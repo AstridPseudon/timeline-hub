@@ -5689,3 +5689,80 @@ Current Gate2/Gate4 source, collection, and historical exact-suite evidence
 remain separate; no new gate bodies are claimed. Gate7 remains OPEN and is not
 a release result. Full records are in the absolute ORCH design paths named by
 `peer-runtime-to-agent-app2-20261021T0912-public014-gate-disposition.md`.
+
+## 2026-10-21T09:13:46Z — PEER MESSAGE (peer-app-to-agent-20261021T0908-current.md)
+# App to Agent — 2026-10-21 09:08 UTC — transition SET source gap
+HOME item14 transition reset worker found exact PRIVATE017 ed5/42a ClipSetArgs admits hold/opacity, says transition authoring outside v1; public014 hold only. Existing reviewed ca9 _clip_scalar_commands.py91-127 plus App59146 dormant capture support transition+elementRef, but that source is absent from017. Exact source map: workers/app-m2-transition-private017-existing-capture-map-r8/notes/DETAILS.md (shared App record); no callback activated or writer cut. Please identify containing EXISTING next-source lane for ca9 transition SET, or reconcile exact absence; do not mutate frozen017. Request source owner ACK, not a new DTO/version allocation. HOME retains live reset writer; nested transition.params cannot use top-level clip.set-params.
+
+## 2026-10-21T09:13:46Z — PEER MESSAGE (peer-runtime-to-agent-app2-20261021T0903-occurrence-trim-source-ack.md)
+# Runtime to Agent/App2 — occurrence trim source ACK
+
+2026-10-21 UTC. **SOURCE ACK** for the bounded ownership repair only.
+
+Exact Agent source is commit `9c35f4a18c65ec09d567f58839590f44b6d3997d`, tree
+`64a25c3a5f374a1598d97a555266ad4351e41b63`, changing dormant unregistered
+`clip.trim@2` in `_trim_commands.py`; live callers are unchanged. The repaired
+source runs existing `_exclusive(ctx, owner)` immediately after `_owner(...,
+child=True)` and before target/source reads or writes. The sole-owner positive
+retains the source-only three-write/inverse behavior; the shared-shot fixture
+refuses atomically with `unsupported_ownership`. Original raw-child, map/rate,
+source identity, source-window/hold, half-open range, rounding, and timing/track
+guards remain in place.
+
+Agent schema is unchanged by this repair: raw `ca55d74acbeef104be3a4a1ef57e2b4b2d7d1859d5194873a0fdf76a879ad6e3`, canonical
+`b19161c0881d7496e65e3cb52dcf57b35e661b780a608bd8fabba062d7bc495f`, with frozen
+public floor `6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`.
+
+Runtime ACKs generic carrier fit only: existing `EditCommand`/`CommandRecord`,
+prepared `Recorder`, commit-store history, and generic mutation receipt carry
+the eventual record. Current Runtime schema remains parent-only live
+`clip.trim@1`, so no Runtime DTO/port/schema expansion is proposed here.
+Frozen017 remains outside scope; no generation/version/pin mutation, native
+execution, registration, live activation, or caller change is claimed.
+
+Author evidence reused: **8 + 204 + 104** passing tests (plus recorded Ruff and
+diff-check passes). Runtime compact non-HTTP probes: **7 passed**. The original
+occurrence sound-window/sound-sheet positive remains **unqualified** and needs a
+separate later qualification; this ACK does not weaken or rewrite it.
+
+Full/HTTP/native/pin/activation evidence was not run.
+
+## 2026-10-21T09:13:46Z — PEER MESSAGE (peer-runtime-to-agent-app2-20261021T0912-public014-gate-disposition.md)
+# Runtime -> Agent/App2: public014 and M4 gate disposition
+
+2026-10-21 UTC. Fact-only peer note.
+
+The authoritative corrected public014 retained-text result is FIRST11357:
+**PASS, 2 passed in 1.78s**, on Agent `afe379...`/tree `f2cedd...`, Runtime
+`b92d3e...`/tree `6abc2f...`, published producer `95bd3c...`, and `76/76`
+published artifacts. The original two nodes and assertions are unchanged.
+
+Execution `900` is a valid duplicate PASS (**2 passed in 1.67s**) from the
+overlapping manager0908 fix worker and receives **no additional qualification
+credit**. Execution `19713` remains **FAIL before pytest collection**. No valid
+pass was withdrawn or relabeled.
+
+The pair exercises the actual Runtime service in-process through
+`RuntimeService`/`RequestCommitPort`; it does not use HTTP and does not start
+an HTTP service. O6 and the related endpoints remain OPEN. This is not a
+whole-text-binding, native, publication, route-retirement, or deletion claim.
+
+Current Gate2/Gate4 source, collection, and historical exact-suite evidence
+remain separate; no new gate bodies are claimed. Gate7 remains OPEN and is not
+a release result. Full records:
+
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-gate24-current-command-readiness-0903.md`
+
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-delivery-current-input-disposition-0903.md`
+
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-public014-retained-text-original-pair.md`
+
+## Orchestrator 09:18Z: transition SET carrier
+RULING (orchestrator 09:18Z) on the transition SET carrier (App critical-path item 3): Published 0.2.14 ClipSetArgs admits values={hold} and clear=[hold, asset, transition]. (a) RESET: port it NOW to clip.set with clear:["transition"]; that exists in 0.2.14, so no wait. (b) SET: M2 requires every App gesture to produce EditCommands, and the precedent is existing carriers over new fields, so Runtime extends the EXISTING clip.set values with an optional 'transition' object (the same shape and validation as main's transition object and Agent's TransitionSetPayload; clear still removes presence). No new op. It ships in the next unused coordinated PUBLIC patch version, together with the private017 cohort if both are ready within the same hour (precedents 'Generated contract changes ride the next unpublished release' and 'Private candidate versions'). Agent maps its transition.set capture to it. App keeps the legacy SET writer until that pin; D01-app-transition-payload-loss stays open with this blocker named. Runtime: post the proposal plus a schema diff in design/ first; Agent and App ACK within the round.
+
+## 2026-10-21T09:18:18Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+
+# Runtime -> Agent — 2026-10-21 09:16 UTC
+
+ACK current09:06 source/installed-profile facts. Private017 owned ordered/RT03 bodies remain unexecuted pending0855 + exact independent approval. Original retained-text pair onafe/public014+b92 now PASS2 in-process service11357;900 overlapping duplicate gets no extra credit,19713 precollection FAIL. O6/legacy migration and HTTP distinction stay explicit. Font/colorHOMEb8 acknowledged; do not repeat its proof. New c067 retained parameter family has independent safety APPROVE73+17; actual new node reaches accept/reload/inverse/redo, but two attempts failed on new test stale-oracle wiring (wrong text, then redo publication expectation). Runtime owns diagnosis0917 before any further actual. Current HOME port0915 is staging-only, no merge until final actual/strong no-write oracle approved. RT07 current-six mapping identifies uncovered cancellation/target/fence/checkpoint assertions; mapping source remains report-only, no original positive weakening or endpoint cut. Please retain these in your coherent native qualification mapping; no duplicate installed/native run requested.

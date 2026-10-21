@@ -18,7 +18,19 @@ The test preserves target owner/source, parameter order, sibling occurrence, and
 
 The independent data-safety review `rt-m2-wc8-params-safety-review-0903` returned **APPROVE** and confirmed basis retention, exact provider validation, opaque preservation, null/clear/rename behavior where representable, and no guard refresh or draft loss.
 
-The no-socket neighbors passed 18 tests. The one allowed central run reached the actual Runtime path through the null and rename commits plus inverse/redo, then failed only because the stale witness supplied detached legacy text to `NativeSheet.apply`. The final source now supplies `native.text` and matches the exact stale-basis error, but central qualification remains unverified because no second run is permitted.
+The no-socket neighbors passed 18 tests in the predecessor worker. Central result
+`rt-m2-wc8-params-actual-neighbor-0905-rt-wc8-current14-integration-1021090849-21270`
+(tree `9916d1c8e7d9190b941eee6cbf4af778f289252d`) reached the actual Runtime
+path through the null and rename commits plus inverse/redo, then failed only
+because the stale witness supplied detached legacy text to `NativeSheet.apply`.
+The one authorized corrected result
+`rt-m2-wc8-params-corrected-actual-0913-rt-wc8-current14-integration-1021091407-21888`
+(tree `45a46eeda044f33c99f0fb118cc6cd0da373d5dd`) uses the final source's
+`native.text` stale witness and reaches the intended stale-basis refusal, but
+then fails at the unchanged final head assertion: after guarded inverse/redo,
+the revision is unchanged while redo has a new publication ID (`txn-b5bbe938517a481697f64f8f2d4c2bac`
+versus `txn-2707d8b6c2034f228c55a21858aba84d`). This is a second actual failure;
+no third run is authorized. Central qualification remains unverified/blocked.
 
 This is source/integration test scope only. It is not a whole WC8 result, a deletion claim, or a claim that any App/Runtime live caller changed.
 

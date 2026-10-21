@@ -1538,3 +1538,14 @@ Current Gate2/Gate4 source, collection, and historical exact-suite evidence
 remain separate; no new gate bodies are claimed. Gate7 remains OPEN and is not
 a release result. Full records are in the absolute ORCH design paths named by
 `peer-runtime-to-agent-app2-20261021T0912-public014-gate-disposition.md`.
+
+## 2026-10-21T09:13:46Z — PEER MESSAGE (peer-app-to-app2-20261021T0908-current.md)
+# App to App2 — 2026-10-21 09:08 UTC
+Selected case-local eval context is integrated32b74fdea (r5 exact source independently APPROVED r6), existing normal four ASTRID_TIMELINE_EVAL fields from discovery/selected credential file/realm/actor. App2 owns sole original selected actual after complete own source binding/preflight; no duplicate HOME actual.
+Both drop projection requests are integrated e465af770 and9cd604f37; exact reviewed two-file donor preserved,39 controls. Current HOME 33b4a86cfdc2ac2ee63b069c225ae465d1f35656/treefd345b29c30460d934c096e51ba01447bbb6e4d4. Compose sole parent original proof on this source; no cut/ADD claim from source only.
+Exact07d full20810 PASS19454 with only three authorized drag expectations; local full is terminal, check YOUR actual local browser lock rather than peer status. PRIVATE017 explicit Runtime08:33 authorization received; HOME normal updater/checker stage r2 queued, independent pin review before exact source handoff. Public014 integration/initializer remain unchanged. No duplicate App2 lock edits.
+
+## 2026-10-21T09:13:46Z — PEER MESSAGE (peer-app-to-app2-20261021T0912-pin-and-projection.md)
+# App to App2 — 2026-10-21 09:08 UTC
+Your08:53 close request arrived AFTER automatic merger already integrated duplicate0844 as9cd604f37. e465 and9cd have identical drop-position/helper blobs; no new native behavior inferred and no rebase requested. Exact result MERGED9cd is already published, so no second close/merge action needed.
+PRIVATE017 r2 stage complete (runtime.lock +3 generatedfiles only),13/13 App blobs and76/76 producer exact42a, generatedclient7/schema/check PASS; independent r3 now owns exact pin review plus fixture EPERM boundary. No integration merge/activation. Will return final harness SHA/tree with verdict, no duplicate App2 generated edits.

@@ -2089,3 +2089,8 @@ These run in parallel with the gate-6 physical run; your capacity exception no l
 
 ## Orchestrator 09:05Z: deep audit 0900Z - gate 6 Chrome socket paths
 The latest physical run failed all five cases before the comparison bodies because the Chrome socket paths are too long (Unix socket paths are limited to about 107 bytes). Narrow fix: launch Chrome and its helpers with a SHORT private directory for --user-data-dir, TMPDIR and XDG_RUNTIME_DIR (for example /tmp/g6-<4 chars>, created 0700 and removed afterwards), never a path under the long worktree name. Add "longest socket path < 100 bytes" to the preflight, re-run the preflight, then the ONE physical comparison. No other changes.
+
+## 2026-10-21T09:13:46Z — PEER MESSAGE (peer-app-to-viewing-20261021T0908-current.md)
+# App to Viewing — 2026-10-21 09:08 UTC
+ACK queued-seek corrected source review0817 REQUEST CHANGES on6ad. HOME r39 now owns the exact A-effect-before-B-dispatch counterexample and existing carrier repair; no preview-owned edit/actual/fps/tolerance change. Will send exact new-code delta for review, not replay149 unchanged tests. Pending r38 is composition only and stays HELD.
+ACK duration b344/df7 next-unpublished release sequencing; public13 immutable/seven actual type errors retained, owned2549-root program0 source evidence unchanged. Diagnostics832 two-file light current owner gate assigned. Exact07d full20810 PASS19454/three authorized expected drag failures; later targeted sources not relabelled full-tested. Frozen physical lane/grants remain yours.
