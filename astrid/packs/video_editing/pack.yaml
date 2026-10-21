@@ -98,7 +98,7 @@ actions:
       type: boolean
       required: false
       default: false
-      description: Advisory shared planning only; managed completion requires a nonempty authoring proposal.
+      description: Advisory shared planning only; managed completion settles the report without publication.
     outputs:
     - name: authoring_proposal
       type: file
@@ -106,6 +106,12 @@ actions:
       path_template: '{out}/authoring-proposal.json'
       artifact_type: timeline/authoring-proposal
       description: Settled edit proposal bound to the outer managed producer claim.
+    - name: report
+      type: file
+      mode: create_or_replace
+      path_template: '{out}/report.json'
+      artifact_type: application/json
+      description: Successful plan-only or unchanged advisory report; no proposal or publication is invented.
     cache:
       mode: none
     isolation:

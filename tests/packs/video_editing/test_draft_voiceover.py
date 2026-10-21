@@ -8,6 +8,12 @@ from astrid.packs.video_editing.shared import draft_voiceover as vo
 
 OLD = 'sha256:' + '1' * 64
 NEW = 'sha256:' + '2' * 64
+OLD_SELECTION = {'asset': 'voice', 'generation_id': 'generation-old',
+                 'variant_id': 'original', 'object_id': OLD,
+                 'catalog_digest': 'sha256:' + '3' * 64}
+NEW_SELECTION = {'asset': 'draft-voiceover-vo', 'generation_id': 'generation-new',
+                 'variant_id': 'original', 'object_id': NEW,
+                 'catalog_digest': 'sha256:' + '4' * 64}
 
 
 def fixture(owned=True, audio=True):
@@ -16,13 +22,18 @@ def fixture(owned=True, audio=True):
         'clips': [{'id': 'image', 'asset': 'image', 'at': 0, 'hold': 3, 'track': 'picture'}],
         'registry': {'assets': {}}}}
     if audio:
-        shot['internal_timeline']['clips'].append({'id': 'vo', 'media_id': OLD, 'at': 0,
-                                                  'from': 0, 'to': 2, 'track': 'vo'})
+        shot['internal_timeline']['clips'].append({'id': 'vo', 'asset': 'voice',
+                                                  'clipType': 'media',
+                                                  'at': 0, 'from': 0, 'to': 2, 'hold': 2, 'track': 'vo'})
+        shot['internal_timeline']['registry']['assets']['voice'] = {
+            'type': 'audio', 'media_id': OLD, 'size': 1, 'selection': dict(OLD_SELECTION)}
     if owned:
         shot['payload']['metadata'][vo.KEY] = {'owner': 'video_editing.sync_draft_voiceover',
             'status': 'draft', 'clip_id': 'vo', 'audio_media_id': OLD, 'text': 'Hello',
             'text_digest': vo.digest('Hello'), 'settings': dict(vo.DEFAULT_SETTINGS)}
     candidate = {'project_id': 'p', 'timeline_id': 't', 'base_parent': {'revision_id': 'h'},
+        'source_mapping': {'shots': {'s1': {'shot_id': 's1', 'revision_id': 's1-revision'},
+                                     's2': {'shot_id': 's2', 'revision_id': 's2-revision'}}},
         'parent': {'clips': [{'id': 'background', 'at': 0, 'hold': 6, 'track': 'picture'}],
                    'config': {'duration': 6}},
         'placements': [
@@ -37,7 +48,16 @@ def fixture(owned=True, audio=True):
 
 def synthesis(text, settings):
     return {'text': text, 'settings': settings, 'audio_media_id': NEW, 'duration_seconds': 4,
-            'run_id': 'r', 'task_id': 'task'}
+            'run_id': 'r', 'task_id': 'task', 'output': {
+                'selection': dict(NEW_SELECTION), 'media_type': 'audio/wav',
+                'size': 1, 'duration_seconds': 4}}
+
+
+def coordinator_synthesis(text, settings):
+    result = synthesis(text, settings)
+    result['duration_seconds'] = 2
+    result['output']['duration_seconds'] = 2
+    return result
 
 
 def test_exact_words_voice_and_selected_identity_reuse():
@@ -111,7 +131,7 @@ def test_regenerated_audio_keeps_authored_selector_and_updates_source_mirrors():
     c,s=fixture(owned=False)
     shot=c['shots']['s1']
     clip=next(row for row in shot['internal_timeline']['clips'] if row['id']=='vo')
-    clip.pop('media_id')
+    clip.pop('media_id', None)
     clip['asset']='voice'
     shot['internal_timeline']['registry']['assets']['voice']={
         'media_id':OLD,'duration':2,'type':'audio'}
@@ -179,7 +199,11 @@ def coordinator_client(c,s,current='h',fail_publish=False):
     for shot in c['shots'].values():
         clips=vo._audio_clips(shot)
         for clip in clips:
-            clip['media_id']=media_id
+            clip.setdefault('asset', 'voice')
+            shot['internal_timeline']['registry']['assets'].setdefault(
+                'voice', {'type': 'audio'})['selection'] = {
+                    **OLD_SELECTION, 'object_id': media_id}
+            shot['internal_timeline']['registry']['assets']['voice']['media_id'] = media_id
         record=shot['payload']['metadata'].get(vo.KEY)
         if record:
             record['audio_media_id']=media_id
@@ -200,11 +224,15 @@ def coordinator_client(c,s,current='h',fail_publish=False):
     bound=Bound(); calls=[0]
     def opened(*args,**kwargs):
         calls[0]+=1
-        return {'summary':{'head_revision_id':'h' if calls[0]==1 else current}}
+        return {'summary':{'head_revision_id':'h' if calls[0]==1 else current,
+                            'head_publication_id':'pub-h'}}
     client=SimpleNamespace(endpoint='http://localhost:8787', media=Media(),
         projects=SimpleNamespace(show=lambda *a:{'project_id':'p'}),
         timelines=SimpleNamespace(open_composition=opened,resolve_scope=lambda *a:{'project_id':'p','timeline_id':'t'},script=lambda *a,**k:s),
-        open_authoring_target=lambda target:bound)
+        open_authoring_target=lambda target:bound,
+        trusted_execution_context={'task_id':'outer-task', 'attempt_id':'outer-attempt',
+                                   'executor_id':'outer-executor', 'fence':7,
+                                   'runtime_epoch':3})
     return client,bound
 
 
@@ -220,29 +248,38 @@ def test_coordinator_noop_and_plan_do_not_synthesize_or_publish(monkeypatch):
 
 def test_coordinator_detects_concurrent_head_and_cas_failure(monkeypatch):
     c,s=fixture();s['occurrences'][0]['text']='New'
-    monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:synthesis)
+    monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:coordinator_synthesis)
     client,bound=coordinator_client(c,s,current='new-head')
     with pytest.raises(vo.VoiceoverSyncError,match='changed during synthesis'):
         vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
     assert not bound.published
     client,bound=coordinator_client(c,s,fail_publish=True)
-    with pytest.raises(RuntimeError,match='CAS conflict'):
+    with pytest.raises(RuntimeError, match='CAS conflict'):
         vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
     assert not bound.published
 
 
 def test_coordinator_publishes_once_with_provenance(monkeypatch):
     c,s=fixture();s['occurrences'][0]['text']='New'
-    monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:synthesis)
+    monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:coordinator_synthesis)
     client,bound=coordinator_client(c,s)
     result=vo.sync_draft_voiceover(client,'p','t',timing_policy='ripple')
     assert result['published'] and bound.published
     assert result['generated'][0]['text']=='New'
 
 
+def test_managed_proposal_refuses_without_private_host_context(monkeypatch):
+    c,s=fixture();s['occurrences'][0]['text']='New'
+    monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:coordinator_synthesis)
+    client,bound=coordinator_client(c,s)
+    with pytest.raises(vo.VoiceoverSyncError, match='private trusted host context'):
+        vo._sync_draft_voiceover_proposal(client,'p','t',timing_policy='preserve')
+    assert not bound.published
+
+
 def test_coordinator_regenerates_missing_fresh_audio_and_surfaces_other_read_errors(monkeypatch):
     c,s=fixture();client,bound=coordinator_client(c,s)
-    monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:synthesis)
+    monkeypatch.setattr(vo,'runtime_synthesizer',lambda *a:coordinator_synthesis)
     def missing(_object_id):
         error=RuntimeError('missing');error.code='not_found';raise error
     client.media.read_bytes=missing
@@ -256,6 +293,14 @@ def test_coordinator_regenerates_missing_fresh_audio_and_surfaces_other_read_err
     with pytest.raises(RuntimeError,match='forbidden'):
         vo.sync_draft_voiceover(client,'p','t',timing_policy='preserve')
     assert not bound.published
+
+
+def test_forged_settled_selection_is_rejected():
+    with pytest.raises(vo.VoiceoverSyncError, match='differs from synthesized audio'):
+        vo._settled_media({'audio_media_id': NEW, 'output': {
+            'selection': {**NEW_SELECTION, 'object_id': OLD},
+            'size': 1, 'duration_seconds': 2,
+        }})
 
 
 def test_synthesizer_verifies_managed_provenance_and_fresh_request_context(monkeypatch):

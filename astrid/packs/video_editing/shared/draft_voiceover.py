@@ -382,22 +382,74 @@ def _artifact_identity(row):
     raise VoiceoverSyncError("Managed artifact has no digest")
 
 
-def runtime_synthesizer(client, project):
+def _speech_generation_intent(text: str, settings: Mapping[str, str]) -> dict[str, Any]:
+    """Declare the existing single-output speech publication shape.
+
+    The executor still receives the exact text/settings as ordinary inputs.
+    This envelope only supplies Runtime's existing generation publication
+    admission metadata; it does not claim a catalog selection or duration.
+    """
+    return {
+        "version": 1,
+        "modality": "audio",
+        "partial_success_policy": "reject",
+        "groups": [{
+            "group_key": "main",
+            "selectors": [{
+                "selector": "speech",
+                "ordinal": 0,
+                "variant_key": "original",
+                "required": True,
+            }],
+        }],
+        "metadata": {
+            "content_type": "audio",
+            "voice": settings["voice"],
+            "text_sha256": digest(text),
+        },
+    }
+
+
+def _speech_runtime_context(result: Any, audio_row: Mapping[str, Any]) -> dict[str, Any]:
+    """Keep terminal Runtime identity available to a future exact media read."""
+    raw_result = getattr(result, "raw_result", {})
+    raw_result = raw_result if isinstance(raw_result, Mapping) else {}
+    settled = raw_result.get("result")
+    settled = settled if isinstance(settled, Mapping) else {}
+    task = raw_result.get("task")
+    task = dict(task) if isinstance(task, Mapping) else None
+    publication = settled.get("generation_publish_v1")
+    publication = dict(publication) if isinstance(publication, Mapping) else None
+    return {
+        "task": task,
+        "task_id": getattr(result, "kernel_task_id", None),
+        "attempt_id": getattr(result, "kernel_attempt_id", None),
+        "association_id": audio_row.get("association_id"),
+        "managed_output": dict(audio_row),
+        "generation_publish_v1": publication,
+    }
+
+
+def runtime_synthesizer(client, project, *, generation_intent: Mapping[str, Any] | None = None):
     """Invoke speech through SDK; verify provenance bytes from managed outputs."""
     # A deliberate regeneration must not replay a failed or missing old output.
     # Share one identity within this batch; a later explicit sync gets a new one.
     request_context = {"draft_voiceover_sync": uuid.uuid4().hex}
     def synthesize(text, settings):
         import astrid.sdk as sdk
+        intent = (generation_intent if generation_intent is not None
+                  else _speech_generation_intent(text, settings))
         result = sdk.invoke("generation.generate_speech", kind="executor", project=project,
-            inputs={"text": text, **settings}, client=client, wait=True,
+            inputs={"text": text, **settings, "generation_intent": intent}, client=client, wait=True,
             idempotency_context=request_context)
         if not result.ok:
             raise VoiceoverSyncError(str(result.error))
         artifacts = result.outputs.get("managed_outputs") or result.outputs.get("artifacts") or []
         manifest_row = next((r for r in artifacts if r.get("name") in {"speech_manifest", "manifest", "manifest.json"}
+                             or r.get("output_port") in {"speech_manifest", "manifest"}
                              or str(r.get("path", "")).endswith("manifest.json")), None)
         audio_row = next((r for r in artifacts if r.get("name") in {"speech", "generated_audio"}
+                          or r.get("output_port") in {"speech", "generated_audio"}
                           or str(r.get("path", "")).endswith("speech.wav")), None)
         if manifest_row is None or audio_row is None:
             raise VoiceoverSyncError("Completed speech run has no managed WAV/provenance outputs")
@@ -410,14 +462,168 @@ def runtime_synthesizer(client, project):
             raise VoiceoverSyncError("Managed speech provenance failed hash verification")
         return {"text": manifest["text"], "settings": manifest["settings"],
                 "audio_media_id": audio_id, "duration_seconds": manifest["duration_seconds"],
-                "run_id": result.run_id, "task_id": result.kernel_task_id}
+                "run_id": result.run_id, "task_id": result.kernel_task_id,
+                "runtime_context": _speech_runtime_context(result, audio_row)}
     return synthesize
 
 
-def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: str,
+_MEDIA_SELECTION_FIELDS = ("asset", "generation_id", "variant_id", "object_id", "catalog_digest")
+_PRODUCER_FIELDS = ("task_id", "attempt_id", "executor_id", "fence", "runtime_epoch")
+
+
+def _exact_media_selection(value: Any, *, label: str) -> dict[str, Any] | None:
+    if not isinstance(value, Mapping):
+        return None
+    nested = value.get("selection")
+    if isinstance(nested, Mapping):
+        value = nested
+    if not all(key in value for key in _MEDIA_SELECTION_FIELDS):
+        return None
+    selection = {key: value[key] for key in _MEDIA_SELECTION_FIELDS}
+    if any(not isinstance(selection[key], str) or not selection[key]
+           for key in _MEDIA_SELECTION_FIELDS):
+        raise VoiceoverSyncError(f"{label} has an invalid five-field media selection")
+    return selection
+
+
+def _settled_media(result: Mapping[str, Any]) -> tuple[dict[str, Any], float, int]:
+    """Read only a settled selection and intrinsic duration from the output row."""
+    context = result.get("runtime_context")
+    managed = context.get("managed_output") if isinstance(context, Mapping) else None
+    candidates = [result.get("output"), result.get("media_selection"), managed]
+    selected_row, selection = None, None
+    for row in candidates:
+        selection = _exact_media_selection(row, label="settled media")
+        if selection is not None:
+            selected_row = row
+            break
+    if selection is None:
+        raise VoiceoverSyncError("Speech result lacks a settled five-field media selection")
+    if selection["object_id"] != result.get("audio_media_id"):
+        raise VoiceoverSyncError("Settled media differs from synthesized audio")
+    duration = selected_row.get("intrinsic_duration_seconds", selected_row.get("duration_seconds"))
+    if isinstance(duration, bool) or not isinstance(duration, (int, float)) \
+            or not math.isfinite(float(duration)) or float(duration) <= 0:
+        raise VoiceoverSyncError("Settled media lacks a positive intrinsic duration")
+    size = selected_row.get("size")
+    if type(size) is not int or size <= 0:
+        raise VoiceoverSyncError("Settled media lacks verified byte size")
+    return selection, float(duration), size
+
+
+def _candidate_media_selection(candidate: Mapping, job: Mapping[str, Any]) -> dict[str, Any] | None:
+    shot = candidate.get("shots", {}).get(job.get("shot_id"), {})
+    internal = shot.get("internal_timeline", {})
+    clip = next((row for row in internal.get("clips", []) if row.get("id") == job.get("clip_id")), None)
+    if not isinstance(clip, Mapping):
+        return None
+    values = [clip]
+    assets = internal.get("registry", {}).get("assets", {})
+    selector = clip.get("asset") or clip.get("asset_id")
+    if isinstance(selector, str):
+        values.append(assets.get(selector))
+    for row in shot.get("payload", {}).get("assets", []):
+        if isinstance(row, Mapping) and row.get("asset_id") == selector:
+            values.append(row)
+    for value in values:
+        selection = _exact_media_selection(value, label="old media")
+        if selection is not None:
+            return selection
+    return None
+
+
+def _candidate_media_size(candidate: Mapping, job: Mapping[str, Any], selection: Mapping[str, Any]) -> int:
+    shot = candidate.get("shots", {}).get(job.get("shot_id"), {})
+    internal = shot.get("internal_timeline", {})
+    clip = next((row for row in internal.get("clips", []) if row.get("id") == job.get("clip_id")), None)
+    values = [clip]
+    assets = internal.get("registry", {}).get("assets", {})
+    selector = clip.get("asset") or clip.get("asset_id") if isinstance(clip, Mapping) else None
+    if isinstance(selector, str):
+        values.append(assets.get(selector))
+    for row in shot.get("payload", {}).get("assets", []):
+        if isinstance(row, Mapping) and row.get("asset_id") == selector:
+            values.append(row)
+    for value in values:
+        if _exact_media_selection(value, label="old media") == selection:
+            size = value.get("size") if isinstance(value, Mapping) else None
+            if type(size) is int and size > 0:
+                return size
+    raise VoiceoverSyncError("Old media lacks verified byte size")
+
+
+_TARGET_FIELDS = ("project_id", "timeline_id", "base_revision_id", "base_publication_id")
+
+
+def _trusted_outer_context() -> tuple[dict[str, Any], dict[str, Any]]:
+    """Read the host-owned context; caller and speech identity are not carriers."""
+    try:
+        from astrid.core.execution.executor._action_context import _require_action_context
+    except (ImportError, AttributeError) as exc:
+        raise VoiceoverSyncError(
+            "Outer authoring proposal requires the private trusted host context"
+        ) from exc
+    try:
+        context = _require_action_context()
+        producer = dict(context.producer)
+        admitted_target = dict(context.admitted_target)
+    except (AttributeError, TypeError, ValueError) as exc:
+        raise VoiceoverSyncError(
+            "Outer authoring proposal requires the private trusted host context"
+        ) from exc
+    if set(producer) != set(_PRODUCER_FIELDS):
+        raise VoiceoverSyncError("Trusted outer execution context is incomplete")
+    if any(not isinstance(producer[key], str) or not producer[key].strip()
+           for key in ("task_id", "attempt_id", "executor_id")):
+        raise VoiceoverSyncError("Trusted outer producer identity is invalid")
+    if any(type(producer[key]) is not int or producer[key] < 1
+           for key in ("fence", "runtime_epoch")):
+        raise VoiceoverSyncError("Trusted outer producer fence is invalid")
+    if set(admitted_target) != set(_TARGET_FIELDS) or any(
+            not isinstance(admitted_target[key], str) or not admitted_target[key].strip()
+            for key in _TARGET_FIELDS):
+        raise VoiceoverSyncError("Trusted outer admitted target is invalid")
+    return producer, admitted_target
+
+
+def _build_voiceover_proposal(*, producer: Mapping[str, Any], candidate: Mapping[str, Any],
+                              base_publication_id: str, commands: list[dict[str, Any]],
+                              admitted_target: Mapping[str, Any]) -> dict[str, Any]:
+    from astrid.sdk.timeline.commit import _digest
+
+    target = {
+        "project_id": candidate["project_id"],
+        "timeline_id": candidate["timeline_id"],
+        "base_revision_id": candidate["base_parent"]["revision_id"],
+        "base_publication_id": base_publication_id,
+    }
+    if dict(admitted_target) != target:
+        raise VoiceoverSyncError("Prepared proposal does not match the admitted target")
+    proposal = {
+        "schema_version": 1,
+        "producer": dict(producer),
+        "admitted_target": target,
+        "commands": copy.deepcopy(commands),
+        "rationale": "Insert settled managed voiceover WAV and preserve its frozen script binding",
+    }
+    proposal["proposal_digest"] = _digest(proposal)
+    return proposal
+
+
+def _require_authoritative_media_boundary(client: Any) -> None:
+    """Keep managed proposals closed until Runtime exposes the required read."""
+    del client
+    raise VoiceoverSyncError(
+        "Managed voiceover proposal requires the existing Runtime authoritative "
+        "media-selection read boundary; synthesizer output claims are not sufficient"
+    )
+
+
+def _sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: str,
                          settings=None, occurrence_ids=None, adopt_clip_ids=None,
-                         padding_seconds=0.15, plan_only=False) -> dict:
-    """One caller-authorized operation: pin, compare, generate, validate, CAS save.
+                         padding_seconds=0.15, plan_only=False,
+                         managed_proposal=False) -> dict:
+    """Run the shared preparation, with publication mode selected privately.
 
     No render is requested. Protected/empty/missing-script rows are reported.
     The source script is read from pinned runtime text; callers cannot inject it.
@@ -426,8 +632,10 @@ def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: 
         raise VoiceoverSyncError("timing_policy must be preserve or ripple")
     if not math.isfinite(padding_seconds) or padding_seconds < 0:
         raise VoiceoverSyncError("padding_seconds must be finite and nonnegative")
+    outer = _trusted_outer_context() if managed_proposal else None
     shown = _data(client.timelines.open_composition(project, timeline))
     head = shown["summary"]["head_revision_id"]
+    base_publication_id = shown["summary"].get("head_publication_id") if managed_proposal else None
     scope = _data(client.timelines.resolve_scope(project, timeline))
     project_row = _data(client.projects.show(project))
     project_id = project_row.get("project_id") or project_row["id"]
@@ -464,17 +672,84 @@ def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: 
         **options, available_media_ids=available_media_ids)
     if plan_only or not plan["jobs"]:
         return {"status": "planned" if plan_only else "unchanged", "plan": plan, "published": False}
+    if managed_proposal:
+        _require_authoritative_media_boundary(client)
+        if not isinstance(base_publication_id, str) or not base_publication_id:
+            raise VoiceoverSyncError("Timeline head lacks its settled publication identity")
     prepared = prepare_draft_voiceover(candidate, scripts,
         synthesize=runtime_synthesizer(client, project_id), timing_policy=timing_policy,
         padding_seconds=padding_seconds, available_media_ids=available_media_ids, **options)
     # Detect edits made while generation was in flight. Publication repeats the
     # check and Runtime CAS closes the final race. Never rebase stale speech.
     current = _data(client.timelines.open_composition(project_id, timeline_id))
-    if current["summary"]["head_revision_id"] != head:
+    if (current["summary"]["head_revision_id"] != head
+            or (managed_proposal
+                and current["summary"].get("head_publication_id") != base_publication_id)):
         raise VoiceoverSyncError("Timeline changed during synthesis; rerun sync from its new head")
     bound.validate(prepared["candidate"])
     diff = bound.diff(prepared["candidate"])
-    frozen = bound.preview(prepared["candidate"])
-    receipt = bound.publish(prepared["candidate"], idempotency_key=frozen["candidate_digest"])
-    return {"status": "published", "published": True, "plan": plan, "diff": diff,
-            "generated": prepared["generated"], "receipt": receipt}
+    if not managed_proposal:
+        frozen = bound.preview(prepared["candidate"])
+        receipt = bound.publish(prepared["candidate"], idempotency_key=frozen["candidate_digest"])
+        return {"status": "published", "published": True, "plan": plan, "diff": diff,
+                "generated": prepared["generated"], "receipt": receipt}
+
+    bound.preview(prepared["candidate"])
+
+    from astrid.sdk.timeline.native_voiceover import capture_draft_voiceover
+    from astrid.sdk.timeline.producer import build_producer_batch
+
+    media_by_occurrence, verified_media, old_media_by_occurrence = {}, [], {}
+    for result in prepared["generated"]:
+        selection, intrinsic_duration, size = _settled_media(result)
+        occurrence_id = result["occurrence_id"]
+        media_by_occurrence[occurrence_id] = selection
+        if not any(row["selection"] == selection for row in verified_media):
+            verified_media.append({"selection": selection, "media_type": "audio/wav", "size": size,
+                                   "duration_seconds": intrinsic_duration})
+        job = next(job for job in prepared["plan"]["jobs"]
+                   if job["occurrence_id"] == occurrence_id)
+        old = _candidate_media_selection(candidate, job)
+        if old is not None:
+            old_media_by_occurrence[occurrence_id] = old
+            old_shot = candidate["shots"][job["shot_id"]]
+            old_clip = next(row for row in old_shot["internal_timeline"]["clips"]
+                            if row.get("id") == job["clip_id"])
+            if not any(row["selection"] == old for row in verified_media):
+                verified_media.append({"selection": old, "media_type": "audio/wav",
+                                       "size": _candidate_media_size(candidate, job, old),
+                                       "duration_seconds": _duration(old_clip)})
+    captured = capture_draft_voiceover(
+        candidate, prepared, media_by_occurrence=media_by_occurrence,
+        verified_media=verified_media, old_media_by_occurrence=old_media_by_occurrence,
+        timing_policy=timing_policy)
+    proposal = _build_voiceover_proposal(
+        producer=outer[0], candidate=candidate, base_publication_id=base_publication_id,
+        commands=captured["commands"], admitted_target=outer[1])
+    # Validate the exact existing six-key proposal and its single guard. The
+    # requester later queues this original proposal through its outbox.
+    build_producer_batch(proposal)
+    return {"status": "proposal_ready", "published": False, "plan": plan, "diff": diff,
+            "generated": prepared["generated"], "authoring_proposal": proposal}
+
+
+def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: str,
+                         settings=None, occurrence_ids=None, adopt_clip_ids=None,
+                         padding_seconds=0.15, plan_only=False) -> dict:
+    """Preserve the existing public preparation, validation, and publication path."""
+    return _sync_draft_voiceover(
+        client, project, timeline, timing_policy=timing_policy, settings=settings,
+        occurrence_ids=occurrence_ids, adopt_clip_ids=adopt_clip_ids,
+        padding_seconds=padding_seconds, plan_only=plan_only,
+    )
+
+
+def _sync_draft_voiceover_proposal(client, project: str, timeline: str, *, timing_policy: str,
+                                   settings=None, occurrence_ids=None, adopt_clip_ids=None,
+                                   padding_seconds=0.15, plan_only=False) -> dict:
+    """Private managed-producer entry; the requester owns proposal submission."""
+    return _sync_draft_voiceover(
+        client, project, timeline, timing_policy=timing_policy, settings=settings,
+        occurrence_ids=occurrence_ids, adopt_clip_ids=adopt_clip_ids,
+        padding_seconds=padding_seconds, plan_only=plan_only, managed_proposal=True,
+    )

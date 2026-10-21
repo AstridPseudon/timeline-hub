@@ -9,9 +9,6 @@ from astrid.core.pack.entrypoint import guard_canonical_entrypoint
 
 guard_canonical_entrypoint("video_editing.sync_draft_voiceover")
 
-from astrid.packs.video_editing.shared.draft_voiceover import sync_draft_voiceover
-
-
 def _decode(value: Any, default: Any) -> Any:
     if value is None:
         return default
@@ -37,13 +34,14 @@ def run(
     padding_seconds: float = 0.15,
     plan_only: bool = False,
 ) -> dict[str, Any]:
-    """Prepare commands and settle the existing managed proposal; never publish."""
+    """Settle a managed proposal or the helper's advisory report; never publish."""
     from astrid.core._shared.result_manifest import build_manifest, write_manifest
     from astrid.core.execution.executor._action_context import (
         _PreparationClient,
         _require_action_context,
     )
     from astrid.core.foundation.atomic_io import write_json_atomic
+    from astrid.packs.video_editing.shared.draft_voiceover import _sync_draft_voiceover_proposal
     from astrid.sdk.timeline.producer import build_producer_batch
 
     context = _require_action_context()
@@ -62,7 +60,7 @@ def run(
     from astrid.sdk import AstridClient
 
     with AstridClient.open_from_launcher() as client:
-        result = sync_draft_voiceover(
+        result = _sync_draft_voiceover_proposal(
             _PreparationClient(client, context),
             project,
             timeline_ref,
@@ -76,20 +74,29 @@ def run(
     if not isinstance(result, dict):
         raise TypeError("draft voiceover synchronization must return a mapping")
     proposal = result.get("authoring_proposal")
-    if not isinstance(proposal, dict):
-        raise ValueError("synchronization produced no authoring proposal to settle")
-    if (proposal.get("producer") != context.producer
-            or proposal.get("admitted_target") != context.admitted_target):
-        raise ValueError("authoring proposal does not match the trusted outer claim")
-    build_producer_batch(proposal)
-    proposal_path = context.out / "authoring-proposal.json"
-    write_json_atomic(proposal_path, proposal)
+    if isinstance(proposal, dict):
+        if (proposal.get("producer") != context.producer
+                or proposal.get("admitted_target") != context.admitted_target):
+            raise ValueError("authoring proposal does not match the trusted outer claim")
+        build_producer_batch(proposal)
+        proposal_path = context.out / "authoring-proposal.json"
+        write_json_atomic(proposal_path, proposal)
+        manifest_outputs = [{"name": "authoring_proposal", "path": proposal_path.name, "type": "file",
+                             "artifact_type": "timeline/authoring-proposal", "role": "result", "is_primary": True}]
+        action_result = {"authoring_proposal": proposal}
+    elif result.get("status") in {"planned", "unchanged"}:
+        report_path = context.out / "report.json"
+        write_json_atomic(report_path, result)
+        manifest_outputs = [{"name": "report", "path": report_path.name, "type": "file",
+                             "artifact_type": "application/json", "role": "result", "is_primary": True}]
+        action_result = {"report": result}
+    else:
+        raise ValueError("synchronization produced neither an authoring proposal nor an advisory report")
     manifest = build_manifest(
         kind="video_editing.sync_draft_voiceover",
         inputs={},
-        outputs=[{"name": "authoring_proposal", "path": proposal_path.name, "type": "file",
-                  "artifact_type": "timeline/authoring-proposal", "role": "result", "is_primary": True}],
+        outputs=manifest_outputs,
         created=datetime.now(timezone.utc).isoformat(),
     )
     write_manifest(context.out / "manifest.json", manifest)
-    return {"authoring_proposal": proposal}
+    return action_result

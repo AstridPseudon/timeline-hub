@@ -50,7 +50,7 @@ def action(managed_invocation, monkeypatch):
         assert client.trusted_execution_context != f.client.trusted_execution_context
         return {'authoring_proposal': copy.deepcopy(f.proposal)}
 
-    monkeypatch.setattr(draft_voiceover, 'sync_draft_voiceover', sync)
+    monkeypatch.setattr(draft_voiceover, '_sync_draft_voiceover_proposal', sync)
     return f
 
 
@@ -85,6 +85,14 @@ def test_existing_action_settles_only_claim_bound_proposal_and_manifest(action):
     assert_closed()
 
 
+def test_action_uses_private_managed_entry_not_public_sync(action, monkeypatch):
+    monkeypatch.setattr(draft_voiceover, 'sync_draft_voiceover',
+                        lambda *a, **k: pytest.fail('public sync path must not run'))
+    result = invoke(action)
+    assert result.ok and result.payload['action_result']['authoring_proposal'] == action.proposal
+    assert_closed()
+
+
 def test_declaration_keeps_existing_eight_inputs_and_network_false(action):
     f = action
     assert [port.name for port in f.definition.inputs] == [
@@ -92,7 +100,8 @@ def test_declaration_keeps_existing_eight_inputs_and_network_false(action):
         'adopt_clip_ids', 'padding_seconds', 'plan_only']
     assert f.definition.isolation.network is False
     assert f.definition.metadata['output_result_manifest'] is True
-    assert [port.artifact_type for port in f.definition.outputs] == ['timeline/authoring-proposal']
+    assert [port.artifact_type for port in f.definition.outputs] == [
+        'timeline/authoring-proposal', 'application/json']
 
 
 def test_missing_trusted_context_refuses_before_shared_work(action):
@@ -133,13 +142,25 @@ def test_caller_identity_is_never_an_action_input(action):
 
 
 @pytest.mark.parametrize('status', ['planned', 'unchanged'])
-def test_advisory_shared_result_cannot_fabricate_proposal_output(action, monkeypatch, status):
+def test_advisory_shared_result_settles_positive_report(action, monkeypatch, status):
     f = action
     monkeypatch.setattr(draft_voiceover, 'sync_draft_voiceover',
-                        lambda *a, **k: {'status': status, 'published': False})
-    with pytest.raises(ValueError, match='no authoring proposal'):
-        invoke(f)
-    assert not list(f.request.out.iterdir())
+                        lambda *a, **k: pytest.fail('public sync path must not run'))
+    advisory = {'status': status, 'published': False, 'plan': {'jobs': [], 'statuses': []}}
+    monkeypatch.setattr(draft_voiceover, '_sync_draft_voiceover_proposal',
+                        lambda *a, **k: copy.deepcopy(advisory))
+    result = invoke(f)
+    assert result.ok and result.payload == {'action_result': {'report': advisory}}
+    assert json.loads((f.request.out / 'report.json').read_text()) == advisory
+    assert not (f.request.out / 'authoring-proposal.json').exists()
+    assert len(result.outputs) == 1 and result.outputs[0]['name'] == 'report'
+    assert result.outputs[0]['path'] == str(f.request.out / 'report.json')
+    manifest = json.loads((f.request.out / 'manifest.json').read_text())
+    assert manifest['outputs'][0]['name'] == 'report'
+    assert manifest['outputs'][0]['artifact_type'] == 'application/json'
+    assert result.outputs[0]['content_hash'] == manifest['outputs'][0]['content_hash']
+    assert 'authoring_proposal' not in result.payload['action_result']
+    assert 'receipt' not in result.payload['action_result']
     assert_closed()
 
 
@@ -169,7 +190,7 @@ def test_failed_shared_work_releases_context_and_pack_modules(action, monkeypatc
     def failed(*args, **kwargs):
         captured.append(_require_action_context())
         raise RuntimeError('speech failed')
-    monkeypatch.setattr(draft_voiceover, 'sync_draft_voiceover', failed)
+    monkeypatch.setattr(draft_voiceover, '_sync_draft_voiceover_proposal', failed)
     with pytest.raises(RuntimeError, match='speech failed'):
         invoke(f)
     assert not list(f.request.out.iterdir())
@@ -185,7 +206,7 @@ def test_shared_helper_cannot_reach_legacy_publish(action, monkeypatch):
     monkeypatch.setattr(f.client, 'open_authoring_target', lambda *a, **k: target, raising=False)
     def legacy(client, *args, **kwargs):
         client.open_authoring_target({}).publish({'candidate': 'legacy'})
-    monkeypatch.setattr(draft_voiceover, 'sync_draft_voiceover', legacy)
+    monkeypatch.setattr(draft_voiceover, '_sync_draft_voiceover_proposal', legacy)
     with pytest.raises(ValueError, match='preparation cannot publish'):
         invoke(f)
     assert not published and not list(f.request.out.iterdir())
@@ -212,7 +233,7 @@ def test_underlying_client_identity_is_never_read(action, monkeypatch):
     def sync(client, *args, **kwargs):
         assert client.trusted_execution_context == _require_action_context().producer
         return {'authoring_proposal': f.proposal}
-    monkeypatch.setattr(draft_voiceover, 'sync_draft_voiceover', sync)
+    monkeypatch.setattr(draft_voiceover, '_sync_draft_voiceover_proposal', sync)
     assert invoke(f).payload['action_result']['authoring_proposal'] == f.proposal
     assert_closed()
 
