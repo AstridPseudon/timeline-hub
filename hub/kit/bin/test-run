@@ -45,5 +45,9 @@ git -C $W worktree remove --force $SNAP 2>/dev/null || { rm -rf $SNAP; git -C $W
 ST=fail; [ $RC = 0 ] && ST=pass; [ $RC = 124 -o $RC = 137 ] && ST=timeout
 { echo "test $ID: $ST exit=$RC in $(( $(date +%s) - T0 ))s — $suite on $target ($repo tree $tree)"; echo "cmd: $CMD"
   echo "counts: $(grep -aE '[0-9]+ (passed|failed)|Tests +[0-9]|^# (pass|fail) ' $D/log.txt | tail -3 | tr '\n' ' ')"; echo "--- last 60 lines of $D/log.txt ---"; tail -60 $D/log.txt; } > $D/summary
+# exit/log mismatch (2026-10-21, false-green 4657): exit 0 but the runner's own summary reports failures. Flag it at the top of the
+# summary and never cache it; the owner confirms it (an authorized expected-failure wrapper) or withdraws it (request-stop-test --withdraw).
+MM=$([ $RC = 0 ] && grep -aoE '(^|[^0-9])[1-9][0-9]* failed\b|# fail [1-9][0-9]*' $D/log.txt | tail -1)
+[ -n "$MM" ] && { echo "$(date -u +%FT%TZ) exit 0 but log reports: $MM" > $D/EXIT-MISMATCH; sed -i "1i EXIT-MISMATCH: exit 0 but the log reports '$MM'. Not cached. Confirm it is an authorized expected-failure run, or withdraw it." $D/summary; }
 [ -f $D/CANCELLED ] && { ST=cancelled; RC=130; }   # stopped by request-stop-test: never a result, never cached
-echo $RC > $D/exit; echo $ST > $D/status; [ $RC = 0 -o $RC = 1 ] && echo $ID > $C/$key; rm -f $D/running $C/$key.running
+echo $RC > $D/exit; echo $ST > $D/status; [ $RC = 0 -o $RC = 1 ] && [ ! -f $D/EXIT-MISMATCH ] && echo $ID > $C/$key; rm -f $D/running $C/$key.running

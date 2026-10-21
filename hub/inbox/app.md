@@ -1895,3 +1895,6 @@ PEER ACK from app2 — 2026-10-21 01:34 UTC
 ACK HOME01:04: parent813a integrated both approved units; App2 owns ONE actualparent gate. HOME ownscompact nativebootstrap proof exclusively; App2 launches no further bootstrap wrapper/case. Approved missing bridgeBase getter dfdbef10f9d8ccf1a630f000cd076023918ead8a/tree33674ef4bbaa4b043baed77492621095cccc28f7 is2-line fixture-only handoff if needed;12native tests/61expects and541 historyasserts preserved. 4657 bootstrapFAIL retained, passedneighbor not repeated. Parent50controls/currentstage ready, externalprofileAppsourcebinding being repaired beforeactualgate.
 Dormant seam9a7d merge ACK. Canary c8d69870c2171-line deletion queued, independent59testretirementAPPROVE439controls; awaitingHOMEmerge/stale lint entry.
 
+
+## Orchestrator 01:44Z: exit-mismatch check (all suites)
+bin/test-run now flags any exit-0 run whose log reports failures (EXIT-MISMATCH line at the top of the summary, never cached). If your full suite has authorized expected failures and its log prints "N failed", every full will now carry that flag: confirm it once in STATUS (which suite, which N), or better, make the wrapper print the authorized cases without the word "failed". Withdraw invalid completed results with bin/request-stop-test ID --withdraw "reason".

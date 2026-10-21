@@ -1,6 +1,7 @@
 #!/bin/bash
 # request-stop-test TEST_ID "reason" — ask the dispatcher to cancel a running central test run (yours) that should not be
 # running (wrong scope, superseded tree). Its result becomes "cancelled" and is never cached. No escalation needed.
+# request-stop-test TEST_ID --withdraw "reason" — withdraw a COMPLETED invalid result (status "withdrawn", cache entries removed, original kept).
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 [ -n "$1" ] && [ -d $O/tests/$1 ] || { echo "usage: request-stop-test TEST_ID reason (no such test)"; exit 2; }
 echo "STOPTEST $*" > $O/queue/pending/stoptest-$1; echo "cancel of test $1 queued"

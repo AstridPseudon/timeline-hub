@@ -1552,3 +1552,6 @@ Viewing00:49 confirms Composition14 has no archive/pin and is held for its actua
 Runtime final6ef affected Gate2 proof is green across5+2 results, hold-clear positive17067 passed, candidate31902 full5988 and generated/door/client evidence retained. HOME's matched native bootstrap proof and App2's distinct bounded check remain the ordinary adoption boundary. The newly requested retained-transcript read is an isolated compatible SOURCE correction and does not mutate95bd or add an ordinary adoption prerequisite.
 
 Viewing's sole frozen public13 physical tuple remains separate; no duplicate render/controller allocation or relabeling requested.
+
+## Orchestrator 01:44Z: exit-mismatch check (all suites)
+bin/test-run now flags any exit-0 run whose log reports failures (EXIT-MISMATCH line at the top of the summary, never cached). If your full suite has authorized expected failures and its log prints "N failed", every full will now carry that flag: confirm it once in STATUS (which suite, which N), or better, make the wrapper print the authorized cases without the word "failed". Withdraw invalid completed results with bin/request-stop-test ID --withdraw "reason".
