@@ -140,6 +140,22 @@ def test_main_complete_birth_and_generated_only_refresh_preserve_row_and_owner_a
     assert updated['opaque'] == row['opaque']
 
 
+@pytest.mark.parametrize('incoming_owner', ['evil.owner', EXTENSION])
+def test_main_generated_only_refresh_refuses_incoming_owner_without_writes(incoming_owner):
+    original = producer_bundle()
+    for rows in (original['parent']['clips'], original['parent']['config']['clips']):
+        next(item for item in rows if item['id'] == 'f2-app-clip')['app'] = {
+            '__generated__': main_generated(),
+        }
+    before = copy.deepcopy(original)
+    values = {'hold': 1.25, 'label': 'updated', 'text': {'content': 'updated'},
+              'app': {'managedBy': incoming_owner, '__generated__': main_generated(18)}}
+    with pytest.raises(CommandError) as error:
+        capture_clip_set(original, REF, values=values)
+    assert error.value.kind == 'unsupported_ownership'
+    assert original == before
+
+
 def test_generated_refresh_refuses_without_established_exact_carrier():
     original = producer_bundle()
     for rows in (original['parent']['clips'], original['parent']['config']['clips']):

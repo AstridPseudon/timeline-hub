@@ -68,6 +68,9 @@ def _producer_app(ctx, ref, incoming):
         raise CommandError('clip.set app leaves require an existing managed clip',
                            kind='unsupported_ownership', ref=ref)
     ctx.read(ref, ['app', 'managedBy'])
+    if not has_managed_by and 'managedBy' in incoming:
+        raise CommandError('clip.set cannot introduce clip ownership',
+                           kind='unsupported_ownership', ref=ref)
     if '__generated__' not in incoming:
         if 'managedBy' in incoming and incoming['managedBy'] != managed_by:
             raise CommandError('clip.set cannot change clip ownership', kind='unsupported_ownership', ref=ref)
