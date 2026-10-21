@@ -19,6 +19,9 @@ ROOT = Path(__file__).resolve().parents[1]
 TARGET = {"project_id": "p", "timeline_id": "t", "base_revision_id": "r", "base_publication_id": "txn"}
 PRODUCER = {"task_id": "task", "attempt_id": "attempt", "executor_id": "executor", "fence": 1, "runtime_epoch": 1}
 PIN = {**PRODUCER, "admitted_target": TARGET, "proposal_digest": DIGEST}
+PRIVATE_RAW_SHA256 = "9cb9597a618f51949fe9ec35686e544dca812b8b252a96a4cff1f686afdfb3ec"
+PRIVATE_CANONICAL_SHA256 = "322733a57e781847e50228f91b6c6a9237ad2237406a188515c8f9da5e554bcc"
+ORDINARY_RAW_SHA256 = "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d"
 CASES = ORDINARY_CASES + [
     ("shot.set", "occurrence:o/shot", {"values": {"name": "Shot", "settings": {"enhancePrompt": False, "batchVideoFrames": 1.5}}, "clear": []}),
     ("clip.set-element", "parent/clip:c", {"elementRef": {"id": "element", "kind": "component", "revision": "r"}}),
@@ -38,22 +41,114 @@ NEW_OPERATIONS = {
     "clip.swap-media",
     "text-binding.set",
 }
+PRIVATE_OPERATIONS = {
+    "clip.move-set",
+    "track.reorder",
+    "timeline.migrate-groups",
+    "occurrence.move",
+    "occurrence.resize",
+    "transcript.associate",
+    "project-data.write",
+    "timeline.reference",
+}
 
 
 def command(op, select, args):
     return {"schema_version": 1, "op": op, "version": "1", "select": select, "args": copy.deepcopy(args)}
 
 
+def _ordinary_schema_bytes(private_schema):
+    """Strip private016 additions and restore the exact ordinary6ba JSON bytes."""
+    ordinary = copy.deepcopy(private_schema)
+    for name in (
+        "ClipMoveSetArgs", "TrackReorderArgs", "MediaManifestEntry", "RawOldSwapMediaArgs",
+        "MigrateGroupsArgs", "ProjectDataWriteArgs", "TimelineReferenceArgs", "OccurrenceMoveArgs",
+        "OccurrenceResizeArgs", "TranscriptAssociateArgs",
+    ):
+        ordinary["$defs"].pop(name)
+    for name in ("EntityRef", "TargetKey", "ScopedId"):
+        ordinary["$defs"][name]["anyOf"].pop()
+    anchor_pattern = ordinary["$defs"]["AnchorIdentity"]["pattern"]
+    ordinary["$defs"]["AnchorIdentity"]["pattern"] = anchor_pattern[3:].split(
+        "$)|(?:^shot:", 1
+    )[0] + "$"
+
+    clip = ordinary["$defs"]["ClipSetArgs"]
+    clip["properties"]["values"]["properties"].pop("opacity")
+    clip["properties"]["clear"]["items"]["enum"].pop()
+    clip["description"] = (
+        "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or "
+        "incoming transition. Clear removes presence, never sets null/empty. Asset assignment "
+        "requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is "
+        "outside v1."
+    )
+    track = ordinary["$defs"]["TrackSetArgs"]
+    track["properties"]["values"]["properties"].pop("muted")
+    track["properties"]["clear"]["items"] = {"const": "label"}
+    track["description"] = "Set raw track.label or explicitly remove it. Null is not a label. Unmentioned fields survive."
+    shot = ordinary["$defs"]["ShotSetArgs"]
+    shot["properties"]["values"]["properties"].pop("metadata")
+    shot["properties"]["clear"]["items"]["enum"].pop()
+    shot["description"] = (
+        "Occurrence-owned raw shot payload fields: canonical root name and bounded scalar settings roots. "
+        "Null is a value; clear removes presence. Unmentioned fields survive. Compound settings roots "
+        "(steerableMotionSettings, phaseConfig, pairConfigs, shotImageIds, loras, structureVideo, "
+        "modelSettingsByModel) are unsupported."
+    )
+
+    ordinary["$defs"]["EditCommand"]["allOf"] = []
+    for clause in private_schema["$defs"]["EditCommand"]["allOf"]:
+        operation = clause["if"]["properties"]["op"]["const"]
+        if operation in PRIVATE_OPERATIONS:
+            continue
+        restored = copy.deepcopy(clause)
+        if "anyOf" in restored["then"]:
+            restored["then"] = restored["then"]["anyOf"][0]
+        ordinary["$defs"]["EditCommand"]["allOf"].append(restored)
+    return (json.dumps(ordinary, indent=2) + "\n").encode()
+
+
 def test_exact_frozen_schema_and_operation_inventory_are_packaged():
     raw = (ROOT / "contract/schemas/edit-command.json").read_bytes()
-    assert hashlib.sha256(raw).hexdigest() == "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d"
+    assert hashlib.sha256(raw).hexdigest() == PRIVATE_RAW_SHA256
     schema = json.loads(raw)
-    assert len(schema["$defs"]) == 55
-    assert len(schema["$defs"]["EditCommand"]["allOf"]) == 29
-    expected_operations = {c[0] for c in CASES} | NEW_OPERATIONS
+    assert hashlib.sha256((json.dumps(schema, ensure_ascii=False, indent=2) + "\n").encode()).hexdigest() == PRIVATE_CANONICAL_SHA256
+    assert len(schema["$defs"]) == 65
+    assert len(schema["$defs"]["EditCommand"]["allOf"]) == 37
+    expected_operations = {c[0] for c in CASES} | NEW_OPERATIONS | PRIVATE_OPERATIONS
     assert {c["if"]["properties"]["op"]["const"] for c in schema["$defs"]["EditCommand"]["allOf"]} == expected_operations
     bundle = json.loads((ROOT / "runtime_protocol/schemas/timeline-commit-bundle.json").read_bytes())
     assert bundle["resources"]["https://astrid.haus/workspace/v1/schemas/edit-command.json"] == schema
+    ordinary_raw = _ordinary_schema_bytes(schema)
+    assert hashlib.sha256(ordinary_raw).hexdigest() == ORDINARY_RAW_SHA256
+    ordinary = json.loads(ordinary_raw)
+    assert len(ordinary["$defs"]) == 55
+    assert len(ordinary["$defs"]["EditCommand"]["allOf"]) == 29
+
+
+@pytest.mark.parametrize("values,clear", [
+    ({"label": "Picture"}, []),
+    ({}, ["label"]),
+    ({"label": "Picture"}, ["label"]),
+    ({"muted": False}, []),
+    ({}, ["muted"]),
+    ({"muted": True}, ["label", "muted"]),
+], ids=["label-set", "label-clear", "label-overlap", "muted-set", "muted-clear", "muted-overlap"])
+def test_track_set_preserves_old_label_and_adds_private_muted_shapes(values, clear):
+    validate_commit_value(command("track.set", "parent/track:video", {"values": values, "clear": clear}), "EditCommand")
+
+
+@pytest.mark.parametrize("args", [
+    {"values": {}, "clear": []},
+    {"values": {"muted": "false"}, "clear": []},
+    {"values": {"muted": None}, "clear": []},
+    {"values": {"label": "Picture", "unknown": True}, "clear": []},
+    {"values": {}, "clear": ["unknown"]},
+    {"values": {"label": "Picture"}, "clear": None},
+], ids=["empty", "wrong-muted-type", "null-muted", "unknown-value", "unknown-clear", "null-clear"])
+def test_track_set_refuses_empty_wrong_typed_null_and_unknown_shapes(args):
+    with pytest.raises(ValidationError):
+        validate_commit_value(command("track.set", "parent/track:video", args), "EditCommand")
 
 
 @pytest.mark.parametrize("op,select,args", CASES, ids=[c[0] for c in CASES])

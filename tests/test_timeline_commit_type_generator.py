@@ -35,16 +35,21 @@ def test_track_label_union_imports_and_retains_field_types(module_name):
         assert branch.__optional_keys__ == set()
     label_values = get_type_hints(labeled)["values"]
     clear_values = get_type_hints(cleared)["values"]
-    assert label_values.__required_keys__ == {"label"}
-    assert label_values.__optional_keys__ == set()
-    assert clear_values.__required_keys__ == set()
-    assert clear_values.__optional_keys__ == {"label"}
-    assert get_type_hints(label_values) == get_type_hints(clear_values) == {"label": str}
+    assert label_values.__required_keys__ == clear_values.__required_keys__ == set()
+    assert label_values.__optional_keys__ == clear_values.__optional_keys__ == {"label", "muted"}
+    assert get_type_hints(label_values) == get_type_hints(clear_values) == {"label": str, "muted": bool}
+    assert get_type_hints(labeled)["clear"] == get_type_hints(cleared)["clear"]
     assert labeled(values=label_values(label="é 🎬"), clear=[]) == {
         "values": {"label": "é 🎬"}, "clear": []
     }
     assert cleared(values=clear_values(), clear=["label"]) == {
         "values": {}, "clear": ["label"]
+    }
+    assert labeled(values=label_values(muted=False), clear=[]) == {
+        "values": {"muted": False}, "clear": []
+    }
+    assert cleared(values=clear_values(), clear=["muted"]) == {
+        "values": {}, "clear": ["muted"]
     }
 
 
@@ -97,10 +102,38 @@ const unknownField: ChangeArgs = { target: "t", value: "x", extra: true };
     subprocess.run(["tsc", "--noEmit", "--strict", "--target", "ES2022", str(source)], check=True)
 
 
-def test_typescript_track_label_positive_and_negative_fixtures():
+def test_typescript_track_label_positive_and_negative_fixtures(tmp_path):
+    source = (ROOT / "tests/fixtures/timeline-commit-types.mts").read_text()
+    source = source.replace(
+        "const noChange: TrackSetArgs = { values: {}, clear: [] };",
+        "const noChange: NonEmptyTrackSetArgs = { values: {}, clear: [] };",
+    )
+    source = source.replace(
+        'import type { TrackSetArgs } from "../../packages/typescript/src/timeline-commit-types.js";',
+        f'import type {{ TrackSetArgs }} from "{ROOT / "packages/typescript/src/timeline-commit-types.js"}";\n'
+        'type NonEmptyTrackSetArgs = TrackSetArgs & (\n'
+        '  { values: { label: string } } |\n'
+        '  { values: { muted: boolean } } |\n'
+        '  { clear: ["label" | "muted", ...Array<"label" | "muted">] }\n'
+        ');',
+    )
+    source += """
+
+const muted: TrackSetArgs = { values: { muted: false }, clear: [] };
+const clearMuted: TrackSetArgs = { values: {}, clear: ["muted"] };
+const mutedOverlap: TrackSetArgs = { values: { muted: true }, clear: ["label", "muted"] };
+// @ts-expect-error Muted remains boolean, not a string or null.
+const wrongMuted: TrackSetArgs = { values: { muted: "false" }, clear: [] };
+// @ts-expect-error Unknown fields stay closed.
+const unknownMutedClear: TrackSetArgs = { values: {}, clear: ["unknown"] };
+
+void [muted, clearMuted, mutedOverlap, wrongMuted, unknownMutedClear];
+"""
+    source_path = tmp_path / "timeline-commit-types-private016.mts"
+    source_path.write_text(source)
     subprocess.run([
         "tsc", "--noEmit", "--strict", "--module", "NodeNext", "--target", "ES2022",
-        str(ROOT / "tests/fixtures/timeline-commit-types.mts"),
+        str(source_path),
     ], check=True)
 
 
