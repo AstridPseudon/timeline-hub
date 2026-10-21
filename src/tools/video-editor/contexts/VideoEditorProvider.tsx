@@ -46,8 +46,6 @@ import { type VideoEditorSequenceComponentCatalog } from '@/tools/video-editor/h
 import { INSTALLED_TIMELINE_SERVICE_HOOKS } from '@/tools/video-editor/runtime/installedTimelineHostServiceHooks.ts';
 import { useTimelineClipsForAttachments } from '@/tools/video-editor/hooks/useTimelineClipsForAttachments.ts';
 import type {
-  TimelineActionResizeStart,
-  TimelineClipEdgeResizeEnd,
   TimelineEditorOpsContextValue,
 } from '@/tools/video-editor/hooks/useTimelineState.types.ts';
 import { useVideoEditorLightboxNavigation } from '@/tools/video-editor/hooks/useVideoEditorLightboxNavigation.ts';
@@ -450,7 +448,7 @@ export function VideoEditorRuntimeContent({
   operationsEnabled?: boolean;
 }) {
   const runtime = useVideoEditorRuntime();
-  const { store, editor, chrome, transcriptHost } = sync;
+  const { store, editor, editorOps: mountedEditorOps, chrome, transcriptHost } = sync;
   useEffect(() => {
     const pending = store.getState().pendingWorkRegistry;
     if (!pending || !onPendingWorkChange) return;
@@ -741,80 +739,14 @@ export function VideoEditorRuntimeContent({
     });
   }, [lightboxAssetKey, lightboxClipId, lightboxFallbackMedia, lightboxGenerationId, lightboxQuery.data, lightboxQuery.isLoading]);
 
-  const onActionResizeStart: TimelineActionResizeStart = editor.onActionResizeStart;
-  const onClipEdgeResizeEnd: TimelineClipEdgeResizeEnd = editor.onClipEdgeResizeEnd;
-
   const editorOps = useMemo<TimelineEditorOpsContextValue>(() => ({
-    element: editor.element,
-    occurrenceDuplicate: editor.occurrenceDuplicate,
-    parentClipAddMedia: editor.parentClipAddMedia,
+    ...mountedEditorOps,
+    // SWAP remains dormant until its own supported consumer is activated.
     parentClipSwapMedia: editor.parentClipSwapMedia,
-    shotSet: editor.shotSet,
-    trackLabel: editor.trackLabel,
-    clipScalar: editor.clipScalar,
-    clipTrim: editor.clipTrim,
-    selectedParam: editor.selectedParam,
     transcriptHost,
-    setInputModality: editor.setInputModality,
-    setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
-    setInteractionMode: editor.setInteractionMode,
-    setGestureOwner: editor.setGestureOwner,
-    setContextTarget: editor.setContextTarget,
-    setInspectorTarget: editor.setInspectorTarget,
-    isClipSelected: editor.isClipSelected,
-    selectClip: editor.selectClip,
-    selectClips: editor.selectClips,
-    addToSelection: editor.addToSelection,
-    clearSelection: editor.clearSelection,
-    setSelectedTrackId: editor.setSelectedTrackId,
-    setActiveClipTab: editor.setActiveClipTab,
-    setAssetPanelState: editor.setAssetPanelState,
-    setSelectedRightPanelId: editor.setSelectedRightPanelId,
-    setRightPanelLayoutSlot: editor.setRightPanelLayoutSlot,
-    setShowDataLanes: editor.setShowDataLanes,
-    setShowTranscriptLane: editor.setShowTranscriptLane,
-    prepareGenerationAsset: editor.prepareGenerationAsset,
-    registerGenerationAsset: editor.registerGenerationAsset,
-    onCursorDrag: editor.onCursorDrag,
-    onClickTimeArea: editor.onClickTimeArea,
-    onActionResizeStart,
-    onClipEdgeResizeEnd,
-    onOverlayChange: editor.onOverlayChange,
-    onTimelineDragOver: editor.onTimelineDragOver,
-    onTimelineDragLeave: editor.onTimelineDragLeave,
-    onTimelineDrop: editor.onTimelineDrop,
-    handleAssetDrop: editor.handleAssetDrop,
-    handleUpdateClips: editor.handleUpdateClips,
-    handleUpdateClipsDeep: editor.handleUpdateClipsDeep,
-    handleDeleteClips: editor.handleDeleteClips,
-    handleDeleteClip: editor.handleDeleteClip,
-    handleSelectedClipChange: editor.handleSelectedClipChange,
-    handleResetClipPosition: editor.handleResetClipPosition,
-    handleResetClipsPosition: editor.handleResetClipsPosition,
-    handleSplitSelectedClip: editor.handleSplitSelectedClip,
-    handleSplitClipAtTime: editor.handleSplitClipAtTime,
-    handleSplitClipsAtPlayhead: editor.handleSplitClipsAtPlayhead,
-    handleToggleMuteClips: editor.handleToggleMuteClips,
-    handleToggleMute: editor.handleToggleMute,
-    handleDetachAudioClip: editor.handleDetachAudioClip,
-    handleTrackLabelEditStart: editor.handleTrackLabelEditStart,
-    handleTrackPopoverChange: editor.handleTrackPopoverChange,
-    handleMoveTrack: editor.handleMoveTrack,
-    handleRemoveTrack: editor.handleRemoveTrack,
-    moveSelectedClipToTrack: editor.moveSelectedClipToTrack,
-    moveSelectedClipsToTrack: editor.moveSelectedClipsToTrack,
-    moveClipToRow: editor.moveClipToRow,
-    applyResolvedClipMove: editor.applyResolvedClipMove,
-    createTrackAndMoveClip: editor.createTrackAndMoveClip,
-    uploadFiles: editor.uploadFiles,
-    applyEdit: editor.applyEdit,
-    commands: editor.commands,
-    patchRegistry: editor.patchRegistry,
-    unpatchRegistry: editor.unpatchRegistry,
-    registerAsset: editor.registerAsset,
     onDoubleClickAsset,
     setLightboxAssetKey,
-  }), [editor, transcriptHost, onActionResizeStart, onClipEdgeResizeEnd, onDoubleClickAsset, setLightboxAssetKey]);
+  }), [editor.parentClipSwapMedia, mountedEditorOps, transcriptHost, onDoubleClickAsset, setLightboxAssetKey]);
 
   useLayoutEffect(() => {
     store.getState().syncOpsSlice(editorOps);
