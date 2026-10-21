@@ -149,13 +149,10 @@ check_source_ancestry() {
 }
 check_approved_delta() {
   APP_HEAD=$(git -C "$APP_ROOT" rev-parse HEAD)
-  if test "$APP_HEAD" = "$APP_SOURCE_SHA"; then
-    :
-  else
-    test "$(git -C "$APP_ROOT" rev-parse HEAD^1 2>/dev/null)" = "$APP_SOURCE_SHA" || return 1
-  fi
-  CHANGED=$(git -C "$APP_ROOT" diff --name-only "$APP_SHA" "$APP_HEAD" -- . | grep -v '^scripts/testing/run-producer-public13-list\.sh$' || true)
-  test -z "$CHANGED"
+  git -C "$APP_ROOT" merge-base --is-ancestor "$APP_SOURCE_SHA" "$APP_HEAD" \
+    || return 1
+  CHANGED=$(git -C "$APP_ROOT" diff --name-only "$APP_SOURCE_SHA" "$APP_HEAD" -- .)
+  test -z "$CHANGED" || test "$CHANGED" = 'scripts/testing/run-producer-public13-list.sh'
 }
 check_body_source_hashes() {
   test "$(sha256sum "$APP_ROOT/tests/e2e/local/producer-ownership-current-pin.spec.ts" | cut -d' ' -f1)" = "$SPEC_SHA" \
