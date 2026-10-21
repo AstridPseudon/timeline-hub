@@ -163,7 +163,12 @@ describe('production transcript lane renderer', () => {
     // 0.1 s at 32 px/s is 3.2px; the button may not pad itself wider than that.
     expect(short).toHaveStyle({ left: '0px', width: '3.2px', paddingLeft: '0px', paddingRight: '0px' });
     expect(next).toHaveStyle({ left: '3.2px', paddingLeft: '0px', paddingRight: '0px' });
-    expect(within(short).getByText(/Transcript text for short/)).toHaveStyle({ paddingLeft: '6px', paddingRight: '6px' });
+    // The inset is a margin on the text span: padding there would keep the span at least 12px wide and its
+    // overflow clip would slice a letter in a narrow chip.
+    const label = within(short).getByText(/Transcript text for short/);
+    expect(label).toHaveStyle({ marginLeft: '6px', marginRight: '6px' });
+    expect(label.style.paddingLeft).toBe('');
+    expect(label.style.paddingRight).toBe('');
     view.unmount();
 
     render(<TranscriptLane {...rendererProps([occurrence('sliver', 0, 0.01)])} />);
