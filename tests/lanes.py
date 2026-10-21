@@ -11,7 +11,9 @@ lane, where a skip would hide a broken install: any lane run by CI (``CI`` set) 
 the ``integration`` tests. A declared dev dependency is imported plainly. A module only the integration
 lane provides (a second checkout or an optional library) is loaded with ``require_module``: it fails in a
 lane that runs integration tests and skips the module in the default lane, which deselects every test that
-needs it.
+needs it. A fixture that needs a second checkout is named in its module's ``INTEGRATION_FIXTURES``: every test
+that requests it is an ``integration`` test, so the default lane deselects it instead of skipping it, and the
+fixture calls ``unavailable`` when the checkout is missing.
 
 Leaked file descriptors (testing plan LEAK.2). The run fails if the pytest process
 ends holding more than FD_LEAK_ALLOWANCE descriptors beyond what it held at start.
@@ -126,6 +128,9 @@ def pytest_configure(config):
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(config, items):
     for item in items:
+        needs_checkout = set(getattr(getattr(item, "module", None), "INTEGRATION_FIXTURES", ()))
+        if needs_checkout & set(getattr(item, "fixturenames", ())):
+            item.add_marker(pytest.mark.integration)
         if sys.platform != "darwin" and item.get_closest_marker("darwin_native"):
             item.add_marker(pytest.mark.skip(reason="darwin_native: needs macOS"))
         if os.name != "posix" and item.get_closest_marker("posix_native"):
