@@ -672,3 +672,113 @@ def test_current014_detached_font_color_uses_one_native_http_commit_and_guarded_
     redone = reloaded.undo([undone['receipt']['receipt_id']])
     redone_bundle = bundle_from_document(redone['data']['canonical_document'])
     assert _json(State(redone_bundle).entity(ref)) == _json(target)
+
+
+@pytest.mark.parametrize('runtime', ['historical'], indirect=True)
+@pytest.mark.parametrize('historical_sheet_film', ['detached'], indirect=True)
+def test_current014_detached_opaque_null_rename_uses_retained_basis_and_guarded_http(
+        runtime, historical_sheet_film):
+    from astrid.sdk.timeline.checkout import _sheet_session
+    from astrid.sdk.timeline_checkout import Checkout
+    from astrid.sdk.timeline_sheet import NativeSheet, SheetError, apply_sheet, render_sheet
+
+    client = runtime.client()
+    assert historical_sheet_film[1] == runtime.project
+
+    def opaque_edit(text, old, new):
+        edited = text.replace(old, new, 1)
+        assert edited != text and edited.count(new) == 1
+        return edited
+
+    # The existing legacy view carries an existing opaque cell as JSON.  It
+    # can carry null and a renamed JSON value, but omission is not representable
+    # here, so this proof deliberately does not claim an opaque clear.
+    tl = Checkout.draft(runtime.project, 'film', client=client, fresh=True)
+    original_text = render_sheet(tl, cuts=['c1'])
+    original_opaque = 'opaque={"keep":[null,false,1,1.0]}'
+    null_text = opaque_edit(original_text, original_opaque, 'opaque=null')
+    session = _sheet_session(tl)
+    artifact = json.loads(session.outbox.path.read_bytes())['sheet']
+    bundle, basis = artifact['bundle'], artifact['basis']
+    ref = artifact['detached']['bindings']['c1.card']
+    native = NativeSheet.load(session)
+    before = client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=runtime.history()['head']['revision_id']).data['bundle']
+    expected_null = [capture_clip_set_params(bundle, ref, values={'opaque': None})]
+    assert native._bundle == bundle and native._basis == basis
+    assert apply_sheet(tl, null_text, client=client)
+    state = json.loads(session.outbox.path.read_bytes())
+    assert state['sheet']['bundle'] == bundle and state['sheet']['basis'] == basis
+    assert state['pending'] == expected_null
+
+    tl.save(quiet=True)
+    request = json.loads(runtime.calls[-1][0])
+    assert request['base_revision_id'] == basis['revision_id']
+    assert request['base_publication_id'] == basis['publication_id']
+    assert request['commands'] == expected_null and request['source'] == {'via': 'sheet'}
+    null_head = copy.deepcopy(runtime.history()['head'])
+    null_bundle = client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=null_head['revision_id']).data['bundle']
+    null_state = State(null_bundle)
+    assert null_state.entity(ref)['params']['opaque'] is None
+    assert null_state.entity('occurrence:occ/clip:video') == State(before).entity('occurrence:occ/clip:video')
+
+    runtime.restart()
+    reopened = runtime.session(name='current014-opaque-null-reopened')
+    reopened_null = reopened.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=null_head['revision_id']).data['bundle']
+    assert State(reopened_null).entity(ref)['params']['opaque'] is None
+    undone_null = reopened.undo([null_head['publication_id']])
+    restored = bundle_from_document(undone_null['data']['canonical_document'])
+    assert _json(State(restored).entity(ref)) == _json(State(before).entity(ref))
+    redone_null = reopened.undo([undone_null['receipt']['receipt_id']])
+    assert _json(State(bundle_from_document(redone_null['data']['canonical_document'])).entity(ref)) == _json(
+        State(null_bundle).entity(ref))
+
+    # Re-export from the accepted null head so the rename has its own exact
+    # author-time basis; it remains an ordinary sheet/HTTP commit.
+    tl = Checkout.draft(runtime.project, 'film', client=client, fresh=True)
+    renamed_text = opaque_edit(render_sheet(tl, cuts=['c1']), 'opaque=null',
+                               'opaque={"renamed":[true]}')
+    rename_session = _sheet_session(tl)
+    rename_artifact = json.loads(rename_session.outbox.path.read_bytes())['sheet']
+    rename_bundle, rename_basis = rename_artifact['bundle'], rename_artifact['basis']
+    assert rename_basis == runtime.history()['head']
+    expected_rename = [capture_clip_set_params(
+        rename_bundle, ref, values={'opaque': {'renamed': [True]}})]
+    assert apply_sheet(tl, renamed_text, client=client)
+    assert json.loads(rename_session.outbox.path.read_bytes())['pending'] == expected_rename
+    tl.save(quiet=True)
+    request = json.loads(runtime.calls[-1][0])
+    assert request['base_revision_id'] == rename_basis['revision_id']
+    assert request['base_publication_id'] == rename_basis['publication_id']
+    assert request['commands'] == expected_rename and request['source'] == {'via': 'sheet'}
+    renamed_head = copy.deepcopy(runtime.history()['head'])
+    renamed_bundle = client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=renamed_head['revision_id']).data['bundle']
+    renamed_state = State(renamed_bundle)
+    assert renamed_state.entity(ref)['params']['opaque'] == {'renamed': [True]}
+    assert list(renamed_state.entity(ref)['params']) == list(State(before).entity(ref)['params'])
+
+    runtime.restart()
+    reopened = runtime.session(name='current014-opaque-rename-reopened')
+    reopened_rename = reopened.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=renamed_head['revision_id']).data['bundle']
+    assert State(reopened_rename).entity(ref)['params']['opaque'] == {'renamed': [True]}
+    undone = reopened.undo([renamed_head['publication_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert _json(State(restored).entity(ref)) == _json(State(null_bundle).entity(ref))
+    redone = reopened.undo([undone['receipt']['receipt_id']])
+    assert _json(State(bundle_from_document(redone['data']['canonical_document'])).entity(ref)) == _json(
+        State(renamed_bundle).entity(ref))
+
+    # The first retained capture is now stale.  It must refuse before queueing
+    # or sending anything, rather than refreshing its original basis.
+    before_stale = reopened.outbox.path.read_bytes()
+    calls = len(runtime.calls)
+    stale_native_text = native.text.replace(original_opaque, 'opaque=null', 1)
+    with pytest.raises(SheetError, match='share the original project, timeline and basis'):
+        native.apply(stale_native_text, session=reopened, dry_run=False)
+    assert reopened.outbox.path.read_bytes() == before_stale
+    assert len(runtime.calls) == calls
+    assert runtime.history()['head'] == renamed_head

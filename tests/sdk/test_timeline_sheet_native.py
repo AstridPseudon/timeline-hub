@@ -36,9 +36,11 @@ def detached_duration_bundle():
     return bundle
 
 
-def detached_draft(connected, tmp_path):
+def detached_draft(connected, tmp_path, *, params=None):
     client, generated, _ = connected
     original = detached_duration_bundle()
+    if params:
+        State(original).entity("occurrence:occ-1/clip:card")["params"].update(copy.deepcopy(params))
     generated.bundles["r0"] = copy.deepcopy(original)
     path = tmp_path / "detached.json"
     generated.path = path.with_name(path.name + ".outbox.json")
@@ -190,6 +192,34 @@ def test_detached_type_string_clear_uses_presence_aware_native_command(connected
     assert card["params"]["font"] == "display"
 
 
+@pytest.mark.parametrize(("field", "initial", "edited", "values", "clear"), [
+    ("nullable", "value", "null", {"nullable": None}, []),  # set-null
+    ("nullable", None, "clear", {}, ["nullable"]),            # clear-null
+    ("font", "display", "clear", {}, ["font"]),              # clear-value
+    ("text", "LIVE", "RENAMED", {"text": "RENAMED"}, []),   # rename
+])
+def test_detached_parameter_cells_keep_presence_and_literal_text(
+        connected, tmp_path, field, initial, edited, values, clear):  # noqa: F811
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    params = {field: initial}
+    tl, original_text, ref, original = detached_draft(connected, tmp_path, params=params)
+    client, generated, _ = connected
+    text = (text_edit(original_text, edited) if field == "text"
+            else param_edit(original_text, field, edited))
+    expected = execute(original, [capture_clip_set_params(original, ref, values=values, clear=clear)])
+
+    draft = Checkout.load(tl.path)
+    assert apply_sheet(draft, text, client=client)
+    state = json.loads(generated.path.read_bytes())
+    assert state["pending"] == expected.commands
+    result = State(draft.bundle).entity(ref)
+    if clear:
+        assert field not in result["params"]
+    else:
+        assert result["params"][field] == next(iter(values.values()))
+
+
 def test_detached_size_preserves_neighbor_presence_and_order(connected, tmp_path):  # noqa: F811
     from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
 
@@ -288,33 +318,49 @@ def test_detached_mixed_edit_with_supported_font_is_staged(connected, tmp_path):
     assert card["hold"] == 2.0 and card["params"]["text"] == "CHANGED" and card["params"]["font"] == "label"
 
 
-def test_detached_mixed_edit_with_unknown_neighbor_is_not_staged(connected, tmp_path):  # noqa: F811
-    tl, original_text, ref, _ = detached_draft(connected, tmp_path)
+def test_detached_mixed_edit_with_opaque_neighbor_is_staged(connected, tmp_path):  # noqa: F811
+    from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    tl, original_text, ref, original = detached_draft(
+        connected, tmp_path, params={"opaque": {"keep": [None, False]}})
     _, generated, _ = connected
     edited = text_edit(duration_edit(original_text, 2), "CHANGED")
-    unsupported = append_param(edited, "unknown", "label")
-
-    native = NativeSheet(detached_duration_bundle(), basis={"revision_id": "r0", "publication_id": "pub0"})
-    native_ref = "occurrence:occ-1/clip:card"
-    old = "\n".join(line + " unknown=label" if "  card  " in line else line
-                       for line in native.text.splitlines()) + "\n"
-    with pytest.raises(SheetError, match="invalid sheet row binding"):
-        NativeSheet._read(old)
-    rows, _ = NativeSheet._read(append_param(native.text, "unknown", "label"))
-    assert native_ref in rows and rows[native_ref][2]["params"]["unknown"] == "label"
-    with pytest.raises(SheetError, match="unsupported parameter unknown"):
-        native.preview(append_param(native.text, "unknown", "label"))
+    supported = param_edit(edited, "opaque", '{"keep":[true]}')
+    unsupported = param_edit(edited, "opaque", "…")
 
     before_bundle = copy.deepcopy(tl.bundle)
     before_outbox = generated.path.read_bytes()
-
     with pytest.raises(SheetError, match="unsupported retained sheet edit"):
         apply_sheet(tl, unsupported)
-
     assert tl.bundle == before_bundle
     assert generated.path.read_bytes() == before_outbox
-    assert State(tl.bundle).entity(ref)["hold"] == 1
-    assert State(tl.bundle).entity(ref)["params"]["text"] == "LIVE"
+
+    native_bundle = detached_duration_bundle()
+    native_ref = "occurrence:occ-1/clip:card"
+    State(native_bundle).entity(native_ref)["params"]["opaque"] = {"keep": [None, False]}
+    native = NativeSheet(native_bundle, basis={"revision_id": "r0", "publication_id": "pub0"})
+    old = "\n".join(line + " unknown=label" if 'clip:card"' in line else line
+                       for line in native.text.splitlines()) + "\n"
+    with pytest.raises(SheetError, match="invalid sheet row binding"):
+        NativeSheet._read(old)
+    native_text = native.text.replace('opaque={"keep":[null,false]}', 'opaque={"keep":[true]}')
+    rows, _ = NativeSheet._read(native_text)
+    assert native_ref in rows and rows[native_ref][2]["params"]["opaque"] == {"keep": [True]}
+    native_plan = native.preview(native_text)
+    assert native_plan.commands[0]["args"] == {
+        "values": {"opaque": {"keep": [True]}}, "clear": []}
+
+    assert apply_sheet(tl, supported)
+    expected = execute(original, [
+        capture_clip_set(original, ref, values={"hold": 2.0}),
+        capture_clip_set_params(original, ref, values={
+            "text": "CHANGED", "opaque": {"keep": [True]}}),
+    ])
+    assert json.loads(generated.path.read_bytes())["pending"] == expected.commands
+    card = State(tl.bundle).entity(ref)
+    assert card["hold"] == 2.0 and card["params"]["text"] == "CHANGED"
+    assert card["params"]["opaque"] == {"keep": [True]}
 
 
 @pytest.mark.parametrize("peer", ["none", "disjoint", "same"])
