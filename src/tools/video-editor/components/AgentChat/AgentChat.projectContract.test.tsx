@@ -502,12 +502,19 @@ describe('real panel → real hooks → owned ACP transport', () => {
     fixture.seed('p1'); fixture.seed('p2');
     const view = mount();
     await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
-    // Delay ownership lookup at the submission boundary, after normal hydration.
+    // Delay the submission's own ownership lookup. Background reads of the same
+    // chat route (polls, model/session queries) are indistinguishable on the
+    // wire, so identify the preflight by cause: it is the first project read
+    // issued while the send mutation is pending. The mutation runs from
+    // onMutate to that fetch in one microtask chain, so no timer-driven read
+    // can be mistaken for it.
     const originalFetch = fixture.fetch;
     const gate = deferred();
     let blocked = false;
+    const sendPending = () => clients[0].getMutationCache()
+      .findAll({ predicate: m => m.state.status === 'pending' && (m.state.variables as { kind?: string } | undefined)?.kind === 'send' }).length > 0;
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
-      if (!blocked && url.endsWith('/projects/p1/chat') && (!init?.method || init.method === 'GET')) {
+      if (!blocked && url.endsWith('/projects/p1/chat') && (!init?.method || init.method === 'GET') && sendPending()) {
         blocked = true; await gate.promise;
       }
       return originalFetch(url, init);
