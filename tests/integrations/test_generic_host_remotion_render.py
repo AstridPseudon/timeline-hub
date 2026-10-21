@@ -13,12 +13,12 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-SCHEMA_ROOT = ROOT.parent / "astrid-app" / "vendor" / "timeline-schema" / "python"
 DEPENDENCY_ROOT = Path(
     os.environ.get(
         "ASTRID_TEST_REMOTION_DEPENDENCY_ROOT",
@@ -167,14 +167,53 @@ def _make_media(root: Path) -> tuple[Path, Path]:
 def _prepare_remotion_fixture(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> tuple[Path, Path, Path, Path]:
-    node = shutil.which("node")
-    if node is None or shutil.which("ffmpeg") is None:
+    configured_node = os.environ.get("ASTRID_NODE_EXECUTABLE")
+    node = Path(configured_node).expanduser() if configured_node else None
+    if node is None:
+        discovered_node = shutil.which("node")
+        node = Path(discovered_node) if discovered_node else None
+    if (
+        node is None
+        or not node.is_file()
+        or not os.access(node, os.X_OK)
+        or shutil.which("ffmpeg") is None
+    ):
         pytest.skip("node and ffmpeg are required for the Remotion acceptance fixture")
-    monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(Path(node).resolve()))
-    monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA_ROOT))
+    monkeypatch.setenv(
+        "ASTRID_NODE_EXECUTABLE",
+        configured_node if configured_node else str(node.resolve()),
+    )
+
+    schema_env = "ASTRID_TIMELINE_SCHEMA_PYTHONPATH"
+    configured_schema = os.environ.get(schema_env)
+    if configured_schema:
+        schema_pythonpath = configured_schema
+        schema_root = Path(configured_schema).expanduser()
+    else:
+        try:
+            import banodoco_timeline_schema
+        except ImportError as exc:
+            pytest.fail(
+                "the Remotion acceptance fixture needs the installed "
+                "banodoco_timeline_schema package or "
+                f"{schema_env}: {exc}"
+            )
+        schema_root = Path(banodoco_timeline_schema.__file__).parent.parent
+        schema_pythonpath = str(schema_root)
+        monkeypatch.setenv(schema_env, schema_pythonpath)
+    if not (schema_root / "banodoco_timeline_schema" / "__init__.py").is_file():
+        pytest.fail(
+            f"{schema_env} does not contain the installed timeline schema: "
+            f"{schema_pythonpath}"
+        )
+
+    caller_pythonpath = os.environ.get("PYTHONPATH")
+    pythonpath = [str(ROOT), schema_pythonpath]
+    if caller_pythonpath:
+        pythonpath.append(caller_pythonpath)
     monkeypatch.setenv(
         "PYTHONPATH",
-        os.pathsep.join(str(path) for path in (ROOT, SCHEMA_ROOT)),
+        os.pathsep.join(pythonpath),
     )
 
     workspace = tmp_path / "workspace"
@@ -194,9 +233,70 @@ def _prepare_remotion_fixture(
         DEPENDENCY_ROOT,
         remotion / "node_modules",
         symlinks=True,
-        copy_function=os.link,
+        copy_function=shutil.copy2,
     )
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(remotion.resolve()))
+    pack_root = workspace / "astrid" / "packs"
+    monkeypatch.setenv("ASTRID_PACKS_PATH", str(pack_root.resolve()))
+    # The real host launch owns this validation.  Keep its artifact private to
+    # the fixture instead of borrowing readiness from another Remotion root.
+    for name in (
+        "PYTHONUSERBASE",
+        "PYTHONNOUSERSITE",
+        "PYTHONSAFEPATH",
+        "PYTHONPLATLIBDIR",
+        "PYTHONCASEOK",
+        "PYTHONUTF8",
+        "PYTHONCOERCECLOCALE",
+        "PYTHONSTARTUP",
+        "PYTHONPYCACHEPREFIX",
+        "PYTHONEXECUTABLE",
+        "__PYVENV_LAUNCHER__",
+        "PYTHONHOME",
+        "NODE_OPTIONS",
+        "NODE_PATH",
+        "NODE_ICU_DATA",
+        "OPENSSL_CONF",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    for name in tuple(os.environ):
+        if name.startswith(("DYLD_", "LD_")):
+            monkeypatch.delenv(name, raising=False)
+    interactive_git = {
+        "GIT_EDITOR",
+        "GIT_SEQUENCE_EDITOR",
+        "GIT_PAGER",
+        "GIT_TERMINAL_PROMPT",
+        "GIT_ASKPASS",
+        "GIT_SSH",
+        "GIT_SSH_COMMAND",
+        "GIT_SSH_VARIANT",
+        "GIT_MERGE_AUTOEDIT",
+        "GIT_AUTHOR_NAME",
+        "GIT_AUTHOR_EMAIL",
+        "GIT_COMMITTER_NAME",
+        "GIT_COMMITTER_EMAIL",
+    }
+    for name in tuple(os.environ):
+        if name.startswith("GIT_") and name not in interactive_git:
+            monkeypatch.delenv(name, raising=False)
+    from astrid.sdk.host_bootstrap import _prepare_render_validation
+
+    validation_env = dict(os.environ)
+    _prepare_render_validation(
+        ROOT,
+        validation_env,
+        tmp_path / "support",
+        sys.executable,
+        pack_roots=(pack_root,),
+    )
+    for name in (
+        "ASTRID_REMOTION_VALIDATION_PATH",
+        "ASTRID_REMOTION_VALIDATION_SHA256",
+        "ASTRID_REMOTION_VALIDATION_LAUNCH",
+        "ASTRID_REMOTION_VALIDATION_ROLE",
+    ):
+        monkeypatch.setenv(name, validation_env[name])
     timeline_path, assets_path = _make_media(workspace)
     return workspace, remotion, timeline_path, assets_path
 
