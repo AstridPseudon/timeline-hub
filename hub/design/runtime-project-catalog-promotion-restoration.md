@@ -1,6 +1,6 @@
 # Runtime project-catalog promotion restoration
 
-Status: **PROPOSED / UNMERGED**. Worker `rt-m2-project-catalog-promotion-restore`, base `16acbb6ef94a6d8e226ccdc351ba0d96e0b09ea5`.
+Status: **CURRENT LANDING PREPARED / UNMERGED**. Runtime worker `rt-m2-project-catalog-promotion-restore` remains proposed; Agent RK02 landing worker `agt-m2-rk02-current-reviewed-test-landing-0839` prepared source `6887ac107a6e5723d1812318ce4c5596276b8025` (tree `63cb7d427685f6a4859f9d6dbe4b2c5028fa59a4`) on current integration `a9f4cfdaee40f3382b51d6cdb291d7012be96b8c`.
 
 Owner14:32/14:34 and MANAGER-COMMON film-vs-catalog precedent authorize the existing project-scoped catalog operation. This changes no Agent command, schema, DTO, client, endpoint, table, journal, release or pin.
 
@@ -23,7 +23,9 @@ snapshot for this repair is Agent tree `63cb7d427685f6a4859f9d6dbe4b2c5028fa59a4
 `_seed_shot` uses the existing trusted acceptance fixture boundary only to make
 film-owned refusal cases reachable; it does not stand in for a product writer,
 accepted history, or catalog promotion. The deletion ledger remains staged
-until this source is merged and independently reviewed.
+until this source is merged. The current landing preserves the independent
+review APPROVE and central 50-pass qualification; no row is marked DELETED
+before manager merge.
 
 ## Implementation and authority
 

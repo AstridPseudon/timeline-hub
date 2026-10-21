@@ -654,3 +654,34 @@ Remaining exit gaps and ownership:
 
 No full, browser, native, render, or replay execution was performed for this
 update.
+
+## Latest current frontier — document presence closure (2026-10-21)
+
+The bounded AG-DOC-PRESENCE gap recorded above is now resolved as a deletion
+row, without turning the result into a whole-Gate claim.
+
+- Current Agent integration is `a9f4cfdaee40f3382b51d6cdb291d7012be96b8c`
+  (tree `93862f0accf8bbe2331ed551b69839b47f7b8e1b`). The complete repair is
+  merged as `b4762b7c40d4bf480494f76366cd2a51d9d6731a` from source
+  `2286b2b902f505f9e59d1ca3a140a9abe05388b7` (tree
+  `41c38e8dde2e4e669031686a68a2444efff8fd34`). Only the three qualified
+  donor blobs were ported; the stale direct merge of `811edb816`/tree
+  `7920ab3` was rejected. No public pin changed.
+- The exact donor blobs remain `e61de49fc6ccbcf66ab47fb41f254c47ab8110ba`
+  (`document_diff.py`), `9b5e409b2bf1f233925cb4ff5446f0d3e2676f82`
+  (current authenticated proof), and
+  `22a0c0d0b9705fc64d6fcfd50c66a7b4f25f692d` (authoring-feedback controls).
+  The independent `e51732a64` helper and retained-context/history-shape
+  review `b920a8951` remain part of the evidence basis.
+- Exact authenticated proof:
+  `agt-m2-document-history-reviewed-one-http-0818-document-diff-null-track-http-integration-1021081908-10363`,
+  selecting
+  `tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated`:
+  **1 passed in 5.51s** on Agent `b920a8951`/tree `7920ab3` and Runtime
+  `b92d3e7a`/tree `6abc2f1`. Retained offline evidence is **57 passed** and
+  **39 passed, 52 deselected**, with Ruff and diff checks passing.
+- This closes only the unsafe old presence comparison: unsupported presence
+  changes remain visibly refused with the draft retained. It does not claim
+  all fields supported, whole Gate 1/WC8/M2 completion, or any change to the
+  public pin. PRIVATE017 remains a separate line.
+
