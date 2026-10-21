@@ -30,6 +30,12 @@ function expectAppMounted(page: Page) {
   return expect(page.locator('#root > *').first()).toBeAttached(STARTUP);
 }
 
+async function expectSelectedTimeline(page: Page, selected: SelectedParamDevSeed) {
+  await expect(page.getByRole('combobox', { name: 'Select timeline' })).toBeVisible(CEILING);
+  await expect.poll(() => new URL(page.url()).searchParams.get('project'), CEILING).toBe(selected.projectId);
+  await expect.poll(() => new URL(page.url()).searchParams.get('timeline'), CEILING).toBe(selected.timelineId);
+}
+
 test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, retry, reload and undo', async ({ page, harness, selected }) => {
   await harness.startSelectedParamDevServer();
   const traffic: CommitTraffic[] = [];
@@ -52,7 +58,7 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
   await page.goto(`${harness.devOrigin}/tools/video-editor`);
   await expectAppMounted(page);
   await openSeededTimeline(page, harness);
-  await expect(page.getByTestId('video-editor-provider')).toHaveAttribute('data-timeline-id', selected.timelineId, CEILING);
+  await expectSelectedTimeline(page, selected);
   const clip = page.locator(`.clip-action[data-clip-id="${selected.clipId}"]`).first();
   await expect(clip).toBeVisible(CEILING);
   await clip.click();
@@ -73,7 +79,7 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
   await page.reload();
   await expectAppMounted(page);
   await openSeededTimeline(page, harness);
-  await expect(page.getByTestId('video-editor-provider')).toHaveAttribute('data-timeline-id', selected.timelineId, CEILING);
+  await expectSelectedTimeline(page, selected);
   await expect(clip).toBeVisible(CEILING);
   await clip.click();
   await expect(page.getByTestId('astrid-element-params')).toBeVisible(CEILING);
@@ -105,7 +111,7 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
   await page.reload();
   await expectAppMounted(page);
   await openSeededTimeline(page, harness);
-  await expect(page.getByTestId('video-editor-provider')).toHaveAttribute('data-timeline-id', selected.timelineId, CEILING);
+  await expectSelectedTimeline(page, selected);
   await expect(clip).toBeVisible(CEILING);
   await clip.click();
   await expect(page.getByTestId('astrid-element-params')).toBeVisible(CEILING);
