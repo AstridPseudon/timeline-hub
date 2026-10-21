@@ -96,6 +96,108 @@ describe('Agent built-in clip.set capture parity', () => {
     expect((clip(result.bundle, ref).transition as Record<string, JsonValue>).params).toMatchObject({ opaque: { 'a.b': false } });
   });
 
+  it.each([
+    ['absent', undefined],
+    ['null', null],
+    ['object', { opaque: { keep: [null, false, 0] } }],
+  ] as const)('preserves raw params %s through an authenticated no-ref duration update', (_label, params) => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    const row = clip(input, ref);
+    row.at = 3;
+    row.transition = { type: 'crossfade', duration: 0.5, revision: 'transition-r1', future: { keep: true } };
+    if (params === undefined) delete (row.transition as Record<string, JsonValue>).params;
+    else (row.transition as Record<string, JsonValue>).params = detached(params);
+
+    const values = {
+      transition: { type: 'crossfade', duration: 0.75, revision: 'transition-r1' },
+    } as Record<string, JsonValue>;
+    const result = executeClipSet(input, captureClipSet(input, ref, { values }));
+    const transition = clip(result.bundle, ref).transition as Record<string, JsonValue>;
+    expect(transition).toMatchObject({ type: 'crossfade', duration: 0.75, revision: 'transition-r1', future: { keep: true } });
+    if (params === undefined) expect(transition).not.toHaveProperty('params');
+    else expect(transition.params).toEqual(params);
+  });
+
+  it('accepts a literal null params value when the no-ref update preserves it', () => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    const row = clip(input, ref);
+    row.at = 3;
+    row.transition = { type: 'crossfade', duration: 0.5, revision: 'transition-r1', params: null };
+    const values = {
+      transition: { type: 'crossfade', duration: 0.75, revision: 'transition-r1', params: null },
+    } as Record<string, JsonValue>;
+
+    const result = executeClipSet(input, captureClipSet(input, ref, { values }));
+    expect(clip(result.bundle, ref).transition).toMatchObject(values.transition);
+    expect(Object.hasOwn(clip(result.bundle, ref).transition as object, 'params')).toBe(true);
+    expect((clip(result.bundle, ref).transition as Record<string, JsonValue>).params).toBeNull();
+  });
+
+  it('refuses params null when it would discard non-empty existing params atomically', () => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    const row = clip(input, ref);
+    row.at = 3;
+    row.transition = {
+      type: 'crossfade', duration: 0.5, revision: 'transition-r1', params: { keep: true },
+    };
+    const before = detached(input);
+    expect(() => captureClipSet(input, ref, {
+      values: { transition: { type: 'crossfade', duration: 0.75, revision: 'transition-r1', params: null } },
+    })).toThrow('remove existing parameters');
+    expect(input).toEqual(before);
+  });
+
+  it.each(['elementRef', 'element_ref'] as const)('refuses no-ref updates when %s is present, independently', (field) => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    const row = clip(input, ref);
+    row.at = 3;
+    row.transition = { type: 'crossfade', duration: 0.5, revision: 'transition-r1' };
+    row[field] = null;
+    const before = detached(input);
+    expect(() => captureClipSet(input, ref, {
+      values: { transition: { type: 'crossfade', duration: 0.75, revision: 'transition-r1' } },
+    })).toThrow('existing raw identity');
+    expect(input).toEqual(before);
+  });
+
+  it.each([
+    ['type', { type: 'other', duration: 0.75, revision: 'transition-r1' }],
+    ['revision', { type: 'crossfade', duration: 0.75, revision: 'transition-r2' }],
+  ] as const)('refuses a no-ref update with changed %s', (_label, transition) => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    const row = clip(input, ref);
+    row.at = 3;
+    row.transition = { type: 'crossfade', duration: 0.5, revision: 'transition-r1' };
+    const before = detached(input);
+    expect(() => captureClipSet(input, ref, { values: { transition } })).toThrow('existing raw identity');
+    expect(input).toEqual(before);
+  });
+
+  it.each([
+    ['missing to null', undefined, null],
+    ['null to missing', null, undefined],
+    ['missing to empty', undefined, ''],
+    ['empty to missing', '', undefined],
+  ] as const)('distinguishes revision presence/value for no-ref updates: %s', (_label, stored, requested) => {
+    const input = detached(golden.bundle);
+    const ref = 'parent/clip:f2-transition-clip';
+    const row = clip(input, ref);
+    row.at = 3;
+    row.transition = { type: 'crossfade', duration: 0.5 };
+    if (stored === undefined) delete (row.transition as Record<string, JsonValue>).revision;
+    else (row.transition as Record<string, JsonValue>).revision = stored;
+    const transition = { type: 'crossfade', duration: 0.75 } as Record<string, JsonValue>;
+    if (requested !== undefined) transition.revision = requested;
+    const before = detached(input);
+    expect(() => captureClipSet(input, ref, { values: { transition } })).toThrow('existing raw identity');
+    expect(input).toEqual(before);
+  });
+
   it('refuses an adjacency gap or mismatched selected ref atomically before writes', () => {
     const base = detached(golden.bundle);
     const ref = 'parent/clip:f2-transition-clip';
