@@ -2,16 +2,19 @@
 # sweep-tmp [HOURS] — remove leaked worker temp dirs (never a leased, KEEP or ACTIVE-named path) at the top of /tmp. Only directories older than HOURS (default 3) by
 # mtime, never /tmp/claude-*, hidden dirs or system dirs, never one that a live process uses (cwd or open file under it),
 # and never a running worker's own /tmp/w-* dir. Safe to run hourly on every machine. Prints what it freed.
-H=${1:-3}; O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
-B=$(df -BM --output=avail /tmp | tail -1 | tr -d ' M'); used=$(for p in /proc/[0-9]*; do readlink $p/cwd; ls -l $p/fd 2>/dev/null | sed -n 's/.*-> //p'; done 2>/dev/null | grep '^/tmp/' | cut -d/ -f1-3 | sort -u)
+H=${1:-3}; MIN=$(( H*60 < 60 ? 60 : H*60 ))   # floor: never younger than 1 h, whatever H (2026-10-21: H=0 removed live workers' dirs)
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+B=$(df -BM --output=avail /tmp | tail -1 | tr -d ' M'); used=$(for p in /proc/[0-9]*; do readlink $p/cwd; ls -l $p/fd 2>/dev/null | sed -n 's/.*-> //p'; done 2>/dev/null | grep -a '^/tmp/' | cut -d/ -f1-3 | sort -u)
 live=$(cat $O/workers/*/tmpdir 2>/dev/null | while read t; do d=$(dirname $(ls $O/workers/*/tmpdir | head -1)); echo $t; done | sort -u)
 # protected: any /tmp path named in a lease, ACTIVE note or KEEP file, or a dir holding a KEEP/.lease marker (2026-10-20 incident: leased toolchains were swept)
-prot=$(cat $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* $O/managers/*/notes/*KEEP* $O/workers/*/KEEP $O/design/*LEASE* $O/design/*lease* $O/managers/*/STATUS.md 2>/dev/null | grep -o '/tmp/[^ "'"'"':,;)]*' | cut -d/ -f1-3 | sort -u)
+prot=$(cat $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* $O/managers/*/notes/*KEEP* $O/workers/*/KEEP $O/design/*LEASE* $O/design/*lease* $O/managers/*/STATUS.md 2>/dev/null | grep -ao '/tmp/[^ "'"'"':,;)]*' | cut -d/ -f1-3 | sort -u)
 n=0; for d in /tmp/*/; do d=${d%/}; b=$(basename $d)
-  hit=0; while read -r p; do [ -n "$p" ] && [[ $d == $p ]] && { hit=1; break; }; done <<< "$prot"; [ $hit = 1 ] && continue;   # exact or glob (e.g. /tmp/app-run.*) [ -e "$d/KEEP" ] || [ -e "$d/.lease" ] || ls "$d"/*.lease >/dev/null 2>&1 && continue
+  hit=0; while read -r p; do [ -n "$p" ] && [[ $d == $p ]] && { hit=1; break; }; done <<< "$prot"; [ $hit = 1 ] && continue   # exact or glob (e.g. /tmp/app-run.*)
+  { [ -e "$d/KEEP" ] || [ -e "$d/.lease" ] || ls "$d"/*.lease >/dev/null 2>&1; } && continue   # marker-protected (this check had slipped into the comment above until 2026-10-21)
   case $b in claude-*|.*|systemd-*|snap*|pw-*|node-compile-cache|v8-compile-cache*|hsperfdata*|tmux-*|ssh-*) continue;; esac
-  [ -n "$(find $d -maxdepth 0 -mmin -$((H*60)) 2>/dev/null)" ] && continue
-  grep -qxF "$d" <<< "$used" && continue
+  [ -n "$(find $d -maxdepth 0 -mmin -$MIN 2>/dev/null)" ] && continue
+  [ -n "$(find $d -mmin -60 -print -quit 2>/dev/null)" ] && continue   # anything inside touched in the last hour = in use
+  grep -aqxF "$d" <<< "$used" && continue
   for w in $O/workers/*/; do [ -f $w/running ] && [ "$(cat $w/tmpdir 2>/dev/null)" = "$d" ] && continue 2; done
   rm -rf "$d" && n=$((n+1)); done
-echo "sweep-tmp: removed $n dirs older than ${H}h; /tmp free ${B}M -> $(df -BM --output=avail /tmp | tail -1 | tr -d ' ')"
+echo "sweep-tmp: removed $n dirs older than $((MIN/60))h (nothing touched inside for 1 h); /tmp free ${B}M -> $(df -BM --output=avail /tmp | tail -1 | tr -d ' ')"
