@@ -1,14 +1,14 @@
 /** Pure requested-frame scene answers. Undeclared component pixels remain unknown. */
 import {prepareTrack, queryTrackFrame, type PreparedTrack, type TransitionSpec, type IncomingTransitionSpec} from './evaluation';
 import {getClipDurationInFrames} from './lib/duration';
-import {animationElapsed, builtinClipLookStyle, clipOpacity, fadeMultiplier, normalizeAnimationRefs, remappedFrame,
+import {animationElapsed, clipOpacity, fadeMultiplier, normalizeAnimationRefs, remappedFrame,
   type AnimationReferenceItem} from './lib/clip-look';
+import {builtinClipLookStyle} from './lib/clip-look-animation';
 import {admitModifiers} from './lib/modifier-admission';
 import {mediaModifierBounds} from './lib/modifier-bounds';
 import type {AssetRegistry, TimelineClip, TrackDefinition} from './types';
 import {provenOpaqueMedia, type SceneCapabilities, type ComponentDiagnostics} from './scene-capabilities';
 import type {ModifierRegistry, ModifierBounds} from './modifier-types';
-import {ANIMATION_DEFAULTS} from './animations.generated';
 import {computeRenderBounds, getVisibleBoundsFromCrop, type RenderBounds} from './lib/render-bounds';
 
 export type SceneFinding = {code: string; clipId: string; reason: string; instanceId?: string; element?: string};
@@ -85,7 +85,9 @@ const clipLookEntrance = (clip: TimelineClip, frame: number, fps: number): ClipL
       return {status: 'unknown', reason: `Entrance animation '${id}' is undeclared`};
     }
     const configured = typeof ref === 'string' ? undefined : ref.durationFrames;
-    const duration = configured ?? ANIMATION_DEFAULTS[id]?.durationFrames;
+    // Both admitted built-in clip-look animations use the same generated
+    // default duration; keep this pure path independent of component registries.
+    const duration = configured ?? 18;
     if (typeof duration !== 'number' || !Number.isFinite(duration) || duration < 0) {
       return {status: 'unknown', reason: `Entrance animation '${id}' has no valid duration`};
     }

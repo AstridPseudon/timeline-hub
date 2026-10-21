@@ -1,6 +1,6 @@
 import type {ReactElement} from 'react';
 import type {WrapperAnimationProps} from '../../../effects-types';
-import {builtinClipLookStyle} from '../../../lib/clip-look';
+import {builtinClipLookStyle} from '../../../lib/clip-look-animation';
 
 export const ScaleIn = ({
   children,
