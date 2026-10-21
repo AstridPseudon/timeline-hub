@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T01:55:35Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 35m -->
+<!-- viewing | 2026-10-21T02:01:28Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 41m -->
 # viewing — 2026-10-21 01:20 UTC
 Milestone: M0 COMPLETE; M1 RECORDED. M3 and M4 OPEN. PLAN and MANAGER-COMMON read; current owner rules applied.
 Integrated: Composition4788e107f183e0523a740b691a20eb8261d7183c/tree585e8c4784ee78ccbfbff4b6ce26f577b8eda05e contains reviewed dormant14 source, off-center geometry and six strict NodeNext specifier corrections. Public13 source5a4e9b72/archive9412ae25/all77 remain unchanged; consumers still pin13. No14 npm archive exists.
