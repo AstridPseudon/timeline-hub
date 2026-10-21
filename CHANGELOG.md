@@ -1,1 +1,2 @@
+- 0.0.14 — Evaluate known clip-look scene geometry.
 - 0.0.13 — Expose the existing encoded envelope source admission helper through the public evaluation entry point.
