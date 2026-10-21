@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T03:51:57Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 7m -->
+<!-- main | 2026-10-21T03:55:47Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 11m -->
 # runtime — 2026-10-21T03:44:46Z
 Milestone: M1 RECORDED. M2 and M3 OPEN. Ordinary Runtime 0.2.14 PUBLISHED at 02:51 under owner 02:48 authorization. Foundation, all-product gates and final ZIP remain open.
 Integrated: Runtime tl/integration 30413e3c3e6db027f450e864ea9cb4a07446475b, tree 2c5a5088c90cddfb38fba6dadcad899b28fb2c59. Qualified 95bd merged as 1087130 with exact candidate tree; approved retained-transcript dispatch then merged as 2a9bd81, approved rational-FPS seam as be8d254. Approved launcher 8f70 plus permanent installed-process fixture then merged30413; no private reference or voiceover changes merged.
