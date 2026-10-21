@@ -81,11 +81,12 @@ class CaptureSceneLabels:
             raise SceneQueryUnavailable("capture scene response mismatch")
         self._answers = copy.deepcopy(dict(zip(frames, answers)))
 
-    def retain(self, produced: Mapping[int, Path]) -> None:
+    def retain(self, produced: Mapping[int, Path], *, pixel_frames: Sequence[int] | None = None) -> None:
         """Publish answers only after the same entire fresh capture succeeds."""
+        required = set(self._answers) if pixel_frames is None else set(pixel_frames)
         from astrid.core.rendering.scene_answers import SceneQueryUnavailable
 
-        if (self._retained or not self._answers or set(produced) != set(self._answers)
+        if (self._retained or not self._answers or set(produced) != required
                 or any(not Path(path).is_file() for path in produced.values())):
             self._retained = False
             self._answers.clear()
@@ -470,6 +471,8 @@ class FrameCaptureWorker:
         frames: Sequence[int],
         output_dir: Path,
         resolution: Sequence[int] | None,
+        *,
+        scene_frames: Sequence[int] = (),
     ) -> Mapping[int, Path]:
         requested = tuple(sorted(set(int(frame) for frame in frames)))
         if not requested:
@@ -481,7 +484,12 @@ class FrameCaptureWorker:
             self.capture_batches += 1
             Path(output_dir).mkdir(parents=True, exist_ok=True)
             try:
-                result = self.renderer(requested, output_dir, resolution)
+                if scene_frames:
+                    result = self.renderer(
+                        requested, output_dir, resolution, scene_frames=tuple(scene_frames),
+                    )
+                else:
+                    result = self.renderer(requested, output_dir, resolution)
             except BaseException as operation_error:
                 # Retain the renderer failure when cleanup independently fails.
                 try:
@@ -530,6 +538,8 @@ class _PersistentRemotionRenderer:
         frames: Sequence[int],
         output_dir: Path,
         resolution: Sequence[int] | None,
+        *,
+        scene_frames: Sequence[int] = (),
     ) -> Mapping[int, Path]:
         from astrid.packs.rendering.rendering.renderers.remotion.run import capture_remotion_frames
 
@@ -546,6 +556,7 @@ class _PersistentRemotionRenderer:
             theme_path=self.theme_path,
             on_scene_props=self.on_scene_props,
             frame_session_identity=renderer_environment_identity(),
+            scene_frame_numbers=scene_frames or None,
         )
 
     def close(self, *, force: bool = False) -> None:
@@ -578,6 +589,8 @@ class _SharedRemotionOwner:
         frames: Sequence[int],
         output_dir: Path,
         resolution: Sequence[int] | None,
+        *,
+        scene_frames: Sequence[int] = (),
     ) -> Mapping[int, Path]:
         from astrid.packs.rendering.rendering.renderers.remotion.run import capture_remotion_frames
 
@@ -597,6 +610,7 @@ class _SharedRemotionOwner:
                 theme_path=context.get("theme_path"),
                 on_scene_props=context.get("on_scene_props"),
                 frame_session_identity=renderer_environment_identity(),
+                scene_frame_numbers=scene_frames or None,
             )
 
     def release(self, *, force: bool = False) -> None:
@@ -621,8 +635,12 @@ class _SharedRemotionHandle:
         frames: Sequence[int],
         output_dir: Path,
         resolution: Sequence[int] | None,
+        *,
+        scene_frames: Sequence[int] = (),
     ) -> Mapping[int, Path]:
-        return self.owner.render(self.context, frames, output_dir, resolution)
+        return self.owner.render(
+            self.context, frames, output_dir, resolution, scene_frames=scene_frames,
+        )
 
     def close(self, *, force: bool = False) -> None:
         if self.closed:
@@ -884,6 +902,8 @@ class RemotionFrameProvider:
         cards: Sequence[Mapping[str, Any]],
         out_root: Path,
         resolution: Sequence[int] | None = None,
+        *,
+        scene_frames: Sequence[int] = (),
     ) -> dict[str, Any]:
         self.scene_capture = self._pending_scene = None
         self.fresh_scene_frames.clear()
@@ -891,6 +911,9 @@ class RemotionFrameProvider:
         out_root = Path(out_root)
         frames_dir = out_root / "frames"
         frames_dir.mkdir(parents=True, exist_ok=True)
+        semantic_frames = tuple(sorted({int(frame) for frame in scene_frames}))
+        if any(frame < 0 for frame in semantic_frames):
+            raise ValueError("scene frame must be non-negative")
         misses: list[tuple[int, str, Path]] = []
         cached = 0
         for card in cards:
@@ -912,15 +935,18 @@ class RemotionFrameProvider:
                 cached += 1
             else:
                 misses.append((frame, key, destination))
+        pixel_frames = tuple(sorted({frame for frame, _key, _destination in misses}))
+        scene_query_frames = tuple(sorted(set(pixel_frames) | set(semantic_frames)))
         fresh = 0
         notes: list[str] = []
         temporary = None
         try:
             if misses:
                 temporary = Path(tempfile.mkdtemp(prefix="astrid-frame-capture-", dir=out_root.parent))
-                self._fresh_requested = tuple(sorted({frame for frame, _key, _destination in misses}))
+                self._fresh_requested = scene_query_frames
                 produced = self.worker.capture(
-                    [frame for frame, _key, _destination in misses], temporary, resolution
+                    pixel_frames, temporary, resolution,
+                    scene_frames=scene_query_frames if self._scene_clips is not None else (),
                 )
                 notes = _renderer_notes(self.worker.renderer)
                 if self._scene_clips is not None and self._pending_scene is None:
@@ -936,9 +962,9 @@ class RemotionFrameProvider:
                             shutil.copyfile(bounds_source, destination.with_name(destination.stem + ".bounds.json"))
                     fresh += 1
                 if self._pending_scene is not None:
-                    self._pending_scene.retain(produced)
+                    self._pending_scene.retain(produced, pixel_frames=pixel_frames)
                     self.scene_capture = self._pending_scene
-                    self.fresh_scene_frames = set(produced)
+                    self.fresh_scene_frames = set(scene_query_frames)
                 for frame, key, destination in misses:
                     self.cache.write(
                         key, destination.read_bytes(),

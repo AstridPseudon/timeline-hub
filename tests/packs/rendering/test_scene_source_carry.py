@@ -164,9 +164,12 @@ def provider(tmp_path, monkeypatch, snapshot, *, callback_change=None, fail=None
                                              asset_registry=props["assets"])
         if callback_change:
             callback_change(props)
+        query_frames = tuple(kwargs.get("scene_frame_numbers", frames))
         calls.append((tuple(frames), copy.deepcopy(props)))
         if fail != "no_callback":
-            kwargs["on_scene_props"](props, (99,) if fail == "frames" else frames)
+            kwargs["on_scene_props"](
+                props, (99,) if fail == "frames" else query_frames,
+            )
         if fail == "capture":
             raise RuntimeError("capture failed after observation")
         produced = {}
@@ -263,6 +266,26 @@ def test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames(source_
     assert fallback_frames == [0]
     p.capture(cards(0, 24), tmp_path / "cached")
     assert p.scene_capture is None and not p.fresh_scene_frames and len(calls) == 2
+    p.close()
+
+
+def test_motion_scene_rows_join_exact_missing_frames_once(source_query, tmp_path, monkeypatch):
+    snapshot, _ = saved(monkeypatch)
+    p, calls = provider(tmp_path, monkeypatch, snapshot)
+
+    info = p.capture(cards(0, 24), tmp_path / "motion", scene_frames=(29,))
+
+    assert info["evidence_source"] == "fresh_capture"
+    assert len(calls) == 1
+    assert [call[0] for call in calls] == [(0, 24)]
+    assert p._fresh_requested == (0, 24, 29)
+    assert p.fresh_scene_frames == {0, 24, 29}
+    assert p.scene_for_frame(0) is p.scene_for_frame(29) is p.scene_capture
+    row = p.scene_for_frame(29).frame(29, source_identity=p.source_identity)
+    assert row["frame"] == 29
+    assert row["layers"][0]["clipId"] == "opaque:occ:A:opaque:source:title"
+    with pytest.raises(scene_answers.SceneQueryUnavailable, match="capture source/frame"):
+        p.scene_for_frame(29).frame(29, source_identity="sha256:" + "f" * 64)
     p.close()
 
 

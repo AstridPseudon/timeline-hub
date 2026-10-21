@@ -480,6 +480,7 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
     # mouth_box crop below remains the pixel/statistics path until D09a's live
     # mouth_state duplication can be retired.
     public = _public_mouth_facts(ctx, presenters[0], series, allow_default_motion=True)
+    public_states = public["states"] if public is not None else None
     for index, presenter in enumerate(presenters):
         top = 30 + index * 70
         draw_text(draw, (10, top + 4), "mouth", 12, PALETTE["muted"])
@@ -491,8 +492,12 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
         vo = [w for w in ctx.words if w.end > start and w.start < end]
         for frame in range(first, last):
             t = frame / ctx.fps
-            state = ((public or {}).get("states", {}).get(frame)
-                     or model.mouth_state(presenter, frame - int(round(presenter.start * ctx.fps)), ctx.fps))
+            if public_states is not None:
+                state = public_states[frame]
+            else:
+                state = model.mouth_state(
+                    presenter, frame - int(round(presenter.start * ctx.fps)), ctx.fps,
+                )
             colour = {"closed": "#334155", "half": "#f59e0b", "open": "#ef4444"}[state]
             x0, x1 = ctx.x_of(t), ctx.x_of(t + 1 / ctx.fps)
             draw.rectangle((x0, top + 2, max(x0 + 1, x1 - 1), top + 20), fill=colour)

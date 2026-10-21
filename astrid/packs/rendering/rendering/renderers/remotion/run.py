@@ -1083,6 +1083,7 @@ def _execute_remotion_locked(
     frame_session: PersistentRemotionFrameSession | None = None,
     frame_session_identity: str | None = None,
     on_scene_props: Callable[[Mapping[str, Any], Sequence[int]], None] | None = None,
+    scene_frame_numbers: Sequence[int] | None = None,
     window: FrameWindow | None = None,
     composition_duration_frames: int | None = None,
 ) -> _ExecutionDetails:
@@ -1098,7 +1099,7 @@ def _execute_remotion_locked(
         composition_clip_types=composition_clip_types,
         encode_aac_at_stitch=encode_aac_at_stitch,
         frame_numbers=frame_numbers, frame_output_dir=frame_output_dir,
-        on_scene_props=on_scene_props, window=window,
+        on_scene_props=on_scene_props, scene_frame_numbers=scene_frame_numbers, window=window,
         composition_duration_frames=composition_duration_frames,
     ) as (
         merged_props, props_path, runtime_tools, theme_for_props,
@@ -1318,6 +1319,7 @@ def capture_remotion_frames(
     frame_session: PersistentRemotionFrameSession | None = None,
     frame_session_identity: str | None = None,
     on_scene_props: Callable[[Mapping[str, Any], Sequence[int]], None] | None = None,
+    scene_frame_numbers: Sequence[int] | None = None,
 ) -> dict[int, Path]:
     """Capture selected composition frames through the trusted Remotion path.
 
@@ -1325,8 +1327,9 @@ def capture_remotion_frames(
     and Remotion renders one image sequence, avoiding a full video and keeping
     all media/effect/font staging on the existing renderer authority path.
     The optional internal callback synchronously observes final serialized Root
-    props and those same frames before capture, while staged assets remain live.
-    It must treat the props as read-only; its exceptions abort capture.
+    props and either the pixel frames or an ephemeral semantic frame set before
+    capture, while staged assets remain live. It must treat the props as
+    read-only; its exceptions abort capture.
     """
     numbers = tuple(sorted(set(frame_numbers)))
     if not numbers:
@@ -1355,6 +1358,7 @@ def capture_remotion_frames(
                 frame_resolution=frame_resolution,
                 frame_session=frame_session,
                 frame_session_identity=frame_session_identity,
+                scene_frame_numbers=scene_frame_numbers,
                 **({"on_scene_props": on_scene_props} if on_scene_props is not None else {}),
             )
     finally:
