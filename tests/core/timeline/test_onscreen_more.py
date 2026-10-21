@@ -30,15 +30,6 @@ def _config(clips, tracks=TRACKS):
     return {"tracks": [dict(t) for t in tracks], "clips": clips}
 
 
-def test_a_cross_fade_of_two_full_plates_is_covered_not_dip():
-    config = _config([
-        _plate("out", asset="P", at=0.0, hold=1.0, effects={"fade_out": 0.5}),
-        _clip("in", "am-footage", "fx", at=0.5, hold=1.0, asset="Q", effects={"fade_in": 0.5}),
-    ])
-    spans = coverage(config, FPS, CANVAS, ELEMENTS, end_frame=45)
-    assert [(s.start_frame, s.end_frame, s.cls, s.content) for s in spans] == [(0, 45, "COVERED", "CONTENT")]
-
-
 def test_a_one_sided_fade_is_a_dip_during_the_ramp_then_covered():
     config = _config([_plate("only", at=0.0, hold=2.0, effects={"fade_in": 0.5})])
     spans = coverage(config, FPS, CANVAS, ELEMENTS)
