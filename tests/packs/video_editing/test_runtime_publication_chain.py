@@ -278,7 +278,23 @@ def _d13_wheel_record_failures(wheel: Path, source: Path) -> list[str]:
     except (OSError, UnicodeDecodeError, ValueError, zipfile.BadZipFile) as exc:
         return [f"Agent wheel RECORD is unreadable: {exc}"]
 
-    installed_record = source / record_name
+    record_path = Path(record_name)
+    if (
+        not record_name
+        or record_path.is_absolute()
+        or any(part in {"", ".", ".."} for part in record_name.split("/"))
+    ):
+        failures.append(f"Agent wheel RECORD contains an unsafe path: {record_name}")
+        return failures
+    if source.is_symlink():
+        failures.append(f"installed Agent RECORD is missing or symlinked: {source}")
+        return failures
+    installed_record = source
+    for part in record_path.parts:
+        installed_record /= part
+        if installed_record.is_symlink():
+            failures.append(f"installed Agent RECORD is missing or symlinked: {installed_record}")
+            return failures
     if not installed_record.is_file() or installed_record.is_symlink():
         failures.append(f"installed Agent RECORD is missing or symlinked: {installed_record}")
         return failures
@@ -706,6 +722,49 @@ def _offline_d13_inputs(tmp_path: Path) -> tuple[_D13Inputs, dict[str, str]]:
 def test_d13_explicit_bindings_accept_exact_offline_positive(tmp_path):
     inputs, profile = _offline_d13_inputs(tmp_path)
     assert _d13_binding_failures(profile, inputs) == []
+
+
+def _d13_wheel_with_record_member(wheel: Path, destination: Path, record_name: str) -> Path:
+    with zipfile.ZipFile(wheel) as source, zipfile.ZipFile(destination, "w") as archive:
+        for name in source.namelist():
+            data = source.read(name)
+            if name.endswith(".dist-info/RECORD"):
+                data = data.replace(name.encode(), record_name.encode())
+                name = record_name
+            archive.writestr(name, data)
+    return destination
+
+
+@pytest.mark.parametrize(
+    "record_name",
+    [
+        "/tmp/astrid-0.1.0.dist-info/RECORD",
+        "../astrid-0.1.0.dist-info/RECORD",
+    ],
+)
+def test_d13_record_member_rejects_absolute_and_parent_paths(tmp_path, record_name):
+    inputs, _ = _offline_d13_inputs(tmp_path)
+    wheel = _d13_wheel_with_record_member(
+        inputs.agent_wheel, tmp_path / "unsafe.whl", record_name
+    )
+    failures = _d13_wheel_record_failures(wheel, inputs.expected_source)
+    assert any("Agent wheel RECORD contains an unsafe path" in failure for failure in failures)
+
+
+def test_d13_record_member_rejects_symlinked_component(tmp_path):
+    inputs, _ = _offline_d13_inputs(tmp_path)
+    alias = inputs.expected_source / "record-alias"
+    alias.symlink_to(inputs.expected_source, target_is_directory=True)
+    wheel = _d13_wheel_with_record_member(
+        inputs.agent_wheel, tmp_path / "symlinked.whl", "record-alias/astrid-0.1.0.dist-info/RECORD"
+    )
+    failures = _d13_wheel_record_failures(wheel, inputs.expected_source)
+    assert any("installed Agent RECORD is missing or symlinked" in failure for failure in failures)
+
+
+def test_d13_record_member_accepts_normal_dist_info_path(tmp_path):
+    inputs, _ = _offline_d13_inputs(tmp_path)
+    assert _d13_wheel_record_failures(inputs.agent_wheel, inputs.expected_source) == []
 
 
 def test_d13_explicit_bindings_reject_wrong_source_profile(tmp_path):
