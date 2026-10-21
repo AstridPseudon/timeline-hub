@@ -2969,6 +2969,46 @@
               "description": "Main fade-out exit replacement; must accompany effects.fade_out and uses source seconds."
             }
           },
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "entrance"
+                ]
+              },
+              "then": {
+                "required": [
+                  "effects"
+                ],
+                "properties": {
+                  "effects": {
+                    "required": [
+                      "fade_in"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "exit"
+                ]
+              },
+              "then": {
+                "required": [
+                  "effects"
+                ],
+                "properties": {
+                  "effects": {
+                    "required": [
+                      "fade_out"
+                    ]
+                  }
+                }
+              }
+            }
+          ],
           "additionalProperties": false
         },
         "clear": {
@@ -2979,6 +3019,14 @@
               "asset",
               "transition",
               "opacity",
+              "x",
+              "y",
+              "width",
+              "height",
+              "cropTop",
+              "cropBottom",
+              "cropLeft",
+              "cropRight",
               "effects.fade_in",
               "effects.fade_out",
               "entrance",

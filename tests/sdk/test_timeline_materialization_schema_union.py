@@ -27,7 +27,7 @@ PRIVATE_FULL_MOVE_SET_SHA256 = 'ba0c42d6a9359c32d89d8088416f7bc9092481dbd05f236e
 PRIVATE_LITERAL_UNION_SHA256 = 'da144e6d1c0d3e2ad6ef8246a63a4d4c5fd379b7a0efbedc0f376987527ef068'
 PRIVATE_REFERENCE_ORDER_SHA256 = 'c47a00135a2beb9df35cbbf201ef6b7f900904f4afeb74efe3cf12871271598e'
 RAW_OLD_CANONICAL_SHA256 = 'd3274d7ed2d4bd80691472dd94daf8f4b8041fc184f39f1dd562d5de5d6a15c2'
-SCALAR_SOURCE_UNION_SHA256 = 'f6f98606342ac69b68eaccc2a3371c896974059c3d9e273e93333ff8e0afb16c'
+SCALAR_SOURCE_UNION_SHA256 = '67444ca7a638e52d556cc1884ceaf582cdbce996614ae197207bca26334986c0'
 
 
 def without_move_set(schema):
@@ -101,7 +101,8 @@ def without_reference_and_order(schema):
 def without_future_scalar_sources(schema):
     """Remove only the reviewed scalar successors from the complete 10226 source."""
     args = schema['$defs']['ClipSetArgs']
-    values = args['properties']['values']['properties']
+    value_schema = args['properties']['values']
+    values = value_schema['properties']
     if 'label' not in values:
         return schema
     for key in ('label', 'text', 'app', 'x', 'y', 'width', 'height',
@@ -109,8 +110,11 @@ def without_future_scalar_sources(schema):
                 'effects', 'entrance', 'exit'):
         del values[key]
     clear = args['properties']['clear']['items']['enum']
-    for key in ('effects.fade_in', 'effects.fade_out', 'entrance', 'exit'):
+    for key in ('x', 'y', 'width', 'height', 'cropTop', 'cropBottom', 'cropLeft',
+                'cropRight', 'effects.fade_in', 'effects.fade_out', 'entrance', 'exit'):
         clear.remove(key)
+    assert len(value_schema['allOf']) == 2
+    del value_schema['allOf']
     assert len(args['allOf']) == 2
     del args['allOf']
     args['description'] = (
@@ -269,6 +273,42 @@ def test_reviewed_scalar_successors_strip_to_exact_complete_10226_source():
     assert hashlib.sha256(raw).hexdigest() == '322733a57e781847e50228f91b6c6a9237ad2237406a188515c8f9da5e554bcc'
     assert len(candidate['$defs']) == 65
     assert len(candidate['$defs']['EditCommand']['allOf']) == 37
+
+
+def test_scalar_join_keeps_position_clears_and_coupled_fade_guards():
+    args = _SCHEMA['$defs']['ClipSetArgs']
+    values = args['properties']['values']
+    assert args['properties']['clear']['items']['enum'] == [
+        'hold', 'asset', 'transition', 'opacity',
+        'x', 'y', 'width', 'height', 'cropTop', 'cropBottom', 'cropLeft', 'cropRight',
+        'effects.fade_in', 'effects.fade_out', 'entrance', 'exit',
+    ]
+    assert values['allOf'] == [
+        {
+            'if': {'required': ['entrance']},
+            'then': {'required': ['effects'],
+                     'properties': {'effects': {'required': ['fade_in']}}},
+        },
+        {
+            'if': {'required': ['exit']},
+            'then': {'required': ['effects'],
+                     'properties': {'effects': {'required': ['fade_out']}}},
+        },
+    ]
+
+    validator = Draft202012Validator(_SCHEMA).evolve(schema={'$ref': '#/$defs/ClipSetArgs'})
+    for leaf in ('x', 'y', 'width', 'height', 'cropTop', 'cropBottom', 'cropLeft', 'cropRight'):
+        validator.validate({'values': {}, 'clear': [leaf]})
+    validator.validate({'values': {
+        'effects': {'fade_in': 1}, 'entrance': {'type': 'fade', 'duration': 1},
+    }, 'clear': []})
+    validator.validate({'values': {
+        'effects': {'fade_out': None}, 'exit': None,
+    }, 'clear': []})
+    for values in ({'entrance': {'type': 'fade', 'duration': 1}},
+                   {'exit': {'type': 'fade-out', 'duration': 1}}):
+        with pytest.raises(ValidationError):
+            validator.validate({'values': values, 'clear': []})
 
 
 def test_removing_only_group_additions_reconstructs_project_data_bytes():
