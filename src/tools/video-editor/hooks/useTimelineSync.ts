@@ -19,8 +19,11 @@ export function useTimelineSync({
 }: UseTimelineSyncOptions) {
   const lastTimeUpdateRef = useRef(0);
 
-  const onPreviewTimeUpdate = useCallback((time: number) => {
+  const onPreviewTimeUpdate = useCallback((time: number, seekComplete = false) => {
     if (isSyncingFromTimeline.current) {
+      if (seekComplete) {
+        isSyncingFromTimeline.current = false;
+      }
       return;
     }
 
@@ -45,16 +48,14 @@ export function useTimelineSync({
     isSyncingFromTimeline.current = true;
     previewRef.current?.seek(time);
     setCurrentTime(time);
-    requestAnimationFrame(() => {
-      isSyncingFromTimeline.current = false;
-    });
   }, [isSyncingFromPreview, isSyncingFromTimeline, previewRef, setCurrentTime]);
 
   const onClickTimeArea = useCallback((time: number) => {
+    isSyncingFromTimeline.current = true;
     previewRef.current?.seek(time);
     setCurrentTime(time);
     return undefined;
-  }, [previewRef, setCurrentTime]);
+  }, [isSyncingFromTimeline, previewRef, setCurrentTime]);
 
   return { onPreviewTimeUpdate, onCursorDrag, onClickTimeArea };
 }

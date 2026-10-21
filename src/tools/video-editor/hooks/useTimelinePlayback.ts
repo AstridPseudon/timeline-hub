@@ -10,7 +10,7 @@ export interface UseTimelinePlaybackResult {
   previewRef: React.RefObject<PreviewHandle>;
   playerContainerRef: React.RefObject<HTMLDivElement>;
   timelineWrapperRef: React.RefObject<HTMLDivElement>;
-  onPreviewTimeUpdate: (time: number) => void;
+  onPreviewTimeUpdate: (time: number, seekComplete?: boolean) => void;
   onCursorDrag: (time: number) => void;
   onClickTimeArea: (time: number) => undefined;
   formatTime: (time: number) => string;
