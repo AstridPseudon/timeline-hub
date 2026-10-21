@@ -96,8 +96,7 @@ def _has_value(clip: Mapping[str, Any], path: str) -> bool:
 def role_of(clip: Mapping[str, Any], track: Any, elements: Mapping[str, Mapping[str, Any]]) -> str:
     """picture | background | content | none, from the element's declared coverage, else the track convention."""
     clip_type = clip.get("clipType")
-    meta = elements.get(clip_type) if isinstance(clip_type, str) else None
-    meta = meta or {}
+    meta = {} if clip_type is None else elements.get(clip_type) or {}
     coverage = meta.get("coverage")
     if coverage is not None:
         if coverage == "picture" and "background_unless" in meta:
