@@ -108,6 +108,18 @@ def test_existing_public_row_carrier_drives_labels_and_rejects_stale_or_forged_r
                                     scene=facts, source_identity=source)
     assert labelled.getpixel((20, 60)) == CONTENT_RGB
 
+    class Provider:
+        source_identity = source
+
+        @staticmethod
+        def scene_for_frame(frame):
+            return capture if frame == 3 else None
+
+    receipt = {"cards": [{}]}
+    attach_frame_addresses(receipt, {"config": CONFIG, "fps_rational": [10, 1]}, [{"frame": 3}],
+                           frame_provider=Provider())
+    assert receipt["cards"][0]["addresses"] == ["c02.card", "c01.field"]
+
     stale = dict(facts)
     stale["answer"] = dict(answer, frame=4)
     with pytest.raises(SceneQueryUnavailable, match="frame mismatch"):
@@ -167,10 +179,11 @@ def test_a_contact_tile_names_its_cut_and_chapter_and_keeps_the_cut_alone_withou
     assert cut_tile_label({"index": 8}, -1) == "#8"  # no id: say it is a position
 
 
-def test_each_frame_index_row_lists_the_addresses_on_screen_top_first():
+def test_each_frame_index_row_marks_addresses_without_a_source_row_unavailable(monkeypatch):
     receipt = {"cards": [{"id": "frame-000000030"}, {"id": "frame-000000003"}]}
     cards = [{"frame": 3}, {"frame": 16}]
     snapshot = {"config": CONFIG, "fps_rational": [10, 1]}
+    monkeypatch.setattr("astrid.core.timeline.onscreen.visible_at", lambda *a, **k: pytest.fail(
+        "private visibility"))
     attach_frame_addresses(receipt, snapshot, cards)
-    assert receipt["cards"][0]["addresses"] == ["c02.card", "c01.field"]
-    assert receipt["cards"][1]["addresses"] == ["c03.late", "c02.card", "c01.field"]
+    assert [row["addresses"] for row in receipt["cards"]] == [None, None]

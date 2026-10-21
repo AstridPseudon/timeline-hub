@@ -113,7 +113,7 @@ def test_default_provider_keeps_png_only_cache_reusable_across_owners(tmp_path, 
     assert (first / "frames/0.png").read_bytes() == png == (second / "frames/0.png").read_bytes()
     assert q.scene_for_frame(0) is None
     receipt = attach_frame_addresses({"cards": [{}]}, q.snapshot, cards(0), frame_provider=q)
-    assert receipt["cards"][0]["addresses"] == ["c08.title"]
+    assert receipt["cards"][0]["addresses"] is None
     q.close()
 
 

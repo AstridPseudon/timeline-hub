@@ -97,14 +97,13 @@ def test_contact_tiles_apply_labels_without_replacing_the_source_image():
     assert original.getpixel((20, 60)) == (0, 0, 0)
 
 
-def test_compact_frame_index_rows_include_visible_addresses():
+def test_compact_frame_index_rows_mark_unbound_addresses_unavailable():
     receipt = {"cards": [{"id": "frame-000000003"}, {"id": "frame-000000016"}]}
     cards = [{"frame": 3}, {"frame": 16}]
 
     attach_frame_addresses(receipt, {"config": CONFIG, "fps_rational": [10, 1]}, cards)
 
-    assert receipt["cards"][0]["addresses"] == ["c02.card", "c01.field"]
-    assert receipt["cards"][1]["addresses"] == ["c03.late", "c02.card", "c01.field"]
+    assert [row["addresses"] for row in receipt["cards"]] == [None, None]
 
 
 def test_verify_labels_use_display_copies_and_keep_decoded_frames_unchanged(tmp_path: Path, monkeypatch):

@@ -10,7 +10,7 @@ def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, fra
     """``addresses`` on each frame-index row: the layers on screen at that frame, top first (``c08.loras``).
 
     ``receipt['cards']`` is the compact projection of ``cards`` in the same order (compact_render_receipt)."""
-    from .overlays.labels import _labels_for_scene_facts, addresses_at, canvas_of
+    from .overlays.labels import _labels_for_scene_facts, canvas_of
 
     config = snapshot.get("config") or {}
     fps = float(Fraction(*snapshot["fps_rational"]))
@@ -19,7 +19,9 @@ def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, fra
         frame = int(card["frame"])
         capture = getattr(frame_provider, "scene_for_frame", lambda frame: None)(frame)
         if capture is None:
-            row["addresses"] = addresses_at(config, frame, fps, canvas)
+            # A PNG-only hit remains valid image evidence, but it carries no
+            # source-bound semantic row from which labels can be derived.
+            row["addresses"] = None
         else:
             from .overlays.labels import MIN_OPACITY
 

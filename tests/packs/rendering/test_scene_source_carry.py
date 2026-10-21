@@ -251,16 +251,10 @@ def test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames(source_
     assert info["evidence_source"] == "mixed" and info["cached_frames"] == info["fresh_frames"] == 1
     assert [call[0] for call in calls] == [(0,), (24,)]
     assert p.scene_for_frame(0) is None and p.scene_for_frame(24) is not prior
-    fallback_frames = []
-    from astrid.packs.rendering.actions.timeline_visualize.overlays import labels
-    old_addresses = labels.addresses_at
-    def fallback(config, frame, fps, canvas):
-        fallback_frames.append(frame)
-        return old_addresses(config, frame, fps, canvas)
-    monkeypatch.setattr(labels, "addresses_at", fallback)
+    monkeypatch.setattr("astrid.core.timeline.onscreen.visible_at", lambda *a, **k: pytest.fail(
+        "private visibility"))
     receipt = attach_frame_addresses({"cards": [{}, {}]}, snapshot, cards(0, 24), frame_provider=p)
-    assert all(row["addresses"] == ["c08.title"] for row in receipt["cards"])
-    assert fallback_frames == [0]
+    assert [row["addresses"] for row in receipt["cards"]] == [None, ["c08.title"]]
     p.capture(cards(0, 24), tmp_path / "cached")
     assert p.scene_capture is None and not p.fresh_scene_frames and len(calls) == 2
     p.close()
