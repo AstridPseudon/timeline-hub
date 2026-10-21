@@ -116,3 +116,47 @@ product or generation change was justified.
 The manager can decide whether to schedule separate exact-current-source
 transcript, rational, and connected-occurrence proofs. Do not treat this
 bounded PASS as a full Gate1 corpus or complete foundation qualification.
+
+## Incremental recheck after merged WC6/public014 inverse logic
+
+Date: 2026-10-21 UTC
+
+The current Agent integration source is now `541c11752daa086fb65a585e680945dedafff0ce`,
+tree `0138778e52fb3bf2b7e2d217fb25f7318599e925`. This is the merge of the
+approved public014 grouped-track inverse fix (`f6485dc4e`) and the approved
+WC6 current document-script slice (`c8d69323c`), so only their shared inverse
+surface was rechecked. The worktree remained clean. No source, schema, client,
+Runtime pin, or public operation drift was introduced by this worker.
+
+Preflight passed before the central runs: the Agent imported from the merged
+worktree, Runtime imported from pinned `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`,
+both exact nodes collected one test, Node was `v20.19.4`, the published14
+artifact fixture and main95 Node modules were present, schema SHA-256 remained
+`6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d`, and
+`runtime.lock.json` remained `920f4a3edf3d0e5ce9df5a0b2749f7b02bc2ea7db6fef2ec70db8d02b65be8e7`.
+
+The exact central reruns were:
+
+| Existing suite | Exact node | Result |
+|---|---|---|
+| `published014-integration-nodes` | `tests/editing_conformance/test_commit_runtime_parent_track_batch_inverse.py::test_grouped_parent_track_create_move_reload_undo_redo` | **1 passed**, result `agt-m2-gate13-wc6-staged-inverse-merged-join-published014-integration-nodes-1021044557-1622` |
+| `wc6-exact95-http-env-qualification-integration` | `tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba` | **1 passed**, result `agt-m2-gate13-wc6-staged-inverse-merged-join-wc6-exact95-http-env-qualification-integration-1021044557-30202` |
+
+The grouped case preserved track creation membership/opaque fields, clip
+placement, reload, guarded undo, and redo. The WC6 case exercised the real
+Runtime-door document script with the exact `hello` voiceover carrier,
+same-alias media rebinding, reload, retry, undo, disjoint edit, redo, and ABA
+guards. No merge defect appeared; no inverse/recording fix or trusted-neighbor
+replay was justified. No Gate3/251 direct, 236 matrix, full, browser, or render
+suite was run.
+
+### Evidence boundary: published ordinary vs transcript future-source
+
+The published ordinary qualification remains the `95bd`/published014 cohort:
+ordinary schema `6ba`, current client/lock, and C13 Composition profile. It
+does not include transcript source-binding acceptance. The separate retained
+transcript result uses the independently compatible Runtime `3dcae183` (tree
+`4fa58b2551f716c35cab6005cc8add84e59da8a9`) with the immutable `95bd` client;
+that is a compatible **future-source** transcript qualification, not a new
+published ordinary014 Runtime pin or an activation of the public ordinary
+cohort. Keep those evidence rows separate in subsequent gate summaries.
