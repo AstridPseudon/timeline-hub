@@ -68,26 +68,25 @@ const fail = (message: string, kind = 'invalid_edit_command'): never => {
 const encodeComponent = (value: string): string => encodeURIComponent(value);
 
 function asObject(value: unknown, message: string): ObjectValue {
-  if (!object(value)) fail(message, 'unsupported_shape');
-  return value;
+  return object(value) ? value : fail(message, 'unsupported_shape');
 }
 
 function stringValue(value: unknown, message: string): string {
-  if (typeof value !== 'string' || value.length === 0) fail(message, 'invalid_source');
-  return value;
+  return typeof value === 'string' && value.length > 0 ? value : fail(message, 'invalid_source');
 }
 
 function exactPin(value: unknown, label: string): DocumentPin {
-  if (!object(value) || !equal(Object.keys(value).sort(), ['content_digest', 'document_id', 'version']) ||
-    typeof value.document_id !== 'string' || !value.document_id.startsWith('transcript:') ||
-    typeof value.version !== 'number' || !Number.isSafeInteger(value.version) || value.version < 1 ||
-    typeof value.content_digest !== 'string' || !MEDIA_ID.test(value.content_digest)) {
-    fail(`exact transcript ${label} DocumentPin is required`, 'invalid_source');
+  const pin = object(value) ? value : fail(`exact transcript ${label} DocumentPin is required`, 'invalid_source');
+  if (!equal(Object.keys(pin).sort(), ['content_digest', 'document_id', 'version']) ||
+    typeof pin.document_id !== 'string' || !pin.document_id.startsWith('transcript:') ||
+    typeof pin.version !== 'number' || !Number.isSafeInteger(pin.version) || pin.version < 1 ||
+    typeof pin.content_digest !== 'string' || !MEDIA_ID.test(pin.content_digest)) {
+    return fail(`exact transcript ${label} DocumentPin is required`, 'invalid_source');
   }
   return {
-    document_id: value.document_id,
-    version: value.version,
-    content_digest: value.content_digest,
+    document_id: pin.document_id,
+    version: pin.version,
+    content_digest: pin.content_digest,
   };
 }
 
@@ -114,7 +113,7 @@ async function verifyTranscript(
     fail(`transcript ${label} source does not match its exact scoped pin`, 'invalid_source');
   }
   const parsed = projectTranscriptSchema.safeParse(document.content);
-  if (!parsed.success) fail(`transcript ${label} content is malformed`, 'invalid_source');
+  if (!parsed.success || parsed.data === undefined) return fail(`transcript ${label} content is malformed`, 'invalid_source');
   const content = parsed.data;
   if (content.schema !== 'media.transcript/v1' || !MEDIA_ID.test(content.media_id)) {
     fail(`transcript ${label} content identity is unsupported`, 'invalid_source');
@@ -187,9 +186,9 @@ function sourceItemSelection(ctx: MoveRecording, rows: readonly ObjectValue[]): 
 function assertCanonicalCarrier(bundle: AuthoredBundle): void {
   const parent = bundle.parent;
   const config = parent.config === undefined ? undefined : asObject(parent.config, 'parent config must be an object');
-  const candidates = [parent, config, parent.bundle];
+  const candidates: unknown[] = [parent, config, parent.bundle];
   for (const candidate of candidates) {
-    if (candidate && (has(candidate, LEGACY_FIELDS[0]) || has(candidate, LEGACY_FIELDS[1]))) {
+    if (object(candidate) && (has(candidate, LEGACY_FIELDS[0]) || has(candidate, LEGACY_FIELDS[1]))) {
       fail('transcript source planes must use parent.config.bundle', 'unsupported_shape');
     }
   }
@@ -274,8 +273,9 @@ function reconcileReferences(
 ): ObjectValue {
   const segments = identityMapping(allPrevious, incoming, assetId, sourceId);
   if (segments.size === 0) return config;
-  const clips = config.clips;
-  if (!Array.isArray(clips)) fail('transcript reconciliation clips are unsupported', 'unsupported_shape');
+  const clips = Array.isArray(config.clips)
+    ? config.clips
+    : fail('transcript reconciliation clips are unsupported', 'unsupported_shape');
 
   const owners = new Map<string, Set<string>>();
   for (const item of allPrevious) {
@@ -285,9 +285,10 @@ function reconcileReferences(
       typeof owner?.assetId !== 'string') continue;
     const ownerKey = globalThis.JSON.stringify([owner.assetId, payload.sourceId]);
     const scope = sourcePrefixes(owner.assetId, payload.sourceId);
-    const aliases = [item.id];
-    if (typeof item.id === 'string' && item.id.startsWith(scope.canonical)) {
-      aliases.push(scope.legacy + item.id.slice(scope.canonical.length));
+    const itemId = typeof item.id === 'string' ? item.id : fail('transcript source item identity is unsupported', 'unsupported_shape');
+    const aliases = [itemId];
+    if (itemId.startsWith(scope.canonical)) {
+      aliases.push(scope.legacy + itemId.slice(scope.canonical.length));
     }
     for (const alias of aliases) {
       const set = owners.get(alias) ?? new Set<string>();
@@ -301,7 +302,7 @@ function reconcileReferences(
     if (!object(media) || media.asset !== assetId || typeof media.id !== 'string') continue;
     mediaSuffixes.push(`@${media.id}`, `@${encodeComponent(media.id)}`);
   }
-  const occupied = new Set(clips.flatMap((clip) => object(clip) && typeof clip.id === 'string' ? [clip.id] : []));
+  const occupied = new Set(clips.flatMap((clip: JSON) => object(clip) && typeof clip.id === 'string' ? [clip.id] : []));
   const nextClips = copy(clips);
   let clipsChanged = false;
   for (const [index, rawClip] of clips.entries()) {
@@ -327,11 +328,14 @@ function reconcileReferences(
     const nextId = captionId(newId + matches[0]);
     if (occupied.has(nextId)) fail('transcript caption destination is occupied', 'identity_conflict');
     occupied.add(nextId);
-    const nextClip = nextClips[index];
-    if (!object(nextClip) || !object(nextClip.app) || !object(nextClip.app.__generated__) ||
-      !object(nextClip.app.__generated__.provenance)) fail('transcript caption metadata is unsupported', 'unsupported_shape');
+    const nextClip = object(nextClips[index]) ? nextClips[index] : fail('transcript caption metadata is unsupported', 'unsupported_shape');
+    const nextApp = object(nextClip.app) ? nextClip.app : fail('transcript caption metadata is unsupported', 'unsupported_shape');
+    const nextGenerated = object(nextApp.__generated__) ? nextApp.__generated__ : fail('transcript caption metadata is unsupported', 'unsupported_shape');
+    const nextProvenance = object(nextGenerated.provenance)
+      ? nextGenerated.provenance
+      : fail('transcript caption metadata is unsupported', 'unsupported_shape');
     nextClip.id = nextId;
-    nextClip.app.__generated__.provenance.sourceItemId = newId;
+    nextProvenance.sourceItemId = newId;
     clipsChanged = true;
   }
 
@@ -375,9 +379,9 @@ function parentAsset(bundle: AuthoredBundle, assetId: string): ObjectValue {
   if (direct && nested && !equal(direct, nested)) fail('parent registry conflicts with parent.config.registry', 'identity_conflict');
   const registry = direct ?? nested;
   const assets = registry && registry.assets !== undefined ? asObject(registry.assets, 'parent asset registry is unsupported') : undefined;
-  const asset = assets?.[assetId];
-  if (!object(asset)) fail('selected transcript asset is missing', 'identity_conflict');
-  return asset;
+  return object(assets?.[assetId])
+    ? assets[assetId]
+    : fail('selected transcript asset is missing', 'identity_conflict');
 }
 
 function commandArgs(command: EditCommand): ObjectValue {
@@ -427,21 +431,23 @@ function applyTranscriptAssociation(
   if (!equal(previousPin, previousSource?.pin)) fail('prior transcript source does not match its exact pin', 'history_unavailable');
 
   const ctx = new MoveRecording(bundle, { ...copy(supplied), intent: { ownership: 'parent' } });
-  const config = ctx.read('parent', ['config']);
-  if (!object(config)) fail('parent config must be an object', 'unsupported_shape');
+  const configValue = ctx.read('parent', ['config']);
+  const config = object(configValue) ? configValue : fail('parent config must be an object', 'unsupported_shape');
   const refsState = ctx.state.get('parent', ['config', 'bundle', 'transcriptReferences']);
   const itemsState = ctx.state.get('parent', ['config', 'bundle', 'itemsBySchemaRef']);
-  const refs = refsState.state === 'absent' ? { schema: TRANSCRIPT_REFERENCES_SCHEMA, associations: [] } : refsState.value;
-  if (!object(refs) || refs.schema !== TRANSCRIPT_REFERENCES_SCHEMA || !Array.isArray(refs.associations)) {
-    fail('transcript reference plane is unsupported', 'unsupported_shape');
-  }
-  const associations = refs.associations;
-  const owners = associations.map((row) => object(row) ? row.assetId : undefined);
+  const refsValue = refsState.state === 'absent' ? { schema: TRANSCRIPT_REFERENCES_SCHEMA, associations: [] } : refsState.value;
+  const refs = object(refsValue) && refsValue.schema === TRANSCRIPT_REFERENCES_SCHEMA
+    ? refsValue
+    : fail('transcript reference plane is unsupported', 'unsupported_shape');
+  const associations = Array.isArray(refs.associations)
+    ? refs.associations
+    : fail('transcript reference plane is unsupported', 'unsupported_shape');
+  const owners = associations.map((row: JSON) => object(row) ? row.assetId : undefined);
   if (owners.some((owner) => typeof owner !== 'string') || new Set(owners).size !== owners.length ||
-    associations.some((row) => !object(row) || typeof row.documentId !== 'string')) {
+    associations.some((row: JSON) => !object(row) || typeof row.documentId !== 'string')) {
     fail('ambiguous transcript association ownership', 'identity_conflict');
   }
-  const existing = associations.find((row) => object(row) && row.assetId === assetId);
+  const existing = associations.find((row: JSON): row is ObjectValue => object(row) && row.assetId === assetId);
   if ((existing === undefined && previousPin !== undefined) ||
     (existing !== undefined && (previousPin === undefined || previousPin.document_id !== existing.documentId))) {
     fail('exact prior DocumentPin is required for replacement', 'history_unavailable');
@@ -450,11 +456,13 @@ function applyTranscriptAssociation(
     fail('prior transcript source belongs to different media', 'invalid_source');
   }
 
-  const sourceMap = itemsState.state === 'absent' ? {} : itemsState.value;
-  if (!object(sourceMap)) fail('transcript source item plane is unsupported', 'unsupported_shape');
+  const sourceMapValue = itemsState.state === 'absent' ? {} : itemsState.value;
+  const sourceMap = object(sourceMapValue)
+    ? sourceMapValue
+    : fail('transcript source item plane is unsupported', 'unsupported_shape');
   const rawItems = sourceMap[TRANSCRIPT_SCHEMA_REF];
-  if (rawItems !== undefined && !Array.isArray(rawItems)) fail('transcript source item collection must be an array', 'unsupported_shape');
-  const oldItems = (rawItems ?? []).map(sourceItemRow);
+  const oldItems = (Array.isArray(rawItems) ? rawItems : rawItems === undefined ? [] :
+    fail('transcript source item collection must be an array', 'unsupported_shape')).map(sourceItemRow);
   const itemKeys = oldItems.map(sourceItemKey);
   if (new Set(itemKeys).size !== itemKeys.length) fail('ambiguous existing transcript source-item identity', 'identity_conflict');
 
@@ -477,7 +485,8 @@ function applyTranscriptAssociation(
   const retained = oldItems.filter((row) => {
     const owner = asObject(row.sourceArtifactRef, 'transcript source item owner is unsupported');
     const payload = asObject(row.payload, 'transcript source item payload is unsupported');
-    const projectTranscript = row.provenance.adapterId === 'astrid.projectTranscript';
+    const provenance = asObject(row.provenance, 'transcript source item provenance is unsupported');
+    const projectTranscript = provenance.adapterId === 'astrid.projectTranscript';
     return !(owner.assetId === assetId && (projectTranscript || payload.sourceId === sourceId));
   });
   const nextRefs = copy(refs);
