@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T03:00:10Z | dispatcher heartbeat 3s | live 4 (sol 0, luna 4, other 0) | busy30 18 | status age 2m -->
+<!-- main | 2026-10-21T03:01:28Z | dispatcher heartbeat 3s | live 4 (sol 0, luna 4, other 0) | busy30 18 | status age 4m -->
 # runtime — 2026-10-21T02:57:22Z
 Milestone: M1 RECORDED. M2 and M3 OPEN. Runtime ordinary014 PUBLISHED02:51; coordinated consumer pins in progress. Approved source-only transcript/rational fixes merged; ONE current integration full25226 running/requested. App dormant init is a separate activation gate. No foundation or final ZIP claim.
 Integrated: Runtime tl/integration be8d254aef249cd421946cbf06ed86d58bc4b307 / tree6d74348b66ee4a3602cfa4fd56b9b7c0ed7508e0. Published014 merged1087130 (exact95tree), then exact approved transcript e291 merged2a9bd81 (tree4fa58b25), then approved rational60a9 mergedbe8d. Immutable client/artifact producer95bd/all76/version54205 unchanged. No private reference, launcher or15 source merged.

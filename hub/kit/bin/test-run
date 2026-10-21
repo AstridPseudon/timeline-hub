@@ -45,6 +45,8 @@ git -C $W worktree remove --force $SNAP 2>/dev/null || { rm -rf $SNAP; git -C $W
 ST=fail; [ $RC = 0 ] && ST=pass; [ $RC = 124 -o $RC = 137 ] && ST=timeout
 { echo "test $ID: $ST exit=$RC in $(( $(date +%s) - T0 ))s — $suite on $target ($repo tree $tree)"; echo "cmd: $CMD"
   echo "counts: $(grep -aE '[0-9]+ (passed|failed)|Tests +[0-9]|^# (pass|fail) ' $D/log.txt | tail -3 | tr '\n' ' ')"; echo "--- last 60 lines of $D/log.txt ---"; tail -60 $D/log.txt; } > $D/summary
+# zero executed tests is never a pass (2026-10-21 audit: "No tests found" runs)
+[ $RC = 0 ] && grep -aqiE 'No tests found|No test files found|collected 0 items|^# tests 0$|Tests +0 passed \(0\)' $D/log.txt && { ST=fail; RC=1; sed -i "1i ZERO-TESTS: the runner executed no tests; recorded as fail." $D/summary; }
 # exit/log mismatch (2026-10-21, false-green 4657): exit 0 but the runner's own summary reports failures. Flag it at the top of the
 # summary and never cache it; the owner confirms it (an authorized expected-failure wrapper) or withdraws it (request-stop-test --withdraw).
 MM=$([ $RC = 0 ] && grep -aoE '(^|[^0-9])[1-9][0-9]* failed\b|# fail [1-9][0-9]*' $D/log.txt | tail -1)
