@@ -1,7 +1,8 @@
 # MAIN run handoff: coherent public current Agent full
 
-**Status: HOLD — do not request or run the full lane until the final wrapper
-delta receives independent APPROVE.**
+**Status: HOLD - do not request or run the full lane until the source-coherent
+wrapper delta receives independent APPROVE and the new immutable Remotion
+runtime and private profile are present.**
 
 This handoff supersedes the 1010 draft. It records one exact MAIN run against
 the frozen current Agent source. This worker did not build, install, launch,
@@ -24,12 +25,66 @@ old profile is not an authority.
 | Agent source | branch `hub/tl/integration`; commit `b3c96a758c1cfa2a609d1498e0e9ee401b32cc40`; tree `3467b7bffb0fe6edf9178c9a9de4d446c8ab8857` | `/home/user/work/main-timeline/coherent-public-current-b3c96a758/source/agent-b3c96a758` |
 | Runtime source | commit `b92d3e7a05eec65c142294ef4873edd059e9b31d`; tree `6abc2f117391de8e7e35c0283f575a002199894d` | `/home/user/work/main-timeline/coherent-public-current-b3c96a758/source/runtime-b92d3e7a` |
 | public Runtime-client source | commit `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`; tree `d3a290b407fa61e6ab2d476f50c068073f70df00`; package `astrid_runtime_client==0.2.14` | `/home/user/work/main-timeline/coherent-public-current-b3c96a758/source/client-95bd3c5f` (build from `packages/python`) |
-| C13 Composition | source marker `30da0a5e05d4529a2b97b3c1818cf9e15842d628`; 77 regular tarball members; tarball SHA-256 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`; lock SHA-256 `c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24` | `/home/user/work/main-timeline/coherent-public-current-b3c96a758/composition-c13-30da0a5e` |
+| C13 Composition | source marker `b3c96a758c1cfa2a609d1498e0e9ee401b32cc40`; 77 regular tarball members; tarball SHA-256 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`; lock SHA-256 `c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24` | `/home/user/work/runtimes/agent-remotion-0014` |
 | Runtime artifact | `astrid-runtime==0.1.0`; all76 artifact digest `sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac` | built privately from Runtime b92; do not substitute another profile |
 
 `runtime.lock.json` in the Agent checkout must name client source commit
 `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`. All three Git checkouts must be
 clean and their HEAD commit/tree must be checked before any wheel is built.
+
+## Remotion source-coherence audit
+
+The old C13 runtime was built from Agent commit
+`30da0a5e05d4529a2b97b3c1818cf9e15842d628`. I compared the complete tracked
+`remotion/` tree at that commit with Agent target b3c, not just the package
+version or lock. Both trees contain 73 files, but their remotion subtree
+objects differ: old `08236aaf8c63e43dafba6baa4fe412343edd6a99`, target
+`aa2b36555203f7f1a82cc5cb399b0b447f03b808`. The exact comparison was:
+
+```text
+git diff --name-status 30da0a5e05d4529a2b97b3c1818cf9e15842d628 b3c96a758c1cfa2a609d1498e0e9ee401b32cc40 -- remotion
+M       remotion/scripts/fetch-shared-browser.mjs
+M       remotion/src/LiveSceneClip.tsx
+```
+
+The other 71 tracked Remotion blobs are byte-identical. The differing blobs
+are exact and material:
+
+```text
+remotion/scripts/fetch-shared-browser.mjs
+  30da blob cf16755930ecc41e7c21891a236c7e8062568bd3
+  b3c  blob f82c1268bb6cfd7221faeb029a38ef8addfb155e
+remotion/src/LiveSceneClip.tsx
+  30da blob cf14ed357ea607d8807ae883cd1ef444468da1ba
+  b3c  blob 1aace8ab33c39114c75aad60ba664a319dfeaacf
+```
+
+`LiveSceneClip.tsx` changes the consumed SceneSurface import path, and the
+browser installer source also differs. Therefore the old 30da runtime is not
+source-coherent with the b3c full. The fact that the C13 package version,
+tarball, and package-lock hash stay the same does not prove host-source
+coherence.
+
+MAIN must request a new immutable runtime from b3c using the existing
+request-runtime path and the same C13 lock:
+
+```text
+Runtime name: agent-remotion-0014
+Request:
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-runtime agent-remotion-0014 b3c96a758c1cfa2a609d1498e0e9ee401b32cc40 c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24
+Expected immutable project: /home/user/work/runtimes/agent-remotion-0014
+Expected generated env file: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-0014.env
+Expected runtime env values:
+PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0014
+ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages
+```
+
+The request was not made by this worker. The new runtime, its env file, its
+`.source-commit`, its 0.0.13 artifact, its exact C13 lock, and its private
+symlink-free `node_modules` are currently missing. The existing 0013 runtime
+must not be relabelled or mutated.
 
 ## Durable wrapper and final delta
 
@@ -42,16 +97,27 @@ hub/tl/agt-m4-full-wrapper-current-batch-main-request-finalize-1023:
 scripts/full_coherent_public_current_integration.sh
 ```
 
-The final worktree blob is
+The exact committed wrapper is commit
+`297fbe0e5cf9bc37c7115dae294838f96df95f16`, tree
+`a4fdb4a28b9d7a88267105f8261518336a18047e`, blob
 `aa8dda3e9cf81301c163294ceec805d97be0d5c8`, SHA-256
 `09822614697e50a0764c2a125bfd0575baadeeb2f87661b4b3a4a10551e96438`.
-The harness has not yet published the final commit, so the wrapper commit is
-**pending harness publication**; do not claim the pre-delta `ea1150b...`
-worktree HEAD as the final wrapper commit. After publication, record the full
-commit SHA and confirm that it contains this exact blob before MAIN activation.
+That exact identity replaces the obsolete "pending harness publication"
+statement. It is the independently approved wrapper baseline, but its C13
+marker still names old 30da and it must not be used for this full.
 
-The only source delta from the repaired `594c16e1f21340f179296fa341e22233df7efa54`
-blob is the expected-Agent snapshot/provenance update:
+This worktree changes only the wrapper metadata needed for source coherence:
+`EXPECTED_C13_SOURCE` becomes b3c and the fallback project path becomes
+`/home/user/work/runtimes/agent-remotion-0014`. The strict artifact, source,
+wheel, install, 164-pin, 166-distribution/RECORD, import-origin, and direct
+pytest exit/SIGTERM guards are retained. The successor wrapper's new commit,
+tree, blob, and SHA-256 are not known until harness publication. This guard
+delta requires a fresh independent review; no full is released until that
+review approves it.
+
+The previously approved source delta from the repaired
+`594c16e1f21340f179296fa341e22233df7efa54` blob was the expected-Agent
+snapshot/provenance update:
 
 ```text
 EXPECTED_AGENT_COMMIT=b3c96a758c1cfa2a609d1498e0e9ee401b32cc40
@@ -65,13 +131,24 @@ archive map remains exactly:
 packages/python/astrid_runtime_client/ -> astrid_runtime_client/
 ```
 
-Independent delta review must approve this four-line identity/provenance
-change and verify that no other wrapper line changed. That review must retain
+The new source-coherence delta is separate and pending. Independent delta
+review must approve the new C13 marker/runtime metadata and verify that no
+other wrapper line changed. That review must retain
 the strict 164-pin carrier/hash, 166 installed distributions and `RECORD`
 files, complete RECORD closure, regular/symlink-free files, all76 source and
 wheel/install byte checks, the Agent/public95 client payload equality, eight
 private import origins, C13/Node/ffmpeg checks, compact positive and wrong-byte
 prefix guards, and direct child/process exit and SIGTERM propagation.
+
+Before activation, MAIN must use the normal durable lease for one exact run.
+The lease must cover the successor wrapper path and its full committed
+commit/tree/blob/SHA-256, the Agent/Runtime/client commit and tree tuple, the
+b3c Remotion runtime and C13 hashes, the private profile and all three product
+wheels, the 164-pin carrier, Node, VibeComfy, ffmpeg, ffprobe, and private C13
+`node_modules`. The lease must name the exact `env -i` command below and refuse
+the full while any input is missing, dirty, symlinked, or has an unverified
+identity. Do not use the old wrapper SHA as the successor hash and do not
+invent a lease result before MAIN records it.
 
 ## MAIN-owned profile and missing-file census
 
@@ -82,7 +159,7 @@ MAIN_ROOT=/home/user/work/main-timeline/coherent-public-current-b3c96a758
 SOURCE_ROOT=$MAIN_ROOT/source/agent-b3c96a758
 RUNTIME_CHECKOUT=$MAIN_ROOT/source/runtime-b92d3e7a
 CLIENT_CHECKOUT=$MAIN_ROOT/source/client-95bd3c5f
-COMPOSITION_ROOT=$MAIN_ROOT/composition-c13-30da0a5e
+COMPOSITION_ROOT=/home/user/work/runtimes/agent-remotion-0014
 PROFILE_ROOT=$MAIN_ROOT/profile/agent-coherent-public-current-b3c96a758
 RUNNER_ROOT=$MAIN_ROOT/runner/approved-current-wrapper
 ```
@@ -100,6 +177,7 @@ $COMPOSITION_ROOT/.source-commit
 $COMPOSITION_ROOT/artifacts/banodoco-timeline-composition-0.0.13.tgz
 $COMPOSITION_ROOT/package-lock.json
 $COMPOSITION_ROOT/node_modules/ (private, symlink-free)
+$RUNNER_ROOT/full_coherent_public_current_integration.sh (successor wrapper with recorded commit/tree/blob/SHA-256)
 $PROFILE_ROOT/venv/bin/python
 $PROFILE_ROOT/venv/lib/python3.13/site-packages/
 $PROFILE_ROOT/profile/astrid.json
@@ -134,11 +212,11 @@ environment.
 
 ## Construction prerequisites (MAIN only, after APPROVE)
 
-Require more than 13 GiB free under `/home/user/work`. Materialize the exact
-source checkouts and C13 artifact in `MAIN_ROOT`; verify commit, tree, clean
-status, source marker, tarball/lock hashes, and Agent runtime-lock client
-commit. Then build only into the private wheelhouse, without network or build
-isolation:
+Require more than 13 GiB free under `/home/user/work`. Request the new
+`agent-remotion-0014` runtime as specified above, then materialize the exact
+source checkouts and verify commit, tree, clean status, b3c Remotion source
+marker, tarball/lock hashes, and Agent runtime-lock client commit. Then build
+only into the private wheelhouse, without network or build isolation:
 
 ```bash
 python3.13 -m pip wheel --no-index --no-build-isolation --no-deps \
@@ -156,9 +234,10 @@ shared venv or relabel an older child environment. After the closure is
 private and verified, install only the three locally built product wheels with
 `pip install --no-index --no-deps --force-reinstall`.
 
-Prepare C13 with the exact source marker, tarball, lock, private
-symlink-free `node_modules`, and Node `v20.19.4`. Do not mutate
-`/home/user/work/app/node_modules`, any shared runtime, or any shared venv.
+Use the new `agent-remotion-0014` runtime with the exact b3c source marker,
+0.0.13 tarball, C13 lock, private symlink-free `node_modules`, and Node
+`v20.19.4`. Do not mutate `/home/user/work/app/node_modules`, the existing
+0013 runtime, any other shared runtime, or any shared venv.
 
 ## Exact MAIN invocation
 
@@ -174,7 +253,7 @@ env -i \
   SOURCE_ROOT=/home/user/work/main-timeline/coherent-public-current-b3c96a758/source/agent-b3c96a758 \
   ASTRID_RUNTIME_CHECKOUT=/home/user/work/main-timeline/coherent-public-current-b3c96a758/source/runtime-b92d3e7a \
   RUNTIME_CLIENT_CHECKOUT=/home/user/work/main-timeline/coherent-public-current-b3c96a758/source/client-95bd3c5f \
-  ASTRID_REMOTION_PROJECT_DIR=/home/user/work/main-timeline/coherent-public-current-b3c96a758/composition-c13-30da0a5e \
+  ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-0014 \
   ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node \
   ASTRID_VIBECOMFY_CHECKOUT=/home/user/work/fixtures/vibecomfy \
   FULL_COHERENT_PUBLIC_PROFILE_ROOT=/home/user/work/main-timeline/coherent-public-current-b3c96a758/profile/agent-coherent-public-current-b3c96a758 \
@@ -202,4 +281,7 @@ paths/hashes, 166/RECORD and eight-origin results, source/wheel/install byte
 parity, Node/C13/tool checks, free-space admission, the exact `env -i`
 command, and the terminal full-suite result. A setup refusal or profile
 preflight is not a full result and must not be relabelled as one. The current
-request remains HOLD until the final wrapper delta is independently APPROVED.
+request remains HOLD until the source-coherence wrapper delta is independently
+APPROVED, the new runtime is present and verified, and MAIN has materialized
+the private profile. The exact final command above is the one allowed command;
+it is not a claim that the profile or runtime already exists.
