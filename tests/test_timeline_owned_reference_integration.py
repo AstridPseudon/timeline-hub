@@ -20,6 +20,8 @@ from test_timeline_commit_integration import agent, film  # noqa: F401 (shared f
 pytestmark = pytest.mark.integration
 
 _ORDERED_TARGET = "com.example.compiler-canary"
+_ORDERED_BEFORE = "a-before"
+_ORDERED_AFTER = "z-after"
 
 
 def _head(service, project):
@@ -252,19 +254,19 @@ def test_actual_provider_removes_ordered_project_data_and_retries_inverse_redo(
         opaque_before = {"literal": [None, False, 0], "future": {"kept": True}}
         opaque_after = {"literal": {"nested": [None, "opaque"]}}
         seed = [
-            _project_data_write("keep", opaque_before, target="before"),
+            _project_data_write("keep", opaque_before, target=_ORDERED_BEFORE),
             _project_data_write("gone", None, target=_ORDERED_TARGET),
-            _project_data_write("keep", opaque_after, target="after"),
+            _project_data_write("keep", opaque_after, target=_ORDERED_AFTER),
         ]
         seed_body = _body(project, _head(service, project), seed)
         seeded = _commit(service, project, seed_body, "ordered-data-seed")
         original = copy.deepcopy(seeded["data"]["canonical_document"])
         original_app = _project_app(original)
-        assert list(original_app) == ["before", _ORDERED_TARGET, "after"]
+        assert list(original_app) == [_ORDERED_BEFORE, _ORDERED_TARGET, _ORDERED_AFTER]
         assert original_app == {
-            "before": {"keep": opaque_before},
+            _ORDERED_BEFORE: {"keep": opaque_before},
             _ORDERED_TARGET: {"gone": None},
-            "after": {"keep": opaque_after},
+            _ORDERED_AFTER: {"keep": opaque_after},
         }
 
         remove = _project_data_remove("gone", target=_ORDERED_TARGET)
@@ -273,10 +275,10 @@ def test_actual_provider_removes_ordered_project_data_and_retries_inverse_redo(
         removed = accepted["data"]["canonical_document"]
         assert accepted["receipt"]["result"] == accepted["data"]
         assert _project_app(removed) == {
-            "before": {"keep": opaque_before},
-            "after": {"keep": opaque_after},
+            _ORDERED_BEFORE: {"keep": opaque_before},
+            _ORDERED_AFTER: {"keep": opaque_after},
         }
-        assert list(_project_app(removed)) == ["before", "after"]
+        assert list(_project_app(removed)) == [_ORDERED_BEFORE, _ORDERED_AFTER]
         record = service.list_timeline_commits(
             project, "main", authorize=lambda: None)["items"][-1]["records"]["commands"][0]
         assert record["command"] == remove
@@ -292,7 +294,7 @@ def test_actual_provider_removes_ordered_project_data_and_retries_inverse_redo(
                 "path": ["config", "app", _ORDERED_TARGET],
                 "before": {"state": "present", "value": {}},
                 "after": {"state": "absent"},
-                "insertion_order": ["before", _ORDERED_TARGET, "after"],
+                "insertion_order": [_ORDERED_BEFORE, _ORDERED_TARGET, _ORDERED_AFTER],
             },
         ]
 
@@ -320,7 +322,7 @@ def test_actual_provider_removes_ordered_project_data_and_retries_inverse_redo(
             )
             restored = undone["data"]["canonical_document"]
             assert _project_app(restored) == original_app
-            assert list(_project_app(restored)) == ["before", _ORDERED_TARGET, "after"]
+            assert list(_project_app(restored)) == [_ORDERED_BEFORE, _ORDERED_TARGET, _ORDERED_AFTER]
             assert restored["parent_revision"]["payload"] == original["parent_revision"]["payload"]
 
             redone = _commit(
@@ -330,7 +332,7 @@ def test_actual_provider_removes_ordered_project_data_and_retries_inverse_redo(
             )
             redone_app = _project_app(redone["data"]["canonical_document"])
             assert redone_app == _project_app(removed)
-            assert list(redone_app) == ["before", "after"]
+            assert list(redone_app) == [_ORDERED_BEFORE, _ORDERED_AFTER]
             assert redone["data"]["canonical_document"]["parent_revision"]["payload"] == \
                 removed["parent_revision"]["payload"]
         finally:
