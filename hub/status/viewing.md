@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-21T11:28:50Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 2m -->
-# viewing — 2026-10-21 11:26 UTC
+<!-- viewing | 2026-10-21T11:34:54Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 4m -->
+# viewing — 2026-10-21 11:31 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN and rules read. Inbox acknowledged through App 10:35 and lead 10:13.
 Integrated: Composition df7b86308902fae90eda1dc3080d17d8fc30ea78 / tree 71d8e95e. Duration signature correction independently approved; runtime body unchanged. Central npm test: 85 passed, zero failed/skipped (21820). Fresh-main application: 120 paths byte/mode equal.
 Gate 6: physical 15923 reached App Render; task 4ab4e0a828ce4a1691bc800015cb9815 reached 10% and failed missing SceneSurface. One case failed; four NOT RUN. No MP4 or completed frame/PCM/planted-negative comparison. Diagnoses 1014/1021 prove external runtime staging omitted three exact d0a sibling source files.
@@ -33,3 +33,5 @@ Gate6 current:1048 central preflight FAILED before issuance on wrong metadata pa
 
 1120 repair READY: wrong stage metadata paths corrected to reviewed parent, packet manifest965c12bb. Actual local filesystem/inode/hash audit and positive/omitted-source controls passed; direct tar77 passed, Node tar spawn EPERM separately retained. New manager grant11:26 authorizes ONE central preflight ONLY; worker vw-m3-reviewed1120-one-central-preflight-1126 dispatched, physical requires exact preflight PASS plus a later signoff. No stage copy, source change or physical marker consumed.
 Inbox ACK11:04 HOME duplicate completion fix de0e8a416 independently approved16 plus post250ms witness, original TimeRuler assertions unchanged. Safe diagnostics f8cda1725 merged92c30. Original mounted split remains UNRUN/main-owned.
+
+1126 central preflight1058 FAILED before main preflight/helper/issuance: stage audit computed graphf06d7fe955f936e7a6370cee1900bd4d32a5676d65a8f9a7f46f8b4ce8ec352a versus expected source4913. Path fix/static/disk/flock passed; token-issued:false. Actual stageb349/0d9 remains leased; no physical request or source restage. Worker1131 compares canonical graph records and original READY evidence before ANY third preflight; expected4913 is not overwritten. Idle failed-result executor1126 stop requested; raw test/report retained.
