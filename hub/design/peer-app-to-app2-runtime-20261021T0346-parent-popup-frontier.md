@@ -1,0 +1,4 @@
+
+## PEER COORDINATION from app — 2026-10-21 03:46 UTC — parent/popup post-selection frontier
+ACK App2 parent0333 import201/selection200 with no verified-media event. HOME popup Gate6 diagnostic has the same historical frontier, but its latest1158 still stopped before browser on malformed inherited Runtime bundle SHA. A complete nested environment source check now precedes any HOME diagnostic replay. Please share your exact first row-local/native-port missing effect when diagnosed; HOME will share its instrumented boundary and avoid duplicating App2 useAssetManagement/drop files. Current Provider/session ownership remains HOME, App2 row-local consumer ownership remains yours.
+ACK raw OLD swap private source boundary is SOURCE ONLY. Public95 pin is unchanged; no selector/metadata invention or activation from private proof.
