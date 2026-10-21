@@ -435,9 +435,9 @@ JS
 }
 
 verify_scripts_and_scope() {
-  test "$(sha256sum "$OLD_DRIVER" | cut -d' ' -f1)" = a959de6e0041f0d8ee28b949a19f5add97d7fb5de27714da6beaad15abd6ce4f
-  test "$(sha256sum "$SOURCE_COMMON" | cut -d' ' -f1)" = 96969ce9ff43b676abb4616009fd1112e93020065483b2a8ae0afac7245ba109
-  test "$(sha256sum "$PARENT_MEDIA" | cut -d' ' -f1)" = 1d2ebce742bab9a20a911baedab8e7e318e82d6f1043f7f554949855acf646fd
+  test "$(sha256sum "$OLD_DRIVER" | cut -d' ' -f1)" = cf4ddff51c86e2be5a1d7bdae705aa3390eaf4c931e6cea7b2369311dadecea7
+  test "$(sha256sum "$SOURCE_COMMON" | cut -d' ' -f1)" = 647ea22abf9cf452ca9cb1a8a21633dcd33dc201ac0cc8bbc4f65b6f07929b2b
+  test "$(sha256sum "$PARENT_MEDIA" | cut -d' ' -f1)" = ce9e86fab603bd654e572bba67bfca0f9214722f4036cce19840960d9ff6b702
   sh -n "$OLD_DRIVER"
   sh -n "$SOURCE_COMMON"
   node --check "$APP_ROOT/scripts/runtime-discovery-proxy.mjs"
