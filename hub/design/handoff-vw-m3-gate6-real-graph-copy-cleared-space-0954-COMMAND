@@ -1,0 +1,38 @@
+# Gate6 private graph copy and static proof commands
+
+SOURCE=/home/user/work/wt/app-pin-d00a6613/node_modules
+DEST=/home/user/work/wt/app-pin-0d432391/node_modules
+APP=/home/user/work/wt/app-pin-0d432391
+DIST=/home/user/work/wt/app-pin-d00a6613/dist
+LEASE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/notes/gate6-app-pin-0d432391.lease
+
+# Read-only pre-copy gate; required free is exact and has no added margin.
+df -B1 --output=avail /home/user/work
+du -sx --block-size=1 "$SOURCE"
+test -d "$SOURCE" && test ! -e "$DEST" && test ! -L "$DEST"
+test "$(realpath "$(dirname "$SOURCE")")" = "$(dirname "$SOURCE")"
+test "$(realpath "$(dirname "$DEST")")" = "$(dirname "$DEST")"
+
+# Authorized materialization under a real parent. Preserve only contained
+# internal symlinks; never use a shared graph, hardlinks, install, or network.
+mkdir "$DEST"
+test "$(realpath "$DEST")" = "$DEST"
+cp -a --reflink=never "$SOURCE"/. "$DEST"/
+
+# Static verification only, using the pinned Node43d6 executable and the
+# existing controller functions: assertPhysicalPrivateGraph and hashTree for
+# both roots; compare hash/count; check all regular files nlink=1 and source /
+# destination inode disjointness; check React18.3.1, Remotion4.0.509, tsx4.21.0;
+# check tsx loaders, Playwright metadata/CLI, TypeScript tsc/tsserver, esbuild,
+# and .bin/{tsx,playwright,tsc,esbuild}; verify Node v20.19.4/SHA43d6.
+
+du -sx --block-size=1 "$SOURCE" "$DEST"
+df -B1 --output=avail /home/user/work
+find "$DIST" -type f
+sha256sum "$DIST/index.html"
+git -C "$APP" status --short --branch
+git -C "$APP" rev-parse HEAD HEAD^{tree}
+test -f "$LEASE"
+
+# Not run here: packet central preflight, physical comparison, browser/helper,
+# Runtime/socket/render/full suite, or any consumer pin/release operation.

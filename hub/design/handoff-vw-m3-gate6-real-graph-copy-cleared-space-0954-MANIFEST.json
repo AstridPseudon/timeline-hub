@@ -1,0 +1,66 @@
+{
+  "status": "GRAPH_READY_PREFLIGHT_HELD",
+  "worker": "vw-m3-gate6-real-graph-copy-cleared-space-0954",
+  "app": {
+    "root": "/home/user/work/wt/app-pin-0d432391",
+    "commit": "0d4323913b92c4e0e3830bf14ec7f35d981475ca",
+    "tree": "5a1e0e85d0f336f642426b91ccf3b3f1984ebd14",
+    "clean": true,
+    "homeAncestry": "PENDING_INDEPENDENT_RESOLUTION"
+  },
+  "graph": {
+    "source": "/home/user/work/wt/app-pin-d00a6613/node_modules",
+    "destination": "/home/user/work/wt/app-pin-0d432391/node_modules",
+    "sourceSha256": "8bdc44e93ce6f712f2a26fc44f1f8e904215c1785f54ed97f826a98fe0145c5b",
+    "destinationSha256": "8bdc44e93ce6f712f2a26fc44f1f8e904215c1785f54ed97f826a98fe0145c5b",
+    "sourceEntries": 32393,
+    "destinationEntries": 32393,
+    "regularFiles": 32357,
+    "sourceAllocatedBytes": 555896832,
+    "destinationAllocatedBytes": 555896832,
+    "allRegularFilesNlink1": true,
+    "independentInodes": true,
+    "physicalGuardUnchanged": true,
+    "internalSymlinksOnly": true
+  },
+  "storage": {
+    "requiredBeforeCopyBytes": 11876144076,
+    "freeBeforeCopyBytes": 11958218752,
+    "marginBeforeCopyBytes": 82074676,
+    "freeAfterCopyBytes": 11401834496
+  },
+  "versions": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.509",
+    "remotionPlayer": "4.0.509",
+    "remotionMedia": "4.0.509",
+    "remotionLayoutUtils": "4.0.509",
+    "tsx": "4.21.0"
+  },
+  "composition": {
+    "runtimeGraphSha256": "4913a37e5403c8372a283dcca8fd30c846b636abd88f59cfc572809d2fd0bd3c",
+    "runtimeGraphEntries": 21455,
+    "public13Sha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "public13RegularMembers": 77
+  },
+  "retainedDist": {
+    "root": "/home/user/work/wt/app-pin-d00a6613/dist",
+    "regularFiles": 339,
+    "indexSha256": "aeb5d83399b453b15a8cbc67b31260cf2820f8d65770ccd458986ddd551e257b",
+    "buildInputEquality": "REUSED_PRIOR_PROOF_AND_EXISTENCE_RECHECKED"
+  },
+  "lease": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/notes/gate6-app-pin-0d432391.lease",
+  "notRun": [
+    "central-preflight",
+    "physical",
+    "install",
+    "network",
+    "browser",
+    "helper",
+    "Runtime",
+    "socket",
+    "render",
+    "full-suite"
+  ]
+}

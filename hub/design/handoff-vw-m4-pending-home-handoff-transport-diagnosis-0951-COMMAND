@@ -1,0 +1,15 @@
+Read-only commands used:
+
+sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md
+sed -n '1,260p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/COMMS.md
+sed -n '1,240p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/hub-sync
+git -C /home/user/timeline-hub log/show/ls-tree/status (read-only)
+git -C /home/user/work/app show-ref/show (read-only)
+git -C /home/user/work/agent show-ref/show (read-only)
+stat/cat/rg over the three hub request/result files and hub status files
+
+Result: all three source refs resolve; all three hub merge results are now
+`PENDING owner review`; App processing is evidenced by hub-sync app
+`2026-10-21T09:49:18Z` / commit `27871dc73`, Agent processing by hub-sync agent
+`2026-10-21T09:37:33Z` / commit `6ad7c8af8`. No tests, network/fetch, Git
+mutation, daemon restart, or hub-clone write was performed.
