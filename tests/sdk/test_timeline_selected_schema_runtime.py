@@ -4,6 +4,7 @@ from __future__ import annotations
 import base64
 import copy
 import json
+import os
 import shutil
 from contextlib import contextmanager
 from pathlib import Path
@@ -21,6 +22,8 @@ from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set_element
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._scalar_commands import capture_clip_set_params, capture_track_set
 from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline.sync import TimelineSession
+from astrid.sdk.timeline_checkout import Checkout
 from tests.core import test_project_packs
 from tests.helpers.runtime import use_runtime
 from tests.helpers.selected_param_legacy import ARCHIVE, accepted_params
@@ -100,7 +103,13 @@ def test_pre_enforcement_alias_history_reopens_with_current_authority(tmp_path, 
 
 
 @pytest.fixture
-def retained_pack(configured_project_pack, tmp_path, monkeypatch, request):
+def selected_runtime_env(monkeypatch):
+    monkeypatch.setenv('ASTRID_RUNTIME_CHECKOUT',
+                       os.environ.get('ASTRID_RUNTIME_CHECKOUT', '/home/user/work/runtime'))
+
+
+@pytest.fixture
+def retained_pack(configured_project_pack, selected_runtime_env, tmp_path, monkeypatch, request):
     use_runtime()
     from runtime_protocol.errors import NotFoundError
     from runtime_protocol.service import RuntimeService
@@ -213,6 +222,177 @@ def retained_pack(configured_project_pack, tmp_path, monkeypatch, request):
         yield case
     finally:
         case.service.close()
+
+
+@pytest.fixture
+def http_retained_pack(configured_project_pack, selected_runtime_env, tmp_path, monkeypatch, real_runtime):
+    """A retained selected-PARAM case through the real Runtime HTTP door."""
+    use_runtime()
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    root = tmp_path / 'realm'
+    RealmStore.initialize(root, realm_id='realm').close()
+    service = RuntimeService(root)
+    project = service.create_project({'slug': 'selected-schema-http', 'name': 'Selected schema HTTP'})['id']
+    service.create_timeline(project, 'film', idempotency_key='create-film-http')
+    service.publish_parent_composition(
+        project, 'film', {
+            'project_id': project, 'timeline_id': 'film', 'expected_head': None,
+            'parent_revision_id': 'selected-http-baseline',
+            'parent_composition': {
+                'config': {'tracks': []}, 'registry': {}, 'clips': [], 'occurrences': [],
+            },
+        }, idempotency_key='selected-http-baseline',
+    )
+    service.close()
+    daemon = real_runtime(root, support_root=tmp_path / 'support', authoring_profile='astrid')
+    client = open_client(daemon)
+
+    @contextmanager
+    def connected():
+        yield client
+
+    monkeypatch.setattr(packs, '_open_client', connected)
+    source_root, directory, _ = test_project_packs.seed(project)
+    path = directory / 'element.yaml'
+    definition = yaml.safe_load(path.read_text())
+    definition['schema']['properties']['seed']['maximum'] = 10
+    definition['defaults']['seed'] = 4
+    definition['schema']['required'] = ['unrelated']
+    definition['schema']['additionalProperties'] = False
+    path.write_text(yaml.safe_dump(definition))
+    result = packs.admit_project_pack('realm', project)
+    selected = {key: result['elements'][0]['descriptor'][key]
+                for key in ('id', 'kind', 'packId', 'revision')}
+    document = client.documents.show(result['documentId'], project=project).data
+    pin = {'document_id': document['document_id'], 'version': document['version'],
+           'content_digest': commit._digest(document['content'])}
+    case = SimpleNamespace(client=client, daemon=daemon, restart=real_runtime, project=project, root=root,
+                           source_root=source_root, artifact_root=Path(result['elements'][0]['snapshot']['root']).parents[3],
+                           path=path, definition=definition, selected=selected, pin=pin,
+                           document=document, outbox=tmp_path / 'selected-http-outbox.json')
+    session = TimelineSession.open(project, 'film', client=client, outbox_path=tmp_path / 'seed-http-outbox.json')
+    seed = Checkout.attach(session)
+    session.commit_many([
+        capture_track_create(seed.bundle, 'parent', {'id': 'picture', 'kind': 'visual'}),
+    ], idempotency_key='seed-track-http')
+    seed = Checkout.attach(session)
+    row = {'id': 'effect', 'clipType': selected['id'], 'elementRef': selected,
+           'at': 0, 'hold': 2, 'track': 'picture',
+           'params': {'seed': 4, 'future': {'keep': [None, False, {}]}}}
+    session.commit_many([
+        capture_clip_add(seed.bundle, 'parent', row),
+    ], idempotency_key='seed-selected-http')
+    from astrid.sdk.timeline_elements import _read_selected_param_inputs
+
+    _, schema_inputs, _ = _read_selected_param_inputs(
+        client.timelines, project, 'film', realm='realm', through=session._state()['base'],
+        select=REF, source=pin, element=selected,
+    )
+    selection = capture_clip_set_element(
+        Checkout.attach(session).bundle, REF, element=selected, schema_source=pin,
+        schema_inputs=schema_inputs, realm_id='realm',
+    )
+    base = session._state()['base']
+    accepted = client.timelines.commit(
+        project, 'film', {
+            'api_version': 1, 'project_id': project, 'timeline_id': 'film',
+            'base_revision_id': base['revision_id'], 'base_publication_id': base['publication_id'],
+            'commands': [selection],
+        }, idempotency_key='select-effect-http',
+    )
+    assert accepted.ok, accepted.as_dict()
+    yield case
+
+
+def test_http_attached_selected_param_retains_original_pin_after_v2_removal_restart(
+        http_retained_pack, monkeypatch):
+    """The new attached setter uses the retained P1 bytes through a real door."""
+    from runtime_protocol.server import RuntimeHandler
+
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    case = http_retained_pack
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    session = TimelineSession.open(case.project, 'film', client=case.client,
+                                    outbox_path=case.outbox)
+    attached = Checkout.attach(session)
+    original = copy.deepcopy(attached.clip(REF).data)
+    before = case.client.timelines.history(case.project, 'film', limit=1).data['head']
+    attached.clip(REF).set(seed=8)
+    durable = json.loads(case.outbox.read_text())
+    assert durable['flight'] is None
+    assert durable['pending'][0]['args']['schema_source'] == case.pin
+    assert case.client.timelines.history(case.project, 'film', limit=1).data['head'] == before
+
+    case.definition['schema']['properties']['seed']['maximum'] = 20
+    case.path.write_text(yaml.safe_dump(case.definition))
+    packs.admit_project_pack('realm', case.project)
+    current = case.client.documents.show(case.document['document_id'], project=case.project).data
+    case.client.documents.update(
+        case.document['document_id'], project=case.project,
+        content={**current['content'], 'admissions': []}, expected_version=current['version'],
+        idempotency_key='remove-current-http-selection',
+    )
+    shutil.rmtree(case.source_root)
+    shutil.rmtree(case.artifact_root)
+
+    observed = []
+    lost = {'selected-http-lost-ack'}
+    original_send = RuntimeHandler._send
+
+    def send(handler, status, payload=None, **kwargs):
+        if (handler.command == 'POST' and handler.path.endswith('/commit')
+                and getattr(handler, '_defer_response', False)):
+            key = handler.headers['Idempotency-Key']
+            observed.append({'body': handler._prefetched_body, 'key': key})
+            if key in lost:
+                lost.remove(key)
+                raise ConnectionError('selected PARAM lost ACK after durable acceptance')
+        return original_send(handler, status, payload, **kwargs)
+
+    monkeypatch.setattr(RuntimeHandler, '_send', send)
+    with pytest.raises(WorkspaceClientError):
+        attached.publish('Retain the selected original', idempotency_key='selected-http-lost-ack')
+    first = copy.deepcopy(observed[-1])
+    flight = json.loads(case.outbox.read_text())['flight']
+    assert flight['key'] == first['key'] == 'selected-http-lost-ack'
+    assert flight['body'].encode() == first['body']
+    assert json.loads(flight['body'])['rationale'] == 'Retain the selected original'
+
+    port = case.daemon.httpd.server_port
+    case.daemon.stop()
+    daemon = case.daemon = case.restart(
+        case.root, support_root=case.root.parent / 'support', port=port, authoring_profile='astrid',
+    )
+    loaded_client = open_client(daemon)
+    loaded = Checkout.attach(TimelineSession.open(
+        case.project, 'film', client=loaded_client, outbox_path=case.outbox,
+    ))
+    retried = loaded.publish()
+    assert observed[-1] == first
+    assert retried['receipt']['idempotency_key'] == first['key']
+    assert loaded.clip(REF).data['params']['seed'] == 8
+
+    raw = raw_params(case, {'seed': 16})
+    head = loaded.session._state()['base']
+    refused = loaded_client.timelines.commit(
+        case.project, 'film', {
+            'api_version': 1, 'project_id': case.project, 'timeline_id': 'film',
+            'base_revision_id': head['revision_id'], 'base_publication_id': head['publication_id'],
+            'commands': [raw],
+        }, idempotency_key='selected-http-invalid-16',
+    )
+    assert not refused.ok
+    assert '10' in refused.error.message or '16' in refused.error.message
+
+    undone = loaded.undo([retried['receipt']['receipt_id']])
+    assert loaded.clip(REF).data == original
+    assert undone['data']['accepted_revision_id']
 
 
 def inverse(publication):
