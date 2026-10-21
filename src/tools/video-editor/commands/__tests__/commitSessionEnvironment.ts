@@ -23,6 +23,7 @@ export const scope = { projectId, timelineId, realmId: 'realm-1', actorId: 'acto
 const h0 = { revisionId: 'r0', publicationId: 'p0' };
 type EnvironmentOptions = {
   validateCommitCommands?: (commands: readonly EditCommand[]) => void;
+  recoverBootstrap?: (ownerId: string) => Promise<TimelineCommandBasis>;
 };
 const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
 const deferred = () => {
@@ -166,7 +167,7 @@ export async function environment(initialDocument = document(), options: Environ
   const mount = (basis = initial) => createTimelineCommandSession({ initial: basis, scope, outboxes,
     loadLatest: () => provider.loadTimelineCommandBasis(timelineId),
     send: (request, key) => provider.commitTimeline(request, key), preview: previews,
-    project, changed: () => {},
+    project, changed: () => {}, recoverBootstrap: options.recoverBootstrap,
   });
   const move = (session: Awaited<ReturnType<typeof mount>>, on: number) => submitClipMove(captureClipMove(session.port, current, 'x'), on);
   return { provider, transport, initial, outboxes, factory, current: () => current, calls, projected, project, mount, move, previews,
