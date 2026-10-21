@@ -19,6 +19,8 @@ from test_timeline_commit_integration import agent  # noqa: F401 (shared fixture
 
 pytestmark = pytest.mark.integration
 
+_ORDERED_TARGET = "com.example.compiler-canary"
+
 
 def _head(service, project):
     value = service.get_project_timeline(project, "main")
@@ -33,15 +35,50 @@ def _document(service, project, revision=None):
 
 
 def _body(project, base, command):
+    commands = command if isinstance(command, list) else [command]
     return {
         "api_version": 1,
         "project_id": project,
         "timeline_id": "main",
         "base_revision_id": base["revision_id"],
         "base_publication_id": base["publication_id"],
-        "commands": [copy.deepcopy(command)],
+        "commands": copy.deepcopy(commands),
         "source": {"via": "python"},
     }
+
+
+def _project_data_write(key, value, *, target):
+    return {
+        "schema_version": 1,
+        "op": "project-data.write",
+        "version": "1",
+        "select": "parent",
+        "args": {"target": target, "key": key, "value": copy.deepcopy(value), "mode": "replace"},
+    }
+
+
+def _project_data_remove(key, *, target):
+    return {
+        "schema_version": 1,
+        "op": "project-data.write",
+        "version": "1",
+        "select": "parent",
+        "args": {"target": target, "key": key, "mode": "remove"},
+    }
+
+
+def _inverse(publication):
+    return {
+        "schema_version": 1,
+        "op": "timeline.inverse",
+        "version": "1",
+        "select": None,
+        "args": {"publications": [publication]},
+    }
+
+
+def _project_app(document):
+    return document["parent_revision"]["payload"]["config"].get("app")
 
 
 def _commit(service, project, body, key):
@@ -197,3 +234,107 @@ def test_actual_provider_preserves_original_owned_unplaced_reference_contract(
     except Exception:
         service.close()
         raise
+
+
+def test_actual_provider_removes_ordered_project_data_and_retries_inverse_redo(
+        tmp_path, agent, monkeypatch):
+    """Exercise one ordered project-data remove through the normal Runtime API."""
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    project = None
+    try:
+        provider = agent.provider()
+        service.register_timeline_commit_provider(provider)
+        project = service.create_project({"slug": "ordered-data", "name": "Ordered data"})["id"]
+        service.create_timeline(project, "main", idempotency_key="ordered-data-main")
+
+        opaque_before = {"literal": [None, False, 0], "future": {"kept": True}}
+        opaque_after = {"literal": {"nested": [None, "opaque"]}}
+        seed = [
+            _project_data_write("keep", opaque_before, target="before"),
+            _project_data_write("gone", None, target=_ORDERED_TARGET),
+            _project_data_write("keep", opaque_after, target="after"),
+        ]
+        seed_body = _body(project, _head(service, project), seed)
+        seeded = _commit(service, project, seed_body, "ordered-data-seed")
+        original = copy.deepcopy(seeded["data"]["canonical_document"])
+        original_app = _project_app(original)
+        assert list(original_app) == ["before", _ORDERED_TARGET, "after"]
+        assert original_app == {
+            "before": {"keep": opaque_before},
+            _ORDERED_TARGET: {"gone": None},
+            "after": {"keep": opaque_after},
+        }
+
+        remove = _project_data_remove("gone", target=_ORDERED_TARGET)
+        remove_body = _body(project, _head(service, project), remove)
+        accepted = _commit(service, project, remove_body, "ordered-data-remove")
+        removed = accepted["data"]["canonical_document"]
+        assert accepted["receipt"]["result"] == accepted["data"]
+        assert _project_app(removed) == {
+            "before": {"keep": opaque_before},
+            "after": {"keep": opaque_after},
+        }
+        assert list(_project_app(removed)) == ["before", "after"]
+        record = service.list_timeline_commits(
+            project, "main", authorize=lambda: None)["items"][-1]["records"]["commands"][0]
+        assert record["command"] == remove
+        assert record["writes"] == [
+            {
+                "ref": "parent",
+                "path": ["config", "app", _ORDERED_TARGET, "gone"],
+                "before": {"state": "present", "value": None},
+                "after": {"state": "absent"},
+            },
+            {
+                "ref": "parent",
+                "path": ["config", "app", _ORDERED_TARGET],
+                "before": {"state": "present", "value": {}},
+                "after": {"state": "absent"},
+                "insertion_order": ["before", _ORDERED_TARGET, "after"],
+            },
+        ]
+
+        service.close()
+        service = None
+        restarted = RuntimeService(root)
+        try:
+            retry_provider = agent.provider()
+            restarted.register_timeline_commit_provider(retry_provider)
+            before_retry = tuple(restarted.store.conn.iterdump())
+            before_history = restarted.list_timeline_commits(
+                project, "main", authorize=lambda: None)["items"]
+            with monkeypatch.context() as retry:
+                retry.setattr(type(retry_provider), "commit",
+                              lambda *_args: pytest.fail("exact retry re-executed Agent provider"))
+                assert _commit(restarted, project, remove_body, "ordered-data-remove") == accepted
+            assert tuple(restarted.store.conn.iterdump()) == before_retry
+            assert restarted.list_timeline_commits(
+                project, "main", authorize=lambda: None)["items"] == before_history
+
+            undone = _commit(
+                restarted, project,
+                _body(project, _head(restarted, project), _inverse(accepted["receipt"]["receipt_id"])),
+                "ordered-data-undo",
+            )
+            restored = undone["data"]["canonical_document"]
+            assert _project_app(restored) == original_app
+            assert list(_project_app(restored)) == ["before", _ORDERED_TARGET, "after"]
+            assert restored["parent_revision"]["payload"] == original["parent_revision"]["payload"]
+
+            redone = _commit(
+                restarted, project,
+                _body(project, _head(restarted, project), _inverse(undone["receipt"]["receipt_id"])),
+                "ordered-data-redo",
+            )
+            redone_app = _project_app(redone["data"]["canonical_document"])
+            assert redone_app == _project_app(removed)
+            assert list(redone_app) == ["before", "after"]
+            assert redone["data"]["canonical_document"]["parent_revision"]["payload"] == \
+                removed["parent_revision"]["payload"]
+        finally:
+            restarted.close()
+    finally:
+        if service is not None:
+            service.close()
