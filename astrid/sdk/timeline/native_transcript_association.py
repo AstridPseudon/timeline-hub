@@ -24,22 +24,35 @@ REFERENCES_SCHEMA = "media.transcript.references/v1"
 _MEDIA_ID = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
+_CARRIER_PREFIX = ("config", "bundle")
+_LEGACY_FIELDS = ("transcriptReferences", "sourceItemsBySchemaRef")
+
+
 def _source_paths(state):
-    """Return the canonical parent-payload paths for the two source planes."""
+    """Return the one persisted App bundle path for the two source planes.
+
+    The parent-level spellings were only used by the rejected source prototype.
+    They are refused here rather than treated as a migration source or a second
+    authority alongside the normal ``config.bundle`` carrier.
+    """
     parent = state.bundle["parent"]
-    locations = []
     for prefix in ((), ("config",), ("bundle",)):
         node = parent
         for token in prefix:
             node = node.get(token) if isinstance(node, Mapping) else None
-        if not isinstance(node, Mapping):
-            continue
-        if any(key in node for key in ("transcriptReferences", "sourceItemsBySchemaRef")):
-            locations.append(prefix)
-    if len(locations) > 1:
-        raise CommandError("transcript source planes have ambiguous parent ownership",
+        if isinstance(node, Mapping) and any(key in node for key in _LEGACY_FIELDS):
+            raise CommandError("transcript source planes must use parent.config.bundle",
+                               kind="unsupported_shape")
+    config = parent.get("config")
+    if not isinstance(config, Mapping):
+        raise CommandError("parent config must be an object", kind="unsupported_shape")
+    carrier = config.get("bundle")
+    if carrier is not None and not isinstance(carrier, Mapping):
+        raise CommandError("parent.config.bundle must be an object", kind="unsupported_shape")
+    if isinstance(carrier, Mapping) and "sourceItemsBySchemaRef" in carrier:
+        raise CommandError("transcript source items must use persisted itemsBySchemaRef",
                            kind="unsupported_shape")
-    return locations[0] if locations else ()
+    return _CARRIER_PREFIX
 
 
 def _path(prefix, field):
@@ -56,7 +69,7 @@ def source_item_selection(state, owner, members=()):
     if owner != "parent":
         raise CommandError("transcript source selection requires parent ownership")
     prefix = _source_paths(state)
-    value = state.get("parent", _path(prefix, "sourceItemsBySchemaRef"))
+    value = state.get("parent", _path(prefix, "itemsBySchemaRef"))
     if value["state"] == "absent":
         rows = []
     elif value["state"] == "present" and isinstance(value["value"], dict):
@@ -232,7 +245,7 @@ def associate(ctx, command):
     if content["media_id"] != args["media_id"] or content["source_id"] != args["source_id"]:
         raise CommandError("transcript source owner differs from command", kind="invalid_source")
     prefix = _source_paths(ctx.state)
-    refs_path, items_path = _path(prefix, "transcriptReferences"), _path(prefix, "sourceItemsBySchemaRef")
+    refs_path, items_path = _path(prefix, "transcriptReferences"), _path(prefix, "itemsBySchemaRef")
     refs_state, items_state = ctx.state.get("parent", refs_path), ctx.state.get("parent", items_path)
     refs = {"schema": REFERENCES_SCHEMA, "associations": []} if refs_state["state"] == "absent" else refs_state.get("value")
     if refs is None:
@@ -297,6 +310,7 @@ def associate(ctx, command):
     next_refs["associations"].append({"assetId": asset_id, "documentId": new_pin["document_id"]})
     next_map = copy.deepcopy(source_map)
     next_map[TRANSCRIPT_SCHEMA_REF] = retained + projected
+    ctx.object("parent", list(prefix))
     ctx.write("parent", refs_path, next_refs)
     ctx.write("parent", items_path, next_map)
 
