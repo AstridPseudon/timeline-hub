@@ -2,16 +2,17 @@ import { randomUUID } from 'node:crypto';
 import type { Page } from '@playwright/test';
 import {
   APP_ENTRY_ROUTE,
-  currentHead,
   expectConnected,
   firstTrackName,
-  revisionBody,
   type DirectHarness,
 } from './app.ts';
 import {
   compositionPublication,
 } from './harness.ts';
-import { SCENE_PHASE_EXTENSION_ID } from '../../../../src/tools/video-editor/dev/scene-phase-markers/extension.ts';
+import {
+  SCENE_PHASE_EXTENSION_ID,
+  scenePhaseShotId,
+} from '../../../../src/tools/video-editor/dev/scene-phase-markers/extension.ts';
 import {
   TRANSCRIPT_CAPTION_TRACK_ID,
   transcriptCaptionClipId,
@@ -23,14 +24,20 @@ export const PRODUCER_OWNERSHIP_TRANSCRIPT_SOURCE_IDS = [
   'transcript-source:producer-ownership-speech:segment:producer-ownership-missing',
 ] as const;
 
+export const PRODUCER_OWNERSHIP_TRANSCRIPT_CARRIER_ID = 'producer-ownership-speech-carrier';
+
+function transcriptOccurrenceId(sourceId: string): string {
+  return `${sourceId}@${PRODUCER_OWNERSHIP_TRANSCRIPT_CARRIER_ID}`;
+}
+
 export const PRODUCER_OWNERSHIP_SCENE_MARKERS = [
   { id: 'producer-ownership-marker-a', time: 1 },
   { id: 'producer-ownership-marker-b', time: 6 },
 ] as const;
 
 export const PRODUCER_OWNERSHIP_PROTECTED_IDS = {
-  transcriptForeign: transcriptCaptionClipId(PRODUCER_OWNERSHIP_TRANSCRIPT_SOURCE_IDS[0]),
-  transcriptUser: transcriptCaptionClipId(PRODUCER_OWNERSHIP_TRANSCRIPT_SOURCE_IDS[1]),
+  transcriptForeign: transcriptCaptionClipId(transcriptOccurrenceId(PRODUCER_OWNERSHIP_TRANSCRIPT_SOURCE_IDS[0])),
+  transcriptUser: transcriptCaptionClipId(transcriptOccurrenceId(PRODUCER_OWNERSHIP_TRANSCRIPT_SOURCE_IDS[1])),
   sceneForeign: 'producer-ownership-scene-foreign',
   sceneUser: 'producer-ownership-scene-user',
 } as const;
@@ -110,7 +117,7 @@ export async function seedProducerOwnershipFixture(harness: DirectHarness): Prom
     app: { userAuthored: true, opaque: { nullable: null, ordered: [false, 0, ''] } },
   };
   const speechClip = {
-    id: 'producer-ownership-speech-carrier',
+    id: PRODUCER_OWNERSHIP_TRANSCRIPT_CARRIER_ID,
     at: 8,
     track: 'V1',
     clipType: 'media',
@@ -154,8 +161,8 @@ export async function seedProducerOwnershipFixture(harness: DirectHarness): Prom
     projectSlug: projectData.slug,
     timelineId,
     headRevisionId: published.body.data.new_head,
-    transcriptMissingClipId: transcriptCaptionClipId(PRODUCER_OWNERSHIP_TRANSCRIPT_SOURCE_IDS[2]),
-    sceneFreshClipIds: PRODUCER_OWNERSHIP_SCENE_MARKERS.map((marker) => `scene-phase-shot-${marker.id}`),
+    transcriptMissingClipId: transcriptCaptionClipId(transcriptOccurrenceId(PRODUCER_OWNERSHIP_TRANSCRIPT_SOURCE_IDS[2])),
+    sceneFreshClipIds: PRODUCER_OWNERSHIP_SCENE_MARKERS.map((marker) => scenePhaseShotId(marker.id)),
     protectedClipIds: Object.values(PRODUCER_OWNERSHIP_PROTECTED_IDS),
   };
 }
@@ -167,8 +174,14 @@ export async function openProducerOwnershipTimeline(page: Page, harness: DirectH
 }
 
 export async function producerOwnershipRevision(harness: DirectHarness, seed: ProducerOwnershipSeed): Promise<ProducerOwnershipRevision> {
-  const head = await currentHead(harness);
-  return { head, body: await revisionBody(harness, head) };
+  const revisionsPath = `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions`;
+  const timelines = await harness.runtimeJson('GET', `${revisionsPath}?limit=1`);
+  if (timelines.status !== 200) throw new Error(`read producer ownership head: ${timelines.status} ${JSON.stringify(timelines.body)}`);
+  const head = timelines.body.items.find((item: any) => item.is_current_head)?.revision_id;
+  if (typeof head !== 'string') throw new Error(`producer ownership timeline has no current head: ${JSON.stringify(timelines.body)}`);
+  const revision = await harness.runtimeJson('GET', `${revisionsPath}/${head}`);
+  if (revision.status !== 200) throw new Error(`read producer ownership revision: ${revision.status} ${JSON.stringify(revision.body)}`);
+  return { head, body: revision.body };
 }
 
 function parentConfig(body: Record<string, any>): Record<string, any> {
@@ -208,6 +221,9 @@ export function submittedTargets(value: unknown): string[] {
 export interface CommitObservation {
   body: Record<string, any>;
   rawBody: string;
+  key: string | undefined;
+  status: number | null;
+  response: Record<string, any> | null;
 }
 
 export function observeProducerCommits(page: Page) {
@@ -215,12 +231,55 @@ export function observeProducerCommits(page: Page) {
   const listener = (request: import('@playwright/test').Request) => {
     if (request.method() !== 'POST' || !new URL(request.url()).pathname.endsWith('/commit')) return;
     const rawBody = request.postData() ?? '{}';
-    requests.push({ body: JSON.parse(rawBody) as Record<string, any>, rawBody });
+    requests.push({
+      body: JSON.parse(rawBody) as Record<string, any>,
+      rawBody,
+      key: request.headers()['idempotency-key'],
+      status: null,
+      response: null,
+    });
   };
   page.on('request', listener);
   return {
     requests,
     dispose: () => page.off('request', listener),
+  };
+}
+
+/** Let the real Runtime accept one commit, then drop only the browser acknowledgement. */
+export async function discardFirstAcceptedCommitAcknowledgement(page: Page, requests: CommitObservation[]) {
+  const commits = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
+  let first = true;
+  let resolveAccepted!: () => void;
+  let rejectAccepted!: (error: unknown) => void;
+  const accepted = new Promise<void>((resolve, reject) => {
+    resolveAccepted = resolve;
+    rejectAccepted = reject;
+  });
+  const intercept = async (route: import('@playwright/test').Route) => {
+    if (route.request().method() !== 'POST' || !first) return route.fallback();
+    first = false;
+    try {
+      const response = await route.fetch({ maxRetries: 0 });
+      const body = await response.json() as Record<string, any>;
+      const observation = requests.at(-1);
+      if (!observation) throw new Error('lost-ack interceptor did not observe its commit request');
+      observation.status = response.status();
+      observation.response = body;
+      const status = body.data?.status;
+      if (response.status() !== 200 || (status !== 'accepted' && status !== 'rebased')) {
+        throw new Error(`lost-ack route received non-accepted Runtime response: ${response.status()} ${JSON.stringify(body)}`);
+      }
+      await route.abort('connectionreset');
+      resolveAccepted();
+    } catch (error) {
+      rejectAccepted(error);
+    }
+  };
+  await page.route(commits, intercept);
+  return {
+    accepted,
+    dispose: () => page.unroute(commits, intercept),
   };
 }
 
