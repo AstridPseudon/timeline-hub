@@ -53,6 +53,27 @@ export const MAIN95_COMPOSITION = Object.freeze({
   playwright: '1.60.0',
 });
 
+// This is the existing r6 private13 lease, not a runner-created graph or
+// readiness format. Keep the lease and READY records bound to their owned
+// paths and independently verified bytes.
+export const MAIN95_PRIVATE13 = Object.freeze({
+  root: '/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned',
+  graph: '/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules',
+  ready: '/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/READY',
+  lease: '/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/LEASE',
+  readySha256: 'sha256:91f9c2b4da9b7218926f54713d8fdfe9e0abd9db6d01282c9da7113d45c2f52a',
+  leaseSha256: 'sha256:88b17b5725e4c941eca0e3a202d1a9cc680818f65240128dad3a5069e280c75b',
+  packageSha256: 'a4dc9fcc02b1769ba8472f551349f7875774b07ad0830c7260eb88d2db8292fd',
+  lockSha256: '7f1bfcea48cef38d4c6f1163aa34190b8d5e71c9f08c7378e01a962d6696fc14',
+  compositionRegularFiles: '77',
+  playwright: '1.60.0',
+  chromium: '141.0.7390.37',
+  environmentSuite: 'e2e-environment-smoke-private13-normal-r6-tree-d6f1e417-graph-r6-chrome141-e2e-integration',
+  environmentResult: 'app-m3-private13-normal-lock-install-units-r6-e2e-environment-smoke-private13-normal-r6-tree-d6f1e417-graph-r6-chrome141-e2e-integration-1021014246-28404',
+  wrapperSha256: '9b395a9687c9c4e83905114a0c35ce5255d71cdd3d20f7fab2f38769268f539e',
+  childSha256: '2f5483c6c8d924905c686d04cba9aad8bb32ce6037a46afe4c5cb657b46be181',
+});
+
 export const SETTINGS_CASE = 'M2 real embedded SettingsAutoDisable: native scalar field change, raw settings preservation, reload, Runtime undo, and zero legacy';
 export const MAIN95_BROWSER = Object.freeze({
   executable: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
@@ -169,15 +190,20 @@ function checkManifest(runtime) {
   return { sha256: sha256File(file), artifactCount: Object.keys(artifacts).length };
 }
 
+function archiveMembers(file) {
+  const members = execFileSync('tar', ['-tzf', file], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim().split('\n')
+    .filter((member) => member && !member.endsWith('/'));
+  if (members.length !== MAIN95_COMPOSITION.fileCount || new Set(members).size !== members.length) fail('Composition archive must contain exactly 77 regular files');
+  if (members.some((member) => !member.startsWith('package/') || member.slice('package/'.length).split('/').includes('..'))) fail('Composition archive contains an unsafe member');
+  return members;
+}
+
 function compositionArchive(root, label, relative) {
   const file = path.join(root, relative, MAIN95_COMPOSITION.archive);
   if (!existsSync(file)) fail(`${label} Composition archive is missing: ${file}`);
   if (sha256File(file) !== MAIN95_COMPOSITION.sha256) fail(`${label} Composition archive is not the approved 0.0.13 artifact`);
-  const members = execFileSync('tar', ['-tzf', file], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim().split('\n')
-    .filter((member) => member && !member.endsWith('/'));
-  if (members.length !== MAIN95_COMPOSITION.fileCount || new Set(members).size !== members.length) fail(`${label} Composition archive must contain exactly 77 regular files`);
-  if (members.some((member) => !member.startsWith('package/') || member.slice('package/'.length).split('/').includes('..'))) fail(`${label} Composition archive contains an unsafe member`);
-  return { sha256: MAIN95_COMPOSITION.sha256, fileCount: members.length };
+  const members = archiveMembers(file);
+  return { file, sha256: MAIN95_COMPOSITION.sha256, fileCount: members.length };
 }
 
 function runNormalVendorCheck(input) {
@@ -255,18 +281,98 @@ function countRegularFiles(root) {
   return count;
 }
 
-function checkPrivateGraph(input) {
+function installedFiles(root, prefix = '') {
+  const files = [];
+  for (const entry of readdirSync(path.join(root, prefix), { withFileTypes: true })) {
+    const relative = path.join(prefix, entry.name);
+    if (entry.isDirectory()) files.push(...installedFiles(root, relative));
+    else if (entry.isFile()) files.push(relative);
+  }
+  return files.sort();
+}
+
+export function parsePrivate13Lease(text) {
+  const record = {};
+  for (const line of text.split(/\r?\n/).filter(Boolean)) {
+    const separator = line.indexOf('=');
+    if (separator <= 0 || separator !== line.lastIndexOf('=')) fail('private13 LEASE record is not a simple key/value record');
+    const key = line.slice(0, separator);
+    if (record[key] !== undefined) fail(`private13 LEASE record repeats ${key}`);
+    record[key] = line.slice(separator + 1);
+  }
+  return record;
+}
+
+export function validatePrivate13ReadyRecord(text, paths = MAIN95_PRIVATE13) {
+  if (`sha256:${createHash('sha256').update(text).digest('hex')}` !== paths.readySha256) fail('private13 READY record bytes changed');
+  return text;
+}
+
+export function validatePrivate13Lease(text, paths = MAIN95_PRIVATE13) {
+  const record = parsePrivate13Lease(text);
+  const expected = {
+    owner: 'app-m3-private13-normal-lock-install-units-r6',
+    purpose: 'reusable normal npm-ci private13 graph for native/prompt/public013 successors',
+    status: 'READY',
+    graph_root: paths.root,
+    node_modules: paths.graph,
+    ready: paths.ready,
+    package_sha256: paths.packageSha256,
+    lock_sha256: paths.lockSha256,
+    composition_sha256: MAIN95_COMPOSITION.sha256.slice('sha256:'.length),
+    composition_regular_files: paths.compositionRegularFiles,
+    playwright: paths.playwright,
+    chromium: paths.chromium,
+    environment_suite: paths.environmentSuite,
+    environment_result: paths.environmentResult,
+    wrapper_sha256: paths.wrapperSha256,
+    child_sha256: paths.childSha256,
+  };
+  const keys = Object.keys(record).sort();
+  const expectedKeys = Object.keys(expected).sort();
+  if (JSON.stringify(keys) !== JSON.stringify(expectedKeys)) fail('private13 LEASE record fields changed');
+  for (const [key, value] of Object.entries(expected)) {
+    if (record[key] !== value) fail(`private13 LEASE record ${key} is not the protected value`);
+  }
+  return Object.freeze(record);
+}
+
+export function compareInstalledComposition(archive, composition) {
+  const members = archiveMembers(archive);
+  const expectedFiles = members.map((member) => member.slice('package/'.length)).sort();
+  const actualFiles = installedFiles(composition);
+  if (JSON.stringify(actualFiles) !== JSON.stringify(expectedFiles)) fail('private Composition installed files do not match all 77 archive members');
+  for (const member of members) {
+    const installed = path.join(composition, member.slice('package/'.length));
+    const archived = execFileSync('tar', ['-xOf', archive, member], { stdio: ['ignore', 'pipe', 'pipe'] });
+    if (!readFileSync(installed).equals(archived)) fail(`private Composition installed bytes changed: ${member}`);
+  }
+  return { sha256: MAIN95_COMPOSITION.sha256, fileCount: members.length };
+}
+
+function validatePrivate13Ready(file) {
+  if (file !== MAIN95_PRIVATE13.ready) fail(`private graph READY path is not protected: ${file}`);
+  validatePrivate13ReadyRecord(readFileSync(file, 'utf8'));
+}
+
+function checkPrivateGraph(input, archive) {
   const graph = input.privateGraph;
+  if (graph !== MAIN95_PRIVATE13.graph) fail(`private graph is not the protected r6 graph: ${graph}`);
   for (const shared of SHARED_ROOTS) {
     if (graph === shared || graph.startsWith(shared)) fail(`private graph resolves into shared dependency storage: ${graph}`);
   }
   if (lstatSync(graph).isSymbolicLink()) fail('private graph root must not be a symlink');
-  const ready = readFileSync(input.privateReady, 'utf8');
-  if (!/(?:all 77 archive files|77\/77 regular archive members)/.test(ready)) fail('private graph READY record does not certify the 77-file Composition archive');
+  if (input.privateLease !== MAIN95_PRIVATE13.lease) fail(`private graph LEASE path is not protected: ${input.privateLease}`);
+  validatePrivate13Ready(input.privateReady);
+  if (sha256File(input.privateLease) !== MAIN95_PRIVATE13.leaseSha256) fail('private graph LEASE record bytes changed');
+  validatePrivate13Lease(readFileSync(input.privateLease, 'utf8'));
+  if (sha256File(path.join(input.app, 'package.json')) !== MAIN95_PRIVATE13.packageSha256) fail('private graph source package bytes changed');
+  if (sha256File(path.join(input.app, 'package-lock.json')) !== MAIN95_PRIVATE13.lockSha256) fail('private graph source lock bytes changed');
   const composition = path.join(graph, '@banodoco/timeline-composition');
   const compositionPackage = jsonFile(path.join(composition, 'package.json'));
   if (compositionPackage.version !== MAIN95_COMPOSITION.version) fail(`private Composition version is ${compositionPackage.version}`);
   if (countRegularFiles(composition) !== MAIN95_COMPOSITION.fileCount) fail('private Composition graph is not the all-77-file artifact');
+  compareInstalledComposition(archive, composition);
   for (const [name, version] of [['vite', MAIN95_COMPOSITION.vite], ['@playwright/test', MAIN95_COMPOSITION.playwright]]) {
     const packageJson = jsonFile(path.join(graph, name, 'package.json'));
     if (packageJson.version !== version) fail(`private ${name} is ${packageJson.version}, expected ${version}`);
@@ -303,14 +409,16 @@ export function readMain95Inputs(env = process.env, appRoot = process.cwd()) {
   const browsersPath = requiredPath(env, 'PLAYWRIGHT_BROWSERS_PATH');
   const privateGraph = requiredPath(env, 'TIMELINE_MAIN95_PROMPT_PRIVATE13_NODE_MODULES');
   const privateReady = required(env, 'TIMELINE_MAIN95_PROMPT_PRIVATE13_READY');
+  const privateLease = required(env, 'TIMELINE_MAIN95_PROMPT_PRIVATE13_LEASE');
   if (!path.isAbsolute(privateReady) || !existsSync(privateReady)) fail(`TIMELINE_MAIN95_PROMPT_PRIVATE13_READY does not name an existing absolute file`);
+  if (!path.isAbsolute(privateLease) || !existsSync(privateLease)) fail(`TIMELINE_MAIN95_PROMPT_PRIVATE13_LEASE does not name an existing absolute file`);
   if (env.ASTRID_PUBLIC_CHECKOUT || env.ASTRID_APP_DIRECT_DIST) fail('public checkout and direct dist overrides are forbidden');
   if ((env.NODE_OPTIONS ?? '').split(/\s+/).some((value) => ['--require', '--import', '--loader'].includes(value) || value.startsWith('--require=') || value.startsWith('--import=') || value.startsWith('--loader='))) fail('NODE_OPTIONS preload/loader overrides are forbidden');
   if (browser !== MAIN95_BROWSER.executable || sha256File(browser) !== MAIN95_BROWSER.sha256) fail('PLAYWRIGHT_CHROMIUM_EXECUTABLE is not the frozen Chromium 141 binary');
   if (browsersPath !== '/opt/pw-browsers') fail(`PLAYWRIGHT_BROWSERS_PATH must be /opt/pw-browsers, got ${browsersPath}`);
   const browserVersion = execFileSync(browser, ['--version'], { encoding: 'utf8' }).trim();
   if (!MAIN95_BROWSER.version.test(browserVersion)) fail(`Chromium version is ${browserVersion}, expected Chromium 141.0.7390.37`);
-  return Object.freeze({ app, appTree, agent, agentSha, vendor, runtime, runtimeSha, runtimeProducer, agentPython, runtimePython, browser, browsersPath, privateGraph, privateReady, runnerSha256, env });
+  return Object.freeze({ app, appTree, agent, agentSha, vendor, runtime, runtimeSha, runtimeProducer, agentPython, runtimePython, browser, browsersPath, privateGraph, privateReady, privateLease, runnerSha256, env });
 }
 
 export function checkMain95Sources(input, { vendor = true } = {}) {
@@ -331,12 +439,12 @@ export function checkMain95Sources(input, { vendor = true } = {}) {
   metadata(input.app, 'App', APP_METADATA);
   metadata(input.agent, 'Agent', AGENT_METADATA);
   checkManifest(input.runtimeProducer);
-  compositionArchive(input.app, 'App', 'vendor/artifacts');
+  const appArchive = compositionArchive(input.app, 'App', 'vendor/artifacts');
   compositionArchive(input.agent, 'Agent', 'remotion/artifacts');
   const vendorModule = path.join(input.vendor, MAIN95_VENDOR.module);
   if (sha256File(vendorModule) !== `sha256:${MAIN95_VENDOR.moduleSha256}`) fail('vendor source module bytes changed');
   checkPublicVendor(input.app);
-  checkPrivateGraph(input);
+  checkPrivateGraph(input, appArchive.file);
   checkPythonImports(input);
   if (vendor) runNormalVendorCheck(input);
   return Object.freeze({ appTree: input.appTree, agent: MAIN95_AGENT, runtime: MAIN95_RUNTIME });
@@ -367,12 +475,23 @@ function swapAppNodeModules(app, overlay) {
   };
 }
 
+export function resolverTestCount(output) {
+  const matches = [...output.matchAll(/^# tests (\d+)$/gm)];
+  if (matches.length !== 1) fail('private Node/Vite resolver output has no unique test count');
+  const count = Number(matches[0][1]);
+  if (!Number.isInteger(count) || count < 1) fail('private Node/Vite resolver ran zero tests');
+  return count;
+}
+
 function runResolver(input) {
   const result = spawnSync(process.execPath, ['--test', 'config/vite/timelineCompositionPackage.test.mjs'], {
-    cwd: input.app, env: input.env, stdio: 'inherit', shell: false,
+    cwd: input.app, env: input.env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], shell: false,
   });
   if (result.error) fail(`private Node/Vite resolver check could not start: ${result.error.message}`);
-  if (result.status !== 0) fail(`private Node/Vite resolver check failed (exit ${result.status ?? 'signal'})`);
+  const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+  if (result.status !== 0) fail(`private Node/Vite resolver check failed (exit ${result.status ?? 'signal'}): ${output}`);
+  const count = resolverTestCount(output);
+  console.log(`[main95-prompt-settings] resolver tests passed: ${count}`);
 }
 
 function runPlaywright(input, outputDir) {
