@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T10:15:54Z | dispatcher heartbeat 14s | live 4 (sol 0, luna 4, other 0) | busy30 25 | status age 8m -->
+<!-- agent | 2026-10-21T10:22:16Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 33 | status age 15m -->
 # agent — 2026-10-21 10:06 UTC
 Milestone: M2 active; M1 recorded. Public Runtime 0.2.14 / producer95 / all76 and Composition 0.0.13 /9412/all77 remain current. Future operations stay dormant.
 Integrated: Agent fbba7c5a2. New WC8 parameter slice c393 merged on c4b: only three reviewed paths, exact final HTTP24222 PASS1 in4.45s and111 direct tests. Prior presence/rename b476, types a9, catalog preservation afe, existing outbox566, font/color b8 and curves c4b retained. Whole WC8 and broad D09 remain OPEN.
