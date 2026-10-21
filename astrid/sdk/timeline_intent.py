@@ -6,7 +6,7 @@ all writes target ``app.astrid`` and leave unrelated metadata intact.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, Iterable
+from typing import Any
 
 
 def _legacy(clip: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -136,7 +136,10 @@ def set_gap_after(clip,value): _set(clip,"gap_after_s",None if value is None els
 def beat_sources(clip,kind="beat"):
     value=_get(clip,"beats")
     if isinstance(value,Mapping):
-        key="downbeats" if kind=="downbeat" else "hits" if kind=="hit" else "beats"
+        if kind == "downbeat":
+            key = "downbeats" if "downbeats" in value else "bars"
+        else:
+            key = "hits" if kind == "hit" else "beats"
         return [float(x[0] if isinstance(x,(list,tuple)) else x) for x in value.get(key,[]) if isinstance(x[0] if isinstance(x,(list,tuple)) else x,(int,float))]
     if kind=="beat" and isinstance(value,list):
         return [float(clip.get("from") or 0)+float(x[0] if isinstance(x,(list,tuple)) else x)*float(clip.get("speed") or 1) for x in value]

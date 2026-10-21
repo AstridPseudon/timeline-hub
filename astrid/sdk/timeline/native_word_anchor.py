@@ -169,12 +169,57 @@ def legacy_binding(bundle, target, field, declaration, sources):
     return replace(hits[0], declaration=moments.format_moment(replace(moment, n=None)))
 
 
+def _legacy_beat(declaration):
+    if not isinstance(declaration, str) or not declaration.strip():
+        return False
+    try:
+        return moments.parse(declaration).kind in ("beat", "downbeat")
+    except moments.MomentError:
+        return False
+
+
+def _has_legacy_beat(bundle):
+    return any(_legacy_beat(_namespace(clip).get(field))
+               for clip in bundle["parent"].get("clips", [])
+               for field in ("on", "until"))
+
+
+def _guard_legacy_beat_inputs(ctx):
+    """Record Main's existing carrier arrays and owner order as replay guards."""
+    bundle = ctx.state.bundle
+    for clip in bundle["parent"].get("clips", []):
+        app = _namespace(clip)
+        if any(_legacy_beat(app.get(field)) for field in ("on", "until")):
+            ref = "parent/clip:" + clip["id"]
+            for field in ("on", "until"):
+                if _legacy_beat(app.get(field)):
+                    ctx.read(ref, ["app", "astrid", field])
+    for row in bundle.get("placements", []):
+        owner = "occurrence:" + row["occurrence_id"]
+        ctx.select("collection.clips", owner)
+        ctx.read(owner, ["occurrence_id"])
+        for field in ("source_offset", "speed", "time_map", "timeMap"):
+            ctx.read(owner, [field])
+        internal = bundle["shots"][row["shot_id"]]["internal_timeline"]
+        for clip in internal.get("clips", []):
+            if "beats" not in _namespace(clip):
+                continue
+            ref = owner + "/clip:" + clip["id"]
+            ctx.read(ref, ["id"])
+            ctx.read(ref, ["app", "astrid", "beats"])
+            for field in ("at", "from", "to", "speed", "from_ms", "to_ms"):
+                if field in clip:
+                    ctx.read(ref, [field])
+
+
 def compile_authored(bundle, sources):
     """Extract first, then compile. No history, IO, registry or authoring writes."""
     if any(_namespace(clip).get("word_anchors")
            for shot in bundle["shots"].values() for clip in shot["internal_timeline"]["clips"]):
         raise TimingCompileError("word anchors require parent ownership")
     projection, bindings = copy.deepcopy(bundle), []
+    has_beats = _has_legacy_beat(bundle)
+    targets = set()
     for clip in projection["parent"]["clips"]:
         app = _namespace(clip)
         refs = app.get("word_anchors", {})
@@ -190,19 +235,32 @@ def compile_authored(bundle, sources):
                 continue
             bindings.append(selected)
             app[field] = selected.declaration
+            targets.add(clip["id"])
+        if has_beats and any(_legacy_beat(app.get(field)) for field in ("on", "until")):
+            targets.add(clip["id"])
     # Only the new path and its exact source clips enter this bounded kernel.
     # Existing films may contain unrelated timing features not yet ported here.
-    targets = {pin.target[2] for pin in bindings}
+    targets.update(pin.target[2] for pin in bindings)
     owners = {pin.source for pin in bindings}
-    projection['parent']['clips'] = [row for row in projection['parent']['clips']
-                                     if row['id'] in targets]
-    projection['placements'] = [row for row in projection['placements']
-                                if any(owner[0] == row['occurrence_id'] for owner in owners)]
+    if has_beats:
+        # Main's legacy beat table is embedded in the captured occurrence
+        # source. Keep the complete captured occurrence/clip order while the
+        # pure kernel evaluates it; no marker source or synthetic ordinal is
+        # introduced.
+        projection['parent']['clips'] = [row for row in projection['parent']['clips']
+                                         if row['id'] in targets]
+        projection['placements'] = copy.deepcopy(bundle['placements'])
+    else:
+        projection['parent']['clips'] = [row for row in projection['parent']['clips']
+                                         if row['id'] in targets]
+        projection['placements'] = [row for row in projection['placements']
+                                    if any(owner[0] == row['occurrence_id'] for owner in owners)]
     shot_ids = {row['shot_id'] for row in projection['placements']}
     projection['shots'] = {key: row for key, row in projection['shots'].items() if key in shot_ids}
     for sid, shot in projection['shots'].items():
-        shot['internal_timeline']['clips'] = [row for row in shot['internal_timeline']['clips']
-            if any(owner[1:] == (sid, row['id']) for owner in owners)]
+        if not has_beats:
+            shot['internal_timeline']['clips'] = [row for row in shot['internal_timeline']['clips']
+                if any(owner[1:] == (sid, row['id']) for owner in owners)]
     transcript_sources = [row for row in sources if row['document']['kind'] == 'media.transcript']
     result = compile_timing(TimingInputs(projection, sources=transcript_sources, bindings=bindings))
     return replace(result, bundle=copy.deepcopy(bundle))
@@ -273,6 +331,7 @@ def _derived(ctx, ref, path, after):
 def compile_recorded(ctx, *, inverse_records=()):
     bundle = ctx.state.bundle
     clips = ctx.state.collection('parent', 'clip') or []
+    has_beats = _has_legacy_beat(bundle)
     if any('word_anchors' in _namespace(row) for shot in bundle['shots'].values()
            for row in shot['internal_timeline'].get('clips', [])):
         raise CommandError('word anchors require parent ownership', kind='unsupported_ownership')
@@ -289,17 +348,23 @@ def compile_recorded(ctx, *, inverse_records=()):
                 row = ctx.state.entity(write['ref'], optional=True)
                 if row is not None and not _namespace(row).get('word_anchors'):
                     _derived(ctx, write['ref'], write['path'], write['before'])
-    if not any('word_anchors' in _namespace(row) for row in clips):
+    if not any('word_anchors' in _namespace(row) for row in clips) and not has_beats:
         return
+    if has_beats:
+        _guard_legacy_beat_inputs(ctx)
     projection = copy.deepcopy(bundle)
     projection['parent']['clips'] = [copy.deepcopy(row) for row in clips
-                                    if 'word_anchors' in _namespace(row)]
+                                    if ('word_anchors' in _namespace(row)
+                                        or (has_beats and any(_legacy_beat(_namespace(row).get(field))
+                                                              for field in ('on', 'until'))))]
     try:
         result = compile_authored(projection, bundle.get('source_mapping', {}).get('pinned_documents', []))
     except TimingCompileError as exc:
         raise CommandError(str(exc), kind='invalid_anchor') from exc
     for row in clips:
-        if not _namespace(row).get('word_anchors'):
+        if not (_namespace(row).get('word_anchors')
+                or (has_beats and any(_legacy_beat(_namespace(row).get(field))
+                                      for field in ('on', 'until')))):
             continue
         ref = 'parent/clip:' + row['id']
         timing = result.timings[('parent', '', row['id'])]
