@@ -55,6 +55,7 @@ const emptyBaseline = {
   config: { clips: [], tracks: [] },
   registry: {},
   clips: [],
+  occurrences: [],
 };
 
 const defaultConfig = {
