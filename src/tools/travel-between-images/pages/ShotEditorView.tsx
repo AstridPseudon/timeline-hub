@@ -63,6 +63,8 @@ import { ShotTimelinePreview } from '../components/ShotTimelinePreview.tsx';
 import { normalizeVideoTravelSettings } from '../settings';
 import { equal } from '@/tools/video-editor/commands/clipMovePrimitives.ts';
 import type { ShotTimelineMediaProvider } from '../components/shotTimelineDataProvider.ts';
+import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
+import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 
 const NATIVE_SETTINGS_SCALARS = new Set(['motionMode', 'advancedMode', 'turboMode']);
 
@@ -87,6 +89,10 @@ interface ShotEditorViewProps {
   canonicalShotComposition?: ShotCompositionAdapter;
   /** Mounted parent command-session authority for canonical shot name edits. */
   shotSetPort?: ShotSetCapturePort;
+  /** Reuse the mounted parent command-session authority for occurrence media adds. */
+  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
+  /** Read the mounted parent timeline at occurrence-add capture time. */
+  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
   /** Reuse the mounted parent Runtime media-import and selection seam. */
   mediaProvider?: ShotTimelineMediaProvider;
   /** Prepared canonical graph shared by the overview and the shot-local preview. */
@@ -120,6 +126,8 @@ export function ShotEditorView({
   canonicalOccurrence,
   canonicalShotComposition,
   shotSetPort,
+  occurrenceAddMediaPort,
+  getOccurrenceAddMediaCurrent,
   mediaProvider,
   canonicalComposition,
   onClose,
@@ -528,6 +536,8 @@ export function ShotEditorView({
             occurrenceId={canonicalOccurrence.occurrenceId}
             shotCompositionAdapter={canonicalShotComposition}
             mediaProvider={mediaProvider}
+            occurrenceAddMediaPort={occurrenceAddMediaPort}
+            getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}
             onCanonicalCompositionPublished={onCanonicalCompositionPublished}
             onCanonicalDraftSessionChange={onCanonicalDraftSessionChange}
             onCanonicalDraftProjectionChange={onCanonicalDraftProjectionChange}
