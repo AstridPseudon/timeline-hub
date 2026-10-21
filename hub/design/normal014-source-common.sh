@@ -52,6 +52,29 @@ case "$NORMAL014_PROFILE" in
     ;;
 esac
 
+# final95 has two separately reviewed App roots.  The suite selects the
+# existing source role; the values are closed here rather than accepted from
+# the caller as arbitrary source identity.
+NORMAL014_APP_SOURCE=${NORMAL014_APP_SOURCE:-bootstrap}
+APP_PIN_RUNTIME_LOCK_SHA=770352eaf1d015e90fca0ed2f1893749b73b69356ca82a7223b2573276fe485e
+APP_PIN_METADATA_SHA=4cd934d868eafd5ab82578da2232f1ee13f04d83c9314b3473b75bd951570044
+APP_PIN_GENERATED_SHA=c575f183b6486dd07e8ec798f5a46bff4c9ffc0918892b189c1a433b9f80762d
+APP_PIN_TYPES_SHA=f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564
+case "$NORMAL014_PROFILE:$NORMAL014_APP_SOURCE" in
+  final95:parent)
+    APP_ROOT_SHA=25155ccb22728780a3ecd6379a929cad75cc1400
+    APP_ROOT_TREE=972d2ed2e4f85f334eb9f2e6ca40d9bfbce9eac7
+    ;;
+  final95:bootstrap)
+    APP_ROOT_SHA=dfdbef10f9d8ccf1a630f000cd076023918ead8a
+    APP_ROOT_TREE=33674ef4bbaa4b043baed77492621095cccc28f7
+    ;;
+  final95:*)
+    echo "unsupported NORMAL014_APP_SOURCE: $NORMAL014_APP_SOURCE (expected parent or bootstrap)" >&2
+    exit 2
+    ;;
+esac
+
 # Both private candidates start from the checked-in public013 App lock.  The
 # selected profile is applied only by the normal updater below.
 APP_BASE_RUNTIME_SHA=2c4ac180c2220bdad966bc01e95ad230e99ce26a
@@ -146,6 +169,33 @@ assert digest(runtime_schema) == os.environ["EXPECTED_SCHEMA"]
 assert agent_schema == runtime_schema
 print(f"verified artifacts={len(manifest['artifacts'])} manifest={digest(manifest_bytes)} schema={digest(runtime_schema)}")
 PY
+}
+
+verify_app_source() {
+  if [ "$NORMAL014_PROFILE" != final95 ]; then
+    return 0
+  fi
+  app_root=$(CDPATH= cd -- "$1" && pwd)
+  test -f "$app_root/package.json"
+  test "$(realpath "$app_root")" = "$app_root"
+  test "$(realpath "$(git -C "$app_root" rev-parse --show-toplevel)")" = "$app_root"
+  test "$(git -C "$app_root" rev-parse HEAD)" = "$APP_ROOT_SHA"
+  test "$(git -C "$app_root" rev-parse 'HEAD^{tree}')" = "$APP_ROOT_TREE"
+  test -z "$(git -C "$app_root" status --porcelain=v1 --untracked-files=all)"
+  for pin_path in \
+    runtime.lock.json \
+    src/integrations/runtime/generated-contract-metadata.ts \
+    src/integrations/runtime/generated.ts \
+    src/integrations/runtime/timeline-commit-types.ts
+  do
+    case "$pin_path" in
+      runtime.lock.json) expected_pin_sha=$APP_PIN_RUNTIME_LOCK_SHA ;;
+      src/integrations/runtime/generated-contract-metadata.ts) expected_pin_sha=$APP_PIN_METADATA_SHA ;;
+      src/integrations/runtime/generated.ts) expected_pin_sha=$APP_PIN_GENERATED_SHA ;;
+      src/integrations/runtime/timeline-commit-types.ts) expected_pin_sha=$APP_PIN_TYPES_SHA ;;
+    esac
+    test "$(sha256sum "$app_root/$pin_path" | cut -d' ' -f1)" = "$expected_pin_sha"
+  done
 }
 
 verify_locked_graph() {

@@ -5,6 +5,7 @@ HERE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$HERE/normal014-source-common.sh"
 
 mode=${1:-preflight}
+app_root=${2:-$(pwd)}
 normal014_start_run timeline-normal014-parent
 normal014_use_private_tmp
 
@@ -13,6 +14,7 @@ case "$mode" in
   *) echo "usage: $0 preflight|run" >&2; exit 2;;
 esac
 
+verify_app_source "$app_root"
 prepare_sources "$run_root/sources"
 runtime="$run_root/sources/runtime-95"
 agent="$run_root/sources/agent-6ef"
