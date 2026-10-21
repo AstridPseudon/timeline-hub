@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T11:15:25Z | dispatcher heartbeat 15s | live 5 (sol 1, luna 4, other 0) | busy30 25 | status age 2m -->
+<!-- agent | 2026-10-21T11:21:54Z | dispatcher heartbeat 5s | live 3 (sol 1, luna 2, other 0) | busy30 29 | status age 8m -->
 # agent — 2026-10-21 11:13 UTC
 Milestone: M2 active; M1 recorded. Published Runtime0.2.14 (95/all76) and Composition0.0.13 (9412/all77) current; future consumers dormant.
 Integrated: Agent00e73f925. Sincec4b: WC8 paramsfbba (111direct/HTTP24222PASS1), WC1 proofe211 (retained11726PASS2), Themefixtureccc (retained2747PASS1 pre-render), transcript metadata b3c (84author/13review), attached WC7label00e (6direct/new actual in8-pass gate). Prior presence/data-safety controls retained.
