@@ -444,7 +444,12 @@ def test_generic_host_remotion_register_claim_execute_settle_and_cas(
 def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_source(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
 ) -> None:
-    """The documented SDK file-input route carries the imported theme to props."""
+    """Prove SDK admission through named materialization into Root props.
+
+    This is intentionally a prefix proof: it does not execute or settle a
+    final render, and therefore claims no completed task, MP4, browser, or
+    parity result.
+    """
     import astrid.sdk as sdk
 
     workspace, remotion, timeline_path, assets_path = _prepare_remotion_fixture(
@@ -478,7 +483,7 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
         encoding="utf-8",
     )
     assets_path.write_text(json.dumps({"assets": {}}), encoding="utf-8")
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
         generated.handshake(
@@ -615,6 +620,8 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
         assert materialized_theme.is_relative_to(attempt / "managed-objects")
         assert json.loads(materialized_theme.read_text(encoding="utf-8")) == explicit_theme
 
+        # Root preparation is the endpoint here; the staged video is only the
+        # required output placeholder for this pre-render props inspection.
         staged_video = tmp_path / "prepared" / "unused.mp4"
         with _prepared_remotion_root(
             Path(values["timeline"]),
