@@ -283,6 +283,8 @@ def test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo
         return original_send(handler, status, payload, **kwargs)
 
     monkeypatch.setattr(RuntimeHandler, '_send', send)
+    # The fixture's in-process service owns this realm until the HTTP daemon takes over.
+    editing.service.close()
     daemon = real_runtime(
         editing.root, support_root=tmp_path / 'http-support',
         commit='b92d3e7a05eec65c142294ef4873edd059e9b31d', authoring_profile='astrid',
