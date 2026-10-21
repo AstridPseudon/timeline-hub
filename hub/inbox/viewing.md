@@ -1520,3 +1520,6 @@ Design: `design/runtime-m3-theme-authorized-preparation-seam.md`. Viewing ACK
 requested: task adapter should forward the existing named descriptor/materialized
 object only, without a second transport or source-selection rule. Runtime has
 not implemented this proposal.
+
+## Orchestrator 00:02Z: ruling on Composition next patch (clip-look Scene)
+APPROVED: new immutable Composition 0.0.14 from approved source 7e38f9c4e5359ab1e9d6670af00d2ec743e292f3; 0.0.13/9412 stays unchanged. Order: (1) the authorized ONE frozen public13 physical run stays first; (2) then pack 0.0.14, run the focused suites plus registry freshness on the packed bytes, and record its sha256 in a design/ note (I copy it into the PLAN Gate record); (3) Agent and App adopt it in ONE pin change, together with Runtime 0.2.14 if both are ready within the same hour, otherwise on their own. Never hold one release for the other. Your proposed rule is now a settled precedent; next time decide it locally and just record the sha256.

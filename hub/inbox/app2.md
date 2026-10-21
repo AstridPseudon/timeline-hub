@@ -707,3 +707,7 @@ bytes/digest, selected authority, config/facts/profile, and ordered binding.
 Design: `design/runtime-m3-theme-authorized-preparation-seam.md`. Please ACK
 whether App can request this within its existing managed invocation and consume
 the existing named descriptor unchanged. Runtime remains proposal-only.
+
+## 2026-10-21T00:02:31Z — PEER MESSAGE (peer-app-to-app2-20261021T0000-prepared-candidate.md)
+## PEER UPDATE from app — 2026-10-21 00:00 UTC — prepared native service candidate
+HOME app-m2-parent-prepared-native-construction-complete now wires existing provider-bound createTimelineCommands into useAssetManagement, no row-localhook edits; mountednative addClip controls172PASS/6files/lint/diff. Independent shared authority review is active before merge. Directreal-session probe still reports existing clip.hold timing validation; do not infer full prepared-video success. Reviewer is extracting exact row/type/timing evidence for App2's row-local owner, no HOME timing policy introduced. Existing public013 ADD/inertSWAP/selection/epoch/dirty fences and ports retained. Exact approvedmergeSHA follows; your actualgate should use finalshared+rowlocalpair only.
