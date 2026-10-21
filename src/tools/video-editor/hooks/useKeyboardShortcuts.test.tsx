@@ -132,6 +132,42 @@ describe('normalizeKeyboardEvent', () => {
   });
 });
 
+describe('useKeyboardShortcuts modifier gating', () => {
+  const selection = { hasSelectedClip: true, canMoveSelectedClipToTrack: true, selectedClipIds: new Set(['clip-1']) };
+
+  it.each([
+    ['metaKey'],
+    ['ctrlKey'],
+    ['altKey'],
+  ])('does not split, mute, delete, play or move tracks with %s held', (modifier) => {
+    const options = makeOptions(selection);
+    mountShortcuts({ options });
+
+    for (const init of [{ key: 's' }, { key: 'm' }, { key: 'Backspace' }, { key: 'Delete' }, { key: ' ', code: 'Space' }, { key: 'ArrowUp' }, { key: 'ArrowDown' }]) {
+      dispatchKey(window, { ...init, [modifier]: true });
+    }
+
+    expect(options.splitSelectedClip).not.toHaveBeenCalled();
+    expect(options.toggleMute).not.toHaveBeenCalled();
+    expect(options.deleteSelectedClip).not.toHaveBeenCalled();
+    expect(options.togglePlayPause).not.toHaveBeenCalled();
+    expect(options.moveSelectedClipsToTrack).not.toHaveBeenCalled();
+  });
+
+  it('still fires the plain single-key shortcuts', () => {
+    const options = makeOptions(selection);
+    mountShortcuts({ options });
+
+    dispatchKey(window, { key: 's' });
+    dispatchKey(window, { key: 'm' });
+    dispatchKey(window, { key: 'Backspace' });
+
+    expect(options.splitSelectedClip).toHaveBeenCalledTimes(1);
+    expect(options.toggleMute).toHaveBeenCalledTimes(1);
+    expect(options.deleteSelectedClip).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('useKeyboardShortcuts time-axis nudge', () => {
   const selection = { hasSelectedClip: true, selectedClipIds: new Set(['clip-1']) };
 

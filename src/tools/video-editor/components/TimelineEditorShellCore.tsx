@@ -38,6 +38,7 @@ import {
   useProposalImportDiagnosticsFromStoreSafe,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { isEditorKeyboardEvent, useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
+import { useEditorBrowserDefaults } from '@/tools/video-editor/hooks/useEditorBrowserDefaults.ts';
 import { useTimelineRealtime } from '@/tools/video-editor/hooks/useTimelineRealtime.ts';
 import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
 import { buildKeyboardDeleteMutation } from '@/tools/video-editor/lib/keyboard-delete.ts';
@@ -389,12 +390,15 @@ function TimelineEditorShellCoreComponent({
   }, [outputResolution]);
   const [tooSmall, setTooSmall] = useState(false);
   const outerRef = useRef<HTMLDivElement | null>(null);
+  const [shellRootNode, setShellRootNode] = useState<HTMLDivElement | null>(null);
   const setShellRoot = useCallback((node: HTMLDivElement | null) => {
     if (runtime.shellRootRef && (node || runtime.shellRootRef.current === outerRef.current)) {
       runtime.shellRootRef.current = node;
     }
     outerRef.current = node;
+    setShellRootNode(node);
   }, [runtime.shellRootRef]);
+  useEditorBrowserDefaults({ shellRoot: shellRootNode, saveStatus: chrome.saveStatus, flushPendingSave: chrome.flushPendingSave });
   const activateInstance = useCallback(() => {
     runtime.agentChat?.activateTimeline?.();
     if (runtime.agentSelectionOwner) activateTimelineClipData(runtime.agentSelectionOwner);

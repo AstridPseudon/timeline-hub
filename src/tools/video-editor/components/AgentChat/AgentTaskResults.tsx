@@ -68,7 +68,7 @@ function LinkedTaskResults({ taskRef }: { taskRef: AstridTaskRef }) {
       {result.mediaType.startsWith('video/') ? <video src={result.url} crossOrigin={mediaCrossOrigin(result.url)} controls preload="metadata" className="max-h-40 max-w-full rounded" />
         : result.mediaType.startsWith('image/') ? <img src={result.url} crossOrigin={mediaCrossOrigin(result.url)} alt={result.name} className="max-h-40 max-w-full rounded" />
           : result.mediaType.startsWith('audio/') ? <audio src={result.url} crossOrigin={mediaCrossOrigin(result.url)} controls preload="metadata" /> : null}
-      <figcaption className="mt-1 truncate text-xs"><a href={result.url} target="_blank" rel="noreferrer" className="underline">{result.name}</a></figcaption>
+      <figcaption className="mt-1 truncate text-xs"><a href={result.url} draggable={false} target="_blank" rel="noreferrer" className="underline">{result.name}</a></figcaption>
     </figure>)}
   </div>;
 }

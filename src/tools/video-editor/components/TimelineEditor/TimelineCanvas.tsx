@@ -972,6 +972,8 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
     );
     const hasBuiltInActions = Boolean(onCreateEmptyShotAt) || hasSelectionActions;
     if (!hasBuiltInActions && !hasEligibleExtensionContextMenuItems(commandRegistry, extensions, target)) {
+      // The editor owns this surface: no actions means no menu, not the browser's.
+      event.preventDefault();
       return;
     }
 
@@ -1157,6 +1159,39 @@ export const TimelineCanvas = forwardRef<TimelineCanvasHandle, TimelineCanvasPro
       container.removeEventListener('touchcancel', endPinch);
     };
   }, [pinchEnabled]);
+
+  // Trackpad pinch (a ctrl-wheel in Chrome) and Ctrl/Cmd+wheel zoom the timeline around the pointer, the same
+  // anchor as touch pinch. Non-passive so Chrome's page zoom never takes it.
+  const hasScaleWidthChange = Boolean(onScaleWidthChange);
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!hasScaleWidthChange || !container) {
+      return;
+    }
+
+    const handleWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey && !event.metaKey) {
+        return;
+      }
+      event.preventDefault();
+      const { pixelsPerSecond: currentPps, scaleWidth: currentScaleWidth, startLeft: currentStartLeft } = pinchInputsRef.current;
+      const lineScale = event.deltaMode === 1 ? 16 : 1;
+      const delta = Math.max(-60, Math.min(60, event.deltaY * lineScale));
+      const nextScaleWidth = clampTimelineScaleWidth(currentScaleWidth * Math.exp(-delta * 0.01));
+      if (nextScaleWidth === currentScaleWidth) {
+        return;
+      }
+      const offsetX = event.clientX - container.getBoundingClientRect().left;
+      pinchAnchorRef.current = {
+        time: (container.scrollLeft + offsetX - currentStartLeft) / currentPps,
+        offsetX,
+      };
+      pinchInputsRef.current.onScaleWidthChange?.(nextScaleWidth);
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [hasScaleWidthChange]);
 
   // Keeps the pinched-at time under the gesture midpoint once the new zoom lands.
   useLayoutEffect(() => {

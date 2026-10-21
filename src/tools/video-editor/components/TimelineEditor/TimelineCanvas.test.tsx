@@ -394,6 +394,7 @@ function renderCanvas(params?: {
   canCreateShotFromSelection?: boolean;
   isCreatingShot?: boolean;
   selectedClipCount?: number;
+  onScaleWidthChange?: React.ComponentProps<typeof TimelineCanvas>['onScaleWidthChange'];
 }) {
   const dataRef = params?.dataRef ?? { current: null };
   const trackDefinitions = params?.tracks ?? [params?.track ?? track];
@@ -468,6 +469,7 @@ function renderCanvas(params?: {
       canCreateShotFromSelection={params?.canCreateShotFromSelection}
       isCreatingShot={params?.isCreatingShot}
       selectedClipCount={params?.selectedClipCount}
+      onScaleWidthChange={params?.onScaleWidthChange}
       dragSessionRef={{ current: null }}
     />
   );
@@ -790,7 +792,30 @@ describe('TimelineCanvas extension context menus', () => {
     }));
   });
 
-  it('leaves native background context-menu behavior alone when no extension items are eligible', () => {
+  it('zooms the timeline on Ctrl/Cmd+wheel and blocks page zoom, but leaves plain wheel alone', () => {
+    const onScaleWidthChange = vi.fn();
+    const { container } = renderCanvas({ onScaleWidthChange, scaleWidth: 100 });
+    const scroller = container.querySelector('.timeline-scroll');
+    if (!(scroller instanceof HTMLElement)) throw new Error('expected timeline scroller');
+
+    const plain = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -30 });
+    scroller.dispatchEvent(plain);
+    expect(plain.defaultPrevented).toBe(false);
+    expect(onScaleWidthChange).not.toHaveBeenCalled();
+
+    const zoomIn = new WheelEvent('wheel', { bubbles: true, cancelable: true, ctrlKey: true, deltaY: -30, clientX: 50 });
+    scroller.dispatchEvent(zoomIn);
+    expect(zoomIn.defaultPrevented).toBe(true);
+    expect(onScaleWidthChange).toHaveBeenCalledTimes(1);
+    expect(onScaleWidthChange.mock.calls[0][0]).toBeGreaterThan(100);
+
+    const zoomOut = new WheelEvent('wheel', { bubbles: true, cancelable: true, metaKey: true, deltaY: 30, clientX: 50 });
+    scroller.dispatchEvent(zoomOut);
+    expect(zoomOut.defaultPrevented).toBe(true);
+    expect(onScaleWidthChange.mock.calls[1][0]).toBeLessThan(100);
+  });
+
+  it('swallows the native context menu on the empty timeline when no actions are eligible', () => {
     const { container } = renderCanvas();
     const background = container.querySelector('.timeline-canvas-edit-area > .relative');
     if (!(background instanceof HTMLElement)) {
@@ -805,7 +830,7 @@ describe('TimelineCanvas extension context menus', () => {
     });
     background.dispatchEvent(event);
 
-    expect(event.defaultPrevented).toBe(false);
+    expect(event.defaultPrevented).toBe(true);
     expect(document.body.querySelector('div.fixed.z-50')).toBeNull();
   });
 

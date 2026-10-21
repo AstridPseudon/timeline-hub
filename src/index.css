@@ -317,6 +317,11 @@
     @apply border-border;
   }
 
+  /* An app UI: images never start Chrome's native image drag. A draggable parent (gallery and asset cards) still drags. */
+  img {
+    -webkit-user-drag: none;
+  }
+
   /* Force title case */
   .title-case {
     text-transform: capitalize !important;
@@ -3117,8 +3122,13 @@ body:has([data-panel-fullscreen-frame]) [data-pane-control]:not([data-pane-contr
   visibility: hidden;
 }
 
-/* Trackpad horizontal scrolls in the video editor must not trigger Chrome's overscroll swipe-back (page Back). */
+/* Trackpad horizontal scrolls in the video editor must not trigger Chrome's overscroll swipe-back (page Back) or rubber-band bounce on either axis. */
 html.video-editor-swipe-lock,
 html.video-editor-swipe-lock body {
-  overscroll-behavior-x: none;
+  overscroll-behavior: none;
+}
+
+/* iPad: no long-press callout (save/copy sheet) over editor images. */
+html.video-editor-swipe-lock img {
+  -webkit-touch-callout: none;
 }
