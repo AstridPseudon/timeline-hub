@@ -600,7 +600,8 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
         assert response.ok
         task = generated.get_task(result.kernel_task_id)
         assert task.input_object_ids == request["input_manifest"]
-        assert task.spec["inputs"] == request["spec"]["inputs"]
+        admitted_inputs = task.spec["spec"]["inputs"]
+        assert admitted_inputs == request["spec"]["inputs"]
         print(
             json.dumps(
                 {
@@ -654,7 +655,7 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
 
         forged = tmp_path / "forged-theme.json"
         forged.write_text(json.dumps(explicit_theme), encoding="utf-8")
-        forged_spec = {"spec": {"inputs": {**task.spec["inputs"], "theme": str(forged)}}}
+        forged_spec = {"spec": {"inputs": {**admitted_inputs, "theme": str(forged)}}}
         with pytest.raises(HostError, match="requires a managed Runtime object"):
             host._materialize_inputs(
                 {**forged_spec, "input_object_ids": task.input_object_ids},
