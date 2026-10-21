@@ -5,7 +5,6 @@ import type { VideoEditorTelemetryHost } from './ports';
 export const REVIEWED_PRODUCTION_EXTENSION_IDS = Object.freeze([
   'haus.astrid.threejs-live-editor',
   'haus.astrid.transcript-lane',
-  'haus.astrid.transcript-lane',
 ] as const);
 const REVIEWED_PRODUCTION_EXTENSION_ID_SET = new Set<string>(REVIEWED_PRODUCTION_EXTENSION_IDS);
 
