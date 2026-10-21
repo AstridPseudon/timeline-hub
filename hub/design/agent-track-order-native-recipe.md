@@ -1,39 +1,19 @@
 # Agent source-only contract: native parent media-track order
 
 Status: **SOURCE ONLY — App2 and Runtime ACK required before generated schema,
-pin/freeze, or consumer activation.** This worker changed only the Agent
-source tree and focused Agent proof. It did not change App, Runtime,
+pin/freeze, or consumer activation.** This change qualifies the Agent source
+recipe and its focused proof only. It does not change App, Runtime,
 Composition, generated clients, DTOs, endpoints, stores, or frozen artifacts.
 
-## Main positive and boundary
+## Scope and boundary
 
-The exact App2 positive is the no-`lanes` branch of
-`useTimelineTrackManagement.handleMoveTrack(activeId, overId)`:
+The source contract covers the App2 media-only reorder branch: a complete
+permutation of the parent authored `config.tracks` collection. The `lanes`
+branch is explicitly unsupported because it also changes
+`config.app.timelineDataLanePlacement`; no partial or split native submission is
+allowed until an atomic carrier for both authored collections is qualified.
 
-```text
-useTimelineTrackManagement.ts:927-932
-  moveTrackWithinKind(resolvedConfig.tracks, activeId, overId)
-  applyEdit({ type: 'config', resolvedConfig: { ...resolvedConfig, tracks: nextTracks } })
-```
-
-It permutes the complete raw `config.tracks` array and keeps each track object,
-clips, and unrelated config/root fields intact. The existing App positive and
-round-trip proof is
-`useTimelineTrackManagement.test.ts:149-161` in the App repo.
-
-The `lanes` branch at `useTimelineTrackManagement.ts:918-925` is **not covered**:
-it changes both `config.tracks` and
-`config.app.timelineDataLanePlacement`. No partial or split native submission is
-allowed; that mixed media/data-lane placement remains on its guarded legacy
-path until a separate atomic carrier is qualified.
-
-## Current Agent decision
-
-Current main had no native order recipe. `track.set` is a leaf label recipe and
-is not widened to carry order. Frozen R4 `timeline.reorder` is useful prior art
-(complete permutation, `expected_order`, and synthetic `track_order` direct
-write), but it is not in the current pinned registry. Therefore the smallest
-new source operation proposed here is:
+The current source operation is `track.reorder`, version `1`:
 
 ```json
 {
@@ -42,92 +22,80 @@ new source operation proposed here is:
   "version": "1",
   "select": "parent",
   "args": {
-    "order": ["parent/track:<id>"],
-    "expected_order": ["parent/track:<id>"]
+    "order": [
+      "parent/track:overlay",
+      "parent/track:picture",
+      "parent/track:music"
+    ],
+    "expected_order": [
+      "parent/track:picture",
+      "parent/track:overlay",
+      "parent/track:music"
+    ]
   },
   "intent": {}
 }
 ```
 
-Both arrays are complete, unique, parent-owned scoped track identities. The
-`expected_order` array is the captured original permutation; `order` is the
-desired permutation. Empty arrays are schema-valid, but an absent or non-array
-authored track collection is refused by the existing collection primitive.
+Both arrays are required, unique, complete, and contain only
+`parent/track:<id>` references. `expected_order` is the captured original
+order; `order` is the desired final order. The command refuses missing, extra,
+duplicate, cross-owner, malformed, or stale identities before writing. An
+absent or non-array authored collection is refused by the existing collection
+primitive; no new empty-collection behavior is introduced.
 
-Capture and execution use the existing `order()` / `arrange()` primitives:
+## Exact semantics
 
-1. Capture selects `collection.tracks` for `parent`, recording the complete
-   membership/order and collection shape. The handler rejects stale
-   `expected_order`, duplicate/missing/extra identities, and any non-parent
-   identity before writing.
-2. The only direct authored write is the derived virtual property
-   `parent::track_order`. It is read from raw `config.tracks` order and applied
-   by `arrange()`; no `track_order` field is stored and no track row is rebuilt.
-3. The existing recorder emits the direct write, original order expectation,
-   collection selection, and normal command claims. Raw row payloads and
-   membership remain untouched.
-4. Existing inverse/replay/rebase machinery restores the virtual permutation.
-   A same-state forward reorder is recorded and allowed. A changed order,
-   membership, or track identity fails closed. A disjoint track leaf edit can
-   rebase; an order write, including an A→B→A later intent, blocks guarded undo.
+Capture selects `collection.tracks` for `parent`. The recorder therefore keeps
+the collection shape read, complete member identity list, exact original order,
+membership boundaries, and the direct virtual write expectation. The virtual
+`parent::track_order` address exists only for recorder overlap and inverse
+guards; it is not a stored field and does not add a schema or persistence leaf.
 
-The virtual property has a collection-level logical address solely for overlap
-and intervening-write checks. It does not create a persisted field.
+Execution applies `arrange()` to the existing raw track rows. It changes only
+array order. Track objects are not rebuilt or normalized, so labels, null,
+false, zero, opaque fields, clips, root/config siblings, and data-lane fields
+are preserved byte-for-byte in the authored bundle. A disjoint track-label edit
+can rebase across the reorder. A changed collection order, membership, or
+identity fails closed. An equal-final-state forward replay is allowed, while
+inverse checks the complete intervening recorder history and rejects an actual
+A→B→A sequence.
 
-## Agent source and executable proof
+The operation is source-only and uses the existing command registry, recorder,
+rebase, inverse, and serialized bundle paths. It introduces no generation,
+freeze, pin, Runtime DTO, public operation, or guessed published contract.
 
-Changed source:
+## Executable floor
 
-- `astrid/core/timeline/schema/edit-command.schema.json:494-519,1012-1040` —
-  source-only `TrackReorderArgs` and `track.reorder@1` envelope branch.
-- `astrid/sdk/timeline/_track_commands.py:11-58` — handler and capture helper.
-- `astrid/sdk/timeline/_command_state.py:109-115,295-298,375-382` — virtual
-  order address plus `State.get/set` delegation to existing collection order
-  primitives.
-- `astrid/sdk/timeline/commands.py:35,86` — source registry entry.
+`tests/editing_conformance/test_recipe_track_order.py` proves:
 
-Focused executable proof:
-
-- `tests/editing_conformance/test_recipe_track_order.py:33-63` — exact raw
-  permutation, opaque/null/false/0 preservation, clips/root preservation,
-  serialized reload, replay, inverse/redo, and forward-equal state.
-- `tests/editing_conformance/test_recipe_track_order.py:66-102` — disjoint
-  label rebase, stale order, changed identity, and later A→B→A guarded undo.
-- `tests/editing_conformance/test_recipe_track_order.py:105-118` — cross-owner
-  and incomplete permutation refusal with no partial mutation.
-
-Exact targeted results:
-
-```text
-PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/runtime \
-  /home/user/work/venv-agent/bin/python -m pytest -q \
-  tests/editing_conformance/test_recipe_track_order.py \
-  tests/editing_conformance/test_recipe_scalar_commands.py
-=> 76 passed in 5.73s
-
-git diff --check
-=> pass
-```
-
-No full suite, browser, localhost, socket, Runtime, generated-contract, or
-App journey was run. The App serializer positive is source evidence from the
-specified report and live handler inspection; App2 adoption remains unverified.
+- exact raw-row permutation and preservation of null/false/zero/opaque fields,
+  clips, root/config siblings, and `timelineDataLanePlacement`;
+- collection shape read plus complete member/order/boundary recorder claims;
+- serialized bundle and record reload, deterministic replay, inverse and redo;
+- equal-final-state forward replay;
+- disjoint label rebase, stale order refusal, changed-identity refusal, and
+  complete unique same-owner membership refusal;
+- strict inverse rejection for both a direct intervening order write and a
+  real recorded A→B→A sequence; and
+- explicit refusal of an unsupported `lanes` argument.
 
 ## Requested peer ACK
 
 Please ACK or reject this exact source contract before any generation or
 activation:
 
-- **App2:** confirm that the media-only handler can build `track.reorder@1`
-  from the complete current parent raw track identity permutation, preserving
-  the existing serializer until consumer proof; confirm the `lanes` branch
-  stays legacy/unsupported and is not split.
+- **App2:** confirm that the media-only handler can capture the complete
+  current parent raw track identity permutation for `track.reorder@1`, retain
+  the existing serializer until consumer proof, and keep the `lanes` branch
+  guarded/unsupported without splitting its two authored collections.
 - **Runtime:** confirm that the existing `/v1` command/provider path can carry
-  the source operation with a virtual direct write at `parent::track_order`,
-  complete collection selection, guarded inverse/rebase, reload, retry, and
-  idempotent acceptance—without a new endpoint, DTO, store, or persisted order
-  field. If Runtime requires a different public spelling, state that before
-  generation; App2 must not guess one.
+  this source operation with its virtual direct write at
+  `parent::track_order`, complete collection selection, guarded inverse/rebase,
+  serialized reload/redo, retry, and idempotent acceptance—without a new
+  endpoint, DTO, store, or persisted order field. If Runtime needs a different
+  published spelling, state that before generation; App2 must not guess one.
 
-ACK scope is source contract only. It does not authorize pinning, freezing,
-generated-client changes, App edits, fallback deletion, or mixed-lane support.
+ACK scope is the source contract only. It does not authorize pinning, freezing,
+generated-client changes, App edits, fallback deletion, mixed-lane support, or
+publication/activation.
