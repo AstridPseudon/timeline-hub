@@ -18,7 +18,7 @@ import subprocess
 import tempfile
 from collections.abc import Mapping
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, TypedDict
 
 import yaml
 
@@ -38,6 +38,13 @@ SOURCE_BINDING = "project-packs"
 BUILD_ENV = "ASTRID_ELEMENT_BUILD_COMMAND"
 _ALLOWED_IMPORTS = {"react", "react/jsx-runtime", "remotion"}
 _SOURCE_EXTENSIONS = {".ts", ".tsx", ".js", ".jsx", ".mjs", ".css"}
+
+
+class _ElementRecord(TypedDict):
+    projectId: str
+    descriptor: dict[str, object]
+    authoring: dict[str, str]
+    snapshot: dict[str, object]
 
 
 def _identity(value: str) -> str:
@@ -430,7 +437,7 @@ def admit_project_pack(realm: str, project: str, *, client=None, collection='def
                 if saved.is_symlink() or not saved.is_file() or hashlib.sha256(saved.read_bytes()).hexdigest()!=item["sha256"]:raise ValueError("Existing admitted snapshot is corrupt; refusing overwrite")
         else:
             staging.rename(snapshot_root)
-        records=[]
+        records: list[_ElementRecord] = []
         for definition,descriptor_path in definitions:
             descriptor=_element_descriptor(definition)
             component=definition.component.relative_to(root).as_posix()
