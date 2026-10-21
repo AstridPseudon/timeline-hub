@@ -248,7 +248,13 @@ class Recording:
                 if not any(equal(claim, prior) for prior in command['reads']):
                     command['reads'].append(claim)
             for selected in self.record['selections']:
-                claim = selection(self.command_input, selected['key'], selected['owner'], selected['members'])
+                selection_state = self.command_input
+                if (command.get('op') == 'timeline.inverse'
+                        and selected['key'] == 'track.create'
+                        and any(selection_state.entity(ref, optional=True) is None
+                                for ref in selected['members'])):
+                    selection_state = self.state
+                claim = selection(selection_state, selected['key'], selected['owner'], selected['members'])
                 if claim not in command['selections']:
                     command['selections'].append(claim)
             command['bindings'] = {b['key']: b['ref'] for b in self.record['bindings']
