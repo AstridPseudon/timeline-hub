@@ -169,7 +169,7 @@ describe('AstridStatusSection', () => {
     await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledOnce());
     const brief = mocks.clipboard.mock.calls[0][0];
     expect(brief).toContain('selected workspace and data root');
-    expect(brief).toContain('supported migration or adoption path');
+    expect(brief).toContain('The installer adopts an existing workspace itself');
     expect(brief).toContain(installCommand('install'));
     expect(brief).not.toBe(installCommand('install'));
     expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();

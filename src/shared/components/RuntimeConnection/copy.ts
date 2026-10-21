@@ -32,6 +32,8 @@ export function withBrowser(text: string, browser: string = installBrowserName()
 export const ASTRID_COMMANDS = {
   macLinux: 'curl -fsSL https://astrid.haus/install | sh',
   windows: 'irm https://astrid.haus/install.ps1 | iex',
+  /** For an agent in Git Bash or another non-PowerShell shell on Windows. */
+  windowsAgent: 'powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://astrid.haus/install.ps1 | iex"',
   macLinuxUpdate: 'curl -fsSL https://astrid.haus/install | sh -s -- --update',
   windowsUpdate: '& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --update',
 } as const;
@@ -44,15 +46,21 @@ export function installCommand(mode: CommandMode): string {
   return windows ? ASTRID_COMMANDS.windows : ASTRID_COMMANDS.macLinux;
 }
 
+const SETUP_GUIDE_URL = 'https://github.com/banodoco/astrid-agent/blob/main/docs/setup/SKILL.md';
+
 /** A complete handoff: retain an existing workspace and diagnose failures before retrying. */
 export function agentInstructions(mode: CommandMode, pageOrigin: string): string {
+  const windows = detectPlatform() === 'windows';
+  const command = installCommand(mode);
   return [
     `Please ${mode === 'update' ? 'update my existing Astrid installation' : 'set up or restart Astrid on this computer'} so the page at ${pageOrigin} can connect. Do the work yourself and verify the result.`,
     'First inspect the existing installation, running services, profile, selected workspace and data root. Preserve my projects, media, credentials and agent instructions. Do not reset or delete my workspace, or replace it with an empty one.',
-    'Use the current official Astrid installer and its supported migration or adoption path if this is an older source installation. Read the installer before running it. Do not bypass ownership guards or overwrite a directory just because the installer refuses it.',
-    `The command offered by this page is:\n${installCommand(mode)}`,
+    "Use the current official Astrid installer; read it before running it. The installer adopts an existing workspace itself; don't run workspace or migration commands by hand. Do not bypass ownership guards or overwrite a directory just because the installer refuses it.",
+    windows && mode === 'install'
+      ? `The command offered by this page, in PowerShell:\n${command}\nFrom Git Bash or another shell:\n${ASTRID_COMMANDS.windowsAgent}\nInstall from Windows, not inside WSL.`
+      : `The command offered by this page is:\n${command}${windows ? '\nInstall from Windows, not inside WSL.' : ''}`,
     'If installation or startup fails, read the log path printed by the installer, diagnose the actual cause and resolve it before retrying. Keep the existing workspace selection and data root connected; do not infer that no installation exists merely because the browser cannot reach it.',
-    `Verify that Astrid is healthy, the page at ${pageOrigin} can connect, and my existing projects are accessible. Report what changed and any remaining problem.`,
+    `The installer verifies Astrid and opens astrid.haus. Tell me to choose Allow if Chrome or Edge asks, and confirm Astrid shows Connected. Setup guide: ${SETUP_GUIDE_URL}`,
   ].join('\n\n');
 }
 

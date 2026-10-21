@@ -16,15 +16,13 @@ describe('PublicAstridHeroCta', () => {
     cleanup();
   });
 
-  it('opens on the app step, then shows the shared OS installer line in step 2', () => {
+  it('opens on the app step only; the computer step now lives in the editor', () => {
     render(<PublicAstridHeroCta active />);
     fireEvent.click(screen.getByRole('button', { name: 'Set up Astrid' }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Get the Astrid app' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Use it in the browser' }));
-    expect(screen.getByRole('button', { name: 'Copy agent instructions' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
-    expect(screen.getByText(/curl -fsSL https:\/\/astrid\.haus\/install \| sh/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Use it in the browser' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copy agent instructions' })).not.toBeInTheDocument();
     expect(screen.queryByText('Add a browser shortcut')).not.toBeInTheDocument();
   });
 });

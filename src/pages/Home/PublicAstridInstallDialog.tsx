@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ArrowRight, Check, Link2, Monitor, Share, X } from 'lucide-react';
+import { ArrowRight, Monitor, X } from 'lucide-react';
 import {
   APP_ENTRY_PATH,
   isRunningInstalled,
@@ -7,29 +7,24 @@ import {
 } from '@/app/entryClassification.ts';
 import { requestAutoConnect } from '@/integrations/runtime/autoConnectRequest.ts';
 import { runInstallPrompt, useInstallPromptSignals } from '@/shared/hooks/platformInstall/signals';
+import { detectBrowser, detectPlatform } from '@/shared/hooks/platformInstall/platformDetection';
 import { detectInstallScenario, type InstallScenario } from './installScenario.ts';
 import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointer.tsx';
-import { useSendLinkToComputer } from './useSendLinkToComputer.ts';
-import { CopyInstallCommand } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
-import { withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
 import './PublicAstridInstallDialog.css';
 
 const AVATAR_SRC = '/astrid-app-icon-192.png';
-const HOME_PATH = '/home';
 
 /** Landing page wording is kept together here for the product copy pass. */
 export const SET_UP_ASTRID_COPY = {
   title: 'Set up Astrid',
-  subtitle: 'Give these instructions to your coding agent to set up Astrid on your computer.',
   appTitle: 'Get the Astrid app',
   appSubtitle: 'Install Astrid so it opens in its own window, or use it right here in the browser.',
   installNow: 'Install Astrid',
   installDone: 'Done — continue',
   useBrowser: 'Use it in the browser',
-  back: '← Back',
-  computerTitle: 'Connect your computer',
-  useHere: 'Already set up? Open Astrid',
-  useHereInstalled: 'Open Astrid in this tab',
+  installedTitle: 'Astrid is installed',
+  installedSubtitle: 'It opens in its own window.',
+  openHere: 'Open here instead',
 };
 
 function useInstallScenario(): InstallScenario {
@@ -116,76 +111,28 @@ function ChromiumVisual() {
   );
 }
 
-/** Safari (17+): the Share button, then Add to Dock. */
-function SafariVisual() {
-  return (
-    <div className="astrid-install-visual" data-scenario="safari" aria-hidden="true">
-      <div className="astrid-install-window">
-        <div className="astrid-install-toolbar">
-          <span className="astrid-install-lights"><i /><i /><i /></span>
-          <span className="astrid-install-omnibox astrid-install-omnibox-centred">
-            <span className="astrid-install-url">astrid</span>
-          </span>
-          <span className="astrid-install-target astrid-install-target-safari"><Share size={11} strokeWidth={2.2} /></span>
-        </div>
-        <div className="astrid-install-page"><i /><i /><i /></div>
-        <div className="astrid-install-popover astrid-install-share-menu">
-          <span>Copy</span>
-          <span>Add to Reading List</span>
-          <span className="astrid-install-popover-confirm">Add to Dock…</span>
-        </div>
-        <span className="astrid-install-cursor" />
-      </div>
-    </div>
-  );
+/** Where an installed app lives on this computer. */
+function appHome(): string {
+  const platform = detectPlatform();
+  return platform === 'windows' ? 'your taskbar' : platform === 'linux' ? 'your app launcher' : 'your dock';
 }
 
-const DESKTOP_COPY: Record<Exclude<InstallScenario, 'mobile'>, { lede: string; steps: string[] }> = {
-  chromium: {
-    lede: 'Astrid installs straight from your browser, into its own window and your dock.',
-    steps: ['Click the install icon at the right end of the address bar, up here.', 'Choose Install.'],
-  },
-  safari: {
-    lede: 'Astrid installs straight from Safari, into its own window and your dock.',
-    steps: ['Click the Share button in the top-right of the toolbar.', 'Choose Add to Dock.'],
-  },
-  unsupported: {
-    lede: 'This browser can’t install web apps. Open this page in Chrome, Edge or Safari to install Astrid, or use it right here.',
-    steps: [],
-  },
-};
+function desktopCopy(scenario: Exclude<InstallScenario, 'mobile'>): { lede: string; steps: string[] } {
+  if (scenario === 'chromium') {
+    return {
+      lede: `Astrid installs straight from your browser, into its own window and ${appHome()}.`,
+      steps: ['Click the install icon at the right end of the address bar, up here.', 'Choose Install.'],
+    };
+  }
+  // Safari blocks an https page from reaching Astrid on this computer (checked with WebKit), so it can't be used here at all.
+  if (detectBrowser() === 'safari') return { lede: 'Astrid needs Chrome or Edge to reach your computer. Open this page there.', steps: [] };
+  return { lede: 'This browser can’t install web apps. Open this page in Chrome or Edge to install Astrid, or use it right here.', steps: [] };
+}
 
 const MOBILE_COPY = {
   ios: { lede: 'Put Astrid on your home screen.', steps: ['Tap the Share button in Safari.', 'Choose Add to Home Screen.'] },
   other: { lede: 'Put Astrid on your home screen.', steps: ['Open your browser’s menu.', 'Choose Install app or Add to Home screen.'] },
 };
-
-function homeLink() {
-  return new URL(HOME_PATH, window.location.origin).href;
-}
-
-function MobileContent({ onClose, active }: { onClose: () => void; active: boolean }) {
-  const { copied, send: sendToComputer } = useSendLinkToComputer(homeLink, active);
-  return (
-    <>
-      <div className="astrid-install-desk" aria-hidden="true">
-        <span className="astrid-install-desk-phone" />
-        <ArrowRight className="astrid-install-desk-arrow" size={18} strokeWidth={2.2} />
-        <span className="astrid-install-desk-laptop"><span /></span>
-      </div>
-      <p className="astrid-install-lede">
-        Astrid runs on a computer. Open this page there to copy the line.
-      </p>
-      <div className="astrid-install-actions">
-        <button type="button" className="astrid-button astrid-button-primary" onClick={sendToComputer}>
-          <span>{copied ? 'Link copied' : 'Send the link to your computer'}</span>
-          {copied ? <Check size={17} aria-hidden="true" /> : <Link2 size={17} aria-hidden="true" />}
-        </button>
-        <button type="button" className="astrid-install-quiet" onClick={onClose}>Not now</button>
-      </div>
-    </>
-  );
-}
 
 /**
  * The landing page's install flow: a visual explainer for installing Astrid as an app from the
@@ -256,17 +203,18 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
   }, [notifyClosed]);
 
   const desktop = scenario !== 'mobile';
-  const copy = desktop ? DESKTOP_COPY[scenario] : null;
-  const pointsUp = scenario === 'chromium' || scenario === 'safari';
-  const [step, setStep] = useState<'app' | 'computer'>('app');
+  const copy = desktop ? desktopCopy(scenario) : null;
+  const needsChrome = scenario === 'unsupported' && detectBrowser() === 'safari';
+  const pointsUp = scenario === 'chromium';
+  const [step, setStep] = useState<'app' | 'installed'>('app');
   const skipApp = installed || (open && isRunningInstalled());
   useEffect(() => {
     // Each opening starts at the app step, unless Astrid is already installed here.
-    if (open) setStep(skipApp ? 'computer' : 'app');
+    if (open) setStep(skipApp ? 'installed' : 'app');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
   useEffect(() => {
-    if (skipApp) setStep('computer');
+    if (skipApp) setStep('installed');
   }, [skipApp]);
   const showApp = step === 'app' && !skipApp;
   const mobileCopy = !desktop
@@ -274,13 +222,8 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
     : null;
   const guide = copy ?? mobileCopy;
   const onInstall = async () => {
-    if (await promptInstall()) setStep('computer');
+    if (await promptInstall()) setStep('installed');
   };
-  const useBrowser = () => {
-    rememberAppEntryPreference();
-    setStep('computer');
-  };
-
   return (
     <dialog
       ref={dialogRef}
@@ -301,7 +244,7 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
     >
       <div className="astrid-install-card">
         {open && showApp && !canPrompt && pointsUp && !installed ? (
-          <ToolbarPointer label={scenario === 'safari' ? 'Share, up here' : 'Up here'} />
+          <ToolbarPointer label="Up here" />
         ) : null}
         <button ref={closeButtonRef} type="button" className="astrid-install-close" onClick={requestClose} aria-label="Close">
           <X size={16} strokeWidth={2} aria-hidden="true" />
@@ -309,8 +252,8 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
         <header className="astrid-install-header">
           <img className="astrid-install-avatar" src={AVATAR_SRC} alt="" />
           <div>
-            <h2 id="astrid-install-title">{showApp ? SET_UP_ASTRID_COPY.appTitle : SET_UP_ASTRID_COPY.computerTitle}</h2>
-            <p>{showApp ? SET_UP_ASTRID_COPY.appSubtitle : withCommandShell(SET_UP_ASTRID_COPY.subtitle)}</p>
+            <h2 id="astrid-install-title">{showApp ? SET_UP_ASTRID_COPY.appTitle : SET_UP_ASTRID_COPY.installedTitle}</h2>
+            <p>{showApp ? SET_UP_ASTRID_COPY.appSubtitle : SET_UP_ASTRID_COPY.installedSubtitle}</p>
           </div>
         </header>
 
@@ -318,7 +261,7 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
           <>
             {canPrompt ? null : (
               <div className="astrid-install-body">
-                {scenario === 'chromium' ? <ChromiumVisual /> : scenario === 'safari' ? <SafariVisual /> : null}
+                {scenario === 'chromium' ? <ChromiumVisual /> : null}
                 <div>
                   <p className="astrid-install-lede">{guide.lede}</p>
                   {guide.steps.length ? <ol className="astrid-install-steps">{guide.steps.map((item) => <li key={item}>{item}</li>)}</ol> : null}
@@ -331,32 +274,23 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
                   <span>{SET_UP_ASTRID_COPY.installNow}</span> <Monitor size={17} aria-hidden="true" />
                 </button>
               ) : scenario !== 'unsupported' ? (
-                <button type="button" className="astrid-button astrid-button-primary" onClick={() => setStep('computer')}>
+                <button type="button" className="astrid-button astrid-button-primary" onClick={openInBrowser}>
                   <span>{SET_UP_ASTRID_COPY.installDone}</span> <ArrowRight size={17} aria-hidden="true" />
                 </button>
               ) : null}
-              <button type="button" className="astrid-button astrid-install-here" onClick={useBrowser}>
-                <span>{SET_UP_ASTRID_COPY.useBrowser}</span><ArrowRight size={17} aria-hidden="true" />
-              </button>
+              {needsChrome ? null : (
+                <button type="button" className="astrid-button astrid-install-here" onClick={openInBrowser}>
+                  <span>{SET_UP_ASTRID_COPY.useBrowser}</span><ArrowRight size={17} aria-hidden="true" />
+                </button>
+              )}
             </div>
           </>
         ) : null}
 
-        {!showApp && !desktop ? <MobileContent onClose={requestClose} active={open} /> : null}
-
-        {!showApp && desktop ? (
-          <div className="astrid-install-computer">
-            <CopyInstallCommand />
-            <div className="astrid-install-actions">
-              <button type="button" className="astrid-button astrid-install-here" onClick={openInBrowser}>
-                <span>{installed ? SET_UP_ASTRID_COPY.useHereInstalled : SET_UP_ASTRID_COPY.useHere}</span><ArrowRight size={17} aria-hidden="true" />
-              </button>
-            </div>
+        {!showApp ? (
+          <div className="astrid-install-actions">
+            <button type="button" className="astrid-install-quiet" onClick={openInBrowser}>{SET_UP_ASTRID_COPY.openHere}</button>
           </div>
-        ) : null}
-
-        {!showApp && !skipApp ? (
-          <button type="button" className="astrid-install-quiet" onClick={() => setStep('app')}>{SET_UP_ASTRID_COPY.back}</button>
         ) : null}
       </div>
     </dialog>

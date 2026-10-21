@@ -336,9 +336,10 @@ describe('RuntimeConnectionPanel', () => {
       const brief = writeText.mock.calls[0][0];
       expect(brief).toContain(window.location.origin);
       expect(brief).toContain('selected workspace and data root');
-      expect(brief).toContain('supported migration or adoption path');
+      expect(brief).toContain('The installer adopts an existing workspace itself');
       expect(brief).toContain('read the log path printed by the installer');
-      expect(brief).toContain('my existing projects are accessible');
+      expect(brief).toContain('Tell me to choose Allow if Chrome or Edge asks');
+      expect(brief).toContain('docs/setup/SKILL.md');
       const command = installCommand(status === 'update_needed' ? 'update' : 'install');
       expect(brief).toContain(command);
       expect(brief).not.toBe(command);
