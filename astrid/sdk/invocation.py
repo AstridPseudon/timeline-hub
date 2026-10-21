@@ -770,6 +770,8 @@ def _validate_timeline_visualize_inputs(
     except ValueError as exc:
         raise CapabilityValidationError(str(exc)) from exc
     context = prepare_filmstrip(values, project=project, client=_client)
+    if values.get("mode") == "scene_only":
+        context = {**context, "mode": "scene_only"}
     from copy import deepcopy
     # These snapshots are host-prepared immutable closures. Carry resource
     # identity in derived metadata; never rewrite their authored config.
@@ -2736,7 +2738,7 @@ def _kernel_invoke(
     # renders source previews.
     if (str(capability.id) == "rendering.timeline_visualize"
             and isinstance(idempotency_context, Mapping)
-            and idempotency_context.get("mode") in {"filmstrip", "input_only", "composed_capture"}):
+            and idempotency_context.get("mode") in {"filmstrip", "input_only", "composed_capture", "scene_only"}):
         authority_snapshot = (
             idempotency_context.get("filmstrip_snapshot")
             or idempotency_context.get("input_snapshot")
@@ -4296,7 +4298,7 @@ def invoke(
                         "transcript input is host-owned; config.app.transcript supplies the CAS object"
                     )
                 inputs["transcript.json"] = transcript_input
-            if invocation_authority_context.get("mode") in {"filmstrip", "input_only", "composed_capture"}:
+            if invocation_authority_context.get("mode") in {"filmstrip", "input_only", "composed_capture", "scene_only"}:
                 # Only preflight may turn a successful project-owned render
                 # into a file input. Public paths were rejected above.
                 inputs = dict(inputs or {})

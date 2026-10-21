@@ -7995,6 +7995,7 @@ class GenericPackHost:
                 safe_label = "".join(char if char.isalnum() or char in "-_." else "_" for char in task_label)
                 output_root = managed_root / "astrid-tasks" / safe_label / "outputs"
                 output_root.mkdir(parents=True, exist_ok=True)
+        prepared_inputs = inputs
         values = {**inputs, "out": str(output_root), "run_root": str(attempt), "python_exec": sys.executable}
         for port in record.definition.inputs:
             if port.name not in values and port.default is not None:
@@ -8092,7 +8093,7 @@ class GenericPackHost:
         # directory name as its import root.
         from astrid.core.rendering.verified_source import PreparedTimelineInputs
 
-        PreparedTimelineInputs.handoff_source(inputs, env)
+        PreparedTimelineInputs.handoff_source(prepared_inputs, env)
         env['PYTHONPATH'] = _command_worker_pythonpath(record, env.get('PYTHONPATH', ''))
         cwd = _confined_cwd(
             binding.cwd,

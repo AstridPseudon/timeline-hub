@@ -846,20 +846,17 @@ class NativeSheet:
         return session.commit_many(plan.commands, idempotency_key=idempotency_key, via="sheet", base=self._basis)
 
 
-def apply_sheet(tl: Checkout, text: str) -> list[str]:
+def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:
     """Apply a full sheet or fragment atomically and return the checkout's change summary.
 
-    A detached sheet exported from an earlier local version merges three-way
-    (what the sheet changed since it was exported, onto what is here now): an
-    edit made after the export is never reverted. Connected callers use the
-    retained NativeSheet basis and TimelineSession instead.
-    """
+    A sheet exported from an earlier version merges three-way (what the sheet changed since it was exported,
+    onto what is here now): an edit made after the export is never reverted."""
     parsed = parse_sheet(text)
     if "clips" in parsed or "tracks" in parsed:
         raise SheetError("native sheet rows require NativeSheet and TimelineSession")
     before = Checkout(copy.deepcopy(tl.bundle))
     if parsed.get("version") and parsed["version"] != sheet_version(tl):
-        base = find_version(tl, parsed["version"])
+        base = find_version(tl, parsed["version"], client=client)
         if base is None:
             raise SheetError(f"this sheet was exported from version {parsed['version']}, which this working copy no longer "
                              f"has (it is now {sheet_version(tl)}): re-export it (timelines show TL --as sheet) and make "

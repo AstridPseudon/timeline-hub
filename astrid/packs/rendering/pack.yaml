@@ -393,6 +393,7 @@ actions:
       - ASTRID_NODE_EXECUTABLE
       - ASTRID_REMOTION_PROJECT_DIR
       - ASTRID_TIMELINE_SCHEMA_PYTHONPATH
+      - ASTRID_PACKS_PATH
       - PYTHONPATH
     metadata:
       visibility: internal
@@ -662,6 +663,8 @@ actions:
       path: actions/timeline_visualize/schemas/transcript-index.json
     - kind: schema
       path: actions/timeline_visualize/schemas/view-map.json
+    - kind: implementation
+      path: actions/timeline_visualize/scene_only.py
     - kind: implementation
       path: actions/timeline_visualize/scope.py
     - kind: implementation
