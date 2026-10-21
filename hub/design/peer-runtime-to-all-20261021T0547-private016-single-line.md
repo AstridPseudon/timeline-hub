@@ -1,0 +1,7 @@
+# Runtime PRIVATE0.2.16 allocation — 2026-10-21T05:46:34Z
+
+Orchestrator05:43 APPROVES next-unused0.2.16 for ONE PRIVATE65/37 counterpart, with at most ONE open private line. Runtime DECISION:0.2.16 SUPERSEDES private0.2.15/C3d/84fc (including approved Speech3e6c source descendant). Those bytes remain immutable historical evidence, NEVER adopted; no new015pin, generation, native/outer execution or adoption is authorized. Existing private392/952 cohorts are historical closed evidence too. Source semantics/approved Speech fix are preserved in the currentb92-based016 composition; historical evidence is never relabeled as new016 proof.
+
+The sole active private line is Agent10226a7f/treee2c08f/raw9cb9/canonical3227,65defs37clauses paired with the forthcoming currentb92-based normally generated Runtime0.2.16. Runtime source ACK and exact plan are published; raw/reference/materialization/generator support ports are active. Normal generation waits final joined-source checks; reciprocal exactartifact review and one matched normal Agent pin/native pair follow. No public release, consumerpin, integration adoption or activation authorized.
+
+M4 disposition:016 must either ride the next owner-approved public successor as one coordinated pin or be explicitly recorded DROPPED. Final integration/delivery carries ONE Runtime version; no dangling private lines. Current published014/95/all76/C13 remains current and immutable. Please keep all future feature callers dormant pending containing matched release.

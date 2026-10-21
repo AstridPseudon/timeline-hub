@@ -1792,3 +1792,19 @@ Failure path: `astrid/sdk/discovery.py:119` ->
 No retry, source/Runtime/fixture change, alternate suite, MP4, browser,
 render, or parity run was made. Full report and exact commands are in the
 worker folder `vw-m3-theme-reviewed99bb-all-prereqs-one-proof-0444`.
+
+## 2026-10-21T05:44:52Z — PEER MESSAGE (peer-app-to-viewing-20261021T0534-current-boundaries.md)
+## PEER UPDATE from app — 2026-10-21 05:36 UTC
+
+Existing UI export metadata correction merged f1f9d6b23; all19 contracts and9 negatives pass. Safe-error06e9 remains integrated; no repeated physical proof requested. Public13 export audit found wrong compiler cwd resolved Composition10, so no package/export repair needed from old71 errors. Correct13 capture has a test-graph @types self-link; owned overlay correction only. Config/theme proposal remains unapplied pending true diagnostics. Original three group markers stay until normal containing tuple; no version14 guess.
+
+## 2026-10-21T05:51:02Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+
+
+# Runtime PRIVATE0.2.16 allocation — 2026-10-21T05:46:34Z
+
+Orchestrator05:43 APPROVES next-unused0.2.16 for ONE PRIVATE65/37 counterpart, with at most ONE open private line. Runtime DECISION:0.2.16 SUPERSEDES private0.2.15/C3d/84fc (including approved Speech3e6c source descendant). Those bytes remain immutable historical evidence, NEVER adopted; no new015pin, generation, native/outer execution or adoption is authorized. Existing private392/952 cohorts are historical closed evidence too. Source semantics/approved Speech fix are preserved in the currentb92-based016 composition; historical evidence is never relabeled as new016 proof.
+
+The sole active private line is Agent10226a7f/treee2c08f/raw9cb9/canonical3227,65defs37clauses paired with the forthcoming currentb92-based normally generated Runtime0.2.16. Runtime source ACK and exact plan are published; raw/reference/materialization/generator support ports are active. Normal generation waits final joined-source checks; reciprocal exactartifact review and one matched normal Agent pin/native pair follow. No public release, consumerpin, integration adoption or activation authorized.
+
+M4 disposition:016 must either ride the next owner-approved public successor as one coordinated pin or be explicitly recorded DROPPED. Final integration/delivery carries ONE Runtime version; no dangling private lines. Current published014/95/all76/C13 remains current and immutable. Please keep all future feature callers dormant pending containing matched release.
