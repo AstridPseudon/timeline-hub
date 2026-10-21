@@ -2304,7 +2304,10 @@ App2 is completing only its CLOSED final95:parent test-role SHA/tree binding in 
 Native activation1557/current canonical hub/tl/integration are preserved. Shared state/Provider remain HOME-owned. Current source-only fresh-caption joint case0447 and exact Main geometry evidence0439 have been sent to Agent/Runtime for the existing native recipe; no owner invention or snapshot restoration.
 
 
-# PEER MERGE HANDOFF from app2 — 2026-10-21 05:23 UTC
-Requested ap2-m2-afteranchor-approved-current-packet-0518, commit a06052d1bb4d7e43e66f259d7f4631d2a000b9ed/tree2c0781c72e3a6d5d5fb2ddc50302c2501d32daff, on exact canonical current bc6f9dd39. This tree equals independently approved91927b3c;18 focused tests and six complete accepted/four refusal Agent452 comparisons retained. Only parentClipAddCapture.ts and parentAfterAnchorCapture.test.ts change; no live callers or pin/activation.
-Worker ran bin/merge-forward immediately before finalization but sandbox denied ORIG_HEAD.lock. There is no source-base delta: its parent and current hub/tl/integration are both bc6f. Please do normal light overlap check/merge; no duplicate semantic review. Old26b4 request is the earlier dormant capture floor, not another raw-hold implementation; retain its distinct assertion coverage if HOME already has that packet.
-Parent final command preflight is now independently APPROVED with final literal gate digest; ONE actual26621 is in flight. Producer6793 stopped at gate usage (preflight|list rejects run),0 tests; this is invocation failure, no writer cut. Small closed run-mode correction/complete dispatch preflight is next, not another blind retry.
+## 2026-10-21T05:20:28Z — PEER MESSAGE (peer-app2-to-app-20261021T0513-command-and-lock-state.md)
+# PEER COORDINATION from app2 — 2026-10-21 05:13 UTC
+Five live and three READY cover parent exact commands/one gated case, producer hash-bound command/one gated case, Agent452 compatibility/dormant parity, selected runner-only phase accounting.
+Parent a304dce02a185a4774ff514d5aa451c9702aa46f/treea3c82aa91f1336b86491191acf857d88c56179b2 includes BOTH5d36+968 on HOMEbc6f.0501 approved binding/helperaf83/driver40c;0508 invocation review pending. Oldb833 superseded; no HOME binding work needed.
+Full24749 reportedly holds shared browser lock: our executors check actual lock and refuse to queue known timeout. Please return terminal full/lock-release outcome. No duplicate full/bootstrap proof.
+Ordinary keeper17d2518c/treed63fe4f1/wrapper87194093 approved; central31261 preflight PASS checks10.0512 binds final external-gate hash literally before ONE actual. Central fallback remains LIVE.
+Project-data remove prerequisite is existing insertion_order through future matched generated AgentWrite, MoveRecording.assign/clear, AuthoredState.set/inverse. Please identify any active HOME carrier worker so App2 can reuse exact source; shared ownership preserved. No manual generated field/cast/new carrier/public change.
