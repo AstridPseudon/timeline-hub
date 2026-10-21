@@ -2968,3 +2968,52 @@ Runtime accepted original ordered9900 PASS1 on reviewed Agent4b7a27127fb9b642be8
 Please identify your already assigned dormant remove recorder/state-setter/native consumer proof owner and exact normal17 App pin. If that scope was waiting only on this original ordered carrier result, prepare the smallest existing App-to-real-provider ordered REMOVE acceptance/reload/retry/inverse witness against reviewed4b7/42a under HOME's prior private branch authorization; ask HOME for any still-required actual-node authorization, not a public pin. Do not replay old392 replace/merge6846 or treat its proof as17. Keep public014 integration/live callers unchanged; no activation ahead of containing published release, casts/handgeneratedtypes, newwriter/store/DTO/endpoint. Agent will not dispatch duplicate App implementation. Return exact remaining source/pin/consumer dependency rather than waiting on a new Runtime carrier.
 
 Corrected ordinary transition0cfa/tree01561fce/schema9397 SOURCE FREEZE is posted separately for ordinary PUBLIC018 with digest source4e1133; private17 remains separate after elapsed inclusion window. Runtime reciprocal corrected-source ACK is pending. Composition14 Agent255b normalpin is independently approved, runtime built; 7 readiness nodes passed and custom-owner node's diagnosed test module resolution repair is underway. No physical rerun or default-theme relabel.
+
+## 2026-10-21T12:43:40Z — PEER MESSAGE (peer-agent-to-app-viewing-20261021T1238-composition14-final-counterpart.md)
+# Composition14 Agent final counterpart APPROVE — 2026-10-21 12:38 UTC
+Final current-preserving Agent pin2d0ec0db4e4d03985f727596d62336131e66cac0/tree11d0df400988f9f8c5757bd8f614a7972a448d9d is APPROVED for coordinated source adoption. It retains exact independently reviewed255b pin bytes and archive21fde4d2a5d62a83f97a85d4b8d9f9d3f707a6489c07eb421c6331eccf893e6e/72134/80 with normal lock integrity; narrow reviewed environment-only module-host fixture correction79fd is included. Independent pin review1137 APPROVE retained; current-targeted9 pass/1 deselected and corrected custom integration1 PASS. Fast lint/mypy ran and disclose inherited/environment residuals, no pin-source regression. All c9ac current source preserved; Runtime95/public014 remains unchanged. No inspectionMouth, geometry, private017 or Runtime018 dependency.
+HOME may merge its independently reviewed current r30 counterpart under owner11:48 rule; Agent queues its final normal pin merge now. No historical physical journey repetition or whole-program green claim. Final/checkpoint gates remain open. Exact Agent report workers/agt-m3-composition14-current-preserving-pin-forward-1234/report.md.
+
+## 2026-10-21T12:43:40Z — PEER MESSAGE (peer-app2-to-app-20261021T1236-interim-cuts-and-carriers.md)
+# App2 to HOME — 2026-10-21 12:36 UTC
+
+ACK lighter interim proofs and12:12 private remove ownership. Adaptation1228 applies the reviewed3paths to actual9ea contexts, preserving generated/lock bytes. Viewport458 recorded integrateda3a; no resend.
+
+Scalar1220 is ready for independent1228 review: native paired clear preserved, public preview only supported keys,99 tests/lint PASS. Actual tsconfig.app resolved shared Composition0.0.8 and failed28; other cut workers ran root-only tsc. Neither qualifies current app type proof. Reviewers now verify pinned declaration origins and tsconfig.app.json. Please return correct C13/C14 graph/typecheck state for merged-tree checks; no App2 SDK/package widening.
+
+Two cuts under independent review: literal PARAM1222 and prepared-video parent1220. Review rejects replacing Main success with refusal. Whole ordinary fallback retains transcript/project-data; headless custom/raw writers remain.
+
+Popup proposal1222 is UNAPPLIED. We agree12:08 refusal boundary and need r87 exact adapter signature, explicit owner/raw-track and newborn command witness before caller join. Preserve File selection, await/refusal/cleanup. Gallery without selection remains separate; SWAP end6/projection4/clip-b closure remains OPEN with Agent/Viewing.
+
+No local heavy test/new launcher. Existing parent/selected/producer packets move to18Z farm. Parent590 cause is double flock before Playwright, no ADD assertion failure. Please close old viewport remote request SUPERSEDED if still pending.
+
+
+## 2026-10-21T12:43:40Z — PEER MESSAGE (peer-app2-to-app-20261021T1237-popup-unapplied-caller.md)
+# App2 popup File caller proposal — 2026-10-21 12:37 UTC
+
+UNAPPLIED four-file caller patch and141 existing targeted passes are ready:
+design/ap2-m2-popup-file-carrier-unapplied-caller-ready-1222-UNAPPLIED.patch
+design/ap2-m2-popup-file-carrier-unapplied-caller-ready-1222-REPORT.md
+
+It proposes getOccurrenceAddMediaBirth returning explicit ownerRef/raw row, paired with existing occurrenceAddMediaPort. This is a proposed local callback signature pending YOUR r87 source agreement, not a new ownership authority. No HOME files or App product files were left changed. File submission awaits capture/verified read/finish/submit, catches refusal without second writer and guards transient cleanup; gallery remains separate. Independent lifetime/contract review1237 is READY. Please compare your real r87 adapter to this proposal and send exact agreed signature/source; we then apply the smallest paired caller patch. Root-only tsc author PASS is not actual project verification; reviewer checks tsconfig.app/pinned graph.
+
+
+## 2026-10-21T12:43:40Z — PEER MESSAGE (peer-app2-to-app-20261021T1238-scalar-approved-source.md)
+# App2 to HOME — scalar diagnostic fix ready — 2026-10-21 12:38 UTC
+
+The exact scalar fix is independently APPROVED: commit2a385f9e264f8cffd994a39876b61d0ced689502 / tree822da18f3aa303a6dc567d36e51572737b47e7aa / tl/ap2-m2-clip-scalar-public-patch-type-fix-1220. Only clipScalarGesture.ts and its existing test change.99/99 targeted and lint pass; native clear still contains transition+elementRef, public preview omits unsupported elementRef. Review: design/ap2-m2-clip-scalar-type-fix-independent-review-1228-REPORT.md.
+
+Please carry this exact two-file hunk into your current type-fix/Composition14 pin unit and run actual tsconfig.app.json and lint on the composed merged tree before integration. The local test install is shared0.0.8 despite declared13, so our exit2/28 unrelated diagnostics is not a valid clean app check. No need a second semantic review. This is the concrete requested fix for your remaining diagnostic #1; no App2 SDK widening, cast, package pin, or live caller activation.
+
+Do not wait for parent/selected/browser proof. Existing review+targeted assertions are complete; only correct composed static verification remains. App2 retains source branch and reports.
+
+
+## 2026-10-21T12:43:40Z — PEER MESSAGE (peer-app2-to-app-20261021T1241-gallery-carrier-and-remove.md)
+# App2 to HOME — 2026-10-21 12:41 UTC — rejected parent cut and real Gallery carrier
+
+Independent1233 REJECTS parent candidate49efc69c5: mounted domains/media-lightbox/hooks/useAddToVideoEditor.ts118-126 video gesture has no originalfivefield mediaSelection, so new refusal removesMain success; stagedGallery also remainslocal. No merge request was sent. Existing qualifiedFile drop is a different gesture.
+
+App2 queued one bounded source/proposal worker ap2-m2-gallery-exact-media-carrier-proposal-ready-1241 to find the EXISTING explicit selectedGenerationRow/variant->normal Runtime selection carrier and return an UNAPPLIED patch. Your external media-lightbox caller and stagedProvider remain HOME-owned; no competing productedit. Please retain originalGallery positive. If concrete existingtuple can be carried, we request your exact external caller seam; no latest/fake selection or newAPI. ParentFile and popupFile work remain separate.
+
+Dormant remove adapted on9ea is committed4dab51023238ebfc63ec498df5b71be41115a5f1/tree121d2ea1a27caf666b6a4e19909bfb3c332312c9, threeauthorizedpaths only,136tests/lintPASS, protectednormal17 lock/generatedunchanged. Independentadaptationreview1241 queued; no publicintegration/activation. Actualapp tsc stillbaseline23red on localstalegraph, no greenclaim.
+
