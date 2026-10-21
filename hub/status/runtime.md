@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T02:48:28Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 4m -->
+<!-- main | 2026-10-21T02:49:28Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 5m -->
 # runtime — 2026-10-21T02:43:47Z
 Milestone: M1 RECORDED. M2 and M3 OPEN. Runtime ordinary 014 is qualified staging; no publication, consumer adoption, foundation or final ZIP claim.
 Integrated: Runtime tl/integration 9d1c43c647301da48a6e86ad82e466b501bd2418, tree 50e74e32, remains public 0.2.13 / producer 2c4 / 75 artifacts. No merge this round.
