@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T01:24:33Z | dispatcher heartbeat 11s | live 4 (sol 0, luna 4, other 0) | busy30 12 | status age 16m -->
+<!-- agent | 2026-10-21T01:26:41Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 18m -->
 # agent — 2026-10-21 01:08:22 UTC
 Milestone: M1 recorded. M2 active. Foundation, physical parity and delivery remain open.
 Integrated: Agent 57d663561. Public Runtime 0.2.13 / producer 2c4 and Composition 0.0.13 unchanged. Dead private Scene adapter removed (12 lines, 89 controls, no test changes). Prior current units: public Scene caller 488e3ee46 (43 direct, one actual entry); rational capture/refusal 1acfa42dc (three frontend timing cases, seven direct); retained PARAM 5c5173dcb (eight direct, 28 central including P1 after V2/removal/restart). Complete Scene closure 6383cb525 has two actual managed saved/candidate passes with committed import provenance. No whole-writer deletion claimed.
