@@ -160,7 +160,7 @@ test.describe('producer ownership on the current mounted route', () => {
       const original = sceneTraffic.requests[0]!;
       expect(commands(original).map((command) => command.op)).toEqual(['clip.move', 'clip.set']);
       expect(commands(original)).toEqual(expect.arrayContaining([
-        expect.objectContaining({ op: 'clip.move', select: `parent/clip:${producerSeed.sceneOwnedClipId}`, args: { at: 1 } }),
+        expect.objectContaining({ op: 'clip.move', select: `parent/clip:${producerSeed.sceneOwnedClipId}`, args: { on: 1 } }),
         expect.objectContaining({ op: 'clip.set', select: `parent/clip:${producerSeed.sceneOwnedClipId}`, args: { values: { hold: 5 }, clear: [] } }),
       ]));
 
