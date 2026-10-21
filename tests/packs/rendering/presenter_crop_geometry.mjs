@@ -24,6 +24,10 @@ export const basis = {width: 1920, height: 1080, fps: 30};
 export const frames = [0, 3, 4, 5, 15, 29];
 export const params = {mouth: {x: 151, y: 104, w: 19}, words: [[.1, .4]],
   chrome: 'none', blinkEvery: 0, seed: 7};
+// The normal constructor omits mouth; the registered presenter supplies its
+// own default anchor. Keep the other capture controls identical to the
+// explicit case without copying the normalized mouth into this fixture.
+export const defaultParams = {words: [[.1, .4]], chrome: 'none', blinkEvery: 0, seed: 7};
 export const propsFor = (p = params, extra = {}) => ({
   timeline: {tracks: [{id: 'overlay', kind: 'visual'}], clips: [{
     id: 'presenter', track: 'overlay', clipType: 'am-presenter', at: 0, hold: 2,
@@ -31,6 +35,7 @@ export const propsFor = (p = params, extra = {}) => ({
     params: p, ...extra,
   }]}, theme: DEFAULT_THEME, assets: {assets: {}},
 });
+export const defaultPropsFor = (extra = {}) => propsFor(defaultParams, extra);
 export const inspect = (props, b = basis, selected = frames) => {
   assert.deepEqual(props.timeline.clips[0].elementRef,
     {kind: 'effect', id: 'am-presenter', packId: 'astrid_motion'});

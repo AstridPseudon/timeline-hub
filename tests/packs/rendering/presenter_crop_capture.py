@@ -124,3 +124,64 @@ def test_actual_registered_presenter_crop_pixels(presenter_query, tmp_path):
     assert {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths} == before
     print(json.dumps({"png_sha256": before, "crop": crops,
                       "natural_pairs": fractions, "planted_controls": controls}, sort_keys=True))
+
+
+@pytest.mark.timeout(240)
+def test_actual_registered_presenter_default_crop_pixels(presenter_query, tmp_path):
+    """One default-constructor case; fail at the real private/public seam."""
+    assert os.environ.get("VIEWING_CROP_CENTRAL") == "1", "central READY grant required"
+    assert subprocess.run(["flock", "-n", "/tmp/timeline-viewing-browser.lock", "true"]).returncode != 0
+    stage_geometry(presenter_query)
+    for name in ("presenter_crop_entry.mjs", "presenter_crop_capture.mjs"):
+        shutil.copyfile(Path(__file__).with_name(name), presenter_query.project / name)
+    output = tmp_path / "default-capture"
+    output.mkdir()
+    process = subprocess.Popen([str(presenter_query.node), "presenter_crop_capture.mjs", str(output), "default"],
+                               cwd=presenter_query.project, env=presenter_query.env,
+                               text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                               start_new_session=True)
+    try:
+        stdout, stderr = process.communicate(timeout=180)
+    finally:
+        if process.poll() is None:
+            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait(timeout=10)
+    assert process.returncode == 0, stdout + stderr
+    case = json.loads((output / "inspection.json").read_text())
+    assert case["frames"] == [0, 3, 4, 5]
+    assert len(list(output.glob("*.png"))) == 4
+    params = case["props"]["timeline"]["clips"][0]["params"]
+    assert "mouth" not in params
+    size = tuple(case["size"])
+    assert size == (640, 360)
+    paths = [output / f"frame-{f}.png" for f in case["frames"]]
+    before = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
+    public = png_crop(public_box(case["rows"][0]), size)
+    private_box = model.mouth_box(legacy_element(case), 0)
+    assert private_box is not None, (
+        "default-mouth source mismatch: registered default publishes a known frame-0 ROI, "
+        "but the existing private default crop is absent; the smallest next correction "
+        "is component-owned compatibility for the normal default constructor"
+    )
+    private = png_crop(private_box, size)
+    assert private == public
+    images = []
+    for path in paths:
+        with Image.open(path) as captured:
+            assert captured.format == "PNG" and captured.size == size
+            images.append(captured.convert("RGB"))
+    assert all(image.crop(private).tobytes() == image.crop(public).tobytes() for image in images)
+    private_fractions = [_diff_fraction(a.crop(private), b.crop(private))[0]
+                         for a, b in zip(images, images[1:])]
+    public_fractions = [_diff_fraction(a.crop(public), b.crop(public))[0]
+                        for a, b in zip(images, images[1:])]
+    assert private_fractions == public_fractions
+    assert [fraction > .02 for fraction in private_fractions] == [fraction > .02 for fraction in public_fractions]
+    assert any(fraction > .02 for fraction in private_fractions)
+    assert {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths} == before
+    print(json.dumps({"png_sha256": before, "crop": {"private": private, "public": public},
+                      "natural_pairs": private_fractions}, sort_keys=True))
