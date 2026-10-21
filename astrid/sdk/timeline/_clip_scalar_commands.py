@@ -169,9 +169,14 @@ def _transition_set(ctx, command, ref, values, identity):
         if existing_params is not _MISSING:
             next_transition['params'] = copy.deepcopy(existing_params)
     elif params is None:
-        # A duration-only/null-shaped update must not erase known parameters.
-        if isinstance(existing_params, dict):
-            next_transition['params'] = copy.deepcopy(existing_params)
+        # Null is a raw value, not a duration-only instruction. Refuse a
+        # non-empty object-to-null change rather than silently retaining data.
+        if ((isinstance(existing_params, dict) and existing_params)
+                or (existing_params is not _MISSING and existing_params is not None
+                    and not isinstance(existing_params, dict))):
+            raise CommandError('transition params null would remove existing parameters',
+                               ref=ref, path=['transition', 'params'])
+        next_transition['params'] = None
     elif isinstance(params, dict):
         base_params = existing_params if isinstance(existing_params, dict) else {}
         next_transition['params'] = {**copy.deepcopy(base_params), **copy.deepcopy(params)}
