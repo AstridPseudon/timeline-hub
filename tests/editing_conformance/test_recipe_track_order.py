@@ -9,8 +9,8 @@ import pytest
 
 from astrid.sdk.timeline._collections import arrange, order
 from astrid.sdk.timeline._command_state import CommandError, State, present
-from astrid.sdk.timeline._scalar_commands import capture_track_set
 from astrid.sdk.timeline._recording import Recording
+from astrid.sdk.timeline._scalar_commands import capture_track_set
 from astrid.sdk.timeline._track_commands import (
     capture_track_reorder,
     track_reorder_with_data_lane_placement_candidate,
@@ -56,8 +56,8 @@ def mixed_lane_bundle():
 
 def mixed_lane_command(original, desired_order, desired_placement):
     old_order = order(State(original), 'parent', 'track')
-    old_placement = original['parent']['config']['app']['timelineDataLanePlacement']
-    return {
+    app = original['parent']['config'].get('app', {})
+    command = {
         'schema_version': 1,
         'op': 'track.reorder',
         'version': '2',
@@ -66,10 +66,13 @@ def mixed_lane_command(original, desired_order, desired_placement):
             'order': copy.deepcopy(desired_order),
             'expected_order': copy.deepcopy(old_order),
             'data_lane_placement': copy.deepcopy(desired_placement),
-            'expected_data_lane_placement': copy.deepcopy(old_placement),
         },
         'intent': {},
     }
+    if 'timelineDataLanePlacement' in app:
+        command['args']['expected_data_lane_placement'] = copy.deepcopy(
+            app['timelineDataLanePlacement'])
+    return command
 
 
 def execute_mixed_lane_candidate(original, command):
@@ -290,3 +293,50 @@ def test_mixed_lane_candidate_guards_lane_identity_and_both_carriers_before_writ
     changed['parent']['config']['app']['timelineDataLanePlacement']['lanes'].reverse()
     with pytest.raises(CommandError, match='placement changed'):
         execute_mixed_lane_candidate(changed, command)
+
+
+@pytest.mark.parametrize('source', ['absent', 'null', 'unknown-anchor', 'malformed'])
+def test_mixed_lane_candidate_matches_main_placement_read_shape(source):
+    original = mixed_lane_bundle()
+    app = original['parent']['config']['app']
+    if source == 'absent':
+        del app['timelineDataLanePlacement']
+    elif source == 'null':
+        app['timelineDataLanePlacement'] = None
+    elif source == 'unknown-anchor':
+        app['timelineDataLanePlacement']['lanes'][0]['beforeTrackId'] = 'deleted-track'
+    else:
+        app['timelineDataLanePlacement'] = {
+            'version': 1,
+            'lanes': [{'laneId': 'astrid.transcript', 'beforeTrackId': 7}],
+        }
+
+    before = copy.deepcopy(original)
+    old = order(State(original), 'parent', 'track')
+    desired = {
+        'version': 1,
+        'lanes': [
+            {'laneId': 'astrid.transcript', 'beforeTrackId': 'picture'},
+            {'laneId': 'opaque:custom/v1', 'beforeTrackId': None},
+        ],
+    }
+    command = mixed_lane_command(original, [old[2], old[0], old[1]], desired)
+
+    if source == 'malformed':
+        candidate = copy.deepcopy(original)
+        ctx = Recording(candidate, command, 0)
+        with pytest.raises(CommandError, match='placement|lane'):
+            track_reorder_with_data_lane_placement_candidate(ctx, command)
+        assert candidate == before
+        return
+
+    plan = execute_mixed_lane_candidate(original, command)
+    assert plan.bundle['parent']['config']['app']['timelineDataLanePlacement'] == desired
+    assert {row['id']: row for row in parent_tracks(plan.bundle)} == {
+        row['id']: row for row in parent_tracks(before)
+    }
+    assert plan.records[0]['writes'][1]['before'] == (
+        {'state': 'absent'} if source == 'absent' else
+        present(before['parent']['config']['app']['timelineDataLanePlacement'])
+    )
+    assert inverse(plan.bundle, json.loads(json.dumps(plan.records))).bundle == before
