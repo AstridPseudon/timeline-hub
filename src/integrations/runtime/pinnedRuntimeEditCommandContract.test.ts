@@ -23,6 +23,19 @@ const nativeMove = (on: number): EditCommand => ({
   args: { on },
 });
 
+const projectDataWrite: EditCommand = {
+  schema_version: 1,
+  op: 'project-data.write',
+  version: '1',
+  select: 'parent',
+  args: {
+    target: 'com.example.compiler-canary',
+    key: '__dsl__:dsl://com.example.compiler-canary/main.json',
+    value: { version: 1 },
+    mode: 'replace',
+  },
+};
+
 describe('live App EditCommand operation contract', () => {
   it.each([
     ['not an object', null],
@@ -53,6 +66,17 @@ describe('live App EditCommand operation contract', () => {
     await expect(env.provider.commitTimeline(request, 'timeline-init-b69')).rejects.toThrow(/timeline\.init/);
     expect(env.commits()).toHaveLength(1);
     expect(env.current().config.clips).toEqual(before);
+  });
+
+  it('gates project-data.write on the pinned schema operation capability', () => {
+    const supported = pinnedRuntimeEditCommandOps();
+    const assertProjectDataWrite = () => assertPinnedRuntimeEditCommandOps([projectDataWrite]);
+
+    if (supported.has(projectDataWrite.op)) {
+      expect(assertProjectDataWrite).not.toThrow();
+    } else {
+      expect(assertProjectDataWrite).toThrow(/project-data\.write/);
+    }
   });
 
   it('accepts a known native command through the existing session and fake ACK seam', async () => {
