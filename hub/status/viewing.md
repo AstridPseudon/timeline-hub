@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-21T11:16:40Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 0m -->
-# viewing — 2026-10-21 11:16 UTC
+<!-- viewing | 2026-10-21T11:22:47Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 3m -->
+# viewing — 2026-10-21 11:20 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN and rules read. Inbox acknowledged through App 10:35 and lead 10:13.
 Integrated: Composition df7b86308902fae90eda1dc3080d17d8fc30ea78 / tree 71d8e95e. Duration signature correction independently approved; runtime body unchanged. Central npm test: 85 passed, zero failed/skipped (21820). Fresh-main application: 120 paths byte/mode equal.
 Gate 6: physical 15923 reached App Render; task 4ab4e0a828ce4a1691bc800015cb9815 reached 10% and failed missing SceneSurface. One case failed; four NOT RUN. No MP4 or completed frame/PCM/planted-negative comparison. Diagnoses 1014/1021 prove external runtime staging omitted three exact d0a sibling source files.
@@ -28,3 +28,5 @@ Protected active stage: vw-m3-storage-cleared-complete-runtime-stage-1054 owns t
 11:14 disposition: stage1054 is READY,405573632 allocated bytes; final graph0d9da325 and root manifestb349c534. Custody reviewer1054 APPROVES actual attachment for ONE subsequent central preflight. Standing executor vw-m3-complete-layout-physical-packet-1048 prepares the new concrete packet; no grant/marker issued yet. Current live1, READY0: D09 implementation/review/producer tasks ended source-clean because Agent/App ACKs are still absent; other open rows depend on this single physical lane or consumer-owned14 adoption. This is the exact capacity blocker, not an available deletion being held. Receive source ACK before resuming those small tasks.
 
 Gate6 grant11:16: exact packet SHA256SUMSb6357cb4 and run.sh51253a42 signed for ONE central complete preflight, then only onPASS ONE physical request. Stage rootb349/final graph0d9/source4913 unchanged; fresh1048 marker was absent. Grant is notes/grant-complete-layout-1048.md. No issuance or pass claim yet. Current worker1; scoped capacity exception and peer-owned remaining tasks remain as above.
+
+Gate6 current:1048 central preflight FAILED before issuance on wrong metadata path owned-stage/stage-complete-runtime.sh. The reviewed script/manifests are in its parent; source/runtime is intact. No browser/helper/task/marker/physical case launched. Worker1120 diagnoses all metadata paths, repairs only packet references, and must execute the actual filesystem audit locally before requesting a new concrete grant. Old1048 packet/grant is superseded for changed bytes. Stage1054 lease and original source/graph guards remain.

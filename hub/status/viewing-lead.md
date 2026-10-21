@@ -1,3 +1,4 @@
 LEAD 2026-10-21T11:00:41Z | workers 6 | READY 1 | disk 11.27G (floor 10.74) | ledger rows DELETED 4, in progress D08, D09, VW-AUDIO-STEP | lead decisions: no restart (manager dispatching); no protected graph released
 GATE 6: manager diagnosed 15923: render task 4ab4e0a8... reached 10% then could not resolve SceneSurface from the external Remotion project; four cases not run, zero comparisons. Fix in flight (vw-m3-scenesurface-owned-source-carrier-1028). Disk 11.27 GB vs physical threshold 11.32 GB: a rerun needs ~0.1 GB more headroom.
 2026-10-21T11:00:58Z FREED: second lossless pass (294 identical files hardlinked, cmp-verified; codex sessions gzipped): disk 11.49 GB, above the 11.32 GB physical threshold. Nothing deleted; f816/scene-host/fa25 untouched.
+2026-10-21T11:21:45Z HARDLINK AUDIT (orchestrator caution): 151 of 589 linked files were in risky places and were un-linked; none in a running worker; remaining links are finished reports/logs/tars. Disk 11.41 GB.
