@@ -1,0 +1,209 @@
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-canonical-stage-sort-packet-1140/packet/issue.mjs	2026-10-21 11:38:33.283293067 +0000
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-discovery-readiness-contract-fix-1153/packet/issue.mjs	2026-10-21 11:54:53.251249058 +0000
+@@ -6,10 +6,10 @@
+ const out=process.env.RUN_DIR;
+ const stage='/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-storage-cleared-complete-runtime-stage-1054/owned-stage';
+ const remotion=path.join(stage,'remotion');
+-const grantNote='/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/notes/grant-canonical-stage-sort-1140.md';
++const grantNote='/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/notes/grant-discovery-readiness-1153.md';
+ assert(out);
+ assert.equal(process.env.RUN_DIR,out);
+-assert.equal(out,path.join(worker,'gate6-20261021T1140'));
++assert.equal(out,path.join(worker,'gate6-20261021T1153'));
+ assert.equal(path.dirname(realpathSync(out)),worker);
+ assert.equal(realpathSync(out),out);
+ assert.deepEqual(readdirSync(out),[],'physical run directory must be fresh; never reuse a partial issuance');
+@@ -47,7 +47,7 @@
+  writeFileSync(p,JSON.stringify(obj,null,2)+'\n',{flag:'wx',mode:0o600});return p;
+ }
+ const tuplePath=exclusive('source-tuple.json',tuple);
+-const approvalReference='manager grant-canonical-stage-sort-1140.md; fresh marker named exact stage, packet, and marker path after one central preflight';
++const approvalReference='manager grant-discovery-readiness-1153.md; fresh marker named exact stage, packet, and marker path after one central preflight';
+ const grant={approved:true,approvalReference,approvedBy:'viewing manager',profile:'native-codec-chrome155',browserExecutable:c.CHROME155.executable,browserVersion:c.CHROME155.version,browserExecutableSha256:c.CHROME155.sha256,browserTreeSha256:c.CHROME155.treeSha256,nodeVersion:c.NODE20.version,nodeExecutableSha256:c.NODE20.sha256,sourceSha:appSha,sourceTree:appTree,stage,packet:worker,marker:markerPath,issuedAt:new Date().toISOString(),maximumCentralRequests:1};
+ const grantPath=exclusive('manager-grant.json',grant);
+ exclusive('one-shot-marker.json',{sourceSha:appSha,sourceTree:appTree,profile:grant.profile,approvalReference,stage,packet:worker,marker:markerPath,issuedAt:grant.issuedAt,exclusiveAllocation:true});
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-canonical-stage-sort-packet-1140/packet/packet-ready.mjs	2026-10-21 11:20:47.346625221 +0000
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-discovery-readiness-contract-fix-1153/packet/packet-ready.mjs	2026-10-21 11:54:43.607249491 +0000
+@@ -1,6 +1,7 @@
+ import assert from 'node:assert/strict';
+ import {pathToFileURL} from 'node:url';
+ import {assertCompleteStage} from './stage-audit.mjs';
++import {assertDiscoveryReadiness} from './discovery-readiness.mjs';
+ 
+ const [app, agent, runtime, stage] = process.argv.slice(2);
+ assert(app && agent && runtime && stage);
+@@ -15,7 +16,6 @@
+ await assertCompleteStage(stage);
+ controller.assertNode20();
+ controller.assertChrome155();
+-const discovery = controller.discover(app);
+-assert.match(discovery, /^Total: 5 tests in 1 file$/m);
++const discovery = assertDiscoveryReadiness(controller, app);
+ controller.assertFreshGrantAndMarker(app);
+-console.log('READY: complete stage, frozen tuple, exact five-case discovery, fresh grant and marker passed');
++console.log(`READY: complete stage, frozen tuple, ${discovery.discovery}, direct refusal controls, fresh grant and marker passed`);
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-canonical-stage-sort-packet-1140/packet/prepare.mjs	2026-10-21 11:20:47.351258880 +0000
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-discovery-readiness-contract-fix-1153/packet/prepare.mjs	2026-10-21 11:54:36.035249831 +0000
+@@ -14,6 +14,7 @@
+ const stage='/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-storage-cleared-complete-runtime-stage-1054/owned-stage';
+ const remotionProject=path.join(stage,'remotion');
+ const c=await import(pathToFileURL(path.join(app,'tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs')).href);
++const {assertDiscoveryReadiness}=await import('./discovery-readiness.mjs');
+ const {assertCompleteStage}=await import('./stage-audit.mjs');
+ const sha=b=>createHash('sha256').update(b).digest('hex');
+ const hash=b=>'sha256:'+sha(b);
+@@ -116,7 +117,8 @@
+ const helper=await bootstrap.resolveReviewedPackHostHelper(agent);
+ await parity.assertRunBoundary();
+ const before=await parity.sourceVersions('native-codec-chrome155');
+-const discovery=c.discover(app);
++const discoveryEvidence=assertDiscoveryReadiness(c,app);
++const discovery=discoveryEvidence.discovery;
+ const normalDiscovery=execFileSync(process.execPath,[path.join(app,'node_modules/@playwright/test/cli.js'),'test','--config','playwright.viewing-parity.normal-profile-native1920.config.ts','--project=native-codec-chrome155','--workers=1','--list'],{cwd:app,encoding:'utf8',timeout:60000});
+ assert.match(normalDiscovery,/^Total: 5 tests in 1 file$/m);
+ const availability=await availabilityGet(dist);
+@@ -126,7 +128,7 @@
+ assert.deepEqual((await assertCompleteStage(stage)).graph,runtimeContent);
+ await bootstrap.resolveReviewedPackHostHelper(agent);
+ assert.equal(git(app,'status','--porcelain'),'');
+-const result={status:failures.length?'BLOCKED':'PASS',failures,runtimeContent,tokenIssued:false,browserLaunched:false,runtimeStarted:false,tuple,dist:assertDist(dist),availability,python,helper,node,chrome,freeBytes,appGraph,runtimeGraph,discovery,normalDiscovery};
++const result={status:failures.length?'BLOCKED':'PASS',failures,runtimeContent,tokenIssued:false,browserLaunched:false,runtimeStarted:false,tuple,dist:assertDist(dist),availability,python,helper,node,chrome,freeBytes,appGraph,runtimeGraph,discovery,discoveryControls:discoveryEvidence.refusals,normalDiscovery};
+ exclusive('preflight.json',result);
+ console.log(JSON.stringify(result,null,2));
+ if (failures.length) process.exitCode=1;
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-canonical-stage-sort-packet-1140/packet/run.sh	2026-10-21 11:38:33.227293070 +0000
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-discovery-readiness-contract-fix-1153/packet/run.sh	2026-10-21 11:54:56.131248929 +0000
+@@ -14,12 +14,12 @@
+ remotion=$stage_root/remotion
+ dist=/home/user/work/wt/app-pin-d00a6613/dist
+ browser=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell
+-physical_run_dir=$worker/gate6-20261021T1140
++physical_run_dir=$worker/gate6-20261021T1153
+ run_dir=$physical_run_dir
+ mode=${1:---run}
+ case "$mode" in --run|--preflight) ;; *) echo 'usage: run.sh [--preflight]' >&2; exit 2 ;; esac
+ test "$#" -le 1
+-grant_note=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/notes/grant-canonical-stage-sort-1140.md
++grant_note=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/viewing/notes/grant-discovery-readiness-1153.md
+ marker_path=$physical_run_dir/one-shot-marker.json
+ test -f "$grant_note"
+ grep -F "$stage_root" "$grant_note" >/dev/null
+@@ -86,6 +86,7 @@
+ "$node" --check "$worker/dist-availability.mjs"
+ "$node" --check "$worker/stage-audit.mjs"
+ "$node" --check "$worker/packet-ready.mjs"
++"$node" --check "$worker/discovery-readiness.mjs"
+ python -B - "$worker/prepare-validation-diagnostic.py" <<'PY'
+ import ast
+ import pathlib
+@@ -112,6 +113,8 @@
+   if (result.appGraph.sha256 !== "8bdc44e93ce6f712f2a26fc44f1f8e904215c1785f54ed97f826a98fe0145c5b" || result.appGraph.fileCount !== 32393) throw new Error("wrong App graph");
+   if (result.runtimeGraph.graph.sha256 !== "4913a37e5403c8372a283dcca8fd30c846b636abd88f59cfc572809d2fd0bd3c" || result.runtimeGraph.graph.fileCount !== 21455) throw new Error("wrong Runtime graph");
+   if (result.dist.files !== 339 || result.dist.index !== "aeb5d83399b453b15a8cbc67b31260cf2820f8d65770ccd458986ddd551e257b") throw new Error("wrong retained dist");
++  if (result.discovery !== "discovered exactly 5 current native-codec-chrome155 parity cases") throw new Error("wrong discover() return contract");
++  if (JSON.stringify(result.discoveryControls) !== JSON.stringify({wrongCount: "refused", wrongName: "refused", noTests: "refused", helperError: "refused"})) throw new Error("discovery refusal controls incomplete");
+   if (result.normalDiscovery.match(/^Total: 5 tests in 1 file$/m) === null) throw new Error("wrong case collection");
+   if (result.availability.status !== 200 || !result.availability.exact) throw new Error("GET 200 guard failed");
+   console.log(JSON.stringify({preflight: "PASS", freeBytes: result.freeBytes, appSource: result.tuple.appSource, appGraph: result.appGraph, runtimeGraph: result.runtimeGraph.graph, dist: result.dist, availability: result.availability, cases: "exactly5"}));
+--- /dev/null	2026-10-20 20:20:15.825079416 +0000
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-discovery-readiness-contract-fix-1153/packet/discovery-readiness.mjs	2026-10-21 11:55:18.043247945 +0000
+@@ -0,0 +1,86 @@
++import assert from 'node:assert/strict';
++import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, realpathSync } from 'node:fs';
++import path from 'node:path';
++
++export const DISCOVERY_SUMMARY = 'discovered exactly 5 current native-codec-chrome155 parity cases';
++
++export function assertDiscoverySummary(discovery) {
++  assert.equal(discovery, DISCOVERY_SUMMARY, 'frozen discover() return contract changed');
++  return discovery;
++}
++
++function caseSource({ count = 5, renameLast = false } = {}) {
++  const names = [
++    'normal App Render action downloads',
++    'fixture readiness seeks',
++    'compares native-size actual Player frames',
++    'captures the actual Player page as one native-PTS VP8/Opus tab stream',
++    renameLast ? 'picture-only renamed case' : 'picture-only one-host patch',
++  ];
++  return [
++    "import { test } from '@playwright/test';",
++    ...names.slice(0, count).map(name => `test('${name}', () => {});`),
++    '',
++  ].join('\n');
++}
++
++function link(source, destination) {
++  mkdirSync(path.dirname(destination), { recursive: true });
++  symlinkSync(source, destination);
++}
++
++function makeDiscoveryFixture(appRoot, options) {
++  const root = mkdtempSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'discovery-controls-'));
++  assert.equal(realpathSync(root), root, 'discovery control root must be canonical');
++  link(path.join(appRoot, 'node_modules'), path.join(root, 'node_modules'));
++  writeFileSync(path.join(root, 'playwright.viewing-parity.native-codec.config.ts'), [
++    "import { defineConfig } from '@playwright/test';",
++    "export default defineConfig({ testDir: './tests/e2e/timeline', testMatch: 'player-export-frame-parity.spec.ts', projects: [{ name: 'native-codec-chrome155' }] });",
++    '',
++  ].join('\n'), { mode: 0o600 });
++  const spec = path.join(root, 'tests/e2e/timeline/player-export-frame-parity.spec.ts');
++  mkdirSync(path.dirname(spec), { recursive: true });
++  writeFileSync(spec, "import './viewing-parity/cases';\n", { mode: 0o600 });
++  const cases = path.join(root, 'tests/e2e/timeline/viewing-parity/cases.ts');
++  mkdirSync(path.dirname(cases), { recursive: true });
++  writeFileSync(cases, caseSource(options), { mode: 0o600 });
++  return root;
++}
++
++function refuses(label, operation, message) {
++  assert.throws(operation, message, `${label} must refuse`);
++}
++
++export function assertDiscoveryRefusals(controller, appRoot) {
++  const roots = [];
++  try {
++    const wrongCount = makeDiscoveryFixture(appRoot, { count: 4 });
++    roots.push(wrongCount);
++    refuses('wrong-count discovery', () => controller.discover(wrongCount), /exactly 5 parity cases/);
++
++    const wrongName = makeDiscoveryFixture(appRoot, { renameLast: true });
++    roots.push(wrongName);
++    refuses('wrong-name discovery', () => controller.discover(wrongName), /missing a current parity case/);
++
++    const noTests = makeDiscoveryFixture(appRoot, { count: 0 });
++    roots.push(noTests);
++    refuses('no-tests discovery', () => controller.discover(noTests), /No tests found/);
++
++    const helperError = mkdtempSync(path.join(path.dirname(new URL(import.meta.url).pathname), 'discovery-controls-'));
++    assert.equal(realpathSync(helperError), helperError, 'helper-error root must be canonical');
++    roots.push(helperError);
++    refuses('helper-error discovery', () => controller.discover(helperError), /offline Playwright discovery failed/);
++  } finally {
++    for (const root of roots) {
++      assert.equal(realpathSync(root), root, 'only the recorded discovery control root may be removed');
++      rmSync(root, { recursive: true, force: true });
++    }
++  }
++  return { wrongCount: 'refused', wrongName: 'refused', noTests: 'refused', helperError: 'refused' };
++}
++
++export function assertDiscoveryReadiness(controller, appRoot) {
++  const discovery = assertDiscoverySummary(controller.discover(appRoot));
++  const refusals = assertDiscoveryRefusals(controller, appRoot);
++  return { discovery, refusals };
++}
+--- /dev/null	2026-10-20 20:20:15.825079416 +0000
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-discovery-readiness-contract-fix-1153/packet/SHA256SUMS	2026-10-21 11:55:45.559246709 +0000
+@@ -0,0 +1,10 @@
++91e047ef8c3083b8f1cdfd326005bd286cdcf3daa3ab4e39cf608473de217192  discovery-readiness.mjs
++fb7632d2c69da10c65db04052f0b04ede1b6e72064817fdc600098135ea50dfd  dist-availability.mjs
++f88b1885196984826cfb505ed7e1a12783f98b98e21f8ae131e2af6b0d8b8479  issue.mjs
++8b7f352688edd511f5194f8fbec44abd8e295ffd02246a2e49252a65e3b7456d  packet-ready.mjs
++43d35af7621732d31290a15e1cb872e9ad0a0432709111d836dd40cfd32b9c12  prepare-validation-diagnostic.py
++ecd8182718707e76336ccf9913756b08b8cc011ae72cffba8a8dc204d8039cf7  prepare.mjs
++26091f1ff5015c44a510e6629f62e593fd12088fad6281f122dd22ec21a3b418  preflight.sh
++b51a2837810d951abfc7a696aff5a34f2a98da2299b442b77714e4a234063b4e  run.sh
++654013afd77ca5baf793b4120c088b3985da3b30bbf2c90cda49cd85cafebcd3  short-player-temp-controls.py
++70f2394e2fa174605f73f275d166bcb922955ff02004be115a744269b87c0a41  stage-audit.mjs

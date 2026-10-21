@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T11:59:04Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 5m -->
+<!-- viewing | 2026-10-21T12:05:06Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 11m -->
 # viewing — 2026-10-21 11:53 UTC
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN and manager rules read. Inbox ACK through App 11:04 and lead 11:34. Lead's space note is superseded by the already completed stage; do not copy it again.
 Integrated: Composition df7b86308902fae90eda1dc3080d17d8fc30ea78 / tree 71d8e95e. Duration signature/body review approved; source full21820: 85 passed, zero failed/skipped. Fresh-main application: 120 paths byte/mode equal.
