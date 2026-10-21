@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAssetDropEdit,
   buildPlacePreparedMediaCommand,
+  buildOccurrenceMediaAddRow,
 } from '@/tools/video-editor/hooks/useAssetManagement';
 import { applyPreparedMediaCommand } from '@/tools/video-editor/commands/media';
 import {
@@ -54,6 +55,33 @@ const createTimelineData = (assetType: string, file: string): TimelineData => ({
 });
 
 describe('buildAssetDropEdit media kind validation', () => {
+  it('builds the raw occurrence row with the original five-field media alias', () => {
+    expect(buildOccurrenceMediaAddRow({
+      clipId: 'popup-child-1',
+      media: {
+        asset: 'asset-1',
+        generation_id: 'generation-1',
+        variant_id: 'variant-1',
+        object_id: 'sha256:object',
+        catalog_digest: 'sha256:catalog',
+      },
+      mediaType: 'video',
+      track: 'video',
+      at: 1.5,
+      duration: 2,
+    })).toEqual({
+      id: 'popup-child-1',
+      clipType: 'video',
+      track: 'video',
+      at: 1.5,
+      asset: 'asset-1',
+      hold: 2,
+      from: 0,
+      to: 2,
+      speed: 1,
+    });
+  });
+
   it('builds JSON-safe prepared-media commands when optional placement fields are absent', () => {
     const command = buildPlacePreparedMediaCommand({
       prepared: {

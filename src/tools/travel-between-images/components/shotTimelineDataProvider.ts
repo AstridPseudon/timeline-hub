@@ -378,10 +378,20 @@ export function createShotTimelineDataProvider(
       ? { prepareMediaImport: mediaProvider.prepareMediaImport.bind(mediaProvider) }
       : {}),
     ...(mediaProvider?.getProjectMediaSelection
-      ? { getProjectMediaSelection: mediaProvider.getProjectMediaSelection.bind(mediaProvider) }
+      ? { getProjectMediaSelection: (query: MediaSelectionQuery) => {
+          const reader = mediaProvider.getProjectMediaSelection!;
+          return reader.length >= 2
+            ? (reader as unknown as (projectId: string, query: MediaSelectionQuery) => Promise<MediaSelection>)(composition.projectId, query)
+            : reader(query);
+        } }
       : {}),
     ...(mediaProvider?.getProjectVerifiedMedia
-      ? { getProjectVerifiedMedia: mediaProvider.getProjectVerifiedMedia.bind(mediaProvider) }
+      ? { getProjectVerifiedMedia: (selection: MediaSelection) => {
+          const reader = mediaProvider.getProjectVerifiedMedia!;
+          return reader.length >= 2
+            ? (reader as unknown as (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>)(composition.projectId, selection)
+            : reader(selection);
+        } }
       : {}),
     setShotTimelineTraceId: (traceId) => { activeTimingTraceId = traceId; },
     getTimelineDraftRecoveryMetadata: (rememberRaw): TimelineDraftRecoveryMetadata => {

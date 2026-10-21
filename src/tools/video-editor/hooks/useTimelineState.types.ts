@@ -6,6 +6,7 @@ import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-pa
 import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semanticGestures.ts';
 import type { ElementCapturePort } from '@/tools/video-editor/commands/elementGesture.ts';
 import type { ParentClipAddMediaCapturePort, ParentClipSwapMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
+import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
 import type { OccurrenceDuplicateCapturePort } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
 import type { ShotSetCapturePort } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
@@ -151,6 +152,7 @@ export interface TimelineEditorOpsContextValue {
   selectedParam?: ClipParamsCapturePort;
   trackLabel?: TrackLabelCapturePort;
   shotSet?: ShotSetCapturePort;
+  occurrenceMedia?: OccurrenceMediaCapturePort;
   parentClipAddMedia?: ParentClipAddMediaCapturePort;
   parentClipSwapMedia?: ParentClipSwapMediaCapturePort;
   occurrenceDuplicate?: OccurrenceDuplicateCapturePort;

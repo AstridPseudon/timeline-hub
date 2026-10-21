@@ -16,6 +16,7 @@ export {
 } from '@/sdk/video/timeline/errors.ts';
 export type { TimelineSchemaIssue } from '@/sdk/video/timeline/errors.ts';
 import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/index.ts';
+import type { MediaImportOptions, PreparedMediaImport } from '@/tools/video-editor/data/AssetResolver.ts';
 import type { Checkpoint } from '@/tools/video-editor/types/history.ts';
 import type { AssetResolver } from '@/tools/video-editor/data/AssetResolver.ts';
 import type { TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
@@ -27,9 +28,12 @@ import type {
   CommitRequest,
   DocumentPin,
   HistoryPage,
+  MediaSelection,
+  MediaSelectionQuery,
   MutationReceipt,
   VerifiedDocument,
   VerifiedDocumentObject,
+  VerifiedMedia,
 } from '@/integrations/runtime/generated.ts';
 export type {
   AssetProfile,
@@ -462,6 +466,12 @@ export interface DataProvider extends AssetResolver {
   shotComposition?: ShotCompositionPort;
   /** Optional provider-owned generation lookup for editor asset actions. */
   loadGenerationForLightbox?(generationId: string): Promise<GenerationRow | null>;
+  /** Read the immutable managed-media identity selected by Runtime. */
+  getProjectMediaSelection?(query: MediaSelectionQuery): Promise<MediaSelection>;
+  /** Read verified metadata for an already-captured immutable selection. */
+  getProjectVerifiedMedia?(selection: MediaSelection): Promise<VerifiedMedia>;
+  /** Existing Runtime byte-import adapter; callers retain its immutable descriptor. */
+  prepareMediaImport?(file: File, options?: MediaImportOptions): Promise<PreparedMediaImport>;
   /** Existing Runtime-managed object plane for editable project sources. */
   projectObjects?: ProjectObjectStorage;
   persistenceEnabled?: boolean;

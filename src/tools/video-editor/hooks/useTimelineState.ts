@@ -3,6 +3,7 @@ import type { ClipTrimCapturePort } from '../commands/clipTrimGesture.ts';
 import type { ClipParamsCapturePort } from '../commands/clipParamsGesture.ts';
 import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 import type { ShotSetCapturePort } from '@/tools/video-editor/commands/shotSetGesture.ts';
+import type { OccurrenceMediaCapturePort } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
 import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
 import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
 import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
@@ -186,6 +187,7 @@ function useTimelineEditorContextValue({
   selectedParamPort,
   elementPort,
   shotSetPort,
+  occurrenceMediaPort,
   uploadFiles,
   applyEdit,
   commands,
@@ -234,6 +236,7 @@ function useTimelineEditorContextValue({
   selectedParamPort?: ClipParamsCapturePort;
   elementPort?: import('@/tools/video-editor/commands/elementGesture.ts').ElementCapturePort;
   shotSetPort?: ShotSetCapturePort;
+  occurrenceMediaPort?: OccurrenceMediaCapturePort;
   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
   commands: TimelineEditorCommands;
@@ -264,6 +267,7 @@ function useTimelineEditorContextValue({
     element: elementPort,
     trackLabel: trackLabelPort,
     shotSet: shotSetPort,
+    occurrenceMedia: occurrenceMediaPort,
     data,
     resolvedConfig: selection.resolvedConfig,
     deviceClass: interactionPolicy.deviceClass,
@@ -447,6 +451,7 @@ function useTimelineEditorContextValue({
     clipScalarPort,
     clipTrimPort,
     shotSetPort,
+    occurrenceMediaPort,
     unpatchRegistry,
     uploadFiles,
   ]);
@@ -634,7 +639,11 @@ function useTimelinePlaybackContextValue({
   ]);
 }
 
-export function useTimelineState(services: TimelineHostServiceHooks, initialTimelineData?: TimelineData): UseTimelineStateResult {
+export function useTimelineState(
+  services: TimelineHostServiceHooks,
+  initialTimelineData?: TimelineData,
+  occurrenceMediaContext?: { occurrenceId: string; port: OccurrenceMediaCapturePort },
+): UseTimelineStateResult {
   const runtime = useVideoEditorRuntime();
   const runtimeRef = useRef(runtime);
   runtimeRef.current = runtime;
@@ -944,6 +953,8 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry,
     invalidateAssetRegistry,
     resolveAssetUrl,
+    occurrenceMediaPort: occurrenceMediaContext?.port,
+    occurrenceId: occurrenceMediaContext?.occurrenceId,
   });
 
   const clipResize = useClipResize({
@@ -1146,6 +1157,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     selectedParamPort: save.commands.clipParamsPort,
     elementPort: save.commands.elementPort,
     shotSetPort: save.commands.shotSetPort,
+    occurrenceMediaPort: save.commands.occurrenceMediaPort,
     uploadFiles,
     applyEdit,
     commands: timelineCommands,
@@ -1238,6 +1250,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     element: save.commands.elementPort,
     trackLabel: save.commands.trackLabelPort,
     shotSet: save.commands.shotSetPort,
+    occurrenceMedia: save.commands.occurrenceMediaPort,
     parentClipAddMedia: save.commands.parentClipAddMediaPort,
     parentClipSwapMedia: save.commands.parentClipSwapMediaPort,
     occurrenceDuplicate: save.commands.occurrenceDuplicatePort,
@@ -1302,7 +1315,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost,
     save.commands.port, save.commands.clipScalarPort, save.commands.clipTrimPort, save.commands.clipParamsPort,
     save.commands.elementPort, save.commands.trackLabelPort, save.commands.shotSetPort,
-    save.commands.parentClipAddMediaPort, save.commands.parentClipSwapMediaPort, save.commands.occurrenceDuplicatePort]);
+    save.commands.occurrenceMediaPort, save.commands.parentClipAddMediaPort, save.commands.parentClipSwapMediaPort, save.commands.occurrenceDuplicatePort]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,
