@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T06:23:24Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 11m -->
+<!-- main | 2026-10-21T06:29:33Z | dispatcher heartbeat 3s | live 5 (sol 0, luna 5, other 0) | busy30 11 | status age 17m -->
 # runtime — 2026-10-21T06:12:17Z
 Milestone: M1 RECORDED. M2/M3 and delivery OPEN. Runtime 0.2.14 PUBLISHED and adopted by Agent 091aa and App 3be. Native initializer activated separately in App 1557 after real 7782. No foundation or ZIP claim.
 Integrated: Runtime tl/integration b92d3e7a05eec65c142294ef4873edd059e9b31d / tree 6abc2f117391de8e7e35c0283f575a002199894d. Launcher, retained transcript and Speech WAV fallback merged. Published producer remains immutable 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c / tree d3a290b407fa61e6ab2d476f50c068073f70df00; all 76 artifacts unchanged, ordinary 6ba has 55 definitions / 29 operations. Artifact sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac; manifest a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d. Exact tuple: design/runtime-current-tuple.md.
