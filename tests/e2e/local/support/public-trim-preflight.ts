@@ -9,6 +9,10 @@ import { REPO_ROOT, RUNTIME_CHECKOUT } from './harness.ts';
 export const EXPECTED_RUNTIME_PRODUCER = 'astrid-runtime';
 export const EXPECTED_RUNTIME_MANIFEST = 'contract/artifacts.json';
 export const EXPECTED_RUNTIME_PRODUCER_VERSION = 'sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac';
+export const EXPECTED_PUBLIC_COMPOSITION_PACKAGE = {
+  name: '@banodoco/timeline-composition',
+  version: '0.0.13',
+} as const;
 
 const EXPECTED_RUNTIME_FILES = {
   'src/integrations/runtime/fixtures/responses/events_page_1_200.json': 'conformance/responses/events_page_1_200.json',
@@ -54,6 +58,15 @@ export function assertPublicTrimRuntimeLock(value: unknown, sourceCommit: string
     assert.match((entry as { sha256: unknown }).sha256 as string, /^sha256:[0-9a-f]{64}$/);
   }
   return lock as RuntimeLock;
+}
+
+/** Validate package identity without constraining the archive's complete package metadata. */
+export function assertPublicTrimCompositionPackage(value: unknown): Record<string, unknown> {
+  assert(value && typeof value === 'object' && !Array.isArray(value), 'public Trim Composition package must be an object');
+  const packageJson = value as Record<string, unknown>;
+  assert.equal(packageJson.name, EXPECTED_PUBLIC_COMPOSITION_PACKAGE.name);
+  assert.equal(packageJson.version, EXPECTED_PUBLIC_COMPOSITION_PACKAGE.version);
+  return packageJson;
 }
 
 const EXACT_AGENT_COMMIT = '6efc81500a0e0688c2bb41e736503f0fc3e04abb';
@@ -127,8 +140,8 @@ export function verifyPublicTrimSourceTuple() {
       remotion: '4.0.509',
     },
   });
-  const archivePackage = JSON.parse(execFileSync('tar', ['-xOzf', archive, 'package/package.json'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })) as { name: string; version: string };
-  assert.deepEqual(archivePackage, { name: '@banodoco/timeline-composition', version: '0.0.13' });
+  const archivePackage = JSON.parse(execFileSync('tar', ['-xOzf', archive, 'package/package.json'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })) as unknown;
+  assertPublicTrimCompositionPackage(archivePackage);
   const members = execFileSync('tar', ['-tzf', archive], { encoding: 'utf8' }).split('\n').filter((member) => member && !member.endsWith('/'));
   assert.equal(members.length, 77);
   assert.ok(members.every((member) => member.startsWith('package/')));
