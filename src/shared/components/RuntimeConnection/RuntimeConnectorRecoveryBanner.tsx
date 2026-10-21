@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { AlertDialog, AlertDialogContent } from '@/shared/components/ui/alert-dialog.tsx';
 import { AlertTriangle, Check, Copy, LoaderCircle, RotateCcw } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card.tsx';
@@ -56,6 +57,42 @@ export function buildWorkspaceRestartBrief({
   ].join('\n\n');
 }
 
+const QUIET_RETRY_MS = 3000;
+
+/**
+ * A popup over whatever is behind it (the editor keeps its layout), not dismissable while the connection is down.
+ * While it shows, it quietly retries every few seconds so a Runtime restart heals without a click.
+ */
+function RecoveryOverlay({ onRetry, children }: { onRetry: () => void | Promise<void>; children: ReactNode }) {
+  const latestRetry = useRef(onRetry);
+  const inFlight = useRef(false);
+  useEffect(() => {
+    latestRetry.current = onRetry;
+  });
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (inFlight.current) return;
+      inFlight.current = true;
+      void Promise.resolve()
+        .then(() => latestRetry.current())
+        .catch(() => undefined)
+        .finally(() => { inFlight.current = false; });
+    }, QUIET_RETRY_MS);
+    return () => clearInterval(timer);
+  }, []);
+  return (
+    <AlertDialog open onOpenChange={() => undefined}>
+      <AlertDialogContent
+        backdropClassName="bg-black/55"
+        className="max-h-[85vh] max-w-2xl gap-0 overflow-y-auto border-0 bg-transparent p-0 shadow-none"
+        data-testid="runtime-connector-alert"
+      >
+        {children}
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 /** One recovery surface for typed connector failures and discovery diagnostics. */
 export function RuntimeConnectorRecoveryBanner({
   retrying = false,
@@ -95,7 +132,8 @@ export function RuntimeConnectorRecoveryBanner({
   const action = 'recoveryAction' in error && typeof error.recoveryAction === 'string'
     ? error.recoveryAction : 'Retry the connection to your configured Astrid Runtime.';
   if (hosted) return (
-    <div className="flex items-center justify-between gap-4 border-b border-destructive/30 bg-destructive/5 px-4 py-3" data-testid="runtime-connector-alert" role="alert">
+    <RecoveryOverlay onRetry={onRetry}>
+    <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background p-6 shadow-lg" role="alert">
       <div className="min-w-0">
         <p className="text-sm font-medium text-foreground">{RUNTIME_CONNECTION_COPY.loadFailed.title}</p>
         <p className="mt-1 text-xs text-muted-foreground">{RUNTIME_CONNECTION_COPY.loadFailed.sentence}</p>
@@ -104,11 +142,12 @@ export function RuntimeConnectorRecoveryBanner({
         {retrying ? RUNTIME_CONNECTION_COPY.loadFailed.retrying : RUNTIME_CONNECTION_COPY.loadFailed.button}
       </Button>
     </div>
+    </RecoveryOverlay>
   );
 
   return (
-    <div className="max-h-[60vh] shrink-0 overflow-y-auto border-b border-destructive/30 bg-background px-4 py-3" data-testid="runtime-connector-alert">
-      <Card className="my-auto w-full min-w-0 max-w-2xl shrink-0 border-border/80 shadow-sm" role="alert">
+    <RecoveryOverlay onRetry={onRetry}>
+      <Card className="w-full min-w-0 border-border/80 shadow-lg" role="alert">
         <CardHeader>
           <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
             <AlertTriangle aria-hidden="true" className="h-5 w-5" />
@@ -165,6 +204,6 @@ export function RuntimeConnectorRecoveryBanner({
           </div>
         </CardContent>
       </Card>
-    </div>
+    </RecoveryOverlay>
   );
 }

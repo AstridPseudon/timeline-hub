@@ -1,10 +1,41 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RuntimeConnectorRecoveryBanner, buildWorkspaceRestartBrief } from './RuntimeConnectorRecoveryBanner';
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+});
+
+describe('RuntimeConnectorRecoveryBanner overlay and quiet retry', () => {
+  it('renders in an overlay layer outside the editor, which stays mounted, and ignores Escape', () => {
+    const { container } = render(<div data-testid="editor"><RuntimeConnectorRecoveryBanner error={new Error('down')} onRetry={vi.fn()} /></div>);
+    expect(screen.getByTestId('editor')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="runtime-connector-alert"]')).toBeNull();
+    expect(screen.getByTestId('runtime-connector-alert')).toBeInTheDocument();
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    expect(screen.getByTestId('runtime-connector-alert')).toBeInTheDocument();
+  });
+
+  it('retries quietly every 3s with one in flight, and stops when the card goes away', async () => {
+    vi.useFakeTimers();
+    try {
+      let release: () => void = () => undefined;
+      const onRetry = vi.fn(() => new Promise<void>((resolve) => { release = resolve; }));
+      const view = render(<RuntimeConnectorRecoveryBanner error={new Error('down')} onRetry={onRetry} />);
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+      expect(onRetry).toHaveBeenCalledTimes(1);
+      await act(async () => { await vi.advanceTimersByTimeAsync(6000); });
+      expect(onRetry).toHaveBeenCalledTimes(1);
+      await act(async () => { release(); await vi.advanceTimersByTimeAsync(3000); });
+      expect(onRetry).toHaveBeenCalledTimes(2);
+      view.unmount();
+      await act(async () => { await vi.advanceTimersByTimeAsync(9000); });
+      expect(onRetry).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe('RuntimeConnectorRecoveryBanner', () => {
