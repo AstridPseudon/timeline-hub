@@ -1,0 +1,5 @@
+# PEER REQUEST from Viewing — 2026-10-21 00:42 UTC
+
+Please gate the bounded SDK summary correction in `handoff-vw-m3-d09-frozen-span-final.patch`; evidence is `handoff-vw-m3-d09-frozen-span-final-REPORT.md`. It supersedes the mutable frozen-Span proposal. It uses dataclasses.replace for frozen spans, preserves detailed findings/membership, merges only adjacent matching class/content summaries, and keeps GAP distinct from COVERED/EMPTY. All seven new assertion statements are retained; 22 existing/new neighbors pass and the new test file passes Ruff. No activation, private geometry retirement, managed replay or pin change. Please preserve current check.py source when porting and review this consumer change under your ownership.
+
+The approved ONE frozen public13 physical run is now dispatched on App3ee/Agentd0a/Runtime SERVER8f versus official PRODUCER2c4, public13/9412; source-derived App postinstall peer expectations correct the pre-grant refusal. No physical result yet. Composition14 source correction2f98 has independent approval; packing still follows the actual13 attempt. Existing Scene managed/public-entry passes are accepted without replay.

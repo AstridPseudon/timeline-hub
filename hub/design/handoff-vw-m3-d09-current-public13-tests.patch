@@ -1,0 +1,61 @@
+diff --git a/tests/packs/rendering/test_scene_host.py b/tests/packs/rendering/test_scene_host.py
+index 630815e49..726c958d1 100644
+--- a/tests/packs/rendering/test_scene_host.py
++++ b/tests/packs/rendering/test_scene_host.py
+@@ -36 +36 @@ def host_project(tmp_path_factory):
+-    # Reuse a coherent peer graph read-only, with the actual pinned public12
++    # Reuse a coherent peer graph read-only, with the actual pinned public13
+@@ -51 +51 @@ def host_project(tmp_path_factory):
+-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
++    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz"
+@@ -53 +53 @@ def host_project(tmp_path_factory):
+-        "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3")
++        "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738")
+@@ -71,0 +72,6 @@ def host_project(tmp_path_factory):
++            source = source.replace(
++                "(props) => createElement('b',",
++                "(props) => props.params?.kind === 'absent' ? null : createElement('b',")
++            source = source.replace(
++                "frame: () => ({presence: 'present',",
++                "frame: () => ({presence: clip.params?.kind === 'absent' ? 'absent' : 'present',")
+@@ -90 +96 @@ def host_project(tmp_path_factory):
+-    assert json.loads((package / "package.json").read_text())["version"] == "0.0.12"
++    assert json.loads((package / "package.json").read_text())["version"] == "0.0.13"
+@@ -136,0 +143,30 @@ def test_native_host_default_custom_alias_capability_and_immutable_props(native_
++def test_native_host_audio_only_track_is_gap_without_visual_layers(native_host):
++    p = props([{"id": "audio-only", "track": "music", "clipType": "custom-alias", "at": 0, "hold": 1}])
++    p["timeline"]["tracks"] = [{"id": "music", "kind": "audio"}]
++
++    answer = scene_answers.host_frames_at(p, BASIS, [0])[0]
++
++    assert answer["layers"] == []
++    assert answer["coverage"] == "GAP" and answer["content"] is None
++
++
++def test_native_host_absent_element_is_not_visual_but_unknown_custom_stays_unknown(native_host):
++    p = props([
++        {"id": "absent", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1,
++         "params": {"kind": "absent"}},
++        {"id": "unsupported", "track": "plate", "clipType": "unsupported-custom", "at": 0, "hold": 1},
++    ])
++
++    answer = scene_answers.host_frames_at(p, BASIS, [0])[0]
++    absent = next(layer for layer in answer["layers"] if layer["clipId"] == "absent")
++    unsupported = next(layer for layer in answer["layers"] if layer["clipId"] == "unsupported")
++
++    assert absent["visible"] is False
++    assert absent["opacity"] == 0 and absent["opaqueSupport"] == "none"
++    assert absent["findings"] == []
++    assert [layer["clipId"] for layer in answer["layers"] if layer["visible"] is not False] == ["unsupported"]
++    assert unsupported["visible"] == "unknown"
++    assert unsupported["opacity"] is None and unsupported["opaqueSupport"] == "unknown"
++    assert answer["coverage"] == "UNKNOWN"
++
++
+@@ -209 +245 @@ def test_native_host_preserves_root_painter_order_and_current_roles(native_host)
+-        {"id": "front", "kind": "visual"}, {"id": "plate", "kind": "visual"},
++        {"id": "front", "kind": "visual", "opacity": 0.8}, {"id": "plate", "kind": "visual"},
+@@ -214,0 +251,3 @@ def test_native_host_preserves_root_painter_order_and_current_roles(native_host)
++    # The public evaluator returns bottom-to-top painter order. Its registered
++    # draw path also multiplies clip opacity by the owning track opacity.
++    assert answer["layers"][1]["opacity"] == pytest.approx(0.5 * 0.8)

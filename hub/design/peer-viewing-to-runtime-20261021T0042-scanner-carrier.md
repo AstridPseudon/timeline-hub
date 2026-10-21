@@ -1,0 +1,3 @@
+# PEER HANDOFF from Viewing — 2026-10-21 00:42 UTC
+
+Delivery scanner and existing e7 Composition inputs are ready for your installed reviewed carrier3dfd5c28. Flat instructions: `handoff-vw-m4-scanner-reviewed-carrier-README.md`, `handoff-vw-m4-scanner-reviewed-carrier-COMMAND`, and `handoff-vw-m4-scanner-reviewed-carrier-REPORT.md`. Scanner1.0.8 ZIP204a7aac and instructions969fe303 are unchanged. On this machine the builder's delivery/README.template.md and gate-results inputs are absent; please use your existing owner-controlled delivery inputs, never fabricate completed gates. No final ZIP/build/owner-film claim. A Composition14 delivery refresh will follow its actual release integration.

@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO=/home/user/work/composition
+SOURCE_REF=tl/integration
+BASE_REF=origin/main
+E7_REF=e7ef7a0729a2d7dad3c0ae60da9e6bb8f844d332
+REVIEWED_SOURCE=3a675f38b972dc95a8fa47e05b40e53b76ac70b9
+REVIEWED_SOURCE_TREE=d2fcf410aa5c40d132315ce9e18609531e442832
+REVIEWED_MAIN=67b8aa3d0d6831d3e3504a340ff583c3da253707
+REVIEWED_MAIN_TREE=62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120
+OUT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-release-tree-delivery-delta/delivery
+SCANNER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-vw-m4-owner-scanner-delivery-payload-scanner-v1.0.8.zip
+CARRIER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build
+
+cd "$REPO"
+test -z "$(git status --porcelain=v1)"
+test "$(git rev-parse "$BASE_REF")" = "$REVIEWED_MAIN"
+test "$(git rev-parse "$BASE_REF^{tree}")" = "$REVIEWED_MAIN_TREE"
+test "$(git rev-parse "$SOURCE_REF^{tree}")" = "$REVIEWED_SOURCE_TREE"
+git merge-base --is-ancestor "$BASE_REF" "$SOURCE_REF"
+test "$(git merge-base "$BASE_REF" "$SOURCE_REF")" = "$REVIEWED_MAIN"
+git merge-base --is-ancestor "$REVIEWED_SOURCE" "$SOURCE_REF"
+diff -u <(git diff --name-only "$E7_REF" "$SOURCE_REF") <(printf '%s\n' CHANGELOG.md package-lock.json package.json typescript/src/builtins/animations/fade-up/component.tsx typescript/src/builtins/animations/scale-in/component.tsx typescript/src/lib/clip-look.ts typescript/src/scene-evaluation.ts typescript/tests/scene-diagnostics.test.ts typescript/tests/scene-evaluation.test.ts)
+test "$(sha256sum "$SCANNER" | cut -d' ' -f1)" = 204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee
+test "$(sha256sum "$CARRIER" | cut -d' ' -f1)" = 3dfd5c28a9be9ab809e6c1fe1e9a83fbf8417ea888afc1b10eec5f751023e990
+mkdir -p "$OUT"
+PATCH="$OUT/composition-origin-main-to-3a675f38.patch"
+BUNDLE="$OUT/composition-origin-main-to-3a675f38.bundle"
+git diff --binary --full-index --no-ext-diff --no-renames "$BASE_REF" "$SOURCE_REF" > "$PATCH"
+git bundle create "$BUNDLE" "$BASE_REF..$SOURCE_REF"
+git bundle verify "$BUNDLE"
+git bundle list-heads "$BUNDLE"
+git diff --check "$BASE_REF" "$SOURCE_REF"
+sha256sum "$PATCH" "$BUNDLE"

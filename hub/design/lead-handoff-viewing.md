@@ -29,3 +29,6 @@ Machine: viewing (home of composition). ORCH=/tmp/claude-0/-home-user-repo/7dc61
 - Lead line format (hub/status/viewing-lead.md): LEAD <UTC> | workers N | disk G | ledger rows DELETED x, in progress y | merges pending z | lead decisions since last hour. Report each work-list item 0-4,7.
 - Gate 6 failing cases: cases.ts:239 (native-size Player frames vs CPU Remotion output), cases.ts:249 (picture-only patch mismatch after full baseline). Standing worker vw-m3-gate6-current-suite-owner.
 - lead-watch now only flags vw-* worker exits (agt-* imported workers ignored).
+## Update 00:42Z
+- Manager restarted 22:43Z (capacity rule) and 00:42Z (kit 90-min rounds, orchestrator item 10). READY queue: bin/request-ready (dispatcher auto-starts under 5 live; log lines "READY viewing live=N" in dispatcher.log). Capacity swings 0-5 as short workers end together; only restart if <4 live for >15 min with empty ready/.
+- Gate 6 one-shot worker failed closed 00:05Z for lack of a manager grant; orchestrator 00:09Z: manager sign-off is enough; put "authority: manager grant <ts>, tuple <ids>" in the run worker's brief. lead-checkin overwrites hub/status/viewing-lead.md with the subagent text; rewrite my own line after each check-in.
