@@ -63,6 +63,7 @@ temp/
 !docs/video-editor/*.md
 !docs/extensions/*.md
 !scripts/quality/__fixtures__/**/*.md
+!notes/source-stage.md
 !docs/extensions/ship-evidence/releases/
 !docs/extensions/ship-evidence/releases/**
 /vendor/timeline-schema/python/build/

@@ -42,7 +42,7 @@ async function load({ enabled = true, status = 0, moved = false, preflightFailur
   return { run: module.namespace.runCurrent013NativeNone, process, calls, checks: () => checks };
 }
 
-test('requires explicit current-pair enablement before guards or child launch', async () => {
+test('requires explicit Agent6ef/Runtime95 pair enablement before guards or child launch', async () => {
   const probe = await load({ enabled: false });
   assert.throws(probe.run, /manager-approved/);
   assert.equal(probe.checks(), 0);

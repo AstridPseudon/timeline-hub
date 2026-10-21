@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-// Compose with the approved current013 guard wrapper before running this lane.
+// Compose with the approved Agent6ef/Runtime95 guard wrapper before running this lane.
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { checkCurrent013Sources, readCurrent013Inputs } from './current013-integration.mjs';
 
 export function runCurrent013NativeNone() {
   if (process.env.TIMELINE_CURRENT013_RUN !== '1') {
-    throw new Error('Supply the manager-approved current013/native None pair before running this lane');
+    throw new Error('Supply the manager-approved Agent6ef/Runtime95 native None pair before running this lane');
   }
   const input = readCurrent013Inputs();
   const before = checkCurrent013Sources(input);
