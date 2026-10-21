@@ -175,17 +175,9 @@ def test_single_mode_public_mouth_facts_drive_existing_consumer(public_capture_r
             pytest.fail("admitted public motion consulted private mouth_state")
         return original_mouth_state(element, frame, fps)
 
-    original_mouth_box = model.mouth_box
-    private_crops = []
-
-    def private_box(element, frame=0):
-        private_crops.append((element.id, frame))
-        return original_mouth_box(element, frame)
-
     monkeypatch.setattr(model, "mouth_state", private_state)
-    monkeypatch.setattr(model, "mouth_box", private_box)
+    monkeypatch.setattr(model, "mouth_box", lambda *_args: pytest.fail("public ROI used private crop"))
     result = builtin.render_lipsync(ctx)
-    assert private_crops == [(presenter.id, 0)]
     assert "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs" in result.findings
 
 

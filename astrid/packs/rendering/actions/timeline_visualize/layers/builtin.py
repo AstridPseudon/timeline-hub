@@ -441,7 +441,7 @@ def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]
         states[frame] = state
         rows.append(layer)
     rect = None
-    if not allow_default_motion:
+    if "mouth" in params:
         zero_rows = [layer for layer in rows if layer.get("contentFrame") == 0]
         if len(zero_rows) != 1:
             return None
@@ -457,6 +457,13 @@ def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]
                       if rect is not None else None),
             "basis": {"width": basis["width"], "height": basis["height"]},
             "states": states}
+
+
+def _public_crop(rect: Sequence[float], basis: Mapping[str, int], size: tuple[int, int]) -> tuple[int, int, int, int]:
+    """Scale a public canvas footprint into the existing PNG crop convention."""
+    sx, sy = size[0] / basis["width"], size[1] / basis["height"]
+    x, y, width, height = rect
+    return max(0, int(x * sx)), max(0, int(y * sy)), int((x + width) * sx) + 1, int((y + height) * sy) + 1
 
 
 def render_lipsync(ctx: LayerContext) -> LayerResult:
@@ -524,9 +531,10 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
             findings.append(f"LIPSYNC {name}: presenter has {len(own)} words, VO has {len(vo)} under the cut; no pairs within 0.3 s")
     # pixel check: does the mouth region actually change in the captured frames?
     presenter = presenters[0]
-    box = model.mouth_box(presenter, 0)
-    crop = None
-    if box and len(series) >= 3:
+    crop = (_public_crop(public["rect"], public["basis"], ctx.frame_size)
+            if public and public["rect"] is not None else None)
+    box = None if crop is not None else model.mouth_box(presenter, 0)
+    if crop is None and box and len(series) >= 3:
         sx, sy = ctx.frame_size[0] / model.CANVAS[0], ctx.frame_size[1] / model.CANVAS[1]
         crop = (max(0, int(box[0] * sx)), max(0, int(box[1] * sy)), int(box[2] * sx) + 1, int(box[3] * sy) + 1)
     if crop and len(series) >= 3:
