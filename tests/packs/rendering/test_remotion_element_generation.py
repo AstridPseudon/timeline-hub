@@ -83,9 +83,9 @@ class RemotionElementGenerationTest(unittest.TestCase):
         self.assertIn("text-card", public_ids["effects"])
         generated = gen_effect_registry.generate_element_registry("effects")
         self.assertIn("'text-card': selectOwnedEffect(", generated)
-        self.assertIn("PUBLIC_EFFECT_REGISTRY['text-card']", generated)
+        self.assertIn("PUBLIC_EFFECT_REGISTRY['text-card'] as EffectComponent", generated)
         self.assertIn("'local': OwnerElement", generated)
-        self.assertIn("'rendering': PUBLIC_EFFECT_REGISTRY['text-card']", generated)
+        self.assertIn("'rendering': PUBLIC_EFFECT_REGISTRY['text-card'] as EffectComponent", generated)
         self.assertNotIn("@pack-rendering-elements-effects/text-card/component", generated)
 
     def test_source_less_transition_keeps_catalog_defaults_and_precedence(self) -> None:

@@ -1,4 +1,4 @@
-"""Public10 host transport with current generated maps and renderer aliases.
+"""Public13 host transport with current generated maps and renderer aliases.
 
 Status is replaced here; supplied props are not source-admission or pixel proof.
 """
@@ -33,7 +33,7 @@ def host_project(tmp_path_factory):
     project = project_root / "remotion"
     (project / "src").mkdir(parents=True)
     (project_root / "astrid").symlink_to(ROOT / "astrid", target_is_directory=True)
-    # Reuse a coherent peer graph read-only, with the actual pinned public12
+    # Reuse a coherent peer graph read-only, with the actual pinned public13
     # extracted into this test's private project. No install or shared mutation.
     peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", REMOTION / "node_modules"))
     assert (peers / "esbuild").is_dir(), "requires provisioned renderer peers"
@@ -48,9 +48,9 @@ def host_project(tmp_path_factory):
         target = modules / peer
         target.parent.mkdir(parents=True, exist_ok=True)
         target.symlink_to(source.resolve(), target_is_directory=True)
-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.12.tgz"
+    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.13.tgz"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
-        "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3")
+        "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738")
     with tarfile.open(artifact) as archive:
         archive.extractall(project, filter="data")
     package = modules / "@banodoco/timeline-composition"
@@ -87,7 +87,7 @@ def host_project(tmp_path_factory):
         patch.setattr(gen_effect_registry, "_element_registry", lambda: registry)
         for kind in ("effects", "animations", "transitions"):
             (project / "src" / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
-    assert json.loads((package / "package.json").read_text())["version"] == "0.0.12"
+    assert json.loads((package / "package.json").read_text())["version"] == "0.0.13"
     def hashes():
         return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in package.rglob("*") if p.is_file()}
@@ -132,6 +132,36 @@ def test_native_host_default_custom_alias_capability_and_immutable_props(native_
     p["timeline"]["clips"][0]["elementRef"]["packId"] = "missing"
     with pytest.raises(scene_answers.SceneQueryUnavailable, match="Unknown effect owner"):
         scene_answers.host_frames_at(p, BASIS, [0])
+
+
+def test_native_host_am_footage_declared_inset_and_slot_support(native_host):
+    asset = {"file": "http://127.0.0.1:4321/footage.mp4", "type": "video/mp4",
+             "resolution": "1920x1080", "fps": 30, "content_sha256": "sha256:admitted-footage"}
+    inset = {"x": 1200, "y": 600, "w": 576, "h": 324, "shadow": False}
+    p = props([
+        {"id": "am-full", "track": "plate", "clipType": "am-footage", "asset": "P", "at": 0,
+         "hold": 1, "params": {}},
+        {"id": "am-inset", "track": "plate", "clipType": "am-footage", "asset": "P", "at": 0,
+         "hold": 1, "params": {"background": "transparent", "inset": inset}},
+        {"id": "am-legacy", "track": "plate", "clipType": "am-footage", "asset": "P", "at": 0,
+         "hold": 1, "params": {"x": 1200, "y": 600, "scale": 0.3}},
+        {"id": "am-slot", "track": "plate", "clipType": "am-footage", "asset": "missing", "at": 0,
+         "hold": 1, "params": {}},
+    ], assets={"assets": {"P": asset}})
+
+    answer = scene_answers.host_frames_at(p, BASIS, [0])[0]
+    layers = {layer["clipId"]: layer for layer in answer["layers"]}
+
+    assert layers["am-full"]["bounds"] == {
+        "status": "known", "rect": {"x": 0, "y": 0, "width": 1920, "height": 1080}}
+    assert layers["am-inset"]["bounds"] == {
+        "status": "known", "rect": {"x": 1200, "y": 600, "width": 576, "height": 324}}
+    assert layers["am-inset"]["opaqueSupport"] == "unknown"
+    assert layers["am-legacy"]["bounds"] == {
+        "status": "known", "rect": {"x": 0, "y": 0, "width": 1920, "height": 1080}}
+    assert layers["am-slot"]["bounds"] == {
+        "status": "known", "rect": {"x": 0, "y": 0, "width": 1920, "height": 1080}}
+    assert layers["am-slot"]["opaqueSupport"] == "rect"
 
 
 def test_native_host_uses_exact_assets_and_runtime_theme(native_host):
