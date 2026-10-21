@@ -100,7 +100,7 @@ function controlledGate3(fn) {
       status: 0,
       stdout: listing
         ? `Listing tests:\n  three-products.spec.ts:2248:1 › ${CURRENT014_GATE3_CASE.fullTitle}\nTotal: 1 test in 1 file`
-        : 'M2 native None single:\n1 passed',
+        : `  ✓  1 tests/e2e/local/three-products.spec.ts:2248:1 › ${CURRENT014_GATE3_CASE.fullTitle} (1.2s)\n1 passed`,
       stderr: '',
     };
   });

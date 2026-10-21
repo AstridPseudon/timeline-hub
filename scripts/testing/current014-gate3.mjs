@@ -422,6 +422,15 @@ export function checkCurrent014Gate3Sources(input) {
 }
 
 const ZERO_TEST_OUTPUT = /(?:No tests found|No test files found|collected\s+0 items|Running\s+0 tests|0 tests found|\b0 passed\b)/i;
+const PLAYWRIGHT_RESULT_LINE = /^\s*(?<status>[✓✘×-])\s+\d+\s+(?<location>.+)\s+›\s+(?<title>.+?)\s+\([^()\r\n]*\)\s*$/gm;
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function executorResults(output) {
+  return [...output.matchAll(PLAYWRIGHT_RESULT_LINE)].map(({ groups }) => groups);
+}
 
 function listedEntries(output) {
   return output.split(/\r?\n/)
@@ -455,11 +464,21 @@ export function assertCurrent014Gate3Selection(status, output) {
 export function assertCurrent014Gate3Result(status, output) {
   if (ZERO_TEST_OUTPUT.test(output)) fail('Gate3 executor reported a zero-test result');
   if (status !== 0) return;
-  if ((output.match(new RegExp(CASE_TITLE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) ?? []).length !== 1) {
-    fail('Gate3 executor did not discover exactly the selected native-None single case');
+
+  const results = executorResults(output);
+  if (results.length !== 1) {
+    fail(`Gate3 executor reported ${results.length} actual test results; expected exactly one`);
+  }
+  const [result] = results;
+  const expectedLocation = new RegExp(`(?:^|›\\s*)${escapeRegExp(TEST_SOURCE)}:\\d+:\\d+$`);
+  if (result.status !== '✓' || !expectedLocation.test(result.location) || result.title !== CASE_FULL_TITLE) {
+    fail('Gate3 executor did not report exactly the selected native-None single case');
   }
   if (!/\b1 passed\b/i.test(output) || /\b(?:[2-9]\d*|\d{2,}) passed\b/i.test(output)) {
     fail('Gate3 executor did not report exactly one passing test');
+  }
+  if (/\bexpected[-\s]+(?:failure|fail(?:ed|ure)?)\b/i.test(output)) {
+    fail('Gate3 executor reported an expected-failure result');
   }
   if (/\b(?:FAIL|FAILED)\b/i.test(output)) fail('Gate3 executor reported a test failure');
 }

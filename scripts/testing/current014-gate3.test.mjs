@@ -14,6 +14,12 @@ const runtimeProducer = process.env.TIMELINE_CURRENT014_GATE3_RUNTIME_PRODUCER_C
 const agentRoot = process.env.ASTRID_CHECKOUT ?? '/home/user/work/wt/agt-pin-6efc8150';
 const agentPython = process.env.ASTRID_PYTHON ?? '/home/user/work/venv-agent/bin/python';
 const runtimePython = process.env.ASTRID_RUNTIME_PYTHON ?? '/home/user/work/venv-runtime/bin/python';
+const RETAINED_EXECUTOR_OUTPUT = [
+  '> vite_react_shadcn_ts@0.0.0 test:e2e:three-products',
+  `> playwright test --config playwright.three-products.config.ts --grep ${CURRENT014_GATE3_CASE.grep}`,
+  `  ✓  1 tests/e2e/local/three-products.spec.ts:2248:1 › ${CURRENT014_GATE3_CASE.fullTitle} (24.3s)`,
+  '  1 passed (1.8m)',
+].join('\n');
 
 test('pins the current014 tuple, public Composition13, and exact one-case argv', () => {
   assert.equal(CURRENT014_GATE3.agent.commit, '6efc81500a0e0688c2bb41e736503f0fc3e04abb');
@@ -67,15 +73,20 @@ test('rejects swapped consumer/source roles before any Gate3 child launch', () =
   );
 });
 
-test('accepts one real passing case and rejects zero, multiple, or failed output', () => {
-  assert.doesNotThrow(() => assertCurrent014Gate3Result(
-    0, '[chromium] › M2 native None single: ordinary default crossfade\n1 passed (1.2s)',
-  ));
+test('counts the retained executor result instead of the npm command echo', () => {
+  assert.doesNotThrow(() => assertCurrent014Gate3Result(0, RETAINED_EXECUTOR_OUTPUT));
+});
+
+test('rejects zero, multiple, wrong-file, wrong-title, failing, or expected-failure results', () => {
+  const actual = `  ✓  1 tests/e2e/local/three-products.spec.ts:2248:1 › ${CURRENT014_GATE3_CASE.fullTitle} (24.3s)`;
   for (const output of [
     'No tests found',
-    'M2 native None single: ordinary default crossfade\n0 passed',
-    'M2 native None single: ordinary default crossfade\n2 passed',
-    'M2 native None single: ordinary default crossfade\n1 passed\n1 failed',
+    '  1 passed (1.2s)',
+    `${actual}\n${actual}\n2 passed`,
+    `  ✓  1 tests/e2e/local/unrelated.spec.ts:1:1 › ${CURRENT014_GATE3_CASE.fullTitle} (1ms)\n1 passed`,
+    `  ✓  1 tests/e2e/local/three-products.spec.ts:2248:1 › M2 native None single: wrong title (1ms)\n1 passed`,
+    `  ✘  1 tests/e2e/local/three-products.spec.ts:2248:1 › ${CURRENT014_GATE3_CASE.fullTitle} (1ms)\n1 failed`,
+    `${actual}\n1 passed\n1 expected failure`,
   ]) assert.throws(() => assertCurrent014Gate3Result(0, output));
 });
 
