@@ -67,6 +67,12 @@ acceptance must work with Node, Root, and the renderer stopped. Preview and
 Scene availability are separate reports.
 
 These commands and route notes do not claim physical frame/audio parity,
-macOS playback, owner-film viewing, or whole-project ZIP delivery. Those are
-separate authorized integration gates; their current status is recorded in
-`design/viewing.md`.
+macOS playback, owner-film viewing, or whole-project ZIP delivery. The explicit
+normalized-mouth public13 physical case passed, but omitted-mouth default
+compatibility is unproved and the private fallback remains. The old
+independent-fade assertion remains live until public14 and the AM capability
+are adopted as a qualified pair. Gate 6 request
+`vw-m3-gate6-isolation-cleared-one-run-0251-e2e-viewing-gate6-built909-0240-1021025417-32009`
+stopped before issuance at the central 10 GiB staging guard and is not parity
+evidence.
+Those limits are recorded in `design/viewing.md`.

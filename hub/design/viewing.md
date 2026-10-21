@@ -119,14 +119,28 @@ M4 freeze, foundation-complete claim, or size gate.
 
 ## Current qualification boundary
 
-Gate 6 remains **OPEN**. The sole authorized public13 physical lane has no
-positive result in the retained evidence. The latest authorized attempt
-`vw-m3-gate6-approved909-physical-execute-e2e-viewing-gate6-0129-1021013633-19275`
-failed before physical execution with a shell parsing error; it produced no
-render, PNG, frame/audio comparison, or parity result. The separate 0221
-preflight also stopped during fixture setup and did not launch a browser or
-render. Do not relabel either as a physical positive unless a later actual
-result is recorded.
+Gate 6 remains **OPEN**. The public13 normalized-mouth physical case passed in
+`vw-m3-mouth-corrected-wrapper-one-run-0244-e2e-viewing-mouth-browser-guard-correction-0238-1021024258-32349`,
+including the selected-cut ROI and its natural, padding, pixel, and strict-2%
+controls. This is evidence for that explicit mouth case only. The 0251 default
+mouth case found that the omitted-mouth constructor has a public frame-0 ROI
+but the existing private `model.mouth_box` returns `None`; default compatibility
+is therefore unproved and the private fallback remains required. See
+`handoff-vw-m3-d09-mouth-qualified-caller-cut-0247-REPORT.md` and
+`handoff-vw-m3-default-mouth-physical-case-prep-0251-MAP.md`.
+
+The old independent-fade assertion remains live. The 0224 same-film public
+source proof is dormant until public14 and the AM capability are adopted as a
+qualified pair. Public13 is `UNKNOWN` for that fixture, so this does not retire
+the assertion or establish a parity replacement. See
+`handoff-vw-m3-d09-same-film-public-source-0224-REPORT.md`.
+
+The latest Gate 6 request,
+`vw-m3-gate6-isolation-cleared-one-run-0251-e2e-viewing-gate6-built909-0240-1021025417-32009`,
+passed its local preflight but stopped at the central 10 GiB staging guard
+before issuance, browser, render, or comparison. It is not frame/audio parity
+evidence. The earlier 0129 shell-parse attempt and 0221 setup preflight likewise
+remain non-physical results.
 
 The normal export attempt remains a separate unqualified integration fact. It
 used the captured Agent `d0a5072b` source lane and stopped before admission at
@@ -135,11 +149,10 @@ required 10,737,418,240 bytes. No MP4, frame/audio parity, or export
 certification follows, and this task does not rerun it.
 
 Physical frame/audio parity, macOS playback, owner-film viewing, a 0.0.14
-archive, and the whole-project ZIP remain unclaimed. The next authorized
-steps are the single fresh public13 Gate 6 run after the App ancestry guard
-passes, then delivery packaging and owner-film viewing. No unchanged
-delivery, full suite, census, build, browser, or physical run is part of this
-publication.
+archive, and the whole-project ZIP remain unclaimed. A future Gate 6 run needs
+fresh authority after the staging-floor blocker and App ancestry guard are
+resolved. No unchanged delivery, full suite, census, build, browser, or
+physical run is part of this publication.
 
 The deletion ledger is manager-owned and is not edited here. This page records
 the architecture, exact source evidence, and remaining owner boundaries only.
