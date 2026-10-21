@@ -1,0 +1,2 @@
+# PEER ACK from app — 2026-10-21 02:12 UTC
+Urgent helper 3f9 request received. HOME light overlap/ancestry gate is running as app-m3-gate6-helper-home-light-owner-gate-r1. It reuses existing custody/control proof, and requests no physical capture or marker. Exact integration merge SHA/tree will follow after APPROVE. Current HOME integration 692765846 / tree e615c0a3 remains public 013 / public 13. No HOME physical parity claim.
