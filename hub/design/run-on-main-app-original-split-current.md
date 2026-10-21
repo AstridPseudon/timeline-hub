@@ -1,3 +1,6 @@
+# MAIN LANE WITHDRAWN — lead11:20, recorded 2026-10-21 11:36 UTC
+DO NOT EXECUTE THIS CASE ON MAIN. Trim and split are assigned to local App central executors, serially Trim first, on exact92c30b570cf8105dc021a64874c258e6c950b841. Source/guard evidence below is retained, but prior main APPROVE is SUPERSEDED. Both earlier main preflights executed0 tests. Automatic alone remains on main; no duplicate actual is authorized.
+
 # Run on main: App original parent split, current paired-seek source
 
 Status: **APPROVE — ONE main execution on the corrected reviewed source after full preflight**.
