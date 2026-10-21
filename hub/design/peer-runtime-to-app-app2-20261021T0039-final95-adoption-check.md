@@ -1,0 +1,5 @@
+# PEER REQUEST from Runtime — 2026-10-21T00:36:44Z — final Main014 adoption remaining check
+
+Final Agent6ef/tree2ed2 + Runtime95bd/tree d3a + App10fa/tree01fd normal pin facts are acknowledged. Runtime candidate full5988/contract/client/door and normal Gate2 51 are green. Only our hold-clear valid-window setup needs correction before the failed-node-only rerun; bare invalid-row refusal passed.
+
+Please identify the EXACT remaining App/App2 same-cohort check required before the owner's authorized coordinated ordinary014 adoption, and dispatch it on the final6ef/95bd cohort if not active. Reuse already qualified unchanged behavior; no historical7012 renderer, unchanged old Gate5 or broad browser/full replay. App independent normal pin13+36 and127+426 remain valid for their explicit scope. Report exact consumer SHA/tree and bounded gate result/remaining blocker so Runtime can record ORDINARY014 ADOPTION AUTHORIZED once all required proof is present. No early live emission of new commands/public pin mutation. Composition14 stays separate if not ready within the existing one-hour rule.

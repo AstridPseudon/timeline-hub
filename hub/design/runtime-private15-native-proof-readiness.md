@@ -1,6 +1,6 @@
 # Private 0.2.15 native outer voiceover proof readiness
 
-Status: HOLD pending Agent reciprocal review and one reviewed, normally generated private Agent pin. This is a readiness handoff, not an execution or pin request.
+Status: READY for one reviewed, normally generated private Agent pin after reciprocal review. This is a readiness handoff, not an execution or pin request.
 
 ## Fixed Runtime counterpart
 
@@ -17,7 +17,52 @@ raw bundle sha256:bbbae375837456b267d9f0c7de89b962966da79a24abe7c4720301423b333b
 artifact manifest version sha256:2df8ebf4fb17cae1b62e78a262b2b20b393770d045d0ef8748207ac7efacbfbb
 ```
 
-Runtime’s private review approved this bundle. Its normal task admission now accepts the existing generic carrier consisting of `runtime_dependencies.publication.admitted_target` with exactly `project`, `timeline`, `base_revision`, and `base_publication`, plus an explicit ordered script input descriptor and matching `input_object_ids`. No `edges`, `aggregation`, `script_pins`, new DTO, route, or schema is needed.
+Runtime’s private review approved this bundle. Its normal task admission accepts the existing generic carrier consisting of `runtime_dependencies.publication.admitted_target` with exactly these four keys: `project_id`, `timeline_id`, `base_revision_id`, and `base_publication_id`. The shortened names previously used in this handoff (`project`, `timeline`, `base_revision`, `base_publication`) were prose-only and are not accepted aliases.
+
+## Exact admitted-target boundary
+
+The accepted normal-admission body is the existing one in `tests/test_task_continuations.py:158-178`, exercised by `test_registered_outer_producer_with_ordered_input_is_not_an_assembly_continuation` at `:125-203`:
+
+```python
+{
+    "project": project_id,
+    "capability_id": "video_editing.sync_draft_voiceover",
+    "capability_digest": capability_digest,
+    "input_object_ids": [object_id],
+    "execution_request": {"target": {"kind": "default"}, "inputs": [descriptor]},
+    "spec": {
+        "capability_id": "video_editing.sync_draft_voiceover",
+        "kind": "executor",
+        "inputs": {
+            "project": project_id,
+            "timeline_ref": "film",
+            "timing_policy": "ripple",
+            "occurrence_ids": ["o1"],
+            "script": descriptor,
+        },
+        "runtime_dependencies": {
+            "publication": {
+                "admitted_target": {
+                    "project_id": project_id,
+                    "timeline_id": "film",
+                    "base_revision_id": "bootstrap-revision",
+                    "base_publication_id": "bootstrap-publication",
+                },
+            },
+        },
+        "outputs": {},
+    },
+    "idempotency_key": "outer-producer-admission",
+}
+```
+
+This is three distinct boundaries, with no aliasing:
+
+* Task-admission wire/body: top-level `project`; `execution_request.inputs` is an ordered descriptor list, and top-level `input_object_ids` mirrors its `object_id` values exactly. The publication target is nested under `spec.runtime_dependencies.publication.admitted_target` and uses the four `_id` keys above. Runtime stores and replays that exact object. See `runtime_protocol/remote_worker_deployment.py:688-728`, `runtime_protocol/store.py:2855-2874`, and the accepted fixture/test above.
+* Producer proposal/pin: both `SettledProducerProposal.admitted_target` and `ProducerAttemptPin.admitted_target` use the same four-key `ProducerAdmittedTarget`. Runtime validates the closed set in `runtime_protocol/timeline_commit_producer.py:16-53`; the frozen Agent schema has the same closed definition at `astrid/core/timeline/schema/edit-command.schema.json:2720-2746` on Agent commit `4d4535882f1e028805c3da178bf9a7fa53696da8`.
+* Commit wire/body: the existing Agent `build_producer_batch` (`astrid/sdk/timeline/producer.py:47-63`) flattens those exact values into `api_version`, `project_id`, `timeline_id`, `base_revision_id`, `base_publication_id`, `commands`, and `rationale`, with the first command carrying the same pin. This is a separate commit request shape; it does not change the task-admission body or proposal keys.
+
+The accepted proposal artifact remains the existing six-key object: `schema_version`, `producer`, `admitted_target` (the four-key object), nonempty `commands`, `rationale`, and `proposal_digest`. Runtime checks the artifact and its pin/commit forwarding in `runtime_protocol/timeline_commit_producer.py:241-274`; no shortened target keys are accepted at any boundary.
 
 ## Remaining Agent carrier gap
 
@@ -65,10 +110,10 @@ The normal request metadata is the existing shape below (replace only the angle-
 kind: executor
 executor_id: video_editing.sync_draft_voiceover
 spec.runtime_dependencies.publication.admitted_target:
-  project: <PROJECT_ID>
-  timeline: <TIMELINE_ID>
-  base_revision: <ORIGINAL_BASE_REVISION>
-  base_publication: <ORIGINAL_BASE_PUBLICATION>
+  project_id: <PROJECT_ID>
+  timeline_id: <TIMELINE_ID>
+  base_revision_id: <ORIGINAL_BASE_REVISION>
+  base_publication_id: <ORIGINAL_BASE_PUBLICATION>
 execution_request.inputs:
   - name: script
     object_id: <SCRIPT_SHA256>

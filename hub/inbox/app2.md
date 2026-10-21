@@ -752,3 +752,19 @@ Owner00:08 verified b69 native timeline.init activation BREAKS currentpublished0
 ## PEER UPDATE from app — 2026-10-21 00:29 UTC — urgent bootstrap source ready
 Rollback app-m2-bootstrap-published013-live-path-restore is queued FIRST: exactpre-b69 publishParentComposition initializer restored, dormantnativecapture/tests preserved,12+170controls/lint/diff PASS. Separate schema-derived liveopguard188controlsPASS queuedSECOND (rejectsunknown timeline.init on pinned013, acceptsclip.move, fakeclient/sessionseam; no stringban/privatehelper deletion). Real13create/init/restart orchestration worker is active afterfrozencommittedsource, no full until repair+guard land.
 Parent622 current Filedriver port is queued next:84controls/15custody/discovery1, allcurrentordinary/opaque/assertions retained. HOME shared native media construction32e is independentlyAPPROVED but remainsHELD until App2's reviewed hook/callers fix missingport/newtrack/top/removeClipId/await semantics. No parentactualrerun beforeexactpairREADY. No duplicatehook edits.
+
+## 2026-10-21T00:36:54Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+# Runtime normal Main014 state — 2026-10-21T00:35:46Z
+
+ACK final Agent6efc81500/tree2ed2b8a1 and App10fa/tree01fd2a04 normal95bd pins and bounded actual results. Runtime Gate2 final51 PASSED25.12s on normal e35/95bd; final source delta is being classified without duplicate suites. Runtime remains public013 pending coordinated adoption.
+
+Only outstanding hold-clear positive failed BEFORE Runtime: central12439 tests/test_timeline_ordinary_http.py::test_ordinary_http_authored_source_window_hold_clear_preserves_timing, capture_clip_add raises unsupported_timing: clip.add v1 does not support from. Bare zero-duration refusal PASSED and is not rerun. Runtime worker now repairs ONLY normal initial test fixture on final6ef using existing trusted isolated-realm setup BEFORE acceptance, preserving source window/all assertions and no accepted-history rewrite; it will run ONLY failed node. If Agent knows the supported normal existing creation seam, send it. No semantic guard weakening requested.
+
+RT07 still requires exact final current consumer migration, independently of pin approval; a last-caller worker checks final6ef against qualified registered7012 source, no renderer repeat. RT03 owned raw/unplaced carrier review is active; no placement/catalog/managed-five-tuple substitution. Private15 admitted_target key-boundary reconciliation is active, no schema aliases.
+
+# PEER REQUEST from Runtime — 2026-10-21T00:36:44Z — final Main014 adoption remaining check
+
+Final Agent6ef/tree2ed2 + Runtime95bd/tree d3a + App10fa/tree01fd normal pin facts are acknowledged. Runtime candidate full5988/contract/client/door and normal Gate2 51 are green. Only our hold-clear valid-window setup needs correction before the failed-node-only rerun; bare invalid-row refusal passed.
+
+Please identify the EXACT remaining App/App2 same-cohort check required before the owner's authorized coordinated ordinary014 adoption, and dispatch it on the final6ef/95bd cohort if not active. Reuse already qualified unchanged behavior; no historical7012 renderer, unchanged old Gate5 or broad browser/full replay. App independent normal pin13+36 and127+426 remain valid for their explicit scope. Report exact consumer SHA/tree and bounded gate result/remaining blocker so Runtime can record ORDINARY014 ADOPTION AUTHORIZED once all required proof is present. No early live emission of new commands/public pin mutation. Composition14 stays separate if not ready within the existing one-hour rule.
