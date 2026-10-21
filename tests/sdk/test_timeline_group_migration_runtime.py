@@ -66,8 +66,7 @@ def test_public_seed_refuses_exact_rational_fps_legacy_input_atomically(tmp_path
         service.close()
 
 
-@pytest.fixture(params=[False, True], ids=["golden-parent", "opaque-parent"])
-def legacy_runtime(tmp_path, monkeypatch, request):
+def _make_legacy_runtime(tmp_path, monkeypatch, *, opaque_variant=False, extra_tracks=()):
     use_runtime(commit=RUNTIME_COMMIT)
     # Runtime owns this helper: it uses normal storage acceptance and retained
     # inputs, without claiming an Agent migration or repairing the old writer.
@@ -79,7 +78,7 @@ def legacy_runtime(tmp_path, monkeypatch, request):
 
     from astrid.sdk.media_transcript import transcript_document_id
     from astrid.sdk.timeline.commit import _digest, create_runtime_commit_service
-    from tests.editing_conformance.test_recipe_m2_group_migration import legacy_document
+    from tests.editing_conformance.test_recipe_m2_group_migration import legacy_document, rehash
 
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
@@ -123,8 +122,13 @@ def legacy_runtime(tmp_path, monkeypatch, request):
             "content_digest": _digest(content),
         }
         document = legacy_document(
-            opaque_variant=request.param, project_id=project, media_id=media, transcript_pin=pin
+            opaque_variant=opaque_variant, project_id=project, media_id=media, transcript_pin=pin
         )
+        if extra_tracks:
+            document["parent_revision"]["payload"]["config"]["tracks"].extend(
+                copy.deepcopy(list(extra_tracks))
+            )
+            rehash(document)
         original = copy.deepcopy(document)
 
         def unavailable(*args, **kwargs):
@@ -135,6 +139,32 @@ def legacy_runtime(tmp_path, monkeypatch, request):
         setup = seed_trusted_legacy_parent(service, document, idempotency_key="legacy-setup")
         assert document == original
         assert setup["data"]["canonical_document"] == original
+        return service, root, document, source
+    except Exception:
+        service.close()
+        raise
+
+
+@pytest.fixture(params=[False, True], ids=["golden-parent", "opaque-parent"])
+def legacy_runtime(tmp_path, monkeypatch, request):
+    service, root, document, source = _make_legacy_runtime(
+        tmp_path, monkeypatch, opaque_variant=request.param
+    )
+    try:
+        yield service, root, document, source
+    finally:
+        service.close()
+
+
+@pytest.fixture(params=[False, True], ids=["golden-parent-existing-lane", "opaque-parent-existing-lane"])
+def group_move_runtime(tmp_path, monkeypatch, request):
+    service, root, document, source = _make_legacy_runtime(
+        tmp_path,
+        monkeypatch,
+        opaque_variant=request.param,
+        extra_tracks=[{"id": "V2", "kind": "visual", "role": "output", "active": True}],
+    )
+    try:
         yield service, root, document, source
     finally:
         service.close()
@@ -285,6 +315,100 @@ def test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids(legac
         assert reopened.store.integrity_report()["ok"]
     finally:
         reopened.close()
+
+
+def test_real_existing_lane_move_reload_inverse_exact_retry(group_move_runtime):
+    """Qualify the one normal C3d migration -> retrack consumer sequence."""
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_port import route_path
+
+    from astrid.sdk.timeline.commit import (
+        bundle_from_document,
+        create_runtime_commit_service,
+        document_from_bundle,
+    )
+    from astrid.sdk.timeline.group_view import project_group_view
+    from astrid.sdk.timeline.new_group_commands import capture_migrate_groups
+    from astrid.sdk.timeline.occurrence_commands import capture_occurrence_move
+    from tests.editing_conformance.test_recipe_m2_group_migration import GROUPS
+    from tests.sdk.test_timeline_commit_provider import inverse
+
+    service, root, original, source = group_move_runtime
+    project, timeline = original["project_id"], original["timeline_id"]
+
+    def request_for(runtime, command):
+        head = runtime.get_project_timeline(project, timeline)
+        return {
+            "api_version": 1,
+            "project_id": project,
+            "timeline_id": timeline,
+            "base_revision_id": head["head_revision_id"],
+            "base_publication_id": head["head_publication_id"],
+            "commands": [command],
+        }
+
+    def submit_body(runtime, body, key):
+        return runtime.commit_timeline(
+            project,
+            timeline,
+            body,
+            idempotency_key=key,
+            publisher="author",
+            invocation_path=route_path(project, timeline),
+            authorize=lambda: None,
+        )
+
+    def submit(runtime, command, key):
+        return submit_body(runtime, request_for(runtime, command), key)
+
+    migrated = submit(service, capture_migrate_groups(original, GROUPS), "migrate")
+    canonical = migrated["data"]["canonical_document"]
+    service.close()
+    service = RuntimeService(root)
+    service.register_timeline_commit_provider(create_runtime_commit_service())
+    try:
+        # Public closure reload is the capture basis; no private _created state
+        # or legacy display identity participates in the move.
+        commits, _ = service._timeline_commits()
+        public = commits.revision_closure(
+            project, timeline, service.get_project_timeline(project, timeline)["head_revision_id"]
+        )
+        assert public == canonical
+        move = capture_occurrence_move(
+            bundle_from_document(public),
+            "occurrence:new-occ",
+            1,
+            track="parent/track:V2",
+            child_track="occurrence:new-occ/track:V2",
+        )[0]
+        moved = submit(service, move, "move-existing-lane")
+        moved_document = moved["data"]["canonical_document"]
+        view = project_group_view(bundle_from_document(moved_document))
+        assert [(row["id"], row["track"], row["at"]) for row in view["clips"][-2:]] == [
+            ("c1", "V2", 1.001),
+            ("c2", "V2", 3.001),
+        ]
+        assert view["pinnedShotGroups"][0]["trackId"] == "V2"
+        assert [binding["raw_child_track"] for binding in view["bindings"] if binding["occurrence"]] == [
+            "occurrence:new-occ/track:V2",
+            "occurrence:new-occ/track:V2",
+        ]
+
+        service.close()
+        service = RuntimeService(root)
+        service.register_timeline_commit_provider(create_runtime_commit_service())
+        commits, _ = service._timeline_commits()
+        reloaded = commits.revision_closure(
+            project, timeline, service.get_project_timeline(project, timeline)["head_revision_id"]
+        )
+        assert reloaded == moved_document
+        undo_body = request_for(service, inverse([moved["receipt"]["receipt_id"]]))
+        undo = submit_body(service, undo_body, "undo-existing-lane")
+        assert undo["data"]["canonical_document"] == canonical
+        assert submit_body(service, undo_body, "undo-existing-lane") == undo
+        assert document_from_bundle(bundle_from_document(undo["data"]["canonical_document"])) == canonical
+    finally:
+        service.close()
 
 
 def test_literal_detached_lines_transcript_is_refused(legacy_runtime):
