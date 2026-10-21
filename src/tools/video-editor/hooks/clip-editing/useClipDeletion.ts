@@ -8,8 +8,8 @@ function isParentClipDeleteTarget(current: ClipEditingContext['dataRef']['curren
   if (!clip) return false;
   const canonical = clip.app?.canonical;
   if (!canonical || typeof canonical !== 'object') return true;
-  const ownerRef = canonical.ownerRef;
-  const clipRef = canonical.clipRef;
+  const ownerRef = 'ownerRef' in canonical ? canonical.ownerRef : undefined;
+  const clipRef = 'clipRef' in canonical ? canonical.clipRef : undefined;
   return ![ownerRef, clipRef].some((ref) => typeof ref === 'string' && ref.startsWith('occurrence:'));
 }
 
