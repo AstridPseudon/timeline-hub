@@ -5,6 +5,7 @@ import { createTimelineCommands } from '../hooks/useTimelineCommandsService.ts';
 import { buildPendingDragSession, commitDraggingSession } from '../hooks/useClipDrag.helpers.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
 import { buildTimelineCommandData } from './timelineData.ts';
+import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
 import {
   captureClipMove,
   submitClipMove,
@@ -56,6 +57,40 @@ function host() {
   initial.syncSlices({
     data: { ...initial.data, dataRef: { current } },
     ops: { ...initial.ops, applyEdit, clipMove: port },
+  });
+  return { port, store, applyEdit, commands: createTimelineCommands(store), current: () => current };
+}
+
+function trimHost() {
+  const current = buildTimelineCommandData({
+    output: { resolution: '1920x1080', fps: 30, file: 'test.mp4' },
+    tracks: [{ id: 'picture', kind: 'visual' }],
+    clips: [{ id: 'c', track: 'picture', at: 2, from: 10, to: 14, speed: 2, clipType: 'media' }],
+  }, { assets: { source: { duration: 20, type: 'video' } } });
+  current.config.clips[0].asset = 'source';
+  current.resolvedConfig.clips[0].asset = 'source';
+  current.resolvedConfig.clips[0].assetEntry = { duration: 20, type: 'video', src: 'source.mp4' };
+  const port: ClipTrimCapturePort = {
+    capture: vi.fn(() => ({ original: { from: 10, to: 14, hold: 4 } })),
+    finish: vi.fn((_basis, args) => ({
+      command: {
+        schema_version: 1, op: 'clip.trim', version: '1', select: 'parent/clip:c',
+        args: { in_s: args.in_s ?? null, out_s: args.out_s ?? null },
+      },
+      preview: {
+        version: 1, source: 'clip.trim', operations: [{
+          op: 'clip.update', target: 'c', payload: { from: 10, to: args.out_s ?? 14, hold: (args.out_s ?? 14) - 10 },
+        }],
+      },
+    })),
+    submit: vi.fn(),
+  };
+  const store = createTimelineStore();
+  const initial = store.getState();
+  const applyEdit = vi.fn();
+  initial.syncSlices({
+    data: { ...initial.data, dataRef: { current } },
+    ops: { ...initial.ops, applyEdit, clipTrim: port },
   });
   return { port, store, applyEdit, commands: createTimelineCommands(store), current: () => current };
 }
@@ -207,4 +242,59 @@ describe('clip.move gesture adapters', () => {
       expect(h.port.submit).not.toHaveBeenCalled();
     },
   );
+});
+
+describe('public trim command adapter', () => {
+  it('submits a source-only parent trim through the existing native port', () => {
+    const h = trimHost();
+
+    expect(h.commands.trimClip({ clipId: 'c', endTime: 3.5 })).toEqual({
+      ok: true, data: { clipId: 'c', startTime: 2, endTime: 3.5 },
+    });
+    expect(h.port.capture).toHaveBeenCalledWith({ clipId: 'c', current: h.current() });
+    expect(h.port.finish).toHaveBeenCalledWith(expect.anything(), { out_s: 13 });
+    expect(h.port.submit).toHaveBeenCalledWith(expect.objectContaining({
+      command: expect.objectContaining({ args: { in_s: null, out_s: 13 } }),
+    }));
+    expect(h.applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('retains the snapshot path for placement-plus-trim', () => {
+    const h = trimHost();
+
+    expect(h.commands.trimClip({ clipId: 'c', startTime: 3, endTime: 3.5 })).toEqual({
+      ok: true, data: { clipId: 'c', startTime: 3, endTime: 3.5 },
+    });
+    expect(h.port.capture).not.toHaveBeenCalled();
+    expect(h.port.submit).not.toHaveBeenCalled();
+    expect(h.applyEdit).toHaveBeenCalledOnce();
+  });
+
+  it('refuses a native owner rejection without applying a snapshot fallback', () => {
+    const h = trimHost();
+    vi.mocked(h.port.capture).mockImplementation(() => { throw new Error('unsupported owner'); });
+
+    expect(h.commands.trimClip({ clipId: 'c', endTime: 3.5 })).toMatchObject({
+      ok: false, error: { code: 'mutation_failed', message: 'unsupported owner' },
+    });
+    expect(h.port.finish).not.toHaveBeenCalled();
+    expect(h.port.submit).not.toHaveBeenCalled();
+    expect(h.applyEdit).not.toHaveBeenCalled();
+    expect(h.current().config.clips[0]).toMatchObject({ at: 2, from: 10, to: 14 });
+  });
+
+  it('refuses an absent native port without applying a snapshot fallback', () => {
+    const h = trimHost();
+    h.store.setState((state) => ({ ops: { ...state.ops, clipTrim: undefined } }));
+
+    expect(h.commands.trimClip({ clipId: 'c', endTime: 3.5 })).toEqual({
+      ok: false,
+      error: {
+        code: 'mutation_failed',
+        message: 'Native clip trim is unavailable until the mounted command session is ready.',
+      },
+    });
+    expect(h.applyEdit).not.toHaveBeenCalled();
+    expect(h.current().config.clips[0]).toMatchObject({ at: 2, from: 10, to: 14 });
+  });
 });
