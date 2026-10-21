@@ -9,6 +9,7 @@ no head.
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from typing import Any
 
 import pytest
@@ -18,7 +19,9 @@ from astrid.core.ids import is_ulid
 from astrid.core.receipts.contract import CommandReceipt
 from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.remote import RemoteTimelines
+from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.workspace_client import WorkspaceClientError
+from tests.sdk.test_timeline_create_native import _accepted
 
 ENVELOPE_KEYS = {"ok", "data", "error", "receipt", "idempotency_key"}
 DEFAULT_CONFIG = {
@@ -183,11 +186,24 @@ def test_timelines_create_help_is_executable(argv: list[str]) -> None:
 # -- SDK route ------------------------------------------------------------
 
 
+class _NativeSession:
+    """Models the native commit port while retaining the generated result shape."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[dict[str, Any], str | None]] = []
+
+    def commit(self, command, *, idempotency_key=None):
+        self.calls.append((deepcopy(command), idempotency_key))
+        return _accepted(command, idempotency_key)
+
+
 class _Writer:
-    """Records the runtime calls ``create_empty`` makes, in order."""
+    """Records the shell/history calls and supplies the native session port."""
 
     def __init__(self, *, shell_error: WorkspaceClientError | None = None) -> None:
         self.calls: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
+        self.history: list[dict[str, Any]] = []
+        self.session = _NativeSession()
         self._shell_error = shell_error
 
     def create_timeline(self, project_id, timeline_id, *, idempotency_key):
@@ -198,6 +214,12 @@ class _Writer:
             "data": {"project_id": "P-1", "timeline_id": timeline_id, "head_revision_id": None},
             "receipt": None,
         }
+
+    def list_timeline_commits(self, project_id, timeline_id, *, cursor=None, limit=50):
+        self.calls.append(
+            ("list_timeline_commits", (project_id, timeline_id), {"cursor": cursor, "limit": limit})
+        )
+        return {"items": deepcopy(self.history), "next_cursor": None}
 
     def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
         self.calls.append(
@@ -247,19 +269,36 @@ def test_remote_create_empty_creates_shell_then_empty_head() -> None:
     assert kwargs == {"idempotency_key": "caller-1-head"}
 
 
-# This legacy fake has no history/commit adapter; native qualification lives in
-# tests/sdk/test_timeline_create_native.py until the paired installed proof.
-@pytest.mark.xfail(strict=True, reason="legacy publisher fake is not a native TimelineSession adapter")
-def test_remote_create_empty_generates_ulid_when_no_id_given() -> None:
+def test_remote_create_empty_generates_ulid_when_no_id_given(monkeypatch) -> None:
     writer = _Writer()
+    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: writer.session)
     result = RemoteTimelines(writer).create_empty(project="render-smoke")
     assert result.ok, result.error
     timeline_id = result.data["timeline_id"]
     assert is_ulid(timeline_id)
     assert writer.calls[0][1] == ("render-smoke", timeline_id)
     assert writer.calls[1][1][1] == timeline_id
-    assert writer.calls[1][2]["idempotency_key"] == f"{result.idempotency_key}-head"
-    assert writer.calls[1][1][2]["parent_composition"]["config"] == {"tracks": []}
+    command, key = writer.session.calls[0]
+    assert key == f"{result.idempotency_key}-head"
+    assert command == {
+        "schema_version": 1,
+        "op": "timeline.init",
+        "version": "1",
+        "select": "parent",
+        "args": {
+            "name": timeline_id,
+            "slug": timeline_id.lower(),
+            "output": {
+                "resolution": "1280x720",
+                "fps": 30,
+                "file": "output.mp4",
+                "background": None,
+                "background_scale": None,
+            },
+        },
+    }
+    assert result.receipt.result["commands"] == [command]
+    assert not any(name == "publish_parent_composition" for name, _, _ in writer.calls)
 
 
 def test_remote_create_empty_stops_when_shell_is_rejected() -> None:
