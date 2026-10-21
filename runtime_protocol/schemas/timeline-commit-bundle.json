@@ -507,6 +507,12 @@
             "before": {
               "$ref": "#/$defs/AgentState"
             },
+            "insertion_order": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "path": {
               "$ref": "#/$defs/TokenPath"
             },

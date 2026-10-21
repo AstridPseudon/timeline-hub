@@ -269,6 +269,12 @@
         },
         "after": {
           "$ref": "#/$defs/AgentState"
+        },
+        "insertion_order": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       },
       "required": [

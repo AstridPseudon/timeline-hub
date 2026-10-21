@@ -19,8 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 TARGET = {"project_id": "p", "timeline_id": "t", "base_revision_id": "r", "base_publication_id": "txn"}
 PRODUCER = {"task_id": "task", "attempt_id": "attempt", "executor_id": "executor", "fence": 1, "runtime_epoch": 1}
 PIN = {**PRODUCER, "admitted_target": TARGET, "proposal_digest": DIGEST}
-PRIVATE_RAW_SHA256 = "9cb9597a618f51949fe9ec35686e544dca812b8b252a96a4cff1f686afdfb3ec"
-PRIVATE_CANONICAL_SHA256 = "322733a57e781847e50228f91b6c6a9237ad2237406a188515c8f9da5e554bcc"
+PRIVATE_RAW_SHA256 = "6dd2b082ebdb630b4fc8ec3eeeea3b40c1eebe910c84557e45ab8fab05322b16"
+PRIVATE_CANONICAL_SHA256 = "9f5612ff34a5758ecacae948d5c0bfb1acc867d6ecb7a6af037bf8e3974fd9d6"
 ORDINARY_RAW_SHA256 = "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d"
 CASES = ORDINARY_CASES + [
     ("shot.set", "occurrence:o/shot", {"values": {"name": "Shot", "settings": {"enhancePrompt": False, "batchVideoFrames": 1.5}}, "clear": []}),
@@ -60,6 +60,7 @@ def command(op, select, args):
 def _ordinary_schema_bytes(private_schema):
     """Strip private016 additions and restore the exact ordinary6ba JSON bytes."""
     ordinary = copy.deepcopy(private_schema)
+    ordinary["$defs"]["AgentWrite"]["properties"].pop("insertion_order")
     for name in (
         "ClipMoveSetArgs", "TrackReorderArgs", "MediaManifestEntry", "RawOldSwapMediaArgs",
         "MigrateGroupsArgs", "ProjectDataWriteArgs", "TimelineReferenceArgs", "OccurrenceMoveArgs",

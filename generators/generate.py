@@ -29,10 +29,10 @@ RELEASE_METADATA = ROOT / "generators" / "release.json"
 # later private candidate may move it to authorized source metadata alongside
 # the exact freeze/allocation; ordinary generation must not depend on it.
 AGENT_COMMAND_SOURCE_PIN = {
-    "commit": "10226a7f08a739ba3e41f8e91de6971eed63aa9d",
-    "tree": "e2c08fbe9b21a3082db7bcf62d9677babfc15e98",
+    "commit": "ed5fd33c4a7fa9956178f9b24eb127415eaca9e6",
+    "tree": "f4a632e4f627499e0b15d8477db9aaab78ebb3d2",
     "path": "astrid/core/timeline/schema/edit-command.schema.json",
-    "sha256": "9cb9597a618f51949fe9ec35686e544dca812b8b252a96a4cff1f686afdfb3ec",
+    "sha256": "6dd2b082ebdb630b4fc8ec3eeeea3b40c1eebe910c84557e45ab8fab05322b16",
 }
 
 
