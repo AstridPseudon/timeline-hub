@@ -30,6 +30,8 @@ const SETTINGS_SHOT_NAME = 'Settings auto-disable shot';
 const ACCEPTED_NAME = 'Édit 🎬';
 const RETRY_NAME = 'F2 retry survives restart';
 const CONFLICT_DRAFT = '  same-name draft 🎬  ';
+const ACCEPTED_PROMPT = 'A paper moon drifts over Tokyo — 🚀';
+const RETRY_PROMPT = 'Prompt retry survives restart';
 
 type CommitPost = {
   body: CommitRequest;
@@ -75,6 +77,12 @@ test.describe.configure({ mode: 'serial' });
 
 function pinOf(result: CommitAcceptedMutation): HeadPin {
   return { revision_id: result.data.accepted_revision_id, publication_id: result.receipt.receipt_id };
+}
+
+function promptCommitIndex(posts: CommitPost[], prompt: string) {
+  return posts.findIndex((post) => post.body.commands.some((command) => (
+    (command.args.values as Record<string, any> | undefined)?.settings?.prompt === prompt
+  )));
 }
 
 function shotPayload(document: CanonicalDocument) {
@@ -417,5 +425,162 @@ test('M2 real embedded SettingsAutoDisable: native scalar field change, raw sett
   const undone = traffic.posts[1].response as CommitAcceptedMutation;
   const undoneRaw = await rawSettingsShot(harness, settingsSeed, pinOf(undone).revision_id);
   expect(undoneRaw.shot.payload).toEqual(initial.shot.payload);
+  expect(traffic.legacy).toEqual([]);
+});
+
+test('M2 real embedded settings prompt: native shot.set preserves exact raw settings, retries after restart, and undoes through Runtime', async ({ page, harness, settingsSeed }) => {
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  await openParent(page, harness);
+  const traffic = observeTraffic(page);
+  const initialHead = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${settingsSeed.timelineId}/composition-revisions?limit=1`)).body.items.find((item: any) => item.is_current_head).revision_id as string;
+  const initial = await rawSettingsShot(harness, settingsSeed, initialHead);
+  expect(initial.shot.payload.settings).toEqual({
+    turboMode: true,
+    advancedMode: true,
+    motionMode: 'advanced',
+    prompt: 'fixture prompt remains raw',
+    negativePrompt: null,
+    x_settings_opaque: settingsSeed.opaqueSettings,
+  });
+
+  const promptDialog = await openEmbeddedCanonicalShot(page, settingsSeed.occurrenceId, SETTINGS_SHOT_NAME);
+  // The shared fixture intentionally starts with the original AutoDisable pair;
+  // consume that mounted correction before exercising the distinct prompt case.
+  await expect.poll(() => traffic.posts.length, CEILING).toBe(1);
+  await waitForPost(traffic.posts, 0);
+  const promptBase = pinOf(traffic.posts[0].response as CommitAcceptedMutation);
+  const promptBaseRaw = await rawSettingsShot(harness, settingsSeed, promptBase.revision_id);
+  const promptInput = promptDialog.locator('#batchVideoPrompt:visible').first();
+  await expect(promptInput).toBeVisible();
+  await promptInput.fill(ACCEPTED_PROMPT);
+  await promptInput.blur();
+  await expect.poll(() => promptCommitIndex(traffic.posts, ACCEPTED_PROMPT), CEILING).toBe(1);
+  await waitForPost(traffic.posts, 1);
+  const acceptedPrompt = traffic.posts[1];
+  expect(acceptedPrompt.body).toMatchObject({
+    base_revision_id: promptBase.revision_id,
+    base_publication_id: promptBase.publication_id,
+    commands: [{
+      schema_version: 1,
+      op: 'shot.set',
+      version: '1',
+      select: `occurrence:${settingsSeed.occurrenceId}/shot`,
+      args: { values: { settings: { prompt: ACCEPTED_PROMPT } }, clear: [] },
+    }],
+  });
+  expect(acceptedPrompt.body).not.toHaveProperty('parent_composition');
+  expect(acceptedPrompt.body.commands[0].reads).toEqual(expect.arrayContaining([
+    { ref: `occurrence:${settingsSeed.occurrenceId}`, path: ['occurrence_id'], state: { state: 'present', value: settingsSeed.occurrenceId } },
+  ]));
+  const acceptedPromptResponse = acceptedPrompt.response as CommitAcceptedMutation;
+  expect(acceptedPromptResponse.data.status).toBe('accepted');
+  const acceptedPromptPin = pinOf(acceptedPromptResponse);
+  const acceptedPromptRaw = await rawSettingsShot(harness, settingsSeed, acceptedPromptPin.revision_id);
+  expect(acceptedPromptRaw.shot.payload.settings).toEqual({
+    ...promptBaseRaw.shot.payload.settings,
+    prompt: ACCEPTED_PROMPT,
+  });
+  expect(acceptedPromptRaw.shot.payload).toEqual({
+    ...promptBaseRaw.shot.payload,
+    internal_timeline_revision_id: acceptedPromptRaw.shot.internal_timeline_revision_id,
+    settings: { ...promptBaseRaw.shot.payload.settings, prompt: ACCEPTED_PROMPT },
+  });
+
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  await expect.poll(() => traffic.posts.length, CEILING).toBe(1);
+  const reloadedPrompt = await rawSettingsShot(harness, settingsSeed, acceptedPromptPin.revision_id);
+  expect(reloadedPrompt.shot.payload.settings).toEqual(acceptedPromptRaw.shot.payload.settings);
+
+  let releaseAck!: () => void;
+  const ackGate = new Promise<void>((resolve) => { releaseAck = resolve; });
+  let heldAck = false;
+  const ackInterceptor = async (route: Route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    if (!heldAck) {
+      heldAck = true;
+      const response = await route.fetch({ maxRetries: 0 });
+      const post = traffic.posts[traffic.posts.length - 1];
+      post.status = response.status();
+      post.response = await response.json();
+      await ackGate;
+      await route.abort('connectionreset').catch(() => {});
+      return;
+    }
+    await acceptAndRecord(route, traffic.posts);
+  };
+  await page.route(COMMITS, ackInterceptor);
+  const retryDialog = await openEmbeddedCanonicalShot(page, settingsSeed.occurrenceId, SETTINGS_SHOT_NAME);
+  const retryInput = retryDialog.locator('#batchVideoPrompt:visible').first();
+  await retryInput.fill(RETRY_PROMPT);
+  await retryInput.blur();
+  await expect.poll(() => promptCommitIndex(traffic.posts, RETRY_PROMPT), CEILING).toBe(2);
+  await waitForPost(traffic.posts, 2);
+  const acceptedRetry = traffic.posts[2];
+  expect(acceptedRetry.body).toMatchObject({
+    base_revision_id: acceptedPromptPin.revision_id,
+    commands: [{
+      schema_version: 1,
+      op: 'shot.set',
+      version: '1',
+      select: `occurrence:${settingsSeed.occurrenceId}/shot`,
+      args: { values: { settings: { prompt: RETRY_PROMPT } }, clear: [] },
+    }],
+  });
+  const acceptedRetryResponse = acceptedRetry.response as CommitAcceptedMutation;
+  expect(acceptedRetryResponse.data.status).toBe('accepted');
+  const acceptedRetryPin = pinOf(acceptedRetryResponse);
+  const acceptedRetryRaw = await rawSettingsShot(harness, settingsSeed, acceptedRetryPin.revision_id);
+  expect(acceptedRetryRaw.shot.payload.settings).toEqual({
+    ...acceptedPromptRaw.shot.payload.settings,
+    prompt: RETRY_PROMPT,
+  });
+  const originalRetry = { body: acceptedRetry.rawBody, key: acceptedRetry.key };
+  releaseAck();
+  await expect.poll(async () => (await commandOutboxes(page, settingsSeed.timelineId)).find((owner) => owner.pending)?.pending?.outcome?.kind, CEILING).toBe('retry');
+  await expect(retryInput).toHaveValue(RETRY_PROMPT);
+  await page.reload();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  const beforeRestart = (await commandOutboxes(page, settingsSeed.timelineId)).find((owner) => owner.pending?.request.key === originalRetry.key)!;
+  expect(beforeRestart.scope).toMatchObject({ projectId: harness.seed.projectId, timelineId: settingsSeed.timelineId });
+  expect(beforeRestart.intents[0]).toMatchObject({
+    basis: { head: { revisionId: acceptedPromptPin.revision_id, publicationId: acceptedPromptPin.publication_id } },
+    payload: { commands: [{ op: 'shot.set', select: `occurrence:${settingsSeed.occurrenceId}/shot`, args: { values: { settings: { prompt: RETRY_PROMPT } } } }] },
+  });
+  expect(beforeRestart.pending?.request.body).toBe(originalRetry.body);
+  expect(beforeRestart.pending?.request.key).toBe(originalRetry.key);
+  const ownerId = beforeRestart.ownerId;
+  const restarted = await harness.restartRuntime();
+  expect(restarted.oldInstanceId).not.toBe(harness.runtimeInstanceId);
+  await expect(page.getByRole('heading', { name: 'Astrid restarted' })).toBeVisible(CEILING);
+  await page.getByRole('button', { name: 'Reload', exact: true }).click();
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  await page.getByRole('button', { name: /^Recover saved edits/ }).and(page.locator(`[data-owner-id="${ownerId}"]`)).click();
+  await expect.poll(() => traffic.posts.length, CEILING).toBe(4);
+  expect(traffic.posts[3].rawBody).toBe(originalRetry.body);
+  expect(traffic.posts[3].key).toBe(originalRetry.key);
+  expect(traffic.posts[3].response).toEqual(traffic.posts[2].response);
+  await expect.poll(async () => (await commandOutboxes(page, settingsSeed.timelineId)).every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+  await page.unroute(COMMITS, ackInterceptor);
+
+  const undoIndex = traffic.posts.length;
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect.poll(() => traffic.posts.length, CEILING).toBe(undoIndex + 1);
+  await waitForPost(traffic.posts, undoIndex);
+  expect(traffic.posts[undoIndex].body.commands).toEqual([{ schema_version: 1, op: 'timeline.inverse', select: null, version: '1', args: { publications: [acceptedRetryPin.publication_id] } }]);
+  const undonePrompt = traffic.posts[undoIndex].response as CommitAcceptedMutation;
+  const undonePromptRaw = await rawSettingsShot(harness, settingsSeed, pinOf(undonePrompt).revision_id);
+  expect(undonePromptRaw.shot.payload.settings).toEqual({
+    ...promptBaseRaw.shot.payload.settings,
+    prompt: ACCEPTED_PROMPT,
+  });
+  expect(undonePromptRaw.shot.payload).toEqual({
+    ...promptBaseRaw.shot.payload,
+    internal_timeline_revision_id: undonePromptRaw.shot.internal_timeline_revision_id,
+    settings: { ...promptBaseRaw.shot.payload.settings, prompt: ACCEPTED_PROMPT },
+  });
   expect(traffic.legacy).toEqual([]);
 });

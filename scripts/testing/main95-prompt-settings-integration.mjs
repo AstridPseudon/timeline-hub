@@ -59,7 +59,7 @@ export const MAIN95_NESTED_COHORT = Object.freeze({
   TIMELINE_CURRENT013_PUBLIC_SOURCE_SHA256: MAIN95_COMPOSITION.sha256.slice('sha256:'.length),
 });
 
-export const SETTINGS_CASE = 'M2 real embedded SettingsAutoDisable: native scalar field change, raw settings preservation, reload, Runtime undo, and zero legacy';
+export const SETTINGS_CASE = 'M2 real embedded settings prompt: native shot.set preserves exact raw settings, retries after restart, and undoes through Runtime';
 export const MAIN95_BROWSER = Object.freeze({
   executable: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
   sha256: 'sha256:85918a9937192b78da8edb51c38a7af4920ac6bd9ba19939ecb0bb724d5a1a95',
