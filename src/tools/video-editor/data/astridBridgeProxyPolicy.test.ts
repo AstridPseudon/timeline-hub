@@ -10,12 +10,14 @@ import { preview, type PreviewServer } from 'vite';
 
 import {
   astridBridgeUpstreamHeaders,
+  createAstridAcpBridgeProxyOptions,
   createAstridBridgeAuthGuard,
   createAstridBridgeAuthPlugin,
   createAstridBridgeProxyOptions,
   resolveAstridBridgePort,
   resolveAstridBridgeProxyPolicy,
 } from '../../../../config/vite/astridBridgeProxy';
+import viteConfig from '../../../../config/vite/vite.config';
 import {
   ASTRID_GENERATION_COMPOSE_ROUTE,
   createAstridGenerationComposeHandler,
@@ -118,6 +120,31 @@ describe('Astrid bridge server-side auth boundary', () => {
       timeout: ASTRID_BRIDGE_REQUEST_TIMEOUT_MS,
       proxyTimeout: ASTRID_BRIDGE_REQUEST_TIMEOUT_MS,
     });
+  });
+
+  it('routes ACP through the existing discovery proxy when enabled', () => {
+    const policy = resolveAstridBridgeProxyPolicy({ ASTRID_BRIDGE_TOKEN: 'secret' });
+    const path = '/api/astrid/acp/projects/project-1/chat';
+
+    expect(createAstridAcpBridgeProxyOptions(policy, 17335).rewrite?.(path)).toBe('/projects/project-1/chat');
+    expect(createAstridAcpBridgeProxyOptions(policy, 17335, true).rewrite?.(path)).toBe('/acp/projects/project-1/chat');
+  });
+
+  it('passes the existing discovery mode into the Vite ACP proxy assembly', async () => {
+    const previous = process.env.ASTRID_ACP_VIA_DISCOVERY_PROXY;
+    process.env.ASTRID_ACP_VIA_DISCOVERY_PROXY = '1';
+    try {
+      const config = typeof viteConfig === 'function'
+        ? await viteConfig({ command: 'serve', mode: 'test' })
+        : viteConfig;
+      const proxy = config.server?.proxy?.['/api/astrid/acp'];
+      const rewrite = (proxy as { rewrite?: (path: string) => string }).rewrite;
+
+      expect(rewrite?.('/api/astrid/acp/projects/project-1/chat')).toBe('/acp/projects/project-1/chat');
+    } finally {
+      if (previous === undefined) delete process.env.ASTRID_ACP_VIA_DISCOVERY_PROXY;
+      else process.env.ASTRID_ACP_VIA_DISCOVERY_PROXY = previous;
+    }
   });
 
   it('strips only the exact same-origin app Origin before the loopback hop', () => {
