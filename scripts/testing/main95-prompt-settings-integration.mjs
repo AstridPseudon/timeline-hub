@@ -119,6 +119,16 @@ function sha256File(file) {
   return `sha256:${createHash('sha256').update(readFileSync(file)).digest('hex')}`;
 }
 
+export function assertOwnedReadyGraphRoot({ graph, readyFile }) {
+  const graphRoot = path.dirname(realpathSync(graph));
+  const ready = readFileSync(realpathSync(readyFile), 'utf8');
+  const expected = `Graph root: \`${graphRoot}\``;
+  if (!ready.includes(expected)) {
+    fail(`private graph READY record is missing the owned graph root: ${expected}`);
+  }
+  return graphRoot;
+}
+
 function within(root, target) {
   const relative = path.relative(root, target);
   return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
@@ -284,8 +294,8 @@ function checkPrivateGraph(input) {
   if (!lstatSync(graph).isDirectory() || lstatSync(graph).isSymbolicLink()) fail('private graph root must be a real directory');
   if (input.privateReady !== NORMAL_GRAPH_READY) fail(`private graph READY record is not the owned normal-lock record: ${input.privateReady}`);
   const ready = readFileSync(input.privateReady, 'utf8');
+  assertOwnedReadyGraphRoot({ graph, readyFile: input.privateReady });
   for (const text of [
-    `Graph root: ${NORMAL_GRAPH_ROOT}`,
     'Source package SHA-256: `a4dc9fcc02b1769ba8472f551349f7875774b07ad0830c7260eb88d2db8292fd`',
     'Source lock SHA-256: `7f1bfcea48cef38d4c6f1163aa34190b8d5e71c9f08c7378e01a962d6696fc14`',
     'Composition input: vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz, SHA-256 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`',
