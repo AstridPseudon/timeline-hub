@@ -3123,21 +3123,35 @@ class ProcessCustody:
                         if held:
                             raise
                         return
-                    if identify(pid) != birth:
-                        os.close(descriptor)
-                        if held:
-                            raise CustodyError("descendant changed during pidfd binding")
-                        return
-                    os.set_inheritable(descriptor, False)
-                    proofs = getattr(self, "_pidfd_exit_proofs", None)
-                    if proofs is None:
-                        proofs = self._pidfd_exit_proofs = {}
-                    terminal_births = getattr(self, "_pidfd_terminal_births", None)
-                    if terminal_births is None:
-                        terminal_births = self._pidfd_terminal_births = {}
-                    self._handles[pid] = (birth, descriptor)
-                    proofs[pid] = _PidfdExitProof(descriptor)
-                    terminal_births.pop(pid, None)
+                    retained = False
+                    proof = None
+                    proofs = None
+                    proof_registered = False
+                    try:
+                        if identify(pid) != birth:
+                            if held:
+                                raise CustodyError("descendant changed during pidfd binding")
+                            return
+                        os.set_inheritable(descriptor, False)
+                        proofs = getattr(self, "_pidfd_exit_proofs", None)
+                        if proofs is None:
+                            proofs = self._pidfd_exit_proofs = {}
+                        terminal_births = getattr(self, "_pidfd_terminal_births", None)
+                        if terminal_births is None:
+                            terminal_births = self._pidfd_terminal_births = {}
+                        proof = _PidfdExitProof(descriptor)
+                        proofs[pid] = proof
+                        proof_registered = True
+                        terminal_births.pop(pid, None)
+                        self._handles[pid] = (birth, descriptor)
+                        retained = True
+                    finally:
+                        if not retained:
+                            if proof_registered and proofs is not None and proofs.get(pid) is proof:
+                                proofs.pop(pid, None)
+                            if proof is not None:
+                                proof.close()
+                            os.close(descriptor)
             except Exception as exc:
                 if sys.platform != "darwin":
                     raise

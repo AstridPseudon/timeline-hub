@@ -5323,13 +5323,20 @@ class GenericPackHost:
             root = self.attempt_base / f"{task_id}-{attempt_id}"
             if root.exists() or root.is_symlink():
                 raise HostError(f"attempt-base allocation already exists: {root.name}")
-            root.mkdir()
-            root.chmod(0o700)
+            if sys.platform == "win32":
+                platform.private_directory(root)
+            else:
+                root.mkdir()
+                root.chmod(0o700)
             return root.resolve()
         # The lease and progress marker carry the task/attempt/fence identity;
         # do not put those values in an ephemeral filesystem basename.  Keep
         # the established reclaim prefix so storage_ownership still finds
         # crash-abandoned roots.
+        if self.attempt_root is None and sys.platform == "win32":
+            root = Path(tempfile.gettempdir()) / f"astrid-attempt-{secrets_module.token_hex(16)}"
+            platform.private_directory(root)
+            return root.resolve()
         root = self.attempt_root or Path(tempfile.mkdtemp(prefix="astrid-attempt-")).resolve()
         root.mkdir(parents=True, exist_ok=True)
         if self.attempt_root is None:
