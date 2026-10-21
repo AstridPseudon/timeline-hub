@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T11:27:38Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 6m -->
+<!-- app | 2026-10-21T11:34:13Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 12m -->
 # app — 2026-10-21 11:09 UTC
 Milestone: M1 RECORDED. M2 editing writers and M3 physical parity remain OPEN. No M4 completion claim.
 Integrated: App tl/integration 92c30b570cf8105dc021a64874c258e6c950b841, tree c34d65b66481fd0015279451b175c53b7b5e8f4f. Main860 is an ancestor. Published Runtime 0.2.14 producer95bd/all76 and Composition13/9412/all77 unchanged. Native initializer1557 and actual7782 remain qualified.
