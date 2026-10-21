@@ -62,7 +62,7 @@ const LayoutShell: React.FC = () => {
   // Extracted hooks
   const { splitViewWrapperRef } = useSplitViewScroll(isMobileSplitView);
   const { isAuthenticated, isLoading } = useAuth();
-  const { isSettingsModalOpen, setIsSettingsModalOpen, settingsInitialTab, handleOpenSettings } = useSettingsModal();
+  const { isSettingsModalOpen, setIsSettingsModalOpen, settingsInitialTab } = useSettingsModal();
   const replayEditorTour = useReplayEditorTour();
   const { showOnboardingModal, onboardingMode, handleOnboardingClose } = useOnboardingFlow();
   useResetCurrentShotOnRouteChange();
