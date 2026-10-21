@@ -48,6 +48,12 @@ export function installCommand(mode: CommandMode): string {
 
 const SETUP_GUIDE_URL = 'https://github.com/banodoco/astrid-agent/blob/main/docs/setup/SKILL.md';
 
+/** The two ways to update, since this page can't tell an installer install from source checkouts. */
+export const UPDATE_ROUTES = {
+  installer: (command: string) => `If you installed Astrid with the installer: ${command}`,
+  source: "If you run Astrid from source checkouts: update those checkouts to their main branches and restart Astrid. Don't run the installer over them.",
+} as const;
+
 /** A complete handoff: retain an existing workspace and diagnose failures before retrying. */
 export function agentInstructions(mode: CommandMode, pageOrigin: string): string {
   const windows = detectPlatform() === 'windows';
@@ -58,10 +64,13 @@ export function agentInstructions(mode: CommandMode, pageOrigin: string): string
     "Use the current official Astrid installer; read it before running it. The installer adopts an existing workspace itself; don't run workspace or migration commands by hand. Do not bypass ownership guards or overwrite a directory just because the installer refuses it.",
     windows && mode === 'install'
       ? `The command offered by this page, in PowerShell:\n${command}\nFrom Git Bash or another shell:\n${ASTRID_COMMANDS.windowsAgent}\nInstall from Windows, not inside WSL.`
-      : `The command offered by this page is:\n${command}${windows ? '\nInstall from Windows, not inside WSL.' : ''}`,
+      : `${mode === 'update' ? 'If you installed Astrid with the installer, the command offered by this page is' : 'The command offered by this page is'}:\n${command}${windows ? '\nInstall from Windows, not inside WSL.' : ''}`,
+    mode === 'update'
+      ? `${UPDATE_ROUTES.source} Before running the installer, check whether this computer runs Astrid from source checkouts (for example, a running runtime_protocol from a git checkout). If it does, update those checkouts instead of running the installer.`
+      : null,
     'If installation or startup fails, read the log path printed by the installer, diagnose the actual cause and resolve it before retrying. Keep the existing workspace selection and data root connected; do not infer that no installation exists merely because the browser cannot reach it.',
     `The installer verifies Astrid and opens astrid.haus. Tell me to choose Allow if Chrome or Edge asks, and confirm Astrid shows Connected. Setup guide: ${SETUP_GUIDE_URL}`,
-  ].join('\n\n');
+  ].filter((part): part is string => part !== null).join('\n\n');
 }
 
 /** Names the shell that matches the command shown on setup, repair and recovery cards. */
@@ -123,6 +132,8 @@ export interface RuntimeConnectionCopy {
     readonly commandCopy: string;
     readonly commandCopied: string;
     readonly terminalAlternative: string;
+    /** Update only, where the installer is one of two routes. */
+    readonly terminalAlternativeUpdate: string;
   };
   /** Next to the compose controls the hosted build disables (card A2.X). */
   readonly composeDisabled: string;
@@ -177,7 +188,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   },
 
   /** Lead-in above the shared update screen when a chat reply from this computer's Astrid is out of date. */
-  chatNeedsUpdate: 'Chat needs this update.',
+  chatNeedsUpdate: 'Chat on this computer is older than this page.',
 
   phone: {
     title: 'Open Astrid on your computer',
@@ -218,6 +229,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     commandCopy: 'Copy command',
     commandCopied: 'Command copied',
     terminalAlternative: 'Or run this yourself in a terminal:',
+    terminalAlternativeUpdate: 'If you installed Astrid with the installer, run this in a terminal:',
   },
 
   composeDisabled: "Making new images isn't on this page yet.",

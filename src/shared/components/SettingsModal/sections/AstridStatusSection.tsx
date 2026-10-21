@@ -102,7 +102,9 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
   const hasServiceDetails = Array.isArray(rawServices) && rawServices.every(isRuntimeService);
   const services = Array.isArray(rawServices) ? rawServices.filter(isRuntimeService) : [];
   const needsRepair = details?.health.status === 'degraded' || services.some((service) => service.state === 'failed');
-  const statusText = summary.updateNeeded
+  const statusText = summary.outOfDate === 'chat'
+    ? COPY.chatUpdateNeeded
+    : summary.outOfDate
     ? COPY.updateNeeded
     : connected
     ? loadFailed ? COPY.unavailable : needsRepair ? COPY.degraded : details ? COPY.connected : COPY.checking
@@ -112,7 +114,7 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
     <section className="mb-6" aria-labelledby="astrid-status-title">
       <Card className="p-4">
         <div className="flex items-start gap-3">
-          {statusIcon(summary.updateNeeded ? 'update_needed' : connected ? needsRepair ? 'degraded' : 'connected' : status)}
+          {statusIcon(summary.outOfDate ? 'update_needed' : connected ? needsRepair ? 'degraded' : 'connected' : status)}
           <div className="min-w-0 flex-1 space-y-3">
             <div>
               <h2 id="astrid-status-title" className="text-base font-semibold">{COPY.title}</h2>
@@ -121,8 +123,8 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
             </div>
 
             {summary.checks && <SetupStatusLine checks={summary.checks} mink={false} announce={false} />}
-            {(!connected || summary.updateNeeded) && summary.detail && <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{summary.updateNeeded ? withCommandShell(summary.detail) : summary.detail}</p>}
-            {summary.updateNeeded && <CopyInstallCommand mode="update" />}
+            {(!connected || summary.outOfDate) && summary.detail && <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{summary.outOfDate ? withCommandShell(summary.detail) : summary.detail}</p>}
+            {summary.outOfDate && <CopyInstallCommand mode="update" />}
             {summary.connect && <Button type="button" variant="retro-secondary" size="retro-sm" onClick={() => connection.connect()}>{RUNTIME_CONNECTION_COPY.permission.connect}</Button>}
             {connected && details && needsRepair && (
               <>

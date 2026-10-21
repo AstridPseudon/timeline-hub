@@ -10,6 +10,7 @@ export const ASTRID_STATUS_COPY = {
   setUp: 'Not found yet',
   notRunning: 'Not running',
   updateNeeded: 'Needs an update',
+  chatUpdateNeeded: 'Connected. Chat needs an update',
   blocked: "Blocked by your browser's settings",
   detailsToggle: 'Details',
   workspace: 'Workspace',

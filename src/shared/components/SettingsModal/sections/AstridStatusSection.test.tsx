@@ -188,8 +188,10 @@ describe('AstridStatusSection', () => {
     });
     render(<AstridStatusSection isOpen />);
 
-    expect(await screen.findByText('Needs an update')).toBeInTheDocument();
-    expect(screen.getByText(/This page needs a newer Astrid/)).toBeInTheDocument();
+    expect(await screen.findByText('Connected. Chat needs an update')).toBeInTheDocument();
+    expect(screen.getByText(/Chat on this computer is older than this page/)).toBeInTheDocument();
+    expect(screen.getByText(/If you run Astrid from source checkouts/)).toBeInTheDocument();
+    expect(screen.queryByText(/This page needs a newer Astrid/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Copy command' }));
 
     await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledWith(installCommand('update')));
@@ -273,7 +275,7 @@ describe('AstridStatusSection', () => {
     mocks.connection.localServiceOutOfDate = true;
     render(<AstridStatusSection isOpen />);
 
-    expect(screen.getByRole('status')).toHaveTextContent('Needs an update');
+    expect(screen.getByRole('status')).toHaveTextContent('Chat needs an update');
     expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'false');
   });

@@ -254,7 +254,7 @@ describe('RuntimeConnectionPanel', () => {
     inEdge();
     for (const status of ['set_up', 'not_running', 'update_needed'] as const) {
       panel(connectionFor({ status }));
-      expect(screen.getByText('Or run this yourself in PowerShell:')).toBeInTheDocument();
+      expect(screen.getByText(status === 'update_needed' ? 'If you installed Astrid with the installer, run this in PowerShell:' : 'Or run this yourself in PowerShell:')).toBeInTheDocument();
       expect(shownText()).not.toContain('Open Start');
       cleanup();
     }
