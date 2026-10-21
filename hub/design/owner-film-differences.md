@@ -2,6 +2,7 @@
 Single viewing list shared by Agent and Viewing, per orchestrator04:24. These are intended semantic changes, not qualified owner-film results. No production films will be supplied here (orchestrator04:33). Ship the readonly credential-free scanner in the delivery ZIP; the owner runs it locally before the hard-stop viewing and keeps film data locally. Film-specific references will be generated there. Viewing owns scan evidence/physical comparisons; Agent adds compiler/source facts without overwriting Viewing rows.
 
 - Runtime timeline archive/unarchive now changes catalog visibility only; historical flat-film recoveries refuse and require `timeline.restore`.
+- Popup stale-variant swap refusal now preserves the selected replacement in recovery; this is not visual, pixel, or broad Main qualification.
 
 | Change | MAIN behavior | Unified behavior / decision | Films and exact references | Evidence and remaining proof |
 | --- | --- | --- | --- | --- |
