@@ -1,1 +1,1 @@
-REFUSED CONFLICT merging tl/ap2-m2-element-mounted-fixture-current-delivery-0104 into app — aborted; dispatch a worker to rebase tl/ap2-m2-element-mounted-fixture-current-delivery-0104 onto tl/integration
+SUPERSEDED SUPERSEDED by 9a7d30228f7eb324e28196373e751df3b6cd2676 (current App conflict resolution preserves the mounted fixture delivery and original assertions)

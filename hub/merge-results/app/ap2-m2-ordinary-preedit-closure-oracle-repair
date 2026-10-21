@@ -1,1 +1,1 @@
-REFUSED CONFLICT merging tl/ap2-m2-ordinary-preedit-closure-oracle-repair into app — aborted; dispatch a worker to rebase tl/ap2-m2-ordinary-preedit-closure-oracle-repair onto tl/integration
+SUPERSEDED SUPERSEDED by 41bf86102f3def930ba1a9388cf33f7291ec7c63 (current App merge-forward preserves the independent pre-edit closure oracle and original assertions)

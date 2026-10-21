@@ -1,1 +1,1 @@
-REFUSED CONFLICT merging tl/ap2-m2-parent-drop-driver-contract-correction into app — aborted; dispatch a worker to rebase tl/ap2-m2-parent-drop-driver-contract-correction onto tl/integration
+SUPERSEDED SUPERSEDED by 780c502368cb6eb379cf3848af7009067c7cd744 (current App merge-forward preserves the parent driver correction and original assertions)

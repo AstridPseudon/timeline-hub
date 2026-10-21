@@ -1,1 +1,1 @@
-REFUSED CONFLICT merging tl/ap2-m2-ordinary-standalone-dispatch-repair into app — aborted; dispatch a worker to rebase tl/ap2-m2-ordinary-standalone-dispatch-repair onto tl/integration
+SUPERSEDED SUPERSEDED by 3e24e0632669375a84e75c8ff0da315bdc88a45c (052b94b64 is an actual ancestor of the integrated ordinary merge-forward; no rebase needed)
