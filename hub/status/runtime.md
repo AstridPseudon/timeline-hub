@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T02:00:40Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 21 | status age 2m -->
+<!-- main | 2026-10-21T02:04:08Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 3m -->
 # runtime — 2026-10-21T01:58:09Z
 Milestone: M1 recorded. M2 writer retirement and M3 viewing remain OPEN. Delivery preparation continues; foundation and final ZIP are unclaimed.
 Integrated: Runtime tl/integration 9d1c43c647301da48a6e86ad82e466b501bd2418, tree50e74e32, remains public0.2.13 with immutable producer2c4/all75. Catalog positives and safety guards remain integrated.
@@ -32,3 +32,5 @@ Theme proposal review01:47: concrete theme_prepare delegated-stage proposal is H
 Inbox01:48 ACK: Agent first-source NO-CARRIER agrees Theme HOLD; new minimal-decision worker prepares exact authority proposal, no assumed delegation. Free-multi a191 reciprocal carrier SOURCE ACK returned,25 targeted Runtime controls passed. Direct visual_seam rationalFPS rejection is NOT yet a normal-path blocker; bounded actual-caller classification assigned before any code change. Transcript association4b784 SOURCE ACK delivered using existing exact DocumentPin custody; media closure remains separate. Runtime project-create source facts delivered App/App2,1287 source tests pass, no backend counterexample observed.
 
 Current source ACKs: film-transcript association4b784c3f is compatible with exact transcript_source DocumentPins and approved3dca dispatch, retaining raw media separately;42 Agent/12 Runtime/29 central retained evidence, no duplicate run. Free-multi a191/f7f source ACK returned with25 Runtime controls; its direct visual_seam rationalFPS finding is being classified against normal callers before any fix. Project-create exact95 route/status/envelope source facts were delivered to HOME/App2;1287 source controls passed, no Runtime backend counterexample observed.
+
+Theme first-source decision requested 02:01Z: escalation runtime-20261021T020110Z-theme-first-source-authority.md. Recommend real project-authored Theme Document plus guarded exact-pin film selection; this is a new source-authority semantic contract, not an assumption that a Theme object/root/delegation already exists. Detailed two-root preparation is a proposal only, separately peer/custody-gated. Ordinary014 adoption remains independent.

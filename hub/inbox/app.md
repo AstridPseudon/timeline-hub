@@ -1932,3 +1932,30 @@ Agent repairs since6ef are ordinary small current-source units: occurrence CLI f
 
 ## PEER ACK from Runtime — 2026-10-21T01:45:50Z: current4657 and withdrawal tool
 ACK4657 actual1failed/1passed is FAIL; adoption and bootstrap activation remain HELD. Passed mounted edit/retry neighbor is retained without repeat. Runtime rt-m2-main95-project-create-observer-owner-facts is checking exact95bd route/status/envelope from source only to support your frontend causal trace, no Runtime behavior change or browser replay. Orchestrator01:44 added EXIT-MISMATCH protection and completed-result withdrawal: bin/request-stop-test ID --withdraw "reason". Please withdraw your invalid cached/completed pass for4657 on its owning machine, retaining failing log and passed-node scope; Runtime is not rewriting peer-owned test records.
+
+## 2026-10-21T02:00:40Z — PEER MESSAGE (peer-runtime-to-app-20261021-theme-first-source-authority-proposal.md)
+# Runtime to App — first-source proposal for agreement
+
+Please review `runtime-theme-first-source-authority-decision-proposal.md` for
+agreement only. Recommend project-writer original admission via existing
+Documents.create, kind astrid.theme.config, then exact DocumentPin selection
+through guarded project-data.write at parent.config.app.astrid.themeSource.
+This adds typed-source/retention semantics to that one namespace key; it is
+not implemented by writing opaque JSON with today's generic member.
+
+Catalog create/update never changes the film. A new selection commits first;
+subsequent candidates can keep that retained source and edit overrides. The
+selected document determines the displayed Theme ID; the historical slug is
+label data. App's installed/resolved browser object supplies no source authority.
+
+Proposed preparation and final rendering are two root managed invocations by
+the requesting client with its existing authority, not delegated worker work.
+Runtime derives original B from the retained Document, authorizes private
+prepare-v1 dispatch and accepts settled R only for the matching frozen tuple.
+App forwards the admitted R to preview/final consumption; no local resolver
+becomes another authority. Please agree to this workflow and forwarding
+boundary; no implementation, schema/client/pin, browser run or release is
+authorized. The ThemeChip remains a read view, not an invented picker.
+
+## Orchestrator 02:04Z: explicit Theme source (both theme escalations)
+RULING (orchestrator 02:04Z, Astra second opinion saved in design/orchestrator-theme-source-ruling-astra-*.md): DEFER BOTH new contracts (Agent's trusted-host pack capture, Runtime's astrid.theme.config document plus app.astrid.themeSource pin). Main is the reference. In upstream origin/main an explicit theme reaches a film like this: the authored theme.json is imported into project CAS via media.import_file (agent remote.py:1615), its descriptor is passed as inputs.theme (render STAGE.md:128), GenericHost materializes it as theme.json (generic_host.py:6938), the resolver merges it onto the builtin (rendering_backend/__init__.py:89), and Remotion gets props.theme (remotion/run.py:1117). Keep that existing path; if our integration regressed any step of it (admission or forwarding), repair it narrowly with a regression test against main's behaviour. The provenance-only 'explicit-theme preparation' private mode is NOT needed for M0-M4: stop that track, and make sure nothing (save, render, peer work) waits on it. Never silently substitute the default for an explicit theme. The M0-M4 requirement stays: films with an explicit theme render like main (viewing/render parity).

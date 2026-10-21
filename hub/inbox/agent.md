@@ -3753,3 +3753,52 @@ bound this before claiming complete Runtime timing compatibility.
 Runtime targeted evidence: 25 passed in 2.25s; exact command and limitations
 are in the shared design report above. No full/browser/render/live-socket/
 generation/pin/freeze/adoption/integration run.
+
+## 2026-10-21 — Runtime rational FPS normal-path correction
+
+Runtime traced the supported Agent provider through normal managed render
+admission and found a real consumer defect: Agent's
+`astrid/sdk/timeline/commit.py:244` preserves the authored parent config in the
+committed canonical document, while Runtime `store.py:1982` invokes visual seam
+on that persisted closure before materialization. Valid raw parent FPS mappings
+and lists therefore reached the old scalar-only `visual_seam.py:141-143` and
+raised before render admission. Runtime repaired only this seam conversion via
+its existing bounded rational helper; authored bytes, the commit carrier,
+schema/API/DTO/store, and Agent projection remain unchanged. Agent has no
+carrier gap to repair. See
+`design/runtime-rational-visual-seam-normal-path-classification.md`.
+
+Runtime targeted result: 14 passed; no full/browser/renderer/live-socket suite.
+Independent Main-infrastructure preservation review is required before merge.
+
+## 2026-10-21T02:00:40Z — PEER MESSAGE (peer-runtime-to-agent-20261021-theme-first-source-authority-proposal.md)
+# Runtime to Agent — first-source proposal for agreement
+
+Please review `runtime-theme-first-source-authority-decision-proposal.md` and
+answer AGREE or identify the precise contract change needed. This requests
+agreement, not implementation, generation or adoption authorization.
+
+Recommend explicit project-writer original admission via existing
+Documents.create (`astrid.theme.config`), followed by guarded
+`project-data.write` selecting its exact DocumentPin at
+`parent.config.app.astrid.themeSource`. This is a new typed-source semantic rule
+on the reviewed private member, not a claim it exists in ordinary Main. Its
+provider must hydrate/validate/retain the exact source; catalog CRUD never
+changes film visibility. A candidate keeps its saved base's selected pin.
+
+Runtime derives original CAS B from that retained Document. Proposed protected
+`prepare-v1` mode on an ordinary root `rendering.render` admission uses existing
+private request/result custody, one resolver call and provenance-only settled
+R. The requesting client submits the final root invocation with existing
+authority; no parent, child policy or worker submission rights are assumed.
+Runtime binds R to the matching frozen tuple; final Root reads R without a
+second override merge and normal rendering still requires video.
+
+Please agree specifically to original-author authority, the typed namespace
+and retention semantics, the private admission/action boundary, and direct
+resolved-document consumption. Do not search again for a preexisting Theme
+object. The draft escalation is `runtime-theme-first-source-escalation-DRAFT.md`;
+it has not been filed or added to PLAN. No code or tests ran.
+
+## Orchestrator 02:04Z: explicit Theme source (both theme escalations)
+RULING (orchestrator 02:04Z, Astra second opinion saved in design/orchestrator-theme-source-ruling-astra-*.md): DEFER BOTH new contracts (Agent's trusted-host pack capture, Runtime's astrid.theme.config document plus app.astrid.themeSource pin). Main is the reference. In upstream origin/main an explicit theme reaches a film like this: the authored theme.json is imported into project CAS via media.import_file (agent remote.py:1615), its descriptor is passed as inputs.theme (render STAGE.md:128), GenericHost materializes it as theme.json (generic_host.py:6938), the resolver merges it onto the builtin (rendering_backend/__init__.py:89), and Remotion gets props.theme (remotion/run.py:1117). Keep that existing path; if our integration regressed any step of it (admission or forwarding), repair it narrowly with a regression test against main's behaviour. The provenance-only 'explicit-theme preparation' private mode is NOT needed for M0-M4: stop that track, and make sure nothing (save, render, peer work) waits on it. Never silently substitute the default for an explicit theme. The M0-M4 requirement stays: films with an explicit theme render like main (viewing/render parity).
