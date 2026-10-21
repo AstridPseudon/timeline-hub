@@ -1,4 +1,6 @@
-import type { AgentState, EditCommand, JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+import type {
+  AgentSelection, AgentState, EditCommand, JSON, MediaSelection, VerifiedMedia,
+} from '@/integrations/runtime/timeline-commit-types.ts';
 import {
   assertFiniteJson, ClipMoveError, copy, equal, freezeJson, has, MoveRecording, object,
 } from './clipMovePrimitives.ts';
@@ -55,7 +57,7 @@ function rate(value: JSON | undefined): [bigint, bigint] {
 
 function selectionValue(
   key: string, owner: string, members: string[], boundaries = members,
-): ObjectValue {
+): AgentSelection {
   return { key, query_version: 1, owner, members: [...members], order: [...members], boundaries: [...boundaries],
     policy: 'guard-membership' };
 }
@@ -133,6 +135,7 @@ function selectCollection(ctx: MoveRecording, owner: string, kind: 'occurrence' 
 
 function selectPlacementOwners(ctx: MoveRecording, owner: string): string[] {
   const row = ctx.state.entity(owner);
+  if (!row) throw new ClipMoveError('missing occurrence owner', 'identity_conflict');
   const shot = row.shot_id;
   if (!rawIdentity(shot)) throw new ClipMoveError('missing occurrence source identity', 'identity_conflict');
   const members = ctx.state.bundle.placements
@@ -353,10 +356,13 @@ export function captureOccurrenceAddMedia(
 
 export function finishOccurrenceAddMedia(basis: unknown) {
   assertFiniteJson(basis);
-  if (!object(basis) || !object(basis.bundle) || !object(basis.command) || !Array.isArray(basis.verifiedMedia)
-    || !CLAIMS.every((key) => has(basis.command, key))) {
+  if (!object(basis) || !object(basis.bundle) || !object(basis.command) || !Array.isArray(basis.verifiedMedia)) {
     throw new ClipMoveError('incomplete occurrence.add-media basis');
   }
-  return executeOccurrenceAddMedia(basis.bundle as AuthoredBundle, basis.command as EditCommand,
+  const command = basis.command;
+  if (!CLAIMS.every((key) => has(command, key))) {
+    throw new ClipMoveError('incomplete occurrence.add-media basis');
+  }
+  return executeOccurrenceAddMedia(basis.bundle as AuthoredBundle, command as EditCommand,
     basis.verifiedMedia as VerifiedMedia[]);
 }
