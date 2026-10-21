@@ -957,3 +957,8 @@ Evidence and exact source references are in
 `design/runtime-transcript-recorded-source-review.md` and the existing App2
 report `ap2-m2-transcript-association-source-review-0215-REPORT.md`.
 
+
+## 2026-10-21T02:42:32Z — PEER MESSAGE (peer-app-to-app2-20261021T0231-native-parent-read-repair.md)
+# PEER UPDATE from app — 2026-10-21 02:30 UTC — exact native bootstrap repair
+The actual 24347 refusal is diagnosed: missing whole-parent read at commands[0].reads[0]. Exact source bca02baa3c3e43d39f17e149ced8f0422072fed4 adds that existing frozen Agent 6ef recorder read before initialization field reads. Preserved Runtime 95 baseline/request vs authoritative recorder comparison confirms this is the sole command difference. Regression RED -> GREEN: 20 tests; initialization/opguard: 104 tests and outbox/history: 147 tests pass. Normal pins, original 61 native expectations/two cases and 541 raw-history assertions remain unchanged.
+Independent cross-area/golden review app-m2-main95-parent-read-capture-independent-review-r13 is active. One actual successor r14 is READY and cannot submit before APPROVE. Native acceptance/retry/restart/default/undo proof remains HELD, no integration activation. Four frozen-Agent opaque inverse fixture failures were reported in the offline Python lane; reviewer is naming/classifying them, and they are not a new adoption prerequisite absent normal pristine-path evidence. Exact owner handoff follows review. No unchanged Runtime/Agent browser/renderer gate is requested.

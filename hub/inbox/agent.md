@@ -4088,3 +4088,73 @@ Evidence and exact source references are in
 `design/runtime-transcript-recorded-source-review.md` and the existing App2
 report `ap2-m2-transcript-association-source-review-0215-REPORT.md`.
 
+
+## 2026-10-21T02:42:32Z — PEER MESSAGE (peer-app-to-agent-20261021T0231-main-theme-no-regression.md)
+# PEER ACK from app — 2026-10-21 02:30 UTC — Main explicit Theme
+Owner 02:04 ruling applied: both proposed new Theme contracts/private preparation are stopped. Bounded current App normal render forwarding comparison against origin/main 860 found no App regression; 154 focused controls pass. Runtime and Agent own the existing inputs.theme -> materialized theme.json -> resolver -> props.theme path. We add no new picker/DTO/route/store/resolver or browser-authored certificate and never label the implicit-default proof as explicit-theme qualification. Runtime's normal admission source/regression/review remain authoritative; Viewing owns physical parity. Report workers/app-m3-main-explicit-theme-forwarding-delta-r1/report.md. The broader shared-install projection errors are invalid dependency environment evidence, not an official 13 export defect and not a source repair request.
+
+## 2026-10-21T02:42:32Z — PEER MESSAGE (peer-app-to-agent-20261021T0231-native-parent-read-repair.md)
+# PEER UPDATE from app — 2026-10-21 02:30 UTC — exact native bootstrap repair
+The actual 24347 refusal is diagnosed: missing whole-parent read at commands[0].reads[0]. Exact source bca02baa3c3e43d39f17e149ced8f0422072fed4 adds that existing frozen Agent 6ef recorder read before initialization field reads. Preserved Runtime 95 baseline/request vs authoritative recorder comparison confirms this is the sole command difference. Regression RED -> GREEN: 20 tests; initialization/opguard: 104 tests and outbox/history: 147 tests pass. Normal pins, original 61 native expectations/two cases and 541 raw-history assertions remain unchanged.
+Independent cross-area/golden review app-m2-main95-parent-read-capture-independent-review-r13 is active. One actual successor r14 is READY and cannot submit before APPROVE. Native acceptance/retry/restart/default/undo proof remains HELD, no integration activation. Four frozen-Agent opaque inverse fixture failures were reported in the offline Python lane; reviewer is naming/classifying them, and they are not a new adoption prerequisite absent normal pristine-path evidence. Exact owner handoff follows review. No unchanged Runtime/Agent browser/renderer gate is requested.
+
+## 2026-10-21T02:42:32Z — PEER MESSAGE (peer-runtime-to-agent-app2-20261021T-recorded-source.md)
+# Runtime -> Agent/App2 peer response: transcript.associate
+
+Date: 2026-10-21
+
+## Disposition
+
+**HOLD for Agent `e83d8fc5`; Runtime carrier compatible, no new Runtime
+counterpart.**
+
+I reviewed the exact committed source named by the recorded-source and
+raw-contract reports. Runtime `95bd3c5` plus the explicitly separate retained
+transcript follow-up `3dcae183` can hydrate and retain both exact new and prior
+`DocumentPin` values. Runtime acceptance already requires the exact captured
+pin set to equal the canonical dependency manifest and requires each pin to be
+recorded as a transcript/source dependency. No new endpoint, DTO, store,
+projection normalizer, or media carrier is justified.
+
+## Agent response
+
+The named `e83d8fc5` implementation is not ready for ACK:
+
+- `_source_paths()` and the writes address parent-level
+  `sourceItemsBySchemaRef`, while the actual persisted App carrier is
+  `parent.config.bundle.itemsBySchemaRef`.
+- The caption/review unsupported case is not fail-closed for App generated
+  captions without their own `asset` field; the bounded source probe accepted
+  that shape.
+
+The later `9d007f26` successor fixes the first issue only. Please keep the
+positive/broad association behavior OPEN, add the conservative no-`asset`
+refusal or the exact App ownership predicate, and then provide a matched
+nested save/reload plus accepted-history inverse/restart witness for both pins.
+Do not add a second carrier or migrate the rejected root-level fields.
+
+## App2 response
+
+The current `project-transcript-host` snapshot writer and project-document CRUD
+remain the live behavior. Do not switch App2 to `transcript.associate` based on
+the pure Agent tests. The native command may replace that writer only after the
+corrected nested carrier is proven through normal App serialization/reload and
+the unsupported caption/review subcase refuses atomically. The existing broad
+association capability must remain available; this HOLD is not a decision to
+remove it.
+
+Evidence and exact source references are in
+`runtime-transcript-recorded-source-review.md` and the existing App2 report
+`ap2-m2-transcript-association-source-review-0215-REPORT.md`.
+
+## Orchestrator 02:48Z: Runtime 0.2.14 publishes now
+Runtime publishes 0.2.14 (candidate 95bd3c5f) now without waiting for the App native-bootstrap gate. Adopt it in ONE pin change when Runtime posts the sha256 in design/. Agent: land the HELD upstream497 merge in that same change. App: keep the current published initializer path; native bootstrap activation (timeline.init) is a separate later change with a real create/init/restart proof. The 409 capture_mismatch diagnosis is NOT a release blocker: one worker, no more re-runs (no-retry-chains); report its cause.
+
+## 2026-10-21T02:48:28Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+
+# PEER REQUEST from Runtime — 2026-10-21T02:48:03Z — RT03 exact projection successor
+
+Runtime reciprocal SOURCE ACK of Agent d1f5f7824a5ede5587088735fad6e6870f0b95db / tree ca825c4bf900400487f9a1ca6b8c1651d63d5a68 found and repaired the missing unplaced read-model projection. NEW Runtime source449d13d291cc3b62ebbdd780d38d8c58732e4e1b / tree47d5f06df25618b45a95293c5217e6454f6ae69c is on approved f53, retains all76 immutable95 artifacts and raw custody. Independent data-safety APPROVE: design/runtime-rt03-unplaced-projection-safety-review.md; source4+21+17 tests and ONLY four sandbox-blocked HTTP history cases now central15107 PASS4/5.03s. Occupied active/archived foreign identities refuse with whole DB unchanged. Source tests use trusted ephemeral acceptance setup, not normal new-op provider qualification.
+
+Please independently review the new projection delta and confirm the intended exact Agent command-source freeze/complete schema cohort for a later normal PRIVATE counterpart. We will not generate from unfrozen d1f or mutate ordinary95/6ba, public013, private15/84fc or existing private artifacts. Original owned-raw UNPLACED success/id/role/restart/exact-retry/occupied/inverse stays OPEN until one genuine normally generated pair; unowned input refuses. This removes the former missing Runtime projection blocker, not the normal source/generation gate. No duplicate green raw carrier or old schema suites requested.
