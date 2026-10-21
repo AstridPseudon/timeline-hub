@@ -109,7 +109,7 @@ def _speech_effect(project_id, *, metadata=None):
             "group_key": "main",
             "selectors": [{
                 "selector": "speech", "ordinal": 0,
-                "variant_key": "original", "output_port": "audio",
+                "variant_key": "original", "output_port": "speech",
             }],
         }],
     )
@@ -507,7 +507,7 @@ def test_speech_settlement_derives_wav_duration_for_exact_media_selection(tmp_pa
             attempt,
             [_output(
                 wav,
-                output_port="audio",
+                output_port="speech",
                 group_key="main",
                 variant_key="original",
                 ordinal=0,
@@ -552,6 +552,36 @@ def test_speech_settlement_derives_wav_duration_for_exact_media_selection(tmp_pa
         service.close()
 
 
+def test_speech_settlement_exact_replay_returns_original_result(tmp_path):
+    service, _project, task, attempt, effect = _fixture(
+        tmp_path,
+        effect_factory=_speech_effect,
+        slug="speech-replay",
+        capability="generation.generate_speech",
+    )
+    try:
+        output = _output(
+            _wav_bytes(),
+            output_port="speech",
+            group_key="main",
+            variant_key="original",
+            ordinal=0,
+            filename="speech.wav",
+            media_type="audio/wav",
+        )
+        first = _settle(
+            service, attempt, [output], effect=effect, key="speech-replay-settle"
+        )
+        assert _settle(
+            service, attempt, [output], effect=effect, key="speech-replay-settle"
+        ) == first
+        assert service.store.conn.execute(
+            "SELECT COUNT(*) FROM generations WHERE source_task_id=?", (task["task"]["id"],)
+        ).fetchone()[0] == 1
+    finally:
+        service.close()
+
+
 def test_speech_settlement_invalid_wav_keeps_duration_unknown_and_selection_refused(tmp_path):
     service, project, task, attempt, effect = _fixture(
         tmp_path,
@@ -566,7 +596,7 @@ def test_speech_settlement_invalid_wav_keeps_duration_unknown_and_selection_refu
             attempt,
             [_output(
                 invalid,
-                output_port="audio",
+                output_port="speech",
                 group_key="main",
                 variant_key="original",
                 ordinal=0,
@@ -602,7 +632,7 @@ def test_speech_settlement_preserves_explicit_null_duration_and_refuses_selectio
             attempt,
             [_output(
                 _wav_bytes(),
-                output_port="audio",
+                output_port="speech",
                 group_key="main",
                 variant_key="original",
                 ordinal=0,
@@ -640,7 +670,7 @@ def test_speech_settlement_zero_rate_wav_keeps_duration_unknown_and_selection_re
             attempt,
             [_output(
                 _zero_rate_wav(),
-                output_port="audio",
+                output_port="speech",
                 group_key="main",
                 variant_key="original",
                 ordinal=0,
@@ -679,7 +709,7 @@ def test_speech_settlement_preserves_explicit_duration_metadata(tmp_path):
             attempt,
             [_output(
                 _wav_bytes(),
-                output_port="audio",
+                output_port="speech",
                 group_key="main",
                 variant_key="original",
                 ordinal=0,
@@ -718,7 +748,7 @@ def test_speech_settlement_verified_media_is_exact_over_authenticated_http(tmp_p
             attempt,
             [_output(
                 wav,
-                output_port="audio",
+                output_port="speech",
                 group_key="main",
                 variant_key="original",
                 ordinal=0,
