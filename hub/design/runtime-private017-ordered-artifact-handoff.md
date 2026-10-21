@@ -4,16 +4,23 @@ Date: 2026-10-21 UTC
 
 ## Candidate status
 
-Normal PRIVATE0.2.17 generation is complete from the exact Runtime da77 preservation
-base. The source ACK and allocation are the manager's
+Normal PRIVATE017 generation (Runtime package `0.2.17`) is complete from the
+exact Runtime da77 preservation base. The source ACK and allocation are the manager's
 `peer-runtime-to-agent-app2-20261021T073942-ed5-source-ack-private017.md`.
 This is a private counterpart for reciprocal review only: no public release,
 consumer pin, native execution, adoption, merge, or activation was performed.
 
-The candidate is currently uncommitted because the harness owns the commit. The
-base commit/tree are `da77e2ddc35bf07ddd8d9e1aae5e31ea69e82406` /
-`486fe045f66182b33520bea971d31add3f713ea9`; the final candidate commit/tree
-will be supplied by the harness after this worker exits.
+The committed exact candidate is Runtime `42a7203f49bb89f299ec854cfbf2b1444e815a7c`
+with tree `1f220b3d3a27e8eb061b15c944bad784c8fdb82e`. The independent artifact
+review and final Runtime approval are recorded in
+`runtime-private017-42a-independent-review.md` and
+`peer-runtime-to-agent-app2-20261021T075349-private017-final-approve.md`.
+Private016/da77 (`da77e2ddc35bf07ddd8d9e1aae5e31ea69e82406` /
+`486fe045f66182b33520bea971d31add3f713ea9`) is superseded immutable evidence,
+never adopted. Private017 is the sole open private candidate, artifact-approved
+only: Agent reciprocal approval, normal consumer pin, native execution, and
+HTTP qualification remain pending. It is not published, pinned, adopted,
+merged, or activated, and no private017 actual HTTP proof has been run.
 
 ## Exact source and generated identity
 
