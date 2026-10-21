@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from collections.abc import Mapping
-from typing import Any
+from pathlib import Path
+from typing import Any, Callable
 
 from .draft_voiceover import (
     VoiceoverSyncError,
@@ -25,6 +27,15 @@ _INPUT_NAME = "voiceover_speech_results"
 _TARGET_FIELDS = frozenset(
     {"project_id", "timeline_id", "base_revision_id", "base_publication_id"}
 )
+_CAPABILITY = "generation.generate_speech"
+_ENVELOPE_FIELDS = {"schema_version", "input_digest", "result_digest", "result"}
+_RESULT_FIELDS = {
+    "capability_id", "capability_type", "native_kind", "ok", "error",
+    "manifest_path", "run_id", "run_root", "outputs", "raw_result",
+    "executor_version", "kernel_run_id", "kernel_task_id", "kernel_attempt_id",
+}
+_REQUEST_FIELDS = {"requester_key", "target", "script_pin", "settings", "occurrence_ids"}
+_ENTRY_FIELDS = {"occurrence_id", "root_idempotency_key", "text", "settings", "result"}
 
 
 def _stable_digest(value: Any) -> str:
@@ -235,6 +246,8 @@ def _prepare_requester_speech_inputs(
         entries.append({
             "occurrence_id": occurrence_id,
             "root_idempotency_key": root_key,
+            "text": job["text"],
+            "settings": dict(normalized_settings),
             "result": _invocation_envelope(result, input_digest=input_digest),
         })
 
@@ -254,3 +267,301 @@ def _prepare_requester_speech_inputs(
     request_digest = _stable_digest(request_identity)
     filename = "voiceover-speech-results-" + request_digest[7:39] + ".json"
     return [_import_bundle(client, project=project, body=body, filename=filename)]
+
+
+def _data(value: Any, label: str) -> Any:
+    if hasattr(value, "ok") and hasattr(value, "data"):
+        if not bool(value.ok):
+            raise VoiceoverSyncError(f"NO-CARRIER: Runtime {label} read failed")
+        value = value.data
+    return value
+
+
+def _text(value: Any, label: str) -> str:
+    if type(value) is not str or not value.strip():
+        raise VoiceoverSyncError(f"settled voiceover {label} is invalid")
+    return value
+
+
+def _read_json(path: Path, *, attempt_root: Path) -> Mapping[str, Any]:
+    """Read only the caller's already-materialized input file."""
+    try:
+        root = attempt_root.resolve(strict=True)
+        if path.is_symlink():
+            raise VoiceoverSyncError("settled voiceover input must not be a symlink")
+        source = path.resolve(strict=True)
+    except OSError as exc:
+        raise VoiceoverSyncError("settled voiceover input is unavailable") from exc
+    if source.is_symlink() or root == source or root not in source.parents:
+        raise VoiceoverSyncError("settled voiceover input is outside its materialized attempt")
+    try:
+        if not source.is_file():
+            raise VoiceoverSyncError("settled voiceover input is not a file")
+        value = json.loads(source.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise VoiceoverSyncError("settled voiceover input is not valid JSON") from exc
+    if not isinstance(value, Mapping):
+        raise VoiceoverSyncError("settled voiceover input must be an object")
+    return value
+
+
+def _jobs(plan: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    jobs = plan.get("jobs")
+    if not isinstance(jobs, list) or not jobs or not all(isinstance(job, Mapping) for job in jobs):
+        raise VoiceoverSyncError("settled voiceover plan has no ordered jobs")
+    ids = [job.get("occurrence_id") for job in jobs]
+    if any(type(value) is not str or not value for value in ids) or len(set(ids)) != len(ids):
+        raise VoiceoverSyncError("settled voiceover plan has duplicate occurrences")
+    return jobs
+
+
+def _sha256(value: Any, label: str) -> str:
+    digest = value
+    if (type(digest) is not str or len(digest) != 71 or not digest.startswith("sha256:")
+            or any(char not in "0123456789abcdef" for char in digest[7:])):
+        raise VoiceoverSyncError(f"settled voiceover {label} is invalid")
+    return digest
+
+
+def _envelope(value: Any) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping) or set(value) != _ENVELOPE_FIELDS:
+        raise VoiceoverSyncError("settled speech result has an invalid H3 envelope")
+    if value.get("schema_version") != _CARRIER_SCHEMA_VERSION:
+        raise VoiceoverSyncError("settled speech result envelope version is unsupported")
+    _sha256(value.get("input_digest"), "input digest")
+    _sha256(value.get("result_digest"), "result digest")
+    result = value["result"]
+    if not isinstance(result, Mapping) or set(result) != _RESULT_FIELDS:
+        raise VoiceoverSyncError("settled speech invocation result is incomplete")
+    if value["result_digest"] != _stable_digest(result):
+        raise VoiceoverSyncError("settled speech result failed its integrity check")
+    return result
+
+
+def _claimed_output(result: Mapping[str, Any]) -> Mapping[str, Any]:
+    outputs = result.get("outputs")
+    rows = outputs.get("managed_outputs") if isinstance(outputs, Mapping) else None
+    if not isinstance(rows, list):
+        raise VoiceoverSyncError("settled speech result has no managed output list")
+    speech = [row for row in rows if isinstance(row, Mapping)
+              and row.get("output_port") == "speech" and row.get("role") != "thumbnail"]
+    if len(speech) != 1:
+        raise VoiceoverSyncError("settled speech result must claim exactly one speech output")
+    row = speech[0]
+    if row.get("ordinal", 0) != 0:
+        raise VoiceoverSyncError("settled speech output has an invalid ordinal")
+    _text(row.get("object_id"), "output object_id")
+    _text(row.get("task_id"), "output task_id")
+    _text(row.get("attempt_id"), "output attempt_id")
+    return row
+
+
+def _request_identity(
+    document: Mapping[str, Any], *, jobs: list[Mapping[str, Any]],
+    target: Mapping[str, Any] | None, script_pin: Mapping[str, Any] | None,
+    requester_key: str | None,
+) -> Mapping[str, Any]:
+    request = document.get("request")
+    if not isinstance(request, Mapping) or set(request) != _REQUEST_FIELDS:
+        raise VoiceoverSyncError("settled voiceover input has an invalid request identity")
+    request_target = _json_copy(request.get("target"), label="settled voiceover target")
+    if set(request_target) != _TARGET_FIELDS:
+        raise VoiceoverSyncError("settled voiceover target must preserve the original four-field pin")
+    if any(type(request_target[field]) is not str or not request_target[field].strip()
+           for field in _TARGET_FIELDS):
+        raise VoiceoverSyncError("settled voiceover target fields must be nonempty strings")
+    request_script = _json_copy(request.get("script_pin"), label="settled voiceover script pin")
+    if type(request.get("requester_key")) is not str or not request["requester_key"].strip():
+        raise VoiceoverSyncError("settled voiceover requester key is invalid")
+    settings = request.get("settings")
+    if not isinstance(settings, Mapping) or dict(settings) != dict(jobs[0].get("settings", {})):
+        raise VoiceoverSyncError("settled voiceover request settings differ from the ordered plan")
+    occurrence_ids = request.get("occurrence_ids")
+    expected_ids = [job["occurrence_id"] for job in jobs]
+    if occurrence_ids != expected_ids:
+        raise VoiceoverSyncError("settled voiceover request occurrence order differs from the plan")
+    if target is not None and request_target != _json_copy(target, label="expected voiceover target"):
+        raise VoiceoverSyncError("settled voiceover target differs from the expected source")
+    if script_pin is not None and request_script != _json_copy(script_pin, label="expected voiceover script pin"):
+        raise VoiceoverSyncError("settled voiceover script pin differs from the expected source")
+    if requester_key is not None and request["requester_key"] != requester_key:
+        raise VoiceoverSyncError("settled voiceover requester key differs from the expected source")
+    return request
+
+
+def _task_inputs(task: Mapping[str, Any], *, text: str, settings: Mapping[str, Any]) -> None:
+    spec = task.get("spec")
+    if isinstance(spec, Mapping) and isinstance(spec.get("spec"), Mapping):
+        spec = spec["spec"]
+    values = spec.get("inputs") if isinstance(spec, Mapping) else None
+    if not isinstance(values, Mapping):
+        raise VoiceoverSyncError("NO-CARRIER: settled speech task has no authoritative inputs")
+    actual = {}
+    for key, value in values.items():
+        if isinstance(value, Mapping) and set(value) == {"value"}:
+            value = value["value"]
+        actual[key] = value
+    expected = {"text": text, **dict(settings)}
+    if actual != expected:
+        raise VoiceoverSyncError("settled speech task inputs differ from the plan")
+
+
+def _runtime_output(client: Any, project: str, result: Mapping[str, Any],
+                    claimed: Mapping[str, Any], task: Mapping[str, Any]) -> Mapping[str, Any]:
+    task_id = _text(result.get("kernel_task_id"), "task_id")
+    run_id = _text(result.get("kernel_run_id"), "run_id")
+    attempt_id = _text(result.get("kernel_attempt_id"), "attempt_id")
+    actual_task_id = task.get("task_id", task.get("id"))
+    capability = task.get("capability_id", task.get("capability"))
+    if (actual_task_id != task_id or task.get("run_id") != run_id
+            or task.get("attempt_id") != attempt_id):
+        raise VoiceoverSyncError("settled speech task identity differs from Runtime")
+    if task.get("project_id") != project or capability != _CAPABILITY:
+        raise VoiceoverSyncError("settled speech task project or capability differs from Runtime")
+    state = str(task.get("state") or task.get("status") or "").lower()
+    if state not in {"succeeded", "completed"}:
+        raise VoiceoverSyncError("settled speech task is not completed")
+    task_result = task.get("result")
+    if not isinstance(task_result, Mapping):
+        raise VoiceoverSyncError("NO-CARRIER: settled speech task has no completed result")
+    for field, expected in (("task_id", task_id), ("run_id", run_id),
+                            ("attempt_id", attempt_id), ("project_id", project)):
+        if field in task_result and task_result[field] != expected:
+            raise VoiceoverSyncError("settled speech task result identity differs from Runtime")
+    task_outputs = task_result.get("outputs")
+    if not isinstance(task_outputs, list):
+        raise VoiceoverSyncError("NO-CARRIER: settled speech result has no output list")
+    matching_task_rows = [
+        row for row in task_outputs
+        if isinstance(row, Mapping)
+        and (row.get("output_port") or row.get("name")) == "speech"
+        and (row.get("object_id") or row.get("digest")) == claimed.get("object_id")
+        and row.get("role") != "thumbnail"
+    ]
+    if len(matching_task_rows) != 1:
+        raise VoiceoverSyncError("settled speech task result does not contain the claimed output")
+    task_row = matching_task_rows[0]
+    for field, expected in (("task_id", task_id), ("run_id", run_id),
+                            ("attempt_id", attempt_id), ("project_id", project)):
+        if field in task_row and task_row[field] != expected:
+            raise VoiceoverSyncError("settled speech task output identity differs from Runtime")
+    try:
+        managed = _data(client.tasks.list_managed_outputs(task_id), "managed output")
+    except Exception as exc:  # noqa: BLE001 - unavailable authority is fail-closed
+        raise VoiceoverSyncError("NO-CARRIER: Runtime managed output read is unavailable") from exc
+    if isinstance(managed, tuple) and len(managed) == 2:
+        managed = managed[0]
+    if not isinstance(managed, list):
+        raise VoiceoverSyncError("NO-CARRIER: Runtime managed output read is unavailable")
+    matches = [row for row in managed if isinstance(row, Mapping)
+               and row.get("output_port") == "speech" and row.get("role") != "thumbnail"]
+    if len(matches) != 1:
+        raise VoiceoverSyncError("Runtime must expose exactly one settled speech output")
+    row = matches[0]
+    for field, expected in (("task_id", task_id), ("run_id", run_id),
+                            ("attempt_id", attempt_id), ("project_id", project)):
+        if row.get(field) != expected:
+            raise VoiceoverSyncError("settled speech output is not bound to its task attempt")
+    if row.get("object_id") != claimed.get("object_id"):
+        raise VoiceoverSyncError("settled speech output differs from the claimed object")
+    return row
+
+
+def _consume_settled_voiceover_input(
+    path: str | Path,
+    *,
+    attempt_root: str | Path,
+    client: Any,
+    project: str,
+    plan: Mapping[str, Any],
+    consume: Callable[[Mapping[str, Any]], Any],
+    target: Mapping[str, Any] | None = None,
+    script_pin: Mapping[str, Any] | None = None,
+    requester_key: str | None = None,
+) -> list[Any]:
+    """Consume one requester's file after re-reading every Runtime claim.
+
+    The file is claimant data.  H3 envelope digests detect malformed transport
+    data, but Runtime task/spec/result, managed-output, media-selection, WAV
+    bytes, and intrinsic duration reads remain the authority.  Outer producer
+    identity is intentionally not carried here; a future caller supplies it
+    separately to the existing capture/proposal path.
+    """
+    if not _text(project, "project") or not callable(consume):
+        raise VoiceoverSyncError("settled voiceover consumer arguments are invalid")
+    jobs = _jobs(plan)
+    document = _read_json(Path(path), attempt_root=Path(attempt_root))
+    if set(document) != {"schema_version", "request", "results"} or document.get("schema_version") != _CARRIER_SCHEMA_VERSION:
+        raise VoiceoverSyncError("settled voiceover input has an unsupported shape")
+    request = _request_identity(document, jobs=jobs, target=target,
+                                script_pin=script_pin, requester_key=requester_key)
+    entries = document.get("results")
+    if not isinstance(entries, list) or len(entries) != len(jobs):
+        raise VoiceoverSyncError("settled voiceover input is missing an ordered entry for every job")
+    prepared: list[tuple[str, str, Mapping[str, Any], str, Mapping[str, Any], Mapping[str, Any]]] = []
+    for job, entry in zip(jobs, entries):
+        if not isinstance(entry, Mapping) or set(entry) != _ENTRY_FIELDS:
+            raise VoiceoverSyncError("settled voiceover entry has unsupported fields")
+        occurrence_id = entry.get("occurrence_id")
+        if occurrence_id != job.get("occurrence_id"):
+            raise VoiceoverSyncError("settled voiceover entries differ from the ordered plan")
+        text = entry.get("text")
+        settings = entry.get("settings")
+        if text != job.get("text") or settings != job.get("settings"):
+            raise VoiceoverSyncError("settled voiceover entry differs from the ordered plan")
+        if not isinstance(text, str) or not isinstance(settings, Mapping):
+            raise VoiceoverSyncError("settled voiceover entry values are invalid")
+        root_key = entry.get("root_idempotency_key")
+        expected_key = _root_idempotency_key(
+            requester_key=request["requester_key"], target=request["target"],
+            script_pin=request["script_pin"], settings=settings,
+            occurrence_id=occurrence_id, text=text,
+        )
+        if root_key != expected_key:
+            raise VoiceoverSyncError("settled voiceover root idempotency key differs from the request")
+        envelope = entry["result"]
+        result = _envelope(envelope)
+        expected_input_digest = _stable_digest({
+            "capability_id": _CAPABILITY, "kind": "executor", "project": project,
+            "inputs": {"text": text, **dict(settings)},
+        })
+        if envelope["input_digest"] != expected_input_digest:
+            raise VoiceoverSyncError("settled speech input digest differs from the request")
+        if (result.get("capability_id") != _CAPABILITY
+                or result.get("capability_type") != "executor"
+                or result.get("native_kind") != "executor" or result.get("ok") is not True):
+            raise VoiceoverSyncError("settled speech result has the wrong capability or status")
+        claimed = _claimed_output(result)
+        prepared.append((occurrence_id, text, settings, root_key, result, claimed))
+
+    verified_rows: list[dict[str, Any]] = []
+    for occurrence_id, text, settings, root_key, result, claimed in prepared:
+        try:
+            task = _data(client.tasks.show(_text(result.get("kernel_task_id"), "task_id")), "task")
+        except Exception as exc:  # noqa: BLE001 - unavailable authority is fail-closed
+            raise VoiceoverSyncError("NO-CARRIER: Runtime task read is unavailable") from exc
+        if not isinstance(task, Mapping):
+            raise VoiceoverSyncError("NO-CARRIER: Runtime task read returned no task")
+        _task_inputs(task, text=text, settings=settings)
+        output = _runtime_output(client, project, result, claimed, task)
+        try:
+            selection, verified = _read_authoritative_media_info(client, project, output)
+        except VoiceoverSyncError:
+            raise
+        except Exception as exc:  # noqa: BLE001 - unavailable authority is fail-closed
+            raise VoiceoverSyncError("NO-CARRIER: Runtime media read is unavailable") from exc
+        duration = verified.get("duration_seconds")
+        if (isinstance(duration, bool) or not isinstance(duration, (int, float))
+                or not math.isfinite(float(duration)) or duration <= 0):
+            raise VoiceoverSyncError("Runtime settled speech duration is invalid")
+        verified_rows.append({
+            "occurrence_id": occurrence_id,
+            "text": text,
+            "settings": dict(settings),
+            "root_idempotency_key": root_key,
+            "audio_media_id": selection["object_id"],
+            "media_selection": selection,
+            "duration_seconds": float(duration),
+            "output": dict(output),
+        })
+    return [consume(row) for row in verified_rows]

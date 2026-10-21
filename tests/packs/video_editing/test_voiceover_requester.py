@@ -8,7 +8,9 @@ from types import SimpleNamespace
 import pytest
 
 from astrid.packs.video_editing.shared import draft_voiceover as vo
+from astrid.packs.video_editing.shared import voiceover_requester as requester
 from astrid.packs.video_editing.shared.voiceover_requester import (
+    _consume_settled_voiceover_input,
     _prepare_requester_speech_inputs,
 )
 from astrid.sdk.remote import RemoteAstridClient
@@ -213,3 +215,135 @@ def test_requester_reuses_planner_refusal_for_normal_unowned_audio(monkeypatch):
         client, "p", candidate, scripts, requester_key="key", target=_target(),
         script_pin={"revision_id": "h"},
     ) == []
+
+
+def _consumer_task(case, *, text="New first line", attempt_id="speech-attempt",
+                   object_id=None):
+    object_id = object_id or case.output["object_id"]
+    output = {**case.output, "run_id": "speech-run", "task_id": "speech-task",
+              "attempt_id": attempt_id, "object_id": object_id}
+    return {
+        "task_id": "speech-task", "run_id": "speech-run", "attempt_id": attempt_id,
+        "project_id": "p", "capability_id": "generation.generate_speech",
+        "state": "completed",
+        "spec": {"spec": {"inputs": {"text": text, **vo.DEFAULT_SETTINGS}}},
+        "result": {"outputs": [{"output_port": "speech", "object_id": object_id,
+                                  "task_id": "speech-task", "attempt_id": attempt_id,
+                                  "project_id": "p"}]},
+    }, output
+
+
+def _consume_requester_bundle(case, tmp_path, *, task=None, managed=None,
+                              plan=None, **kwargs):
+    descriptor = _prepare(case)[0]
+    body = case.imported[-1]["data"]
+    source = tmp_path / "voiceover-input.json"
+    source.write_bytes(body)
+    task, output = task or _consumer_task(case)
+    case.client._remote.tasks = SimpleNamespace(
+        show=lambda task_id: task if task_id == "speech-task" else None,
+        list_managed_outputs=lambda task_id: managed if managed is not None else [output],
+    )
+    return source, descriptor, plan or {"jobs": [{
+        "occurrence_id": "o1", "text": "New first line", "settings": dict(vo.DEFAULT_SETTINGS),
+    }]}
+
+
+def test_requester_consumer_roundtrips_one_claimant_file(requester_case, tmp_path):
+    case = requester_case
+    source, descriptor, plan = _consume_requester_bundle(case, tmp_path)
+    seen = []
+    consumed = _consume_settled_voiceover_input(
+        source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
+        target=_target(), script_pin={"revision_id": "h", "script_digest": "sha256:" + "b" * 64},
+        requester_key="requester-original-key", consume=seen.append,
+    )
+    assert descriptor["object_id"] == "sha256:" + hashlib.sha256(
+        case.imported[-1]["data"]
+    ).hexdigest()
+    assert consumed == [None]
+    assert seen[0]["occurrence_id"] == "o1"
+    assert seen[0]["root_idempotency_key"].startswith("video-editing-voiceover-speech-")
+    assert seen[0]["media_selection"] == case.selection
+    assert seen[0]["duration_seconds"] == case.verified["duration_seconds"]
+
+
+@pytest.mark.parametrize("change", [
+    lambda task: task["spec"]["spec"]["inputs"].update(text="changed"),
+    lambda task: task.update(attempt_id="foreign-attempt"),
+])
+def test_requester_consumer_rejects_changed_runtime_claim(requester_case, tmp_path, change):
+    case = requester_case
+    source, _, plan = _consume_requester_bundle(case, tmp_path)
+    task, _ = _consumer_task(case)
+    change(task)
+    case.client._remote.tasks = SimpleNamespace(
+        show=lambda task_id: task,
+        list_managed_outputs=lambda task_id: [],
+    )
+    with pytest.raises(vo.VoiceoverSyncError):
+        _consume_settled_voiceover_input(
+            source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
+            consume=lambda value: value,
+        )
+
+
+def test_requester_consumer_rejects_duplicate_or_reordered_entries(requester_case, tmp_path):
+    case = requester_case
+    first = _prepare(case)[0]
+    body = json.loads(case.imported[-1]["data"])
+    second = copy.deepcopy(body["results"][0])
+    second["occurrence_id"] = "o2"
+    second["text"] = "New first line"
+    second["root_idempotency_key"] = requester._root_idempotency_key(
+        requester_key=body["request"]["requester_key"], target=body["request"]["target"],
+        script_pin=body["request"]["script_pin"], settings=second["settings"],
+        occurrence_id="o2", text="New first line",
+    )
+    body["request"]["occurrence_ids"] = ["o1", "o2"]
+    body["results"].append(second)
+    source = tmp_path / "voiceover-input.json"
+    source.write_text(json.dumps(body), encoding="utf-8")
+    task, output = _consumer_task(case)
+    case.client._remote.tasks = SimpleNamespace(show=lambda task_id: task,
+                                        list_managed_outputs=lambda task_id: [output])
+    plan = {"jobs": [
+        {"occurrence_id": "o1", "text": "New first line", "settings": dict(vo.DEFAULT_SETTINGS)},
+        {"occurrence_id": "o2", "text": "New first line", "settings": dict(vo.DEFAULT_SETTINGS)},
+    ]}
+    assert len(_consume_settled_voiceover_input(
+        source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
+        consume=lambda value: value,
+    )) == 2
+    body["results"] = [second, first]
+    body["request"]["occurrence_ids"] = ["o2", "o1"]
+    source.write_text(json.dumps(body), encoding="utf-8")
+    with pytest.raises(vo.VoiceoverSyncError, match="occurrence order"):
+        _consume_settled_voiceover_input(
+            source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
+            consume=lambda value: value,
+        )
+    body["results"] = [first, second]
+    body["results"][1]["occurrence_id"] = "o1"
+    body["request"]["occurrence_ids"] = ["o1", "o1"]
+    source.write_text(json.dumps(body), encoding="utf-8")
+    with pytest.raises(vo.VoiceoverSyncError, match="occurrence order"):
+        _consume_settled_voiceover_input(
+            source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
+            consume=lambda value: value,
+        )
+    assert first["object_id"] == "sha256:" + hashlib.sha256(
+        case.imported[-1]["data"]
+    ).hexdigest()
+
+
+def test_requester_consumer_refuses_media_authority_failure(requester_case, tmp_path, monkeypatch):
+    case = requester_case
+    source, _, plan = _consume_requester_bundle(case, tmp_path)
+    monkeypatch.setattr(requester, "_read_authoritative_media_info",
+                        lambda *args: (_ for _ in ()).throw(vo.VoiceoverSyncError("NO-CARRIER")))
+    with pytest.raises(vo.VoiceoverSyncError, match="NO-CARRIER"):
+        _consume_settled_voiceover_input(
+            source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
+            consume=lambda value: value,
+        )
