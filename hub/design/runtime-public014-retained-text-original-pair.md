@@ -1,12 +1,11 @@
 # Published014 original retained-text compatibility pair
 
-Status: **Central execution attempted; failed before collection**. The exact
-public two-node `--runxfail` lane was added to the supported test-service
-allow-list and submitted once. The service snapshots the requested tree into
-a synthetic commit before running the command, so the suite's first guard
-(`git rev-parse HEAD == afe379…`) failed even though the captured Agent tree
-was the exact public tree `f2cedd08…`. No private017/c964 source, old7d
-Runtime, or alternate text/native control was used.
+Status: **FIRST `11357` corrected central execution PASS; `900` is a valid
+duplicate with no additional qualification credit; initial `19713` failed
+before collection**. The exact public two-node `--runxfail` lane was repaired
+to compare the synthetic snapshot's tree and the original source commit's
+tree. No private017/c964 source, old7d Runtime, or alternate text/native
+control was used.
 
 ## Exact qualification tuple
 
@@ -55,7 +54,12 @@ size and CAS-byte checks, custody/selection checks, restart and idempotent
 retry, canonical-document equality, absence/NotFound clear behavior, exact
 inverse/redo, and zero-selection-on-clear assertions.
 
-## Central request disposition
+These two nodes exercise the actual Runtime service in-process through
+`RuntimeService`/`RequestCommitPort`; they do not make HTTP requests and do
+not start an HTTP service. The central test service is only the execution
+harness.
+
+## Initial central request disposition (`19713`)
 
 One central request was submitted, and no retry was made:
 
@@ -90,11 +94,44 @@ public lane:
 agent public014-retained-text-original-pair-integration env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_CHECKOUT=$PWD PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-agent/bin/python -P -c 'import json,pathlib,subprocess,astrid_runtime_client,runtime_protocol; a=pathlib.Path.cwd().resolve(); r=pathlib.Path("/home/user/work/runtime").resolve(); g=lambda p,*x:subprocess.check_output(["git","-C",str(p),*x],text=True).strip(); assert g(a,"rev-parse","HEAD")=="afe37906433773a29b5928b35abd8075be8a7ecf" and g(a,"rev-parse","HEAD^{tree}")=="f2cedd08a01b1a360df79046e4b9c2a5cb101dd5" and g(r,"rev-parse","HEAD")=="b92d3e7a05eec65c142294ef4873edd059e9b31d" and g(r,"rev-parse","HEAD^{tree}")=="6abc2f117391de8e7e35c0283f575a002199894d" and astrid_runtime_client.contract_metadata.SCHEMA_DIGEST=="sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816" and json.loads((a/"runtime.lock.json").read_text())["source_commit"]=="95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c" and len(json.loads((r/"contract/artifacts.json").read_text())["artifacts"])==76 and pathlib.Path(runtime_protocol.__file__).resolve()==r/"runtime_protocol/__init__.py"; raise SystemExit(__import__("pytest").main(["-q","-o","addopts=","-p","no:cacheprovider","-m","integration","--runxfail","tests/editing_conformance/test_commit_runtime_text_binding.py::test_rebind_existing_main_descriptor_undo_is_exact","tests/editing_conformance/test_commit_runtime_text_binding.py::test_clear_existing_main_descriptor_and_inverse_are_exact"]))'
 ```
 
+## Corrected central executions (`11357` authoritative; `900` duplicate)
+
+The authorized suite line was repaired only in its own Agent lane. It now
+checks both `git rev-parse HEAD^{tree} == f2cedd08…` (the service's synthetic
+snapshot) and
+`git rev-parse afe37906433773a29b5928b35abd8075be8a7ecf^{tree} == f2cedd08…`
+(the original source commit tree), while retaining the Runtime b92 commit/tree,
+published95 lock, client schema7d4, all76 artifact, and Runtime import guards.
+The two original selectors remain the only pytest nodes.
+
+The first corrected central request was submitted after the prerequisite audit
+and is authoritative:
+
+```text
+request-test rt-m2-public014-text-pair-execute-0903 public014-retained-text-original-pair-integration
+wait-test rt-m2-public014-text-pair-execute-0903-public014-retained-text-original-pair-integration-1021090630-11357
+```
+
+Result: **PASS**, exit 0, `2 passed in 1.78s`. This is the qualification
+result for the two original retained-text positives only. Before the stop was
+processed, manager0908's fix worker also submitted corrected execution `900`:
+
+```text
+request-test rt-m2-public-text-snapshot-guard-fix-0908 public014-retained-text-original-pair-integration
+wait-test rt-m2-public-text-snapshot-guard-fix-0908-public014-retained-text-original-pair-integration-1021090900-900
+```
+
+It passed (`2 passed in 1.67s`) and is a valid duplicate of the same repaired
+lane, but receives **no additional qualification credit**. The original nodes
+and assertions remain unchanged. Neither execution claims whole text-binding
+completion, route retirement, deletion, or any other consumer migration.
+
 ## Remaining boundary
 
-This is not a qualification result and does not close O6, authorize legacy
-consumer migration, retire a route/writer, or claim whole text-binding
-completion. Authenticated retained legacy `text/plain` descriptors remain live;
+This bounded result does not close O6, authorize legacy consumer migration,
+retire a route/writer, or claim whole text-binding completion. O6 and the
+related endpoints remain **OPEN**. Authenticated retained legacy `text/plain`
+descriptors remain live;
 new selections still require `text/plain; charset=utf-8`. Agent owns the later
 marker/consumer migration and must preserve the existing legacy consumers and
 positives through an explicit recorded migration.
