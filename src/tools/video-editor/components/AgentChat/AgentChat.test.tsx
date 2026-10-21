@@ -1319,7 +1319,8 @@ describe('project draft consumer ownership', () => {
     vi.clearAllMocks();
     const state = createState();
     mockFromState(state);
-    state.createSession.mutateAsync.mockRejectedValue(new Error('Connection lost'));
+    let rejectCreation!: (error: Error) => void;
+    state.createSession.mutateAsync.mockImplementationOnce(() => new Promise((_, reject) => { rejectCreation = reject; }));
     render(<AgentChatPanel />);
     const composer = screen.getByRole('textbox');
     fireEvent.change(composer, { target: { value: 'Still my draft' } });
@@ -1327,6 +1328,8 @@ describe('project draft consumer ownership', () => {
     fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
     await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledOnce());
     expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1');
+    await act(async () => { rejectCreation(new Error('Connection lost')); });
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Connection lost'));
     expect(composer).toHaveValue('Still my draft');
     expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
   });
