@@ -14,7 +14,7 @@ source_common=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a
 app_ancestry_anchor=7e85d89120227f336a2e8dbf8e0ea44d98311da0
 
 usage() {
-  echo "usage: $0 run APP_ROOT | $0 probe" >&2
+  echo "usage: $0 run APP_ROOT | $0 preflight APP_ROOT | $0 probe" >&2
   exit 2
 }
 
@@ -149,6 +149,7 @@ exit_handler() {
 
 run_gate() {
   app_root=$1
+  mode=${2:-run}
   run_root=
   run_copy=
   cleanup_run_root=0
@@ -175,7 +176,8 @@ run_gate() {
   cleanup_runner=1
   sed \
     -e "s|^\. \"\$HERE/normal014-source-common.sh\"$|. \"$source_common\"|" \
-    -e "s/--grep 'M2 real gate 5'/--grep 'M2 real mounted manual video drop'/" \
+    -e "s|^normal014_required_case='M2 real gate 5 bootstrap actual consumer: production initializer uses native create/init, exact retry, restart and guarded undo'$|normal014_required_case='M2 real mounted manual video drop: Runtime selection refusal is closed, native ADD recovers exactly, and undo preserves opaque data'|" \
+    -e 's|^normal014_playwright_grep="^\${normal014_required_case}\$"$|normal014_playwright_grep="M2 real mounted manual video drop"|' \
     -e "/^npm run build:hosted$/i\\
 node node_modules/playwright/cli.js test --config playwright.three-products.config.ts --grep 'M2 real mounted manual video drop' --list\\
 " \
@@ -184,7 +186,7 @@ node node_modules/playwright/cli.js test --config playwright.three-products.conf
 
   status=0
   NORMAL014_PROFILE=final95 NORMAL014_APP_SOURCE=parent NORMAL014_RUN_ROOT="$run_root" \
-    sh "$run_copy" run "$app_root" >"$run_root/runner.log" 2>&1 || status=$?
+    sh "$run_copy" "$mode" "$app_root" >"$run_root/runner.log" 2>&1 || status=$?
   cat "$run_root/runner.log"
   record_evidence "$run_root" "$app_root" "$status"
   evidence_recorded=1
@@ -222,7 +224,7 @@ failuretrap_probe() {
 }
 
 case "${1:-}" in
-  run) [ "$#" -eq 2 ] || usage; run_gate "$2" ;;
+  run|preflight) [ "$#" -eq 2 ] || usage; run_gate "$2" "$1" ;;
   probe) [ "$#" -eq 1 ] || usage; failuretrap_probe ;;
   *) usage ;;
 esac
