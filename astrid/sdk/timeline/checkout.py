@@ -367,7 +367,10 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         return labels
 
     def _reload(self) -> None:
-        fresh = Checkout._load_locked(Path(self.path))
+        path = self.path
+        if path is None:
+            raise TimelineEditError("only a saved working copy can reload")
+        fresh = Checkout._load_locked(path)
         self.bundle, self._mcache, self._journal, self._disk = fresh.bundle, None, [], fresh._disk
 
     @contextlib.contextmanager
