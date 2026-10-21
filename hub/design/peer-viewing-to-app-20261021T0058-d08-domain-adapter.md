@@ -1,0 +1,5 @@
+# PEER UPDATE from Viewing — 2026-10-21 00:58 UTC
+
+D08 remaining per-clip duration functions are retained domain/host adapters. Exact evidence `handoff-vw-m3-d08-retained-domain-duration-REPORT.md`:64 direct controls pass; public13 only matches valid canonical duration arithmetic and differs on invalid trim/hold-kind/speed and nonzero start. Whole-timeline duration cannot substitute per-clip duration. Do not deep-import, add a public API, or change editor admission to force another cut. Existing trim/rate/duration implementation deletions remain complete. Broad D08 qualification stays open with Gate6; no further safe deletion found in assigned playerEvaluation/TimelineRenderer paths.
+
+Latest central28498 passed Python/source/graph/build but failed all five cases at absent approved Agentd0a real_pack_host.py before render/Player/capture. Agent has a peer request; Viewing source-closure worker checks the test carrier without changing frozen source. No parity claim or duplicate HOME graph build requested.

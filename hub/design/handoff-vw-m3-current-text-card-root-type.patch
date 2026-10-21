@@ -1,0 +1,22 @@
+UNAPPLIED owner correction (do not apply in this worker):
+
+diff --git a/scripts/gen_effect_registry.py b/scripts/gen_effect_registry.py
+--- a/scripts/gen_effect_registry.py
++++ b/scripts/gen_effect_registry.py
+@@
+-                    f"const {public_symbols[effect_id]} = PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}];"
++                    f"const {public_symbols[effect_id]} = PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}] as EffectComponent;"
+@@
+-            else f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}]"
++            else f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}] as EffectComponent"
+@@
+-            else f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}]"
++            else f"PUBLIC_EFFECT_REGISTRY[{_ts_string(effect_id)}] as EffectComponent"
+
+Why: the installed public13 registry declares `effects` as
+`Readonly<Record<string, EffectComponent<never> & SceneCapableComponent>>`,
+while the generated owner selector accepts `EffectComponent` (the default
+`EffectComponent<unknown>`). The cast belongs at the Agent generator's
+public-registry-to-host-map boundary; it must be reviewed/applied by the
+Agent owner and regenerated normally. This worker did not apply it and did
+not patch generated output.
