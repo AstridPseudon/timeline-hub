@@ -1,0 +1,129 @@
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py b/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+index ac9b86391..f3ab8e959 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+@@ -475,11 +475,15 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
+     draw = ImageDraw.Draw(image)
+     findings = []
+     start, end = float(ctx.cut["start"]), float(ctx.cut["end"])
+-    series = [f for f in _sorted_frames(ctx) if start <= f / ctx.fps < end]
+-    # Motion rows are independently useful semantic evidence. The private
+-    # mouth_box crop below remains the pixel/statistics path until D09a's live
+-    # mouth_state duplication can be retired.
+-    public = _public_mouth_facts(ctx, presenters[0], series, allow_default_motion=True)
++    # Keep the PNG-card clock sparse for the existing crop/statistics lane.
++    pixel_series = [f for f in _sorted_frames(ctx) if start <= f / ctx.fps < end]
++    # The query-only producer supplies the complete source-bound semantic clock
++    # separately from those cards. Use it for motion admission when available;
++    # the private mouth_box crop below remains on the pixel clock.
++    public_scene = ctx.shared.get("public_scene")
++    semantic_series = ([f for f in sorted(public_scene) if start <= f / ctx.fps < end]
++                       if isinstance(public_scene, Mapping) else pixel_series)
++    public = _public_mouth_facts(ctx, presenters[0], semantic_series, allow_default_motion=True)
+     public_states = public["states"] if public is not None else None
+     for index, presenter in enumerate(presenters):
+         top = 30 + index * 70
+@@ -492,7 +496,7 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
+         vo = [w for w in ctx.words if w.end > start and w.start < end]
+         for frame in range(first, last):
+             t = frame / ctx.fps
+-            if public_states is not None:
++            if public_states is not None and frame in public_states:
+                 state = public_states[frame]
+             else:
+                 state = model.mouth_state(
+@@ -539,20 +543,20 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
+     crop = (_public_crop(public["rect"], public["basis"], ctx.frame_size)
+             if public and public["rect"] is not None else None)
+     box = None if crop is not None else model.mouth_box(presenter, 0)
+-    if crop is None and box and len(series) >= 3:
++    if crop is None and box and len(pixel_series) >= 3:
+         sx, sy = ctx.frame_size[0] / model.CANVAS[0], ctx.frame_size[1] / model.CANVAS[1]
+         crop = (max(0, int(box[0] * sx)), max(0, int(box[1] * sy)), int(box[2] * sx) + 1, int(box[3] * sy) + 1)
+-    if crop and len(series) >= 3:
++    if crop and len(pixel_series) >= 3:
+         changes = 0
+         previous = None
+-        for frame in series:
++        for frame in pixel_series:
+             image_frame = ctx.frame_image(frame)
+             region = image_frame.crop(crop) if image_frame else None
+             if region is not None and previous is not None:
+                 fraction, _mask = _diff_fraction(previous, region)
+                 changes += fraction > 0.02
+             previous = region
+-        findings.append(f"LIPSYNC pixels: mouth region changed between {changes} of {len(series) - 1} sampled frame pairs")
++        findings.append(f"LIPSYNC pixels: mouth region changed between {changes} of {len(pixel_series) - 1} sampled frame pairs")
+diff --git a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+index 1cf41b418..5656d80dd 100644
+--- a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
++++ b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+@@ -147,13 +147,41 @@ def _public_provider(case, rows, monkeypatch, *, mode="fresh"):
+     return Provider()
+ 
+ 
+-def context(case, order=(0, 3, 4, 5), frame_provider=None):
++def _dense_public_provider(case, rows, semantic_frames, pixel_paths, monkeypatch):
++    props = deepcopy(case["props"])
++    rows = deepcopy(rows)
++    by_frame = {row["frame"]: row for row in rows}
++
++    def host_frames(current_props, current_basis, frames):
++        assert current_props == props
++        assert current_basis == case["basis"]
++        assert tuple(frames) == tuple(semantic_frames)
++        return [by_frame[frame] for frame in frames]
++
++    monkeypatch.setattr(scene_answers, "host_frames_at", host_frames)
++    capture = CaptureSceneLabels(source_identity="dense-presenter", props=props,
++                                 basis=case["basis"], addresses={"presenter": "presenter"})
++    capture.observe(props, semantic_frames)
++    capture.retain(pixel_paths, pixel_frames=tuple(pixel_paths))
++
++    class Provider:
++        source_identity = "dense-presenter"
++        fresh_scene_frames = set(semantic_frames)
++        _cached_scenes = {}
++
++        def scene_for_frame(self, frame):
++            return capture if frame in by_frame else None
++
++    return Provider()
++
++
++def context(case, order=(0, 3, 4, 5), frame_provider=None, frame_paths=None):
+@@
+-    frames = {f: FIXTURE / f"frame-{f}.png" for f in order}
++    frames = frame_paths or {f: FIXTURE / f"frame-{f}.png" for f in order}
+     return sheet.build_context(snapshot, cut, frames, fps=case["basis"]["fps"],
+                                frame_size=tuple(case["size"]), frame_provider=frame_provider)
+@@ -181,6 +209,34 @@ def test_single_mode_public_mouth_facts_drive_existing_consumer(public_capture_rows, retained, monkeypatch, mode):
+     assert "LIPSYNC pixels: mouth region changed between 3 of 3 sampled frame pairs" in result.findings
+ 
+ 
++def test_sparse_pixels_use_dense_public_semantic_clock(presenter_query, retained, monkeypatch):
++    case = deepcopy(retained)
++    case["props"]["timeline"]["clips"][0]["hold"] = 1
++    semantic_frames = tuple(range(30))
++    public_rows = _public_rows_for_case(presenter_query, {**case, "frames": list(semantic_frames)})
++    pixel_paths = {
++        0: FIXTURE / "frame-0.png",
++        24: FIXTURE / "frame-4.png",
++        29: FIXTURE / "frame-5.png",
++    }
++    provider = _dense_public_provider(case, public_rows, semantic_frames, pixel_paths, monkeypatch)
++    ctx = context(case, order=tuple(pixel_paths), frame_provider=provider, frame_paths=pixel_paths)
++    presenter = ctx.elements[0]
++    private_state = model.mouth_state
++
++    def no_private_state(element, frame, fps):
++        if element.id == presenter.id:
++            pytest.fail(f"dense public semantic row consulted private mouth_state at {frame}")
++        return private_state(element, frame, fps)
++
++    monkeypatch.setattr(model, "mouth_state", no_private_state)
++    result = builtin.render_lipsync(ctx)
++
++    assert ctx.shared["public_scene_evidence_mode"] == "fresh_capture"
++    assert sorted(ctx.shared["public_scene"]) == list(semantic_frames)
++    assert "LIPSYNC pixels: mouth region changed between 1 of 2 sampled frame pairs" in result.findings

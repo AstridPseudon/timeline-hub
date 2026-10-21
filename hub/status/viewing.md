@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T13:00:13Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 25 | status age 1m -->
+<!-- viewing | 2026-10-21T13:06:21Z | dispatcher heartbeat 4s | live 4 (sol 1, luna 3, other 0) | busy30 25 | status age 8m -->
 # viewing — 2026-10-21 12:27 UTC
 This round: 1 source-deletion row closed (VW-AUDIO-STEP); 1 docs merge; 4 independently reviewed Agent source merges requested; VW-D09b/c DEFERRED; D08/adapters KEEP.
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN/rules rev2026-10-21 and inbox through owner12:08/App12:10 ACK.
