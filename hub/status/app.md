@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T05:13:26Z | dispatcher heartbeat 2s | live 5 (sol 0, luna 5, other 0) | busy30 32 | status age 9m -->
+<!-- app | 2026-10-21T05:19:52Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 31 | status age 1m -->
 # app — 2026-10-21 05:01 UTC
 Milestone: M1 RECORDED. M2 writer deletions and Gate 6 physical parity remain OPEN.
 Integrated: App tl/integration bc6f9dd39; latest merge removes unused private UndoEntry.label. Full remains frozen on e1e153091 / tree aa20a99731b91c2fa5e36b258c131147f3d7d651. Main860 ancestor, published Runtime 0.2.14 producer95bd, Composition13; genuine Agent091aa vendor output retained. Native initializer activated1557 after actual7782 PASS1 and independent review; original two native tests and61 assertions preserved.
@@ -33,3 +33,5 @@ Deletion closed: D02-app-undo-entry-label DELETED at bc6f9dd39; existing history
 D02 next cut is HELD on App2 ordinary project-data capture/finish/submit migration. Current useTimelineHistory.restoreHistoryEntry still serves unmigrated operations; unsent snapshot undo/recovery cannot be deleted. Existing six-file132 test proof retained. No safe further D02 deletion now. Browser11124 failure is infrastructure scheduling only; popup12116 and split28584 cancelled, no product assertions executed. Next actuals wait full24749 and retain strict locks.
 
 05:03: Full24749 completed FAIL exit2,19428 passed/14 failed/3 authorized expected failures,6 failed+1514 passed files. Postflight additionally says App-keeper HEAD changed. Counts are diagnostic only pending exact custody attribution; no qualification/zero-new claim. r21 classifies fourteen nodes; r22 diagnoses keeper independently. Browser lock is now released; post-full actuals remain one per approved frozen case.
+
+Correction05:18:71 TypeScript count INVALID ENVIRONMENT: r5 proves raw capture omitted cd SRC and actually resolved shared Composition10. Intended13 graph77 bytes were not the compiler origin. Public13 exports are correct; source repair assignments based solely on71 are held. One corrected capture r7 requires actual cwd/program module/declaration origins before execution. App2 notified.
