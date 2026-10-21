@@ -27,6 +27,7 @@ import type {
   CanonicalShotTimelineScope,
 } from '@/tools/video-editor/runtime/ports.ts';
 import type { ShotSetCapturePort } from '@/tools/video-editor/commands/shotSetGesture.ts';
+import type { ShotTimelineMediaProvider } from '../components/shotTimelineDataProvider.ts';
 
 type LocalTimelineShotBrowserProps = {
   projectSlug: string;
@@ -42,6 +43,8 @@ type LocalTimelineShotBrowserProps = {
   onClose?: () => void;
   /** The mounted parent editor's canonical command-session authority. */
   shotSetPort?: ShotSetCapturePort;
+  /** Reuse the mounted parent Runtime media-import and selection seam. */
+  mediaProvider?: ShotTimelineMediaProvider;
   /** Receives the latest graph after an embedded shot edit is published. */
   onCanonicalCompositionPublished?: (
     composition: PreparedShotComposition,
@@ -159,7 +162,7 @@ function isCompositionForDocument(
     && composition.occurrences.length > 0;
 }
 
-export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, shotCompositionPort, shotCompositionAdapter, shotRef, initialComposition, onClose, shotSetPort, onCanonicalCompositionPublished, onCanonicalDraftSessionChange, onCanonicalDraftProjectionChange, onCanonicalDraftProjectionClear }: LocalTimelineShotBrowserProps) {
+export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, shotCompositionPort, shotCompositionAdapter, shotRef, initialComposition, onClose, shotSetPort, mediaProvider, onCanonicalCompositionPublished, onCanonicalDraftSessionChange, onCanonicalDraftProjectionChange, onCanonicalDraftProjectionClear }: LocalTimelineShotBrowserProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -303,6 +306,7 @@ export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, 
           shotSortMode="ordered"
           onClose={onClose}
           shotSetPort={shotSetPort}
+          mediaProvider={mediaProvider}
           onCanonicalCompositionPublished={handleCanonicalCompositionPublished}
           onCanonicalDraftSessionChange={onCanonicalDraftSessionChange}
           onCanonicalDraftProjectionChange={onCanonicalDraftProjectionChange}
