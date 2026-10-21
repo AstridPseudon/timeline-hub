@@ -29,6 +29,24 @@ RAW_CONFIG = {
     "opaque_sibling": {"literal": "preserve-me"},
 }
 
+# These are the known authored structure slots that a pristine initializer may
+# carry only in their empty form.  The rest of the open config remains opaque
+# JSON: in particular, theme metadata and namespaced arrays are not structure.
+EMPTY_STRUCTURAL_PATHS = {
+    ("tracks",),
+    ("clips",),
+    ("occurrences",),
+    ("placements",),
+    ("shots",),
+    ("groups",),
+    ("pinnedShotGroups",),
+    ("media",),
+    ("references",),
+    ("reference",),
+    ("assets",),
+    ("registry", "assets"),
+}
+
 
 def raw_init_command(config=RAW_CONFIG):
     """The proposed closed outer envelope; it is intentionally unregistered."""
@@ -41,8 +59,12 @@ def raw_init_command(config=RAW_CONFIG):
     }
 
 
-def capture_raw_init(bundle, *, config=RAW_CONFIG):
-    """Capture only the proposed scoped config/name/slug writes."""
+def _capture_raw_init_unchecked(bundle, *, config=RAW_CONFIG):
+    """Capture the proposal before its empty-structure admission check.
+
+    This is intentionally kept as a test-only counterexample seam: an open
+    whole-config write otherwise makes structural births look like metadata.
+    """
     command = raw_init_command(config)
     ctx = Recording(copy.deepcopy(bundle), command, 0)
     parent = ctx.read("parent")
@@ -59,6 +81,36 @@ def capture_raw_init(bundle, *, config=RAW_CONFIG):
     ctx.write("parent", ["name"], command["args"]["name"])
     ctx.write("parent", ["slug"], command["args"]["slug"])
     return ctx.finish(capture=True), ctx.state.bundle
+
+
+def _at_path(config, path):
+    value = config
+    for token in path:
+        if not isinstance(value, dict) or token not in value:
+            return ABSENT
+        value = value[token]
+    return value
+
+
+def _require_empty_structure(config, record):
+    """Reject unrecorded births while retaining arbitrary authored metadata."""
+    if record["created"]:
+        raise CommandError("raw initialization cannot create structural entities", kind="unrecorded_birth")
+    for path in EMPTY_STRUCTURAL_PATHS:
+        value = _at_path(config, path)
+        if value != ABSENT and value not in ([], {}):
+            raise CommandError(
+                "nonempty raw initialization structure requires recorded creation facts",
+                kind="unrecorded_birth",
+                path=path,
+            )
+
+
+def capture_raw_init(bundle, *, config=RAW_CONFIG):
+    """Capture only the proposed scoped config/name/slug writes."""
+    record, candidate = _capture_raw_init_unchecked(bundle, config=config)
+    _require_empty_structure(config, record)
+    return record, candidate
 
 
 def inverse(bundle, records, *, intervening=()):
@@ -90,9 +142,44 @@ def test_raw_config_roundtrip_reload_and_inverse():
 
     reloaded = bundle_from_document(document_from_bundle(initialized))
     assert reloaded["parent"]["config"] == RAW_CONFIG
+    assert reloaded["parent"]["config"]["theme_overrides"]["opaque_theme"] == [None, False]
+    assert list(reloaded["parent"]["config"]["theme_overrides"]["visual"]["canvas"]) == [
+        "width", "height", "fps", "background"
+    ]
     undone = inverse(reloaded, [record])
     assert (document_from_bundle(undone.bundle)["parent_revision"]["payload"]
             == empty_document()["parent_revision"]["payload"])
+
+
+@pytest.mark.parametrize(
+    "path,value",
+    [
+        (("tracks",), [{"id": "born-track", "kind": "visual"}]),
+        (("clips",), [{"id": "born-clip", "track": "born-track"}]),
+        (("groups",), {"group-1": ["born-clip"]}),
+        (("media",), {"asset-1": {"media_id": "sha256:born"}}),
+        (("references",), {"ref-1": {"target": "born-clip"}}),
+        (("registry", "assets"), {"asset-1": {"media_id": "sha256:born"}}),
+    ],
+)
+def test_open_config_would_smuggle_unrecorded_structural_births(path, value):
+    """The risk is real unless the proposed carrier applies the empty boundary."""
+    config = copy.deepcopy(RAW_CONFIG)
+    node = config
+    for token in path[:-1]:
+        node[token] = {}
+        node = node[token]
+    node[path[-1]] = value
+
+    original = bundle_from_document(empty_document())
+    unchecked_record, unchecked = _capture_raw_init_unchecked(original, config=config)
+    assert unchecked["parent"]["config"][path[0]]
+    assert unchecked_record["created"] == []
+    assert not any(read["ref"].startswith("parent/") for read in unchecked_record["reads"])
+
+    with pytest.raises(CommandError) as error:
+        capture_raw_init(original, config=config)
+    assert error.value.kind == "unrecorded_birth"
 
 
 def test_raw_init_refuses_nonpristine_and_any_later_edit():
