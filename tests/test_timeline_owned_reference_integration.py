@@ -83,6 +83,14 @@ def _project_app(document):
     return document["parent_revision"]["payload"]["config"].get("app")
 
 
+def _authoritative_recorded_command(agent, document, command):
+    """Capture the complete command from the normal Agent recorder."""
+    from astrid.sdk.timeline.commands import execute
+
+    plan = execute(agent.bundle(document), [copy.deepcopy(command)])
+    return plan.records[0]["command"]
+
+
 def _commit(service, project, body, key):
     return service.commit_timeline(
         project, "main", body, idempotency_key=key,
@@ -281,7 +289,7 @@ def test_actual_provider_removes_ordered_project_data_and_retries_inverse_redo(
         assert list(_project_app(removed)) == [_ORDERED_BEFORE, _ORDERED_AFTER]
         record = service.list_timeline_commits(
             project, "main", authorize=lambda: None)["items"][-1]["records"]["commands"][0]
-        assert record["command"] == remove
+        assert record["command"] == _authoritative_recorded_command(agent, original, remove)
         assert record["writes"] == [
             {
                 "ref": "parent",
