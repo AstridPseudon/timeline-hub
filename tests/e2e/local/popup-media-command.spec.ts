@@ -59,7 +59,7 @@ function observeTraffic(page: Page) {
         response: null,
       });
     }
-    if (request.method() === 'POST' && LEGACY_SAVES.test(pathname)) legacy.push(pathname);
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method()) && LEGACY_SAVES.test(pathname)) legacy.push(pathname);
     if (request.method() === 'GET' && MEDIA_SELECTION.test(pathname + new URL(request.url()).search)) {
       mediaSelections.push(pathname + new URL(request.url()).search);
     }
