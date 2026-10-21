@@ -271,14 +271,14 @@ function makeHarness(options: HarnessOptions = {}) {
 
 function mount(
   harness: ReturnType<typeof makeHarness>,
-  options: { visible?: boolean; popout?: { open: boolean; onOpenChange: (open: boolean) => void } } = {},
+  options: { visible?: boolean; fullscreen?: { active: boolean; enter: () => void; exit: () => void } } = {},
 ) {
   const element = (visible: boolean) => createElement(WorldExplorerPanel, {
     context: harness.ctx,
     instanceId: 'explorer:worlds',
     visible,
     video: harness.video,
-    popout: options.popout,
+    fullscreen: options.fullscreen,
   } as never);
   const view = render(element(options.visible ?? true));
   return { ...view, setVisible: (value: boolean) => view.rerender(element(value)) };
@@ -1120,17 +1120,22 @@ describe('World Explorer layout', () => {
     expect(scene.unmounts).toBe(unmounts);
   });
 
-  it('pop-out appears only with a popout prop, and the viewer asks for focus', async () => {
-    const onOpenChange = vi.fn();
-    const view = mount(makeHarness({ clips: [liveClip()] }), { popout: { open: false, onOpenChange } });
+  it('the full-screen icon appears only with a fullscreen prop and not while active, and the viewer asks for focus', async () => {
+    const enter = vi.fn();
+    const view = mount(makeHarness({ clips: [liveClip()] }), { fullscreen: { active: false, enter, exit: vi.fn() } });
     await openReady(EXPLORE);
     expect(viewerOf(view)).toHaveAttribute('data-autofocus');
-    fireEvent.click(view.getByRole('button', { name: 'Pop out World Explorer' }));
-    expect(onOpenChange).toHaveBeenCalledWith(true);
+    fireEvent.click(view.getByRole('button', { name: 'Full screen World Explorer' }));
+    expect(enter).toHaveBeenCalledTimes(1);
 
     view.unmount();
+    const active = mount(makeHarness({ clips: [liveClip()] }), { fullscreen: { active: true, enter, exit: vi.fn() } });
+    await openReady(EXPLORE);
+    expect(active.queryByRole('button', { name: 'Full screen World Explorer' })).toBeNull();
+
+    active.unmount();
     const plain = mount(makeHarness({ clips: [liveClip()] }));
     await openReady(EXPLORE);
-    expect(plain.queryByRole('button', { name: 'Pop out World Explorer' })).toBeNull();
+    expect(plain.queryByRole('button', { name: 'Full screen World Explorer' })).toBeNull();
   });
 });
