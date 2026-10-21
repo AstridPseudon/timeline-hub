@@ -3,7 +3,7 @@
 /**
  * Main95 prompt/settings central integration launcher.
  *
- * The browser journey remains the existing SettingsAutoDisable case. This
+ * The browser journey is the distinct native settings-prompt case. This
  * wrapper owns its exact source tuple and the private public13 dependency
  * graph, so a central snapshot cannot silently fall back to an old runner.
  */
@@ -59,7 +59,7 @@ export const MAIN95_NESTED_COHORT = Object.freeze({
   TIMELINE_CURRENT013_PUBLIC_SOURCE_SHA256: MAIN95_COMPOSITION.sha256.slice('sha256:'.length),
 });
 
-export const SETTINGS_CASE = 'M2 real embedded SettingsAutoDisable: native scalar field change, raw settings preservation, reload, Runtime undo, and zero legacy';
+export const SETTINGS_CASE = 'M2 real embedded settings prompt: native shot.set preserves exact raw settings, retries after restart, and undoes through Runtime';
 export const MAIN95_BROWSER = Object.freeze({
   executable: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
   sha256: 'sha256:85918a9937192b78da8edb51c38a7af4920ac6bd9ba19939ecb0bb724d5a1a95',
@@ -414,10 +414,10 @@ function runPlaywright(input, outputDir) {
     cwd: input.app, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], shell: false,
   });
   const discovery = `${list.stdout}\n${list.stderr}`;
-  if (list.error) fail(`Main95 SettingsAutoDisable discovery could not start: ${list.error.message}`);
-  if (list.status !== 0) fail(`Main95 SettingsAutoDisable discovery failed (exit ${list.status ?? 'signal'}): ${discovery}`);
-  if (!/Total:\s+1 test in 1 file/.test(discovery) || (discovery.match(/shot-name-command\.spec\.ts:/g) || []).length !== 1) fail(`Main95 SettingsAutoDisable discovery did not select exactly one test: ${discovery}`);
-  console.log('[main95-prompt-settings] discovery selected exactly one SettingsAutoDisable case');
+  if (list.error) fail(`Main95 settings-prompt discovery could not start: ${list.error.message}`);
+  if (list.status !== 0) fail(`Main95 settings-prompt discovery failed (exit ${list.status ?? 'signal'}): ${discovery}`);
+  if (!/Total:\s+1 test in 1 file/.test(discovery) || (discovery.match(/shot-name-command\.spec\.ts:/g) || []).length !== 1) fail(`Main95 settings-prompt discovery did not select exactly one test: ${discovery}`);
+  console.log('[main95-prompt-settings] discovery selected exactly one settings-prompt case');
   if (process.env.TIMELINE_MAIN95_PROMPT_SKIP_BROWSER === '1') return 0;
   const run = spawnSync(process.execPath, [path.join(input.privateGraph, '.bin/playwright'), 'test', '--config', 'playwright.shot-name.config.ts', '--grep', SETTINGS_CASE], {
     cwd: input.app, env, stdio: 'inherit', shell: false,
