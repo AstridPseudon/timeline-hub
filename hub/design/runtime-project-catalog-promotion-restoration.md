@@ -4,6 +4,27 @@ Status: **PROPOSED / UNMERGED**. Worker `rt-m2-project-catalog-promotion-restore
 
 Owner14:32/14:34 and MANAGER-COMMON film-vs-catalog precedent authorize the existing project-scoped catalog operation. This changes no Agent command, schema, DTO, client, endpoint, table, journal, release or pin.
 
+## Agent preservation source mapping (staged)
+
+The Agent-side preservation repair is tests-only in
+`tests/stage1/test_runtime_client_cutover.py`, against the compatible Runtime
+checkout `b92d3e7a05eec65c142294ef4873edd059e9b31d` with the vendored/public
+Runtime source pin `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`. The central
+snapshot for this repair is Agent tree `63cb7d427685f6a4859f9d6dbe4b2c5028fa59a4`.
+
+| Ledger row | Existing test mapping | Preserved boundary |
+|---|---|---|
+| AG-CATALOG-PROMOTION / AG-CUTOVER-04 | `test_promote_candidate_receipt_replay_and_foreign_provenance_rejection` | Kept catalog promotion success, fixed-point invalidation, exact receipt/result, replay, foreign provenance refusal, and restart replay. |
+| AG-CUTOVER-01 | `test_documented_project_cli_mutations_return_committed_receipts` | Kept unplaced catalog create/add/reorder success and receipt/result equality. |
+| AG-CUTOVER-02 | `test_project_shot_scope_stays_with_project_route` | Kept project isolation and unplaced lifecycle success; film-owned writes refuse without mutation. |
+| AG-CUTOVER-03 | `test_editor_domain_reads_and_media_relations_use_generated_operations` | Kept catalog reads, stale-version conflict, and unplaced lifecycle success; film-owned writes refuse without mutation. |
+| AG-CUTOVER-05 | `test_shot_items_and_reference_associations_use_versioned_routes_and_survive_restart` | Kept catalog CRUD/version/replay/restart and reference receipt assertions; film-owned item/lifecycle writers refuse with unchanged SQL/state. |
+
+`_seed_shot` uses the existing trusted acceptance fixture boundary only to make
+film-owned refusal cases reachable; it does not stand in for a product writer,
+accepted history, or catalog promotion. The deletion ledger remains staged
+until this source is merged and independently reviewed.
+
 ## Implementation and authority
 
 Restored Main `29d0954b6d78a7d7937d81bc36567b6dee7ca976`'s `RuntimeService.promote_project_shot_candidate` body unchanged, and `RealmStore.promote_shot_items`. Restored only the two catalog revision helpers the operation needs (one unused Main local assignment removed). The existing shot-scoped internal revision identity is Main's retained child representation; no timeline row or film history is invented. The unused store RetiredRouteError import is removed. Other direct shot/item/text writers remain refused.
