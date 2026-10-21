@@ -315,6 +315,7 @@ def _runtime_inputs(project_dir: Path, environment: Mapping[str, str], python: s
         roots.append(project / "src")
     roots.extend(Path(p) for p in closure.get("package_roots", []))
     paths = [node, Path(python), cli, project / "package.json", project / "package-lock.json", Path(__file__),
+             Path(_remotion_package.__file__),
              REPO_ROOT / "astrid" / "core" / "timeline" / "schema" / "timeline-config.schema.json"]
     paths.extend(p for p in project.iterdir() if p.is_file() and p.suffix in {".ts", ".js", ".mjs", ".cjs", ".json"})
     cfg = Path(python).parent.parent / "pyvenv.cfg"

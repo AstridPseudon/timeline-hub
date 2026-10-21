@@ -842,6 +842,27 @@ def test_launch_validation_rejects_changed_installed_content(tmp_path, monkeypat
     assert len(calls) == 3
 
 
+def test_launch_validation_rejects_changed_extracted_helper_source(tmp_path, monkeypatch):
+    helper_source = Path(remotion_runtime._remotion_package.__file__).resolve()
+    owned_source = tmp_path / 'owned-source' / helper_source.name
+    owned_source.parent.mkdir()
+    shutil.copy2(helper_source, owned_source)
+    spec = importlib.util.spec_from_file_location('owned_remotion_package', owned_source)
+    assert spec is not None and spec.loader is not None
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    monkeypatch.setattr(remotion_runtime, '_remotion_package', helper)
+    monkeypatch.setattr(remotion_runtime, '_composition_package_problem', helper.composition_package_problem)
+
+    runtime, _, _, env, ref, calls = _owned_validation_fixture(tmp_path, monkeypatch)
+    actual = {**env, **ref}
+    remotion_runtime._validated_runtime(runtime, environment=actual)
+    owned_source.write_bytes(owned_source.read_bytes() + b'\n')
+    with pytest.raises(remotion_runtime.RemotionValidationError, match='inputs changed'):
+        remotion_runtime._validated_runtime(runtime, environment=actual)
+    assert len(calls) == 3
+
+
 @pytest.mark.parametrize('home', [None, '', 'relative'])
 def test_clean_probe_home_refuses_before_launch(home):
     environment = {} if home is None else {'HOME': home}
