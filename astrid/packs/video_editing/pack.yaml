@@ -99,6 +99,10 @@ actions:
       required: false
       default: false
       description: Advisory shared planning only; managed completion settles the report without publication.
+    - name: settled_speech_input
+      type: file
+      required: false
+      description: Optional requester-owned H3 speech result bundle, materialized by the host for managed proposal preparation.
     outputs:
     - name: authoring_proposal
       type: file
@@ -130,6 +134,10 @@ actions:
       path: actions/sync_draft_voiceover/run.py
     - kind: implementation
       path: shared/draft_voiceover.py
+    - kind: implementation
+      path: shared/settled_voiceover_input.py
+    - kind: implementation
+      path: shared/voiceover_requester.py
     - kind: documentation
       path: actions/sync_draft_voiceover/STAGE.md
   cut:

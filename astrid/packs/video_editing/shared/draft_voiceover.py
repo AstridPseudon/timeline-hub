@@ -366,6 +366,34 @@ def prepare_draft_voiceover(candidate: Mapping, scripts: Mapping, *, synthesize:
             "generated": [{"occurrence_id": job["occurrence_id"], **result} for job,result in generated]}
 
 
+def _settled_speech_synthesizer(rows: list[Mapping[str, Any]]) -> Callable:
+    """Adapt verified requester rows to the existing preparation callback."""
+    cursor = iter(rows)
+
+    def synthesize(text: str, settings: Mapping[str, Any]) -> dict[str, Any]:
+        try:
+            row = next(cursor)
+        except StopIteration as exc:
+            raise VoiceoverSyncError("Settled speech input has too few ordered rows") from exc
+        if row.get("text") != text or row.get("settings") != settings:
+            raise VoiceoverSyncError("Settled speech provenance differs from requested words/settings")
+        output = row.get("output")
+        if not isinstance(output, Mapping):
+            raise VoiceoverSyncError("Settled speech input has no Runtime output binding")
+        return {
+            "text": text,
+            "settings": dict(settings),
+            "audio_media_id": row["audio_media_id"],
+            "duration_seconds": row["duration_seconds"],
+            "task_id": output.get("task_id"),
+            "run_id": output.get("run_id"),
+            "media_selection": dict(row["media_selection"]),
+            "runtime_context": {"managed_output": dict(output)},
+        }
+
+    return synthesize
+
+
 def _data(result):
     if hasattr(result, "ok"):
         if not result.ok:
@@ -707,7 +735,8 @@ def _build_voiceover_proposal(*, producer: Mapping[str, Any], candidate: Mapping
 def _sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: str,
                          settings=None, occurrence_ids=None, adopt_clip_ids=None,
                          padding_seconds=0.15, plan_only=False,
-                         managed_proposal=False) -> dict:
+                         managed_proposal=False, settled_speech_input=None,
+                         attempt_root=None) -> dict:
     """Run the shared preparation, with publication mode selected privately.
 
     No render is requested. Protected/empty/missing-script rows are reported.
@@ -766,8 +795,24 @@ def _sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy:
         return {"status": "planned" if plan_only else "unchanged", "plan": plan, "published": False}
     if managed_proposal and (not isinstance(base_publication_id, str) or not base_publication_id):
         raise VoiceoverSyncError("Timeline head lacks its settled publication identity")
-    synthesizer = (runtime_synthesizer(client, project_id, authoritative_media=True)
-                   if managed_proposal else runtime_synthesizer(client, project_id))
+    if settled_speech_input is not None:
+        if attempt_root is None:
+            raise VoiceoverSyncError("Settled speech input requires the managed attempt root")
+        from .settled_voiceover_input import _consume_settled_voiceover_input
+
+        settled_rows: list[Mapping[str, Any]] = []
+        _consume_settled_voiceover_input(
+            settled_speech_input,
+            attempt_root=attempt_root,
+            client=client,
+            project=project_id,
+            plan=plan,
+            consume=settled_rows.append,
+        )
+        synthesizer = _settled_speech_synthesizer(settled_rows)
+    else:
+        synthesizer = (runtime_synthesizer(client, project_id, authoritative_media=True)
+                       if managed_proposal else runtime_synthesizer(client, project_id))
     prepared = prepare_draft_voiceover(candidate, scripts,
         synthesize=synthesizer,
         timing_policy=timing_policy,
@@ -848,10 +893,12 @@ def sync_draft_voiceover(client, project: str, timeline: str, *, timing_policy: 
 
 def _sync_draft_voiceover_proposal(client, project: str, timeline: str, *, timing_policy: str,
                                    settings=None, occurrence_ids=None, adopt_clip_ids=None,
-                                   padding_seconds=0.15, plan_only=False) -> dict:
+                                   padding_seconds=0.15, plan_only=False,
+                                   settled_speech_input=None, attempt_root=None) -> dict:
     """Private managed-producer entry; the requester owns proposal submission."""
     return _sync_draft_voiceover(
         client, project, timeline, timing_policy=timing_policy, settings=settings,
         occurrence_ids=occurrence_ids, adopt_clip_ids=adopt_clip_ids,
         padding_seconds=padding_seconds, plan_only=plan_only, managed_proposal=True,
+        settled_speech_input=settled_speech_input, attempt_root=attempt_root,
     )

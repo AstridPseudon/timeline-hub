@@ -19,6 +19,7 @@ from urllib.parse import parse_qsl, unquote, urlsplit
 import pytest
 
 from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
+from astrid.core.execution.executor import _action_context as action_context
 from astrid.core.execution.executor._action_context import (
     _require_action_context,
 )
@@ -197,7 +198,8 @@ def combined(request, media_wire, monkeypatch):
                              preview=lambda work: {'candidate_digest': _digest(work)},
                              publish=lambda *a, **k: f.published.append(True))
     monkeypatch.setattr(media.client, 'open_authoring_target', lambda *a: target)
-    monkeypatch.setattr(AstridClient, 'open_from_launcher', lambda: nullcontext(media.client))
+    monkeypatch.setattr(action_context, '_managed_read_client',
+                        lambda context: nullcontext(media.client))
     monkeypatch.setenv(ASTRID_INTERNAL_INVOCATION, '1')
     # Serve the old pin through the same generated readers, with original wire
     # transport still handling the new association and actual object bytes.
