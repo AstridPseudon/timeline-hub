@@ -20,4 +20,3 @@ sys.stdout=sys.stderr=open('C:\\Astrid\\logs\\runtime-service.log','a',encoding=
 from astrid_runtime.cli import main
 sys.exit(main(['run', '--profile', 'astrid', '--data-root', 'C:\\Astrid Data', '--source-manifest', 'C:\\Astrid\\versions\\v1\\profile.json']))"</Arguments><WorkingDirectory>C:\Astrid\versions\v1</WorkingDirectory></Exec></Actions>
 </Task>
-

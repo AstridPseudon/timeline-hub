@@ -1,6 +1,7 @@
 """Installer staging must consume the schema artifact pinned by Remotion."""
 
 import json
+import tarfile
 from pathlib import Path
 
 from astrid.installer.backend import Backend
@@ -94,23 +95,33 @@ def test_staging_installs_the_npm_locked_schema_before_declaring_services(tmp_pa
     assert version.profile.is_file()
 
 
-def test_remotion_lock_pins_the_transitive_schema_package():
+def test_remotion_lock_pins_the_immutable_composition_public_entry():
     package = json.loads((ROOT / "remotion/package.json").read_text(encoding="utf-8"))
     lock = json.loads((ROOT / "remotion/package-lock.json").read_text(encoding="utf-8"))
     composition = lock["packages"]["node_modules/@banodoco/timeline-composition"]
-    schema = lock["packages"]["node_modules/@banodoco/timeline-schema"]
+    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz"
+    public_exports = (".", "./evaluation", "./theme-api", "./registries",
+                      "./effects.generated", "./animations.generated",
+                      "./transitions.generated", "./registry.generated")
 
     assert package["dependencies"]["@banodoco/timeline-composition"] == (
-        "https://github.com/banodoco/timeline-composition/archive/refs/tags/v0.0.6.tar.gz"
+        "file:artifacts/banodoco-timeline-composition-0.0.13.tgz"
     )
-    assert composition["dependencies"]["@banodoco/timeline-schema"] == (
-        "https://github.com/banodoco/timeline-schema/archive/refs/tags/v0.0.1.tar.gz"
+    assert composition["version"] == "0.0.13"
+    assert composition["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.13.tgz"
+    assert composition["integrity"] == (
+        "sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ=="
     )
-    assert schema["version"] == "0.0.1"
-    assert schema["resolved"] == (
-        "https://github.com/banodoco/timeline-schema/archive/refs/tags/v0.0.1.tar.gz"
-    )
-    assert schema["integrity"] == (
-        "sha512-m7oUjUV+q1dPb78N6+5B3iayTXkV/WBrQLxNDrlt32j4GXY2sQOIOwpGBw4kNjjngVpSwSaAGneQKUWCgUS8lQ=="
-    )
+    assert "node_modules/@banodoco/timeline-schema" not in lock["packages"]
+    assert "node_modules/@banodoco/timeline-theme-2rp" not in lock["packages"]
+
+    with tarfile.open(artifact) as archive:
+        manifest = json.load(archive.extractfile("package/package.json"))
+        files = {member.name for member in archive.getmembers()}
+    assert manifest["name"] == "@banodoco/timeline-composition"
+    assert manifest["version"] == "0.0.13"
+    for export in public_exports:
+        for target in manifest["exports"][export].values():
+            assert target.startswith("./dist/")
+            assert "package/" + target.removeprefix("./") in files
 
