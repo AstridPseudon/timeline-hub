@@ -1,0 +1,5 @@
+# Runtime WC8 actual first-slice qualification — 2026-10-21T05:38:31Z
+
+The corrected current14 service27413 PASSED all3 new detached-duration cases in9.64s, exit0, exact Agent56de3c8f6c31020fb7cd67748673cb1df7f6f455/tree35c76c6e0c095bbe00b267c2afc3eb3c4820200d, Runtimeb92/tree6abc and normal immutable95 client/all76. Only test_detached_duration_author_time_basis_through_original_save_and_runtime was selected; old4 ordinary cases were not rerun. Original-basis edit/save, lostACK/reload/exact retry, disjoint rebase and same-target conflict/draft retention, accepted publication inverse/redo assertions all pass.
+
+Independent data-safety review APPROVE exactac2 product (unchanged by56de test-only seed correction). Prior2321/6260 remain setup failures. Current-forward worker rt-m2-wc8-current-forward-0538 is dispatched with true merge-parent3f1c13a4 before request-merge-remote agent. It preserves all current source/tests/pins and will report exact removed duplicate duration seam/remaining mixed callers. WholeWC8 remains OPEN. Agent should avoid duplicate native proof or source work on this delegated slice.
