@@ -3597,17 +3597,19 @@ def _cmd_check(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_apply(parsed: argparse.Namespace) -> int:
-    # Connected callers already have the retained NativeSheet basis. Keep the
-    # detached path for no-client Main callers until their remaining grammar
-    # has a bound command replacement.
-    if parsed.native or parsed.client is not None:
-        return _cmd_commit_edit(parsed, sheet=True)
+    from astrid.sdk.timeline_sheet import apply_sheet, parse_sheet
+
+    text = Path(parsed.sheet_file).read_text(encoding="utf-8")
+    sheet = parse_sheet(text)
+    if parsed.native or (parsed.client is not None and ("clips" in sheet or "tracks" in sheet)):
+        from astrid.packs.timeline.cli_native import commit_edit
+
+        return commit_edit(parsed, sheet=True)
     if parsed.dry_run or parsed.idempotency_key or parsed.json:
         raise _VerbError("--native is required with commit apply options", 2)
-    from astrid.sdk.timeline_sheet import apply_sheet
     tl = _edit_checkout(parsed)
     before = tl.document()
-    changes = apply_sheet(tl, Path(parsed.sheet_file).read_text(encoding="utf-8"))
+    changes = apply_sheet(tl, text, client=parsed.client)
     if changes or before != tl.document():
         tl.save(quiet=True)
         print("applied sheet")

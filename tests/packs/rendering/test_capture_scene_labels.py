@@ -15,7 +15,7 @@ from PIL import Image
 from astrid.core.rendering.node_pin import resolve_pinned_node
 from astrid.core.rendering.remotion_runtime import RemotionRuntimeStatus
 from astrid.core.theme import builtin_theme
-from astrid.core.timeline import scene_answers
+from astrid.core.rendering import scene_answers
 from astrid.packs.rendering.actions.timeline_visualize.composed_frame import (
     CaptureSceneLabels,
 )

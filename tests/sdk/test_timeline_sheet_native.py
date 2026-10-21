@@ -13,9 +13,157 @@ from astrid.sdk.timeline.capture import capture_clip_delete, capture_move
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.sync import CommitConflict
 from astrid.sdk.timeline_checkout import Checkout
-from astrid.sdk.timeline_sheet import NativeSheet, SheetError, apply_sheet
+from astrid.sdk.timeline_sheet import NativeSheet, SheetError, apply_sheet, render_sheet
 from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.sdk.test_timeline_sync import connected, initial_bundle, open_session  # noqa: F401
+
+
+def detached_duration_bundle():
+    from tests.packs.timeline.test_cli_native_sheet import rational_occurrence_bundle
+
+    bundle = rational_occurrence_bundle()
+    for index, shot in enumerate(bundle["shots"].values(), 1):
+        internal = shot["internal_timeline"]
+        internal["tracks"][0]["id"] = "plate"
+        internal["tracks"].append({"id": "type", "kind": "visual"})
+        picture = internal["clips"][0]
+        picture.update(track="plate", hold=10, **{"from": 2, "to": 12},
+                       app={"astrid": {"cut": f"c{index}", "layer": "plate"}})
+        internal["clips"].append({"id": "card", "clipType": "am-type", "track": "type", "at": 1,
+            "hold": 1, "params": {"text": "LIVE", "size": 32}, "transition": None,
+            "opaque": {"keep": [None, False, 1, 1.0]},
+            "app": {"astrid": {"cut": f"c{index}", "layer": "card", "for": 1}}})
+    return bundle
+
+
+def detached_draft(connected, tmp_path):
+    client, generated, _ = connected
+    original = detached_duration_bundle()
+    generated.bundles["r0"] = copy.deepcopy(original)
+    path = tmp_path / "detached.json"
+    generated.path = path.with_name(path.name + ".outbox.json")
+    tl = Checkout(copy.deepcopy(original))
+    tl.save(path, quiet=True)
+    tl._scene_client = client
+    text = render_sheet(tl, cuts=["c1"])
+    assert "for 1s" in text
+    ref = "occurrence:occ-1/clip:card"
+    return tl, text, ref, original
+
+
+def duration_edit(text, value):
+    return "\n".join(line.replace("for 1s", f"for {value}s") if "  card  " in line else line
+                     for line in text.splitlines()) + "\n"
+
+
+def test_detached_static_duration_keeps_the_original_local_grammar(tmp_path):
+    tl = Checkout(detached_duration_bundle())
+    tl.save(tmp_path / "local.json", quiet=True)
+    original = render_sheet(tl, cuts=["c1"])
+    assert apply_sheet(tl, duration_edit(original, 2))
+    assert tl.clip("c1.card").duration == 2
+    assert tl.clip("c2.card").duration == 1
+    assert not list(tmp_path.glob("*.outbox.json"))
+
+
+@pytest.mark.parametrize("peer", ["none", "disjoint", "same"])
+def test_detached_duration_retains_author_basis_retry_reload_and_guarded_inverse(
+        connected, tmp_path, monkeypatch, peer):  # noqa: F811
+    from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+    from astrid.sdk.timeline.checkout import _sheet_session
+    from astrid.sdk.timeline.commit import _json
+
+    tl, original_text, ref, original = detached_draft(connected, tmp_path)
+    client, generated, _ = connected
+    artifact = json.loads(generated.path.read_bytes())["sheet"]
+    assert artifact["bundle"] == original
+    assert artifact["basis"] == {"revision_id": "r0", "publication_id": "pub0"}
+    assert artifact["detached"]["bindings"]["c1.card"] == ref
+    edited = duration_edit(original_text, 2)
+    expected = execute(original, [capture_clip_set(original, ref, values={"hold": 2.0})])
+    if peer != "none":
+        other_ref = ref if peer == "same" else "occurrence:occ-2/clip:card"
+        generated.bundles["peer"] = execute(original, [capture_clip_set(original, other_ref, values={"hold": 3})]).bundle
+        generated.head = {"revision_id": "peer", "publication_id": "peer-pub"}
+    before = copy.deepcopy(generated.bundles[generated.head["revision_id"]])
+    monkeypatch.setattr("astrid.sdk.timeline_sheet.merge_sheet", lambda *a: pytest.fail("client rebase"))
+    monkeypatch.setattr("astrid.sdk.timeline_sheet._apply_parsed", lambda *a: pytest.fail("duplicate local consumer"))
+    # The retained basis survives a reload before any intent is parsed.
+    tl = Checkout.load(tl.path)
+    assert apply_sheet(tl, edited, client=client)
+    assert generated.calls == []
+    assert json.loads(generated.path.read_bytes())["pending"] == expected.commands
+    if peer == "same":
+        with pytest.raises(CommitConflict):
+            tl.save(quiet=True)
+        state = json.loads(generated.path.read_bytes())
+        assert state["base"] == artifact["basis"] and state["sheet"]["bundle"] == original
+        assert state["pending"] == expected.commands and state["flight"] and state["conflict"]
+        assert Checkout.load(tl.path).clip("c1.card").duration == 2
+        assert generated.bundles["peer"] == before and not generated.accepted
+        return
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        tl.save(quiet=True)
+    first = generated.calls[-1]
+    durable = tl.path.read_bytes()
+    tl = Checkout.load(tl.path)
+    monkeypatch.setattr("astrid.sdk.timeline.sync.TimelineSession._bundle", lambda *a: pytest.fail("retry recaptured"))
+    assert apply_sheet(tl, edited, client=client)
+    tl.save(quiet=True)
+    assert generated.calls[-1] == first and len(generated.accepted) == 1
+    assert tl.path.read_bytes() == durable
+    for restore in (tl.undo, tl.redo):
+        with pytest.raises(TimelineEditError, match="use publications"):
+            restore()
+    accepted = generated.bundles["r1"]
+    assert _json(State(accepted).entity(ref)) == _json(State(expected.bundle).entity(ref))
+    assert State(accepted).entity("occurrence:occ-2/clip:card") == State(before).entity("occurrence:occ-2/clip:card")
+    response = next(iter(generated.accepted.values()))[1]
+    assert response["data"]["status"] == ("rebased" if peer == "disjoint" else "accepted")
+    assert json.loads(first[0])["base_publication_id"] == "pub0"
+    session = _sheet_session(tl)
+    session.undo(["pub1"])
+    assert _json(generated.bundles["r2"]) == _json(before)
+    session.undo(["pub2"])
+    assert _json(generated.bundles["r3"]) == _json(accepted)
+
+
+def test_detached_duration_invalid_or_changed_pending_text_keeps_draft(connected, tmp_path):  # noqa: F811
+    tl, text, _, _ = detached_draft(connected, tmp_path)
+    _, generated, _ = connected
+    disk, outbox = tl.path.read_bytes(), generated.path.read_bytes()
+    with pytest.raises(SheetError):
+        apply_sheet(tl, duration_edit(text, "nonsense"))
+    assert tl.path.read_bytes() == disk and generated.path.read_bytes() == outbox
+    apply_sheet(tl, duration_edit(text, 2))
+    outbox = generated.path.read_bytes()
+    with pytest.raises(SheetError, match="pending"):
+        apply_sheet(tl, duration_edit(text, 3))
+    assert tl.path.read_bytes() == disk and generated.path.read_bytes() == outbox
+
+
+@pytest.mark.parametrize("identity", ["realm_id", "actor_id", "project_id", "timeline_id"])
+def test_detached_duration_cannot_change_its_authored_target(connected, tmp_path, identity):  # noqa: F811
+    tl, text, _, _ = detached_draft(connected, tmp_path)
+    client, generated, _ = connected
+    before = generated.path.read_bytes()
+    if identity in {"realm_id", "actor_id"}:
+        client._remote._transport._last_handshake[identity] = "other"
+    else:
+        tl.bundle[identity] = "other"
+    reads = list(client.reads)
+    with pytest.raises(TimelineEditError, match="identity"):
+        apply_sheet(tl, duration_edit(text, 2))
+    assert generated.path.read_bytes() == before and generated.calls == [] and client.reads == reads
+
+
+def test_retained_export_without_intent_can_still_be_saved_locally(connected, tmp_path):  # noqa: F811
+    tl, _, _, _ = detached_draft(connected, tmp_path)
+    client, generated, _ = connected
+    disk, reads = tl.path.read_bytes(), list(client.reads)
+    Checkout.load(tl.path).save(quiet=True)
+    assert tl.path.read_bytes() == disk and client.reads == reads and generated.calls == []
 
 
 def sheet_for(bundle):

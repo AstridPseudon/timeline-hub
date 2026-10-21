@@ -26,7 +26,10 @@ class _RemoteTimelineRevisionMixin:
         written. Returns ``{bundle, project_id, timeline_id, revision_id,
         is_current_head}``.
         """
-        from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+        from astrid.core.timeline.authoring_bundle import (
+            AuthoringBundleError,
+            open_authoring_bundle,
+        )
         from astrid.sdk.timeline.commit import (
             INTERNAL_IMAGE_FIELDS,
             PARENT_IMAGE_FIELDS,
@@ -100,7 +103,7 @@ class _RemoteTimelineRevisionMixin:
                 shot_revisions=shot_images,
                 internal_timeline_revisions=internal_images,
             )
-        except Exception as exc:  # the bundle compiler names the inconsistent field
+        except (AuthoringBundleError, KeyError, TypeError) as exc:
             return DomainResult.failure(ErrorObject(
                 "protocol_error", f"could not open the timeline closure: {exc}",
                 {"timeline": timeline_id, "revision_id": revision},
