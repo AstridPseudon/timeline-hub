@@ -1,10 +1,15 @@
 # @banodoco/timeline-composition
 
-Version 0.0.13 ships built ESM and declarations for the timeline evaluator,
-Remotion composition, theme API and default registries. Plain Node can import
+The current source declares version **0.0.14** and ships built ESM and
+declarations for the timeline evaluator, Remotion composition, theme API and
+default registries. Plain Node can import
 `@banodoco/timeline-composition/evaluation` without React, Remotion or a TypeScript
 loader. The renderer uses host peers React/React DOM 18.3.1 and
 Remotion/media/layout-utils 4.0.509; those runtimes are never bundled.
+
+No 0.0.14 archive or final ZIP is claimed here. The immutable public13 consumer
+artifact remains `@banodoco/timeline-composition@0.0.13`, 77 files, SHA-256
+`9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`.
 
 The package owns text-card (including the `text` alias), six animations, two
 transitions and four 2rp effects relocated from App. The bundled 2rp source is
@@ -346,29 +351,29 @@ and both `answers` and `scene_clips` are empty. Empty answers are not a
 successful empty scene, and the advisory result must not block save or rewrite
 authored data.
 
+The orchestrator's 02:04 ruling defers new Theme document, provenance and
+source-selection contracts. The existing main path is authoritative:
+imported `theme.json` enters `inputs.theme`, is materialized by the existing
+host, passes through the existing resolver, and arrives as `props.theme`;
+absence keeps the existing builtin default. Do not infer authority from a
+theme slug or caller-only value, and do not add a resolver, DTO, copied theme,
+or new producer requirement.
+
 Saving is renderer-free. Commit, reload, retry, rebase, undo, and history
 acceptance must work with Node, Root, and the renderer stopped. Preview and
 Scene availability are separate reports.
 
 ## Build, package and verify
 
-Use the immutable exact-d0a/c4d pairing: Agent source
-`d0a5072bbe7b7ce9489f43aa0a81027ec400343b` and its
-`remotion/package-lock.json` SHA-256
-`c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24`.
-Composition 0.0.13 is the corresponding 77-member artifact with SHA-256
-`9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`.
+The current Composition source is `tl/integration` commit
+`7bb54bbd64107e5090643ecca1e4d33164173e85`, tree
+`20467712e66dbadff4d562c0d5baae22b8c077a7`, with `origin/main` base
+`67b8aa3d0d6831d3e3504a340ff583c3da253707`. Its source-only delivery was
+verified to apply and reverse cleanly; this does not publish an npm 0.0.14
+archive. The immutable public13 artifact and its hash are recorded at the top
+of this README for the separate physical lane.
 
-The named immutable runtime request is
-`agent-remotion-viewing13-d0a5072b`. Its environment-generation attempt was
-refused because it ran Node 22.22.0/npm 10.9.4 instead of the required Node
-20.19.4/npm 10.8.2. The recorded host carrier is held for graph-ready and
-independent custody validation; do not treat it as a working environment until
-that validation passes. No duplicate install, extraction, or source copy is
-implied by this record.
-
-After the graph-ready worker validates the environment, the canonical checks
-from the real Composition root are:
+For a fresh checkout, the canonical checks from the real Composition root are:
 
 ```sh
 cd /home/user/work/composition
@@ -434,18 +439,54 @@ comparison and real Player/export frame/audio parity remain separate integration
 gates. The historical 0.0.11/0.0.12 package records remain historical; they are
 not setup instructions for the current route.
 
-## Current qualification boundary
+## M4 current evidence and qualification boundary
 
-The normal export fixture is pinned to the current Agent source `d0a5072b`
-(`21e84b7d` source handoff), Runtime producer `2c4ac180`, and Composition
-0.0.13. Its offline source staging, registry generation, typecheck, and bundle
-were recorded as passing. The central normal export has not produced an MP4:
-the latest attempt stopped before admission at the existing `/tmp` disk guard
-with `10,538,319,872` free bytes, below the required `10,737,418,240` (10 GiB).
-No MP4, frame/audio parity, or export certification follows from that attempt.
+The current source delivery recorded the following unchanged artifacts:
 
-Physical frame parity and physical audio parity, macOS playback, owner-film
-viewing, and whole-project ZIP delivery were not run here and are not claimed.
+- source patch: SHA-256 `327178ed354ed9f624addecd86f859820f0607b27d779d9f355adcce84f50063`;
+- source bundle: SHA-256 `f06812274384792bb6a3d5103448d3eada33ca6f869550ce463481f60e615981`;
+- manifest: SHA-256 `e4cad42b1106bbd85eb6d3440a6eba2c215d38d1e3ee0a392366cd68c3c6db5d`.
+
+The bundle head is the current 7bb source and requires the stated Main base.
+The current-source Composition suite was recorded as `84 passed, 0 failed,
+0 skipped` in central run `composition-full-1021014707-6851`. This page does
+not rerun that unchanged suite or the delivery proof.
+
+The approved Viewing census is a bounded source measurement, not a
+current-all-repo census, final M4 freeze, foundation claim, or size gate. Its
+honest tuple is:
+
+| scope | files | bytes | physical lines | nonblank lines |
+| --- | ---: | ---: | ---: | ---: |
+| exact Main baseline | 140 | 2,000,415 | 49,247 | 45,182 |
+| actual current home integrations | 197 | 2,227,916 | 53,657 | 49,316 |
+| current minus Main | +57 | +227,501 | +4,410 | +4,134 |
+
+That census measurement was taken before the final Composition 7bb source
+refresh and retains its measured identity distinction; it is not relabelled as
+a 7bb census. The included census heads were Agent
+`57d6635616f2982b814cfcc059b670ea1a7c9f2c` (tree
+`0174fd49bd175a726a44542d1d6e31bca13c0f02`), App
+`813a85106ecb4abbaf224081abe6c33b8dab0df7` (tree
+`2a19a78bb1bdfb3fd779f568a1b513b094318982`), and the then-current Composition
+`4788e107f183e0523a740b691a20eb8261d7183c` (tree
+`585e8c4784ee78ccbfbff4b6ce26f577b8eda05e`). Runtime was checked but excluded
+from this approved Viewing boundary.
+
+Gate 6 remains **OPEN**. The latest available authorized public13 physical
+attempt terminated before Gate 6 execution
+(`vw-m3-gate6-approved909-physical-execute-e2e-viewing-gate6-0129-1021013633-19275`;
+shell parsing failure), so it produced no render, frame/audio comparison, or
+parity result. The public13 artifact remains the immutable 0.0.13 hash above.
+The approved scanner 1.0.8 and installed carrier hashes remain unchanged:
+`204a7aac78177824219954574f67fcaf4c56ac81620d533ecb376030340c93ee` and
+`3dfd5c28a9be9ab809e6c1fe1e9a83fbf8417ea888afc1b10eec5f751023e990`.
+
+Physical frame/audio parity, owner-film viewing, a 0.0.14 archive, and the
+whole-project ZIP remain unclaimed. Material M4 needs are the fresh approved
+public13 Gate 6 run after the App ancestry guard passes, followed by delivery
+packaging and owner-film viewing; no unchanged delivery/full/census rerun is
+needed for this publication.
 
 ## Keyframe origin
 
