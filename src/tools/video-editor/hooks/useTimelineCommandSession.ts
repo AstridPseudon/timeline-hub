@@ -6,6 +6,7 @@ import { parseTimelineBundle } from '../data/typed/timelineBundle.ts';
 import { buildTimelineData, type TimelineData } from '../lib/timeline-data.ts';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
+import { projectClipSplitPreview } from '../commands/clipSplitGesture.ts';
 import { projectGenericPatchPreview } from '../commands/genericPatchCapture.ts';
 import { projectClipTrimPreview } from '../commands/clipTrimGesture.ts';
 import type { TimelineConfig, AssetRegistry } from '../types/index.ts';
@@ -119,9 +120,11 @@ export function useTimelineCommandSession(options: {
         let data = await buildTimelineData(config, registry, resolve,
           context.configVersionRef.current + 1, source?.itemsBySchemaRef, head, source?.transcriptReferences);
         for (const preview of previews) {
-          const trimmed = projectClipTrimPreview(preview, data);
-          const native = trimmed ?? projectGenericPatchPreview(preview, data);
-          const compiled = trimmed ? { valid: true, nextData: trimmed }
+          const split = projectClipSplitPreview(preview, data);
+          const trimmed = split ? undefined : projectClipTrimPreview(preview, data);
+          const native = split ?? trimmed ?? projectGenericPatchPreview(preview, data);
+          const compiled = split ? { valid: true, nextData: split }
+            : trimmed ? { valid: true, nextData: trimmed }
             : native ? { valid: true, nextData: native } : compileTimelinePatch(preview, data);
           if (!compiled.valid || !compiled.nextData) throw new Error('Recovered move preview is unavailable');
           data = compiled.nextData;
@@ -163,9 +166,11 @@ export function useTimelineCommandSession(options: {
           if (disposed) throw new Error('Timeline command session is closed');
           const { commit } = latest.current;
           if (!commit.dataRef.current) throw new Error('Timeline is not loaded');
-          const trimmed = projectClipTrimPreview(patch, commit.dataRef.current);
-          const native = trimmed ?? projectGenericPatchPreview(patch, commit.dataRef.current);
-          const compiled = trimmed ? { valid: true, nextData: trimmed }
+          const split = projectClipSplitPreview(patch, commit.dataRef.current);
+          const trimmed = split ? undefined : projectClipTrimPreview(patch, commit.dataRef.current);
+          const native = split ?? trimmed ?? projectGenericPatchPreview(patch, commit.dataRef.current);
+          const compiled = split ? { valid: true, nextData: split }
+            : trimmed ? { valid: true, nextData: trimmed }
             : native ? { valid: true, nextData: native } : compileTimelinePatch(patch, commit.dataRef.current);
           if (!compiled.valid || !compiled.nextData) throw new Error('Move preview is unavailable');
           projectGeneration++;
@@ -307,6 +312,16 @@ export function useTimelineCommandSession(options: {
           capture(input) { requireCleanDuplicate(); return occurrenceDuplicatePort.capture(input); },
           finish(basis) { requireCleanDuplicate(); return occurrenceDuplicatePort.finish(basis); },
           submit(input) { requireCleanDuplicate(); occurrenceDuplicatePort.submit(input); },
+        };
+        const splitPort = session.clipSplitPort;
+        const requireCleanSplit = () => {
+          if (!latest.current.legacyClean()) throw new Error('Wait for earlier timeline saves before splitting');
+        };
+        session.clipSplitPort = {
+          supports: splitPort.supports,
+          capture(input) { requireCleanSplit(); return splitPort.capture(input); },
+          finish(basis) { requireCleanSplit(); return splitPort.finish(basis); },
+          submit(input) { requireCleanSplit(); splitPort.submit(input); },
         };
         const labelPort = session.trackLabelPort;
         const requireCleanLabelEdit = () => {
@@ -451,6 +466,7 @@ export function useTimelineCommandSession(options: {
     parentClipAddMediaPort: sessionRef.current?.parentClipAddMediaPort,
     parentClipSwapMediaPort: sessionRef.current?.parentClipSwapMediaPort,
     occurrenceDuplicatePort: sessionRef.current?.occurrenceDuplicatePort,
+    clipSplitPort: sessionRef.current?.clipSplitPort,
     retry, undo, flush, recover, useLatest, keepLabelChanges };
 }
 export type TimelineCommandSessionSurface = Pick<ReturnType<typeof useTimelineCommandSession>, 'state' | 'retry' | 'recover'>
