@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T13:36:49Z | dispatcher heartbeat 1322s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 29m -->
+<!-- viewing | 2026-10-21T13:42:53Z | dispatcher heartbeat 1686s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 35m -->
 # viewing — 2026-10-21 13:07 UTC
 This round: VW-AUDIO-STEP source row closed as DELETED; README merged; seven reviewed Agent source units requested for HOME integration. No new physical pass. D09b/c are DEFERRED; D08 and intentional adapters KEEP.
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN and manager rules re-read; inbox ACK through lead12:44 and App2 popup12:38. Owner lighter interim proofs and farm rule applied.
