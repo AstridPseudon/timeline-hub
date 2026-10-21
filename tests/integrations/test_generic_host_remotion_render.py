@@ -614,8 +614,9 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
         )
         attempt = tmp_path / "materialized-attempt"
         values = host._materialize_inputs(
-            {"spec": task.spec, "input_object_ids": task.input_object_ids},
+            task.spec,
             attempt,
+            authorized_input_object_ids=task.input_object_ids,
             file_input_names=frozenset(
                 port.name for port in record.definition.inputs if port.type == "file"
             ),
