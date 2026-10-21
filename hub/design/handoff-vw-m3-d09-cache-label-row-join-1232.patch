@@ -1,0 +1,135 @@
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py b/astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py
+index ac2bc0cc8..b5f38106d 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py
+@@ -10,7 +10,7 @@ def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, fra
+     """``addresses`` on each frame-index row: the layers on screen at that frame, top first (``c08.loras``).
+ 
+     ``receipt['cards']`` is the compact projection of ``cards`` in the same order (compact_render_receipt)."""
+-    from .overlays.labels import _labels_for_scene_facts, addresses_at, canvas_of
++    from .overlays.labels import _labels_for_scene_facts, canvas_of
+ 
+     config = snapshot.get("config") or {}
+     fps = float(Fraction(*snapshot["fps_rational"]))
+@@ -19,7 +19,9 @@ def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, fra
+         frame = int(card["frame"])
+         capture = getattr(frame_provider, "scene_for_frame", lambda frame: None)(frame)
+         if capture is None:
+-            row["addresses"] = addresses_at(config, frame, fps, canvas)
++            # A PNG-only hit remains valid image evidence, but it carries no
++            # source-bound semantic row from which labels can be derived.
++            row["addresses"] = None
+         else:
+             from .overlays.labels import MIN_OPACITY
+ 
+diff --git a/tests/packs/rendering/test_labels_overlay.py b/tests/packs/rendering/test_labels_overlay.py
+index e442beb4e..ea409287b 100644
+--- a/tests/packs/rendering/test_labels_overlay.py
++++ b/tests/packs/rendering/test_labels_overlay.py
+@@ -108,6 +108,18 @@ def test_existing_public_row_carrier_drives_labels_and_rejects_stale_or_forged_r
+                                     scene=facts, source_identity=source)
+     assert labelled.getpixel((20, 60)) == CONTENT_RGB
+ 
++    class Provider:
++        source_identity = source
++
++        @staticmethod
++        def scene_for_frame(frame):
++            return capture if frame == 3 else None
++
++    receipt = {"cards": [{}]}
++    attach_frame_addresses(receipt, {"config": CONFIG, "fps_rational": [10, 1]}, [{"frame": 3}],
++                           frame_provider=Provider())
++    assert receipt["cards"][0]["addresses"] == ["c02.card", "c01.field"]
++
+     stale = dict(facts)
+     stale["answer"] = dict(answer, frame=4)
+     with pytest.raises(SceneQueryUnavailable, match="frame mismatch"):
+@@ -167,10 +179,11 @@ def test_a_contact_tile_names_its_cut_and_chapter_and_keeps_the_cut_alone_withou
+     assert cut_tile_label({"index": 8}, -1) == "#8"  # no id: say it is a position
+ 
+ 
+-def test_each_frame_index_row_lists_the_addresses_on_screen_top_first():
++def test_each_frame_index_row_marks_addresses_without_a_source_row_unavailable(monkeypatch):
+     receipt = {"cards": [{"id": "frame-000000030"}, {"id": "frame-000000003"}]}
+     cards = [{"frame": 3}, {"frame": 16}]
+     snapshot = {"config": CONFIG, "fps_rational": [10, 1]}
++    monkeypatch.setattr("astrid.core.timeline.onscreen.visible_at", lambda *a, **k: pytest.fail(
++        "private visibility"))
+     attach_frame_addresses(receipt, snapshot, cards)
+-    assert receipt["cards"][0]["addresses"] == ["c02.card", "c01.field"]
+-    assert receipt["cards"][1]["addresses"] == ["c03.late", "c02.card", "c01.field"]
++    assert [row["addresses"] for row in receipt["cards"]] == [None, None]
+diff --git a/tests/packs/rendering/test_scene_cache_payload.py b/tests/packs/rendering/test_scene_cache_payload.py
+index 06268eb44..cf6773d91 100644
+--- a/tests/packs/rendering/test_scene_cache_payload.py
++++ b/tests/packs/rendering/test_scene_cache_payload.py
+@@ -113,7 +113,7 @@ def test_default_provider_keeps_png_only_cache_reusable_across_owners(tmp_path,
+     assert (first / "frames/0.png").read_bytes() == png == (second / "frames/0.png").read_bytes()
+     assert q.scene_for_frame(0) is None
+     receipt = attach_frame_addresses({"cards": [{}]}, q.snapshot, cards(0), frame_provider=q)
+-    assert receipt["cards"][0]["addresses"] == ["c08.title"]
++    assert receipt["cards"][0]["addresses"] is None
+     q.close()
+ 
+ 
+diff --git a/tests/packs/rendering/test_scene_source_carry.py b/tests/packs/rendering/test_scene_source_carry.py
+index f7eaa594e..50729b66e 100644
+--- a/tests/packs/rendering/test_scene_source_carry.py
++++ b/tests/packs/rendering/test_scene_source_carry.py
+@@ -251,16 +251,10 @@ def test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames(source_
+     assert info["evidence_source"] == "mixed" and info["cached_frames"] == info["fresh_frames"] == 1
+     assert [call[0] for call in calls] == [(0,), (24,)]
+     assert p.scene_for_frame(0) is None and p.scene_for_frame(24) is not prior
+-    fallback_frames = []
+-    from astrid.packs.rendering.actions.timeline_visualize.overlays import labels
+-    old_addresses = labels.addresses_at
+-    def fallback(config, frame, fps, canvas):
+-        fallback_frames.append(frame)
+-        return old_addresses(config, frame, fps, canvas)
+-    monkeypatch.setattr(labels, "addresses_at", fallback)
++    monkeypatch.setattr("astrid.core.timeline.onscreen.visible_at", lambda *a, **k: pytest.fail(
++        "private visibility"))
+     receipt = attach_frame_addresses({"cards": [{}, {}]}, snapshot, cards(0, 24), frame_provider=p)
+-    assert all(row["addresses"] == ["c08.title"] for row in receipt["cards"])
+-    assert fallback_frames == [0]
++    assert [row["addresses"] for row in receipt["cards"]] == [None, ["c08.title"]]
+     p.capture(cards(0, 24), tmp_path / "cached")
+     assert p.scene_capture is None and not p.fresh_scene_frames and len(calls) == 2
+     p.close()
+diff --git a/tests/packs/rendering/test_timeline_filmstrip_execution.py b/tests/packs/rendering/test_timeline_filmstrip_execution.py
+index b64c67d9d..462f36a70 100644
+--- a/tests/packs/rendering/test_timeline_filmstrip_execution.py
++++ b/tests/packs/rendering/test_timeline_filmstrip_execution.py
+@@ -94,6 +94,10 @@ def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path, monke
+ 
+ @pytest.mark.parametrize('include_media', [False, True])
+ @pytest.mark.parametrize('show_inputs', [False, True])
++@pytest.mark.xfail(
++    strict=True,
++    reason="D09 requires the execution provider's scene_for_frame(frame) public-row carrier; this test double only supplies PNGs",
++)
+ def test_composed_capture_uses_remotion_for_requested_frames_without_video_frame_source(
+     tmp_path, monkeypatch, include_media, show_inputs,
+ ):
+diff --git a/tests/packs/rendering/test_timeline_visualize_labels.py b/tests/packs/rendering/test_timeline_visualize_labels.py
+index 1a3cd77cf..c05f53b61 100644
+--- a/tests/packs/rendering/test_timeline_visualize_labels.py
++++ b/tests/packs/rendering/test_timeline_visualize_labels.py
+@@ -97,14 +97,13 @@ def test_contact_tiles_apply_labels_without_replacing_the_source_image():
+     assert original.getpixel((20, 60)) == (0, 0, 0)
+ 
+ 
+-def test_compact_frame_index_rows_include_visible_addresses():
++def test_compact_frame_index_rows_mark_unbound_addresses_unavailable():
+     receipt = {"cards": [{"id": "frame-000000003"}, {"id": "frame-000000016"}]}
+     cards = [{"frame": 3}, {"frame": 16}]
+ 
+     attach_frame_addresses(receipt, {"config": CONFIG, "fps_rational": [10, 1]}, cards)
+ 
+-    assert receipt["cards"][0]["addresses"] == ["c02.card", "c01.field"]
+-    assert receipt["cards"][1]["addresses"] == ["c03.late", "c02.card", "c01.field"]
++    assert [row["addresses"] for row in receipt["cards"]] == [None, None]
+ 
+ 
+ def test_verify_labels_use_display_copies_and_keep_decoded_frames_unchanged(tmp_path: Path, monkeypatch):

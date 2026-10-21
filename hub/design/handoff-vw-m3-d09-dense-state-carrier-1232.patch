@@ -1,0 +1,199 @@
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py b/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+index 4b077dabd..a9fd059a8 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/layers/builtin.py
+@@ -287,7 +287,7 @@ def render_curves(ctx: LayerContext) -> LayerResult:
+             public_scene = ctx.shared.get("public_scene")
+             public_frames = sorted(public_scene) if isinstance(public_scene, Mapping) else ()
+             if public_frames:
+-                public = _public_mouth_facts(ctx, element, public_frames)
++                public = _public_mouth_facts(ctx, element, public_frames, allow_default_motion=True)
+                 public_states = public["states"] if public else {}
+         samples = []
+         for frame in frames:
+@@ -378,19 +378,22 @@ def render_curves(ctx: LayerContext) -> LayerResult:
+ 
+ # ---------------------------------------------------------------- lipsync (data + pixels)
+ 
+-def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]) -> dict[str, Any] | None:
+-    """Adapt retained public presenter rows for this private layer only."""
++def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int], *,
++                        allow_default_motion: bool = False) -> dict[str, Any] | None:
++    """Adapt retained public presenter rows for the selected consumers."""
+     if len(frames) < 3:
+         return None
+     # Partial or absent raw anchors are not equivalent to the private model's
+-    # crop. Keep those inputs on the established fallback path.
++    # crop. Keep those inputs on the established fallback path for lipsync and
++    # curves; only the omitted default can use its independent motion state.
+     params = presenter.params if isinstance(presenter.params, Mapping) else {}
+     raw_mouth = params.get("mouth")
+-    if (not isinstance(raw_mouth, Mapping)
++    if ((not allow_default_motion or "mouth" in params)
++            and (not isinstance(raw_mouth, Mapping)
+             or any(type(raw_mouth.get(key)) is not int for key in ("x", "y", "w"))
+             or not 0 <= raw_mouth["x"] < 320
+             or not 0 <= raw_mouth["y"] < 180
+-            or not 1 <= raw_mouth["w"] <= 40):
++            or not 1 <= raw_mouth["w"] <= 40)):
+         return None
+     public_scene = ctx.shared.get("public_scene")
+     if (ctx.shared.get("public_scene_evidence_mode") not in {"fresh_capture", "cache"}
+@@ -437,18 +440,21 @@ def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]
+             return None
+         states[frame] = state
+         rows.append(layer)
+-    zero_rows = [layer for layer in rows if layer.get("contentFrame") == 0]
+-    if len(zero_rows) != 1:
+-        return None
+-    mouth = ((zero_rows[0].get("diagnostics") or {}).get("mouth")
+-             if isinstance(zero_rows[0].get("diagnostics"), Mapping) else None)
+-    rect = mouth.get("rect") if isinstance(mouth, Mapping) and mouth.get("status") == "known" else None
+-    if (not isinstance(rect, Mapping)
+-            or any(type(rect.get(key)) not in (int, float) or isinstance(rect.get(key), bool)
+-                   or not math.isfinite(rect[key]) for key in ("x", "y", "width", "height"))
+-            or rect["width"] <= 0 or rect["height"] <= 0):
+-        return None
+-    return {"rect": tuple(float(rect[key]) for key in ("x", "y", "width", "height")),
++    rect = None
++    if not allow_default_motion:
++        zero_rows = [layer for layer in rows if layer.get("contentFrame") == 0]
++        if len(zero_rows) != 1:
++            return None
++        mouth = ((zero_rows[0].get("diagnostics") or {}).get("mouth")
++                 if isinstance(zero_rows[0].get("diagnostics"), Mapping) else None)
++        rect = mouth.get("rect") if isinstance(mouth, Mapping) and mouth.get("status") == "known" else None
++        if (not isinstance(rect, Mapping)
++                or any(type(rect.get(key)) not in (int, float) or isinstance(rect.get(key), bool)
++                       or not math.isfinite(rect[key]) for key in ("x", "y", "width", "height"))
++                or rect["width"] <= 0 or rect["height"] <= 0):
++            return None
++    return {"rect": (tuple(float(rect[key]) for key in ("x", "y", "width", "height"))
++                      if rect is not None else None),
+             "basis": {"width": basis["width"], "height": basis["height"]},
+             "states": states}
+ 
+diff --git a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+index e3c257e1a..73918261c 100644
+--- a/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
++++ b/tests/packs/rendering/test_presenter_selected_cut_aggregate.py
+@@ -96,12 +96,39 @@ def public_zero(presenter_query, retained):
+     return answer["zero"]
+ 
+ 
++def _public_rows_for_case(presenter_query, case):
++    script = """
++import fs from 'node:fs';
++import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
++
++const input = JSON.parse(fs.readFileSync(0, 'utf8'));
++process.argv[1] = 'query.mjs';
++const {prepareHostScene} = await import('./query.mjs');
++const scene = prepareHostScene(input.props, input.basis);
++console.log(JSON.stringify(input.frames.map(frame => querySceneFrame(scene, frame))));
++"""
++    result = subprocess.run(
++        [str(presenter_query.node), "--input-type=module", "-e", script],
++        cwd=presenter_query.project, env=presenter_query.env,
++        input=json.dumps({"props": case["props"], "basis": case["basis"], "frames": case["frames"]}),
++        capture_output=True, text=True, timeout=60,
++    )
++    assert result.returncode == 0, result.stdout + result.stderr
++    return json.loads(result.stdout)
++
++
+ def _public_provider(case, rows, monkeypatch, *, mode="fresh"):
+     props = deepcopy(case["props"])
+     rows = deepcopy(rows)
+     by_frame = {row["frame"]: row for row in rows}
+-    monkeypatch.setattr(scene_answers, "host_frames_at",
+-                        lambda _props, _basis, frames: [by_frame[frame] for frame in frames])
++
++    def host_frames(current_props, current_basis, frames):
++        assert current_props == props
++        assert current_basis == case["basis"]
++        assert tuple(frames) == tuple(case["frames"])
++        return [by_frame[frame] for frame in frames]
++
++    monkeypatch.setattr(scene_answers, "host_frames_at", host_frames)
+     capture = CaptureSceneLabels(source_identity="fresh-presenter", props=props,
+                                  basis=case["basis"], addresses={"presenter": "presenter"})
+     capture.observe(props, tuple(case["frames"]))
+@@ -179,6 +206,76 @@ def test_public_mouth_rows_drive_curve_and_missing_row_keeps_private_fallback(
+     assert samples[1] == {"closed": 0.0, "half": 0.5, "open": 1.0}[private_missing]
+ 
+ 
++def test_default_presenter_curve_uses_public_motion_without_legacy_roi(
++        presenter_query, retained, monkeypatch):
++    case = deepcopy(retained)
++    case["props"]["timeline"]["clips"][0]["params"].pop("mouth")
++    public_rows = _public_rows_for_case(presenter_query, case)
++    provider = _public_provider(case, public_rows, monkeypatch)
++    ctx = context(case, frame_provider=provider)
++    presenter = ctx.elements[0]
++    public_states = {row["frame"]: {0.0: "closed", 0.5: "half", 1.0: "open"}[
++        row["layers"][0]["diagnostics"]["motion"]["mouth"]]
++                     for row in public_rows}
++    original_mouth_state = model.mouth_state
++    samples = {}
++
++    def private_state(element, frame, fps):
++        if element.id == presenter.id and frame in public_states:
++            pytest.fail("default presenter curve consulted private mouth_state")
++        return original_mouth_state(element, frame, fps)
++
++    original_props_at = model.props_at
++
++    def record_props(element, t, fps, **kwargs):
++        props = original_props_at(element, t, fps, **kwargs)
++        if element.id == presenter.id and "mouth" in props:
++            samples[int(math.floor(t * fps))] = props["mouth"]
++        return props
++
++    monkeypatch.setattr(model, "mouth_state", private_state)
++    monkeypatch.setattr(model, "props_at", record_props)
++    assert builtin._public_mouth_facts(ctx, presenter, [0, 3, 4, 5]) is None
++    builtin.render_curves(ctx)
++
++    assert {frame: samples[frame] for frame in public_states} == {
++        frame: {"closed": 0.0, "half": 0.5, "open": 1.0}[state]
++        for frame, state in public_states.items()
++    }
++    assert public_states[0] == "closed" and samples[0] == 0.0
++
++
++@pytest.mark.parametrize("raw_mouth", [None, {"x": "bad", "y": None, "w": 900}])
++def test_explicit_invalid_presenter_mouth_keeps_private_curve_fallback(
++        presenter_query, retained, monkeypatch, raw_mouth):
++    case = deepcopy(retained)
++    case["props"]["timeline"]["clips"][0]["params"]["mouth"] = raw_mouth
++    public_rows = _public_rows_for_case(presenter_query, case)
++    provider = _public_provider(case, public_rows, monkeypatch)
++    ctx = context(case, frame_provider=provider)
++    presenter = ctx.elements[0]
++
++    assert builtin._public_mouth_facts(
++        ctx, presenter, case["frames"], allow_default_motion=True,
++    ) is None
++
++    original = model.mouth_state
++    expected = {frame: {"closed": 0.0, "half": 0.5, "open": 1.0}[
++        original(presenter, frame, ctx.fps)] for frame in case["frames"]}
++    samples = {}
++    original_props_at = model.props_at
++
++    def record_props(element, t, fps, **kwargs):
++        props = original_props_at(element, t, fps, **kwargs)
++        if element.id == presenter.id and "mouth" in props:
++            samples[int(math.floor(t * fps))] = props["mouth"]
++        return props
++
++    monkeypatch.setattr(model, "props_at", record_props)
++    builtin.render_curves(ctx)
++    assert {frame: samples[frame] for frame in expected} == expected
++
++
+ def test_missing_presenter_override_preserves_props_dispatch(retained, monkeypatch):
+     presenter = context(retained).elements[0]
+     dispatched = {"custom": 1.0}
+
