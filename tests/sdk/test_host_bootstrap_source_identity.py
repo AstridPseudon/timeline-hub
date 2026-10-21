@@ -465,7 +465,7 @@ def test_installed_profile_refuses_checkout_origins_from_isolated_probe(monkeypa
     seen = []
     def probe(argv, **kwargs):
         seen.append((argv, kwargs))
-        return subprocess.CompletedProcess(argv, 0, json.dumps({key: "/foreign/source.py" for key in ["host", "child", "action", "client", "sdk"]}), "")
+        return subprocess.CompletedProcess(argv, 0, json.dumps({key: "/foreign/source.py" for key in ["host", "child", "action", "client", "sdk", "runtime_protocol", "runtime_protocol.platform", "astrid_runtime"]}), "")
     monkeypatch.setattr(host_bootstrap.subprocess, "run", probe)
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="actual installed"):
         host_bootstrap._installed_execution_origins(tmp_path, "/selected/python")
@@ -485,17 +485,17 @@ def test_installed_profile_does_not_use_ambient_runtime_checkout(monkeypatch, tm
             argv,
             0,
             json.dumps({key: str(tmp_path / "installed" / f"{key}.py")
-                        for key in ["host", "child", "action", "client", "sdk"]}),
+                        for key in ["host", "child", "action", "client", "sdk", "runtime_protocol", "runtime_protocol.platform", "astrid_runtime"]}),
             "",
         )
 
     monkeypatch.setattr(host_bootstrap.subprocess, "run", probe)
     installed = tmp_path / "installed"
     installed.mkdir()
-    for name in ("host", "child", "action", "client", "sdk"):
+    for name in ("host", "child", "action", "client", "sdk", "runtime_protocol", "runtime_protocol.platform", "astrid_runtime"):
         (installed / f"{name}.py").write_text("# installed\n", encoding="utf-8")
     origins = host_bootstrap._installed_execution_origins(installed, "/selected/python")
-    assert set(origins) == {"host", "child", "action", "client", "sdk"}
+    assert set(origins) == {"host", "child", "action", "client", "sdk", "runtime_protocol", "runtime_protocol.platform", "astrid_runtime"}
     assert "PYTHONPATH" not in seen[0][1]["env"]
     assert "ASTRID_RUNTIME_CHECKOUT" not in seen[0][1]["env"]
 

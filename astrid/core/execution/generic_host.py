@@ -44,6 +44,11 @@ from runtime_protocol.dirfd import filesystem as os
 
 from astrid.core.execution.pipe_io import PipeReader, PipeWriter, close_pipe_workers
 from astrid.core.execution.platform_helpers import owned_by_current_user
+from astrid.core.source_identity import (
+    _source_digest,
+    source_checkout_closure,
+    source_checkout_closure_digest,
+)
 
 # Startup observations use only the existing private stderr sink. Regular-file
 # latency is not bounded; this diagnostic never changes descriptor flags.
@@ -2115,18 +2120,6 @@ def _hivemind_source_preflight(record: "CapabilityRecord") -> dict[str, Any] | N
     return {"ok": True, "checkout": str(checkout), "revision": revision}
 
 
-def _source_digest(root: Path) -> str:
-    """Hash the complete executor source tree without retaining a source path in a task."""
-    entries: list[tuple[str, str]] = []
-    if root.is_file():
-        return hashlib.sha256(root.read_bytes()).hexdigest()
-    for path in sorted(root.rglob("*")):
-        if not path.is_file() or "__pycache__" in path.parts:
-            continue
-        entries.append((str(path.relative_to(root)), hashlib.sha256(path.read_bytes()).hexdigest()))
-    return _canonical_digest(entries)
-
-
 def _attempt_tree_bytes(root: Path) -> int:
     """Count owned attempt bytes without following symlink escapes."""
     total = 0
@@ -4109,50 +4102,6 @@ def source_checkout_digest(checkout: str | Path) -> str:
     if any(path.is_symlink() for path in pack_root.rglob("*")):
         raise ValueError("source checkout pack root contains a symlink")
     return _source_digest(pack_root)
-
-
-def source_checkout_closure(checkout: str | Path) -> dict[str, Any]:
-    """Measure the executable host closure owned by this checkout.
-
-    The legacy pack digest remains the capability-admission identity.  This
-    separate receipt covers the process host, Astrid core, SDK/bootstrap,
-    package entrypoints, launcher, and vendored workspace-client files that
-    can change what an admitted executable does.
-    """
-    root = Path(checkout).expanduser().resolve()
-    components = {
-        "host": root / "astrid" / "core" / "execution" / "generic_host.py",
-        "core": root / "astrid" / "core",
-        "sdk": root / "astrid" / "sdk",
-        "launcher": root / "astrid" / "omp_agent.py",
-        "astrid_entrypoint": root / "astrid" / "__init__.py",
-        "astrid_version": root / "astrid" / "version.py",
-        "astrid_main": root / "astrid" / "__main__.py",
-        "astrid_runtime_cli": root / "astrid" / "runtime_cli.py",
-        "vendored_workspace_client": root / "astrid_runtime_client",
-    }
-    measured: list[dict[str, str]] = []
-    for name, path in components.items():
-        if path.is_symlink() or not path.exists():
-            raise ValueError(f"source closure component is missing or symlinked: {name}")
-        if path.is_dir() and any(child.is_symlink() for child in path.rglob("*")):
-            raise ValueError(f"source closure component contains a symlink: {name}")
-        measured.append({
-            "component": name,
-            "path": str(path.relative_to(root)),
-            "sha256": _source_digest(path),
-        })
-    measured.sort(key=lambda item: item["component"])
-    return {
-        "schema_version": 1,
-        "components": measured,
-        "digest": _canonical_digest(measured),
-    }
-
-
-def source_checkout_closure_digest(checkout: str | Path) -> str:
-    """Return the deterministic digest for the executable source closure."""
-    return str(source_checkout_closure(checkout)["digest"])
 
 
 def process_birth_identity(pid: int | None = None) -> str:
