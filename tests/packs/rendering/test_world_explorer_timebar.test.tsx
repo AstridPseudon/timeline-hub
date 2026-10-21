@@ -1,11 +1,18 @@
 // @vitest-environment jsdom
 import { createElement } from 'react';
 import { cleanup, createEvent, fireEvent, render } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TimeBar } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/TimeBar';
 
 afterEach(() => {
   cleanup();
+});
+
+// Label fit is measured on a canvas; jsdom has none, so a fixed 5 px a character stands in for it.
+beforeAll(() => {
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+    { font: '', measureText: (text: string) => ({ width: text.length * 5 }) } as unknown as CanvasRenderingContext2D,
+  );
 });
 
 // A 10 s bar: the step is span / 50 = 0.2 s, Shift steps five times that.
@@ -162,5 +169,56 @@ describe('TimeBar', () => {
     expect(event.defaultPrevented).toBe(false);
     fireEvent.keyDown(slider, { key: 'Home' });
     expect(view.onSeek).not.toHaveBeenCalled();
+  });
+
+  it('with no markers the bar is 18 px tall and has no label lane', () => {
+    const view = bar();
+    const root = view.container.querySelector('[data-time-bar]') as HTMLElement;
+    expect(root.className).toContain('h-[18px]');
+    expect(root.className).not.toContain('h-11');
+    expect(view.getByRole('slider', { name: 'Travel position' }).className).toContain('top-0');
+  });
+
+  it('with markers the bar keeps the 26 px label lane', () => {
+    const view = bar({ markers: [{ key: 'dawn', from: 2, to: 2, title: 'Dawn' }] });
+    const root = view.container.querySelector('[data-time-bar]') as HTMLElement;
+    expect(root.className).toContain('h-11');
+    expect(view.getByRole('slider', { name: 'Travel position' }).className).toContain('top-[26px]');
+  });
+
+  it('a label is drawn only when its whole title fits its room, and never truncated', () => {
+    // 5 px a character. At 320 px: Dawn (20 px) has 26 px before the next mark, Shooting star (65 px) has 26 px, Late has the rest.
+    const view = bar({
+      markers: [
+        { key: 'dawn', from: 0, to: 0, title: 'Dawn' },
+        { key: 'star', from: 1, to: 1, title: 'Shooting star' },
+        { key: 'late', from: 2, to: 2, title: 'Late' },
+      ],
+    });
+    const labelOf = (name: string) => view.getByRole('button', { name }).querySelector('span') as HTMLElement;
+    expect(labelOf('Dawn').dataset.label).toBe('shown');
+    expect(labelOf('Shooting star').dataset.label).toBe('hover');
+    expect(labelOf('Shooting star').className).toContain('hidden');
+    expect(labelOf('Late').dataset.label).toBe('shown');
+    for (const span of view.container.querySelectorAll('[data-event-marker] > span')) {
+      expect(span.textContent).not.toContain('…');
+      expect(span.className).not.toContain('truncate');
+    }
+  });
+
+  it('a point marker has a 16 px hit area centred on its tick', () => {
+    const view = bar({ markers: [{ key: 'dawn', from: 5, to: 5, title: 'Dawn' }] });
+    const dawn = view.getByRole('button', { name: 'Dawn' });
+    expect(dawn.style.width).toBe('16px');
+    // The tick sits at the centre: 320 px * 0.5 = 160 px, so the button starts 8 px left of it.
+    expect(dawn.style.left).toBe('152px');
+  });
+
+  it('the playhead knob is drawn before the range brackets, so the brackets stay on top', () => {
+    const view = bar({ time: 2, range: { from: 2, to: 6 } });
+    const playhead = view.container.querySelector('[data-playhead]') as HTMLElement;
+    const start = view.getByRole('slider', { name: 'Range start' });
+    // DOCUMENT_POSITION_FOLLOWING: the bracket comes after the knob in document order.
+    expect(playhead.compareDocumentPosition(start) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
