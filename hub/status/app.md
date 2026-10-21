@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T05:07:00Z | dispatcher heartbeat 2s | live 5 (sol 0, luna 5, other 0) | busy30 30 | status age 3m -->
+<!-- app | 2026-10-21T05:13:26Z | dispatcher heartbeat 2s | live 5 (sol 0, luna 5, other 0) | busy30 32 | status age 9m -->
 # app — 2026-10-21 05:01 UTC
 Milestone: M1 RECORDED. M2 writer deletions and Gate 6 physical parity remain OPEN.
 Integrated: App tl/integration bc6f9dd39; latest merge removes unused private UndoEntry.label. Full remains frozen on e1e153091 / tree aa20a99731b91c2fa5e36b258c131147f3d7d651. Main860 ancestor, published Runtime 0.2.14 producer95bd, Composition13; genuine Agent091aa vendor output retained. Native initializer activated1557 after actual7782 PASS1 and independent review; original two native tests and61 assertions preserved.
