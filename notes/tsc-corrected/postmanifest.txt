@@ -1,0 +1,20 @@
+post_tsc_source_commit=bc6f9dd39c7e5154ddf075cb87b7202cf5702e65
+post_tsc_source_tree=4cd13d09b7cffd60612d8521f1a2921ca4e762d2
+post_tsc_worktree_status=?? .app-tsc-private13-src/
+?? notes/
+post_tsc_package_sha256=a4dc9fcc02b1769ba8472f551349f7875774b07ad0830c7260eb88d2db8292fd
+post_tsc_lock_sha256=7f1bfcea48cef38d4c6f1163aa34190b8d5e71c9f08c7378e01a962d6696fc14
+post_tsc_runtime_lock_sha256=770352eaf1d015e90fca0ed2f1893749b73b69356ca82a7223b2573276fe485e
+post_tsc_archive_sha256=9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+post_tsc_archive_size_bytes=58477
+post_tsc_graph_node_modules=/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules
+post_tsc_graph_package=/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition
+post_tsc_graph_package_version=0.0.13
+post_tsc_graph_typescript=/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/typescript/bin/tsc
+post_tsc_graph_at_types_entry=/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@types
+post_tsc_graph_at_types_entry_is_symlink=true
+post_tsc_exit=2
+post_tsc_stdout_sha256=40f907c8255ed842201fbf208f793b764a70f6576c25db32696ec3a23f0b6db9
+post_tsc_stderr_sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+post_tsc_error_lines=1
+post_tsc_stderr_bytes=0

@@ -1,0 +1,24 @@
+PREFLIGHT_STATUS=PASS
+cwd=/home/user/work/wt/app-m4-correct-cwd-public13-one-diagnostics-r7/.app-tsc-private13-src
+cwd_pwd_P=/home/user/work/wt/app-m4-correct-cwd-public13-one-diagnostics-r7/.app-tsc-private13-src
+config=/home/user/work/wt/app-m4-correct-cwd-public13-one-diagnostics-r7/.app-tsc-private13-src/tsconfig.app.json
+config_realpath=/home/user/work/wt/app-m4-correct-cwd-public13-one-diagnostics-r7/.app-tsc-private13-src/tsconfig.app.json
+ts_api=/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/typescript/lib/typescript.js
+ts_version=5.9.3
+program_root_names=2549
+package_json=/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/package.json
+package_version=0.0.13
+declaration_origin=/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.d.ts
+runtime_origin=/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.js
+graph_node_modules=/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules
+--- module resolutions ---
+{"importer":"src/tools/video-editor/compositions/AudioTrack.tsx","importerRealpath":"/home/user/work/wt/app-m4-correct-cwd-public13-one-diagnostics-r7/.app-tsc-private13-src/src/tools/video-editor/compositions/AudioTrack.tsx","resolvedFileName":"/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.d.ts","resolvedRealpath":"/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.d.ts","isExternalLibraryImport":true}
+{"importer":"src/tools/video-editor/compositions/VisualClip.tsx","importerRealpath":"/home/user/work/wt/app-m4-correct-cwd-public13-one-diagnostics-r7/.app-tsc-private13-src/src/tools/video-editor/compositions/VisualClip.tsx","resolvedFileName":"/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.d.ts","resolvedRealpath":"/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.d.ts","isExternalLibraryImport":true}
+{"importer":"src/tools/video-editor/compositions/compiledAudioSourceClock.ts","importerRealpath":"/home/user/work/wt/app-m4-correct-cwd-public13-one-diagnostics-r7/.app-tsc-private13-src/src/tools/video-editor/compositions/compiledAudioSourceClock.ts","resolvedFileName":"/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.d.ts","resolvedRealpath":"/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.d.ts","isExternalLibraryImport":true}
+{"importer":"src/tools/video-editor/compositions/playerEvaluation.ts","importerRealpath":"/home/user/work/wt/app-m4-correct-cwd-public13-one-diagnostics-r7/.app-tsc-private13-src/src/tools/video-editor/compositions/playerEvaluation.ts","resolvedFileName":"/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.d.ts","resolvedRealpath":"/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.d.ts","isExternalLibraryImport":true}
+{"importer":"src/tools/video-editor/lib/config-utils.ts","importerRealpath":"/home/user/work/wt/app-m4-correct-cwd-public13-one-diagnostics-r7/.app-tsc-private13-src/src/tools/video-editor/lib/config-utils.ts","resolvedFileName":"/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.d.ts","resolvedRealpath":"/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/@banodoco/timeline-composition/dist/evaluation.d.ts","isExternalLibraryImport":true}
+--- symbols ---
+{"name":"computeMediaTrim","kind":"value","declarationCheckerExport":true,"declarationTextMention":true,"runtimeTextExportMention":true}
+{"name":"encodedEnvelopeSource","kind":"value","declarationCheckerExport":true,"declarationTextMention":true,"runtimeTextExportMention":true}
+{"name":"getSanitizedPlaybackRate","kind":"value","declarationCheckerExport":true,"declarationTextMention":true,"runtimeTextExportMention":true}
+{"name":"EncodedEnvelopeSource","kind":"type","declarationCheckerExport":true,"declarationTextMention":true,"runtimeTextExportMention":false}

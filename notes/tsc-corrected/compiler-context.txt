@@ -1,0 +1,12 @@
+source_commit=bc6f9dd39c7e5154ddf075cb87b7202cf5702e65
+source_tree=4cd13d09b7cffd60612d8521f1a2921ca4e762d2
+cwd=/home/user/work/wt/app-m4-correct-cwd-public13-one-diagnostics-r7/.app-tsc-private13-src
+config=/home/user/work/wt/app-m4-correct-cwd-public13-one-diagnostics-r7/.app-tsc-private13-src/tsconfig.app.json
+tsc=/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/typescript/bin/tsc
+node_options=--max-old-space-size=4096
+argv=/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned/node_modules/typescript/bin/tsc -p tsconfig.app.json --noEmit
+preflight=PASS
+exit=2
+stdout_bytes=150
+stderr_bytes=0
+compiler_invocations=1
