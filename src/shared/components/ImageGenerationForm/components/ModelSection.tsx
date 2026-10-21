@@ -55,7 +55,7 @@ const JustTextSection: React.FC<{
               <RadioGroupItem value={model.id} id={`model-${model.id}`} />
               <Label
                 htmlFor={`model-${model.id}`}
-                className="cursor-pointer font-normal preserve-case"
+                className="cursor-pointer font-normal"
                 title={model.description}
               >
                 {model.name}

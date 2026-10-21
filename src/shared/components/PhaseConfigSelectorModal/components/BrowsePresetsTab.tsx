@@ -120,7 +120,7 @@ export const BrowsePresetsTab: React.FC<BrowsePresetsTabProps> = (props) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Preset</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "<span className="preserve-case">{presetToDelete?.name}</span>"? This action cannot be undone.
+              Are you sure you want to delete "<span className="">{presetToDelete?.name}</span>"? This action cannot be undone.
               {presetToDelete?.isSelected && (
                 <span className="block mt-2 text-amber-600 dark:text-amber-400">
                   Note: This preset is currently selected and will be deselected.

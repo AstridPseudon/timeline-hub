@@ -12,7 +12,6 @@ import { SettingsModal } from '@/shared/components/SettingsModal/SettingsModal';
 import { useShotSettingsGeneration } from '../ShotSettingsContext';
 import type { ModalSelectedLora } from '../types/modalLora';
 import { getModelSpec, type SelectedModel } from '@/tools/travel-between-images/settings';
-import { useTextCase } from '@/shared/hooks/useTextCase';
 
 interface ModalsSectionProps {
   // LoRA modal
@@ -41,7 +40,6 @@ export const ModalsSection: React.FC<ModalsSectionProps> = ({
   onSettingsModalOpenChange,
 }) => {
   const { availableLoras } = useShotSettingsGeneration();
-  const { preserveUserText, setPreserveUserText } = useTextCase();
 
   return (
     <>
@@ -59,8 +57,6 @@ export const ModalsSection: React.FC<ModalsSectionProps> = ({
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onOpenChange={onSettingsModalOpenChange}
-        preserveUserText={preserveUserText}
-        setPreserveUserText={setPreserveUserText}
       />
     </>
   );

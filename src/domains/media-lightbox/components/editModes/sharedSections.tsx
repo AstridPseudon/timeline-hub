@@ -275,7 +275,7 @@ export const LegacyLoraSection: React.FC<LegacyLoraSectionProps> = ({ state, has
           }}
           placeholder="Enter a Hugging Face LoRA URL"
           className={cn(
-            'preserve-case mt-1.5 w-full rounded-md border border-input bg-background',
+            'mt-1.5 w-full rounded-md border border-input bg-background',
             'focus:outline-none focus:ring-2 focus:ring-ring',
             state.isMobile ? 'px-2 py-1.5 text-base' : 'px-3 py-2 text-sm',
           )}

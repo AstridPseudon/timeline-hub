@@ -593,7 +593,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                           return bDate - aDate;
                         })
                         .map((project) => (
-                          <SelectItem variant="default" key={project.id} value={project.id} className="!text-xs preserve-case">
+                          <SelectItem variant="default" key={project.id} value={project.id} className="!text-xs">
                             {project.name}
                           </SelectItem>
                         ))}

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { ProjectTimelinePicker } from '@/shared/components/ProjectTimelineSelectors.tsx';
@@ -139,5 +139,67 @@ describe('ProjectTimelinePicker', () => {
     fireEvent.submit(input.closest('form')!);
     expect(onRenameTimeline).toHaveBeenCalledWith('timeline-1', 'Opening Cut');
     expect(onSelectTimeline).not.toHaveBeenCalled();
+  });
+
+  it('marks only the primary timeline row with a labelled star in the left column', async () => {
+    render(
+      <ProjectTimelinePicker
+        projects={[]}
+        timelines={[
+          { id: 'main', name: 'Main Cut', isPrimary: true },
+          { id: 'alt', name: 'Alt Cut' },
+        ]}
+        projectId={null}
+        timelineId="alt"
+        onSelectProject={vi.fn()}
+        onSelectTimeline={vi.fn()}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('combobox', { name: 'Select timeline' }));
+    const primaryRow = await screen.findByRole('option', { name: /Main Cut/ });
+    const mark = within(primaryRow).getByRole('img', { name: 'Primary timeline' });
+    expect(mark.closest('.absolute')).not.toBeNull();
+    expect(primaryRow.querySelector('svg.lucide-check')).toBeNull();
+
+    const otherRow = screen.getByRole('option', { name: /Alt Cut/ });
+    expect(within(otherRow).queryByRole('img', { name: 'Primary timeline' })).toBeNull();
+    expect(otherRow.querySelector('svg.lucide-star')).toBeNull();
+  });
+
+  it('shows the selected tick and the primary star together when the selected timeline is primary', async () => {
+    const { rerender } = render(
+      <ProjectTimelinePicker
+        projects={[]}
+        timelines={[{ id: 'main', name: 'Main Cut', isPrimary: true }, { id: 'alt', name: 'Alt Cut' }]}
+        projectId={null}
+        timelineId="main"
+        onSelectProject={vi.fn()}
+        onSelectTimeline={vi.fn()}
+      />,
+    );
+    // The closed trigger carries the same star for the current primary timeline.
+    expect(within(screen.getByRole('combobox', { name: 'Select timeline' })).getByRole('img', { name: 'Primary timeline' })).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('combobox', { name: 'Select timeline' }));
+    const row = await screen.findByRole('option', { name: /Main Cut/ });
+    expect(row).toHaveAttribute('aria-current', 'true');
+    expect(row.querySelector('svg.lucide-check')).not.toBeNull();
+    expect(within(row).getByRole('img', { name: 'Primary timeline' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+
+    rerender(
+      <ProjectTimelinePicker
+        projects={[]}
+        timelines={[{ id: 'main', name: 'Main Cut', isPrimary: true }, { id: 'alt', name: 'Alt Cut' }]}
+        projectId={null}
+        timelineId="alt"
+        onSelectProject={vi.fn()}
+        onSelectTimeline={vi.fn()}
+      />,
+    );
+    // A non-primary selection shows no star on the trigger.
+    expect(within(screen.getByRole('combobox', { name: 'Select timeline' })).queryByRole('img', { name: 'Primary timeline' })).toBeNull();
   });
 });

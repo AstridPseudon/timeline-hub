@@ -145,7 +145,7 @@ export const PerPhaseCard: React.FC<PerPhaseCardProps> = ({
                               phases: updatedPhases,
                             });
                           }}
-                          className="text-xs preserve-case"
+                          className="text-xs"
                         >
                           {predefinedLora.name}
                         </DropdownMenuItem>

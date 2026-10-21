@@ -53,7 +53,7 @@ export function AstridSetupStep({ onNext, reconnect = false }: OnboardingStepPro
       ) : (
         <>
           <p className="text-muted-foreground">{withCommandShell(copy.sentence)}</p>
-          <CopyInstallCommand label={COPY.agent.copy} mode="install" />
+          <CopyInstallCommand mode="install" />
         </>
       )}
     </div>

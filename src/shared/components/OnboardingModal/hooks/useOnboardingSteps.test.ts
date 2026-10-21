@@ -2,8 +2,8 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useOnboardingSteps } from './useOnboardingSteps';
 
-const STEP_COUNT = 4;
-const EXPECTED_TITLES = ['Set up', 'Brightness', 'Text', 'Community'];
+const STEP_COUNT = 3;
+const EXPECTED_TITLES = ['Set up', 'Brightness', 'Community'];
 
 afterEach(() => {
   vi.useRealTimers();

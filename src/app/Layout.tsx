@@ -29,7 +29,6 @@ import { useGlobalPaneShortcuts } from './hooks/useGlobalPaneShortcuts';
 import { useSettingsModal } from './hooks/useSettingsModal';
 import { useOnboardingFlow } from './hooks/useOnboardingFlow';
 import { useResetCurrentShotOnRouteChange } from './hooks/useResetCurrentShotOnRouteChange';
-import { useTextCase } from '@/shared/hooks/useTextCase';
 import { LayoutMainContent } from './components/LayoutMainContent';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { AppSkyBackground } from '@/shared/components/TimeOfDay/TimeOfDayControl';
@@ -70,7 +69,6 @@ const LayoutShell: React.FC = () => {
   // Extracted hooks
   const { splitViewWrapperRef } = useSplitViewScroll(isMobileSplitView);
   const { isAuthenticated, isLoading } = useAuth();
-  const { preserveUserText, setPreserveUserText } = useTextCase();
   const { isSettingsModalOpen, setIsSettingsModalOpen, settingsInitialTab, settingsCreditsTab, handleOpenSettings } = useSettingsModal();
   const { showOnboardingModal, onboardingMode, handleOnboardingClose } = useOnboardingFlow();
   useResetCurrentShotOnRouteChange();
@@ -159,8 +157,6 @@ const LayoutShell: React.FC = () => {
           onOpenChange={setIsSettingsModalOpen}
           initialTab={settingsInitialTab}
           creditsTab={settingsCreditsTab}
-          preserveUserText={preserveUserText}
-          setPreserveUserText={setPreserveUserText}
         />
 
         {/* Onboarding Modal */}

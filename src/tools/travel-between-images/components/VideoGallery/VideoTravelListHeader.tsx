@@ -155,7 +155,7 @@ export const VideoTravelListHeader: React.FC<VideoTravelListHeaderProps> = ({
               placeholder="Search..."
               value={shotSearchQuery}
               onChange={(e) => setShotSearchQuery(e.target.value)}
-              className="bg-transparent border-none outline-none text-sm w-24 sm:w-40 preserve-case"
+              className="bg-transparent border-none outline-none text-sm w-24 sm:w-40"
             />
             {shotSearchQuery && (
               <Button
@@ -182,7 +182,7 @@ export const VideoTravelListHeader: React.FC<VideoTravelListHeaderProps> = ({
                 setVideoSearchTerm(e.target.value);
                 setVideoPageSearch(1);
               }}
-              className="bg-transparent border-none outline-none text-sm w-24 sm:w-40 preserve-case"
+              className="bg-transparent border-none outline-none text-sm w-24 sm:w-40"
             />
             {videoSearchTerm && (
               <Button

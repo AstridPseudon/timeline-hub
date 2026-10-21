@@ -485,7 +485,7 @@ export const ShotMetadata: React.FC<ShotMetadataProps> = ({
   if (!isEditingName) {
     return (
       <div className="flex items-center gap-2 flex-grow mr-2 min-w-0">
-        <h3 className="text-xl font-light group-hover:text-primary/80 transition-colors duration-300 truncate preserve-case">
+        <h3 className="text-xl font-light group-hover:text-primary/80 transition-colors duration-300 truncate">
           {displayName}
         </h3>
         {generationMode && (

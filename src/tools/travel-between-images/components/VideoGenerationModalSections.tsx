@@ -46,7 +46,7 @@ export function VideoGenerationModalHeader({
   return (
     <div className="flex items-center gap-2">
       <span className="text-xl font-light">
-        Generate Video - <span className="preserve-case">{shotName || 'Unnamed Shot'}</span>
+        Generate Video - <span className="">{shotName || 'Unnamed Shot'}</span>
       </span>
       <ExternalLinkTooltipButton
         onClick={onNavigateToShot}

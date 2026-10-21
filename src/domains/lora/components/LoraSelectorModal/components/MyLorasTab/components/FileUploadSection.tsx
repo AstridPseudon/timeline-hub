@@ -132,7 +132,7 @@ export const FileUploadSection: React.FC<FileUploadSectionProps> = ({
             <Upload className="h-8 w-8 text-muted-foreground" />
             <div className="text-sm">
               {loraFiles.single ? (
-                <span className="font-medium text-green-700 dark:text-green-300 preserve-case">{loraFiles.single.name}</span>
+                <span className="font-medium text-green-700 dark:text-green-300">{loraFiles.single.name}</span>
               ) : (
                 <span className="text-muted-foreground">
                   Drop or click to select a <code>.safetensors</code> file

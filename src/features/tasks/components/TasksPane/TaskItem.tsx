@@ -247,7 +247,7 @@ const TaskItemComponent: React.FC<TaskItemProps> = ({
         </span>
 
         {variantName && (
-          <span className="ml-2 px-1.5 py-0.5 bg-foreground/10 text-card-foreground text-[10px] rounded-md flex-shrink-0 preserve-case">
+          <span className="ml-2 px-1.5 py-0.5 bg-foreground/10 text-card-foreground text-[10px] rounded-md flex-shrink-0">
             {variantName}
           </span>
         )}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUserUIState } from '@/shared/hooks/useUserUIState';
 import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
 import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
+import { usePersistentState } from '@/shared/hooks/usePersistentState';
 
 type PaneLockKey = 'shots' | 'tasks' | 'gens' | 'editor';
 
@@ -19,6 +20,9 @@ const UNLOCKED_PANES: PaneLocksState = {
   editor: false,
 };
 
+/** The Tasks (Activity) pane lock the user last chose on this browser. `null` means nothing saved yet. */
+export const TASKS_PANE_LOCK_STORAGE_KEY = 'astrid.tasks-pane-locked.v1';
+
 export function usePaneLockPolicyState() {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
@@ -27,7 +31,13 @@ export function usePaneLockPolicyState() {
   const paneControlsHosted = usePaneControlsHosted();
   const transientPanes = (isMobile && !isTablet) || paneControlsHosted;
 
-  const { value: paneLocks, update: savePaneLocks, isLoading } = useUserUIState('paneLocks', UNLOCKED_PANES);
+  // A first visit on desktop opens the Tasks pane locked. Phones and tablets keep the pane unlocked by default.
+  const isDesktop = !isMobile && !isTablet;
+  const [savedTasksLock, saveTasksLock] = usePersistentState<boolean | null>(TASKS_PANE_LOCK_STORAGE_KEY, null);
+  const { value: paneLocks, update: savePaneLocks, isLoading } = useUserUIState(
+    'paneLocks',
+    { ...UNLOCKED_PANES, tasks: savedTasksLock ?? isDesktop },
+  );
   const [locks, setLocks] = useState(paneLocks);
 
   const [isGenerationsPaneOpenState, setIsGenerationsPaneOpenState] = useState(false);
@@ -81,6 +91,9 @@ export function usePaneLockPolicyState() {
             ? { ...UNLOCKED_PANES, [lockKey]: isLocked }
             : { [lockKey]: isLocked },
         );
+        // Remember the Tasks lock as the user leaves it, including when an exclusive lock clears it.
+        const tasksChoice = lockKey === 'tasks' ? isLocked : exclusiveLock ? false : null;
+        if (tasksChoice !== null) saveTasksLock(tasksChoice);
       }
 
       if (lockKey === 'tasks') {
@@ -89,7 +102,7 @@ export function usePaneLockPolicyState() {
         setIsTasksPaneOpenState(false);
       }
     },
-    [isMobile, isTablet, transientPanes, savePaneLocks],
+    [isMobile, isTablet, transientPanes, savePaneLocks, saveTasksLock],
   );
 
   const setIsGenerationsPaneLocked = useMemo(() => createPaneLockSetter('gens'), [createPaneLockSetter]);
@@ -115,7 +128,8 @@ export function usePaneLockPolicyState() {
     setLocks(UNLOCKED_PANES);
     setIsTasksPaneOpenState(false);
     savePaneLocks(UNLOCKED_PANES);
-  }, [savePaneLocks]);
+    if (!transientPanes) saveTasksLock(false);
+  }, [savePaneLocks, saveTasksLock, transientPanes]);
 
   return {
     locks,

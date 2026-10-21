@@ -59,7 +59,7 @@ export const PresetBrowseCard: React.FC<PresetBrowseCardProps> = ({
           <div className="flex-grow">
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2 flex-wrap flex-1">
-                <CardTitle className="text-xl preserve-case">{metadata.name}</CardTitle>
+                <CardTitle className="text-xl">{metadata.name}</CardTitle>
                 {isMyPreset && (
                   <Badge variant="secondary" className="text-xs">
                     Mine

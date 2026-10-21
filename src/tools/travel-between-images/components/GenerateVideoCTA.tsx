@@ -57,7 +57,7 @@ export const GenerateVideoCTA: React.FC<GenerateVideoCTAProps> = ({
           value={variantName}
           onChange={(e) => onVariantNameChange(e.target.value)}
           placeholder="Variant name"
-          className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent preserve-case"
+          className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
         />
       </div> */}
 

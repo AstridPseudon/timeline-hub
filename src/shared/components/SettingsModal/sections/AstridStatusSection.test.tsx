@@ -10,8 +10,8 @@ const mocks = vi.hoisted(() => ({
   connect: vi.fn(),
   connection: {
     state: { status: 'connected', realm: { realm_id: 'realm-1', display_name: 'Studio' } },
-    awaitingConnect: false, isChecking: false, schemaDigest: null, connect: () => {},
-  } as { state: { status: string; realm?: { realm_id: string; display_name: string } }; awaitingConnect: boolean; isChecking: boolean; schemaDigest: string | null; connect: () => void },
+    awaitingConnect: false, isChecking: false, schemaDigest: null, localServiceOutOfDate: false, connect: () => {},
+  } as { state: { status: string; realm?: { realm_id: string; display_name: string } }; awaitingConnect: boolean; isChecking: boolean; schemaDigest: string | null; localServiceOutOfDate: boolean; connect: () => void },
 }));
 
 vi.mock('@/integrations/runtime/client.ts', () => ({
@@ -28,11 +28,16 @@ vi.mock('@/shared/lib/browser/clipboard.ts', () => ({
   writeClipboardTextSafe: mocks.clipboard,
 }));
 
+async function openDetails() {
+  fireEvent.click(await screen.findByRole('button', { name: 'Details' }));
+}
+
 describe('AstridStatusSection', () => {
   beforeEach(() => {
     mocks.connection.state = { status: 'connected', realm: { realm_id: 'realm-1', display_name: 'Studio' } };
     mocks.connection.awaitingConnect = false;
     mocks.connection.isChecking = false;
+    mocks.connection.localServiceOutOfDate = false;
     mocks.connection.connect = mocks.connect.mockReset();
     mocks.clipboard.mockReset().mockResolvedValue(true);
     mocks.readStatus.mockReset().mockResolvedValue({
@@ -55,6 +60,10 @@ describe('AstridStatusSection', () => {
 
   it('keeps Runtime and Workspace checks in the single status section', async () => {
     render(<AstridStatusSection isOpen />);
+    // Runtime and Workspace marks stay visible; the workspace name waits behind Details.
+    expect(screen.getByText('Runtime')).toHaveAttribute('data-state', 'pass');
+    expect(screen.queryByText('Studio')).not.toBeInTheDocument();
+    await openDetails();
     expect(await screen.findByText('Studio')).toBeInTheDocument();
     expect(screen.getByText('Runtime')).toHaveAttribute('data-state', 'pass');
     expect(document.querySelector('[data-check="workspace"]')).toHaveAttribute('data-state', 'pass');
@@ -82,6 +91,7 @@ describe('AstridStatusSection', () => {
   it('shows the connected workspace and readable service states without inventing versions', async () => {
     render(<AstridStatusSection isOpen />);
 
+    await openDetails();
     expect(await screen.findByText('Studio')).toBeInTheDocument();
     expect(screen.getByText('workspace.v1')).toBeInTheDocument();
     expect(screen.queryByText('Versions')).not.toBeInTheDocument();
@@ -91,13 +101,13 @@ describe('AstridStatusSection', () => {
     expect(screen.getByText('Starting…')).toBeInTheDocument();
     expect(screen.getByText('Running')).toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent("Part of Astrid isn't working. Run this line to restart it.");
+    expect(screen.getByRole('status')).toHaveTextContent("Part of Astrid isn't working. Give these instructions to your coding agent to restart it.");
     expect(screen.getByRole('link', { name: 'Get help' })).toHaveAttribute('href', ASTRID_HELP_URL);
     expect(document.querySelector('svg.lucide-circle-alert')).not.toBeNull();
     expect(screen.getByText(/Restarts: 3/)).toBeInTheDocument();
     expect(screen.queryByText('Restarts: 0')).not.toBeInTheDocument();
     expect(screen.queryByText(/Last exit code|Reason:|startup_failed/)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
     expect(screen.getByText('curl -fsSL https://astrid.haus/install | sh')).toBeInTheDocument();
   });
 
@@ -116,11 +126,12 @@ describe('AstridStatusSection', () => {
     });
     render(<AstridStatusSection isOpen />);
 
+    await openDetails();
     const customWorker = await screen.findByText('custom-worker');
     expect(customWorker.closest('li')?.querySelector('span.basis-full')).toBeNull();
     expect(screen.queryByText(/Last exit code|Reason:|exited/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^ · /)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Copy' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copy command' })).not.toBeInTheDocument();
     expect(screen.queryByText('curl -fsSL https://astrid.haus/install | sh')).not.toBeInTheDocument();
     expect(screen.queryByText(/Restarts:/)).not.toBeInTheDocument();
   });
@@ -137,19 +148,61 @@ describe('AstridStatusSection', () => {
     });
     render(<AstridStatusSection isOpen />);
 
-    expect(await screen.findByRole('status')).toHaveTextContent("Part of Astrid isn't working. Run this line to restart it.");
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(await screen.findByRole('status')).toHaveTextContent("Part of Astrid isn't working. Give these instructions to your coding agent to restart it.");
+    expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
     expect(screen.getByText('curl -fsSL https://astrid.haus/install | sh')).toBeInTheDocument();
   });
 
   it('copies the same install command shown in the repair control', async () => {
     render(<AstridStatusSection isOpen />);
-    expect(await screen.findByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Copy command' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy command' }));
 
     await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledWith(installCommand('install')));
-    expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Command copied' })).toBeInTheDocument();
+  });
+
+  it('copies a complete agent brief separately from the repair command', async () => {
+    render(<AstridStatusSection isOpen />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Copy agent instructions' }));
+    await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledOnce());
+    const brief = mocks.clipboard.mock.calls[0][0];
+    expect(brief).toContain('selected workspace and data root');
+    expect(brief).toContain('supported migration or adoption path');
+    expect(brief).toContain(installCommand('install'));
+    expect(brief).not.toBe(installCommand('install'));
+    expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
+  });
+
+  it('shows Needs an update with the update command when Astrid on this computer is older than this page', async () => {
+    mocks.connection.localServiceOutOfDate = true;
+    mocks.readStatus.mockResolvedValue({
+      health: {
+        status: 'ok',
+        protocol: 'workspace.v1',
+        schema_digest: `sha256:${'a'.repeat(64)}`,
+        services: [{ name: 'pack-host', state: 'running', last_exit: null, restart_count: 0 }],
+      },
+      realm: { realm_id: 'realm-1', display_name: 'Studio', version: 4, created_at: '2026-01-01T00:00:00Z' },
+    });
+    render(<AstridStatusSection isOpen />);
+
+    expect(await screen.findByText('Needs an update')).toBeInTheDocument();
+    expect(screen.getByText(/Astrid on this computer needs an update/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy command' }));
+
+    await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledWith(installCommand('update')));
+    expect(mocks.clipboard).not.toHaveBeenCalledWith(installCommand('install'));
+  });
+
+  it('does not show the update status while the local service is up to date', async () => {
+    render(<AstridStatusSection isOpen />);
+
+    await openDetails();
+    expect(await screen.findByText('Studio')).toBeInTheDocument();
+    expect(screen.queryByText('Needs an update')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Astrid on this computer needs an update/)).not.toBeInTheDocument();
   });
 
   it('shows the connection state without requesting details while offline', () => {
@@ -183,12 +236,45 @@ describe('AstridStatusSection', () => {
     mocks.readStatus.mockReset().mockResolvedValueOnce(first).mockResolvedValueOnce(second);
     const view = render(<AstridStatusSection isOpen />);
 
+    await openDetails();
     expect(await screen.findByText('Running')).toBeInTheDocument();
     view.rerender(<AstridStatusSection isOpen={false} />);
     view.rerender(<AstridStatusSection isOpen />);
 
-    expect(await screen.findByText("Part of Astrid isn't working. Run this line to restart it.")).toBeInTheDocument();
+    await openDetails();
+    expect(await screen.findByText("Part of Astrid isn't working. Give these instructions to your coding agent to restart it.")).toBeInTheDocument();
     expect(await screen.findByText('Failed')).toBeInTheDocument();
     expect(mocks.readStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the workspace, connection details and services behind a closed Details toggle', async () => {
+    render(<AstridStatusSection isOpen />);
+
+    await waitFor(() => expect(mocks.readStatus).toHaveBeenCalled());
+    const toggle = await screen.findByRole('button', { name: 'Details' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    for (const hidden of ['Studio', 'workspace.v1', 'Task host']) expect(screen.queryByText(hidden)).not.toBeInTheDocument();
+    expect(screen.queryByText('Workspace', { selector: 'h3' })).not.toBeInTheDocument();
+    // What the person needs stays in view: the status and the Runtime and Workspace marks.
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText('Runtime')).toHaveAttribute('data-state', 'pass');
+    expect(document.querySelector('[data-check="workspace"]')).toHaveAttribute('data-state', 'pass');
+  });
+
+  it('shortens the schema digest inside Details and keeps the full value as its tooltip', async () => {
+    render(<AstridStatusSection isOpen />);
+
+    await openDetails();
+    const short = await screen.findByText(`sha256:${'a'.repeat(8)}…${'a'.repeat(6)}`);
+    expect(short).toHaveAttribute('title', `sha256:${'a'.repeat(64)}`);
+  });
+
+  it('keeps the update command outside Details when an update is needed', async () => {
+    mocks.connection.localServiceOutOfDate = true;
+    render(<AstridStatusSection isOpen />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('Needs an update');
+    expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'false');
   });
 });

@@ -102,13 +102,13 @@ describe('RuntimeConnectionPill', () => {
     route.answer = unreachable;
 
     await waitFor(() => expect(screen.getByRole('heading', { name: 'Astrid stopped' })).toBeInTheDocument());
-    expect(screen.getByText('Run this line in a terminal to start it again. Your changes are kept.')).toBeInTheDocument();
+    expect(screen.getByText('Give these instructions to your coding agent to start Astrid again. Your changes are kept.')).toBeInTheDocument();
     expect(status()).toHaveAttribute('data-state', 'stopped');
     expect(status()).not.toHaveTextContent('Connected');
     expect(screen.getByRole('alert')).toHaveClass('fixed', 'right-4', 'bottom-20', 'sm:bottom-4');
     expect(isRecoveryCardShowing()).toBe(true);
 
-      fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+      fireEvent.click(screen.getByRole('button', { name: COPY.agent.commandCopy }));
     await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
     expect(String(writeText.mock.calls[0][0])).toMatch(/^curl -fsSL https:\/\/astrid\.haus\/install \| sh$/);
   });
@@ -120,7 +120,7 @@ describe('RuntimeConnectionPill', () => {
     await waitFor(() => expect(fetchImpl).toHaveBeenCalled());
     route.answer = unreachable;
 
-    await waitFor(() => expect(screen.getByText('Run this line in PowerShell to start it again. Your changes are kept.')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Or run this command yourself in PowerShell:')).toBeInTheDocument());
   });
 
   it('one dropped reading is not a stop', async () => {

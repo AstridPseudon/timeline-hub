@@ -3046,3 +3046,250 @@ describe('EditorRuntimeProvider effect replay and Fast Refresh', () => {
     expect(persistence.dispose).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('EditorRuntimeProvider settings snapshot gate', () => {
+  const TRANSCRIPT_ID = 'transcript';
+  const THREEJS_ID = 'haus.astrid.threejs-live-editor';
+  const GATE_IDS = [TRANSCRIPT_ID, THREEJS_ID];
+
+  function cleanGateLocalStorage(): void {
+    for (const id of GATE_IDS) {
+      const prefix = `astrid.ext.${id}.`;
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(prefix)) keysToRemove.push(key);
+      }
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+    }
+  }
+
+  function gateSnapshot(extensionId: string): ExtensionSettingsSnapshot {
+    return {
+      extensionId,
+      schemaVersion: 2,
+      values: { channels: ['left', 'right'], enableDebug: true },
+      lastWrittenAt: '2026-10-20T00:00:00.000Z',
+    };
+  }
+
+  function makeGateRepository(read: () => Promise<ExtensionSettingsSnapshot[]>) {
+    return {
+      initialize: vi.fn().mockResolvedValue(undefined),
+      dispose: vi.fn().mockResolvedValue(undefined),
+      isDisposed: false,
+      putSettingsSnapshot: vi.fn(async () => undefined),
+      getSettingsSnapshot: vi.fn(async () => null),
+      getAllSettingsSnapshots: vi.fn(read),
+      deleteSettingsSnapshot: vi.fn(async () => undefined),
+    } as Partial<ExtensionStateRepository> as ExtensionStateRepository;
+  }
+
+  function makeGateExtension(
+    extensionId: string,
+    activations: string[],
+    captured: Record<string, ExtensionSettingsService>,
+  ) {
+    return defineExtension({
+      manifest: {
+        id: extensionId as never,
+        version: '1.0.0',
+        label: extensionId,
+        settingsSchemaVersion: 2,
+        settingsDefaults: { theme: 'system' },
+      },
+      activate(ctx) {
+        activations.push(extensionId);
+        captured[extensionId] = ctx.services.settings;
+        return { dispose() {} };
+      },
+    });
+  }
+
+  const sorted = (ids: string[]) => [...ids].sort();
+
+  beforeEach(() => {
+    cleanGateLocalStorage();
+  });
+
+  afterEach(() => {
+    cleanGateLocalStorage();
+  });
+
+  it('activates extensions only after stored snapshots load, and honours them as initial settings', async () => {
+    let resolveRead!: (snapshots: ExtensionSettingsSnapshot[]) => void;
+    const repository = makeGateRepository(() => new Promise((resolve) => { resolveRead = resolve; }));
+    const activations: string[] = [];
+    const captured: Record<string, ExtensionSettingsService> = {};
+    const extensions = [
+      makeGateExtension(TRANSCRIPT_ID, activations, captured),
+      makeGateExtension(THREEJS_ID, activations, captured),
+    ];
+
+    render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={{} as DataProvider}
+        timelineId="gate-normal"
+        userId="user-1"
+        extensions={extensions}
+        extensionStateRepository={repository}
+      >
+        <div>gate child</div>
+      </EditorRuntimeProvider>,
+    );
+
+    await act(async () => { await Promise.resolve(); });
+    expect(repository.getAllSettingsSnapshots).toHaveBeenCalledTimes(1);
+    expect(activations).toEqual([]);
+
+    await act(async () => {
+      resolveRead([gateSnapshot(TRANSCRIPT_ID), gateSnapshot(THREEJS_ID)]);
+    });
+
+    await waitFor(() => {
+      expect(sorted(activations)).toEqual(sorted([TRANSCRIPT_ID, THREEJS_ID]));
+    });
+    expect(captured[TRANSCRIPT_ID].get('channels')).toEqual(['left', 'right']);
+    expect(captured[TRANSCRIPT_ID].get('enableDebug')).toBe(true);
+    expect(captured[THREEJS_ID].get('channels')).toEqual(['left', 'right']);
+    expect(captured[THREEJS_ID].get('enableDebug')).toBe(true);
+    expect(captured[TRANSCRIPT_ID].get('theme')).toBe('system');
+    expect(repository.putSettingsSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('keeps the editor children rendered and activates nothing while the read is pending', async () => {
+    const repository = makeGateRepository(() => new Promise(() => {}));
+    const activations: string[] = [];
+    const captured: Record<string, ExtensionSettingsService> = {};
+    const extensions = [makeGateExtension(TRANSCRIPT_ID, activations, captured)];
+
+    const view = render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={{} as DataProvider}
+        timelineId="gate-pending"
+        userId="user-1"
+        extensions={extensions}
+        extensionStateRepository={repository}
+      >
+        <div>gate child</div>
+      </EditorRuntimeProvider>,
+    );
+
+    await act(async () => { await Promise.resolve(); });
+    expect(screen.getByText('gate child')).toBeTruthy();
+    expect(repository.getAllSettingsSnapshots).toHaveBeenCalledTimes(1);
+    expect(activations).toEqual([]);
+    view.unmount();
+  });
+
+  it('activates without clobbering when the snapshot read rejects, and settings still work locally', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const repository = makeGateRepository(() => Promise.reject(new Error('read failed')));
+    const activations: string[] = [];
+    const captured: Record<string, ExtensionSettingsService> = {};
+    const extensions = [
+      makeGateExtension(TRANSCRIPT_ID, activations, captured),
+      makeGateExtension(THREEJS_ID, activations, captured),
+    ];
+
+    render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={{} as DataProvider}
+        timelineId="gate-reject"
+        userId="user-1"
+        extensions={extensions}
+        extensionStateRepository={repository}
+      >
+        <div>gate child</div>
+      </EditorRuntimeProvider>,
+    );
+
+    await waitFor(() => {
+      expect(sorted(activations)).toEqual(sorted([TRANSCRIPT_ID, THREEJS_ID]));
+    });
+    expect(captured[TRANSCRIPT_ID].get('channels')).toBeUndefined();
+    expect(captured[TRANSCRIPT_ID].get('theme')).toBe('system');
+
+    act(() => {
+      captured[TRANSCRIPT_ID].set('theme', 'dark');
+    });
+    expect(captured[TRANSCRIPT_ID].get('theme')).toBe('dark');
+
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    expect(repository.putSettingsSnapshot).not.toHaveBeenCalled();
+    expect(warn.mock.calls.some((args) => String(args[0]).includes('Stored settings unavailable'))).toBe(true);
+    warn.mockRestore();
+  });
+
+  it('stops waiting after the bound, activates without a repository write, and ignores a late read', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.useFakeTimers();
+    try {
+      let resolveRead!: (snapshots: ExtensionSettingsSnapshot[]) => void;
+      const repository = makeGateRepository(() => new Promise((resolve) => { resolveRead = resolve; }));
+      const activations: string[] = [];
+      const captured: Record<string, ExtensionSettingsService> = {};
+      const extensions = [makeGateExtension(TRANSCRIPT_ID, activations, captured)];
+
+      const view = render(
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+          dataProvider={{} as DataProvider}
+          timelineId="gate-timeout"
+          userId="user-1"
+          extensions={extensions}
+          extensionStateRepository={repository}
+        >
+          <div>gate child</div>
+        </EditorRuntimeProvider>,
+      );
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(2999); });
+      expect(activations).toEqual([]);
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(activations).toEqual([TRANSCRIPT_ID]);
+      expect(repository.putSettingsSnapshot).not.toHaveBeenCalled();
+
+      await act(async () => {
+        resolveRead([gateSnapshot(TRANSCRIPT_ID)]);
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(activations).toEqual([TRANSCRIPT_ID]);
+      expect(captured[TRANSCRIPT_ID].get('channels')).toBeUndefined();
+      expect(repository.putSettingsSnapshot).not.toHaveBeenCalled();
+
+      view.unmount();
+    } finally {
+      vi.useRealTimers();
+      warn.mockRestore();
+    }
+  });
+
+  it('activates immediately when no repository is bound', async () => {
+    const activations: string[] = [];
+    const captured: Record<string, ExtensionSettingsService> = {};
+    const extensions = [
+      makeGateExtension(TRANSCRIPT_ID, activations, captured),
+      makeGateExtension(THREEJS_ID, activations, captured),
+    ];
+
+    render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={{} as DataProvider}
+        timelineId="gate-no-repo"
+        userId="user-1"
+        extensions={extensions}
+      >
+        <div>gate child</div>
+      </EditorRuntimeProvider>,
+    );
+
+    await act(async () => {});
+    expect(sorted(activations)).toEqual(sorted([TRANSCRIPT_ID, THREEJS_ID]));
+    expect(captured[TRANSCRIPT_ID].get('theme')).toBe('system');
+    act(() => {
+      captured[TRANSCRIPT_ID].set('theme', 'light');
+    });
+    expect(captured[TRANSCRIPT_ID].get('theme')).toBe('light');
+  });
+});

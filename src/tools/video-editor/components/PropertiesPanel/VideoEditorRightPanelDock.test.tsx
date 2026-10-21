@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
@@ -7,19 +7,19 @@ import { ExtensionManager } from '@/tools/video-editor/components/ExtensionManag
 import { defaultPreferences, type EditorPreferences } from '../../hooks/useEditorPreferences';
 import { VideoEditorRightPanelDock } from './VideoEditorRightPanelDock';
 import { VideoEditorPanelDisplayControl } from './VideoEditorPanelDisplayControl';
-const state = vi.hoisted(() => ({ panels: [] as Array<{extensionId:string;id:string;label:string}>, timelineData: {} as object | null, preferences: {} as EditorPreferences, selection: {} as {selectedClipIds?:Set<string>;selectedTrackId?:string|null;inspectorTarget?:{kind:string}|null}, update: (_next: EditorPreferences | ((current: EditorPreferences) => EditorPreferences)) => {}, inventory: null as null | Array<{extensionId:string; packageSource:string; packageState:string; packageMetadata?:{label:string}}>, extensions: [] as Array<{manifest:{id:string;label?:string}}>, toggle: vi.fn(async () => {}), refresh: vi.fn() }));
+const state = vi.hoisted(() => ({ panels: [] as Array<{extensionId:string;id:string;label:string}>, timelineData: {} as object | null, preferences: {} as EditorPreferences, selection: {} as {selectedClipIds?:Set<string>;selectedTrackId?:string|null;inspectorTarget?:{kind:string}|null}, update: (_next: EditorPreferences | ((current: EditorPreferences) => EditorPreferences)) => {}, inventory: null as null | Array<{extensionId:string; packageSource:string; packageState:string; packageMetadata?:{label:string}}>, extensions: [] as Array<{manifest:{id:string;label?:string;description?:string;contributions?:Array<Record<string,unknown>>}}>, commandRegistry: { executeCommand: vi.fn(async (_commandId: string) => {}) } as { executeCommand: (commandId: string) => Promise<unknown> } | null, toggle: vi.fn(async () => {}), refresh: vi.fn() }));
 const panelKey = 'haus.astrid.transcript-lane:transcript-lane-panel';
 vi.mock('./PropertiesPanel', () => ({ PropertiesPanel: () => <div>Inspector content</div> }));
-vi.mock('./VideoEditorAssetPanelSurface', () => ({ VideoEditorAssetPanelSurface: (props: {activePanelKey: string | null; settingsByPanelKey: Record<string,{open:boolean;onOpenChange:(value:boolean)=>void}>}) => {
+vi.mock('./VideoEditorAssetPanelSurface', () => ({ VideoEditorAssetPanelSurface: (props: {activePanelKey: string | null; settingsByPanelKey: Record<string,{open:boolean;onOpenChange:(value:boolean)=>void}>; poppedPanelKey?: string | null; onPoppedPanelKeyChange?: (key: string | null) => void}) => {
   const [draft, setDraft] = useState('');
-  return <div hidden={!props.activePanelKey}><textarea aria-label="Retained draft" value={draft} onChange={(event) => setDraft(event.target.value)} /><button aria-label="Transcript settings" onClick={() => props.settingsByPanelKey[panelKey].onOpenChange(true)}>Settings</button><span>{props.settingsByPanelKey[panelKey]?.open ? 'Tool settings open' : 'Tool reading view'}</span></div>;
+  return <div hidden={!props.activePanelKey}><textarea aria-label="Retained draft" value={draft} onChange={(event) => setDraft(event.target.value)} /><button aria-label="Transcript settings" onClick={() => props.settingsByPanelKey[panelKey].onOpenChange(true)}>Settings</button><span>{props.settingsByPanelKey[panelKey]?.open ? 'Tool settings open' : 'Tool reading view'}</span><span data-testid="popped-key">{props.poppedPanelKey ?? 'none'}</span><button type="button" aria-label="Surface dock all" onClick={() => props.onPoppedPanelKeyChange?.(null)}>Dock all</button></div>;
 } }));
 vi.mock('../../components/ExtensionManager', () => ({ ExtensionManager: () => <div>Manager inventory</div> }));
 vi.mock('../../runtime/useVideoEditorRenderContext', () => ({ useVideoEditorAssetPanels: () => state.panels }));
 vi.mock('../../contexts/VideoEditorRuntimeContext', () => ({ useOptionalVideoEditorRuntime: () => ({ extensionRuntime: { extensions: state.extensions, packageStateInventory: state.inventory ?? [
   { extensionId: 'haus.astrid.transcript-lane', packageSource: 'direct', packageState: 'loaded', packageMetadata: {label:'Transcript'} },
   { extensionId: 'example', packageSource: 'installed', packageState: 'disabled-by-user', packageMetadata: {label:'Beat Cue'} },
-] }, extensionStateRepository: { putEnablementState: state.toggle }, triggerExtensionRefresh: state.refresh }) }));
+] }, commandRegistry: state.commandRegistry, extensionStateRepository: { putEnablementState: state.toggle }, triggerExtensionRefresh: state.refresh }) }));
 vi.mock('../../hooks/timelineStore', () => ({ useTimelineEditorData: () => ({ data: state.timelineData, preferences: state.preferences, ...state.selection }), useTimelineEditorOps: () => ({
   setSelectedRightPanelId: (id: string | null) => state.update((current) => ({ ...current, selectedRightPanelId: id, rightPanelTab: id ? id === 'host:properties' ? 'inspector' : 'extensions' : current.rightPanelTab, lastExtensionPanelId: id && id !== 'host:properties' ? id : current.lastExtensionPanelId })),
   setRightPanelLayoutSlot: (id: string, slot: 'compact' | 'dock') => state.update((current) => ({ ...current, rightPanelLayoutSlotsByPanelId: { ...current.rightPanelLayoutSlotsByPanelId, [id]: slot } })),
@@ -64,12 +64,12 @@ it('separates Inspector/Extensions, limits tools to admitted panels and retains 
   const active = screen.getByRole('button', {name:'Displayed extension'});
   const manage = screen.getByRole('button', {name:'Manage extensions'});
   expect(active).toHaveTextContent('Display: Transcript');
-  expect(manage).toHaveTextContent('Manage');
-  expect(active).toHaveClass('flex-1'); expect(manage.parentElement).toHaveClass('flex-1');
+  expect(manage).not.toHaveTextContent('Manage');
+  expect(active).toHaveClass('flex-1'); expect(manage.parentElement).toHaveClass('shrink-0');
   expect(screen.getByRole('button', {name:'Displayed extension'}).parentElement).not.toContainElement(screen.getByRole('button', {name:'Panel display'}));
   const draft = screen.getByRole('textbox', {name:'Retained draft'}); fireEvent.change(draft, {target:{value:'Unsent draft'}});
   screen.getByRole('button',{name:'Displayed extension'}).focus(); await user.keyboard('{ArrowDown}');
-  expect(screen.getByRole('menuitemradio',{name:'Transcript'})).toBeTruthy(); expect(screen.getByRole('menuitemradio',{name:'Beat Cue'})).toBeTruthy(); expect(screen.queryByRole('menuitemradio',{name:'Properties'})).toBeNull(); expect(screen.queryByRole('menuitemradio',{name:'Closed'})).toBeNull();
+  expect(screen.getByRole('menuitemradio',{name:/^Transcript/})).toBeTruthy(); expect(screen.getByRole('menuitemradio',{name:/^Beat Cue/})).toBeTruthy(); expect(screen.queryByRole('menuitemradio',{name:'Properties'})).toBeNull(); expect(screen.queryByRole('menuitemradio',{name:'Closed'})).toBeNull();
   await user.keyboard('{Escape}'); await user.click(screen.getByRole('tab',{name:'Inspector'})); expect(draft).not.toBeVisible();
   await user.click(screen.getByRole('tab',{name:'Extensions'})); expect(screen.getByRole('textbox',{name:'Retained draft'})).toBe(draft);
   screen.getByRole('button',{name:'Panel display'}).focus(); await user.keyboard('{ArrowDown}'); await user.click(screen.getByRole('menuitemradio',{name:'Compact'}));
@@ -138,7 +138,8 @@ it('shows enabled extension names on hover/focus and click opens the full existi
 it('states honestly when no extension is currently enabled', async () => {
   state.inventory = [{ extensionId: 'example', packageSource: 'installed', packageState: 'disabled-by-user' }];
   state.extensions = [];
-  const user = userEvent.setup(); render(<Harness />);
+  state.panels = [];
+  const user = userEvent.setup(); render(<Harness initialPreferences={{ selectedRightPanelId: 'host:extensions' }} />);
   await user.hover(screen.getByRole('button', { name: 'Manage extensions' }));
   expect(screen.getByRole('tooltip')).toHaveTextContent('No extensions are currently enabled.');
   expect(screen.getByRole('tooltip')).not.toHaveTextContent('Transcript');
@@ -292,5 +293,146 @@ it('on touch, the Extensions picker lists the Transcript panel', async () => {
   render(<TouchHarness />);
   await user.click(screen.getByRole('tab', { name: 'Extensions' }));
   await user.click(screen.getByRole('button', { name: 'Displayed extension' }));
-  expect(await screen.findByRole('menuitemradio', { name: 'Transcript' })).toBeInTheDocument();
+  expect(await screen.findByRole('menuitemradio', { name: /^Transcript/ })).toBeInTheDocument();
+});
+
+it('pops the active extension out through the header control into the surface', async () => {
+  const user = userEvent.setup(); render(<Harness />);
+  expect(screen.getByTestId('popped-key')).toHaveTextContent('none');
+  const pop = screen.getByRole('button', { name: 'Pop out Transcript' });
+  expect(pop).toHaveAttribute('aria-pressed', 'false');
+  await user.click(pop);
+  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+  expect(screen.getByRole('button', { name: 'Pop out Transcript' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+it('keeps the popped panel across the Inspector tab switch', async () => {
+  const user = userEvent.setup(); render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Pop out Transcript' }));
+  await user.click(screen.getByRole('tab', { name: 'Inspector' }));
+  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+  await user.click(screen.getByRole('tab', { name: 'Extensions' }));
+  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+});
+
+it('replaces the popped panel when a different tool is popped out', async () => {
+  const user = userEvent.setup(); render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Pop out Transcript' }));
+  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+  screen.getByRole('button', { name: 'Displayed extension' }).focus();
+  await user.keyboard('{ArrowDown}');
+  await user.click(screen.getByRole('menuitemradio', { name: /^Beat Cue/ }));
+  expect(screen.getByRole('button', { name: 'Pop out Beat Cue' })).toHaveAttribute('aria-pressed', 'false');
+  await user.click(screen.getByRole('button', { name: 'Pop out Beat Cue' }));
+  expect(screen.getByTestId('popped-key')).toHaveTextContent('example:beat');
+  expect(screen.getByTestId('popped-key')).not.toHaveTextContent(panelKey);
+});
+
+it('lists an enabled extension without panels, shows its info view, and runs its command through the registry', async () => {
+  const user = userEvent.setup();
+  const executeCommand = vi.fn(async (_commandId: string) => {});
+  state.commandRegistry = { executeCommand };
+  state.extensions = [
+    { manifest: { id: 'haus.astrid.transcript-lane', label: 'Transcript' } },
+    { manifest: {
+      id: 'haus.astrid.threejs-live-editor',
+      label: 'Three.js Live Editor',
+      description: 'Place live Three.js scenes on the timeline.',
+      contributions: [
+        { id: 'scene-clip', kind: 'clipType', label: 'Live Three.js Scene', clipTypeId: 'x' },
+        { id: 'import', kind: 'command', command: 'haus.import', label: 'Import prepared scene' },
+      ],
+    } },
+  ];
+  render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Displayed extension' }));
+  await user.click(await screen.findByRole('menuitemradio', { name: /^Three\.js Live Editor/ }));
+  expect(state.preferences.selectedRightPanelId).toBe('host:extensions');
+  expect(screen.getByRole('button', { name: 'Displayed extension' })).toHaveTextContent('Display: Three.js Live Editor');
+  const info = screen.getByTestId('extension-info-view');
+  expect(info).toHaveTextContent('Place live Three.js scenes on the timeline.');
+  expect(info).toHaveTextContent('Live Three.js Scene clips');
+  await user.click(screen.getByRole('button', { name: 'Import prepared scene' }));
+  expect(executeCommand).toHaveBeenCalledWith('haus.import');
+  expect(screen.queryByRole('button', { name: /^Pop out/ })).toBeNull();
+});
+
+it('shows a tablist of panels for an extension that owns more than one and selects the clicked panel', async () => {
+  const user = userEvent.setup();
+  state.panels = [
+    { extensionId: 'haus.astrid.transcript-lane', id: 'transcript-lane-panel', label: 'Transcript' },
+    { extensionId: 'haus.astrid.transcript-lane', id: 'transcript-notes', label: 'Notes' },
+  ];
+  render(<Harness />);
+  const tablist = screen.getByRole('tablist', { name: 'Transcript panels' });
+  expect(within(tablist).getByRole('tab', { name: 'Transcript' })).toBeInTheDocument();
+  await user.click(within(tablist).getByRole('tab', { name: 'Notes' }));
+  expect(state.preferences.selectedRightPanelId).toBe('haus.astrid.transcript-lane:transcript-notes');
+  expect(within(tablist).getByRole('tab', { name: 'Notes' })).toHaveAttribute('aria-selected', 'true');
+});
+
+it('resolves a saved panel key to its extension label', () => {
+  state.inventory = [
+    { extensionId: 'haus.astrid.transcript-lane', packageSource: 'direct', packageState: 'loaded', packageMetadata: { label: 'Transcript' } },
+    { extensionId: 'example', packageSource: 'installed', packageState: 'loaded', packageMetadata: { label: 'Beat Cue' } },
+  ];
+  state.panels = [
+    { extensionId: 'haus.astrid.transcript-lane', id: 'transcript-lane-panel', label: 'Transcript' },
+    { extensionId: 'example', id: 'beat', label: 'Beat cue controls' },
+  ];
+  render(<Harness initialPreferences={{ selectedRightPanelId: 'example:beat', lastExtensionPanelId: 'example:beat', rightPanelTab: 'extensions' }} />);
+  expect(screen.getByRole('button', { name: 'Displayed extension' })).toHaveTextContent('Display: Beat Cue');
+});
+
+it('Manage is an icon-only button named Manage extensions, with a tooltip on hover and focus', async () => {
+  const user = userEvent.setup(); render(<Harness />);
+  const manage = screen.getByRole('button', { name: 'Manage extensions' });
+  expect(manage).toHaveAttribute('aria-label', 'Manage extensions');
+  expect((manage.textContent ?? '').trim()).toBe('');
+  expect(manage.querySelector('svg')).not.toBeNull();
+
+  await user.hover(manage);
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Manage extensions');
+  await user.unhover(manage);
+  expect(screen.queryByRole('tooltip')).toBeNull();
+
+  fireEvent.focus(manage);
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Manage extensions');
+});
+
+it('the Displayed extension menu lists each extension panel names on a muted second line', async () => {
+  const user = userEvent.setup();
+  state.panels = [
+    { extensionId: 'haus.astrid.transcript-lane', id: 'transcript-lane-panel', label: 'Transcript' },
+    { extensionId: 'haus.astrid.transcript-lane', id: 'second', label: 'Second View' },
+    { extensionId: 'example', id: 'beat', label: 'Beat Cue' },
+  ];
+  render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Displayed extension' }));
+  const transcript = await screen.findByRole('menuitemradio', { name: /^Transcript/ });
+  expect(within(transcript).getByTestId('extension-menu-panels')).toHaveTextContent('Transcript / Second View');
+  expect(within(transcript).getByTestId('extension-menu-panels').className).toContain('text-muted-foreground');
+  const beat = screen.getByRole('menuitemradio', { name: /^Beat Cue/ });
+  expect(within(beat).getByTestId('extension-menu-panels')).toHaveTextContent(/^Beat Cue$/);
+});
+
+it('the Pop out button shows a tooltip on hover and focus, and clicking hides it and still pops out', async () => {
+  const user = userEvent.setup(); render(<Harness />);
+  const pop = screen.getByRole('button', { name: 'Pop out Transcript' });
+
+  await user.hover(pop);
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Pop out Transcript');
+  await user.unhover(pop);
+  expect(screen.queryByRole('tooltip')).toBeNull();
+
+  fireEvent.focus(pop);
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Pop out Transcript');
+  fireEvent.blur(pop);
+  expect(screen.queryByRole('tooltip')).toBeNull();
+
+  await user.hover(pop);
+  expect(screen.getByRole('tooltip')).toBeTruthy();
+  await user.click(pop);
+  expect(screen.queryByRole('tooltip')).toBeNull();
+  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
 });

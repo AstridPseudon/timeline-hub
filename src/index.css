@@ -317,24 +317,7 @@
     @apply border-border;
   }
 
-  /* Astrid's own words keep their sentence case, as on the public site. The person's own text (project
-   * names, shot names, prompts: elements with .preserve-case) follows their choice in onboarding:
-   * all lowercase, unless they chose to keep it exactly as typed. */
-  :root:not(.preserve-user-text) .preserve-case {
-    text-transform: lowercase !important;
-  }
-
-  /* Text shown exactly as written, whatever the case settings: commands, briefs to paste into an agent,
-   and previews of the person's own text. */
-  .verbatim-case,
-  .verbatim-case *,
-  /* As specific as the lowercase rule above, and later, so verbatim wins on a .preserve-case field too. */
-  :root .verbatim-case.preserve-case,
-  :root .verbatim-case .preserve-case {
-    text-transform: none !important;
-  }
-
-  /* Force title case regardless of global lowercase setting */
+  /* Force title case */
   .title-case {
     text-transform: capitalize !important;
   }

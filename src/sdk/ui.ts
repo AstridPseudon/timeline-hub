@@ -36,12 +36,18 @@ export interface PanelVideoAdapter {
   readonly preview?: PanelPreviewService;
   /** Seek through the host player. The adapter owns validation/projection. */
   seek(seconds: number): void;
+  /** Select these clips in the timeline, replacing the current selection. Unknown ids
+   *  are ignored; an empty list clears it. Optional: absent where the host has no timeline. */
+  select?(clipIds: readonly string[]): void;
 }
 
 /** Props supplied to a registered trusted React panel renderer. */
 export interface PanelRenderProps {
   /** Host-controlled extension settings surface, when supplied by the dock. */
   readonly settings?: { readonly open: boolean; readonly onOpenChange: (open: boolean) => void };
+  /** Host-owned larger window, present only where the host offers one. Lay out from your
+   *  measured size, not from `open`; your DOM may move while mounted. */
+  readonly popout?: { readonly open: boolean; readonly onOpenChange: (open: boolean) => void };
   /** Stable for this contribution in this mounted host, distinct between hosts. */
   readonly instanceId: string;
   /** Hidden panels remain mounted; suspend observations while false. */

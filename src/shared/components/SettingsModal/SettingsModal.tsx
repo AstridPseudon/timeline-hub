@@ -20,8 +20,6 @@ import type { SettingsModalProps } from "./types";
 const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onOpenChange,
-  preserveUserText,
-  setPreserveUserText,
 }) => {
   const isMobile = useIsMobile();
 
@@ -75,8 +73,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           <AstridStatusSection isOpen={isOpen} />
           <PreferencesSection
             isMobile={isMobile}
-            preserveUserText={preserveUserText}
-            setPreserveUserText={setPreserveUserText}
             aiInputMode={aiInputMode}
             setAIInputMode={setAIInputMode}
           />

@@ -45,7 +45,7 @@ const SelectValue = React.forwardRef<
 SelectValue.displayName = 'SelectValue';
 
 const selectTriggerVariants = cva(
-  'flex w-full items-center justify-between rounded-md px-3 py-2 text-base lg:text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 relative preserve-case',
+  'flex w-full items-center justify-between rounded-md px-3 py-2 text-base lg:text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 relative',
   {
     variants: {
       variant: {
@@ -266,7 +266,7 @@ const SelectLabel = React.forwardRef<
 SelectLabel.displayName = 'SelectLabel';
 
 const selectItemVariants = cva(
-  'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 preserve-case',
+  'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
   {
     variants: {
       variant: {

@@ -33,7 +33,7 @@ function EditModeStatusBanner({ isOverwriting, presetName, onCancel }: EditModeS
     >
       <div className="flex items-center gap-2">
         <Pencil className={`h-4 w-4 ${isOverwriting ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`} />
-        <span className={`text-sm font-medium preserve-case ${isOverwriting ? 'text-orange-900 dark:text-orange-100' : 'text-blue-900 dark:text-blue-100'}`}>
+        <span className={`text-sm font-medium ${isOverwriting ? 'text-orange-900 dark:text-orange-100' : 'text-blue-900 dark:text-blue-100'}`}>
           {isOverwriting ? `Overwriting: ${presetName}` : `Editing: ${presetName}`}
         </span>
       </div>

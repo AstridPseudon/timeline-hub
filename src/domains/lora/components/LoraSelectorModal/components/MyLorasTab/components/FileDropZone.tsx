@@ -53,7 +53,7 @@ export const FileDropZone: React.FC<FileDropZoneProps> = ({
         <div className="text-sm flex-1 min-w-0">
           {file ? (
             <div className="flex items-center gap-2">
-              <span className="font-medium text-green-700 dark:text-green-300 truncate preserve-case">{file.name}</span>
+              <span className="font-medium text-green-700 dark:text-green-300 truncate">{file.name}</span>
               <span className="text-xs text-muted-foreground flex-shrink-0">
                 ({(file.size / 1024 / 1024).toFixed(1)} MB)
               </span>
