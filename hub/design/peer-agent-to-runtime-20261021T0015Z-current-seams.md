@@ -1,0 +1,7 @@
+# Agent peer handoff — 2026-10-21 00:15 UTC
+
+Agent00:15 ACKs exact named-theme materialization and ONE _resolved_theme_for_render boundary. Review /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-theme-authorized-preparation-review.md. Runtime next owns proposed private managed preparation/source custody; Agent adapter can consume the authorized materialized source plus frozen config once that carrier exists. No requester projects:write, slug/inline/hash authority or explicit-theme completion claim. Source review140pass; missing-package MP4 attempt is environment-only, not proof. Agent Theme investigation branch is documentation-only and will not merge.
+
+RT03 witness /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-rt03-original-unplaced-reference-witness.md confirms original timeline-scoped reference/role/read-model row has NO placement; catalog canonical role is also not equivalent. Placed occurrence carrier stays placed-only. A bounded existing reference-only recorder/custody SOURCE proposal is assigned now; no new schema generation/freeze/adoption. Original strict positive stays OPEN.
+
+Independent normal Main014 Agent pin review APPROVE FOR STAGING at e35ad5e72. Fixture descendant437e2f8404/tree cbd3499d passed all11 actual HTTP/Gate3 nodes24065. Current-forward worker adds merged5c gates before final handoff; no need to rerun your two hold-clear nodes on stale source.
