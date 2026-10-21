@@ -47,7 +47,6 @@ describe('validatePanelClipSpec', () => {
     ['zero speed', { ...spec, speed: 0 }],
     ['long label', { ...spec, label: 'x'.repeat(201) }],
     ['array app', { ...spec, app: [] }],
-    ['huge app', { ...spec, app: { blob: 'x'.repeat(70_000) } }],
   ])('rejects %s', (_name, bad) => {
     expect(validatePanelClipSpec(bad, OWNER, ownership)).toMatchObject({ ok: false });
   });
@@ -85,6 +84,25 @@ describe('createPanelClipDragSource', () => {
     const json = transfer();
     json.setData(PANEL_CLIP_DRAG_TYPE, JSON.stringify(spec));
     expect(readPanelClipDrag(json)).toBeNull();
+  });
+  it('accepts a large scene sidecar and refuses one that is unbounded or cyclic, without a per-render cost', () => {
+    const big = { liveScene: { html: 'x'.repeat(2_000_000) } };
+    const stringify = vi.spyOn(JSON, 'stringify');
+    const props = source({ ...spec, app: big })!;
+    expect(stringify).not.toHaveBeenCalled();
+    const dt = transfer();
+    props.onDragStart({ dataTransfer: dt });
+    expect(isPanelClipDrag(dt.types)).toBe(true);
+    stringify.mockRestore();
+
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    const refused = transfer();
+    source({ ...spec, app: cyclic })!.onDragStart({ dataTransfer: refused });
+    expect(isPanelClipDrag(refused.types)).toBe(false);
+    const huge = transfer();
+    source({ ...spec, app: { html: 'x'.repeat(17 * 1024 * 1024) } })!.onDragStart({ dataTransfer: huge });
+    expect(isPanelClipDrag(huge.types)).toBe(false);
   });
   it('ignores a drag start without a transfer', () => {
     expect(() => source(spec)!.onDragStart({ dataTransfer: null })).not.toThrow();

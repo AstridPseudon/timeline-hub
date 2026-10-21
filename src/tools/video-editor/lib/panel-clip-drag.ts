@@ -15,8 +15,14 @@ import { getCompatibleTrackId } from '@/tools/video-editor/lib/coordinate-utils.
 
 /** Lower-case on purpose: browsers lower-case DataTransfer keys. */
 export const PANEL_CLIP_DRAG_TYPE = 'application/x-astrid-panel-clip';
-const MAX_APP_BYTES = 64 * 1024;
+/** The sidecar of a live scene carries its whole package (up to 8 MiB of entry HTML), so the cap is generous. */
+const MAX_APP_CHARS = 16 * 1024 * 1024;
 const MAX_LABEL = 200;
+
+/** Size of the sidecar as JSON, or null when it cannot be serialised. Costly: call once per drag, not per render. */
+export function panelClipAppSize(app: unknown): number | null {
+  try { return JSON.stringify(app).length; } catch { return null; }
+}
 
 export interface PanelClipOwnership {
   /** Who owns a clip type, as the host's clip-type registry knows it. */
@@ -50,9 +56,6 @@ export function validatePanelClipSpec(
   }
   if (app !== undefined) {
     if (!app || typeof app !== 'object' || Array.isArray(app)) return { ok: false, reason: 'app must be an object' };
-    let size = 0;
-    try { size = JSON.stringify(app).length; } catch { return { ok: false, reason: 'app must be JSON-serialisable' }; }
-    if (size > MAX_APP_BYTES) return { ok: false, reason: 'app sidecar is too large' };
   }
   return {
     ok: true,
@@ -80,6 +83,11 @@ export function createPanelClipDragSource(extensionId: string, ownership: PanelC
       onDragStart: (event) => {
         const transfer = event.dataTransfer;
         if (!transfer) return;
+        // Checked here, once per drag, because stringifying a scene's package on every render would be wasteful.
+        if (checked.spec.app) {
+          const size = panelClipAppSize(checked.spec.app);
+          if (size === null || size > MAX_APP_CHARS) return;
+        }
         const token = `panel-clip-${++sequence}`;
         mine.add(token);
         active.set(token, { extensionId, spec: checked.spec });
