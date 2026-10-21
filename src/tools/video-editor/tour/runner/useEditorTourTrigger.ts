@@ -20,6 +20,11 @@ export function useEditorTourTrigger(hasSelection: boolean): void {
   const desktop = useIsDesktopEditor();
   const gateOpen = useRuntimeGateOpen();
   useEffect(() => {
-    startEditorTourIfFirstRun(hasSelection && desktop && gateOpen);
+    // The Runtime answers asynchronously: a change in eligibility meanwhile (or an unmount) cancels the start.
+    let current = true;
+    void startEditorTourIfFirstRun(hasSelection && desktop && gateOpen, () => current);
+    return () => {
+      current = false;
+    };
   }, [hasSelection, desktop, gateOpen]);
 }

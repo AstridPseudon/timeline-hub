@@ -17,6 +17,8 @@ const productCalls: ReadonlyArray<readonly [string, string, PairedService]> = [
   ['GET', runtime('/v1/health'), 'runtime'],
   ['POST', runtime('/v1/handshake'), 'runtime'],
   ['GET', runtime('/v1/realm'), 'runtime'],
+  ['GET', runtime('/v1/app-state/user/editor-tour'), 'runtime'],
+  ['PUT', runtime('/v1/app-state/user/editor-tour'), 'runtime'],
   ['GET', runtime('/v1/projects?limit=50&cursor=c1'), 'runtime'],
   ['POST', runtime('/v1/projects'), 'runtime'],
   ['GET', runtime(`/v1/projects/${P}`), 'runtime'],

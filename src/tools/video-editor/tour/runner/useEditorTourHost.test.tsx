@@ -1,10 +1,16 @@
 // @vitest-environment jsdom
 
-import { act, render } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { exitEditorTour, getEditorTourState, markEditorTourReady } from '@/shared/state/editorTourStore';
 import { EditorTourSlot } from '../timeline/editorTourSlot';
 import { useEditorTourHost } from './useEditorTourHost';
+
+vi.mock('./tourRecord', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./tourRecord')>()),
+  readRuntimeTourStatus: vi.fn(async () => 'unseen'),
+  recordEditorTour: vi.fn(async () => undefined),
+}));
 
 vi.mock('@/shared/hooks/mobile', () => ({
   useIsMobile: () => false,
@@ -23,16 +29,18 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-afterEach(() => {
+afterEach(async () => {
+  // The runner ends a tour on unmount one tick later; let that settle before the next test starts its own.
+  await new Promise((resolve) => setTimeout(resolve, 0));
   exitEditorTour();
   localStorage.clear();
 });
 
 describe('useEditorTourHost', () => {
-  it('starts on the first mount with a selection and shows the runner only while the tour runs', () => {
+  it('starts on the first mount with a selection and shows the runner only while the tour runs', async () => {
     const { unmount } = render(<Page hasSelection />);
 
-    expect(getEditorTourState().status).toBe('running');
+    await waitFor(() => expect(getEditorTourState().status).toBe('running'));
     expect(document.querySelector('[data-editor-tour-shield]')).not.toBeNull();
 
     act(() => {
@@ -43,12 +51,13 @@ describe('useEditorTourHost', () => {
     unmount();
   });
 
-  it('does not start without a selection, and Enter swallows the keystroke while running', () => {
+  it('does not start without a selection, and Enter swallows the keystroke while running', async () => {
     const idle = render(<Page hasSelection={false} />);
     expect(getEditorTourState().status).toBe('idle');
     idle.unmount();
 
     const { unmount } = render(<Page hasSelection />);
+    await waitFor(() => expect(document.querySelector('[data-editor-tour-shield]')).not.toBeNull());
     // Replay path: the flag is set, so only an explicit start runs it again.
     // The welcome card has played its entrance, so Enter is its OK.
     act(() => markEditorTourReady('card'));

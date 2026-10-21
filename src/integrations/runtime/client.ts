@@ -576,6 +576,12 @@ export class AstridRuntimeClient {
     ));
   }
 
+  /** One actor-owned app-state record (absent reads as version 0 with null content). */
+  async getUserAppState(key: string) { return this.withSession(() => this.client.getUserAppState(key)); }
+  async updateUserAppState(key: string, content: Record<string, unknown>, expectedVersion: number) {
+    return this.withMutation(() => this.client.updateUserAppState(key, content, expectedVersion, idempotencyKey()));
+  }
+
   async listDocuments(projectId: string, cursor?: string, limit = 50, kind?: string) { return this.withSession(() => this.client.listDocuments(projectId, cursor, limit, kind)); }
   async getDocument(projectId: string, documentId: string) { return this.withSession(() => this.client.getDocument(projectId, documentId)); }
   async createDocument(projectId: string, documentId: string, kind: string, content: unknown, key: string) { return this.withMutation(() => this.client.createDocument(projectId, documentId, kind, content, key)); }

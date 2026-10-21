@@ -1,3 +1,4 @@
+import { buildEditorTourRecord, recordEditorTour } from './tourRecord';
 import { EDITOR_TOUR_ANCHORS, editorTourSelector } from '../anchors';
 import {
   exitEditorTour,
@@ -53,10 +54,15 @@ export function runEditorTourPrimary(): void {
   advanceBeat();
 }
 
-/** Esc, and the end of the finale: leave the tour and hand the user their own chat. */
+/**
+ * Esc, Skip, leaving the page, and the end of the finale: leave the tour and hand the user their own chat.
+ * Ending at the finale is "completed"; ending anywhere earlier is "skipped". Either is recorded with where it ended.
+ */
 export function finishEditorTour(): void {
-  if (getEditorTourState().status !== 'running') return;
+  const { status, act, beat } = getEditorTourState();
+  if (status !== 'running') return;
   exitEditorTour();
+  void recordEditorTour(buildEditorTourRecord(beat === 'finale' ? 'completed' : 'skipped', act, beat));
   focusRealComposer();
 }
 

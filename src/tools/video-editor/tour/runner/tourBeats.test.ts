@@ -9,10 +9,18 @@ import {
 } from '@/shared/state/editorTourStore';
 import { finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
 import { beginEditorTour, hasSeenEditorTour, startEditorTourIfFirstRun } from './tourFlag';
+import { recordEditorTour } from './tourRecord';
+
+vi.mock('./tourRecord', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./tourRecord')>()),
+  readRuntimeTourStatus: vi.fn(async () => 'unseen'),
+  recordEditorTour: vi.fn(async () => undefined),
+}));
 
 let stopWatching: (() => void) | undefined;
 
 beforeEach(() => {
+  vi.mocked(recordEditorTour).mockClear();
   exitEditorTour();
   localStorage.clear();
   stopWatching = watchEditorTourSend();
@@ -170,11 +178,11 @@ describe('tour beat machine', () => {
     expect(getEditorTourState()).toBe(before);
   });
 
-  it('a reload mid-tour leaves the seen flag set and does not restart the tour', () => {
+  it('a reload mid-tour leaves the seen flag set and does not restart the tour', async () => {
     // Start from a fresh first run: the beforeEach already started a tour, which would block the trigger.
     exitEditorTour();
     localStorage.clear();
-    expect(startEditorTourIfFirstRun(true)).toBe(true);
+    expect(await startEditorTourIfFirstRun(true)).toBe(true);
     setEditorTourBeat(2, 'land');
     expect(hasSeenEditorTour()).toBe(true);
 
@@ -182,7 +190,7 @@ describe('tour beat machine', () => {
     exitEditorTour();
 
     expect(hasSeenEditorTour()).toBe(true);
-    expect(startEditorTourIfFirstRun(true)).toBe(false);
+    expect(await startEditorTourIfFirstRun(true)).toBe(false);
     expect(getEditorTourState().status).toBe('idle');
   });
 
@@ -206,5 +214,53 @@ describe('tour beat machine', () => {
       sent: false,
       ready: { chat: false, timeline: false, card: false },
     });
+  });
+});
+
+describe('the recorded outcome', () => {
+  const lastRecord = () => vi.mocked(recordEditorTour).mock.calls.at(-1)?.[0];
+
+  it('finishing from the finale is completed, with where it ended', () => {
+    setEditorTourBeat(3, 'finale');
+    markEditorTourReady('card');
+
+    runEditorTourPrimary();
+
+    expect(getEditorTourState().status).toBe('idle');
+    expect(lastRecord()).toMatchObject({ version: 1, outcome: 'completed', step: 'act3/finale' });
+    expect(Date.parse(lastRecord()!.at)).not.toBeNaN();
+  });
+
+  it('Skip, Esc or leaving the page before the finale is skipped, at the step it ended on', () => {
+    setEditorTourBeat(2, 'respond');
+
+    finishEditorTour();
+
+    expect(lastRecord()).toMatchObject({ outcome: 'skipped', step: 'act2/respond' });
+  });
+
+  it('skipping on the welcome card is skipped at the welcome', () => {
+    startEditorTour();
+
+    finishEditorTour();
+
+    expect(lastRecord()).toMatchObject({ outcome: 'skipped', step: 'act1/welcome' });
+  });
+
+  it('Esc on the finale itself still counts as completed: the user had seen everything', () => {
+    setEditorTourBeat(3, 'finale');
+
+    finishEditorTour();
+
+    expect(lastRecord()).toMatchObject({ outcome: 'completed', step: 'act3/finale' });
+  });
+
+  it('records nothing when no tour is running', () => {
+    exitEditorTour();
+    vi.mocked(recordEditorTour).mockClear();
+
+    finishEditorTour();
+
+    expect(recordEditorTour).not.toHaveBeenCalled();
   });
 });

@@ -209,6 +209,22 @@ async function resetFakeRuntime(seed: 'empty' | 'demo'): Promise<void> {
   expect((await response.json()).seed).toBe(seed);
 }
 
+/** What the fake Runtime holds for this user's `editor-tour` app-state record (the Runtime-side "seen"). */
+async function runtimeTourRecord(): Promise<{ version: number; content: { version: number; outcome: string; step: string; at: string } | null }> {
+  const response = await fetch(`${FAKE_RUNTIME_ORIGIN}/v1/app-state/user/editor-tour`, { headers: fakeRuntimeAuthHeaders() });
+  expect(response.ok, 'fake Runtime app-state read').toBe(true);
+  return response.json();
+}
+
+/** The editor is up and has asked the Runtime about the tour (the answer decides the auto-start). */
+async function reloadEditorAndAwaitRuntimeAnswer(page: Page): Promise<void> {
+  const answered = page.waitForResponse((response) => response.url().includes('/v1/app-state/user/editor-tour') && response.request().method() === 'GET', { timeout: 60_000 });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await answered;
+  await page.getByRole('button', { name: 'Render', exact: true }).waitFor({ state: 'visible', timeout: 45_000 });
+  await page.locator('[data-track-id]').first().waitFor({ timeout: 30_000 });
+}
+
 test.describe('editor tour', () => {
   test.beforeEach(async () => { await resetFakeRuntime('empty'); });
   test.afterEach(async () => { await resetFakeRuntime('demo'); });
@@ -273,11 +289,21 @@ test.describe('editor tour', () => {
     await expectEmptyTimeline(page);
     await shot(page, '12-editor-after');
 
+    // The Runtime now holds the outcome, so it outlives this browser's storage.
+    await expect.poll(async () => (await runtimeTourRecord()).content?.outcome).toBe('completed');
+    expect((await runtimeTourRecord()).content).toMatchObject({ version: 1, outcome: 'completed', step: 'act3/finale' });
+
     // "Seen" was stored at the start: a reload goes straight to the editor.
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'Render', exact: true }).waitFor({ state: 'visible', timeout: 45_000 });
     await page.locator('[data-track-id]').first().waitFor({ timeout: 30_000 });
     await expectRealEditor(page);
+
+    // Forget the browser's flag (a new browser, another origin, cleared storage): the Runtime's record keeps the tour away.
+    await page.evaluate((key) => window.localStorage.removeItem(key), SEEN_KEY);
+    await reloadEditorAndAwaitRuntimeAnswer(page);
+    await expectRealEditor(page);
+    expect(await page.evaluate((key) => window.localStorage.getItem(key), SEEN_KEY)).not.toBeNull();
     // (This Chromium cannot decode the H.264 placeholders, so play() rejects with "no supported sources".)
     expect(logs.filter((line) => line.startsWith('[pageerror]') && !line.includes('no supported sources'))).toEqual([]);
   });
@@ -300,13 +326,37 @@ test.describe('editor tour', () => {
     await expectRealEditor(page);
     await expectRealComposerFocused(page);
 
-    // Mid-tour reload: start again by forgetting the flag, then reload once the tour is running.
+    // Esc recorded "skipped" in the Runtime, and a record keeps the tour away on its own.
+    await expect.poll(async () => (await runtimeTourRecord()).content?.outcome).toBe('skipped');
+    expect((await runtimeTourRecord()).content).toMatchObject({ version: 1, outcome: 'skipped', step: 'act1/compose' });
+
+    // Mid-tour reload: start again as a new user (no Runtime record, no flag), then reload once the tour is running.
+    await resetFakeRuntime('empty');
     await page.evaluate((key) => window.localStorage.removeItem(key), SEEN_KEY);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await waitSettled(page, 1, 'welcome');
+    // Starting recorded "started" in the Runtime, so the reload mid-tour, even with the flag gone, never re-traps anyone.
+    await expect.poll(async () => (await runtimeTourRecord()).content?.outcome).toBe('started');
+    await page.evaluate((key) => window.localStorage.removeItem(key), SEEN_KEY);
+    await reloadEditorAndAwaitRuntimeAnswer(page);
+    await expectRealEditor(page);
+  });
+
+  test('a skip at the welcome is remembered by the Runtime: with the browser flag gone, the tour stays away', async ({ page }) => {
+    test.setTimeout(180_000);
+    await loadEditor(page);
+    expect((await runtimeTourRecord()).content).toBeNull();
+    await page.evaluate((key) => window.localStorage.removeItem(key), SEEN_KEY);
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.getByRole('button', { name: 'Render', exact: true }).waitFor({ state: 'visible', timeout: 45_000 });
-    await page.locator('[data-track-id]').first().waitFor({ timeout: 30_000 });
+    await waitSettled(page, 1, 'welcome');
+
+    await page.keyboard.press('Escape');
+    await expectRealEditor(page);
+    await expect.poll(async () => (await runtimeTourRecord()).content?.outcome).toBe('skipped');
+    expect((await runtimeTourRecord()).content).toMatchObject({ version: 1, outcome: 'skipped', step: 'act1/welcome' });
+
+    await page.evaluate((key) => window.localStorage.removeItem(key), SEEN_KEY);
+    await reloadEditorAndAwaitRuntimeAnswer(page);
     await expectRealEditor(page);
   });
 
@@ -334,6 +384,10 @@ test.describe('editor tour', () => {
     await expectRealComposerFocused(page);
     await expect.poll(() => page.locator('[data-track-id]').evaluateAll((els) => els.map((el) => el.getAttribute('data-track-id'))))
       .toEqual(realTracks);
+
+    // Replay records its own outcome the same way.
+    await expect.poll(async () => (await runtimeTourRecord()).content?.outcome).toBe('skipped');
+    expect((await runtimeTourRecord()).content).toMatchObject({ version: 1, step: 'act1/compose' });
 
     // Replay never changes "seen": a reload does not start the tour.
     await page.reload({ waitUntil: 'domcontentloaded' });
