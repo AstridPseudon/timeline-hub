@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 
-from astrid.core.timeline.scene_answers import host_frames_at
+from astrid.core.rendering.scene_answers import host_frames_at
 from astrid.sdk import timeline_filmstrip
 from astrid.sdk.timeline_checkout import Checkout
 from tests.packs.rendering.test_scene_host import BASIS, props

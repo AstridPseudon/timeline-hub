@@ -14,7 +14,7 @@ import pytest
 
 from astrid.core.rendering import remotion_runtime
 from astrid.core.rendering.node_pin import resolve_pinned_node
-from astrid.core.timeline import scene_answers
+from astrid.core.rendering import scene_answers
 
 ROOT = Path(__file__).resolve().parents[3]
 ARTIFACT = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz"

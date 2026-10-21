@@ -54,7 +54,7 @@ class CaptureSceneLabels:
 
     def observe(self, props: Mapping[str, Any], frames: Sequence[int]) -> None:
         """Query the public host once, inside the existing capture lifetime."""
-        from astrid.core.timeline.scene_answers import (
+        from astrid.core.rendering.scene_answers import (
             SceneQueryUnavailable,
             host_frames_at,
         )
@@ -83,7 +83,7 @@ class CaptureSceneLabels:
 
     def retain(self, produced: Mapping[int, Path]) -> None:
         """Publish answers only after the same entire fresh capture succeeds."""
-        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+        from astrid.core.rendering.scene_answers import SceneQueryUnavailable
 
         if (self._retained or not self._answers or set(produced) != set(self._answers)
                 or any(not Path(path).is_file() for path in produced.values())):
@@ -93,7 +93,7 @@ class CaptureSceneLabels:
         self._retained = True
 
     def frame(self, frame: int, *, source_identity: str) -> dict[str, Any]:
-        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+        from astrid.core.rendering.scene_answers import SceneQueryUnavailable
 
         if not self._retained or source_identity != self._source_identity or frame not in self._answers:
             raise SceneQueryUnavailable("scene unavailable for this capture source/frame")
@@ -116,7 +116,7 @@ class CaptureSceneLabels:
         return labels_for_scene(answer, self._addresses), {key: answer[key] for key in ("width", "height")}
 
     def _cache_payload(self, frame: int) -> dict[str, Any]:
-        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+        from astrid.core.rendering.scene_answers import SceneQueryUnavailable
 
         if not self._props:
             raise SceneQueryUnavailable("cached scene rows cannot mint a fresh payload")
@@ -774,7 +774,7 @@ class RemotionFrameProvider:
 
     def _observe_scene(self, props: Mapping[str, Any], frames: Sequence[int]) -> None:
         from astrid.core.rendering.profile import resolve_render_profile
-        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+        from astrid.core.rendering.scene_answers import SceneQueryUnavailable
 
         if self._pending_scene is not None or tuple(frames) != self._fresh_requested:
             raise SceneQueryUnavailable("capture callback frames mismatch or already observed")
@@ -826,7 +826,7 @@ class RemotionFrameProvider:
         capture.observe(props, frames)
 
     def _validate_staged_assets(self, clip: Mapping[str, Any], registry: Mapping[str, Any]) -> None:
-        from astrid.core.timeline.scene_answers import SceneQueryUnavailable
+        from astrid.core.rendering.scene_answers import SceneQueryUnavailable
         from astrid.packs.rendering.rendering.renderers.remotion.run import (
             REPO_ROOT,
             _effect_id_for_clip,

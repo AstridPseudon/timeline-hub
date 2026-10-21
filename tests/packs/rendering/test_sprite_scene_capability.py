@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from astrid.core.rendering.node_pin import resolve_pinned_node
-from astrid.core.timeline import scene_answers
+from astrid.core.rendering import scene_answers
 from astrid.core.timeline.shot_composition_projection import project_shot_composition
 from astrid.packs.rendering.shared.rendering_backend import _serialize_timeline
 from astrid.sdk.timeline.units import from_canvas
