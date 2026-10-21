@@ -280,11 +280,10 @@ def test_fresh_shared_placement_materializes_own_slot_reload_inverse_and_exact_r
     source_pin = source['source_mapping']['shots'][destination]
     expected_map = allocation_map(expected.records)
     assert command['op'] == 'placement.move' and command['version'] == '2'
-    assert expected_map == {
-        'shot:' + destination: destination,
-        'shot:' + destination + '/item:' + next(iter(source_pin['item_id_map'].values())):
-            next(iter(source_pin['item_id_map'].values())),
-    }
+    # The captured identity source has no shot items, so this native proof is
+    # limited to shot allocation; item allocation remains a separate gap.
+    assert source_pin['item_id_map'] == {}
+    assert expected_map == {'shot:' + destination: destination}
 
     accepted = edit.commit(body, 'placement-materialization')
     data = accepted['data']
