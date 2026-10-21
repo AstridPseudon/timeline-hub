@@ -13,7 +13,8 @@ export function addNewbornVideoHold(row: MediaRow): MediaRow {
     || row.to <= row.from) {
     return row;
   }
-  return { ...row, hold: row.to - row.from };
+  const duration = row.to - row.from;
+  return Number.isFinite(duration) && duration > 0 ? { ...row, hold: duration } : row;
 }
 
 /** Convert Main's detached birth shape to the raw Agent occurrence shape. */
@@ -37,5 +38,6 @@ export function adaptNewbornOccurrenceMediaRow(
     || detached.to <= detached.from) {
     return null;
   }
-  return addNewbornVideoHold(detached);
+  const adapted = addNewbornVideoHold(detached);
+  return own(adapted, 'hold') ? adapted : null;
 }

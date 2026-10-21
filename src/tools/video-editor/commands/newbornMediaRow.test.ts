@@ -30,6 +30,14 @@ describe('newborn occurrence media row adapter', () => {
     expect(addNewbornVideoHold(source)).toEqual({ ...videoRow, hold: 6 });
   });
 
+  it('refuses an overflowing finite window without changing the source object', () => {
+    const source = { ...videoRow, from: -Number.MAX_VALUE, to: Number.MAX_VALUE };
+
+    expect(addNewbornVideoHold(source)).toBe(source);
+    expect(adaptNewbornOccurrenceMediaRow(source, 'video')).toBeNull();
+    expect(source).toEqual({ ...videoRow, from: -Number.MAX_VALUE, to: Number.MAX_VALUE });
+  });
+
   it.each([
     ['present-null hold', { hold: null }],
     ['other speed', { speed: 2 }],

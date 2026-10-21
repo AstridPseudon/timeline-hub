@@ -159,4 +159,13 @@ describe('native parent clip.add-media capture', () => {
     Object.assign(candidate, patch);
     expect(() => captureParentClipAddMedia(bundle(), candidate, media, [verified])).toThrow();
   });
+
+  it('retains parent capture refusal for an overflowing finite newborn window', () => {
+    const candidate = { ...row, clipType: 'media', from: -Number.MAX_VALUE, to: Number.MAX_VALUE, speed: 1 };
+    delete candidate.hold;
+    const input = bundle(), before = copy(input);
+
+    expect(() => captureParentClipAddMedia(input, candidate, media, [verified])).toThrow();
+    expect(input).toEqual(before);
+  });
 });
