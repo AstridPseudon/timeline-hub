@@ -78,6 +78,23 @@ The canvas and frame rate are stored in the parent-composition config at
 key is the supported retry path. The retired whole-document `timelines create`
 route and local timeline files are not authorities.
 
+## Look in the editor first
+
+People watch timelines in the Astrid editor, which plays the live composition
+in the browser with nothing to render:
+
+```text
+https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-slug>
+```
+
+After a publish, give the user that link and the times to look at instead of
+rendering a video for them to review; each published revision shows there at
+once. For your own checks, read timing with `timelines show --as script` and
+look at a few `timelines visualize` frames at the moments you changed (960x540
+unless you need detail; `--preset motion --at <t>` for a move). Composed frames
+go through the shared pack host, so dense full-resolution sweeps are slow and
+queue behind other work. Render only when someone needs the exported file.
+
 ## Visualize before rendering
 
 Start review with the canonical structural view, then use the public
