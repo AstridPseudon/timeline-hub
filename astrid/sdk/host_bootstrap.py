@@ -752,7 +752,9 @@ print(json.dumps(origins))
                                     if key in {"PATH", "HOME", "LANG", "LC_ALL", "TMPDIR"}})
     try:
         origins = json.loads(completed.stdout) if completed.returncode == 0 else None
-        if not isinstance(origins, dict) or set(origins) != {"host", "child", "action", "client", "sdk"}:
+        required = {"host", "child", "action", "client", "sdk",
+                    "runtime_protocol", "runtime_protocol.platform", "astrid_runtime"}
+        if not isinstance(origins, dict) or set(origins) != required:
             raise ValueError("missing installed origins")
         for name, origin in origins.items():
             path = Path(origin)
@@ -763,7 +765,7 @@ print(json.dumps(origins))
         return {name: str(Path(origin).resolve()) for name, origin in origins.items()}
     except (TypeError, ValueError, json.JSONDecodeError) as exc:
         raise PackHostBootstrapError(
-            "installed host profile does not bind actual installed host/child/action/client origins; "
+            "installed host profile does not bind actual installed host/child/action/client/Runtime origins; "
             "rebind the profile to the selected interpreter's noneditable product tree") from exc
 
 
