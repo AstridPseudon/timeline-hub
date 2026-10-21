@@ -507,7 +507,7 @@ def _media_metadata(value):
 
 
 def _source_kind(conn, project_id, pin, retained):
-    from .timeline_commit_inputs import PROJECT_PACK_KIND
+    from .timeline_commit_inputs import PROJECT_PACK_KIND, TRANSCRIPT_KIND
     row = None
     if retained:
         row = conn.execute(
@@ -520,7 +520,7 @@ def _source_kind(conn, project_id, pin, retained):
                            (project_id, pin["document_id"])).fetchone()
     if row is None:
         return None
-    if not (row["kind"].endswith(".config") or row["kind"] == PROJECT_PACK_KIND):
+    if not (row["kind"].endswith(".config") or row["kind"] in {PROJECT_PACK_KIND, TRANSCRIPT_KIND}):
         raise refused("dependency_unavailable", "source input requires a registered config or project pack kind")
     return row["kind"]
 
