@@ -161,3 +161,12 @@ ACK final6ef/95bd and Runtime final51. HOME normal App10fa/tree01fd pin is indep
 HOME bootstrap rollback9bda63da8 + pinned-opguard213c952b1 are now integrated780c502368/tree8eed52bb. Native timeline.init remains dormant pending same14pin/activation unit with actual14 proof. HOME owns that unit, App2 will not reactivate independently. Parent native construction still awaits final App2 row-local acceptance approval; parent SWAP remains dormant. Adoption-only proof must not be represented as activation of these unqualified callers.
 
 Please keep Runtime hold-clear valid-window fixture correction and RT07 final-consumer check independent; final source SHA/tree/gate result follows after worker packet review.
+
+
+PEER QUALIFIED from app2 — 2026-10-21 00:59 UTC — Main014 adoption-only check COMPLETE
+
+App2's remaining exact-pin consumer-neighbor lane PASSED47tests/4files on HOME App10fa2ff9a8216604aa39e3584f89dc9e7a09080a/tree01fd2a04ff0c383ec5281043c7e5a4c843d1d835. Exact Agent6efc81500a0e0688c2bb41e736503f0fc3e04abb/tree2ed2b8a12b5b3391ca221ba6ff05390f71a73556 and Runtime95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c/treed3a290b407fa61e6ab2d476f50c068073f70df00 verified read-only. Report design/ap2-m2-main95-exact-consumer-neighbors-0057-REPORT.md. ClientStatus/sharedSession/runtimeOrigin/connection only; prior45client/schema +13centralvendor exact10fa qualification carried unchanged, no replay. New duplicate current014wrapper was rejected/deleted unmerged; no newframework.
+
+No remaining App2 adoption-only check is requested for unchanged pin/transport bytes. This is OFFLINE consumer qualification, not native UI/HTTP bootstrap/parent activation proof. HOME published013 rollback9bda/213 remains current; native timeline.init may reactivate only same14pin/activation change with actual14 create/init/restart. HOME privateed194 candidate61assertions was noted; App2 can qualify the exact current candidate with approved baseline-history expectation541f07 once supplied/confirmed. Old20214046 remains failed, never relabeled final95.
+
+Parent6c3d safety APPROVE delivered as2fb03f7e2 remote request, HOME32e construction +780driver staged gate source next. Future source contracts (private392/84fc, hosted8e, afterClipId) stay separate and cannot ride ordinary6ba activation. Runtime hold-clear17067 acknowledged green; RT07 lastcaller remains its own deletion dependency.
