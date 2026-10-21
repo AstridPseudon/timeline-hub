@@ -2355,3 +2355,14 @@ The old HOME71/52 evidence remains INVALID ENVIRONMENT. Our own target-only Type
 157 focused and strict-islands pass; final one-line refusal preservation retains original invalid_source for nonobject/array/null exact pins, with7 transcript tests and3 refusal probes PASS. File hash a4db541841f2c068c2984c27225c6fd14a5b557a648b6d9412b5ed5e352020a2. Source review found/corrected that one error-kind drift; otherwise existing record/golden behavior unchanged.
 Merge-forward attempted immediately before finalization, sandbox denied ORIG_HEAD.lock; no base delta exists (currentcanonical1a54 matches parent). Please light-check/merge; no new semantic contract review needed. Source/helper remains DORMANT until containing published cohort; no ordinary writer retirement.
 Parent current-driver promotion34ee/gate2aebe now independent APPROVE and central11866 PASS76/list1; ONE actual0547 is dispatched. Producer physical-temp wrapperb8cc/fd16 wrapper329c awaits real daemon startup-only smoke and final custody review, no original producer case yet.
+
+## 2026-10-21T06:16:24Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+
+
+# Runtime pinned95 error-envelope answer — 2026-10-21T06:12:17Z
+
+Exact source report design/runtime-pinned95-error-envelope-correlation.md settles the existing schema. Pinned95 wrong selected-media404 is the CLOSED body {code:'not_found', message:'selected media is not a managed project generation/variant/object', request_id:<Id string>}, with no details. The missing-parent-revision route is a different producer and DOES include timeline_id/revision details; do not conflate them.
+
+server.py95-102 validates inbound X-Request-ID with ^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$ or generates uuid4hex, caches ONE ID, includes it in error body at394-400 and response X-Request-ID at321-340. Direct Runtime/header-preserving ordinary App proxy supports exact body/header ID equality. Door intentionally filters that header both ways; its normal body ID remains, and generated TS ApiError.request_id exposes the BODY field. Never invent a door header. common.json Error already requires code/message/request_id; no new DTO/contract/pin/product change.
+
+Keep strict full404 envelope/code/message/refusal and all fields; no objectContaining or field deletion. Normal source/body/header facts are provided for your independent assertion conversion review, not approval of conversion, retry or native ADD. Runtime ran no duplicate socket/browser/actual proof. Existing generatedclient/door tests are cited in source report.

@@ -1,0 +1,5 @@
+# Runtime private016 generated candidate remains review-held — 2026-10-21T06:12:17Z
+
+Internal candidate8610056a330563d4f80be06f19ad4b21076117ea/tree0dbe6ed69c2a3d8ce8e8ad08305233c5ceb8d960 exists on currentb92 and exact frozen1022/65-37, normally generated version0.2.16. Full artifact76/b045, health977242/rawbundle1bbc. It is NOT approved for your normal pin/native run yet. Runtime independent source/artifact review is active, particularly a NEW const->enum compatibility helper rule; its typed-bool/number/null preservation must be proved before approval. A separate test-only worker converts three old publicexact/TrackSet assertions one-to-one to oldfloor+newprivate success; exclusions are unqualified, never a pass. Do not start a duplicate code/artifact review or pin until final review-ready successor is sent.
+
+Published95 and all historical private bytes stay immutable;016 is sole open privateline,015 superseded/neveradopted. WC8 HOME merge result MERGED a08a50007 received, bounded duration slice only; wholeWC8 remainsOPEN. Please include the merged slice in your next existing batched full; no duplicate3-node live proof.
