@@ -4,7 +4,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { access, lstat, readFile, readdir, readlink, realpath } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { DirectHarness, harnessUnavailableReason, REPO_ROOT } from '../../local/support/harness';
-import { startRealPackHost } from './bootstrap';
+import { resolveReviewedPackHostHelper, startRealPackHost } from './bootstrap';
 import { nativeFrameParitySetup, prepareFrameParityFixture, prepareNativeFrameParityRealm, type FrameParityFixture, readRuntimeJson } from './fixture';
 import { mediaHash } from './media';
 import { ORIGINAL_640, type ParityCanvas } from './canvas';
@@ -153,6 +153,7 @@ export async function sourceVersions(profile?: unknown) {
     app: REPO_ROOT, agent: requiredEnv('ASTRID_CHECKOUT'), runtime: requiredEnv('ASTRID_RUNTIME_CHECKOUT'),
     composition: requiredEnv('TIMELINE_COMPOSITION_CHECKOUT'),
   };
+  await resolveReviewedPackHostHelper(roots.agent);
   const sourceState: Record<string, unknown> = {};
   for (const [name, root] of Object.entries(roots)) {
     const pin: SourcePin = tuple.sources[name as keyof typeof roots];
