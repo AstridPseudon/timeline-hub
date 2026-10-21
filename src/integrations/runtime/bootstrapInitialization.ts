@@ -217,3 +217,13 @@ export async function initializeBootstrapTimeline(
     return resumeBootstrapInitialization(box, options.ports);
   });
 }
+
+/** Resume one already-owned native bootstrap; never create a replacement owner. */
+export async function recoverBootstrapInitialization(
+  scope: OutboxScope,
+  ownerId: string,
+  ports: Ports,
+  outboxes = createCommitOutbox(),
+): Promise<TimelineCommandBasis> {
+  return outboxes.recover(scope, ownerId, (box) => resumeBootstrapInitialization(box, ports));
+}

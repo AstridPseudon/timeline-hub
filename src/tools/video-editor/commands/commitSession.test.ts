@@ -6,7 +6,8 @@ import { acceptedCommit } from '@/integrations/runtime/__tests__/timelineCommitF
 import { captureClipMove, submitClipMove } from './semanticGestures.ts';
 import { environment, scope, document } from './__tests__/commitSessionEnvironment.ts';
 import { createTimelineCommandSession } from './commitSession.ts';
-import type { OutboxRecord } from './commitOutbox.ts';
+import type { OutboxRecord, OutboxRequest } from './commitOutbox.ts';
+import type { TimelineCommandBasis } from '../data/DataProvider.ts';
 import type { EditCommand, MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 
 async function editOwner(env: Awaited<ReturnType<typeof environment>>, change: (record: OutboxRecord) => void) {
@@ -534,6 +535,43 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
     await second.recover(owner);
     expect(env.commits()[1]).toEqual(env.commits()[0]);
     await second.dispose();
+  });
+  it('routes a persisted native bootstrap owner through its existing carrier before generic edit recovery', async () => {
+    const runtime = {} as { env: Awaited<ReturnType<typeof environment>> };
+    const recoverBootstrap = async (claimedOwner: string): Promise<TimelineCommandBasis> => {
+      expect(claimedOwner).toBe(ownerId);
+      await runtime.env.outboxes.recover(scope, claimedOwner, async (box) => {
+        expect((await box.read()).pending?.request).toEqual(nativeRequest);
+        await box.dispatch(() => { throw new Error('pending native request must be reused'); }, async (request) => {
+          expect(request).toEqual(nativeRequest);
+          return { kind: 'accepted', head: { revisionId: 'r1', publicationId: 'p1' }, value: {} };
+        });
+      });
+      return runtime.env.initial;
+    };
+    const env = await environment(undefined, { recoverBootstrap });
+    runtime.env = env;
+    const nativeBody = { api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+      base_revision_id: 'r0', base_publication_id: 'p0', commands: [{ op: 'timeline.init' }], source: { via: 'app' } };
+    let nativeRequest!: OutboxRequest;
+    let ownerId = '';
+    await env.outboxes.create(scope, async (box) => {
+      await box.append({ kind: 'timeline-init', commands: [{ op: 'timeline.init' }] }, { head: { revisionId: 'r0', publicationId: 'p0' } });
+      await box.dispatch(() => ({ method: 'POST', path: '/v1/projects/project-commit/timelines/timeline-commit/commit', body: nativeBody }), async (request) => {
+        nativeRequest = request;
+        expect(request.body).toBe(JSON.stringify(nativeBody));
+        return { kind: 'retry', error: { message: 'lost acknowledgement' } };
+      });
+    });
+    ownerId = (await env.outboxes.list(scope))[0].ownerId;
+    const session = await env.mount();
+    expect(session.getState()).toMatchObject({ status: 'recovery', recoverableOwners: [ownerId] });
+    await session.recover(ownerId);
+    expect(session.getState()).toMatchObject({ status: 'saved', ownerId });
+    const recovered = (await env.outboxes.list(scope))[0];
+    expect(recovered.intents).toEqual([]);
+    expect(recovered.pending).toBeUndefined();
+    await session.dispose();
   });
   it('recovers B on its original display closure after A is acknowledged without changing submission bytes', async () => {
     const env = await environment();
