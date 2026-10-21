@@ -2819,6 +2819,154 @@
               "minimum": 0,
               "maximum": 1,
               "description": "Raw visual opacity fraction in the inclusive range 0..1."
+            },
+            "label": {
+              "type": "string",
+              "description": "Literal top-level clip label."
+            },
+            "text": {
+              "type": "object",
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "fontSize": {
+                  "type": "number"
+                },
+                "color": {
+                  "type": "string"
+                },
+                "bold": {
+                  "type": "boolean"
+                },
+                "align": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "minProperties": 1,
+              "description": "Known text leaves; unmentioned style leaves survive."
+            },
+            "app": {
+              "type": "object",
+              "properties": {
+                "managedBy": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "__generated__": {
+                  "$ref": "#/$defs/JSON"
+                }
+              },
+              "additionalProperties": false,
+              "minProperties": 1,
+              "description": "Existing-owner leaves only: managedBy and the complete generated metadata leaf."
+            },
+            "x": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "y": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "width": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "height": {
+              "type": "number",
+              "description": "Finite raw canvas pixels; no bounds or conversion."
+            },
+            "cropTop": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
+            },
+            "cropBottom": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
+            },
+            "cropLeft": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
+            },
+            "cropRight": {
+              "type": "number",
+              "description": "Finite raw edge fraction; no clamping or normalization."
+            },
+            "effects": {
+              "type": "object",
+              "minProperties": 1,
+              "properties": {
+                "fade_in": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "Raw Main fade-in duration in source seconds; null is only valid with a paired null entrance."
+                },
+                "fade_out": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "description": "Raw Main fade-out duration in source seconds; null is only valid with a paired null exit."
+                }
+              },
+              "additionalProperties": false,
+              "description": "Patch only fade leaves in source seconds. Existing opaque effects members and object order survive; ordered effects arrays are unsupported."
+            },
+            "entrance": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "duration"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "fade"
+                    },
+                    "duration": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ],
+              "description": "Main fade entrance replacement; must accompany effects.fade_in and uses source seconds."
+            },
+            "exit": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "duration"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "fade-out"
+                    },
+                    "duration": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              ],
+              "description": "Main fade-out exit replacement; must accompany effects.fade_out and uses source seconds."
             }
           },
           "additionalProperties": false
@@ -2830,12 +2978,58 @@
               "hold",
               "asset",
               "transition",
-              "opacity"
+              "opacity",
+              "effects.fade_in",
+              "effects.fade_out",
+              "entrance",
+              "exit"
             ]
           },
           "uniqueItems": true
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "clear": {
+                "contains": {
+                  "const": "entrance"
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "clear": {
+                "contains": {
+                  "const": "effects.fade_in"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "clear": {
+                "contains": {
+                  "const": "exit"
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "clear": {
+                "contains": {
+                  "const": "effects.fade_out"
+                }
+              }
+            }
+          }
+        }
+      ],
       "required": [
         "values",
         "clear"
@@ -2857,7 +3051,7 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction; explicitly remove hold, asset, incoming transition or opacity. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
+      "description": "Bounded raw clip fields. Set hold in source seconds, opacity as a raw 0..1 fraction, or Main fade pairs in source seconds; explicitly remove hold, asset, incoming transition, opacity, a standalone effects fade leaf, or an exact effects/entrance or effects/exit pair. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
     },
     "ProjectDataWriteArgs": {
       "type": "object",

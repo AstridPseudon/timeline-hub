@@ -11,6 +11,107 @@ from ._materialization import capture_version
 from ._scalar_commands import _capture, _changes, _clip_basis, _selected_schema, _target
 from .capture import CLIP_FIELDS, MAP_FIELDS, RELATIONS, _duration, number, occurrence_start, rate
 
+_GENERATED_IDENTITY = ('extensionId', 'contributionId')
+_GENERATED_FIXED_FIELDS = ('extensionId', 'contributionId', 'generatedAt', 'sourceMapEntryId')
+_TEXT_LEAVES = frozenset(('content', 'fontSize', 'color', 'bold', 'align'))
+_HOST_CONFLICT_POLICIES = frozenset(
+    ('preserve-output', 'regenerate-output', 'propose-source-update'))
+
+
+def _generated_context(metadata):
+    """Return the accepted host carrier context, or refuse malformed provenance."""
+    if not isinstance(metadata, dict):
+        return None
+    extension_id = metadata.get('extensionId')
+    contribution_id = metadata.get('contributionId')
+    provenance = metadata.get('provenance')
+    if (not isinstance(extension_id, str) or not extension_id
+            or (contribution_id is not None
+                and (not isinstance(contribution_id, str) or not contribution_id))
+            or not isinstance(provenance, dict)
+            or provenance.get('contractVersion') != 1):
+        return None
+    for key in ('sourceSchemaRef', 'sourceItemId', 'sourceFingerprint',
+                'generatorVersion', 'outputFingerprint'):
+        if not isinstance(provenance.get(key), str) or not provenance[key]:
+            return None
+    source_revision = provenance.get('sourceRevision')
+    if (source_revision is not None
+            and (isinstance(source_revision, bool)
+                 or not isinstance(source_revision, (str, int, float))
+                 or (isinstance(source_revision, str) and not source_revision)
+                 or (isinstance(source_revision, float) and not math.isfinite(source_revision)))):
+        return None
+    if provenance.get('conflictPolicy') not in _HOST_CONFLICT_POLICIES:
+        return None
+    generated_at = metadata.get('generatedAt')
+    if (generated_at is not None
+            and (isinstance(generated_at, bool) or not isinstance(generated_at, (int, float))
+                 or isinstance(generated_at, float) and not math.isfinite(generated_at))):
+        return None
+    source_map_entry_id = metadata.get('sourceMapEntryId')
+    if (source_map_entry_id is not None
+            and (not isinstance(source_map_entry_id, str) or not source_map_entry_id)):
+        return None
+    return {'extensionId': extension_id, 'contributionId': contribution_id}
+
+
+def _producer_app(ctx, ref, incoming):
+    """Update an established generated carrier; never adopt a raw/user clip."""
+    current = ctx.read(ref, ['app'])
+    if not isinstance(current, dict):
+        raise CommandError('clip.set app leaves require an existing generated clip',
+                           kind='unsupported_ownership', ref=ref)
+    managed_by = current.get('managedBy')
+    has_managed_by = 'managedBy' in current
+    if has_managed_by and (not isinstance(managed_by, str) or managed_by == ''):
+        raise CommandError('clip.set app leaves require an existing managed clip',
+                           kind='unsupported_ownership', ref=ref)
+    ctx.read(ref, ['app', 'managedBy'])
+    if not has_managed_by and 'managedBy' in incoming:
+        raise CommandError('clip.set cannot introduce clip ownership',
+                           kind='unsupported_ownership', ref=ref)
+    if '__generated__' not in incoming:
+        if 'managedBy' in incoming and incoming['managedBy'] != managed_by:
+            raise CommandError('clip.set cannot change clip ownership', kind='unsupported_ownership', ref=ref)
+        return
+    metadata = incoming['__generated__']
+    previous = current.get('__generated__')
+    declared = _generated_context(metadata)
+    established = _generated_context(previous)
+    if declared is None or established is None:
+        raise CommandError('clip.set generated metadata has unknown or malformed provenance',
+                           kind='unsupported_ownership', ref=ref)
+    ctx.read(ref, ['app', '__generated__'])
+    # Main's fresh birth carries the host-generated identity but no managedBy.
+    # The exact persisted extension/contribution pair is the only private
+    # source-only owner fallback; it is never materialized as managedBy.
+    if not has_managed_by:
+        managed_by = established['extensionId']
+    if declared['extensionId'] != managed_by:
+        raise CommandError('clip.set generated metadata owner does not match managedBy',
+                           kind='unsupported_ownership', ref=ref)
+    for key in _GENERATED_IDENTITY:
+        if metadata.get(key) != previous.get(key):
+            raise CommandError('clip.set cannot adopt or change generated metadata identity',
+                               kind='unsupported_ownership', ref=ref)
+    for key in _GENERATED_FIXED_FIELDS:
+        if metadata.get(key) != previous.get(key):
+            raise CommandError('clip.set generated metadata identity changed',
+                               kind='unsupported_ownership', ref=ref)
+
+
+def _producer_text(ctx, ref, incoming):
+    if not _TEXT_LEAVES.issuperset(incoming):
+        raise CommandError('clip.set text contains an unsupported leaf', ref=ref)
+    current = ctx.read(ref, ['text'])
+    if current is not None and not isinstance(current, dict):
+        raise CommandError('clip.set text requires an object', ref=ref)
+    if current is None:
+        ctx.object(ref, ['text'])
+    for key in sorted(incoming):
+        ctx.write(ref, ['text', key], incoming[key])
+
 
 def _hold_extent(ctx, ref, values, clear):
     owner = ref.rsplit('/', 1)[0]
@@ -87,6 +188,101 @@ def _hold_extent(ctx, ref, values, clear):
     return duration_paths, duration
 
 
+_FADE_PAIRS = {
+    'fade_in': ('entrance', 'fade'),
+    'fade_out': ('exit', 'fade-out'),
+}
+
+
+def _fade_duration(value, label):
+    if value is None:
+        return None
+    result = number(value, label)
+    if result < 0:
+        raise CommandError(f'{label} must be non-negative', kind='unsupported_timing')
+    return result
+
+
+def _effect_values(ctx, ref, values, clear):
+    """Apply numeric effect leaves and Main's exact coupled fade slots."""
+    patch = values.get('effects')
+    cleared = {key.removeprefix('effects.') for key in clear
+               if key.startswith('effects.')}
+    coupled = {}
+    for fade, (slot, slot_type) in _FADE_PAIRS.items():
+        effect_set = isinstance(patch, dict) and fade in patch
+        slot_set = slot in values
+        effect_clear = fade in cleared
+        slot_clear = slot in clear
+        if slot_set and not effect_set:
+            raise CommandError(f'{slot} must be paired with effects.{fade}', ref=ref,
+                               path=[slot])
+        if slot_clear and not effect_clear:
+            raise CommandError(f'{slot} clear must be paired with effects.{fade}', ref=ref,
+                               path=[slot])
+        if (effect_set or slot_set) and (effect_clear or slot_clear):
+            raise CommandError(f'cannot set and clear the {fade} pair', ref=ref,
+                               path=['effects', fade])
+        if slot_set:
+            effect = patch[fade]
+            slot_value = values[slot]
+            if effect is None:
+                if slot_value is not None:
+                    raise CommandError(f'{fade} and {slot} must both be null or numeric',
+                                       ref=ref, path=['effects', fade])
+            else:
+                duration = _fade_duration(effect, 'effects.' + fade)
+                if (not isinstance(slot_value, dict)
+                        or set(slot_value) != {'type', 'duration'}
+                        or slot_value.get('type') != slot_type
+                        or _fade_duration(slot_value.get('duration'), slot + '.duration') != duration):
+                    raise CommandError(f'{fade} and {slot} must be the same Main fade',
+                                       ref=ref, path=['effects', fade])
+            coupled[fade] = (slot, slot_value)
+        elif slot_clear:
+            coupled[fade] = (slot, None)
+
+    if coupled:
+        # Coupled commands guard the original slots and complete effects
+        # container, including opaque members and insertion order.
+        ctx.read(ref, ['entrance'])
+        ctx.read(ref, ['effects'])
+        ctx.read(ref, ['exit'])
+
+    if patch is None and not cleared:
+        return
+    if patch is not None:
+        current = ctx.state.get(ref, ['effects'])
+        if (current['state'] == 'present' and current['value'] is not None
+                and not isinstance(current['value'], dict)):
+            raise CommandError('clip.set effects requires an object effects map', ref=ref,
+                               path=['effects'])
+        ctx.object(ref, ['effects'])
+        for key in sorted(patch):
+            if key in coupled:
+                if patch[key] is not None:
+                    _fade_duration(patch[key], 'effects.' + key)
+            else:
+                number(patch[key], 'effects.' + key)
+            ctx.write(ref, ['effects', key], patch[key])
+
+    for key in sorted(cleared):
+        current = ctx.state.get(ref, ['effects'])
+        if (current['state'] == 'present' and current['value'] is not None
+                and not isinstance(current['value'], dict)):
+            raise CommandError('clip.set effects requires an object effects map', ref=ref,
+                               path=['effects'])
+        # State.clear records an absent/null parent as an exact no-op leaf
+        # write, preserving the raw distinction in the command guard.
+        ctx.clear(ref, ['effects', key])
+
+    for fade, (slot, slot_value) in coupled.items():
+        if isinstance(patch, dict) and fade in patch:
+            ctx.write(ref, [slot], slot_value)
+        else:
+            ctx.clear(ref, [slot])
+
+
 def clip_set(ctx, command):
     ref = _target(ctx, command, 'clip')
     values, clear = _changes(command)
@@ -105,14 +301,23 @@ def clip_set(ctx, command):
         duration_paths, duration = _hold_extent(ctx, ref, values, clear)
         for path in duration_paths:
             ctx.write(ref, path, duration)
+    _effect_values(ctx, ref, values, clear)
     for key in sorted(values):
-        ctx.write(ref, [key], values[key])
+        if key == 'app':
+            _producer_app(ctx, ref, values[key])
+            for leaf in sorted(values[key]):
+                ctx.write(ref, ['app', leaf], values[key][leaf])
+        elif key == 'text':
+            _producer_text(ctx, ref, values[key])
+        elif key not in {'effects', 'entrance', 'exit'}:
+            ctx.write(ref, [key], values[key])
     for key in sorted(clear):
-        ctx.clear(ref, [key])
+        if not key.startswith('effects.') and key not in {'entrance', 'exit'}:
+            ctx.clear(ref, [key])
 
 
 def capture_clip_set(bundle, select, *, values=None, clear=()):
-    """Capture bounded raw hold/opacity writes and explicit field removal."""
+    """Capture bounded raw clip leaves and explicit field removal."""
     return _capture(bundle, 'clip.set', select, values, clear)
 
 
