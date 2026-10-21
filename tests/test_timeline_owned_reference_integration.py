@@ -6,7 +6,10 @@ with the matched private Agent/Runtime source pair named in the handoff.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
+import traceback
+from collections.abc import Mapping
 
 import pytest
 
@@ -89,6 +92,169 @@ def _authoritative_recorded_command(agent, document, command):
 
     plan = execute(agent.bundle(document), [copy.deepcopy(command)])
     return plan.records[0]["command"]
+
+
+_INVERSE_DIAGNOSTIC_REPORT = (
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/"
+    "scratchpad/orch/design/runtime-ordered-inverse-operands-diagnosis-1105.md"
+)
+
+
+def _diagnostic_snapshot(value):
+    try:
+        value = copy.deepcopy(value)
+        if isinstance(value, Mapping):
+            return {key: _diagnostic_snapshot(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [_diagnostic_snapshot(item) for item in value]
+        return value
+    except Exception as error:  # pragma: no cover - diagnostic fallback only
+        return {"<snapshot-error>": f"{type(error).__name__}: {error}"}
+
+
+def _diagnostic_json(value):
+    return json.dumps(value, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False, allow_nan=False)
+
+
+def _diagnostic_hash(value):
+    return "sha256:" + hashlib.sha256(_diagnostic_json(value).encode("utf-8")).hexdigest()
+
+
+def _diagnostic_path(path, key):
+    return f'{path}[{json.dumps(key, ensure_ascii=False)}]'
+
+
+def _diagnostic_equal(left, right):
+    return _diagnostic_difference(left, right) is None
+
+
+def _diagnostic_difference(left, right, path="$", *, _order_check=True):
+    if type(left) is not type(right):
+        return {"kind": "type", "path": path, "left": type(left).__name__,
+                "right": type(right).__name__, "left_value": left, "right_value": right}
+    if isinstance(left, Mapping):
+        left_keys, right_keys = list(left), list(right)
+        for key in left_keys:
+            if key not in right:
+                return {"kind": "presence", "path": _diagnostic_path(path, key),
+                        "left": "present", "right": "absent"}
+        for key in right_keys:
+            if key not in left:
+                return {"kind": "presence", "path": _diagnostic_path(path, key),
+                        "left": "absent", "right": "present"}
+        for key in left_keys:
+            difference = _diagnostic_difference(
+                left[key], right[key], _diagnostic_path(path, key), _order_check=_order_check
+            )
+            if difference is not None:
+                return difference
+        return None
+    if isinstance(left, list):
+        if len(left) != len(right):
+            return {"kind": "list_length", "path": path, "left": len(left),
+                    "right": len(right)}
+        if _order_check and left != right and all(
+                any(_diagnostic_equal(item, candidate) for candidate in right) for item in left
+        ) and all(any(_diagnostic_equal(item, candidate) for candidate in left) for item in right):
+            return {"kind": "list_order", "path": path, "left_value": left,
+                    "right_value": right}
+        for index, (left_item, right_item) in enumerate(zip(left, right)):
+            difference = _diagnostic_difference(
+                left_item, right_item, f"{path}[{index}]", _order_check=_order_check
+            )
+            if difference is not None:
+                return difference
+        return None
+    if left != right:
+        return {"kind": "value", "path": path, "left_value": left, "right_value": right}
+    return None
+
+
+def _diagnostic_hashes(value, path="$", result=None):
+    result = {} if result is None else result
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            item_path = _diagnostic_path(path, key)
+            if isinstance(item, str) and (
+                    isinstance(key, str) and key.endswith(("_digest", "_hash"))
+                    or item.startswith("sha256:")):
+                result[item_path] = item
+            _diagnostic_hashes(item, item_path, result)
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            _diagnostic_hashes(item, f"{path}[{index}]", result)
+    return result
+
+
+def _write_inverse_diagnostic(calls):
+    report = {
+        "selector": "tests/test_timeline_owned_reference_integration.py::"
+                   "test_actual_provider_removes_ordered_project_data_and_retries_inverse_redo",
+        "call_count": len(calls),
+        "calls": calls,
+    }
+    with open(_INVERSE_DIAGNOSTIC_REPORT, "w", encoding="utf-8") as handle:
+        handle.write("# Runtime ordered inverse operand diagnosis\n\n```json\n")
+        json.dump(report, handle, indent=2, ensure_ascii=False, allow_nan=False)
+        handle.write("\n```\n")
+
+
+def _install_inverse_diagnostic(monkeypatch):
+    from astrid.sdk.timeline import commit as agent_commit
+
+    original = agent_commit._inverse_media_removals
+    calls = []
+
+    def observe(records, bundle):
+        record_entries = getattr(records, "entries", [])
+        entries = _diagnostic_snapshot(record_entries)
+        flattened = _diagnostic_snapshot(list(records))
+        accepted = _diagnostic_snapshot([
+            record for entry in record_entries for record in entry["records"]["commands"]
+        ])
+        call = {
+            "index": len(calls),
+            "origins": [
+                {"filename": frame.filename, "line": frame.lineno, "function": frame.name}
+                for frame in traceback.extract_stack()[:-1][-16:]
+            ],
+            "records_argument": {
+                "type": type(records).__name__,
+                "value": _diagnostic_snapshot(records),
+                "entries": entries,
+            },
+            "bundle_argument": _diagnostic_snapshot(bundle),
+            "compared_command_lists": {
+                "accepted_records": flattened,
+                "history_records": accepted,
+            },
+            "first_difference": _diagnostic_difference(flattened, accepted),
+            "source_hashes": {
+                "records_argument": _diagnostic_hash(flattened),
+                "records_entries": _diagnostic_hash(entries),
+                "bundle_argument": _diagnostic_hash(_diagnostic_snapshot(bundle)),
+                "records_fields": _diagnostic_hashes(entries),
+                "bundle_fields": _diagnostic_hashes(_diagnostic_snapshot(bundle)),
+            },
+        }
+        try:
+            result = original(records, bundle)
+            call["outcome"] = {"status": "returned", "type": type(result).__name__}
+            return result
+        except BaseException as error:
+            call["outcome"] = {
+                "status": "raised",
+                "type": type(error).__name__,
+                "message": str(error),
+            }
+            raise
+        finally:
+            calls.append(call)
+            _write_inverse_diagnostic(calls)
+
+    monkeypatch.setattr(agent_commit, "_inverse_media_removals", observe)
+    return calls
 
 
 def _commit(service, project, body, key):
@@ -256,6 +422,7 @@ def test_actual_provider_removes_ordered_project_data_and_retries_inverse_redo(
     service = RuntimeService(root)
     project = None
     try:
+        _inverse_observation = _install_inverse_diagnostic(monkeypatch)
         provider = agent.provider()
         service.register_timeline_commit_provider(provider)
         project = service.create_project({"slug": "ordered-data", "name": "Ordered data"})["id"]
