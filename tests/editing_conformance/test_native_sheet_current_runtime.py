@@ -20,7 +20,10 @@ from astrid.sdk.timeline._track_commands import capture_track_set
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
-from astrid.sdk.timeline.document_diff import DocumentDiffError, document_diff_to_commands
+from astrid.sdk.timeline.document_diff import (
+    DocumentDiffError,
+    document_diff_to_commands,
+)
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from astrid.sdk.timeline_sheet import NativeSheet
 from astrid.sdk.workspace_client import WorkspaceClientError
