@@ -74,6 +74,24 @@ def test_exact_old_and_new_closures_ignore_later_current_head_and_preserve_unkno
         assert sum(call[0] == operation for call in reader.calls) == 2
 
 
+def test_open_saved_revision_reports_corrupt_closure_as_protocol_error():
+    reader = HistoricalReader()
+    opened = reader.open_bundle('project-slug', 'main', revision_id='parent-1')
+    assert opened.ok, opened.error
+    assert opened.data['revision_id'] == 'parent-1'
+    assert all('parent-2' not in str(call) for call in reader.calls)
+    assert ('get_project_shot_revision', ('project-1', 'shot-shared', 'shot-rev-1'), {}) in reader.calls
+    assert ('get_project_timeline_revision', ('project-1', 'main', 'internal-1'), {}) in reader.calls
+
+    reader.rows['parent-1']['payload']['occurrences'][0]['duration_ms'] = 'not-a-duration'
+    corrupt = reader.open_bundle('project-slug', 'main', revision_id='parent-1')
+
+    assert not corrupt.ok
+    assert corrupt.data is None
+    assert corrupt.error.code == 'protocol_error'
+    assert 'could not open the timeline closure' in corrupt.error.message
+
+
 @pytest.mark.parametrize('damage', ['missing_child', 'foreign_project', 'foreign_timeline', 'wrong_revision', 'corrupt_bytes'])
 def test_missing_or_mismatched_pin_fails_without_partial_or_current_fallback(damage):
     reader = HistoricalReader()
