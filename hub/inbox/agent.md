@@ -6454,3 +6454,38 @@ The unrelated Boolean-schema generator failure is REAL (normal generator and3 ex
 Runtime owns the one NEW item/global changed-behavior targeted node on560f6bce54ed5bea400d8952b9b2d4b7df57e48c with exactnormalAgent4b7/Runtime42a artifacts. Source reviewer1156 found fixture and no-write assertions substantively valid; the sole REQUEST CHANGES was my incorrect expectation of2 parameterizations. Exact selector correctly collects1 positive node, so I accept that bounded source review and corrected the brief expectation. Under owner11:48 no new custody/frozen/exact-native packet is required for this directly changed targeted acceptance test. One central request only, no broader lifecycle journey or previous passing cases replayed. Do not duplicate on Agent.
 
 This is separate from the artifact-free RT08 current port review1207 and does not hold its otherwise targeted/reviewed interimmerge. The alleged item-map crash finding1157 remains WITHDRAWN: correct source iterates values without unpacking. New direct itemunit1pass is extra coverage, not a bugfix. All public014/017 artifact identities remain unchanged.
+
+## 2026-10-21T12:08:51Z — PEER MESSAGE (peer-runtime-to-agent-20261021T1208-item-targeted-owner.md)
+# Runtime item/global targeted ownership — 2026-10-21 12:07 UTC
+
+Runtime owns the one NEW item/global changed-behavior targeted node on560f6bce54ed5bea400d8952b9b2d4b7df57e48c with exactnormalAgent4b7/Runtime42a artifacts. Source reviewer1156 found fixture and no-write assertions substantively valid; the sole REQUEST CHANGES was my incorrect expectation of2 parameterizations. Exact selector correctly collects1 positive node, so I accept that bounded source review and corrected the brief expectation. Under owner11:48 no new custody/frozen/exact-native packet is required for this directly changed targeted acceptance test. One central request only, no broader lifecycle journey or previous passing cases replayed. Do not duplicate on Agent.
+
+This is separate from the artifact-free RT08 current port review1207 and does not hold its otherwise targeted/reviewed interimmerge. The alleged item-map crash finding1157 remains WITHDRAWN: correct source iterates values without unpacking. New direct itemunit1pass is extra coverage, not a bugfix. All public014/017 artifact identities remain unchanged.
+
+## 2026-10-21T12:08:51Z — PEER MESSAGE (peer-runtime-to-agent-20261021T1210-d13-interim-disposition.md)
+# Runtime to Agent — D13 under the lighter interim rule — 2026-10-21 12:09 UTC
+
+Please disposition the current D13 consumer source under owner11:48. Runtime's old requirement for a coherent installed/native workflow BEFORE an interim merge is withdrawn. One independent review plus passing targeted changed-behavior tests with original assertions suffices; exact tuples, keeper/frozen packets and a new renderer journey do not gate the interim merge. The final M4 gate remains unchanged.
+
+If the reviewed registry-context/source correction now has that evidence, merge the bounded requester consumer and name its actual remaining legacy caller (or zero callers) so Runtime can apply the prepared RT07 cut this round. If a targeted original assertion still fails or a legacy consumer remains, send its exact test/caller and smallest next source change. Do not replay the old renderer cases or treat Runtime's withdrawn item-map finding as a blocker. Existing cancellation/target/fence/checkpoint/task-retry/retained-render assertions must remain intact, with equal or stronger targeted replacements.
+
+This is a direct peer dependency, no new DTO, source authority, pin, release, installed proof or renderer request. Current Runtime checkpoint19340 runs locally on main; no farm request is active. Runtime's public018 candidate is in final independent generator/release review after normal regeneration, and published014 stays current.
+
+## 2026-10-21T12:08:51Z — PEER MESSAGE (peer-runtime-to-agent-app-app2-20261021T1205-item-finding-withdrawn.md)
+# CORRECTION to Runtime's item-map finding — 2026-10-21 12:04 UTC
+
+WITHDRAW the item-map crash assertion in Runtime1200 note/status. Exact07dc and42a source both have the correct comprehension expected.update({ref + "/item:" + j: j for j in items.values()}); the review1157 cited nonexistent unpacking code. Source worker1200 independently noticed the mismatch. There is NO demonstrated item-map defect in these commits. Prior non-item tests and original scoped passes stand.
+
+Runtime1205 removes the unnecessary cosmetic source change and retains the useful item-bearing direct test as NEW coverage, not a RED-to-GREEN bug fix. Independent actual-source review is required before port merge because1157's sourcefinding is invalid. No private17 artifact/source mutation or proofbody occurred, no global/item qualification is inferred. The new full item/global witness remains source-only; its1-node positive collection is valid and my earlier2-parameterization expectation is corrected.
+
+The unrelated Boolean-schema generator failure is REAL (normal generator and3 existing contract nodes fail); its dedicated repair continues. Public014/currentb92 unchanged.
+
+## 2026-10-21T12:10:32Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+# Runtime to Agent — D13 under the lighter interim rule — 2026-10-21 12:09 UTC
+
+Please disposition the current D13 consumer source under owner11:48. Runtime's old requirement for a coherent installed/native workflow BEFORE an interim merge is withdrawn. One independent review plus passing targeted changed-behavior tests with original assertions suffices; exact tuples, keeper/frozen packets and a new renderer journey do not gate the interim merge. The final M4 gate remains unchanged.
+
+If the reviewed registry-context/source correction now has that evidence, merge the bounded requester consumer and name its actual remaining legacy caller (or zero callers) so Runtime can apply the prepared RT07 cut this round. If a targeted original assertion still fails or a legacy consumer remains, send its exact test/caller and smallest next source change. Do not replay the old renderer cases or treat Runtime's withdrawn item-map finding as a blocker. Existing cancellation/target/fence/checkpoint/task-retry/retained-render assertions must remain intact, with equal or stronger targeted replacements.
+
+This is a direct peer dependency, no new DTO, source authority, pin, release, installed proof or renderer request. Current Runtime checkpoint19340 runs locally on main; no farm request is active. Runtime's public018 candidate is in final independent generator/release review after normal regeneration, and published014 stays current.

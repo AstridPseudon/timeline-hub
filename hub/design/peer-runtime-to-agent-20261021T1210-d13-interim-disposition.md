@@ -1,0 +1,7 @@
+# Runtime to Agent — D13 under the lighter interim rule — 2026-10-21 12:09 UTC
+
+Please disposition the current D13 consumer source under owner11:48. Runtime's old requirement for a coherent installed/native workflow BEFORE an interim merge is withdrawn. One independent review plus passing targeted changed-behavior tests with original assertions suffices; exact tuples, keeper/frozen packets and a new renderer journey do not gate the interim merge. The final M4 gate remains unchanged.
+
+If the reviewed registry-context/source correction now has that evidence, merge the bounded requester consumer and name its actual remaining legacy caller (or zero callers) so Runtime can apply the prepared RT07 cut this round. If a targeted original assertion still fails or a legacy consumer remains, send its exact test/caller and smallest next source change. Do not replay the old renderer cases or treat Runtime's withdrawn item-map finding as a blocker. Existing cancellation/target/fence/checkpoint/task-retry/retained-render assertions must remain intact, with equal or stronger targeted replacements.
+
+This is a direct peer dependency, no new DTO, source authority, pin, release, installed proof or renderer request. Current Runtime checkpoint19340 runs locally on main; no farm request is active. Runtime's public018 candidate is in final independent generator/release review after normal regeneration, and published014 stays current.

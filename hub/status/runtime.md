@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T12:08:51Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 4m -->
+<!-- main | 2026-10-21T12:10:32Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 24 | status age 5m -->
 # runtime — 2026-10-21T12:04:38Z
 Milestone: M1 RECORDED. M2, M3 and M4 OPEN. No foundation, all-gates or final ZIP claim.
 Integrated: Runtime b92d3e7a05eec65c142294ef4873edd059e9b31d / tree 6abc2f117391de8e7e35c0283f575a002199894d unchanged. Published 0.2.14 producer 95bd / all 76 / ordinary 6ba (55 definitions, 29 clauses) remains immutable. Agent 091aa and App 3be adopted it; native App initializer 1557 has distinct actual proof 7782. Exact hashes: design/runtime-current-tuple.md.
