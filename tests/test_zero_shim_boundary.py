@@ -146,6 +146,13 @@ def test_start_does_not_inject_checkout_into_child(monkeypatch, tmp_path, host):
     assert not any(str(source_checkout) in str(value) for value in environment.values())
     assert not any(str(source_checkout) in part for part in captured["argv"])
     assert "PYTHONPATH" not in kwargs
+    if host == "linux":
+        # Linux launches the daemon directly (spawn_tree) and publishes native
+        # custody for the probed identity; Darwin publishes via the broker.
+        assert boundary._process._runtime_native_custody.identity == {
+            "pid": 123, "uid": module.platform.current_user(), "birth_id": "birth"}
+    else:
+        assert not hasattr(boundary._process, "_runtime_native_custody")
 
 
 def test_wait_endpoint_does_not_adopt_incumbent_discovery(monkeypatch, tmp_path):
