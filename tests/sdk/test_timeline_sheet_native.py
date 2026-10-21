@@ -89,6 +89,47 @@ def test_detached_static_text_uses_retained_native_params_command(connected, tmp
     assert State(tl.bundle).entity("occurrence:occ-2/clip:card")["params"]["text"] == "LIVE"
 
 
+def test_detached_mixed_text_and_duration_is_one_retained_native_batch(connected, tmp_path):  # noqa: F811
+    from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
+    from astrid.sdk.timeline._scalar_commands import capture_clip_set_params
+
+    tl, original_text, ref, original = detached_draft(connected, tmp_path)
+    client, generated, _ = connected
+    edited = text_edit(duration_edit(original_text, 2), "CHANGED")
+    expected = execute(original, [
+        capture_clip_set(original, ref, values={"hold": 2.0}),
+        capture_clip_set_params(original, ref, values={"text": "CHANGED"}),
+    ])
+
+    tl = Checkout.load(tl.path)
+    assert apply_sheet(tl, edited, client=client)
+    state = json.loads(generated.path.read_bytes())
+    assert generated.calls == []
+    assert state["sheet"]["bundle"] == original
+    assert state["sheet"]["basis"] == {"revision_id": "r0", "publication_id": "pub0"}
+    assert state["pending"] == expected.commands
+    assert State(tl.bundle).entity(ref)["hold"] == 2.0
+    assert State(tl.bundle).entity(ref)["params"]["text"] == "CHANGED"
+
+
+def test_detached_mixed_edit_with_unsupported_neighbor_is_not_staged(connected, tmp_path):  # noqa: F811
+    tl, original_text, ref, _ = detached_draft(connected, tmp_path)
+    _, generated, _ = connected
+    edited = text_edit(duration_edit(original_text, 2), "CHANGED")
+    unsupported = edited.replace('type   card   type   "CHANGED"       for 2s  size=32',
+                                 'type   card   type   "CHANGED"       for 2s  size=33')
+    before_bundle = copy.deepcopy(tl.bundle)
+    before_outbox = generated.path.read_bytes()
+
+    with pytest.raises(SheetError):
+        apply_sheet(tl, unsupported)
+
+    assert tl.bundle == before_bundle
+    assert generated.path.read_bytes() == before_outbox
+    assert State(tl.bundle).entity(ref)["hold"] == 1
+    assert State(tl.bundle).entity(ref)["params"]["text"] == "LIVE"
+
+
 @pytest.mark.parametrize("peer", ["none", "disjoint", "same"])
 def test_detached_duration_retains_author_basis_retry_reload_and_guarded_inverse(
         connected, tmp_path, monkeypatch, peer):  # noqa: F811

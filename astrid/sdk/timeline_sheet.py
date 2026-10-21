@@ -863,12 +863,15 @@ def _duration_sheet(sheet, artifact, parsed):
     """Translate existing static layer durations and literal type text."""
     from astrid.sdk.timeline._command_state import State, equal
 
+    def refuse():
+        raise SheetError("unsupported retained sheet edit; supported fields are am-type text and static duration")
+
     original = parse_sheet(artifact["text"])
     edited = copy.deepcopy(parsed, {id(ELIDED): ELIDED})
     left = {(cut, row["name"]): row for cut, row in iter_layers(original)}
     right = {(cut, row["name"]): row for cut, row in iter_layers(edited)}
     if left.keys() != right.keys() or len(left) != sum(len(c["layers"]) for c in original["cuts"]):
-        return None
+        refuse()
     text = sheet.text
     for key, row in right.items():
         before = left[key]
@@ -876,13 +879,13 @@ def _duration_sheet(sheet, artifact, parsed):
             continue
         ref = artifact["bindings"].get(".".join(key))
         if ref is None:
-            return None
+            refuse()
         clip = State(sheet._bundle).entity(ref)
         if not equal(before["for"], row["for"]):
             if before["for"] is None or row["for"] is None:
-                return None
+                refuse()
             if clip.get("clipType") != "am-type" or type(clip.get("hold")) not in (int, float) or row["until"] or row["on"]:
-                return None
+                refuse()
             value = row["for"] * (clip.get("speed") or 1)
             suffix = " # ref " + json.dumps(ref)
             text = "\n".join(re.sub(r"(?<!\S)hold=\S+", "hold=" + repr(value), line)
@@ -891,7 +894,7 @@ def _duration_sheet(sheet, artifact, parsed):
         if not equal(before["text"], row["text"]):
             if (before["text"] is None or not isinstance(row["text"], str)
                     or clip.get("clipType") != "am-type" or row["until"] or row["on"]):
-                return None
+                refuse()
             old_token = "text=" + json.dumps(before["text"], ensure_ascii=False)
             new_token = "text=" + json.dumps(row["text"], ensure_ascii=False)
             suffix = " # ref " + json.dumps(ref)
@@ -902,11 +905,11 @@ def _duration_sheet(sheet, artifact, parsed):
                     continue
                 body = line[:-len(suffix)]
                 if _tokens(body.strip()).count(old_token) != 1:
-                    return None
+                    refuse()
                 body, count = re.subn(rf"(?<!\S){re.escape(old_token)}(?=\s|$)",
                                       lambda _: new_token, body, count=1)
                 if count != 1:
-                    return None
+                    refuse()
                 replaced.append(body + suffix)
             text = "\n".join(replaced) + "\n"
             row["text"] = before["text"]
@@ -916,7 +919,9 @@ def _duration_sheet(sheet, artifact, parsed):
         if isinstance(value, list):
             return [semantic(v) for v in value]
         return "…" if value is ELIDED else value
-    return text if equal(semantic(original), semantic(edited)) else None
+    if not equal(semantic(original), semantic(edited)):
+        refuse()
+    return text
 
 
 def find_version(tl: Any, version: str, *, client: Any = None) -> Any:
