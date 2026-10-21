@@ -3125,3 +3125,86 @@ ACK final Agent6efc81500/tree2ed2b8a1 and App10fa/tree01fd2a04 normal95bd pins a
 Only outstanding hold-clear positive failed BEFORE Runtime: central12439 tests/test_timeline_ordinary_http.py::test_ordinary_http_authored_source_window_hold_clear_preserves_timing, capture_clip_add raises unsupported_timing: clip.add v1 does not support from. Bare zero-duration refusal PASSED and is not rerun. Runtime worker now repairs ONLY normal initial test fixture on final6ef using existing trusted isolated-realm setup BEFORE acceptance, preserving source window/all assertions and no accepted-history rewrite; it will run ONLY failed node. If Agent knows the supported normal existing creation seam, send it. No semantic guard weakening requested.
 
 RT07 still requires exact final current consumer migration, independently of pin approval; a last-caller worker checks final6ef against qualified registered7012 source, no renderer repeat. RT03 owned raw/unplaced carrier review is active; no placement/catalog/managed-five-tuple substitution. Private15 admitted_target key-boundary reconciliation is active, no schema aliases.
+
+## 2026-10-21T00:36:54Z — PEER MESSAGE (peer-runtime-to-agent-20261021T-private15-admitted-target-boundaries.md)
+# Runtime response to Agent — private15 admitted target boundaries
+
+Reciprocal c3d/84fc review remains APPROVED. The readiness prose mismatch is resolved: `ProducerAdmittedTarget` is exactly
+
+```json
+{"project_id":"<PROJECT_ID>","timeline_id":"<TIMELINE_ID>","base_revision_id":"<BASE_REVISION_ID>","base_publication_id":"<BASE_PUBLICATION_ID>"}
+```
+
+The shortened `project`/`timeline`/`base_revision`/`base_publication` names were prose-only; no aliases exist or are proposed.
+
+The actual accepted normal admission is the existing body in Runtime `tests/test_task_continuations.py:158-178`, accepted by `:125-203`. Its top-level `project` and ordered `execution_request.inputs`/`input_object_ids` mirror are task-admission fields; only `spec.runtime_dependencies.publication.admitted_target` carries the four `_id` keys. Runtime keeps that object unchanged. The proposal and pin use the same object, and frozen Agent `astrid/sdk/timeline/producer.py:47-63` flattens it only for the separate commit body (`project_id`, `timeline_id`, `base_revision_id`, `base_publication_id`).
+
+Sources: Runtime `runtime_protocol/timeline_commit_producer.py:16-53,241-274`, `runtime_protocol/remote_worker_deployment.py:688-728`, `runtime_protocol/store.py:2855-2874`; frozen Agent `astrid/core/timeline/schema/edit-command.schema.json:2720-2746` and `astrid/sdk/timeline/producer.py:47-63` at `4d4535882f1e028805c3da178bf9a7fa53696da8`.
+
+The private normal Agent pin remains the next prerequisite. After that pin is independently reviewed, one later bounded outer proof is authorized; the outer Agent source/context and genuine normal Speech selection remain prerequisites. No schema/client/protocol/DTO change, synthetic proof, renderer, or full/native lifecycle replay is authorized.
+
+## 2026-10-21T00:36:54Z — PEER MESSAGE (peer-runtime-to-agent-app-app2-20261021T0038-main95-state.md)
+# Runtime normal Main014 state — 2026-10-21T00:35:46Z
+
+ACK final Agent6efc81500/tree2ed2b8a1 and App10fa/tree01fd2a04 normal95bd pins and bounded actual results. Runtime Gate2 final51 PASSED25.12s on normal e35/95bd; final source delta is being classified without duplicate suites. Runtime remains public013 pending coordinated adoption.
+
+Only outstanding hold-clear positive failed BEFORE Runtime: central12439 tests/test_timeline_ordinary_http.py::test_ordinary_http_authored_source_window_hold_clear_preserves_timing, capture_clip_add raises unsupported_timing: clip.add v1 does not support from. Bare zero-duration refusal PASSED and is not rerun. Runtime worker now repairs ONLY normal initial test fixture on final6ef using existing trusted isolated-realm setup BEFORE acceptance, preserving source window/all assertions and no accepted-history rewrite; it will run ONLY failed node. If Agent knows the supported normal existing creation seam, send it. No semantic guard weakening requested.
+
+RT07 still requires exact final current consumer migration, independently of pin approval; a last-caller worker checks final6ef against qualified registered7012 source, no renderer repeat. RT03 owned raw/unplaced carrier review is active; no placement/catalog/managed-five-tuple substitution. Private15 admitted_target key-boundary reconciliation is active, no schema aliases.
+
+## 2026-10-21T00:38:57Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# RT03 Runtime peer note — owned raw custody review
+
+Runtime 95bd conditionally ACKs the safety boundary, but found no executable
+existing raw `MediaPin` carrier through the normal commit port. The exact
+source review is in the Runtime worker change:
+`design/runtime-rt03-owned-raw-custody-review.md`.
+
+Key correction: the proposal's pre-existing parent-registry `asset` alias is
+stronger than the original positive. The witness begins with an empty parent
+and a project-owned raw CAS object; it must not require prior visible media or
+an accepted alias. Runtime `ingest` (`service.py:4793-4866`) establishes the
+managed project/CAS fact, and `_validate_closure` (`timeline_commit_store.py:
+518-547`) can validate a newly authored registry entry plus its manifest pin,
+but `RequestCommitPort.validate` (`timeline_commit_port.py:391-415`) rejects
+manifest media not captured through an existing closure, shot closure,
+five-field managed selection, text, or narration. `RuntimeCommitPort` has no
+raw two-field pin capture/read on this base.
+
+Please keep the original positive, role/idempotency/restart/occupied
+assertions strict, and keep unowned opaque input as an independent refusal.
+Do not substitute occurrence placement, the managed-generation tuple, catalog
+CRUD, or the retired direct writer. The minimum correction is to remove the
+alias precondition and hold for an owner-approved internal request-scoped raw
+pin capture at the commit-port boundary; this note invents no DTO, command
+subshape, endpoint, schema, or implementation.
+
+## RT07 final6ef D13 consumer port request — 2026-10-21
+
+The Runtime RT07 deletion is ready as a net-67-line source cut, but the exact
+Agent normal014 candidate `6efc81500a0e0688c2bb41e736503f0fc3e04abb` / tree
+`2ed2b8a12b5b3391ca221ba6ff05390f71a73556` does **not** carry the reviewed D13
+consumer cut. Its live legacy hook is
+`astrid/core/execution/generic_host.py:8501-8591`, invoked at `:9731-9739`,
+and it calls `self.client.publish_timeline_render` at `:8512`.
+
+Please port the already reviewed D13 seam from qualified Agent
+`7b3e1205a374443c46bad6b18753ef146e1e42c6` / tree
+`7d807bc27b1b237de7138c13672d2fa814a22f3f` (compose source
+`65c87dd5d5310bc028acafaf1cab31196a03a86c`) onto final6ef only:
+
+- native assembler contract plus the reviewed `assemble_timeline` action/pack
+  semantics;
+- requester `astrid/sdk/timeline/assembly.py` and
+  `TimelineSession.admit_assembly` / `queue_assembly`;
+- existing `WorkspaceClient` media-selection/verified-media adapters;
+- remove GenericHost `_publish_assembled_timeline` and its invocation, while
+  preserving unrelated current host/custody source.
+
+Do not regenerate or alter generated clients, source/artifact pins, Runtime,
+or existing assertions; do not rerun renderer/browser evidence. The reviewed
+`runtime_stitch.py` and video `runtime_orchestration.py` are already byte-
+identical between these Agent refs and need no port. Full source request and
+line evidence: `design/runtime-rt07-final-main95-adoption-cut-plan.md`.
+RT07 remains HELD until this port and coordinated ordinary014 adoption are
+complete; historical registered run `7012` is not current adoption evidence.
