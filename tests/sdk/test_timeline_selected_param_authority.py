@@ -382,8 +382,6 @@ def test_transition_accepts_matching_legacy_authority(transition_pins):
 
 # Requirement: an explicit transition reselection establishes the chosen
 # source authority before the next same-reference transition update.
-@pytest.mark.xfail(strict=True,
-                   reason='explicit transition reselection must establish selected source authority')
 def test_distinct_transition_reselection_reload_update_inverse_restores_legacy_raw(
         transition_pins, configured_project_pack):
     realm, legacy_element, _, _ = _transition_birth(transition_pins)
