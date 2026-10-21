@@ -48,7 +48,7 @@ timeline command to reference.
 
 ## Timeline authoring
 
-Timeline edits use the normal Runtime command path:
+Migrated timeline edits use the normal Runtime command path:
 
 ```text
 App gesture or authoring client
@@ -59,11 +59,13 @@ App gesture or authoring client
   -> accepted revision and timeline readback
 ```
 
-Retired edge authoring handlers, append helpers, and whole-configuration
-publication paths are not authoring routes. Producers that need to affect a
-timeline must emit the published command contract and use
-the Runtime commit door; completion and media preparation alone do not grant a
-canonical write.
+Retired edge authoring handlers and append helpers are not authoring routes.
+Open ordinary and popup producers still use the Runtime's head-checked
+parent-publication boundary, and the current empty-timeline bootstrap/repair
+initializer remains on that boundary. The staged native `timeline.init`
+outbox path has not been activated. Producers that have migrated to commands
+must use the Runtime commit door; completion and media preparation alone do
+not grant a canonical write.
 
 ## Worker responsibilities
 

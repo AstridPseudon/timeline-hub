@@ -17,11 +17,13 @@ UI producer
 
 This path is the authority for supported image, video, character-animation, and related producers. Input identity, ordered inputs, output validation, idempotency, and publication are carried by the admitted Runtime task and its settlement fence.
 
-The former edge editing endpoint is retired. Timeline authoring uses App
-command capture and the Runtime `/v1` commit door;
-it does not use a Supabase append/import route or publish a whole timeline
-configuration. Immutable CAS media returned by Runtime can still be referenced
-by a normal guarded timeline command.
+The former edge editing endpoint is retired. Migrated timeline authoring uses
+App command capture and the Runtime `/v1` commit door. Open ordinary and popup
+producers, plus empty-timeline bootstrap/repair, still use the Runtime's
+head-checked parent-publication boundary; the staged native `timeline.init`
+outbox path is not active in production. No Supabase append/import route is
+supported. Immutable CAS media returned by Runtime can still be referenced by
+a normal guarded timeline command.
 
 ## Retired legacy boundary
 

@@ -109,9 +109,12 @@ payload parse closed with `BridgeContractError`. Astrid-side *serving* of
 bundles (an `astrid serve` that writes and returns them) is an explicitly
 out-of-scope follow-up outside this repo.
 
-The former Supabase `saveTimeline`/append path is retired. Timeline authoring
-now uses App command capture, the crash-safe outbox, and the Runtime `/v1`
-commit door; no `config-replaced` or `create-with-config` route is a supported
+The former Supabase `saveTimeline`/append path is retired. Migrated timeline
+producers use App command capture, the crash-safe outbox, and the Runtime
+`/v1` commit door. The current Runtime parent-publication path remains live for
+open ordinary and popup producers and for empty-timeline bootstrap/repair; the
+native `timeline.init` outbox path is staged but not active in production. No
+`config-replaced` or `create-with-config` Supabase route is a supported
 compatibility path. The bundle remains a fail-closed compatibility contract:
 unknown versions and malformed payloads are rejected rather than silently
 becoming empty lanes. Immutable media and task results are referenced by
