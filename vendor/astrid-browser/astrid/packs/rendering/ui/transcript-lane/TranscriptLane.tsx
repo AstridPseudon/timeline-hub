@@ -158,9 +158,12 @@ function TranscriptSegmentControl({
   const playing = props.playingItemIds?.includes(item.id) === true;
   const left = item.timelineStart * props.pixelsPerSecond;
   // The 1px border is inside the border-box width, so 2px is the narrowest box
-  // that still has a content edge. The horizontal padding lives on the inner
-  // text span (not the button), otherwise every chip is at least 14px wide and
-  // chips that do not overlap in time overlap on screen.
+  // that still has a content edge. The 6px horizontal inset is a margin on the
+  // inner text span, not padding on the button (every chip would be at least
+  // 14px wide and overlap its neighbour on screen) and not padding on the span
+  // (its overflow clip sits at the padding edge, so a narrow chip would show a
+  // sliced fragment of a letter). With a margin the span shrinks to nothing
+  // inside a narrow chip instead.
   const width = Math.max(2, (item.timelineEnd - item.timelineStart) * props.pixelsPerSecond);
   const style: CSSProperties = {
     position: 'absolute',
@@ -303,7 +306,7 @@ function TranscriptSegmentControl({
       <span
         aria-hidden="true"
         className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
-        style={{ boxSizing: 'border-box', padding: '0 6px' }}
+        style={{ margin: '0 6px' }}
       >
         {text}
       </span>
