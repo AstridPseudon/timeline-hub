@@ -57,6 +57,7 @@ temp/
 !docs/design/*.md
 !docs/governance/contracts/astrid-plan-a.md
 !docs/extensions/foundation-contract-ledger.md
+!design/peer-app-to-viewing-duration-type-contract-20261021.md
 !vendor/astrid-browser/remotion/public/fonts/FONT_PROVENANCE.md
 !docs/extensions/foundation-closure-assessment.md
 !docs/extensions/composition-spine/*.md
