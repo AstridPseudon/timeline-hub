@@ -467,7 +467,7 @@ def test_installed_profile_refuses_checkout_origins_from_isolated_probe(monkeypa
     seen = []
     def probe(argv, **kwargs):
         seen.append((argv, kwargs))
-        return subprocess.CompletedProcess(argv, 0, json.dumps({key: "/foreign/source.py" for key in ["host", "child", "action", "client", "sdk"]}), "")
+        return subprocess.CompletedProcess(argv, 0, json.dumps({key: "/foreign/source.py" for key in ["host", "child", "action", "client", "sdk", "runtime_protocol", "runtime_protocol.platform", "astrid_runtime"]}), "")
     monkeypatch.setattr(host_bootstrap.subprocess, "run", probe)
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="actual installed"):
         host_bootstrap._installed_execution_origins(tmp_path, "/selected/python")
