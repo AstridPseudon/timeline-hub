@@ -1,8 +1,8 @@
 /**
  * Agent Tool family module.
  *
- * Houses the agent tool family contracts extracted from the public barrel
- * (src/sdk/index.ts): AgentToolContribution manifest interface, schema/property
+ * Houses the agent tool family contracts:
+ * AgentToolContribution manifest interface, schema/property
  * types, invocation/request/context/export context, result families, result
  * refs, diagnostics, handler, and AgentToolRegistrationService.
  *
@@ -39,7 +39,7 @@ import type { ProcessSpawnConfig } from './processes';
 import type { GenerationSessionLiveDelivery } from '../liveData';
 
 // ---------------------------------------------------------------------------
-// M10: Agent tool contribution (manifest)
+// Agent tool contribution (manifest)
 // ---------------------------------------------------------------------------
 
 /**
@@ -78,14 +78,14 @@ export interface AgentToolContribution {
 }
 
 // ---------------------------------------------------------------------------
-// M10: Agent tool input schema / property types
+// Agent tool input schema / property types
 // ---------------------------------------------------------------------------
 
 /**
  * Supported StandardSchema subset for agent tool input schemas.
  *
  * The host uses SchemaForm to render these schemas. Only a minimal
- * StandardSchema subset is supported in M10:
+ * StandardSchema subset is supported:
  * - type: 'object' with properties
  * - property types: string, number, boolean, enum (string[])
  * - nested objects (one level)
@@ -114,7 +114,7 @@ export interface AgentToolInputProperty {
 }
 
 // ---------------------------------------------------------------------------
-// M10: Result families and result types
+// Result families and result types
 // ---------------------------------------------------------------------------
 
 /**
@@ -134,7 +134,7 @@ export type ToolResultFamily =
   | 'ui/summary';
 
 /**
- * M10: Grouped ToolResult union.
+ * Grouped ToolResult union.
  *
  * Every result carries a `family` discriminator and a `family`-specific
  * payload. Results that don't fit a known family are rejected with
@@ -212,10 +212,10 @@ export interface ToolExportResult {
   rationale?: string;
 }
 
-/** Process invocation result (pre-M12 placeholder). */
+/** Process invocation result (placeholder). */
 export interface ToolProcessResult {
   family: 'process';
-  /** Structured pending diagnostic (always present before M12). */
+  /** Structured pending diagnostic (always present). */
   diagnostics: readonly ToolResultDiagnostic[];
 }
 
@@ -231,7 +231,7 @@ export interface ToolUISummaryResult {
 }
 
 // ---------------------------------------------------------------------------
-// M10: Result refs and diagnostics
+// Result refs and diagnostics
 // ---------------------------------------------------------------------------
 
 /** A source-to-output reference for traceability. */
@@ -387,7 +387,7 @@ export interface ToolResultDiagnostic {
 }
 
 // ---------------------------------------------------------------------------
-// M10: AgentToolInvocationRequest and context types
+// AgentToolInvocationRequest and context types
 // ---------------------------------------------------------------------------
 
 /**
@@ -438,7 +438,7 @@ export interface AgentToolExportContext {
 }
 
 // ---------------------------------------------------------------------------
-// M10: GenerationSession (long-running generation)
+// GenerationSession (long-running generation)
 // ---------------------------------------------------------------------------
 
 /**
@@ -446,7 +446,7 @@ export interface AgentToolExportContext {
  *
  * Provides progress reporting, cancellation, and a preview-only
  * sample channel placeholder. Live media buffers and bake internals
- * are deferred to M11/M12.
+ * are deferred.
  */
 export interface GenerationSession {
   /** Unique session identifier. */
@@ -482,7 +482,7 @@ export interface GenerationSession {
 }
 
 // ---------------------------------------------------------------------------
-// M10: AgentToolRegistrationService and handler
+// AgentToolRegistrationService and handler
 // ---------------------------------------------------------------------------
 
 /**
@@ -510,10 +510,10 @@ export interface AgentToolRegistrationService {
   ): DisposeHandle;
 
   /**
-   * Invoke a process-backed tool (pre-M12 placeholder).
+   * Invoke a process-backed tool (placeholder).
    *
    * Always returns a `ToolProcessResult` with a structured pending
-   * diagnostic indicating process execution is not available until M12.
+   * diagnostic indicating process execution is not available yet.
    */
   invokeProcess(
     toolId: string,

@@ -34,7 +34,7 @@ export default defineConfig({
   test: {
     ...baseConfig.test,
     include: ['src/tools/video-editor/runtime/astridSceneComposition.test.tsx'],
-    exclude: ['supabase/functions/**'],
+    exclude: [],
     server: {
       ...baseConfig.test.server,
       deps: {

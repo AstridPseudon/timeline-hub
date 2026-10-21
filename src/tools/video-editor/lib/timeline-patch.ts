@@ -1,7 +1,7 @@
 /**
  * TimelinePatch pure validation, compilation, and preview.
  *
- * Validates, compiles, and previews TimelinePatch batches against the M3
+ * Validates, compiles, and previews TimelinePatch batches against the
  * public contract types defined in @astrid/editor-sdk.  This module is
  * intentionally pure — it does not import DataProvider, useTimelineCommit,
  * or any editor-internal mutation / store / provider machinery.
@@ -76,7 +76,7 @@ import {
 // Reserved operation families
 // ---------------------------------------------------------------------------
 
-/** Operation families that are validated but deferred (not executed in M3). */
+/** Operation families that are validated but deferred (not executed). */
 const RESERVED_OPS: ReadonlySet<TimelinePatchAnyOpFamily> = new Set(TIMELINE_PATCH_RESERVED_OP_FAMILIES);
 
 /**
@@ -1042,7 +1042,7 @@ export function compileTimelinePatch(
     clipOrder[trackId] = [...ids];
   }
 
-  // Working config.app clone (extension project-data lives here per SD2).
+  // Working config.app clone (extension project-data lives here).
   const configApp: Record<string, unknown> = data.config.app
     ? { ...data.config.app }
     : {};
@@ -2028,7 +2028,7 @@ export function previewTimelinePatch(
 }
 
 // ---------------------------------------------------------------------------
-// Graph preview bridge — M1b
+// Graph preview bridge
 // ---------------------------------------------------------------------------
 
 /**

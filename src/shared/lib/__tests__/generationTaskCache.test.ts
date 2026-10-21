@@ -32,7 +32,7 @@ vi.mock('@/shared/lib/tasks/generationTaskRepository', () => ({
   }),
 }));
 
-vi.mock('@/integrations/supabase/repositories/taskRepository', () => ({
+vi.mock('@/integrations/astrid/repositories/taskRepository', () => ({
   fetchTaskInProject: (...args: unknown[]) => mockFetchTaskInProject(...args),
 }));
 

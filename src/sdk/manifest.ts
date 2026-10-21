@@ -20,7 +20,7 @@ import type { IntegrityHash, InstalledExtensionMetadata, ExtensionDependency, Mi
 import type { ExtensionSettingsSchema } from './settings';
 import type { ProcessManifestEntry } from './video/families/processes';
 
-// M2b family contribution types (used in ExtensionManifest union)
+// Family contribution types (used in ExtensionManifest union)
 import type { CommandContribution } from './video/families/commands';
 import type { KeybindingContribution } from './video/families/keybindings';
 import type { ContextMenuItemContribution } from './video/families/contextMenuItems';
@@ -35,14 +35,14 @@ import type { TransitionContribution } from './video/families/transitions';
 import type { ClipTypeContribution } from './video/families/clipTypeContributions';
 import type { ShaderContribution } from './video/families/shaders';
 import type { AgentToolContribution } from './video/families/agentTools';
-// dataKind V1: duration-neutral typed-data lanes ([CONVERGE-WITH-M1] vocabularies live in-module)
+// dataKind V1: duration-neutral typed-data lanes (vocabularies live in-module)
 import type {
   DataKindContribution,
   DataShape,
   DataCoordinateDomain,
 } from './video/families/dataKind';
 import { KNOWN_DATA_SHAPES, KNOWN_DATA_DOMAINS } from './video/families/dataKind';
-// T1.1: required-render timeline overlay contribution (governed, not permissive)
+// required-render timeline overlay contribution (governed, not permissive)
 import type { TimelineOverlayManifestContribution } from './video/families/timelineOverlays';
 
 // ---------------------------------------------------------------------------
@@ -104,19 +104,19 @@ export interface ExtensionContribution {
   transitionId?: string;
   /** Reserved for future clip-type descriptors. */
   clipTypeId?: string;
-  /** M13: Shader identifier declared by the extension. */
+  /** Shader identifier declared by the extension. */
   shaderId?: string;
-  /** M6: Parser identifier declared by the extension. */
+  /** Parser identifier declared by the extension. */
   parserId?: string;
-  /** M6: Output format identifier declared by the extension. */
+  /** Output format identifier declared by the extension. */
   outputFormatId?: string;
-  /** M6: Search provider identifier declared by the extension. */
+  /** Search provider identifier declared by the extension. */
   searchProviderId?: string;
-  /** M6: Metadata facet identifier declared by the extension. */
+  /** Metadata facet identifier declared by the extension. */
   metadataFacetId?: string;
-  /** M6: Asset detail section identifier declared by the extension. */
+  /** Asset detail section identifier declared by the extension. */
   assetDetailSectionId?: string;
-  /** M10: Agent tool identifier declared by the extension. */
+  /** Agent tool identifier declared by the extension. */
   agentToolId?: string;
   /** dataKind: stable kind identifier registered via ctx.dataKinds.register(). */
   kindId?: string;
@@ -240,28 +240,28 @@ export interface ExtensionManifest {
   /** Contribution declarations. */
   contributions?: readonly (
     | ExtensionContribution
-    // T1.1: timeline overlays require a non-empty `render` id and forbid `when`
+    // timeline overlays require a non-empty `render` id and forbid `when`
     | TimelineOverlayManifestContribution
     | CommandContribution
     | KeybindingContribution
     | ContextMenuItemContribution
-    // M6: parser, output format, search provider, metadata facet, asset detail section
+    // parser, output format, search provider, metadata facet, asset detail section
     | ParserContribution
     | OutputFormatContribution
     | SearchProviderContribution
     | MetadataFacetContribution
     | AssetDetailSectionContribution
-    // M12: trusted local processes
+    // trusted local processes
     | ProcessContribution
-    // M7: trusted component effects
+    // trusted component effects
     | EffectContribution
-    // M8: trusted component transitions
+    // trusted component transitions
     | TransitionContribution
-    // M9: contributed clip types
+    // contributed clip types
     | ClipTypeContribution
-    // M13: shader/WebGL contributions
+    // shader/WebGL contributions
     | ShaderContribution
-    // M10: agent tool contributions
+    // agent tool contributions
     | AgentToolContribution
     // dataKind V1: duration-neutral typed-data lanes
     | DataKindContribution
@@ -519,7 +519,7 @@ export function validateManifest(
       }
 
       // Duplicate detection uses scoped key (kind:contributionId) — cross-kind
-      // reuse of the same bare contributionId is valid (SD3).
+      // reuse of the same bare contributionId is valid.
       const scopedKey = `${cKind}:${cId}`;
       if (seen.has(scopedKey)) {
         pushErr('manifest/duplicate-contribution-id', `Duplicate contribution ID "${cId}" for kind "${cKind}"`, cId);
@@ -865,9 +865,9 @@ export function validateManifest(
       }
     }
   } else {
-    // ---- Dev mode: compatibility warnings for legacy (M1/local) manifests ----
+    // ---- Dev mode: compatibility warnings for legacy (local) manifests ----
 
-    // Warn about missing M14-required fields so extension authors see what will be
+    // Warn about missing required fields so extension authors see what will be
     // required for installed-pack compatibility.
     if (!manifest.publisher) {
       pushWarn(

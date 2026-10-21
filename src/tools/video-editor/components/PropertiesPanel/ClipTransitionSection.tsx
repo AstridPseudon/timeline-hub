@@ -20,7 +20,7 @@ import {
 import { FieldLabel, NO_TRANSITION } from './clip-panel-primitives.tsx';
 
 // ---------------------------------------------------------------------------
-// Transition helpers (T11: single-clip transition controls)
+// Transition helpers
 // ---------------------------------------------------------------------------
 
 /** Returns a short provenance label for display in transition selectors. */
@@ -96,7 +96,7 @@ function getMergedTransitionParams(
   };
 }
 
-/** T11: single-clip transition controls. */
+/** single-clip transition controls. */
 export function ClipTransitionSection({
   clip,
   onChange,

@@ -11,7 +11,6 @@ vi.mock('@/shared/hooks/settings/useToolSettings', () => ({
     update: vi.fn().mockResolvedValue(undefined),
     hasShotSettings: false,
   }),
-  updateToolSettingsSupabase: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/shared/lib/utils/deepEqual', () => ({

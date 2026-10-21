@@ -354,8 +354,8 @@ export function useTimelineTrackManagement({
   ) => {
     let current = dataRef.current;
     if (!current) {
-      // Timeline not loaded — this used to be a silent no-op. Surface it so
-      // the write-ack watchdog can make the dropped edit visible.
+      // Timeline not loaded: emit a lost-edit event so the write-ack watchdog
+      // can make the dropped edit visible.
       eventBus?.emit('lostEdit');
       return;
     }

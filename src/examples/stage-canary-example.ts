@@ -1,5 +1,5 @@
 /**
- * stage-canary-example — M2 stage canary example.
+ * stage-canary-example — stage canary example.
  *
  * Demonstrates the stage surface canary using the registry-derived family
  * compatibility helpers and the stage creative context stub. Exercises
@@ -95,7 +95,7 @@ export const stageCanaryExample: AstridExtension = defineExtension({
       });
     }
 
-    // Demonstrate creative context stub for stage (M5, not yet active)
+    // Demonstrate creative context stub for stage (not yet active)
     ctx.services.diagnostics.report({
       severity: 'info',
       code: 'stage/milestone',

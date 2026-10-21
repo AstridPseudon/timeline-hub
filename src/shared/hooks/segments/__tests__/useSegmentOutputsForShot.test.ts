@@ -1,48 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React from 'react';
 import type { GenerationRow } from '@/domains/generation/types';
 
-// Mock supabase
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-          order: vi.fn().mockResolvedValue({ data: [], error: null }),
-          gte: vi.fn().mockReturnValue({
-            order: vi.fn().mockResolvedValue({ data: [], error: null }),
-          }),
-        }),
-      }),
-    }),
-  }),
-}));
-
-vi.mock('@/shared/hooks/useSmartPolling', () => ({
-  useSmartPollingConfig: () => ({ refetchInterval: false }),
-}));
-
-vi.mock('@/shared/lib/mediaTypeHelpers', () => ({
+vi.mock('@/shared/lib/media/mediaTypeHelpers', () => ({
   getGenerationId: (gen: { generation_id?: string; id: string }) => gen.generation_id || gen.id,
 }));
 
 import { useSegmentOutputsForShot } from '../useSegmentOutputsForShot';
-
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0 } },
-  });
-  return {
-    queryClient,
-    wrapper: ({ children }: { children: React.ReactNode }) =>
-      React.createElement(QueryClientProvider, { client: queryClient }, children),
-  };
-}
 
 function createSegmentOutputGenerationRow(overrides: Partial<GenerationRow> = {}): GenerationRow {
   return {
@@ -84,18 +48,15 @@ describe('useSegmentOutputsForShot', () => {
         params: { segment_index: 0 },
       });
 
-      const { wrapper } = createWrapper();
       const { result } = renderHook(
         () =>
           useSegmentOutputsForShot(
             'shot-1',
-            'project-1',
             undefined,
             undefined,
             undefined,
             [parentGen, childGen]
-          ),
-        { wrapper }
+          )
       );
 
       expect(result.current.parentGenerations).toHaveLength(1);
@@ -119,18 +80,15 @@ describe('useSegmentOutputsForShot', () => {
         params: { segment_index: 0, orchestrator_details: {} },
       });
 
-      const { wrapper } = createWrapper();
       const { result } = renderHook(
         () =>
           useSegmentOutputsForShot(
             'shot-1',
-            'project-1',
             undefined,
             undefined,
             undefined,
             [parentGen, childGen]
-          ),
-        { wrapper }
+          )
       );
 
       // Only parent should be in the list
@@ -148,18 +106,15 @@ describe('useSegmentOutputsForShot', () => {
         params: { orchestrator_details: {} },
       });
 
-      const { wrapper } = createWrapper();
       const { result } = renderHook(
         () =>
           useSegmentOutputsForShot(
             'shot-1',
-            'project-1',
             undefined,
             undefined,
             undefined,
             [imageGen]
-          ),
-        { wrapper }
+          )
       );
 
       expect(result.current.parentGenerations).toHaveLength(0);
@@ -184,18 +139,15 @@ describe('useSegmentOutputsForShot', () => {
         params: { orchestrator_details: {} },
       });
 
-      const { wrapper } = createWrapper();
       const { result } = renderHook(
         () =>
           useSegmentOutputsForShot(
             'shot-1',
-            'project-1',
             undefined,
             undefined,
             undefined,
             [older, newer]
-          ),
-        { wrapper }
+          )
       );
 
       expect(result.current.parentGenerations[0].id).toBe('sg-newer');
@@ -205,27 +157,22 @@ describe('useSegmentOutputsForShot', () => {
 
   describe('controlled vs uncontrolled mode', () => {
     it('uses internal state in uncontrolled mode', () => {
-      const { wrapper } = createWrapper();
       const { result } = renderHook(
-        () => useSegmentOutputsForShot('shot-1', 'project-1'),
-        { wrapper }
+        () => useSegmentOutputsForShot('shot-1')
       );
 
       expect(result.current.selectedParentId).toBeNull();
     });
 
     it('uses controlled value when provided', () => {
-      const { wrapper } = createWrapper();
       const { result } = renderHook(
         () =>
           useSegmentOutputsForShot(
             'shot-1',
-            'project-1',
             undefined,
             'controlled-id',
             vi.fn()
-          ),
-        { wrapper }
+          )
       );
 
       expect(result.current.selectedParentId).toBe('controlled-id');
@@ -233,17 +180,14 @@ describe('useSegmentOutputsForShot', () => {
 
     it('calls onSelectedParentChange in controlled mode', () => {
       const onChange = vi.fn();
-      const { wrapper } = createWrapper();
       const { result } = renderHook(
         () =>
           useSegmentOutputsForShot(
             'shot-1',
-            'project-1',
             undefined,
             'controlled-id',
             onChange
-          ),
-        { wrapper }
+          )
       );
 
       act(() => {
@@ -257,10 +201,8 @@ describe('useSegmentOutputsForShot', () => {
   describe('segment progress', () => {
     it('computes progress from segment slots', () => {
       // With no data, should be 0/0
-      const { wrapper } = createWrapper();
       const { result } = renderHook(
-        () => useSegmentOutputsForShot('shot-1', 'project-1'),
-        { wrapper }
+        () => useSegmentOutputsForShot('shot-1')
       );
 
       expect(result.current.segmentProgress).toEqual({ completed: 0, total: 0 });
@@ -269,21 +211,8 @@ describe('useSegmentOutputsForShot', () => {
 
   describe('disabled state', () => {
     it('handles null shotId gracefully', () => {
-      const { wrapper } = createWrapper();
       const { result } = renderHook(
-        () => useSegmentOutputsForShot(null, 'project-1'),
-        { wrapper }
-      );
-
-      expect(result.current.parentGenerations).toEqual([]);
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    it('handles null projectId gracefully', () => {
-      const { wrapper } = createWrapper();
-      const { result } = renderHook(
-        () => useSegmentOutputsForShot('shot-1', null),
-        { wrapper }
+        () => useSegmentOutputsForShot(null)
       );
 
       expect(result.current.parentGenerations).toEqual([]);
@@ -292,10 +221,8 @@ describe('useSegmentOutputsForShot', () => {
 
   describe('hasFinalOutput', () => {
     it('returns false when no parent selected', () => {
-      const { wrapper } = createWrapper();
       const { result } = renderHook(
-        () => useSegmentOutputsForShot('shot-1', 'project-1'),
-        { wrapper }
+        () => useSegmentOutputsForShot('shot-1')
       );
 
       expect(result.current.hasFinalOutput).toBe(false);
@@ -323,18 +250,15 @@ describe('useSegmentOutputsForShot', () => {
         type: 'image',
       });
 
-      const { wrapper } = createWrapper();
       const { result } = renderHook(
         () =>
           useSegmentOutputsForShot(
             'shot-1',
-            'project-1',
             undefined,
             undefined,
             undefined,
             [gen1, gen2, unpositioned]
-          ),
-        { wrapper }
+          )
       );
 
       // No parents should be found (these are images, not video with orchestrator_details)

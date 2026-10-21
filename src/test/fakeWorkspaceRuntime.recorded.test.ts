@@ -1,4 +1,4 @@
-// Testing plan C2.2 / R-4 for the fixture side of the fake Runtime: the stale-head publish rejection is the
+// The fixture side of the fake Runtime: the stale-head publish rejection is the
 // one `runtimeFixture` answer with a recording, so it is held to `publish_conflict_409` here. (The events
 // feed is the router's and is held in fakeRuntimeRouter.recorded.test.ts.) Everything else `runtimeFixture`
 // serves is unrecorded; the real-daemon direct journey is its referee.

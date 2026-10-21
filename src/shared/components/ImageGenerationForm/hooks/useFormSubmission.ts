@@ -2,15 +2,12 @@
  * useFormSubmission - Handles form submission and task creation
  */
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
+import type { FormEvent } from 'react';
 import { useIncomingTaskRunner } from './formSubmission/useIncomingTaskRunner';
-import { usePromptQueueHandlers } from './formSubmission/usePromptQueueHandlers';
-import { useSubmitHandler } from './formSubmission/useSubmitHandler';
 import { useSubmissionOrchestrator } from './formSubmission/useSubmissionOrchestrator';
-import { buildSubmissionRuntimeContext } from './formSubmission/submissionContext';
 import { useTaskParamsBuilder } from './formSubmission/useTaskParamsBuilder';
 import type {
-  FormStateSnapshot,
   UseFormSubmissionProps,
   UseFormSubmissionReturn,
 } from './formSubmission/types';
@@ -18,43 +15,19 @@ import type {
 export function useFormSubmission(props: UseFormSubmissionProps): UseFormSubmissionReturn {
   const { formState, promptConfig, effects } = props;
   const {
-    selectedProjectId, prompts, imagesPerPrompt, promptMultiplier,
+    selectedProjectId, prompts, imagesPerPrompt,
     associatedShotId, currentBeforePromptText, currentAfterPromptText,
     styleBoostTerms, isLocalGenerationEnabled, hiresFixConfig,
-    projectResolution,
-    effectivePromptMode, masterPromptText, actionablePromptsCount,
+    projectResolution, actionablePromptsCount,
   } = formState;
   const {
     generationSourceRef, selectedTextModelRef, selectedLoras, styleReferenceImageGeneration,
     styleReferenceStrength, subjectStrength, effectiveSubjectDescription,
     inThisScene, inThisSceneStrength, referenceMode,
   } = promptConfig;
-  const { aiGeneratePrompts, onGenerate, setPrompts, automatedSubmitButton } = effects;
+  const { onGenerate, automatedSubmitButton } = effects;
   const selectedLorasRef = useRef(selectedLoras);
   selectedLorasRef.current = selectedLoras;
-
-  const formStateRef = useRef<FormStateSnapshot>();
-  useEffect(() => {
-    formStateRef.current = {
-      masterPromptText,
-      imagesPerPrompt,
-      promptMultiplier,
-      selectedProjectId,
-      associatedShotId,
-      styleReferenceImageGeneration,
-      styleReferenceStrength,
-      subjectStrength,
-      effectiveSubjectDescription,
-      inThisScene,
-      inThisSceneStrength,
-      referenceMode,
-      beforePromptText: currentBeforePromptText,
-      afterPromptText: currentAfterPromptText,
-      styleBoostTerms,
-      isLocalGenerationEnabled,
-      hiresFixConfig,
-    };
-  });
 
   const getTaskParams = useTaskParamsBuilder({
     selectedProjectId,
@@ -80,53 +53,20 @@ export function useFormSubmission(props: UseFormSubmissionProps): UseFormSubmiss
 
   const runIncomingTask = useIncomingTaskRunner();
 
-  const submissionContext = buildSubmissionRuntimeContext({
-    prompts,
-    promptMultiplier,
-    imagesPerPrompt,
-    actionablePromptsCount,
-    styleReferenceImageGeneration,
-    generationSourceRef,
-    selectedTextModelRef,
-    selectedLorasRef,
-  }, formStateRef);
-
-  const commands = useSubmissionOrchestrator({
-    context: submissionContext,
+  const { submitManaged } = useSubmissionOrchestrator({
+    context: { prompts, imagesPerPrompt, actionablePromptsCount },
     effects: {
       automatedSubmitButton,
-      aiGeneratePrompts,
       onGenerate,
-      setPrompts,
       getTaskParams,
       runIncomingTask,
     },
   });
 
-  const handleSubmit = useSubmitHandler({
-    effectivePromptMode,
-    commands: {
-      submitManaged: commands.submitManaged,
-      submitAutomated: commands.submitAutomated,
-    },
-  });
+  const handleSubmit = useCallback(async (event: FormEvent) => {
+    event.preventDefault();
+    submitManaged();
+  }, [submitManaged]);
 
-  const {
-    handleGenerateAndQueue,
-    handleUseExistingPrompts,
-    handleNewPromptsLikeExisting,
-  } = usePromptQueueHandlers({
-    commands: {
-      generateAndSubmit: commands.generateAndSubmit,
-      queueExisting: commands.queueExisting,
-      queueLikeExisting: commands.queueLikeExisting,
-    },
-  });
-
-  return {
-    handleSubmit,
-    handleGenerateAndQueue,
-    handleUseExistingPrompts,
-    handleNewPromptsLikeExisting,
-  };
+  return { handleSubmit };
 }

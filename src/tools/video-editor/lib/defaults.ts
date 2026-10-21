@@ -31,10 +31,9 @@ export const DEFAULT_OUTPUT = {
 } as const;
 
 export function createDefaultTimelineConfig(): TimelineConfig {
-  // Sprint 2 schema-lift: `theme`, `theme_overrides`, and `generation_defaults`
-  // are intentionally left absent here. New timelines start with no theme bound
-  // (the editor today renders without a theme registry); the Theme chip in
-  // Sprint 3 is responsible for populating these once the user picks a theme.
+  // `theme`, `theme_overrides`, and `generation_defaults` are intentionally left absent here.
+  // New timelines start with no theme bound (the editor renders without a theme registry).
+  // They are populated once the user picks a theme.
   // Keeping them undefined preserves byte-equivalence for every existing
   // call site that snapshots a freshly-created config.
   return {
@@ -57,7 +56,7 @@ export function createDefaultTimelineConfig(): TimelineConfig {
  * `getCanvas` in Root.tsx and the ffmpeg `_timeline_canvas` both prefer
  * `theme_overrides.visual.canvas`, then the resolved theme canvas, then a
  * hardcoded default):
- *   1. explicit `output.resolution` / `output.fps` (persisted, Supabase path)
+ *   1. explicit `output.resolution` / `output.fps` (persisted)
  *   2. `theme_overrides.visual.canvas` (per-timeline declared geometry)
  *   3. the installed theme's `visual.canvas` (via `resolveTimelineRenderTheme`)
  *   4. `DEFAULT_OUTPUT` (1280x720@30) — unchanged for timelines that declare

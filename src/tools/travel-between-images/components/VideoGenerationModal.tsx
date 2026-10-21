@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader } from '@/shared/components/ui/dial
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { useExtraLargeModal } from '@/shared/hooks/useModal';
-import { LoraSelectorModal } from '@/domains/lora/components';
 import {
   VideoGenerationModalAccordionContent,
   VideoGenerationModalHeader,
@@ -17,7 +16,6 @@ import {
 } from './VideoGenerationModalSections';
 import { useVideoGenerationModalController } from './hooks/useVideoGenerationModalController';
 import { useBatchVideoGeneration } from './hooks/useBatchVideoGeneration';
-import { getModelSpec } from '../settings';
 import { VideoTravelSettingsProvider } from '../providers';
 
 export interface VideoGenerationModalProps {
@@ -55,7 +53,6 @@ interface ModalBodyProps {
     defaultBottomOpen: boolean;
   };
   accordionProps: {
-    availableLoras: ReturnType<typeof useVideoGenerationModalController>['availableLoras'];
     accelerated: boolean;
     onAcceleratedChange: (v: boolean) => void;
     onRandomSeedChange: (v: boolean) => void;
@@ -63,7 +60,6 @@ interface ModalBodyProps {
     guidanceKind: TravelGuidanceMode | undefined;
     validPresetId: string | undefined;
     status: 'idle' | 'loading' | 'ready' | 'saving' | 'error';
-    onOpenLoraModal: () => void;
     onRemoveLora: (loraId: string) => void;
     onLoraStrengthChange: (loraId: string, strength: number) => void;
     onAddTriggerWord: (word: string) => void;
@@ -120,7 +116,6 @@ const VideoGenerationModalBody: React.FC<ModalBodyProps> = ({
           projects={projects}
           selectedProjectId={selectedProjectId}
           selectedLoras={selectedLoras}
-          availableLoras={accordionProps.availableLoras}
           accelerated={accordionProps.accelerated}
           onAcceleratedChange={accordionProps.onAcceleratedChange}
           randomSeed={randomSeed}
@@ -130,7 +125,6 @@ const VideoGenerationModalBody: React.FC<ModalBodyProps> = ({
           guidanceKind={accordionProps.guidanceKind}
           validPresetId={accordionProps.validPresetId}
           status={accordionProps.status}
-          onOpenLoraModal={accordionProps.onOpenLoraModal}
           onRemoveLora={accordionProps.onRemoveLora}
           onLoraStrengthChange={accordionProps.onLoraStrengthChange}
           onAddTriggerWord={accordionProps.onAddTriggerWord}
@@ -181,7 +175,6 @@ export const VideoGenerationModal: React.FC<VideoGenerationModalProps> = ({
     settings,
     status,
     updateField,
-    availableLoras,
     positionedImages,
     isLoading,
     hasStructureVideo,
@@ -193,14 +186,9 @@ export const VideoGenerationModal: React.FC<VideoGenerationModalProps> = ({
     setRandomSeed,
     validPresetId,
     selectedLoras,
-    isLoraModalOpen,
-    openLoraModal,
-    closeLoraModal,
-    handleAddLora,
     handleRemoveLora,
     handleLoraStrengthChange,
     handleAddTriggerWord,
-    selectedLorasForModal,
     effectiveAspectRatio,
     shotGenerations,
     handleNavigateToShot,
@@ -213,74 +201,58 @@ export const VideoGenerationModal: React.FC<VideoGenerationModalProps> = ({
   });
 
   return (
-    <>
-      <VideoTravelSettingsProvider
-        projectId={selectedProjectId}
-        shotId={shot.id}
-        selectedShot={shot}
-        availableLoras={availableLoras ?? []}
-        updateShotMode={updateShotMode}
-      >
-        <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
-          <DialogContent className={modal.className} style={{ ...modal.style, maxWidth: '1000px' }}>
-            <DialogHeader className={modal.headerClass}>
-              <VideoGenerationModalHeader
-                shotName={shot.name}
-                onNavigateToShot={handleNavigateToShot}
-              />
-            </DialogHeader>
+    <VideoTravelSettingsProvider
+      projectId={selectedProjectId}
+      shotId={shot.id}
+      selectedShot={shot}
+      updateShotMode={updateShotMode}
+    >
+      <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
+        <DialogContent className={modal.className} style={{ ...modal.style, maxWidth: '1000px' }}>
+          <DialogHeader className={modal.headerClass}>
+            <VideoGenerationModalHeader
+              shotName={shot.name}
+              onNavigateToShot={handleNavigateToShot}
+            />
+          </DialogHeader>
 
-            <div className={`${modal.scrollClass} -mx-6 px-6 flex-1 min-h-0`}>
-              <VideoGenerationModalBody
-                shot={shot}
-                projectId={selectedProjectId}
-                onClose={onClose}
-                randomSeed={randomSeed}
-                positionedImages={positionedImages}
-                effectiveAspectRatio={effectiveAspectRatio}
-                selectedLoras={selectedLoras}
-                structureState={structureState}
-                isLoading={isLoading}
-                shotGenerations={shotGenerations}
-                projects={projects}
-                selectedProjectId={selectedProjectId}
-                accordionDefaults={{
-                  defaultTopOpen,
-                  defaultFinalVideoOpen,
-                  defaultBottomOpen,
-                }}
-                accordionProps={{
-                  availableLoras,
-                  accelerated,
-                  onAcceleratedChange: setAccelerated,
-                  onRandomSeedChange: setRandomSeed,
-                  hasStructureVideo,
-                  guidanceKind,
-                  validPresetId,
-                  status,
-                  onOpenLoraModal: openLoraModal,
-                  onRemoveLora: handleRemoveLora,
-                  onLoraStrengthChange: handleLoraStrengthChange,
-                  onAddTriggerWord: handleAddTriggerWord,
-                  settings,
-                  updateField,
-                }}
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
-      </VideoTravelSettingsProvider>
-
-      <LoraSelectorModal
-        isOpen={isLoraModalOpen}
-        onClose={closeLoraModal}
-        loras={availableLoras}
-        onAddLora={handleAddLora}
-        onRemoveLora={handleRemoveLora}
-        onUpdateLoraStrength={handleLoraStrengthChange}
-        selectedLoras={selectedLorasForModal}
-        loraType={getModelSpec(settings.selectedModel).loraFamily}
-      />
-    </>
+          <div className={`${modal.scrollClass} -mx-6 px-6 flex-1 min-h-0`}>
+            <VideoGenerationModalBody
+              shot={shot}
+              projectId={selectedProjectId}
+              onClose={onClose}
+              randomSeed={randomSeed}
+              positionedImages={positionedImages}
+              effectiveAspectRatio={effectiveAspectRatio}
+              selectedLoras={selectedLoras}
+              structureState={structureState}
+              isLoading={isLoading}
+              shotGenerations={shotGenerations}
+              projects={projects}
+              selectedProjectId={selectedProjectId}
+              accordionDefaults={{
+                defaultTopOpen,
+                defaultFinalVideoOpen,
+                defaultBottomOpen,
+              }}
+              accordionProps={{
+                accelerated,
+                onAcceleratedChange: setAccelerated,
+                onRandomSeedChange: setRandomSeed,
+                hasStructureVideo,
+                guidanceKind,
+                validPresetId,
+                status,
+                onRemoveLora: handleRemoveLora,
+                onLoraStrengthChange: handleLoraStrengthChange,
+                onAddTriggerWord: handleAddTriggerWord,
+                settings,
+                updateField,
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </VideoTravelSettingsProvider>
   );
 };

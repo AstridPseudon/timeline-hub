@@ -1,5 +1,5 @@
 /**
- * writing-canary-example — M2 writing canary example.
+ * writing-canary-example — writing canary example.
  *
  * Demonstrates the writing surface canary using creative context stubs,
  * ExtensionNotImplementedError, and the writing milestone metadata.
@@ -45,7 +45,7 @@ export const writingCanaryExample: AstridExtension = defineExtension({
   },
 
   activate(ctx: ExtensionContext): DisposeHandle {
-    // Demonstrate creative context stubs — writing is active in M2
+    // Demonstrate creative context stubs — writing is active
     const writingMilestone = CREATIVE_MEMBER_MILESTONE['writing'];
     ctx.services.diagnostics.report({
       severity: 'info',

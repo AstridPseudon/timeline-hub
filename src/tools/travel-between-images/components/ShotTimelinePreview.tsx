@@ -523,7 +523,7 @@ export function ShotTimelinePreview({
         )
       : null,
     // Keep one provider/editor session. Its query identity advances with the
-    // clean canonical head, so the H0 cache cannot be reused for H1.
+    // clean canonical head, so the previous head's cache cannot be reused for the new one.
     // Its initial composition is refreshed by adoptCleanBaseline below, and
     // its publish callback is refreshed by setPublishCallback on every render;
     // recreating it for either would reset query/editor/recovery identity.

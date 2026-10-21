@@ -393,7 +393,7 @@ export function ShaderInspector({
             </Button>
           </div>
         </div>
-        {/* M13 stores A/B intent on host metadata; live split preview is planned for a later preview bridge. */}
+        {/* Stores A/B intent on host metadata; live split preview is not wired yet. */}
         <Button
           type="button"
           variant="outline"

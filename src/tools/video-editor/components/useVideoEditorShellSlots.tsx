@@ -26,7 +26,7 @@ export function useVideoEditorShellSlots() {
   const slotRenderers = useVideoEditorSlotRenderers();
   const renderContext = useVideoEditorRenderContext();
 
-  // M6: Derive export format categories from extension contributions
+  // Derive export format categories from extension contributions
   const compileOnlyExportFormats: VideoEditorOutputFormatDescriptor[] = useMemo(() => {
     const all = renderContext.extensions?.outputFormats ?? [];
     return all.filter((f) => !f.requiresRender && !f.disabled);
@@ -40,7 +40,7 @@ export function useVideoEditorShellSlots() {
 
   const runtime = useOptionalVideoEditorRuntime();
 
-  // M5: Normalized slot → extensionId mapping derived from contribution manifests.
+  // Normalized slot → extensionId mapping derived from contribution manifests.
   // Used by HostContributionErrorBoundary to wire host-owned recovery keys.
   const slotOwnerMap = useMemo<ReadonlyMap<string, string>>(() => {
     const map = new Map<string, string>();
@@ -176,7 +176,7 @@ export function useVideoEditorShellSlots() {
     </HostContributionErrorBoundary>
   ) : null;
 
-  // ---- New M2 surface slots ------------------------------------------------
+  // ---- Surface slots ------------------------------------------------
   const leftPanelSlot = resolveSurfaceSlot('leftPanel', 'Left panel');
   const rightPanelSlot = resolveSurfaceSlot('rightPanel', 'Right panel');
   const codePanelSlot = resolveSurfaceSlot('codePanel', 'Code panel');

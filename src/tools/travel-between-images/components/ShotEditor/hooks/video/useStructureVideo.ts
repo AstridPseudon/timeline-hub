@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { useAutoSaveSettings } from '@/shared/settings/hooks/useAutoSaveSettings';
-import type { AuthoredVideoMetadata } from '@/shared/lib/media/videoUploader';
+import type { AuthoredVideoMetadata } from '@/shared/lib/media/videoMetadata';
 import {
   DEFAULT_STRUCTURE_GUIDANCE_CONTROLS,
   DEFAULT_STRUCTURE_VIDEO,

@@ -289,7 +289,7 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
     expect(screen.getByText('Astrid', { selector: 'span' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Chat: New chat' }).closest('div[class*="border-b"]')!.querySelector('img')).toBeNull();
     expect(screen.getByText('✨ I can do almost anything')).toBeInTheDocument();
-    expect(composer().placeholder).toBe('Type or press Cmd+Shift+R to talk...');
+    expect(composer().placeholder).toBe('Type a message...');
 
     act(() => skipEditorTourAnimation());
     fireEvent.click(sendButton());
@@ -461,7 +461,7 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
     expect(getEditorTourState().runId).toBe(runId + 1);
     expect(getEditorTourState().act).toBe(1);
     expect(composer().value).toBe('');
-    expect(transcript().textContent).toBe('✨ I can do almost anythingPress Cmd+Shift+R to talkAstrid · default model');
+    expect(transcript().textContent).toBe('✨ I can do almost anythingAstrid · default model');
     expect(within(transcript()).queryByText(ACT1.prompt)).toBeNull();
     expect(transcript().textContent).not.toContain(ACT1.reply);
 

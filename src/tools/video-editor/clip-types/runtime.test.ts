@@ -259,7 +259,7 @@ describe('clip-type runtime registry', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M9 T7: Extension clip type descriptor synthesis
+// Extension clip type descriptor synthesis
 // ---------------------------------------------------------------------------
 
 describe('defineClipTypeFromExtensionRecord', () => {

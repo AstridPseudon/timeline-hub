@@ -15,9 +15,6 @@ vi.mock('@/shared/contexts/AgentChatContext', () => ({
   useAgentChatBridge: () => ({ timelineId: null, editorContext: { projectId: 'project-1' } }),
   useAgentChatActionsRegistry: () => ({ registerHandlers: () => {}, publishState: () => {}, unregister: () => {} }),
 }));
-vi.mock('@/tools/video-editor/hooks/useAgentVoice', () => ({
-  useAgentVoice: () => ({ isRecording: false, isProcessing: false, cancelRecording: () => {} }),
-}));
 
 import { AgentChatPanel as AgentChatPanelWithoutProvider } from './AgentChat.tsx';
 import { RuntimeConnectionProvider } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';

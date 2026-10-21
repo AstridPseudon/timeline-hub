@@ -25,7 +25,7 @@ import type {
 import type { DeterminismStatus, RenderRoute } from '../rendering/renderability';
 
 // ---------------------------------------------------------------------------
-// M12: Process spawn configuration
+// Process spawn configuration
 // ---------------------------------------------------------------------------
 
 export interface ProcessSpawnConfig {
@@ -36,10 +36,10 @@ export interface ProcessSpawnConfig {
 }
 
 // ---------------------------------------------------------------------------
-// M12: Process environment / operation / spec types
+// Process environment / operation / spec types
 // ---------------------------------------------------------------------------
 
-/** M12: Declarative environment field for trusted local process configuration. */
+/** Declarative environment field for trusted local process configuration. */
 export interface ProcessEnvFieldSpec {
   readonly key: string;
   readonly label?: string;
@@ -79,7 +79,7 @@ export interface ProcessLiveSourceBinding {
   readonly processId: string;
 }
 
-/** M12: Operation a trusted local process exposes to tools, render routes, or export formats. */
+/** Operation a trusted local process exposes to tools, render routes, or export formats. */
 export interface ProcessOperationSpec {
   readonly id: string;
   readonly label: string;
@@ -91,7 +91,7 @@ export interface ProcessOperationSpec {
   readonly determinism?: DeterminismStatus;
 }
 
-/** M12: Declarative trusted-local process specification. */
+/** Declarative trusted-local process specification. */
 export interface ProcessManifestEntry {
   readonly id: string;
   readonly label: string;
@@ -109,14 +109,14 @@ export interface ProcessManifestEntry {
   readonly requiredBy?: readonly CapabilitySourceRef[];
 }
 
-/** M12: Host-side process descriptor used by the runtime process manager. */
+/** Host-side process descriptor used by the runtime process manager. */
 export type ProcessSpec = ProcessManifestEntry;
 
 // ---------------------------------------------------------------------------
-// M12: Process contribution (manifest)
+// Process contribution (manifest)
 // ---------------------------------------------------------------------------
 
-/** M12: Process contribution declared in an extension manifest. */
+/** Process contribution declared in an extension manifest. */
 export interface ProcessContribution {
   readonly id: ContributionId;
   readonly kind: 'process';
@@ -126,7 +126,7 @@ export interface ProcessContribution {
 }
 
 // ---------------------------------------------------------------------------
-// M12: Process lifecycle state / status types
+// Process lifecycle state / status types
 // ---------------------------------------------------------------------------
 
 export type ProcessLifecycleState =

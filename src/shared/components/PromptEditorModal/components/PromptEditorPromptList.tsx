@@ -5,7 +5,6 @@ import type { PromptEntry } from '@/shared/components/ImageGenerationForm/types'
 interface PromptEditorPromptListProps {
   prompts: PromptEntry[];
   isMobile: boolean;
-  isLoading: boolean;
   activePromptIdForFullView: string | null;
   onActivePromptChange: (id: string | null) => void;
   onUpdatePromptField: (id: string, field: 'fullPrompt' | 'shortPrompt', value: string) => void;
@@ -15,7 +14,6 @@ interface PromptEditorPromptListProps {
 export function PromptEditorPromptList({
   prompts,
   isMobile,
-  isLoading,
   activePromptIdForFullView,
   onActivePromptChange,
   onUpdatePromptField,
@@ -26,7 +24,7 @@ export function PromptEditorPromptList({
       <div className={isMobile ? 'px-2 py-4 pb-1' : 'p-6 pb-2'}>
         {prompts.length === 0 && (
           <div className="text-center text-muted-foreground py-8">
-            No prompts yet. Add one manually or use AI generation.
+            No prompts yet. Add one to get started.
           </div>
         )}
         {prompts.map((prompt, index) => (
@@ -38,7 +36,6 @@ export function PromptEditorPromptList({
               onUpdate={onUpdatePromptField}
               onRemove={() => onRemovePrompt(prompt.id)}
               canRemove={prompts.length > 1}
-              isGenerating={isLoading}
               onSetActiveForFullView={onActivePromptChange}
               isActiveForFullView={activePromptIdForFullView === prompt.id}
               autoEnterEditWhenActive={isMobile}

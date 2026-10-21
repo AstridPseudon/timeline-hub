@@ -1,7 +1,7 @@
 /**
  * Backward-compatible facade for Join Clips clip management services.
  *
- * Logic is now split across focused modules under `lib/clipManager/`.
+ * Logic lives in focused modules under `lib/clipManager/`.
  */
 
 // Re-export everything from clipInitService so existing consumers keep working.
@@ -31,14 +31,9 @@ export {
 } from './clipManager/normalization';
 
 export {
-  uploadClipVideo,
-} from './clipManager/upload';
-
-export {
   reorderClipsAndPrompts,
 } from './clipManager/ordering';
 
 export {
-  updateClipInArray,
   clearClipVideo,
 } from './clipManager/updates';

@@ -413,9 +413,9 @@ export function useTimelineCommit({
 
     const current = dataRef.current;
     if (!current) {
-      // The timeline isn't loaded yet. This used to be a silent no-op — the
-      // user's edit vanished with no signal. Surface it so the write-ack
-      // watchdog can make the loss visible.
+      // The timeline isn't loaded yet. Emit a lost-edit event rather than
+      // dropping the user's edit silently, so the write-ack watchdog can make
+      // the loss visible.
       eventBus.emit('lostEdit');
       return;
     }

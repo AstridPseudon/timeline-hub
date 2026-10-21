@@ -8,8 +8,6 @@ describe('useTimelineUiState', () => {
 
     expect(result.current.resetGap).toBe(50);
     expect(result.current.maxGap).toBe(81);
-    expect(result.current.showVideoBrowser).toBe(false);
-    expect(result.current.isUploadingStructureVideo).toBe(false);
   });
 
   it('updates state through setter callbacks', () => {
@@ -17,13 +15,9 @@ describe('useTimelineUiState', () => {
 
     act(() => {
       result.current.setResetGap(72);
-      result.current.setShowVideoBrowser(true);
-      result.current.setIsUploadingStructureVideo(true);
     });
 
     expect(result.current.resetGap).toBe(72);
-    expect(result.current.showVideoBrowser).toBe(true);
-    expect(result.current.isUploadingStructureVideo).toBe(true);
   });
 
   it('uses model-provided max gap and default gap when supplied', () => {

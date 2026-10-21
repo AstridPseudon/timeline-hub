@@ -6,9 +6,9 @@
  * no DOM, localStorage, console, React lifecycle, requestAnimationFrame,
  * or provider-service imports.
  *
- * NOTE: createExtensionContext() was moved to `src/sdk/contextFactory.ts`
- * in M2b because it is deeply coupled to host wiring (DOM manipulation,
- * localStorage, console I/O, provider services, and React lifecycle).
+ * NOTE: createExtensionContext() is not in this module: it is deeply coupled to
+ * host wiring (DOM manipulation, localStorage, console I/O, provider services,
+ * and React lifecycle).
  * context.ts remains host-wiring-free.
  *
  * @publicContract
@@ -31,7 +31,7 @@ import type { ExportService } from '@/sdk/video/exports/outputFormats.ts';
 import type { ProjectObjectStorage } from './video/assets/projectObjects';
 import type { LiveSceneAuthoringRegistration } from './video/liveSceneAuthoring';
 
-// M2b family types now extracted to dedicated family modules.
+// Family types live in dedicated family modules.
 // import type is erased at compile time — zero runtime cost, no host wiring.
 import type { EffectRegistrationService } from './video/families/effects';
 import type { ClipTypeRegistrationService } from './video/families/clipTypeContributions';
@@ -42,7 +42,7 @@ import type { TimelineOps } from './video/timeline/timelineOps';
 import type { TransitionRegistrationService } from './video/families/transitions';
 import type { ExtensionManifest } from './manifest';
 import type { AgentToolRegistrationService } from './video/families/agentTools';
-// dataKind V1: duration-neutral typed-data lanes ([CONVERGE-WITH-M1] vocabularies)
+// dataKind V1: duration-neutral typed-data lanes (vocabularies)
 import type { DataKindRegistrationService } from './video/families/dataKind';
 
 // ---------------------------------------------------------------------------
@@ -125,9 +125,9 @@ export interface CreativeContext {
   readonly project: unknown;
   /** Runtime project documents, scoped to the active project. */
   readonly documents: ProjectDocumentSurface;
-  /** Public mutation surface for atomic timeline operations (M3). */
+  /** Public mutation surface for atomic timeline operations. */
   readonly timeline: TimelineOps;
-  /** Read-only snapshot projection of the current timeline state (M3). */
+  /** Read-only snapshot projection of the current timeline state. */
   readonly reader: TimelineReader;
   /** Report writing and unsaved work that affects project navigation. */
   readonly pendingWork: ExtensionPendingWorkService;
@@ -135,18 +135,18 @@ export interface CreativeContext {
    * Provider-owned live view of timeline UX state (playback, selection,
    * viewport, geometry). Renderer-independent: available from commands,
    * keybindings, and any contribution surface, with or without a mounted
-   * `timelineOverlay` renderer (M2).
+   * `timelineOverlay` renderer.
    */
   readonly timelineView: TimelineViewStore;
-  /** Provider-scoped proposal lifecycle manager (M3). */
+  /** Provider-scoped proposal lifecycle manager. */
   readonly proposals: ProposalRuntime;
   /** Live registry asset identity and legacy profile reads. */
   readonly assets: CreativeAssetReadSurface;
-  /** Read-only material metadata surface (M6). */
+  /** Read-only material metadata surface. */
   readonly materials: MaterialReadSurface;
-  /** Live data sessions service for source/channel/bake/steering operations (M11). */
+  /** Live data sessions service for source/channel/bake/steering operations. */
   readonly sessions: LiveSessionsService;
-  /** Export service for registering output format handlers (M6). */
+  /** Export service for registering output format handlers. */
   readonly export: ExportService;
   /**
    * Active-project immutable source/package object port (L2a).
@@ -272,7 +272,7 @@ export function createCreativeContext(
   return Object.freeze(merged) as unknown as CreativeContext;
 }
 // ---------------------------------------------------------------------------
-// M4: Command registration service
+// Command registration service
 // ---------------------------------------------------------------------------
 
 /**
@@ -305,11 +305,11 @@ export interface ExtensionCommandService {
 
 /**
  * The context passed to an extension during activation.
- * Exposes only approved M1 members; no raw DataProvider, applyEdit,
+ * Exposes only approved members; no raw DataProvider, applyEdit,
  * timeline store, or internal mutation escape hatch.
  */
 export interface ExtensionContext {
-  /** Current API version (1 in M1). */
+  /** Current API version. */
   readonly apiVersion: number;
   /** Readonly extension metadata. */
   readonly extension: {
@@ -329,19 +329,19 @@ export interface ExtensionContext {
   };
   /** Reserved creative context stubs — throw typed \"not implemented until Mx\". */
   readonly creative: CreativeContext;
-  /** M4: Command registration service for imperative handler binding. */
+  /** Command registration service for imperative handler binding. */
   readonly commands: ExtensionCommandService;
   /** UI renderer registration service for render-backed contributions. */
   readonly ui: ExtensionUiService;
-  /** M7: Effect registration service for trusted component effects. */
+  /** Effect registration service for trusted component effects. */
   readonly effects: EffectRegistrationService;
-  /** M8: Transition registration service for trusted component transitions. */
+  /** Transition registration service for trusted component transitions. */
   readonly transitions: TransitionRegistrationService;
-  /** M9: Clip-type registration service for contributed clip types. */
+  /** Clip-type registration service for contributed clip types. */
   readonly clipTypes: ClipTypeRegistrationService;
-  /** M13: Shader registration service for dedicated WebGL shader passes. */
+  /** Shader registration service for dedicated WebGL shader passes. */
   readonly shaders: ShaderRegistrationService;
-  /** M10: Agent tool registration service for host-mediated agent tools. */
+  /** Agent tool registration service for host-mediated agent tools. */
   readonly agentTools: AgentToolRegistrationService;
   /** Bounded rendering-pack ACP authoring port, when supported by the host. */
   readonly liveSceneAuthoring?: LiveSceneAuthoringRegistration;

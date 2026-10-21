@@ -1,5 +1,5 @@
 /**
- * Extension lock metadata (M14, T17).
+ * Extension lock metadata.
  *
  * Manages project-level extension requirements/lock metadata when installed
  * packs are enabled. The lock captures:
@@ -141,7 +141,7 @@ export function buildLockEntryFromPackRecord(
  * - Extension settings values (in ExtensionSettingsSnapshot)
  * - Extension-owned project data patches
  * - Lifecycle events (in append-only event log)
- * - Bundle content (in IndexedDB per SD2)
+ * - Bundle content (in IndexedDB)
  *
  * @param repository - The extension state repository
  * @param enabledInstalledPacks - Pack records for enabled installed extensions

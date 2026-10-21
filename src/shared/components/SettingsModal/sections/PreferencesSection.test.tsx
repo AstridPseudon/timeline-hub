@@ -5,7 +5,7 @@ import { PreferencesSection } from './PreferencesSection';
 
 vi.mock('@/shared/components/TimeOfDay/TimeOfDayControl', () => ({ TimeOfDayControl: () => <div /> }));
 
-const base = { isMobile: false, aiInputMode: 'text' as const, setAIInputMode: vi.fn() };
+const base = { isMobile: false };
 
 describe('PreferencesSection Replay tour', () => {
   it('renders Replay tour as the last item and calls the handler on click', () => {

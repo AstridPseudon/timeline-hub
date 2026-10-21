@@ -1,6 +1,41 @@
-import { formatDistanceToNow } from 'date-fns';
+import { useMemo } from 'react';
+import { formatDistanceToNow, isValid } from 'date-fns';
 import { abbreviateRelativeTime, formatRelativeDuration } from '@/shared/lib/timeFormatting';
-import { useLiveRelativeTimestamp } from './useLiveRelativeTimestamp';
+import { useTimestampUpdater } from './useTimestampUpdater';
+
+interface UseLiveRelativeTimestampOptions {
+  dateInput: string | Date | null | undefined;
+  disabled: boolean;
+  formatter: (date: Date) => string;
+}
+
+export function useLiveRelativeTimestamp({
+  dateInput,
+  disabled,
+  formatter,
+}: UseLiveRelativeTimestampOptions): string | null {
+  const parsedDate = useMemo(() => {
+    if (!dateInput) {
+      return null;
+    }
+
+    const parsed = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    return isValid(parsed) ? parsed : null;
+  }, [dateInput]);
+
+  // The updater's tick state re-renders this host on every update, so the
+  // formatter runs on each render and no memo keyed on the tick is needed.
+  useTimestampUpdater({
+    date: parsedDate,
+    disabled,
+    isVisible: true,
+  });
+
+  if (!parsedDate) {
+    return null;
+  }
+  return formatter(parsedDate);
+}
 
 type RelativeTimestampPreset = 'default' | 'task' | 'processing' | 'completed';
 

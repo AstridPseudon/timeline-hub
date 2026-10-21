@@ -2,8 +2,6 @@ import { useMemo, useState } from 'react';
 import {
   BUILTIN_I2V_PRESET,
   BUILTIN_VACE_PRESET,
-  SEGMENT_I2V_FEATURED_PRESET_IDS,
-  SEGMENT_VACE_FEATURED_PRESET_IDS,
   detectGenerationMode,
 } from '../segmentSettingsUtils';
 import type { SegmentSettings, SegmentSettingsFormProps } from '../types';
@@ -20,7 +18,6 @@ export function useAdvancedSettingsState({
   shotDefaults,
 }: UseAdvancedSettingsStateParams) {
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [isLoraModalOpen, setIsLoraModalOpen] = useState(false);
 
   const generationMode = useMemo(
     () => detectGenerationMode(modelName),
@@ -28,13 +25,6 @@ export function useAdvancedSettingsState({
   );
   const builtinPreset = useMemo(
     () => (generationMode === 'vace' ? BUILTIN_VACE_PRESET : BUILTIN_I2V_PRESET),
-    [generationMode]
-  );
-  const featuredPresetIds = useMemo(
-    () =>
-      generationMode === 'vace'
-        ? SEGMENT_VACE_FEATURED_PRESET_IDS
-        : SEGMENT_I2V_FEATURED_PRESET_IDS,
     [generationMode]
   );
   const effectiveLoras = useMemo(
@@ -53,12 +43,7 @@ export function useAdvancedSettingsState({
   return {
     showAdvanced,
     setShowAdvanced,
-    isLoraModalOpen,
-    openLoraModal: () => setIsLoraModalOpen(true),
-    closeLoraModal: () => setIsLoraModalOpen(false),
-    generationMode,
     builtinPreset,
-    featuredPresetIds,
     effectiveLoras,
     isUsingMotionDefaults: isUsingMotionModeDefault && isUsingPhaseConfigDefault,
     isUsingLorasDefault,

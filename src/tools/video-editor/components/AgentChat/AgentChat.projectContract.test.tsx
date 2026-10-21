@@ -1,10 +1,18 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, configure, fireEvent, getConfig, render, screen, waitFor } from '@testing-library/react';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgentChatEditorContext } from '@/shared/contexts/AgentChatContext';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes';
+
+// Waits here are hang ceilings, not timing assertions: on an oversubscribed
+// machine the default 1000 ms asyncUtilTimeout expires while real transport
+// work is still progressing. Scoped to this file and restored afterwards.
+const HANG_CEILING_MS = 10_000;
+const defaultAsyncUtilTimeout = getConfig().asyncUtilTimeout;
+beforeAll(() => { configure({ asyncUtilTimeout: HANG_CEILING_MS }); });
+afterAll(() => { configure({ asyncUtilTimeout: defaultAsyncUtilTimeout }); });
 
 // The editor is the host boundary. Chat, its hooks, ACP routes, transport,
 // presentation, attachment selection and query cache are all real.
@@ -562,12 +570,19 @@ describe('real panel → real hooks → owned ACP transport', () => {
     fixture.seed('p1'); fixture.seed('p2');
     const view = mount();
     await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
-    // Delay ownership lookup at the submission boundary, after normal hydration.
+    // Delay the submission's own ownership lookup. Background reads of the same
+    // chat route (polls, model/session queries) are indistinguishable on the
+    // wire, so identify the preflight by cause: it is the first project read
+    // issued while the send mutation is pending. The mutation runs from
+    // onMutate to that fetch in one microtask chain, so no timer-driven read
+    // can be mistaken for it.
     const originalFetch = fixture.fetch;
     const gate = deferred();
     let blocked = false;
+    const sendPending = () => clients[0].getMutationCache()
+      .findAll({ predicate: m => m.state.status === 'pending' && (m.state.variables as { kind?: string } | undefined)?.kind === 'send' }).length > 0;
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
-      if (!blocked && url.endsWith('/projects/p1/chat') && (!init?.method || init.method === 'GET')) {
+      if (!blocked && url.endsWith('/projects/p1/chat') && (!init?.method || init.method === 'GET') && sendPending()) {
         blocked = true; await gate.promise;
       }
       return originalFetch(url, init);

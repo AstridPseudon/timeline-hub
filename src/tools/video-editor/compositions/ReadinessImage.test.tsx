@@ -19,7 +19,7 @@ function showDelayedLoading() {
   act(() => {vi.advanceTimersByTime(150);});
 }
 
-// Native delayPlayback/premount behavior is exercised in the T3 browser suite.
+// Native delayPlayback/premount behavior is exercised in the browser suite.
 // These tests verify that terminal errors release the primitive through unmount
 // and that recovery creates a fresh primitive with the native readiness flag.
 describe('owned still cleanup and recovery', () => {

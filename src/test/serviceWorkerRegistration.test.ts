@@ -50,7 +50,7 @@ describe("service worker registration", () => {
     await vi.waitFor(() => expect(appRegistration.unregister).toHaveBeenCalledOnce());
     expect(otherRegistration.unregister).not.toHaveBeenCalled();
     expect(cacheDelete).toHaveBeenCalledOnce();
-    expect(cacheDelete).toHaveBeenCalledWith("astrid-app-v3");
+    expect(cacheDelete).toHaveBeenCalledWith("astrid-v4");
     expect(serviceWorker.register).not.toHaveBeenCalled();
     dom.window.close();
   });

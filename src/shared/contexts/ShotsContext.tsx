@@ -39,7 +39,7 @@ export function ShotsContextProvider({
 
 /**
  * Bridge authority has no relational shots read route. Supply an explicit empty
- * compatibility view without importing or executing the deferred Supabase shot
+ * compatibility view without importing or executing any relational shot
  * hooks. Document-native groups are owned by the editor runtime instead.
  */
 export function AstridShotsProvider({ children }: ShotsProviderProps) {

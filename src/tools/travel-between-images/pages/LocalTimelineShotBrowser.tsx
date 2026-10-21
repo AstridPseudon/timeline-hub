@@ -296,7 +296,6 @@ export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, 
           isNewlyCreatedShot={false}
           shotFromState={undefined}
           shots={shotModels}
-          availableLoras={[]}
           shotSortMode="ordered"
           onClose={onClose}
           onCanonicalCompositionPublished={handleCanonicalCompositionPublished}
@@ -316,7 +315,6 @@ export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, 
           </div>
           <ShotListDisplay
             readOnly
-            projectId={identityProjectId}
             shots={shotModels}
             onSelectShot={selectShot}
             sortMode="ordered"

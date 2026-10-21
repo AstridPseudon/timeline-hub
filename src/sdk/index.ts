@@ -110,7 +110,7 @@ export type { KeyframeInterpolation, Keyframe, InterpolatedParam, AutomationClip
 export type { AgentToolContribution, AgentToolInputSchema, AgentToolInputProperty, ToolResultFamily, ToolResult, ToolMutationProposalResult, ToolGenerationSessionResult, ToolMaterialArtifactResult, ToolEnrichmentSearchResult, ToolExportResult, ToolProcessResult, ToolUISummaryResult, ToolSourceRef, ToolArtifactRef, ToolSearchResultMatch, ToolResultDiagnostic, AgentToolInvocationRequest, AgentToolRequestContext, AgentToolExportContext, GenerationSession, AgentToolRegistrationService, AgentToolHandler } from './video/families/agentTools';
 export type { ProcessSpawnConfig, ProcessManifestEntry, ProcessEnvFieldSpec, ProcessLiveSourceValueShape, ProcessLiveSourceDeclaration, ProcessLiveSourceBinding, ProcessOperationSpec, ProcessContribution } from './video/families/processes';
 export type { ShaderPassKind, ShaderColorSpace, ShaderFallbackBehavior, ShaderTextureSourceKind, ShaderTextureFilter, ShaderTextureWrap, ShaderInlineSource, ShaderModuleSource, ShaderSourceDescriptor, ShaderPassDescriptor, ShaderUniformType, ShaderUniformEnumOption, ShaderTextureRef, ShaderUniformDefaultValue, ShaderUniformDefinition, ShaderUniformSchema, ShaderTextureDefinition, ShaderTextureSchema, ShaderMaterializerDescriptor, ShaderContribution, ShaderRegistrationOptions, ShaderRegistrationService } from './video/families/shaders';
-// dataKind family: duration-neutral typed-data lanes ([CONVERGE-WITH-M1] vocabularies)
+// dataKind family: duration-neutral typed-data lanes (vocabularies)
 export type { DataKindContribution, DataShape, DataCoordinateDomain, DataLaneRenderItem, DataLaneRendererProps, DataLaneActionDescriptor, DataItemInspectorProps, DataKindRegistrationOptions, DataKindRegistrationService, DataKindSourceItem } from './video/families/dataKind';
 export { sourceToTimelineTime, timelineToSourceTime } from './video/timeline/sourceTime';
 export type { TimelineOverlayManifestContribution, TimelineOverlayDescriptor, ResolvedTimelineOverlayDescriptor, TimelineOverlayGeometryInput, TimelineOverlayGeometry, TimelineViewportSnapshot, TimelineViewportStore, TimelinePlayheadSnapshot, TimelinePlayheadStore, TimelineOverlaySelection, TimelineOverlayRenderProps, TimelinePointMarker, TimelineMarkerChange, TimelineMarkerLayerOptions, TimelineOverlayPrimitives } from './video/families/timelineOverlays';
@@ -125,7 +125,7 @@ export type { ContributionRef, LiveSourceRef, MaterialRef, OutputFormatRef } fro
 export { contributionRefKey } from './video/composition/references';
 
 // ===========================================================================
-// Video: Composition (graph contracts — M1b)
+// Video: Composition (graph contracts)
 // ===========================================================================
 
 export type {

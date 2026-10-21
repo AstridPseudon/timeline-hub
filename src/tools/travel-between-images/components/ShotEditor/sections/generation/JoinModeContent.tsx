@@ -5,7 +5,6 @@ import {
 } from '@/shared/components/JoinClipsSettingsForm/JoinClipsSettingsForm';
 import { useShotSettingsGeneration, useShotSettingsIdentity } from '../../ShotSettingsContext';
 import { buildJoinClipsFormProps } from './joinClipsFormProps';
-import { useBoundarySummary } from '../../hooks/actions/useBoundarySummary';
 
 interface JoinModeContentProps {
   readOnly?: boolean;
@@ -19,14 +18,12 @@ export const JoinModeContent: React.FC<JoinModeContentProps> = ({
   swapButtonRef,
 }) => {
   const { projectId } = useShotSettingsIdentity();
-  const { availableLoras, generationMode, joinState } = useShotSettingsGeneration();
+  const { generationMode, joinState } = useShotSettingsGeneration();
 
   console.log('[JoinModeContent] joinState.joinSegmentSlots:', joinState.joinSegmentSlots?.length, joinState.joinSegmentSlots);
-  const boundarySummary = useBoundarySummary((joinState.joinSegmentSlots ?? []) as import('@/shared/hooks/segments/useSegmentOutputsForShot').SegmentSlot[]);
 
   const joinFormProps = buildJoinClipsFormProps({
     joinState,
-    availableLoras,
     projectId,
     loraPersistenceKey: 'join-clips-shot-editor',
   });
@@ -40,12 +37,9 @@ export const JoinModeContent: React.FC<JoinModeContentProps> = ({
           onGenerate: readOnly ? () => undefined : joinState.handleJoinSegments,
           isGenerating: joinState.isJoiningClips,
           generateSuccess: joinState.joinClipsSuccess,
-          generateButtonText: boundarySummary?.every(b => b.canCrossfade)
-            ? 'Stitch Segments'
-            : 'Join Segments',
+          generateButtonText: 'Join Segments',
           isGenerateDisabled: readOnly || joinState.joinValidationData.videoCount < 2,
           onRestoreDefaults: joinState.handleRestoreJoinDefaults,
-          boundarySummary,
         }}
       />
 

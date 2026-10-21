@@ -25,12 +25,9 @@ import {
   resolveAstridGenerationComposer,
 } from "./astridGenerationCompose";
 import { createBundleBudgetPlugin } from "./bundleBudget";
-import { createRemoteFontModePlugin } from "./remoteFonts";
 import { createPairedRelayPlugin, resolvePairedRelayConfig } from "./pairedRelay";
 import { createShareMetaPlugin } from "./shareMeta";
 import { createInstallerAssetsPlugin } from "./installerAssets";
-
-export { createRemoteFontModePlugin, stripRemoteFontLinks } from "./remoteFonts";
 
 const logger = createLogger();
 const originalWarn = logger.warn.bind(logger);
@@ -109,7 +106,6 @@ export default defineConfig(() => {
     },
     readDocument:async(projectId:string,id:string)=>{try{return await elementRuntime.getDocument(projectId,id);}catch(error){if((error as {status?:number}).status===404)return null;throw error;}},
   }:undefined;
-  const disableRemoteFonts = process.env.VITE_DISABLE_REMOTE_FONTS === "1";
   const generatedRegistryPath = path.resolve(
     __dirname,
     "../../node_modules/@banodoco/timeline-composition/typescript/src/registry.generated.ts",
@@ -161,7 +157,6 @@ export default defineConfig(() => {
       createElementAdmissionsPlugin(elementAdmissions),
       pairedRelay,
       astridBridgeAuthPlugin,
-      createRemoteFontModePlugin(disableRemoteFonts),
       createShareMetaPlugin(process.env.ASTRID_SITE_ORIGIN?.trim() || undefined),
       createInstallerAssetsPlugin(),
       react(),

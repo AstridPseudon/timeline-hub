@@ -3,7 +3,6 @@ import { toast } from '@/shared/components/ui/runtime/sonner';
 import { unsupportedLegacyTaskError } from '@/shared/lib/taskCreation/legacyBoundary';
 import { useEditVideoSettings } from '@/shared/settings/hooks/useEditVideoSettings';
 import { useLoraManager } from '@/domains/lora/hooks/useLoraManager';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
 import { useVideoEditingSelections } from './useVideoEditingSelections';
 
 export type { UseVideoEditingProps, UseVideoEditingReturn } from './types';
@@ -18,15 +17,13 @@ export const useVideoEditing = ({
   selectedProjectId,
   videoDuration,
   videoUrl,
-  onExitVideoEditMode,
 }: UseVideoEditingProps): UseVideoEditingReturn => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const [isVideoEditMode, setIsVideoEditMode] = useState(false);
 
   const editSettings = useEditVideoSettings(selectedProjectId);
-  const { data: availableLoras } = usePublicLoras();
-  const loraManager = useLoraManager(availableLoras, {
+  const loraManager = useLoraManager({
     projectId: selectedProjectId || undefined,
     persistenceScope: 'none', // Managed explicitly via editSettings.
   });
@@ -57,8 +54,7 @@ export const useVideoEditing = ({
 
   const handleExitVideoEditMode = useCallback(() => {
     setIsVideoEditMode(false);
-    onExitVideoEditMode?.();
-  }, [onExitVideoEditMode]);
+  }, []);
 
   return {
     isVideoEditMode,
@@ -81,7 +77,6 @@ export const useVideoEditing = ({
     editSettings,
 
     loraManager,
-    availableLoras,
 
     handleGenerate,
     isGenerating: false,

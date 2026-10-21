@@ -126,7 +126,7 @@ export type LiveChannelKind =
  * but carries a distinct type so the compiler can distinguish channel
  * identifiers from arbitrary strings.
  *
- * This preserves backward compatibility with M10 code that treated
+ * This preserves backward compatibility with code that treated
  * getSampleChannel() as returning a plain string.
  */
 export type LiveChannelDescriptor = string & { readonly __brand: 'LiveChannelDescriptor' };
@@ -412,7 +412,7 @@ export interface SteeringLineage {
 /**
  * A steering decision applied to a GenerationSession.
  *
- * The steering resolver (Step 14) must always return an explicit
+ * The steering resolver must always return an explicit
  * supersede, fork, or reject decision. GenerationSession live sample
  * delivery must not activate without complete steering lineage.
  */
@@ -434,7 +434,7 @@ export interface SteeringDecision {
  *
  * Supplying this object asks the host to bridge preview samples from the
  * GenerationSession into provider-scoped live ring buffers. Activation is
- * gated by the Step 14 steering resolver: `steeringDecision` must be a complete
+ * gated by the steering resolver: `steeringDecision` must be a complete
  * supersede or fork decision with lineage.
  */
 export interface GenerationSessionLiveDelivery {

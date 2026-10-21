@@ -9,7 +9,7 @@ export interface TaskDetailsData {
   error: Error | null;
   inputImages: string[];
   taskId: string | null;
-  onApplySettingsFromTask?: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
+  onApplySettingsFromTask?: (taskId: string) => void;
   onClose?: () => void;
 }
 

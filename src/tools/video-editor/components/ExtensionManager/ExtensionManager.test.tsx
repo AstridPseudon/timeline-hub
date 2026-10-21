@@ -169,6 +169,8 @@ describe('ExtensionManager — enable/disable controls', () => {
       const toggle = screen.getByRole('button', { name: /disable ext\.a/i });
       expect(toggle).toBeInTheDocument();
       expect(toggle).toHaveTextContent('Enabled');
+      // State text uses design tokens that keep 4.5:1 in every palette the sky produces, never a fixed Tailwind hue.
+      expect(screen.getAllByText('Enabled')[0]).toHaveClass('text-wes-forest');
       expect(toggle).toHaveAttribute('aria-pressed', 'true');
     });
 
@@ -187,6 +189,7 @@ describe('ExtensionManager — enable/disable controls', () => {
       const toggle = screen.getByRole('button', { name: /enable ext\.a/i });
       expect(toggle).toBeInTheDocument();
       expect(toggle).toHaveTextContent('Disabled');
+      expect(screen.getAllByText('Disabled')[0]).toHaveClass('text-muted-foreground');
       expect(toggle).toHaveAttribute('aria-pressed', 'false');
     });
 
@@ -712,7 +715,7 @@ describe('ExtensionManager — concise inventory surface', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Settings persistence tests (T7)
+// Settings persistence tests
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — settings persistence', () => {
@@ -1461,7 +1464,7 @@ describe('ExtensionManager — settings persistence', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T10: SchemaForm vs key-value fallback for settings editing
+// SchemaForm vs key-value fallback for settings editing
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — settings editing: SchemaForm vs key-value fallback (T10)', () => {
@@ -1758,7 +1761,7 @@ describe('ExtensionManager — settings editing: SchemaForm vs key-value fallbac
 });
 
 // ---------------------------------------------------------------------------
-// Diagnostic badge and inline detail tests (T9)
+// Diagnostic badge and inline detail tests
 // ---------------------------------------------------------------------------
 
 /** Build a single Diagnostic object for testing. */
@@ -1802,7 +1805,7 @@ function makeDiagnosticCollection(initial: Diagnostic[] = []) {
 }
 
 // ---------------------------------------------------------------------------
-// T10: Settings notification registry helper for manager tests
+// Settings notification registry helper for manager tests
 // ---------------------------------------------------------------------------
 
 function makeNotificationRegistry() {
@@ -1840,7 +1843,7 @@ function makeNotificationRegistry() {
 }
 
 // ---------------------------------------------------------------------------
-// T10: Settings notification coherence tests
+// Settings notification coherence tests
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — settings notification coherence (T10)', () => {
@@ -2617,7 +2620,7 @@ describe('ExtensionManager — diagnostic badges and inline details', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T11: Direct entry read-only, package inventory card source, and state tests
+// Direct entry read-only, package inventory card source, and state tests
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — direct entry read-only (T11)', () => {
@@ -2892,7 +2895,7 @@ describe('ExtensionManager — direct entry read-only (T11)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T11: Package inventory contribution summary tests
+// Package inventory contribution summary tests
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — contribution summary from inventory (T11)', () => {
@@ -3144,7 +3147,7 @@ describe('ExtensionManager — contribution summary from inventory (T11)', () =>
 });
 
 // ---------------------------------------------------------------------------
-// T11: Empty, error, and mixed state tests
+// Empty, error, and mixed state tests
 // ---------------------------------------------------------------------------
 
 describe('ExtensionManager — empty, error, and mixed states (T11)', () => {

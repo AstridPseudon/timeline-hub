@@ -5,7 +5,7 @@ import type { VideoEditorOutputFormatDescriptor } from '@/tools/video-editor/run
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 
 /**
- * M6: Export dropdown — compile-only formats near render controls.
+ * Export dropdown — compile-only formats near render controls.
  * Collapsed to a chip: this sits in the preview overlay bar, and at its
  * natural width it laid a 320px card across the video on every device.
  */

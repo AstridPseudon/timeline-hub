@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
@@ -23,10 +23,6 @@ vi.mock('@/shared/contexts/ProjectContext', () => ({
     isDeletingProject: false,
   }),
   useProjectIdentityContext: () => ({ userId: null }),
-}));
-
-vi.mock('@/features/resources/hooks/useResources', () => ({
-  usePublicLoras: () => ({ data: [] }),
 }));
 
 vi.mock('@/shared/lib/tooling/toolIds', () => ({
@@ -108,15 +104,12 @@ const mockUseRepositionMode = vi.fn().mockReturnValue({
   hasTransformChanges: false,
   isGeneratingReposition: false,
   repositionGenerateSuccess: false,
-  isSavingAsVariant: false,
-  saveAsVariantSuccess: false,
   setScale: vi.fn(),
   setRotation: vi.fn(),
   toggleFlipH: vi.fn(),
   toggleFlipV: vi.fn(),
   resetTransform: vi.fn(),
   handleGenerateReposition: vi.fn(),
-  handleSaveAsVariant: vi.fn(),
   getTransformStyle: vi.fn().mockReturnValue(''),
   isDragging: false,
   dragHandlers: null,
@@ -190,14 +183,6 @@ vi.mock('@/domains/media-lightbox/hooks/useSourceGeneration', () => ({
 
 vi.mock('@/domains/media-lightbox/hooks/useMagicEditMode', () => ({
   useMagicEditMode: (...args: unknown[]) => mockUseMagicEditMode(...args),
-}));
-
-vi.mock('@/domains/media-lightbox/hooks/useStarToggle', () => ({
-  useStarToggle: () => ({
-    localStarred: false,
-    toggleStarMutation: { isPending: false },
-    handleToggleStar: vi.fn(),
-  }),
 }));
 
 vi.mock('@/domains/media-lightbox/hooks/useRepositionMode', () => ({
@@ -330,15 +315,12 @@ describe('useInlineEditState', () => {
       hasTransformChanges: false,
       isGeneratingReposition: false,
       repositionGenerateSuccess: false,
-      isSavingAsVariant: false,
-      saveAsVariantSuccess: false,
       setScale: vi.fn(),
       setRotation: vi.fn(),
       toggleFlipH: vi.fn(),
       toggleFlipV: vi.fn(),
       resetTransform: vi.fn(),
       handleGenerateReposition: vi.fn(),
-      handleSaveAsVariant: vi.fn(),
       getTransformStyle: vi.fn().mockReturnValue(''),
       isDragging: false,
       dragHandlers: null,
@@ -399,9 +381,6 @@ describe('useInlineEditState', () => {
     expect(typeof result.current.inpaintingState.setIsInpaintMode).toBe('function');
     expect(typeof result.current.inpaintingState.setEditMode).toBe('function');
 
-    // Star toggle
-    expect(result.current.generationState.localStarred).toBe(false);
-
     // Download
     expect(typeof result.current.generationState.handleDownload).toBe('function');
 
@@ -412,6 +391,16 @@ describe('useInlineEditState', () => {
 
     // imageEditValue
     expect(result.current.imageEditValue).toBeDefined();
+  });
+
+  it('reports the LoRA library as needing an online account instead of loading it', async () => {
+    const { result } = renderHook(
+      () => useInlineEditState(mockMedia),
+      { wrapper: createWrapper() },
+    );
+
+    await waitFor(() => expect(result.current.cloudBackendUnavailable).toBe(true));
+    expect(result.current).not.toHaveProperty('availableLoras');
   });
 
   it('passes correct params to useUpscale', () => {

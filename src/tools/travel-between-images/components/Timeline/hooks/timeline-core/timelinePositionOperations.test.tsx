@@ -10,8 +10,6 @@ const mocks = vi.hoisted(() => ({
   normalizeAndPresentError: vi.fn(),
   quantizePositions: vi.fn((positions: Map<string, number>) => new Map(positions)),
   persistTimelineFrameBatch: vi.fn(),
-  clearTrailingEndpointFrame: vi.fn(),
-  setTrailingEndpointFrame: vi.fn(),
 }));
 
 vi.mock('@/shared/components/ui/runtime/sonner', () => ({
@@ -31,11 +29,6 @@ vi.mock('@/shared/lib/timelineFrameBatchPersist', () => ({
 vi.mock('../../utils/timeline-utils', () => ({
   TRAILING_ENDPOINT_KEY: '__trailing__',
   quantizePositions: mocks.quantizePositions,
-}));
-
-vi.mock('../segment/timelineTrailingEndpointPersistence', () => ({
-  clearTrailingEndpointFrame: mocks.clearTrailingEndpointFrame,
-  setTrailingEndpointFrame: mocks.setTrailingEndpointFrame,
 }));
 
 import { useTimelinePositionOperations } from './timelinePositionOperations';
@@ -124,8 +117,6 @@ describe('useTimelinePositionOperations', () => {
       durationMs: 12,
       skipped: false,
     });
-    mocks.clearTrailingEndpointFrame.mockResolvedValue(undefined);
-    mocks.setTrailingEndpointFrame.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -223,7 +214,7 @@ describe('useTimelinePositionOperations', () => {
     expect(harness.setStatus).not.toHaveBeenCalled();
   });
 
-  it('persists successful updates and clears a removed trailing endpoint', async () => {
+  it('persists successful image updates and never persists the trailing endpoint', async () => {
     const harness = createHarness({
       initialPositions: [
         ['img-1', 0],
@@ -246,11 +237,6 @@ describe('useTimelinePositionOperations', () => {
       vi.runAllTimers();
     });
 
-    expect(mocks.setTrailingEndpointFrame).not.toHaveBeenCalled();
-    expect(mocks.clearTrailingEndpointFrame).toHaveBeenCalledWith(expect.objectContaining({
-      shotId: 'shot-1',
-      shotGenerations: harness.params.shotGenerations,
-    }));
     expect(mocks.persistTimelineFrameBatch).toHaveBeenCalledWith(expect.objectContaining({
       shotId: 'shot-1',
       operationLabel: 'timeline-positions-drop',

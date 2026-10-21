@@ -327,6 +327,55 @@ export const THREE_PRODUCTS_OPAQUE = {
   clip: { owner: 'f2', nested: [1, { k: 'v' }] },
 } as const;
 
+/**
+ * The render journey's timeline (testing plan F2 steps 3 and 4): a 6 s film whose middle two seconds are the slot an agent fills
+ * with a marker clip. `placeholderGrey` is the solid grey the slot holds until then (and holds again in the revision published
+ * after the render was admitted); the render must show the marker, never this grey.
+ */
+export interface RenderSeed {
+  projectSlug: string;
+  timelineId: string;
+  /** The timeline's name, as the "Select timeline" combobox lists it. */
+  timelineName: string;
+  headRevisionId: string;
+  shotId: string;
+  occurrenceId: string;
+  /** The clip the agent fills (film seconds 2 to 4). */
+  slotClipId: string;
+  /** The key the agent names for the marker clip (new: the CLI refuses a key that already names other media). */
+  markerAssetKey: string;
+  /** The slot's asset in the seed, which the agent swaps back to for the negative control. */
+  placeholderAssetKey: string;
+  /** The placeholder's object id, so the swap back can be named by digest. */
+  placeholder: SeededObject;
+  placeholderGrey: { r: number; g: number; b: number };
+  /** The occurrence's block on the timeline (its label, which spans the block): its right edge is where the film, and so the seekable preview, ends. */
+  occurrenceBlockSelector: string;
+  fps: number;
+  durationSeconds: number;
+}
+
+export const RENDER_TIMELINE_NAME = 'F2 Render';
+const RENDER_GREY = { r: 0x80, g: 0x80, b: 0x80 };
+
+/**
+ * BT.601, limited range, said in the file. That is what VP8 is (ffmpeg reads every VP8 frame as such), and a clip that does not
+ * say it is decoded by guesswork: a browser's `<video>` and its WebCodecs path guess differently for the same clip, so the
+ * editor's preview and a player of the rendered film would disagree about the source before any renderer is involved.
+ */
+const BT601_FILTER = 'format=rgb24,scale=out_color_matrix=bt601:out_range=tv,format=yuv420p';
+const BT601_TAGS = ['-colorspace', 'smpte170m', '-color_primaries', 'smpte170m', '-color_trc', 'smpte170m', '-color_range', 'tv'];
+
+/** Runs ffmpeg or fails by name: this journey's media are real VP8/Opus, so there is no fallback file to use instead. */
+function ffmpegOrFail(args: string[], what: string): void {
+  try {
+    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', ...args], { stdio: ['ignore', 'ignore', 'pipe'], timeout: 120_000 });
+  } catch (error) {
+    const stderr = (error as { stderr?: Buffer }).stderr?.toString().trim().slice(-400);
+    throw new Error(`the render journey needs ffmpeg (with libvpx and libopus) to make ${what}: ${stderr || (error as Error).message}`);
+  }
+}
+
 const SCENE_MARKER = 'journey-scene';
 
 /** The smallest entry page the validator accepts: a `<head>` for the CSP, a `<body>` for the bridge, and `window.astridScene`. */
@@ -358,6 +407,7 @@ export class DirectHarness {
   private extensionsSeed?: ExtensionsSeed;
   private mediaSeed?: MediaSeed;
   private threeProductsSeed?: ThreeProductsSeed;
+  private renderSeed?: RenderSeed;
 
   /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
 
@@ -700,6 +750,99 @@ export class DirectHarness {
       ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: { config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip } },
     };
     return this.threeProductsSeed;
+  }
+
+  /**
+   * The render journey's timeline, a second timeline in the seeded project made on first use (after the cases that open the
+   * seeded timeline, so none of them sees another timeline). The editor opens it from the "Select timeline" combobox.
+   *
+   * Parent: a visual track `S1` that hosts one occurrence of the shot over the whole film (0 s to 6 s), and an audio track `A1`
+   * with a 6 s 440 Hz Opus tone. The shot's internal timeline is one visual track `V2` of three VP8 clips, each with `from`/`to`
+   * bounds: a test pattern (0 s to 2 s), the slot `f2-render-slot` on a solid grey placeholder (2 s to 4 s), and the test
+   * pattern again (4 s to 6 s). The two cut frames (2 s and 4 s) declare nothing: the Runtime's seam check only advises render admission
+   * (it reports in `timeline_authority.visual_seam_report` and never blocks), so the render is not held up by them. Media are real: ffmpeg is required and there is no stand-in file.
+   */
+  async seedRenderTimeline(): Promise<RenderSeed> {
+    if (this.renderSeed) return this.renderSeed;
+    const { projectId } = this.seed;
+    const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
+    if (project.status !== 200) throw new Error(`seed render project: ${project.status} ${JSON.stringify(project.body)}`);
+    const dir = path.join(this.tmp, 'render-media');
+    mkdirSync(dir, { recursive: true });
+    const pattern = path.join(dir, 'pattern.webm');
+    const grey = path.join(dir, 'placeholder.webm');
+    const tone = path.join(dir, 'tone.webm');
+    const { r, g, b } = RENDER_GREY;
+    const hex = [r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('');
+    ffmpegOrFail(['-f', 'lavfi', '-i', 'testsrc=size=640x360:rate=30:duration=6', '-vf', BT601_FILTER, '-c:v', 'libvpx', '-pix_fmt', 'yuv420p', '-b:v', '1M', '-g', '30', ...BT601_TAGS, pattern], 'the test pattern video');
+    ffmpegOrFail(['-f', 'lavfi', '-i', `color=c=0x${hex}:s=640x360:r=30:d=4`, '-vf', BT601_FILTER, '-c:v', 'libvpx', '-pix_fmt', 'yuv420p', '-b:v', '500k', '-g', '30', ...BT601_TAGS, grey], 'the grey placeholder video');
+    ffmpegOrFail(['-f', 'lavfi', '-i', 'sine=frequency=440:duration=6', '-c:a', 'libopus', tone], 'the 440 Hz tone');
+    const ingest = async (file: string, mediaType: string, filename: string): Promise<SeededObject> => {
+      const data = readFileSync(file);
+      const response = await this.runtimeFetch(`/v1/projects/${projectId}/objects`, { method: 'POST', headers: { 'Content-Type': mediaType, 'Idempotency-Key': randomUUID(), 'X-Original-Name': filename }, body: new Uint8Array(data) });
+      if (response.status !== 201 && response.status !== 200) throw new Error(`seed ${filename}: ${response.status} ${await response.text()}`);
+      const body = await response.json();
+      if (body.data.digest !== sha256Hex(data)) throw new Error(`seed ${filename}: Runtime digest differs from local digest`);
+      return { objectId: body.data.object_id, digest: body.data.digest, size: data.length, mediaType };
+    };
+    const patternObject = await ingest(pattern, 'video/webm', 'f2-render-pattern.webm');
+    const placeholder = await ingest(grey, 'video/webm', 'f2-render-placeholder.webm');
+    const toneObject = await ingest(tone, 'audio/webm', 'f2-render-tone.webm');
+    const entry = (object: SeededObject, duration: number) => ({ ...this.registryLocator(object), media_id: object.objectId, content_sha256: object.digest, type: object.mediaType, duration });
+
+    const ids = { shotId: 'f2-render-shot', occurrenceId: 'f2-render-occurrence', slotClipId: 'f2-render-slot', markerAssetKey: 'f2-render-marker', placeholderAssetKey: 'f2-render-placeholder' };
+    const timelineId = randomUUID();
+    const internalRevisionId = randomUUID();
+    const shotRevisionId = randomUUID();
+    const clip = (id: string, at: number, asset: string, from: number, to: number) => ({ id, at, track: 'V2', clipType: 'media', asset, from, to, speed: 1 });
+    const shotClips = [
+      clip('f2-render-before', 0, 'f2-render-pattern', 0, 2),
+      clip(ids.slotClipId, 2, ids.placeholderAssetKey, 0, 2),
+      clip('f2-render-after', 4, 'f2-render-pattern', 4, 6),
+    ];
+    const parentClips = [{ id: 'f2-render-tone', at: 0, track: 'A1', clipType: 'media', asset: 'f2-render-tone', from: 0, to: 6, speed: 1, volume: 1 }];
+    const publication = compositionPublication({ projectId, timelineId }, null, RENDER_TIMELINE_NAME, 30);
+    publication.parent_composition.config = {
+      ...publication.parent_composition.config,
+      clips: parentClips,
+      tracks: [{ id: 'S1', kind: 'visual', label: 'S1' }, { id: 'A1', kind: 'audio', label: 'A1' }],
+    } as unknown as typeof publication.parent_composition.config;
+    publication.parent_composition.clips = parentClips as unknown as typeof publication.parent_composition.clips;
+    publication.parent_composition.registry = { assets: { 'f2-render-tone': entry(toneObject, 6) } } as unknown as typeof publication.parent_composition.registry;
+    Object.assign(publication, {
+      internal_timeline_revisions: [{
+        timeline_id: timelineId,
+        revision_id: internalRevisionId,
+        payload: {
+          tracks: [{ id: 'V2', kind: 'visual', label: 'V2' }],
+          clips: shotClips, effects: [], audio: [], layout: {},
+          registry: { assets: { 'f2-render-pattern': entry(patternObject, 6), [ids.placeholderAssetKey]: entry(placeholder, 4) } },
+          assets: [],
+        },
+      }],
+      shot_revisions: [{
+        shot_id: ids.shotId,
+        revision_id: shotRevisionId,
+        internal_timeline_revision_id: internalRevisionId,
+        payload: { metadata: { title: 'F2 render shot' }, items: [], pools: [], selected_variants: {}, provenance: {}, generation_inputs: {}, audio_bindings: [], text_bindings: [] },
+      }],
+    });
+    (publication.parent_composition as Record<string, unknown>).occurrences = [{
+      occurrence_id: ids.occurrenceId, shot_id: ids.shotId, shot_revision_id: shotRevisionId,
+      placement: { start_ms: 0 }, source_offset: 0, duration_ms: 6000, speed: 1, track: 'S1', transform: {}, gain: 1, mute: false, provenance: {},
+    }];
+    const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
+    if (published.status !== 200) throw new Error(`seed render timeline: ${published.status} ${JSON.stringify(published.body)}`);
+    this.renderSeed = {
+      projectSlug: (project.body.data ?? project.body).slug, timelineId, timelineName: RENDER_TIMELINE_NAME, headRevisionId: published.body.data.new_head,
+      ...ids, placeholder, placeholderGrey: { ...RENDER_GREY }, occurrenceBlockSelector: `[data-action-id="shot-group-label"][data-shot-group-drag-anchor-clip-id="${ids.occurrenceId}"]`, fps: 30, durationSeconds: 6,
+    };
+    return this.renderSeed;
+  }
+
+  /** The `file` the App publishes next to an asset's identity (dataProvider `withManagedFileRoute`): the object's route, which the Runtime keeps out of the render's frozen inputs. */
+  private registryLocator(object: SeededObject): { file: string } {
+    return { file: `/v1/objects/${encodeURIComponent(object.objectId)}` };
   }
 
   // -- Door ----------------------------------------------------------------------------------

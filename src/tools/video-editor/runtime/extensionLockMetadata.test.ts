@@ -1,5 +1,5 @@
 /**
- * Tests for extensionLockMetadata (M14, T17).
+ * Tests for extensionLockMetadata.
  *
  * Covers:
  *  - extractContributionRefs() from manifests with various contribution types
@@ -620,7 +620,7 @@ describe('lock metadata separation from extension-owned data', () => {
     const lock = await repository.getLock();
     const entry = lock.entries['bundle.ext'];
     expect(entry).toBeDefined();
-    // Lock should not carry bundleContentRef (that's IndexedDB territory per SD2)
+    // Lock should not carry bundleContentRef (that's IndexedDB territory)
     expect((entry as any).bundleContentRef).toBeUndefined();
     expect((entry as any).bundleContent).toBeUndefined();
     expect((entry as any).bundle).toBeUndefined();

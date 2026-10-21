@@ -17,23 +17,18 @@ UI producer
 
 This path is the authority for supported image, video, character-animation, and related producers. Input identity, ordered inputs, output validation, idempotency, and publication are carried by the admitted Runtime task and its settlement fence.
 
-The `supabase/functions/ai-timeline-agent` surface remains a timeline editing and read-context surface. Its timeline commands and existing canonical producer integrations may consume returned CAS media, but the agent does not create tasks, inspect legacy task rows, poll legacy workers, or perform generation settlement.
+## Removed legacy boundary
 
-## Retired legacy boundary
-
-`supabase/functions/create-task` now performs only CORS/auth bootstrap. An authenticated POST returns the stable non-retryable `410 legacy_task_endpoint_removed` response before any task, route, materialization, or recovery database operation.
-
-The agent's historical `create_task`, `get_tasks`, and `delegateToBanodocoAgent` names are fail-closed compatibility stubs and are not model-visible. `run generate` is likewise retired from the live agent registry. There is no browser-side fallback to route derivation, `materialized_inputs`, legacy `task_types`, direct task insertion, or legacy task lifecycle writes.
+The Supabase `create-task` endpoint, the `ai-timeline-agent` function, legacy task rows, `materialized_inputs`, legacy `task_types` and the browser-side route derivation were removed with the cloud backend (removed 2026-10-18, tag `pre-cloud-removal`). There is no browser-side fallback to direct task insertion or legacy task lifecycle writes. The future online backend is designed in `docs/design/cloud-mode-*`.
 
 ## Worker and route boundary
 
-The retained Worker route catalog and Stage1 substrate describe execution capability only. They are not an admission authority and do not justify a browser producer or a direct task-table write. Supported claim, progress, and settlement operations use the Runtime edge contract. Older Astrid App status/retry helpers that still resolve Supabase function URLs are retained only as unreachable compatibility residue; they are not a supported Runtime path and remain covered by the residual reachability scan. The supported Worker has no direct database fallback for task lifecycle writes.
+The retained Worker route catalog and Stage1 substrate describe execution capability only. They are not an admission authority and do not justify a browser producer or a direct task-table write. Supported claim, progress, and settlement operations use the Runtime edge contract. The supported Worker has no direct database fallback for task lifecycle writes.
 
 ## Acceptance evidence
 
 - Astrid App source boundary: commit `87a98d3`.
 - Worker retry boundary: commit `50c6bf1`; supported launcher lineage remains `41df4b0`.
-- Affected Astrid App edge suite: 190 tests passed.
 - Canonical producer regression suite: 39 tests passed.
 - Strict island typecheck and targeted lint passed.
 - Worker focused residual suite: 30 tests passed.

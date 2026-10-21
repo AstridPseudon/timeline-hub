@@ -25,8 +25,6 @@ vi.mock('@/shared/hooks/useModal', () => ({
   }),
 }));
 vi.mock('@/shared/hooks/useScrollFade', () => ({ useScrollFade: () => ({ showFade: false, scrollRef: { current: null } }) }));
-vi.mock('@/shared/contexts/AIInputModeContext', () => ({ useAIInputMode: () => ({ mode: 'text', setMode: vi.fn() }) }));
-vi.mock('@/integrations/supabase/client', () => ({ getSupabaseClient: () => ({ auth: { signOut: vi.fn() } }) }));
 vi.mock('./sections/PreferencesSection', () => ({ PreferencesSection: () => <div>Preferences</div> }));
 
 import { SettingsModal } from './SettingsModal';

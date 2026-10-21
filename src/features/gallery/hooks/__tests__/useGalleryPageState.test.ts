@@ -19,20 +19,6 @@ vi.mock('@/shared/hooks/projects/useProjectGenerations', () => ({
   }),
 }));
 
-vi.mock('@/domains/generation/hooks/useGenerationMutations', () => ({
-  useToggleGenerationStar: () => ({
-    mutate: vi.fn(),
-  }),
-}));
-
-vi.mock('@/domains/generation/hooks/useDeleteGenerationWithConfirm', () => ({
-  useDeleteGenerationWithConfirm: () => ({
-    requestDelete: vi.fn(),
-    confirmDialogProps: { open: false, onOpenChange: vi.fn(), onConfirm: vi.fn() },
-    deletingId: null,
-  }),
-}));
-
 vi.mock('@/shared/hooks/shots', () => ({
   useAddImageToShot: () => ({
     mutateAsync: vi.fn().mockResolvedValue(undefined),
@@ -154,10 +140,8 @@ describe('useGalleryPageState', () => {
     );
 
     expect(typeof result.current.handleServerPageChange).toBe('function');
-    expect(typeof result.current.handleDeleteGeneration).toBe('function');
     expect(typeof result.current.handleAddToShot).toBe('function');
     expect(typeof result.current.handleAddToShotWithoutPosition).toBe('function');
-    expect(typeof result.current.handleToggleStar).toBe('function');
   });
 
   it('provides setter functions', () => {

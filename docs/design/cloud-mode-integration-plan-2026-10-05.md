@@ -1,6 +1,6 @@
 # Cloud mode integration plan
 
-**Shared metaplan:** [Astrid App Cloud — coordinated projects and execution schedule](/Users/peteromalley/Documents/astrid-app-workspace/astrid-app/docs/design/cloud-mode-megado-projects-2026-10-05.md).
+**Shared metaplan:** [Astrid App Cloud — coordinated projects and execution schedule](cloud-mode-megado-projects-2026-10-05.md).
 
 **Status: Draft for engineering review — 2026-10-05**
 

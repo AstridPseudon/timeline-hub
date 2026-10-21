@@ -11,8 +11,6 @@ interface UsePendingFramesProps {
 interface UsePendingFramesReturn {
   pendingDropFrame: number | null;
   setPendingDropFrame: (frame: number | null) => void;
-  pendingDuplicateFrame: number | null;
-  setPendingDuplicateFrame: (frame: number | null) => void;
   pendingExternalAddFrame: number | null;
   isInternalDropProcessing: boolean;
   setIsInternalDropProcessing: (processing: boolean) => void;
@@ -23,7 +21,6 @@ interface UsePendingFramesReturn {
 /**
  * Manages pending frame state for skeleton placeholders during:
  * - File drops
- * - Image duplication
  * - External adds (from GenerationsPane)
  */
 export function usePendingFrames({
@@ -32,8 +29,6 @@ export function usePendingFrames({
   isUploadingImage,
 }: UsePendingFramesProps): UsePendingFramesReturn {
   const [pendingDropFrame, setPendingDropFrame] = useState<number | null>(null);
-  const [pendingDuplicateFrame, setPendingDuplicateFrame] = useState<number | null>(null);
-  const [pendingDuplicateId, setPendingDuplicateId] = useState<string | null>(null);
   const [pendingExternalAddFrame, setPendingExternalAddFrame] = useState<number | null>(null);
   const [isInternalDropProcessing, setIsInternalDropProcessing] = useState(false);
 
@@ -51,45 +46,12 @@ export function usePendingFrames({
 
   useAppEventListener('timeline:pending-add', handlePendingAdd);
 
-  // Listen for duplicate complete event to get the new item's ID
-  const handleDuplicateComplete = useCallback((detail: { shotId: string; newItemId: string }) => {
-    const { shotId: targetShotId, newItemId } = detail;
-    if (!targetShotId || targetShotId === shotId) {
-      // Store the ID so we can clear skeleton when this item appears
-      setPendingDuplicateId(newItemId);
-    }
-  }, [shotId]);
-
-  useAppEventListener('timeline:duplicate-complete', handleDuplicateComplete);
-
   // Clear pending drop frame when upload finishes
   useEffect(() => {
     if (!isUploadingImage && !isInternalDropProcessing) {
       setPendingDropFrame(null);
     }
   }, [isUploadingImage, isInternalDropProcessing]);
-
-  // Clear pending duplicate frame when the new item appears (by ID, not frame)
-  useEffect(() => {
-    if (pendingDuplicateFrame !== null && pendingDuplicateId !== null) {
-      const hasNewItem = images.some(img => img.id === pendingDuplicateId);
-      if (hasNewItem) {
-        setPendingDuplicateFrame(null);
-        setPendingDuplicateId(null);
-      }
-    }
-  }, [images, pendingDuplicateFrame, pendingDuplicateId]);
-
-  // Safety timeout for pending duplicate frame
-  useEffect(() => {
-    if (pendingDuplicateFrame !== null) {
-      const timer = setTimeout(() => {
-        setPendingDuplicateFrame(null);
-        setPendingDuplicateId(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [pendingDuplicateFrame]);
 
   // Clear pending external add frame when the new item appears
   useEffect(() => {
@@ -111,13 +73,11 @@ export function usePendingFrames({
     }
   }, [pendingExternalAddFrame]);
 
-  const activePendingFrame = pendingDropFrame ?? pendingDuplicateFrame ?? pendingExternalAddFrame;
+  const activePendingFrame = pendingDropFrame ?? pendingExternalAddFrame;
 
   return {
     pendingDropFrame,
     setPendingDropFrame,
-    pendingDuplicateFrame,
-    setPendingDuplicateFrame,
     pendingExternalAddFrame,
     isInternalDropProcessing,
     setIsInternalDropProcessing,

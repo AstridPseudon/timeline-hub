@@ -117,7 +117,7 @@ describe('video-editor serialization', () => {
     expect(serialized.pinnedShotGroups).toEqual(pinnedShotGroups);
   });
 
-  // Sprint 2 schema-lift backward-compatibility guarantee: a pre-Sprint-2
+  // Schema-lift backward-compatibility guarantee: a pre-schema-lift
   // timeline (with only the four built-in clipTypes and no theme / overrides)
   // round-trips through validateSerializedConfig untouched, and through
   // serializeForDisk preserving every field. New optional fields stay absent
@@ -164,7 +164,7 @@ describe('video-editor serialization', () => {
       output: { resolution: '1280x720', fps: 30, file: 'output.mp4' },
       tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
       clips: [
-        // Unknown clipType — Sprint 5 ships strict registry validation; for
+        // Unknown clipType — strict registry validation is not implemented; for
         // now the validator must NOT reject this.
         { id: 'clip-themed', at: 0, track: 'V1', clipType: 'theme:karaoke-bouncing-ball', hold: 2 } as TimelineClip,
       ],
@@ -185,7 +185,7 @@ describe('video-editor serialization', () => {
           asset: 'a1',
           from: 0,
           to: 5,
-          // Sprint 2 clip-level lift fields:
+          // Clip-level lift fields:
           params: { intensity: 0.4 },
           pool_id: 'pool-visual-a',
           clip_order: 1,
@@ -454,7 +454,7 @@ describe('video-editor serialization', () => {
     expect(serialized.app?.['x-astrid']).not.toBe(config.app?.['x-astrid']);
   });
 
-  // ── M8: Transition params snapshot and round-trip ─────────────────────
+  // ── Transition params snapshot and round-trip ─────────────────────
 
   it('preserves transition.params through serializeForDisk round-trip', () => {
     const resolved = {
@@ -602,7 +602,7 @@ describe('video-editor serialization', () => {
     expect(() => validateSerializedConfig(serialized)).not.toThrow();
   });
 
-  // ── M13: Shader metadata persistence ─────────────────────────────────
+  // ── Shader metadata persistence ─────────────────────────────────
 
   it('round-trips clip-local and postprocess shader metadata through disk serialization', () => {
     const clipShader = {
@@ -648,7 +648,7 @@ describe('video-editor serialization', () => {
     expect(() => validateSerializedConfig(serialized)).not.toThrow();
   });
 
-  // ── M9: Keyframe serialization round-trip tests ──────────────────────
+  // ── Keyframe serialization round-trip tests ──────────────────────
 
   it('round-trips clip keyframes through serializeForDisk and validation', () => {
     const resolved = {
@@ -778,7 +778,7 @@ describe('video-editor serialization', () => {
     expect(() => validateSerializedConfig(serialized)).not.toThrow();
   });
 
-  // ── M9: Automation clip payload round-trip tests ─────────────────────
+  // ── Automation clip payload round-trip tests ─────────────────────
 
   it('round-trips automation clip params through serializeForDisk and validation', () => {
     const automationParams = {

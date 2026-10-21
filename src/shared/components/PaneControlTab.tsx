@@ -15,7 +15,7 @@ import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
 type PaneIconType = 'chevron' | 'tools' | 'gallery' | 'tasks';
 
 // Button types that can appear in the control
-type ButtonType = 'third' | 'fourth' | 'lock' | 'unlock' | 'open' | 'split';
+type ButtonType = 'third' | 'fourth' | 'lock' | 'unlock' | 'open' | 'composer';
 
 interface PaneControlPosition {
   side: PaneSide;
@@ -61,12 +61,11 @@ interface PaneControlTabProps {
   actions?: {
     thirdButton?: PaneControlAction;
     fourthButton?: PaneControlAction;
-    /**
-     * Composite action with one primary control filling the cell and a secondary
-     * control appearing as a small bubble in the top-right corner on hover.
-     * Caller decides which is primary based on context (e.g. most recent use).
-     */
-    splitButton?: { primary: PaneControlAction; secondary: PaneControlAction };
+    /** Opens the agent message composer; hidden while the pane is locked. */
+    composerButton?: PaneControlAction & {
+      /** A second control shown as a small bubble in the cell's top-right corner on hover (chat voice, when it is on). */
+      secondary?: PaneControlAction;
+    };
   };
 }
 
@@ -102,7 +101,7 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
 }) => {
   const thirdButton = actions?.thirdButton;
   const fourthButton = actions?.fourthButton;
-  const splitButton = actions?.splitButton;
+  const composerButton = actions?.composerButton;
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const handleOpen = customOpenAction ?? openPane;
@@ -177,7 +176,7 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
       if (!isBottom) {
         const buttons: ButtonType[] = [];
         if (thirdButton) buttons.push('third');
-        if (splitButton && !isLocked) buttons.push('split');
+        if (composerButton && !isLocked) buttons.push('composer');
         return buttons;
       }
       // Bottom pane on mobile with allowMobileLock
@@ -193,19 +192,19 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
 
     // Desktop behavior
     if (isLocked) {
-      // Locked: never show split (chat is already visible in the pane)
+      // Locked: never show the composer button (chat is already visible in the pane)
       return isBottom ? ['third', 'unlock', 'fourth'] : ['third', 'unlock'];
     }
     if (isOpen) {
       const buttons: ButtonType[] = isBottom ? ['third', 'lock', 'fourth'] : ['third', 'lock'];
-      if (splitButton && !isBottom) buttons.push('split');
+      if (composerButton && !isBottom) buttons.push('composer');
       return buttons;
     }
     // Closed
     if (side === 'top') return ['third', 'lock'];
     if (isBottom) return ['third', 'lock', 'open'];
     const closedSideButtons: ButtonType[] = ['third', 'lock'];
-    if (splitButton) closedSideButtons.push('split');
+    if (composerButton) closedSideButtons.push('composer');
     return closedSideButtons;
   };
 
@@ -298,50 +297,47 @@ const PaneControlTab: React.FC<PaneControlTabProps> = ({
           </TooltipButton>
         );
 
-      case 'split': {
-        if (!splitButton) return null;
-        // Primary fills the cell. Secondary sits as a small bubble in the
-        // top-right corner and only appears on hover (or when focused via
-        // keyboard). The split is hierarchical, not symmetric — caller decides
-        // which is primary based on user context (e.g. most recent action).
+      case 'composer': {
+        if (!composerButton) return null;
+        const { secondary } = composerButton;
+        const primaryButton = (
+          <TooltipButton
+            key="composer"
+            tooltip={composerButton.tooltip}
+            showTooltip={showTooltips}
+            side={tooltipSide}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              onPointerUp={handleButtonClick(composerButton.onClick)}
+              onClick={(e) => e.stopPropagation()}
+              className={cn(baseClass, 'rounded')}
+              aria-label={composerButton.ariaLabel}
+            >
+              {composerButton.content}
+            </Button>
+          </TooltipButton>
+        );
+        if (!secondary) return primaryButton;
         return (
-          <div key="split" className={cn('group relative', buttonSize)}>
-            <TooltipButton
-              tooltip={splitButton.primary.tooltip}
-              showTooltip={showTooltips}
-              side={tooltipSide}
-            >
+          <div key="composer" className={cn('group relative', buttonSize)}>
+            {primaryButton}
+            <TooltipButton tooltip={secondary.tooltip} showTooltip={showTooltips} side={tooltipSide}>
               <Button
                 variant="ghost"
                 size="icon"
-                onPointerUp={handleButtonClick(splitButton.primary.onClick)}
-                onClick={(e) => e.stopPropagation()}
-                className={cn(baseClass, 'rounded')}
-                aria-label={splitButton.primary.ariaLabel}
-              >
-                {splitButton.primary.content}
-              </Button>
-            </TooltipButton>
-            <TooltipButton
-              tooltip={splitButton.secondary.tooltip}
-              showTooltip={showTooltips}
-              side={tooltipSide}
-            >
-              <Button
-                variant="ghost"
-                size="icon"
-                onPointerUp={handleButtonClick(splitButton.secondary.onClick)}
+                onPointerUp={handleButtonClick(secondary.onClick)}
                 onClick={(e) => e.stopPropagation()}
                 className={cn(
                   'absolute -top-1.5 -right-1.5 h-4 w-4 p-0 rounded-full',
                   'bg-secondary border border-border text-secondary-foreground hover:bg-accent hover:text-foreground',
-                  // Hidden by default; reveal on hover/focus of the composite cell.
                   'opacity-0 transition-opacity duration-150',
                   'group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100',
                 )}
-                aria-label={splitButton.secondary.ariaLabel}
+                aria-label={secondary.ariaLabel}
               >
-                {splitButton.secondary.content}
+                {secondary.content}
               </Button>
             </TooltipButton>
           </div>

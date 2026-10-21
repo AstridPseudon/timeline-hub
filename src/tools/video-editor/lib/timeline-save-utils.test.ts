@@ -202,6 +202,14 @@ const moveClipCommandDescriptor: TimelineCommandDescriptor<MoveClipCommand> = {
 
 const commandRunner = createTimelineCommandRunner([moveClipCommandDescriptor]);
 
+// assembleTimelineData derives a readable `label` per clip (clipDisplayNames) onto
+// `resolvedConfig.clips` and `meta`, but signs the unlabelled resolved config so derived
+// names never churn the signature.
+const stripClipLabels = (resolvedConfig: ReturnType<typeof buildResolvedConfig>) => ({
+  ...resolvedConfig,
+  clips: resolvedConfig.clips.map(({ label: _label, ...clip }) => clip),
+});
+
 const buildCommandTestData = () => {
   const config: TimelineConfig = {
     output: { resolution: '1920x1080', fps: 30, file: 'command-test.mp4' },
@@ -360,7 +368,13 @@ describe('timeline save utils regression coverage', () => {
 
     expect(data.config).toBe(config);
     expect(data.registry).toBe(registry);
-    expect(data.resolvedConfig).toBe(resolvedConfig);
+    expect(data.resolvedConfig).toEqual({
+      ...resolvedConfig,
+      clips: resolvedConfig.clips.map((clip) => ({
+        ...clip,
+        label: { 'clip-1': 'video.mp4', 'clip-2': 'audio.mp3' }[clip.id],
+      })),
+    });
     expect(data.configVersion).toBe(7);
     expect(data.output).toEqual(config.output);
     expect(data.assetMap).toEqual({
@@ -754,7 +768,8 @@ describe('timeline save utils regression coverage', () => {
         ],
       },
     ]);
-    expect(data.signature).toBe(getConfigSignature(data.resolvedConfig));
+    expect(data.resolvedConfig.clips.map(({ label }) => label)).toEqual(['next.png', 'next.png']);
+    expect(data.signature).toBe(getConfigSignature(stripClipLabels(data.resolvedConfig)));
     expect(data.signature).toBe(getConfigSignature(unprojectedResolvedConfig));
   });
 
@@ -806,7 +821,7 @@ describe('timeline save utils regression coverage', () => {
       expect.objectContaining({ id: 'clip-2', at: 4, hold: 3 }),
       expect.objectContaining({ id: 'clip-1', at: 7, hold: 2 }),
     ]));
-    expect(data.signature).toBe(getConfigSignature(data.resolvedConfig));
+    expect(data.signature).toBe(getConfigSignature(stripClipLabels(data.resolvedConfig)));
   });
 
   it('keeps the stable signature unchanged when only resolved asset URLs change', () => {
@@ -1046,7 +1061,14 @@ describe('timeline command runner core', () => {
 
     expect(undone.status).toBe('ok');
     expect(undone.nextData.config.clips[0]?.at).toBe(0);
-    expect(undone.nextData.stableSignature).toBe(data.stableSignature);
+    // Row edits persist the derived display label into the config, so the undone state is the
+    // original config with its derived labels materialized (positions restored, nothing else changed).
+    const labelledOriginalConfig: TimelineConfig = {
+      ...data.config,
+      clips: data.config.clips.map((clip) => ({ ...clip, label: data.meta[clip.id]?.label })),
+    };
+    expect(undone.nextData.config).toEqual(labelledOriginalConfig);
+    expect(undone.nextData.stableSignature).toBe(getStableConfigSignature(labelledOriginalConfig, data.registry));
   });
 
   it('keeps atomic batches all-or-nothing when any command fails', () => {

@@ -1,6 +1,6 @@
 # Cloud mode specification readiness
 
-**Shared metaplan:** [Astrid App Cloud — coordinated projects and execution schedule](/Users/peteromalley/Documents/astrid-app-workspace/astrid-app/docs/design/cloud-mode-megado-projects-2026-10-05.md).
+**Shared metaplan:** [Astrid App Cloud — coordinated projects and execution schedule](cloud-mode-megado-projects-2026-10-05.md).
 
 **Purpose.** This document lists what is already settled by the Local/Cloud direction, what source code can be reused, what must be adapted or added, and which bounded prototypes close the remaining engineering decisions. It complements [Cloud mode integration plan](cloud-mode-integration-plan-2026-10-05.md); it does not claim implementation or live-service verification. The detailed source ledgers are linked below. All evidence is from repository history/worktrees inspected 2026-10-05; the Astrid App, Astrid and workspace Runtime trees were dirty at the recorded HEADs, so implementation must choose an isolated clean baseline while preserving unrelated dirty work.
 

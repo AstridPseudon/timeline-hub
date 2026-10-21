@@ -84,11 +84,10 @@ describe('MediaGalleryLightbox', () => {
     renderLightbox(lightboxMedia);
 
     const props = mediaLightboxSpy.mock.calls[0]?.[0] as {
-      actions?: { starred?: boolean };
+      actions?: Record<string, unknown>;
       features?: Record<string, unknown>;
       media?: GenerationRow;
     };
-    expect(props.actions?.starred).toBe(true);
     expect(props.features).not.toHaveProperty('showImageEditTools');
     expect(props.features).not.toHaveProperty('showMagicEdit');
     expect(props.actions).not.toHaveProperty('onApplySettings');

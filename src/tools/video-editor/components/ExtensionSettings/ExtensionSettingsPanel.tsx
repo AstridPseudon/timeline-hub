@@ -1,5 +1,5 @@
 /**
- * ExtensionSettingsPanel — SchemaForm-backed extension settings UI (M4, T7).
+ * ExtensionSettingsPanel — SchemaForm-backed extension settings UI.
  *
  * Renders an editable settings form for a single extension, driven by the
  * extension manifest's `settingsSchema`.  Uses
@@ -137,7 +137,7 @@ export function ExtensionSettingsPanel({
   className,
   onDiagnostics,
 }: ExtensionSettingsPanelProps) {
-  // ---- Analyse the manifest settings schema (T1/T7) -------------------------
+  // ---- Analyse the manifest settings schema -------------------------
   const schemaAnalysis = useMemo(
     () => analyzeManifestSettingsSchema(manifest),
     [manifest],

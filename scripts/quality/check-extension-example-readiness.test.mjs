@@ -118,11 +118,11 @@ function setupTempRepo() {
   writeRepoFile(root, 'src/examples/effect-live-example.ts', baselineExampleFile('effect-live-example'));
   writeRepoFile(root, 'src/examples/transition-mask-example.ts', baselineExampleFile('transition-mask-example'));
   writeRepoFile(root, 'src/examples/output-format-sidecar-composed-example.ts', [
-    'const EX04_GRAPH_PATH_MARKER = "EX-04/output-format-sidecar-composed";',
+    'const GRAPH_PATH_MARKER = "output-format-sidecar-composed/graph-path";',
     'const EX04_ROUTE_CONSTRAINTS = ["sidecar-export"];',
     'const blocker = { reason: \'process-dependent\' };',
     'const evidence = {',
-    '  graphPathMarker: EX04_GRAPH_PATH_MARKER,',
+    '  graphPathMarker: GRAPH_PATH_MARKER,',
     '  routeConstraints: EX04_ROUTE_CONSTRAINTS,',
     '  requiredProfiles: [\'sidecar\'],',
     '};',

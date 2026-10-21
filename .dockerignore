@@ -26,7 +26,6 @@ Thumbs.db
 
 # Tooling state — not needed inside the build context
 .claude
-.megaplan
 .cursor
 .cursorrules
 .codex
@@ -47,11 +46,8 @@ investigation
 *.md
 README.md
 VIDEO_EDITOR_INTEGRATION_PLAN.md
-VIDEO_EDITOR_INTEGRATION_TASKS.json
 findings.json
-scorecard.png
 localhost-*.log
-!prev
 
 # Old build configs (replaced by Dockerfile)
 nixpacks.toml
@@ -66,6 +62,3 @@ Dockerfile
 **/*.test.tsx
 **/*.spec.ts
 **/*.spec.tsx
-
-# Deno lockfile is for supabase edge fns, not the Vite build
-deno.lock

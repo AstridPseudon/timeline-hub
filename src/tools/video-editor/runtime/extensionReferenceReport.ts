@@ -1,5 +1,5 @@
 /**
- * Extension reference report (M14, T23).
+ * Extension reference report.
  *
  * Scans the current project for extension-owned references before uninstall
  * and produces a structured report with counts, expandable reference lists,

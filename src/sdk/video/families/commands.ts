@@ -3,7 +3,7 @@
  *
  * Command contributions declare palette-invocable actions with optional
  * target context dispatch (clip, clip-selection, track, timeline-area).
- * Fully bridged at M4 with host adapter, keybinding, and context-menu wiring.
+ * Wired through the host adapter, keybinding, and context-menu surfaces.
  *
  * @module video/families/commands
  * @publicContract

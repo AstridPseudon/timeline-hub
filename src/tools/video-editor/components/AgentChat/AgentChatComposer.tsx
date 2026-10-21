@@ -1,6 +1,7 @@
 import type { KeyboardEvent, Ref } from 'react';
 import { Mic, Send, Square, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/chatVoice.ts';
 import { EDITOR_TOUR_ANCHOR_ATTRIBUTE, EDITOR_TOUR_ANCHORS } from '@/tools/video-editor/tour/anchors.ts';
 
 export interface AgentChatComposerVoice {
@@ -32,7 +33,8 @@ export function AgentChatComposer({
   placeholder: string;
   readOnly?: boolean;
   inputDisabled?: boolean;
-  voice: AgentChatComposerVoice;
+  /** The mic. Not rendered while chat voice is switched off. */
+  voice?: AgentChatComposerVoice;
   onSend: () => void;
   sendDisabled: boolean;
 }) {
@@ -54,6 +56,7 @@ export function AgentChatComposer({
         />
 
         <div className="absolute inset-y-4 right-2 z-10 flex w-8 flex-col gap-2">
+          {CHAT_VOICE_ENABLED && voice && (
           <div className="relative flex min-h-0 flex-1 items-center justify-center">
             <Button
               type="button"
@@ -81,6 +84,7 @@ export function AgentChatComposer({
               </Button>
             )}
           </div>
+          )}
 
           <div className="flex min-h-0 flex-1 items-center justify-center">
             <Button

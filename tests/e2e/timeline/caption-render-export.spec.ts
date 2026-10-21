@@ -5,6 +5,7 @@ import { promisify } from 'node:util';
 import {
   CLIP_BODY_SELECTOR,
   browserEvidencePath,
+  forceBlobLinkDownload,
   resetFakeRuntimeBaseline,
   editorUrl,
 } from './support';
@@ -87,6 +88,8 @@ test.describe('caption materialization render and export', () => {
       }
     });
 
+    // Download saves through the native file picker where the browser has one; the blob-link path yields a download event.
+    await forceBlobLinkDownload(page);
     await page.addInitScript(() => {
       localStorage.removeItem('astrid.dev-extensions.disabled');
     });
@@ -109,7 +112,7 @@ test.describe('caption materialization render and export', () => {
     ).toBeGreaterThanOrEqual(2);
     await page.getByRole('button', { name: 'Render', exact: true }).click();
 
-    const downloadLink = page.getByRole('link', { name: /download/i });
+    const downloadLink = page.getByRole('button', { name: /download/i });
     await expect(downloadLink).toBeVisible({ timeout: 240_000 });
     await page.screenshot({
       path: browserEvidencePath(testInfo, 'chrome-acceptance/28-headless-remotion-4.0.503-render-complete.png'),

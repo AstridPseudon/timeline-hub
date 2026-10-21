@@ -281,6 +281,19 @@ export const useClipDrag = (): UseClipDragResult => {
     // ── Pointer handlers ─────────────────────────────────────────────
 
     const handlePointerDown = (event: PointerEvent) => {
+      // A second finger is a pinch, not a second drag. The pinch handler claims the touch stream
+      // but cannot stop the first finger's pointer stream, which would keep dragging the clip
+      // under it (in move mode, across tracks) while the timeline zooms. Cancel like pointercancel.
+      const activeState = getActiveState();
+      if (
+        activeState
+        && event.pointerType === 'touch'
+        && event.pointerId !== activeState.session.pointerId
+      ) {
+        endSession();
+        return;
+      }
+
       if (event.button !== 0) return;
 
       const wrapper = timelineWrapperRef.current;

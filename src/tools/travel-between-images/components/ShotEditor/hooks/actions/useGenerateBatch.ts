@@ -100,7 +100,6 @@ export interface BatchGenerationRequest {
 interface UseGenerateBatchOptions {
   core: UseGenerateBatchCoreOptions;
   request: BatchGenerationRequest;
-  clearAllEnhancedPrompts: () => Promise<void>;
 }
 
 interface UseGenerateBatchReturn {
@@ -108,7 +107,6 @@ interface UseGenerateBatchReturn {
   isSteerableMotionEnqueuing: boolean;
   steerableMotionJustQueued: boolean;
   isGenerationDisabled: boolean;
-  enhancementProgress: { phase: 'enhancing'; completed: number; total: number } | null;
 }
 
 export function useGenerateBatch({ core }: UseGenerateBatchOptions): UseGenerateBatchReturn {
@@ -126,6 +124,5 @@ export function useGenerateBatch({ core }: UseGenerateBatchOptions): UseGenerate
     isSteerableMotionEnqueuing: false,
     steerableMotionJustQueued: false,
     isGenerationDisabled: false,
-    enhancementProgress: null,
   };
 }

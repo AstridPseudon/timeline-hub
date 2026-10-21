@@ -19,7 +19,6 @@ interface VariantGridProps extends VariantCardSharedProps {
   currentPage: number;
   onPageChange: (page: number) => void;
   relationshipMap: Record<string, { isParent: boolean; isChild: boolean }>;
-  variantLineageDepth: Record<string, number>;
   isDeleteLoading: (variantId: string) => boolean;
 }
 
@@ -30,24 +29,17 @@ export const VariantGrid: React.FC<VariantGridProps> = ({
   onPageChange,
   isMobile,
   readOnly,
-  availableLoras,
   relationshipMap,
-  variantLineageDepth,
   copiedVariantId,
   loadedSettingsVariantId,
   onVariantSelect,
   onMakePrimary,
   onDeleteVariant,
   onLoadVariantSettings,
-  onToggleStar,
   onMouseEnter,
   onShowMobileInfo,
-  onShowLineageGif,
   onCopyId,
   onLoadSettings,
-  onLoadImages,
-  currentSegmentImages,
-  loadedImagesVariantId,
   isDeleteLoading,
 }) => {
   const totalPages = Math.ceil(filteredVariants.length / ITEMS_PER_PAGE);
@@ -57,22 +49,16 @@ export const VariantGrid: React.FC<VariantGridProps> = ({
     activeVariantId,
     isMobile,
     readOnly,
-    availableLoras,
     copiedVariantId,
     loadedSettingsVariantId,
     onVariantSelect,
     onMakePrimary,
     onDeleteVariant,
     onLoadVariantSettings,
-    onToggleStar,
     onMouseEnter,
     onShowMobileInfo,
-    onShowLineageGif,
     onCopyId,
     onLoadSettings,
-    onLoadImages,
-    currentSegmentImages,
-    loadedImagesVariantId,
   };
 
   return (
@@ -130,7 +116,6 @@ export const VariantGrid: React.FC<VariantGridProps> = ({
               isPrimary={isPrimary}
               isParent={isParent}
               isChild={isChild}
-              lineageDepth={variantLineageDepth[variant.id] || 0}
               isDeleteLoading={isDeleteLoading(variant.id)}
               {...sharedVariantCardProps}
             />

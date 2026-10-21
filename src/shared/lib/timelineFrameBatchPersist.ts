@@ -100,8 +100,8 @@ function abortable<T>(start: () => Promise<T>): (signal: AbortSignal) => Promise
 
 /**
  * Persist a batch of timeline frame updates through the document placement
- * service (doc 24 Q1 — the timeline document is the ONLY placement authority;
- * the retired `batch_update_timeline_frames` RPC has no successor route).
+ * service (the timeline document is the ONLY placement authority; no separate
+ * route updates frames in batch).
  *
  * Callers identify entries either by the deterministic entry id
  * (`sg-<shotId>-<generationId>`, what placement reads surface as row id) or

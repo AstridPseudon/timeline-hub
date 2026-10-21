@@ -94,7 +94,6 @@ function buildParams(overrides: Record<string, unknown> = {}) {
     taskError: null,
     inputImages: ['in-1.png'],
     lightboxTaskMapping: { taskId: 'task-1' },
-    onCreateShot: vi.fn(),
     handleNavigateToShot: vi.fn(),
     showDelete: true,
     ...overrides,

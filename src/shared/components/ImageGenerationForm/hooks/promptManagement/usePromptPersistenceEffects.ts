@@ -1,7 +1,5 @@
 import { useEffect } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
-import type { PromptMode } from '../../types';
-import type { ShotPromptSettingsContract } from './types';
 import { getStoredPromptCount } from './storedPromptCount';
 
 interface PromptPersistenceInput {
@@ -9,9 +7,6 @@ interface PromptPersistenceInput {
   promptsLength: number;
   effectiveShotId: string;
   setLastKnownPromptCount: Dispatch<SetStateAction<number>>;
-  isShotSettingsReady: boolean;
-  shotPromptSettings: ShotPromptSettingsContract;
-  effectivePromptMode: PromptMode;
 }
 
 export function usePromptPersistenceEffects(input: PromptPersistenceInput): void {
@@ -20,9 +15,6 @@ export function usePromptPersistenceEffects(input: PromptPersistenceInput): void
     promptsLength,
     effectiveShotId,
     setLastKnownPromptCount,
-    isShotSettingsReady,
-    shotPromptSettings,
-    effectivePromptMode,
   } = input;
 
   // Sync prompt count with sessionStorage: read on shot change, write when prompts change
@@ -44,31 +36,4 @@ export function usePromptPersistenceEffects(input: PromptPersistenceInput): void
       // Ignore sessionStorage errors.
     }
   }, [ready, promptsLength, effectiveShotId, setLastKnownPromptCount]);
-
-  useEffect(() => {
-    if (!isShotSettingsReady || shotPromptSettings.status !== 'ready') {
-      return;
-    }
-
-    try {
-      const settingsToSave = {
-        masterPrompt: shotPromptSettings.settings.masterPrompt || '',
-        promptMode:
-          shotPromptSettings.settings.promptMode || effectivePromptMode || 'automated',
-      };
-
-      localStorage.setItem(
-        'image-gen-last-active-shot-settings',
-        JSON.stringify(settingsToSave)
-      );
-    } catch {
-      // Ignore localStorage errors.
-    }
-  }, [
-    isShotSettingsReady,
-    shotPromptSettings.status,
-    shotPromptSettings.settings.masterPrompt,
-    shotPromptSettings.settings.promptMode,
-    effectivePromptMode,
-  ]);
 }

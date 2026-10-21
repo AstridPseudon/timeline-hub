@@ -1,7 +1,7 @@
 /**
  * RealtimeConnection Tests — bridge diff-poller transport.
  *
- * Covers the [XHARD] evidence set for Slice C (Batch B3):
+ * Covers the transport evidence set:
  *  (a) synthetic-event diff matrix: INSERT/UPDATE/DELETE synthesis incl.
  *      DELETE-preserving-`old` and out-of-order poll result application;
  *  (b) premature/non-'connected' status degrades smart-polling to the

@@ -99,7 +99,7 @@ export interface TimelineData {
   signature: string;
   stableSignature: string;
   /**
-   * Duration-neutral typed-data lanes ([CONVERGE-WITH-M1], dataKind V1).
+   * Duration-neutral typed-data lanes (, dataKind V1).
    * Evidence/visualization state only — never an input to duration
    * computation, `configToRows`, or export scanning (design:
    * decisions/astrid-editor-data-lanes.md §Three-layer split). Default is
@@ -107,7 +107,7 @@ export interface TimelineData {
    */
   dataLanes: DataLaneView[];
   /**
-   * V2 persistence plane ([CONVERGE-WITH-M1]): persisted SOURCE items
+   * V2 persistence plane: persisted SOURCE items
    * carried from `LoadedTimeline.bundle.itemsBySchemaRef` so lanes can
    * repaint after reload. Canonical source state — serialized in the bundle
    * alongside configs, never an input to duration computation; render-side assembly

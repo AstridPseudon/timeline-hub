@@ -38,21 +38,8 @@ interface ShotActionStatus {
   currentTargetShotName: string | undefined;
 }
 
-/** Quick-create shot state and callbacks */
-interface ShotQuickCreateState {
-  quickCreateSuccess: {
-    isSuccessful: boolean;
-    shotId: string | null;
-    shotName: string | null;
-    isLoading?: boolean;
-  };
-  handleQuickCreateAndAdd: () => void;
-  handleVisitCreatedShot: () => void;
-}
-
 /** Callback handlers for shot actions */
 interface ShotActionCallbacks {
-  onCreateShot?: (name: string, files: File[]) => Promise<void>;
   onNavigateToShot: (shot: { id: string; name: string }) => void;
   onAddToShot: () => Promise<void>;
   onAddToShotWithoutPosition: () => Promise<void>;
@@ -62,7 +49,6 @@ interface ShotActionsProps {
   image: GeneratedImageWithMetadata;
   selector: ShotSelectorState;
   status: ShotActionStatus;
-  quickCreate: ShotQuickCreateState;
   actions: ShotActionCallbacks;
 }
 
@@ -70,7 +56,6 @@ export const ShotActions: React.FC<ShotActionsProps> = ({
   image,
   selector,
   status,
-  quickCreate,
   actions,
 }) => {
   const {
@@ -95,13 +80,6 @@ export const ShotActions: React.FC<ShotActionsProps> = ({
   } = status;
 
   const {
-    quickCreateSuccess,
-    handleQuickCreateAndAdd,
-    handleVisitCreatedShot,
-  } = quickCreate;
-
-  const {
-    onCreateShot,
     onNavigateToShot,
     onAddToShot,
     onAddToShotWithoutPosition,
@@ -141,11 +119,6 @@ export const ShotActions: React.FC<ShotActionsProps> = ({
             ? "h-8 px-3 py-1 rounded-md bg-black/50 hover:bg-black/70 text-white text-sm w-full truncate focus:ring-0 focus:ring-offset-0"
             : "h-7 px-2 py-1 rounded-md bg-black/50 hover:bg-black/70 text-white text-xs w-full truncate focus:ring-0 focus:ring-offset-0"
           }
-          showAddShot={!!onCreateShot}
-          onCreateShot={handleQuickCreateAndAdd}
-          isCreatingShot={addingToShotImageId === image.id}
-          quickCreateSuccess={quickCreateSuccess}
-          onVisitCreatedShot={handleVisitCreatedShot}
           side="bottom"
           align="start"
           sideOffset={4}

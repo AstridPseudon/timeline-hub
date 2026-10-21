@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useCopyToClipboard } from '../useCopyToClipboard';
+import { useCopyToClipboard, useKeyedCopyToClipboard } from '../useCopyToClipboard';
 
 describe('useCopyToClipboard', () => {
   const writeTextMock = vi.fn().mockResolvedValue(undefined);
@@ -92,5 +92,54 @@ describe('useCopyToClipboard', () => {
       result.current.handleCopy();
     });
     expect(writeTextMock).toHaveBeenCalledWith('second');
+  });
+});
+
+describe('useKeyedCopyToClipboard', () => {
+  const writeTextMock = vi.fn().mockResolvedValue(undefined);
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: writeTextMock,
+      },
+    });
+    writeTextMock.mockClear();
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+  });
+
+  it('sets copied value and resets after timeout when copy succeeds', async () => {
+    const { result } = renderHook(() => useKeyedCopyToClipboard<'task-id'>(500));
+
+    await act(async () => {
+      await result.current.copyText('hello world', 'task-id');
+    });
+
+    expect(writeTextMock).toHaveBeenCalledWith('hello world');
+    expect(result.current.copiedValue).toBe('task-id');
+
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(result.current.copiedValue).toBeNull();
+  });
+
+  it('does not set copied value when clipboard write fails', async () => {
+    writeTextMock.mockRejectedValueOnce(new Error('clipboard error'));
+    const { result } = renderHook(() => useKeyedCopyToClipboard<string>(500));
+
+    let didCopy = true;
+    await act(async () => {
+      didCopy = await result.current.copyText('hello world', 'done');
+    });
+
+    expect(didCopy).toBe(false);
+    expect(result.current.copiedValue).toBeNull();
   });
 });

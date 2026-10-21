@@ -19,7 +19,7 @@ This matrix records the compatibility posture of each concrete `DataProvider` im
 | **InMemory** | `InMemoryDataProvider` | Ephemeral (Map-backed) | Test / dev / demo | Full |
 | **Runtime** | `RuntimeDataProvider` (`src/integrations/runtime/dataProvider.ts`) | Workspace Runtime (workspace.v1): canonical composition heads and managed objects | Local workspace; `dev:editor` and the e2e suite against the fake Runtime | Full, except the checkpoint API (history is Runtime composition revisions) |
 
-The Supabase and Astrid Bridge providers were retired when the Runtime path became the only local data path; this matrix no longer covers them.
+The Supabase and Astrid Bridge providers were retired when the Runtime path became the only local data path (Supabase: 2026-10-18, tag `pre-cloud-removal`); this matrix no longer covers them.
 
 ---
 
@@ -243,6 +243,6 @@ Per the shared matrix helper (SD1), the `providerCompatibility` shared suite is 
 
 | Date | Change |
 |---|---|
-| 2026-06-19 | Initial provider compatibility matrix. Coverage: M3 TimelinePatch, Proposals, golden replay across InMemory, Supabase, Astrid. |
-| 2026-06-20 | Added §10: environment-impossible provider checks with contract-recheck row links. Documents every skip flag, mock strategy, and delegated coverage path for Supabase and Astrid Bridge. InMemory (both variants) confirmed as environment-unrestricted canonical baseline. Added §11: version history.
-| 2026-10-18 | Retired the Supabase and Astrid Bridge providers from every table; added `RuntimeDataProvider` (§4.2, §10.1). |
+| 2026-06-19 | Initial provider compatibility matrix. Coverage: M3 TimelinePatch, Proposals, golden replay across InMemory, the cloud provider, Astrid. |
+| 2026-06-20 | Added §10: environment-impossible provider checks with contract-recheck row links. Documents every skip flag, mock strategy, and delegated coverage path for the cloud provider and Astrid Bridge. InMemory (both variants) confirmed as environment-unrestricted canonical baseline. Added §11: version history.
+| 2026-10-18 | Retired the Supabase (tag `pre-cloud-removal`) and Astrid Bridge providers from every table; added `RuntimeDataProvider` (§4.2, §10.1). |

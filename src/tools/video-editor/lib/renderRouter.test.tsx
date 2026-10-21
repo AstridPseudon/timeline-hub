@@ -1,4 +1,4 @@
-// Sprint 8: render-button router tests.
+// render-button router tests.
 // Mirrors the sprint brief's three cases (pure media, themed, mixed) +
 // the orchestrator dispatch shape.
 
@@ -319,7 +319,7 @@ describe('Sprint 8 render-button router (decideRenderRoute)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M7b T2: Sidecar-export planner / router selection
+// Sidecar-export planner / router selection
 // ---------------------------------------------------------------------------
 
 describe('M7b T2 sidecar-export route selection', () => {
@@ -642,7 +642,7 @@ describe('planner route selection never rides a vacuously unblocked route', () =
 });
 
 // ---------------------------------------------------------------------------
-// M9 T11: Contributed clip routing via dynamic capability records
+// Contributed clip routing via dynamic capability records
 // ---------------------------------------------------------------------------
 
 function makeContributedRecord(
@@ -1431,7 +1431,6 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
         family: RENDER_CAPABILITY_ID,
         params: {
           timeline_ref: 't',
-          selector: 'rendering.remotion',
           output_name: 'render.mp4',
         },
         output_policy: {
@@ -1448,6 +1447,8 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     });
     expect(body).not.toHaveProperty('family');
     expect(body).not.toHaveProperty('input');
+    // An ordinary timeline names no renderer: the host that claims the task chooses the one it can run.
+    expect(body.spec.params).not.toHaveProperty('selector');
     vi.unstubAllGlobals();
   });
 
@@ -1500,7 +1501,7 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
 });
 
 // ---------------------------------------------------------------------------
-// B6 T6.1/T6.2: cancel rides the common fenced task route
+// cancel rides the common fenced task route
 // ---------------------------------------------------------------------------
 
 function stubFakeBridge() {
@@ -1688,7 +1689,6 @@ describe('Sprint 8 router → enqueue integration', () => {
         family: RENDER_CAPABILITY_ID,
         params: {
           timeline_ref: 't',
-          selector: 'rendering.remotion',
           output_name: 'timeline-t.mp4',
         },
       },
@@ -1932,7 +1932,6 @@ describe('Sprint 8 render pipeline middleware', () => {
         params: {
           timeline_ref: 'timeline-fixture-worker',
           output_name: 'timeline-timeline-fixture-worker.mp4',
-          selector: 'rendering.remotion',
         },
       },
     });

@@ -1,5 +1,5 @@
 /**
- * T5: Ajv-backed schema validation coverage for checked-in astrid-extension.json
+ * Ajv-backed schema validation coverage for checked-in astrid-extension.json
  * manifests and proof that unknown/unsupported top-level collections are rejected
  * by the frozen manifest contract.
  *
@@ -841,7 +841,7 @@ describe('T5: Manifest schema validation (Ajv-backed)', () => {
     });
   });
 
-  // -- M2: Uniform/parameter schema coverage ---------------------------------
+  // -- Uniform/parameter schema coverage ---------------------------------
 
   describe('M2: Uniform/parameter definition schema coverage', () => {
     /** Build a minimal valid shader contribution with the given uniforms. */

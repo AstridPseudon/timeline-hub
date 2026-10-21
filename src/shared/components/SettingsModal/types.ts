@@ -1,4 +1,3 @@
-import type { AIInputMode } from "@/shared/contexts/AIInputModeContext"
 import type { ExtensionReferenceReport } from "@/tools/video-editor/runtime/extensionReferenceReport"
 
 // Types for SettingsModal components
@@ -9,7 +8,6 @@ export interface SettingsModalProps {
   initialTab?: string;
   /** Offered where the tour can run (desktop, none running); replays the whole tour. */
   onReplayTour?: () => void;
-  creditsTab?: 'purchase' | 'history' | 'task-log';
   /** Optional extension display data for the Extensions tab. */
   extensions?: readonly ExtensionDisplayInfo[];
   /** Whether extension data is still being resolved. */
@@ -38,25 +36,23 @@ export interface SettingsModalProps {
 
 export interface PreferencesSectionProps {
   isMobile: boolean;
-  aiInputMode: AIInputMode;
-  setAIInputMode: (mode: AIInputMode) => void;
   onReplayTour?: () => void;
 }
 
 // ---------------------------------------------------------------------------
-// Extensions tab types (T18)
+// Extensions tab types
 // ---------------------------------------------------------------------------
 
 /** Status classification for an extension displayed in the manager. */
 export type ExtensionStatus = 'active' | 'blocked' | 'degraded' | 'disabled' | 'error';
 
 // ---------------------------------------------------------------------------
-// T21: Dependency badges, degraded contributions, lifecycle events
+// Dependency badges, degraded contributions, lifecycle events
 // ---------------------------------------------------------------------------
 
 
 // ---------------------------------------------------------------------------
-// T22: Settings schema-driven controls and migration summary
+// Settings schema-driven controls and migration summary
 // ---------------------------------------------------------------------------
 
 /** Supported primitive types for settings fields. */

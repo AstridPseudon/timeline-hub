@@ -939,7 +939,7 @@ describe('TimelineRenderer postprocess shader preview', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M9 T10: Extension clip renderer dispatch tests
+// Extension clip renderer dispatch tests
 // ---------------------------------------------------------------------------
 
 const mockClipTypeRegistryGet = vi.fn();

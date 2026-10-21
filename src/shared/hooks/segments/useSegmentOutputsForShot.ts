@@ -3,27 +3,18 @@
  *
  * Manages segment outputs for inline display above the timeline.
  * Handles multiple parent generations (different "runs"), their children,
- * and the slot system for partial results.
+ * and the slot system for partial results. All of it is derived from the
+ * generations the caller passes in; without them the hook reports no outputs.
  */
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { GenerationRow } from '@/domains/generation/types';
-import { useSmartPollingConfig } from '@/shared/hooks/useSmartPolling';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { compareByCreatedAtDesc } from '@/shared/lib/sorting/createdAtSort';
 import {
   extractExpectedSegmentData,
   isSegmentGeneration,
 } from './segmentDataTransforms';
-import {
-  buildChildrenQueryKey,
-  buildLiveTimelineQueryKey,
-  buildParentGenerationsQueryKey,
-  fetchChildGenerations,
-  fetchLiveTimeline,
-  fetchParentGenerations,
-} from './segmentOutputsQueries';
 import { buildSegmentSlots } from './segmentSlotAssignment';
 import type {
   ExpectedSegmentData,
@@ -43,16 +34,13 @@ interface UseSegmentOutputsReturn {
   segments: GenerationRow[];
   segmentProgress: { completed: number; total: number };
   expectedSegmentData: ExpectedSegmentData | null;
-  isLoading: boolean;
-  isRefetching: boolean;
-  refetch: () => void;
 }
 
-function derivePreloadedParentGenerations(
+function deriveParentGenerations(
   preloadedGenerations?: GenerationRow[],
-): GenerationRow[] | undefined {
+): GenerationRow[] {
   if (!preloadedGenerations) {
-    return undefined;
+    return [];
   }
 
   const parentIds = new Set<string>();
@@ -79,13 +67,13 @@ function derivePreloadedParentGenerations(
   return parents;
 }
 
-function derivePreloadedChildren(
+function deriveChildGenerations(
   preloadedGenerations: GenerationRow[] | undefined,
   selectedParentId: string | null,
   parentGenerations: GenerationRow[],
-): GenerationRow[] | undefined {
+): GenerationRow[] {
   if (!preloadedGenerations || !selectedParentId) {
-    return undefined;
+    return [];
   }
 
   const selectedParent = parentGenerations.find(
@@ -99,7 +87,7 @@ function derivePreloadedChildren(
   });
 }
 
-function derivePreloadedTimelineData(
+function deriveTimelineData(
   preloadedGenerations?: GenerationRow[],
 ): LiveTimelineRow[] | undefined {
   if (!preloadedGenerations) {
@@ -131,7 +119,6 @@ function buildPositionMap(timelineData: LiveTimelineRow[] | undefined): Map<stri
 
 export function useSegmentOutputsForShot(
   shotId: string | null,
-  projectId: string | null,
   localShotGenPositions?: Map<string, number>,
   controlledSelectedParentId?: string | null,
   onSelectedParentChange?: (id: string | null) => void,
@@ -150,36 +137,9 @@ export function useSegmentOutputsForShot(
     setInternalSelectedParentId(id);
   }, [isControlled, onSelectedParentChange]);
 
-  const preloadedParentGenerations = useMemo(
-    () => derivePreloadedParentGenerations(preloadedGenerations),
-    [preloadedGenerations],
-  );
-
-  const parentQueryKey = useMemo(
-    () => buildParentGenerationsQueryKey(shotId!, projectId),
-    [projectId, shotId],
-  );
-
-  const {
-    data: parentGenerationsData,
-    isLoading: isLoadingParents,
-    isFetching: isFetchingParents,
-    refetch: refetchParents,
-  } = useQuery({
-    queryKey: parentQueryKey,
-    queryFn: async () => {
-      if (!shotId || !projectId) {
-        return [];
-      }
-      return fetchParentGenerations(shotId, projectId);
-    },
-    enabled: !!shotId && !!projectId && !preloadedGenerations,
-    staleTime: 30000,
-  });
-
   const parentGenerations = useMemo(
-    () => (preloadedParentGenerations ?? parentGenerationsData) || [],
-    [preloadedParentGenerations, parentGenerationsData],
+    () => deriveParentGenerations(preloadedGenerations),
+    [preloadedGenerations],
   );
 
   useEffect(() => {
@@ -207,38 +167,9 @@ export function useSegmentOutputsForShot(
     return parentGenerations.find((parent) => parent.id === selectedParentId) || null;
   }, [parentGenerations, selectedParentId]);
 
-  const preloadedChildren = useMemo(
-    () => derivePreloadedChildren(preloadedGenerations, selectedParentId, parentGenerations),
-    [preloadedGenerations, selectedParentId, parentGenerations],
-  );
-
-  const childrenQueryKey = useMemo(
-    () => buildChildrenQueryKey(selectedParentId!),
-    [selectedParentId],
-  );
-  const childrenPollingConfig = useSmartPollingConfig(childrenQueryKey);
-
-  const {
-    data: childGenerationsData,
-    isLoading: isLoadingChildren,
-    isFetching: isFetchingChildren,
-    refetch: refetchChildren,
-  } = useQuery({
-    queryKey: childrenQueryKey,
-    queryFn: async () => {
-      if (!selectedParentId) {
-        return [];
-      }
-      return fetchChildGenerations(selectedParentId);
-    },
-    enabled: !!selectedParentId && !preloadedGenerations,
-    ...childrenPollingConfig,
-    refetchOnWindowFocus: false,
-  });
-
   const childGenerations = useMemo(
-    () => (preloadedChildren ?? childGenerationsData) || [],
-    [preloadedChildren, childGenerationsData],
+    () => deriveChildGenerations(preloadedGenerations, selectedParentId, parentGenerations),
+    [preloadedGenerations, selectedParentId, parentGenerations],
   );
 
   const segments = useMemo(
@@ -246,32 +177,10 @@ export function useSegmentOutputsForShot(
     [childGenerations],
   );
 
-  const preloadedTimelineData = useMemo(
-    () => derivePreloadedTimelineData(preloadedGenerations),
+  const effectiveTimelineData = useMemo(
+    () => deriveTimelineData(preloadedGenerations),
     [preloadedGenerations],
   );
-
-  const liveTimelineQueryKey = useMemo(
-    () => buildLiveTimelineQueryKey(shotId!),
-    [shotId],
-  );
-
-  const {
-    data: liveTimelineData,
-    refetch: refetchTimeline,
-  } = useQuery({
-    queryKey: liveTimelineQueryKey,
-    queryFn: async () => {
-      if (!shotId) {
-        return [];
-      }
-      return fetchLiveTimeline(shotId);
-    },
-    enabled: !!shotId && !preloadedGenerations,
-    staleTime: 10000,
-  });
-
-  const effectiveTimelineData = preloadedTimelineData ?? liveTimelineData;
 
   const liveShotGenIdToPosition = useMemo(
     () => buildPositionMap(effectiveTimelineData),
@@ -306,12 +215,6 @@ export function useSegmentOutputsForShot(
     return { completed, total: segmentSlots.length };
   }, [segmentSlots]);
 
-  const refetch = useCallback(() => {
-    refetchParents();
-    refetchChildren();
-    refetchTimeline();
-  }, [refetchChildren, refetchParents, refetchTimeline]);
-
   return {
     parentGenerations,
     selectedParentId,
@@ -322,8 +225,5 @@ export function useSegmentOutputsForShot(
     segments,
     segmentProgress,
     expectedSegmentData,
-    isLoading: isLoadingParents || isLoadingChildren,
-    isRefetching: isFetchingParents || isFetchingChildren,
-    refetch,
   };
 }

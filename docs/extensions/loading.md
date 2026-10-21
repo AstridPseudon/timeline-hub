@@ -19,7 +19,7 @@ import type {
 ```
 
 Extension packages should also follow the public package shape documented in
-`docs/extensions/authoring.md`. Do not import loader, repository, diagnostics,
+`docs/video-editor/extension-author-contract.md` (§12). Do not import loader, repository, diagnostics,
 or runtime helpers from internal video editor modules.
 
 ## Loader API

@@ -1,4 +1,3 @@
-import type React from 'react';
 import type { PhaseConfig } from '@/shared/types/phaseConfig';
 import type { LoraConfig } from '@/shared/types/segmentSettings';
 import type { StructureVideoConfigWithMetadata } from '@/shared/lib/tasks/travelBetweenImages';
@@ -95,16 +94,7 @@ export interface SegmentFieldSectionProps
   extends SegmentSettingsChangeProps,
     SegmentShotDefaultFieldProps {}
 
-export interface StructureVideoDragHandlers {
-  isDraggingVideo: boolean;
-  onDragOver: (event: React.DragEvent) => void;
-  onDragEnter: (event: React.DragEvent) => void;
-  onDragLeave: (event: React.DragEvent) => void;
-  onDrop: (event: React.DragEvent) => void;
-}
-
 interface SegmentStructureVideoHandlers {
-  onAddSegmentStructureVideo?: (video: StructureVideoConfigWithMetadata) => void;
   onRemoveSegmentStructureVideo?: () => void;
 }
 
@@ -130,7 +120,6 @@ interface SegmentSettingsFormDisplayProps {
   showHeader?: boolean;
   headerTitle?: string;
   maxFrames?: number;
-  queryKeyPrefix?: string;
   onFrameCountChange?: (frames: number) => void;
 }
 
@@ -164,7 +153,6 @@ interface SegmentSettingsFormPromptEnhancementProps {
 interface SegmentSettingsFormTimelineProps {
   edgeExtendAmount?: 4 | 6;
   isTimelineMode?: boolean;
-  onAddSegmentStructureVideo?: (video: StructureVideoConfigWithMetadata) => void;
   onUpdateSegmentStructureVideo?: (
     updates: Partial<StructureVideoConfigWithMetadata>
   ) => void;

@@ -1,4 +1,5 @@
-import { extractVideoMetadataFromUrl } from '@/shared/lib/media/videoUploader';
+import { getDisplayNameFromUrl } from '@/domains/lora/lib/loraUtils';
+import { extractVideoMetadataFromUrl } from '@/shared/lib/media/videoMetadata';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { resolvePrimaryStructureVideo } from '@/shared/lib/tasks/travelBetweenImages';
 import type {
@@ -21,34 +22,17 @@ export const applyLoRAs = (
   }
 
   if (loras.length > 0) {
-    // Clear existing LoRAs first
-    if (context.loraManager.setSelectedLoras) {
-      context.loraManager.setSelectedLoras([]);
-    }
-
-    // Map paths to available LoRAs and restore them (with delay to ensure state is cleared)
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        let matchedCount = 0;
-
-        loras.forEach((loraData) => {
-          const matchingLora = context.availableLoras.find(lora => {
-            const legacyDownloadLink = (lora as Record<string, unknown>)['Download Link'];
-            const loraUrl = lora.huggingface_url ?? (typeof legacyDownloadLink === 'string' ? legacyDownloadLink : '');
-            return loraUrl === loraData.path ||
-              loraUrl.endsWith(loraData.path) ||
-              loraData.path.endsWith(loraUrl.split('/').pop() || '');
-          });
-
-          if (matchingLora) {
-            context.loraManager.handleAddLora(matchingLora, false, loraData.strength);
-            matchedCount++;
-          }
-        });
-
-        resolve({ success: true, settingName: 'loras', details: `${matchedCount}/${loras.length} matched` });
-      }, 100); // Small delay to ensure state clears
-    });
+    // Replace the selection with the task's LoRAs. The task params carry the LoRA path and
+    // strength; there is no library to look names or previews up in, so the name comes from the path.
+    context.loraManager.setSelectedLoras?.(
+      loras.map((lora) => ({
+        id: lora.path,
+        name: getDisplayNameFromUrl(lora.path),
+        path: lora.path,
+        strength: lora.strength,
+      })),
+    );
+    return Promise.resolve({ success: true, settingName: 'loras', details: `${loras.length} applied` });
   }
 
   if (context.loraManager.setSelectedLoras) {

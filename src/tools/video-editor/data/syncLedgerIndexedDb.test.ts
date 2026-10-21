@@ -523,7 +523,7 @@ describe('syncLedgerIndexedDb', () => {
   });
 
   // -----------------------------------------------------------------------
-  // Hub hash requirements (SD2: hub_hash mandatory)
+  // Hub hash requirements (hub_hash mandatory)
   // -----------------------------------------------------------------------
 
   describe('hub hash requirements', () => {

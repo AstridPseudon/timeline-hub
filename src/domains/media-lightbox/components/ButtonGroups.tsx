@@ -2,11 +2,8 @@ import React from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import {
-  Star,
   Download,
-  CheckCircle,
   Loader2,
-  ImagePlus,
   Trash2,
   Film,
   ArrowRight,
@@ -101,49 +98,10 @@ export const TopRightControls: React.FC<TopRightControlsProps> = ({
 };
 
 // ============================================================================
-// BOTTOM LEFT CONTROLS - Star button
-// ============================================================================
-
-interface BottomLeftControlsProps {
-  localStarred?: boolean;
-  handleToggleStar?: () => void;
-  toggleStarPending?: boolean;
-}
-
-export const BottomLeftControls: React.FC<BottomLeftControlsProps> = ({
-  localStarred,
-  handleToggleStar,
-  toggleStarPending,
-}) => {
-  const { readOnly } = useLightboxCoreSafe();
-
-  // Star button in bottom left
-  if (readOnly || !handleToggleStar) return null;
-
-  return (
-    <div className="absolute bottom-4 left-4 flex items-center gap-x-2 z-10">
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={handleToggleStar}
-        disabled={toggleStarPending}
-        className="transition-colors bg-black/50 hover:bg-black/70 text-white"
-      >
-        <Star className={`h-4 w-4 ${localStarred ? 'fill-current' : ''}`} />
-      </Button>
-    </div>
-  );
-};
-
-// ============================================================================
-// BOTTOM RIGHT CONTROLS - Add to References / Add to Join Clips
+// BOTTOM RIGHT CONTROLS - Add to Join Clips
 // ============================================================================
 
 interface BottomRightControlsProps {
-  isAddingToReferences?: boolean;
-  addToReferencesSuccess?: boolean;
-  handleAddToReferences?: () => Promise<void>;
-  showAddToReferences?: boolean;
   // Add to Join Clips
   handleAddToJoin?: () => void;
   isAddingToJoin?: boolean;
@@ -152,52 +110,18 @@ interface BottomRightControlsProps {
 }
 
 export const BottomRightControls: React.FC<BottomRightControlsProps> = ({
-  isAddingToReferences = false,
-  addToReferencesSuccess = false,
-  handleAddToReferences,
-  showAddToReferences = true,
   handleAddToJoin,
   isAddingToJoin,
   addToJoinSuccess,
   onGoToJoin,
 }) => {
   // Get shared state from context
-  const { readOnly, selectedProjectId } = useLightboxCoreSafe();
+  const { readOnly } = useLightboxCoreSafe();
   const { isVideo } = useLightboxMediaSafe();
 
-  // Keep visible in edit mode - users can add to references while editing
+  // Keep visible in edit mode - users can add to join clips while editing
   return (
     <div className="absolute bottom-4 right-4 flex items-center gap-x-2 z-10">
-      {/* Add to References Button */}
-      {showAddToReferences && !readOnly && !isVideo && selectedProjectId && handleAddToReferences && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleAddToReferences}
-              disabled={isAddingToReferences || addToReferencesSuccess}
-              className={`transition-colors ${
-                addToReferencesSuccess
-                  ? 'bg-green-600/80 hover:bg-green-600 text-white'
-                  : 'bg-black/50 hover:bg-black/70 text-white'
-              }`}
-            >
-              {isAddingToReferences ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : addToReferencesSuccess ? (
-                <CheckCircle className="h-4 w-4" />
-              ) : (
-                <ImagePlus className="h-4 w-4" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {isAddingToReferences ? 'Adding...' : addToReferencesSuccess ? 'Added!' : 'Add to references'}
-          </TooltipContent>
-        </Tooltip>
-      )}
-
       {/* Add to Join Clips Button (videos only) */}
       {!readOnly && isVideo && handleAddToJoin && (
         <Tooltip>

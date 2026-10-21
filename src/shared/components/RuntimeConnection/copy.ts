@@ -3,7 +3,7 @@ import { installBrowserName } from '@/pages/Home/installScenario.ts';
 import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection.ts';
 
 /**
- * Every word the hosted build's connection gate shows (Plan A, design D3; card CP3). The panel, the restart cards,
+ * Every word the hosted build's connection gate shows. The panel, the restart cards,
  * the status container and the disabled compose controls render from this object and nothing else, so the wording is
  * reviewed in one place.
  *
@@ -135,7 +135,7 @@ export interface RuntimeConnectionCopy {
     /** Update only, where the installer is one of two routes. */
     readonly terminalAlternativeUpdate: string;
   };
-  /** Next to the compose controls the hosted build disables (card A2.X). */
+  /** Next to the compose controls the hosted build disables. */
   readonly composeDisabled: string;
 }
 
@@ -236,7 +236,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 };
 
 /**
- * CP3's compose line on the hosted build (a gateway origin is configured), `null` same-origin. The one rule
+ * The compose line on the hosted build (a gateway origin is configured), `null` same-origin. The one rule
  * the compose controls, their submit handlers and the task-creation library all read, so the composer route,
  * which the gateway does not serve, is never requested from the hosted page.
  */

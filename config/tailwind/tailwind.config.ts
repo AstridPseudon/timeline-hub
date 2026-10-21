@@ -48,7 +48,6 @@ export default {
 				// Astrid's display serif, as the public site's headings (the class keeps its legacy name).
 				'crimson': ['Georgia', '"Times New Roman"', 'serif'],
 				'inter': ['Inter', 'sans-serif'],
-				'playfair': ['Playfair Display', 'serif'],
 			},
 			fontWeight: {
 				'ultralight': '200',

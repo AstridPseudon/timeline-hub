@@ -38,11 +38,11 @@ export interface FamilyContributionSequence {
   uniqueExtensions: AstridExtension[];
   /** Bridged contributions sorted by extension-order → order → id. */
   sortedBridged: CollectedContribution[];
-  /** Reserved M6 output-format contributions (may project when inactive). */
+  /** Reserved output-format contributions (may project when inactive). */
   m6ReservedOutputFormats: CollectedContribution[];
-  /** Reserved M6 search-provider contributions. */
+  /** Reserved search-provider contributions. */
   m6ReservedSearchProviders: CollectedContribution[];
-  /** Reserved M12 process contributions. */
+  /** Reserved process contributions. */
   m12ReservedProcesses: CollectedContribution[];
 }
 
@@ -160,7 +160,7 @@ export function buildFamilyContributionSequence(
   const knownRenderIds = new Set<string>();
   const settingsDefaults: Record<string, Record<string, unknown>> = {};
 
-  // M6: Collect contributions that are reserved for execution but still
+  // Collect contributions that are reserved for execution but still
   // need to be surfaced as disabled/reserved descriptors in the runtime config.
   const m6ReservedOutputFormats: CollectedContribution[] = [];
   const m6ReservedSearchProviders: CollectedContribution[] = [];
@@ -211,7 +211,7 @@ export function buildFamilyContributionSequence(
       );
       const notYetBridged = runtimeStatus.legacyBridgeStatus;
 
-      // M7: Effect contributions with component metadata (effectId) are
+      // Effect contributions with component metadata (effectId) are
       // treated as active and projected into deterministic descriptors.
       // Effects without component metadata remain inactive with diagnostics.
       if (contrib.kind === 'effect') {
@@ -251,7 +251,7 @@ export function buildFamilyContributionSequence(
         continue;
       }
 
-      // M8: Transition contributions with renderer metadata (transitionId) are
+      // Transition contributions with renderer metadata (transitionId) are
       // treated as active and projected into deterministic descriptors.
       // Transitions without renderer metadata remain inactive with diagnostics.
       if (contrib.kind === 'transition') {
@@ -291,7 +291,7 @@ export function buildFamilyContributionSequence(
         continue;
       }
 
-      // M6: OutputFormat and SearchProvider are reserved for execution but
+      // OutputFormat and SearchProvider are reserved for execution but
       // must still be collected as descriptors in the runtime config.
       if (
         runtimeStatus.isDelegated &&
@@ -305,7 +305,7 @@ export function buildFamilyContributionSequence(
           collected,
           notYetBridged,
         );
-        // Collect into the appropriate M6 reserved list for later projection
+        // Collect into the appropriate reserved list for later projection
         if (contrib.kind === 'outputFormat') {
           m6ReservedOutputFormats.push(collected);
         } else {

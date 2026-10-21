@@ -9,6 +9,7 @@ import {
   type VideoEditSubMode,
   type PanelMode,
   DEFAULT_LAST_USED,
+  parseVideoEditSubMode,
 } from '../model/editSettingsTypes';
 
 export type { LastUsedEditSettings, VideoEditSubMode, PanelMode };
@@ -39,6 +40,12 @@ function hasSettingsChanged(prev: LastUsedEditSettings, next: LastUsedEditSettin
   return !deepEqual(prev, next);
 }
 
+function withCurrentVideoEditSubMode(settings: LastUsedEditSettings): LastUsedEditSettings {
+  const videoEditSubMode = parseVideoEditSubMode(settings.videoEditSubMode)
+    ?? DEFAULT_LAST_USED.videoEditSubMode;
+  return videoEditSubMode === settings.videoEditSubMode ? settings : { ...settings, videoEditSubMode };
+}
+
 function readLocalStorageSettings(projectId: string | null): LastUsedEditSettings {
   if (!projectId) {
     return DEFAULT_LAST_USED;
@@ -47,12 +54,12 @@ function readLocalStorageSettings(projectId: string | null): LastUsedEditSetting
   try {
     const projectStored = localStorage.getItem(STORAGE_KEY_PROJECT(projectId));
     if (projectStored) {
-      return { ...DEFAULT_LAST_USED, ...JSON.parse(projectStored) };
+      return withCurrentVideoEditSubMode({ ...DEFAULT_LAST_USED, ...JSON.parse(projectStored) });
     }
 
     const globalStored = localStorage.getItem(STORAGE_KEY_GLOBAL);
     if (globalStored) {
-      return { ...DEFAULT_LAST_USED, ...JSON.parse(globalStored) };
+      return withCurrentVideoEditSubMode({ ...DEFAULT_LAST_USED, ...JSON.parse(globalStored) });
     }
   } catch {
     // Ignore storage corruption and fall back to defaults.
@@ -158,7 +165,9 @@ export function useLastUsedEditSettings({
     }
 
     const localSettings = readLocalStorageSettings(entityId);
-    const dbSnapshot = dbSettings ? { ...localSettings, ...dbSettings } : null;
+    const dbSnapshot = dbSettings
+      ? withCurrentVideoEditSubMode({ ...localSettings, ...dbSettings })
+      : null;
     const currentEntity = store.getState().entities[entityId];
     const nextSeed = dbSnapshot ?? localSettings;
 

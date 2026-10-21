@@ -33,7 +33,7 @@ export const validateSerializedConfig = (config: TimelineConfig): void => {
 export const serializeForDisk = (
   resolved: ResolvedTimelineConfig,
   pinnedShotGroups?: TimelineConfig['pinnedShotGroups'],
-  // Sprint 2: optional carry-through of schema-lift top-level fields. Callers
+  // Optional carry-through of schema-lift top-level fields. Callers
   // that don't pass these keep the prior behavior; existing timelines without
   // them stay unchanged.
   extras?: Pick<TimelineConfig, 'theme' | 'theme_overrides' | 'generation_defaults' | 'app'>,

@@ -66,64 +66,51 @@ Key invariants:
 4. `setRuntimeOrigin()` runs once at boot; a gateway origin plus a compiled `VITE_WORKSPACE_RUNTIME_EXPECTED_*` identity throws (`build:hosted` sets them empty). Bases are read per request, never cached.
 5. The door (astrid-runtime `runtime_protocol/door.py`, inside the Runtime) checks Origin before routing, acts with the product credential through the Runtime's own handlers, and never sends that credential to the page.
 
+## Data Sources
+
+All reads and writes go through the Runtime path: `src/integrations/astrid/` (bridge routes, `AstridLocalClient`) and `src/integrations/runtime/` (`AstridRuntimeClient`). Row types for generations, tasks and derived items live in `src/integrations/astrid/repositories/`. The Supabase client and every query against it were removed 2026-10-18 (tag `pre-cloud-removal`).
+
 ## Query Scopes
 
 Three intentionally separate scopes for generation data. These are NOT duplication.
 
-| Scope | Hook | Query Key | Table | Use Case |
-|-------|------|-----------|-------|----------|
-| Project | `useProjectGenerations` | `['unified-generations', 'project', projectId, ...]` | `generations` | Paginated gallery (GenerationsPane, MediaGallery) |
-| Shot | `useShotImages` | `['all-shot-generations', shotId]` | `shot_generations` JOIN `generations` | Timeline, ShotEditor, shot image grids |
-| Variant | `useVariants` | `['generation-variants', generationId]` | `generation_variants` | Lightbox variant switching |
+| Scope | Hook | Query Key | Source | Use Case |
+|-------|------|-----------|--------|----------|
+| Project | `useProjectGenerations` | `['unified-generations', 'project', projectId, ...]` | Bridge gallery pages (`GET /projects/:slug/generations`, keyset, 200-row cap) | Paginated gallery (GenerationsPane, MediaGallery) |
+| Shot | `useShotImages` | `['all-shot-generations', shotId]` | No fetcher: cache primed from `ShotsContext` / the local timeline adapter | Timeline, ShotEditor, shot image grids |
+| Variant | `useVariants` | `['generation-variants', generationId]` (`['runtime', 'generation-variants', projectId, generationId]` on Runtime authority) | Generation detail snapshot | Lightbox variant switching |
 
-### Derived/selector hooks (no separate queries)
-
-| Hook | Derives From | Filters |
-|------|-------------|---------|
-| `useTimelineImages(shotId)` | `useShotImages` | Positioned, non-video, valid location |
-| `useUnpositionedImages(shotId)` | `useShotImages` | Null timeline_frame, non-video |
-| `useVideoOutputs(shotId)` | `useShotImages` | Video type only |
-| `useDerivedItems(generationId)` | Own query `['derived-items', id]` | Edits/children of a generation |
+`useDerivedItems(generationId)` has its own query (`[..., 'derived-items', projectId, generationId]`, from generation detail) for edits/children of a generation.
 
 ## Cache Priming & Loading
 
-`useShotImages` is one query (`shot_generations` JOIN `generations`, no multi-phase loading). For instant display on shot navigation, `usePrimeShotGenerationsCache` seeds the cache first: shot selected, cache primed from `ShotsContext` (`usePrimeShotImagesCache` in `useShotImages.ts`, no metadata), selectors such as `useTimelineImages` have data at once, then the `useShotImages` queryFn replaces it with full data.
+`useShotImages` never fetches (`enabled: false`, `queryFn: skipToken`). `usePrimeShotImagesCache` seeds the cache from `ShotsContext` on shot selection, and the local timeline adapter primes it with full data; consumers observe it.
 
 ### Query Presets (`src/shared/lib/query/queryDefaults.ts`)
 
 | Preset | staleTime | Use Case |
 |--------|-----------|----------|
-| `realtimeBacked` | 30s | Data updated by realtime/mutations (generations, tasks, shots) |
+| `realtimeBacked` | 30s | Data updated by polling/mutations (generations, tasks, shots); no mount/focus refetch |
 | `static` | 5min | Resources, presets, tool settings |
 | `immutable` | Infinity | Completed task results, historical data |
-| `userConfig` | 2min | User preferences, account settings |
+| `userConfig` | 2min | User preferences |
 
 ## Mutation Ownership
 
-Mutations live in `useGenerationMutations.ts` (re-exported from `useProjectGenerations.ts` for compatibility).
+Shot placement mutations live in `src/shared/hooks/shots/useShotGenerationMutations.ts` and write through `placementService` (the timeline document is the placement authority):
 
-| Mutation Hook | Table | Invalidation |
-|---------------|-------|-------------|
-| `useDeleteGeneration` | `generations` | None (caller invalidates) |
-| `useDeleteVariant` | `generation_variants` | None (caller invalidates) |
-| `useUpdateGenerationLocation` | `generations` | None (caller invalidates) |
-| `useCreateGeneration` | `generations` + `generation_variants` | None (caller invalidates) |
-| `useToggleGenerationStar` | `generations` | Optimistic update on `unified-generations`, `shots`, `all-shot-generations` |
+| Mutation | Optimistic? | Invalidation |
+|----------|-------------|-------------|
+| `useAddImageToShot` | Yes (temp ID, cache update) | shot generations, shots list, meta |
+| `useRemoveImageFromShot` | Yes (set frame null) | segment queries |
+| `useUpdateShotImageOrder` | Yes (reorder frames) | meta |
+| `usePositionExistingGenerationInShot` | No | shot generations |
 
-Shot-generation mutations in `useShotGenerationMutations.ts`:
-
-| Mutation | Table | Optimistic? | Invalidation |
-|----------|-------|-------------|-------------|
-| `useAddImageToShot` | `shot_generations` | Yes (temp ID, cache update) | shots list, meta, unified |
-| `useRemoveImageFromShot` | `shot_generations` | Yes (set frame null) | segment queries |
-| `useUpdateShotImageOrder` | `shot_generations` | Yes (reorder frames) | meta, source-slot |
-| `useDuplicateAsNewGeneration` | `generations` + `shot_generations` | No | shots, generations, segments |
-
-Variant mutations in `useVariants.ts` (`setPrimaryVariant`, `deleteVariant`, both on `generation_variants`) call `invalidateVariantChange()`.
+Variant writes are `setPrimaryVariant` / `deleteVariant` (returned by `useVariants`), `usePromoteVariantToGeneration` (throws `VariantPromotionUnsupportedError` when Runtime cannot promote) and `useMarkVariantViewed`.
 
 ## Optimistic Update Pattern
 
-Used by shot-generation mutations (`useShotGenerationMutations.ts`). All follow the same structure:
+Used by shot-generation mutations. All follow the same structure:
 
 ```
 onMutate:  cancel queries -> snapshot previous -> update cache (mark _optimistic)
@@ -131,7 +118,7 @@ onError:   rollback from snapshot
 onSuccess: replace temp IDs with real IDs -> scoped invalidation
 ```
 
-Cache utilities (`src/shared/hooks/shots/cacheUtils.ts`) provide helpers: `cancelShotsQueries`, `updateAllShotsCaches`, `rollbackShotsCaches`, `updateShotGenerationsCache`, `rollbackShotGenerationsCache`.
+Cache utilities (`src/shared/hooks/shots/cacheUtils.ts`) provide helpers: `cancelShotsQueries`, `updateAllShotsCaches`, `rollbackShotsCaches`, `rollbackShotGenerationsCache`, `cancelShotGenerationsQuery`.
 
 Stable callbacks: use refs to prevent recreation storms (avoid `addMutation` in deps).
 
@@ -141,33 +128,33 @@ Stable callbacks: use refs to prevent recreation storms (avoid `addMutation` in 
 
 | Function | When to Use | What It Invalidates |
 |----------|------------|-------------------|
-| `useInvalidateGenerations()(shotId, opts)` | After shot-scoped changes | `all-shot-generations`, `segment-live-timeline`, `shot-generations-meta`, `unpositioned-count` (scoped by `opts.scope`) |
-| `invalidateVariantChange(qc, opts)` | After variant create/update/set-primary | Variants, detail, badges, all shot-generations (broad), unified, derived, segment children/sources |
-| `invalidateAllShotGenerations(qc, reason)` | Global fallback (avoid if possible) | All `all-shot-generations` queries via predicate |
+| `useEnqueueGenerationsInvalidation()(shotId, opts)` / `enqueueGenerationsInvalidation(qc, shotId, opts)` | After shot-scoped changes | `all-shot-generations`, `segment-live-timeline`, `shot-generations-meta`, `unpositioned-count` (scoped by `opts.scope`; optional `delayMs` debounce) |
+| `enqueueVariantInvalidation(qc, opts)` | After variant create/update/set-primary | Variants, detail, badges, shot generations, unified, derived, segment children/sources |
+| `invalidateAllShotGenerations(qc)` | Global fallback (avoid if possible) | All `all-shot-generations` queries via predicate |
 
-Scopes for `useInvalidateGenerations`: `'all'` | `'images'` | `'metadata'` | `'counts'`.
+Scopes for the enqueue functions: `'all'` | `'images'` | `'metadata'` | `'counts'`.
 
 ### Realtime invalidation
 
-Realtime event -> invalidation mapping: see [realtime_system.md](realtime_system.md).
+Poll-diff event -> invalidation mapping: see [realtime_system.md](realtime_system.md).
 
 ### Smart Polling (fallback)
 
-`DataFreshnessManager` + `useSmartPollingConfig` provides intelligent polling when realtime is unhealthy. Hooks opt in via `useSmartPollingConfig(['namespace', id])`.
+`DataFreshnessManager` + `useSmartPollingConfig` provides polling when the poller is unhealthy. Hooks opt in via `useSmartPollingConfig(['namespace', id])`.
 
 ## When to Use Which Hook
 
 | I want to... | Use |
 |-------------|-----|
 | Paginated project gallery | `useProjectGenerations(projectId, page, limit, enabled, filters)` |
-| Shot timeline/grid, positioned, unpositioned, videos | `useShotImages(shotId)`, `useTimelineImages`, `useUnpositionedImages`, `useVideoOutputs` |
+| Shot images (positioned and unpositioned) | `useShotImages(shotId)` |
 | Variants / derived edits in lightbox | `useVariants({ generationId })` / `useDerivedItems(generationId)` |
-| Delete/star/create generations; shot add/remove/reorder | `useGenerationMutations` / `useShotGenerationMutations` |
-| Invalidate after shot-scoped / variant changes | `useInvalidateGenerations()` / `invalidateVariantChange()` |
+| Shot add/remove/reorder | `useShotGenerationMutations` hooks |
+| Invalidate after shot-scoped / variant changes | `useEnqueueGenerationsInvalidation()` / `enqueueVariantInvalidation()` |
 
 ## Key Invariants
 
 1. **Three scopes, three hooks** -- project, shot, variant. Don't merge them.
-2. **Mutations in dedicated files** -- `useGenerationMutations.ts` and `useShotGenerationMutations.ts`, not in query hooks.
-3. **Prefer `queryKeys.*` registry for all query keys** -- ~25 isolated hooks still use inline keys (see `code_quality_audit.md` S2).
-4. **Realtime -> invalidation, not direct cache updates**; smart polling is the fallback; optimistic updates snapshot and roll back.
+2. **Mutations in dedicated files** -- `useShotGenerationMutations.ts`, not in query hooks.
+3. **Prefer `queryKeys.*` registry for all query keys** -- some isolated hooks still use inline keys (see `code_quality_audit.md` S2).
+4. **Poll diffs -> invalidation, not direct cache updates**; smart polling is the fallback; optimistic updates snapshot and roll back.

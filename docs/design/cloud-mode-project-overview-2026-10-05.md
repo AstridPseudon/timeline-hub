@@ -1,6 +1,6 @@
 # Astrid App and Astrid Cloud Mode: Project Overview
 
-**Shared metaplan:** [Astrid App Cloud — coordinated projects and execution schedule](/Users/peteromalley/Documents/astrid-app-workspace/astrid-app/docs/design/cloud-mode-megado-projects-2026-10-05.md).
+**Shared metaplan:** [Astrid App Cloud — coordinated projects and execution schedule](cloud-mode-megado-projects-2026-10-05.md).
 
 **Status: architecture overview reviewed by Astra High; implementation and validation pending — 2026-10-05**
 

@@ -6,7 +6,6 @@ import {
 
 interface JoinClipsIntentScope {
   projectId?: string | null;
-  userId?: string | null;
 }
 
 type JoinClipsIntentListener = (scope: JoinClipsIntentScope) => void;
@@ -22,7 +21,7 @@ export function enqueueJoinClipsIntent(
   entry: PendingJoinClipEntry,
   scope: JoinClipsIntentScope,
 ): void {
-  const key = getPendingJoinClipsStorageKey(scope.projectId, scope.userId);
+  const key = getPendingJoinClipsStorageKey(scope.projectId);
   const existing = intentsByScopeKey.get(key) ?? [];
   if (existing.some((pending) => pending.generationId === entry.generationId)) {
     return;

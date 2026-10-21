@@ -1,5 +1,5 @@
 /**
- * Host-visible extension-scoped settings notification registry (T9).
+ * Host-visible extension-scoped settings notification registry.
  *
  * Provides a single seam through which the manager, runtime lifecycle host,
  * and host-owned UI can observe settings changes across all active extension

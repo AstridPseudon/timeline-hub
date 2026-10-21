@@ -1,5 +1,5 @@
 /**
- * Gallery routes of the frozen doc-27 §4.1 set: bounded generation pages and
+ * Gallery routes: bounded generation pages and
  * generation detail with variants. Read-only — star/delete/set-primary ride
  * pack commands in later batches, never a second write surface here.
  */

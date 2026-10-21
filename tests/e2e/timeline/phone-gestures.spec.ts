@@ -366,7 +366,27 @@ test.describe('timeline phone gestures', () => {
       });
     });
 
-    // --- 8. pinch-to-zoom over the edit area ------------------------------
+    // --- 8. the thumb bar is within reach ------------------------------------
+    // Creation on the phone is the agent's job: the thumb bar offers the gallery and "Ask Astrid…" (no Text
+    // button since 17e46de9). It is in the layout flow and needs no scrolling first; its 44px targets are
+    // asserted in toolbar-reachable.
+    const bar = page.getByTestId('touch-agent-bar');
+    await expect(bar.getByRole('button', { name: 'Add text' })).toHaveCount(0);
+    const askBox = await bar.getByRole('button', { name: /Ask Astrid|Astrid is working/ }).boundingBox();
+    expect(askBox, 'the thumb bar renders Ask Astrid').not.toBeNull();
+    const viewport = page.viewportSize()!;
+    await test.step('Ask Astrid is inside the viewport with the edit area unscrolled', async () => {
+      const editAreaScrollTop = await page.locator('.timeline-canvas-edit-area').evaluate((area) => area.scrollTop);
+      expect(editAreaScrollTop, 'edit area is at scrollTop 0').toBe(0);
+      expect(
+        askBox!.x >= 0 && askBox!.y >= 0
+          && askBox!.x + askBox!.width <= viewport.width && askBox!.y + askBox!.height <= viewport.height,
+        JSON.stringify({ askBox, viewport }),
+      ).toBe(true);
+    });
+    await shot('m8-thumb-bar');
+
+    // --- 9. pinch-to-zoom over the edit area ------------------------------
     const pinchArea = await boxOf(page, '.timeline-canvas-edit-area');
     const pinchMidX = pinchArea ? pinchArea.cx : 210;
     const pinchMidY = pinchArea ? pinchArea.y + 20 : 590;
@@ -422,6 +442,6 @@ test.describe('timeline phone gestures', () => {
         .toBeLessThan(24);
     });
 
-    await shot('m8-pinch');
+    await shot('m9-pinch');
   });
 });

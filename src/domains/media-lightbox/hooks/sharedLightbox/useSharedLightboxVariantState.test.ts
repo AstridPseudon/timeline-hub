@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   useVariants: vi.fn(),
   useVariantSelection: vi.fn(),
-  useVariantPromotion: vi.fn(),
   rawSetActiveVariantId: vi.fn(),
   refetchVariants: vi.fn(),
   setPrimaryVariant: vi.fn(),
@@ -19,10 +18,6 @@ vi.mock('@/shared/hooks/variants/useVariants', () => ({
 
 vi.mock('../useVariantSelection', () => ({
   useVariantSelection: (...args: unknown[]) => mocks.useVariantSelection(...args),
-}));
-
-vi.mock('../useVariantPromotion', () => ({
-  useVariantPromotion: (...args: unknown[]) => mocks.useVariantPromotion(...args),
 }));
 
 import { useSharedLightboxVariantState } from './useSharedLightboxVariantState';
@@ -49,15 +44,7 @@ describe('useSharedLightboxVariantState', () => {
 
     mocks.useVariantSelection.mockImplementation((input: { rawSetActiveVariantId: (id: string) => void; activeVariant: { id: string } | null }) => ({
       setActiveVariantId: input.rawSetActiveVariantId,
-      isViewingNonPrimaryVariant: input.activeVariant?.id === 'variant-b',
     }));
-
-    mocks.useVariantPromotion.mockReturnValue({
-      promoteSuccess: { isSuccessful: true },
-      isPromoting: false,
-      handlePromoteToGeneration: vi.fn(),
-      handleAddVariantAsNewGenerationToShot: vi.fn(),
-    });
   });
 
   it('passes form-only mode through to useVariants and tracks intended active variant IDs', () => {
@@ -67,7 +54,6 @@ describe('useSharedLightboxVariantState', () => {
         variantFetchGenerationId: 'gen-1',
         initialVariantId: 'variant-a',
         isFormOnlyMode: true,
-        selectedProjectId: 'project-1',
       }),
     );
 
@@ -91,7 +77,6 @@ describe('useSharedLightboxVariantState', () => {
         variantFetchGenerationId: 'gen-1',
         initialVariantId: 'variant-a',
         isFormOnlyMode: false,
-        selectedProjectId: 'project-1',
       }),
     );
 

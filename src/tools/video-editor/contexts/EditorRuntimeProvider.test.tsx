@@ -1111,7 +1111,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M3: Repository-backed runtime settings write-through
+// Repository-backed runtime settings write-through
 // ---------------------------------------------------------------------------
 
 describe('EditorRuntimeProvider project-object capability', () => {
@@ -1386,7 +1386,7 @@ describe('EditorRuntimeProvider repository-backed runtime settings', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M4: Extension settings surface via SchemaForm inside EditorRuntimeProvider
+// Extension settings surface via SchemaForm inside EditorRuntimeProvider
 // ---------------------------------------------------------------------------
 
 describe('EditorRuntimeProvider extension settings surface', () => {
@@ -1777,7 +1777,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     expect(raw).toBe('"saved-key"');
   });
 
-  // T17: Shared cleanup helper — diagnostics removal and settings UI state reset
+  // Shared cleanup helper — diagnostics removal and settings UI state reset
   // on disable/unload, preserving unrelated extension state.
   it('disable clears targeted extension diagnostics and settings while preserving unrelated extension state', async () => {
     const OTHER_EXTENSION_ID = 'com.example.other';
@@ -2024,7 +2024,7 @@ describe('EditorRuntimeProvider render-boundary recovery', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T22: Focused per-registry scoped cleanup tests
+// Focused per-registry scoped cleanup tests
 // ---------------------------------------------------------------------------
 // These tests verify that each lifecycle-owned contribution registry
 // (effects, transitions, shaders, clip-types) correctly scopes cleanup to
@@ -2286,7 +2286,7 @@ describe('EditorRuntimeProvider clip-type registry scoped cleanup', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M1: Proposal persistence provider lifecycle (fail-to-pass — T5 will satisfy)
+// Proposal persistence provider lifecycle (fail-to-pass)
 // ---------------------------------------------------------------------------
 
 describe('M1: proposal persistence provider lifecycle', () => {
@@ -2373,7 +2373,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     expect(dataProvider.createExtensionPersistenceService).toHaveBeenCalled();
 
     // initialize() must have been called on the service.
-    // (FAIL-TO-PASS: currently initialize is never called. T5 will fix this.)
+    // (FAIL-TO-PASS: currently initialize is never called. This is the fix target.)
     expect(persistenceService.initialize).toHaveBeenCalled();
 
     // Wait for initialization to settle, then verify proposalRuntime was
@@ -2431,7 +2431,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     // When initialization fails, syncSlices MUST NOT carry a non-null
     // proposalRuntime.  (FAIL-TO-PASS: currently the runtime is exposed
     // unconditionally in the render body, without waiting for initialize.)
-    // After T5, this should hold.
+    // This should hold.
     await waitFor(() => {
       expect(persistenceService.initialize).toHaveBeenCalled();
     });
@@ -2439,7 +2439,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     const runtimeSyncs = mocks.syncSlices.mock.calls.filter(
       (call: any[]) => call[0] && 'proposalRuntime' in call[0] && call[0].proposalRuntime != null,
     );
-    // In the corrected implementation (T5), a failed initialize must not
+    // In the corrected implementation, a failed initialize must not
     // expose a persistence-backed proposalRuntime.
     expect(runtimeSyncs.length).toBe(0);
   });
@@ -2533,7 +2533,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
   });
 
   it('scopes persistence to userId/timelineId/provider changes, disposing old service and creating fresh', async () => {
-    // This test verifies the T5 rework: when scope (userId, timelineId, or
+    // This test verifies the scope rework: when scope (userId, timelineId, or
     // dataProvider) changes, the old persistence service is disposed, the
     // bridge is cleared, and a new service is created + initialized for the
     // new scope.
@@ -2713,7 +2713,7 @@ describe('EditorRuntimeProvider browse-only assembly', () => {
 
     // Keep this diagnostic serializable: a failing spy assertion formats its
     // captured ExtensionContext, whose creative.assets getter intentionally
-    // throws until M6 and can hide the actual activation regression.
+    // throws until its adapter is implemented and can hide the actual activation regression.
     expect(activate.mock.calls.length).toBe(0);
     expect(runtime!.extensionRuntime?.extensions ?? []).toHaveLength(0);
     expect(runtime!.commandRegistry).toBeUndefined();

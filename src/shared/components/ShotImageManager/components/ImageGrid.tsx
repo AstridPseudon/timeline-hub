@@ -12,7 +12,6 @@ import type { UseVideoScrubbingReturn } from '@/shared/hooks/useVideoScrubbing';
 import { TrailingDurationIndicator } from './TrailingDurationIndicator';
 import { Loader2 } from 'lucide-react';
 import { usePrefetchTaskData } from '@/shared/hooks/tasks/useTaskPrefetch';
-import { useSourceImageChanges } from '@/shared/hooks/sourceImageChanges/useSourceImageChanges';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
 import { resolveDuplicateFrame } from '../utils/image-utils';
 import type { VariantDropParams } from '@/shared/hooks/dnd/useImageVariantDrop';
@@ -127,46 +126,6 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
 
   // Prefetch task data on hover (desktop only)
   const prefetchTaskData = usePrefetchTaskData();
-
-  // Build segment info for source image change detection
-  const segmentSourceInfo = useMemo(() => {
-    if (!segmentSlots) return [];
-    return segmentSlots
-      .filter(slot => slot.type === 'child')
-      .map(slot => {
-        if (slot.type !== 'child') return null;
-        const child = slot.child;
-        const params = child.params as Record<string, unknown> | null;
-        const individualParams = (params?.individual_segment_params || {}) as Record<string, unknown>;
-        const orchDetails = (params?.orchestrator_details || {}) as Record<string, unknown>;
-        const childOrder = child.child_order ?? slot.index;
-
-        // Get generation IDs - check multiple locations (individual params, top-level, orchestrator arrays)
-        const orchGenIds = (orchDetails.input_image_generation_ids || []) as string[];
-        const startGenId = [
-          individualParams.start_image_generation_id,
-          params?.start_image_generation_id,
-          orchGenIds[childOrder],
-        ].find((value): value is string => typeof value === 'string') ?? null;
-        const endGenId = [
-          individualParams.end_image_generation_id,
-          params?.end_image_generation_id,
-          orchGenIds[childOrder + 1],
-        ].find((value): value is string => typeof value === 'string') ?? null;
-
-        return {
-          segmentId: child.id,
-          childOrder,
-          params: params || {},
-          startGenId,
-          endGenId,
-        };
-      })
-      .filter((info): info is NonNullable<typeof info> => info !== null);
-  }, [segmentSlots]);
-
-  // Check for recent source image changes (shows warning for 5 minutes after change)
-  const { hasRecentMismatch } = useSourceImageChanges(segmentSourceInfo, !readOnly);
 
   // Build a map from pairShotGenerationId → segmentSlot for direct image-based lookup.
   // This ties segments to their start image rather than relying on position indices,
@@ -304,31 +263,27 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 <div className="absolute -left-[6px] top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-auto flex flex-col items-center gap-1">
                   {showSegmentArea && (
                     <div className="w-20">
-                      {prevSegmentSlot ? (() => {
-                        const segmentId = prevSegmentSlot.type === 'child' ? prevSegmentSlot.child.id : null;
-                        return (
-                          <InlineSegmentVideo
-                            slot={prevSegmentSlot}
-                            pairIndex={slotIndex}
-                            onClick={() => onSegmentClick?.(slotIndex)}
-                            onOpenPairSettings={onPairClick}
-                            onDelete={onSegmentDelete}
-                            isDeleting={prevSegmentSlot.type === 'child' && prevSegmentSlot.child.id === deletingSegmentId}
-                            projectAspectRatio={projectAspectRatio}
-                            isMobile={isMobile}
-                            layout="flow"
-                            compact={true}
-                            isPending={isPrevPending}
-                            hasSourceChanged={segmentId ? hasRecentMismatch(segmentId) : false}
-                            // Scrubbing props
-                            isScrubbingActive={isActiveScrubbing}
-                            onScrubbingStart={onScrubbingStart ? (rect: DOMRect) => onScrubbingStart(slotIndex, rect) : undefined}
-                            scrubbingContainerRef={isActiveScrubbing ? scrubbing?.containerRef : undefined}
-                            scrubbingContainerProps={isActiveScrubbing ? scrubbing?.containerProps : undefined}
-                            scrubbingProgress={isActiveScrubbing ? scrubbing?.progress : undefined}
-                          />
-                        );
-                      })() : isPrevPending ? (
+                      {prevSegmentSlot ? (
+                        <InlineSegmentVideo
+                          slot={prevSegmentSlot}
+                          pairIndex={slotIndex}
+                          onClick={() => onSegmentClick?.(slotIndex)}
+                          onOpenPairSettings={onPairClick}
+                          onDelete={onSegmentDelete}
+                          isDeleting={prevSegmentSlot.type === 'child' && prevSegmentSlot.child.id === deletingSegmentId}
+                          projectAspectRatio={projectAspectRatio}
+                          isMobile={isMobile}
+                          layout="flow"
+                          compact={true}
+                          isPending={isPrevPending}
+                          // Scrubbing props
+                          isScrubbingActive={isActiveScrubbing}
+                          onScrubbingStart={onScrubbingStart ? (rect: DOMRect) => onScrubbingStart(slotIndex, rect) : undefined}
+                          scrubbingContainerRef={isActiveScrubbing ? scrubbing?.containerRef : undefined}
+                          scrubbingContainerProps={isActiveScrubbing ? scrubbing?.containerProps : undefined}
+                          scrubbingProgress={isActiveScrubbing ? scrubbing?.progress : undefined}
+                        />
+                      ) : isPrevPending ? (
                         // No slot yet but task is pending - show loading indicator
                         <div className="h-16 bg-muted/40 border-2 border-dashed border-primary/40 rounded-md flex items-center justify-center shadow-sm">
                           <div className="flex flex-col items-center gap-0.5 text-primary">
@@ -381,31 +336,27 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
                 <div className="absolute -right-[6px] top-1/2 translate-x-1/2 -translate-y-1/2 z-20 pointer-events-auto flex flex-col items-center gap-1">
                   {showSegmentArea && (
                     <div className="w-20">
-                      {segmentSlot ? (() => {
-                        const segmentId = segmentSlot.type === 'child' ? segmentSlot.child.id : null;
-                        return (
-                          <InlineSegmentVideo
-                            slot={segmentSlot}
-                            pairIndex={slotIndex}
-                            onClick={() => onSegmentClick?.(slotIndex)}
-                            onOpenPairSettings={onPairClick}
-                            onDelete={onSegmentDelete}
-                            isDeleting={segmentSlot.type === 'child' && segmentSlot.child.id === deletingSegmentId}
-                            projectAspectRatio={projectAspectRatio}
-                            isMobile={isMobile}
-                            layout="flow"
-                            compact={true}
-                            isPending={isPending}
-                            hasSourceChanged={segmentId ? hasRecentMismatch(segmentId) : false}
-                            // Scrubbing props
-                            isScrubbingActive={isActiveScrubbing}
-                            onScrubbingStart={onScrubbingStart ? (rect: DOMRect) => onScrubbingStart(slotIndex, rect) : undefined}
-                            scrubbingContainerRef={isActiveScrubbing ? scrubbing?.containerRef : undefined}
-                            scrubbingContainerProps={isActiveScrubbing ? scrubbing?.containerProps : undefined}
-                            scrubbingProgress={isActiveScrubbing ? scrubbing?.progress : undefined}
-                          />
-                        );
-                      })() : isPending ? (
+                      {segmentSlot ? (
+                        <InlineSegmentVideo
+                          slot={segmentSlot}
+                          pairIndex={slotIndex}
+                          onClick={() => onSegmentClick?.(slotIndex)}
+                          onOpenPairSettings={onPairClick}
+                          onDelete={onSegmentDelete}
+                          isDeleting={segmentSlot.type === 'child' && segmentSlot.child.id === deletingSegmentId}
+                          projectAspectRatio={projectAspectRatio}
+                          isMobile={isMobile}
+                          layout="flow"
+                          compact={true}
+                          isPending={isPending}
+                          // Scrubbing props
+                          isScrubbingActive={isActiveScrubbing}
+                          onScrubbingStart={onScrubbingStart ? (rect: DOMRect) => onScrubbingStart(slotIndex, rect) : undefined}
+                          scrubbingContainerRef={isActiveScrubbing ? scrubbing?.containerRef : undefined}
+                          scrubbingContainerProps={isActiveScrubbing ? scrubbing?.containerProps : undefined}
+                          scrubbingProgress={isActiveScrubbing ? scrubbing?.progress : undefined}
+                        />
+                      ) : isPending ? (
                         // No slot yet but task is pending - show loading indicator
                         <div className="h-16 bg-muted/40 border-2 border-dashed border-primary/40 rounded-md flex items-center justify-center shadow-sm">
                           <div className="flex flex-col items-center gap-0.5 text-primary">

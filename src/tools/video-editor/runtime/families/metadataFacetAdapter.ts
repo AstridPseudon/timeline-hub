@@ -2,8 +2,8 @@
  * Metadata Facet adapter — first real HostFamilyAdapter.
  *
  * Owns normalization, lifecycle, diagnostics, and conformance reporting
- * for metadata facet contributions.  Replaces the inline projection
- * previously embedded in FamilyRuntimeAssembly's switch statement.
+ * for metadata facet contributions.  The projection lives here rather than inline in
+ * FamilyRuntimeAssembly's switch statement.
  *
  * @module families/metadataFacetAdapter
  */

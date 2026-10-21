@@ -1,5 +1,5 @@
 /**
- * Sprint 5: Phase 4d EFFECT_REGISTRY dispatch test.
+ * Phase 4d EFFECT_REGISTRY dispatch test.
  *
  * Verifies that:
  *   1. A clipType registered in `@banodoco/timeline-composition/registry.generated`

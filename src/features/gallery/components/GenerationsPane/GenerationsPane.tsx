@@ -2,7 +2,6 @@ import React from 'react';
 import { Sparkles, Images } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { ImageGenerationModal } from '@/shared/components/modals/ImageGenerationModal';
-import { DeleteGenerationConfirmDialog } from '@/shared/components/dialogs/DeleteGenerationConfirmDialog';
 import { PaneControlTab } from '@/shared/components/PaneControlTab';
 import { GenerationsPaneControls } from './components/GenerationsPaneControls';
 import { GenerationsPaneGallery } from './components/GenerationsPaneGallery';
@@ -181,9 +180,6 @@ function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneCon
             runtimeProjectId: gallery.runtimeProjectId,
             runtimeAuthority: gallery.runtimeAuthority,
             items: gallery.paginatedData.items,
-            onDelete: gallery.handleDeleteGeneration,
-            onToggleStar: gallery.handleToggleStar,
-            isDeleting: !!gallery.isDeleting,
             allShots: gallery.shotsData || [],
             lastShotId: gallery.lastAffectedShotId || undefined,
             filters: filters.galleryFilters,
@@ -193,7 +189,6 @@ function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneCon
             onServerPageChange: gallery.handleServerPageChange,
             generationFilters: filters.generationFilters,
             currentViewingShotId: filters.currentShotId || undefined,
-            onCreateShot: gallery.handleCreateShot,
             onAddGenerationToTimeline: addGenerationToTimeline,
             config: gallery.config,
             readOnly: gallery.readOnly,
@@ -220,8 +215,6 @@ const GenerationsPaneComponent: React.FC = () => {
         onClose={() => controller.modal.setIsGenerationModalOpen(false)}
         initialShotId={controller.filters.currentShotId}
       />
-
-      <DeleteGenerationConfirmDialog {...controller.gallery.confirmDialogProps} />
     </>
   );
 };

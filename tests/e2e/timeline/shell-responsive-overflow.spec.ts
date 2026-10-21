@@ -1,6 +1,11 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { browserEvidencePath, openEditor, resetFakeRuntimeBaseline } from "./support";
 
+/**
+ * The composed editor shell stays inside its viewport at the three device classes: the page never widens, the
+ * main grid, timeline and preview lie inside the viewport width, the touch rows and thumb bar fit, and the
+ * project and timeline pickers are not pushed off an edge.
+ */
 const VIEWPORTS = [
   {
     name: "desktop",
@@ -24,106 +29,6 @@ const VIEWPORTS = [
     screenshot: "27-shell-phone-node20.png",
   },
 ] as const;
-
-async function auditMarkerLayerPages(
-  page: Page,
-): Promise<{ total: number; keys: string[] }> {
-  const legend = page.getByTestId("timeline-marker-layer-legend");
-  await expect(legend).toBeVisible();
-  // On touch the pager is one corner button that steps to the next page and wraps
-  // ("Marker layers 1–3 of 11: show the next layers"); at a desk it has Next/Previous.
-  const compact = await legend.evaluate((element) => element.tagName === "BUTTON");
-  const next = legend.getByRole("button", { name: "Next marker layers" });
-  const previous = legend.getByRole("button", {
-    name: "Previous marker layers",
-  });
-  const keys = new Set<string>();
-  let total = 0;
-
-  for (let pageIndex = 0; pageIndex < 12; pageIndex += 1) {
-    const label = compact
-      ? (await legend.getAttribute("aria-label")) ?? ""
-      : (await legend.textContent()) ?? "";
-    const match = compact
-      ? /Marker layers \d+[–-]\d+ of (\d+)/.exec(label)
-      : /Layers \d+[–-]\d+\/(\d+)/.exec(label);
-    expect(match, `unexpected marker pager label: ${label}`).not.toBeNull();
-    total = Number(match![1]);
-
-    const composition = await page.evaluate(() => {
-      const layers = Array.from(
-        document.querySelectorAll('[data-testid="timeline-marker-layer"]'),
-      );
-      const markers = Array.from(
-        document.querySelectorAll("[data-marker-anchor-x]"),
-      );
-      const groups = new Map<
-        string,
-        Array<{ lane: string | null; offset: string | null }>
-      >();
-      for (const marker of markers) {
-        const anchor = marker.getAttribute("data-marker-anchor-x") ?? "";
-        const group = groups.get(anchor) ?? [];
-        group.push({
-          lane: marker.getAttribute("data-marker-layer-lane"),
-          offset: marker.getAttribute("data-marker-visual-offset-x"),
-        });
-        groups.set(anchor, group);
-      }
-      return {
-        keys: layers.map((layer) =>
-          layer.getAttribute("data-marker-layer-key"),
-        ),
-        indexes: layers.map((layer) =>
-          layer.getAttribute("data-marker-layer-index"),
-        ),
-        coincident: [...groups.values()]
-          .filter((group) => group.length > 1)
-          .map((group) => ({
-            count: group.length,
-            positions: new Set(
-              group.map((entry) => `${entry.lane}:${entry.offset}`),
-            ).size,
-          })),
-      };
-    });
-
-    expect(composition.keys.length).toBeGreaterThan(0);
-    expect(new Set(composition.indexes).size).toBe(composition.indexes.length);
-    for (const key of composition.keys) {
-      expect(key).not.toBeNull();
-      keys.add(key!);
-    }
-    for (const group of composition.coincident) {
-      expect(group.positions, JSON.stringify(composition)).toBe(group.count);
-    }
-
-    if (compact) {
-      const pageNumber = Number(await legend.getAttribute("data-marker-layer-page"));
-      const pageCount = Number(await legend.getAttribute("data-marker-layer-page-count"));
-      if (pageNumber + 1 >= pageCount) break;
-      await legend.click();
-      await expect(legend).toHaveAttribute("data-marker-layer-page", String(pageNumber + 1));
-      continue;
-    }
-    if (await next.isDisabled()) break;
-    const oldLabel = label;
-    await next.click();
-    await expect(legend).not.toHaveText(oldLabel);
-  }
-
-  expect(keys.size).toBe(total);
-  if (compact) {
-    // The last page's step wraps back to the first.
-    await legend.click();
-    await expect(legend).toHaveAttribute("data-marker-layer-page", "0");
-  } else {
-    while (!(await previous.isDisabled())) {
-      await previous.click();
-    }
-  }
-  return { total, keys: [...keys] };
-}
 
 for (const viewport of VIEWPORTS) {
   test.describe(viewport.name, () => {
@@ -167,10 +72,10 @@ for (const viewport of VIEWPORTS) {
           ),
           phoneTopRow: rect('[data-toolbar-layout="touch"]'),
           phonePlaybackRow: rect('[data-testid="touch-playback-row"]'),
+          touchAgentBar: rect('[data-testid="touch-agent-bar"]'),
           removedModeUi: document.querySelectorAll(
             '[data-timeline-mode-switcher], [aria-label="Phone timeline mode bar"], [aria-label="Timeline mode switcher"]',
           ).length,
-          markerPager: rect('[data-testid="timeline-marker-layer-legend"]'),
           editArea: rect(".timeline-canvas-edit-area"),
           preview: rect('[data-testid="video-editor-preview-surface"]'),
           selectors: Array.from(
@@ -180,25 +85,6 @@ for (const viewport of VIEWPORTS) {
           ).map((element) => {
             const box = element.getBoundingClientRect();
             return { left: Math.round(box.left), right: Math.round(box.right) };
-          }),
-          // The scene-markers extension panel's own controls (its outer panel has no test id).
-          sceneMarkerControls: Array.from(
-            document.querySelectorAll(
-              'button[data-testid^="scene-markers-"], select[data-testid^="scene-markers-"], input[data-testid^="scene-markers-"]',
-            ),
-          ).map((element) => {
-            const box = element.getBoundingClientRect();
-            return {
-              label:
-                element.getAttribute("data-testid") ??
-                element.getAttribute("aria-label") ??
-                element.textContent?.trim() ??
-                element.tagName,
-              left: Math.round(box.left),
-              top: Math.round(box.top),
-              right: Math.round(box.right),
-              bottom: Math.round(box.bottom),
-            };
           }),
         };
       });
@@ -215,7 +101,6 @@ for (const viewport of VIEWPORTS) {
         geometry.main,
         geometry.editArea,
         geometry.preview,
-        geometry.markerPager,
       ]) {
         expect(region, JSON.stringify(geometry)).not.toBeNull();
         expect(region!.x, JSON.stringify(geometry)).toBeGreaterThanOrEqual(0);
@@ -223,26 +108,21 @@ for (const viewport of VIEWPORTS) {
           viewport.width,
         );
       }
-      // Extension panels are a desk surface: the touch editor (phone and tablet) leaves that
-      // work to the agent and draws no extension footer.
-      expect(geometry.sceneMarkerControls, JSON.stringify(geometry)).toHaveLength(viewport.touch ? 0 : 5);
-      for (const control of geometry.sceneMarkerControls) {
-        expect(control.left, JSON.stringify(geometry)).toBeGreaterThanOrEqual(
-          0,
-        );
-        expect(control.top, JSON.stringify(geometry)).toBeGreaterThanOrEqual(0);
-        expect(control.right, JSON.stringify(geometry)).toBeLessThanOrEqual(
-          viewport.width,
-        );
-        expect(control.bottom, JSON.stringify(geometry)).toBeLessThanOrEqual(
-          viewport.height,
-        );
-      }
       for (const selector of geometry.selectors) {
         expect(selector.left, JSON.stringify(geometry)).toBeGreaterThanOrEqual(
           0,
         );
         expect(selector.right, JSON.stringify(geometry)).toBeLessThanOrEqual(
+          viewport.width,
+        );
+      }
+
+      // The touch editor's thumb bar (gallery, Text, Ask Astrid…) must fit the viewport width: a button
+      // pushed off the right edge is a button nobody can tap.
+      if (viewport.touch) {
+        expect(geometry.touchAgentBar, JSON.stringify(geometry)).not.toBeNull();
+        expect(geometry.touchAgentBar!.x, JSON.stringify(geometry)).toBeGreaterThanOrEqual(0);
+        expect(geometry.touchAgentBar!.right, JSON.stringify(geometry)).toBeLessThanOrEqual(
           viewport.width,
         );
       }
@@ -258,8 +138,6 @@ for (const viewport of VIEWPORTS) {
           );
         }
       }
-      const layerComposition = await auditMarkerLayerPages(page);
-      expect(layerComposition.total).toBe(11);
 
       await page.screenshot({
         path: browserEvidencePath(testInfo, `chrome-acceptance/${viewport.screenshot}`),

@@ -3,13 +3,14 @@ import type { QueryClient } from '@tanstack/react-query';
 import { updateSettingsCache } from '@/shared/hooks/settings/useToolSettings';
 import { settingsQueryKeys } from '@/shared/lib/queryKeys/settings';
 import { SETTINGS_IDS } from '@/shared/lib/settingsIds';
-import type { ProjectImageSettings } from '../../types';
+import type { ProjectImageSettings, ReferenceImage } from '../../types';
 import type { ReferenceActionHandlersOutput } from './types';
 
 interface UseReferenceSelectionHandlersInput {
   selectedReferenceId: string | null;
   selectedReferenceIdByShot: Record<string, string | null>;
   effectiveShotId: string;
+  referencePointers: ReferenceImage[];
   selectedProjectId: string | undefined;
   associatedShotId: string | null;
   shotPromptSettings?: { updateField: <T>(field: string, value: T) => void };
@@ -19,11 +20,11 @@ interface UseReferenceSelectionHandlersInput {
   ) => Promise<void>;
   markAsInteracted: () => void;
   queryClient: QueryClient;
-  handleDeleteReference: (referenceId: string) => Promise<void>;
 }
 
 interface ReferenceSelectionHandlers {
   handleSelectReference: ReferenceActionHandlersOutput['handleSelectReference'];
+  handleDeleteReference: ReferenceActionHandlersOutput['handleDeleteReference'];
   handleRemoveStyleReference: ReferenceActionHandlersOutput['handleRemoveStyleReference'];
 }
 
@@ -34,13 +35,13 @@ export function useReferenceSelectionHandlers(
     selectedReferenceId,
     selectedReferenceIdByShot,
     effectiveShotId,
+    referencePointers,
     selectedProjectId,
     associatedShotId,
     shotPromptSettings,
     updateProjectImageSettings,
     markAsInteracted,
     queryClient,
-    handleDeleteReference,
   } = input;
 
   const handleSelectReference = useCallback(async (referenceId: string) => {
@@ -81,6 +82,49 @@ export function useReferenceSelectionHandlers(
     updateProjectImageSettings,
   ]);
 
+  // Drops the pointer from the project's reference list and re-points any shot
+  // that had it selected at the first remaining reference.
+  const handleDeleteReference = useCallback(async (referenceId: string) => {
+    if (!referencePointers.some((pointer) => pointer.id === referenceId)) {
+      return;
+    }
+
+    const filteredPointers = referencePointers.filter((pointer) => pointer.id !== referenceId);
+    const updatedSelections = { ...selectedReferenceIdByShot };
+    Object.keys(updatedSelections).forEach((shotId) => {
+      if (updatedSelections[shotId] === referenceId) {
+        updatedSelections[shotId] = filteredPointers[0]?.id ?? null;
+      }
+    });
+
+    try {
+      queryClient.setQueryData(
+        settingsQueryKeys.tool(SETTINGS_IDS.PROJECT_IMAGE_SETTINGS, selectedProjectId, undefined),
+        (prev: unknown) =>
+          updateSettingsCache<ProjectImageSettings>(prev, {
+            references: filteredPointers,
+            selectedReferenceIdByShot: updatedSelections,
+          })
+      );
+    } catch {
+      // Intentionally ignored - cache update is best effort.
+    }
+
+    await updateProjectImageSettings('project', {
+      references: filteredPointers,
+      selectedReferenceIdByShot: updatedSelections,
+    });
+
+    markAsInteracted();
+  }, [
+    markAsInteracted,
+    queryClient,
+    referencePointers,
+    selectedProjectId,
+    selectedReferenceIdByShot,
+    updateProjectImageSettings,
+  ]);
+
   const handleRemoveStyleReference = useCallback(async () => {
     if (!selectedReferenceId) {
       return;
@@ -91,6 +135,7 @@ export function useReferenceSelectionHandlers(
 
   return {
     handleSelectReference,
+    handleDeleteReference,
     handleRemoveStyleReference,
   };
 }

@@ -142,24 +142,4 @@ describe('usePromptFieldState', () => {
     expect(mockOnClearEnhancedPrompt).toHaveBeenCalled();
     expect(mockOnSettingsChange).not.toHaveBeenCalled();
   });
-
-  it('handleVoiceResult passes prompt to onSettingsChange', () => {
-    const { result } = renderHook(() => usePromptFieldState(defaultProps));
-
-    act(() => {
-      result.current.handleVoiceResult({ prompt: 'voice prompt', transcription: 'raw transcription' });
-    });
-
-    expect(mockOnSettingsChange).toHaveBeenCalledWith('voice prompt');
-  });
-
-  it('handleVoiceResult falls back to transcription when no prompt', () => {
-    const { result } = renderHook(() => usePromptFieldState(defaultProps));
-
-    act(() => {
-      result.current.handleVoiceResult({ transcription: 'raw transcription' });
-    });
-
-    expect(mockOnSettingsChange).toHaveBeenCalledWith('raw transcription');
-  });
 });

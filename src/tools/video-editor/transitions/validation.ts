@@ -35,7 +35,7 @@ export const TransitionDiagnosticCodes = {
   /** The transition type is not found in built-ins or the registry. */
   UNRESOLVED_TYPE: 'transitions/validation/unresolved-type',
 
-  /** A contributed transition that was previously available has been removed. */
+  /** The contributed transition was removed. */
   REMOVED_CONTRIBUTED: 'transitions/validation/removed-contributed',
 
   /** The transition record exists but is in an inactive/error state. */

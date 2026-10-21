@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { PageFadeIn } from '@/shared/components/transitions/PageFadeIn';
+import { CloudBackendNotice } from '@/shared/components/CloudBackendNotice';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { VideoUploadList } from '../components/VideoUploadList';
 import { VideoSegmentEditor } from '../components/VideoSegmentEditor/VideoSegmentEditor';
@@ -25,6 +26,7 @@ export default function TrainingDataHelperPage() {
     deleteBatch,
     setSelectedBatchId,
     getVideoUrl,
+    cloudBackendUnavailable,
   } = useTrainingData();
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const segmentEditorRef = useRef<HTMLDivElement>(null);
@@ -73,6 +75,7 @@ export default function TrainingDataHelperPage() {
           <p className="text-muted-foreground">
             Upload videos and extract training segments for AI model development
           </p>
+          {cloudBackendUnavailable && <CloudBackendNotice toolName="Training Data Helper" />}
         </div>
 
         {/* Batch Selector */}

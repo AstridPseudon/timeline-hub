@@ -585,7 +585,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   // that the lazy-init guard above establishes on `storeRef.current`.
   const store = storeRef.current;
   const playback = useTimelinePlayback();
-  const preferences = useEditorPreferences(runtime.timelineId, { persist: isDataProviderPersistenceEnabled(runtime.provider) });
+  const preferences = useEditorPreferences(runtime.timelineId, viewportWidth, { persist: isDataProviderPersistenceEnabled(runtime.provider) });
   const resolveAssetUrl = useCallback(async (file: string) => {
     if (runtime.assetResolver) {
       return await runtime.assetResolver.resolveAssetUrl(file);
@@ -751,7 +751,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     onRemoteData,
   } = history;
 
-  // Wire TimelineOps (M3 atomic mutation adapter) into the host runtime context.
+  // Wire TimelineOps (atomic mutation adapter) into the host runtime context.
   // The adapter is stable (memoized on its callback deps) and delegates to
   // the existing commitData/history path without replacing the command facade.
   // The canonical version getter reads the store's ack-tracked field (outside

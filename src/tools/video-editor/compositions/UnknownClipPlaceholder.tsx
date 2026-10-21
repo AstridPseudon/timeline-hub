@@ -6,7 +6,7 @@ import type { ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
 /**
  * Loud placeholder for clips the editor cannot render — either because
  * `clipType` is unknown to the editor or because a
- * known clipType is missing the asset it needs to render. Per SD-025 these
+ * known clipType is missing the asset it needs to render. These
  * cases must be visible, never silent.
  *
  * Two styles:

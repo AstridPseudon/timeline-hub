@@ -8,7 +8,6 @@
 
 import React from 'react';
 import { GenerationDetails } from '@/domains/generation/components/GenerationDetails';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import { getSourceTaskIdLegacyCompatible } from '@/shared/lib/taskIdHelpers';
 import { useGetTask } from '@/shared/hooks/tasks/useTasks';
 import type { GenerationVariant } from '@/shared/hooks/variants/useVariants';
@@ -17,10 +16,9 @@ import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 
 interface VariantDetailsProps {
   variant: GenerationVariant;
-  availableLoras?: LoraModel[];
 }
 
-export const VariantDetails: React.FC<VariantDetailsProps> = ({ variant, availableLoras }) => {
+export const VariantDetails: React.FC<VariantDetailsProps> = ({ variant }) => {
   const { selectedProjectId } = useProjectSelectionContext();
   const variantParams = variant.params;
   const sourceTaskId = getSourceTaskIdLegacyCompatible(variantParams);
@@ -37,7 +35,6 @@ export const VariantDetails: React.FC<VariantDetailsProps> = ({ variant, availab
         inputImages={[]}
         variant="hover"
         isMobile={false}
-        availableLoras={availableLoras}
         showCopyButtons={true}
       />
     );
@@ -56,7 +53,6 @@ export const VariantDetails: React.FC<VariantDetailsProps> = ({ variant, availab
       inputImages={[]}
       variant="hover"
       isMobile={false}
-      availableLoras={availableLoras}
       showCopyButtons={true}
     />
   );

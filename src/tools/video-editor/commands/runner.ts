@@ -1,3 +1,4 @@
+import { getErrorMessage } from '@/shared/lib/errorHandling/errorUtils';
 import { buildTrackClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { serializeForDisk, validateSerializedConfig } from '@/tools/video-editor/lib/serialize.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
@@ -205,14 +206,6 @@ const toExecutionError = (
   path: params.path ?? '$',
   ...params,
 });
-
-const asErrorMessage = (error: unknown): string => {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return String(error);
-};
 
 const withPinnedShotGroups = (
   config: TimelineData['config'],
@@ -422,7 +415,7 @@ const runTimelineCommandsInternal = <TCommand extends TimelineCommand = Timeline
           } catch (error) {
             const executionError = toExecutionError({
               code: 'invert_failed',
-              message: `Timeline command "${command.type}" could not produce an inverse transaction: ${asErrorMessage(error)}`,
+              message: `Timeline command "${command.type}" could not produce an inverse transaction: ${getErrorMessage(error)}`,
               path: `$.commands[${commandIndex}]`,
               transactionId: normalizedTransaction.transactionId,
               commandType: command.type,
@@ -464,7 +457,7 @@ const runTimelineCommandsInternal = <TCommand extends TimelineCommand = Timeline
       } catch (error) {
         const executionError = toExecutionError({
           code: runMode === 'apply' ? 'apply_failed' : 'dry_run_failed',
-          message: `Timeline command "${command.type}" failed during ${runMode === 'apply' ? 'apply' : 'dry run'}: ${asErrorMessage(error)}`,
+          message: `Timeline command "${command.type}" failed during ${runMode === 'apply' ? 'apply' : 'dry run'}: ${getErrorMessage(error)}`,
           path: `$.commands[${commandIndex}]`,
           transactionId: normalizedTransaction.transactionId,
           commandType: command.type,

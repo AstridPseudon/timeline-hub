@@ -9,8 +9,9 @@ import {
   sanitizeExtensionOperationalEvent,
   selectReviewedExtensions,
 } from './extensionReleaseControls';
-import { TRANSCRIPT_LANE_EXTENSION_ID } from '@/tools/video-editor/dev/transcript-lane/extension';
 import { devLocalExtensions } from '@/tools/video-editor/dev/localExtensions';
+
+const TRANSCRIPT_LANE_EXTENSION_ID = 'haus.astrid.transcript-lane';
 
 const extension = (id: string) => defineExtension({
   manifest: { id: id as never, version: '1.0.0', apiVersion: 1, license: 'MIT', label: id },
@@ -35,12 +36,12 @@ describe('extension release controls', () => {
 
   it('rejects unreviewed extensions while admitting shipped extensions', () => {
     const all = [
-      extension('haus.astrid.scene-phase-markers'),
+      extension('haus.astrid.live-scenes'),
       extension('haus.astrid.unreviewed-local-example'),
       extension(TRANSCRIPT_LANE_EXTENSION_ID),
     ];
     expect(selectReviewedExtensions(all).map((item) => item.manifest.id)).toEqual([
-      'haus.astrid.scene-phase-markers', TRANSCRIPT_LANE_EXTENSION_ID,
+      'haus.astrid.live-scenes', TRANSCRIPT_LANE_EXTENSION_ID,
     ]);
   });
 

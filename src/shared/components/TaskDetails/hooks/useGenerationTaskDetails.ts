@@ -19,7 +19,7 @@ interface UseGenerationTaskDetailsOptions {
   projectId?: string | null;
   enabled?: boolean;
   resolveMappingOnDemand?: boolean;
-  onApplySettingsFromTask?: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
+  onApplySettingsFromTask?: (taskId: string) => void;
   onClose?: () => void;
 }
 

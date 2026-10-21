@@ -19,9 +19,6 @@ interface UISettings {
   imageDeletion?: {
     skipConfirmation: boolean;
   };
-  aiInputMode: {
-    mode: 'voice' | 'text';
-  };
   privacyDefaults: {
     resourcesPublic: boolean;
     generationsPublic: boolean;
@@ -99,18 +96,6 @@ function decodeImageDeletion(
   };
 }
 
-function decodeAIInputMode(
-  value: unknown,
-  fallback: UISettings['aiInputMode'],
-): UISettings['aiInputMode'] {
-  const record = toRecord(value);
-  const mode = record?.mode === 'voice' || record?.mode === 'text'
-    ? record.mode
-    : fallback.mode;
-
-  return { mode };
-}
-
 function decodePrivacyDefaults(
   value: unknown,
   fallback: UISettings['privacyDefaults'],
@@ -154,8 +139,6 @@ function normalizeUserUISetting<K extends keyof UISettings>(
         value,
         fallback as NonNullable<UISettings['imageDeletion']>,
       ) as UISettings[K];
-    case 'aiInputMode':
-      return decodeAIInputMode(value, fallback as UISettings['aiInputMode']) as UISettings[K];
     case 'privacyDefaults':
       return decodePrivacyDefaults(
         value,

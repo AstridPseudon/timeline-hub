@@ -66,12 +66,10 @@ interface UseMediaGalleryViewInteractionsParams {
   filtersHook: MediaGalleryViewFiltersHook;
   stateHook: MediaGalleryViewStateHook;
   isMobile: boolean;
-  onCreateShot?: ((shotName: string, files: File[]) => Promise<void>) | undefined;
   onAddToLastShot?: AddToShotHandler | undefined;
   onAddToLastShotWithoutPosition?: AddToShotHandler | undefined;
   showDelete: boolean;
   showDownload: boolean;
-  showShare: boolean;
   showStar: boolean;
   showAddToShot: boolean;
   enableSingleClick: boolean;
@@ -97,12 +95,10 @@ export function useMediaGalleryViewInteractions(params: UseMediaGalleryViewInter
     filtersHook,
     stateHook,
     isMobile,
-    onCreateShot,
     onAddToLastShot,
     onAddToLastShotWithoutPosition,
     showDelete,
     showDownload,
-    showShare,
     showStar,
     showAddToShot,
     enableSingleClick,
@@ -157,12 +153,10 @@ export function useMediaGalleryViewInteractions(params: UseMediaGalleryViewInter
   } = useMediaGalleryItemProps({
     simplifiedShotOptions,
     currentViewingShotId,
-    onCreateShot,
     onAddToLastShot,
     onAddToLastShotWithoutPosition,
     showDelete,
     showDownload,
-    showShare,
     showStar,
     showAddToShot,
     enableSingleClick,

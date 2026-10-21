@@ -47,7 +47,7 @@ import type {
   DisposeHandle,
   ExtensionDiagnostic,
   ProcessManifestEntry,
-  // M6 contribution types
+  // contribution types
   ParserContribution,
   OutputFormatContribution,
   SearchProviderContribution,
@@ -62,7 +62,7 @@ import type {
   MetadataFacetDescriptor,
   MetadataFacetValueKind,
   AssetDetailSectionDescriptor,
-  // M11 live-data types
+  // live-data types
   LiveSourceKind,
   LiveSourceStatus,
   LiveSourceDiagnostic,
@@ -97,7 +97,7 @@ import type {
   LiveSessionsService,
   GenerationSession,
   CreativeContext,
-  // M12 planner requirement types
+  // planner requirement types
   CapabilityVersion,
   CapabilitySourceRef,
   RouteFitMetadata,
@@ -115,7 +115,7 @@ import type {
   ShaderContribution,
   ShaderInlineSource,
   ShaderRegistrationService,
-  // M14 packaging types
+  // packaging types
   DependencyPosture,
   ExtensionDependency,
   ExtensionSettingsSchema,
@@ -127,7 +127,7 @@ import type {
   InstalledExtensionPackage,
   ManifestValidationMode,
   ManifestValidationResult,
-  // M10 agent tool types
+  // agent tool types
   AgentToolContribution,
   AgentToolInvocationRequest,
   AgentToolRequestContext,
@@ -143,7 +143,7 @@ import type {
   ParserInput,
   ParserResult,
   SearchMatch,
-  // M1b CompositionGraph types
+  // CompositionGraph types
   CompositionNodeKind,
   CompositionEdgeKind,
   ReferenceState,
@@ -152,7 +152,7 @@ import type {
   CompositionReferenceStateEntry,
   CompositionGraphPreviewResult,
   CompositionGraph,
-  // M7a Output-format route planning types
+  // Output-format route planning types
   OutputFormatRef,
   ArtifactManifestProfile,
   ArtifactManifestProfileBase,
@@ -162,7 +162,7 @@ import type {
   SidecarArtifactManifestProfile,
   PreviewArtifactManifestProfile,
   ProvenanceGap,
-  // T1.1 timeline overlay + UI contracts
+  // timeline overlay + UI contracts
   ExtensionRenderer,
   ExtensionUiService,
   TimelineOverlayManifestContribution,
@@ -403,16 +403,16 @@ describe('contributionKindNotYetBridged', () => {
 
   it('unsupported contribution behavior is explicit (returns owning milestone)', () => {
     expect(contributionKindNotYetBridged('clipType')).toBeNull();
-    // shader is delegated to a placeholder adapter — returns M13
+    // shader is delegated to a placeholder adapter — returns its milestone
     expect(contributionKindNotYetBridged('shader')).toBe('M13');
     expect(contributionKindNotYetBridged('agentTool')).toBe('M10');
-    // agent is delegated — not bridged, returns M10
+    // agent is delegated — not bridged, returns its milestone
     expect(contributionKindNotYetBridged('agent')).toBe('M10');
   });
 
   it('shader is delegated to a placeholder adapter (schema-backed, active in runtime normalization)', () => {
     expect(CONTRIBUTION_KIND_MILESTONE.shader).toBe('M13');
-    // Registry-derived: shader has executionMaturity 'delegated', so it reports M13
+    // Registry-derived: shader has executionMaturity 'delegated', so it reports its milestone
     expect(contributionKindNotYetBridged('shader')).toBe('M13');
   });
 
@@ -514,7 +514,7 @@ describe('registry-derived family helpers', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M13: defineExtension accepts dedicated shader contributions
+// defineExtension accepts dedicated shader contributions
 // ---------------------------------------------------------------------------
 
 describe('M13: shader SDK contracts', () => {
@@ -650,7 +650,7 @@ describe('M13: shader SDK contracts', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: defineExtension accepts parser/outputFormat/searchProvider contributions
+// defineExtension accepts parser/outputFormat/searchProvider contributions
 // ---------------------------------------------------------------------------
 
 describe('M6: defineExtension accepts M6 contribution types', () => {
@@ -777,7 +777,7 @@ describe('M6: defineExtension accepts M6 contribution types', () => {
   });
 
   it('allows cross-kind reuse of the same bare contribution ID', () => {
-    // SD3: Cross-kind reuse is valid — only exact scoped-key duplicates (same kind + same ID) are blocked.
+    // Cross-kind reuse is valid — only exact scoped-key duplicates (same kind + same ID) are blocked.
     const ext = defineExtension({
       manifest: {
         id: 'com.m6.cross-kind' as any,
@@ -854,7 +854,7 @@ describe('M6: defineExtension accepts M6 contribution types', () => {
   });
 
   it('unsupported contribution behavior is explicit in CONTRIBUTION_KIND_MILESTONE', () => {
-    // clipType is M9-bridged (executionMaturity 'runtime-bridged'), so it returns null.
+    // clipType is runtime-bridged (executionMaturity 'runtime-bridged'), so it returns null.
     expect((CONTRIBUTION_KIND_MILESTONE as Record<string, string>)['clipType']).toBe('M9');
     expect(contributionKindNotYetBridged('clipType' as any)).toBeNull();
 
@@ -1688,7 +1688,7 @@ describe('CREATIVE_MEMBER_MILESTONE', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M11: Live Data Bridge — source, channel, sample, bake, permission,
+// Live Data Bridge — source, channel, sample, bake, permission,
 // recording, learn, steering, and binding-resolution type tests
 // ---------------------------------------------------------------------------
 
@@ -2372,7 +2372,7 @@ describe('M11: Updated CREATIVE_MEMBER_MILESTONE', () => {
 
 
 // ---------------------------------------------------------------------------
-// M12: Planner requirement contracts — constructability
+// Planner requirement contracts — constructability
 // ---------------------------------------------------------------------------
 
 describe('M12: CapabilityVersion is constructable', () => {
@@ -2830,7 +2830,7 @@ describe('M12: output, artifact, sampling, and process contracts are constructab
 });
 
 // ---------------------------------------------------------------------------
-// M14: validateManifest
+// validateManifest
 // ---------------------------------------------------------------------------
 
 describe('M14: validateManifest', () => {
@@ -2844,7 +2844,7 @@ describe('M14: validateManifest', () => {
     const result = validateManifest(baseManifest(), 'dev');
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
-    // Dev mode warns about missing M14 fields
+    // Dev mode warns about missing required fields
     expect(result.warnings.length).toBeGreaterThanOrEqual(1);
     expect(result.warnings.some(w => w.code === 'manifest/dev-missing-publisher')).toBe(true);
     expect(result.warnings.some(w => w.code === 'manifest/dev-missing-license')).toBe(true);
@@ -3155,7 +3155,7 @@ describe('M14: validateManifest', () => {
     expect(result.errors).toHaveLength(0);
   });
 
-  // ---- Dev mode: old M1 manifests produce warnings, not errors ----
+  // ---- Dev mode: legacy manifests produce warnings, not errors ----
 
   it('accepts old M1-style manifest (no publisher, license, settingsSchema) with warnings only', () => {
     const m1Manifest: ExtensionManifest = {
@@ -3178,7 +3178,7 @@ describe('M14: validateManifest', () => {
     expect(Object.isFrozen(result.warnings)).toBe(true);
   });
 
-  // ---- T3: Kind-specific placement rules ---- 
+  // ---- Kind-specific placement rules ---- 
 
   it('accepts valid panel placement', () => {
     const manifest: ExtensionManifest = {
@@ -3277,7 +3277,7 @@ describe('M14: validateManifest', () => {
   });
 
   it('accepts known-but-deferred kind at manifest validation level (bridging check is runtime concern)', () => {
-    // outputFormat is in KNOWN_CONTRIBUTION_KINDS but contributionKindNotYetBridged('outputFormat') === 'M6'
+    // outputFormat is in KNOWN_CONTRIBUTION_KINDS but contributionKindNotYetBridged('outputFormat') returns a milestone string
     const manifest: ExtensionManifest = {
       ...baseManifest(),
       contributions: [
@@ -3291,7 +3291,7 @@ describe('M14: validateManifest', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M14: validateInstalledPackage
+// validateInstalledPackage
 // ---------------------------------------------------------------------------
 
 describe('M14: validateInstalledPackage', () => {
@@ -3339,7 +3339,7 @@ describe('M14: validateInstalledPackage', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M10: defineExtension accepts agentTool contributions
+// defineExtension accepts agentTool contributions
 // ---------------------------------------------------------------------------
 
 describe('M10: defineExtension accepts agentTool contributions', () => {
@@ -3397,7 +3397,7 @@ describe('M10: defineExtension accepts agentTool contributions', () => {
   });
 
   it('allows cross-kind reuse across agentTool and other kinds', () => {
-    // SD3: Cross-kind reuse is valid — only exact scoped-key duplicates (same kind + same ID) are blocked.
+    // Cross-kind reuse is valid — only exact scoped-key duplicates (same kind + same ID) are blocked.
     const ext = defineExtension({
       manifest: {
         id: 'com.m10.cross-kind' as any,
@@ -3450,7 +3450,7 @@ describe('M10: defineExtension accepts agentTool contributions', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M10: Agent tool type constructability (index test)
+// Agent tool type constructability (index test)
 // ---------------------------------------------------------------------------
 
 describe('M10: agent tool type constructability (index)', () => {
@@ -3527,13 +3527,13 @@ describe('M10: agent tool type constructability (index)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M10: defineExtension rejects agent contributions (reserved)
+// defineExtension rejects agent contributions (reserved)
 // ---------------------------------------------------------------------------
 
 describe('M10: defineExtension rejects reserved agent contributions', () => {
   it('rejects agent contribution kind as not yet bridged', () => {
     // Registry-derived: agent has executionMaturity 'delegated', so it is NOT bridged.
-    // agentTool is also delegated to a placeholder adapter, so it reports M10.
+    // agentTool is also delegated to a placeholder adapter, so it reports its milestone.
     // CONTRIBUTION_KIND_MILESTONE still records the owning milestone for both.
     expect(contributionKindNotYetBridged('agent')).toBe('M10');
     expect(CONTRIBUTION_KIND_MILESTONE.agent).toBe('M10');
@@ -3711,7 +3711,7 @@ describe('DiagnosticCollection interface (index)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M4: Diagnostic source, removeByExtensionId, and capacity eviction
+// Diagnostic source, removeByExtensionId, and capacity eviction
 // ---------------------------------------------------------------------------
 
 describe('M4: DiagnosticSource and DIAGNOSTIC_SOURCE_EXTENSION', () => {
@@ -4310,7 +4310,7 @@ describe('semver-sensitive SDK exports (index)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M14: validateInstalledPackage (continued)
+// validateInstalledPackage (continued)
 // ---------------------------------------------------------------------------
 
 describe('M14: validateInstalledPackage (continued)', () => {
@@ -4407,7 +4407,7 @@ describe('M14: validateInstalledPackage (continued)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M14: Type shapes are constructable
+// Type shapes are constructable
 // ---------------------------------------------------------------------------
 
 describe('M14: Type shapes are constructable', () => {
@@ -4540,7 +4540,7 @@ describe('M14: Type shapes are constructable', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M1b: CompositionGraph SDK exports
+// CompositionGraph SDK exports
 // ---------------------------------------------------------------------------
 
 describe('M1b: CompositionGraph SDK exports', () => {
@@ -4645,7 +4645,7 @@ describe('M1b: CompositionGraph SDK exports', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M7a: Output-format route planning public contract
+// Output-format route planning public contract
 // ---------------------------------------------------------------------------
 
 describe('M7a: Output-format route planning public contract', () => {
@@ -4802,7 +4802,7 @@ describe('M7a: Output-format route planning public contract', () => {
 
 
 // ---------------------------------------------------------------------------
-// T1.1: Timeline overlay + UI public contracts
+// Timeline overlay + UI public contracts
 // ---------------------------------------------------------------------------
 
 // Compile-time pins (enforced by tsc; values referenced in the runtime test
@@ -5205,7 +5205,7 @@ describe('T1.1: ExtensionContext.ui contract', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T2.1: timelineOverlay manifest enforcement (runtime + type-level)
+// timelineOverlay manifest enforcement (runtime + type-level)
 // ---------------------------------------------------------------------------
 
 // Compile-time pins (enforced by tsc; referenced below so noUnusedLocals does

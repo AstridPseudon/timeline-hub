@@ -17,16 +17,18 @@ import { AgentIcon, agentNames } from './agentIdentity';
 import { AgentChatMessage, AgentChatToolGroup } from './AgentChatMessage.tsx';
 import { buildRenderedTurns } from './buildRenderedTurns';
 import { buildTourTurns, tourActStartMs, type TourChatProgress } from './tourChatTurns';
+import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/chatVoice.ts';
 import { useChatScroll } from './useChatScroll';
 
-const IDLE_PLACEHOLDER = 'Type or press Cmd+Shift+R to talk...';
-const COARSE_PLACEHOLDER = 'Type, or tap the mic to talk...';
+const IDLE_PLACEHOLDER = CHAT_VOICE_ENABLED ? 'Type or press Cmd+Shift+R to talk...' : 'Type a message...';
+const COARSE_PLACEHOLDER = CHAT_VOICE_ENABLED ? 'Type, or tap the mic to talk...' : 'Type a message...';
 const BUSY_PLACEHOLDER = 'Type to queue next message...';
 // The header of a fresh chat: untitled, on the default agent. Static, so nothing here reaches a session.
 const NO_SESSIONS: never[] = [];
 const NO_OP = () => undefined;
 const NO_MODEL_CHANGE = () => Promise.resolve();
 const NO_PROGRESS: TourChatProgress = { typed: 0, replyChars: 0, cards: 0 };
+// The tour never records: its mic is shown disabled while chat voice is on, and absent while it is off.
 const NO_VOICE = { isRecording: false, onToggle: () => undefined, onCancel: () => undefined, micDisabled: true };
 
 const TYPING_START_MS = 500;
@@ -176,9 +178,9 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
         {renderedTurns.length === 0 && (
           <div className="flex min-h-full flex-col items-center justify-center py-8 text-center text-sm text-muted-foreground">
             <p>✨ I can do almost anything</p>
-            {coarsePointer
+            {CHAT_VOICE_ENABLED && (coarsePointer
               ? <p className="mt-1 text-xs">Tap the mic to talk</p>
-              : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>}
+              : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>)}
             <p className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px]">
               <AgentIcon agent="astrid" className="h-3 w-3 shrink-0" />
               {agentNames.astrid} · default model
@@ -215,7 +217,7 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
           readOnly
           rows={isExpanded ? 8 : 4}
           placeholder={busy ? BUSY_PLACEHOLDER : coarsePointer ? COARSE_PLACEHOLDER : IDLE_PLACEHOLDER}
-          voice={NO_VOICE}
+          voice={CHAT_VOICE_ENABLED ? NO_VOICE : undefined}
           onSend={() => {
             if (!getEditorTourState().sent) markEditorTourSent();
           }}

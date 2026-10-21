@@ -1,5 +1,5 @@
 /**
- * Tests for the manifest settings-schema adapter (M4, T11).
+ * Tests for the manifest settings-schema adapter.
  *
  * Validates:
  *  - Full valid JSON Schema maps to StandardSchema (type object, properties, required)
@@ -431,7 +431,7 @@ describe('adaptManifestSettingsSchema', () => {
     expect(result1.diagnostics[0].code).toBe(result2.diagnostics[0].code);
   });
 
-  // --- Unsupported marker preservation (T1) ---
+  // --- Unsupported marker preservation ---
 
   it('preserves $ref marker through adaptation', () => {
     const manifest = makeManifest({
@@ -602,7 +602,7 @@ describe('adaptManifestSettingsSchema', () => {
 });
 
 // ---------------------------------------------------------------------------
-// detectUnsupportedShape (T1)
+// detectUnsupportedShape
 // ---------------------------------------------------------------------------
 
 describe('detectUnsupportedShape', () => {
@@ -735,7 +735,7 @@ describe('detectUnsupportedShape', () => {
 });
 
 // ---------------------------------------------------------------------------
-// analyzeManifestSettingsSchema (T1)
+// analyzeManifestSettingsSchema
 // ---------------------------------------------------------------------------
 
 describe('analyzeManifestSettingsSchema', () => {
@@ -949,7 +949,7 @@ describe('analyzeManifestSettingsSchema', () => {
 });
 
 // ---------------------------------------------------------------------------
-// materializeSettingsDefaults (T2)
+// materializeSettingsDefaults
 // ---------------------------------------------------------------------------
 
 describe('materializeSettingsDefaults', () => {
@@ -1376,7 +1376,7 @@ describe('materializeSettingsDefaults', () => {
 });
 
 // ---------------------------------------------------------------------------
-// reconcileSettingsSnapshot (T3)
+// reconcileSettingsSnapshot
 // ---------------------------------------------------------------------------
 
 describe('reconcileSettingsSnapshot', () => {

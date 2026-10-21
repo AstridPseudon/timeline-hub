@@ -53,7 +53,7 @@ export function PackageSettingsSection({
   repository: ExtensionStateRepository | null;
   onRefresh: () => void;
   manifest?: ExtensionManifest | null;
-  /** T10: Host-visible notification registry for manager/runtime coherence. */
+  /** Host-visible notification registry for manager/runtime coherence. */
   settingsNotificationRegistry?: ExtensionSettingsNotificationRegistry | null;
 }) {
   const [sectionState, setSectionState] = useState<SettingsSectionState>('collapsed');
@@ -68,11 +68,11 @@ export function PackageSettingsSection({
   const baseValuesRef = useRef<Record<string, unknown>>({});
   const schemaFormRef = useRef<SchemaFormHandle>(null);
   const mountedRef = useRef(true);
-  // T10: Track whether a save is in flight so the notification reload callback
+  // Track whether a save is in flight so the notification reload callback
   // can skip reloading during our own save (avoids redundant re-fetch).
   const savingRef = useRef(false);
 
-  // Fully analyse the manifest schema (T1): returns schema, diagnostics,
+  // Fully analyse the manifest schema: returns schema, diagnostics,
   // unsupportedFields, and editable flag.  Replaces the older
   // adaptManifestSettingsSchema call so we can gate the editable surface and
   // feed the analysis into reconcileSettingsSnapshot.
@@ -87,7 +87,7 @@ export function PackageSettingsSection({
   const hasUnsupportedSchema =
     schemaAnalysis !== null && !schemaAnalysis.editable;
 
-  // ---- Reconciliation derived values (T4) — must be before callbacks that
+  // ---- Reconciliation derived values — must be before callbacks that
   //      reference them to avoid temporal dead zone. ------------------------
   const reconciliationState: ReconciliationState | null =
     reconciliationResult?.state ?? null;
@@ -98,7 +98,7 @@ export function PackageSettingsSection({
     return () => { mountedRef.current = false; };
   }, []);
 
-  // T10: Subscribe to settings change notifications from the shared registry.
+  // Subscribe to settings change notifications from the shared registry.
   // When runtime code writes through settings.set()/settings.delete(), the
   // manager reloads and reconciles the updated values without remounting.
   useEffect(() => {
@@ -203,7 +203,7 @@ export function PackageSettingsSection({
 
       if (!mountedRef.current) return;
 
-      // Run reconciliation (T3) when a manifest is available so the
+      // Run reconciliation when a manifest is available so the
       // manager surface always has a classified state + diagnostics.
       if (manifest) {
         const result = reconcileSettingsSnapshot({ manifest, snapshot });
@@ -269,7 +269,7 @@ export function PackageSettingsSection({
         setSectionState('idle');
         onRefresh();
 
-        // T10: Publish save through the shared notification path so active
+        // Publish save through the shared notification path so active
         // extensions and other host consumers see the update.
         if (settingsNotificationRegistry && !settingsNotificationRegistry.isDisposed) {
           settingsNotificationRegistry.notifySettingsChanged(extensionId);
@@ -376,7 +376,7 @@ export function PackageSettingsSection({
         </div>
       )}
 
-      {/* ---- Reconciliation diagnostic row (T4) ---- */}
+      {/* ---- Reconciliation diagnostic row ---- */}
       {reconciliationResult &&
         (sectionState === 'idle' || sectionState === 'editing') && (
           <SettingsReconciliationRow
@@ -435,7 +435,7 @@ export function PackageSettingsSection({
               </button>
             )}
             {hasUnsupportedSchema && (
-              <span className="text-[10px] text-yellow-400/80 font-medium">Read-only</span>
+              <span className="text-[10px] text-ink-warning font-medium">Read-only</span>
             )}
           </div>
           {settingsKeys.map((key) => (
@@ -491,7 +491,7 @@ export function PackageSettingsSection({
               type="button"
               onClick={handleSave}
               disabled={!isDirty || isBlocked}
-              className="inline-flex min-h-6 items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex min-h-6 items-center gap-1 rounded border border-wes-forest/30 bg-wes-forest/10 px-2 py-0.5 text-[10px] font-medium text-wes-forest transition-colors hover:bg-wes-forest/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-40"
               aria-label="Save extension settings"
               data-video-editor-extension-settings-save={extensionId}
             >
@@ -512,7 +512,7 @@ export function PackageSettingsSection({
             <button
               type="button"
               onClick={handleReset}
-              className="inline-flex min-h-6 items-center gap-1 rounded border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[10px] font-medium text-red-400 transition-colors hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+              className="inline-flex min-h-6 items-center gap-1 rounded border border-ink-danger/30 bg-ink-danger/10 px-2 py-0.5 text-[10px] font-medium text-ink-danger transition-colors hover:bg-ink-danger/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
               aria-label="Reset extension settings"
               data-video-editor-extension-settings-reset={extensionId}
             >
@@ -534,7 +534,7 @@ export function PackageSettingsSection({
       {/* Error */}
       {sectionState === 'error' && settingsError && (
         <div
-          className="rounded bg-red-500/10 border border-red-500/30 px-2 py-1 text-[11px] text-red-400"
+          className="rounded bg-ink-danger/10 border border-ink-danger/30 px-2 py-1 text-[11px] text-ink-danger"
           role="alert"
           data-video-editor-extension-settings-error={extensionId}
         >
@@ -543,7 +543,7 @@ export function PackageSettingsSection({
             <button
               type="button"
               onClick={handleSettingsRetry}
-              className="min-h-6 shrink-0 rounded px-1 text-[10px] underline transition-colors hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+              className="min-h-6 shrink-0 rounded px-1 text-[10px] underline transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
               aria-label="Retry extension settings"
               data-video-editor-extension-settings-retry={extensionId}
             >

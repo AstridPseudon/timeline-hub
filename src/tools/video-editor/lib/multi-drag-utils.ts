@@ -52,7 +52,7 @@ export interface GhostRect {
 }
 
 // Committed times land on the frame grid, then on the shared 4-decimal
-// serialization precision. The 2-decimal rounding that used to live here was
+// serialization precision. Rounding to 2 decimals here would be
 // the drag path's drift factory: 0.01 s is a non-multiple of every common
 // frame duration, so abutting drag-committed clips straddled frame boundaries
 // ~24% of the time (see `lib/time-grid.ts`).

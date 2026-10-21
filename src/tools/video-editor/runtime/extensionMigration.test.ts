@@ -1,5 +1,5 @@
 /**
- * Tests for extensionMigration.ts (M14, T24).
+ * Tests for extensionMigration.ts.
  *
  * Covers:
  *   - compareContributionIds: identical, local-only, installed-only, shared, empty.
@@ -43,7 +43,6 @@ import type {
 } from './extensionStateRepository';
 import { createLifecycleEvent } from './extensionStateRepository';
 import { createHostOwnedExtensionOperationalEmitter } from './extensionReleaseControls';
-import { toTransportSafeOperationalEvent } from './extensionOperationalAnalytics';
 import type {
   ExtensionManifest,
   InstalledExtensionPackage,
@@ -743,13 +742,10 @@ describe('executeLocalToInstalledMigration', () => {
       extensionVersions: new Map([
         [operationalExtensionId, new Set(['1.0.0'])],
       ]),
-    }, (event) => {
-      const transportSafe = toTransportSafeOperationalEvent(event);
-      if (transportSafe) sink(transportSafe);
-    });
+    }, sink);
   }
 
-  it('emits one transport-safe success outcome without creative migration payloads', async () => {
+  it('emits one success outcome without creative migration payloads', async () => {
     const sink = vi.fn();
     const creativeSecrets = {
       prompt: 'rose neon piano chord',

@@ -91,12 +91,10 @@ describe('TimelineTrackPrelude', () => {
         }],
         localShotGenPositions: new Map([['img-1', 0], ['img-2', 61]]),
         segmentSlots: [{ id: 'slot-1' }] as never,
-        isSegmentsLoading: false,
         hasPendingTask: vi.fn(),
         selectedOutputId: 'output-1',
         onPairClick: vi.fn<(pairIndex: number) => void>(),
         onOpenPairSettings: vi.fn<(pairIndex: number) => void>(),
-        onTrailingEndFrameChange: vi.fn(),
         onTrailingVideoInfo: vi.fn(),
         onFileDrop: vi.fn(),
         videoOutputs: [{ id: 'video-1' }] as never,
@@ -124,8 +122,6 @@ describe('TimelineTrackPrelude', () => {
           uni3cEndPercent: 100,
         },
         onPrimaryStructureVideoInputChange: vi.fn(),
-        isUploadingStructureVideo: false,
-        setIsUploadingStructureVideo: vi.fn(),
       },
       audio: {
         audioUrl: 'audio.mp3',
@@ -186,8 +182,6 @@ describe('TimelineTrackPrelude', () => {
         imageFrame: 61,
         endFrame: 78,
       },
-      isMultiImage: true,
-      lastImageFrame: 61,
     });
     expect(captures.audioProps).toMatchObject({
       audioUrl: 'audio.mp3',

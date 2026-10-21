@@ -8,7 +8,6 @@ interface TrimTimelineDisplayProps {
   onEndTrimChange: TrimControlsPanelProps['onEndTrimChange'];
   currentTime: TrimControlsPanelProps['currentTime'];
   videoRef: TrimControlsPanelProps['videoRef'];
-  isSaving: boolean;
   labelSize: string;
 }
 
@@ -18,7 +17,6 @@ export function TrimTimelineDisplay({
   onEndTrimChange,
   currentTime,
   videoRef,
-  isSaving,
   labelSize,
 }: TrimTimelineDisplayProps) {
   return (
@@ -44,7 +42,6 @@ export function TrimTimelineDisplay({
         onEndTrimChange={onEndTrimChange}
         currentTime={currentTime}
         videoRef={videoRef}
-        disabled={isSaving}
       />
     </>
   );

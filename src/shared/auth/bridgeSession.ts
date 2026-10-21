@@ -4,8 +4,8 @@
  * `AuthProvider` resolves the fixed local user by asking the Astrid local
  * bridge whether it is alive (`GET /v1/health`, same-origin `/api/astrid` —
  * the development vite proxy). There is no login: a healthy bridge IS the
- * session. The resolved user id is a fixed local identity (doc 27 §4.7:
- * the per-boot request token is a request capability delivered out of band
+ * session. The resolved user id is a fixed local identity (the
+ * per-boot request token is a request capability delivered out of band
  * to server-side callers; it never travels through browser code), so the
  * app-wide providers can key their data on it without any credential.
  *

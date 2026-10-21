@@ -1,4 +1,4 @@
-// Sprint 2: re-export the canonical shared types so Astrid App and Banodoco agree at
+// Re-export the canonical shared types so Astrid App and Banodoco agree at
 // the boundary. Astrid App keeps richer locally-typed shapes for editor-internal use
 // (ResolvedTimelineConfig, ClipMeta, etc.) — only the persisted on-disk shape
 // must match the shared schema.
@@ -66,11 +66,11 @@ export type TrackBlendMode =
   | 'lighten'
   | 'soft-light'
   | 'hard-light';
-// SD-024 (Sprint 2): clipType is widened to a string at the schema level.
+// clipType is widened to a string at the schema level.
 // The closed union of built-in clip types is retained as BUILTIN_CLIP_TYPES for
 // call sites that still narrow against the legacy four. Effect-id / theme-id
-// validation against a registry is Sprint 5; the editor's placeholder fallback
-// for unknown clipTypes is Sprint 3.
+// validation against a registry is deferred; the editor's placeholder fallback
+// for unknown clipTypes renders as a placeholder.
 export { BUILTIN_CLIP_TYPES, type BuiltinClipType } from '@/sdk/video/timeline/clipTypes.ts';
 export type ClipType = string;
 
@@ -138,10 +138,10 @@ export type TextClipData = {
   italic?: boolean;
 };
 
-// M9: Keyframe interpolation mode — mirrors the SDK KeyframeInterpolation type.
+// Keyframe interpolation mode — mirrors the SDK KeyframeInterpolation type.
 export type KeyframeInterpolation = 'linear' | 'hold';
 
-// M9: A single keyframe stored as JSON-serializable timeline data on a clip.
+// A single keyframe stored as JSON-serializable timeline data on a clip.
 export type ClipKeyframe = {
   /** Time in seconds. */
   time: number;
@@ -151,7 +151,7 @@ export type ClipKeyframe = {
   interpolation: KeyframeInterpolation;
 };
 
-// M11: Timeline-resident live binding metadata. Runtime samples remain
+// Timeline-resident live binding metadata. Runtime samples remain
 // provider-scoped and must never be persisted in these shapes.
 export type TimelineLiveSourceKind =
   | 'webcam'
@@ -311,7 +311,7 @@ export type TimelineLiveUniformBinding = {
   metadata?: Record<string, unknown>;
 };
 
-// M13: Host-owned shader metadata persisted on the timeline. V1 stores one
+// Host-owned shader metadata persisted on the timeline. V1 stores one
 // clip-local shader in clip.app.shader and one postprocess shader in
 // config.app.shaderPostprocess.
 export type TimelineShaderScope = 'clip' | 'postprocess';
@@ -397,7 +397,7 @@ export type TimelineClip = {
   /** Optional Astrid element identity; legacy clips remain valid without it. */
   elementRef?: TimelineElementRef;
   effects?: TimelineEffect[] | Record<string, number>;
-  // Sprint 2: schema-lift fields. All optional; existing timelines without them
+  // Schema-lift fields. All optional; existing timelines without them
   // round-trip unchanged. `params` carries effect/theme parameter blobs;
   // `pool_id` / `clip_order` are Banodoco-arrangement provenance fields.
   params?: Record<string, unknown>;
@@ -406,7 +406,7 @@ export type TimelineClip = {
   source_uuid?: string;
   generation?: Record<string, unknown>;
   app?: TimelineClipAppMetadata;
-  // M9: Host-owned keyframes keyed by parameter name.
+  // Host-owned keyframes keyed by parameter name.
   // Each parameter maps to an ordered array of keyframes.
   keyframes?: Record<string, ClipKeyframe[]>;
 };
@@ -471,8 +471,7 @@ export type PinnedShotGroup = {
   videoAssetKey?: string;
   imageClipSnapshot?: PinnedShotImageClipSnapshot[];
   /**
-   * Pooled (unpositioned) generation members — document-native placement
-   * (doc 24 Q1): members of the shot not yet placed as clips.
+   * Pooled (unpositioned) generation members: shot members not yet placed as clips.
    */
   poolGenerationIds?: string[];
   /** Source group lineage for a document-native deep-copy duplicate. */
@@ -482,8 +481,8 @@ export type PinnedShotGroup = {
   };
 };
 
-// Sprint 2: theme overrides and generation defaults blocks. Open-shaped on
-// purpose — concrete schemas land with theme registry packages (Sprint 5+).
+// Theme overrides and generation defaults blocks. Open-shaped on
+// purpose — concrete schemas land with theme registry packages.
 export type ThemeOverrides = {
   visual?: Record<string, unknown>;
   generation?: Record<string, unknown>;
@@ -499,7 +498,7 @@ export type TimelineConfig = {
   clips: TimelineClip[];
   tracks?: TrackDefinition[];
   pinnedShotGroups?: PinnedShotGroup[];
-  // Sprint 2: schema-lift fields. All optional. `theme` is a slug that
+  // Schema-lift fields. All optional. `theme` is a slug that
   // resolves against the theme registry at render time; `theme_overrides`
   // deep-merges onto the resolved theme; `generation_defaults` carries
   // pipeline-wide generation knobs.
@@ -644,7 +643,7 @@ export type TimelineCompositionProps = {
 };
 
 // ---------------------------------------------------------------------------
-// M3b: Deterministic Capture — host/editor-owned contracts
+// Deterministic Capture — host/editor-owned contracts
 // ---------------------------------------------------------------------------
 // These types define the frozen V1 deterministic capture profiles. Concrete
 // table bodies are host/editor-owned and must not be re-exported through the

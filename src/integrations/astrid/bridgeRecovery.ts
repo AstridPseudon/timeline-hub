@@ -1,5 +1,5 @@
 /**
- * Recovery copy for the Phase C C4 browser surfaces.
+ * Recovery copy for the browser surfaces.
  *
  * The bridge exposes exactly five public failure categories. Keeping the
  * guidance in one exhaustive record prevents callers from silently dropping a

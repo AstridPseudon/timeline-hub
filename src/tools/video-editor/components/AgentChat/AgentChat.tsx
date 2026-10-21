@@ -29,7 +29,6 @@ import {
   useConfigureAgentSession,
   useLocalAgents,
 } from '@/tools/video-editor/hooks/useAgentSession.ts';
-import { useAgentVoice } from '@/tools/video-editor/hooks/useAgentVoice.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 import { loadGenerationForLightbox } from '@/tools/video-editor/lib/generation-utils.ts';
 import type {
@@ -46,6 +45,8 @@ import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded';
 import { AgentIcon, agentNames } from './agentIdentity';
 import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
 import { AgentChatComposer } from './AgentChatComposer';
+import { useAgentVoice } from '@/tools/video-editor/hooks/useAgentVoice.ts';
+import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/chatVoice.ts';
 import { buildRenderedTurns } from './buildRenderedTurns';
 import { TourChatPanel } from './TourChatPanel';
 import { useEditorTourRunning } from '@/shared/state/editorTourStore.ts';
@@ -460,15 +461,18 @@ function AvailableAgentChatPanel({
   const activeQueue = startingAgent ? [] : queue.filter((item) => item.sessionId === activeSessionId);
   // A phone or tablet has no shortcut keys to press: its way to talk is the mic.
   const [coarsePointer] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true);
+  const idlePlaceholder = !CHAT_VOICE_ENABLED
+    ? 'Type a message...'
+    : coarsePointer ? 'Type, or tap the mic to talk...' : 'Type or press Cmd+Shift+R to talk...';
   const inputPlaceholder = startingAgent
     ? `Starting ${agentNames[startingAgent]}…`
     : showNoProjectState
-    ? 'Select a project to start chatting...'
-    : voice.isRecording
-      ? 'Recording...'
-      : (isProcessing || sendMessage.isPending || hasQueuedMessages)
-        ? 'Type to queue next message...'
-        : coarsePointer ? 'Type, or tap the mic to talk...' : 'Type or press Cmd+Shift+R to talk...';
+      ? 'Select a project to start chatting...'
+      : voice.isRecording
+        ? 'Recording...'
+        : (isProcessing || sendMessage.isPending || hasQueuedMessages)
+          ? 'Type to queue next message...'
+          : idlePlaceholder;
   const optimisticTurnAlreadyMaterialized = optimisticMessage !== null
     && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.request_id === optimisticMessage.id));
   const chatFailures = [activeSession.error, sendMessage.localError, createSession.error, sessions.error, projectChat.error];
@@ -610,26 +614,6 @@ function AvailableAgentChatPanel({
     });
   }, [createSession, hasProject, hasAvailableProjectSession, projectChat.data, projectChat.isLoading, projectChat.isError, isEngaged]);
 
-  // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
-        event.preventDefault();
-        if (!hasProject || isFollower || startingAgent) {
-          return;
-        }
-        if (voice.isRecording) {
-          voice.stopRecording();
-        } else if (!voice.isProcessing) {
-          voice.startRecording();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasProject, isFollower, startingAgent, voice]);
-
   useEffect(() => {
     sendingRef.current = false;
     setPausedQueueHeadId(draftSnapshotRef.current.queue.find(item => item.sessionId === activeSessionId)?.id ?? null);
@@ -752,8 +736,8 @@ function AvailableAgentChatPanel({
     }
   }, [activeSessionData?.turns.length, activeSessionId, editorContext, projectId, sendMessage, reconcileAcceptedQueue, sessionControl?.active]);
 
-  const handleSend = useCallback(async (rawText?: string) => {
-    const text = (rawText ?? draft).trim();
+  const handleSend = useCallback(async () => {
+    const text = draft.trim();
     if (!text || !activeSessionId || !hasProject || composerLockedRef.current) return;
 
     const attachments: AgentTurnAttachment[] = clips.map((clip) => ({
@@ -771,10 +755,8 @@ function AvailableAgentChatPanel({
       duration: clip.duration,
     }));
 
-    if (rawText === undefined) {
-      setDraft('');
-      draftSnapshotRef.current = { ...draftSnapshotRef.current, text: '' };
-    }
+    setDraft('');
+    draftSnapshotRef.current = { ...draftSnapshotRef.current, text: '' };
     const item: QueuedMessage = {
       id: createMessageId(),
       text,
@@ -874,16 +856,37 @@ function AvailableAgentChatPanel({
     }
   }, [defaultAgent, handleNewSession, configureSession]);
 
+  // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
+  useEffect(() => {
+    // Chat voice is switched off: the shortcut is not registered.
+    if (!CHAT_VOICE_ENABLED) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
+        event.preventDefault();
+        if (!hasProject || isFollower || startingAgent) {
+          return;
+        }
+        if (voice.isRecording) {
+          voice.stopRecording();
+        } else if (!voice.isProcessing) {
+          voice.startRecording();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasProject, isFollower, startingAgent, voice]);
+
   // ==========================================================================
-  // Actions registry — exposes stable handlers the parent (TasksPane split
+  // Actions registry — exposes stable handlers the parent (TasksPane message
   // button) can invoke. Stable identity means the registration effect runs
-  // exactly once per mount, even though `voice` re-renders. Reactive state is
-  // published separately so the split button mic icon flips with recording.
+  // exactly once per mount.
   // ==========================================================================
   const actionsRegistry = useAgentChatActionsRegistry();
   const stableHandlers = useMemo<AgentChatActionsHandlers>(() => ({
     toggleRecording: () => {
-      if (composerLockedRef.current) return;
+      if (!CHAT_VOICE_ENABLED || composerLockedRef.current) return;
       const v = voiceRef.current;
       if (v.isRecording) {
         v.stopRecording();
@@ -1096,10 +1099,12 @@ function AvailableAgentChatPanel({
             ) : (
               <>
                 <p>✨ I can do almost anything</p>
-                {coarsePointer
-                  ? <p className="mt-1 text-xs">Tap the mic to talk</p>
-                  : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>}
-                <p data-testid="agent-chat-runs-with" className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px]">
+                {CHAT_VOICE_ENABLED
+                  ? (coarsePointer
+                    ? <p className="mt-1 text-xs">Tap the mic to talk</p>
+                    : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>)
+                  : <p className="mt-1 text-xs">Type a message to get started.</p>}
+                <p data-testid="agent-chat-runs-with" className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px] normal-case">
                   <AgentIcon agent={startingAgent ?? chatAgent} className="h-3 w-3 shrink-0" />
                   {agentNames[chatAgent]} · {chatModelName ?? 'default model'}
                 </p>
@@ -1333,12 +1338,12 @@ function AvailableAgentChatPanel({
           rows={isExpanded ? 8 : 4}
           placeholder={inputPlaceholder}
           inputDisabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
-          voice={{
+          voice={CHAT_VOICE_ENABLED ? {
             isRecording: voice.isRecording,
             onToggle: () => voice.isRecording ? voice.stopRecording() : voice.startRecording(),
             onCancel: () => voice.cancelRecording(),
             micDisabled: startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending,
-          }}
+          } : undefined}
           onSend={() => void handleSend()}
           sendDisabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
         />

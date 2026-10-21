@@ -7,15 +7,15 @@ import {
 
 describe('debugRegistry', () => {
   it('registers a debug global and exposes owner metadata', () => {
-    const value = { id: 'reconnect' };
+    const value = { id: 'freshness' };
     const dispose = registerDebugGlobal(
-      '__RECONNECT_SCHEDULER__',
-      value as unknown as Window['__RECONNECT_SCHEDULER__'],
+      '__DATA_FRESHNESS_MANAGER__',
+      value as unknown as Window['__DATA_FRESHNESS_MANAGER__'],
       'test-owner',
     );
 
-    expect(getDebugGlobal('__RECONNECT_SCHEDULER__')).toBe(value);
-    expect(getDebugGlobalOwner('__RECONNECT_SCHEDULER__')).toBe('test-owner');
+    expect(getDebugGlobal('__DATA_FRESHNESS_MANAGER__')).toBe(value);
+    expect(getDebugGlobalOwner('__DATA_FRESHNESS_MANAGER__')).toBe('test-owner');
 
     dispose();
   });

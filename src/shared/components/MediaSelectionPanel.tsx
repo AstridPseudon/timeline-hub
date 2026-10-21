@@ -12,7 +12,7 @@ import { AstridLoading } from '@/shared/components/AstridLoading';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useProjectGenerations, type GenerationsPaginatedResponse } from '@/shared/hooks/projects/useProjectGenerations';
 import { MediaGallery, DEFAULT_GALLERY_FILTERS, type GalleryFilterState } from '@/shared/components/MediaGallery';
-import { useListShots } from '@/shared/hooks/shots';
+import { useShots } from '@/shared/contexts/ShotsContext';
 
 interface MediaSelectionPanelProps {
   /** Called when the user selects a media item */
@@ -39,7 +39,7 @@ export function MediaSelectionPanel({ onSelect, mediaType, label }: MediaSelecti
     prevFilterKeyRef.current = filterKey;
     if (currentPage !== 1) setCurrentPage(1);
   }
-  const { data: shots } = useListShots(selectedProjectId);
+  const { shots } = useShots();
   const itemsPerPage = 15;
 
   const {
@@ -92,7 +92,6 @@ export function MediaSelectionPanel({ onSelect, mediaType, label }: MediaSelecti
                  hideShotNotifier: true,
                  showDelete: false,
                  showDownload: false,
-                 showShare: false,
                  showStar: false,
                  showAddToShot: false,
                  enableSingleClick: true,

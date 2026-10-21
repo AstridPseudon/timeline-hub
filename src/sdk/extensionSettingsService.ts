@@ -1,16 +1,15 @@
 /**
- * Injectable extension settings service factory (T8, extended in T9, T10).
+ * Injectable extension settings service factory.
  *
- * Extracted from `createExtensionContext` so the settings service can be
- * created independently for testing, provider-backed storage integration,
- * and settings snapshot persistence through ExtensionStateRepository.
+ * The settings service can be created independently for testing, provider-backed
+ * storage integration, and settings snapshot persistence through ExtensionStateRepository.
  *
- * T9 extends the factory to accept an optional ExtensionStateRepository
+ * The factory accepts an optional ExtensionStateRepository
  * and/or an initial ExtensionSettingsSnapshot. When a repository is
  * provided, the service writes its current settings as a snapshot to the
  * repository on dispose, enabling reload-equivalent reinitialization.
  *
- * T10 adds settings schema-version migration support: when an
+ * Settings schema-version migration support: when an
  * initialSnapshot carries a different schema version than the manifest,
  * the factory runs migration handlers and resets to defaults on failure.
  *
@@ -27,7 +26,7 @@
  *     sessions; only when an initial snapshot is provided)
  *  3. Manifest defaults (from manifest.settingsDefaults)
  *
- * ## Settings migration (T10)
+ * ## Settings migration
  *
  * When `initialSnapshot.schemaVersion` differs from the manifest's
  * declared settings schema version, the factory optionally runs
@@ -63,11 +62,11 @@ export function getSettingsPrefix(extensionId: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Factory options (T9, T10)
+// Factory options
 // ---------------------------------------------------------------------------
 
 /**
- * Settings migration configuration (T10).
+ * Settings migration configuration.
  *
  * When provided, the factory checks whether the persisted snapshot's
  * schema version matches the manifest.  If they differ, it invokes the
@@ -105,7 +104,7 @@ export interface SettingsPersistenceError extends SettingsPersistenceSuccess {
  *   serve as a fallback layer between localStorage and manifest defaults.
  *   When absent but a repository is present, the caller should load the
  *   snapshot from the repository before constructing the service.
- * - `migration` — Settings migration configuration (T10). When an
+ * - `migration` — Settings migration configuration. When an
  *   initialSnapshot's schema version differs from the manifest, migration
  *   handlers are invoked and lifecycle events are emitted.
  */
@@ -128,13 +127,13 @@ export interface CreateExtensionSettingsServiceOptions {
  * - `dispose` — cleans up localStorage keys and (when a repository was
  *   provided) writes the final settings snapshot to the repository.
  *   Safe to call multiple times; idempotent.
- * - `migrationResult` — The result of settings migration (T10), or null
+ * - `migrationResult` — The result of settings migration, or null
  *   when no migration was attempted.
  */
 export interface ExtensionSettingsServiceFactoryResult {
   readonly service: ExtensionSettingsService;
   dispose(): void;
-  /** Migration outcome when schema versions differed (T10). Null otherwise. */
+  /** Migration outcome when schema versions differed. Null otherwise. */
   readonly migrationResult: import('./extensionSettingsMigration').SettingsMigrationResult | null;
 }
 
@@ -150,7 +149,7 @@ export interface ExtensionSettingsServiceFactoryResult {
  * current settings (the merged view of localStorage + snapshot +
  * defaults) as an ExtensionSettingsSnapshot to the repository.
  *
- * ## Settings migration (T10)
+ * ## Settings migration
  *
  * When `initialSnapshot.schemaVersion` differs from
  * `manifest.settingsSchemaVersion` (or `manifest.settingsSchema.version`),
@@ -168,7 +167,7 @@ export interface ExtensionSettingsServiceFactoryResult {
  *
  * @param extensionId  The extension's unique identifier.
  * @param manifest     The extension manifest (for settingsDefaults and migration declarations).
- * @param options      Optional repository, initial snapshot, and/or migration config (T9, T10).
+ * @param options      Optional repository, initial snapshot, and/or migration config.
  * @returns A disposable settings service with optional migration result.
  */
 export function createExtensionSettingsService(
@@ -181,7 +180,7 @@ export function createExtensionSettingsService(
     (manifest.settingsDefaults as Record<string, unknown> | undefined) ?? {};
 
   // -----------------------------------------------------------------------
-  // Settings migration (T10)
+  // Settings migration
   // -----------------------------------------------------------------------
 
   let migrationResult: import('./extensionSettingsMigration').SettingsMigrationResult | null = null;
@@ -576,7 +575,7 @@ export function createExtensionSettingsService(
   }
 
   // -----------------------------------------------------------------------
-  // Ajv-backed atomic save validation (T12)
+  // Ajv-backed atomic save validation
   // -----------------------------------------------------------------------
 
   /**
@@ -655,7 +654,7 @@ export function createExtensionSettingsService(
       return getEffectiveValue<T>(key);
     },
     set<T = unknown>(key: string, value: T): void {
-      // T12: Ajv-backed atomic save — validate the full candidate before
+      // Ajv-backed atomic save — validate the full candidate before
       // writing to localStorage. Blocks invalid saves to prevent partial
       // corruption of the existing valid override state.
       if (settingsSchemaValidator) {

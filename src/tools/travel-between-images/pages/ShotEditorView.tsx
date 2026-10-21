@@ -13,7 +13,6 @@ import { Button } from '@/shared/components/ui/button';
 import { useCurrentShot } from '@/shared/state/selectionStore';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { useShotNavigation } from '@/shared/hooks/shots/useShotNavigation';
-import { useUpdateShotName } from '@/shared/hooks/shots';
 import { usePrimeShotImagesCache } from '@/shared/hooks/shots/useShotImages';
 import { shotListLocation } from '@/shared/lib/tooling/toolRoutes.ts';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
@@ -21,7 +20,6 @@ import { useEnqueueGenerationsInvalidation } from '@/shared/hooks/invalidation/u
 import { useProjectVideoCountsCache } from '@/shared/hooks/projects/useProjectVideoCountsCache';
 import { useProjectGenerationModesCache } from '@/shared/hooks/projects/useProjectGenerationModesCache';
 import { useVideoGalleryPreloader } from '@/shared/hooks/gallery/useVideoGalleryPreloader';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import { ShotSettingsEditor } from '../components/ShotEditor';
 import {
   VideoTravelSettingsProvider,
@@ -64,7 +62,6 @@ interface ShotEditorViewProps {
   /** Array of all shots (for navigation) */
   shots: Shot[] | undefined;
   /** Available LoRAs */
-  availableLoras: LoraModel[];
   /** Sort mode for shot navigation */
   shotSortMode?: 'ordered' | 'newest' | 'oldest';
   /** Canonical occurrence identity used by local/read-only composition views. */
@@ -97,7 +94,6 @@ export function ShotEditorView({
   isNewlyCreatedShot,
   shotFromState,
   shots,
-  availableLoras,
   shotSortMode = 'ordered',
   canonicalOccurrence,
   canonicalShotComposition,
@@ -176,12 +172,7 @@ export function ShotEditorView({
 
   const { setCurrentShotId } = useCurrentShot();
   const { navigateToPreviousShot, navigateToNextShot } = useShotNavigation();
-  const updateShotNameMutation = useUpdateShotName();
-  const updateShotNameMutateRef = useRef(updateShotNameMutation.mutate);
-  updateShotNameMutateRef.current = updateShotNameMutation.mutate;
   const invalidateGenerations = useEnqueueGenerationsInvalidation();
-
-  const isCloudGenerationEnabled = true;
 
   // Project caches
   const { getFinalVideoCount, getHasStructureVideo } = useProjectVideoCountsCache(selectedProjectId);
@@ -292,37 +283,36 @@ export function ShotEditorView({
     }
   }, [sortedShots, shotToEdit, navigateToNextShot]);
 
+  const canRenameCanonicalShot = Boolean(
+    canonicalSettingsPersistence && canonicalShotComposition && canonicalComposition && canonicalOccurrence,
+  );
+
   const handleUpdateShotName = useCallback((newName: string) => {
-    if (canonicalSettingsPersistence && canonicalShotComposition && canonicalComposition && canonicalOccurrence) {
-      const editingBase = canonicalComposition;
-      void enqueueCanonicalShotPublish(
-        editingBase.projectId,
-        canonicalComposition.parentDocumentId,
-        async () => {
-          const current = editingBase;
-          const graph = await updateCanonicalShotName(current.contract, canonicalOccurrence.occurrenceId, newName);
-          const published = await canonicalShotComposition.publish?.({
-            projectId: current.projectId,
-            parentDocumentId: current.parentDocumentId,
-            expectedHeadRevisionId: current.headRevisionId,
-            graph,
-          });
-          if (published) onCanonicalCompositionPublished?.(published);
-        },
-      ).catch((error: unknown) => {
-        normalizeAndPresentError(error, {
-          context: 'canonical-shot:update-name',
-          toastTitle: 'Failed to save shot name',
-        });
-      });
+    if (!canonicalSettingsPersistence || !canonicalShotComposition || !canonicalComposition || !canonicalOccurrence) {
       return;
     }
-    updateShotNameMutateRef.current({
-      shotId: shotToEdit.id,
-      newName: newName,
-      projectId: selectedProjectId,
+    const editingBase = canonicalComposition;
+    void enqueueCanonicalShotPublish(
+      editingBase.projectId,
+      canonicalComposition.parentDocumentId,
+      async () => {
+        const current = editingBase;
+        const graph = await updateCanonicalShotName(current.contract, canonicalOccurrence.occurrenceId, newName);
+        const published = await canonicalShotComposition.publish?.({
+          projectId: current.projectId,
+          parentDocumentId: current.parentDocumentId,
+          expectedHeadRevisionId: current.headRevisionId,
+          graph,
+        });
+        if (published) onCanonicalCompositionPublished?.(published);
+      },
+    ).catch((error: unknown) => {
+      normalizeAndPresentError(error, {
+        context: 'canonical-shot:update-name',
+        toastTitle: 'Failed to save shot name',
+      });
     });
-  }, [canonicalComposition, canonicalOccurrence, canonicalSettingsPersistence, canonicalShotComposition, onCanonicalCompositionPublished, selectedProjectId, shotToEdit.id]);
+  }, [canonicalComposition, canonicalOccurrence, canonicalSettingsPersistence, canonicalShotComposition, onCanonicalCompositionPublished]);
 
   const handleShotImagesUpdate = useCallback(async () => {
     invalidateGenerations(shotToEdit.id, {
@@ -374,11 +364,10 @@ export function ShotEditorView({
             projectId={selectedProjectId}
             shotId={shotToEdit.id}
             selectedShot={shotToEdit}
-            availableLoras={availableLoras}
             updateShotMode={updateShotMode}
             shotSettingsPersistence={canonicalSettingsPersistence}
           >
-            <SettingsAutoDisable shotId={shotToEdit.id} isCloudGenerationEnabled={isCloudGenerationEnabled} readOnly={editorReadOnly} />
+            <SettingsAutoDisable shotId={shotToEdit.id} readOnly={editorReadOnly} />
             <ShotSettingsEditor
               // Core identifiers
               selectedShotId={shotToEdit.id}
@@ -400,7 +389,7 @@ export function ShotEditorView({
               onNextShot={handleNextShot}
               hasPrevious={hasPrevious}
               hasNext={hasNext}
-              onUpdateShotName={editorReadOnly ? undefined : handleUpdateShotName}
+              onUpdateShotName={editorReadOnly || !canRenameCanonicalShot ? undefined : handleUpdateShotName}
               readOnly={editorReadOnly}
               // Loading and cache
               getFinalVideoCount={getFinalVideoCount}
@@ -443,20 +432,13 @@ export function ShotEditorView({
  * Renderless component that auto-disables conflicting settings.
  * Lives inside VideoTravelSettingsProvider to access settings context.
  */
-function SettingsAutoDisable({ shotId, isCloudGenerationEnabled, readOnly }: {
+function SettingsAutoDisable({ shotId, readOnly }: {
   shotId: string;
-  isCloudGenerationEnabled: boolean;
   readOnly?: boolean;
 }) {
-  const { settings, status, shotId: loadedShotId, updateField, updateFields } =
+  const { settings, status, shotId: loadedShotId, updateFields } =
     useVideoTravelSettingsMutations();
   const { turboMode = false, advancedMode = false } = settings;
-
-  // Auto-disable turbo mode when cloud generation is disabled
-  useEffect(() => {
-    if (readOnly || status !== 'ready' || loadedShotId !== shotId) return;
-    if (!isCloudGenerationEnabled && turboMode) updateField('turboMode', false);
-  }, [isCloudGenerationEnabled, turboMode, status, loadedShotId, shotId, updateField, readOnly]);
 
   // Auto-disable advanced mode when turbo mode is on
   useEffect(() => {

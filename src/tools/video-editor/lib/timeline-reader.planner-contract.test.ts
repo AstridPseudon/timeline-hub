@@ -1,5 +1,5 @@
 /**
- * M12: Planner-public-contract-only tests for TimelineReader inspection surface.
+ * Planner-public-contract-only tests for TimelineReader inspection surface.
  *
  * These tests prove that planner code can consume TimelineSnapshot,
  * TimelineReader, and SDK requirement types without importing provider
@@ -165,7 +165,7 @@ describe('M12 planner contract boundary', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M12: Snapshot carries planner inspection data
+// Snapshot carries planner inspection data
 // ---------------------------------------------------------------------------
 
 describe('M12 snapshot inspection fields', () => {
@@ -477,7 +477,7 @@ describe('M12 snapshot inspection fields', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M12: getCapabilityRequirements — provider-free inspection
+// getCapabilityRequirements — provider-free inspection
 // ---------------------------------------------------------------------------
 
 describe('M12 getCapabilityRequirements', () => {

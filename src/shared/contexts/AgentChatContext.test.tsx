@@ -57,6 +57,8 @@ describe('AgentChatActions registry', () => {
 
     const last = seen[seen.length - 1];
     expect(last).not.toBeNull();
+    expect(last).toHaveProperty('focusComposer');
+    expect(last).toHaveProperty('markEngaged');
     expect(last?.isRecording).toBe(true);
     expect(last?.isProcessing).toBe(false);
     expect(last?.isAgentWorking).toBe(true);

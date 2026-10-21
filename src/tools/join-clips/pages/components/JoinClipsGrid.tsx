@@ -64,12 +64,8 @@ export function JoinClipsGrid({ joinSettings, clipManager, settingsLoaded }: Joi
               clip={clip}
               index={index}
               clips={clipManager.clips}
-              uploadingClipId={clipManager.uploadingClipId}
-              draggingOverClipId={clipManager.draggingOverClipId}
-              isScrolling={clipManager.isScrolling}
               settingsLoaded={settingsLoaded}
               videoRefs={clipManager.videoRefs}
-              fileInputRefs={clipManager.fileInputRefs}
               transitionPrompts={clipManager.transitionPrompts}
               useIndividualPrompts={joinSettings.settings.useIndividualPrompts}
               loopFirstClip={joinSettings.settings.loopFirstClip}
@@ -77,11 +73,6 @@ export function JoinClipsGrid({ joinSettings, clipManager, settingsLoaded }: Joi
               onLoopFirstClipChange={(checked) => joinSettings.updateField('loopFirstClip', checked)}
               onRemoveClip={clipManager.handleRemoveClip}
               onClearVideo={clipManager.handleClearVideo}
-              onVideoUpload={clipManager.handleVideoUpload}
-              onDragOver={clipManager.handleDragOver}
-              onDragEnter={clipManager.handleDragEnter}
-              onDragLeave={clipManager.handleDragLeave}
-              onDrop={clipManager.handleDrop}
               onPromptChange={clipManager.handlePromptChange}
               setClips={clipManager.setClips}
               onOpenInLightbox={clipManager.setLightboxClip}

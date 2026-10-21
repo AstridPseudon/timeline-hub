@@ -1,5 +1,5 @@
 /**
- * Chrome's local-network permission, as the hosted build sees it (Plan A, D3).
+ * Chrome's local-network permission, as the hosted build sees it.
  *
  * The permission name is `local-network-access` (checked in Chromium 141; `local-network` and
  * `loopback-network` throw). `granted` means probe at once, `prompt` means send nothing until the

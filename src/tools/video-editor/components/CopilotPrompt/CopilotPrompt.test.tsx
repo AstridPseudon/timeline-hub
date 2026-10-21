@@ -1,5 +1,5 @@
 /**
- * M10 T20: Tests for CopilotPrompt and competing chat surface detection.
+ * Tests for CopilotPrompt and competing chat surface detection.
  *
  * Covers:
  *  - diagnoseCompetingChatSurface: detects competing chat surfaces in agentTool contributions
@@ -8,7 +8,6 @@
  *    confirmation, history tracking, empty states
  *
  * @module CopilotPrompt.test
- * @milestone M10
  */
 
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';

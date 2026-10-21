@@ -71,17 +71,17 @@ export interface EditorRuntimeProviderProps {
   sequenceComponentCatalog?: VideoEditorSequenceComponentCatalog | null;
   runtime?: Pick<VideoEditorRuntimeContextValue, 'assetResolver' | 'exporter' | 'hostContext'>;
   extensions?: readonly AstridExtension[];
-  /** Package-state inventory entries propagated from the loader (M5). */
+  /** Package-state inventory entries propagated from the loader. */
   packageStateEntries?: readonly PackageStateInventoryEntry[];
-  /** M5: Extension state repository for enable/disable persistence. */
+  /** Extension state repository for enable/disable persistence. */
   extensionStateRepository?: ExtensionStateRepository | null;
-  /** M5: Trigger extension re-resolution after persistence writes. */
+  /** Trigger extension re-resolution after persistence writes. */
   triggerExtensionRefresh?: () => void;
-  /** M6b: Host-provided process manager override. When absent, a default
+  /** Host-provided process manager override. When absent, a default
    *  ProcessManager is created from the extension runtime's declared process
    *  specs. */
   processManager?: ProcessManager;
-  /** T22: Provider-owned timeline-overlay feature flag. Explicitly defaults
+  /** Provider-owned timeline-overlay feature flag. Explicitly defaults
    *  to false; hosts opt in by supplying `true`. */
   timelineOverlaysEnabled?: boolean;
   /** Explicit ports for an admitted, independently scoped editor instance. */
@@ -138,7 +138,6 @@ function EditorRuntimeProviderInner({
     projectId: hostServices?.scope.projectId ?? null,
     timelineId,
     projectObjects,
-    catalogUserId: userId,
     effectsQueryEnabled: !effectCatalog && Boolean(userId),
     effectCatalog,
     sequenceComponentCatalog,
@@ -252,7 +251,7 @@ function EditorRuntimeProviderInstance({
     service?.getDisposeHandle().dispose();
   });
 
-  // ---- T9: Host-visible settings notification registry (one per provider) -----
+  // ---- Host-visible settings notification registry (one per provider) -----
   const settingsNotificationRegistry = useMemo(
     () => enableMutationServices ? createExtensionSettingsNotificationRegistry() : null,
     [enableMutationServices],
@@ -300,7 +299,7 @@ function EditorRuntimeProviderInstance({
     },
   });
 
-  // ---- T9: Pre-load settings snapshots from repository for context factory ----
+  // ---- Pre-load settings snapshots from repository for context factory ----
   const [settingsSnapshots, setSettingsSnapshots] = useState<
     Record<string, ExtensionSettingsSnapshot> | null
   >(null);
@@ -358,14 +357,14 @@ function EditorRuntimeProviderInstance({
     };
   }, [activeExtensionStateRepository]);
 
-  // ---- M1: Proposal persistence service lifecycle (provider-owned) ----------
+  // ---- Proposal persistence service lifecycle (provider-owned) ----------
   const proposalPersistenceBridgeRef = useRef<ProposalPersistenceProvider | null | undefined>(undefined);
   const [, setPersistenceInitVersion] = useState(0);
 
   // Track the current scope so we can detect userId / timelineId / provider
   // changes and tear down the old persistence service before creating a new
   // one.  Without this the lazy-init guard never resets and a disposed service
-  // is re-used for the new scope (rework item T5-scope).
+  // is re-used for the new scope.
   const persistedServiceRef = useRef<ExtensionPersistenceService | null>(null);
   const scopeKeyRef = useRef<string | undefined>(undefined);
   const currentScopeKey = `${userId ?? 'unknown'}::${timelineId}::${enableMutationServices}::${!!dataProvider.createExtensionPersistenceService}`;
@@ -444,8 +443,6 @@ function EditorRuntimeProviderInstance({
     isLoading: false,
     error: null,
     refetchShots: () => {},
-    finalVideoMap: new Map(),
-    dismissFinalVideo: () => {},
   }), []);
 
   const stubMediaLightboxHost = useMemo<VideoEditorMediaLightboxHost>(() => ({

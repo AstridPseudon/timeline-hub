@@ -26,17 +26,13 @@ import {
 } from '@/shared/lib/dnd/dragDrop';
 import type { GeneratedImageWithMetadata } from '@/shared/components/MediaGallery/types';
 import { parseRatio } from '@/shared/lib/media/aspectRatios';
-import { CreateShotModal } from "@/features/shots/components/CreateShotModal";
 import { useProjectSelectionContext } from "@/shared/contexts/ProjectContext";
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { useShotNavigation } from "@/shared/hooks/shots/useShotNavigation";
-import { useLastAffectedShot } from "@/shared/hooks/shots/useLastAffectedShot";
-import { useQuickShotCreate } from "@/shared/hooks/useQuickShotCreate";
 import { usePrefetchTaskData } from "@/shared/hooks/tasks/useTaskPrefetch";
 import { useGenerationTaskMapping } from "@/domains/generation/hooks/tasks/useGenerationTaskMapping";
 import { useTaskType } from "@/shared/hooks/tasks/useTaskType";
 import { useGetTask } from "@/shared/hooks/tasks/useTasks";
-import { useShareGeneration } from "@/shared/hooks/useShareGeneration";
 import { deriveGalleryInputImages } from "./MediaGallery/utils";
 import { isImageEditTaskType } from "@/shared/lib/taskParamsUtils";
 import { useMarkVariantViewed } from "@/shared/hooks/variants/useMarkVariantViewed";
@@ -141,7 +137,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     addingToShotWithoutPositionImageId,
     setAddingToShotWithoutPositionImageId,
     currentViewingShotId,
-    onCreateShot,
     onAddToLastShot,
     onAddToLastShotWithoutPosition,
   } = shotWorkflow;
@@ -152,7 +147,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     onMobileTap,
   } = mobileInteraction;
   const {
-    showShare = true,
     showDelete = true,
     showStar = true,
     showAddToShot = true,
@@ -183,11 +177,7 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     setIsShotSelectorOpen,
     isDragging,
     setIsDragging,
-    isCreateShotModalOpen,
-    setIsCreateShotModalOpen,
-    isCreatingShot,
-    handleCreateShot,
-  } = useMediaGalleryItemState({ image, onCreateShot });
+  } = useMediaGalleryItemState({ image });
   const prefetchTaskData = usePrefetchTaskData();
   const taskIdFromMetadata = image.metadata?.taskId as string | undefined;
   const actualGenerationId = getGenerationId(image);
@@ -209,12 +199,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     (!taskTypeInfo && image.metadata?.tool_type === TOOL_IDS.TRAVEL_BETWEEN_IMAGES);
   const isImageEditTask = isImageEditTaskType(taskType || undefined);
   const shouldShowTaskDetails = (!!taskData) && (isVideoTask || isImageEditTask);
-  const { handleShare, isCreatingShare, shareCopied, shareSlug } = useShareGeneration(
-    image.id,
-    taskId,
-    undefined,
-    { projectId: selectedProjectId },
-  );
   const { markAllViewed } = useMarkVariantViewed();
   const handleMarkAllVariantsViewed = useCallback(() => {
     if (actualGenerationId) {
@@ -222,27 +206,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
     }
   }, [actualGenerationId, markAllViewed]);
   const { navigateToShot } = useShotNavigation();
-  const { setLastAffectedShotId: updateLastAffectedShotId } = useLastAffectedShot();
-  const {
-    quickCreateSuccess,
-    handleQuickCreateAndAdd,
-    handleVisitCreatedShot,
-  } = useQuickShotCreate({
-    generationId: generationIdForActions,
-    generationPreview: {
-      imageUrl: image.url ?? undefined,
-      thumbUrl: image.thumbUrl ?? undefined,
-      type: image.type,
-      location: image.location,
-    },
-    shots: simplifiedShotOptions,
-    onShotChange: (shotId) => {
-      updateLastAffectedShotId(shotId);
-      setSelectedShotIdLocal(shotId);
-    },
-    onLoadingStart: () => setAddingToShotImageId(image.id),
-    onLoadingEnd: () => setAddingToShotImageId(null),
-  });
   const {
     isVideoContent,
     isAudioContent,
@@ -522,13 +485,7 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
                 shouldShowAddWithoutPositionButton,
                 currentTargetShotName,
               }}
-              quickCreate={{
-                quickCreateSuccess,
-                handleQuickCreateAndAdd,
-                handleVisitCreatedShot,
-              }}
               actions={{
-                onCreateShot,
                 onNavigateToShot: (shot) => navigateToShot(shot, { scrollToTop: true }),
                 onAddToShot: addToShot,
                 onAddToShotWithoutPosition: addToShotWithoutPosition,
@@ -552,12 +509,6 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
             shouldShowMetadata={shouldShowMetadata}
             shouldShowTaskDetails={shouldShowTaskDetails}
             setIsInfoOpen={setIsInfoOpen}
-            showShare={showShare}
-            taskId={taskId}
-            handleShare={(event) => { void handleShare(event); }}
-            isCreatingShare={isCreatingShare}
-            shareCopied={shareCopied}
-            shareSlug={shareSlug}
             onMarkAllVariantsViewed={handleMarkAllVariantsViewed}
           />
           <ActionButtons
@@ -579,28 +530,10 @@ export const MediaGalleryItem: React.FC<MediaGalleryItemProps> = ({
   return isMobile ? (
     <React.Fragment key={imageKey}>
       {imageContent}
-      {onCreateShot && (
-        <CreateShotModal
-          isOpen={isCreateShotModalOpen}
-          onClose={() => setIsCreateShotModalOpen(false)}
-          onSubmit={handleCreateShot}
-          isLoading={isCreatingShot}
-          projectId={selectedProjectId ?? undefined}
-        />
-      )}
     </React.Fragment>
   ) : (
     <DraggableImage key={`draggable-${imageKey}`} image={image} onDoubleClick={() => onOpenLightbox(image)}>
       {imageContent}
-      {onCreateShot && (
-        <CreateShotModal
-          isOpen={isCreateShotModalOpen}
-          onClose={() => setIsCreateShotModalOpen(false)}
-          onSubmit={handleCreateShot}
-          isLoading={isCreatingShot}
-          projectId={selectedProjectId ?? undefined}
-        />
-      )}
     </DraggableImage>
   );
 };

@@ -121,19 +121,13 @@ function useImageLightboxRenderModel(
     handleVariantSelect: sharedState.variants.setActiveVariantId,
     handleMakePrimary: sharedState.variants.setPrimaryVariant,
     handleDeleteVariant: sharedState.variants.deleteVariant,
-    promoteSuccess: sharedState.variants.promoteSuccess,
-    isPromoting: sharedState.variants.isPromoting,
-    handlePromoteToGeneration: sharedState.variants.handlePromoteToGeneration,
-    isMakingMainVariant: sharedState.makeMainVariant.isMaking,
-    canMakeMainVariant: sharedState.makeMainVariant.canMake,
-    handleMakeMainVariant: sharedState.makeMainVariant.handle,
     pendingTaskCount: variantBadges.pendingTaskCount,
     unviewedVariantCount: variantBadges.unviewedVariantCount,
     onMarkAllViewed: variantBadges.handleMarkAllViewed,
     variantsSectionRef: env.variantsSectionRef,
   }), [
     sharedState.variants,
-    sharedState.makeMainVariant, variantBadges, env.variantsSectionRef,
+    variantBadges, env.variantsSectionRef,
   ]);
 
   // --- Action handlers ---
@@ -174,15 +168,11 @@ function useImageLightboxRenderModel(
           thumbUrl: media.thumbUrl,
           allShots, selectedShotId,
           onShotChange: shotWorkflow?.onShotChange,
-          onCreateShot: shotWorkflow?.onCreateShot,
           isAlreadyPositionedInSelectedShot: sharedState.shots.isAlreadyPositionedInSelectedShot,
           isAlreadyAssociatedWithoutPosition: sharedState.shots.isAlreadyAssociatedWithoutPosition,
           showTickForImageId, showTickForSecondaryImageId,
           onAddToShot: shotWorkflow.onAddToShot,
           onAddToShotWithoutPosition: shotWorkflow?.onAddToShotWithoutPosition,
-          onAddVariantAsNewGeneration: sharedState.variants.handleAddVariantAsNewGenerationToShot,
-          activeVariantId: sharedState.variants.activeVariant?.id || sharedState.variants.primaryVariant?.id,
-          currentTimelineFrame: media.timeline_frame ?? undefined,
           onShowTick: shotWorkflow?.onShowTick,
           onOptimisticPositioned: shotWorkflow?.onOptimisticPositioned,
           onShowSecondaryTick: shotWorkflow?.onShowSecondaryTick,
@@ -197,13 +187,11 @@ function useImageLightboxRenderModel(
     actionHandlers,
     addToVideoEditor,
     shotWorkflow, env.actualGenerationId, env.contentRef,
-    media.id, media.thumbUrl, media.timeline_frame,
+    media.id, media.thumbUrl,
     sharedState.effectiveMedia.mediaUrl, allShots, selectedShotId,
     sharedState.shots.isAlreadyPositionedInSelectedShot,
     sharedState.shots.isAlreadyAssociatedWithoutPosition,
     showTickForImageId, showTickForSecondaryImageId,
-    sharedState.variants.handleAddVariantAsNewGenerationToShot,
-    sharedState.variants.activeVariant?.id, sharedState.variants.primaryVariant?.id,
     handleNavigateToShotFromSelector, onClose,
   ]);
 
@@ -271,7 +259,6 @@ function useImageLightboxRenderModel(
     effectiveTasksPaneWidth: env.effectiveTasksPaneWidth,
     workflowBar,
     buttonGroups: {
-      bottomLeft: sharedState.buttonGroupProps.bottomLeft,
       bottomRight: sharedState.buttonGroupProps.bottomRight,
       topRight: {
         ...sharedState.buttonGroupProps.topRight,
@@ -283,7 +270,7 @@ function useImageLightboxRenderModel(
   } satisfies LightboxLayoutProps), [
     showPanel, sharedState.layout.shouldShowSidePanel,
     env.effectiveTasksPaneOpen, env.effectiveTasksPaneWidth, workflowBar,
-    sharedState.buttonGroupProps.bottomLeft, sharedState.buttonGroupProps.bottomRight,
+    sharedState.buttonGroupProps.bottomRight,
     sharedState.buttonGroupProps.topRight, handleDownload, handleDelete, props.customOverlay, adjacentSegments,
   ]);
 

@@ -5,7 +5,7 @@ import { getVisibleTaskTypes } from '@/shared/lib/tasks/taskConfig';
 import { QUERY_PRESETS } from '@/shared/lib/query/queryDefaults';
 import { taskQueryKeys } from '@/shared/lib/queryKeys/tasks';
 import { useProcessingRefetchGuard } from '@/shared/hooks/tasks/useProcessingRefetchGuard';
-import { fetchTaskInProject } from '@/integrations/supabase/repositories/taskRepository';
+import { fetchTaskInProject } from '@/integrations/astrid/repositories/taskRepository';
 import {
   type PaginatedTasksResponse as RepositoryPaginatedTasksResponse,
 } from '@/shared/hooks/tasks/paginatedTaskRepository';

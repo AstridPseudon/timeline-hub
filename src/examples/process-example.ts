@@ -1,5 +1,5 @@
 /**
- * process-example — M12 trusted local process declaration example.
+ * process-example — trusted local process declaration example.
  *
  * Demonstrates:
  *   1. A `ProcessContribution` declared in the extension manifest with a

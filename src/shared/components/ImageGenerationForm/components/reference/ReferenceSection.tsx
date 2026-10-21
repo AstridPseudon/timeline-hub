@@ -1,44 +1,30 @@
 import React from "react";
-import { Button } from "@/shared/components/ui/button";
-import { Images } from "lucide-react";
-import { FileInput } from "@/shared/components/FileInput";
-import { ResourceBrowserModalBase } from "@/features/resources/components/ResourceBrowserModalBase";
 import { ReferenceGrid } from "./ReferenceGrid";
 import { ReferencePreview } from "./ReferencePreview";
 import { ReferenceModeControls } from "./ReferenceModeControls";
 import { LoraGrid } from "./LoraGrid";
-import { useFormCoreContext, useFormReferencesContext } from "../../ImageGenerationFormContext";
+import { useFormReferencesContext } from "../../ImageGenerationFormContext";
 
 interface ReferenceSectionProps {
-  onOpenLoraModal: () => void;
   isLoadingReferenceData?: boolean;
   referenceCount?: number;
 }
 
 export const ReferenceSection: React.FC<ReferenceSectionProps> = ({
-  onOpenLoraModal,
   isLoadingReferenceData = false,
   referenceCount = 0,
 }) => {
-  const [showDatasetBrowser, setShowDatasetBrowser] = React.useState(false);
-
-  const { isGenerating } = useFormCoreContext();
   const {
     references,
     styleReferenceImageDisplay: styleReferenceImage,
-    isUploadingStyleReference,
-    onStyleUpload: onAddReference,
-    onResourceSelect,
   } = useFormReferencesContext();
 
-  // Determine which UI state to show
   const hasReferences = referenceCount > 0 || references.length > 0;
   const hasSelectedReference = !!styleReferenceImage;
 
   return (
     <div className="space-y-4">
-      {hasReferences ? (
-        // Main UI: mode controls + grid + preview
+      {hasReferences && (
         <>
           {/* Mode selector and strength controls */}
           <ReferenceModeControls
@@ -50,7 +36,6 @@ export const ReferenceSection: React.FC<ReferenceSectionProps> = ({
             {/* Left: Thumbnail grid */}
             <div className="flex-[2]">
               <ReferenceGrid
-                onOpenDatasetBrowser={() => setShowDatasetBrowser(true)}
                 isLoadingReferenceData={isLoadingReferenceData}
                 referenceCount={referenceCount}
               />
@@ -64,42 +49,9 @@ export const ReferenceSection: React.FC<ReferenceSectionProps> = ({
             </div>
           </div>
         </>
-      ) : (
-        // Empty state: no references yet
-        <div className="space-y-3">
-          <FileInput
-            onFileChange={onAddReference}
-            acceptTypes={["image"]}
-            disabled={isGenerating || isUploadingStyleReference}
-            label="Upload your first reference image"
-            className="w-full"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowDatasetBrowser(true)}
-            disabled={isGenerating || isUploadingStyleReference}
-            className="w-full"
-          >
-            <Images className="h-4 w-4 mr-2" />
-            Browse images
-          </Button>
-        </div>
       )}
 
-      {/* LoRA Grid */}
-      <LoraGrid
-        onOpenLoraModal={onOpenLoraModal}
-      />
-
-      {/* Dataset Browser Modal */}
-      <ResourceBrowserModalBase
-        isOpen={showDatasetBrowser}
-        onOpenChange={setShowDatasetBrowser}
-        resourceType="style-reference"
-        onResourceSelect={onResourceSelect}
-      />
+      <LoraGrid />
     </div>
   );
 };

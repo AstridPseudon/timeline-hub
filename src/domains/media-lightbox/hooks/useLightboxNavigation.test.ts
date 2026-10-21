@@ -144,8 +144,8 @@ describe('useLightboxNavigation', () => {
 
   it('does not suppress keys when a modal overlay registers but is not actually open', () => {
     // Regression: a Base-UI Select/Popover registers with modal:true before its popup
-    // opens (elements missing / data-state !== "open"). Previously this left
-    // `getTopOverlay()` pointing at the stale entry and broke arrow/Escape in the lightbox.
+    // opens (elements missing / data-state !== "open"). Without the guard this would leave
+    // `getTopOverlay()` pointing at the stale entry and break arrow/Escape in the lightbox.
     const onPrevious = vi.fn();
     const onClose = vi.fn();
 

@@ -1,6 +1,6 @@
 # Astrid App Cloud: maximising parallel delivery
 
-**Shared metaplan:** [Astrid App Cloud — coordinated projects and execution schedule](/Users/peteromalley/Documents/astrid-app-workspace/astrid-app/docs/design/cloud-mode-megado-projects-2026-10-05.md).
+**Shared metaplan:** [Astrid App Cloud — coordinated projects and execution schedule](cloud-mode-megado-projects-2026-10-05.md).
 
 **2026-10-05 — independent Astra scheduling advice, planning only.** This interprets “synchronous work” as simultaneous work across the six existing Megado projects. It proposes changes to scheduling and task dependencies; it does not change the existing plans, authorize implementation, certify execution, bind future model budgets, or constitute an oracle review.
 

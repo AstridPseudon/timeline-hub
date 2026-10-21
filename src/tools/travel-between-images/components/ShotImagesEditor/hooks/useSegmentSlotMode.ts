@@ -63,7 +63,6 @@ export function useSegmentSlotMode(props: UseSegmentSlotModeProps): UseSegmentSl
     generationMode: props.effectiveGenerationMode,
     maxFrameLimit: props.maxFrameLimit,
     loadPositions: props.loadPositions,
-    trailingFrameUpdateRef: props.trailingFrameUpdateRef,
   });
 
   const trailingPairData = useMemo(() => buildTrailingPairData({

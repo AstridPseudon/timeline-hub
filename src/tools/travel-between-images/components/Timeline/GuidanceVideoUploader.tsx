@@ -3,7 +3,7 @@ import React from 'react';
 interface GuidanceVideoUploaderProps {
   shotId: string;
   projectId: string;
-  onVideoUploaded: (videoUrl: string | null, metadata: import('@/shared/lib/media/videoUploader').VideoMetadata | null) => void;
+  onVideoUploaded: (videoUrl: string | null, metadata: import('@/shared/lib/media/videoMetadata').VideoMetadata | null) => void;
   currentVideoUrl: string | null;
   compact?: boolean;
   zoomLevel: number;
@@ -17,7 +17,7 @@ interface GuidanceVideoUploaderProps {
 export const GuidanceVideoUploader: React.FC<GuidanceVideoUploaderProps> = ({
   zoomLevel,
 }) => {
-  // Note: Upload controls are now in TimelineContainer's top bar
+  // Note: Upload controls are in TimelineContainer's top bar
   // Just a small spacer for visual separation
 
   return (

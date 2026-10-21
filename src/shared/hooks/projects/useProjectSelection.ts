@@ -107,7 +107,7 @@ export function useProjectSelection({
 
     if (previousUserId && !userId && !isUrlOwnedMode) {
       // Auth/Runtime transitions must not retain a cloud project identity:
-      // otherwise project-scoped Supabase queries can briefly outlive the
+      // otherwise project-scoped queries can briefly outlive the
       // session. Clear local resume state without writing a logout preference.
       hadLocalStorageValueRef.current = false;
       hasAppliedServerPreferencesRef.current = false;

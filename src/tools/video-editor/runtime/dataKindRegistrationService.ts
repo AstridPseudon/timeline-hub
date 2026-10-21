@@ -180,7 +180,7 @@ export function createDataKindRegistrationService(
       return { dispose() {} };
     }
 
-    // ---- Host-validate open-string shape/domain ([CONVERGE-WITH-M1]) -------
+    // ---- Host-validate open-string shape/domain -------
     // Manifest validation rejects unknown values; this re-check also catches
     // absent fields, which the public schema permits but the registry record
     // requires (closed vocabularies feed lane painting).

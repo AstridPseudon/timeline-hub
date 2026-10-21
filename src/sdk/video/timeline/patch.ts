@@ -1,7 +1,7 @@
 /**
  * Timeline patch contracts — portable public contracts.
  *
- * Representative execution/process-like family boundary (M0 sanity check):
+ * Representative execution/process-like family boundary (sanity check):
  * - Portable: operation-family vocabulary, patch/diff/preview shapes,
  *   diagnostics, and project-data limit contracts. These are data-only
  *   descriptions of intended timeline mutations; they do not execute.
@@ -30,7 +30,7 @@ export type TimelinePatchOpFamily =
   | 'project-data.delete'
   | 'extension.noop';
 
-/** Reserved operation families that are validated but not executed in M3. */
+/** Reserved operation families that are validated but not executed. */
 export type TimelinePatchReservedOpFamily =
   | 'clip.split'
   | 'clip.slice'

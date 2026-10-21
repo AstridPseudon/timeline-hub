@@ -59,8 +59,8 @@ This document is the downstream consumer of the [M15 Contract-Recheck Matrix](./
 | S-013 | Extension removal from provider props unregisters contributions | **supported** | CR:M1-010; TEST:EditorRuntimeProvider.test.tsx |
 | S-014 | `ExtensionContext` exposes no raw `DataProvider`, no `applyEdit`, no internal mutation escape hatch | **supported** | CR:M1-014, CR:X-002; `ExtensionContext` shape in `src/tools/video-editor/runtime/` |
 | S-015 | HMR-safe re-registration and stale component cleanup | **supported** | CR:M5-003; provider-scoped lifecycle with `DisposeHandle` |
-| S-016 | Activation/deactivation wrapped in visible console grouping | **supported** | DOC:extensions-trust-envelope.md§4; `console.groupCollapsed`/`console.groupEnd` in lifecycle host |
-| S-017 | Lifecycle teardown failures captured as diagnostics, never thrown | **supported** | DOC:extensions-trust-envelope.md§2 (Dispose row); `lifecycle/teardown-error` diagnostics |
+| S-016 | Activation/deactivation wrapped in visible console grouping | **supported** | DOC:trust-and-security.md§11.2; `console.groupCollapsed`/`console.groupEnd` in lifecycle host |
+| S-017 | Lifecycle teardown failures captured as diagnostics, never thrown | **supported** | DOC:trust-and-security.md§11.1 (Dispose row); `lifecycle/teardown-error` diagnostics |
 | S-018 | Minimal manifest-only extension compiles and exports through public SDK | **supported** | CR:M0-001; EX:hello-world-extension.ts |
 | S-019 | Settings schema-version migration declaration and handler | **supported** | CR:M1-007; EX:settings-migration-example.ts |
 
@@ -197,7 +197,7 @@ This document is the downstream consumer of the [M15 Contract-Recheck Matrix](./
 
 | Row ID | Behavior | Classification | Evidence |
 |---|---|---|---|
-| S-150 | V1 trust envelope documented and honest (trusted-local execution) | **supported** | CR:X-003; DOC:extensions-trust-envelope.md |
+| S-150 | V1 trust envelope documented and honest (trusted-local execution) | **supported** | CR:X-003; DOC:trust-and-security.md |
 | S-151 | No new platform primitives added beyond explicitly bridged kinds | **supported** | CR:X-005; `contribution_kind_not_yet_bridged` diagnostics |
 | S-152 | Public SDK boundary guard: no internal provider/mutation leaks from SDK entrypoints | **supported** | CR:X-002; `@publicContract` annotation in `src/sdk/index.ts` |
 | S-153 | Source-pack/package contract freeze for manifest format | **supported** | CR:X-009; 8 `astrid-extension.json` files with consistent format |
@@ -226,7 +226,7 @@ This document is the downstream consumer of the [M15 Contract-Recheck Matrix](./
 | S-166 | Overlay renderers receive `TimelineOverlayRenderProps` (memoized geometry, stable viewport/playhead stores, selection, boolean `pointerClaimed`/`claimPointer()`/`releasePointer()`, `primitives`) and render through React component semantics inside `HostContributionErrorBoundary` (error releases any active claim) | **supported** | TEST:TimelineExtensionOverlayHost.integration.test.tsx, TimelineExtensionOverlayHost.test.tsx; `src/sdk/video/families/timelineOverlays.ts` |
 | S-167 | Ruler-only marker primitive: `primitives.markerLayer()` accepts `placement: 'ruler'` only (no `trackId`, no canvas placement), controlled markers with preview/commit intents, frame-grid snapping at commit, accessible marker buttons, culling with overscan | **supported** | TEST:TimelineMarkerLayer.test.tsx; `components/TimelineEditor/TimelineMarkerLayer.tsx`, `useTimelineMarkerDrag.ts` |
 | S-168 | Passive gesture arbitration: unclaimed overlay wrappers are click-through, `claimPointer()` declines for foreign owners/foreign overlay claimants, release on up/cancel/blur/visibility/error/disable/unmount, pinch refuses while `'overlay'` owns, `touch-action: none` limited to interactive marker hit targets | **supported** | TEST:TimelineExtensionOverlayHost.integration.test.tsx (T5.1 passive parity and ownership arbitration); `lib/mobile-interaction-model.ts` (`'overlay'` owner); `lib/timeline-dom.ts` |
-| S-169 | Storage-neutral persistence: marker/project data persists through the standard `project-data.write` path; generic disposal never deletes project data (dispose also runs on provider unmount, HMR, and reload); explicit user-triggered Clear/Delete Data actions | **supported** | `dev/scene-phase-markers/ScenePhaseMarkersPanel.tsx` (Clear/Delete Data); `dev/scene-phase-markers/extension.ts` (800-marker ceiling measured below the 64 KB hard entry limit); DOC:timeline-patch-operations.md§3.11 |
+| S-169 | Storage-neutral persistence: marker/project data persists through the standard `project-data.write` path; generic disposal never deletes project data (dispose also runs on provider unmount, HMR, and reload); deletion only through an explicit user action | **supported** | `src/examples/overlay-example.ts` (its dispose releases only the renderer); `src/tools/video-editor/lib/timeline-patch.test.ts` (64 KB hard entry limit diagnostics); DOC:timeline-patch-operations.md§3.11 |
 | S-170 | DEV-only Local extensions manager section: inventory from `devLocalExtensions`, active status/contribution summaries from `extensionRuntime.extensions`, stable external-store snapshots, toggles via `setDevExtensionEnabled`; disabled local extensions stay visible and re-enableable | **supported** | TEST:ExtensionManager.test.tsx (T2.4 DEV-only Local extensions section), devExtensionEnablement.test.ts, VideoEditorPage.test.tsx; `dev/devExtensionEnablement.ts`, `components/ExtensionManager/ExtensionManager.tsx` |
 | S-171 | Canary gate and deferred maturity promotion: `timelineOverlaysEnabled` defaults false and is provider-owned; the DEV-only `?timelineOverlayCanary=1` query parameter is implemented (flips the flag in DEV builds; production will not honor the query parameter); promotion to `public-supported` deferred until the release criterion passes | **supported** | TEST:BrowserVideoEditorProvider.test.tsx (timelineOverlaysEnabled flag), VideoEditorProvider.test.tsx; provider flag plumbing in `contexts/` + `browser/BrowserVideoEditorProvider.tsx`; DOC:extension-platform-release-checklist.md§2.11 |
 | S-172 | Public transcript-panel adapter and immutable transcript-package storage contracts compile and are exercised through the public SDK example | **supported** | EX:src/examples/transcript-panel-example.ts; TEST:src/sdk/examples-governance.test.ts (`Transcript panel SDK example contract`); `src/sdk/video/transcript.ts`, `src/sdk/video/assets/projectObjects.ts` |
@@ -241,11 +241,11 @@ This document is the downstream consumer of the [M15 Contract-Recheck Matrix](./
 |---|---|---|---|
 | D-001 | Extension installation, update, and deletion from manager UI (enable/disable, settings editing, and persistence are shipped — S-160–S-164) | **deferred** | CR:M14-001; BLOCKER:B-001; ABSENCE:grep -rE 'installExtension|uninstallExtension|deleteExtension|removeExtension' src/tools/video-editor/components/ExtensionManager/ |
 | D-002 | Failed extension load recovery and automated diagnostic triage | **deferred** | CR:M14-003; BLOCKER:B-001 |
-| D-003 | Integrity mismatch prevents installation/activation | **deferred** | CR:M14-004; BLOCKER:B-001; DOC:extensions-trust-envelope.md§6 (planned M4–M5) |
+| D-003 | Integrity mismatch prevents installation/activation | **deferred** | CR:M14-004; BLOCKER:B-001; DOC:trust-and-security.md§10 (planned M4–M5) |
 | D-004 | Extension state persistence, workspace pack load, bundle pack validation | **deferred** | CR:M14-005; BLOCKER:B-001 |
 | D-005 | Migration diagnostics for older metadata shapes | **deferred** | CR:M14-006; BLOCKER:B-001 |
 | D-006 | Local-source-to-installed-pack migration (settings/data preservation) | **deferred** | CR:M14-007; BLOCKER:B-001 |
-| D-007 | Manager trust warnings and extension requirements/lock metadata for installed packs | **deferred** | CR:M14-008; BLOCKER:B-001; DOC:extensions-trust-envelope.md |
+| D-007 | Manager trust warnings and extension requirements/lock metadata for installed packs | **deferred** | CR:M14-008; BLOCKER:B-001; DOC:trust-and-security.md |
 | D-008 | Provider-backed extension state repository | **deferred** | CR:M14-009; BLOCKER:B-001 |
 | D-009 | Extension dependency diagnostics, optional dependency degradation | **deferred** | CR:M14-010; BLOCKER:B-001 |
 | D-010 | Conflict override UI, dependency tree badges, uninstall reference report | **deferred** | CR:M14-011; BLOCKER:B-001 |
@@ -353,9 +353,9 @@ This document is the downstream consumer of the [M15 Contract-Recheck Matrix](./
 
 | Row ID | Behavior | Classification | Evidence |
 |---|---|---|---|
-| D-120 | Runtime permission enforcement (network, filesystem, env, processes gating) | **deferred** | DOC:extensions-trust-envelope.md§3; ABSENCE:grep -r 'permission enforcement' src/tools/video-editor/runtime/ |
-| D-121 | Sandboxed extension execution (iframe, Worker, ShadowRealm isolation) | **deferred** | DOC:extensions-trust-envelope.md§§5-6; ABSENCE:grep -r 'sandbox' src/tools/video-editor/runtime/; planned M4–M5 |
-| D-122 | Dynamic package loading (npm / CDN / `import()` for extension code) | **deferred** | DOC:extensions-trust-envelope.md§2; ABSENCE:grep -r 'CDN.*extension' src/tools/video-editor/runtime/; extensions statically bundled with host |
+| D-120 | Runtime permission enforcement (network, filesystem, env, processes gating) | **deferred** | DOC:trust-and-security.md§2; ABSENCE:grep -r 'permission enforcement' src/tools/video-editor/runtime/ |
+| D-121 | Sandboxed extension execution (iframe, Worker, ShadowRealm isolation) | **deferred** | DOC:trust-and-security.md§§11.3, 10; ABSENCE:grep -r 'sandbox' src/tools/video-editor/runtime/; planned M4–M5 |
+| D-122 | Dynamic package loading (npm / CDN / `import()` for extension code) | **deferred** | DOC:trust-and-security.md§11.1; ABSENCE:grep -r 'CDN.*extension' src/tools/video-editor/runtime/; extensions statically bundled with host |
 | D-123 | Marketplace, cloud loading, or third-party extension registry | **unsupported** | CR:X-006; consistently OUT of scope for all milestones; ABSENCE:grep -r 'marketplace' src/sdk/ |
 
 ### 3.13 Structural Deferrals
@@ -382,7 +382,7 @@ These behaviors are documented as unsupported across all milestones and have no 
 | Marketplace / extension registry | ABSENCE:grep -r 'marketplace' src/sdk/; CR:X-006 |
 | Standalone `@astrid/editor-sdk` npm publishing | Deferred — see D-136 above. The SDK is monorepo-extractable but has not been published as an independent npm package. |
 | Cloud extension loading | ABSENCE:grep -r 'cloud.*extension' src/tools/video-editor/runtime/ |
-| Sandboxed execution (iframe/Worker/ShadowRealm) | DOC:extensions-trust-envelope.md§5 |
+| Sandboxed execution (iframe/Worker/ShadowRealm) | DOC:trust-and-security.md§11.3 |
 | Theme contributions | ABSENCE:grep -r 'theme.*contribution' src/sdk/index.ts |
 | Public CRDT collaboration primitives | ABSENCE:grep -r 'CRDT' src/sdk/index.ts |
 
@@ -390,12 +390,12 @@ These behaviors are documented as unsupported across all milestones and have no 
 
 | Concern | V1 Answer | Evidence |
 |---|---|---|
-| Execution context | Same-thread, same-origin JavaScript in the browser | DOC:extensions-trust-envelope.md§7 |
-| Isolation | None | DOC:extensions-trust-envelope.md§1 |
-| Permission enforcement | Descriptive only (no runtime gating) | DOC:extensions-trust-envelope.md§3 |
-| Lifecycle visibility | Console groups + structured diagnostics + export guard | DOC:extensions-trust-envelope.md§7 |
-| Error containment | Contribution-level error boundaries; activation throws → `failed` state + diagnostics | DOC:extensions-trust-envelope.md§5 |
-| Source vetting | Human review required; no automated integrity checks in V1 | DOC:extensions-trust-envelope.md§7 |
+| Execution context | Same-thread, same-origin JavaScript in the browser | DOC:trust-and-security.md§11.5 |
+| Isolation | None | DOC:trust-and-security.md§1 |
+| Permission enforcement | Descriptive only (no runtime gating) | DOC:trust-and-security.md§2 |
+| Lifecycle visibility | Console groups + structured diagnostics + export guard | DOC:trust-and-security.md§11.5 |
+| Error containment | Contribution-level error boundaries; activation throws → `failed` state + diagnostics | DOC:trust-and-security.md§11.3 |
+| Source vetting | Human review required; no automated integrity checks in V1 | DOC:trust-and-security.md§11.5 |
 
 ---
 
@@ -472,8 +472,8 @@ Each deferred row maps to the contract-recheck row(s) where the gap was identifi
 | Document | Purpose |
 |---|---|
 | [extension-platform-contract-recheck.md](./extension-platform-contract-recheck.md) | Complete M0–M14 Done Criteria evidence matrix |
-| [extensions-trust-envelope.md](./extensions-trust-envelope.md) | V1 trusted-local execution model and permission posture |
-| [provider-compatibility-matrix.md](./provider-compatibility-matrix.md) | DataProvider compatibility across InMemory/Supabase/Astrid |
+| [trust-and-security.md](../extensions/trust-and-security.md) | V1 trusted-local execution model and permission posture |
+| [provider-compatibility-matrix.md](./provider-compatibility-matrix.md) | DataProvider compatibility across InMemory/Runtime |
 | [timeline-patch-operations.md](./timeline-patch-operations.md) | Complete TimelinePatch operation reference |
 | [shader-execution-model.md](./shader-execution-model.md) | M13 shader/WebGL bridge model |
 | [frontend-closure-checklist.md](./frontend-closure-checklist.md) | Frontend state completeness for public primitives |

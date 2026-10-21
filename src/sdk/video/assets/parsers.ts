@@ -15,7 +15,7 @@ import type { DiagnosticSeverity } from '../../diagnostics';
 import type { AssetMetadata, DeferredEnrichmentRecord } from './metadata';
 
 // ---------------------------------------------------------------------------
-// M6: Parser runtime types
+// Parser runtime types
 // ---------------------------------------------------------------------------
 
 /**
@@ -62,7 +62,7 @@ export interface ParserResult {
   /**
    * Deferred enrichment records the parser wishes to enqueue.
    * These are persisted alongside the asset and surface in the asset
-   * detail panel; execution is deferred to M10/M12.
+   * detail panel; execution is deferred.
    */
   enrichment?: readonly DeferredEnrichmentRecord[];
 }

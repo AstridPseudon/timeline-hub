@@ -6,8 +6,8 @@
  * (`docs/video-editor/extension-platform-supported-deferred.md`) and
  * governance outputs (`config/governance/contract-surface-map.json`,
  * `config/governance/sdk-public-export-allowlist.json`) to determine which
- * example files are safe to reference in author-contract docs and quickstart
- * guides.
+ * example files are safe to reference in the author contract, including its
+ * getting-started section.
  *
  * ## What this gate enforces
  *
@@ -740,7 +740,7 @@ const RELEASE_EXAMPLE_CONTRACTS = Object.freeze([
         label: 'sidecar blocker and artifact-route evidence',
         patterns: Object.freeze([
           {
-            regex: /graphPathMarker:\s*EX04_GRAPH_PATH_MARKER/,
+            regex: /graphPathMarker:\s*GRAPH_PATH_MARKER/,
             message: 'missing EX-04 graph-path marker evidence.',
           },
           {

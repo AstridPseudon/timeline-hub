@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 type Setter<T> = T | ((current: T) => T);
 
@@ -8,6 +8,10 @@ interface EditorSettingsOptions {
   persist?: boolean;
 }
 
+/**
+ * A localStorage-backed value. Only an explicit `setValue` is written back: mounting with the default
+ * (or with a record that merely lacks newer fields) must not turn that default into a saved choice.
+ */
 export function useEditorSettings<T>(storageKey: string, initialValue: T, { debounceMs = 200, persist = true }: EditorSettingsOptions = {}) {
   const initial = useMemo(() => {
     if (!persist) return initialValue;
@@ -20,9 +24,10 @@ export function useEditorSettings<T>(storageKey: string, initialValue: T, { debo
   }, [initialValue, persist, storageKey]);
 
   const [value, setValueState] = useState<T>(initial);
+  const changedByCaller = useRef(false);
 
   useEffect(() => {
-    if (!persist) return;
+    if (!persist || !changedByCaller.current) return undefined;
     const timeout = window.setTimeout(() => {
       window.localStorage.setItem(storageKey, JSON.stringify(value));
     }, debounceMs);
@@ -33,6 +38,7 @@ export function useEditorSettings<T>(storageKey: string, initialValue: T, { debo
   }, [debounceMs, persist, storageKey, value]);
 
   const setValue = (update: Setter<T>) => {
+    changedByCaller.current = true;
     setValueState((current) => (typeof update === 'function' ? (update as (current: T) => T)(current) : update));
   };
 

@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
-import { CheckCircle, PlusCircle, ImagePlus, Loader2, ArrowRight } from 'lucide-react';
+import { CheckCircle, PlusCircle, ArrowRight } from 'lucide-react';
 import { ShotSelectorWithAdd } from '@/shared/components/selectors/ShotSelectorWithAdd';
-import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import type { ShotOption } from '@/domains/generation/types';
-import { INTERACTION_TIMING } from '@/shared/lib/interactions/timing';
 import { useShotAssociationControls } from './hooks/useShotAssociationControls';
 
 export interface ShotSelectorControlsProps {
@@ -18,7 +16,6 @@ export interface ShotSelectorControlsProps {
   allShots: ShotOption[];
   selectedShotId: string | undefined;
   onShotChange?: (shotId: string) => void;
-  onCreateShot?: (shotName: string, files: File[]) => Promise<{shotId?: string; shotName?: string} | void>;
 
   // Shot positioning
   isAlreadyPositionedInSelectedShot: boolean;
@@ -30,13 +27,6 @@ export interface ShotSelectorControlsProps {
   // CRITICAL: targetShotId is the shot selected in the DROPDOWN, not the shot being viewed
   onAddToShot: (targetShotId: string, generationId: string, imageUrl?: string, thumbUrl?: string) => Promise<boolean>;
   onAddToShotWithoutPosition?: (targetShotId: string, generationId: string, imageUrl?: string, thumbUrl?: string) => Promise<boolean>;
-
-  // Variant promotion - for adding a variant as a new generation to a shot
-  // Handler queries target shot directly to find positioning
-  onAddVariantAsNewGeneration?: (shotId: string, variantId: string, currentTimelineFrame?: number) => Promise<boolean>;
-  activeVariantId?: string | null;
-  // Current generation's timeline position in the selected shot (for positioning new items)
-  currentTimelineFrame?: number;
 
   // Optimistic updates
   onShowTick?: (imageId: string) => void;
@@ -72,16 +62,12 @@ export const ShotSelectorControls: React.FC<ShotSelectorControlsProps> = ({
   allShots,
   selectedShotId,
   onShotChange,
-  onCreateShot,
   isAlreadyPositionedInSelectedShot,
   isAlreadyAssociatedWithoutPosition,
   showTickForImageId,
   showTickForSecondaryImageId,
   onAddToShot,
   onAddToShotWithoutPosition,
-  onAddVariantAsNewGeneration,
-  activeVariantId,
-  currentTimelineFrame,
   onShowTick,
   onOptimisticPositioned,
   onShowSecondaryTick,
@@ -92,8 +78,6 @@ export const ShotSelectorControls: React.FC<ShotSelectorControlsProps> = ({
   isAdding = false,
   isAddingWithoutPosition = false,
 }) => {
-  const [isAddingVariantAsNew, setIsAddingVariantAsNew] = useState(false);
-  const [addedVariantAsNewSuccess, setAddedVariantAsNewSuccess] = useState(false);
   const {
     selectedShot,
     isAddedWithoutPosition,
@@ -114,35 +98,6 @@ export const ShotSelectorControls: React.FC<ShotSelectorControlsProps> = ({
     errorContext: 'ShotSelectorControls',
   });
 
-  // Handle adding variant as a new generation to shot
-  const handleAddVariantAsNewGeneration = async () => {
-
-    if (!selectedShotId || !activeVariantId || !onAddVariantAsNewGeneration) {
-      return;
-    }
-
-    setIsAddingVariantAsNew(true);
-    setAddedVariantAsNewSuccess(false);
-
-    try {
-      // Handler queries target shot directly to find positioning
-      const success = await onAddVariantAsNewGeneration(
-        selectedShotId,
-        activeVariantId,
-        currentTimelineFrame
-      );
-      if (success) {
-        setAddedVariantAsNewSuccess(true);
-        // Reset success state after delay
-        setTimeout(() => setAddedVariantAsNewSuccess(false), INTERACTION_TIMING.shotAssociationSuccessMs);
-      }
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'ShotSelectorControls', showToast: false });
-    } finally {
-      setIsAddingVariantAsNew(false);
-    }
-  };
-
   return (
     <div className="flex flex-col items-center gap-1">
       {/* Top row: selector and buttons */}
@@ -155,7 +110,6 @@ export const ShotSelectorControls: React.FC<ShotSelectorControlsProps> = ({
           selectedShotId={selectedShotId || ''}
           onShotChange={onShotChange || (() => {})}
           onAddToShot={onAddToShot}
-          showCreateShot={!!onCreateShot}
           isAlreadyPositionedInSelectedShot={isAlreadyPositionedInSelectedShot}
           showTick={showTickForImageId === mediaId}
           isAdding={isAdding}
@@ -203,41 +157,6 @@ export const ShotSelectorControls: React.FC<ShotSelectorControlsProps> = ({
           </Tooltip>
         );
       })()}
-
-        {/* Add variant as new generation to shot button - show by default, disable when no variant */}
-        {onAddVariantAsNewGeneration && selectedShotId && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => {
-                  handleAddVariantAsNewGeneration();
-                }}
-                disabled={isAddingVariantAsNew || !activeVariantId}
-                data-testid="add-variant-as-new-button"
-                className={`h-8 w-8 ml-1 text-white ${
-                  addedVariantAsNewSuccess
-                    ? 'bg-green-600/80 hover:bg-green-600'
-                    : 'bg-black/50 hover:bg-black/70'
-                }`}
-              >
-                {isAddingVariantAsNew ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : addedVariantAsNewSuccess ? (
-                  <CheckCircle className="h-4 w-4" />
-                ) : (
-                  <ImagePlus className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {addedVariantAsNewSuccess
-                ? 'Added variant as new image to shot!'
-                : 'Add variant as new image to shot'}
-            </TooltipContent>
-          </Tooltip>
-        )}
       </div>
 
       {/* Jump to shot link - below the buttons */}

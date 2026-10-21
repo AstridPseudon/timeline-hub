@@ -50,7 +50,7 @@ const GIT_ENV = Object.freeze({
 export const REPO_ROOT = resolve(moduleDir, '..', '..');
 export const CHECKLIST_PATH = resolve(
   REPO_ROOT,
-  'docs/extensions/extension-ship-quality-checklist.md',
+  'docs/video-editor/extension-platform-release-checklist.md',
 );
 export const LEDGER_PATH = resolve(
   REPO_ROOT,

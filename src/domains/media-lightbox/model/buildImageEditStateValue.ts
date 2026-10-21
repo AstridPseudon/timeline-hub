@@ -104,7 +104,7 @@ export function buildImageEditStateValue(p: BuildImageEditStateParams): ImageEdi
     // Display
     imageContainerRef: p.imageContainerRef,
     isFlippedHorizontally: Boolean(reposition.transform?.flipH),
-    isSaving: reposition.isGeneratingReposition || reposition.isSavingAsVariant,
+    isSaving: reposition.isGeneratingReposition,
 
     // Panel UI
     toolPanelPosition: magic.toolPanelPosition,
@@ -150,8 +150,6 @@ export function buildImageEditStateValue(p: BuildImageEditStateParams): ImageEdi
     img2imgGenerateSuccess: img2img.img2imgGenerateSuccess,
     isGeneratingReposition: reposition.isGeneratingReposition,
     repositionGenerateSuccess: reposition.repositionGenerateSuccess,
-    isSavingAsVariant: reposition.isSavingAsVariant,
-    saveAsVariantSuccess: reposition.saveAsVariantSuccess,
     isCreatingMagicEditTasks: magic.isCreatingMagicEditTasks,
     magicEditTasksCreated: magic.magicEditTasksCreated,
   };

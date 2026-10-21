@@ -2,12 +2,24 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
-import type { SettingsFetchResult, SettingsScope } from '@/shared/settings';
 import type { ToolDefaultsById, ToolDefaultsId } from '@/tooling/toolDefaultsRegistry';
 
-export { updateToolSettingsSupabase } from '@/shared/settings';
-export type { SettingsScope } from '@/shared/settings';
+export type SettingsScope = 'user' | 'project' | 'shot';
 
+export interface SettingsFetchResult<T = Record<string, unknown>> {
+  settings: T;
+  hasShotSettings: boolean;
+}
+
+// ============================================================================
+// Cache format helpers
+// ============================================================================
+
+/**
+ * Helper to check if a cache value has the wrapper format.
+ * settings reads always return { settings, hasShotSettings },
+ * but legacy or manually-set cache entries may use flat format.
+ */
 function isSettingsWrapper(data: unknown): data is SettingsFetchResult {
   if (!data || typeof data !== 'object') return false;
   return 'settings' in data && 'hasShotSettings' in data;
@@ -61,7 +73,13 @@ export function useToolSettings<T extends object>(toolId: string, context?: { pr
   hasShotSettings: boolean;
 };
 
-/** Observe cached settings without deferred account reads or writes. */
+/**
+ * Tool settings hook. The Runtime path has no tool-settings backend, so the
+ * query is never fetched and `update` is a no-op. The hook still observes the
+ * settings cache, which other hooks seed with `setQueryData` (shot settings
+ * seeding, reference/style handlers), so `settings`, `hasShotSettings` and
+ * `error` come from whatever those writers put there.
+ */
 export function useToolSettings<T extends object>(
   toolId: string,
   context?: { projectId?: string; shotId?: string; enabled?: boolean },

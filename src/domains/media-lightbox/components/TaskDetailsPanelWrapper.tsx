@@ -23,8 +23,6 @@ export const TaskDetailsPanelWrapper: React.FC<TaskDetailsPanelWrapperProps> = (
       error={taskDetailsData?.error ?? null}
       inputImages={taskDetailsData?.inputImages || []}
       taskId={taskDetailsData?.taskId || null}
-      replaceImages={false}
-      onReplaceImagesChange={() => {}}
       className=""
       showUserImage={false}
       derivedSection={null}

@@ -22,7 +22,6 @@ describe('PromptEditorPromptList', () => {
       <PromptEditorPromptList
         prompts={[]}
         isMobile={false}
-        isLoading={false}
         activePromptIdForFullView={null}
         onActivePromptChange={vi.fn()}
         onUpdatePromptField={vi.fn()}
@@ -30,7 +29,7 @@ describe('PromptEditorPromptList', () => {
       />,
     );
 
-    expect(screen.getByText('No prompts yet. Add one manually or use AI generation.')).toBeInTheDocument();
+    expect(screen.getByText('No prompts yet. Add one to get started.')).toBeInTheDocument();
     expect(mocks.PromptInputRow).not.toHaveBeenCalled();
   });
 
@@ -46,7 +45,6 @@ describe('PromptEditorPromptList', () => {
           { id: 'p2', fullPrompt: 'B', shortPrompt: 'B short' },
         ]}
         isMobile={true}
-        isLoading={true}
         activePromptIdForFullView={'p2'}
         onActivePromptChange={onActivePromptChange}
         onUpdatePromptField={onUpdatePromptField}
@@ -64,7 +62,6 @@ describe('PromptEditorPromptList', () => {
       expect.objectContaining({
         totalPrompts: 2,
         canRemove: true,
-        isGenerating: true,
         autoEnterEditWhenActive: true,
       }),
     );

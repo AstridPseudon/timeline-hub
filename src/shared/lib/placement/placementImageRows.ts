@@ -1,17 +1,16 @@
 /**
- * Document-native placement image rows (C4, doc 24 Q1 RATIFIED).
+ * Document-native placement image rows.
  *
  * The timeline document is the ONLY placement authority, but every shots /
- * gallery surface consumes the `GenerationRow` shape the retired
- * `shot_generations` junction JOIN used to produce. This module merges the
+ * gallery surface consumes the `GenerationRow` shape. This module merges the
  * document read model (`fetchProjectPlacements`) against bridge gallery rows
- * (`fetchGalleryRows`, R12) and reuses `mapShotGenerationToRow` so output
+ * (`fetchGalleryRows`) and reuses `mapShotGenerationToRow` so output
  * rows are byte-compatible with what consumers already expect:
  *
  * - `id`            = placement entryId (`sg-<shotId>-<generationId>`)
  * - `generation_id` = the real generation id
  * - `timeline_frame`= clip frame (null = pooled/unpositioned)
- * - display URLs    = primary media via the R9 content route
+ * - display URLs    = primary media via the content route
  */
 
 import type { GenerationRow } from '@/domains/generation/types';
@@ -70,12 +69,12 @@ export function mergePlacementImageRows(
   return rows;
 }
 
-/** Gallery-recency ordering (newest first), matching the retired junction read's `created_at DESC` intent. */
+/** Gallery-recency ordering (newest first). */
 export function sortPlacementRowsNewestFirst(rows: GenerationRow[]): GenerationRow[] {
   return [...rows].sort((a, b) => {
     const delta = new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
     if (delta !== 0) return delta;
-    // Tie-break mirrors the old secondary sort: earlier frame first, pooled last.
+    // Tie-break: earlier frame first, pooled last.
     if (a.timeline_frame == null && b.timeline_frame == null) return 0;
     if (a.timeline_frame == null) return 1;
     if (b.timeline_frame == null) return -1;

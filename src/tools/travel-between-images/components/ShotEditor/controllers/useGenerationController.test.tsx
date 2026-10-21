@@ -1,22 +1,12 @@
 // @vitest-environment jsdom
 
-import { act, renderHook } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGenerationController } from './useGenerationController';
 
 const mocks = vi.hoisted(() => ({
-  useTimelineCore: vi.fn(),
-  normalizeAndPresentError: vi.fn(),
   useSteerableMotionHandlers: vi.fn(),
   useGenerateBatch: vi.fn(),
-}));
-
-vi.mock('@/shared/hooks/timeline/useTimelineCore', () => ({
-  useTimelineCore: mocks.useTimelineCore,
-}));
-
-vi.mock('@/shared/lib/errorHandling/runtimeError', () => ({
-  normalizeAndPresentError: mocks.normalizeAndPresentError,
 }));
 
 vi.mock('../hooks/actions/useSteerableMotionHandlers', () => ({
@@ -30,12 +20,6 @@ vi.mock('../hooks/actions/useGenerateBatch', () => ({
 describe('useGenerationController', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mocks.useTimelineCore.mockReturnValue({
-      clearAllEnhancedPrompts: vi.fn().mockResolvedValue(undefined),
-      updatePairPromptsByIndex: vi.fn(),
-      refetch: vi.fn(),
-    });
 
     mocks.useSteerableMotionHandlers.mockReturnValue({
       handleRandomSeedChange: vi.fn(),
@@ -129,12 +113,11 @@ describe('useGenerationController', () => {
     };
   }
 
-  it('builds the batch generation request and exposes the downstream handlers', async () => {
+  it('builds the batch generation request and exposes the downstream handlers', () => {
     const args = buildArgs();
 
     const { result } = renderHook(() => useGenerationController(args));
 
-    expect(mocks.useTimelineCore).toHaveBeenCalledWith('shot-1');
     expect(mocks.useSteerableMotionHandlers).toHaveBeenCalledWith(
       expect.objectContaining({
         accelerated: false,
@@ -178,39 +161,14 @@ describe('useGenerationController', () => {
       }),
     );
 
-    await act(async () => {
-      await result.current.handleBatchVideoPromptChangeWithClear('Updated prompt');
-    });
+    result.current.handleBatchVideoPromptChange('Updated prompt');
 
     expect(args.prompt.onPromptChange).toHaveBeenCalledWith('Updated prompt');
-    expect(mocks.useTimelineCore.mock.results[0].value.clearAllEnhancedPrompts).toHaveBeenCalledTimes(1);
     expect(result.current.handleGenerateBatch).toBe(
       mocks.useGenerateBatch.mock.results[0].value.handleGenerateBatch,
     );
     expect(result.current.handleRandomSeedChange).toBe(
       mocks.useSteerableMotionHandlers.mock.results[0].value.handleRandomSeedChange,
-    );
-  });
-
-  it('normalizes prompt-clear failures without breaking the prompt update flow', async () => {
-    const args = buildArgs();
-    const clearAllEnhancedPrompts = vi.fn().mockRejectedValue(new Error('clear failed'));
-    mocks.useTimelineCore.mockReturnValueOnce({
-      clearAllEnhancedPrompts,
-      updatePairPromptsByIndex: vi.fn(),
-      refetch: vi.fn(),
-    });
-
-    const { result } = renderHook(() => useGenerationController(args));
-
-    await act(async () => {
-      await result.current.handleBatchVideoPromptChangeWithClear('Retry prompt');
-    });
-
-    expect(args.prompt.onPromptChange).toHaveBeenCalledWith('Retry prompt');
-    expect(mocks.normalizeAndPresentError).toHaveBeenCalledWith(
-      expect.any(Error),
-      { context: 'PromptClearLog', showToast: false },
     );
   });
 

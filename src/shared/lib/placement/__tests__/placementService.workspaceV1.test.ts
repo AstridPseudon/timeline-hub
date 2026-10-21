@@ -4,7 +4,7 @@ import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors';
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults';
 
 /**
- * B7: under Workspace v1 the Runtime has no `…/timelines/:ref/save` route, so
+ * The Runtime has no `…/timelines/:ref/save` route, so
  * placement must publish through the same RuntimeDataProvider path the editor
  * saves with (`saveTimelineAtHead`, expected-head CAS).
  */

@@ -338,7 +338,7 @@ function screenFor(connection: RuntimeConnectionValue, phone: boolean): { name: 
 }
 
 /**
- * The connection panel for the hosted build, one screen per thing a person can do (Plan A, D3), over the empty editor.
+ * The connection panel for the hosted build, one screen per thing a person can do, over the empty editor.
  * Renders nothing once connected unless it is on its way out (`exit`). Every word comes from `copy.ts`.
  */
 export function RuntimeConnectionPanel({ connection, exit = null }: RuntimeConnectionPanelProps) {

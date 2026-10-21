@@ -8,20 +8,6 @@ vi.mock('@/shared/lib/taskCreation', () => ({
   createTask: vi.fn(),
 }));
 
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      update: vi.fn().mockReturnThis(),
-    })),
-    functions: {
-      invoke: vi.fn(),
-    },
-  }),
-}));
-
 const getSettings = () => ({
   prompt: 'A prompt',
   negativePrompt: '',
@@ -102,8 +88,7 @@ describe('submitSegmentTask', () => {
     });
   });
 
-  it('fails closed before settings persistence or task creation', () => {
-    const saveSettings = vi.fn().mockResolvedValue(false);
+  it('fails closed before task creation', () => {
     const run = vi.fn<RunTaskPlaceholder>();
     const onNonFatalError = vi.fn();
 
@@ -111,8 +96,6 @@ describe('submitSegmentTask', () => {
       taskLabel: 'Segment 1',
       errorContext: 'submitSegmentTask.test',
       getSettings,
-      saveSettings,
-      shouldSaveSettings: true,
       shouldEnhance: false,
       defaultNumFrames: 25,
       images: {
@@ -128,23 +111,19 @@ describe('submitSegmentTask', () => {
       onNonFatalError,
     })).toThrow('Astrid capability generation.generate_video is unsupported');
 
-    expect(saveSettings).not.toHaveBeenCalled();
     expect(run).not.toHaveBeenCalled();
     expect(onNonFatalError).toHaveBeenCalledWith('unsupported_capability', expect.any(Error));
   });
 
-  it('does not create an individual travel task even when settings are writable', () => {
+  it('does not create an individual travel task', () => {
     const createTaskMock = vi.mocked(createTask);
     createTaskMock.mockResolvedValue({ task_id: 'task-2', status: 'queued' });
-    const saveSettings = vi.fn().mockResolvedValue(true);
     const run = vi.fn<RunTaskPlaceholder>();
 
     expect(() => submitSegmentTask({
       taskLabel: 'Segment 2',
       errorContext: 'submitSegmentTask.test',
       getSettings,
-      saveSettings,
-      shouldSaveSettings: true,
       shouldEnhance: false,
       defaultNumFrames: 25,
       images: {
@@ -160,7 +139,6 @@ describe('submitSegmentTask', () => {
       queryClient: new QueryClient(),
     })).toThrow('Astrid capability generation.generate_video is unsupported');
 
-    expect(saveSettings).not.toHaveBeenCalled();
     expect(run).not.toHaveBeenCalled();
     expect(createTaskMock).not.toHaveBeenCalled();
   });

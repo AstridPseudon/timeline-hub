@@ -21,17 +21,6 @@ vi.mock('@/shared/components/DefaultableTextarea', () => ({
         >
           set-default
         </button>
-        <button
-          type="button"
-          onClick={() =>
-            (props.onVoiceResult as (result: { prompt?: string; transcription?: string }) => void)({
-              prompt: '',
-              transcription: 'spoken negative',
-            })
-          }
-        >
-          voice
-        </button>
       </div>
     );
   },
@@ -77,18 +66,16 @@ describe('NegativePromptField', () => {
     expect(passedProps.defaultValue).toBe('shot default negative');
     expect(passedProps.hasDbOverride).toBe(true);
     expect(passedProps.isSavingDefault).toBe(true);
-    expect(passedProps.voiceInput).toBe(true);
+    expect(Object.keys(passedProps).filter((key) => /voice/i.test(key))).toEqual([]);
 
     fireEvent.click(screen.getByRole('button', { name: 'change' }));
     fireEvent.click(screen.getByRole('button', { name: 'clear' }));
     fireEvent.click(screen.getByRole('button', { name: 'use-default' }));
-    fireEvent.click(screen.getByRole('button', { name: 'voice' }));
     fireEvent.click(screen.getByRole('button', { name: 'set-default' }));
 
     expect(onChange).toHaveBeenCalledWith({ negativePrompt: 'new negative' });
     expect(onChange).toHaveBeenCalledWith({ negativePrompt: '' });
     expect(onChange).toHaveBeenCalledWith({ negativePrompt: undefined });
-    expect(onChange).toHaveBeenCalledWith({ negativePrompt: 'spoken negative' });
     expect(handleSaveFieldAsDefault).toHaveBeenCalledWith('negativePrompt', 'defaulted value');
   });
 

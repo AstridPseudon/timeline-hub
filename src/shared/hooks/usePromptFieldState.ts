@@ -20,7 +20,6 @@ interface PromptFieldState {
   handleChange: (value: string) => void;
   handleClearAll: () => void;
   handleClearEnhanced: () => void;
-  handleVoiceResult: (result: { prompt?: string; transcription?: string }) => void;
 }
 
 /** Resolve prompt display priority across user edits, enhanced prompts, and defaults. */
@@ -81,10 +80,6 @@ export function usePromptFieldState({
     onClearEnhancedPrompt?.();
   }, [onClearEnhancedPrompt]);
 
-  const handleVoiceResult = useCallback((result: { prompt?: string; transcription?: string }) => {
-    onSettingsChange(result.prompt || result.transcription || '');
-  }, [onSettingsChange]);
-
   return {
     displayValue,
     badgeType,
@@ -94,6 +89,5 @@ export function usePromptFieldState({
     handleChange: onSettingsChange,
     handleClearAll,
     handleClearEnhanced,
-    handleVoiceResult,
   };
 }

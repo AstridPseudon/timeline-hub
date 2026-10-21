@@ -4,27 +4,10 @@ import { renderHook, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RUNTIME_MEDIA_IMPORT_MAX_BYTES } from '@/tools/video-editor/data/AssetResolver.ts';
 
-const createGenerationForUploadedImageMock = vi.fn();
-const createGenerationForUploadedVideoMock = vi.fn();
-const createGenerationForLocalFileMock = vi.fn();
 const runtimePrepareMediaImportMock = vi.fn();
 const useResolvedGalleryProjectMock = vi.fn();
-const locationMock = { search: '', pathname: '/' };
 const toastErrorMock = vi.fn();
-const toastInfoMock = vi.fn();
 const normalizeAndPresentErrorMock = vi.fn();
-
-vi.mock('@/shared/contexts/ProjectContext', () => ({
-  useProjectSelectionContext: () => ({ selectedProjectId: 'project-1' }),
-}));
-
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
-  return {
-    ...actual,
-    useLocation: () => locationMock,
-  };
-});
 
 vi.mock('@/app/runtime/useResolvedGalleryProject', () => ({
   useResolvedGalleryProject: (...args: unknown[]) => useResolvedGalleryProjectMock(...args),
@@ -38,16 +21,9 @@ vi.mock('@/integrations/runtime/dataProvider', () => ({
   },
 }));
 
-vi.mock('@/shared/lib/media/createGenerationFromFile', () => ({
-  createGenerationForLocalFile: (...args: unknown[]) => createGenerationForLocalFileMock(...args),
-  createGenerationForUploadedImage: (...args: unknown[]) => createGenerationForUploadedImageMock(...args),
-  createGenerationForUploadedVideo: (...args: unknown[]) => createGenerationForUploadedVideoMock(...args),
-}));
-
 vi.mock('@/shared/components/ui/runtime/sonner', () => ({
   toast: {
     error: (...args: unknown[]) => toastErrorMock(...args),
-    info: (...args: unknown[]) => toastInfoMock(...args),
   },
 }));
 
@@ -70,8 +46,6 @@ describe('useDropToGeneration', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    locationMock.search = '';
-    locationMock.pathname = '/';
     useResolvedGalleryProjectMock.mockReturnValue({
       projectId: null,
       runtimeAuthority: false,
@@ -80,39 +54,6 @@ describe('useDropToGeneration', () => {
       error: null,
       selector: null,
     });
-    createGenerationForUploadedImageMock.mockResolvedValue({ id: 'gen-image' });
-    createGenerationForUploadedVideoMock.mockResolvedValue({ id: 'gen-video' });
-  });
-
-  it('uploads supported files and invalidates only the selected project generation scope', async () => {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
-    const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
-
-    const { result } = renderHook(() => useDropToGeneration(), {
-      wrapper: createWrapper(queryClient),
-    });
-
-    const imageFile = new File(['image'], 'frame.png', { type: 'image/png' });
-    const videoFile = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
-
-    await act(async () => {
-      await result.current([imageFile, videoFile]);
-    });
-
-    expect(createGenerationForUploadedImageMock).toHaveBeenCalledWith({
-      imageFile,
-      projectId: 'project-1',
-    });
-    expect(createGenerationForUploadedVideoMock).toHaveBeenCalledWith({
-      videoFile,
-      projectId: 'project-1',
-    });
-    expect(invalidateQueriesSpy).toHaveBeenCalledWith({
-      queryKey: ['unified-generations', 'project', 'project-1'],
-    });
-    expect(toastErrorMock).not.toHaveBeenCalled();
   });
 
   it('imports Runtime image/video drops with the canonical project and refreshes the Runtime gallery scope', async () => {
@@ -165,8 +106,6 @@ describe('useDropToGeneration', () => {
       filename: 'clip.mp4',
       mediaType: 'video/mp4',
     });
-    expect(createGenerationForUploadedImageMock).not.toHaveBeenCalled();
-    expect(createGenerationForUploadedVideoMock).not.toHaveBeenCalled();
     expect(invalidateQueriesSpy).toHaveBeenCalledWith({
       queryKey: ['runtime', 'unified-generations', 'project', 'runtime-project-id'],
     });
@@ -203,7 +142,6 @@ describe('useDropToGeneration', () => {
   });
 
   it('fails closed when Runtime has no canonical project for a scoped URL', async () => {
-    locationMock.search = '?project=bridge-slug&timeline=timeline-1';
     useResolvedGalleryProjectMock.mockReturnValue({
       projectId: null,
       runtimeAuthority: true,
@@ -221,35 +159,36 @@ describe('useDropToGeneration', () => {
     });
 
     expect(runtimePrepareMediaImportMock).not.toHaveBeenCalled();
-    expect(createGenerationForLocalFileMock).not.toHaveBeenCalled();
-    expect(createGenerationForUploadedImageMock).not.toHaveBeenCalled();
     expect(toastErrorMock).toHaveBeenCalledWith('Runtime project is unavailable.');
   });
 
-  it('shows an informational toast and skips oversized files', async () => {
+  it('refuses drops on a route without a Runtime project and sends nothing', async () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
     const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
-
     const { result } = renderHook(() => useDropToGeneration(), {
       wrapper: createWrapper(queryClient),
     });
 
-    const oversizedImage = new File(['x'], 'huge.png', { type: 'image/png' });
-    Object.defineProperty(oversizedImage, 'size', { value: 25 * 1024 * 1024 });
-
     await act(async () => {
-      await result.current([oversizedImage]);
+      await result.current([new File(['image'], 'frame.png', { type: 'image/png' })]);
     });
 
-    expect(createGenerationForUploadedImageMock).not.toHaveBeenCalled();
-    expect(createGenerationForUploadedVideoMock).not.toHaveBeenCalled();
-    expect(toastInfoMock).toHaveBeenCalledTimes(1);
+    expect(runtimePrepareMediaImportMock).not.toHaveBeenCalled();
     expect(invalidateQueriesSpy).not.toHaveBeenCalled();
+    expect(toastErrorMock).toHaveBeenCalledWith('Astrid Runtime project is not ready for media import.');
   });
 
   it('shows an error toast for unsupported files', async () => {
+    useResolvedGalleryProjectMock.mockReturnValue({
+      projectId: 'runtime-project-id',
+      runtimeAuthority: true,
+      status: 'resolved',
+      isResolving: false,
+      error: null,
+      selector: null,
+    });
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
@@ -265,7 +204,6 @@ describe('useDropToGeneration', () => {
     });
 
     expect(toastErrorMock).toHaveBeenCalledWith('Unsupported file type: notes.txt');
-    expect(createGenerationForUploadedImageMock).not.toHaveBeenCalled();
-    expect(createGenerationForUploadedVideoMock).not.toHaveBeenCalled();
+    expect(runtimePrepareMediaImportMock).not.toHaveBeenCalled();
   });
 });

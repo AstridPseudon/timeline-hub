@@ -1,21 +1,17 @@
 import React, { type MutableRefObject } from 'react';
-import { Check, Copy, Maximize2, Trash2 } from 'lucide-react';
+import { Maximize2, Trash2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { VariantBadge } from '@/shared/components/VariantBadge';
 import type { GenerationRow } from '@/domains/generation/types';
 
 interface TimelineItemActionButtonsProps {
   image: GenerationRow;
-  imageKey: string;
   isDragging: boolean;
   readOnly: boolean;
   isSelected: boolean;
   isTouchDevice: boolean;
   onMobileTap?: () => void;
-  onDuplicateClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onDeleteClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  duplicatingImageId?: string;
-  duplicateSuccessImageId?: string;
   onMarkAllVariantsViewed: () => void;
   buttonClickedRef: MutableRefObject<boolean>;
   scheduleButtonClickReset: () => void;
@@ -23,16 +19,12 @@ interface TimelineItemActionButtonsProps {
 
 export const TimelineItemActionButtons: React.FC<TimelineItemActionButtonsProps> = ({
   image,
-  imageKey,
   isDragging,
   readOnly,
   isSelected,
   isTouchDevice,
   onMobileTap,
-  onDuplicateClick,
   onDeleteClick,
-  duplicatingImageId,
-  duplicateSuccessImageId,
   onMarkAllVariantsViewed,
   buttonClickedRef,
   scheduleButtonClickReset,
@@ -82,31 +74,6 @@ export const TimelineItemActionButtons: React.FC<TimelineItemActionButtonsProps>
             zIndex={20}
             onMarkAllViewed={onMarkAllVariantsViewed}
           />
-
-          <Button
-            variant="secondary"
-            size="icon"
-            className="absolute top-1 right-[1.65rem] h-5 w-5 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20"
-            onClick={onDuplicateClick}
-            onMouseDown={markButtonInteraction}
-            onPointerDown={markButtonInteraction}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-            }}
-            onTouchEnd={(e) => {
-              e.stopPropagation();
-            }}
-            disabled={duplicatingImageId === imageKey}
-            title="Duplicate image"
-          >
-            {duplicatingImageId === imageKey ? (
-              <div className="!h-3 !w-3 animate-spin rounded-full border-b-2 border-white" />
-            ) : duplicateSuccessImageId === imageKey ? (
-              <Check className="!h-3 !w-3" />
-            ) : (
-              <Copy className="!h-3 !w-3" />
-            )}
-          </Button>
 
           <Button
             variant="destructive"
