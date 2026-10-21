@@ -42,7 +42,10 @@ function Still({ revision, start, name }: { revision: string; start: number; nam
 }
 
 /** The one action slot per card: in the caption row, never on the still. Faint at rest, solid on hover, focus or touch. */
-const ACTION = 'absolute bottom-2 right-1 flex h-6 w-6 items-center justify-center rounded-full border border-border/70 bg-background text-foreground opacity-60 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 [@media(hover:none)]:opacity-100';
+const ACTION = 'flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background text-foreground opacity-60 transition-opacity group-hover/card:opacity-100 group-focus-within/card:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40 [@media(hover:none)]:opacity-100';
+
+/** The ring sits on the still, above the image, and never outside the card's box. */
+const RING = 'pointer-events-none absolute inset-0 rounded group-hover/card:shadow-[inset_0_0_0_1px_hsl(var(--border))] group-focus-visible/shot:shadow-[inset_0_0_0_2px_hsl(var(--ring))]';
 
 function ShotCard({ shot, index, current, revision, fullscreen, addDisabled, addTitle, dragProps, onSelect, onAdd }: {
   shot: GalleryShot; index: number; current: boolean; revision: string; fullscreen: boolean;
@@ -53,53 +56,57 @@ function ShotCard({ shot, index, current, revision, fullscreen, addDisabled, add
   const card = useRef<HTMLLIElement>(null);
   const range = `${clockText(shot.start)} – ${clockText(shot.end)}`;
   return (
-    <li ref={card} className="group relative flex min-w-0 flex-col" data-shot-card data-current={current ? 'true' : undefined}>
+    <li ref={card} className="group/card relative flex min-w-0 flex-col gap-1" data-shot-card data-current={current ? 'true' : undefined}>
       <button
         type="button"
         aria-current={current ? 'true' : undefined}
         aria-label={`${shot.name}, ${range}`}
         title={`Play ${shot.name}`}
-        className="flex min-w-0 flex-col gap-1 rounded-md p-1 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        style={current ? { background: 'hsl(var(--primary) / 0.12)', boxShadow: 'inset 0 0 0 1.5px hsl(var(--primary) / 0.7)' } : undefined}
+        className="group/shot flex min-w-0 flex-col gap-1 p-0 text-left focus-visible:outline-none"
         onClick={() => onSelect(index)}
       >
-        <span className="block aspect-video w-full overflow-hidden rounded" style={{ background: '#05060f' }}>
+        <span className="relative block aspect-video w-full overflow-hidden rounded" style={{ background: '#05060f' }}>
           <Still revision={revision} start={shot.start} name={shot.name} />
+          <span
+            aria-hidden="true"
+            className={RING}
+            style={current ? { boxShadow: 'inset 0 0 0 2px hsl(var(--primary) / 0.7)' } : undefined}
+          />
         </span>
-        <span className="flex min-w-0 flex-col gap-1 pr-6">
-          <span className="truncate text-xs font-medium leading-tight">{shot.name}</span>
-          <span className="truncate text-[10px] tabular-nums leading-tight text-muted-foreground">{range}</span>
-        </span>
+        <span className={`block truncate text-xs font-medium leading-tight ${current ? 'text-primary' : ''}`}>{shot.name}</span>
       </button>
-      {fullscreen ? (
-        <button
-          type="button"
-          aria-label={`Add ${shot.name} to video`}
-          title={addTitle ?? 'Add to video at the playhead'}
-          disabled={addDisabled}
-          className={ACTION}
-          onClick={() => onAdd(index)}
-        >
-          {PLUS}
-        </button>
-      ) : dragProps ? (
-        <button
-          type="button"
-          {...dragProps}
-          aria-label={`Add ${shot.name} to video, or drag it onto the timeline`}
-          title={addDisabled && addTitle ? addTitle : 'Drag onto the timeline (Enter adds at the playhead)'}
-          data-testid="shot-drag-handle"
-          aria-disabled={addDisabled || undefined}
-          className={`${ACTION} cursor-grab active:cursor-grabbing ${addDisabled ? 'opacity-50' : ''}`}
-          onClick={() => { if (!addDisabled) onAdd(index); }}
-          onDragStart={(event: DragEvent<HTMLButtonElement>) => {
-            dragProps.onDragStart(event);
-            try { if (card.current) event.dataTransfer.setDragImage(card.current, 16, 16); } catch { /* the default ghost is fine */ }
-          }}
-        >
-          {GRIP}
-        </button>
-      ) : null}
+      <div className="flex h-6 min-w-0 items-center justify-between">
+        <span className="min-w-0 truncate text-[10px] tabular-nums leading-tight text-muted-foreground">{range}</span>
+        {fullscreen ? (
+          <button
+            type="button"
+            aria-label={`Add ${shot.name} to video`}
+            title={addTitle ?? 'Add to video at the playhead'}
+            disabled={addDisabled}
+            className={ACTION}
+            onClick={() => onAdd(index)}
+          >
+            {PLUS}
+          </button>
+        ) : dragProps ? (
+          <button
+            type="button"
+            {...dragProps}
+            aria-label={`Add ${shot.name} to video, or drag it onto the timeline`}
+            title={addDisabled && addTitle ? addTitle : 'Drag onto the timeline (Enter adds at the playhead)'}
+            data-testid="shot-drag-handle"
+            aria-disabled={addDisabled || undefined}
+            className={`${ACTION} cursor-grab active:cursor-grabbing ${addDisabled ? 'opacity-50' : ''}`}
+            onClick={() => { if (!addDisabled) onAdd(index); }}
+            onDragStart={(event: DragEvent<HTMLButtonElement>) => {
+              dragProps.onDragStart(event);
+              try { if (card.current) event.dataTransfer.setDragImage(card.current, 16, 16); } catch { /* the default ghost is fine */ }
+            }}
+          >
+            {GRIP}
+          </button>
+        ) : null}
+      </div>
     </li>
   );
 }
@@ -140,21 +147,20 @@ export function ShotGallery({ shots, currentIndex, revision, fullscreen, addDisa
   // The pager's width comes from the whole world's page count, so it never moves while paging or searching.
   const pagerWidth = `${String(pageCount(shots.length)).length * 2 + 3}ch`;
 
-  const countText = shots.length === 0 ? 'No shots yet'
-    : searching ? `${matches.length} of ${shots.length} ${shots.length === 1 ? 'shot' : 'shots'}`
-      : `${shots.length} ${shots.length === 1 ? 'shot' : 'shots'}`;
+  // The world's shot count lives in the placeholder; "3 of 12" appears beside the field only while searching.
+  const placeholder = shots.length === 0 ? 'Search shots' : `Search ${shots.length} ${shots.length === 1 ? 'shot' : 'shots'}`;
 
   return (
     <section aria-label="Shots" className="flex min-w-0 flex-col gap-2" data-testid="shot-gallery">
       {/* The search row stays at the top of the scroller while the cards scroll under it. The pager sits last, so its place never moves. */}
-      <div className="sticky top-0 z-10 -mt-1 flex items-center gap-2 bg-background pb-1 pt-1">
+      <div className="sticky top-0 z-10 flex items-center gap-2 pb-2 pt-2" style={{ background: 'var(--explorer-surface, hsl(var(--background)))' }}>
         <label htmlFor={searchId} className="sr-only">Search shots</label>
         <div className="relative min-w-0 flex-1">
         <input
           id={searchId}
           type="search"
           value={query}
-          placeholder="Search shots"
+          placeholder={placeholder}
           autoComplete="off"
           className="min-h-10 w-full min-w-0 appearance-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-cancel-button]:appearance-none rounded-md border border-border/70 bg-transparent pl-2 pr-7 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-8"
           onChange={(event) => { setQuery(event.target.value); setRequestedPage(0); }}
@@ -171,12 +177,12 @@ export function ShotGallery({ shots, currentIndex, revision, fullscreen, addDisa
           </button>
         ) : null}
         </div>
-        <span aria-live="polite" className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{countText}</span>
+        <span aria-live="polite" className="shrink-0 text-[11px] tabular-nums text-muted-foreground empty:hidden">{searching ? `${matches.length} of ${shots.length}` : null}</span>
         {pages > 1 ? (
-          <nav aria-label="Shots pages" className="flex shrink-0 items-center">
-            <button type="button" aria-label="Previous page" className="flex h-8 w-7 items-center justify-center rounded-md text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40" disabled={page === 0} onClick={() => setRequestedPage(page - 1)}>‹</button>
-            <span className="text-center text-[11px] tabular-nums text-muted-foreground" style={{ width: pagerWidth }} aria-live="polite" aria-label={`Page ${page + 1} of ${pages}`}>{page + 1} / {pages}</span>
-            <button type="button" aria-label="Next page" className="flex h-8 w-7 items-center justify-center rounded-md text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40" disabled={page >= pages - 1} onClick={() => setRequestedPage(page + 1)}>›</button>
+          <nav aria-label="Shots pages" className="flex h-8 shrink-0 items-center overflow-hidden rounded-md border border-border/70">
+            <button type="button" aria-label="Previous page" className="flex h-full w-8 shrink-0 items-center justify-center border-r border-border/70 text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:opacity-40" disabled={page === 0} onClick={() => setRequestedPage(page - 1)}>‹</button>
+            <span className="flex h-full items-center justify-center border-r border-border/70 text-center text-[11px] tabular-nums text-muted-foreground" style={{ width: pagerWidth }} aria-live="polite" aria-label={`Page ${page + 1} of ${pages}`}>{page + 1} / {pages}</span>
+            <button type="button" aria-label="Next page" className="flex h-full w-8 shrink-0 items-center justify-center text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:opacity-40" disabled={page >= pages - 1} onClick={() => setRequestedPage(page + 1)}>›</button>
           </nav>
         ) : null}
       </div>
@@ -193,7 +199,7 @@ export function ShotGallery({ shots, currentIndex, revision, fullscreen, addDisa
           )}
         </div>
       ) : (
-        <ul aria-label="Shots" className="-mx-1 mb-0 mt-0 grid list-none grid-cols-3 gap-x-1 gap-y-2 p-0">
+        <ul aria-label="Shots" className="mb-0 mt-0 grid list-none grid-cols-3 gap-x-3 gap-y-3 p-0">
           {visible.map(({ shot, index }) => (
             <ShotCard
               key={`${index}:${shot.start}:${shot.name}`}

@@ -34,7 +34,8 @@ describe('ShotGallery', () => {
   it('shows nine cards on page one with a count, and the rest on page two', () => {
     const { view } = mount();
     expect(cards(view)).toHaveLength(9);
-    expect(view.getByText('12 shots')).toBeTruthy();
+    expect(view.getByRole('searchbox')).toHaveAttribute('placeholder', 'Search 12 shots');
+    expect(view.queryByText(/^\d+ of \d+$/)).toBeNull();
     expect(view.getByLabelText('Page 1 of 2')).toBeTruthy();
     expect(view.getByRole('button', { name: 'Previous page' })).toBeDisabled();
     fireEvent.click(view.getByRole('button', { name: 'Next page' }));
@@ -54,17 +55,17 @@ describe('ShotGallery', () => {
     expect(view.getByLabelText('Page 2 of 3')).toBeTruthy();
     fireEvent.change(view.getByRole('searchbox', { name: 'Search shots' }), { target: { value: 'tower' } });
     expect(view.getByLabelText('Page 1 of 3')).toBeTruthy();
-    expect(view.getByText('25 of 26 shots')).toBeTruthy();
+    expect(view.getByText('25 of 26')).toBeTruthy();
     fireEvent.change(view.getByRole('searchbox', { name: 'Search shots' }), { target: { value: 'harb' } });
     expect(cards(view)).toHaveLength(1);
-    expect(view.getByText('1 of 26 shots')).toBeTruthy();
+    expect(view.getByText('1 of 26')).toBeTruthy();
     expect(view.queryByRole('navigation', { name: 'Shots pages' })).toBeNull();
   });
   it('says so when nothing matches, and Clear search brings everything back', () => {
     const { view } = mount();
     fireEvent.change(view.getByRole('searchbox', { name: 'Search shots' }), { target: { value: 'nope' } });
     expect(view.getByText(/No shots match/)).toBeTruthy();
-    expect(view.getByText('0 of 12 shots')).toBeTruthy();
+    expect(view.getByText('0 of 12')).toBeTruthy();
     fireEvent.click(view.getByRole('button', { name: 'Clear search' }));
     expect(cards(view)).toHaveLength(9);
     expect((view.getByRole('searchbox') as HTMLInputElement).value).toBe('');
@@ -113,6 +114,23 @@ describe('ShotGallery', () => {
     const width = (view.getByLabelText('Page 1 of 2') as HTMLElement).style.width;
     fireEvent.click(view.getByRole('button', { name: 'Next page' }));
     expect((view.getByLabelText('Page 2 of 2') as HTMLElement).style.width).toBe(width);
+  });
+  it('the search row is sticky on the explorer surface, with no strip of its own above the field', () => {
+    const { view } = mount();
+    const row = view.getByRole('searchbox').closest('div.sticky') as HTMLElement;
+    expect(row.className).toContain('sticky top-0');
+    expect(row.className).not.toContain('-mt-1');
+    expect(row.getAttribute('style')).toContain('var(--explorer-surface');
+  });
+  it('cards sit flush: no negative margin on the grid, and the caption row holds the action', () => {
+    const { view } = mount({ fullscreen: true });
+    const list = view.getByRole('list', { name: 'Shots' });
+    expect(list.className).not.toContain('-mx-1');
+    expect(list.className).toContain('gap-x-3');
+    const card = cards(view)[0];
+    const action = within(card).getByRole('button', { name: 'Add Bridge 1 to video' });
+    expect(action.parentElement?.className).toContain('h-6');
+    expect(within(card).getByRole('button', { name: /^Bridge 1,/ }).className).toContain('p-0');
   });
   it('full screen: every card offers Add to video instead of a handle', () => {
     const { view, props } = mount({ fullscreen: true });
