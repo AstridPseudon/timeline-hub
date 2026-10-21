@@ -9,8 +9,13 @@ SOURCE_BOUND_OPERATIONS = frozenset({
     'clip.move', 'placement.move', 'track.create', 'clip.set',
     'clip.set-element', 'track.set',
     'shot.set', 'clip.set-params', 'occurrence.add-media', 'occurrence.swap-media',
-    'placement.create', 'placement.unplace', 'shot.pool', 'clip.delete',
+    'placement.create', 'placement.unplace', 'shot.pool',
 })
+
+# Keep the reviewed thirteen-operation carrier floor exact.  The dormant
+# occurrence-child delete carrier is an additive v2 clause, not a rewrite of
+# that frozen set.
+SOURCE_BOUND_V2_ADDITIONS = frozenset({'clip.delete'})
 
 
 def capture_version(bundle, select):

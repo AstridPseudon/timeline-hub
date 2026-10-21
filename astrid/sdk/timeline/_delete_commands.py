@@ -39,9 +39,10 @@ def _transition(ctx, ref, owner):
                                kind='unsupported_dependency', ref=ref, path=['transition']) from exc
 
 
-def _unreferenced(ctx):
-    """Refuse declared dependencies before removing a raw clip in either scope."""
-    owners = ['parent', *ctx.select('collection.occurrences', 'parent')]
+def _unreferenced(ctx, owners=None):
+    """Refuse declared dependencies before removing raw clips in each scope."""
+    owners = (['parent', *ctx.select('collection.occurrences', 'parent')]
+              if owners is None else list(owners))
     for owner in owners:
         config_ref, prefix = ('parent', ['config']) if owner == 'parent' else (owner + '/source', [])
         _unrelated(ctx, config_ref, [prefix], ('pinnedShotGroups',))
@@ -76,6 +77,9 @@ def _occurrence_child_delete(ctx, ref):
         raise CommandError('delete target disappeared', kind='identity_conflict', ref=ref)
     ctx.read(ref)
     ctx.read(owner + '/source')
+    # Reuse the existing declared-dependency check, scoped to this occurrence.
+    # It reads only known dependency fields; opaque extension values remain data.
+    _unreferenced(ctx, owners=[owner])
     ctx.bind('delete.owner', owner)
     ctx.bind('delete.target', ref)
     ctx.clear(ref, [])

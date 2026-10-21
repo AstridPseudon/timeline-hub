@@ -32,6 +32,7 @@ FROZEN_10226_CANONICAL_SHA256 = '322733a57e781847e50228f91b6c6a9237ad2237406a188
 
 def without_insertion_order(schema):
     """Reconstruct the frozen 10226 AgentWrite carrier exactly."""
+    schema = without_occurrence_delete_v2(schema)
     assert schema['$defs']['AgentWrite']['properties'].pop('insertion_order') == {
         'type': 'array',
         'items': {'type': 'string'},
@@ -68,6 +69,28 @@ def without_track_reorder(schema):
     return schema
 
 
+def without_occurrence_delete_v2(schema):
+    """Strip only the dormant child-delete clause from frozen schema floors."""
+    clause = next(item for item in schema['$defs']['EditCommand']['allOf']
+                  if item['if']['properties']['op']['const'] == 'clip.delete')
+    branches = clause['then'].get('anyOf')
+    assert branches is not None and len(branches) == 2
+    old, new = branches
+    expected = copy.deepcopy(old)
+    expected['properties']['version']['const'] = '2'
+    assert new['properties']['version'] == {'const': '2'}
+    assert new['properties']['select']['pattern'] == (
+        '^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$')
+    assert new['properties']['args'] == old['properties']['args']
+    assert new['properties']['intent'] == {
+        'type': 'object', 'properties': {'ownership': {'const': 'occurrence'}},
+        'additionalProperties': False,
+    }
+    assert new != expected
+    clause['then'] = old
+    return schema
+
+
 def without_raw_old_swap(schema):
     """Remove the additive raw-OLD successor from an earlier schema floor."""
     for clause in schema['$defs']['EditCommand']['allOf']:
@@ -96,7 +119,8 @@ def without_transcript(schema):
 
 def without_new_sources(schema):
     """Reconstruct the pre-movement/reference/order schema without fixtures."""
-    return without_insertion_order(without_track_reorder(without_reference(without_move_set(
+    return without_insertion_order(without_track_reorder(
+        without_reference(without_move_set(
         without_raw_old_swap(without_transcript(schema))))))
 
 

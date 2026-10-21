@@ -132,9 +132,10 @@ def validate_command(command):
     errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
     if errors:
         raise CommandError(errors[0].message)
-    from ._materialization import SOURCE_BOUND_OPERATIONS
+    from ._materialization import SOURCE_BOUND_OPERATIONS, SOURCE_BOUND_V2_ADDITIONS
 
-    source_bound = command['version'] == '2' and command['op'] in SOURCE_BOUND_OPERATIONS
+    source_bound = command['version'] == '2' and command['op'] in (
+        SOURCE_BOUND_OPERATIONS | SOURCE_BOUND_V2_ADDITIONS)
     raw_old_swap = ((command['op'], command['version']) in {
         ('clip.swap-media', '2'), ('occurrence.swap-media', '3')})
     if command['version'] != '1' and not (source_bound or raw_old_swap):
@@ -245,7 +246,7 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     history. Incoming recorder fields are checked claims; generated records are
     the authority. No persistence, mutable reads or renderer lives here.
     """
-    from ._materialization import SOURCE_BOUND_OPERATIONS
+    from ._materialization import SOURCE_BOUND_OPERATIONS, SOURCE_BOUND_V2_ADDITIONS
     from .inverse import apply_inverse
 
     if not commands:
@@ -266,7 +267,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     candidate, records = copy.deepcopy(bundle), []
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
-        if command['version'] == '2' and command['op'] in SOURCE_BOUND_OPERATIONS:
+        if command['version'] == '2' and command['op'] in (
+                SOURCE_BOUND_OPERATIONS | SOURCE_BOUND_V2_ADDITIONS):
             if '_source_closure' not in candidate['source_mapping']:
                 raise CommandError('source-bound v2 requires the verified original closure', kind='capture_mismatch')
             fields = {'resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'}
@@ -320,7 +322,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         from ._materialization import capture, verify_sources
         # Complete public S2 v1 captures retain their original record format.
         # Inverses carry original facts from authenticated accepted history.
-        if (command['version'] == '2' and command['op'] in SOURCE_BOUND_OPERATIONS
+        if (command['version'] == '2' and command['op'] in (
+                SOURCE_BOUND_OPERATIONS | SOURCE_BOUND_V2_ADDITIONS)
                 or command['op'] == 'timeline.inverse'):
             capture(ctx, inverse_records if command['op'] == 'timeline.inverse' else materializations)
         verify_sources(ctx.state, [ctx.record])

@@ -355,6 +355,33 @@ def test_occurrence_child_delete_compiles_reload_inverse_redo_and_keeps_source_f
     assert document_from_bundle(redone.bundle, source_bundles=(original, reloaded)) == removed_document
 
 
+def test_occurrence_child_delete_refuses_declared_sibling_dependency_without_writes():
+    original = bundle_from_document(occurrence_child_document(), capture_sources=True)
+    sibling = State(original).entity('occurrence:occ-a/clip:clip-a')
+    sibling['app'] = {'astrid': {'on': 'clip-b'}}
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError) as error:
+        capture_clip_delete(original, 'occurrence:occ-a/clip:clip-b')
+    assert error.value.kind == 'unsupported_dependency'
+    assert error.value.ref == 'occurrence:occ-a/clip:clip-a'
+    assert error.value.path == ['app', 'astrid', 'on']
+    assert original == before
+
+
+def test_occurrence_child_delete_records_scoped_dependency_reads_for_independent_sibling():
+    original = bundle_from_document(occurrence_child_document(), capture_sources=True)
+    ref = 'occurrence:occ-a/clip:clip-b'
+    plan = execute(original, [capture_clip_delete(original, ref)])
+    selection = next(item for item in plan.records[0]['selections']
+                     if item['key'] == 'collection.clips')
+    assert selection['owner'] == 'occurrence:occ-a'
+    assert selection['order'] == ['occurrence:occ-a/clip:clip-a', ref, 'occurrence:occ-a/clip:clip-c']
+    assert any(read['ref'] == 'occurrence:occ-a/clip:clip-a'
+               and read['path'] == ['app', 'astrid', 'on']
+               and read['state'] == ABSENT
+               for read in plan.records[0]['reads'])
+
+
 @pytest.mark.parametrize('change', ['child', 'order'])
 def test_occurrence_child_delete_changed_child_or_order_refuses_atomically(change):
     original = bundle_from_document(occurrence_child_document(), capture_sources=True)
