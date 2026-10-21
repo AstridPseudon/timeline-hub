@@ -89,7 +89,9 @@ test.describe('producer ownership on the current mounted route', () => {
     await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible();
     // The stale source item is valid but outside the carrier's [0, 4] window;
     // only the two protected in-window source items are visible to the lane.
-    await expect(page.getByTestId('transcript-lane-chip')).toHaveCount(2);
+    // The mounted production pack uses occurrence controls; the retired dev
+    // renderer's `transcript-lane-chip` marker is not present on this route.
+    await expect(page.getByTestId('transcript-lane-occurrence')).toHaveCount(2);
 
     const initial = await currentPinRevision(harness, producerSeed);
     const protectedBefore = protectedClipState(initial.body, producerSeed);
