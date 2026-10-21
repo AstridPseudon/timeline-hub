@@ -30,23 +30,23 @@ When the task concerns native Three.js scene code, a world, or a
 extension and its operations are active; installed documentation alone does
 not make the capability available.
 
-The contract: **worlds are always explorable; cameras live within them.** A
+The contract: **worlds are always explorable; shots live within them.** A
 world is one self-contained HTML entry implementing `window.astridScene`. It
 declares `explore` (required: where the free view starts and may go), its
-`events` (in world time) and its `cameras` (named source-time ranges, each
-with an optional `worldStart`). Its `render` draws the authored camera for a
+`events` (in world time) and its `shots` (named source-time ranges, each
+with an optional `worldStart`). Its `render` draws the authored shot for a
 `sourceTime`, or exactly the World Explorer's `view` at `worldTime`. Before
 creating, converting or editing a world, read
 [Worlds: authoring explorable live scenes](references/worlds-authoring.md). It
 covers the four layers (world constructor → world state from world time,
-including events → cameras → free view), holding up from any viewpoint,
+including events → shots → free view), holding up from any viewpoint,
 software-GL performance, the package contract, admission, and the
 read/exact-edit/publish loop. Start from the
 [world template](templates/world-template.ts).
 
 Ordinary clip placement, trim, repetition, playback rate and audio remain on
-this general timeline route. Events and cameras live in the world's source.
-Maple Hollow is a continuous take (one implicit camera) and does not declare
+this general timeline route. Events and shots live in the world's source.
+Maple Hollow is a continuous take (one implicit shot) and does not declare
 `explore` yet. This route does not add a retiming engine, a scene-audio
 subsystem, a generic ZIP importer or a second timeline authority.
 

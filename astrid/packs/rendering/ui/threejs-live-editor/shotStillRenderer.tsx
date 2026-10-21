@@ -1,6 +1,6 @@
 import { createElement, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { SceneSurface } from './SceneSurface';
-import { shotStills, STILL_HEIGHT, STILL_WIDTH, type ShotStillStore, type StillState } from './shotStills';
+import { shotStills, STILL_HEIGHT, STILL_WIDTH, type ShotStillStore } from './shotStills';
 import type { SceneStatus } from './runtime';
 
 /** Keep the hidden instance alive this long after the queue empties, so a page turn reuses it. */
@@ -71,11 +71,4 @@ export function ShotStillRenderer({ source, revision, store = shotStills }: { so
   }, createElement(SceneSurface, {
     source, sourceTime: current ?? PARK_TIME, width: STILL_WIDTH, height: STILL_HEIGHT, capture: true, onStatus,
   }));
-}
-
-/** The current state of one still; re-renders when it settles. Requests it on first use. */
-export function useShotStill(revision: string, start: number, store: ShotStillStore = shotStills): StillState {
-  useEffect(() => { store.request(revision, [start]); }, [store, revision, start]);
-  useSyncExternalStore(store.subscribe, store.version, store.version);
-  return store.get(revision, start);
 }

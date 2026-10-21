@@ -65,7 +65,7 @@ function SceneInstance({ document, component, frame, visible, width, height, onS
       },
       value => {
         effectTrace('parent-status', value);
-        if (active && value.phase !== 'disposed') callback.current(document, value, host.current?.info ?? { events: [], cameras: [], explore: null });
+        if (active && value.phase !== 'disposed') callback.current(document, value, host.current?.info ?? { events: [], shots: [], explore: null });
       }, 30000, diagnostic ? effectTrace : undefined);
     host.current = instance;
     const receive = (event: MessageEvent) => {

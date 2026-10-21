@@ -1,8 +1,8 @@
 // @vitest-environment node
 import {describe,expect,it,vi} from 'vitest';
 import {
-  MAX_SCENE_CAMERAS,MAX_SCENE_EVENTS,
-  SceneFrameHost,sanitizeSceneCameras,sanitizeSceneEvents,sanitizeSceneExplore,sanitizeSceneView,
+  MAX_SCENE_SHOTS,MAX_SCENE_EVENTS,
+  SceneFrameHost,sanitizeSceneShots,sanitizeSceneEvents,sanitizeSceneExplore,sanitizeSceneView,
   MAX_STILL_CHARS,sanitizeSceneStill,
   sceneDocument,validateScenePackage,type SceneStatus,type ValidatedScenePackage,
 } from '../../../astrid/packs/rendering/ui/threejs-live-editor/runtime';
@@ -51,24 +51,24 @@ describe('sanitizeSceneEvents',()=>{
   });
 });
 
-describe('sanitizeSceneCameras',()=>{
-  it('keeps valid cameras trimmed, sorted by start, with worldStart only when given',()=>{
-    const out=sanitizeSceneCameras([{name:' B ',start:5,end:8,worldStart:1},{name:'A',start:0,end:4},{name:'C',start:8,end:9.5}],10);
+describe('sanitizeSceneShots',()=>{
+  it('keeps valid shots trimmed, sorted by start, with worldStart only when given',()=>{
+    const out=sanitizeSceneShots([{name:' B ',start:5,end:8,worldStart:1},{name:'A',start:0,end:4},{name:'C',start:8,end:9.5}],10);
     expect(out).toEqual([{name:'A',start:0,end:4},{name:'B',start:5,end:8,worldStart:1},{name:'C',start:8,end:9.5}]);
     expect(Object.keys(out[0])).toEqual(['name','start','end']);
     expect(Object.keys(out[1])).toEqual(['name','start','end','worldStart']);
   });
   it('accepts worldStart at both ends of the duration',()=>{
-    expect(sanitizeSceneCameras([{name:'a',start:0,end:1,worldStart:0},{name:'b',start:1,end:2,worldStart:10}],10))
+    expect(sanitizeSceneShots([{name:'a',start:0,end:1,worldStart:0},{name:'b',start:1,end:2,worldStart:10}],10))
       .toEqual([{name:'a',start:0,end:1,worldStart:0},{name:'b',start:1,end:2,worldStart:10}]);
   });
-  it('drops overlapping cameras but keeps touching ones',()=>{
-    expect(sanitizeSceneCameras([
+  it('drops overlapping shots but keeps touching ones',()=>{
+    expect(sanitizeSceneShots([
       {name:'A',start:0,end:4},{name:'overlap',start:3,end:6},{name:'touch',start:4,end:5},{name:'inside',start:4.5,end:4.8},
     ],10)).toEqual([{name:'A',start:0,end:4},{name:'touch',start:4,end:5}]);
   });
   it('drops invalid entries, including a bad worldStart',()=>{
-    expect(sanitizeSceneCameras([
+    expect(sanitizeSceneShots([
       null,{name:'a',start:0},{name:'a',start:2,end:2},{name:'a',start:3,end:2},{name:'a',start:-1,end:1},{name:'a',start:0,end:11},
       {name:'a',start:0,end:1,worldStart:-1},{name:'a',start:0,end:1,worldStart:11},{name:'a',start:0,end:1,worldStart:NaN},
       {name:'a',start:0,end:1,worldStart:'1'},{name:'a',start:0,end:1,worldStart:null},
@@ -78,10 +78,10 @@ describe('sanitizeSceneCameras',()=>{
     ],10)).toEqual([{name:'ok',start:6,end:7,worldStart:3}]);
   });
   it('treats absent, non-array and oversized lists as empty',()=>{
-    for(const value of [undefined,null,{},'x',3]) expect(sanitizeSceneCameras(value,10)).toEqual([]);
-    const many=Array.from({length:MAX_SCENE_CAMERAS+1},(_,i)=>({name:`c${i}`,start:i*0.25,end:i*0.25+0.25}));
-    expect(sanitizeSceneCameras(many,10)).toEqual([]);
-    expect(sanitizeSceneCameras(many.slice(0,MAX_SCENE_CAMERAS),10)).toHaveLength(MAX_SCENE_CAMERAS);
+    for(const value of [undefined,null,{},'x',3]) expect(sanitizeSceneShots(value,10)).toEqual([]);
+    const many=Array.from({length:MAX_SCENE_SHOTS+1},(_,i)=>({name:`c${i}`,start:i*0.25,end:i*0.25+0.25}));
+    expect(sanitizeSceneShots(many,10)).toEqual([]);
+    expect(sanitizeSceneShots(many.slice(0,MAX_SCENE_SHOTS),10)).toHaveLength(MAX_SCENE_SHOTS);
   });
 });
 
@@ -161,30 +161,30 @@ describe('SceneFrameHost world info',()=>{
   };
   it('is empty until initialized',()=>{
     const {h,ack}=host();
-    expect(h.events).toEqual([]);expect(h.cameras).toEqual([]);expect(h.explore).toBeNull();
-    expect(h.info).toEqual({events:[],cameras:[],explore:null});
+    expect(h.events).toEqual([]);expect(h.shots).toEqual([]);expect(h.explore).toBeNull();
+    expect(h.info).toEqual({events:[],shots:[],explore:null});
     ack({});
-    expect(h.info).toEqual({events:[],cameras:[],explore:null});
+    expect(h.info).toEqual({events:[],shots:[],explore:null});
     h.dispose(false);
   });
   it('re-validates what the child declared against the manifest duration',()=>{
     const {h,ack}=host(10);
     const events=[{name:' Bridge ',start:9,end:10},{name:'late',start:11},{name:'',start:1}];
-    const cameras=[{name:'A',start:0,end:4},{name:'B',start:3,end:6},{name:'C',start:6,end:10,worldStart:2}];
+    const shots=[{name:'A',start:0,end:4},{name:'B',start:3,end:6},{name:'C',start:6,end:10,worldStart:2}];
     const explore={start:{position:[0,0,0],target:[0,0,1]},bounds:{min:[-5,-5,-5],max:[5,5,5]},speed:3};
-    ack({events,cameras,explore});
+    ack({events,shots,explore});
     expect(h.events).toEqual(sanitizeSceneEvents(events,10));
-    expect(h.cameras).toEqual(sanitizeSceneCameras(cameras,10));
+    expect(h.shots).toEqual(sanitizeSceneShots(shots,10));
     expect(h.explore).toEqual(sanitizeSceneExplore(explore));
     expect(h.events).toEqual([{name:'Bridge',start:9,end:10}]);
-    expect(h.cameras).toEqual([{name:'A',start:0,end:4},{name:'C',start:6,end:10,worldStart:2}]);
-    expect(h.info).toEqual({events:h.events,cameras:h.cameras,explore:h.explore});
+    expect(h.shots).toEqual([{name:'A',start:0,end:4},{name:'C',start:6,end:10,worldStart:2}]);
+    expect(h.info).toEqual({events:h.events,shots:h.shots,explore:h.explore});
     h.dispose(false);
   });
   it('treats absent or invalid declarations as empty, and null explore',()=>{
     const {h,ack}=host(10);
-    ack({events:'nope',cameras:{},explore:{start:{position:[1,1,1],target:[1,1,1]}}});
-    expect(h.events).toEqual([]);expect(h.cameras).toEqual([]);expect(h.explore).toBeNull();
+    ack({events:'nope',shots:{},explore:{start:{position:[1,1,1],target:[1,1,1]}}});
+    expect(h.events).toEqual([]);expect(h.shots).toEqual([]);expect(h.explore).toBeNull();
     h.dispose(false);
   });
 });
@@ -244,8 +244,8 @@ describe('SceneFrameHost render frames',()=>{
 
 describe('bridge in sceneDocument',()=>{
   // Runs the injected bridge against a stub iframe window. `declared` supplies the scene's
-  // events/cameras/explore; an undefined value means the property is absent and an Error is thrown on read.
-  type Declared={events?:unknown;cameras?:unknown;explore?:unknown};
+  // events/shots/explore; an undefined value means the property is absent and an Error is thrown on read.
+  type Declared={events?:unknown;shots?:unknown;explore?:unknown};
   async function run(declared: Declared, duration=60, canvases: {width:number;height:number}[]=[], drawn: unknown[]=[]) {
     const html=sceneDocument(pkg(duration),'i');
     const script=/<script>([\s\S]*)<\/script><\/body>/.exec(html)![1];
@@ -258,7 +258,7 @@ describe('bridge in sceneDocument',()=>{
       render:async(arg:Record<string,unknown>)=>{renders.push(arg);},
       dispose:()=>{},
     };
-    for(const key of ['events','cameras','explore'] as const) {
+    for(const key of ['events','shots','explore'] as const) {
       const value=declared[key];
       if(value===undefined) continue;
       Object.defineProperty(scene,key,{get:()=>{ if(value instanceof Error) throw value; return value; }});
@@ -281,26 +281,26 @@ describe('bridge in sceneDocument',()=>{
     };
     return {ack:posted[0],posted,renders,render};
   }
-  it('adds events, cameras and explore to the initialized acknowledgement',async()=>{
+  it('adds events, shots and explore to the initialized acknowledgement',async()=>{
     const {ack}=await run({
       events:[{name:' B ',start:3,end:4},{name:'A',start:1},{name:'past',start:99},{name:'',start:2}],
-      cameras:[{name:'one',start:0,end:4},{name:'overlap',start:2,end:5},{name:'two',start:4,end:6,worldStart:1}],
+      shots:[{name:'one',start:0,end:4},{name:'overlap',start:2,end:5},{name:'two',start:4,end:6,worldStart:1}],
       explore:{start:{position:[0,0,0],target:[0,0,1]},speed:4},
     },10);
     expect(ack).toEqual({
       protocol:'astrid.scene/1',instance:'i',revision:DIGEST,kind:'initialized',
       events:[{name:'A',start:1},{name:'B',start:3,end:4}],
-      cameras:[{name:'one',start:0,end:4},{name:'two',start:4,end:6,worldStart:1}],
+      shots:[{name:'one',start:0,end:4},{name:'two',start:4,end:6,worldStart:1}],
       explore:{start:{position:[0,0,0],target:[0,0,1]},speed:4},
     });
   });
   it('sends empty lists and null explore when absent, invalid or throwing',async()=>{
     const absent=await run({},10);
-    expect(absent.ack).toMatchObject({kind:'initialized',events:[],cameras:[],explore:null});
-    const throwing=await run({events:new Error('boom'),cameras:new Error('boom'),explore:new Error('boom')},10);
-    expect(throwing.ack).toMatchObject({kind:'initialized',events:[],cameras:[],explore:null});
-    const invalid=await run({events:'nope',cameras:Array.from({length:MAX_SCENE_CAMERAS+1},(_,i)=>({name:'c',start:i,end:i+1})),explore:{start:{position:[0,0,0],target:[0,0,0]}}},10);
-    expect(invalid.ack).toMatchObject({kind:'initialized',events:[],cameras:[],explore:null});
+    expect(absent.ack).toMatchObject({kind:'initialized',events:[],shots:[],explore:null});
+    const throwing=await run({events:new Error('boom'),shots:new Error('boom'),explore:new Error('boom')},10);
+    expect(throwing.ack).toMatchObject({kind:'initialized',events:[],shots:[],explore:null});
+    const invalid=await run({events:'nope',shots:Array.from({length:MAX_SCENE_SHOTS+1},(_,i)=>({name:'c',start:i,end:i+1})),explore:{start:{position:[0,0,0],target:[0,0,0]}}},10);
+    expect(invalid.ack).toMatchObject({kind:'initialized',events:[],shots:[],explore:null});
   });
   it('rejects an explore with any invalid part as null',async()=>{
     const cases=[
@@ -319,20 +319,20 @@ describe('bridge in sceneDocument',()=>{
       {events:[null,'s',{name:'a',start:-1},{name:'a',start:11},{name:'a',start:1,end:0},{name:'a',start:1,end:NaN},{name:'  ',start:1},{name:'ok',start:4,end:4}]},
       {events:Array.from({length:MAX_SCENE_EVENTS+1},(_,i)=>({name:`e${i}`,start:i*0.1}))},
       {events:Array.from({length:MAX_SCENE_EVENTS},(_,i)=>({name:`e${i}`,start:i*0.1}))},
-      {cameras:[{name:'A',start:0,end:4},{name:'overlap',start:3,end:6},{name:'touch',start:4,end:5,worldStart:9},{name:'bad',start:5,end:6,worldStart:11}]},
-      {cameras:[{name:'x',start:6,end:6},{name:'y',start:1,end:2,worldStart:0},{name:'z',start:0,end:1,worldStart:-0.5}]},
-      {cameras:Array.from({length:MAX_SCENE_CAMERAS+1},(_,i)=>({name:`c${i}`,start:i*0.25,end:i*0.25+0.25}))},
+      {shots:[{name:'A',start:0,end:4},{name:'overlap',start:3,end:6},{name:'touch',start:4,end:5,worldStart:9},{name:'bad',start:5,end:6,worldStart:11}]},
+      {shots:[{name:'x',start:6,end:6},{name:'y',start:1,end:2,worldStart:0},{name:'z',start:0,end:1,worldStart:-0.5}]},
+      {shots:Array.from({length:MAX_SCENE_SHOTS+1},(_,i)=>({name:`c${i}`,start:i*0.25,end:i*0.25+0.25}))},
       {explore:{start:{position:[-5,5,20],target:[3,4,5]},bounds:{min:[0,0,0],max:[10,10,10]},speed:10000}},
       {explore:{start:{position:[0,0,0],target:[0,0,1]},bounds:{min:[0,0,0],max:[0,9,9]}}},
       {explore:{start:{position:[0,0,0],target:[0,0,1]},speed:10001}},
       {explore:{start:{position:[1,1,1],target:[1,1,1]}}},
       {explore:{start:{position:[0,0,0],target:[0,0,1]},speed:2}},
-      {events:[{name:'a',start:1}],cameras:[{name:'b',start:0,end:2}],explore:{start:{position:[0,0,0],target:[1,0,0]}}},
+      {events:[{name:'a',start:1}],shots:[{name:'b',start:0,end:2}],explore:{start:{position:[0,0,0],target:[1,0,0]}}},
     ];
     for(const declared of tables) {
       const {ack}=await run(declared,duration);
       expect(ack.events).toEqual(sanitizeSceneEvents(declared.events,duration));
-      expect(ack.cameras).toEqual(sanitizeSceneCameras(declared.cameras,duration));
+      expect(ack.shots).toEqual(sanitizeSceneShots(declared.shots,duration));
       expect(ack.explore).toEqual(sanitizeSceneExplore(declared.explore));
     }
   });

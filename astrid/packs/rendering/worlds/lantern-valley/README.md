@@ -8,12 +8,12 @@ from the water through the evening. Everything is built in code (three r185.1):
 terrain, trees, water, lanterns, and the moon. The scene is one self-contained
 HTML entry in `prepared/lantern-valley.scene.json`.
 
-## Cameras and events
+## Shots and events
 
-Time is 75 s of source time at 30 fps. Cameras are authored moves, laid end to end
+Time is 75 s of source time at 30 fps. Shots are authored camera moves, laid end to end
 on the source clock. Each has a `worldStart`, the world time at its first frame.
 
-| Camera | Source | World | Sees |
+| Shot | Source | World | Sees |
 |---|---|---|---|
 | Valley flight | 0-25 s | from 0 s | the valley from the air |
 | Riverside walk | 25-50 s | from 20 s | the river and the bridge, on foot |
@@ -29,17 +29,17 @@ Events are in world time:
 | Fish leap | 43 s |
 
 The explorer's free mode (`explore`) starts above the valley and is bounded to it.
-`prepared/world.json` holds the cameras, events and explore descriptor; it is what the
+`prepared/world.json` holds the shots, events and explore descriptor; it is what the
 build writes from the source, so it never drifts from the scene.
 
 ## Files
 
-- `src/`: the world source (`main.ts` the entry, `cameras.ts`, `world/*` the scene).
+- `src/`: the world source (`main.ts` the entry, `shots.ts`, `world/*` the scene).
 - `build.mjs`: bundles the entry, writes `prepared/`, and regenerates the explorer module
   `ui/threejs-live-editor/explorer/worlds/sample.ts` (do not edit that file by hand).
 - `deps.mjs`: where three and esbuild come from (see below).
 - `harness/`: `validate.mjs` (the package through Astrid's validators and the Python
-  `validate_package`), `check.mjs` (camera-move checks), `capture.mjs` and `views.mjs`
+  `validate_package`), `check.mjs` (shot checks), `capture.mjs` and `views.mjs`
   (headless stills through Astrid's runtime), with `host-page.ts` and `shots.json`.
 - `stills/`: three 640x360 timeline stills.
 
@@ -48,7 +48,7 @@ build writes from the source, so it never drifts from the scene.
 ```bash
 node build.mjs            # prepared/ and the explorer module
 node harness/validate.mjs # checks the committed package
-node harness/check.mjs    # camera-move checks
+node harness/check.mjs    # shot checks
 ```
 
 Dependencies come from, in order: `LANTERN_VALLEY_DEPS=<node_modules>` when set; the

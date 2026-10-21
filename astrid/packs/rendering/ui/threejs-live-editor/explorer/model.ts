@@ -4,11 +4,11 @@ import { LIVE_SCENE_CLIP_TYPE_ID } from '../identity';
 
 /** Something that happens in the world, in world seconds; `end` is absent for a point event. */
 export type WorldEvent = { readonly name: string; readonly start: number; readonly end?: number };
-/** An authored camera: `start`/`end` in source seconds, `worldStart` the world time shown at `start` (default start). */
-export type CameraMove = { readonly name: string; readonly start: number; readonly end: number; readonly worldStart?: number };
+/** An authored shot: `start`/`end` in source seconds, `worldStart` the world time shown at `start` (default start). */
+export type ShotMove = { readonly name: string; readonly start: number; readonly end: number; readonly worldStart?: number };
 export type Stretch = { readonly from: number; readonly to: number; readonly speed: number };
 export type WorldUse = { clipId: string; track: string; at: number; from: number; to: number; speed: number };
-export type LibraryEntry = { objectId: string; revision: string; name: string; duration: number; authoredFps: number; events: WorldEvent[]; cameras: CameraMove[]; sample?: true };
+export type LibraryEntry = { objectId: string; revision: string; name: string; duration: number; authoredFps: number; events: WorldEvent[]; shots: ShotMove[]; sample?: true };
 /** Names a timeline world can be given, best first: the clip's label, a name its package declares, a name from its entry file. */
 export type NameHints = { label?: string; declared?: string; file?: string };
 export type TimelineWorld = { objectId: string; revision: string; duration: number; authoredFps: number; uses: WorldUse[]; liveScene: Record<string, unknown>; nameHints: NameHints };
@@ -49,8 +49,9 @@ export function worldsFromSnapshot(snapshot: TimelineSnapshot): TimelineWorld[] 
       world = { objectId, revision, duration: manifest.duration, authoredFps: manifest.authoredFps, uses: [], liveScene: ls, nameHints: manifestNameHints(manifest) };
       byKey.set(key, world);
     }
-    // The clip label reads "World" or "World · Camera"; the world is the part before the dot.
-    const worldLabel = typeof (clip as { label?: unknown }).label === 'string' ? (clip as { label: string }).label.split(' · ')[0].trim() : '';
+    // The clip label reads "World" or "World · Shot"; the world is the part before the dot.
+    const clipLabel = (clip as { label?: unknown }).label;
+    const worldLabel = typeof clipLabel === 'string' ? clipLabel.split(' · ')[0].trim() : '';
     if (worldLabel && !world.nameHints.label) world.nameHints.label = worldLabel;
     const rate = clip.rate ?? 1;
     const from = clip.sourceOffset ?? 0;
@@ -71,7 +72,7 @@ function validEvent(v: unknown): v is WorldEvent {
     && (v.end === undefined || (typeof v.end === 'number' && Number.isFinite(v.end)));
 }
 
-function validCamera(v: unknown): v is CameraMove {
+function validShot(v: unknown): v is ShotMove {
   return isRecord(v) && typeof v.name === 'string'
     && typeof v.start === 'number' && Number.isFinite(v.start)
     && typeof v.end === 'number' && Number.isFinite(v.end) && v.end > v.start
@@ -87,7 +88,7 @@ function validEntry(v: unknown): boolean {
     && isPositive(v.authoredFps);
 }
 
-/** Library entries from a stored document body; invalid entries are dropped, and so are invalid events and cameras
+/** Library entries from a stored document body; invalid entries are dropped, and so are invalid events and shots
  * (an entry saved with the old `stops` simply loses them). Never throws. */
 export function parseLibrary(content: unknown): LibraryEntry[] {
   const raw = isRecord(content) ? content.worlds : undefined;
@@ -101,7 +102,7 @@ export function parseLibrary(content: unknown): LibraryEntry[] {
       duration: e.duration as number,
       authoredFps: e.authoredFps as number,
       events: Array.isArray(e.events) ? e.events.filter(validEvent) : [],
-      cameras: Array.isArray(e.cameras) ? e.cameras.filter(validCamera) : [],
+      shots: Array.isArray(e.shots) ? e.shots.filter(validShot) : [],
       ...(e.sample === true ? { sample: true as const } : {}),
     };
   });
@@ -137,9 +138,9 @@ export function worldTitleFromFilename(filename: string): string {
   return words[0].toUpperCase() + words.slice(1).toLowerCase();
 }
 
-/** The name of a timeline clip showing a world: the world, then the camera when one is shown. */
-export function clipName(world: string, camera?: string): string {
-  return camera ? `${world} · ${camera}` : world;
+/** The name of a timeline clip showing a world: the world, then the shot when one is shown. */
+export function clipName(world: string, shot?: string): string {
+  return shot ? `${world} · ${shot}` : world;
 }
 
 /** JSON with object keys sorted, so equal content compares equal whatever order its keys were written in. */
@@ -156,15 +157,15 @@ const sameJson = (a: unknown, b: unknown) => stableJson(a) === stableJson(b);
 
 export const UNTITLED_WORLD = /^Untitled world( \d+)?$/;
 
-/** Keeps the events and cameras a library world's scene reported; the same list when the entry is missing or already has them. */
+/** Keeps the events and shots a library world's scene reported; the same list when the entry is missing or already has them. */
 export function withInfo(
   list: readonly LibraryEntry[],
   key: string,
-  info: { events: readonly WorldEvent[]; cameras: readonly CameraMove[] },
+  info: { events: readonly WorldEvent[]; shots: readonly ShotMove[] },
 ): LibraryEntry[] {
   const entry = list.find((e) => worldKey(e) === key);
-  if (!entry || (sameJson(entry.events, info.events) && sameJson(entry.cameras, info.cameras))) return [...list];
-  return upsertEntry(list, { ...entry, events: [...info.events], cameras: [...info.cameras] });
+  if (!entry || (sameJson(entry.events, info.events) && sameJson(entry.shots, info.shots))) return [...list];
+  return upsertEntry(list, { ...entry, events: [...info.events], shots: [...info.shots] });
 }
 
 export const stretchDuration = (s: Stretch) => (s.to - s.from) / s.speed;
@@ -370,41 +371,41 @@ export class TravelClock {
   }
 }
 
-// ---- Cameras: authored moves through the world, in source time.
+// ---- Shots: authored moves through the world, in source time.
 
-export const WHOLE_WORLD_CAMERA = 'Whole world';
+export const WHOLE_WORLD_SHOT = 'Whole world';
 
-/** The world's cameras; a world that declares none gets one implicit camera covering all of it. */
-export function camerasOrImplicit(cameras: readonly CameraMove[], duration: number): CameraMove[] {
-  return cameras.length ? [...cameras] : [{ name: WHOLE_WORLD_CAMERA, start: 0, end: Math.max(duration, 0) }];
+/** The world's shots; a world that declares none gets one implicit shot covering all of it. */
+export function shotsOrImplicit(shots: readonly ShotMove[], duration: number): ShotMove[] {
+  return shots.length ? [...shots] : [{ name: WHOLE_WORLD_SHOT, start: 0, end: Math.max(duration, 0) }];
 }
 
-/** World time shown at a source time inside a camera: worldStart + (sourceTime - start). */
-export const worldTimeIn = (camera: CameraMove, sourceTime: number) => (camera.worldStart ?? camera.start) + (sourceTime - camera.start);
+/** World time shown at a source time inside a shot: worldStart + (sourceTime - start). */
+export const worldTimeIn = (shot: ShotMove, sourceTime: number) => (shot.worldStart ?? shot.start) + (sourceTime - shot.start);
 
-/** Index of the camera whose source range holds `time` (end exclusive, the last one inclusive); else the nearest earlier one; else 0. */
-export function cameraIndexAt(cameras: readonly CameraMove[], time: number): number {
+/** Index of the shot whose source range holds `time` (end exclusive, the last one inclusive); else the nearest earlier one; else 0. */
+export function shotIndexAt(shots: readonly ShotMove[], time: number): number {
   let found = -1;
-  for (let i = 0; i < cameras.length; i++) {
-    if (time >= cameras[i].start && (time < cameras[i].end || (i === cameras.length - 1 && time <= cameras[i].end))) return i;
-    if (cameras[i].start <= time) found = i;
+  for (let i = 0; i < shots.length; i++) {
+    if (time >= shots[i].start && (time < shots[i].end || (i === shots.length - 1 && time <= shots[i].end))) return i;
+    if (shots[i].start <= time) found = i;
   }
   return Math.max(found, 0);
 }
 
-/** An event as seen from one camera: its overlap with the camera's world window, mapped to source time. */
-export type CameraEvent = { readonly event: WorldEvent; readonly from: number; readonly to: number };
+/** An event as seen from one shot: its overlap with the shot's world window, mapped to source time. */
+export type ShotEvent = { readonly event: WorldEvent; readonly from: number; readonly to: number };
 
-/** Events whose world time overlaps the camera's world-time window (touching counts for a point), clipped and mapped to source time. */
-export function eventsInCamera(events: readonly WorldEvent[], camera: CameraMove): CameraEvent[] {
-  const w0 = camera.worldStart ?? camera.start;
-  const w1 = w0 + (camera.end - camera.start);
-  const out: CameraEvent[] = [];
+/** Events whose world time overlaps the shot's world-time window (touching counts for a point), clipped and mapped to source time. */
+export function eventsInShot(events: readonly WorldEvent[], shot: ShotMove): ShotEvent[] {
+  const w0 = shot.worldStart ?? shot.start;
+  const w1 = w0 + (shot.end - shot.start);
+  const out: ShotEvent[] = [];
   for (const event of events) {
     const e0 = event.start;
     const e1 = event.end ?? event.start;
     if (e1 < w0 || e0 > w1) continue;
-    out.push({ event, from: camera.start + (Math.max(e0, w0) - w0), to: camera.start + (Math.min(e1, w1) - w0) });
+    out.push({ event, from: shot.start + (Math.max(e0, w0) - w0), to: shot.start + (Math.min(e1, w1) - w0) });
   }
   return out;
 }

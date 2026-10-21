@@ -4,12 +4,12 @@ import { buildRows } from '../../../astrid/packs/rendering/ui/threejs-live-edito
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../../../astrid/packs/rendering/ui/threejs-live-editor/identity';
 import {
   TravelClock,
-  cameraIndexAt,
-  camerasOrImplicit,
+  shotIndexAt,
+  shotsOrImplicit,
   chooseDefaultWorld,
   clampStretch,
   clipName,
-  eventsInCamera,
+  eventsInShot,
   exploreKey,
   fitToBox,
   freeVisualTrack,
@@ -36,7 +36,7 @@ import {
   worldKey,
   worldsFromSnapshot,
   worldTimeIn,
-  type CameraMove,
+  type ShotMove,
   type LibraryEntry,
   type WorldEvent,
 } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/model';
@@ -61,7 +61,7 @@ function snap(partial: Record<string, unknown>): TimelineSnapshot {
 }
 
 function entry(objectId: string, revision = 'r1', name = objectId): LibraryEntry {
-  return { objectId, revision, name, duration: 4, authoredFps: 24, events: [{ name: 'hit', start: 1 }], cameras: [] };
+  return { objectId, revision, name, duration: 4, authoredFps: 24, events: [{ name: 'hit', start: 1 }], shots: [] };
 }
 
 describe('worldsFromSnapshot', () => {
@@ -128,22 +128,22 @@ describe('library document model', () => {
     expect(parseLibrary({ version: 1, worlds: [entry('ok'), { objectId: 'bad' }, null, { ...entry('neg'), duration: -1 }, { ...entry('fps'), authoredFps: 0 }] }).map((e) => e.objectId)).toEqual(['ok']);
   });
 
-  it('parseLibrary drops invalid events and cameras, keeping the valid ones', () => {
+  it('parseLibrary drops invalid events and shots, keeping the valid ones', () => {
     const [read] = parseLibrary({
       version: 1,
       worlds: [{
         ...entry('A'),
         events: [{ name: 'ok', start: 1 }, { name: 'span', start: 2, end: 3 }, { name: 'bad' }, { name: 'nan', start: 2, end: 'x' }],
-        cameras: [{ name: 'cam', start: 0, end: 4 }, { name: 'backwards', start: 5, end: 2 }, { name: 'nan', start: 0, end: 1, worldStart: NaN }],
+        shots: [{ name: 'cam', start: 0, end: 4 }, { name: 'backwards', start: 5, end: 2 }, { name: 'nan', start: 0, end: 1, worldStart: NaN }],
       }],
     });
     expect(read.events).toEqual([{ name: 'ok', start: 1 }, { name: 'span', start: 2, end: 3 }]);
-    expect(read.cameras).toEqual([{ name: 'cam', start: 0, end: 4 }]);
+    expect(read.shots).toEqual([{ name: 'cam', start: 0, end: 4 }]);
   });
 
-  it('reads an entry saved with only the old stops field as having no events or cameras', () => {
+  it('reads an entry saved with only the old stops field as having no events or shots', () => {
     const list = parseLibrary({ version: 1, worlds: [{ objectId: 'A', revision: 'r1', name: 'A', duration: 4, authoredFps: 24, stops: [{ time: 1, name: 'hit' }] }] });
-    expect(list).toEqual([{ objectId: 'A', revision: 'r1', name: 'A', duration: 4, authoredFps: 24, events: [], cameras: [] }]);
+    expect(list).toEqual([{ objectId: 'A', revision: 'r1', name: 'A', duration: 4, authoredFps: 24, events: [], shots: [] }]);
   });
 
   it('keeps the sample flag only when it is true', () => {
@@ -181,23 +181,23 @@ describe('library document model', () => {
   });
 
   it('withInfo returns the same content when nothing changed', () => {
-    const list = [{ ...entry('A'), events: [{ name: 'hit', start: 1 }], cameras: [{ name: 'Wide', start: 0, end: 4 }] }];
-    expect(withInfo(list, 'A@r1', { events: [{ name: 'hit', start: 1 }], cameras: [{ name: 'Wide', start: 0, end: 4 }] })).toEqual(list);
-    expect(withInfo(list, 'B@r1', { events: [{ name: 'x', start: 0 }], cameras: [] })).toEqual(list);
+    const list = [{ ...entry('A'), events: [{ name: 'hit', start: 1 }], shots: [{ name: 'Wide', start: 0, end: 4 }] }];
+    expect(withInfo(list, 'A@r1', { events: [{ name: 'hit', start: 1 }], shots: [{ name: 'Wide', start: 0, end: 4 }] })).toEqual(list);
+    expect(withInfo(list, 'B@r1', { events: [{ name: 'x', start: 0 }], shots: [] })).toEqual(list);
   });
 
-  it('withInfo updates events and cameras of the keyed entry and keeps its other fields', () => {
+  it('withInfo updates events and shots of the keyed entry and keeps its other fields', () => {
     const list = [entry('A'), entry('B')];
     const bridge: WorldEvent[] = [{ name: 'Bridge', start: 2 }];
-    const cam: CameraMove[] = [{ name: 'Wide', start: 0, end: 4 }];
-    const next = withInfo(list, 'A@r1', { events: bridge, cameras: cam });
-    expect(next).toEqual([{ ...entry('A'), events: bridge, cameras: cam }, entry('B')]);
-    expect(withInfo(next, 'A@r1', { events: [], cameras: [] })[0]).toMatchObject({ events: [], cameras: [], name: 'A' });
+    const cam: ShotMove[] = [{ name: 'Wide', start: 0, end: 4 }];
+    const next = withInfo(list, 'A@r1', { events: bridge, shots: cam });
+    expect(next).toEqual([{ ...entry('A'), events: bridge, shots: cam }, entry('B')]);
+    expect(withInfo(next, 'A@r1', { events: [], shots: [] })[0]).toMatchObject({ events: [], shots: [], name: 'A' });
   });
 
   it('withInfo ignores a world that is not in the library', () => {
     const list = [entry('A')];
-    expect(withInfo(list, 'B@r1', { events: [{ name: 'Bridge', start: 2 }], cameras: [] })).toEqual(list);
+    expect(withInfo(list, 'B@r1', { events: [{ name: 'Bridge', start: 2 }], shots: [] })).toEqual(list);
   });
 });
 
@@ -484,15 +484,15 @@ describe('TravelClock window', () => {
   });
 });
 
-describe('camerasOrImplicit', () => {
+describe('shotsOrImplicit', () => {
   it('gives an empty world one implicit whole-world camera', () => {
-    expect(camerasOrImplicit([], 4)).toEqual([{ name: 'Whole world', start: 0, end: 4 }]);
-    expect(camerasOrImplicit([], -1)).toEqual([{ name: 'Whole world', start: 0, end: 0 }]);
+    expect(shotsOrImplicit([], 4)).toEqual([{ name: 'Whole world', start: 0, end: 4 }]);
+    expect(shotsOrImplicit([], -1)).toEqual([{ name: 'Whole world', start: 0, end: 0 }]);
   });
 
-  it('returns a copy of declared cameras', () => {
-    const cams: CameraMove[] = [{ name: 'A', start: 0, end: 2 }];
-    const out = camerasOrImplicit(cams, 4);
+  it('returns a copy of declared shots', () => {
+    const cams: ShotMove[] = [{ name: 'A', start: 0, end: 2 }];
+    const out = shotsOrImplicit(cams, 4);
     expect(out).toEqual(cams);
     expect(out).not.toBe(cams);
   });
@@ -500,58 +500,58 @@ describe('camerasOrImplicit', () => {
 
 describe('worldTimeIn', () => {
   it('defaults worldStart to start, so world time equals source time', () => {
-    const cam: CameraMove = { name: 'a', start: 2, end: 6 };
+    const cam: ShotMove = { name: 'a', start: 2, end: 6 };
     expect(worldTimeIn(cam, 2)).toBe(2);
     expect(worldTimeIn(cam, 5)).toBe(5);
   });
 
   it('offsets world time by worldStart', () => {
-    const cam: CameraMove = { name: 'b', start: 2, end: 6, worldStart: 10 };
+    const cam: ShotMove = { name: 'b', start: 2, end: 6, worldStart: 10 };
     expect(worldTimeIn(cam, 2)).toBe(10);
     expect(worldTimeIn(cam, 5)).toBe(13);
   });
 });
 
-describe('cameraIndexAt', () => {
-  const cams: CameraMove[] = [{ name: 'a', start: 0, end: 4 }, { name: 'b', start: 4, end: 8 }];
+describe('shotIndexAt', () => {
+  const cams: ShotMove[] = [{ name: 'a', start: 0, end: 4 }, { name: 'b', start: 4, end: 8 }];
 
   it('finds the camera holding a time', () => {
-    expect(cameraIndexAt(cams, 2)).toBe(0);
-    expect(cameraIndexAt(cams, 6)).toBe(1);
-    expect(cameraIndexAt(cams, 0)).toBe(0);
+    expect(shotIndexAt(cams, 2)).toBe(0);
+    expect(shotIndexAt(cams, 6)).toBe(1);
+    expect(shotIndexAt(cams, 0)).toBe(0);
   });
 
   it('gives a shared boundary to the later camera', () => {
-    expect(cameraIndexAt(cams, 4)).toBe(1);
+    expect(shotIndexAt(cams, 4)).toBe(1);
   });
 
   it('includes the end of the last camera', () => {
-    expect(cameraIndexAt(cams, 8)).toBe(1);
+    expect(shotIndexAt(cams, 8)).toBe(1);
   });
 
   it('before the first camera is index 0', () => {
-    expect(cameraIndexAt([{ name: 'a', start: 2, end: 4 }], 1)).toBe(0);
+    expect(shotIndexAt([{ name: 'a', start: 2, end: 4 }], 1)).toBe(0);
   });
 
   it('in a gap, gives the earlier camera', () => {
-    const gapped: CameraMove[] = [{ name: 'a', start: 0, end: 2 }, { name: 'b', start: 5, end: 8 }];
-    expect(cameraIndexAt(gapped, 3.5)).toBe(0);
+    const gapped: ShotMove[] = [{ name: 'a', start: 0, end: 2 }, { name: 'b', start: 5, end: 8 }];
+    expect(shotIndexAt(gapped, 3.5)).toBe(0);
   });
 
   it('past the last camera, gives the last camera', () => {
-    expect(cameraIndexAt(cams, 9)).toBe(1);
+    expect(shotIndexAt(cams, 9)).toBe(1);
   });
 
-  it('is 0 with no cameras', () => {
-    expect(cameraIndexAt([], 3)).toBe(0);
+  it('is 0 with no shots', () => {
+    expect(shotIndexAt([], 3)).toBe(0);
   });
 });
 
-describe('eventsInCamera', () => {
+describe('eventsInShot', () => {
   const span = (name: string, start: number, end: number): WorldEvent => ({ name, start, end });
 
   it('maps events on an aligned camera to source time, clipping spans to the window', () => {
-    const cam: CameraMove = { name: 'c', start: 4, end: 8 };
+    const cam: ShotMove = { name: 'c', start: 4, end: 8 };
     const events: WorldEvent[] = [
       span('inside', 5, 6),
       { name: 'point-mid', start: 6 },
@@ -562,7 +562,7 @@ describe('eventsInCamera', () => {
       span('before', 0, 3),
       span('after', 9, 10),
     ];
-    expect(eventsInCamera(events, cam)).toEqual([
+    expect(eventsInShot(events, cam)).toEqual([
       { event: events[0], from: 5, to: 6 },
       { event: events[1], from: 6, to: 6 },
       { event: events[2], from: 4, to: 4 },
@@ -572,21 +572,21 @@ describe('eventsInCamera', () => {
     ]);
   });
 
-  it('shows the same event from two cameras with different worldStart', () => {
+  it('shows the same event from two shots with different worldStart', () => {
     const event = span('shared', 3, 5);
-    const a: CameraMove = { name: 'A', start: 0, end: 4 };
-    const b: CameraMove = { name: 'B', start: 10, end: 14, worldStart: 2 };
-    expect(eventsInCamera([event], a)).toEqual([{ event, from: 3, to: 4 }]);
-    expect(eventsInCamera([event], b)).toEqual([{ event, from: 11, to: 13 }]);
+    const a: ShotMove = { name: 'A', start: 0, end: 4 };
+    const b: ShotMove = { name: 'B', start: 10, end: 14, worldStart: 2 };
+    expect(eventsInShot([event], a)).toEqual([{ event, from: 3, to: 4 }]);
+    expect(eventsInShot([event], b)).toEqual([{ event, from: 11, to: 13 }]);
   });
 
   it('drops events outside the camera window', () => {
-    const cam: CameraMove = { name: 'B', start: 10, end: 14, worldStart: 2 };
-    expect(eventsInCamera([span('gone', 0, 1), span('late', 7, 9)], cam)).toEqual([]);
+    const cam: ShotMove = { name: 'B', start: 10, end: 14, worldStart: 2 };
+    expect(eventsInShot([span('gone', 0, 1), span('late', 7, 9)], cam)).toEqual([]);
   });
 
   it('returns nothing for no events', () => {
-    expect(eventsInCamera([], { name: 'c', start: 0, end: 4 })).toEqual([]);
+    expect(eventsInShot([], { name: 'c', start: 0, end: 4 })).toEqual([]);
   });
 });
 
@@ -860,8 +860,8 @@ describe('worldTitleFromFilename, clipName and renameEntry', () => {
 
   it('renames one entry and leaves the others alone; a blank name changes nothing', () => {
     const list = [
-      { objectId: 'o1', revision: 'r1', name: 'First', duration: 10, authoredFps: 24, events: [], cameras: [] },
-      { objectId: 'o2', revision: 'r1', name: 'Second', duration: 12, authoredFps: 24, events: [], cameras: [] },
+      { objectId: 'o1', revision: 'r1', name: 'First', duration: 10, authoredFps: 24, events: [], shots: [] },
+      { objectId: 'o2', revision: 'r1', name: 'Second', duration: 12, authoredFps: 24, events: [], shots: [] },
     ];
     expect(renameEntry(list, 'o2@r1', '  Renamed  ').map((e) => e.name)).toEqual(['First', 'Renamed']);
     expect(renameEntry(list, 'o2@r1', '   ').map((e) => e.name)).toEqual(['First', 'Second']);

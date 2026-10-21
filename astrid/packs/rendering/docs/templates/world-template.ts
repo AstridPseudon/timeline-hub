@@ -1,15 +1,15 @@
 import * as THREE from 'three';
 
 /**
- * World template: one explorable world with two authored cameras.
+ * World template: one explorable world with two authored shots.
  *
  * Every Astrid world has the same four layers, in this order:
  *
  *   1. createWorld()     builds the place once: sky, horizon, ground, things.
  *   2. evaluateWorld(t)  sets the living state from WORLD time alone,
  *                        including the declared events.
- *   3. CAMERAS, shotAt() map SOURCE time (what the timeline plays) to one
- *                        camera, the world time it shows, and its pose.
+ *   3. SHOTS, shotAt()   map SOURCE time (what the timeline plays) to one
+ *                        shot, the world time it shows, and its camera pose.
  *   4. the free view     when the host passes `view`, draw exactly that view.
  *
  * Bundle this file into the package's single self-contained HTML entry. The
@@ -21,12 +21,12 @@ type Vec3 = [number, number, number];
 type View = { position: Vec3; quaternion: [number, number, number, number]; fov: number };
 type Frame = { sourceTime: number; width: number; height: number; view?: View; worldTime?: number };
 type WorldEvent = { name: string; start: number; end?: number };
-type CameraMove = { name: string; start: number; end: number; worldStart?: number };
+type Shot = { name: string; start: number; end: number; worldStart?: number };
 type Explore = { start: { position: Vec3; target: Vec3 }; speed?: number; bounds?: { min: Vec3; max: Vec3 } };
 
 type AstridScene = {
   explore: Explore;
-  cameras: readonly CameraMove[];
+  shots: readonly Shot[];
   events: readonly WorldEvent[];
   initialize(): Promise<void>;
   render(frame: Frame): Promise<void>;
@@ -39,8 +39,8 @@ const POND_RADIUS = 5;
 
 // ---- Events: what happens in the world, in WORLD seconds ------------------
 // evaluateWorld reads these same objects, so retiming an event here moves both
-// the declaration and the behaviour. Events happen whether or not a camera
-// frames them: no camera below shows the lanterns, but exploring does.
+// the declaration and the behaviour. Events happen whether or not a shot
+// frames them: no shot below shows the lanterns, but exploring does.
 const BOAT_CROSSES = { name: 'Boat crosses the pond', start: 1, end: 5 };
 const LANTERNS_LIGHT = { name: 'Lanterns light', start: 7 };
 const EVENTS: readonly WorldEvent[] = [BOAT_CROSSES, LANTERNS_LIGHT];
@@ -262,15 +262,15 @@ function evaluateWorld(world: World, worldTime: number): void {
   world.lampLight.intensity = 6 * lit;
 }
 
-// ---- 3. Cameras: the authored shots, in source seconds ----------------------
+// ---- 3. Shots: the authored shots, in source seconds -------------------------
 // Named, non-overlapping, and together covering 0..DURATION, so every source
-// time has exactly one camera. worldStart is the world time a camera shows at
+// time has exactly one shot. worldStart is the world time a shot shows at
 // its start (default: its own start, i.e. aligned). "Low on the crossing"
 // replays the crossing that "Wide on the crossing" showed, from the water.
 type Pose = { position: THREE.Vector3; target: THREE.Vector3; fov: number };
-type Camera = CameraMove & { pose(progress: number, worldTime: number, out: Pose): void };
+type ShotDef = Shot & { pose(progress: number, worldTime: number, out: Pose): void };
 
-const CAMERAS: readonly Camera[] = [
+const SHOTS: readonly ShotDef[] = [
   {
     name: 'Wide on the crossing', start: 0, end: 5, // aligned: world 0..5
     pose(u, _t, out) {
@@ -289,13 +289,13 @@ const CAMERAS: readonly Camera[] = [
   },
 ];
 
-/** The camera for a source time and the world time it shows. Ranges are
- * half-open; the final instant belongs to the last camera. */
-function shotAt(sourceTime: number): { camera: Camera; worldTime: number; progress: number } {
+/** The shot for a source time and the world time it shows. Ranges are
+ * half-open; the final instant belongs to the last shot. */
+function shotAt(sourceTime: number): { shot: ShotDef; worldTime: number; progress: number } {
   const s = THREE.MathUtils.clamp(sourceTime, 0, DURATION);
-  const camera = CAMERAS.find(c => s >= c.start && s < c.end) ?? CAMERAS[CAMERAS.length - 1];
-  const local = s - camera.start;
-  return { camera, worldTime: (camera.worldStart ?? camera.start) + local, progress: local / (camera.end - camera.start) };
+  const shot = SHOTS.find(c => s >= c.start && s < c.end) ?? SHOTS[SHOTS.length - 1];
+  const local = s - shot.start;
+  return { shot, worldTime: (shot.worldStart ?? shot.start) + local, progress: local / (shot.end - shot.start) };
 }
 
 // ---- 4. The host-facing scene ---------------------------------------------
@@ -305,7 +305,7 @@ const pose: Pose = { position: new THREE.Vector3(), target: new THREE.Vector3(),
 
 const astridScene: AstridScene = {
   explore: EXPLORE,
-  cameras: CAMERAS.map(({ name, start, end, worldStart }) => ({ name, start, end, worldStart })),
+  shots: SHOTS.map(({ name, start, end, worldStart }) => ({ name, start, end, worldStart })),
   events: EVENTS,
 
   async initialize() {
@@ -331,10 +331,10 @@ const astridScene: AstridScene = {
       camera.quaternion.fromArray(view.quaternion);
       camera.fov = view.fov;
     } else {
-      // Timeline and video: source time picks the camera and the world time it shows.
-      const shot = shotAt(sourceTime);
-      evaluateWorld(world, shot.worldTime);
-      shot.camera.pose(shot.progress, shot.worldTime, pose);
+      // Timeline and video: source time picks the shot and the world time it shows.
+      const at = shotAt(sourceTime);
+      evaluateWorld(world, at.worldTime);
+      at.shot.pose(at.progress, at.worldTime, pose);
       camera.position.copy(pose.position);
       camera.lookAt(pose.target);
       camera.fov = pose.fov;

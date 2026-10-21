@@ -5,12 +5,12 @@ import type { SceneExplore, SceneInfo, SceneStatus } from '../runtime';
 import { loadLibrary, updateLibrary } from './library';
 import { defaultExploreSpeed, FreeCamera, type ViewPose } from './camera';
 import {
-  camerasOrImplicit,
-  cameraIndexAt,
+  shotsOrImplicit,
+  shotIndexAt,
   chooseDefaultWorld,
   clampStretch,
   clipName,
-  eventsInCamera,
+  eventsInShot,
   exploreKey,
   fitToBox,
   freeVisualTrack,
@@ -35,7 +35,7 @@ import {
   worldKey,
   worldsFromSnapshot,
   worldTitleFromFilename,
-  type CameraMove,
+  type ShotMove,
   type LibraryEntry,
   type Stretch,
   type WorldEvent,
@@ -44,10 +44,15 @@ import { buildRows, rowFromEntry, type Row } from './rows';
 import { Select } from './Select';
 import { TimeBar, type BarMarker } from './TimeBar';
 import { button, chip, clockText, ERROR_STYLE, errorMessage, OVERLAY_STYLE, PILL_STYLE, speedLabel, VIEWER_STYLE } from './ui';
+import { ShotGallery } from './ShotGallery';
 import { WorldList } from './WorldList';
 
 type AuthoringModule = typeof import('../authoring');
 const loadAuthoring = (): Promise<AuthoringModule> => import('../authoring');
+
+const LazyShotStillRenderer = lazy(() =>
+  import('../shotStillRenderer').then(({ ShotStillRenderer }) => ({ default: ShotStillRenderer })),
+);
 
 const LazySceneSurface = lazy(() =>
   import('../SceneSurface').then(({ SceneSurface }) => ({ default: SceneSurface })),
@@ -61,7 +66,7 @@ const FALLBACK_VIEW_WIDTH = 320;
 const FALLBACK_ASPECT = 16 / 9;
 /** At this container width the panel uses its side column (the full-screen layout). */
 const WIDE_REM = 38;
-const SIDE_COLUMN = '13rem';
+const SIDE_COLUMN = '22rem';
 /** Both modes' controls share this height in the side layout, so the viewer keeps its size when the mode changes. */
 const CONTROLS_MIN_HEIGHT = '10rem';
 /** Wide enough to see the world, narrow enough that a big view does not stretch its edges. */
@@ -77,9 +82,9 @@ const HINT_FADE_MS = 700;
 /** A drag counts as looking once it has gone this far. */
 const LOOKED_PIXELS = 12;
 
-type Mode = 'explore' | 'cameras';
+type Mode = 'explore' | 'shots';
 type Frame = { time: number; worldTime?: number; view?: ViewPose };
-type Declared = { key: string; events: WorldEvent[]; cameras: CameraMove[]; explore: SceneExplore | null };
+type Declared = { key: string; events: WorldEvent[]; shots: ShotMove[]; explore: SceneExplore | null };
 
 const percent = (time: number, duration: number) => `${duration > 0 ? Math.min(Math.max(time / duration, 0), 1) * 100 : 0}%`;
 
@@ -155,7 +160,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const [hintFading, setHintFading] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
   const [touchSeen, setTouchSeen] = useState(false);
-  const [cameraIndex, setCameraIndex] = useState(0);
+  const [shotIndex, setShotIndex] = useState(0);
   const [stretch, setStretch] = useState<Stretch>({ from: 0, to: 1, speed: 1 });
   const [loop, setLoop] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -168,7 +173,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ tone: 'error' | 'info'; text: string; details?: string } | null>(null);
 
-  // World time (Explore) and travel time (Cameras) are separate clocks over the same world.
+  // World time (Explore) and travel time (Shots) are separate clocks over the same world.
   const worldClock = useRef<TravelClock | null>(null);
   const travelClock = useRef<TravelClock | null>(null);
   const roam = useRef<FreeCamera | null>(null);
@@ -186,8 +191,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const exploreRef = useRef<SceneExplore | null | undefined>(undefined);
   const modeRef = useRef<Mode>('explore');
   const revealedRef = useRef(false);
-  const camerasRef = useRef<CameraMove[]>([]);
-  const cameraIndexRef = useRef(0);
+  const shotsRef = useRef<ShotMove[]>([]);
+  const shotIndexRef = useRef(0);
   const focusTime = useRef<number | null>(null);
   const openRequest = useRef(0);
   const mounted = useRef(false);
@@ -321,7 +326,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       void commitLibrary((list) => missing.reduce(
         (next, row) => (next.some((entry) => worldKey(entry) === row.key && (!UNTITLED_WORLD.test(entry.name) || UNTITLED_WORLD.test(row.name))) ? next : upsertEntry(next, {
           objectId: row.objectId, revision: row.revision, name: row.name, duration: row.duration, authoredFps: row.authoredFps,
-          events: [...row.events], cameras: [...row.cameras], ...(next.find((entry) => worldKey(entry) === row.key)?.sample ? { sample: true as const } : {}),
+          events: [...row.events], shots: [...row.shots], ...(next.find((entry) => worldKey(entry) === row.key)?.sample ? { sample: true as const } : {}),
         })),
         list,
       ), true);
@@ -335,14 +340,14 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const info = selected && declared?.key === selected.key ? declared : null;
   // What the scene reported wins, even when empty; before it loads, the library's saved copy stands in.
   const events = selected ? (info ? info.events : [...selected.events]) : [];
-  const cameras = useMemo(
-    () => camerasOrImplicit(selected ? (info ? info.cameras : selected.cameras) : [], duration),
+  const shots = useMemo(
+    () => shotsOrImplicit(selected ? (info ? info.shots : selected.shots) : [], duration),
     [selected, info, duration],
   );
-  const camera = cameras[Math.min(cameraIndex, cameras.length - 1)];
+  const shot = shots[Math.min(shotIndex, shots.length - 1)];
   // undefined until the scene reports; null when it declared no (valid) explore.
   const explore = info ? info.explore : undefined;
-  const mode: Mode = explore === null ? 'cameras' : modeChoice;
+  const mode: Mode = explore === null ? 'shots' : modeChoice;
   const ready = Boolean(liveScene) && revealed && !sceneError;
   const sampleSaved = library.some((entry) => entry.sample);
   const projectReady = Boolean(snap?.projectId && snap?.timelineId);
@@ -357,11 +362,11 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     : !stretchValid ? 'The range is empty.'
     : null;
   const speedOptions = [...new Set([...SPEEDS, stretch.speed])].sort((a, b) => a - b);
-  const cameraEvents = useMemo(() => (camera ? eventsInCamera(events, camera) : []), [events, camera]);
+  const shotEvents = useMemo(() => (shot ? eventsInShot(events, shot) : []), [events, shot]);
   const eventMarkers: BarMarker[] = events.map((event, i) => ({
     key: `${i}:${event.start}:${event.name}`, from: event.start, to: event.end ?? event.start, title: event.name, time: clockText(event.start, 1),
   }));
-  const cameraMarkers: BarMarker[] = cameraEvents.map(({ event, from, to }, i) => ({
+  const shotMarkers: BarMarker[] = shotEvents.map(({ event, from, to }, i) => ({
     key: `${i}:${event.start}:${event.name}`, from, to: event.end === undefined ? from : to, title: event.name, time: clockText(from, 1),
   }));
 
@@ -413,7 +418,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   }, []);
 
   function effectiveMode(): Mode {
-    return exploreRef.current === null ? 'cameras' : modeRef.current;
+    return exploreRef.current === null ? 'shots' : modeRef.current;
   }
 
   // Frame loop: only while visible with a world loaded. Advances world time, moves the free camera, offers the next frame.
@@ -469,7 +474,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     if (row) openWorld(row);
   }, [visible, selected, liveClipId, allRows.length, projectId, libraryReady]);
 
-  // Follow the single selected live-scene clip: open its world in Cameras mode with its stretch.
+  // Follow the single selected live-scene clip: open its world in Shots mode with its stretch.
   useEffect(() => {
     if (!liveClipId) return;
     const snapshot = readSnapshot(ctx);
@@ -483,7 +488,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       followOpenClip(use, liveClipId);
       return;
     }
-    openWorld(row, { stretch: { from: use.from, to: use.to, speed: use.speed }, clipId: liveClipId, mode: 'cameras' });
+    openWorld(row, { stretch: { from: use.from, to: use.to, speed: use.speed }, clipId: liveClipId, mode: 'shots' });
   }, [liveClipId]);
 
   /** Sends the newest time and view to the scene, at most one frame in flight. Reads refs only. */
@@ -500,15 +505,15 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     setFrame(view ? { time: clock.time, worldTime: clock.time, view: view.pose(VIEW_FOV) } : { time: clock.time });
   }
 
-  /** Follows a clip of the open world: Cameras mode on the camera holding its start, with its stretch. */
+  /** Follows a clip of the open world: Shots mode on the shot holding its start, with its stretch. */
   function followOpenClip(use: { from: number; to: number; speed: number }, clipId: string) {
     const travel = travelClock.current;
     if (!travel || !selected) return;
     const next = clampStretch({ from: use.from, to: use.to, speed: use.speed }, selected.duration);
-    const index = cameraIndexAt(camerasRef.current, next.from);
-    modeRef.current = 'cameras';
-    setModeChoice('cameras');
-    enterCamera(index, next.from);
+    const index = shotIndexAt(shotsRef.current, next.from);
+    modeRef.current = 'shots';
+    setModeChoice('shots');
+    enterShot(index, next.from);
     travel.setSpeed(next.speed);
     setStretch(next);
     setFollowedClipId(clipId);
@@ -578,13 +583,13 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     }, HINT_FADE_MS);
   }
 
-  /** Confines Cameras-mode travel to one camera and rests at its start (or the given time). */
-  function enterCamera(index: number, at?: number) {
-    const move = camerasRef.current[index];
+  /** Confines Shots-mode travel to one shot and rests at its start (or the given time). */
+  function enterShot(index: number, at?: number) {
+    const move = shotsRef.current[index];
     const travel = travelClock.current;
     if (!move || !travel) return;
-    cameraIndexRef.current = index;
-    setCameraIndex(index);
+    shotIndexRef.current = index;
+    setShotIndex(index);
     travel.setWindow(move.start, move.end);
     travel.seek(at ?? move.start);
     travel.pause();
@@ -592,20 +597,36 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     setShownTime(travel.time);
   }
 
-  function selectCamera(index: number, at?: number) {
-    const move = cameras[index];
+  function selectShot(index: number, at?: number) {
+    const move = shots[index];
     if (!move) return;
-    enterCamera(index, at);
+    enterShot(index, at);
     setStretch((current) => ({ from: move.start, to: move.end, speed: current.speed }));
     setFollowedClipId(null);
     pump();
   }
 
+  /** A gallery card: show that shot in the viewer and play it from its start. */
+  function playShot(index: number) {
+    selectShot(index);
+    const clock = travelClock.current;
+    if (clock && readyRef.current) {
+      clock.play();
+      setPlaying(true);
+    }
+  }
+
+  /** Full screen covers the timeline, so a card adds its shot instead of being dragged. */
+  function addShot(index: number) {
+    const move = shots[index];
+    if (move) void addToVideo({ from: move.start, to: move.end, speed: 1, name: move.name });
+  }
+
   function switchMode(next: Mode) {
     modeRef.current = next;
     setModeChoice(next);
-    if (next === 'cameras') {
-      const move = camerasRef.current[cameraIndexRef.current];
+    if (next === 'shots') {
+      const move = shotsRef.current[shotIndexRef.current];
       const travel = travelClock.current;
       if (move && travel) travel.setWindow(move.start, move.end);
       travel?.pause();
@@ -626,8 +647,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
 
   function openWorld(row: Row, options: { stretch?: Stretch; clipId?: string | null; mode?: Mode } = {}) {
     const token = ++openRequest.current;
-    const known = camerasOrImplicit(row.cameras, row.duration);
-    const index = options.stretch ? cameraIndexAt(known, options.stretch.from) : 0;
+    const known = shotsOrImplicit(row.shots, row.duration);
+    const index = options.stretch ? shotIndexAt(known, options.stretch.from) : 0;
     const next = clampStretch(options.stretch ?? { from: known[index].start, to: known[index].end, speed: 1 }, row.duration);
     const world = new TravelClock({ duration: row.duration, loop: true });
     world.play();
@@ -642,8 +663,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     roam.current = null;
     exploreRef.current = undefined;
     modeRef.current = startMode;
-    camerasRef.current = known;
-    cameraIndexRef.current = index;
+    shotsRef.current = known;
+    shotIndexRef.current = index;
     focusTime.current = options.stretch ? options.stretch.from : null;
     heldKeys.current.clear();
     pointers.current.clear();
@@ -655,7 +676,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     setSelected(row);
     setFollowedClipId(options.clipId ?? null);
     setModeChoice(startMode);
-    setCameraIndex(index);
+    setShotIndex(index);
     setStretch(next);
     setLoaded(null);
     setLoadError(null);
@@ -699,7 +720,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       // Reveal once the scene has drawn what the user will see first: the free view, or the camera.
       const declaredExplore = exploreRef.current;
       if (!revealedRef.current && declaredExplore !== undefined
-        && (declaredExplore === null || status.view !== undefined || modeRef.current === 'cameras')) {
+        && (declaredExplore === null || status.view !== undefined || modeRef.current === 'shots')) {
         revealedRef.current = true;
         setRevealed(true);
       }
@@ -717,11 +738,11 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   function handleReady(reported: SceneInfo) {
     if (!selected) return;
     const events = reported.events.map((event) => ({ ...event }));
-    const reportedCameras = reported.cameras.map((move) => ({ ...move }));
-    setDeclared({ key: selected.key, events, cameras: reportedCameras, explore: reported.explore });
+    const reportedShots = reported.shots.map((move) => ({ ...move }));
+    setDeclared({ key: selected.key, events, shots: reportedShots, explore: reported.explore });
     // A library world keeps what its scene reported, so the next visit shows it before the scene loads.
-    if (withInfo(libraryRef.current, selected.key, { events, cameras: reportedCameras }).length) {
-      void commitLibrary((list) => withInfo(list, selected.key, { events, cameras: reportedCameras }));
+    if (withInfo(libraryRef.current, selected.key, { events, shots: reportedShots }).length) {
+      void commitLibrary((list) => withInfo(list, selected.key, { events, shots: reportedShots }));
     }
     exploreRef.current = reported.explore;
     if (reported.explore) {
@@ -730,13 +751,13 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     } else {
       roam.current = null;
     }
-    // The scene's own cameras replace the library's copy; a followed clip picks the one holding its start.
-    const next = camerasOrImplicit(reportedCameras, selected.duration);
-    camerasRef.current = next;
+    // The scene's own shots replace the library's copy; a followed clip picks the one holding its start.
+    const next = shotsOrImplicit(reportedShots, selected.duration);
+    shotsRef.current = next;
     const followed = focusTime.current !== null;
-    const index = followed ? cameraIndexAt(next, focusTime.current!) : 0;
-    cameraIndexRef.current = index;
-    setCameraIndex(index);
+    const index = followed ? shotIndexAt(next, focusTime.current!) : 0;
+    shotIndexRef.current = index;
+    setShotIndex(index);
     const travel = travelClock.current;
     if (travel) {
       travel.setWindow(next[index].start, next[index].end);
@@ -746,7 +767,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         setStretch((current) => ({ from: next[index].start, to: next[index].end, speed: current.speed }));
       }
     }
-    if (exploreRef.current === null && modeRef.current === 'explore') modeRef.current = 'cameras';
+    if (exploreRef.current === null && modeRef.current === 'explore') modeRef.current = 'shots';
   }
 
   function pick(key: string) {
@@ -803,7 +824,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     if (!trimmed) return;
     void commitLibrary((list) => (list.some((e) => worldKey(e) === row.key)
       ? renameEntry(list, row.key, trimmed)
-      : upsertEntry(list, { objectId: row.objectId, revision: row.revision, name: trimmed, duration: row.duration, authoredFps: row.authoredFps, events: [...row.events], cameras: [...row.cameras] })));
+      : upsertEntry(list, { objectId: row.objectId, revision: row.revision, name: trimmed, duration: row.duration, authoredFps: row.authoredFps, events: [...row.events], shots: [...row.shots] })));
     setSelected((current) => (current?.key === row.key ? { ...current, name: trimmed } : current));
   }
 
@@ -839,8 +860,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   function onViewerKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     shiftRef.current = event.shiftKey;
     if (event.target !== event.currentTarget) return;
-    // In Cameras mode the viewer owns the travel keys, so the film never sees them.
-    if (effectiveMode() === 'cameras') {
+    // In Shots mode the viewer owns the travel keys, so the film never sees them.
+    if (effectiveMode() === 'shots') {
       travelKey(event);
       return;
     }
@@ -962,7 +983,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         duration: parsed.manifest.duration,
         authoredFps: parsed.manifest.authoredFps,
         events: [],
-        cameras: [],
+        shots: [],
       };
       await commitLibrary((list) => upsertEntry(list, entry));
       openWorld(rowFromEntry(entry));
@@ -997,7 +1018,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         duration: parsed.manifest.duration,
         authoredFps: parsed.manifest.authoredFps,
         events: sample.events.map((event) => ({ ...event })),
-        cameras: sample.cameras.map((move) => ({ ...move })),
+        shots: sample.shots.map((move) => ({ ...move })),
         sample: true,
       };
       // The same package already in the library is just selected, not saved twice.
@@ -1020,7 +1041,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     }
   }
 
-  async function addToVideo() {
+  /** Adds the current range, or the given shot's whole range, to the video at the playhead. */
+  async function addToVideo(range?: Stretch & { name: string }) {
     if (!selected || !liveScene || addReason) return;
     const snapshot = readSnapshot(ctx);
     if (!snapshot) return;
@@ -1028,12 +1050,13 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     setNotice(null);
     try {
       const at = video?.view.getSnapshot().playhead.time ?? 0;
-      const span = stretchDuration(stretch);
+      const use = range ?? stretch;
+      const span = stretchDuration(use);
       const { track } = freeVisualTrack(snapshot, at, span);
       const id = newClipId(snapshot);
       const authoring = await loadAuthoring();
       await authoring.placeLiveScene(ctx, liveScene, selected.duration, [
-        { id, track, at, from: stretch.from, to: stretch.to, rate: stretch.speed, label: clipName(selected.name, mode === 'cameras' ? camera?.name : undefined) },
+        { id, track, at, from: use.from, to: use.to, rate: use.speed, label: clipName(selected.name, range ? range.name : mode === 'shots' ? shot?.name : undefined) },
       ]);
       if (!mounted.current) return;
       // Select the new clip so the explorer follows it; a host without `select` just moves the playhead to it.
@@ -1120,7 +1143,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
 
   const modeToggle = (
     <div role="group" aria-label="Mode" data-refocus className="inline-flex shrink-0 rounded-md border border-border/70 p-0.5">
-      {(['explore', 'cameras'] as const).map((value) => {
+      {(['explore', 'shots'] as const).map((value) => {
         const active = mode === value;
         const unavailable = value === 'explore' && explore === null;
         return (
@@ -1134,14 +1157,14 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             style={active ? { background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))' } : undefined}
             onClick={() => switchMode(value)}
           >
-            {value === 'explore' ? 'Explore' : 'Cameras'}
+            {value === 'explore' ? 'Explore' : 'Shots'}
           </button>
         );
       })}
     </div>
   );
   const notExplorable = explore === null ? (
-    <p className="text-[11px] text-muted-foreground">This world has no free view yet, so only its cameras can be shown.</p>
+    <p className="text-[11px] text-muted-foreground">This world has no free view yet, so only its shots can be shown.</p>
   ) : null;
 
   const eventButtons = (
@@ -1160,9 +1183,9 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
       ))}
     </div>
   );
-  const cameraEventButtons = (
-    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Camera events">
-      {cameraEvents.map(({ event, from }, i) => (
+  const shotEventButtons = (
+    <div className="flex flex-wrap gap-1.5" role="group" aria-label="Shot events">
+      {shotEvents.map(({ event, from }, i) => (
         <button
           key={`${i}:${event.start}:${event.name}`}
           type="button"
@@ -1176,10 +1199,31 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     </div>
   );
 
+  const inFullscreen = fullscreen?.active === true;
+  const specFor = (range: Stretch & { name: string }) => video?.dragSource?.({
+    clipType: LIVE_SCENE_CLIP_TYPE_ID, from: range.from, to: range.to, speed: range.speed,
+    label: clipName(selected?.name ?? '', range.name), ...(liveScene ? { app: { liveScene } } : {}),
+  }) ?? null;
+  const gallery = selected && liveScene ? (
+    <ShotGallery
+      shots={shots}
+      currentIndex={shotIndex}
+      revision={selected.key}
+      fullscreen={inFullscreen}
+      addDisabled={Boolean(addReason)}
+      addTitle={addReason ?? undefined}
+      dragPropsFor={(index) => (shots[index] ? specFor({ from: shots[index].start, to: shots[index].end, speed: 1, name: shots[index].name }) : null)}
+      onSelect={playShot}
+      onAdd={addShot}
+    />
+  ) : null;
+  // The viewer's own handle drags (or, in full screen, adds) the range currently set in the controls.
+  const viewerDrag = mode === 'shots' && ready && !inFullscreen && selected ? specFor({ ...stretch, name: shot?.name ?? '' }) : null;
+
   // Side column: what lives beside the viewer when there is room.
   const sideColumn = (
     <aside
-      aria-label="Worlds and cameras"
+      aria-label="Worlds and shots"
       className="flex min-h-0 shrink-0 flex-col gap-3 overflow-y-auto border-r border-border/70 p-3"
       style={{ width: SIDE_COLUMN }}
     >
@@ -1195,34 +1239,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             </>
           ) : null
         ) : (
-          <ul aria-label="Cameras" className="flex flex-col gap-1">
-            {cameras.map((move, i) => {
-              const covered = eventsInCamera(events, move);
-              return (
-                <li key={`${i}:${move.start}:${move.name}`} className="flex flex-col gap-0.5">
-                  <button
-                    type="button"
-                    aria-current={i === cameraIndex ? 'true' : undefined}
-                    className="min-h-8 truncate rounded-md px-2 py-1 text-left text-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    style={i === cameraIndex ? { background: 'hsl(var(--primary) / 0.12)' } : undefined}
-                    onClick={() => selectCamera(i)}
-                  >
-                    {move.name} <span className="tabular-nums text-muted-foreground">{clockText(move.start)} – {clockText(move.end)}</span>
-                  </button>
-                  {covered.map(({ event, from }, j) => (
-                    <button
-                      key={`${j}:${event.start}:${event.name}`}
-                      type="button"
-                      className="truncate rounded-md py-0.5 pl-5 pr-2 text-left text-[11px] text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      onClick={() => selectCamera(i, from)}
-                    >
-                      {event.name}
-                    </button>
-                  ))}
-                </li>
-              );
-            })}
-          </ul>
+          gallery
         )}
       </div>
     </aside>
@@ -1262,7 +1279,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
         {!wide && allRows.length > 0 ? header : null}
         {showEmpty ? (
           <div className="flex flex-col gap-3 rounded-md border border-border/70 p-3">
-            <p className="text-sm text-muted-foreground">A world is a live 3D place. Look around freely, then add one of its cameras to your video.</p>
+            <p className="text-sm text-muted-foreground">A world is a live 3D place. Look around freely, then add one of its shots to your video.</p>
             <div className="flex flex-wrap gap-2">
               <button type="button" className={`${button} bg-primary/10 text-primary`} disabled={busy} onClick={() => { void addSample(); }}>Add {SAMPLE_LABEL} (sample)</button>
               <button type="button" className={`${button} border border-border`} disabled={busy} onClick={() => importInput.current?.click()}>Import world…</button>
@@ -1400,6 +1417,35 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
                 </button>
               </div>
             ) : null}
+            {mode === 'shots' && ready && selected && inFullscreen ? (
+              <button
+                type="button"
+                data-viewer-control
+                aria-label="Add this shot to video"
+                title={addReason ?? 'Add the range set below to the video at the playhead'}
+                disabled={Boolean(addReason)}
+                className="absolute left-2 top-2 flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                style={PILL_STYLE}
+                onClick={() => { void addToVideo(); }}
+              >
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+                Add to video
+              </button>
+            ) : null}
+            {viewerDrag ? (
+              <span
+                {...viewerDrag}
+                aria-hidden="true"
+                data-viewer-control
+                data-testid="viewer-drag-handle"
+                title="Drag this shot onto the timeline"
+                className="absolute left-2 top-2 flex h-7 cursor-grab items-center gap-1.5 rounded-full px-2.5 text-[11px] active:cursor-grabbing"
+                style={PILL_STYLE}
+              >
+                <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.8" /><circle cx="15" cy="6" r="1.8" /><circle cx="9" cy="12" r="1.8" /><circle cx="15" cy="12" r="1.8" /><circle cx="9" cy="18" r="1.8" /><circle cx="15" cy="18" r="1.8" /></svg>
+                Drag to timeline
+              </span>
+            ) : null}
             {canExpand ? (
               <button
                 type="button"
@@ -1440,25 +1486,18 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             />
             {!wide && events.length ? eventButtons : null}
             {ready && selected ? (
-              <p className="truncate text-[11px] text-muted-foreground">To add this world to your video, <button type="button" className="underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm" onClick={() => switchMode('cameras')}>pick a camera →</button></p>
+              <p className="truncate text-[11px] text-muted-foreground">To add this world to your video, <button type="button" className="underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm" onClick={() => switchMode('shots')}>pick a shot →</button></p>
             ) : null}
           </div>
         ) : (
           <div
             role="group"
-            aria-label="Camera travel"
+            aria-label="Shot travel"
             tabIndex={0}
             className="flex shrink-0 flex-col gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             style={wide ? { minHeight: CONTROLS_MIN_HEIGHT } : undefined}
             onKeyDown={onTravelKeyDown}
           >
-            {!wide && selected && cameras.length > 1 ? (
-              <Select label="Camera" value={String(cameraIndex)} onChange={(event) => selectCamera(Number(event.target.value))}>
-                {cameras.map((move, i) => (
-                  <option key={`${i}:${move.start}:${move.name}`} value={i} className="bg-background text-foreground">{move.name} · {clockText(move.start)} – {clockText(move.end)}</option>
-                ))}
-              </Select>
-            ) : null}
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" className={`${button} w-16 border border-border`} disabled={!ready} onClick={toggleTravel}>
                 {playing ? 'Pause' : 'Play'}
@@ -1471,25 +1510,25 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
                 Loop
               </label>
               <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
-                {clockText(shownTime, 1)} / {clockText(camera?.end ?? duration)}
+                {clockText(shownTime, 1)} / {clockText(shot?.end ?? duration)}
               </span>
             </div>
 
             <TimeBar
-              start={camera?.start ?? 0}
-              end={camera?.end ?? duration}
+              start={shot?.start ?? 0}
+              end={shot?.end ?? duration}
               time={shownTime}
               label="Travel position"
               valueText={clockText(shownTime, 1)}
               disabled={!selected}
-              markers={cameraMarkers}
+              markers={shotMarkers}
               uses={(selected?.uses ?? []).map((use) => ({ key: use.clipId, from: use.from, to: use.to, title: `On ${use.track} at ${clockText(use.at)}` }))}
               range={selected ? { from: stretch.from, to: stretch.to } : undefined}
               onSeek={seekTravel}
               onRange={(next) => setStretch((current) => clampStretch({ ...current, ...next }, duration))}
             />
 
-            {!wide && cameraEvents.length ? cameraEventButtons : null}
+            {shotEvents.length ? shotEventButtons : null}
 
             {selected ? (
               <div className="flex items-center gap-2">
@@ -1538,6 +1577,12 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
           </div>
         )}
         {wide ? <div ref={spacerRef} data-stage-spacer className="min-h-0 flex-1" /> : null}
+        {!wide && !showEmpty && mode === 'shots' ? gallery : null}
+        {selected && liveScene && mode === 'shots' ? (
+          <Suspense fallback={null}>
+            <LazyShotStillRenderer source={liveScene} revision={selected.key} />
+          </Suspense>
+        ) : null}
       </div>
     </section>
   );

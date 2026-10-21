@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "types": []
   },
-  "include": ["src/**/*.ts", "harness/check-cameras.ts"]
+  "include": ["src/**/*.ts", "harness/check-shots.ts"]
 }

@@ -1,4 +1,4 @@
-// Node-side checks of the camera moves (see check-cameras.ts), bundled with the repo's three.
+// Node-side checks of the camera moves (see check-shots.ts), bundled with the repo's three.
 //   node harness/check.mjs
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -8,7 +8,7 @@ import { build, NODE_PATHS } from '../deps.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const result = await build({
-  entryPoints: [join(root, 'harness/check-cameras.ts')],
+  entryPoints: [join(root, 'harness/check-shots.ts')],
   bundle: true,
   platform: 'node',
   format: 'esm',
@@ -17,6 +17,6 @@ const result = await build({
   logLevel: 'warning',
 });
 mkdirSync(join(root, '.cache'), { recursive: true });
-const out = join(root, '.cache/check-cameras.mjs');
+const out = join(root, '.cache/check-shots.mjs');
 writeFileSync(out, result.outputFiles[0].text);
 execFileSync(process.execPath, [out], { stdio: 'inherit' });

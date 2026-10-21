@@ -1,12 +1,12 @@
 # Worlds: authoring explorable live scenes
 
-> **Worlds are always explorable. Cameras live within them.**
+> **Worlds are always explorable. Shots live within them.**
 
 A world is one self-contained Three.js live-scene package: a single HTML
 entry, run in a sandboxed iframe, that implements `window.astridScene`. Its
 living state (water, creatures, weather, light) is evaluated from time alone,
 and it can be viewed from anywhere inside its bounds. The authored shots are
-cameras placed inside that world.
+camera moves placed inside that world.
 
 The rule is a restriction that removes problems instead of adding work:
 
@@ -17,11 +17,11 @@ The rule is a restriction that removes problems instead of adding work:
   so the bugs they cause never happen.
 - **One world, three readers.** The World Explorer, the timeline preview and
   the final video run the same code on the same world. A fix to the world shows
-  in every camera at once.
-- **Cameras are cheap.** A camera is a name, a source-time range and a pose.
+  in every shot at once.
+- **Shots are cheap.** A shot is a name, a source-time range and a pose.
   Adding one, retiming one, or filming an event again from another angle never
   touches the world.
-- **Edits stay local.** World edits and camera edits live in separate,
+- **Edits stay local.** World edits and shot edits live in separate,
   named parts of the source, so a person or an agent can change one without
   silently moving the other.
 
@@ -41,24 +41,24 @@ data, immutable objects and revisions belong to Runtime project storage.
 Editing a world does not rebuild the editor. Do not edit a checkout database,
 generated catalog, private store or mutable dev URL.
 
-## World, cameras, view
+## World, shots, view
 
 | Term | Meaning |
 | --- | --- |
 | World | The whole package: one HTML entry implementing `window.astridScene`. |
 | World time | The clock of the world's living state and events, in seconds from `0` to the manifest duration. |
-| Event | A named thing that happens in the world, at a world time (a point) or over a world-time range. Events happen whether or not any camera frames them. |
-| Source time | The clock the timeline plays: the authored sequence of cameras, from `0` to the manifest duration. |
-| Camera | A named, authored shot: a source-time range, the world time it shows, and a pose. |
+| Event | A named thing that happens in the world, at a world time (a point) or over a world-time range. Events happen whether or not any shot frames them. |
+| Source time | The clock the timeline plays: the authored sequence of shots, from `0` to the manifest duration. |
+| Shot | A named, authored stretch of the sequence: a source-time range, the world time it shows, and a camera pose. |
 | View | A free viewpoint, `{position, quaternion, fov}`, that the World Explorer passes in. |
 | Explore | The world's declaration of where the free view starts and where it may go. Required. |
 
 Every frame comes from one of two paths:
 
 ```text
-Timeline and video   sourceTime ─► the camera covering it
+Timeline and video   sourceTime ─► the shot covering it
                                 ─► worldTime = worldStart + (sourceTime − start)
-                                ─► world state at worldTime, drawn from the camera's pose
+                                ─► world state at worldTime, drawn from the shot's pose
 
 World Explorer       worldTime + view
                                 ─► world state at worldTime, drawn from exactly that view
@@ -66,9 +66,9 @@ World Explorer       worldTime + view
 
 The World Explorer has two modes. **Explore** moves freely through the world
 (look, move, up and down, speed) while world time plays on a loop, with pause.
-**Cameras** plays the authored sequence and lets the user pick a camera and
+**Shots** plays the authored sequence and lets the user pick a shot and
 place a stretch of it on the timeline. The timeline plays the world along its
-cameras, and that is what ends up in the video.
+shots, and that is what ends up in the video.
 
 ## The scene interface
 
@@ -84,9 +84,9 @@ interface AstridScene {
     speed?: number;                    // world units per second
     bounds?: {min: Vec3; max: Vec3};   // the host keeps the view inside these
   };
-  // The authored shots, in SOURCE seconds. None means one implicit camera
+  // The authored shots, in SOURCE seconds. None means one implicit shot
   // covering the whole duration, with world time equal to source time.
-  cameras?: ReadonlyArray<{name: string; start: number; end: number; worldStart?: number}>;
+  shots?: ReadonlyArray<{name: string; start: number; end: number; worldStart?: number}>;
   // What happens in the world, in WORLD seconds. A point event omits `end`.
   events?: ReadonlyArray<{name: string; start: number; end?: number}>;
 
@@ -105,8 +105,8 @@ interface AstridScene {
 What each host sends to `render`:
 
 - **Timeline preview and final video** send only `{sourceTime, width,
-  height}`. Draw the authored camera that covers `sourceTime`, at the world
-  time that camera shows. This path must be deterministic.
+  height}`. Draw the authored shot that covers `sourceTime`, at the world
+  time that shot shows. This path must be deterministic.
 - **World Explorer** sends `{sourceTime, width, height, view, worldTime}`,
   with `sourceTime` equal to `worldTime`. Evaluate the world at `worldTime`
   and draw from exactly `view`. Do not clamp, smooth or adjust the view: the
@@ -119,7 +119,7 @@ authored shot. Choose world units and keep them consistent; metres read well.
 
 ### What the host keeps
 
-The bridge reads `explore`, `cameras` and `events` once, after `initialize()`
+The bridge reads `explore`, `shots` and `events` once, after `initialize()`
 resolves and fonts and document images are ready, and returns them on the
 `initialized` acknowledgement. The host checks them again. Invalid entries are
 dropped silently and never fail the world, so check what was kept (the
@@ -135,10 +135,10 @@ explorer shows it).
   Movement eases in and out, so the speed is a top speed. `bounds.min` must be below
   `bounds.max` on every axis. A start position outside the bounds is clamped
   into them. If any part is invalid, the whole declaration is dropped and the
-  world counts as not explorable: the explorer opens it in Cameras mode only.
-- **`cameras`**: at most 32 (a longer array means none). Each has a trimmed
+  world counts as not explorable: the explorer opens it in Shots mode only.
+- **`shots`**: at most 32 (a longer array means none). Each has a trimmed
   name of 1–80 characters and `0 <= start < end <= duration`. `worldStart`,
-  if given, is in `[0, duration]`. Cameras are sorted by `start`, and a camera
+  if given, is in `[0, duration]`. Shots are sorted by `start`, and a shot
   that overlaps an earlier one is dropped. The host does not check that
   `worldStart + (end − start)` stays within the duration. Keep it within, because
   world time never runs past the duration.
@@ -151,20 +151,20 @@ explorer shows it).
 
 These declarations are metadata. They do not change the package manifest,
 digest or any timeline timing. The manifest keeps exactly its four fields;
-`explore`, `cameras` and `events` live in the entry, declared by the running
+`explore`, `shots` and `events` live in the entry, declared by the running
 world, so the explorer and the timeline read the same truth.
 
 ## Write a world in four layers
 
 The [world template](../templates/world-template.ts) is a small pond world
-with two events and two cameras. It shows every layer below, and its frames
+with two events and two shots. It shows every layer below, and its frames
 hold up from any viewpoint inside its bounds.
 
 ### 1. The world constructor
 
 Build the place once, in `initialize()`: renderer, scene, sky, ground, things,
 lights. Record every geometry and material you create so `dispose()` can
-release them. Build nothing for one camera only: everything in the world is
+release them. Build nothing for one shot only: everything in the world is
 there for every viewpoint. Do not start `requestAnimationFrame`, timers that
 drive state, input handlers, native media playback or an audio clock.
 
@@ -181,33 +181,33 @@ template, `BOAT_CROSSES = {name, start, end}` is both the declared event and
 the range the boat's motion reads, so retiming the event moves both together.
 Keep independently editable events separate even when their times coincide.
 An agent can then retime one without silently moving the other. An event
-happens whether or not any camera frames it: the template's lanterns light at
-world time 7, which no camera shows but exploring does.
+happens whether or not any shot frames it: the template's lanterns light at
+world time 7, which no shot shows but exploring does.
 
-### 3. Cameras: source time to world time and pose
+### 3. Shots: source time to world time and pose
 
-A camera maps a stretch of source time onto the world:
+A shot maps a stretch of source time onto the world:
 
 ```ts
 const s = clamp(sourceTime, 0, DURATION);
-const camera = CAMERAS.find(c => s >= c.start && s < c.end) ?? CAMERAS[CAMERAS.length - 1];
-const worldTime = (camera.worldStart ?? camera.start) + (s - camera.start);
+const shot = SHOTS.find(c => s >= c.start && s < c.end) ?? SHOTS[SHOTS.length - 1];
+const worldTime = (shot.worldStart ?? shot.start) + (s - shot.start);
 ```
 
-- Cover `0..duration` with cameras, with no gaps and no overlaps, so every
-  source time has exactly one camera. Ranges are half-open, and the final
-  instant belongs to the last camera.
-- A camera without `worldStart` is **aligned**: world time equals source time.
-- `worldStart` lets a camera show a different stretch of world time. Two
-  cameras can show the same event from different angles. In the template,
+- Cover `0..duration` with shots, with no gaps and no overlaps, so every
+  source time has exactly one shot. Ranges are half-open, and the final
+  instant belongs to the last shot.
+- A shot without `worldStart` is **aligned**: world time equals source time.
+- `worldStart` lets a shot show a different stretch of world time. Two
+  shots can show the same event from different angles. In the template,
   "Wide on the crossing" (source 0–5, aligned) and "Low on the crossing"
-  (source 5–10, `worldStart: 1`) both show the boat crossing. A camera can
+  (source 5–10, `worldStart: 1`) both show the boat crossing. A shot can
   also sit apart from any event.
 - A pose is a position, a look target (or a quaternion) and a field of view.
-  It may follow the world state; the template's low camera tracks the boat.
-- A world with no cameras has one implicit camera: aligned, covering the
+  It may follow the world state; the template's low shot follows the boat.
+- A world with no shots has one implicit shot: aligned, covering the
   whole duration. It still draws an authored pose when no view is given.
-- Camera edits never touch layers 1 and 2. World edits show in every camera.
+- Shot edits never touch layers 1 and 2. World edits show in every shot.
 
 ### 4. The free view
 
@@ -222,7 +222,7 @@ camera.fov = view.fov;
 camera.updateProjectionMatrix();
 ```
 
-Do not run the camera lookup in this path. Anything that belongs to a shot,
+Do not run the shot lookup in this path. Anything that belongs to a shot,
 such as a caption, a title, a vignette or a camera-attached light, is off:
 the explorer shows the world, not the shot.
 
@@ -253,8 +253,8 @@ including straight up and straight down. Check each of these:
   billboard cut-outs or backdrop cards that only work from the front. Finish
   the undersides you can see from `bounds.min[1]`, and any interior the view
   can enter.
-- **Lighting from every side.** Do not rig a light to one camera. Light the
-  world, and let the cameras find it.
+- **Lighting from every side.** Do not rig a light to one shot. Light the
+  world, and let the shots find it.
 - **A good start.** `explore.start` is a composed first view: inside the
   bounds, clear of objects, looking at the world's subject.
 - **Bounds that fit the world.** Make them generous enough to wander in and
@@ -305,7 +305,7 @@ The active interval is half-open. A clip with `from`/`to` lasts
 when Astrid materialises a nonzero render window. Two clips can reference the
 same package revision while keeping independent `at`, source range and rate.
 Use ordinary timeline operations for placement, trim, repetition and rate.
-Use the world's source for events and cameras.
+Use the world's source for events and shots.
 
 The same `sourceTime` must give the same pixels, and so must the same
 `worldTime` and `view`, whatever was drawn before. A render request outside
@@ -436,7 +436,7 @@ The entry is `<!doctype html><html><head><meta charset="utf-8"></head><body>
 `</body>` tag, because the host injects its CSP into the head and its bridge
 before `</body>`; the build checks this. The bundle stays unminified unless you
 pass `--minify`, so use that only if you are near the 8 MiB entry limit. The
-agent route edits exact text spans, and readable `EVENTS`, `CAMERAS` and
+agent route edits exact text spans, and readable `EVENTS`, `SHOTS` and
 `EXPLORE` blocks with unique names can be found and changed in one step.
 
 The prepared handoff is JSON with the exact manifest, entry
@@ -478,7 +478,7 @@ a bounded excerpt first, then publishes against the same capture:
   "requestId": "read-1",
   "scope": {"sessionId":"…","turnId":"…","projectId":"…","timelineId":"…","capturedTimelineVersion":7},
   "placementIds": ["<placement-id-from-active-timeline>"],
-  "action": "read", "find": "const CAMERAS", "offset": 0, "length": 2000
+  "action": "read", "find": "const SHOTS", "offset": 0, "length": 2000
 }</astrid_live_scene_request>
 ```
 
@@ -508,13 +508,13 @@ version, not the package revision.
 
 Know which layer an edit touches:
 
-- **Camera edit**: change a camera's `start`, `end`, `worldStart` or pose.
+- **Shot edit**: change a shot's `start`, `end`, `worldStart` or pose.
   The world and its events are unchanged. Check source times on both sides of
   each changed boundary.
 - **Event edit**: change the event object that both the declaration and the
-  behaviour read. Every camera that shows that world time changes with it.
-  Move a camera's `worldStart` if it should keep framing the event.
-- **World edit**: change construction or `evaluateWorld`. Every camera, and
+  behaviour read. Every shot that shows that world time changes with it.
+  Move a shot's `worldStart` if it should keep framing the event.
+- **World edit**: change construction or `evaluateWorld`. Every shot, and
   every view, shows the change. Re-check "Make it hold up from any
   viewpoint" above.
 - **Duration change**: a manifest change plus explicit clip reconciliation
@@ -522,7 +522,7 @@ Know which layer an edit touches:
   audio.
 
 After publishing, open the world in the World Explorer. Explore it, check the
-cameras and events the host kept, then render the pinned revision.
+shots and events the host kept, then render the pinned revision.
 
 ## Audio, security and export boundaries
 
@@ -555,7 +555,7 @@ The final video never sends a `view`.
 ## Worlds that are not explorable yet
 
 Live scenes made before this contract may not declare `explore`. The World
-Explorer opens them in Cameras mode only, and their timeline preview and video
+Explorer opens them in Shots mode only, and their timeline preview and video
 are unchanged. Make them explorable when you next edit them.
 
 Maple Hollow, prepared by
@@ -567,7 +567,7 @@ Declare `explore` (start at the journey's opening pose, with bounds around the
 hollow). Declare its caption moments as events. In `render`, when a `view` is
 present, evaluate the journey at `worldTime`, then set the camera's position,
 quaternion and field of view from the view and hide the caption. Keep its one
-implicit camera; do not split the take into cameras for their own sake. The
+implicit shot; do not split the take into shots for their own sake. The
 Maple camera-edit helper is an acceptance fixture, not a general camera
 editor.
 
@@ -575,9 +575,9 @@ editor.
 
 Before calling a world done:
 
-1. The declarations the host kept (`events`, `cameras`, `explore`) match what
+1. The declarations the host kept (`events`, `shots`, `explore`) match what
    you wrote. The explorer shows them, and so does `SceneFrameHost.info`.
-2. Frames either side of every camera boundary show the right camera at the
+2. Frames either side of every shot boundary show the right shot at the
    right world time.
 3. Rendering a source time again after later frames gives identical pixels.
 4. Views from the explore start, each bounds corner looking outward, straight

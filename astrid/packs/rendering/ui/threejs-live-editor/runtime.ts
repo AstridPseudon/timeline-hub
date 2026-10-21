@@ -36,12 +36,12 @@ export const MAX_SCENE_EVENTS = 64;
 export const MAX_SCENE_EVENT_NAME = 80;
 export type Vec3 = readonly [number, number, number];
 export type Quat = readonly [number, number, number, number];
-/** A named, authored camera: `window.astridScene.cameras`. start/end are SOURCE seconds (its place in the authored
+/** A named, authored shot: `window.astridScene.shots`. start/end are SOURCE seconds (its place in the authored
  * sequence); worldStart is the world time it shows at `start` (default: start, i.e. aligned). So the world time
- * inside a camera is worldStart + (sourceTime - start), and two cameras can show the same event. */
-export type SceneCameraMove = { readonly name: string; readonly start: number; readonly end: number; readonly worldStart?: number };
-export const MAX_SCENE_CAMERAS = 32;
-export const MAX_SCENE_CAMERA_NAME = 80;
+ * inside a shot is worldStart + (sourceTime - start), and two shots can show the same event. */
+export type SceneShot = { readonly name: string; readonly start: number; readonly end: number; readonly worldStart?: number };
+export const MAX_SCENE_SHOTS = 32;
+export const MAX_SCENE_SHOT_NAME = 80;
 /** Free exploring: `window.astridScene.explore`. Null on the host means the world declared none (or an invalid one). */
 export type SceneExplore = {
   readonly start: { readonly position: Vec3; readonly target: Vec3 };
@@ -70,7 +70,7 @@ export function sanitizeSceneStill(value: unknown): string | undefined {
 /** What a scene declares at initialize, all re-checked by the host. */
 export type SceneInfo = {
   readonly events: readonly SceneEvent[];
-  readonly cameras: readonly SceneCameraMove[];
+  readonly shots: readonly SceneShot[];
   readonly explore: SceneExplore | null;
 };
 export type SceneStatus = {
@@ -144,11 +144,11 @@ export function sanitizeSceneExplore(value: unknown): SceneExplore | null {
   });
 }
 
-/** Keeps valid cameras (trimmed 1-80 char name, 0 <= start < end <= duration, optional worldStart in [0, duration]), sorted by start,
+/** Keeps valid shots (trimmed 1-80 char name, 0 <= start < end <= duration, optional worldStart in [0, duration]), sorted by start,
  * dropping any that overlap an earlier one. More than 32 entries means none. Never an error. */
-export function sanitizeSceneCameras(value: unknown, duration = Infinity): readonly SceneCameraMove[] {
-  if (!Array.isArray(value) || value.length > MAX_SCENE_CAMERAS) return Object.freeze([]);
-  const valid: SceneCameraMove[] = [];
+export function sanitizeSceneShots(value: unknown, duration = Infinity): readonly SceneShot[] {
+  if (!Array.isArray(value) || value.length > MAX_SCENE_SHOTS) return Object.freeze([]);
+  const valid: SceneShot[] = [];
   for (const entry of value) {
     if (!isRecord(entry) || typeof entry.name !== 'string' || typeof entry.start !== 'number' || typeof entry.end !== 'number'
       || !Number.isFinite(entry.start) || !Number.isFinite(entry.end)
@@ -159,11 +159,11 @@ export function sanitizeSceneCameras(value: unknown, duration = Infinity): reado
       worldStart = entry.worldStart;
     }
     const name = entry.name.trim();
-    if (name.length < 1 || name.length > MAX_SCENE_CAMERA_NAME) continue;
+    if (name.length < 1 || name.length > MAX_SCENE_SHOT_NAME) continue;
     valid.push(Object.freeze(worldStart === undefined ? { name, start: entry.start, end: entry.end } : { name, start: entry.start, end: entry.end, worldStart }));
   }
   valid.sort((a, b) => a.start - b.start);
-  const kept: SceneCameraMove[] = [];
+  const kept: SceneShot[] = [];
   for (const move of valid) if (!kept.length || move.start >= kept[kept.length - 1].end) kept.push(move);
   return Object.freeze(kept);
 }
@@ -290,7 +290,7 @@ export function sceneDocument(source: ValidatedScenePackage, instance: string): 
   const bridge = `<script>(()=>{
     const identity=${identity}; let disposed=false; let chain=Promise.resolve();
     const diagnostic=${diagnostic};
-    const duration=${JSON.stringify(source.manifest.duration)}; let sceneEvents=[],sceneCameras=[],sceneExplore=null;
+    const duration=${JSON.stringify(source.manifest.duration)}; let sceneEvents=[],sceneShots=[],sceneExplore=null;
     const trace=(stage,detail={})=>{if(diagnostic){const record={owner:{...identity,document:identity.instance},time:Date.now(),stage,detail};(window.__l1bChildTrace??=[]).push(record);console.warn('[L1b scene trace] '+JSON.stringify(record));parent.postMessage({protocol:'astrid.scene/trace',record},'*');}};
     trace('child-bridge-boot');
     let snapshot='';
@@ -324,19 +324,19 @@ export function sceneDocument(source: ValidatedScenePackage, instance: string): 
         }
         events.sort((a,b)=>a.start-b.start||(a.end??a.start)-(b.end??b.start));sceneEvents=events;
       }catch{sceneEvents=[];}
-      // Optional authored camera moves and free exploring. Same rules as sanitizeSceneCameras / sanitizeSceneExplore.
+      // Optional authored shots and free exploring. Same rules as sanitizeSceneShots / sanitizeSceneExplore.
       try{
-        const raw=window.astridScene.cameras,list=[];
-        if(Array.isArray(raw)&&raw.length<=${MAX_SCENE_CAMERAS})for(const e of raw){
+        const raw=window.astridScene.shots,list=[];
+        if(Array.isArray(raw)&&raw.length<=${MAX_SCENE_SHOTS})for(const e of raw){
           if(!e||typeof e!=='object'||typeof e.name!=='string'||typeof e.start!=='number'||typeof e.end!=='number'||!Number.isFinite(e.start)||!Number.isFinite(e.end)||e.start<0||e.start>=e.end||e.end>duration)continue;
           let ws;if(e.worldStart!==undefined){if(typeof e.worldStart!=='number'||!Number.isFinite(e.worldStart)||e.worldStart<0||e.worldStart>duration)continue;ws=e.worldStart;}
-          const name=e.name.trim();if(name.length<1||name.length>${MAX_SCENE_CAMERA_NAME})continue;
+          const name=e.name.trim();if(name.length<1||name.length>${MAX_SCENE_SHOT_NAME})continue;
           list.push(ws===undefined?{name,start:e.start,end:e.end}:{name,start:e.start,end:e.end,worldStart:ws});
         }
         list.sort((a,b)=>a.start-b.start);
         const kept=[];for(const c of list)if(!kept.length||c.start>=kept[kept.length-1].end)kept.push(c);
-        sceneCameras=kept;
-      }catch{sceneCameras=[];}
+        sceneShots=kept;
+      }catch{sceneShots=[];}
       try{
         const v3=a=>Array.isArray(a)&&a.length===3&&a.every(n=>typeof n==='number'&&Number.isFinite(n));
         const x=window.astridScene.explore;sceneExplore=null;
@@ -361,7 +361,7 @@ export function sceneDocument(source: ValidatedScenePackage, instance: string): 
       if(reason){trace('child-message-rejected',{reason,message:m});return;}
       trace('child-message-accepted',{message:m});
       if(m.kind==='initialize'){
-        initialized.then(()=>{if(!disposed)send({kind:'initialized',events:sceneEvents,cameras:sceneCameras,explore:sceneExplore});}).catch(e=>{if(!disposed)send({kind:'error',error:String(e.message||e)});});
+        initialized.then(()=>{if(!disposed)send({kind:'initialized',events:sceneEvents,shots:sceneShots,explore:sceneExplore});}).catch(e=>{if(!disposed)send({kind:'error',error:String(e.message||e)});});
         return;
       }
       if(m.kind==='dispose'){disposed=true;chain.finally(()=>window.astridScene?.dispose());return;}
@@ -401,7 +401,7 @@ export class SceneFrameHost {
   private serial = 0;
   private initialized = false;
   private sceneEvents: readonly SceneEvent[] = Object.freeze([]);
-  private sceneCameras: readonly SceneCameraMove[] = Object.freeze([]);
+  private sceneShots: readonly SceneShot[] = Object.freeze([]);
   private sceneExplore: SceneExplore | null = null;
   private disposed = false;
   private failed = false;
@@ -421,12 +421,12 @@ export class SceneFrameHost {
   ) { this.report({ phase: 'loading', revision: source.package.revision }); this.arm(); }
   /** World events the scene declared; valid once initialized (empty before). */
   get events(): readonly SceneEvent[] { return this.sceneEvents; }
-  /** Authored camera moves the scene declared; valid once initialized (empty before). */
-  get cameras(): readonly SceneCameraMove[] { return this.sceneCameras; }
+  /** Authored shots the scene declared; valid once initialized (empty before). */
+  get shots(): readonly SceneShot[] { return this.sceneShots; }
   /** Free-exploring declaration, or null when absent or invalid (and before initialize). */
   get explore(): SceneExplore | null { return this.sceneExplore; }
   /** Everything the scene declared at initialize. */
-  get info(): SceneInfo { return { events: this.sceneEvents, cameras: this.sceneCameras, explore: this.sceneExplore }; }
+  get info(): SceneInfo { return { events: this.sceneEvents, shots: this.sceneShots, explore: this.sceneExplore }; }
   initialize() {
     if (this.disposed || this.failed || this.initialized) return;
     // Own the interval before sending: a synchronous acknowledgement may
@@ -482,7 +482,7 @@ export class SceneFrameHost {
   receive(message: Record<string, unknown>) {
     const reason = this.disposed ? 'disposed' : this.failed ? 'failed' : message.protocol !== 'astrid.scene/1' ? 'protocol' : message.instance !== this.instance ? 'instance' : message.revision !== this.source.package.revision ? 'revision' : null;
     if (reason) { this.trace?.('host-message-rejected', { reason, message }); return; }
-    if (message.kind === 'initialized') { if (this.initialized) { this.trace?.('host-message-rejected', { reason: 'duplicate-initialized', message }); return; } this.trace?.('host-message-accepted', { message }); this.initialized = true; this.sceneEvents = sanitizeSceneEvents(message.events, this.source.manifest.duration); this.sceneCameras = sanitizeSceneCameras(message.cameras, this.source.manifest.duration); this.sceneExplore = sanitizeSceneExplore(message.explore); this.stopInitializeRetry('initialized'); clearTimeout(this.timer); this.trace?.('host-timeout-clear', { reason: 'initialized' }); this.flush(); return; }
+    if (message.kind === 'initialized') { if (this.initialized) { this.trace?.('host-message-rejected', { reason: 'duplicate-initialized', message }); return; } this.trace?.('host-message-accepted', { message }); this.initialized = true; this.sceneEvents = sanitizeSceneEvents(message.events, this.source.manifest.duration); this.sceneShots = sanitizeSceneShots(message.shots, this.source.manifest.duration); this.sceneExplore = sanitizeSceneExplore(message.explore); this.stopInitializeRetry('initialized'); clearTimeout(this.timer); this.trace?.('host-timeout-clear', { reason: 'initialized' }); this.flush(); return; }
     if (message.kind === 'error') {
       if (message.requestId !== undefined && message.requestId !== this.active?.requestId) return;
       this.fail(String(message.error)); this.active = undefined; return;

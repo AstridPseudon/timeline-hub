@@ -138,7 +138,7 @@ const { html, bytes, digest, packageJson } = await packageWorld({
 // what the entry reports at runtime always agree.
 const describe = await build({
   stdin: {
-    contents: "export { EXPLORE, CAMERAS, DURATION } from './cameras'; export { EVENTS } from './world/living';",
+    contents: "export { EXPLORE, SHOTS, DURATION } from './shots'; export { EVENTS } from './world/living';",
     resolveDir: join(root, 'src'),
     loader: 'ts',
   },
@@ -150,14 +150,14 @@ const describe = await build({
   logLevel: 'warning',
 });
 const mod = await import('data:text/javascript;base64,' + Buffer.from(describe.outputFiles[0].text).toString('base64'));
-if (mod.DURATION !== DURATION) throw Error(`cameras span ${mod.DURATION}s but the manifest says ${DURATION}s`);
-const description = { explore: mod.EXPLORE, cameras: mod.CAMERAS, events: mod.EVENTS };
+if (mod.DURATION !== DURATION) throw Error(`shots span ${mod.DURATION}s but the manifest says ${DURATION}s`);
+const description = { explore: mod.EXPLORE, shots: mod.SHOTS, events: mod.EVENTS };
 
 writeFileSync(join(prepared, 'lantern-valley.scene.json'), packageJson);
 writeFileSync(join(cache, ENTRY_NAME), html);
 writeFileSync(join(prepared, 'world.json'), JSON.stringify(description, null, 2) + '\n');
 // The drop-in module the explorer imports: the same name, package and world description
-// that the panel reads (name, packageJson, events, cameras; explore is reported by the scene).
+// that the panel reads (name, packageJson, events, shots; explore is reported by the scene).
 mkdirSync(dirname(explorerModule), { recursive: true });
 writeFileSync(
   explorerModule,
@@ -166,7 +166,7 @@ writeFileSync(
     `  name: ${JSON.stringify('Lantern Valley')},\n` +
     `  packageJson: ${JSON.stringify(packageJson)},\n` +
     `  explore: ${JSON.stringify(description.explore)},\n` +
-    `  cameras: ${JSON.stringify(description.cameras)},\n` +
+    `  shots: ${JSON.stringify(description.shots)},\n` +
     `  events: ${JSON.stringify(description.events)},\n} as const;\n`,
 );
 const packageBytes = Buffer.byteLength(packageJson);

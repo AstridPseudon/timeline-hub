@@ -79,7 +79,7 @@ window.harness = {
     const first = await ready;
     if (first.phase === 'error') throw Error(String(first.error));
     // what the host accepted from the scene after its own sanitizing
-    return { initMs: performance.now() - t0, declared: { explore: host.explore, cameras: host.cameras, events: host.events } };
+    return { initMs: performance.now() - t0, declared: { explore: host.explore, shots: host.shots, events: host.events } };
   },
   frame(sourceTime: number, view?: unknown, worldTime?: number) {
     return new Promise<number>((resolve, reject) => {

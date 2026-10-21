@@ -2,7 +2,7 @@
 // Explorer requests them: Astrid's SceneFrameHost drives the entry inside a
 // sandbox="allow-scripts" srcdoc iframe (host CSP + bridge), with
 // request({ sourceTime, width, height, view?, worldTime? }).
-//   node harness/views.mjs [--size 1920x1080] [--groups cameras,events,free]
+//   node harness/views.mjs [--size 1920x1080] [--groups shots,events,free]
 import { build, loadPlaywright, NODE_PATHS, REPO, requireDeps } from '../deps.mjs';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -17,7 +17,7 @@ const RUNTIME =
   process.env.ASTRID_RUNTIME_TS ??
   join(REPO, 'astrid/packs/rendering/ui/threejs-live-editor/runtime.ts');
 const [w, h] = (args.size ?? '1920x1080').split('x').map(Number);
-const groups = (args.groups ?? 'cameras,events,free').split(',');
+const groups = (args.groups ?? 'shots,events,free').split(',');
 const shots = JSON.parse(readFileSync(join(root, 'harness/shots.json'), 'utf8'));
 const prepared = readFileSync(join(root, 'prepared/lantern-valley.scene.json'), 'utf8');
 const hostJs = (

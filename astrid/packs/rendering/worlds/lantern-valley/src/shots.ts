@@ -1,4 +1,4 @@
-// Cameras that live in the world: three named camera moves laid end to end on
+// Shots that live in the world: three named camera moves laid end to end on
 // the SOURCE clock, plus the free-explore descriptor.
 //
 // Each move has a source span [start, end) and a worldStart: the world time at
@@ -188,7 +188,7 @@ export function moveAt(sourceTime: number): CameraMove {
 }
 
 /** What the host lists: names and spans. worldStart says which world moment each move watches. */
-export const CAMERAS = cameraMoves.map((m) => ({ name: m.name, start: m.start, end: m.end, worldStart: m.worldStart }));
+export const SHOTS = cameraMoves.map((m) => ({ name: m.name, start: m.start, end: m.end, worldStart: m.worldStart }));
 
 /** Path samples for checks. */
 export function moveSamples(): { name: string; t: number; worldTime: number; position: Vector3 }[] {

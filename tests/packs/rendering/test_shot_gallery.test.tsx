@@ -1,0 +1,120 @@
+// @vitest-environment jsdom
+import { act, cleanup, fireEvent, render, within } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ShotGallery, filterShots, pageCount, SHOTS_PER_PAGE } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/ShotGallery';
+import { shotStills } from '../../../astrid/packs/rendering/ui/threejs-live-editor/shotStills';
+
+afterEach(cleanup);
+
+const SHOTS = Array.from({ length: 12 }, (_, i) => ({ name: i % 4 === 0 ? `Bridge ${i + 1}` : `Shot ${i + 1}`, start: i * 5, end: i * 5 + 5 }));
+const handle = () => ({ draggable: true as const, onDragStart: vi.fn(), onDragEnd: vi.fn() });
+
+function mount(over: Partial<Parameters<typeof ShotGallery>[0]> = {}) {
+  const props = {
+    shots: SHOTS, currentIndex: 0, revision: 'gallery-test', fullscreen: false, addDisabled: false,
+    dragPropsFor: vi.fn(() => handle()), onSelect: vi.fn(), onAdd: vi.fn(), ...over,
+  };
+  return { props, view: render(<ShotGallery {...props} />) };
+}
+const cards = (view: ReturnType<typeof render>) => within(view.getByRole('list', { name: 'Shots' })).getAllByRole('listitem');
+
+describe('gallery helpers', () => {
+  it('filters by name, case-insensitively, keeping indexes in the full list', () => {
+    expect(filterShots(SHOTS, ' bridge ').map(({ index }) => index)).toEqual([0, 4, 8]);
+    expect(filterShots(SHOTS, '')).toHaveLength(12);
+    expect(filterShots(SHOTS, 'zzz')).toEqual([]);
+  });
+  it('pages nine at a time and always has at least one page', () => {
+    expect([0, 1, 9, 10, 18, 19].map((n) => pageCount(n))).toEqual([1, 1, 1, 2, 2, 3]);
+    expect(SHOTS_PER_PAGE).toBe(9);
+  });
+});
+
+describe('ShotGallery', () => {
+  it('shows nine cards on page one with a count, and the rest on page two', () => {
+    const { view } = mount();
+    expect(cards(view)).toHaveLength(9);
+    expect(view.getByText('12 shots')).toBeTruthy();
+    expect(view.getByText('Page 1 of 2')).toBeTruthy();
+    expect(view.getByRole('button', { name: 'Previous page' })).toBeDisabled();
+    fireEvent.click(view.getByRole('button', { name: 'Next page' }));
+    expect(cards(view)).toHaveLength(3);
+    expect(view.getByText('Page 2 of 2')).toBeTruthy();
+    expect(view.getByRole('button', { name: 'Next page' })).toBeDisabled();
+    expect(within(cards(view)[0]).getByText('Shot 10')).toBeTruthy();
+  });
+  it('hides the page controls when everything fits on one page', () => {
+    const { view } = mount({ shots: SHOTS.slice(0, 4) });
+    expect(view.queryByRole('navigation', { name: 'Shots pages' })).toBeNull();
+  });
+  it('searching resets to page 1, shows the match count, and keeps paging working', () => {
+    const many = Array.from({ length: 25 }, (_, i) => ({ name: `Tower ${i + 1}`, start: i, end: i + 1 }));
+    const { view } = mount({ shots: [...many, { name: 'Harbour', start: 30, end: 31 }] });
+    fireEvent.click(view.getByRole('button', { name: 'Next page' }));
+    expect(view.getByText('Page 2 of 3')).toBeTruthy();
+    fireEvent.change(view.getByRole('searchbox', { name: 'Search shots' }), { target: { value: 'tower' } });
+    expect(view.getByText('Page 1 of 3')).toBeTruthy();
+    expect(view.getByText('25 of 26 shots')).toBeTruthy();
+    fireEvent.change(view.getByRole('searchbox', { name: 'Search shots' }), { target: { value: 'harb' } });
+    expect(cards(view)).toHaveLength(1);
+    expect(view.getByText('1 of 26 shots')).toBeTruthy();
+    expect(view.queryByRole('navigation', { name: 'Shots pages' })).toBeNull();
+  });
+  it('says so when nothing matches, and Clear search brings everything back', () => {
+    const { view } = mount();
+    fireEvent.change(view.getByRole('searchbox', { name: 'Search shots' }), { target: { value: 'nope' } });
+    expect(view.getByText(/No shots match/)).toBeTruthy();
+    expect(view.getByText('0 of 12 shots')).toBeTruthy();
+    fireEvent.click(view.getByRole('button', { name: 'Clear search' }));
+    expect(cards(view)).toHaveLength(9);
+    expect((view.getByRole('searchbox') as HTMLInputElement).value).toBe('');
+  });
+  it('Escape clears the search without leaving the field', () => {
+    const { view } = mount();
+    const box = view.getByRole('searchbox') as HTMLInputElement;
+    fireEvent.change(box, { target: { value: 'bridge' } });
+    fireEvent.keyDown(box, { key: 'Escape' });
+    expect(box.value).toBe('');
+  });
+  it('selecting a card reports its index in the full list, even when filtered', () => {
+    const { view, props } = mount();
+    fireEvent.change(view.getByRole('searchbox'), { target: { value: 'bridge' } });
+    fireEvent.click(within(view.getByRole('list', { name: 'Shots' })).getByRole('button', { name: /^Bridge 5,/ }));
+    expect(props.onSelect).toHaveBeenCalledWith(4);
+  });
+  it('marks the current shot', () => {
+    const { view } = mount({ currentIndex: 2 });
+    expect(within(cards(view)[2]).getByRole('button', { name: /^Shot 3,/ })).toHaveAttribute('aria-current', 'true');
+    expect(within(cards(view)[1]).getByRole('button', { name: /^Shot 2,/ })).not.toHaveAttribute('aria-current');
+  });
+  it('docked: every card has a drag handle and no Add button', () => {
+    const { view } = mount();
+    expect(view.getAllByTestId('shot-drag-handle')).toHaveLength(9);
+    expect(view.queryByRole('button', { name: /^Add / })).toBeNull();
+  });
+  it('full screen: every card offers Add to video instead of a handle', () => {
+    const { view, props } = mount({ fullscreen: true });
+    expect(view.queryByTestId('shot-drag-handle')).toBeNull();
+    const add = view.getAllByRole('button', { name: /^Add .* to video$/ });
+    expect(add).toHaveLength(9);
+    fireEvent.click(add[1]);
+    expect(props.onAdd).toHaveBeenCalledWith(1);
+  });
+  it('disables Add when the panel cannot add', () => {
+    const { view } = mount({ fullscreen: true, addDisabled: true, addTitle: 'Open a timeline to add worlds to a video.' });
+    expect(view.getAllByRole('button', { name: /^Add .* to video$/ })[0]).toBeDisabled();
+  });
+  it('shows a loading placeholder until the still arrives, then the image', () => {
+    const { view } = mount({ shots: SHOTS.slice(0, 1) });
+    expect(view.getByRole('img', { name: /Loading preview of Bridge 1/ })).toBeTruthy();
+    const took = shotStills.take('gallery-test');
+    expect(took).toEqual({ revision: 'gallery-test', start: 0 });
+    view.rerender(<ShotGallery shots={SHOTS.slice(0, 1)} currentIndex={0} revision="gallery-test" fullscreen={false} addDisabled={false} dragPropsFor={() => null} onSelect={() => {}} onAdd={() => {}} />);
+    act(() => { shotStills.fulfil('gallery-test', 0, 'data:image/jpeg;base64,AAAA'); });
+    expect(view.container.querySelector('img')).toHaveAttribute('src', 'data:image/jpeg;base64,AAAA');
+  });
+  it('says what an empty world gets', () => {
+    const { view } = mount({ shots: [] });
+    expect(view.getByText(/no shots yet/)).toBeTruthy();
+  });
+});

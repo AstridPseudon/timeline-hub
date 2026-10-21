@@ -4,7 +4,7 @@ import { upsertEntry, worldKey, type LibraryEntry } from '../../../astrid/packs/
 import { fakeDocuments, type FakeDocuments } from './world_explorer_documents';
 
 function entry(objectId: string, revision = 'r1', name = objectId): LibraryEntry {
-  return { objectId, revision, name, duration: 4, authoredFps: 24, events: [], cameras: [] };
+  return { objectId, revision, name, duration: 4, authoredFps: 24, events: [], shots: [] };
 }
 
 const stored = (fake: FakeDocuments, projectId = 'p1') => fake.docs.get(libraryDocumentId(projectId));
@@ -98,12 +98,12 @@ describe('library document', () => {
   });
 
   it('writes nothing when the change leaves the stored content the same, whatever its key order or invalid extras', async () => {
-    const fake = fakeDocuments({ library: [{ ...entry('A'), events: [{ start: 1, name: 'hit' }], cameras: [{ end: 1, start: 0, name: 'bad-order' }, { name: 'dropped', start: 2, end: 1 }] }] });
+    const fake = fakeDocuments({ library: [{ ...entry('A'), events: [{ start: 1, name: 'hit' }], shots: [{ end: 1, start: 0, name: 'bad-order' }, { name: 'dropped', start: 2, end: 1 }] }] });
     const update = vi.spyOn(fake, 'update');
     const create = vi.spyOn(fake, 'create');
-    const reordered = { ...entry('A'), events: [{ name: 'hit', start: 1 }], cameras: [{ name: 'bad-order', start: 0, end: 1 }] };
+    const reordered = { ...entry('A'), events: [{ name: 'hit', start: 1 }], shots: [{ name: 'bad-order', start: 0, end: 1 }] };
     await updateLibrary(fake, 'p1', (list) => upsertEntry(list, reordered));
-    await updateLibrary(fake, 'p1', (list) => list.map((e) => ({ ...e, cameras: [...e.cameras, { name: 'dropped', start: 2, end: 1 }] })));
+    await updateLibrary(fake, 'p1', (list) => list.map((e) => ({ ...e, shots: [...e.shots, { name: 'dropped', start: 2, end: 1 }] })));
     expect(update).not.toHaveBeenCalled();
     expect(create).not.toHaveBeenCalled();
     expect(stored(fake)).toMatchObject({ version: 1 });

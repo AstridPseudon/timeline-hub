@@ -122,7 +122,7 @@ console.log(
   JSON.stringify(
     report.sizes.map(({ frames, logs, declaredToHost, ...rest }) => ({
       ...rest,
-      hostAccepted: { cameras: declaredToHost.cameras.length, events: declaredToHost.events.length, explore: Boolean(declaredToHost.explore) },
+      hostAccepted: { shots: declaredToHost.shots.length, events: declaredToHost.events.length, explore: Boolean(declaredToHost.explore) },
     })),
     null,
     2,

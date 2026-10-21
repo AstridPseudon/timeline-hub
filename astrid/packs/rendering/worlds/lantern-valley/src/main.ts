@@ -3,12 +3,12 @@
 // The entry has three parts, in this order:
 //   1. the world: built once by buildWorld() (src/world/build.ts),
 //   2. its living state at a world time: world.setTime(t) (src/world/living.ts),
-//   3. cameras that live in it: named moves on the source clock (src/cameras.ts),
+//   3. shots that live in it: named moves on the source clock (src/shots.ts),
 //      or any free view the host hands over.
 // The host owns time. render() is a pure function of its input: nothing here
 // runs on its own clock, so any frame can be drawn directly, in any order.
 import { LinearSRGBColorSpace, MathUtils, PerspectiveCamera, Quaternion, Vector3, WebGLRenderer } from 'three';
-import { CAMERAS, DURATION, EXPLORE, moveAt, settleView, type Pose } from './cameras';
+import { SHOTS, DURATION, EXPLORE, moveAt, settleView, type Pose } from './shots';
 import { buildWorld, type World } from './world/build';
 import { EVENTS } from './world/living';
 
@@ -35,7 +35,7 @@ declare global {
   interface Window {
     astridScene: {
       explore: typeof EXPLORE;
-      cameras: typeof CAMERAS;
+      shots: typeof SHOTS;
       events: typeof EVENTS;
       initialize(): Promise<void>;
       render(input: RenderInput): Promise<void>;
@@ -121,7 +121,7 @@ function readView(view: View, out: Pose): Pose {
 
 window.astridScene = {
   explore: EXPLORE,
-  cameras: CAMERAS,
+  shots: SHOTS,
   events: EVENTS,
   // idempotent: the host may ask more than once
   initialize: () => (initializing ??= initialize()),

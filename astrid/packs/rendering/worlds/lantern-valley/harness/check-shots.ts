@@ -2,7 +2,7 @@
 // smoothness, graceful starts and ends, trees and lanterns kept clear, and which
 // camera sees each event. Run: npm run check
 import { Quaternion, Vector3 } from 'three';
-import { CAMERAS, DURATION, EXPLORE, moveAt, type Pose } from '../src/cameras';
+import { SHOTS, DURATION, EXPLORE, moveAt, type Pose } from '../src/shots';
 import { WATER_Y, bridgeFrame, terrainHeight } from '../src/world/layout';
 import { EVENTS, lanternAt, lanternSeeds, type LanternState } from '../src/world/living';
 import { placeTrees } from '../src/world/placement';
@@ -15,7 +15,7 @@ const bridge = bridgeFrame().center;
 const fps = 30;
 let failures = 0;
 
-for (const cam of CAMERAS) {
+for (const cam of SHOTS) {
   const pose: Pose = { position: new Vector3(), quaternion: new Quaternion(), fov: 40 };
   const frames: { p: Vector3; fwd: Vector3; t: number; w: number }[] = [];
   const last = Math.round((cam.end - cam.start) * fps) - (cam.end === DURATION ? 0 : 1);
@@ -64,10 +64,10 @@ for (const cam of CAMERAS) {
   }
 }
 
-console.log('\nevents (world time) and the cameras that see them:');
+console.log('\nevents (world time) and the shots that see them:');
 for (const ev of EVENTS) {
   const end = ev.end ?? ev.start + 1;
-  const seenBy = CAMERAS.filter((c) => c.worldStart < end && c.worldStart + (c.end - c.start) > ev.start).map((c) => c.name);
+  const seenBy = SHOTS.filter((c) => c.worldStart < end && c.worldStart + (c.end - c.start) > ev.start).map((c) => c.name);
   console.log(`  ${ev.name} ${ev.start}${ev.end !== undefined ? `-${ev.end}` : ''}s: ${seenBy.join(', ') || 'no camera'}`);
 }
 const s = EXPLORE.start.position;

@@ -126,7 +126,7 @@ describe('onReady',()=>{
     expect(onReady).not.toHaveBeenCalled();
     t.ready(a);
     expect(onReady).toHaveBeenCalledTimes(1);
-    expect(onReady).toHaveBeenLastCalledWith({events:[{name:'A',start:5},{name:'B',start:20}],cameras:[],explore:null});
+    expect(onReady).toHaveBeenLastCalledWith({events:[{name:'A',start:5},{name:'B',start:20}],shots:[],explore:null});
     view.rerender(<SceneSurface source={first} sourceTime={2} width={10} height={10} onReady={onReady}/>);
     t.ready(a);
     expect(onReady).toHaveBeenCalledTimes(1);
@@ -137,7 +137,7 @@ describe('onReady',()=>{
     expect(onReady).toHaveBeenCalledTimes(1);
     t.ready(b);
     expect(onReady).toHaveBeenCalledTimes(2);
-    expect(onReady).toHaveBeenLastCalledWith({events:[],cameras:[],explore:null});
+    expect(onReady).toHaveBeenLastCalledWith({events:[],shots:[],explore:null});
   });
   it('does not report a candidate that errors or is superseded',async()=>{
     const first=await makeSource(),second=await makeSource({duration:50}),t=ownedChildren(),onReady=vi.fn();
@@ -150,14 +150,14 @@ describe('onReady',()=>{
   });
 });
 describe('protocol forwarding',()=>{
-  it('forwards view and worldTime to the frame and reports events, cameras and explore on ready',async()=>{
+  it('forwards view and worldTime to the frame and reports events, shots and explore on ready',async()=>{
     const source=await makeSource({duration:100}),t=ownedChildren(),onReady=vi.fn();
     const view:SceneView={position:[1,2,3],quaternion:[0,0,0,2],fov:200};
     const scene=render(<SceneSurface source={source} sourceTime={4} width={10} height={10} view={view} worldTime={4} onReady={onReady}/>);
     const a=await t.mounted(scene.container);
     t.ack(a,{kind:'initialized',
       events:[{name:' Lift ',start:3,end:6},{name:'off-scene',start:200}],
-      cameras:[{name:'Wide',start:0,end:5}],
+      shots:[{name:'Wide',start:0,end:5}],
       explore:{start:{position:[0,0,0],target:[0,0,-1]},speed:2}});
     const frameMessage=t.messages(a).filter(message=>message.kind==='render').at(-1)!;
     expect(frameMessage).toMatchObject({sourceTime:4,width:10,height:10,worldTime:4});
@@ -167,7 +167,7 @@ describe('protocol forwarding',()=>{
     expect(onReady).toHaveBeenCalledTimes(1);
     expect(onReady).toHaveBeenLastCalledWith({
       events:[{name:'Lift',start:3,end:6}],
-      cameras:[{name:'Wide',start:0,end:5}],
+      shots:[{name:'Wide',start:0,end:5}],
       explore:{start:{position:[0,0,0],target:[0,0,-1]},speed:2},
     });
   });
