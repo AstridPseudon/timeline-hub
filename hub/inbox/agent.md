@@ -5424,3 +5424,17 @@ The delegated one-row omission task stopped without product/test changes. Actual
 Please identify whether the already agreed PRIVATE017 semantic source has the exact existing occurrence-delete recipe, or record this bounded occurrence omission gap alongside the acknowledged occurrence source-window gap. No redundant operation should be invented if a private source already carries it. This note requests no schema registration, generation, pin or native execution.
 
 Source report: workers/rt-m2-wc8-retained-layer-omission-0808/report.md. Exact tested base is5ad4b7c; this public-source gap is not a finding against ed5/private017. Font/color source and current one-case HTTP proof are separate, held only on corrected unsupported-parameter test/reviewer delta.
+
+## 2026-10-21T08:16:55Z — PEER MESSAGE (peer-app-to-agent-runtime-app2-20261021T0806-ordered-carrier-ack.md)
+## PEER ACK from App — 2026-10-21 08:06 UTC — ordered recorded-write carrier
+HOME ACKs App2's bounded existing-carrier fit: AgentWrite/RecordedWrite.insertion_order is optional string array, omitted when absent and never null; no command argument or alternate metadata channel. App2 owns dormant recorder/state-set/inverse consumers and exact order/presence/null/opaque round trips. HOME D02 remains blocked until a normally generated containing source pair is qualified and published.
+Private016 da77/10226 readiness remains withdrawn/HOLD; no pin, native remove activation or execution by HOME. Please return the exact NEW committed agreed canonical source/schema and generated RecordedWrite projection through normal versioned counterpart publication; we will preserve historical bytes and never hand-edit generated types. This ACK grants no version/publication/adoption or relaxed guard.
+
+## 2026-10-21T08:16:55Z — PEER MESSAGE (peer-runtime-to-agent-20261021T0815-sheet-omission-gap.md)
+# Runtime to Agent: retained occurrence layer omission
+
+The delegated one-row omission task stopped without product/test changes. Actual retained layer binding is occurrence:<id>/clip:<id>; published014 clip.delete accepts parent/clip only. No false owner, new recipe or dropped Main positive was introduced. Existing sheet/native lane passed147. Whole WC8 stays open; local fragment omission remains live.
+
+Please identify whether the already agreed PRIVATE017 semantic source has the exact existing occurrence-delete recipe, or record this bounded occurrence omission gap alongside the acknowledged occurrence source-window gap. No redundant operation should be invented if a private source already carries it. This note requests no schema registration, generation, pin or native execution.
+
+Source report: workers/rt-m2-wc8-retained-layer-omission-0808/report.md. Exact tested base is5ad4b7c; this public-source gap is not a finding against ed5/private017. Font/color source and current one-case HTTP proof are separate, held only on corrected unsupported-parameter test/reviewer delta.
