@@ -35,6 +35,7 @@ def operations():
     from ._scalar_commands import clip_set_params, track_set
     from ._shot_commands import SHOT_INTENT, shot_set
     from ._split_commands import clip_split
+    from ._track_commands import track_reorder
     from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
     from .native_initialize import initialize
@@ -95,6 +96,7 @@ def operations():
             'clip.trim': Operation(_SCHEMA['$defs']['ClipTrimArgs'], clip_trim, {}, True),
             'clip.split': Operation(_SCHEMA['$defs']['ClipSplitArgs'], clip_split, {}, True),
             'track.set': Operation(_SCHEMA['$defs']['TrackSetArgs'], track_set, {}, True),
+            'track.reorder': Operation(_SCHEMA['$defs']['TrackReorderArgs'], track_reorder, {}),
             'shot.set': Operation(_SCHEMA['$defs']['ShotSetArgs'], shot_set, SHOT_INTENT, True),
             'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True),
             'timeline.assembled-target': Operation(_SCHEMA['$defs']['AssembledTargetArgs'], assembled_target, {}),

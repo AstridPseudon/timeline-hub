@@ -5,6 +5,7 @@ import copy
 
 import pytest
 
+from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute, validate_command
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
@@ -80,9 +81,14 @@ def test_empty_parent_raw_reference_is_unplaced_and_round_trips_exactly():
     assert plan.bundle["shots"] == {}
     assert State(plan.bundle).collection("parent", "clip") == []
 
+    compiled = compile_authoring_candidate(plan.bundle)
+    assert compiled.publication["parent_composition"]["config"]["app"]["astrid"][
+        "timeline_references"
+    ] == reference
     document = document_from_bundle(plan.bundle)
     assert document["dependency_manifest"]["media"] == [MEDIA]
-    assert document_from_bundle(bundle_from_document(document)) == document
+    reloaded = bundle_from_document(copy.deepcopy(document))
+    assert document_from_bundle(reloaded) == document
     assert _strip_derived(document) == document
 
 
@@ -146,3 +152,16 @@ def test_raw_reference_does_not_overwrite_an_occupied_stable_identity():
     with pytest.raises(CommandError, match="identity is already occupied"):
         execute(first.bundle, [replacement], verified_media=replacement_verified)
     assert first.bundle == before
+
+
+def test_raw_reference_does_not_alias_an_ordinary_asset_with_the_same_user_id():
+    original = empty_bundle()
+    original["parent"]["registry"] = {"assets": {
+        "same-id": {"media_id": MEDIA["media_id"], "type": "image"},
+    }}
+    before = copy.deepcopy(original)
+    captured = command(empty_bundle(), "same-id")
+
+    with pytest.raises(CommandError, match="identity is already occupied"):
+        execute(original, [plain(captured)], verified_media=VERIFIED)
+    assert original == before

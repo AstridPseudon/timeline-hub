@@ -55,6 +55,15 @@ def without_raw_reference(schema):
     return schema
 
 
+def without_track_reorder(schema):
+    schema['$defs'].pop('TrackReorderArgs', None)
+    schema['$defs']['EditCommand']['allOf'] = [
+        item for item in schema['$defs']['EditCommand']['allOf']
+        if item['if']['properties']['op']['const'] != 'track.reorder'
+    ]
+    return schema
+
+
 @pytest.mark.parametrize('name', SOURCES)
 def test_full_current_candidate_preserves_every_definition_and_registered_operation(name):
     assert compatibility_errors(baseline(name), _SCHEMA) == []
@@ -138,8 +147,8 @@ def s2_slice():
 
 
 def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
-    assert without_raw_reference(s2_slice()) == baseline('agent-frozen-s2-26ef2bbb')
-    frozen = without_raw_reference(copy.deepcopy(_SCHEMA))
+    assert without_track_reorder(without_raw_reference(s2_slice())) == baseline('agent-frozen-s2-26ef2bbb')
+    frozen = without_track_reorder(without_raw_reference(copy.deepcopy(_SCHEMA)))
     assert len(frozen['$defs']) == 59
     assert len(frozen['$defs']['EditCommand']['allOf']) == 33
 
@@ -196,9 +205,9 @@ def test_closed_union_operation_inventory_is_exactly_the_supported_cohort():
                 'project-data.write', 'timeline.migrate-groups', 'occurrence.move',
                 'placement.unplace', 'producer.guard', 'shot.pool', 'shot.set',
                 'timeline.assembled-target', 'timeline.init', 'timeline.inverse',
-                'timeline.reference',
+                'timeline.reference', 'track.reorder',
                 'timeline.restore', 'track.create', 'track.set'}
     actual = [item['if']['properties']['op']['const']
               for item in _SCHEMA['$defs']['EditCommand']['allOf']]
-    assert len(actual) == len(set(actual)) == 34
+    assert len(actual) == len(set(actual)) == 35
     assert set(actual) == expected == set(operations()) | {'timeline.inverse', 'timeline.restore'}

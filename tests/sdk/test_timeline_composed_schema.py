@@ -57,6 +57,12 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
                     'content_digest': 'sha256:' + 'a' * 64,
                 }},
         },
+        'track.reorder': {
+            'schema_version': 1, 'op': 'track.reorder', 'version': '1',
+            'select': 'parent', 'args': {
+                'order': ['parent/track:overlay', 'parent/track:picture'],
+                'expected_order': ['parent/track:picture', 'parent/track:overlay']},
+        },
     })
     conditions = {condition['if']['properties']['op']['const']: condition['then']
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}

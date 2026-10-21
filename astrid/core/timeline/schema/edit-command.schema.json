@@ -505,6 +505,33 @@
       ],
       "description": "Set raw track.label or explicitly remove it. Null is not a label. Unmentioned fields survive."
     },
+    "TrackReorderArgs": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*::)parent/track:[^/]+$"
+          },
+          "uniqueItems": true
+        },
+        "expected_order": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*::)parent/track:[^/]+$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "order",
+        "expected_order"
+      ],
+      "additionalProperties": false,
+      "description": "Replace only the complete authored parent track permutation. Both arrays must be the same-owner, unique membership; expected_order is the captured original order."
+    },
     "ShotSetArgs": {
       "type": "object",
       "properties": {
@@ -972,6 +999,35 @@
               },
               "args": {
                 "$ref": "#/$defs/ClipDeleteArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "track.reorder"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/TrackReorderArgs"
               },
               "intent": {
                 "type": "object",
