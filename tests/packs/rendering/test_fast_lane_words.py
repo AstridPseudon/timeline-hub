@@ -133,6 +133,40 @@ def test_labelled_tiles_use_fresh_source_bound_rows_and_reject_forged_rows(tmp_p
     ) == {}
 
 
+def test_materialized_scene_result_carrier_reaches_public_labels(tmp_path, monkeypatch):
+    from tests.sdk.test_scene_caller_preservation import _scene_context, _scene_result
+
+    context = _scene_context()
+    snapshot = context["capture_snapshot"]
+    snapshot["fps_rational"] = [10, 1]
+    snapshot["config"] = {
+        "theme_overrides": {"visual": {"canvas": {"width": 200, "height": 100}}},
+        "clips": [{"id": "compiled-1", "app": {"astrid": {"cut": "c01", "layer": "card"}}}],
+    }
+    answers = [
+        {"frame": frame, "width": 200, "height": 100, "coverage": "COVERED", "content": "CONTENT",
+         "layers": [{"clipId": "compiled-1", "role": "content", "visible": True, "opacity": 1, "fullFrame": False,
+                      "bounds": {"status": "known", "rect": {"x": 20, "y": 40, "width": 60, "height": 40}}}],
+         "findings": []}
+        for frame in range(2)
+    ]
+    result, client = _scene_result(context, answers=answers)
+    provider = fast_lane._scene_frame_carrier(result, context, client=client)
+    assert provider is not None and provider.fresh_scene_frames == {0, 1}
+
+    frame = tmp_path / "frame.png"
+    Image.new("RGB", (200, 100)).save(frame)
+    monkeypatch.setattr("astrid.core.timeline.onscreen.visible_at", lambda *a, **k: pytest.fail(
+        "private visibility"))
+    labelled = fast_lane._labelled_tiles(
+        {"published": snapshot}, 0, 10.0, {"published": frame}, tmp_path, 0,
+        frame_providers={"published": provider},
+    )
+    assert set(labelled) == {"published"}
+    with Image.open(labelled["published"]) as image:
+        assert image.getpixel((20, 60)) == (250, 204, 21)
+
+
 def _pair(tmp_path, published, working, paint):
     """Stands in for the two managed renders: ``paint(side, frame)`` returns the decoded frame image."""
     pair = {"base_snapshot": published, "working_snapshot": working,

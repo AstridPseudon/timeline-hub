@@ -18,6 +18,7 @@ import time
 from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Iterable, Mapping, Sequence
 
 from .provenance import snapshot_label
@@ -140,8 +141,13 @@ def _require_clean_base_render(client: Any, run_id: str, draft: Any) -> dict[str
 
 def prepare_pair(client: Any, project: str, timeline: str, draft: Any, *, media_root: Path) -> dict[str, Any]:
     """Pin the base render and freeze/render the working candidate through V3."""
+    from astrid.sdk import invocation
     from astrid.sdk.authoring_bundle import render_authoring_candidate_preview
-    from astrid.sdk.timeline_filmstrip import prepare_filmstrip
+    from astrid.sdk.timeline_filmstrip import (
+        _scene_only_candidate_request,
+        _scene_only_request,
+        prepare_filmstrip,
+    )
 
     remote = getattr(client, "_remote", client)
     base = prepare_filmstrip(
@@ -182,10 +188,102 @@ def prepare_pair(client: Any, project: str, timeline: str, draft: Any, *, media_
     working_video, working_media = _candidate_video(candidate, working_authority, client=client, project=project, media_root=media_root)
     if not isinstance(base_snapshot, Mapping) or not isinstance(working_snapshot, Mapping):
         raise FastLaneError("the exact managed renders did not yield filmstrip snapshots")
+    # The Remotion provider owns its callback and CaptureSceneLabels only for
+    # the executor's capture lifetime.  Reuse the existing private scene-only
+    # mode to read its admitted bundle result after that lifetime has ended;
+    # _scene_frame_carrier keeps only materialized CaptureSceneLabels rows.
+    frame_providers: dict[str, Any] = {}
+    for side, scene_inputs in (
+        ("published", {"timeline_ref": timeline, "render_run": base_run}),
+        ("working", None),
+    ):
+        try:
+            if scene_inputs is None:
+                _request, scene_context = _scene_only_candidate_request(
+                    draft.document(), project=project, timeline_ref=timeline, client=remote,
+                )
+            else:
+                _request, scene_context = _scene_only_request(
+                    scene_inputs, project=project, client=remote,
+                )
+            scene_result = invocation._invoke_internal_result(
+                "rendering.timeline_visualize", kind="executor", project=project,
+                inputs=_request, client=remote, wait=True, read_managed_outputs=True,
+            )
+            carrier = _scene_frame_carrier(scene_result, scene_context, client=remote)
+        except Exception:  # noqa: BLE001 - scene labels are advisory to pixel verification
+            carrier = None
+        if carrier is not None:
+            frame_providers[side] = carrier
     return {"base_run": base_run, "working_run": working_run,
             "base_snapshot": base_snapshot, "working_snapshot": working_snapshot,
             "base_video": base_video, "base_media": base_media,
-            "working_video": working_video, "working_media": working_media}
+            "working_video": working_video, "working_media": working_media,
+            "frame_providers": frame_providers}
+
+
+def _scene_frame_carrier(result: Any, context: Mapping[str, Any], *, client: Any) -> Any | None:
+    """Materialize the existing managed scene result for the label join.
+
+    The scene-only executor already verifies the bundle digest, source
+    provenance, complete frame extent, projected addresses, and snapshot
+    label.  The carrier below is deliberately made from those retained rows;
+    it never keeps the executor's live renderer or callback alive.
+    """
+    from astrid.sdk.timeline_filmstrip import (
+        _scene_only_authority,
+        _scene_only_bundle_payload,
+        _scene_only_spans,
+    )
+
+    from .composed_frame import CaptureSceneLabels
+
+    spans = _scene_only_spans(result, context, client=client)
+    if not spans or any(span.cls == "UNAVAILABLE" for span in spans):
+        return None
+    source = _scene_only_bundle_payload(result, client=client)
+    authority = _scene_only_authority(context)
+    if source is None or authority is None:
+        return None
+    payload, _managed_row = source
+    answers = payload.get("answers")
+    if not isinstance(answers, list) or not answers:
+        return None
+    snapshot = context.get("capture_snapshot") or context.get("filmstrip_snapshot")
+    rational = snapshot.get("fps_rational") if isinstance(snapshot, Mapping) else None
+    if (not isinstance(rational, (list, tuple)) or len(rational) != 2
+            or type(rational[0]) is not int or type(rational[1]) is not int or rational[1] <= 0):
+        return None
+    addresses = {key: value["address"] for key, value in authority["scene_clips"].items()}
+    source_identity = authority["capture_identity"]
+    root_source = source_identity.removeprefix("sha256:")
+    if (len(root_source) != 64 or any(char not in "0123456789abcdef" for char in root_source)):
+        root_source = hashlib.sha256(source_identity.encode()).hexdigest()
+    captures: dict[int, CaptureSceneLabels] = {}
+    for answer in answers:
+        if not isinstance(answer, Mapping) or type(answer.get("frame")) is not int:
+            return None
+        width, height = answer.get("width"), answer.get("height")
+        if type(width) is not int or type(height) is not int or width <= 0 or height <= 0:
+            return None
+        basis = {"width": width, "height": height,
+                 "fps": float(Fraction(rational[0], rational[1]))}
+        try:
+            captures[answer["frame"]] = CaptureSceneLabels._from_cache(
+                {"source_identity": source_identity, "basis": basis, "addresses": addresses,
+                 "root_source": root_source, "answer": dict(answer)},
+                source_identity=source_identity, basis=basis, addresses=addresses,
+                frame=answer["frame"],
+            )
+        except (KeyError, TypeError, ValueError):
+            return None
+    if set(captures) != set(range(len(answers))):
+        return None
+    return SimpleNamespace(
+        source_identity=source_identity,
+        fresh_scene_frames=frozenset(captures),
+        scene_for_frame=captures.get,
+    )
 
 
 def _base_video(authority: Mapping[str, Any], *, client: Any, project: str,
