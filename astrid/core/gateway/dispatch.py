@@ -241,6 +241,8 @@ def _dispatch_doctor(args: list[str]) -> int:
         return 1
     report.setdefault("effects", ["observe"])
     report.setdefault("authorization_required", False)
+    report.setdefault("ok", result_code == 0)
+    report.setdefault("problem_code", diagnostic["problemCode"])
     report["diagnostic"] = diagnostic
     if not parsed.shared:
         try:
@@ -291,6 +293,7 @@ def _dispatch_doctor(args: list[str]) -> int:
     compute_fact = diagnostic["facts"]["computeWorker"]
     if diagnostic["problemCode"] == "capability_unavailable":
         result_code = 1
+    report["ok"] = result_code == 0
     if parsed.diagnostic:
         print(json.dumps(diagnostic, indent=2, sort_keys=True))
         return 0 if diagnostic["problemCode"] is None else 1
