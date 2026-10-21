@@ -50,6 +50,7 @@ import type {
 } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { CanonicalShotTimelinePublication } from '@/tools/video-editor/runtime/ports.ts';
 import { managedOutputMatchesOccurrence } from '@/tools/video-editor/data/shotCompositionProjection.ts';
+import { getClipEndSeconds, roundTimelineValue } from '@/tools/video-editor/lib/editor-utils.ts';
 
 interface AstridTimelineEditorProps {
   onOpenSequenceCreator?: () => void;
@@ -176,6 +177,18 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     interactionStateRef: timeline.interactionStateRef,
   }), shallow);
   const commands = useTimelineCommandsService();
+  const [publicTrimProbeResult, setPublicTrimProbeResult] = useState('');
+  const publicTrimProbeEnabled = new URLSearchParams(window.location.search).get('timelinePublicTrimProbe') === '1';
+  const runPublicTrimProbe = useCallback(() => {
+    const [clipId] = selectedClipIds;
+    const clip = resolvedConfig?.clips.find((candidate) => candidate.id === clipId);
+    if (!clipId || !clip) {
+      setPublicTrimProbeResult(JSON.stringify({ ok: false, error: { code: 'clip_not_selected' } }));
+      return;
+    }
+    const endTime = roundTimelineValue(getClipEndSeconds(clip) - 0.5);
+    setPublicTrimProbeResult(JSON.stringify(commands.trimClip({ clipId, endTime })));
+  }, [commands, resolvedConfig?.clips, selectedClipIds]);
   const {
     applyEdit,
     prepareGenerationAsset,
@@ -626,6 +639,14 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
 
   return (
     <>
+      {publicTrimProbeEnabled ? (
+        <div data-testid="timeline-public-trim-probe" className="sr-only">
+          <button type="button" data-testid="timeline-public-trim-trigger" onClick={runPublicTrimProbe}>
+            Run mounted public trim
+          </button>
+          <output data-testid="timeline-public-trim-result">{publicTrimProbeResult}</output>
+        </div>
+      ) : null}
       {!hosted && isDocumentShotMode && !isCanonicalEditor ? (
         <div role="status" data-canonical-load-state="legacy" className="border-b px-3 py-1.5 text-center text-xs">
           Canonical shot composition is unavailable; showing the explicit legacy shot view.

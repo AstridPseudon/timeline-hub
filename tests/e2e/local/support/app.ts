@@ -63,11 +63,11 @@ export async function waitForAudit(harness: DirectHarness, predicate: (entry: Re
   }
 }
 
-/** Opens the App at the hosted origin with nothing in the URL and returns the requests it made to the door. */
-export async function openApp(page: Page, harness: DirectHarness) {
+/** Opens the App at the hosted origin with an optional search suffix and returns the requests it made to the door. */
+export async function openApp(page: Page, harness: DirectHarness, search = '') {
   const doorRequests: string[] = [];
   page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${DOOR_PORT}/`)) doorRequests.push(`${request.method()} ${request.url()}`); });
-  await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}`);
+  await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}${search}`);
   return doorRequests;
 }
 
