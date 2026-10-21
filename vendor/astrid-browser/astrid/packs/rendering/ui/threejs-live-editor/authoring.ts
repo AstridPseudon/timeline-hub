@@ -941,3 +941,4 @@ export async function publishBoundedMapleEdit(
   const candidate = await prepareBoundedLiveSceneEdit(ctx, placementIds[0]);
   return publishLiveSceneEdit(ctx, { placementIds: [...placementIds], package: candidate, capture });
 }
+

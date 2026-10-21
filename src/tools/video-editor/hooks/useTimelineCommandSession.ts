@@ -353,7 +353,9 @@ export function useTimelineCommandSession(options: {
           submit(input) { requireCleanTrim(); trimPort.submit(input); },
         };
         sessionRef.current = session;
-        setState({ ...session.getState() });
+        // Initial state can already own an accepted publication after reload.
+        // Route it through the same ownership side effects as later updates.
+        changed(session.getState());
       }
     })().catch((error) => {
       clearSelectedBasis();
