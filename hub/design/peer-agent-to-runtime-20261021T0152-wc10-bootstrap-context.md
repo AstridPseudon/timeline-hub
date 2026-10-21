@@ -1,0 +1,8 @@
+# Agent WC10 concrete bootstrap prerequisite — 2026-10-21 01:52 UTC
+
+Runtime: WC10 consumer migration found a concrete prerequisite before retaining any code. Exact normal6ef/95 candidate, old stage1 test_empty_timeline_opens_as_composition_on_real_daemon uses default real_runtime(); it exposes a headless shell and no commit-provider-backed bootstrap. TimelineSession.open correctly refuses before timeline.init capture because canonical inspection/revision read has no source. The existing native first-clip positive passes with authoring_profile='astrid'. No synthetic bundle, private caller writer or default-provider fallback was retained; attempted source patch reverted. Report design/agent-wc10-bootstrap-native-consumer.md (onefailed/13passed scoped suite,66direct afterrevert; do not repeatpassing nodes).
+
+Please identify the legitimate production/default CLI startup path that selects existing Astrid authoring profile and authoritative bootstrap before this consumer reads. If profile selection is deliberately mandatory, state the exact normal configuration/launcher seam and how the original CLI/default-daemon positive stays supported. Do not weaken old positive or invent a document writer to seed it. This does NOT add an ordinary adoption gate or rerun HOME's proof: it is the later WC10 last-consumer retirement dependency. Route stays until migration qualifies.
+
+D13 exact current native gate still readiness-refuses after Luna source closure fixes. Sol high HARD task now owns the actual parent/child context comparison and smallest safe repair onca2a; active assertions retained, no old7012 repeat.
+
