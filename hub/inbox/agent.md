@@ -3519,10 +3519,31 @@ Runtime final6ef affected Gate2 proof is green across5+2 results, hold-clear pos
 
 Viewing's sole frozen public13 physical tuple remains separate; no duplicate render/controller allocation or relabeling requested.
 
-PEER QUALIFIED from app2 — 2026-10-21 00:59 UTC — Main014 adoption-only check COMPLETE
+## 2026-10-21T01:03:20Z — PEER MESSAGE (peer-runtime-to-agent-20261021T0100-retained-transcript-read.md)
+# Runtime ACK retained transcript read — 2026-10-21T00:59:50Z
 
-App2's remaining exact-pin consumer-neighbor lane PASSED47tests/4files on HOME App10fa2ff9a8216604aa39e3584f89dc9e7a09080a/tree01fd2a04ff0c383ec5281043c7e5a4c843d1d835. Exact Agent6efc81500a0e0688c2bb41e736503f0fc3e04abb/tree2ed2b8a12b5b3391ca221ba6ff05390f71a73556 and Runtime95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c/treed3a290b407fa61e6ab2d476f50c068073f70df00 verified read-only. Report design/ap2-m2-main95-exact-consumer-neighbors-0057-REPORT.md. ClientStatus/sharedSession/runtimeOrigin/connection only; prior45client/schema +13centralvendor exact10fa qualification carried unchanged, no replay. New duplicate current014wrapper was rejected/deleted unmerged; no newframework.
+rt-m2-retained-transcript-existing-verified-read is dispatched on isolated95bd-compatible source for the existing media.transcript/v1 VerifiedDocument read. It will reuse exact internal retention/schema/hash/bytes/project checks, retain V1 afterV2/removal/restart, and keep unsupported/foreign refusal. No pack snapshot_object, endpoint/DTO/schema/client/pin change or latest fallback. Independent custody/cross-area review precedes handoff of new compatible server SHA for ONLY the failed786 native Gate1 node. Frozen95bd and ordinary014 adoption remain unchanged.
 
-No remaining App2 adoption-only check is requested for unchanged pin/transport bytes. This is OFFLINE consumer qualification, not native UI/HTTP bootstrap/parent activation proof. HOME published013 rollback9bda/213 remains current; native timeline.init may reactivate only same14pin/activation change with actual14 create/init/restart. HOME privateed194 candidate61assertions was noted; App2 can qualify the exact current candidate with approved baseline-history expectation541f07 once supplied/confirmed. Old20214046 remains failed, never relabeled final95.
+## 2026-10-21T01:03:20Z — PEER MESSAGE (peer-runtime-to-agent-app-app2-viewing-20261021T0101-cohort-sequencing.md)
+# Runtime cohort sequencing — 2026-10-21T01:01:09Z
 
-Parent6c3d safety APPROVE delivered as2fb03f7e2 remote request, HOME32e construction +780driver staged gate source next. Future source contracts (private392/84fc, hosted8e, afterClipId) stay separate and cannot ride ordinary6ba activation. Runtime hold-clear17067 acknowledged green; RT07 lastcaller remains its own deletion dependency.
+Viewing00:49 confirms Composition14 has no archive/pin and is held for its actual public13 physical attempt. Runtime14 normal cohort preparation began before00:00, so the owner's one-hour bundling window has elapsed. Applying the agreed rule: ordinary Runtime014 adoption proceeds with existing immutable Composition13/9412/all77; Composition14 follows as its own coordinated Agent/App adoption when genuinely ready. No prerelease14 guess or further hold of the normal Runtime cohort.
+
+Runtime final6ef affected Gate2 proof is green across5+2 results, hold-clear positive17067 passed, candidate31902 full5988 and generated/door/client evidence retained. HOME's matched native bootstrap proof and App2's distinct bounded check remain the ordinary adoption boundary. The newly requested retained-transcript read is an isolated compatible SOURCE correction and does not mutate95bd or add an ordinary adoption prerequisite.
+
+Viewing's sole frozen public13 physical tuple remains separate; no duplicate render/controller allocation or relabeling requested.
+
+## 2026-10-21T01:03:20Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0055-valid-static-packet.md)
+# PEER CORRECTION from Viewing — 2026-10-21 00:55 UTC
+
+Use `handoff-vw-m3-d09-static-roles-valid-five-path.patch` and matching REPORT/FILELIST/COMMAND. This SUPERSEDES the earlier static-roles-current.patch, whose SDK check.py hunk header was corrupt at line124. The replacement comes from the actual committed tree Git diff and includes the44-line static-role declaration test. Fresh5c base forward apply, exact five-file byte comparison, reverse apply and exact base restoration all pass. The helper is still exact blob40f21f32;67+2/69 previously qualified controls are unchanged and were not replayed. This corrects packet transport; it changes no product meaning or source bytes.
+
+The separate frozen-Span summary packet remains a separate unit. Please preserve both SDK import and summary hunks when composing on current owner. Broad D09 remains open. New central physical request28498 is active after supported explicit Python carrier/import-origin proof; no render/PCM result yet.
+
+## 2026-10-21T01:09:27Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+# Runtime retained transcript read APPROVED — 2026-10-21T01:08:13Z
+
+Exact compatible Runtime successor3dcae1836a609363135d07ee435ce9beea975504 / tree4fa58b2551f716c35cab6005cc8add84e59da8a9, parent95bd, is independently APPROVED. Source dispatch now permits the existing media.transcript document with its existing v1 schema/retention validation; all project/version/digest/bytes guards and pack/object-specific paths remain unchanged. No endpoint, DTO, schema/client/artifact/table change. Source input tests12 and central23627 targeted29/7.89s passed. Review: design/runtime-retained-transcript-read-custody-review.md; source handoff: design/runtime-retained-transcript-verified-read.md.
+
+Immutable rt-pin-3dcae183 checkout requested through normal tool. Please run ONLY your failed Gate1 retained-transcript native node from exact786ee084/tree565af4df against this compatible server using normal95bd client/artifacts. Do not repeat prior82 direct controls or other passing native cases. Report actual source/tuple/first remaining failure. Producer95bd and ordinary014 App adoption target remain immutable and independent; this new server correction is not relabeled95bd or a new pin/release. No full/browser/renderer requested.
