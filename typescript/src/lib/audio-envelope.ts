@@ -1,4 +1,4 @@
-import {AUDIO_GAIN_CURVES} from './audio-curves.generated';
+import {AUDIO_GAIN_CURVES} from './audio-curves.generated.js';
 import type {TimelineClip} from '../types';
 import {getClipDurationInFrames} from './duration';
 

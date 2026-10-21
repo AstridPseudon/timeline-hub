@@ -1,13 +1,15 @@
 /** Pure requested-frame scene answers. Undeclared component pixels remain unknown. */
 import {prepareTrack, queryTrackFrame, type PreparedTrack, type TransitionSpec, type IncomingTransitionSpec} from './evaluation';
 import {getClipDurationInFrames} from './lib/duration';
-import {clipOpacity, fadeMultiplier, remappedFrame} from './lib/clip-look';
+import {animationElapsed, builtinClipLookStyle, clipOpacity, fadeMultiplier, normalizeAnimationRefs, remappedFrame,
+  type AnimationReferenceItem} from './lib/clip-look';
 import {admitModifiers} from './lib/modifier-admission';
 import {mediaModifierBounds} from './lib/modifier-bounds';
 import type {AssetRegistry, TimelineClip, TrackDefinition} from './types';
 import {provenOpaqueMedia, type SceneCapabilities, type ComponentDiagnostics} from './scene-capabilities';
 import type {ModifierRegistry, ModifierBounds} from './modifier-types';
-import type {RenderBounds} from './lib/render-bounds';
+import {ANIMATION_DEFAULTS} from './animations.generated';
+import {computeRenderBounds, getVisibleBoundsFromCrop, type RenderBounds} from './lib/render-bounds';
 
 export type SceneFinding = {code: string; clipId: string; reason: string; instanceId?: string; element?: string};
 export type SceneTrackInput = {track: TrackDefinition; clips: readonly TimelineClip[];
@@ -66,6 +68,62 @@ const clippedRect = (bounds: ModifierBounds, width: number, height: number): Ren
   const y = Math.max(0, Math.min(height, rect.y));
   return {x, y, width: Math.max(0, Math.min(width, rect.x + rect.width) - x),
     height: Math.max(0, Math.min(height, rect.y + rect.height) - y)};
+};
+
+type ClipLookEntrance = {status: 'inactive'} | {status: 'active'; opacity: number;
+  translateY?: number; scale?: number} | {status: 'unknown'; reason: string};
+
+const clipLookEntrance = (clip: TimelineClip, frame: number, fps: number): ClipLookEntrance => {
+  if (clip.entrance === undefined) return {status: 'inactive'};
+  try {
+    const normalized = normalizeAnimationRefs(clip.entrance, fps);
+    const refs = normalized === undefined ? [] : Array.isArray(normalized) ? normalized : [normalized];
+    if (refs.length !== 1) return {status: 'unknown', reason: 'Entrance animation composition is undeclared'};
+    const ref = refs[0] as AnimationReferenceItem;
+    const id = typeof ref === 'string' ? ref : ref.id;
+    if (id !== 'fade-up' && id !== 'scale-in') {
+      return {status: 'unknown', reason: `Entrance animation '${id}' is undeclared`};
+    }
+    const configured = typeof ref === 'string' ? undefined : ref.durationFrames;
+    const duration = configured ?? ANIMATION_DEFAULTS[id]?.durationFrames;
+    if (typeof duration !== 'number' || !Number.isFinite(duration) || duration < 0) {
+      return {status: 'unknown', reason: `Entrance animation '${id}' has no valid duration`};
+    }
+    const elapsed = animationElapsed('entrance', frame, getClipDurationInFrames(clip, fps), duration);
+    if (elapsed === null) return {status: 'inactive'};
+    const easing = typeof ref === 'string' ? undefined : ref.easing ?? ref.params?.easing;
+    return {status: 'active', ...builtinClipLookStyle(id, elapsed, duration, fps, easing)};
+  } catch (error) {
+    return {status: 'unknown', reason: error instanceof Error ? error.message : String(error)};
+  }
+};
+
+const transformBounds = (bounds: ModifierBounds, style: Extract<ClipLookEntrance, {status: 'active'}>,
+  width: number, height: number): ModifierBounds => {
+  if (bounds.status !== 'known') return bounds;
+  const rect = style.scale === undefined ? {...bounds.rect, y: bounds.rect.y + (style.translateY ?? 0)} : {
+    x: width / 2 + (bounds.rect.x - width / 2) * style.scale,
+    y: height / 2 + (bounds.rect.y - height / 2) * style.scale,
+    width: bounds.rect.width * style.scale,
+    height: bounds.rect.height * style.scale,
+  };
+  return {status: 'known', rect: computeRenderBounds(rect, width, height)};
+};
+
+// ClipLook applies element crop to its full-canvas outer AbsoluteFill. The
+// entrance wrapper is inside that crop, so transform first and intersect with
+// the canvas crop region afterwards.
+const applyElementCrop = (bounds: ModifierBounds, clip: TimelineClip,
+  width: number, height: number): ModifierBounds => {
+  if (bounds.status !== 'known') return bounds;
+  const crop = getVisibleBoundsFromCrop({x: 0, y: 0, width, height}, clip);
+  const rect = bounds.rect;
+  return {status: 'known', rect: computeRenderBounds({
+    x: Math.max(rect.x, crop.x),
+    y: Math.max(rect.y, crop.y),
+    width: Math.max(0, Math.min(rect.x + rect.width, crop.x + crop.width) - Math.max(rect.x, crop.x)),
+    height: Math.max(0, Math.min(rect.y + rect.height, crop.y + crop.height) - Math.max(rect.y, crop.y)),
+  }, width, height)};
 };
 
 // Shared by visibility and the public threshold query. Upper layers are front first.
@@ -175,16 +233,35 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
       let bounds = targetBounds;
       let opacity: number | null = Math.min(1, Math.max(0, track.opacity ?? 1))
         * clipOpacity(clip, draw.contentFrame, scene.fps) * draw.opacity;
+      let clipLookChanged = false;
+      const instances = clip.modifiers ?? [];
       // An assetless native layer draws nothing; an unresolved referenced asset
       // is still unknown and cannot acquire valid absence from missing media.
       const absent = support?.presence === 'absent' || clip.clipType === 'effect-layer' || (!element && !clip.asset);
       if (element && !absent && (!support || support.presence === 'unknown' || support.opaqueSupport === 'unknown')) unknown('unknown-component-internals', 'Final component alpha and support are undeclared');
-      if (clip.entrance !== undefined || clip.exit !== undefined
-          || (element && [clip.cropTop, clip.cropBottom, clip.cropLeft, clip.cropRight].some(value => value !== undefined && value !== 0))) {
-        unknown('unknown-animation-geometry', 'Animation does not declare evaluated support and alpha');
-        bounds = {status: 'unknown', reason: 'Animation geometry is undeclared'};
+      const hasCrop = [clip.cropTop, clip.cropBottom, clip.cropLeft, clip.cropRight]
+        .some(value => value !== undefined && value !== 0);
+      if (element && hasCrop && instances.length) {
+        unknown('unknown-animation-geometry', 'Element crop inside a custom modifier is undeclared');
+        bounds = {status: 'unknown', reason: 'Element crop inside a custom modifier is undeclared'};
       }
-      const instances = clip.modifiers ?? [];
+      const entrance = clipLookEntrance(clip, draw.contentFrame, scene.fps);
+      if (entrance.status === 'unknown') {
+        unknown('unknown-animation-geometry', entrance.reason);
+        bounds = {status: 'unknown', reason: entrance.reason};
+      } else if (entrance.status === 'active') {
+        opacity = opacity === null ? null : Math.min(1, Math.max(0, opacity * entrance.opacity));
+        bounds = transformBounds(bounds, entrance, scene.width, scene.height);
+        clipLookChanged = true;
+      }
+      if (element && hasCrop && !instances.length) {
+        bounds = applyElementCrop(bounds, clip, scene.width, scene.height);
+        clipLookChanged = true;
+      }
+      if (clip.exit !== undefined) {
+        unknown('unknown-animation-geometry', 'Exit animation does not declare evaluated support and alpha');
+        bounds = {status: 'unknown', reason: 'Exit animation geometry is undeclared'};
+      }
       if (targetBounds.status === 'unknown' && !absent) {
         unknown(instances.length ? 'unknown-target-bounds' : 'unknown-component-bounds', targetBounds.reason);
       }
@@ -232,7 +309,8 @@ export const querySceneFrame = (scene: PreparedScene, frame: number): SceneFrame
       const dip = !absent && (((plan.fadeIn?.kind === 'dip' || plan.fadeOut?.kind === 'dip') && draw.opacity < 1)
         || fadeMultiplier(clip, draw.contentFrame, scene.fps) < 1);
       const geometryReason = bounds.status === 'unknown' ? bounds.reason
-        : instances.length ? 'Modifiers do not declare internal region positions or text size' : undefined;
+        : instances.length ? 'Modifiers do not declare internal region positions or text size'
+        : clipLookChanged ? 'Clip look changes outer geometry or alpha' : undefined;
       const diagnostics = support?.diagnostics === undefined ? undefined : componentDiagnostics(support.diagnostics,
         geometryReason, reason => unknown('invalid-component-diagnostics', reason));
       layers.push({clipId: clip.id, track: track.id, clipIndex: draw.clipIndex, z: 0,

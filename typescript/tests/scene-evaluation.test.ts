@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
+import type {CSSProperties, ReactElement} from 'react';
 import {createElement} from 'react';
+import {composeClipLook} from '../src/ClipLook';
+import {DEFAULT_THEME, toRuntimeTheme} from '../src/ThemeContext';
+import {cropClipPath} from '../src/lib/clip-look';
 import {prepareScene, querySceneFrame} from '../src/scene-evaluation';
 import type {ModifierDeclaration} from '../src/modifier-types';
 import type {AssetRegistry, TimelineClip, TrackDefinition} from '../src/types';
@@ -51,6 +55,84 @@ test('scene roles use own clip-ID entries and preserve the track fallback', () =
     const fallback = querySceneFrame(prepare([clip({id})], assets, {roles: {}}), 0);
     assert.equal(fallback.layers[0].role, 'content');
   }
+});
+
+test('scene clip-look uses render crop and builtin entrance geometry with half-open clocks', () => {
+  const support = {identity: 'plate@1', frame: () => ({presence: 'present' as const,
+    opaqueSupport: 'rect' as const, bounds: {status: 'known' as const, rect: {x: 0, y: 0, width: 1920, height: 1080}}})};
+  const sceneFor = (overrides: Partial<TimelineClip>) => prepareScene([{track: visualTrack,
+    clips: [{...clip({id: 'plate', clipType: 'plate', ...overrides})} as TimelineClip], transitions: [null]}], assets, 30, 1920, 1080,
+  {elements: new Set(['plate']), capabilities: {components: {plate: support}}});
+
+  const cropped = querySceneFrame(sceneFor({cropTop: .1}), 0).layers[0];
+  assert.deepEqual(cropped.bounds, {status: 'known', rect: {x: 0, y: 108, width: 1920, height: 972}});
+  assert.equal(cropped.fullFrame, false);
+
+  const scaledEarly = querySceneFrame(sceneFor({entrance: {id: 'scale-in', durationFrames: 18}}), 0).layers[0];
+  assert.deepEqual(scaledEarly.bounds, {status: 'known', rect: {x: 144, y: 81, width: 1632, height: 918}});
+  assert.equal(scaledEarly.opacity, 0);
+  assert.deepEqual(querySceneFrame(sceneFor({entrance: 'scale-in'}), 18).layers[0].bounds,
+    {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}});
+
+  const fadedEarly = querySceneFrame(sceneFor({entrance: 'fade-up'}), 0).layers[0];
+  assert.deepEqual(fadedEarly.bounds, {status: 'known', rect: {x: 0, y: 40, width: 1920, height: 1040}});
+  assert.equal(fadedEarly.opacity, 0);
+  assert.deepEqual(querySceneFrame(sceneFor({entrance: 'fade-up'}), 18).layers[0].bounds,
+    {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}});
+});
+
+test('scene clip-look matches full-canvas wrapper origin for off-center scale and fade-up', () => {
+  const width = 1920;
+  const height = 1080;
+  const fps = 30;
+  const theme = toRuntimeTheme(DEFAULT_THEME);
+  const support = {identity: 'plate@1', frame: () => ({presence: 'present' as const,
+    opaqueSupport: 'rect' as const, bounds: {status: 'known' as const, rect: {x: 100, y: 200, width: 600, height: 300}}})};
+  const sceneFor = (entrance: TimelineClip['entrance'], crop = false) => prepareScene([{track: visualTrack,
+    clips: [clip({id: 'plate', clipType: 'plate', entrance, ...(crop ? {cropTop: .1, cropLeft: .2} : {})})], transitions: [null]}],
+  assets, fps, width, height, {elements: new Set(['plate']), capabilities: {components: {plate: support}}});
+  const renderTree = (entrance: TimelineClip['entrance'], crop = false) => {
+    const node = composeClipLook({clip: {...clip({id: 'plate', clipType: 'plate', entrance,
+      ...(crop ? {cropTop: .1, cropLeft: .2} : {})})}, fps, kind: 'element', children: createElement('div')}, 6, theme) as
+      ReactElement<{style: CSSProperties; children: ReactElement<{style?: CSSProperties}>}>;
+    const animation = node.props.children;
+    const renderAnimation = animation.type as (props: typeof animation.props) => ReactElement<{style: CSSProperties}>;
+    return {outer: node.props.style, wrapper: renderAnimation(animation.props).props.style};
+  };
+
+  const scaled = renderTree({id: 'scale-in', durationFrames: 18, easing: 'linear'}, true);
+  assert.equal(scaled.outer.clipPath, cropClipPath({cropTop: .1, cropLeft: .2} as TimelineClip));
+  assert.equal(scaled.wrapper.transform, 'scale(0.9)');
+  const scaledLayer = querySceneFrame(sceneFor({id: 'scale-in', durationFrames: 18, easing: 'linear'}, true), 6).layers[0];
+  assert.deepEqual(scaledLayer.bounds, {status: 'known', rect: {x: 384, y: 234, width: 342, height: 270}});
+  assert.equal(scaledLayer.opacity, 1 / 3);
+
+  const faded = renderTree({id: 'fade-up', durationFrames: 18, easing: 'linear'});
+  assert.equal(faded.wrapper.transform, 'translateY(26.66666666666667px)');
+  const fadedLayer = querySceneFrame(sceneFor({id: 'fade-up', durationFrames: 18, easing: 'linear'}), 6).layers[0];
+  assert.equal(fadedLayer.bounds.status, 'known');
+  if (fadedLayer.bounds.status === 'known') {
+    assert.equal(fadedLayer.bounds.rect.x, 100);
+    assert.equal(fadedLayer.bounds.rect.width, 600);
+    assert.ok(Math.abs(fadedLayer.bounds.rect.y - 226.66666666666667) < 1e-12);
+    assert.ok(Math.abs(fadedLayer.bounds.rect.height - 300) < 1e-12);
+  }
+  assert.equal(fadedLayer.opacity, 1 / 3);
+});
+
+test('known clip-look does not manufacture geometry through an unknown custom modifier', () => {
+  const modifier: ModifierDeclaration = {kind: 'modifier', element: 'custom', hosts: ['composition'],
+    bounds: 'unknown', alpha: 'preserve', support: 'preserve',
+    wrap: (_instance, _context, children) => createElement('span', null, children)};
+  const scene = prepareScene([{track: visualTrack, clips: [clip({id: 'plate', clipType: 'plate', entrance: 'fade-up',
+    modifiers: [{id: 'custom', element: 'custom', params: {}}]})], transitions: [null]}], assets, 30, 1920, 1080,
+  {elements: new Set(['plate']), modifiers: {custom: modifier}, capabilities: {components: {plate: {
+    identity: 'plate@1', frame: () => ({presence: 'present', opaqueSupport: 'rect',
+      bounds: {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}}}),
+  }}}});
+  const layer = querySceneFrame(scene, 0).layers[0];
+  assert.equal(layer.bounds.status, 'unknown');
+  assert.ok(layer.findings.some(finding => finding.code === 'unknown-modifier-bounds'));
 });
 
 test('unresolved or unproven media remains unknown instead of being treated as absent', () => {

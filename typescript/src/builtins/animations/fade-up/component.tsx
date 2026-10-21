@@ -1,22 +1,16 @@
 import type {ReactElement} from 'react';
-import {interpolate, spring} from 'remotion';
 import type {WrapperAnimationProps} from '../../../effects-types';
+import {builtinClipLookStyle} from '../../../lib/clip-look';
 
 export const FadeUp = ({
   children,
   fps,
   durationFrames,
   elapsedFrames,
-  progress: explicitProgress,
+  progress: suppliedProgress,
+  easing,
 }: WrapperAnimationProps): ReactElement => {
-  const progress = explicitProgress ?? spring({
-    frame: elapsedFrames,
-    fps,
-    from: 0,
-    to: 1,
-    durationInFrames: durationFrames,
-    config: {damping: 14, stiffness: 110},
-  });
+  const style = builtinClipLookStyle('fade-up', elapsedFrames, durationFrames, fps, easing, suppliedProgress);
   return (
     <div
       style={{
@@ -25,8 +19,8 @@ export const FadeUp = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        opacity: progress,
-        transform: `translateY(${explicitProgress === undefined ? interpolate(progress, [0, 1], [40, 0]) : 40 * (1 - progress)}px)`,
+        opacity: style.opacity,
+        transform: style.transform,
       }}
     >
       {children}
