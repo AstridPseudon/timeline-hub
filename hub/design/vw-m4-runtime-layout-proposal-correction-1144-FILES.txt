@@ -1,0 +1,10 @@
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-layout-proposal-correction-1144.patch
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-layout-proposal-correction-1144-source-fixture.mjs
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-layout-proposal-correction-1144-FILES.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-layout-proposal-correction-1144-COMMANDS.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/vw-m4-runtime-layout-proposal-correction-1144-REPORT.md
+
+Proposal target (unapplied):
+- `bin/make-runtime` only.
+- No `bin/` source was changed in this worker; the patch is a review artifact.
+- No Composition product file was changed.

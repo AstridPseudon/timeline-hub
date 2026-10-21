@@ -1,0 +1,46 @@
+--- a/bin/make-runtime
++++ b/bin/make-runtime
+@@ -2,16 +2,35 @@
+ # make-runtime NAME AGENT_SHA [LOCK_SHA256] — run by the dispatcher (outside the sandbox; uses the network for npm ci).
+ # Builds a NEW read-only Remotion runtime /home/user/work/runtimes/<NAME> from the Agent repo's remotion/ directory at
+-# AGENT_SHA (exact package-lock bytes, verified against LOCK_SHA256 when given), with Node 20 and `npm ci`. Writes
++# AGENT_SHA, plus the rendering-pack source closure used by Root's relative imports (exact package-lock bytes, verified
++# against LOCK_SHA256 when given), with Node 20 and `npm ci`. Writes
+ # $ORCH/tests/<NAME>.env and a "<NAME>-nodes" suite (cloned from the remotion-0012-nodes line). Never touches an existing runtime.
+ O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; A=/home/user/work/agent
+ N=$1; S=$2; L=$3; case "$N" in agent-remotion-[0-9a-z]*) ;; *) echo "REFUSED: name must be agent-remotion-<version>"; exit 2;; esac
+ D=/home/user/work/runtimes/$N; [ -e $D ] && { echo "exists: $D (runtimes are immutable; pick a new name)"; exit 0; }
+ git -C $A cat-file -e "$S^{commit}" 2>/dev/null || git -C $A fetch -q hub 2>/dev/null; git -C $A cat-file -e "$S^{commit}" || { echo "unknown agent commit $S"; exit 1; }
+-NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin; T=$D.partial; rm -rf $T; mkdir -p $T
+-git -C $A archive "$S" remotion | tar -x -C $T --strip-components=1 || { echo "archive failed"; exit 1; }
++NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin; T=$D.partial; rm -rf $T; mkdir -p $T/remotion
++git -C $A archive "$S" remotion | tar -x -C $T/remotion --strip-components=1 || { echo "archive failed"; exit 1; }
++git -C $A archive "$S" astrid/packs/rendering | tar -x -C $T || { echo "rendering source archive failed"; rm -rf $T; exit 1; }
++scene_dir=
++if grep -Fq '../../astrid/packs/rendering/editor/live-scenes/SceneSurface' "$T/remotion/src/LiveSceneClip.tsx" &&
++   grep -Fq '../../astrid/packs/rendering/editor/live-scenes/runtime' "$T/remotion/src/LiveSceneClip.tsx"; then
++  scene_dir=astrid/packs/rendering/editor/live-scenes
++elif grep -Fq '../../astrid/packs/rendering/ui/threejs-live-editor/SceneSurface' "$T/remotion/src/LiveSceneClip.tsx" &&
++     grep -Fq '../../astrid/packs/rendering/ui/threejs-live-editor/runtime' "$T/remotion/src/LiveSceneClip.tsx"; then
++  scene_dir=astrid/packs/rendering/ui/threejs-live-editor
++else
++  echo "unsupported Root source closure in $T/remotion/src/LiveSceneClip.tsx" >&2; rm -rf $T; exit 1
++fi
++grep -Fq "from './runtime'" "$T/$scene_dir/SceneSurface.tsx" &&
++grep -Fq "from './diagnostics'" "$T/$scene_dir/SceneSurface.tsx" || {
++  echo "incomplete Root source closure under $T/$scene_dir" >&2; rm -rf $T; exit 1;
++}
++for name in SceneSurface.tsx runtime.ts diagnostics.ts; do
++  [ -f "$T/$scene_dir/$name" ] || { echo "missing Root source closure file: $T/$scene_dir/$name" >&2; rm -rf $T; exit 1; }
++done
+-got=$(sha256sum $T/package-lock.json | cut -d' ' -f1); [ -z "$L" ] || [ "$got" = "$L" ] || { echo "REFUSED: lock sha256 $got != $L"; rm -rf $T; exit 1; }
+-( cd $T && PATH=$NODE:$PATH npm ci --no-audit --no-fund --loglevel=error ) || { echo "npm ci failed"; rm -rf $T; exit 1; }
++got=$(sha256sum $T/remotion/package-lock.json | cut -d' ' -f1); [ -z "$L" ] || [ "$got" = "$L" ] || { echo "REFUSED: lock sha256 $got != $L"; rm -rf $T; exit 1; }
++( cd $T/remotion && PATH=$NODE:$PATH npm ci --no-audit --no-fund --loglevel=error ) || { echo "npm ci failed"; rm -rf $T; exit 1; }
+ mv $T $D; find $D -path '*/node_modules/.cache' -prune -o -path '*/node_modules/.vite*' -prune -o -type f -exec chmod a-w {} +
+-sed "s#agent-remotion-0012#$N#g" $O/tests/agent-remotion-0012.env > $O/tests/$N.env
+-grep -q "^agent $N-nodes " $O/tests/suites.conf || grep '^agent remotion-0012-nodes ' $O/tests/suites.conf | sed "s#remotion-0012-nodes#$N-nodes#; s#agent-remotion-0012#$N#g" >> $O/tests/suites.conf
+-echo "created $D from agent ${S:0:12} (lock $got), read-only; env tests/$N.env; suite '$N-nodes'; remotion $(PATH=$NODE:$PATH node -e "console.log(require('$D/node_modules/remotion/package.json').version)" 2>/dev/null)"
++sed "s#agent-remotion-0012#$N#g; s#/home/user/work/runtimes/$N#/home/user/work/runtimes/$N/remotion#g" $O/tests/agent-remotion-0012.env > $O/tests/$N.env
++grep -q "^agent $N-nodes " $O/tests/suites.conf || grep '^agent remotion-0012-nodes ' $O/tests/suites.conf | sed "s#remotion-0012-nodes#$N-nodes#; s#agent-remotion-0012#$N#g; s#/home/user/work/runtimes/$N#/home/user/work/runtimes/$N/remotion#g" >> $O/tests/suites.conf
++echo "created $D from agent ${S:0:12} (lock $got), read-only; env tests/$N.env; suite '$N-nodes'; remotion $(PATH=$NODE:$PATH node -e "console.log(require('$D/remotion/node_modules/remotion/package.json').version)" 2>/dev/null)"

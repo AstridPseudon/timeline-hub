@@ -1,0 +1,35 @@
+Read-only inputs:
+  sed -n '1,240p' .../scratchpad/orch/PLAN.md
+  sed -n '1,260p' .../scratchpad/orch/managers/viewing/briefs/vw-m4-runtime-layout-proposal-correction-1144.md
+  sed -n '1,260p' .../design/vw-m4-durable-runtime-source-closure-proposal-REPORT.md
+  git show hub/tl/vw-m4-durable-runtime-source-closure-proposal-1134
+  git -C /home/user/work/agent show d0a5072bbe7b7ce9489f43aa0a81027ec400343b:remotion/src/LiveSceneClip.tsx
+  git -C /home/user/work/agent show 1a50cf3f30398500e9f1ccf0b94d59fe7a8bdb3f:remotion/src/LiveSceneClip.tsx
+  RESULT: PASS; 1134 was confirmed to flatten remotion/src and put astrid beside it.
+
+Patch validation (private task-owned root; no install/build):
+  TMP=$(mktemp -d /tmp/vw-m4-runtime-layout-1144-check.XXXXXX)
+  patch --dry-run -p1 -d "$TMP" < .../design/vw-m4-runtime-layout-proposal-correction-1144.patch
+  patch -p1 -d "$TMP" < .../design/vw-m4-runtime-layout-proposal-correction-1144.patch
+  bash -n "$TMP/bin/make-runtime"
+  RESULT: PASS; created /tmp/vw-m4-runtime-layout-1144-check.EkS9te; removed that exact real path after verification.
+
+Source-only fixture (Node path.resolve; no npm install/build/browser/runtime):
+  git -C /home/user/work/agent archive d0a5072bbe7b7ce9489f43aa0a81027ec400343b remotion | tar -x ...
+  git -C /home/user/work/agent archive d0a5072bbe7b7ce9489f43aa0a81027ec400343b astrid/packs/rendering | tar -x ...
+  git -C /home/user/work/agent archive 1a50cf3f30398500e9f1ccf0b94d59fe7a8bdb3f remotion | tar -x ...
+  git -C /home/user/work/agent archive 1a50cf3f30398500e9f1ccf0b94d59fe7a8bdb3f astrid/packs/rendering | tar -x ...
+  /home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node .../vw-m4-runtime-layout-proposal-correction-1144-source-fixture.mjs <task-root> old-d0a <old-root> <nested-root> current-main <old-root> <nested-root>
+  RESULT: PASS; created /tmp/vw-m4-runtime-layout-1144-fixture.5tCgTE and removed that exact real path.
+  old-d0a old1134: FAIL as expected.
+  old-d0a corrected nested: PASS; editor/live-scenes SceneSurface, runtime, diagnostics resolved.
+  current-main old1134: FAIL as expected.
+  current-main corrected nested: PASS; ui/threejs-live-editor SceneSurface, runtime, diagnostics resolved.
+
+Syntax/working-tree checks:
+  node --check .../vw-m4-runtime-layout-proposal-correction-1144-source-fixture.mjs  RESULT: PASS
+  git diff --check  RESULT: PASS (composition worktree clean; no product edit)
+
+Explicitly not run by instruction:
+  npm ci/install, build, full graph/dependency copy, browser/helper, Runtime/server,
+  socket, central, physical, render, or full suite.
