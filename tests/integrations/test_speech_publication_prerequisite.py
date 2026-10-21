@@ -177,26 +177,6 @@ def test_sdk_speech_admission_settles_fixture_wav_and_reads_exact_selection(
                 project=project_id,
                 inputs={
                     "text": "A genuine fixture speech task.",
-                    "generation_intent": {
-                        "version": 1,
-                        "modality": "audio",
-                        "partial_success_policy": "reject",
-                        "groups": [{
-                            "group_key": "main",
-                            "selectors": [{
-                                "selector": "main-0",
-                                "ordinal": 0,
-                                "variant_key": "original",
-                                "required": True,
-                            }],
-                        }],
-                        "metadata": {
-                            "params": {
-                                "media_type": "audio/wav",
-                                "duration_seconds": 1.0,
-                            },
-                        },
-                    },
                 },
                 client=remote,
                 wait=True,
@@ -219,13 +199,10 @@ def test_sdk_speech_admission_settles_fixture_wav_and_reads_exact_selection(
                     "required": True,
                 }],
             }],
-            "metadata": {
-                "params": {
-                    "media_type": "audio/wav",
-                    "duration_seconds": 1.0,
-                },
-            },
         }
+        # Automatic publication admission carries no caller-owned duration
+        # authority; duration is checked only from the settled WAV bytes below.
+        assert "metadata" not in task["generation_intent"]
         assert task["expected_effect"]["effect_type"] == "generation.publish_v1"
         assert task["expected_effect"]["target_id"] == project_id
         assert task["expected_effect"]["payload"]["groups"][0]["selectors"][0]["output_port"] == "speech"

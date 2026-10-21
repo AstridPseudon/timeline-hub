@@ -377,6 +377,8 @@ def test_registered_speech_public_invocation_admits_project_bound_publication(
     intent = admission["generation_intent"]
     assert intent["version"] == 1
     assert intent["modality"] == "audio"
+    if not explicit:
+        assert "metadata" not in intent
     selector = intent["groups"][0]["selectors"][0]
     assert (selector["selector"], selector["ordinal"]) == ("main-0", 0)
     assert admission["project_id"] == "project-1"
