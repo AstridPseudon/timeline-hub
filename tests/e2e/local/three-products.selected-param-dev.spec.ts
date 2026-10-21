@@ -43,6 +43,7 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
 
   await page.goto(`${harness.devOrigin}/tools/video-editor`);
   await openSeededTimeline(page, harness);
+  await expect(page.getByTestId('video-editor-provider')).toHaveAttribute('data-timeline-id', selected.timelineId, CEILING);
   const clip = page.locator(`.clip-action[data-clip-id="${selected.clipId}"]`).first();
   await expect(clip).toBeVisible(CEILING);
   await clip.click();
@@ -62,6 +63,8 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
   expect(p2.revision).not.toBe(selected.p1.revision);
   await page.reload();
   await openSeededTimeline(page, harness);
+  await expect(page.getByTestId('video-editor-provider')).toHaveAttribute('data-timeline-id', selected.timelineId, CEILING);
+  await expect(clip).toBeVisible(CEILING);
   await clip.click();
   await expect(page.getByTestId('astrid-element-params')).toBeVisible(CEILING);
   await expect(page.getByLabel('Amount')).toHaveValue('8');
@@ -91,6 +94,11 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
 
   await page.reload();
   await openSeededTimeline(page, harness);
+  await expect(page.getByTestId('video-editor-provider')).toHaveAttribute('data-timeline-id', selected.timelineId, CEILING);
+  await expect(clip).toBeVisible(CEILING);
+  await clip.click();
+  await expect(page.getByTestId('astrid-element-params')).toBeVisible(CEILING);
+  await expect(page.getByLabel('Amount')).toHaveValue('8');
   const recovered = page.getByRole('button', { name: /^Recover saved edits/ }).first();
   await expect(recovered).toBeEnabled(CEILING);
   const retry = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
