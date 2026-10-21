@@ -180,7 +180,13 @@ verify_app_source() {
   test -f "$app_root/package.json"
   test "$(realpath "$app_root")" = "$app_root"
   test "$(realpath "$(git -C "$app_root" rev-parse --show-toplevel)")" = "$app_root"
-  test "$(git -C "$app_root" rev-parse HEAD)" = "$APP_ROOT_SHA"
+  app_head=$(git -C "$app_root" rev-parse HEAD)
+  if [ "$app_head" != "$APP_ROOT_SHA" ]; then
+    # The central test service wraps a consumer tree in a synthetic commit.
+    # Its original source commit must remain in verified ancestry; producer
+    # checkouts below still require their exact real HEAD.
+    git -C "$app_root" merge-base --is-ancestor "$APP_ROOT_SHA" "$app_head"
+  fi
   test "$(git -C "$app_root" rev-parse 'HEAD^{tree}')" = "$APP_ROOT_TREE"
   test -z "$(git -C "$app_root" status --porcelain=v1 --untracked-files=all)"
   for pin_path in \
@@ -297,6 +303,10 @@ prepare_private_python() {
   run_root=$1
   base=${NORMAL014_PYTHON_BASE:-/home/user/work/venv-app2-native/bin/python}
   test -x "$base"
+  if [ "${NORMAL014_USE_BASE_PYTHON:-0}" = 1 ]; then
+    NORMAL014_PYTHON=$base
+    return 0
+  fi
   python_root="$run_root/python-runtime"
   "$base" -m venv --copies "$python_root"
   PIP_CACHE_DIR="$run_root/pip-cache" \

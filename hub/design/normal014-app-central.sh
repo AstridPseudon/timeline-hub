@@ -68,7 +68,7 @@ if [ -n "$normal014_private_spec" ]; then
   test -f "$normal014_private_spec"
   normal014_private_spec=$(realpath "$normal014_private_spec")
   test "$normal014_private_spec" = "$(realpath "$normal014_private_spec")"
-  cp -- "$normal014_private_spec" "$overlay/tests/e2e/local/normal014-negative.spec.ts"
+  cp -- "$normal014_private_spec" "$overlay/tests/e2e/local/three-products-negative.spec.ts"
 fi
 source_node_modules=$(realpath "$LOCKED_GRAPH/node_modules")
 test "$source_node_modules" = "$LOCKED_GRAPH/node_modules"
@@ -152,7 +152,7 @@ set +e
 if [ -n "$normal014_private_spec" ]; then
   flock -w 600 /home/user/work/.app-m1-browser.lock \
     node node_modules/playwright/cli.js test --config playwright.three-products.config.ts \
-    --grep "^${normal014_required_case}$" tests/e2e/local/normal014-negative.spec.ts
+    --grep "^${normal014_required_case}$" three-products-negative.spec.ts
 else
   flock -w 600 /home/user/work/.app-m1-browser.lock \
     node node_modules/playwright/cli.js test --config playwright.three-products.config.ts \
