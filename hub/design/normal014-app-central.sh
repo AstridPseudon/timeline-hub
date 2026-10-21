@@ -68,7 +68,7 @@ if [ -n "$normal014_private_spec" ]; then
   test -f "$normal014_private_spec"
   normal014_private_spec=$(realpath "$normal014_private_spec")
   test "$normal014_private_spec" = "$(realpath "$normal014_private_spec")"
-  cp -- "$normal014_private_spec" "$overlay/tests/e2e/local/three-products-negative.spec.ts"
+  cp -- "$normal014_private_spec" "$overlay/tests/e2e/local/three-products.spec.ts"
 fi
 source_node_modules=$(realpath "$LOCKED_GRAPH/node_modules")
 test "$source_node_modules" = "$LOCKED_GRAPH/node_modules"
@@ -149,15 +149,16 @@ if [ "$mode" = preflight ]; then
 fi
 
 set +e
+normal014_playwright_grep="^${normal014_required_case}$"
 if [ -n "$normal014_private_spec" ]; then
-  flock -w 600 /home/user/work/.app-m1-browser.lock \
-    node node_modules/playwright/cli.js test --config playwright.three-products.config.ts \
-    --grep "^${normal014_required_case}$" three-products-negative.spec.ts
-else
-  flock -w 600 /home/user/work/.app-m1-browser.lock \
-    node node_modules/playwright/cli.js test --config playwright.three-products.config.ts \
-    --grep "^${normal014_required_case}$"
+  normal014_playwright_grep='.'
 fi
+set -- --config playwright.three-products.config.ts --grep "$normal014_playwright_grep"
+if [ -n "$normal014_private_spec" ]; then
+  set -- "$@" tests/e2e/local/three-products.spec.ts
+fi
+flock -w 600 /home/user/work/.app-m1-browser.lock \
+  node node_modules/playwright/cli.js test "$@"
 normal014_playwright_exit_status=$?
 echo "normal014 Playwright child exit: $normal014_playwright_exit_status" >&2
 set -e
