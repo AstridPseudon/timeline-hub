@@ -5,15 +5,17 @@ Status: HOLD
 ## Scope and source identity
 
 - Repo: Runtime
-- Hub/integration branch: `tl/integration`
+- Hub/integration branch: `timeline/runtime/tl/integration`
 - Runtime checkout for the farm: `/home/user/work/runtime`
 - Current Runtime commit: `b92d3e7a05eec65c142294ef4873edd059e9b31d`
 - Current Runtime tree: `6abc2f117391de8e7e35c0283f575a002199894d`
-- Current observed Runtime checkout is clean and is on `tl/integration`.
+- Current observed Runtime checkout is clean and is on
+  `timeline/runtime/tl/integration`.
 - This is one Runtime repository full suite, with no targeted file list.
 
 The normal Agent dependency is the existing checkout `/home/user/work/agent` on
-`tl/integration`, supplied through `ASTRID_CHECKOUT` and `PYTHONPATH`. The
+`timeline/agent/tl/integration`, supplied through `ASTRID_CHECKOUT` and
+`PYTHONPATH`. The
 current observed normal-Agent identity is commit
 `1a50cf3f30398500e9f1ccf0b94d59fe7a8bdb3f`, tree
 `b286a34197313b552132b442915b8f318b7bb062`; the farm must re-check this
@@ -30,8 +32,9 @@ consumer or private candidate.
 
 ## Exact farm command
 
-Use the existing tested retained-owned-temp wrapper from
-`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m4-full-temp-retain-all-final/runtime-full-retained-temp.py`.
+Use the existing tested retained-owned-temp wrapper exported at
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-checkpoint-full-retained-temp.py`.
+Its SHA-256 is `aaf7026e2df9ffacd15a8368ddfe2b2b4db4de0ba120df629a499a138eac4378`.
 Run exactly once from the Runtime checkout, after the farm's preflight:
 
 ```sh
@@ -44,7 +47,7 @@ env -i \
   ASTRID_CHECKOUT=/home/user/work/agent \
   PYTHONPATH=/home/user/work/runtime:/home/user/work/agent \
   /home/user/work/venv-runtime/bin/python \
-  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-m4-full-temp-retain-all-final/runtime-full-retained-temp.py \
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-checkpoint-full-retained-temp.py \
   -- /home/user/work/venv-runtime/bin/python -m pytest -q -n 3
 ```
 
@@ -58,8 +61,8 @@ Required paths and identities:
   `/home/user/work/venv-agent/bin/python`. It is not a substitute for the
   Runtime interpreter in this command.
 - Tool path: `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin` (Node
-  `20.19.4` if inspected by the farm preflight). Runtime full does not invoke
-  Node, Remotion, a browser, a renderer, or a native run.
+  `20.19.4` if inspected by the farm preflight); preserve the explicit
+  `env -i` isolation and this required tool path.
 
 The wrapper creates one fresh mode-0700 `/tmp/rt-full-*` root, sets
 `TMPDIR`, `TMP`, and `TEMP` to it, adds pytest `--basetemp` under that root,
@@ -84,13 +87,15 @@ preflight and list every failure before stopping:
 3. Both venv paths, the Runtime pytest entrypoint, and the tool path exist and
    are readable. Shared venvs, runtimes, node_modules, and toolchains are
    read-only.
-4. The wrapper path exists and is the retained-owned-temp wrapper named above;
-   no new wrapper framework, storage-floor override, archive, install, or
-   checkout process is introduced.
-5. A short private temp/run directory is available with mode 0700, the farm has
-   at least 5 GiB free, and no unrelated process owns the run's private paths.
+4. The wrapper path exists, has the SHA-256 above, and is the retained-owned-
+   temp wrapper named above; no new wrapper framework, storage-floor override,
+   archive, install, or checkout process is introduced.
+5. A short private temp/run directory is available with mode 0700, the farm's
+   existing machine disk-floor policy and fixed allowance preflight pass, and
+   no unrelated process owns the run's private paths.
 6. The command is exactly the one above, with no `|| true`, test weakening,
-   retry, browser, renderer, native, or archive/install step.
+   retry, or archive/install step; preserve the explicit `env -i` isolation and
+   required tooling.
 
 ## Prior accepted evidence
 

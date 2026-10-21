@@ -2135,3 +2135,68 @@ Act on it now: list in STATUS every item you were holding ONLY for such a proof,
 
 ## Orchestrator 11:53Z: SCOPE TRIAGE (owner decision; design/orchestrator-scope-triage-20261021T1147Z.md)
 In design/deletion-ledger.viewing.md: set VW-D09b and VW-D09c to DEFERRED (orchestrator scope triage 2026-10-21, design/orchestrator-scope-triage-20261021T1147Z.md; listed in design/owner-film-differences.md). Close as KEEP: D08 (duplicate leaves already deleted; adapters intentional) and the appendix duration/host adapter rows. REQUIRED: D09, VW-D09a, VW-D09-LEGACY-FADE, VW-AUDIO-STEP, D08a/D08b with App, and gate 6.
+
+## 2026-10-21T11:53:47Z — PEER MESSAGE (peer-agent-to-viewing-20261021T1138-composition14-and-derived-inspection.md)
+# Agent to Viewing — 2026-10-21 11:35 UTC
+
+Composition14 normal Agent staging is committed255b6856cc1c96f4d40ddac05d4e3d98bb81051c/treeaed2ccf7596add9118b272afad831c214ede11fe with exact21fde4d2 archive/72134 bytes/80 members. Independent pin review1137 is running. Public Runtime95 remains unchanged, no inspectionMouth addition or physical rerun. Please coordinate App14 counterpart independently of Runtime018; final adoption waits reviewed paired consumers and normal readiness checks.
+
+SOURCE ACK for the bounded optional derived inspectionMouth proposal1038, following exact Agent review1115. Typed ModifierBounds/null through existing diagnostics sanitizer preserves outer geometry UNKNOWN and frame/source guards; existing presenter mouthInspectionRect remains sole producer. Semantic diagnostics.mouth/codebook stay unchanged. No motion scalar substitution. This is reciprocal source agreement only; no implementation, package mutation, activation or fallback retirement before the next unpublished coordinated successor and actual proof. Retain partial697/explicit799 results, private fallback/statistics and strict2% denominator. Proposal is excluded from immutable13 and packed14.
+
+## 2026-10-21T11:53:47Z — PEER MESSAGE (peer-agent-to-viewing-app-20261021T1130-composition14-stage.md)
+# Agent/App coordinated Composition14 stage — 2026-10-21 11:30 UTC
+ACK Viewing qualified immutable14 handoff21fde4d2/72134bytes80members and exact source df7b8630; public13 unchanged. Agent stages ONE normal inactive consumer branch agt-m3-composition14-normal-agent-consumer-stage-1130 using actual artifact/lock. HOME App please stage its ONE normal counterpart if not already assigned, preserving current safety/currentRuntime14. Return exact lock/hash and independent pin verdict; no duplicate package smoke or physical run. Viewing owns Scene/clip-look/duration/purity semantic/package proof; Agent/App own targeted consumer checks and actual activation gates before coordinated integration adoption. No Runtime successor dependency and no inspectionMouth in14. Full frozenb3c/C13 and Viewing frozen public13 physical tuple remain separate; no old result relabel.
+
+## 2026-10-21T11:53:47Z — PEER MESSAGE (peer-app-to-viewing-agent-inspection-mouth-1130.md)
+# App source ACK — additive inspection mouth carrier
+
+**Decision: SOURCE ACK.** App has no concrete consumer or type conflict with
+the bounded proposal in
+`vw-m3-d09-existing-inspection-carrier-proposal-1038.md` and the Viewing
+11:03 request.
+
+## Bounded trace
+
+- The current App Composition consumer is
+  `src/tools/video-editor/compositions/playerEvaluation.ts`. It prepares and
+  returns the Composition scene (`prepareCompositionScene` or `prepareScene`)
+  without narrowing, copying, or interpreting `SceneLayer.diagnostics`.
+- The App's direct selected-frame query callers are the existing parity/control
+  tests in:
+  - `src/tools/video-editor/compositions/VisualClip.evaluation.test.tsx`
+  - `src/tools/video-editor/compositions/playerEvaluation.test.ts`
+  - `src/tools/video-editor/data/canonicalCompositionState.mainImageCap.test.ts`
+  - `src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.initialRead.test.tsx`
+  - `src/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewSurface.storedCap.test.tsx`
+- Those queries inspect clip/timing/visibility/findings or layer presence only;
+  no App production code or test reads `layer.diagnostics`,
+  `diagnostics.mouth`, or any other `ComponentDiagnostics` member.
+- App has no local `ComponentDiagnostics` declaration or diagnostic sanitizer.
+  The currently installed public13 declaration already makes the existing
+  carrier optional (`ComponentFrameSupport.diagnostics?`) and its current
+  `ComponentDiagnostics` is not consumed as an exact/exhaustive object by App.
+
+Therefore adding exactly
+`inspectionMouth?: ModifierBounds | null` to the existing
+`ComponentDiagnostics` carrier is structurally compatible with App. Old
+Composition results that omit the optional field remain valid. App does not
+need a fallback, migration, generated-contract change, or caller change.
+
+## Semantics acknowledged
+
+This ACK preserves the request's boundaries: the registered presenter
+`mouthInspectionRect` remains the sole producer; semantic `diagnostics.mouth`
+and the motion codebook remain unchanged, including valid closed `0.0`;
+absent/raw-invalid compatibility input remains `null`; and source/frame,
+outer-geometry, forged/stale, UNKNOWN, strict 2% denominator, private
+fallback, and old failed-physical-evidence behavior remain unchanged.
+
+This is source agreement only. It does not approve implementation, schema or
+generated changes, public13/public14 tuple adoption, repacking, pinning,
+release, activation, or physical/browser verification.
+
+## Verification limits
+
+No tests, browser/build/install/graph/full suite, pin, release, or artifact
+operation was run, per the task boundary. The conclusion is from the bounded
+App source/type trace above.
