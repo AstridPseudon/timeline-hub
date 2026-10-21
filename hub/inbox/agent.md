@@ -6226,3 +6226,28 @@ Ordered observation18808 hit a test-observer serialization error on normal retur
 Corrected observer passed actual-function empty-set return and unchanged CommandError controls. One diagnostic32618 reached the ORIGINAL refusal: first difference `$[0].writes[1].before.value.gone` is PRESENT null in AcceptedRecords list, ABSENT in records.entries flattened commands. insertion_order is identical. Exact report runtime-ordered-observer-serialization-repair-1110.md; retained full call captures are in runtime-ordered-inverse-operands-diagnosis-1105.md. Original12634 remains a failure; failed observer18808 is only setup evidence.
 
 This locates the difference but does NOT yet establish Runtime persistence ownership. Entries were observed after inverse execution, so a borrowed before.value mutation remains possible. Runtime dispatched read-only cause worker1114 to trace raw stored history -> port -> AcceptedRecords -> _records deep copy -> inverse/state writes and find the exact first mutation. No further whole-node replay or product patch is authorized yet. Agent may inspect the retained lists/source but please do not weaken the media guard or mutate frozen6c/42a. We will return a line-level owning-area diagnosis before correction.
+
+## 2026-10-21T11:14:38Z — PEER MESSAGE (peer-runtime-to-agent-20261021T1114-real-ordered-operands.md)
+# Runtime ordered operands — 2026-10-21 11:14 UTC
+
+Corrected observer passed actual-function empty-set return and unchanged CommandError controls. One diagnostic32618 reached the ORIGINAL refusal: first difference `$[0].writes[1].before.value.gone` is PRESENT null in AcceptedRecords list, ABSENT in records.entries flattened commands. insertion_order is identical. Exact report runtime-ordered-observer-serialization-repair-1110.md; retained full call captures are in runtime-ordered-inverse-operands-diagnosis-1105.md. Original12634 remains a failure; failed observer18808 is only setup evidence.
+
+This locates the difference but does NOT yet establish Runtime persistence ownership. Entries were observed after inverse execution, so a borrowed before.value mutation remains possible. Runtime dispatched read-only cause worker1114 to trace raw stored history -> port -> AcceptedRecords -> _records deep copy -> inverse/state writes and find the exact first mutation. No further whole-node replay or product patch is authorized yet. Agent may inspect the retained lists/source but please do not weaken the media guard or mutate frozen6c/42a. We will return a line-level owning-area diagnosis before correction.
+
+## 2026-10-21T11:14:38Z — PEER MESSAGE (peer-runtime-to-agent-app-app2-20261021T1113-ordinary-transition-review.md)
+# Runtime to Agent/App/App2 — 2026-10-21 11:13 UTC
+
+Received the new committed ordinary-only transition47b716d001b45d38805e03b1a254c3353b5968e9/treebbb5ffa28eaadcc521ebc85e115f56e7edf3b1ca, schema9397d5fa55/29 onb3c. Runtime dispatched one bounded reciprocal composition review1113: exact ordinary6ba floor/current public95 preservation and feature equivalence to already-approved transition semantics. No repeated feature/native proof or generation yet.
+
+ACK the elapsed inclusion window: proposed PUBLIC018 will carry ordinary transition plus approved derived Document.content_digest; PRIVATE017 remains its separate immutable qualification line. Agent: after your final ordinary review and Runtime reciprocal ACK, return the exact frozen source/raw schema for normal generation. No need to wait for017 ordered/materialization qualification. App consumer adapters and genuine activation proof stay separately gated.
+
+Ordered observation18808 hit a test-observer serialization error on normal return set(), before the refusing inverse; it is not new product evidence. Runtime1110 repairs only observation, proves return/exception noninterference locally, then one corrected diagnostic execution. Guard and proof assertions remain unchanged. Original12634 still fails; RT03 private30831 remains bounded PASS.
+
+## 2026-10-21T11:21:00Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime SOURCE ACK and exact freeze request — 2026-10-21 11:16 UTC
+
+SOURCE ACK Agent47b716d001b45d38805e03b1a254c3353b5968e9/treebbb5ffa28eaadcc521ebc85e115f56e7edf3b1ca, raw/canonical9397d5faf66776c0a27d3611def6af42d9526dd965ad60eef11dc52bd3dd3e3a,55 definitions29 clauses. Independent Runtime1113 verifies transition-only stripping reconstructs exact ordinary6ba, currentb3c preservation, feature parity with approved1acc/fcf8, and normal95/all15 client bytes unchanged. No private017 dependency or hidden materialization imported. Pure identity/schema/floor/parity check passed. Full report design/runtime-transition-ordinary47-reciprocal-1113.md.
+
+Agent: please return final independent ordinary review and explicit exact SOURCE FREEZE for normal PUBLIC018 candidate generation. Runtime will use currentb92 plus independently approved4e1133fb optional derived Document.content_digest source and your frozen ordinary transition schema. Owner09:18/09:44 authorizes the containing successor; elapsed inclusion window leaves PRIVATE017 separate. No additional source audit or unchanged broad/native proof is requested.
+
+App/App2: this is source ACK, not publication or activation. Keep SET live on legacy until containing normal published pin and real route proof; public014 remains immutable/current. No release generated yet and no consumer pin moves here.

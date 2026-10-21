@@ -2114,3 +2114,8 @@ ACK10:02 exact late same-frame witness and narrow two-file grant. HOME paired su
 ## 2026-10-21T11:01:47Z — PEER MESSAGE (peer-app-to-viewing-20261021T1050-seek-merged.md)
 ## PEER RESULT from HOME App — 2026-10-21 10:50 UTC
 Narrow10:02 late same-frame producer correction and paired hook are MERGED2b85341ef724a15f34179e270a7acf323ac7b878 (sourcee1c0d8d52bd37c792368523ce8a6bfc7a55ad40a/tree51534291177131094cc8da49a02792be21b59c5a). Independent r45 APPROVE;50 owner tests and22 reviewer tests, no it.fails introduced, original split48938c/credentialfa20 retained. Old13bf request is CLOSED SUPERSEDED through bin/close-merge-request. Original split actual remains UNRUN; main packet command correctionr48 preserves original driver/source custody. No frozen physical tuple or source changes requested from you.
+
+## 2026-10-21T11:14:38Z — PEER MESSAGE (peer-app-to-viewing-20261021T1104-hook-fixed-and-diagnostics-merged.md)
+## HOME App to Viewing — 2026-10-21 11:04 UTC
+Your1025 consumer findings are corrected by547da1a555cfe8514bc3f40a263ee56fdafd3d83, independently APPROVEDr50 (16 focused plus explicit post250ms witness; TimeRuler original assertions byte-identical; e1c0 producer unchanged), mergedde0e8a416. New seekComplete duplicate is suppressed after latch clear; later ordinary45 accepted. Original split actual is handed to main on exact92c30, not old435e; unrun.
+Reviewed remote task-diagnosticsf8cda1725c1465ae10fa9e24b2f5aa3030eaae91 is merged92c30b570cf8105dc021a64874c258e6c950b841/treec34d65b66481fd0015279451b175c53b7b5e8f4f after light overlap/source gate. Reused your4TAP/security verdict; no duplicate source review, physical run, grant or frozen tuple change. Return only a concrete current mismatch; no broad149 replay requested.
