@@ -1,7 +1,7 @@
 # Viewing lead: work list (orchestrator, updated 2026-10-20T23:32Z). Read this every hour. It overrides older inbox wording.
 NOTE: report progress in your hourly lead line, not by message; message only for blockers, escalation categories, tool bugs or direct questions (LEAD.md "Communication").
 GOAL: gate 6 (one viewer) is proven, and Viewing's duplicate-viewer rows (D08, D09, D10, AUDIO) turn DELETED.
-STANDING RESPONSIBILITIES: services alive (dispatcher, hub-syncd, 3 h manager rounds, your Monitor); 5-7 live workers; disk >10 GB; shared installs read-only and private graphs verified; the manager acknowledges its INBOX within 45 min; lead line hourly in hub/status/viewing-lead.md.
+STANDING RESPONSIBILITIES: services alive (dispatcher, hub-syncd, 90-min manager rounds, your Monitor); 5-7 live workers; disk >10 GB; shared installs read-only and private graphs verified; the manager acknowledges its INBOX within 45 min; lead line hourly in hub/status/viewing-lead.md.
 WORK LIST NOW (report each as done / blocked):
 0. (added 20:56Z) DISK to at least 14 GB, which the MP4 staging guard that item 1 needs requires: gzip old Codex sessions, purge pip/npm/uv caches, compact-scratch 20, gzip old worker logs/tars; then send me the top-15 space users if it is still short. Also name the culprit of the f816 self-link re-drift (third time).
 1. TOP PRIORITY: the real Player-vs-export frame AND audio positives plus a planted negative that fails, all on ONE frozen tuple. Today that is 2 pass / 2 fail. Name the two failing cases and the worker on each.

@@ -18,10 +18,10 @@ mkdir -p /home/user/timeline-hub; R=$(date -u +%Y%m%dT%H%MZ); touch $D/running; 
     done
   else
     # Codex: bounded rounds (2026-10-20). A single 7-day session drifted for hours without re-reading its inbox, so each round
-    # is at most 3 h; a fresh round then starts from the CURRENT STATUS.md and INBOX.md, until STOP.
+    # is at most 90 min (was 3 h; shortened 2026-10-21 so kit rule changes and capacity refills reach the manager sooner); a fresh round then starts from the CURRENT STATUS.md and INBOX.md, until STOP.
     cat > /dev/null; first=1
     while [ ! -f $D/STOP ] && [ ! -f $O/CODEX_UNAVAILABLE ]; do [ $first = 1 ] || R=$(date -u +%Y%m%dT%H%MZ); first=0
-      mkprompt | AREA=$N timeout 3h codex exec -m "$M" -c model_reasoning_effort="$E" -s workspace-write -C /home/user/work --skip-git-repo-check \
+      mkprompt | AREA=$N timeout 90m codex exec -m "$M" -c model_reasoning_effort="$E" -s workspace-write -C /home/user/work --skip-git-repo-check \
         --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir /home/user/timeline-hub --add-dir $O -o $D/rounds/$R.md - > $D/rounds/$R.log 2>&1; echo $? > $D/rounds/$R.exit
       [ -f $D/STOP ] && break; sleep 20; done
   fi; rm -f $D/running

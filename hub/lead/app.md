@@ -1,7 +1,7 @@
 # App lead: work list (orchestrator, updated 2026-10-20T23:32Z). Read this every hour. It overrides older inbox wording.
 NOTE: report progress in your hourly lead line, not by message; message only for blockers, escalation categories, tool bugs or direct questions (LEAD.md "Communication").
 GOAL: App's M2 writer retirements land, and its deletion-ledger rows turn DELETED. You keep the machine and the manager delivering that.
-STANDING RESPONSIBILITIES: services alive (dispatcher, hub-syncd, 3 h manager rounds, your Monitor); 5-7 live workers; disk >10 GB (sweep-tmp, recycle, compact-scratch hourly); the manager acknowledges its INBOX within 45 min (restart it if not); lead line hourly in hub/status/app-lead.md.
+STANDING RESPONSIBILITIES: services alive (dispatcher, hub-syncd, 90-min manager rounds, your Monitor); 5-7 live workers; disk >10 GB (sweep-tmp, recycle, compact-scratch hourly); the manager acknowledges its INBOX within 45 min (restart it if not); lead line hourly in hub/status/app-lead.md.
 WORK LIST NOW (report each as done / blocked):
 1. The 5 new failures on 20ea14c26 (shotCompositionRuntime popup x3, getProjectVerifiedMedia relay x2): fix workers green, then the ONE full re-run green. No dependent merges until then.
 2. Workers back to 5+ within 30 min; at least 2 on deletion-ledger rows (D01 writers you kept, D02, D08, D10). Tell me their ledger row ids.
