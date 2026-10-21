@@ -7,8 +7,9 @@ import os
 import shutil
 import subprocess
 import time
+import zipfile
 from collections.abc import Mapping
-from dataclasses import asdict, is_dataclass
+from dataclasses import asdict, dataclass, is_dataclass, replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -27,17 +28,6 @@ from astrid.sdk.timeline.assembly import read_assembly_proposal
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.workspace_client import WorkspaceClientError
 
-_D13_PROFILE = Path(os.environ.get("ASTRID_D13_SOURCE_PROFILE", ""))
-_D13_NODE = Path("/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node")
-_D13_REMOTION = Path("/home/user/work/runtimes/agent-remotion-main95bd")
-_D13_BROWSER = Path("/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell")
-_D13_FFMPEG = Path("/usr/bin/ffmpeg")
-_D13_FFPROBE = Path("/usr/bin/ffprobe")
-_D13_NODE_SHA256 = "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"
-_D13_REMOTION_LOCK_SHA256 = "c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24"
-_D13_BROWSER_SHA256 = "63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4"
-_D13_FFMPEG_SHA256 = "ed16af623947494a72e284b6eb8ff225f2da22b38b5d5069c2fd4b4ba3384e41"
-_D13_FFPROBE_SHA256 = "272f6ebc634a63d9c8b4ca68e964119d980f25154e5aa2c35e5487da48e9a58f"
 _D13_REQUIRED_PROFILE_KEYS = frozenset(
     {"profile", "runtime_checkout", "source_checkout", "runtime_environment"}
 )
@@ -45,6 +35,98 @@ _D13_REQUIRED_ORIGINS = (
     "host", "child", "action", "client", "sdk", "runtime_protocol",
     "runtime_protocol.platform", "astrid_runtime",
 )
+
+
+@dataclass(frozen=True)
+class _D13Inputs:
+    """Manager-selected D13 inputs; none are product authority fields."""
+
+    profile: Path
+    bindings: Path
+    expected_source: Path
+    expected_environment: Path
+    agent_commit: str
+    agent_tree: str
+    agent_wheel: Path
+    agent_wheel_sha256: str
+    source_digest: str
+    node: Path
+    node_sha256: str
+    remotion: Path
+    remotion_lock_sha256: str
+    browser: Path
+    browser_sha256: str
+    ffmpeg: Path
+    ffmpeg_sha256: str
+    ffprobe: Path
+    ffprobe_sha256: str
+    node_modules: Path
+
+
+_D13_BINDING_KEYS = frozenset({
+    "agent_commit", "agent_tree", "agent_wheel", "agent_wheel_sha256",
+    "source_checkout", "source_digest", "runtime_environment",
+})
+
+
+def _d13_inputs() -> tuple[_D13Inputs, list[str]]:
+    """Read the explicit manager contract and the existing tool environment."""
+    failures: list[str] = []
+
+    def required(name: str) -> str:
+        value = os.environ.get(name, "").strip()
+        if not value:
+            failures.append(f"missing required D13 environment input: {name}")
+        return value
+
+    profile = Path(required("ASTRID_D13_SOURCE_PROFILE"))
+    bindings_path = Path(required("ASTRID_D13_EXPECTED_BINDINGS"))
+    bindings: dict[str, str] = {}
+    if bindings_path.is_file() and not bindings_path.is_symlink():
+        try:
+            raw = json.loads(bindings_path.read_text(encoding="utf-8"))
+            if isinstance(raw, dict) and set(raw) == _D13_BINDING_KEYS and all(
+                isinstance(value, str) and value.strip() for value in raw.values()
+            ):
+                bindings = {key: value.strip() for key, value in raw.items()}
+            else:
+                failures.append("D13 expected bindings must contain the exact Agent/source keys")
+        except (OSError, ValueError) as exc:
+            failures.append(f"D13 expected bindings are unreadable: {exc}")
+    else:
+        failures.append(f"D13 expected bindings are not a regular file: {bindings_path}")
+
+    def binding(name: str) -> str:
+        value = bindings.get(name, "")
+        if not value:
+            failures.append(f"D13 expected bindings missing {name}")
+        return value
+
+    return (
+        _D13Inputs(
+            profile=profile,
+            bindings=bindings_path,
+            expected_source=Path(binding("source_checkout")),
+            expected_environment=Path(binding("runtime_environment")),
+            agent_commit=binding("agent_commit"),
+            agent_tree=binding("agent_tree"),
+            agent_wheel=Path(binding("agent_wheel")),
+            agent_wheel_sha256=binding("agent_wheel_sha256"),
+            source_digest=binding("source_digest"),
+            node=Path(required("ASTRID_NODE_EXECUTABLE")),
+            node_sha256=required("ASTRID_D13_NODE_SHA256"),
+            remotion=Path(required("ASTRID_REMOTION_PROJECT_DIR")),
+            remotion_lock_sha256=required("ASTRID_D13_REMOTION_LOCK_SHA256"),
+            browser=Path(required("ASTRID_REMOTION_BROWSER_EXECUTABLE")),
+            browser_sha256=required("ASTRID_D13_BROWSER_SHA256"),
+            ffmpeg=Path(required("ASTRID_FFMPEG_EXECUTABLE")),
+            ffmpeg_sha256=required("ASTRID_D13_FFMPEG_SHA256"),
+            ffprobe=Path(required("ASTRID_FFPROBE_EXECUTABLE")),
+            ffprobe_sha256=required("ASTRID_D13_FFPROBE_SHA256"),
+            node_modules=Path(required("ASTRID_TEST_NODE_MODULES")),
+        ),
+        failures,
+    )
 
 
 def _plain(value):
@@ -65,27 +147,113 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _d13_resource_locks(profile: Mapping[str, str]) -> dict[str, str]:
+def _d13_resource_locks(profile: Mapping[str, str], inputs: _D13Inputs) -> dict[str, str]:
     source = Path(profile["source_checkout"]).resolve()
     resources = {
         "source": str(source),
         "source_digest": source_checkout_digest(source),
-        "node": _sha256_file(_D13_NODE),
-        "remotion_package_lock": _sha256_file(_D13_REMOTION / "package-lock.json"),
-        "browser": _sha256_file(_D13_BROWSER),
-        "ffmpeg": _sha256_file(_D13_FFMPEG),
-        "ffprobe": _sha256_file(_D13_FFPROBE),
+        "node": _sha256_file(inputs.node),
+        "remotion_package_lock": _sha256_file(inputs.remotion / "package-lock.json"),
+        "browser": _sha256_file(inputs.browser),
+        "ffmpeg": _sha256_file(inputs.ffmpeg),
+        "ffprobe": _sha256_file(inputs.ffprobe),
     }
     return resources
 
 
-def _d13_installed_profile(tmp_path: Path) -> tuple[dict[str, str], dict[str, str]]:
+def _d13_binding_failures(profile: Mapping[str, str], inputs: _D13Inputs) -> list[str]:
+    """Compare selected profile/resources with manager-supplied expectations."""
     failures: list[str] = []
-    if not _D13_PROFILE.is_file() or _D13_PROFILE.is_symlink():
-        failures.append(f"profile is not a regular file: {_D13_PROFILE}")
+    expected_source = inputs.expected_source.resolve()
+    expected_environment = inputs.expected_environment.resolve()
+    actual_source = Path(str(profile.get("source_checkout", ""))).resolve()
+    actual_runtime = Path(str(profile.get("runtime_checkout", ""))).resolve()
+    actual_environment = Path(str(profile.get("runtime_environment", ""))).resolve()
+    if actual_source != expected_source:
+        failures.append(f"selected source differs from manager binding: {actual_source} != {expected_source}")
+    if actual_runtime != expected_source:
+        failures.append(f"selected runtime tree differs from manager binding: {actual_runtime} != {expected_source}")
+    if actual_environment != expected_environment:
+        failures.append(
+            f"selected runtime environment differs from manager binding: "
+            f"{actual_environment} != {expected_environment}"
+        )
+    if actual_source.is_dir():
+        try:
+            actual_digest = source_checkout_digest(actual_source)
+        except (OSError, ValueError) as exc:
+            failures.append(f"selected source digest could not be measured: {exc}")
+        else:
+            if actual_digest != inputs.source_digest:
+                failures.append(
+                    f"selected source digest differs from manager binding: "
+                    f"{actual_digest} != {inputs.source_digest}"
+                )
+
+    for label, value in (("commit", inputs.agent_commit), ("tree", inputs.agent_tree)):
+        if len(value) != 40 or any(char not in "0123456789abcdef" for char in value.lower()):
+            failures.append(f"manager Agent {label} binding is not a full object id")
+    for label, value in (
+        ("wheel", inputs.agent_wheel_sha256), ("source", inputs.source_digest),
+        ("node", inputs.node_sha256), ("Remotion lock", inputs.remotion_lock_sha256),
+        ("browser", inputs.browser_sha256), ("ffmpeg", inputs.ffmpeg_sha256),
+        ("ffprobe", inputs.ffprobe_sha256),
+    ):
+        if len(value) != 64 or any(char not in "0123456789abcdef" for char in value.lower()):
+            failures.append(f"manager {label} binding is not a SHA-256 digest")
+    wheel = inputs.agent_wheel
+    if not wheel.is_file() or wheel.is_symlink():
+        failures.append(f"manager Agent wheel is unavailable or symlinked: {wheel}")
+    else:
+        actual_wheel = _sha256_file(wheel)
+        if actual_wheel != inputs.agent_wheel_sha256:
+            failures.append(
+                f"Agent wheel differs from manager binding: {actual_wheel} != {inputs.agent_wheel_sha256}"
+            )
+        else:
+            try:
+                with zipfile.ZipFile(wheel) as archive:
+                    for member in archive.namelist():
+                        if member.endswith("/RECORD"):
+                            continue
+                        member_path = Path(member)
+                        if member_path.is_absolute() or ".." in member_path.parts:
+                            failures.append(f"Agent wheel member escapes its package root: {member}")
+                            continue
+                        target = actual_source / member_path
+                        if target.is_symlink() or not target.is_file():
+                            failures.append(f"installed Agent wheel member is missing: {member}")
+                        elif target.read_bytes() != archive.read(member):
+                            failures.append(f"installed Agent wheel member differs: {member}")
+            except (OSError, ValueError, zipfile.BadZipFile) as exc:
+                failures.append(f"Agent wheel could not be compared with installed files: {exc}")
+
+    resources = (
+        ("node", inputs.node, inputs.node_sha256),
+        ("Remotion package lock", inputs.remotion / "package-lock.json", inputs.remotion_lock_sha256),
+        ("browser", inputs.browser, inputs.browser_sha256),
+        ("ffmpeg", inputs.ffmpeg, inputs.ffmpeg_sha256),
+        ("ffprobe", inputs.ffprobe, inputs.ffprobe_sha256),
+    )
+    for label, path, expected in resources:
+        if not path.is_file() or path.is_symlink():
+            failures.append(f"{label} is unavailable or symlinked: {path}")
+        elif _sha256_file(path) != expected:
+            failures.append(f"{label} differs from manager-selected tool binding: {path}")
+    if not inputs.remotion.is_dir() or inputs.remotion.is_symlink():
+        failures.append(f"Remotion project is unavailable or symlinked: {inputs.remotion}")
+    if not inputs.node_modules.is_dir() or inputs.node_modules.is_symlink():
+        failures.append(f"Node modules are unavailable or symlinked: {inputs.node_modules}")
+    return failures
+
+
+def _d13_installed_profile(tmp_path: Path) -> tuple[dict[str, str], dict[str, str]]:
+    inputs, failures = _d13_inputs()
+    if not inputs.profile.is_file() or inputs.profile.is_symlink():
+        failures.append(f"profile is not a regular file: {inputs.profile}")
         return {}, {"failures": "; ".join(failures)}
     try:
-        profile = json.loads(_D13_PROFILE.read_text(encoding="utf-8"))
+        profile = json.loads(inputs.profile.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         return {}, {"failures": f"profile unreadable: {exc}"}
     if not isinstance(profile, dict) or set(profile) != _D13_REQUIRED_PROFILE_KEYS:
@@ -94,6 +262,7 @@ def _d13_installed_profile(tmp_path: Path) -> tuple[dict[str, str], dict[str, st
     if profile.get("profile") != "astrid":
         failures.append("profile id is not astrid")
     if profile:
+        failures.extend(_d13_binding_failures(profile, inputs))
         source = Path(str(profile["source_checkout"]))
         runtime = Path(str(profile["runtime_checkout"]))
         environment = Path(str(profile["runtime_environment"]))
@@ -123,20 +292,7 @@ def _d13_installed_profile(tmp_path: Path) -> tuple[dict[str, str], dict[str, st
                     failures.append(f"installed origin escaped selected tree: {key}={origins[key]}")
         except (AttributeError, ImportError, KeyError, OSError, TypeError, ValueError) as exc:
             failures.append(f"installed origin probe failed: {exc}")
-    for label, path, expected in (
-        ("node", _D13_NODE, _D13_NODE_SHA256),
-        ("Remotion package lock", _D13_REMOTION / "package-lock.json", _D13_REMOTION_LOCK_SHA256),
-        ("browser", _D13_BROWSER, _D13_BROWSER_SHA256),
-        ("ffmpeg", _D13_FFMPEG, _D13_FFMPEG_SHA256),
-        ("ffprobe", _D13_FFPROBE, _D13_FFPROBE_SHA256),
-    ):
-        if not path.is_file() or path.is_symlink():
-            failures.append(f"{label} is unavailable or symlinked: {path}")
-        elif _sha256_file(path) != expected:
-            failures.append(f"{label} hash changed: {path}")
-    if not _D13_REMOTION.is_dir() or _D13_REMOTION.is_symlink():
-        failures.append(f"Remotion project is unavailable or symlinked: {_D13_REMOTION}")
-    fonts = _D13_REMOTION / "public" / "fonts"
+    fonts = inputs.remotion / "public" / "fonts"
     if not fonts.is_dir() or not (fonts / "FONT_PROVENANCE.md").is_file():
         failures.append("Remotion font provenance is unavailable")
     else:
@@ -157,7 +313,7 @@ def _d13_installed_profile(tmp_path: Path) -> tuple[dict[str, str], dict[str, st
         failures.append(f"free disk below 5 GiB: {usage.free}")
     if failures:
         return profile, {"failures": "; ".join(failures)}
-    return profile, _d13_resource_locks(profile)
+    return profile, _d13_resource_locks(profile, inputs)
 
 
 class _InstalledRuntimeService:
@@ -242,6 +398,8 @@ def installed_runtime(tmp_path, monkeypatch):
     """Own the normal installed Runtime authority for the D13 positive."""
     profile, preflight = _d13_installed_profile(tmp_path)
     assert "failures" not in preflight, preflight["failures"]
+    inputs, input_failures = _d13_inputs()
+    assert not input_failures, "; ".join(input_failures)
     source = Path(profile["source_checkout"]).resolve()
     environment = Path(profile["runtime_environment"]).resolve()
     runtime_cli = environment / "bin" / "astrid-runtime"
@@ -255,18 +413,20 @@ def installed_runtime(tmp_path, monkeypatch):
         "HOME": str(home),
         "LANG": "C.UTF-8",
         "LC_ALL": "C.UTF-8",
-        "PATH": f"{_D13_NODE.parent}:{environment / 'bin'}:/usr/bin:/bin",
+        "PATH": f"{inputs.node.parent}:{environment / 'bin'}:/usr/bin:/bin",
         "PYTHONDONTWRITEBYTECODE": "1",
         "TMPDIR": str(temp_root),
         "ASTRID_HOST_EXECUTION_PROFILE": "installed",
         "ASTRID_PACK_HOST_PYTHON": str(environment / "bin" / "python"),
         "ASTRID_PACKS_PATH": str(source / "astrid" / "packs" / "rendering"),
-        "ASTRID_REMOTION_PROJECT_DIR": str(_D13_REMOTION),
-        "ASTRID_REMOTION_BROWSER_EXECUTABLE": str(_D13_BROWSER),
-        "ASTRID_NODE_EXECUTABLE": str(_D13_NODE),
-        "ASTRID_TEST_NODE_MODULES": str(_D13_REMOTION / "node_modules"),
+        "ASTRID_REMOTION_PROJECT_DIR": str(inputs.remotion),
+        "ASTRID_REMOTION_BROWSER_EXECUTABLE": str(inputs.browser),
+        "ASTRID_NODE_EXECUTABLE": str(inputs.node),
+        "ASTRID_TEST_NODE_MODULES": str(inputs.node_modules),
+        "ASTRID_FFMPEG_EXECUTABLE": str(inputs.ffmpeg),
+        "ASTRID_FFPROBE_EXECUTABLE": str(inputs.ffprobe),
         "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": str(source),
-        "ASTRID_RUNTIME_SOURCE_MANIFEST": str(_D13_PROFILE),
+        "ASTRID_RUNTIME_SOURCE_MANIFEST": str(inputs.profile),
     }
     def run_runtime(*args):
         completed = subprocess.run(
@@ -279,12 +439,12 @@ def installed_runtime(tmp_path, monkeypatch):
     bootstrap = None
     try:
         run_runtime(
-            "workspace", "create", "--profile", "astrid", "--source-manifest", str(_D13_PROFILE),
+            "workspace", "create", "--profile", "astrid", "--source-manifest", str(inputs.profile),
             "--data-root", str(support), "--realm-root", str(realm_root),
             "--hosted-origin", "off",
         )
         bootstrap = run_runtime(
-            "up", "--profile", "astrid", "--source-manifest", str(_D13_PROFILE),
+            "up", "--profile", "astrid", "--source-manifest", str(inputs.profile),
             "--data-root", str(support), "--hosted-origin", "https://astrid.local",
             "--door-port", "0", "--wait",
         )
@@ -312,7 +472,7 @@ def installed_runtime(tmp_path, monkeypatch):
                 env=runtime_env, cwd=tmp_path, check=False, text=True, capture_output=True,
             )
             assert completed.returncode == 0, completed.stdout + completed.stderr
-            assert _d13_resource_locks(profile) == preflight
+            assert _d13_resource_locks(profile, inputs) == preflight
 
 
 def test_d13_installed_native_preflight(tmp_path):
@@ -321,6 +481,71 @@ def test_d13_installed_native_preflight(tmp_path):
     assert "failures" not in result, result["failures"]
     assert profile["profile"] == "astrid"
     assert result["source_digest"]
+
+
+def _offline_d13_inputs(tmp_path: Path) -> tuple[_D13Inputs, dict[str, str]]:
+    source = tmp_path / "site-packages"
+    (source / "astrid" / "packs").mkdir(parents=True)
+    (source / "astrid" / "packs" / "marker.txt").write_text("selected", encoding="utf-8")
+    environment = tmp_path / "venv"
+    (environment / "bin").mkdir(parents=True)
+    remotion = tmp_path / "remotion"
+    (remotion / "public" / "fonts").mkdir(parents=True)
+    (remotion / "package-lock.json").write_text("lock", encoding="utf-8")
+    browser = tmp_path / "browser"
+    node = tmp_path / "node"
+    ffmpeg = tmp_path / "ffmpeg"
+    ffprobe = tmp_path / "ffprobe"
+    for path, content in ((browser, "browser"), (node, "node"), (ffmpeg, "ffmpeg"), (ffprobe, "ffprobe")):
+        path.write_text(content, encoding="utf-8")
+    node_modules = remotion / "node_modules"
+    node_modules.mkdir()
+    wheel = tmp_path / "astrid-0.1.0-py3-none-any.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr("astrid/packs/marker.txt", "selected")
+    inputs = _D13Inputs(
+        profile=tmp_path / "astrid.json", bindings=tmp_path / "bindings.json",
+        expected_source=source, expected_environment=environment,
+        agent_commit="1" * 40, agent_tree="2" * 40,
+        agent_wheel=wheel, agent_wheel_sha256=_sha256_file(wheel),
+        source_digest=source_checkout_digest(source), node=node,
+        node_sha256=_sha256_file(node), remotion=remotion,
+        remotion_lock_sha256=_sha256_file(remotion / "package-lock.json"),
+        browser=browser, browser_sha256=_sha256_file(browser),
+        ffmpeg=ffmpeg, ffmpeg_sha256=_sha256_file(ffmpeg),
+        ffprobe=ffprobe, ffprobe_sha256=_sha256_file(ffprobe),
+        node_modules=node_modules,
+    )
+    profile = {
+        "profile": "astrid", "runtime_checkout": str(source),
+        "source_checkout": str(source), "runtime_environment": str(environment),
+    }
+    return inputs, profile
+
+
+def test_d13_explicit_bindings_accept_exact_offline_positive(tmp_path):
+    inputs, profile = _offline_d13_inputs(tmp_path)
+    assert _d13_binding_failures(profile, inputs) == []
+
+
+def test_d13_explicit_bindings_reject_wrong_source_profile(tmp_path):
+    inputs, profile = _offline_d13_inputs(tmp_path)
+    wrong = tmp_path / "wrong-site-packages"
+    (wrong / "astrid" / "packs").mkdir(parents=True)
+    profile["source_checkout"] = str(wrong)
+    profile["runtime_checkout"] = str(wrong)
+    failures = _d13_binding_failures(profile, inputs)
+    assert any("selected source differs" in failure for failure in failures)
+    assert any("selected source digest differs" in failure for failure in failures)
+
+
+def test_d13_explicit_bindings_reject_substituted_tool(tmp_path):
+    inputs, profile = _offline_d13_inputs(tmp_path)
+    substitute = tmp_path / "substitute-ffmpeg"
+    substitute.write_text("foreign tool", encoding="utf-8")
+    substituted = replace(inputs, ffmpeg=substitute)
+    failures = _d13_binding_failures(profile, substituted)
+    assert any("ffmpeg differs from manager-selected tool binding" in failure for failure in failures)
 
 
 def _digest(value: str | bytes) -> str:
@@ -611,7 +836,8 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
             path = tmp_path / f"child-{index}.mp4"
             subprocess.run(
                 [
-                    "ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
+                    installed_runtime.runtime_env["ASTRID_FFMPEG_EXECUTABLE"],
+                    "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi",
                     "-i", f"color=c={colour}:s=64x36:r=30:d=1", "-an", "-c:v", "libx264",
                     "-pix_fmt", "yuv420p", str(path),
                 ],
@@ -779,7 +1005,8 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
         _, video_bytes = service.object(video["digest"])
         assert len(video_bytes) > 100
         probe = subprocess.run(
-            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", "-"],
+            [installed_runtime.runtime_env["ASTRID_FFPROBE_EXECUTABLE"], "-v", "error",
+             "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", "-"],
             input=video_bytes,
             capture_output=True,
         )
