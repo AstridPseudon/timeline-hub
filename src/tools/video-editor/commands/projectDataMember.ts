@@ -23,8 +23,12 @@ const CLAIMS = ['resolved', 'expect', 'authorship', 'reads', 'selections', 'bind
 type ProjectDataArgs = {
   target: string;
   key: string;
-  value: JSON;
   mode: 'replace';
+  value: JSON;
+} | {
+  target: string;
+  key: string;
+  mode: 'remove';
 };
 
 type ProjectDataPatchArgs = {
@@ -33,10 +37,13 @@ type ProjectDataPatchArgs = {
   mode?: 'merge' | 'replace';
 };
 
-type ProjectDataOperation = TimelinePatchOperation & {
+type ProjectDataOperation = (TimelinePatchOperation & {
   op: 'project-data.write';
   payload: ProjectDataPatchArgs;
-};
+}) | (TimelinePatchOperation & {
+  op: 'project-data.delete';
+  payload: { key: string };
+});
 
 export type ProjectDataMemberCapture = {
   readonly patch: TimelinePatch;
@@ -124,24 +131,35 @@ function validatePatchArgs(args: unknown): asserts args is ProjectDataPatchArgs 
 }
 
 function validateArgs(args: unknown): asserts args is ProjectDataArgs {
-  if (!object(args) || !equal(Object.keys(args).sort(), ['key', 'mode', 'target', 'value'])) {
+  if (!object(args) || typeof args.mode !== 'string' ||
+    !equal(Object.keys(args).sort(), args.mode === 'remove'
+      ? ['key', 'mode', 'target'] : ['key', 'mode', 'target', 'value'])) {
     throw new ClipMoveError('project-data.write requires target, key, value, and mode arguments');
   }
   validateTarget(args.target);
   validateKey(args.key);
-  if (args.mode !== 'replace') throw new ClipMoveError('project-data.write only supports mode "replace"');
-  validateValue(args.value);
+  if (args.mode !== 'replace' && args.mode !== 'remove') {
+    throw new ClipMoveError('project-data.write only supports mode "replace" or "remove"');
+  }
+  if (args.mode === 'replace') validateValue(args.value);
 }
 
 function validateOperation(operation: TimelinePatchOperation): asserts operation is ProjectDataOperation {
   if (Object.keys(operation).some((key) => !['op', 'target', 'payload', 'order'].includes(key)) ||
-    operation.op !== 'project-data.write' || typeof operation.target !== 'string' ||
+    (operation.op !== 'project-data.write' && operation.op !== 'project-data.delete') ||
+    typeof operation.target !== 'string' ||
     (operation.order !== undefined && (typeof operation.order !== 'number' || !Number.isFinite(operation.order))) ||
     !object(operation.payload)) {
     throw new ClipMoveError('Only a closed project-data.write operation is supported');
   }
   validateTarget(operation.target);
-  validatePatchArgs(operation.payload);
+  if (operation.op === 'project-data.write') validatePatchArgs(operation.payload);
+  else {
+    if (!equal(Object.keys(operation.payload).sort(), ['key'])) {
+      throw new ClipMoveError('project-data.delete requires a key argument');
+    }
+    validateKey(operation.payload.key);
+  }
 }
 
 function pathClaim(ref: string, path: readonly string[]): string {
@@ -166,7 +184,11 @@ function replaceGeneratedClaims(ctx: MoveRecording): void {
   ctx.command.authorship = authorship;
 }
 
-function validateLimits(bundle: AuthoredBundle, args: ProjectDataArgs, projectedValue: JSON): void {
+function validateLimits(
+  bundle: AuthoredBundle,
+  args: Extract<ProjectDataArgs, { mode: 'replace' }>,
+  projectedValue: JSON,
+): void {
   const config = bundle.parent.config;
   if (config !== undefined && config !== null && !object(config)) {
     throw new ClipMoveError('project-data.write requires an authored parent config object');
@@ -247,6 +269,33 @@ function closedCommand(command: EditCommand): void {
   validateArgs(command.args);
 }
 
+function removeProjectDataMember(ctx: MoveRecording, args: Extract<ProjectDataArgs, { mode: 'remove' }>): void {
+  const targetPath = ['config', 'app', args.target];
+  const namespace = ctx.state.get('parent', targetPath);
+  if (namespace.state === 'absent') {
+    ctx.read('parent', targetPath);
+    return;
+  }
+  if (namespace.value !== null && !object(namespace.value)) {
+    throw new ClipMoveError('intent container must be object or null');
+  }
+  const app = ctx.state.get('parent', ['config', 'app']);
+  const insertionOrder = app.state === 'present' && object(app.value) ? Object.keys(app.value) : undefined;
+  if (namespace.value === null || !Object.keys(namespace.value as Record<string, JSON>).length) {
+    ctx.clear('parent', targetPath, insertionOrder);
+  } else {
+    ctx.clear('parent', [...targetPath, args.key]);
+    const remaining = ctx.state.get('parent', targetPath);
+    if (remaining.state === 'present' && object(remaining.value) && !Object.keys(remaining.value).length) {
+      ctx.clear('parent', targetPath, insertionOrder);
+    }
+  }
+  const remainingApp = ctx.state.get('parent', ['config', 'app']);
+  if (remainingApp.state === 'present' && object(remainingApp.value) && !Object.keys(remainingApp.value).length) {
+    ctx.clear('parent', ['config', 'app']);
+  }
+}
+
 function applyProjectDataMember(
   bundle: AuthoredBundle,
   supplied: EditCommand,
@@ -258,19 +307,22 @@ function applyProjectDataMember(
     authorship: {}, bindings: {}, created: [] } as EditCommand;
   const args = command.args as unknown as ProjectDataArgs;
   const ctx = new MoveRecording(bundle, command);
-  // project-data.write is a non-singleton parent operation in Agent's registry.
   ctx.command.resolved = [];
-  ctx.object('parent', ['config']);
-  ctx.object('parent', ['config', 'app']);
-  ctx.object('parent', ['config', 'app', args.target]);
-  const original = ctx.state.get('parent', ['config', 'app', args.target, args.key]);
-  const projectedValue = lowerProjectDataValue(
-    original.state === 'present' ? original.value : undefined,
-    { value: args.value, mode: sourceMode },
-  );
-  validateLimits(bundle, args, projectedValue);
-  (ctx.command.args as unknown as ProjectDataArgs).value = projectedValue;
-  ctx.write('parent', ['config', 'app', args.target, args.key], projectedValue);
+  if (args.mode === 'remove') removeProjectDataMember(ctx, args);
+  else {
+    // project-data.write is a non-singleton parent operation in Agent's registry.
+    ctx.object('parent', ['config']);
+    ctx.object('parent', ['config', 'app']);
+    ctx.object('parent', ['config', 'app', args.target]);
+    const original = ctx.state.get('parent', ['config', 'app', args.target, args.key]);
+    const projectedValue = lowerProjectDataValue(
+      original.state === 'present' ? original.value : undefined,
+      { value: args.value, mode: sourceMode },
+    );
+    validateLimits(bundle, args, projectedValue);
+    ctx.command.args.value = projectedValue;
+    ctx.write('parent', ['config', 'app', args.target, args.key], projectedValue);
+  }
   replaceGeneratedClaims(ctx);
   ctx.record.ordinal = ordinal;
   ctx.record.derived_writes.forEach((write) => { write.cause = ordinal; });
@@ -295,7 +347,7 @@ function unsupportedReason(operation: TimelinePatchOperation): string | undefine
   }
 }
 
-/** Capture one ordered source/source-map project-data batch without registering it. */
+/** Capture one ordered project-data batch without registering it. */
 export function captureProjectDataMember(bundle: AuthoredBundle, patch: TimelinePatch): ProjectDataMemberCapture {
   assertFiniteJson(bundle);
   assertFiniteJson(patch);
@@ -318,7 +370,11 @@ export function captureProjectDataMember(bundle: AuthoredBundle, patch: Timeline
         op: 'project-data.write',
         version: '1',
         select: 'parent',
-        args: {
+        args: operation.op === 'project-data.delete' ? {
+          target: operation.target,
+          key: operation.payload.key,
+          mode: 'remove',
+        } : {
           target: operation.target,
           key: operation.payload.key,
           value: copy(operation.payload.value),
@@ -326,7 +382,8 @@ export function captureProjectDataMember(bundle: AuthoredBundle, patch: Timeline
         } as unknown as Record<string, JSON>,
         intent: {},
       };
-      const result = applyProjectDataMember(after, command, commands.length, operation.payload.mode ?? 'replace');
+      const result = applyProjectDataMember(after, command, commands.length,
+        operation.op === 'project-data.write' ? operation.payload.mode ?? 'replace' : 'replace');
       after = result.bundle;
       commands.push(result.command);
       records.push(result.record);

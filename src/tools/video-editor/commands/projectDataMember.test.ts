@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
-import { copy } from './clipMovePrimitives.ts';
+import { AuthoredState, copy } from './clipMovePrimitives.ts';
 import {
   captureProjectDataMember,
   executeProjectDataMember,
@@ -14,6 +14,10 @@ const target = 'com.example.compiler-canary';
 
 function write(key: string, value: unknown, extra: Record<string, unknown> = {}, order?: number) {
   return { op: 'project-data.write' as const, target, payload: { key, value, ...extra }, ...(order === undefined ? {} : { order }) };
+}
+
+function remove(key: string, order?: number) {
+  return { op: 'project-data.delete' as const, target, payload: { key }, ...(order === undefined ? {} : { order }) };
 }
 
 async function authoredBundle() {
@@ -87,6 +91,68 @@ describe('bounded inert project-data member', () => {
       state: 'present', value: null,
     });
     expect(bundle).toEqual(before);
+  });
+
+  it('captures dormant delete as Agent remove and restores a pruned namespace order after JSON reload', async () => {
+    const bundle = await authoredBundle();
+    bundle.parent.config.app = {
+      before: { opaque: true },
+      [target]: { gone: null },
+      after: { keep: [null, false, 0] },
+    };
+    const before = copy(bundle);
+    const captured = captureProjectDataMember(bundle, { version: 1, operations: [remove('gone')] });
+
+    expect(captured.commands[0].args).toEqual({ target, key: 'gone', mode: 'remove' });
+    expect(captured.bundle.parent.config.app).toEqual({
+      before: { opaque: true },
+      after: { keep: [null, false, 0] },
+    });
+    expect(captured.records[0].writes).toEqual([
+      { ref: 'parent', path: ['config', 'app', target, 'gone'],
+        before: { state: 'present', value: null }, after: { state: 'absent' } },
+      { ref: 'parent', path: ['config', 'app', target],
+        before: { state: 'present', value: {} }, after: { state: 'absent' },
+        insertion_order: ['before', target, 'after'] },
+    ]);
+
+    const replayed = executeProjectDataMember(copy(bundle), JSON.parse(JSON.stringify(captured.commands)));
+    expect(replayed).toEqual({ bundle: captured.bundle, records: captured.records });
+    const restored = copy(captured.bundle);
+    const state = new AuthoredState(restored);
+    for (const write of [...captured.records[0].writes].reverse()) {
+      state.set(write.ref, write.path, write.before, write.insertion_order);
+    }
+    expect(restored).toEqual(before);
+    expect(Object.keys(restored.parent.config.app!)).toEqual(['before', target, 'after']);
+  });
+
+  it('keeps delete absent/null/opaque compatibility without manufacturing an order carrier', async () => {
+    const bundle = await authoredBundle();
+    bundle.parent.config.app = { [target]: { keep: { opaque: true }, gone: false }, sibling: null };
+    const removed = captureProjectDataMember(bundle, { version: 1, operations: [remove('gone')] });
+    expect(removed.bundle.parent.config.app).toEqual({ [target]: { keep: { opaque: true } }, sibling: null });
+    expect(removed.records[0].writes).toEqual([
+      { ref: 'parent', path: ['config', 'app', target, 'gone'],
+        before: { state: 'present', value: false }, after: { state: 'absent' } },
+    ]);
+
+    const absent = captureProjectDataMember(bundle, { version: 1, operations: [remove('missing')] });
+    expect(absent.bundle).toEqual(bundle);
+    expect(absent.records[0].writes).toHaveLength(1);
+    expect(absent.records[0].writes[0]).toMatchObject({
+      path: ['config', 'app', target, 'missing'],
+      before: { state: 'absent' }, after: { state: 'absent' },
+    });
+    expect('insertion_order' in absent.records[0].writes[0]).toBe(false);
+
+    const nullNamespace = copy(bundle);
+    nullNamespace.parent.config.app = { before: 1, [target]: null, after: { opaque: true } };
+    const nulled = captureProjectDataMember(nullNamespace, { version: 1, operations: [remove('gone')] });
+    expect(nulled.bundle.parent.config.app).toEqual({ before: 1, after: { opaque: true } });
+    expect(nulled.records[0].writes[0]).toMatchObject({
+      insertion_order: ['before', target, 'after'],
+    });
   });
 
   it('lowers Main merge, default replace, and declared order to native replace cells', async () => {

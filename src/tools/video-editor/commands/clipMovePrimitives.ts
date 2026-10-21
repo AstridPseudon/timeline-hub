@@ -201,7 +201,7 @@ export class AuthoredState {
       actual.value === this.isolatedOwner(ref.slice(0, -'/shot'.length), expected.value);
   }
 
-  set(ref: string, path: string[], state: AgentState): void {
+  set(ref: string, path: string[], state: AgentState, insertionOrder?: readonly string[]): void {
     let target = this.entity(ref)!;
     for (const key of path.slice(0, -1)) {
       if (!has(target, key) || !object(target[key])) throw new ClipMoveError('write requires recorded container creation');
@@ -209,9 +209,29 @@ export class AuthoredState {
     }
     const key = path[path.length - 1];
     if (state.state === 'absent') delete target[key];
-    else Object.defineProperty(target, key, {
-      value: copy(state.value), enumerable: true, configurable: true, writable: true,
-    });
+    else {
+      const next = copy(state.value);
+      if (insertionOrder !== undefined) {
+        const existing = Object.keys(target);
+        if (!insertionOrder.includes(key) || existing.some((name) => !insertionOrder.includes(name)) ||
+          existing.length !== new Set(existing).size ||
+          existing.join('\u0000') !== insertionOrder.filter((name) => existing.includes(name)).join('\u0000')) {
+          throw new ClipMoveError('historical object order differs from state', 'history_unavailable');
+        }
+        const following = new Set(insertionOrder.slice(insertionOrder.indexOf(key) + 1));
+        const before = existing.find((name) => following.has(name));
+        const index = before === undefined ? existing.length : existing.indexOf(before);
+        existing.splice(index, 0, key);
+        const values = new Map(Object.entries(target));
+        values.set(key, next);
+        for (const name of Object.keys(target)) delete target[name];
+        for (const name of existing) Object.defineProperty(target, name, {
+          value: values.get(name), enumerable: true, configurable: true, writable: true,
+        });
+      } else Object.defineProperty(target, key, {
+        value: next, enumerable: true, configurable: true, writable: true,
+      });
+    }
   }
 }
 
@@ -292,20 +312,24 @@ export class MoveRecording {
     }
   }
 
-  assign(ref: string, path: string[], after: AgentState): void {
+  assign(ref: string, path: string[], after: AgentState, insertionOrder?: readonly string[]): void {
     const address = `${ref}::${path.join('.')}`;
     if (!has(this.command.expect!, address)) this.command.expect![address] = this.state.get(ref, path);
     this.command.authorship![address] = 'direct';
-    this.record.writes.push({ ref, path: [...path], before: this.state.get(ref, path), after: copy(after) });
-    this.state.set(ref, path, after);
+    const write: CommandRecord['writes'][number] = {
+      ref, path: [...path], before: this.state.get(ref, path), after: copy(after),
+    };
+    this.record.writes.push(write);
+    if (insertionOrder !== undefined) write.insertion_order = [...insertionOrder];
+    this.state.set(ref, path, after, insertionOrder);
   }
 
   write(ref: string, path: string[], value: JSON): void {
     this.assign(ref, path, { state: 'present', value });
   }
 
-  clear(ref: string, path: string[]): void {
-    this.assign(ref, path, { state: 'absent' });
+  clear(ref: string, path: string[], insertionOrder?: readonly string[]): void {
+    this.assign(ref, path, { state: 'absent' }, insertionOrder);
   }
 
   object(ref: string, path: string[]): void {
