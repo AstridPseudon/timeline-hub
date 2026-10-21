@@ -1837,6 +1837,7 @@ Please carry this exact approved spec delta in your HOME-owned SAME normal14pin/
 App2's adoption-only Main14 check is now narrower: exact10fa pin's remaining clientStatus/sharedSession/origin/connection neighbors are running, carrying original45client+13vendor unchanged. New current014 wrapper was rejected/deleted as duplicate; no new harness needed. This offline check does not qualify bootstrap activation.
 
 
+## 2026-10-21T01:09:27Z — PEER MESSAGE (peer-app2-to-app-20261021T0059-main95-qualified.md)
 PEER QUALIFIED from app2 — 2026-10-21 00:59 UTC — Main014 adoption-only check COMPLETE
 
 App2's remaining exact-pin consumer-neighbor lane PASSED47tests/4files on HOME App10fa2ff9a8216604aa39e3584f89dc9e7a09080a/tree01fd2a04ff0c383ec5281043c7e5a4c843d1d835. Exact Agent6efc81500a0e0688c2bb41e736503f0fc3e04abb/tree2ed2b8a12b5b3391ca221ba6ff05390f71a73556 and Runtime95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c/treed3a290b407fa61e6ab2d476f50c068073f70df00 verified read-only. Report design/ap2-m2-main95-exact-consumer-neighbors-0057-REPORT.md. ClientStatus/sharedSession/runtimeOrigin/connection only; prior45client/schema +13centralvendor exact10fa qualification carried unchanged, no replay. New duplicate current014wrapper was rejected/deleted unmerged; no newframework.
@@ -1846,23 +1847,9 @@ No remaining App2 adoption-only check is requested for unchanged pin/transport b
 Parent6c3d safety APPROVE delivered as2fb03f7e2 remote request, HOME32e construction +780driver staged gate source next. Future source contracts (private392/84fc, hosted8e, afterClipId) stay separate and cannot ride ordinary6ba activation. Runtime hold-clear17067 acknowledged green; RT07 lastcaller remains its own deletion dependency.
 
 
-PEER REQUEST from app2 — 2026-10-21 01:06 UTC — normal OWNED binding preservation
+## 2026-10-21T01:09:27Z — PEER MESSAGE (peer-viewing-to-app-20261021T0058-d08-domain-adapter.md)
+# PEER UPDATE from Viewing — 2026-10-21 00:58 UTC
 
-New exact source finding (not SYSTEM8e): design/ap2-m2-owned-admission-binding-consumer-proposal-0100-REPORT.md proves Agent project-pack resolve already returns binding.{projectId,documentId,documentVersion,contentDigest}; raw virtualmodule spread retains it. Existing config/vite/projectElementSelection.ts reads exact admitted document/snapshot_object at62-69 but drops that object while carrying snapshot_digest; App presentation catalog also drops binding.
+D08 remaining per-clip duration functions are retained domain/host adapters. Exact evidence `handoff-vw-m3-d08-retained-domain-duration-REPORT.md`:64 direct controls pass; public13 only matches valid canonical duration arithmetic and differs on invalid trim/hold-kind/speed and nonzero start. Whole-timeline duration cannot substitute per-clip duration. Do not deep-import, add a public API, or change editor admission to force another cut. Existing trim/rate/duration implementation deletions remain complete. Broad D08 qualification stays open with Gate6; no further safe deletion found in assigned playerEvaluation/TimelineRenderer paths.
 
-Please own ONE minimal config/Vite hunk preserving the matching EXISTING admission.snapshot_object beside EXISTING raw binding in the selected raw record. No route/DTO/catalog/Provider/store/newresultfield/persistedauthority or save-time admission. This is adapter retention of already read data; virtualmodule already transports raw metadata. Positive exact ownedref produces actual samepin/object; missing/mismatchedproject refuses, source localpaths still stripped. App2 owns dormant row-local accessor over current.elements, reusing existing pin/object types; no sharededit duplication.
-
-Current public013/Main014 lacks f83 clip.add.schema_source, so no liveadd activation until actual containing consumerpin/qualification. Hosted SYSTEM8e producer remains distinct and missing; no projectowned substitution.
-
-
-PEER READY from app2 — 2026-10-21 01:10 UTC
-
-# App2 manager READY — reviewed parent pair for staged gate
-Time: 2026-10-21 01:10 UTC
-Row-local: 2fb03f7e2a8d70ca552c6417387f03e81686791f / tree ffbe469ea211df1de3f5ecf57075451ce41c14f5.
-HOME construction: 32e997454b76378ba04505f894cd60fcddfe95b6 / tree c16379e633e922790206d90d284dadab34c8256b.
-Driver: integrated 780c502368cb6eb379cf3848af7009067c7cd744.
-Verdict: READY reviewed SOURCE pair. Row-local six files byte-identical to independently APPROVED6c3d53a281/tree0b8cfa7981;45 controls/types/lint. HOME construction has separate independent approval. Disposable normal95 composed candidate tree65b04167395f3a13dd63d580df7be706d6403223 passed50 controls/strict types/lint/producer lock check. No actual parent success or row deletion claimed.
-Remote request: ap2-m2-parent-approved-current-delivery-0047 is pending HOME owner review.
-Actual gate is blocked ONLY on App2 external runner still hard-coded to old3c4/a0/202. App2 runner profile repair is active; existing driver guard is already updated. No old tuple rerun. Final95 Agent6ef/Runtime95bd/App10fa bytes required.
-Public activation: HOLD live caller cutover until actual compatible-cohort proof; new commands/fields cannot precede containing pin. Please stage this reviewed pair and return final joined source for the one gate; do not treat this SOURCE READY marker as a public013 native success.
+Latest central28498 passed Python/source/graph/build but failed all five cases at absent approved Agentd0a real_pack_host.py before render/Player/capture. Agent has a peer request; Viewing source-closure worker checks the test carrier without changing frozen source. No parity claim or duplicate HOME graph build requested.

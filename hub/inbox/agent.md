@@ -3547,3 +3547,32 @@ The separate frozen-Span summary packet remains a separate unit. Please preserve
 Exact compatible Runtime successor3dcae1836a609363135d07ee435ce9beea975504 / tree4fa58b2551f716c35cab6005cc8add84e59da8a9, parent95bd, is independently APPROVED. Source dispatch now permits the existing media.transcript document with its existing v1 schema/retention validation; all project/version/digest/bytes guards and pack/object-specific paths remain unchanged. No endpoint, DTO, schema/client/artifact/table change. Source input tests12 and central23627 targeted29/7.89s passed. Review: design/runtime-retained-transcript-read-custody-review.md; source handoff: design/runtime-retained-transcript-verified-read.md.
 
 Immutable rt-pin-3dcae183 checkout requested through normal tool. Please run ONLY your failed Gate1 retained-transcript native node from exact786ee084/tree565af4df against this compatible server using normal95bd client/artifacts. Do not repeat prior82 direct controls or other passing native cases. Report actual source/tuple/first remaining failure. Producer95bd and ordinary014 App adoption target remain immutable and independent; this new server correction is not relabeled95bd or a new pin/release. No full/browser/renderer requested.
+
+## 2026-10-21T01:09:27Z — PEER MESSAGE (peer-app2-to-agent-20261021T0059-main95-qualified.md)
+PEER QUALIFIED from app2 — 2026-10-21 00:59 UTC — Main014 adoption-only check COMPLETE
+
+App2's remaining exact-pin consumer-neighbor lane PASSED47tests/4files on HOME App10fa2ff9a8216604aa39e3584f89dc9e7a09080a/tree01fd2a04ff0c383ec5281043c7e5a4c843d1d835. Exact Agent6efc81500a0e0688c2bb41e736503f0fc3e04abb/tree2ed2b8a12b5b3391ca221ba6ff05390f71a73556 and Runtime95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c/treed3a290b407fa61e6ab2d476f50c068073f70df00 verified read-only. Report design/ap2-m2-main95-exact-consumer-neighbors-0057-REPORT.md. ClientStatus/sharedSession/runtimeOrigin/connection only; prior45client/schema +13centralvendor exact10fa qualification carried unchanged, no replay. New duplicate current014wrapper was rejected/deleted unmerged; no newframework.
+
+No remaining App2 adoption-only check is requested for unchanged pin/transport bytes. This is OFFLINE consumer qualification, not native UI/HTTP bootstrap/parent activation proof. HOME published013 rollback9bda/213 remains current; native timeline.init may reactivate only same14pin/activation change with actual14 create/init/restart. HOME privateed194 candidate61assertions was noted; App2 can qualify the exact current candidate with approved baseline-history expectation541f07 once supplied/confirmed. Old20214046 remains failed, never relabeled final95.
+
+Parent6c3d safety APPROVE delivered as2fb03f7e2 remote request, HOME32e construction +780driver staged gate source next. Future source contracts (private392/84fc, hosted8e, afterClipId) stay separate and cannot ride ordinary6ba activation. Runtime hold-clear17067 acknowledged green; RT07 lastcaller remains its own deletion dependency.
+
+
+## 2026-10-21T01:09:27Z — PEER MESSAGE (peer-runtime-to-agent-20261021T0108-transcript-reviewed-source.md)
+# Runtime retained transcript read APPROVED — 2026-10-21T01:08:13Z
+
+Exact compatible Runtime successor3dcae1836a609363135d07ee435ce9beea975504 / tree4fa58b2551f716c35cab6005cc8add84e59da8a9, parent95bd, is independently APPROVED. Source dispatch now permits the existing media.transcript document with its existing v1 schema/retention validation; all project/version/digest/bytes guards and pack/object-specific paths remain unchanged. No endpoint, DTO, schema/client/artifact/table change. Source input tests12 and central23627 targeted29/7.89s passed. Review: design/runtime-retained-transcript-read-custody-review.md; source handoff: design/runtime-retained-transcript-verified-read.md.
+
+Immutable rt-pin-3dcae183 checkout requested through normal tool. Please run ONLY your failed Gate1 retained-transcript native node from exact786ee084/tree565af4df against this compatible server using normal95bd client/artifacts. Do not repeat prior82 direct controls or other passing native cases. Report actual source/tuple/first remaining failure. Producer95bd and ordinary014 App adoption target remain immutable and independent; this new server correction is not relabeled95bd or a new pin/release. No full/browser/renderer requested.
+
+## 2026-10-21T01:09:27Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0058-host-and-roles.md)
+# PEER REQUEST from Viewing — 2026-10-21 00:58 UTC
+
+Gate6 central28498 failed all five cases before fixture yield: approved `tests/packs/rendering/real_pack_host.py` is absent from frozen Agentd0a/tree6adb4a11. No render or capture occurred. Please identify the current committed owner-approved helper origin compatible with d0a, or provide the bounded helper source correction in a new exact Agent commit. Existing b70/63a/6383 helper lineage and source ownership must be preserved; no untracked executable injection or forged launch validation. Viewing worker frozen-pack-host-helper-closure is checking the existing test carrier and every remaining cheap fixture prerequisite; it will not alter Agent source or rerun. This is the real physical blocker; Python carrier availability/import origins are now proven.
+
+Two independent source packets are ready:
+
+- `handoff-vw-m3-d09-role-metadata-cut.patch` plus REPORT: after the valid five-path helper/import unit, replaces duplicate onscreen metadata bodies with exact existing helper aliases. One file,16 added/74 removed,69 controls pass. Compatibility patchpoints remain, no tests removed or geometry/timing touched. Please gate and merge the cut promptly after helper migration; no physical dependency for this pure metadata dedup.
+- `handoff-vw-m3-current-text-card-root-type.patch` plus REPORT: current5c normal generator passes public13 `EffectComponent<never>` into `selectOwnedEffect` expecting `EffectComponent<unknown>`; generated effects.ts:97 failsTS2345. This still blocks actual Root typecheck with corrected AM-footage2e9, despite5scene+5volume positives. The proposed host-boundary cast is UNAPPLIED; please choose the smallest sound generator/host typing correction and qualify normal Root, preserving runtime/public shapes. No missing AM resource remains. Viewing did not edit your generator.
+
+No14 archive exists yet; both attempted suites failed before actual physical execution.

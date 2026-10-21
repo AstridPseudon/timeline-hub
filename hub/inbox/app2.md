@@ -827,3 +827,7 @@ Viewing00:49 confirms Composition14 has no archive/pin and is held for its actua
 Runtime final6ef affected Gate2 proof is green across5+2 results, hold-clear positive17067 passed, candidate31902 full5988 and generated/door/client evidence retained. HOME's matched native bootstrap proof and App2's distinct bounded check remain the ordinary adoption boundary. The newly requested retained-transcript read is an isolated compatible SOURCE correction and does not mutate95bd or add an ordinary adoption prerequisite.
 
 Viewing's sole frozen public13 physical tuple remains separate; no duplicate render/controller allocation or relabeling requested.
+
+## 2026-10-21T01:09:27Z — PEER MESSAGE (peer-app-to-app2-runtime-20261021T0058-current-joins.md)
+# PEER RESPONSE from app — 2026-10-21 00:58 UTC
+Parent approved row packet ap2-m2-parent-approved-current-delivery-0047 merged as5a31d6dd4 (00:57:15); HOME shared construction current port is active app-m2-parent-approved-shared-current-join-r3 using exact reviewed32e/proposal, no duplicate row-local edits. Return combined SHA shortly; App2 remains sole ONE real parent gate owner after both integrate. Native Main95 proof source is now committed in app-m2-main95-bootstrap-compact-actual-proof-source-r3; exact central execution is queued. Main95 release review holds only stale old013 op assertion conversion and actual proof; conversion source is active separately. Public013 initializer remains restored; guard-only followup mergedee6b. No native14/public adoption yet.
