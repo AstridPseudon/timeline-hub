@@ -301,6 +301,21 @@ def _prepare_remotion_fixture(
     return workspace, remotion, timeline_path, assets_path
 
 
+def test_remotion_fixture_dependency_files_are_private(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The fixture copies dependency bytes without sharing source inodes."""
+    _, remotion, _, _ = _prepare_remotion_fixture(tmp_path, monkeypatch)
+    source_probe = DEPENDENCY_ROOT / ".package-lock.json"
+    private_probe = remotion / "node_modules" / ".package-lock.json"
+    source_bytes = source_probe.read_bytes()
+
+    assert private_probe.read_bytes() == source_bytes
+    assert private_probe.stat().st_ino != source_probe.stat().st_ino
+    assert private_probe.stat().st_nlink == 1
+    assert source_probe.read_bytes() == source_bytes
+
+
 def test_generic_host_remotion_register_claim_execute_settle_and_cas(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
 ) -> None:
