@@ -470,6 +470,10 @@
           "properties": {
             "label": {
               "type": "string"
+            },
+            "muted": {
+              "type": "boolean",
+              "description": "Raw authored track mute flag; absent remains absent until explicitly set."
             }
           },
           "additionalProperties": false
@@ -477,7 +481,10 @@
         "clear": {
           "type": "array",
           "items": {
-            "const": "label"
+            "enum": [
+              "label",
+              "muted"
+            ]
           },
           "uniqueItems": true
         }
@@ -503,7 +510,7 @@
           }
         }
       ],
-      "description": "Set raw track.label or explicitly remove it. Null is not a label. Unmentioned fields survive."
+      "description": "Set raw track.label or boolean track.muted, or explicitly remove either field. Null is not a supported value. Unmentioned fields survive."
     },
     "ShotSetArgs": {
       "type": "object",
@@ -2576,6 +2583,12 @@
               "type": "number",
               "exclusiveMinimum": 0,
               "description": "Positive finite source seconds; timeline duration is hold/speed."
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Raw visual opacity fraction in the inclusive range 0..1."
             }
           },
           "additionalProperties": false
@@ -2586,7 +2599,8 @@
             "enum": [
               "hold",
               "asset",
-              "transition"
+              "transition",
+              "opacity"
             ]
           },
           "uniqueItems": true
@@ -2613,7 +2627,7 @@
           }
         }
       ],
-      "description": "Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or incoming transition. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
+      "description": "Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction; explicitly remove hold, asset, incoming transition or opacity. Clear removes presence, never sets null/empty. Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is outside v1."
     },
     "ProjectDataWriteArgs": {
       "type": "object",

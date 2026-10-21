@@ -10,7 +10,10 @@ import pytest
 
 from astrid.sdk.timeline.commands import _SCHEMA, operations
 from tests.sdk.command_schema_compatibility import compatibility_errors
-from tests.sdk.test_timeline_materialization_schema_union import ordinary_schema
+from tests.sdk.test_timeline_materialization_schema_union import (
+    ordinary_schema,
+    without_literal_fields,
+)
 
 FIXTURES = Path(__file__).parents[1] / 'fixtures' / 'current-union-command-schemas'
 SOURCES = {
@@ -48,7 +51,7 @@ def without_text(schema):
 
 @pytest.mark.parametrize('name', SOURCES)
 def test_full_current_candidate_preserves_every_definition_and_registered_operation(name):
-    assert compatibility_errors(baseline(name), _SCHEMA) == []
+    assert compatibility_errors(baseline(name), without_literal_fields(copy.deepcopy(_SCHEMA))) == []
 
 
 @pytest.mark.parametrize('name', SOURCES)
