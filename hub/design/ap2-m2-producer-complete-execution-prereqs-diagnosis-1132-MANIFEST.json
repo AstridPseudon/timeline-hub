@@ -1,0 +1,316 @@
+{
+  "worker": "ap2-m2-producer-complete-execution-prereqs-diagnosis-1132",
+  "status": "diagnosis complete; controls BLOCKED; no preflight/control/actual execution",
+  "source": "5863411a8c2400db719b5385002b05af0a2b3891",
+  "tree": "31b0f77c6ef4e9fdbeff3e4f88cc4705f0891e89",
+  "artifacts": [
+    {
+      "archive_path": "artifacts/producer-physical-keeper-gate-0717-owned.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/artifacts/producer-physical-keeper-gate-0717-owned.sh",
+      "mode": "0o755",
+      "size": 1886,
+      "sha256": "d9ecc3ade14746c559c46c68046eec3f71ecac5c37f9218cb575a9e2057a6238"
+    },
+    {
+      "archive_path": "artifacts/producer-public13-runner-0717-owned.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/artifacts/producer-public13-runner-0717-owned.sh",
+      "mode": "0o755",
+      "size": 14986,
+      "sha256": "b21d9ccd1dfc31b81d38e2e19c78ca4d53ca3a3a7a5c74f82c7bffb533fe9d13"
+    },
+    {
+      "archive_path": "artifacts/producer-retain-failure-artifacts-0753.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/artifacts/producer-retain-failure-artifacts-0753.sh",
+      "mode": "0o755",
+      "size": 2953,
+      "sha256": "dab4e885cedbde6273139d3b4350cacdd33020e63773f9c71e0289ab78ddea75"
+    },
+    {
+      "archive_path": "artifacts/producer-runner-0717-owned.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/artifacts/producer-runner-0717-owned.sh",
+      "mode": "0o755",
+      "size": 12884,
+      "sha256": "84031e301827518c2b981c585e812c5a5ad3d00727105c1b8515a6e1209a54fa"
+    },
+    {
+      "archive_path": "artifacts/producer-startup-custody-gate-0717-owned.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/artifacts/producer-startup-custody-gate-0717-owned.sh",
+      "mode": "0o755",
+      "size": 5531,
+      "sha256": "02d831e05094586d3771424ac43cacb602799c691ec40423fb370891ba1cb16e"
+    },
+    {
+      "archive_path": "artifacts/producer-startup-module-format-probe-0717-owned.mts",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/artifacts/producer-startup-module-format-probe-0717-owned.mts",
+      "mode": "0o755",
+      "size": 674,
+      "sha256": "d4eeaeb74a582fe9ccb94c1cfba7f66c41ec50eef7823db34f61ed7185e12af3"
+    },
+    {
+      "archive_path": "artifacts/producer-startup-only-gate-0717-owned.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/artifacts/producer-startup-only-gate-0717-owned.sh",
+      "mode": "0o755",
+      "size": 4910,
+      "sha256": "4ce9e7f4fc0eb6c6a7b32b784cd3ea64f598b4169fa49ba2a99126237dc4a5df"
+    },
+    {
+      "archive_path": "artifacts/producer-startup-only-probe-0717-owned.mts",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/artifacts/producer-startup-only-probe-0717-owned.mts",
+      "mode": "0o755",
+      "size": 4461,
+      "sha256": "a062cab11ea3a86ef75ece5a86584d0555040336032ced515d6ac50de9481d8f"
+    },
+    {
+      "archive_path": "before-artifacts/producer-physical-keeper-gate-0717-owned.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/before-artifacts/producer-physical-keeper-gate-0717-owned.sh",
+      "mode": "0o755",
+      "size": 1924,
+      "sha256": "88cb8695c850fc2b3da52bfb2151191901e8f19a14c3f1cbace6f4d1a0166a8b"
+    },
+    {
+      "archive_path": "before-artifacts/producer-public13-runner-0717-owned.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/before-artifacts/producer-public13-runner-0717-owned.sh",
+      "mode": "0o755",
+      "size": 14835,
+      "sha256": "dc1159bd071b81c77bdab9f952d473c5e9b7e088f22693ca8c570a194daa51e7"
+    },
+    {
+      "archive_path": "before-artifacts/producer-retain-failure-artifacts-0753.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/before-artifacts/producer-retain-failure-artifacts-0753.sh",
+      "mode": "0o755",
+      "size": 2953,
+      "sha256": "dab4e885cedbde6273139d3b4350cacdd33020e63773f9c71e0289ab78ddea75"
+    },
+    {
+      "archive_path": "before-artifacts/producer-runner-0717-owned.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/before-artifacts/producer-runner-0717-owned.sh",
+      "mode": "0o755",
+      "size": 12802,
+      "sha256": "664ab0c500f5404e637a2524abaaf75937ee4335cc8fc987df91c37f79c11bd8"
+    },
+    {
+      "archive_path": "before-artifacts/producer-startup-custody-gate-0717-owned.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/before-artifacts/producer-startup-custody-gate-0717-owned.sh",
+      "mode": "0o755",
+      "size": 5521,
+      "sha256": "e92ac3920d0f2e197c482444183518629f72e1f83b728fecb68e5553c45a48d0"
+    },
+    {
+      "archive_path": "before-artifacts/producer-startup-module-format-probe-0717-owned.mts",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/before-artifacts/producer-startup-module-format-probe-0717-owned.mts",
+      "mode": "0o644",
+      "size": 674,
+      "sha256": "d4eeaeb74a582fe9ccb94c1cfba7f66c41ec50eef7823db34f61ed7185e12af3"
+    },
+    {
+      "archive_path": "before-artifacts/producer-startup-only-gate-0717-owned.sh",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/before-artifacts/producer-startup-only-gate-0717-owned.sh",
+      "mode": "0o755",
+      "size": 4924,
+      "sha256": "3db5151a442811def19711e3a8e0cc63d0e91047e8f29d1480977c45e6f877d2"
+    },
+    {
+      "archive_path": "before-artifacts/producer-startup-only-probe-0717-owned.mts",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/before-artifacts/producer-startup-only-probe-0717-owned.mts",
+      "mode": "0o644",
+      "size": 4461,
+      "sha256": "a062cab11ea3a86ef75ece5a86584d0555040336032ced515d6ac50de9481d8f"
+    },
+    {
+      "archive_path": "agent-source-tree.tsv",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/agent-source-tree.tsv",
+      "mode": "0o644",
+      "size": 312923,
+      "sha256": "a74a3cf8083add9698967a66c1f346f25b6020432b911d3d9a328eec4d5aae94"
+    },
+    {
+      "archive_path": "app-source-tree.tsv",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/app-source-tree.tsv",
+      "mode": "0o644",
+      "size": 665138,
+      "sha256": "8f0eff488c071cbfa6a023a1a442ba27cef9d407e83d376ea15fc8f680e0d293"
+    },
+    {
+      "archive_path": "archive-and-catalog.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/archive-and-catalog.json",
+      "mode": "0o644",
+      "size": 35219,
+      "sha256": "de2e9a45ff505b8bdcc9f5aa8dbf2114cd93eaf1a0fa9da04a91c2877a0dac92"
+    },
+    {
+      "archive_path": "audit-inputs.py",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/audit-inputs.py",
+      "mode": "0o644",
+      "size": 8703,
+      "sha256": "f6763043cf86078f9433dc48da15c02c7f517687af6f809e64629c7bb1a3e5c5"
+    },
+    {
+      "archive_path": "environment.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/environment.json",
+      "mode": "0o644",
+      "size": 13317,
+      "sha256": "7bb671bcdea3b2b3df1b89fac6e058dee146df201ee3c49b2207b7a183d8bd97"
+    },
+    {
+      "archive_path": "finalrun-NOT-AUTHORIZED.sh.txt",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/finalrun-NOT-AUTHORIZED.sh.txt",
+      "mode": "0o644",
+      "size": 1409,
+      "sha256": "41ab97b4ce4c4fbf3e4c599d52387b732e5738b1fb4f4eefc7615d6a6562ec25"
+    },
+    {
+      "archive_path": "guard-readback.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/guard-readback.json",
+      "mode": "0o644",
+      "size": 41730,
+      "sha256": "69e10dbe3a3127834fbe6b237692905b961c0e21845fe40145df65526918039a"
+    },
+    {
+      "archive_path": "import-inventory.cjs",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/import-inventory.cjs",
+      "mode": "0o644",
+      "size": 8073,
+      "sha256": "30aa8adc389a835db63d670e3648ca44e94d0085f718081fdd39baabe9cd31c4"
+    },
+    {
+      "archive_path": "import-inventory.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/import-inventory.json",
+      "mode": "0o644",
+      "size": 6499838,
+      "sha256": "82f70e82b4c27df0b9a928c939f5b02e43fab6a0e18f13187674cc35501cd2ce"
+    },
+    {
+      "archive_path": "independent-custody-review.md",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/independent-custody-review.md",
+      "mode": "0o644",
+      "size": 955,
+      "sha256": "c6e99c4638d3f10561a17b353ed4eeb2c572082c5dbb9dc0a5d251e8a3252e20"
+    },
+    {
+      "archive_path": "keeper-repair.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/keeper-repair.json",
+      "mode": "0o644",
+      "size": 1527,
+      "sha256": "99c970f2b012921a6b96db25f32da8a17ea603214e89ca5eb322372f84e5e659"
+    },
+    {
+      "archive_path": "launch-tool-stub.py",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/launch-tool-stub.py",
+      "mode": "0o755",
+      "size": 4813,
+      "sha256": "4299795135db4be3b83b41d9034cb1519b529925865222f9af866029df9264b7"
+    },
+    {
+      "archive_path": "next-five-controls-BLOCKED.sh.txt",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/next-five-controls-BLOCKED.sh.txt",
+      "mode": "0o644",
+      "size": 512,
+      "sha256": "1a2d0cce4d5d3394c91a4e1d8cbb0754e911ec9dfc31c075a6166bbbc40d3bd4"
+    },
+    {
+      "archive_path": "next-preflight.sh.txt",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/next-preflight.sh.txt",
+      "mode": "0o644",
+      "size": 361,
+      "sha256": "a087d72587b202e2c2bd36156b3a00bb3ccdfa8231023472f65c28025d056ce5"
+    },
+    {
+      "archive_path": "original-registration.txt",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/original-registration.txt",
+      "mode": "0o644",
+      "size": 1485,
+      "sha256": "335b79fda91fdf7868201c2b11edb6d1ebfd80d89288b87e3b434d1f8f5ff047"
+    },
+    {
+      "archive_path": "outer-controls-run.py",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/outer-controls-run.py",
+      "mode": "0o755",
+      "size": 10707,
+      "sha256": "ff1ae8404f39d765b01429ce706fa0affb6a163b632c20506a9705f103ec7234"
+    },
+    {
+      "archive_path": "package-graph.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/package-graph.json",
+      "mode": "0o644",
+      "size": 436325,
+      "sha256": "a58b7d248fea2c3e4ef1f1a8ebd427cc07392143e7ac22f63e3040f7ba86a721"
+    },
+    {
+      "archive_path": "prepare-closure.py",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/prepare-closure.py",
+      "mode": "0o644",
+      "size": 5872,
+      "sha256": "ecfd0baf3c5c68b75ddf14db5634aa00a876ef5a5228ef120cae9eb0a6b3c0fa"
+    },
+    {
+      "archive_path": "prepare-parser-input.py",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/prepare-parser-input.py",
+      "mode": "0o644",
+      "size": 1054,
+      "sha256": "f326082c738275e53542deb5161bb1c898f9dde081b282c265117502da040da5"
+    },
+    {
+      "archive_path": "python-dependencies.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/python-dependencies.json",
+      "mode": "0o644",
+      "size": 3294,
+      "sha256": "96013a3fe3a179fb1b9c66e9088b30e3f65d8c4cef15c3a77d393a383e1d8ec2"
+    },
+    {
+      "archive_path": "python-import-inventory.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/python-import-inventory.json",
+      "mode": "0o644",
+      "size": 261441,
+      "sha256": "f1fc8aa40f44e17153d34cb581c3abead5f5a18c81730140d440a53abaa5ee24"
+    },
+    {
+      "archive_path": "rebind-proof.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/rebind-proof.json",
+      "mode": "0o644",
+      "size": 1903,
+      "sha256": "7b0c5e45aaa17398e9fdbfee88d5537bd4c43fb50e3ed8119f3fcf3efd5e04b1"
+    },
+    {
+      "archive_path": "registration-rebind-proof.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/registration-rebind-proof.json",
+      "mode": "0o644",
+      "size": 1357,
+      "sha256": "abb983a6a9501d822698c66fdbddaa9ab188c8d4b47d1981283faad429a44088"
+    },
+    {
+      "archive_path": "runtime-source-tree.tsv",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/runtime-source-tree.tsv",
+      "mode": "0o644",
+      "size": 37136,
+      "sha256": "3075f7fd4c76ecd65bb045ff8a94bb5911e7d8635d980cf47fd8ab48bce4940f"
+    },
+    {
+      "archive_path": "shell-execution-ledger.json",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/shell-execution-ledger.json",
+      "mode": "0o644",
+      "size": 269067,
+      "sha256": "60730c5550d44ef9410c27faf78e2c88591acb601be59ff66008b4751e433e3e"
+    },
+    {
+      "archive_path": "validate-syntax.py",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/validate-syntax.py",
+      "mode": "0o644",
+      "size": 1069,
+      "sha256": "ff8bc73c4ba4eb82318b00dcc1afd0210d2c52b0003a54a3c97404bad1d2458a"
+    },
+    {
+      "archive_path": "validation.txt",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132/validation.txt",
+      "mode": "0o644",
+      "size": 1549,
+      "sha256": "47d355bbc5d06f660dd4fac20a26dfa493c3a5acc0f06aab5fd468f5bb1bf304"
+    },
+    {
+      "archive_path": "REPORT.md",
+      "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/ap2-m2-producer-complete-execution-prereqs-diagnosis-1132-REPORT.md",
+      "mode": "0o644",
+      "size": 33875,
+      "sha256": "ce0ed96342c3a77ce5ef71ffeb754f6885606a387971222f085de964878b53f4"
+    }
+  ]
+}
