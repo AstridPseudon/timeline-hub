@@ -45,6 +45,21 @@ def without_text(schema):
     return candidate
 
 
+def without_transition(schema):
+    """Strip only the additive clip.set transition carrier for floor checks."""
+    args = schema['$defs']['ClipSetArgs']
+    args['properties']['values']['properties'].pop('transition', None)
+    args['properties']['values']['properties'].pop('elementRef', None)
+    args['properties']['clear']['items']['enum'].remove('elementRef')
+    args['properties'].pop('schema_source')
+    args['description'] = (
+        'Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or '
+        'incoming transition. Clear removes presence, never sets null/empty. Asset assignment '
+        'requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is '
+        'outside v1.')
+    return schema
+
+
 @pytest.mark.parametrize('name', SOURCES)
 def test_full_current_candidate_preserves_every_definition_and_registered_operation(name):
     assert compatibility_errors(baseline(name), _SCHEMA) == []
@@ -64,7 +79,7 @@ def test_every_dropped_operation_is_reported_despite_the_open_generic_envelope(n
     previous = baseline(name)
     for condition in previous['$defs']['EditCommand']['allOf']:
         op = condition['if']['properties']['op']['const']
-        candidate = copy.deepcopy(_SCHEMA)
+        candidate = without_transition(copy.deepcopy(_SCHEMA))
         candidate['$defs']['EditCommand']['allOf'] = [
             item for item in candidate['$defs']['EditCommand']['allOf']
             if item['if']['properties']['op']['const'] != op]
@@ -112,7 +127,7 @@ def test_existing_argument_narrowing_still_fails(name):
 
 
 def s2_slice():
-    candidate = without_text(_SCHEMA)
+    candidate = without_transition(without_text(_SCHEMA))
     for definition in ('WordAnchor', 'ClipAnchorArgs', 'TimelineInitArgs',
                        'AssembledTargetArgs', 'ClipAddMediaArgs', 'OccurrenceCreateArgs'):
         del candidate['$defs'][definition]
@@ -137,12 +152,13 @@ def test_each_added_definition_and_operation_matches_its_approved_source():
     additions = json.loads((FIXTURES / 'next-command-additions.json').read_text())
     conditions = {item['if']['properties']['op']['const']: item
                   for item in _SCHEMA['$defs']['EditCommand']['allOf']}
+    floor = without_transition(copy.deepcopy(_SCHEMA))
     additions['text'] = json.loads((FIXTURES / 'text-command-additions.json').read_text())
     for source in additions.values():
         for name, value in source['definitions'].items():
             assert _SCHEMA['$defs'][name] == value
         for name, value in source.get('updates', {}).items():
-            assert _SCHEMA['$defs'][name] == value
+            assert floor['$defs'][name] == value
         for op, condition in source['operations'].items():
             assert conditions[op] == condition
 
@@ -153,7 +169,7 @@ def test_all_published_floors_preserve_every_field_with_only_historical_pattern_
     for version, source in sources.items():
         raw = (FIXTURES / source['file']).read_bytes()
         assert hashlib.sha256(raw).hexdigest() == source['sha256']
-        previous, candidate = json.loads(raw), without_text(_SCHEMA)
+        previous, candidate = json.loads(raw), without_transition(without_text(_SCHEMA))
         if version in ('0.2.1', '0.2.2'):
             # The conservative checker cannot prove regex inclusion. Verify
             # these exact additive alternatives, then check every other field.
