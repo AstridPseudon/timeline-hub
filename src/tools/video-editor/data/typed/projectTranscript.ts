@@ -3,9 +3,11 @@ import { sha256Hex, canonicalJsonStringify } from "./timelineBundle.ts";
 import { TRANSCRIPT_SCHEMA_REF } from "./adaptTranscript.ts";
 import { freezeSourceDataItem, type SourceFrozenDataItem } from "./envelope.ts";
 import type { AssetRegistry } from "../../types/index.ts";
+import type { DocumentPin } from "@/integrations/runtime/timeline-commit-types.ts";
 
 export const PROJECT_TRANSCRIPT_KIND = "media.transcript";
 export const PROJECT_TRANSCRIPT_SCHEMA = "media.transcript/v1";
+const documentDigest = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 const time = z.number().finite().nonnegative();
 const word = z
   .strictObject({
@@ -53,6 +55,8 @@ export type ProjectTranscriptContent = z.infer<typeof projectTranscriptSchema>;
 export interface ProjectTranscriptDocument {
   /** Existing Runtime mutation receipt is retained on create/update responses. */
   readonly receipt?: unknown;
+  /** Optional server-derived digest; old immutable document replays omit it. */
+  readonly content_digest?: z.infer<typeof documentDigest>;
   document_id: string;
   project_id: string;
   kind: typeof PROJECT_TRANSCRIPT_KIND;
@@ -60,6 +64,19 @@ export interface ProjectTranscriptDocument {
   version: number;
   created_at: string;
   updated_at: string;
+}
+
+/** Map an ordinary transcript result to the existing native source pin. */
+export function transcriptDocumentPin(
+  document: ProjectTranscriptDocument,
+): DocumentPin | undefined {
+  if (document.content_digest === undefined) return undefined;
+  documentDigest.parse(document.content_digest);
+  return {
+    document_id: document.document_id,
+    version: document.version,
+    content_digest: document.content_digest,
+  };
 }
 export interface ProjectTranscriptRepository {
   readonly projectId: string;
@@ -155,6 +172,7 @@ export async function parseProjectTranscriptDocument(
     throw new Error(
       "Project transcript document identity does not match its media and source.",
     );
+  documentDigest.optional().parse(d.content_digest);
   return { ...d, content };
 }
 export function transcriptMediaId(
