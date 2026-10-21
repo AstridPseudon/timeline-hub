@@ -113,6 +113,13 @@ def test_existing_argument_narrowing_still_fails(name):
 
 def s2_slice():
     candidate = without_text(_SCHEMA)
+    # The transcript association is an unfrozen source-only prototype; the
+    # published S2 compatibility floor intentionally excludes it.
+    del candidate['$defs']['TranscriptAssociateArgs']
+    candidate['$defs']['EditCommand']['allOf'] = [
+        item for item in candidate['$defs']['EditCommand']['allOf']
+        if item['if']['properties']['op']['const'] != 'transcript.associate'
+    ]
     for definition in ('WordAnchor', 'ClipAnchorArgs', 'TimelineInitArgs',
                        'AssembledTargetArgs', 'ClipAddMediaArgs', 'OccurrenceCreateArgs'):
         del candidate['$defs'][definition]
@@ -129,8 +136,8 @@ def s2_slice():
 
 def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
     assert s2_slice() == baseline('agent-frozen-s2-26ef2bbb')
-    assert len(_SCHEMA['$defs']) == 55
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 29
+    assert len(_SCHEMA['$defs']) == 56
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 30
 
 
 def test_each_added_definition_and_operation_matches_its_approved_source():
@@ -186,5 +193,6 @@ def test_closed_union_operation_inventory_is_exactly_the_supported_cohort():
                 'timeline.restore', 'track.create', 'track.set'}
     actual = [item['if']['properties']['op']['const']
               for item in _SCHEMA['$defs']['EditCommand']['allOf']]
-    assert len(actual) == len(set(actual)) == 29
+    expected.add('transcript.associate')
+    assert len(actual) == len(set(actual)) == 30
     assert set(actual) == expected == set(operations()) | {'timeline.inverse', 'timeline.restore'}

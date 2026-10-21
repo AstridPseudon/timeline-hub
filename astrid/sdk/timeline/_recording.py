@@ -38,6 +38,9 @@ def selection(state, key, owner, members=()):
         result = ['occurrence:' + row['occurrence_id'] for row in state.bundle['placements']
                   if row['shot_id'] == shot]
         boundaries = ['shot:' + shot] if shot is not None else []
+    elif key == 'transcript.source-items':
+        from .native_transcript_association import source_item_selection
+        return source_item_selection(state, owner, members)
     elif key == "move.blockers":
         origin = state.occurrence(owner)
         lane = (origin.get('placement') or {}).get('track', origin.get('track'))
@@ -253,6 +256,7 @@ class Recording:
                     command['selections'].append(claim)
             command['bindings'] = {b['key']: b['ref'] for b in self.record['bindings']
                                    if '/clip:' in b['ref'] or '/track:' in b['ref']
+                                   or '/asset:' in b['ref']
                                    or (b['ref'].startswith('occurrence:') and '/' not in b['ref'])}
             command['created'] = [item['ref'] for item in self.record['created']]
             command['expect'], command['authorship'] = {}, {}

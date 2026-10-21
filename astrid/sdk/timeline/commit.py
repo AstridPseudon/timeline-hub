@@ -432,6 +432,13 @@ def _hydrate(port, bundle, calls=(), *, inverse_records=(), inverse_sources=()):
             pin = _document_pin(call['args']['choice']['document'])
             if pin not in pins:
                 pins.append(pin)
+        if call['op'] == 'transcript.associate':
+            for key in ('document', 'previous_document'):
+                candidate = call.get('args', {}).get(key)
+                if candidate is not None:
+                    pin = _document_pin(candidate)
+                    if pin not in pins:
+                        pins.append(pin)
     for pin in pins:
         transcript = pin["document_id"].startswith("transcript:")
         verified = (port.transcript_source(pin) if transcript else port.config_source(pin))
