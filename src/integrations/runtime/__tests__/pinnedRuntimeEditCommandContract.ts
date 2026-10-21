@@ -20,15 +20,19 @@ function runtimeBundlePath(): string {
   return resolve(checkout, 'runtime_protocol/schemas/timeline-commit-bundle.json');
 }
 
-function pinnedEditCommandSchema(): JsonObject {
-  const bundle = JSON.parse(readFileSync(runtimeBundlePath(), 'utf8')) as JsonObject;
+const EDIT_COMMAND_SCHEMA_ID = 'https://astrid.local/schemas/timeline/edit-command.schema.json';
+
+function pinnedEditCommandSchema(bundle: unknown): JsonObject {
+  if (!bundle || typeof bundle !== 'object' || Array.isArray(bundle)) {
+    throw new Error('Pinned Runtime commit bundle is not an object');
+  }
   const resources = bundle.resources;
   if (!resources || typeof resources !== 'object' || Array.isArray(resources)) {
     throw new Error('Pinned Runtime commit bundle has no resources');
   }
   const resource = Object.values(resources as JsonObject).find((candidate) => (
     candidate && typeof candidate === 'object' && !Array.isArray(candidate)
-      && (candidate as JsonObject).$id === 'https://astrid.local/schemas/timeline/edit-command.schema.json'
+      && (candidate as JsonObject).$id === EDIT_COMMAND_SCHEMA_ID
   ));
   if (!resource || typeof resource !== 'object' || Array.isArray(resource)) {
     throw new Error('Pinned Runtime commit bundle has no EditCommand schema resource');
@@ -37,8 +41,8 @@ function pinnedEditCommandSchema(): JsonObject {
 }
 
 /** Derive operation membership from the Runtime's normal pinned schema bundle. */
-export function pinnedRuntimeEditCommandOps(): ReadonlySet<string> {
-  const schema = pinnedEditCommandSchema();
+export function pinnedRuntimeEditCommandOpsFromBundle(bundle: unknown): ReadonlySet<string> {
+  const schema = pinnedEditCommandSchema(bundle);
   const defs = schema.$defs;
   const editCommand = defs && typeof defs === 'object' && !Array.isArray(defs)
     ? (defs as JsonObject).EditCommand : undefined;
@@ -53,6 +57,12 @@ export function pinnedRuntimeEditCommandOps(): ReadonlySet<string> {
   });
   if (!operations.size) throw new Error('Pinned Runtime EditCommand schema declares no operations');
   return operations;
+}
+
+export function pinnedRuntimeEditCommandOps(): ReadonlySet<string> {
+  return pinnedRuntimeEditCommandOpsFromBundle(
+    JSON.parse(readFileSync(runtimeBundlePath(), 'utf8')) as unknown,
+  );
 }
 
 export function assertPinnedRuntimeEditCommandOps(commands: readonly EditCommand[]): void {

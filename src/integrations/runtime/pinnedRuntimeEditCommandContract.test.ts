@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { CommitRequest, EditCommand } from './timeline-commit-types.ts';
-import { assertPinnedRuntimeEditCommandOps, pinnedRuntimeEditCommandOps } from './__tests__/pinnedRuntimeEditCommandContract.ts';
+import {
+  assertPinnedRuntimeEditCommandOps,
+  pinnedRuntimeEditCommandOps,
+  pinnedRuntimeEditCommandOpsFromBundle,
+} from './__tests__/pinnedRuntimeEditCommandContract.ts';
 import { document, environment } from '@/tools/video-editor/commands/__tests__/commitSessionEnvironment.ts';
 
 const initCommand: EditCommand = {
@@ -20,6 +24,15 @@ const nativeMove = (on: number): EditCommand => ({
 });
 
 describe('live App EditCommand operation contract', () => {
+  it.each([
+    ['not an object', null],
+    ['missing resources', {}],
+    ['unknown schema resource', { resources: { unknown: { $id: 'https://astrid.local/schemas/other.json' } } }],
+    ['missing EditCommand definition', { resources: { edit: { $id: 'https://astrid.local/schemas/timeline/edit-command.schema.json', $defs: {} } } }],
+  ])('refuses a pinned bundle with %s', (_description, bundle) => {
+    expect(() => pinnedRuntimeEditCommandOpsFromBundle(bundle)).toThrow(/Pinned Runtime/);
+  });
+
   it('derives public13 membership from the pinned Runtime bundle and rejects b69 active init', async () => {
     const supported = pinnedRuntimeEditCommandOps();
     expect(supported.has('clip.move')).toBe(true);
