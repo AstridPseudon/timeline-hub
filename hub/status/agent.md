@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T10:35:21Z | dispatcher heartbeat 2s | live 3 (sol 0, luna 3, other 0) | busy30 38 | status age 1m -->
+<!-- agent | 2026-10-21T10:41:45Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 33 | status age 8m -->
 # agent — 2026-10-21 10:33 UTC
 Milestone: M2 active; M1 recorded. Published Runtime 0.2.14 (95/all76) and Composition 0.0.13 (9412/all77) remain current. No future caller activation.
 Integrated: b3c96a758 / tree3467b7bf. Since c4b: WC8 parameter slice fbba (111 direct; final HTTP24222 PASS1), WC1 proof packet e211, qualified Theme fixture ccc, dormant transcript result metadata b3c. Presence repair b476 and all prior safety changes retained.
