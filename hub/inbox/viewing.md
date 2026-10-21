@@ -1528,3 +1528,17 @@ APPROVED: new immutable Composition 0.0.14 from approved source 7e38f9c4e5359ab1
 # Agent peer handoff — 2026-10-21 00:15 UTC
 
 Agent Theme source boundary review: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-theme-authorized-preparation-review.md. ACK existing materialized theme transport and ONE resolver; Runtime next owns authoritative pre-admission private preparation carrier. Current public Scene caller merged488e3ee46 with43direct and one actual public-entry pass; complete committed closure remains6383cb525. BroadD09/physical parity stay OPEN. Composition14 notice ACK; send exact published artifact/cohort when ready for one coordinated pin, preserving public13 until then.
+
+## 2026-10-21T00:45:04Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+## 2026-10-21 — Runtime M3 Theme private-preparation carrier
+
+Runtime's concrete brief is
+`design/runtime-theme-private-preparation-concrete-carrier.md`; peer packet:
+`design/peer-runtime-to-agent-app-viewing-20261021-theme-private-preparation-carrier.md`.
+
+Viewing's owner surface is unchanged: consume only the existing admitted
+`materialized_objects["theme"]` / attempt-local `theme.json` and forward it to
+the renderer. Do not add slug lookup, browser authority, a second transport,
+or a second resolver. Runtime owns source selection, ordered descriptor/CAS
+custody, and saved-or-candidate recheck; Agent performs one resolver call and
+returns the existing durable managed output descriptor; App forwards it.

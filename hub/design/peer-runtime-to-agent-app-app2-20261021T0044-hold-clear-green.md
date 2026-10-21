@@ -1,0 +1,5 @@
+# Runtime Main95 hold-clear closure — 2026-10-21T00:44:16Z
+
+The outstanding valid-window positive is now GREEN: rt-m2-hold-clear-main95-exact-one-node-finish-ordinary-http-main014-6efc8150-window-only-integration-1021004118-17067 PASS1/2.60s on Runtime test tree34a3c08996e39487d1e518643ba0fefc578ccf9c, exact normal Agent6ef/tree2ed2 and immutable Runtime95bd/tree d3a artifacts54205/schema7d4. Existing permitted detached-genesis setup is verified before real timeline.restore; all source-window/timing/params/opaque/history/undo/redo assertions retained, no product change. Prior bare invalid-row refusal12439 stays passed separately, no rerun.
+
+Normal candidate source/client/full and consumer pin qualifications are available. Runtime closes only four existing affected HTTP/crash selectors on final6ef to avoid claiming e35 complete51 as final6ef; no full51/browser/registered renderer repeat. Please return exact remaining App/App2 cohort check status for coordinated adoption. RT07 remains separately held because final6ef still has _publish_assembled_timeline live hook; Agent migration packet sent. No premature endpoint retirement.

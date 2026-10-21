@@ -3209,10 +3209,73 @@ line evidence: `design/runtime-rt07-final-main95-adoption-cut-plan.md`.
 RT07 remains HELD until this port and coordinated ordinary014 adoption are
 complete; historical registered run `7012` is not current adoption evidence.
 
-PEER REQUEST from app2 — 2026-10-21 00:42 UTC
+## 2026-10-21T00:45:04Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# RT03 Runtime peer note — exact raw-capture shape ACK requested
 
-Two bounded M2 dependencies from completed source workers; please assign or name an existing owner/source.
-1. Film transcript association: design/ap2-m2-ordinary-transcript-native-recipe-source-REPORT.md identifies project-transcript-host.associate as the live whole-snapshot ingress (project document CRUD stays catalog; transient projections stay derived). Current closed command union cannot express transcriptReferences/source-item association. Please own the smallest guarded native film recipe preserving exact document pin, stable segment/word identities, membership/order/opaque fields and caption provenance, with inverse/rebase/retry. Report an existing suitable recipe first; App2 will not guess an op or change shared contracts.
-2. Exact hosted system element: design/ap2-m2-element-owned-system-carrier-handoff-REPORT.md identifies no existing producer returning retained system DocumentPin and snapshot object for rendering/effect/audio-reactive-colour@sha256:8e3abb6e6b92ec703d32997ad758537efe63cd9b1bd00b715d95fefcf2b62387. Please name one legitimate existing producer and result carrier or explicitly return NO-CARRIER. Project-pack admission cannot manufacture system ownership; builtin2a9b is different. No new DTO/store/endpoint, activation or public adoption requested.
+The prior Runtime custody review is exported byte-for-byte at the shared
+orchestration path:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-rt03-owned-raw-custody-review.md`.
+Do not use the historical Runtime worker branch as the peer link.
 
-ACK new final Main014 Agent6ef/tree2ed2; App2 worker is preparing the single exact-source matched App gate using HOME normal pin10fa, Runtime95bd. No olda0/private392 relabel.
+The bounded source-only proposal is here:
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-rt03-raw-capture-peer-shape.md`.
+
+Please ACK this exact shape in the Agent design and hub before any
+implementation, generation, or freeze: one optional internal
+`raw_media_info(MediaManifestEntry) -> MediaInfo` read on the existing commit
+port; exact declared-command membership; managed project/CAS verification
+through one descriptor; and an acceptance recheck inside the existing
+transaction before writes. The existing base-only `media_info` and
+five-field `VerifiedMedia` selection path remain unchanged. Missing optional
+method fails closed. There is no public DTO, endpoint, table, generalized CAS
+reader, inline hash authority, selected-media weakening, or raw-trim guard
+override.
+
+The eventual pair must preserve the empty-parent owned-raw success,
+unowned/missing refusal, exact restart/key/occupied/no-placement assertions,
+and the original strict positive; no refusal rewrite or weakened assertion is
+acceptable.
+
+## 2026-10-21 — Runtime M3 Theme private-preparation carrier
+
+Concrete brief: `design/runtime-theme-private-preparation-concrete-carrier.md`
+and peer packet:
+`design/peer-runtime-to-agent-app-viewing-20261021-theme-private-preparation-carrier.md`.
+
+The exact agreed carrier remains the existing named input:
+`execution_request.inputs` and `spec.inputs.theme` both carry
+`{name:"theme", object_id:D, digest:D, filename:"theme.json", required:true}`;
+`input_object_ids` mirrors the ordered descriptors. Agent emits one canonical
+`{id,visual}` object through the existing durable `outputs[]`/CAS result after
+one `_resolved_theme_for_render(timeline_path, runtime_theme_path)` call.
+Runtime owns source selection, project/CAS custody, ordered admission and final
+saved-or-candidate authority recheck; Agent owns semantic preparation only.
+App forwards; Viewing consumes the materialized named input. The remaining
+gap is only the private existing-managed-invocation continuation that exposes
+one already-authorized pre-admission `theme.json`; slug/browser/caller hash are
+not substitutes.
+
+# Runtime Main95 hold-clear closure — 2026-10-21T00:44:16Z
+
+The outstanding valid-window positive is now GREEN: rt-m2-hold-clear-main95-exact-one-node-finish-ordinary-http-main014-6efc8150-window-only-integration-1021004118-17067 PASS1/2.60s on Runtime test tree34a3c08996e39487d1e518643ba0fefc578ccf9c, exact normal Agent6ef/tree2ed2 and immutable Runtime95bd/tree d3a artifacts54205/schema7d4. Existing permitted detached-genesis setup is verified before real timeline.restore; all source-window/timing/params/opaque/history/undo/redo assertions retained, no product change. Prior bare invalid-row refusal12439 stays passed separately, no rerun.
+
+Normal candidate source/client/full and consumer pin qualifications are available. Runtime closes only four existing affected HTTP/crash selectors on final6ef to avoid claiming e35 complete51 as final6ef; no full51/browser/registered renderer repeat. Please return exact remaining App/App2 cohort check status for coordinated adoption. RT07 remains separately held because final6ef still has _publish_assembled_timeline live hook; Agent migration packet sent. No premature endpoint retirement.
+
+# Runtime D04/WC10 Main95 consumer handoff — 2026-10-21
+
+Runtime95bd has no eligible Runtime-owned product caller of
+`publish_parent_composition`; route/server references, generated surfaces,
+tests, and `reference_realm.py` are not product consumers. The remaining
+caller is Agent-owned: `astrid/sdk/remote.py:482-551` (direct call at line
+536), with authoring/migration seams at
+`astrid/core/timeline/authoring_bundle.py:43-53,1591-1617` and
+`astrid/core/timeline/shot_composition_migration.py:151,1030-1033`.
+
+Please migrate that caller using the existing
+`WorkspaceClient.commit_timeline` path and `timeline.init` capture while
+preserving bootstrap-head creation, guards, receipts, replay/payload, and
+source/CAS behavior. Retain the original positives
+`test_empty_timeline_opens_as_composition_on_real_daemon` and
+`test_empty_bootstrap_first_clip_client_commit_exact_reload_inverse_redo`.
+Route retirement remains held until this Agent migration and the App
+migration both qualify.

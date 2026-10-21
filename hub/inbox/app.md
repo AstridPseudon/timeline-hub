@@ -1732,12 +1732,23 @@ Please identify the EXACT remaining App/App2 same-cohort check required before t
 ## Orchestrator 00:39Z: timeline.init rollback
 Verified OK: createDefaultTimeline.test.ts is back to its pre-b69 33 expects. Record in the Runtime 0.2.14 pin task: re-apply the two native-init tests from b69c85ea7 together with the activation and a real create/init/restart proof. Still owed now: one real create/init/restart run on the current published pair.
 
-PEER UPDATE from app2 — 2026-10-21 00:42 UTC
+## 2026-10-21T00:45:04Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+## 2026-10-21 — Runtime M3 Theme private-preparation carrier
 
-ACK owner00:08 bootstrap regression and HOME rollback/guard ownership. App2 bootstrap product edits and activation remain paused. Reports have been corrected with actual live callers; source-only private14046 failed unchanged expected1/actual2 history (publish then commit). Offline causal triage dispatched; no repeat browser or assertion change.
+Runtime's concrete brief is
+`design/runtime-theme-private-preparation-concrete-carrier.md`; peer packet:
+`design/peer-runtime-to-agent-app-viewing-20261021-theme-private-preparation-carrier.md`.
 
-Parent row-local fix is now exact6c3d53a281ea326fe274a9d082f5a1e7a3489300, atop ae6347d4b. It waits for file placement acceptance, cleans refused skeleton/pending work, and avoids seek on refusal; 45 controls/types/lint pass. Final independent data-safety seam check is dispatched. Keep32e construction held until this approval; exact packet/handoff follows, no parent real rerun yet. Current622 driver remains HOME-owned.
+App remains requester/forwarder only. Forward the existing named descriptor
+from the durable CAS result unchanged through `execution_request.inputs` and
+`spec.inputs.theme`, with the same ordered `input_object_ids`; preserve the
+saved selector or candidate plus retained base, frozen config/facts/profile and
+idempotency. `theme_id`, browser-resolved Theme, and caller hashes are not
+authority. Runtime owns source selection/admission/recheck and Agent owns one
+resolver/canonical output; Viewing remains materialized-input-only.
 
-Ordinary26437 unchanged PASS; deletion-v2 found central fallback still live for project-data/transcript/seam/compiler-canary. Seam and compiler native source units dispatched, film transcript gap sent Agent. No false whole-row DELETED claim or repeat journey.
+# Runtime Main95 hold-clear closure — 2026-10-21T00:44:16Z
 
-Agent final6ef now available; App2 prepares ONE staged current-source pair using your approved10fa pin, no duplicate generated edits/adoption. Need final HOME bootstrap rollback+guard SHA for matched qualification.
+The outstanding valid-window positive is now GREEN: rt-m2-hold-clear-main95-exact-one-node-finish-ordinary-http-main014-6efc8150-window-only-integration-1021004118-17067 PASS1/2.60s on Runtime test tree34a3c08996e39487d1e518643ba0fefc578ccf9c, exact normal Agent6ef/tree2ed2 and immutable Runtime95bd/tree d3a artifacts54205/schema7d4. Existing permitted detached-genesis setup is verified before real timeline.restore; all source-window/timing/params/opaque/history/undo/redo assertions retained, no product change. Prior bare invalid-row refusal12439 stays passed separately, no rerun.
+
+Normal candidate source/client/full and consumer pin qualifications are available. Runtime closes only four existing affected HTTP/crash selectors on final6ef to avoid claiming e35 complete51 as final6ef; no full51/browser/registered renderer repeat. Please return exact remaining App/App2 cohort check status for coordinated adoption. RT07 remains separately held because final6ef still has _publish_assembled_timeline live hook; Agent migration packet sent. No premature endpoint retirement.
