@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -170,12 +171,19 @@ def test_generated_custom_elements_reach_shared_render_and_scene_unchanged(tmp_p
     for kind in ("effects", "animations", "transitions"):
         (tmp_path / f"{kind}.generated.ts").write_text(gen_effect_registry.generate_element_registry(kind))
     (tmp_path / "host-registries.ts").write_text((REMOTION / "src/host-registries.ts").read_text())
-    package = REMOTION / "node_modules/@banodoco/timeline-composition"
+    runtime_project = Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION))).resolve()
+    peers = Path(os.environ.get("ASTRID_TEST_NODE_MODULES", str(runtime_project / "node_modules"))).resolve()
+    host = tmp_path / "module-host"
+    host.mkdir()
+    (host / "node_modules").symlink_to(peers, target_is_directory=True)
+    script = host / "composition-package.mjs"
+    shutil.copyfile(REMOTION / "tests/composition-package.mjs", script)
+    package = peers / "@banodoco/timeline-composition"
     before = {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
               for p in package.rglob("*") if p.is_file()}
     subprocess.run([os.environ.get("ASTRID_NODE_EXECUTABLE", "node"),
-                    str(REMOTION / "tests/composition-package.mjs"), str(tmp_path)],
-                   cwd=REMOTION, check=True, capture_output=True, text=True, timeout=60)
+                    str(script), str(tmp_path)],
+                   cwd=host, check=True, capture_output=True, text=True, timeout=60)
     after = {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
              for p in package.rglob("*") if p.is_file()}
     assert before == after
