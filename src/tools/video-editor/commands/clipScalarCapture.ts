@@ -16,7 +16,7 @@ export { ClipMoveError } from './clipMovePrimitives.ts';
 export type { AuthoredBundle } from './clipMovePrimitives.ts';
 
 type ScalarValue = Record<string, JSON>;
-type ScalarClear = Array<'hold' | 'asset' | 'transition'>;
+type ScalarClear = Array<'hold' | 'asset' | 'transition' | 'elementRef'>;
 type ScalarArgs = { values: ScalarValue; clear: ScalarClear };
 
 const CLIP_FIELDS = [
@@ -186,6 +186,27 @@ function clipBasis(ctx: MoveRecording, ref: string): void {
   }
 }
 
+function transitionClearPair(ctx: MoveRecording, ref: string): void {
+  const references: Array<[string, JSON]> = [];
+  for (const key of ['elementRef', 'element_ref']) {
+    const state = ctx.state.get(ref, [key]);
+    if (state.state === 'present') references.push([key, state.value]);
+  }
+  if (!references.length) return;
+
+  const transition = ctx.state.get(ref, ['transition']);
+  const value = transition.state === 'present' ? transition.value : undefined;
+  if (!object(value) || typeof value.type !== 'string') {
+    throw new ClipMoveError('transition remove requires a matching transition identity');
+  }
+  for (const [, selected] of references) {
+    if (!object(selected) || selected.kind !== 'transition'
+      || selected.id !== value.type || selected.revision !== value.revision) {
+      throw new ClipMoveError('transition remove refuses a mismatched element reference');
+    }
+  }
+}
+
 function changes(command: EditCommand): ScalarArgs {
   if (!object(command.args) || !has(command.args, 'values') || !has(command.args, 'clear') ||
     !equal(Object.keys(command.args).sort(), ['clear', 'values'])) {
@@ -199,7 +220,7 @@ function changes(command: EditCommand): ScalarArgs {
   if (Object.keys(values).some((key) => key !== 'hold' && key !== 'transition' && key !== 'elementRef')) {
     throw new ClipMoveError('clip.set only supports hold, transition, and elementRef values');
   }
-  if (clear.some((key) => key !== 'hold' && key !== 'asset' && key !== 'transition') ||
+  if (clear.some((key) => key !== 'hold' && key !== 'asset' && key !== 'transition' && key !== 'elementRef') ||
     new Set(clear).size !== clear.length) {
     throw new ClipMoveError('clip.set clear contains an unsupported or repeated field');
   }
@@ -359,6 +380,12 @@ function setClip(bundle: AuthoredBundle, command: EditCommand) {
   const ref = target(ctx, command);
   const { values, clear } = changes(command);
   clipBasis(ctx, ref);
+  if (clear.includes('elementRef')) {
+    if (!clear.includes('transition')) {
+      throw new ClipMoveError('elementRef clear requires transition clear');
+    }
+    transitionClearPair(ctx, ref);
+  }
   const row = ctx.state.entity(ref)!;
   if (has(values, 'elementRef') && !has(values, 'transition')) {
     throw new ClipMoveError('elementRef requires transition SET');
@@ -385,7 +412,10 @@ function setClip(bundle: AuthoredBundle, command: EditCommand) {
   if (has(values, 'hold') || clear.includes('hold')) holdExtent(ctx, ref, values, clear);
   for (const key of Object.keys(values).sort()) ctx.write(ref, [key], values[key]);
   if (has(values, 'elementRef') && has(row, 'element_ref')) ctx.clear(ref, ['element_ref']);
-  for (const key of [...clear].sort()) ctx.clear(ref, [key]);
+  for (const key of [...clear].sort()) {
+    ctx.clear(ref, [key]);
+    if (key === 'elementRef' && has(row, 'element_ref')) ctx.clear(ref, ['element_ref']);
+  }
   ctx.compile();
   return { command: ctx.command, bundle: ctx.state.bundle, record: ctx.record };
 }
