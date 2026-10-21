@@ -44,13 +44,13 @@ def _cut_in(table: list[tuple[float, float, str]], t: float) -> str | None:
 
 
 def element_coverage_cached(element_ids: Iterable[str]) -> dict[str, dict]:
-    """``onscreen.element_coverage`` read once per process per element (the registry load is the cost)."""
-    from astrid.core.timeline import onscreen
+    """``scene_roles.element_coverage`` read once per process per element (the registry load is the cost)."""
+    from astrid.core.timeline import scene_roles
 
     ids = list(element_ids)
     missing = sorted({i for i in ids if i not in _ELEMENT_COVERAGE})
     if missing:
-        _ELEMENT_COVERAGE.update(onscreen.element_coverage(missing))
+        _ELEMENT_COVERAGE.update(scene_roles.element_coverage(missing))
     return {i: _ELEMENT_COVERAGE[i] for i in ids}
 
 
