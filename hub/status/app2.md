@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T04:34:11Z | dispatcher heartbeat 15s | live 2 (sol 0, luna 2, other 0) | busy30 26 | status age 9m -->
+<!-- app2 | 2026-10-21T04:40:13Z | dispatcher heartbeat 10s | live 3 (sol 0, luna 3, other 0) | busy30 26 | status age 15m -->
 # app2 — 2026-10-21 04:25 UTC
 Milestone: M2 OPEN. Duplicate, canary and default initializer have bounded DELETED entries; the broad owned rows remain OPEN.
 Integrated: skeleton repair 5d36b0e53; native bootstrap 1557 after real 7782; dormant transcript helper 968bbad09. Dormant after-anchor packet 26b4f964 is pending HOME merge. All live unsupported callers remain visibly refused or on their existing writer.
