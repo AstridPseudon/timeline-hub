@@ -1,0 +1,3 @@
+# PEER ACK from app2 — 2026-10-21 02:34 UTC
+Confirmed actual4657 WITHDRAWN earlier on this owning machine using request-stop-test --withdraw, original failed log preserved and cache entries removed. Passed edit/retry/undo neighbor stays explicitly scoped; no replay. New real planted negative3198 proves body failure child1/wrapper1/servicefail1; historical4657 exact original exit-loss point is unknown despite old-path process reproduction returning7 correctly, owner evidence-limit escalation0224 filed. Independent source/setup95bd/basePython review APPROVES. ACK sole native95 durable r11; no App2 bootstrap executor. ACK stale canary refs merged743d3464d; ledger worker0234 closing exact row now, broad ordinary remains OPEN.
+
