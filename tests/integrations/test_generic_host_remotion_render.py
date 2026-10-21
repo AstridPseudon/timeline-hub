@@ -444,11 +444,41 @@ def test_generic_host_remotion_register_claim_execute_settle_and_cas(
 def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_source(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
 ) -> None:
-    """The ordinary CAS/file-input route carries the imported theme to props."""
+    """The documented SDK file-input route carries the imported theme to props."""
+    import astrid.sdk as sdk
+
     workspace, remotion, timeline_path, assets_path = _prepare_remotion_fixture(
         tmp_path, monkeypatch
     )
-    daemon = real_runtime()
+    # The ordinary file caller cannot authorize assets named inside a registry.
+    # Use the media-free title film from test_remotion_backend's real-render
+    # fixture, without authored overrides that would mask the theme controls.
+    timeline_path.write_text(
+        json.dumps(
+            {
+                "theme": "banodoco-default",
+                "tracks": [{"id": "v1", "kind": "visual", "label": "Title"}],
+                "clips": [
+                    {
+                        "id": "title",
+                        "at": 0.0,
+                        "track": "v1",
+                        "clipType": "text",
+                        "hold": 0.5,
+                        "text": {
+                            "content": "Remotion ANGLE",
+                            "fontSize": 64,
+                            "color": "#ffffff",
+                        },
+                        "params": {"weight": 700},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    assets_path.write_text(json.dumps({"assets": {}}), encoding="utf-8")
+    daemon = real_runtime(production_worker_credentials=True)
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
         generated.handshake(
@@ -488,6 +518,18 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
         }
         theme_source = workspace / "media" / "explicit-theme.json"
         theme_source.write_text(json.dumps(explicit_theme), encoding="utf-8")
+        timeline_import = owner.media.import_file(
+            project=project_id,
+            path=timeline_path,
+            idempotency_key="generic-remotion-theme-timeline",
+        )
+        assert timeline_import.ok
+        registry_import = owner.media.import_file(
+            project=project_id,
+            path=assets_path,
+            idempotency_key="generic-remotion-theme-assets",
+        )
+        assert registry_import.ok
         imported = owner.media.import_file(
             project=project_id,
             path=theme_source,
@@ -495,8 +537,6 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
         )
         assert imported.ok
         descriptor = imported.data
-        theme_object_id = str(descriptor["object_id"])
-        theme_digest = str(descriptor["digest"])
 
         host = GenericPackHost(
             pack_roots=[workspace / "astrid" / "packs"],
@@ -511,28 +551,56 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
         registration = host.register()
         assert registration["registration"].executor_id == "astrid-theme-proof-host"
 
-        spec = {
-            "inputs": {
-                "timeline": str(timeline_path),
-                "timeline_ref": "timeline-generic-remotion-theme-proof",
-                "assets_registry": str(assets_path),
+        admissions = []
+        create_task = owner.tasks.create
+
+        def capture_admission(**request):
+            response = create_task(**request)
+            admissions.append((request, response))
+            return response
+
+        monkeypatch.setattr(owner.tasks, "create", capture_admission)
+        result = sdk.invoke(
+            "rendering.render",
+            kind="executor",
+            project=project_id,
+            inputs={
+                "timeline": {
+                    "object_id": timeline_import.data["object_id"],
+                    "digest": timeline_import.data["digest"],
+                    "filename": "hype.timeline.json",
+                },
+                "assets_registry": {
+                    "object_id": registry_import.data["object_id"],
+                    "digest": registry_import.data["digest"],
+                    "filename": "hype.assets.json",
+                },
                 "theme": {
-                    "object_id": theme_object_id,
-                    "digest": theme_digest,
+                    "object_id": descriptor["object_id"],
+                    "digest": descriptor["digest"],
                     "filename": "theme.json",
                 },
                 "selector": "rendering.remotion",
-            }
-        }
-        admitted = generated.admit_task(
-            capability_id=record.id,
-            capability_digest=record.capability_digest,
-            input_object_ids=[theme_object_id],
-            idempotency_key="generic-remotion-theme-task",
-            project_id=project_id,
-            spec=spec,
+            },
+            client=owner,
         )
-        task = generated.get_task(admitted["task_id"])
+        assert result.ok, result.to_dict()
+        assert len(admissions) == 1
+        request, response = admissions[0]
+        assert response.ok
+        task = generated.get_task(result.kernel_task_id)
+        assert task.input_object_ids == request["input_manifest"]
+        assert task.spec["inputs"] == request["spec"]["inputs"]
+        print(
+            json.dumps(
+                {
+                    "sdk_admission": request,
+                    "admission_result": response.data,
+                    "sdk_result": result.to_dict(),
+                },
+                default=str,
+            )
+        )
         attempt = tmp_path / "materialized-attempt"
         values = host._materialize_inputs(
             {"spec": task.spec, "input_object_ids": task.input_object_ids},
