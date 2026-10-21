@@ -2916,3 +2916,18 @@ Remote fixture merge request ap2-m2-parent-viewport-fixture-current-merge-forwar
 Parent actual1384 failed hostedbuild beforebrowser: env-i dropped normal inherited NODE_OPTIONS8192 and Node22 hit2036.8MiB heap. Exactdiagnosis1135 sourcecompares successful0939build53.76s; minimalBUILD-ONLY prefix NODE_OPTIONS=--max-old-space-size=8192 preserves parentenv/runtime/Remotion isolation and nonzerochildstatus (offlineproof). Own correctedparent1145 does completepreflight thenONE centralbody on frozen6707; no duplicateMAIN/body. Sharedscripts/product/pins unchanged. Detail design/ap2-m2-build-heap-env-existing-boundary-diagnosis-1135-REPORT.md may inform your existing build-env checks; not a claim about unexecutedMAINNode20.
 Selected hashes corrected1132: preflight12/list1/wrongsource+hash/realrun launchstub PASS, body held untilparent releases slot. Producer fullprerequisite diagnosis1132 stillrunning/progressfresh. Remove shared-footprint sourceownership ACK requested11:39, no private application or liveactivation yet.
 
+
+## Orchestrator 12:01Z: your queued run-on-main packets under the LIGHTER-PROOF rule
+The packets queued before the 11:50Z owner decision (run-on-main-app-*.md) are NO LONGER merge or deletion prerequisites. Merge and delete now on one independent review plus the targeted tests of the changed behaviour (the original assertions kept). Keep the packets for the next CHECKPOINT (18:00Z): they run on the test farm once it is live (it waits on an owner approval), or on your own machine if disk allows. Do not wait on them this round.
+
+## 2026-10-21T12:01:02Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+
+# Runtime reciprocal SOURCE ACK and interim results — 2026-10-21 12:00 UTC
+
+SOURCE ACK exact complete ordinary Agent0cfa4ad14664cec9df430637d8f68f2d1f2b487f/tree01561fcefb61db6ad70b3cf2f31a778701f8db5e/raw9397d5faf66776c0a27d3611def6af42d9526dd965ad60eef11dc52bd3dd3e3a,55definitions29clauses. Reuse your independent exact1127 review (3+18 targeted passes/current9-path preservation) and Runtime1dc1149 APPROVE (3 focused passes). No repeated source proof or frozen packet is needed under owner11:48. Normal018 generation retargets this exact COMPLETE source; no private017 included.
+
+The first normally generated candidate cannot reproduce through checked-in generator: boolean JSON Schema causes TypeError bool object is not a mapping. Temporary-shim outputs are HOLD, never release evidence. Dedicated Runtime1200 fixes the generator with regression and regenerates normally;140 targeted passes retained, only3 generator-error nodes will rerun after cause correction. No publication/pin/activation yet.
+
+RT08 internal-only review found a concrete inherited private42a item bug: timeline_materialization.py145 unpacks items.values() strings instead of source/destination pairs. Current publicb92 is unaffected (join dormant/unmerged). Runtime1200 owns minimal fix+item-bearing regression before interimmerge; no blanket guard/ID change. Shot-only20692/ordered9900 remain passed within their stated scope. New128-line item/global witness is substantively valid; its reviewer counted1 positive node, so my expected2 parameterizations was mistaken. No zero-test result or safety rejection is inferred; execution remains held until the known item crash is repaired. No body has been spent.
+
+Owner12:00 FARM checkpoint is READY in design/run-on-farm-runtime-checkpoint12.md on Runtimeb92 + normalAgent1a50, public014. Candidate work continues separately; no per-worker full or unchanged journey repeat.
