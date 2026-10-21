@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TimelineSnapshot } from '@astrid/editor-sdk';
+import { buildRows } from '../../../astrid/packs/rendering/ui/threejs-live-editor/explorer/rows';
 import { LIVE_SCENE_CLIP_TYPE_ID } from '../../../astrid/packs/rendering/ui/threejs-live-editor/identity';
 import {
   TravelClock,
@@ -865,5 +866,24 @@ describe('worldTitleFromFilename, clipName and renameEntry', () => {
     expect(renameEntry(list, 'o2@r1', '  Renamed  ').map((e) => e.name)).toEqual(['First', 'Renamed']);
     expect(renameEntry(list, 'o2@r1', '   ').map((e) => e.name)).toEqual(['First', 'Second']);
     expect(renameEntry(list, 'o2@r1', '')).toEqual(list);
+  });
+});
+
+describe('timeline world names', () => {
+  const body = (manifest: Record<string, unknown>) => JSON.stringify({ formatVersion: 1, manifest: { formatVersion: 1, duration: 4, authoredFps: 24, ...manifest } });
+  const rowFor = (clipExtra: Record<string, unknown>, manifest: Record<string, unknown>, library: LibraryEntry[] = []) => {
+    const s = snap({ clips: [worldClip('c1', 'V1', 0, { objectId: 'W', revision: 'r1', body: body(manifest) }, clipExtra)] });
+    return buildRows(s, library).timeline[0].name;
+  };
+  it('takes the clip label before the camera part, then a declared name, a library sibling, a filename, else Untitled', () => {
+    expect(rowFor({ label: 'Harbour · Pier' }, { entry: 'a.html', name: 'Declared' })).toBe('Harbour');
+    expect(rowFor({}, { entry: 'a.html', name: 'Declared' })).toBe('Declared');
+    expect(rowFor({}, { entry: 'harbour-dusk.html' }, [{ ...entry('W', 'other', 'Sibling') }])).toBe('Sibling');
+    expect(rowFor({}, { entry: 'scenes/harbour-dusk.html' })).toBe('Harbour dusk');
+    expect(rowFor({}, { entry: 'index.html' })).toBe('Untitled world');
+  });
+  it('a saved real name wins, and a saved placeholder yields to a derived one', () => {
+    expect(rowFor({ label: 'Label' }, {}, [entry('W', 'r1', 'Saved')])).toBe('Saved');
+    expect(rowFor({ label: 'Label' }, {}, [entry('W', 'r1', 'Untitled world')])).toBe('Label');
   });
 });

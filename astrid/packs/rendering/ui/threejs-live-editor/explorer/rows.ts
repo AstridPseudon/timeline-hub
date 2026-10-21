@@ -1,6 +1,6 @@
 // The one world list: worlds in the video, then library worlds.
 import type { TimelineSnapshot } from '@astrid/editor-sdk';
-import { worldKey, worldsFromSnapshot, type CameraMove, type LibraryEntry, type WorldEvent, type WorldUse } from './model';
+import { UNTITLED_WORLD, worldKey, worldsFromSnapshot, type CameraMove, type TimelineWorld, type LibraryEntry, type WorldEvent, type WorldUse } from './model';
 
 /** One world the explorer can open: from the timeline, or from the project library. */
 export type Row = {
@@ -31,6 +31,15 @@ export function rowFromEntry(entry: LibraryEntry): Row {
   };
 }
 
+/** A timeline world's name: its saved name, else the clip's label, a name the package declares, a library world with the same
+ * object or revision, a title from its entry file; "Untitled world" only when none exists. */
+export function timelineWorldName(world: TimelineWorld, entry: LibraryEntry | undefined, library: readonly LibraryEntry[], index = 0): string {
+  if (entry && !UNTITLED_WORLD.test(entry.name)) return entry.name;
+  const sibling = library.find((e) => (e.objectId === world.objectId || e.revision === world.revision) && !UNTITLED_WORLD.test(e.name));
+  return world.nameHints.label ?? world.nameHints.declared ?? sibling?.name ?? world.nameHints.file
+    ?? entry?.name ?? (index === 0 ? 'Untitled world' : `Untitled world ${index + 1}`);
+}
+
 /** Timeline worlds first (named from the library when saved, else "Untitled world"), then library-only worlds. */
 export function buildRows(snapshot: TimelineSnapshot | undefined, library: readonly LibraryEntry[]): { timeline: Row[]; library: Row[] } {
   const worlds = snapshot ? worldsFromSnapshot(snapshot) : [];
@@ -40,7 +49,7 @@ export function buildRows(snapshot: TimelineSnapshot | undefined, library: reado
     const entry = saved.get(worldKey(world));
     return {
       key: worldKey(world),
-      name: entry?.name ?? (index === 0 ? 'Untitled world' : `Untitled world ${index + 1}`),
+      name: timelineWorldName(world, entry, library, index),
       duration: world.duration,
       authoredFps: world.authoredFps,
       objectId: world.objectId,

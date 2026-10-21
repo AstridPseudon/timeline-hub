@@ -1,6 +1,6 @@
 // The project's world library: one versioned Runtime project document, shared by every timeline and viewer of the project.
 import type { ProjectDocumentSurface } from '@astrid/editor-sdk';
-import { libraryContent, parseLibrary, type LibraryEntry } from './model';
+import { libraryContent, parseLibrary, stableJson, type LibraryEntry } from './model';
 
 export const LIBRARY_KIND = 'haus.astrid.threejs-live-editor.world-library';
 // Runtime document ids are global, so the id carries the project.
@@ -40,7 +40,8 @@ export async function updateLibrary(
     const doc = await readDocument(documents, id);
     const current = doc ? parseLibrary(doc.content) : [];
     const next = change(current);
-    if (doc && JSON.stringify(next) === JSON.stringify(current)) return current;
+    // Compare what would be stored (invalid items dropped) with stable key order, so a load that changes nothing writes nothing.
+    if (doc && stableJson(parseLibrary(libraryContent(next))) === stableJson(current)) return current;
     try {
       if (doc) await documents.update(id, libraryContent(next), doc.version);
       else await documents.create(LIBRARY_KIND, libraryContent(next), id);

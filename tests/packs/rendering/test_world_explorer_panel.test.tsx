@@ -113,7 +113,7 @@ const SAMPLE = await sampleLiveScene();
 const SAMPLE_END = SAMPLE.duration;
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 const tenths = (s: number) => `${mmss(Math.floor(s))}.${Math.round((s % 1) * 10)}`;
-const SCENE_USE = new RegExp(`^Untitled world ${mmss(SAMPLE_END)}\\s*· 1 use$`);
+const SCENE_USE = new RegExp(`^Lantern valley ${mmss(SAMPLE_END)}\\s*· 1 use$`);
 
 /** What a scene declares when it supports free roam: a start view the viewer can move from. */
 const EXPLORE = { start: { position: [0, 1, 5] as [number, number, number], target: [0, 1, 0] as [number, number, number] } };
@@ -322,7 +322,7 @@ describe('World Explorer panel', () => {
     const view = mount(harness);
     // The first world in the video opens by itself.
     await waitFor(() => expect(scene.renders.length).toBeGreaterThan(0));
-    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Untitled world');
+    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern valley');
 
     fireEvent.click(view.getByRole('button', { name: 'Choose world' }));
     const worlds = view.getByRole('group', { name: 'Worlds' });
@@ -330,7 +330,7 @@ describe('World Explorer panel', () => {
     // The accessible name drops the space before the separator, so the match allows any spacing there.
     expect(within(inVideo).getByRole('button', { name: SCENE_USE })).toBeTruthy();
     expect(within(worlds).queryByRole('list', { name: 'Library' })).toBeNull();
-    expect(within(worlds).queryByRole('button', { name: /^Lantern/ })).toBeNull();
+    expect(within(worlds).queryByRole('button', { name: /^Lantern Valley/ })).toBeNull();
 
     fireEvent.click(within(inVideo).getByRole('button', { name: SCENE_USE }));
     expect(view.queryByRole('group', { name: 'Worlds' })).toBeNull();
@@ -684,6 +684,31 @@ describe('World Explorer panel', () => {
     expect(storedWorlds(harness.documents)).toEqual([
       expect.objectContaining({ objectId: SAMPLE.liveScene.source.objectId, revision: SAMPLE.liveScene.source.revision }),
     ]);
+  });
+
+  it('a timeline world is named from its clip label, and the name is registered into the library', async () => {
+    const harness = makeHarness({ clips: [{ ...liveClip(), label: 'Harbour Dusk · Pier walk' }] });
+    mount(harness);
+    await waitFor(() => expect(storedWorlds(harness.documents)).toEqual([expect.objectContaining({ name: 'Harbour Dusk' })]));
+  });
+
+  it('opening the panel twice on unchanged worlds writes nothing the second time', async () => {
+    const harness = makeHarness({ clips: [liveClip()] });
+    const first = mount(harness);
+    await waitFor(() => expect(storedWorlds(harness.documents)).toHaveLength(1));
+    await waitFor(() => expect(scene.renders.length).toBeGreaterThan(0));
+    act(() => scene.onReady!({ events: SAMPLE_WORLD.events, cameras: SAMPLE_WORLD.cameras, explore: EXPLORE }));
+    await waitFor(() => expect(storedWorlds(harness.documents)).toEqual([expect.objectContaining({ events: SAMPLE_WORLD.events })]));
+    first.unmount();
+    const create = vi.spyOn(harness.documents, 'create');
+    const update = vi.spyOn(harness.documents, 'update');
+    const second = mount(harness);
+    await waitFor(() => expect(scene.renders.length).toBeGreaterThan(0));
+    act(() => scene.onReady!({ events: SAMPLE_WORLD.events, cameras: SAMPLE_WORLD.cameras, explore: EXPLORE }));
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    second.unmount();
+    expect(create).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
   });
 
   /** Two library worlds: the sample (real package) and a spare entry that has no package behind it. */
