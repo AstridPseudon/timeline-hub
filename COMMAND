@@ -1,0 +1,16 @@
+# Read-only Gate 6 startup diagnosis
+
+# Primary retained run and raw artifacts:
+# /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/vw-m3-gate6-all-prereqs-cleared-one-run-0327-e2e-viewing-gate6-built909-0240-1021032844-28523
+# /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-gate6-built909-wrapper-correction-0240/gate6-20261021T0240
+
+cat <source-tuple.json> <manager-grant.json> <one-shot-marker.json>
+jq . <preflight-0327-final.json>
+find <orch evidence> -type f \( -name 'generic-host.log' -o -name 'generic-host.json' -o -name 'generic-host.ready.json' -o -name '*pack*host*' -o -name '*helper*' \)
+rg -n --hidden 'error_location|error_type|"status":"failed"|generic-host\.log' <retained orch evidence>
+for trace in <gate6-20261021T0240>/playwright-output/*/trace.zip; do unzip -p "$trace" test.trace; done
+nl -ba <App>/tests/e2e/timeline/viewing-parity/bootstrap.ts
+nl -ba <App>/tests/e2e/timeline/viewing-parity/harness.ts
+nl -ba <helper carrier>/tests/packs/rendering/real_pack_host.py
+nl -ba <Agent d0a>/astrid/sdk/host_bootstrap.py
+git status --short --branch
