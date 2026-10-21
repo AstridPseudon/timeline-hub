@@ -44,6 +44,18 @@ export function installCommand(mode: CommandMode): string {
   return windows ? ASTRID_COMMANDS.windows : ASTRID_COMMANDS.macLinux;
 }
 
+/** A complete handoff: retain an existing workspace and diagnose failures before retrying. */
+export function agentInstructions(mode: CommandMode, pageOrigin: string): string {
+  return [
+    `Please ${mode === 'update' ? 'update my existing Astrid installation' : 'set up or restart Astrid on this computer'} so the page at ${pageOrigin} can connect. Do the work yourself and verify the result.`,
+    'First inspect the existing installation, running services, profile, selected workspace and data root. Preserve my projects, media, credentials and agent instructions. Do not reset or delete my workspace, or replace it with an empty one.',
+    'Use the current official Astrid installer and its supported migration or adoption path if this is an older source installation. Read the installer before running it. Do not bypass ownership guards or overwrite a directory just because the installer refuses it.',
+    `The command offered by this page is:\n${installCommand(mode)}`,
+    'If installation or startup fails, read the log path printed by the installer, diagnose the actual cause and resolve it before retrying. Keep the existing workspace selection and data root connected; do not infer that no installation exists merely because the browser cannot reach it.',
+    `Verify that Astrid is healthy, the page at ${pageOrigin} can connect, and my existing projects are accessible. Report what changed and any remaining problem.`,
+  ].join('\n\n');
+}
+
 /** The short shell-opening hint shown beside every install, repair and update line. */
 export function terminalOpeningHint(): string {
   switch (detectPlatform()) {
@@ -109,6 +121,9 @@ export interface RuntimeConnectionCopy {
     /** Shown with the command in a text box, only when the clipboard write failed. */
     readonly copyFailed: string;
     readonly note: string;
+    readonly commandCopy: string;
+    readonly commandCopied: string;
+    readonly terminalAlternative: string;
   };
   /** Next to the compose controls the hosted build disables (card A2.X). */
   readonly composeDisabled: string;
@@ -147,17 +162,17 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   setUp: {
     title: 'Set up Astrid on this computer',
-    sentence: "This browser hasn't found Astrid here yet. Run this line in a terminal to set it up, or to start it if it's already installed.",
+    sentence: "This browser hasn't found Astrid here yet. Give these instructions to your coding agent to set it up or reconnect your existing installation.",
   },
 
   notRunning: {
     title: "Astrid isn't running",
-    sentence: 'Run this line in a terminal to start it again. It keeps your work as it is. This page opens by itself.',
+    sentence: 'Give these instructions to your coding agent to start Astrid again and keep your existing work. This page opens by itself.',
   },
 
   updateNeeded: {
     title: 'Update Astrid',
-    sentence: 'Astrid on this computer needs an update to work with this page. Run this line in a terminal to update it. It backs up your work first.',
+    sentence: 'Astrid on this computer needs an update to work with this page. Give these instructions to your coding agent to update your existing installation.',
   },
 
   /** Lead-in above the shared update screen when a chat reply from this computer's Astrid is out of date. */
@@ -176,7 +191,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   stopped: {
     title: 'Astrid stopped',
-    sentence: 'Run this line in a terminal to start it again. Your changes are kept.',
+    sentence: 'Give these instructions to your coding agent to start Astrid again. Your changes are kept.',
   },
 
   restarted: {
@@ -195,11 +210,14 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
   },
 
   agent: {
-    copy: 'Copy',
+    copy: 'Copy agent instructions',
     copied: 'Copied',
     pasteNext: 'Steps copied. Paste them into your agent.',
     copyFailed: "Copying didn't work. Select the text below and copy it.",
-    note: 'Or paste it into a coding agent to run for you.',
+    note: 'Paste these instructions into your coding agent.',
+    commandCopy: 'Copy command',
+    commandCopied: 'Command copied',
+    terminalAlternative: 'Or run this command yourself in a terminal:',
   },
 
   composeDisabled: "Making new images isn't on this page yet.",

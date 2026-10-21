@@ -83,8 +83,8 @@ describe('RuntimeConnectionPanel', () => {
     expect(card).toHaveClass('w-full', 'max-w-md', 'rounded-2xl', 'border-border', 'bg-card', 'p-6', 'sm:p-8', 'text-center');
     expect(screen.getByRole('heading', { level: 1 })).toHaveClass('font-theme-heading', 'text-2xl', 'text-foreground');
     expect(view.container.querySelector('.border-t')).toBeNull();
-    expect(screen.getAllByRole('button')).toHaveLength(1);
-    expect(screen.getByRole('button')).toHaveClass('w-full', 'sm:w-auto');
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: COPY.agent.copy })).toHaveClass('w-full', 'sm:w-auto');
   });
 
   describe('connecting', () => {
@@ -217,10 +217,10 @@ describe('RuntimeConnectionPanel', () => {
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up');
     expect(screen.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeInTheDocument();
-    const sentence = screen.getByText("This browser hasn't found Astrid here yet. Run this line in a terminal to set it up, or to start it if it's already installed.");
+    const sentence = screen.getByText("This browser hasn't found Astrid here yet. Give these instructions to your coding agent to set it up or reconnect your existing installation.");
     expect(sentence).toHaveClass('text-base', 'leading-7', 'text-muted-foreground');
-    expect(screen.getAllByRole('button')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: COPY.agent.commandCopy })).toBeInTheDocument();
     expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
     expect(screen.getByText(COPY.agent.note)).toBeInTheDocument();
     const panelText = screen.getByTestId('runtime-not-connected').textContent ?? '';
@@ -230,15 +230,10 @@ describe('RuntimeConnectionPanel', () => {
 
   it('uses PowerShell for setup, repair, restart and update on Windows', () => {
     inEdge();
-    const windowsSentences: ReadonlyArray<[RuntimeConnectionValue, string]> = [
-      [connectionFor({ status: 'set_up' }), "This browser hasn't found Astrid here yet. Run this line in PowerShell to set it up, or to start it if it's already installed."],
-      [connectionFor({ status: 'not_running' }), 'Run this line in PowerShell to start it again. It keeps your work as it is. This page opens by itself.'],
-      [connectionFor({ status: 'update_needed' }), 'Astrid on this computer needs an update to work with this page. Run this line in PowerShell to update it. It backs up your work first.'],
-    ];
-
-    for (const [connection, sentence] of windowsSentences) {
-      panel(connection);
-      expect(screen.getByText(sentence)).toBeInTheDocument();
+    for (const status of ['set_up', 'not_running', 'update_needed'] as const) {
+      panel(connectionFor({ status }));
+      expect(screen.getByText('Or run this command yourself in PowerShell:')).toBeInTheDocument();
+      expect(screen.getByText('Open Start and type PowerShell.')).toBeInTheDocument();
       cleanup();
     }
   });
@@ -252,9 +247,9 @@ describe('RuntimeConnectionPanel', () => {
     panel(connection());
 
     expect(screen.getByRole('heading', { name: "Astrid isn't running" })).toBeInTheDocument();
-    expect(screen.getByText('Run this line in a terminal to start it again. It keeps your work as it is. This page opens by itself.')).toBeInTheDocument();
-    expect(screen.getAllByRole('button')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(screen.getByText('Give these instructions to your coding agent to start Astrid again and keep your existing work. This page opens by itself.')).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: COPY.agent.commandCopy })).toBeInTheDocument();
     expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
     expect(shownText()).not.toMatch(/reload/i);
     expect(screen.queryByText('Set up Astrid on this computer')).not.toBeInTheDocument();
@@ -324,14 +319,51 @@ describe('RuntimeConnectionPanel', () => {
       const command = mode === 'update' ? installCommand('update') : installCommand('install');
       expect(screen.getByRole('code')).toHaveTextContent(command);
       expect(screen.getByText(COPY.agent.note)).toBeInTheDocument();
-      fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+      fireEvent.click(screen.getByRole('button', { name: COPY.agent.commandCopy }));
       await waitFor(() => expect(writeText).toHaveBeenCalledWith(command));
+    });
+
+    it.each(['set_up', 'not_running', 'update_needed'] as const)('%s prioritizes the complete agent brief and keeps command copying independent', async (status) => {
+      const writeText = vi.fn(async (_text: string) => undefined);
+      stubClipboard(writeText);
+      panel(connectionFor({ status }));
+      const primary = screen.getByRole('button', { name: 'Copy agent instructions' });
+      const commandCopy = screen.getByRole('button', { name: 'Copy command' });
+      expect(screen.getAllByRole('button')[0]).toBe(primary);
+      expect(commandCopy.parentElement).toContainElement(screen.getByRole('code'));
+      fireEvent.click(primary);
+      await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
+      const brief = writeText.mock.calls[0][0];
+      expect(brief).toContain(window.location.origin);
+      expect(brief).toContain('selected workspace and data root');
+      expect(brief).toContain('supported migration or adoption path');
+      expect(brief).toContain('read the log path printed by the installer');
+      expect(brief).toContain('my existing projects are accessible');
+      const command = installCommand(status === 'update_needed' ? 'update' : 'install');
+      expect(brief).toContain(command);
+      expect(brief).not.toBe(command);
+      expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
+      fireEvent.click(commandCopy);
+      await waitFor(() => expect(writeText).toHaveBeenLastCalledWith(command));
+      expect(screen.getByRole('button', { name: 'Command copied' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: COPY.agent.copied })).toBeInTheDocument();
+    });
+
+    it('keeps the full agent brief selectable when copying it fails', async () => {
+      stubClipboard(vi.fn(async () => { throw new Error('Clipboard denied'); }));
+      panel(connectionFor({ status: 'not_running' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Copy agent instructions' }));
+      const field = await screen.findByRole('textbox', { name: COPY.agent.copyFailed }) as HTMLTextAreaElement;
+      expect(field.value).toContain('selected workspace and data root');
+      expect(field.value).toContain('read the log path printed by the installer');
+      expect(field.selectionEnd).toBe(field.value.length);
+      expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
     });
 
     it('shows the command in a selectable box if clipboard writing fails', async () => {
       stubClipboard(vi.fn(async () => { throw new Error('Clipboard denied'); }));
       panel(connectionFor({ status: 'not_running' }));
-      fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+      fireEvent.click(screen.getByRole('button', { name: COPY.agent.commandCopy }));
       await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(COPY.agent.copyFailed));
       const field = screen.getByRole('textbox') as HTMLTextAreaElement;
       expect(field.value).toBe(installCommand('install'));

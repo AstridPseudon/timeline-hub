@@ -6,7 +6,7 @@ import type { ReactElement } from 'react';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { OnboardingModal } from '@/shared/components/modals/OnboardingModal';
 import { Dialog, DialogContent } from '@/shared/components/ui/dialog';
-import { ASTRID_COMMANDS, RUNTIME_CONNECTION_COPY as COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
+import { agentInstructions, ASTRID_COMMANDS, RUNTIME_CONNECTION_COPY as COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
 import { connectionFor, CONNECTED_REALM } from '@/shared/components/RuntimeConnection/connectionFixture.ts';
 
 const mocks = vi.hoisted(() => ({
@@ -74,13 +74,13 @@ describe('AstridSetupStep', () => {
 
     fireEvent.click(screen.getByRole('button', { name: COPY.agent.copy }));
     expect(await screen.findByRole('button', { name: COPY.agent.copied })).toBeInTheDocument();
-    expect(mocks.clipboard).toHaveBeenCalledWith(command);
+    expect(mocks.clipboard).toHaveBeenCalledWith(agentInstructions('install', window.location.origin));
   });
 
   it('keeps the command selectable when the shared copy action fails', async () => {
     mocks.clipboard.mockResolvedValue(false);
     renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
-    const command = screen.getByText(/https:\/\/astrid.haus\/install/, { selector: 'code' }).textContent;
+    const command = agentInstructions('install', window.location.origin);
     fireEvent.click(screen.getByRole('button', { name: COPY.agent.copy }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(COPY.agent.copyFailed);

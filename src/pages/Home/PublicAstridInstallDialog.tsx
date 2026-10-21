@@ -19,8 +19,7 @@ const HOME_PATH = '/home';
 /** Landing page wording is kept together here for the product copy pass. */
 export const SET_UP_ASTRID_COPY = {
   title: 'Set up Astrid',
-  subtitle: 'Run one line in a terminal to set up Astrid on your computer.',
-  copyCommand: 'Copy',
+  subtitle: 'Give these instructions to your coding agent to set up Astrid on your computer.',
   browserShortcut: 'Add a browser shortcut',
   installNow: 'Add the shortcut',
   useHere: 'Already set up? Open Astrid',
@@ -285,7 +284,7 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
 
         {desktop && copy ? (
           <>
-            <CopyInstallCommand label={SET_UP_ASTRID_COPY.copyCommand} />
+            <CopyInstallCommand />
             <div className="astrid-install-actions">
               <details className="astrid-install-guide" onToggle={event => setShortcutExpanded(event.currentTarget.open)}>
                 <summary>{SET_UP_ASTRID_COPY.browserShortcut}</summary>

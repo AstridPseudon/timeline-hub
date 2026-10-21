@@ -63,7 +63,7 @@ export function RuntimeConnectionPill({
     return (
       <div data-testid="runtime-connection-status" data-state="stopped" role="alert" className={CARD_CLASS}>
         <CardText title={COPY.stopped.title} sentence={withCommandShell(COPY.stopped.sentence)} />
-        <CopyInstallCommand label={COPY.agent.copy} mode="install" />
+        <CopyInstallCommand mode="install" />
       </div>
     );
   }

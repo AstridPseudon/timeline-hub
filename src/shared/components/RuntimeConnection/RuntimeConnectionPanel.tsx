@@ -166,7 +166,7 @@ function SetUpPanel() {
       dataState="set_up"
       title={setUp.title}
       sentence={withCommandShell(setUp.sentence)}
-      action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
+      action={<CopyInstallCommand mode="install" />}
     />
   );
 }
@@ -179,7 +179,7 @@ function NotRunningPanel() {
       dataState="not_running"
       title={notRunning.title}
       sentence={withCommandShell(notRunning.sentence)}
-      action={<CopyInstallCommand label={COPY.agent.copy} mode="install" />}
+      action={<CopyInstallCommand mode="install" />}
       showHelp
     />
   );
@@ -192,7 +192,7 @@ function UpdateNeededPanel() {
       dataState="update_needed"
       title={updateNeeded.title}
       sentence={withCommandShell(updateNeeded.sentence)}
-      action={<CopyInstallCommand label={COPY.agent.copy} mode="update" />}
+      action={<CopyInstallCommand mode="update" />}
       showHelp
     />
   );
