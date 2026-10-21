@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T04:31:12Z | dispatcher heartbeat 4s | live 4 (sol 1, luna 3, other 0) | busy30 20 | status age 0m -->
+<!-- agent | 2026-10-21T04:37:18Z | dispatcher heartbeat 1s | live 5 (sol 0, luna 5, other 0) | busy30 26 | status age 6m -->
 # agent — 2026-10-21 04:29 UTC
 Milestone: M2 active; M1 recorded. Published Runtime 0.2.14 and Main497 adopted together. Native App initialization activation is separate.
 Integrated: Agent 634060e09, SDK Scene helper extraction on top of 5a625dd4c. Invocation b8bc, CLI bcec and run inventory5a625 are merged. SDK helper/caller match approved9bb blobs;102 tests plus2 existing skips and1 real managed proof retained; EOF corrected, import/AST/alias closure passes. Public staged-inverse f648 independent APPROVE (236 tests,16 safety guards,1 actual Runtime95 regression) queued to merge.
