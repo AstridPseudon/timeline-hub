@@ -18,7 +18,7 @@ vi.mock('@/shared/components/ui/runtime/sonner.tsx', () => ({ toast: { error: vi
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-async function mounted(database = createFakeIndexedDB(), changeDocument?: (document: TimelineCommandBasis['canonicalDocument']) => void) {
+async function mounted(database = createFakeIndexedDB(), changeDocument?: (document: TimelineCommandBasis['canonicalDocument']) => void, currentTime = 3) {
   vi.stubGlobal('indexedDB', database);
   const held = new Set<string>();
   vi.stubGlobal('navigator', { locks: { request: async (key: string, _options: unknown, work: (lock: unknown) => Promise<unknown>) => {
@@ -56,7 +56,7 @@ async function mounted(database = createFakeIndexedDB(), changeDocument?: (docum
       configVersionRef, lastSavedSignatureRef, store, shots: { shots: undefined, isLoading: false, error: null,
         refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn(), canonicalDraft: null } });
     const editing = useClipEditing({ dataRef: commit.dataRef, resolvedConfig: commit.data?.resolvedConfig ?? null,
-      selectedClipId: 'clip-a', selectedTrack: null, currentTime: 3, selectClip,
+      selectedClipId: 'clip-a', selectedTrack: null, currentTime, selectClip,
       setSelectedTrackId: vi.fn(), applyEdit, clipSplit: commands.clipSplitPort });
     return { commit, commands, editing };
   });
@@ -120,6 +120,61 @@ describe('staged single-parent split at the mounted command-session boundary', (
 
 
 describe('production single-parent split ingress', () => {
+  it('routes the original source-clock seed at on=1 through native capture and exact retry', async () => {
+    const env = await mounted(undefined, (document) => {
+      const payload = document.parent_revision.payload as Record<string, unknown>;
+      const rows = payload.clips as Array<Record<string, unknown>>;
+      const config = payload.config as Record<string, unknown>;
+      for (const row of [rows[0], (config.clips as Array<Record<string, unknown>>)[0]]) {
+        row.at = 0;
+        row.from = 0;
+        row.to = 4;
+        row.hold = 4;
+        row.speed = 1.3;
+        (row.app as Record<string, Record<string, unknown>>).astrid.for = 4 / 1.3;
+      }
+    }, 1);
+    act(() => { env.hook.result.current.editing.handleSplitSelectedClip(); });
+    await waitFor(() => expect(env.hook.result.current.commands.state.status).toBe('retry'));
+    const request = structuredClone(vi.mocked(env.provider.commitTimeline!).mock.calls[0]);
+    const command = request[0].commands[0];
+    const rightId = command.args.right_id as string;
+    expect(command).toMatchObject({
+      schema_version: 1,
+      op: 'clip.split',
+      version: '1',
+      select: 'parent/clip:clip-a',
+      args: { on: 1 },
+      resolved: ['parent/clip:clip-a'],
+      bindings: { 'split.target': 'parent/clip:clip-a' },
+      created: [`parent/clip:${rightId}`],
+      expect: {
+        'parent/clip:clip-a::hold': { state: 'present', value: 4 },
+        'parent/clip:clip-a::to': { state: 'present', value: 4 },
+        'parent/clip:clip-a::app.astrid.for': { state: 'present', value: 4 / 1.3 },
+      },
+    });
+    expect(command.reads).toEqual(expect.arrayContaining([
+      expect.objectContaining({ ref: 'parent/clip:clip-a', path: [], state: { state: 'present', value: expect.objectContaining({ at: 0, from: 0, to: 4, hold: 4, speed: 1.3 }) } }),
+      expect.objectContaining({ ref: 'parent/clip:' + rightId, path: [], state: { state: 'absent' } }),
+    ]));
+    const draft = env.hook.result.current.commit.data!;
+    expect(draft.config.clips).toHaveLength(3);
+    expect(draft.config.clips[0]).toMatchObject({ id: 'clip-a', at: 0, from: 0, to: 1.3, hold: 1.3, speed: 1.3 });
+    expect(draft.config.clips[1]).toMatchObject({ id: rightId, at: 1, from: 1.3, to: 4, hold: 2.7, speed: 1.3 });
+    expect(draft.config.clips[0].app?.astrid?.for).toBe(1);
+    expect(draft.config.clips[1].app?.astrid?.for).toBe(2.0769230769230766);
+    expect(draft.config.clips[1].opaque).toEqual(draft.config.clips[0].opaque);
+    expect(draft.config.clips[1].params).toEqual(draft.config.clips[0].params);
+    expect(env.applyEdit).not.toHaveBeenCalled();
+    expect(env.scheduled).not.toHaveBeenCalled();
+    await act(async () => { await env.hook.result.current.commands.retry(); });
+    expect(vi.mocked(env.provider.commitTimeline!).mock.calls[1]).toEqual(request);
+    expect(env.provider.saveTimeline).not.toHaveBeenCalled();
+    expect(env.provider.saveTimelineAtHead).not.toHaveBeenCalled();
+    env.hook.unmount();
+  });
+
   it.each(['selected', 'context menu', 'keyboard'] as const)('routes %s through actual hook capture/finish/submit exactly once', async (ingress) => {
     const env = await mounted();
     const port = env.hook.result.current.commands.clipSplitPort!;

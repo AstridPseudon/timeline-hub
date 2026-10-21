@@ -138,6 +138,78 @@ describe('native parent clip.split capture parity', () => {
     expect(result.command.created).toEqual(['parent/clip:right']);
   });
 
+  it('matches the original source-clock Agent capture, including its full record', async () => {
+    const input = await bundle();
+    const sourceRows = [clips(input)[0], ((input.parent.config as Record<string, JsonValue>).clips as Array<Record<string, JsonValue>>)[0]];
+    for (const clip of sourceRows) {
+      clip.at = 0;
+      clip.from = 0;
+      clip.to = 4;
+      clip.hold = 4;
+      clip.speed = 1.3;
+      ((clip.app as Record<string, JsonValue>).astrid as Record<string, JsonValue>).for = 4 / 1.3;
+    }
+    const before = detached(input);
+    const derived = detached(input);
+    for (const clip of [clips(derived)[0], ((derived.parent.config as Record<string, JsonValue>).clips as Array<Record<string, JsonValue>>)[0]]) {
+      clip.hold = 4 / 1.3;
+    }
+    const derivedBefore = detached(derived);
+    expect(() => captureClipSplit(derived, select, { on: 1, right_id: 'right-dynamic' }))
+      .toThrow('matching hold and source window');
+    expect(derived).toEqual(derivedBefore);
+
+    const result = finishClipSplit(captureClipSplit(input, select, { on: 1, right_id: 'right-dynamic' }));
+    const [left, right, neighbor] = clips(result.bundle);
+    const source = clips(before)[0];
+    const originalRows = clips(before);
+    const expectedLeft = { ...detached(source), at: 0, from: 0, to: 1.3, hold: 1.3 };
+    const expectedRight = { ...detached(source), id: 'right-dynamic', at: 1, from: 1.3, to: 4, hold: 2.7 };
+    ((expectedLeft.app as Record<string, JsonValue>).astrid as Record<string, JsonValue>).for = 1;
+    ((expectedRight.app as Record<string, JsonValue>).astrid as Record<string, JsonValue>).for = 2.0769230769230766;
+    expect([left, right, neighbor]).toEqual([expectedLeft, expectedRight, originalRows[1]]);
+    expect(result.bundle.parent.config).toEqual({ ...result.bundle.parent.config, clips: [expectedLeft, expectedRight, originalRows[1]] });
+    expect(result.command).toMatchObject({
+      schema_version: 1,
+      op: 'clip.split',
+      version: '1',
+      select,
+      args: { on: 1, right_id: 'right-dynamic' },
+      resolved: [select],
+      bindings: { 'split.target': select },
+      created: ['parent/clip:right-dynamic'],
+      expect: {
+        'parent/clip:right-dynamic::': { state: 'absent' },
+        'parent/clip:clip-a::hold': { state: 'present', value: 4 },
+        'parent/clip:clip-a::to': { state: 'present', value: 4 },
+        'parent/clip:clip-a::app.astrid.for': { state: 'present', value: 4 / 1.3 },
+      },
+    });
+    expect(result.record).toMatchObject({
+      ordinal: 0,
+      command: result.command,
+      created: [{ ref: 'parent/clip:right-dynamic', kind: 'clip', owner: 'parent' }],
+      dependencies: [],
+      writes: [
+        { ref: 'parent/clip:right-dynamic', path: [], before: { state: 'absent' }, after: { state: 'present', value: expectedRight } },
+        { ref: select, path: ['hold'], before: { state: 'present', value: 4 }, after: { state: 'present', value: 1.3 } },
+        { ref: select, path: ['to'], before: { state: 'present', value: 4 }, after: { state: 'present', value: 1.3 } },
+        { ref: select, path: ['app', 'astrid', 'for'], before: { state: 'present', value: 4 / 1.3 }, after: { state: 'present', value: 1 } },
+      ],
+      derived_writes: [{
+        ref: 'parent',
+        path: ['config', 'clips'],
+        before: { state: 'present', value: originalRows },
+        after: { state: 'present', value: [expectedLeft, expectedRight, originalRows[1]] },
+        cause: 0,
+      }],
+    });
+    expect(result.record.reads).toEqual(result.command.reads);
+    expect(result.record.selections).toEqual(result.command.selections);
+    expect(result.record.bindings).toEqual([{ key: 'split.target', ref: select, policy: 'fixed', dependencies: [] }]);
+    expect(input).toEqual(before);
+  });
+
   it('allows disjoint neighbor edits while refusing touched source and selection claims', async () => {
     const original = await bundle();
     const command = captureClipSplit(original, select, args).command;
