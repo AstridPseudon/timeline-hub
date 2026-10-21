@@ -509,7 +509,7 @@ def render_lipsync(ctx: LayerContext) -> LayerResult:
             findings.append(f"LIPSYNC {name}: presenter has {len(own)} words, VO has {len(vo)} under the cut; no pairs within 0.3 s")
     # pixel check: does the mouth region actually change in the captured frames?
     presenter = presenters[0]
-    box = model.mouth_box(presenter, 0)
+    box = None if public else model.mouth_box(presenter, 0)
     crop = _public_crop(public["rect"], public["basis"], ctx.frame_size) if public else None
     if crop is None and box and len(series) >= 3:
         sx, sy = ctx.frame_size[0] / model.CANVAS[0], ctx.frame_size[1] / model.CANVAS[1]
