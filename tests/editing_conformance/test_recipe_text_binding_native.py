@@ -44,6 +44,23 @@ def apply(base, binding=VOICE, data=b'voice', *, clear=False):
     return execute(base, [call], verified_media=verified)
 
 
+def migrate(base, data=b'hello'):
+    pin = descriptor(data)
+    verified = [{**pin, 'utf8': True}]
+    call = capture_text_binding_set(base, OWNER, VOICE, text=pin,
+                                    verified_text=verified,
+                                    legacy_source='main-inline-voiceover-v1')
+    validate_command(call)
+    return execute(base, [call], verified_media=verified)
+
+
+def migration_command(pin):
+    return {'schema_version': 1, 'op': 'text-binding.set', 'version': '1', 'select': OWNER,
+            'args': {'binding': copy.deepcopy(VOICE), 'text': copy.deepcopy(pin),
+                     'legacy_source': 'main-inline-voiceover-v1'},
+            'intent': {'ownership': 'occurrence'}}
+
+
 def test_exact_capture_inverse_and_same_value_write(original):
     base = copy.deepcopy(original)
     plan = apply(original)
@@ -60,6 +77,74 @@ def test_exact_capture_inverse_and_same_value_write(original):
     again = apply(plan.bundle)
     assert again.bundle == plan.bundle
     assert again.records[0]['writes'][0]['before'] == again.records[0]['writes'][0]['after']
+
+
+def test_explicit_main_inline_migration_keeps_opaque_row_and_order(original):
+    base = apply(apply(original, TRANSCRIPT).bundle, PROMPT).bundle
+    rows = payload(base)['text_bindings']
+    legacy = {'slot': 'voiceover', 'text': 'hello', 'opaque': None, 'present': False}
+    rows.insert(1, legacy)
+    before = copy.deepcopy(base)
+
+    plan = migrate(base)
+    migrated = payload(plan.bundle)['text_bindings']
+    assert migrated[1] == {
+        'kind': 'voiceover_script', 'slot': None,
+        'media_id': descriptor(b'hello')['object_id'],
+        'content_hash': descriptor(b'hello')['digest'], 'byte_size': 5,
+        'mime_type': TEXT_MEDIA_TYPE, 'opaque': None, 'present': False,
+    }
+    assert [row['kind'] for row in migrated] == ['transcript', 'voiceover_script', 'prompt']
+    assert plan.records[0]['writes'][0]['before'] == present(legacy)
+    assert inverse(plan.bundle, plan.records).bundle == before
+    assert replay(plan, before, verified_media=[{**descriptor(b'hello'), 'utf8': True}]).bundle == plan.bundle
+
+
+def test_explicit_main_inline_migration_accepts_empty_text(original):
+    payload(original)['text_bindings'] = [{'slot': 'voiceover', 'text': ''}]
+    plan = migrate(original, b'')
+    assert payload(plan.bundle)['text_bindings'][0]['byte_size'] == 0
+    assert inverse(plan.bundle, plan.records).bundle == original
+
+
+@pytest.mark.parametrize('damage', ['descriptor', 'verified', 'surrogate', 'duplicate', 'shared'])
+def test_explicit_main_inline_migration_refuses_before_writes(original, damage):
+    base = copy.deepcopy(original)
+    payload(base)['text_bindings'] = [{'slot': 'voiceover', 'text': 'hello'}]
+    pin = descriptor(b'hello')
+    verified = [{**pin, 'utf8': True}]
+    if damage == 'descriptor':
+        pin = descriptor(b'other')
+    elif damage == 'verified':
+        verified = []
+    elif damage == 'surrogate':
+        payload(base)['text_bindings'][0]['text'] = '\ud800'
+    elif damage == 'duplicate':
+        payload(base)['text_bindings'].append({**VOICE, **{
+            'media_id': descriptor(b'old')['object_id'], 'content_hash': descriptor(b'old')['digest'],
+            'byte_size': 3, 'mime_type': TEXT_MEDIA_TYPE}})
+    elif damage == 'shared':
+        base = bundle(shared=True)
+        owner_payload = payload(base)
+        owner_payload['text_bindings'] = [{'slot': 'voiceover', 'text': 'hello'}]
+        verified = [{**pin, 'utf8': True}]
+    call = migration_command(pin)
+    before = copy.deepcopy(base)
+    with pytest.raises(CommandError):
+        execute(base, [call], verified_media=verified)
+    assert base == before
+
+
+def test_ordinary_inline_text_binding_still_refuses_without_migration_flag(original):
+    payload(original)['text_bindings'] = [{'slot': 'voiceover', 'text': 'hello'}]
+    pin = descriptor(b'hello')
+    call = {'schema_version': 1, 'op': 'text-binding.set', 'version': '1', 'select': OWNER,
+            'args': {'binding': copy.deepcopy(VOICE), 'text': pin},
+            'intent': {'ownership': 'occurrence'}}
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError):
+        execute(original, [call], verified_media=[{**pin, 'utf8': True}])
+    assert original == before
 
 
 def test_empty_clear_and_original_noncanonical_order(original):

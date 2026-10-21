@@ -2656,6 +2656,9 @@
         },
         "clear": {
           "const": true
+        },
+        "legacy_source": {
+          "const": "main-inline-voiceover-v1"
         }
       },
       "oneOf": [
