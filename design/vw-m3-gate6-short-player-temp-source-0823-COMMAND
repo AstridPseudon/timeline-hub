@@ -1,0 +1,21 @@
+# Source-only checks run in the Composition worktree.
+set -eu
+
+python3 -m py_compile design/vw-m3-gate6-short-player-temp-source-0823-short-player-temp-controls.py
+python3 design/vw-m3-gate6-short-player-temp-source-0823-short-player-temp-controls.py
+python3 design/vw-m3-gate6-short-player-temp-source-0823-short-player-temp-controls.py \
+  --witness /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-gate6-runner-child-contract-repair-0803/tmp-5aZG7i \
+  'com.google.Chrome.tFXWh4/SingletonSocket'
+probe_tmp=$(mktemp -d /tmp/vw-XXXXXX)
+chmod 700 "$probe_tmp"
+python3 design/vw-m3-gate6-short-player-temp-source-0823-short-player-temp-controls.py --check-path "$probe_tmp"
+python3 design/vw-m3-gate6-short-player-temp-source-0823-short-player-temp-controls.py --cleanup "$probe_tmp"
+test ! -e "$probe_tmp"
+git diff --check
+
+# Private dry-run only: copies retained 0803 scripts and the frozen harness to
+# /tmp, applies the unapplied packet with patch --dry-run, then runs bash -n.
+# No central child, helper, Runtime, browser, renderer, or export is started.
+
+# Not run by this source-only task: the central preflight or any helper,
+# Runtime, browser, renderer, export, localhost, live-socket, or full suite.
