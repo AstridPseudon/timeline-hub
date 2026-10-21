@@ -214,9 +214,11 @@ def test_remove_pruned_namespace_restores_exact_order_after_reload_and_redo():
     ]
     removed = reload_bundle(plan.bundle)
     records = json.loads(json.dumps(plan.records))
+    records_before = copy.deepcopy(records)
     assert list(project_data(removed)) == ["before", "after"]
 
     undone = inverse(removed, records)
+    assert records == records_before
     assert list(project_data(undone.bundle)) == ["before", TARGET, "after"]
     assert undone.bundle == before
 
