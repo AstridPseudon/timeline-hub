@@ -32,6 +32,22 @@ def without_groups(schema):
     return schema
 
 
+def without_transition(schema):
+    """Reconstruct the reviewed 84fc floor without copying its schema."""
+    args = schema['$defs']['ClipSetArgs']
+    args['properties']['values']['properties'].pop('transition', None)
+    args['properties']['values']['properties'].pop('elementRef', None)
+    args['properties']['clear']['items']['enum'] = [
+        value for value in args['properties']['clear']['items']['enum'] if value != 'elementRef']
+    args['properties'].pop('schema_source', None)
+    args['description'] = (
+        'Bounded raw clip fields. Set hold in source seconds; explicitly remove hold, asset or '
+        'incoming transition. Clear removes presence, never sets null/empty. Asset assignment '
+        'requires the scoped clip.swap-media or occurrence.swap-media; transition authoring is '
+        'outside v1.')
+    return schema
+
+
 def without_voiceover(schema):
     shot = schema['$defs']['ShotSetArgs']
     del shot['properties']['values']['properties']['metadata']
@@ -62,7 +78,7 @@ def without_extent(schema):
 
 def ordinary_schema():
     """Remove only the reviewed carrier additions, checking each complete branch."""
-    candidate = without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
+    candidate = without_transition(without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA)))))
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -92,6 +108,7 @@ def ordinary_schema():
         clause['then'] = old
         affected.add(clause['if']['properties']['op']['const'])
     assert affected | {'track.create'} == SOURCE_BOUND_OPERATIONS
+    without_transition(candidate)
     return candidate
 
 
@@ -106,8 +123,20 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
     assert compatibility_errors(ordinary, _SCHEMA) == []
 
 
+def test_transition_carrier_is_additive_on_the_current_clip_set_schema():
+    args = _SCHEMA['$defs']['ClipSetArgs']
+    assert set(args['properties']) == {'values', 'clear', 'schema_source'}
+    assert set(args['properties']['values']['properties']) == {'hold', 'transition', 'elementRef'}
+    transition = args['properties']['values']['properties']['transition']
+    assert transition['required'] == ['type', 'duration']
+    assert all(transition['properties'][key] is False
+               for key in ('id', 'durationFrames', 'align', 'incomingPolicy'))
+    assert args['properties']['clear']['items']['enum'] == [
+        'hold', 'asset', 'transition', 'elementRef']
+
+
 def test_removing_only_group_additions_reconstructs_project_data_bytes():
-    candidate = without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
+    candidate = without_transition(without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA)))))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
     assert len(candidate['$defs']) == 56
@@ -115,7 +144,7 @@ def test_removing_only_group_additions_reconstructs_project_data_bytes():
 
 
 def test_removing_group_and_project_data_additions_reconstructs_private_carrier_bytes():
-    candidate = without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
+    candidate = without_transition(without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA)))))
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -128,19 +157,19 @@ def test_removing_group_and_project_data_additions_reconstructs_private_carrier_
 
 
 def test_project_data_proposal_has_a_new_closed_schema_hash():
-    raw = (json.dumps(without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA)))), indent=2) + '\n').encode()
+    raw = (json.dumps(without_transition(without_groups(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
 
 
 def test_private_extent_proposal_is_one_addition_on_voiceover_floor():
-    raw = (json.dumps(_SCHEMA, indent=2) + '\n').encode()
+    raw = (json.dumps(without_transition(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_EXTENT_SHA256
     assert len(_SCHEMA['$defs']) == 59
     assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
 
 
 def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():
-    candidate = without_extent(copy.deepcopy(_SCHEMA))
+    candidate = without_transition(without_extent(copy.deepcopy(_SCHEMA)))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_VOICEOVER_SHA256
     assert len(candidate['$defs']) == 58
@@ -148,7 +177,7 @@ def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():
 
 
 def test_voiceover_property_preserves_the_prior_group_schema_hash():
-    raw = (json.dumps(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))), indent=2) + '\n').encode()
+    raw = (json.dumps(without_transition(without_extent(without_voiceover(copy.deepcopy(_SCHEMA)))), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
 
 
@@ -156,7 +185,7 @@ def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schem
     from tests.sdk.test_timeline_current_union_schema import FIXTURES, baseline
 
     previous = baseline('agent-frozen-s2-26ef2bbb')
-    current = without_extent(without_voiceover(copy.deepcopy(_SCHEMA)))
+    current = without_transition(without_extent(without_voiceover(copy.deepcopy(_SCHEMA))))
     raw = (FIXTURES / 'agent-frozen-s2-26ef2bbb.json').read_bytes()
     for name in (*REFERENCES, 'AnchorIdentity'):
         addition = copy.deepcopy(

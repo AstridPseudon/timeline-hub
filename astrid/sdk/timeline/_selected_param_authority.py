@@ -37,10 +37,14 @@ def _association(record, select):
             or set(pin['element']) != {'packId', 'id', 'kind', 'revision'}):
         return None
     _document_pin(pin['source'])
-    if command['op'] == 'clip.set-params':
+    if command['op'] in ('clip.set-params', 'clip.set'):
         reads = {r['path'][0]: r['state'].get('value') for r in record['reads']
                  if r['ref'] == select and r['path'] in (['elementRef'], ['element_ref'])}
-        if (reads.get('elementRef') or reads.get('element_ref')) != pin['element']:
+        previous = reads.get('elementRef') or reads.get('element_ref')
+        if previous is not None and previous != pin['element']:
+            return None
+        if (command['op'] == 'clip.set'
+                and command['args']['values'].get('elementRef') != pin['element']):
             return None
     return pin
 
@@ -83,14 +87,17 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
                         if current.entity(owner, optional=True) is not None else None)
                 if shot and ref == 'shot:' + shot['shot_id']:
                     return True
-        return record['command']['select'] == select and record['command']['op'] in (
-            'clip.set-element', 'clip.set-params')
+        command = record['command']
+        return (command['select'] == select and command['op'] in (
+            'clip.set-element', 'clip.set-params')) or (
+                command['select'] == select and command['op'] == 'clip.set'
+                and 'schema_source' in command['args'])
 
     def effect(value, record, index, envelope=None):
         if not relevant(record, index):
             return value
         command = record['command']
-        if command['op'] in ('clip.set-element', 'clip.set-params'):
+        if command['op'] in ('clip.set-element', 'clip.set-params', 'clip.set'):
             association = _association(record, select)
             if association is None:
                 return None
