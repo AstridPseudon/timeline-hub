@@ -1714,7 +1714,8 @@ def _record_may_render(record: 'CapabilityRecord') -> bool:
 
 def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment: Mapping[str, str],
                                      capability_matrix: Path | None = None,
-                                     *, remotion_only: bool = False) -> list[dict[str, str]]:
+                                     *, remotion_only: bool = False,
+                                     installed_root: Path | None = None) -> list[dict[str, str]]:
     """Project only fixed launch-known inputs; never expand task placeholders.
 
     With ``remotion_only`` just the worker environments of capabilities that
@@ -1770,10 +1771,22 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
     # launch. Qualify the explicit host mapping, not that caller's ambient env.
     dependencies = dependency_pythonpath(environment)
     baseline = build_child_subprocess_env(base=environment, parent=environment)
+    installed = (environment.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed'
+                 or os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed')
+    if installed:
+        from astrid.core.rendering.remotion_runtime import _registry_context
+        _registry_context(environment, generator=False)
+        # The installed host already discovers its selected package tree.
+        # Do not make a worker's pack root or source path a second authority.
+        baseline.pop(ASTRID_PACKS_PATH, None)
+        baseline.pop('PYTHONPATH', None)
     variants = [baseline]
     for record in records.values():
         if remotion_only and not _record_may_render(record):
             continue
+        if installed and remotion_only and not record.source_root.is_relative_to(
+                (installed_root or Path(__file__).absolute().parents[3]) / 'astrid/packs'):
+            raise HostError('installed Remotion workers require product-owned pack roots')
         # Startup validation has no task credential channel. Legacy manifests
         # can still list credentials in passthrough: omit those names entirely,
         # while retaining their syntax checks without declaring any authority.
@@ -1795,22 +1808,35 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
             passthrough=public_passthrough,
             declared_passthrough=public_passthrough)
         native = dict(projected)
-        native[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in pack_roots)
-        native['PYTHONPATH'] = os.pathsep.join(dict.fromkeys((
-            str(Path(__file__).resolve().parents[3]), *dependencies,
-            *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
+        if installed:
+            if ASTRID_PACKS_PATH not in fixed:
+                native.pop(ASTRID_PACKS_PATH, None)
+            if 'PYTHONPATH' not in fixed:
+                native.pop('PYTHONPATH', None)
+        else:
+            native[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in pack_roots)
+            native['PYTHONPATH'] = os.pathsep.join(dict.fromkeys((
+                str(Path(__file__).resolve().parents[3]), *dependencies,
+                *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
         variants.append(native)
         # The command builder supplies a canonical default, then command/env
         # and required nonsecret configuration override it, in the real order.
-        command_fixed = _fixed_worker_environment(record, {
+        command_defaults = {} if installed else {
             'PYTHONPATH': os.pathsep.join((str(Path(__file__).resolve().parents[3]), *dependencies)),
-            **fixed}, environment)
-        command_relevant = {**relevant, 'PYTHONPATH': command_fixed['PYTHONPATH']}
+        }
+        command_fixed = _fixed_worker_environment(record, {
+            **command_defaults, **fixed}, environment)
+        command_relevant = dict(relevant)
+        if 'PYTHONPATH' in command_fixed:
+            command_relevant['PYTHONPATH'] = command_fixed['PYTHONPATH']
         command_variant = build_child_subprocess_env(
             base=environment, parent=environment, explicit_env=command_relevant,
             passthrough=public_passthrough,
             declared_passthrough=public_passthrough)
-        command_variant['PYTHONPATH'] = _command_worker_pythonpath(record, command_variant['PYTHONPATH'])
+        if not installed:
+            command_variant['PYTHONPATH'] = _command_worker_pythonpath(record, command_variant['PYTHONPATH'])
+        elif ASTRID_PACKS_PATH not in fixed:
+            command_variant.pop(ASTRID_PACKS_PATH, None)
         variants.append(command_variant)
     return variants
 
@@ -6478,6 +6504,7 @@ class GenericPackHost:
         input_size_limits: Mapping[str, int] | None = None,
         storage_policy_version: str | None = None,
         continuation_id: str | None = None,
+        producer_identity: Mapping[str, Any] | None = None,
         file_input_names: frozenset[str] = frozenset(),
     ) -> dict[str, Any]:
         """Materialize digest inputs and managed registry objects in *attempt*.
@@ -6633,6 +6660,24 @@ class GenericPackHost:
                 "edges": _json_safe(runtime_dependencies.get("edges", [])),
                 "aggregation": _json_safe(runtime_dependencies.get("aggregation", {})),
             }
+            capture = values.get("resolved_children")
+            if capture is not None:
+                publication = runtime_dependencies.get("publication", {})
+                if (not isinstance(capture, Mapping) or not isinstance(publication, Mapping)
+                        or capture.get("admitted_target") != publication.get("admitted_target")):
+                    raise HostError("assembler capture differs from immutable admitted target")
+                resolved_envelope["capture"] = _json_safe(capture)
+            from astrid.core.contracts.runtime_orchestration import is_native_assembler_spec
+
+            if is_native_assembler_spec(input_spec) and producer_identity is not None:
+                from astrid.core.execution._child_bridge import resource
+
+                resolved_envelope["producer"] = _json_safe(producer_identity)
+                resolved_envelope["associations"] = [
+                    _json_safe(resource(self._client_operation("child_output")(
+                        child["association"]["association_id"])))
+                    for child in capture["children"]
+                ]
             if continuation_id is None:
                 resolved_envelope.pop("continuation_id", None)
             resolved_path = Path(attempt).resolve() / "inputs" / "resolved-children.json"
@@ -7666,7 +7711,14 @@ class GenericPackHost:
                     readiness_path = readiness_path[len(installed_hook) + 1:]
                 else:
                     raise HostError('host network hook context differs before readiness validation')
-            if readiness_worker_kind == 'command':
+            if readiness_worker_kind not in {'native', 'command'}:
+                raise HostError('unknown internal readiness worker projection')
+            if os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed':
+                if readiness_path:
+                    readiness_env['PYTHONPATH'] = readiness_path
+                else:
+                    readiness_env.pop('PYTHONPATH', None)
+            elif readiness_worker_kind == 'command':
                 readiness_env['PYTHONPATH'] = _command_worker_pythonpath(record, readiness_path)
             elif readiness_worker_kind == 'native':
                 readiness_env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
@@ -8031,7 +8083,9 @@ class GenericPackHost:
             readiness_worker_kind='command',
             allow_runtime_connection=allow_runtime_connection and child_bridge is None,
             explicit_env={
-                "PYTHONPATH": os.pathsep.join((package_parent, *_dependency_pythonpath())),
+                **({} if os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed' else {
+                    "PYTHONPATH": os.pathsep.join((package_parent, *_dependency_pythonpath())),
+                }),
                 ASTRID_INTERNAL_INVOCATION: "1",
                 **binding.env,
                 "ASTRID_PROGRESS_PATH": str(attempt / ".astrid-progress.json"),
@@ -8050,7 +8104,8 @@ class GenericPackHost:
         from astrid.core.rendering.verified_source import PreparedTimelineInputs
 
         PreparedTimelineInputs.handoff_source(prepared_inputs, env)
-        env['PYTHONPATH'] = _command_worker_pythonpath(record, env.get('PYTHONPATH', ''))
+        if os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') != 'installed':
+            env['PYTHONPATH'] = _command_worker_pythonpath(record, env.get('PYTHONPATH', ''))
         cwd = _confined_cwd(
             binding.cwd,
             attempt=attempt,
@@ -8326,10 +8381,11 @@ class GenericPackHost:
         # Preserve the host-created sitecustomize hook when replacing the
         # worker import path; arbitrary child PYTHONPATH is still excluded.
         network_hook_roots = (str(attempt_path / ".astrid-network-hook"),) if env.get("ASTRID_NETWORK_POLICY") else ()
-        env["PYTHONPATH"] = os.pathsep.join(
-            dict.fromkeys((*network_hook_roots, package_parent, *_dependency_pythonpath(), *import_roots))
-        )
-        env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
+        if os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') != 'installed':
+            env["PYTHONPATH"] = os.pathsep.join(
+                dict.fromkeys((*network_hook_roots, package_parent, *_dependency_pythonpath(), *import_roots))
+            )
+            env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
         broker_endpoint = str((child_env or {}).get("ASTRID_BROKER_PROXY") or "")
         argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker", str(request_path)]
         inherited_fds = ()
@@ -8453,98 +8509,6 @@ class GenericPackHost:
                 env.clear()
                 request_path.unlink(missing_ok=True)
                 result_path.unlink(missing_ok=True)
-
-    def _publish_assembled_timeline(
-        self,
-        *,
-        task_data: Mapping[str, Any],
-        attempt_id: str,
-        fence: int,
-        lease_token: str,
-        outputs: Sequence[Mapping[str, Any]],
-        attempt_root: Path,
-    ) -> Mapping[str, Any]:
-        """Publish the authoring result before settling its Runtime attempt."""
-        publish = getattr(self.client, "publish_timeline_render", None)
-        if not callable(publish):
-            raise HostError("runtime client lacks canonical publish_timeline_render operation")
-        proposal_descriptor = next(
-            (
-                item for item in outputs
-                if str(item.get("artifact_type", "")) == "timeline/authoring-proposal"
-                or Path(str(item.get("path", ""))).name == "authoring-proposal.json"
-            ),
-            None,
-        )
-        if proposal_descriptor is None:
-            raise HostError("rendering.assemble_timeline produced no authoring proposal")
-        proposal_path = Path(str(proposal_descriptor.get("path", ""))).expanduser().resolve()
-        if not proposal_path.is_file() or not proposal_path.is_relative_to(Path(attempt_root).resolve()):
-            raise HostError("authoring proposal path is outside the current attempt")
-        try:
-            proposal = json.loads(proposal_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as exc:
-            raise HostError(f"authoring proposal is unreadable: {exc}") from exc
-        if not isinstance(proposal, Mapping):
-            raise HostError("authoring proposal must be an object")
-        publication = proposal.get("publication")
-        timeline = proposal.get("timeline")
-        registry = proposal.get("registry")
-        if not isinstance(publication, Mapping) or publication.get("authority") != "workspace_runtime":
-            raise HostError("authoring proposal is not Runtime-owned")
-        if publication.get("render_capability") != "rendering.render":
-            raise HostError("authoring proposal must use rendering.render")
-        if not isinstance(timeline, Mapping) or not isinstance(registry, Mapping):
-            raise HostError("authoring proposal must contain timeline and registry objects")
-
-        admitted = task_data.get("spec")
-        if not isinstance(admitted, Mapping):
-            raise HostError("authoring task is missing its immutable spec")
-        public_spec = admitted.get("spec") if isinstance(admitted.get("spec"), Mapping) else admitted
-        dependencies = public_spec.get("runtime_dependencies") if isinstance(public_spec, Mapping) else None
-        if not isinstance(dependencies, Mapping):
-            raise HostError("authoring task is missing runtime publication settings")
-        timeline_id = dependencies.get("timeline_id") or dependencies.get("timeline_ref")
-        expected_version = dependencies.get("expected_version")
-        publication_settings = dependencies.get("publication")
-        if isinstance(publication_settings, Mapping):
-            timeline_id = timeline_id or publication_settings.get("timeline_id") or publication_settings.get("timeline_ref")
-            expected_version = expected_version if expected_version is not None else publication_settings.get("expected_version")
-        if not isinstance(timeline_id, str) or not timeline_id.strip():
-            raise HostError("authoring task publication settings require timeline_id")
-        if isinstance(expected_version, bool) or not isinstance(expected_version, int) or expected_version < 1:
-            raise HostError("authoring task publication settings require a positive expected_version")
-
-        render = dependencies.get("render")
-        if render is None and isinstance(publication_settings, Mapping):
-            render = publication_settings.get("render")
-        if not isinstance(render, Mapping):
-            raise HostError("authoring task publication settings require render configuration")
-        render = dict(render)
-        if render.get("capability_id") != "rendering.render":
-            raise HostError("authoring task render configuration must use rendering.render")
-        if not isinstance(render.get("capability_digest"), str) or not render["capability_digest"].startswith("sha256:"):
-            render_record = self.capabilities.get("rendering.render")
-            if render_record is None:
-                raise HostError("rendering.render capability is not registered with this host")
-            render["capability_digest"] = render_record.capability_digest
-        render.setdefault("schema_version", "1")
-        render_spec = render.get("spec")
-        if not isinstance(render_spec, Mapping):
-            render_spec = {"capability_id": "rendering.render", "kind": "executor", "inputs": {}, "outputs": {}}
-        render["spec"] = dict(render_spec)
-        idempotency_key = f"timeline-publication-{task_data.get('id', attempt_id)}"
-        return publish(
-            attempt_id,
-            lease_token,
-            fence=int(fence),
-            timeline_id=timeline_id,
-            expected_version=expected_version,
-            config=dict(timeline),
-            registry=dict(registry),
-            render=render,
-            idempotency_key=idempotency_key,
-        )
 
     def _wan_session_context(self, task_data: Mapping[str, Any]) -> dict[str, Any]:
         """Read the explicitly admitted Wan source/config/interpreter tuple."""
@@ -8909,6 +8873,14 @@ class GenericPackHost:
             )
             raise HostError(str(exc)) from exc
         spec = task_data.get("spec", {})
+        if capability_id == "rendering.assemble_timeline":
+            from astrid.core.contracts.runtime_orchestration import is_native_assembler_spec
+
+            if not is_native_assembler_spec(_admitted_spec_envelope(spec)):
+                fail_admission(HostError(
+                    "legacy assembler admission lacks an immutable original target; "
+                    "native assembly admission is required"
+                ))
         private_runtime_context = isinstance(spec, Mapping) and (
             "child_delegation" in spec or "delegated_parent" in spec or "delegated_recoverable_outputs" in spec)
         authorized_input_object_ids = task_data.get("input_object_ids")
@@ -9220,6 +9192,9 @@ class GenericPackHost:
                     else None
                 ),
                 continuation_id=task_id,
+                producer_identity={"task_id": task_id, "attempt_id": attempt_id,
+                                   "executor_id": self.executor_id, "fence": fence,
+                                   "runtime_epoch": claim_epoch},
                 file_input_names=frozenset(
                     port.name
                     for port in record.definition.inputs
@@ -9683,16 +9658,6 @@ class GenericPackHost:
                 task_data=task_data,
             )
             typed_outputs.extend(thumbnail_outputs)
-            publication_result: Mapping[str, Any] | None = None
-            if capability_id == "rendering.assemble_timeline":
-                publication_result = self._publish_assembled_timeline(
-                    task_data=task_data,
-                    attempt_id=attempt_id,
-                    fence=fence,
-                    lease_token=lease_token,
-                    outputs=typed_outputs,
-                    attempt_root=root,
-                )
             result_names = {
                 descriptor["name"]
                 for descriptor in harvested
@@ -9770,8 +9735,6 @@ class GenericPackHost:
             }
             if "gpu" in record.preflight:
                 payload["gpu_qualification"] = dict(record.preflight["gpu"])
-            if publication_result is not None:
-                payload["timeline_render_publication"] = dict(publication_result)
             if thumbnail_diagnostics:
                 payload["thumbnail_diagnostics"] = thumbnail_diagnostics
             network_evidence = self._network_evidence(

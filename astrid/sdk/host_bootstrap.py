@@ -793,7 +793,8 @@ def _host_render_environment(source_path: Path) -> dict[str, str]:
 
 def _prepare_render_validation(source_path: Path, env: dict[str, str],
                                support_root: Path, python_executable: str,
-                               pack_roots: tuple[Path, ...] = ()) -> str | None:
+                               pack_roots: tuple[Path, ...] = (),
+                               source_closure_digest: str | None = None) -> str | None:
     from astrid.core.env_vars import (
         ASTRID_REMOTION_PROJECT_DIR,
         ASTRID_REMOTION_VALIDATION_LAUNCH,
@@ -810,6 +811,10 @@ def _prepare_render_validation(source_path: Path, env: dict[str, str],
     if not env.get(ASTRID_REMOTION_PROJECT_DIR):
         return None  # No provisioned Remotion: existing unavailable capability.
     launch_id = secrets.token_hex(16)
+    installed_source = None
+    if _execution_profile() == 'installed':
+        from astrid.core.source_identity import source_checkout_closure_digest
+        installed_source = (str(source_path), source_closure_digest or source_checkout_closure_digest(source_path))
     # This is the canonical worker filter. Invocation metadata added later is
     # outside the explicitly adopted clean probe environment contract.
     if pack_roots:
@@ -817,13 +822,15 @@ def _prepare_render_validation(source_path: Path, env: dict[str, str],
         matrix = source_path / 'config' / 'astrid-beta-capabilities.json'
         workers = _launch_worker_probe_environments(
             pack_roots, env, matrix if matrix.is_file() else None,
-            remotion_only=True)  # Validate what renders, not every pack's worker.
+            remotion_only=True,
+            **({'installed_root': source_path} if installed_source else {}))
     else:
         workers = [build_child_subprocess_env(base=env, parent=env)]
     reference = prepare_remotion_validation(
         artifact_directory=Path(support_root) / 'remotion-validation',
         host_environment=env, python_executable=python_executable,
         launch_id=launch_id, contexts={'host': dict(env), 'worker': workers},
+        **({'installed_source': installed_source} if installed_source else {}),
     )
     env.update(reference)
     return launch_id
@@ -907,7 +914,7 @@ class _ParkedPackHostPreparer:
         _provision_render_runtime_env(reference.source_checkout, env)
         validation_launch = _prepare_render_validation(
             reference.source_checkout, env, Path(reference.support_root), str(launch.argv[0]),
-            tuple(Path(root) for root in reference.pack_roots))
+            tuple(Path(root) for root in reference.pack_roots), reference.source_closure_digest.removeprefix('sha256:'))
         parent, child = socket.socketpair()
         operation_id, channel_id = secrets.token_hex(16), secrets.token_hex(16)
         launch_argv = list(launch.argv)
@@ -1620,7 +1627,7 @@ def ensure_pack_host(
         child_env = _host_render_environment(source_path)
         validation_launch = _prepare_render_validation(
             source_path, child_env, runtime_support, host_python,
-            (pack_root, *managed_inventory.roots))
+            (pack_root, *managed_inventory.roots), source_closure_digest)
         if validation_launch is not None:
             argv.extend(("--remotion-validation-launch-id", validation_launch))
         if _foreground:

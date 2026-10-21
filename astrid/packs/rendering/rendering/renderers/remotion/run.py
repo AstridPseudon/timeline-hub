@@ -22,8 +22,7 @@ import tempfile
 from contextlib import ExitStack
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from tempfile import TemporaryDirectory
-from types import ModuleType
+from tempfile import TemporaryDirectory, gettempdir
 from typing import Any, Callable, Mapping, Sequence
 
 from astrid.core import timeline
@@ -86,12 +85,12 @@ from astrid.packs.rendering.shared.rendering_backend import (
     _timeline_alpha,
 )
 from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
-from astrid.core.foundation.paths import load_checkout_script
-
-# Release wheels intentionally exclude authoring scripts.  A provisioned
-# server-owned Remotion bundle carries its generated registry outputs.
-# Loaded by file: another pack's top-level ``scripts`` package must not shadow it.
-gen_effect_registry: ModuleType | None = load_checkout_script("gen_effect_registry")
+try:
+    import astrid.core.rendering._effect_registry as gen_effect_registry
+except ModuleNotFoundError as exc:
+    if exc.name != 'astrid.core.rendering._effect_registry':
+        raise
+    gen_effect_registry = None
 
 
 _RangeHTTPRequestHandler = _rendering_assets.RangeHTTPRequestHandler
@@ -440,11 +439,14 @@ def _regenerate_element_registries_locked(
                     or _read_registry_state(project_dir) != fresh
                     or _registry_output_content_hashes(project_dir) != fresh['content_hashes']):
                 raise RuntimeError('launch-bound registry drift refuses regeneration')
-        # Provisioned wheel output bindings are checked above; never invent a
-        # source generator for a wheel. Launch-bound consumers never rewrite.
+        # Launch-bound consumers never rewrite settled outputs.
         return
 
+    installed = os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed'
     if gen_effect_registry is None:
+        if installed:
+            from astrid.core.rendering.remotion_runtime import RemotionValidationError
+            raise RemotionValidationError('installed registry generator carrier is unavailable')
         if not _registry_outputs_exist(project_dir):
             raise RuntimeError("installed Remotion bundle is missing generated element registries")
         return
@@ -460,12 +462,17 @@ def _regenerate_element_registries_locked(
 
     generator = REPO_ROOT / "scripts" / "gen_effect_registry.py"
     cmd = [sys.executable, str(generator)]
+    cwd = REPO_ROOT
+    if installed:
+        from astrid.core.rendering import _registry_origin, remotion_runtime
+        cmd = _registry_origin.installed_argv(sys.executable, remotion_runtime.__file__, generate=True)
+        cwd = Path(gettempdir()).resolve()
     env: dict[str, str] = {}
     env["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir.resolve())
     env.update(remotion_lock.remotion_render_lock_child_env())
     subprocess.run(
         cmd,
-        cwd=str(REPO_ROOT),
+        cwd=str(cwd),
         env=build_child_subprocess_env(explicit_env=env),
         capture_output=True,
         check=True,

@@ -3775,6 +3775,26 @@ def test_launch_worker_projection_matches_fixed_execution_context(tmp_path, monk
         secrets.clear()
 
 
+def test_installed_worker_registry_projection_matches_host_without_second_root(tmp_path, monkeypatch):
+    from astrid.core.execution.generic_host import _launch_worker_probe_environments
+    from astrid.core.rendering import remotion_runtime
+
+    manifest = _write_manifest(tmp_path / 'installed-worker')
+    environment = {
+        'HOME': str(tmp_path), 'LANG': 'C', 'PATH': '/usr/bin',
+        'ASTRID_HOST_EXECUTION_PROFILE': 'installed',
+    }
+    monkeypatch.setenv('ASTRID_HOST_EXECUTION_PROFILE', 'installed')
+    candidates = _launch_worker_probe_environments((tmp_path,), environment)
+
+    contexts = [remotion_runtime._registry_context(candidate, generator=False)
+                for candidate in candidates]
+    assert all('ASTRID_PACKS_PATH' not in candidate for candidate in candidates)
+    assert all('PYTHONPATH' not in candidate for candidate in candidates)
+    assert contexts[1:] == [contexts[0]] * (len(contexts) - 1)
+    assert manifest.is_file()
+
+
 def test_readiness_preserves_network_guard_in_final_command_popen_environment(tmp_path, monkeypatch):
     from astrid.core.rendering import remotion_runtime
     _write_manifest(tmp_path / 'guarded-command')

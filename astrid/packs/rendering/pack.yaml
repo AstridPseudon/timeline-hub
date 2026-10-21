@@ -50,8 +50,8 @@ actions:
     short_description: Author a canonical two-child timeline from runtime-resolved
       visual outputs.
     description: Validate a fenced two-child runtime continuation and emit a deterministic
-      canonical timeline authoring proposal. Timeline mutation and rendering remain
-      runtime-owned.
+      canonical timeline authoring proposal. Captured admissions return guarded native
+      edits for the requester to commit; legacy admissions are refused before execution.
     keywords:
     - timeline
     - assemble
@@ -84,7 +84,7 @@ actions:
       mode: create_or_replace
       path_template: '{out}/authoring-proposal.json'
       artifact_type: timeline/authoring-proposal
-      description: Typed runtime publication handoff containing the timeline and registry.
+      description: Captured native edit proposal; legacy admissions are refused before execution.
     graph:
       consumes:
       - runtime/resolved-children
