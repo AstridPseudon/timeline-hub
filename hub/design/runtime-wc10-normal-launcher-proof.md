@@ -114,3 +114,56 @@ the central test service retains its result directory. This remains a bounded
 fixture/inventory blocker and makes no D13 render or consumer-migration claim.
 The earlier unmarked request's `exit=5`/one-deselected result is retained above
 as historical context and is not normalized into this result.
+
+## Matched-runner result (2026-10-21 03:18Z)
+
+The one authorized corrected-runner request was executed exactly once:
+
+```text
+request: rt-m2-wc10-matched-runner-one-execution-0318
+suite: wc10-installed-launcher-integration
+request id: rt-m2-wc10-matched-runner-one-execution-0318-wc10-installed-launcher-integration-1021031824-22571
+command: env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/test_wc10_installed_launcher.py::test_wc10_installed_normal_launcher_provider_bootstrap
+result: exit=1; 1 failed in 31.26s
+```
+
+The corrected outer interpreter reached the private non-editable install and
+the normal installed launcher. The product wheels were built and installed as
+`astrid-runtime==0.1.0`, `astrid==0.1.0`, and
+`astrid-runtime-client==0.2.14`. The launcher returned a healthy `wc10` realm,
+the status check returned `support.healthy == true` and `health.status ==
+"ok"`, and the isolated child reached `WorkspaceClient.health()` successfully.
+The retained realm contains the `WC10` project and its `wc10-project`
+idempotency receipt, so the project write itself completed.
+
+The first failing assertion was the unchanged operation's
+`client.create_project(...)["project_id"]` at `tests/test_wc10_installed_launcher.py:471`.
+The pinned Agent `astrid.sdk.workspace_client.WorkspaceClient._call_generated`
+preserves mutation receipts by returning an outer `{"data": ..., "receipt":
+...}` envelope. The generated client data contains the project resource, but
+the test indexes `project_id` at the envelope level and raises `KeyError`.
+This is an Agent-client/WC10 assertion contract mismatch, not an installed
+dependency or launcher setup failure. No test or product source was changed
+to mask it.
+
+Installed evidence retained by the central run:
+
+- private site: `/tmp/pytest-of-root/pytest-20/test_wc10_installed_normal_lau0/installed-runtime/lib/python3.13/site-packages`;
+- wheel SHA-256: Runtime `4c7242691001d52aef6f702a8270119f59e462180d07d1218cbf7106235c26f4`, client `1f9bf541007dc6deacb3be04f090a21be884e9b057992e9f9c7e8c83f96aa`, Agent `bdc71a0e92c619c069aba663b8835f23e69e398ed883dba862395e42afd6ba6`;
+- installed Runtime module hashes: `server.py` `3d89f77238fad1e465a09bf7f9c6c3439c02338e5edf7da72c197bbb16928598`, `service.py` `0beb8c3ce2e374a76138bd82259b529f6f3d32182a8e007a0eaa3cdb1fcb0be8`, `store.py` `4d1ece5a7f7b64ddbf4fb9edd8d6fc4c94e4caf448dc690bab0853b677286f4c`;
+- installed client `generated.py` hash `e2e66babca52a7ff95b8387dd6b36a5e46b4a4085bc9082ea664ab8d054bd468`.
+
+The child operation used the test's private command with `-I -B` and a child
+environment with `PYTHONPATH` removed. The failure occurred before timeline
+creation, provider bootstrap, canonical history/read, `bootstrap` head, and
+the `publish_parent_composition` negative assertion. There is no installed
+origin proof for those later assertions and no D13 render or whole-WC10
+consumer claim.
+
+Setup history remains preserved: the earlier default-targeted request exited
+5 with one test deselected; the marked `venv-runtime` request exited 1 before
+private installation because its 54-distribution inventory was incomplete;
+this is the first request to reach private installation and the launcher.
+
+Status remains **blocked**. Resolving the response-shape contract requires an
+Agent/test-owner decision; no retry is authorized by this task.

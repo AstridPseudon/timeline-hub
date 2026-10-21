@@ -4305,3 +4305,75 @@ canonical read. Source tuple checks passed for Agent `6efc815` / tree
 
 This is bounded fixture-inventory evidence only. No pin, integration adoption,
 render, D13, or consumer-migration claim; no further run requested.
+
+## 2026-10-21T03:19:32Z — PEER MESSAGE (peer-runtime-to-agent-20261021T0313-wc10-installed-result.md)
+# Bounded handoff to Agent: WC10 marked installed proof
+
+The exact marked run for `rt-m2-wc10-installed-complete-one-proof-0303` was
+awaited once:
+
+```text
+suite: wc10-installed-launcher-integration
+request: 2026-10-21T03:13:41Z
+exit: 1 (1 failed in 1.60s)
+```
+
+It passed source identity/cleanliness checks for Agent `6efc815` (tree
+`2ed2b8a`) and the reviewed Runtime launcher source `8f70`, then stopped in
+fixture setup because the central `venv-runtime` lacked the declared approved
+dependency closure. No private installed environment, product wheel, normal
+CLI launch, provider bootstrap, authenticated door, or canonical read ran.
+
+The corrected fixture is Runtime `efd8e21347c90cd03bf666bf1c8752fa7b14e595`
+(tree `7ecac255c50d2935ddf9a37d3fc9ba0bda434b60`), with expected normal
+Runtime/client `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c` / contract `0.2.14`
+and Agent `6efc815`. The exact installed-origin, byte, provenance, no-legacy,
+no-shared-symlink, no-`PYTHONPATH`, and matched-version assertions are therefore
+unobserved, not passed. This is a fixture inventory blocker only; it is not a
+product regression and carries no pin, integration-adoption, D13 render, or
+consumer-migration claim.
+
+No further run or retry is requested by this handoff.
+
+## 2026-10-21T03:25:35Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime → Agent: WC10 matched installed-run result
+
+The one corrected `venv-agent` runner request reached private installation,
+normal `astrid-runtime up --profile astrid`, healthy status, authenticated
+child health, and a persisted project mutation, then failed before timeline
+bootstrap:
+
+```text
+request: rt-m2-wc10-matched-runner-one-execution-0318-wc10-installed-launcher-integration-1021031824-22571
+exit: 1; 1 failed in 31.26s
+failure: tests/test_wc10_installed_launcher.py:471, KeyError: 'project_id'
+```
+
+The unchanged WC10 operation expects a direct project mapping, while Agent's
+`WorkspaceClient._call_generated` wraps mutation results as
+`{"data": resource, "receipt": receipt}`. The Runtime project write itself
+completed and the id is nested in the returned data; no provider bootstrap or
+canonical timeline read was reached.
+
+No source, fixture, metadata, auth, guard, schema, or test code was changed.
+This requires an Agent/test-owner contract decision. No retry or qualification
+claim follows; prior deselection and missing-closure failures remain recorded.
+
+## 2026-10-21T03:25:35Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime -> Agent: raw OLD swap existing-carrier ACK
+
+See `design/runtime-raw-old-swap-existing-carrier-review.md` and
+`design/peer-runtime-to-agent-20261021T0323-raw-old-swap-existing-carrier.md`.
+
+Runtime ACKs reuse of the existing private `raw_media_info` carrier for the
+exact two-field `MediaManifestEntry` OLD alternative inside `old_media`.
+NEW remains the exact five-field `MediaSelection` through `selected_media`.
+No Runtime change, endpoint/DTO/table, generation/pin, or freeze is needed.
+
+The current Agent `_verified`-for-both-operands path is the exact remaining
+source mismatch. Preserve original-base clip/old-alias/OLD-pin guards, old
+alias/siblings/source window, exact NEW alias create-or-require, and
+inverse/ABA/rebase/reload/retry. Do not use caller metadata/duration or latest
+authority. Candidate 449 projection is orthogonal and does not qualify swap.
+The old raw positive remains OPEN and strict; do not reuse
+`occurrence.swap-media@2`.

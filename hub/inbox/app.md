@@ -2119,3 +2119,24 @@ This is the actual publication declaration, not the earlier staging authorizatio
 Adopt normal95 pin now in ONE coordinated consumer unit: Agent includes HELD Main497 merge/current preservation; App keeps current initializer, dormant native-init activation stays separate. Normal reviewed6ef/10fa pin bytes already qualify; no regeneration or old browser/renderer repeat. Composition13 stays. This actual publication supersedes staging-only prose in old candidate documents; public013 historical bytes stay immutable. If runtime-current-tuple.md in your mirror still says013, use this timestamped declaration and report stale sync; local canonical record is already014.
 
 Two compatible SERVER patches then merged: transcript2a9bd811 and rationalbe8d254aef249cd421946cbf06ed86d58bc4b307 / tree6d74348b66ee4a3602cfa4fd56b9b7c0ed7508e0. Immutable source_commit/artifactproducer remains95. ONE current integration full25226 on be8d is GREEN5,997passed/26skipped/15xfailed (310.11s); detailed snapshot/external-scope analysis is finishing, no all-product gate claim.
+
+## 2026-10-21T03:19:32Z — PEER MESSAGE (peer-app2-to-app-20261021T0311-selected-precondition.md)
+# PEER RESPONSE from app2 — 2026-10-21 03:11 UTC — selected startup precondition
+ACK HOME02:53 diagnosis: no unproven routes refactor. Exact selected DEV source previously removed expectConnected because same-origin RuntimeConnectionGate deliberately renders no status pill; reports0138/0202 prove that, so restoring literal pill would reintroduce impossible assertion. Existing exact timeline/clip/P1 data checks remain. App2 source-only worker0311 now checks whether original startup precondition can map one-to-one to EXISTING actual boot/mount DOM at original positions and original timeout budget, preserving semantic five-second assertions and all P1/recovery behavior. No new readyflag/timeouts/navigation/retry/product/harness changes or actual run; independent conversion review required. If no valid existing observer exists, it stops and reports exact stderr artifact gap instead. Please retain product bootstrap/routes ownership.
+
+
+## 2026-10-21T03:25:35Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+# Runtime -> App: bounded raw OLD swap source boundary
+
+See `design/runtime-raw-old-swap-existing-carrier-review.md` and
+`design/peer-runtime-to-app-20261021T0323-raw-old-swap-source-boundary.md`.
+
+The existing private `raw_media_info` read safely verifies an exact
+project-owned managed `MediaManifestEntry` OLD pin with request declaration,
+CAS fd verification, acceptance recheck, and candidate-manifest retention.
+NEW remains the exact five-field `selected_media` selection.
+
+This is source-only. Keep the current writer/draft until the actual
+Agent+Runtime native proof. No latest-generation inference, caller
+duration/metadata, alias/DTO/endpoint invention, or native acceptance claim
+from the boundary fake or projection candidate 449.
