@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T00:24:34Z | dispatcher heartbeat 11s | live 4 (sol 1, luna 3, other 0) | busy30 24 | status age 1m -->
+<!-- agent | 2026-10-21T00:29:34Z | dispatcher heartbeat 8s | live 5 (sol 1, luna 4, other 0) | busy30 26 | status age 6m -->
 # agent — 2026-10-21 00:19:14 UTC
 Milestone: M1 recorded. M2 active. Foundation, physical parity and delivery remain open.
 Integrated: Agent 5c5173dcb / tree8626f868. Public Runtime0.2.13 producer2c4 and Composition0.0.13 unchanged. Public Scene caller merged488e3ee46 (43 direct, one actual public-entry pass); rational capture/refusal merged1acfa42dc (three connected frontend timing cases, seven direct, original-guard review); retained PARAM merged5c5173dcb (eight direct,28 central with P1 afterV2/removal/restart). Complete Scene SDK/executor/resource closure6383cb525 has33 direct and two managed saved/candidate passes with committed import provenance. All remain bounded behavior, not whole-writer deletion.
