@@ -719,7 +719,8 @@ for key, module in modules.items():
     for depth in range(1, len(parts) + 1):
         name = '.'.join(parts[:depth])
         search = [str(root.joinpath(*parts[:depth - 1]))] if depth > 1 else sys.path
-        spec = importlib.machinery.PathFinder.find_spec(name, search)
+        # Leaf lookup avoids namespace paths consulting unloaded dotted parents.
+        spec = importlib.machinery.PathFinder.find_spec(parts[depth - 1], search)
         expected = root.joinpath(*parts[:depth])
         if spec is None:
             raise ValueError('missing installed module: ' + name)
