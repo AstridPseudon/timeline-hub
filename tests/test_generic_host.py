@@ -1500,7 +1500,7 @@ def test_vendored_runtime_client_timeout_is_bounded_and_request_correlated(monke
 
     captured = {}
 
-    def timed_out(_opener, request, *, timeout):
+    def timed_out(request, *, timeout):
         captured["timeout"] = timeout
         captured["request_id"] = request.get_header("X-request-id")
         raise TimeoutError("fixture timeout")
