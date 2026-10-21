@@ -32,7 +32,7 @@ describe('useEditorPreferences right panel state', () => {
     localStorage.setItem('video-editor:preferences:demo', JSON.stringify({ scaleWidth: 222 }));
     const setItem = vi.spyOn(localStorage, 'setItem');
 
-    const { result } = renderHook(() => useEditorPreferences('demo', { persist: false }));
+    const { result } = renderHook(() => useEditorPreferences('demo', 1280, { persist: false }));
     expect(result.current.scaleWidth).toBe(defaultPreferences.scaleWidth);
 
     act(() => result.current.setScaleWidth(300));

@@ -736,8 +736,8 @@ function AvailableAgentChatPanel({
     }
   }, [activeSessionData?.turns.length, activeSessionId, editorContext, projectId, sendMessage, reconcileAcceptedQueue, sessionControl?.active]);
 
-  const handleSend = useCallback(async () => {
-    const text = draft.trim();
+  const handleSend = useCallback(async (rawText?: string) => {
+    const text = (rawText ?? draft).trim();
     if (!text || !activeSessionId || !hasProject || composerLockedRef.current) return;
 
     const attachments: AgentTurnAttachment[] = clips.map((clip) => ({
@@ -755,8 +755,10 @@ function AvailableAgentChatPanel({
       duration: clip.duration,
     }));
 
-    setDraft('');
-    draftSnapshotRef.current = { ...draftSnapshotRef.current, text: '' };
+    if (rawText === undefined) {
+      setDraft('');
+      draftSnapshotRef.current = { ...draftSnapshotRef.current, text: '' };
+    }
     const item: QueuedMessage = {
       id: createMessageId(),
       text,
