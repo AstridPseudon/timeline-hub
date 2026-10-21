@@ -27,6 +27,16 @@ PRIVATE_FULL_MOVE_SET_SHA256 = 'ba0c42d6a9359c32d89d8088416f7bc9092481dbd05f236e
 PRIVATE_LITERAL_UNION_SHA256 = 'da144e6d1c0d3e2ad6ef8246a63a4d4c5fd379b7a0efbedc0f376987527ef068'
 PRIVATE_REFERENCE_ORDER_SHA256 = 'c47a00135a2beb9df35cbbf201ef6b7f900904f4afeb74efe3cf12871271598e'
 RAW_OLD_CANONICAL_SHA256 = 'd3274d7ed2d4bd80691472dd94daf8f4b8041fc184f39f1dd562d5de5d6a15c2'
+FROZEN_10226_CANONICAL_SHA256 = '322733a57e781847e50228f91b6c6a9237ad2237406a188515c8f9da5e554bcc'
+
+
+def without_insertion_order(schema):
+    """Reconstruct the frozen 10226 AgentWrite carrier exactly."""
+    assert schema['$defs']['AgentWrite']['properties'].pop('insertion_order') == {
+        'type': 'array',
+        'items': {'type': 'string'},
+    }
+    return schema
 
 
 def without_move_set(schema):
@@ -86,13 +96,13 @@ def without_transcript(schema):
 
 def without_new_sources(schema):
     """Reconstruct the pre-movement/reference/order schema without fixtures."""
-    return without_track_reorder(without_reference(without_move_set(
-        without_raw_old_swap(without_transcript(schema)))))
+    return without_insertion_order(without_track_reorder(without_reference(without_move_set(
+        without_raw_old_swap(without_transcript(schema))))))
 
 
 def without_reference_and_order(schema):
-    return without_track_reorder(without_reference(without_raw_old_swap(
-        without_transcript(schema))))
+    return without_insertion_order(without_track_reorder(without_reference(without_raw_old_swap(
+        without_transcript(schema)))))
 
 
 def without_mute(schema):
@@ -235,6 +245,18 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
     assert compatibility_errors(ordinary, without_new_sources(without_literal_fields(copy.deepcopy(_SCHEMA)))) == []
 
 
+def test_write_order_successor_preserves_frozen_10226_schema_bytes():
+    predecessor = without_insertion_order(copy.deepcopy(_SCHEMA))
+    raw = (json.dumps(predecessor, indent=2) + '\n').encode()
+    assert hashlib.sha256(raw).hexdigest() == FROZEN_10226_CANONICAL_SHA256
+    assert compatibility_errors(predecessor, _SCHEMA) == []
+    assert _SCHEMA['$defs']['AgentWrite']['properties']['insertion_order'] == {
+        'type': 'array',
+        'items': {'type': 'string'},
+    }
+    assert 'insertion_order' not in predecessor['$defs']['AgentWrite']['properties']
+
+
 def test_removing_only_group_additions_reconstructs_project_data_bytes():
     candidate = without_new_sources(without_groups(without_extent(without_voiceover(
         without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))))))
@@ -292,13 +314,13 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
         'literal-union-f448': without_new_sources(copy.deepcopy(_SCHEMA)),
         'movement3b320': without_reference_and_order(
             without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))),
-        'reference-order-85c': without_raw_old_swap(
+            'reference-order-85c': without_insertion_order(without_raw_old_swap(
             without_transcript(
                 without_move_set(
                     without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))
                 )
-            )
-        ),
+                )
+            )),
         'ordered-remove': without_new_sources(without_opacity(without_mute(copy.deepcopy(_SCHEMA)))),
         'track-mute': without_new_sources(without_opacity(without_remove(copy.deepcopy(_SCHEMA)))),
         'opacity': without_new_sources(without_mute(without_remove(copy.deepcopy(_SCHEMA)))),
@@ -316,12 +338,8 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
     for name, candidate in candidates.items():
         raw = (json.dumps(candidate, indent=2) + '\n').encode()
         assert hashlib.sha256(raw).hexdigest() == expected[name], name
-    assert hashlib.sha256((json.dumps(_SCHEMA, indent=2) + '\n').encode()).hexdigest() == \
-        '322733a57e781847e50228f91b6c6a9237ad2237406a188515c8f9da5e554bcc'
-
-
 def test_transcript_successor_strips_to_exact_raw_old_schema():
-    candidate = without_transcript(copy.deepcopy(_SCHEMA))
+    candidate = without_insertion_order(without_transcript(copy.deepcopy(_SCHEMA)))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == RAW_OLD_CANONICAL_SHA256
     assert len(candidate['$defs']) == 64

@@ -197,6 +197,21 @@ def test_remove_pruned_namespace_restores_exact_order_after_reload_and_redo():
     before = copy.deepcopy(original)
 
     plan = execute(original, [remove("gone")])
+    assert plan.records[0]["writes"] == [
+        {
+            "ref": "parent",
+            "path": ["config", "app", TARGET, "gone"],
+            "before": {"state": "present", "value": False},
+            "after": {"state": "absent"},
+        },
+        {
+            "ref": "parent",
+            "path": ["config", "app", TARGET],
+            "before": {"state": "present", "value": {}},
+            "after": {"state": "absent"},
+            "insertion_order": ["before", TARGET, "after"],
+        },
+    ]
     removed = reload_bundle(plan.bundle)
     records = json.loads(json.dumps(plan.records))
     assert list(project_data(removed)) == ["before", "after"]
@@ -232,6 +247,20 @@ def test_disjoint_keys_rebase_and_same_key_aba_refuses():
             intervening_records=[*away.records, *back.records],
         )
     assert error.value.kind == "intervening_write"
+
+
+def test_remove_absent_key_omits_order_carrier():
+    original = bundle()
+    original["parent"]["config"]["app"] = {
+        "before": {"keep": True},
+        TARGET: {"keep": True},
+        "after": {"keep": True},
+    }
+
+    plan = execute(original, [remove("missing")])
+
+    assert len(plan.records[0]["writes"]) == 1
+    assert "insertion_order" not in plan.records[0]["writes"][0]
 
 
 def test_disjoint_key_rebase_births_an_absent_namespace_without_losing_the_other_key():
@@ -351,3 +380,17 @@ def test_private_schema_and_registry_are_closed():
         invalid_replace = command("source", 1)
         del invalid_replace["args"]["value"]
         validator.validate(invalid_replace)
+
+    write_validator = validator.evolve(schema={"$ref": "#/$defs/AgentWrite"})
+    write = {
+        "ref": "parent",
+        "path": ["config", "app", TARGET],
+        "before": {"state": "present", "value": {}},
+        "after": {"state": "absent"},
+        "insertion_order": ["before", TARGET, "after"],
+    }
+    write_validator.validate(write)
+    for insertion_order in (None, ["before", None], [1]):
+        invalid = {**write, "insertion_order": insertion_order}
+        with pytest.raises(Exception):
+            write_validator.validate(invalid)
