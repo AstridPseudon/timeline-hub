@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
   accessSync, constants, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync,
-  readFileSync, realpathSync, rmSync, statSync, symlinkSync, unlinkSync,
+  readFileSync, realpathSync, readlinkSync, rmSync, statSync, symlinkSync, unlinkSync,
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -53,6 +53,27 @@ const FULL_SHA = /^[a-f0-9]{40}$/;
 const APP_METADATA = 'src/integrations/runtime/generated-contract-metadata.ts';
 const AGENT_METADATA = 'astrid_runtime_client/contract_metadata.py';
 const SHARED_ROOTS = ['/home/user/work/app/node_modules', '/home/user/work/runtimes/'];
+const NORMAL_GRAPH_ROOT = '/home/user/work/app-m3-private13-normal-lock-install-units-r6-owned';
+const NORMAL_GRAPH = path.join(NORMAL_GRAPH_ROOT, 'node_modules');
+const NORMAL_GRAPH_READY = path.join(NORMAL_GRAPH_ROOT, 'READY');
+const NORMAL_GRAPH_PACKAGE_VERSIONS = Object.freeze({
+  '@banodoco/timeline-composition': '0.0.13',
+  '@playwright/test': '1.60.0',
+  '@remotion/layout-utils': '4.0.509',
+  '@remotion/media': '4.0.509',
+  '@remotion/player': '4.0.509',
+  '@remotion/three': '4.0.509',
+  '@remotion/web-renderer': '4.0.509',
+  react: '18.3.1',
+  'react-dom': '18.3.1',
+  remotion: '4.0.509',
+  three: '0.185.1',
+  vite: '5.4.21',
+});
+const NORMAL_GRAPH_MODULE_HASHES = Object.freeze({
+  '@banodoco/timeline-composition/evaluation': 'sha256:e27ed545e9e0c28cf863e7bccd4a720f61e1002e04f2946dd3afca5e5f478155',
+  '@remotion/media': 'sha256:013837eff580e10d093d8cf6948214ab8be06c025901d2191b79386e1d93b588',
+});
 
 function fail(message) {
   throw new Error(`[main95-prompt-settings] ${message}`);
@@ -226,36 +247,136 @@ function countRegularFiles(root) {
 
 function checkPrivateGraph(input) {
   const graph = input.privateGraph;
+  if (graph !== NORMAL_GRAPH) fail(`private graph is not the owned normal-lock graph: ${graph}`);
   for (const shared of SHARED_ROOTS) {
     if (graph === shared || graph.startsWith(shared)) fail(`private graph resolves into shared dependency storage: ${graph}`);
   }
-  if (lstatSync(graph).isSymbolicLink()) fail('private graph root must not be a symlink');
+  if (!lstatSync(graph).isDirectory() || lstatSync(graph).isSymbolicLink()) fail('private graph root must be a real directory');
+  if (input.privateReady !== NORMAL_GRAPH_READY) fail(`private graph READY record is not the owned normal-lock record: ${input.privateReady}`);
   const ready = readFileSync(input.privateReady, 'utf8');
-  if (!ready.includes('all 77 archive files')) fail('private graph READY record does not certify the 77-file Composition archive');
+  for (const text of [
+    `Graph root: ${NORMAL_GRAPH_ROOT}`,
+    'Source package SHA-256: `a4dc9fcc02b1769ba8472f551349f7875774b07ad0830c7260eb88d2db8292fd`',
+    'Source lock SHA-256: `7f1bfcea48cef38d4c6f1163aa34190b8d5e71c9f08c7378e01a962d6696fc14`',
+    'Composition input: vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz, SHA-256 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`',
+    '77/77 regular archive members',
+    'Direct lock identities:',
+  ]) {
+    if (!ready.includes(text)) fail(`private graph READY record is missing: ${text}`);
+  }
   const composition = path.join(graph, '@banodoco/timeline-composition');
   const compositionPackage = jsonFile(path.join(composition, 'package.json'));
   if (compositionPackage.version !== MAIN95_COMPOSITION.version) fail(`private Composition version is ${compositionPackage.version}`);
   if (countRegularFiles(composition) !== MAIN95_COMPOSITION.fileCount) fail('private Composition graph is not the all-77-file artifact');
-  for (const [name, version] of [['vite', MAIN95_COMPOSITION.vite], ['@playwright/test', MAIN95_COMPOSITION.playwright]]) {
+  for (const [name, version] of Object.entries(NORMAL_GRAPH_PACKAGE_VERSIONS)) {
     const packageJson = jsonFile(path.join(graph, name, 'package.json'));
     if (packageJson.version !== version) fail(`private ${name} is ${packageJson.version}, expected ${version}`);
   }
-  const viteBin = realpathSync(path.join(graph, '.bin/vite'));
-  if (!viteBin.startsWith(graph + path.sep)) fail('private Vite executable escaped the private graph');
+  for (const binary of ['vite', 'playwright']) {
+    const executable = realpathSync(path.join(graph, `.bin/${binary}`));
+    if (!executable.startsWith(graph + path.sep)) fail(`private ${binary} executable escaped the private graph`);
+  }
 }
 
-function checkResolvedPrivatePackages(app, graph) {
-  const script = "for (const name of ['vite','@playwright/test','@banodoco/timeline-composition']) console.log(require.resolve(name + '/package.json'))";
-  const result = spawnSync(process.execPath, ['-e', script], { cwd: app, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-  if (result.error) fail(`private Node package resolution could not start: ${result.error.message}`);
-  if (result.status !== 0) fail(`private Node package resolution failed: ${result.stderr?.trim()}`);
-  for (const resolved of result.stdout.trim().split('\n')) {
-    if (!resolved.startsWith(graph + path.sep)) fail(`Node package resolved outside private graph: ${resolved}`);
+function executionEnv(input, outputDir) {
+  return {
+    ...input.env,
+    ASTRID_CHECKOUT: input.agent,
+    ASTRID_RUNTIME_CHECKOUT: input.runtime,
+    ASTRID_PYTHON: input.agentPython,
+    ASTRID_RUNTIME_PYTHON: input.runtimePython,
+    TIMELINE_BUNDLE_AGENT_HEAD: input.agentSha,
+    TIMELINE_BUNDLE_RUNTIME_HEAD: input.runtimeSha,
+    VITE_TIMELINE_COMPOSITION_ROOT: path.join(input.privateGraph, '@banodoco/timeline-composition'),
+    VITE_CACHE_DIR: path.join(outputDir, 'vite-cache'),
+    VITEST_CACHE_DIR: path.join(outputDir, 'vitest-cache'),
+    TMPDIR: path.join(outputDir, 'tmp'),
+    npm_config_cache: path.join(outputDir, 'npm-cache'),
+  };
+}
+
+function checkResolvedPrivatePackages(input, outputDir) {
+  const env = executionEnv(input, outputDir);
+  const graph = input.privateGraph;
+  const nodeProbe = `
+    import { createHash } from 'node:crypto';
+    import { createRequire } from 'node:module';
+    import { readFileSync, realpathSync } from 'node:fs';
+    import path from 'node:path';
+    const app = ${JSON.stringify(input.app)};
+    const graph = ${JSON.stringify(graph)};
+    const requireFromApp = createRequire(path.join(app, 'package.json'));
+    const hash = (file) => 'sha256:' + createHash('sha256').update(readFileSync(file)).digest('hex');
+    const packageVersions = ${JSON.stringify(NORMAL_GRAPH_PACKAGE_VERSIONS)};
+    const resolved = {};
+    for (const [name, version] of Object.entries(packageVersions)) {
+      const packageFile = realpathSync(requireFromApp.resolve(name + '/package.json'));
+      if (!packageFile.startsWith(graph + path.sep)) throw new Error(name + ' package escaped graph: ' + packageFile);
+      const packageJson = JSON.parse(readFileSync(packageFile, 'utf8'));
+      if (packageJson.version !== version) throw new Error(name + ' resolved version ' + packageJson.version + ', expected ' + version);
+      resolved[name] = { packageFile, packageHash: hash(packageFile), version: packageJson.version };
+    }
+    for (const name of ['@banodoco/timeline-composition/evaluation', '@remotion/media']) {
+      const moduleFile = realpathSync(requireFromApp.resolve(name));
+      if (!moduleFile.startsWith(graph + path.sep)) throw new Error(name + ' module escaped graph: ' + moduleFile);
+      resolved[name] = { moduleFile, moduleHash: hash(moduleFile) };
+    }
+    process.stdout.write(JSON.stringify({ graph: realpathSync(graph), resolved }));
+  `;
+  const node = spawnSync(process.execPath, ['--input-type=module', '-e', nodeProbe], {
+    cwd: input.app, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], shell: false,
+  });
+  if (node.error) fail(`private Node resolution could not start: ${node.error.message}`);
+  if (node.status !== 0) fail(`private Node resolution failed: ${node.stderr?.trim() || `exit ${node.status}`}`);
+  let nodeResult;
+  try { nodeResult = JSON.parse(node.stdout); } catch (error) { fail(`private Node resolution returned invalid JSON: ${error.message}`); }
+  for (const [name, expectedHash] of Object.entries(NORMAL_GRAPH_MODULE_HASHES)) {
+    if (nodeResult.resolved[name]?.moduleHash !== expectedHash) fail(`private Node module hash changed for ${name}: ${nodeResult.resolved[name]?.moduleHash}`);
   }
+  console.log(`[main95-prompt-settings] actual Node graph resolution: ${node.stdout}`);
+
+  const viteProbe = `
+    import { resolveConfig } from 'vite';
+    import { createHash } from 'node:crypto';
+    import { readFileSync, realpathSync } from 'node:fs';
+    import path from 'node:path';
+    const app = ${JSON.stringify(input.app)};
+    const graph = ${JSON.stringify(graph)};
+    const hash = (file) => 'sha256:' + createHash('sha256').update(readFileSync(file)).digest('hex');
+    const config = await resolveConfig({ configFile: path.join(app, 'config/vite/vite.config.ts'), cacheDir: ${JSON.stringify(path.join(outputDir, 'vite-cache'))} }, 'build');
+    const resolver = config.createResolver();
+    const checks = [
+      ['@banodoco/timeline-composition/evaluation', path.join(app, 'src/tools/video-editor/compositions/TimelineRenderer.tsx')],
+      ['@remotion/media', path.join(app, 'src/tools/video-editor/compositions/AudioTrack.tsx')],
+    ];
+    const resolved = {};
+    for (const [name, importer] of checks) {
+      const result = await resolver(name, importer);
+      if (!result) throw new Error('Vite did not resolve ' + name);
+      const file = realpathSync(result);
+      if (!file.startsWith(graph + path.sep)) throw new Error(name + ' resolved outside graph: ' + file);
+      resolved[name] = { file, hash: hash(file) };
+    }
+    process.stdout.write(JSON.stringify({ graph: realpathSync(graph), resolved }));
+  `;
+  const vite = spawnSync(process.execPath, ['--input-type=module', '-e', viteProbe], {
+    cwd: input.app, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], shell: false,
+  });
+  if (vite.error) fail(`private Vite resolution could not start: ${vite.error.message}`);
+  if (vite.status !== 0) fail(`private Vite resolution failed: ${vite.stderr?.trim() || `exit ${vite.status}`}`);
+  let viteResult;
+  try { viteResult = JSON.parse(vite.stdout); } catch (error) { fail(`private Vite resolution returned invalid JSON: ${error.message}`); }
+  if (viteResult.resolved['@banodoco/timeline-composition/evaluation']?.hash !== NORMAL_GRAPH_MODULE_HASHES['@banodoco/timeline-composition/evaluation']) fail('private Vite resolved an unexpected Composition evaluation hash');
+  if (viteResult.resolved['@remotion/media']?.hash !== NORMAL_GRAPH_MODULE_HASHES['@remotion/media']) fail('private Vite resolved an unexpected @remotion/media hash');
+  console.log(`[main95-prompt-settings] actual Vite graph resolution: ${vite.stdout}`);
 }
 
 export function readMain95Inputs(env = process.env, appRoot = process.cwd()) {
   const appTree = requiredSha(env, 'TIMELINE_MAIN95_PROMPT_APP_TREE');
+  const runnerSha = required(env, 'TIMELINE_MAIN95_PROMPT_RUNNER_SHA256');
+  if (!/^sha256:[a-f0-9]{64}$/.test(runnerSha)) fail('TIMELINE_MAIN95_PROMPT_RUNNER_SHA256 must be a sha256 digest');
+  const runner = process.argv[1] && realpathSync(process.argv[1]);
+  if (!runner || sha256File(runner) !== runnerSha) fail('Main95 runner source hash does not match the frozen wrapper identity');
   const agentSha = requiredSha(env, 'TIMELINE_MAIN95_PROMPT_AGENT_SHA');
   const runtimeSha = requiredSha(env, 'TIMELINE_MAIN95_PROMPT_RUNTIME_SHA');
   if (agentSha !== MAIN95_AGENT.commit) fail(`TIMELINE_MAIN95_PROMPT_AGENT_SHA must be the frozen Agent ${MAIN95_AGENT.commit}`);
@@ -277,7 +398,7 @@ export function readMain95Inputs(env = process.env, appRoot = process.cwd()) {
   if (browsersPath !== '/opt/pw-browsers') fail(`PLAYWRIGHT_BROWSERS_PATH must be /opt/pw-browsers, got ${browsersPath}`);
   const browserVersion = execFileSync(browser, ['--version'], { encoding: 'utf8' }).trim();
   if (!MAIN95_BROWSER.version.test(browserVersion)) fail(`Chromium version is ${browserVersion}, expected Chromium 141.0.7390.37`);
-  return Object.freeze({ app, appTree, agent, agentSha, runtime, runtimeSha, runtimeProducer, agentPython, runtimePython, browser, browsersPath, privateGraph, privateReady, env });
+  return Object.freeze({ app, appTree, runnerSha, agent, agentSha, runtime, runtimeSha, runtimeProducer, agentPython, runtimePython, browser, browsersPath, privateGraph, privateReady, env });
 }
 
 export function checkMain95Sources(input, { vendor = true } = {}) {
@@ -320,35 +441,51 @@ function swapAppNodeModules(app, overlay) {
   const link = path.join(app, 'node_modules');
   const stat = lstatSync(link);
   if (!stat.isSymbolicLink() || realpathSync(link) !== '/home/user/work/app/node_modules') fail('App node_modules is not the expected shared symlink; refusing to replace it');
+  const originalTarget = readlinkSync(link);
+  const originalReal = realpathSync(link);
   const target = `${path.relative(app, overlay)}`;
   unlinkSync(link);
   symlinkSync(target, link);
   return () => {
+    if (!lstatSync(link).isSymbolicLink() || realpathSync(link) !== realpathSync(overlay)) fail('App node_modules changed unexpectedly before restore');
     unlinkSync(link);
-    symlinkSync('/home/user/work/app/node_modules', link);
+    symlinkSync(originalTarget, link);
+    if (realpathSync(link) !== originalReal) fail('App node_modules did not restore its original shared target');
   };
 }
 
-function runResolver(input) {
-  const result = spawnSync(process.execPath, ['--test', 'config/vite/timelineCompositionPackage.test.mjs'], {
-    cwd: input.app, env: input.env, stdio: 'inherit', shell: false,
+function runSupportedCli(input, outputDir) {
+  const env = executionEnv(input, outputDir);
+  for (const [name, expected] of [
+    ['vite', `vite/${MAIN95_COMPOSITION.vite}`],
+    ['playwright', `Version ${MAIN95_COMPOSITION.playwright}`],
+  ]) {
+    const result = spawnSync(path.join(input.privateGraph, `.bin/${name}`), ['--version'], {
+      cwd: input.app, env, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], shell: false,
+    });
+    if (result.error) fail(`private ${name} CLI could not start: ${result.error.message}`);
+    if (result.status !== 0) fail(`private ${name} CLI failed: ${result.stderr?.trim() || `exit ${result.status}`}`);
+    if (!result.stdout.trim().includes(expected)) fail(`private ${name} CLI was ${result.stdout.trim()}, expected ${expected}`);
+    console.log(`[main95-prompt-settings] supported ${name} CLI: ${result.stdout.trim()}`);
+  }
+}
+
+function runNormalBuild(input, outputDir) {
+  const env = executionEnv(input, outputDir);
+  mkdirSync(env.TMPDIR, { recursive: true });
+  mkdirSync(env.npm_config_cache, { recursive: true });
+  const result = spawnSync('npm', ['run', 'build:hosted'], {
+    cwd: input.app, env, stdio: 'inherit', shell: false,
   });
-  if (result.error) fail(`private Node/Vite resolver check could not start: ${result.error.message}`);
-  if (result.status !== 0) fail(`private Node/Vite resolver check failed (exit ${result.status ?? 'signal'})`);
+  if (result.error) fail(`normal hosted build could not start: ${result.error.message}`);
+  if (result.status !== 0) fail(`normal hosted build failed (exit ${result.status ?? 'signal'})`);
+  console.log('[main95-prompt-settings] normal hosted build passed with the mounted normal graph');
 }
 
 function runPlaywright(input, outputDir) {
   const env = {
-    ...input.env,
-    ASTRID_CHECKOUT: input.agent,
-    ASTRID_RUNTIME_CHECKOUT: input.runtime,
-    ASTRID_PYTHON: input.agentPython,
-    ASTRID_RUNTIME_PYTHON: input.runtimePython,
-    TIMELINE_BUNDLE_AGENT_HEAD: input.agentSha,
-    TIMELINE_BUNDLE_RUNTIME_HEAD: input.runtimeSha,
+    ...executionEnv(input, outputDir),
     PLAYWRIGHT_OUTPUT_DIR: outputDir,
-    VITEST_CACHE_DIR: path.join(outputDir, 'vitest-cache'),
-    TMPDIR: path.join(outputDir, 'tmp'),
   };
   mkdirSync(env.TMPDIR, { recursive: true });
   const list = spawnSync(process.execPath, [path.join(input.privateGraph, '.bin/playwright'), 'test', '--config', 'playwright.shot-name.config.ts', '--grep', SETTINGS_CASE, '--list'], {
@@ -379,8 +516,9 @@ export function runMain95PromptSettingsIntegration() {
   let status = 1;
   try {
     restore = swapAppNodeModules(input.app, overlay);
-    checkResolvedPrivatePackages(input.app, input.privateGraph);
-    runResolver(input);
+    checkResolvedPrivatePackages(input, outputDir);
+    runSupportedCli(input, outputDir);
+    runNormalBuild(input, outputDir);
     status = runPlaywright(input, outputDir);
     if (process.env.TIMELINE_MAIN95_PROMPT_SKIP_BROWSER === '1') console.log('[main95-prompt-settings] browser execution explicitly skipped by caller');
   } finally {
