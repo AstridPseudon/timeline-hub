@@ -7733,8 +7733,11 @@ class GenericPackHost:
                 readiness_env['PYTHONPATH'] = _command_worker_pythonpath(record, readiness_path)
             elif readiness_worker_kind == 'native':
                 readiness_env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
+                runtime_checkout = env.get('ASTRID_RUNTIME_CHECKOUT')
                 readiness_env['PYTHONPATH'] = os.pathsep.join(dict.fromkeys((
-                    str(Path(__file__).resolve().parents[3]), *_dependency_pythonpath(),
+                    str(Path(__file__).resolve().parents[3]),
+                    *((str(Path(runtime_checkout).resolve()),) if runtime_checkout else ()),
+                    *_dependency_pythonpath(),
                     *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
             else:
                 raise HostError('unknown internal readiness worker projection')
@@ -8085,6 +8088,7 @@ class GenericPackHost:
         # boundary.  In particular, an unrelated ambient API key must never
         # leak into a provider subprocess.
         package_parent = str(Path(__file__).resolve().parents[3])
+        runtime_checkout = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
         env, secrets = self._child_environment(
             record,
             attempt,
@@ -8094,7 +8098,10 @@ class GenericPackHost:
             readiness_worker_kind='command',
             allow_runtime_connection=allow_runtime_connection and child_bridge is None,
             explicit_env={
-                "PYTHONPATH": os.pathsep.join((package_parent, *_dependency_pythonpath())),
+                "PYTHONPATH": os.pathsep.join(
+                    (package_parent, *((str(Path(runtime_checkout).resolve()),) if runtime_checkout else ()),
+                     *_dependency_pythonpath())
+                ),
                 ASTRID_INTERNAL_INVOCATION: "1",
                 **binding.env,
                 "ASTRID_PROGRESS_PATH": str(attempt / ".astrid-progress.json"),

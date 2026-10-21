@@ -266,6 +266,7 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
     # The named integration suite supplies the pinned current Remotion/runtime
     # pair. Keep this bootstrap read-only and do not redirect it to a mutable
     # checkout-local renderer.
+    monkeypatch.setenv("ASTRID_PACKS_PATH", str(astrid_root / "astrid/packs/rendering"))
     assert os.environ.get("ASTRID_REMOTION_PROJECT_DIR")
     assert os.environ.get("ASTRID_NODE_EXECUTABLE")
     assert os.environ.get("ASTRID_TIMELINE_SCHEMA_PYTHONPATH")
@@ -447,7 +448,7 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
         assert admitted_spec["outputs"]["authoring_proposal"] == {
             "type": "file", "artifact_type": "timeline/authoring-proposal",
         }
-        author_claim = service.claim_next(
+        author_claim = host.client.claim_next(
             executor_id="astrid-pack-host",
             capability_ids=["rendering.assemble_timeline"],
             idempotency_key="host-chain-claim-author",
