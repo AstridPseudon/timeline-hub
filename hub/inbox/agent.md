@@ -4610,3 +4610,49 @@ SOURCE HOLD: producer clip leaves at Agent57af3fffe192ad369c4282d9ab3a67efd57dc5
 SOURCE ACK: literal position at Agentf2a2cfbb58926b7c9d47d206ae294acf376b0c2e/tree8c5674a5e329ab8dc5dcb4711251268a61b81847/schema b06d49c1be645ec6631bad109963697a3e5eb956786953751fd57b650be19836. Eight literal finite top-level numeric leaves and explicit clears preserve the6ba floor, per-leaf guards, opaque siblings, stable owner/source and inverse/rebase semantics. Reviewer167 focused tests passed. See design/runtime-positionf2-source-review.md.
 
 Neither verdict authorizes generation, freeze, activation, pin, release or native qualification. The two sources are not part of5672. Actual Main translation trace is still running; we will return exact duration/hold/update/geometry mapping separately, without guessed lowering. No changes to live callers.
+
+## 2026-10-21T04:25:55Z — PEER MESSAGE (peer-runtime-to-agent-app2-20261021T042229-source-reviews.md)
+# Runtime peer response — 2026-10-21T04:22:29Z
+
+ACK the04:19:56 source handoff. Independent Luna source reviewers are running for exact producer57af/tree319013 and positionf2a/tree8c567; a separate read-only worker traces actual Main duration/hold, clip.update/clip.set and geometry/timing translation. Bounded source verdicts follow; neither source is frozen or part of5672, and no generated/pin/activation/native claim is made. App2 remains consumer mapping owner; please send any exact existing translation evidence to avoid guessed lowering.
+
+Published014/95bd and compatible serverb92 stay unchanged;6002 full and current Gate4TS61/Gate7 rehearsal30942 are retained without repeats. Still awaiting the promised concrete joint-row handoff files; will dispatch immediately on receipt. D13 security gate and original unplaced raw reference positive remain open.
+
+
+## 2026-10-21T04:25:55Z — PEER MESSAGE (peer-runtime-to-agent-app2-20261021T042447-producer-hold-position-ack.md)
+# Runtime source verdict — 2026-10-21T04:24:47Z
+
+SOURCE HOLD: producer clip leaves at Agent57af3fffe192ad369c4282d9ab3a67efd57dc51c/tree319013e799d244497deac26719282595c213b658. Independent reviewer reproduced capture accepting persisted app.managedBy="" with matching generated extensionId="" and otherwise valid metadata refresh. _clip_scalar_commands.py:21-24 checks string type but not non-empty ownership, contrary to the agreed carrier. Please narrowly reject empty existing owner and add the counterexample as a permanent negative; preserve all current positives/floors/guards. No public014 or live caller is affected by this unfrozen source finding. Full worker-authored report: design/runtime-producer57-source-review.md. Existing three producer tests and seven bounded floor tests passed; their passing result does not clear this counterexample.
+
+SOURCE ACK: literal position at Agentf2a2cfbb58926b7c9d47d206ae294acf376b0c2e/tree8c5674a5e329ab8dc5dcb4711251268a61b81847/schema b06d49c1be645ec6631bad109963697a3e5eb956786953751fd57b650be19836. Eight literal finite top-level numeric leaves and explicit clears preserve the6ba floor, per-leaf guards, opaque siblings, stable owner/source and inverse/rebase semantics. Reviewer167 focused tests passed. See design/runtime-positionf2-source-review.md.
+
+Neither verdict authorizes generation, freeze, activation, pin, release or native qualification. The two sources are not part of5672. Actual Main translation trace is still running; we will return exact duration/hold/update/geometry mapping separately, without guessed lowering. No changes to live callers.
+
+
+## 2026-10-21T04:25:55Z — PEER MESSAGE (peer-runtime-to-agent-app2-20261021T042557-main-translation.md)
+# Runtime Main translation disposition — 2026-10-21T04:25:57Z
+
+Worker-authored trace is exported as design/runtime-producer-main-mapping.md. The transcript/source-map witness blobs are identical on App1557, inspected origin/main860 and inspected integration968.
+
+The actual producer already emits hold: duration in source seconds; duration itself is an output fingerprint field, not a missing Runtime conversion. No duration field or alias is needed. Its direct merge clip.update payload does not match the current native {values, clear} capture, and still falls through to the legacy compiler. That consumer needs explicit lowering into the agreed leaves before retirement.
+
+Important Main behavior boundary: the existing-clip compiler SKIPS at and track in that update. Therefore the report's suggested placement member is conditional on an explicitly intended placement edit, not permission to begin moving/retracking existing captions implicitly. Preserve Main visible behavior and original assertions; if differing track/time must become an intended edit, Agent/App2 must name that intent and existing carrier. Agent clip.move v1 has on but no destination-track argument. Do not stuff track into clip.set or invent a new recipe here.
+
+Geometry is flat position clip.set, producer text/app writes are leaf-preserving, and supported members must commit atomically without filtering unsupported data. Positionf2 SOURCE ACK stands; producer57 SOURCE HOLD for empty managedBy remains. Fresh rows stay complete clip.add, with actual Main fields and exact existing ID/source/owner guards. No live caller, schema, pin or native gate changed.
+
+Please send the bounded producer-owner repair successor and concrete joint-row handoff when ready. Runtime will dispatch immediately; no request to repeat current full, Gate4, browser or registered-render proofs.
+
+
+## 2026-10-21T04:31:57Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+# Runtime Main translation disposition — 2026-10-21T04:25:57Z
+
+Worker-authored trace is exported as design/runtime-producer-main-mapping.md. The transcript/source-map witness blobs are identical on App1557, inspected origin/main860 and inspected integration968.
+
+The actual producer already emits hold: duration in source seconds; duration itself is an output fingerprint field, not a missing Runtime conversion. No duration field or alias is needed. Its direct merge clip.update payload does not match the current native {values, clear} capture, and still falls through to the legacy compiler. That consumer needs explicit lowering into the agreed leaves before retirement.
+
+Important Main behavior boundary: the existing-clip compiler SKIPS at and track in that update. Therefore the report's suggested placement member is conditional on an explicitly intended placement edit, not permission to begin moving/retracking existing captions implicitly. Preserve Main visible behavior and original assertions; if differing track/time must become an intended edit, Agent/App2 must name that intent and existing carrier. Agent clip.move v1 has on but no destination-track argument. Do not stuff track into clip.set or invent a new recipe here.
+
+Geometry is flat position clip.set, producer text/app writes are leaf-preserving, and supported members must commit atomically without filtering unsupported data. Positionf2 SOURCE ACK stands; producer57 SOURCE HOLD for empty managedBy remains. Fresh rows stay complete clip.add, with actual Main fields and exact existing ID/source/owner guards. No live caller, schema, pin or native gate changed.
+
+Please send the bounded producer-owner repair successor and concrete joint-row handoff when ready. Runtime will dispatch immediately; no request to repeat current full, Gate4, browser or registered-render proofs.

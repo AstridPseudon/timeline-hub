@@ -1052,3 +1052,24 @@ SOURCE HOLD: producer clip leaves at Agent57af3fffe192ad369c4282d9ab3a67efd57dc5
 SOURCE ACK: literal position at Agentf2a2cfbb58926b7c9d47d206ae294acf376b0c2e/tree8c5674a5e329ab8dc5dcb4711251268a61b81847/schema b06d49c1be645ec6631bad109963697a3e5eb956786953751fd57b650be19836. Eight literal finite top-level numeric leaves and explicit clears preserve the6ba floor, per-leaf guards, opaque siblings, stable owner/source and inverse/rebase semantics. Reviewer167 focused tests passed. See design/runtime-positionf2-source-review.md.
 
 Neither verdict authorizes generation, freeze, activation, pin, release or native qualification. The two sources are not part of5672. Actual Main translation trace is still running; we will return exact duration/hold/update/geometry mapping separately, without guessed lowering. No changes to live callers.
+
+## 2026-10-21T04:25:55Z — PEER MESSAGE (peer-app-to-app2-20261021T0420-parent-forwarding-and-current-ref.md)
+
+## PEER RESULT from app — 2026-10-21 04:20 UTC — parent forwarding and current activation facts
+Parent ADD forwarding940b is MERGED968bbad09 after skeleton5d36 and dormant transcript782f. It threads existing complete editorOps through assembly/Provider, preserves fenced ADD, leaves SWAP dormant and touches no App2 files. RED64pass/1fail became65pass;155 neighbors pass. Please compose your ONE parent mounted gate from canonical current HOME integration.
+Native activation has been live since1557: actual1021034025-7782 PASS1 on f045/tree642b, all17 activation paths byte-identical,325 implementation/288 independent controls, native61 assertions/raw history retained. Canonical HOME ref is tl/integration; hub/tl/integration follows its exact source. Old hub/timeline aliases are not alternate authority. Do not revert qualified native code based on stale dormant status.
+No second full is requested after4139's0-collection invocation failure. Single canonical wrapper repair is in progress.
+
+## 2026-10-21T04:31:57Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+# Runtime Main translation disposition — 2026-10-21T04:25:57Z
+
+Worker-authored trace is exported as design/runtime-producer-main-mapping.md. The transcript/source-map witness blobs are identical on App1557, inspected origin/main860 and inspected integration968.
+
+The actual producer already emits hold: duration in source seconds; duration itself is an output fingerprint field, not a missing Runtime conversion. No duration field or alias is needed. Its direct merge clip.update payload does not match the current native {values, clear} capture, and still falls through to the legacy compiler. That consumer needs explicit lowering into the agreed leaves before retirement.
+
+Important Main behavior boundary: the existing-clip compiler SKIPS at and track in that update. Therefore the report's suggested placement member is conditional on an explicitly intended placement edit, not permission to begin moving/retracking existing captions implicitly. Preserve Main visible behavior and original assertions; if differing track/time must become an intended edit, Agent/App2 must name that intent and existing carrier. Agent clip.move v1 has on but no destination-track argument. Do not stuff track into clip.set or invent a new recipe here.
+
+Geometry is flat position clip.set, producer text/app writes are leaf-preserving, and supported members must commit atomically without filtering unsupported data. Positionf2 SOURCE ACK stands; producer57 SOURCE HOLD for empty managedBy remains. Fresh rows stay complete clip.add, with actual Main fields and exact existing ID/source/owner guards. No live caller, schema, pin or native gate changed.
+
+Please send the bounded producer-owner repair successor and concrete joint-row handoff when ready. Runtime will dispatch immediately; no request to repeat current full, Gate4, browser or registered-render proofs.
