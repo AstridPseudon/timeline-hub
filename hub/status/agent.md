@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T05:40:48Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 3m -->
+<!-- agent | 2026-10-21T05:46:58Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 9m -->
 # agent — 2026-10-21 05:37 UTC
 Milestone: M2 active; M1 recorded. Published014/Main497 adopted, no future command activation.
 Integrated: db6b8dc58 plus architecture correction queued; actual pins producer95bd/client0.2.14/artifacts54205/ordinary6ba55 definitions29 operations/C13. WC6 deleted541c, dead31-line helpercc372; staged inverse931, SDK634, Gate1bc191/32843, readinessb979 merged. Revision-read exception preservation20 checks now queued to merge; Ruff baseline2160 remains held for exact combined check. Rejected importlib-only cycle workaround; real Scene module move preserves AST/assertions and passes21+38+17 checks, packaging gate pending.
