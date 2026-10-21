@@ -7,6 +7,7 @@ import {
   type ContributionErrorInfo,
 } from './ContributionErrorBoundary';
 import { PanelPopoutFrame, type PanelPopoutBounds, type PanelRect } from './PanelPopoutFrame';
+import { PanelFullscreenFrame } from './PanelFullscreenFrame';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 
 /** Stable contribution identity for selection/preferences within a host. */
@@ -39,7 +40,7 @@ export function placePanelNode(node: Node, parent: Node): void {
 export interface ExtensionPanelHostProps {
   /** Include registered panels even while hidden. Removal ends their lifetime. */
   readonly panels: readonly VideoEditorPanelDescriptor[];
-  /** Panels shown in their docked slot. A popped-out panel is visible regardless. */
+  /** Panels shown in their docked slot. A popped-out or full-screen panel is visible regardless. */
   readonly visiblePanelKeys: ReadonlySet<string>;
   readonly video?: PanelVideoAdapter;
   readonly settingsByPanelKey?: Readonly<Record<string, PanelRenderProps['settings']>>;
@@ -48,8 +49,12 @@ export interface ExtensionPanelHostProps {
   readonly poppedPanelKey?: string | null;
   /** Supplying this is what offers `popout` to panels. Null docks the panel. */
   readonly onPoppedPanelKeyChange?: (key: string | null) => void;
-  /** Touch chrome: the frame fills the editor instead of floating. */
+  /** Touch chrome for the retained pop-out contract. */
   readonly touch?: boolean;
+  /** Controlled: the one panel shown full screen, if any. */
+  readonly fullscreenPanelKey?: string | null;
+  /** Supplying this is what offers `fullscreen` to panels. Null returns the panel to its slot. */
+  readonly onFullscreenPanelKeyChange?: (key: string | null) => void;
 }
 
 function PanelContent({ panel, ...props }: PanelRenderProps & { panel: VideoEditorPanelDescriptor }) {
@@ -62,15 +67,18 @@ interface PanelSlotProps {
   readonly instanceId: string;
   readonly dockedVisible: boolean;
   readonly popped: boolean;
-  readonly frameBody: () => HTMLElement | null;
+  readonly fullscreenActive: boolean;
+  readonly popoutBody: () => HTMLElement | null;
+  readonly fullscreenBody: () => HTMLElement | null;
   readonly video?: PanelVideoAdapter;
   readonly settings?: PanelRenderProps['settings'];
   readonly popout?: PanelRenderProps['popout'];
+  readonly fullscreen?: PanelRenderProps['fullscreen'];
   readonly onDock: () => void;
   readonly onError?: (info: ContributionErrorInfo) => void;
 }
 
-function PanelSlot({ panel, panelKey, instanceId, dockedVisible, popped, frameBody, video, settings, popout, onDock, onError }: PanelSlotProps) {
+function PanelSlot({ panel, panelKey, instanceId, dockedVisible, popped, fullscreenActive, popoutBody, fullscreenBody, video, settings, popout, fullscreen, onDock, onError }: PanelSlotProps) {
   // One DOM node per panel for its whole life; it is only ever moved, never recreated.
   const [node] = useState(() => {
     const el = document.createElement('div');
@@ -82,13 +90,10 @@ function PanelSlot({ panel, panelKey, instanceId, dockedVisible, popped, frameBo
   const wasPoppedRef = useRef(false);
   const openerRef = useRef<Element | null>(null);
   useLayoutEffect(() => {
-    // Read before the move: an appendChild fallback drops focus from the node.
     if (popped && !wasPoppedRef.current) openerRef.current = document.activeElement;
-    const parent = popped ? frameBody() : mountRef.current;
+    const parent = fullscreenActive ? fullscreenBody() : popped ? popoutBody() : mountRef.current;
     if (parent) placePanelNode(node, parent);
     if (!popped && wasPoppedRef.current) {
-      // The frame returns focus to its opener; when the opener is gone (a control that
-      // only exists while docked), the panel's own first target takes it instead.
       const opener = openerRef.current;
       if (!(opener instanceof HTMLElement && opener.isConnected)) node.querySelector<HTMLElement>('[data-autofocus]')?.focus({ preventScroll: true });
       openerRef.current = null;
@@ -96,16 +101,11 @@ function PanelSlot({ panel, panelKey, instanceId, dockedVisible, popped, frameBo
     wasPoppedRef.current = popped;
   });
   useLayoutEffect(() => () => { node.remove(); }, [node]);
-  const visible = dockedVisible || popped;
+  const visible = dockedVisible || popped || fullscreenActive;
   return (
-    <div className="h-full min-h-0 flex-col" style={{ display: dockedVisible ? 'flex' : 'none' }} hidden={!dockedVisible} data-video-editor-panel-id={panel.id} data-panel-key={panelKey} data-popped={popped ? 'true' : undefined}>
-      {popped && (
-        <div data-testid="panel-popped-placeholder" className="flex flex-1 flex-col items-center justify-center gap-2 p-4 text-center text-sm text-muted-foreground">
-          <p>{panel.label || panel.id} is open in a window</p>
-          <button type="button" className="rounded-md border border-border/70 px-2 py-1 text-xs text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onDock}>Bring back</button>
-        </div>
-      )}
-      <div ref={mountRef} className="min-h-0 flex-1" hidden={popped} />
+    <div className="h-full min-h-0 flex-col" style={{ display: dockedVisible ? 'flex' : 'none' }} hidden={!dockedVisible} data-video-editor-panel-id={panel.id} data-panel-key={panelKey} data-popped={popped ? 'true' : undefined} data-fullscreen={fullscreenActive ? 'true' : undefined}>
+      {popped && <div data-testid="panel-popped-placeholder" className="flex flex-1 flex-col items-center justify-center gap-2 p-4 text-center text-sm text-muted-foreground"><p>{panel.label || panel.id} is open in a window</p><button type="button" className="rounded-md border border-border/70 px-2 py-1 text-xs text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={onDock}>Bring back</button></div>}
+      <div ref={mountRef} className="min-h-0 flex-1" hidden={popped || fullscreenActive} />
       {createPortal(
         <HostContributionErrorBoundary
           contributionId={panel.id}
@@ -114,7 +114,7 @@ function PanelSlot({ panel, panelKey, instanceId, dockedVisible, popped, frameBo
           label={panel.label}
           onError={onError}
         >
-          <PanelContent panel={panel} instanceId={instanceId} visible={visible} video={video} settings={settings} popout={popout} />
+          <PanelContent panel={panel} instanceId={instanceId} visible={visible} video={video} settings={settings} popout={popout} fullscreen={fullscreen} />
         </HostContributionErrorBoundary>,
         node,
       )}
@@ -123,38 +123,56 @@ function PanelSlot({ panel, panelKey, instanceId, dockedVisible, popped, frameBo
 }
 
 /** One React instance per qualified contribution in each mounted host. */
-export function ExtensionPanelHost({ panels, visiblePanelKeys, video, onError, settingsByPanelKey, poppedPanelKey = null, onPoppedPanelKeyChange, touch = false }: ExtensionPanelHostProps) {
+export function ExtensionPanelHost({ panels, visiblePanelKeys, video, onError, settingsByPanelKey, poppedPanelKey = null, onPoppedPanelKeyChange, touch = false, fullscreenPanelKey = null, onFullscreenPanelKeyChange }: ExtensionPanelHostProps) {
   const hostId = useId();
   const runtime = useOptionalVideoEditorRuntime();
-  const frameRef = useRef<HTMLDivElement>(null);
+  const popoutFrameRef = useRef<HTMLDivElement>(null);
+  const fullscreenFrameRef = useRef<HTMLDivElement>(null);
   const poppedPanel = poppedPanelKey === null ? undefined : panels.find((panel) => getPanelKey(panel) === poppedPanelKey);
+  const fullscreenPanel = fullscreenPanelKey === null ? undefined : panels.find((panel) => getPanelKey(panel) === fullscreenPanelKey);
   const shellRoot = runtime?.shellRootRef?.current ?? null;
-  // The frame outlives the pop-out by one commit: the panel node must move back to its
+  // The frame outlives full screen by one commit: the panel node must move back to its
   // slot (a state-preserving moveBefore) before React removes the frame's DOM.
   const poppedKey = poppedPanel ? getPanelKey(poppedPanel) : null;
-  const [shownKey, setShownKey] = useState(poppedKey);
-  if (poppedKey && shownKey !== poppedKey) setShownKey(poppedKey);
+  const activeKey = fullscreenPanel ? getPanelKey(fullscreenPanel) : null;
+  const [shownPoppedKey, setShownPoppedKey] = useState(poppedKey);
+  const [shownFullscreenKey, setShownFullscreenKey] = useState(activeKey);
+  if (poppedKey && shownPoppedKey !== poppedKey) setShownPoppedKey(poppedKey);
+  if (activeKey && shownFullscreenKey !== activeKey) setShownFullscreenKey(activeKey);
   useLayoutEffect(() => {
-    if (!poppedKey && shownKey) setShownKey(null);
-  }, [poppedKey, shownKey]);
-  const shown = shownKey === null ? undefined : panels.find((panel) => getPanelKey(panel) === shownKey);
+    if (!poppedKey && shownPoppedKey) setShownPoppedKey(null);
+  }, [poppedKey, shownPoppedKey]);
+  useLayoutEffect(() => {
+    if (!activeKey && shownFullscreenKey) setShownFullscreenKey(null);
+  }, [activeKey, shownFullscreenKey]);
+  const shownPopped = shownPoppedKey === null ? undefined : panels.find((panel) => getPanelKey(panel) === shownPoppedKey);
+  const shownFullscreen = shownFullscreenKey === null ? undefined : panels.find((panel) => getPanelKey(panel) === shownFullscreenKey);
   return (
     <>
-      {shown && onPoppedPanelKeyChange && (
+      {shownPopped && onPoppedPanelKeyChange && (
         <PanelPopoutFrame
-          key={getPanelKey(shown)}
-          ref={frameRef}
-          title={shown.label || shown.id}
-          panelKey={getPanelKey(shown)}
+          key={getPanelKey(shownPopped)}
+          ref={popoutFrameRef}
+          title={shownPopped.label || shownPopped.id}
+          panelKey={getPanelKey(shownPopped)}
           bounds={shellRoot ?? WINDOW_BOUNDS()}
           defaultRect={previewRect(shellRoot)}
           touch={touch}
           onClose={() => onPoppedPanelKeyChange(null)}
         />
       )}
+      {shownFullscreen && onFullscreenPanelKeyChange && (
+        <PanelFullscreenFrame
+          key={getPanelKey(shownFullscreen)}
+          ref={fullscreenFrameRef}
+          title={shownFullscreen.label || shownFullscreen.id}
+          onExit={() => onFullscreenPanelKeyChange(null)}
+        />
+      )}
       {panels.map((panel) => {
         const key = getPanelKey(panel);
         const popped = key === poppedKey;
+        const active = key === activeKey;
         return (
           <PanelSlot
             key={key}
@@ -163,7 +181,9 @@ export function ExtensionPanelHost({ panels, visiblePanelKeys, video, onError, s
             instanceId={`${hostId}:${key}`}
             dockedVisible={visiblePanelKeys.has(key)}
             popped={popped}
-            frameBody={() => frameRef.current}
+            fullscreenActive={active}
+            popoutBody={() => popoutFrameRef.current}
+            fullscreenBody={() => fullscreenFrameRef.current}
             video={video}
             settings={settingsByPanelKey?.[key]}
             popout={onPoppedPanelKeyChange ? {
@@ -172,6 +192,11 @@ export function ExtensionPanelHost({ panels, visiblePanelKeys, video, onError, s
                 if (open) onPoppedPanelKeyChange(key);
                 else if (popped) onPoppedPanelKeyChange(null);
               },
+            } : undefined}
+            fullscreen={onFullscreenPanelKeyChange ? {
+              active,
+              enter: () => onFullscreenPanelKeyChange(key),
+              exit: () => { if (active) onFullscreenPanelKeyChange(null); },
             } : undefined}
             onDock={() => onPoppedPanelKeyChange?.(null)}
             onError={onError}
@@ -184,7 +209,6 @@ export function ExtensionPanelHost({ panels, visiblePanelKeys, video, onError, s
 
 const WINDOW_BOUNDS = (): PanelPopoutBounds => ({ width: window.innerWidth, height: window.innerHeight });
 
-/** The stage's rectangle in shell-root coordinates (the frame clamps it). */
 function previewRect(shellRoot: HTMLElement | null): PanelRect {
   const stage = shellRoot?.querySelector<HTMLElement>('[data-video-editor-shell-region="preview"]');
   if (!shellRoot || !stage) return { x: 48, y: 48, width: 960, height: 600 };

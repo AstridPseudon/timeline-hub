@@ -408,7 +408,7 @@ export class RuntimeDataProvider implements DataProvider {
       create: async (kind, content, documentId) => {
         const id = documentId ?? `document:${generateUUID()}`;
         const result = await this.client.createDocument(
-          this.projectId, id, kind, content, `document-create:${id}`,
+          this.projectId, id, kind, content, await documentCreateKey(id),
         );
         notifyDocumentsChanged();
         return result;
@@ -2057,6 +2057,15 @@ function stableJson(value: unknown): string {
       .join(',')}}`;
   }
   return JSON.stringify(value);
+}
+
+/**
+ * Deterministic create key per document id (retry-safe). Ids may contain ':' or be long,
+ * which Runtime's key grammar (^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$) rejects, so hash them.
+ */
+export async function documentCreateKey(documentId: string): Promise<string> {
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(documentId));
+  return `astrid.document-create.${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
 async function stablePublicationKey(

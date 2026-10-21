@@ -10,9 +10,9 @@ import { VideoEditorPanelDisplayControl } from './VideoEditorPanelDisplayControl
 const state = vi.hoisted(() => ({ panels: [] as Array<{extensionId:string;id:string;label:string}>, timelineData: {} as object | null, preferences: {} as EditorPreferences, selection: {} as {selectedClipIds?:Set<string>;selectedTrackId?:string|null;inspectorTarget?:{kind:string}|null}, update: (_next: EditorPreferences | ((current: EditorPreferences) => EditorPreferences)) => {}, inventory: null as null | Array<{extensionId:string; packageSource:string; packageState:string; packageMetadata?:{label:string}}>, extensions: [] as Array<{manifest:{id:string;label?:string;description?:string;contributions?:Array<Record<string,unknown>>}}>, commandRegistry: { executeCommand: vi.fn(async (_commandId: string) => {}) } as { executeCommand: (commandId: string) => Promise<unknown> } | null, toggle: vi.fn(async () => {}), refresh: vi.fn() }));
 const panelKey = 'haus.astrid.transcript-lane:transcript-lane-panel';
 vi.mock('./PropertiesPanel', () => ({ PropertiesPanel: () => <div>Inspector content</div> }));
-vi.mock('./VideoEditorAssetPanelSurface', () => ({ VideoEditorAssetPanelSurface: (props: {activePanelKey: string | null; settingsByPanelKey: Record<string,{open:boolean;onOpenChange:(value:boolean)=>void}>; poppedPanelKey?: string | null; onPoppedPanelKeyChange?: (key: string | null) => void}) => {
+vi.mock('./VideoEditorAssetPanelSurface', () => ({ VideoEditorAssetPanelSurface: (props: {activePanelKey: string | null; settingsByPanelKey: Record<string,{open:boolean;onOpenChange:(value:boolean)=>void}>; fullscreenPanelKey?: string | null; onFullscreenPanelKeyChange?: (key: string | null) => void}) => {
   const [draft, setDraft] = useState('');
-  return <div hidden={!props.activePanelKey}><textarea aria-label="Retained draft" value={draft} onChange={(event) => setDraft(event.target.value)} /><button aria-label="Transcript settings" onClick={() => props.settingsByPanelKey[panelKey].onOpenChange(true)}>Settings</button><span>{props.settingsByPanelKey[panelKey]?.open ? 'Tool settings open' : 'Tool reading view'}</span><span data-testid="popped-key">{props.poppedPanelKey ?? 'none'}</span><button type="button" aria-label="Surface dock all" onClick={() => props.onPoppedPanelKeyChange?.(null)}>Dock all</button></div>;
+  return <div hidden={!props.activePanelKey}><textarea aria-label="Retained draft" value={draft} onChange={(event) => setDraft(event.target.value)} /><button aria-label="Transcript settings" onClick={() => props.settingsByPanelKey[panelKey].onOpenChange(true)}>Settings</button><span>{props.settingsByPanelKey[panelKey]?.open ? 'Tool settings open' : 'Tool reading view'}</span><span data-testid="fullscreen-key">{props.fullscreenPanelKey ?? 'none'}</span><button type="button" aria-label="Surface dock all" onClick={() => props.onFullscreenPanelKeyChange?.(null)}>Dock all</button></div>;
 } }));
 vi.mock('../../components/ExtensionManager', () => ({ ExtensionManager: () => <div>Manager inventory</div> }));
 vi.mock('../../runtime/useVideoEditorRenderContext', () => ({ useVideoEditorAssetPanels: () => state.panels }));
@@ -296,36 +296,45 @@ it('on touch, the Extensions picker lists the Transcript panel', async () => {
   expect(await screen.findByRole('menuitemradio', { name: /^Transcript/ })).toBeInTheDocument();
 });
 
-it('pops the active extension out through the header control into the surface', async () => {
+it('puts the active extension full screen through the header control into the surface', async () => {
   const user = userEvent.setup(); render(<Harness />);
-  expect(screen.getByTestId('popped-key')).toHaveTextContent('none');
-  const pop = screen.getByRole('button', { name: 'Pop out Transcript' });
+  expect(screen.getByTestId('fullscreen-key')).toHaveTextContent('none');
+  const pop = screen.getByRole('button', { name: 'Full screen Transcript' });
   expect(pop).toHaveAttribute('aria-pressed', 'false');
   await user.click(pop);
-  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
-  expect(screen.getByRole('button', { name: 'Pop out Transcript' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByTestId('fullscreen-key')).toHaveTextContent(panelKey);
+  expect(screen.getByRole('button', { name: 'Full screen Transcript' })).toHaveAttribute('aria-pressed', 'true');
 });
 
-it('keeps the popped panel across the Inspector tab switch', async () => {
+it('returns focus to the Full screen button when full screen ends', async () => {
   const user = userEvent.setup(); render(<Harness />);
-  await user.click(screen.getByRole('button', { name: 'Pop out Transcript' }));
+  await user.click(screen.getByRole('button', { name: 'Full screen Transcript' }));
+  screen.getByRole('button', { name: 'Surface dock all' }).focus();
+  await user.click(screen.getByRole('button', { name: 'Surface dock all' }));
+  expect(screen.getByTestId('fullscreen-key')).toHaveTextContent('none');
+  expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Full screen Transcript' }));
+});
+
+it('keeps the full-screen panel across the Inspector tab switch', async () => {
+  const user = userEvent.setup(); render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Full screen Transcript' }));
   await user.click(screen.getByRole('tab', { name: 'Inspector' }));
-  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+  expect(screen.getByTestId('fullscreen-key')).toHaveTextContent(panelKey);
   await user.click(screen.getByRole('tab', { name: 'Extensions' }));
-  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+  expect(screen.getByTestId('fullscreen-key')).toHaveTextContent(panelKey);
 });
 
-it('replaces the popped panel when a different tool is popped out', async () => {
+it('replaces the full-screen panel when a different tool goes full screen', async () => {
   const user = userEvent.setup(); render(<Harness />);
-  await user.click(screen.getByRole('button', { name: 'Pop out Transcript' }));
-  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+  await user.click(screen.getByRole('button', { name: 'Full screen Transcript' }));
+  expect(screen.getByTestId('fullscreen-key')).toHaveTextContent(panelKey);
   screen.getByRole('button', { name: 'Displayed extension' }).focus();
   await user.keyboard('{ArrowDown}');
   await user.click(screen.getByRole('menuitemradio', { name: /^Beat Cue/ }));
-  expect(screen.getByRole('button', { name: 'Pop out Beat Cue' })).toHaveAttribute('aria-pressed', 'false');
-  await user.click(screen.getByRole('button', { name: 'Pop out Beat Cue' }));
-  expect(screen.getByTestId('popped-key')).toHaveTextContent('example:beat');
-  expect(screen.getByTestId('popped-key')).not.toHaveTextContent(panelKey);
+  expect(screen.getByRole('button', { name: 'Full screen Beat Cue' })).toHaveAttribute('aria-pressed', 'false');
+  await user.click(screen.getByRole('button', { name: 'Full screen Beat Cue' }));
+  expect(screen.getByTestId('fullscreen-key')).toHaveTextContent('example:beat');
+  expect(screen.getByTestId('fullscreen-key')).not.toHaveTextContent(panelKey);
 });
 
 it('lists an enabled extension without panels, shows its info view, and runs its command through the registry', async () => {
@@ -354,7 +363,7 @@ it('lists an enabled extension without panels, shows its info view, and runs its
   expect(info).toHaveTextContent('Live Three.js Scene clips');
   await user.click(screen.getByRole('button', { name: 'Import prepared scene' }));
   expect(executeCommand).toHaveBeenCalledWith('haus.import');
-  expect(screen.queryByRole('button', { name: /^Pop out/ })).toBeNull();
+  expect(screen.queryByRole('button', { name: /^Full screen/ })).toBeNull();
 });
 
 it('shows a tablist of panels for an extension that owns more than one and selects the clicked panel', async () => {
@@ -416,17 +425,17 @@ it('the Displayed extension menu lists each extension panel names on a muted sec
   expect(within(beat).getByTestId('extension-menu-panels')).toHaveTextContent(/^Beat Cue$/);
 });
 
-it('the Pop out button shows a tooltip on hover and focus, and clicking hides it and still pops out', async () => {
+it('the Full screen button shows a tooltip on hover and focus, and clicking hides it and still goes full screen', async () => {
   const user = userEvent.setup(); render(<Harness />);
-  const pop = screen.getByRole('button', { name: 'Pop out Transcript' });
+  const pop = screen.getByRole('button', { name: 'Full screen Transcript' });
 
   await user.hover(pop);
-  expect(screen.getByRole('tooltip')).toHaveTextContent('Pop out Transcript');
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Full screen Transcript');
   await user.unhover(pop);
   expect(screen.queryByRole('tooltip')).toBeNull();
 
   fireEvent.focus(pop);
-  expect(screen.getByRole('tooltip')).toHaveTextContent('Pop out Transcript');
+  expect(screen.getByRole('tooltip')).toHaveTextContent('Full screen Transcript');
   fireEvent.blur(pop);
   expect(screen.queryByRole('tooltip')).toBeNull();
 
@@ -434,5 +443,5 @@ it('the Pop out button shows a tooltip on hover and focus, and clicking hides it
   expect(screen.getByRole('tooltip')).toBeTruthy();
   await user.click(pop);
   expect(screen.queryByRole('tooltip')).toBeNull();
-  expect(screen.getByTestId('popped-key')).toHaveTextContent(panelKey);
+  expect(screen.getByTestId('fullscreen-key')).toHaveTextContent(panelKey);
 });

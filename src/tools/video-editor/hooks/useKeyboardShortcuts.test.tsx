@@ -540,11 +540,11 @@ describe('useKeyboardShortcuts activatable targets', () => {
   });
 });
 
-describe('useKeyboardShortcuts Escape in a popped-out panel', () => {
-  it('leaves Escape alone inside a popout frame', () => {
+describe('useKeyboardShortcuts while a panel is full screen', () => {
+  it('leaves Escape alone inside a full-screen frame', () => {
     const clearSelection = vi.fn();
     const frame = document.createElement('div');
-    frame.setAttribute('data-panel-popout-frame', '');
+    frame.setAttribute('data-panel-fullscreen-frame', '');
     const inner = document.createElement('div');
     inner.tabIndex = 0;
     frame.append(inner);
@@ -556,6 +556,23 @@ describe('useKeyboardShortcuts Escape in a popped-out panel', () => {
       expect(event.defaultPrevented).toBe(false);
     } finally {
       frame.remove();
+    }
+  });
+
+  it('fires no editor shortcut even when focus is outside the frame', () => {
+    const clearSelection = vi.fn();
+    const frame = document.createElement('div');
+    frame.setAttribute('data-panel-fullscreen-frame', '');
+    const outside = document.createElement('div');
+    document.body.append(frame, outside);
+    try {
+      mountShortcuts({ options: makeOptions({ clearSelection }) });
+      const event = dispatchKey(outside, { key: 'Escape' });
+      expect(clearSelection).not.toHaveBeenCalled();
+      expect(event.defaultPrevented).toBe(false);
+    } finally {
+      frame.remove();
+      outside.remove();
     }
   });
 

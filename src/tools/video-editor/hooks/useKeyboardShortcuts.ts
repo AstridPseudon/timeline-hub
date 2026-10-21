@@ -225,9 +225,9 @@ export function useKeyboardShortcuts({
       // Transcript included); only an unfocused timeline plays on Space.
       if ((event.key === ' ' || event.key === 'Enter') && isActivatableTarget(event.target)) return;
 
-      // Esc inside a popped-out panel docks it (the frame listens after this hook, and
-      // would see our preventDefault); it must not also clear the timeline selection.
-      if (event.key === 'Escape' && event.target instanceof Element && event.target.closest('[data-panel-popout-frame]')) return;
+      // A full-screen panel is modal: no editor shortcut acts while it is open, and its Esc
+      // (the frame listens after this hook) must not also clear the timeline selection.
+      if (document.querySelector('[data-panel-fullscreen-frame]')) return;
 
       const isModifierPressed = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
