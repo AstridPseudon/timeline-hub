@@ -488,7 +488,7 @@ function runCurrent014Gate3Selection(input) {
   assertCurrent014Gate3Selection(child.status ?? 1, output);
   console.log('[current014/gate3] selection', JSON.stringify({
     argv: CURRENT014_GATE3.argv,
-    listArgv: [...CURRENT014_GATE3.argv, '--list'],
+    listArgv: [...CURRENT014_GATE3_CASE.argv, '--list'],
     cwd: input.app,
     config: path.join(input.app, CURRENT014_GATE3_CASE.config),
     testDir: CURRENT014_GATE3_CASE.testDir,
