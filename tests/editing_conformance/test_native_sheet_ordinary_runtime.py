@@ -538,3 +538,68 @@ def test_current014_detached_mixed_text_duration_uses_one_native_http_batch_and_
     assert State(redone_bundle).entity(sibling) == State(after).entity(sibling)
     with pytest.raises(CommitConflict):
         reloaded.undo([accepted['publication_id']])
+
+
+@pytest.mark.parametrize('runtime', ['historical'], indirect=True)
+@pytest.mark.parametrize('historical_sheet_film', ['detached'], indirect=True)
+def test_current014_detached_size_clear_uses_one_native_http_commit_and_guarded_inverse(
+        runtime, historical_sheet_film):
+    from astrid.sdk.timeline.checkout import _sheet_session
+    from astrid.sdk.timeline_checkout import Checkout
+    from astrid.sdk.timeline_sheet import apply_sheet, render_sheet
+
+    client = runtime.client()
+    assert historical_sheet_film[1] == runtime.project
+    tl = Checkout.draft(runtime.project, 'film', client=client)
+    original_text = render_sheet(tl, cuts=['c1'])
+    edited = original_text.replace('size=32', 'size=clear', 1)
+    assert edited != original_text
+
+    session = _sheet_session(tl)
+    native = NativeSheet.load(session)
+    artifact = json.loads(session.outbox.path.read_bytes())['sheet']
+    bundle = artifact['bundle']
+    basis = artifact['basis']
+    ref = artifact['detached']['bindings']['c1.card']
+    sibling = 'occurrence:occ/clip:video'
+    before = client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=runtime.history()['head']['revision_id']).data['bundle']
+    expected = [capture_clip_set_params(bundle, ref, values={}, clear=['size'])]
+    assert native._bundle == bundle and native._basis == basis and 'size=32' in native.text
+    assert apply_sheet(tl, edited, client=client)
+    assert json.loads(session.outbox.path.read_bytes())['pending'] == expected
+
+    tl.save(quiet=True)
+    assert len(runtime.calls) == 1
+    request = json.loads(runtime.calls[-1][0])
+    assert request['base_revision_id'] == basis['revision_id']
+    assert request['base_publication_id'] == basis['publication_id']
+    assert request['commands'] == expected and request['source'] == {'via': 'sheet'}
+    accepted = copy.deepcopy(runtime.history()['head'])
+    after = client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=accepted['revision_id']).data['bundle']
+    target = State(after).entity(ref)
+    assert target['clipType'] == 'am-type' and target['track'] == 'type'
+    assert target['params']['text'] == 'Before'
+    assert target['params']['opaque'] == {'keep': [None, False, 1, 1.0]}
+    assert target['hold'] == 1 and 'size' not in target['params']
+    assert 'asset' not in target and 'from' not in target and 'to' not in target
+    internal_clips = [clip for shot in after['shots'].values()
+                      for clip in shot['internal_timeline']['clips']]
+    assert [clip['id'] for clip in internal_clips] == ['video', 'title']
+    assert State(after).entity(sibling) == State(before).entity(sibling)
+    assert after['parent']['config']['org.example/data'] == {'null': None}
+
+    runtime.restart()
+    reloaded = runtime.session(name='current014-size-reloaded')
+    reloaded_bundle = reloaded.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=accepted['revision_id']).data['bundle']
+    assert State(reloaded_bundle).entity(ref) == target
+    undone = reloaded.undo([accepted['publication_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    restored_target = State(restored).entity(ref)
+    assert restored_target['params']['size'] == 32
+    assert _json(restored_target) == _json(State(before).entity(ref))
+    redone = reloaded.undo([undone['receipt']['receipt_id']])
+    redone_bundle = bundle_from_document(redone['data']['canonical_document'])
+    assert _json(State(redone_bundle).entity(ref)) == _json(target)
