@@ -97,6 +97,27 @@ def test_unchanged_json_roundtrip_has_empty_diff(tmp_path):
     assert diff_authoring_candidate(work)["change_count"] > 0
 
 
+@pytest.mark.parametrize("scope,field", [("parent", "config"), ("parent", "registry"),
+                                        ("config", "registry"), ("child", "registry"),
+                                        ("child", "assets")])
+@pytest.mark.parametrize("value", [None, []])
+def test_malformed_media_containers_refuse_before_file_probe(tmp_path, scope, field, value, monkeypatch):
+    work = bundle()
+    target = (work["parent"] if scope == "parent" else work["parent"]["config"] if scope == "config"
+              else next(iter(work["shots"].values()))["internal_timeline"])
+    if field == "assets":
+        target = target["registry"]
+    target[field] = value
+    if scope != "child":
+        edit(work, "must-not-probe.png")
+    original = copy.deepcopy(work)
+    monkeypatch.setattr("astrid.sdk.authoring_media._metadata",
+                        lambda *args: pytest.fail("malformed container reached file probe"))
+    with pytest.raises(ValueError, match="Malformed media container at candidate"):
+        plan_authoring_media(work, base_directory=tmp_path)
+    assert work == original
+
+
 def test_local_registry_replacement_is_readonly_and_strips_stale_authority(tmp_path):
     path = picture(tmp_path)
     work = bundle()
