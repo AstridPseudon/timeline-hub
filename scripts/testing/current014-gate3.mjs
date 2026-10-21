@@ -188,15 +188,50 @@ function checkMetadata(root, label, fileName) {
   return sha256File(file);
 }
 
-function checkRuntimeLock(root, label) {
+function checkRuntimeLock(root, label, producer = null, python = null) {
   const file = path.join(root, 'runtime.lock.json');
   const lock = jsonFile(file);
   if (lock.producer !== 'astrid-runtime' || lock.source_commit !== CURRENT014_GATE3.runtime.commit) {
     fail(`${label} Runtime lock producer/source is not Runtime95`);
   }
   if (lock.producer_version !== CURRENT014_GATE3.runtime.producerVersion) fail(`${label} Runtime lock version is not the all76 artifact`);
+  if (producer) {
+    const checker = label === 'App' ? process.execPath : python;
+    const checkerScript = label === 'App' ? path.join(root, 'scripts/vendor-lock.mjs') : path.join(root, 'scripts/vendor_lock.py');
+    if (!checker) fail(`${label} vendor-lock checker Python is required`);
+    try {
+      execFileSync(checker, [checkerScript, 'check', file, '--producer', producer], {
+        cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+      });
+    } catch (error) {
+      const detail = error.stderr?.toString().trim() || error.stdout?.toString().trim() || error.message;
+      fail(`${label} vendor-lock check failed: ${detail}`);
+    }
+  }
   return sha256File(file);
 }
+
+export { checkRuntimeLock };
+
+function checkRuntimeProducerManifest(root, python) {
+  const file = path.join(root, 'contract/artifacts.json');
+  const manifest = jsonFile(file);
+  if (manifest.producer !== 'astrid-runtime' || manifest.version !== CURRENT014_GATE3.runtime.producerVersion
+    || Object.keys(manifest.artifacts ?? {}).length !== CURRENT014_GATE3.runtime.artifactCount) {
+    fail('Runtime producer is not the all76 artifact manifest');
+  }
+  try {
+    execFileSync(python, [path.join(root, 'scripts/artifact_manifest.py'), '--check'], {
+      cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (error) {
+    const detail = error.stderr?.toString().trim() || error.stdout?.toString().trim() || error.message;
+    fail(`Runtime producer artifact manifest check failed: ${detail}`);
+  }
+  return sha256File(file);
+}
+
+export { checkRuntimeProducerManifest };
 
 function checkCompositionArchive(root, label, relativeDirectory) {
   const file = path.join(root, relativeDirectory, CURRENT014_GATE3.composition.archive);
@@ -358,16 +393,11 @@ export function checkCurrent014Gate3Sources(input) {
   if (git(input.runtimeProducer, 'rev-parse', 'HEAD') !== CURRENT014_GATE3.runtime.commit || git(input.runtimeProducer, 'rev-parse', 'HEAD^{tree}') !== CURRENT014_GATE3.runtime.tree) fail('Runtime producer source identity changed');
   for (const [root, label] of [[input.agent, 'Agent'], [input.runtime, 'Runtime'], [input.runtimeProducer, 'Runtime producer']]) checkClean(root, label);
   checkVendor(input);
-  checkRuntimeLock(input.app, 'App');
-  checkRuntimeLock(input.agent, 'Agent');
+  checkRuntimeLock(input.app, 'App', input.runtimeProducer);
+  checkRuntimeLock(input.agent, 'Agent', input.runtimeProducer, input.agentPython);
   checkMetadata(input.app, 'App', APP_METADATA);
   checkMetadata(input.agent, 'Agent', AGENT_METADATA);
-  const manifest = jsonFile(path.join(input.runtimeProducer, 'contract/artifacts.json'));
-  if (manifest.producer !== 'astrid-runtime' || manifest.source_commit !== CURRENT014_GATE3.runtime.commit
-    || manifest.producer_version !== CURRENT014_GATE3.runtime.producerVersion
-    || Object.keys(manifest.artifacts ?? {}).length !== CURRENT014_GATE3.runtime.artifactCount) {
-    fail('Runtime producer is not the all76 artifact manifest');
-  }
+  checkRuntimeProducerManifest(input.runtimeProducer, input.runtimePython);
   const appComposition = checkCompositionArchive(input.app, 'App', 'vendor/artifacts');
   checkCompositionArchive(input.agent, 'Agent', 'remotion/artifacts');
   checkCompositionPackage(input.app);
