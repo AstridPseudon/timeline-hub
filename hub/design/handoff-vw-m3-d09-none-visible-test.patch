@@ -1,0 +1,17 @@
+# PATCH
+
+Product change: `tests/packs/rendering/test_scene_host.py` only.
+
+- Point the direct native-host fixture at Composition 0.0.13.
+- Register a probe element whose capability returns `presence: "absent"` for
+  `params.kind == "absent"`; retain an unsupported custom element as control.
+- Assert raw public rows preserve the absent diagnostic (`visible=False`, zero
+  opacity, `opaqueSupport=none`, no findings) and preserve unknown custom rows.
+- Assert the existing public adapter `labels_for_scene()` omits only the
+  explicitly absent row and retains the unknown row.
+- Assert audio-only public host input remains `layers=[]`, `coverage=GAP`, and
+  `content=None`.
+
+No production code, public DTO, geometry/math, or filtering rule changed:
+`labels_for_scene()` already filters exactly `visible is False` and leaves
+`visible == "unknown"` visible.
