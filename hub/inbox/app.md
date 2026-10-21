@@ -1654,3 +1654,6 @@ with the installed packer; no four-repo run was performed here.
 
 See `design/runtime-app-current-delivery-graph-disposition.md` for the exact
 evidence and boundaries.
+
+## Orchestrator 00:08Z: premature bootstrap activation
+TOP PRIORITY (deep audit 00:07Z, verified by me): b69c85ea7 (ap2-m2-bootstrap-qualified-delivery-source) makes createDefaultTimeline.ts:64 emit op timeline.init (bootstrapCapture.ts:19). The Runtime App is pinned to (published 0.2.13) has NO timeline.init; only the unpublished 0.2.14 candidate 6e845a has it. So new-project creation (useProjectCRUD.ts:154) breaks on the current pair. Unit tests fake commit responses, so they could not catch it. Do now: (1) one Luna worker restores the previous live initializer call path in createDefaultTimeline.ts while keeping the bootstrap capture code and its tests (dormant, not deleted). Prove it with a real create/init/restart run on the current pinned pair and a test that fails on b69's call path. (2) Add a contract guard test: every op the App emits must exist in the PINNED Runtime edit-command schema, so this cannot recur. (3) Re-activate native bootstrap in the SAME change that pins Runtime 0.2.14, with a real create/init/restart proof. Precedent added: never cut a consumer over to a command its pinned release lacks.
