@@ -40,7 +40,7 @@ const EXTENSION_ID_TOKEN = /^haus\.astrid\.[a-z0-9.-]{1,100}$/;
 export const REVIEWED_EXTENSION_IDS = new Set([
   'haus.astrid.scene-phase-markers',
   'haus.astrid.transcript-lane',
-  'haus.astrid.live-scenes',
+  'haus.astrid.threejs-live-editor',
   'haus.astrid.creative-lab.pulse-map',
   'haus.astrid.creative-lab.soundtrack-cartographer',
   'haus.astrid.creative-lab.caption-safe-zone-orchestra',
