@@ -14,6 +14,13 @@ from astrid.packs.rendering.actions.timeline_visualize import filmstrip_executio
 from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import plan_filmstrip
 from astrid.packs.rendering.actions.timeline_visualize.filmstrip_options import filmstrip_options
 from astrid.packs.rendering.actions.timeline_visualize.inspection_contract import project_input_window
+from tests.packs.rendering import test_capture_scene_labels as scene_fixture
+
+# Reuse the existing private-host fixture and its public scene query.  These
+# aliases keep the direct executor test on the same admitted source seam as
+# the scene-carrier tests without introducing another fixture implementation.
+host = scene_fixture.host
+native = scene_fixture.native
 
 
 def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path, monkeypatch):
@@ -94,12 +101,8 @@ def test_input_only_is_a_materializable_compact_filmstrip_bundle(tmp_path, monke
 
 @pytest.mark.parametrize('include_media', [False, True])
 @pytest.mark.parametrize('show_inputs', [False, True])
-@pytest.mark.xfail(
-    strict=True,
-    reason="D09 requires the execution provider's scene_for_frame(frame) public-row carrier; this test double only supplies PNGs",
-)
 def test_composed_capture_uses_remotion_for_requested_frames_without_video_frame_source(
-    tmp_path, monkeypatch, include_media, show_inputs,
+    tmp_path, monkeypatch, include_media, show_inputs, native,
 ):
     from PIL import Image
     from astrid.packs.rendering.actions.timeline_visualize import composed_frame
@@ -118,19 +121,41 @@ def test_composed_capture_uses_remotion_for_requested_frames_without_video_frame
             self.snapshot = snapshot
             self.kwargs = kwargs
             self.requested = []
+            self.source_identity = snapshot['metadata']['capture_identity']
+            props = scene_fixture.props()
+            props['timeline']['clips'][0]['id'] = 'visible-title'
+            self._scene_props = props
+            self._scene_basis = {'width': 64, 'height': 36, 'fps': 24}
+            self._scene = None
             providers.append(self)
 
         def capture(self, cards, out_root, resolution):
             self.requested = [int(card['frame']) for card in cards]
+            from astrid.packs.rendering.actions.timeline_visualize.composed_frame import CaptureSceneLabels
+
             for card in cards:
                 destination = Path(out_root) / str(card['image'])
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 Image.new('RGB', (64, 36), '#224466').save(destination)
+            self._scene = CaptureSceneLabels(
+                source_identity=self.source_identity,
+                props=self._scene_props,
+                basis=self._scene_basis,
+                addresses={'visible-title': 'c1.title'},
+            )
+            self._scene.observe(self._scene_props, tuple(self.requested))
+            self._scene.retain({
+                frame: Path(out_root) / f'frames/frame-{frame:09d}.png'
+                for frame in self.requested
+            })
             return {
                 'evidence_source': 'fresh_capture',
                 'requested_frames': list(self.requested),
                 'resolution': resolution,
             }
+
+        def scene_for_frame(self, frame):
+            return self._scene if self._scene is not None and frame in self.requested else None
 
         def close(self, *, force=False):
             return None
