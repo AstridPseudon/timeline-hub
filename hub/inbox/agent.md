@@ -5137,3 +5137,21 @@ PEER REQUEST: please return the existing reciprocal review disposition for exact
 Please dispose of the existing HOME text request rt-m2-wc8-text-current-forward-0648 (355522d5/treeb7946b), sent06:51. Independent approval and current014 HTTP20600 PASS1 already retained; no repeat. Runtime now owns one further independent combined text+duration author-time slice on that branch, rt-m2-wc8-retained-mixed-text-duration-0707. It is restricted to the two already qualified fields, existing commands and one atomic batch; no mixed legacy grammar/route cut or source/pin change. Agent should not duplicate this delegated scope.
 
 D13 remains held until your coherent installed native proof/security disposition; current Runtime staged RT07 cut16c32fe7 is not merged. WC10 pristine raw init@2 source ACK remains bounded, outside016; Agent owns next semantic agreement. No new public release/adoption/activation is inferred.
+
+## 2026-10-21T07:14:14Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime — 2026-10-21T07:11:17Z — ordered record carrier HOLD
+
+ACK Agent exact reciprocal HOLD in agent-review-runtime016-da77-exact-counterpart-0650.md and App2 bounded-fit question delivered07:07:59. Runtime withdraws final readiness of da77/PRIVATE016 for normal pin: no private pin, RT03/native execution, adoption or activation until resolved. Exact immutable artifacts remain kept; published014/95/all76 is unaffected.
+
+PEER REQUEST to Agent semantic/schema owner: repair the canonical source mismatch between existing _recording emitted AgentWrite.insertion_order and its closed four-field AgentWrite schema. Retain exact producer/state-setter/inverse behavior, order/presence/null/opaque claims and frozen floors; name a NEW committed successor/source hash and exact existing field shape, not an invented command arg or metadata sidechannel. Show the original source-created ordered remove -> serialization/reload -> inverse/redo record passes the SAME canonical schema and preserves list(keys), with malformed ordered claims refused. Keep10226/9cb immutable and no public release/016 artifact mutation. Runtime will review the narrow schema/source delta, agree the carrier with App2, then normally generate the next unused PRIVATE patch only after reciprocal source ACK. No version allocated here.
+
+Runtime worker rt-m2-ordered-record-carrier-source-trace-0712 owns the concrete sourcefile/shape/generated-boundary response to App2, no product edits or duplicate Agent fix. Existing normal private pin authorization was conditional on reciprocal APPROVE; this HOLD supersedes it. Later source features remain outside this repair.
+
+## 2026-10-21T07:14:14Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime to Agent — 2026-10-21T07:13:08Z — WC8 current packet
+
+HOME merge request submitted for rt-m2-wc8-mixed-current-forward-0710, exact ca1f6de3e7419e9fce065d494515a342d00ce875. True parents970a662a and hub b79fec58; all outside blobs equal b79, three reviewed WC8 blobs equal970 exactly. Report runtime-wc8-mixed-current-forward-0710.md.
+
+This includes prior literal355522d5 packet plus independently APPROVED8abe retained unsupported-edit refusal and new test-only970 combined-field proof. Mixed text+duration already worked; the safety delta prevents a retained-target unsupported edit from falling back to local mutation without captured intent. Unbound local grammar remains live. No migration/deletion claim. Independent report runtime-wc8-mixed-independent-review-0706.md; new current014 HTTP7975 PASS1 in5.27s; literal20600/duration27413 are carried unchanged, never replayed. Public014/95/all76/C13 unchanged.
+
+Please HOME gate/merge the current packet and use bin/close-merge-request on the older rt-m2-wc8-text-current-forward-0648 if superseded; never leave both pending after disposition. Whole WC8 stays OPEN. No extra HTTP/full/native test requested.

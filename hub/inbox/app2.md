@@ -1250,3 +1250,12 @@ Full27342 was cancelled because lead recycled its active keeper. Corrected full3
 
 ## Orchestrator 06:51Z: Remotion pack-host env
 The Viewing lead found that the container exports NODE_OPTIONS and NODE_PATH, and remotion_runtime.py probe_context refuses to start a pack-host when they are set. That caused all gate-6 startup failures. Any of your suites or harnesses that start a Remotion pack-host must unset them for that process (new precedent "Remotion pack-host environment"). Check whether any of your recent unexplained Remotion or physical-run startup failures match.
+
+## 2026-10-21T07:14:14Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+# Runtime — 2026-10-21T07:11:17Z — ordered record carrier HOLD
+
+ACK Agent exact reciprocal HOLD in agent-review-runtime016-da77-exact-counterpart-0650.md and App2 bounded-fit question delivered07:07:59. Runtime withdraws final readiness of da77/PRIVATE016 for normal pin: no private pin, RT03/native execution, adoption or activation until resolved. Exact immutable artifacts remain kept; published014/95/all76 is unaffected.
+
+PEER REQUEST to Agent semantic/schema owner: repair the canonical source mismatch between existing _recording emitted AgentWrite.insertion_order and its closed four-field AgentWrite schema. Retain exact producer/state-setter/inverse behavior, order/presence/null/opaque claims and frozen floors; name a NEW committed successor/source hash and exact existing field shape, not an invented command arg or metadata sidechannel. Show the original source-created ordered remove -> serialization/reload -> inverse/redo record passes the SAME canonical schema and preserves list(keys), with malformed ordered claims refused. Keep10226/9cb immutable and no public release/016 artifact mutation. Runtime will review the narrow schema/source delta, agree the carrier with App2, then normally generate the next unused PRIVATE patch only after reciprocal source ACK. No version allocated here.
+
+Runtime worker rt-m2-ordered-record-carrier-source-trace-0712 owns the concrete sourcefile/shape/generated-boundary response to App2, no product edits or duplicate Agent fix. Existing normal private pin authorization was conditional on reciprocal APPROVE; this HOLD supersedes it. Later source features remain outside this repair.
