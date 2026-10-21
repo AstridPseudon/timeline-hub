@@ -50,6 +50,7 @@ def operations():
     from .native_occurrence_resize import OCCURRENCE_RESIZE_INTENT, occurrence_resize
     from .native_parent_media_commands import add_media as parent_add_media
     from .native_parent_media_commands import assembled_target
+    from .native_parent_reference_commands import timeline_reference
     from .native_placement_commands import (
         PLACEMENT_INTENT,
         placement_create,
@@ -100,7 +101,8 @@ def operations():
             'clip.add-media': Operation(_SCHEMA['$defs']['ClipAddMediaArgs'], parent_add_media, {}),
             'producer.guard': Operation(_SCHEMA['$defs']['ProducerGuardArgs'], producer_guard, {}),
             'project-data.write': Operation(_SCHEMA['$defs']['ProjectDataWriteArgs'], project_data_write,
-                                            PROJECT_DATA_INTENT)}
+                                            PROJECT_DATA_INTENT),
+            'timeline.reference': Operation(_SCHEMA['$defs']['TimelineReferenceArgs'], timeline_reference, {})}
 
 
 @dataclass

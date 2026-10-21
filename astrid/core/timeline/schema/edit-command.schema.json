@@ -2289,6 +2289,35 @@
           "if": {
             "properties": {
               "op": {
+                "const": "timeline.reference"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/TimelineReferenceArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
                 "const": "occurrence.move"
               }
             },
@@ -2651,6 +2680,42 @@
         }
       },
       "description": "Replace one opaque extension-owned project-data value in the parent authored timeline. The project catalog is a separate scoped operation."
+    },
+    "TimelineReferenceArgs": {
+      "type": "object",
+      "required": [
+        "reference_id",
+        "role",
+        "media"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "reference_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)(?=.*\\S)[^/]+$"
+        },
+        "role": {
+          "const": "source"
+        },
+        "media": {
+          "type": "object",
+          "required": [
+            "media_id",
+            "content_digest"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "media_id": {
+              "$ref": "#/$defs/Digest"
+            },
+            "content_digest": {
+              "$ref": "#/$defs/Digest"
+            }
+          },
+          "description": "Existing MediaManifestEntry. Runtime verifies media_id and content_digest are the same owned CAS digest."
+        }
+      },
+      "description": "Create one unplaced parent source reference. The media pin is verified through the private Runtime raw-media port; it is not caller authority."
     },
     "ClipTrimArgs": {
       "type": "object",
