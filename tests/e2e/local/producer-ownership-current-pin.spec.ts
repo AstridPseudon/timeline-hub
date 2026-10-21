@@ -89,7 +89,9 @@ test.describe('producer ownership on the current mounted route', () => {
     await expect(page.locator('[data-lane-kind="astrid.transcript"]')).toBeVisible();
     // The stale source item is valid but outside the carrier's [0, 4] window;
     // only the two protected in-window source items are visible to the lane.
-    await expect(page.getByTestId('transcript-lane-chip')).toHaveCount(2);
+    // The mounted production pack uses occurrence controls; the retired dev
+    // renderer's `transcript-lane-chip` marker is not present on this route.
+    await expect(page.getByTestId('transcript-lane-occurrence')).toHaveCount(2);
 
     const initial = await currentPinRevision(harness, producerSeed);
     const protectedBefore = protectedClipState(initial.body, producerSeed);
@@ -102,6 +104,7 @@ test.describe('producer ownership on the current mounted route', () => {
       app: { managedBy: 'haus.astrid.scene-phase-markers' },
     });
 
+    const legacyTraffic = observeProducerCommits(page);
     const transcriptTraffic = observeProducerCommits(page);
     const transcriptAlerts = await page.getByRole('alert').allTextContents();
     await transcriptRegenerate(page);
@@ -158,7 +161,7 @@ test.describe('producer ownership on the current mounted route', () => {
       const original = sceneTraffic.requests[0]!;
       expect(commands(original).map((command) => command.op)).toEqual(['clip.move', 'clip.set']);
       expect(commands(original)).toEqual(expect.arrayContaining([
-        expect.objectContaining({ op: 'clip.move', select: `parent/clip:${producerSeed.sceneOwnedClipId}`, args: { at: 1 } }),
+        expect.objectContaining({ op: 'clip.move', select: `parent/clip:${producerSeed.sceneOwnedClipId}`, args: { on: 1 } }),
         expect.objectContaining({ op: 'clip.set', select: `parent/clip:${producerSeed.sceneOwnedClipId}`, args: { values: { hold: 5 }, clear: [] } }),
       ]));
 
@@ -171,6 +174,7 @@ test.describe('producer ownership on the current mounted route', () => {
     } finally {
       await lostAcknowledgement.dispose();
       sceneTraffic.dispose();
+      expect(legacyTraffic.legacy, 'producer gestures must not use legacy film-save routes').toEqual([]);
     }
 
     const afterScene = await currentPinRevision(harness, producerSeed);
@@ -187,6 +191,11 @@ test.describe('producer ownership on the current mounted route', () => {
       await waitForHeadChange(harness, producerSeed, afterScene.head);
     } finally {
       undoTraffic.dispose();
+      try {
+        expect(legacyTraffic.legacy, 'producer gestures must not use legacy film-save routes').toEqual([]);
+      } finally {
+        legacyTraffic.dispose();
+      }
     }
     const afterUndo = await currentPinRevision(harness, producerSeed);
     expect(clipFromRevision(afterUndo.body, producerSeed.sceneOwnedClipId)).toMatchObject({ at: 30, hold: 2 });
