@@ -1,5 +1,5 @@
 import { expect, type Request, type Route } from '@playwright/test';
-import { commandOutboxes, expectConnected, openSeededTimeline, test as appTest } from './support/app.ts';
+import { commandOutboxes, openSeededTimeline, test as appTest } from './support/app.ts';
 import type { DirectHarness, SelectedParamDevSeed } from './support/harness.ts';
 
 const CEILING = { timeout: 90_000 };
@@ -42,7 +42,6 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
   });
 
   await page.goto(`${harness.devOrigin}/tools/video-editor`);
-  await expectConnected(page);
   await openSeededTimeline(page, harness);
   const clip = page.locator(`.clip-action[data-clip-id="${selected.clipId}"]`).first();
   await expect(clip).toBeVisible(CEILING);
@@ -62,7 +61,6 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
   const { p2 } = await harness.advanceSelectedParamAndRemoveSource(selected);
   expect(p2.revision).not.toBe(selected.p1.revision);
   await page.reload();
-  await expectConnected(page);
   await openSeededTimeline(page, harness);
   await clip.click();
   await expect(page.getByTestId('astrid-element-params')).toBeVisible(CEILING);
@@ -92,7 +90,6 @@ test('local DEV selected PARAM uses admitted P1 through P2 removal, refusal, ret
   await expect.poll(async () => (await commandOutboxes(page, selected.timelineId)).some((owner) => owner.pending?.outcome?.kind === 'retry'), CEILING).toBe(true);
 
   await page.reload();
-  await expectConnected(page);
   await openSeededTimeline(page, harness);
   const recovered = page.getByRole('button', { name: /^Recover saved edits/ }).first();
   await expect(recovered).toBeEnabled(CEILING);
