@@ -1,15 +1,15 @@
-<!-- app | 2026-10-21T08:15:36Z | dispatcher heartbeat 14s | live 8 (sol 0, luna 8, other 0) | busy30 30 | status age 1m -->
-# app — 2026-10-21 08:14 UTC
+<!-- app | 2026-10-21T08:22:49Z | dispatcher heartbeat 7s | live 4 (sol 0, luna 4, other 0) | busy30 25 | status age 2m -->
+# app — 2026-10-21 08:20 UTC
 Milestone: M1 RECORDED. M2 writers and M3 viewing parity OPEN; no M4 completion claim.
-Integrated: App tl/integration 07d86990c65f1663529c19dc41eaf52460f58a61, tree 757ff3e20c344afd87b15d1bcea273738011987c; Main860 ancestor. Published Runtime0.2.14 producer95bd/all76 and Composition13/9412/all77 unchanged. Newborn-only video carrier6bdb (134 tests plus independent data-safety approval), child-scoped pack-host environment0c9b (custody approval), AgentChat rejection-settlement oracle07d (49 tests) merged.
+Integrated: App tl/integration e2267a418a89d659c1a70524b17dde631f12fd16, tree 99af03128b9df4d20e5ca8779cb7540a8bc8be8a; Main860 ancestor. Published Runtime014/95bd/all76 and Composition13/9412/all77 unchanged. Newborn6bdb (134 tests plus independent review), scoped pack-host env0c9b (custody approved), AgentChat oracle07d (49 tests) and singleton-only alias e226 (9/9 resolver/SSR controls) merged.
 Proven: native initializer1557/real7782 PASS1: create/init, lost ACK, exact retry, reload/restart, raw defaults and ordered history; original2 native tests/61 assertions preserved. Parent delete14549 and Source In/Out19010 remain proven. Original3 group/multi/cross-track drag it.fails remain; published014 lacks their private commands.
-In flight: 5 live (target5–7):
-- app-m2-auto-chromium-sigtrap-first-cause-r38
+In flight: 5 running (target5–7):
+- app-m2-auto-short-physical-tmp-custody-one-actual-r39
 - app-m2-popup-r40-approved-one-original-add-actual-r41
-- app-m2-public-trim-mounted-trigger-first-cause-r24
-- app-m3-gate3-exact-runtime-argv-zero-selection-cause-r8
+- app-m2-selected-eval-context-independent-custody-r6
+- app-m2-transition-one-native-reset-callback-r6
 - app-m4-agentchat-fixed-current-one-full-r36
-READY: 0 fully briefed at write: dispatcher consumed the briefed queue; refill this round.
+READY: 2 briefed at write: app-m2-transition-native-reset-data-review-r7, app-m2-split-current-packet-original-body-custody-r35.
 Next 5: one exact current full after AgentChat fix and active browser cases; diagnose Trim fixture mount; prove settings after corrected source registration; diagnose automatic Chrome launch; original popup ADD actual on strengthened detector source.
 Rows one step from deletion: Public Trim waits original public-method success; its old post-validation snapshot branch stays. Popup shared ADD/SWAP writer waits BOTH occurrence routes; ADD-only cannot cut it. Automatic legacy placement service also has manual/catalog/pool callers, so even a passing auto proof needs caller separation. No premature cut from any prebody result.
 Held rows: D02 waits App2 project-data/capture-finish migration plus containing published cohort; private016 readiness da77/10226 is WITHDRAWN/HOLD pending insertion_order correction. Ordinary snapshot fallback/useTimelineOps stays App2-owned/live because transcript/project-data/seam families remain. D04 dataProvider shot publisher stays live through popup persistence; ordinary save1131 stays live. Bounded parent-delete/default-init/duplicate/canary and D08/D10 physical cuts remain recorded in their ledgers.
@@ -38,3 +38,6 @@ Item14 ACK08:09 lead/owner08:07. FIVE distinct Luna high workers dispatched imme
 - app-m3-d08a-actual-result-ledger-reconcile-r7 — D08a exact actual result, no new run.
 - app-m2-bootstrap-trim-stale-waits-close-r26 — remove superseded current waits, retain historical013 and live dataProvider/real current full blockers.
 Full20810/r36 remains untouched and RUNNING. Critical-path design document has not yet synced locally; explicit lead item14 and App2 source request07:48 are sufficient concrete direction, so no permission delay.
+
+Item14 outcomes08:20: selected eval-context r5 source finished with narrow pure mismatch/custody controls; r6 independent review is READY, then HOME merge before App2 sole selected case. Split packet r34 and native reset callback r6 in flight. D08a r7 replaced stale active-rerun text with exact23570 terminal pre-browser/tree-mismatch failure; no active freshcold rerun or parity pass. Stale waits r26 updated handoffs: default initializer1557/7782 is qualified, historical013 remains historical, dataProvider295/1131 stay live; Trim full18367 ended, actual12805 fixture-null is the current blocker and current20810 is genuinely active. No new run for metadata reconciliation.
+Gate7 delivery groundwork: App-only packer carrier on e226 reports patch/bundle/source tree equality99af0312, overall dry-run exited1 for missing delivery/README.template.md. No ZIP/delivery claim; exact retained report/log handed Runtime to identify the normal template carrier. Detailed note misplaced in recycled worktree is unavailable, so no extra evidence inferred. Current public13 type closure still held on containing release despite private b344 declaration proof0.

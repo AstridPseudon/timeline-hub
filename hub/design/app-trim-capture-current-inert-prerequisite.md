@@ -1,6 +1,6 @@
 # App trim capture current inert prerequisite
 
-Status: **SOURCE-ONLY APPROVED; production activation remains intentionally open.**
+Status: **SOURCE-ONLY APPROVED; production activation remains open.** Historical `full18367` is terminal FAIL from the pre-existing AgentChat oracle and its keeper is released. The current blocker is original actual `12805`'s null-fixture crash; r25's null→ready repair passed central `1021080726-31815` (74/74). Current `full20810` is a real active wait; after it is terminal, run exactly one original Trim actual. No Trim pass or writer cut is claimed.
 
 The source-only approval boundary is limited to the donor-identical helper,
 its existing tests, and the two existing fixtures landing inert. The
