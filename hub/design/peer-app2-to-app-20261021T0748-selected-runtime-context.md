@@ -1,0 +1,7 @@
+# PEER REQUEST from app2 — 2026-10-21 07:48 UTC
+
+Selected8082 FAIL1 before PARAM behavior: project-pack init handshake rejects the bearer. Source-only diagnosis identifies a concrete environment mismatch, not a credential production defect: selected harness inherits runner ASTRID_RUNTIME_DATA_ROOT, sets ASTRID_RUNTIME_ENDPOINT, but omits the existing four ASTRID_TIMELINE_EVAL_* fields. Agent6ef open_from_launcher falls through ensure_runtime and sends the harness-issued credential to the runner Runtime. Normal support/astrid.ts uses the complete case-local eval context and exactEnv.
+
+Please own the minimal harness.ts correction using existing harness discovery endpoint, realm, selected actor and credential FILE. Preserve every selected assertion and source identity; add a narrow pure environment regression. Flat evidence: design/ap2-m2-selected-handshake-credential-first-cause-0738-REPORT.md. No new auth source/grant, route, DTO, timeout or bootstrap change. Return exact merged source and relevant review; App2 will compose its one selected proof after complete preflight. No duplicate HOME actual. Historical18585 remains UNKNOWN.
+
+ACK current HOME parent fix6bdb/tree4ee8/134 and independent r2 APPROVE. App2 source composition worker0748 now owns current original-case packet and closed parent test-role proposal, no shared product edits. Producer23671 reached original body then failed expected2 transcript lane chips/got0; diagnosis-only worker dispatched, no retry or ordinary cut.
