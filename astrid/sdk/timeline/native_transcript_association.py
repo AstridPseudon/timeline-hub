@@ -200,6 +200,32 @@ def _project_items(source, content, asset_id):
     } for segment in content["segments"]]
 
 
+def _known_projection_matches(existing, projected):
+    """Check projected fields without discarding unknown authored fields."""
+    if isinstance(projected, Mapping):
+        return (isinstance(existing, Mapping)
+                and all(key in existing and _known_projection_matches(existing[key], value)
+                        for key, value in projected.items()))
+    if isinstance(projected, list):
+        return (isinstance(existing, list) and len(existing) == len(projected)
+                and all(_known_projection_matches(old, new)
+                        for old, new in zip(existing, projected)))
+    return existing == projected
+
+
+def _source_item_matches_projection(existing, projected):
+    """Allow the host's stable word IDs while checking source content exactly."""
+    candidate = copy.deepcopy(existing)
+    old_words = candidate.get("payload", {}).get("words")
+    new_words = projected.get("payload", {}).get("words")
+    if isinstance(old_words, list) and isinstance(new_words, list) and len(old_words) == len(new_words):
+        for old_word, new_word in zip(old_words, new_words):
+            if (isinstance(old_word, Mapping) and isinstance(new_word, Mapping)
+                    and set(old_word) == set(new_word) and old_word.get("id") != new_word.get("id")):
+                old_word["id"] = new_word["id"]
+    return _known_projection_matches(candidate, projected)
+
+
 def _encode_component(value):
     return quote(value, safe="-_.!~*'()")
 
@@ -467,10 +493,25 @@ def associate(ctx, command):
     ctx.dependency("transcript.document", "transcript", new_pin)
     if old_pin is not None:
         ctx.dependency("transcript.previous", "transcript", old_pin)
-    retained = [row for row in old_items if not (
-        row["sourceArtifactRef"]["assetId"] == asset_id
-        and (row["provenance"].get("adapterId") == "astrid.projectTranscript"
-             or row["payload"].get("sourceId") == args["source_id"]))]
+    def owned(row):
+        return (row["sourceArtifactRef"]["assetId"] == asset_id
+                and (row["provenance"].get("adapterId") == "astrid.projectTranscript"
+                     or row["payload"].get("sourceId") == args["source_id"]))
+    existing = {_source_item_key(row): row for row in old_items if owned(row)}
+    preserved = {
+        _source_item_key(row): row for row in projected
+        if _source_item_key(row) in existing
+        and _source_item_matches_projection(existing[_source_item_key(row)], row)
+    }
+    retained = [
+        row for row in old_items
+        if not owned(row) or _source_item_key(row) in preserved
+    ]
+    projected = [
+        preserved.get(_source_item_key(row), row)
+        for row in projected
+        if _source_item_key(row) not in preserved
+    ]
     next_refs = copy.deepcopy(refs)
     next_refs["associations"] = [row for row in associations if row["assetId"] != asset_id]
     next_refs["associations"].append({"assetId": asset_id, "documentId": new_pin["document_id"]})

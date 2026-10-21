@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import json
 
 import pytest
 
@@ -182,6 +183,46 @@ def test_replacement_requires_and_retains_exact_prior_pin():
     assert {row["pin"]["document_id"] for row in dependencies} == {
         old_pin["document_id"], new_pin["document_id"]}
     assert plan.bundle["parent"]["config"]["bundle"]["itemsBySchemaRef"][TRANSCRIPT_SCHEMA_REF][0]["payload"]["documentId"] == new_pin["document_id"]
+
+
+def test_serialized_replacement_inverse_restores_source_item_order():
+    bundle, old_pin = _bundle()
+    old_id = "transcript-source:source-1:segment:segment-a"
+    old_pin, old_source = _document(segment_id=old_id)
+    bundle["source_mapping"]["pinned_documents"] = [{"pin": old_pin, "document": old_source}]
+    old_item = _project_items(old_source, old_source["content"], "asset-a")[0]
+    old_item["opaque"] = {"keep": [None, False, 7]}
+    old_item["payload"]["words"][0]["id"] = old_id + ":word:word-a"
+    unrelated = []
+    for suffix in ("one", "two"):
+        row = copy.deepcopy(old_item)
+        row["id"] = "transcript-source:other:segment:" + suffix
+        row["sourceArtifactRef"] = {"assetId": "asset-b"}
+        row["payload"].update({"sourceId": "other-source", "segmentId": row["id"]})
+        unrelated.append(row)
+    source_map = bundle["parent"]["config"]["bundle"]["itemsBySchemaRef"]
+    source_map[TRANSCRIPT_SCHEMA_REF] = [old_item, *unrelated]
+
+    old_command = capture_transcript_association(bundle, "asset-a", document=old_pin)
+    first = execute(bundle, [old_command])
+    new_pin, new_source = _document(segment_id="transcript-source:asset-a:source:source-1:segment:segment-a",
+                                     version=2)
+    first.bundle["source_mapping"]["pinned_documents"].append(
+        {"pin": new_pin, "document": new_source})
+    replacement = capture_transcript_association(
+        first.bundle, "asset-a", document=new_pin, previous_document=old_pin)
+    second = execute(first.bundle, [replacement])
+    assert first.bundle["parent"]["config"]["bundle"]["itemsBySchemaRef"][TRANSCRIPT_SCHEMA_REF] == [
+        old_item, *unrelated]
+    assert [row["id"] for row in second.bundle["parent"]["config"]["bundle"]
+            ["itemsBySchemaRef"][TRANSCRIPT_SCHEMA_REF]] == [
+                unrelated[0]["id"], unrelated[1]["id"], new_source["content"]["segments"][0]["id"]]
+
+    reloaded = json.loads(json.dumps(second.bundle))
+    records = json.loads(json.dumps(second.records))
+    undone = inverse(reloaded, records)
+    assert undone.bundle["parent"]["config"]["bundle"]["itemsBySchemaRef"][TRANSCRIPT_SCHEMA_REF] == [
+        old_item, *unrelated]
 
 
 def test_unqualified_caption_reference_does_not_block_source_association():
