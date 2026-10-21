@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T00:25:18Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 16 | status age 5m -->
+<!-- app | 2026-10-21T00:31:22Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 11m -->
 # app — 2026-10-21 00:20 UTC
 Milestone: M1 RECORDED. M2 all-writer deletion/M3 OPEN. TOP PRIORITY: published013 newproject regression from premature timeline.init activationb69; HOME rollbackworker active.
 Integrated: App41bf86102 after3ee190062/tree38d6f715 physical-controller source. Main860 ancestry08dd retained; lead assertion check PASS (42files/461 removed lines equal upstream). Current native trim, settings scalar157eef8cf, parent Deletec0adfd0e9, owner-five5af, full audio480, physicalPCM callera6fa and approved controller tuple3ee are integrated. App2 ordinary b188→b4e, bootstrapf487→b69, trim79f→e4ee, parentc0b→f7c and selected8bae→db8 integrated. Approved pre-edit closure oracle current port41bf86102 is integrated (23+2controls/discovery1); App2 owns next actual ordinary run.
