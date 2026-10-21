@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T04:15:41Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 33 | status age 6m -->
+<!-- app | 2026-10-21T04:22:00Z | dispatcher heartbeat 11s | live 3 (sol 0, luna 3, other 0) | busy30 32 | status age 0m -->
 # app — 2026-10-21 04:08 UTC
 Milestone: M1 RECORDED. M2 writer retirement and M3 physical gates remain OPEN.
 Integrated: App tl/integration 1557c312b999ddc0a21c1728acbc64052ef6491f / tree cf94daef960fe1426f6f50e4000b00c0fc42867e. Main860, published Runtime0.2.14 producer95bd and Composition13 retained. Genuine Agent091aa vendor regeneration merged976e. Native initializer activation merged1557 after real proof and independent review.
@@ -23,3 +23,5 @@ Resources: about11GiB free after evidence-preserving own scratch cleanup. Normal
 04:02: Native initializer legacy publication removed28 lines at5c53/1557; dataProvider.ts:295 remains a live publishParentComposition caller, so whole D04/bootstrap row is not closed. Popup complete preflight now proves old frozen979 vendor provenance invalid (one mismatch,12 missing,6 unrecorded); no new browser was requested. Current-source instrumentation is needed.
 
 04:08: full4139 exit1, nine guards pass,0 collected and1518 default files unrun: configLoader=runner exposes __dirname. Invocation/harness failure, no product qualification. Wrapper r17 also corrects unquoted postflight heredoc; no rerun yet. Actual automatic31868 failed discovery product identity before browser; origin/main authority diagnosis assigned. HOME parent ADD forwarding repair assigned from exact missing-port witness, App2 row-local files reserved.
+
+Decided locally04:20: split raw holds convert timeline-unit values to literal source-seconds1.3/2.7, keeping all assertions plus equivalent visible-duration positives. No guard or film-intent change; independent delta review required. Parent ADD forwarding968 merged; App2 notified.
