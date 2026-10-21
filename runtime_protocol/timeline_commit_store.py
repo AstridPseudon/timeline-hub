@@ -14,6 +14,7 @@ import re
 from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
 from .timeline_commit_validation import detached, digest
+from .timeline_materialization import has_materialization, item_identity, materialization_join, root_identity
 from .util import canonical_json, new_id, now
 
 _METADATA = ("source", "label", "rationale", "group_id")
@@ -126,6 +127,7 @@ class TimelineCommitStore:
         return self._envelope(row, edge["project_id"])
 
     def _verify_accepted(self, row, edge):
+        from .timeline_commit import CommitRejected
         try:
             data, records = json.loads(row["result_json"]), json.loads(edge["records_json"])
             previous = {"revision_id": edge["previous_revision_id"], "publication_id": edge["previous_publication_id"]}
@@ -138,7 +140,7 @@ class TimelineCommitStore:
                      and data["accepted_revision_id"] == document["parent_revision"]["revision_id"] == edge["revision_id"]
                      and document["project_id"] == edge["project_id"] and document["timeline_id"] == edge["timeline_id"]
                      and data["document_digest"] == digest(document)
-                     and data["commands"] == [r["command"] for r in records["commands"]]
+                     and canonical_json(data["commands"]) == canonical_json([r["command"] for r in records["commands"]])
                      and data["previous_revision_id"] == previous["revision_id"]
                      and data["previous_publication_id"] == previous["publication_id"]
                      and data["publisher"] == edge["publisher"]
@@ -175,8 +177,42 @@ class TimelineCommitStore:
                                     "records_digest": digest(records)}
             if not valid:
                 raise ValueError()
-        except (KeyError, TypeError, ValueError, IndexError) as exc:
+            prepared = {**data, "records": records, "expected_head": previous}
+            if has_materialization(prepared):
+                project, timeline = edge["project_id"], edge["timeline_id"]
+                allocations = materialization_join(prepared, project, timeline,
+                    lambda revision: self.revision_closure(project, timeline, revision))
+                if canonical_json(document) != canonical_json(self.revision_closure(project, timeline, edge["revision_id"])):
+                    raise ValueError()
+                self._check_inherited_allocations(project, timeline, records, allocations, edge["project_seq"])
+        except (KeyError, TypeError, ValueError, IndexError, ValidationError, CommitRejected) as exc:
             raise ProtocolError("accepted commit record is corrupt") from exc
+
+    def _check_inherited_allocations(self, project, timeline, records, allocations, before_seq=None):
+        inverse_refs = {d["key"].removeprefix("materialization.source:")
+                        for r in records["commands"] if r["command"]["op"] == "timeline.inverse"
+                        for d in r["dependencies"] if d["key"].startswith("materialization.source:")}
+        if not inverse_refs:
+            return
+        inherited = {}
+        for publication in records["undo_of"]:
+            if before_seq is not None:
+                row = self.conn.execute("SELECT project_seq FROM timeline_commit_history WHERE publication_id=?",
+                                        (publication,)).fetchone()
+                if row is None or row[0] >= before_seq:
+                    reject("invalid_records")
+            entry = self.history_entry(project, timeline, publication)
+            data = entry["receipt"]["result"]
+            target = {**data, "records": entry["records"], "expected_head": entry["previous"]}
+            if has_materialization(target):
+                for shot, allocation in materialization_join(target, project, timeline,
+                        lambda revision: self.revision_closure(project, timeline, revision)).items():
+                    if shot in inherited and canonical_json(inherited[shot]) != canonical_json(allocation):
+                        reject("invalid_records")
+                    inherited[shot] = allocation
+        if any(canonical_json(allocations.get(ref.removeprefix("shot:"))) !=
+               canonical_json(inherited.get(ref.removeprefix("shot:"))) for ref in inverse_refs):
+            reject("invalid_records", "inverse allocation lacks authenticated provenance")
 
     @staticmethod
     def _envelope(row, project_id):
@@ -565,8 +601,6 @@ class TimelineCommitStore:
         commands = records["commands"]
         if not commands or [r["ordinal"] for r in commands] != list(range(len(commands))):
             reject("invalid_records", status=422)
-        if any(key != value for key, value in prepared["id_map"].items()):
-            reject("invalid_records", "id_map must contain identity pairs", status=422)
         for record in commands:
             if any(write["cause"] >= len(commands) for write in record["derived_writes"]):
                 reject("invalid_records", status=422)
@@ -583,26 +617,70 @@ class TimelineCommitStore:
             if event["command_ordinal"] >= len(commands) or self.validate_event is None:
                 reject("invalid_event", status=422)
             self.validate_event(event)
-        if inputs is not None:
+        if inputs is not None and not has_materialization(prepared):
             inputs.validate(prepared)
-        elif document["dependency_manifest"]["documents"] or any(r["dependencies"] for r in commands):
+        elif inputs is None and (document["dependency_manifest"]["documents"] or any(r["dependencies"] for r in commands)):
             reject("dependency_unavailable", "request-private dependency captures required")
+        allocations = self._materializations(context, prepared, inputs)
+        self._check_inherited_allocations(request["project_id"], request["timeline_id"], records, allocations)
         return {"canonical_document": document, "document_digest": prepared["document_digest"],
                 "commands": [r["command"] for r in commands], "id_map": prepared["id_map"],
                 "provider_version": prepared["provider_version"], "compiler_version": prepared["compiler_version"]}
 
-    def _check_shot_destinations(self, context, prepared):
+    def _materializations(self, context, prepared, inputs):
+        if has_materialization(prepared):
+            from .timeline_commit_port import RequestCommitPort
+            if not isinstance(inputs, RequestCommitPort) or canonical_json(inputs._provider_context()) != canonical_json(context):
+                reject("dependency_unavailable", "request-private materialization captures required")
+            return inputs.validate(prepared)
+        return materialization_join(prepared, context["request"]["project_id"], context["request"]["timeline_id"],
+                                    lambda _: reject("dependency_unavailable"))
+
+    @staticmethod
+    def _same_materialization_slot(shot, owner, allocation, prior_allocation, before, after):
+        if allocation is None or allocation[0] != owner:
+            return False
+        pin = allocation[1]
+        source = pin["source"]
+        edge = [(o["shot_id"], o["shot_revision_id"]) for o in before["parent_revision"]["payload"]["occurrences"]
+                if o["occurrence_id"] == owner]
+        if edge != [(source["shot_id"], source["revision_id"])]:
+            return False
+        output = [o["shot_id"] for o in after["parent_revision"]["payload"]["occurrences"] if o["occurrence_id"] == owner]
+        members = {i.get("item_id", i.get("id")) for s in after["shot_revisions"]
+                   if s["shot_id"] == shot for i in s["payload"].get("items", [])}
+        if output != [shot]:
+            return False
+        if prior_allocation is not None:
+            return canonical_json(allocation) == canonical_json(prior_allocation)
+        # Frozen M1 edges have no new allocation facts. Their already verified
+        # source/binding/read proof remains usable only with this exact closure.
+        return (canonical_json(pin["parent"]) == canonical_json({k: before["parent_revision"][k]
+                                                                for k in ("revision_id", "content_digest")})
+                and members == set(source["item_id_map"].values()))
+
+    def _check_shot_destinations(self, context, prepared, inputs=None):
         # Check the wire shape before inspecting destinations. This preflight
         # precedes closure validation so foreign occupants get the same refusal.
         try:
             self.validate_prepared(prepared)
         except Exception:
             reject("invalid_prepared", "prepared commit does not satisfy the frozen schema", status=422)
-        document = prepared["canonical_document"]
+        document, records = prepared["canonical_document"], prepared["records"]
         project, timeline = context["request"]["project_id"], context["request"]["timeline_id"]
         # Exact immutable reuse does not write the mutable shot projection.
         writes = [s for s in document["shot_revisions"] if self.conn.execute(
             "SELECT 1 FROM shot_revisions WHERE id=?", (s["revision_id"],)).fetchone() is None]
+        if len({s["shot_id"] for s in writes}) != len(writes):
+            reject("identity_collision")
+        # Agent owns command.created consistency. Reserve the exact recorded
+        # reference without interpreting command arguments or inventing ID forms.
+        claims = [(item["kind"], item["ref"]) for record in records["commands"]
+                  if record["command"]["op"] != "timeline.inverse" for item in record["created"]]
+        claims = [(kind, self._reservation_identity(kind, ref)) for kind, ref in claims]
+        if len(set(claims)) != len(claims):
+            reject("identity_collision")
+        self._check_birth_destinations(claims)
         occupied = set()
         for image in writes:
             row = self.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (image["shot_id"],)).fetchone()
@@ -610,68 +688,166 @@ class TimelineCommitStore:
                 if row["project_id"] != project:
                     reject("destination_occupied")
                 occupied.add(image["shot_id"])
-        if not occupied:
+        allocations = self._materializations(context, prepared, inputs)
+        if not writes and not claims:
             return
         current = self.revision_closure(project, timeline, prepared["expected_head"]["revision_id"])
+        owned = {s["shot_id"] for s in current["shot_revisions"]}
+        fresh = {s["shot_id"] for s in writes} - owned
+        for shot in fresh:
+            for row in self.conn.execute("SELECT project_id FROM shot_revisions WHERE shot_id=?", (shot,)):
+                if row["project_id"] != project:
+                    reject("destination_occupied")
+                occupied.add(shot)
         heads = {shot: self.conn.execute("SELECT revision_id FROM shot_revision_heads WHERE shot_id=? AND project_id=?",
                                         (shot, project)).fetchone() for shot in occupied}
 
         def unchanged(shot, revision):
             return heads[shot] is not None and heads[shot]["revision_id"] == revision
 
+        authorized = set()
         for image in current["shot_revisions"]:
             shot = image["shot_id"]
             if shot in occupied and unchanged(shot, image["revision_id"]):
                 # A film pin authorizes its own projection, not a newer catalog
                 # head written since that pin was accepted.
                 occupied.remove(shot)
-        if not occupied:
+                authorized.add(shot)
+        restored_items = set()
+        if occupied:
+            from .timeline_commit_port import command_leaves
+
+            requested = [p for c in command_leaves(context["request"]["commands"])
+                         if c["op"] == "timeline.inverse" for p in c["args"]["publications"]]
+            if requested != prepared["records"]["undo_of"]:
+                reject("destination_occupied")
+
+            def edges(value):
+                return {o["occurrence_id"]: (o["shot_id"], o["shot_revision_id"])
+                        for o in value["parent_revision"]["payload"]["occurrences"]}
+
+            active, output = edges(current), edges(document)
+            cursor, remaining = prepared["expected_head"], set(requested)
+            while cursor and (occupied or remaining):
+                # history_entry authenticates the records against the receipt/event.
+                entry = self.history_entry(project, timeline, cursor["publication_id"])
+                previous = entry["previous"]
+                if entry["intent"] == "recorded":
+                    before = self.revision_closure(project, timeline, previous["revision_id"])
+                    prior = edges(before)
+                    if entry["publication_id"] in remaining:
+                        for o, (shot, _) in prior.items():
+                            owner, source = "occurrence:" + o, before["parent_revision"]
+                            if (shot in occupied and unchanged(shot, prior[o][1])
+                                    and output.get(o, (None,))[0] == shot) and any(
+                                    w["ref"] == "shot:" + shot or w["ref"] == owner or w["ref"].startswith(owner + "/")
+                                    or (w["ref"] == "timeline" and not w["path"] and w["before"] == {
+                                        "state": "present", "value": {k: source[k] for k in ("revision_id", "content_digest")}})
+                                    for r in entry["records"]["commands"] for w in r["writes"]):
+                                occupied.discard(shot)
+                                authorized.add(shot)
+                                restored_items.update(i.get("item_id", i.get("id"))
+                                    for s in before["shot_revisions"] if s["shot_id"] == shot
+                                    for i in s["payload"].get("items", []))
+                        remaining.remove(entry["publication_id"])
+                    accepted_document = self.revision_closure(project, timeline, entry["revision_id"])
+                    after = edges(accepted_document)
+                    historical = {**entry["receipt"]["result"], "records": entry["records"], "expected_head": previous}
+                    prior_allocations = (materialization_join(historical, project, timeline,
+                        lambda revision: self.revision_closure(project, timeline, revision))
+                        if has_materialization(historical) else {})
+                    for o, (shot, _) in after.items():
+                        owner = "occurrence:" + o
+                        if shot in allocations or shot in prior_allocations:
+                            if not self._same_materialization_slot(shot, o, allocations.get(shot),
+                                    prior_allocations.get(shot), before, accepted_document):
+                                continue
+                        if (shot in occupied and unchanged(shot, after[o][1])
+                                and output.get(o, (None,))[0] == shot and o in prior
+                                and active.get(o) == prior[o]
+                                and any(any(b["ref"] == owner for b in r["bindings"])
+                                        and any(read["ref"] == owner + "/shot" and read["path"] == ["shot_id"]
+                                                and read["state"] == {"state": "present", "value": prior[o][0]}
+                                                for read in r["reads"]) for r in entry["records"]["commands"])):
+                            occupied.remove(shot)
+                            authorized.add(shot)
+                cursor = previous
+            if occupied or remaining:
+                reject("destination_occupied")
+        destinations, fresh_items = {}, set()
+        old_items = {s["shot_id"]: {i.get("item_id", i.get("id")) for i in s["payload"].get("items", [])}
+                     for s in current["shot_revisions"]}
+        for image in writes:
+            shot = image["shot_id"]
+            for item in image["payload"].get("items", []):
+                identity = item.get("item_id", item.get("id"))
+                if not identity or identity in destinations:
+                    reject("identity_collision")
+                destinations[identity] = shot
+                if identity not in old_items.get(shot, set()):
+                    fresh_items.add(identity)
+        for identity, shot in destinations.items():
+            row = self.conn.execute("SELECT shot_id FROM shot_items WHERE id=?", (identity,)).fetchone()
+            if row is not None and (row["shot_id"] != shot or shot not in authorized):
+                reject("identity_collision")
+            for retained in self.conn.execute(
+                    "SELECT DISTINCT s.* FROM shot_revisions s, json_each(s.payload_json, '$.items') i "
+                    "WHERE COALESCE(json_extract(i.value, '$.item_id'), json_extract(i.value, '$.id'))=?", (identity,)):
+                if (digest(json.loads(retained["payload_json"])) != retained["content_digest"]
+                        or retained["project_id"] != project or retained["shot_id"] != shot or shot not in authorized):
+                    reject("identity_collision")
+        if not fresh and not fresh_items and not claims:
             return
-        from .timeline_commit_port import command_leaves
+        # Missing history cannot prove that a free ID was never reserved. Exact
+        # matching records are authenticated against their durable receipt/event.
+        if self.conn.execute("SELECT 1 FROM command_idempotency c LEFT JOIN timeline_commit_history h ON h.publication_id=c.txn_id "
+                             "WHERE c.command_kind='timeline.commit' AND h.publication_id IS NULL LIMIT 1").fetchone():
+            reject("identity_collision")
+        reservations = set(claims) | {("shot", "shot:" + shot) for shot in fresh - authorized}
+        reservations.update(("item", identity) for identity in fresh_items - restored_items)
+        for kind, ref in reservations:
+            rows = self.conn.execute(
+                "SELECT DISTINCT h.* FROM timeline_commit_history h, "
+                "json_each(h.records_json, '$.commands') r, json_each(r.value, '$.created') i "
+                "WHERE json_extract(i.value, '$.kind')=? AND (json_extract(i.value, '$.ref')=? OR ?='item') "
+                "AND (h.project_id=? OR ?='item') AND (h.timeline_id=? OR ? IN ('shot', 'item'))",
+                (kind, ref, kind, project, kind, timeline, kind)).fetchall()
+            for entry in rows:
+                if kind == "item" and not any(i["kind"] == "item" and self._reservation_identity("item", i["ref"]) == ref
+                        for r in json.loads(entry["records_json"])["commands"]
+                        if r["command"]["op"] != "timeline.inverse" for i in r["created"]):
+                    continue
+                ledger = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (entry["publication_id"],)).fetchone()
+                if ledger is None:
+                    reject("identity_collision")
+                self._verify_accepted(ledger, entry)
+                reject("identity_collision")
 
-        requested = [p for c in command_leaves(context["request"]["commands"])
-                     if c["op"] == "timeline.inverse" for p in c["args"]["publications"]]
-        if requested != prepared["records"]["undo_of"]:
-            reject("destination_occupied")
+    @staticmethod
+    def _reservation_identity(kind, ref):
+        if kind == "item":
+            member = item_identity(ref)
+            if member is None:
+                reject("invalid_records", "item reservation requires a canonical item ref", status=422)
+            return member[1]
+        if kind == "shot" and (root_identity(ref) is None or root_identity(ref)[0] != "shot"):
+            reject("invalid_records", "shot reservation requires a canonical shot ref", status=422)
+        return ref
 
-        def edges(value):
-            return {o["occurrence_id"]: (o["shot_id"], o["shot_revision_id"])
-                    for o in value["parent_revision"]["payload"]["occurrences"]}
-
-        active, output = edges(current), edges(document)
-        cursor, remaining = prepared["expected_head"], set(requested)
-        while cursor and (occupied or remaining):
-            # history_entry authenticates the records against the receipt/event.
-            entry = self.history_entry(project, timeline, cursor["publication_id"])
-            previous = entry["previous"]
-            if entry["intent"] == "recorded":
-                before = self.revision_closure(project, timeline, previous["revision_id"])
-                prior = edges(before)
-                if entry["publication_id"] in remaining:
-                    for o, (shot, _) in prior.items():
-                        owner, source = "occurrence:" + o, before["parent_revision"]
-                        if (shot in occupied and unchanged(shot, prior[o][1])
-                                and output.get(o, (None,))[0] == shot) and any(
-                                w["ref"] == "shot:" + shot or w["ref"] == owner or w["ref"].startswith(owner + "/")
-                                or (w["ref"] == "timeline" and not w["path"] and w["before"] == {
-                                    "state": "present", "value": {k: source[k] for k in ("revision_id", "content_digest")}})
-                                for r in entry["records"]["commands"] for w in r["writes"]):
-                            occupied.discard(shot)
-                    remaining.remove(entry["publication_id"])
-                after = edges(self.revision_closure(project, timeline, entry["revision_id"]))
-                for o, (shot, _) in after.items():
-                    owner = "occurrence:" + o
-                    if (shot in occupied and unchanged(shot, after[o][1])
-                            and output.get(o, (None,))[0] == shot and o in prior
-                            and active.get(o) == prior[o]
-                            and any(any(b["ref"] == owner for b in r["bindings"])
-                                    and any(read["ref"] == owner + "/shot" and read["path"] == ["shot_id"]
-                                            and read["state"] == {"state": "present", "value": prior[o][0]}
-                                            for read in r["reads"]) for r in entry["records"]["commands"])):
-                        occupied.remove(shot)
-            cursor = previous
-        if occupied or remaining:
-            reject("destination_occupied")
+    def _check_birth_destinations(self, claims):
+        # Native births reserve even if a later command removes the new root.
+        # Derived allocations never supply these claims; inverses were excluded.
+        for kind, ref in claims:
+            if kind == "shot":
+                shot = root_identity(ref)[1]
+                if (self.conn.execute("SELECT 1 FROM project_shots WHERE id=?", (shot,)).fetchone()
+                        or self.conn.execute("SELECT 1 FROM shot_revisions WHERE shot_id=?", (shot,)).fetchone()):
+                    reject("destination_occupied")
+            elif kind == "item":
+                if (self.conn.execute("SELECT 1 FROM shot_items WHERE id=?", (ref,)).fetchone()
+                        or self.conn.execute("SELECT 1 FROM shot_revisions s, json_each(s.payload_json, '$.items') i "
+                            "WHERE COALESCE(json_extract(i.value, '$.item_id'), json_extract(i.value, '$.id'))=? LIMIT 1", (ref,)).fetchone()):
+                    reject("identity_collision")
 
     def preview(self, context, prepared, *, authorize, inputs=None):
         context, prepared = detached(context), detached(prepared)
@@ -681,7 +857,7 @@ class TimelineCommitStore:
                 reject("preview_requires_dry_run", status=422)
             self._check_context(context)
             self._check_head(context, prepared["expected_head"])
-            self._check_shot_destinations(context, prepared)
+            self._check_shot_destinations(context, prepared, inputs)
             candidate = self._validate(context, prepared, inputs)
             request = context["request"]
             return {"data": {"status": "preview", "base_revision_id": request["base_revision_id"],
@@ -723,7 +899,7 @@ class TimelineCommitStore:
                     reject("dry_run_accept", status=422)
                 self._check_context(context)
                 self._check_head(context, prepared["expected_head"])
-                self._check_shot_destinations(context, prepared)
+                self._check_shot_destinations(context, prepared, inputs)
                 candidate = self._validate(context, prepared, inputs)
                 request, previous = context["request"], prepared["expected_head"]
                 base = {"revision_id": request["base_revision_id"], "publication_id": request["base_publication_id"]}
