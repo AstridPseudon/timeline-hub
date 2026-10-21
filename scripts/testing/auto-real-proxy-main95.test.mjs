@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
-import { chmodSync, lstatSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { PassThrough, Readable } from 'node:stream';
 import { after, test } from 'node:test';
-import { REAL_PROXY_RUNTIME, prepareNodeModulesOverlay, readRealProxyInputs } from './auto-real-proxy-main95.mjs';
+import { createRuntimeProxyServer, readWorkspaceRuntimeConfig } from '../runtime-discovery-proxy.mjs';
+import { normalAcpEnvironment, REAL_PROXY_RUNTIME, prepareNodeModulesOverlay, readRealProxyInputs } from './auto-real-proxy-main95.mjs';
 
 const scratch = mkdtempSync(path.join(os.tmpdir(), 'auto-real-proxy-current-root-'));
 after(() => rmSync(scratch, { recursive: true, force: true }));
@@ -45,6 +47,132 @@ test('pins Runtime95 and rejects stale public/direct overrides', () => {
   assert.throws(() => readRealProxyInputs({ ...values(), TIMELINE_AUTO_REAL_PROXY_RUNTIME_SHA: 'f'.repeat(40) }, roots.app), /published Main95/);
   assert.throws(() => readRealProxyInputs({ ...values(), ASTRID_PUBLIC_CHECKOUT: roots.agent }, roots.app), /overrides are forbidden/);
   assert.throws(() => readRealProxyInputs({ ...values(), ASTRID_APP_DIRECT_DIST: path.join(scratch, 'dist') }, roots.app), /overrides are forbidden/);
+});
+
+function normalParserFixture(overrides = {}) {
+  const directory = mkdtempSync(path.join(scratch, 'normal-parser-'));
+  const realm = path.join(directory, 'realm');
+  mkdirSync(realm);
+  const credential = path.join(directory, 'credential.json');
+  const credentialValue = {
+    version: 1,
+    scope: 'astrid',
+    actor_id: 'astrid-product-test',
+    token: 'synthetic-normal-parser-token',
+    ...(overrides.credential ?? {}),
+  };
+  for (const key of overrides.removeCredential ?? []) delete credentialValue[key];
+  writeFileSync(credential, JSON.stringify(credentialValue), { mode: 0o600 });
+  const discovery = path.join(directory, 'discovery.json');
+  const discoveryValue = {
+    endpoint: 'http://127.0.0.1:17336',
+    credential_file: credential,
+    active_realm: 'realm',
+    runtime_instance_id: 'runtime-instance-test',
+    realm_root: realm,
+    ...(overrides.discovery ?? {}),
+  };
+  for (const key of overrides.removeDiscovery ?? []) delete discoveryValue[key];
+  writeFileSync(discovery, JSON.stringify(discoveryValue), { mode: 0o600 });
+  writeFileSync(path.join(directory, 'catalog.json'), JSON.stringify({
+    selected_realm_id: 'realm',
+    realms: [{ realm_id: 'realm', source_profile: 'astrid', data_root: realm }],
+  }), { mode: 0o600 });
+  return { directory, discovery, credential, credentialValue };
+}
+
+test('normal automatic fixture parser accepts the established scoped credential file', () => {
+  const fixture = normalParserFixture();
+  assert.deepEqual(readWorkspaceRuntimeConfig(fixture.discovery), {
+    schemaVersion: 1,
+    endpoint: 'http://127.0.0.1:17336',
+    actorId: 'astrid-product-test',
+    realmId: 'realm',
+    runtimeInstanceId: 'runtime-instance-test',
+  });
+  assert.equal(statSync(fixture.credential).mode & 0o777, 0o600);
+  assert.deepEqual(JSON.parse(readFileSync(fixture.credential, 'utf8')), fixture.credentialValue);
+});
+
+test('normal automatic fixture parser rejects missing or wrong product identity fields', () => {
+  const cases = [
+    ['missing version', { removeCredential: ['version'] }],
+    ['wrong version', { credential: { version: 2 } }],
+    ['missing scope', { removeCredential: ['scope'] }],
+    ['wrong scope', { credential: { scope: 'owner' } }],
+    ['missing token', { removeCredential: ['token'] }],
+    ['missing actor', { removeCredential: ['actor_id'] }],
+    ['missing discovery realm', { removeDiscovery: ['active_realm'] }],
+    ['missing discovery instance', { removeDiscovery: ['runtime_instance_id'] }],
+    ['missing discovery credential file', { removeDiscovery: ['credential_file'] }],
+  ];
+  for (const [label, overrides] of cases) {
+    const fixture = normalParserFixture(overrides);
+    assert.throws(() => readWorkspaceRuntimeConfig(fixture.discovery), label);
+    const error = (() => {
+      try { readWorkspaceRuntimeConfig(fixture.discovery); return ''; }
+      catch (caught) { return caught instanceof Error ? caught.message : String(caught); }
+    })();
+    assert(!error.includes(fixture.credentialValue.token), `${label}: synthetic credential leaked in parser error`);
+  }
+});
+
+test('automatic fixture registers the normal ACP environment and forwards the exact discovery-proxy request', async () => {
+  assert.deepEqual(normalAcpEnvironment(17335), {
+    VITE_ASTRID_ACP_BRIDGE_PORT: '17335',
+    ASTRID_ACP_VIA_DISCOVERY_PROXY: '1',
+  });
+  const fixture = normalParserFixture();
+  const upstreamRequests = [];
+  const chatToken = 'synthetic-acp-forward-token';
+  writeFileSync(path.join(fixture.directory, 'chat.json'), JSON.stringify({ endpoint: 'http://127.0.0.1:17337', token: chatToken }), { mode: 0o600 });
+  const body = Buffer.from('{"prompt":"synthetic ACP request"}');
+  const upstream = new PassThrough();
+  upstream.setTimeout = () => upstream;
+  const upstreamResponse = Readable.from(['{"ok":true}']);
+  upstreamResponse.statusCode = 200;
+  upstreamResponse.headers = { 'content-type': 'application/json' };
+  const proxy = createRuntimeProxyServer({
+    discoveryPath: fixture.discovery,
+    request(options, callback) {
+      upstreamRequests.push({ options });
+      process.nextTick(() => callback(upstreamResponse));
+      return upstream;
+    },
+  });
+  const incoming = Readable.from([body]);
+  Object.assign(incoming, {
+    method: 'POST',
+    url: '/acp/projects/project-test/chat',
+    headers: { host: '127.0.0.1:17338', authorization: 'Bearer browser-secret', 'x-astrid-bridge-version': 'browser-version',
+      'content-type': 'application/json', 'content-length': String(body.length) },
+    aborted: false,
+  });
+  const response = new PassThrough();
+  let statusCode;
+  response.writeHead = (status) => { statusCode = status; return response; };
+  const responseBody = new Promise((resolve) => {
+    const chunks = [];
+    response.on('data', (chunk) => chunks.push(chunk));
+    response.once('end', () => resolve(Buffer.concat(chunks)));
+  });
+  const upstreamBody = new Promise((resolve) => {
+    const chunks = [];
+    upstream.on('data', (chunk) => chunks.push(chunk));
+    upstream.once('end', () => resolve(Buffer.concat(chunks)));
+  });
+  proxy.emit('request', incoming, response);
+  assert.deepEqual(await responseBody, Buffer.from('{"ok":true}'));
+  assert.equal(statusCode, 200);
+  assert.equal(upstreamRequests.length, 1);
+  const forwarded = upstreamRequests[0].options;
+  assert.equal(forwarded.method, 'POST');
+  assert.equal(forwarded.path, '/projects/project-test/chat');
+  assert.equal(forwarded.headers.authorization, `Bearer ${chatToken}`);
+  assert.equal(forwarded.headers['x-astrid-bridge-version'], 'v1');
+  assert.equal(forwarded.headers['content-type'], 'application/json');
+  assert.equal(forwarded.headers.host, undefined);
+  assert.deepEqual(await upstreamBody, body);
 });
 
 test('overlay copies Vite and Rollup resolvers while linking the rest read-only', () => {

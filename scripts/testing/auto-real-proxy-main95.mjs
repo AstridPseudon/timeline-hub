@@ -57,6 +57,13 @@ export const REAL_PROXY_BROWSER = Object.freeze({
   sha256: 'sha256:85918a9937192b78da8edb51c38a7af4920ac6bd9ba19939ecb0bb724d5a1a95',
 });
 
+export function normalAcpEnvironment(proxyPort) {
+  return Object.freeze({
+    VITE_ASTRID_ACP_BRIDGE_PORT: String(proxyPort),
+    ASTRID_ACP_VIA_DISCOVERY_PROXY: '1',
+  });
+}
+
 const SHA = /^[a-f0-9]{40}$/;
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const APP_METADATA = 'src/integrations/runtime/generated-contract-metadata.ts';

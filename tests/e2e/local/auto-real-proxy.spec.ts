@@ -15,6 +15,7 @@ import {
   classifyRuntimePost,
   isExpectedInverseRequest,
 } from './support/auto-real-proxy-helpers.ts';
+import { normalAcpEnvironment } from '../../../scripts/testing/auto-real-proxy-main95.mjs';
 import type { ThreeProductsSeed } from './support/harness.ts';
 
 const OPERATION_PREFIX = '/runtime-config/v1/operation';
@@ -147,6 +148,7 @@ async function startViteWorkspace(harness: DirectHarness, composerCheckout: stri
       ASTRID_PYTHON,
       PYTHONPATH: [composerCheckout, RUNTIME_CHECKOUT].join(path.delimiter),
       VITE_ASTRID_BRIDGE_PORT: String(proxyPort),
+      ...normalAcpEnvironment(proxyPort),
       ASTRID_BRIDGE_TOKEN: harness.productToken,
       ASTRID_RUNTIME_OPERATION_ORIGIN: origin,
       ASTRID_RUNTIME_PROXY_PORT: String(proxyPort),
