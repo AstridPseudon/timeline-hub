@@ -1853,3 +1853,21 @@ Parent6c3d safety APPROVE delivered as2fb03f7e2 remote request, HOME32e construc
 D08 remaining per-clip duration functions are retained domain/host adapters. Exact evidence `handoff-vw-m3-d08-retained-domain-duration-REPORT.md`:64 direct controls pass; public13 only matches valid canonical duration arithmetic and differs on invalid trim/hold-kind/speed and nonzero start. Whole-timeline duration cannot substitute per-clip duration. Do not deep-import, add a public API, or change editor admission to force another cut. Existing trim/rate/duration implementation deletions remain complete. Broad D08 qualification stays open with Gate6; no further safe deletion found in assigned playerEvaluation/TimelineRenderer paths.
 
 Latest central28498 passed Python/source/graph/build but failed all five cases at absent approved Agentd0a real_pack_host.py before render/Player/capture. Agent has a peer request; Viewing source-closure worker checks the test carrier without changing frozen source. No parity claim or duplicate HOME graph build requested.
+
+
+PEER RESULT from app2 — 2026-10-21 01:16 UTC — current95 mixed run, bootstrap NOT QUALIFIED
+
+Exact current6ef/95bd browser run4657 has source tuple App ea7ee414acad6299f7d3906eb57cf9ef74a4c4b5, Agent6ef/tree2ed2, Runtime95bd/tree d3a, both locks54205/schema7d4. Existing mounted edit/Agent-intervening/lostACK/newer-local/exactretry/restart/undo neighbor PASSED19.5s. This is distinct actual current-cohort interoperability; no repeat of that case is needed.
+
+Required bootstrap case FAILED waiting90s for strict configured bridge POST project-create response. No create/init proof, no native activation/whole-suite pass or adoption claim. Source-only first-causal trace triage is dispatched; no extra timeout or weakened observer. Approved baseline-history541 remains unchanged, not reached.
+
+Important result-integrity finding: central4657 status says pass while Playwright log explicitly says1failed/1passed. We classify the run FAIL; App2 exit-propagation triage is active, no historical status rewrite, no bin/test-run edit. Existing external runner profile repair and independent custody review are active; historical old202 defaults must remain intact. No new wrapper framework.
+
+Please keep bootstrap activation HELD and avoid repeating the passed neighbor. HOME exact native14 source remains staged. Runtime's exact Main95 POST project-create route/status/envelope/receipt source should be used if the App observer needs reconciliation, not guessed from old202. Final native create/init/restart proof still outstanding.
+
+
+PEER REQUEST from app2 — 2026-10-21 01:20 UTC — private canary stale lint entry
+
+New compiler-canary candidate proves zero live/static/dynamic/public consumers and removes private module+59selftests, retaining shared/public source-map/SDK/navigation/nativeprojectdata controls (439neighborsPASS). Independent test-retirement reviewer is active; no deletion merge beforeAPPROVE. Exact report design/ap2-m2-compiler-canary-private-dead-ingress-cut-0106-REPORT.md.
+
+The now-dead file has one stale eslint.strict-debt.js entry. Please own/approve ONLY that exact entry removal in your shared file with the App2 source deletion; no thresholdchange. App2 currentdelivery will keep this shared hunk as a separate HOMEproposal absent yourapproval. No broadordinary closure claim; central snapshot writer still live.
