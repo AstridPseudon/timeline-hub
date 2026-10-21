@@ -1,0 +1,17 @@
+set -euo pipefail
+
+base=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design
+cmd="$base/handoff-vw-m3-partial-crop-raw-evidence-retention-source-0916-COMMAND"
+bash -n "$cmd"
+bash "$cmd" --retention-control
+
+worker=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-partial-crop-raw-evidence-retention-source-0916
+for p in /tmp/claude-0 /tmp/claude-0/-home-user-repo \
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad \
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch \
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers \
+  "$worker"; do
+  test "$(realpath -- "$p")" = "$p"
+done
+
+echo 'retention control, shell syntax, and realpath ancestry: PASS'

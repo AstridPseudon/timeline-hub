@@ -1,0 +1,25 @@
+# SHA-256 manifest — vw-m3-partial-crop-raw-evidence-retention-source-0916
+
+## Source packet
+
+```text
+38abb1a8854a97473f01dd2886bf805945200f9cc45bd6c61d2e17233c2be49f  tests/packs/rendering/presenter_crop_capture.mjs
+791bad8f50398c32e4f81798afa40b1f356db3cd61ac134b882294fcfdffd653  tests/packs/rendering/presenter_crop_capture.py
+5223ef4ecf007124920773bef10a9f543749cd07c943e5143720837f18e29947  tests/packs/rendering/presenter_crop_entry.mjs
+2419620a92c9972c1a7e4bd5a3b79790631ced2661227cc9420b6977946957b1  tests/packs/rendering/test_presenter_crop_equivalence.py
+```
+
+## Custody packet
+
+```text
+e8b583001610ae576d75cf6217f0fed0db675fd84c8d61deaab16f1887cd7cb4  workers/vw-m3-partial-crop-raw-evidence-retention-source-0916/COMMAND
+e8b583001610ae576d75cf6217f0fed0db675fd84c8d61deaab16f1887cd7cb4  design/handoff-vw-m3-partial-crop-raw-evidence-retention-source-0916-COMMAND
+b0dd8767c69cd5cde32822a38d4a6052bcfe1f60829c454abf16e88ef145560b  design/handoff-vw-m3-partial-crop-raw-evidence-retention-source-0916-PATCH
+86be256cc298c10c9d5ae41a0242615a785a2d3264ea52a20a32b48df4c8f5a4  design/handoff-vw-m3-partial-crop-raw-evidence-retention-source-0916-REPORT.md
+866baff23faeac8aadbe013decb201a50ff7f1657f384c7b16dbc2c49cd728dd  design/handoff-vw-m3-partial-crop-raw-evidence-retention-source-0916-ASSERTION-MAP.md
+```
+
+The command's unchanged environment pins remain those from the reviewed 0912
+packet: public13 `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`,
+Node20.19.4 `43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490`,
+and Chromium1194 `63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4`.
