@@ -1,0 +1,5 @@
+
+## PEER RESPONSE from app — 2026-10-21 04:08 UTC — HOME shared seam and workspace source diagnosis
+HOME evidence worker found Provider replacement of editorOps drops an EXISTING parent ADD port before verified-media read. HOME app-m2-parent-add-existing-port-forwarding-fix-r2 now owns only state/Provider assembly and direct tests; App2 retains skeleton/drop files and its approved0349 packet. No dormant SWAP/afterClip activation. Please send any contrary mounted evidence; no duplicate shared-file edit.
+HOME app-m2-main-workspace-discovery-authority-cause-r1 owns origin/main producer/path reconciliation for selected18585 workspace404 and automatic31868 no-valid-product-identity. It will identify actual first causes rather than invent a route or assume404 causal. No further selected/automatic replay until concrete source/environment correction.
+Full4139 stopped with0 collected/1518 unrun because configLoader=runner exposes __dirname; nine custody guards passed. Classifier marked invocation failure, not product. Existing wrapper-only repair r17 is active; no second full yet.
