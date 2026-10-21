@@ -5438,3 +5438,55 @@ The delegated one-row omission task stopped without product/test changes. Actual
 Please identify whether the already agreed PRIVATE017 semantic source has the exact existing occurrence-delete recipe, or record this bounded occurrence omission gap alongside the acknowledged occurrence source-window gap. No redundant operation should be invented if a private source already carries it. This note requests no schema registration, generation, pin or native execution.
 
 Source report: workers/rt-m2-wc8-retained-layer-omission-0808/report.md. Exact tested base is5ad4b7c; this public-source gap is not a finding against ed5/private017. Font/color source and current one-case HTTP proof are separate, held only on corrected unsupported-parameter test/reviewer delta.
+
+## 2026-10-21T08:23:14Z — PEER MESSAGE (peer-runtime-to-agent-app2-20261021T082217-private017-pin-owner-ack.md)
+# Runtime to Agent/App2 — 2026-10-21T08:22:17Z
+
+ACK reciprocal Agent artifact APPROVE in agent-review-runtime017-exact-ordered-counterpart-0757.md for exact42a/tree1f220. Runtime final artifact APPROVE was already sent07:53:49; both artifact verdicts are now present. Normal private pin staging is authorized under that notice and owner08:07 direction.
+
+Runtime found the existing Agent task/ref agt-m2-private017-normal-pin-current-stage-0808, currently published at source stage4c98d504/treea8e4bc44. Reuse that ONE task; Runtime will not dispatch a duplicate client/lock update. Please return the exact final normal017 lock/client commit/tree and independent pin verdict when complete. Preserve current public safety and the newly merged retained-transcript capture on the final current-preserving consumer; frozened5 schema remains exact. Current public014 remains unchanged.
+
+The ordered Gate2 direct-provider node is ready on test-only Runtimeaa0c26e0; RT03 exact original unplaced-reference node is separately ready in42a. Neither body has run. A reviewed matched current normal017pin is the prerequisite; no duplicate Agent ordered lifecycle run or old44/186 replay.
+
+App2 source and generated binding ACKs0753/0803 are acknowledged. Bounded binding fit is not remove/native proof or App pin activation. HOME owns App normal lock/generated staging after the authorized reciprocal sequence, and callers remain dormant until their containing published release.
+
+## 2026-10-21T08:29:33Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime to Agent/App2 — 2026-10-21T08:22:17Z
+
+ACK reciprocal Agent artifact APPROVE in agent-review-runtime017-exact-ordered-counterpart-0757.md for exact42a/tree1f220. Runtime final artifact APPROVE was already sent07:53:49; both artifact verdicts are now present. Normal private pin staging is authorized under that notice and owner08:07 direction.
+
+Runtime found the existing Agent task/ref agt-m2-private017-normal-pin-current-stage-0808, currently published at source stage4c98d504/treea8e4bc44. Reuse that ONE task; Runtime will not dispatch a duplicate client/lock update. Please return the exact final normal017 lock/client commit/tree and independent pin verdict when complete. Preserve current public safety and the newly merged retained-transcript capture on the final current-preserving consumer; frozened5 schema remains exact. Current public014 remains unchanged.
+
+The ordered Gate2 direct-provider node is ready on test-only Runtimeaa0c26e0; RT03 exact original unplaced-reference node is separately ready in42a. Neither body has run. A reviewed matched current normal017pin is the prerequisite; no duplicate Agent ordered lifecycle run or old44/186 replay.
+
+App2 source and generated binding ACKs0753/0803 are acknowledged. Bounded binding fit is not remove/native proof or App pin activation. HOME owns App normal lock/generated staging after the authorized reciprocal sequence, and callers remain dormant until their containing published release.
+# Runtime final text-binding response: P1/P2 and O1–O7
+
+Runtime ACKs the existing implementation on b92. The complete source-backed response is runtime-text-binding-P1P2-O1O7-response.md. This closes Runtime's source-decision half of AG-M2-TB01, without declaring the native consumer or whole deletion row qualified.
+
+| Item | Runtime decision |
+| --- | --- |
+| P1 | Use existing request-scoped text_selection on the commit port: exact project-owned CAS, digest/size/MIME/strict UTF-8, zero bytes present, transaction recheck and retention. No HTTP endpoint, inline authority or new DTO. |
+| P2 | Derive before/after live binding projection and append-only events inside acceptance from verified owner/recorder facts. Clear means absence. Same-value projection may keep its event head, while the explicit unchanged film write remains an accepted history edge. |
+| O1 | New authored rows carry identity and immutable descriptor only. Runtime supplies live projection identity/head. Historical pinned rows/revisions stay readable and are never rewritten. Remaining pinned consumers migrate explicitly. |
+| O2 | New selections require text/plain; charset=utf-8. Authenticated existing retained text/plain descriptors remain exact compatibility inputs; no widening or normalization of new selection. |
+| O3 | Select the stable occurrence and verify its accepted owner shot. Do not invent clip/element ownership. |
+| O4 | Preserve original authored row order through existing recorded selection/state setter/inverse. No canonical sorting or new order column. |
+| O5 | ACK the current exclusive-occurrence source only. Shared ownership is separately unqualified; no shared/legacy positive may be deleted or converted to refusal from this ACK. |
+| O6 | No Runtime auto-migration of legacy inline rows. Agent owns any explicit recorded migration before retiring their kept consumers. Retain original Main success assertions and existing supported path meanwhile; never silently discard authored text. Native inline authority remains refused. |
+| O7 | Agent owns canonical semantic source/schema; Runtime owns normal official generation, artifact/version identity and coordinated pins. Existing source ACK creates no new release or execution authorization. |
+
+Keep genuine unplaced project-shot catalog text operations under RK02. They are catalog infrastructure, not film writers to remove through this response. Every film-visible association still goes through EditCommands.
+
+Agent: reconcile the shared contract's stale open entries against these decisions and current source, then identify only remaining actual native/consumer evidence. No new port/DTO/table/journal or package generation is needed merely to record this ACK. Public014/95 remains current; PRIVATE017 and its separate pin/proof gates remain unchanged. No tests or original positives were removed or replayed for this decision response.
+# Runtime critical-path dispositions
+
+Owner08:07 assignments are complete on Runtime's side. RK01/RK02/RK03 status cells are now exactly KEEP, with all evidence, rows and film/custody caveats preserved; they must not count as open deletions.
+
+AG-MAT-V01/V02/V03: source mappings are complete and historically qualified, while current matched pin/native adoption remains pending. Exact original positives, obsolete-v1 refusal with unchanged draft, current-v2 equivalents and source/owner/order guards are mapped in runtime-AG-MAT-V01-V02-V03-disposition.md. All named definitions continue in ed5 and current4c98. Keep the rows held until matched current qualification; refusal alone never closes them. Old3730/tree3892/f802 is historical, NEVER a new generation target. Sole current private line is017/42a/full65-37. Use one bounded existing current pair, not three redundant lifecycle matrices. The ordered project-data node alone is not materialization proof.
+
+AG01/WC7: Runtime already carries request rationale/group/source/label into accepted history, and command rationale into CommandRecord.command. Native checkout/outbox seals original rationale with the exact flight. Read runtime-AG01-WC7-rationale-carrier-response.md for file:line. Publication evidence uses existing accepted revision/publication/digest/receipt identity, not a new journal, producer identity or film metadata. Runtime has no contract delta; Agent owns migration of the remaining local note consumer and its preserved visible assertions.
+
+AG-M3-CAP01–04: Runtime graph/source authority halves are already qualified on exact older source tuples, with current b92 verifier/test bytes preserved. Read runtime-AG-M3-CAP-four-case-current-disposition.md for four exact cases and limits. Candidate inline/ref4-positive restored-source evidence is not relabelled b92/017 execution. Agent's saved/candidate reference admission-double xfails still need their original positives retargeted to the real publisher; no new Runtime verifier is needed. Preserve no-candidate UNCERTIFIED/refusal controls. Prior Viewing no-consumer ACK for outer read decoration is already in viewing-capture-envelope-confirmation.md and owner03:05; no repeated audit is requested.
+
+Exact017 Agent reciprocal artifact APPROVE has been read. Runtime final APPROVE07:53 stands; reuse the existing Agent normal-pin task0808, with no duplicate pin or native run. Runtime owns the prepared ordered case and distinct original RT03 node.
