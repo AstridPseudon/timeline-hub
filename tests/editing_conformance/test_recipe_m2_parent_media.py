@@ -13,6 +13,7 @@ from astrid.core.timeline.shot_composition_projection import (
 )
 from astrid.sdk.timeline._collections import order, restoration_orders
 from astrid.sdk.timeline._command_state import CommandError, State
+from astrid.sdk.timeline._move_set import capture_move_set
 from astrid.sdk.timeline.capture import capture_clip_delete
 from astrid.sdk.timeline.commands import execute, validate_command
 from astrid.sdk.timeline.commit import (
@@ -554,12 +555,121 @@ def test_literal_completion_uses_only_the_row_media_birth_and_preserves_source_u
 
 def test_birth_after_a_boundary_keeps_it_until_an_explicit_delete():
     bundle, new, verified = ordered_parent()
-    row = args(new, 'image')['row']
+    for rows in (bundle['parent']['clips'], bundle['parent']['config']['clips']):
+        target = next(item for item in rows if item['id'] == 'target')
+        target.update({'effectId': 'effect-target', 'transition': {'kind': 'fade'},
+                       'opaque': {'keep': [None, False, {}, []]}})
+    row = {**args(new, 'image')['row'], 'effectId': 'effect-born'}
     command = capture_clip_add_media(bundle, row, new, after='parent/clip:target', verified_media=verified)
     plan = execute(bundle, [command], verified_media=verified)
+    retry = execute(bundle, [command], verified_media=verified)
     assert clip_ids(plan.bundle) == ['A', 'target', 'born', 'C']
+    assert retry.commands == plan.commands
+    assert retry.bundle == plan.bundle
+    source = State(bundle).entity('parent/clip:target')
+    created = State(plan.bundle).entity('parent/clip:born')
+    assert created == {**source, 'id': 'born', 'asset': new['asset'], 'at': 4,
+                      'effectId': 'effect-born'}
+    assert State(plan.bundle).entity('parent/clip:C')['at'] == 4
+    assert State(plan.bundle).entity('parent/clip:A')['at'] == 0
+    assert plan.bundle['placements'] == bundle['placements']
     assert inverse(plan.bundle, plan.records).bundle == bundle
     assert set(command['args']) == {'row', 'media'}
+
+
+def test_after_capture_records_raw_anchor_media_rate_and_peer_reads():
+    bundle, new, verified = ordered_parent()
+    command = capture_clip_add_media(
+        bundle, {'id': 'born', 'track': 'overlay', 'asset': new['asset']}, new,
+        after='parent/clip:target', verified_media=verified)
+    plan = execute(bundle, [command], verified_media=verified)
+    record = plan.records[0]
+    assert any(read['ref'] == 'parent/clip:target' and read['path'] == [] for read in record['reads'])
+    assert any(read['ref'] == 'parent/asset:picture' and read['path'] == [] for read in record['reads'])
+    assert any(read['ref'] == 'parent' and read['path'] == ['config', 'output', 'fps']
+               for read in record['reads'])
+    selection = next(item for item in record['selections'] if item['key'] == 'collection.clips.after')
+    assert selection['members'] == ['parent/clip:target']
+    assert selection['order'] == ['parent/clip:A', 'parent/clip:target', 'parent/clip:C']
+    assert {item['ref'] for item in record['created']} == {
+        'parent/asset:reserved-new', 'parent/clip:born'}
+
+
+def test_after_capture_refuses_a_missing_raw_anchor_without_appending():
+    bundle, new, verified = ordered_parent()
+    before = copy.deepcopy(bundle)
+    with pytest.raises(CommandError, match='anchor'):
+        capture_clip_add_media(
+            bundle, {'id': 'born', 'track': 'overlay', 'asset': new['asset']}, new,
+            after='parent/clip:gone', verified_media=verified)
+    assert bundle == before
+
+
+@pytest.mark.parametrize('damage', ['anchor-timing', 'peer-timing', 'order'])
+def test_after_replay_refuses_changed_anchor_or_same_row_peer(damage):
+    bundle, new, verified = ordered_parent()
+    command = capture_clip_add_media(
+        bundle, {'id': 'born', 'track': 'overlay', 'asset': new['asset']}, new,
+        after='parent/clip:target', verified_media=verified)
+    plan = execute(bundle, [command], verified_media=verified)
+    head = copy.deepcopy(bundle)
+    if damage == 'anchor-timing':
+        edit(head, 'parent/clip:target', at=1)
+        changed = later('parent/clip:target', ['at'], 1)
+    elif damage == 'peer-timing':
+        edit(head, 'parent/clip:C', at=6)
+        changed = later('parent/clip:C', ['at'], 6)
+    else:
+        for rows in (head['parent']['clips'], head['parent']['config']['clips']):
+            rows.reverse()
+        changed = later('parent', ['clips'], head['parent']['clips'])
+    with pytest.raises(CommandError):
+        replay(plan, head, verified_media=verified, intervening_records=[changed])
+
+
+def test_after_replay_allows_disjoint_track_timing_and_preserves_exact_ids():
+    bundle, new, verified = ordered_parent()
+    side = {'id': 'side', 'track': 'other', 'asset': 'picture', 'clipType': 'media', 'at': 2, 'hold': 1}
+    bundle['parent']['config']['tracks'].append({'id': 'other', 'kind': 'visual', 'role': 'output'})
+    for rows in (bundle['parent']['clips'], bundle['parent']['config']['clips']):
+        rows.append(copy.deepcopy(side))
+    command = capture_clip_add_media(
+        bundle, {'id': 'born', 'track': 'overlay', 'asset': new['asset']}, new,
+        after='parent/clip:target', verified_media=verified)
+    plan = execute(bundle, [command], verified_media=verified)
+    head = copy.deepcopy(bundle)
+    edit(head, 'parent/clip:side', at=9)
+    rebased = replay(plan, head, verified_media=verified,
+                     intervening_records=[later('parent/clip:side', ['at'], 9)])
+    assert State(rebased.bundle).entity('parent/clip:side')['at'] == 9
+    assert State(rebased.bundle).entity('parent/clip:born')['at'] == 4
+    assert [item['ref'] for item in rebased.records[0]['created']] == [
+        'parent/asset:reserved-new', 'parent/clip:born']
+    assert inverse(rebased.bundle, rebased.records).bundle == head
+
+
+def test_after_replay_interacts_with_a_disjoint_move_set():
+    bundle, new, verified = ordered_parent()
+    bundle['parent']['config']['tracks'].append({'id': 'other', 'kind': 'visual', 'role': 'output'})
+    for row in ({'id': 'side-a', 'track': 'other', 'asset': 'picture', 'clipType': 'media', 'at': 0, 'hold': 1},
+                {'id': 'side-b', 'track': 'other', 'asset': 'picture', 'clipType': 'media', 'at': 2, 'hold': 1}):
+        for rows in (bundle['parent']['clips'], bundle['parent']['config']['clips']):
+            rows.append(copy.deepcopy(row))
+    command = capture_clip_add_media(
+        bundle, {'id': 'born', 'track': 'overlay', 'asset': new['asset']}, new,
+        after='parent/clip:target', verified_media=verified)
+    plan = execute(bundle, [command], verified_media=verified)
+    move = capture_move_set(
+        bundle,
+        [{'clip': 'parent/clip:side-a', 'track': 'parent/track:other'},
+         {'clip': 'parent/clip:side-b', 'track': 'parent/track:other'}],
+        'parent/clip:side-b', 5)
+    moved = execute(bundle, [move])
+    rebased = replay(plan, moved.bundle, verified_media=verified, intervening_records=moved.records)
+    assert State(rebased.bundle).entity('parent/clip:side-a')['at'] == pytest.approx(3.005)
+    assert State(rebased.bundle).entity('parent/clip:side-b')['at'] == pytest.approx(5.005)
+    assert State(rebased.bundle).entity('parent/clip:born')['at'] == 4
+    assert inverse(rebased.bundle, rebased.records).bundle == moved.bundle
 
 
 
