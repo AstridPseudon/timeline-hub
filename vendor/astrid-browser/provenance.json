@@ -1,7 +1,7 @@
 {
-  "astrid_commit": "167068b3f01d2e7d30abdd2ddbfba42de1817d3f",
-  "astrid_tree": "6042a3c5820fd987d6d90562627644c88f98c982",
-  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit 167068b3f01d2e7d30abdd2ddbfba42de1817d3f",
+  "astrid_commit": "accaf1ab2a7539fb71cfbba267a31ef1b6e0da33",
+  "astrid_tree": "e734e714c07a6827d65797da3907467becc0781e",
+  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit accaf1ab2a7539fb71cfbba267a31ef1b6e0da33",
   "declared_files": "config/astrid-vendor-files.json",
   "verify_command": "node scripts/build/verify-astrid-vendor-sources.mjs",
   "files": {
@@ -135,7 +135,7 @@
     "astrid/packs/rendering/ui/threejs-live-editor/explorer/Select.tsx": "ff70d6fc0da09549a39412e89b03b1d7950e8a700ce5954f19395fccdfc22528",
     "astrid/packs/rendering/ui/threejs-live-editor/explorer/ShotGallery.tsx": "2ce04c23dd78602b4d16072b2a419a1d22df34ab65bcc8c47f5aac4ca8c70538",
     "astrid/packs/rendering/ui/threejs-live-editor/explorer/TimeBar.tsx": "afa95c18081f1c5818dbd46baece86f9543fdacdfcf51be4ee8fb7c42f0db510",
-    "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel.tsx": "0d853cfed0b813a25e7e6855ff3c259c8e859ea2917c7b02c42d402e6158243e",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel.tsx": "3af740afa0cec4c8067ba95fa9fb9ef39ce46b0758baa7c0aae9df1b2455a483",
     "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldList.tsx": "ab3b84403973b98e68f650e6e58fef0c6b958425291bf29cdea775ccd70be11a",
     "astrid/packs/rendering/ui/threejs-live-editor/explorer/camera.ts": "b54f7711cae25c3c63284ed6a5f20fba2af6c7758fdd5a104dc41b2aad85eefc",
     "astrid/packs/rendering/ui/threejs-live-editor/explorer/library.ts": "a2d670345a6977c3567ee5158bc53e6d365a325d82d7724d0853980d5c02d414",
