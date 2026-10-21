@@ -1,8 +1,9 @@
 # MAIN run handoff: coherent public current Agent full
 
-**Status: HOLD - do not request or run the full lane until the source-coherent
-wrapper delta receives independent APPROVE and the new immutable Remotion
-runtime and private profile are present.**
+**Status: CODE APPROVED / STORAGE HOLD - the source-coherent wrapper delta is
+independently APPROVED. Do not request or run the full lane until the new
+immutable Remotion runtime and private profile are present, and free storage
+is above the existing >13 GiB admission floor.**
 
 This handoff supersedes the 1010 draft. It records one exact MAIN run against
 the frozen current Agent source. This worker did not build, install, launch,
@@ -110,10 +111,13 @@ This worktree changes only the wrapper metadata needed for source coherence:
 `EXPECTED_C13_SOURCE` becomes b3c and the fallback project path becomes
 `/home/user/work/runtimes/agent-remotion-0014`. The strict artifact, source,
 wheel, install, 164-pin, 166-distribution/RECORD, import-origin, and direct
-pytest exit/SIGTERM guards are retained. The successor wrapper's new commit,
-tree, blob, and SHA-256 are not known until harness publication. This guard
-delta requires a fresh independent review; no full is released until that
-review approves it.
+pytest exit/SIGTERM guards are retained. Independent review APPROVES this
+two-line delta at commit `fc4c23d079f17aa4d8f167b385c7e5bda2edd299`, tree
+`7ce6a0b8022928cd98a2f7cd448bf9d24a442587`, wrapper blob
+`198a94ad1f1c9921705399febb7e7f71dffd419d`, SHA-256
+`0e1b5ccd2157788d53d6ba7fa6c0e1adc362e97f190e734cc023bf4ff92e87d`.
+This approval is code-only: the b3c-source `agent-remotion-0014` runtime is
+absent and the private profile is not built, so storage remains HOLD.
 
 The previously approved source delta from the repaired
 `594c16e1f21340f179296fa341e22233df7efa54` blob was the expected-Agent
@@ -131,9 +135,8 @@ archive map remains exactly:
 packages/python/astrid_runtime_client/ -> astrid_runtime_client/
 ```
 
-The new source-coherence delta is separate and pending. Independent delta
-review must approve the new C13 marker/runtime metadata and verify that no
-other wrapper line changed. That review must retain
+The new source-coherence delta is now approved. The review verified that no
+other wrapper line changed and retained
 the strict 164-pin carrier/hash, 166 installed distributions and `RECORD`
 files, complete RECORD closure, regular/symlink-free files, all76 source and
 wheel/install byte checks, the Agent/public95 client payload equality, eight
