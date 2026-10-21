@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T01:51:40Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 22 | status age 14m -->
+<!-- app | 2026-10-21T01:57:49Z | dispatcher heartbeat 10s | live 4 (sol 0, luna 4, other 0) | busy30 20 | status age 3m -->
 # app — 2026-10-21 01:35 UTC
 Milestone: M1 RECORDED. M2 writer retirement / M3 gates OPEN.
 Integrated: App808ef7ebf8b48d16cc0007a23b6877d62b90f63e, tree d6f1e417379f59c41747b61adab51de4c370f8e6; Main860 retained. Parent row+shared construction813a, dormant App2 seam helperf37, fixture conflict resolution9a7 and owned binding/snapshot retention808 are merged. Binding adapter21 targeted central controls pass; no live add activation. App2 parent actual gate remains its owner.
@@ -22,3 +22,5 @@ Inbox: ACK01:15 lead owed-public013 proof and READY fix. ACK App2 offline Main14
 Decided locally: correct our mistaken12GiB install guard to ORIGINAL12GB guidance (12000000000 available bytes after staging); prior12122560KiB exceeds12GB. Integrity/source/ownership guards unchanged. New install remains owned, existing graphs read-only. Native baseline expectedkey correction adds assertion from pinned source, no product normalization.
 Resources: safe App recycling exhausted;271MB reclaimed.12GB guidance now measured consistently in bytes; current approximate12G. Active graphs/leases protected. No manager product/Git mutation.
 STORAGE NEED 3 GiB for upcoming current integration full after safe App cleanup; install may proceed only when original decimal12GB floor is met.
+
+01:54 ACK lead churn redirect: ONE canonical public013 branch6615f1fd/treefd9610bb, ONE executorr8. App2 owns bootstrap ledger; redundant HOME ledger task stopped. Next failed proof gets DIAGNOSIS ONLY, no executor chain. Normal14 pin/proof distinct and held. READY normalgraph installed/central-smoke PASS; no more installs.
