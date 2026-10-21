@@ -125,12 +125,22 @@
     "astrid/packs/rendering/ui/live-scenes/authoring.ts": "sha256:0a555b38ad93727e87f0dc08ed958a90412511be94a8bb632830c234f233d276",
     "astrid/packs/rendering/ui/live-scenes/extension.tsx": "sha256:bb9f23ee14913b8ef9919a0dd9508f1c782705717a4484b8b40a9a544b9fa3b9",
     "astrid/packs/rendering/ui/live-scenes/identity.ts": "sha256:ab1fa9c6972518d85dd39f5f1fdeee983a2754b6ad04a738d3e4dff13ed2b3b9",
-    "astrid/packs/rendering/ui/threejs-live-editor/SceneSurface.tsx": "sha256:1fc6ee4a611c713e7db13e2c823d05a065230a7e3a65131b1cb0ba4c84caf683",
-    "astrid/packs/rendering/ui/threejs-live-editor/authoring.ts": "sha256:2e681aa4b6a4a287d3921e13c56e696e1279cb20f8e8ef7e363c9860b545875a",
+    "astrid/packs/rendering/ui/threejs-live-editor/SceneSurface.tsx": "sha256:a0a7f48a49a6b59f467c902daa962a871b3d9d058a77e420768de80c27bd8193",
+    "astrid/packs/rendering/ui/threejs-live-editor/authoring.ts": "sha256:52a9956ce1451002072037dc07f27f6b66e0b372803be34c7cdb5165d36f7f07",
     "astrid/packs/rendering/ui/threejs-live-editor/diagnostics.ts": "sha256:dd4e81c2fbab6657dc1b17e94f3f8ebe567157140b16550243644b6518caf303",
-    "astrid/packs/rendering/ui/threejs-live-editor/extension.tsx": "sha256:b1e5fba1717b71a8cf62f6fb5d4c0f6636762144acfd475cb3da2bd4a7897da3",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/Select.tsx": "sha256:ff70d6fc0da09549a39412e89b03b1d7950e8a700ce5954f19395fccdfc22528",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/TimeBar.tsx": "sha256:c2b1f10f0ba0287b8e654774edcbbc72b17450d6afffe5a38988c95d0db9560e",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldExplorerPanel.tsx": "sha256:e02fa60d25c352bf0e09108611c6c9ef6147eedc32957ae5e030fceeac3fc9aa",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/WorldList.tsx": "sha256:f3e00fffa1580b0b920a1f7136d085d1e9fde7527f001d13e9589c1e3f23d656",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/camera.ts": "sha256:b54f7711cae25c3c63284ed6a5f20fba2af6c7758fdd5a104dc41b2aad85eefc",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/library.ts": "sha256:7b985551abb6717d5ed61719de187550db62759564a22deaccdf0a1c1af3e9ad",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/model.ts": "sha256:7b4ed6174aff827fddec6036bbe2a7b47d810100eee3f5c4c0111baf93582cab",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/rows.ts": "sha256:3b3f68da6771729d093f99271510970e616fbcd0fad99a82f693d86679459ff6",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/ui.ts": "sha256:96dad2fd30b53af76c19672961dde306b18d80ff151da3ee658ba356ee49863e",
+    "astrid/packs/rendering/ui/threejs-live-editor/explorer/worlds/sample.ts": "sha256:6b265ce9429624faa2834b2a1f08d3a252289aecf85bfb4bd1a9489a09cd6c43",
+    "astrid/packs/rendering/ui/threejs-live-editor/extension.tsx": "sha256:b45a3835e46b98a21793f23f66222ab12e5a66266be9840fc503c749bca1b7cb",
     "astrid/packs/rendering/ui/threejs-live-editor/identity.ts": "sha256:b295f5b94eb47fa34612c40faac3508eacb27e89a1369525d526dfb17c2dbdf2",
-    "astrid/packs/rendering/ui/threejs-live-editor/runtime.ts": "sha256:0be9b7a3599bf247555a663fcb93e15d8256b131daaa7dccea44fc8c09d5badf",
+    "astrid/packs/rendering/ui/threejs-live-editor/runtime.ts": "sha256:5c1d69b3977b371168f46660364f26de971c323741a74871e88360b38b237ab4",
     "astrid/packs/rendering/ui/transcript-lane/TranscriptLane.tsx": "sha256:d92ea46a3d25f3d5e952db9d3b3c41401da2f82d49a58ca60a0f1fefb22f5c9b",
     "astrid/packs/rendering/ui/transcript/TranscriptPanel.tsx": "sha256:2f315298851f579bce16c9a72253d1df37c0f772e05833d5f151f6d5c034dea4",
     "astrid/packs/rendering/ui/transcript/extension.tsx": "sha256:870ef0dadec02b41246161fdd74653756a26fc5d53c4458d7221af67202bee1e",
@@ -159,5 +169,5 @@
     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
   },
   "producer": "astrid-agent",
-  "version": "sha256:833a2ce9d7993a90805250159b8290f21b11c60dfb18e0fd8914bef41a9d8005"
+  "version": "sha256:d049d2ab7967e0a56266d18f07754ee62c50081ea84e6c69a2fc3188d558a805"
 }

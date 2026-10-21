@@ -2,8 +2,8 @@
 name: rendering
 description: >
   Author, inspect, edit, preview, render, and open runtime-owned Astrid
-  timelines, including Remotion output and render-time animation, transition,
-  and effect elements.
+  timelines, including Remotion output, explorable Three.js worlds, and
+  render-time animation, transition, and effect elements.
 ---
 
 # Timeline editing
@@ -23,23 +23,32 @@ When the request also needs
 new generated media (for example Foley audio), use [creative work](../../_core/docs/creative-work/SKILL.md)
 to find its generation capability, then return here to assemble the result.
 
-## Live Scenes extension route
+## Worlds (Three.js live scenes)
 
-When the task concerns native Three.js scene code or a
-`haus.astrid.liveScene` clip, first confirm that the corresponding
-registered extension/operation is active; installed documentation alone does
-not make the capability available. Then read [Live-scene authoring and
-conversion](references/live-scenes-authoring.md) for the supported public
-Astrid App read/exact-edit/publish loop, Runtime-owned package revisions, hosted
-lifecycle, source-time mapping, and bounded prepared-scene admission/export
-boundaries. Use the [two-shot Three.js template](templates/two-shot-threejs.ts)
-for the minimal reusable-set, animated-subject example with named camera cuts.
+When the task concerns native Three.js scene code, a world, or a
+`haus.astrid.liveScene` clip, first confirm that the Three.js Live Editor
+extension and its operations are active; installed documentation alone does
+not make the capability available.
 
-Ordinary clip placement, trim, repetition, playback rate, and audio remain on
-this general timeline route; use scene source/data for internal action or
-camera timing. Maple remains a continuous take. This extension route does not
-add a camera UI, retiming engine, scene-audio subsystem, generic ZIP importer,
-or second timeline authority.
+The contract: **worlds are always explorable; cameras live within them.** A
+world is one self-contained HTML entry implementing `window.astridScene`. It
+declares `explore` (required: where the free view starts and may go), its
+`events` (in world time) and its `cameras` (named source-time ranges, each
+with an optional `worldStart`). Its `render` draws the authored camera for a
+`sourceTime`, or exactly the World Explorer's `view` at `worldTime`. Before
+creating, converting or editing a world, read
+[Worlds: authoring explorable live scenes](references/worlds-authoring.md). It
+covers the four layers (world constructor → world state from world time,
+including events → cameras → free view), holding up from any viewpoint,
+software-GL performance, the package contract, admission, and the
+read/exact-edit/publish loop. Start from the
+[world template](templates/world-template.ts).
+
+Ordinary clip placement, trim, repetition, playback rate and audio remain on
+this general timeline route. Events and cameras live in the world's source.
+Maple Hollow is a continuous take (one implicit camera) and does not declare
+`explore` yet. This route does not add a retiming engine, a scene-audio
+subsystem, a generic ZIP importer or a second timeline authority.
 
 Treat the connected workspace runtime as the sole authority for projects,
 timeline documents, versions, media objects, tasks, runs, and render outputs.

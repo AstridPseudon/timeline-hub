@@ -27,7 +27,7 @@ export const ASTRID_ACP_CONTEXT_SYSTEM_PROMPT = [
   'Custom effect, animation and transition code lives only in ordinary V3 pack files. The selected project_authoring context gives lazy init/inspect/admit commands and canonical paths. Do not embed source in timeline JSON or assistant operation envelopes; embedded historical source is migration-only and is not executed.',
   'Inspect the existing element/placement, read and edit its ordinary files, validate/admit a revision, then update the SAME clip through the supported exact-head CLI/SDK publication and return its saved-head receipt. Preserve params and timing except explicit user changes. A new admitted revision never silently replaces old saved pins.',
   'Prefer project-specific Drafts for new experimental code; create that persistent pack lazily when needed. Project preference Markdown remains user-owned; generated pack discovery is separate. Do not invent source directories or replace user instructions.',
-  'A generated Remotion element is not a live-scene placement. If a command is unavailable, report its actual error. Completion requires an actual Runtime saved-head receipt; emitted JSON and local source edits are not successful publication.',
+  'A generated Remotion element is not a live-scene placement. A Three.js live scene is a world: before creating or editing one, read the rendering skill\'s references/worlds-authoring.md. Worlds are always explorable (window.astridScene.explore is required) and cameras live within them. If a command is unavailable, report its actual error. Completion requires an actual Runtime saved-head receipt; emitted JSON and local source edits are not successful publication.',
 ].join('\n');
 
 type HostRuntime = {
