@@ -2,13 +2,16 @@
 set -eu
 
 # Evidence-preserving adaptation of the approved parent-drop driver. Keep the
-# current exact three-path source pins and current App tree guard; do not alter
-# the product row or broaden its selectors.
+# current exact three-path source pins and the committed consumer source guard;
+# do not alter the product row or broaden its selectors.
 
 worker_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 source_runner=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-app-central.sh
 source_common=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-source-common.sh
-expected_app_tree=972d2ed2e4f85f334eb9f2e6ca40d9bfbce9eac7
+# This committed parent is the ancestry anchor for the corrected consumer
+# tree. The shared normal014 source helper remains the authoritative exact
+# tree guard; do not embed a self-referential tree digest here.
+app_ancestry_anchor=7e85d89120227f336a2e8dbf8e0ea44d98311da0
 
 usage() {
   echo "usage: $0 run APP_ROOT | $0 probe" >&2
@@ -35,10 +38,15 @@ write_source_identity() {
     printf 'head=%s\n' "$(git -C "$app_root" rev-parse HEAD 2>/dev/null || printf unavailable)"
     printf 'tree=%s\n' "$(git -C "$app_root" rev-parse 'HEAD^{tree}' 2>/dev/null || printf unavailable)"
     printf 'status=%s\n' "$(git -C "$app_root" status --porcelain=v1 --untracked-files=all 2>/dev/null | tr '\n' ' ' || printf unavailable)"
-    printf 'expected_tree=%s\n' "$expected_app_tree"
+    printf 'ancestry_anchor=%s\n' "$app_ancestry_anchor"
+    printf 'source_guard=normal014-source-common.sh:final95:parent\n'
+    printf 'profile=final95\n'
+    printf 'app_source=parent\n'
     printf 'app_pin=10fa2ff9a8216604aa39e3584f89dc9e7a09080a\n'
     printf 'agent_pin=6efc81500a0e0688c2bb41e736503f0fc3e04abb\n'
+    printf 'agent_tree=2ed2b8a12b5b3391ca221ba6ff05390f71a73556\n'
     printf 'runtime_pin=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c\n'
+    printf 'runtime_tree=d3a290b407fa61e6ab2d476f50c068073f70df00\n'
     printf 'producer_pin=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c\n'
     printf 'public13_archive_sha=sha256:895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30\n'
   } >"$evidence_dir/source-identity.txt"
@@ -156,7 +164,7 @@ run_gate() {
   observed_app_head=$(git -C "$app_root" rev-parse HEAD)
   observed_app_tree=$(git -C "$app_root" rev-parse 'HEAD^{tree}')
   observed_app_status=$(git -C "$app_root" status --porcelain=v1 --untracked-files=all)
-  test "$observed_app_tree" = "$expected_app_tree"
+  git -C "$app_root" merge-base --is-ancestor "$app_ancestry_anchor" "$observed_app_head"
   test -z "$observed_app_status"
   test "${#observed_app_head}" -eq 40
   case "$observed_app_head" in *[!0123456789abcdef]*) exit 1;; esac
@@ -175,7 +183,8 @@ node node_modules/playwright/cli.js test --config playwright.three-products.conf
   chmod 700 "$run_copy"
 
   status=0
-  NORMAL014_RUN_ROOT="$run_root" sh "$run_copy" run "$app_root" >"$run_root/runner.log" 2>&1 || status=$?
+  NORMAL014_PROFILE=final95 NORMAL014_APP_SOURCE=parent NORMAL014_RUN_ROOT="$run_root" \
+    sh "$run_copy" run "$app_root" >"$run_root/runner.log" 2>&1 || status=$?
   cat "$run_root/runner.log"
   record_evidence "$run_root" "$app_root" "$status"
   evidence_recorded=1
