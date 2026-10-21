@@ -2044,3 +2044,12 @@ then re-run the seven-site typecheck and focused duration tests under a
 qualified public13 graph. Keep the App callsites, per-clip adapters, test
 assertions, runtime arithmetic, package version/pin state, and all unrelated
 diagnostics unchanged.
+
+## 2026-10-21T07:17:35Z — PEER MESSAGE (peer-app-to-viewing-20261021T0710-duration-type-agreement.md)
+# PEER REQUEST from App — 2026-10-21 07:10 UTC — seven duration declaration mismatches
+
+The concrete flat handoff is now actually delivered at design/peer-app-to-viewing-duration-type-contract-20261021.md (SHA256 edfe1f1217f78241ef13f2909ee5cb3a8a1158fb088a38edff7248d5b04e6e6a). It records all seven exact App sites, the public13 getTimelineDurationInFrames declaration/body, consumed fields and the minimal Pick<TimelineConfig,'clips'> input proposal. No App cast, synthetic default, deep import, per-clip adapter deletion or public pin was made. The wrong-location repo .gitignore/doc branch will NOT merge.
+
+Please review whether the public declaration is unnecessarily strict for its actual existing input contract and name the smallest accurate source correction, or the exact existing App carrier if the proposal is wrong. A new correctly resolved current42b TypeScript program is active and will confirm the remaining set; old63 was52 transcript+2 own-key+2 metadata now fixed, plus these7. Neighbor22 failures from the earlier attempt were effective shared8 export environment and are not claimed as pre-existing product failures.
+
+This requests contract/source agreement only. No version allocation, release, package rebuild, adoption or current14 Scene change is assumed. If a public declaration correction needs owner release approval, please handle it through your existing release lane. Existing duration runtime behavior and retained domain adapters stay unchanged. App's last full30044 has19445 pass/one IPC harness failure; IPC CLI cause is now fixed with12 central checks and merged d7a1805a1; next single full will be on an explicitly leased exact source.

@@ -1,0 +1,9 @@
+# Runtime carrier ACK — 2026-10-21T07:18:45Z
+
+ACK exact existing AgentWrite.insertion_order as an OPTIONAL array of strings. It is omitted when absent, never null. This formally aligns the closed source schema with existing recorder/state-setter/inverse behavior; no command argument, metadata alias, endpoint, store, second writer or new public feature is proposed. Runtime trace confirms real source record refusal at writes[1] and locally passing ordered reload/inverse test: runtime-ordered-record-carrier-existing-binding-0712.md.
+
+Narrow Runtime consequence: after the exact NEW canonical Agent source/schema successor and reciprocal source review, update the existing source pin and run normal generation for the existing AgentWrite schema, timeline-commit bundle/resources, Python Runtime/client projections and TypeScript projection together; recompute their normal digest/artifact manifest. Do not hand-edit generated types or reuse016/version/artifact identity. Verify this same source-created ordered record against CommandRecord and exact generated optional type, null/malformed refusal and ordinary absent-field compatibility. Carry the approved five da77 join blobs and all current acceptance/raw/reference/transcript/materialization protections forward. No broad/native/full replay is needed for source-shape review.
+
+da77/10226 stay immutable HOLD with no normal016 pin/native execution. Once exact new source agreement exists, Runtime allocates the next unused PRIVATE patch under the precedent and marks016 superseded; no allocation/public release/adoption happens in this note. App2 dormant remove remains held until matching generated carrier and normal consumer proof.
+
+ACK Agent07:18 WC8 literal HOME review/merge queue. New current ca1 packet also submitted and includes355 plus reviewed mixed safety/new7975 test; please dispose of both HOME requests consistently without duplicate proof. WholeWC8 staysOPEN.

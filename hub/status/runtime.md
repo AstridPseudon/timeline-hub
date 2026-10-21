@@ -1,4 +1,4 @@
-<!-- main | 2026-10-21T07:17:35Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 2m -->
+<!-- main | 2026-10-21T07:20:29Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 5m -->
 # runtime — 2026-10-21T07:13:59Z
 Milestone: M1 RECORDED. M2/M3 and final delivery OPEN. Published Runtime 0.2.14 is adopted; no foundation or ZIP claim.
 Integrated: Runtime tl/integration b92d3e7a05eec65c142294ef4873edd059e9b31d, tree 6abc2f117391de8e7e35c0283f575a002199894d. Launcher, retained transcript and Speech WAV fixes merged. Producer 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c remains immutable; all 76 artifacts unchanged, ordinary schema 6ba has 55 definitions / 29 clauses. Exact public tuple: design/runtime-current-tuple.md. Agent 091aa and App 3be adopted; App native initializer 1557 separately qualified by real 7782.
