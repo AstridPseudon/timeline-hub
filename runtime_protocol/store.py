@@ -4923,7 +4923,7 @@ class RealmStore:
                     if (
                         task_row
                         and task_row["capability"] == "generation.generate_speech"
-                        and output.get("output_port") == "audio"
+                        and output.get("output_port") in {"audio", "speech"}
                         and media_type in {"audio/wav", "audio/x-wav"}
                         and "duration_seconds" not in variant_metadata
                         and not explicit_duration
