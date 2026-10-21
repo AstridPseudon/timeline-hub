@@ -250,3 +250,4 @@ function openPreparedSceneFile(signal: AbortSignal): Promise<Uint8Array> {
 }
 
 export default threejsLiveEditorExtension;
+
