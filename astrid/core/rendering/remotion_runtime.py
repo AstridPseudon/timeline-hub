@@ -37,7 +37,7 @@ from astrid.core.env_vars import (
 )
 from astrid.core.execution.platform_helpers import owned_by_current_user
 from astrid.core.foundation.paths import REPO_ROOT
-from astrid.core.rendering import _remotion_package
+from astrid.core.rendering import _registry_origin, _remotion_package
 
 REMOTION_PROJECT_DIR_ENV = ASTRID_REMOTION_PROJECT_DIR
 NODE_EXECUTABLE_ENV = ASTRID_NODE_EXECUTABLE
@@ -385,6 +385,8 @@ _INTERACTIVE_GIT_ENV = frozenset({
 
 def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dict[str, str]:
     from astrid.core.subprocess_env import _SAFE_BASE_ENV, _WINDOWS_BASE_ENV
+    if _installed_registry_profile(environment) and any(environment.get(name) for name in ('PYTHONPATH', ASTRID_PACKS_PATH)):
+        raise RemotionValidationError('installed registry discovery refuses explicit import or pack roots')
     probe_context(environment=environment, python_executable=sys.executable)
     if any((k.startswith('GIT_') and k not in _INTERACTIVE_GIT_ENV) or k in {'PYTHONSTARTUP'}
            for k in environment):
@@ -546,13 +548,19 @@ def _registry_observation() -> dict[str, Any]:
         raise RemotionValidationError('managed registry corpus requires the selected Git executable')
     if git:
         files.append(str(Path(git).resolve()))
+    from astrid.core.source_identity import installed_runtime_origins
+    dependency_origins = (
+        {'runtime_dependency_origins': installed_runtime_origins(_registry_origin.selected_root(__file__))}
+        if _installed_registry_profile(os.environ) else {}
+    )
     return {'state': state, 'roots': roots, 'optional_files': optional_files,
             'module_files': files, 'package_roots': package_roots,
             'search_paths': [str(Path(value or '.').absolute()) for value in sys.path],
             'search_path_spellings': sys.path, 'probe_cwd': os.getcwd(),
-            'generator_origin': str(Path(generator.__file__).resolve()),
-            'astrid_origin': str(Path(astrid.__file__).resolve()),
-            'runtime_origin': str(Path(__file__).resolve()),
+            'generator_origin': generator.__file__,
+            'astrid_origin': astrid.__file__,
+            'runtime_origin': __file__,
+            **dependency_origins,
             'managed_inventory_identity': inventory.identity,
             'lock_path': str(lock._resolved_lock_path()),
             'startup': {'executable': sys.executable, 'prefix': sys.prefix, 'base_prefix': sys.base_prefix}}
@@ -682,19 +690,23 @@ def _installed_registry_profile(environment: Mapping[str, str]) -> bool:
             or os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed')
 
 
-def _registry_probe(environment: Mapping[str, str], python: str, *, generator: bool = False) -> tuple[dict[str, Any], dict[str, Any]]:
+def _registry_probe(environment: Mapping[str, str], python: str, *, generator: bool = False,
+                    installed_source: tuple[str, str] | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
     from astrid.packs.rendering.rendering.renderers.remotion import run
-    installed = _installed_registry_profile(environment)
+    installed = installed_source is not None or _installed_registry_profile(environment)
     if installed and environment.get('PYTHONPATH'):
         raise RemotionValidationError('installed registry discovery refuses PYTHONPATH')
     if installed and environment.get(ASTRID_PACKS_PATH):
         raise RemotionValidationError('installed registry discovery refuses explicit pack roots')
     if installed:
-        source = ('import json; '
-                  'from astrid.core.rendering.remotion_runtime import _registry_observation; '
-                  'print(json.dumps(_registry_observation(),sort_keys=True))')
         cwd = Path(tempfile.gettempdir()).resolve()
-        argv = [python, '-I', '-c', source]
+        try:
+            argv = _registry_origin.installed_argv(python, __file__, installed_source=installed_source)
+        except FileNotFoundError as exc:
+            raise RemotionValidationError('installed registry generator carrier is unavailable') from exc
+        except (OSError, ValueError) as exc:
+            raise RemotionValidationError('installed registry launch source binding is unavailable') from exc
+        environment = {**environment, 'ASTRID_HOST_EXECUTION_PROFILE': 'installed'}
     else:
         script_directory = REPO_ROOT / 'scripts' if generator else Path(run.__file__).resolve().parents[2]
         # Match both real script launchers: replace -c's cwd search entry with
@@ -716,17 +728,7 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
         if result.returncode or observation['startup']['executable'] != python:
             raise ValueError('registry source/interpreter differs')
         if installed:
-            astrid_origin = Path(observation['astrid_origin']).resolve(strict=True)
-            installed_root = astrid_origin.parent.parent
-            expected_runtime = installed_root / 'astrid/core/rendering/remotion_runtime.py'
-            runtime_origin = Path(observation['runtime_origin']).resolve(strict=True)
-            generator_origin = Path(observation['generator_origin']).resolve(strict=True)
-            if (astrid_origin != installed_root / 'astrid/__init__.py'
-                    or runtime_origin != expected_runtime
-                    or not generator_origin.is_relative_to(installed_root)
-                    or any(path.is_symlink() for path in (astrid_origin, runtime_origin, generator_origin))
-                    or observation['probe_cwd'] != str(Path(tempfile.gettempdir()).resolve())):
-                raise ValueError('installed registry source/cwd differs')
+            _registry_origin.validate_observation(observation, __file__, cwd, installed_source)
         elif observation['runtime_origin'] != str(Path(__file__).resolve()):
             raise ValueError('registry source/interpreter differs')
         hashes = observation['state']['content_hashes']
@@ -741,14 +743,20 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
 
 
 @_validation_timing("registry_settle")
-def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, *, expected_state: Any = None) -> dict[bytes, Any]:
+def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, *, expected_state: Any = None,
+                       installed_source: tuple[str, str] | None = None) -> dict[bytes, Any]:
     from astrid.packs.rendering.rendering.renderers.remotion import lock, run
     if not lock.remotion_render_lock_held():
         raise RemotionValidationError('registry settling requires the original held Remotion lock')
     output_paths = run._registry_output_paths(project)
     selected: dict[bytes, Any] = {}
+    installed = installed_source is not None or _installed_registry_profile(os.environ) or any(
+        _installed_registry_profile(env) for paths in contexts.values()
+        for env in ([paths] if isinstance(paths, Mapping) else paths))
     if run.gen_effect_registry is None:
-        # Installed wheel: only the provisioned executable outputs are claimed.
+        if installed:
+            raise RemotionValidationError('installed registry generator carrier is unavailable')
+        # Preserve source-only provisioned output bindings without a generator.
         for paths in contexts.values():
             for environment in ([paths] if isinstance(paths, Mapping) else paths):
                 context = _registry_context(environment, generator=False)
@@ -762,7 +770,6 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
     expected = expected_state
     generator_env = None
     generator_origin = None
-    installed = _installed_registry_profile(os.environ)
     digest_memo: dict = {}  # One launch only; never persisted or shared.
     for paths in contexts.values():
         for environment in ([paths] if isinstance(paths, Mapping) else paths):
@@ -775,7 +782,9 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
             key = _canonical({'environment': renderer, 'generator_startup': False})
             if key not in probes:
                 started_ns = time.time_ns()
-                observation, discovery_wait = _registry_probe(renderer, python, generator=False)
+                probe_environment = {**renderer, 'ASTRID_HOST_EXECUTION_PROFILE': 'installed'} if installed else renderer
+                observation, discovery_wait = _registry_probe(probe_environment, python, generator=False,
+                    **({'installed_source': installed_source} if installed_source is not None else {}))
                 _require_completed_probe(discovery_wait, phase='registry_discovery')
                 bound = _registry_inputs(observation, digest_memo=digest_memo, changed_after_ns=started_ns)
                 if observation['lock_path'] != str(lock._resolved_lock_path()):
@@ -800,7 +809,9 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
                     'installed registry generator carrier is unavailable: '
                     'registry discovery returned no generator origin'
                 )
-            generator_argv = [python, str(Path(generator_origin).resolve(strict=True))]
+            generator_argv = _registry_origin.installed_argv(python, __file__, generate=True,
+                                                            installed_source=installed_source)
+            generator_env['ASTRID_HOST_EXECUTION_PROFILE'] = 'installed'
             generator_cwd = Path(tempfile.gettempdir()).resolve()
         else:
             generator_argv = [python, str(REPO_ROOT / 'scripts/gen_effect_registry.py')]
@@ -838,7 +849,8 @@ def _prepare_remotion_validation(**kwargs: Any) -> dict[str, str]:
 
 def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_environment: Mapping[str, str],
                                 python_executable: str, launch_id: str,
-                                contexts: Mapping[str, Mapping[str, str] | list[Mapping[str, str]]]) -> dict[str, str]:
+                                contexts: Mapping[str, Mapping[str, str] | list[Mapping[str, str]]],
+                                installed_source: tuple[str, str] | None = None) -> dict[str, str]:
     """Explicit launch-owner transaction; ordinary resolver calls never spawn."""
     project_raw = host_environment.get(REMOTION_PROJECT_DIR_ENV, "")
     if not project_raw or not Path(project_raw).is_absolute():
@@ -852,7 +864,8 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
     contexts = {role: [candidate for environment in ([values] if isinstance(values, Mapping) else values)
                        for candidate in (dict(environment), build_child_subprocess_env(base=environment, parent=environment))]
                 for role, values in contexts.items()}
-    registries = _settle_registries(project, contexts, python_executable)
+    registries = _settle_registries(project, contexts, python_executable,
+        **({'installed_source': installed_source} if installed_source is not None else {}))
     entries: dict[str, Any] = {}
     validated: dict[bytes, dict[str, Any]] = {}
     # Registry selectors remain qualified independently. The owned Node and

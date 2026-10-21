@@ -1714,7 +1714,8 @@ def _record_may_render(record: 'CapabilityRecord') -> bool:
 
 def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment: Mapping[str, str],
                                      capability_matrix: Path | None = None,
-                                     *, remotion_only: bool = False) -> list[dict[str, str]]:
+                                     *, remotion_only: bool = False,
+                                     installed_root: Path | None = None) -> list[dict[str, str]]:
     """Project only fixed launch-known inputs; never expand task placeholders.
 
     With ``remotion_only`` just the worker environments of capabilities that
@@ -1773,6 +1774,8 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
     installed = (environment.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed'
                  or os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed')
     if installed:
+        from astrid.core.rendering.remotion_runtime import _registry_context
+        _registry_context(environment, generator=False)
         # The installed host already discovers its selected package tree.
         # Do not make a worker's pack root or source path a second authority.
         baseline.pop(ASTRID_PACKS_PATH, None)
@@ -1781,6 +1784,11 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
     for record in records.values():
         if remotion_only and not _record_may_render(record):
             continue
+        if installed and remotion_only and not record.source_root.is_relative_to(
+                (installed_root or Path(__file__).absolute().parents[3]) / 'astrid/packs'):
+            raise HostError('installed Remotion workers require product-owned pack roots')
+        if installed and remotion_only and _network_policy(record) is not None:
+            raise HostError('installed Remotion workers cannot project attempt-specific startup import hooks')
         # Startup validation has no task credential channel. Legacy manifests
         # can still list credentials in passthrough: omit those names entirely,
         # while retaining their syntax checks without declaring any authority.
@@ -7705,7 +7713,14 @@ class GenericPackHost:
                     readiness_path = readiness_path[len(installed_hook) + 1:]
                 else:
                     raise HostError('host network hook context differs before readiness validation')
-            if readiness_worker_kind == 'command':
+            if readiness_worker_kind not in {'native', 'command'}:
+                raise HostError('unknown internal readiness worker projection')
+            if os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed':
+                if readiness_path:
+                    readiness_env['PYTHONPATH'] = readiness_path
+                else:
+                    readiness_env.pop('PYTHONPATH', None)
+            elif readiness_worker_kind == 'command':
                 readiness_env['PYTHONPATH'] = _command_worker_pythonpath(record, readiness_path)
             elif readiness_worker_kind == 'native':
                 readiness_env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
@@ -8070,7 +8085,9 @@ class GenericPackHost:
             readiness_worker_kind='command',
             allow_runtime_connection=allow_runtime_connection and child_bridge is None,
             explicit_env={
-                "PYTHONPATH": os.pathsep.join((package_parent, *_dependency_pythonpath())),
+                **({} if os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed' else {
+                    "PYTHONPATH": os.pathsep.join((package_parent, *_dependency_pythonpath())),
+                }),
                 ASTRID_INTERNAL_INVOCATION: "1",
                 **binding.env,
                 "ASTRID_PROGRESS_PATH": str(attempt / ".astrid-progress.json"),
@@ -8089,7 +8106,8 @@ class GenericPackHost:
         from astrid.core.rendering.verified_source import PreparedTimelineInputs
 
         PreparedTimelineInputs.handoff_source(prepared_inputs, env)
-        env['PYTHONPATH'] = _command_worker_pythonpath(record, env.get('PYTHONPATH', ''))
+        if os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') != 'installed':
+            env['PYTHONPATH'] = _command_worker_pythonpath(record, env.get('PYTHONPATH', ''))
         cwd = _confined_cwd(
             binding.cwd,
             attempt=attempt,
@@ -8365,10 +8383,11 @@ class GenericPackHost:
         # Preserve the host-created sitecustomize hook when replacing the
         # worker import path; arbitrary child PYTHONPATH is still excluded.
         network_hook_roots = (str(attempt_path / ".astrid-network-hook"),) if env.get("ASTRID_NETWORK_POLICY") else ()
-        env["PYTHONPATH"] = os.pathsep.join(
-            dict.fromkeys((*network_hook_roots, package_parent, *_dependency_pythonpath(), *import_roots))
-        )
-        env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
+        if os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') != 'installed':
+            env["PYTHONPATH"] = os.pathsep.join(
+                dict.fromkeys((*network_hook_roots, package_parent, *_dependency_pythonpath(), *import_roots))
+            )
+            env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
         broker_endpoint = str((child_env or {}).get("ASTRID_BROKER_PROXY") or "")
         argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker", str(request_path)]
         inherited_fds = ()

@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -23,8 +24,8 @@ def _installed_observation(tmp_path, python):
     astrid = root / 'astrid'
     runtime_origin = astrid / 'core/rendering/remotion_runtime.py'
     astrid_origin = astrid / '__init__.py'
-    generator = root / 'scripts/gen_effect_registry.py'
-    for path in (astrid_origin, runtime_origin, generator):
+    generator = astrid / 'core/rendering/_effect_registry.py'
+    for path in (astrid_origin, runtime_origin, generator, *(Path(raw) for raw in _runtime_origins(root).values())):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text('# installed fixture\n', encoding='utf-8')
     return {
@@ -33,9 +34,26 @@ def _installed_observation(tmp_path, python):
         'astrid_origin': str(astrid_origin),
         'runtime_origin': str(runtime_origin),
         'generator_origin': str(generator),
+        'runtime_dependency_origins': _runtime_origins(root),
         'probe_cwd': str(tmp_path.resolve()),
         'startup': {'executable': python},
     }
+
+
+def _runtime_origins(root):
+    return {name: str(root / path) for name, path in {
+        'runtime_protocol': 'runtime_protocol/__init__.py',
+        'runtime_protocol.platform': 'runtime_protocol/platform.py',
+        'astrid_runtime': 'astrid_runtime/__init__.py',
+    }.items()}
+
+
+def _bind_installed_fixture(tmp_path, monkeypatch):
+    root = tmp_path / 'site-packages'
+    # The selected host tree is an independent fixture input, not inferred
+    # from the observation being checked. No interpreter runs in these tests.
+    monkeypatch.setattr(runtime._registry_origin, 'selected_root', lambda _: root)
+    monkeypatch.setattr(runtime._registry_origin, 'source_checkout_closure_digest', lambda _: 'a' * 64)
 
 
 def _completed_probe_receipt():
@@ -51,6 +69,7 @@ def test_installed_registry_probe_uses_selected_interpreter_and_neutral_context(
     environment = _env(tmp_path, ASTRID_HOST_EXECUTION_PROFILE='installed')
     captured = {}
     observation = _installed_observation(tmp_path, python)
+    _bind_installed_fixture(tmp_path, monkeypatch)
 
     def owned(argv, **kwargs):
         captured.update(argv=argv, kwargs=kwargs)
@@ -73,6 +92,7 @@ def test_installed_registry_probe_refuses_wrong_interpreter_or_foreign_cwd(tmp_p
     python = '/selected/venv/bin/python'
     environment = _env(tmp_path, ASTRID_HOST_EXECUTION_PROFILE='installed')
     observation = _installed_observation(tmp_path, python)
+    _bind_installed_fixture(tmp_path, monkeypatch)
     if field == 'executable':
         observation['startup']['executable'] = '/foreign/python'
     else:
