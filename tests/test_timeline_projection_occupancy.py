@@ -416,18 +416,24 @@ def test_actual_provider_historical_slot_rematerializes_after_verified_restore(s
         s["shot_id"] for s in first["data"]["canonical_document"]["shot_revisions"]}
 
 
-@pytest.mark.integration
-def test_startup_provider_materializes_source_items_and_refuses_global_item_occupancy(
-    film, agent, tmp_path,
-):
-    from runtime_protocol.errors import RuntimeErrorBase
-
+@pytest.fixture
+def source_items_agent(film, request):
     setup = RuntimeService(film.fixture.duplicate_root)
     try:
         publish_source_items(setup, film)
     finally:
         setup.close()
+    # Install renderer tripwires only after the normal source publication.
+    return request.getfixturevalue("agent")
 
+
+@pytest.mark.integration
+def test_startup_provider_materializes_source_items_and_refuses_global_item_occupancy(
+    film, source_items_agent, tmp_path,
+):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    agent = source_items_agent
     world = _start_door(film, tmp_path)
     try:
         editing = Editing(world.daemon.service, film, agent)
