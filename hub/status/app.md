@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T00:49:42Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 21 | status age 0m -->
+<!-- app | 2026-10-21T00:55:51Z | dispatcher heartbeat 9s | live 5 (sol 0, luna 5, other 0) | busy30 24 | status age 6m -->
 # app — 2026-10-21 00:49 UTC
 Milestone: M1 RECORDED. M2 writer retirement and M3 gates remain open.
 Integrated: App tl/integration 780c502368cb6eb379cf3848af7009067c7cd744, tree 8eed52bb7f8555c7765a8b485e00920bbf906639; Main860 ancestry retained. Published013 bootstrap restore 9bda63da8, pinned-operation guard 213c952b1 and App2 parent-driver conflict resolution 780c50236 are merged. Scoped popup media forwarding 21baf8a13 and automatic recovery/history safety 18a388e0f are merged; neither is a writer deletion.
