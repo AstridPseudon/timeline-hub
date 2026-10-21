@@ -31,7 +31,8 @@ describe('clip scalar gesture', () => {
     expect(port.capture).toHaveBeenCalledWith({ current, clipId: 'o1:raw', ownerRef: 'occurrence:o1' });
     expect(submit.mock.calls[0][0]).toEqual(JSON.parse(JSON.stringify({ command: {
       schema_version: 1, op: 'clip.set', version: '1', select: basis.select, args },
-    preview: { version: 1, operations: [{ op: 'clip.update', target: 'o1:raw', payload: args.values, clear: args.clear }] } })));
+    preview: { version: 1, operations: [{ op: 'clip.update', target: 'o1:raw', payload: args.values,
+      clear: args.clear.filter((key) => key !== 'elementRef') }] } })));
   });
   it('omits empty preview clear metadata for a native transition set', () => {
     const { port, current, submit } = setup();

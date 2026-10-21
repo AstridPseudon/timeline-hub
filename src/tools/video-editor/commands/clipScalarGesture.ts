@@ -23,9 +23,10 @@ export interface CapturedClipScalarEdit {
 export function clipScalarPreview(clipId: string, args: ClipScalarArgs): TimelinePatch {
   const transitionSet = Object.prototype.hasOwnProperty.call(args.values, 'transition')
     || Object.prototype.hasOwnProperty.call(args.values, 'elementRef');
+  const clear = args.clear.filter((key): key is 'hold' | 'asset' | 'transition' => key !== 'elementRef');
   return { version: 1, operations: [{
     op: 'clip.update', target: clipId, payload: structuredClone(args.values),
-    ...(args.clear.length || !transitionSet ? { clear: [...args.clear] } : {}),
+    ...(clear.length || !transitionSet ? { clear } : {}),
   }] };
 }
 
