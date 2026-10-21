@@ -111,11 +111,15 @@ out-of-scope follow-up outside this repo.
 
 The former Supabase `saveTimeline`/append path is retired. Migrated timeline
 producers use App command capture, the crash-safe outbox, and the Runtime
-`/v1` commit door. The current Runtime parent-publication path remains live for
-open ordinary and popup producers and for empty-timeline bootstrap/repair; the
-native `timeline.init` outbox path is staged but not active in production. No
-`config-replaced` or `create-with-config` Supabase route is a supported
-compatibility path. The bundle remains a fail-closed compatibility contract:
+`/v1` commit door. Current empty-timeline creation and repair use the native
+`timeline.init` outbox path: Runtime creates the timeline, App verifies the
+single empty parent baseline, and App commits `timeline.init` plus its two
+`track.create` commands through the normal commit route. The Runtime
+parent-publication path remains live for open shot-composition, popup, and
+placement producers that have not migrated. No `config-replaced` or
+`create-with-config`
+Supabase route is a supported compatibility path. The bundle remains a
+fail-closed compatibility contract:
 unknown versions and malformed payloads are rejected rather than silently
 becoming empty lanes. Immutable media and task results are referenced by
 normal guarded commands when they need to enter a timeline.
