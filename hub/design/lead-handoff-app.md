@@ -4,7 +4,7 @@ The hub is AstridPseudon/timeline-hub (clone /home/user/timeline-hub). Never pus
 
 ## How this machine's daemons run (exact commands; all from /home/user)
 - Dispatcher: nohup env PLAYWRIGHT_BROWSERS_PATH=/home/user/work/pw-browsers setsid $ORCH/bin/dispatcher-daemon >> $ORCH/dispatcher.log 2>&1 < /dev/null &
-  (the env var points Playwright 1.60 at a symlink shim over the image's chromium 1194; without it browser tests fail). Pid in $ORCH/dispatcher.pid. Now pid 21263.
+  (the env var points Playwright 1.60 at a symlink shim over the image's chromium 1194; without it browser tests fail). Pid in $ORCH/dispatcher.pid. Now pid 20932 (restarted 01:14Z so it runs the kit READY-refill code).
 - hub-syncd: nohup setsid $ORCH/bin/hub-syncd app > $ORCH/hub-sync.log 2>&1 < /dev/null &   (pid 311; every ~5 min; never run bin/hub-sync by hand)
 - Manager: rm -f $ORCH/managers/app/running only if no manager process remains, then nohup setsid $ORCH/bin/run-manager app > /dev/null 2>&1 < /dev/null &
   It is a loop with 3 h codex rounds (gpt-6.1-sol high). Restart a stuck round by killing ONLY the `timeout 3h codex exec` pid; the loop starts a fresh round.
