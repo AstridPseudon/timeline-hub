@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import difflib
 import re
 
 from astrid.core.timeline import clip_fields
@@ -45,6 +46,10 @@ def _publishable_parent_command(command):
             and set(args) == {'on', 'right_id'}):
         return True
     values = args.get('values') if isinstance(args, dict) else None
+    if (command.get('op') == 'clip.set-params' and isinstance(args, dict)
+            and isinstance(values, dict) and isinstance(args.get('clear'), list)
+            and isinstance(args.get('schema_source'), dict)):
+        return True
     return (command.get('op') == 'clip.set' and isinstance(args, dict)
             and ((args.get('clear') == [] and isinstance(values, dict)
                   and set(values) == {'hold'} and values['hold'] is not None)
@@ -63,12 +68,61 @@ class AttachedCheckout(Checkout):
     def _read_pending(self):
         with self.session.outbox.locked():
             state = self.session._state()
-        self.bundle = self.session._bundle(state)
+        try:
+            self.bundle = self._bundle(state)
+        except Exception:
+            # A selected PARAM flight already contains its exact retained pin
+            # and is retried verbatim.  Its portable bytes need not be reread
+            # just to reopen the draft preview after a lost acknowledgement.
+            if (state['flight'] is None or not any(
+                    command.get('op') == 'clip.set-params'
+                    and isinstance(command.get('args', {}).get('schema_source'), dict)
+                    for command in state['pending'])):
+                raise
+            from .store import fetch_bundle
+
+            self.bundle = fetch_bundle(self.session.project_id, self.session.timeline_id,
+                                       revision_id=state['base']['revision_id'], client=self.session.client)
         self._basis = copy.deepcopy(state['base'])
         self._pending = copy.deepcopy(state['pending'])
         self._preview = copy.deepcopy(self.bundle)
         self.fps = float(rate(self.bundle['parent'].get('config', {}).get('output', {}).get('fps')))
         self._mcache = None
+
+    def _bundle(self, state):
+        """Materialize pending selected PARAM commands from their exact pins."""
+        from astrid.sdk.timeline_elements import _read_selected_param_inputs
+
+        from .store import fetch_bundle
+
+        bundle = fetch_bundle(self.session.project_id, self.session.timeline_id,
+                              revision_id=state['base']['revision_id'], client=self.session.client)
+        if not state['pending']:
+            return bundle
+        inputs = []
+        for command in state['pending']:
+            if command.get('op') != 'clip.set-params':
+                continue
+            source = command.get('args', {}).get('schema_source')
+            if not isinstance(source, dict):
+                continue
+            row = State(bundle).entity(command['select'])
+            selected = row.get('elementRef') or row.get('element_ref')
+            _, captured, _ = _read_selected_param_inputs(
+                self.session.client.timelines,
+                self.session.project_id,
+                self.session.timeline_id,
+                realm=self.session.identity['realm_id'],
+                through=state['base'],
+                select=command['select'],
+                source=source,
+                element=selected,
+            )
+            inputs.extend(captured)
+        if not inputs:
+            return self.session._bundle(state)
+        return execute(bundle, state['pending'], schema_inputs=inputs,
+                       realm_id=self.session.identity['realm_id']).bundle
 
     def _unchanged_preview(self):
         if not equal(self.bundle, self._preview):
@@ -80,16 +134,16 @@ class AttachedCheckout(Checkout):
         if not equal(state['base'], self._basis) or not equal(state['pending'], self._pending):
             raise TimelineEditError('attached checkout basis changed; reattach before editing')
 
-    def _queue(self, command):
+    def _queue(self, command, *, schema_inputs=(), realm_id=None):
         self._unchanged_preview()
         plans = []
 
         def capture(state):
             self._unchanged_basis(state)
-            bundle = self.session._bundle(state)
+            bundle = self._bundle(state)
             if not equal(bundle, self._preview):
                 raise TimelineEditError('attached checkout basis changed; reattach before editing')
-            plan = execute(bundle, [command])
+            plan = execute(bundle, [command], schema_inputs=schema_inputs, realm_id=realm_id)
             plans.append(plan)
             return plan.commands
 
@@ -124,15 +178,13 @@ class AttachedCheckout(Checkout):
         return result
 
     def publish(self, message='', *, idempotency_key=None, client=None, force=False, restructure=False):
-        """Publish one captured parent move, hold set, trim, delete, or split from an explicitly selected outbox.
+        """Publish one captured parent command from an explicitly selected outbox.
 
         The outbox path is this draft's recovery identity. Reattach that same
         session after a restart; detached checkouts never discover its intent.
-        Other attached verbs continue to use ``flush()``. A hold remains a
-        source-unit scalar, trim keeps the original registry/source reads,
-        delete keeps its full dependency guards, and split retains its
-        caller-allocated right identity; all are captured through the native
-        command operations.
+        Other attached verbs continue to use ``flush()``. Parent move, hold,
+        trim, delete, split, asset clear, and selected PARAM commands retain
+        their original command reads and guards.
         """
         if (not getattr(self.session, '_explicit_outbox', False) or force or restructure
                 or (client is not None and client is not self.session.client)):
@@ -254,6 +306,23 @@ class AttachedClip(Clip):
     def clear_asset(self):
         return self._command('clip.set', {'values': {}, 'clear': ['asset']})
 
+    def _check_selected_param_keys(self, keys, schema):
+        properties = schema.get('properties') or {}
+        tops = [re.split(r'[.\[]', key, maxsplit=1)[0] for key in keys]
+        timing = [key for key in tops
+                  if key in self._TIMING_WORDS and key not in properties]
+        if timing:
+            raise TimelineEditError(f'{self.address}: {", ".join(timing)} is not a param: use '
+                                    + '; '.join(f'{key} → {self._TIMING_WORDS[key]}' for key in timing))
+        bad = [key for key in tops if key not in properties and key not in self.params]
+        if bad:
+            declared = sorted(properties)
+            hints = [f'{key} (did you mean {", ".join(difflib.get_close_matches(key, declared, n=2))}?)'
+                     if difflib.get_close_matches(key, declared, n=2) else key for key in bad]
+            raise TimelineEditError(f'{self.address} is an attached selected element, which has no param '
+                                    f'{", ".join(hints)}. It takes: {", ".join(declared)} '
+                                    ' (an undeclared param on purpose: .set(..., _allow_new=True))')
+
     def set(self, **params):
         allow_new = params.pop('_allow_new', False)
         if not allow_new and params == {'transition': None}:
@@ -262,9 +331,53 @@ class AttachedClip(Clip):
             return self._command('clip.set', {'values': {}, 'clear': ['transition']})
         selected = self.data.get('elementRef') or self.data.get('element_ref')
         if isinstance(selected, dict) and selected.get('packId'):
-            # Session queue currently has no exact selected-schema input reader.
-            # Never substitute the locally installed pack or caller-inline schema.
-            raise TimelineEditError('selected pack params require exact schema inputs; attached setter is held')
+            if any('.' in key or '[' in key or _is_formula_or_moment(value) for key, value in params.items()):
+                _held()
+            if intent.formulas(self.data):
+                _held()
+            if any(key in clip_fields.FIELDS or clip_fields.is_reserved(key) for key in params):
+                _held()
+            self._tl._unchanged_preview()
+            with self._tl.session.outbox.locked():
+                state = self._tl.session._state()
+                through = copy.deepcopy(state['base'])
+            try:
+                from astrid.sdk.timeline_elements import _read_selected_param_inputs
+
+                _, schema_inputs, descriptor = _read_selected_param_inputs(
+                    self._tl.session.client.timelines,
+                    self._tl.session.project_id,
+                    self._tl.session.timeline_id,
+                    realm=self._tl.session.identity['realm_id'],
+                    through=through,
+                    select=self._ref,
+                )
+            except Exception as exc:
+                raise TimelineEditError(
+                    f'selected pack params require exact schema inputs (retained declaration): {exc}') from exc
+            if not allow_new:
+                self._check_selected_param_keys(list(params), descriptor['schema'])
+            if not params:
+                return self
+            command = {
+                'schema_version': 1,
+                'op': 'clip.set-params',
+                'version': '1',
+                'select': self._ref,
+                'args': {
+                    # Selected pack declarations are not substituted with a
+                    # locally installed alias.  The native command receives
+                    # the caller's literal values and validates them against
+                    # the retained descriptor above.
+                    'values': {key: value
+                               for key, value in params.items() if value is not None},
+                    'clear': [key for key, value in params.items() if value is None],
+                    'schema_source': copy.deepcopy(schema_inputs[0][0]['pin']),
+                },
+            }
+            self._tl._queue(command, schema_inputs=schema_inputs,
+                            realm_id=self._tl.session.identity['realm_id'])
+            return self
         if any('.' in key or '[' in key or _is_formula_or_moment(value) for key, value in params.items()):
             _held()
         if intent.formulas(self.data):

@@ -8,7 +8,6 @@ from __future__ import annotations
 import copy
 import io
 import json
-import uuid
 from http.client import HTTPResponse
 from types import SimpleNamespace
 from urllib.error import URLError
@@ -21,7 +20,7 @@ from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from astrid.sdk.workspace_client import WorkspaceClientError
-from tests.helpers.runtime import use_runtime, vendored_runtime_commit
+from tests.helpers.runtime import new_runtime_daemon, use_runtime, vendored_runtime_commit
 
 pytestmark = pytest.mark.integration
 
@@ -44,11 +43,7 @@ class MemorySocket:
 @pytest.fixture
 def runtime(tmp_path, monkeypatch, request):
     use_runtime(vendored_runtime_commit())
-    from runtime_protocol.auth import CredentialStore
     from runtime_protocol.server import RuntimeHandler
-    from runtime_protocol.service import RuntimeService
-    from runtime_protocol.store import RealmStore
-    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
 
     from astrid.sdk import workspace_client
     from astrid.sdk.client import AstridClient
@@ -58,21 +53,19 @@ def runtime(tmp_path, monkeypatch, request):
     root = tmp_path / 'realm'
     if getattr(request, 'param', None) == 'historical':
         root, film = request.getfixturevalue('historical_sheet_film')
-    else:
-        RealmStore.initialize(root).close()
-    credentials = CredentialStore(tmp_path / 'credentials')
-    token, _ = credentials.provision('owner', ['admin', 'handshake', 'projects:read',
-                                             'projects:write', 'objects:read', 'objects:write',
-                                             'tasks:read', 'tasks:write'])
     world = SimpleNamespace(calls=[], lost=set(), reads=[])
-    server = SimpleNamespace(credentials=credentials,
-                             daemon_runtime=SimpleNamespace(instance_id=uuid.uuid4().hex))
+    support = tmp_path / 'support'
+    daemon = new_runtime_daemon(root, commit=vendored_runtime_commit(),
+                                support_root=support, authoring_profile='astrid').start()
+    server = daemon.httpd
+    token = daemon.token
 
     def restart():
-        if hasattr(server, 'runtime'):
-            server.runtime.close()
-        server.runtime = RuntimeService(root)
-        server.runtime.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+        nonlocal daemon, server
+        daemon.stop()
+        daemon = new_runtime_daemon(root, commit=vendored_runtime_commit(),
+                                    support_root=support, authoring_profile='astrid').start()
+        server = daemon.httpd
 
     def transport(method, path, headers, body):
         body = body or b''
@@ -122,7 +115,7 @@ def runtime(tmp_path, monkeypatch, request):
     try:
         yield world
     finally:
-        server.runtime.close()
+        daemon.stop()
 
 
 def command(op, select, args, **metadata):
