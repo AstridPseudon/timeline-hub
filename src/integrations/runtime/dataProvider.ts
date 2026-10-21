@@ -1755,7 +1755,7 @@ function acceptedManifest(entries: RuntimeRecord[], keyFor: (entry: RuntimeRecor
   return result;
 }
 
-function validateAcceptedCanonicalDocument(
+export function validateAcceptedCanonicalDocument(
   value: CanonicalDocument,
   projectId: string,
   timelineId: string,
