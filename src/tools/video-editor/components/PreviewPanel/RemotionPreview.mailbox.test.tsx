@@ -17,6 +17,8 @@ const boundary = vi.hoisted(() => ({
   events: [] as Array<{ frame: number; fps: number; config: string }>,
   order: [] as string[],
   frameSchedulers: [] as Array<() => void>,
+  frameEffects: [] as Array<() => void>,
+  deferFrameEffects: false,
   commitFrame: null as ((frame: number) => void) | null,
   listeners: new Map<string, Set<(event: any) => void>>(),
 }));
@@ -35,8 +37,12 @@ vi.mock('@remotion/player', async () => {
           hasCommittedFrame.current = true;
           return;
         }
-        boundary.order.push(`frameupdate:${frame}`);
-        for (const listener of boundary.listeners.get('frameupdate') ?? []) listener({ detail: { frame } });
+        const dispatchFrameUpdate = () => {
+          boundary.order.push(`frameupdate:${frame}`);
+          for (const listener of boundary.listeners.get('frameupdate') ?? []) listener({ detail: { frame } });
+        };
+        if (boundary.deferFrameEffects) boundary.frameEffects.push(dispatchFrameUpdate);
+        else dispatchFrameUpdate();
       }, [frame]);
       boundary.commitFrame = setFrame;
       const handle = React.useRef<any>(null);
@@ -125,6 +131,8 @@ beforeEach(() => {
   boundary.events = [];
   boundary.order = [];
   boundary.frameSchedulers = [];
+  boundary.frameEffects = [];
+  boundary.deferFrameEffects = false;
   boundary.commitFrame = null;
   boundary.listeners.clear();
   raf = new Map();
@@ -205,6 +213,36 @@ it('completes a same-frame seek without waiting for a Player frame effect', () =
   expect(boundary.frameSchedulers).toHaveLength(1);
   expect(h.onTimeUpdate).toHaveBeenLastCalledWith(0, true);
   expect(boundary.order).toEqual(['seek:0']);
+});
+
+it('does not echo a queued same-frame effect after explicit completion', () => {
+  const fps = 30000 / 1001;
+  const h = preview(config('same-frame-late-echo', fps));
+  settle();
+
+  // A's native frame state reaches 30 while its Remotion frameupdate effect
+  // remains queued. B1 is authored as 1 second, which rounds to that same
+  // frame at 30000/1001.
+  boundary.deferFrameEffects = true;
+  act(() => boundary.commitFrame?.(30));
+  expect(boundary.player.getCurrentFrame()).toBe(30);
+  expect(boundary.frameEffects).toHaveLength(1);
+
+  // B sees the existing frame and therefore completes explicitly without a
+  // second native frame transition. The queued A effect is delivered after it.
+  act(() => h.ref.current!.seek(1));
+  expect(boundary.order).toEqual(['seek:30']);
+  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(30 / fps, true);
+
+  boundary.deferFrameEffects = false;
+  act(() => boundary.frameEffects.shift()?.());
+  expect(boundary.order).toEqual(['seek:30', 'frameupdate:30']);
+
+  act(() => boundary.commitFrame?.(45));
+  expect(h.onTimeUpdate.mock.calls).toEqual([
+    [30 / fps, true],
+    [45 / fps],
+  ]);
 });
 
 it('coalesces queued seeks and completes only the surviving target', () => {

@@ -138,6 +138,9 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   const [isPlaying, setIsPlaying] = useState(false);
   const playbackIntentRef = useRef<'playing' | 'paused'>('paused');
   const activeSeekFrameRef = useRef<number | null>(null);
+  // A same-frame seek can complete before Remotion delivers the prior frame's
+  // already-scheduled React effect. Consume that one stale matching effect.
+  const completedSameFrameRef = useRef<number | null>(null);
   const pendingSeekRef = useRef<PendingSeek | null>(null);
   const seekFlushRafRef = useRef<number | null>(null);
   const onTimeUpdateRef = useRef(onTimeUpdate);
@@ -309,6 +312,10 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
 
     const onFrameUpdate = (event: { detail: { frame: number } }) => {
       const frame = event.detail.frame;
+      if (completedSameFrameRef.current === frame) {
+        completedSameFrameRef.current = null;
+        return;
+      }
       const seekComplete = activeSeekFrameRef.current === frame && pendingSeekRef.current === null;
       if (seekComplete) {
         activeSeekFrameRef.current = null;
@@ -371,6 +378,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       // explicitly while preserving the ordinary frame-time value.
       if (activeSeekFrameRef.current === frame && frameBeforeSeek === frame) {
         activeSeekFrameRef.current = null;
+        completedSameFrameRef.current = frame;
         onTimeUpdateRef.current(frame / currentMetadata.fps, true);
       }
 
@@ -475,6 +483,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       seekFlushRafRef.current = null;
     }
     activeSeekFrameRef.current = null;
+    completedSameFrameRef.current = null;
     pendingSeekRef.current = null;
   }, []);
 
