@@ -13,7 +13,8 @@ import { useEffects } from '@/tools/video-editor/hooks/useEffects.ts';
  * store sync.
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { readyRuntimeTaskEvents, subscribeRuntimeTaskUpdates, useRuntimeTaskEvents } from '@/features/tasks/components/TasksPane/hooks/useRuntimeTaskEvents.ts';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
 import { MediaLightbox, type MediaLightboxProps } from '@/domains/media-lightbox/MediaLightbox.tsx';
@@ -99,6 +100,8 @@ import {
   type HostOwnedExtensionOperationalEmitter,
   type ExtensionOperationalEventSink,
 } from '@/tools/video-editor/runtime/extensionReleaseControls.ts';
+import { bindEditorImagePlacementHost, type EditorImagePlacementHost } from '@/integrations/runtime/clientLocalAdapter.ts';
+import { RuntimeOperationHost } from '@/integrations/runtime/operationHost.ts';
 
 const log = import.meta.env.DEV ? (...args: Parameters<typeof console.log>) => console.log(...args) : () => {};
 
@@ -850,6 +853,29 @@ function VideoEditorProviderInstance({
   extensionOperationalEventSink = dispatchExtensionOperationalEvent,
   children,
 }: VideoEditorProviderProps) {
+  const [imagePlacementHost, setImagePlacementHost] = useState<EditorImagePlacementHost>();
+  const taskQueries = useQueryClient();
+  useRuntimeTaskEvents(imagePlacementHost ? projectId ?? null : null);
+  useEffect(() => {
+    setImagePlacementHost(undefined);
+    if (!projectId) return;
+    const operationHost = new RuntimeOperationHost();
+    let current = true;
+    void bindEditorImagePlacementHost(operationHost, projectId).then((bound) => {
+      if (current) setImagePlacementHost({ ...bound,
+        taskEventsReady: () => readyRuntimeTaskEvents(taskQueries, projectId),
+        subscribe: (notify) => subscribeRuntimeTaskUpdates(taskQueries, projectId, notify),
+      });
+      else bound.retire?.();
+    }).catch(() => {
+      // Same-origin Runtime qualification is optional; the existing placement
+      // surface remains visibly unavailable when it cannot be established.
+    });
+    return () => {
+      current = false;
+      operationHost.dispose();
+    };
+  }, [projectId, taskQueries]);
   const shotsHost = useAstridShotsHost(projectId, timelineId, dataProvider.shotComposition);
   const effectiveTimelineEditability = useMemo(
     () => withCanonicalShotDraftLock(timelineEditability, Boolean(shotsHost.canonicalDraft)),
@@ -1080,7 +1106,8 @@ function VideoEditorProviderInstance({
     timelineOverlaysEnabled,
     timelineViewStore: assembly.timelineViewStoreRef.current ?? undefined,
     timelineEditability: effectiveTimelineEditability,
-  }), [agentChatHost, assembly.agentSelectionOwner, assembly.shellRootRef, dataProvider, effectiveTimelineEditability, extensionHostEnabled, operationalEmitter, projectId, projectSlug, registerAgentChatTimeline, shotsHost, telemetryHost, timelineId, timelineName, userId, assembly.resolvedExtensionsConfig, assembly.extensionRuntime, assembly.processResultAttachRecords, assembly.processStatuses, assembly.recordProcessResultAttach, assembly.getRecoveryKey, assembly.incrementRecoveryKey, timelineOverlaysEnabled]);
+    ...(imagePlacementHost ? { imagePlacementHost } : {}),
+  }), [agentChatHost, assembly.agentSelectionOwner, assembly.shellRootRef, dataProvider, effectiveTimelineEditability, extensionHostEnabled, imagePlacementHost, operationalEmitter, projectId, projectSlug, registerAgentChatTimeline, shotsHost, telemetryHost, timelineId, timelineName, userId, assembly.resolvedExtensionsConfig, assembly.extensionRuntime, assembly.processResultAttachRecords, assembly.processStatuses, assembly.recordProcessResultAttach, assembly.getRecoveryKey, assembly.incrementRecoveryKey, timelineOverlaysEnabled]);
 
   return (
     <VideoEditorRuntimeProvider value={runtimeValue}>
