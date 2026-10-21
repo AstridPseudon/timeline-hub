@@ -1,0 +1,22 @@
+diff --git a/tests/e2e/timeline/viewing-parity/cases.ts b/tests/e2e/timeline/viewing-parity/cases.ts
+index 84bca679c..9608e097e 100644
+--- a/tests/e2e/timeline/viewing-parity/cases.ts
++++ b/tests/e2e/timeline/viewing-parity/cases.ts
+@@ -88,7 +88,7 @@ export function registerFrameParityCases(canvas: ParityCanvas = ORIGINAL_640): v
+           canonical_occurrence_ids: [fixture.occurrenceId],
+         } } });
+       const authoredOutput = record(record(fixture.parent.payload.config).output);
+-      expect(request.spec.output_policy).toMatchObject({ format: 'mp4', destination: 'download', filename: authoredOutput.file });
++      expect(request.spec.output_policy).toMatchObject({ format: 'mp4', destination: 'download', filename: `timeline-${fixture.timelineId}.mp4` });
+       expect(request.spec.inputs).toBeUndefined();
+       const admitted = (await response.json()).data as Task;
+       expect(admitted.task_id).toBeTruthy();
+@@ -156,7 +156,7 @@ export function registerFrameParityCases(canvas: ParityCanvas = ORIGINAL_640): v
+       } finally { transferObserver.stop(); }
+       await mkdir(testInfo.outputPath('viewing-parity'), { recursive: true });
+       const exportPath = testInfo.outputPath('viewing-parity/final-export.mp4');
+-      expect(download.suggestedFilename()).toBe(authoredOutput.file);
++      expect(download.suggestedFilename()).toBe(`timeline-${fixture.timelineId}.mp4`);
+       await download.saveAs(exportPath);
+       expect(await download.failure()).toBeNull();
+       expect((await stat(exportPath)).size).toBeGreaterThan(1_000);
