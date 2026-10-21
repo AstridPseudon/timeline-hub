@@ -407,6 +407,8 @@ export class DirectHarness {
   private selectedParamPython?: string;
   private selectedParamVerifier?: string;
   private devServer?: Managed;
+  private runtimeProxy?: Managed;
+  private runtimeProxyPort = 0;
   private devPort = 0;
   private canonicalSettingsSeed?: CanonicalSettingsSeed;
   private timelineAuthoring = false;
@@ -710,14 +712,31 @@ export class DirectHarness {
     const seed = this.selectedParamDevSeed;
     if (!seed || !this.selectedParamEnv) throw new Error('selected PARAM seed must be created before starting DEV');
     this.devPort = await freePort();
+    this.runtimeProxyPort = await freePort();
     const agent = path.resolve(process.env.ASTRID_CHECKOUT
       ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
         .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
       ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
+    const discoveryPath = path.join(this.supportDir, 'discovery.json');
+    this.runtimeProxy = spawnGroup(process.execPath, [path.join(REPO_ROOT, 'scripts/runtime-discovery-proxy.mjs')], {
+      cwd: REPO_ROOT,
+      env: {
+        ...this.selectedParamEnv,
+        ASTRID_RUNTIME_PROXY_PORT: String(this.runtimeProxyPort),
+        ASTRID_RUNTIME_OPERATION_ORIGIN: this.devOrigin,
+        ASTRID_WORKSPACE_DISCOVERY: discoveryPath,
+      },
+    });
+    await waitFor('selected PARAM Runtime discovery proxy', async () => {
+      const response = await fetch(`http://127.0.0.1:${this.runtimeProxyPort}/runtime-config/v1/workspace.json`).catch(() => null);
+      return response?.ok ? true : null;
+    }, 3_000, () => (this.runtimeProxy?.child.exitCode !== null
+      ? `proxy exited ${this.runtimeProxy?.child.exitCode}: ${this.runtimeProxy?.stderr.slice(-1200)}` : null));
     const env = {
       ...this.selectedParamEnv,
       PORT: String(this.devPort),
-      VITE_WORKSPACE_RUNTIME_URL: this.runtimeUrl,
+      VITE_WORKSPACE_RUNTIME_URL: `http://127.0.0.1:${this.runtimeProxyPort}`,
+      ASTRID_RUNTIME_OPERATION_ORIGIN: this.devOrigin,
       WORKSPACE_RUNTIME_TOKEN_FILE: this.credentialPath,
       VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID: PRODUCT_ACTOR,
       VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID: this.realmId,
@@ -1139,6 +1158,7 @@ export class DirectHarness {
     if (this.stopped) return;
     this.stopped = true;
     await stopGroup(this.devServer).catch(() => {});
+    await stopGroup(this.runtimeProxy).catch(() => {});
     await stopGroup(this.runtime).catch(() => {});
     await new Promise<void>((resolve) => { if (!this.https) return resolve(); this.https.closeAllConnections?.(); this.https.close(() => resolve()); });
     if (this.tmp) rmSync(this.tmp, { recursive: true, force: true });
