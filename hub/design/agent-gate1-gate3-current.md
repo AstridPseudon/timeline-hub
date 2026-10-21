@@ -685,3 +685,87 @@ row, without turning the result into a whole-Gate claim.
   all fields supported, whole Gate 1/WC8/M2 completion, or any change to the
   public pin. PRIVATE017 remains a separate line.
 
+## Gate1/3 evidence map after current 5217 (2026-10-21)
+
+This is a flat evidence map, not a whole-gate claim. The current integration
+receipt is `agent-gate13-current-b92-integration-1021085125-5217`: Agent commit
+`566307478f43672db23f84fda2a478bb6116a008`, tree
+`c6ecc87ab4b5c7500de07715ab4f4a5803f1e1de`; Runtime commit
+`b92d3e7a05eec65c142294ef4873edd059e9b31d`, tree
+`6abc2f117391de8e7e35c0283f575a002199894d`; normal Runtime producer pin
+`95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`, tree
+`d3a290b407fa61e6ab2d476f50c068073f70df00`. Its exact seven selected nodes
+passed in **42.89s**: rational move **3**, shared-occurrence move **3**, and
+renderer-off authenticated Door commit/reload/undo **1**.
+
+The successful 5217 runner used the normal schema-only root
+`/home/user/work/venv-agent/lib/python3.13/site-packages`, then guarded the
+post-import origins: shared schema from that root, Agent's vendored
+`astrid_runtime_client`, contract `0.2.14`, and digest
+`sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816`.
+That correction is part of the receipt. It is not an authorization to repeat
+5217.
+
+The other two receipts remain exact, bounded evidence and are not rerun:
+
+- `agt-m2-document-history-reviewed-one-http-0818-document-diff-null-track-http-integration-1021081908-10363`: Agent source `b920a8951867d6c3ff42860a5304ecc74f5a4121`, tree `7920ab3097e24b12ddb124f49bc01f41439f95be`, Runtime `b92d3e7a05eec65c142294ef4873edd059e9b31d` / tree `6abc2f117391de8e7e35c0283f575a002199894d`; the authenticated document null/presence/track node passed **1**. This is presence/null evidence for the reviewed repair cohort, not a blanket field-support or current-head claim.
+- `agt-m2-gate1-fresh-transcript-b92-one-current-proof-0751-gate1-fresh-transcript-b92-current-source-integration-1021075556-26071`: Agent source `4a50ad896b17e28f939aa3b67b8bac0b121097c5`, tree `856769372ca7e850d3be5eb10cd069182ffc6f11`, Runtime `b92d3e7a05eec65c142294ef4873edd059e9b31d` / tree `6abc2f117391de8e7e35c0283f575a002199894d`; the fresh transcript/source three-frontend node passed **3** in **5.63s**. This is exact source-snapshot evidence, not a replay on current integration.
+
+### PLAN lossless map
+
+| Required behavior | Existing real nodes | Scope and current status |
+|---|---|---|
+| Opaque fields | `test_http_connected_rational_move_is_lossless_across_native_frontends`; `test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends`; `test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated`; offline `test_literal_seconds_and_opaque_json_exact_reload_inverse_redo`, `test_canonical_schema_closes_the_operation_and_preserves_opaque_row_fields`, `test_preserves_raw_identity_source_media_order_opaque_and_sibling` | 5217 covers current authenticated Python/CLI/NativeSheet opaque preservation on rational and occurrence moves; 10363 covers the reviewed document adapter. Offline recipe coverage is broader but not current HTTP qualification. |
+| Presence / null | `test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated`; `test_absence_null_and_relation_clears_roundtrip`; `test_empty_text_is_present_zero_byte_and_distinct_from_clear_and_absent` | 10363 is one authenticated current-cohort node. The latter two are offline recipe nodes; unsupported presence changes still refuse with the draft retained. |
+| Explicit clear | `test_http_connected_label_clear_is_lossless_across_native_frontends`; `test_label_clear_is_distinct_from_empty_and_literal_clear`; `test_clear_of_absent_binding_is_refused_not_a_silent_noop` | The native three-frontend label-clear node previously passed **3** in result `...1020225435-13125` on an older current cohort. It is not part of 5217 and is therefore the one next current behavior below. |
+| Occurrence isolation | `test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends`; `test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated`; `test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo`; `test_preserves_raw_identity_source_media_order_opaque_and_sibling` | 5217 current/native proves target movement while the shared sibling, clear row, source pins, and opaque payload remain isolated. 10363 and offline nodes add reviewed/source-cohort evidence. |
+| Transcript binding | `test_fresh_word_transcript_frontends_exact_pin_roundtrip`; `test_set_round_trip_records_exact_identity_and_dependency`; `test_inverse_restores_absence_and_redo_restores_exact_row`; `test_empty_text_is_present_zero_byte_and_distinct_from_clear_and_absent` | 26071 proves Python/CLI/NativeSheet on its exact source snapshot with authenticated Door, exact transcript pins, reload, undo/redo, outbox/restart, and scopes. It is not a current-integration replay. |
+| Source binding/identity | `test_http_connected_rational_move_is_lossless_across_native_frontends`; `test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends`; `test_fresh_word_transcript_frontends_exact_pin_roundtrip`; `test_retained_v1_and_explicit_v2_keep_window_and_raw_source_identity`; `test_same_word_in_reused_cas_clips_retains_raw_source_through_undo` | 5217 current/native covers media/source identity and shared occurrence source retention; 26071 covers transcript source identity on its pinned snapshot; retained-input tests are offline/private-fixture scope, not current HTTP proof. |
+| Rational fps | `test_http_connected_rational_move_is_lossless_across_native_frontends`; `test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance`; `test_typed_second_offset_preserves_main_precision_at_rational_frame_boundary`; `test_rational_fps_anchor_and_exact_frame_offset` | 5217 is current authenticated Python/CLI/NativeSheet evidence, three passes, with exact `30000/1001` frame checks. Offline timing nodes are supporting scope only. |
+| Half-open boundaries | `test_http_connected_rational_move_is_lossless_across_native_frontends`; `test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends`; `test_noninteger_positive_speed_preserves_source_units_and_half_open_boundary`; `test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance` | 5217 asserts `[start,end)` frame membership for rational and occurrence paths; offline nodes cover source-window and speed variants. |
+| Determinism | Exact command/history/persisted-bundle assertions in the two 5217 move nodes; `test_compilation_has_no_io_random_clock_renderer_or_mutable_checkout_dependency`; `test_equal_text_references_produce_distinct_canonical_revisions` | Current/native nodes prove stable captured commands and exact reload/redo state for these cases. The compiler purity/determinism node is offline; no blanket all-command determinism claim follows. |
+| Undo | Both 5217 move nodes; renderer-off `test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable`; 10363 document node; 26071 transcript node | Current integration has rational/occurrence undo and one renderer-off authenticated Door undo. 10363/26071 supply bounded document/transcript cohorts. |
+| Redo | Both 5217 move nodes; 26071 transcript node; offline `test_inverse_restores_absence_and_redo_restores_exact_row`, `test_parent_and_occurrence_golden_capture_replay_reload_inverse_redo`, `test_provider_exact_reload_inverse_redo_and_retired_asset_reservation` | Current/native rational and occurrence nodes reach exact redo. The renderer-off Door node is an undo proof only; it does not add a current Door redo claim. |
+
+The 5217 frontend tuple is specifically **Python + CLI + NativeSheet** for the
+rational and occurrence rows. The renderer-off Door row is a separate
+authenticated Runtime/SDK path. The offline recipe/compiler rows are neither
+current HTTP nor private qualification; no private body, browser, render,
+native process, install, or full-suite evidence is being claimed here.
+
+### Failed history retained
+
+- `agent-gate13-current-b92-integration-1021083128-8324` remains a failed
+  **zero-test** run: the artifact-count preflight had a quoting
+  `SyntaxError`, so pytest never executed.
+- `agent-gate13-current-b92-integration-1021083835-1139` remains a failed
+  **7-test** run caused by the old C13 child `astrid_runtime_client` shadowing
+  the vendored client (`8de823...` vs expected `7d4afa...`). All seven failed at
+  health-schema validation; this is an environment/import-origin failure, not
+  product evidence.
+
+Neither failure is relabeled as a pass, and neither is erased by 5217.
+
+### One next uncovered current behavior
+
+The next smallest current Gate1 proof is explicit clear across the three
+connected frontends:
+
+```text
+tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_label_clear_is_lossless_across_native_frontends
+```
+
+Use the existing named suite `gate1-connected-frontends-integration` once,
+with its existing exact node and the 5217 runner correction (normal schema
+root plus post-import vendored-client origin/version/digest guards). Pin the
+snapshot to current Agent `566307478f43672db23f84fda2a478bb6116a008` / tree
+`c6ecc87ab4b5c7500de07715ab4f4a5803f1e1de` and Runtime b92/tree `6abc2f1`;
+collect exactly its three parameters (Python, CLI, NativeSheet), then assert
+the existing node's accepted clear, reload, guarded undo, opaque/source and
+retired-writer checks. Do not add a test, selector, fixture, matrix, or
+framework. Do not request this proof until the named runner carries the 5217
+schema/client-origin correction; that is the only identified dependency.
+
+This is one bounded next proof, not Gate1 completion and not a Gate3 redo.
+Do not repeat 5217, 10363, or 26071.
+
