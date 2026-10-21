@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T07:58:09Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 38 | status age 18m -->
+<!-- agent | 2026-10-21T07:59:42Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 37 | status age 20m -->
 # agent — 2026-10-21 07:39 UTC
 Milestone: M2 active; M1 recorded. Public Runtime 0.2.14 and Composition 0.0.13 current. Future operations dormant.
 Integrated: Agent 7c9ef2ed5. SDK typing current-forward merged 7c9ef2ed5 with160 + 40 + 27 + 2 targeted passes; shrink-only Ruff refresh merged96eebbd70 with2159/2159 and3 controls. LEAD: live document presence-loss stopgap merged ac9a93579 (a362c7fd), 26 + 12 targeted passed; complete repair still awaits authenticated proof. Installed-origin correction and eight-origin negative merged 45729a6be after independent custody review, 18 + 6 + 4 controls and corrected fixture2 passed. WC8 mixed safety merged09f1cf4aa with independent APPROVE and HTTP7975 PASS1; duration27413 PASS3 and literal20600 PASS1 retained without replay. Whole WC8 OPEN. Structure fixture merged244a83f45,12 passed. Public95/all76/54205/ordinary6ba55-29/Main497/C13 archive9412/all77 unchanged.
