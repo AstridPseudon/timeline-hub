@@ -78,8 +78,11 @@ def add_media(ctx, command):
     prior_records = getattr(ctx, 'prior_records', ())
     replacing = bool(prior_records and
                      prior_records[-1]['command']['op'] == 'timeline.assembled-target')
+    raw_window = after is not None and not replacing
+    if row.get('hold') is None and not raw_window:
+        raise CommandError('media edit requires a positive clip.hold', kind='unsupported_timing')
     ctx.bind('media.owner', 'parent')
-    _clip(ctx, 'parent', row, float('inf'), kind, [value], raw_window=after is not None and not replacing)
+    _clip(ctx, 'parent', row, float('inf'), kind, [value], raw_window=raw_window)
     for occurrence in ctx.select('collection.occurrences', 'parent'):
         for path in (['placement', 'track'], ['track']):
             if ctx.read(occurrence, path) == row['track']:

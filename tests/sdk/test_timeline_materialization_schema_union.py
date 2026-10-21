@@ -57,9 +57,20 @@ def without_track_reorder(schema):
     return schema
 
 
+def without_after_anchor_source(schema):
+    """Reconstruct the prior clip.add-media row contract before this successor."""
+    row = schema['$defs']['ClipAddMediaArgs']['properties']['row']
+    if '$ref' in row:
+        return schema
+    assert len(row['anyOf']) == 2
+    assert row['anyOf'][0] == {'$ref': '#/$defs/ClipAddArgs/properties/row'}
+    schema['$defs']['ClipAddMediaArgs']['properties']['row'] = row['anyOf'][0]
+    return schema
+
+
 def without_new_sources(schema):
     """Reconstruct the pre-movement/reference/order schema without fixtures."""
-    return without_track_reorder(without_reference(without_move_set(schema)))
+    return without_track_reorder(without_reference(without_move_set(without_after_anchor_source(schema))))
 
 
 def without_reference_and_order(schema):
@@ -101,7 +112,7 @@ def without_opacity(schema):
 
 def without_literal_fields(schema):
     """Remove only mute and opacity; all ordered-remove content remains."""
-    return without_opacity(without_mute(schema))
+    return without_after_anchor_source(without_opacity(without_mute(schema)))
 
 
 def without_groups(schema):
@@ -282,8 +293,10 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
     for name, candidate in candidates.items():
         raw = (json.dumps(candidate, indent=2) + '\n').encode()
         assert hashlib.sha256(raw).hexdigest() == expected[name], name
+    # This successor changes only the private after-anchor row alternative;
+    # the helpers above still reconstruct every prior frozen floor exactly.
     assert hashlib.sha256((json.dumps(_SCHEMA, indent=2) + '\n').encode()).hexdigest() == \
-        '9c05ec496e957548fe4656ca655a67a7b936ff4f220bdedae474a680e6d32eb9'
+        '0e4e3e78e3c80dafd79bc47ccf98100525c72c98ecb4c189d19b8ac6bcc46314'
 
 
 def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():

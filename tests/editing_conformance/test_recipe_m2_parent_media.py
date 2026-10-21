@@ -604,6 +604,68 @@ def test_after_capture_refuses_a_missing_raw_anchor_without_appending():
     assert bundle == before
 
 
+@pytest.mark.parametrize('hold_state', ['missing', 'null'])
+def test_after_anchor_reconstructs_missing_or_null_video_hold_in_source_units(hold_state):
+    bundle, new, verified = ordered_parent('video')
+    for rows in (bundle['parent']['clips'], bundle['parent']['config']['clips']):
+        target = next(item for item in rows if item['id'] == 'target')
+        target.update({'clipType': 'video', 'from': 2, 'to': 2.01, 'speed': 2})
+        if hold_state == 'missing':
+            target.pop('hold')
+        else:
+            target['hold'] = None
+
+    command = capture_clip_add_media(
+        bundle, {'id': 'born', 'track': 'overlay', 'asset': new['asset']}, new,
+        after='parent/clip:target', verified_media=verified)
+    row = command['args']['row']
+    if hold_state == 'missing':
+        assert 'hold' not in row
+    else:
+        assert row['hold'] is None
+    plan = execute(bundle, [command], verified_media=verified)
+    created = State(plan.bundle).entity('parent/clip:born')
+    assert created['at'] == pytest.approx(0.05)
+    if hold_state == 'missing':
+        assert 'hold' not in created
+    else:
+        assert created['hold'] is None
+    assert (created['from'], created['to'], created['speed']) == (2, 2.01, 2)
+    assert State(plan.bundle).entity('parent/clip:C')['at'] == pytest.approx(0.05)
+    assert [write['path'] for write in plan.records[0]['derived_writes']] == [
+        ['config', 'clips'], ['config', 'clips']]
+    assert plan.bundle['parent']['clips'] == plan.bundle['parent']['config']['clips']
+
+
+def test_after_anchor_explicit_zero_hold_refuses_atomically():
+    bundle, new, verified = ordered_parent('video')
+    for rows in (bundle['parent']['clips'], bundle['parent']['config']['clips']):
+        target = next(item for item in rows if item['id'] == 'target')
+        target.update({'clipType': 'video', 'from': 2, 'to': 2.01, 'speed': 2})
+        target.pop('hold')
+    command = capture_clip_add_media(
+        bundle, {'id': 'born', 'track': 'overlay', 'asset': new['asset']}, new,
+        after='parent/clip:target', verified_media=verified)
+    command['args']['row']['hold'] = 0
+    before = copy.deepcopy(bundle)
+    with pytest.raises(CommandError):
+        execute(bundle, [command], verified_media=verified)
+    assert bundle == before
+
+
+@pytest.mark.parametrize('hold_state', ['missing', 'null'])
+def test_ordinary_parent_media_birth_keeps_positive_hold_requirement(hold_state):
+    bundle, new, verified = ordered_parent('video')
+    row = {'id': 'born', 'clipType': 'video', 'track': 'overlay', 'asset': new['asset'], 'at': 0,
+           'from': 2, 'to': 2.01, 'speed': 2}
+    if hold_state == 'null':
+        row['hold'] = None
+    before = copy.deepcopy(bundle)
+    with pytest.raises(CommandError):
+        capture_clip_add_media(bundle, row, new, verified_media=verified)
+    assert bundle == before
+
+
 @pytest.mark.parametrize('damage', ['anchor-timing', 'peer-timing', 'order'])
 def test_after_replay_refuses_changed_anchor_or_same_row_peer(damage):
     bundle, new, verified = ordered_parent()

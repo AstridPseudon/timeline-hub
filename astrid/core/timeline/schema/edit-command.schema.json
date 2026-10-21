@@ -3083,7 +3083,51 @@
       ],
       "properties": {
         "row": {
-          "$ref": "#/$defs/ClipAddArgs/properties/row"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ClipAddArgs/properties/row"
+            },
+            {
+              "type": "object",
+              "required": [
+                "id",
+                "clipType",
+                "track",
+                "at"
+              ],
+              "description": "After-anchor video births may carry a source row with hold absent or null; the parent handler derives its positive source-window hold. Ordinary parent births still require the positive ClipAddArgs row above.",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^(?!.*::)[^/]+$"
+                },
+                "clipType": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "track": {
+                  "type": "string",
+                  "pattern": "^(?!.*::)[^/]+$"
+                },
+                "at": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "hold": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": true
+            }
+          ]
         },
         "media": {
           "$ref": "#/$defs/MediaSelection"
