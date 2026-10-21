@@ -1,8 +1,8 @@
 """The on-screen model (TRUTH.md §2.2): what is visible on a frame, and how every frame is covered.
 
 Pure: no I/O in ``visible_at`` / ``coverage`` (``element_coverage`` reads the element registry, and only that).
-Opacity, fades and the transition windows follow timeline-composition ``lib/fade.ts``, ``lib/clip-look.ts``
-and ``lib/transition-spans.ts``; the universal clip fields are read through ``clip_fields.read``.
+Opacity and fade ramps follow timeline-composition ``lib/fade.ts`` and ``lib/clip-look.ts``; the universal
+clip fields are read through ``clip_fields.read``. Transition coverage comes from the public Scene query.
 
 Frame arithmetic: a clip covers ``[start, end)`` with ``start = clip_start_frame`` and ``end = clip_end_frame``
 (``duration.py``). Fade ramps and entrance/exit windows are in absolute frames, the same arithmetic as the
@@ -24,8 +24,6 @@ COVER_OPACITY = 0.999
 CONTENT_OPACITY = 0.05
 FULL_FRAME_TOLERANCE = 1.0
 DEFAULT_ANIMATION_FRAMES = 8
-DEFAULT_TRANSITION_FRAMES = 12
-FADE_TRANSITION_IDS = frozenset({"fade", "dip", "cross-fade", "crossfade"})
 LAYOUT_KEYS = ("x", "y", "width", "height", "scale")
 CROP_FIELDS = ("crop_top", "crop_right", "crop_bottom", "crop_left")
 _ELEMENT_KINDS = ("effects", "animations", "transitions")
@@ -208,12 +206,6 @@ def _build(config: Mapping[str, Any], fps: float, canvas: Mapping[str, Any], ele
         ))
     listed.sort(key=lambda item: (item[0], item[1]))
 
-    # Same-track adjacency, as the composition's transition planner: a transition needs a clip that starts
-    # within a frame of its end (the last clip of a track has none, so no dip there).
-    starts_by_track: dict[Any, list[int]] = {}
-    for item in listed:
-        starts_by_track.setdefault(item[2].get("track"), []).append(item[5])
-
     layers: list[_Layer] = []
     for z, (_, _, clip, track, role, start, end) in enumerate(listed):
         opacity = clip_fields.read(clip, "opacity")
@@ -266,14 +258,6 @@ def _build(config: Mapping[str, Any], fps: float, canvas: Mapping[str, Any], ele
                 layer.blocks.append((end - frames, end))
                 if picture:  # a declared exit animation: intended, not a tear
                     layer.dips.append((end - frames, end))
-
-        transition = clip_fields.read(clip, "transition")
-        if isinstance(transition, Mapping) and transition.get("id") in FADE_TRANSITION_IDS:
-            has_next = any(end - 1 <= s <= end for s in starts_by_track.get(clip.get("track"), []) if s != start)
-            if has_next and clip.get("clipType") != "effect-layer":
-                frames = transition.get("durationFrames")
-                width = int(frames) if _is_num(frames) and int(frames) > 0 else DEFAULT_TRANSITION_FRAMES
-                layer.dips.append((end - width, end))
 
         layer.bounds, layer.bounds_source = layout_bounds(clip, canvas_w, canvas_h)
         layer.static_full = (
