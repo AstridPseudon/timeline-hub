@@ -1,12 +1,12 @@
 """Completion diagnostics must retain failure evidence without receipt secrets."""
 import json
 import subprocess
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from astrid.core.rendering import remotion_runtime as runtime
-
 
 SENTINEL = 'private-argv-environment-output-must-not-cross-diagnostic'
 
@@ -66,7 +66,7 @@ def test_probe_diagnostic_never_formats_untrusted_values_or_type_names():
 
 
 def test_registry_generator_nonzero_keeps_failure_and_safe_phase(monkeypatch, tmp_path):
-    from astrid.packs.rendering.rendering.renderers.remotion import run, lock
+    from astrid.packs.rendering.rendering.renderers.remotion import lock, run
 
     expected = {'content_hashes': {'fixed': 'registry-state'}}
     lock_path = tmp_path / 'held-lock'
@@ -81,13 +81,15 @@ def test_registry_generator_nonzero_keeps_failure_and_safe_phase(monkeypatch, tm
     monkeypatch.setattr(runtime, '_registry_inputs', lambda _, **__: {'bound': True})
     observation = {'state': expected, 'lock_path': str(lock_path)}
     monkeypatch.setattr(runtime, '_registry_probe', lambda *_a, **_k: (observation, _receipt()))
+    generator_stderr = 'registry generator fixture failure: selected effect is invalid\n'
+    monkeypatch.setattr(runtime.tempfile, 'gettempdir', lambda: str(tmp_path))
     calls = []
 
     def failed_generator(argv, **kwargs):
         calls.append((argv, kwargs))
         receipt = _receipt()
         receipt['original_wait_exit_code'] = 1
-        return subprocess.CompletedProcess([SENTINEL], 1, SENTINEL, SENTINEL), receipt
+        return subprocess.CompletedProcess([SENTINEL], 1, SENTINEL, generator_stderr), receipt
 
     monkeypatch.setattr(runtime, '_owned_probe', failed_generator)
     with pytest.raises(runtime.RemotionValidationError) as caught:
@@ -98,6 +100,10 @@ def test_registry_generator_nonzero_keeps_failure_and_safe_phase(monkeypatch, tm
     assert safe['original_wait_exit_code'] == 1 and safe['original_child_pid'] == 71
     assert safe['custody_admitted'] is True and safe['census_complete'] is True
     assert SENTINEL not in str(caught.value) + json.dumps(safe)
+    stderr_path = caught.value.probe_stderr_path
+    assert str(stderr_path).startswith(str(tmp_path / 'astrid-probe-logs'))
+    assert Path(stderr_path).read_text(encoding='utf-8') == generator_stderr
+    assert str(stderr_path) in str(caught.value)
     assert caught.value.__cause__ is None
 
 
