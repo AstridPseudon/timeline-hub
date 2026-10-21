@@ -46,6 +46,7 @@ import {
 } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
+import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 
 export type TimelineCommandErrorCode =
@@ -834,6 +835,34 @@ export function createTimelineCommands(
       }
       if (nextEnd <= nextStart) {
         return failure('invalid_argument', 'trimClip requires an end time after the start time.');
+      }
+
+      // The native trim contract owns source-window precision and recording,
+      // but does not move a clip on the timeline. Keep the old snapshot path
+      // for placement-plus-trim and for shapes the existing port rejects.
+      if (clip.clipType === 'media' && !isHoldClip(clip) && nextStart === currentStart && state.ops.clipTrim) {
+        let captured;
+        try {
+          captured = captureClipTrimEdit(state.ops.clipTrim, current, input.clipId);
+        } catch {
+          captured = undefined;
+        }
+
+        if (captured) {
+          try {
+            const speed = clip.speed ?? 1;
+            const currentFrom = clip.from ?? 0;
+            const nextTo = currentFrom + (nextEnd - nextStart) * speed;
+            submitClipTrimEdit(captured, { out_s: nextTo });
+            return success({ clipId: input.clipId, startTime: nextStart, endTime: nextEnd });
+          } catch (cause) {
+            return failure(
+              'mutation_failed',
+              cause instanceof Error ? cause.message : 'Native clip trim failed.',
+              { cause },
+            );
+          }
+        }
       }
 
       const nextConfig = updateClipInConfig(current.resolvedConfig, input.clipId, (existingClip) => {

@@ -755,6 +755,32 @@ export class DirectHarness {
     }, 60_000, () => (this.devServer?.child.exitCode !== null ? `Vite exited ${this.devServer?.child.exitCode}: ${this.devServer?.stderr.slice(-1200)}` : null));
   }
 
+  async startPublicTrimFixtureDevServer(): Promise<void> {
+    if (this.devServer) return;
+    this.devPort = await freePort();
+    const agent = path.resolve(process.env.ASTRID_CHECKOUT
+      ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
+        .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
+      ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
+    const env = {
+      ...this.runtimeEnv(),
+      PORT: String(this.devPort),
+      VITE_WORKSPACE_RUNTIME_URL: this.runtimeUrl,
+      WORKSPACE_RUNTIME_TOKEN_FILE: this.credentialPath,
+      VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID: PRODUCT_ACTOR,
+      VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID: this.realmId,
+      VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID: this.runtimeInstanceId,
+      ASTRID_CHECKOUT: agent,
+      ASTRID_RUNTIME_CHECKOUT: RUNTIME_CHECKOUT,
+      VITE_DISABLE_REMOTE_FONTS: '1',
+    };
+    this.devServer = spawnGroup(process.execPath, [path.join(REPO_ROOT, 'node_modules/vite/bin/vite.js'), '--config', path.join(REPO_ROOT, 'config/vite/vite.config.ts'), '--host', '127.0.0.1', '--port', String(this.devPort)], { cwd: REPO_ROOT, env });
+    await waitFor('public trim fixture DEV server', async () => {
+      const response = await fetch(`${this.devOrigin}/tests/e2e/fixtures/public-trim/index.html`).catch(() => null);
+      return response?.ok ? true : null;
+    }, 60_000, () => (this.devServer?.child.exitCode !== null ? `Vite exited ${this.devServer?.child.exitCode}: ${this.devServer?.stderr.slice(-1200)}` : null));
+  }
+
   /**
    * What the Runtime last published about itself (`<support>/discovery.json`, rewritten on every start). Every Astrid call
    * re-reads it, so a restarted Runtime on a new port is followed with no special case. Throws when it is absent or unparsable.
