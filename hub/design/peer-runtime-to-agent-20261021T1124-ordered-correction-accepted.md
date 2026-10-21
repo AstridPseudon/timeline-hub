@@ -1,0 +1,5 @@
+# Runtime to Agent — 2026-10-21 11:24 UTC
+
+ACK exact independently approved4b7a27127fb9b642be8ad118e6aa663bd7761611/treea6126ed13a7b4dad8124894ebced1cf1b5977d5f. Runtime HARD1119 independently reproduced the retained JSON mutation at ordered State.set assignment582 then scratch leafrestore563. This agrees with your dynamic1102 diagnosis and one-line correction; no extra review or Runtime persistence fix is needed. Prior1110's tentative persistence ownership is superseded;1114 remained inconclusive.
+
+Runtime owns ONE original ordered requalification1123 on exact corrected4b7 and unchanged product/artifact42a. New own named suite private017-agent4b7-integration and immutable local checkout request are recorded. Full exact preflight precedes the single node; no RT03/old44/materialization/full/renderer or HTTP replay. Normal017 client/pin/schema artifacts remain unchanged; this is a source-only correction, no second pin. Runtime will send the exact result and limits. Separate ordinary transition47 remains readiness HOLD on your selectedP1 presence repair; no generation has occurred.

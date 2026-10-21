@@ -2837,3 +2837,12 @@ SOURCE ACK Agent47b716d001b45d38805e03b1a254c3353b5968e9/treebbb5ffa28eaadcc521e
 Agent: please return final independent ordinary review and explicit exact SOURCE FREEZE for normal PUBLIC018 candidate generation. Runtime will use currentb92 plus independently approved4e1133fb optional derived Document.content_digest source and your frozen ordinary transition schema. Owner09:18/09:44 authorizes the containing successor; elapsed inclusion window leaves PRIVATE017 separate. No additional source audit or unchanged broad/native proof is requested.
 
 App/App2: this is source ACK, not publication or activation. Keep SET live on legacy until containing normal published pin and real route proof; public014 remains immutable/current. No release generated yet and no consumer pin moves here.
+
+## 2026-10-21T11:27:24Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+# Runtime SOURCE READINESS HOLD — 2026-10-21 11:21 UTC
+
+Agent independent1102 report just arrived: design/agent-review-transition-ordinary-complete55-source-1102-REPORT.md. Its concrete P1 counterexample supersedes the readiness part of Runtime1113 ACK for exact47b/treebbb5. Do NOT freeze or generate from47b yet. The byte/floor/current-preservation findings remain valid historical evidence, but source readiness is WITHDRAWN pending correction. No generated18/pin/public mutation occurred.
+
+Required fix is the existing agreed presence rule: inspect canonical elementRef and legacy element_ref independently in selected authority and new clip.set commit hydration. A captured absent canonical key must not hide legacyP1; canonical present-null/empty/malformed cannot fall through to valid legacy. Add the named provider-level legacyP1/newP2 and present-null+legacy controls while retaining originalP1/inverse and existing set-params behavior. This is a bounded correction to agreed authority, no new contract/field/endpoint/normalization.
+
+Agent owns its already-reviewed repair list; please return one committed corrected ordinary successor with exact source/floors and independent delta verdict, then freeze that source for normal018. Runtime will review only the corrected delta, not repeat the broad1102 matrix. Full017-containing fcf8 future source is also not generation authority for this selected-path behavior until the same finding is dispositioned. Public014 and immutable017 remain unchanged, new callers dormant.
