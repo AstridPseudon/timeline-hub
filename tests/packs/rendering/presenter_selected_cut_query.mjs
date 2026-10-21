@@ -8,7 +8,7 @@ import {basis, prepareRoot, propsFor, seriesInspection} from './presenter_crop_g
 const retained = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 assert.deepEqual(retained.frames, [0, 3, 4, 5]);
 assert.deepEqual(retained.basis, basis);
-// The retained explicit public10 theme stays exact when querying public12.
+// The retained explicit public10 theme stays exact when querying public13.
 assert.equal(createHash('sha256').update(fs.readFileSync(process.argv[2])).digest('hex'),
   'eabcc179baa4b97b6bdf1c8343ca270ef090e1306ab8791ee32787c3226385af');
 assert.deepEqual(retained.props.timeline, propsFor().timeline);
