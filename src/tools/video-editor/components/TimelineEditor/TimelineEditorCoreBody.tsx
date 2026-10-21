@@ -830,7 +830,6 @@ function TimelineEditorCoreComponent({
     applyVariantToAsset,
     canCreateShotFromSelection,
     data,
-    deviceClass,
     dismissAsset,
     dismissedAssetKeys,
     duplicatingClipId,
