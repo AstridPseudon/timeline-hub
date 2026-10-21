@@ -10,12 +10,6 @@ type Params = {
   placeholder?: boolean;
 };
 
-const absent = (): ComponentFrameSupport => ({
-  presence: 'absent',
-  opaqueSupport: 'none',
-  bounds: {status: 'known', rect: {x: 0, y: 0, width: 0, height: 0}},
-});
-
 const fieldSupport = (background: string, width: number, height: number): ComponentFrameSupport => ({
   presence: 'present',
   opaqueSupport: /^#(?:[\da-f]{3}|[\da-f]{6}|[\da-f]{3}f|[\da-f]{6}ff)$/i.test(background) ? 'rect' : 'unknown',
@@ -36,9 +30,6 @@ export const prepareFootageScene = (context: ComponentCapabilityContext): Prepar
   return {
     identity: JSON.stringify([clip.params, clip.asset, assetEntry, width, height]),
     frame: () => {
-      // A selected asset with an admitted missing/blank entry is not the slot
-      // card: report absence instead of inventing media or alpha support.
-      if (selectedAsset && selectedEntryKnown && !source) return absent();
       if (isolatedInset) {
         return {
           presence: 'present',

@@ -62,16 +62,25 @@ test('declared transparent inset keeps actual layout bounds and unknown media al
   assert.equal(result.opaqueSupport, 'unknown');
 });
 
-test('missing selected media is absent and invalid legacy layout is not geometry proof', () => {
+test('own-entry-undefined media draws the slot field and invalid legacy layout is not geometry proof', () => {
   const missing = support(clip({}, {asset: 'missing'}), {assetEntry: undefined});
   assert.deepEqual(missing, {
-    presence: 'absent',
-    opaqueSupport: 'none',
-    bounds: {status: 'known', rect: {x: 0, y: 0, width: 0, height: 0}},
+    presence: 'present',
+    opaqueSupport: 'rect',
+    bounds: {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}},
   });
 
   const legacy = support(clip({x: 1200, y: 600, scale: 0.3}, {asset: 'P'}), {assetEntry: admitted});
   assert.deepEqual(legacy.bounds, {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}});
+});
+
+test('blank slot uses full-field support', () => {
+  const result = support(clip());
+  assert.deepEqual(result, {
+    presence: 'present',
+    opaqueSupport: 'rect',
+    bounds: {status: 'known', rect: {x: 0, y: 0, width: 1920, height: 1080}},
+  });
 });
 
 test('unresolved transparent inset remains unknown rather than guessing alpha', () => {
