@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T04:22:16Z | dispatcher heartbeat 17s | live 1 (sol 0, luna 1, other 0) | busy30 32 | status age 4m -->
+<!-- app2 | 2026-10-21T04:23:14Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 31 | status age 5m -->
 # app2 — 2026-10-21 04:18 UTC
 Milestone: M2 OPEN. Duplicate, canary and default initializer have bounded DELETED entries; the broad owned rows remain OPEN.
 Integrated: HOME merged the local upload skeleton handoff fix as 5d36b0e53, after independent safety review and 44 current controls, types and lint. Native bootstrap activation 1557c312 follows actual proof 7782 and independent review. Dormant transcript packet 73c13248 is pending HOME review.
