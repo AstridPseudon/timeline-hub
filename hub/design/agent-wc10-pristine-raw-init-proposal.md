@@ -1,0 +1,133 @@
+# WC10 pristine raw-config initialization proposal
+
+Status: **unregistered source spike; no activation requested** (2026-10-21).
+
+This is one concrete Agent-side proposal for the unresolved custom-config
+positive in `agent-wc10-custom-output-existing-recipe-plan.md`. It keeps the
+current `timeline.init` operation family and version 1 unchanged, and uses the
+existing recorder/inverse/reload machinery. It does not register a command,
+change a public caller, update a pin, or replace an initialized timeline root.
+
+## Proposed literal closed envelope
+
+Use the existing operation with a new version boundary, `timeline.init@2`:
+
+```json
+{
+  "schema_version": 1,
+  "op": "timeline.init",
+  "version": "2",
+  "select": "parent",
+  "args": {
+    "name": "Custom",
+    "slug": "custom",
+    "config": {
+      "tracks": [],
+      "theme_overrides": {
+        "visual": {
+          "canvas": {
+            "width": 1920,
+            "height": 1080,
+            "fps": 30,
+            "background": null
+          },
+          "opaque_visual": {"enabled": false}
+        },
+        "opaque_theme": [null, false]
+      },
+      "opaque_sibling": {"literal": "preserve-me"}
+    }
+  }
+}
+```
+
+The outer command and `args` object are closed: no `output`, root replacement,
+intent override, arbitrary target, or extra argument is admitted. `args.config`
+is the one intentionally open JSON subtree. Its authored object keys and
+values are copied byte-for-byte as JSON, so `theme_overrides.visual.canvas`
+stays at that path; `null` remains a value; omitted fields remain absent; and
+opaque sibling keys/values remain present. The example omits
+`background_scale` intentionally to make absence distinct from the explicit
+`background: null`.
+
+## Recipe boundary
+
+The future handler should use the same exact pristine guard as current v1:
+
+1. `ctx.record["ordinal"] == 0`.
+2. The authenticated input parent equals exactly the empty bootstrap parent
+   (`config.clips == []`, `config.tracks == []`, `registry == {}`, `clips ==
+   []`).
+3. `placements` and `shots` are empty.
+4. `config`, `name`, and `slug` are read from the input; `name` and `slug` must
+   still be absent. No caller-supplied equal-bytes head, prior publication, or
+   post-edit head satisfies this guard.
+
+The only authored writes are these three scoped addresses, in this order:
+
+```text
+parent::config  <- args.config
+parent::name    <- args.name
+parent::slug    <- args.slug
+```
+
+There is no `parent` whole-root write, no `registry.assets` injection, no
+`config.output` projection, and no write to clips, tracks, placements, shots,
+or registry siblings. The config container is the bounded carrier; this is not
+a generic initialized-root replacement writer. A later edit overlaps the
+scoped `parent::config` container and must make inverse refuse rather than
+silently restore over it.
+
+The existing `Recording.write` can represent the container write while
+retaining exact nested JSON. `Recording.finish(capture=True)` supplies the
+normal `before`/`after`, exact absence/value reads, authored guards, and the
+same record shape consumed by `inverse.py`. No snapshot, frozen schema copy,
+or special inverse path is needed.
+
+## Executable controls in this spike
+
+`tests/editing_conformance/test_pristine_raw_initialize_proposal.py` is
+test-only and deliberately bypasses `operations()`/schema registration. It
+contains the literal envelope above and a small pure capture helper. The two
+controls prove:
+
+- exact raw config roundtrip through `document_from_bundle` /
+  `bundle_from_document`, including the canvas path, explicit null, absent
+  field, and opaque siblings; then the existing guarded inverse restores the
+  pristine authored payload after reload;
+- a changed bootstrap parent refuses with `not_pristine`, a second init after
+  the first init refuses with `not_pristine`, and a later `track.create` makes
+  inverse refuse with `intervening_write`.
+
+This is recorder/inverse capability evidence only. It is not Runtime custody,
+CAS, HTTP, installed-pair, App, or public-positive evidence.
+
+## Exact source and schema implications for activation
+
+No source or schema implication below is applied by this spike.
+
+| Surface | Required future change | Must remain unchanged now |
+| --- | --- | --- |
+| Agent `native_initialize.py` | Add a v2 handler/capture builder with the guard and exactly the three writes above. Keep v1's fixed App `output` recipe separate. | No v1 behavior or current operation registry change. |
+| Agent command schema | Add one `timeline.init` conditional for `version: "2"` and a small `TimelineInitRawArgs` definition: required `name`, `slug`, `config`; `config` is an object whose values use the existing recursive `JSON` definition. Keep `additionalProperties: false` on the args object. | Do not copy/freeze a second full schema; do not alter `TimelineInitArgs` v1, schema version, generated/public command surface, or existing pins. |
+| Agent validator/registry | Permit only this exact op/version pair once the schema is intentionally adopted; the current `version == "1"` and `operations()` behavior is the activation seam. | The current validator must continue refusing this unregistered v2 spike. |
+| Runtime provider | Reuse the existing `timeline.init` provider route, authenticated bootstrap publication, receipt/idempotency, exact base pair, inverse, and CAS retry boundary. Its init detection is already operation-family based; paired qualification must prove it forwards the config subtree unchanged and rejects any non-bootstrap/later head. | No new endpoint, DTO, generic root writer, publication bypass, or Runtime schema/client behavior in this task. The reviewed `b3bc0f75…` fixture conversion proves only the native ULID/default positive, not this custom raw positive. |
+| App | On a future agreed activation, `bootstrapCapture` would persist this exact v2 command and source `config` from the caller raw config. It must not pass `DEFAULT_OUTPUT`/`withDefaultTimelineOutput` or synthesize `output`; null/absence/opaque siblings stay in `config`. | No App caller migration or public behavior change now. |
+
+The eventual paired positive must retain the original `tests/v10` custom
+canvas expectation at `theme_overrides.visual.canvas`; it must not convert that
+expectation to `config.output` or turn it into a refusal merely to make the
+native fixture green. Until the v2 schema/registry and Runtime/App pair are
+explicitly approved, the original custom-canvas positive remains open.
+
+## Existing seam / counterexample
+
+The existing recorder is sufficient for the bounded `parent.config` carrier;
+the spike found no recorder counterexample for nested null, absence, opaque
+sibling values, serialization/reload, or guarded inverse. The exact unresolved
+seam is admission, not recording: current Agent `edit-command.schema.json`,
+`commands.validate_command`, and `operations()` admit only `timeline.init`
+version 1, whose fixed `output` args cannot spell this raw config. The current
+Runtime/App paths consequently cannot claim the original custom positive. The
+proposal must remain unregistered until that explicit v2 agreement and a
+paired Runtime acceptance proof exist.
