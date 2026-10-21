@@ -441,10 +441,29 @@ assert isinstance(credential["token"], str) and credential["token"]
 client = WorkspaceClient(sys.argv[1], credential["token"])
 health = client.health()
 assert health["status"] == "ok"
-project = client.create_project("WC10", slug="wc10", idempotency_key="wc10-project")["project_id"]
-timeline = client.create_timeline(project, "empty", idempotency_key="wc10-empty")
+project_result = client.create_project("WC10", slug="wc10", idempotency_key="wc10-project")
+assert set(project_result) == {"data", "receipt"}
+project = project_result["data"]
+project_receipt = project_result["receipt"]
+assert project["name"] == "WC10" and project["slug"] == "wc10"
+assert project_receipt["command_kind"] == "project.create"
+assert project_receipt["idempotency_key"] == "wc10-project"
+assert project_receipt["project_id"] == project["project_id"]
+assert project_receipt["receipt_id"]
+assert project_receipt["result"]["id"] == project["project_id"]
+project_id = project["project_id"]
+timeline_result = client.create_timeline(project_id, "empty", idempotency_key="wc10-empty")
+assert set(timeline_result) == {"data", "receipt"}
+timeline = timeline_result["data"]
+timeline_receipt = timeline_result["receipt"]
+assert timeline["project_id"] == project_id and timeline["timeline_id"] == "empty"
+assert timeline_receipt["command_kind"] == "timeline.create"
+assert timeline_receipt["idempotency_key"] == "wc10-empty"
+assert timeline_receipt["project_id"] == project_id
+assert timeline_receipt["receipt_id"]
+assert timeline_receipt["result"] == timeline
 assert timeline["head_revision_id"] and timeline["head_publication_id"]
-history = client.list_timeline_commits(project, "empty", limit=10)
+history = client.list_timeline_commits(project_id, "empty", limit=10)
 assert history["head"] == {
     "revision_id": timeline["head_revision_id"],
     "publication_id": timeline["head_publication_id"],
@@ -453,8 +472,8 @@ assert len(history["items"]) == 1
 assert history["items"][0]["intent"] == "bootstrap"
 assert history["items"][0]["records"] is None
 assert "publish_parent_composition" not in json.dumps(history, sort_keys=True)
-inspection = client.inspect_timeline(project, "empty")
-assert inspection["project_id"] == project
+inspection = client.inspect_timeline(project_id, "empty")
+assert inspection["project_id"] == project_id
 assert inspection["timeline_id"] == "empty"
 print(json.dumps({"project": project, "timeline": timeline, "inspection": inspection}, sort_keys=True))
 """
