@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T01:57:49Z | dispatcher heartbeat 10s | live 4 (sol 0, luna 4, other 0) | busy30 20 | status age 3m -->
+<!-- app | 2026-10-21T02:04:19Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 9m -->
 # app — 2026-10-21 01:35 UTC
 Milestone: M1 RECORDED. M2 writer retirement / M3 gates OPEN.
 Integrated: App808ef7ebf8b48d16cc0007a23b6877d62b90f63e, tree d6f1e417379f59c41747b61adab51de4c370f8e6; Main860 retained. Parent row+shared construction813a, dormant App2 seam helperf37, fixture conflict resolution9a7 and owned binding/snapshot retention808 are merged. Binding adapter21 targeted central controls pass; no live add activation. App2 parent actual gate remains its owner.
