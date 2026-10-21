@@ -14,15 +14,19 @@ from pathlib import Path
 
 import pytest
 
-
-RUNTIME_COMMIT = "c3d26567ff6fe4e20a959476d40aff90ad23a0ca"
-RUNTIME_TREE = Path(
-    os.environ.get("ASTRID_NORMAL_RUNTIME_SOURCE")
-    or os.environ.get("ASTRID_RUNTIME_CHECKOUT")
-    or "/home/user/work/wt/rt-pin-c3d26567"
+PRODUCER_RUNTIME_COMMIT = "c3d26567ff6fe4e20a959476d40aff90ad23a0ca"
+PRODUCER_RUNTIME_TREE = Path(
+    os.environ.get("ASTRID_NORMAL_RUNTIME_SOURCE") or "/home/user/work/wt/rt-pin-c3d26567"
 ).resolve()
-os.environ["ASTRID_RUNTIME_CHECKOUT"] = str(RUNTIME_TREE)
-sys.path.insert(0, str(RUNTIME_TREE))
+SERVER_RUNTIME_COMMIT = "3e6c173128400c81842cd423d9ac90a76f54bf41"
+SERVER_RUNTIME_TREE = Path(
+    os.environ.get("ASTRID_RUNTIME_CHECKOUT") or "/home/user/work/wt/rt-pin-3e6c1731"
+).resolve()
+
+os.environ["ASTRID_RUNTIME_CHECKOUT"] = str(SERVER_RUNTIME_TREE)
+sys.path.insert(0, str(SERVER_RUNTIME_TREE))
+
+from runtime_protocol.daemon import WORKER_ACTOR  # noqa: E402
 
 from astrid.core.execution.generic_host import (  # noqa: E402
     GenericPackHost,
@@ -31,10 +35,55 @@ from astrid.core.execution.generic_host import (  # noqa: E402
 from astrid.sdk.invocation import invoke  # noqa: E402
 from astrid.sdk.remote import RemoteAstridClient  # noqa: E402
 from astrid.sdk.workspace_client import WorkspaceClient  # noqa: E402
-from runtime_protocol.daemon import WORKER_ACTOR  # noqa: E402
-
 
 pytestmark = pytest.mark.integration
+
+
+def _git_revision(root: Path, revision: str) -> str:
+    return subprocess.run(
+        ["git", "-C", str(root), "rev-parse", revision],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def _assert_compatible_runtime_source() -> None:
+    """Keep the immutable C3d producer distinct from the corrected server source."""
+    assert PRODUCER_RUNTIME_TREE.joinpath("runtime_protocol").is_dir()
+    assert SERVER_RUNTIME_TREE.joinpath("runtime_protocol").is_dir()
+    assert _git_revision(PRODUCER_RUNTIME_TREE, "HEAD") == PRODUCER_RUNTIME_COMMIT
+    assert _git_revision(PRODUCER_RUNTIME_TREE, "HEAD^{tree}") == (
+        "f3ae49d38454ce73a9c91a954bb530b3ce51c122"
+    )
+    assert _git_revision(SERVER_RUNTIME_TREE, "HEAD") == SERVER_RUNTIME_COMMIT
+    assert _git_revision(SERVER_RUNTIME_TREE, "HEAD^{tree}") == (
+        "322859f268fcdcae5872aa2e3ccdcb2a288d76fb"
+    )
+
+    changed = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(SERVER_RUNTIME_TREE),
+            "diff",
+            "--name-only",
+            f"{PRODUCER_RUNTIME_COMMIT}..{SERVER_RUNTIME_COMMIT}",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+    assert changed == [
+        "runtime_protocol/store.py",
+        "tests/test_generation_publish_v1_settlement.py",
+    ]
+    assert _git_revision(SERVER_RUNTIME_TREE, f"{SERVER_RUNTIME_COMMIT}:runtime_protocol/store.py") == (
+        "5415a62fbc4692c110017245ceda12260e25629b"
+    )
+    assert _git_revision(
+        SERVER_RUNTIME_TREE, f"{SERVER_RUNTIME_COMMIT}:tests/test_generation_publish_v1_settlement.py"
+    ) == "a5317ce82f008cc4cfd8d86f73e5c95e50a567dd"
 
 
 def _wav_bytes() -> bytes:
@@ -135,16 +184,9 @@ def test_sdk_speech_admission_settles_fixture_wav_and_reads_exact_selection(
     tmp_path: Path, real_runtime
 ) -> None:
     """Normal SDK admission reaches an authorized host and exact media reads."""
-    assert RUNTIME_TREE.joinpath("runtime_protocol").is_dir()
-    runtime_head = subprocess.run(
-        ["git", "-C", str(RUNTIME_TREE), "rev-parse", "HEAD"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    assert runtime_head == RUNTIME_COMMIT
+    _assert_compatible_runtime_source()
 
-    daemon = real_runtime(commit=RUNTIME_COMMIT)
+    daemon = real_runtime(commit=SERVER_RUNTIME_COMMIT)
     transport = WorkspaceClient(daemon.endpoint, daemon.token)
     transport.handshake(
         "speech-prerequisite-writer",
