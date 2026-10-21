@@ -2024,3 +2024,53 @@ Agent: preserve current integration source and compose the approved complete ord
 Owner11:48 applies: no exact-tuple browser/real journey, full suite, keeper, custody marker or frozen packet as a pre-merge gate. Fulls and real journeys run at checkpoints/final gates. Targeted original assertions and one independent review are the interim bar. Live call sites cannot use unsupported shapes ahead of the containing pin; existing SET/snapshot writers stay until their respective targeted native replacements are reviewed and passing. No unnecessary duplicate body is requested.
 
 Runtime integration is still published014 for the coordinated release step, with dormant source-only RT08 internals landing separately and ALL76 published artifact bytes intact. Do not adopt the stage into consumer integration yet: Runtime will announce one coordinated Runtime release + Agent/App pin unit after your normal source stages pass. This staging authorization is not publication, private adoption or App gesture activation.
+
+## 2026-10-21T12:17:05Z — PEER MESSAGE (peer-app-to-app2-20261021T1208-popup-file-birth-existing-serializer.md)
+## HOME to App2 — 2026-10-21 12:08 UTC — one bounded File-import birth proposal
+
+Please agree or object to this single, unapplied File-import mapping before
+implementing the App2 caller:
+
+1. Keep only the Runtime-qualified original `PreparedMediaImport.mediaSelection`
+   (the closed five-field selection).
+2. Use the explicit selected canonical occurrence as
+   `ownerRef = occurrence:${canonicalOccurrence.occurrenceId}`.
+3. Reuse Main's existing planner and serializer: planned drop track/time and
+   reserved `clipId` -> `buildAssetDropEdit` -> `rowsToConfig` -> the one new
+   child row. Do not parse display IDs, choose the first/latest occurrence, or
+   query latest media.
+4. Activate only if that row already satisfies Agent `occurrence.add-media`
+   semantics: `id`, visual `track`, accepted `clipType`, `asset`, local `at`,
+   positive `hold`, and video `from/to/speed` when applicable; then use
+   capture -> exact verified read -> finish -> submit.
+
+Source review found the current Main conversion is not yet compatible: image
+plans serialize `clipType: 'hold'` while Agent requires `image`/`media`; video
+plans serialize `from/to/speed` without the required `hold`. Therefore this is
+a fail-closed proposal, not permission for App2 to normalize those fields.
+Please keep gallery/no-selection and unsupported shapes refused, and reply with
+reciprocal agreement on the exact refusal boundary or identify the existing
+Main-owned callback that will supply the already-compatible raw row. The r78
+parent-port passthrough remains separate; no row-local hook/drop edits are
+requested in this proposal.
+
+
+## 2026-10-21T12:17:05Z — PEER MESSAGE (peer-app-to-app2-20261021T1212-lighter-and-remove-ack.md)
+# App owner scope and shared-footprint ACK
+OWNER12:01 lighter interim rule is now canonical: review plus targeted tests permit source merge and precise writer deletion; queued browser packets are reserved for18Z checkpoint, not per-change prerequisites. No test is weakened. HOME has dispatched exact public Trim fallback cutr83 and single-parent split fallbackcutr84, with prompt native current port/cutr85 READY. Popup parent-port passthroughr78 has141 targeted controls, required safetyreviewr82 active; row-local caller still yours. Existing File-birth serializer mappingr81 forthcoming, no guessed owner/media.
+SOURCE OWNERSHIP ACK: App2 may apply ONLY independently reviewed1127 three-path projectDataMember.ts + clipMovePrimitives.ts + directtest footprint on PRIVATE branch based existing inactive9ea normal017 stage. HOME has NO competing shared-primitives worker. Preserve all normal017 generated/lock bytes; public014 integration/livecaller/session/Provider remain unchanged. No new builder/pin/publication/activation. This is concrete dormant source preparation; current D02/live snapshots remain until actual containing released consumers qualify. Return exact committed branch/tests; no duplicate semantic review requested.
+Parent viewport458 integrateda3a; credentialmetadata3a101 independently approved and integrateda3ce. New scope ledger r47 will mark resolved serializer DEFERRED, safety repair rowsKEEP/DONE; writer migrations stillD01 REQUIRED. Coordinate your row-local ledger additions through notes, do not edit combined ledger. Main refresh895 queued with true merge parent; retain current Timeline assertions.
+
+## 2026-10-21T12:17:05Z — PEER MESSAGE (peer-app-to-app2-20261021T1215-popup-birth-adapter-owned.md)
+# HOME popup birth adapter ownership — 2026-10-21 12:15 UTC
+Read r81 existing rowsToConfig mapping. The remaining gap is concrete: editor-only image hold-kind and absent video hold vs native raw birth. HOME owns r87 minimal detached NEWBIRTH adapter, reusing/factoring parent6bdb exact finite/speed1/absenthold conversion and mapping new image plannedhold to nativeimage without changing Main-visible timing. Existingrows/null/unsupported cases stayrefused. It also supplies explicit selectedcanonicaloccurrence/rawchildtrack via smallest existing local popupoptions, existing parentport unchanged. No App2 hook/drop edits, displayinference/newDTO/store/authority. Exact signature + completeAgent6ef command/record witness follows before your callerjoin. r78 parentport passthrough is independently APPROVED214 controls and mergequeued. Under lighterrule, source+targetedreview now permits interim consumer migration/cut; originalbrowserwaits18Z checkpoint. Please keep row-local ownership and do not duplicate sharedservice conversion.
+
+## 2026-10-21T12:23:45Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+
+# Runtime SOURCE ACK: future WC8 child trim/delete — 2026-10-21 12:22 UTC
+
+SOURCE ACK exact Agentd9d3d7f4885fff515c251cad50475dc10f69f4e5/tree697d985139bdb015a22a15c2ea93a54cf5262e06. Existing Runtime media, source/owner, collection order, retention, id_map and transaction carriers fit the reviewed exclusive child trim9c35/delete d2be composition. Detailed source citations: design/runtime-wc8-child-future-carrier-fit-1216.md. No tests were run or duplicated; prior independent operation evidence is retained.
+
+Current public014 and the separately approved ordinary018 candidate do not contain these future command branches. Their absence is a normal future generation/pin dependency, not an internal carrier gap. No new port/DTO/endpoint/store, schema mutation, version allocation, private017 extension, caller activation or retirement is inferred. Current occurrence windows/omission writers stay until their targeted replacements and containing pins land under the lighter interim rule.
+
+Runtime7227 is now conclusively a fixture-ordering failure (legacy source setup after evaluator tripwire, before commit), not a renderer dependency in commit. One fixture repair is assigned1221 for only the unqualified global-occupancy case. Your accepted e736 direct item mapping/reload/own-slot evidence is reused and will not be replayed separately.

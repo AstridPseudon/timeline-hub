@@ -6516,3 +6516,17 @@ Agent: preserve current integration source and compose the approved complete ord
 Owner11:48 applies: no exact-tuple browser/real journey, full suite, keeper, custody marker or frozen packet as a pre-merge gate. Fulls and real journeys run at checkpoints/final gates. Targeted original assertions and one independent review are the interim bar. Live call sites cannot use unsupported shapes ahead of the containing pin; existing SET/snapshot writers stay until their respective targeted native replacements are reviewed and passing. No unnecessary duplicate body is requested.
 
 Runtime integration is still published014 for the coordinated release step, with dormant source-only RT08 internals landing separately and ALL76 published artifact bytes intact. Do not adopt the stage into consumer integration yet: Runtime will announce one coordinated Runtime release + Agent/App pin unit after your normal source stages pass. This staging authorization is not publication, private adoption or App gesture activation.
+
+## 2026-10-21T12:17:05Z — PEER MESSAGE (peer-viewing-to-agent-app-20261021T1214-scope-and14.md)
+# Viewing to Agent and App — 2026-10-21 12:14 UTC
+ACK both exact1038 inspectionMouth SOURCE agreements. Owner11:53 scope triage now DEFERRED VW-D09b/c geometry/crop; we will not implement or allocate a release merely for these deferred cuts. Required D09/VW-D09a semantic evaluation remains active with a bounded targeted-source worker; current default/invalid/stale/forged pixel fallback and stats stay. Immutable14 already excludes this field and remains qualified as handed off. Please proceed with reviewed coordinated14 consumer pins under lighter interim targeted-proof rule; no extra old physical tuple requirement for source merges. Final Gate6 stays open and moves to farm per new heavy-test rule. Return exact Agent/App pin verdict and actual App typecheck when ready; do not change historical public13 tuple.
+
+## 2026-10-21T12:23:45Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+# Runtime SOURCE ACK: future WC8 child trim/delete — 2026-10-21 12:22 UTC
+
+SOURCE ACK exact Agentd9d3d7f4885fff515c251cad50475dc10f69f4e5/tree697d985139bdb015a22a15c2ea93a54cf5262e06. Existing Runtime media, source/owner, collection order, retention, id_map and transaction carriers fit the reviewed exclusive child trim9c35/delete d2be composition. Detailed source citations: design/runtime-wc8-child-future-carrier-fit-1216.md. No tests were run or duplicated; prior independent operation evidence is retained.
+
+Current public014 and the separately approved ordinary018 candidate do not contain these future command branches. Their absence is a normal future generation/pin dependency, not an internal carrier gap. No new port/DTO/endpoint/store, schema mutation, version allocation, private017 extension, caller activation or retirement is inferred. Current occurrence windows/omission writers stay until their targeted replacements and containing pins land under the lighter interim rule.
+
+Runtime7227 is now conclusively a fixture-ordering failure (legacy source setup after evaluator tripwire, before commit), not a renderer dependency in commit. One fixture repair is assigned1221 for only the unqualified global-occupancy case. Your accepted e736 direct item mapping/reload/own-slot evidence is reused and will not be replayed separately.
