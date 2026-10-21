@@ -108,6 +108,11 @@ def address(key, resolved):
 
 def logical_address(ref, path):
     path = tuple(path)
+    if ref == 'parent' and path == ('track_order',):
+        # Authored order is a virtual collection property. It deliberately
+        # has no stored sibling in config.tracks; this address only gives
+        # overlap/rebase logic a stable collection-level identity.
+        return ref, ('config', 'tracks', ('order',))
     if '/text-binding:' in ref:
         owner, identity = ref.rsplit('/text-binding:', 1)
         return owner, ('payload', 'text_bindings', ('text-binding', identity), *path)
@@ -304,6 +309,9 @@ class State:
             raise CommandError('occurrence references missing shot', kind='identity_conflict', ref=ref)
 
     def get(self, ref, path):
+        if ref == 'parent' and tuple(path) == ('track_order',):
+            from ._collections import order
+            return present(order(self, 'parent', 'track'))
         if '/collection:' in ref:
             from ._collections import shape
             owner, kind = ref.rsplit('/collection:', 1)
@@ -381,6 +389,13 @@ class State:
         return False
 
     def set(self, ref, path, state, *, insertion_order=None):
+        if ref == 'parent' and tuple(path) == ('track_order',):
+            from ._collections import arrange
+            if state.get('state') != 'present' or not isinstance(state.get('value'), list):
+                raise CommandError('track order requires a complete present permutation', ref=ref,
+                                   path=path)
+            arrange(self, 'parent', 'track', state['value'])
+            return
         if '/text-binding:' in ref:
             from .native_text_binding import binding_key, binding_rows
             if path:

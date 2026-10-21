@@ -921,6 +921,18 @@ class RuntimeCommitService:
                 validate_command(call)
             verified_producer = capture_producer(port, request)
             for call in calls:
+                if call['op'] == 'timeline.reference':
+                    raw_reader = getattr(port, 'raw_media_info', None)
+                    if not callable(raw_reader):
+                        raise CommandError(
+                            'timeline reference requires the optional raw media port',
+                            kind='dependency_unavailable',
+                        )
+                    pin = copy.deepcopy(call['args']['media'])
+                    verified_media.append({
+                        'raw_pin': pin,
+                        'media_info': copy.deepcopy(raw_reader(pin)),
+                    })
                 if call['op'] == 'text-binding.set' and 'text' in call['args']:
                     verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
                 if call['op'] in ('clip.add-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',

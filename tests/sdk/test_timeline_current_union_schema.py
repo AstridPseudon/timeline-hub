@@ -133,8 +133,8 @@ def s2_slice():
 
 def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
     assert s2_slice() == baseline('agent-frozen-s2-26ef2bbb')
-    assert len(_SCHEMA['$defs']) == 59
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
+    assert len(_SCHEMA['$defs']) == 62
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 36
 
 
 def test_each_added_definition_and_operation_matches_its_approved_source():
@@ -182,15 +182,16 @@ def test_all_published_floors_preserve_every_field_with_only_historical_pattern_
 
 
 def test_closed_union_operation_inventory_is_exactly_the_supported_cohort():
-    expected = {'text-binding.set', 'clip.swap-media', 'occurrence.create', 'clip.add', 'clip.add-media', 'clip.anchor', 'clip.delete', 'clip.move',
+    expected = {'text-binding.set', 'clip.swap-media', 'occurrence.create', 'clip.add', 'clip.add-media', 'clip.anchor', 'clip.delete', 'clip.move', 'clip.move-set',
                 'clip.set', 'clip.set-element', 'clip.set-params', 'clip.split', 'clip.trim',
                 'occurrence.add-media', 'occurrence.delete', 'occurrence.duplicate',
                 'occurrence.resize', 'occurrence.swap-media', 'placement.create', 'placement.move',
                 'project-data.write', 'timeline.migrate-groups', 'occurrence.move',
                 'placement.unplace', 'producer.guard', 'shot.pool', 'shot.set',
                 'timeline.assembled-target', 'timeline.init', 'timeline.inverse',
+                'timeline.reference', 'track.reorder',
                 'timeline.restore', 'track.create', 'track.set'}
     actual = [item['if']['properties']['op']['const']
               for item in _SCHEMA['$defs']['EditCommand']['allOf']]
-    assert len(actual) == len(set(actual)) == 33
+    assert len(actual) == len(set(actual)) == 36
     assert set(actual) == expected == set(operations()) | {'timeline.inverse', 'timeline.restore'}

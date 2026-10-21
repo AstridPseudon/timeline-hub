@@ -23,6 +23,47 @@ PRIVATE_EXTENT_SHA256 = '84fc0863a1f925f32c00b171eaf51b8f06afb7d34064296394bc859
 PRIVATE_REMOVE_SHA256 = 'c49a6058cfb49fec3dd12e8d93868de6433f121b07a56a943257e34b239f9b7c'
 PRIVATE_MUTE_SHA256 = '0f0b7e9356506f60f3058d35e67d52ee5ecc66002fb40d8772a0b13fc10e6890'
 PRIVATE_OPACITY_SHA256 = '9b4f16f87fffc00da010e2dbea469ca6bfc021695c5b453c821d1d4553336708'
+PRIVATE_FULL_MOVE_SET_SHA256 = 'ba0c42d6a9359c32d89d8088416f7bc9092481dbd05f236e4d7e6e019c9246e7'
+PRIVATE_LITERAL_UNION_SHA256 = 'da144e6d1c0d3e2ad6ef8246a63a4d4c5fd379b7a0efbedc0f376987527ef068'
+PRIVATE_REFERENCE_ORDER_SHA256 = 'c47a00135a2beb9df35cbbf201ef6b7f900904f4afeb74efe3cf12871271598e'
+
+
+def without_move_set(schema):
+    """Remove only the reviewed free multi-clip move operation."""
+    del schema['$defs']['ClipMoveSetArgs']
+    schema['$defs']['EditCommand']['allOf'] = [
+        clause for clause in schema['$defs']['EditCommand']['allOf']
+        if clause['if']['properties']['op']['const'] != 'clip.move-set']
+    return schema
+
+
+def without_reference(schema):
+    """Remove only the reviewed raw parent reference operation."""
+    del schema['$defs']['TimelineReferenceArgs']
+    schema['$defs']['EditCommand']['allOf'] = [
+        clause for clause in schema['$defs']['EditCommand']['allOf']
+        if clause['if']['properties']['op']['const'] != 'timeline.reference'
+    ]
+    return schema
+
+
+def without_track_reorder(schema):
+    """Remove only the reviewed parent track order operation."""
+    del schema['$defs']['TrackReorderArgs']
+    schema['$defs']['EditCommand']['allOf'] = [
+        clause for clause in schema['$defs']['EditCommand']['allOf']
+        if clause['if']['properties']['op']['const'] != 'track.reorder'
+    ]
+    return schema
+
+
+def without_new_sources(schema):
+    """Reconstruct the pre-movement/reference/order schema without fixtures."""
+    return without_track_reorder(without_reference(without_move_set(schema)))
+
+
+def without_reference_and_order(schema):
+    return without_track_reorder(without_reference(schema))
 
 
 def without_mute(schema):
@@ -120,8 +161,8 @@ def without_extent(schema):
 
 def ordinary_schema():
     """Remove only the reviewed carrier additions, checking each complete branch."""
-    candidate = without_groups(without_extent(without_voiceover(
-        without_remove(without_literal_fields(copy.deepcopy(_SCHEMA))))))
+    candidate = without_new_sources(without_groups(without_extent(without_voiceover(
+        without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))))))
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -160,14 +201,14 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
     assert hashlib.sha256(raw).hexdigest() == ORDINARY_SHA256
     assert len(ordinary['$defs']) == 55
     assert len(ordinary['$defs']['EditCommand']['allOf']) == 29
-    assert len(_SCHEMA['$defs']) == 59
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
-    assert compatibility_errors(ordinary, without_literal_fields(copy.deepcopy(_SCHEMA))) == []
+    assert len(_SCHEMA['$defs']) == 62
+    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 36
+    assert compatibility_errors(ordinary, without_new_sources(without_literal_fields(copy.deepcopy(_SCHEMA)))) == []
 
 
 def test_removing_only_group_additions_reconstructs_project_data_bytes():
-    candidate = without_groups(without_extent(without_voiceover(
-        without_remove(without_literal_fields(copy.deepcopy(_SCHEMA))))))
+    candidate = without_new_sources(without_groups(without_extent(without_voiceover(
+        without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))))))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
     assert len(candidate['$defs']) == 56
@@ -175,8 +216,8 @@ def test_removing_only_group_additions_reconstructs_project_data_bytes():
 
 
 def test_removing_group_and_project_data_additions_reconstructs_private_carrier_bytes():
-    candidate = without_groups(without_extent(without_voiceover(
-        without_remove(without_literal_fields(copy.deepcopy(_SCHEMA))))))
+    candidate = without_new_sources(without_groups(without_extent(without_voiceover(
+        without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))))))
     del candidate['$defs']['ProjectDataWriteArgs']
     candidate['$defs']['EditCommand']['allOf'] = [
         clause for clause in candidate['$defs']['EditCommand']['allOf']
@@ -189,34 +230,50 @@ def test_removing_group_and_project_data_additions_reconstructs_private_carrier_
 
 
 def test_project_data_proposal_has_a_new_closed_schema_hash():
-    candidate = without_groups(without_extent(without_voiceover(
-        without_remove(without_literal_fields(copy.deepcopy(_SCHEMA))))))
+    candidate = without_new_sources(without_groups(without_extent(without_voiceover(
+        without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))))))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_PROJECT_DATA_SHA256
 
 
 def test_private_remove_proposal_is_one_addition_on_extent_floor():
-    raw = (json.dumps(without_literal_fields(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()
+    raw = (json.dumps(without_new_sources(without_literal_fields(copy.deepcopy(_SCHEMA))), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_REMOVE_SHA256
-    assert len(_SCHEMA['$defs']) == 59
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
+    assert len(without_new_sources(copy.deepcopy(_SCHEMA))['$defs']) == 59
+    assert len(without_new_sources(copy.deepcopy(_SCHEMA))['$defs']['EditCommand']['allOf']) == 33
 
 
 def test_private_extent_floor_is_preserved_when_remove_is_stripped():
-    raw = (json.dumps(without_remove(without_literal_fields(copy.deepcopy(_SCHEMA))), indent=2) + '\n').encode()
+    raw = (json.dumps(without_new_sources(without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_EXTENT_SHA256
-    assert len(_SCHEMA['$defs']) == 59
-    assert len(_SCHEMA['$defs']['EditCommand']['allOf']) == 33
+    assert len(without_new_sources(copy.deepcopy(_SCHEMA))['$defs']) == 59
+    assert len(without_new_sources(copy.deepcopy(_SCHEMA))['$defs']['EditCommand']['allOf']) == 33
+
+
+def test_full_move_set_schema_reconstructs_its_exact_source_floor():
+    candidate = without_reference_and_order(without_remove(without_literal_fields(copy.deepcopy(_SCHEMA))))
+    raw = (json.dumps(candidate, indent=2) + '\n').encode()
+    assert hashlib.sha256(raw).hexdigest() == PRIVATE_FULL_MOVE_SET_SHA256
+    assert len(candidate['$defs']) == 60
+    assert len(candidate['$defs']['EditCommand']['allOf']) == 34
 
 
 def test_literal_three_union_reconstructs_each_reviewed_source_floor():
     candidates = {
-        'ordered-remove': without_opacity(without_mute(copy.deepcopy(_SCHEMA))),
-        'track-mute': without_opacity(without_remove(copy.deepcopy(_SCHEMA))),
-        'opacity': without_mute(without_remove(copy.deepcopy(_SCHEMA))),
-        'exact84fc': without_remove(without_literal_fields(copy.deepcopy(_SCHEMA))),
+        'literal-union-f448': without_new_sources(copy.deepcopy(_SCHEMA)),
+        'movement3b320': without_reference_and_order(
+            without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))),
+        'reference-order-85c': without_move_set(
+            without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))),
+        'ordered-remove': without_new_sources(without_opacity(without_mute(copy.deepcopy(_SCHEMA)))),
+        'track-mute': without_new_sources(without_opacity(without_remove(copy.deepcopy(_SCHEMA)))),
+        'opacity': without_new_sources(without_mute(without_remove(copy.deepcopy(_SCHEMA)))),
+        'exact84fc': without_new_sources(without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))),
     }
     expected = {
+        'literal-union-f448': PRIVATE_LITERAL_UNION_SHA256,
+        'movement3b320': PRIVATE_FULL_MOVE_SET_SHA256,
+        'reference-order-85c': PRIVATE_REFERENCE_ORDER_SHA256,
         'ordered-remove': PRIVATE_REMOVE_SHA256,
         'track-mute': PRIVATE_MUTE_SHA256,
         'opacity': PRIVATE_OPACITY_SHA256,
@@ -226,11 +283,11 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
         raw = (json.dumps(candidate, indent=2) + '\n').encode()
         assert hashlib.sha256(raw).hexdigest() == expected[name], name
     assert hashlib.sha256((json.dumps(_SCHEMA, indent=2) + '\n').encode()).hexdigest() == \
-        'da144e6d1c0d3e2ad6ef8246a63a4d4c5fd379b7a0efbedc0f376987527ef068'
+        '9c05ec496e957548fe4656ca655a67a7b936ff4f220bdedae474a680e6d32eb9'
 
 
 def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():
-    candidate = without_literal_fields(without_extent(without_remove(copy.deepcopy(_SCHEMA))))
+    candidate = without_new_sources(without_literal_fields(without_extent(without_remove(copy.deepcopy(_SCHEMA)))))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_VOICEOVER_SHA256
     assert len(candidate['$defs']) == 58
@@ -238,8 +295,8 @@ def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():
 
 
 def test_voiceover_property_preserves_the_prior_group_schema_hash():
-    raw = (json.dumps(without_literal_fields(without_extent(
-        without_voiceover(without_remove(copy.deepcopy(_SCHEMA))))), indent=2) + '\n').encode()
+    raw = (json.dumps(without_new_sources(without_literal_fields(without_extent(
+        without_voiceover(without_remove(copy.deepcopy(_SCHEMA)))))), indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_GROUP_SHA256
 
 
@@ -247,8 +304,8 @@ def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schem
     from tests.sdk.test_timeline_current_union_schema import FIXTURES, baseline
 
     previous = baseline('agent-frozen-s2-26ef2bbb')
-    current = without_literal_fields(without_extent(
-        without_voiceover(without_remove(copy.deepcopy(_SCHEMA)))))
+    current = without_new_sources(without_literal_fields(without_extent(
+        without_voiceover(without_remove(copy.deepcopy(_SCHEMA))))))
     raw = (FIXTURES / 'agent-frozen-s2-26ef2bbb.json').read_bytes()
     for name in (*REFERENCES, 'AnchorIdentity'):
         addition = copy.deepcopy(
@@ -270,7 +327,7 @@ def test_complete_reviewed_private_s2_is_preserved_without_a_copied_frozen_schem
             clause['then'] = addition
     assert json.loads(raw) == previous
     assert hashlib.sha256(raw).hexdigest() == PRIVATE_S2_SHA256
-    assert compatibility_errors(previous, without_literal_fields(copy.deepcopy(_SCHEMA))) == []
+    assert compatibility_errors(previous, without_new_sources(without_literal_fields(copy.deepcopy(_SCHEMA)))) == []
 
 
 @pytest.mark.parametrize('name', (*REFERENCES, 'AnchorIdentity'))

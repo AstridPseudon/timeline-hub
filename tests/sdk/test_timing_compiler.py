@@ -123,6 +123,38 @@ def test_fixed_source_window_and_rational_half_frame_ties(fps):
     assert encoded(project(bundle).bundle) == encoded(bundle)
 
 
+@pytest.mark.parametrize('owner', ['parent', 'base_parent_payload'])
+@pytest.mark.parametrize('fps', [[True, 1001], [30000.0, 1001], [30000, 0], [-30000, -1001],
+                                 {'numerator': True, 'denominator': 1001},
+                                 {'numerator': 30000.0, 'denominator': 1001},
+                                 {'numerator': 30000, 'denominator': 0},
+                                 {'numerator': -30000, 'denominator': -1001}])
+def test_main_and_capture_share_positive_integer_rational_policy(owner, fps):
+    from astrid.sdk.timeline._command_state import CommandError
+    from astrid.sdk.timeline.capture import rate
+
+    bundle = film(fps)
+    if owner == 'base_parent_payload':
+        bundle[owner] = copy.deepcopy(bundle['parent'])
+        del bundle['parent']['config']['theme_overrides']
+    before = encoded(bundle)
+    with pytest.raises(TimingCompileError, match='positive integer numerator/denominator'):
+        project(bundle)
+    with pytest.raises(CommandError, match='positive integer numerator/denominator'):
+        rate(fps)
+    assert encoded(bundle) == before
+
+
+@pytest.mark.parametrize('fps', [{'numerator': 30000, 'denominator': 1001}, [30000, 1001]])
+def test_rational_rate_in_base_parent_canvas_uses_main_policy(fps):
+    bundle = film(fps)
+    card(bundle)['app']['astrid'] = {'fixed_start': True}
+    expected = project(bundle).timings
+    bundle['base_parent_payload'] = copy.deepcopy(bundle['parent'])
+    del bundle['parent']['config']['theme_overrides']
+    assert project(bundle).timings == expected
+
+
 def test_after_word_end_at_source_out_is_included_and_onset_at_source_out_is_refused():
     bundle, document, pin = captured()
     text = 'after "stop"'

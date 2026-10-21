@@ -448,6 +448,21 @@
       "properties": {},
       "additionalProperties": false
     },
+    "ClipMoveSetArgs": {
+      "type": "object", "additionalProperties": false,
+      "required": ["members", "anchor", "on"],
+      "properties": {
+        "members": {"type": "array", "minItems": 1, "items": {
+          "type": "object", "additionalProperties": false, "required": ["clip", "track"],
+          "properties": {
+            "clip": {"type": "string", "pattern": "^(?!.*::)parent/clip:[^/]+$"},
+            "track": {"type": "string", "pattern": "^(?!.*::)parent/track:[^/]+$"}
+          }
+        }},
+        "anchor": {"type": "string", "pattern": "^(?!.*::)parent/clip:[^/]+$"},
+        "on": {"type": "number", "minimum": 0}
+      }
+    },
     "ClipMoveArgs": {
       "type": "object",
       "properties": {
@@ -511,6 +526,33 @@
         }
       ],
       "description": "Set raw track.label or boolean track.muted, or explicitly remove either field. Null is not a supported value. Unmentioned fields survive."
+    },
+    "TrackReorderArgs": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*::)parent/track:[^/]+$"
+          },
+          "uniqueItems": true
+        },
+        "expected_order": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*::)parent/track:[^/]+$"
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "order",
+        "expected_order"
+      ],
+      "additionalProperties": false,
+      "description": "Replace only the complete authored parent track permutation. Both arrays must be the same-owner, unique membership; expected_order is the captured original order."
     },
     "ShotSetArgs": {
       "type": "object",
@@ -962,6 +1004,17 @@
       "description": "Client recorder fields are claims only. Provider verifies/reconstructs all observations; authorship is write classification, never authenticated actor identity. Unknown operations pass the envelope only and require installed registered schemas/handlers.",
       "allOf": [
         {
+          "if": {"properties": {"op": {"const": "clip.move-set"}}, "required": ["op"]},
+          "then": {"properties": {
+            "version": {"const": "1"}, "select": {"const": "parent"},
+            "args": {"$ref": "#/$defs/ClipMoveSetArgs"},
+            "intent": {"type": "object", "additionalProperties": false, "properties": {
+              "ripple": {"const": "none"}, "anchor": {"const": "fixed"},
+              "position": {"const": "absolute"}
+            }}
+          }}
+        },
+        {
           "if": {
             "properties": {
               "op": {
@@ -979,6 +1032,35 @@
               },
               "args": {
                 "$ref": "#/$defs/ClipDeleteArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "track.reorder"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/TrackReorderArgs"
               },
               "intent": {
                 "type": "object",
@@ -2296,6 +2378,35 @@
           "if": {
             "properties": {
               "op": {
+                "const": "timeline.reference"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "const": "parent"
+              },
+              "args": {
+                "$ref": "#/$defs/TimelineReferenceArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
                 "const": "occurrence.move"
               }
             },
@@ -2694,6 +2805,42 @@
         }
       ],
       "description": "Replace or remove one opaque extension-owned project-data value in the parent authored timeline. Remove deletes the declared key and prunes only empty target/app containers; the project catalog is a separate scoped operation."
+    },
+    "TimelineReferenceArgs": {
+      "type": "object",
+      "required": [
+        "reference_id",
+        "role",
+        "media"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "reference_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)(?=.*\\S)[^/]+$"
+        },
+        "role": {
+          "const": "source"
+        },
+        "media": {
+          "type": "object",
+          "required": [
+            "media_id",
+            "content_digest"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "media_id": {
+              "$ref": "#/$defs/Digest"
+            },
+            "content_digest": {
+              "$ref": "#/$defs/Digest"
+            }
+          },
+          "description": "Existing MediaManifestEntry. Runtime verifies media_id and content_digest are the same owned CAS digest."
+        }
+      },
+      "description": "Create one unplaced parent source reference. The media pin is verified through the private Runtime raw-media port; it is not caller authority."
     },
     "ClipTrimArgs": {
       "type": "object",

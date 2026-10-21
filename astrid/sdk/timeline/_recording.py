@@ -15,7 +15,9 @@ def active(row):
 
 def selection(state, key, owner, members=()):
     boundaries = None
-    if key == "move.target":
+    if key == 'selection.clips':
+        result = [ref for ref in order(state, owner, 'clip') if ref in members]
+    elif key == "move.target":
         result = [ref for ref in members if state.entity(ref, optional=True) is not None]
     elif key == 'migration.groups':
         if owner != 'parent' or len(set(members)) != len(members) or any(
@@ -25,12 +27,11 @@ def selection(state, key, owner, members=()):
     elif key == 'element.targets':
         result = order(state, owner, 'clip', check_mirrors=False)
     elif key == 'lane.members':
-        from .occurrence_commands import lane
-        target = state.entity(owner)['id']
+        target = owner.removeprefix('parent/track:')
         result = [ref for ref in order(state, 'parent', 'clip')
                   if state.entity(ref).get('track') == target]
         result += [ref for ref in order(state, 'parent', 'occurrence')
-                   if lane(state.entity(ref)) == target]
+                   if (state.entity(ref).get('placement') or {}).get('track', state.entity(ref).get('track')) == target]
     elif key in KINDS:
         result = ([] if owner != 'parent' and state.entity(owner, optional=True) is None
                   else order(state, owner, KINDS[key]))
@@ -163,16 +164,20 @@ class Recording:
 
     def create(self, owner, kind, row, *, restoring=False, after=None):
         rows(self.state, owner, kind, check_mirrors=not restoring)
-        if not restoring and any(s['owner'] == owner and s['key'] == 'collection.' + kind + 's.after'
-               for s in self.record['selections']):
-            raise CommandError('create-after requires a single scoped creation')
         ordered = None
         if after is not None:
             if restoring or kind not in ('clip', 'track') or any(
                     item['owner'] == owner and item['kind'] == kind for item in self.record['created']):
                 raise CommandError('create-after requires a single scoped creation')
-            self.select('collection.' + kind + 's.after', owner, [after])
-            ordered = order(self.state, owner, kind)
+            existing = [s for s in self.record['selections']
+                        if s['owner'] == owner and s['key'] == 'collection.' + kind + 's.after']
+            if existing:
+                if len(existing) != 1 or existing[0]['members'] != [after]:
+                    raise CommandError('create-after requires a single scoped creation')
+                ordered = list(existing[0]['order'])
+            else:
+                self.select('collection.' + kind + 's.after', owner, [after])
+                ordered = order(self.state, owner, kind)
         if owner != 'parent':
             self.read(owner, ['occurrence_id'])
             self.read(owner + '/shot', ['shot_id'])

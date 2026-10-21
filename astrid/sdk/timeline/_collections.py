@@ -125,6 +125,17 @@ def arrange(state, owner, kind, expected):
 
 
 def selection_overlap(selected, write):
+    if selected['key'] == 'selection.clips':
+        ref, path = logical_address(write['ref'], write['path'])
+        if ref != selected['owner']:
+            return ref == 'timeline' and not path
+        prefix = ('config', 'clips')
+        if prefix[:len(path)] == path:
+            return True
+        rest = path[len(prefix):] if path[:len(prefix)] == prefix else ()
+        return bool(rest and isinstance(rest[0], tuple)
+                    and 'parent/clip:' + rest[0][1] in selected['members']
+                    and (len(rest) == 1 or rest[1:] == ('id',)))
     if selected['key'] == 'lane.members':
         ref, path = write['ref'], write['path']
         if ref == 'parent':
