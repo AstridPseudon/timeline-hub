@@ -45,7 +45,10 @@ On Windows, run in PowerShell:
 irm https://astrid.haus/install.ps1 | iex
 ```
 
-Then open [astrid.haus](https://astrid.haus) and follow its setup steps. Do not
+The installer checks that Astrid is healthy and opens astrid.haus itself. Tell
+the user to choose Allow if Chrome or Edge asks to reach their computer, then
+confirm astrid.haus shows Connected. That is the end of setup. (Connecting
+local engines such as ComfyUI or Wan2GP is not covered here yet.) Do not
 install or clone `astrid-app`; it is for app developers.
 
 ## Commands for outside agents
@@ -129,8 +132,11 @@ After installation, the commands below work with the installed Runtime. For a
 new machine, follow the setup path above and open astrid.haus.
 
 ```bash
-python3 -m astrid doctor --json
+curl -fsSL https://astrid.haus/install | sh -s -- --doctor
 ```
+
+On Windows PowerShell use
+`& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --doctor`.
 
 If Astrid isn't running, run the install line again.
 
