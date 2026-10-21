@@ -139,7 +139,50 @@ test('Main95 real native bootstrap: create/init, lost ACK retry, daemon restart,
   const history = await harness.runtimeJson<any>('GET', `${base}/commits?limit=50`);
   expect(history.status).toBe(200);
   expect(history.body.head).toEqual({ revision_id: accepted.data.accepted_revision_id, publication_id: accepted.receipt.receipt_id });
-  expect(history.body.items).toEqual([expect.objectContaining({ intent: 'recorded', previous: { revision_id: createData.head_revision_id, publication_id: createData.head_publication_id } })]);
+  // Main's create_timeline publishes one normal empty baseline before the
+  // native initialization commit. Keep that contract one-to-one as
+  // baseline=1 plus native-init=1, without filtering either history record.
+  expect(history.body.items).toHaveLength(2);
+  const [bootstrapEntry, initEntry] = history.body.items;
+  expect((bootstrapEntry.receipt.result as { revision_id?: unknown }).revision_id).toBe(bootstrapEntry.revision_id);
+  expect(bootstrapEntry).toMatchObject({
+    publication_id: bootstrapEntry.receipt.receipt_id,
+    previous: null,
+    intent: 'bootstrap',
+    records: null,
+    receipt: {
+      command_kind: 'parent_composition.publish',
+      idempotency_key: `bootstrap:${timelineId}`,
+      project_id: projectId,
+      result: {
+        project_id: projectId,
+        timeline_id: timelineId,
+        old_head: null,
+        new_head: bootstrapEntry.revision_id,
+      },
+    },
+  });
+  expect(initEntry).toMatchObject({
+    publication_id: initEntry.receipt.receipt_id,
+    previous: { revision_id: bootstrapEntry.revision_id, publication_id: bootstrapEntry.publication_id },
+    intent: 'recorded',
+    receipt: {
+      command_kind: 'timeline.commit',
+      project_id: projectId,
+      result: {
+        canonical_document: { project_id: projectId, timeline_id: timelineId },
+      },
+    },
+  });
+  expect(history.body.items.map((entry: Record<string, any>) => entry.receipt.command_kind)).toEqual([
+    'parent_composition.publish', 'timeline.commit',
+  ]);
+  expect(history.body.head).toEqual({ revision_id: initEntry.revision_id, publication_id: initEntry.publication_id });
+  expect(initEntry.records?.commands.map((record: Record<string, any>) => [record.command.op, record.command.version, record.command.select])).toEqual([
+    ['timeline.init', '1', 'parent'],
+    ['track.create', '1', 'parent'],
+    ['track.create', '1', 'parent'],
+  ]);
   const readback = await harness.runtimeJson<any>('GET', `${base}/composition-revisions/${accepted.data.accepted_revision_id}`);
   expect(readback.body.payload).toEqual(initializedPayload);
   await expect(firstTrackName(page)).toHaveValue('V1', CEILING);
