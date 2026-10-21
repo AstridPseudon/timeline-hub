@@ -168,34 +168,6 @@ function textFromContent(value: unknown): string {
   return '';
 }
 
-const ELEMENT_OPERATION_MARKER = /<astrid_element_operation>\s*([\s\S]*?)\s*<\/astrid_element_operation>/g;
-
-export type AstridElementOperationExtraction = {
-  visibleContent: string;
-  operations: readonly unknown[];
-  parseErrors: readonly string[];
-};
-
-/**
- * ACP remains the conversational surface, while the host-owned marker is the
- * narrow machine boundary for Elements edits. Keeping it in the assistant
- * turn means the model can still explain its work, but the host never has to
- * scrape shell commands or guess whether prose describes a completed edit.
- */
-export function extractAstridElementOperations(content: string): AstridElementOperationExtraction {
-  const operations: unknown[] = [];
-  const parseErrors: string[] = [];
-  const visibleContent = content.replace(ELEMENT_OPERATION_MARKER, (_match, payload: string) => {
-    try {
-      operations.push(JSON.parse(payload));
-    } catch (error) {
-      parseErrors.push(error instanceof Error ? error.message : String(error));
-    }
-    return '';
-  }).trim();
-  return { visibleContent, operations, parseErrors };
-}
-
 /** Keep the transport context model-visible but hide it from the chat UI. */
 export function stripAstridEditorContext(content: string): string {
   if (content.startsWith('<astrid_element_result>')) return '';
@@ -1067,7 +1039,7 @@ export function useAgentSessions(timelineId: string | null | undefined, projectI
 }
 
 export const projectChatQueryKey = (projectId: string | null | undefined) => ['project-agent-chat', projectId ?? null] as const;
-export const unassignedProjectSessionsQueryKey = (projectId: string | null | undefined) => ['project-agent-chat-unassigned', projectId ?? null] as const;
+const unassignedProjectSessionsQueryKey = (projectId: string | null | undefined) => ['project-agent-chat-unassigned', projectId ?? null] as const;
 
 // Association/selection and draft revisions advance independently. A delayed
 // draft reply must not undo a newer selected session, or vice versa.

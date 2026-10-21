@@ -7,7 +7,6 @@ import {
   appendAcpAssistantDraft,
   appendAcpTextTurn,
   AstridAgentSessionStore,
-  extractAstridElementOperations,
   projectChatQueryKey,
   stripAstridEditorContext,
   useCancelSession,
@@ -1109,29 +1108,6 @@ describe('timeline agent ACP chat', () => {
     expect(stripAstridEditorContext('hello\n<astrid_agent_context>private</astrid_agent_context>\n<astrid_editor_context>{}</astrid_editor_context>')).toBe('hello');
     expect(stripAstridEditorContext('make the first clip start later\n\nAstrid editor context:\nTimeline ID: timeline-1'))
       .toBe('make the first clip start later');
-  });
-
-  it('extracts host-executable element operations without leaking markers into chat', () => {
-    const result = extractAstridElementOperations([
-      'I will apply the effect.',
-      '<astrid_element_operation>{"name":"elements.list"}</astrid_element_operation>',
-      '<astrid_element_operation>{"name":"elements.validate","draft_id":"draft-glow"}</astrid_element_operation>',
-    ].join('\n'));
-    expect(result.visibleContent).toBe('I will apply the effect.');
-    expect(result.operations).toEqual([
-      { name: 'elements.list' },
-      { name: 'elements.validate', draft_id: 'draft-glow' },
-    ]);
-    expect(result.parseErrors).toEqual([]);
-  });
-
-  it('reports malformed operation markers while preserving surrounding narration', () => {
-    const result = extractAstridElementOperations(
-      'Done. <astrid_element_operation>{not json}</astrid_element_operation>',
-    );
-    expect(result.visibleContent).toBe('Done.');
-    expect(result.operations).toEqual([]);
-    expect(result.parseErrors).toHaveLength(1);
   });
 });
 
