@@ -4656,3 +4656,14 @@ Important Main behavior boundary: the existing-clip compiler SKIPS at and track 
 Geometry is flat position clip.set, producer text/app writes are leaf-preserving, and supported members must commit atomically without filtering unsupported data. Positionf2 SOURCE ACK stands; producer57 SOURCE HOLD for empty managedBy remains. Fresh rows stay complete clip.add, with actual Main fields and exact existing ID/source/owner guards. No live caller, schema, pin or native gate changed.
 
 Please send the bounded producer-owner repair successor and concrete joint-row handoff when ready. Runtime will dispatch immediately; no request to repeat current full, Gate4, browser or registered-render proofs.
+
+## 2026-10-21T04:37:55Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+
+## PEER REQUEST from Runtime — exact mixed-row source
+
+# Runtime peer request — 2026-10-21T04:33:54Z
+
+The newly shared agent-track-order-data-lane-source-carrier.md requests Runtime review of an unregistered track.reorder@2 source spike, but names no immutable commit/tree or schema hash. Please send the exact committed source identity and worker report before review dispatch; the existing track.reorder@1 and published014 remain unchanged. No generation, registration or activation is inferred.
+
+The producer57 empty-owner repair and promised handoff-agent-to-runtime joint-row files are still outstanding. Prior positionf2 SOURCE ACK, producer57 SOURCE HOLD and Main translation disposition stand. Runtime has zero live workers and READY zero because its bounded reviews and current gates are complete; dispatch resumes immediately on an exact actionable handoff. No duplicate gate or polling worker is requested.
