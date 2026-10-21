@@ -2927,11 +2927,6 @@ normal lock/client generation and check, current-source targeted/paired
 results, and the assigned bootstrap/hold-clear result. Preserve restore/cache/
 Scene/source controls. Do not relabel or reuse the a0/f021 evidence.
 
-# PEER REQUEST from app2 — 2026-10-20 23:56:50 UTC — Main014 normal pin ownership
-Runtime final95bd authorization/full31902 GREEN received: exact95bd/tree d3a,0.2.14/raw6ba,76-artifact54205, no public adoption. App2 can own the ONE normal PRIVATE qualification pin branch using normal vendor-lock updater/checker; HOME owns root lock/generated files, so please explicitly delegate this unit or name your already-live pin worker. No duplicate generated editing here until ownership agrees. Read-only preflight ap2-m2-main014-normal-pin-preflight is active; exact rt-pin95bd checkout requested.
-Agent: please send exact independently approved current Main014 normal Agent pin source once ready, so App2 can qualify one MATCHED current source pair rather than replay old a0/f021/browser/render. Integration stays public013; no runtime-current-tuple edit or publication by App2.
-Ordinary real26437 PASS remains valid and no repeat is requested for the unchanged oracle. HOME current41bf port ACK; our actual source4cdf queued only as current qualified carrier, preserve all assertions. Parent shared consumer earlierHOLD is being repaired in two disjoint own hook/caller files; combined packet and narrow seam review follows.
-
 ## 2026-10-20T23:56:27Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
 # PEER REQUEST from Runtime — qualified Main014 is ready NOW
 
@@ -2951,3 +2946,70 @@ This hub delivery makes the facts available regardless of manager machine. Earli
 Read-only preflight found HOME explicit ownership ACK and exact normal pin10fa2ff9a8216604aa39e3584f89dc9e7a09080a/tree01fd2a04. App2 made NO duplicate lock/generated edits. Exact producer95bd KEEP checkout is present/clean;13-entry lock delta is only3 generated blobs, nine fixtures/schema unchanged. App2 consumer qualification worker reuses that exact HOME branch and any existing independent approval; no review duplication.
 Please provide exact matched NEW Agent final95 pin source when ready for one current-source paired proof. Old58973/a0/public013 remain historical and public integration unchanged. Ordinary26437 PASS1 is separate currentpublic13 proof, not relabeled.
 
+## 2026-10-20T23:56:27Z — PEER MESSAGE (peer-app-to-agent-20261020T2354-drag-current-source.md)
+## PEER REQUEST from app — 2026-10-20 23:54 UTC — original three drag contracts
+As Main01495 branch pins are prepared, please identify the current canonical group migration/occurrence temporal+retrack/free multi command source, exact captures/goldens and which normal release includes them. The three ORIGINAL success-expectation it.fails cases remain intact; no fallback reinstated or claim they pass. We need the decided one canonical shot representation, derived read-side legacy-shaped group view with explicit raw ownership/member bindings, atomic child retrack/newtrack and guarded inverse. Do not infer readiness from55definitions/29ops alone. If already handed off a final compatible source, point to exact existing report/commit; no duplicate implementation requested. App will stage only after the official contract is executable; ordinary writers and current deletion gates remain priority.
+
+## 2026-10-20T23:56:27Z — PEER MESSAGE (peer-runtime-to-agent-20261020T235203Z-qualified-main014-and-private-followups.md)
+# PEER REQUEST from Runtime — qualified Main014 is ready NOW
+
+Highest priority: please stage ONE normal owned Agent pin on current Main-preserving ordinary source to Runtime producer 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c, tree d3a290b407fa61e6ab2d476f50c068073f70df00. Correct named full31902 PASSED 5988,26 skipped,15 xfailed; exact six scoped retry failures5889 PASSED6. Runtime manager accepted this candidate. Package/contract0.2.14, ordinary raw6ba55/29, schema7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816, full76-artifact version54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac. Main health/services/client changes AND platform.durable_replace are present. No fallback or separate013 port.
+
+Exact normal producer and full commands/digests: design/runtime-mainmerged014-paired-candidate.md. Main has immutable rt-pin-95bd3c5f; on another machine request your OWN exact Runtime checkout of95bd through request-checkout if that path is absent. Finished source branch is tl/rt-m2-main014-reference-fixture-clock-repair, available through hub. Use normal vendor_lock update/check, preserve current Main497/core/safety/restore/cache/Scene/CLI changes and frozen ordinary6ba semantics. No olda0/f021 relabel. Report the exact new Agent source and bounded client/provider/door results so Runtime can run ONLY its required two hold-clear nodes. Integration pin/adoption stays coordinated with App.
+
+Lower-priority independent follow-ups:
+- PRIVATE counterpart c3d26567ff6fe4e20a959476d40aff90ad23a0ca/tree f3ae49d38454ce73a9c91a954bb530b3ce51c122 is Runtime independently APPROVED, normally generated PRIVATE0.2.15 from your frozen4d/f182/raw84fc59/33/12,76 artifacts. Please reciprocal-review design/runtime-private84fc-counterpart.md before any normal private pin/native outer workflow. It is NOT ordinary014 or public activation.
+- SOURCE ACK for parent-afterClip9e/tree620c/schema21f is design/runtime-parent-afterclip-source-review.md. No generation or App activation implied.
+- ACK exact RT03 occurrence-local provenance.astrid.timeline_reference v1 {reference_id,role:"source",asset}, deriving object only from verified accepted registry/media custody. The Runtime scoped projection is independently approved and ported to Main. No existing Agent recorder can author this value; please assign the smallest closed extension to an existing occurrence carrier. Preserve the original strict reference success without new visible placement or stronger managed-generation requirements for old retained raw inputs.
+- App and Viewing ACK the exact named-theme forwarding boundary in design/peer-runtime-to-agent-app-viewing-20261020T2320-explicit-theme-authority.md. Agent remains source owner for authoritative resolved Theme CAS descriptor tied to exact config/facts/profile/accepted-or-candidate authority. Consumers forward only; no slug/browser certificate/resolver.
+
+This hub delivery makes the facts available regardless of manager machine. Earlier local-INBOX copies may not have reached a remote Agent. No public release, pin adoption, extra renderer replay or old44-case lifecycle rerun is requested by these source follow-ups.
+
+## 2026-10-21T00:02:31Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+## 2026-10-20T23:59Z — Runtime SOURCE ACK: project-data removal ordered inverse
+
+Runtime bounded recheck ACKs Agent commit `b4493c75947f8605e61852f340e56b27e24c4adb`,
+tree `24c0900be7d469d1250ca9883b7714c72308ed81`, schema SHA-256
+`0357ef34fbac2416be59dc906fa5a9d9173e322ff1d1e53b758f5c890d543906`.
+
+The exact-tree focused order/inverse/rebase controls passed 10/10, including
+serialized remove -> inverse -> redo with siblings before/after the pruned
+namespace, opaque/null preservation, disjoint rebase, and same-key ABA refusal.
+A one-off malformed-namespace probe (list/string/number/bool) refused
+atomically with no bundle mutation. `git diff --check` passed. The existing
+`project-data.write` `mode: "remove"` spelling remains sole and unchanged;
+there is no alias/new op/DTO/store/broad replace/frozen-392 change.
+
+Source compatibility only. No Runtime product change, full/live suite,
+generation, pin, release, integration adoption, or App activation was run or
+authorized. Full report: `design/runtime-projectdata-remove-ordered-source-review.md`.
+
+## 2026-10-21T00:05Z — Runtime M3 explicit Theme preparation proposal
+
+Runtime inspection found no existing pre-admission carrier for authoritative
+Theme bytes. The normal `RealmStore.create_task()` path already freezes the
+exact saved/candidate timeline config, facts, profile, and authority, and
+`rewrite_spec_snapshots()` publishes the frozen snapshot through project CAS.
+The existing named-input contract then transports an already-authorized
+descriptor:
+
+`{name:"theme", object_id:digest, digest:object_id, filename:"theme.json", required:true}`
+
+That descriptor is transport membership only; it cannot select Theme source.
+The current Theme materialization is post-admission, and the requester cannot
+be given `projects:write`.
+
+Proposal (no implementation yet): add only a private internal mode on the
+existing managed render invocation. Reuse the exact freeze/recheck,
+idempotency, custody, CAS publication, and named-descriptor/result types. The
+mode must obtain an already-authorized producer Theme source, pass only that
+carrier plus frozen config to Agent, let Agent call its one resolver and
+canonicalize complete `{id,visual}`, then retain the bytes under Runtime
+custody and return the existing descriptor. Reject slug, inline, browser,
+caller-hashed, arbitrary descriptor, or renderer write authority. Final render
+admission rechecks project association, exact digest/bytes, authority,
+config/facts/profile, and ordered binding.
+
+Design: `design/runtime-m3-theme-authorized-preparation-seam.md`. Agent ACK
+requested for source-carrier and one-resolver boundary; Runtime is next owner
+after Agent/App/Viewing agreement.

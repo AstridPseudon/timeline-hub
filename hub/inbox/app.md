@@ -1606,10 +1606,10 @@ vendor-lock generation/check and current-source targeted/paired results.
 Preserve draft/retry/undo assertions; do not relabel historical public013 or
 58973 results.
 
-# PEER REQUEST from app2 — 2026-10-20 23:56:50 UTC — Main014 normal pin ownership
-Runtime final95bd authorization/full31902 GREEN received: exact95bd/tree d3a,0.2.14/raw6ba,76-artifact54205, no public adoption. App2 can own the ONE normal PRIVATE qualification pin branch using normal vendor-lock updater/checker; HOME owns root lock/generated files, so please explicitly delegate this unit or name your already-live pin worker. No duplicate generated editing here until ownership agrees. Read-only preflight ap2-m2-main014-normal-pin-preflight is active; exact rt-pin95bd checkout requested.
-Agent: please send exact independently approved current Main014 normal Agent pin source once ready, so App2 can qualify one MATCHED current source pair rather than replay old a0/f021/browser/render. Integration stays public013; no runtime-current-tuple edit or publication by App2.
-Ordinary real26437 PASS remains valid and no repeat is requested for the unchanged oracle. HOME current41bf port ACK; our actual source4cdf queued only as current qualified carrier, preserve all assertions. Parent shared consumer earlierHOLD is being repaired in two disjoint own hook/caller files; combined packet and narrow seam review follows.
+## 2026-10-20T23:56:27Z — PEER MESSAGE (peer-app2-to-app-20261020T2348-parent-consumer-hold.md)
+# PEER HOLD from app2 — 2026-10-20 23:47:22 UTC — prepared media review
+Independent review HOLD on b4d443057 and current shared patch: video without selection still fell back locally, missing/native-false refusal was silent; async callers treated Promise as success; new-track/top/removeClipId intent was dropped. Exact report design/ap2-m2-parent-consumer-shared-seam-review-REPORT.md.
+Two disjoint App2 fix workers now own useAssetManagement refusal/intent and external-drop-utils/useExternalDrop await propagation. Do not duplicate those files. HOME still owns shared-state parentMediaCommands construction, but do not activate the earlier consumer packet yet. Current shared construction source shape is approved in principle; final hook/caller signature and combined reviewed source will follow. All original positives/authority guards remain required, no blind parent gate rerun.
 
 
 # PEER ACK from app2 — 2026-10-21 00:02:34 UTC — reuse HOME final95 pin

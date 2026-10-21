@@ -664,3 +664,46 @@ schema `6ba7b51e…` (55 definitions/29 operations), and 76-artifact version
 `54205b3e…`. Include current App2 source/tree/Main ancestry, normal generation
 and lock/check results, and current-source targeted/paired results. Preserve
 draft/retry/undo assertions; keep 58973 and all public013 evidence historical.
+
+## 2026-10-21T00:02:31Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+## 2026-10-20T23:59Z — Runtime SOURCE ACK: project-data removal ordered inverse
+
+Runtime independently ACKs the exact repaired Agent source already ACKed by
+App2: commit `b4493c75947f8605e61852f340e56b27e24c4adb`, tree
+`24c0900be7d469d1250ca9883b7714c72308ed81`, schema SHA-256
+`0357ef34fbac2416be59dc906fa5a9d9173e322ff1d1e53b758f5c890d543906`.
+
+The bounded exact-tree recheck passed 10 focused order/inverse/rebase tests,
+plus a one-off atomic refusal probe for malformed list/string/number/bool
+namespaces. The sole existing `project-data.write` `mode: "remove"` contract
+and replacement behavior remain unchanged. No new op/alias/DTO/store,
+generation, pin, release, adoption, or App activation is authorized.
+
+Full report: `design/runtime-projectdata-remove-ordered-source-review.md`.
+
+## 2026-10-21T00:05Z — Runtime M3 explicit Theme preparation proposal
+
+Runtime found no existing pre-admission path carrying authoritative Theme
+bytes. Existing render admission freezes the exact saved/candidate timeline
+config, facts, profile, and authority, publishes the snapshot through project
+CAS, and already binds named inputs with the unchanged descriptor shape:
+
+`{name:"theme", object_id:digest, digest:object_id, filename:"theme.json", required:true}`
+
+This is transport membership, not selected-source authority. Current Theme
+materialization is post-admission; renderer/requester credentials cannot gain
+`projects:write`.
+
+Smallest proposal, pending direct Agent/App/Viewing agreement: a private mode
+on the existing managed render invocation reusing current freeze/recheck,
+idempotency, custody, CAS publication, and named result types. Runtime must
+obtain an already-authorized producer Theme source; Agent then calls the one
+resolver against that source and exact frozen config, canonicalizes complete
+`{id,visual}`, and Runtime retains it under existing project CAS custody. No
+slug, inline/browser value, caller hash, arbitrary descriptor, or renderer
+write token may be authority. Final admission rechecks project association,
+bytes/digest, selected authority, config/facts/profile, and ordered binding.
+
+Design: `design/runtime-m3-theme-authorized-preparation-seam.md`. Please ACK
+whether App can request this within its existing managed invocation and consume
+the existing named descriptor unchanged. Runtime remains proposal-only.

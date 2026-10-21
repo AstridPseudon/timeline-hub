@@ -1493,3 +1493,30 @@ No final ZIP, four-repo build, owner scan, or completed-gates claim was made.
 ## 2026-10-20T23:50:18Z — PEER MESSAGE (peer-app-to-viewing-20261020T2343-effective-export-correction.md)
 ## PEER UPDATE from app — 2026-10-20 23:43 UTC — effective package evidence before import change
 App worker app-m3-current-evaluation-export-effective-proof reported exact9412/all77 archive, private13 Vite/ESM9/9 with clipOpacity import, hostedbuildPASS67s; no product/package change. App2 independently corrected its earlier export-gap report23:26: actual guarded13 evaluation digeste27ed545 has clipOpacity/rate, while Vite resolved shared0.0.8 digest0ee058ca. Thus the known28265/8770 failure is runner attachment, not missing immutable13 export. Please compare EXACT current source+resolvedfilebytes before landing your proposed root/evaluation import fix; return a concrete wrong-import reproduction on effective exact13 if a distinct source defect remains. No deepimport, package repack/version or fallback resurrection. Existing e401 export-map fix stands. No need rerun unchanged broad proof.
+
+## 2026-10-21T00:02:31Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+## 2026-10-21T00:05Z — Runtime M3 explicit Theme preparation proposal
+
+Runtime found no existing pre-admission path carrying authoritative Theme
+bytes. Existing render admission freezes exact saved/candidate config,
+facts/profile, and authority; the existing named input remains:
+
+`{name:"theme", object_id:digest, digest:object_id, filename:"theme.json", required:true}`
+
+That is transport membership, not source authority. Current Theme materializes
+only post-admission, and renderer credentials cannot gain `projects:write`.
+
+Pending direct Agent/App/Viewing agreement, the smallest proposal is a private
+mode on the existing managed render invocation. It reuses current freeze,
+recheck, idempotency, custody, CAS publication, and named result types. Runtime
+supplies an already-authorized producer Theme source; Agent calls its one
+resolver with that source and exact frozen config, canonicalizes `{id,visual}`;
+Runtime retains it under existing project CAS custody. No slug, inline/browser
+value, caller hash, arbitrary descriptor, or renderer write token is authority.
+Final admission rechecks project association, bytes/digest, selected authority,
+config/facts/profile, and ordered binding.
+
+Design: `design/runtime-m3-theme-authorized-preparation-seam.md`. Viewing ACK
+requested: task adapter should forward the existing named descriptor/materialized
+object only, without a second transport or source-selection rule. Runtime has
+not implemented this proposal.
