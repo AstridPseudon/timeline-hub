@@ -41,11 +41,60 @@ const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const APP_METADATA = 'src/integrations/runtime/generated-contract-metadata.ts';
 const AGENT_METADATA = 'astrid_runtime_client/contract_metadata.py';
 const REAL_HTTP_TEST = 'tests/e2e/local/bootstrap013-real-http.spec.ts';
-const PRIVATE13_NODE_MODULES = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-public13-full-environment-custody-repair/private13/node_modules';
-const PRIVATE13_READY = '/home/user/work/wt/app-m3-public13-full-environment-custody-repair/notes/public13-protected-env-READY';
+const DEFAULT_PRIVATE13_NODE_MODULES = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-m3-public13-full-environment-custody-repair/private13/node_modules';
+const DEFAULT_PRIVATE13_READY = '/home/user/work/wt/app-m3-public13-full-environment-custody-repair/notes/public13-protected-env-READY';
+const PRIVATE13_ARCHIVE_SHA256 = '9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738';
+const PRIVATE13_COMPOSITION_TREE_SHA256 = '5ce2600247eba0be40cd8c643a8ad35c20248e089cb31a41f7ae2585e4f96a7c';
+const PRIVATE13_DIRECT_PACKAGES = [
+  '@banodoco/timeline-composition', '@banodoco/timeline-ops', '@banodoco/timeline-schema',
+  '@playwright/test', '@remotion/layout-utils', '@remotion/media', '@remotion/player', '@remotion/three',
+  'react', 'react-dom', 'remotion', 'vite',
+];
 
 function fail(message) {
   throw new Error(`[current013] ${message}`);
+}
+
+function private13Paths(env = process.env) {
+  const leaf = (env.TIMELINE_CURRENT013_PRIVATE13_NODE_MODULES ?? DEFAULT_PRIVATE13_NODE_MODULES).trim();
+  const ready = (env.TIMELINE_CURRENT013_PRIVATE13_READY ?? DEFAULT_PRIVATE13_READY).trim();
+  if (!path.isAbsolute(leaf) || !path.isAbsolute(ready)) fail('private13 graph and READY paths must be absolute');
+  return Object.freeze({ leaf, ready });
+}
+
+function compositionTreeDigest(root) {
+  const digest = createHash('sha256');
+  const files = execFileSync('find', [root, '-type', 'f', '-print'], { encoding: 'utf8' }).trim().split('\n').filter(Boolean).sort();
+  for (const file of files) {
+    digest.update(path.relative(root, file));
+    digest.update(readFileSync(file));
+  }
+  return digest.digest('hex');
+}
+
+function checkDirectPackages(leaf) {
+  const appPackage = jsonFile(path.join(process.cwd(), 'package.json'));
+  const appLock = jsonFile(path.join(process.cwd(), 'package-lock.json'));
+  const direct = { ...(appPackage.dependencies ?? {}), ...(appPackage.devDependencies ?? {}) };
+  for (const name of PRIVATE13_DIRECT_PACKAGES) {
+    if (!(name in direct)) fail(`private13 direct package is not an App dependency: ${name}`);
+  }
+  const resolved = {};
+  for (const name of Object.keys(direct)) {
+    const packageFile = path.join(leaf, name, 'package.json');
+    if (!existsSync(packageFile)) fail(`private13 direct package is missing: ${name}`);
+    const packageJson = jsonFile(packageFile);
+    const lockEntry = appLock.packages?.[`node_modules/${name}`];
+    const lockVersion = lockEntry?.version
+      ?? (lockEntry?.link && lockEntry.resolved ? appLock.packages?.[lockEntry.resolved]?.version : undefined);
+    if (!lockVersion || packageJson.name !== name || packageJson.version !== lockVersion) {
+      fail(`private13 direct package identity mismatch for ${name}: ${packageJson.name}@${packageJson.version}, expected ${name}@${lockVersion}`);
+    }
+    const actual = realpathSync(path.dirname(packageFile));
+    if (!actual.startsWith(`${leaf}${path.sep}`)) fail(`private13 direct package escapes owned graph: ${name} -> ${actual}`);
+    resolved[name] = { version: packageJson.version, path: actual };
+  }
+  return resolved;
 }
 
 function required(env, name) {
@@ -186,30 +235,38 @@ function checkCompositionArchive(root, label) {
 }
 
 function checkPrivate13() {
-  if (!existsSync(PRIVATE13_NODE_MODULES) || !statSync(PRIVATE13_NODE_MODULES).isDirectory()) {
-    fail(`protected public13 node_modules leaf is missing: ${PRIVATE13_NODE_MODULES}`);
+  const { leaf, ready } = private13Paths();
+  if (!existsSync(leaf) || !statSync(leaf).isDirectory()) {
+    fail(`protected public13 node_modules leaf is missing: ${leaf}`);
   }
-  if (realpathSync(PRIVATE13_NODE_MODULES) !== PRIVATE13_NODE_MODULES) {
-    fail(`protected public13 node_modules leaf moved or became a symlink: ${PRIVATE13_NODE_MODULES}`);
+  if (realpathSync(leaf) !== leaf) {
+    fail(`protected public13 node_modules leaf moved or became a symlink: ${leaf}`);
   }
-  const ready = readFileSync(PRIVATE13_READY, 'utf8');
-  if (!ready.includes(PRIVATE13_NODE_MODULES) || !ready.includes('all 77 archive files') || !ready.includes('Runtime source `2c4ac180')) {
-    fail(`protected public13 READY record is not the authoritative 77-file Runtime-2c4 environment: ${PRIVATE13_READY}`);
+  const readyRecord = readFileSync(ready, 'utf8');
+  if (!readyRecord.includes(leaf) || !readyRecord.includes('all 77 archive files') || !readyRecord.includes('Runtime source `2c4ac180')) {
+    fail(`protected public13 READY record is not the authoritative 77-file Runtime-2c4 environment: ${ready}`);
   }
-  const composition = path.join(PRIVATE13_NODE_MODULES, '@banodoco/timeline-composition');
-  if (realpathSync(composition) === realpathSync(path.join(process.cwd(), 'node_modules/@banodoco/timeline-composition'))) {
+  const composition = path.join(leaf, '@banodoco/timeline-composition');
+  const sharedModules = process.env.TIMELINE_CURRENT013_SHARED_NODE_MODULES
+    ?? path.join(process.cwd(), 'node_modules');
+  if (realpathSync(composition) === realpathSync(path.join(sharedModules, '@banodoco/timeline-composition'))) {
     fail('protected public13 Composition resolves to the App shared install');
   }
   const files = execFileSync('find', [composition, '-type', 'f', '-print'], { encoding: 'utf8' }).trim().split('\n').filter(Boolean);
   if (files.length !== CURRENT013_COMPOSITION.fileCount) fail(`protected public13 Composition has ${files.length} files, expected ${CURRENT013_COMPOSITION.fileCount}`);
+  const archive = path.join(process.cwd(), 'vendor/artifacts', CURRENT013_COMPOSITION.archive);
+  if (sha256File(archive) !== `sha256:${PRIVATE13_ARCHIVE_SHA256}`) fail(`protected public13 archive is not ${PRIVATE13_ARCHIVE_SHA256}`);
+  if (compositionTreeDigest(composition) !== PRIVATE13_COMPOSITION_TREE_SHA256) fail('protected public13 Composition payload bytes changed');
   const packageJson = jsonFile(path.join(composition, 'package.json'));
   if (packageJson.name !== '@banodoco/timeline-composition' || packageJson.version !== '0.0.13') fail('protected public13 Composition package is not 0.0.13');
   if (!existsSync(path.join(composition, 'dist/animations.generated.js'))) fail('protected public13 generated animations are missing');
-  const vite = path.join(PRIVATE13_NODE_MODULES, '.bin/vite');
+  const direct = checkDirectPackages(leaf);
+  const vite = path.join(leaf, '.bin/vite');
   requiredExecutable({ VITE: vite }, 'VITE');
+  if (!realpathSync(vite).startsWith(`${leaf}${path.sep}`)) fail(`protected public13 Vite resolves outside the owned graph: ${realpathSync(vite)}`);
   execFileSync(process.execPath, ['--version'], { stdio: ['ignore', 'pipe', 'pipe'] });
   execFileSync(vite, ['--version'], { stdio: ['ignore', 'pipe', 'pipe'] });
-  return Object.freeze({ leaf: PRIVATE13_NODE_MODULES, compositionFiles: files.length, node: process.execPath, vite });
+  return Object.freeze({ leaf, ready, compositionFiles: files.length, compositionTree: PRIVATE13_COMPOSITION_TREE_SHA256, archive: PRIVATE13_ARCHIVE_SHA256, direct, node: process.execPath, vite });
 }
 
 function runVendorCheck(input, root, command, label) {
@@ -259,6 +316,7 @@ export function runCurrent013Integration() {
   }
   const input = readCurrent013Inputs();
   const private13 = process.env.CURRENT013_LAUNCHER_TEST === '1' ? null : checkPrivate13();
+  const private13PathsFromEnv = private13Paths();
   const before = checkCurrent013Sources(input);
   console.log(`[current013] exact source preflight passed; running ${REAL_HTTP_TEST}`);
   const childEnv = {
@@ -269,8 +327,8 @@ export function runCurrent013Integration() {
     ASTRID_RUNTIME_PYTHON: input.runtimePython,
     TIMELINE_BUNDLE_AGENT_HEAD: input.agentSha,
     TIMELINE_BUNDLE_RUNTIME_HEAD: input.runtimeSha,
-    PRIVATE13_NODE_MODULES,
-    VITE_TIMELINE_COMPOSITION_ROOT: path.join(PRIVATE13_NODE_MODULES, '@banodoco/timeline-composition'),
+    PRIVATE13_NODE_MODULES: private13PathsFromEnv.leaf,
+    VITE_TIMELINE_COMPOSITION_ROOT: path.join(private13PathsFromEnv.leaf, '@banodoco/timeline-composition'),
   };
   let status = 1;
   try {
