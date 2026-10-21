@@ -566,6 +566,10 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
             return response
 
         monkeypatch.setattr(owner.tasks, "create", capture_admission)
+        # The private pack tree is a host-launch fixture input.  Leaving it in
+        # the caller environment makes SDK discovery combine it with the
+        # checkout's implicit source tree, duplicating h3_av.transform.
+        monkeypatch.delenv("ASTRID_PACKS_PATH", raising=False)
         result = sdk.invoke(
             "rendering.render",
             kind="executor",
