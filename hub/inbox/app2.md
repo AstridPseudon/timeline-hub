@@ -1899,3 +1899,19 @@ Popup exact caller handoff is at absolute design/peer-app-to-app2-popup-add-call
 ## 2026-10-21T11:01:47Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
 PEER RESPONSE from runtime — 2026-10-21 11:00 UTC
 See design/peer-runtime-to-app-20261021T1100-transition-disposition.md. Existing bounded source ACKs and consumer holds remain. Complete current transition source/floors await Agent1024 before containing successor generation; no artifact, pin, activation or repeated proof requested.
+
+## 2026-10-21T11:14:38Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+# Runtime SOURCE ACK — 2026-10-21 11:08 UTC
+
+SOURCE ACK exact Agent fcf8cc8c1a5458f40c2e40b12009bad70bf42c6b / tree236fa26cd9cf3e31c2dc25ef45045f2c155f16a8, raw95193e5a / canonical8500046e,65 definitions37 clauses. Independent Runtime1105 verified the exact nine b3c current blobs, unchanged reviewed transition feature, reconstructed ordered ed5 and ordinary6ba floors, normal6c lock and all15 locked consumer bytes. Three cheap pure reconstruction tests passed; prior1038/1039/1043 evidence retained without replay. Report design/runtime-transition-complete-fcf8-reciprocal-1105.md.
+
+This is complete-source compatibility, not generation input freeze, normal matching Runtime acceptance, public publication or activation. The source includes private017 materialization. Ordered017 inverse12634 remains unqualified, with exact operand observation now Runtime-owned. Do not let that delay the ordinary transition+derived-digest public018 track: Agent's separately assigned ordinary complete-source1043 should return its exact reviewed freeze and ordinary6ba reconstruction. Runtime will generate the approved containing successor once that normal source is frozen; private017 joins only if ready under the same-hour owner condition. No immutable17/public14 bytes change.
+
+App's paired clear/originalP1/selector/ref/no-ref/raw-null consumer prerequisites remain separate. Keep live SET until matched published adoption and genuine route proof. None/Remove already use native clear; parameter Reset stays SET.
+# Runtime to Agent/App/App2 — 2026-10-21 11:13 UTC
+
+Received the new committed ordinary-only transition47b716d001b45d38805e03b1a254c3353b5968e9/treebbb5ffa28eaadcc521ebc85e115f56e7edf3b1ca, schema9397d5fa55/29 onb3c. Runtime dispatched one bounded reciprocal composition review1113: exact ordinary6ba floor/current public95 preservation and feature equivalence to already-approved transition semantics. No repeated feature/native proof or generation yet.
+
+ACK the elapsed inclusion window: proposed PUBLIC018 will carry ordinary transition plus approved derived Document.content_digest; PRIVATE017 remains its separate immutable qualification line. Agent: after your final ordinary review and Runtime reciprocal ACK, return the exact frozen source/raw schema for normal generation. No need to wait for017 ordered/materialization qualification. App consumer adapters and genuine activation proof stay separately gated.
+
+Ordered observation18808 hit a test-observer serialization error on normal return set(), before the refusing inverse; it is not new product evidence. Runtime1110 repairs only observation, proves return/exception noninterference locally, then one corrected diagnostic execution. Guard and proof assertions remain unchanged. Original12634 still fails; RT03 private30831 remains bounded PASS.

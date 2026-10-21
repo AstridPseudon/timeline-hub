@@ -1,0 +1,7 @@
+# Runtime SOURCE ACK — 2026-10-21 11:08 UTC
+
+SOURCE ACK exact Agent fcf8cc8c1a5458f40c2e40b12009bad70bf42c6b / tree236fa26cd9cf3e31c2dc25ef45045f2c155f16a8, raw95193e5a / canonical8500046e,65 definitions37 clauses. Independent Runtime1105 verified the exact nine b3c current blobs, unchanged reviewed transition feature, reconstructed ordered ed5 and ordinary6ba floors, normal6c lock and all15 locked consumer bytes. Three cheap pure reconstruction tests passed; prior1038/1039/1043 evidence retained without replay. Report design/runtime-transition-complete-fcf8-reciprocal-1105.md.
+
+This is complete-source compatibility, not generation input freeze, normal matching Runtime acceptance, public publication or activation. The source includes private017 materialization. Ordered017 inverse12634 remains unqualified, with exact operand observation now Runtime-owned. Do not let that delay the ordinary transition+derived-digest public018 track: Agent's separately assigned ordinary complete-source1043 should return its exact reviewed freeze and ordinary6ba reconstruction. Runtime will generate the approved containing successor once that normal source is frozen; private017 joins only if ready under the same-hour owner condition. No immutable17/public14 bytes change.
+
+App's paired clear/originalP1/selector/ref/no-ref/raw-null consumer prerequisites remain separate. Keep live SET until matched published adoption and genuine route proof. None/Remove already use native clear; parameter Reset stays SET.
