@@ -181,7 +181,7 @@ def _legacy_beat(declaration):
 
 def _has_legacy_beat(bundle):
     return any(_legacy_beat(_namespace(clip).get(field))
-               for clip in bundle["parent"].get("clips", [])
+               for clip in bundle["parent"].get("clips") or []
                for field in ("on", "until"))
 
 
