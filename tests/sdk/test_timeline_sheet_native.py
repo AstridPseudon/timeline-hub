@@ -74,7 +74,10 @@ def param_edit(text, field, value):
 
 
 def append_param(text, field, value):
-    return "\n".join(line + f" {field}={value}" if "  card  " in line else line
+    token = f" {field}={value}"
+    return "\n".join(line.replace(" # ref ", token + " # ref ", 1)
+                         if "  card  " in line and " # ref " in line else
+                         line + token if "  card  " in line else line
                      for line in text.splitlines()) + "\n"
 
 
@@ -290,10 +293,22 @@ def test_detached_mixed_edit_with_unknown_neighbor_is_not_staged(connected, tmp_
     _, generated, _ = connected
     edited = text_edit(duration_edit(original_text, 2), "CHANGED")
     unsupported = append_param(edited, "unknown", "label")
+
+    native = NativeSheet(detached_duration_bundle(), basis={"revision_id": "r0", "publication_id": "pub0"})
+    native_ref = "occurrence:occ-1/clip:card"
+    old = "\n".join(line + " unknown=label" if "  card  " in line else line
+                       for line in native.text.splitlines()) + "\n"
+    with pytest.raises(SheetError, match="invalid sheet row binding"):
+        NativeSheet._read(old)
+    rows, _ = NativeSheet._read(append_param(native.text, "unknown", "label"))
+    assert native_ref in rows and rows[native_ref][2]["params"]["unknown"] == "label"
+    with pytest.raises(SheetError, match="unsupported parameter unknown"):
+        native.preview(append_param(native.text, "unknown", "label"))
+
     before_bundle = copy.deepcopy(tl.bundle)
     before_outbox = generated.path.read_bytes()
 
-    with pytest.raises(SheetError):
+    with pytest.raises(SheetError, match="unsupported retained sheet edit"):
         apply_sheet(tl, unsupported)
 
     assert tl.bundle == before_bundle
