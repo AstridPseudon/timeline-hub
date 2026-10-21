@@ -114,9 +114,15 @@ producers use App command capture, the crash-safe outbox, and the Runtime
 `/v1` commit door. Current empty-timeline creation and repair use the native
 `timeline.init` outbox path: Runtime creates the timeline, App verifies the
 single empty parent baseline, and App commits `timeline.init` plus its two
-`track.create` commands through the normal commit route. The Runtime
-parent-publication path remains live for open shot-composition, popup, and
-placement producers that have not migrated. No `config-replaced` or
+`track.create` commands through the normal commit route. The bounded current
+App qualification is 1557c312 against published Runtime 0.2.14 source 95bd3c5f
+(`all76`) and Composition 0.0.13 (`all77`). This bounded tuple does not
+qualify the remaining product gates; they are separate and unverified. The bounded
+native parent `clip.delete` and occurrence-owned shot-name
+`shot.set` slices are also qualified, while their other ownership families
+remain open. The Runtime parent-publication path remains live for open
+shot-composition, popup, and placement producers that have not migrated. No
+`config-replaced` or
 `create-with-config`
 Supabase route is a supported compatibility path. The bundle remains a
 fail-closed compatibility contract:

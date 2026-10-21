@@ -18,6 +18,8 @@
 | Everything in the tool | `npx vitest run src/tools/video-editor` (or a subdir, e.g. `.../lib`) |
 | Real-browser device gestures | `npm run test:e2e:timeline` — one command; it boots the dev server *and* the fake Runtime. Chromium must already be available; do not install shared browser dependencies from a worker |
 | Native bootstrap proof | `npx playwright test --config playwright.main95-native-bootstrap.config.ts` — focused create/init, lost-ACK, restart, outbox-drain, and raw-history journey |
+| Focused native unit proof | `npx vitest run --config config/testing/vitest.config.ts src/integrations/runtime/bootstrapInitialization.test.ts src/integrations/runtime/createDefaultTimeline.test.ts src/tools/video-editor/commands/ordinaryStructuralMember.test.ts src/tools/video-editor/commands/shotSetCapture.test.ts src/tools/video-editor/commands/shotSetSession.test.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx src/tools/travel-between-images/pages/ShotEditorView.test.tsx` |
+| Docs quality audit | `npm run check:docs-maturity-sync` and `git diff --check` |
 | Is the extension host wired? | open the editor with `?extensionSmoke=1`; the smoke extension's status contribution should appear |
 
 The conformance suite is the slow one (~45s for the 3-file run) — for the edit
@@ -60,12 +62,20 @@ outbox and `/v1` commit route. A late create or commit acknowledgement is
 recovered by the original owner and request identity; it is never replaced by
 a fresh request.
 
-The current App native-bootstrap reference is 1557c312. Its focused proof is
-`tests/e2e/local/main95-native-bootstrap.integration.spec.ts`: create/init,
-lost acknowledgement, Runtime restart, reload, exact retry, outbox drain, two
-raw history entries, and canonical readback. The corresponding unit contract
-is `src/integrations/runtime/bootstrapInitialization.test.ts`. These are
-focused proofs, not a whole-M2 or full-suite qualification.
+The current App native-bootstrap reference is 1557c312. Its bounded proof is
+the qualified `tests/e2e/local/main95-native-bootstrap.integration.spec.ts`
+journey (create/init, lost acknowledgement, Runtime restart, reload, exact
+retry, outbox drain, two raw history entries, and canonical readback), with
+the unit contract in `src/integrations/runtime/bootstrapInitialization.test.ts`.
+The current proof tuple is Runtime 0.2.14, published from source 95bd3c5f
+(`all76`), and Composition 0.0.13 (`all77`). These are bounded current
+qualification facts; remaining product gates are separate and unverified.
+
+Two other bounded native slices are qualified on this path: one eligible
+parent `clip.delete` through the existing command session/outbox, and the
+mounted occurrence-owned shot name through `shot.set`. The former is not a
+claim for grouped, multi-clip, occurrence, or prepared-media deletion; the
+latter is not a claim for standalone, gallery, or shot-settings writers.
 
 The one-path target is not yet complete for every producer. Keep these gaps
 visible until each has an accepted native replacement and the old call is
@@ -73,12 +83,14 @@ removed:
 
 | Still-open writer or boundary | Current path | Status |
 |---|---|---|
-| Ordinary snapshot batches and extension/producer edits | `src/tools/video-editor/hooks/useTimelineOps.ts:277-321` and its `commitData` callers | Snapshot ingress remains live; no zero-writer claim. |
-| Parent-composition publication | `src/integrations/runtime/dataProvider.ts:295`, reached through the shot-composition/placement seams | Still live for unmigrated shot-composition, popup, and placement producers. |
-| Generic timeline compatibility save | `src/integrations/runtime/dataProvider.ts:1000-1131` (`saveTimeline` / `saveTimelineAtHead`) and `src/shared/lib/placement/placementService.ts:106` | Retained compatibility writer; not the native command path. |
-| Popup occurrence add/swap | `src/tools/travel-between-images/components/shotTimelineDataProvider.ts` | Existing `saveTimeline` writer remains; native ADD and SWAP acceptance are separate gaps. |
+| Ordinary snapshot batches and extension/producer edits | `src/tools/video-editor/hooks/useTimelineOps.ts:277-321` and its `commitData` callers | **HELD**: snapshot ingress remains live; no zero-writer claim. |
+| Parent-composition publication | `src/integrations/runtime/dataProvider.ts:295`, reached through the shot-composition/placement seams | **HELD**: still live for unmigrated shot-composition and placement producers. |
+| Generic timeline compatibility save | `src/integrations/runtime/dataProvider.ts:1000-1131` (`saveTimeline` / `saveTimelineAtHead`) and `src/shared/lib/placement/placementService.ts:106` | **HELD**: retained compatibility writer; not the native command path. |
+| Popup occurrence add/swap | `src/tools/travel-between-images/components/shotTimelineDataProvider.ts` | **HELD**: existing `saveTimeline` writer remains; native ADD and SWAP acceptance are separate gaps. |
+| Remaining SET families (clip/element/selected-parameter and shot settings) | `src/tools/video-editor/commands/elementCapture.ts`, `src/tools/video-editor/commands/selectedParamAuthority.ts`, and `src/tools/travel-between-images/pages/ShotEditorView.tsx` | **HELD**: bounded captures exist, but the remaining writers have no zero-legacy qualification. |
+| Extension project-data writers | `src/tools/video-editor/lib/source-map-runtime.ts` and `src/tools/video-editor/commands/projectDataMember.ts` | **HELD**: the native replacement needs the matched ordered carrier and accepted remove/inverse proof. |
 | Local checkpoints and snapshot restore | `src/tools/video-editor/hooks/useTimelineHistory.ts:248-279,302-320,493-556` and `src/tools/video-editor/components/TimelineEditorShellToolbar.tsx:213-245` | Runtime history is authoritative for accepted commands, but these unmigrated local paths remain. |
-| Wider gesture coverage | grouped/occurrence delete, ordinary batch, element, selected-parameter, split, parent-media, and remaining shot-settings routes | Native captures are staged or partial; do not describe them as all migrated. |
+| Wider gesture coverage | grouped/occurrence delete, ordinary batch, split, parent-media, and remaining shot-settings routes | Native captures are staged or partial; do not describe them as all migrated. |
 
 The parent-publication boundary is therefore a remaining migration seam, not a
 second recommended editing recipe. The former Supabase append/import and
