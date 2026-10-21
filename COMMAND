@@ -1,0 +1,56 @@
+# Corrected-source preflight; all commands were read-only against source and
+# shared carriers. No tuple/grant/marker was created or consumed.
+
+# Prerequisite evidence:
+git -C /home/user/work/wt/vw-m3-gate6-corrected-helper-source-stage status --short --branch
+git -C /home/user/work/wt/vw-m3-gate6-corrected-helper-source-stage rev-parse HEAD HEAD^{tree}
+sed -n '1,120p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-gate6-helper-correction-custody-review/REPORT.md
+sed -n '1,140p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m3-gate6-corrected-helper-source-stage/REPORT.md
+
+# Targeted corrected-source tests:
+ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-d0a5072b \
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-8f105c26 \
+ASTRID_PACK_HOST_HELPER_CHECKOUT=/home/user/work/wt/agt-pin-b70b9d56 \
+/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node --import tsx --test \
+  tests/e2e/timeline/viewing-parity/harness.test.ts \
+  tests/e2e/timeline/viewing-parity/browser-profile.test.ts \
+  tests/e2e/timeline/viewing-parity/source-tuple.test.ts \
+  tests/e2e/timeline/viewing-parity/canvas.test.ts
+# PASS: 4 files, 0 failures.
+
+# Touched-file quality:
+./node_modules/.bin/eslint \
+  tests/e2e/timeline/viewing-parity/bootstrap.ts \
+  tests/e2e/timeline/viewing-parity/harness.ts \
+  tests/e2e/timeline/viewing-parity/harness.test.ts --max-warnings 0
+git diff --check
+# PASS.
+
+# Cheap identity/graph audit:
+# A temporary worker-local Node audit checked terminal KEEP, correction-review
+# APPROVE, actual postcommit App SHA/tree/root/full source hash, exact d0a/8f/5a
+# pins, owner ports, b70 immutable carrier, App and Agent physical graphs,
+# six-peer maps, Node20/browser bytes without launch, hosted dist marker, disk
+# floor, and no-current-integration substitution. It passed with:
+# App 909d2bfa186985db9791be0ab090b9f4e7824f9b /
+# tree 79728118ec633070581beff0e283fdff1a74f2d2 /
+# source sha256:ad14badc98dc19f87a30529d620a389a9bef6d27d0d7fef52f74c51d98073396.
+# The temporary audit script was removed after the evidence was recorded.
+
+# Shell-only cheap checks:
+openssl version
+ffmpeg -version | head -1
+ffprobe -version | head -1
+PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH=/home/user/work/wt/rt-pin-8f105c26:/home/user/work/wt/agt-pin-d0a5072b \
+  /home/user/work/venv-runtime/bin/python -B -m runtime_protocol.cli --help
+PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH=/home/user/work/wt/rt-pin-8f105c26:/home/user/work/wt/agt-pin-d0a5072b \
+  /home/user/work/venv-agent/bin/python -B -m astrid --help
+
+# PASS: Python import origins were Runtime 8f / Agent d0a; both CLI probes
+# passed without a listener. Discovery passed exactly 5 cases and the App graph
+# hash remained 8bdc44e9...145c5b before/after. Public13 package verification
+# passed 77/77 files for App and Agent; Runtime release verification passed
+# 75/75 artifacts and the generated-client hash.
+
+# Explicit future manager invocation (not run here; fresh tuple/grant/marker
+# are manager-owned): see READY.json invocation.command.

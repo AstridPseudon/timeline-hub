@@ -1,0 +1,98 @@
+{
+  "status": "READY",
+  "worker": "vw-m3-gate6-corrected-source-preflight",
+  "base": "3ee1900621f5ae27450ce5b1b69a3b7987e4b8c8",
+  "app": {
+    "root": "/home/user/work/wt/vw-m3-gate6-corrected-helper-source-stage",
+    "source": "909d2bfa186985db9791be0ab090b9f4e7824f9b",
+    "tree": "79728118ec633070581beff0e283fdff1a74f2d2",
+    "fullSourceHash": "sha256:ad14badc98dc19f87a30529d620a389a9bef6d27d0d7fef52f74c51d98073396",
+    "clean": true,
+    "changedFiles": [
+      "tests/e2e/timeline/viewing-parity/bootstrap.ts",
+      "tests/e2e/timeline/viewing-parity/harness.test.ts",
+      "tests/e2e/timeline/viewing-parity/harness.ts"
+    ]
+  },
+  "agent": {
+    "root": "/home/user/work/wt/agt-pin-d0a5072b",
+    "source": "d0a5072bbe7b7ce9489f43aa0a81027ec400343b",
+    "tree": "6adb4a1190dfb2874e101565f37eccd392b1ae2f"
+  },
+  "runtime": {
+    "root": "/home/user/work/wt/rt-pin-8f105c26",
+    "source": "8f105c26e3b62f9c2683f717a9773a12bc775a8e",
+    "tree": "b7f456d5135cba6049980ebc43a91c7a72ab8f7e"
+  },
+  "composition": {
+    "root": "/home/user/work/wt/vw-pin-5a4e9b72",
+    "source": "5a4e9b72f1916c4da01fa370ec5fe8d46b6da8e8",
+    "tree": "13e375534fffd704305eced5686699d2c8c9c948",
+    "public13Archive": "sha256:9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "regularMembers": 77
+  },
+  "helperCarrier": {
+    "root": "/home/user/work/wt/agt-pin-b70b9d56",
+    "source": "b70b9d569b2c80885d72734c61cd57e64c3715a8",
+    "tree": "687f077c4771e3dbb66bfb7ff2b98f310ac054b6",
+    "path": "tests/packs/rendering/real_pack_host.py",
+    "bytes": 10938,
+    "sha256": "sha256:bc75d73f21c6310efad7fc41e4a3d790bfe3a8975e0eb96c08c3dec63e62961b",
+    "readOnlyLease": true
+  },
+  "privateGraphs": {
+    "app": {
+      "root": "/home/user/work/wt/vw-m3-gate6-corrected-helper-source-stage/node_modules",
+      "sha256": "8bdc44e93ce6f712f2a26fc44f1f8e904215c1785f54ed97f826a98fe0145c5b",
+      "entries": 32393,
+      "regularFiles": 32357,
+      "internalSymlinks": 36,
+      "sharedInodes": 0,
+      "escapingLinks": 0
+    },
+    "agentRemotion": {
+      "root": "/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b/node_modules",
+      "sha256": "4913a37e5403c8372a283dcca8fd30c846b636abd88f59cfc572809d2fd0bd3c",
+      "entries": 21455
+    }
+  },
+  "runtimeArtifact": {
+    "producerSource": "2c4ac180c2220bdad966bc01e95ad230e99ce26a",
+    "producerTree": "7ab412cc4bcbe517efcfa806e092336390312e18",
+    "version": "sha256:6f000bc615a9cb24fb00cc69a97af75eae71006ebfe87e3caa272fcdbbb1af56",
+    "artifactCount": 75,
+    "generatedClient": "sha256:dd542c8c04ceec1af3d21413cf82ac6316879c0f3d2dacae5f88754c3b395ee8"
+  },
+  "python": {
+    "runtime": "/home/user/work/venv-runtime/bin/python",
+    "agent": "/home/user/work/venv-agent/bin/python"
+  },
+  "browsers": {
+    "player": "/opt/google/chrome/chrome",
+    "playerSha256": "cb19b59995072b86cc7f887b3b1c7ab1f63518a7f2ed9f0d33249e1a040e2c76",
+    "export": "/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell",
+    "exportSha256": "63eca986a3fe7f523d2d6e79d9f13daf4f1c73c1d9013c2c4a05b123510145b4",
+    "launched": false
+  },
+  "discovery": {
+    "cases": 5,
+    "profile": "native-codec-chrome155",
+    "graphUnchanged": true
+  },
+  "invocation": {
+    "cwd": "/home/user/work/wt/vw-m3-gate6-corrected-helper-source-stage",
+    "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "command": "ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-d0a5072b ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-8f105c26 ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python ASTRID_PYTHON=/home/user/work/venv-agent/bin/python ASTRID_PACK_HOST_HELPER_CHECKOUT=/home/user/work/wt/agt-pin-b70b9d56 ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-viewing13-d0a5072b TIMELINE_COMPOSITION_CHECKOUT=/home/user/work/wt/vw-pin-5a4e9b72 TIMELINE_VIEWING_APP_SOURCE=909d2bfa186985db9791be0ab090b9f4e7824f9b TIMELINE_VIEWING_APP_TREE=79728118ec633070581beff0e283fdff1a74f2d2 /home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node tests/e2e/timeline/viewing-parity/tab-audio.controller.mjs --ready /home/user/work/wt/vw-m3-gate6-corrected-helper-source-stage /home/user/work/wt/agt-pin-d0a5072b /home/user/work/wt/rt-pin-8f105c26",
+    "freshTupleGrantMarker": "manager-owned and intentionally not created by this preflight"
+  },
+  "unrun": [
+    "managed Runtime/Vite startup",
+    "Runtime listener and catalog readiness",
+    "pack-host launch",
+    "browser launch",
+    "physical capture/render/PCM/parity",
+    "central request",
+    "grant and one-shot marker creation/consumption",
+    "full suite"
+  ]
+}
