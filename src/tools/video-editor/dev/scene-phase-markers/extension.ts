@@ -560,7 +560,12 @@ export function buildCreateEmptyShotsPatch(
       {
         op: 'clip.add',
         target: clipId,
-        payload: { track: options.trackId, at: marker.time, clipType: 'hold' },
+        payload: {
+          track: options.trackId,
+          at: marker.time,
+          clipType: 'hold',
+          app: { managedBy: extensionId },
+        },
         order: baseOrder,
       },
       {
@@ -634,7 +639,12 @@ export function buildCreateShotsPatch(
       {
         op: 'clip.add',
         target: clipId,
-        payload: { track: options.trackId, at: marker.time, clipType: 'hold' },
+        payload: {
+          track: options.trackId,
+          at: marker.time,
+          clipType: 'hold',
+          app: { managedBy: extensionId },
+        },
         order: baseOrder,
       },
       {
@@ -677,15 +687,6 @@ export function buildAlignShotsPatch(
   extensionId: string,
 ): TimelinePatch {
   const seenTargets = new Set<string>();
-  // Decide the move shape from the original alignment batch. If any member
-  // keeps the legacy cross-track form, the complete batch remains legacy so
-  // the guarded compiler can apply it atomically instead of receiving a
-  // mixed native/legacy patch.
-  const nativeMoveBatch = alignments.every((alignment) => {
-    const currentClip = snapshot.clips.find((clip) => clip.id === alignment.clipId);
-    return currentClip?.track === alignment.trackId;
-  });
-  const operations: TimelinePatchOperation[] = [];
   alignments.forEach((alignment) => {
     if (seenTargets.has(alignment.clipId)) {
       throw new Error(`Scene Phase Markers: ambiguous alignment for clip ${alignment.clipId}.`);
@@ -697,6 +698,21 @@ export function buildAlignShotsPatch(
     if (alignment.hold !== undefined && (!Number.isFinite(alignment.hold) || alignment.hold <= 0)) {
       throw new Error(`Scene Phase Markers: invalid alignment hold for clip ${alignment.clipId}.`);
     }
+  });
+  const ownedAlignments = alignments.filter((alignment) => {
+    const clip = snapshot.clips.find((candidate) => candidate.id === alignment.clipId);
+    return clip?.managed === true && clip.managedBy === extensionId;
+  });
+  // Decide the move shape from the original alignment batch. If any member
+  // keeps the legacy cross-track form, the complete batch remains legacy so
+  // the guarded compiler can apply it atomically instead of receiving a
+  // mixed native/legacy patch.
+  const nativeMoveBatch = ownedAlignments.every((alignment) => {
+    const currentClip = snapshot.clips.find((clip) => clip.id === alignment.clipId);
+    return currentClip?.track === alignment.trackId;
+  });
+  const operations: TimelinePatchOperation[] = [];
+  ownedAlignments.forEach((alignment) => {
     // A wholly same-track batch can use the ordinary native member's `{ at }`
     // shape. Cross-track or unresolved intent keeps the legacy `{ track, at }`
     // shape for every member of the batch.
@@ -818,9 +834,11 @@ export function moveExistingShotsToMarkers(
     ctx.chrome.toast('No markers yet — press B during playback first.', 'warning');
     return;
   }
-  const clips = visualClips(snapshot);
+  const clips = visualClips(snapshot).filter(
+    (clip) => clip.managed === true && clip.managedBy === ctx.extension.id,
+  );
   if (clips.length === 0) {
-    ctx.chrome.toast('No visual clips on the timeline to move.', 'info');
+    ctx.chrome.toast('No clips owned by Scene Phase Markers on the timeline to move.', 'info');
     return;
   }
   const alignments: ShotAlignment[] = clips.map((clip, index) => {

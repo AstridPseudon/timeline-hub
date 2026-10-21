@@ -268,6 +268,13 @@ export function readTranscriptSourceReviews(
     .sort((left, right) => left.key.localeCompare(right.key));
 }
 
+function isTranscriptCaptionOwnedByExtension(
+  clip: TimelineSnapshot['clips'][number],
+  extensionId: string,
+): boolean {
+  return clip.managed === true && clip.managedBy === extensionId;
+}
+
 function currentTranscriptSourceValue(item: DataLaneRenderItem) {
   const sourceItemId = item.sourceItemId ?? item.id;
   return {
@@ -420,6 +427,7 @@ export function buildTranscriptCaptionPatch(
     });
     const existing = existingClips.get(clipId);
     if (existing && mode === 'preserve') continue;
+    if (existing && !isTranscriptCaptionOwnedByExtension(existing, extensionId)) continue;
     if (!existing) {
       operations.push({
         op: 'clip.add',
@@ -454,6 +462,7 @@ export function buildTranscriptCaptionPatch(
       const provenance = readHostGenerationProvenance(clip.generatedMeta);
       if (
         clip.track !== TRANSCRIPT_CAPTION_TRACK_ID
+        || !isTranscriptCaptionOwnedByExtension(clip, extensionId)
         || clip.generatedMeta?.extensionId !== extensionId
         || clip.generatedMeta.contributionId !== TRANSCRIPT_CAPTION_CONTRIBUTION_ID
         || provenance?.sourceSchemaRef !== TRANSCRIPT_SCHEMA_REF

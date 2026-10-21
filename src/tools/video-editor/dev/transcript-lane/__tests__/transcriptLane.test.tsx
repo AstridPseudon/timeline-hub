@@ -1101,6 +1101,64 @@ describe('transcript lane chips (rework round-2 F3)', () => {
     expect(regenerate.meta).toMatchObject({ roundTripPolicy: 'regenerate' });
   });
 
+  it('does not remove or update clips owned by another extension or by the user', () => {
+    const current = {
+      id: 'current-source@clip-1',
+      sourceItemId: 'current-source',
+      timelineStart: 2,
+      timelineEnd: 4,
+      payload: { text: 'Current caption' },
+    };
+    const foreignMeta = {
+      extensionId: 'com.other.extension',
+      contributionId: 'other-generator',
+    };
+    const foreignStaleClip = {
+      id: 'foreign-stale-caption',
+      track: TRANSCRIPT_CAPTION_TRACK_ID,
+      at: 1,
+      duration: 1,
+      clipType: 'text',
+      managed: true,
+      managedBy: 'com.other.extension',
+      generatedMeta: foreignMeta,
+    };
+    const userStaleClip = {
+      id: 'user-stale-caption',
+      track: TRANSCRIPT_CAPTION_TRACK_ID,
+      at: 5,
+      duration: 2,
+      clipType: 'text',
+      managed: false,
+    };
+    const stalePatch = buildTranscriptCaptionPatch({
+      baseVersion: 20,
+      tracks: [{ id: TRANSCRIPT_CAPTION_TRACK_ID, kind: 'visual', label: 'Transcript Captions', muted: false }],
+      clips: [foreignStaleClip, userStaleClip],
+    }, [current], TRANSCRIPT_LANE_EXTENSION_ID, { mode: 'regenerate' });
+    expect(stalePatch.operations.find((operation) => (
+      operation.op === 'clip.remove' && operation.target === 'foreign-stale-caption'
+    ))).toBeUndefined();
+    expect(stalePatch.operations.find((operation) => (
+      operation.op === 'clip.remove' && operation.target === 'user-stale-caption'
+    ))).toBeUndefined();
+
+    const currentClipId = transcriptCaptionClipId(current.id);
+    for (const clip of [
+      { ...foreignStaleClip, id: currentClipId },
+      { ...userStaleClip, id: currentClipId },
+    ]) {
+      const updatePatch = buildTranscriptCaptionPatch({
+        baseVersion: 21,
+        tracks: [{ id: TRANSCRIPT_CAPTION_TRACK_ID, kind: 'visual', label: 'Transcript Captions', muted: false }],
+        clips: [clip],
+      }, [current], TRANSCRIPT_LANE_EXTENSION_ID, { mode: 'regenerate' });
+      // The deterministic caption id is occupied in either case; regeneration
+      // must leave the non-owned clip untouched instead of overwriting it.
+      expect(updatePatch.operations).toEqual([]);
+    }
+  });
+
   it('turns human-edited captions into review proposals without mutating transcript source', () => {
     const item = {
       id: 'source-1@clip-1',

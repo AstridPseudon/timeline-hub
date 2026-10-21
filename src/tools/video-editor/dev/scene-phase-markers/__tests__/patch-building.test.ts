@@ -70,6 +70,17 @@ function makeSnapshot(overrides: Partial<TimelineSnapshot> = {}): TimelineSnapsh
   };
 }
 
+function ownedClip(id: string, track = 'V1', at = 0, duration = 4) {
+  return {
+    id,
+    track,
+    at,
+    duration,
+    managed: true,
+    managedBy: SCENE_PHASE_EXTENSION_ID,
+  };
+}
+
 function makeOps(): { ops: TimelineOps; applied: TimelinePatch[] } {
   const applied: TimelinePatch[] = [];
   const ops: TimelineOps = {
@@ -536,7 +547,7 @@ describe('buildCreateShotsPatch', () => {
     expect(patch.operations).toEqual([
       {
         op: 'clip.add', target: 'scene-phase-shot-m1',
-        payload: { track: 'V1', at: 0, clipType: 'hold' }, order: 0,
+        payload: { track: 'V1', at: 0, clipType: 'hold', app: { managedBy: SCENE_PHASE_EXTENSION_ID } }, order: 0,
       },
       {
         op: 'clip.update', target: 'scene-phase-shot-m1',
@@ -544,7 +555,7 @@ describe('buildCreateShotsPatch', () => {
       },
       {
         op: 'clip.add', target: 'scene-phase-shot-m2',
-        payload: { track: 'V1', at: 5, clipType: 'hold' }, order: 2,
+        payload: { track: 'V1', at: 5, clipType: 'hold', app: { managedBy: SCENE_PHASE_EXTENSION_ID } }, order: 2,
       },
       {
         op: 'clip.update', target: 'scene-phase-shot-m2',
@@ -552,7 +563,7 @@ describe('buildCreateShotsPatch', () => {
       },
       {
         op: 'clip.add', target: 'scene-phase-shot-m3',
-        payload: { track: 'V1', at: 8, clipType: 'hold' }, order: 4,
+        payload: { track: 'V1', at: 8, clipType: 'hold', app: { managedBy: SCENE_PHASE_EXTENSION_ID } }, order: 4,
       },
       {
         op: 'clip.update', target: 'scene-phase-shot-m3',
@@ -748,7 +759,7 @@ describe('buildCreateShotsPatch idempotency', () => {
 
 describe('buildAlignShotsPatch', () => {
   it('moves each clip to its chosen marker time with the snapshot base version', () => {
-    const snapshot = makeSnapshot({ baseVersion: 4 });
+    const snapshot = makeSnapshot({ baseVersion: 4, clips: [ownedClip('clip-a', 'A1'), ownedClip('clip-b', 'A1')] });
     const patch = buildAlignShotsPatch(snapshot, [
       { clipId: 'clip-a', trackId: 'V1', time: 0 },
       { clipId: 'clip-b', trackId: 'V1', time: 5 },
@@ -763,7 +774,7 @@ describe('buildAlignShotsPatch', () => {
   it('normalizes same-track move and hold members for the ordinary native port', () => {
     const snapshot = makeSnapshot({
       clips: [
-        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
+        ownedClip('clip-a', 'V1', 12),
       ],
     });
     const patch = buildAlignShotsPatch(snapshot, [
@@ -779,8 +790,8 @@ describe('buildAlignShotsPatch', () => {
   it('keeps a batch with cross-track intent on the legacy guarded shape', () => {
     const snapshot = makeSnapshot({
       clips: [
-        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
-        { id: 'clip-b', track: 'V1', at: 20, duration: 4 },
+        ownedClip('clip-a', 'V1', 12),
+        ownedClip('clip-b', 'V1', 20),
       ],
     });
     const patch = buildAlignShotsPatch(snapshot, [
@@ -796,7 +807,7 @@ describe('buildAlignShotsPatch', () => {
 
   it('keeps cross-track move and hold members wholly on the legacy guarded shape', () => {
     const snapshot = makeSnapshot({
-      clips: [{ id: 'clip-a', track: 'V1', at: 12, duration: 4 }],
+      clips: [ownedClip('clip-a', 'V1', 12)],
     });
     const patch = buildAlignShotsPatch(snapshot, [
       { clipId: 'clip-a', trackId: 'A1', time: 3, hold: 6 },
@@ -812,8 +823,8 @@ describe('buildAlignShotsPatch', () => {
   it('classifies a mixed same/cross-track move and hold batch as wholly legacy', () => {
     const snapshot = makeSnapshot({
       clips: [
-        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
-        { id: 'clip-b', track: 'V1', at: 20, duration: 4 },
+        ownedClip('clip-a', 'V1', 12),
+        ownedClip('clip-b', 'V1', 20),
       ],
     });
     const patch = buildAlignShotsPatch(snapshot, [
@@ -833,8 +844,8 @@ describe('buildAlignShotsPatch', () => {
   it('emits four native members for a complete same-track two-clip batch', () => {
     const snapshot = makeSnapshot({
       clips: [
-        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
-        { id: 'clip-b', track: 'V1', at: 20, duration: 4 },
+        ownedClip('clip-a', 'V1', 12),
+        ownedClip('clip-b', 'V1', 20),
       ],
     });
     const patch = buildAlignShotsPatch(snapshot, [
@@ -855,6 +866,21 @@ describe('buildAlignShotsPatch', () => {
       { clipId: 'clip-a', trackId: 'V1', time: 3 },
       { clipId: 'clip-a', trackId: 'V1', time: 9 },
     ], SCENE_PHASE_EXTENSION_ID)).toThrow('ambiguous alignment');
+  });
+
+  it('does not update clips owned by another extension or authored by the user', () => {
+    const snapshot = makeSnapshot({
+      clips: [
+        { ...ownedClip('foreign-clip', 'V1', 12), managedBy: 'com.other.extension' },
+        { id: 'user-clip', track: 'V1', at: 20, duration: 4, managed: false },
+      ],
+    });
+    const patch = buildAlignShotsPatch(snapshot, [
+      { clipId: 'foreign-clip', trackId: 'V1', time: 3, hold: 6 },
+      { clipId: 'user-clip', trackId: 'V1', time: 9, hold: 2 },
+    ], SCENE_PHASE_EXTENSION_ID);
+
+    expect(patch.operations).toEqual([]);
   });
 });
 
@@ -908,8 +934,8 @@ describe('alignShotsToTransitions (unified panel action)', () => {
     const snapshot = makeSnapshot({
       tracks: [{ id: 'V1', kind: 'visual', label: 'V1', muted: false }],
       clips: [
-        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
-        { id: 'clip-b', track: 'V1', at: 20, duration: 4 },
+        ownedClip('clip-a', 'V1', 12),
+        ownedClip('clip-b', 'V1', 20),
       ],
       app: {
         [SCENE_PHASE_EXTENSION_ID]: {
@@ -938,8 +964,8 @@ describe('alignShotsToTransitions (unified panel action)', () => {
     const snapshot = makeSnapshot({
       tracks: [{ id: 'V1', kind: 'visual', label: 'V1', muted: false }],
       clips: [
-        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
-        { id: 'clip-b', track: 'V1', at: 20, duration: 4 },
+        ownedClip('clip-a', 'V1', 12),
+        ownedClip('clip-b', 'V1', 20),
       ],
       app: {
         [SCENE_PHASE_EXTENSION_ID]: {
@@ -1001,7 +1027,7 @@ describe('split panel entry points (createShotsFromMarkers / moveExistingShotsTo
   it('createShotsFromMarkers creates at every marker regardless of existing clips (unchecked)', () => {
     const snapshot = makeSnapshot({
       tracks: [{ id: 'V1', kind: 'visual', label: 'V1', muted: false }],
-      clips: [{ id: 'clip-a', track: 'V1', at: 12, duration: 4, managed: false }],
+      clips: [ownedClip('clip-a', 'V1', 12)],
       app: markerApp(),
     });
     const { ctx, applied } = makeCtx(snapshot);
@@ -1038,8 +1064,8 @@ describe('split panel entry points (createShotsFromMarkers / moveExistingShotsTo
     const snapshot = makeSnapshot({
       tracks: [{ id: 'V1', kind: 'visual', label: 'V1', muted: false }],
       clips: [
-        { id: 'clip-a', track: 'V1', at: 12, duration: 4, managed: false },
-        { id: 'clip-b', track: 'V1', at: 20, duration: 4, managed: false },
+        ownedClip('clip-a', 'V1', 12),
+        ownedClip('clip-b', 'V1', 20),
       ],
       app: markerApp(),
     });
@@ -1064,11 +1090,11 @@ describe('split panel entry points (createShotsFromMarkers / moveExistingShotsTo
         { id: 'V2', kind: 'visual', label: 'V2' },
       ],
       clips: [
-        { id: 'parent-a', track: 'V1', at: 0, duration: 3 },
-        { id: 'parent-b', track: 'V1', at: 15, duration: 3 },
-        { id: 'occurrence:f2-occurrence/clip:f2-plate', track: 'plate', at: 0, duration: 12 },
-        { id: 'occurrence:f2-occurrence/clip:f2-agent-clip', track: 'V2', at: 3, duration: 3 },
-        { id: 'occurrence:f2-occurrence/clip:f2-agent-clear-clip', track: 'V2', at: 6, duration: 3 },
+        ownedClip('parent-a', 'V1', 0, 3),
+        ownedClip('parent-b', 'V1', 15, 3),
+        ownedClip('occurrence:f2-occurrence/clip:f2-plate', 'plate', 0, 12),
+        ownedClip('occurrence:f2-occurrence/clip:f2-agent-clip', 'V2', 3, 3),
+        ownedClip('occurrence:f2-occurrence/clip:f2-agent-clear-clip', 'V2', 6, 3),
       ],
       app: markerApp(),
     });
