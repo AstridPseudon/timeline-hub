@@ -237,4 +237,28 @@ else
   unset PUBLIC13_PREFLIGHT_ONLY
 fi
 
-exec sh "$PUBLIC13_RUNNER" "$APP_ROOT" ordinary
+# The existing public13 runner derives Chromium's TMPDIR, profile, and
+# Playwright/npm/Vite paths from APP_ROOT. Bind only that runner invocation to
+# a unique short alias; source guards and the real App checkout remain bound to
+# the caller's original path.
+SHORT_ENV_ROOT=$(mktemp -d /tmp/tla-XXXXXX)
+SHORT_APP_ROOT="$SHORT_ENV_ROOT/a"
+mkdir -p "$SHORT_ENV_ROOT/xdg-cache" "$SHORT_ENV_ROOT/xdg-config"
+ln -s "$APP_ROOT" "$SHORT_APP_ROOT"
+
+cleanup_short_environment() {
+  status=$?
+  trap - EXIT HUP INT TERM
+  find -P "$SHORT_ENV_ROOT" -depth -delete 2>/dev/null || true
+  exit "$status"
+}
+trap cleanup_short_environment EXIT HUP INT TERM
+
+export XDG_CACHE_HOME="$SHORT_ENV_ROOT/xdg-cache"
+export XDG_CONFIG_HOME="$SHORT_ENV_ROOT/xdg-config"
+
+set +e
+sh "$PUBLIC13_RUNNER" "$SHORT_APP_ROOT" ordinary
+status=$?
+set -e
+exit "$status"
