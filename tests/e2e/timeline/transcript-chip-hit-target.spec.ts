@@ -32,6 +32,14 @@ test.describe('transcript overlap hit targets', () => {
         const { left, right, top, bottom, width, height } = element.getBoundingClientRect();
         return { left, right, top, bottom, width, height };
       })(),
+      // The text span's box. Its overflow clip is what the reader sees, so a span wider than its chip (padding that
+      // keeps it at least 12px wide) shows a sliced fragment of the first glyphs in a 3-7px chip.
+      textRect: (() => {
+        const span = element.querySelector('span');
+        if (!span) return null;
+        const { left, right, top, bottom } = span.getBoundingClientRect();
+        return { left, right, top, bottom };
+      })(),
       style: {
         top: (element as HTMLElement).style.top,
         height: (element as HTMLElement).style.height,
@@ -51,6 +59,14 @@ test.describe('transcript overlap hit targets', () => {
         Math.abs(rect.width - Number.parseFloat(style.width)),
         `${label}: rendered width ${rect.width}px must equal its interval width ${style.width}`,
       ).toBeLessThanOrEqual(0.5);
+    }
+    for (const { label, rect, textRect } of chipData) {
+      expect(textRect, `${label}: the chip has a text span`).not.toBeNull();
+      expect(
+        textRect!.left >= rect.left - 0.5 && textRect!.right <= rect.right + 0.5
+          && textRect!.top >= rect.top - 0.5 && textRect!.bottom <= rect.bottom + 0.5,
+        `${label}: the text span ${JSON.stringify(textRect)} must lie inside its chip ${JSON.stringify(rect)}`,
+      ).toBe(true);
     }
     const rowBox = await transcriptRow.boundingBox();
     expect(rowBox).not.toBeNull();
