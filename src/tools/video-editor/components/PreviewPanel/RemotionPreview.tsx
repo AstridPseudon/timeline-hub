@@ -106,7 +106,9 @@ interface PendingSeek {
 interface RemotionPreviewProps {
   compiledTransitions?: CompiledCanonicalTransitions;
   config: ResolvedTimelineConfig;
-  onTimeUpdate: (time: number) => void;
+  // True only after the latest mailbox seek's frame feedback is consumed,
+  // or that request completes without a frame change. RAF dispatch is not completion.
+  onTimeUpdate: (time: number, seekComplete?: boolean) => void;
   playerContainerRef: RefObject<HTMLDivElement>;
   compact?: boolean;
   /** Phone/tablet chrome: transport controls grow to touch-sized hit targets. */
@@ -136,14 +138,23 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   const [isPlaying, setIsPlaying] = useState(false);
   const playbackIntentRef = useRef<'playing' | 'paused'>('paused');
   const activeSeekFrameRef = useRef<number | null>(null);
+  // A same-frame seek can complete before Remotion delivers the prior frame's
+  // already-scheduled React effect. Consume that one stale matching effect.
+  const completedSameFrameRef = useRef<number | null>(null);
   const pendingSeekRef = useRef<PendingSeek | null>(null);
   const seekFlushRafRef = useRef<number | null>(null);
+  const onTimeUpdateRef = useRef(onTimeUpdate);
+  onTimeUpdateRef.current = onTimeUpdate;
   const appliedConfigGenerationRef = useRef(0);
   const configIdentityRef = useRef({ config, compiledTransitions });
   const configGenerationRef = useRef(0);
   if (configIdentityRef.current.config !== config || configIdentityRef.current.compiledTransitions !== compiledTransitions) {
     configIdentityRef.current = { config, compiledTransitions };
     configGenerationRef.current += 1;
+    // A config replacement invalidates a seek against the old delivered
+    // composition. A replacement seek will be held in the existing mailbox
+    // until this generation reaches the Player.
+    activeSeekFrameRef.current = null;
   }
   useRenderDiagnostic('RemotionPreview');
   const markEventsEffect = useEffectDiagnostic('remotionPreview:events');
@@ -300,7 +311,21 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
     }
 
     const onFrameUpdate = (event: { detail: { frame: number } }) => {
-      onTimeUpdate(event.detail.frame / metadata.fps);
+      const frame = event.detail.frame;
+      if (completedSameFrameRef.current === frame) {
+        completedSameFrameRef.current = null;
+        return;
+      }
+      const seekComplete = activeSeekFrameRef.current === frame && pendingSeekRef.current === null;
+      if (seekComplete) {
+        activeSeekFrameRef.current = null;
+      }
+      const time = frame / metadata.fps;
+      if (seekComplete) {
+        onTimeUpdateRef.current(time, true);
+      } else {
+        onTimeUpdateRef.current(time);
+      }
     };
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
@@ -321,22 +346,6 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
     // command window keeps one active command plus one replaceable latest
     // target; it does not attempt to predict browser decode completion.
     const configGeneration = configGenerationRef.current;
-    // A prop update is debounced before it reaches Remotion. Keep imperative
-    // seeks queued until the Player is rendering that same config generation;
-    // otherwise a seek expressed in the new fps/extent is sent to stale media.
-    if (configGeneration !== appliedConfigGenerationRef.current) {
-      pendingSeekRef.current = { frame: targetFrame, configGeneration };
-      return;
-    }
-    if (activeSeekFrameRef.current !== null) {
-      if (activeSeekFrameRef.current === targetFrame) {
-        pendingSeekRef.current = null;
-      } else {
-        pendingSeekRef.current = { frame: targetFrame, configGeneration };
-      }
-      return;
-    }
-
     const dispatchSeek = ({ frame: requestedFrame, configGeneration: requestedGeneration }: PendingSeek) => {
       if (requestedGeneration !== configGenerationRef.current) {
         return;
@@ -354,6 +363,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       const frame = Math.min(Math.max(0, requestedFrame), Math.max(0, currentMetadata.durationInFrames - 1));
       activeSeekFrameRef.current = frame;
       const lastFrame = currentMetadata.durationInFrames - 1;
+      const frameBeforeSeek = player.getCurrentFrame();
       const wasPlaying = player.isPlaying() && playbackIntentRef.current !== 'paused';
       if (wasPlaying) {
         player.pause();
@@ -363,10 +373,18 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
         player.play();
       }
 
+      // Remotion may keep the same frame state for a same-frame or clamped
+      // seek, so no frameupdate effect is guaranteed. Complete that request
+      // explicitly while preserving the ordinary frame-time value.
+      if (activeSeekFrameRef.current === frame && frameBeforeSeek === frame) {
+        activeSeekFrameRef.current = null;
+        completedSameFrameRef.current = frame;
+        onTimeUpdateRef.current(frame / currentMetadata.fps, true);
+      }
+
       if (seekFlushRafRef.current === null) {
         seekFlushRafRef.current = requestAnimationFrame(() => {
           seekFlushRafRef.current = null;
-          activeSeekFrameRef.current = null;
           const pendingSeek = pendingSeekRef.current;
           pendingSeekRef.current = null;
           if (pendingSeek !== null) {
@@ -375,6 +393,31 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
         });
       }
     };
+    // A prop update is debounced before it reaches Remotion. Keep imperative
+    // seeks queued until the Player is rendering that same config generation;
+    // otherwise a seek expressed in the new fps/extent is sent to stale media.
+    if (configGeneration !== appliedConfigGenerationRef.current) {
+      pendingSeekRef.current = { frame: targetFrame, configGeneration };
+      return;
+    }
+    if (activeSeekFrameRef.current !== null) {
+      if (activeSeekFrameRef.current === targetFrame) {
+        pendingSeekRef.current = null;
+      } else {
+        pendingSeekRef.current = { frame: targetFrame, configGeneration };
+      }
+      if (seekFlushRafRef.current === null) {
+        seekFlushRafRef.current = requestAnimationFrame(() => {
+          seekFlushRafRef.current = null;
+          const pendingSeek = pendingSeekRef.current;
+          pendingSeekRef.current = null;
+          if (pendingSeek !== null) {
+            dispatchSeek(pendingSeek);
+          }
+        });
+      }
+      return;
+    }
 
     dispatchSeek({ frame: targetFrame, configGeneration });
   }, []);
@@ -382,8 +425,10 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   useEffect(() => {
     appliedConfigGenerationRef.current = delivery.generation;
     const pendingSeek = pendingSeekRef.current;
-    if (pendingSeek?.configGeneration === appliedConfigGenerationRef.current) {
+    if (pendingSeek !== null) {
       pendingSeekRef.current = null;
+    }
+    if (pendingSeek?.configGeneration === appliedConfigGenerationRef.current) {
       const frame = pendingSeek.time === undefined
         ? pendingSeek.frame
         : Math.max(0, Math.round(pendingSeek.time * metadataRef.current.fps));
@@ -437,6 +482,9 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       cancelAnimationFrame(seekFlushRafRef.current);
       seekFlushRafRef.current = null;
     }
+    activeSeekFrameRef.current = null;
+    completedSameFrameRef.current = null;
+    pendingSeekRef.current = null;
   }, []);
 
   useEffect(() => {
