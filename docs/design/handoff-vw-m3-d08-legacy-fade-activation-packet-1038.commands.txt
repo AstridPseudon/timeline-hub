@@ -1,0 +1,15 @@
+# Future-only commands; do not run until the independently qualified immutable
+# Composition 0.0.14 archive exists. ARCHIVE is supplied by release ownership.
+ARCHIVE=/absolute/path/to/banodoco-timeline-composition-0.0.14.tgz
+test -f "$ARCHIVE"
+test "$(basename "$ARCHIVE")" = banodoco-timeline-composition-0.0.14.tgz
+realpath "$ARCHIVE"
+test "$(realpath vendor/artifacts)" = "$PWD/vendor/artifacts"
+cp --no-clobber "$ARCHIVE" vendor/artifacts/banodoco-timeline-composition-0.0.14.tgz
+npm install --package-lock-only --ignore-scripts --no-audit --no-fund ./vendor/artifacts/banodoco-timeline-composition-0.0.14.tgz
+
+# Post-update focused proof (only after package.json/package-lock.json are
+# intentionally updated by HOME):
+ASTRID_CHECKOUT=/home/user/work/agent node_modules/.bin/vitest run --config config/testing/vitest.config.ts --no-cache src/tools/video-editor/compositions/playerEvaluation.test.ts src/tools/video-editor/compositions/VisualClip.evaluation.test.tsx src/tools/video-editor/compositions/TimelineRenderer.sequence.test.tsx
+node_modules/.bin/eslint src/tools/video-editor/compositions/playerEvaluation.ts src/tools/video-editor/compositions/VisualClip.tsx src/tools/video-editor/compositions/TimelineRenderer.tsx --max-warnings 0
+git diff --check
