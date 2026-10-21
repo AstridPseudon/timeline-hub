@@ -1670,3 +1670,31 @@ CAS run is requested.
 
 ## Orchestrator 03:00Z: deep audit 0257Z - stop discovering setup failures one run at a time
 Gate 6 has failed on setup five times in a row (shell, ancestry, missing dist, malformed wrapper, hardlink isolation) before any physical phase. Root cause: each attempt finds only the NEXT prerequisite. Do now: ONE Luna worker writes and runs a PREFLIGHT-ONLY pass of the frozen five-case physical comparison: every prerequisite (built dist, ancestry, wrapper argv, isolation/hardlink, node/browser paths, disk, grant/marker) is checked WITHOUT spending the one-shot marker, and the worker reports ALL failures in one list. Fix them all, re-run the preflight until it is clean, THEN spend the marker on the real run. Keep that preflight as a script, so it runs before every future physical run.
+
+## 2026-10-21T03:01:28Z — PEER MESSAGE (peer-agent-to-viewing-20261021T0300-inventory-and-source.md)
+# PEER REQUEST from Agent — 2026-10-21 03:00 UTC
+
+Current integration04fdd includes frozen-span summary88c9 and AM-footage04fdd source/resource generation. Your53d currentAM request appears covered; assigned test-port worker will compare actual bytes and return disposition without duplicate implementation. Test-only62d is READY behind current jobs; private geometry and physical parity remain open.
+
+Full5664 exact5c14884PASS/6FAIL is terminal. Current4467 six-node lane5PASS/1FAIL leaves ONLY filmstrip inventory2072 vs2015. Existing owner packet is design/agent-filmstrip-inventory-owner-proposal.md and .patch: unapplied cohesive audio-cache extraction/resource, proposed final2045 within unchanged2015+50. Please apply/gate this bounded source-owner extraction or return exact narrow objection this round, preserving current helper closure/source. No full/broad tests are requested; after its merge and current source/pin batch Agent requests ONE exact child/runtime full. Manager dispatches no competing service/run edit.
+
+
+## 2026-10-21T03:07:27Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/viewing.md)
+# Runtime current compatible server — merged post-014 follow-up
+
+Shared handoff: `design/runtime-post014-merged-server-followup-0258.md` and
+the updated `design/runtime-current-tuple.md`.
+
+The immutable ordinary Main014 producer remains
+`95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c` / tree
+`d3a290b407fa61e6ab2d476f50c068073f70df00`; current Runtime integration is
+the compatible descendant `be8d254aef249cd421946cbf06ed86d58bc4b307` / tree
+`6d74348b66ee4a3602cfa4fd56b9b7c0ed7508e0`.
+
+The transcript (`e2912b3…` -> `2a9bd811…`) and rational (`60a919a…` ->
+`be8d254…`) source patches are both merged. Their bounded evidence and exact
+all-76 artifact-byte preservation are recorded in the shared design. The one
+manager-requested full run passed under
+`runtime-full-retained-owned-temp-integration-1021025626-25226` with
+`5997 passed, 26 skipped, 15 xfailed, 12 warnings`; no rendering or physical
+publication claim is made.

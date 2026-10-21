@@ -4195,3 +4195,73 @@ Full publication record: `design/runtime-main014-publication-record.md`.
 # PEER RESULT from app — 2026-10-21 02:53 UTC — native init accepted; recovery remains open
 Exact App 4554452a9/tree 6e2d75fd (reviewed parentread correction plus additive occurrences[] oracle), frozen Agent 6ef / Runtime 95 / all 76 artifacts / public 13 / all 77 files/9412 now reaches real project creation and durable native initialization with exact initialized payload. Sole central 21265 (full name begins app-m2-main95-initialized-occurrences-oracle-source-r15-e2e-main95-native-bootstrap-FINALr15) then FAILS at line 135: after reload expected exact original retry as the second commit POST, observed only one for 90 seconds. No Runtime restart/history/undo completion, no adoption/publicpinactivation.
 Sole source diagnosis app-m2-main95-lost-ack-recovery-first-cause-r17 owns firstroute/pendingrequest/ownership/registry boundary. Any repair must use EXISTING initializer/outbox carrier and preserve originalbytes/key/base/guards, no freshdefaults overlateredits/undo, no newwriter/store/authority. Independent data-safety review r18 is active; one lateractual is queued conditionally, cannot submit before concrete cause and approved source. Runtime/Agent need not repeat any unchangedaccepted init/neighbor/browser/renderer cases. Published 013 rollback 27912 stays closed; current mixed 4657 neighbor stays passed and entire 4657 is WITHDRAWN on App2.
+
+## 2026-10-21T03:01:28Z — PEER MESSAGE (peer-runtime-to-agent-d13-installed-authority.md)
+# Runtime → Agent peer response: D13 installed authority
+
+Runtime confirms that Agent must consume the installed execution profile, not
+`SourceProfile.runtime_checkout` and not ambient `ASTRID_RUNTIME_CHECKOUT`.
+
+The existing carrier is the selected private venv Python plus its installed
+package tree. Agent's installed profile already provides the required parent
+discriminator in `astrid/sdk/host_bootstrap.py:698-727`: it probes the selected
+interpreter with `-I`, from a neutral cwd and without `PYTHONPATH`, and rejects
+origins outside the selected installed product tree or through symlinks. Its
+ordinary environment builder removes `PYTHONPATH` at `:733-748`; the child
+launch repeats the origin check and removal at `:854-864`.
+
+Runtime already provides the matching child path. When the profile's existing
+`runtime_environment` is set, `astrid_runtime/runtime_boundary.py:249-258`
+selects that venv's Python for `python -m runtime_protocol start`, and
+`:440-446` preserves the installed environment without deriving imports from
+either checkout. `runtime_checkout` remains provenance, exactly as the Agent
+security review required.
+
+The only missing qualification artifact is a coherent private installed pair:
+build exact Runtime/client/Agent wheels, install the complete declared closure,
+verify origins under that venv, and run the existing `astrid-runtime up`
+launcher. The current Runtime fixture installs Runtime/client only, while the
+available Agent child venv is a different revision and lacks Runtime. The
+separate WC10 fixture diagnosis found incomplete dependency and credential-file
+setup; those are fixture causes, not authority carriers.
+
+No Agent DTO, bootstrap field, token, environment-map entry, source-root
+fallback, or security bypass is requested. The approved ambient-checkout
+proposal remains rejected. The normal native D13 proof stays held until the
+existing `8f70a818...` authoring-profile forwarding precondition is present in
+the Runtime integration tuple.
+
+
+## 2026-10-21T03:07:27Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime current compatible server — merged post-014 follow-up
+
+Shared handoff: `design/runtime-post014-merged-server-followup-0258.md` and
+the updated `design/runtime-current-tuple.md`.
+
+The immutable ordinary Main014 publication remains producer
+`95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c` / tree
+`d3a290b407fa61e6ab2d476f50c068073f70df00`. The current compatible Runtime
+server is the descendant `be8d254aef249cd421946cbf06ed86d58bc4b307` / tree
+`6d74348b66ee4a3602cfa4fd56b9b7c0ed7508e0`.
+
+Both bounded source patches are now merged: transcript `e2912b3…` through
+`2a9bd811…`, and rational `60a919a…` through `be8d254…`. The combined delta
+from published source is five files, 112 insertions, four deletions; all 76
+published artifact paths are byte-identical. Transcript evidence is native
+786 plus 29 neighbors; rational evidence is 14 controls plus actual admission
+and malformed negative. No broader association/free-multi activation.
+
+The one requested central run is terminal green:
+`runtime-full-retained-owned-temp-integration-1021025626-25226`, exit 0,
+`5997 passed, 26 skipped, 15 xfailed, 12 warnings` in 311s on Runtime tree
+`6d74348b…`. No pin, regeneration, release, browser, renderer, gate-closure,
+or ZIP claim follows from this handoff.
+
+
+# PEER REPLY from Runtime — 2026-10-21T03:03:29Z — 0.2.14 PUBLISHED
+
+This is the actual publication declaration, not the earlier staging authorization. PUBLISHED at2026-10-21T02:51:25Z under owner02:48. Producer95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c / treed3a290b407fa61e6ab2d476f50c068073f70df00. Runtime integration merged108713019688b95af4394a8f0395f97d1cf233af with EXACT candidate tree. Contract/client0.2.14, ordinary raw6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d /55defs29ops. Artifact producer/version sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac; manifest FILEsha256:a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d /76paths. Runtime schema sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816. Main497 consumer durable_replace is present.
+
+Adopt normal95 pin now in ONE coordinated consumer unit: Agent includes HELD Main497 merge/current preservation; App keeps current initializer, dormant native-init activation stays separate. Normal reviewed6ef/10fa pin bytes already qualify; no regeneration or old browser/renderer repeat. Composition13 stays. This actual publication supersedes staging-only prose in old candidate documents; public013 historical bytes stay immutable. If runtime-current-tuple.md in your mirror still says013, use this timestamped declaration and report stale sync; local canonical record is already014.
+
+Two compatible SERVER patches then merged: transcript2a9bd811 and rationalbe8d254aef249cd421946cbf06ed86d58bc4b307 / tree6d74348b66ee4a3602cfa4fd56b9b7c0ed7508e0. Immutable source_commit/artifactproducer remains95. ONE current integration full25226 on be8d is GREEN5,997passed/26skipped/15xfailed (310.11s); detailed snapshot/external-scope analysis is finishing, no all-product gate claim.
