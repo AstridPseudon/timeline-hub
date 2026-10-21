@@ -488,15 +488,53 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
         }
         theme_source = workspace / "media" / "explicit-theme.json"
         theme_source.write_text(json.dumps(explicit_theme), encoding="utf-8")
-        imported = owner.media.import_file(
+        registry = json.loads(assets_path.read_text(encoding="utf-8"))
+        media_object_ids: list[str] = []
+        for key, filename in (("black", "black.mp4"), ("silence", "silence.m4a")):
+            imported_media = owner.media.import_file(
+                project=project_id,
+                path=workspace / "media" / filename,
+                idempotency_key=f"generic-remotion-theme-{key}",
+            )
+            assert imported_media.ok
+            media_descriptor = imported_media.data
+            media_object_id = str(media_descriptor["object_id"])
+            registry["assets"][key]["media_id"] = media_object_id
+            registry["assets"][key]["content_sha256"] = str(
+                media_descriptor["digest"]
+            ).removeprefix("sha256:")
+            media_object_ids.append(media_object_id)
+        assets_path.write_text(json.dumps(registry), encoding="utf-8")
+
+        timeline_import = owner.media.import_file(
+            project=project_id,
+            path=timeline_path,
+            idempotency_key="generic-remotion-theme-timeline",
+        )
+        assert timeline_import.ok
+        timeline_descriptor = timeline_import.data
+        timeline_object_id = str(timeline_descriptor["object_id"])
+        timeline_digest = str(timeline_descriptor["digest"])
+
+        assets_import = owner.media.import_file(
+            project=project_id,
+            path=assets_path,
+            idempotency_key="generic-remotion-theme-assets",
+        )
+        assert assets_import.ok
+        assets_descriptor = assets_import.data
+        assets_object_id = str(assets_descriptor["object_id"])
+        assets_digest = str(assets_descriptor["digest"])
+
+        theme_import = owner.media.import_file(
             project=project_id,
             path=theme_source,
             idempotency_key="generic-remotion-explicit-theme",
         )
-        assert imported.ok
-        descriptor = imported.data
-        theme_object_id = str(descriptor["object_id"])
-        theme_digest = str(descriptor["digest"])
+        assert theme_import.ok
+        theme_descriptor = theme_import.data
+        theme_object_id = str(theme_descriptor["object_id"])
+        theme_digest = str(theme_descriptor["digest"])
 
         host = GenericPackHost(
             pack_roots=[workspace / "astrid" / "packs"],
@@ -513,9 +551,16 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
 
         spec = {
             "inputs": {
-                "timeline": str(timeline_path),
-                "timeline_ref": "timeline-generic-remotion-theme-proof",
-                "assets_registry": str(assets_path),
+                "timeline": {
+                    "object_id": timeline_object_id,
+                    "digest": timeline_digest,
+                    "filename": "hype.timeline.json",
+                },
+                "assets_registry": {
+                    "object_id": assets_object_id,
+                    "digest": assets_digest,
+                    "filename": "hype.assets.json",
+                },
                 "theme": {
                     "object_id": theme_object_id,
                     "digest": theme_digest,
@@ -527,7 +572,12 @@ def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_sour
         admitted = generated.admit_task(
             capability_id=record.id,
             capability_digest=record.capability_digest,
-            input_object_ids=[theme_object_id],
+            input_object_ids=[
+                timeline_object_id,
+                assets_object_id,
+                theme_object_id,
+                *media_object_ids,
+            ],
             idempotency_key="generic-remotion-theme-task",
             project_id=project_id,
             spec=spec,
