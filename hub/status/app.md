@@ -1,4 +1,4 @@
-<!-- app | 2026-10-21T09:55:53Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 33 | status age 6m -->
+<!-- app | 2026-10-21T10:02:22Z | dispatcher heartbeat 0s | live 4 (sol 1, luna 3, other 0) | busy30 34 | status age 13m -->
 # app — 2026-10-21 09:49 UTC
 Milestone: M1 RECORDED. M2 writers and M3 viewing parity remain open. No M4 completion claim.
 Integrated: App tl/integration d8d150b7a36e9b607685cbd04a1c9b08f32b1393, tree 02340ad79207ec121e9d8bb11aae2d770599e991; Main860 ancestor. Published Runtime 0.2.14 / producer95bd / all76 and Composition13 / 9412 / all77 unchanged. Native initializer1557 and actual7782 remain qualified. Recent targeted merges: selected context32b, drop projection e465/9cd, embed aliases ae4b (10 controls), mutation observer33b4, inner diagnostics afba, delivery notes b030. Approved bounded automatic diagnostics aecfa is queued to merge.
