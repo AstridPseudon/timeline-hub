@@ -9,11 +9,23 @@ from .inverse import check_intervening
 def replay(plan, head_bundle, *, intervening_records=(), inverse_records=(), id_map=None, closures=None,
            verified_media=(), schema_inputs=(), realm_id=None, resolve_inputs=None,
            verified_producer=None):
-    check_intervening(
-        plan.records, intervening_records, state=State(head_bundle),
-        identities_only=(all(command['op'] not in ('timeline.inverse', 'timeline.restore')
-                             for command in plan.commands)
-                         and not any(command['op'] == 'clip.move-set' for command in plan.commands)))
+    forward = all(command['op'] not in ('timeline.inverse', 'timeline.restore')
+                  for command in plan.commands)
+    state = State(head_bundle)
+    check_intervening(plan.records, intervening_records, state=state, identities_only=forward)
+    if forward:
+        for record in plan.records:
+            if record['command']['op'] != 'clip.move-set':
+                continue
+            # Ordinary clip values are verified against the original claims on
+            # the final head. Membership and source pins also guard history.
+            reads = [read for read in record['reads']
+                     if not read['ref'].startswith('parent/clip:') or not read['path']
+                     or read['path'][0] in ('id', 'track', 'asset', 'asset_id', 'media_id', 'object_id',
+                                            'clipType', 'clip_type', 'enabled', 'active', 'disabled',
+                                            'hidden', 'deleted', 'clips', 'children')]
+            check_intervening([{**record, 'writes': [], 'reads': reads}],
+                              intervening_records, state=state)
     from ._materialization import consume
     sources = {**(closures or {})}
     sources[plan.bundle['base_parent']['revision_id']] = plan.bundle

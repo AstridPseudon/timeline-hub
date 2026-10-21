@@ -12,6 +12,7 @@ from astrid.sdk.media_transcript import SCHEMA, transcript_document_id
 from astrid.sdk.timeline.compiler import TimingCompileError, TimingCycleError
 from astrid.sdk.timeline.units import (
     _playback_rate,
+    _rational_fps,
     _time_fraction,
     quantize_interval,
     quantize_time,
@@ -32,15 +33,8 @@ def _fps(bundle):
         value = canvas.get("fps")
         if value is None:
             continue
-        if isinstance(value, dict) and set(value) == {"numerator", "denominator"}:
-            parts = [value["numerator"], value["denominator"]]
-        elif isinstance(value, list) and len(value) == 2:
-            parts = value
-        else:
-            return _playback_rate(value)
-        if any(isinstance(x, bool) or not isinstance(x, int) or x <= 0 for x in parts):
-            raise TimingCompileError("fps rational requires positive integer numerator/denominator")
-        return Fraction(*parts)
+        rational = _rational_fps(value)
+        return rational if rational is not None else _playback_rate(value)
     return Fraction(30)
 
 

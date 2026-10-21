@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import json
+from fractions import Fraction
 from pathlib import Path
 
 import pytest
@@ -98,8 +99,12 @@ def test_exact_app_drag_golden_selection_order_and_created_track_are_one_unit():
 
 @pytest.mark.parametrize('codec', ['at', 'at_ms', 'both'])
 def test_shared_rational_quantized_delta_preserves_windows_holds_and_opaque(codec):
+    check_rational_move(codec, {'numerator': 30000, 'denominator': 1001})
+
+
+def check_rational_move(codec, fps):
     original = basis()
-    original['parent']['config']['output']['fps'] = {'numerator': 30000, 'denominator': 1001}
+    original['parent']['config']['output']['fps'] = fps
     for row in original['parent']['clips']:
         row.update(at=row['at'] + .0123, hold=4, speed=2, **{'from': 7, 'to': 11},
                    opaque={'ordered': [None, False, {}, []]}, app={'opaque': None})
@@ -114,12 +119,26 @@ def test_shared_rational_quantized_delta_preserves_windows_holds_and_opaque(code
         return row.get('at', row.get('at_ms', 0) / 1000)
     assert start(rows[1]) == pytest.approx(90 * 1001 / 30000)
     assert start(rows[1]) - start(rows[0]) == pytest.approx(2)
+    assert start(rows[1]) == 90 * 1001 / 30000
+    assert start(rows[0]) == float(Fraction(90 * 1001, 30000) - 2)
     for row, prior in zip(rows, original['parent']['clips']):
         for key in ('from', 'to', 'hold', 'speed', 'opaque'):
             assert row[key] == prior[key]
         assert row['app']['opaque'] is None
         assert row['app']['astrid']['for'] == 2
     assert inverse(reload(plan.bundle), plan.records).bundle['parent'] == original['parent']
+    assert next(d for d in plan.records[0]['dependencies'] if d['key'] == 'move.quantization')['pin'] == {
+        'numerator': 30000, 'denominator': 1001, 'rounding': 'half-toward-positive-infinity'}
+    return plan
+
+
+@pytest.mark.parametrize('codec', ['at', 'at_ms', 'both'])
+def test_shared_rational_quantized_delta_accepts_main_list_rate_spelling(codec):
+    plan = check_rational_move(codec, [30000, 1001])
+    mapping = check_rational_move(codec, {'numerator': 30000, 'denominator': 1001})
+    assert plan.bundle['parent']['clips'] == mapping.bundle['parent']['clips']
+    for field in ('writes', 'dependencies', 'bindings', 'selections', 'created'):
+        assert plan.records[0][field] == mapping.records[0][field]
 
 
 def test_literal_zero_and_whole_candidate_excludes_moving_old_locations():
@@ -176,7 +195,7 @@ def test_disjoint_lane_changes_rebase_and_survive_inverse(edit):
     assert undone.bundle['parent'] == head['parent']
 
 
-@pytest.mark.parametrize('kind', ['lane-entry-aba', 'lane-root-aba', 'source', 'member', 'order', 'read-aba'])
+@pytest.mark.parametrize('kind', ['lane-entry-aba', 'lane-root-aba', 'source', 'member', 'order'])
 def test_membership_predicates_sources_and_aba_refuse_atomically(kind):
     original = basis()
     row = {'id': 'other', 'at': 10, 'hold': 1, 'track': 'V1', 'clipType': 'hold'}
@@ -198,8 +217,6 @@ def test_membership_predicates_sources_and_aba_refuse_atomically(kind):
     elif kind == 'order':
         head['parent']['clips'].reverse()
         head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
-    else:
-        intervening = [later('parent/clip:clip-1', ['hold'], 2)]
     before = copy.deepcopy(head)
     with pytest.raises(CommandError):
         replay(plan, head, intervening_records=intervening)
@@ -208,6 +225,72 @@ def test_membership_predicates_sources_and_aba_refuse_atomically(kind):
         with pytest.raises(CommandError) as error:
             inverse(plan.bundle, plan.records, intervening)
         assert error.value.kind == 'intervening_write'
+
+
+@pytest.mark.parametrize('staged', [False, True])
+@pytest.mark.parametrize('values', [(2,), (3, 2)], ids=['same-value', 'aba'])
+def test_forward_equal_value_aba_accepts_original_guards(staged, values):
+    if staged:
+        original, plan = staged_drag()
+    else:
+        original = basis()
+        row = {'id': 'other', 'at': 10, 'hold': 1, 'track': 'V1', 'clipType': 'hold'}
+        change(original, 'parent/clip:other', [], row)
+        plan = execute(original, [capture(original)])
+    head = copy.deepcopy(original)
+    before, records, commands = copy.deepcopy((head, plan.records, plan.commands))
+    intervening = [later('parent/clip:clip-1', ['hold'], value) for value in values]
+    rebased = replay(plan, head, intervening_records=intervening)
+    assert rebased.bundle == plan.bundle
+    assert rebased.records == records
+    assert rebased.commands == commands
+    assert plan.records == records
+    assert head == before
+    with pytest.raises(CommandError) as error:
+        inverse(plan.bundle, plan.records, intervening)
+    assert error.value.kind == 'intervening_write'
+
+
+def test_forward_changed_membership_refuses_atomically():
+    original = basis()
+    plan = execute(original, [capture(original)])
+    head = copy.deepcopy(original)
+    change(head, 'parent/clip:blocker', [],
+           {'id': 'blocker', 'at': 3, 'hold': 1, 'track': 'V3', 'clipType': 'hold'})
+    before, records = copy.deepcopy((head, plan.records))
+    with pytest.raises(CommandError) as error:
+        replay(plan, head)
+    assert error.value.kind == 'selection_changed'
+    assert head == before
+    assert plan.records == records
+
+
+@pytest.mark.parametrize('site', ['clip-root', 'track-root', 'asset', 'registry-source', 'rate'])
+def test_forward_source_and_identity_aba_remain_guarded(site):
+    original = basis()
+    change(original, 'parent/clip:clip-1', ['asset'], 'picture')
+    original['parent']['registry']['assets']['picture'] = {'media_id': 'media-1'}
+    plan = execute(original, [capture(original)])
+    head = copy.deepcopy(original)
+    if site in ('clip-root', 'track-root'):
+        ref = 'parent/clip:clip-1' if site == 'clip-root' else 'parent/track:V3'
+        value = copy.deepcopy(State(head).entity(ref))
+        intervening = [change(head, ref, [], value)]
+    else:
+        ref, path, value = {
+            'asset': ('parent/clip:clip-1', ['asset'], 'other-picture'),
+            'registry-source': ('parent/registry', ['assets', 'picture', 'media_id'], 'media-2'),
+            'rate': ('parent', ['config', 'output', 'fps'], 25),
+        }[site]
+        prior = State(head).get(ref, path)['value']
+        intervening = [change(head, ref, path, value), change(head, ref, path, prior)]
+    assert head == original
+    before, records = copy.deepcopy((head, plan.records))
+    with pytest.raises(CommandError) as error:
+        replay(plan, head, intervening_records=intervening)
+    assert error.value.kind == 'intervening_write'
+    assert head == before
+    assert plan.records == records
 
 
 @pytest.mark.parametrize('field', ['expect', 'reads', 'selections', 'bindings', 'resolved', 'created'])

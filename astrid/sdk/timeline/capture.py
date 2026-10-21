@@ -9,6 +9,7 @@ from astrid.core.timeline.duration import clip_start_frame, clip_timeline_durati
 
 from ._command_state import CommandError
 from ._materialization import capture_version
+from .units import _rational_fps
 
 MOVE_INTENT = {"ripple": "none", "anchor": "fixed", "position": "absolute"}
 CLIP_FIELDS = ('id', 'at', 'at_ms', 'track', 'asset', 'asset_id', 'media_id', 'object_id',
@@ -39,13 +40,12 @@ def number(value, label, *, positive=False):
 def rate(value):
     if value is None:
         return Fraction(30)
-    if isinstance(value, dict) and set(value) == {'numerator', 'denominator'}:
-        n, d = value['numerator'], value['denominator']
-        if isinstance(n, bool) or isinstance(d, bool) or not isinstance(n, int) or not isinstance(d, int):
-            raise CommandError("fps rational requires integer numerator/denominator")
-        if n <= 0 or d <= 0:
-            raise CommandError("fps rational must be positive")
-        return Fraction(n, d)
+    try:
+        rational = _rational_fps(value)
+    except ValueError as exc:
+        raise CommandError(str(exc)) from exc
+    if rational is not None:
+        return rational
     return Fraction(str(number(value, 'fps', positive=True)))
 
 

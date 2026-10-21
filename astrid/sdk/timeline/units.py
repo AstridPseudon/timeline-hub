@@ -51,6 +51,18 @@ def _playback_rate(speed: int | float | Fraction) -> Fraction:
     return rate
 
 
+def _rational_fps(value) -> Fraction | None:
+    if isinstance(value, dict) and set(value) == {"numerator", "denominator"}:
+        parts = [value["numerator"], value["denominator"]]
+    elif isinstance(value, list) and len(value) == 2:
+        parts = value
+    else:
+        return None
+    if any(isinstance(x, bool) or not isinstance(x, int) or x <= 0 for x in parts):
+        raise TimelineEditError("fps rational requires positive integer numerator/denominator")
+    return Fraction(*parts)
+
+
 def source_to_timeline_time(
     source_time: int | float | Fraction,
     *,
