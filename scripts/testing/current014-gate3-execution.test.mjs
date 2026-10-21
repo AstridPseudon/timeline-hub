@@ -3,7 +3,7 @@ import childProcess from 'node:child_process';
 import { after, mock, test } from 'node:test';
 import { execFileSync as hostExecFileSync } from 'node:child_process';
 import {
-  mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync,
+  lstatSync, mkdirSync, mkdtempSync, realpathSync, renameSync, rmSync, writeFileSync,
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -95,6 +95,13 @@ function controlledGate3(fn) {
   mock.method(childProcess, 'spawnSync', (command, args, options) => {
     calls.push({ command, args: [...args], options });
     assert.equal(command, CURRENT014_GATE3_CASE.command);
+    const envNames = ['TMPDIR', 'PWTEST_CACHE_DIR', 'XDG_CACHE_HOME', 'XDG_CONFIG_HOME', 'XDG_STATE_HOME', 'XDG_DATA_HOME',
+      'VITE_CACHE_DIR', 'PLAYWRIGHT_OUTPUT_DIR', 'PLAYWRIGHT_PROFILE_DIR', 'HOME', 'npm_config_cache'];
+    assert.match(options.env.TMPDIR, /^\/tmp\/tl-gate3-[^/]+\/tmp$/);
+    for (const envName of envNames) {
+      assert.equal(lstatSync(options.env[envName]).isSymbolicLink(), false, envName);
+      assert.equal(realpathSync(options.env[envName]), options.env[envName], envName);
+    }
     const listing = calls.length === 1;
     return {
       status: 0,
@@ -125,5 +132,8 @@ test('executes the selected Gate3 case with the same original argv used by --lis
     assert.deepEqual(calls[1].args, CURRENT014_GATE3_CASE.argv);
     assert.deepEqual(calls[1].args, calls[0].args.slice(0, -1));
     assert.equal(calls[1].options.cwd, appRoot);
+    const runEnvs = calls.map(({ options }) => options.env);
+    assert.equal(new Set(runEnvs.map((env) => env.TMPDIR)).size, 1);
+    assert.match(runEnvs[0].TMPDIR, /^\/tmp\/tl-gate3-[^/]+\/tmp$/);
   });
 });

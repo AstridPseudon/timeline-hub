@@ -11,7 +11,7 @@
 import { createHash } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import {
-  accessSync, constants, existsSync, lstatSync, readFileSync, readdirSync, realpathSync, statSync,
+  accessSync, constants, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync,
 } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -65,6 +65,38 @@ export const CURRENT014_GATE3_CASE = Object.freeze({
 
 function fail(message) {
   throw new Error(`[current014/gate3] ${message}`);
+}
+
+function gate3RunRoot() {
+  const root = mkdtempSync('/tmp/tl-gate3-');
+  const directories = Object.freeze({
+    tmp: path.join(root, 'tmp'),
+    playwrightCache: path.join(root, 'playwright-cache'),
+    xdgCache: path.join(root, 'xdg-cache'),
+    xdgConfig: path.join(root, 'xdg-config'),
+    xdgState: path.join(root, 'xdg-state'),
+    xdgData: path.join(root, 'xdg-data'),
+    viteCache: path.join(root, 'vite-cache'),
+    output: path.join(root, 'browser-artifacts'),
+    profile: path.join(root, 'profile'),
+    home: path.join(root, 'home'),
+    npmCache: path.join(root, 'npm-cache'),
+  });
+  try {
+    if (realpathSync('/tmp') !== '/tmp' || realpathSync(root) !== root) {
+      fail('Gate3 ephemeral root must be a physical directory directly under /tmp');
+    }
+    for (const directory of Object.values(directories)) mkdirSync(directory, { recursive: true, mode: 0o700 });
+    for (const [name, directory] of Object.entries(directories)) {
+      if (lstatSync(directory).isSymbolicLink() || !statSync(directory).isDirectory() || realpathSync(directory) !== directory) {
+        fail(`Gate3 ${name} root must be a physical private directory: ${directory}`);
+      }
+    }
+    return Object.freeze({ root, ...directories });
+  } catch (error) {
+    rmSync(root, { recursive: true, force: true });
+    throw error;
+  }
 }
 
 function required(env, name) {
@@ -464,7 +496,7 @@ export function assertCurrent014Gate3Result(status, output) {
   if (/\b(?:FAIL|FAILED)\b/i.test(output)) fail('Gate3 executor reported a test failure');
 }
 
-function childEnv(input) {
+function childEnv(input, runRoot) {
   return {
     ...process.env,
     ASTRID_CHECKOUT: input.agent,
@@ -474,13 +506,26 @@ function childEnv(input) {
     TIMELINE_BUNDLE_AGENT_HEAD: input.agentSha,
     TIMELINE_BUNDLE_RUNTIME_HEAD: input.runtimeSha,
     VITE_TIMELINE_COMPOSITION_ROOT: path.join(input.graph, '@banodoco/timeline-composition'),
+    TMPDIR: runRoot.tmp,
+    TMP: runRoot.tmp,
+    TEMP: runRoot.tmp,
+    PWTEST_CACHE_DIR: runRoot.playwrightCache,
+    XDG_CACHE_HOME: runRoot.xdgCache,
+    XDG_CONFIG_HOME: runRoot.xdgConfig,
+    XDG_STATE_HOME: runRoot.xdgState,
+    XDG_DATA_HOME: runRoot.xdgData,
+    VITE_CACHE_DIR: runRoot.viteCache,
+    PLAYWRIGHT_OUTPUT_DIR: runRoot.output,
+    PLAYWRIGHT_PROFILE_DIR: runRoot.profile,
+    HOME: runRoot.home,
+    npm_config_cache: runRoot.npmCache,
   };
 }
 
-function runCurrent014Gate3Selection(input) {
+function runCurrent014Gate3Selection(input, runRoot) {
   const child = spawnSync(CURRENT014_GATE3_CASE.command, [...CURRENT014_GATE3_CASE.argv, '--list'], {
     cwd: input.app,
-    env: childEnv(input),
+    env: childEnv(input, runRoot),
     stdio: ['ignore', 'pipe', 'pipe'], shell: false,
   });
   if (child.error) throw child.error;
@@ -507,13 +552,21 @@ export function runCurrent014Gate3() {
   if (process.argv.length !== 2) fail('Gate3 wrapper accepts no caller argv; its single-case argv is fixed');
   const input = readCurrent014Gate3Inputs();
   const before = checkCurrent014Gate3Sources(input);
+  const runRoot = gate3RunRoot();
+  console.log('[current014/gate3] ephemeral roots', JSON.stringify({
+    root: runRoot.root,
+    tmp: runRoot.tmp,
+    cache: runRoot.playwrightCache,
+    profile: runRoot.profile,
+    output: runRoot.output,
+  }));
   console.log('[current014/gate3] source preflight passed; caller is M2 native None single');
   let status = 1;
   try {
-    runCurrent014Gate3Selection(input);
+    runCurrent014Gate3Selection(input, runRoot);
     const child = spawnSync(CURRENT014_GATE3_CASE.command, CURRENT014_GATE3_CASE.argv, {
       cwd: input.app,
-      env: childEnv(input),
+      env: childEnv(input, runRoot),
       stdio: ['ignore', 'pipe', 'pipe'], shell: false,
     });
     if (child.error) throw child.error;
@@ -525,6 +578,7 @@ export function runCurrent014Gate3() {
     const after = checkCurrent014Gate3Sources(input);
     if (JSON.stringify(after) !== JSON.stringify(before)) fail('current014 Gate3 source or dependency bytes changed during the browser gate');
     console.log('[current014/gate3] source postflight passed');
+    rmSync(runRoot.root, { recursive: true, force: true });
   }
   process.exitCode = status;
 }
