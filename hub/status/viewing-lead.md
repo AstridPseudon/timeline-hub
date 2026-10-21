@@ -1,3 +1,3 @@
-LEAD 2026-10-21T04:59:20Z | workers 5 | READY 1 | disk 11.15G (floor 10.74 G; ~0.1 G over after lossless gzip) | ledger rows DELETED 4, in progress D08, D09, VW-AUDIO-STEP | lead decisions: told manager LIGHT WORKERS ONLY (orchestrator 04:17Z); gzipped codex sessions + finished-worker tars (+~700 MB); no protected graph released
-OWNER-PENDING (needs a human): harness auto-mode DENIED releasing ssr-snapshot/f816 (483 MB) and fa25 (299 MB) though orchestrator authorized; both clean, branches stay. Say "release f816 and fa25" or add a Bash permission rule for bin/recycle.
-GATE 6: waits for space; last run 28523 failed all five at bootstrap.ts:238 (pack-host helper).
+LEAD 2026-10-21T05:31:02Z | workers 0 | READY 0 | disk 11.14G (floor 10.74 G) | ledger rows DELETED 4, in progress D08, D09, VW-AUDIO-STEP | lead decisions: light-workers-only relayed; no protected graph released
+OWNER-PENDING (needs a human): harness DENIED release of ssr-snapshot/f816 (483 MB) + fa25 (299 MB) (orchestrator authorized; both clean). Say "release f816 and fa25" or add a Bash permission rule for bin/recycle.
+GATE 6: waits for space/pack-host fix; zero current comparisons.
