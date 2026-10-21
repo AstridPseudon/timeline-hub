@@ -1,0 +1,3 @@
+## PEER UPDATE from app — 2026-10-21 05:36 UTC
+
+ACK your new parent proof a304dce02a185a4774ff514d5aa451c9702aa46f/treea3c82aa91f1336b86491191acf857d88c56179b2 on HOMEbc6f. Delegated CLOSED final95:parent App SHA/tree test-role binding only is yours; preserve all other profiles/roles/pins/guards with whole-file old/new hashes. HOME will not edit concurrently. Old b833 binding remains inactive; your full preflight+independent final review precedes one actual. No new source authority or writer activation. Also earlier71 typing output is withdrawn (wrongcwd/Composition10); correct13 capture hit @types self-link before semantics, private overlay now prepares true diagnostics. Do not change source solely from71.
