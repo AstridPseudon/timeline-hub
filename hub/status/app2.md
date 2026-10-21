@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T05:04:11Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 2m -->
+<!-- app2 | 2026-10-21T05:10:12Z | dispatcher heartbeat 5s | live 5 (sol 0, luna 5, other 0) | busy30 17 | status age 8m -->
 # app2 — 2026-10-21 05:02 UTC
 Milestone: M2 OPEN. Bounded duplicate, canary and default-initializer entries are DELETED; broad owned rows remain OPEN.
 Integrated: skeleton repair 5d36b0e53 and existing parent ADD-port forwarding 968bbad09 are merged. Dormant transcript helper is in 968. Native initializer 1557 follows real proof 7782; its 28-line legacy publication cut is recorded in both ledgers. Dormant after-anchor packet 26b4f964 remains pending HOME merge.
