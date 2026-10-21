@@ -9,10 +9,27 @@ worker_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 source_runner=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-app-central.sh
 source_common=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-source-common.sh
 expected_app_tree=78f3784287d78fc92677ebe5eb710d162b0f50ae
+manual_case_title='M2 real mounted manual video drop: Runtime selection refusal is closed, native ADD recovers exactly, and undo preserves opaque data'
 
 usage() {
   echo "usage: $0 run APP_ROOT | $0 probe" >&2
   exit 2
+}
+
+guard_test_run() {
+  child_status=$1
+  output=$2
+  if [ "$child_status" -eq 0 ] && grep -Eiq \
+    'No tests found|No test files found|collected[[:space:]]+0 items|Running[[:space:]]+0 tests|0 tests found|Tests[[:space:]]+0 passed[[:space:]]+\(0\)|^[[:space:]]*0 passed([[:space:]]|$)' \
+    "$output"; then
+    printf '%s\n' 'manual-drop runner refused a zero-test result' >&2
+    return 1
+  fi
+  if [ "$child_status" -eq 0 ] && ! grep -Fq "$manual_case_title" "$output"; then
+    printf '%s\n' 'manual-drop runner did not discover the registered manual-drop test' >&2
+    return 1
+  fi
+  return "$child_status"
 }
 
 copy_bounded() {
@@ -174,6 +191,7 @@ node node_modules/playwright/cli.js test --config playwright.three-products.conf
 
   status=0
   NORMAL014_RUN_ROOT="$run_root" sh "$run_copy" run "$app_root" >"$run_root/runner.log" 2>&1 || status=$?
+  guard_test_run "$status" "$run_root/runner.log" || status=$?
   cat "$run_root/runner.log"
   record_evidence "$run_root" "$app_root" "$status"
   evidence_recorded=1
@@ -182,6 +200,17 @@ node node_modules/playwright/cli.js test --config playwright.three-products.conf
 }
 
 failuretrap_probe() {
+  zero_test_output=$(mktemp /tmp/timeline-parent-zero-test-probe.XXXXXX)
+  one_test_output=$(mktemp /tmp/timeline-parent-one-test-probe.XXXXXX)
+  printf '%s\n' 'No tests found' 'Running 0 tests' >"$zero_test_output"
+  if guard_test_run 0 "$zero_test_output"; then
+    printf '%s\n' 'zero-test guard probe unexpectedly passed' >&2
+    exit 1
+  fi
+  printf '%s\n' "[chromium] › $manual_case_title" >"$one_test_output"
+  guard_test_run 0 "$one_test_output"
+  rm -f -- "$zero_test_output" "$one_test_output"
+
   probe_root=$(mktemp -d /tmp/timeline-parent-negative-failuretrap.XXXXXX)
   probe_evidence=$(mktemp -d /tmp/timeline-parent-negative-failuretrap-record.XXXXXX)
   mkdir -p "$probe_root/browser-output/fake-test"
