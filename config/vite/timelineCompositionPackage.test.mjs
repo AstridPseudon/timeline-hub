@@ -21,17 +21,17 @@ const configs = [
   'examples/embed-demo/vite.config.ts',
 ];
 
-test('root and lock use the approved immutable public13 artifact', () => {
-  const artifact = 'vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz';
+test('root and lock use the approved immutable public14 artifact', () => {
+  const artifact = 'vendor/artifacts/banodoco-timeline-composition-0.0.14.tgz';
   const bytes = fs.readFileSync(path.join(appRoot, artifact));
   const root = JSON.parse(fs.readFileSync(path.join(appRoot, 'package.json'), 'utf8'));
   const lock = JSON.parse(fs.readFileSync(path.join(appRoot, 'package-lock.json'), 'utf8'));
   const installed = lock.packages[`node_modules/${packageName}`];
-  assert.equal(bytes.length, 58477);
-  assert.equal(createHash('sha256').update(bytes).digest('hex'), '9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738');
+  assert.equal(bytes.length, 72134);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), '21fde4d2a5d62a83f97a85d4b8d9f9d3f707a6489c07eb421c6331eccf893e6e');
   assert.equal(root.dependencies[packageName], `file:${artifact}`);
   assert.equal(lock.packages[''].dependencies[packageName], root.dependencies[packageName]);
-  assert.equal(installed.version, '0.0.13');
+  assert.equal(installed.version, '0.0.14');
   assert.equal(installed.resolved, `file:${artifact}`);
   assert.equal(installed.integrity, `sha512-${createHash('sha512').update(bytes).digest('base64')}`);
   assert.equal(root.dependencies['@remotion/layout-utils'], '4.0.509');
@@ -51,7 +51,7 @@ for (const configFile of configs) {
         path.join(appRoot, 'src/tools/video-editor/compositions/TimelineRenderer.tsx'),
         path.join(checkout, 'remotion/src/ThreeTimelineComposition.tsx'),
       ];
-      assert.equal(manifest.version, '0.0.13');
+      assert.equal(manifest.version, '0.0.14');
       for (const [subpath, entry] of Object.entries(manifest.exports)) {
         if (subpath === './package.json') continue;
         const specifier = packageName + subpath.slice(1);
