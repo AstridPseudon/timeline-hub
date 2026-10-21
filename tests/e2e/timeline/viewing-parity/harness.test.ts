@@ -83,6 +83,29 @@ class FailedHelper extends EventEmitter {
   }
 }
 
+class ReadyHelper extends EventEmitter {
+  stdin = new PassThrough();
+  stdout = new PassThrough();
+  stderr = new PassThrough();
+
+  constructor() {
+    super();
+    this.stdin.on('finish', () => {
+      this.stdout.write(`${JSON.stringify({ status: 'stopped', host_pid: 42 })}\n`);
+      this.stdout.end();
+      this.stderr.end();
+      setImmediate(() => this.emit('close', 0));
+    });
+  }
+
+  kill(): boolean {
+    this.stdout.end();
+    this.stderr.end();
+    setImmediate(() => this.emit('close', null));
+    return true;
+  }
+}
+
 test('accepts only the reviewed committed pack-host helper carrier', async () => {
   assert.ok(process.env.ASTRID_CHECKOUT, 'ASTRID_CHECKOUT must select the frozen Agent source');
   assert.ok(process.env.ASTRID_PACK_HOST_HELPER_CHECKOUT,
@@ -185,6 +208,56 @@ test('preserves a safe helper failure when startup cleanup also fails', async ()
       },
     );
     assert.equal(helper.closed, true);
+  } finally {
+    await releaseImmutableCarrier(carrier);
+    await Promise.all([rm(carrier, { recursive: true, force: true }), rm(stub.root, { recursive: true, force: true })]);
+  }
+});
+
+test('clears loader overrides only for the real pack-host child', async () => {
+  const carrier = await helperCarrier(true);
+  const stub = await gitStub(false);
+  const helper = new ReadyHelper();
+  const env = {
+    ...stub.env,
+    ASTRID_CHECKOUT: process.cwd(),
+    ASTRID_RUNTIME_CHECKOUT: process.cwd(),
+    ASTRID_PYTHON: '/parent/python',
+    ASTRID_PACK_HOST_HELPER_CHECKOUT: carrier,
+    ASTRID_RUNTIME_CREDENTIAL: '/trusted/credential',
+    ASTRID_RUNTIME_SOURCE_MANIFEST: '/trusted/source-manifest',
+    ASTRID_RUNTIME_ROLE: 'product',
+    ASTRID_RUNTIME_LEASE_ID: 'lease-exact',
+    NODE_OPTIONS: '--max-old-space-size=8192',
+    NODE_PATH: '/usr/local/lib/node_modules_global',
+  };
+  const parentSentinels = {
+    NODE_OPTIONS: env.NODE_OPTIONS,
+    NODE_PATH: env.NODE_PATH,
+  };
+  let childEnv: NodeJS.ProcessEnv | undefined;
+  const spawnHelper = ((...args: Parameters<typeof spawn>) => {
+    childEnv = args[2]?.env;
+    setImmediate(() => helper.stdout.write(`${JSON.stringify({
+      status: 'ready', host_pid: 42, host_status: 'ready', host_ready_capabilities: ['rendering.render'],
+    })}\n`));
+    return helper as unknown as ChildProcessWithoutNullStreams;
+  }) as typeof spawn;
+  try {
+    const session = await startRealPackHost(
+      { tmp: carrier, realmDir: join(carrier, 'realm'), supportDir: join(carrier, 'support'), runtimeInstanceId: 'instance-exact' },
+      async () => {},
+      { env, spawn: spawnHelper, startupTimeoutMs: 100, stopTimeoutMs: 100 },
+    );
+    assert.ok(childEnv);
+    assert.equal(childEnv.NODE_OPTIONS, undefined);
+    assert.equal(childEnv.NODE_PATH, undefined);
+    for (const key of ['ASTRID_CHECKOUT', 'ASTRID_RUNTIME_CHECKOUT', 'ASTRID_PYTHON', 'ASTRID_PACK_HOST_HELPER_CHECKOUT',
+      'ASTRID_RUNTIME_CREDENTIAL', 'ASTRID_RUNTIME_SOURCE_MANIFEST', 'ASTRID_RUNTIME_ROLE', 'ASTRID_RUNTIME_LEASE_ID', 'PATH']) {
+      assert.equal(childEnv[key], env[key], `${key} must be preserved for the helper child`);
+    }
+    assert.deepEqual({ NODE_OPTIONS: env.NODE_OPTIONS, NODE_PATH: env.NODE_PATH }, parentSentinels);
+    await session.stop();
   } finally {
     await releaseImmutableCarrier(carrier);
     await Promise.all([rm(carrier, { recursive: true, force: true }), rm(stub.root, { recursive: true, force: true })]);

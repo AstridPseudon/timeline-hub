@@ -104,6 +104,8 @@ export async function startRealPackHost(
   options: BootstrapOptions = {},
 ): Promise<PackHostSession> {
   const env: NodeJS.ProcessEnv = { ...(options.env ?? process.env), PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1' };
+  delete env.NODE_OPTIONS;
+  delete env.NODE_PATH;
   const runtime = env.ASTRID_RUNTIME_CHECKOUT;
   if (!runtime || !isAbsolute(runtime)) throw new Error('Pack-host bootstrap requires frozen absolute ASTRID_RUNTIME_CHECKOUT');
   const source = env.ASTRID_CHECKOUT;
