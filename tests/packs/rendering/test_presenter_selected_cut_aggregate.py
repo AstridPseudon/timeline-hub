@@ -96,12 +96,39 @@ def public_zero(presenter_query, retained):
     return answer["zero"]
 
 
+def _public_rows_for_case(presenter_query, case):
+    script = """
+import fs from 'node:fs';
+import {querySceneFrame} from '@banodoco/timeline-composition/evaluation';
+
+const input = JSON.parse(fs.readFileSync(0, 'utf8'));
+process.argv[1] = 'query.mjs';
+const {prepareHostScene} = await import('./query.mjs');
+const scene = prepareHostScene(input.props, input.basis);
+console.log(JSON.stringify(input.frames.map(frame => querySceneFrame(scene, frame))));
+"""
+    result = subprocess.run(
+        [str(presenter_query.node), "--input-type=module", "-e", script],
+        cwd=presenter_query.project, env=presenter_query.env,
+        input=json.dumps({"props": case["props"], "basis": case["basis"], "frames": case["frames"]}),
+        capture_output=True, text=True, timeout=60,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    return json.loads(result.stdout)
+
+
 def _public_provider(case, rows, monkeypatch, *, mode="fresh"):
     props = deepcopy(case["props"])
     rows = deepcopy(rows)
     by_frame = {row["frame"]: row for row in rows}
-    monkeypatch.setattr(scene_answers, "host_frames_at",
-                        lambda _props, _basis, frames: [by_frame[frame] for frame in frames])
+
+    def host_frames(current_props, current_basis, frames):
+        assert current_props == props
+        assert current_basis == case["basis"]
+        assert tuple(frames) == tuple(case["frames"])
+        return [by_frame[frame] for frame in frames]
+
+    monkeypatch.setattr(scene_answers, "host_frames_at", host_frames)
     capture = CaptureSceneLabels(source_identity="fresh-presenter", props=props,
                                  basis=case["basis"], addresses={"presenter": "presenter"})
     capture.observe(props, tuple(case["frames"]))
@@ -180,15 +207,16 @@ def test_public_mouth_rows_drive_curve_and_missing_row_keeps_private_fallback(
 
 
 def test_default_presenter_curve_uses_public_motion_without_legacy_roi(
-        public_capture_rows, retained, monkeypatch):
+        presenter_query, retained, monkeypatch):
     case = deepcopy(retained)
     case["props"]["timeline"]["clips"][0]["params"].pop("mouth")
-    provider = _public_provider(retained, public_capture_rows, monkeypatch)
+    public_rows = _public_rows_for_case(presenter_query, case)
+    provider = _public_provider(case, public_rows, monkeypatch)
     ctx = context(case, frame_provider=provider)
     presenter = ctx.elements[0]
     public_states = {row["frame"]: {0.0: "closed", 0.5: "half", 1.0: "open"}[
         row["layers"][0]["diagnostics"]["motion"]["mouth"]]
-                     for row in public_capture_rows}
+                     for row in public_rows}
     original_mouth_state = model.mouth_state
     samples = {}
 
@@ -214,6 +242,37 @@ def test_default_presenter_curve_uses_public_motion_without_legacy_roi(
         frame: {"closed": 0.0, "half": 0.5, "open": 1.0}[state]
         for frame, state in public_states.items()
     }
+
+
+@pytest.mark.parametrize("raw_mouth", [None, {"x": "bad", "y": None, "w": 900}])
+def test_explicit_invalid_presenter_mouth_keeps_private_curve_fallback(
+        presenter_query, retained, monkeypatch, raw_mouth):
+    case = deepcopy(retained)
+    case["props"]["timeline"]["clips"][0]["params"]["mouth"] = raw_mouth
+    public_rows = _public_rows_for_case(presenter_query, case)
+    provider = _public_provider(case, public_rows, monkeypatch)
+    ctx = context(case, frame_provider=provider)
+    presenter = ctx.elements[0]
+
+    assert builtin._public_mouth_facts(
+        ctx, presenter, case["frames"], allow_default_motion=True,
+    ) is None
+
+    original = model.mouth_state
+    expected = {frame: {"closed": 0.0, "half": 0.5, "open": 1.0}[
+        original(presenter, frame, ctx.fps)] for frame in case["frames"]}
+    samples = {}
+    original_props_at = model.props_at
+
+    def record_props(element, t, fps, **kwargs):
+        props = original_props_at(element, t, fps, **kwargs)
+        if element.id == presenter.id and "mouth" in props:
+            samples[int(math.floor(t * fps))] = props["mouth"]
+        return props
+
+    monkeypatch.setattr(model, "props_at", record_props)
+    builtin.render_curves(ctx)
+    assert {frame: samples[frame] for frame in expected} == expected
 
 
 def test_missing_presenter_override_preserves_props_dispatch(retained, monkeypatch):

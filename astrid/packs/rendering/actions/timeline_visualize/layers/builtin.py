@@ -388,7 +388,7 @@ def _public_mouth_facts(ctx: LayerContext, presenter: Any, frames: Sequence[int]
     # curves; only the omitted default can use its independent motion state.
     params = presenter.params if isinstance(presenter.params, Mapping) else {}
     raw_mouth = params.get("mouth")
-    if ((not allow_default_motion or raw_mouth is not None)
+    if ((not allow_default_motion or "mouth" in params)
             and (not isinstance(raw_mouth, Mapping)
             or any(type(raw_mouth.get(key)) is not int for key in ("x", "y", "w"))
             or not 0 <= raw_mouth["x"] < 320
