@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T09:44:05Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 17 | status age 3m -->
+<!-- agent | 2026-10-21T09:50:28Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 10m -->
 # agent — 2026-10-21 09:39 UTC
 Milestone: M2 active; M1 recorded. Published Runtime 0.2.14 /95/all76 and Composition 0.0.13 /9412/all77 current; future callers dormant.
 Integrated: Agent c4b964f6a / tree d7796be2. Presence/rename b476 (review +HTTP10363 PASS1), types a9 (91targeted/zero limited-mypy/six negatives), RK02 preservation afe (50central/review), WC1 existing outbox566 (8+97direct/review), WC8 font/colorb8 (HTTP12180 PASS1/6direct/exact3blobs), D09a curvesc4b (current32pass2skip; donor25+33approval) merged. Curve fallback, pixel statistics and broadD09 remain live. Remote2ca/3fed requests closed SUPERSEDED by their current merge SHAs.
