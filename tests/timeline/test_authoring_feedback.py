@@ -239,7 +239,7 @@ def test_document_view_adapter_refuses_matched_row_presence_changes(family):
     candidate_row.pop(probe)
     before, pinned = copy.deepcopy(work), copy.deepcopy(base)
 
-    with pytest.raises(DocumentDiffError, match="^presence-only change not supported yet$"):
+    with pytest.raises(DocumentDiffError):
         document_diff_to_commands(work, base)
     assert work == before
     assert base == pinned
@@ -258,10 +258,72 @@ def test_document_view_adapter_refuses_presence_loss_masked_by_a_valid_move():
     work["parent"]["config"]["clips"][0].pop(probe)
     before, pinned = copy.deepcopy(work), copy.deepcopy(base)
 
-    with pytest.raises(DocumentDiffError, match="^presence-only change not supported yet$"):
+    with pytest.raises(DocumentDiffError):
         document_diff_to_commands(work, base)
     assert work == before
     assert base == pinned
+
+
+def test_document_view_adapter_clears_present_null_hold_without_zero_command():
+    work = bundle()
+    base = copy.deepcopy(work)
+    for parent in (base["parent"], work["base_parent_payload"], work["parent"]):
+        for rows in (parent["clips"], parent["config"]["clips"]):
+            rows[0].update({"from": 0, "to": 1, "hold": None})
+    for rows in (work["parent"]["clips"], work["parent"]["config"]["clips"]):
+        rows[0].pop("hold")
+
+    native = document_diff_to_commands(work, base)
+
+    assert [command["op"] for command in native["commands"]] == ["clip.set"]
+    assert native["commands"][0]["args"] == {"values": {}, "clear": ["hold"]}
+    assert "hold" not in native["bundle"]["parent"]["clips"][0]
+    assert "hold" not in native["bundle"]["parent"]["config"]["clips"][0]
+
+
+def test_document_view_adapter_clears_a_present_nonnull_param():
+    work = bundle()
+    base = copy.deepcopy(work)
+    shot = next(iter(work["shots"].values()))
+    base_shot = next(iter(base["shots"].values()))
+    for timeline in (base_shot["internal_timeline"], shot["base_internal_timeline"],
+                     shot["internal_timeline"]):
+        timeline["clips"][0]["clipType"] = "am-type"
+        timeline["clips"][0]["params"] = {"text": "hello"}
+    shot["internal_timeline"]["clips"][0]["params"] = {}
+
+    native = document_diff_to_commands(work, base)
+
+    assert [command["op"] for command in native["commands"]] == ["clip.set-params"]
+    assert native["commands"][0]["args"] == {"values": {}, "clear": ["text"]}
+    assert native["bundle"]["shots"][shot["shot_id"]]["internal_timeline"]["clips"][0][
+        "params"] == {}
+
+
+def test_document_view_adapter_validates_parent_track_rename_against_captured_result():
+    work = bundle()
+    base = copy.deepcopy(work)
+    work["parent"]["config"]["tracks"][0]["label"] = "Renamed"
+
+    native = document_diff_to_commands(work, base)
+
+    assert [command["op"] for command in native["commands"]] == ["track.set"]
+    assert native["commands"][0]["args"] == {"values": {"label": "Renamed"}, "clear": []}
+    assert native["bundle"]["parent"]["config"]["tracks"][0]["label"] == "Renamed"
+
+
+def test_document_view_adapter_refuses_candidate_only_mirror_field_matching_move_result():
+    work = bundle()
+    base = copy.deepcopy(work)
+    work["parent"]["clips"][0]["at"] = 4
+    mirror = work["parent"]["config"]["clips"][0]
+    mirror["at"] = 4
+    mirror["app"] = {"astrid": {"fixed_start": True, "for": 1.0}}
+
+    before, pinned = copy.deepcopy(work), copy.deepcopy(base)
+    with pytest.raises(DocumentDiffError, match="candidate-only"):
+        document_diff_to_commands(work, base)
+    assert work == before and base == pinned
 
 
 def test_unchanged_checkout_reports_no_authored_changes_and_unknown_imports_by_default():

@@ -842,14 +842,17 @@ def test_launch_validation_rejects_changed_installed_content(tmp_path, monkeypat
     assert len(calls) == 3
 
 
-def test_launch_validation_rejects_changed_remotion_runtime_source(tmp_path, monkeypatch):
-    # The extracted helper was folded into remotion_runtime.py; keep the
-    # current source-integrity witness against that canonical module instead.
-    helper_source = Path(remotion_runtime.__file__).resolve()
+def test_launch_validation_rejects_changed_extracted_helper_source(tmp_path, monkeypatch):
+    helper_source = Path(remotion_runtime._remotion_package.__file__).resolve()
     owned_source = tmp_path / 'owned-source' / helper_source.name
     owned_source.parent.mkdir()
     shutil.copy2(helper_source, owned_source)
-    monkeypatch.setattr(remotion_runtime, '__file__', str(owned_source))
+    spec = importlib.util.spec_from_file_location('owned_remotion_package', owned_source)
+    assert spec is not None and spec.loader is not None
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    monkeypatch.setattr(remotion_runtime, '_remotion_package', helper)
+    monkeypatch.setattr(remotion_runtime, '_composition_package_problem', helper.composition_package_problem)
 
     runtime, _, _, env, ref, calls = _owned_validation_fixture(tmp_path, monkeypatch)
     actual = {**env, **ref}

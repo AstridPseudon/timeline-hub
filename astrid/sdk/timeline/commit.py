@@ -225,13 +225,21 @@ def _inverse_media_removals(records, bundle):
             for (owner, kind), (_, expected) in restoration_orders(accepted, only=record).items():
                 arrange(state, owner, kind, expected)
         replayed = document_from_bundle(state.bundle, source_bundles=(after,))
+        # Scalar media_id/object_id writes carry their codec in the address;
+        # retain that current guard and also account for the bounded payload
+        # mirrors emitted by the native same-alias command.
+        written_media = _collect_media([
+            {write['path'][-1]: write['after'].get('value')} if write['path'] else write['after']
+            for record in commands for write in record['writes']
+        ])
         if (not equal(replayed['parent_revision']['payload'], images[1]['parent_revision']['payload'])
                 or any(not equal(replayed[key], images[1][key]) for key in (
                     'shot_revisions', 'internal_timeline_revisions'))
                 or not equal(replayed['dependency_manifest']['documents'],
                              images[1]['dependency_manifest']['documents'])
-                or not introduced <= _collect_media([write['after'] for record in commands
-                                                     for write in record['writes']])):
+                or not introduced <= written_media | _collect_media([
+                    write['after'] for record in commands for write in record['writes']
+                ])):
             raise CommandError('unproven media boundary scope', kind='history_unavailable')
         removed.update(introduced)
     return removed

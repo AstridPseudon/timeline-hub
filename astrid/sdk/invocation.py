@@ -3841,7 +3841,7 @@ def _invoke_bridge_child(
     from astrid.core.foundation.hash import executor_definition_digest
     from ._child_bridge import (
         _BridgeRejected, _BridgeReplyTimeout, _BridgeTimeout, _ChildOutputBinding,
-        _child_request, _valid_id, _validate_output_page,
+        _child_request, _child_status_error, _valid_id, _validate_output_page,
     )
 
     digest = executor_definition_digest(registries[0].get(capability.id))
@@ -3870,9 +3870,8 @@ def _invoke_bridge_child(
 
         def validate_status(observed: Any) -> None:
             nonlocal protocol_error
-            if not isinstance(observed, Mapping) or observed.get("task_id") != task_id or observed.get("run_id") != run_id:
-                bridge.close()
-                protocol_error = CapabilityInvocationError("child bridge status returned a foreign task resource")
+            protocol_error = _child_status_error(observed, task_id=task_id, run_id=run_id, close=bridge.close)
+            if protocol_error is not None:
                 raise protocol_error
 
         def status(observed_id: str) -> Any:

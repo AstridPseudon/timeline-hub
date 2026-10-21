@@ -553,23 +553,18 @@ def test_foreign_status_fails_closed(tmp_path, isolated, channel):
 
 
 def test_child_status_error_preserves_identity_guard_and_close():
-    local, host = socket.socketpair()
-    bridge = bridge_module.ChildBridge(local)
-    foreign = {
-        "association_id": "A-child", "run_id": "R-child", "task_id": "T-foreign",
-        "attempt_id": "A-attempt", "object_id": "sha256:" + "a" * 64,
-        "digest": "sha256:" + "a" * 64, "size": 0, "ordinal": 0,
-        "filename": "output.txt", "media_type": "text/plain", "output_port": "text",
-    }
-    try:
-        with pytest.raises(ValueError, match="invalid child output descriptor"):
-            bridge_module._validate_output(foreign, task_id="T-child", run_id="R-child")
-        bridge.close()
-        assert bridge._closed
-        assert local.fileno() == -1
-    finally:
-        bridge.close()
-        host.close()
+    closed = []
+    assert bridge_module._child_status_error(
+        {"task_id": "T-child", "run_id": "R-child"},
+        task_id="T-child", run_id="R-child", close=lambda: closed.append(True),
+    ) is None
+    error = bridge_module._child_status_error(
+        {"task_id": "T-foreign", "run_id": "R-child"},
+        task_id="T-child", run_id="R-child", close=lambda: closed.append(True),
+    )
+    assert isinstance(error, astrid.CapabilityInvocationError)
+    assert str(error) == "child bridge status returned a foreign task resource"
+    assert closed == [True]
 
 
 @pytest.mark.parametrize("failure", [

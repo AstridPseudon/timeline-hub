@@ -147,13 +147,15 @@ class Client:
                                      "summary": {"head_revision_id": self.generated.head["revision_id"]}})
 
     def open_bundle(self, project, timeline, *, revision_id):
-        from astrid.sdk.timeline.commit import bundle_from_document
-
         self.reads.append(revision_id)
+        bundle = copy.deepcopy(self.generated.bundles[revision_id])
         for _, result in self.generated.accepted.values():
             if result['data']['accepted_revision_id'] == revision_id:
-                return DomainResult.success({'bundle': bundle_from_document(result['data']['canonical_document'])})
-        return DomainResult.success({"bundle": copy.deepcopy(self.generated.bundles[revision_id])})
+                parent = result['data']['canonical_document']['parent_revision']
+                # The offline transport retains authored working copies for its
+                # raw-state assertions; reads still carry the published base pin.
+                bundle['base_parent'] = {key: parent[key] for key in ('revision_id', 'content_digest')}
+        return DomainResult.success({"bundle": bundle})
 
 
 @pytest.fixture
@@ -970,3 +972,46 @@ def test_inverse_ack_reconstructs_all_claims_from_accepted_records(damage):
     result['receipt']['result'] = copy.deepcopy(data)
     with pytest.raises(TimelineEditError):
         _ack(result, body, flight, identity, source_bundle=plan.bundle, inverse_records=plan.records)
+
+
+def test_ordinary_bundle_read_does_not_require_a_transcript_client(monkeypatch):
+    bundle = initial_bundle()
+    monkeypatch.setattr('astrid.sdk.timeline.store.fetch_bundle', lambda *a, **kw: copy.deepcopy(bundle))
+    session = TimelineSession(SimpleNamespace(timelines=SimpleNamespace()), None, {}, 'p', 't')
+    assert session._bundle({'base': {'revision_id': 'r0'}, 'pending': []}) == bundle
+
+
+@pytest.mark.parametrize('pending', [False, True])
+def test_bundle_hydrates_the_exact_transcript_before_pending_or_new_anchor(monkeypatch, pending):
+    from astrid.sdk.media_transcript import build_transcript, transcript_document_id
+    from astrid.sdk.timeline.native_source_inputs import _canonical_digest
+
+    content = build_transcript('sha256:' + 'a' * 64, 'voice', 'hello', [[0, 1, 'hello']])
+    document_id = transcript_document_id('p', content['media_id'], content['source_id'])
+    pin = {'document_id': document_id, 'version': 1, 'content_digest': _canonical_digest(content)}
+    document = {'project_id': 'p', 'document_id': document_id, 'version': 1,
+                'kind': 'media.transcript', 'content': content}
+    reads = []
+
+    def verified(project, selected):
+        reads.append((project, copy.deepcopy(selected)))
+        return {'pin': copy.deepcopy(pin), 'document': copy.deepcopy(document)}
+
+    original = initial_bundle()
+    monkeypatch.setattr('astrid.sdk.timeline.store.fetch_bundle', lambda *a, **kw: copy.deepcopy(original))
+    command = {'op': 'clip.anchor', 'args': {'choice': {'document': pin}}}
+    client = SimpleNamespace(timelines=SimpleNamespace(_client=SimpleNamespace(get_project_verified_document=verified)))
+    session = TimelineSession(client, None, {}, 'p', 't')
+    state = {'base': {'revision_id': 'r0'}, 'pending': [command] if pending else []}
+    before = copy.deepcopy(state)
+
+    def execute_hydrated(bundle, commands):
+        assert commands == [command]
+        assert bundle['source_mapping']['pinned_documents'] == [{'pin': pin, 'document': document}]
+        return SimpleNamespace(bundle=bundle)
+
+    monkeypatch.setattr('astrid.sdk.timeline.commands.execute', execute_hydrated)
+    result = session._bundle(state, [] if pending else [command])
+    assert result['source_mapping']['pinned_documents'] == [{'pin': pin, 'document': document}]
+    assert reads == [('p', pin)] and state == before
+    assert 'pinned_documents' not in original['source_mapping']
