@@ -1142,7 +1142,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   );
 
   const modeToggle = (
-    <div role="group" aria-label="Mode" data-refocus className="inline-flex shrink-0 rounded-md border border-border/70 p-0.5">
+    <div role="group" aria-label="Mode" data-refocus className="flex w-full shrink-0 rounded-md border border-border/70 p-0.5">
       {(['explore', 'shots'] as const).map((value) => {
         const active = mode === value;
         const unavailable = value === 'explore' && explore === null;
@@ -1153,7 +1153,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             aria-pressed={active}
             disabled={!selected || unavailable}
             title={unavailable ? 'This world is not explorable yet' : undefined}
-            className="min-h-9 rounded px-3 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 sm:min-h-7"
+            className="min-h-9 flex-1 rounded px-3 text-center text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 sm:min-h-7"
             style={active ? { background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))' } : undefined}
             onClick={() => switchMode(value)}
           >
