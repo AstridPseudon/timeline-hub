@@ -188,6 +188,24 @@ describe('dormant native occurrence.add-media capture', () => {
       'contradictory occurrence start codecs',
     );
 
+    const largeTimestampWithinRelativeTolerance = bundle();
+    largeTimestampWithinRelativeTolerance.placements[0].placement = {
+      ...(largeTimestampWithinRelativeTolerance.placements[0].placement as Record<string, JSON>), start_ms: 1e9,
+    };
+    largeTimestampWithinRelativeTolerance.placements[0].at_ms = 1e9 + 0.5;
+    expect(() => captureOccurrenceAddMedia(
+      largeTimestampWithinRelativeTolerance, owner, row, media, [verified],
+    )).not.toThrow();
+
+    const largeTimestampContradiction = bundle();
+    largeTimestampContradiction.placements[0].placement = {
+      ...(largeTimestampContradiction.placements[0].placement as Record<string, JSON>), start_ms: 1e9,
+    };
+    largeTimestampContradiction.placements[0].at_ms = 1e9 + 1.5;
+    expect(() => captureOccurrenceAddMedia(
+      largeTimestampContradiction, owner, row, media, [verified],
+    )).toThrow('contradictory occurrence start codecs');
+
     const booleanSpeed = bundle();
     booleanSpeed.placements[0].speed = true;
     expect(() => captureOccurrenceAddMedia(booleanSpeed, owner, row, media, [verified])).toThrow();

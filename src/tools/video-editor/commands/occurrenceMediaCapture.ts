@@ -76,10 +76,12 @@ function occurrenceStart(row: Row): number {
   }
   const start = object(placement) && has(placement, 'start_ms') ? placement.start_ms : undefined;
   const fallback = has(row, 'at_ms') ? row.at_ms : undefined;
-  if (start != null && fallback != null && Math.abs(
-    number(start, 'placement.start_ms') - number(fallback, 'at_ms'),
-  ) > 1e-9) {
-    throw new ClipMoveError('contradictory occurrence start codecs', 'unsupported_timing');
+  if (start != null && fallback != null) {
+    const startMs = number(start, 'placement.start_ms');
+    const fallbackMs = number(fallback, 'at_ms');
+    if (Math.abs(startMs - fallbackMs) > Math.max(1e-9, 1e-9 * Math.max(Math.abs(startMs), Math.abs(fallbackMs)))) {
+      throw new ClipMoveError('contradictory occurrence start codecs', 'unsupported_timing');
+    }
   }
   return number(start != null ? start : (fallback != null ? fallback : 0), 'occurrence start') / 1000;
 }
