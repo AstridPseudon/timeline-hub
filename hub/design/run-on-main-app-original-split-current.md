@@ -1,9 +1,6 @@
-# HOME STOP — 2026-10-21 10:55 UTC
-DO NOT EXECUTE this split packet. New Viewing consumer defect1025 applies to the retained current hook: duplicate marked completion can overwrite authored1 with1.001 after latch release. Source correctionr49 and independent review are required before updated immutable source/command. Prior READY status below is superseded. No actual was consumed.
-
 # Run on main: App original parent split, current paired-seek source
 
-Status: **HOLD — new duplicate-marked consumer correction and review required; DO NOT EXECUTE**.
+Status: **APPROVE — ONE main execution on the corrected reviewed source after full preflight**.
 
 This is the PLAN D01 original parent-split proof on the integrated paired-seek
 successor. It reuses the existing normal three-products driver, fixture,
@@ -18,7 +15,7 @@ not a moving branch tip:
 
 | purpose | ref / review fact | commit (40) | tree (40) |
 |---|---|---|---|
-| App under test | `tl/integration` source at packet composition; publish as `hub/timeline/app/tl/integration` | `435e76eb3f2dcaa0324ed69d4c019ab9c32bfbef` | `daf4e71ba71ebaf6a2bc8b6cd6e66fc13d762273` |
+| App under test | `tl/integration` source at packet composition; publish as `hub/timeline/app/tl/integration` | `92c30b570cf8105dc021a64874c258e6c950b841` | `c34d65b66481fd0015279451b175c53b7b5e8f4f` |
 | r44 paired seek fix | `tl/app-m2-split-late-same-frame-paired-fix-r44` | `e1c0d8d52bd37c792368523ce8a6bfc7a55ad40a` | `51534291177131094cc8da49a02792be21b59c5a` |
 | r45 independent review | `tl/app-m2-split-late-frame-pair-independent-review-r45`, **APPROVE** | `e1c0d8d52bd37c792368523ce8a6bfc7a55ad40a` | `51534291177131094cc8da49a02792be21b59c5a` |
 | integration merge | `2b85341ef` merge of r44 | `2b85341ef724a15f34179e270a7acf323ac7b878` | `5ea64a704797fd034fb5fd184832448ae6b12ce0` |
@@ -140,8 +137,8 @@ for d in "$PRIVATE" "$EVIDENCE" "$TMP" "$SOCKET" "$SHORT"; do
   test "$(stat -c '%a' "$d")" = 700
 done
 test "${#TMP}" -lt 100; test "${#SOCKET}" -lt 100
-test "$(git -C "$APP" rev-parse HEAD)" = 435e76eb3f2dcaa0324ed69d4c019ab9c32bfbef
-test "$(git -C "$APP" rev-parse HEAD^{tree})" = daf4e71ba71ebaf6a2bc8b6cd6e66fc13d762273
+test "$(git -C "$APP" rev-parse HEAD)" = 92c30b570cf8105dc021a64874c258e6c950b841
+test "$(git -C "$APP" rev-parse HEAD^{tree})" = c34d65b66481fd0015279451b175c53b7b5e8f4f
 git -C "$APP" merge-base --is-ancestor e1c0d8d52bd37c792368523ce8a6bfc7a55ad40a HEAD
 git -C "$APP" merge-base --is-ancestor 2b85341ef724a15f34179e270a7acf323ac7b878 HEAD
 test -z "$(git -C "$APP" status --porcelain --untracked-files=normal)"
@@ -189,8 +186,8 @@ env -i \
   ASTRID_CHECKOUT="$AGENT" ASTRID_RUNTIME_CHECKOUT="$RUNTIME" \
   ASTRID_PYTHON=/home/user/work/venv-agent/bin/python \
   ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python \
-  TIMELINE_CURRENT013_APP_SHA=435e76eb3f2dcaa0324ed69d4c019ab9c32bfbef \
-  TIMELINE_CURRENT013_APP_TREE=daf4e71ba71ebaf6a2bc8b6cd6e66fc13d762273 \
+  TIMELINE_CURRENT013_APP_SHA=92c30b570cf8105dc021a64874c258e6c950b841 \
+  TIMELINE_CURRENT013_APP_TREE=c34d65b66481fd0015279451b175c53b7b5e8f4f \
   TIMELINE_CURRENT013_AGENT_SHA=6efc81500a0e0688c2bb41e736503f0fc3e04abb \
   TIMELINE_CURRENT013_RUNTIME_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c \
   TIMELINE_CURRENT013_AGENT_VENDOR_CHECKOUT="$AGENT_VENDOR" \
@@ -256,7 +253,7 @@ config. `env -i` keeps `NODE_OPTIONS`, `NODE_PATH`, `PYTHONHOME`, and all
 ```bash
 cd "$APP"
 CACHE_ID="$(env -i HOME="$MAIN/h" LANG=C.UTF-8 PATH="$MAIN/node-v20.19.4-linux-x64/bin:/usr/bin:/bin" \
-  "$NODE" --input-type=module -e 'import { parentSplitCacheIdentity } from "./scripts/testing/current013-parent-split.mjs"; console.log(parentSplitCacheIdentity({ appSha: "435e76eb3f2dcaa0324ed69d4c019ab9c32bfbef", appTree: "daf4e71ba71ebaf6a2bc8b6cd6e66fc13d762273", agentSha: "6efc81500a0e0688c2bb41e736503f0fc3e04abb", runtimeSha: "95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c" }));')"
+  "$NODE" --input-type=module -e 'import { parentSplitCacheIdentity } from "./scripts/testing/current013-parent-split.mjs"; console.log(parentSplitCacheIdentity({ appSha: "92c30b570cf8105dc021a64874c258e6c950b841", appTree: "c34d65b66481fd0015279451b175c53b7b5e8f4f", agentSha: "6efc81500a0e0688c2bb41e736503f0fc3e04abb", runtimeSha: "95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c" }));')"
 test -n "$CACHE_ID"
 ```
 
@@ -272,8 +269,8 @@ env -i \
   ASTRID_CHECKOUT="$AGENT" ASTRID_RUNTIME_CHECKOUT="$RUNTIME" \
   ASTRID_PYTHON=/home/user/work/venv-agent/bin/python \
   ASTRID_RUNTIME_PYTHON=/home/user/work/venv-runtime/bin/python \
-  TIMELINE_CURRENT013_APP_SHA=435e76eb3f2dcaa0324ed69d4c019ab9c32bfbef \
-  TIMELINE_CURRENT013_APP_TREE=daf4e71ba71ebaf6a2bc8b6cd6e66fc13d762273 \
+  TIMELINE_CURRENT013_APP_SHA=92c30b570cf8105dc021a64874c258e6c950b841 \
+  TIMELINE_CURRENT013_APP_TREE=c34d65b66481fd0015279451b175c53b7b5e8f4f \
   TIMELINE_CURRENT013_AGENT_SHA=6efc81500a0e0688c2bb41e736503f0fc3e04abb \
   TIMELINE_CURRENT013_RUNTIME_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c \
   TIMELINE_CURRENT013_AGENT_VENDOR_CHECKOUT="$AGENT_VENDOR" \
@@ -343,3 +340,6 @@ hub integration ref is publication reachability only, not a moving-tip
 identity requirement. No browser, build, install, new graph, full suite, or
 actual was run in this worker. READY FOR MAIN means main still must satisfy
 the real machine prerequisite checks and consume the one command once.
+
+## Final HOME source binding — 2026-10-21 11:04 UTC
+The source binding above now selects exact92c30b570cf8105dc021a64874c258e6c950b841/treec34d65b66481fd0015279451b175c53b7b5e8f4f, including reviewed duplicate-marked consumer547da1a555cfe8514bc3f40a263ee56fdafd3d83 mergedde0e8a416 and reviewed test-only task diagnosticsf8cda172 merged92c30b570. r50 independently APPROVED the new hook ordering:16 focused tests plus explicit post250ms witness; producer e1c0, original TimeRuler assertions and split48938c remain unchanged. This resolves10:55 HOLD; no old435e actual is authorized. Directory labels containing435e are only private path labels; every authoritative source SHA/tree/check/env now names92c30. Existing driver hash, pins, graph, list1, credential, overlay and postflight guards are unchanged. Before the one actual additionally verify547da1a555cfe8514bc3f40a263ee56fdafd3d83 is an ancestor of the exact checkout. No actual has been run.
