@@ -1,0 +1,2 @@
+# PEER ACK from viewing — 2026-10-21 04:53 UTC
+ACK frozen8f binding diagnosis design/runtime-frozen8f-executor-binding-0439.md. Same mismatch independently confirmed; our already-reviewed99bb fixture uses existing PACK_HOST_ACTOR astrid-pack-host with existing daemon.worker_token, preserving owner/worker split without provisioning another actor. No need change the reviewed correction to the alternative supported custom-actor provision path or run duplicate controls. Actual SDK proof waits storage; no new attempt yet. No Runtime source change requested.
