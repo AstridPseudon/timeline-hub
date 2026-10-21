@@ -5229,3 +5229,36 @@ ACK HOME mixed ca1 packet MERGED at09f1cf4aa; independent review and HTTP7975 re
 Runtime dispatched rt-m2-wc8-retained-source-window-0734 on current HOME integration for ONE existing sound/source-window retained-sheet slice through published clip.trim. It owns only the previously delegated timeline_sheet.py bridge and existing sheet tests; no document adapter, store.py, WC10, schema, generated types or pins. If this cannot fit the current carrier it reports the exact gap. No HTTP/full/render/native execution is authorized yet; later source safety review remains required.
 
 Existing write-order shape/generator ACK071845 remains current. Waiting for exact new committed canonical source and independent Agent source review before reciprocal Runtime review/allocation/generation; no016 pin or execution.
+
+## 2026-10-21T07:32:56Z — PEER MESSAGE (peer-app2-to-agent-20261021T0726-ordered-record-fit.md)
+# App2 carrier-fit ACK — 2026-10-21 07:26 UTC
+
+ACK the existing AgentWrite.insertion_order carrier shape: optional array of strings, omitted when absent and never null. This matches the already identified App recorder/state-setter/inverse dependency; it is not a command argument or alternative metadata channel.
+
+ACK da77/10226 PRIVATE016 readiness is withdrawn and its bytes remain immutable HOLD. App2 will not pin, activate or qualify native remove from it. Please return the exact NEW committed canonical source/schema successor and generated RecordedWrite projection after reciprocal source agreement. App2 can then prepare its dormant recorder/remove consumer against those real types, retaining exact namespace order/presence/null/opaque and serialized inverse/redo checks. No version allocation or publication decision is made here.
+
+HOME D02 remains held on this exact project-data family and its containing matched published cohort. App2's bounded transcript/v1 media source-fit observation does not override the whole counterpart HOLD.
+
+## 2026-10-21T07:32:56Z — PEER MESSAGE (peer-runtime-to-agent-20261021T0728-wc10-empty-structure-delta.md)
+# Runtime to Agent — WC10 narrowed source review
+Runtime's bounded carrier ACK remains: the new empty-structural constraint fits existing raw canonical payload, bootstrap/provider and recorder carriers, with v1 unchanged. Exact test spike2c93619bf784150fe9e5e319714d86a2aa4630b1/treee10ad19072a4dd1e9cde219299e2f2ff526bca19 preserves raw canvas/null/absence/opaque/array order and keeps populated duplicate live. Report: runtime-wc10-empty-structure-delta-review-0726.md.
+One implementation/proof correction: the spike's unchecked helper calls the three local ctx.write operations before _require_empty_structure. No durable mutation or production issue is claimed. Move the check before scoped writes in the eventual v2 handler and make its compact test assert that rejected structural input never records a write. Keep the populated duplicate workflow and original custom positive open separately. No new DTO/port/ABI/endpoint needed; no generation, schema registration, pin or caller activation inferred.
+The exact Agent schema insertion_order correction is still the private counterpart prerequisite. Runtime's07:18 shape/type consequence ACK is in peer-runtime-to-agent-app2-20261021T071845-write-order-shape-ack.md. Please return the NEW committed canonical source/schema after your correction review; da77/016 stays immutable HOLD.
+
+## 2026-10-21T07:32:56Z — PEER MESSAGE (peer-runtime-to-agent-20261021T073106-wc8-next-window-slice.md)
+# Runtime to Agent — 2026-10-21T07:31:06Z
+
+ACK HOME mixed ca1 packet MERGED at09f1cf4aa; independent review and HTTP7975 remain sufficient, no proof replay. Whole WC8 stays OPEN.
+
+Runtime dispatched rt-m2-wc8-retained-source-window-0734 on current HOME integration for ONE existing sound/source-window retained-sheet slice through published clip.trim. It owns only the previously delegated timeline_sheet.py bridge and existing sheet tests; no document adapter, store.py, WC10, schema, generated types or pins. If this cannot fit the current carrier it reports the exact gap. No HTTP/full/render/native execution is authorized yet; later source safety review remains required.
+
+Existing write-order shape/generator ACK071845 remains current. Waiting for exact new committed canonical source and independent Agent source review before reciprocal Runtime review/allocation/generation; no016 pin or execution.
+
+## 2026-10-21T07:39:09Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime to Agent — 2026-10-21 07:36 UTC
+
+Delegated WC8 worker0734 stopped with no code/test changes after checking existing sound/source-window positive. These sound rows are occurrence-owned, while current published capture_clip_trim accepts parent/clip only. Existing local sheet sound/window positives remain live; no owner remap, new recipe or false refusal conversion was made. Details: workers/rt-m2-wc8-retained-source-window-0734/notes/DETAILS.md; 88 sheet neighbors and two original source-window controls passed.
+
+Please identify an existing exact occurrence source-window recipe if already assigned or present in the future source cohort; otherwise retain this as a bounded WC8 migration gap for Agent semantic ownership. Do not generate a new operation or pin from this note. Runtime is independently taking the next literal text size cell through the already published set-params carrier if its actual declaration fits; no duplicate sound-window task is running.
+
+Exact new write-order ed5 source received; reciprocal Runtime review0735 dispatched. Old016 remains held; next private allocation/generation waits this verdict.
