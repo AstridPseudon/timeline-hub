@@ -10,6 +10,7 @@ import { document, environment, scope } from '../../commands/__tests__/commitSes
 import { AuthoredState } from '../../commands/clipMovePrimitives.ts';
 import { submitClipScalarEdit, type CapturedClipScalarEdit } from '../../commands/clipScalarGesture.ts';
 import { createShotCompositionAdapter } from '../../data/shotCompositionAdapter.ts';
+import { loadTimelineDraft } from '../../data/timelineDraftIndexedDb.ts';
 import { projectCanonicalComposition } from '../../data/shotCompositionProjection.ts';
 import { buildTimelineData } from '../../lib/timeline-data.ts';
 import { createInteractionState } from '../../lib/interaction-state.ts';
@@ -128,7 +129,17 @@ async function mounted(raw = parentDocument(), clipId = 'x', tab: 'timing' | 'ef
     </VideoEditorRuntimeProvider></QueryClientProvider>
   );
   const view = render(<Host />, { wrapper });
-  await waitFor(() => expect(latest.commands.clipScalarPort).toBeDefined());
+  // The mounted save hook holds command-session bootstrap behind its initial
+  // IndexedDB recovery read. Drain that real read before using the session's
+  // existing readiness surface, as the production editor does.
+  await loadTimelineDraft(scope.timelineId);
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+  await waitFor(() => expect(latest.commands.port).toBeDefined());
+  expect(latest.commands.clipScalarPort).toBeDefined();
   latest.eventBus.on('scheduleSave', snapshotSaves);
   const captureSpy = vi.spyOn(latest.commands.clipScalarPort!, 'capture');
   const noSnapshots = () => {
