@@ -44,8 +44,10 @@ const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring
  * button that jumps), a neutral track with a playhead knob, and a thin lane of existing uses. With `range`, the
  * in/out range is a segment with two draggable handles. The track is a slider: ←/→ (Shift ×5) and Home/End.
  */
-export function TimeBar({ start, end, time, label, valueText, disabled, markers = [], uses = [], range, onSeek, onJump, onRange }: {
+export function TimeBar({ start, end, time, label, valueText, disabled, reserveLabels, markers = [], uses = [], range, onSeek, onJump, onRange }: {
   start: number; end: number; time: number; label: string; valueText: string; disabled?: boolean;
+  /** Keep the label lane even when this stretch has no marks, so the bar does not change height as it changes. */
+  reserveLabels?: boolean;
   markers?: readonly BarMarker[]; uses?: readonly BarUse[];
   range?: BarRange; onSeek: (time: number) => void; onJump?: (time: number) => void; onRange?: (range: BarRange) => void;
 }) {
@@ -134,7 +136,7 @@ export function TimeBar({ start, end, time, label, valueText, disabled, markers 
 
   const lane = 'absolute inset-y-0 left-2 right-2';
   // With no events there is no label lane: the bar is just the track, the handles and the knob.
-  const hasLabels = !disabled && marks.length > 0;
+  const hasLabels = !disabled && (marks.length > 0 || reserveLabels === true);
   const barHeight = hasLabels ? 'h-11' : 'h-[18px]';
   const laneTop = hasLabels ? 'top-[26px]' : 'top-0';
 
@@ -169,8 +171,8 @@ export function TimeBar({ start, end, time, label, valueText, disabled, markers 
                 {isSpan ? (
                   <span
                     aria-hidden="true"
-                    className="absolute bottom-0.5 inset-x-0 h-1.5 rounded-[1px] border-x border-t"
-                    style={{ borderColor: MARK }}
+                    className="absolute bottom-0.5 inset-x-0 h-1.5 rounded-[1px] border"
+                    style={{ borderColor: MARK, background: 'hsl(var(--foreground) / 0.12)' }}
                   />
                 ) : (
                   <span aria-hidden="true" className="absolute bottom-0.5 left-[7.25px] h-2.5 w-[1.5px] rounded-full" style={{ background: MARK }} />
