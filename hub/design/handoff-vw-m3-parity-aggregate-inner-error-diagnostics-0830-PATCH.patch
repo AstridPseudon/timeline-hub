@@ -1,0 +1,74 @@
+diff --git a/tests/e2e/timeline/viewing-parity/harness.test.ts b/tests/e2e/timeline/viewing-parity/harness.test.ts
+index a3492e136..8865e5ab4 100644
+--- a/tests/e2e/timeline/viewing-parity/harness.test.ts
++++ b/tests/e2e/timeline/viewing-parity/harness.test.ts
+@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
+ import { delimiter, join } from 'node:path';
+ import { PassThrough } from 'node:stream';
+ import { test } from 'node:test';
+-import { assertSourceVersionsUnchanged, verifyFileGraph } from './harness';
++import { aggregateFixtureFailures, assertSourceVersionsUnchanged, verifyFileGraph } from './harness';
+ import { resolveReviewedPackHostHelper, startRealPackHost } from './bootstrap';
+ import { mediaHash } from './media';
+ import { playerBrowserProfile } from './browser-profile';
+@@ -332,6 +332,20 @@ test('fails postflight when a declared dependency graph changes', () => {
+   );
+ });
+ 
++test('keeps both fixture failures visible without replacing their original errors', () => {
++  const cause = new Error('underlying source failure');
++  const first = new Error('Player launch failed');
++  const second = new Error('source postflight failed', { cause });
++  const aggregate = aggregateFixtureFailures('Player fixture failed', [first, second]);
++
++  assert.ok(aggregate instanceof AggregateError);
++  assert.match(aggregate.message, /1: Player launch failed/);
++  assert.match(aggregate.message, /2: source postflight failed/);
++  assert.doesNotMatch(aggregate.message, /underlying source failure/);
++  assert.deepEqual([...aggregate.errors], [first, second]);
++  assert.equal(second.cause, cause);
++});
++
+ test('fails postflight when the selected browser profile or executable bytes change', () => {
+   const before = {
+     compositionFiles: {}, renderGraphHashes: {}, playerBrowser: playerBrowserProfile(), exportBrowserHash: 'export',
+diff --git a/tests/e2e/timeline/viewing-parity/harness.ts b/tests/e2e/timeline/viewing-parity/harness.ts
+index be58c7a0f..29af4bf5d 100644
+--- a/tests/e2e/timeline/viewing-parity/harness.ts
++++ b/tests/e2e/timeline/viewing-parity/harness.ts
+@@ -228,6 +228,17 @@ export function assertSourceVersionsUnchanged(before: SourceVersionGraph, after:
+   }
+ }
+ 
++function safeFailureReason(failure: unknown): string {
++  if (!(failure instanceof Error)) return 'non-Error failure';
++  return failure.message || 'Error without a message';
++}
++
++/** Keep fixture diagnostics useful without serializing arbitrary error data. */
++export function aggregateFixtureFailures(message: string, failures: readonly unknown[]): AggregateError {
++  const reasons = failures.map((failure, index) => `${index + 1}: ${safeFailureReason(failure)}`).join('; ');
++  return new AggregateError(failures, reasons ? `${message}: ${reasons}` : message);
++}
++
+ export async function readyRenderCapability(harness: DirectHarness): Promise<Capability> {
+   let cursor: string | null = null;
+   do {
+@@ -270,7 +281,7 @@ export const test = base.extend<object, {
+         assertSourceVersionsUnchanged(preflight, await sourceVersions(profile));
+       } catch (error) { failures.push(error); }
+     }
+-    if (failures.length) throw new AggregateError(failures, 'Runtime fixture or final source postflight failed');
++    if (failures.length) throw aggregateFixtureFailures('Runtime fixture or final source postflight failed', failures);
+   }, { scope: 'worker', timeout: 240_000 }],
+   fixture: [async ({ harness, parityCanvas }, provide) => {
+     await harness.enableTimelineAuthoring(requiredEnv('ASTRID_PYTHON'));
+@@ -302,7 +313,7 @@ export const test = base.extend<object, {
+         assertSourceVersionsUnchanged(preflight, await sourceVersions(profile));
+       } catch (error) { failures.push(error); }
+     }
+-    if (failures.length) throw new AggregateError(failures, 'Player fixture or final source postflight failed');
++    if (failures.length) throw aggregateFixtureFailures('Player fixture or final source postflight failed', failures);
+   }, { scope: 'worker' }],
+   context: async ({ browser, harness, parityCanvas }, provide) => {
+     const context = await browser.newContext({ ...harness.contextOptions,
