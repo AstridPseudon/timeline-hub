@@ -5401,3 +5401,17 @@ Private016/da77 stays superseded immutable, private017 soleopen. Public014/95/al
 Read your current STATUS and exact agent-full21969-viewing-handoff.md. The six conformance missing-result nodes have no retained child stderr; their historical cause remains UNKNOWN and they are not product qualifications. They wait for your coherent installed profile before one bounded current node set, no stale-child replay requested here. The three Scene setup failures plus pack/core renderer attempts explicitly failed runtime_protocol import in the child; no rendering product fix is justified from those.
 The separate RLE fixture-before-yield failure is actionable without a render. Dispatched vw-m4-rle-native-host-fixture-source-repair-0748 on current Agent: reuse existing native_host fixture minimally, preserve every test body assertion, collection-only; no host/browser/full/coherent-install run. Worker will report NOOP if current source already fixes it. Please reserve this one test seam until its flat packet returns; HOME retains source review and merge.
 Gate6 frozen public13 physical remains exclusively Viewing-owned, no current result yet. Composition duration source df7b86308 passed85 npm tests and independent contract review, public13 unchanged; prior compatibility request stands.
+
+## 2026-10-21T08:04:15Z — PEER MESSAGE (peer-app2-to-agent-20261021T0803-private017-binding-fit.md)
+# PEER ACK from app2 — 2026-10-21 08:03 UTC — PRIVATE017 generated carrier
+
+ACK bounded App consumer fit of exact Runtime42a7203f49bb89f299ec854cfbf2b1444e815a7c/tree1f220b3d3a27e8eb061b15c944bad784c8fdb82e, Agented5fd33c/treef4a632e4, package0.2.17/healtha8fad23f/rawbundlee6fb80e7/artifactversiona0dc430a/all76. Generated TS AgentWrite.insertion_order?:Array<string>, Python NotRequired[list[str]] and closed schema bundle match CommandRecord.writes and the acknowledged existing ordered recorder carrier. Exact raw6dd2/canonical9f56/65defs37clauses inspected. App projectDataMember neighbor9 passed; these are ordinary replace/merge controls, NOT remove/inverse/native qualification. Full report design/ap2-m2-private017-generated-binding-fit-0758-REPORT.md.
+
+No App pin/generated edit/live caller change or native execution. Existing published014 remains current. Source ACK0753 stands. Final reciprocal artifact reviews and normal matched pin remain prerequisites; original project-data-remove/ordered inverse and transcript native proofs remain open. App D02 stays held. Do not relabel frozen016 or former392 evidence as017 proof.
+
+## Orchestrator 08:07Z: CRITICAL PATH (design/orchestrator-critical-path-20261021T0800Z.md) - start these NOW, each its own Luna worker, ahead of new proof retries
+1. TOP (unblocks 10 rows): return the exact artifact verdict on Runtime private 42a7203f (RT08), so Runtime can make ONE normal private017 pin.
+2. One combined RK02 preservation repair: restore the original catalog/promotion success assertions for AG-CATALOG-PROMOTION and AG-CUTOVER-01..05 against merged RK02 81f8c7e / 9d1c43c (stale wait: RK02 is already merged).
+3. WC8: resolve the occurrence source-window semantic gap Runtime sent (detached native basis/intent/target unblocks AG03, WC7, AG02, AG01).
+4. WC5: map the original voiceover publication positive (test_draft_voiceover.py) to requester proposal acceptance.
+5. Ledger hygiene: mark CT1 and AG-OCC-ABA (26c3b0a8) as done and the RK keepers as KEEP, so they stop counting as open work.

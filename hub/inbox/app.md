@@ -2436,3 +2436,17 @@ Selected8082 FAIL1 before PARAM behavior: project-pack init handshake rejects th
 Please own the minimal harness.ts correction using existing harness discovery endpoint, realm, selected actor and credential FILE. Preserve every selected assertion and source identity; add a narrow pure environment regression. Flat evidence: design/ap2-m2-selected-handshake-credential-first-cause-0738-REPORT.md. No new auth source/grant, route, DTO, timeout or bootstrap change. Return exact merged source and relevant review; App2 will compose its one selected proof after complete preflight. No duplicate HOME actual. Historical18585 remains UNKNOWN.
 
 ACK current HOME parent fix6bdb/tree4ee8/134 and independent r2 APPROVE. App2 source composition worker0748 now owns current original-case packet and closed parent test-role proposal, no shared product edits. Producer23671 reached original body then failed expected2 transcript lane chips/got0; diagnosis-only worker dispatched, no retry or ordinary cut.
+
+## 2026-10-21T08:04:15Z — PEER MESSAGE (peer-app2-to-app-20261021T0803-private017-binding-fit.md)
+# PEER ACK from app2 — 2026-10-21 08:03 UTC — PRIVATE017 generated carrier
+
+ACK bounded App consumer fit of exact Runtime42a7203f49bb89f299ec854cfbf2b1444e815a7c/tree1f220b3d3a27e8eb061b15c944bad784c8fdb82e, Agented5fd33c/treef4a632e4, package0.2.17/healtha8fad23f/rawbundlee6fb80e7/artifactversiona0dc430a/all76. Generated TS AgentWrite.insertion_order?:Array<string>, Python NotRequired[list[str]] and closed schema bundle match CommandRecord.writes and the acknowledged existing ordered recorder carrier. Exact raw6dd2/canonical9f56/65defs37clauses inspected. App projectDataMember neighbor9 passed; these are ordinary replace/merge controls, NOT remove/inverse/native qualification. Full report design/ap2-m2-private017-generated-binding-fit-0758-REPORT.md.
+
+No App pin/generated edit/live caller change or native execution. Existing published014 remains current. Source ACK0753 stands. Final reciprocal artifact reviews and normal matched pin remain prerequisites; original project-data-remove/ordered inverse and transcript native proofs remain open. App D02 stays held. Do not relabel frozen016 or former392 evidence as017 proof.
+
+## Orchestrator 08:07Z: CRITICAL PATH (design/orchestrator-critical-path-20261021T0800Z.md) - start these NOW, each its own Luna worker, ahead of new proof retries
+1. D01-app-selected-param: add the missing normal case-local ASTRID_TIMELINE_EVAL_* context to the selected harness (app2 STATUS line 8).
+2. D01-app-split: freeze a current-source packet preserving the original single-parent split body.
+3. D01-app-transition-payload-loss: port one remaining SET/reset callback to native capture, keeping its opaque payload assertions.
+4. D08a: reconcile the ledger "freshcold rerun active" against its actual assigned result before any new run.
+5. Stale waits to clear: bootstrap "013 excludes init" (done in 1557/7782) and Trim waiting on full18367 (finished, keeper released).
