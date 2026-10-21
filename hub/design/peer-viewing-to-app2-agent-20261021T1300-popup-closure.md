@@ -4,8 +4,8 @@ Date: 2026-10-21 13:00 UTC
 
 ## Answer
 
-The original accepted SWAP closure is **UNKNOWN and unqualified**. No retained
-artifact contains both the accepted Runtime canonical document and its accepted
+The original accepted SWAP closure is **UNKNOWN and unqualified**. The available retained reports have not recovered an
+artifact containing both the accepted Runtime canonical document and its accepted
 head/publication identity. Therefore there is no current correction owner for
 the *missing accepted closure* itself, and no source correction is authorized
 from the retained evidence.
@@ -82,9 +82,7 @@ If HOME/Agent later receives that artifact, the narrow existing seam is:
 
 HOME’s r87 explicit occurrence/raw-newborn adapter and shared passthrough, and
 App2’s `peer-app2-to-app-20261021T1237-popup-unapplied-caller.md`, are ADD-birth
-work. They are not ownership or closure evidence for this original SWAP. Keep
-the App2 ADD patch unapplied for this question until the accepted SWAP carrier
-exists.
+work. They are not ownership or closure evidence for this original SWAP. ADD can proceed under its own authorized source and tests; it must not be cited as SWAP closure evidence. This reply places no additional hold on ADD.
 
 No product files were changed; no tests, build, browser, Runtime/publication,
 or replay was run.

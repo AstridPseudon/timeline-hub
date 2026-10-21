@@ -74,9 +74,22 @@ Required external immutable inputs:
 - private App dependency graph `8bdc44e93ce6f712f2a26fc44f1f8e904215c1785f54ed97f826a98fe0145c5b`
   (32,393 entries), App source manifest
   `4fb1e53b2dce325f826b6b071d0782544e5ba2c7b27418b6170f8c947c450435`
-  (5,902 files), and retained App dist at
-  `/home/user/work/wt/app-pin-d00a6613/dist` (339 files; `index.html`
-  `aeb5d83399b453b15a8cbc67b31260cf2820f8d65770ccd458986ddd551e257b`);
+  (5,902 files), plus the verified exact App dist transport retained at
+  `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-exact-dist-transport-pin-1306/app-dist-d00a6613.tar.gz`
+  (244,690,962 bytes; SHA-256
+  `669b8d13050da29094da9f54d919961566012353fa7ef2e6d808ef6352b98b6b`).
+  Its regular-file SHA/mode manifest is
+  `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/vw-m4-exact-dist-transport-pin-1306/app-dist-d00a6613.manifest`
+  (SHA-256
+  `8a2de62bf07e933bdc6a8bb47f4ae6b65fd2c5f77f813f3b8023f2cfa1bb5d99`);
+  the archive round-trip matched all 339 paths/bytes/modes and the original
+  `index.html` SHA
+  `aeb5d83399b453b15a8cbc67b31260cf2820f8d65770ccd458986ddd551e257b`.
+  Because this archive exceeds the 50 MB design-sync limit, it is not copied
+  into `design/`; when independently materialized, extract its contents to
+  `/home/user/work/wt/app-pin-d00a6613/dist` (the existing command binding).
+  The d00 KEEP remains required until that farm-local transport is available;
+  no source, command, or frozen tuple identity changes here.
 - public13 archive
   `9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738`,
   package lock `c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24`,
