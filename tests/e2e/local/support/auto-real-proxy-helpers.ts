@@ -8,10 +8,13 @@ export const LEGACY_POST = /^\/api\/runtime\/.*$/;
 export type RuntimePostKind = 'native-commit' | 'task-api' | 'read-only' | 'legacy-writer' | 'other';
 
 export function classifyRuntimePost(method: string, pathname: string): RuntimePostKind {
-  if (method !== 'POST') return 'other';
-  if (NATIVE_RUNTIME_COMMIT.test(pathname)) return 'native-commit';
-  if (TASK_API_POST.test(pathname)) return 'task-api';
-  if (READ_ONLY_RUNTIME_POST.test(pathname)) return 'read-only';
+  if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) return 'other';
+  if (method === 'POST') {
+    if (NATIVE_RUNTIME_COMMIT.test(pathname)) return 'native-commit';
+    if (TASK_API_POST.test(pathname)) return 'task-api';
+    if (READ_ONLY_RUNTIME_POST.test(pathname)) return 'read-only';
+  }
+  if (NATIVE_RUNTIME_COMMIT.test(pathname) || TASK_API_POST.test(pathname) || READ_ONLY_RUNTIME_POST.test(pathname)) return 'other';
   return LEGACY_POST.test(pathname) ? 'legacy-writer' : 'other';
 }
 
