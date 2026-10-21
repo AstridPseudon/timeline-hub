@@ -82,6 +82,7 @@ function parentClip(parent: Record<string, any>, clipId: string) {
 async function openFixture(page: Page, harness: DirectHarness, seed: ThreeProductsSeed) {
   await page.goto(`${harness.devOrigin}/tests/e2e/fixtures/public-trim/index.html?project=${encodeURIComponent(harness.seed.projectId)}&timeline=${encodeURIComponent(seed.timelineId)}`);
   await expect(page.getByTestId('public-trim-trigger')).toBeEnabled(CEILING);
+  await expect(page.getByTestId('public-trim-result')).toHaveText(JSON.stringify({ nativeClipTrimPortReady: true }), CEILING);
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
 }
 
