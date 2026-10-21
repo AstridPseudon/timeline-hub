@@ -46,6 +46,9 @@ dev = [
     # The RunPod claim script is exercised by unit and Darwin CI tests. Pin
     # the lifecycle implementation because it is not published on PyPI.
     "runpod-lifecycle @ git+https://github.com/banodoco/runpod-lifecycle.git@db79345536985c701b7aff2eb5eec36667aae204",
+    # The installer and the packs import runtime_protocol from the Runtime, which is
+    # not on PyPI. Pin the commit runtime.lock.json vendors (tests/test_vendor_lock.py).
+    "astrid-runtime @ git+https://github.com/banodoco/astrid-runtime.git@b535646faaad2f8ae7968dfe0f4fa3057f960264",
     "mypy==1.17.0",
     "pytest==9.0.2",
     "pytest-cov==7.1.0",

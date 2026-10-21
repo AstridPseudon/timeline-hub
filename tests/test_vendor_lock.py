@@ -82,6 +82,14 @@ def test_one_root_lock_covers_all_known_runtime_paths() -> None:
     assert vendor_lock.check(LOCK) == []
 
 
+def test_dev_extra_installs_the_runtime_the_lock_vendors() -> None:
+    import tomllib
+
+    dev = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["optional-dependencies"]["dev"]
+    pins = [spec for spec in dev if spec.startswith("astrid-runtime @ ")]
+    assert pins == [f"astrid-runtime @ git+https://github.com/banodoco/astrid-runtime.git@{json.loads(LOCK.read_text())['source_commit']}"]
+
+
 def test_checkout_with_same_bytes_but_wrong_commit_is_rejected(tmp_path: Path) -> None:
     producer, manifest = _producer(tmp_path)
     root, lock = _consumer(tmp_path, producer, manifest)

@@ -173,10 +173,23 @@ jobs:
           python -m build --wheel --no-isolation --outdir dist
           test "$(ls dist/*.whl | wc -l)" -eq 1
 
+      - name: Read the pinned Runtime commit
+        id: runtime-pin
+        run: echo "commit=$(python -c 'import json; print(json.load(open("runtime.lock.json"))["source_commit"])')" >> "$GITHUB_OUTPUT"
+
+      # The wheel imports runtime_protocol, which ships in the Runtime rather than on PyPI.
+      - name: Check out the Runtime
+        uses: actions/checkout@v4
+        with:
+          repository: banodoco/astrid-runtime
+          ref: ${{ steps.runtime-pin.outputs.commit }}
+          path: runtime-producer
+
       - name: Install the wheel with the hashed runtime lock only
         run: |
           python -m venv "$RUNNER_TEMP/release-venv"
           "$RUNNER_TEMP/release-venv/bin/python" -m pip install --disable-pip-version-check --no-input --require-hashes -r requirements/runtime.lock
+          "$RUNNER_TEMP/release-venv/bin/python" -m pip install --no-deps ./runtime-producer
           "$RUNNER_TEMP/release-venv/bin/python" -m pip install --no-deps dist/*.whl
           "$RUNNER_TEMP/release-venv/bin/python" -m pip check
           cd "$RUNNER_TEMP" && "$RUNNER_TEMP/release-venv/bin/python" -c "import astrid"
