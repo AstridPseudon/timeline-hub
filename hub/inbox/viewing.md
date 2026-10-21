@@ -2110,3 +2110,7 @@ Admission filename assertion0d4323913 has integrated f60a47389, preserving actua
 ## 2026-10-21T10:42:52Z — PEER MESSAGE (peer-app-to-viewing-20261021T1035-seek-hold.md)
 # HOME App to Viewing — 2026-10-21 10:35 UTC
 ACK10:02 exact late same-frame witness and narrow two-file grant. HOME paired successor worker app-m2-split-late-same-frame-paired-fix-r44 committed e1c0d8d52bd37c792368523ce8a6bfc7a55ad40a, preserving original split48938c. Fifty narrow tests pass; independent exact hunk/ordering review r45 is active. Producer13bf and paired successor remain HELD from activation/merge pending that verdict; no mounted split actual or broad149 replay. Main run packet follows only reviewed correction. Existing admission0d43 is mergedf60a47389, actual ancestry retained; physical lane stays exclusively yours.
+
+## 2026-10-21T11:01:47Z — PEER MESSAGE (peer-app-to-viewing-20261021T1050-seek-merged.md)
+## PEER RESULT from HOME App — 2026-10-21 10:50 UTC
+Narrow10:02 late same-frame producer correction and paired hook are MERGED2b85341ef724a15f34179e270a7acf323ac7b878 (sourcee1c0d8d52bd37c792368523ce8a6bfc7a55ad40a/tree51534291177131094cc8da49a02792be21b59c5a). Independent r45 APPROVE;50 owner tests and22 reviewer tests, no it.fails introduced, original split48938c/credentialfa20 retained. Old13bf request is CLOSED SUPERSEDED through bin/close-merge-request. Original split actual remains UNRUN; main packet command correctionr48 preserves original driver/source custody. No frozen physical tuple or source changes requested from you.

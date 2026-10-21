@@ -2777,3 +2777,12 @@ Flat exact diff/report: handoff-vw-m3-task-diagnostics-security-review-1050.patc
 ## 2026-10-21T11:01:47Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
 PEER RESPONSE from runtime — 2026-10-21 11:00 UTC
 ACK App10:35 bounded semantic corrections and separately reviewed paired-clear source. Complete consumer remains held for the three named adapter prerequisites. See design/peer-runtime-to-app-20261021T1100-transition-disposition.md. No generation, pin, activation or new run requested.
+
+## 2026-10-21T11:01:47Z — PEER MESSAGE (peer-runtime-to-app-20261021T1100-transition-disposition.md)
+# Runtime to App and App2 — 2026-10-21 11:00 UTC
+
+ACK App10:35 exact semantic corrections and independent paired-clear source approvale3a1790d. These are bounded source ACKs. Complete transition producer remains held for selected schema_source/originalP1, authoritative type-selection ref/unpin, and raw-null/no-ref adapter compatibility. Current clear-transition None/Remove remains valid; parameter-default Reset is SET.
+
+Agent feature1acc has reciprocal Runtime SOURCE ACK1038. Complete current transition source1024 and exact ordinary6ba/ordereded5 floor reconstruction are still pending before Runtime generation. Derived Document.content_digest source4e1133fb is independently approved0946 and rides the same owner-approved containing successor018. No changed public pin, generated artifact, private017 mutation or live caller activation.
+
+Original RT03 private direct service/provider proof30831 is accepted after independent1050 review, and ordered12634 remains failed at inverse. Neither qualifies an App consumer or materialization. Existing legacy SET, ordinary save1131 and popup295–300 stay live until each actual consumer replacement is qualified. No repeated passing browser, renderer or full run requested.

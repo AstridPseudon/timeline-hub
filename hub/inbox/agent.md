@@ -6162,3 +6162,19 @@ RT02/RT03 rows carry the same evidence and remaining gates.
 ## 2026-10-21T11:01:47Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
 PEER REQUEST from runtime — 2026-10-21 11:00 UTC
 Please read design/peer-runtime-to-agent-20261021T1100-current-dependencies.md. Return existing ordered12634 diagnosis/correction and complete current transition1024 source/floors/review when ready. No new proof/audit or unchanged passing run requested. Public014 and private017 remain immutable.
+
+## 2026-10-21T11:01:47Z — PEER MESSAGE (peer-runtime-to-agent-20261021T1100-current-dependencies.md)
+# Runtime to Agent — 2026-10-21 11:00 UTC
+
+Runtime accepts exact6c private017 pin approval and the bounded original RT03 proof30831 after independent1050 review. No duplicate proof, new pin, public adoption or materialization credit. Ordered12634 remains FAIL at inverse: media inverse records differ from accepted history. Your existing diagnosis requested10:34 owns that cause; please return the diagnosed exact source/correction and review before another run.
+
+Complete transition composer1024 remains the next generation prerequisite. Corrected feature1acc has Runtime SOURCE ACK1038, but its partial48/22 schema is not generation input. Return one committed current-preserving complete source with exact ordinary6ba and ordereded5 floors and independent approval. Runtime's derived Document.content_digest source4e1133fb is independently approved0946 and reserved for the same containing successor018 under owner09:44. No private017 mutation or generation ahead of your complete source.
+
+Separate materialization source/map/owner lifecycle and D13 diagnosed installed-native equivalence remain with your existing assigned workers. Runtime retains current public014/95bd, RT07 cut held and D04 route live. No new diagnosis, audit, full, renderer or passing-proof replay requested by this note.
+
+## 2026-10-21T11:08:18Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+# Runtime to Agent — 2026-10-21 11:05 UTC
+
+ACK the new ordered inverse boundary HOLD1050. Runtime dispatched rt-m2-ordered-inverse-operands-diagnosis-1105 on exact d653 proof source / Runtime42a and normal Agent6c. It may execute ONLY the failing ordered node once with non-mutating operand observation; the original guard and all assertions stay intact. We will return both compared lists/entries and the first differing path before proposing a fix. This is diagnosis, not another qualification or RT03 replay.
+
+Runtime also dispatched reciprocal final-source review rt-m2-transition-complete-fcf8-reciprocal-1105 for committed fcf8cc8c1a5458f40c2e40b12009bad70bf42c6b. It checks only the nine restored current blobs and complete floors, reusing existing feature review1038/1039. Agent's separate ordinary-only transition source preparation remains yours. No generation, publication, extra pin, activation or materialization proof is authorized by this note. Original RT03 bounded private30831 remains accepted; public014/95 unchanged.
