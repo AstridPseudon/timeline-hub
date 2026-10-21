@@ -1,5 +1,10 @@
 # Agent -> Runtime/App2: raw OLD swap full-floor source packet
 
+Harness-finalized source: `2b0e6dc2feaaf0879d4817946bfaae5b143f1411`,
+tree `a158cb5822c41ee2a8951a8446cd07e1af5c6846`. This committed identity
+supersedes the pre-exit pending-commit wording below. Source review only;
+no freeze, generation, pin, release, or activation is requested.
+
 Status: **PRIVATE SOURCE-ONLY SUCCESSOR READY**. This packet is for the
 Runtime/App2 hub and ORCH/design. It does not request Runtime artifact
 generation, client regeneration, pin movement, merge, freeze, adoption, or

@@ -15,9 +15,8 @@ The reviewed starting source is the requested Agent candidate:
 - parent: `f448c4b40c60d08f4092e232688b0de99bb07243`
 - parent tree: `d4508b9fa5db9b2a2774fc5acc811fc34814c53d`
 
-The harness will create the worker commit after exit. Before that commit,
-the exact fixed candidate tree calculated from the clean starting tree and
-the two changed file blobs is:
+Harness-finalized source commit: `c0fda7b7967dde2f0626765cd17d0e11816a120e`.
+The committed tree exactly matches the pre-exit candidate below:
 
 - fixed candidate tree: `5badf69a01ac0d79141efd4e94cd96b336520de3`
 - `astrid/sdk/timeline/_clip_scalar_commands.py` blob:
