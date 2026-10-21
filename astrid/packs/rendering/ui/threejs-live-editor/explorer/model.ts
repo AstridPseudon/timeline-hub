@@ -52,7 +52,7 @@ export function worldsFromSnapshot(snapshot: TimelineSnapshot): TimelineWorld[] 
     // The clip label reads "World" or "World · Shot"; the world is the part before the dot.
     const clipLabel = (clip as { label?: unknown }).label;
     const worldLabel = typeof clipLabel === 'string' ? clipLabel.split(' · ')[0].trim() : '';
-    if (worldLabel && !world.nameHints.label) world.nameHints.label = worldLabel;
+    if (worldLabel && !PLACEHOLDER_LABEL.test(worldLabel) && !world.nameHints.label) world.nameHints.label = worldLabel;
     const rate = clip.rate ?? 1;
     const from = clip.sourceOffset ?? 0;
     const to = clip.sourceEnd ?? from + clip.duration * rate;
@@ -156,6 +156,9 @@ export function stableJson(value: unknown): string {
 const sameJson = (a: unknown, b: unknown) => stableJson(a) === stableJson(b);
 
 export const UNTITLED_WORLD = /^Untitled world( \d+)?$/;
+
+/** Labels the app generates ("world-1", "Untitled world", "Scene 2"): never a name for a world. */
+export const PLACEHOLDER_LABEL = /^(world[-_ ]?\d+|untitled world( \d+)?|scene[-_ ]?\d+)$/i;
 
 /** Keeps the events and shots a library world's scene reported; the same list when the entry is missing or already has them. */
 export function withInfo(

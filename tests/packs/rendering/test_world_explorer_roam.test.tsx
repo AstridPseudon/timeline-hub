@@ -830,7 +830,7 @@ describe('World Explorer free roam', () => {
     ]));
     const view = mount(makeHarness({ clips: [liveClip()], storage, settings, documents }));
     await openReady(EXPLORE);
-    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern valley');
+    expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('Lantern Valley');
     expect(view.getByRole('button', { name: 'Choose world' })).toHaveTextContent('1 / 2');
   });
 

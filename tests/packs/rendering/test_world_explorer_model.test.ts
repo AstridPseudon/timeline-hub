@@ -887,3 +887,28 @@ describe('timeline world names', () => {
     expect(rowFor({ label: 'Label' }, {}, [entry('W', 'r1', 'Untitled world')])).toBe('Label');
   });
 });
+
+describe('world name spelling and collisions', () => {
+  const body = (manifest: Record<string, unknown> = {}) => JSON.stringify({ formatVersion: 1, manifest: { formatVersion: 1, duration: 4, authoredFps: 24, ...manifest } });
+  const rows = (clipExtra: Record<string, unknown>, manifest: Record<string, unknown>, library: LibraryEntry[], ids = { objectId: 'W', revision: 'r1' }) =>
+    buildRows(snap({ clips: [worldClip('c1', 'V1', 0, { ...ids, body: body(manifest) }, clipExtra)] }), library);
+
+  it('a name from a filename or label adopts the spelling of a case-insensitive library match', () => {
+    const lib = [entry('L', 'r2', 'Lantern Valley')];
+    expect(rows({}, { entry: 'lantern-valley.html' }, lib).timeline[0].name).toBe('Lantern Valley');
+    expect(rows({ label: 'lantern valley · Dawn' }, {}, lib).timeline[0].name).toBe('Lantern Valley');
+  });
+  it('placeholder labels are never name hints', () => {
+    for (const label of ['world-1', 'World 2', 'Untitled world · Valley flight', 'Untitled world 3', 'Scene 4']) {
+      expect(rows({ label }, { entry: 'harbour-dusk.html' }, []).timeline[0].name).toBe('Harbour dusk');
+    }
+    expect(rows({ label: 'world-1' }, {}, []).timeline[0].name).toBe('Untitled world');
+  });
+  it('rows that still share a name carry a qualifier, others none', () => {
+    const lib = [entry('L', 'r2', 'Lantern Valley'), entry('M', 'r3', 'Meadow')];
+    const { timeline, library } = rows({}, { entry: 'lantern-valley.html' }, lib);
+    expect(timeline[0]).toMatchObject({ name: 'Lantern Valley', qualifier: 'in video' });
+    expect(library.find((r) => r.objectId === 'L')?.qualifier).toBe('library');
+    expect(library.find((r) => r.objectId === 'M')?.qualifier).toBeUndefined();
+  });
+});
