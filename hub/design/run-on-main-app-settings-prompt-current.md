@@ -1,10 +1,9 @@
 # Main95 prompt-only Settings proof packet
 
-**Decision: HOLD for main execution.** The final App source is committed and
-the prompt case is statically bound, but the requested approved runner blob
-does not match the runner file on the final r46 tree. Do not request the
-central preflight/list or actual until that runner identity is reconciled by
-the orchestrator. This record contains no product PASS.
+**Decision: APPROVE for main execution.** The final App source is committed,
+the prompt case is statically bound, and this packet is now pinned to the
+exact runner blob on the final r46 tree. This record contains no product PASS;
+the central preflight/list and one actual remain unrun here.
 
 ## Final source identity
 
@@ -57,25 +56,46 @@ with its existing `READY` and `LEASE` records. It is read-only. The shared
 `/home/user/work/app/node_modules` must not be written or replaced outside the
 runner's existing temporary overlay/restore operation.
 
-## Runner identity and blocker
+## Runner identity and resolved cause
 
-The requested approved runner blob is:
+The exact final-r46 runner blob is:
 
-`sha256:b7d0732b02a533a091c76bb7a163376900725db1b5ac067979a638134800ed88`
+`sha256:d52ae2c084130bef6e2733da03088a7cfb8e516908e547645125e6d973cb2d42`
 
-That is the runner blob from the approved r44 packet. The runner file present
-on final r46 is a different blob:
+The stale requested `b7d0732b02a533a091c76bb7a163376900725db1b5ac067979a638134800ed88`
+originated in the approved r44 donor commit
+`140431bd3a46a0c25b569013fe21aaff30c83050` and was copied forward into the
+r47 packet without being recomputed after the final composition. It is
+historical donor provenance, not the final execution-source identity.
 
-`scripts/testing/main95-prompt-settings-integration.mjs`
-→ `sha256:d52ae2c084130bef6e2733da03088a7cfb8e516908e547645125e6d973cb2d42`
+The exact blob comparison is:
 
-The difference is not fabricated away: r46 changed the runner's discovery and
-diagnostic labels back to `SettingsAutoDisable`, while its `SETTINGS_CASE`
-still selects the exact new prompt title. Since the packet requires the exact
-approved `b7d0732b02a533a091c76bb7a163376900725db1b5ac067979a638134800ed88` blob and no runner-code change was authorized, this mismatch is
-the concrete HOLD reason. Do not substitute `d52ae2c084130bef6e2733da03088a7cfb8e516908e547645125e6d973cb2d42`, a moving branch, or an
-uncommitted file. The orchestrator must either bind the approved blob as the
-actual runner input or make an explicit source decision before execution.
+- approved callback `cd927abfa09b6f8571cfeb282763855af3e44541`:
+  `sha256:c148574748970ccbbbacac5514b419a66731115b8736e89adf7ad45bfb827b9d`
+- r44 proof donor `140431bd3a46a0c25b569013fe21aaff30c83050`:
+  `sha256:b7d0732b02a533a091c76bb7a163376900725db1b5ac067979a638134800ed88`
+- composed `fb23bf75e0985c77b14c38f97776ca950f1b47bc`:
+  `sha256:d52ae2c084130bef6e2733da03088a7cfb8e516908e547645125e6d973cb2d42`
+- final `dfb96f10a3f33abcbef733ee55d9874e3aaeba01`:
+  `sha256:d52ae2c084130bef6e2733da03088a7cfb8e516908e547645125e6d973cb2d42`
+
+Callback-to-donor changed line 6’s comment, line 62’s `SETTINGS_CASE` from
+the old scalar SettingsAutoDisable title to the distinct prompt title, and
+lines 417–420’s discovery labels. Donor-to-composed and composed-to-final
+left the prompt selector and all guards intact; only the line 6 and 417–420
+diagnostic labels were restored to their SettingsAutoDisable wording.
+The donor-to-final source diff is limited to harmless comment/diagnostic
+labels: line 6 changes the comment from “distinct native settings-prompt” to
+“existing SettingsAutoDisable”, and lines 417–420 change discovery error and
+log labels from `settings-prompt` to `SettingsAutoDisable`. The actual
+selector at line 62 remains the exact distinct prompt title, and the spawn
+argv, discovery cardinality guard, source/credential/environment pins, and
+all other process guards are byte-identical. These labels do not alter which
+test `--grep SETTINGS_CASE` selects; no process, credential, or source-guard
+drift exists. The final source is therefore preserved unchanged and the
+packet binds to
+`d52ae2c084130bef6e2733da03088a7cfb8e516908e547645125e6d973cb2d42`, rather
+than accepting the stale donor hash.
 
 ## Central command contract (not run here)
 
@@ -148,7 +168,7 @@ flock -w 600 /home/user/work/.app-m1-browser.lock bash -c '
     TIMELINE_MAIN95_PROMPT_APP_TREE=47798b03f705b0f2888c6d738264cf48f9c76062 \
     TIMELINE_MAIN95_PROMPT_AGENT_SHA=6efc81500a0e0688c2bb41e736503f0fc3e04abb \
     TIMELINE_MAIN95_PROMPT_RUNTIME_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c \
-    TIMELINE_MAIN95_PROMPT_RUNNER_SHA256=sha256:b7d0732b02a533a091c76bb7a163376900725db1b5ac067979a638134800ed88 \
+    TIMELINE_MAIN95_PROMPT_RUNNER_SHA256=sha256:d52ae2c084130bef6e2733da03088a7cfb8e516908e547645125e6d973cb2d42 \
     ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-6efc8150 \
     TIMELINE_MAIN95_PROMPT_VENDOR_CHECKOUT=/home/user/work/wt/agt-pin-091aa23e \
     ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-95bd3c5f \
@@ -191,11 +211,11 @@ actual phase is eligible.
 - `node --check scripts/testing/main95-prompt-settings-integration.mjs` — PASS.
 - `node --test scripts/testing/main95-prompt-settings-integration.test.mjs` — PASS, 1 file / 1 test.
 - Exact prompt title/source scan — PASS; `SETTINGS_CASE` and the new test title are identical, and the source guard still requires one test in one file.
-- Requested runner hash check — HOLD: approved `b7d0732b02a533a091c76bb7a163376900725db1b5ac067979a638134800ed88` versus final-r46 file `d52ae2c084130bef6e2733da03088a7cfb8e516908e547645125e6d973cb2d42`.
+- Exact runner blob comparison — PASS: composed `fb23bf75e0985c77b14c38f97776ca950f1b47bc` and final r46 `dfb96f10a3f33abcbef733ee55d9874e3aaeba01` both contain `d52ae2c084130bef6e2733da03088a7cfb8e516908e547645125e6d973cb2d42`; stale `b7d0732b02a533a091c76bb7a163376900725db1b5ac067979a638134800ed88` is only the r44 donor blob.
+- Prior r44 private-overlay Playwright `--list` evidence — PASS: exactly one prompt test and zero final failures; this worker did not rerun discovery.
 
-No browser, Runtime door, actual prompt journey, `--list` discovery against
-the graph, build, install, dependency graph construction, localhost/live
-socket, full suite, or actual execution was run by this worker. Until the
-runner mismatch is resolved and the central list phase passes, the prompt
-journey, retry/restart, raw readback, inverse, and zero-legacy behavior remain
-unverified.
+No browser, Runtime door, actual prompt journey, current `--list` discovery
+against the graph, build, install, dependency graph construction,
+localhost/live socket, full suite, or actual execution was run by this worker.
+Until the central list phase passes, the prompt journey, retry/restart, raw
+readback, inverse, and zero-legacy behavior remain unverified.
