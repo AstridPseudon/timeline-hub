@@ -313,6 +313,7 @@ export async function handleFileDrop({
   uploadImageGeneration,
   uploadVideoGeneration,
   dropAsset,
+  handleOccurrenceMediaDrop,
   directAssetUploadAllFiles = false,
   mediaImportForImageVideo = false,
   onAssetDropError,
@@ -332,6 +333,8 @@ export async function handleFileDrop({
   uploadImageGeneration: UseAssetManagementResult['uploadImageGeneration'];
   uploadVideoGeneration: UseAssetManagementResult['uploadVideoGeneration'];
   dropAsset: UseAssetManagementResult['handleAssetDrop'];
+  /** Optional File-only native occurrence path; absent means ordinary drop. */
+  handleOccurrenceMediaDrop?: UseAssetManagementResult['handleOccurrenceMediaDrop'];
   directAssetUploadAllFiles?: boolean;
   mediaImportForImageVideo?: boolean;
   onAssetDropError?: (error: unknown) => void;
@@ -489,6 +492,21 @@ export async function handleFileDrop({
       }, { save: false });
     };
 
+    const settlePreparedMediaDrop = async (
+      preparedAsset: TimelineProvisionedAsset,
+    ): Promise<boolean> => {
+      try {
+        // A supplied occurrence caller is authoritative for this File drop:
+        // refusal preserves the draft and must not fall through to a second
+        // parent-media writer.
+        return handleOccurrenceMediaDrop
+          ? await handleOccurrenceMediaDrop({ preparedAsset, trackId: compatibleTrackId, time: clipTime })
+          : await dropAsset(preparedAsset.assetKey, compatibleTrackId, clipTime, false, false, preparedAsset, skeletonId);
+      } finally {
+        removeSkeleton();
+      }
+    };
+
     pendingOpsRef.current += 1;
     const placementPromise = (async (): Promise<boolean> => {
       try {
@@ -504,8 +522,7 @@ export async function handleFileDrop({
             removeSkeleton();
             return false;
           }
-          const placed = await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
-          removeSkeleton();
+          const placed = await settlePreparedMediaDrop(preparedAsset);
           return placed;
         }
 
@@ -521,8 +538,7 @@ export async function handleFileDrop({
             removeSkeleton();
             return false;
           }
-          const placed = await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
-          removeSkeleton();
+          const placed = await settlePreparedMediaDrop(preparedAsset);
           return placed;
         }
 

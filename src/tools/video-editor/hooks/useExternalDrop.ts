@@ -74,6 +74,7 @@ async function dispatchTimelineDrop({
   uploadImageGeneration,
   uploadVideoGeneration,
   dropAsset,
+  handleOccurrenceMediaDrop,
   directAssetUploadAllFiles,
   mediaImportForImageVideo,
   onAssetDropError,
@@ -95,6 +96,7 @@ async function dispatchTimelineDrop({
   uploadImageGeneration: UseAssetManagementResult['uploadImageGeneration'];
   uploadVideoGeneration: UseAssetManagementResult['uploadVideoGeneration'];
   dropAsset: UseAssetManagementResult['handleAssetDrop'];
+  handleOccurrenceMediaDrop?: UseAssetManagementResult['handleOccurrenceMediaDrop'];
   directAssetUploadAllFiles: boolean;
   mediaImportForImageVideo: boolean;
   onAssetDropError?: (error: unknown) => void;
@@ -128,6 +130,7 @@ async function dispatchTimelineDrop({
     uploadImageGeneration,
     uploadVideoGeneration,
     dropAsset,
+    handleOccurrenceMediaDrop,
     directAssetUploadAllFiles,
     mediaImportForImageVideo,
     onAssetDropError,
@@ -467,6 +470,7 @@ export interface UseExternalDropArgs {
   uploadImageGeneration: UseAssetManagementResult['uploadImageGeneration'];
   uploadVideoGeneration: UseAssetManagementResult['uploadVideoGeneration'];
   handleAssetDrop: UseAssetManagementResult['handleAssetDrop'];
+  handleOccurrenceMediaDrop?: UseAssetManagementResult['handleOccurrenceMediaDrop'];
   handleAddTextAt?: (trackId: string, time: number) => void;
   onSeekToTime?: (time: number) => void;
   shots?: Shot[] | undefined;
@@ -494,6 +498,7 @@ export function useExternalDrop({
   uploadImageGeneration,
   uploadVideoGeneration,
   handleAssetDrop: dropAsset,
+  handleOccurrenceMediaDrop,
   handleAddTextAt,
   onSeekToTime,
   shots,
@@ -642,6 +647,7 @@ export function useExternalDrop({
       uploadImageGeneration,
       uploadVideoGeneration,
       dropAsset,
+      handleOccurrenceMediaDrop,
       directAssetUploadAllFiles,
       mediaImportForImageVideo,
       onAssetDropError: (error) => {
@@ -660,6 +666,7 @@ export function useExternalDrop({
     coordinator,
     clearExternalDragState,
     dropAsset,
+    handleOccurrenceMediaDrop,
     getApplyEdit,
     getDataRef,
     getPendingOpsRef,

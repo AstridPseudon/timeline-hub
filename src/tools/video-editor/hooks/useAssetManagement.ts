@@ -8,7 +8,7 @@ import { extractVideoMetadata } from '@/shared/lib/media/videoMetadata.ts';
 import { extractVideoPosterFrame } from '@/shared/lib/media/videoPosterExtractor.ts';
 import { generateClientThumbnail, uploadImageWithThumbnail } from '@/shared/media/clientThumbnailGenerator.ts';
 import type { SelectClipOptions } from '@/shared/state/selectionStore.ts';
-import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { createExternalUploadGeneration } from '@/integrations/supabase/repositories/generationMutationsRepository.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import {
@@ -38,6 +38,7 @@ import type {
 } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
 import type { TimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
+import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
 
 type UploadedGenerationData = GenerationDropData & {
   assetId?: string;
@@ -64,6 +65,48 @@ type UploadedGenerationResult = {
 
 const NATIVE_REFUSAL_MESSAGE_LIMIT = 240;
 
+/** HOME supplies this carrier from its existing popup serializer. */
+export type OccurrenceMediaBirth = Readonly<{
+  ownerRef: `occurrence:${string}`;
+  row: Record<string, JSON>;
+}>;
+
+export type OccurrenceMediaBirthResolver = (input: {
+  current: TimelineData;
+  preparedAsset: TimelineProvisionedAsset;
+  trackId: string;
+  time: number;
+}) => OccurrenceMediaBirth | null;
+
+export async function submitPreparedOccurrenceMedia(input: {
+  ownerRef: `occurrence:${string}`;
+  row: Record<string, JSON>;
+  preparedAsset: TimelineProvisionedAsset;
+  current: TimelineData;
+  occurrenceAddMediaPort: OccurrenceAddMediaCapturePort;
+  getProjectVerifiedMedia: (selection: MediaSelection) => Promise<VerifiedMedia>;
+}): Promise<boolean> {
+  const media = input.preparedAsset.mediaSelection;
+  if (!media || (input.preparedAsset.mediaType !== 'image' && input.preparedAsset.mediaType !== 'video')) {
+    return false;
+  }
+
+  try {
+    const basis = input.occurrenceAddMediaPort.capture({
+      ownerRef: input.ownerRef,
+      row: input.row,
+      media,
+      current: input.current,
+    });
+    const verifiedMedia = await input.getProjectVerifiedMedia(media);
+    const finished = input.occurrenceAddMediaPort.finish(basis, verifiedMedia);
+    input.occurrenceAddMediaPort.submit(finished);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export interface UseAssetManagementArgs {
   store?: TimelineStoreApi;
   dataRef: MutableRefObject<TimelineData | null>;
@@ -76,6 +119,9 @@ export interface UseAssetManagementArgs {
   invalidateAssetRegistry: TimelineInvalidateAssetRegistry;
   resolveAssetUrl: (file: string) => Promise<string>;
   commands?: Pick<TimelineCommands, 'addClip'>;
+  /** Dormant until HOME wires the popup serializer's explicit birth carrier. */
+  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
+  getOccurrenceAddMediaBirth?: OccurrenceMediaBirthResolver;
 }
 
 export interface UseAssetManagementResult {
@@ -92,6 +138,11 @@ export interface UseAssetManagementResult {
     preparedAsset?: TimelineProvisionedAsset,
     removeClipId?: string,
   ) => boolean | Promise<boolean>;
+  handleOccurrenceMediaDrop?: (input: {
+    preparedAsset: TimelineProvisionedAsset;
+    trackId: string;
+    time: number;
+  }) => Promise<boolean>;
 }
 
 export interface AssetDropTargetResolution {
@@ -185,8 +236,11 @@ export function useAssetManagement({
   applyEdit,
   patchRegistry,
   commands,
+  occurrenceAddMediaPort,
+  getOccurrenceAddMediaBirth,
 }: UseAssetManagementArgs): UseAssetManagementResult {
   const runtime = useVideoEditorRuntime();
+  const runtimeProvider = runtime.provider;
   const getDataRef = useCallback(() => {
     const storeDataRef = store?.getState().data.dataRef;
     return storeDataRef && storeDataRef.current !== null ? storeDataRef : dataRef;
@@ -206,6 +260,46 @@ export function useAssetManagement({
   const getSetSelectedTrackId = useCallback(() => {
     return store?.getState().ops.setSelectedTrackId ?? setSelectedTrackId;
   }, [setSelectedTrackId, store]);
+
+  const handleOccurrenceMediaDrop = useCallback(async (input: {
+    preparedAsset: TimelineProvisionedAsset;
+    trackId: string;
+    time: number;
+  }): Promise<boolean> => {
+    if (!occurrenceAddMediaPort || !getOccurrenceAddMediaBirth) {
+      return false;
+    }
+
+    const current = getDataRef().current;
+    if (!current) {
+      return false;
+    }
+    const birth = getOccurrenceAddMediaBirth({
+      current,
+      preparedAsset: input.preparedAsset,
+      trackId: input.trackId,
+      time: input.time,
+    });
+    if (!birth) {
+      return false;
+    }
+
+    const provider = runtimeProvider as typeof runtimeProvider & {
+      getProjectVerifiedMedia?: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
+    };
+    if (!selectedProjectId || typeof provider.getProjectVerifiedMedia !== 'function') {
+      return false;
+    }
+
+    return submitPreparedOccurrenceMedia({
+      ownerRef: birth.ownerRef,
+      row: birth.row,
+      preparedAsset: input.preparedAsset,
+      current,
+      occurrenceAddMediaPort,
+      getProjectVerifiedMedia: (selection) => provider.getProjectVerifiedMedia!(selectedProjectId, selection),
+    });
+  }, [getDataRef, getOccurrenceAddMediaBirth, occurrenceAddMediaPort, runtimeProvider, selectedProjectId]);
 
   const prepareGenerationAsset = useCallback((generationData: UploadedGenerationData | null): TimelineProvisionedAsset | null => {
     if (!generationData) {
@@ -579,5 +673,6 @@ export function useAssetManagement({
     uploadImageGeneration,
     uploadVideoGeneration,
     handleAssetDrop,
+    handleOccurrenceMediaDrop,
   };
 }

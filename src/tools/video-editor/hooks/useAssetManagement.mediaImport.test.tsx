@@ -7,10 +7,12 @@ import {
   VideoEditorRuntimeProvider,
   type VideoEditorRuntimeContextValue,
 } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import { useAssetManagement, type UseAssetManagementArgs } from './useAssetManagement';
+import { submitPreparedOccurrenceMedia, useAssetManagement, type UseAssetManagementArgs } from './useAssetManagement';
 import { RUNTIME_MEDIA_IMPORT_MAX_BYTES } from '@/tools/video-editor/data/AssetResolver.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { TimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
+import type { VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 
 const extractVideoMetadataMock = vi.fn();
 
@@ -100,6 +102,57 @@ function renderAssetManagement(provider: Record<string, unknown>, args = buildAr
 }
 
 describe('useAssetManagement Runtime media imports', () => {
+  it('captures, verifies, finishes, then submits a File occurrence add without a fallback writer', async () => {
+    const mediaSelection = {
+      asset: 'sha256:asset',
+      generation_id: 'generation-1',
+      variant_id: 'variant-1',
+      object_id: 'sha256:object',
+      catalog_digest: 'sha256:catalog',
+    } as const;
+    const preparedAsset = {
+      assetKey: 'asset-1',
+      mediaType: 'image',
+      durationSeconds: null,
+      entry: { file: 'https://runtime.test/image', type: 'image/png' },
+      source: 'registered',
+      mediaSelection,
+    } satisfies TimelineProvisionedAsset;
+    const verifiedMedia = { selection: mediaSelection, media_type: 'image/png', size: 1 } satisfies VerifiedMedia;
+    const order: string[] = [];
+    const basis = { token: 'basis' } as never;
+    const finished = { command: { token: 'command' }, preview: null } as never;
+    const port = {
+      capture: vi.fn(() => { order.push('capture'); return basis; }),
+      finish: vi.fn(() => { order.push('finish'); return finished; }),
+      submit: vi.fn(() => { order.push('submit'); }),
+    };
+    const getProjectVerifiedMedia = vi.fn(async () => {
+      order.push('verified-read');
+      return verifiedMedia;
+    });
+
+    await expect(submitPreparedOccurrenceMedia({
+      ownerRef: 'occurrence:occ-1',
+      row: {
+        id: 'child-1',
+        track: 'V1',
+        clipType: 'image',
+        asset: 'sha256:asset',
+        at: 3,
+        hold: 5,
+      },
+      preparedAsset,
+      current: buildDropData(),
+      occurrenceAddMediaPort: port,
+      getProjectVerifiedMedia,
+    })).resolves.toBe(true);
+
+    expect(order).toEqual(['capture', 'verified-read', 'finish', 'submit']);
+    expect(getProjectVerifiedMedia).toHaveBeenCalledWith(mediaSelection);
+    expect(port.submit).toHaveBeenCalledWith(finished);
+  });
+
   it('uses one Runtime import identity for image and video drops', async () => {
     extractVideoMetadataMock.mockResolvedValue({ duration_seconds: 2.5 });
     const prepareMediaImport = vi.fn()
