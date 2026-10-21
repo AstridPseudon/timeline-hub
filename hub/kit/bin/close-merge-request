@@ -1,0 +1,7 @@
+#!/bin/bash
+# close-merge-request WORKER "SUPERSEDED by <sha> (reason)" — run by the HOME repo's manager for a remote merge request that will
+# never be merged as sent (superseded by an integrated successor, withdrawn). hub-sync publishes it to the requester as
+# "SUPERSEDED ..." in hub/merge-results/<repo>/WORKER instead of leaving it PENDING forever. Re-sending the branch with a new sha reopens it.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+W=$1; shift; [ -n "$W" ] && [ -n "$*" ] || { echo "usage: close-merge-request WORKER \"SUPERSEDED by <sha> (reason)\""; exit 2; }
+mkdir -p $O/queue/superseded; echo "$(date -u +%FT%TZ) $*" > $O/queue/superseded/merge-$W; echo "closed merge request $W: $*"

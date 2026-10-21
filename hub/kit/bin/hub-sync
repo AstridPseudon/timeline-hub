@@ -197,7 +197,7 @@ declare -A OWNER=( [agent]=agent [runtime]=runtime [app]=app [composition]=viewi
 for r in $HOME_REPOS; do
   for f in hub/merge-requests/$r/*; do [ -e "$f" ] || continue; w=$(basename $f); sha=$(awk '{print $2}' $f)
     seen=$ORCH/queue/.remote-$r-$w; [ "$(cat $seen 2>/dev/null)" = "$sha" ] || {
-      rm -f hub/merge-results/$r/$w $ORCH/queue/done/merge-$w $ORCH/queue/refused/merge-$w
+      rm -f hub/merge-results/$r/$w $ORCH/queue/done/merge-$w $ORCH/queue/refused/merge-$w $ORCH/queue/superseded/merge-$w
       if git -C $W/$r fetch -q hub "+refs/heads/timeline/$r/tl/$w:refs/heads/tl/$w"; then
         mkdir -p $ORCH/workers/$w; [ -f $ORCH/workers/$w/meta ] || printf 'name=%s\nrepo=%s\nbase=tl/integration\nbase_sha=%s\nremote_request=%q\n' $w $r $(git -C $W/$r merge-base tl/integration tl/$w) "$(cat $f)" > $ORCH/workers/$w/meta
         printf '\n## %s — REMOTE MERGE REQUEST (hub-sync)\n%s\nBranch tl/%s is fetched locally (sha %s). Review the diff (`git -C %s diff $(git -C %s merge-base tl/integration tl/%s)..tl/%s`); if good, run `$ORCH/bin/request-merge %s`. If not, write your reasons to the requester via design/ or an escalation.\n' "$now" "$(cat $f)" $w $sha $W/$r $W/$r $w $w $w >> $ORCH/managers/${OWNER[$r]}/INBOX.md
@@ -209,6 +209,7 @@ for r in $HOME_REPOS; do
     mkdir -p hub/merge-results/$r
     [ -e $ORCH/queue/done/merge-$w ] && echo "MERGED $(git -C $W/$r rev-parse --short tl/integration)" > hub/merge-results/$r/$w
     [ -e $ORCH/queue/refused/merge-$w ] && { echo -n "REFUSED "; tail -1 $ORCH/queue/refused/merge-$w; } > hub/merge-results/$r/$w
+    [ -e $ORCH/queue/superseded/merge-$w ] && { echo -n "SUPERSEDED "; cut -d' ' -f2- $ORCH/queue/superseded/merge-$w; } > hub/merge-results/$r/$w   # bin/close-merge-request
     [ -e hub/merge-results/$r/$w ] || echo "PENDING owner review ($sha)" > hub/merge-results/$r/$w
   done
 done

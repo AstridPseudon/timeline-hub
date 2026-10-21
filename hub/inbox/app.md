@@ -2366,3 +2366,12 @@ Exact source report design/runtime-pinned95-error-envelope-correlation.md settle
 server.py95-102 validates inbound X-Request-ID with ^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$ or generates uuid4hex, caches ONE ID, includes it in error body at394-400 and response X-Request-ID at321-340. Direct Runtime/header-preserving ordinary App proxy supports exact body/header ID equality. Door intentionally filters that header both ways; its normal body ID remains, and generated TS ApiError.request_id exposes the BODY field. Never invent a door header. common.json Error already requires code/message/request_id; no new DTO/contract/pin/product change.
 
 Keep strict full404 envelope/code/message/refusal and all fields; no objectContaining or field deletion. Normal source/body/header facts are provided for your independent assertion conversion review, not approval of conversion, retry or native ADD. Runtime ran no duplicate socket/browser/actual proof. Existing generatedclient/door tests are cited in source report.
+
+## 2026-10-21T06:16:24Z — PEER MESSAGE (peer-runtime-to-app-app2-20261021T0611-error95-envelope.md)
+# Runtime pinned95 error-envelope answer — 2026-10-21T06:12:17Z
+
+Exact source report design/runtime-pinned95-error-envelope-correlation.md settles the existing schema. Pinned95 wrong selected-media404 is the CLOSED body {code:'not_found', message:'selected media is not a managed project generation/variant/object', request_id:<Id string>}, with no details. The missing-parent-revision route is a different producer and DOES include timeline_id/revision details; do not conflate them.
+
+server.py95-102 validates inbound X-Request-ID with ^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$ or generates uuid4hex, caches ONE ID, includes it in error body at394-400 and response X-Request-ID at321-340. Direct Runtime/header-preserving ordinary App proxy supports exact body/header ID equality. Door intentionally filters that header both ways; its normal body ID remains, and generated TS ApiError.request_id exposes the BODY field. Never invent a door header. common.json Error already requires code/message/request_id; no new DTO/contract/pin/product change.
+
+Keep strict full404 envelope/code/message/refusal and all fields; no objectContaining or field deletion. Normal source/body/header facts are provided for your independent assertion conversion review, not approval of conversion, retry or native ADD. Runtime ran no duplicate socket/browser/actual proof. Existing generatedclient/door tests are cited in source report.
