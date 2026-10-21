@@ -9,7 +9,11 @@ import uuid
 from types import SimpleNamespace
 from typing import Any
 
-from astrid.core.element.project_packs import _json_digest, _read_document
+from astrid.core.element.project_packs import (
+    _json_digest,
+    _read_document,
+    admitted_element_snapshot_descriptor,
+)
 from astrid.core.receipts.contract import CommandReceipt
 from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.documents import Documents
@@ -69,6 +73,44 @@ class _SelectionReads:
                 if document is not None:
                     return document
         raise ValueError('Accepted selection revision closure is unavailable')
+
+
+def _read_selected_param_inputs(owner, project, timeline, *, realm, through, select,
+                                source=None, element=None):
+    """Read the exact accepted PARAM declaration and its retained bytes.
+
+    The accepted publication chain chooses the source pin.  Runtime then
+    authenticates that pin and returns its portable snapshot; neither the
+    current admission nor a caller-provided schema can replace it.
+    """
+    from astrid.sdk.timeline._selected_param_authority import resolve_selected_param_source
+
+    if source is None:
+        authority = resolve_selected_param_source(
+            _SelectionReads(owner, project, timeline),
+            context={'request': {'project_id': project, 'timeline_id': timeline}},
+            through=through,
+            select=select,
+        )
+    else:
+        if not isinstance(source, dict) or not isinstance(element, dict):
+            raise ValueError('selected PARAM retry lacks its original pin or element identity')
+        authority = {'source': copy.deepcopy(source), 'element': copy.deepcopy(element)}
+    pin = authority['source']
+    verified = owner._client.get_project_verified_document(project, pin)
+    if source is not None:
+        admissions = verified.get('document', {}).get('content', {}).get('admissions', [])
+        matches = [row.get('snapshot_object') for row in admissions
+                   if all(row.get(key) == element.get(key)
+                          for key in ('id', 'kind', 'revision'))]
+        if len(matches) != 1 or not isinstance(matches[0], dict):
+            raise ValueError('pack snapshot unavailable; re-admit pack')
+        authority['object'] = copy.deepcopy(matches[0])
+    snapshot = owner._client.get_project_verified_document_object(
+        project, pin, authority['object']['object_id'])
+    descriptor = admitted_element_snapshot_descriptor(
+        realm, project, authority['element'], verified, snapshot)
+    return authority, [(verified, {authority['object']['object_id']: snapshot})], descriptor
 
 
 def _matches(saved, calls):
@@ -202,19 +244,10 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
             if all(call['op'] == 'clip.set' for call in fresh_calls):
                 return execute(opened.data['bundle'], fresh_calls, realm_id=realm).commands
             if all(call['op'] != 'clip.set-element' for call in fresh_calls):
-                from astrid.sdk.timeline._selected_param_authority import (
-                    resolve_selected_param_source,
-                )
-
-                authority = resolve_selected_param_source(
-                    _SelectionReads(owner, session.project_id, session.timeline_id),
-                    context={'request': {'project_id': session.project_id, 'timeline_id': session.timeline_id}},
+                authority, inputs, _ = _read_selected_param_inputs(
+                    owner, session.project_id, session.timeline_id, realm=realm,
                     through=state['base'], select=f'parent/clip:{clip_id}')
                 pin = authority['source']
-                verified = owner._client.get_project_verified_document(session.project_id, pin)
-                snapshot = owner._client.get_project_verified_document_object(
-                    session.project_id, pin, authority['object']['object_id'])
-                inputs = [(verified, {authority['object']['object_id']: snapshot})]
                 return execute(opened.data['bundle'], _calls(
                     clip_id, element, duration, params, clear_params, pin, before),
                     schema_inputs=inputs, realm_id=realm).commands
