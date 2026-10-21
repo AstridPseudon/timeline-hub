@@ -1,0 +1,3 @@
+test(app): register popup diagnostic suite
+
+Register the authorized one-shot post-selection diagnostic command for the frozen instrumented App candidate.

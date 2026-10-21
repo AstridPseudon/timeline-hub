@@ -1,0 +1,1 @@
+The single authorized central request failed before wrapper launch because the registered command used `node` for a Bash wrapper. The one-diagnostic limit forbids retry, so no browser or post-selection diagnostic boundary was reached.
