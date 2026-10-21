@@ -10,6 +10,7 @@ const appRoot = fileURLToPath(new URL('../..', import.meta.url));
 const packageName = '@banodoco/timeline-composition';
 const packageRoot = path.join(appRoot, 'node_modules', packageName);
 const manifest = JSON.parse(fs.readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
+const peerVersions = { ...manifest.peerDependencies, three: '0.185.1', '@remotion/three': '4.0.509' };
 const configs = [
   'config/vite/vite.config.ts',
   'config/testing/vitest.config.ts',
@@ -60,7 +61,7 @@ for (const configFile of configs) {
           assert.equal(fs.realpathSync(resolved), fs.realpathSync(path.join(packageRoot, entry.import)));
         }
       }
-      for (const [peer, version] of Object.entries({ ...manifest.peerDependencies, three: '0.185.1', '@remotion/three': '4.0.509' })) {
+      for (const [peer, version] of Object.entries(peerVersions)) {
         const peerRoot = path.join(appRoot, 'node_modules', peer);
         assert.equal(JSON.parse(fs.readFileSync(path.join(peerRoot, 'package.json'), 'utf8')).version, version);
         const appPeer = await resolve(peer, importers[0]);
@@ -78,6 +79,44 @@ for (const configFile of configs) {
     }
   });
 }
+
+test('diagnostic reports all Composition peer resolution divergences', async () => {
+  const divergences = [];
+  for (const configFile of configs) {
+    const previousCheckout = process.env.ASTRID_CHECKOUT;
+    const previousPublicCheckout = process.env.ASTRID_PUBLIC_CHECKOUT;
+    const checkout = previousCheckout || path.join(appRoot, 'vendor/astrid-browser');
+    process.env.ASTRID_CHECKOUT = checkout;
+    process.env.ASTRID_PUBLIC_CHECKOUT = previousPublicCheckout || checkout;
+    try {
+      const config = await resolveConfig({ configFile: path.join(appRoot, configFile) }, 'build');
+      const resolve = config.createResolver();
+      const importers = {
+        app: path.join(appRoot, 'src/tools/video-editor/compositions/TimelineRenderer.tsx'),
+        linked: path.join(checkout, 'remotion/src/ThreeTimelineComposition.tsx'),
+        composition: path.join(packageRoot, manifest.main),
+      };
+      for (const [peer] of Object.entries(peerVersions)) {
+        const resolved = {};
+        for (const [importer, source] of Object.entries(importers)) {
+          const result = await resolve(peer, source);
+          resolved[importer] = result ? fs.realpathSync(result) : undefined;
+        }
+        for (const [importer, actual] of Object.entries(resolved)) {
+          if (!actual || actual !== resolved.app) {
+            divergences.push({ configFile, peer, importer, actual, expected: resolved.app });
+          }
+        }
+      }
+    } finally {
+      if (previousCheckout === undefined) delete process.env.ASTRID_CHECKOUT;
+      else process.env.ASTRID_CHECKOUT = previousCheckout;
+      if (previousPublicCheckout === undefined) delete process.env.ASTRID_PUBLIC_CHECKOUT;
+      else process.env.ASTRID_PUBLIC_CHECKOUT = previousPublicCheckout;
+    }
+  }
+  assert.deepEqual(divergences, []);
+});
 
 test('Node SSR can import the public Composition consumer subpaths', async () => {
   const [evaluation, themeApi, registry] = await Promise.all([
