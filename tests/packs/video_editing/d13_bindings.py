@@ -52,6 +52,11 @@ _FORBIDDEN_ENV_PREFIXES = ("LD_",)
 _FORBIDDEN_ENV = frozenset(
     {"NODE_OPTIONS", "NODE_PATH", "PYTHONHOME", "PYTHONPATH", "ASTRID_RUNTIME_CHECKOUT"}
 )
+_NATIVE_TEST = (
+    "tests/packs/video_editing/test_runtime_publication_chain.py::"
+    "test_daemon_backed_host_executes_authoring_and_final_render"
+)
+_MAX_SOCKET_PATH = 100
 
 
 @dataclass(frozen=True)
@@ -335,6 +340,8 @@ def installed_profile(tmp_path: Path) -> tuple[D13Inputs, dict[str, object], dic
 
 def isolated_environment(inputs: D13Inputs, *, home: Path, tmpdir: Path) -> dict[str, str]:
     """Build the existing env -i child environment for later named tests."""
+    if not tmpdir.is_absolute() or len(str(tmpdir)) >= _MAX_SOCKET_PATH:
+        raise ValueError("D13 per-run temp root must be an absolute short path")
     env = {
         "HOME": str(home),
         "LANG": "C.UTF-8",
@@ -342,6 +349,14 @@ def isolated_environment(inputs: D13Inputs, *, home: Path, tmpdir: Path) -> dict
         "PATH": f"{inputs.node.parent}:{inputs.environment / 'bin'}:/usr/bin:/bin",
         "PYTHONDONTWRITEBYTECODE": "1",
         "TMPDIR": str(tmpdir),
+        "XDG_RUNTIME_DIR": str(tmpdir),
+        "ASTRID_D13_SOURCE_PROFILE": str(inputs.profile),
+        "ASTRID_D13_EXPECTED_BINDINGS": str(inputs.bindings),
+        "ASTRID_D13_NODE_SHA256": inputs.node_sha256,
+        "ASTRID_D13_REMOTION_LOCK_SHA256": inputs.remotion_lock_sha256,
+        "ASTRID_D13_BROWSER_SHA256": inputs.browser_sha256,
+        "ASTRID_D13_FFMPEG_SHA256": inputs.ffmpeg_sha256,
+        "ASTRID_D13_FFPROBE_SHA256": inputs.ffprobe_sha256,
         "ASTRID_HOST_EXECUTION_PROFILE": "installed",
         "ASTRID_PACK_HOST_PYTHON": str(inputs.environment / "bin" / "python"),
         "ASTRID_PACKS_PATH": str(inputs.source / "astrid" / "packs" / "rendering"),
@@ -358,10 +373,28 @@ def isolated_environment(inputs: D13Inputs, *, home: Path, tmpdir: Path) -> dict
     return env
 
 
-def named_collection_command(inputs: D13Inputs, source_root: Path) -> tuple[list[str], dict[str, str]]:
-    """Return, but do not execute, the existing named C13 collection command."""
-    env = isolated_environment(inputs, home=source_root / ".d13-home", tmpdir=source_root / ".d13-tmp")
-    env.update({"ASTRID_RUNTIME_CHECKOUT": str(source_root)})
+def named_collection_command(
+    inputs: D13Inputs,
+    source_root: Path,
+    *,
+    runtime_checkout: Path,
+    run_root: Path,
+) -> tuple[list[str], dict[str, str]]:
+    """Return, but do not execute, the existing named C13 collection command.
+
+    The command is run from ``source_root`` by its caller.  Its test selector
+    is relative so a recycled worker worktree cannot enter the exported argv;
+    Runtime's checkout selector is explicit and remains separate from the
+    installed Agent source selected by the profile.
+    """
+    if not source_root.is_absolute() or not source_root.is_dir():
+        raise ValueError("D13 source root must be an existing absolute directory")
+    if not runtime_checkout.is_absolute() or not runtime_checkout.is_dir() or runtime_checkout.is_symlink():
+        raise ValueError("D13 Runtime checkout must be an existing regular directory")
+    if not run_root.is_absolute() or len(str(run_root)) >= _MAX_SOCKET_PATH:
+        raise ValueError("D13 per-run root must be an absolute short path")
+    env = isolated_environment(inputs, home=run_root / "home", tmpdir=run_root / "tmp")
+    env.update({"ASTRID_RUNTIME_CHECKOUT": str(runtime_checkout)})
     command = [
         str(inputs.environment / "bin" / "python"),
         "-B",
@@ -371,7 +404,7 @@ def named_collection_command(inputs: D13Inputs, source_root: Path) -> tuple[list
         "addopts=",
         "-p",
         "no:cacheprovider",
-        str(source_root / "tests"),
+        _NATIVE_TEST,
         "--collect-only",
         "-q",
     ]

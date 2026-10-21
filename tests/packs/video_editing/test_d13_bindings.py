@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from tests.packs.video_editing import d13_bindings
 
 
@@ -102,9 +104,33 @@ def test_d13_named_collection_is_only_constructed_and_clears_forbidden_node_env(
         node_modules=tmp_path / "node_modules",
     )
 
-    command, environment = d13_bindings.named_collection_command(inputs, tmp_path)
+    runtime_checkout = tmp_path / "runtime"
+    runtime_checkout.mkdir()
+    command, environment = d13_bindings.named_collection_command(
+        inputs,
+        tmp_path,
+        runtime_checkout=runtime_checkout,
+        run_root=Path("/tmp/d13-abcd"),
+    )
 
     assert command[:4] == [str(inputs.environment / "bin" / "python"), "-B", "-m", "pytest"]
-    assert environment["ASTRID_RUNTIME_CHECKOUT"] == str(tmp_path)
+    assert command[-3:] == [d13_bindings._NATIVE_TEST, "--collect-only", "-q"]
+    assert environment["ASTRID_RUNTIME_CHECKOUT"] == str(runtime_checkout)
+    assert environment["ASTRID_D13_SOURCE_PROFILE"] == str(inputs.profile)
+    assert environment["ASTRID_D13_EXPECTED_BINDINGS"] == str(inputs.bindings)
+    assert environment["ASTRID_D13_NODE_SHA256"] == inputs.node_sha256
+    assert environment["ASTRID_D13_REMOTION_LOCK_SHA256"] == inputs.remotion_lock_sha256
+    assert environment["ASTRID_D13_BROWSER_SHA256"] == inputs.browser_sha256
+    assert environment["ASTRID_D13_FFMPEG_SHA256"] == inputs.ffmpeg_sha256
+    assert environment["ASTRID_D13_FFPROBE_SHA256"] == inputs.ffprobe_sha256
+    assert environment["XDG_RUNTIME_DIR"] == "/tmp/d13-abcd/tmp"
+    assert str(tmp_path) not in environment["TMPDIR"]
     assert not {"NODE_OPTIONS", "NODE_PATH", "PYTHONHOME", "PYTHONPATH"} & environment.keys()
     assert not any(name.startswith("LD_") for name in environment)
+    with pytest.raises(ValueError, match="short"):
+        d13_bindings.named_collection_command(
+            inputs,
+            tmp_path,
+            runtime_checkout=runtime_checkout,
+            run_root=Path("/tmp") / ("d13-" + "x" * 100),
+        )
