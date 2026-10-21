@@ -185,6 +185,42 @@ describe('AstridElementParams', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('refuses a literal edit without the native carrier while preserving the dirty draft', () => {
+    const literal = { ...descriptor, packId: undefined };
+    const onChange = vi.fn();
+    editorState.data = null;
+    editorState.element = undefined;
+    renderForm({ reference: literal, onChange });
+
+    fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } });
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Selected Segment Index')).toHaveValue('1');
+    expect(screen.getByTestId('astrid-element-param-error')).toHaveTextContent(
+      'Literal PARAM native capture is unavailable; draft preserved.',
+    );
+  });
+
+  it('preserves a literal draft when native capture refuses the edit', () => {
+    const literal = { ...descriptor, packId: undefined };
+    const capture = vi.fn(() => { throw new Error('literal capture refused'); });
+    const finish = vi.fn();
+    const submit = vi.fn();
+    editorState.data = { data: {} };
+    editorState.element = { capture, finish, submit } as unknown as ElementCapturePort;
+    const onChange = vi.fn();
+    renderForm({ reference: literal, onChange });
+
+    fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } });
+
+    expect(capture).toHaveBeenCalledTimes(1);
+    expect(finish).not.toHaveBeenCalled();
+    expect(submit).not.toHaveBeenCalled();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Selected Segment Index')).toHaveValue('1');
+    expect(screen.getByTestId('astrid-element-param-error')).toHaveTextContent('literal capture refused');
+  });
+
   it('does not expose the form for read-only timelines or stale host registrations', () => {
     const readOnly = renderForm({ readOnly: true });
     expect(screen.queryByTestId('astrid-element-params')).toBeNull();
