@@ -13,6 +13,8 @@ def __getattr__(name):
                 "capture_parent_completion"):
         from . import native_parent_media_commands
         return getattr(native_parent_media_commands, name)
+    if name not in __all__:
+        raise AttributeError(name)
     from astrid.sdk import timeline_checkout as legacy
     if name in __all__:
         return getattr(legacy, name)
