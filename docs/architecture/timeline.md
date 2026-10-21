@@ -44,11 +44,14 @@ These are current source/contract facts, not an M4 completion claim.
 Still-live migration boundaries are explicit: WC1's digest-only media
 publication remains legacy; WC7's bounded attached move/outbox path does not
 retire detached or broader publication; WC8's covered connected sheet cells
-are native while detached sheet merge/legacy grammar remains; WC10's empty
-native initialization is staged and unmerged while populated/custom creation
-remains; and D13's assembled-media admission/proposal is staged while the
-legacy host publication remains. Checkout/whole-bundle writers, remaining
-timing and App snapshot/parent/popup/checkpoint writers stay held.
+are native while detached sheet merge/legacy grammar remains; WC10's ordinary
+`timeline.init` v1 is merged in the current registry, while Agent
+`RemoteTimelines.create_empty` still uses the old publication path and only
+its custom raw-config v2 source/migration is staged; App activation status is
+separately owned and is not inferred from WC10; and D13's assembled-media
+admission/proposal is staged while the legacy host publication remains.
+Checkout/whole-bundle writers, remaining timing and App
+snapshot/parent/popup/checkpoint writers stay held.
 
 Staged branches, private installed profiles, and future carrier proposals are
 qualification material only: they are not merged product behavior, pins,
