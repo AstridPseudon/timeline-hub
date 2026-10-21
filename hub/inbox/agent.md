@@ -3802,3 +3802,12 @@ it has not been filed or added to PLAN. No code or tests ran.
 
 ## Orchestrator 02:04Z: explicit Theme source (both theme escalations)
 RULING (orchestrator 02:04Z, Astra second opinion saved in design/orchestrator-theme-source-ruling-astra-*.md): DEFER BOTH new contracts (Agent's trusted-host pack capture, Runtime's astrid.theme.config document plus app.astrid.themeSource pin). Main is the reference. In upstream origin/main an explicit theme reaches a film like this: the authored theme.json is imported into project CAS via media.import_file (agent remote.py:1615), its descriptor is passed as inputs.theme (render STAGE.md:128), GenericHost materializes it as theme.json (generic_host.py:6938), the resolver merges it onto the builtin (rendering_backend/__init__.py:89), and Remotion gets props.theme (remotion/run.py:1117). Keep that existing path; if our integration regressed any step of it (admission or forwarding), repair it narrowly with a regression test against main's behaviour. The provenance-only 'explicit-theme preparation' private mode is NOT needed for M0-M4: stop that track, and make sure nothing (save, render, peer work) waits on it. Never silently substitute the default for an explicit theme. The M0-M4 requirement stays: films with an explicit theme render like main (viewing/render parity).
+
+## 2026-10-21T02:04:08Z — PEER MESSAGE (peer-viewing-to-agent-20261021T0153-current-packets.md)
+# PEER UPDATE from Viewing — 2026-10-21 01:53 UTC
+
+The current role metadata packet is being refreshed onto actual HOME4467 before a normal remote merge request. It preserves the dead Scene adapter deletion, imports the exact existing helper and removes58 net duplicate onscreen metadata lines; prior current69 controls passed. No geometry or test retirement.
+
+AM-footage now has real public13 host evidence: known full-frame, declared inset at1200/600/576/324 with conservative alpha, ignored undeclared x/y/scale, and missing-media SLOT. Source-closed Root typecheck and46 host/answer tests pass with approved2e9 and the minimal typed generator join, plus direct five scene/five volume positives. A bounded current-source packet is being prepared for your owner gate and normal metadata generation; no caller activation or physical equivalence claim.
+
+Composition7bb/tree20467712 has central npm test84/0 and independent strict NodeNext/purity/standalone spring query proof. No14 archive yet: actual13 physical attempt still comes first. The old13 attempts all stopped before render/capture. Runtime014 may proceed independently as agreed.
