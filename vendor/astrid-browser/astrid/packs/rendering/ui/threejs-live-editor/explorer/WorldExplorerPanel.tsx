@@ -193,6 +193,8 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
   const mounted = useRef(false);
   const rootRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  /** Wide layout: the room left under the controls, so the viewer's own room is the stage plus this. */
+  const spacerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
   const importInput = useRef<HTMLInputElement>(null);
   const seenClipRef = useRef<string | null | undefined>(undefined);
@@ -382,7 +384,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     const measure = () => {
       setRootWidth(Math.floor(root.clientWidth));
       const width = Math.floor(element.clientWidth);
-      const height = Math.floor(element.clientHeight);
+      const height = Math.floor(element.clientHeight + (spacerRef.current?.clientHeight ?? 0));
       setStage((current) => (current.width === width && current.height === height ? current : { width, height }));
     };
     measure();
@@ -390,6 +392,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
     const observer = new ResizeObserver(measure);
     observer.observe(root);
     observer.observe(element);
+    if (spacerRef.current) observer.observe(spacerRef.current);
     return () => observer.disconnect();
   }, [wide]);
 
@@ -1294,7 +1297,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
 
         <div
           ref={stageRef}
-          className={wide ? 'flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden' : 'w-full'}
+          className={wide ? 'flex min-h-0 min-w-0 shrink-0 items-start justify-center overflow-hidden' : 'w-full'}
           style={showEmpty ? { display: 'none' } : undefined}
         >
           <div
@@ -1534,6 +1537,7 @@ export function WorldExplorerPanel(props: PanelRenderProps & { context: Extensio
             </p>
           </div>
         )}
+        {wide ? <div ref={spacerRef} data-stage-spacer className="min-h-0 flex-1" /> : null}
       </div>
     </section>
   );
