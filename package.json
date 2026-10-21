@@ -110,6 +110,7 @@
     "test:e2e:timeline": "node scripts/portable-developer-command.mjs timeline",
     "test:e2e:direct": "playwright test --config playwright.direct.config.ts",
     "test:e2e:three-products": "playwright test --config playwright.three-products.config.ts",
+    "test:integration:private392-http": "sh scripts/testing/private392-http-runner.sh \"$PWD\"",
     "test:acceptance:local-project": "node scripts/acceptance/verify-local-project-gallery.mjs",
     "test:acceptance:local-project:matrix": "node scripts/portable-developer-command.mjs acceptance-matrix",
     "test:acceptance:local-project:unit": "node --test scripts/acceptance/verify-local-project-gallery.test.mjs",
