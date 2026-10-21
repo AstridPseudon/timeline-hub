@@ -8,6 +8,7 @@ import zipfile
 from collections.abc import Mapping
 from copy import deepcopy
 from pathlib import PurePosixPath
+from types import SimpleNamespace
 from typing import Any
 
 from .exceptions import CapabilityValidationError
@@ -24,9 +25,7 @@ _SCENE_ONLY_FORBIDDEN_INPUTS = frozenset({
 
 def _scene_only_unavailable(context: Mapping[str, Any] | None = None, *, reason: str = "scene result unavailable") -> list:
     """Return advisory-only Scene input for a missing or stale private result."""
-    from types import SimpleNamespace
-
-    snapshot = {}
+    snapshot: Mapping[str, Any] = {}
     if isinstance(context, Mapping):
         snapshot = (context.get("capture_snapshot") or context.get("filmstrip_snapshot") or {})
     duration = snapshot.get("duration_frames") if isinstance(snapshot, Mapping) else None
@@ -165,7 +164,7 @@ def _scene_only_result_sources(result: Any) -> tuple[Mapping[str, Any], Mapping[
     if ok is False:
         return None
     outputs = getattr(result, "outputs", None)
-    candidates = [outputs] if isinstance(outputs, Mapping) and outputs else [
+    candidates: list[object] = [outputs] if isinstance(outputs, Mapping) and outputs else [
         getattr(result, "raw_result", None),
         result if isinstance(result, Mapping) else None,
     ]
@@ -306,8 +305,6 @@ def _scene_only_spans(
     Any missing, stale, or mismatched binding becomes one advisory UNAVAILABLE
     span.  It never turns a Scene query failure into a structural/save failure.
     """
-    from types import SimpleNamespace
-
     authority = _scene_only_authority(context)
     source = _scene_only_bundle_payload(result, client=client)
     payload = source[0] if source is not None else None
@@ -348,7 +345,7 @@ def _scene_only_spans(
     if [answer.get("frame") if isinstance(answer, Mapping) else None for answer in answers] != list(range(expected_duration)):
         return _scene_only_unavailable(context, reason="scene answers incomplete")
 
-    spans = []
+    spans: list[SimpleNamespace] = []
     for answer in sorted(answers, key=lambda item: item.get("frame", -1) if isinstance(item, Mapping) else -1):
         if not isinstance(answer, Mapping) or type(answer.get("frame")) is not int or answer["frame"] < 0:
             return _scene_only_unavailable(context, reason="scene answers invalid")

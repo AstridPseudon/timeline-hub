@@ -381,6 +381,7 @@ class _RemoteFamily:
             elif operation == "get_task": value = self._client.get_task(*args, **kwargs)
             elif operation == "inspect_timeline": value = self._client.inspect_timeline(*args, **kwargs)
             elif operation == "create_timeline_view":
+                assert key is not None
                 value = self._client.create_timeline_view(*args, idempotency_key=key, **kwargs)
             elif operation == "fail_attempt": value = self._client.fail_attempt(*args, **kwargs)
             elif operation == "head_object": value = self._client.head_object(*args, **kwargs)

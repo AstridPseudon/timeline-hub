@@ -277,11 +277,13 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
     except CommitConflict as exc:
         failure = exc.failure
         return DomainResult.failure(ErrorObject(failure['code'], failure['message'], failure['details']),
-                                    idempotency_key=key)
+                                    idempotency_key=key or f'element-{uuid.uuid4().hex}')
     except WorkspaceClientError as exc:
-        return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key)
+        return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details),
+                                    idempotency_key=key or f'element-{uuid.uuid4().hex}')
     except ServiceError as exc:
-        return DomainResult.failure(exc.to_error_object(), idempotency_key=key)
+        return DomainResult.failure(exc.to_error_object(),
+                                    idempotency_key=key or f'element-{uuid.uuid4().hex}')
     except (ValueError, KeyError, TypeError) as exc:
         return DomainResult.failure(ErrorObject('validation_error', str(exc), {}),
                                     idempotency_key=key or f'element-{uuid.uuid4().hex}')
