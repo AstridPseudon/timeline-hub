@@ -8,6 +8,7 @@ import { extractVideoMetadata } from '@/shared/lib/media/videoMetadata.ts';
 import { extractVideoPosterFrame } from '@/shared/lib/media/videoPosterExtractor.ts';
 import { generateClientThumbnail, uploadImageWithThumbnail } from '@/shared/media/clientThumbnailGenerator.ts';
 import type { SelectClipOptions } from '@/shared/state/selectionStore.ts';
+import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 import { createExternalUploadGeneration } from '@/integrations/supabase/repositories/generationMutationsRepository.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import {
@@ -41,6 +42,8 @@ type UploadedGenerationData = GenerationDropData & {
   assetId?: string;
   durationSeconds?: number;
   mediaImport?: PreparedMediaImport;
+  /** Original Runtime selection returned with an already-catalogued generation. */
+  mediaSelection?: MediaSelection;
 };
 
 type UploadedGenerationResult = {
@@ -250,8 +253,8 @@ export function useAssetManagement({
       durationSeconds: assetEntry.duration ?? null,
       entry: assetEntry,
       source: 'registered',
-      ...(generationData.mediaImport?.mediaSelection
-        ? { mediaSelection: generationData.mediaImport.mediaSelection }
+      ...(generationData.mediaSelection ?? generationData.mediaImport?.mediaSelection
+        ? { mediaSelection: generationData.mediaSelection ?? generationData.mediaImport?.mediaSelection }
         : {}),
     };
   }, []);
