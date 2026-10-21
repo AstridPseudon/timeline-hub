@@ -1,10 +1,9 @@
-// Pure clip-look and animation-shape helpers. No React imports; Remotion is
-// used only for its pure animation math so render and scene share the result.
+// Pure clip-look and animation-shape helpers shared by render and scene.
 
 import type {TimelineClip} from '../types';
 import {getClipDurationInFrames, secondsToFrames} from './duration';
 import {normalizeRenderCropValues} from './render-bounds';
-import {interpolate, spring} from 'remotion';
+import {interpolate, spring} from './remotion-primitives.generated.js';
 import {animationProgress} from './animation-easing';
 
 // Structurally identical to effects-types AnimationReferenceList (kept local so

@@ -62,11 +62,11 @@
   ],
   "scripts": {
     "build": "npm run gen-registry:check && node scripts/build.mjs",
-    "build:ts": "tsc -p typescript/tsconfig.json",
-    "build:test": "tsc -p typescript/tsconfig.test.json",
+    "build:ts": "node scripts/build-typescript.mjs",
+    "build:test": "node scripts/build-typescript.mjs --test",
     "gen-registry": "node --import tsx scripts/gen-registry.ts",
     "gen-registry:check": "node --import tsx scripts/gen-registry.ts --check",
-    "test": "npm run build:test && node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/*.test.js scripts/gen-registry.test.mjs",
+    "test": "npm run build:test && node --import ./typescript/tests/register-extensionless.mjs --test typescript/test-dist/tests/*.test.js scripts/*.test.mjs",
     "prepack": "npm run build",
     "test:package": "node scripts/smoke-package.mjs"
   },

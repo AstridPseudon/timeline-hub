@@ -385,6 +385,15 @@ scoped registration/capabilities, peer identity, declarations and installed
 file immutability. It does not prove browser pixels, Player audio, or film
 parity.
 
+Every production, declaration, and test build regenerates the internal
+`typescript/src/lib/remotion-primitives.generated.js` module with esbuild from
+the installed Remotion spring/interpolate dependency leaves. Resolution uses
+Remotion's exported `package.json` and requires exactly `4.0.509`. The module
+is ignored build output, contains no runtime peer imports, and is removed before
+resolution so failed or missing inputs cannot reuse an older calculation.
+Test compilation copies the current module beside the emitted helpers;
+production bundles it into the ESM graph. `make clean` removes these outputs.
+
 `npm run test:package -- /absolute/path/to/artifact.tgz` installs that actual
 artifact and exact peers in a fresh temporary consumer. It checks plain Node
 imports of every public entry, the evaluator's peer-free import graph, bundled
