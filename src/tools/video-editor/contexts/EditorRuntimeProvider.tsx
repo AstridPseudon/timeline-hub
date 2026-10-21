@@ -100,6 +100,8 @@ function EditorRuntimeProviderInner({
   enableMutationServices,
   proposalPersistenceProvider,
   settingsSnapshotsRef,
+  settingsSnapshotsReady,
+  settingsSnapshotsUnavailable,
   settingsNotificationRegistryRef,
   extensionStateRepository,
   projectObjects,
@@ -117,6 +119,10 @@ function EditorRuntimeProviderInner({
   enableMutationServices: boolean;
   proposalPersistenceProvider: ProposalPersistenceProvider | null | undefined;
   settingsSnapshotsRef: React.MutableRefObject<Record<string, ExtensionSettingsSnapshot> | null>;
+  /** False until the stored settings snapshots have been read, so an extension never starts on empty settings. */
+  settingsSnapshotsReady: boolean;
+  /** True when the read failed or timed out: extensions then run on local settings only and never write the durable snapshot. */
+  settingsSnapshotsUnavailable: boolean;
   settingsNotificationRegistryRef: React.MutableRefObject<ExtensionSettingsNotificationRegistry | null>;
   extensionStateRepository: ExtensionStateRepository | null | undefined;
   projectObjects?: DataProvider['projectObjects'];
@@ -142,6 +148,8 @@ function EditorRuntimeProviderInner({
     settings: {
       repository: extensionStateRepository,
       snapshotsRef: settingsSnapshotsRef,
+      snapshotsReady: settingsSnapshotsReady,
+      snapshotsUnavailable: settingsSnapshotsUnavailable,
       notificationRegistryRef: settingsNotificationRegistryRef,
     },
   });
@@ -179,6 +187,9 @@ function EditorRuntimeProviderInner({
     </EditorRuntimeScaffold>
   );
 }
+
+/** Longest an extension waits for its stored settings before starting without them. */
+const SETTINGS_SNAPSHOT_WAIT_MS = 3000;
 
 export function EditorRuntimeProvider(props: EditorRuntimeProviderProps) {
   const authority = useRef({ provider: props.dataProvider, elementHost: props.astridElementHost,
@@ -295,33 +306,55 @@ function EditorRuntimeProviderInstance({
   >(null);
   const settingsSnapshotsRef = useRef<Record<string, ExtensionSettingsSnapshot> | null>(null);
 
+  const [settingsSnapshotsReady, setSettingsSnapshotsReady] = useState(false);
+  const [settingsSnapshotsUnavailable, setSettingsSnapshotsUnavailable] = useState(false);
+
   useEffect(() => {
     const repo = activeExtensionStateRepository;
     if (!repo || repo.isDisposed) {
       setSettingsSnapshots(null);
       settingsSnapshotsRef.current = null;
+      setSettingsSnapshotsReady(true);
+      setSettingsSnapshotsUnavailable(false);
       return;
     }
 
     let cancelled = false;
+    let settled = false;
+    setSettingsSnapshotsReady(false);
+    setSettingsSnapshotsUnavailable(false);
+    // Extensions wait for the stored settings, but never for long: after the bound they start without
+    // durable settings, so a later write cannot replace a snapshot that was never read.
+    const giveUp = (reason: string) => {
+      if (cancelled || settled) return;
+      settled = true;
+      console.warn(`[ExtensionSettings] Stored settings unavailable (${reason}); extensions start without durable settings.`);
+      setSettingsSnapshots(null);
+      settingsSnapshotsRef.current = null;
+      setSettingsSnapshotsUnavailable(true);
+      setSettingsSnapshotsReady(true);
+    };
+    const timeout = setTimeout(() => giveUp('timed out'), SETTINGS_SNAPSHOT_WAIT_MS);
 
     repo.getAllSettingsSnapshots().then((snapshots) => {
-      if (cancelled) return;
+      if (cancelled || settled) return;
+      settled = true;
+      clearTimeout(timeout);
       const byId: Record<string, ExtensionSettingsSnapshot> = {};
       for (const snap of snapshots) {
         byId[snap.extensionId] = snap;
       }
       setSettingsSnapshots(byId);
       settingsSnapshotsRef.current = byId;
-    }).catch(() => {
-      if (!cancelled) {
-        setSettingsSnapshots(null);
-        settingsSnapshotsRef.current = null;
-      }
+      setSettingsSnapshotsReady(true);
+    }).catch((error) => {
+      clearTimeout(timeout);
+      giveUp(error instanceof Error ? error.message : 'read failed');
     });
 
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
     };
   }, [activeExtensionStateRepository]);
 
@@ -541,6 +574,8 @@ function EditorRuntimeProviderInstance({
         enableMutationServices={enableMutationServices}
         proposalPersistenceProvider={proposalPersistenceBridgeRef.current}
         settingsSnapshotsRef={settingsSnapshotsRef}
+        settingsSnapshotsReady={settingsSnapshotsReady}
+        settingsSnapshotsUnavailable={settingsSnapshotsUnavailable}
         settingsNotificationRegistryRef={settingsNotificationRegistryRef}
         extensionStateRepository={activeExtensionStateRepository}
         projectObjects={dataProvider.projectObjects}

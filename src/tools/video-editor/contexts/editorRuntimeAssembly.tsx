@@ -583,6 +583,10 @@ export interface UseEditorRuntimeSyncOptions {
   settings?: {
     repository: ExtensionStateRepository | null | undefined;
     snapshotsRef: MutableRefObject<Record<string, ExtensionSettingsSnapshot> | null>;
+    /** False while stored snapshots are still loading; extensions wait so their first write cannot replace them. */
+    snapshotsReady?: boolean;
+    /** True when the read failed or timed out: no repository is bound, so the unread snapshot is never overwritten. */
+    snapshotsUnavailable?: boolean;
     notificationRegistryRef: MutableRefObject<ExtensionSettingsNotificationRegistry | null>;
   };
   /** Synchronously seed a host-owned timeline projection before provider I/O. */
@@ -637,6 +641,8 @@ export function useEditorRuntimeSync({
   } = assembly;
   const settingsRepository = enableMutationServices ? settings?.repository ?? null : null;
   const settingsSnapshotsRef = enableMutationServices ? settings?.snapshotsRef : undefined;
+  const settingsSnapshotsReady = settings?.snapshotsReady ?? true;
+  const settingsSnapshotsUnavailable = settings?.snapshotsUnavailable ?? false;
   const settingsNotificationRegistryRef = enableMutationServices
     ? settings?.notificationRegistryRef
     : undefined;
@@ -813,6 +819,7 @@ export function useEditorRuntimeSync({
     const host = lifecycleHostRef.current;
     const registry = commandRegistryRef.current;
     if (!host) return;
+    if (settingsRepository && !settingsSnapshotsReady) return;
 
     host.synchronize(
       extensionRuntime.extensions,
@@ -933,7 +940,7 @@ export function useEditorRuntimeSync({
         };
         // T9: Build settings service options when repository is available
         const settingsOptions: CreateExtensionSettingsServiceOptions | undefined =
-          settingsRepository && !settingsRepository.isDisposed
+          settingsRepository && !settingsRepository.isDisposed && !settingsSnapshotsUnavailable
             ? {
                 repository: settingsRepository,
                 initialSnapshot:
@@ -1007,6 +1014,8 @@ export function useEditorRuntimeSync({
     settingsRepository,
     store,
     settingsSnapshotsRef,
+    settingsSnapshotsReady,
+    settingsSnapshotsUnavailable,
     shaderRegistryRef,
     transitionRegistryRef,
     enableMutationServices,
