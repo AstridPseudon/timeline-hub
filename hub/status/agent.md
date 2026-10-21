@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-21T07:27:36Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 35 | status age 1m -->
+<!-- agent | 2026-10-21T07:28:50Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 33 | status age 2m -->
 # agent — 2026-10-21 07:20 UTC
 Milestone: M2 active; M1 recorded. Public Runtime 0.2.14 and Composition 0.0.13 remain current. Future operations are dormant.
 Integrated: Agent ac9a93579. LEAD: owner07:17 live row-presence refusal stopgap merged ac9a93579 (source a362c7fd),26+12 targeted PASS; faulty adapter541c was LIVE, complete repair still pending. WC8 durationa08a and literal text121aed7 are merged; text has independent safety APPROVE, escaped-text RED/GREEN, HTTP20600 PASS1 and joined114+111. Whole WC8 remains OPEN. Fresh public Checkout import cycle fixed with 12+136+73 checks. Earlier custody, platform outbox, doctor, RLE, installer, Gate3 and checkout guard merges remain current. Public95/all76/54205/ordinary6ba55-29/Main497/C13 archive9412all77 unchanged.
