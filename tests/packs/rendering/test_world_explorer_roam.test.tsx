@@ -1063,7 +1063,7 @@ describe('World Explorer layout', () => {
     });
     Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
       configurable: true,
-      get(this: HTMLElement) { return this.tagName === 'SECTION' ? 0 : layout.stageHeight; },
+      get(this: HTMLElement) { return this.tagName === 'SECTION' || this.hasAttribute('data-stage-spacer') ? 0 : layout.stageHeight; },
     });
   });
 
