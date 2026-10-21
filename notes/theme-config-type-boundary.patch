@@ -1,0 +1,173 @@
+diff --git a/src/tools/travel-between-images/components/ShotTimelinePreview.tsx b/src/tools/travel-between-images/components/ShotTimelinePreview.tsx
+--- a/src/tools/travel-between-images/components/ShotTimelinePreview.tsx
++++ b/src/tools/travel-between-images/components/ShotTimelinePreview.tsx
+@@ -1,5 +1,5 @@
+ import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
+-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
++import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
+ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+ import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
+ import { AlertCircle, Film } from 'lucide-react';
+diff --git a/src/tools/video-editor/components/CompactPreview.tsx b/src/tools/video-editor/components/CompactPreview.tsx
+--- a/src/tools/video-editor/components/CompactPreview.tsx
++++ b/src/tools/video-editor/components/CompactPreview.tsx
+@@ -1,5 +1,5 @@
+ import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
+-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
++import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
+ import { useMemo } from 'react';
+ import { ExternalLink, Plus } from 'lucide-react';
+ import { useNavigate } from 'react-router-dom';
+diff --git a/src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx b/src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx
+--- a/src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx
++++ b/src/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSurface.tsx
+@@ -1,5 +1,5 @@
+ import { memo, useMemo, useRef } from 'react';
+-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
++import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
+ import AssetPanel from '@/tools/video-editor/components/PropertiesPanel/AssetPanel.tsx';
+ import {
+   useTimelineEditorData,
+diff --git a/src/tools/video-editor/components/TimelineEditorShellCore.tsx b/src/tools/video-editor/components/TimelineEditorShellCore.tsx
+--- a/src/tools/video-editor/components/TimelineEditorShellCore.tsx
++++ b/src/tools/video-editor/components/TimelineEditorShellCore.tsx
+@@ -2,6 +2,6 @@
+ // Layer map & invariants: docs/structure_detail/tool_video_editor.md
+ import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
+-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
++import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
+ import { CommandPalette } from '@/tools/video-editor/components/CommandPalette/CommandPalette.tsx';
+ import { Images, Loader2, Maximize2, Sparkles } from 'lucide-react';
+ import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
+@@ -40,10 +40,10 @@
+   useTimelinePlaybackSelector,
+   useTimelineStoreApi,
+   useProposalRuntimeFromStoreSafe,
+   useProposalImportDiagnosticsFromStoreSafe,
+ } from '@/tools/video-editor/hooks/timelineStore.ts';
+ import { isEditorKeyboardEvent, useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
+ import { useTimelineRealtime } from '@/tools/video-editor/hooks/useTimelineRealtime.ts';
+-import { parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
++import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
+ import { buildKeyboardDeleteMutation } from '@/tools/video-editor/lib/keyboard-delete.ts';
+ import { buildKeyboardTimeNudgeMutation } from '@/tools/video-editor/lib/keyboard-nudge.ts';
+diff --git a/src/tools/video-editor/compositions/TimelineRenderer.tsx b/src/tools/video-editor/compositions/TimelineRenderer.tsx
+--- a/src/tools/video-editor/compositions/TimelineRenderer.tsx
++++ b/src/tools/video-editor/compositions/TimelineRenderer.tsx
+@@ -1,4 +1,4 @@
+-import { getTimelineDurationInFrames, type CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
++import { type CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
+ import { getAdmittedElementSelection, subscribeAdmittedElements } from '../runtime/admitted-elements';
+ import { AbsoluteFill, Sequence, useCurrentFrame, useRemotionEnvironment } from 'remotion';
+ import { Component, createContext, memo, useContext, useMemo, useSyncExternalStore, type ComponentType, type FC, type ReactNode } from 'react';
+@@ -6,3 +6,3 @@
+ import { getAudioTracks, getVisualTracks } from '@/tools/video-editor/lib/editor-utils.ts';
+-import { getClipDurationInFrames, resolveTimelineConfig, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
++import { getClipDurationInFrames, getTimelineDurationInFrames, resolveTimelineConfig, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
+ import { BUILTIN_CLIP_TYPES } from '@/sdk/video/timeline/clipTypes.ts';
+diff --git a/src/tools/video-editor/hooks/useDerivedTimeline.ts b/src/tools/video-editor/hooks/useDerivedTimeline.ts
+--- a/src/tools/video-editor/hooks/useDerivedTimeline.ts
++++ b/src/tools/video-editor/hooks/useDerivedTimeline.ts
+@@ -1,7 +1,6 @@
+ import { useMemo } from 'react';
+-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
+ import { getTrackById } from '@/tools/video-editor/lib/editor-utils.ts';
+-import { parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
++import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
+ import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
+ import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+ import type { TrackDefinition } from '@/tools/video-editor/types/index.ts';
+diff --git a/src/tools/video-editor/hooks/useRenderState.ts b/src/tools/video-editor/hooks/useRenderState.ts
+--- a/src/tools/video-editor/hooks/useRenderState.ts
++++ b/src/tools/video-editor/hooks/useRenderState.ts
+@@ -1,5 +1,4 @@
+ import { useCallback, useContext, useEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
+-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
+ import { compilePlayerTransitions } from '@/tools/video-editor/compositions/playerEvaluation.ts';
+ import type { AstridLocalClient } from '@/integrations/astrid/client.ts';
+ import { isLocalTestMode } from '@/app/localTestRuntime.ts';
+@@ -37,7 +36,7 @@
+ import { resolveCanonicalComposition } from '@/tools/video-editor/data/canonicalCompositionState.ts';
+ import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
+ import { useVideoEditorPreviewComposition } from '@/tools/video-editor/components/PreviewPanel/useVideoEditorPreviewComposition.ts';
+ import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+-import { parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
++import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
+ import type { BridgeTaskDetailPayload } from '@/tools/video-editor/data/bridgeContract.ts';
+ import type {
+diff --git a/src/tools/video-editor/lib/config-utils.ts b/src/tools/video-editor/lib/config-utils.ts
+--- a/src/tools/video-editor/lib/config-utils.ts
++++ b/src/tools/video-editor/lib/config-utils.ts
+@@ -6,7 +6,9 @@ import type {
+   TimelineClip,
+   TimelineConfig,
+ } from '@/tools/video-editor/types/index.ts';
+-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
++import {
++  getTimelineDurationInFrames as getPublicTimelineDurationInFrames,
++} from '@banodoco/timeline-composition';
+ import {
+   getConfigSignature,
+   getStableConfigSignature,
+@@ -18,4 +22,5 @@ import {
+   getConfigTimelineClipDuration,
+   getConfigTimelineClipSourceDuration,
+ } from './timeline-domain.ts';
++import { resolveTimelineRenderTheme } from '../compositions/installed-themes.ts';
+ import { secondsToFrames } from './time-grid.ts';
+@@ -82,6 +87,13 @@ export const getClipDurationInFrames = (clip: TimelineClip, fps: number): number => {
+   return Math.max(1, secondsToFrames(getClipTimelineDuration(clip), fps));
+ };
+ 
+-export { getTimelineDurationInFrames };
++/** Supply the public Composition's resolved theme contract at the See boundary. */
++export const getTimelineDurationInFrames = (
++  config: TimelineConfig | ResolvedTimelineConfig,
++  fps: number,
++): number => getPublicTimelineDurationInFrames({
++  ...config,
++  theme: resolveTimelineRenderTheme(config).id,
++}, fps);
+ 
+ export const getEffectValue = (
+   effects: TimelineClip['effects'],
+diff --git a/src/tools/video-editor/lib/config-utils.test.ts b/src/tools/video-editor/lib/config-utils.test.ts
+--- a/src/tools/video-editor/lib/config-utils.test.ts
++++ b/src/tools/video-editor/lib/config-utils.test.ts
+@@ -1,6 +1,8 @@
+ import { describe, expect, it } from 'vitest';
+ import { getTimelineDurationInFrames as publicGetTimelineDurationInFrames } from '@banodoco/timeline-composition';
+ import { computeMediaTrim, getSanitizedPlaybackRate } from '@banodoco/timeline-composition/evaluation';
++import { resolveTimelineRenderTheme } from '@/tools/video-editor/compositions/installed-themes.ts';
++import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+ import {
+   getConfigSignature,
+   getClipDurationInFrames,
+@@ -49,6 +51,25 @@ describe('config-utils media sanitizers', () => {
+     expect(getTimelineDurationInFrames(config, 30)).toBe(31);
+   });
+ 
+-  it('re-exports the public timeline duration evaluator without a local wrapper', () => {
+-    expect(getTimelineDurationInFrames).toBe(publicGetTimelineDurationInFrames);
++  it.each([
++    ['absent', undefined],
++    ['null at the JSON boundary', null],
++    ['explicit', '2rp'],
++  ] as const)('keeps %s authored theme unchanged while resolving the See copy', (_label, theme) => {
++    const config = {
++      output: { file: 'out.mp4', resolution: '1920x1080', fps: 30 },
++      tracks: [{ id: 'V1', kind: 'visual' as const, label: 'V1' }],
++      clips: [{ id: 'clip', at: 0, track: 'V1', hold: 1 }],
++      registry: {},
++      ...(theme === undefined ? {} : { theme }),
++    } as unknown as ResolvedTimelineConfig;
++    const before = structuredClone(config);
++    const resolvedThemeId = resolveTimelineRenderTheme(config).id;
++
++    expect(getTimelineDurationInFrames(config, 30)).toBe(
++      publicGetTimelineDurationInFrames({ ...config, theme: resolvedThemeId }, 30),
++    );
++    expect(config).toEqual(before);
++    if (theme === undefined) expect(config).not.toHaveProperty('theme');
++    else expect(config.theme).toBe(theme);
+   });
