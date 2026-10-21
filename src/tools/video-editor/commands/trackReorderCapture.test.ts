@@ -32,18 +32,27 @@ describe('dormant media-only parent track reorder capture', () => {
     const result = finishTrackReorder(basis);
     const config = result.bundle.parent.config as Record<string, JSON>;
 
-    expect(result.command).toMatchObject({
-      schema_version: 1, op: 'track.reorder', version: '1', select: 'parent',
-      args: { order: [refs[2], refs[0], refs[1]], expected_order: refs }, intent: {},
+    expect(result.command).toEqual({
+      schema_version: 1,
+      op: 'track.reorder',
+      version: '1',
+      select: 'parent',
+      args: { order: [refs[2], refs[0], refs[1]], expected_order: refs },
+      intent: {},
+      resolved: [],
+      reads: [{ ref: 'parent/collection:track', path: [], state: { state: 'present', value: {
+        config: { state: 'present', value: {} },
+        members: { state: 'present', value: [] },
+      } } }],
+      selections: [{
+        key: 'collection.tracks', query_version: 1, owner: 'parent', members: refs,
+        order: refs, boundaries: refs, policy: 'guard-membership',
+      }],
+      expect: { 'parent::track_order': { state: 'present', value: refs } },
+      authorship: { 'parent::track_order': 'direct' },
+      bindings: {},
+      created: [],
     });
-    expect(result.command.reads?.[0]).toEqual({ ref: 'parent/collection:track', path: [],
-      state: { state: 'present', value: refs } });
-    expect(result.command.selections).toEqual([{
-      key: 'collection.tracks', query_version: 1, owner: 'parent', members: refs,
-      order: refs, boundaries: refs, policy: 'guard-membership',
-    }]);
-    expect(result.command.expect).toEqual({ 'parent::track_order': { state: 'present', value: refs } });
-    expect(result.command.authorship).toEqual({ 'parent::track_order': 'direct' });
     expect(config.tracks!.map((row) => (row as Record<string, JSON>).id)).toEqual(['overlay', 'picture', 'audio']);
     expect(config.tracks![0]).toEqual((before.parent.config as Record<string, JSON>).tracks![2]);
     expect(config.app).toEqual((before.parent.config as Record<string, JSON>).app);

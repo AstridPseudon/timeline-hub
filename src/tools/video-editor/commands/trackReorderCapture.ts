@@ -83,7 +83,17 @@ function assertCommand(command: EditCommand): asserts command is EditCommand & {
 }
 
 function recordCollectionRead(ctx: MoveRecording, refs: readonly string[]): void {
-  const read = { ref: COLLECTION_REF, path: [], state: { state: 'present' as const, value: [...refs] } };
+  const read = {
+    ref: COLLECTION_REF,
+    path: [],
+    state: {
+      state: 'present' as const,
+      value: {
+        config: { state: 'present' as const, value: {} },
+        members: { state: 'present' as const, value: [] },
+      },
+    },
+  };
   if (!ctx.command.reads!.some((prior) => equal(prior, read))) ctx.command.reads!.push(read);
   ctx.command.selections!.push({ key: 'collection.tracks', query_version: 1, owner: 'parent',
     members: [...refs], order: [...refs], boundaries: [...refs], policy: 'guard-membership' });
@@ -101,6 +111,7 @@ function applyTrackReorder(bundle: AuthoredBundle, supplied: EditCommand) {
   }
 
   const ctx = new MoveRecording(bundle, { ...copy(supplied), intent: {} });
+  ctx.command.resolved = [];
   recordCollectionRead(ctx, current);
   ctx.command.expect![ORDER_ADDRESS] = { state: 'present', value: copy(current) };
   ctx.command.authorship![ORDER_ADDRESS] = 'direct';
