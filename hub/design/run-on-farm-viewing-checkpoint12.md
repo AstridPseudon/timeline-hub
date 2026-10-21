@@ -60,7 +60,7 @@ as FAIL. A changed count must be reported, not masked.
 The farm lead must list every failed prerequisite before stopping. Verify:
 
 1. `/home/user/work/composition` is the clean checkout of the commit and tree
-   above, and the hub branch still names that head.
+   above. Prepare the exact12Z checkpoint commit even if later documentation-only merges advance the hub branch; do not substitute a later tree.
 2. The required immutable Node toolchain exists and is read-only:
    `/home/user/work/toolchain/node-v20.19.4-linux-x64`, Node `v20.19.4`, npm
    `10.8.2`; the observed executable hashes are Node

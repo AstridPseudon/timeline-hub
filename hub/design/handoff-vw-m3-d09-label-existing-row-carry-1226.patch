@@ -1,0 +1,219 @@
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py b/astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py
+index 43804a0d5..ac2bc0cc8 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/_filmstrip_cache.py
+@@ -10,7 +10,7 @@ def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, fra
+     """``addresses`` on each frame-index row: the layers on screen at that frame, top first (``c08.loras``).
+ 
+     ``receipt['cards']`` is the compact projection of ``cards`` in the same order (compact_render_receipt)."""
+-    from .overlays.labels import addresses_at, canvas_of
++    from .overlays.labels import _labels_for_scene_facts, addresses_at, canvas_of
+ 
+     config = snapshot.get("config") or {}
+     fps = float(Fraction(*snapshot["fps_rational"]))
+@@ -23,7 +23,15 @@ def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, fra
+         else:
+             from .overlays.labels import MIN_OPACITY
+ 
+-            labels, _canvas = capture.labels(frame, source_identity=frame_provider.source_identity)
++            facts = getattr(capture, "_frame_facts", None)
++            if callable(facts):
++                labels, _canvas = _labels_for_scene_facts(
++                    facts(frame, source_identity=frame_provider.source_identity),
++                    frame, fps, canvas,
++                    source_identity=frame_provider.source_identity,
++                )
++            else:
++                labels, _canvas = capture.labels(frame, source_identity=frame_provider.source_identity)
+             row["addresses"] = [item.address for item in labels
+                                 if item.opacity is None or item.opacity >= MIN_OPACITY]
+     return receipt
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/composed_frame.py b/astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+index dacec2ac1..6e1bfc1e0 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/composed_frame.py
+@@ -107,6 +107,7 @@ class CaptureSceneLabels:
+             "basis": {"width": self._basis["width"], "height": self._basis["height"],
+                       "fps": self._basis["fps"]},
+             "addresses": dict(self._addresses),
++            "source_identity": self._source_identity,
+         }
+ 
+     def labels(self, frame: int, *, source_identity: str):
+diff --git a/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py b/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py
+index 73a850974..6761edd4b 100644
+--- a/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py
++++ b/astrid/packs/rendering/actions/timeline_visualize/overlays/labels.py
+@@ -40,6 +40,46 @@ def labels_for_scene(answer: Mapping[str, Any], addresses: Mapping[str, str]) ->
+     return labels
+ 
+ 
++def _labels_for_scene_facts(
++    facts: Mapping[str, Any], frame: int, fps: float,
++    canvas: Mapping[str, int] | None = None, *, source_identity: str = "",
++) -> tuple[list[SceneLabel], dict[str, int]]:
++    """Format one already-admitted Scene row without re-evaluating visibility."""
++    from astrid.core.rendering.scene_answers import SceneQueryUnavailable
++
++    answer = facts.get("answer")
++    basis = facts.get("basis")
++    addresses = facts.get("addresses")
++    if not source_identity or facts.get("source_identity") != source_identity:
++        raise SceneQueryUnavailable("scene label source mismatch")
++    if (not isinstance(answer, Mapping) or type(answer.get("frame")) is not int
++            or answer["frame"] != frame or not isinstance(answer.get("layers"), list)):
++        raise SceneQueryUnavailable("scene label frame mismatch")
++    if (not isinstance(basis, Mapping) or type(basis.get("width")) is not int
++            or type(basis.get("height")) is not int or basis["width"] <= 0
++            or basis["height"] <= 0 or not isinstance(basis.get("fps"), (int, float))
++            or isinstance(basis["fps"], bool) or not math.isclose(float(basis["fps"]), fps,
++                                                                     rel_tol=0.0, abs_tol=1e-9)):
++        raise SceneQueryUnavailable("scene label basis mismatch")
++    if (answer.get("width") != basis["width"] or answer.get("height") != basis["height"]
++            or not isinstance(addresses, Mapping)
++            or any(not isinstance(clip_id, str) or not isinstance(address, str) or not address
++                   for clip_id, address in addresses.items())):
++        raise SceneQueryUnavailable("scene label source mapping mismatch")
++    if any(not isinstance(layer, Mapping) or layer.get("clipId") not in addresses
++           for layer in answer["layers"]):
++        raise SceneQueryUnavailable("scene label clip mapping mismatch")
++    scene_canvas = {"width": basis["width"], "height": basis["height"]}
++    requested_canvas = dict(canvas or scene_canvas)
++    if requested_canvas != scene_canvas:
++        raise SceneQueryUnavailable("scene label canvas mismatch")
++    try:
++        labels = labels_for_scene(answer, addresses)
++    except (KeyError, TypeError, ValueError) as exc:
++        raise SceneQueryUnavailable("scene label row is malformed") from exc
++    return labels, scene_canvas
++
++
+ def canvas_of(config: Mapping[str, Any]) -> dict[str, int]:
+     """Return the declared visual canvas, defaulting to 1920 by 1080."""
+     canvas = ((config.get("theme_overrides") or {}).get("visual") or {}).get("canvas") or {}
+@@ -51,8 +91,14 @@ def canvas_of(config: Mapping[str, Any]) -> dict[str, int]:
+ 
+ 
+ def labels_for(config: Mapping[str, Any], frame: int, fps: float,
+-               canvas: Mapping[str, int] | None = None) -> list:
++               canvas: Mapping[str, int] | None = None, *, scene: Mapping[str, Any] | None = None,
++               source_identity: str = "") -> list:
+     """Visible timeline clips at a frame, top first, using the canonical on-screen model."""
++    if scene is not None:
++        labels, _scene_canvas = _labels_for_scene_facts(
++            scene, frame, fps, canvas, source_identity=source_identity,
++        )
++        return labels
+     from astrid.core.timeline.onscreen import element_coverage, visible_at
+ 
+     types = {str(clip.get("clipType")) for clip in config.get("clips") or ()
+@@ -61,9 +107,12 @@ def labels_for(config: Mapping[str, Any], frame: int, fps: float,
+ 
+ 
+ def addresses_at(config: Mapping[str, Any], frame: int, fps: float,
+-                 canvas: Mapping[str, int] | None = None) -> list[str]:
++                 canvas: Mapping[str, int] | None = None, *, scene: Mapping[str, Any] | None = None,
++                 source_identity: str = "") -> list[str]:
+     """Visible addresses at or above the canonical 5 percent opacity threshold, top first."""
+-    return [item.address for item in labels_for(config, frame, fps, canvas) if item.opacity >= MIN_OPACITY]
++    return [item.address for item in labels_for(
++        config, frame, fps, canvas, scene=scene, source_identity=source_identity,
++    ) if item.opacity is None or item.opacity >= MIN_OPACITY]
+ 
+ 
+ def draw_labels(image, layers: Sequence[Any], *, canvas: Mapping[str, int],
+@@ -105,11 +154,16 @@ def draw_labels(image, layers: Sequence[Any], *, canvas: Mapping[str, int],
+ 
+ 
+ def overlay_labels_frame(image, config: Mapping[str, Any], frame: int, fps: float, *,
+-                         capture=None, source_identity: str = ""):
++                         capture=None, source_identity: str = "", scene: Mapping[str, Any] | None = None):
+     """Draw the visible addresses for one exact decoded frame on a display copy."""
+     if capture is not None:
+         layers, canvas = capture.labels(frame, source_identity=source_identity)
+         return draw_labels(image, layers, canvas=canvas, tile_size=image.size)
++    if scene is not None:
++        layers, canvas = _labels_for_scene_facts(
++            scene, frame, fps, source_identity=source_identity,
++        )
++        return draw_labels(image, layers, canvas=canvas, tile_size=image.size)
+     canvas = canvas_of(config)
+     return draw_labels(image, labels_for(config, frame, fps, canvas), canvas=canvas, tile_size=image.size)
+ 
+diff --git a/tests/packs/rendering/test_labels_overlay.py b/tests/packs/rendering/test_labels_overlay.py
+index 746bfd5f6..e442beb4e 100644
+--- a/tests/packs/rendering/test_labels_overlay.py
++++ b/tests/packs/rendering/test_labels_overlay.py
+@@ -3,18 +3,22 @@ from __future__ import annotations
+ 
+ from pathlib import Path
+ 
++import pytest
+ from PIL import Image
+ 
++from astrid.core.rendering.scene_answers import SceneQueryUnavailable
+ from astrid.core.timeline.onscreen import Visible
+ from astrid.packs.rendering.actions.timeline_visualize import fast_lane
++from astrid.packs.rendering.actions.timeline_visualize.composed_frame import CaptureSceneLabels
+ from astrid.packs.rendering.actions.timeline_visualize.contact_sheet import cut_tile_label
+-from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import attach_frame_addresses
+ from astrid.packs.rendering.actions.timeline_visualize.fast_lane import Moment
++from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import attach_frame_addresses
+ from astrid.packs.rendering.actions.timeline_visualize.layers.base import discover, resolve_layers
+ from astrid.packs.rendering.actions.timeline_visualize.overlays.labels import (
+     addresses_at,
+     draw_labels,
+     labels_for,
++    overlay_labels_frame,
+ )
+ 
+ FPS = 10.0
+@@ -73,6 +77,47 @@ def test_labels_for_lists_the_layers_on_screen_top_first_and_not_the_ones_not_ye
+     assert addresses_at(CONFIG, 16, FPS) == ["c03.late", "c02.card", "c01.field"]  # c03 starts at 1.5 s, top track first
+ 
+ 
++def test_existing_public_row_carrier_drives_labels_and_rejects_stale_or_forged_rows(monkeypatch):
++    source = "sha256:" + "a" * 64
++    addresses = {"bottom": "c01.field", "top": "c02.card"}
++    answer = {
++        "frame": 3,
++        "width": CANVAS["width"],
++        "height": CANVAS["height"],
++        "layers": [
++            {"clipId": "bottom", "role": "background", "visible": True, "opacity": 1,
++             "fullFrame": True, "bounds": {"status": "unknown"}},
++            {"clipId": "top", "role": "content", "visible": True, "opacity": 0.5,
++             "fullFrame": False, "bounds": {"status": "known", "rect":
++                 {"x": 20, "y": 40, "width": 60, "height": 40}}},
++        ],
++    }
++    capture = CaptureSceneLabels._from_cache(
++        {"source_identity": source, "basis": {"width": 200, "height": 100, "fps": FPS},
++         "addresses": addresses, "root_source": "b" * 64, "answer": answer},
++        source_identity=source, basis={"width": 200, "height": 100, "fps": FPS},
++        addresses=addresses, frame=3,
++    )
++    facts = capture._frame_facts(3, source_identity=source)
++    monkeypatch.setattr("astrid.core.timeline.onscreen.visible_at", lambda *a, **k: pytest.fail(
++        "private visibility"))
++    assert [item.address for item in labels_for(CONFIG, 3, FPS, scene=facts, source_identity=source)] == [
++        "c02.card", "c01.field"
++    ]
++    labelled = overlay_labels_frame(Image.new("RGB", (200, 100)), CONFIG, 3, FPS,
++                                    scene=facts, source_identity=source)
++    assert labelled.getpixel((20, 60)) == CONTENT_RGB
++
++    stale = dict(facts)
++    stale["answer"] = dict(answer, frame=4)
++    with pytest.raises(SceneQueryUnavailable, match="frame mismatch"):
++        overlay_labels_frame(Image.new("RGB", (200, 100)), CONFIG, 3, FPS,
++                             scene=stale, source_identity=source)
++    forged = dict(facts, source_identity="sha256:" + "f" * 64)
++    with pytest.raises(SceneQueryUnavailable, match="source mismatch"):
++        labels_for(CONFIG, 3, FPS, scene=forged, source_identity=source)
++
++
+ def _tile(path: Path, rgb) -> str:
+     path.parent.mkdir(parents=True, exist_ok=True)
+     Image.new("RGB", (200, 100), rgb).save(path)
+
