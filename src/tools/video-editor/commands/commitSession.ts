@@ -46,7 +46,13 @@ import { createCommitOutbox, type ClaimedOutbox, type OutboxBasis, type OutboxHe
 import { captureParentClipAddMedia } from './parentClipAddCapture.ts';
 import { captureParentClipSwapMedia, finishParentClipSwapMedia } from './parentClipSwapCapture.ts';
 import { captureOccurrenceAddMedia, captureOccurrenceSwapMedia, executeOccurrenceMedia } from './occurrenceMediaCapture.ts';
-import { occurrenceMediaPreview, type OccurrenceMediaCapturePort, type OccurrenceMediaRequest, type VerifiedMediaRead } from './occurrenceMediaGesture.ts';
+import {
+  logPopupPostSelectionDiagnostic,
+  occurrenceMediaPreview,
+  type OccurrenceMediaCapturePort,
+  type OccurrenceMediaRequest,
+  type VerifiedMediaRead,
+} from './occurrenceMediaGesture.ts';
 import { OccurrenceMediaState, rawIdentity } from './occurrenceMediaPrimitives.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
 import type { JsonObject } from './types.ts';
@@ -516,56 +522,85 @@ export async function createTimelineCommandSession(options: Options) {
   const mediaCaptures = new WeakSet<JsonObject>();
   const occurrenceMediaPort: OccurrenceMediaCapturePort = {
     capture({ request, current }) {
-      assertReady();
-      if (!options.getProjectVerifiedMedia) throw new Error('Runtime verified-media read is unavailable');
-      if (!acceptedBasis.graph) throw new Error('Occurrence media requires the original canonical graph');
-      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
-        || current.head.headRevisionId !== acceptedBasis.head.revisionId || current.head.headPublicationId !== acceptedBasis.head.publicationId) {
-        throw new Error('Displayed timeline does not match the raw authoring basis');
+      logPopupPostSelectionDiagnostic('native.capture', 'enter', {
+        occurrenceId: request.ownerRef.slice('occurrence:'.length),
+        ownerRef: request.ownerRef,
+        trackRef: request.trackRef,
+        hasSession: true,
+      });
+      try {
+        assertReady();
+        if (!options.getProjectVerifiedMedia) throw new Error('Runtime verified-media read is unavailable');
+        if (!acceptedBasis.graph) throw new Error('Occurrence media requires the original canonical graph');
+        if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+          || current.head.headRevisionId !== acceptedBasis.head.revisionId || current.head.headPublicationId !== acceptedBasis.head.publicationId) {
+          throw new Error('Displayed timeline does not match the raw authoring basis');
+        }
+        if (!/^occurrence:[^/]+$/.test(request.ownerRef) || !rawIdentity(request.ownerRef.slice(11))
+          || request.trackRef !== `${request.ownerRef}/track:${request.trackRef.slice(`${request.ownerRef}/track:`.length)}`
+          || !rawIdentity(request.trackRef.slice(`${request.ownerRef}/track:`.length))) {
+          throw new Error('Media edit requires explicit matching occurrence and raw track refs');
+        }
+        assertFiniteJson(request);
+        const raw = new OccurrenceMediaState(bundle);
+        raw.occurrence(request.ownerRef);
+        raw.entity(request.trackRef);
+        if (request.kind === 'add') {
+          if (!rawIdentity(request.row.id) || request.row.track !== request.trackRef.slice(`${request.ownerRef}/track:`.length)) {
+            throw new Error('Media add requires caller-reserved child and matching raw track');
+          }
+        } else if (request.kind === 'swap') {
+          if (!request.clipRef.startsWith(`${request.ownerRef}/clip:`)
+            || !rawIdentity(request.clipRef.slice(`${request.ownerRef}/clip:`.length))
+            || raw.entity(request.clipRef)!.track !== request.trackRef.slice(`${request.ownerRef}/track:`.length)) {
+            throw new Error('Media swap requires an explicit matching raw child and track');
+          }
+          const rawClipId = request.clipRef.slice(`${request.ownerRef}/clip:`.length);
+          const matches = current.resolvedConfig.clips.filter((clip) => clip.id === `${request.ownerRef.slice(11)}:${rawClipId}`);
+          const identity = matches[0]?.app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
+          const occurrence = raw.occurrence(request.ownerRef);
+          const source = bundle.source_mapping.shots[String(occurrence.shot_id)];
+          if (matches.length !== 1 || !identity || identity.clipRef !== request.clipRef || identity.rawClipId !== rawClipId
+            || identity.ownerRef !== request.ownerRef || identity.occurrenceId !== request.ownerRef.slice(11)
+            || identity.projectId !== options.scope.projectId || identity.parentDocumentId !== options.scope.timelineId
+            || identity.shotId !== source?.shot_id || identity.revisionId !== source?.revision_id
+            || identity.internalTimelineRevisionId !== source?.internal_timeline_revision_id
+            || identity.outputIdentity !== stableOutputIdentity(options.scope.projectId, options.scope.timelineId, identity.occurrenceId)) {
+            throw new Error('Media swap requires an explicit matching projected owner');
+          }
+        } else throw new Error('Unsupported occurrence media request');
+        const basis = freezeJson(json({ request, bundle, graph: acceptedBasis.graph, localGeneration,
+          localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as JsonObject;
+        mediaCaptures.add(basis);
+        logPopupPostSelectionDiagnostic('native.capture', 'return', {
+          occurrenceId: request.ownerRef.slice('occurrence:'.length),
+          ownerRef: request.ownerRef,
+          trackRef: request.trackRef,
+          hasSession: true,
+        });
+        return basis;
+      } catch (error) {
+        logPopupPostSelectionDiagnostic('native.capture', 'throw', {
+          occurrenceId: request.ownerRef.slice('occurrence:'.length),
+          ownerRef: request.ownerRef,
+          trackRef: request.trackRef,
+          hasSession: true,
+        }, error);
+        throw error;
       }
-      if (!/^occurrence:[^/]+$/.test(request.ownerRef) || !rawIdentity(request.ownerRef.slice(11))
-        || request.trackRef !== `${request.ownerRef}/track:${request.trackRef.slice(`${request.ownerRef}/track:`.length)}`
-        || !rawIdentity(request.trackRef.slice(`${request.ownerRef}/track:`.length))) {
-        throw new Error('Media edit requires explicit matching occurrence and raw track refs');
-      }
-      assertFiniteJson(request);
-      const raw = new OccurrenceMediaState(bundle);
-      raw.occurrence(request.ownerRef);
-      raw.entity(request.trackRef);
-      if (request.kind === 'add') {
-        if (!rawIdentity(request.row.id) || request.row.track !== request.trackRef.slice(`${request.ownerRef}/track:`.length)) {
-          throw new Error('Media add requires caller-reserved child and matching raw track');
-        }
-      } else if (request.kind === 'swap') {
-        if (!request.clipRef.startsWith(`${request.ownerRef}/clip:`)
-          || !rawIdentity(request.clipRef.slice(`${request.ownerRef}/clip:`.length))
-          || raw.entity(request.clipRef)!.track !== request.trackRef.slice(`${request.ownerRef}/track:`.length)) {
-          throw new Error('Media swap requires an explicit matching raw child and track');
-        }
-        const rawClipId = request.clipRef.slice(`${request.ownerRef}/clip:`.length);
-        const matches = current.resolvedConfig.clips.filter((clip) => clip.id === `${request.ownerRef.slice(11)}:${rawClipId}`);
-        const identity = matches[0]?.app?.canonical as Partial<CanonicalProjectedClipIdentity> | undefined;
-        const occurrence = raw.occurrence(request.ownerRef);
-        const source = bundle.source_mapping.shots[String(occurrence.shot_id)];
-        if (matches.length !== 1 || !identity || identity.clipRef !== request.clipRef || identity.rawClipId !== rawClipId
-          || identity.ownerRef !== request.ownerRef || identity.occurrenceId !== request.ownerRef.slice(11)
-          || identity.projectId !== options.scope.projectId || identity.parentDocumentId !== options.scope.timelineId
-          || identity.shotId !== source?.shot_id || identity.revisionId !== source?.revision_id
-          || identity.internalTimelineRevisionId !== source?.internal_timeline_revision_id
-          || identity.outputIdentity !== stableOutputIdentity(options.scope.projectId, options.scope.timelineId, identity.occurrenceId)) {
-          throw new Error('Media swap requires an explicit matching projected owner');
-        }
-      } else throw new Error('Unsupported occurrence media request');
-      const basis = freezeJson(json({ request, bundle, graph: acceptedBasis.graph, localGeneration,
-        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } })) as JsonObject;
-      mediaCaptures.add(basis);
-      return basis;
     },
     async finish(basis) {
+      logPopupPostSelectionDiagnostic('native.finish', 'enter', { hasSession: true });
       assertReady();
       if (!mediaCaptures.has(basis) || basis.localGeneration !== localGeneration) throw new Error('Media edit was not captured by this session or the timeline changed');
       const before = bundle;
       const request = basis.request as unknown as OccurrenceMediaRequest;
+      logPopupPostSelectionDiagnostic('native.finish.request', 'enter', {
+        occurrenceId: request.ownerRef.slice('occurrence:'.length),
+        ownerRef: request.ownerRef,
+        trackRef: request.trackRef,
+        hasSession: true,
+      });
       const pins = request.kind === 'swap' ? [request.oldMedia, request.media] : [request.media];
       try {
         const inputs = await Promise.all(pins.map((pin) => options.getProjectVerifiedMedia!(copy(pin))));
@@ -580,21 +615,50 @@ export async function createTimelineCommandSession(options: Options) {
         prepared.set(JSON.stringify(result.command), { payload: {
           commands: [result.command], before: bundle, after: result.bundle, preview, displayBasis: acceptedBasis,
         }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+        logPopupPostSelectionDiagnostic('native.finish', 'return', {
+          occurrenceId: request.ownerRef.slice('occurrence:'.length),
+          ownerRef: request.ownerRef,
+          trackRef: request.trackRef,
+          commandOp: result.command.op,
+          hasSession: true,
+        });
         return { command: result.command, preview };
       } catch (error) {
         if (!stopped) publish('error', message(error));
+        logPopupPostSelectionDiagnostic('native.finish', 'throw', {
+          occurrenceId: request.ownerRef.slice('occurrence:'.length),
+          ownerRef: request.ownerRef,
+          trackRef: request.trackRef,
+          hasSession: true,
+        }, error);
         throw error;
       }
     },
     submit({ command, preview }) {
-      assertReady();
-      const entry = prepared.get(JSON.stringify(command));
-      if (!['occurrence.add-media', 'occurrence.swap-media'].includes(command.op) || !entry
-        || entry.generation !== localGeneration || entry.payload.before !== bundle || !equal(preview, entry.payload.preview)) {
-        throw new Error('Media edit requires this session’s prepared command and complete closure preview');
+      logPopupPostSelectionDiagnostic('native.submit', 'enter', {
+        commandOp: command.op,
+        hasSession: true,
+      });
+      try {
+        assertReady();
+        const entry = prepared.get(JSON.stringify(command));
+        if (!['occurrence.add-media', 'occurrence.swap-media'].includes(command.op) || !entry
+          || entry.generation !== localGeneration || entry.payload.before !== bundle || !equal(preview, entry.payload.preview)) {
+          throw new Error('Media edit requires this session’s prepared command and complete closure preview');
+        }
+        enqueue(entry.payload, preview, entry.basis);
+        prepared.delete(JSON.stringify(command));
+        logPopupPostSelectionDiagnostic('native.submit', 'return', {
+          commandOp: command.op,
+          hasSession: true,
+        });
+      } catch (error) {
+        logPopupPostSelectionDiagnostic('native.submit', 'throw', {
+          commandOp: command.op,
+          hasSession: true,
+        }, error);
+        throw error;
       }
-      enqueue(entry.payload, preview, entry.basis);
-      prepared.delete(JSON.stringify(command));
     },
   };
   const occurrenceDuplicatePort: OccurrenceDuplicateCapturePort = {

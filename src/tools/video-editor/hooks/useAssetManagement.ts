@@ -21,6 +21,7 @@ import {
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import {
   captureOccurrenceMediaEdit,
+  logPopupPostSelectionDiagnostic,
   submitOccurrenceMediaEdit,
   type OccurrenceMediaCapturePort,
 } from '@/tools/video-editor/commands/occurrenceMediaGesture.ts';
@@ -338,7 +339,17 @@ export function useAssetManagement({
       || (runtime.provider.getProjectMediaSelection && prepared.entry.generationId && prepared.entry.variantId),
     );
     if (occurrenceId && !removeClipId && ['image', 'video'].includes(prepared.mediaType)) {
+      logPopupPostSelectionDiagnostic('target', 'enter', {
+        occurrenceId,
+        hasPort: Boolean(occurrenceMediaPort),
+        hasSelection: canReadOccurrenceSelection,
+      });
       if (!occurrenceMediaPort || !canReadOccurrenceSelection) {
+        logPopupPostSelectionDiagnostic('target', 'refused', {
+          occurrenceId,
+          hasPort: Boolean(occurrenceMediaPort),
+          hasSelection: canReadOccurrenceSelection,
+        });
         runtime.toast.error('Occurrence media placement requires the mounted command session and original Runtime selection.');
         return false;
       }
@@ -358,6 +369,12 @@ export function useAssetManagement({
       const resolvedTrackId = typeof detail?.trackId === 'string' ? detail.trackId : null;
       const clip = clipId ? preview?.nextData.config.clips.find(candidate => candidate.id === clipId) : undefined;
       if (!clip || !resolvedTrackId) {
+        logPopupPostSelectionDiagnostic('target.preview', 'refused', {
+          occurrenceId,
+          hasPort: true,
+          hasSelection: canReadOccurrenceSelection,
+          hasTarget: Boolean(clip && resolvedTrackId),
+        });
         runtime.toast.error('The timeline drop target changed before the occurrence media edit was captured.');
         return false;
       }
@@ -376,6 +393,12 @@ export function useAssetManagement({
             });
           })();
       void selectionPromise.then(async (media) => {
+        logPopupPostSelectionDiagnostic('selection.continuation', 'enter', {
+          occurrenceId,
+          hasPort: true,
+          hasSelection: true,
+          hasTarget: true,
+        });
         const ownerRef = `occurrence:${occurrenceId}` as `occurrence:${string}`;
         const trackRef = `${ownerRef}/track:${resolvedTrackId}` as `occurrence:${string}/track:${string}`;
         const duration = clip?.clipType === 'hold'
@@ -396,7 +419,19 @@ export function useAssetManagement({
           }),
         });
         await submitOccurrenceMediaEdit(captured);
+        logPopupPostSelectionDiagnostic('selection.continuation.submit', 'return', {
+          occurrenceId,
+          ownerRef,
+          trackRef,
+          hasSession: true,
+        });
       }).catch((cause) => {
+        logPopupPostSelectionDiagnostic('selection.continuation', 'throw', {
+          occurrenceId,
+          hasPort: true,
+          hasSelection: true,
+          hasTarget: true,
+        }, cause);
         runtime.toast.error(cause instanceof Error ? cause.message : 'The occurrence media edit was refused.');
       });
       return true;

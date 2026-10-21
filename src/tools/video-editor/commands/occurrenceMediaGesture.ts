@@ -21,6 +21,39 @@ export interface OccurrenceMediaCapturePort {
   finish(basis: JsonObject): Promise<{ command: EditCommand; preview: TimelinePatch }>;
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
 }
+
+type PopupPostSelectionDiagnosticDetails = {
+  occurrenceId?: string;
+  ownerRef?: string;
+  trackRef?: string;
+  commandOp?: string;
+  hasPort?: boolean;
+  hasSelection?: boolean;
+  hasTarget?: boolean;
+  hasSession?: boolean;
+};
+
+function diagnosticError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  return message
+    .replace(/https?:\/\/\S+/gi, '[url]')
+    .replace(/(?:authorization|cookie|password|secret|token|body)\s*[:=]\s*\S+/gi, '[redacted]')
+    .slice(0, 180);
+}
+
+export function logPopupPostSelectionDiagnostic(
+  boundary: string,
+  outcome: 'enter' | 'return' | 'refused' | 'throw',
+  details: PopupPostSelectionDiagnosticDetails = {},
+  error?: unknown,
+): void {
+  console.log('[popup-post-selection-diagnostic]', {
+    boundary,
+    outcome,
+    ...details,
+    ...(error === undefined ? {} : { error: diagnosticError(error) }),
+  });
+}
 /** Bind a shot-local display to its explicit owner in the mounted parent session. */
 export function bindPopupOccurrenceMediaPort(
   port: OccurrenceMediaCapturePort,
@@ -29,27 +62,82 @@ export function bindPopupOccurrenceMediaPort(
 ): OccurrenceMediaCapturePort {
   return {
     capture({ request, current }) {
-      const parent = getParent();
-      const projection = current.config.app?.canonicalComposition;
-      if (!parent?.head || !object(projection)
-        || projection.projectId !== parent.head.projectId
-        || projection.parentDocumentId !== parent.head.timelineId
-        || projection.headRevisionId !== parent.head.headRevisionId
-        || !equal(projection.occurrenceIds, [occurrenceId])
-        || request.ownerRef !== `occurrence:${occurrenceId}`) {
-        throw new Error('The popup media owner or displayed head changed; keep the imported media');
+      logPopupPostSelectionDiagnostic('popup-port.capture', 'enter', {
+        occurrenceId,
+        ownerRef: request.ownerRef,
+        trackRef: request.trackRef,
+        hasPort: true,
+      });
+      try {
+        const parent = getParent();
+        const projection = current.config.app?.canonicalComposition;
+        if (!parent?.head || !object(projection)
+          || projection.projectId !== parent.head.projectId
+          || projection.parentDocumentId !== parent.head.timelineId
+          || projection.headRevisionId !== parent.head.headRevisionId
+          || !equal(projection.occurrenceIds, [occurrenceId])
+          || request.ownerRef !== `occurrence:${occurrenceId}`) {
+          logPopupPostSelectionDiagnostic('popup-port.capture.target', 'refused', {
+            occurrenceId,
+            ownerRef: request.ownerRef,
+            trackRef: request.trackRef,
+            hasTarget: Boolean(parent?.head && projection),
+          });
+          throw new Error('The popup media owner or displayed head changed; keep the imported media');
+        }
+        const basis = port.capture({ request, current: parent });
+        logPopupPostSelectionDiagnostic('popup-port.capture', 'return', {
+          occurrenceId,
+          ownerRef: request.ownerRef,
+          trackRef: request.trackRef,
+          hasTarget: true,
+        });
+        return basis;
+      } catch (error) {
+        logPopupPostSelectionDiagnostic('popup-port.capture', 'throw', {
+          occurrenceId,
+          ownerRef: request.ownerRef,
+          trackRef: request.trackRef,
+        }, error);
+        throw error;
       }
-      return port.capture({ request, current: parent });
     },
     async finish(basis) {
-      if (!getParent()) throw new Error('The popup media session is closed; keep the imported media');
-      const result = await port.finish(basis);
-      if (!getParent()) throw new Error('The popup media session is closed; keep the imported media');
-      return result;
+      logPopupPostSelectionDiagnostic('popup-port.finish', 'enter', { occurrenceId, hasPort: true });
+      try {
+        if (!getParent()) throw new Error('The popup media session is closed; keep the imported media');
+        const result = await port.finish(basis);
+        if (!getParent()) throw new Error('The popup media session is closed; keep the imported media');
+        logPopupPostSelectionDiagnostic('popup-port.finish', 'return', {
+          occurrenceId,
+          commandOp: result.command.op,
+        });
+        return result;
+      } catch (error) {
+        logPopupPostSelectionDiagnostic('popup-port.finish', 'throw', { occurrenceId }, error);
+        throw error;
+      }
     },
     submit(input) {
-      if (!getParent()) throw new Error('The popup media session is closed; keep the imported media');
-      port.submit(input);
+      logPopupPostSelectionDiagnostic('popup-port.submit', 'enter', {
+        occurrenceId,
+        commandOp: input.command.op,
+        hasPort: true,
+      });
+      try {
+        if (!getParent()) throw new Error('The popup media session is closed; keep the imported media');
+        port.submit(input);
+        logPopupPostSelectionDiagnostic('popup-port.submit', 'return', {
+          occurrenceId,
+          commandOp: input.command.op,
+        });
+      } catch (error) {
+        logPopupPostSelectionDiagnostic('popup-port.submit', 'throw', {
+          occurrenceId,
+          commandOp: input.command.op,
+        }, error);
+        throw error;
+      }
     },
   };
 }
@@ -57,21 +145,75 @@ export function bindPopupOccurrenceMediaPort(
 export type VerifiedMediaRead = (selection: MediaSelection) => Promise<VerifiedMedia>;
 
 export function captureOccurrenceMediaEdit(port: OccurrenceMediaCapturePort | undefined, current: TimelineData, request: OccurrenceMediaRequest) {
-  if (!port) throw new Error('Occurrence media capture is unavailable');
-  return Object.freeze({ port, basis: freezeJson(port.capture({ request, current })) });
+  logPopupPostSelectionDiagnostic('capture', 'enter', {
+    occurrenceId: request.ownerRef.slice('occurrence:'.length),
+    ownerRef: request.ownerRef,
+    trackRef: request.trackRef,
+    hasPort: Boolean(port),
+  });
+  try {
+    if (!port) throw new Error('Occurrence media capture is unavailable');
+    const captured = Object.freeze({ port, basis: freezeJson(port.capture({ request, current })) });
+    logPopupPostSelectionDiagnostic('capture', 'return', {
+      occurrenceId: request.ownerRef.slice('occurrence:'.length),
+      ownerRef: request.ownerRef,
+      trackRef: request.trackRef,
+    });
+    return captured;
+  } catch (error) {
+    logPopupPostSelectionDiagnostic('capture', 'throw', {
+      occurrenceId: request.ownerRef.slice('occurrence:'.length),
+      ownerRef: request.ownerRef,
+      trackRef: request.trackRef,
+    }, error);
+    throw error;
+  }
 }
 
 export async function submitOccurrenceMediaEdit(captured: ReturnType<typeof captureOccurrenceMediaEdit>): Promise<void> {
-  const result = await captured.port.finish(captured.basis);
-  const request = captured.basis.request as unknown as OccurrenceMediaRequest;
-  const args = request.kind === 'add' ? { row: request.row, media: request.media } : { old_media: request.oldMedia, media: request.media };
-  if (result.command.schema_version !== 1 || result.command.version !== '1'
-    || result.command.op !== `occurrence.${request.kind}-media`
-    || result.command.select !== (request.kind === 'add' ? request.ownerRef : request.clipRef)
-    || !equal(result.command.intent, { ownership: 'occurrence' }) || !equal(result.command.args, args)) {
-    throw new Error('Unsupported occurrence media capture result');
+  logPopupPostSelectionDiagnostic('submit', 'enter');
+  let request: OccurrenceMediaRequest | undefined;
+  try {
+    const result = await captured.port.finish(captured.basis);
+    request = captured.basis.request as unknown as OccurrenceMediaRequest;
+    logPopupPostSelectionDiagnostic('submit.finish', 'return', {
+      occurrenceId: request.ownerRef.slice('occurrence:'.length),
+      ownerRef: request.ownerRef,
+      commandOp: result.command.op,
+    });
+    const args = request.kind === 'add' ? { row: request.row, media: request.media } : { old_media: request.oldMedia, media: request.media };
+    if (result.command.schema_version !== 1 || result.command.version !== '1'
+      || result.command.op !== `occurrence.${request.kind}-media`
+      || result.command.select !== (request.kind === 'add' ? request.ownerRef : request.clipRef)
+      || !equal(result.command.intent, { ownership: 'occurrence' }) || !equal(result.command.args, args)) {
+      logPopupPostSelectionDiagnostic('submit.command', 'refused', {
+        occurrenceId: request.ownerRef.slice('occurrence:'.length),
+        ownerRef: request.ownerRef,
+        commandOp: result.command.op,
+      });
+      throw new Error('Unsupported occurrence media capture result');
+    }
+    logPopupPostSelectionDiagnostic('submit.port', 'enter', {
+      occurrenceId: request.ownerRef.slice('occurrence:'.length),
+      ownerRef: request.ownerRef,
+      commandOp: result.command.op,
+    });
+    captured.port.submit(freezeJson(result));
+    logPopupPostSelectionDiagnostic('submit.port', 'return', {
+      occurrenceId: request.ownerRef.slice('occurrence:'.length),
+      ownerRef: request.ownerRef,
+      commandOp: result.command.op,
+    });
+  } catch (error) {
+    logPopupPostSelectionDiagnostic('submit', 'throw', {
+      ...(request === undefined ? {} : {
+        occurrenceId: request.ownerRef.slice('occurrence:'.length),
+        ownerRef: request.ownerRef,
+        trackRef: request.trackRef,
+      }),
+    }, error);
+    throw error;
   }
-  captured.port.submit(freezeJson(result));
 }
 
 export function occurrenceMediaPreview(bundle: AuthoringBundle, graph: Record<string, unknown> | undefined): TimelinePatch {

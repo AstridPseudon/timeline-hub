@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import type { DataProvider, TimelineCommandBasis, TimelineHeadRevision } from '../data/DataProvider.ts';
-import { projectOccurrenceMediaPreview } from '../commands/occurrenceMediaGesture.ts';
+import { logPopupPostSelectionDiagnostic, projectOccurrenceMediaPreview } from '../commands/occurrenceMediaGesture.ts';
 import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
 import { parseTimelineBundle } from '../data/typed/timelineBundle.ts';
@@ -322,20 +322,68 @@ export function useTimelineCommandSession(options: {
         };
         session.occurrenceMediaPort = {
           capture(input) {
-            if (input.current !== requireCurrentMedia()) throw new Error('Media capture requires the current displayed timeline');
-            const basis = occurrenceMediaPort.capture(input);
-            mediaDisplays.set(basis, input.current);
-            return basis;
+            logPopupPostSelectionDiagnostic('session.capture', 'enter', {
+              occurrenceId: input.request.ownerRef.slice('occurrence:'.length),
+              ownerRef: input.request.ownerRef,
+              trackRef: input.request.trackRef,
+              hasSession: true,
+            });
+            try {
+              if (input.current !== requireCurrentMedia()) throw new Error('Media capture requires the current displayed timeline');
+              const basis = occurrenceMediaPort.capture(input);
+              mediaDisplays.set(basis, input.current);
+              logPopupPostSelectionDiagnostic('session.capture', 'return', {
+                occurrenceId: input.request.ownerRef.slice('occurrence:'.length),
+                ownerRef: input.request.ownerRef,
+                trackRef: input.request.trackRef,
+                hasSession: true,
+              });
+              return basis;
+            } catch (error) {
+              logPopupPostSelectionDiagnostic('session.capture', 'throw', {
+                occurrenceId: input.request.ownerRef.slice('occurrence:'.length),
+                ownerRef: input.request.ownerRef,
+                trackRef: input.request.trackRef,
+                hasSession: true,
+              }, error);
+              throw error;
+            }
           },
           async finish(basis) {
-            requireCurrentMedia(basis);
-            const result = await occurrenceMediaPort.finish(basis);
-            mediaCommands.set(result.command, requireCurrentMedia(basis));
-            return result;
+            logPopupPostSelectionDiagnostic('session.finish', 'enter', { hasSession: true });
+            try {
+              requireCurrentMedia(basis);
+              const result = await occurrenceMediaPort.finish(basis);
+              mediaCommands.set(result.command, requireCurrentMedia(basis));
+              logPopupPostSelectionDiagnostic('session.finish', 'return', {
+                commandOp: result.command.op,
+                hasSession: true,
+              });
+              return result;
+            } catch (error) {
+              logPopupPostSelectionDiagnostic('session.finish', 'throw', { hasSession: true }, error);
+              throw error;
+            }
           },
           submit(input) {
-            if (mediaCommands.get(input.command) !== requireCurrentMedia()) throw new Error('Displayed timeline changed before the media preview');
-            occurrenceMediaPort.submit(input);
+            logPopupPostSelectionDiagnostic('session.submit', 'enter', {
+              commandOp: input.command.op,
+              hasSession: true,
+            });
+            try {
+              if (mediaCommands.get(input.command) !== requireCurrentMedia()) throw new Error('Displayed timeline changed before the media preview');
+              occurrenceMediaPort.submit(input);
+              logPopupPostSelectionDiagnostic('session.submit', 'return', {
+                commandOp: input.command.op,
+                hasSession: true,
+              });
+            } catch (error) {
+              logPopupPostSelectionDiagnostic('session.submit', 'throw', {
+                commandOp: input.command.op,
+                hasSession: true,
+              }, error);
+              throw error;
+            }
           },
         };
         const occurrenceDuplicatePort = session.occurrenceDuplicatePort;

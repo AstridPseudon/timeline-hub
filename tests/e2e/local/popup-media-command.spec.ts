@@ -44,6 +44,10 @@ function observeTraffic(page: Page) {
   const posts: CommitPost[] = [];
   const legacy: string[] = [];
   const mediaSelections: string[] = [];
+  page.on('console', (message) => {
+    const text = message.text();
+    if (message.type() === 'log' && text.startsWith('[popup-post-selection-diagnostic]')) console.log(text);
+  });
   page.on('request', (request) => {
     const pathname = new URL(request.url()).pathname;
     if (request.method() === 'POST' && COMMITS.test(pathname)) {
