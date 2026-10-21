@@ -357,9 +357,8 @@ def _claimed_output(result: Mapping[str, Any]) -> Mapping[str, Any]:
 
 
 def _request_identity(
-    document: Mapping[str, Any], *, jobs: list[Mapping[str, Any]],
-    target: Mapping[str, Any] | None, script_pin: Mapping[str, Any] | None,
-    requester_key: str | None,
+    document: Mapping[str, Any], *, project: str, jobs: list[Mapping[str, Any]],
+    target: Mapping[str, Any], script_pin: Mapping[str, Any], requester_key: str,
 ) -> Mapping[str, Any]:
     request = document.get("request")
     if not isinstance(request, Mapping) or set(request) != _REQUEST_FIELDS:
@@ -370,21 +369,37 @@ def _request_identity(
     if any(type(request_target[field]) is not str or not request_target[field].strip()
            for field in _TARGET_FIELDS):
         raise VoiceoverSyncError("settled voiceover target fields must be nonempty strings")
+    if request_target["project_id"] != project:
+        raise VoiceoverSyncError("settled voiceover target project differs from the requester project")
     request_script = _json_copy(request.get("script_pin"), label="settled voiceover script pin")
     if type(request.get("requester_key")) is not str or not request["requester_key"].strip():
         raise VoiceoverSyncError("settled voiceover requester key is invalid")
     settings = request.get("settings")
-    if not isinstance(settings, Mapping) or dict(settings) != dict(jobs[0].get("settings", {})):
+    if (not isinstance(settings, Mapping)
+            or any(not isinstance(job.get("settings"), Mapping)
+                   or dict(settings) != dict(job["settings"])
+                   for job in jobs)):
         raise VoiceoverSyncError("settled voiceover request settings differ from the ordered plan")
     occurrence_ids = request.get("occurrence_ids")
     expected_ids = [job["occurrence_id"] for job in jobs]
     if occurrence_ids != expected_ids:
         raise VoiceoverSyncError("settled voiceover request occurrence order differs from the plan")
-    if target is not None and request_target != _json_copy(target, label="expected voiceover target"):
+    expected_target = _json_copy(target, label="expected voiceover target")
+    if set(expected_target) != _TARGET_FIELDS:
+        raise VoiceoverSyncError("expected voiceover target must preserve the original four-field pin")
+    if any(type(expected_target[field]) is not str or not expected_target[field].strip()
+           for field in _TARGET_FIELDS):
+        raise VoiceoverSyncError("expected voiceover target fields must be nonempty strings")
+    if expected_target["project_id"] != project:
+        raise VoiceoverSyncError("expected voiceover target project differs from the requester project")
+    if request_target != expected_target:
         raise VoiceoverSyncError("settled voiceover target differs from the expected source")
-    if script_pin is not None and request_script != _json_copy(script_pin, label="expected voiceover script pin"):
+    expected_script = _json_copy(script_pin, label="expected voiceover script pin")
+    if request_script != expected_script:
         raise VoiceoverSyncError("settled voiceover script pin differs from the expected source")
-    if requester_key is not None and request["requester_key"] != requester_key:
+    if type(requester_key) is not str or not requester_key.strip():
+        raise VoiceoverSyncError("expected voiceover requester key is invalid")
+    if request["requester_key"] != requester_key:
         raise VoiceoverSyncError("settled voiceover requester key differs from the expected source")
     return request
 
@@ -475,17 +490,18 @@ def _consume_settled_voiceover_input(
     project: str,
     plan: Mapping[str, Any],
     consume: Callable[[Mapping[str, Any]], Any],
-    target: Mapping[str, Any] | None = None,
-    script_pin: Mapping[str, Any] | None = None,
-    requester_key: str | None = None,
+    target: Mapping[str, Any],
+    script_pin: Mapping[str, Any],
+    requester_key: str,
 ) -> list[Any]:
     """Consume one requester's file after re-reading every Runtime claim.
 
     The file is claimant data.  H3 envelope digests detect malformed transport
     data, but Runtime task/spec/result, managed-output, media-selection, WAV
-    bytes, and intrinsic duration reads remain the authority.  Outer producer
-    identity is intentionally not carried here; a future caller supplies it
-    separately to the existing capture/proposal path.
+    bytes, and intrinsic duration reads remain the authority.  Trusted outer
+    identity is validated here but is intentionally not copied into the
+    consumed rows; the caller supplies it separately to the existing
+    capture/proposal path.
     """
     if not _text(project, "project") or not callable(consume):
         raise VoiceoverSyncError("settled voiceover consumer arguments are invalid")
@@ -493,7 +509,7 @@ def _consume_settled_voiceover_input(
     document = _read_json(Path(path), attempt_root=Path(attempt_root))
     if set(document) != {"schema_version", "request", "results"} or document.get("schema_version") != _CARRIER_SCHEMA_VERSION:
         raise VoiceoverSyncError("settled voiceover input has an unsupported shape")
-    request = _request_identity(document, jobs=jobs, target=target,
+    request = _request_identity(document, project=project, jobs=jobs, target=target,
                                 script_pin=script_pin, requester_key=requester_key)
     entries = document.get("results")
     if not isinstance(entries, list) or len(entries) != len(jobs):

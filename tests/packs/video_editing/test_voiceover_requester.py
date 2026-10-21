@@ -28,6 +28,18 @@ def _target() -> dict[str, str]:
     }
 
 
+def _script_pin() -> dict[str, str]:
+    return {"revision_id": "h", "script_digest": "sha256:" + "b" * 64}
+
+
+def _consumer_identity() -> dict[str, object]:
+    return {
+        "target": _target(),
+        "script_pin": _script_pin(),
+        "requester_key": "requester-original-key",
+    }
+
+
 def _speech_result(output: dict[str, object]) -> InvocationResult:
     return InvocationResult(
         capability_id="generation.generate_speech",
@@ -130,7 +142,7 @@ def _prepare(case):
         case.scripts,
         requester_key="requester-original-key",
         target=_target(),
-        script_pin={"revision_id": "h", "script_digest": "sha256:" + "b" * 64},
+        script_pin=_script_pin(),
         occurrence_ids=["o1"],
     )
 
@@ -255,8 +267,7 @@ def test_requester_consumer_roundtrips_one_claimant_file(requester_case, tmp_pat
     seen = []
     consumed = _consume_settled_voiceover_input(
         source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
-        target=_target(), script_pin={"revision_id": "h", "script_digest": "sha256:" + "b" * 64},
-        requester_key="requester-original-key", consume=seen.append,
+        **_consumer_identity(), consume=seen.append,
     )
     assert descriptor["object_id"] == "sha256:" + hashlib.sha256(
         case.imported[-1]["data"]
@@ -284,7 +295,53 @@ def test_requester_consumer_rejects_changed_runtime_claim(requester_case, tmp_pa
     with pytest.raises(vo.VoiceoverSyncError):
         _consume_settled_voiceover_input(
             source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
-            consume=lambda value: value,
+            **_consumer_identity(), consume=lambda value: value,
+        )
+
+
+@pytest.mark.parametrize("foreign_field", ["target", "script_pin", "requester_key"])
+def test_requester_consumer_rejects_foreign_trusted_identity(
+    requester_case, tmp_path, foreign_field,
+):
+    case = requester_case
+    source, _, plan = _consume_requester_bundle(case, tmp_path)
+    body = json.loads(source.read_text(encoding="utf-8"))
+    if foreign_field == "target":
+        body["request"]["target"] = {**body["request"]["target"], "project_id": "foreign"}
+    elif foreign_field == "script_pin":
+        body["request"]["script_pin"] = {
+            **body["request"]["script_pin"], "script_digest": "sha256:" + "c" * 64,
+        }
+    else:
+        body["request"]["requester_key"] = "foreign-requester-key"
+    entry = body["results"][0]
+    entry["root_idempotency_key"] = requester._root_idempotency_key(
+        requester_key=body["request"]["requester_key"],
+        target=body["request"]["target"],
+        script_pin=body["request"]["script_pin"],
+        settings=entry["settings"], occurrence_id=entry["occurrence_id"], text=entry["text"],
+    )
+    source.write_text(json.dumps(body), encoding="utf-8")
+    with pytest.raises(vo.VoiceoverSyncError, match="(target|script pin|requester key)"):
+        _consume_settled_voiceover_input(
+            source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
+            **_consumer_identity(), consume=lambda value: value,
+        )
+
+
+def test_requester_consumer_rejects_later_job_settings_mismatch(requester_case, tmp_path):
+    case = requester_case
+    source, _, _ = _consume_requester_bundle(case, tmp_path)
+    plan = {"jobs": [
+        {"occurrence_id": "o1", "text": "New first line", "settings": dict(vo.DEFAULT_SETTINGS)},
+        {"occurrence_id": "o2", "text": "New first line", "settings": {
+            **vo.DEFAULT_SETTINGS, "rate": "+5%",
+        }},
+    ]}
+    with pytest.raises(vo.VoiceoverSyncError, match="request settings"):
+        _consume_settled_voiceover_input(
+            source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
+            **_consumer_identity(), consume=lambda value: value,
         )
 
 
@@ -313,7 +370,7 @@ def test_requester_consumer_rejects_duplicate_or_reordered_entries(requester_cas
     ]}
     assert len(_consume_settled_voiceover_input(
         source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
-        consume=lambda value: value,
+        **_consumer_identity(), consume=lambda value: value,
     )) == 2
     body["results"] = [second, first]
     body["request"]["occurrence_ids"] = ["o2", "o1"]
@@ -321,7 +378,7 @@ def test_requester_consumer_rejects_duplicate_or_reordered_entries(requester_cas
     with pytest.raises(vo.VoiceoverSyncError, match="occurrence order"):
         _consume_settled_voiceover_input(
             source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
-            consume=lambda value: value,
+            **_consumer_identity(), consume=lambda value: value,
         )
     body["results"] = [first, second]
     body["results"][1]["occurrence_id"] = "o1"
@@ -330,7 +387,7 @@ def test_requester_consumer_rejects_duplicate_or_reordered_entries(requester_cas
     with pytest.raises(vo.VoiceoverSyncError, match="occurrence order"):
         _consume_settled_voiceover_input(
             source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
-            consume=lambda value: value,
+            **_consumer_identity(), consume=lambda value: value,
         )
     assert first["object_id"] == "sha256:" + hashlib.sha256(
         case.imported[-1]["data"]
@@ -345,5 +402,5 @@ def test_requester_consumer_refuses_media_authority_failure(requester_case, tmp_
     with pytest.raises(vo.VoiceoverSyncError, match="NO-CARRIER"):
         _consume_settled_voiceover_input(
             source, attempt_root=tmp_path, client=case.client, project="p", plan=plan,
-            consume=lambda value: value,
+            **_consumer_identity(), consume=lambda value: value,
         )
