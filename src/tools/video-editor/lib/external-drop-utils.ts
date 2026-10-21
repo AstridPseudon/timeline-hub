@@ -321,6 +321,8 @@ export async function handleFileDrop({
     : dropPosition.trackId;
   let forceNewTrack = dropPosition.isNewTrack;
   let timeOffset = 0;
+  let acceptedFile = false;
+  const placementPromises: Array<Promise<boolean>> = [];
 
   for (const file of files) {
     const kind = inferFileDropKind(file);
@@ -381,6 +383,7 @@ export async function handleFileDrop({
         if (!placed) {
           throw new Error('The timeline drop target changed before the prepared asset was placed');
         }
+        acceptedFile = true;
         void invalidateAssetRegistry();
 
         if (!forceNewTrack || !dataRef.current) {
@@ -462,42 +465,44 @@ export async function handleFileDrop({
     };
 
     pendingOpsRef.current += 1;
-    void (async () => {
+    const placementPromise = (async (): Promise<boolean> => {
       try {
         if (isImageFile(file)) {
           const generationData = await uploadImageGeneration(file);
           const current = dataRef.current;
           if (!current) {
-            return;
+            return false;
           }
 
           const preparedAsset = prepareGenerationForDrop(generationData, dataRef, registerGenerationAsset, prepareGenerationAsset);
           if (!preparedAsset) {
             removeSkeleton();
-            return;
+            return false;
           }
-          if (!await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
+          const placed = await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
+          if (!placed) {
             removeSkeleton();
           }
-          return;
+          return placed;
         }
 
         if (isVideoFile(file)) {
           const generationData = await uploadVideoGeneration(file);
           const current = dataRef.current;
           if (!current) {
-            return;
+            return false;
           }
 
           const preparedAsset = prepareGenerationForDrop(generationData, dataRef, registerGenerationAsset, prepareGenerationAsset);
           if (!preparedAsset) {
             removeSkeleton();
-            return;
+            return false;
           }
-          if (!await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
+          const placed = await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
+          if (!placed) {
             removeSkeleton();
           }
-          return;
+          return placed;
         }
 
         // Preparation is required for placement: the compound editor command
@@ -523,22 +528,29 @@ export async function handleFileDrop({
           removeSkeleton();
         }
         void invalidateAssetRegistry();
+        return placed;
       } catch (error) {
         console.error('[drop] Upload failed:', error);
         onAssetDropError?.(error);
         const current = dataRef.current;
         if (!current) {
-          return;
+          return false;
         }
 
         removeSkeleton();
+        return false;
       } finally {
         pendingOpsRef.current -= 1;
       }
     })();
+    placementPromises.push(placementPromise);
   }
 
-  return true;
+  // File drops are handled only when at least one file was actually placed.
+  // Individual uploads still run concurrently; a partial drop is accepted
+  // when any file settles successfully, while an all-refused drop is not.
+  const placedFiles = await Promise.all(placementPromises);
+  return acceptedFile || placedFiles.some(Boolean);
 }
 
 export async function handleMultiGenerationDrop({
