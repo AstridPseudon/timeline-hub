@@ -322,7 +322,7 @@ describe('mounted transition callbacks preserve raw authoring through publicatio
 
   // Requirement: a type-only selector needs an authoritative selected-ref carrier
   // before this complete lossless SET can be admitted.
-  it.fails('type change preserves the raw transition envelope and does not reuse an old binding', async () => {
+  it('type change preserves the raw transition envelope and does not reuse an old binding', async () => {
     const { clips, assertPublished } = await editor(false);
     fireEvent.change(within(transitionSection()).getAllByRole('combobox')[0], { target: { value: 'wipe' } });
     await assertPublished([(() => {
