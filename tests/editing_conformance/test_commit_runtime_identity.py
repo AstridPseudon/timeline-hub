@@ -268,7 +268,7 @@ def test_fresh_shared_placement_materializes_own_slot_reload_inverse_and_exact_r
 
     from astrid.sdk.timeline._materialization import id_map as allocation_map
     from astrid.sdk.timeline.commands import execute
-    from astrid.sdk.timeline.commit import document_from_bundle
+    from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
     from astrid.sdk.timeline.native_placement_commands import capture_placement
 
     edit = identity.edit
@@ -313,8 +313,13 @@ def test_fresh_shared_placement_materializes_own_slot_reload_inverse_and_exact_r
     reloaded = edit.agent.bundle(edit.document())
     assert next(row['shot_id'] for row in reloaded['placements']
                 if row['occurrence_id'] == 'occurrence-1') == destination
-    assert reloaded['source_mapping']['shots'][destination]['shot_id'] == source_pin['shot_id']
-    assert reloaded['source_mapping']['shots'][destination]['item_id_map'] == source_pin['item_id_map']
+    # Reload opens the accepted physical document as a new authoring
+    # projection: its derived source for D is D.  The accepted record above
+    # retains the original S authority; source_mapping here is not history.
+    projected = bundle_from_document(document_from_bundle(expected.bundle))
+    assert reloaded['source_mapping']['shots'][destination] == projected['source_mapping']['shots'][destination]
+    assert reloaded['source_mapping']['shots'][destination]['shot_id'] == destination
+    assert reloaded['source_mapping']['shots'][destination]['item_id_map'] == {}
     assert occurrence_image(edit.document(), 'occurrence-1')[2]['payload']['clips'][0]['at'] == 0.5
 
     own_command = capture_placement(reloaded, 'occurrence:occurrence-1', 'clip-1', 0.75,
