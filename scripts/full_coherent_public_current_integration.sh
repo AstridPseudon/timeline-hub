@@ -265,6 +265,47 @@ def wheel_rows(wheel: Path) -> tuple[str, dict[str, tuple[str, str]], dict[str, 
                 raise SystemExit(f"unsafe wheel member path: {wheel}: {name}")
         return record_name, rows, {name: archive.read(name) for name in members}
 
+def canonical_package_bytes(
+    entries: dict[str, bytes],
+    source_roots: dict[str, str],
+    label: str,
+    *,
+    allow_dist_info: bool,
+) -> dict[str, bytes]:
+    """Map one package's known source roots into its wheel namespace."""
+    canonical = {}
+    roots = tuple(sorted(source_roots.items(), key=lambda item: len(item[0]), reverse=True))
+    if not roots or len({target for _, target in roots}) != len(roots):
+        raise SystemExit(f"invalid or duplicate canonical source roots: {label}")
+    dist_info_roots = {
+        PurePosixPath(raw_name).parts[0]
+        for raw_name in entries
+        if PurePosixPath(raw_name).parts[0].endswith(".dist-info")
+    }
+    if allow_dist_info and len(dist_info_roots) != 1:
+        raise SystemExit(f"wheel must have exactly one dist-info root: {label}")
+    dist_info_root = next(iter(dist_info_roots), None)
+    for raw_name, data in entries.items():
+        parsed = PurePosixPath(raw_name)
+        if parsed.is_absolute() or ".." in parsed.parts or "" in raw_name.split("/") or "\\" in raw_name:
+            raise SystemExit(f"unsafe {label} member path: {raw_name}")
+        if parsed.parts[0].endswith(".dist-info"):
+            if allow_dist_info and parsed.parts[0] == dist_info_root:
+                continue
+            raise SystemExit(f"unexpected dist-info root: {label}: {raw_name}")
+        matches = [(source, target) for source, target in roots if raw_name.startswith(source)]
+        if len(matches) != 1:
+            raise SystemExit(f"unexpected or missing {label} package root: {raw_name}")
+        source, target = matches[0]
+        suffix = raw_name[len(source):]
+        if not suffix:
+            raise SystemExit(f"empty {label} package member: {raw_name}")
+        canonical_name = target + suffix
+        if canonical_name in canonical:
+            raise SystemExit(f"duplicate canonical {label} member: {canonical_name}")
+        canonical[canonical_name] = data
+    return canonical
+
 def installed_wheel_bytes(wheel: Path) -> None:
     record_name, rows, members = wheel_rows(wheel)
     installed_record = site / Path(*PurePosixPath(record_name).parts)
@@ -283,38 +324,65 @@ def installed_wheel_bytes(wheel: Path) -> None:
 
 wheelhouse = root / "wheelhouse"
 wheel_paths = [
-    (Path(os.environ["AGENT_WHEEL"]), ("astrid/", "astrid_runtime_client/"), Path(os.environ["EXPECTED_AGENT_COMMIT"]), Path(os.environ["RUNTIME_CHECKOUT"]), ("astrid", "astrid_runtime_client")),
-    (wheelhouse / "astrid_runtime-0.1.0-py3-none-any.whl", ("astrid_runtime/", "runtime_protocol/"), Path(os.environ["EXPECTED_RUNTIME_COMMIT"]), Path(os.environ["RUNTIME_CHECKOUT"]), ("astrid_runtime", "runtime_protocol")),
-    (wheelhouse / "astrid_runtime_client-0.2.14-py3-none-any.whl", ("astrid_runtime_client/",), Path(os.environ["EXPECTED_CLIENT_COMMIT"]), Path(os.environ["CLIENT_CHECKOUT"]), ("packages/python/astrid_runtime_client",)),
+    (
+        Path(os.environ["AGENT_WHEEL"]),
+        Path(os.environ["EXPECTED_AGENT_COMMIT"]),
+        Path(os.environ["RUNTIME_CHECKOUT"]),
+        {
+            "astrid/": "astrid/",
+            "astrid_runtime_client/": "astrid_runtime_client/",
+        },
+    ),
+    (
+        wheelhouse / "astrid_runtime-0.1.0-py3-none-any.whl",
+        Path(os.environ["EXPECTED_RUNTIME_COMMIT"]),
+        Path(os.environ["RUNTIME_CHECKOUT"]),
+        {
+            "astrid_runtime/": "astrid_runtime/",
+            "runtime_protocol/": "runtime_protocol/",
+        },
+    ),
+    (
+        wheelhouse / "astrid_runtime_client-0.2.14-py3-none-any.whl",
+        Path(os.environ["EXPECTED_CLIENT_COMMIT"]),
+        Path(os.environ["CLIENT_CHECKOUT"]),
+        {
+            "packages/python/astrid_runtime_client/": "astrid_runtime_client/",
+        },
+    ),
 ]
-for wheel, prefixes, commit, checkout, source_prefixes in wheel_paths:
+for wheel, commit, checkout, source_root_map in wheel_paths:
     if not wheel.is_file():
         raise SystemExit(f"missing product wheel: {wheel}")
     installed_wheel_bytes(wheel)
     if hashlib.sha256(wheel.read_bytes()).hexdigest() == "":
         raise SystemExit(f"unreadable wheel hash: {wheel}")
     with ZipFile(wheel) as archive:
-        wheel_source = {
-            name: archive.read(name)
-            for name in archive.namelist()
-            if any(name.startswith(prefix) for prefix in prefixes) and not name.endswith("/")
-        }
+        wheel_names = [name for name in archive.namelist() if not name.endswith("/")]
+        if len(wheel_names) != len(set(wheel_names)):
+            raise SystemExit(f"duplicate wheel member: {wheel}")
+        wheel_source = {name: archive.read(name) for name in wheel_names}
+    wheel_roots = {target: target for target in source_root_map.values()}
+    wheel_bytes = canonical_package_bytes(
+        wheel_source, wheel_roots, f"wheel {wheel}", allow_dist_info=True
+    )
+    source_prefixes = tuple(source.rstrip("/") for source in source_root_map)
     command = ["git", "-C", str(checkout), "archive", "--format=tar", commit.as_posix(), "--", *source_prefixes]
     result = subprocess.run(command, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode:
         raise SystemExit(f"could not archive exact product source for {wheel}: {result.stderr.decode(errors='replace')}")
-    source_bytes = {}
+    source_entries = {}
     with tarfile.open(fileobj=BytesIO(result.stdout), mode="r:") as archive:
         for item in archive.getmembers():
             if not item.isfile():
                 continue
             name = item.name.removeprefix("./")
-            for prefix in source_prefixes:
-                source_name = prefix.rstrip("/") + "/"
-                if name.startswith(source_name):
-                    source_bytes[name] = archive.extractfile(item).read()
-                    break
-    wheel_bytes = wheel_source
+            if name in source_entries:
+                raise SystemExit(f"duplicate source member: {name}")
+            source_entries[name] = archive.extractfile(item).read()
+    source_bytes = canonical_package_bytes(
+        source_entries, source_root_map, f"archive {wheel}", allow_dist_info=False
+    )
     if wheel_bytes != source_bytes:
         raise SystemExit(f"wheel payload differs from exact source commit: {wheel}")
 
