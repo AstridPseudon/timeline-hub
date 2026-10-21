@@ -40,9 +40,10 @@ function requiredCredential(env) {
   if ((statSync(file).mode & 0o777) !== 0o600) fail('WORKSPACE_RUNTIME_TOKEN_FILE must be a physical mode-0600 file');
   let credential;
   try { credential = JSON.parse(readFileSync(file, 'utf8')); } catch (error) { fail(`WORKSPACE_RUNTIME_TOKEN_FILE is not valid JSON: ${error.message}`); }
+  const actorId = typeof credential?.actor_id === 'string' ? credential.actor_id.trim() : '';
+  const token = typeof credential?.token === 'string' ? credential.token.trim() : '';
   if (credential?.version !== 1 || credential?.scope !== 'astrid'
-    || typeof credential.actor_id !== 'string' || !credential.actor_id
-    || typeof credential.token !== 'string' || !credential.token) {
+    || !actorId || ['owner', 'astrid-pack-host', 'admin', 'worker'].includes(actorId) || !token) {
     fail('WORKSPACE_RUNTIME_TOKEN_FILE is not an existing Runtime product credential');
   }
   return file;

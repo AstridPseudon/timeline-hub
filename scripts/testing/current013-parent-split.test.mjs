@@ -11,7 +11,8 @@ const input = { app: '/snapshot', appSha: 'c'.repeat(40), appTree: 'a'.repeat(40
   agentPython: '/venv-agent/bin/python', runtimePython: '/venv-runtime/bin/python', privateModules: '/private/node_modules', ready: '/private/READY', lease: '/private/LEASE', shortTemp: '/tmp/parent-split', config: '/config/playwright.parent-split.config.ts', browser: '/browser/chrome', credential: '/private/product-credential.json',
   agentSha: '6efc81500a0e0688c2bb41e736503f0fc3e04abb', runtimeSha: '95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c' };
 
-async function load({ enabled = true, status = 0, moved = false, preflightFailure = false, launchFailure = false, cacheId } = {}) {
+async function load({ enabled = true, status = 0, moved = false, preflightFailure = false, launchFailure = false, cacheId,
+  credential = { version: 1, scope: 'astrid', actor_id: 'app', token: 'test-token' } } = {}) {
   const calls = [];
   const process = { env: enabled ? { TIMELINE_CURRENT013_RUN: '1' } : {}, argv: [], exitCode: undefined, cwd: () => '/snapshot' };
   const context = createContext({ process, URL });
@@ -23,7 +24,7 @@ async function load({ enabled = true, status = 0, moved = false, preflightFailur
     else if (specifier === 'node:fs') exports = { readFileSync: (file) => {
       if (String(file).includes('provenance.json')) return Buffer.from(JSON.stringify({ astrid_commit: '091aa23ec83ea05ffd3b0115a640230d51c8c429', astrid_tree: 'e3ae90fe482ba6cad6c3f94069127faf76ebceb6' }));
       if (String(file).endsWith('runtime.lock.json')) return Buffer.from(JSON.stringify({ source_commit: input.runtimeSha, producer_version: 'sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac' }));
-      if (String(file).includes('product-credential.json')) return Buffer.from(JSON.stringify({ version: 1, scope: 'astrid', actor_id: 'app', token: 'test-token' }));
+      if (String(file).includes('product-credential.json')) return Buffer.from(JSON.stringify(credential));
       return Buffer.from(JSON.stringify({ producer: 'astrid-runtime', version: 'sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac', artifacts: Object.fromEntries(Array.from({ length: 76 }, (_, i) => [`a${i}`, {}])) }));
     }, accessSync() {}, constants: { X_OK: 1 }, existsSync: () => true, lstatSync: () => ({ isSymbolicLink: () => false }), realpathSync: (value) => value, statSync: (file) => ({ mode: String(file).includes('product-credential.json') ? 0o600 : 0o700, isFile: () => true, isDirectory: () => true }) };
     else if (specifier === 'node:child_process') exports = { execFileSync: (command, args = []) => {
@@ -52,7 +53,7 @@ async function load({ enabled = true, status = 0, moved = false, preflightFailur
   process.env.ASTRID_PYTHON = input.agentPython; process.env.ASTRID_RUNTIME_PYTHON = input.runtimePython;
   process.env.PRIVATE13_NODE_MODULES = input.privateModules; process.env.TIMELINE_CURRENT013_PRIVATE13_READY = input.ready; process.env.TIMELINE_CURRENT013_PRIVATE13_LEASE = input.lease; process.env.TIMELINE_CURRENT013_SHORT_TMPDIR = input.shortTemp; process.env.TIMELINE_CURRENT013_CONFIG_PATH = input.config; process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE = input.browser; process.env.WORKSPACE_RUNTIME_TOKEN_FILE = input.credential;
   process.env.TIMELINE_CURRENT013_CACHE_ID = cacheId ?? module.namespace.parentSplitCacheIdentity(input);
-  return { run: module.namespace.runCurrent013ParentSplit, process, calls, checks: () => checks, cacheIdentity: module.namespace.parentSplitCacheIdentity };
+  return { run: module.namespace.runCurrent013ParentSplit, readInputs: () => module.namespace.readCurrent013ParentSplitInputs(), process, calls, checks: () => checks, cacheIdentity: module.namespace.parentSplitCacheIdentity };
 }
 
 test('requires explicit enablement and binds cache identity to source and pair', async () => {
@@ -67,6 +68,22 @@ test('source guard refusal never launches the browser lane', async () => {
   const probe = await load({ preflightFailure: true });
   assert.throws(probe.run, /App source SHA\/tree/);
   assert.equal(probe.calls.length, 0);
+});
+
+test('accepts trimmed valid credentials and rejects forbidden or blank credentials', async () => {
+  const valid = await load({ credential: { version: 1, scope: 'astrid', actor_id: ' app ', token: ' test-token ' } });
+  assert.doesNotThrow(valid.readInputs);
+  for (const actorId of ['owner', 'astrid-pack-host', 'admin', 'worker']) {
+    const probe = await load({ credential: { version: 1, scope: 'astrid', actor_id: actorId, token: 'test-token' } });
+    assert.throws(probe.readInputs, /existing Runtime product credential/);
+  }
+  for (const credential of [
+    { version: 1, scope: 'astrid', actor_id: ' \t', token: 'test-token' },
+    { version: 1, scope: 'astrid', actor_id: 'app', token: ' \n' },
+  ]) {
+    const probe = await load({ credential });
+    assert.throws(probe.readInputs, /existing Runtime product credential/);
+  }
 });
 
 test('delegates only the named parent-split config and preserves child status', async () => {
