@@ -101,6 +101,11 @@ export const embeddedShotNameInput = (dialog: import('@playwright/test').Locator
   dialog.locator('input[class*="w-[200px]"]:visible').first()
 );
 
+/** The mounted canonical prompt control inside an embedded ShotEditorView. */
+export const embeddedPromptInput = (dialog: import('@playwright/test').Locator) => (
+  dialog.locator('#batchVideoPrompt:visible').first()
+);
+
 export async function editFirstTrackName(page: Page, name: string) {
   const field = firstTrackName(page);
   await field.fill(name);

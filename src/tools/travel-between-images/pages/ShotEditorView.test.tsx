@@ -18,6 +18,7 @@ const capture = vi.hoisted(() => ({
   persistence: null as any,
   onName: null as any,
   beforeName: null as any,
+  settingsIntent: null as any,
   legacyName: null as any,
   errors: vi.fn(),
   settingsMutation: { settings: {}, status: 'loading', shotId: 'shot-alpha', updateField: vi.fn(), updateFields: vi.fn() },
@@ -28,7 +29,11 @@ vi.mock('../components/ShotEditor', () => ({ ShotSettingsEditor: (props: any) =>
   return null;
 } }));
 vi.mock('../providers', () => ({
-  VideoTravelSettingsProvider: (props: any) => { capture.persistence = props.shotSettingsPersistence; return props.children; },
+  VideoTravelSettingsProvider: (props: any) => {
+    capture.persistence = props.shotSettingsPersistence;
+    capture.settingsIntent = props.onSettingsIntent;
+    return props.children;
+  },
   useVideoTravelSettingsMutations: () => capture.settingsMutation,
 }));
 vi.mock('../components/ShotTimelinePreview.tsx', () => ({ ShotTimelinePreview: () => null }));
@@ -58,6 +63,7 @@ afterEach(() => {
   capture.persistence = null;
   capture.onName = null;
   capture.beforeName = null;
+  capture.settingsIntent = null;
   capture.legacyName = null;
   capture.settingsMutation = { settings: {}, status: 'loading', shotId: 'shot-alpha', updateField: vi.fn(), updateFields: vi.fn() };
 });
@@ -161,6 +167,38 @@ describe('current App shot editing base', () => {
     });
   });
 
+  it('captures the live prompt setter and submits only prompt through native shot.set', async () => {
+    const port = namePort();
+    const input = structuredClone(fixture) as Record<string, any>;
+    input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha').settings = {
+      prompt: 'Original prompt',
+      negativePrompt: null,
+      x_settings_opaque: { owner: 'prompt-native', nested: [null, false, 0] },
+    };
+    const state = await setup(input as typeof fixture, port);
+
+    capture.settingsIntent({ prompt: 'Revised prompt' });
+    const loaded = await capture.persistence.load('shot-alpha');
+    await capture.persistence.save('shot-alpha', { ...loaded, prompt: 'Revised prompt' });
+
+    expect(port.capture).toHaveBeenCalledWith(expect.objectContaining({
+      occurrenceId: 'occ-1',
+      args: { values: { settings: { prompt: 'Revised prompt' } }, clear: [] },
+    }));
+    expect(port.finish).toHaveBeenCalledWith(expect.anything(), {
+      values: { settings: { prompt: 'Revised prompt' } }, clear: [],
+    });
+    expect(port.submit).toHaveBeenCalledWith({
+      command: expect.objectContaining({
+        op: 'shot.set',
+        select: 'occurrence:occ-1/shot',
+        args: { values: { settings: { prompt: 'Revised prompt' } }, clear: [] },
+      }),
+    });
+    expect(state.publish).not.toHaveBeenCalled();
+    expect(state.read()).toEqual(input);
+  });
+
   it('refuses canonical scalar settings without shot.set authority and keeps the draft dirty', async () => {
     const input = structuredClone(fixture) as Record<string, any>;
     input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha').settings = {
@@ -180,6 +218,43 @@ describe('current App shot editing base', () => {
     });
     await store.getState().ensureEntity('shot-alpha');
     store.getState().updateFields('shot-alpha', { advancedMode: false, motionMode: 'basic' });
+    const draft = structuredClone(store.getState().entities['shot-alpha'].settings);
+
+    await expect(store.getState().saveImmediate('shot-alpha')).rejects.toThrow(
+      'Mounted shot.set settings authority is unavailable; draft kept.',
+    );
+    expect(capture.errors).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ toastTitle: 'Shot settings draft kept' }),
+    );
+    expect(store.getState().entities['shot-alpha'].status).toBe('error');
+    expect(store.getState().isDirty('shot-alpha')).toBe(true);
+    assert.deepStrictEqual(store.getState().entities['shot-alpha'].settings, draft);
+    expect(state.publish).not.toHaveBeenCalled();
+    assert.deepStrictEqual(state.read(), input);
+  });
+
+  it('refuses a prompt edit without shot.set authority and keeps prompt and LoRA intent dirty', async () => {
+    const input = structuredClone(fixture) as Record<string, any>;
+    input.shot_revisions.find((row: Record<string, any>) => row.shot_id === 'shot-alpha').settings = {
+      prompt: 'Original prompt',
+      loras: [{ path: 'original.safetensors', strength: 0.5 }],
+      x_settings_opaque: { owner: 'prompt-refusal', nested: [null, false, 0] },
+    };
+    const state = await setup(input as typeof fixture);
+    expect(() => capture.settingsIntent({ prompt: 'Draft prompt' })).toThrow(
+      'Mounted shot.set settings authority is unavailable; draft kept.',
+    );
+    const loaded = await capture.persistence.load('shot-alpha');
+    const store = createEntityStore<Record<string, any>>({
+      toolId: 'shot-settings-prompt-native-authority',
+      defaults: {},
+      load: async () => ({ db: loaded, lastUsed: null }),
+      save: capture.persistence.save,
+    });
+    await store.getState().ensureEntity('shot-alpha');
+    const loras = [{ path: 'revised.safetensors', strength: 0.8 }];
+    store.getState().updateFields('shot-alpha', { prompt: 'Draft prompt', loras });
     const draft = structuredClone(store.getState().entities['shot-alpha'].settings);
 
     await expect(store.getState().saveImmediate('shot-alpha')).rejects.toThrow(

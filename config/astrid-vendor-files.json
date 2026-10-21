@@ -83,6 +83,12 @@
     "remotion/public/fonts/FONT_PROVENANCE.md"
   ],
   "exclude": [
+    "astrid/packs/rendering/editor/live-scenes/diagnostics.ts",
+    "astrid/packs/rendering/editor/live-scenes/runtime.ts",
+    "astrid/packs/rendering/ui/live-scenes/SceneSurface.tsx",
+    "astrid/packs/rendering/ui/live-scenes/authoring.ts",
+    "astrid/packs/rendering/ui/live-scenes/extension.tsx",
+    "astrid/packs/rendering/ui/live-scenes/identity.ts",
     "astrid/packs/rendering/rendering/elements/animations/fade/component.tsx",
     "astrid/packs/rendering/rendering/elements/animations/fade-up/component.tsx",
     "astrid/packs/rendering/rendering/elements/animations/scale-in/component.tsx",
