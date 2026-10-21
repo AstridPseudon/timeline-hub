@@ -41,9 +41,9 @@ describe('live App EditCommand operation contract', () => {
   it('derives operation membership from the pinned Runtime bundle', () => {
     const supported = pinnedRuntimeEditCommandOps();
     expect(supported.has('clip.move')).toBe(true);
+    expect(supported.has('timeline.init')).toBe(true);
     const assertInit = () => assertPinnedRuntimeEditCommandOps([initCommand]);
-    if (supported.has('timeline.init')) expect(assertInit).not.toThrow();
-    else expect(assertInit).toThrow(/timeline\.init/);
+    expect(assertInit).not.toThrow();
     expect(() => assertPinnedRuntimeEditCommandOps([unknownCommand()])).toThrow(/timeline\.unknown/);
   });
 

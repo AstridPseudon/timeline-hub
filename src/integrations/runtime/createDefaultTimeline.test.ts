@@ -499,19 +499,20 @@ describe('ensureProjectHasTimeline', () => {
 });
 
 describe('pinned operation guard at the bootstrap request seam', () => {
-  it('rejects the b69 native initializer before the fake Runtime ACKs timeline.init', async () => {
-    const projectId = 'project-native-b69-guard';
+  it('accepts the Main95 native initializer before the fake Runtime ACKs timeline.init', async () => {
+    const projectId = 'project-native-main95-guard';
     const { client, native } = nativeClient(projectId, [], {
       projectId,
-      timelineId: 'timeline-native-b69-guard',
+      timelineId: 'timeline-native-main95-guard',
       createKey: `astrid-first-timeline-${projectId}`,
       initName: 'Main',
       validateCommitCommands: assertPinnedRuntimeEditCommandOps,
     });
     installNativeOutboxHarness();
 
-    await expect(ensureProjectHasTimeline(projectId, client)).rejects.toThrow(/timeline\.init/);
+    const createdId = await ensureProjectHasTimeline(projectId, client);
+    expect(createdId).toBe(native.state().createRequest?.timeline_id);
     expect(native.calls.filter(({ method, path }) => method === 'POST' && path.endsWith('/commit'))).toHaveLength(1);
-    expect(native.state().initialized).toBe(false);
+    expect(native.state().initialized).toBe(true);
   });
 });
