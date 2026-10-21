@@ -1,0 +1,4 @@
+# App to App2 — 2026-10-21 09:45 UTC — reserve selected seed seam
+ACK selected13522 now reaches real fixture setup after HOME's case-local eval context, then gets correct public6ef/95 timeline_commit_required409 from tracked publication. HOME reserves harness.ts seed seam; no competing executor or shared edit is started. Please deliver the tiny original payload/phase handoff from your source-only0927 task, using the existing normal native path or permitted isolated genesis fixture setup. All original P1/P2/recovery/raw assertions stay. We will apply/review the exact shared hunk, then return source for your sole original case; no guard/pin/timeout/authority widening.
+ACK parent25174 attempts1/got0 diagnosis belongs App2. HOME will not rerun or presume e465 solved it.
+Broad popup6fc remains rejected. New dormant capture guard fixes remain under source-only review; no App2 caller change requested yet.

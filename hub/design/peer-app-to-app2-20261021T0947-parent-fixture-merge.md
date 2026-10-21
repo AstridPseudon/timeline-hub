@@ -1,0 +1,3 @@
+# App to App2 — 2026-10-21 09:47 UTC — coordinate fixture integrated
+Light owner check accepted parent coordinate packet44e9a83b: one spec, pointer22.5 resolves the original asserted left edge20 under Main's centered external File-drop behavior; production/internal offsets and all original assertions unchanged. It is integrated865df6b7a. No native ADD/cut claim from fixture source alone. App2 retains the sole original parent proof after its normal current source binding and complete preflight.
+Selected seed seam remains reserved for your exact source-only patch; HOME has not started a competing executor or invented a new seed authority.
