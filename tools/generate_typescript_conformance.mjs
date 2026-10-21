@@ -208,6 +208,7 @@ export interface ManagedOutput {
 export interface ManagedOutputPage { items: ManagedOutput[]; next_cursor: string | null; }
 export interface ManagedOutputAdoption { association_id?: string; manifest_ref?: string | null; object_id?: string; digest?: string; size?: number; filename?: string; media_type?: string; output_port?: string; selector?: Record<string, unknown>; ordinal?: number; role?: string; durability?: ManagedOutputDurability; }
 export interface ManagedOutputLifecycle { operation: "lease" | "release" | "pin" | "unpin" | "expire" | "reclaim" | "promote"; expected_version: number; lease_id?: string; lease_owner?: string; lease_seconds?: number; provenance?: Record<string, unknown>; }
+export interface AppStateResource { scope: "user"; actor_id: string; key: string; content: Record<string, unknown> | null; version: number; created_at: string | null; updated_at: string | null }
 export type PreferenceScope = "user" | "project";
 export interface PreferenceResource { scope: PreferenceScope; actor_id: string | null; project_id: string | null; document_id: string; content: string; version: number; created_at: string | null; updated_at: string | null }
 export type PreferenceMutationResult = PreferenceResource & { readonly receipt: Record<string, unknown> | null };
@@ -286,6 +287,22 @@ export class WorkspaceClient {
   async updatePreferences(scope: PreferenceScope, content: string, expectedVersion: number, idempotencyKey: string, projectId?: string): Promise<PreferenceMutationResult> {
     const path = this.preferencesPath(scope, projectId);
     return this.preferenceMutation((await this.call("updatePreferences", "PUT", path, new TextEncoder().encode(JSON.stringify({ content, expected_version: expectedVersion })), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body, scope);
+  }
+  private appStateResource(value: unknown, key: string): AppStateResource {
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid app-state resource");
+    const v = value as Record<string, unknown>;
+    if (["scope", "actor_id", "key", "content", "version", "created_at", "updated_at"].some(name => !(name in v))) throw new Error("invalid app-state resource fields");
+    const content = v.content;
+    if (v.scope !== "user" || typeof v.actor_id !== "string" || !v.actor_id || v.key !== key || !(content === null || (typeof content === "object" && !Array.isArray(content))) || !Number.isInteger(v.version) || (v.version as number) < 0 || (content === null) !== (v.version === 0) || [v.created_at, v.updated_at].some(item => item !== null && typeof item !== "string")) throw new Error("invalid app-state resource ownership, content or version");
+    return v as unknown as AppStateResource;
+  }
+  async getUserAppState(key: string): Promise<AppStateResource> {
+    return this.appStateResource(this.json((await this.call("getUserAppState", "GET", "/v1/app-state/user/" + encodeURIComponent(key))).body), key);
+  }
+  async updateUserAppState(key: string, content: Record<string, unknown>, expectedVersion: number, idempotencyKey: string): Promise<AppStateResource> {
+    const value = this.json<Record<string, unknown>>((await this.call("updateUserAppState", "PUT", "/v1/app-state/user/" + encodeURIComponent(key), new TextEncoder().encode(JSON.stringify({ content, expected_version: expectedVersion })), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body);
+    if (!value || typeof value !== "object" || !("data" in value) || value.receipt !== null) throw new Error("invalid app-state mutation: data and null receipt are required");
+    return this.appStateResource(value.data, key);
   }
   async handshake(clientName: string, clientVersion: string, requestedScopes: string[]): Promise<Record<string, unknown>> {
     return this.json<Record<string, unknown>>((await this.call("handshake", "POST", "/v1/handshake", new TextEncoder().encode(JSON.stringify({ protocol: PROTOCOL, client_name: clientName, client_version: clientVersion, requested_scopes: requestedScopes })), { "Content-Type": "application/json" })).body);

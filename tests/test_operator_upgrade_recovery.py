@@ -64,6 +64,7 @@ if __name__ == "__main__":
     paths, profile, realm = _fixture(base, version=SCHEMA_VERSION)
     with sqlite3.connect(realm / "realm.sqlite3") as connection:
         connection.execute("ALTER TABLE timelines DROP COLUMN name")
+        connection.execute("DROP TABLE user_app_state")
         connection.execute("UPDATE runtime_schema SET version=29 WHERE id=1")
     boundary = _Boundary(paths)
     original_journal = operator_upgrade._journal

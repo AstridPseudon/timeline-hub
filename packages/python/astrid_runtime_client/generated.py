@@ -14,8 +14,8 @@ from urllib.parse import urlsplit
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
-SCHEMA_DIGEST = "sha256:53bc985a9ab3dba290c3d2a99c7837460f43c9bb0f0ef486d273eec3e2e44ed0"
-OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
+SCHEMA_DIGEST = "sha256:3605a9c517d92031d7702307e256223905784e0800bcd09c87005ce21ee53a47"
+OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'getUserAppState', 'updateUserAppState', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'updateTimeline', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'createShot', 'getShot', 'updateShot', 'archiveShot', 'recoverShot', 'createReference', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'updateReference', 'archiveReference', 'recoverReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
@@ -205,6 +205,33 @@ class PreferenceResource:
         # only fields understood by this client. Opaque documented payloads
         # (such as content and metadata) remain intact in their fields.
         return cls(**{key: value[key] for key in fields})
+
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
+
+
+@dataclass(frozen=True)
+class AppStateResource:
+    scope: Literal["user"]
+    actor_id: str
+    key: str
+    content: dict[str, Any] | None
+    version: int
+    created_at: str | None
+    updated_at: str | None
+
+    @classmethod
+    def from_json(cls, value: Mapping[str, Any], key: str) -> "AppStateResource":
+        fields = {"scope", "actor_id", "key", "content", "version", "created_at", "updated_at"}
+        if not isinstance(value, Mapping) or not fields.issubset(value):
+            raise ApiError(0, "invalid_response", "app-state resource fields are required")
+        if value["scope"] != "user" or not isinstance(value["actor_id"], str) or not value["actor_id"] or value["key"] != key:
+            raise ApiError(0, "invalid_response", "app-state resource ownership or key is invalid")
+        if not (value["content"] is None or isinstance(value["content"], dict)) or type(value["version"]) is not int or value["version"] < 0 \
+                or (value["content"] is None) != (value["version"] == 0) \
+                or any(item is not None and not isinstance(item, str) for item in (value["created_at"], value["updated_at"])):
+            raise ApiError(0, "invalid_response", "app-state resource content, version or timestamps are invalid")
+        return cls(**{name: value[name] for name in fields})
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
@@ -784,6 +811,16 @@ class WorkspaceClient:
         if resource.scope != scope:
             raise ApiError(0, "invalid_response", "preference response scope does not match request")
         return PreferenceMutationResult(resource, receipt)
+
+    def get_user_app_state(self, key: str) -> AppStateResource:
+        return AppStateResource.from_json(self._json(self._request("GET", f"/v1/app-state/user/{_path_part(key)}")[2]), key)
+
+    def update_user_app_state(self, key: str, content: Mapping[str, Any], expected_version: int, idempotency_key: str) -> AppStateResource:
+        payload = {"content": content, "expected_version": expected_version}
+        value = self._json(self._request("PUT", f"/v1/app-state/user/{_path_part(key)}", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
+        if not isinstance(value, Mapping) or not {"data", "receipt"}.issubset(value) or value["receipt"] is not None:
+            raise ApiError(0, "invalid_response", "app-state mutation requires data and null receipt")
+        return AppStateResource.from_json(value["data"], key)
 
     def create_document(self, project_id: str, document_id: str, kind: str, content: Any, *, idempotency_key: str) -> MutationResult:
         payload = {"document_id": document_id, "kind": kind, "content": content}

@@ -356,6 +356,16 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             if set(body) != {"content", "expected_version"}:
                 raise ProtocolError("preferences require only content and expected_version")
             return self._send(200, self.runtime.update_preferences(path[2], body["content"], body["expected_version"], self._idempotency_key(), project_id, identity=identity))
+        if len(path) == 4 and path[:3] == ["v1", "app-state", "user"] and method in ("GET", "PUT"):
+            identity = self._identity("projects:read" if method == "GET" else "projects:write")
+            if urlsplit(self.path).query:
+                raise ProtocolError("app-state accepts no query parameters")
+            if method == "GET":
+                return self._send(200, self.runtime.get_app_state(path[3], identity=identity))
+            body = self._project_mutation_body()
+            if set(body) != {"content", "expected_version"}:
+                raise ProtocolError("app-state requires only content and expected_version")
+            return self._send(200, self.runtime.update_app_state(path[3], body["content"], body["expected_version"], self._idempotency_key(), identity=identity))
         if path == ["v1", "projects", "selection"] and method in ("GET", "PUT"):
             identity = self._identity("projects:read" if method == "GET" else "projects:write")
             if method == "GET":

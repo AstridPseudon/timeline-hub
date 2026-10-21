@@ -133,6 +133,13 @@ CREATE TABLE user_preferences (
     content TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
     created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
+CREATE TABLE user_app_state (
+    actor_id TEXT NOT NULL, key TEXT NOT NULL,
+    content_json TEXT NOT NULL CHECK (json_valid(content_json)),
+    version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
+    created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+    PRIMARY KEY (actor_id, key)
+);
 CREATE TABLE generations (
     id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id),
     source_task_id TEXT REFERENCES tasks(id), type TEXT NOT NULL DEFAULT 'generation',

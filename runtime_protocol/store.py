@@ -41,7 +41,7 @@ from .visual_seam import (
 from .visual_boundary import finite as _visual_finite, js_round as _visual_js_round
 from .idempotency import command_result, compact_result, expired_result, EXPIRED, RESULT_WINDOW_SECONDS, IdempotencyWindowExpired
 
-SCHEMA_VERSION = 30
+SCHEMA_VERSION = 31
 IDEMPOTENCY_RESULT_WINDOW_SECONDS = 24 * 60 * 60
 IDEMPOTENCY_RESULT_MARKER = "__runtime_idempotency_result_expired_v1"
 IDEMPOTENCY_RESULT_MARKER_PREFIX = '{"' + IDEMPOTENCY_RESULT_MARKER + '":'
@@ -201,6 +201,7 @@ REQUIRED_SCHEMA_COLUMNS = {
     "composition_revision_occurrences": frozenset("parent_revision_id occurrence_id ordinal project_id shot_id shot_revision_id placement_json source_offset_json duration_ms speed_json track transform_json gain muted provenance_json".split()),
     "composition_revision_dependencies": frozenset("parent_revision_id dependency_kind dependency_id content_digest ordinal".split()),
     "objects": frozenset("digest size media_type original_name created_at".split()),
+    "user_app_state": frozenset("actor_id key content_json version created_at updated_at".split()),
     "user_preferences": frozenset("actor_id id content version created_at updated_at".split()),
     "project_documents": frozenset("id project_id kind content_json version created_at updated_at".split()),
     "project_objects": frozenset("project_id digest relation created_at".split()),
