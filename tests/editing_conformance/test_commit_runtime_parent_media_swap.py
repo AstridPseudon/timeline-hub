@@ -325,7 +325,7 @@ def test_selected_swap_over_authenticated_http_preserves_flight_and_guarded_undo
     assert command['select'] == target
     assert command['op'] == ('clip.swap-media' if editing.owner == 'parent' else 'occurrence.swap-media')
     assert command['args'] == {'old_media': editing.old, 'media': editing.new}
-    outbox = next((path for path in (tmp_path / 'timeline-outbox').glob('*.json')))
+    outbox = next((path for path in (tmp_path / 'client-data' / 'timeline-outbox').glob('*.json')))
     saved = json.loads(outbox.read_text())
     assert saved['flight']['key'] == first['key']
     assert saved['flight']['body'].encode() == first['body']

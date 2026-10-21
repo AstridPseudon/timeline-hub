@@ -18,24 +18,6 @@ OWNER = 'occurrence:occ-a'
 TARGET = OWNER + '/clip:clip-a'
 
 
-def _binding_descriptor(binding: dict, text: str) -> dict:
-    """Keep the publication fixture independent of Runtime's retired helper."""
-    return {
-        'binding_id': binding['binding_id'],
-        'project_id': binding['project_id'],
-        'shot_id': binding['shot_id'],
-        'kind': binding['kind'],
-        'slot': binding['slot'],
-        'event_stream_id': binding['event_stream_id'],
-        'head': binding['head'],
-        'media_id': binding['media_id'],
-        'content_hash': binding['content_hash'],
-        'mime_type': binding['mime_type'],
-        'byte_size': binding['byte_size'],
-        'text': text,
-    }
-
-
 @pytest.fixture(params=['image', 'video'])
 def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes):
     runtime = use_runtime()
@@ -130,12 +112,7 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
         for row in parent['occurrences']:
             row.update(source_offset=0, speed=1)
         parent['occurrences'][0]['placement']['start_ms'] = 8000
-        service.create_project_shot(project, {'shot_id': 'chapter-shot', 'name': 'Chapter One'},
-                                    idempotency_key='chapter-shot')
-        binding = service.set_project_shot_text_binding(project, {
-            'shot_id': 'chapter-shot', 'kind': 'transcript', 'text': 'A chapter', 'expected_head': 0,
-        }, idempotency_key='chapter-text')['data']
-        document['shot_revisions'][0]['payload']['text_bindings'] = [_binding_descriptor(binding, 'A chapter')]
+        document['shot_revisions'][0]['payload']['text_bindings'] = []
         service.publish_parent_composition(project, 'film', {
             'project_id': project, 'timeline_id': 'film', 'expected_head': None,
             'parent_revision_id': 'popup-baseline', 'parent_composition': parent,
