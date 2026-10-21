@@ -149,3 +149,7 @@ PASS — 2 test files, 2 passed, 0 failed, 0 skipped/todo; exit 0.
 Recommended next step: apply the literal packet corrections above, obtain a
 fresh source-only preflight/list-1 result, then perform the one authorized
 actual once. Do not treat this review as actual qualification.
+
+## HOME final disposition — 2026-10-21 11:12 UTC
+The historical HOLD above applied to the original direct-command packet. It is RESOLVED for the rewritten existing-runner packet by r56, with every listed finding addressed, shell syntax and both original runner/observation controls passing. Product/source/runner implementation bytes are unchanged; no new wrapper or custody authority was introduced. HOME authorizes ONE main actual only after the rewritten complete preflight and exact list1 pass. The old10:40 dispatch hold is SUPERSEDED. This is owner disposition of concrete corrections, not a fabricated independent review or browser pass.
+Authoritative current request: design/run-on-main-app-automatic-current.md, SHA-256 516fe8fffc2b68c58f5a4668a5944489d156fed0a66bfa884ac9937b42cd61a0. If this checksum is absent on main, wait for sync; do not use the old packet or infer approval from an older Status line. The first main response REFUSED-PREFLIGHT started0 processes/tests and consumed no actual; retain that result as historical refusal. Source remains exact1490fbfe90f83c7c7c380d5cb16ccfcc0e9dcfcf/tree8e242d1497841f391b6152ecd8d204143fa03b52.
