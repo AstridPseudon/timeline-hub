@@ -1,4 +1,4 @@
-"""Compare App bootstrap goldens against Agent 4296a709 on PYTHONPATH.
+"""Compare App bootstrap goldens against Agent 6efc8150 on PYTHONPATH.
 
 Run with the shared Agent interpreter and an extracted source tree containing
 editing_conformance. This exercises native semantics, not Runtime admission.
@@ -27,7 +27,7 @@ plan = execute(original, [init, video, audio])
 
 
 def test_native_sequential_captures_records_inverse_redo_and_replay():
-    assert fixture['source'] == '4296a7091d30543d3839fe703c0f0626f9882ebe'
+    assert fixture['source'] == '6efc81500a0e0688c2bb41e736503f0fc3e04abb'
     assert fixture['commands'] == native_fixture['commands']
     assert fixture['records'] == native_fixture['records']
     assert [init, video, audio] == fixture['commands']
