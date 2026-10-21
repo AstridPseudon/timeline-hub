@@ -26,6 +26,7 @@ from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.editing_conformance import test_native_batch_ingress
 from tests.editing_conformance.test_native_batch_ingress import command, label
 from tests.editing_conformance.test_native_sheet_current import property_cell
+from tests.editing_conformance.test_recipe_clip_scalar_fields import app_closure
 from tests.helpers.trusted_seed import seed_trusted_parent
 from tests.sdk.test_timeline_sheet_native import edit_cell, remove_row
 
@@ -36,6 +37,10 @@ RATIONAL_FPS = {'numerator': 30000, 'denominator': 1001}
 RATIONAL_FPS_VALUE = Fraction(30000, 1001)
 RATIONAL_LATTICE_SECONDS = 1.001
 RATIONAL_TARGET = 'parent/clip:b-plate'
+OCCURRENCE_TARGET = 'occurrence:f2-occurrence/clip:f2-agent-clip'
+OCCURRENCE_CLEAR = 'occurrence:f2-occurrence/clip:f2-agent-clear-clip'
+OCCURRENCE_SIBLING = 'occurrence:shared-sibling/clip:f2-agent-clip'
+OCCURRENCE_GLOBAL_ON = 9
 
 
 def run(runtime, *args):
@@ -146,6 +151,84 @@ def seed_rational_tiny_cut_parent(runtime):
     payload['config']['clips'] = copy.deepcopy(payload['clips'])
     receipt = seed_trusted_parent(runtime.service(), document, idempotency_key='native-sheet-rational-parent')
     return document, receipt
+
+
+def _replace_media_ids(value, replacements):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key in ('media_id', 'content_sha256', 'object_id') and child in replacements:
+                value[key] = replacements[child]
+            else:
+                _replace_media_ids(child, replacements)
+    elif isinstance(value, list):
+        for child in value:
+            _replace_media_ids(child, replacements)
+
+
+def seed_shared_occurrence_parent(runtime):
+    """Seed the existing shared-source App closure at the real Runtime boundary."""
+    parent, shots, internals = app_closure()
+    project = runtime.project
+    media_ids = set()
+
+    def collect(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if key in ('media_id', 'object_id') and isinstance(child, str):
+                    media_ids.add(child)
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    collect([parent, *shots, *internals])
+    replacements = {}
+    for index, source_id in enumerate(sorted(media_ids)):
+        ingested = runtime.service().ingest(
+            project, f'connected-occurrence-source-{index}'.encode(),
+            media_type='application/octet-stream',
+            original_name=f'connected-occurrence-source-{index}',
+            idempotency_key=f'connected-occurrence-source-{index}',
+        )
+        replacements[source_id] = ingested['data']['object_id']
+    _replace_media_ids(parent, replacements)
+    _replace_media_ids(shots, replacements)
+    _replace_media_ids(internals, replacements)
+
+    parent['project_id'] = project
+    parent['timeline_id'] = 'film'
+    for image in [*shots, *internals]:
+        image['project_id'] = project
+    for image in internals:
+        image['timeline_id'] = 'film'
+    document = {
+        'project_id': project,
+        'timeline_id': 'film',
+        'expected_head': None,
+        'parent_revision_id': 'native-sheet-connected-occurrence-parent',
+        'parent_composition': parent['payload'],
+        'shot_revisions': shots,
+        'internal_timeline_revisions': internals,
+    }
+    receipt = seed_trusted_parent(
+        runtime.service(), document, idempotency_key='native-sheet-connected-occurrence-parent',
+    )
+    return document, receipt
+
+
+def occurrence_source_pin(bundle, ref):
+    owner = ref.rsplit('/', 1)[0]
+    occurrence = next(row for row in bundle['placements']
+                      if 'occurrence:' + row['occurrence_id'] == owner)
+    shot_id = occurrence['shot_id']
+    source = bundle['source_mapping']['shots'][shot_id]
+    return {
+        'shot_id': source['shot_id'],
+        'revision_id': source['revision_id'],
+        'internal_timeline_revision_id': source['internal_timeline_revision_id'],
+        'internal_timeline_id': source['internal_timeline_id'],
+        'text_bindings': copy.deepcopy(bundle['shots'][shot_id]['payload']['text_bindings']),
+    }
 
 
 def persisted_bundle(bundle):
@@ -419,6 +502,102 @@ def test_http_connected_rational_move_is_lossless_across_native_frontends(
     undone = reloaded.undo([result['receipt']['receipt_id']])
     restored = bundle_from_document(undone['data']['canonical_document'])
     assert persisted_bundle(restored) == persisted_bundle(before)
+    redone = reloaded.undo([undone['receipt']['receipt_id']])
+    assert redone['data']['canonical_document'] == result['data']['canonical_document']
+    assert len(runtime.calls) == 3
+
+
+@pytest.mark.parametrize('entry', ['python', 'cli', 'sheet'])
+def test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends(
+        runtime, capsys, entry, monkeypatch):
+    _document, setup = seed_shared_occurrence_parent(runtime)
+    runtime.restart()
+    session = runtime.session(name=entry)
+    loaded = session.client.timelines.open_bundle(runtime.project, 'film')
+    assert loaded.ok
+    before = loaded.data['bundle']
+    original_target = copy.deepcopy(State(before).entity(OCCURRENCE_TARGET))
+    original_clear = copy.deepcopy(State(before).entity(OCCURRENCE_CLEAR))
+    original_sibling = copy.deepcopy(State(before).entity(OCCURRENCE_SIBLING))
+    source_pin = occurrence_source_pin(before, OCCURRENCE_TARGET)
+    expected = capture_move(before, OCCURRENCE_TARGET, OCCURRENCE_GLOBAL_ON)
+    assert setup['data']['accepted_revision_id'] == runtime.history()['head']['revision_id']
+    assert source_pin['shot_id'] == 'shot-shared'
+    assert source_pin['text_bindings'] == [{'slot': 'voiceover', 'text': 'hello'}]
+    assert original_target['app'] == {
+        'f2Opaque': {'owner': 'f2', 'nested': [1, {'k': 'v'}]},
+    }
+
+    def forbidden_legacy_publish(*args, **kwargs):
+        pytest.fail('connected occurrence frontend used retired publish_parent_composition')
+
+    monkeypatch.setattr(type(runtime.service()), 'publish_parent_composition', forbidden_legacy_publish)
+
+    if entry == 'python':
+        result = session.move(OCCURRENCE_TARGET, OCCURRENCE_GLOBAL_ON)
+    elif entry == 'cli':
+        assert run(runtime, 'edit', 'film', '--clip', OCCURRENCE_TARGET,
+                   '--on', str(OCCURRENCE_GLOBAL_ON)) == 0
+        result = json.loads(capsys.readouterr().out)
+    else:
+        sheet = NativeSheet.export(session, occurrence='f2-occurrence')
+        edited = edit_cell(sheet.text, OCCURRENCE_TARGET, str(OCCURRENCE_GLOBAL_ON))
+        assert sheet.preview(edited).commands == [expected]
+        result = sheet.apply(edited, session=session, dry_run=False)
+
+    body = json.loads(runtime.calls[-1][0])
+    assert body['commands'] == [expected]
+    assert result['data']['commands'] == [expected]
+    assert body['source'] == {'via': entry}
+    assert len(runtime.calls) == 1
+
+    accepted = bundle_from_document(result['data']['canonical_document'])
+    moved = State(accepted).entity(OCCURRENCE_TARGET)
+    clear = State(accepted).entity(OCCURRENCE_CLEAR)
+    sibling = State(accepted).entity(OCCURRENCE_SIBLING)
+    assert moved['at'] == OCCURRENCE_GLOBAL_ON
+    assert moved['hold'] == original_target['hold']
+    assert moved['asset'] == original_target['asset']
+    assert moved['app']['f2Opaque'] == original_target['app']['f2Opaque']
+    assert clear == original_clear
+    assert sibling == original_sibling
+    assert occurrence_source_pin(accepted, OCCURRENCE_TARGET)['text_bindings'] == source_pin['text_bindings']
+    assert occurrence_source_pin(accepted, OCCURRENCE_SIBLING) == occurrence_source_pin(
+        before, OCCURRENCE_SIBLING)
+
+    start_frame = clip_start_frame(moved, 30)
+    end_frame = clip_end_frame(moved, 30)
+    assert (start_frame, end_frame) == (270, 360)
+    assert list(range(start_frame, end_frame))[-1] == 359
+    assert end_frame not in range(start_frame, end_frame)
+
+    history_entry = next(item for item in runtime.history()['items']
+                         if item['publication_id'] == result['receipt']['receipt_id'])
+    record = history_entry['records']['commands'][0]
+    source_dependency = next(dep for dep in record['dependencies'] if dep['key'] == 'move.images')
+    assert source_dependency['pin']['source']['shot_id'] == source_pin['shot_id']
+    assert source_dependency['pin']['source']['revision_id'] == source_pin['revision_id']
+    assert source_dependency['pin']['source']['internal_timeline_revision_id'] == (
+        source_pin['internal_timeline_revision_id'])
+
+    runtime.restart()
+    reloaded = runtime.session(name=f'{entry}-reloaded')
+    stored = reloaded.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=result['data']['accepted_revision_id'])
+    assert stored.ok
+    stored_bundle = stored.data['bundle']
+    assert State(stored_bundle).entity(OCCURRENCE_TARGET) == moved
+    assert State(stored_bundle).entity(OCCURRENCE_CLEAR) == original_clear
+    assert State(stored_bundle).entity(OCCURRENCE_SIBLING) == original_sibling
+    assert occurrence_source_pin(stored_bundle, OCCURRENCE_TARGET)['text_bindings'] == (
+        source_pin['text_bindings'])
+
+    undone = reloaded.undo([result['receipt']['receipt_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert State(restored).entity(OCCURRENCE_TARGET) == original_target
+    assert State(restored).entity(OCCURRENCE_CLEAR) == original_clear
+    assert State(restored).entity(OCCURRENCE_SIBLING) == original_sibling
+    assert occurrence_source_pin(restored, OCCURRENCE_TARGET) == source_pin
     redone = reloaded.undo([undone['receipt']['receipt_id']])
     assert redone['data']['canonical_document'] == result['data']['canonical_document']
     assert len(runtime.calls) == 3
