@@ -1,0 +1,183 @@
++ set -eu
++ dirname -- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-app-central.sh
++ CDPATH= cd -- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design
++ pwd
++ HERE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design
++ . /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-source-common.sh
++ set -eu
++ AGENT_REPO=/home/user/peteromallet/astrid-agent
++ RUNTIME_REPO=/home/user/banodoco/banodoco-workspace-runtime
++ NORMAL014_PROFILE=final95
++ AGENT_SHA=6efc81500a0e0688c2bb41e736503f0fc3e04abb
++ AGENT_TREE=2ed2b8a12b5b3391ca221ba6ff05390f71a73556
++ RUNTIME_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
++ RUNTIME_TREE=d3a290b407fa61e6ab2d476f50c068073f70df00
++ PRODUCER_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
++ PRODUCER_TREE=d3a290b407fa61e6ab2d476f50c068073f70df00
++ ARTIFACT_SHA=sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac
++ MANIFEST_SHA=a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d
++ MANIFEST_COUNT=76
++ SCHEMA_SHA=6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d
++ WIRE_SHA=sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816
++ APP_METADATA_SHA=4cd934d868eafd5ab82578da2232f1ee13f04d83c9314b3473b75bd951570044
++ APP_GENERATED_SHA=c575f183b6486dd07e8ec798f5a46bff4c9ffc0918892b189c1a433b9f80762d
++ APP_TYPES_SHA=f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564
++ APP_SCHEMA_SHA=f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1
++ NORMAL014_APP_SOURCE=parent
++ APP_PIN_RUNTIME_LOCK_SHA=770352eaf1d015e90fca0ed2f1893749b73b69356ca82a7223b2573276fe485e
++ APP_PIN_METADATA_SHA=4cd934d868eafd5ab82578da2232f1ee13f04d83c9314b3473b75bd951570044
++ APP_PIN_GENERATED_SHA=c575f183b6486dd07e8ec798f5a46bff4c9ffc0918892b189c1a433b9f80762d
++ APP_PIN_TYPES_SHA=f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564
++ APP_ROOT_SHA=a304dce02a185a4774ff514d5aa451c9702aa46f
++ APP_ROOT_TREE=a3c82aa91f1336b86491191acf857d88c56179b2
++ APP_BASE_RUNTIME_SHA=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
++ MARKER_SHA=150a7abb340040e45c34742bc871ef83caab0575
++ D05E_SHA=d05e6383f4ccaf7541698a65b2737fbc5f3f0fbb
++ LOCKED_GRAPH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph
++ LOCKED_GRAPH_ARCHIVE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph-source.tar
++ LOCKED_GRAPH_ARCHIVE_SHA=895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30
++ LOCKED_COMPOSITION_SHA=9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
++ mode=run
++ app_root=/home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455
++ normal014_start_run timeline-normal014-app
++ normal014_tmp_parent=/tmp/w-909c2e1743
++ cleanup=1
++ [ 0 = 1 ]
++ normal014_run_root_owned=0
++ [ -n /tmp/timeline-parent-driver-diag.iRQSkO ]
++ run_root=/tmp/timeline-parent-driver-diag.iRQSkO
++ trap normal014_cleanup_run_root "$?" EXIT
++ trap normal014_signal_trap HUP "$?" HUP
++ trap normal014_signal_trap INT "$?" INT
++ trap normal014_signal_trap TERM "$?" TERM
++ normal014_use_private_tmp
++ mkdir -p /tmp/timeline-parent-driver-diag.iRQSkO/tmp
++ TMPDIR=/tmp/timeline-parent-driver-diag.iRQSkO/tmp
++ export TMPDIR
++ normal014_required_case=M2 real gate 5 bootstrap actual consumer: production initializer uses native create/init, exact retry, restart and guarded undo
++ test -f /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455/package.json
++ verify_app_source /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455
++ [ final95 != final95 ]
++ CDPATH= cd -- /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455
++ pwd
++ app_root=/home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455
++ test -f /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455/package.json
++ realpath /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455
++ test /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455 = /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455
++ git -C /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455 rev-parse --show-toplevel
++ realpath /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455
++ test /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455 = /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455
++ git -C /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455 rev-parse HEAD
++ app_head=a304dce02a185a4774ff514d5aa451c9702aa46f
++ [ a304dce02a185a4774ff514d5aa451c9702aa46f != a304dce02a185a4774ff514d5aa451c9702aa46f ]
++ git -C /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455 rev-parse HEAD^{tree}
++ test a3c82aa91f1336b86491191acf857d88c56179b2 = a3c82aa91f1336b86491191acf857d88c56179b2
++ git -C /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455 status --porcelain=v1 --untracked-files=all
++ test -z 
++ expected_pin_sha=770352eaf1d015e90fca0ed2f1893749b73b69356ca82a7223b2573276fe485e
++ sha256sum /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455/runtime.lock.json
++ cut -d  -f1
++ test 770352eaf1d015e90fca0ed2f1893749b73b69356ca82a7223b2573276fe485e = 770352eaf1d015e90fca0ed2f1893749b73b69356ca82a7223b2573276fe485e
++ expected_pin_sha=4cd934d868eafd5ab82578da2232f1ee13f04d83c9314b3473b75bd951570044
++ sha256sum /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455/src/integrations/runtime/generated-contract-metadata.ts
++ cut -d  -f1
++ test 4cd934d868eafd5ab82578da2232f1ee13f04d83c9314b3473b75bd951570044 = 4cd934d868eafd5ab82578da2232f1ee13f04d83c9314b3473b75bd951570044
++ expected_pin_sha=c575f183b6486dd07e8ec798f5a46bff4c9ffc0918892b189c1a433b9f80762d
++ cut -d  -f1
++ sha256sum /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455/src/integrations/runtime/generated.ts
++ test c575f183b6486dd07e8ec798f5a46bff4c9ffc0918892b189c1a433b9f80762d = c575f183b6486dd07e8ec798f5a46bff4c9ffc0918892b189c1a433b9f80762d
++ expected_pin_sha=f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564
++ sha256sum /home/user/work/wt/ap2-m2-parent-complete-current-proof-source-0455/src/integrations/runtime/timeline-commit-types.ts
++ cut -d  -f1
++ test f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564 = f8cbbbbc48713a308c2ac2e2e977d08525c4280ef4dc93cd3e8d842245394564
++ prepare_sources /tmp/timeline-parent-driver-diag.iRQSkO/sources
++ root=/tmp/timeline-parent-driver-diag.iRQSkO/sources
++ mkdir -p /tmp/timeline-parent-driver-diag.iRQSkO/sources
++ prepare_checkout /home/user/peteromallet/astrid-agent 6efc81500a0e0688c2bb41e736503f0fc3e04abb /tmp/timeline-parent-driver-diag.iRQSkO/sources/agent-6ef 2ed2b8a12b5b3391ca221ba6ff05390f71a73556
++ source_repo=/home/user/peteromallet/astrid-agent
++ source_sha=6efc81500a0e0688c2bb41e736503f0fc3e04abb
++ destination=/tmp/timeline-parent-driver-diag.iRQSkO/sources/agent-6ef
++ git clone --quiet --shared --no-checkout /home/user/peteromallet/astrid-agent /tmp/timeline-parent-driver-diag.iRQSkO/sources/agent-6ef
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/agent-6ef checkout --quiet --detach 6efc81500a0e0688c2bb41e736503f0fc3e04abb
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/agent-6ef rev-parse HEAD
++ test 6efc81500a0e0688c2bb41e736503f0fc3e04abb = 6efc81500a0e0688c2bb41e736503f0fc3e04abb
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/agent-6ef show -s --format=%T HEAD
++ test 2ed2b8a12b5b3391ca221ba6ff05390f71a73556 = 2ed2b8a12b5b3391ca221ba6ff05390f71a73556
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/agent-6ef status --porcelain=v1 --untracked-files=all
++ test -z 
++ prepare_checkout /home/user/banodoco/banodoco-workspace-runtime 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c /tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95 d3a290b407fa61e6ab2d476f50c068073f70df00
++ source_repo=/home/user/banodoco/banodoco-workspace-runtime
++ source_sha=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
++ destination=/tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95
++ git clone --quiet --shared --no-checkout /home/user/banodoco/banodoco-workspace-runtime /tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95 checkout --quiet --detach 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95 rev-parse HEAD
++ test 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c = 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95 show -s --format=%T HEAD
++ test d3a290b407fa61e6ab2d476f50c068073f70df00 = d3a290b407fa61e6ab2d476f50c068073f70df00
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95 status --porcelain=v1 --untracked-files=all
++ test -z 
++ prepare_checkout /home/user/banodoco/banodoco-workspace-runtime 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c /tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95 d3a290b407fa61e6ab2d476f50c068073f70df00
++ source_repo=/home/user/banodoco/banodoco-workspace-runtime
++ source_sha=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
++ destination=/tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95
++ git clone --quiet --shared --no-checkout /home/user/banodoco/banodoco-workspace-runtime /tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95 checkout --quiet --detach 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95 rev-parse HEAD
++ test 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c = 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95 show -s --format=%T HEAD
++ test d3a290b407fa61e6ab2d476f50c068073f70df00 = d3a290b407fa61e6ab2d476f50c068073f70df00
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95 status --porcelain=v1 --untracked-files=all
++ test -z 
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95 merge-base --is-ancestor 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c 95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c
++ AGENT=/tmp/timeline-parent-driver-diag.iRQSkO/sources/agent-6ef verify_artifacts /tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95 /tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95
++ runtime=/tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95
++ producer=/tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95
++ RUNTIME=/tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95 PRODUCER=/tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95 EXPECTED_MANIFEST=a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d EXPECTED_ARTIFACT=sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac EXPECTED_SCHEMA=6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d EXPECTED_MANIFEST_COUNT=76 python3 -
+verified artifacts=76 manifest=a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d schema=6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/agent-6ef show -s --format=%T HEAD
++ test 2ed2b8a12b5b3391ca221ba6ff05390f71a73556 = 2ed2b8a12b5b3391ca221ba6ff05390f71a73556
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95 show -s --format=%T HEAD
++ test d3a290b407fa61e6ab2d476f50c068073f70df00 = d3a290b407fa61e6ab2d476f50c068073f70df00
++ git -C /tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95 show -s --format=%T HEAD
++ test d3a290b407fa61e6ab2d476f50c068073f70df00 = d3a290b407fa61e6ab2d476f50c068073f70df00
++ agent=/tmp/timeline-parent-driver-diag.iRQSkO/sources/agent-6ef
++ runtime=/tmp/timeline-parent-driver-diag.iRQSkO/sources/runtime-95
++ producer=/tmp/timeline-parent-driver-diag.iRQSkO/sources/producer-95
++ verify_locked_graph
++ test -d /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph/node_modules
++ test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph-source.tar
++ sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph-source.tar
++ cut -d  -f1
++ test 895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30 = 895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30
++ node -p require('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph/node_modules/@banodoco/timeline-composition/package.json').version
++ test 0.0.13 = 0.0.13
++ tar -xOf /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph-source.tar vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz
++ sha256sum
++ cut -d  -f1
++ test 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738 = 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
++ realpath /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph/node_modules
++ test /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph/node_modules = /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph/node_modules
++ find -P /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph -type f -perm /022 -print -quit
++ test -z 
++ GRAPH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-m2-locked-app-test-graph/artifacts/app-ap2-m2-locked-graph node --input-type=module -
++ prepare_private_python /tmp/timeline-parent-driver-diag.iRQSkO
++ run_root=/tmp/timeline-parent-driver-diag.iRQSkO
++ base=/home/user/work/venv-app2-native/bin/python
++ test -x /home/user/work/venv-app2-native/bin/python
++ [ 0 = 1 ]
++ python_root=/tmp/timeline-parent-driver-diag.iRQSkO/python-runtime
++ /home/user/work/venv-app2-native/bin/python -m venv --copies /tmp/timeline-parent-driver-diag.iRQSkO/python-runtime
++ PIP_CACHE_DIR=/tmp/timeline-parent-driver-diag.iRQSkO/pip-cache PIP_DISABLE_PIP_VERSION_CHECK=1 /tmp/timeline-parent-driver-diag.iRQSkO/python-runtime/bin/python -m pip install --disable-pip-version-check --no-input jsonschema>=4.18 referencing>=0.30 PyYAML>=6.0 pytest>=8 pytest-timeout>=2.4
+WARNING: Retrying (Retry(total=4, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x7efcd3fd5bb0>: Failed to establish a new connection: [Errno -2] Name or service not known')': /simple/jsonschema/
+WARNING: Retrying (Retry(total=3, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x7efcd422a660>: Failed to establish a new connection: [Errno -2] Name or service not known')': /simple/jsonschema/
+WARNING: Retrying (Retry(total=2, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x7efcd2d73500>: Failed to establish a new connection: [Errno -2] Name or service not known')': /simple/jsonschema/
+WARNING: Retrying (Retry(total=1, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x7efcd2d73710>: Failed to establish a new connection: [Errno -2] Name or service not known')': /simple/jsonschema/
+WARNING: Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x7efcd2d73920>: Failed to establish a new connection: [Errno -2] Name or service not known')': /simple/jsonschema/
+ERROR: Could not find a version that satisfies the requirement jsonschema>=4.18 (from versions: none)
+ERROR: No matching distribution found for jsonschema>=4.18
++ normal014_cleanup_run_root 1
++ normal014_status=1
++ [ 1 = 1 ]
++ [ 0 = 1 ]
++ return 1
