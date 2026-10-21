@@ -2200,3 +2200,6 @@ release, activation, or physical/browser verification.
 No tests, browser/build/install/graph/full suite, pin, release, or artifact
 operation was run, per the task boundary. The conclusion is from the bounded
 App source/type trace above.
+
+## Orchestrator 12:08Z: deep audit 1205Z
+Finish the diagnosed readiness adapter correction, then run the EXISTING comparison. Do not expand the wrappers further. Zero physical comparison bodies have completed after many setup fixes, so reuse what exists.

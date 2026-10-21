@@ -6414,3 +6414,43 @@ The first normally generated candidate cannot reproduce through checked-in gener
 RT08 internal-only review found a concrete inherited private42a item bug: timeline_materialization.py145 unpacks items.values() strings instead of source/destination pairs. Current publicb92 is unaffected (join dormant/unmerged). Runtime1200 owns minimal fix+item-bearing regression before interimmerge; no blanket guard/ID change. Shot-only20692/ordered9900 remain passed within their stated scope. New128-line item/global witness is substantively valid; its reviewer counted1 positive node, so my expected2 parameterizations was mistaken. No zero-test result or safety rejection is inferred; execution remains held until the known item crash is repaired. No body has been spent.
 
 Owner12:00 FARM checkpoint is READY in design/run-on-farm-runtime-checkpoint12.md on Runtimeb92 + normalAgent1a50, public014. Candidate work continues separately; no per-worker full or unchanged journey repeat.
+
+## 2026-10-21T12:02:32Z — PEER MESSAGE (peer-runtime-to-agent-20261021T1202-o6-projection-gap.md)
+# Runtime O6 response — 2026-10-21 12:02 UTC
+
+Existing carrier fit ACK: optional closed discriminator on existing text-binding.set plus existing text selection/retention is the right boundary. Current generated schema necessarily lacks that PROPOSED discriminator; that is an expected future coordinated-generation dependency, not a source-shape objection. No generation/activation is implied.
+
+One concrete implementation mismatch remains before qualification: timeline_commit_store.py743–791 maps recorded present-before directly to presence of a native relational shot_text_bindings row. A genuine legacy inline source row is present in the accepted shot payload but absent from that descriptor projection, so it would refuse text_binding_mismatch. The recorder must keep the exact raw before row/order/inverse; do not replace it with absence to satisfy projection.
+
+Recommended smallest existing-layer repair for agreement: Runtime's existing projection distinguishes a canonical descriptor row from the exact authenticated legacy inline source row (which has no relational binding). It projects descriptor presence, while the recorder keeps authored-row presence. Compare legacy source to the accepted base row/owner before writes; inverse restores that exact raw row and relational ABSENCE, and redo creates the exact descriptor again. No new writer/store/table/DTO/endpoint or inline input authority. Agent must also verify the newly Runtime-verified descriptor's content hash/size equals exact UTF-8 bytes of the guarded inline source, using existing deterministic digest helpers; the caller-only equality check cannot establish migration semantics. Empty UTF-8 remains present.
+
+Please ACK that bounded projection/source-equality rule or name the existing recorded identity carrier that should constrain inverse. Runtime will implement the projection counterpart after that concrete agreement; no implementation blocked on another broad read audit. Original inline/native positives remain live and no automatic migration or private017 mutation is authorized. Current completed source review is retained in worker rt-m2-text-inline-o6-carrier-review-ready1158 (its first wire-availability observation is deliberately NOT treated as a semantic blocker).
+
+## Orchestrator 12:08Z: deep audit 1205Z
+D13 preservation: the held replacement source refuses the existing capture.web_page and rendering.sprite_sheet startup hooks. Preserve every existing startup capability in D13 (with a test per hook) before retiring the legacy consumer. Also: run the repo fast checks (lint, plus mypy/pyright where configured) on every merge.
+
+## 2026-10-21T12:08:51Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+
+# Runtime O6 response — 2026-10-21 12:02 UTC
+
+Existing carrier fit ACK: optional closed discriminator on existing text-binding.set plus existing text selection/retention is the right boundary. Current generated schema necessarily lacks that PROPOSED discriminator; that is an expected future coordinated-generation dependency, not a source-shape objection. No generation/activation is implied.
+
+One concrete implementation mismatch remains before qualification: timeline_commit_store.py743–791 maps recorded present-before directly to presence of a native relational shot_text_bindings row. A genuine legacy inline source row is present in the accepted shot payload but absent from that descriptor projection, so it would refuse text_binding_mismatch. The recorder must keep the exact raw before row/order/inverse; do not replace it with absence to satisfy projection.
+
+Recommended smallest existing-layer repair for agreement: Runtime's existing projection distinguishes a canonical descriptor row from the exact authenticated legacy inline source row (which has no relational binding). It projects descriptor presence, while the recorder keeps authored-row presence. Compare legacy source to the accepted base row/owner before writes; inverse restores that exact raw row and relational ABSENCE, and redo creates the exact descriptor again. No new writer/store/table/DTO/endpoint or inline input authority. Agent must also verify the newly Runtime-verified descriptor's content hash/size equals exact UTF-8 bytes of the guarded inline source, using existing deterministic digest helpers; the caller-only equality check cannot establish migration semantics. Empty UTF-8 remains present.
+
+Please ACK that bounded projection/source-equality rule or name the existing recorded identity carrier that should constrain inverse. Runtime will implement the projection counterpart after that concrete agreement; no implementation blocked on another broad read audit. Original inline/native positives remain live and no automatic migration or private017 mutation is authorized. Current completed source review is retained in worker rt-m2-text-inline-o6-carrier-review-ready1158 (its first wire-availability observation is deliberately NOT treated as a semantic blocker).
+
+# CORRECTION to Runtime's item-map finding — 2026-10-21 12:04 UTC
+
+WITHDRAW the item-map crash assertion in Runtime1200 note/status. Exact07dc and42a source both have the correct comprehension expected.update({ref + "/item:" + j: j for j in items.values()}); the review1157 cited nonexistent unpacking code. Source worker1200 independently noticed the mismatch. There is NO demonstrated item-map defect in these commits. Prior non-item tests and original scoped passes stand.
+
+Runtime1205 removes the unnecessary cosmetic source change and retains the useful item-bearing direct test as NEW coverage, not a RED-to-GREEN bug fix. Independent actual-source review is required before port merge because1157's sourcefinding is invalid. No private17 artifact/source mutation or proofbody occurred, no global/item qualification is inferred. The new full item/global witness remains source-only; its1-node positive collection is valid and my earlier2-parameterization expectation is corrected.
+
+The unrelated Boolean-schema generator failure is REAL (normal generator and3 existing contract nodes fail); its dedicated repair continues. Public014/currentb92 unchanged.
+
+# Runtime item/global targeted ownership — 2026-10-21 12:07 UTC
+
+Runtime owns the one NEW item/global changed-behavior targeted node on560f6bce54ed5bea400d8952b9b2d4b7df57e48c with exactnormalAgent4b7/Runtime42a artifacts. Source reviewer1156 found fixture and no-write assertions substantively valid; the sole REQUEST CHANGES was my incorrect expectation of2 parameterizations. Exact selector correctly collects1 positive node, so I accept that bounded source review and corrected the brief expectation. Under owner11:48 no new custody/frozen/exact-native packet is required for this directly changed targeted acceptance test. One central request only, no broader lifecycle journey or previous passing cases replayed. Do not duplicate on Agent.
+
+This is separate from the artifact-free RT08 current port review1207 and does not hold its otherwise targeted/reviewed interimmerge. The alleged item-map crash finding1157 remains WITHDRAWN: correct source iterates values without unpacking. New direct itemunit1pass is extra coverage, not a bugfix. All public014/017 artifact identities remain unchanged.

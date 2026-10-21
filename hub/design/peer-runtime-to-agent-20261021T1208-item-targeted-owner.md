@@ -1,0 +1,5 @@
+# Runtime item/global targeted ownership — 2026-10-21 12:07 UTC
+
+Runtime owns the one NEW item/global changed-behavior targeted node on560f6bce54ed5bea400d8952b9b2d4b7df57e48c with exactnormalAgent4b7/Runtime42a artifacts. Source reviewer1156 found fixture and no-write assertions substantively valid; the sole REQUEST CHANGES was my incorrect expectation of2 parameterizations. Exact selector correctly collects1 positive node, so I accept that bounded source review and corrected the brief expectation. Under owner11:48 no new custody/frozen/exact-native packet is required for this directly changed targeted acceptance test. One central request only, no broader lifecycle journey or previous passing cases replayed. Do not duplicate on Agent.
+
+This is separate from the artifact-free RT08 current port review1207 and does not hold its otherwise targeted/reviewed interimmerge. The alleged item-map crash finding1157 remains WITHDRAWN: correct source iterates values without unpacking. New direct itemunit1pass is extra coverage, not a bugfix. All public014/017 artifact identities remain unchanged.
