@@ -21,6 +21,7 @@ import { useTimelineCommit } from './useTimelineCommit.ts';
 import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { TimelineSchemaIncompatibleError, type DataProvider } from '../data/DataProvider.ts';
 import type { MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { TimelineProvisionedAsset } from '../commands/provisioning.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 import { captureTrackLabelEdit, submitTrackLabelEdit } from '../commands/trackLabelGesture.ts';
 import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
@@ -77,7 +78,7 @@ async function mounted(existingEnv?: Awaited<ReturnType<typeof environment>>, co
   hook.result.current.commit.eventBus.on('scheduleSave', snapshotSaves);
   await waitFor(() => expect(hook.result.current.commands.port).toBeDefined());
   const service = createTimelineCommands(store);
-  return { env, hook, service, snapshotSaves, saveTimeline, saveTimelineAtHead, readiness };
+  return { env, hook, service, store, snapshotSaves, saveTimeline, saveTimelineAtHead, readiness };
 }
 
 async function scoped() {
@@ -108,6 +109,63 @@ async function scoped() {
 }
 
 describe('mounted timeline command session', () => {
+  it('adds a hold only to the detached newborn media row before native parent capture', async () => {
+    const { env, hook, store } = await mounted();
+    const port = hook.result.current.commands.parentClipAddMediaPort!;
+    store.getState().syncOpsSlice({ ...store.getState().ops, parentClipAddMedia: port });
+    const media: MediaSelection = {
+      asset: 'reserved-newborn',
+      generation_id: 'generation-newborn',
+      variant_id: 'variant-newborn',
+      object_id: 'sha256:2222222222222222222222222222222222222222222222222222222222222222',
+      catalog_digest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    };
+    const verified: VerifiedMedia = {
+      selection: { ...media }, media_type: 'video/mp4', size: 123, duration_seconds: 5,
+    };
+    const preparedAsset: TimelineProvisionedAsset & { mediaSelection: MediaSelection } = {
+      assetKey: 'reserved-newborn', mediaType: 'video', durationSeconds: 5,
+      entry: { file: 'newborn.mp4', type: 'video/mp4', duration: 5 }, source: 'registered',
+      mediaSelection: media,
+    };
+    const capture = vi.spyOn(port, 'capture');
+    const finish = vi.spyOn(port, 'finish');
+    const submit = vi.spyOn(port, 'submit');
+    const getProjectVerifiedMedia = vi.fn(async () => verified);
+    const service = createTimelineCommands(store, {
+      parentMediaRuntime: { projectId: 'project-commit', getProjectVerifiedMedia },
+    });
+
+    let result!: Awaited<ReturnType<typeof service.addClip>>;
+    await act(async () => {
+      result = await service.addClip({
+        preparedAsset, trackId: 'V1', time: 10, clipSpanSeconds: 5,
+      });
+    });
+
+    expect(result).toEqual({ ok: true, data: { clipId: expect.any(String), trackId: 'V1' } });
+    expect(getProjectVerifiedMedia).toHaveBeenCalledWith('project-commit', media);
+    expect(capture).toHaveBeenCalledOnce();
+    expect(finish).toHaveBeenCalledOnce();
+    expect(submit).toHaveBeenCalledOnce();
+    const capturedRow = capture.mock.calls[0][0].row;
+    expect(capturedRow).toMatchObject({
+      clipType: 'media', from: 0, to: 5, speed: 1, hold: 5,
+      asset: 'reserved-newborn', track: 'V1', at: 10,
+    });
+    expect(Object.keys(capturedRow)).toEqual([
+      'id', 'at', 'track', 'asset', 'clipType', 'from', 'to', 'speed', 'volume', 'opacity', 'hold',
+    ]);
+    expect(hook.result.current.commit.data!.config.clips).not.toContainEqual(
+      expect.objectContaining({ asset: 'reserved-newborn' }),
+    );
+    expect(env.commits()).toHaveLength(1);
+    expect(env.commits()[0].body?.commands[0]).toMatchObject({
+      op: 'clip.add-media', args: { row: capturedRow, media },
+    });
+    hook.unmount();
+  });
+
   it('initializes a clean mounted save hook with a verified accepted projection', async () => {
     const { env, hook, snapshotSaves, saveTimeline, saveTimelineAtHead } = await mounted();
     expect(hook.result.current.commit.data!.editProjection).toEqual({ kind: 'accepted', head: env.initial.head });
