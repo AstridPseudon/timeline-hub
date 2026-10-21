@@ -1,0 +1,15 @@
+Exact inherited 69-test command (already passed with these exact bytes; not replayed per brief):
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/core/timeline/test_scene_roles.py tests/core/timeline/test_onscreen.py tests/core/timeline/test_onscreen_more.py tests/sdk/test_intent_app_astrid.py tests/sdk/test_timeline_reflow_golden.py tests/packs/rendering/test_labels_overlay.py tests/packs/rendering/test_timeline_visualize_labels.py tests/sdk/test_scene_save_core.py
+Result: 69 passed in 1.95s.
+
+Patch generation:
+git diff --binary 5c5173dcb -- astrid/core/timeline/scene_answers.py astrid/core/timeline/scene_roles.py astrid/sdk/timeline/check.py astrid/sdk/timeline/reflow.py > PATCH
+git diff --binary --no-index /dev/null tests/core/timeline/test_scene_roles.py >> PATCH
+Result: one five-path PATCH; the second diff exits 1 because it is a new file.
+
+Packet validation:
+git -C <fresh-5c5173dcb-extraction> apply --check PATCH
+git -C <fresh-5c5173dcb-extraction> apply PATCH
+git -C <fresh-5c5173dcb-extraction> apply --reverse --check PATCH
+git -C <fresh-5c5173dcb-extraction> apply --reverse PATCH
+Result: forward apply, reverse apply, exact base-tree identity, and second forward apply all passed; all five changed files matched byte-for-byte.
