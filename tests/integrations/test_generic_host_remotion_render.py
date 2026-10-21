@@ -33,7 +33,19 @@ if not DEPENDENCY_ROOT.is_dir():
         allow_module_level=True,
     )
 
-from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient  # noqa: E402
+from astrid.core.execution.generic_host import (  # noqa: E402
+    GenericPackHost,
+    HostError,
+    RuntimeProtocolClient,
+)
+from astrid.core.theme import builtin_theme  # noqa: E402
+from astrid.packs.rendering.rendering.renderers.remotion.root_preparation import (  # noqa: E402
+    _prepared_remotion_root,
+)
+from astrid.packs.rendering.shared.rendering_backend import (  # noqa: E402
+    _resolved_theme_for_render,
+)
+from astrid.sdk.client import AstridClient  # noqa: E402
 from astrid_runtime_client import WorkspaceClient  # noqa: E402
 
 pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
@@ -152,20 +164,17 @@ def _make_media(root: Path) -> tuple[Path, Path]:
     return timeline_path, media / "assets.json"
 
 
-def test_generic_host_remotion_register_claim_execute_settle_and_cas(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
-) -> None:
+def _prepare_remotion_fixture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[Path, Path, Path, Path]:
     node = shutil.which("node")
     if node is None or shutil.which("ffmpeg") is None:
-        pytest.skip("node and ffmpeg are required for the Remotion acceptance render")
+        pytest.skip("node and ffmpeg are required for the Remotion acceptance fixture")
     monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(Path(node).resolve()))
     monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA_ROOT))
     monkeypatch.setenv(
         "PYTHONPATH",
-        os.pathsep.join(
-            str(path)
-            for path in (ROOT, SCHEMA_ROOT)
-        ),
+        os.pathsep.join(str(path) for path in (ROOT, SCHEMA_ROOT)),
     )
 
     workspace = tmp_path / "workspace"
@@ -189,7 +198,15 @@ def test_generic_host_remotion_register_claim_execute_settle_and_cas(
     )
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(remotion.resolve()))
     timeline_path, assets_path = _make_media(workspace)
+    return workspace, remotion, timeline_path, assets_path
 
+
+def test_generic_host_remotion_register_claim_execute_settle_and_cas(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
+) -> None:
+    workspace, remotion, timeline_path, assets_path = _prepare_remotion_fixture(
+        tmp_path, monkeypatch
+    )
     daemon = real_runtime(production_worker_credentials=True)
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -305,5 +322,151 @@ def test_generic_host_remotion_register_claim_execute_settle_and_cas(
         for path in (output, provenance):
             digest = "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
             assert generated.get_object(digest).data == path.read_bytes()
+    finally:
+        daemon.stop()
+
+
+def test_generic_host_normal_imported_theme_reaches_props_and_rejects_local_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
+) -> None:
+    """The ordinary CAS/file-input route carries the imported theme to props."""
+    workspace, remotion, timeline_path, assets_path = _prepare_remotion_fixture(
+        tmp_path, monkeypatch
+    )
+    daemon = real_runtime(production_worker_credentials=True)
+    try:
+        generated = WorkspaceClient(daemon.endpoint, daemon.token)
+        generated.handshake(
+            "generic-remotion-theme-proof",
+            "0.1.0",
+            [
+                "projects:read",
+                "projects:write",
+                "objects:read",
+                "objects:write",
+                "tasks:read",
+                "tasks:write",
+            ],
+        )
+        project = generated.create_project(
+            "Generic Remotion theme proof",
+            slug="generic-remotion-theme-proof",
+            idempotency_key="generic-remotion-theme-project",
+        )
+        project_id = str(project["project_id"])
+
+        owner = AstridClient.open(
+            endpoint=daemon.endpoint,
+            credential=daemon.credential_path,
+            realm_id=daemon.service.realm["id"],
+            actor_id="owner",
+            client_name="generic-remotion-theme-proof-owner",
+            client_version="test",
+            protocol_version="workspace.v1",
+        )
+        explicit_theme = json.loads(json.dumps(builtin_theme()))
+        explicit_theme["id"] = "imported-explicit-theme"
+        explicit_theme["visual"]["color"] = {
+            "fg": "#e8f1ff",
+            "bg": "#26113d",
+            "accent": "#ff8a3d",
+        }
+        theme_source = workspace / "media" / "explicit-theme.json"
+        theme_source.write_text(json.dumps(explicit_theme), encoding="utf-8")
+        imported = owner.media.import_file(
+            project=project_id,
+            path=theme_source,
+            idempotency_key="generic-remotion-explicit-theme",
+        )
+        assert imported.ok
+        descriptor = imported.data
+        theme_object_id = str(descriptor["object_id"])
+        theme_digest = str(descriptor["digest"])
+
+        host = GenericPackHost(
+            pack_roots=[workspace / "astrid" / "packs"],
+            client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+            executor_id="astrid-theme-proof-host",
+            attempt_root=tmp_path / "attempt",
+        )
+        record = next(item for item in host.discover() if item.id == "rendering.render")
+        assert "theme" in {port.name for port in record.definition.inputs}
+        host.preflight(record.id)
+        assert host.capabilities[record.id].ready is True
+        registration = host.register()
+        assert registration["registration"].executor_id == "astrid-theme-proof-host"
+
+        spec = {
+            "inputs": {
+                "timeline": str(timeline_path),
+                "timeline_ref": "timeline-generic-remotion-theme-proof",
+                "assets_registry": str(assets_path),
+                "theme": {
+                    "object_id": theme_object_id,
+                    "digest": theme_digest,
+                    "filename": "theme.json",
+                },
+                "selector": "rendering.remotion",
+            }
+        }
+        admitted = generated.admit_task(
+            capability_id=record.id,
+            capability_digest=record.capability_digest,
+            input_object_ids=[theme_object_id],
+            idempotency_key="generic-remotion-theme-task",
+            project_id=project_id,
+            spec=spec,
+        )
+        task = generated.get_task(admitted["task_id"])
+        attempt = tmp_path / "materialized-attempt"
+        values = host._materialize_inputs(
+            {"spec": task.spec, "input_object_ids": task.input_object_ids},
+            attempt,
+            file_input_names=frozenset(
+                port.name for port in record.definition.inputs if port.type == "file"
+            ),
+        )
+        materialized_theme = Path(values["theme"])
+        assert materialized_theme == Path(values["materialized_objects"]["theme"])
+        assert materialized_theme.name == "theme.json"
+        assert materialized_theme.is_relative_to(attempt / "managed-objects")
+        assert json.loads(materialized_theme.read_text(encoding="utf-8")) == explicit_theme
+
+        staged_video = tmp_path / "prepared" / "unused.mp4"
+        with _prepared_remotion_root(
+            Path(values["timeline"]),
+            Path(values["assets_registry"]),
+            staged_video,
+            provenance_out_path=staged_video,
+            project_dir=remotion,
+            composition_id="TimelineComposition",
+            theme_path=materialized_theme,
+            min_free_gb=None,
+            materialized_root=Path(values["materialized_root"]),
+            materialized_objects=values["materialized_objects"],
+            staging_parent=tmp_path / "prepared",
+            frame_numbers=(0,),
+            frame_output_dir=tmp_path / "frames",
+        ) as prepared:
+            props = prepared[0]
+            assert props["theme"]["id"] == explicit_theme["id"]
+            assert props["theme"]["visual"]["color"] == explicit_theme["visual"]["color"]
+
+        omitted = _resolved_theme_for_render(Path(values["timeline"]), None)
+        builtin = builtin_theme()
+        assert omitted == {"id": builtin["id"], "visual": builtin["visual"]}
+        assert omitted["id"] != explicit_theme["id"]
+
+        forged = tmp_path / "forged-theme.json"
+        forged.write_text(json.dumps(explicit_theme), encoding="utf-8")
+        forged_spec = {"spec": {"inputs": {**task.spec["inputs"], "theme": str(forged)}}}
+        with pytest.raises(HostError, match="requires a managed Runtime object"):
+            host._materialize_inputs(
+                {**forged_spec, "input_object_ids": task.input_object_ids},
+                tmp_path / "forged-attempt",
+                file_input_names=frozenset(
+                    port.name for port in record.definition.inputs if port.type == "file"
+                ),
+            )
     finally:
         daemon.stop()
