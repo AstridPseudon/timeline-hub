@@ -1,6 +1,10 @@
-import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Minimize2 } from 'lucide-react';
+import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
+import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
+import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 
 export interface PanelFullscreenFrameProps {
   title: string;
@@ -17,14 +21,22 @@ function focusInitial(body: HTMLElement): boolean {
 }
 
 /**
- * A panel at the full size of the browser window, above the editor, chat and panes (not the
- * Fullscreen API). The host moves the panel's DOM node into the ref'd body. Modal: Esc exits and
- * Tab stays inside. Whoever opened it returns focus to its own button on exit.
+ * A panel filling the editor area: everything below the app top bar and beside the chat/Tasks
+ * pane. It is portalled into the editor shell root (which is `relative` and already sized by the
+ * layout, so it follows the pane's live width), never over the pane. Where the pane is a
+ * transient overlay (phones, or a page that hosts the pane controls) it fills the window instead.
+ * The host moves the panel's DOM node into the ref'd body. Not modal toward the pane: Esc exits
+ * only from the frame or the editor, and Tab and clicks reach the chat.
  */
 export const PanelFullscreenFrame = forwardRef<HTMLDivElement, PanelFullscreenFrameProps>(function PanelFullscreenFrame(
   { title, onExit },
   bodyRef,
 ) {
+  const shellRoot = useOptionalVideoEditorRuntime()?.shellRootRef?.current ?? null;
+  const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
+  const paneControlsHosted = usePaneControlsHosted();
+  const fillsWindow = (isMobile && !isTablet) || paneControlsHosted || !shellRoot;
   const frameRef = useRef<HTMLDivElement | null>(null);
   const innerBodyRef = useRef<HTMLDivElement | null>(null);
   const onExitRef = useRef(onExit);
@@ -48,53 +60,32 @@ export const PanelFullscreenFrame = forwardRef<HTMLDivElement, PanelFullscreenFr
     return () => observer.disconnect();
   }, []);
 
-  // Esc exits unless a panel consumed it; Tab wraps inside the frame.
+  // Esc exits when focus is in the frame or the editor (or nowhere), not while typing in chat,
+  // and not when a panel already consumed it.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
       const frame = frameRef.current;
       if (!frame) return;
-      if (event.key === 'Escape' && !event.defaultPrevented) {
-        event.preventDefault();
-        onExitRef.current();
-        return;
-      }
-      if (event.key !== 'Tab' || event.defaultPrevented) return;
-      const items = Array.from(frame.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null || el === document.activeElement);
-      if (items.length === 0) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active = document.activeElement;
-      if (!(active instanceof Node) || !frame.contains(active)) {
-        event.preventDefault();
-        first.focus();
-      } else if (event.shiftKey && active === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
-      }
+      const target = event.target instanceof Node ? event.target : null;
+      const inEditor = target === null || target === document.body || target === document.documentElement
+        || frame.contains(target) || Boolean(shellRoot?.contains(target)) || fillsWindow;
+      if (!inEditor) return;
+      event.preventDefault();
+      onExitRef.current();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [shellRoot, fillsWindow]);
 
-  // The page behind stays put while the frame is up.
-  useLayoutEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previous; };
-  }, []);
-
-  // The app's pane handles are fixed at z-[100016] (see shared/config/panes.ts); the frame stacks above them.
   const frame = (
     <div
       ref={frameRef}
       role="dialog"
-      aria-modal="true"
+      aria-modal="false"
       aria-label={title}
       data-panel-fullscreen-frame
-      className="fixed inset-0 z-[100017] flex min-h-0 flex-col bg-background text-foreground"
+      className={cn('flex min-h-0 flex-col bg-background text-foreground', fillsWindow ? 'fixed inset-0 z-[100017]' : 'absolute inset-0 z-50')}
     >
       <div data-panel-fullscreen-titlebar className="flex h-9 shrink-0 select-none items-center gap-2 border-b border-border bg-muted/40 px-3">
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{title}</span>
@@ -112,5 +103,5 @@ export const PanelFullscreenFrame = forwardRef<HTMLDivElement, PanelFullscreenFr
     </div>
   );
 
-  return createPortal(frame, document.body);
+  return createPortal(frame, fillsWindow ? document.body : shellRoot!);
 });
