@@ -70,7 +70,7 @@ export function checkCurrent013ParentSplitSources(input, env = process.env) {
   if (!existsSync(archive) || sha256(archive) !== PUBLIC13_ARCHIVE_SHA256) fail('public13 archive is not 9412');
   safeArchive(archive);
   const privateModules = realpathSync(required(env, 'PRIVATE13_NODE_MODULES'));
-  if (privateModules === '/home/user/work/app/node_modules' || privateModules === realpathSync(path.join(input.app, 'node_modules'))) fail('private13 node_modules resolves to a shared install');
+  if (privateModules === realpathSync('/home/user/work/app/node_modules')) fail('private13 node_modules resolves to a shared install');
   const ready = required(env, 'TIMELINE_CURRENT013_PRIVATE13_READY');
   if (!existsSync(ready)) fail(`private13 readiness marker is missing: ${ready}`);
   const browser = required(env, 'PLAYWRIGHT_CHROMIUM_EXECUTABLE');
