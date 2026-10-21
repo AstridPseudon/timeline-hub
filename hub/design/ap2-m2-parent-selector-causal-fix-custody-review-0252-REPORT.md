@@ -88,7 +88,8 @@ Artifact:          sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4
 Manifest:          a902387c6a2315374f7e73511feea47da30191aba831b48820b3864b773a532d
 Manifest entries:  76
 Schema:            6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d
-Public13 archive:  895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30
+Private App dependency-graph source archive: 895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30
+Official immutable Composition 0.0.13 archive: 9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
 ```
 
 Agent and Runtime source worktrees were clean when checked. The unchanged
