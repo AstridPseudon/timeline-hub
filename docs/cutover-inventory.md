@@ -1002,7 +1002,6 @@ These files match the raw validation regex (`\.from\(|\.rpc\(|functions\.invoke|
 | `tools/video-editor/keyframes/index.ts` | `.from(` | allowedOptions: Array.from(allowedValues), | defer | raw-grep false positive — no supabase usage |
 | `tools/video-editor/lib/assetMetadataUIHelpers.ts` | `.from(` | const sorted = Array.from(matchMap.values()).sort((a, b) => { | defer | raw-grep false positive — no supabase usage |
 | `tools/video-editor/lib/assetParserRuntime.ts` | `.from(` | const blessedKeys = Array.from(BLESSED_REGISTRY_ENTRY_FIELDS); | defer | raw-grep false positive — no supabase usage |
-| `tools/video-editor/lib/compiler-canary.test.ts` | `.from(` | const manyClips = Array.from({ length: 50 }, (_, i) => ({ | defer | raw-grep false positive — no supabase usage |
 | `tools/video-editor/lib/drop-position.ts` | `.from(` | const types = Array.from(event.dataTransfer.types); | defer | raw-grep false positive — no supabase usage |
 | `tools/video-editor/lib/proposal-runtime.ts` | `.from(` | const all = Array.from(proposals.values()); | defer | raw-grep false positive — no supabase usage |
 | `tools/video-editor/lib/sha256.test.ts` | `.from(` | return Array.from(new Uint8Array(hash)) | defer | raw-grep false positive — no supabase usage |
