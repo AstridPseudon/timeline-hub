@@ -8,7 +8,7 @@ import json
 import pytest
 from jsonschema import Draft202012Validator, ValidationError
 
-from astrid.sdk.timeline._materialization import SOURCE_BOUND_OPERATIONS
+from astrid.sdk.timeline._materialization import SOURCE_BOUND_OPERATIONS, SOURCE_BOUND_V2_ADDITIONS
 from astrid.sdk.timeline.commands import _SCHEMA
 from tests.sdk.command_schema_compatibility import compatibility_errors
 
@@ -28,6 +28,7 @@ PRIVATE_LITERAL_UNION_SHA256 = 'da144e6d1c0d3e2ad6ef8246a63a4d4c5fd379b7a0efbedc
 PRIVATE_REFERENCE_ORDER_SHA256 = 'c47a00135a2beb9df35cbbf201ef6b7f900904f4afeb74efe3cf12871271598e'
 RAW_OLD_CANONICAL_SHA256 = 'd3274d7ed2d4bd80691472dd94daf8f4b8041fc184f39f1dd562d5de5d6a15c2'
 SCALAR_SOURCE_UNION_SHA256 = '67444ca7a638e52d556cc1884ceaf582cdbce996614ae197207bca26334986c0'
+OCCURRENCE_SOURCE_UNION_SHA256 = '682464dd3e06f1d6667fbb62217fc5f877ed0161dacb3aaf295683505eb9a92b'
 
 
 def without_move_set(schema):
@@ -88,12 +89,14 @@ def without_transcript(schema):
 def without_new_sources(schema):
     """Reconstruct the pre-movement/reference/order schema without fixtures."""
     schema = without_future_scalar_sources(schema)
+    schema = without_occurrence_source_extensions(schema)
     return without_track_reorder(without_reference(without_move_set(
         without_raw_old_swap(without_transcript(schema)))))
 
 
 def without_reference_and_order(schema):
     schema = without_future_scalar_sources(schema)
+    schema = without_occurrence_source_extensions(schema)
     return without_track_reorder(without_reference(without_raw_old_swap(
         without_transcript(schema))))
 
@@ -123,6 +126,58 @@ def without_future_scalar_sources(schema):
         'never sets null/empty. Asset assignment requires the scoped clip.swap-media or '
         'occurrence.swap-media; transition authoring is outside v1.')
     return schema
+
+
+def without_occurrence_delete_v2(schema):
+    """Strip only the dormant occurrence-child delete branch from a schema copy."""
+    clause = next(item for item in schema['$defs']['EditCommand']['allOf']
+                  if item['if']['properties']['op']['const'] == 'clip.delete')
+    branches = clause['then'].get('anyOf')
+    if branches is None:
+        return schema
+    assert branches is not None and len(branches) == 2
+    old, new = branches
+    assert new['properties']['version'] == {'const': '2'}
+    assert new['properties']['select']['pattern'] == (
+        '^occurrence:(?!.*::)[^/]+/clip:(?!.*::)[^/]+$')
+    assert new['properties']['args'] == old['properties']['args']
+    assert new['properties']['intent'] == {
+        'type': 'object', 'properties': {'ownership': {'const': 'occurrence'}},
+        'additionalProperties': False,
+    }
+    clause['then'] = old
+    return schema
+
+
+def without_occurrence_trim_v2(schema):
+    """Strip only the dormant occurrence source-trim branch from a schema copy."""
+    clause = next(item for item in schema['$defs']['EditCommand']['allOf']
+                  if item['if']['properties']['op']['const'] == 'clip.trim')
+    branches = clause['then'].get('oneOf')
+    if branches is None:
+        return schema
+    assert branches is not None and len(branches) == 2
+    old, new = branches
+    assert old['properties']['version'] == {'const': '1'}
+    assert old['properties']['select']['pattern'] == '^(?!.*::)parent/clip:[^/]+$'
+    assert new['properties']['version'] == {'const': '2'}
+    assert new['properties']['select']['pattern'] == (
+        '^(?!.*::)occurrence:[^/]+/clip:[^/]+$')
+    assert new['properties'].keys() == {'version', 'select'}
+    clause['then'] = {
+        'properties': {
+            'version': old['properties']['version'],
+            'select': old['properties']['select'],
+            'args': clause['then']['properties']['args'],
+            'intent': clause['then']['properties']['intent'],
+        }
+    }
+    return schema
+
+
+def without_occurrence_source_extensions(schema):
+    """Strip both dormant occurrence branches, independently of scalar stripping."""
+    return without_occurrence_trim_v2(without_occurrence_delete_v2(schema))
 
 
 def without_mute(schema):
@@ -268,7 +323,7 @@ def test_only_carrier_additions_separate_union_from_exact_complete_ordinary_sour
 
 
 def test_reviewed_scalar_successors_strip_to_exact_complete_10226_source():
-    candidate = without_future_scalar_sources(copy.deepcopy(_SCHEMA))
+    candidate = without_occurrence_source_extensions(without_future_scalar_sources(copy.deepcopy(_SCHEMA)))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == '322733a57e781847e50228f91b6c6a9237ad2237406a188515c8f9da5e554bcc'
     assert len(candidate['$defs']) == 65
@@ -309,6 +364,17 @@ def test_scalar_join_keeps_position_clears_and_coupled_fade_guards():
                    {'exit': {'type': 'fade-out', 'duration': 1}}):
         with pytest.raises(ValidationError):
             validator.validate({'values': values, 'clear': []})
+
+
+def test_occurrence_extensions_strip_to_scalar_parent_and_child_donor_floor():
+    scalar_parent = without_occurrence_source_extensions(copy.deepcopy(_SCHEMA))
+    assert hashlib.sha256((json.dumps(scalar_parent, indent=2) + '\n').encode()).hexdigest() == \
+        SCALAR_SOURCE_UNION_SHA256
+
+    child_donor = without_occurrence_source_extensions(
+        without_future_scalar_sources(copy.deepcopy(_SCHEMA)))
+    assert hashlib.sha256((json.dumps(child_donor, indent=2) + '\n').encode()).hexdigest() == \
+        '322733a57e781847e50228f91b6c6a9237ad2237406a188515c8f9da5e554bcc'
 
 
 def test_removing_only_group_additions_reconstructs_project_data_bytes():
@@ -371,7 +437,8 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
         'reference-order-85c': without_raw_old_swap(
             without_transcript(
                 without_move_set(
-                    without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))
+                    without_remove(without_literal_fields(
+                        without_occurrence_source_extensions(copy.deepcopy(_SCHEMA))))
                 )
             )
         ),
@@ -393,11 +460,12 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
         raw = (json.dumps(candidate, indent=2) + '\n').encode()
         assert hashlib.sha256(raw).hexdigest() == expected[name], name
     assert hashlib.sha256((json.dumps(_SCHEMA, indent=2) + '\n').encode()).hexdigest() == \
-        SCALAR_SOURCE_UNION_SHA256
+        OCCURRENCE_SOURCE_UNION_SHA256
 
 
 def test_transcript_successor_strips_to_exact_raw_old_schema():
-    candidate = without_transcript(without_future_scalar_sources(copy.deepcopy(_SCHEMA)))
+    candidate = without_transcript(without_occurrence_source_extensions(
+        without_future_scalar_sources(copy.deepcopy(_SCHEMA))))
     raw = (json.dumps(candidate, indent=2) + '\n').encode()
     assert hashlib.sha256(raw).hexdigest() == RAW_OLD_CANONICAL_SHA256
     assert len(candidate['$defs']) == 64
@@ -472,3 +540,4 @@ def test_operation_versions_remain_limited_to_the_reviewed_thirteen_operations()
         'track.set', 'shot.set', 'clip.set-params', 'occurrence.add-media',
         'occurrence.swap-media', 'placement.create', 'placement.unplace', 'shot.pool',
     }
+    assert SOURCE_BOUND_V2_ADDITIONS == {'clip.delete'}

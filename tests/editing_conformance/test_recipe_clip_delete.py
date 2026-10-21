@@ -8,17 +8,18 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
+from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
 from astrid.sdk.timeline.capture import capture_clip_delete
 from astrid.sdk.timeline.commands import execute, operations
-from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.test_recipe_m1_commands import (
     accepted_boundaries,
     inverse,
     later,
 )
-from tests.sdk.test_timeline_commit_provider_document import document_fixture
+from tests.sdk.test_timeline_commit_provider_document import _manifest, document_fixture
 
 FIXTURE = Path(__file__).parent / 'fixtures/recipe_clip_delete.json'
 
@@ -33,8 +34,42 @@ def delete_document():
     rows[1]['app'] = None
     rows[2].pop('app')
     parent['config']['clips'] = copy.deepcopy(rows)
-    from astrid.sdk.timeline.commit import _digest
     document['parent_revision']['content_digest'] = _digest(parent)
+    return document
+
+
+def occurrence_child_document(*, sibling=False):
+    """Small source closure with raw child presence and opaque values in place."""
+    document = document_fixture(shared=False)
+    internal = document['internal_timeline_revisions'][0]
+    rows = internal['payload']['clips']
+    rows.append(dict(copy.deepcopy(rows[0]), id='clip-c', at=8))
+    rows[0]['opaque'] = {'literal': 'keep-a', 'values': [None, False, 0]}
+    rows[1]['nullable'] = None
+    rows[1]['app'] = None
+    rows[2].pop('app')
+    internal['content_digest'] = _digest(internal['payload'])
+    document['dependency_manifest'] = _manifest(
+        document['shot_revisions'], document['internal_timeline_revisions'],
+        document['dependency_manifest']['media'], [])
+    if sibling:
+        shot = copy.deepcopy(document['shot_revisions'][0])
+        child = copy.deepcopy(document['internal_timeline_revisions'][0])
+        shot.update(shot_id='chapter-shot-2', revision_id='shot-2', internal_timeline_revision_id='internal-2')
+        child.update(revision_id='internal-2', timeline_id='chapter-2')
+        shot['payload']['internal_timeline_revision_id'] = 'internal-2'
+        shot['payload']['items'][0]['item_id'] = 'item-2'
+        shot['content_digest'] = _digest(shot['payload'])
+        child['content_digest'] = _digest(child['payload'])
+        occurrence = copy.deepcopy(document['parent_revision']['payload']['occurrences'][0])
+        occurrence.update(occurrence_id='occ-b', shot_id='chapter-shot-2', shot_revision_id='shot-2')
+        document['parent_revision']['payload']['occurrences'].append(occurrence)
+        document['shot_revisions'].append(shot)
+        document['internal_timeline_revisions'].append(child)
+        document['dependency_manifest'] = _manifest(
+            document['shot_revisions'], document['internal_timeline_revisions'],
+            document['dependency_manifest']['media'], [])
+    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
     return document
 
 
@@ -235,8 +270,7 @@ def test_unrecognized_child_transition_shapes_still_refuse_untouched(transition)
 
 
 @pytest.mark.parametrize('select', [None, 'parent', 'clip-b', 'parent/clip:', 'parent/clip:clip-b/extra',
-                                    'parent/clip:a::b', 'shot:s/clip:clip-b',
-                                    'occurrence:occ-a/clip:clip-b'])
+                                    'parent/clip:a::b', 'shot:s/clip:clip-b'])
 def test_only_one_parent_owned_identity_is_supported(select):
     with pytest.raises(CommandError) as error:
         capture_clip_delete(bundle_from_document(delete_document()), select)
@@ -285,3 +319,89 @@ def test_canonical_delete_schema_closes_args_intent_and_version():
     for field, value in [('args', {'cleanup': True}), ('intent', {'ripple': 'selected'}), ('version', '2')]:
         invalid = dict(valid, **{field: value})
         assert list(validator.iter_errors(invalid))
+
+
+def test_occurrence_child_delete_compiles_reload_inverse_redo_and_keeps_source_floor():
+    document = occurrence_child_document(sibling=True)
+    original = bundle_from_document(document, capture_sources=True)
+    ref = 'occurrence:occ-a/clip:clip-b'
+    command = capture_clip_delete(original, ref)
+    assert command['version'] == '2'
+    assert command['intent'] == {'ownership': 'occurrence'}
+    before = copy.deepcopy(original)
+    assert State(original).entity(ref)['app'] is None
+    assert State(original).entity(ref)['nullable'] is None
+    plan = execute(original, [command])
+    assert original == before
+    assert plan.records[0]['writes'] == [{
+        'ref': ref, 'path': [], 'before': present(State(original).entity(ref)), 'after': ABSENT,
+    }]
+    assert any(read['ref'] == 'occurrence:occ-a/source' for read in plan.records[0]['reads'])
+    assert [row['id'] for row in State(plan.bundle).collection('occurrence:occ-a', 'clip')] == [
+        'clip-a', 'clip-c']
+    assert State(plan.bundle).entity('occurrence:occ-b/clip:clip-b') == \
+        State(original).entity('occurrence:occ-b/clip:clip-b')
+    assert State(plan.bundle).entity('occurrence:occ-a/clip:clip-a')['opaque'] == {
+        'literal': 'keep-a', 'values': [None, False, 0]}
+    assert 'app' not in State(plan.bundle).entity('occurrence:occ-a/clip:clip-c')
+    compile_authoring_candidate(plan.bundle)
+    removed_document = json.loads(json.dumps(document_from_bundle(plan.bundle)))
+    reloaded = bundle_from_document(removed_document, capture_sources=True)
+    undone = inverse(reloaded, plan.records)
+    assert document_from_bundle(undone.bundle, source_bundles=(original, reloaded)) == document
+    restored = bundle_from_document(json.loads(json.dumps(document_from_bundle(undone.bundle))),
+                                    capture_sources=True)
+    redone = inverse(restored, accepted_boundaries(undone.records, reloaded, restored))
+    assert document_from_bundle(redone.bundle, source_bundles=(original, reloaded)) == removed_document
+
+
+@pytest.mark.parametrize('change', ['child', 'order'])
+def test_occurrence_child_delete_changed_child_or_order_refuses_atomically(change):
+    original = bundle_from_document(occurrence_child_document(), capture_sources=True)
+    ref = 'occurrence:occ-a/clip:clip-b'
+    command = capture_clip_delete(original, ref)
+    head = copy.deepcopy(original)
+    if change == 'child':
+        State(head).entity(ref)['opaque'] = {'changed': True}
+    else:
+        State(head).config('occurrence:occ-a')['clips'].reverse()
+    before = copy.deepcopy(head)
+    with pytest.raises(CommandError):
+        execute(head, [command])
+    assert head == before
+
+
+def test_occurrence_child_delete_shared_source_refuses_before_any_write():
+    original = bundle_from_document(document_fixture(shared=True), capture_sources=True)
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError) as error:
+        capture_clip_delete(original, 'occurrence:occ-a/clip:clip-b')
+    assert error.value.kind == 'unsupported_ownership'
+    assert original == before
+
+
+def test_occurrence_child_delete_refuses_declared_sibling_dependency_without_writes():
+    original = bundle_from_document(occurrence_child_document(), capture_sources=True)
+    sibling = State(original).entity('occurrence:occ-a/clip:clip-a')
+    sibling['app'] = {'astrid': {'on': 'clip-b'}}
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError) as error:
+        capture_clip_delete(original, 'occurrence:occ-a/clip:clip-b')
+    assert error.value.kind == 'unsupported_dependency'
+    assert error.value.ref == 'occurrence:occ-a/clip:clip-a'
+    assert error.value.path == ['app', 'astrid', 'on']
+    assert original == before
+
+
+def test_occurrence_child_delete_records_scoped_dependency_reads_for_independent_sibling():
+    original = bundle_from_document(occurrence_child_document(), capture_sources=True)
+    ref = 'occurrence:occ-a/clip:clip-b'
+    plan = execute(original, [capture_clip_delete(original, ref)])
+    selection = next(item for item in plan.records[0]['selections']
+                     if item['key'] == 'collection.clips')
+    assert selection['owner'] == 'occurrence:occ-a'
+    assert selection['order'] == ['occurrence:occ-a/clip:clip-a', ref, 'occurrence:occ-a/clip:clip-c']
+    assert any(read['ref'] == 'occurrence:occ-a/clip:clip-a'
+               and read['path'] == ['app', 'astrid', 'on']
+               and read['state'] == ABSENT
+               for read in plan.records[0]['reads'])
