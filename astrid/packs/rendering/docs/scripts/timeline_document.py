@@ -1,21 +1,25 @@
 """Check out, validate, or publish a detached timeline JSON document."""
 
 import argparse
+import hashlib
 import json
 import shlex
 from pathlib import Path
 from urllib.parse import urlparse
 
-from astrid.sdk import AstridClient
 from astrid.core.path_utils import file_uri_to_path
+from astrid.core.timeline.authoring_feedback import authoring_change_summary, publication_feedback
+from astrid.sdk import AstridClient
 from astrid.sdk.authoring_bundle import (
-    import_authoring_media,
     diff_authoring_candidate,
+    import_authoring_media,
     open_authoring_bundle,
     plan_authoring_media,
-    publish_authoring_candidate,
 )
 from astrid.sdk.autobootstrap import ensure_runtime
+from astrid.sdk.timeline.document_diff import DocumentDiffError, document_diff_to_commands
+from astrid.sdk.timeline.store import fetch_bundle
+from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.workspace_client import WorkspaceClient, resolve_runtime_connection
 
 
@@ -27,6 +31,48 @@ def typed(result):
 
 def data(response):
     return response.get("data", response)
+
+
+def resolve_media_rebinds(transport, project_id, candidate, base):
+    """Resolve exact old/new pins for same-alias document rebinds."""
+    selections, verified = {}, []
+    for shot_id, shot in candidate.get("shots", {}).items():
+        before_assets = base["shots"][shot_id]["internal_timeline"].get("registry", {}).get("assets", {})
+        after_assets = shot["internal_timeline"].get("registry", {}).get("assets", {})
+        for alias, old_entry in before_assets.items():
+            new_entry = after_assets.get(alias)
+            if not isinstance(old_entry, dict) or not isinstance(new_entry, dict):
+                continue
+            if old_entry.get("media_id") == new_entry.get("media_id"):
+                continue
+            owner = next(
+                "occurrence:" + row["occurrence_id"]
+                for row in base["placements"]
+                if row["shot_id"] == shot_id
+            )
+
+            def read_pin(entry):
+                generation = entry.get("generationId") or entry.get("generation_id")
+                variant = entry.get("variantId") or entry.get("variant_id")
+                if not isinstance(generation, str) or not isinstance(variant, str):
+                    raise RuntimeError(
+                        f"{owner}/asset:{alias} lacks an exact generation/variant pin; "
+                        "re-check out the document before publishing"
+                    )
+                selection = data(transport.get_project_media_selection(
+                    project_id, {"asset": alias, "generation_id": generation, "variant_id": variant}
+                ))
+                if selection.get("asset") != alias or selection.get("object_id") != entry.get("media_id"):
+                    raise RuntimeError(f"{owner}/asset:{alias} Runtime selection does not match the document")
+                return selection
+
+            old_media, new_media = read_pin(old_entry), read_pin(new_entry)
+            selections[(owner, alias)] = {"old": old_media, "new": new_media}
+            for pin in (old_media, new_media):
+                value = data(transport.get_project_verified_media(project_id, pin))
+                if value not in verified:
+                    verified.append(value)
+    return selections, verified
 
 
 def dump(path, value):
@@ -86,18 +132,6 @@ def resolve_timeline_scope(client, project_id, timeline_ref):
     return timeline_id, inspection
 
 
-class Writer:
-    def __init__(self, transport):
-        self.transport = transport
-
-    def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
-        return data(
-            self.transport.publish_parent_composition(
-                project_id, timeline_id, publication, idempotency_key=idempotency_key
-            )
-        )
-
-
 def checkout(args):
     if args.file.exists():
         raise FileExistsError(f"Refusing to overwrite {args.file}; choose a new checkout file")
@@ -106,6 +140,8 @@ def checkout(args):
         project_id = project.get("project_id") or project["id"]
         timeline_id, inspection = resolve_timeline_scope(client, project_id, args.timeline)
         head = inspection["summary"]["head_revision_id"]
+        history = typed(client.timelines.history(project_id, timeline_id, limit=1))
+        head_pin = history.get("head", {}) if isinstance(history, dict) else {}
     transport = workspace()
     parent = data(transport.get_project_parent_composition_revision(project_id, timeline_id, head))
     shots, internals = {}, {}
@@ -131,6 +167,8 @@ def checkout(args):
         shot_revisions=list(shots.values()),
         internal_timeline_revisions=list(internals.values()),
     )
+    if head_pin.get("revision_id") == head:
+        candidate["base_parent"]["publication_id"] = head_pin.get("publication_id")
     dump(args.file, candidate)
     print(
         json.dumps(
@@ -200,25 +238,111 @@ def main():
     if args.command == "check":
         print(json.dumps(report, indent=2))
         return
-    # Verify selection against this launcher before crossing the publication boundary.
+    # Capture supported document fields against the candidate's exact pinned base.
     with AstridClient.open_from_launcher(start_pack_host=False) as client:
-        typed(client.timelines.open_composition(candidate["project_id"], candidate["timeline_id"]))
-    # Runtime owns replay-before-CAS: an identical accepted request may be
-    # retried after the canonical head advances, while a new request remains
-    # subject to the publication's expected_head.
-    transport = workspace()
-    imported = import_authoring_media(plan, transport)
+        transport = workspace()
+        base_publication_id = candidate.get("base_parent", {}).get("publication_id")
+        if not isinstance(base_publication_id, str) or not base_publication_id:
+            history = typed(client.timelines.history(candidate["project_id"], candidate["timeline_id"], limit=100))
+            head = history.get("head", {}) if isinstance(history, dict) else {}
+            match = next((row for row in history.get("items", [])
+                          if row.get("revision_id") == candidate["base_parent"]["revision_id"]), None)
+            base_publication_id = (head.get("publication_id") if head.get("revision_id") == candidate["base_parent"]["revision_id"]
+                                   else (match or {}).get("publication_id"))
+        if not isinstance(base_publication_id, str) or not base_publication_id:
+            raise RuntimeError("Detached document has no exact base publication pin; re-run checkout before publishing")
+        session = TimelineSession.open(
+            candidate["project_id"], candidate["timeline_id"], client=client,
+            outbox_path=args.file.with_suffix(".outbox.json"),
+            base_revision_id=candidate["base_parent"]["revision_id"],
+            base_publication_id=base_publication_id,
+        )
+        session_state = session._state()
+        if session_state.get("pending") or session_state.get("flight") is not None:
+            base = fetch_bundle(
+                candidate["project_id"], candidate["timeline_id"],
+                revision_id=session_state["base"]["revision_id"], client=client,
+            )
+        else:
+            base = session._bundle(session_state)
+        try:
+            document_diff_to_commands(plan["candidate"], base, defer_media=True)
+        except DocumentDiffError as exc:
+            raise RuntimeError(f"document publish is held: {exc}") from exc
+        imported = import_authoring_media(plan, transport)
+        media_selections, verified_media = resolve_media_rebinds(
+            transport, candidate["project_id"], imported["candidate"], base
+        )
+        try:
+            native = document_diff_to_commands(
+                imported["candidate"], base,
+                media_selections=media_selections,
+                verified_media=verified_media,
+            )
+        except DocumentDiffError as exc:
+            raise RuntimeError(f"document publish is held: {exc}") from exc
     # Save the durable rewrite separately; preserve the editable source file for
     # review/retry if import or parent CAS fails. This is not another media store.
     prepared_path = args.file.with_suffix(".prepared.json")
     dump(prepared_path, imported["candidate"])
     dump(args.file.with_suffix(".imports.json"), imported["imports"])
-    receipt = publish_authoring_candidate(
-        imported["candidate"], Writer(transport), idempotency_key=args.idempotency_key,
-        media_imports=imported["imports"],
-    )
-    receipt["media_imports"] = imported["imports"]
+    command_digest = hashlib.sha256(
+        json.dumps(native["commands"], sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    candidate_digest = hashlib.sha256(
+        json.dumps(imported["candidate"], sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
     receipt_path = args.file.with_suffix(".publication.json")
+    if receipt_path.exists():
+        try:
+            previous = json.loads(receipt_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            previous = None
+        if isinstance(previous, dict) and previous.get("idempotency_key") == args.idempotency_key:
+            if (previous.get("candidate_digest"), previous.get("command_digest")) != (
+                candidate_digest, command_digest
+            ):
+                raise RuntimeError("idempotency key was reused with changed document intent; the original publication remains")
+            print(json.dumps({
+                "receipt": str(receipt_path), "prepared": str(prepared_path),
+                "publication": previous.get("publication"), "update": previous["update"],
+                "summary": previous["summary"], "next_actions": previous["next_actions"],
+                "artifacts": previous["artifacts"],
+            }))
+            return
+    summary = authoring_change_summary(imported["candidate"], media_imports=imported["imports"])
+    if not native["commands"]:
+        receipt = {
+            "idempotency_key": args.idempotency_key,
+            "candidate_digest": candidate_digest,
+            "command_digest": command_digest,
+            "publication": None,
+            "media_imports": imported["imports"],
+            **publication_feedback(summary, {}, project_id=candidate["project_id"],
+                                   timeline_id=candidate["timeline_id"]),
+        }
+    else:
+        publication = session.commit_many(
+            native["commands"], idempotency_key=args.idempotency_key, via="script",
+            verified_media=verified_media,
+            base={"revision_id": candidate["base_parent"]["revision_id"],
+                  "publication_id": base_publication_id},
+        )
+        publication_data = publication.get("data", {})
+        feedback_publication = {"data": {
+            "new_head": publication_data.get("accepted_revision_id"),
+            "old_head": publication_data.get("previous_revision_id"),
+        }}
+        receipt = {
+            "idempotency_key": args.idempotency_key,
+            "candidate_digest": candidate_digest,
+            "command_digest": command_digest,
+            "publication": publication,
+            "media_imports": imported["imports"],
+            **publication_feedback(summary, feedback_publication,
+                                   project_id=candidate["project_id"],
+                                   timeline_id=candidate["timeline_id"]),
+        }
     check_path = args.file.with_suffix(".check.json")
     receipt["artifacts"] = {
         "check": str(check_path), "prepared": str(prepared_path),
