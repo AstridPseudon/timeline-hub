@@ -14,8 +14,10 @@ os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
 sys.dont_write_bytecode = True
 if sys.pycache_prefix is None:
     _pycache_prefix = Path(tempfile.mkdtemp(prefix="astrid-pycache-"))
+    # Only this process moves its bytecode. Do not export PYTHONPYCACHEPREFIX: children already inherit
+    # PYTHONDONTWRITEBYTECODE, and the Remotion runtime validation refuses a process whose environment carries
+    # that startup override (remotion_runtime._UNSUPPORTED_PYTHON_STARTUP), which in-process renders read.
     sys.pycache_prefix = str(_pycache_prefix)
-    os.environ.setdefault("PYTHONPYCACHEPREFIX", str(_pycache_prefix))
     atexit.register(lambda: shutil.rmtree(_pycache_prefix, ignore_errors=True))
 
 from astrid.core.foundation import project_paths as paths
