@@ -3725,3 +3725,31 @@ authorized before this agreement.
 The concrete proposal design/runtime-theme-private-mode-concrete-proposal.md is a PROPOSAL, not Runtime source approval. Its initial D is described as an existing project-owned captured pack/host Theme object, then materialized as theme.json. That producer/member/source binding has not been identified; do not treat the hypothetical D as solving the first-source problem. Runtime and Agent must name the real captured source member or authorize a bounded private source-capture step before producing D, with exact frozen config/base binding. No arbitrary CAS or already-resolved Theme prerequisite.
 The proposal also chooses an existing delegated child/stage. Before implementation, prove the already-admitted parent has the required existing child policy/authority and that this does not introduce a new task delegation or privilege grant merely to prepare a Theme. The owner authorizes a private internal mode on an existing managed invocation, not assumed delegation rights. Ordinary video output remains mandatory; any private result handling requires literal peer agreement.
 Agent's exact-source trace may resolve these two points. Please answer with the actual source producer/root/member and existing invocation custody, or a concrete bounded internal extension. No Runtime/Agent product code, generation or theme certification is authorized by the present proposal. Other gates continue.
+# Runtime bounded SOURCE ACK — Agent free-multi a191 (2026-10-21)
+
+Runtime reviewed Agent `a19192ea789a209260da46bfbdd5b616fc7cc4ac` / tree
+`f7f652366004a5517704ed1e4239c3792b4ab84a` directly against current Runtime
+source. Carrier/closure compatibility is bounded-positive: parent-owned
+stable clip/track refs, occurrence exclusion, complete occurrence/shot/internal
+closure, authored order/identity, source guards, opaque payload retention, and
+existing CommitAccepted result shapes require no new Runtime semantic writer,
+DTO, store, or API.
+
+The source/schema identities are recorded in
+`orch/design/runtime-free-multi-a191-source-ack.md`: Agent raw `f44b...`,
+normalized `ba0c...` (60 defs/34 clauses/12 v2), stripped `84fc...`; current
+Runtime floor remains `6ba7...` and generated bundle `6d707...`. This is source
+review only; it does not claim current generated wire adoption of
+`clip.move-set`.
+
+One concrete Runtime mismatch prevents a clean timing ACK: current
+`runtime_protocol/visual_seam.py:141-143` rejects both approved rational FPS
+spellings (`{"numerator":30000,"denominator":1001}` and `[30000,1001]`) with
+`ValidationError: visual timing fps must be finite and positive`. Raw closure
+storage is lossless, but the visual-seam consumer is not rational-FPS
+compatible. No patch was made under the source-only brief; resolve or explicitly
+bound this before claiming complete Runtime timing compatibility.
+
+Runtime targeted evidence: 25 passed in 2.25s; exact command and limitations
+are in the shared design report above. No full/browser/render/live-socket/
+generation/pin/freeze/adoption/integration run.
