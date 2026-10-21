@@ -18,9 +18,56 @@ from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.door import DoorConfig
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+from runtime_protocol.timeline_commit_store import TimelineCommitStore
+from runtime_protocol.timeline_commit_validation import digest, validate_commit_value
 from tests.door_helpers import HOSTED, PRODUCT_ACTOR, DoorWorld, write_owner_only
 
 pytestmark = pytest.mark.integration
+
+
+def _prepare_authored_source_window(root, row):
+    """Prepare a detached source document before normal daemon startup.
+
+    ``clip.add`` intentionally accepts only literal hold timing. This setup
+    uses the existing closure persistence seam in a new, inactive realm, then
+    leaves normal ``timeline.restore`` to perform the first authored
+    acceptance. The empty bootstrap head and history remain untouched here.
+    """
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    try:
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        project = service.create_project(
+            {"slug": "ordinary-http", "name": "Ordinary HTTP"},
+            idempotency_key="project",
+        )["id"]
+        service.create_timeline(project, "film", idempotency_key="empty-bootstrap")
+        track = {"id": "picture", "kind": "visual", "role": "output", "opaque": [None, False]}
+        payload = {"config": {"clips": [row], "tracks": [track]}, "registry": {},
+                   "clips": [row], "occurrences": []}
+        document = {
+            "schema_version": 1, "project_id": project, "timeline_id": "film",
+            "parent_revision": {"revision_id": "authored-source-window", "payload": payload,
+                                "content_digest": digest(payload)},
+            "shot_revisions": [], "internal_timeline_revisions": [],
+            "dependency_manifest": {"shots": [], "internal_timelines": [],
+                                    "media": [], "documents": []},
+        }
+        validate_commit_value(document, "CanonicalDocument")
+        commits = TimelineCommitStore(
+            service.store,
+            validate_prepared=lambda value: validate_commit_value(value, "PreparedCommit"),
+        )
+        empty_head = commits.head(project, "film")
+        with service.store._mutex, service.store._transaction():
+            commits._validate_closure(document)
+            commits._persist_closure(document)
+            assert commits.revision_closure(project, "film", "authored-source-window") == document
+            assert commits.head(project, "film") == empty_head
+        return project, document
+    finally:
+        service.close()
 
 
 def _run_ordinary_http_hold_clear_case(
@@ -65,7 +112,11 @@ def _run_ordinary_http_hold_clear_case(
     assert f"SCHEMA_DIGEST = {SCHEMA_DIGEST!r}" in agent_metadata
 
     credential = tmp_path / "product.json"
-    RealmStore.initialize(tmp_path / "realm").close()
+    source_document = None
+    if expect_hold_clear:
+        project, source_document = _prepare_authored_source_window(tmp_path / "realm", row)
+    else:
+        RealmStore.initialize(tmp_path / "realm").close()
     daemon = RuntimeDaemon(
         tmp_path / "realm", support_root=tmp_path / "support", authoring_profile="astrid",
         door=DoorConfig(origin=HOSTED, port=0, credential_file=credential),
@@ -90,7 +141,13 @@ def _run_ordinary_http_hold_clear_case(
         assert identity.actor_id == PRODUCT_ACTOR and identity.schema_digest == SCHEMA_DIGEST
         assert daemon.service._timeline_commit_provider.__class__ is agent.RuntimeCommitService
         assert daemon.service._timeline_commit_provider.contract_digest == SCHEMA_DIGEST
-        project = client.create_project("Ordinary HTTP", slug="ordinary-http", idempotency_key="project")["project_id"]
+        created_project = client.create_project(
+            "Ordinary HTTP", slug="ordinary-http", idempotency_key="project",
+        )["project_id"]
+        if source_document is None:
+            project = created_project
+        else:
+            assert created_project == project
         bootstrap_error = None
         try:
             client.create_timeline(project, "film", idempotency_key="empty-bootstrap")
@@ -165,6 +222,29 @@ def _run_ordinary_http_hold_clear_case(
         bundle = open_authoring_bundle(parent, shot_revisions=[], internal_timeline_revisions=[])
         assert bundle["parent"]["clips"] == []
 
+        if source_document is not None:
+            seeded_parent = client.get_project_parent_composition_revision(
+                project, "film", source_document["parent_revision"]["revision_id"],
+            )
+            seeded_bundle = open_authoring_bundle(
+                seeded_parent, shot_revisions=[], internal_timeline_revisions=[],
+            )
+            assert seeded_parent["payload"]["clips"] == [row]
+            assert seeded_bundle["parent"]["clips"] == [row]
+            restored = client.restore_project_parent_composition_revision(
+                project, "film", source_document["parent_revision"]["revision_id"],
+                expected_head=page["head"]["revision_id"],
+                expected_publication_id=page["head"]["publication_id"],
+                idempotency_key="authored-source-window-restore",
+            )
+            assert restored["data"]["canonical_document"] == source_document
+            assert restored["receipt"]["result"] == restored["data"]
+            parent = client.get_project_parent_composition_revision(
+                project, "film", restored["data"]["accepted_revision_id"],
+            )
+            bundle = open_authoring_bundle(parent, shot_revisions=[], internal_timeline_revisions=[])
+            assert bundle["parent"]["clips"] == [row]
+
         def commit(command, key):
             assert {"reads", "selections", "bindings", "created", "expect", "authorship"} <= command.keys()
             head = client.list_timeline_commits(project, "film", limit=100)["head"]
@@ -187,14 +267,18 @@ def _run_ordinary_http_hold_clear_case(
             assert history["items"][-1]["records"]["commands"][0]["command"] == command
             return document
 
-        track = {"id": "picture", "kind": "visual", "role": "output", "opaque": [None, False]}
-        tracked = commit(capture_track_create(bundle, "parent", track), "track-create")
-        assert tracked["parent_revision"]["payload"]["config"]["tracks"] == [track]
-        created = commit(capture_clip_add(agent.bundle_from_document(tracked), "parent", row), "clip-add")
-        assert created["parent_revision"]["payload"]["clips"] == [row]
-        assert created["parent_revision"]["payload"]["config"]["clips"] == [row]
-        held = commit(capture_clip_set(agent.bundle_from_document(created), "parent/clip:title",
-                                       values={"hold": 3}), "hold-set")
+        if source_document is None:
+            track = {"id": "picture", "kind": "visual", "role": "output", "opaque": [None, False]}
+            tracked = commit(capture_track_create(bundle, "parent", track), "track-create")
+            assert tracked["parent_revision"]["payload"]["config"]["tracks"] == [track]
+            created = commit(capture_clip_add(agent.bundle_from_document(tracked), "parent", row), "clip-add")
+            assert created["parent_revision"]["payload"]["clips"] == [row]
+            assert created["parent_revision"]["payload"]["config"]["clips"] == [row]
+            held = commit(capture_clip_set(agent.bundle_from_document(created), "parent/clip:title",
+                                           values={"hold": 3}), "hold-set")
+        else:
+            held = commit(capture_clip_set(agent.bundle_from_document(source_document), "parent/clip:title",
+                                           values={"hold": 3}), "hold-set")
         assert held["parent_revision"]["payload"]["clips"] == [{**row, "hold": 3}]
 
         # Continue on the film created through the public API. A source or
