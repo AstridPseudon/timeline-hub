@@ -605,6 +605,7 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     checkout_timeline = checkout_shot['internal_timeline']
     checkout_clip = next(row for row in checkout_timeline['clips'] if row['id'] == 'clip-1')
     original_narration = copy.deepcopy(checkout_shot['payload'].get('text_bindings'))
+    assert original_narration
     original_metadata = copy.deepcopy(checkout_shot['payload'].get('metadata'))
     original_source_window = {
         key: checkout_clip.get(key) for key in ('from', 'to', 'source_window')
@@ -662,6 +663,7 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     reloaded_document = json.loads(reloaded.read_text())
     assert reloaded_document['base_parent']['revision_id'] == published_document['parent_revision']['revision_id']
     assert reloaded_document['shots'][first_id]['internal_timeline']['registry']['assets']['picture-1']['media_id'] == new_digest
+    assert reloaded_document['shots'][first_id]['payload']['text_bindings'] == original_narration
 
     from runtime_protocol.server import RuntimeHandler
 

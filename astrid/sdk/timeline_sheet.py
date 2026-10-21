@@ -40,26 +40,6 @@ def sheet_version(tl):
     return hashlib.sha256(raw).hexdigest()[:12]
 
 
-def _clip_row(c, *, is_picture=False):
-    element=str(c.element or "media"); element=element[3:] if element.startswith("am-") else element
-    owner=c._tl
-    shot_start=owner._shot_start(c.shot_id)
-    bits=[f"{c.start:6.2f}" if abs(c.start-shot_start)>0.5/owner.fps else "",str(c.track or "visual"),c.layer_name,element,str(c.asset or "")]
-    params=dict(c.data.get("params",{})); text=params.pop("text",None)
-    if text is not None: bits[4]=((bits[4]+" ") if bits[4] else "")+json.dumps(str(text),ensure_ascii=False)
-    extras=[]
-    for key,value in sorted(params.items()):
-        if isinstance(value,(str,int,float,bool)):
-            shown=c.get(key) if key in {"x","y"} else value
-            if isinstance(shown,str): shown=json.dumps(shown,ensure_ascii=False)
-            extras.append(f"{key}={shown:g}" if isinstance(shown,float) else f"{key}={shown}")
-    on=intent.on(c.data)
-    until=intent.until(c.data)
-    timing=(f"on {on}" if on else f"until {until}" if until else f"for {c.duration:g}s" if c.duration and not is_picture else "")
-    bits.extend([timing," ".join(extras)])
-    return bits
-
-
 def render_sheet(tl: Checkout, *, start=None, end=None, banner=None, film=None, cuts: Iterable[str]|None=None, detail=False):
     groups = tl._cut_groups()
     if not groups:

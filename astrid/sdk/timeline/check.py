@@ -191,11 +191,36 @@ class _CheckMixin:
                        "a declared fade/dip (not a gap)")
         return out
 
+    @staticmethod
+    def _scene_warning_spans(spans: list) -> list:
+        """Project adjacent equal coverage/content rows for display warnings only.
+
+        Scene answers retain per-frame membership, findings and identity.  The
+        warning format has no use for membership, so a fade whose visible
+        membership changes can still be reported as one continuous DIP.  Copy
+        rows before extending them so the detailed answer rows are untouched.
+        """
+        summary = []
+        for span in spans:
+            if (summary and summary[-1].end_frame == span.start_frame
+                    and summary[-1].cls == span.cls and summary[-1].content == span.content):
+                previous = summary[-1]
+                if dataclasses.is_dataclass(previous):
+                    summary[-1] = dataclasses.replace(previous, end_frame=span.end_frame)
+                else:
+                    merged = copy.copy(previous)
+                    merged.end_frame = span.end_frame
+                    summary[-1] = merged
+            else:
+                summary.append(copy.copy(span))
+        return summary
+
     def _scene_problems(self, spans: list) -> list[str]:
         """Advisory scene findings, retaining cut addresses and deliberate-hold classification."""
-        sustained, incidental = self.empty_cuts(spans)
-        out = [f"picture {line}" for line in self.picture_gaps(spans)]
-        out += sustained + incidental + self.dips(spans)
+        warning_spans = self._scene_warning_spans(spans)
+        sustained, incidental = self.empty_cuts(warning_spans)
+        out = [f"picture {line}" for line in self.picture_gaps(warning_spans)]
+        out += sustained + incidental + self.dips(warning_spans)
         for span in spans:
             if span.cls not in {"UNKNOWN", "UNAVAILABLE"} and span.content != "UNKNOWN":
                 continue

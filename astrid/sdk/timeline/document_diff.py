@@ -424,4 +424,3 @@ def document_diff_to_commands(candidate, base, *, media_selections=None, verifie
 
 
 __all__ = ["DocumentDiffError", "document_diff_to_commands"]
-

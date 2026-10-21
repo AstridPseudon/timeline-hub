@@ -47,7 +47,7 @@ export const prepareHostScene = (props, b) => {
     undefined, undefined, {}, '', {}, source.resolveHostRegistries(theme), props.compiledTransitions);
 };
 const basis = {width: 1920, height: 1080, fps: 30};
-// Composition 0.0.12's package default is Agent's navy theme. The historical
+// Composition 0.0.13's package default is Agent's navy theme. The historical
 // SSR hashes intentionally use this explicit pre-12 theme so the presenter
 // preservation check does not silently turn an old fixture into a new default.
 assert.deepEqual(DEFAULT_THEME, JSON.parse(readFileSync(path.join(project, 'builtin-default-theme.json'), 'utf8')));
