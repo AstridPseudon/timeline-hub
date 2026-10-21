@@ -30,7 +30,7 @@ TITLE = 'parent/clip:title'
 
 
 @pytest.fixture
-def historical_sheet_film(tmp_path):
+def historical_sheet_film(tmp_path, request):
     # Use PLAN's frozen Runtime main, through its real APIs in another process.
     # Current Runtime then performs its normal migration and history adoption.
     old_runtime = runtime_checkout('8c1830d1ca64a3934c37611a28ffe8db7df879ea')
@@ -50,6 +50,17 @@ def historical_sheet_film(tmp_path):
                          'tracks': [{'id': 'picture', 'kind': 'visual', 'label': 'Before'}],
                          'clips': copy.deepcopy(clips), 'org.example/data': {'null': None}},
                'clips': clips, 'occurrences': [], 'registry': {'assets': {}}}
+    if getattr(request, 'param', None) == 'detached':
+        clips[0].update(track='plate', at=0, hold=10, speed=1, **{'from': 1, 'to': 11},
+                        app={'astrid': {'cut': 'c1', 'layer': 'plate'}})
+        clips[1].update(track='type', at=1, hold=1,
+                        app={'astrid': {'cut': 'c1', 'layer': 'card', 'for': 1}})
+        payload['config']['clips'] = payload['clips'] = []
+        payload['occurrences'] = [{'occurrence_id': 'occ', 'shot_id': 'shot',
+            'shot_revision_id': 'shot-rev', 'placement': {'start_ms': 0},
+            'duration_ms': 10000, 'source_offset': 0, 'speed': 1}]
+        payload['_internal'] = {'tracks': [{'id': 'plate', 'kind': 'visual'}, {'id': 'type', 'kind': 'visual'}],
+                                'output': copy.deepcopy(payload['config']['output']), 'clips': clips}
     root = tmp_path / 'historical-realm'
     script = """
 import json
@@ -66,11 +77,18 @@ try:
     media = service.ingest(project, b'ordinary sheet source', media_type='video/mp4',
                            original_name='source.mp4', idempotency_key='source')['data']['object_id']
     payload = json.load(sys.stdin)
+    internal = payload.pop('_internal', None)
     payload['registry']['assets']['source'] = {'media_id': media, 'type': 'video', 'duration': 12}
+    shots, internals = [], []
+    if internal is not None:
+        internal['registry'] = payload['registry']
+        shots = [{'shot_id': 'shot', 'revision_id': 'shot-rev',
+                  'internal_timeline_revision_id': 'internal-rev', 'payload': {'name': 'Opening', 'items': []}}]
+        internals = [{'timeline_id': 'film', 'revision_id': 'internal-rev', 'payload': internal}]
     service.publish_parent_composition(project, 'film', {
         'project_id': project, 'timeline_id': 'film', 'expected_head': None,
         'parent_revision_id': 'sheet-baseline', 'parent_composition': payload,
-        'shot_revisions': [], 'internal_timeline_revisions': [],
+        'shot_revisions': shots, 'internal_timeline_revisions': internals,
     }, idempotency_key='seed-sheet')
     print(json.dumps({'project_id': project, 'realm_id': service.store.realm['id']}))
 finally:
@@ -172,3 +190,86 @@ def test_http_trim_clear_params_original_basis_reload_undo_retry_or_kept_conflic
     assert _json(redone['data']['canonical_document']) == _json(result['data']['canonical_document'])
     assert path.read_bytes() == draft_bytes
     assert NativeSheet.load(restarted).text == sheet.text
+
+
+@pytest.mark.parametrize('runtime', ['historical'], indirect=True)
+@pytest.mark.parametrize('historical_sheet_film', ['detached'], indirect=True)
+@pytest.mark.parametrize('peer', ['none', 'disjoint', 'same'])
+def test_detached_duration_author_time_basis_through_original_save_and_runtime(
+        runtime, historical_sheet_film, tmp_path, monkeypatch, peer):
+    from astrid.sdk.timeline.checkout import _sheet_session
+    from astrid.sdk.timeline_checkout import Checkout
+    from astrid.sdk.timeline_sheet import apply_sheet, render_sheet
+
+    client = runtime.client()
+    assert historical_sheet_film[1] == runtime.project
+    # Use the normal local draft entrypoint; the export retains native context.
+    tl = Checkout.draft(runtime.project, 'film', client=client)
+    text = render_sheet(tl, cuts=['c1'])
+    edited = text.replace('for 1s', 'for 2s')
+    assert edited != text
+    path = tmp_path / 'detached.sheet'
+    path.write_text(edited)
+    session = _sheet_session(tl)
+    original = json.loads(session.outbox.path.read_bytes())['sheet']
+    ref = original['detached']['bindings']['c1.card']
+    basis = original['basis']
+    if peer != 'none':
+        other = runtime.session(name='peer')
+        other.commit(command('clip.set', ref, {'values': {'hold': 3}, 'clear': []})
+                     if peer == 'same' else label('Concurrent'))
+    before = client.timelines.open_bundle(runtime.project, 'film',
+        revision_id=runtime.history()['head']['revision_id']).data['bundle']
+    tl = Checkout.load(tl.path)
+    assert apply_sheet(tl, path.read_text(), client=client)
+    pending = json.loads(session.outbox.path.read_bytes())['pending']
+    assert len(pending) == 1 and pending[0]['op'] == 'clip.set' and pending[0]['select'] == ref
+    head = copy.deepcopy(runtime.history()['head'])
+    if peer == 'same':
+        with pytest.raises(CommitConflict):
+            tl.save(quiet=True)
+        state = json.loads(session.outbox.path.read_bytes())
+        assert state['base'] == basis and state['sheet']['bundle'] == original['bundle']
+        assert state['flight'] and state['pending'] == pending and state['conflict']
+        assert Checkout.load(tl.path).clip('c1.card').duration == 2
+        assert runtime.history()['head'] == head and path.read_text() == edited
+        return
+    # The save owns the ordinary flight key; lose its response after acceptance.
+    from astrid.sdk import workspace_client
+    real_commit = workspace_client.WorkspaceClient.commit_timeline
+    lost = []
+    def lose_ack(transport, *args, **kwargs):
+        response = real_commit(transport, *args, **kwargs)
+        if not lost:
+            lost.append(True)
+            raise WorkspaceClientError(0, 'unavailable', 'lost detached ACK', {})
+        return response
+    monkeypatch.setattr(workspace_client.WorkspaceClient, 'commit_timeline', lose_ack)
+    with pytest.raises(WorkspaceClientError):
+        tl.save(quiet=True)
+    first = runtime.calls[-1][:2]
+    assert json.loads(first[0])['base_revision_id'] == basis['revision_id']
+    assert json.loads(first[0])['base_publication_id'] == basis['publication_id']
+    accepted = runtime.history()['head']
+    count = len(runtime.history()['items'])
+    runtime.restart()
+    tl = Checkout.load(tl.path)
+    assert apply_sheet(tl, path.read_text(), client=runtime.client())
+    with monkeypatch.context() as retry:
+        retry.setattr(TimelineSession, '_bundle', lambda *a: pytest.fail('retry fetched a basis'))
+        tl.save(quiet=True)
+    assert runtime.calls[-1][:2] == first
+    assert runtime.history()['head'] == accepted and len(runtime.history()['items']) == count
+    after = runtime.client().timelines.open_bundle(runtime.project, 'film',
+        revision_id=accepted['revision_id']).data['bundle']
+    assert State(after).entity(ref)['hold'] == 2
+    session = _sheet_session(tl)
+    undone = session.undo([accepted['publication_id']])
+    restored = bundle_from_document(undone['data']['canonical_document'])
+    assert _json(State(restored).entity(ref)) == _json(State(before).entity(ref))
+    assert restored['parent'] == before['parent']
+    redone = session.undo([undone['receipt']['receipt_id']])
+    assert _json(State(bundle_from_document(redone['data']['canonical_document'])).entity(ref)) == _json(State(after).entity(ref))
+    with pytest.raises(CommitConflict):
+        session.undo([accepted['publication_id']])
+    assert path.read_text() == edited
