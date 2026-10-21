@@ -88,7 +88,7 @@ export function registerFrameParityCases(canvas: ParityCanvas = ORIGINAL_640): v
           canonical_occurrence_ids: [fixture.occurrenceId],
         } } });
       const authoredOutput = record(record(fixture.parent.payload.config).output);
-      expect(request.spec.output_policy).toMatchObject({ format: 'mp4', destination: 'download', filename: authoredOutput.file });
+      expect(request.spec.output_policy).toMatchObject({ format: 'mp4', destination: 'download', filename: `timeline-${fixture.timelineId}.mp4` });
       expect(request.spec.inputs).toBeUndefined();
       const admitted = (await response.json()).data as Task;
       expect(admitted.task_id).toBeTruthy();
