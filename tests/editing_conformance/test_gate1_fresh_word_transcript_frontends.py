@@ -38,7 +38,7 @@ PROJECT = "fresh-word-anchor"
 TIMELINE = "film"
 TARGET = "parent/clip:target"
 SOURCE = "occurrence:source-occurrence/clip:source"
-BASE_AGENT = "786ee084be2b87bcc2c18d1eaea09bb8a4faf710"
+BASE_AGENT = "3d2eb08d66946dd5862045d23471665a124626db"
 NORMAL_RUNTIME = "95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c"
 
 
@@ -269,14 +269,7 @@ def _assert_roundtrip(world, result, before, *, entry):
     assert State(bundle_from_document(redone["data"]["canonical_document"])).entity(TARGET) == after_target
 
 
-_FRONTEND_CARRIER_GAP = pytest.mark.xfail(
-    strict=True,
-    reason="Gate1 requirement: non-Python frontends must carry and hydrate the exact clip.anchor carrier",
-)
-
-
-@pytest.mark.parametrize("entry", ["python", pytest.param("cli", marks=_FRONTEND_CARRIER_GAP),
-                                    pytest.param("sheet", marks=_FRONTEND_CARRIER_GAP)])
+@pytest.mark.parametrize("entry", ["python", "cli", "sheet"])
 def test_fresh_word_transcript_frontends_exact_pin_roundtrip(fresh_realm, tmp_path, capsys, entry):
     world = fresh_realm
     session = world.session(entry)
@@ -302,8 +295,8 @@ def test_fresh_word_transcript_frontends_exact_pin_roundtrip(fresh_realm, tmp_pa
         accepted = _cli(world, path, capsys, pins=_pins(world))
     else:
         sheet = NativeSheet.export(session)
+        encoded = json.dumps(carrier, separators=(",", ":"))
         edited = sheet.text.replace(' # ref "parent/clip:target"',
-                                    ' on="fresh" # ref "parent/clip:target"')
-        sheet.preview(edited)
-        raise AssertionError("NativeSheet unexpectedly accepted a word-anchor carrier")
+                                    f" on={encoded} # ref \"parent/clip:target\"")
+        accepted = sheet.apply(edited, session=session, dry_run=False)
     _assert_roundtrip(world, accepted, before, entry=entry)

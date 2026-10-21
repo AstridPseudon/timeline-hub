@@ -176,12 +176,16 @@ class TimelineSession:
             raise TimelineEditError("outbox identity changed; reconnect to its original realm and actor")
         return state
 
-    def _bundle(self, state):
+    def _bundle(self, state, extra_commands=()):
         from astrid.sdk.timeline.commands import execute
+        from astrid.sdk.timeline.native_source_inputs import materialize_transcript_inputs
         from astrid.sdk.timeline.store import fetch_bundle
 
         bundle = fetch_bundle(self.project_id, self.timeline_id,
                               revision_id=state["base"]["revision_id"], client=self.client)
+        materialize_transcript_inputs(
+            bundle, [*state["pending"], *extra_commands],
+            client=self.client.timelines._client, project=self.project_id)
         return execute(bundle, state["pending"]).bundle if state["pending"] else bundle
 
     def queue_move(self, select, on):
@@ -223,7 +227,7 @@ class TimelineSession:
         from astrid.sdk.timeline.commands import execute
 
         commands = [_native_command(command) for command in commands]
-        return self._stage(lambda state: execute(self._bundle(state), commands).commands)
+        return self._stage(lambda state: execute(self._bundle(state, commands), commands).commands)
 
     def commit(self, command, *, idempotency_key=None, dry_run=False, via="python"):
         """Capture and flush one native command, or retry its original flight."""
@@ -235,7 +239,7 @@ class TimelineSession:
         from astrid.sdk.timeline.commands import execute
 
         commands = [_native_command(command) for command in commands]
-        self._stage(lambda state: execute(self._bundle(state), commands).commands,
+        self._stage(lambda state: execute(self._bundle(state, commands), commands).commands,
                     lambda pending: len(pending) == len(commands) and all(
                         all(equal(saved.get(key), value) for key, value in command.items() if key != "intent")
                         and all(equal(saved["intent"].get(key), value)
