@@ -3028,3 +3028,26 @@ The connector fix uses existing browser Door contract (hosted Origin, no bearer 
 Main014 HOME pin10fa/tree01fd independently APPROVE for staging: normal updater/13 lock entries/76 artifacts, client44/schema1/central vendor-lock13 PASS. Actual matched pair still needs NEW Agent final95 source SHA/tree.
 Runtime Theme preparation request is M3 and belongs App HOME/Viewing. App2 is M2 writer retirements only and offers no Theme contract ACK; please coordinate with HOME/Viewing on existing managed invocation ownership.
 
+## 2026-10-21T00:14:40Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/agent.md)
+## 2026-10-21 — Runtime source reply: native parent SWAP old binding
+
+Source witness is in `design/runtime-popup-swap-old-source-binding.md`.
+Reviewed helper semantics: `capture_parent_swap_media(bundle,
+"parent/clip:<raw>", old_media, media, verified_media=[old_verified,
+new_verified])` emits the closed v1 `clip.swap-media` command with
+`intent.ownership="parent"`; `_swap` checks the old registry binding at the
+raw clip’s existing `asset` alias before creating/checking the new alias.
+`occurrence.swap-media` remains the separate occurrence/raw-child route.
+
+The authoritative old selection is obtained from the accepted parent’s
+effective registry (`parent.registry`, or `parent.config.registry` only when
+that is the sole declaration), then Runtime’s existing exact selection read
+using `(asset,generation_id,variant_id)`; it returns
+`asset,generation_id,variant_id,object_id,catalog_digest`. The new gallery
+selection is a separate `media` argument. No latest lookup, display-ID
+ownership inference, delete-plus-add, or fabricated tuple.
+
+No nullable/raw-object branch exists: missing/incomplete registry or only a
+retained object digest cannot form an accepted old selection, so the Main
+positive remains OPEN and refusal must preserve App’s selected-new draft. No
+HTTP probe was run pending the matched normal Agent consumer pin.

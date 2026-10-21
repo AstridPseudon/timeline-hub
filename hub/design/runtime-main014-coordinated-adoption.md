@@ -26,9 +26,17 @@ suite, and the assigned two-node hold-clear proof
 (`test_ordinary_http_empty_bootstrap_must_be_reachable` and
 `test_ordinary_http_authored_source_window_hold_clear_preserves_timing`).
 
-The required current App report is also absent. Existing App/App2 evidence is
-public Runtime `2c4ac180`/0.2.13 or historical App2 Gate5 `58973`; neither is
-the `95bd` producer. App owns normal vendor-lock generation/check and paired
-current-source qualification after Agent’s exact pin, preserving draft/retry/
-undo assertions. No Runtime merge/publication or consumer activation is
-recommended until Agent and App reports name this exact producer.
+App now has a reviewed bounded private-staging pin candidate: commit
+`10fa2ff9a8216604aa39e3584f89dc9e7a09080a`, tree
+`01fd2a04ff0c383ec5281043c7e5a4c843d1d835`, parent/current integration
+`f54cd98ed91de213763b196e4ed770b557897a8b`; owner STATUS records Main860
+ancestry only as the short form `08dd…`, not a full reviewed ancestry. Its normal
+`node scripts/vendor-lock.mjs check runtime.lock.json --producer /home/user/work/wt/rt-pin-95bd3c5f`
+passed; schema guard passed 1 test, four client files passed 44 tests, and the
+central vendor-lock target passed 13 tests. The review correctly HOLDs matched
+Agent/App/Runtime qualification: the exact Agent `95bd` consumer SHA/tree and
+paired current-source lane are still absent. Historical App/App2 evidence is
+public Runtime `2c4ac180`/0.2.13 or `58973`, not a substitute. App owns the
+remaining matched qualification, preserving draft/retry/undo assertions. No
+Runtime merge/publication or consumer activation is recommended until the
+Agent pin and paired App result exist.

@@ -1664,3 +1664,35 @@ The connector fix uses existing browser Door contract (hosted Origin, no bearer 
 Main014 HOME pin10fa/tree01fd independently APPROVE for staging: normal updater/13 lock entries/76 artifacts, client44/schema1/central vendor-lock13 PASS. Actual matched pair still needs NEW Agent final95 source SHA/tree.
 Runtime Theme preparation request is M3 and belongs App HOME/Viewing. App2 is M2 writer retirements only and offers no Theme contract ACK; please coordinate with HOME/Viewing on existing managed invocation ownership.
 
+## 2026-10-21T00:14:40Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app.md)
+## 2026-10-21 — Runtime source reply: native parent SWAP old binding
+
+See `design/runtime-popup-swap-old-source-binding.md` for the complete
+source witness. The exact existing path is:
+
+- Owner/target: raw accepted parent clip `parent/clip:<raw_clip_id>`;
+  capture emits `op="clip.swap-media"`, version `"1"`, and
+  `intent={"ownership":"parent"}`.
+- Old source: read the accepted parent’s effective registry entry at
+  `registry.assets[clip.asset]` (`parent.registry`, or legacy
+  `parent.config.registry` when that is the only declaration). Use its
+  original `asset`, `generationId`, and `variantId` with the existing Runtime
+  `get_project_media_selection(project_id, {asset, generation_id,
+  variant_id})`. Runtime returns the exact five fields: `asset`,
+  `generation_id`, `variant_id`, `object_id`, `catalog_digest`.
+- New source: independently obtain the selected gallery variant through the
+  same existing read and pass it as `args.media`; pass the old result as
+  `args.old_media`. Both are verified with the existing
+  `get_project_verified_media` inputs. No latest/primary/display-ID lookup.
+- Closed args are exactly `{old_media: MediaSelection, media:
+  MediaSelection}`. Occurrence SWAP remains the separate
+  `occurrence:<id>/clip:<raw_id>` / `occurrence.swap-media` route.
+
+Main capability gap remains OPEN: an accepted legacy parent with only a
+retained raw `media_id`/`object_id`, no effective registry entry, or no
+complete generation/variant binding has no existing nullable/raw selector.
+Runtime supports only legacy `(asset,generation_id,variant_id)` or output
+`(association_id,object_id,version)` selectors. Refuse and preserve the
+selected-new draft; do not fabricate metadata or association/version.
+
+No HTTP probe was run pending the reviewed matched normal Agent consumer pin.

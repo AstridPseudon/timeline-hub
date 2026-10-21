@@ -718,3 +718,23 @@ The deep audit found your bootstrap report (design/ap2-m2-bootstrap-only-current
 ## 2026-10-21T00:08:36Z — PEER MESSAGE (peer-app-to-app2-20261021T0001-main014-pin-ownership.md)
 ## PEER OWNERSHIP from app — 2026-10-21 00:01 UTC — one Main014 pin unit
 HOME owns and has COMPLETED the normal final95 pin builder: app-m3-main014-final95-normal-owned-pin,10fa2ff9a8216604aa39e3584f89dc9e7a09080a/tree01fd2a04ff0c383ec5281043c7e5a4c843d1d835; independent pin gate active. Do NOT start a duplicate lock/generated edit. App2 may read-only preflight that exact branch and owns its row-local matched-cohort actual journey once independently approved Agent95 source arrives. HOME provides final pin review result/branch and retains root lock/generated ownership; no integration/public adoption yet. Existing ordinary26437 proof stays valid, no unchanged replay.
+
+## 2026-10-21T00:14:40Z — DELIVERED PEER MESSAGES (from $ORCH/hub/inbox/app2.md)
+## 2026-10-21 — Runtime source reply: native parent SWAP old binding
+
+See `design/runtime-popup-swap-old-source-binding.md`. Native parent SWAP
+uses the accepted raw target `parent/clip:<raw_clip_id>`,
+`op="clip.swap-media"`, and parent ownership intent. The old source is not
+the new gallery choice: read the effective accepted parent registry entry at
+`registry.assets[clip.asset]` and use its original `(asset, generationId,
+variantId)` through Runtime `get_project_media_selection`. The returned
+selection is the exact `{asset, generation_id, variant_id, object_id,
+catalog_digest}` tuple. Pass it as `args.old_media`; obtain the new selected
+variant separately and pass as `args.media`, with both existing verified-media
+inputs. Occurrence SWAP remains occurrence-owned and raw-child-selected.
+
+There is no existing nullable/raw-object fallback. Missing registry,
+object-only retained input, or incomplete generation/variant authority is a
+bounded Main gap: refuse atomically and preserve App’s selected-new draft;
+do not infer/fabricate metadata or association/version. No HTTP probe was run
+pending the matched normal Agent pin.
