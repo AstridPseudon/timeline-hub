@@ -32,7 +32,7 @@ import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { harnessUnavailableReason, sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { APP_ENTRY_ROUTE, commandOutboxes, currentHead, dragTimelineClip, dropFileOnTimeline, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, holdTimelineCreation, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI, waitForAudit } from './support/app.ts';
-import { boundedEvidenceText, relevantEvidenceUrl, summarizeEvidenceBody, type BoundedEvidenceBody } from './support/auto-real-proxy-helpers.ts';
+import { allowlistedEvidenceMethod, allowlistedEvidenceStatus, relevantEvidenceRoute, type EvidenceMethod, type EvidenceRoute } from './support/auto-real-proxy-helpers.ts';
 import { timelineBase as runtimeTimelineBase, timelineFromList, type TimelineListPage, type TimelineScope } from './support/timeline-scope.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
@@ -106,42 +106,27 @@ const journey = {
 };
 
 interface BoundedBrowserEvidence {
-  requests: Array<{ method: string; url: string }>;
-  responses: Array<{ method: string; url: string; status: number; body?: BoundedEvidenceBody }>;
-  console: Array<{ type: string; text: string }>;
-  errors: string[];
-  pending: Array<Promise<void>>;
+  requests: Array<{ method: EvidenceMethod; route: EvidenceRoute }>;
+  responses: Array<{ method: EvidenceMethod; route: EvidenceRoute; status: number }>;
 }
 
 const browserEvidence = new Map<Page, BoundedBrowserEvidence>();
 
 function captureBoundedBrowserEvidence(page: Page): void {
-  const evidence: BoundedBrowserEvidence = { requests: [], responses: [], console: [], errors: [], pending: [] };
+  const evidence: BoundedBrowserEvidence = { requests: [], responses: [] };
   browserEvidence.set(page, evidence);
   page.on('request', (request) => {
-    const url = relevantEvidenceUrl(request.url());
-    if (url && evidence.requests.length < 80) evidence.requests.push({ method: request.method(), url });
+    const method = allowlistedEvidenceMethod(request.method());
+    const route = relevantEvidenceRoute(request.url());
+    if (method && route && evidence.requests.length < 80) evidence.requests.push({ method, route });
   });
   page.on('response', (response) => {
-    const url = relevantEvidenceUrl(response.url());
-    if (!url || evidence.responses.length >= 80) return;
-    const record = { method: response.request().method(), url, status: response.status() } as BoundedBrowserEvidence['responses'][number];
-    evidence.responses.push(record);
-    if (response.status() < 400) return;
-    evidence.pending.push((async () => {
-      try {
-        record.body = summarizeEvidenceBody(JSON.parse(await response.text()));
-      } catch {
-        // A non-JSON response has no safe bounded refusal summary.
-      }
-    })());
-  });
-  page.on('console', (message) => {
-    if (!/drop|media|native|refus|commit/i.test(message.text()) || evidence.console.length >= 80) return;
-    evidence.console.push({ type: message.type(), text: boundedEvidenceText(message.text()) });
-  });
-  page.on('pageerror', (error) => {
-    if (evidence.errors.length < 40) evidence.errors.push(boundedEvidenceText(error.message));
+    const method = allowlistedEvidenceMethod(response.request().method());
+    const route = relevantEvidenceRoute(response.url());
+    const status = allowlistedEvidenceStatus(response.status());
+    if (method && route && status !== undefined && evidence.responses.length < 80) {
+      evidence.responses.push({ method, route, status });
+    }
   });
 }
 
@@ -154,14 +139,11 @@ test.beforeEach(async ({ astrid }) => {
 test.afterEach(async ({ astrid, page }, testInfo) => {
   const evidence = [...browserEvidence.values()];
   if (evidence.length) {
-    await Promise.allSettled(evidence.flatMap((item) => item.pending));
     journey.facts = {
       ...journey.facts,
       boundedBrowserEvidence: {
         requests: evidence.flatMap((item) => item.requests).slice(0, 160),
         responses: evidence.flatMap((item) => item.responses).slice(0, 160),
-        console: evidence.flatMap((item) => item.console).slice(0, 160),
-        errors: evidence.flatMap((item) => item.errors).slice(0, 80),
       },
     };
   }
