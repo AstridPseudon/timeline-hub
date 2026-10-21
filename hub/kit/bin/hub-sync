@@ -91,7 +91,7 @@ for a in $AREAS; do
 done
 # peer messages written to $ORCH/hub/inbox/<area>.md (a path managers reach for, but which never syncs) are delivered into that
 # area's real INBOX, then renamed. Main forwards to every area; remote machines forward what is addressed to their own areas.
-for f in $ORCH/hub/inbox/*.md; do [ -f "$f" ] || continue; a=$(basename $f .md); [ -d $ORCH/managers/$a ] || continue
+for f in $ORCH/hub/inbox/*.md; do [ -f "$f" ] || continue; a=$(basename $f .md); [ -d $ORCH/managers/$a ] || a=${a%%-*}; [ -d $ORCH/managers/$a ] || continue   # <area>.md or <area>-<slug>.md
   { echo; echo "## $now — DELIVERED PEER MESSAGES (from \$ORCH/hub/inbox/$a.md)"; cat $f; } >> $ORCH/managers/$a/INBOX.md; mv $f $f.delivered-$(date +%s); done
 if [ $M = main ]; then
   for a in $REMOTE_AREAS; do
