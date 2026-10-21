@@ -1,10 +1,18 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, configure, fireEvent, getConfig, render, screen, waitFor } from '@testing-library/react';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgentChatEditorContext } from '@/shared/contexts/AgentChatContext';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes';
+
+// Waits here are hang ceilings, not timing assertions: on an oversubscribed
+// machine the default 1000 ms asyncUtilTimeout expires while real transport
+// work is still progressing. Scoped to this file and restored afterwards.
+const HANG_CEILING_MS = 10_000;
+const defaultAsyncUtilTimeout = getConfig().asyncUtilTimeout;
+beforeAll(() => { configure({ asyncUtilTimeout: HANG_CEILING_MS }); });
+afterAll(() => { configure({ asyncUtilTimeout: defaultAsyncUtilTimeout }); });
 
 // The editor is the host boundary. Chat, its hooks, ACP routes, transport,
 // presentation, attachment selection and query cache are all real.
