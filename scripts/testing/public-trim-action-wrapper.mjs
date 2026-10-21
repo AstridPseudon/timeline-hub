@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { appendFileSync, closeSync, cpSync, existsSync, mkdirSync, openSync, realpathSync, writeFileSync } from 'node:fs';
+import { appendFileSync, closeSync, constants, cpSync, existsSync, fchmodSync, lstatSync, mkdirSync, openSync, realpathSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -29,10 +29,36 @@ function isInside(parent, child) {
   return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
 }
 
-function prepareRecordDirectory(recordDir, outputDir) {
+function rejectSymlinkPath(target, name) {
+  const root = path.parse(target).root;
+  let current = root;
+  for (const part of target.slice(root.length).split(path.sep).filter(Boolean)) {
+    current = path.join(current, part);
+    try {
+      if (lstatSync(current).isSymbolicLink()) fail(`${name} must not contain symlinks`);
+    } catch (error) {
+      if (error?.code === 'ENOENT') break;
+      throw error;
+    }
+  }
+}
+
+function ensurePrivateRecordDirectory(recordDir) {
+  rejectSymlinkPath(recordDir, 'RECORD_DIR');
   mkdirSync(recordDir, { recursive: true, mode: 0o700 });
+  let fd;
+  try {
+    fd = openSync(recordDir, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+    fchmodSync(fd, 0o700);
+  } finally {
+    if (fd !== undefined) closeSync(fd);
+  }
+  return realpathSync(recordDir);
+}
+
+function prepareRecordDirectory(recordDir, outputDir) {
+  const record = ensurePrivateRecordDirectory(recordDir);
   mkdirSync(outputDir, { recursive: true, mode: 0o700 });
-  const record = realpathSync(recordDir);
   const output = realpathSync(outputDir);
   if (isInside(output, record)) fail('RECORD_DIR must be outside PLAYWRIGHT_OUTPUT_DIR');
   return { record, output };
