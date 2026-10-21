@@ -13,6 +13,14 @@ export interface ClipSplitCapturePort {
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
 }
 
+/** Keep the existing explicit parent binding policy used by native trim/patch ports. */
+export function isLiteralParentClip(current: TimelineData, clipId: string): boolean {
+  const matches = current.resolvedConfig.clips.filter((clip) => clip.id === clipId);
+  if (matches.length !== 1) return false;
+  const identity = matches[0].app?.canonical as { clipRef?: string; occurrenceId?: string } | undefined;
+  return identity?.occurrenceId === undefined && identity?.clipRef === `parent/clip:${clipId}`;
+}
+
 /** Conservative ingress cohort; unsupported shapes retain their established writer. */
 export function supportsParentClipSplit(rows: readonly JsonObject[], registry: JsonObject, clipId: string): boolean {
   const matches = rows.filter((row) => row.id === clipId);

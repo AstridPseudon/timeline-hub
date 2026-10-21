@@ -47,7 +47,7 @@ import {
 } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import { splitParentClip } from '../commands/clipSplitGesture.ts';
+import { isLiteralParentClip, splitParentClip } from '../commands/clipSplitGesture.ts';
 import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
 import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 
@@ -935,7 +935,11 @@ export function createTimelineCommands(
       const managedBlock = checkManagedClip(input.clipId);
       if (managedBlock) return managedBlock;
 
-      if (state.ops.clipSplit?.supports?.({ clipId: input.clipId, current })) {
+      const nativeSupported = state.ops.clipSplit?.supports?.({ clipId: input.clipId, current }) === true;
+      if (isLiteralParentClip(current, input.clipId) && !nativeSupported) {
+        return failure('mutation_failed', 'Native clip split is unavailable for this parent clip.');
+      }
+      if (nativeSupported) {
         if (!canSplitClipAtTime(clip, input.time)) {
           return failure('invalid_argument', 'The requested split time is outside the clip’s playable range.');
         }

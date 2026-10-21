@@ -6,7 +6,7 @@ import { captureClipSplitEdit, clipSplitPreview, projectClipSplitPreview, submit
 import { buildTimelineData } from '../lib/timeline-data.ts';
 import type { JsonObject } from './types.ts';
 import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
-import fixture from './fixtures/recipe_m2_clip_split.json';
+import fixture from './fixtures/recipeM2ClipSplit.ts';
 
 async function setup() {
   const document = structuredClone(fixture.input) as CanonicalDocument;

@@ -1,4 +1,7 @@
 // @vitest-environment node
+// Cohesion exception: this 538-line parity suite keeps every complete native
+// command/record/bundle equality case beside its shared donor projection; splitting
+// it would separate the exact recorder and replay assertions that qualify the cut.
 import { describe, expect, it } from 'vitest';
 import type { CanonicalDocument, CommandRecord, EditCommand, JSON as JsonValue } from '@/integrations/runtime/timeline-commit-types.ts';
 import { authoringBundleFromDocument } from './authoringBundle.ts';
@@ -11,7 +14,7 @@ import {
 import { AuthoredState, ClipMoveError, freezeJson } from './clipMovePrimitives.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
 import { captureClipMove, finishClipMove } from './clipMoveCapture.ts';
-import fixture from './fixtures/recipe_m2_clip_split.json';
+import fixture from './fixtures/recipeM2ClipSplit.ts';
 
 type SplitFixture = {
   input: CanonicalDocument;

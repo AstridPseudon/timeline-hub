@@ -6,7 +6,7 @@ import type { DataProvider, TimelineCommandBasis } from '../data/DataProvider.ts
 import { buildTimelineData } from '../lib/timeline-data.ts';
 import { getClipTimelineDuration } from '../lib/config-utils.ts';
 import { captureClipSplitEdit, submitClipSplitEdit } from '../commands/clipSplitGesture.ts';
-import fixture from '../commands/fixtures/recipe_m2_clip_split.json';
+import fixture from '../commands/fixtures/recipeM2ClipSplit.ts';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
 import { useClipEditing } from './useClipEditing.ts';
 import { createTimelineCommands } from './useTimelineCommandsService.ts';
@@ -19,7 +19,7 @@ vi.mock('@/shared/components/ui/runtime/sonner.tsx', () => ({ toast: { error: vi
 
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-async function mounted(database = createFakeIndexedDB(), changeDocument?: (document: TimelineCommandBasis['canonicalDocument']) => void, currentTime = 3) {
+async function mounted(database = createFakeIndexedDB(), changeDocument?: (document: TimelineCommandBasis['canonicalDocument']) => void, currentTime = 3, withNativePort = true) {
   vi.stubGlobal('indexedDB', database);
   const held = new Set<string>();
   vi.stubGlobal('navigator', { locks: { request: async (key: string, _options: unknown, work: (lock: unknown) => Promise<unknown>) => {
@@ -58,11 +58,19 @@ async function mounted(database = createFakeIndexedDB(), changeDocument?: (docum
         refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn(), canonicalDraft: null } });
     const editing = useClipEditing({ dataRef: commit.dataRef, resolvedConfig: commit.data?.resolvedConfig ?? null,
       selectedClipId: 'clip-a', selectedTrack: null, currentTime, selectClip,
-      setSelectedTrackId: vi.fn(), applyEdit, clipSplit: commands.clipSplitPort });
+      setSelectedTrackId: vi.fn(), applyEdit, clipSplit: withNativePort ? commands.clipSplitPort : undefined });
     return { commit, commands, editing };
   });
   await waitFor(() => expect(hook.result.current.commands.clipSplitPort).toBeDefined());
   return { hook, provider, scheduled, snapshotWriteBlockedRef, applyEdit, selectClip, store, setClean: (value: boolean) => { clean = value; } };
+}
+
+function bindExplicitParent(document: TimelineCommandBasis['canonicalDocument']): void {
+  const payload = document.parent_revision.payload as Record<string, unknown>;
+  for (const rows of [payload.clips, (payload.config as Record<string, unknown>).clips]) {
+    const first = (rows as Array<Record<string, unknown>>)[0];
+    first.app = { ...first.app as object, canonical: { clipRef: 'parent/clip:clip-a' } };
+  }
 }
 
 describe('staged single-parent split at the mounted command-session boundary', () => {
@@ -417,15 +425,47 @@ describe('production single-parent split ingress', () => {
     env.hook.unmount();
   });
 
-  it('keeps the SDK legacy split positive when no native port is supplied', async () => {
-    const env = await mounted();
+  it.each(['selected', 'context menu', 'keyboard'] as const)('refuses a parent split visibly when the UI native port is missing from the %s ingress', async (ingress) => {
+    const env = await mounted(undefined, bindExplicitParent, 3, false);
+    const before = env.hook.result.current.commit.data;
+    act(() => {
+      if (ingress === 'selected') env.hook.result.current.editing.handleSplitSelectedClip();
+      else if (ingress === 'context menu') env.hook.result.current.editing.handleSplitClipAtTime('clip-a', 3);
+      else env.hook.result.current.editing.handleSplitClipsAtPlayhead(['clip-a']);
+    });
+    expect(toast.error).toHaveBeenCalledWith('Native clip split is unavailable for this parent clip.');
+    expect(env.hook.result.current.commit.data).toBe(before);
+    expect(env.applyEdit).not.toHaveBeenCalled();
+    expect(env.provider.commitTimeline).not.toHaveBeenCalled();
+    expect(env.scheduled).not.toHaveBeenCalled();
+    env.hook.unmount();
+  });
+
+  it('refuses a parent split visibly when the UI native port declines support', async () => {
+    const env = await mounted(undefined, bindExplicitParent);
+    vi.spyOn(env.hook.result.current.commands.clipSplitPort!, 'supports').mockReturnValue(false);
+    const before = env.hook.result.current.commit.data;
+    act(() => { env.hook.result.current.editing.handleSplitClipAtTime('clip-a', 3); });
+    expect(toast.error).toHaveBeenCalledWith('Native clip split is unavailable for this parent clip.');
+    expect(env.hook.result.current.commit.data).toBe(before);
+    expect(env.applyEdit).not.toHaveBeenCalled();
+    expect(env.provider.commitTimeline).not.toHaveBeenCalled();
+    env.hook.unmount();
+  });
+
+  it.each(['missing', 'unsupported'] as const)('refuses a parent split through the SDK when the native port is %s', async (kind) => {
+    const env = await mounted(undefined, bindExplicitParent);
     const state = env.store.getState();
+    const port = env.hook.result.current.commands.clipSplitPort!;
+    if (kind === 'unsupported') vi.spyOn(port, 'supports').mockReturnValue(false);
     state.syncSlices({ data: { ...state.data, dataRef: env.hook.result.current.commit.dataRef },
-      ops: { ...state.ops, clipSplit: undefined, applyEdit: env.applyEdit } });
+      ops: { ...state.ops, clipSplit: kind === 'missing' ? undefined : port, applyEdit: env.applyEdit, selectClip: env.selectClip } });
+    const before = env.hook.result.current.commit.data;
     const result = createTimelineCommands(env.store).splitClip({ clipId: 'clip-a', time: 3 });
-    expect(result.ok).toBe(true);
-    expect(env.applyEdit).toHaveBeenCalledOnce();
-    expect(env.applyEdit.mock.calls[0][0].resolvedConfig.clips).toHaveLength(3);
+    expect(result).toMatchObject({ ok: false, error: { code: 'mutation_failed',
+      message: 'Native clip split is unavailable for this parent clip.' } });
+    expect(env.hook.result.current.commit.data).toBe(before);
+    expect(env.applyEdit).not.toHaveBeenCalled();
     expect(env.provider.commitTimeline).not.toHaveBeenCalled();
     env.hook.unmount();
   });

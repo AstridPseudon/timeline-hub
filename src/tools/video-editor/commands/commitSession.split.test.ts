@@ -17,7 +17,7 @@ import { compileTimelinePatch } from '../lib/timeline-patch.ts';
 import { captureClipSplitEdit, submitClipSplitEdit } from './clipSplitGesture.ts';
 import type { AuthoredBundle } from './clipMovePrimitives.ts';
 import { projectClipSplitPreview } from './clipSplitGesture.ts';
-import fixture from './fixtures/recipe_m2_clip_split.json';
+import fixture from './fixtures/recipeM2ClipSplit.ts';
 
 const golden = fixture as unknown as { input: TimelineCommandBasis['canonicalDocument'] };
 const scope = { projectId: 'project-1', timelineId: 'film', realmId: 'realm-1', actorId: 'actor-1' };
