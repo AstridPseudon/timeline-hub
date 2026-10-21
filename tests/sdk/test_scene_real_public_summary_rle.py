@@ -5,11 +5,10 @@ from copy import deepcopy
 from astrid.core.rendering.scene_answers import host_frames_at
 from astrid.sdk import timeline_filmstrip
 from astrid.sdk.timeline_checkout import Checkout
+from tests.packs.rendering.conftest import host_project, native_host  # noqa: F401,F811
 from tests.packs.rendering.test_scene_host import BASIS, props
 from tests.sdk.test_coverage_empty_cut import _empty_cut_bundle
 from tests.sdk.test_scene_caller_preservation import _scene_context, _scene_result
-
-pytest_plugins = ("tests.packs.rendering.test_scene_host",)
 
 
 def _real_spans(answers):
@@ -48,7 +47,7 @@ def _summary_rows(monkeypatch, spans):
     return seen[0]
 
 
-def test_real_public_scene_answers_reach_rle_summary(native_host, monkeypatch):
+def test_real_public_scene_answers_reach_rle_summary(native_host, monkeypatch):  # noqa: F811
     source = props(
         [
             {"id": "content", "track": "plate", "clipType": "custom-alias", "at": 0, "hold": 1},
