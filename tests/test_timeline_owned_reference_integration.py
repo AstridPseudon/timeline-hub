@@ -225,7 +225,9 @@ def test_actual_provider_preserves_original_owned_unplaced_reference_contract(
             with pytest.raises(RuntimeErrorBase) as refused:
                 _commit(restarted, project, _body(project, _head(restarted, project), unowned),
                         "unowned-reference-key")
-            assert refused.value.status == 409
+            # Foreign raw ownership is deliberately mapped to the same
+            # non-disclosing NotFoundError as any missing managed object.
+            assert refused.value.status == 404
             assert "raw media" in str(refused.value).lower()
             assert tuple(restarted.store.conn.iterdump()) == before
 
