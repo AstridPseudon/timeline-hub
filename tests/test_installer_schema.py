@@ -99,18 +99,18 @@ def test_remotion_lock_pins_the_immutable_composition_public_entry():
     package = json.loads((ROOT / "remotion/package.json").read_text(encoding="utf-8"))
     lock = json.loads((ROOT / "remotion/package-lock.json").read_text(encoding="utf-8"))
     composition = lock["packages"]["node_modules/@banodoco/timeline-composition"]
-    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.13.tgz"
+    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.14.tgz"
     public_exports = (".", "./evaluation", "./theme-api", "./registries",
                       "./effects.generated", "./animations.generated",
                       "./transitions.generated", "./registry.generated")
 
     assert package["dependencies"]["@banodoco/timeline-composition"] == (
-        "file:artifacts/banodoco-timeline-composition-0.0.13.tgz"
+        "file:artifacts/banodoco-timeline-composition-0.0.14.tgz"
     )
-    assert composition["version"] == "0.0.13"
-    assert composition["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.13.tgz"
+    assert composition["version"] == "0.0.14"
+    assert composition["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.14.tgz"
     assert composition["integrity"] == (
-        "sha512-6qgEAcfYqEGuiesoRlBFj1QnEgDKdZsisQdrMivONtc3lAct8thdzVbNV6L7lY5f2D9vvTIZHTD8vKhfWgLOuQ=="
+        "sha512-Bgf9lHdk3CJCTsA3Jbd5WW9UYCHEZQTF3VFM1YO6dimZ+q8bQ8cX6CZ4FCfClBNgg10DQ1bozGMqFCpkGNXvvw=="
     )
     assert "node_modules/@banodoco/timeline-schema" not in lock["packages"]
     assert "node_modules/@banodoco/timeline-theme-2rp" not in lock["packages"]
@@ -119,7 +119,7 @@ def test_remotion_lock_pins_the_immutable_composition_public_entry():
         manifest = json.load(archive.extractfile("package/package.json"))
         files = {member.name for member in archive.getmembers()}
     assert manifest["name"] == "@banodoco/timeline-composition"
-    assert manifest["version"] == "0.0.13"
+    assert manifest["version"] == "0.0.14"
     for export in public_exports:
         for target in manifest["exports"][export].values():
             assert target.startswith("./dist/")
