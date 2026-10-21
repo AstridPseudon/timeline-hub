@@ -3,6 +3,12 @@ from __future__ import annotations
 
 import base64
 import copy
+import hashlib
+import inspect
+import json
+import os
+import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -10,8 +16,59 @@ from tests.helpers.runtime import runtime_checkout, use_runtime
 
 RUNTIME_COMMIT = "c3d26567ff6fe4e20a959476d40aff90ad23a0ca"
 TRUSTED_BOOTSTRAP_HELPER = "54db299d6ebb9ec98649895760a4cd37cee6c147"
+RUNTIME_TREE = "f3ae49d38454ce73a9c91a954bb530b3ce51c122"
+RUNTIME_SCHEMA_DIGEST = "sha256:07c0668b2fb16226475429ec65637404c0b2e885e1b88e67f896e249089d6680"
+RUNTIME_ARTIFACT_VERSION = "sha256:2df8ebf4fb17cae1b62e78a262b2b20b393770d045d0ef8748207ac7efacbfbb"
+RUNTIME_VISUAL_SEAM_SHA256 = "85986492c86e42ec84fb7bed23f069cc0b711f69558fff65ab77ee8f1534178b"
+HELPER_SOURCE_SHA256 = "9f61af7be9518aa9d2442091257d6cdae99c65db0773377a53244f8807b30e13"
 
 pytestmark = pytest.mark.integration
+
+
+def _assert_exact_private_sources():
+    """Keep the qualification tied to the immutable Runtime and normal Agent provider."""
+    runtime_source = Path(os.environ["ASTRID_RUNTIME_CHECKOUT"]).resolve()
+    assert subprocess.run(
+        ["git", "-C", str(runtime_source), "rev-parse", "HEAD"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip() == RUNTIME_COMMIT
+    assert subprocess.run(
+        ["git", "-C", str(runtime_source), "rev-parse", "HEAD^{tree}"],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip() == RUNTIME_TREE
+
+    runtime = runtime_checkout(RUNTIME_COMMIT)
+    import runtime_protocol.service as runtime_service
+    from runtime_protocol.contract_metadata import SCHEMA_DIGEST
+
+    from astrid.sdk.timeline.commit import create_runtime_commit_service
+
+    imported_service = Path(runtime_service.__file__).resolve()
+    assert hashlib.sha256(imported_service.read_bytes()).hexdigest() == (
+        hashlib.sha256((runtime / "runtime_protocol/service.py").read_bytes()).hexdigest()
+    )
+    assert hashlib.sha256((runtime / "runtime_protocol/visual_seam.py").read_bytes()).hexdigest() == RUNTIME_VISUAL_SEAM_SHA256
+    manifest = json.loads((runtime / "contract/artifacts.json").read_text())
+    assert manifest["version"] == RUNTIME_ARTIFACT_VERSION
+    assert manifest["artifacts"]["contract/schemas/edit-command.json"] == (
+        "sha256:84fc0863a1f925f32c00b171eaf51b8f06afb7d34064296394bc8592386cbbc5"
+    )
+    assert manifest["artifacts"]["runtime_protocol/schemas/timeline-commit-bundle.json"] == (
+        "sha256:bbbae375837456b267d9f0c7de89b962966da79a24abe7c4720301423b333bcb"
+    )
+    assert SCHEMA_DIGEST == RUNTIME_SCHEMA_DIGEST
+
+    helper = runtime_checkout(TRUSTED_BOOTSTRAP_HELPER)
+    import timeline_trusted_bootstrap
+
+    assert Path(timeline_trusted_bootstrap.__file__).resolve().is_relative_to(helper)
+    assert hashlib.sha256((helper / "tests/timeline_trusted_bootstrap.py").read_bytes()).hexdigest() == HELPER_SOURCE_SHA256
+
+    provider_source = Path(inspect.getfile(create_runtime_commit_service)).resolve()
+    assert provider_source == Path(__file__).resolve().parents[2] / "astrid/sdk/timeline/commit.py"
+    provider = create_runtime_commit_service()
+    assert provider.contract_digest == RUNTIME_SCHEMA_DIGEST
+    assert provider.provider_id == "astrid-v1"
 
 
 def test_public_seed_refuses_exact_rational_fps_legacy_input_atomically(tmp_path):
@@ -319,6 +376,7 @@ def test_real_migration_accepted_reload_inverse_exact_legacy_redo_same_ids(legac
 
 def test_real_existing_lane_move_reload_inverse_exact_retry(group_move_runtime):
     """Qualify the one normal C3d migration -> retrack consumer sequence."""
+    _assert_exact_private_sources()
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_port import route_path
 
