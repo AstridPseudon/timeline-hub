@@ -79,12 +79,15 @@ describe('production transcript lane renderer', () => {
     const originalHeight = window.innerHeight;
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: 320 });
     let targetRect = { left: 200, top: 210, width: 60, height: 24 };
+    // One row, so the lane is exactly the chip's box.
+    const laneRect = () => targetRect;
     const makeRect = (left: number, top: number, width: number, height: number) => ({
       x: left, y: top, left, top, width, height, right: left + width, bottom: top + height, toJSON: () => ({}),
     }) as DOMRect;
     const originalRect = HTMLElement.prototype.getBoundingClientRect;
     const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this.getAttribute('data-testid') === 'transcript-lane-occurrence') return makeRect(targetRect.left, targetRect.top, targetRect.width, targetRect.height);
+      if (this.getAttribute('data-testid') === 'transcript-lane-renderer') return makeRect(laneRect().left, laneRect().top, laneRect().width, laneRect().height);
       if (this.getAttribute('role') === 'tooltip') return makeRect(0, 0, 150, 64);
       return originalRect.call(this);
     });
@@ -108,6 +111,63 @@ describe('production transcript lane renderer', () => {
       rectSpy.mockRestore();
       Object.defineProperty(window, 'innerHeight', { configurable: true, value: originalHeight });
     }
+  });
+
+  it('clears the whole lane, not just the chip, so the tooltip never covers the row above', () => {
+    const originalHeight = window.innerHeight;
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 320 });
+    const makeRect = (left: number, top: number, width: number, height: number) => ({
+      x: left, y: top, left, top, width, height, right: left + width, bottom: top + height, toJSON: () => ({}),
+    }) as DOMRect;
+    // Two overlapping items pack into two rows; the renderer is 48px tall, so each row is 24px.
+    let laneTop = 200;
+    const rowTop = (id: string | null) => laneTop + (id === 'lower' ? 24 : 0);
+    const originalRect = HTMLElement.prototype.getBoundingClientRect;
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const testId = this.getAttribute('data-testid');
+      if (testId === 'transcript-lane-renderer') return makeRect(0, laneTop, 400, 48);
+      if (testId === 'transcript-lane-occurrence') return makeRect(200, rowTop(this.getAttribute('data-item-id')), 60, 24);
+      if (this.getAttribute('role') === 'tooltip') return makeRect(0, 0, 150, 64);
+      return originalRect.call(this);
+    });
+    try {
+      const items = [occurrence('upper', 2, 6), occurrence('lower', 3, 5)];
+      const view = render(<TranscriptLane {...rendererProps(items)} />);
+      const [upper, lower] = screen.getAllByTestId('transcript-lane-occurrence');
+      expect(upper.getAttribute('data-item-id')).toBe('upper');
+      expect(lower.style.top).toBe('50%');
+
+      // Row 1 is focused/hovered: the tooltip goes above the lane (200 - 64 - 8), not above the row (224 - 64 - 8).
+      fireEvent.focus(lower);
+      expect(screen.getByRole('tooltip').style.top).toBe('128px');
+      expect(screen.getByRole('tooltip').style.left).toBe('155px');
+      view.unmount();
+
+      // No room above the lane: flip below the whole lane (40 + 48 + 8), not below the chip.
+      laneTop = 40;
+      render(<TranscriptLane {...rendererProps(items)} />);
+      fireEvent.mouseEnter(screen.getAllByTestId('transcript-lane-occurrence')[0]);
+      expect(screen.getByRole('tooltip').style.top).toBe('96px');
+    } finally {
+      rectSpy.mockRestore();
+      Object.defineProperty(window, 'innerHeight', { configurable: true, value: originalHeight });
+    }
+  });
+
+  it('keeps the chip box inside its interval: no horizontal padding on the button, 2px floor', () => {
+    const view = render(<TranscriptLane {...rendererProps([
+      occurrence('short', 0, 0.1),
+      occurrence('next', 0.1, 0.9),
+    ], { pixelsPerSecond: 32 })} />);
+    const [short, next] = screen.getAllByTestId('transcript-lane-occurrence');
+    // 0.1 s at 32 px/s is 3.2px; the button may not pad itself wider than that.
+    expect(short).toHaveStyle({ left: '0px', width: '3.2px', paddingLeft: '0px', paddingRight: '0px' });
+    expect(next).toHaveStyle({ left: '3.2px', paddingLeft: '0px', paddingRight: '0px' });
+    expect(within(short).getByText(/Transcript text for short/)).toHaveStyle({ paddingLeft: '6px', paddingRight: '6px' });
+    view.unmount();
+
+    render(<TranscriptLane {...rendererProps([occurrence('sliver', 0, 0.01)])} />);
+    expect(screen.getByTestId('transcript-lane-occurrence')).toHaveStyle({ width: '2px' });
   });
 
   it('keeps repeated and cross-asset occurrences distinct from selection, focus, and simultaneous playback', () => {
