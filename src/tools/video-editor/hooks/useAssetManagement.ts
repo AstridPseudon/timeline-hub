@@ -23,6 +23,7 @@ import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/pro
 import {
   type TimelineData,
 } from '@/tools/video-editor/lib/timeline-data.ts';
+import { isTransientUploadPlaceholder } from '@/tools/video-editor/lib/external-drop-utils.ts';
 import {
   buildAssetDropEdit,
   estimateAssetDuration,
@@ -295,13 +296,17 @@ export function useAssetManagement({
         });
         return false;
       }
+      const current = getDataRef().current;
+      const nativeRemoveClipId = removeClipId && (!current || !isTransientUploadPlaceholder(current, removeClipId))
+        ? removeClipId
+        : undefined;
       return Promise.resolve(commands.addClip({
         preparedAsset: prepared,
         ...(trackId !== undefined ? { trackId } : {}),
         time,
         forceNewTrack,
         insertAtTop,
-        ...(removeClipId !== undefined ? { removeClipId } : {}),
+        ...(nativeRemoveClipId !== undefined ? { removeClipId: nativeRemoveClipId } : {}),
       })).then((result) => {
         if (!result.ok) {
           const description = result.error.message.trim().slice(0, NATIVE_REFUSAL_MESSAGE_LIMIT)

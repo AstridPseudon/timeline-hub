@@ -71,6 +71,20 @@ function buildDropData(): TimelineData {
   } as TimelineData;
 }
 
+function addUploadPlaceholder(data: TimelineData, clipId = 'uploading-1'): TimelineData {
+  return {
+    ...data,
+    rows: [{
+      ...data.rows[0]!,
+      actions: [{ id: clipId, start: 3, end: 8, effectId: `effect-${clipId}` }],
+    }],
+    meta: {
+      ...data.meta,
+      [clipId]: { asset: 'uploading:clip.mp4', track: 'V1', clipType: 'hold', hold: 5 },
+    },
+  };
+}
+
 function renderAssetManagement(provider: Record<string, unknown>, args = buildArgs()) {
   const toastError = vi.fn();
   const runtime = buildRuntimeValue(provider);
@@ -242,6 +256,107 @@ describe('useAssetManagement Runtime media imports', () => {
     });
     expect(addClip.mock.calls[0]?.[0].preparedAsset.mediaSelection).toBe(mediaSelection);
     expect(args.applyEdit).not.toHaveBeenCalled();
+  });
+
+  it('hands a local upload placeholder to native ADD without claiming an accepted replacement', async () => {
+    const addClip = vi.fn().mockResolvedValue({ ok: true, data: { clipId: 'clip-1', trackId: 'V1' } });
+    const args = buildArgs();
+    args.commands = { addClip: addClip as unknown as TimelineCommands['addClip'] };
+    args.dataRef.current = addUploadPlaceholder(buildDropData());
+    const { result } = renderAssetManagement({
+      supportsDirectAssetUpload: true,
+      resolveAssetUrl: vi.fn(),
+    }, args);
+    const prepared = result.current.prepareGenerationAsset({
+      generationId: 'generation-1',
+      variantId: 'variant-1',
+      variantType: 'video',
+      mediaId: 'sha256:object',
+      imageUrl: 'https://runtime.test/object.mp4',
+      metadata: { content_type: 'video/mp4', original_filename: 'object.mp4' },
+      mediaImport: {
+        provider: 'runtime',
+        project: 'runtime-project-id',
+        importOperationId: 'operation-1',
+        generationId: 'generation-1',
+        variantId: 'variant-1',
+        assetId: 'sha256:asset',
+        entry: { file: 'https://runtime.test/object.mp4', type: 'video/mp4' },
+        mediaSelection: {
+          asset: 'sha256:asset',
+          generation_id: 'generation-1',
+          variant_id: 'variant-1',
+          object_id: 'sha256:object',
+          catalog_digest: 'sha256:catalog',
+        },
+      },
+    });
+
+    await act(async () => {
+      await result.current.handleAssetDrop('sha256:asset', 'V1', 3, false, false, prepared ?? undefined, 'uploading-1');
+    });
+
+    expect(addClip).toHaveBeenCalledWith({
+      preparedAsset: prepared,
+      trackId: 'V1',
+      time: 3,
+      forceNewTrack: false,
+      insertAtTop: false,
+    });
+  });
+
+  it('keeps an accepted-row replacement refusal visible and preserves the authored row', async () => {
+    const addClip = vi.fn().mockResolvedValue({
+      ok: false,
+      error: { code: 'invalid_argument', message: 'Native prepared parent media only supports a new manual clip.' },
+    });
+    const args = buildArgs();
+    args.commands = { addClip: addClip as unknown as TimelineCommands['addClip'] };
+    const data = buildDropData();
+    data.rows[0]!.actions = [{ id: 'clip-authored', start: 3, end: 8, effectId: 'effect-clip-authored' }];
+    data.meta['clip-authored'] = { asset: 'asset-authored', track: 'V1', clipType: 'media', from: 0, to: 5 };
+    args.dataRef.current = data;
+    const { result, toastError } = renderAssetManagement({
+      supportsDirectAssetUpload: true,
+      resolveAssetUrl: vi.fn(),
+    }, args);
+    const prepared = result.current.prepareGenerationAsset({
+      generationId: 'generation-1',
+      variantId: 'variant-1',
+      variantType: 'video',
+      mediaId: 'sha256:object',
+      imageUrl: 'https://runtime.test/object.mp4',
+      metadata: { content_type: 'video/mp4', original_filename: 'object.mp4' },
+      mediaImport: {
+        provider: 'runtime',
+        project: 'runtime-project-id',
+        importOperationId: 'operation-1',
+        generationId: 'generation-1',
+        variantId: 'variant-1',
+        assetId: 'sha256:asset',
+        entry: { file: 'https://runtime.test/object.mp4', type: 'video/mp4' },
+        mediaSelection: {
+          asset: 'sha256:asset',
+          generation_id: 'generation-1',
+          variant_id: 'variant-1',
+          object_id: 'sha256:object',
+          catalog_digest: 'sha256:catalog',
+        },
+      },
+    });
+
+    let placed = true;
+    await act(async () => {
+      placed = await result.current.handleAssetDrop('sha256:asset', 'V1', 3, false, false, prepared ?? undefined, 'clip-authored');
+    });
+
+    expect(placed).toBe(false);
+    expect(addClip).toHaveBeenCalledWith(expect.objectContaining({ removeClipId: 'clip-authored' }));
+    expect(args.dataRef.current?.rows[0]?.actions[0]?.id).toBe('clip-authored');
+    expect(args.applyEdit).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith('Failed to save asset', {
+      description: 'Native prepared parent media only supports a new manual clip.',
+    });
   });
 
   it('refuses a prepared video without its original selection before local editing', async () => {

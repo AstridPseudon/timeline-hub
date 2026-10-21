@@ -824,7 +824,21 @@ describe('useExternalDrop', () => {
       current: makeDropTestData({ registry: { assets: {} } }),
     } as React.MutableRefObject<DropTestData>;
     const pendingOpsRef = { current: 0 } as React.MutableRefObject<number>;
-    const applyEdit = vi.fn();
+    const applyEdit = vi.fn((mutation: unknown) => {
+      const edit = mutation as {
+        rows?: DropTestData['rows'];
+        metaUpdates?: DropTestData['meta'];
+        metaDeletes?: string[];
+      };
+      if (!dataRef.current) return;
+      const meta = { ...dataRef.current.meta, ...(edit.metaUpdates ?? {}) };
+      for (const clipId of edit.metaDeletes ?? []) delete meta[clipId];
+      dataRef.current = {
+        ...dataRef.current,
+        ...(edit.rows ? { rows: edit.rows } : {}),
+        meta,
+      };
+    });
     const onSeekToTime = vi.fn();
     const registerGenerationAsset = vi.fn((generation: { generationId: string; imageUrl: string }) => {
       dataRef.current.registry.assets[`asset-${generation.generationId}`] = {
