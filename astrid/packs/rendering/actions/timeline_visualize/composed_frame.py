@@ -107,6 +107,7 @@ class CaptureSceneLabels:
             "basis": {"width": self._basis["width"], "height": self._basis["height"],
                       "fps": self._basis["fps"]},
             "addresses": dict(self._addresses),
+            "source_identity": self._source_identity,
         }
 
     def labels(self, frame: int, *, source_identity: str):

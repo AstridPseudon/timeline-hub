@@ -40,6 +40,46 @@ def labels_for_scene(answer: Mapping[str, Any], addresses: Mapping[str, str]) ->
     return labels
 
 
+def _labels_for_scene_facts(
+    facts: Mapping[str, Any], frame: int, fps: float,
+    canvas: Mapping[str, int] | None = None, *, source_identity: str = "",
+) -> tuple[list[SceneLabel], dict[str, int]]:
+    """Format one already-admitted Scene row without re-evaluating visibility."""
+    from astrid.core.rendering.scene_answers import SceneQueryUnavailable
+
+    answer = facts.get("answer")
+    basis = facts.get("basis")
+    addresses = facts.get("addresses")
+    if not source_identity or facts.get("source_identity") != source_identity:
+        raise SceneQueryUnavailable("scene label source mismatch")
+    if (not isinstance(answer, Mapping) or type(answer.get("frame")) is not int
+            or answer["frame"] != frame or not isinstance(answer.get("layers"), list)):
+        raise SceneQueryUnavailable("scene label frame mismatch")
+    if (not isinstance(basis, Mapping) or type(basis.get("width")) is not int
+            or type(basis.get("height")) is not int or basis["width"] <= 0
+            or basis["height"] <= 0 or not isinstance(basis.get("fps"), (int, float))
+            or isinstance(basis["fps"], bool) or not math.isclose(float(basis["fps"]), fps,
+                                                                     rel_tol=0.0, abs_tol=1e-9)):
+        raise SceneQueryUnavailable("scene label basis mismatch")
+    if (answer.get("width") != basis["width"] or answer.get("height") != basis["height"]
+            or not isinstance(addresses, Mapping)
+            or any(not isinstance(clip_id, str) or not isinstance(address, str) or not address
+                   for clip_id, address in addresses.items())):
+        raise SceneQueryUnavailable("scene label source mapping mismatch")
+    if any(not isinstance(layer, Mapping) or layer.get("clipId") not in addresses
+           for layer in answer["layers"]):
+        raise SceneQueryUnavailable("scene label clip mapping mismatch")
+    scene_canvas = {"width": basis["width"], "height": basis["height"]}
+    requested_canvas = dict(canvas or scene_canvas)
+    if requested_canvas != scene_canvas:
+        raise SceneQueryUnavailable("scene label canvas mismatch")
+    try:
+        labels = labels_for_scene(answer, addresses)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise SceneQueryUnavailable("scene label row is malformed") from exc
+    return labels, scene_canvas
+
+
 def canvas_of(config: Mapping[str, Any]) -> dict[str, int]:
     """Return the declared visual canvas, defaulting to 1920 by 1080."""
     canvas = ((config.get("theme_overrides") or {}).get("visual") or {}).get("canvas") or {}
@@ -51,8 +91,14 @@ def canvas_of(config: Mapping[str, Any]) -> dict[str, int]:
 
 
 def labels_for(config: Mapping[str, Any], frame: int, fps: float,
-               canvas: Mapping[str, int] | None = None) -> list:
+               canvas: Mapping[str, int] | None = None, *, scene: Mapping[str, Any] | None = None,
+               source_identity: str = "") -> list:
     """Visible timeline clips at a frame, top first, using the canonical on-screen model."""
+    if scene is not None:
+        labels, _scene_canvas = _labels_for_scene_facts(
+            scene, frame, fps, canvas, source_identity=source_identity,
+        )
+        return labels
     from astrid.core.timeline.onscreen import element_coverage, visible_at
 
     types = {str(clip.get("clipType")) for clip in config.get("clips") or ()
@@ -61,9 +107,12 @@ def labels_for(config: Mapping[str, Any], frame: int, fps: float,
 
 
 def addresses_at(config: Mapping[str, Any], frame: int, fps: float,
-                 canvas: Mapping[str, int] | None = None) -> list[str]:
+                 canvas: Mapping[str, int] | None = None, *, scene: Mapping[str, Any] | None = None,
+                 source_identity: str = "") -> list[str]:
     """Visible addresses at or above the canonical 5 percent opacity threshold, top first."""
-    return [item.address for item in labels_for(config, frame, fps, canvas) if item.opacity >= MIN_OPACITY]
+    return [item.address for item in labels_for(
+        config, frame, fps, canvas, scene=scene, source_identity=source_identity,
+    ) if item.opacity is None or item.opacity >= MIN_OPACITY]
 
 
 def draw_labels(image, layers: Sequence[Any], *, canvas: Mapping[str, int],
@@ -105,10 +154,15 @@ def draw_labels(image, layers: Sequence[Any], *, canvas: Mapping[str, int],
 
 
 def overlay_labels_frame(image, config: Mapping[str, Any], frame: int, fps: float, *,
-                         capture=None, source_identity: str = ""):
+                         capture=None, source_identity: str = "", scene: Mapping[str, Any] | None = None):
     """Draw the visible addresses for one exact decoded frame on a display copy."""
     if capture is not None:
         layers, canvas = capture.labels(frame, source_identity=source_identity)
+        return draw_labels(image, layers, canvas=canvas, tile_size=image.size)
+    if scene is not None:
+        layers, canvas = _labels_for_scene_facts(
+            scene, frame, fps, source_identity=source_identity,
+        )
         return draw_labels(image, layers, canvas=canvas, tile_size=image.size)
     canvas = canvas_of(config)
     return draw_labels(image, labels_for(config, frame, fps, canvas), canvas=canvas, tile_size=image.size)

@@ -10,7 +10,7 @@ def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, fra
     """``addresses`` on each frame-index row: the layers on screen at that frame, top first (``c08.loras``).
 
     ``receipt['cards']`` is the compact projection of ``cards`` in the same order (compact_render_receipt)."""
-    from .overlays.labels import addresses_at, canvas_of
+    from .overlays.labels import _labels_for_scene_facts, addresses_at, canvas_of
 
     config = snapshot.get("config") or {}
     fps = float(Fraction(*snapshot["fps_rational"]))
@@ -23,7 +23,15 @@ def attach_frame_addresses(receipt: dict, snapshot: Mapping, cards: list, *, fra
         else:
             from .overlays.labels import MIN_OPACITY
 
-            labels, _canvas = capture.labels(frame, source_identity=frame_provider.source_identity)
+            facts = getattr(capture, "_frame_facts", None)
+            if callable(facts):
+                labels, _canvas = _labels_for_scene_facts(
+                    facts(frame, source_identity=frame_provider.source_identity),
+                    frame, fps, canvas,
+                    source_identity=frame_provider.source_identity,
+                )
+            else:
+                labels, _canvas = capture.labels(frame, source_identity=frame_provider.source_identity)
             row["addresses"] = [item.address for item in labels
                                 if item.opacity is None or item.opacity >= MIN_OPACITY]
     return receipt

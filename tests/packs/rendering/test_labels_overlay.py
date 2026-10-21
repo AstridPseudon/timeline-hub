@@ -3,18 +3,22 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from PIL import Image
 
+from astrid.core.rendering.scene_answers import SceneQueryUnavailable
 from astrid.core.timeline.onscreen import Visible
 from astrid.packs.rendering.actions.timeline_visualize import fast_lane
+from astrid.packs.rendering.actions.timeline_visualize.composed_frame import CaptureSceneLabels
 from astrid.packs.rendering.actions.timeline_visualize.contact_sheet import cut_tile_label
-from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import attach_frame_addresses
 from astrid.packs.rendering.actions.timeline_visualize.fast_lane import Moment
+from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import attach_frame_addresses
 from astrid.packs.rendering.actions.timeline_visualize.layers.base import discover, resolve_layers
 from astrid.packs.rendering.actions.timeline_visualize.overlays.labels import (
     addresses_at,
     draw_labels,
     labels_for,
+    overlay_labels_frame,
 )
 
 FPS = 10.0
@@ -71,6 +75,47 @@ def test_labels_for_lists_the_layers_on_screen_top_first_and_not_the_ones_not_ye
     assert [v.z for v in labels_for(CONFIG, 3, FPS)] == [1, 2]  # z indexes every listed clip (c03 is z 0, off screen)
     assert addresses_at(CONFIG, 3, FPS) == ["c02.card", "c01.field"]
     assert addresses_at(CONFIG, 16, FPS) == ["c03.late", "c02.card", "c01.field"]  # c03 starts at 1.5 s, top track first
+
+
+def test_existing_public_row_carrier_drives_labels_and_rejects_stale_or_forged_rows(monkeypatch):
+    source = "sha256:" + "a" * 64
+    addresses = {"bottom": "c01.field", "top": "c02.card"}
+    answer = {
+        "frame": 3,
+        "width": CANVAS["width"],
+        "height": CANVAS["height"],
+        "layers": [
+            {"clipId": "bottom", "role": "background", "visible": True, "opacity": 1,
+             "fullFrame": True, "bounds": {"status": "unknown"}},
+            {"clipId": "top", "role": "content", "visible": True, "opacity": 0.5,
+             "fullFrame": False, "bounds": {"status": "known", "rect":
+                 {"x": 20, "y": 40, "width": 60, "height": 40}}},
+        ],
+    }
+    capture = CaptureSceneLabels._from_cache(
+        {"source_identity": source, "basis": {"width": 200, "height": 100, "fps": FPS},
+         "addresses": addresses, "root_source": "b" * 64, "answer": answer},
+        source_identity=source, basis={"width": 200, "height": 100, "fps": FPS},
+        addresses=addresses, frame=3,
+    )
+    facts = capture._frame_facts(3, source_identity=source)
+    monkeypatch.setattr("astrid.core.timeline.onscreen.visible_at", lambda *a, **k: pytest.fail(
+        "private visibility"))
+    assert [item.address for item in labels_for(CONFIG, 3, FPS, scene=facts, source_identity=source)] == [
+        "c02.card", "c01.field"
+    ]
+    labelled = overlay_labels_frame(Image.new("RGB", (200, 100)), CONFIG, 3, FPS,
+                                    scene=facts, source_identity=source)
+    assert labelled.getpixel((20, 60)) == CONTENT_RGB
+
+    stale = dict(facts)
+    stale["answer"] = dict(answer, frame=4)
+    with pytest.raises(SceneQueryUnavailable, match="frame mismatch"):
+        overlay_labels_frame(Image.new("RGB", (200, 100)), CONFIG, 3, FPS,
+                             scene=stale, source_identity=source)
+    forged = dict(facts, source_identity="sha256:" + "f" * 64)
+    with pytest.raises(SceneQueryUnavailable, match="source mismatch"):
+        labels_for(CONFIG, 3, FPS, scene=forged, source_identity=source)
 
 
 def _tile(path: Path, rgb) -> str:
