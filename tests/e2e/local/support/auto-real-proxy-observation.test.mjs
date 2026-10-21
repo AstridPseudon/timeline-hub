@@ -5,6 +5,7 @@ import { compileFunction } from 'node:vm';
 import ts from 'typescript';
 
 const source = readFileSync(new URL('./auto-real-proxy-helpers.ts', import.meta.url), 'utf8');
+const observerSource = readFileSync(new URL('../three-products.spec.ts', import.meta.url), 'utf8');
 const constants = source.match(/^export const (?:NATIVE_RUNTIME_COMMIT|TASK_API_POST|READ_ONLY_RUNTIME_POST|LEGACY_POST) = [^;]+;/gm)
   ?.map((line) => line.replace(/^export /, ''));
 assert.equal(constants?.length, 4, 'traffic classifier constants must remain source-visible');
@@ -26,6 +27,13 @@ const headHelper = source.match(/^export function requireAuthoritativeHead\([^]*
 assert.ok(headHelper, 'authoritative head helper must remain source-visible');
 const requireAuthoritativeHead = compileFunction(
   `${ts.transpileModule(headHelper.replace(/^export /, ''), {}).outputText}\nreturn requireAuthoritativeHead;`,
+  [],
+)();
+
+const evidenceHelpers = source.match(/^export const EVIDENCE_METHODS[^]*?^export function relevantEvidenceRoute\([^]*?^}/m)?.[0];
+assert.ok(evidenceHelpers, 'allowlisted evidence helpers must remain source-visible');
+const evidence = compileFunction(
+  `${ts.transpileModule(evidenceHelpers.replace(/^export /gm, ''), {}).outputText}\nreturn { allowlistedEvidenceMethod, allowlistedEvidenceStatus, relevantEvidenceRoute };`,
   [],
 )();
 
@@ -110,4 +118,44 @@ test('pure: authoritative head uses the Runtime pair and refuses incomplete valu
   for (const body of [{}, { head: null }, { head: { revision_id: 'revision-only' } }, { head: { publication_id: 'publication-only' } }]) {
     assert.throws(() => requireAuthoritativeHead(body), /authoritative head pair/);
   }
+});
+
+test('pure: planted Runtime 503 retains only allowlisted route, method and status facts', () => {
+  const route = evidence.relevantEvidenceRoute('https://app.test/runtime-config/v1/operation/runtime/v1/tasks?credential=secret&bearer=token&cookie=session');
+  assert.equal(route, 'runtime-operation');
+  const record = {
+    method: evidence.allowlistedEvidenceMethod('GET'),
+    route,
+    status: evidence.allowlistedEvidenceStatus(503),
+  };
+  assert.deepEqual(record, {
+    method: 'GET', route: 'runtime-operation', status: 503,
+  });
+  assert.equal(JSON.stringify(record).includes('secret'), false);
+  assert.equal(JSON.stringify(record).includes('token'), false);
+  assert.equal(JSON.stringify(record).includes('session'), false);
+});
+
+test('pure: planted private path and non-Bearer or oversized text are not retained', () => {
+  const privatePath = 'https://app.test/runtime-config/v1/operation/runtime/v1/tasks/privatepath/secret-file';
+  const privateRecord = { route: evidence.relevantEvidenceRoute(privatePath) };
+  assert.equal(privateRecord.route, 'runtime-operation');
+  assert.equal(JSON.stringify(privateRecord).includes('privatepath'), false);
+  assert.equal(evidence.relevantEvidenceRoute('https://app.test/privatepath/secret-file'), undefined);
+  assert.equal(evidence.allowlistedEvidenceMethod('GET secret-token'), undefined);
+  assert.equal(evidence.allowlistedEvidenceStatus(600), undefined);
+  const oversizedText = 'oversized-text-'.repeat(200);
+  const record = {
+    method: evidence.allowlistedEvidenceMethod('GET'),
+    route: evidence.relevantEvidenceRoute(`https://app.test/api/runtime/v1/events?query=nonBearer-secret&message=${oversizedText}`),
+    status: evidence.allowlistedEvidenceStatus(503),
+  };
+  assert.deepEqual(record, { method: 'GET', route: 'runtime-api', status: 503 });
+  assert.equal(JSON.stringify(record).includes('nonBearer-secret'), false);
+  assert.equal(JSON.stringify(record).includes(oversizedText), false);
+  const observer = observerSource.match(/function captureBoundedBrowserEvidence\([^]*?^}/m)?.[0];
+  assert.ok(observer, 'bounded browser observer must remain source-visible');
+  assert.doesNotMatch(observer, /response\.(?:text|body)\(\)/, 'observer must not buffer response bodies');
+  assert.doesNotMatch(observer, /message\.text\(\)|error\.message/, 'observer must not retain free-form diagnostics');
+  assert.doesNotMatch(source, /boundedEvidenceText|summarizeEvidenceBody|message|error\.message/);
 });

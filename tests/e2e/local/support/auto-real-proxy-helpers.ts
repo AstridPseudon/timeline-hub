@@ -7,6 +7,40 @@ export const LEGACY_POST = /^\/api\/runtime\/.*$/;
 
 export type RuntimePostKind = 'native-commit' | 'task-api' | 'read-only' | 'legacy-writer' | 'other';
 
+export const EVIDENCE_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'] as const;
+export type EvidenceMethod = typeof EVIDENCE_METHODS[number];
+
+export const EVIDENCE_ROUTES = [
+  'runtime-api',
+  'runtime-operation',
+  'runtime-workspace',
+  'media-imports',
+  'media-selection',
+  'commit',
+] as const;
+export type EvidenceRoute = typeof EVIDENCE_ROUTES[number];
+
+export function allowlistedEvidenceMethod(value: string): EvidenceMethod | undefined {
+  return (EVIDENCE_METHODS as readonly string[]).includes(value) ? value as EvidenceMethod : undefined;
+}
+
+export function allowlistedEvidenceStatus(value: number): number | undefined {
+  return Number.isInteger(value) && value >= 100 && value <= 599 ? value : undefined;
+}
+
+export function relevantEvidenceRoute(rawUrl: string): EvidenceRoute | undefined {
+  let url: URL;
+  try { url = new URL(rawUrl); } catch { return undefined; }
+  const { pathname } = url;
+  if (pathname === '/runtime-config/v1/workspace.json') return 'runtime-workspace';
+  if (pathname.startsWith('/runtime-config/v1/operation/')) return 'runtime-operation';
+  if (pathname.startsWith('/api/runtime/')) return 'runtime-api';
+  if (/\/media-imports$/.test(pathname)) return 'media-imports';
+  if (/\/media-selection(?:\/verified)?$/.test(pathname)) return 'media-selection';
+  if (/\/commit$/.test(pathname)) return 'commit';
+  return undefined;
+}
+
 export function classifyRuntimePost(method: string, pathname: string): RuntimePostKind {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) return 'other';
   if (method === 'POST') {
