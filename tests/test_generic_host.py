@@ -3832,6 +3832,33 @@ def test_launch_worker_projects_fixed_registry_selectors_and_transport_filter(tm
     assert 'PYTHONPATH' not in renderer and 'XDG_STATE_HOME' not in renderer
 
 
+@pytest.mark.parametrize('runtime_checkout', ['foreign', 'missing', 'symlink'])
+def test_runtime_checkout_is_provenance_not_worker_import_authority(tmp_path, runtime_checkout):
+    from astrid.core.execution.generic_host import _launch_worker_probe_environments
+    from astrid.core.rendering.transport import _build_environment
+
+    target = tmp_path / 'runtime-target'
+    target.mkdir()
+    if runtime_checkout == 'foreign':
+        selected = tmp_path / 'foreign-runtime'
+        selected.mkdir()
+    elif runtime_checkout == 'missing':
+        selected = tmp_path / 'missing-runtime'
+    else:
+        selected = tmp_path / 'runtime-alias'
+        selected.symlink_to(target, target_is_directory=True)
+    environment = {
+        'HOME': str(tmp_path), 'PATH': '/usr/bin', 'LANG': 'C',
+        'ASTRID_RUNTIME_CHECKOUT': str(selected),
+    }
+
+    candidates = _launch_worker_probe_environments((tmp_path,), environment)
+    assert candidates
+    assert all(str(selected) not in candidate.get('PYTHONPATH', '') for candidate in candidates)
+    renderer = _build_environment(environment)
+    assert str(selected) not in renderer.get('PYTHONPATH', '')
+
+
 @pytest.mark.parametrize('configured_pythonpath', [None, 'configured'])
 def test_launch_command_projection_matches_actual_final_context(tmp_path, monkeypatch, configured_pythonpath):
     from astrid.core.rendering import remotion_runtime

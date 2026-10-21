@@ -474,6 +474,32 @@ def test_installed_profile_refuses_checkout_origins_from_isolated_probe(monkeypa
     assert seen[0][1]["cwd"] != str(tmp_path)
 
 
+def test_installed_profile_does_not_use_ambient_runtime_checkout(monkeypatch, tmp_path):
+    monkeypatch.setenv("ASTRID_HOST_EXECUTION_PROFILE", "installed")
+    monkeypatch.setenv("ASTRID_RUNTIME_CHECKOUT", str(tmp_path / "foreign-runtime"))
+    seen = []
+
+    def probe(argv, **kwargs):
+        seen.append((argv, kwargs))
+        return subprocess.CompletedProcess(
+            argv,
+            0,
+            json.dumps({key: str(tmp_path / "installed" / f"{key}.py")
+                        for key in ["host", "child", "action", "client", "sdk"]}),
+            "",
+        )
+
+    monkeypatch.setattr(host_bootstrap.subprocess, "run", probe)
+    installed = tmp_path / "installed"
+    installed.mkdir()
+    for name in ("host", "child", "action", "client", "sdk"):
+        (installed / f"{name}.py").write_text("# installed\n", encoding="utf-8")
+    origins = host_bootstrap._installed_execution_origins(installed, "/selected/python")
+    assert set(origins) == {"host", "child", "action", "client", "sdk"}
+    assert "PYTHONPATH" not in seen[0][1]["env"]
+    assert "ASTRID_RUNTIME_CHECKOUT" not in seen[0][1]["env"]
+
+
 def test_installed_profile_launch_preserves_identity_and_uses_isolated_interpreter(monkeypatch, tmp_path):
     # Reuse the existing exact source/inventory/ready-binding fixture while
     # replacing only the independent installed-origin probe dependency.

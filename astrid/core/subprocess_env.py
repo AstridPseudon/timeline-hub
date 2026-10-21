@@ -112,7 +112,6 @@ _ASTRID_PROPAGATED_ENV = frozenset(
         ASTRID_REMOTION_VALIDATION_ROLE,
 
         ASTRID_REMOTION_PROJECT_DIR,
-        "ASTRID_RUNTIME_CHECKOUT",
         "ASTRID_REMOTION_BROWSER_EXECUTABLE",
         "ASTRID_RENDER_INHERIT_PROCESS_GROUP",
         # RunPod executor manifests explicitly declare this host-owned path.

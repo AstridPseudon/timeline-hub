@@ -1761,12 +1761,9 @@ def _launch_worker_probe_environments(pack_roots: tuple[Path, ...], environment:
             records[definition.id] = CapabilityRecord(
                 definition=definition, capability_digest='', source_digest='',
                 source_root=pack_root, matrix=matrix.get(definition.id, {}))
-    # The SDK caller can carry import paths removed from the installed host
-    # launch. Qualify the explicit host mapping, not that caller's ambient env.
-    runtime_checkout = environment.get('ASTRID_RUNTIME_CHECKOUT')
-    dependencies = tuple(dict.fromkeys((
-        *((str(Path(runtime_checkout).resolve()),) if runtime_checkout else ()),
-        *dependency_pythonpath(environment))))
+    # The installed host's selected interpreter and package tree are the
+    # import authority. A runtime checkout is provenance, never a child path.
+    dependencies = dependency_pythonpath(environment)
     baseline = build_child_subprocess_env(base=environment, parent=environment)
     variants = [baseline]
     for record in records.values():
@@ -7736,10 +7733,8 @@ class GenericPackHost:
                 readiness_env['PYTHONPATH'] = _command_worker_pythonpath(record, readiness_path)
             elif readiness_worker_kind == 'native':
                 readiness_env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
-                runtime_checkout = env.get('ASTRID_RUNTIME_CHECKOUT')
                 readiness_env['PYTHONPATH'] = os.pathsep.join(dict.fromkeys((
                     str(Path(__file__).resolve().parents[3]),
-                    *((str(Path(runtime_checkout).resolve()),) if runtime_checkout else ()),
                     *_dependency_pythonpath(),
                     *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
             else:
@@ -8091,7 +8086,6 @@ class GenericPackHost:
         # boundary.  In particular, an unrelated ambient API key must never
         # leak into a provider subprocess.
         package_parent = str(Path(__file__).resolve().parents[3])
-        runtime_checkout = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
         env, secrets = self._child_environment(
             record,
             attempt,
@@ -8101,10 +8095,7 @@ class GenericPackHost:
             readiness_worker_kind='command',
             allow_runtime_connection=allow_runtime_connection and child_bridge is None,
             explicit_env={
-                "PYTHONPATH": os.pathsep.join(
-                    (package_parent, *((str(Path(runtime_checkout).resolve()),) if runtime_checkout else ()),
-                     *_dependency_pythonpath())
-                ),
+                "PYTHONPATH": os.pathsep.join((package_parent, *_dependency_pythonpath())),
                 ASTRID_INTERNAL_INVOCATION: "1",
                 **binding.env,
                 "ASTRID_PROGRESS_PATH": str(attempt / ".astrid-progress.json"),
@@ -8399,10 +8390,8 @@ class GenericPackHost:
         # Preserve the host-created sitecustomize hook when replacing the
         # worker import path; arbitrary child PYTHONPATH is still excluded.
         network_hook_roots = (str(attempt_path / ".astrid-network-hook"),) if env.get("ASTRID_NETWORK_POLICY") else ()
-        runtime_checkout = env.get('ASTRID_RUNTIME_CHECKOUT')
         env["PYTHONPATH"] = os.pathsep.join(
             dict.fromkeys((*network_hook_roots, package_parent,
-                           *((str(Path(runtime_checkout).resolve()),) if runtime_checkout else ()),
                            *_dependency_pythonpath(), *import_roots))
         )
         env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)

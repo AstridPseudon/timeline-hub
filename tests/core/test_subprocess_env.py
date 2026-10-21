@@ -36,6 +36,14 @@ def test_non_windows_child_environment_does_not_admit_windows_only_variables(mon
     assert env == {}
 
 
+def test_ambient_runtime_checkout_does_not_cross_child_boundary():
+    env = build_child_subprocess_env(
+        base={"ASTRID_RUNTIME_CHECKOUT": "/foreign/runtime"},
+        parent={"ASTRID_RUNTIME_CHECKOUT": "/foreign/runtime"},
+    )
+    assert "ASTRID_RUNTIME_CHECKOUT" not in env
+
+
 @pytest.mark.parametrize("marker,value", [
     ("ASTRID_RENDER_INHERIT_PROCESS_GROUP", "1"),
     ("ASTRID_INSTALL_PROGRAM_ROOT", "/custom/Astrid program"),

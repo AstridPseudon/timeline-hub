@@ -22,17 +22,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, Mapping
 
-try:
-    from runtime_protocol import platform
-except ModuleNotFoundError:
-    runtime_checkout = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
-    if not runtime_checkout:
-        raise
-    runtime_root = Path(runtime_checkout).resolve()
-    if not (runtime_root / "runtime_protocol").is_dir():
-        raise
-    sys.path.insert(0, str(runtime_root))
-    from runtime_protocol import platform
+from runtime_protocol import platform
 
 from astrid.core.env_vars import (
     ASTRID_NODE_EXECUTABLE,
@@ -496,7 +486,7 @@ def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dic
     if environment.get('PYTHONPATH') and any(not raw or not Path(raw).is_absolute() for raw in environment['PYTHONPATH'].split(os.pathsep)):
         raise RemotionValidationError('registry import paths require absolute launch-known locations')
     keys = set(_SAFE_BASE_ENV) | {
-        'ASTRID_NODE_EXECUTABLE', 'ASTRID_PACKS_PATH', 'ASTRID_RUNTIME_CHECKOUT',
+        'ASTRID_NODE_EXECUTABLE', 'ASTRID_PACKS_PATH',
         TIMELINE_SCHEMA_PYTHONPATH_ENV,
     }
     if sys.platform == 'win32':
@@ -857,15 +847,6 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
     generator_wait = None
     if cached != expected or current_hashes != expected['content_hashes']:
         generator_env = {**generator_env, **lock.remotion_render_lock_child_env()}
-        runtime_checkout = generator_env.get('ASTRID_RUNTIME_CHECKOUT')
-        if runtime_checkout:
-            runtime_root = Path(runtime_checkout).resolve(strict=True)
-            if not (runtime_root / 'runtime_protocol').is_dir():
-                raise RemotionValidationError('registry generator runtime checkout is incomplete')
-            # The generator imports the renderer's Python source closure, which
-            # uses the selected Runtime checkout directly. Keep this private to
-            # the owned child launch; do not broaden the validated parent env.
-            generator_env['PYTHONPATH'] = str(runtime_root)
         result, generator_wait = _owned_registry_probe([python, str(REPO_ROOT / 'scripts/gen_effect_registry.py')],
                                                       cwd=REPO_ROOT, env=generator_env, phase='registry_generator')
         _require_completed_probe(generator_wait, phase='registry_generator')
