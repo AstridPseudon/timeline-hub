@@ -1,0 +1,151 @@
+diff --git a/tests/e2e/timeline/viewing-parity/cases.ts b/tests/e2e/timeline/viewing-parity/cases.ts
+index 5d916af99..b7c0df1f8 100644
+--- a/tests/e2e/timeline/viewing-parity/cases.ts
++++ b/tests/e2e/timeline/viewing-parity/cases.ts
+@@ -17,6 +17,7 @@ import {
+ import {
+   assertFrameWithinBound, capturePlayerFrame, compareRgbFrames, decodeExportFrame,
+ } from './frames';
++import { formatTerminalTaskFailure } from './compare';
+ import { captureActualPlayerTab, installTabAudioObservation } from './tab-audio';
+ import { compareNativeAudio, decodeNativeAudio } from './audio-join';
+ 
+@@ -107,13 +108,23 @@ export function registerFrameParityCases(canvas: ParityCanvas = ORIGINAL_640): v
+       const resultDialog = page.getByRole('dialog', { name: 'Rendered film', exact: true });
+       const downloadButton = resultDialog.getByRole('button', { name: 'Download', exact: true });
+       const blocker = page.locator('[data-video-editor-render-blocker="true"]');
+-      await expect.poll(async () => {
+-        const task = await readRuntimeJson<Task>(harness, taskPath);
+-        if (['failed', 'cancelled'].includes(task.state)) return `error:task-${task.state}`;
+-        const error = (await blocker.allTextContents()).join('\n').trim();
+-        if (error) return `error:${error}`;
+-        return task.state === 'succeeded' && await downloadButton.isVisible() ? 'done' : 'pending';
+-      }, { timeout: 240_000, message: 'mounted App Render action must finish through the real generic pack host' }).toBe('done');
++      const waitForCompletion = async () => {
++        const deadline = Date.now() + 240_000;
++        while (Date.now() < deadline) {
++          const task = await readRuntimeJson<Task>(harness, taskPath);
++          const terminalFailure = formatTerminalTaskFailure(task);
++          if (terminalFailure) throw new Error(terminalFailure);
++          const error = (await blocker.allTextContents()).join('\n').trim();
++          if (error) {
++            await new Promise(resolve => setTimeout(resolve, 250));
++            continue;
++          }
++          if (task.state === 'succeeded' && await downloadButton.isVisible()) return;
++          await new Promise(resolve => setTimeout(resolve, 250));
++        }
++        throw new Error('mounted App Render action must finish through the real generic pack host');
++      };
++      await waitForCompletion();
+       expect(polls.some(url => url.endsWith(taskPath)), 'App must poll its admitted task').toBe(true);
+       expect(legacyWrites, 'Render must not publish through a legacy writer').toEqual([]);
+       const completed = await readRuntimeJson<Task>(harness, taskPath);
+diff --git a/tests/e2e/timeline/viewing-parity/compare.test.ts b/tests/e2e/timeline/viewing-parity/compare.test.ts
+index edd43f3ad..f72196dec 100644
+--- a/tests/e2e/timeline/viewing-parity/compare.test.ts
++++ b/tests/e2e/timeline/viewing-parity/compare.test.ts
+@@ -1,12 +1,50 @@
+ import assert from 'node:assert/strict';
+ import { test } from 'node:test';
+-import { assertFrameWithinBound, compareRgbFrames, type RgbFrame } from './compare';
++import { assertFrameWithinBound, compareRgbFrames, formatTerminalTaskFailure, type RgbFrame } from './compare';
+ import { PARITY_HEIGHT, PARITY_WIDTH } from './media';
+ 
+ function image(): RgbFrame {
+   return { width: PARITY_WIDTH, height: PARITY_HEIGHT, bytes: Buffer.alloc(PARITY_WIDTH * PARITY_HEIGHT * 3, 64) };
+ }
+ 
++function task(overrides: Record<string, unknown> = {}) {
++  return {
++    task_id: 'task-render-1', attempt_id: 'attempt-render-1', state: 'running', result: null,
++    ...overrides,
++  } as Parameters<typeof formatTerminalTaskFailure>[0];
++}
++
++test('planted terminal task failure fails with bounded fields and no executor message', () => {
++  const diagnostic = formatTerminalTaskFailure(task({
++    state: 'failed',
++    result: {
++      error: {
++        type: 'BundleError', location: 'render.bundle', code: 'module_not_found',
++        message: 'secret /home/user/project and raw stderr must never be shown',
++        stderr: 'secret stderr /var/lib/renderer',
++        path: '/var/lib/renderer/bundle.js',
++      },
++      input_body: { token: 'secret', inputs: ['/var/lib/renderer/input.json'] },
++    },
++  }));
++  assert.equal(diagnostic, 'Render task terminal failure: task_id=task-render-1 attempt_id=attempt-render-1 error_type=BundleError error_location=render.bundle code=module_not_found');
++  assert.doesNotMatch(diagnostic ?? '', /secret|home|stderr|token|message|renderer|var|input/);
++  assert.equal(formatTerminalTaskFailure(task({
++    task_id: '/tmp/task', attempt_id: 'attempt\n', state: 'failed', result: {
++      error: { code: 'C:/secret', location: '/home/user/project', message: 'Module not found' },
++    },
++  })), 'Render task terminal failure: task_id=unknown attempt_id=unknown error_type=unknown error_location=unknown code=task_failed');
++});
++
++test('successful task remains on the existing completion path', () => {
++  assert.equal(formatTerminalTaskFailure(task({ state: 'succeeded', result: { outputs: [] } })), null);
++});
++
++test('cancelled task fails with the bounded cancellation code', () => {
++  assert.equal(formatTerminalTaskFailure(task({ state: 'cancelled', result: { error: { message: 'cancelled by secret input' } } })),
++    'Render task terminal failure: task_id=task-render-1 attempt_id=attempt-render-1 error_type=unknown error_location=unknown code=task_cancelled');
++});
++
+ test('same comparator accepts baseline then rejects an opaque one-host patch with pixel metric', () => {
+   const reference = image();
+   const player = image();
+diff --git a/tests/e2e/timeline/viewing-parity/compare.ts b/tests/e2e/timeline/viewing-parity/compare.ts
+index 5e5b33934..c7f715a6c 100644
+--- a/tests/e2e/timeline/viewing-parity/compare.ts
++++ b/tests/e2e/timeline/viewing-parity/compare.ts
+@@ -1,4 +1,5 @@
+ import { ORIGINAL_640, type ParityCanvas } from './canvas';
++import type { Task } from '../../../../src/integrations/runtime/generated';
+ 
+ export type RgbFrame = {
+   readonly width: number;
+@@ -15,6 +16,41 @@ export type FrameComparison = {
+   readonly meanChannelError: number;
+ };
+ 
++type DiagnosticRecord = Record<string, unknown>;
++
++const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$/;
++const SAFE_ERROR_TYPE = /^[A-Za-z][A-Za-z0-9_]{0,63}$/;
++// Locations are logical labels only; filesystem-looking paths are refused.
++const SAFE_ERROR_LOCATION = /^[A-Za-z][A-Za-z0-9._:-]{0,127}$/;
++const SAFE_ERROR_CODE = /^[A-Za-z][A-Za-z0-9._:-]{0,63}$/;
++
++function record(value: unknown): DiagnosticRecord | null {
++  return value !== null && typeof value === 'object' && !Array.isArray(value)
++    ? value as DiagnosticRecord
++    : null;
++}
++
++function safeField(value: unknown, pattern: RegExp, fallback: string): string {
++  return typeof value === 'string' && pattern.test(value) ? value : fallback;
++}
++
++/**
++ * Keep terminal task failures useful without copying the executor's message.
++ * Runtime task results are extensible, so only these bounded scalar fields are
++ * allowed into a comparison failure; arbitrary result/error data stays out.
++ */
++export function formatTerminalTaskFailure(task: Pick<Task, 'task_id' | 'attempt_id' | 'state' | 'result'>): string | null {
++  if (task.state !== 'failed' && task.state !== 'cancelled') return null;
++  const error = record(record(task.result)?.error);
++  const stateCode = task.state === 'failed' ? 'task_failed' : 'task_cancelled';
++  const errorType = safeField(error?.error_type ?? error?.type, SAFE_ERROR_TYPE, 'unknown');
++  const errorLocation = safeField(error?.error_location ?? error?.location, SAFE_ERROR_LOCATION, 'unknown');
++  const code = safeField(error?.code, SAFE_ERROR_CODE, stateCode);
++  const taskId = safeField(task.task_id, SAFE_ID, 'unknown');
++  const attemptId = safeField(task.attempt_id, SAFE_ID, 'unknown');
++  return `Render task terminal failure: task_id=${taskId} attempt_id=${attemptId} error_type=${errorType} error_location=${errorLocation} code=${code}`;
++}
++
+ export function compareRgbFrames(expected: RgbFrame, actual: RgbFrame, frame: number, canvas: ParityCanvas = ORIGINAL_640): FrameComparison {
+   for (const [host, image] of [['Player', expected], ['export', actual]] as const) {
+     if (image.width !== canvas.width || image.height !== canvas.height
