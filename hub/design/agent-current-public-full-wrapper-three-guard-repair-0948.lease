@@ -1,0 +1,12 @@
+ACTIVE OWN stable wrapper lease — agt-m4-current-full-wrapper-three-guard-repair-0948
+
+Protects:
+  Agent worker branch tl/agt-m4-current-full-wrapper-three-guard-repair-0948
+  scripts/full_coherent_public_current_integration.sh
+  named wrapper full-coherent-public-current-integration
+
+Purpose: retain the wrapper source for central recreation and bounded review.
+No full suite is requested by this lease. The eventual manager-owned run must
+bind the exact c4b Agent, b92 Runtime, public95 client, C13, 164-pin carrier,
+private profile, and wheel inputs before invoking pytest. Retire after the
+manager records the registration and final decision.
