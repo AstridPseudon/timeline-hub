@@ -1,14 +1,13 @@
-<!-- app | 2026-10-21T09:36:05Z | dispatcher heartbeat 10s | live 3 (sol 1, luna 2, other 0) | busy30 40 | status age 13m -->
-# app — 2026-10-21 09:22 UTC
+<!-- app | 2026-10-21T09:42:39Z | dispatcher heartbeat 4s | live 5 (sol 1, luna 4, other 0) | busy30 39 | status age 6m -->
+# app — 2026-10-21 09:36 UTC
 Milestone: M1 RECORDED. M2 writers and M3 viewing parity remain open. No M4 completion claim.
 Integrated: App tl/integration d8d150b7a36e9b607685cbd04a1c9b08f32b1393, tree 02340ad79207ec121e9d8bb11aae2d770599e991; Main860 ancestor. Published Runtime 0.2.14 / producer95bd / all76 and Composition13 / 9412 / all77 unchanged. Native initializer1557 and actual7782 remain qualified. Recent targeted merges: selected context32b, drop projection e465/9cd, embed aliases ae4b (10 controls), mutation observer33b4, inner diagnostics afba, delivery notes b030. Approved bounded automatic diagnostics aecfa is queued to merge.
 Gate7 App full: PASS20810 on exact07d86990c / tree757ff3e20c344afd87b15d1bcea273738011987c: 19,454 passed, three authorized expected drag failures, zero unexpected; source/graph postflight and nine IPC controls passed. This is the clean post014 App full. Later merges have targeted controls and are not relabelled as the full-tested tree. No duplicate full requested.
-In flight: 4 running (target 5–7):
-- app-m2-transition-reset-native-clear-current-r9
-- app-m2-popup-occurrence-add-current-data-review-r48
-- app-m3-gate3-short-physical-temp-one-proof-r18
-- app-m2-settings-current-nested-cohort-port-r34
-READY: 2 fully briefed: app-m2-transition-reset-clear-data-review-r10, app-m2-auto-current-original-source-prepare-r45.
+In flight: 3 running (target 5–7):
+- app-m2-auto-current-port-data-review-r47
+- app-m2-settings-effective-row-causal-repair-r37
+- app-m2-popup-small-capture-refusal-fix-r52
+READY: 0 fully briefed: .
 Next 5: original public Trim case after approved snapshot setup; current Settings nested source/actual input correction; one native transition reset/clear callback; current popup occurrence ADD source review and App2 overlap verdict; current automatic original source freeze with approved bounded diagnostics.
 Rows one step from deletion: public Trim needs the original public-method acceptance/reload/retry/undo/zeroLegacy proof. Popup shared ADD/SWAP writer needs BOTH occurrence routes; neither is qualified. Automatic placement service also has manual/catalog/pool consumers, so automatic proof alone cannot cut it. No source, list, build or startup result counts as a browser proof.
 Held rows: D02 and accepted-echo history depend on App2 project-data/transcript/capture-finish migration plus a containing published cohort. Ordinary snapshot fallback and dataProvider295/1131 remain live. Bounded initializer, parent delete, duplicate, compiler canary and D08/D10 cuts remain recorded in their ledgers.
@@ -25,3 +24,6 @@ Inbox: ACK owner09:05 audit and lead09:19 reset ruling. Native reset/clear r9 is
 Decided locally: keep clean exact07d full plus targeted later deltas; no full relabelling. Apply only reviewed own snapshot graph setup before guards. Keep missing accepted closure UNKNOWN and all writers live until actual replacements qualify. No new authority or schema field invented.
 Resources: about9GiB free after safe cleanup. No installs or new graphs. Shared dependencies, runtimes and venvs read-only. Full20810 keeper already released; unused ancestor ce6 pin recycled after complete no-active-reference checks. Current proof keepers and protected Node20/public13 remain leased. Item13 zero-test guard0340 and03:24 scratch cleanup DONE. No ZIP/macOS/owner-film/physical parity claim.
 STORAGE NEED 3 GiB for remaining central browser proofs; own safe cleanup exhausted apart from active or protected sources.
+
+Latest 09:36: Settings correction b0f07b85 was independently APPROVED and merged; actual-preparation10704 failed before validation because the REGISTERED row omitted Chromium variables from the approved recipe. r37 (Sol high, repeated missed cross-process environment failure) diagnoses exact row construction and proves effective shell/child inputs; no browser retry. Trim r30 fixed the exact lease variable and executed every strict shell guard; local list reached port allocation and failed under sandbox, so r32 uses CENTRAL complete prefix/list before at most one original case. Gate3 r19 proved the four-launch matrix never reached Chrome: its actual child still hard-coded deleted deps12. Matrix result is INVALID browser evidence; r20 fixes the actual module root with effective-child origin proof before one launch-only control.
+Popup broad port6fc was independently REJECTED (missing custody guards, premature async success, no direct branch regressions). It will not merge; App2 was notified to cancel overlap review. Smaller dormant capture56bc matched accepted complete command/record but failed exact null/contradiction/boolean refusals; r52 fixes only those guards and r53 reviews new code. No live callers changed. r51 prepares only the smallest later caller seam. Automatic r45 found the current integration lacks the reviewed original requester/runner/spec; r46 ports existing approved source on current HOME and r47 reviews it before any actual or cut. Transition r9/r10 confirmed None/Remove already native; parameter Reset defaults remains SET (103 unchanged controls passed), not silently converted to None. Runtime SET schema proposal09:20 is in r11 App source review; exact ACK follows, no pin or activation.
