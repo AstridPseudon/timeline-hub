@@ -17,6 +17,9 @@ from astrid.sdk.timeline.commit import (
 from astrid.sdk.timeline.native_transcript_association import (
     REFERENCES_SCHEMA,
     TRANSCRIPT_SCHEMA_REF,
+    _caption_id,
+    _encode_component,
+    _project_items,
     capture_transcript_association,
 )
 from astrid.sdk.timeline.rebase import replay
@@ -62,6 +65,74 @@ def _bundle(*, caption=False):
     bundle = bundle_from_document(document)
     bundle["source_mapping"]["pinned_documents"] = [{"pin": pin, "document": source}]
     return bundle, pin
+
+
+def _known_reconciliation_bundle():
+    bundle, pin = _bundle()
+    canonical = "transcript-source:asset-a:source:source-1:segment:segment-a"
+    legacy = "transcript-source:source-1:segment:segment-a"
+    source = bundle["source_mapping"]["pinned_documents"][0]["document"]
+    source["content"]["segments"][0]["id"] = canonical
+    source["content_digest"] = _digest(source["content"])
+    pin = copy.deepcopy(pin)
+    pin["content_digest"] = source["content_digest"]
+    bundle["source_mapping"]["pinned_documents"] = [{"pin": pin, "document": source}]
+    incoming = _project_items(source, source["content"], "asset-a")[0]
+    old = copy.deepcopy(incoming)
+    old["id"] = legacy
+    old["payload"]["segmentId"] = legacy
+    bundle["parent"]["config"]["bundle"]["itemsBySchemaRef"][TRANSCRIPT_SCHEMA_REF] = [old]
+    media = {"id": "media-a", "asset": "asset-a", "track": "A1", "clipType": "audio"}
+    caption = {
+        "id": _caption_id(legacy + "@media-a"),
+        "track": "transcript-caption-foundry-track",
+        "clipType": "text",
+        "at": 0.1,
+        "hold": 2.3,
+        "x": 143,
+        "y": 620,
+        "text": {"content": "Human correction", "color": "#cc3377", "fontSize": 51},
+        "app": {
+            "retained": {"future": [None, False]},
+            "__generated__": {
+                "extensionId": "haus.astrid.transcript-lane",
+                "contributionId": "transcript-caption-foundry",
+                "provenance": {
+                    "contractVersion": 1,
+                    "sourceSchemaRef": TRANSCRIPT_SCHEMA_REF,
+                    "sourceItemId": legacy,
+                    "sourceFingerprint": "keep-source-fingerprint",
+                    "generatorVersion": "1.3.0",
+                    "outputFingerprint": "keep-output-fingerprint",
+                    "conflictPolicy": "preserve-output",
+                },
+            },
+        },
+    }
+    review_key = "transcript-source-review:" + _encode_component(legacy)
+    review = {
+        "schemaVersion": 1,
+        "sourceSchemaRef": TRANSCRIPT_SCHEMA_REF,
+        "sourceItemId": legacy,
+        "status": "accepted-for-source-update",
+        "proposedText": "Human correction",
+        "opaque": {"keep": [None, False]},
+    }
+    config = bundle["parent"]["config"]
+    config["clips"] = [media, caption]
+    config["app"] = {
+        "unrelated": {"keep": True},
+        "haus.astrid.transcript-lane": {
+            "preferences": {"color": "blue"},
+            review_key: review,
+        },
+    }
+    bundle["parent"]["clips"] = copy.deepcopy(config["clips"])
+    payload = bundle["source_mapping"]["_runtime_document"]["parent_revision"]["payload"]
+    payload["config"] = copy.deepcopy(config)
+    payload["clips"] = copy.deepcopy(config["clips"])
+    payload["config"]["bundle"] = copy.deepcopy(bundle["parent"]["config"]["bundle"])
+    return bundle, pin, legacy, canonical, review_key
 
 
 def test_association_records_source_planes_and_roundtrips_canonically():
@@ -113,10 +184,69 @@ def test_replacement_requires_and_retains_exact_prior_pin():
     assert plan.bundle["parent"]["config"]["bundle"]["itemsBySchemaRef"][TRANSCRIPT_SCHEMA_REF][0]["payload"]["documentId"] == new_pin["document_id"]
 
 
-def test_association_refuses_caption_reconciliation_before_any_write():
+def test_unqualified_caption_reference_does_not_block_source_association():
     bundle, pin = _bundle(caption=True)
+    command = capture_transcript_association(bundle, "asset-a", document=pin)
+    plan = execute(bundle, [command])
+    assert plan.bundle["parent"]["config"]["bundle"]["itemsBySchemaRef"][TRANSCRIPT_SCHEMA_REF]
+
+
+def test_association_reconciles_real_caption_and_review_leaves_without_asset_on_caption():
+    bundle, pin, legacy, canonical, review_key = _known_reconciliation_bundle()
     before = copy.deepcopy(bundle)
-    with pytest.raises(CommandError, match="caption/review reconciliation"):
+    command = capture_transcript_association(bundle, "asset-a", document=pin)
+    plan = execute(bundle, [command])
+    assert bundle == before
+    write_paths = {(write["ref"], tuple(write["path"])) for write in plan.records[0]["writes"]}
+    assert ("parent", ("config", "bundle", "transcriptReferences")) in write_paths
+    assert ("parent", ("config", "bundle", "itemsBySchemaRef")) in write_paths
+    assert ("parent", ("config", "app", "haus.astrid.transcript-lane")) in write_paths
+    assert all(path != ("config",) for _, path in write_paths)
+
+    payload = document_from_bundle(plan.bundle)["parent_revision"]["payload"]
+    clips = payload["config"]["clips"]
+    caption = clips[1]
+    assert caption["id"] == _caption_id(canonical + "@media-a")
+    assert "asset" not in caption
+    assert caption["text"] == before["parent"]["config"]["clips"][1]["text"]
+    assert caption["at"] == before["parent"]["config"]["clips"][1]["at"]
+    assert caption["app"]["retained"] == {"future": [None, False]}
+    assert caption["app"]["__generated__"]["provenance"]["sourceItemId"] == canonical
+    extension = payload["config"]["app"]["haus.astrid.transcript-lane"]
+    assert review_key not in extension
+    canonical_review_key = "transcript-source-review:" + _encode_component(canonical)
+    assert extension[canonical_review_key]["sourceItemId"] == canonical
+    assert extension[canonical_review_key]["opaque"] == {"keep": [None, False]}
+    assert payload["config"]["bundle"]["itemsBySchemaRef"][TRANSCRIPT_SCHEMA_REF][0]["id"] == canonical
+
+    reopened = bundle_from_document(document_from_bundle(plan.bundle))
+    reopened["source_mapping"]["pinned_documents"] = copy.deepcopy(
+        bundle["source_mapping"]["pinned_documents"]
+    )
+    undone = inverse(reopened, plan.records)
+    assert document_from_bundle(undone.bundle) == document_from_bundle(bundle)
+    redone = inverse(undone.bundle, undone.records)
+    assert document_from_bundle(redone.bundle) == document_from_bundle(plan.bundle)
+
+
+def test_association_refuses_caption_destination_collision_atomically():
+    bundle, pin, _, canonical, _ = _known_reconciliation_bundle()
+    target_id = _caption_id(canonical + "@media-a")
+    bundle["parent"]["config"]["clips"].append({"id": target_id, "track": "other", "clipType": "text"})
+    bundle["parent"]["clips"] = copy.deepcopy(bundle["parent"]["config"]["clips"])
+    before = copy.deepcopy(bundle)
+    with pytest.raises(CommandError, match="caption destination"):
+        capture_transcript_association(bundle, "asset-a", document=pin)
+    assert bundle == before
+
+
+def test_association_refuses_shared_review_ownership_atomically():
+    bundle, pin, _, _, _ = _known_reconciliation_bundle()
+    old = copy.deepcopy(bundle["parent"]["config"]["bundle"]["itemsBySchemaRef"][TRANSCRIPT_SCHEMA_REF][0])
+    old["sourceArtifactRef"] = {"assetId": "asset-b"}
+    bundle["parent"]["config"]["bundle"]["itemsBySchemaRef"][TRANSCRIPT_SCHEMA_REF].append(old)
+    before = copy.deepcopy(bundle)
+    with pytest.raises(CommandError, match="review ownership"):
         capture_transcript_association(bundle, "asset-a", document=pin)
     assert bundle == before
 

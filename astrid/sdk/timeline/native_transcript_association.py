@@ -1,9 +1,4 @@
-"""Bounded, source-only association of a project transcript with parent media.
-
-The source planes are authored parent payload fields.  This operation deliberately
-does not own project-document CRUD or caption/review reconciliation; either of
-those changes is refused before the first write until its native carrier exists.
-"""
+"""Bounded, source-only association of a project transcript with parent media."""
 from __future__ import annotations
 
 import copy
@@ -11,17 +6,24 @@ import json
 import math
 import re
 from collections.abc import Mapping
+from urllib.parse import quote
 
 from astrid.core.timeline.authoring_bundle import _digest
 from astrid.sdk.media_transcript import SCHEMA as TRANSCRIPT_SCHEMA
 from astrid.sdk.media_transcript import transcript_document_id
 
-from ._command_state import CommandError
+from ._command_state import CommandError, equal
 
 OP = "transcript.associate"
 TRANSCRIPT_SCHEMA_REF = "astrid.transcript_segment/v1"
 REFERENCES_SCHEMA = "media.transcript.references/v1"
 _MEDIA_ID = re.compile(r"^sha256:[0-9a-f]{64}$")
+
+_EXTENSION_ID = "haus.astrid.transcript-lane"
+_CONTRIBUTION_ID = "transcript-caption-foundry"
+_REVIEW_PREFIX = "transcript-source-review:"
+_CAPTION_TRACK_ID = "transcript-caption-foundry-track"
+_HOST_PROVENANCE_VERSION = 1
 
 
 _CARRIER_PREFIX = ("config", "bundle")
@@ -198,29 +200,195 @@ def _project_items(source, content, asset_id):
     } for segment in content["segments"]]
 
 
-def _reconciliation_needed(config, asset_id, old_ids, new_ids):
-    """Detect changes that belong to the not-yet-carried caption/review reconciler."""
+def _encode_component(value):
+    return quote(value, safe="-_.!~*'()")
+
+
+def _transcript_prefixes(asset_id, source_id):
+    source = _encode_component(source_id)
+    return {
+        "legacy": "transcript-source:" + source + ":segment:",
+        "canonical": ("transcript-source:" + _encode_component(asset_id)
+                      + ":source:" + source + ":segment:"),
+    }
+
+
+def _host_fingerprint(value):
+    """Match App's host-owned FNV-1a fingerprint for JSON string values."""
+    encoded = json.dumps(value, ensure_ascii=False, separators=(",", ":"),
+                         allow_nan=False).encode("utf-8")
+    hash_value = 0xCBF29CE484222325
+    for byte in encoded:
+        hash_value ^= byte
+        hash_value = (hash_value * 0x100000001B3) & 0xFFFFFFFFFFFFFFFF
+    return "astrid-fnv1a64-v1:" + format(hash_value, "016x")
+
+
+def _caption_id(occurrence_id):
+    return "transcript-caption-" + _host_fingerprint(occurrence_id).split(":", 1)[1]
+
+
+def _identity_mapping(previous, incoming, asset_id, source_id):
+    """Map only the App legacy ID spelling to its exact canonical replacement."""
+    scope = _transcript_prefixes(asset_id, source_id)
+
+    def belongs(item):
+        return (isinstance(item, Mapping) and item.get("schemaRef") == TRANSCRIPT_SCHEMA_REF
+                and isinstance(item.get("sourceArtifactRef"), Mapping)
+                and item["sourceArtifactRef"].get("assetId") == asset_id
+                and isinstance(item.get("payload"), Mapping)
+                and item["payload"].get("sourceId") == source_id)
+
+    previous_by_id = {}
+    for item in previous:
+        if not belongs(item):
+            continue
+        item_id = item.get("id")
+        if item_id in previous_by_id:
+            raise CommandError("ambiguous prior transcript identity", kind="identity_conflict")
+        previous_by_id[item_id] = item
+
+    segments = {}
+    incoming_ids = set()
+    for item in incoming:
+        if not belongs(item):
+            continue
+        item_id = item.get("id")
+        if item_id in incoming_ids:
+            raise CommandError("ambiguous incoming transcript identity", kind="identity_conflict")
+        incoming_ids.add(item_id)
+        if not isinstance(item_id, str) or not item_id.startswith(scope["canonical"]):
+            continue
+        legacy_id = scope["legacy"] + item_id[len(scope["canonical"]):]
+        old = previous_by_id.get(legacy_id)
+        if old is None:
+            continue
+        if legacy_id in segments and segments[legacy_id] != item_id:
+            raise CommandError("ambiguous transcript identity mapping", kind="identity_conflict")
+        if item_id in segments.values() and segments.get(legacy_id) != item_id:
+            raise CommandError("ambiguous transcript identity mapping", kind="identity_conflict")
+        segments[legacy_id] = item_id
+    return segments
+
+
+def reconcile_transcript_references(config, all_previous, incoming, asset_id, source_id):
+    """Purely reconcile the App's known generated caption/review references.
+
+    Only the exact legacy-to-canonical source IDs produced by the transcript
+    adapter are considered.  The returned config is a deep copy only when a
+    proven reference changes; every other field retains its value and order.
+    """
+    segments = _identity_mapping(all_previous, incoming, asset_id, source_id)
+    if not segments:
+        return config
     if not isinstance(config, Mapping):
-        return False
+        raise CommandError("transcript reconciliation config is unsupported", kind="unsupported_shape")
     clips = config.get("clips", [])
-    if isinstance(clips, list):
-        for clip in clips:
-            if not isinstance(clip, Mapping) or clip.get("asset") != asset_id:
-                continue
-            generated = clip.get("app", {}).get("__generated__") if isinstance(clip.get("app"), Mapping) else None
-            provenance = generated.get("provenance") if isinstance(generated, Mapping) else None
-            if not isinstance(provenance, Mapping) or provenance.get("sourceSchemaRef") != TRANSCRIPT_SCHEMA_REF:
-                continue
-            if provenance.get("sourceItemId") not in new_ids:
-                return True
+    if not isinstance(clips, list):
+        raise CommandError("transcript reconciliation clips are unsupported", kind="unsupported_shape")
+
+    owners = {}
+    for item in all_previous:
+        if (not isinstance(item, Mapping) or item.get("schemaRef") != TRANSCRIPT_SCHEMA_REF
+                or not isinstance(item.get("payload"), Mapping)
+                or not isinstance(item["payload"].get("sourceId"), str)
+                or not isinstance(item.get("sourceArtifactRef"), Mapping)):
+            continue
+        owner = (item["sourceArtifactRef"].get("assetId"), item["payload"]["sourceId"])
+        item_id = item.get("id")
+        aliases = [item_id]
+        scope = _transcript_prefixes(*owner)
+        if isinstance(item_id, str) and item_id.startswith(scope["canonical"]):
+            aliases.append(scope["legacy"] + item_id[len(scope["canonical"]):])
+        for alias in aliases:
+            owners.setdefault(alias, set()).add(owner)
+
+    media_suffixes = []
+    for media in clips:
+        if not isinstance(media, Mapping) or media.get("asset") != asset_id:
+            continue
+        media_id = media.get("id")
+        if not isinstance(media_id, str):
+            continue
+        media_suffixes.extend(("@" + media_id, "@" + _encode_component(media_id)))
+
+    occupied = {clip.get("id") for clip in clips if isinstance(clip, Mapping)}
+    next_clips = copy.deepcopy(clips)
+    clips_changed = False
+    for index, clip in enumerate(clips):
+        if not isinstance(clip, Mapping):
+            continue
+        app = clip.get("app")
+        generated = app.get("__generated__") if isinstance(app, Mapping) else None
+        provenance = generated.get("provenance") if isinstance(generated, Mapping) else None
+        if (clip.get("track") != _CAPTION_TRACK_ID or not isinstance(generated, Mapping)
+                or generated.get("extensionId") != _EXTENSION_ID
+                or generated.get("contributionId") != _CONTRIBUTION_ID
+                or not isinstance(provenance, Mapping)
+                or provenance.get("sourceSchemaRef") != TRANSCRIPT_SCHEMA_REF
+                or provenance.get("contractVersion") != _HOST_PROVENANCE_VERSION
+                or not isinstance(provenance.get("sourceItemId"), str)):
+            continue
+        old_id = provenance["sourceItemId"]
+        new_id = segments.get(old_id)
+        if new_id is None:
+            continue
+        suffixes = list(dict.fromkeys(media_suffixes))
+        if len(owners.get(old_id, set())) == 1:
+            suffixes.extend(("", "@source", "@timeline"))
+        matches = [suffix for suffix in suffixes if _caption_id(old_id + suffix) == clip.get("id")]
+        if len(matches) > 1:
+            raise CommandError("ambiguous transcript caption ownership", kind="identity_conflict")
+        if not matches:
+            # An exact generic caption with shared ownership cannot be safely
+            # assigned to this asset; preserve the draft only by refusing it.
+            if len(owners.get(old_id, set())) > 1 and _caption_id(old_id) == clip.get("id"):
+                raise CommandError("ambiguous transcript caption ownership", kind="identity_conflict")
+            continue
+        new_clip_id = _caption_id(new_id + matches[0])
+        if new_clip_id in occupied:
+            raise CommandError("transcript caption destination is occupied", kind="identity_conflict")
+        occupied.add(new_clip_id)
+        next_clip = copy.deepcopy(clip)
+        next_clip["id"] = new_clip_id
+        next_clip["app"]["__generated__"]["provenance"]["sourceItemId"] = new_id
+        next_clips[index] = next_clip
+        clips_changed = True
+
     app = config.get("app")
-    review = app.get("haus.astrid.transcript-lane") if isinstance(app, Mapping) else None
-    if isinstance(review, Mapping):
-        for row in review.values():
-            if (isinstance(row, Mapping) and row.get("sourceSchemaRef") == TRANSCRIPT_SCHEMA_REF
-                    and row.get("sourceItemId") not in new_ids):
-                return True
-    return False
+    extension = app.get(_EXTENSION_ID) if isinstance(app, Mapping) else None
+    next_extension = copy.deepcopy(extension) if isinstance(extension, Mapping) else None
+    reviews_changed = False
+    if isinstance(extension, Mapping):
+        for old_id, new_id in segments.items():
+            owners_for_id = owners.get(old_id, set())
+            old_key = _REVIEW_PREFIX + _encode_component(old_id)
+            new_key = _REVIEW_PREFIX + _encode_component(new_id)
+            value = extension.get(old_key)
+            if len(owners_for_id) > 1 and isinstance(value, Mapping):
+                if (value.get("schemaVersion") == 1
+                        and value.get("sourceSchemaRef") == TRANSCRIPT_SCHEMA_REF
+                        and value.get("sourceItemId") == old_id):
+                    raise CommandError("ambiguous transcript review ownership", kind="identity_conflict")
+            if (len(owners_for_id) != 1 or not isinstance(value, Mapping)
+                    or value.get("schemaVersion") != 1
+                    or value.get("sourceSchemaRef") != TRANSCRIPT_SCHEMA_REF
+                    or value.get("sourceItemId") != old_id):
+                continue
+            if new_key in next_extension:
+                raise CommandError("transcript review destination is occupied", kind="identity_conflict")
+            del next_extension[old_key]
+            next_extension[new_key] = {**value, "sourceItemId": new_id}
+            reviews_changed = True
+
+    if not clips_changed and not reviews_changed:
+        return config
+    result = copy.deepcopy(config)
+    if clips_changed:
+        result["clips"] = next_clips
+    if reviews_changed:
+        result.setdefault("app", {})[_EXTENSION_ID] = next_extension
+    return result
 
 
 def associate(ctx, command):
@@ -284,12 +452,10 @@ def associate(ctx, command):
             raise CommandError("ambiguous existing transcript source-item identity", kind="identity_conflict")
         keys.append(key)
     projected = _project_items({"document_id": new_pin["document_id"], "version": new_pin["version"]}, content, asset_id)
-    new_ids = {row["id"] for row in projected}
-    old_ids = {row["id"] for row in old_items if row["sourceArtifactRef"]["assetId"] == asset_id}
     config = ctx.read("parent", ["config"])
-    if _reconciliation_needed(config, asset_id, old_ids, new_ids):
-        raise CommandError("caption/review reconciliation would change unsupported data; follow up with a native reconciliation carrier",
-                           kind="unsupported_reconciliation")
+    reconciled_config = reconcile_transcript_references(
+        config, old_items, projected, asset_id, args["source_id"]
+    )
     ctx.select("transcript.source-items", "parent")
     ctx.read("parent", refs_path)
     ctx.read("parent", items_path)
@@ -313,6 +479,17 @@ def associate(ctx, command):
     ctx.object("parent", list(prefix))
     ctx.write("parent", refs_path, next_refs)
     ctx.write("parent", items_path, next_map)
+    if not equal(config.get("clips", []), reconciled_config.get("clips", [])):
+        clip_path = (list(ctx.state.parent_clip_path)
+                     if ctx.state.parent_clip_path == ("clips",)
+                     else ["config", "clips"])
+        ctx.write("parent", clip_path, reconciled_config["clips"])
+    old_app = config.get("app") if isinstance(config, Mapping) else None
+    new_app = reconciled_config.get("app") if isinstance(reconciled_config, Mapping) else None
+    old_extension = old_app.get(_EXTENSION_ID) if isinstance(old_app, Mapping) else None
+    new_extension = new_app.get(_EXTENSION_ID) if isinstance(new_app, Mapping) else None
+    if not equal(old_extension, new_extension):
+        ctx.write("parent", ["config", "app", _EXTENSION_ID], new_extension)
 
 
 def capture_transcript_association(bundle, asset_id, *, document, previous_document=None):
