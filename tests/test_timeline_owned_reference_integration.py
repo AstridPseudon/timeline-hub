@@ -14,7 +14,7 @@ from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import route_path
-from test_timeline_commit_integration import agent  # noqa: F401 (shared fixture)
+from test_timeline_commit_integration import agent, film  # noqa: F401 (shared fixtures)
 
 
 pytestmark = pytest.mark.integration
