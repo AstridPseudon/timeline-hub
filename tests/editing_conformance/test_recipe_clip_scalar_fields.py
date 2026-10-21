@@ -209,6 +209,159 @@ def test_opacity_strict_aba_and_disjoint_parameter_rebase():
     assert State(rebased.bundle).get(REF, ['params', 'opaque']) == present({'keep': 1})
 
 
+def test_main_numeric_effects_set_is_a_leaf_patch_with_opaque_order_and_exact_inverse():
+    original = bundle()
+    ref = 'parent/clip:direct'
+    target = clip(original, ref)
+    target['effects'] = {
+        'opaque_before': None,
+        'fade_out': 0.8,
+        'opaque_after': [False, {'keep': 1}],
+    }
+    target.update(
+        entrance={'type': 'wipe', 'duration': 1.2},
+        exit={'type': 'cut', 'duration': 0.3},
+        transition={'type': 'crossfade', 'duration': 0.5})
+    before = copy.deepcopy(original)
+    command = capture_clip_set(original, ref, values={'effects': {'fade_in': 0.4}})
+    assert command['args'] == {'values': {'effects': {'fade_in': 0.4}}, 'clear': []}
+    assert command['expect'] == {ref + '::effects.fade_in': ABSENT}
+    plan = execute(original, [command])
+    assert list(clip(plan.bundle, ref)['effects']) == [
+        'opaque_before', 'fade_out', 'opaque_after', 'fade_in']
+    assert clip(plan.bundle, ref)['effects']['fade_in'] == 0.4
+    assert clip(plan.bundle, ref)['entrance'] == before['parent']['clips'][0]['entrance']
+    assert clip(plan.bundle, ref)['exit'] == before['parent']['clips'][0]['exit']
+    assert clip(plan.bundle, ref)['transition'] == before['parent']['clips'][0]['transition']
+    assert plan.records[0]['writes'] == [{
+        'ref': ref, 'path': ['effects', 'fade_in'], 'before': ABSENT,
+        'after': present(0.4)}]
+    assert inverse(plan.bundle, plan.records).bundle == before
+
+
+@pytest.mark.parametrize('before', [ABSENT, present(None)])
+def test_numeric_effect_set_replaces_only_absent_or_null_effect_container(before):
+    original = bundle()
+    ref = 'parent/clip:direct'
+    if before != ABSENT:
+        clip(original, ref)['effects'] = copy.deepcopy(before['value'])
+    plan = execute(original, [capture_clip_set(
+        original, ref, values={'effects': {'fade_in': 0.4}})])
+    assert clip(plan.bundle, ref)['effects'] == {'fade_in': 0.4}
+    assert inverse(plan.bundle, plan.records).bundle == original
+
+
+@pytest.mark.parametrize('before', [
+    ABSENT,
+    present(None),
+    present({}),
+    present({'fade_in': None, 'opaque': [None, False]}),
+    present({'fade_in': 0.2, 'opaque': {'keep': True}}),
+])
+def test_numeric_effect_clear_preserves_absence_null_and_opaque_siblings(before):
+    original = bundle()
+    ref = 'parent/clip:direct'
+    if before != ABSENT:
+        clip(original, ref)['effects'] = copy.deepcopy(before['value'])
+    command = capture_clip_set(original, ref, clear=['effects.fade_in'])
+    plan = execute(original, [command])
+    effects = clip(plan.bundle, ref).get('effects', ABSENT)
+    if before in (ABSENT, present(None)):
+        assert effects == (ABSENT if before == ABSENT else None)
+    elif 'fade_in' in before['value'] and before['value'].get('fade_in') is None:
+        assert effects == {'opaque': [None, False]}
+    elif before['value'].get('fade_in') == 0.2:
+        assert list(effects) == ['opaque']
+        assert effects['opaque'] == {'keep': True}
+    else:
+        assert effects == {}
+    leaf_before = (present(before['value']['fade_in'])
+                   if before.get('state') == 'present'
+                   and isinstance(before.get('value'), dict)
+                   and 'fade_in' in before['value'] else ABSENT)
+    assert plan.records[0]['writes'] == [{
+        'ref': ref, 'path': ['effects', 'fade_in'],
+        'before': leaf_before,
+        'after': ABSENT}]
+    assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_numeric_effect_clear_fade_out_preserves_fade_in_and_order():
+    original = bundle()
+    ref = 'parent/clip:direct'
+    clip(original, ref)['effects'] = {
+        'fade_in': 0.2, 'fade_out': 0.8, 'opaque': {'keep': False}}
+    plan = execute(original, [capture_clip_set(original, ref, clear=['effects.fade_out'])])
+    assert list(clip(plan.bundle, ref)['effects']) == ['fade_in', 'opaque']
+    assert clip(plan.bundle, ref)['effects'] == {'fade_in': 0.2, 'opaque': {'keep': False}}
+    assert inverse(plan.bundle, plan.records).bundle == original
+
+
+def test_main_app_effect_capture_is_top_level_clip_set_and_fade_out_is_separate():
+    original = app_bundle()
+    ref = 'parent/clip:f2-app-clip'
+    clip(original, ref)['effects'] = {'keep': None, 'fade_in': 0.1}
+    command = capture_clip_set(original, ref, values={'effects': {'fade_out': 1.25}})
+    assert command['op'] == 'clip.set'
+    assert command['select'] == ref
+    assert command['args'] == {'values': {'effects': {'fade_out': 1.25}}, 'clear': []}
+    assert command['expect'] == {ref + '::effects.fade_out': ABSENT}
+    assert command['authorship'] == {ref + '::effects.fade_out': 'direct'}
+    plan = execute(original, [command])
+    assert clip(plan.bundle, ref)['effects'] == {'keep': None, 'fade_in': 0.1, 'fade_out': 1.25}
+    assert inverse(plan.bundle, plan.records).bundle == original
+
+
+@pytest.mark.parametrize('values,clear', [
+    ({'effects': {}}, []),
+    ({'effects': {'fade_in': None}}, []),
+    ({'effects': {'fade_in': True}}, []),
+    ({'effects': {'fade_in': float('inf')}}, []),
+    ({'effects': {'fade_in': float('nan')}}, []),
+    ({'effects': {'unknown': 0.2}}, []),
+    ({'effects': {'fade_in': 0.2}}, ['effects.fade_in']),
+    ({}, ['effects.unknown']),
+])
+def test_numeric_effects_refuse_invalid_or_mixed_intent_atomically(values, clear):
+    original = bundle()
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError):
+        capture_clip_set(original, REF, values=values, clear=clear)
+    assert original == before
+
+
+@pytest.mark.parametrize('operation', ['set', 'clear'])
+def test_numeric_effects_refuse_ordered_effects_arrays_without_mutation(operation):
+    original = bundle()
+    clip(original, REF)['effects'] = [{'fade_in': 0.2}]
+    before = copy.deepcopy(original)
+    with pytest.raises(CommandError):
+        if operation == 'set':
+            capture_clip_set(original, REF, values={'effects': {'fade_out': 0.4}})
+        else:
+            capture_clip_set(original, REF, clear=['effects.fade_in'])
+    assert original == before
+
+
+def test_numeric_effects_strict_aba_and_disjoint_leaf_rebase():
+    original = bundle()
+    clip(original, REF)['effects'] = {'opaque': None}
+    command = capture_clip_set(original, REF, values={'effects': {'fade_in': 0.4}})
+    plan = execute(original, [command])
+    changed = execute(plan.bundle, [capture_clip_set(
+        plan.bundle, REF, values={'effects': {'fade_in': 0.6}})])
+    back = execute(changed.bundle, [capture_clip_set(
+        changed.bundle, REF, values={'effects': {'fade_in': 0.4}})])
+    with pytest.raises(CommandError, match='intervening'):
+        inverse(back.bundle, plan.records, [later(REF, ['effects', 'fade_in'], 0.4)])
+    other = execute(original, [capture_clip_set(
+        original, REF, values={'effects': {'fade_out': 0.8}})])
+    rebased = replay(plan, other.bundle, intervening_records=other.records)
+    assert clip(rebased.bundle, REF)['effects'] == {
+        'opaque': None, 'fade_out': 0.8, 'fade_in': 0.4}
+    assert inverse(rebased.bundle, rebased.records).bundle == other.bundle
+
+
 @pytest.mark.parametrize('fps', [30, {'numerator': 30000, 'denominator': 1001}])
 def test_source_hold_speed_two_rational_fps_boundary_and_no_implicit_rewrites(fps):
     original = bundle(fps=fps)

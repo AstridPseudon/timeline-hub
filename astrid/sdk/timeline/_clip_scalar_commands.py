@@ -87,6 +87,38 @@ def _hold_extent(ctx, ref, values, clear):
     return duration_paths, duration
 
 
+def _effect_values(ctx, ref, values, clear):
+    patch = values.get('effects')
+    cleared = {key.removeprefix('effects.') for key in clear
+               if key.startswith('effects.')}
+    if patch is None and not cleared:
+        return
+    if patch is not None and cleared.intersection(patch):
+        raise CommandError('an effects fade leaf cannot be both set and cleared', ref=ref,
+                           path=['effects'])
+
+    if patch is not None:
+        current = ctx.state.get(ref, ['effects'])
+        if (current['state'] == 'present' and current['value'] is not None
+                and not isinstance(current['value'], dict)):
+            raise CommandError('clip.set effects requires an object effects map', ref=ref,
+                               path=['effects'])
+        ctx.object(ref, ['effects'])
+        for key in sorted(patch):
+            number(patch[key], 'effects.' + key)
+            ctx.write(ref, ['effects', key], patch[key])
+
+    for key in sorted(cleared):
+        current = ctx.state.get(ref, ['effects'])
+        if (current['state'] == 'present' and current['value'] is not None
+                and not isinstance(current['value'], dict)):
+            raise CommandError('clip.set effects requires an object effects map', ref=ref,
+                               path=['effects'])
+        # State.clear records an absent/null parent as an exact no-op leaf
+        # write, preserving the raw distinction in the command guard.
+        ctx.clear(ref, ['effects', key])
+
+
 def clip_set(ctx, command):
     ref = _target(ctx, command, 'clip')
     values, clear = _changes(command)
@@ -105,14 +137,17 @@ def clip_set(ctx, command):
         duration_paths, duration = _hold_extent(ctx, ref, values, clear)
         for path in duration_paths:
             ctx.write(ref, path, duration)
+    _effect_values(ctx, ref, values, clear)
     for key in sorted(values):
-        ctx.write(ref, [key], values[key])
+        if key != 'effects':
+            ctx.write(ref, [key], values[key])
     for key in sorted(clear):
-        ctx.clear(ref, [key])
+        if not key.startswith('effects.'):
+            ctx.clear(ref, [key])
 
 
 def capture_clip_set(bundle, select, *, values=None, clear=()):
-    """Capture bounded raw hold/opacity writes and explicit field removal."""
+    """Capture bounded raw clip leaves and explicit field removal."""
     return _capture(bundle, 'clip.set', select, values, clear)
 
 

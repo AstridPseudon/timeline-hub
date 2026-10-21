@@ -26,6 +26,7 @@ PRIVATE_OPACITY_SHA256 = '9b4f16f87fffc00da010e2dbea469ca6bfc021695c5b453c821d1d
 PRIVATE_FULL_MOVE_SET_SHA256 = 'ba0c42d6a9359c32d89d8088416f7bc9092481dbd05f236e4d7e6e019c9246e7'
 PRIVATE_LITERAL_UNION_SHA256 = 'da144e6d1c0d3e2ad6ef8246a63a4d4c5fd379b7a0efbedc0f376987527ef068'
 PRIVATE_REFERENCE_ORDER_SHA256 = 'c47a00135a2beb9df35cbbf201ef6b7f900904f4afeb74efe3cf12871271598e'
+DAEC_CANONICAL_SHA256 = '9c05ec496e957548fe4656ca655a67a7b936ff4f220bdedae474a680e6d32eb9'
 
 
 def without_move_set(schema):
@@ -99,9 +100,40 @@ def without_opacity(schema):
     return schema
 
 
+def without_effects(schema):
+    """Remove only the unpublished Main numeric effects fade leaf slice."""
+    args = schema['$defs']['ClipSetArgs']
+    assert args['properties']['values']['properties'].pop('effects') == {
+        'type': 'object',
+        'minProperties': 1,
+        'properties': {
+            'fade_in': {
+                'type': 'number',
+                'description': 'Raw Main fade-in duration in seconds; no frame conversion or clamping.',
+            },
+            'fade_out': {
+                'type': 'number',
+                'description': 'Raw Main fade-out duration in seconds; no frame conversion or clamping.',
+            },
+        },
+        'additionalProperties': False,
+        'description': 'Patch only numeric fade leaves. Existing opaque effects members and object order '
+                       'survive; ordered effects arrays are unsupported.',
+    }
+    clear = args['properties']['clear']['items']
+    assert clear['enum'][-2:] == ['effects.fade_in', 'effects.fade_out']
+    clear['enum'] = clear['enum'][:-2]
+    args['description'] = (
+        'Bounded raw clip fields. Set hold in source seconds or opacity as a raw 0..1 fraction; explicitly '
+        'remove hold, asset, incoming transition or opacity. Clear removes presence, never sets null/empty. '
+        'Asset assignment requires the scoped clip.swap-media or occurrence.swap-media; transition authoring '
+        'is outside v1.')
+    return schema
+
+
 def without_literal_fields(schema):
-    """Remove only mute and opacity; all ordered-remove content remains."""
-    return without_opacity(without_mute(schema))
+    """Remove only mute, opacity, and effects; all ordered-remove content remains."""
+    return without_opacity(without_mute(without_effects(schema)))
 
 
 def without_groups(schema):
@@ -260,14 +292,17 @@ def test_full_move_set_schema_reconstructs_its_exact_source_floor():
 
 def test_literal_three_union_reconstructs_each_reviewed_source_floor():
     candidates = {
-        'literal-union-f448': without_new_sources(copy.deepcopy(_SCHEMA)),
+        'literal-union-f448': without_new_sources(without_effects(copy.deepcopy(_SCHEMA))),
         'movement3b320': without_reference_and_order(
             without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))),
         'reference-order-85c': without_move_set(
             without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))),
-        'ordered-remove': without_new_sources(without_opacity(without_mute(copy.deepcopy(_SCHEMA)))),
-        'track-mute': without_new_sources(without_opacity(without_remove(copy.deepcopy(_SCHEMA)))),
-        'opacity': without_new_sources(without_mute(without_remove(copy.deepcopy(_SCHEMA)))),
+        'ordered-remove': without_new_sources(without_opacity(
+            without_mute(without_effects(copy.deepcopy(_SCHEMA))))),
+        'track-mute': without_new_sources(without_opacity(
+            without_remove(without_effects(copy.deepcopy(_SCHEMA))))),
+        'opacity': without_new_sources(without_mute(
+            without_remove(without_effects(copy.deepcopy(_SCHEMA))))),
         'exact84fc': without_new_sources(without_remove(without_literal_fields(copy.deepcopy(_SCHEMA)))),
     }
     expected = {
@@ -282,8 +317,8 @@ def test_literal_three_union_reconstructs_each_reviewed_source_floor():
     for name, candidate in candidates.items():
         raw = (json.dumps(candidate, indent=2) + '\n').encode()
         assert hashlib.sha256(raw).hexdigest() == expected[name], name
-    assert hashlib.sha256((json.dumps(_SCHEMA, indent=2) + '\n').encode()).hexdigest() == \
-        '9c05ec496e957548fe4656ca655a67a7b936ff4f220bdedae474a680e6d32eb9'
+    assert hashlib.sha256((json.dumps(without_effects(copy.deepcopy(_SCHEMA)), indent=2) + '\n').encode()).hexdigest() == \
+        DAEC_CANONICAL_SHA256
 
 
 def test_extent_proposal_preserves_the_prior_voiceover_schema_hash():
