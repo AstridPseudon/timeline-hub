@@ -48,7 +48,7 @@ write_source_identity() {
     printf 'runtime_pin=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c\n'
     printf 'runtime_tree=d3a290b407fa61e6ab2d476f50c068073f70df00\n'
     printf 'producer_pin=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c\n'
-    printf 'public13_archive_sha=sha256:895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30\n'
+    printf 'private_dependency_graph_archive_sha=sha256:895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30\n'
   } >"$evidence_dir/source-identity.txt"
 }
 
