@@ -18,6 +18,8 @@ export type { AuthoredBundle } from './clipMovePrimitives.ts';
 type ScalarValue = Record<string, JSON>;
 type ScalarClear = Array<'hold' | 'asset' | 'transition' | 'elementRef'>;
 type ScalarArgs = { values: ScalarValue; clear: ScalarClear };
+const MISSING = Symbol('missing');
+type RawValue = typeof MISSING | JSON;
 
 const CLIP_FIELDS = [
   'id', 'at', 'at_ms', 'track', 'asset', 'asset_id', 'media_id', 'object_id',
@@ -186,6 +188,49 @@ function clipBasis(ctx: MoveRecording, ref: string): void {
   }
 }
 
+function raw(row: ScalarValue, key: string): RawValue {
+  return has(row, key) ? row[key] : MISSING;
+}
+
+function sameRaw(left: RawValue, right: RawValue): boolean {
+  return left === MISSING || right === MISSING ? left === right : equal(left, right);
+}
+
+function transitionRevision(value: RawValue): RawValue {
+  return object(value) ? raw(value, 'revision') : MISSING;
+}
+
+function validateNoReferenceTransition(row: ScalarValue, transition: ScalarValue): void {
+  const existing = raw(row, 'transition');
+  if (raw(row, 'elementRef') !== MISSING || raw(row, 'element_ref') !== MISSING ||
+    !object(existing) || existing.type !== transition.type ||
+    !sameRaw(transitionRevision(existing), transitionRevision(transition))) {
+    throw new ClipMoveError('transition SET without elementRef requires the existing raw identity');
+  }
+}
+
+function transitionWithRawParams(row: ScalarValue, transition: ScalarValue): ScalarValue {
+  const existing = raw(row, 'transition');
+  const next = object(existing) ? copy(existing) : {};
+  for (const key of Object.keys(transition)) next[key] = transition[key];
+
+  const existingParams = object(existing) ? raw(existing, 'params') : MISSING;
+  const requestedParams = raw(transition, 'params');
+  if (requestedParams === MISSING) {
+    if (existingParams !== MISSING) next.params = copy(existingParams);
+  } else if (requestedParams === null) {
+    if ((object(existingParams) && Object.keys(existingParams).length > 0) ||
+      (existingParams !== MISSING && existingParams !== null && !object(existingParams))) {
+      throw new ClipMoveError('transition params null would remove existing parameters');
+    }
+    next.params = null;
+  } else if (object(requestedParams)) {
+    const base = object(existingParams) ? existingParams : {};
+    next.params = { ...copy(base), ...copy(requestedParams) };
+  }
+  return next;
+}
+
 function transitionClearPair(ctx: MoveRecording, ref: string): void {
   const references: Array<[string, JSON]> = [];
   for (const key of ['elementRef', 'element_ref']) {
@@ -201,7 +246,7 @@ function transitionClearPair(ctx: MoveRecording, ref: string): void {
   }
   for (const [, selected] of references) {
     if (!object(selected) || selected.kind !== 'transition'
-      || selected.id !== value.type || selected.revision !== value.revision) {
+      || selected.id !== value.type || !sameRaw(transitionRevision(selected), transitionRevision(value))) {
       throw new ClipMoveError('transition remove refuses a mismatched element reference');
     }
   }
@@ -245,9 +290,8 @@ function validateTransitionRef(value: JSON): void {
 function validateTransition(value: JSON): asserts value is ScalarValue {
   if (!object(value) || typeof value.type !== 'string' || !value.type
     || typeof value.duration !== 'number' || !Number.isFinite(value.duration) || value.duration <= 0
-    || (has(value, 'revision') && (typeof value.revision !== 'string' || !value.revision))
-    || (has(value, 'params') && !object(value.params))) {
-    throw new ClipMoveError('transition requires a non-empty type, positive duration, and object params');
+    || (has(value, 'params') && value.params !== null && !object(value.params))) {
+    throw new ClipMoveError('transition requires a non-empty type, positive duration, and object or null params');
   }
   if (['id', 'durationFrames', 'align', 'incomingPolicy'].some((key) => has(value, key))) {
     throw new ClipMoveError('transition contains a compiled-only field');
@@ -392,13 +436,16 @@ function setClip(bundle: AuthoredBundle, command: EditCommand) {
   }
   if (has(values, 'transition')) {
     const transition = values.transition as ScalarValue;
-    const selected = has(values, 'elementRef') ? values.elementRef : ctx.read(ref, ['elementRef']) ?? ctx.read(ref, ['element_ref']);
-    if (selected !== undefined) {
+    if (has(values, 'elementRef')) {
+      const selected = values.elementRef;
       validateTransitionRef(selected);
       const selectedRef = selected as ScalarValue;
-      if (selectedRef.id !== transition.type || (has(transition, 'revision') && selectedRef.revision !== transition.revision)) {
+      if (selectedRef.id !== transition.type ||
+        !sameRaw(transitionRevision(selectedRef), transitionRevision(transition))) {
         throw new ClipMoveError('transition requires its matching selected reference');
       }
+    } else {
+      validateNoReferenceTransition(row, transition);
     }
     transitionPredecessor(ctx, ref, number(transition.duration, 'transition.duration', true));
   }
@@ -410,7 +457,12 @@ function setClip(bundle: AuthoredBundle, command: EditCommand) {
     ctx.read(`${ref.slice(0, ref.lastIndexOf('/'))}/registry`, ['assets', asset, 'content_sha256']);
   }
   if (has(values, 'hold') || clear.includes('hold')) holdExtent(ctx, ref, values, clear);
-  for (const key of Object.keys(values).sort()) ctx.write(ref, [key], values[key]);
+  for (const key of Object.keys(values).sort()) {
+    const value = key === 'transition'
+      ? transitionWithRawParams(row, values[key] as ScalarValue)
+      : values[key];
+    ctx.write(ref, [key], value);
+  }
   if (has(values, 'elementRef') && has(row, 'element_ref')) ctx.clear(ref, ['element_ref']);
   for (const key of [...clear].sort()) {
     ctx.clear(ref, [key]);
