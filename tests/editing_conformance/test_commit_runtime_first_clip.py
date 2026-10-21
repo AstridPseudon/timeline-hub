@@ -28,7 +28,7 @@ def test_empty_bootstrap_first_clip_client_commit_exact_reload_inverse_redo(
     monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client-data'))
     daemon = real_runtime(authoring_profile='astrid')
     project = daemon.service.create_project({'slug': 'first-clip', 'name': 'First clip'})['id']
-    daemon.service.create_timeline(project, 'film', idempotency_key='empty-bootstrap')
+    client = open_client(daemon)
 
     def forbidden(*args, **kwargs):
         raise AssertionError('first clip must not use a legacy publisher or renderer')
@@ -45,7 +45,11 @@ def test_empty_bootstrap_first_clip_client_commit_exact_reload_inverse_redo(
     monkeypatch.setattr(service_module, 'evaluate_closure', forbidden)
     monkeypatch.setattr(visual_seam, 'evaluate_closure', forbidden)
     monkeypatch.setattr(daemon.service, 'publish_parent_composition', forbidden)
-    client = open_client(daemon)
+    created = client.timelines.create_empty(
+        project=project, timeline_id='film', config={'tracks': []},
+        idempotency_key='empty-bootstrap',
+    )
+    assert created.ok, created.as_dict()
 
     def history():
         result = client.timelines.history(project, 'film', limit=100)
@@ -82,7 +86,9 @@ def test_empty_bootstrap_first_clip_client_commit_exact_reload_inverse_redo(
         return document
 
     initial = history()
-    assert len(initial['items']) == 1 and initial['items'][0]['records'] is None
+    assert len(initial['items']) == 2
+    assert initial['items'][0]['records']['commands'][0]['command']['op'] == 'timeline.init'
+    assert initial['items'][1]['records'] is None
     opened = client.timelines.open_bundle(project, 'film')
     assert opened.ok, opened.as_dict()
     assert opened.data['bundle']['parent']['clips'] == []
