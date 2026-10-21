@@ -251,7 +251,8 @@ def _swap(ctx, command, owner, limit):
         _registry(ctx, owner, old, kind, alias=alias)
         for key, replacement in _binding(pin, kind).items():
             ctx.write(owner + '/asset:' + alias, [key], replacement)
-        _replace_payload_media(ctx, owner, old['object_id'], pin['object_id'])
+        if owner != 'parent':
+            _replace_payload_media(ctx, owner, old['object_id'], pin['object_id'])
     else:
         _clip(ctx, owner, row, limit, kind, [previous, value], raw_window=owner == 'parent')
         _registry(ctx, owner, old, kind, alias=alias)
