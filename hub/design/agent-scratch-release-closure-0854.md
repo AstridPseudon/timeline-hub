@@ -26,6 +26,19 @@ Predicates:
 - Durable evidence: the failed current result, historical UNKNOWN status,
   exact source/result classification, and the private311 dependency/wheel
   inventory are retained in the prior Gate7 reports and this closure.
+- Private311 inventory retained for reconstruction/diagnosis: historical
+  source `8afe5a87dfe093ac5efd017106acb03cc597509c`, tree
+  `9eac28e8ac1d24d2020c9b3700ea54ddef5812cd`; Runtime95
+  `95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c`, tree
+  `d3a290b407fa61e6ab2d476f50c068073f70df00`; Agent runtime-lock SHA-256
+  `7a05eb67ba9aa2efbcb81ba57225351abf0456e63b67110e5fe75cec16732cb5`;
+  64 hashed Runtime-lock wheels; NumPy 2.4.6 wheel SHA-256
+  `89cd468399cfd2504718f0ba50e410dca55a170b61a02ad92bb18c8a65186e93`;
+  Agent wheel `585a10fb33821f5babf71089086e847a869ac8d9eca59fd76c18bc82ea1f0751`;
+  Runtime wheel `5236bc9dadb51190403b1a61b7e3ea2467f7d221f8532844197dad9c01e4ec78`;
+  client wheel `837ce7218ea177eccd036373c900e5f2f27ad0f60f05d945e4feafb3f11add28`;
+  test-only `types-PyYAML 6.0.12.20260906` wheel SHA-256
+  `bca893ff0d51df5c9053137d5d0e6ccd36e939a196356f1d5c16372422f5137b`.
 - Safe finished path: the current coherent `f4edcb4b` profile below; no
   future task should use source8afe as an active prerequisite.
 
