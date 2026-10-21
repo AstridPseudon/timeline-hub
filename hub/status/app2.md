@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-21T00:02:21Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 21 | status age 16m -->
+<!-- app2 | 2026-10-21T00:03:23Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 17m -->
 # app2 — 2026-10-20 23:45:31 UTC
 Milestone: M2. Duplicate DELETED; six rows OPEN. Ordinary representative journey is now qualified; remaining native families prevent the central snapshot cut.
 Integrated: HOME receipts: ordinary b188 at b4e417bfe, inert transition at 812a609ee, bootstrap/trim/selected current delivery at a6fa6ff8c, inert private swap helper at 3ee190062. Public13 alias repair ce6/e401, shared adapter7d42, selected5a, trim0fa/source-window3935 retained. HOME owns shared session/Provider/door/outbox/state.
