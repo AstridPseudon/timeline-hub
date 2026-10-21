@@ -124,6 +124,31 @@ export function removeAction(rows: TimelineData['rows'], actionId: string) {
   }));
 }
 
+/**
+ * Upload placeholders are local-only rows. Their marker is deliberately
+ * stronger than the ID prefix: an authored row must never be removed just
+ * because a caller supplied an `uploading-*` ID.
+ */
+export function isTransientUploadPlaceholder(current: TimelineData, clipId: string): boolean {
+  if (!clipId.startsWith('uploading-')) {
+    return false;
+  }
+
+  const meta = current.meta[clipId];
+  if (!meta?.asset?.startsWith('uploading:')) {
+    return false;
+  }
+
+  if (current.config.clips?.some((clip) => clip.id === clipId)) {
+    return false;
+  }
+  if (Object.values(current.clipOrder).some((clipIds) => clipIds.includes(clipId))) {
+    return false;
+  }
+
+  return current.rows.some((row) => row.actions.some((action) => action.id === clipId));
+}
+
 export function inferFileDropKind(file: File): TrackKind {
   const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
   return ['.mp3', '.wav', '.aac', '.m4a'].includes(extension) ? 'audio' : 'visual';
@@ -454,7 +479,7 @@ export async function handleFileDrop({
 
     const removeSkeleton = () => {
       const current = dataRef.current;
-      if (!current) {
+      if (!current || !isTransientUploadPlaceholder(current, skeletonId)) {
         return;
       }
       applyEdit({
@@ -480,9 +505,7 @@ export async function handleFileDrop({
             return false;
           }
           const placed = await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
-          if (!placed) {
-            removeSkeleton();
-          }
+          removeSkeleton();
           return placed;
         }
 
@@ -499,9 +522,7 @@ export async function handleFileDrop({
             return false;
           }
           const placed = await dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
-          if (!placed) {
-            removeSkeleton();
-          }
+          removeSkeleton();
           return placed;
         }
 
@@ -524,9 +545,7 @@ export async function handleFileDrop({
           source: 'registered',
         };
         const placed = await dropAsset(result.assetId, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId);
-        if (!placed) {
-          removeSkeleton();
-        }
+        removeSkeleton();
         void invalidateAssetRegistry();
         return placed;
       } catch (error) {

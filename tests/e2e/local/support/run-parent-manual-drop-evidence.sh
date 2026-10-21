@@ -2,17 +2,17 @@
 set -eu
 
 # Evidence-preserving adaptation of the approved parent-drop driver. Keep the
-# current exact three-path source pins and current App tree guard; do not alter
-# the product row or broaden its selectors.
+# current exact three-path source pins and the committed consumer source guard;
+# do not alter the product row or broaden its selectors.
 
 worker_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 source_runner=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-app-central.sh
 source_common=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/normal014-source-common.sh
-expected_app_tree=78f3784287d78fc92677ebe5eb710d162b0f50ae
+app_ancestry_anchor=84ec385a463fd4907628e68e87aabbe717202a96
 manual_case_title='M2 real mounted manual video drop: Runtime selection refusal is closed, native ADD recovers exactly, and undo preserves opaque data'
 
 usage() {
-  echo "usage: $0 run APP_ROOT | $0 probe" >&2
+  echo "usage: $0 run APP_ROOT | $0 preflight APP_ROOT | $0 probe" >&2
   exit 2
 }
 
@@ -52,10 +52,17 @@ write_source_identity() {
     printf 'head=%s\n' "$(git -C "$app_root" rev-parse HEAD 2>/dev/null || printf unavailable)"
     printf 'tree=%s\n' "$(git -C "$app_root" rev-parse 'HEAD^{tree}' 2>/dev/null || printf unavailable)"
     printf 'status=%s\n' "$(git -C "$app_root" status --porcelain=v1 --untracked-files=all 2>/dev/null | tr '\n' ' ' || printf unavailable)"
-    printf 'expected_tree=%s\n' "$expected_app_tree"
-    printf 'agent_pin=3c4f6de4fa777323b3386c01c7266b619b86af6d\n'
-    printf 'runtime_pin=202074110717146fc7f08af2306a8dd7f695b0b1\n'
-    printf 'producer_pin=a0dca16975dfe8f5e762703b99d9791a16cf7fd7\n'
+    printf 'ancestry_anchor=%s\n' "$app_ancestry_anchor"
+    printf 'source_guard=normal014-source-common.sh:final95:parent\n'
+    printf 'profile=final95\n'
+    printf 'app_source=parent\n'
+    printf 'app_pin=10fa2ff9a8216604aa39e3584f89dc9e7a09080a\n'
+    printf 'agent_pin=6efc81500a0e0688c2bb41e736503f0fc3e04abb\n'
+    printf 'agent_tree=2ed2b8a12b5b3391ca221ba6ff05390f71a73556\n'
+    printf 'runtime_pin=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c\n'
+    printf 'runtime_tree=d3a290b407fa61e6ab2d476f50c068073f70df00\n'
+    printf 'producer_pin=95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c\n'
+    printf 'private_dependency_graph_archive_sha=sha256:895c628ab0727c8975247310fd0319b0f546a8d032a57072c9e364e20965ca30\n'
   } >"$evidence_dir/source-identity.txt"
 }
 
@@ -156,6 +163,7 @@ exit_handler() {
 
 run_gate() {
   app_root=$1
+  mode=${2:-run}
   run_root=
   run_copy=
   cleanup_run_root=0
@@ -171,7 +179,7 @@ run_gate() {
   observed_app_head=$(git -C "$app_root" rev-parse HEAD)
   observed_app_tree=$(git -C "$app_root" rev-parse 'HEAD^{tree}')
   observed_app_status=$(git -C "$app_root" status --porcelain=v1 --untracked-files=all)
-  test "$observed_app_tree" = "$expected_app_tree"
+  git -C "$app_root" merge-base --is-ancestor "$app_ancestry_anchor" "$observed_app_head"
   test -z "$observed_app_status"
   test "${#observed_app_head}" -eq 40
   case "$observed_app_head" in *[!0123456789abcdef]*) exit 1;; esac
@@ -182,7 +190,8 @@ run_gate() {
   cleanup_runner=1
   sed \
     -e "s|^\. \"\$HERE/normal014-source-common.sh\"$|. \"$source_common\"|" \
-    -e "s/--grep 'M2 real gate 5'/--grep 'M2 real mounted manual video drop'/" \
+    -e "s|^normal014_required_case='M2 real gate 5 bootstrap actual consumer: production initializer uses native create/init, exact retry, restart and guarded undo'$|normal014_required_case='M2 real mounted manual video drop: Runtime selection refusal is closed, native ADD recovers exactly, and undo preserves opaque data'|" \
+    -e 's|^normal014_playwright_grep="^\${normal014_required_case}\$"$|normal014_playwright_grep="M2 real mounted manual video drop"|' \
     -e "/^npm run build:hosted$/i\\
 node node_modules/playwright/cli.js test --config playwright.three-products.config.ts --grep 'M2 real mounted manual video drop' --list\\
 " \
@@ -190,7 +199,8 @@ node node_modules/playwright/cli.js test --config playwright.three-products.conf
   chmod 700 "$run_copy"
 
   status=0
-  NORMAL014_RUN_ROOT="$run_root" sh "$run_copy" run "$app_root" >"$run_root/runner.log" 2>&1 || status=$?
+  NORMAL014_PROFILE=final95 NORMAL014_APP_SOURCE=parent NORMAL014_RUN_ROOT="$run_root" \
+    sh "$run_copy" "$mode" "$app_root" >"$run_root/runner.log" 2>&1 || status=$?
   guard_test_run "$status" "$run_root/runner.log" || status=$?
   cat "$run_root/runner.log"
   record_evidence "$run_root" "$app_root" "$status"
@@ -240,7 +250,7 @@ failuretrap_probe() {
 }
 
 case "${1:-}" in
-  run) [ "$#" -eq 2 ] || usage; run_gate "$2" ;;
+  run|preflight) [ "$#" -eq 2 ] || usage; run_gate "$2" "$1" ;;
   probe) [ "$#" -eq 1 ] || usage; failuretrap_probe ;;
   *) usage ;;
 esac

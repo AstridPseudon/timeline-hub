@@ -1501,7 +1501,11 @@ test('M2 real mounted manual video drop: Runtime selection refusal is closed, na
   await dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 20);
   await wrongImportResponse;
   const wrongVerified = await wrongVerifiedResponse;
-  expect([404, 409]).toContain(wrongVerified.status());
+  expect(wrongVerified.status()).toBe(404);
+  await expect(wrongVerified.json()).resolves.toEqual({
+    code: 'not_found',
+    message: 'selected media is not a managed project generation/variant/object',
+  });
   await page.unroute(wrongSelectionRoute);
   await expect(page.locator('.clip-action')).toHaveCount(baselineClipCount, CEILING);
   expect(await currentHead(harness)).toBe(original.head.revision_id);
@@ -1722,12 +1726,50 @@ test('M2 real gate 5 bootstrap actual consumer: production initializer uses nati
   const bootstrapHistory = await history(harness, seed3, expectedScope);
   // The audit deliberately records only the door's method/path/status. The
   // accepted Runtime history is the authoritative record of the init body.
-  expect(bootstrapHistory.items).toHaveLength(1);
-  expect(bootstrapHistory.items[0]).toMatchObject({ previous: null, revision_id: bootstrapHistory.head.revision_id });
-  expect(bootstrapHistory.items[0].records?.commands.map((record) => [record.command.op, record.command.version])).toEqual([
-    ['timeline.init', '1'],
-    ['track.create', '1'],
-    ['track.create', '1'],
+  // Main's create_timeline publishes one normal empty baseline before the
+  // native initialization commit. The former total=1 assertion represented
+  // only the native entry; keep that contract one-to-one as baseline=1 plus
+  // native-init=1, without filtering either accepted record from history.
+  expect(bootstrapHistory.items).toHaveLength(2);
+  const [bootstrapEntry, initEntry] = bootstrapHistory.items;
+  expect((bootstrapEntry.receipt.result as { revision_id?: unknown }).revision_id).toBe(bootstrapEntry.revision_id);
+  expect(bootstrapEntry).toMatchObject({
+    publication_id: bootstrapEntry.receipt.receipt_id,
+    previous: null,
+    intent: 'bootstrap',
+    records: null,
+    receipt: {
+      command_kind: 'parent_composition.publish',
+      idempotency_key: `bootstrap:${expectedScope.timelineId}`,
+      project_id: expectedScope.projectId,
+      result: {
+        project_id: expectedScope.projectId,
+        timeline_id: expectedScope.timelineId,
+        old_head: null,
+        new_head: bootstrapEntry.revision_id,
+      },
+    },
+  });
+  expect(initEntry).toMatchObject({
+    publication_id: initEntry.receipt.receipt_id,
+    previous: { revision_id: bootstrapEntry.revision_id, publication_id: bootstrapEntry.publication_id },
+    intent: 'recorded',
+    receipt: {
+      command_kind: 'timeline.commit',
+      project_id: expectedScope.projectId,
+      result: {
+        canonical_document: { project_id: expectedScope.projectId, timeline_id: expectedScope.timelineId },
+      },
+    },
+  });
+  expect(bootstrapHistory.items.map((entry) => entry.receipt.command_kind)).toEqual([
+    'parent_composition.publish', 'timeline.commit',
+  ]);
+  expect(bootstrapHistory.head).toEqual({ revision_id: initEntry.revision_id, publication_id: initEntry.publication_id });
+  expect(initEntry.records?.commands.map((record) => [record.command.op, record.command.version, record.command.select])).toEqual([
+    ['timeline.init', '1', 'parent'],
+    ['track.create', '1', 'parent'],
+    ['track.create', '1', 'parent'],
   ]);
 
   const originalTrackName = await firstTrackName(page).inputValue();

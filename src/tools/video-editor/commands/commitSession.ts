@@ -112,6 +112,7 @@ type Options = {
   initial: TimelineCommandBasis;
   outboxes?: ReturnType<typeof createCommitOutbox>;
   loadLatest?(): Promise<TimelineCommandBasis>;
+  recoverBootstrap?(ownerId: string): Promise<TimelineCommandBasis>;
   send(request: CommitRequest, key: string): Promise<TimelineCommitResult>;
   preview(patch: TimelinePatch): void;
   project(basis: TimelineCommandBasis, previews: TimelinePatch[]): Promise<void>;
@@ -1151,6 +1152,11 @@ export async function createTimelineCommandSession(options: Options) {
     }
   }
   const owners = (await storage.list(options.scope)).filter((owner) => owner.intents.length || owner.pending);
+  const bootstrapOwners = new Set(owners.filter((owner) => {
+    const payload = owner.intents[0]?.payload;
+    return payload !== null && typeof payload === 'object' && !Array.isArray(payload)
+      && (payload as { kind?: unknown }).kind === 'timeline-init';
+  }).map((owner) => owner.ownerId));
   if (owners.length) {
     state = { ...state, recoverableOwners: owners.map((owner) => owner.ownerId) };
     publish('recovery', 'Choose the persisted editor owner to recover its exact pending request');
@@ -1173,6 +1179,21 @@ export async function createTimelineCommandSession(options: Options) {
     getState: () => state,
     async recover(ownerId: string) {
       if (!state.recoverableOwners.includes(ownerId)) throw new Error('Unknown persisted outbox owner');
+      if (bootstrapOwners.has(ownerId) && options.recoverBootstrap) {
+        const basis = await options.recoverBootstrap(ownerId);
+        await claim(ownerId);
+        if (stopped) throw new Error('Timeline command session is closed');
+        bundle = await authoringBundleFromDocument(basis.canonicalDocument) as AuthoredBundle;
+        known = basis;
+        acceptedBasis = basis;
+        displayHead = basis.head;
+        localGeneration++;
+        appendedGeneration = localGeneration;
+        lastIntent = undefined;
+        await project(basis, []);
+        publish('saved');
+        return;
+      }
       await claim(ownerId);
       // Explicit recovery authorizes retry; never adopt a sessionStorage owner.
       await pump();
