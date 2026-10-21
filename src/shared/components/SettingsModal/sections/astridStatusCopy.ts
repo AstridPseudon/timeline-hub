@@ -4,7 +4,7 @@ export const ASTRID_STATUS_COPY = {
   description: "Your workspace and what's running on this computer.",
   connecting: 'Looking for Astrid…',
   connected: 'Connected',
-  degraded: "Part of Astrid isn't working. Run this line to restart it.",
+  degraded: "Part of Astrid isn't working. Give these instructions to your coding agent to restart it.",
   checking: 'Reading details…',
   unavailable: "Astrid's details aren't available right now.",
   setUp: 'Not found yet',

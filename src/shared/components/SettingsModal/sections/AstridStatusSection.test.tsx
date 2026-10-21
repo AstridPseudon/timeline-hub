@@ -101,13 +101,13 @@ describe('AstridStatusSection', () => {
     expect(screen.getByText('Starting…')).toBeInTheDocument();
     expect(screen.getByText('Running')).toBeInTheDocument();
     expect(screen.getByText('Failed')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent("Part of Astrid isn't working. Run this line to restart it.");
+    expect(screen.getByRole('status')).toHaveTextContent("Part of Astrid isn't working. Give these instructions to your coding agent to restart it.");
     expect(screen.getByRole('link', { name: 'Get help' })).toHaveAttribute('href', ASTRID_HELP_URL);
     expect(document.querySelector('svg.lucide-circle-alert')).not.toBeNull();
     expect(screen.getByText(/Restarts: 3/)).toBeInTheDocument();
     expect(screen.queryByText('Restarts: 0')).not.toBeInTheDocument();
     expect(screen.queryByText(/Last exit code|Reason:|startup_failed/)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
     expect(screen.getByText('curl -fsSL https://astrid.haus/install | sh')).toBeInTheDocument();
   });
 
@@ -131,7 +131,7 @@ describe('AstridStatusSection', () => {
     expect(customWorker.closest('li')?.querySelector('span.basis-full')).toBeNull();
     expect(screen.queryByText(/Last exit code|Reason:|exited/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^ · /)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Copy' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Copy command' })).not.toBeInTheDocument();
     expect(screen.queryByText('curl -fsSL https://astrid.haus/install | sh')).not.toBeInTheDocument();
     expect(screen.queryByText(/Restarts:/)).not.toBeInTheDocument();
   });
@@ -148,19 +148,31 @@ describe('AstridStatusSection', () => {
     });
     render(<AstridStatusSection isOpen />);
 
-    expect(await screen.findByRole('status')).toHaveTextContent("Part of Astrid isn't working. Run this line to restart it.");
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(await screen.findByRole('status')).toHaveTextContent("Part of Astrid isn't working. Give these instructions to your coding agent to restart it.");
+    expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
     expect(screen.getByText('curl -fsSL https://astrid.haus/install | sh')).toBeInTheDocument();
   });
 
   it('copies the same install command shown in the repair control', async () => {
     render(<AstridStatusSection isOpen />);
-    expect(await screen.findByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Copy command' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy command' }));
 
     await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledWith(installCommand('install')));
-    expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Command copied' })).toBeInTheDocument();
+  });
+
+  it('copies a complete agent brief separately from the repair command', async () => {
+    render(<AstridStatusSection isOpen />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Copy agent instructions' }));
+    await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledOnce());
+    const brief = mocks.clipboard.mock.calls[0][0];
+    expect(brief).toContain('selected workspace and data root');
+    expect(brief).toContain('supported migration or adoption path');
+    expect(brief).toContain(installCommand('install'));
+    expect(brief).not.toBe(installCommand('install'));
+    expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
   });
 
   it('shows Needs an update with the update command when Astrid on this computer is older than this page', async () => {
@@ -178,7 +190,7 @@ describe('AstridStatusSection', () => {
 
     expect(await screen.findByText('Needs an update')).toBeInTheDocument();
     expect(screen.getByText(/Astrid on this computer needs an update/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy command' }));
 
     await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledWith(installCommand('update')));
     expect(mocks.clipboard).not.toHaveBeenCalledWith(installCommand('install'));
@@ -230,7 +242,7 @@ describe('AstridStatusSection', () => {
     view.rerender(<AstridStatusSection isOpen />);
 
     await openDetails();
-    expect(await screen.findByText("Part of Astrid isn't working. Run this line to restart it.")).toBeInTheDocument();
+    expect(await screen.findByText("Part of Astrid isn't working. Give these instructions to your coding agent to restart it.")).toBeInTheDocument();
     expect(await screen.findByText('Failed')).toBeInTheDocument();
     expect(mocks.readStatus).toHaveBeenCalledTimes(2);
   });
@@ -262,7 +274,7 @@ describe('AstridStatusSection', () => {
     render(<AstridStatusSection isOpen />);
 
     expect(screen.getByRole('status')).toHaveTextContent('Needs an update');
-    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy command' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Details' })).toHaveAttribute('aria-expanded', 'false');
   });
 });

@@ -122,11 +122,11 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
 
             {summary.checks && <SetupStatusLine checks={summary.checks} mink={false} announce={false} />}
             {(!connected || summary.updateNeeded) && summary.detail && <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{summary.updateNeeded ? withCommandShell(summary.detail) : summary.detail}</p>}
-            {summary.updateNeeded && <CopyInstallCommand label={RUNTIME_CONNECTION_COPY.agent.copy} mode="update" />}
+            {summary.updateNeeded && <CopyInstallCommand mode="update" />}
             {summary.connect && <Button type="button" variant="retro-secondary" size="retro-sm" onClick={() => connection.connect()}>{RUNTIME_CONNECTION_COPY.permission.connect}</Button>}
             {connected && details && needsRepair && (
               <>
-                <CopyInstallCommand label={RUNTIME_CONNECTION_COPY.agent.copy} mode="install" />
+                <CopyInstallCommand mode="install" />
                 <a className="text-sm text-muted-foreground underline underline-offset-4" href={ASTRID_HELP_URL} target="_blank" rel="noreferrer">Get help</a>
               </>
             )}

@@ -18,7 +18,7 @@ export function ChatUpdateNeeded({ detail }: { readonly detail: string }) {
       <p>{RUNTIME_CONNECTION_COPY.chatNeedsUpdate}</p>
       <p className="font-medium">{copy.title}</p>
       <p>{withCommandShell(copy.sentence)}</p>
-      <CopyInstallCommand mode="update" label={RUNTIME_CONNECTION_COPY.agent.copy} />
+      <CopyInstallCommand mode="update" />
       <details className="text-[11px] text-muted-foreground">
         <summary className="cursor-pointer">Details</summary>
         <p className="mt-1 break-words">{detail}</p>
