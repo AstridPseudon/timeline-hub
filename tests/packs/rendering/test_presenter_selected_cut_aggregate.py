@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from astrid.core.timeline import scene_answers
+from astrid.core.rendering import scene_answers
 from astrid.core.timeline.cuts import find_cut
 from astrid.packs.rendering.actions.timeline_visualize.composed_frame import CaptureSceneLabels
 from astrid.packs.rendering.actions.timeline_visualize.layers import builtin

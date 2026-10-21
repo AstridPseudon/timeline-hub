@@ -18,7 +18,8 @@ import pytest
 from PIL import Image
 
 from astrid.core.rendering.node_pin import resolve_pinned_node
-from astrid.core.timeline import Timeline, scene_answers
+from astrid.core.rendering import scene_answers
+from astrid.core.timeline import Timeline
 from astrid.packs.rendering.actions.render import managed_timeline
 from astrid.packs.rendering.rendering.renderers.remotion import run
 from astrid.sdk.timeline_filmstrip import prepare_filmstrip

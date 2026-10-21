@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.core.timeline import scene_answers
+from astrid.core.rendering import scene_answers
 from astrid.packs.rendering.actions.timeline_visualize import filmstrip_execution
 
 

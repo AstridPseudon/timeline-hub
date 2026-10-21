@@ -14,7 +14,8 @@ from pathlib import Path
 import pytest
 from PIL import Image
 
-from astrid.core.timeline import Timeline, scene_answers
+from astrid.core.rendering import scene_answers
+from astrid.core.timeline import Timeline
 from astrid.packs.rendering.actions.timeline_visualize import composed_frame
 from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import (
     _contact_overlay_for_layers,

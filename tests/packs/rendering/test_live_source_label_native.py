@@ -246,7 +246,8 @@ def test_retained_source_reaches_exact_final_root_inside_normal_lifetime(
 
     from astrid.core.rendering.profile import resolve_render_profile
     from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
-    from astrid.core.timeline import Timeline, scene_answers
+    from astrid.core.rendering import scene_answers
+    from astrid.core.timeline import Timeline
     from astrid.core.timeline.duration import timeline_duration_frames
     from astrid.packs.rendering.rendering.renderers.remotion import lock, run
 
