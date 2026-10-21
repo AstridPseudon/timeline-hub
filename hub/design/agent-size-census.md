@@ -1,179 +1,225 @@
-# Preliminary Agent Timeline-core size census
+# Agent Timeline core size census
 
-Captured `2026-10-21T01:59:11Z` (UTC). This is a read-only census at the
-exact current commit `4467c1c1a9ed81fa7cd1b2d7687b8ada54dc216a`, compared
-with the same path rules at `origin/main`
-(`497714c73531f164082555ec81b61ca5bc8b6554`). It follows PLAN section 3:
-the 20–26k figure is a rough guide, not a hard cap or gate.
+Read-only census captured 2026-10-21 UTC. The comparison is the frozen
+upstream Main497 source `497714c73531f164082555ec81b61ca5bc8b6554` (`origin/main`)
+against the actual Agent integration source
+`cc37291af12ac6504eb48dd71ea39b9dfdb56d71` (`tl/integration` at census time).
+The latter source SHA is fixed in the reproducer below so later documentation
+commits cannot silently move the measurement.
 
-## Scoped result
+This follows the PLAN3 owner 08:00/10:34 boundary: authored Agent product
+code implementing Timeline Read, See, or Edit, including the compiler,
+provider/adapters, and text views. Untouched generic main infrastructure,
+generated clients/registries and contract data, tests/fixtures, vendored
+Composition, build output, and lockfiles are excluded. Physical lines include
+blank and comment lines; nonblank is reported for context. These are footprint
+counts, not claims that every line is newly authored Timeline meaning or
+removable.
 
-`physical` counts UTF-8 blob lines using `splitlines()`; `nonblank` counts
-those lines after `strip()`. The selected paths are disjoint.
+## Result
 
-| bucket | origin/main physical / nonblank | current physical / nonblank | delta physical / nonblank |
+| disjoint bucket | Main497 physical / nonblank | current physical / nonblank | delta physical / nonblank |
 |---|---:|---:|---:|
-| Agent Read/Edit core | 34,284 / 30,050 | 41,156 / 36,253 | +6,872 / +6,203 |
-| Agent See adapters | 3,362 / 3,079 | 3,986 / 3,647 | +624 / +568 |
-| Mixed SDK transport slices | 1,463 / 1,412 | 1,431 / 1,382 | −32 / −30 |
-| **Scoped Agent total** | **39,109 / 34,541** | **46,573 / 41,282** | **+7,464 / +6,741** |
+| Read/Edit core, compiler, text views | 33,836 / 29,647 | 42,304 / 37,263 | +8,468 / +7,616 |
+| See adapters and filmstrip Scene handoff | 3,362 / 3,079 | 4,013 / 3,670 | +651 / +591 |
+| Provider/adapters | 1,088 / 995 | 1,292 / 1,188 | +204 / +193 |
+| Selected SDK transport slices | 1,463 / 1,412 | 1,449 / 1,398 | −14 / −14 |
+| **Scoped Agent total** | **39,749 / 35,133** | **49,058 / 43,519** | **+9,309 / +8,386** |
 
-These are authored-source footprint numbers, not a claim that every line is
-new Timeline meaning or removable. No source deletion is proposed to reach a
-number.
+The current total is larger than the historical preliminary figure because it
+is measured at the later integration SHA and includes the current authored
+filmstrip Scene handoff and authoring-media provider. It is not a deletion
+target.
+
+Historical preliminary numbers remain preserved: **39,109 physical lines on
+Main497 and 46,573 physical lines on the earlier integration snapshot** (the
+earlier report also recorded 34,541 and 41,282 nonblank lines). Those numbers
+were valid for their then-selected surface and are not silently rewritten by
+this current-source census.
+
+The PLAN's approximately 20–26k figure is a rough guide, not a hard limit or
+gate. No behavior is removed or simplified to reach it.
 
 ## Exact path boundary
 
-Read/Edit core is exactly:
+The reproducer's `selected_paths()` output is the exact path list for each
+source SHA; it prints every selected path before counting. The disjoint groups
+are:
 
-- all committed Python under `astrid/sdk/timeline/`;
-- top-level `astrid/sdk/timeline_*.py`, except `timeline_filmstrip.py`;
-- all committed Python under `astrid/packs/timeline/`, except
-  `cli_visualize.py`;
-- all committed Python under `astrid/core/timeline/`, except
-  `scene_answers.py`, `onscreen.py`, and
-  `shot_composition_projection.py`;
-- the adapter files `astrid/sdk/_remote_timeline.py`,
-  `astrid/sdk/authoring_bundle.py`, `astrid/sdk/authoring_remote.py`, and
-  `astrid/sdk/authoring_revision_diff.py`.
+- Read/Edit core: Python under `astrid/sdk/timeline/`, Python matching
+  `astrid/sdk/timeline_*.py`, Python under `astrid/packs/timeline/`, and Python
+  under `astrid/core/timeline/`, excluding the six See files and the five
+  explicit provider/adapters below. The `cli_visualize.py` file is excluded
+  from the core family and counted in See.
+- See: `astrid/sdk/timeline_filmstrip.py`,
+  `astrid/sdk/_timeline_filmstrip_scene.py`,
+  `astrid/packs/timeline/cli_visualize.py`,
+  `astrid/core/timeline/scene_answers.py`,
+  `astrid/core/timeline/onscreen.py`, and
+  `astrid/core/timeline/shot_composition_projection.py`.
+- Provider/adapters: `astrid/sdk/_remote_timeline.py`,
+  `astrid/sdk/authoring_bundle.py`, `astrid/sdk/authoring_remote.py`,
+  `astrid/sdk/authoring_revision_diff.py`, and
+  `astrid/sdk/authoring_media.py`.
+- Selected transport slices: `RemoteTimelines` and `RemoteShots` in
+  `astrid/sdk/remote.py`, plus the named hand-authored timeline/shot/text
+  methods in `astrid/sdk/workspace_client.py`. The rest of both mixed files
+  is excluded; generated operation maps and generic client plumbing are not
+  charged.
 
-The current/baseline Read/Edit subcounts are:
+Non-Python schema files under `astrid/core/timeline/schema/` and other
+JSON/YAML/generated data are excluded. The current source has 140 core paths,
+6 See paths, 5 provider/adapter paths, and 2 mixed files; Main497 has 101,
+4, 4, and 2 respectively. The command below is the authoritative complete
+list, including paths absent from Main497.
 
-| exact path group | origin/main | current | delta |
-|---|---:|---:|---:|
-| `astrid/sdk/timeline/**/*.py` | 7,415 / 6,484 | 14,090 / 12,455 | +6,675 / +5,971 |
-| `astrid/sdk/timeline_*.py` minus filmstrip | 6,304 / 5,583 | 6,587 / 5,856 | +283 / +273 |
-| `astrid/packs/timeline/**/*.py` minus visualize CLI | 5,775 / 5,127 | 6,201 / 5,507 | +426 / +380 |
-| `astrid/core/timeline/**/*.py` minus the three See files | 14,342 / 12,453 | 13,643 / 11,856 | −699 / −597 |
-| four SDK adapter files above | 448 / 403 | 635 / 579 | +187 / +176 |
+## Changed main infrastructure (separate, not counted)
 
-Agent See adapters are exactly:
+`astrid/core/execution/generic_host.py` remains excluded as generic host
+infrastructure; it is not counted as a whole merely because Timeline source
+preparation now passes through it. From Main497 to the current source its raw
+diff is **30 insertions / 18 deletions**. The adjacent
+`astrid/core/rendering/verified_source.py` source-authority helper is also
+outside this product footprint (current file: 206 physical / 176 nonblank).
+These are disclosed infrastructure context, not added to the scoped total.
+The renderer-owned `astrid/packs/rendering/**` and generic SDK invocation/
+process-host plumbing remain outside this Agent census as well.
 
-- `astrid/sdk/timeline_filmstrip.py`;
-- `astrid/packs/timeline/cli_visualize.py`;
-- `astrid/core/timeline/scene_answers.py`;
-- `astrid/core/timeline/onscreen.py`;
-- `astrid/core/timeline/shot_composition_projection.py`.
+## Existing ledger frontiers only
 
-The mixed SDK transport bucket does not count whole files. It counts the
-`RemoteTimelines` and `RemoteShots` classes in `astrid/sdk/remote.py`, plus
-the hand-authored timeline/revision/shot/text-binding methods in
-`astrid/sdk/workspace_client.py`. Generic client plumbing and generated
-operation maps are excluded. The selected method names are the timeline CRUD,
-history, commit, inspection, diff, revision, parent-composition media,
-project-shot, shot-item, and shot-text-binding methods; the reproducible AST
-selection is the method-name set in the selector below.
+This census does not perform a new duplicate-writer audit or change ledger
+status. The already-owned Agent frontiers still relevant to the counted code
+are:
 
-The exact mixed-file selector is:
+- in progress: `D13`, `D01a`, `D01b`, `AG01`, `AG02`, `AG03`, and `WC7`;
+- held: `AG-M2-TB01`, `AG-M3-CAP-01..04`, `AG05`, `WC1`, `WC3`, `WC5`, `WC8`,
+  and `WC10`.
 
-```text
-remote.py classes: RemoteTimelines, RemoteShots
-workspace_client.py methods:
-get_project_shot_revision, get_project_timeline_revision,
-get_project_parent_composition_revision, publish_parent_composition,
-replace_parent_composition_media, create_timeline, rename_timeline,
-create_timeline_document, update_timeline_document, list_timelines,
-commit_timeline, list_timeline_commits, get_project_verified_document,
-get_project_verified_document_object, get_timeline, inspect_timeline,
-create_timeline_view, list_timeline_history, replace_timeline_clip,
-diff_timeline, archive_timeline, recover_timeline, list_project_shots,
-create_project_shot, get_project_shot, update_project_shot,
-archive_project_shot, recover_project_shot, add_shot_item,
-promote_project_shot_candidate, remove_shot_item, reorder_shot_items,
-list_project_shot_text_bindings, set_project_shot_text_binding,
-get_project_shot_text_binding, set_project_shot_text_binding_by_id,
-rebind_project_shot_text_binding
-```
+The ledger's deleted rows remain deleted, including `D05`, `D06`, `D07`,
+`WC2`, `WC4`, `WC6`, `WC9`, `AG-RECOVER`, and `AG-M2-DEAD-LEAF-01`. Open
+frontiers are not treated as deletions and no new frontier is proposed here.
 
-The five See files are Agent-side projections/adapters only. The renderer and
-rendering implementation remain Viewing-owned and are not counted here.
+## Deterministic reproduction
 
-## Timeline additions in shared `generic_host.py`
-
-The whole `astrid/core/execution/generic_host.py` is excluded as generic host
-infrastructure. Relative to `origin/main`, its Timeline-specific additions
-are the `PreparedTimelineInputs.prepare(...)`, `values.prepare_snapshot(...)`,
-`values.mint_source(...)`, and `PreparedTimelineInputs.handoff_source(...)`
-excerpts. They contain **20 inserted physical / 16 inserted nonblank lines**;
-because the old one-line `return values` becomes a four-line mint-source
-try/except, the net selected excerpt delta is **+18 physical / +15 nonblank**.
-Neither figure is included in the scoped Agent total.
-
-## Authored tests and fixtures (context only)
-
-These are deliberately not core-target lines and no fixture cleanup is being
-requested. The context selection is all `tests/editing_conformance/**/*.py`,
-all `tests/editing_conformance/fixtures/**`, all `tests/timeline/**/*.py`,
-all `tests/packs/timeline/**/*.py`, all `tests/core/timeline/**/*.py`, the
-timeline-named `tests/core` files, and the explicitly timeline-focused SDK
-tests (`test_timeline*`, `test_timing*`, `test_native_timeline*`, scene,
-capture, admission, authority, and timeline workspace-client tests).
-
-| context | origin/main files / lines | current files / lines | delta files / lines |
-|---|---:|---:|---:|
-| authored tests | 104 / 26,223 physical (21,589 nonblank) | 208 / 56,086 (47,513) | +104 / +29,863 (+25,924) |
-| authored JSON fixtures | 0 / 0 | 32 / 33,408 (33,408) | +32 / +33,408 (+33,408) |
-
-The fixture count is context, not product size. It includes current editing
-conformance fixtures and does not justify deleting or weakening any positive
-behavior expectation.
-
-## Exclusions and ownership
-
-- `tests/`, fixtures, docs, schemas/contracts, lockfiles, manifests,
-  generated clients and generated registries are outside the core total.
-- `astrid/packs/rendering/**` and `remotion/**` are Viewing-owned rendering
-  paths. They are intentionally not folded into Agent's See number, avoiding
-  cross-area double counting.
-- Whole generic infrastructure, including `generic_host.py`, is excluded;
-  only the Timeline excerpt above is disclosed separately.
-- Binary artifacts, vendored Composition packages, stale `dist/`, and
-  unrelated packs are excluded.
-
-## Remaining deletion/dead-path ledger state
-
-The current Agent deletion ledger still has these rows open, held, or pending;
-they are not silently treated as deleted in the census:
-
-| status group | rows / remaining path or responsibility |
-|---|---|
-| in progress | `D13` generic-host assembled-timeline direct publish; `D01a` popup occurrence add/swap fallback; `D01b` canonical placement loop; `AG01` local journal/history/save consumers; `AG02` legacy SDK/CLI snapshot saves (numeric parent consumer only deleted); `AG03` cut-sheet merge/save (partial); `WC7` whole-document publish path (attached migrated slices only) |
-| held | `AG-M2-TB01` direct text-binding writers; `AG-M3-CAP-01..04` candidate/source admission positives; `AG05` duplicated capture projection; `WC1` whole authoring-candidate publisher; `WC3` remote parent-media publisher; `WC5` authoring-remote publisher; `WC6` rendering-doc detached publisher; `WC8` whole-document merge; `WC10` Runtime parent-composition route; `AG-MAT-V01..V03` obsolete private-carrier fixtures; `AG-CATALOG-PROMOTION` Runtime preservation gate |
-| rejected/unmerged preservation rows | `AG-CUTOVER-01..05`; these are retained as ledger decisions because positive behavior preservation is incomplete, not counted as product code |
-
-Rows already marked deleted in the ledger include `D05`, `D06`, `D07`, `WC2`,
-`WC4`, `WC9`, `AG-RECOVER`, and `AG-M2-DEAD-LEAF-01`. The open rows above
-remain the authoritative cleanup list; this report adds no new framework,
-threshold, or deletion decision.
-
-## Reproduction
-
-From this worktree, the path families can be printed for either exact SHA with:
+Run from this Agent worktree. It reads only committed Git blobs; it does not
+import the product, install packages, create caches, or run tests.
 
 ```sh
-git ls-tree -r --name-only "$SHA" | awk '
-  ($0 ~ /^astrid\/sdk\/timeline\/.+\.py$/) ||
-  ($0 ~ /^astrid\/sdk\/timeline_[^\/]+\.py$/) ||
-  ($0 ~ /^astrid\/packs\/timeline\/.+\.py$/) ||
-  ($0 ~ /^astrid\/core\/timeline\/.+\.py$/) ||
-  ($0 == "astrid\/sdk\/_remote_timeline.py") ||
-  ($0 == "astrid\/sdk\/authoring_bundle.py") ||
-  ($0 == "astrid\/sdk\/authoring_remote.py") ||
-  ($0 == "astrid\/sdk\/authoring_revision_diff.py") {print}
-' | sort
+python3 - <<'PY'
+import ast
+import subprocess
+
+SHAS = {
+    "main497": "497714c73531f164082555ec81b61ca5bc8b6554",
+    "current": "cc37291af12ac6504eb48dd71ea39b9dfdb56d71",
+}
+
+SEE = {
+    "astrid/sdk/timeline_filmstrip.py",
+    "astrid/sdk/_timeline_filmstrip_scene.py",
+    "astrid/packs/timeline/cli_visualize.py",
+    "astrid/core/timeline/scene_answers.py",
+    "astrid/core/timeline/onscreen.py",
+    "astrid/core/timeline/shot_composition_projection.py",
+}
+ADAPTERS = {
+    "astrid/sdk/_remote_timeline.py",
+    "astrid/sdk/authoring_bundle.py",
+    "astrid/sdk/authoring_remote.py",
+    "astrid/sdk/authoring_revision_diff.py",
+    "astrid/sdk/authoring_media.py",
+}
+MIXED = {"astrid/sdk/remote.py", "astrid/sdk/workspace_client.py"}
+WORKSPACE_METHODS = {
+    "get_project_shot_revision", "get_project_timeline_revision",
+    "get_project_parent_composition_revision", "publish_parent_composition",
+    "replace_parent_composition_media", "create_timeline", "rename_timeline",
+    "create_timeline_document", "update_timeline_document", "list_timelines",
+    "commit_timeline", "list_timeline_commits", "get_project_verified_document",
+    "get_project_verified_document_object", "get_timeline", "inspect_timeline",
+    "create_timeline_view", "list_timeline_history", "replace_timeline_clip",
+    "diff_timeline", "archive_timeline", "recover_timeline", "list_project_shots",
+    "create_project_shot", "get_project_shot", "update_project_shot",
+    "archive_project_shot", "recover_project_shot", "add_shot_item",
+    "promote_project_shot_candidate", "remove_shot_item", "reorder_shot_items",
+    "list_project_shot_text_bindings", "set_project_shot_text_binding",
+    "get_project_shot_text_binding", "set_project_shot_text_binding_by_id",
+    "rebind_project_shot_text_binding",
+}
+
+def run(*args):
+    return subprocess.check_output(args)
+
+def blob(sha, path):
+    return run("git", "show", f"{sha}:{path}").decode("utf-8")
+
+def selected_paths(sha):
+    names = run("git", "ls-tree", "-r", "--name-only", sha).decode().splitlines()
+    names = set(names)
+    paths = (SEE | ADAPTERS | MIXED) & names
+    paths |= {
+        p for p in names
+        if p.endswith(".py") and (
+            p.startswith("astrid/sdk/timeline/")
+            or p.startswith("astrid/packs/timeline/")
+            or p.startswith("astrid/core/timeline/")
+            or p.startswith("astrid/sdk/timeline_")
+        )
+    }
+    return sorted(paths)
+
+def selected_lines(sha, path):
+    lines = blob(sha, path).splitlines()
+    if path not in MIXED:
+        return set(range(1, len(lines) + 1)), lines
+    tree = ast.parse("\n".join(lines))
+    if path.endswith("/remote.py"):
+        nodes = [
+            node for node in tree.body
+            if isinstance(node, ast.ClassDef)
+            and node.name in {"RemoteTimelines", "RemoteShots"}
+        ]
+    else:
+        nodes = [
+            node for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name in WORKSPACE_METHODS
+        ]
+    selected = {
+        line
+        for node in nodes
+        for line in range(node.lineno, node.end_lineno + 1)
+    }
+    return selected, lines
+
+def bucket(path):
+    if path in SEE:
+        return "see"
+    if path in ADAPTERS:
+        return "adapters"
+    if path in MIXED:
+        return "mixed"
+    return "core"
+
+for label, sha in SHAS.items():
+    paths = selected_paths(sha)
+    totals = {name: [0, 0, 0] for name in ("core", "see", "adapters", "mixed")}
+    for path in paths:
+        selected, lines = selected_lines(sha, path)
+        kind = bucket(path)
+        totals[kind][0] += 1
+        totals[kind][1] += len(selected)
+        totals[kind][2] += sum(bool(lines[line - 1].strip()) for line in selected)
+    print(f"{label} {sha} paths={len(paths)}")
+    for path in paths:
+        print(f"  {path}")
+    for kind, (files, physical, nonblank) in totals.items():
+        print(f"  {kind}: files={files} physical={physical} nonblank={nonblank}")
+    total = [sum(values[index] for values in totals.values()) for index in range(1, 3)]
+    print(f"  total: physical={total[0]} nonblank={total[1]}")
+PY
 ```
 
-Remove the five See paths from that output for Read/Edit, and count them
-separately. For every whole-file row, use `git show "$SHA:$path"`; for the
-two mixed files, parse the committed blob with Python `ast`, select the named
-classes/methods, and union each selected node's inclusive `lineno..end_lineno`
-range before counting. Missing baseline paths contribute zero. This is the
-same path/range method used for both SHAs, so the delta is comparable.
-
-Verification was arithmetic/source inspection only. No product code was
-changed and no test or suite was run, as required for this read-only census.
-For transparency, `git diff --check origin/main...HEAD` exits 2 on three
-pre-existing unrelated blank-at-EOF warnings in
-`astrid/packs/rendering/rendering/renderers/remotion/root_preparation.py`,
-`astrid/sdk/timeline/_media_inputs.py`, and
-`docs/design/agent-fixture-trim-current.md`; this worker added none of them.
+Expected totals are Main497 `39,749 / 35,133` and current
+`49,058 / 43,519`, as shown above. No product tests, full suite, build,
+package, profile, fixture cleanup, or deletion was run for this census.
