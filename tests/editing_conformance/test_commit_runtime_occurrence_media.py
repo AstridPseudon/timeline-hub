@@ -18,6 +18,24 @@ OWNER = 'occurrence:occ-a'
 TARGET = OWNER + '/clip:clip-a'
 
 
+def _binding_descriptor(binding: dict, text: str) -> dict:
+    """Keep the publication fixture independent of Runtime's retired helper."""
+    return {
+        'binding_id': binding['binding_id'],
+        'project_id': binding['project_id'],
+        'shot_id': binding['shot_id'],
+        'kind': binding['kind'],
+        'slot': binding['slot'],
+        'event_stream_id': binding['event_stream_id'],
+        'head': binding['head'],
+        'media_id': binding['media_id'],
+        'content_hash': binding['content_hash'],
+        'mime_type': binding['mime_type'],
+        'byte_size': binding['byte_size'],
+        'text': text,
+    }
+
+
 @pytest.fixture(params=['image', 'video'])
 def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes):
     runtime = use_runtime()
@@ -81,8 +99,6 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
             pins.append(pin)
         by_name = {row['variant_key']: pin for row, pin in zip(associations, pins)}
         old, new = by_name['old'], by_name['new']
-        from timeline_commit_film_fixture import _binding_descriptor
-
         from tests.sdk.test_timeline_commit_provider_document import (
             MEDIA,
             document_fixture,

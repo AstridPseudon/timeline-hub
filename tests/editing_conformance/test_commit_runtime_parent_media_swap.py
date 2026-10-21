@@ -139,7 +139,9 @@ with pytest.MonkeyPatch.context() as patch:
 @pytest.fixture(params=['parent', 'occurrence:occ-a'])
 def http_editing(request, tmp_path, monkeypatch):
     """Use one normal image fixture for the bounded parent/occurrence HTTP proof."""
-    fixture = editing.__wrapped__(
+    from tests.editing_conformance.test_commit_runtime_occurrence_media import editing as occurrence_editing
+
+    fixture = occurrence_editing.__wrapped__(
         SimpleNamespace(param='image'), tmp_path, monkeypatch, 'swap', request.param,
         source_bytes.__wrapped__(tmp_path),
     )
