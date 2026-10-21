@@ -1,7 +1,8 @@
 /* Install dialog: centred on screen. On desktop a hand-drawn arrow in the top-right corner (ToolbarPointer)
    points up at the browser's own install control. */
 .astrid-install-dialog {
-  width: min(380px, calc(100vw - 32px));
+  /* One width for both steps (max-w-xl); phones get the full width minus the gutter. */
+  width: min(576px, calc(100vw - 32px));
   position: fixed;
   max-width: none;
   max-height: calc(100dvh - 32px);
@@ -21,7 +22,6 @@
 @keyframes astrid-install-in { from { opacity: 0; } }
 @keyframes astrid-install-fade { from { opacity: 0; } }
 
-.astrid-install-dialog[data-points-up] { width: min(720px, calc(100vw - 32px)); }
 /* The card is not a positioning context: the close button and the arrow hang off the dialog, so
    the arrow can sit outside the card's scroll box. */
 .astrid-install-card {
@@ -105,6 +105,8 @@
 }
 
 .astrid-install-actions { display: grid; gap: 8px; }
+/* Step 2 sits centred in the dialog's width, at a readable measure. */
+.astrid-install-computer { display: grid; gap: 16px; width: 100%; max-width: 440px; margin: 0 auto; }
 .astrid-install-actions .astrid-button { width: 100%; min-height: 48px; }
 .astrid-install-actions .astrid-install-here {
   min-height: 42px;

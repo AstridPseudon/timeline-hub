@@ -345,14 +345,14 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
         {!showApp && !desktop ? <MobileContent onClose={requestClose} active={open} /> : null}
 
         {!showApp && desktop ? (
-          <>
+          <div className="astrid-install-computer">
             <CopyInstallCommand />
             <div className="astrid-install-actions">
               <button type="button" className="astrid-button astrid-install-here" onClick={openInBrowser}>
                 <span>{installed ? SET_UP_ASTRID_COPY.useHereInstalled : SET_UP_ASTRID_COPY.useHere}</span><ArrowRight size={17} aria-hidden="true" />
               </button>
             </div>
-          </>
+          </div>
         ) : null}
 
         {!showApp && !skipApp ? (

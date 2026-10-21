@@ -75,7 +75,7 @@ export function CopyInstallCommand({ mode = 'install' }: CopyInstallCommandProps
       <div className="space-y-2 text-left">
         <p className="text-xs text-muted-foreground">{withCommandShell(copy.terminalAlternative)}</p>
         <div className="flex min-w-0 items-center gap-2 rounded-md border border-border bg-background p-2">
-          <pre className="min-w-0 flex-1 whitespace-pre-wrap break-all text-xs leading-5 text-foreground"><code>{command}</code></pre>
+          <pre className="min-w-0 flex-1 whitespace-pre-wrap [overflow-wrap:normal] overflow-x-auto text-xs leading-5 text-foreground"><code>{command}</code></pre>
           <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label={commandCopy.status === 'copied' ? copy.commandCopied : copy.commandCopy} title={copy.commandCopy} onClick={() => void commandCopy.copy()}>
             {commandCopy.status === 'copied' ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}
           </Button>
