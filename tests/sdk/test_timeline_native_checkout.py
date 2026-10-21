@@ -12,9 +12,11 @@ from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.sync import CommitConflict
 from astrid.sdk.timeline_checkout import Checkout
+from astrid.sdk.media_transcript import transcript_document_id
 from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.editing_conformance.test_recipe_clip_scalar_fields import app_closure
 from tests.editing_conformance.test_recipe_m2_clip_trim import media_document
+from tests.editing_conformance.test_native_word_anchor_vectors import fixture as word_anchor_fixture
 from tests.sdk import test_timeline_sync as sync
 
 connected = sync.connected
@@ -31,6 +33,22 @@ def attached(connected, bundle=None):
 
 def pending(connected):
     return json.loads(connected[2].read_bytes())
+
+
+def anchored_bundle():
+    bundle, pin, content = word_anchor_fixture()
+    pin['document_id'] = transcript_document_id('p', content['media_id'], content['source_id'])
+    for capture in bundle['source_mapping']['pinned_documents']:
+        capture['pin'] = pin
+        capture['document']['document_id'] = pin['document_id']
+        capture['document']['project_id'] = 'p'
+    word = content['segments'][0]['words'][0]
+    choice = {
+        'source': 'occurrence:occ-a/clip:voice',
+        'document': pin,
+        'word_ids': [word['id']],
+    }
+    return bundle, {'field': 'on', 'declaration': f'"{word["text"]}"', 'choice': choice}
 
 
 @pytest.mark.parametrize('type_key', ['clipType', 'clip_type'])
@@ -139,6 +157,57 @@ def test_source_window_duration_follows_hold_and_windowless_stays_windowless(con
     other.hold_for(3)
     assert other.data['hold'] == 3.003
     assert 'from' not in other.data and 'to' not in other.data
+
+
+def test_attached_word_anchor_reuses_clip_anchor_carrier_and_pinned_capture(connected):
+    bundle, value = anchored_bundle()
+    tl = attached(connected, bundle)
+    clip = tl.clip('parent/clip:clip-a')
+    before_at = clip.data['at']
+
+    clip.set(on=value)
+
+    command = pending(connected)['pending'][0]
+    assert command['op'] == 'clip.anchor'
+    assert command['intent'] == {'anchor': 'follow'}
+    assert command['args'] == value
+    assert clip.data['app']['astrid']['word_anchors']['on'] == value['choice']
+    assert clip.data['at'] != before_at
+
+    accepted = tl.publish('attach one stable word')
+    assert accepted['new_head'] == 'r1'
+    assert accepted['message'] == 'attach one stable word'
+    assert pending(connected)['pending'] == []
+
+
+def test_attached_word_anchor_refuses_without_exact_capture_or_on_text(connected):
+    bundle, value = anchored_bundle()
+    bundle['source_mapping']['pinned_documents'] = []
+    tl = attached(connected, bundle)
+    before, state = copy.deepcopy(tl.bundle), pending(connected)
+
+    with pytest.raises(TimelineEditError, match='exact transcript pin is missing'):
+        tl.clip('parent/clip:clip-a').set(on=value)
+    with pytest.raises(TimelineEditError, match='text-only or mixed values are unsupported'):
+        tl.clip('parent/clip:clip-a').set(on='again')
+    with pytest.raises(TimelineEditError, match='cannot be mixed'):
+        tl.clip('parent/clip:clip-a').set(on=value, text='also')
+
+    assert tl.bundle == before
+    assert pending(connected) == state
+
+
+def test_attached_word_anchor_clear_uses_existing_clip_anchor_command(connected):
+    bundle, value = anchored_bundle()
+    tl = attached(connected, bundle)
+    clip = tl.clip('parent/clip:clip-a')
+    clip.set(on=value)
+    clip.set(on=None)
+
+    commands = pending(connected)['pending']
+    assert [command['op'] for command in commands] == ['clip.anchor', 'clip.anchor']
+    assert commands[1]['args'] == {'field': 'on', 'declaration': None, 'choice': None}
+    assert 'on' not in clip.data['app']['astrid'].get('word_anchors', {})
 
 
 @pytest.mark.parametrize('verb', [lambda clip: clip.on('word:later'), lambda clip: clip.until('end'),

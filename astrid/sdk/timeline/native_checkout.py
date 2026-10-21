@@ -42,6 +42,11 @@ def _publishable_parent_command(command):
         return True
     if command.get('op') == 'clip.delete' and args == {}:
         return True
+    if (command.get('op') == 'clip.anchor' and isinstance(args, dict)
+            and set(args) == {'field', 'declaration', 'choice'}
+            and args.get('field') in {'on', 'until'}
+            and (args.get('choice') is None or isinstance(args.get('choice'), dict))):
+        return True
     if (command.get('op') == 'clip.split' and isinstance(args, dict)
             and set(args) == {'on', 'right_id'}):
         return True
@@ -267,6 +272,38 @@ class AttachedClip(Clip):
         self._tl._queue(command)
         return self
 
+    def _anchor_command(self, value):
+        """Queue the existing ``clip.anchor`` carrier, when already captured.
+
+        Attached ``set`` is intentionally narrower than the legacy moment
+        parser here.  The value is the registered operation's own arguments,
+        so a stable ``word_ids`` + ``DocumentPin`` choice remains the source
+        of meaning and the local command engine can verify its existing
+        ``source_mapping.pinned_documents`` capture before staging anything.
+        """
+        if self.shot_id != 'parent':
+            _held()
+        if value is None:
+            args = {'field': 'on', 'declaration': None, 'choice': None}
+        elif isinstance(value, dict) and set(value) == {'field', 'declaration', 'choice'}:
+            if value['field'] != 'on':
+                raise TimelineEditError(f'{self.address}: attached .set(on=...) only accepts field="on"')
+            args = copy.deepcopy(value)
+        else:
+            raise TimelineEditError(
+                f'{self.address}: attached word anchors require the existing '
+                'clip.anchor carrier {field, declaration, choice}; text-only or mixed values are unsupported')
+        command = {
+            'schema_version': 1,
+            'op': 'clip.anchor',
+            'version': '1',
+            'select': self._ref,
+            'args': args,
+            'intent': {'anchor': 'follow'},
+        }
+        self._tl._queue(command)
+        return self
+
     def on(self, moment):
         if intent.cut_of(self.data):
             _held()
@@ -325,6 +362,10 @@ class AttachedClip(Clip):
 
     def set(self, **params):
         allow_new = params.pop('_allow_new', False)
+        if 'on' in params:
+            if len(params) != 1:
+                raise TimelineEditError(f'{self.address}: attached word anchors cannot be mixed with other .set fields')
+            return self._anchor_command(params['on'])
         if not allow_new and params == {'transition': None}:
             if self.shot_id != 'parent':
                 _held()
