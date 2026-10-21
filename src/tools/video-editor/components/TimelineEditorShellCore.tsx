@@ -168,6 +168,20 @@ const INSPECTOR_HOST_OWNED_KINDS: ReadonlySet<string> = new Set([
  * the timeline, panels and preferences arrive, lands at its final size. Ends at the first pointer
  * or key input anywhere in the page.
  */
+/** The longest the boot screen (or the connection panel on its way out) waits for the first timeline load; past it the
+ *  editor shows its own loading panes rather than keeping the page covered. */
+const FIRST_LOAD_HOLD_MAX_MS = 6000;
+
+/** Whether the editor still holds the boot screen over itself: until its first load answers, at most for a while. */
+function useFirstLoadHold(answered: boolean): boolean {
+  const [expired, setExpired] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setExpired(true), FIRST_LOAD_HOLD_MAX_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+  return !answered && !expired;
+}
+
 function useLayoutSettlingUntilInput(): boolean {
   const [settling, setSettling] = useState(true);
   useEffect(() => {
@@ -290,6 +304,7 @@ function TimelineEditorShellCoreComponent({
   // A refetch that fails keeps the last loaded timeline (and the local draft on top of it). While the Astrid stopped /
   // restarted card is up, that timeline stays mounted behind it: the card says the changes are kept, so they stay in view.
   const hasLoadedTimeline = Boolean(editorData.resolvedConfig);
+  const holdsBoot = useFirstLoadHold(hasLoadedTimeline || Boolean(chrome.loadError));
   const recoveryCardShowing = useRecoveryCardShowing();
   // Astrid answering again clears the card. What failed while it was stopped is retried here, so the page carries on as
   // the card promised ("Your changes are kept"): a timeline read that failed is read again, and an edit that was never
@@ -879,6 +894,9 @@ function TimelineEditorShellCoreComponent({
         <div className="sr-only" aria-live="polite" aria-atomic="true">
           {interactionStatusLabel}
         </div>
+        {/* Until the first load answers, the boot screen (or the connection panel on its way out) stays over the
+            editor, so it opens on the timeline rather than on empty panes (`bootLayer.ts`). */}
+        {holdsBoot && <span data-boot-hold="" hidden />}
         {headerSlot ?? (showHeader ? (
           <AppHeader
             navigationMode={navigationMode}

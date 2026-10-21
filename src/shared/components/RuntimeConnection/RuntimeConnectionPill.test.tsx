@@ -120,7 +120,7 @@ describe('RuntimeConnectionPill', () => {
     await waitFor(() => expect(fetchImpl).toHaveBeenCalled());
     route.answer = unreachable;
 
-    await waitFor(() => expect(screen.getByText('Or run this command yourself in PowerShell:')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Or run this yourself in PowerShell:')).toBeInTheDocument());
   });
 
   it('one dropped reading is not a stop', async () => {

@@ -13,7 +13,7 @@ import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection
  * - Straight apostrophes only: the journey matches `Astrid isn't running` exactly.
  * - Gate states name their screens: connecting, blocked, set_up, not_running, update_needed and connected.
  *   Permission, pending and phone screens come from browser context. Polling never adds a checking indicator.
- * - The setup, repair and update screens all show the command that matches the state and OS.
+ * - The setup, repair and update screens all show the command that matches the state and OS, and nothing about opening a terminal.
  * - Each phrase the journey looks for (`tests/e2e/local/direct-journey.spec.ts`) appears in one element of its
  *   panel only, so a text locator finds exactly one match.
  * - The browser a card names is a `{browser}` placeholder, filled by `withBrowser` from the landing page's browser detection.
@@ -64,16 +64,6 @@ export function agentInstructions(mode: CommandMode, pageOrigin: string): string
   ].join('\n\n');
 }
 
-/** The short shell-opening hint shown beside every install, repair and update line. */
-export function terminalOpeningHint(): string {
-  switch (detectPlatform()) {
-    case 'mac': return 'Open Terminal from Applications → Utilities.';
-    case 'windows': return 'Open Start and type PowerShell.';
-    case 'linux': return 'Open Terminal from your applications menu.';
-    default: return 'Open a terminal on your computer.';
-  }
-}
-
 /** Names the shell that matches the command shown on setup, repair and recovery cards. */
 export function withCommandShell(sentence: string): string {
   return detectPlatform() === 'windows' ? sentence.replace('in a terminal', 'in PowerShell') : sentence;
@@ -89,7 +79,7 @@ export interface RuntimeConnectionCopy {
   readonly commands: typeof ASTRID_COMMANDS;
   /** Accessible name for the panel region. */
   readonly panelLabel: string;
-  /** The live line above a card that waits for the person to set Astrid up elsewhere. */
+  /** The quiet status line along the bottom of a card that waits for something done elsewhere; it becomes `connected`. */
   readonly waiting: string;
   /** While the first probe is in flight (and while Astrid is still starting): the one line under the mark. */
   readonly connecting: { readonly sentence: string };
@@ -130,7 +120,6 @@ export interface RuntimeConnectionCopy {
     readonly pasteNext: string;
     /** Shown with the command in a text box, only when the clipboard write failed. */
     readonly copyFailed: string;
-    readonly note: string;
     readonly commandCopy: string;
     readonly commandCopied: string;
     readonly terminalAlternative: string;
@@ -152,11 +141,11 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   permission: {
     title: 'Connect to Astrid on this computer',
-    sentence: '{browser} will ask about devices on your network. Choose Allow so this page can reach Astrid on your computer.',
+    sentence: '{browser} will ask about devices on your network. Choose Allow so this page can reach Astrid.',
     connect: 'Connect',
     pending: {
       title: 'Choose Allow in {browser}',
-      sentence: '{browser} is asking, at the top left of this window, to let this page reach Astrid on your computer.',
+      sentence: '{browser} is asking at the top left of this window.',
       /** The word on the arrow that points at the prompt, as the install dialog's says "Up here". */
       pointer: 'Up here',
     },
@@ -164,7 +153,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   blocked: {
     title: 'Allow Astrid in {browser}',
-    sentence: '{browser} is blocking this page from reaching Astrid on your computer.',
+    sentence: '{browser} is blocking this page from reaching Astrid.',
     steps: [
       'Click the icon at the left of the address bar, then Site settings.',
       'Set Local network access to Allow.',
@@ -174,17 +163,17 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   setUp: {
     title: 'Connect Astrid on this computer',
-    sentence: "This browser hasn't found Astrid here yet. Give these instructions to your coding agent to set it up or reconnect your existing installation.",
+    sentence: 'Your coding agent can set Astrid up, or reconnect the one you have.',
   },
 
   notRunning: {
     title: "Astrid isn't running",
-    sentence: 'Give these instructions to your coding agent to start Astrid again and keep your existing work. This page opens by itself.',
+    sentence: 'Give these instructions to your coding agent to start it again. Your work is kept.',
   },
 
   updateNeeded: {
     title: 'Update Astrid',
-    sentence: 'Astrid on this computer needs an update to work with this page. Give these instructions to your coding agent to update your existing installation.',
+    sentence: 'This page needs a newer Astrid. Give these instructions to your coding agent to update it.',
   },
 
   /** Lead-in above the shared update screen when a chat reply from this computer's Astrid is out of date. */
@@ -223,13 +212,12 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   agent: {
     copy: 'Copy agent instructions',
-    copied: 'Copied',
+    copied: 'Copied. Paste them into your agent.',
     pasteNext: 'Steps copied. Paste them into your agent.',
     copyFailed: "Copying didn't work. Select the text below and copy it.",
-    note: 'Paste these instructions into your coding agent.',
     commandCopy: 'Copy command',
     commandCopied: 'Command copied',
-    terminalAlternative: 'Or run this command yourself in a terminal:',
+    terminalAlternative: 'Or run this yourself in a terminal:',
   },
 
   composeDisabled: "Making new images isn't on this page yet.",

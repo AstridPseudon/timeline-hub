@@ -664,6 +664,30 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(container.querySelector('main')?.className).toContain('animate-in');
   });
 
+  it('holds the boot screen over itself until its first load answers, and only for a while', () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      expect(container.querySelector('[data-boot-hold]')).not.toBeNull();
+      act(() => { vi.advanceTimersByTime(5999); });
+      expect(container.querySelector('[data-boot-hold]')).not.toBeNull();
+      act(() => { vi.advanceTimersByTime(1); });
+      expect(container.querySelector('[data-boot-hold]')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('lets the boot screen go at once when the first load fails', () => {
+    __chromeOverrides = { loadError: new Error('Timeline unavailable') };
+    try {
+      const { container } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      expect(container.querySelector('[data-boot-hold]')).toBeNull();
+    } finally {
+      __chromeOverrides = {};
+    }
+  });
+
   // ---- Reserved slots stay hidden until an extension contributes -------------
   it('does not render unclaimed codePanel, writingPanel, or stagePanel slots', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);

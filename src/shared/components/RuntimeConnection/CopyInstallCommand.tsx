@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
-import { agentInstructions, installCommand, RUNTIME_CONNECTION_COPY, terminalOpeningHint, withCommandShell, type CommandMode } from './copy.ts';
+import { agentInstructions, installCommand, RUNTIME_CONNECTION_COPY, withCommandShell, type CommandMode } from './copy.ts';
 
 export interface CopyInstallCommandProps {
   /** `install` for setup/repair and `update` for an incompatible Astrid. */
@@ -50,37 +50,35 @@ function CopyFallback({ text, label }: { text: string; label: string }) {
   );
 }
 
-/** Agent handoff first; the manual command has a separate copy action beside it. */
+/**
+ * Agent handoff first, as the one primary action; the manual command is the quiet alternative under it, with its own
+ * copy action. Nothing else: the card around it says what the instructions are for.
+ */
 export function CopyInstallCommand({ mode = 'install' }: CopyInstallCommandProps) {
   const copy = RUNTIME_CONNECTION_COPY.agent;
   const instructions = agentInstructions(mode, window.location.origin);
   const command = installCommand(mode);
   const agentCopy = useCopyAction(instructions);
   const commandCopy = useCopyAction(command);
+  const agentCopied = agentCopy.status === 'copied';
 
   return (
     <div className="w-full space-y-4">
       <div className="space-y-2">
-        <Button type="button" className="w-full sm:w-auto" onClick={() => void agentCopy.copy()}>
-          {agentCopy.status === 'copied'
-            ? <Check aria-hidden="true" className="mr-2 h-4 w-4" />
-            : <Copy aria-hidden="true" className="mr-2 h-4 w-4" />}
-          {agentCopy.status === 'copied' ? copy.copied : copy.copy}
+        <Button type="button" className="h-11 w-full justify-between rounded-xl px-4 text-sm" onClick={() => void agentCopy.copy()}>
+          <span aria-live="polite">{agentCopied ? copy.copied : copy.copy}</span>
+          {agentCopied ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}
         </Button>
-        <p role={agentCopy.status === 'copied' ? 'status' : undefined} className="text-xs text-muted-foreground">
-          {agentCopy.status === 'copied' ? copy.pasteNext : copy.note}
-        </p>
         {agentCopy.status === 'failed' && <CopyFallback text={instructions} label={copy.copyFailed} />}
       </div>
-      <div className="space-y-2 text-left">
+      <div className="space-y-1.5 text-left">
         <p className="text-xs text-muted-foreground">{withCommandShell(copy.terminalAlternative)}</p>
-        <div className="flex min-w-0 items-center gap-2 rounded-md border border-border bg-background p-2">
-          <pre className="min-w-0 flex-1 whitespace-pre-wrap [overflow-wrap:normal] overflow-x-auto text-xs leading-5 text-foreground"><code>{command}</code></pre>
-          <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label={commandCopy.status === 'copied' ? copy.commandCopied : copy.commandCopy} title={copy.commandCopy} onClick={() => void commandCopy.copy()}>
+        <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-background/70 py-1 pl-3 pr-1">
+          <pre className="min-w-0 flex-1 whitespace-pre-wrap [overflow-wrap:normal] overflow-x-auto font-mono text-xs leading-5 text-foreground"><code>{command}</code></pre>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" aria-label={commandCopy.status === 'copied' ? copy.commandCopied : copy.commandCopy} title={copy.commandCopy} onClick={() => void commandCopy.copy()}>
             {commandCopy.status === 'copied' ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">{terminalOpeningHint()}</p>
         {commandCopy.status === 'failed' && <CopyFallback text={command} label={copy.commandCopy} />}
       </div>
     </div>

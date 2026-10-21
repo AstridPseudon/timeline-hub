@@ -189,7 +189,7 @@ describe('AstridStatusSection', () => {
     render(<AstridStatusSection isOpen />);
 
     expect(await screen.findByText('Needs an update')).toBeInTheDocument();
-    expect(screen.getByText(/Astrid on this computer needs an update/)).toBeInTheDocument();
+    expect(screen.getByText(/This page needs a newer Astrid/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Copy command' }));
 
     await waitFor(() => expect(mocks.clipboard).toHaveBeenCalledWith(installCommand('update')));
@@ -202,7 +202,7 @@ describe('AstridStatusSection', () => {
     await openDetails();
     expect(await screen.findByText('Studio')).toBeInTheDocument();
     expect(screen.queryByText('Needs an update')).not.toBeInTheDocument();
-    expect(screen.queryByText(/Astrid on this computer needs an update/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/This page needs a newer Astrid/)).not.toBeInTheDocument();
   });
 
   it('shows the connection state without requesting details while offline', () => {

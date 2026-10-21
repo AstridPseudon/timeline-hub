@@ -26,7 +26,7 @@
  * The panel and pill are render props with a placeholder default each, so the real ones are plugged in here and
  * `Layout.tsx` is not edited again.
  */
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { requireContextValue } from '@/shared/contexts/contextGuard';
 import { rememberAppEntryPreference } from '@/app/entryClassification';
 import {
@@ -349,7 +349,10 @@ export const useRuntimeConnection = (): RuntimeConnectionValue =>
   requireContextValue(useContext(RuntimeConnectionContext), 'useRuntimeConnection', 'RuntimeConnectionProvider');
 
 /** Placeholder until the real panel is plugged in (A2.P): the state name and nothing else. */
-function PlaceholderPanel({ state }: RuntimeConnectionValue) {
+function PlaceholderPanel({ state, exit }: RuntimeConnectionValue & { exit: RuntimeConnectionPanelExit | null }) {
+  // Nothing to show on the way out: the app opens at once.
+  useEffect(() => { exit?.left(); }, [exit]);
+  if (exit) return null;
   return (
     <div
       role="status"
@@ -362,21 +365,25 @@ function PlaceholderPanel({ state }: RuntimeConnectionValue) {
   );
 }
 
-export interface RuntimeConnectionGateProps {
-  children: React.ReactNode;
-  /** Rendered instead of `children` while the Runtime is not connected. */
-  panel?: (connection: RuntimeConnectionValue) => React.ReactNode;
-  /** Rendered beside `children` once connected. Nothing until A2.P. */
-  pill?: (connection: RuntimeConnectionValue) => React.ReactNode;
-  /**
-   * Shown for `CONNECTED_HOLD_MS` when the Runtime connects while a setup or reconnect screen was showing, so the person
-   * sees the moment it worked before the app opens. A Runtime that answers on the first probe never shows it.
-   */
-  connected?: () => React.ReactNode;
+/**
+ * The panel's way out once the Runtime connects: the app is mounted beneath it, the panel leaves in its own way (a
+ * screen that asked for something shows that it worked first), then calls `left`.
+ */
+export interface RuntimeConnectionPanelExit {
+  readonly left: () => void;
 }
 
-/** How long the connected moment stays up before the app opens. */
-export const CONNECTED_HOLD_MS = 1200;
+export interface RuntimeConnectionGateProps {
+  children: React.ReactNode;
+  /**
+   * Drawn over the app while the Runtime is not connected. When it connects, the same panel stays (with the last
+   * screen it showed) and `exit` is set: the app mounts beneath it, and the panel is removed when it calls `exit.left`.
+   * The panel decides how it leaves: a screen that asked the person to do something shows that it worked first.
+   */
+  panel?: (connection: RuntimeConnectionValue, exit: RuntimeConnectionPanelExit | null) => React.ReactNode;
+  /** Rendered beside `children` once connected. Nothing until A2.P. */
+  pill?: (connection: RuntimeConnectionValue) => React.ReactNode;
+}
 
 /**
  * Renders `children` once the Runtime is connected, and `panel` until then. A same-origin build renders `children`
@@ -384,25 +391,20 @@ export const CONNECTED_HOLD_MS = 1200;
  */
 export function RuntimeConnectionGate({
   children,
-  panel = (connection) => <PlaceholderPanel {...connection} />,
+  panel = (connection, exit) => <PlaceholderPanel {...connection} exit={exit} />,
   pill = () => null,
-  connected,
 }: RuntimeConnectionGateProps) {
   const connection = useRuntimeConnection();
-  // A screen that asks the person to do something (set up, allow, restart) has been shown: connecting now is news.
-  const askedRef = useRef(false);
-  const [holding, setHolding] = useState(false);
-  if (connection.gated && !connection.isConnected && !connection.isBooting) askedRef.current = true;
-  const justConnected = connection.gated && connection.isConnected && askedRef.current && Boolean(connected);
-  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (holdTimer.current) clearTimeout(holdTimer.current); }, []);
-  useEffect(() => {
-    if (!justConnected) return;
-    // Clearing `askedRef` ends `justConnected` on the next render, so the timer outlives this effect on purpose.
-    askedRef.current = false;
-    setHolding(true);
-    holdTimer.current = setTimeout(() => setHolding(false), CONNECTED_HOLD_MS);
-  }, [justConnected]);
+  // The last connection the panel was drawn with. While it is set and Astrid is connected, the panel is on its way
+  // out over the app; `left` clears it.
+  const shownRef = useRef<RuntimeConnectionValue | null>(null);
+  const [, panelLeft] = useReducer((count: number) => count + 1, 0);
+  const exit = useMemo<RuntimeConnectionPanelExit>(() => ({
+    left: () => {
+      shownRef.current = null;
+      panelLeft();
+    },
+  }), []);
   // The landing page's "use it right here" click asked to go in (`autoConnectRequest.ts`): the flag is read once, in the
   // first render, so the explainer is never painted for the frame before the effect below asks Chrome.
   const [autoConnect, setAutoConnect] = useState(() => {
@@ -423,16 +425,25 @@ export function RuntimeConnectionGate({
     }
   }, [gated, autoConnect, awaitingConnect, isBooting, isConnected, connect]);
   if (!gated) return <>{children}</>;
-  if (!connection.isConnected) {
+  let overlay: React.ReactNode = null;
+  if (!isConnected) {
     // While the flag is waiting for its effect, the panel shows Chrome's prompt screen, not the explainer.
     const shown = autoConnect && awaitingConnect ? { ...connection, isChecking: true } : connection;
-    return <>{panel(shown)}</>;
+    shownRef.current = shown;
+    overlay = panel(shown, null);
+  } else if (shownRef.current) {
+    overlay = panel(shownRef.current, exit);
   }
-  if (justConnected || holding) return <>{connected?.()}</>;
+  // Keyed, so the panel stays the same element while the app mounts beneath it; the app is inert until it has left.
   return (
     <>
-      {pill(connection)}
-      {children}
+      {isConnected ? (
+        <div key="app" className="contents" {...(overlay ? { inert: '' } : {})}>
+          {pill(connection)}
+          {children}
+        </div>
+      ) : null}
+      {overlay ? <React.Fragment key="panel">{overlay}</React.Fragment> : null}
     </>
   );
 }

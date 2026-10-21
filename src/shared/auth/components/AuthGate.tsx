@@ -12,7 +12,12 @@ export const AuthGate = ({ children }: { children: ReactNode }) => {
   const { pathname } = useLocation();
 
   // On the hosted build the wait is the Runtime probe (up to its timeout), so show the connecting state, not a blank page.
-  if (isLoading) return connection.gated ? <RuntimeConnectionPanel connection={connection} /> : null;
+  // A workspace route passes straight to its connection gate, which draws the same screen and, once Astrid answers,
+  // keeps it until the editor beneath has settled.
+  if (isLoading) {
+    if (!connection.gated) return null;
+    return isWorkspaceRoute(pathname) ? <>{children}</> : <RuntimeConnectionPanel connection={connection} />;
+  }
 
   // A failed same-origin boot probe remains unauthenticated. Keep the requested
   // route mounted behind a manual recovery action instead of redirecting away.

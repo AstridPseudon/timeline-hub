@@ -139,6 +139,9 @@ test.describe('zero-click connection (App)', () => {
       expect(copied).toBe('curl -fsSL https://astrid.haus/install | sh');
       await harness.startRuntime();
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected', { timeout: 20_000 });
+      // The card shows that it worked, then leaves by itself once the editor beneath has opened.
+      await expect(panel.getByText('Connected to Astrid')).toBeVisible();
+      await expect(page.locator(UI.panel)).toHaveCount(0);
       expect(await page.evaluate(() => (window as unknown as { __noReload?: boolean }).__noReload)).toBe(true);
     } finally {
       await harness.resetToHealthy();
@@ -297,7 +300,7 @@ test.describe('permission gate and readiness (App)', () => {
       await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
       const panel = page.locator(UI.panel);
       await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
-      await expect(panel.getByText('Run this line in a terminal to start it again. It keeps your work as it is. This page opens by itself.')).toBeVisible();
+      await expect(panel.getByText('Give these instructions to your coding agent to start it again. Your work is kept.')).toBeVisible();
       await expect(panel.getByText('Connect Astrid on this computer')).toHaveCount(0);
       await expect(panel).not.toContainText(/Runtime|workspace|realm|gateway|door|reload/i);
       const notReadyReadings = harness.audit().filter((entry) => entry.path === '/v1/health' && entry.status === 503).length;
@@ -673,7 +676,7 @@ test.describe('restarts', () => {
     harness.withdrawProductCredential();
     try {
       await expect(page.getByRole('heading', { name: 'Astrid stopped' })).toBeVisible({ timeout: 20_000 });
-      await expect(page.getByText('Run this line in a terminal to start it again. Your changes are kept.')).toBeVisible();
+      await expect(page.getByText('Give these instructions to your coding agent to start Astrid again. Your changes are kept.')).toBeVisible();
       await expect(page.getByRole('button', { name: UI.copy })).toBeVisible();
       // The status no longer claims "Connected", and the editor's own technical recovery card is not there.
       await expect(page.locator(UI.status)).toHaveAttribute('data-state', 'stopped');

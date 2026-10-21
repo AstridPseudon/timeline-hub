@@ -64,7 +64,8 @@ describe('AstridSetupStep', () => {
     expect(screen.getByRole('heading', { name: COPY.setUp.title })).toBeInTheDocument();
     expect(screen.getByText(withCommandShell(COPY.setUp.sentence))).toBeInTheDocument();
     expect(screen.getByText(command, { selector: 'code' })).toBeInTheDocument();
-    expect(screen.getByText(COPY.agent.note)).toBeInTheDocument();
+    // No line repeats what the instructions are for, and none explains how to open a terminal.
+    expect(document.body.textContent).not.toMatch(/Paste these instructions|Open Terminal|Open Start/);
     expect(screen.getAllByRole('button', { name: COPY.agent.copy })).toHaveLength(1);
     expect(screen.queryByRole('radio')).toBeNull();
     expect(screen.queryByRole('link')).toBeNull();
