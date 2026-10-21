@@ -164,8 +164,8 @@ test('A04/A05/A06/A07/A08 daylight palettes, resize, disclosure and live motion'
 test('A03/A08/A11/A12 native modal focus, route teardown and transition fallback', async ({ page }, info) => {
   await page.addInitScript(() => Object.defineProperty(document, 'startViewTransition', { configurable: true, value: undefined }));
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  // The Install button belongs to the App audience, which is an explicit choice now (c9ca234b): Agent, the
-  // default, hides it. Enter Home as App, leave for Vision and come back through history, which restores App.
+  // Both audiences open the same setup dialog (b0f0009c). Enter Home as App, the explicit choice (c9ca234b), leave
+  // for Vision and come back through history, which restores App.
   await page.goto('/home?experience=app');
   await surface(page, 'home');
   await expect(page.locator('main.astrid-public-site')).toHaveAttribute('data-audience', 'app');
@@ -175,7 +175,7 @@ test('A03/A08/A11/A12 native modal focus, route teardown and transition fallback
   await surface(page, 'home');
   await expect(page.locator('main.astrid-public-site')).toHaveAttribute('data-audience', 'app');
   await expect(page.locator('.astrid-editor-stage')).toHaveAttribute('data-astrid-readiness', 'settled', { timeout: 30_000 });
-  const install = page.getByRole('button', { name: 'Install Astrid', exact: true });
+  const install = page.getByRole('button', { name: 'Set up Astrid', exact: true });
   await install.click();
   await expect(page.locator('dialog')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Close', exact: true })).toBeFocused();
