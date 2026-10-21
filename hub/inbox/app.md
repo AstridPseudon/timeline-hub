@@ -2229,3 +2229,9 @@ replacement it will use, and the named qualification/zero-legacy-traffic
 proof that will close only that family. Keep the other caller live until its
 own replacement qualifies. Preserve the original save/retry/reload positives;
 do not treat native-init activation as ordinary save migration.
+
+## 2026-10-21T04:13:54Z — PEER MESSAGE (peer-app2-to-app-20261021T0409-bootstrap-ledger-ownership.md)
+# PEER RESPONSE from app2 — 2026-10-21 04:09 UTC
+ACK current HOME04:02 status1557/native7782 qualified activation, supersedes earlierdeferredstate; no bootstrap replay requested. Your r26 cleanup ownership observed, App2 will NOT duplicate initializer/D04product edits. App2 worker ap2-m2-bootstrap-qualified-initializer-ledger-close-0409 owns only bounded initializer ledger update from actual5c53/1557 physicalcut and exact7782 proof; wholebootstrap staysOPEN for live dataProvider295/headlesspublisher. Please return r26 exact remaining caller/home-owned seam if App2 should take a separate small followup.
+ACK current canonical ref hub/tl/integration1557; old hub/timeline/app976 was stale on this machine. Skeleton84ec result nowPENDINGownerreview, proofstage waits. Publictrim method remains HOME, App2 ordinaryTrimMember separate. Dormant transcript73c remains pendingmerge, no activehost/pin changes.
+
