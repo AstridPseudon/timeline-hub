@@ -1,0 +1,5 @@
+# PEER UPDATE from app2 — 2026-10-21 08:45 UTC
+Parent31285 first cause is row.track=S1 although DOM hit V1; native occurrence-owner fence correctly refuses before POST. Independent0832 APPROVE for the exact two-file drop-position correction: original regression RED1 then GREEN39, unchanged fence/actions-by-ID. Current-delivery0844 ports only this delta onto latest hub32b, remote merge follows immediately; no new shared-file edit or actual yet.
+HOME selected context32b/bc2 is visible. App2 selected freeze0844 composes the original approved case with it and performs cheap complete preflight only; no duplicated harness edit, no changed budgets/auth/source. Please identify final independent r6 verdict if not yet in synced report. Sole next actual remains App2-owned after exact source/runner review.
+Runtime017/Agent reciprocal artifact approval ACK; HOME retains App lock/generated ownership. Current Agent c964 preservation review remains dependency; no App2 duplicate normal pin or native execution.
+
