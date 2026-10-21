@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import base64
+import csv
 import hashlib
+import io
 import json
 import os
 import shutil
 import subprocess
+import tarfile
 import time
 import zipfile
 from collections.abc import Mapping
@@ -61,6 +64,7 @@ class _D13Inputs:
     ffprobe: Path
     ffprobe_sha256: str
     node_modules: Path
+    source_repo: Path | None = None
 
 
 _D13_BINDING_KEYS = frozenset({
@@ -124,6 +128,7 @@ def _d13_inputs() -> tuple[_D13Inputs, list[str]]:
             ffprobe=Path(required("ASTRID_FFPROBE_EXECUTABLE")),
             ffprobe_sha256=required("ASTRID_D13_FFPROBE_SHA256"),
             node_modules=Path(required("ASTRID_TEST_NODE_MODULES")),
+            source_repo=Path(__file__).resolve().parents[3],
         ),
         failures,
     )
@@ -145,6 +150,168 @@ def _sha256_file(path: Path) -> str:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _d13_git_blob_digest(data: bytes, algorithm: str) -> str:
+    header = f"blob {len(data)}\0".encode("ascii")
+    return hashlib.new(algorithm, header + data).hexdigest()
+
+
+def _d13_source_archive_failures(wheel: Path, inputs: _D13Inputs) -> list[str]:
+    """Tie the selected wheel to the declared commit/tree through Git blobs."""
+    if inputs.source_repo is None:
+        return []
+    failures: list[str] = []
+    repo = inputs.source_repo.resolve()
+    commit = inputs.agent_commit.lower()
+
+    def git(*args: str) -> subprocess.CompletedProcess[bytes]:
+        return subprocess.run(
+            ["git", "-C", str(repo), *args],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+    verified = git("rev-parse", "--verify", f"{commit}^{{commit}}")
+    if verified.returncode != 0:
+        return [f"declared Agent commit is not present in selected source repository: {commit}"]
+    actual_tree = git("rev-parse", "--verify", f"{commit}^{{tree}}")
+    if actual_tree.returncode != 0:
+        return [f"declared Agent commit tree could not be resolved: {commit}"]
+    if actual_tree.stdout.decode().strip() != inputs.agent_tree.lower():
+        failures.append(
+            "declared Agent tree does not match the declared commit: "
+            f"{actual_tree.stdout.decode().strip()} != {inputs.agent_tree}"
+        )
+    object_format = git("rev-parse", "--show-object-format")
+    if object_format.returncode != 0 or object_format.stdout.decode().strip() not in {"sha1", "sha256"}:
+        failures.append("selected source repository object format is unavailable or unsupported")
+        return failures
+    algorithm = object_format.stdout.decode().strip()
+    listing = git("ls-tree", "-r", "-z", commit, "--", "astrid")
+    if listing.returncode != 0:
+        failures.append("declared Agent commit tree could not be listed")
+        return failures
+    blobs: dict[str, str] = {}
+    for entry in listing.stdout.split(b"\0"):
+        if not entry:
+            continue
+        header, path_bytes = entry.split(b"\t", 1)
+        mode, kind, oid = header.split()
+        if kind != b"blob" or mode not in {b"100644", b"100755"}:
+            continue
+        blobs[path_bytes.decode("utf-8")] = oid.decode("ascii")
+
+    try:
+        with tarfile.open(
+            fileobj=io.BytesIO(git("archive", "--format=tar", commit, "--", "astrid").stdout),
+            mode="r:",
+        ) as archive:
+            archived = {
+                member.name.removeprefix("./"): archive.extractfile(member).read()
+                for member in archive.getmembers()
+                if member.isfile() and member.name.removeprefix("./").startswith("astrid/")
+            }
+    except (OSError, tarfile.TarError, ValueError) as exc:
+        failures.append(f"declared Agent source archive could not be read: {exc}")
+        return failures
+
+    try:
+        with zipfile.ZipFile(wheel) as package:
+            package_members = {
+                name: package.read(name)
+                for name in package.namelist()
+                if name.startswith("astrid/") and not name.endswith("/")
+            }
+    except (OSError, zipfile.BadZipFile) as exc:
+        failures.append(f"Agent wheel could not be read for source parity: {exc}")
+        return failures
+
+    for path, package_bytes in package_members.items():
+        archive_bytes = archived.get(path)
+        if archive_bytes is None:
+            failures.append(f"Agent wheel member is absent from declared source archive: {path}")
+            continue
+        if archive_bytes != package_bytes:
+            failures.append(f"Agent wheel member differs from declared source archive: {path}")
+        blob = blobs.get(path)
+        if blob is None:
+            failures.append(f"declared source tree has no blob for Agent wheel member: {path}")
+        elif _d13_git_blob_digest(archive_bytes, algorithm) != blob:
+            failures.append(f"declared source archive blob differs from Git object: {path}")
+    return failures
+
+
+def _d13_record_rows(text: str) -> dict[str, tuple[str, str]]:
+    rows: dict[str, tuple[str, str]] = {}
+    for row in csv.reader(text.splitlines()):
+        if len(row) != 3 or not row[0] or row[0] in rows:
+            raise ValueError("malformed or duplicate RECORD row")
+        rows[row[0]] = (row[1], row[2])
+    return rows
+
+
+def _d13_record_digest(data: bytes, algorithm: str) -> str:
+    digest = hashlib.new(algorithm, data).digest()
+    return base64.urlsafe_b64encode(digest).decode("ascii").rstrip("=")
+
+
+def _d13_wheel_record_failures(wheel: Path, source: Path) -> list[str]:
+    """Require wheel RECORD hashes and installed package bytes to agree."""
+    failures: list[str] = []
+    try:
+        with zipfile.ZipFile(wheel) as archive:
+            record_names = [name for name in archive.namelist() if name.endswith(".dist-info/RECORD")]
+            if len(record_names) != 1:
+                return [f"Agent wheel must contain exactly one RECORD, found {len(record_names)}"]
+            record_name = record_names[0]
+            wheel_rows = _d13_record_rows(archive.read(record_name).decode("utf-8"))
+            wheel_members = {name for name in archive.namelist() if not name.endswith("/")}
+            if set(wheel_rows) != wheel_members:
+                failures.append("Agent wheel RECORD does not enumerate exactly its file members")
+            wheel_bytes = {
+                name: archive.read(name)
+                for name in wheel_members
+                if name != record_name
+            }
+    except (OSError, UnicodeDecodeError, ValueError, zipfile.BadZipFile) as exc:
+        return [f"Agent wheel RECORD is unreadable: {exc}"]
+
+    installed_record = source / record_name
+    if not installed_record.is_file() or installed_record.is_symlink():
+        failures.append(f"installed Agent RECORD is missing or symlinked: {installed_record}")
+        return failures
+    try:
+        installed_rows = _d13_record_rows(installed_record.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        return [f"installed Agent RECORD is unreadable: {exc}"]
+
+    for name, (expected_hash, expected_size) in wheel_rows.items():
+        if name == record_name:
+            if expected_hash or expected_size:
+                failures.append("wheel RECORD must leave its own row unhashed")
+            continue
+        if not name or name.startswith("/") or ".." in Path(name).parts:
+            failures.append(f"Agent wheel RECORD contains an unsafe path: {name}")
+            continue
+        target = source / Path(name)
+        if not target.is_file() or target.is_symlink():
+            failures.append(f"installed Agent RECORD member is missing: {name}")
+            continue
+        actual = target.read_bytes()
+        if str(len(actual)) != expected_size:
+            failures.append(f"installed Agent RECORD size differs: {name}")
+        if not expected_hash.startswith("sha256="):
+            failures.append(f"Agent wheel RECORD uses an unsupported digest: {name}")
+        elif _d13_record_digest(actual, "sha256") != expected_hash.removeprefix("sha256="):
+            failures.append(f"installed Agent RECORD hash differs: {name}")
+        if name in wheel_bytes and actual != wheel_bytes[name]:
+            failures.append(f"installed Agent package bytes differ from wheel: {name}")
+        installed_hash, installed_size = installed_rows.get(name, ("", ""))
+        if (installed_hash, installed_size) != (expected_hash, expected_size):
+            failures.append(f"installed Agent RECORD does not preserve wheel row: {name}")
+    return failures
 
 
 def _d13_resource_locks(profile: Mapping[str, str], inputs: _D13Inputs) -> dict[str, str]:
@@ -244,6 +411,8 @@ def _d13_binding_failures(profile: Mapping[str, str], inputs: _D13Inputs) -> lis
         failures.append(f"Remotion project is unavailable or symlinked: {inputs.remotion}")
     if not inputs.node_modules.is_dir() or inputs.node_modules.is_symlink():
         failures.append(f"Node modules are unavailable or symlinked: {inputs.node_modules}")
+    failures.extend(_d13_source_archive_failures(wheel, inputs))
+    failures.extend(_d13_wheel_record_failures(wheel, actual_source))
     return failures
 
 
@@ -501,8 +670,18 @@ def _offline_d13_inputs(tmp_path: Path) -> tuple[_D13Inputs, dict[str, str]]:
     node_modules = remotion / "node_modules"
     node_modules.mkdir()
     wheel = tmp_path / "astrid-0.1.0-py3-none-any.whl"
+    marker = b"selected"
+    record_name = "astrid-0.1.0.dist-info/RECORD"
+    marker_digest = _d13_record_digest(marker, "sha256")
+    record = (
+        f"astrid/packs/marker.txt,sha256={marker_digest},{len(marker)}\n"
+        f"{record_name},,\n"
+    ).encode()
+    (source / record_name).parent.mkdir(parents=True)
+    (source / record_name).write_bytes(record)
     with zipfile.ZipFile(wheel, "w") as archive:
-        archive.writestr("astrid/packs/marker.txt", "selected")
+        archive.writestr("astrid/packs/marker.txt", marker)
+        archive.writestr(record_name, record)
     inputs = _D13Inputs(
         profile=tmp_path / "astrid.json", bindings=tmp_path / "bindings.json",
         expected_source=source, expected_environment=environment,
@@ -515,6 +694,7 @@ def _offline_d13_inputs(tmp_path: Path) -> tuple[_D13Inputs, dict[str, str]]:
         ffmpeg=ffmpeg, ffmpeg_sha256=_sha256_file(ffmpeg),
         ffprobe=ffprobe, ffprobe_sha256=_sha256_file(ffprobe),
         node_modules=node_modules,
+        source_repo=None,
     )
     profile = {
         "profile": "astrid", "runtime_checkout": str(source),
@@ -546,6 +726,15 @@ def test_d13_explicit_bindings_reject_substituted_tool(tmp_path):
     substituted = replace(inputs, ffmpeg=substitute)
     failures = _d13_binding_failures(profile, substituted)
     assert any("ffmpeg differs from manager-selected tool binding" in failure for failure in failures)
+
+
+def test_d13_explicit_bindings_reject_installed_package_tamper(tmp_path):
+    inputs, profile = _offline_d13_inputs(tmp_path)
+    installed = inputs.expected_source / "astrid" / "packs" / "marker.txt"
+    installed.write_text("tampered", encoding="utf-8")
+    failures = _d13_binding_failures(profile, inputs)
+    assert any("installed Agent RECORD hash differs" in failure for failure in failures)
+    assert any("installed Agent package bytes differ from wheel" in failure for failure in failures)
 
 
 def _digest(value: str | bytes) -> str:
