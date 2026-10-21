@@ -14,6 +14,7 @@ from tests.editing_conformance.fixture_loader import load_fixture
 from tests.editing_conformance.test_recipe_m2_placement import MATERIALIZATION_FIXTURE
 from tests.helpers.runtime import use_runtime
 from tests.helpers.trusted_seed import seed_trusted_parent
+from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
 pytestmark = pytest.mark.integration
 REF = "occurrence:occurrence-1/clip:clip-1"
@@ -45,6 +46,11 @@ def identity(request, tmp_path, monkeypatch):
         internal = {k: copy.deepcopy(source_internal[k]) for k in ("timeline_id", "revision_id", "payload")}
         shot = {k: copy.deepcopy(source_shot[k]) for k in (
             "shot_id", "revision_id", "internal_timeline_revision_id", "payload")}
+        # Reuse main's real shot/item carrier; only the media pin belongs to
+        # this captured Runtime source.  The item identity is never invented.
+        source_item = copy.deepcopy(document_fixture()["shot_revisions"][0]["payload"]["items"][0])
+        source_item["media_id"] = source_shot["payload"]["provenance"]["source_media"]
+        shot["payload"]["items"] = [source_item]
         internal["revision_id"] = "identity-internal"
         internal["payload"]["clips"][0]["hold"] = 0.25
         shot.update(revision_id="identity-shot", internal_timeline_revision_id="identity-internal")
@@ -279,11 +285,13 @@ def test_fresh_shared_placement_materializes_own_slot_reload_inverse_and_exact_r
                        if row['occurrence_id'] == 'occurrence-1')
     source_pin = source['source_mapping']['shots'][destination]
     expected_map = allocation_map(expected.records)
+    raw_item_id, target_item_id = next(iter(source_pin['item_id_map'].items()))
     assert command['op'] == 'placement.move' and command['version'] == '2'
-    # The captured identity source has no shot items, so this native proof is
-    # limited to shot allocation; item allocation remains a separate gap.
-    assert source_pin['item_id_map'] == {}
-    assert expected_map == {'shot:' + destination: destination}
+    assert source_pin['item_id_map'] == {raw_item_id: target_item_id}
+    assert expected_map == {
+        'shot:' + destination: destination,
+        'shot:' + destination + '/item:' + target_item_id: target_item_id,
+    }
 
     accepted = edit.commit(body, 'placement-materialization')
     data = accepted['data']
@@ -301,6 +309,12 @@ def test_fresh_shared_placement_materializes_own_slot_reload_inverse_and_exact_r
                     'key': 'materialization.owner:shot:' + destination,
                     'ref': 'occurrence:occurrence-1', 'policy': 'fixed',
                     'dependencies': [allocation['key']],
+                }
+    assert next(binding for binding in record['bindings']
+                if binding['key'] == 'shot:' + destination + '/item:' + target_item_id) == {
+                    'key': 'shot:' + destination + '/item:' + target_item_id,
+                    'ref': 'shot:' + source_pin['shot_id'] + '/item:' + raw_item_id,
+                    'policy': 'fixed', 'dependencies': [allocation['key']],
                 }
     moved = occurrence_image(data['canonical_document'], 'occurrence-1')
     assert moved[0]['shot_id'] == destination
