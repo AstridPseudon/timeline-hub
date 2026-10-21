@@ -1,0 +1,140 @@
+diff --git a/tests/sdk/test_timeline_checkout.py b/tests/sdk/test_timeline_checkout.py
+index 85442b07d..d2db27387 100644
+--- a/tests/sdk/test_timeline_checkout.py
++++ b/tests/sdk/test_timeline_checkout.py
+@@ -1456,6 +1456,135 @@ def test_fast_lane_pair_keeps_real_explicit_working_snapshot_and_original_video(
+     assert produced["task"]["spec"]["spec"]["inputs"]["timeline_snapshot"]["config"]["clips"][0]["params"]["content"] == "frozen-WORKING"
+ 
+ 
++def test_fast_lane_prepare_pair_materializes_normal_scene_labels_for_verify(tmp_path, monkeypatch):
++    """The ordinary pair caller must carry managed Scene rows into public labels."""
++    from copy import deepcopy
++    from types import SimpleNamespace
++
++    from PIL import Image
++
++    from astrid.sdk import timeline_filmstrip
++    from astrid.packs.rendering.actions.timeline_visualize import fast_lane
++    from astrid.packs.rendering.actions.timeline_visualize.overlays import labels as label_overlay
++    from tests.sdk.test_scene_caller_preservation import _scene_context, _scene_result
++
++    config = {
++        "duration": 0.2,
++        "theme_overrides": {"visual": {"canvas": {"fps": 10, "width": 200, "height": 100}}},
++        "tracks": [{"id": "picture", "kind": "visual", "label": "Picture"}],
++        # Deliberately not a known local element: Scene answers, not authored
++        # config inference, must supply the public label.
++        "clips": [{"id": "compiled-1", "track": "picture", "clipType": "not-local", "at": 0, "hold": 0.2}],
++    }
++    base_context = _scene_context()
++    base_snapshot = base_context["capture_snapshot"]
++    base_snapshot.update({"duration_frames": 2, "fps_rational": [10, 1], "video_digest": "capture-1",
++                          "timeline_id": "timeline-1", "config": deepcopy(config)})
++    base_snapshot["metadata"].update({"capture_identity": "capture-1", "capture_authority": {"parent_revision_id": "r1"},
++                                       "scene_clips": {"compiled-1": {"address": "c01.card"}}})
++    base_context.update({"capture_identity": "capture-1", "video_digest": "capture-1", "render_run_id": "base-run",
++                         "filmstrip_snapshot": base_snapshot})
++    working_context = deepcopy(base_context)
++    working_context["capture_snapshot"]["metadata"]["working_copy"] = {"base_parent": {"revision_id": "r1"}}
++    working_context["render_run_id"] = "candidate"
++    answers = [
++        {
++            "frame": frame, "width": 200, "height": 100, "coverage": "COVERED", "content": "CONTENT",
++            "layers": [{"clipId": "compiled-1", "role": "content", "visible": True, "opacity": 1,
++                        "fullFrame": False, "bounds": {"status": "known", "rect": {
++                            "x": 20, "y": 40, "width": 60, "height": 40,
++                        }} }],
++            "findings": [],
++        }
++        for frame in range(2)
++    ]
++    base_scene, base_media = _scene_result(base_context, answers=answers)
++    candidate_scene, candidate_media = _scene_result(
++        working_context,
++        answers=answers,
++        label={"status": "candidate", "label": "unsaved candidate based on committed revision r1",
++               "actual_revision_id": None, "base_revision_id": "r1"},
++    )
++    base_digest = base_scene["outputs"]["managed_outputs"][0]["digest"]
++    candidate_digest = candidate_scene["outputs"]["managed_outputs"][0]["digest"]
++    bundles = {base_digest: base_media.media.read_bytes("bundle"),
++               candidate_digest: candidate_media.media.read_bytes("bundle")}
++    transport = SimpleNamespace(media=SimpleNamespace(read_bytes=lambda ref: bundles[ref]))
++    scene_calls = []
++
++    def prepare(inputs, *, project, client, **kwargs):
++        del project, client, kwargs
++        if inputs.get("authoring_preview"):
++            return deepcopy(working_context)
++        if inputs.get("render_run") == "candidate":
++            return deepcopy(working_context)
++        return deepcopy(base_context)
++
++    monkeypatch.setattr(timeline_filmstrip, "prepare_filmstrip", prepare)
++    monkeypatch.setattr(
++        "astrid.sdk.authoring_bundle.render_authoring_candidate_preview",
++        lambda *args, **kwargs: SimpleNamespace(ok=True, run_id="candidate"),
++    )
++    monkeypatch.setattr(fast_lane, "_require_clean_base_render", lambda *args, **kwargs: {"width": 200, "height": 100})
++    monkeypatch.setattr(
++        fast_lane, "_base_video",
++        lambda *args, **kwargs: (tmp_path / "base.mp4", {"digest": "base"}),
++    )
++    monkeypatch.setattr(
++        fast_lane, "_candidate_video",
++        lambda *args, **kwargs: (tmp_path / "candidate.mp4", {"digest": "candidate"}),
++    )
++
++    def invoke_scene(capability, *, inputs, **kwargs):
++        assert capability == "rendering.timeline_visualize"
++        assert inputs["mode"] == "scene_only"
++        assert inputs["formats"] == ["md"] and inputs["include_media"] is False
++        assert not {"source_ref", "source", "authority", "provider"}.intersection(inputs)
++        scene_calls.append(dict(inputs))
++        return candidate_scene if inputs.get("authoring_preview") else base_scene
++
++    monkeypatch.setattr("astrid.sdk.invocation._invoke_internal_result", invoke_scene)
++
++    draft = SimpleNamespace(
++        bundle={"base_parent": {"revision_id": "r1"}},
++        document=lambda: {"kind": "authoring-candidate-preview", "candidate": {"marker": "working"}},
++    )
++    pair_seen = {}
++    prepare_pair = fast_lane.prepare_pair
++
++    def observe_pair(*args, **kwargs):
++        pair = prepare_pair(*args, **kwargs)
++        pair_seen["pair"] = pair
++        return pair
++
++    monkeypatch.setattr(fast_lane, "prepare_pair", observe_pair)
++
++    published = tmp_path / "published.png"
++    working = tmp_path / "working.png"
++    Image.new("RGB", (200, 100), "black").save(published)
++    Image.new("RGB", (200, 100), "black").save(working)
++    monkeypatch.setattr(label_overlay, "labels_for", lambda *args, **kwargs: pytest.fail("config visibility inference"))
++    monkeypatch.setattr("astrid.core.timeline.onscreen.visible_at", lambda *args, **kwargs: pytest.fail("private visibility"))
++    monkeypatch.setattr(
++        fast_lane, "decode_frames",
++        lambda video, frames, out_dir: {
++            frame: published if Path(video).name == "base.mp4" else working for frame in frames
++        },
++    )
++    result = fast_lane.verify(
++        transport, "p", "cut", [fast_lane.Moment(0, "managed scene")], draft=draft,
++        root=tmp_path / "verify", labels=True,
++    )
++    pair = pair_seen["pair"]
++    assert set(pair["frame_providers"]) == {"published", "working"}
++    assert all(provider.fresh_scene_frames == {0, 1} for provider in pair["frame_providers"].values())
++    labelled = result["rows"][0]["labelled"]
++    assert set(labelled) == {"published", "working"}
++    with Image.open(labelled["published"]) as image:
++        assert image.getpixel((20, 60)) == (250, 204, 21)
++    assert len(scene_calls) == 2 and {call.get("mode") for call in scene_calls} == {"scene_only"}
++
++
+ @pytest.mark.parametrize("route", ["verify", "sweep"])
+ @pytest.mark.parametrize("later_failure", [None, "base", "decode", "page"])
+ def test_candidate_cas_materialization_has_run_owned_lifetime(tmp_path, monkeypatch, route, later_failure):

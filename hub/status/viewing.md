@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-21T12:54:04Z | dispatcher heartbeat 11s | live 3 (sol 0, luna 3, other 0) | busy30 26 | status age 8m -->
+<!-- viewing | 2026-10-21T13:00:13Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 25 | status age 1m -->
 # viewing — 2026-10-21 12:27 UTC
 This round: 1 source-deletion row closed (VW-AUDIO-STEP); 1 docs merge; 4 independently reviewed Agent source merges requested; VW-D09b/c DEFERRED; D08/adapters KEEP.
 Milestone: M0 COMPLETE; M1 RECORDED; M3/M4 OPEN. PLAN/rules rev2026-10-21 and inbox through owner12:08/App12:10 ACK.
@@ -21,3 +21,5 @@ Resources: latest11289194496B free. Last census198files/53600physical/49264nonbl
 Decided locally: apply lighter source proofs and explicit source/physical ledger separation; retain intended adapters and deferred crops; no inspection-field work solely for deferred rows; farm-only heavy runs; no retry of historical cases or frozen-result relabel.
 
 12:46 current results: d9c863aa7 label carry independently APPROVE1228 (17overlay/38cache/20transportPASS), Agent request sent. e62f63906 state split independently APPROVE1234 after restoring qualified-public-crop route and exact original tripwire (37PASS), Agent request sent after0e631. Cache1d698 branch REJECTED despite reviewerAPPROVE because4unauthorizedxfails; correction1240 must restore4activepositives. Dense producer REJECTED for extraPNGcaptures; query-only correction1242 active. Fastlane consumer de7 seam APPROVE but dormant; normalproducer1240 active. Actual code changes/activation only after correct source bindings and original assertions, no relaxed proof. FARM acknowledgement still pending since12:18; exact requests start Status:READY.
+
+Pin disposition (lead12:44 request): pin-release: app-pin-3ee19006. Worker1250 removed only our obsolete KEEP after ancestry, process, running-test and lease checks; lead should use bin/recycle (estimated1155031040 allocated bytes). pin-keep: app-pin-d00a6613 — its339-file dist remains an exact READY farm input; app-pin-0d432391 — source/graph/current1054 stage still referenced. No manual worktree deletion.
