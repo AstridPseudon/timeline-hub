@@ -32,6 +32,7 @@ import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { harnessUnavailableReason, sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { APP_ENTRY_ROUTE, commandOutboxes, currentHead, dragTimelineClip, dropFileOnTimeline, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, holdTimelineCreation, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI, waitForAudit } from './support/app.ts';
+import { boundedEvidenceText, relevantEvidenceUrl, summarizeEvidenceBody, type BoundedEvidenceBody } from './support/auto-real-proxy-helpers.ts';
 import { timelineBase as runtimeTimelineBase, timelineFromList, type TimelineListPage, type TimelineScope } from './support/timeline-scope.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
@@ -106,23 +107,13 @@ const journey = {
 
 interface BoundedBrowserEvidence {
   requests: Array<{ method: string; url: string }>;
-  responses: Array<{ method: string; url: string; status: number; body?: { code?: string; message?: string } }>;
+  responses: Array<{ method: string; url: string; status: number; body?: BoundedEvidenceBody }>;
   console: Array<{ type: string; text: string }>;
   errors: string[];
   pending: Array<Promise<void>>;
 }
 
 const browserEvidence = new Map<Page, BoundedBrowserEvidence>();
-
-function boundedText(value: string, limit = 300): string {
-  return value.replace(/bearer\s+\S+/ig, 'Bearer <redacted>').slice(0, limit);
-}
-
-function relevantEvidenceUrl(rawUrl: string): string | null {
-  const url = new URL(rawUrl);
-  if (!/\/(?:media-imports|media-selection(?:\/verified)?|commit)$/.test(url.pathname)) return null;
-  return `${url.pathname}${url.search}`.slice(0, 700);
-}
 
 function captureBoundedBrowserEvidence(page: Page): void {
   const evidence: BoundedBrowserEvidence = { requests: [], responses: [], console: [], errors: [], pending: [] };
@@ -136,13 +127,10 @@ function captureBoundedBrowserEvidence(page: Page): void {
     if (!url || evidence.responses.length >= 80) return;
     const record = { method: response.request().method(), url, status: response.status() } as BoundedBrowserEvidence['responses'][number];
     evidence.responses.push(record);
+    if (response.status() < 400) return;
     evidence.pending.push((async () => {
       try {
-        const body = JSON.parse(await response.text()) as Record<string, unknown>;
-        const summary: NonNullable<typeof record.body> = {};
-        if (typeof body.code === 'string') summary.code = body.code;
-        if (typeof body.message === 'string') summary.message = boundedText(body.message);
-        if (Object.keys(summary).length) record.body = summary;
+        record.body = summarizeEvidenceBody(JSON.parse(await response.text()));
       } catch {
         // A non-JSON response has no safe bounded refusal summary.
       }
@@ -150,10 +138,10 @@ function captureBoundedBrowserEvidence(page: Page): void {
   });
   page.on('console', (message) => {
     if (!/drop|media|native|refus|commit/i.test(message.text()) || evidence.console.length >= 80) return;
-    evidence.console.push({ type: message.type(), text: boundedText(message.text()) });
+    evidence.console.push({ type: message.type(), text: boundedEvidenceText(message.text()) });
   });
   page.on('pageerror', (error) => {
-    if (evidence.errors.length < 40) evidence.errors.push(boundedText(error.message));
+    if (evidence.errors.length < 40) evidence.errors.push(boundedEvidenceText(error.message));
   });
 }
 

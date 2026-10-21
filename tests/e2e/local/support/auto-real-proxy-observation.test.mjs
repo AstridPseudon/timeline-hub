@@ -29,6 +29,15 @@ const requireAuthoritativeHead = compileFunction(
   [],
 )();
 
+const evidenceHelpers = source.match(/^export function boundedEvidenceText\([^]*?^}\n\nexport function relevantEvidenceUrl\([^]*?^}\n\nexport interface BoundedEvidenceBody[^]*?^}\n\nexport function summarizeEvidenceBody\([^]*?^}/m)?.[0];
+assert.ok(evidenceHelpers, 'bounded evidence helpers must remain source-visible');
+const evidenceConstant = source.match(/^const SAFE_EVIDENCE_FACT = [^;]+;/m)?.[0];
+assert.ok(evidenceConstant, 'bounded evidence fact validator must remain source-visible');
+const evidence = compileFunction(
+  `${evidenceConstant}\n${ts.transpileModule(evidenceHelpers.replace(/^export /gm, ''), {}).outputText}\nreturn { boundedEvidenceText, relevantEvidenceUrl, summarizeEvidenceBody };`,
+  [],
+)();
+
 function request(url, method, body) {
   return { method: () => method, url: () => url, postDataJSON: () => body };
 }
@@ -96,4 +105,23 @@ test('pure: authoritative head uses the Runtime pair and refuses incomplete valu
   for (const body of [{}, { head: null }, { head: { revision_id: 'revision-only' } }, { head: { publication_id: 'publication-only' } }]) {
     assert.throws(() => requireAuthoritativeHead(body), /authoritative head pair/);
   }
+});
+
+test('pure: planted Runtime 503 retains route, status and sanitized error facts', () => {
+  const route = evidence.relevantEvidenceUrl('https://app.test/runtime-config/v1/operation/runtime/v1/tasks?credential=secret');
+  assert.equal(route, '/runtime-config/v1/operation/runtime/v1/tasks');
+  const record = {
+    method: 'GET',
+    url: route,
+    status: 503,
+    body: evidence.summarizeEvidenceBody({
+    error: 'operation_unavailable',
+    detail: 'Bearer secret must not be retained',
+    message: 'upstream unavailable: Bearer secret',
+    }),
+  };
+  assert.deepEqual(record, {
+    method: 'GET', url: '/runtime-config/v1/operation/runtime/v1/tasks', status: 503, body: { error: 'operation_unavailable' },
+  });
+  assert.equal(JSON.stringify(record).includes('secret'), false);
 });

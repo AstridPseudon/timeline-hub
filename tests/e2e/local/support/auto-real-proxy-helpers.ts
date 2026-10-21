@@ -7,6 +7,40 @@ export const LEGACY_POST = /^\/api\/runtime\/.*$/;
 
 export type RuntimePostKind = 'native-commit' | 'task-api' | 'read-only' | 'legacy-writer' | 'other';
 
+const SAFE_EVIDENCE_FACT = /^[A-Za-z0-9._:/-]{1,160}$/;
+
+export function boundedEvidenceText(value: string, limit = 300): string {
+  return value.replace(/bearer\s+\S+/ig, 'Bearer <redacted>').slice(0, limit);
+}
+
+export function relevantEvidenceUrl(rawUrl: string): string | undefined {
+  let url: URL;
+  try { url = new URL(rawUrl); } catch { return undefined; }
+  const { pathname } = url;
+  if (!pathname.startsWith('/api/runtime')
+    && !pathname.startsWith('/runtime-config/v1/operation')
+    && pathname !== '/runtime-config/v1/workspace.json'
+    && !/\/(?:media-imports|media-selection(?:\/verified)?|commit)$/.test(pathname)) return undefined;
+  return pathname.slice(0, 320);
+}
+
+export interface BoundedEvidenceBody {
+  code?: string;
+  error?: string;
+  type?: string;
+  location?: string;
+}
+
+export function summarizeEvidenceBody(value: unknown): BoundedEvidenceBody | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const body = value as Record<string, unknown>;
+  const summary: BoundedEvidenceBody = {};
+  for (const key of ['code', 'error', 'type', 'location'] as const) {
+    if (typeof body[key] === 'string' && SAFE_EVIDENCE_FACT.test(body[key])) summary[key] = body[key];
+  }
+  return Object.keys(summary).length ? summary : undefined;
+}
+
 export function classifyRuntimePost(method: string, pathname: string): RuntimePostKind {
   if (method !== 'POST') return 'other';
   if (NATIVE_RUNTIME_COMMIT.test(pathname)) return 'native-commit';
