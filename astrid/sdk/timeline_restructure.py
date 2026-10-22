@@ -106,7 +106,7 @@ def _anchor_chapters(out: dict[str, Any], rows: list[dict[str, Any]], shots: Map
 
     groups = Checkout(copy.deepcopy(out))._cut_groups()
     starts = [(int(round(g["start"] * 1000)), g["id"]) for g in groups]
-    table = []
+    table: list[Mapping[str, Any]] = []
     for index, row in enumerate(rows):
         lo = _row_start(row)
         hi = _row_start(rows[index + 1]) if index + 1 < len(rows) else lo + int(_num(row.get("duration_ms")))

@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import difflib
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -41,6 +42,7 @@ class _EditMixin:
     """Checkout: structural edits (add, cuts, notes, ripple), slots and stand-ins, assets and beats."""
 
     _orphan_reason: str  # set by Checkout.__init__; declared so this mixin's readers are typed
+    _parent_clips: Callable[[], list[dict[str, Any]]]  # defined on _LookupMixin; declared so this mixin's readers are typed
 
     # ---- structural edits ---------------------------------------------------
     def add(self, element: str, *, at: Any, hold: float | None = None, asset: Any = None, params: Mapping[str, Any] | None = None,

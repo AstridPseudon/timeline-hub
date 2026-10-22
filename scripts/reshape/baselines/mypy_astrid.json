@@ -5,7 +5,7 @@
     "scripts/reshape"
   ],
   "command": [
-    "/Users/hannahomalley/Developer/tp-merge-20261018/wt/land/.venv/bin/python",
+    "/Users/hannahomalley/Developer/astrid-video/astrid-local/labs/astrid-ci3/.venv/bin/python",
     "-m",
     "mypy",
     "astrid",
@@ -15,11 +15,11 @@
     "--no-pretty",
     "--show-error-codes"
   ],
-  "finding_count": 1943,
+  "finding_count": 1937,
   "code_counts": {
     "arg-type": 428,
     "assignment": 158,
-    "attr-defined": 533,
+    "attr-defined": 527,
     "call-arg": 1,
     "call-overload": 38,
     "dict-item": 34,

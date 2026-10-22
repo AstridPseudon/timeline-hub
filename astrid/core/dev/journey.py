@@ -1229,6 +1229,7 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
             runner.phase("adopt_down", lambda: runner.command("adopt_down", [sys.executable, "-m", "astrid_runtime", "down", "--source-manifest", str(manifest_path)] + common, env, unbounded=True))
         runner.phase("up", lambda: runner.command("up", local + ["up", "--source-manifest", str(manifest_path)] + door_args + common, env, unbounded=(tier == "quick")))
         if tier == "quick":
+            assert app_checkout is not None  # preflight refuses QUICK without --app-checkout
             quick_journey = Journey(runner=runner, root=root, env=env, project=project, timeline=source_timeline,
                                     start=0, end=1, kill_start=0, checkout=checkout, backend=REMOTION_BACKEND)
             runner.phase("first_open", lambda: runner.command("first_open", [sys.executable, "-c", OPEN_CLIENT], env, json_result=False, unbounded=True))

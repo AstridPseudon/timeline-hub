@@ -29,6 +29,8 @@ from astrid.sdk.timeline.selection import Selection
 class _LookupMixin:
     """Checkout: clocks, looking things up (cuts, clips, words), and reading the document's shots and cut groups."""
 
+    bundle: dict[str, Any]  # set by Checkout.__init__; declared so this mixin's readers are typed
+
     # ---- clocks -----------------------------------------------------------
     def quantize(self, seconds: float) -> float:
         return _r(round(float(seconds) * self.fps) / self.fps)
@@ -354,7 +356,7 @@ class _LookupMixin:
         if not isinstance(chosen, list):
             return None
         parent["clips"] = chosen
-        if isinstance(mirror, list):
+        if isinstance(mirror, list) and isinstance(config, dict):  # a list mirror exists only under a dict config
             config["clips"] = chosen
         return chosen
 

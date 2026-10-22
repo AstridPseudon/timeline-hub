@@ -5,6 +5,7 @@ import copy
 import json
 import math
 import statistics
+from collections.abc import Callable
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -64,6 +65,7 @@ class _ReflowMixin:
 
     _scope: list | None = None  # the changes of the open re-time scope (keep_end only): (film second, seconds, skip ids)
     _orphan_reason: str  # set by Checkout.__init__; declared so this mixin's readers are typed
+    _parent_clips: Callable[[], list[dict[str, Any]]]  # defined on _LookupMixin; declared so this mixin's readers are typed
 
     @property
     def music(self) -> str:

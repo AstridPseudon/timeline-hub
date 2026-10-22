@@ -52,7 +52,7 @@ def media_only_publication(project_id: str, media: Sequence[Mapping[str, Any]], 
     clips = [{"id": f"clip-{n}", "clipType": "media", "track": "video", "asset": f"clip{n}",
               "at": seconds * (n - 1), "from": 0, "to": seconds, "speed": 1}
              for n in range(1, len(media) + 1)]
-    config = {"tracks": [{"id": "video", "kind": "visual", "label": "Video"}], "effects": []}
+    config: dict[str, Any] = {"tracks": [{"id": "video", "kind": "visual", "label": "Video"}], "effects": []}
     if seconds == TINY_CLIP_SECONDS:
         config["theme_overrides"] = {"visual": {"canvas": {"width": 320, "height": 180, "fps": 24}}}
     return {
