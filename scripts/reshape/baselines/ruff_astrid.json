@@ -4,7 +4,7 @@
     "pyproject.toml [tool.ruff].include"
   ],
   "command": [
-    "/tmp/lead-fixwin/astrid-agent/.venv/bin/python",
+    "/Users/hannahomalley/Developer/astrid-video/astrid-local/labs/astrid-followup/.venv/bin/python",
     "-m",
     "ruff",
     "check",
@@ -12,11 +12,11 @@
     "--output-format",
     "json"
   ],
-  "finding_count": 2203,
+  "finding_count": 2197,
   "code_counts": {
     "F401": 148,
-    "BLE001": 214,
-    "I001": 220,
+    "BLE001": 210,
+    "I001": 218,
     "E701": 463,
     "E702": 229,
     "E731": 11,
