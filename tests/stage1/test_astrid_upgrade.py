@@ -79,6 +79,52 @@ def test_upgrade_refuses_ambiguous_explicit_source(tmp_path):
         upgrade.resolve_upgrade_roots(source=source, destination=tmp_path / "target")
 
 
+@pytest.mark.parametrize("forced", [False, True])
+def test_stop_pack_host_reports_only_forced_sigkill(monkeypatch, tmp_path, forced):
+    from astrid.sdk import host_bootstrap
+
+    data_root = tmp_path / "data"
+    support = data_root / "runtime"
+    support.mkdir(parents=True)
+    state = {"pid": 4321, "process_birth_id": "birth-current", "support_root": str(support)}
+    for name in ("generic-host.json", "generic-host.ready.json"):
+        (support / name).write_text(json.dumps(state), encoding="utf-8")
+    monkeypatch.setattr(host_bootstrap, "_host_pid_alive", lambda _pid: True)
+    monkeypatch.setattr(host_bootstrap, "_host_identity_matches", lambda _state: True)
+    monkeypatch.setattr(host_bootstrap, "_IDLE_CHECKS", 1)
+    monkeypatch.setattr(host_bootstrap, "_descendant_snapshot", lambda _pid: {4322: ("helper-birth", 4321)})
+    monkeypatch.setattr(host_bootstrap, "_terminate_old_host", lambda _state: forced)
+
+    result = upgrade.stop_pack_host(data_root)
+
+    expected = {"host_status": "stopped", "host_pid": 4321}
+    if forced:
+        expected["forced"] = True
+    assert result == expected
+    assert not (support / "generic-host.json").exists()
+    assert not (support / "generic-host.ready.json").exists()
+
+
+def test_stop_pack_host_refuses_active_work_outside_host_group(monkeypatch, tmp_path):
+    from astrid.sdk import host_bootstrap
+
+    data_root = tmp_path / "data"
+    support = data_root / "runtime"
+    support.mkdir(parents=True)
+    state = {"pid": 4321, "process_birth_id": "birth-current", "support_root": str(support)}
+    for name in ("generic-host.json", "generic-host.ready.json"):
+        (support / name).write_text(json.dumps(state), encoding="utf-8")
+    monkeypatch.setattr(host_bootstrap, "_host_pid_alive", lambda _pid: True)
+    monkeypatch.setattr(host_bootstrap, "_host_identity_matches", lambda _state: True)
+    monkeypatch.setattr(host_bootstrap, "_IDLE_CHECKS", 1)
+    monkeypatch.setattr(host_bootstrap, "_descendant_snapshot", lambda _pid: {4322: ("task-birth", 5000)})
+
+    with pytest.raises(upgrade.UpgradeError, match="active child work"):
+        upgrade.stop_pack_host(data_root)
+
+    assert (support / "generic-host.json").is_file()
+
+
 def test_upgrade_delegates_cutover_then_relaunches_target(monkeypatch, tmp_path):
     source = tmp_path / "source"
     target = tmp_path / "target"

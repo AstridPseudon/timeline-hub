@@ -594,7 +594,9 @@ class HostChildBridge:
             oid = row.get("object_id")
             size = row.get("size")
             if (not isinstance(oid, str) or not _DIGEST.fullmatch(oid) or row.get("digest") != oid
-                    or type(size) is not int or not 0 <= size <= _MAX_OBJECT):
+                    or type(size) is not int or not 0 <= size <= _MAX_OBJECT
+                    or (row.get("role") != "recoverable_snapshot" and self.policy is not None
+                        and size > self.policy["limits"]["max_derived_bytes"])):
                 raise ChildBridgeError("invalid child output byte identity")
             if row.get("role") == "recoverable_snapshot":
                 grant = _snapshot_grant(task)

@@ -411,8 +411,8 @@ def test_stop_group_signals_only_the_registered_anchored_group(monkeypatch):
         census.clear()
     monkeypatch.setattr(host_bootstrap, "signal_observed_group", signal_group)
 
-    host_bootstrap._stop_group(4321, grace=0, leader_birth="birth-current")
-    assert calls == [(4321, signal.SIGTERM)]
+    assert host_bootstrap._stop_group(4321, grace=0, leader_birth="birth-current") is False
+    assert calls == [(4321, host_bootstrap.platform.TERM)]
 
     calls.clear()
     census.update({
@@ -445,4 +445,49 @@ def test_stop_group_rechecks_leader_birth_before_escalation(monkeypatch):
 
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="reused"):
         host_bootstrap._stop_group(4321, grace=0, leader_birth="registered-birth")
-    assert calls == [(4321, signal.SIGTERM)]
+    assert calls == [(4321, host_bootstrap.platform.TERM)]
+
+
+def test_stop_group_reports_sigkill_escalation_without_live_processes(monkeypatch):
+    state = {"alive": True}
+    calls = []
+
+    def survivors(_pgid, *, leader_birth=None):
+        if leader_birth is not None:
+            assert leader_birth == "birth-current"
+        return [4321] if state["alive"] else []
+
+    def signal_group(pgid, signum, *, leader_birth):
+        assert leader_birth == "birth-current"
+        calls.append((pgid, signum))
+        if signum == host_bootstrap.platform.KILL:
+            state["alive"] = False
+
+    monkeypatch.setattr(host_bootstrap, "_group_survivors", survivors)
+    monkeypatch.setattr(host_bootstrap.os, "getpid", lambda: 9999)
+    monkeypatch.setattr(host_bootstrap.platform, "process_group", lambda _pid: 8765)
+    monkeypatch.setattr(host_bootstrap, "signal_observed_group", signal_group)
+
+    forced = host_bootstrap._stop_group(4321, grace=0, leader_birth="birth-current")
+
+    assert forced is True
+    assert calls == [(4321, host_bootstrap.platform.TERM), (4321, host_bootstrap.platform.KILL)]
+
+
+def test_process_census_catches_declared_failure_without_hiding_programming_errors(monkeypatch):
+    def unavailable():
+        raise host_bootstrap.CleanupUncertainError("census unavailable")
+
+    monkeypatch.setattr(host_bootstrap, "_process_snapshot", unavailable)
+    assert host_bootstrap._host_birth_identity(4321) == ""
+    assert host_bootstrap._descendant_snapshot(4321) == {}
+
+    def broken():
+        raise RuntimeError("invalid census implementation")
+
+    # Main also tolerates OSError and ValueError from a census; a bug such as this one still surfaces.
+    monkeypatch.setattr(host_bootstrap, "_process_snapshot", broken)
+    with pytest.raises(RuntimeError, match="invalid census implementation"):
+        host_bootstrap._host_birth_identity(4321)
+    with pytest.raises(RuntimeError, match="invalid census implementation"):
+        host_bootstrap._descendant_snapshot(4321)

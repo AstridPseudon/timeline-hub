@@ -17,7 +17,6 @@ from astrid.packs.rendering.rendering.renderers.threejs import run as threejs
 from tests.core.rendering.test_service import _candidate, _renderer_resolution
 from tests.packs.rendering._helpers import _execution_env, _probe
 from tests.packs.rendering.test_live_scene_boundary import _package
-from tests.packs.rendering.test_threejs_backend import _require_threejs_environment
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -330,9 +329,9 @@ def _rgb_frame(path, frame):
     return subprocess.run(['ffmpeg', '-v', 'error', '-i', str(path), '-vf', f'select=eq(n\\,{frame})', '-frames:v', '1', '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-'], check=True, capture_output=True).stdout
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
-def test_real_render_scene_window_audio_and_overlay(tmp_path):
-    _require_threejs_environment()
+def test_real_render_scene_window_audio_and_overlay(tmp_path, remotion_launch_validation):
     package = _package(_three_html())
     timeline = tmp_path / 'timeline.json'
     timeline.write_text(json.dumps(_composition(package)))
