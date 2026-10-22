@@ -31,9 +31,10 @@ def _walk_back_to_v30(connection):
 
 
 def _walk_back_to_v27(connection):
-    # Remove current commit storage, then the display name and deduplicated specs.
+    # Remove current commit storage, app state, then the display name and deduplicated specs.
     _walk_back_to_v30(connection)
     connection.execute("PRAGMA foreign_keys=OFF")
+    connection.execute("DROP TABLE user_app_state")
     connection.execute("ALTER TABLE timelines DROP COLUMN name")
     connection.execute("DROP INDEX IF EXISTS idx_tasks_retention")
     for table in ("runs", "tasks"):
@@ -299,9 +300,11 @@ def _canonical_fixture(root, version):
     connection = sqlite3.connect(root / "realm.sqlite3")
     try:
         if version < 28:
-            _walk_back_to_v27(connection)  # also drops timelines.name
-        elif version < 31:
-            _walk_back_to_v30(connection)
+            _walk_back_to_v27(connection)  # also drops user_app_state and timelines.name
+        else:
+            if version < 31:
+                _walk_back_to_v30(connection)
+                connection.execute("DROP TABLE user_app_state")
             if version < 30:
                 connection.execute("ALTER TABLE timelines DROP COLUMN name")
         if version < 27:
@@ -333,7 +336,7 @@ def _canonical_fixture(root, version):
     return f"realm-v{version}"
 
 
-@pytest.mark.parametrize("source_version, expected_steps", [(24, 7), (25, 6), (26, 5), (29, 2), (30, 1)])
+@pytest.mark.parametrize("source_version, expected_steps", [(24, 8), (25, 7), (26, 6), (29, 3), (30, 2)])
 def test_complete_canonical_migration_chain_reaches_current_schema(tmp_path, source_version, expected_steps):
     root = tmp_path / f"realm-{source_version}"
     realm_id = _canonical_fixture(root, source_version)
@@ -355,6 +358,7 @@ def test_complete_canonical_migration_chain_reaches_current_schema(tmp_path, sou
         assert connection.execute("SELECT * FROM projects ORDER BY id").fetchall() == projects_before
         assert connection.execute("SELECT * FROM project_documents ORDER BY id").fetchall() == documents_before
         assert connection.execute("SELECT COUNT(*) FROM user_preferences").fetchone()[0] == 0
+        assert connection.execute("SELECT COUNT(*) FROM user_app_state").fetchone()[0] == 0
     reopened = RealmStore(root)
     try:
         assert reopened.integrity_report()["ok"] is True

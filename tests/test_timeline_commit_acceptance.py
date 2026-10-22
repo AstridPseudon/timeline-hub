@@ -3,6 +3,8 @@ from __future__ import annotations
 import copy
 import json
 from pathlib import Path
+import sqlite3
+import tarfile
 
 import pytest
 from jsonschema import Draft202012Validator
@@ -16,6 +18,7 @@ from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit import CommitRejected, StaleHead
 from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest, request_identity
 from runtime_protocol.util import canonical_json
+from precut_realm_fixture import load_precut_realm_fixture
 from test_timeline_commit_integration import agent  # noqa: F401 (shared fixture)
 
 
@@ -678,35 +681,50 @@ def test_original_retry_ignores_corrupt_later_acceptance(realm, column, replacem
     assert list(conn.iterdump()) == before
 
 
-def test_v30_schema_migration_installs_empty_history_without_invented_baselines(tmp_path):
-    import sqlite3
-    from runtime_protocol.upgrade import _apply_v30_to_v31, _canonical_schema_identity, migrate_canonical_to_current
+def test_upstream_v31_schema_migration_installs_empty_history_without_invented_baselines(tmp_path):
+    from runtime_protocol.upgrade import (
+        _apply_v31_to_v32,
+        _canonical_schema_identity,
+        migrate_canonical_to_current,
+    )
 
-    root = tmp_path / "old-realm"
-    initial = RealmStore.initialize(root)
-    realm_id = initial.realm["id"]
-    initial.close()
+    archive = Path(__file__).with_name("fixtures") / "upstream-app-state-v31.tar.gz"
+    root = tmp_path / "upstream-v31"
+    with tarfile.open(archive, "r:gz") as contents:
+        members = contents.getmembers()
+        assert {member.name for member in members} >= {"realm.sqlite3", "PROVENANCE.json"}
+        assert all(member.isfile() or member.isdir() for member in members)
+        provenance = json.loads(contents.extractfile("PROVENANCE.json").read())
+        assert provenance == {
+            "created_by": "runtime_protocol.store.RealmStore.initialize",
+            "realm_id": "upstream-app-state-v31",
+            "schema_version": 31,
+            "source_sha": "4563bb5ff06171b3290fc5e2300e08d7fa125b01",
+        }
+        root.mkdir()
+        for member in members:
+            if member.name != "PROVENANCE.json":
+                contents.extract(member, root, filter="data")
+    realm_id = "upstream-app-state-v31"
     connection = sqlite3.connect(root / "realm.sqlite3", isolation_level=None)
     connection.row_factory = sqlite3.Row
     try:
-        connection.execute("ALTER TABLE parent_composition_heads DROP COLUMN publication_id")
-        connection.execute("ALTER TABLE parent_composition_revisions DROP COLUMN commit_manifest_json")
-        for table in ("timeline_commit_history", "timeline_document_input_links", "timeline_document_input_bindings", "timeline_document_input_contents"):
-            connection.execute(f"DROP TABLE {table}")
-        connection.execute("UPDATE runtime_schema SET version=30 WHERE id=1")
-        assert _canonical_schema_identity(connection)["version"] == 30
-        connection.execute("BEGIN IMMEDIATE")
-        assert _apply_v30_to_v31(connection)["target_schema_version"] == 31
-        assert connection.in_transaction
+        assert connection.execute("SELECT version FROM runtime_schema WHERE id=1").fetchone()[0] == 31
+        assert connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='user_app_state'").fetchone()
+        assert connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='timeline_commit_history'").fetchone() is None
         assert _canonical_schema_identity(connection)["version"] == 31
+        connection.execute("BEGIN IMMEDIATE")
+        assert _apply_v31_to_v32(connection)["target_schema_version"] == 32
+        assert connection.in_transaction
+        assert _canonical_schema_identity(connection)["version"] == 32
         assert connection.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == 0
         assert connection.execute("SELECT COUNT(*) FROM timeline_document_input_contents").fetchone()[0] == 0
         connection.rollback()
-        assert _canonical_schema_identity(connection)["version"] == 30
+        assert _canonical_schema_identity(connection)["version"] == 31
     finally:
         connection.close()
     result = migrate_canonical_to_current(root, confirmation=f"MIGRATE CANONICAL {realm_id}")
-    assert result["target_schema_version"] == 31
+    assert result["target_schema_version"] == 32
     assert len(result["steps"]) == 1
     reopened = RealmStore(root)
     try:
@@ -714,6 +732,30 @@ def test_v30_schema_migration_installs_empty_history_without_invented_baselines(
         assert reopened.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == 0
     finally:
         reopened.close()
+
+
+def test_legacy_timeline_v31_fixture_remains_a_distinct_migration_source(tmp_path):
+    from runtime_protocol.upgrade import (
+        _canonical_schema_identity,
+        migrate_canonical_to_current,
+    )
+
+    fixture = load_precut_realm_fixture(tmp_path)
+    root = fixture.copy_roots[0]
+    with sqlite3.connect(root / "realm.sqlite3") as connection:
+        assert connection.execute("SELECT version FROM runtime_schema WHERE id=1").fetchone()[0] == 31
+        assert connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='timeline_commit_history'").fetchone()
+        assert connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='user_app_state'").fetchone() is None
+        assert _canonical_schema_identity(connection)["version"] == 31
+    result = migrate_canonical_to_current(
+        root,
+        confirmation=f"MIGRATE CANONICAL {fixture.manifest['realm']['id']}",
+    )
+    assert result["target_schema_version"] == 32
+    assert result["steps"][-1]["target_schema_version"] == 32
+    with sqlite3.connect(root / "realm.sqlite3") as connection:
+        assert connection.execute("SELECT version FROM runtime_schema WHERE id=1").fetchone()[0] == 32
+        assert connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='user_app_state'").fetchone()
 
 
 @pytest.mark.parametrize("kind", ["config", "transcript"])
@@ -987,7 +1029,10 @@ def test_real_provider_two_projects_keep_local_ids_and_commit_authority_isolated
         assert moved[a.project]["data"]["accepted_revision_id"] != moved[b.project]["data"]["accepted_revision_id"]
         for edit in (a, b):
             before = rows(service)
-            assert edit.commit(copy.deepcopy(flights[edit.project]), key) == moved[edit.project]
+            assert (
+                edit.commit(copy.deepcopy(flights[edit.project]), key)
+                == moved[edit.project]
+            )
             assert rows(service) == before
         changed = copy.deepcopy(flights[a.project])
         changed["commands"][0]["args"]["on"] = 2

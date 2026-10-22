@@ -213,6 +213,33 @@ class PreferenceResource:
 
 
 @dataclass(frozen=True)
+class AppStateResource:
+    scope: Literal["user"]
+    actor_id: str
+    key: str
+    content: dict[str, Any] | None
+    version: int
+    created_at: str | None
+    updated_at: str | None
+
+    @classmethod
+    def from_json(cls, value: Mapping[str, Any], key: str) -> "AppStateResource":
+        fields = {"scope", "actor_id", "key", "content", "version", "created_at", "updated_at"}
+        if not isinstance(value, Mapping) or not fields.issubset(value):
+            raise ApiError(0, "invalid_response", "app-state resource fields are required")
+        if value["scope"] != "user" or not isinstance(value["actor_id"], str) or not value["actor_id"] or value["key"] != key:
+            raise ApiError(0, "invalid_response", "app-state resource ownership or key is invalid")
+        if not (value["content"] is None or isinstance(value["content"], dict)) or type(value["version"]) is not int or value["version"] < 0 \
+                or (value["content"] is None) != (value["version"] == 0) \
+                or any(item is not None and not isinstance(item, str) for item in (value["created_at"], value["updated_at"])):
+            raise ApiError(0, "invalid_response", "app-state resource content, version or timestamps are invalid")
+        return cls(**{name: value[name] for name in fields})
+
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
+
+
+@dataclass(frozen=True)
 class Generation:
     generation_id: str
     project_id: str
@@ -786,6 +813,16 @@ class WorkspaceClient:
         if resource.scope != scope:
             raise ApiError(0, "invalid_response", "preference response scope does not match request")
         return PreferenceMutationResult(resource, receipt)
+
+    def get_user_app_state(self, key: str) -> AppStateResource:
+        return AppStateResource.from_json(self._json(self._request("GET", f"/v1/app-state/user/{_path_part(key)}")[2]), key)
+
+    def update_user_app_state(self, key: str, content: Mapping[str, Any], expected_version: int, idempotency_key: str) -> AppStateResource:
+        payload = {"content": content, "expected_version": expected_version}
+        value = self._json(self._request("PUT", f"/v1/app-state/user/{_path_part(key)}", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
+        if not isinstance(value, Mapping) or not {"data", "receipt"}.issubset(value) or value["receipt"] is not None:
+            raise ApiError(0, "invalid_response", "app-state mutation requires data and null receipt")
+        return AppStateResource.from_json(value["data"], key)
 
     def create_document(self, project_id: str, document_id: str, kind: str, content: Any, *, idempotency_key: str) -> MutationResult:
         payload = {"document_id": document_id, "kind": kind, "content": content}

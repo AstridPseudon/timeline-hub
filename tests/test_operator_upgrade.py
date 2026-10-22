@@ -56,6 +56,10 @@ def _fixture(tmp_path, *, live=True, runtime_checkout=None, version=25):
     paths.ensure_support_dirs()
     realm_root = paths.realms_dir / "realm-1"
     RealmStore.initialize(realm_root, realm_id="realm-1").close()
+    if version < 31:
+        # Upstream app-state v31 adds this table; v30 and earlier must omit it.
+        with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
+            connection.execute("DROP TABLE user_app_state")
     if version < 28:
         # v28 -> v27 restores inline specs and drops task_specs.
         connection = sqlite3.connect(realm_root / "realm.sqlite3")

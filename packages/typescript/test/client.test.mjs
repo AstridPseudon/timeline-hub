@@ -265,8 +265,6 @@ test("default fetch receives Blob directly", async () => {
     await new WorkspaceClient("http://runtime").importProjectMedia("project", blob, "image/png", "media");
   } finally {
     globalThis.fetch = previousFetch;
-  }
-});
 
 
 test("persisted timeline view sends explicit key and preserves the plain view response", async () => {
@@ -282,4 +280,26 @@ test("persisted timeline view sends explicit key and preserves the plain view re
   };
   const client = new WorkspaceClient("http://runtime", "writer", transport);
   assert.deepEqual(await client.createTimelineView("p/one", "t/two", options, "view-retry"), result);
+});
+
+test("app-state client reads absent state, writes with a null receipt and rejects mismatched resources", async () => {
+  const content = { version: 1, outcome: "completed", step: "finale", at: "2026-10-21T00:00:00Z" };
+  const resource = { scope: "user", actor_id: "a", key: "editor-tour", content, version: 1, created_at: "t", updated_at: "t" };
+  const calls = [];
+  const transport = async (method, path, headers, body) => {
+    calls.push({ method, path, headers, body: body ? JSON.parse(new TextDecoder().decode(body)) : undefined });
+    if (path.endsWith("/other-key")) return { status: 200, headers: {}, body: json(resource) };
+    if (method === "GET") return { status: 200, headers: {}, body: json({ ...resource, content: null, version: 0, created_at: null, updated_at: null }) };
+    return { status: 200, headers: {}, body: json(resource) };
+  };
+  const client = new WorkspaceClient("http://runtime", "writer", transport);
+  const empty = await client.getUserAppState("editor-tour");
+  assert.equal(empty.content, null);
+  assert.equal(calls[0].path, "/v1/app-state/user/editor-tour");
+  const saved = await client.updateUserAppState("editor-tour", content, 0, "idem-1");
+  assert.deepEqual(saved.content, content);
+  assert.equal(calls[1].method, "PUT");
+  assert.equal(calls[1].headers["Idempotency-Key"], "idem-1");
+  assert.deepEqual(calls[1].body, { content, expected_version: 0 });
+  await assert.rejects(client.getUserAppState("other-key"), /invalid app-state resource/);
 });

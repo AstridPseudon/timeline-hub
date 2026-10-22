@@ -888,6 +888,7 @@ def _authenticated_v28_backup(tmp_path):
         connection.execute("PRAGMA journal_mode=DELETE")
         walk_back_to_v30(connection)
         connection.execute("ALTER TABLE timelines DROP COLUMN name")  # v30 -> v29/v28 layout
+        connection.execute("DROP TABLE user_app_state")
         connection.execute("UPDATE runtime_schema SET version=28 WHERE id=1")
         connection.commit()
     finally:

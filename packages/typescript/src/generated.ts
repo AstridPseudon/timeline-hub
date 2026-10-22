@@ -54,6 +54,7 @@ export interface RecoveryCheckpointReceipt { checkpoint_id: string; attempt_id: 
 export interface RecoveryReceipt { type: string; checkpoint_id: string; attempt_id: string; task_id: string; runtime_epoch: number; command: string; status: string; version?: number; checkpoint_digest?: string; executor_result?: unknown; checkpoint?: unknown; error?: { type: string; message: string } }
 export interface RecoveryResumeReceipt { receipt: RecoveryReceipt; attempt: AttemptFence }
 export interface MutationReceipt { receipt_id: string; command_kind: string; idempotency_key: string; request_hash: string; project_id: string; project_seq: [number, number]; event_ids: string[]; result: unknown; created_at: string }
+export interface AppStateResource { scope: "user"; actor_id: string; key: string; content: Record<string, unknown> | null; version: number; created_at: string | null; updated_at: string | null }
 export type PreferenceScope = "user" | "project";
 export interface PreferenceResource { scope: PreferenceScope; actor_id: string | null; project_id: string | null; document_id: string; content: string; version: number; created_at: string | null; updated_at: string | null }
 export type PreferenceMutationResult = PreferenceResource & { readonly receipt: MutationReceipt | null };
@@ -123,6 +124,22 @@ export class WorkspaceClient {
   async updatePreferences(scope: PreferenceScope, content: string, expectedVersion: number, idempotencyKey: string, projectId?: string): Promise<PreferenceMutationResult> {
     const path = this.preferencesPath(scope, projectId);
     return this.preferenceMutation((await this.request("PUT", path, new TextEncoder().encode(JSON.stringify({ content, expected_version: expectedVersion })), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body, scope);
+  }
+  private appStateResource(value: unknown, key: string): AppStateResource {
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid app-state resource");
+    const v = value as Record<string, unknown>;
+    if (["scope", "actor_id", "key", "content", "version", "created_at", "updated_at"].some(name => !(name in v))) throw new Error("invalid app-state resource fields");
+    const content = v.content;
+    if (v.scope !== "user" || typeof v.actor_id !== "string" || !v.actor_id || v.key !== key || !(content === null || (typeof content === "object" && !Array.isArray(content))) || !Number.isInteger(v.version) || (v.version as number) < 0 || (content === null) !== (v.version === 0) || [v.created_at, v.updated_at].some(item => item !== null && typeof item !== "string")) throw new Error("invalid app-state resource ownership, content or version");
+    return v as unknown as AppStateResource;
+  }
+  async getUserAppState(key: string): Promise<AppStateResource> {
+    return this.appStateResource(this.json((await this.request("GET", `/v1/app-state/user/${encodeURIComponent(key)}`)).body), key);
+  }
+  async updateUserAppState(key: string, content: Record<string, unknown>, expectedVersion: number, idempotencyKey: string): Promise<AppStateResource> {
+    const value = this.json<Record<string, unknown>>((await this.request("PUT", `/v1/app-state/user/${encodeURIComponent(key)}`, new TextEncoder().encode(JSON.stringify({ content, expected_version: expectedVersion })), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body);
+    if (!value || typeof value !== "object" || !("data" in value) || value.receipt !== null) throw new Error("invalid app-state mutation: data and null receipt are required");
+    return this.appStateResource(value.data, key);
   }
   async handshake(client_name: string, client_version: string, requested_scopes: string[]): Promise<Handshake> { const v = this.json<Handshake>((await this.request("POST", "/v1/handshake", new TextEncoder().encode(JSON.stringify({ protocol: PROTOCOL, client_name, client_version, requested_scopes })), { "Content-Type": "application/json" })).body); this.handshakeInfo = v; return v }
   async getRealm(): Promise<Realm> { return this.json<Realm>((await this.request("GET", "/v1/realm")).body) }
