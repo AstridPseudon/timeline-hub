@@ -128,6 +128,8 @@ class SharedAssetEntry(TypedDict, total=False):
     generationId: str
     variantId: str
     thumbnailUrl: str
+    # Opaque application/extension metadata admitted at the registry seam.
+    meta: dict[str, Any]
 
 AssetEntry = SharedAssetEntry
 
@@ -181,6 +183,7 @@ class TrackDefinition(_TrackDefinitionRequired, total=False):
     # Editor extension metadata is intentionally opaque to Astrid but must
     # round-trip through the shared timeline contract.
     app: dict[str, Any]
+    meta: dict[str, Any]
 
 class ClipEntrance(TypedDict, total=False):
     type: str
@@ -348,7 +351,7 @@ class PipelineMetadata(TypedDict):
 # swaps to/from `"from"` at the JSON boundary. Every other field is 1:1 with TS.
 _FROM_ALIAS = ("from_", "from")
 _TIMELINE_TOP_ALLOWED = frozenset(
-    {"theme", "theme_overrides", "generation_defaults", "clips", "tracks", "pinnedShotGroups", "app", "output"}
+    {"theme", "theme_overrides", "generation_defaults", "clips", "tracks", "pinnedShotGroups", "app", "meta", "output"}
 )
 _TIMELINE_CONTAINER_REQUIRED = frozenset({"clips", "tracks"})
 _LEGACY_CONTAINER_KEYS = frozenset({"schema_version", "assembly", "pool", "arrangement"})
@@ -367,10 +370,11 @@ _CLIP_ALLOWED = frozenset(
         # are flattened into media/image/text clips.  These fields are not
         # authoring hints: admission stamps them from the registered shot.
         "shot_id", "shot_occurrence_id", "shot_name",
+        "meta",
     }
 )
 _TRACK_ALLOWED = frozenset(
-    {"id", "kind", "label", "scale", "fit", "opacity", "volume", "muted", "blendMode", "app", "role"}
+    {"id", "kind", "label", "scale", "fit", "opacity", "volume", "muted", "blendMode", "app", "meta", "role"}
 )
 _ASSET_ENTRY_ALLOWED = frozenset(
     {
@@ -389,6 +393,7 @@ _ASSET_ENTRY_ALLOWED = frozenset(
         "generationId",
         "variantId",
         "thumbnailUrl",
+        "meta",
     }
 )
 METADATA_VERSION = 1
@@ -479,6 +484,11 @@ def _known_timeline_payload(config: Mapping[str, Any]) -> dict[str, Any]:
         key: value for key, value in config.items() if key in _TIMELINE_TOP_ALLOWED
     }
     known.pop("app", None)
+    # ``meta`` is an admitted authored extension, not part of the current
+    # shared render schema.  Keep it on the caller's value while excluding it
+    # from the strict render-shape check; the local validator checks its exact
+    # bounded envelope at each known location.
+    known.pop("meta", None)
     render_provenance_fields = {"shot_id", "shot_occurrence_id", "shot_name", "elementRef"}
     for collection in ("clips", "tracks"):
         entries = known.get(collection)
@@ -488,7 +498,7 @@ def _known_timeline_payload(config: Mapping[str, Any]) -> dict[str, Any]:
             (
                 {
                     key: value for key, value in entry.items()
-                    if key != "app" and not (
+                    if key not in {"app", "meta"} and not (
                         collection == "clips" and key in render_provenance_fields
                     )
                 }
@@ -610,6 +620,11 @@ from astrid.core.timeline.validators.arrangement import (
 from astrid.core.timeline.validators.metadata import (
     _validate_generated_at as _validate_generated_at,
     validate_metadata as validate_metadata,
+)
+from astrid.core.timeline.validators.meta import (
+    MetaValidationError as MetaValidationError,
+    validate_meta as validate_meta,
+    validate_timeline_meta_locations as validate_timeline_meta_locations,
 )
 from astrid.core.timeline.validators.pool import (
     _validate_pool_scores as _validate_pool_scores,
