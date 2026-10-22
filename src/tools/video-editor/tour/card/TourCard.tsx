@@ -84,7 +84,7 @@ function Explainer({ act, playing, onPrimary, onBack, onSkip }: { act: EditorTou
       <div className="mt-3">
         <TourVisual visual={visual} labels={labels} playing={playing} />
       </div>
-      <h2 className="mt-4 text-balance font-serif font-theme-heading text-xl leading-tight text-foreground">{title}</h2>
+      <h2 className="mt-4 text-pretty font-serif font-theme-heading text-lg leading-tight text-foreground">{title}</h2>
       <p className="mt-1.5 text-pretty text-sm leading-6 text-muted-foreground">{body}</p>
       <div className="mt-4">
         <TourStrip filled={act} labels={SCRIPT.strip} />

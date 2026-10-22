@@ -64,7 +64,7 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
         { name: 'Qwen Image 2.1 × 2', detail: 'ComfyUI · frame → realistic still' },
       ],
       card: {
-        title: 'Your agent generates with local models',
+        title: 'Your agent generates with local models equipped with the ecosystem’s knowledge',
         body: 'Qwen Image 2.1 made these realistic frames in ComfyUI, on your own machine. Your agent can run ComfyUI, Wan2GP or any inference framework, and handles the tricky setup.',
         visual: 'frame-to-still',
         labels: ['Frame', 'Qwen Image 2.1'],
