@@ -7,7 +7,7 @@ import {
   setEditorTourBeat,
   startEditorTour,
 } from '@/shared/state/editorTourStore';
-import { backEditorTour, finishEditorTour, RESPOND_HOLD_MS, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
+import { backEditorTour, finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
 import { beginEditorTour, hasSeenEditorTour, startEditorTourIfFirstRun } from './tourFlag';
 import { recordEditorTour } from './tourRecord';
 
@@ -111,13 +111,15 @@ describe('tour beat machine', () => {
   it('plays the whole three-act journey and ends on finale primary', () => {
     const stages: number[] = [];
     for (const act of [1, 2, 3] as const) {
-      // compose: send, then respond: chat ready, then land
+      // compose: send; act 1 then stops on respond for its Next, acts 2 and 3 go straight to land
       expect(getEditorTourState()).toMatchObject({ act, beat: 'compose' });
       readyChat();
       runEditorTourPrimary();
-      expect(getEditorTourState()).toMatchObject({ act, beat: 'respond' });
-      readyChat();
-      runEditorTourPrimary();
+      if (act === 1) {
+        expect(getEditorTourState()).toMatchObject({ act, beat: 'respond' });
+        readyChat();
+        runEditorTourPrimary();
+      }
       expect(getEditorTourState()).toMatchObject({ act, beat: 'land' });
       readyLand();
       stages.push(editorTourStage(act, 'land'));
@@ -232,11 +234,11 @@ describe('the recorded outcome', () => {
   });
 
   it('Skip, Esc or leaving the page before the finale is skipped, at the step it ended on', () => {
-    setEditorTourBeat(2, 'respond');
+    setEditorTourBeat(1, 'respond');
 
     finishEditorTour();
 
-    expect(lastRecord()).toMatchObject({ outcome: 'skipped', step: 'act2/respond' });
+    expect(lastRecord()).toMatchObject({ outcome: 'skipped', step: 'act1/respond' });
   });
 
   it('skipping on the welcome card is skipped at the welcome', () => {
@@ -275,10 +277,8 @@ describe('tour Back', () => {
     [{ act: 1, beat: 'respond' }, { act: 1, beat: 'compose' }],
     [{ act: 1, beat: 'land' }, { act: 1, beat: 'respond' }],
     [{ act: 2, beat: 'compose' }, { act: 1, beat: 'land' }],
-    [{ act: 2, beat: 'respond' }, { act: 2, beat: 'compose' }],
     [{ act: 2, beat: 'land' }, { act: 2, beat: 'compose' }],
     [{ act: 3, beat: 'compose' }, { act: 2, beat: 'land' }],
-    [{ act: 3, beat: 'respond' }, { act: 3, beat: 'compose' }],
     [{ act: 3, beat: 'land' }, { act: 3, beat: 'compose' }],
     [{ act: 3, beat: 'finale' }, { act: 3, beat: 'land' }],
   ] as const)('from %o goes to %o, finished (instant) and unsent', (from, to) => {
@@ -322,65 +322,18 @@ describe('tour Back', () => {
   });
 });
 
-describe('tour respond auto-advance (acts 2 and 3)', () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { vi.useRealTimers(); });
-
-  it.each([2, 3] as const)('act %i moves to land by itself RESPOND_HOLD_MS after the reply is ready', (act) => {
-    setEditorTourBeat(act, 'respond');
-    vi.advanceTimersByTime(10_000);
-    expect(getEditorTourState().beat).toBe('respond'); // not ready: no timer
-
+describe('tour Send', () => {
+  it('on act 1 moves compose on to respond, where the reply has its Next', () => {
+    setEditorTourBeat(1, 'compose');
     readyChat();
-    vi.advanceTimersByTime(RESPOND_HOLD_MS - 1);
-    expect(getEditorTourState().beat).toBe('respond');
-    vi.advanceTimersByTime(1);
+    runEditorTourPrimary();
+    expect(getEditorTourState()).toMatchObject({ act: 1, beat: 'respond', instant: false });
+  });
+
+  it.each([2, 3] as const)('on act %i goes straight to land: no respond step', (act) => {
+    setEditorTourBeat(act, 'compose');
+    readyChat();
+    runEditorTourPrimary();
     expect(getEditorTourState()).toMatchObject({ act, beat: 'land', instant: false });
   });
-
-  it('never auto-advances on act 1', () => {
-    setEditorTourBeat(1, 'respond');
-    readyChat();
-    vi.advanceTimersByTime(10_000);
-    expect(getEditorTourState()).toMatchObject({ act: 1, beat: 'respond' });
-  });
-
-  it('Back cancels the pending advance', () => {
-    setEditorTourBeat(2, 'respond');
-    readyChat();
-    vi.advanceTimersByTime(RESPOND_HOLD_MS - 100);
-    backEditorTour();
-    expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'compose', instant: true });
-    vi.advanceTimersByTime(10_000);
-    expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'compose' });
-  });
-
-  it('Skip (finish) cancels the pending advance', () => {
-    setEditorTourBeat(3, 'respond');
-    readyChat();
-    vi.advanceTimersByTime(RESPOND_HOLD_MS - 100);
-    finishEditorTour();
-    vi.advanceTimersByTime(10_000);
-    expect(getEditorTourState()).toMatchObject({ status: 'idle', beat: 'respond' });
-  });
-
-  it('Enter during the hold advances once and the timer then does nothing more', () => {
-    setEditorTourBeat(2, 'respond');
-    readyChat();
-    vi.advanceTimersByTime(200);
-    runEditorTourPrimary();
-    expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'land' });
-    vi.advanceTimersByTime(10_000);
-    expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'land' });
-  });
-
-  it('stopping the watcher cancels the pending advance', () => {
-    setEditorTourBeat(2, 'respond');
-    readyChat();
-    stopWatching?.();
-    stopWatching = undefined;
-    vi.advanceTimersByTime(10_000);
-    expect(getEditorTourState().beat).toBe('respond');
-  });
 });
-

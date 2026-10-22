@@ -131,16 +131,14 @@ function Finale({ playing, onPrimary, onBack }: { playing: boolean; onPrimary: (
   );
 }
 
-/** Compose: send the prompt (the chat's Send, or Enter). Respond: the reply's Next. */
+/** Compose: send the prompt (the chat's Send, or Enter). Respond (act 1 only): the reply's Next. */
 function Hint({ act, beat, onPrimary, onBack, onSkip }: { act: EditorTourAct; beat: EditorTourBeat } & TourCardProps) {
   const compose = beat === 'compose';
-  // Only act 1 explains the reply; acts 2 and 3 pass through it, so their card is just the top row and Next.
-  const line = compose ? SCRIPT.hints.compose : act === 1 ? SCRIPT.hints.respond : null;
   return (
     <>
       <CounterRow act={act} onBack={onBack} onSkip={onSkip} />
-      <div className={cn('mt-2 flex min-h-9 items-center gap-3', line ? 'justify-between' : 'justify-end')}>
-        {line && <p className="text-sm text-foreground">{line}</p>}
+      <div className="mt-2 flex min-h-9 items-center justify-between gap-3">
+        <p className="text-sm text-foreground">{compose ? SCRIPT.hints.compose : SCRIPT.hints.respond}</p>
         {compose ? <Kbd>↵</Kbd> : <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} />}
       </div>
     </>

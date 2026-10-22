@@ -67,21 +67,13 @@ describe('TourCard', () => {
     expect(cardReady()).toBe(false);
   });
 
-  it('on respond offers the reply its Next, with the hint on act 1', () => {
+  it('on respond (act 1) offers the reply its Next, with the hint', () => {
     const { onPrimary } = renderAt(1, 'respond');
     expect(screen.getByText(SCRIPT.hints.respond)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Next/ }));
     expect(onPrimary).toHaveBeenCalledTimes(1);
     advance(TOUR_CARD_ENTRANCE_MS * 2);
     expect(cardReady()).toBe(false);
-  });
-
-  it('on act 2 respond shows only the top row and Next, with no hint line', () => {
-    const { onPrimary } = renderAt(2, 'respond');
-    expect(screen.getByText('2 of 3')).toBeInTheDocument();
-    expect(screen.queryByText(SCRIPT.hints.respond)).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: /Next/ }));
-    expect(onPrimary).toHaveBeenCalledTimes(1);
   });
 
   it.each([1, 2, 3] as const)('explains act %i on land and reports ready once its entrance has played', (tourAct) => {
