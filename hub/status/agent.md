@@ -1,20 +1,20 @@
-<!-- agent | 2026-10-22T23:45:19Z | dispatcher heartbeat 4s | live 3 (sol 1, luna 2, other 0) | busy30 13 | status age 2m -->
-# agent board, 2026-10-22T23:42:47Z
+<!-- agent | 2026-10-22T23:47:01Z | dispatcher heartbeat 3s | live 10 (sol 1, luna 9, other 0) | busy30 20 | status age 1m -->
+# agent board, 2026-10-22T23:45:56Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream merge, regenerated artifacts | Sol | — | merged | agt-U2-media-repair; agt-U2-integrated-proof | Integrated184behaviorPASS+manifest/lockPASS. Global1922mypy/2151Ruff below oldbaselines;2 merge-induced typing repairs now agt-U2-fastgate-repair, no baseline weakening | 3f1ceaed1 |
 | U4a | regenerated Runtime client/schema | Luna | U1, U2 | doing | agt-U4a-client-schema | U1 merged27f0306b9 integrated317PASS; exact producer checkout requested; normal adoption now dispatched | — |
 | R1 | doc.patch semantics and guards | Sol | C0 approved; U2 before merge | doing | agt-R1-restart | Resumed clean original branch after container restart; implementation/review pending | — |
 | R2 | guarded whole/per-step undo | Sol | R1; C0c before merge | review | agt-R2-step-undo; agt-R2-core-review | Staged core548targetedPASS; scopedlint/typePASS. R1 provider dispatch/physical binding/effect projection still needed; C0c merge hold | b5b811066 |
-| R3 | dry run and structured errors | Luna | R1 | todo | — | — | — |
-| V2 | timing/structure/element/parameter validation | Luna | R1 | todo | — | — | — |
-| G2 | open/commit and bounded rerun | Sol | C0 approved; R1,U2 before merge | review | agt-G2-restart; agt-G2-forward-U2 | Independent conditionalPASS312tests; clean actual merge-forward to landedU2 prepared, workerchecking; R1 before landing, G3 emitter later. Private declaredtypecheck4modulesPASS | 63f7b4c21 |
-| G3 | document patch emitter and helpers | Luna | G2 | todo | — | — | — |
-| G4 | remaining writers through commit | Luna | G2 | todo | — | — | — |
+| R3 | dry run and structured errors | Luna | R1 | doing | agt-R3-dry-run-errors | Early start authorized inbox23:45; follows R1 interfaces, merge-forward before landing | — |
+| V2 | timing/structure/element/parameter validation | Luna | R1 before merge | doing | agt-V2-validator | Early start authorized inbox23:45 | — |
+| G2 | open/commit and bounded rerun | Sol | C0 approved; R1,U2 before merge | review | agt-G2-restart; agt-G2-forward-U2 | Independent conditionalPASS312tests; U2-forward312tests+wholeRuff/mypyPASS; final independent delta review agt-G2-forward-review; R1 before landing, G3 emitter later. Private declaredtypecheck4modulesPASS | 63f7b4c21 |
+| G3 | document patch emitter and helpers | Luna | G2 before merge | doing | agt-G3-emitter | Early start on reviewed G2forward authorized inbox23:45 | — |
+| G4 | remaining writers through commit | Luna | G2 before merge | doing | agt-G4-remote-writers; agt-G4-narration; agt-G4-elements | Three independent file-owned slices; original behavior tests retained | — |
 | G5 | delete superseded paths | Luna | G3,G4; H3 go/no-go | todo | — | — | — |
 U4a dependencies cleared: RuntimeU1 merged27f0306b9 and AgentU2 merged3f1ceaed1; exact checkout request and worker dispatched immediately.
-Blockers: orchestrator — R2 merge waits C0c approval. C0b APPROVED; header now synchronized.
-Next ready: R2 landing/R3/V2 after R1; G3/G4 after G2. Every authorized ready task dispatched; U2 remediation and G2 review active; R1/R2 still implementing; G3, R3, V2 and U4a briefs ready for immediate dependency-triggered dispatch. G2 interface relayed to design/handoff-agt-G2-restart-interface.md for peers.
+Blockers: runtime — C0c APPROVED per newest inbox; R2 landing waits contract merge plus R1 provider integration/review. Header copy lags approval, no new approval needed.
+Next ready: R1 review/merge on author completion; R2 provider integration after R1; G2 landing after R1. Early-start R3/V2/G3/G4 and dependency-complete U4a all dispatched. Previous order: R2 landing/R3/V2 after R1; G3/G4 after G2. Every authorized ready task dispatched; U2 remediation and G2 review active; R1/R2 still implementing; G3, R3, V2 and U4a briefs ready for immediate dependency-triggered dispatch. G2 interface relayed to design/handoff-agt-G2-restart-interface.md for peers.
 Restart recovery: acknowledged lead23:07 and all post-v2.1 inbox items. U2 old8a2677cd7 remains quarantined: unchanged tree must never land. Manager merge-forward now works; prior ORIG_HEAD preparation blocker resolved. Current integration3f1ceaed1 includes external P1 corpus mergeb1c25f5c via queue at23:09Z; agt-P1-integrated-review PASS:13tests+Ruff; mypy/repo gate failures reproduced onbase, no H3 claim. External P4 collection merged250db8c8d; agt-P4-integrated-review PASS:2tests+Ruff, mypy/repo gates inherited environment failures; no execution-proof claim.
 Upstream: origin/main431681a6d matches last explicit lead/orchestrator confirmation. Manager fresh ls-remote could not connect to configured proxy127.0.0.1:41903; no ref changed or network workaround attempted.
 Disk: sweep-tmp3 and compact-scratch completed;5 idle finished v1 worktrees recycled, branches/reports kept. 13 idle finished v1 worktrees recycled in total; exact95bd checkout retained for active U2. Deleted2.10GB abandoned v1 archives; available17.1GB at23:25Z, above15GB floor.
