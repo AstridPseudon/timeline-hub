@@ -2755,7 +2755,9 @@ class _CommandInventoryOwner:
                 if channel is not None:
                     channel.close()
                 self.done.set()
-        self.thread = threading.Thread(target=serve, name='astrid-command-inventory', daemon=False)
+        # A daemon: the owner must never hold the launcher open behind a detached child (the pack host).
+        # The delegated helper is still reaped by serve()'s own finally before the thread ends.
+        self.thread = threading.Thread(target=serve, name='astrid-command-inventory', daemon=True)
         self.thread.start()
 
     def finish(self, *, cancel: bool = False) -> None:

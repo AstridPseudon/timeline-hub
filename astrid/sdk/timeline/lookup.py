@@ -338,15 +338,30 @@ class _LookupMixin:
                 return row
         raise TimelineEditError(f"no shot {shot_id!r} is placed in this timeline")
 
+    def _parent_clip_list(self) -> list[dict[str, Any]] | None:
+        """The parent composition's clip list, or None when the parent has none. The parent may mirror its
+        clips in ``config.clips`` (the App writes both). The two keys are made ONE list here, so an edit or a
+        shift can never reach one and miss the other; two lists that differ are refused, as ``flatten`` does."""
+        parent = self.bundle.get("parent")
+        if not isinstance(parent, dict):
+            return None
+        config = parent.get("config")
+        mirror = config.get("clips") if isinstance(config, dict) else None
+        own = parent.get("clips")
+        if own and mirror and own is not mirror and own != mirror:
+            raise TimelineEditError("the parent holds two different clip lists (clips and config.clips)")
+        chosen = own or mirror
+        if not isinstance(chosen, list):
+            return None
+        parent["clips"] = chosen
+        if isinstance(mirror, list):
+            config["clips"] = chosen
+        return chosen
+
     def _parent_clips(self) -> list[dict[str, Any]]:
         """The parent composition's own clips (what media dropped on an empty timeline becomes): they sit
-        directly on the parent, timeline-absolute, with no shot. ``config.clips`` is read when the parent
-        carries none of its own (a parent may mirror its clips there)."""
-        parent = self.bundle.get("parent")
-        if not isinstance(parent, Mapping):
-            return []
-        clips = parent.get("clips") or (parent.get("config") or {}).get("clips") or []
-        return [c for c in clips if isinstance(c, dict)]
+        directly on the parent, timeline-absolute, with no shot."""
+        return [c for c in self._parent_clip_list() or [] if isinstance(c, dict)]
 
     def _shot_start(self, shot_id: str) -> float:
         if shot_id == PARENT_SHOT:
@@ -374,9 +389,8 @@ class _LookupMixin:
 
     def _internal(self, shot_id: str) -> dict[str, Any]:
         if shot_id == PARENT_SHOT:  # the parent composition plays the part of a shot that starts at 0
+            self._parent_clip_list()
             parent = self.bundle.setdefault("parent", {})
-            if not parent.get("clips") and (parent.get("config") or {}).get("clips"):
-                parent["clips"] = parent["config"]["clips"]  # one list, shared with its mirror
             parent.setdefault("clips", [])
             return parent
         shot = self.bundle["shots"][shot_id]

@@ -203,8 +203,13 @@ def three_way(base: Mapping[str, Any], head: Mapping[str, Any], candidate: Mappi
             elif value is not None:
                 clips[index] = value
         elif kind == "parent-clip":
-            clips = merged.setdefault("parent", {}).setdefault("clips", [])
+            parent = merged.setdefault("parent", {})
+            mirror = (parent.get("config") or {}).get("clips")
+            clips = parent.get("clips") or mirror or []
+            parent["clips"] = clips
             clips[:] = [x for x in clips if str(x.get("id")) != key[1]] + ([value] if value is not None else [])
+            if isinstance(mirror, list):  # the parent mirrors its clips in config.clips: they stay one list
+                parent["config"]["clips"] = copy.deepcopy(clips)
         elif kind == "parent-config":
             config = merged.setdefault("parent", {}).setdefault("config", {})
             if key[1] in _ns.FILM_INTENT_KEYS:  # Astrid's film intent is written under app.astrid only
@@ -628,7 +633,8 @@ def _units(bundle: Mapping[str, Any], *, whole: bool = False) -> dict[tuple[str,
             units[("clip", str(sid), str(clip.get("id")))] = clip
         units[("tracks", str(sid))] = internal.get("tracks")
         units[("registry", str(sid))] = internal.get("registry")
-    for clip in (bundle.get("parent") or {}).get("clips") or []:
+    parent = bundle.get("parent") or {}
+    for clip in parent.get("clips") or (parent.get("config") or {}).get("clips") or []:
         units[("parent-clip", str(clip.get("id")))] = clip
     return units
 

@@ -2800,7 +2800,7 @@ def test_command_inventory_owner_channel_end_never_erases_non_eof_failure(tmp_pa
     owner=cb._CommandInventoryOwner(SimpleNamespace(_launch_broker=SimpleNamespace(channel=right),
         process=SimpleNamespace(poll=lambda:0)),{})
     owner.start()
-    assert owner.thread.daemon is False  # Interpreter exit must join any outstanding helper reap.
+    assert owner.thread.daemon is True  # A launcher must exit behind a detached child; the helper is reaped by serve()'s own finally.
     if fault=="abort_release":owner.abort_before_release()
     else:
         if fault=="pending_eof":owner.pending=1
