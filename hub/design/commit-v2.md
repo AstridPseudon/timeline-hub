@@ -37,6 +37,8 @@ its preview/accept branch at line 1061). Frozen R4 `commands.py`/`commit.py` wer
 also inspected; the line-1061 reference belongs to integration, not frozen R4.
 Runtime's existing acceptance transaction, publisher-bound request hashing,
 per-scope idempotency, verified closure, CAS and history chain remain authoritative.
+C0b also rechecked Runtime hub integration `0d4c71a3c` and the same Agent hub
+ref, including native occurrence creation and root restoration/allocation paths.
 
 Examples are finite JSON: complete HTTP bodies/envelopes where stated, otherwise
 named fixture fragments or input/expected-output scenarios. A fragment is not an
@@ -97,8 +99,8 @@ fills the accepted step patch with complete authoritative effect records,
 including compiler consequences and the provider-only forms in §2. Submitted
 patches and these effect records have different permissions. Step patches are
 checked claims, never instructions to apply a second edit. Semantic commands
-need not predict compiler output in order to be submitted. Replies, previews and history always contain complete
-provider-derived step patches with actual before values at the landing head.
+need not predict compiler output in order to be submitted. Replies, previews
+and history always contain complete provider-derived step patches with actual before values at the landing head.
 
 `reads` is an optional array of the field/collection/scope dependencies defined
 in §3, additional to all reads the provider captures for semantic commands.
@@ -118,8 +120,8 @@ that native captures or inherited request reads are empty. A free-transform
 producer must declare every additional step-local dependency it knows.
 
 Omitting request `reads` is different: Runtime cannot infer what a script
-consulted. A request containing `doc.patch` with
-omitted `reads` has effective mode `atomic`, even if it asked for `fields`, and
+consulted. A request containing `doc.patch` with omitted `reads` has effective
+mode `atomic`, even if it asked for `fields`, and
 guards the complete touched document scopes. The result reports `merge_mode`.
 For each free-transform step in this fallback, persist scope dependencies for
 its complete touched scopes at its sequential input, including scopes of its
@@ -127,8 +129,8 @@ derived effects. Optional step reads cannot waive this fallback. If scope
 capture cannot bound the consulted closure, persist a `timeline` scope read.
 These dependencies remain undo guards after acceptance; reporting `atomic`
 alone is insufficient. A script consulting another scope must declare it; use
-a closure-scope read when the consulted set cannot be bounded. The SDK must choose this conservative
-form when it cannot capture reads, not invent `reads: []` after diffing bytes.
+a closure-scope read when the consulted set cannot be bounded. The SDK must
+choose this conservative form when it cannot capture reads, not invent `reads: []` after diffing bytes.
 
 Accepted step `dependencies` is a provider-only array of §3 dependency variants:
 the normalized union of inherited request reads, verified step reads, captured
@@ -334,8 +336,9 @@ pins remain Runtime-generated, never writable effect targets.
 This permission is only for authenticated provider output, including an inverse's
 output. Submitting the same root-create/root-remove or managed-edge form in
 `doc.patch`, even inside a whole-root/item replacement or a step assertion,
-remains invalid (`managed_closure_write`). A ref absent from the verified union
-still fails `outside_closure`; clients cannot enlarge that union by naming refs.
+remains invalid (`managed_closure_write`); reject these forbidden submitted
+forms before address lookup. Otherwise a ref absent from the verified union
+fails `outside_closure`; clients cannot enlarge that union by naming refs.
 Only semantic execution and verified allocations establish new union members.
 Effect records do not replace native `records.commands` allocation, restoration,
 compiler-cause or dependency provenance; retain it for authentication and undo.
@@ -422,22 +425,22 @@ Structural patch fragments and expected final order:
 
 ```json
 {
-  "initial": [{"id": "a", "kind": "video"}, {"id": "b", "kind": "video"}],
+  "initial": [{"id": "a", "kind": "visual"}, {"id": "b", "kind": "visual"}],
   "changes": [
     {
       "op": "list.insert", "ref": "parent", "path": ["config", "tracks"],
       "id": "c", "before": {"state": "absent"},
       "order_before": ["a", "b"], "after_id": "a",
-      "value": {"id": "c", "kind": "video"}
+      "value": {"id": "c", "kind": "visual"}
     },
     {
       "op": "list.move", "ref": "parent", "path": ["config", "tracks"],
-      "id": "b", "before": {"state": "present", "value": {"id": "b", "kind": "video"}},
+      "id": "b", "before": {"state": "present", "value": {"id": "b", "kind": "visual"}},
       "order_before": ["a", "c", "b"], "after_id": null
     },
     {
       "op": "list.remove", "ref": "parent", "path": ["config", "tracks"],
-      "id": "c", "before": {"state": "present", "value": {"id": "c", "kind": "video"}},
+      "id": "c", "before": {"state": "present", "value": {"id": "c", "kind": "visual"}},
       "order_before": ["b", "a", "c"]
     }
   ],
@@ -490,7 +493,7 @@ Created-ID command fragment:
     "op": "list.insert", "ref": "parent", "path": ["config", "tracks"],
     "id": "track-2", "before": {"state": "absent"},
     "order_before": ["track-1"], "after_id": "track-1",
-    "value": {"id": "track-2", "kind": "video"}
+    "value": {"id": "track-2", "kind": "visual"}
   }]}
 }
 ```
@@ -547,8 +550,8 @@ by itself guard item contents. For an id-less array use a field read of the
 entire array. Scope reads guard the complete addressed payload; `timeline`
 means the whole closure and is read-only. Verified image pins at the actual
 evaluation boundary supply scope state (including earlier semantic allocations
-for step reads); clients do not manufacture digests for scope reads. Any overlapping
-intervening change conflicts even if the current state/order equals the base.
+for step reads); clients do not manufacture digests for scope reads. Any
+overlapping intervening change conflicts even if the current state/order equals the base.
 Incorrect declared reads at their original sequential evaluation boundary are
 invalid. Earlier steps in this same transaction are not intervening publications;
 their outputs are available to later step reads and retained as dependencies.
@@ -635,14 +638,14 @@ Complete accepted envelope for §1's request at pub-0:
       "timeline_id": "film-1",
       "parent_revision": {
         "revision_id": "rev-1",
-        "content_digest": "sha256:04967dfe604339e5d7b10f29a9ae64caa2efd93b12271a400d803896c484908f",
+        "content_digest": "sha256:4506f79a8b9deebb8d0f0c0d260016c2c67027aaaccd1abf3fe89361903f5772",
         "payload": {
           "config": {
             "fps": 30,
             "tracks": [
               {
                 "id": "track-1",
-                "kind": "video",
+                "kind": "visual",
                 "label": "Picture"
               }
             ]
@@ -674,7 +677,7 @@ Complete accepted envelope for §1's request at pub-0:
         "documents": []
       }
     },
-    "document_digest": "sha256:3bf2315c305dfba115efc48ca54207a0ec13765ccdf7029d77e6633f60280a0e",
+    "document_digest": "sha256:f2c8b08d4d8cbdf2bf68fc90043b6be2a6930e22db945979f20e4b0150d94d3d",
     "commands": [
       {
         "schema_version": 1,
@@ -772,14 +775,14 @@ Complete accepted envelope for §1's request at pub-0:
         "timeline_id": "film-1",
         "parent_revision": {
           "revision_id": "rev-1",
-          "content_digest": "sha256:04967dfe604339e5d7b10f29a9ae64caa2efd93b12271a400d803896c484908f",
+          "content_digest": "sha256:4506f79a8b9deebb8d0f0c0d260016c2c67027aaaccd1abf3fe89361903f5772",
           "payload": {
             "config": {
               "fps": 30,
               "tracks": [
                 {
                   "id": "track-1",
-                  "kind": "video",
+                  "kind": "visual",
                   "label": "Picture"
                 }
               ]
@@ -811,7 +814,7 @@ Complete accepted envelope for §1's request at pub-0:
           "documents": []
         }
       },
-      "document_digest": "sha256:3bf2315c305dfba115efc48ca54207a0ec13765ccdf7029d77e6633f60280a0e",
+      "document_digest": "sha256:f2c8b08d4d8cbdf2bf68fc90043b6be2a6930e22db945979f20e4b0150d94d3d",
       "commands": [
         {
           "schema_version": 1,
@@ -910,14 +913,14 @@ survives; the original base stays pub-0 and the actual predecessor is pub-1:
       "timeline_id": "film-1",
       "parent_revision": {
         "revision_id": "rev-2",
-        "content_digest": "sha256:c1fe2a5c5575702edad51f37da7f21805b6d8199d184adbcbb232ba8b1efd944",
+        "content_digest": "sha256:b2d872fa7524bb6e963d49a858bc0f178b1de35d50b503145d853cd2f092385a",
         "payload": {
           "config": {
             "fps": 30,
             "tracks": [
               {
                 "id": "track-1",
-                "kind": "video",
+                "kind": "visual",
                 "label": "Opening"
               }
             ]
@@ -949,7 +952,7 @@ survives; the original base stays pub-0 and the actual predecessor is pub-1:
         "documents": []
       }
     },
-    "document_digest": "sha256:966674c611d1b1139cd6eacab70a0e45400f8d70ea2ff9b7ab24ac622e85d4af",
+    "document_digest": "sha256:e5e0ad4e9ad7674a72fbf5d931ceb5812ac4464a6b4dacd46927b181382f6d10",
     "commands": [
       {
         "schema_version": 1,
@@ -1050,14 +1053,14 @@ survives; the original base stays pub-0 and the actual predecessor is pub-1:
         "timeline_id": "film-1",
         "parent_revision": {
           "revision_id": "rev-2",
-          "content_digest": "sha256:c1fe2a5c5575702edad51f37da7f21805b6d8199d184adbcbb232ba8b1efd944",
+          "content_digest": "sha256:b2d872fa7524bb6e963d49a858bc0f178b1de35d50b503145d853cd2f092385a",
           "payload": {
             "config": {
               "fps": 30,
               "tracks": [
                 {
                   "id": "track-1",
-                  "kind": "video",
+                  "kind": "visual",
                   "label": "Opening"
                 }
               ]
@@ -1089,7 +1092,7 @@ survives; the original base stays pub-0 and the actual predecessor is pub-1:
           "documents": []
         }
       },
-      "document_digest": "sha256:966674c611d1b1139cd6eacab70a0e45400f8d70ea2ff9b7ab24ac622e85d4af",
+      "document_digest": "sha256:e5e0ad4e9ad7674a72fbf5d931ceb5812ac4464a6b4dacd46927b181382f6d10",
       "commands": [
         {
           "schema_version": 1,
@@ -1266,14 +1269,14 @@ Complete successful merged-preview envelope:
       "timeline_id": "film-1",
       "parent_revision": {
         "revision_id": "preview-rev-2",
-        "content_digest": "sha256:c1fe2a5c5575702edad51f37da7f21805b6d8199d184adbcbb232ba8b1efd944",
+        "content_digest": "sha256:b2d872fa7524bb6e963d49a858bc0f178b1de35d50b503145d853cd2f092385a",
         "payload": {
           "config": {
             "fps": 30,
             "tracks": [
               {
                 "id": "track-1",
-                "kind": "video",
+                "kind": "visual",
                 "label": "Opening"
               }
             ]
@@ -1305,7 +1308,7 @@ Complete successful merged-preview envelope:
         "documents": []
       }
     },
-    "document_digest": "sha256:d3708156fc92838904d3c07561361a69a866b7eaa5e3afb2408ff543e9d24c9c",
+    "document_digest": "sha256:211e4c7bb6c33fb38316e9c3e488e9b9b4525fa51d101464cbe27e17379c4663",
     "commands": [
       {
         "schema_version": 1,
@@ -1429,8 +1432,8 @@ inverses; (2) scan every later accepted publication and every later nonselected
 step through the current evaluated head for overlapping writes, reads and
 reference dependencies. Include every authoritative step dependency from §1,
 with inherited request reads applying to every step and conservative scope reads
-remaining active after the commit landed. A later write to a target field or guarded read refuses
-undo even if it restored equal bytes; later consumers of a created entity or a
+remaining active after the commit landed. A later write to a target field or
+guarded read refuses undo even if it restored equal bytes; later consumers of a created entity or a
 value the inverse would invalidate also refuse undo. Selected steps with shared
 fields/dependencies must be undone together when a remaining step would be
 invalidated. Unknown/legacy history is `history_unavailable`, never permission
@@ -1516,22 +1519,13 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
     "timeline_id": "film-1",
     "parent_revision": {
       "revision_id": "rev-reads-0",
-      "content_digest": "sha256:f8ddb151df9ac943dcfb3d765aab1a1dbd5d717a00cb23c014cffc45a835002a",
+      "content_digest": "sha256:2474d93db3e5bdd0f35e1fd2dd489b1d8b5eb154b1ee29ae7e1863074cbcf812",
       "payload": {
-        "config": {"fps": 30, "tracks": [{"id": "track-1", "kind": "video", "label": "Picture"}]},
+        "config": {"output": {"fps": 30}, "tracks": []},
         "registry": {},
-        "clips": [
-          {
-            "id": "clip-1",
-            "clipType": "video",
-            "track": "track-1",
-            "at": 0,
-            "hold": 2,
-            "meta": {"org.example.notes": {"note": "A"}}
-          }
-        ],
+        "clips": [],
         "occurrences": [],
-        "meta": {"org.example.notes": {}}
+        "meta": {"org.example.notes": {"note": "A"}}
       }
     },
     "shot_revisions": [],
@@ -1555,7 +1549,7 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
             {
               "op": "set",
               "ref": "parent",
-              "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+              "path": ["meta", "org.example.notes", "note"],
               "before": {"state": "present", "value": "A"},
               "value": "B"
             }
@@ -1592,7 +1586,7 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
           {
             "op": "set",
             "ref": "parent",
-            "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+            "path": ["meta", "org.example.notes", "note"],
             "before": {"state": "present", "value": "A"},
             "value": "B"
           }
@@ -1618,7 +1612,7 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
           {
             "kind": "field",
             "ref": "parent",
-            "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+            "path": ["meta", "org.example.notes", "note"],
             "state": {"state": "present", "value": "B"}
           }
         ]
@@ -1643,7 +1637,7 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
           {
             "op": "set",
             "ref": "parent",
-            "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+            "path": ["meta", "org.example.notes", "note"],
             "before": {"state": "present", "value": "A"},
             "value": "B"
           }
@@ -1669,7 +1663,7 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
           {
             "kind": "field",
             "ref": "parent",
-            "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+            "path": ["meta", "org.example.notes", "note"],
             "state": {"state": "present", "value": "B"}
           }
         ],
@@ -1677,27 +1671,18 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
           {
             "kind": "field",
             "ref": "parent",
-            "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+            "path": ["meta", "org.example.notes", "note"],
             "state": {"state": "present", "value": "B"}
           }
         ]
       }
     ],
     "parent_payload": {
-      "config": {"fps": 30, "tracks": [{"id": "track-1", "kind": "video", "label": "Picture"}]},
+      "config": {"output": {"fps": 30}, "tracks": []},
       "registry": {},
-      "clips": [
-        {
-          "id": "clip-1",
-          "clipType": "video",
-          "track": "track-1",
-          "at": 0,
-          "hold": 2,
-          "meta": {"org.example.notes": {"note": "B"}}
-        }
-      ],
+      "clips": [],
       "occurrences": [],
-      "meta": {"org.example.notes": {"summary": "Note: B"}}
+      "meta": {"org.example.notes": {"note": "B", "summary": "Note: B"}}
     }
   },
   "undo_first_request": {
@@ -1737,7 +1722,7 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
       "status": "conflict",
       "reason": "inverse_conflict",
       "code": "inverse_conflict",
-      "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+      "path": ["meta", "org.example.notes", "note"],
       "hint": "Undo first and second together",
       "suggested_command": "timeline history",
       "base": {"revision_id": "rev-reads-1", "publication_id": "pub-reads-1"},
@@ -1746,7 +1731,7 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
         {
           "kind": "inverse_conflict",
           "ref": "parent",
-          "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+          "path": ["meta", "org.example.notes", "note"],
           "base": {"state": "present", "value": "B"},
           "theirs": {"state": "present", "value": "B"},
           "ours": {"state": "present", "value": "A"},
@@ -1758,20 +1743,11 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
   "expected_after_refusal": {
     "head": {"revision_id": "rev-reads-1", "publication_id": "pub-reads-1"},
     "parent_payload": {
-      "config": {"fps": 30, "tracks": [{"id": "track-1", "kind": "video", "label": "Picture"}]},
+      "config": {"output": {"fps": 30}, "tracks": []},
       "registry": {},
-      "clips": [
-        {
-          "id": "clip-1",
-          "clipType": "video",
-          "track": "track-1",
-          "at": 0,
-          "hold": 2,
-          "meta": {"org.example.notes": {"note": "B"}}
-        }
-      ],
+      "clips": [],
       "occurrences": [],
-      "meta": {"org.example.notes": {"summary": "Note: B"}}
+      "meta": {"org.example.notes": {"note": "B", "summary": "Note: B"}}
     },
     "added_history_entries": 0
   },
@@ -1819,26 +1795,17 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
       {
         "op": "set",
         "ref": "parent",
-        "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+        "path": ["meta", "org.example.notes", "note"],
         "before": {"state": "present", "value": "B"},
         "value": "A"
       }
     ],
     "parent_payload": {
-      "config": {"fps": 30, "tracks": [{"id": "track-1", "kind": "video", "label": "Picture"}]},
+      "config": {"output": {"fps": 30}, "tracks": []},
       "registry": {},
-      "clips": [
-        {
-          "id": "clip-1",
-          "clipType": "video",
-          "track": "track-1",
-          "at": 0,
-          "hold": 2,
-          "meta": {"org.example.notes": {"note": "A"}}
-        }
-      ],
+      "clips": [],
       "occurrences": [],
-      "meta": {"org.example.notes": {}}
+      "meta": {"org.example.notes": {"note": "A"}}
     },
     "undo_of": ["pub-reads-1"],
     "undo_steps": {"pub-reads-1": ["first", "second"]}
@@ -1848,7 +1815,7 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
       {
         "kind": "field",
         "ref": "parent",
-        "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+        "path": ["meta", "org.example.notes", "note"],
         "state": {"state": "present", "value": "A"}
       }
     ],
@@ -1857,7 +1824,7 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
         {
           "kind": "field",
           "ref": "parent",
-          "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+          "path": ["meta", "org.example.notes", "note"],
           "state": {"state": "present", "value": "A"}
         }
       ],
@@ -1865,13 +1832,13 @@ These are required R1/R2 behavioral assertions, not results from JSON parsing.
         {
           "kind": "field",
           "ref": "parent",
-          "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+          "path": ["meta", "org.example.notes", "note"],
           "state": {"state": "present", "value": "A"}
         },
         {
           "kind": "field",
           "ref": "parent",
-          "path": ["clips", "id:clip-1", "meta", "org.example.notes", "note"],
+          "path": ["meta", "org.example.notes", "note"],
           "state": {"state": "present", "value": "B"}
         }
       ]
@@ -1929,9 +1896,12 @@ these scenarios against the provider; fixture checks alone do not qualify them.
     "timeline_id": "film-1",
     "parent_revision": {
       "revision_id": "rev-create-0",
-      "content_digest": "sha256:6a59b4c43cc944201aa4ec218d138a8635b53aa87b047216d00ef69a3300ee44",
+      "content_digest": "sha256:7db6941424344f29682efe9425283892d2f45c9fc96bd20cf21faaa8256eb16a",
       "payload": {
-        "config": {"output": {"fps": 30}, "tracks": [{"id": "picture", "kind": "visual", "role": "output"}]},
+        "config": {
+          "output": {"fps": 30},
+          "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+        },
         "registry": {},
         "clips": [],
         "occurrences": []
@@ -1994,9 +1964,12 @@ these scenarios against the provider; fixture checks alone do not qualify them.
         "timeline_id": "film-1",
         "parent_revision": {
           "revision_id": "rev-create-1",
-          "content_digest": "sha256:e53ac0e2af0a02c70a512a18642a2f29fd6a28ff7c94eacbf1a7dc1ebe4c8f23",
+          "content_digest": "sha256:d3546764a26b60a2e6b6d0a91bbd39b7564c9cd58d9fbd89b901c0540ba108ee",
           "payload": {
-            "config": {"output": {"fps": 30}, "tracks": [{"id": "picture", "kind": "visual", "role": "output"}]},
+            "config": {
+              "output": {"fps": 30},
+              "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+            },
             "registry": {},
             "clips": [],
             "occurrences": [
@@ -2051,7 +2024,7 @@ these scenarios against the provider; fixture checks alone do not qualify them.
           "documents": []
         }
       },
-      "document_digest": "sha256:d1487c45694d48c7eb6ef346d660c35a6344cbcf88293d53e3faf147d89fa678",
+      "document_digest": "sha256:da282a5a1240e00d2e4516951ac1ed7a54b5e8d32171a4cefed83a4514b05508",
       "commands": [
         {
           "schema_version": 1,
@@ -2145,9 +2118,12 @@ these scenarios against the provider; fixture checks alone do not qualify them.
           "timeline_id": "film-1",
           "parent_revision": {
             "revision_id": "rev-create-1",
-            "content_digest": "sha256:e53ac0e2af0a02c70a512a18642a2f29fd6a28ff7c94eacbf1a7dc1ebe4c8f23",
+            "content_digest": "sha256:d3546764a26b60a2e6b6d0a91bbd39b7564c9cd58d9fbd89b901c0540ba108ee",
             "payload": {
-              "config": {"output": {"fps": 30}, "tracks": [{"id": "picture", "kind": "visual", "role": "output"}]},
+              "config": {
+                "output": {"fps": 30},
+                "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+              },
               "registry": {},
               "clips": [],
               "occurrences": [
@@ -2202,7 +2178,7 @@ these scenarios against the provider; fixture checks alone do not qualify them.
             "documents": []
           }
         },
-        "document_digest": "sha256:d1487c45694d48c7eb6ef346d660c35a6344cbcf88293d53e3faf147d89fa678",
+        "document_digest": "sha256:da282a5a1240e00d2e4516951ac1ed7a54b5e8d32171a4cefed83a4514b05508",
         "commands": [
           {
             "schema_version": 1,
@@ -2321,9 +2297,12 @@ these scenarios against the provider; fixture checks alone do not qualify them.
         "timeline_id": "film-1",
         "parent_revision": {
           "revision_id": "rev-create-2",
-          "content_digest": "sha256:6a59b4c43cc944201aa4ec218d138a8635b53aa87b047216d00ef69a3300ee44",
+          "content_digest": "sha256:7db6941424344f29682efe9425283892d2f45c9fc96bd20cf21faaa8256eb16a",
           "payload": {
-            "config": {"output": {"fps": 30}, "tracks": [{"id": "picture", "kind": "visual", "role": "output"}]},
+            "config": {
+              "output": {"fps": 30},
+              "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+            },
             "registry": {},
             "clips": [],
             "occurrences": []
@@ -2333,7 +2312,7 @@ these scenarios against the provider; fixture checks alone do not qualify them.
         "internal_timeline_revisions": [],
         "dependency_manifest": {"shots": [], "internal_timelines": [], "media": [], "documents": []}
       },
-      "document_digest": "sha256:628737db0045dc577dd11ceb43ef881efe59532cb2d0e501ee95b6415325a4f3",
+      "document_digest": "sha256:ecdacf571218d4cc951583296e5f75e1593cbcc72d64fa4f062597d38bd57689",
       "commands": [
         {
           "schema_version": 1,
@@ -2423,9 +2402,12 @@ these scenarios against the provider; fixture checks alone do not qualify them.
           "timeline_id": "film-1",
           "parent_revision": {
             "revision_id": "rev-create-2",
-            "content_digest": "sha256:6a59b4c43cc944201aa4ec218d138a8635b53aa87b047216d00ef69a3300ee44",
+            "content_digest": "sha256:7db6941424344f29682efe9425283892d2f45c9fc96bd20cf21faaa8256eb16a",
             "payload": {
-              "config": {"output": {"fps": 30}, "tracks": [{"id": "picture", "kind": "visual", "role": "output"}]},
+              "config": {
+                "output": {"fps": 30},
+                "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+              },
               "registry": {},
               "clips": [],
               "occurrences": []
@@ -2435,7 +2417,7 @@ these scenarios against the provider; fixture checks alone do not qualify them.
           "internal_timeline_revisions": [],
           "dependency_manifest": {"shots": [], "internal_timelines": [], "media": [], "documents": []}
         },
-        "document_digest": "sha256:628737db0045dc577dd11ceb43ef881efe59532cb2d0e501ee95b6415325a4f3",
+        "document_digest": "sha256:ecdacf571218d4cc951583296e5f75e1593cbcc72d64fa4f062597d38bd57689",
         "commands": [
           {
             "schema_version": 1,
@@ -2546,7 +2528,10 @@ these scenarios against the provider; fixture checks alone do not qualify them.
   "expected_redo": {
     "status": "accepted",
     "parent_payload": {
-      "config": {"output": {"fps": 30}, "tracks": [{"id": "picture", "kind": "visual", "role": "output"}]},
+      "config": {
+        "output": {"fps": 30},
+        "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+      },
       "registry": {},
       "clips": [],
       "occurrences": [
@@ -2836,7 +2821,8 @@ preview and structured errors; V1/V2 adopt metadata and validation; A2 consumes
 canonical replies through the persisted outbox; G2 provides the bounded Python
 function re-run. Existing passing behavior tests stay in place. C0 changes only
 this contract and its identical orchestrator design copy. C0b amends those same
-two files only; implementation and behavioral qualification belong to R1/R2/R2r.
+two files only; existing fixture track kinds are corrected from `video` to the
+schema enum `visual`, with recomputed digests and canonical-schema checks; implementation and behavioral qualification belong to R1/R2/R2r.
 The Runtime Python project/CI configure pytest but no prose lint or typecheck
 gate. The TypeScript client has a `tsc` build/test gate; it is N/A to these
 Markdown-only edits. The targeted generator tests below still exercise its DTO
@@ -2865,7 +2851,9 @@ PY
 ```
 
 The following fixture-consistency check also passed. It uses the existing
-Runtime digest function; it does not run an unimplemented v2 provider:
+Runtime digest/schema validators and applies the displayed effect transitions to fixture
+values; it does not run an unimplemented v2 provider or prove refusal, causal
+compiler capture, allocation authentication, rebase or replay behavior:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-runtime/bin/python - <<'PY'
@@ -2873,7 +2861,7 @@ import copy
 import json
 import re
 from pathlib import Path
-from runtime_protocol.timeline_commit_validation import digest
+from runtime_protocol.timeline_commit_validation import digest, validate_commit_value
 
 source = Path('contract/commit-v2.md').read_text()
 examples = [json.loads(block) for block in re.findall(r'^```json\n(.*?)^```$', source, re.M | re.S)]
@@ -2881,6 +2869,7 @@ request, shapes, clears, structural, idless, created, reads, conflicts, accepted
 for outcome in (accepted, merged, preview):
     data = outcome['data']
     document = data['canonical_document']
+    validate_commit_value(document, 'CanonicalDocument')
     assert digest(document) == data['document_digest']
     assert digest(document['parent_revision']['payload']) == document['parent_revision']['content_digest']
     assert data['commands'] == request['commands']
@@ -2922,6 +2911,7 @@ assert meta['before']['meta']['com.other.tool'] == meta['expected']['meta']['com
 for outcome in (creation['reply'], creation['undo_reply']):
     data = outcome['data']
     document = data['canonical_document']
+    validate_commit_value(document, 'CanonicalDocument')
     assert digest(document) == data['document_digest']
     for image in [document['parent_revision'], *document['shot_revisions'], *document['internal_timeline_revisions']]:
         assert digest(image['payload']) == image['content_digest']
@@ -2944,6 +2934,7 @@ for outcome in (creation['reply'], creation['undo_reply']):
     assert data['steps'][0]['dependencies'] == [{'kind': 'scope', 'ref': 'timeline', 'path': []}]
 for scenario in (sequential, creation):
     document = scenario['base_document']
+    validate_commit_value(document, 'CanonicalDocument')
     assert digest(document['parent_revision']['payload']) == document['parent_revision']['content_digest']
     body = scenario['request']
     assert [i for step in body['steps'] for i in step['command_ordinals']] == list(range(len(body['commands'])))
