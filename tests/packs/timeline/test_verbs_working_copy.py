@@ -428,3 +428,120 @@ def test_undo_takes_steps_as_a_position_or_an_option():
     assert cli.build_parser(None).parse_args(["undo", "t", "--project", "P", "3"]).steps == 3
     parsed = cli.build_parser(None).parse_args(["redo", "t", "--project", "P", "--steps", "2"])
     assert parsed.steps_option == 2
+
+
+# ---- a reused working copy behind the head, and refusals that print one plain line ----------
+
+EDITOR_HEAD = "astrid.editor.timeline.5fb2249e" + "0" * 24
+
+
+def _head_at(monkeypatch, tmp_path, head: dict) -> None:
+    from astrid.sdk.timeline import store
+
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "data"))
+    for module in (tc, store):
+        monkeypatch.setattr(module, "resolve_ids", lambda project, timeline, client=None: ("p", "t", head["id"]))
+        monkeypatch.setattr(module, "fetch_bundle", lambda project, timeline, revision_id=None, client=None: copy.deepcopy(bundle()))
+
+
+def test_checkout_reusing_a_copy_behind_the_head_says_so(tmp_path, monkeypatch, capsys):
+    head = {"id": "rev-0"}
+    _head_at(monkeypatch, tmp_path, head)
+    assert _run("checkout", "t", "--project", "P") == 0
+    capsys.readouterr()
+    assert _run("edit", "t", "--project", "P", "--clip", "R", "--nudge-frames", "3") == 0
+    capsys.readouterr()
+
+    head["id"] = EDITOR_HEAD  # the App editor publishes while this copy is still on rev-0
+    assert _run("checkout", "t", "--project", "P") == 0
+    out = capsys.readouterr().out.splitlines()
+
+    assert out[0].startswith('working copy "main" of t · from published rev-0 · ')
+    assert out[1] == ('STALE: working copy "main" was made from rev-0, but the head is now 5fb2249e '
+                      "(written by the App editor).")
+    assert out[2] == "  checkout reused the copy and did not pick up the head; it holds 1 clip changed vs rev-0."
+    assert "  to start from the head: timelines discard t --project P, then timelines checkout t --project P --fresh" in out
+    assert "STALE" not in "\n".join(out[3:])
+
+
+def test_checkout_of_a_current_copy_says_nothing_stale(tmp_path, monkeypatch, capsys):
+    head = {"id": "rev-0"}
+    _head_at(monkeypatch, tmp_path, head)
+    assert _run("checkout", "t", "--project", "P") == 0
+    capsys.readouterr()
+    assert _run("checkout", "t", "--project", "P") == 0
+    assert "STALE" not in capsys.readouterr().out
+
+
+def test_fresh_checkout_after_discard_is_not_stale(tmp_path, monkeypatch, capsys):
+    head = {"id": "rev-0"}
+    _head_at(monkeypatch, tmp_path, head)
+    assert _run("checkout", "t", "--project", "P") == 0
+    assert _run("edit", "t", "--project", "P", "--clip", "R", "--nudge-frames", "3") == 0
+    assert _run("discard", "t", "--project", "P") == 0
+    head["id"] = EDITOR_HEAD
+    capsys.readouterr()
+    assert _run("checkout", "t", "--project", "P", "--fresh") == 0
+    assert "STALE" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("argv", [
+    ["checkout", "t", "--project", "P"],
+    ["status", "t", "--project", "P"],
+    ["publish", "t", "--project", "P", "-m", "x"],
+])
+def test_a_refusal_from_the_head_lookup_is_one_plain_line(tmp_path, monkeypatch, capsys, argv):
+    from astrid.sdk.timeline import store
+
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "data"))
+
+    def refuse(project, timeline, client=None):
+        raise TimelineEditError("could not open timeline 't' in project 'P': no such timeline")
+
+    monkeypatch.setattr(store, "resolve_ids", refuse)
+    monkeypatch.setattr(tc, "resolve_ids", refuse)
+    assert _run(*argv) == 2  # the guarded exit code, not a bug report
+    err = capsys.readouterr().err
+    assert err.strip() == "could not open timeline 't' in project 'P': no such timeline"
+    assert "unstructured" not in err
+
+
+# ---- the conflict message names the editor and says how to start over ----------------------
+
+def test_short_revision_strips_every_known_prefix():
+    from astrid.sdk.timeline.revisions import short_revision
+
+    assert short_revision(EDITOR_HEAD) == "5fb2249e"
+    assert short_revision("authoring-parent-revision-38cecaa5" + "f" * 24) == "38cecaa5"
+    assert short_revision("restore-0a1b2c3d4e5f") == "0a1b2c3d"
+    assert short_revision("rev-0") == "rev-0"
+    assert short_revision(None) == ""
+
+
+@pytest.mark.parametrize("head, who", [
+    (EDITOR_HEAD, "the editor published 5fb2249e after your checkout (rev-0)"),
+    ("authoring-parent-revision-38cecaa5" + "f" * 24, "someone published 38cecaa5 after your checkout (rev-0)"),
+])
+def test_publish_conflict_names_the_writer_and_offers_discard_first(monkeypatch, head, who):
+    from astrid.sdk.timeline import store
+
+    class _Timelines:
+        def open_composition(self, *_args, **_kwargs):
+            return type("Shown", (), {"ok": True, "error": None,
+                                      "data": {"summary": {"head_revision_id": head}}})()
+
+    class _Client:
+        timelines = _Timelines()
+
+    monkeypatch.setattr(store, "fetch_bundle", lambda *_args, **_kwargs: copy.deepcopy(bundle()))
+    monkeypatch.setattr(store, "three_way", lambda _base, _head, candidate, force: (candidate, ["p/a-rocket (clip) moved 1.8s"]))
+
+    with pytest.raises(TimelineEditError) as refused:
+        store.publish_bundle(copy.deepcopy(bundle()), "key", client=_Client())
+    message = str(refused.value)
+
+    assert message.splitlines()[0].startswith(f"not published: {who}, and you both changed:")
+    assert "next: timelines discard t --project p, then timelines checkout t --project p --fresh, and re-apply your edit." in message
+    assert "  publish --force overwrites the newer published version." in message
+    assert "to overwrite theirs" not in message
+    assert "astrid.e\n" not in message and "astrid.e " not in message

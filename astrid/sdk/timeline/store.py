@@ -17,6 +17,7 @@ from astrid.core.timeline import astrid_ns as _ns
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.doc import _serialize
+from astrid.sdk.timeline.revisions import revision_source, short_revision
 
 LOCK_WAIT_ENV = "ASTRID_TIMELINE_LOCK_TIMEOUT"
 LOCK_WAIT_SECONDS = 30.0
@@ -283,10 +284,16 @@ def publish_bundle(candidate: Mapping[str, Any], idempotency_key: str, *, client
                 m = re.match(r"^\S+/(\S+) \(clip\) (.*)$", line)
                 return f"{names.get(m.group(1), m.group(1))}  {m.group(2)}" if m else line
 
-            short = lambda rev: str(rev).removeprefix("authoring-parent-revision-")[:8]  # noqa: E731
-            raise TimelineEditError(f"not published: someone published {short(current)} after your checkout ({short(base)}), "
-                                    "and you both changed:\n  " + "\n  ".join(plain(c) for c in conflicts)
-                                    + "\nnext: timelines discard, checkout and re-apply your edit (or publish --force to overwrite theirs)")
+            who = "the editor" if revision_source(str(current)) == "app" else "someone"
+            project_id, timeline_id = str(candidate["project_id"]), str(candidate["timeline_id"])
+            # The head is newer than this copy and holds content you have not seen: the way out is to start
+            # again from it, not to overwrite it.
+            raise TimelineEditError(f"not published: {who} published {short_revision(current)} after your checkout "
+                                    f"({short_revision(base)}), and you both changed:\n  "
+                                    + "\n  ".join(plain(c) for c in conflicts)
+                                    + f"\nnext: timelines discard {timeline_id} --project {project_id}, then "
+                                    f"timelines checkout {timeline_id} --project {project_id} --fresh, and re-apply your edit."
+                                    "\n  publish --force overwrites the newer published version.")
         candidate = merged
         merged_note = f"merged onto head {current} (your checkout was {base})" + (" with force" if conflicts else "")
         base = current

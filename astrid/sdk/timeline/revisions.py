@@ -42,6 +42,16 @@ def revision_source(revision_id: str) -> str:
     return "other"
 
 
+def short_revision(revision_id: Any) -> str:
+    """The 8-character handle people read and type: the part after the revision's known prefix, so
+    ``astrid.editor.timeline.5fb2249e…`` and ``authoring-parent-revision-5fb2249e…`` both read ``5fb2249e``."""
+    text = str(revision_id or "")
+    for prefix in _ID_PREFIXES:
+        if text.startswith(prefix):
+            return text[len(prefix):][:8] or text
+    return text[:8] or text
+
+
 class RevisionStore(Protocol):
     """The adapter. ``list`` returns None when this store cannot list revisions."""
 
