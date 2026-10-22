@@ -206,9 +206,9 @@ def commit_edit(parsed, *, undo: bool = False, command=None, sheet=False, edit=N
                 }), as_json=parsed.json, human_renderer=lambda _: (
                     "preview only; no publication accepted" if parsed.dry_run else "no change (the sheet matches its original export)"))
         elif batch is not None:
-            result = session.commit_many(batch, **options)
+            result = session.commit_many(batch, label="CLI commands-file", **options)
         elif command is not None:
-            result = session.commit(command, **options)
+            result = session.commit(command, label=f"CLI {command}", **options)
         else:
             result = session.undo(parsed.publication, **options) if undo else session.move(parsed.clip, parsed.on, **options)
         receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
