@@ -61,178 +61,6 @@
         }
       }
     },
-    "https://astrid.haus/workspace/v1/schemas/common.json": {
-      "$defs": {
-        "ActorScope": {
-          "additionalProperties": false,
-          "properties": {
-            "actor_id": {
-              "$ref": "#/$defs/Id"
-            },
-            "realm_id": {
-              "$ref": "#/$defs/Id"
-            },
-            "scopes": {
-              "items": {
-                "minLength": 1,
-                "type": "string"
-              },
-              "type": "array",
-              "uniqueItems": true
-            }
-          },
-          "required": [
-            "actor_id",
-            "realm_id",
-            "scopes"
-          ],
-          "type": "object"
-        },
-        "Cursor": {
-          "maxLength": 512,
-          "minLength": 1,
-          "type": "string"
-        },
-        "Digest": {
-          "pattern": "^sha256:[0-9a-f]{64}$",
-          "type": "string"
-        },
-        "Error": {
-          "additionalProperties": false,
-          "properties": {
-            "code": {
-              "enum": [
-                "invalid_request",
-                "validation_error",
-                "unauthorized",
-                "forbidden",
-                "not_found",
-                "conflict",
-                "version_conflict",
-                "idempotency_conflict",
-                "unsupported_version",
-                "range_not_satisfiable",
-                "lease_fenced",
-                "invalid_settlement",
-                "not_ready",
-                "internal"
-              ],
-              "type": "string"
-            },
-            "details": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "message": {
-              "type": "string"
-            },
-            "request_id": {
-              "$ref": "#/$defs/Id"
-            }
-          },
-          "required": [
-            "code",
-            "message",
-            "request_id"
-          ],
-          "type": "object"
-        },
-        "Id": {
-          "pattern": "^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$",
-          "type": "string"
-        },
-        "Meta": {
-          "additionalProperties": {
-            "$ref": "#/$defs/MetaNamespaceValue"
-          },
-          "description": "Optional bounded namespace map. Canonical byte and depth limits are provider-enforced.",
-          "maxProperties": 64,
-          "propertyNames": {
-            "$ref": "#/$defs/MetaNamespaceKey"
-          },
-          "type": "object"
-        },
-        "MetaNamespaceKey": {
-          "description": "ASCII namespace key for opaque extension metadata.",
-          "maxLength": 128,
-          "minLength": 1,
-          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
-          "type": "string"
-        },
-        "MetaNamespaceValue": {
-          "additionalProperties": {
-            "$ref": "#/$defs/MetaValue"
-          },
-          "description": "Opaque namespace payload; the namespace root is always an object.",
-          "type": "object"
-        },
-        "MetaValue": {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "$ref": "#/$defs/MetaValue"
-              },
-              "type": "object"
-            },
-            {
-              "items": {
-                "$ref": "#/$defs/MetaValue"
-              },
-              "type": "array"
-            },
-            {
-              "type": "string"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "A finite JSON descendant of an opaque metadata namespace."
-        },
-        "Page": {
-          "additionalProperties": false,
-          "properties": {
-            "items": {
-              "type": "array"
-            },
-            "next_cursor": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/Cursor"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            }
-          },
-          "required": [
-            "items",
-            "next_cursor"
-          ],
-          "type": "object"
-        },
-        "Timestamp": {
-          "format": "date-time",
-          "type": "string"
-        },
-        "Version": {
-          "minimum": 1,
-          "type": "integer"
-        }
-      },
-      "$id": "https://astrid.haus/workspace/v1/schemas/common.json",
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "additionalProperties": false,
-      "title": "Workspace protocol common definitions",
-      "type": "object"
-    },
     "https://astrid.haus/workspace/v1/schemas/document.json": {
       "$defs": {
         "MediaTranscript": {
@@ -3109,7 +2937,7 @@
           "additionalProperties": true,
           "properties": {
             "meta": {
-              "$ref": "common.json#/$defs/Meta"
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             }
           },
           "type": "object"
@@ -3175,7 +3003,7 @@
               "type": "number"
             },
             "meta": {
-              "$ref": "common.json#/$defs/Meta"
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "mute": {
               "type": "boolean"
@@ -3273,7 +3101,7 @@
               "description": "Exact authored parent config; partial output and opaque fields are preserved."
             },
             "meta": {
-              "$ref": "common.json#/$defs/Meta"
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "occurrences": {
               "items": {
@@ -3320,7 +3148,7 @@
               "$ref": "timeline-config.schema.json#/definitions/TimelineClip/properties/id"
             },
             "meta": {
-              "$ref": "common.json#/$defs/Meta"
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "track": {
               "$ref": "timeline-config.schema.json#/definitions/TimelineClip/properties/track"
@@ -3407,7 +3235,7 @@
               "$ref": "#/$defs/OpenMap"
             },
             "meta": {
-              "$ref": "common.json#/$defs/Meta"
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "output": {
               "$ref": "#/$defs/RawOutput"
@@ -3452,7 +3280,7 @@
               "$ref": "timeline-config.schema.json#/properties/tracks/items/properties/label"
             },
             "meta": {
-              "$ref": "common.json#/$defs/Meta"
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "role": {
               "$ref": "timeline-config.schema.json#/properties/tracks/items/properties/role"
@@ -3490,7 +3318,7 @@
               "type": "string"
             },
             "meta": {
-              "$ref": "common.json#/$defs/Meta"
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "object_id": {
               "minLength": 1,
@@ -3538,7 +3366,7 @@
               "type": "string"
             },
             "meta": {
-              "$ref": "common.json#/$defs/Meta"
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "metadata": {
               "$ref": "#/$defs/OpenMap"
@@ -5135,7 +4963,7 @@
               "type": "string"
             },
             "meta": {
-              "$ref": "common.json#/$defs/Meta"
+              "$ref": "#/definitions/Meta"
             },
             "resolution": {
               "type": "string"
@@ -5157,6 +4985,60 @@
             }
           },
           "type": "object"
+        },
+        "Meta": {
+          "additionalProperties": {
+            "$ref": "#/definitions/MetaNamespaceValue"
+          },
+          "description": "Optional bounded namespace map. Canonical byte and depth limits are provider-enforced.",
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/definitions/MetaNamespaceKey"
+          },
+          "type": "object"
+        },
+        "MetaNamespaceKey": {
+          "description": "ASCII namespace key for opaque extension metadata.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+          "type": "string"
+        },
+        "MetaNamespaceValue": {
+          "additionalProperties": {
+            "$ref": "#/definitions/MetaValue"
+          },
+          "description": "Opaque namespace payload; the namespace root is always an object.",
+          "type": "object"
+        },
+        "MetaValue": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/definitions/MetaValue"
+              },
+              "type": "object"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/MetaValue"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A finite JSON descendant of an opaque metadata namespace."
         },
         "Theme": {
           "additionalProperties": true,
@@ -5355,7 +5237,7 @@
               "type": "string"
             },
             "meta": {
-              "$ref": "common.json#/$defs/Meta"
+              "$ref": "#/definitions/Meta"
             },
             "opacity": {
               "type": "number"
@@ -5525,7 +5407,7 @@
           "type": "object"
         },
         "meta": {
-          "$ref": "common.json#/$defs/Meta",
+          "$ref": "#/definitions/Meta",
           "description": "Runtime-owned opaque extension metadata; ignored by TimelineConfig consumers."
         },
         "output": {
@@ -5618,7 +5500,7 @@
                 "type": "string"
               },
               "meta": {
-                "$ref": "common.json#/$defs/Meta"
+                "$ref": "#/definitions/Meta"
               },
               "muted": {
                 "type": "boolean"

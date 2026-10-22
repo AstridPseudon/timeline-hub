@@ -2,7 +2,7 @@
   "type": "object",
   "properties": {
     "meta": {
-      "$ref": "common.json#/$defs/Meta",
+      "$ref": "#/definitions/Meta",
       "description": "Runtime-owned opaque extension metadata; ignored by TimelineConfig consumers."
     },
     "theme": {
@@ -78,7 +78,7 @@
             "additionalProperties": {}
           },
           "meta": {
-            "$ref": "common.json#/$defs/Meta"
+            "$ref": "#/definitions/Meta"
           }
         },
         "required": [
@@ -149,6 +149,42 @@
   "additionalProperties": false,
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "MetaNamespaceKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "ASCII namespace key for opaque extension metadata."
+    },
+    "MetaValue": {
+      "description": "A finite JSON descendant of an opaque metadata namespace.",
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/MetaValue" }
+        },
+        {
+          "type": "array",
+          "items": { "$ref": "#/definitions/MetaValue" }
+        },
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "MetaNamespaceValue": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/MetaValue" },
+      "description": "Opaque namespace payload; the namespace root is always an object."
+    },
+    "Meta": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": { "$ref": "#/definitions/MetaNamespaceKey" },
+      "additionalProperties": { "$ref": "#/definitions/MetaNamespaceValue" },
+      "description": "Optional bounded namespace map. Canonical byte and depth limits are provider-enforced."
+    },
     "TimelineClip": {
       "type": "object",
       "properties": {
@@ -399,7 +435,7 @@
           "additionalProperties": {}
         },
         "meta": {
-          "$ref": "common.json#/$defs/Meta"
+          "$ref": "#/definitions/Meta"
         }
       },
       "required": [
@@ -539,7 +575,7 @@
           "type": "string"
         },
         "meta": {
-          "$ref": "common.json#/$defs/Meta"
+          "$ref": "#/definitions/Meta"
         }
       },
       "additionalProperties": false

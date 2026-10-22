@@ -14,8 +14,6 @@ MATRIX_PATH = ROOT / "conformance" / "fixtures" / "shot-composition-compatibilit
 TIMELINE_SCHEMA_PATH = ROOT / "contract" / "schemas" / "timeline-config.schema.json"
 TIMELINE_SCHEMA_PROVENANCE_PATH = ROOT / "contract" / "schemas" / "timeline-config.schema.provenance.json"
 TIMELINE_SCHEMA_URI = "https://astrid.haus/workspace/v1/schemas/timeline-config.schema.json"
-COMMON_SCHEMA_PATH = ROOT / "contract" / "schemas" / "common.json"
-COMMON_SCHEMA_URI = "https://astrid.haus/workspace/v1/schemas/common.json"
 
 
 def _schema() -> dict:
@@ -28,25 +26,28 @@ def _matrix() -> dict:
 
 def _composition_validator(schema: dict) -> Draft202012Validator:
     canonical = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
-    common = json.loads(COMMON_SCHEMA_PATH.read_text(encoding="utf-8"))
     registry = Registry().with_resources(
         (
             (TIMELINE_SCHEMA_URI, Resource.from_contents(canonical)),
-            (COMMON_SCHEMA_URI, Resource.from_contents(common)),
         )
     )
     return Draft202012Validator(schema, registry=registry)
 
 
 def _shot_payload_validator(schema: dict) -> Draft202012Validator:
-    common = json.loads(COMMON_SCHEMA_PATH.read_text(encoding="utf-8"))
+    canonical = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
     return Draft202012Validator(
         {
             "$schema": schema["$schema"],
+            "$id": schema["$id"],
             "$ref": "#/$defs/ShotPayload",
             "$defs": schema["$defs"],
         },
-        registry=Registry().with_resource(COMMON_SCHEMA_URI, Resource.from_contents(common)),
+        registry=Registry().with_resources(
+            (
+                (TIMELINE_SCHEMA_URI, Resource.from_contents(canonical)),
+            )
+        ),
     )
 
 
@@ -147,6 +148,29 @@ def test_pinned_compiled_timeline_schema_remains_strict() -> None:
     assert list(Draft7Validator(canonical).iter_errors(role_config))
 
 
+def test_standalone_timeline_schema_validates_meta_without_registry() -> None:
+    canonical = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
+    config = {
+        "meta": {"org.example.config": {"nullable": None}},
+        "tracks": [{
+            "id": "video",
+            "kind": "visual",
+            "label": "Video",
+            "meta": {"org.example.track": {"enabled": True}},
+        }],
+        "clips": [{
+            "id": "clip",
+            "at": 0,
+            "track": "video",
+            "meta": {"org.example.clip": {"items": [1, None]}},
+        }],
+    }
+
+    validator = Draft7Validator(canonical)
+    assert not list(validator.iter_errors(config))
+    assert list(validator.iter_errors({**config, "meta": {"org..invalid": {}}}))
+
+
 def test_materialized_timeline_schema_provenance_and_compatible_raw_field_reuse() -> None:
     schema = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
     provenance = json.loads(TIMELINE_SCHEMA_PROVENANCE_PATH.read_text(encoding="utf-8"))
@@ -203,10 +227,10 @@ def test_meta_is_bounded_opaque_and_available_on_all_v1_locations() -> None:
     assert not list(_composition_validator(schema).iter_errors(publication))
 
     meta = schema["$defs"]["ParentComposition"]["properties"]["meta"]
-    assert meta["$ref"] == "common.json#/$defs/Meta"
-    common = json.loads(COMMON_SCHEMA_PATH.read_text(encoding="utf-8"))
-    meta_schema = {"$ref": "#/$defs/Meta", "$defs": common["$defs"]}
-    validator = Draft202012Validator(meta_schema)
+    assert meta["$ref"] == "timeline-config.schema.json#/definitions/Meta"
+    canonical = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
+    meta_schema = {"$ref": "#/definitions/Meta", "definitions": canonical["definitions"]}
+    validator = Draft7Validator(meta_schema)
     assert not list(validator.iter_errors({"a": {}, "z9.test": {"null": None, "array": [False]}}))
     for invalid in (
         None,

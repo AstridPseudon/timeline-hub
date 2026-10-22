@@ -5,7 +5,7 @@
   "source_commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
   "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
   "source_artifact": "python/banodoco_timeline_schema/timeline.schema.json",
-  "sha256": "ad0740948dc852b6caa873889fd978088b13e2e7c01c978cdc39ad78cbae3e8a",
+  "sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
   "base_sha256": "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1",
   "role_extension": {
     "property": "TimelineConfig.tracks[].role",

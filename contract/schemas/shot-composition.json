@@ -79,7 +79,7 @@
           "$ref": "#/$defs/OpenMap"
         },
         "meta": {
-          "$ref": "common.json#/$defs/Meta"
+          "$ref": "timeline-config.schema.json#/definitions/Meta"
         }
       }
     },
@@ -106,7 +106,7 @@
           ]
         },
         "meta": {
-          "$ref": "common.json#/$defs/Meta"
+          "$ref": "timeline-config.schema.json#/definitions/Meta"
         }
       }
     },
@@ -130,7 +130,7 @@
           }
         },
         "meta": {
-          "$ref": "common.json#/$defs/Meta"
+          "$ref": "timeline-config.schema.json#/definitions/Meta"
         }
       }
     },
@@ -191,7 +191,7 @@
           "items": { "$ref": "#/$defs/RawClip" }
         },
         "occurrences": { "type": "array", "items": { "$ref": "#/$defs/Occurrence" } },
-        "meta": { "$ref": "common.json#/$defs/Meta" }
+        "meta": { "$ref": "timeline-config.schema.json#/definitions/Meta" }
       }
     },
     "Occurrence": {
@@ -211,7 +211,7 @@
         "gain": { "type": "number" },
         "mute": { "type": "boolean" },
         "provenance": { "$ref": "#/$defs/OpenMap" },
-        "meta": { "$ref": "common.json#/$defs/Meta" }
+        "meta": { "$ref": "timeline-config.schema.json#/definitions/Meta" }
       }
     },
     "ShotRevisionInput": {
@@ -267,7 +267,7 @@
           "description": "Immutable link to the child timeline revision."
         },
         "meta": {
-          "$ref": "common.json#/$defs/Meta"
+          "$ref": "timeline-config.schema.json#/definitions/Meta"
         }
       }
     },
@@ -283,14 +283,14 @@
         "type": { "type": "string", "minLength": 1 },
         "media_kind": { "type": "string", "minLength": 1 },
         "scope": { "$ref": "#/$defs/OpenMap" },
-        "meta": { "$ref": "common.json#/$defs/Meta" }
+        "meta": { "$ref": "timeline-config.schema.json#/definitions/Meta" }
       }
     },
     "AssetRecord": {
       "type": "object",
       "additionalProperties": true,
       "properties": {
-        "meta": { "$ref": "common.json#/$defs/Meta" }
+        "meta": { "$ref": "timeline-config.schema.json#/definitions/Meta" }
       }
     },
     "OpenBinding": {
