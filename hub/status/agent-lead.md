@@ -1,1 +1,1 @@
-2026-10-22T23:07:19Z container restarted 23:06Z; restarted hub-syncd, dispatcher, manager (round 2307Z); R1+G2 workers killed mid-run (codex websocket refused at 22:21), re-dispatch requested via INBOX; U2 hold released; disk 15G; no escalation needed
+2026-10-22T23:39:07Z hub-syncd/dispatcher/manager alive (up 32m); 4 workers running (R1,U2-proof,R2-review,G2-forward-U2); ready-undispatched none; U2 merged 3f1ceae; disk 16G; no issues
