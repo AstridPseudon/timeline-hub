@@ -1,0 +1,1 @@
+2026-10-22T23:13:18Z procs: dispatcher-daemon hub-syncd ; manager NOT running (run-manager start denied, awaiting owner); workers 0; ready-undispatched n/a; disk 22G free; issues: container restarted 23:09Z, daemons restarted, origin remotes added but not reported
