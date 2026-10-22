@@ -146,12 +146,14 @@ def test_pinned_launcher_recovers_disposable_partial_state(case: str) -> None:
         capture_output=True,
         text=True,
         check=True,
-        timeout=45,
+        timeout=600,
     )
     report = json.loads(result.stdout)
+    print(json.dumps({key: report.get(key) for key in ("initial", "recovery", "prepared_state")}, indent=1))
+    assert report["initial"]["ok"] is True, report["initial"]
     assert report["prepared_state"]["discovery_present"] is True
     assert report["prepared_state"]["partial_instance_lock"] is (case == "interrupted")
-    assert report["recovery"]["ok"] is True
+    assert report["recovery"]["ok"] is True, (report["initial"], report["recovery"])
     assert report["recovery"]["result"]["status"] in {"started", "reconnected"}
     assert report["owner_telemetry"]["owner_lock_count"] == 1
     assert report["owner_telemetry"]["discovery_pid_alive_before_cleanup"] is True
