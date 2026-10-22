@@ -129,6 +129,20 @@ describe('Playwright guard', () => {
     expect(result.out).toMatch(/SKIP .*lane case: \[declared:direct-journey-ffmpeg\]/);
   });
 
+  it('names tests not run because an earlier serial test failed', () => {
+    const result = playwright('serial.pwfixture.ts');
+    expect(result.code).not.toBe(0);
+    expect(result.out).toContain('2 test(s) NOT RUN');
+    expect(result.out).toMatch(/NOT RUN .*second is not run \(skipped with no reason/);
+    expect(result.out).toMatch(/NOT RUN .*third is not run/);
+  });
+
+  it('names tests that never started because the run stopped at maxFailures', () => {
+    const result = playwright('maxfail.pwfixture.ts', { GUARD_MAX_FAILURES: '1' });
+    expect(result.code).not.toBe(0);
+    expect(result.out).toMatch(/NOT RUN .*never started \(never ran: the run stopped early\)/);
+  });
+
   it('fails instead of skipping in a job that provides the lane', () => {
     const result = playwright('required.pwfixture.ts', { ASTRID_REQUIRE_LANES: 'direct-journey' });
     expect(result.code).not.toBe(0);

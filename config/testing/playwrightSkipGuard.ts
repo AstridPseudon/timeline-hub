@@ -1,32 +1,54 @@
-import type { FullResult, Reporter, TestCase, TestResult } from '@playwright/test/reporter';
+import type { FullResult, Reporter, Suite, TestCase, TestResult } from '@playwright/test/reporter';
 import { classifySkips, formatSkipReport } from './skipRegistry.mjs';
 
 /**
- * Prints every skipped test by name and fails the run on any skip, fixme or expected-failure marker
- * whose reason is not declared in skipRegistry.mjs. Declared skips come from tests/e2e/support/declaredSkip.ts.
- * A test that did not run because an earlier serial test failed is also "skipped"; those are only listed,
- * since the run has already failed.
+ * Prints every skipped test by name and fails the run on:
+ *  - any skip, fixme or expected-failure marker whose reason is not declared in skipRegistry.mjs
+ *    (declared skips come from tests/e2e/support/declaredSkip.ts);
+ *  - any test that was NOT RUN because an earlier test failed: in a serial describe Playwright reports the
+ *    rest as "skipped" with no reason, and with maxFailures or an interrupt it never reports them at all.
+ *    Both are named here and count as a failure of the run, never as a quiet skip.
  */
 export default class PlaywrightSkipGuard implements Reporter {
   private readonly entries: Array<{ name: string; reason: string }> = [];
+  private readonly notRun: string[] = [];
+  private readonly ended = new Set<string>();
+  private all: TestCase[] = [];
 
   printsToStdio(): boolean {
     return false;
   }
 
-  onTestEnd(test: TestCase, result: TestResult): void {
-    const marker = test.annotations.find((annotation) => annotation.type === 'skip' || annotation.type === 'fixme');
-    if (result.status === 'skipped' || marker) {
-      this.entries.push({ name: test.titlePath().filter(Boolean).join(' > '), reason: marker?.description ?? '' });
-    }
+  onBegin(_config: unknown, suite: Suite): void {
+    this.all = suite.allTests();
   }
 
-  async onEnd(result: FullResult): Promise<{ status: FullResult['status'] } | undefined> {
-    if (!this.entries.length) return undefined;
+  onTestEnd(test: TestCase, result: TestResult): void {
+    this.ended.add(test.id);
+    const name = test.titlePath().filter(Boolean).join(' > ');
+    const marker = test.annotations.find((annotation) => annotation.type === 'skip' || annotation.type === 'fixme');
+    if (marker) this.entries.push({ name, reason: marker.description ?? '' });
+    else if (result.status === 'skipped') this.notRun.push(`${name} (skipped with no reason: an earlier serial test failed)`);
+  }
+
+  async onEnd(): Promise<{ status: FullResult['status'] } | undefined> {
+    for (const test of this.all) {
+      if (this.ended.has(test.id)) continue;
+      if (test.expectedStatus === 'skipped' || test.annotations.some((a) => a.type === 'skip' || a.type === 'fixme')) {
+        this.entries.push({ name: test.titlePath().filter(Boolean).join(' > '), reason: test.annotations.find((a) => a.type === 'skip' || a.type === 'fixme')?.description ?? '' });
+      } else {
+        this.notRun.push(`${test.titlePath().filter(Boolean).join(' > ')} (never ran: the run stopped early)`);
+      }
+    }
     const report = classifySkips(this.entries);
-    console.log(`\n${formatSkipReport(report)}`);
-    if (report.undeclared.length && result.status === 'passed') {
-      console.error(`\n${report.undeclared.length} undeclared skip(s): declare each in config/testing/skipRegistry.mjs and use tests/e2e/support/declaredSkip.ts.`);
+    const text = formatSkipReport(report);
+    if (text) console.log(`\n${text}`);
+    if (this.notRun.length) {
+      console.error(`\n${this.notRun.length} test(s) NOT RUN:`);
+      for (const line of this.notRun) console.error(`  NOT RUN ${line}`);
+    }
+    if (report.undeclared.length || this.notRun.length) {
+      console.error('\nDeclare each skip in config/testing/skipRegistry.mjs and use tests/e2e/support/declaredSkip.ts; fix the earlier failure for NOT RUN tests.');
       return { status: 'failed' };
     }
     return undefined;
