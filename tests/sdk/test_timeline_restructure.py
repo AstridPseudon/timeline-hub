@@ -90,13 +90,6 @@ def test_repeated_nonconsecutive_chapter_refused_by_restructure_and_publish_spli
     with pytest.raises(TimelineEditError, match="chapter.*B.*appears twice"):
         Checkout(flat).stored_document(restructure=True)
 
-    stored = published(split(four_chapter_film()))
-    tl = Checkout(stored)
-    intent.set_chapters(tl.bundle, [{"name": "A", "from": "c1"}, {"name": "B", "from": "c2"},
-                                    {"name": "C", "from": "c3"}, {"name": "B", "from": "c4"}])
-    with pytest.raises(TimelineEditError, match="chapter.*B.*appears twice"):
-        tl.stored_document()  # an already split film also splits at ordinary publish time
-
 
 def test_consecutive_labels_with_the_same_name_remain_one_chapter():
     flat = flat_film()
@@ -137,35 +130,20 @@ def test_split_and_flatten_keep_shot_only_fx_above_plate_with_full_track_propert
     assert next(t for t in flat_shot["tracks"] if t["id"] == "fx") == fx
 
 
-def test_flatten_keeps_existing_distinct_shots_with_repeated_names():
+def test_a_film_whose_shots_repeat_a_name_is_not_flattened():
     stored = published(split(four_chapter_film()))
-    last = stored["placements"][-1]["shot_id"]
-    stored["shots"][last]["payload"]["name"] = "B"
-    intent.set_chapters(stored, [{"name": "A", "from": "c1"}, {"name": "B", "from": "c2"},
-                                 {"name": "C", "from": "c3"}, {"name": "B", "from": "c4"}])
-    flat = flatten(stored)
-    assert STRUCTURE_KEY in flat
-    clips = flat["shots"][flat["placements"][0]["shot_id"]]["internal_timeline"]["clips"]
-    assert {c["id"] for c in clips} >= {"p1", "p2", "p3", "p4"}
-    assert {c.id for c in Checkout(stored).clips()} >= {"p1", "p2", "p3", "p4"}
+    stored["shots"][stored["placements"][-1]["shot_id"]]["payload"]["name"] = "B"
+    assert not is_split(stored)
+    assert flatten(stored) is stored
 
 
-def test_checkout_keeps_stored_shots_readable_after_an_extra_label_run():
+def test_set_chapters_on_a_split_film_is_refused_but_dropping_is_allowed():
     stored = published(split(four_chapter_film()))
-    third = stored["placements"][2]["shot_id"]
-    stored["shots"][third]["internal_timeline"]["clips"].append(plate("p3b", 2.0, 0.2, "c3b"))
-    intent.set_chapters(stored, [{"name": "A", "from": "c1"}, {"name": "B", "from": "c2"},
-                                 {"name": "C", "from": "c3"}, {"name": "B", "from": "c3b"},
-                                 {"name": "D", "from": "c4"}])
-    assert is_split(stored)
-    tl = Checkout(stored)
-    assert len(tl.bundle["placements"]) == 1
-    assert {c.id for c in tl.clips()} >= {"p1", "p2", "p3", "p3b", "p4"}
-    with pytest.raises(TimelineEditError, match="chapter.*B.*appears twice"):
-        tl.stored_document()
-    without_film_clips = copy.deepcopy(stored)
-    without_film_clips["parent"]["clips"] = []
-    assert is_split(without_film_clips)
+    with pytest.raises(TimelineEditError, match="rename the shot instead"):
+        intent.set_chapters(stored, [{"name": "A", "from": "c1"}])
+    with pytest.raises(TimelineEditError, match="rename the shot instead"):
+        intent.set_chapters(Checkout(stored).bundle, [{"name": "A", "from": "c1"}])
+    intent.set_chapters(stored, [])
 
 
 def test_split_fallback_id_does_not_overwrite_an_existing_shot():
@@ -351,8 +329,23 @@ def test_flatten_merges_track_copies_that_differ_only_by_non_conflicting_app_key
         for t in shot["internal_timeline"]["tracks"]:
             if t["id"] == shared["id"]:
                 t["app"] = {"scaleAppliesToPositionedClips": False}
-    with pytest.raises(TimelineEditError, match="conflicting track"):
-        flatten(stored)
+    flat = flatten(stored)  # a conflicting shot copy no longer raises: the film's definition wins
+    held = next(t for t in flat["shots"][next(iter(flat["shots"]))]["internal_timeline"]["tracks"] if t["id"] == shared["id"])
+    assert held["app"] == {"scaleAppliesToPositionedClips": True}
+
+
+def test_flatten_takes_the_films_track_definition_when_a_shot_copy_has_another_label():
+    stored = published(split(flat_film()))
+    film_track = next(t for t in stored["parent"]["config"]["tracks"]
+                      if any(t["id"] == x["id"] for shot in stored["shots"].values() for x in shot["internal_timeline"]["tracks"]))
+    film_track["label"] = "Film label"
+    for shot in stored["shots"].values():
+        for t in shot["internal_timeline"]["tracks"]:
+            if t["id"] == film_track["id"]:
+                t["label"] = "Shot label"
+    flat = flatten(stored)
+    held = next(t for t in flat["shots"][next(iter(flat["shots"]))]["internal_timeline"]["tracks"] if t["id"] == film_track["id"])
+    assert held["label"] == "Film label"
 
 
 def shared_asset_film(digest: str):
@@ -376,9 +369,9 @@ def test_flatten_merges_asset_copies_that_differ_only_by_fields_the_film_copy_la
     assert list(merged) == ["media_id", "handle", "source"]  # the held entry first, then the new fields
 
 
-def test_flatten_still_refuses_an_asset_copy_whose_shared_field_differs():
+def test_flatten_still_refuses_an_asset_copy_that_names_other_media():
     stored = shared_asset_film("sha256:116b6dde")
-    stored["parent"]["registry"]["assets"]["R"]["handle"] = "sha256:0000"
+    stored["parent"]["registry"]["assets"]["R"]["media_id"] = "m-other"
     with pytest.raises(TimelineEditError, match="conflicting asset key 'R'"):
         flatten(stored)
 
@@ -520,3 +513,63 @@ def test_duplicate_refuses_when_the_wrong_form_of_the_source_is_copied(monkeypat
     with pytest.raises(TimelineEditError, match="distinct shots"):
         td._duplicate(client, "p", "t", slug="dup", name=None, revision_id=None)
     assert not published_docs and archived
+
+
+# ---- chapters are shots ------------------------------------------------------------------
+
+def test_a_split_films_chapters_are_its_shots():
+    stored = published(split(flat_film()))
+    assert [c["name"] for c in intent.chapters(published(stored))] == ["01 ONE", "02 TWO", "03 THREE"]
+    assert [c["from"] for c in intent.chapters(stored)] == ["c1", "c2", "c3"]
+    assert intent.film_chapter_labels(stored) == []  # split dropped the label list
+    # a stale label list on the stored form (the 04 / 05 / 04 case) is ignored: the shots decide
+    stale = copy.deepcopy(stored)
+    intent._film_w(stale)["chapters"] = [{"name": "01 ONE", "from": "c1"}, {"name": "02 TWO", "from": "c2"},
+                                         {"name": "01 ONE", "from": "c3"}]
+    assert [c["name"] for c in intent.chapters(stale)] == ["01 ONE", "02 TWO", "03 THREE"]
+    flat = flatten(stale)
+    assert [c["name"] for c in intent.chapters(flat)] == ["01 ONE", "02 TWO", "03 THREE"]
+    assert [c["name"] for c in Checkout(stale).bundle and intent.chapters(Checkout(stale).bundle)] == ["01 ONE", "02 TWO", "03 THREE"]
+
+
+def test_a_one_shot_film_still_uses_its_labels():
+    flat = flat_film()
+    assert [c["name"] for c in intent.chapters(flat)] == ["01 ONE", "02 TWO", "03 THREE"]
+
+
+def test_restructure_drops_the_label_list_after_cutting():
+    flat = flat_film()
+    assert intent.film_chapter_labels(flat)
+    stored = split(flat)
+    assert len(stored["placements"]) == 3
+    assert intent.film_chapter_labels(stored) == []
+    assert [c["name"] for c in intent.chapters(published(stored))] == ["01 ONE", "02 TWO", "03 THREE"]
+
+
+def test_split_routes_a_new_clip_by_placement_and_a_wall_crosser_to_the_film():
+    stored = published(split(flat_film()))
+    tl = Checkout(stored)
+    doc = tl.bundle
+    clips = doc["shots"][doc["placements"][0]["shot_id"]]["internal_timeline"]["clips"]
+    clips.append({"id": "added", "clipType": "am-type", "track": "type", "at": 5.2, "hold": 1.0, "params": {"text": "x"}})
+    clips.append({"id": "wide", "clipType": "am-sprite", "track": "sprite", "asset": "R", "at": 7.5, "hold": 1.0, "params": {}})
+    out = split(doc)
+    held = {out["shots"][r["shot_id"]]["payload"]["name"]: {c["id"] for c in out["shots"][r["shot_id"]]["internal_timeline"]["clips"]}
+            for r in out["placements"]}
+    assert "added" in held["02 TWO"]
+    assert "wide" not in set().union(*held.values())
+    assert "wide" in {c["id"] for c in out["parent"]["clips"]}
+    assert intent.film_chapter_labels(out) == []
+
+
+def test_same_asset_follows_the_runtime_identity_fixture():
+    import json
+    from pathlib import Path
+    from astrid.sdk.timeline_restructure import same_asset
+
+    cases = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "asset-identity.json").read_text())["cases"]
+    for case in cases:
+        if any(k in case["a"] or k in case["b"] for k in ("duration", "resolution", "fps")):
+            continue  # render-affecting fields are not part of Astrid's rule
+        assert same_asset(case["a"], case["b"]) is case["same"], case["name"]
+    assert same_asset({"media_id": "m", "duration": 3}, {"media_id": "m", "duration": 4})

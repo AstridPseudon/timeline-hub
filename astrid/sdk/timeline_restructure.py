@@ -5,8 +5,8 @@ storage boundaries:
 
 * ``flatten(stored)``: a stored film (one shot per chapter, plus film-level clips, registry and track order on the
   parent) becomes the flat working shot. The stored form is kept under ``structure_base``.
-* ``split(flat)``: the flat shot becomes the stored form. Each chapter (from the film's chapter labels) is a real
-  shot; music and any clip that crosses a chapter wall (by more than 1 ms) is a film-level (parent) clip.
+* ``split(flat)``: the flat shot becomes the stored form. Each chapter is a real shot (a split film's chapters are
+  its shot placements, anchored to cuts in the flat form; a one-shot film's come from its labels, once, at restructure); music and any clip that crosses a chapter wall (by more than 1 ms) is a film-level (parent) clip.
 
 ``renderer_input`` / ``assert_equivalent`` project a stored form exactly as the renderer does and prove two forms
 hand the renderer the same thing, so a restructure that would change a frame or a sample refuses to publish.
@@ -61,35 +61,61 @@ def _chapter_runs(bundle: Mapping[str, Any]) -> list[dict[str, str]]:
 
 
 def is_split(bundle: Mapping[str, Any]) -> bool:
-    """True for a stored film whose chapters are shots (named like the chapter labels) or that has film-level clips."""
+    """True for a stored film that places more than one shot (its chapters are those shots), or that holds
+    film-level clips next to one shot named like its single chapter label."""
     if not isinstance(bundle, Mapping) or STRUCTURE_KEY in bundle:
         return False
     rows = _rows(bundle)
     shots = bundle.get("shots") or {}
     if not rows or any(str(r.get("shot_id")) not in shots for r in rows):
         return False
-    runs = _chapter_runs(bundle)
-    if not runs:
-        return False
-    names = [_shot_name(shots[str(r["shot_id"])]) for r in rows]
-    if names != [r["name"] for r in runs]:
-        # A later label edit can add a run inside an already stored shot. Keep that
-        # shot closure readable; split will refuse the repeated name on publish.
-        if len(rows) < 2 or len(set(names)) != len(names):
+    if len(rows) >= 2:  # a chapter film: distinct shot names, a cut in every shot, fits the flat form (else it is edited as it is)
+        names = [_shot_name(shots[str(r["shot_id"])]) for r in rows]
+        if len(set(names)) != len(names):
             return False
-        cut_starts: dict[str, float] = {}
-        for row in rows:
-            start = _row_start(row)
-            for clip in (shots[str(row["shot_id"])].get("internal_timeline") or {}).get("clips") or []:
-                cut = intent.cut_of(clip)
-                if cut:
-                    cut_starts.setdefault(str(cut), start + int(round(_num(clip.get("at")) * 1000)))
-        if not all(any(run["name"] == name and abs(cut_starts.get(run["from"], -10**9) - _row_start(row)) <= 1
-                       for run in runs) for name, row in zip(names, rows)):
+        try:
+            for r in rows:
+                _check_shot(r, shots[str(r["shot_id"])])
+        except TimelineEditError:
             return False
+        return all(any(intent.cut_of(c) for c in (shots[str(r["shot_id"])].get("internal_timeline") or {}).get("clips") or [])
+                   for r in rows)
     parent = bundle.get("parent") or {}
-    config = parent.get("config") or {}
-    return len(rows) >= 2 or bool(parent.get("clips") or config.get("clips"))
+    has_clips = bool(parent.get("clips") or (parent.get("config") or {}).get("clips"))
+    runs = _chapter_runs(bundle)
+    return has_clips and [r["name"] for r in runs] == [_shot_name(shots[str(rows[0]["shot_id"])])]
+
+
+def shot_chapters(bundle: Mapping[str, Any]) -> list[dict[str, str]] | None:
+    """The chapters of a film that places more than one shot: ``[{name, from: cutId}]``, one per shot placement
+    (name = the shot's name, ``from`` = the first cut starting inside its span). None when the film is not such a
+    film, so the caller falls back to the label list."""
+    if not isinstance(bundle, Mapping) or STRUCTURE_KEY in bundle or len(bundle.get("placements") or []) < 2:
+        return None
+    try:
+        flat = flatten(dict(bundle))
+    except TimelineEditError:
+        return None
+    return [dict(r) for r in intent.film_chapter_labels(flat)] if STRUCTURE_KEY in flat else None
+
+
+def _anchor_chapters(out: dict[str, Any], rows: list[dict[str, Any]], shots: Mapping[str, Any]) -> None:
+    """Write the flat form's working chapter anchors from the stored shots: each shot's name at the first cut that
+    starts inside its span, so the walls follow later edits. split() drops them again."""
+    from astrid.sdk.timeline.checkout import Checkout
+
+    groups = Checkout(copy.deepcopy(out))._cut_groups()
+    starts = [(int(round(g["start"] * 1000)), g["id"]) for g in groups]
+    table = []
+    for index, row in enumerate(rows):
+        lo = _row_start(row)
+        hi = _row_start(rows[index + 1]) if index + 1 < len(rows) else lo + int(_num(row.get("duration_ms")))
+        name = _shot_name(shots[str(row["shot_id"])])
+        cut = next((cid for ms, cid in starts if lo - 1.5 <= ms < hi - 1.5), None)
+        if cut is None:
+            raise TimelineEditError(f"shot {name!r} has no cut starting inside it, so it cannot be edited as chapter {name!r}")
+        table.append({"name": name, "from": cut})
+    intent.set_chapters(out, table, _anchors=True)
 
 
 def _check_shot(row: Mapping[str, Any], shot: Mapping[str, Any]) -> None:
@@ -130,15 +156,43 @@ def _view(bundle: Mapping[str, Any], *, base: bool) -> dict[str, Any]:
     return {"parent": parent or {}, "rows": rows, "shots": shots}
 
 
+_IDENTITY = ("media_id", "content_sha256", "file")
+
+
+def _identity(entry: Mapping[str, Any]) -> dict[str, str]:
+    out = {}
+    for name in _IDENTITY:
+        value = entry.get(name)
+        if isinstance(value, str) and value.strip():
+            value = value.strip()
+            if name == "content_sha256":
+                value = value.lower().removeprefix("sha256:")
+            out[name] = value
+    return out
+
+
+def same_asset(a: Any, b: Any) -> bool:
+    """Whether two registry entries name the same media (the Runtime's rule, runtime_protocol/asset_identity.py).
+
+    Identity fields are ``media_id``, ``content_sha256`` (optional ``sha256:`` prefix dropped, lower-cased) and
+    ``file``. Same media iff the entries share at least one identity field and every identity field both carry is
+    equal; a field only one side carries never counts against them, and decoration (urls, thumbnails, etags,
+    handles, names) never counts at all. With no shared identity field the entries are compared by full equality."""
+    if not isinstance(a, Mapping) or not isinstance(b, Mapping):
+        return a == b
+    ia, ib = _identity(a), _identity(b)
+    shared = ia.keys() & ib.keys()
+    return a == b if not shared else all(ia[k] == ib[k] for k in shared)
+
+
 def _union_asset(held: Any, value: Any, error: str) -> Any:
-    """Copies of one asset key merge into their union when no field present in both differs (an App save
-    can drop fields from the film-level copy only); a field present in both with other values raises ``error``."""
+    """Copies of one asset key that name the same media merge: the held copy's values win for fields both carry,
+    then fields only the new copy has are added. Different media raises ``error``."""
     if held == value:
         return copy.deepcopy(held)
-    if not isinstance(held, Mapping) or not isinstance(value, Mapping) \
-            or any(name in held and held[name] != field for name, field in value.items()):
+    if not same_asset(held, value):
         raise TimelineEditError(error)
-    return {**copy.deepcopy(dict(held)), **copy.deepcopy(dict(value))}
+    return {**copy.deepcopy(dict(held)), **{k: copy.deepcopy(v) for k, v in value.items() if k not in held}}
 
 
 def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
@@ -164,7 +218,7 @@ def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
     def add_track(track: Mapping[str, Any], order: list[Mapping[str, Any]], index: int) -> None:
         """Track definitions are copied into the film and every chapter shot; tools may annotate one
         copy (e.g. an App flag under ``app``). Copies merge when they differ only by non-conflicting
-        ``app`` keys; a different kind/label/etc. or the same ``app`` key with another value is a conflict."""
+        ``app`` keys; on any other difference the film's definition wins (as in the renderer), a shot copy is ignored."""
         key = str(track.get("id"))
         if key not in tracks:
             preceding = next((str(item.get("id")) for item in reversed(order[:index])
@@ -195,7 +249,7 @@ def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
         app_b = track.get("app") or {}
         if base_a != base_b or not isinstance(app_a, Mapping) or not isinstance(app_b, Mapping) \
                 or any(name in app_a and app_a[name] != value for name, value in app_b.items()):
-            raise TimelineEditError(f"flatten has conflicting track {key!r}")
+            return  # the film's copy (added first) is the one held: the film's definition wins, as in the renderer
         merged = {**copy.deepcopy(dict(app_a)), **copy.deepcopy(dict(app_b))}
         tracks[key] = {**held, "app": merged}
 
@@ -265,6 +319,9 @@ def flatten(stored: dict[str, Any]) -> dict[str, Any]:
     out["shots"] = {wid: shot}
     out[STRUCTURE_KEY] = copy.deepcopy(dict(stored))
     del occ
+    rows = _view(stored, base=False)["rows"]
+    if len(rows) >= 2:
+        _anchor_chapters(out, rows, stored["shots"])
     return out
 
 
@@ -308,6 +365,15 @@ def _walls(tl: Any, runs: list[dict[str, str]], end_ms: int) -> list[int]:
     return walls
 
 
+def _snap_to_shots(walls: list[int], runs: list[dict[str, str]], stored: Mapping[str, Any] | None) -> list[int]:
+    """A wall within 1.5 ms of where the film's existing shot of that name is placed lands exactly on that placement
+    (cut starts carry millisecond rounding that the stored placement does not), so an unedited film re-splits to
+    the same shots; an edited film's walls keep following their cuts."""
+    shots = (stored or {}).get("shots") or {}
+    starts = {_shot_name(shots[str(r["shot_id"])]): _row_start(r) for r in _rows(stored or {}) if str(r.get("shot_id")) in shots}
+    return [int(starts[r["name"]]) if r["name"] in starts and abs(starts[r["name"]] - w) <= 1.5 else w for r, w in zip(runs, walls)]
+
+
 def plan(flat: Mapping[str, Any]) -> Plan | None:
     """Who stores what for a flat film, or None when it is not a chapter film (one chapter or none)."""
     from astrid.sdk.timeline.checkout import Checkout
@@ -316,13 +382,14 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
     runs = _chapter_runs(flat)
     if len(rows) != 1 or len(runs) < 2:
         return None
-    tl = Checkout(copy.deepcopy(dict(flat)))
+    tl = Checkout(copy.deepcopy({k: v for k, v in flat.items() if k != STRUCTURE_KEY}))
     sid = str(rows[0]["shot_id"])
     end_ms = int(_num(rows[0].get("duration_ms")))
     start0 = _row_start(rows[0])
     if start0:
         raise TimelineEditError("the film's shot must start at 0 to be split into chapters")
     walls = _walls(tl, runs, end_ms)
+    walls = _snap_to_shots(walls, runs, flat.get(STRUCTURE_KEY))
     occurrences: dict[str, list[tuple[int, str]]] = {}
     for run, wall in zip(runs, walls):
         occurrences.setdefault(run["name"], []).append((wall, run["from"]))
@@ -411,7 +478,7 @@ def split(flat: Mapping[str, Any]) -> dict[str, Any]:
     from astrid.sdk.timeline_editing import add_authoring_shot
 
     work = {k: v for k, v in flat.items() if k != STRUCTURE_KEY}
-    planned = plan(work)
+    planned = plan(flat)
     if planned is None:
         return copy.deepcopy(work)
     old = copy.deepcopy(dict(flat.get(STRUCTURE_KEY) or work))  # the stored form this film was read from
@@ -477,6 +544,7 @@ def split(flat: Mapping[str, Any]) -> dict[str, Any]:
         row["duration_ms"] = chapter.length_ms
         placements.append(row)
     out["placements"] = placements
+    intent.set_chapters(out, [])  # the shots are the chapters now; the film never relies on both
     intent.migrate(out)
     return out
 
