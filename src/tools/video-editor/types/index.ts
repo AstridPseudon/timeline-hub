@@ -592,6 +592,12 @@ export type AssetRegistryEntry = {
   prompt?: string;
   /** Stable project-owned media identity used by the Astrid bridge byte route. */
   media_id?: string;
+  /** Astrid media handle (sha256 or ref/run lineage) the entry was resolved from. */
+  handle?: string;
+  /** Astrid-owned provenance of the entry; kept verbatim by the App. */
+  source?: unknown;
+  /** Pixel executor report carried beside a pixel asset; shape owned by Astrid. */
+  pixel_provenance?: unknown;
   url?: string;
   etag?: string;
   content_sha256?: string;

@@ -256,6 +256,10 @@ export function orderParsers(
  */
 const BLESSED_REGISTRY_ENTRY_FIELDS = new Set([
   'file',
+  'media_id',
+  'handle',
+  'source',
+  'pixel_provenance',
   'url',
   'etag',
   'content_sha256',

@@ -772,6 +772,19 @@ describe('sanitizeAssetRegistryEntry', () => {
     expect(result.type).toBe('image/jpeg');
   });
 
+  it('keeps Astrid media identity fields (handle, source, pixel_provenance) through sanitize', () => {
+    const entry: AssetRegistryEntry = {
+      ...baseEntry,
+      media_id: 'sha256:' + 'a'.repeat(64),
+      content_sha256: 'a'.repeat(64),
+      handle: 'ref:hero-still',
+      source: { kind: 'generation', run_id: 'run-1' },
+      pixel_provenance: { executor: 'pixel.snap', outline: 'ok' },
+    };
+    const result = sanitizeAssetRegistryEntry(entry);
+    expect(result).toEqual(entry);
+  });
+
   it('handles empty entry gracefully', () => {
     const result = sanitizeAssetRegistryEntry({ file: 'x' });
     expect(result.file).toBe('x');
