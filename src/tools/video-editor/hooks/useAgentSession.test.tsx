@@ -105,52 +105,6 @@ describe('timeline agent ACP chat', () => {
     expect(acp.connect).toHaveBeenCalledTimes(1);
   });
 
-  describe('event polls riding out a transport blip', () => {
-    const hangUp = () => new BridgeRouteError('ACP events', 503, { error: 'runtime_unavailable', detail: 'runtime request failed: socket hang up' });
-    const store = (events: ReturnType<typeof vi.fn>) => new AstridAgentSessionStore({ acp: {
-      projectChat: vi.fn(async () => ({ project_id: 'p', sessions: [{ id: 'chat-1' }] })),
-      connect: vi.fn(async () => ({ connection_id: 'conn' })),
-      loadSession: vi.fn(async () => ({})),
-      events,
-    } } as never);
-
-    beforeEach(() => { vi.useFakeTimers(); });
-    afterEach(() => { vi.useRealTimers(); });
-
-    it('retries an upstream hang-up quietly and surfaces nothing', async () => {
-      const events = vi.fn()
-        .mockRejectedValueOnce(hangUp())
-        .mockRejectedValueOnce(new BridgeTransportFailure(new TypeError('fetch failed')))
-        .mockResolvedValue({ notifications: [], disconnected: false });
-      const loading = store(events).get('p', 'chat-1');
-      await vi.advanceTimersByTimeAsync(5_000);
-      expect((await loading).id).toBe('chat-1');
-      expect(events).toHaveBeenCalledTimes(3);
-    });
-
-    it('surfaces the failure once the quiet retries are spent', async () => {
-      const failure = hangUp();
-      const events = vi.fn(async () => { throw failure; });
-      const loading = store(events).get('p', 'chat-1');
-      const settled = expect(loading).rejects.toBe(failure);
-      await vi.advanceTimersByTimeAsync(10_000);
-      await settled;
-      expect(events).toHaveBeenCalledTimes(4);
-    });
-
-    it.each([
-      ['a rejected request', new BridgeRouteError('ACP events', 400, { error: 'invalid_protocol', detail: 'Expected X-Astrid-Bridge-Version: v1' })],
-      ['no chat service on this computer', new BridgeRouteError('ACP events', 503, { error: 'acp_unavailable' })],
-    ])('does not retry %s', async (_name, failure) => {
-      const events = vi.fn(async () => { throw failure; });
-      const loading = store(events).get('p', 'chat-1');
-      const settled = expect(loading).rejects.toBe(failure);
-      await vi.advanceTimersByTimeAsync(10_000);
-      await settled;
-      expect(events).toHaveBeenCalledTimes(1);
-    });
-  });
-
   it('streams live follower turns without recording replay receipts, blocks writes, and takes over explicitly', async () => {
     const projectChat = { project_id: 'p', scope_key: 'project:p', revision: 1, selected_session_id: 'chat-1', sessions: [{ id: 'chat-1' }], draft: { text: '', revision: 1, queued_messages: [] } };
     let eventsRead = false;

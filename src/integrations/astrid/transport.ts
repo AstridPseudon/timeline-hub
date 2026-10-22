@@ -71,6 +71,36 @@ export class BridgeTransportFailure extends Error {
   }
 }
 
+/**
+ * The Runtime door's answer to every chat route while no chat service is running on this computer
+ * (astrid-runtime `runtime_protocol/door.py`: 503 `{"error": "acp_unavailable"}`).
+ */
+export const ACP_UNAVAILABLE_CODE = 'acp_unavailable';
+
+/** Quiet pauses between retries of one idempotent request; a longer outage surfaces. */
+export const BRIDGE_READ_RETRY_DELAYS_MS = [250, 1_000, 2_500] as const;
+
+/**
+ * A request that never reached the service, or whose upstream hung up (the proxy's 502/503/504),
+ * says nothing about the route itself. `acp_unavailable` is a real "no chat service" state, not a blip.
+ */
+export function isTransientBridgeFailure(error: unknown): boolean {
+  if (error instanceof BridgeTransportFailure) return true;
+  return error instanceof BridgeRouteError
+    && (error.status === 502 || error.status === 503 || error.status === 504)
+    && error.code !== ACP_UNAVAILABLE_CODE;
+}
+
+/** Resolve after `ms`, or reject at once when `signal` aborts. */
+function pause(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(signal.reason);
+    const onAbort = () => { clearTimeout(timer); reject(signal?.reason); };
+    const timer = setTimeout(() => { signal?.removeEventListener('abort', onAbort); resolve(); }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
 /** Host-owned, privacy-bounded observation of one actual bridge request. */
 export type AstridBridgeRequestObservation = Readonly<{
   outcome: 'success' | 'failure';
@@ -187,10 +217,7 @@ export class AstridBridgeTransport {
     schema: Schema,
     what: string,
   ): Promise<z.infer<Schema>> {
-    const response = await this.requestRaw(path, request);
-    if (!response.ok) {
-      throw new BridgeRouteError(what, response.status, await parseErrorEnvelope(response));
-    }
+    const response = await this.requestWithReadRetry(path, request, what);
     let payload: unknown;
     try {
       payload = await response.json();
@@ -201,6 +228,32 @@ export class AstridBridgeTransport {
       );
     }
     return parseBridgePayload(schema, payload, what);
+  }
+
+  /**
+   * GET/HEAD are idempotent: ride out a transient failure quietly (same delays everywhere) and
+   * throw the original error once the delays are spent. Writes are never retried; an abort stops at once.
+   */
+  private async requestWithReadRetry(path: string, request: BridgeRequestInit, what: string): Promise<Response> {
+    const method = request.method ?? 'GET';
+    const idempotent = method === 'GET' || method === 'HEAD';
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const response = await this.requestRaw(path, request);
+        if (!response.ok) {
+          throw new BridgeRouteError(what, response.status, await parseErrorEnvelope(response));
+        }
+        return response;
+      } catch (error) {
+        const delay = BRIDGE_READ_RETRY_DELAYS_MS[attempt];
+        if (!idempotent || delay === undefined || request.signal?.aborted || !isTransientBridgeFailure(error)) throw error;
+        try {
+          await pause(delay, request.signal);
+        } catch {
+          throw error;
+        }
+      }
+    }
   }
 
   /**

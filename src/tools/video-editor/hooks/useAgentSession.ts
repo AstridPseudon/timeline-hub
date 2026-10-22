@@ -1,6 +1,6 @@
 import { refreshProjectElementContext } from '../runtime/admitted-elements';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ACP_UNAVAILABLE_CODE, type AcpModelCatalog, type ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
+import { type AcpModelCatalog, type ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
@@ -49,19 +49,6 @@ function isMissingAcpConnection(error: unknown): boolean {
     // missing saved session (also sometimes `not_found`) as a lost transport.
     || (error.code === 'not_found' && error.detail === 'ACP connection is not available; reconnect')
   );
-}
-/** Quiet pauses between retries of one event poll; a longer outage surfaces. */
-const ACP_EVENTS_RETRY_DELAYS_MS = [250, 1_000, 2_500] as const;
-/**
- * A poll that never reached the chat service, or whose upstream hung up
- * (the proxy's 502/503/504 `runtime_unavailable`), says nothing about the
- * chat itself. `acp_unavailable` is a real "no chat service" state, not a blip.
- */
-function isTransientEventsFailure(error: unknown): boolean {
-  if (error instanceof BridgeTransportFailure) return true;
-  return error instanceof BridgeRouteError
-    && (error.status === 502 || error.status === 503 || error.status === 504)
-    && error.code !== ACP_UNAVAILABLE_CODE;
 }
 function isMissingLocalAgentTranscript(error: unknown, method: 'session/load', sessionId: string): boolean {
   if (!(error instanceof BridgeRouteError) || error.code !== 'acp_transport') return false;
@@ -808,25 +795,12 @@ export class AstridAgentSessionStore {
     if (this.sessionProjects.get(sessionId) === projectId) await this.pullEvents();
   }
 
-  /** A lost poll is not a lost chat: retry transport blips quietly before surfacing anything. */
-  private async eventsWithRetry(connectionId: string) {
-    for (let attempt = 0; ; attempt++) {
-      try {
-        return await this.client.acp.events(connectionId);
-      } catch (error) {
-        const delay = ACP_EVENTS_RETRY_DELAYS_MS[attempt];
-        if (delay === undefined || !isTransientEventsFailure(error)) throw error;
-        await new Promise<void>(resolve => setTimeout(resolve, delay));
-      }
-    }
-  }
-
   private async pullEvents(): Promise<void> {
     if (this.eventsPromise) return this.eventsPromise;
     this.eventsPromise = (async () => {
       const connections = [...this.connectionIds.entries()];
       await Promise.all(connections.map(async ([agent, connectionId]) => {
-        const response = await this.eventsWithRetry(connectionId).catch((error: unknown) => {
+        const response = await this.client.acp.events(connectionId).catch((error: unknown) => {
           if (isMissingAcpConnection(error)) {
             this.retireConnection(connectionId);
             return null;

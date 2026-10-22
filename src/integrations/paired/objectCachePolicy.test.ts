@@ -3,7 +3,7 @@ import { createServer, request, type IncomingHttpHeaders, type Server } from 'no
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   IMMUTABLE_OBJECT_CACHE_CONTROL, isImmutableObjectRead, objectCacheControl,
 } from '../../../config/vite/objectCachePolicy.mjs';
@@ -109,6 +109,19 @@ describe('dev runtime discovery proxy', () => {
       const other = await get(path);
       expect(other.headers['cache-control'], path).toBe('no-store');
     }
+  });
+
+  it('logs one upstream error line without the query string when the Runtime drops the socket', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    cleanup.push(async () => { errorSpy.mockRestore(); });
+    const get = await venue((req) => { req.socket.destroy(); });
+    const reply = await get('/v1/projects/p?token=secret');
+    expect(reply.status).toBe(503);
+    const lines = errorSpy.mock.calls.map((call) => String(call[0])).filter((line) => line.startsWith('runtime proxy upstream error'));
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toMatch(/^runtime proxy upstream error \d{4}-\d{2}-\d{2}T\S+ GET \/v1\/projects\/p code=ECONNRESET message=socket hang up reusedSocket=(true|false) elapsedMs=\d+ inFlight=1$/);
+    expect(lines[0]).not.toContain('token');
+    expect(lines[0]).not.toContain('secret');
   });
 
   it('does not cache a failed object read', async () => {

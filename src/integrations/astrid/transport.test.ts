@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { z } from 'zod';
@@ -197,5 +197,74 @@ describe('Astrid bridge transport boundary', () => {
     } finally {
       await close(server);
     }
+  });
+});
+
+describe('Astrid bridge transport quiet retry', () => {
+  const schema = z.object({ ok: z.boolean() });
+  const hangUp = () => new Response(JSON.stringify({ error: 'runtime_unavailable', detail: 'runtime request failed: socket hang up' }), { status: 503 });
+  const okResponse = () => Response.json({ ok: true });
+  const transport = () => new AstridBridgeTransport({ baseUrl: 'http://bridge.test' });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  function stubFetch(impl: () => Promise<Response>) {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn(impl);
+    vi.stubGlobal('fetch', fetchMock);
+    return fetchMock;
+  }
+
+  it('retries a GET upstream hang-up quietly and surfaces nothing', async () => {
+    const fetchMock = stubFetch(async () => okResponse());
+    fetchMock
+      .mockResolvedValueOnce(hangUp())
+      .mockRejectedValueOnce(new TypeError('fetch failed'));
+    const loading = transport().requestJson('/acp/events', {}, schema, 'ACP events');
+    await vi.advanceTimersByTimeAsync(5_000);
+    await expect(loading).resolves.toEqual({ ok: true });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('gives up after the last delay with the original error', async () => {
+    const fetchMock = stubFetch(async () => hangUp());
+    const loading = transport().requestJson('/acp/events', {}, schema, 'ACP events');
+    const settled = expect(loading).rejects.toMatchObject({ name: 'BridgeRouteError', status: 503, code: 'runtime_unavailable' });
+    await vi.advanceTimersByTimeAsync(10_000);
+    await settled;
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it.each([
+    ['a rejected request', () => new Response(JSON.stringify({ error: 'invalid_protocol', detail: 'Expected X-Astrid-Bridge-Version: v1' }), { status: 400 })],
+    ['no chat service on this computer', () => new Response(JSON.stringify({ error: 'acp_unavailable' }), { status: 503 })],
+  ])('does not retry %s', async (_name, failure) => {
+    const fetchMock = stubFetch(async () => failure());
+    const settled = expect(transport().requestJson('/acp/events', {}, schema, 'ACP events')).rejects.toBeInstanceOf(BridgeRouteError);
+    await vi.advanceTimersByTimeAsync(10_000);
+    await settled;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['POST', 'PATCH', 'DELETE'] as const)('never retries a %s', async (method) => {
+    const fetchMock = stubFetch(async () => hangUp());
+    const settled = expect(transport().requestJson('/acp/send', { method, body: {} }, schema, 'send')).rejects.toBeInstanceOf(BridgeRouteError);
+    await vi.advanceTimersByTimeAsync(10_000);
+    await settled;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops retrying at once when the caller aborts', async () => {
+    const fetchMock = stubFetch(async () => hangUp());
+    const controller = new AbortController();
+    const settled = expect(transport().requestJson('/acp/events', { signal: controller.signal }, schema, 'ACP events')).rejects.toBeInstanceOf(BridgeRouteError);
+    await vi.advanceTimersByTimeAsync(100);
+    controller.abort();
+    await vi.advanceTimersByTimeAsync(0);
+    await settled;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
