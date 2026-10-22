@@ -1029,7 +1029,7 @@ def migrate_canonical_to_current(
             if int(current["version"]) == TIMELINE_NAME_TARGET_SCHEMA_VERSION:
                 steps.append(_apply_v30_to_v31(connection))
                 current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
-            if current["version"] == APP_STATE_TARGET_SCHEMA_VERSION:
+            if int(current["version"]) == APP_STATE_TARGET_SCHEMA_VERSION:
                 steps.append(_apply_v31_to_v32(connection))
             final = _canonical_schema_identity(connection, expected_realm_id=realm_id)
             if int(final["version"]) != TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
@@ -1069,14 +1069,14 @@ def _source_shape(connection: sqlite3.Connection) -> tuple[set[str], dict[str, l
         if unknown:
             raise ValidationError("upgrade refuses unknown source tables: " + ", ".join(sorted(unknown)))
         excluded = {"runtime_schema", *REVISION_TABLES}
-        columns: dict[str, list[str]] = {}
+        current_columns: dict[str, list[str]] = {}
         for table in sorted(REQUIRED_SCHEMA_TABLES - excluded):
             actual = _table_columns(connection, table)
             expected = list(REQUIRED_SCHEMA_COLUMNS[table])
             if set(actual) != set(expected) or len(actual) != len(expected):
                 raise ValidationError(f"upgrade source shape differs for table {table}")
-            columns[table] = actual
-        return tables, columns, str(schema[1])
+            current_columns[table] = actual
+        return tables, current_columns, str(schema[1])
     if "schema_migrations" not in tables:
         raise ValidationError("upgrade requires a legacy schema_migrations table")
     version = connection.execute("SELECT COALESCE(MAX(version), 0) FROM schema_migrations").fetchone()[0]
