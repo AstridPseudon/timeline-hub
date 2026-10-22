@@ -1,10 +1,10 @@
-<!-- app | 2026-10-22T23:29:12Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 9 | status age 1m -->
-# app board, 2026-10-22T23:24:00Z
+<!-- app | 2026-10-22T23:31:10Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 10 | status age 0m -->
+# app board, 2026-10-22T23:30:41Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| U3a | Upstream deletions, docs/config/supabase | Luna high | — | doing | app-U3a-repair-r1 | Review FAIL: five direct issues; first repair active. Denied scratch action remains prohibited | 7192c0127 source |
-| U3b | Upstream editor; retain outbox/transport/client | Luna high | — | review | app-U3b-review-r2 | Author: 338 tests, lint173 PASS; two outer-host type errors remain; independent review active | 7b33f8f50 |
-| U3c | QUICK harness plus retained journeys | Luna high | — | review | app-U3c-review-r2 | Repair author PASS: support13, discovery14 normal/1 QUICK, all configs nonzero; tsc16 cross-slice errors; independent review active | 15d9df3ce |
+| U3a | Upstream deletions, docs/config/supabase | Luna high | — | review | app-U3a-repair-review-r1 | Five fixes complete: script11/text-case6/lint/discovery PASS; vendor/type/Supabase joins under independent review | tl/app-U3a-repair-r1 |
+| U3b | Upstream editor; retain outbox/transport/client | Luna high | — | doing | app-U3b-repair-r1 | Review FAIL: live placement adapter removed, placement test import fails, host props/type mismatch, trailing whitespace; first return active | 7b33f8f50 source |
+| U3c | QUICK harness plus retained journeys | Luna high | — | review | app-U3c-quick-adapter-review | Coverage reviewed; focused two-call QUICK defect fixed. Discovery14 normal/1 QUICK and lint PASS; final leaf review queued | tl/app-U3c-quick-adapter-fix |
 | U3 | True live upstream merge and Agent re-vendor | Luna high | U3a/U3b/U3c; merged U2 | todo | — | GitHub live ref verified equal to local origin/main 7c17cc9d9; repeat before final composition | — |
 | U4p | Adopt regenerated U1 client/schema | Luna high | U1, U3 | todo | — | Await official U1 tuple and composed U3 | — |
 | A2 | Save funnel and dependent local-document chain | Sol high | C0 APPROVED, U3b merged | todo | — | Brief ready; dispatch immediately after reviewed U3b merge | — |
