@@ -259,6 +259,14 @@ def review_supported(backend: str) -> bool:
     return backend == REMOTION_BACKEND
 
 
+def _admitted_task_inputs(shown: Mapping[str, Any]) -> Mapping[str, Any]:
+    """The admitted inputs of a task, from ``tasks show --json``: the Runtime's task spec
+    (``data.spec``) wraps the admitted executor spec, whose ``inputs`` carry the pinned timeline."""
+    admitted = ((shown.get("data") or {}).get("spec") or {}).get("spec") or {}
+    inputs = admitted.get("inputs")
+    return inputs if isinstance(inputs, Mapping) else {}
+
+
 def render_argv(astrid: Sequence[str], timeline: str, project: str, name: str, *, backend: str,
                 window: tuple[float, float] | None = None, review: bool = False, detach: bool = False,
                 timeout: float | None = None, expected_version: int | None = None,
@@ -883,8 +891,7 @@ class Journey:
             admitted = self.r.command(phase, self.astrid + ["tasks", "show", str(task_id), "--project",
                                                self.project, "--json"], self.env,
                                      unbounded=phase.startswith("quick_"))
-            task_spec = (admitted.get("data") or {}).get("spec") or {}
-            inputs = task_spec.get("inputs") or {}
+            inputs = _admitted_task_inputs(admitted)
             authority = inputs.get("timeline_authority") or {}
             snapshot_ref = inputs.get("timeline_snapshot_ref") or {}
             exact_project_id = project_id or self.project

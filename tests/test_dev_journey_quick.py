@@ -77,3 +77,46 @@ def test_a_failed_journey_exits_nonzero_through_the_dev_command(tmp_path: Path, 
     argv = ["journey", "--tier", "quick", "--reference", "generated", "--summary", str(summary)]
     assert dev_operator.main(argv) == 1
     assert json.loads(summary.read_text())["ok"] is False
+
+
+# ---- the saved-revision render proof reads where the Runtime records the pin ------------------
+
+REVISION = "astrid.editor.timeline.b1b9e54b"
+
+
+def _shown(revision: str = REVISION, *, wrapped: bool = True) -> dict:
+    inputs = {
+        "timeline_authority": {"parent_revision_id": revision, "project_id": "kernel-p", "timeline_id": "main"},
+        "timeline_snapshot_ref": {"revision_id": revision, "project_id": "kernel-p", "timeline_id": "main"},
+    }
+    spec = {"spec": {"inputs": inputs}} if wrapped else {"inputs": inputs}
+    return {"data": {"spec": spec}}
+
+
+def _excerpt(tmp_path: Path, monkeypatch, shown: dict) -> None:
+    from astrid.core.dev import journey as module
+
+    output = tmp_path / "out.mp4"
+    output.write_bytes(b"x")
+    monkeypatch.setattr(module, "_find_output", lambda *_a: output)
+    monkeypatch.setattr(module, "_duration", lambda *_a: 1.0)
+    runner = Runner(tmp_path, tmp_path / "summary.json", "quick")
+    monkeypatch.setattr(runner, "command", lambda *_a, **_k: shown)
+    journey = module.Journey(runner=runner, root=tmp_path, env={}, project="journey", timeline="main",
+                             start=0, end=1, kill_start=0, checkout=tmp_path)
+    monkeypatch.setattr(journey, "render", lambda *_a, **_k: ({"data": {"kernel_task_id": "t1", "state": "completed"}}, "o.mp4"))
+    journey.excerpt("quick_render", "saved", [], revision_id=REVISION, project_id="kernel-p")
+
+
+def test_the_render_proof_reads_the_admitted_spec_the_runtime_records(tmp_path: Path, monkeypatch) -> None:
+    _excerpt(tmp_path, monkeypatch, _shown())
+
+
+def test_the_render_proof_rejects_a_task_pinned_to_another_revision(tmp_path: Path, monkeypatch) -> None:
+    with pytest.raises(JourneyFailure, match="did not pin the saved revision"):
+        _excerpt(tmp_path, monkeypatch, _shown("astrid.editor.timeline.other"))
+
+
+def test_the_render_proof_rejects_a_task_with_no_pin(tmp_path: Path, monkeypatch) -> None:
+    with pytest.raises(JourneyFailure, match="did not pin the saved revision"):
+        _excerpt(tmp_path, monkeypatch, {"data": {"spec": {"spec": {"inputs": {}}}}})
