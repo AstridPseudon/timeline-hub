@@ -18,10 +18,14 @@ Runtime service credit is claimed.
 
 Current source is Agent `tl/integration` at `3f1ceaed`, which contains the
 integrated collection commit `250db8c8`. The governing contract is Timeline
-commit v2 (C0 + C0b + adopted C0c addressing principle). Trim and list vectors
+commit v2 (C0 + C0b + the C0c addressing principle adopted for correctness
+review, with formal C0c approval still pending). Trim and list vectors
 address `parent` because that is where the real authored collection and fields
 live. The source internal child is compiled output, not an invented patch root.
 Scalar vectors use the existing source-record address `occurrence:o/clip:c`.
+The same-field and list refusal heads are explicitly constructed-unexecuted
+scenarios on real input fragments; their provenance is not claimed as an
+original corpus test execution.
 No publication IDs, idempotency keys, provider result, or guessed Runtime API
 fields were added because the real fixtures do not contain them.
 

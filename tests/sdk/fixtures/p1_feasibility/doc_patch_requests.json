@@ -355,11 +355,14 @@
           }
         ]
       },
-      "head": {"changes": [{"ref": "parent", "path": ["clips", "id:clip-a", "from"], "before": 2, "after": 3}]},
+      "head": {
+        "provenance": "constructed-unexecuted on real base",
+        "changes": [{"ref": "parent", "path": ["clips", "id:clip-a", "from"], "before": 2, "after": 3}]
+      },
       "expected": {
         "status": "conflict",
-        "reason": "same written field changed since base",
-        "code": "field_changed",
+        "reason": "value_conflict",
+        "code": "value_conflict",
         "head_unchanged_by_refusal": true,
         "authored_deltas": [{"ref": "parent", "path": ["clips", "id:clip-a", "from"], "before": 2, "after": 1}]
       },
@@ -405,6 +408,14 @@
         "membership_after": ["clip-a", "clip-b"],
         "order_refusal": {"status": "conflict", "code": "selection_changed", "head_order": ["clip-b", "clip-a"]},
         "membership_refusal": {"status": "conflict", "code": "selection_changed", "head_members": ["clip-a"]}
+      },
+      "scenario": {
+        "status": "constructed-unexecuted on real base",
+        "base_fragment": {
+          "fixture": "canonical_clip_trim.json",
+          "phase": "input",
+          "path": ["config", "clips"]
+        }
       },
       "unexecuted_provider_cases": ["accepted list.move", "membership/order dependency conflicts", "no last-writer-wins insertion tie"]
     }
