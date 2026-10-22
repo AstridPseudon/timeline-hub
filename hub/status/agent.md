@@ -1,8 +1,8 @@
-<!-- agent | 2026-10-22T22:13:14Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 0m -->
-# agent board, 2026-10-22T22:13Z
+<!-- agent | 2026-10-22T22:15:23Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
+# agent board, 2026-10-22T22:14Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
-| U2 | upstream merge, rerere, regenerated artifacts | Luna | — | doing | agt-U2-upstream | Targeted tests, lint/typecheck and independent review pending | — |
+| U2 | upstream merge, rerere, regenerated artifacts | Luna | — | blocked:orchestrator | agt-U2-upstream; agt-U2-review | Author BLOCKED; review queued; unmerged ancestry-only branch MUST NOT LAND | 8a2677cd7 (quarantined branch) |
 | U4a | regenerated Runtime client/schema adoption | Luna | U1, U2 | todo | — | — | — |
 | R1 | doc.patch semantics and guards | Sol | C0 APPROVED; U2 before merge | blocked:orchestrator | — | — | — |
 | R2 | guarded whole/per-step undo, A→B→A | Sol | R1 | todo | — | — | — |
@@ -12,6 +12,7 @@
 | G3 | document patch emitter and helpers | Luna | G2 | todo | — | — | — |
 | G4 | remaining writers through commit | Luna | G2 | todo | — | — | — |
 | G5 | delete superseded paths | Luna | G3, G4; H3 go/no-go | todo | — | — | — |
+Blockers: orchestrator / agent lead infrastructure — U2 merge-forward denied writing ORIG_HEAD.lock; need approved dispatcher preparation. See escalations/agent-20261022T2214Z-u2-merge-preparation-denied.md. No ancestry-only merge will land.
 Blockers: orchestrator — BOARD-HEADER still says C0 NOT YET APPROVED; R1 and G2 dispatch immediately after approval under lane brief's parallel-start permission.
 Blockers: runtime — U4a awaits merged U1 and its exact regenerated producer/schema.
 Next ready: R1 and G2 on C0 APPROVED; U4a on merged U1 + U2.
