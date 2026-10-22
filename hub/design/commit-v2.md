@@ -46,12 +46,19 @@ Its HTTP `Idempotency-Key` is required for a mutation. The base is the exact pai
 local revision counter. Equal document bytes at a later publication are a new
 base. Runtime verifies membership, authorization, the base pair and ancestry.
 
-Required body fields are `api_version`, both scope IDs, both base IDs, a nonempty
-`commands` array, a nonempty `label`, and a nonempty `steps` array. `source`,
-`rationale` and `group_id` retain their existing meanings as caller-supplied
-annotations. `dry_run` defaults to false. `merge` accepts only `fields` or
-`atomic` and defaults to `atomic`. Unknown control fields/enums are invalid;
-open document payload fields remain preserved.
+Required body fields remain `api_version`, both scope IDs, both base IDs and a
+nonempty `commands` array. New App/Agent producers supply a nonempty `label` and
+nonempty `steps` array. For compatibility with existing ABI-1 callers, omission
+of `label` normalizes to `Timeline edit`; omission of `steps` synthesizes one
+step (`id: "edit"`, the commit label, empty intent/tags, all command ordinals)
+whose complete patch the provider derives. Explicit empty/null label or steps
+is invalid. Thus every accepted commit has a label and step patches, including
+requests from existing semantic callers. `source`, `rationale` and `group_id`
+retain their existing meanings as caller-supplied annotations. `dry_run` defaults
+to false. `merge` accepts only `fields` or `atomic` and defaults to `fields`,
+preserving existing native semantic rebase with captured dependencies. The
+conservative patch-read rule below can make its effective mode `atomic`.
+Unknown control fields/enums are invalid; open document fields stay preserved.
 
 Commands execute in array order as one transaction. They may mix native semantic
 commands (including move, trim, set, split, ripple and per-occurrence fork when
@@ -1592,5 +1599,63 @@ for path in (repo, shared):
         json.loads(block, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
     assert len(re.findall(r'^## [1-7]\. ', source, re.M)) == 7
     print(f'{path}: {len(blocks)} JSON blocks parsed; 7 required headings')
+PY
+```
+
+The following fixture-consistency check also passed. It uses the existing
+Runtime digest function; it does not run an unimplemented v2 provider:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-runtime/bin/python - <<'PY'
+import copy
+import json
+import re
+from pathlib import Path
+from runtime_protocol.timeline_commit_validation import digest
+
+source = Path('contract/commit-v2.md').read_text()
+examples = [json.loads(block) for block in re.findall(r'^```json\n(.*?)^```$', source, re.M | re.S)]
+request, shapes, clears, structural, idless, created, reads, conflicts, accepted, merged, conflict, invalid, preview, undo, undo_cases, meta, history = examples
+for outcome in (accepted, merged, preview):
+    data = outcome['data']
+    document = data['canonical_document']
+    assert digest(document) == data['document_digest']
+    assert digest(document['parent_revision']['payload']) == document['parent_revision']['content_digest']
+    assert data['commands'] == request['commands']
+    assert data['steps'] == request['steps']
+for outcome in (accepted, merged):
+    assert outcome['receipt']['result'] == outcome['data']
+    assert outcome['receipt']['receipt_id'] == outcome['data']['accepted_revision_id'].replace('rev-', 'pub-')
+assert preview['receipt'] is None and preview['data']['would_status'] == 'merged'
+assert merged['data']['previous_revision_id'] == merged['data']['rebased_onto']['revision_id']
+assert merged['data']['previous_publication_id'] == merged['data']['rebased_onto']['publication_id']
+assert merged['data']['canonical_document']['parent_revision']['payload']['config']['tracks'][0]['label'] == 'Opening'
+assert accepted['data']['canonical_document']['parent_revision']['payload']['config']['tracks'][0]['label'] == 'Picture'
+assert history['steps'] == history['records']['steps'] == request['steps']
+assert [i for step in request['steps'] for i in step['command_ordinals']] == list(range(len(request['commands'])))
+assert [change for step in request['steps'] for change in step['patch']] == [change for command in request['commands'] for change in command['args']['changes']]
+rows = copy.deepcopy(structural['initial'])
+for change in structural['changes']:
+    assert [row['id'] for row in rows] == change['order_before']
+    before = next((row for row in rows if row['id'] == change['id']), None)
+    assert change['before'] == ({'state': 'present', 'value': before} if before else {'state': 'absent'})
+    if change['op'] == 'list.insert':
+        row = change['value']
+    else:
+        row = rows.pop(next(i for i, row in enumerate(rows) if row['id'] == change['id']))
+    if change['op'] != 'list.remove':
+        anchor = change['after_id']
+        index = 0 if anchor is None else next(i for i, row in enumerate(rows) if row['id'] == anchor) + 1
+        rows.insert(index, row)
+assert [row['id'] for row in rows] == structural['expected_ids']
+assert shapes['missing'] != shapes['explicit_null']
+assert conflict['details']['current'] and invalid['details']['code'] == idless['expected_invalid_code']
+assert all(key in failure['details'] for failure in (conflict, invalid) for key in ('code', 'path', 'hint', 'suggested_command'))
+aba = next(case for case in undo_cases if case['case'] == 'A_to_B_to_A')
+assert aba['target']['after'] == aba['current'] == aba['later'][-1]['after']
+assert aba['expected'] == 'conflict' and aba['reason'] == 'intervening_write'
+assert meta['before']['meta']['com.other.tool'] == meta['expected']['meta']['com.other.tool']
+assert not any(line.rstrip() != line for line in source.splitlines())
+print('PASS: Runtime digests, receipt/result equality, step partition, ordered-list transitions, merged preservation, preview, structured errors, ABA, meta preservation and whitespace')
 PY
 ```
