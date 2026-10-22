@@ -19,9 +19,21 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
+import { loadQuickDescriptor, type QuickDescriptor } from './quick-descriptor.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, '../../../..');
+const EDITOR_TOUR_VERSION = 1;
+const forbiddenEnvKeys = [
+  'BANODOCO_LOCAL_DATA_ROOT', 'BANODOCO_LOCAL_SOURCE_MANIFEST', 'BANODOCO_RUNTIME_DATA_ROOT', 'BANODOCO_RUNTIME_SOURCE_MANIFEST',
+  'ASTRID_LOCAL_DATA_ROOT', 'ASTRID_RUNTIME_DATA_ROOT', 'ASTRID_LOCAL_SOURCE_MANIFEST', 'ASTRID_RUNTIME_SOURCE_MANIFEST',
+];
+
+function cleanProcessEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const clean = { ...env };
+  for (const key of forbiddenEnvKeys) delete clean[key];
+  return clean;
+}
 
 /** The door's well-known port (Plan A D1). Override with ASTRID_APP_DIRECT_DOOR_PORT. */
 export const DOOR_PORT = Number(process.env.ASTRID_APP_DIRECT_DOOR_PORT ?? 17340);
@@ -33,8 +45,25 @@ export const ASTRID_ACTOR = 'astrid-f2';
 export const PRODUCT_SCOPES = ['handshake', 'projects:read', 'projects:write', 'tasks:read', 'tasks:write', 'objects:read', 'objects:write'];
 export const BIG_DOWNLOAD_BYTES = 60 * 1024 * 1024;
 export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
-/** Parent transition anchor used by the retained M1 gesture cases. */
-export const THREE_PRODUCTS_REFERENCE_AT = 9;
+/** Keep the App's reference sibling clear of the retained gesture moves. */
+export const THREE_PRODUCTS_REFERENCE_AT = 15;
+
+/** Selected-parameter child processes receive a private credential path, never its bearer value. */
+export function selectedParamCliEnv(base: NodeJS.ProcessEnv, credentialFile: string): NodeJS.ProcessEnv {
+  return { ...base, ASTRID_RUNTIME_CREDENTIAL: credentialFile };
+}
+
+/** Add selected-parameter evaluation context without replacing inherited runner state. */
+export function selectedParamEvalEnv(base: NodeJS.ProcessEnv, credentialFile: string,
+  context: { endpoint: string; realmId: string; actorId: string }): NodeJS.ProcessEnv {
+  return {
+    ...selectedParamCliEnv(base, credentialFile),
+    ASTRID_TIMELINE_EVAL_ENDPOINT: context.endpoint,
+    ASTRID_TIMELINE_EVAL_CREDENTIAL: credentialFile,
+    ASTRID_TIMELINE_EVAL_REALM_ID: context.realmId,
+    ASTRID_TIMELINE_EVAL_ACTOR_ID: context.actorId,
+  };
+}
 
 export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-runtime'));
 const DIST_DIR = path.resolve(process.env.ASTRID_APP_DIRECT_DIST ?? path.join(REPO_ROOT, 'dist'));
@@ -93,7 +122,8 @@ export interface Managed {
 
 /** Starts `command` in its own process group. `exactEnv` gives it `options.env` alone; otherwise that is laid over this process's environment. */
 export function spawnGroup(command: string, args: string[], options: { cwd: string; env?: NodeJS.ProcessEnv; exactEnv?: boolean }): Managed {
-  const child = spawn(command, args, { cwd: options.cwd, env: options.exactEnv ? { ...options.env } : { ...process.env, ...options.env }, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const childEnv = options.exactEnv ? { ...options.env } : { ...cleanProcessEnv(), ...options.env };
+  const child = spawn(command, args, { cwd: options.cwd, env: childEnv, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
   if (!child.pid) throw new Error(`could not start ${command}`);
   liveGroups.add(child.pid);
   const managed: Managed = {
@@ -108,19 +138,27 @@ export function spawnGroup(command: string, args: string[], options: { cwd: stri
   return managed;
 }
 
-export async function stopGroup(managed: Managed | undefined, graceMs = 8000): Promise<void> {
+export async function stopGroup(managed: Managed | undefined, graceMs = 8000, strict = false): Promise<void> {
   if (!managed) return;
   const { pid, exitCode } = managed.child;
   if (!pid) return;
+  let forced = false;
   if (exitCode === null) {
     try { process.kill(-pid, 'SIGTERM'); } catch { /* already gone */ }
-    const timer = setTimeout(() => killGroupSync(pid), graceMs);
+    const timer = setTimeout(() => { forced = true; killGroupSync(pid); }, graceMs);
     await managed.exited;
     clearTimeout(timer);
   }
   // Reap stragglers (tsx/python helper children) of the group.
+  try { process.kill(-pid, 0); forced = true; } catch { /* process group is gone */ }
   killGroupSync(pid);
+  if (strict) {
+    let remains = false;
+    try { process.kill(-pid, 0); remains = true; } catch { /* ESRCH means the App-owned process group is gone. */ }
+    if (remains) throw new Error(`owned process group ${pid} remains after SIGKILL cleanup`);
+  }
   liveGroups.delete(pid);
+  if (strict && forced) throw new Error(`owned process group ${pid} required forced cleanup`);
 }
 
 async function waitFor<T>(label: string, probe: () => Promise<T | null | undefined | false>, timeoutMs: number, abort?: () => string | null): Promise<T> {
@@ -165,7 +203,7 @@ function makeCertificate(dir: string) {
   const key = path.join(dir, 'tls.key');
   const cert = path.join(dir, 'tls.crt');
   execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '2', '-subj', `/CN=${HOSTED_HOST}`,
-    '-addext', `subjectAltName=DNS:${HOSTED_HOST},DNS:${OTHER_HOST}`], { stdio: 'ignore' });
+    '-addext', `subjectAltName=DNS:${HOSTED_HOST},DNS:${OTHER_HOST}`], { stdio: 'ignore', env: cleanProcessEnv() });
   const x509 = new X509Certificate(readFileSync(cert));
   const spki = createHash('sha256').update(x509.publicKey.export({ type: 'spki', format: 'der' })).digest('base64');
   return { key: readFileSync(key), cert: readFileSync(cert), spki };
@@ -230,7 +268,7 @@ export function makePng(width = 64, height = 48): Buffer {
 function makeVideo(dir: string): { data: Buffer; mediaType: string; decodable: boolean } {
   const out = path.join(dir, 'clip.webm');
   try {
-    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=size=320x180:rate=15:duration=12', '-c:v', 'libvpx', '-b:v', '600k', '-g', '15', out], { stdio: 'ignore', timeout: 60_000 });
+    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=size=320x180:rate=15:duration=12', '-c:v', 'libvpx', '-b:v', '600k', '-g', '15', out], { stdio: 'ignore', timeout: 60_000, env: cleanProcessEnv() });
     return { data: readFileSync(out), mediaType: 'video/webm', decodable: true };
   } catch {
     return { data: readFileSync(path.join(REPO_ROOT, 'src/pages/Home/light-study-assets/first-light.mp4')), mediaType: 'video/mp4', decodable: false };
@@ -321,13 +359,73 @@ export interface ThreeProductsSeed {
   /** The key the agent names for a task output (`--swap-asset f2-marker=task:T/marker#0`). It is new: the CLI refuses a key that already names other media. */
   markerAssetKey: string;
   /** Opaque data neither client models; every later revision must carry both unchanged. */
-  opaque: { config: Record<string, unknown>; clip: Record<string, unknown> };
+  opaque: { config: Record<string, unknown>; clip: Record<string, unknown>; shot?: Record<string, unknown> };
+}
+
+export interface QuickSeed {
+  projectId: string;
+  projectSlug: string;
+  projectName: string;
+  timelineId: string;
+  headRevisionId: string;
 }
 
 export const THREE_PRODUCTS_OPAQUE = {
   config: { owner: 'f2', nested: [1, { k: 'v' }], flag: true },
   clip: { owner: 'f2', nested: [1, { k: 'v' }] },
+  shot: { owner: 'f2-shot', nested: [1, { k: 'v' }], flag: true },
 } as const;
+export const THREE_PRODUCTS_SCENE_MARKER_EXTENSION_ID = 'haus.astrid.scene-phase-markers';
+export const THREE_PRODUCTS_SCENE_MARKERS = [{ id: 'ordinary-marker-a', time: 1 }, { id: 'ordinary-marker-b', time: 6 }] as const;
+
+/**
+ * The render journey's timeline (testing plan F2 steps 3 and 4): a 6 s film whose middle two seconds are the slot an agent fills
+ * with a marker clip. `placeholderGrey` is the solid grey the slot holds until then (and holds again in the revision published
+ * after the render was admitted); the render must show the marker, never this grey.
+ */
+export interface RenderSeed {
+  projectSlug: string;
+  timelineId: string;
+  /** The timeline's name, as the "Select timeline" combobox lists it. */
+  timelineName: string;
+  headRevisionId: string;
+  shotId: string;
+  occurrenceId: string;
+  /** The clip the agent fills (film seconds 2 to 4). */
+  slotClipId: string;
+  /** The key the agent names for the marker clip (new: the CLI refuses a key that already names other media). */
+  markerAssetKey: string;
+  /** The slot's asset in the seed, which the agent swaps back to for the negative control. */
+  placeholderAssetKey: string;
+  /** The placeholder's object id, so the swap back can be named by digest. */
+  placeholder: SeededObject;
+  placeholderGrey: { r: number; g: number; b: number };
+  /** The occurrence's block on the timeline (its label, which spans the block): its right edge is where the film, and so the seekable preview, ends. */
+  occurrenceBlockSelector: string;
+  fps: number;
+  durationSeconds: number;
+}
+
+export const RENDER_TIMELINE_NAME = 'F2 Render';
+const RENDER_GREY = { r: 0x80, g: 0x80, b: 0x80 };
+
+/**
+ * BT.601, limited range, said in the file. That is what VP8 is (ffmpeg reads every VP8 frame as such), and a clip that does not
+ * say it is decoded by guesswork: a browser's `<video>` and its WebCodecs path guess differently for the same clip, so the
+ * editor's preview and a player of the rendered film would disagree about the source before any renderer is involved.
+ */
+const BT601_FILTER = 'format=rgb24,scale=out_color_matrix=bt601:out_range=tv,format=yuv420p';
+const BT601_TAGS = ['-colorspace', 'smpte170m', '-color_primaries', 'smpte170m', '-color_trc', 'smpte170m', '-color_range', 'tv'];
+
+/** Runs ffmpeg or fails by name: this journey's media are real VP8/Opus, so there is no fallback file to use instead. */
+function ffmpegOrFail(args: string[], what: string): void {
+  try {
+    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', ...args], { stdio: ['ignore', 'ignore', 'pipe'], timeout: 120_000 });
+  } catch (error) {
+    const stderr = (error as { stderr?: Buffer }).stderr?.toString().trim().slice(-400);
+    throw new Error(`the render journey needs ffmpeg (with libvpx and libopus) to make ${what}: ${stderr || (error as Error).message}`);
+  }
+}
 
 const SCENE_MARKER = 'journey-scene';
 
@@ -343,6 +441,8 @@ window.astridScene = {
 }
 
 export class DirectHarness {
+  attachment: QuickDescriptor | null = null;
+  quickSeed?: QuickSeed;
   tmp = '';
   origin = '';
   originPort = 0;
@@ -353,20 +453,22 @@ export class DirectHarness {
   realmId = '';
   seed!: Seed;
   productToken = '';
-  readonly doorPort = DOOR_PORT;
+  /** The door's loopback port: the fixed default, or the adopted Runtime's own in attachment mode. */
+  doorPort = DOOR_PORT;
   private runtime?: Managed;
   private https?: HttpsServer;
   private stopped = false;
   private extensionsSeed?: ExtensionsSeed;
   private mediaSeed?: MediaSeed;
   private threeProductsSeed?: ThreeProductsSeed;
+  private renderSeed?: RenderSeed;
   private timelineAuthoring = false;
   private authoringPython?: string;
 
   /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
 
   get realmDir() { return path.join(this.tmp, 'realm'); }
-  get supportDir() { return path.join(this.tmp, 'support'); }
+  get supportDir() { return this.attachment ? path.dirname(this.attachment.discoveryFile) : path.join(this.tmp, 'support'); }
   get auditPath() { return path.join(this.tmp, 'door-audit.jsonl'); }
   /** The product credential the door acts with, as `astrid-runtime up` would provision it. */
   get credentialPath() { return path.join(this.tmp, 'product-credential.json'); }
@@ -376,7 +478,12 @@ export class DirectHarness {
 
   /** Browser context options: the local-network permission is granted (the prompt itself is a manual-checklist item). */
   get contextOptions() {
-    return { permissions: ['local-network-access'] as string[] };
+    return {
+      permissions: ['local-network-access'] as string[],
+      // The first-run tour swaps the editor for its demo timeline while it runs, so no journey would be looking at the
+      // real timeline (and nothing polls its head). Every case here is about the real editor: the tour is already seen.
+      storageState: { cookies: [], origins: [{ origin: this.origin, localStorage: [{ name: `astrid-editor-tour-v${EDITOR_TOUR_VERSION}`, value: '1' }] }] },
+    };
   }
 
   /** Chromium arguments: host mapping, a pinned test certificate, and the hosted origin treated as a public address. */
@@ -396,21 +503,42 @@ export class DirectHarness {
   async start(): Promise<this> {
     process.on('SIGTERM', () => { void this.stop().finally(() => process.exit(143)); });
     try {
+      const descriptorText = process.env.ASTRID_QUICK_DESCRIPTOR;
+      if (descriptorText !== undefined) this.attachment = loadQuickDescriptor(descriptorText);
       this.tmp = mkdtempSync(path.join(tmpdir(), 'astrid-direct-'));
-      await assertPortFree(this.doorPort, 'door');
+      if (!this.attachment) await assertPortFree(this.doorPort, 'door');
       const tls = makeCertificate(this.tmp);
       this.spki = tls.spki;
-      this.originPort = Number(process.env.ASTRID_APP_DIRECT_ORIGIN_PORT ?? 0) || await freePort();
+      // The adopted Runtime's door already serves one hosted origin; the page must be served from exactly that.
+      this.originPort = this.attachment ? Number(new URL(this.attachment.hostedOrigin).port) : Number(process.env.ASTRID_APP_DIRECT_ORIGIN_PORT ?? 0) || await freePort();
+      if (this.attachment) this.doorPort = Number(new URL(this.attachment.doorEndpoint).port);
       this.https = await startHostedServer(tls, this.originPort);
       this.origin = `https://${HOSTED_HOST}:${this.originPort}`;
       this.otherOrigin = `https://${OTHER_HOST}:${this.originPort}`;
 
-      mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
-      this.realmId = await this.createRealm();
-      await this.startRuntime();
-      // The door listens from the start and answers `runtime_unavailable` until the product credential exists.
-      this.productToken = await this.provisionCredential(PRODUCT_ACTOR, path.basename(this.credentialPath));
-      this.seed = await this.seedRuntime();
+      if (this.attachment) {
+        this.realmId = this.attachment.realmId;
+        const discovery = this.discovery();
+        if (!/^https?:\/\//.test(discovery.endpoint)) throw new Error('adopted Runtime discovery endpoint must be an absolute HTTP URL');
+        if (discovery.active_realm !== this.attachment.realmId || discovery.runtime_instance_id !== this.attachment.runtimeInstanceId) throw new Error(`adopted Runtime discovery identity mismatch: realm ${discovery.active_realm}, instance ${discovery.runtime_instance_id}`);
+        this.runtimePort = Number(new URL(discovery.endpoint).port);
+        this.productToken = readCredentialToken(this.attachment.productCredentialFile);
+        await this.assertAttachedIdentity();
+        const project = await this.runtimeJson('GET', `/v1/projects/${this.attachment.projectId}`);
+        if (project.status !== 200) throw new Error(`adopted project lookup failed: ${project.status} ${JSON.stringify(project.body)}`);
+        const resource = project.body;
+        if (resource.project_id !== this.attachment.projectId || resource.realm_id !== this.realmId || resource.slug !== this.attachment.projectSlug) throw new Error(`adopted project identity mismatch: ${JSON.stringify(resource)}`);
+        const projectName = resource.name;
+        this.quickSeed = { projectId: this.attachment.projectId, projectSlug: this.attachment.projectSlug, projectName, timelineId: this.attachment.timelineId, headRevisionId: this.attachment.headRevisionId };
+        this.seed = { ...this.quickSeed, image: undefined, video: undefined, big: undefined } as unknown as Seed;
+      } else {
+        mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
+        this.realmId = await this.createRealm();
+        await this.startRuntime();
+        // The door listens from the start and answers `runtime_unavailable` until the product credential exists.
+        this.productToken = await this.provisionCredential(PRODUCT_ACTOR, path.basename(this.credentialPath));
+        this.seed = await this.seedRuntime();
+      }
     } catch (error) {
       await this.stop();
       throw error;
@@ -421,14 +549,31 @@ export class DirectHarness {
   // -- Runtime -------------------------------------------------------------------------------
 
   private runtimeEnv(): NodeJS.ProcessEnv {
-    const agent = path.resolve(process.env.ASTRID_CHECKOUT
-      ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
-        .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
-      ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
+    const agent = path.resolve(process.env.ASTRID_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
     return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', PYTHONPATH: [RUNTIME_CHECKOUT, agent].join(path.delimiter) };
   }
 
-  /** Seed with main's APIs first; startup verifies their original publication provenance. */
+  /** Health identifies the running instance; the authenticated realm route identifies its realm. */
+  private async assertAttachedIdentity(): Promise<void> {
+    const healthResponse = await fetch(`${this.runtimeUrl}/v1/health`);
+    if (!healthResponse.ok) throw new Error(`adopted Runtime health failed: ${healthResponse.status}`);
+    const health = await healthResponse.json() as { runtime_instance_id?: string };
+    const realm = await this.runtimeJson('GET', '/v1/realm');
+    if (realm.status !== 200) throw new Error(`adopted realm lookup failed: ${realm.status} ${JSON.stringify(realm.body)}`);
+    if (realm.body.realm_id !== this.realmId || health.runtime_instance_id !== this.attachment!.runtimeInstanceId) throw new Error(`adopted Runtime identity mismatch: realm ${realm.body.realm_id}, instance ${health.runtime_instance_id}`);
+    this.runtimeInstanceId = health.runtime_instance_id;
+  }
+
+  private async createRealm(): Promise<string> {
+    const output = execFileSync(runtimePython()!, ['-m', 'runtime_protocol.cli', 'create', '--root', this.realmDir, '--display-name', 'Direct Journey'], { cwd: this.tmp, env: cleanProcessEnv({ ...process.env, ...this.runtimeEnv() }), encoding: 'utf8' });
+    return JSON.parse(output.trim().split('\n').pop()!).realm_id;
+  }
+
+  /**
+   * Starts the daemon the way `astrid-runtime up` does: port 0, so every start gets a new port (discovery is rewritten by the
+   * Runtime), and the browser door for the hosted origin on its fixed port, acting with the product credential.
+   */
+  /** Restart with the Agent-authoring provider used by the retained commit journeys. */
   async enableTimelineAuthoring(python: string): Promise<void> {
     if (this.timelineAuthoring) return;
     await this.stopRuntime();
@@ -438,16 +583,8 @@ export class DirectHarness {
     await this.startRuntime();
   }
 
-  private async createRealm(): Promise<string> {
-    const output = execFileSync(runtimePython()!, ['-m', 'runtime_protocol.cli', 'create', '--root', this.realmDir, '--display-name', 'Direct Journey'], { cwd: this.tmp, env: { ...process.env, ...this.runtimeEnv() }, encoding: 'utf8' });
-    return JSON.parse(output.trim().split('\n').pop()!).realm_id;
-  }
-
-  /**
-   * Starts the daemon the way `astrid-runtime up` does: port 0, so every start gets a new port (discovery is rewritten by the
-   * Runtime), and the browser door for the hosted origin on its fixed port, acting with the product credential.
-   */
   async startRuntime(port = 0): Promise<void> {
+    if (this.attachment) throw new Error('App attachment cannot start an adopted Runtime');
     if (this.runtime) throw new Error('Runtime already running');
     const managed = spawnGroup(this.authoringPython ?? runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
       '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath,
@@ -466,6 +603,7 @@ export class DirectHarness {
   }
 
   async stopRuntime(): Promise<void> {
+    if (this.attachment) return;
     await stopGroup(this.runtime);
     this.runtime = undefined;
   }
@@ -482,7 +620,7 @@ export class DirectHarness {
 
   get runtimeRunning() { return Boolean(this.runtime && this.runtime.child.exitCode === null); }
 
-  get runtimeUrl() { return `http://127.0.0.1:${this.runtimePort}`; }
+  get runtimeUrl() { return this.attachment ? this.discovery().endpoint.replace(/\/$/, '') : `http://127.0.0.1:${this.runtimePort}`; }
 
   /** A request straight to the Runtime with the product credential (the "direct" side of every comparison). */
   async runtimeFetch(pathAndQuery: string, init: RequestInit & { headers?: Record<string, string> } = {}): Promise<Response> {
@@ -521,7 +659,7 @@ export class DirectHarness {
    * re-reads it, so a restarted Runtime on a new port is followed with no special case. Throws when it is absent or unparsable.
    */
   discovery(): RuntimeDiscovery {
-    const parsed = JSON.parse(readFileSync(path.join(this.supportDir, 'discovery.json'), 'utf8'));
+    const parsed = JSON.parse(readFileSync(this.attachment?.discoveryFile ?? path.join(this.supportDir, 'discovery.json'), 'utf8'));
     for (const key of ['endpoint', 'active_realm', 'runtime_instance_id', 'worker_credential_file', 'worker_actor'] as const) {
       if (typeof parsed[key] !== 'string' || !parsed[key]) throw new Error(`discovery.json has no ${key}`);
     }
@@ -663,7 +801,7 @@ export class DirectHarness {
    * the shot `f2-shot` (occurrence on parent track `S1`, 0 s to 12 s), which the App draws as one block, not as its clips. The shot
    * also holds a full-length `f2-plate` so the film stays covered when the agent clears an asset (Astrid refuses to publish a gap).
    */
-  async seedThreeProducts(): Promise<ThreeProductsSeed> {
+  async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT, transitions: 'ordinary' | 'native-none' | 'parent-delete' = 'ordinary'): Promise<ThreeProductsSeed> {
     if (this.threeProductsSeed) return this.threeProductsSeed;
     const { projectId, timelineId, image, video, headRevisionId } = this.seed;
     const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
@@ -681,15 +819,19 @@ export class DirectHarness {
     const shotRevisionId = randomUUID();
     const parentClips = [
       { id: ids.appClipId, at: 0, track: 'V1', clipType: 'media', asset: 'f2-app', from: 0, to: 3, speed: 1 },
-      { id: ids.transitionClipId, at: 9, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
+      { id: ids.transitionClipId, at: referenceAt, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
     ];
+    if (transitions === 'native-none') {
+      Object.assign(parentClips[0], JSON.parse('{"opaqueClip":{"nullable":null,"ordered":[false,0,"",[],{"z":2,"a":1}]},"transition":{"type":"crossfade","duration":0.5,"revision":"native-none-unknown-revision","params":{"nullable":null,"__proto__":{"literal":true},"constructor":{"prototype":[null,false]}},"future":{"ordered":[null,0,false]},"__proto__":{"outer":true},"prototype":false}}'));
+    }
+    if (transitions === 'parent-delete') delete parentClips[1].transition;
     const shotClips = [
       { id: 'f2-plate', at: 0, track: 'plate', clipType: 'media', asset: 'f2-plate', hold: 12 },
       { id: ids.agentClipId, at: 3, track: 'V2', clipType: 'media', asset: 'f2-placeholder', hold: 3, app: { f2Opaque: THREE_PRODUCTS_OPAQUE.clip } },
       { id: ids.agentClearClipId, at: 6, track: 'V2', clipType: 'media', asset: 'f2-clear', hold: 3 },
     ];
     const publication = compositionPublication({ projectId, timelineId }, headRevisionId, 'Main', 30);
-    publication.parent_composition.config = { ...publication.parent_composition.config, clips: parentClips, tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }], x_f2_opaque: THREE_PRODUCTS_OPAQUE.config } as unknown as typeof publication.parent_composition.config;
+    publication.parent_composition.config = { ...publication.parent_composition.config, clips: parentClips, tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }], x_f2_opaque: THREE_PRODUCTS_OPAQUE.config, app: { [THREE_PRODUCTS_SCENE_MARKER_EXTENSION_ID]: { sceneMarkers: [...THREE_PRODUCTS_SCENE_MARKERS] } } } as unknown as typeof publication.parent_composition.config;
     publication.parent_composition.clips = parentClips as unknown as typeof publication.parent_composition.clips;
     publication.parent_composition.registry = { assets: { 'f2-app': imageAsset('f2-app'), 'f2-video': videoAsset } } as unknown as typeof publication.parent_composition.registry;
     Object.assign(publication, {
@@ -707,7 +849,7 @@ export class DirectHarness {
         shot_id: shotId,
         revision_id: shotRevisionId,
         internal_timeline_revision_id: internalRevisionId,
-        payload: { metadata: { title: 'F2 agent shot' }, items: [], pools: [], selected_variants: {}, provenance: {}, generation_inputs: {}, audio_bindings: [], text_bindings: [] },
+        payload: { metadata: { title: 'F2 agent shot' }, items: [], pools: [], selected_variants: {}, provenance: {}, generation_inputs: {}, audio_bindings: [], text_bindings: [], x_f2_opaque: THREE_PRODUCTS_OPAQUE.shot },
       }],
     });
     (publication.parent_composition as Record<string, unknown>).occurrences = [{
@@ -718,9 +860,102 @@ export class DirectHarness {
     if (published.status !== 200) throw new Error(`seed three products timeline: ${published.status} ${JSON.stringify(published.body)}`);
     this.threeProductsSeed = {
       projectSlug: (project.body.data ?? project.body).slug, timelineId, headRevisionId: published.body.data.new_head,
-      ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: { config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip } },
+      ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: { config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip }, shot: { ...THREE_PRODUCTS_OPAQUE.shot } },
     };
     return this.threeProductsSeed;
+  }
+
+  /**
+   * The render journey's timeline, a second timeline in the seeded project made on first use (after the cases that open the
+   * seeded timeline, so none of them sees another timeline). The editor opens it from the "Select timeline" combobox.
+   *
+   * Parent: a visual track `S1` that hosts one occurrence of the shot over the whole film (0 s to 6 s), and an audio track `A1`
+   * with a 6 s 440 Hz Opus tone. The shot's internal timeline is one visual track `V2` of three VP8 clips, each with `from`/`to`
+   * bounds: a test pattern (0 s to 2 s), the slot `f2-render-slot` on a solid grey placeholder (2 s to 4 s), and the test
+   * pattern again (4 s to 6 s). The two cut frames (2 s and 4 s) declare nothing: the Runtime's seam check only advises render admission
+   * (it reports in `timeline_authority.visual_seam_report` and never blocks), so the render is not held up by them. Media are real: ffmpeg is required and there is no stand-in file.
+   */
+  async seedRenderTimeline(): Promise<RenderSeed> {
+    if (this.renderSeed) return this.renderSeed;
+    const { projectId } = this.seed;
+    const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
+    if (project.status !== 200) throw new Error(`seed render project: ${project.status} ${JSON.stringify(project.body)}`);
+    const dir = path.join(this.tmp, 'render-media');
+    mkdirSync(dir, { recursive: true });
+    const pattern = path.join(dir, 'pattern.webm');
+    const grey = path.join(dir, 'placeholder.webm');
+    const tone = path.join(dir, 'tone.webm');
+    const { r, g, b } = RENDER_GREY;
+    const hex = [r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('');
+    ffmpegOrFail(['-f', 'lavfi', '-i', 'testsrc=size=640x360:rate=30:duration=6', '-vf', BT601_FILTER, '-c:v', 'libvpx', '-pix_fmt', 'yuv420p', '-b:v', '1M', '-g', '30', ...BT601_TAGS, pattern], 'the test pattern video');
+    ffmpegOrFail(['-f', 'lavfi', '-i', `color=c=0x${hex}:s=640x360:r=30:d=4`, '-vf', BT601_FILTER, '-c:v', 'libvpx', '-pix_fmt', 'yuv420p', '-b:v', '500k', '-g', '30', ...BT601_TAGS, grey], 'the grey placeholder video');
+    ffmpegOrFail(['-f', 'lavfi', '-i', 'sine=frequency=440:duration=6', '-c:a', 'libopus', tone], 'the 440 Hz tone');
+    const ingest = async (file: string, mediaType: string, filename: string): Promise<SeededObject> => {
+      const data = readFileSync(file);
+      const response = await this.runtimeFetch(`/v1/projects/${projectId}/objects`, { method: 'POST', headers: { 'Content-Type': mediaType, 'Idempotency-Key': randomUUID(), 'X-Original-Name': filename }, body: new Uint8Array(data) });
+      if (response.status !== 201 && response.status !== 200) throw new Error(`seed ${filename}: ${response.status} ${await response.text()}`);
+      const body = await response.json();
+      if (body.data.digest !== sha256Hex(data)) throw new Error(`seed ${filename}: Runtime digest differs from local digest`);
+      return { objectId: body.data.object_id, digest: body.data.digest, size: data.length, mediaType };
+    };
+    const patternObject = await ingest(pattern, 'video/webm', 'f2-render-pattern.webm');
+    const placeholder = await ingest(grey, 'video/webm', 'f2-render-placeholder.webm');
+    const toneObject = await ingest(tone, 'audio/webm', 'f2-render-tone.webm');
+    const entry = (object: SeededObject, duration: number) => ({ ...this.registryLocator(object), media_id: object.objectId, content_sha256: object.digest, type: object.mediaType, duration });
+
+    const ids = { shotId: 'f2-render-shot', occurrenceId: 'f2-render-occurrence', slotClipId: 'f2-render-slot', markerAssetKey: 'f2-render-marker', placeholderAssetKey: 'f2-render-placeholder' };
+    const timelineId = randomUUID();
+    const internalRevisionId = randomUUID();
+    const shotRevisionId = randomUUID();
+    const clip = (id: string, at: number, asset: string, from: number, to: number) => ({ id, at, track: 'V2', clipType: 'media', asset, from, to, speed: 1 });
+    const shotClips = [
+      clip('f2-render-before', 0, 'f2-render-pattern', 0, 2),
+      clip(ids.slotClipId, 2, ids.placeholderAssetKey, 0, 2),
+      clip('f2-render-after', 4, 'f2-render-pattern', 4, 6),
+    ];
+    const parentClips = [{ id: 'f2-render-tone', at: 0, track: 'A1', clipType: 'media', asset: 'f2-render-tone', from: 0, to: 6, speed: 1, volume: 1 }];
+    const publication = compositionPublication({ projectId, timelineId }, null, RENDER_TIMELINE_NAME, 30);
+    publication.parent_composition.config = {
+      ...publication.parent_composition.config,
+      clips: parentClips,
+      tracks: [{ id: 'S1', kind: 'visual', label: 'S1' }, { id: 'A1', kind: 'audio', label: 'A1' }],
+    } as unknown as typeof publication.parent_composition.config;
+    publication.parent_composition.clips = parentClips as unknown as typeof publication.parent_composition.clips;
+    publication.parent_composition.registry = { assets: { 'f2-render-tone': entry(toneObject, 6) } } as unknown as typeof publication.parent_composition.registry;
+    Object.assign(publication, {
+      internal_timeline_revisions: [{
+        timeline_id: timelineId,
+        revision_id: internalRevisionId,
+        payload: {
+          tracks: [{ id: 'V2', kind: 'visual', label: 'V2' }],
+          clips: shotClips, effects: [], audio: [], layout: {},
+          registry: { assets: { 'f2-render-pattern': entry(patternObject, 6), [ids.placeholderAssetKey]: entry(placeholder, 4) } },
+          assets: [],
+        },
+      }],
+      shot_revisions: [{
+        shot_id: ids.shotId,
+        revision_id: shotRevisionId,
+        internal_timeline_revision_id: internalRevisionId,
+        payload: { metadata: { title: 'F2 render shot' }, items: [], pools: [], selected_variants: {}, provenance: {}, generation_inputs: {}, audio_bindings: [], text_bindings: [] },
+      }],
+    });
+    (publication.parent_composition as Record<string, unknown>).occurrences = [{
+      occurrence_id: ids.occurrenceId, shot_id: ids.shotId, shot_revision_id: shotRevisionId,
+      placement: { start_ms: 0 }, source_offset: 0, duration_ms: 6000, speed: 1, track: 'S1', transform: {}, gain: 1, mute: false, provenance: {},
+    }];
+    const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
+    if (published.status !== 200) throw new Error(`seed render timeline: ${published.status} ${JSON.stringify(published.body)}`);
+    this.renderSeed = {
+      projectSlug: (project.body.data ?? project.body).slug, timelineId, timelineName: RENDER_TIMELINE_NAME, headRevisionId: published.body.data.new_head,
+      ...ids, placeholder, placeholderGrey: { ...RENDER_GREY }, occurrenceBlockSelector: `[data-action-id="shot-group-label"][data-shot-group-drag-anchor-clip-id="${ids.occurrenceId}"]`, fps: 30, durationSeconds: 6,
+    };
+    return this.renderSeed;
+  }
+
+  /** The `file` the App publishes next to an asset's identity (dataProvider `withManagedFileRoute`): the object's route, which the Runtime keeps out of the render's frozen inputs. */
+  private registryLocator(object: SeededObject): { file: string } {
+    return { file: `/v1/objects/${encodeURIComponent(object.objectId)}` };
   }
 
   // -- Door ----------------------------------------------------------------------------------
@@ -774,6 +1009,7 @@ export class DirectHarness {
 
   /** Brings the Runtime and its door back to a serving state after a test that stopped it or took its credential away. */
   async resetToHealthy(): Promise<void> {
+    if (this.attachment) { await this.assertAttachedIdentity(); return; }
     this.restoreProductCredential();
     if (!this.runtimeRunning) { this.runtime = undefined; await this.startRuntime(); }
     const probe = await this.doorRequest('/v1/health').catch(() => null);
@@ -785,12 +1021,20 @@ export class DirectHarness {
   async stop(): Promise<void> {
     if (this.stopped) return;
     this.stopped = true;
-    await stopGroup(this.runtime).catch(() => {});
+    let cleanupError: unknown;
+    if (!this.attachment) await stopGroup(this.runtime).catch((error) => { cleanupError ??= error; });
     await new Promise<void>((resolve) => { if (!this.https) return resolve(); this.https.closeAllConnections?.(); this.https.close(() => resolve()); });
     if (this.tmp) rmSync(this.tmp, { recursive: true, force: true });
+    if (cleanupError) throw cleanupError;
   }
 }
 
 export async function startDirectHarness(): Promise<DirectHarness> {
   return new DirectHarness().start();
+}
+
+function readCredentialToken(file: string): string {
+  const parsed = JSON.parse(readFileSync(file, 'utf8'));
+  if (typeof parsed.token !== 'string' || !parsed.token) throw new Error(`credential file ${file} has no token`);
+  return parsed.token;
 }
