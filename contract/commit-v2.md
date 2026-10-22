@@ -1,11 +1,12 @@
-# Timeline commit contract v2 (C0)
+# Timeline commit contract v2 (C0 + C0b)
 
 Normative contract for PLAN v2.1 §2, 22 October 2026. Runtime is the only writer;
 the Python Agent provider computes semantics, validation, rebase and inverses.
 App, CLI, Python, scripts and sheets submit the same commit operation. There is
 no TypeScript executor, document overwrite route or force-conflict option.
-Changes to this contract require the orchestrator. C0 supplies the contract for
-approval; this document does not claim implementation or approval has occurred.
+Changes to this contract require the orchestrator. C0 is approved for dependents;
+C0b supplies the undo amendments for review and does not claim their approval or
+implementation. R2 waits for C0b review.
 
 This extends the existing `commitTimeline` engine, not a second store or journal.
 The document version is v2; request `api_version: 1`, command `schema_version: 1`
@@ -19,6 +20,15 @@ and client change, not a promise that the frozen R4 provider accepts v2 input.
 Runtime's coordinator/port outcome validation must adopt `invalid` failures and
 `merged` successes along with the generated DTOs; its present failure check only
 admits `conflict`/`refused`. This document does not change those checks by itself.
+Historical accepted receipts whose disjoint-head success is spelled `rebased`
+remain authentic and replay unchanged, including their result, request hash,
+event chain, records digest and `rebased_onto`. Extend `_verify_accepted()` to
+recognize both historical `rebased` and new `merged` for a non-base landing;
+`accepted` still requires the base landing. Keep every other authentication
+check. Do not rewrite stored results/events, rehash old requests, synthesize
+missing v2 step evidence or normalize a replay to `merged`. New v2 acceptances
+and previews use `merged`; exact retries of historical keys return the original
+`rebased` envelope without execution or an extra history entry.
 
 Read against Runtime `cc7410a1f` (`timeline_commit_store.py`,
 `timeline_commit_execution.py`) and Agent hub integration
@@ -27,6 +37,8 @@ its preview/accept branch at line 1061). Frozen R4 `commands.py`/`commit.py` wer
 also inspected; the line-1061 reference belongs to integration, not frozen R4.
 Runtime's existing acceptance transaction, publisher-bound request hashing,
 per-scope idempotency, verified closure, CAS and history chain remain authoritative.
+C0b also rechecked Runtime hub integration `0d4c71a3c` and the same Agent hub
+ref, including native occurrence creation and root restoration/allocation paths.
 
 Examples are finite JSON: complete HTTP bodies/envelopes where stated, otherwise
 named fixture fragments or input/expected-output scenarios. A fragment is not an
@@ -74,7 +86,8 @@ whole batch, including its steps; `fields` never means partial acceptance.
 
 Each step contains a stable unique `id` within the commit, `label`, `intent`
 (string), `tags` (unique strings), `command_ordinals` (zero-based command indices)
-and `patch` (an array of changes using §2). Steps partition the command array
+and `patch` (an array of submitted changes using §2), plus optional `reads`
+using §3's dependency variants. Steps partition the command array
 into nonempty contiguous runs in execution order. Each command belongs to
 exactly one step. A helper that needs independent undo of ten notes emits ten
 commands/steps in one request. All changes of a command share its step.
@@ -82,22 +95,75 @@ commands/steps in one request. All changes of a command share its step.
 For `doc.patch`, the submitted step patch must equal its commands' ordered
 changes. For semantic commands, it contains any caller-asserted expected effects
 and may be empty; assertions must match authoritative execution. The provider
-fills the accepted step patch with the complete actual changes, including
-compiler consequences. Step patches are checked claims, never instructions to
-apply a second edit. Semantic commands need not predict compiler output in
-order to be submitted. Replies, previews and history always contain complete
-provider-derived step patches with actual before values at the landing head.
+fills the accepted step patch with complete authoritative effect records,
+including compiler consequences and the provider-only forms in §2. Submitted
+patches and these effect records have different permissions. Step patches are
+checked claims, never instructions to apply a second edit. Semantic commands
+need not predict compiler output in order to be submitted. Replies, previews
+and history always contain complete provider-derived step patches with actual before values at the landing head.
 
 `reads` is an optional array of the field/collection/scope dependencies defined
 in §3, additional to all reads the provider captures for semantic commands.
-Explicit `reads: []` declares that a free transform consulted no other state
-besides its guarded patch operands. Omitting `reads` is different: Runtime
-cannot infer what a script consulted. A request containing `doc.patch` with
-omitted `reads` has effective mode `atomic`, even if it asked for `fields`, and
+Request `reads` are evaluated once at batch entry and apply conservatively to
+every step, including when undo selects only one step. Explicit request
+`reads: []` declares no additional batch-entry reads besides guarded operands;
+it does not erase step-local or captured semantic dependencies. Step `reads`
+are evaluated immediately before that step's first command, after preceding
+steps' executed changes, at both original-base validation and landing-head
+replay. They can therefore consume a value or root produced by an earlier step.
+An incorrect step read on the sequential base is invalid
+(`previous_value_mismatch`); a changed dependency during rebase is conflict
+(`dependency_changed`, or `selection_changed` for collection shape).
+Request-level reads are not re-evaluated at each step against values changed by
+the batch itself. Omitted step `reads` adds no declarations; it does not assert
+that native captures or inherited request reads are empty. A free-transform
+producer must declare every additional step-local dependency it knows.
+
+Omitting request `reads` is different: Runtime cannot infer what a script
+consulted. A request containing `doc.patch` with omitted `reads` has effective
+mode `atomic`, even if it asked for `fields`, and
 guards the complete touched document scopes. The result reports `merge_mode`.
-A script consulting another scope must declare it; use a closure-scope read
-when the consulted set cannot be bounded. The SDK must choose this conservative
-form when it cannot capture reads, not invent `reads: []` after diffing bytes.
+For each free-transform step in this fallback, persist scope dependencies for
+the batch's complete touched scopes at that step's sequential input, including
+scopes of derived effects. Do not limit this to scopes that the step wrote: it
+may have consumed another step's output. Optional step reads cannot waive this
+fallback. If scope
+capture cannot bound the consulted closure, persist a `timeline` scope read.
+These dependencies remain undo guards after acceptance; reporting `atomic`
+alone is insufficient. A script consulting another scope must declare it; use
+a closure-scope read when the consulted set cannot be bounded. The SDK must
+choose this conservative form when it cannot capture reads, not invent `reads: []` after diffing bytes.
+
+Accepted step `dependencies` is a provider-only array of §3 dependency variants:
+the normalized union of inherited request reads, verified step reads, captured
+semantic reads/selections/bindings, and generated conservative scope reads.
+Empty `dependencies` may be omitted; supplied `steps[].dependencies` is invalid.
+A scope dependency may conservatively subsume narrower captures in this array;
+the original exact captures remain in `records.commands`. Preserve evaluation
+boundaries and observed states in the authenticated request/step/command records;
+this union is an undo dependency index, not a new batch-entry guard array.
+`records.steps` stores the authoritative patches and dependencies, linked to
+command captures by `command_ordinals`. Preview, result and history expose the
+same authoritative steps. Never regenerate step dependencies from the final
+patch or accept caller-authored recorder facts as authority.
+
+Compiler attribution is causal and deterministic, even if compilation physically
+runs only after the final command. For each derived effect, track the semantic
+inputs it actually consumed and their last changing command ordinals. Assign
+the effect to the step of the greatest such ordinal (ties use execution order),
+and persist dependencies on all contributing steps' input changes. Compiler
+outputs that depend on earlier compiler outputs inherit those causes. Preserve
+actual before/after states and execution order in command captures; attribution
+does not make a deferred effect observable earlier. A shared derived effect
+requires contributing steps to be undone together whenever a surviving consumer
+would be invalidated. If the compiler cannot bound causes, assign the effect to
+the final step and persist conservative closure dependencies for all potential
+contributors; per-step undo must refuse an unsafe subset. Do not silently assign
+all effects to the final recorder. For example, step one changes a word anchor
+and step two changes an unrelated note: derived clip `at`/`hold` belong to step
+one, with its transcript dependency; undoing step two preserves that timing,
+and undoing step one restores anchor and timing while preserving the note when
+no later consumer exists. Rebase and preview use this same attribution rule.
 
 Complete request body (`Idempotency-Key: edit-7`):
 
@@ -251,6 +317,34 @@ not write contradictory copies. Alias normalization must happen before overlap
 checks: editing the same shared child through two occurrences is not disjoint.
 A ref outside the authenticated closure is `outside_closure`.
 
+**Provider-generated effect records.** Accepted `steps[].patch` and
+`records.steps[].patch` describe the verified before/after closure union at the
+relevant execution boundary, rather than only submitted-patch addresses.
+Alongside ordinary changes, they may contain root creation (`set`, `path: []`,
+`before: {"state": "absent"}` with the complete new payload), root removal
+(`remove`, `path: []`, complete present `before`), and managed closure-edge
+changes, including the links embedded in newly created roots/occurrence rows.
+Root absence means absence from this boundary's reachable closure; immutable
+historical images remain stored. Record every entered/left root and changed
+managed link; links inside a complete root/item value are already recorded and
+must not be duplicated as a second mutation. Use dependency-order effects:
+create child before attaching its owner, detach owner before removing child.
+A fork records the new roots and reattachment, and any old roots that leave the
+closure; a still-shared old root is retained. Materialized revision-pin changes
+are complete recorded effects even though §3 distinguishes them from authored
+parent conflicts. Image wrappers, manifests, receipt identity and publication
+pins remain Runtime-generated, never writable effect targets.
+
+This permission is only for authenticated provider output, including an inverse's
+output. Submitting the same root-create/root-remove or managed-edge form in
+`doc.patch`, even inside a whole-root/item replacement or a step assertion,
+remains invalid (`managed_closure_write`); reject these forbidden submitted
+forms before address lookup. Otherwise a ref absent from the verified union
+fails `outside_closure`; clients cannot enlarge that union by naming refs.
+Only semantic execution and verified allocations establish new union members.
+Effect records do not replace native `records.commands` allocation, restoration,
+compiler-cause or dependency provenance; retain it for authentication and undo.
+
 For an array whose schema gives items a unique string `id`, an element token is
 `id:<literal-id>`. For the occurrence array it is
 `occurrence_id:<literal-occurrence-id>`. Split a token at its first colon only.
@@ -333,22 +427,22 @@ Structural patch fragments and expected final order:
 
 ```json
 {
-  "initial": [{"id": "a", "kind": "video"}, {"id": "b", "kind": "video"}],
+  "initial": [{"id": "a", "kind": "visual"}, {"id": "b", "kind": "visual"}],
   "changes": [
     {
       "op": "list.insert", "ref": "parent", "path": ["config", "tracks"],
       "id": "c", "before": {"state": "absent"},
       "order_before": ["a", "b"], "after_id": "a",
-      "value": {"id": "c", "kind": "video"}
+      "value": {"id": "c", "kind": "visual"}
     },
     {
       "op": "list.move", "ref": "parent", "path": ["config", "tracks"],
-      "id": "b", "before": {"state": "present", "value": {"id": "b", "kind": "video"}},
+      "id": "b", "before": {"state": "present", "value": {"id": "b", "kind": "visual"}},
       "order_before": ["a", "c", "b"], "after_id": null
     },
     {
       "op": "list.remove", "ref": "parent", "path": ["config", "tracks"],
-      "id": "c", "before": {"state": "present", "value": {"id": "c", "kind": "video"}},
+      "id": "c", "before": {"state": "present", "value": {"id": "c", "kind": "visual"}},
       "order_before": ["b", "a", "c"]
     }
   ],
@@ -401,7 +495,7 @@ Created-ID command fragment:
     "op": "list.insert", "ref": "parent", "path": ["config", "tracks"],
     "id": "track-2", "before": {"state": "absent"},
     "order_before": ["track-1"], "after_id": "track-1",
-    "value": {"id": "track-2", "kind": "video"}
+    "value": {"id": "track-2", "kind": "visual"}
   }]}
 }
 ```
@@ -425,8 +519,9 @@ implicitly read all sibling fields or sibling ordering. Ordered `list.*` does
 read collection shape, as specified above. Provider semantic reads and derived
 writes participate in exactly the same conflict checks as patch effects.
 
-Declared read variants (fixture fragments; reads in a request are evaluated at
-its original base, before any commands):
+Declared read variants (fixture fragments). Request reads are evaluated at the
+original base before commands; step reads use the sequential input immediately
+before that step. Replay uses the corresponding landing-head boundaries:
 
 ```json
 {
@@ -455,10 +550,13 @@ non-null. It guards the full collection, not just selected items; declare field
 reads too if a filter consulted item properties. A collection read does not
 by itself guard item contents. For an id-less array use a field read of the
 entire array. Scope reads guard the complete addressed payload; `timeline`
-means the whole closure and is read-only. Base closure image pins supply scope
-state; clients do not manufacture digests for scope reads. Any overlapping
-intervening change conflicts even if the current state/order equals the base.
-Incorrect declared reads at the original base are invalid.
+means the whole closure and is read-only. Verified image pins at the actual
+evaluation boundary supply scope state (including earlier semantic allocations
+for step reads); clients do not manufacture digests for scope reads. Any
+overlapping intervening change conflicts even if the current state/order equals the base.
+Incorrect declared reads at their original sequential evaluation boundary are
+invalid. Earlier steps in this same transaction are not intervening publications;
+their outputs are available to later step reads and retained as dependencies.
 
 For effective `atomic`, derive touched scopes from every read, write and created
 entity (including semantic consequences), normalized to parent, shot and child
@@ -542,14 +640,14 @@ Complete accepted envelope for §1's request at pub-0:
       "timeline_id": "film-1",
       "parent_revision": {
         "revision_id": "rev-1",
-        "content_digest": "sha256:04967dfe604339e5d7b10f29a9ae64caa2efd93b12271a400d803896c484908f",
+        "content_digest": "sha256:4506f79a8b9deebb8d0f0c0d260016c2c67027aaaccd1abf3fe89361903f5772",
         "payload": {
           "config": {
             "fps": 30,
             "tracks": [
               {
                 "id": "track-1",
-                "kind": "video",
+                "kind": "visual",
                 "label": "Picture"
               }
             ]
@@ -581,7 +679,7 @@ Complete accepted envelope for §1's request at pub-0:
         "documents": []
       }
     },
-    "document_digest": "sha256:3bf2315c305dfba115efc48ca54207a0ec13765ccdf7029d77e6633f60280a0e",
+    "document_digest": "sha256:f2c8b08d4d8cbdf2bf68fc90043b6be2a6930e22db945979f20e4b0150d94d3d",
     "commands": [
       {
         "schema_version": 1,
@@ -679,14 +777,14 @@ Complete accepted envelope for §1's request at pub-0:
         "timeline_id": "film-1",
         "parent_revision": {
           "revision_id": "rev-1",
-          "content_digest": "sha256:04967dfe604339e5d7b10f29a9ae64caa2efd93b12271a400d803896c484908f",
+          "content_digest": "sha256:4506f79a8b9deebb8d0f0c0d260016c2c67027aaaccd1abf3fe89361903f5772",
           "payload": {
             "config": {
               "fps": 30,
               "tracks": [
                 {
                   "id": "track-1",
-                  "kind": "video",
+                  "kind": "visual",
                   "label": "Picture"
                 }
               ]
@@ -718,7 +816,7 @@ Complete accepted envelope for §1's request at pub-0:
           "documents": []
         }
       },
-      "document_digest": "sha256:3bf2315c305dfba115efc48ca54207a0ec13765ccdf7029d77e6633f60280a0e",
+      "document_digest": "sha256:f2c8b08d4d8cbdf2bf68fc90043b6be2a6930e22db945979f20e4b0150d94d3d",
       "commands": [
         {
           "schema_version": 1,
@@ -817,14 +915,14 @@ survives; the original base stays pub-0 and the actual predecessor is pub-1:
       "timeline_id": "film-1",
       "parent_revision": {
         "revision_id": "rev-2",
-        "content_digest": "sha256:c1fe2a5c5575702edad51f37da7f21805b6d8199d184adbcbb232ba8b1efd944",
+        "content_digest": "sha256:b2d872fa7524bb6e963d49a858bc0f178b1de35d50b503145d853cd2f092385a",
         "payload": {
           "config": {
             "fps": 30,
             "tracks": [
               {
                 "id": "track-1",
-                "kind": "video",
+                "kind": "visual",
                 "label": "Opening"
               }
             ]
@@ -856,7 +954,7 @@ survives; the original base stays pub-0 and the actual predecessor is pub-1:
         "documents": []
       }
     },
-    "document_digest": "sha256:966674c611d1b1139cd6eacab70a0e45400f8d70ea2ff9b7ab24ac622e85d4af",
+    "document_digest": "sha256:e5e0ad4e9ad7674a72fbf5d931ceb5812ac4464a6b4dacd46927b181382f6d10",
     "commands": [
       {
         "schema_version": 1,
@@ -957,14 +1055,14 @@ survives; the original base stays pub-0 and the actual predecessor is pub-1:
         "timeline_id": "film-1",
         "parent_revision": {
           "revision_id": "rev-2",
-          "content_digest": "sha256:c1fe2a5c5575702edad51f37da7f21805b6d8199d184adbcbb232ba8b1efd944",
+          "content_digest": "sha256:b2d872fa7524bb6e963d49a858bc0f178b1de35d50b503145d853cd2f092385a",
           "payload": {
             "config": {
               "fps": 30,
               "tracks": [
                 {
                   "id": "track-1",
-                  "kind": "video",
+                  "kind": "visual",
                   "label": "Opening"
                 }
               ]
@@ -996,7 +1094,7 @@ survives; the original base stays pub-0 and the actual predecessor is pub-1:
           "documents": []
         }
       },
-      "document_digest": "sha256:966674c611d1b1139cd6eacab70a0e45400f8d70ea2ff9b7ab24ac622e85d4af",
+      "document_digest": "sha256:e5e0ad4e9ad7674a72fbf5d931ceb5812ac4464a6b4dacd46927b181382f6d10",
       "commands": [
         {
           "schema_version": 1,
@@ -1173,14 +1271,14 @@ Complete successful merged-preview envelope:
       "timeline_id": "film-1",
       "parent_revision": {
         "revision_id": "preview-rev-2",
-        "content_digest": "sha256:c1fe2a5c5575702edad51f37da7f21805b6d8199d184adbcbb232ba8b1efd944",
+        "content_digest": "sha256:b2d872fa7524bb6e963d49a858bc0f178b1de35d50b503145d853cd2f092385a",
         "payload": {
           "config": {
             "fps": 30,
             "tracks": [
               {
                 "id": "track-1",
-                "kind": "video",
+                "kind": "visual",
                 "label": "Opening"
               }
             ]
@@ -1212,7 +1310,7 @@ Complete successful merged-preview envelope:
         "documents": []
       }
     },
-    "document_digest": "sha256:d3708156fc92838904d3c07561361a69a866b7eaa5e3afb2408ff543e9d24c9c",
+    "document_digest": "sha256:211e4c7bb6c33fb38316e9c3e488e9b9b4525fa51d101464cbe27e17379c4663",
     "commands": [
       {
         "schema_version": 1,
@@ -1318,14 +1416,26 @@ removal, removal becomes insertion at its recorded position, and move restores
 its previous position. A step's inverse uses its own sequential boundary states,
 not the whole commit's final coalesced field values. Preserve all effects,
 including derived writes and collection-shape changes. Validate the completed
-inverse candidate before acceptance.
+inverse candidate before acceptance. Root create/remove and managed-edge effects
+are inverted through the existing semantic restoration machinery, never by
+turning the effect log into a client `doc.patch`. Load authenticated before/after
+closures and native allocation facts, order restoration/reattachment correctly,
+and recompile managed pins from that verified source. Restore reserved IDs only
+with their original authenticated allocation provenance (including inherited
+materialization sources); redo inherits it from the accepted inverse. No fresh
+allocation, caller-supplied closure image or inferred provenance may authorize
+restoration. Corrupt provenance is rejected, and unavailable boundary/history
+is `history_unavailable`. Removing a root from the live closure does not erase
+its immutable image or free its reserved ID.
 
 Two guards are required: (1) current values/identities/collection shape match the
 selected effects' recorded after states, adjusted only for other selected
 inverses; (2) scan every later accepted publication and every later nonselected
 step through the current evaluated head for overlapping writes, reads and
-reference dependencies. A later write to a target field or guarded read refuses
-undo even if it restored equal bytes; later consumers of a created entity or a
+reference dependencies. Include every authoritative step dependency from §1,
+with inherited request reads applying to every step and conservative scope reads
+remaining active after the commit landed. A later write to a target field or
+guarded read refuses undo even if it restored equal bytes; later consumers of a created entity or a
 value the inverse would invalidate also refuse undo. Selected steps with shared
 fields/dependencies must be undone together when a remaining step would be
 invalidated. Unknown/legacy history is `history_unavailable`, never permission
@@ -1384,6 +1494,1139 @@ Undo scenarios, including a value-equal A→B→A tail:
     "later": [], "expected_after_undo": {"note": "A", "track_label": "Opening"}
   }
 ]
+```
+
+Two-patch executable scenario. Bootstrap `base_document` as the authenticated
+`pub-reads-0` fixture (its parent meta namespace already exists). Submit `request`
+with key `step-reads`, then, with no other publications, submit
+`undo_first_request` with key `undo-first`. Step two's read of B is valid only
+after step one has run; evaluating it at batch entry would incorrectly reject
+the commit. The first undo returns the exact refusal below, has no receipt and
+adds no history. From that unchanged head submit `undo_both_request` with key
+`undo-both`; it reverses second then first and restores the original payload.
+`expected_commit`/`expected_undo` are outcome projections, not HTTP envelopes.
+In independent resets, replace request `reads` with `request_read_variant.reads`
+(the A read is checked only at entry), or remove it as instructed by
+`uncaptured_variant`. Both still refuse undo of first alone and accept undo of
+both; the latter persists parent-scope dependencies on both steps and reports
+`atomic`. Later independent parent work would therefore also guard this undo.
+These are required R1/R2 behavioral assertions, not results from JSON parsing.
+
+```json
+{
+  "case": "sequential_step_reads",
+  "base_document": {
+    "schema_version": 1,
+    "project_id": "project-1",
+    "timeline_id": "film-1",
+    "parent_revision": {
+      "revision_id": "rev-reads-0",
+      "content_digest": "sha256:2474d93db3e5bdd0f35e1fd2dd489b1d8b5eb154b1ee29ae7e1863074cbcf812",
+      "payload": {
+        "config": {"output": {"fps": 30}, "tracks": []},
+        "registry": {},
+        "clips": [],
+        "occurrences": [],
+        "meta": {"org.example.notes": {"note": "A"}}
+      }
+    },
+    "shot_revisions": [],
+    "internal_timeline_revisions": [],
+    "dependency_manifest": {"shots": [], "internal_timelines": [], "media": [], "documents": []}
+  },
+  "request": {
+    "api_version": 1,
+    "project_id": "project-1",
+    "timeline_id": "film-1",
+    "base_revision_id": "rev-reads-0",
+    "base_publication_id": "pub-reads-0",
+    "commands": [
+      {
+        "schema_version": 1,
+        "op": "doc.patch",
+        "version": "1",
+        "select": null,
+        "args": {
+          "changes": [
+            {
+              "op": "set",
+              "ref": "parent",
+              "path": ["meta", "org.example.notes", "note"],
+              "before": {"state": "present", "value": "A"},
+              "value": "B"
+            }
+          ]
+        }
+      },
+      {
+        "schema_version": 1,
+        "op": "doc.patch",
+        "version": "1",
+        "select": null,
+        "args": {
+          "changes": [
+            {
+              "op": "set",
+              "ref": "parent",
+              "path": ["meta", "org.example.notes", "summary"],
+              "before": {"state": "absent"},
+              "value": "Note: B"
+            }
+          ]
+        }
+      }
+    ],
+    "label": "Revise note and summarize",
+    "steps": [
+      {
+        "id": "first",
+        "label": "Revise note",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [0],
+        "patch": [
+          {
+            "op": "set",
+            "ref": "parent",
+            "path": ["meta", "org.example.notes", "note"],
+            "before": {"state": "present", "value": "A"},
+            "value": "B"
+          }
+        ],
+        "reads": []
+      },
+      {
+        "id": "second",
+        "label": "Summarize revised note",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [1],
+        "patch": [
+          {
+            "op": "set",
+            "ref": "parent",
+            "path": ["meta", "org.example.notes", "summary"],
+            "before": {"state": "absent"},
+            "value": "Note: B"
+          }
+        ],
+        "reads": [
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": ["meta", "org.example.notes", "note"],
+            "state": {"state": "present", "value": "B"}
+          }
+        ]
+      }
+    ],
+    "merge": "fields",
+    "reads": []
+  },
+  "expected_commit": {
+    "status": "accepted",
+    "accepted_revision_id": "rev-reads-1",
+    "publication_id": "pub-reads-1",
+    "merge_mode": "fields",
+    "steps": [
+      {
+        "id": "first",
+        "label": "Revise note",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [0],
+        "patch": [
+          {
+            "op": "set",
+            "ref": "parent",
+            "path": ["meta", "org.example.notes", "note"],
+            "before": {"state": "present", "value": "A"},
+            "value": "B"
+          }
+        ],
+        "reads": []
+      },
+      {
+        "id": "second",
+        "label": "Summarize revised note",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [1],
+        "patch": [
+          {
+            "op": "set",
+            "ref": "parent",
+            "path": ["meta", "org.example.notes", "summary"],
+            "before": {"state": "absent"},
+            "value": "Note: B"
+          }
+        ],
+        "reads": [
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": ["meta", "org.example.notes", "note"],
+            "state": {"state": "present", "value": "B"}
+          }
+        ],
+        "dependencies": [
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": ["meta", "org.example.notes", "note"],
+            "state": {"state": "present", "value": "B"}
+          }
+        ]
+      }
+    ],
+    "parent_payload": {
+      "config": {"output": {"fps": 30}, "tracks": []},
+      "registry": {},
+      "clips": [],
+      "occurrences": [],
+      "meta": {"org.example.notes": {"note": "B", "summary": "Note: B"}}
+    }
+  },
+  "undo_first_request": {
+    "api_version": 1,
+    "project_id": "project-1",
+    "timeline_id": "film-1",
+    "base_revision_id": "rev-reads-1",
+    "base_publication_id": "pub-reads-1",
+    "commands": [
+      {
+        "schema_version": 1,
+        "op": "timeline.inverse",
+        "version": "1",
+        "select": null,
+        "args": {"publications": ["pub-reads-1"], "steps": {"pub-reads-1": ["first"]}}
+      }
+    ],
+    "label": "Undo notes",
+    "steps": [
+      {
+        "id": "undo",
+        "label": "Undo notes",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [0],
+        "patch": []
+      }
+    ],
+    "merge": "fields",
+    "reads": []
+  },
+  "expected_refusal": {
+    "http_status": 409,
+    "code": "conflict",
+    "message": "A surviving step consumed the selected output",
+    "details": {
+      "status": "conflict",
+      "reason": "inverse_conflict",
+      "code": "inverse_conflict",
+      "path": ["meta", "org.example.notes", "note"],
+      "hint": "Undo first and second together",
+      "suggested_command": "timeline history",
+      "base": {"revision_id": "rev-reads-1", "publication_id": "pub-reads-1"},
+      "current": {"revision_id": "rev-reads-1", "publication_id": "pub-reads-1"},
+      "conflicts": [
+        {
+          "kind": "inverse_conflict",
+          "ref": "parent",
+          "path": ["meta", "org.example.notes", "note"],
+          "base": {"state": "present", "value": "B"},
+          "theirs": {"state": "present", "value": "B"},
+          "ours": {"state": "present", "value": "A"},
+          "choices": []
+        }
+      ]
+    }
+  },
+  "expected_after_refusal": {
+    "head": {"revision_id": "rev-reads-1", "publication_id": "pub-reads-1"},
+    "parent_payload": {
+      "config": {"output": {"fps": 30}, "tracks": []},
+      "registry": {},
+      "clips": [],
+      "occurrences": [],
+      "meta": {"org.example.notes": {"note": "B", "summary": "Note: B"}}
+    },
+    "added_history_entries": 0
+  },
+  "undo_both_request": {
+    "api_version": 1,
+    "project_id": "project-1",
+    "timeline_id": "film-1",
+    "base_revision_id": "rev-reads-1",
+    "base_publication_id": "pub-reads-1",
+    "commands": [
+      {
+        "schema_version": 1,
+        "op": "timeline.inverse",
+        "version": "1",
+        "select": null,
+        "args": {"publications": ["pub-reads-1"], "steps": {"pub-reads-1": ["first", "second"]}}
+      }
+    ],
+    "label": "Undo notes",
+    "steps": [
+      {
+        "id": "undo",
+        "label": "Undo notes",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [0],
+        "patch": []
+      }
+    ],
+    "merge": "fields",
+    "reads": []
+  },
+  "expected_undo": {
+    "status": "accepted",
+    "accepted_revision_id": "rev-reads-2",
+    "publication_id": "pub-reads-2",
+    "reversed_steps": ["second", "first"],
+    "patch": [
+      {
+        "op": "remove",
+        "ref": "parent",
+        "path": ["meta", "org.example.notes", "summary"],
+        "before": {"state": "present", "value": "Note: B"}
+      },
+      {
+        "op": "set",
+        "ref": "parent",
+        "path": ["meta", "org.example.notes", "note"],
+        "before": {"state": "present", "value": "B"},
+        "value": "A"
+      }
+    ],
+    "parent_payload": {
+      "config": {"output": {"fps": 30}, "tracks": []},
+      "registry": {},
+      "clips": [],
+      "occurrences": [],
+      "meta": {"org.example.notes": {"note": "A"}}
+    },
+    "undo_of": ["pub-reads-1"],
+    "undo_steps": {"pub-reads-1": ["first", "second"]}
+  },
+  "request_read_variant": {
+    "reads": [
+      {
+        "kind": "field",
+        "ref": "parent",
+        "path": ["meta", "org.example.notes", "note"],
+        "state": {"state": "present", "value": "A"}
+      }
+    ],
+    "expected_dependencies": [
+      [
+        {
+          "kind": "field",
+          "ref": "parent",
+          "path": ["meta", "org.example.notes", "note"],
+          "state": {"state": "present", "value": "A"}
+        }
+      ],
+      [
+        {
+          "kind": "field",
+          "ref": "parent",
+          "path": ["meta", "org.example.notes", "note"],
+          "state": {"state": "present", "value": "A"}
+        },
+        {
+          "kind": "field",
+          "ref": "parent",
+          "path": ["meta", "org.example.notes", "note"],
+          "state": {"state": "present", "value": "B"}
+        }
+      ]
+    ],
+    "expected_status": "accepted"
+  },
+  "uncaptured_variant": {
+    "omit_request_fields": ["reads"],
+    "expected_merge_mode": "atomic",
+    "required_dependencies_per_step": [{"kind": "scope", "ref": "parent", "path": []}],
+    "undo_first_status": "conflict",
+    "undo_first_reason": "inverse_conflict",
+    "undo_both_status": "accepted"
+  }
+}
+```
+
+Semantic creation and undo executable scenario. This uses the existing
+`occurrence.create`, avoiding an invented fork recipe. Bootstrap the empty
+closure below at `pub-create-0` with `picture` an active visual output track,
+no reserved `shot-new`/`occ-new`, no legacy pinned groups and no intervening work.
+Submit `request` with key `create-opening`, reload its canonical closure, then
+submit `undo_request` with key `undo-opening`. `reply` and `undo_reply` are
+complete success envelopes, including every root payload, manifest pin, effect
+and receipt result; fixture revision/event identities stand for provider-produced
+pins as in §4. The internal image's `timeline_id` is `film-1`, as the current
+compiler assigns for a new shot. This case has exactly one child at that ref.
+The new shot-to-internal link is inside the root `set`; the occurrence-to-shot
+links are inside `list.insert`. All belong to the creation step although the
+compiler emits the pins after command execution. Undo removes the occurrence,
+then the shot and internal roots from the reachable closure. It preserves the
+empty base payload and adds a new publication, retaining historical images and
+ID reservations. `expected_history` is a recorder projection: native typed
+allocations remain authenticated alongside the displayed effect records.
+
+From the undo head, `redo_request` with fresh key `redo-opening` must restore the
+same entities and child images via the accepted inverse's inherited allocation
+provenance; its parent revision/publication is newly accepted. Ordinary creation
+reusing these retired IDs at that base must be invalid (`identity_collision`). In
+independent resets, wrap each `forbidden_patch_commands` command in an otherwise
+valid commit with its matching step patch and `reads: []`: test root creation at
+the empty base, and root removal/managed-edge set at the creation head. Each
+returns 422 `invalid`/`managed_closure_write`, without receipt or history. A
+same-value edge set is forbidden too; this is an ownership check, not a missing
+reference check. A fork uses the same effect permissions and inverse machinery,
+with surviving shared roots retained as specified in §2. R1/R2 must execute
+these scenarios against the provider; fixture checks alone do not qualify them.
+
+```json
+{
+  "case": "semantic_creation_and_inverse",
+  "base_document": {
+    "schema_version": 1,
+    "project_id": "project-1",
+    "timeline_id": "film-1",
+    "parent_revision": {
+      "revision_id": "rev-create-0",
+      "content_digest": "sha256:7db6941424344f29682efe9425283892d2f45c9fc96bd20cf21faaa8256eb16a",
+      "payload": {
+        "config": {
+          "output": {"fps": 30},
+          "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+        },
+        "registry": {},
+        "clips": [],
+        "occurrences": []
+      }
+    },
+    "shot_revisions": [],
+    "internal_timeline_revisions": [],
+    "dependency_manifest": {"shots": [], "internal_timelines": [], "media": [], "documents": []}
+  },
+  "request": {
+    "api_version": 1,
+    "project_id": "project-1",
+    "timeline_id": "film-1",
+    "base_revision_id": "rev-create-0",
+    "base_publication_id": "pub-create-0",
+    "commands": [
+      {
+        "schema_version": 1,
+        "op": "occurrence.create",
+        "version": "1",
+        "select": "parent",
+        "args": {
+          "occurrence_id": "occ-new",
+          "shot_id": "shot-new",
+          "name": "Opening",
+          "track": "picture",
+          "on": 0,
+          "duration": 2
+        },
+        "created": ["shot:shot-new", "occurrence:occ-new"]
+      }
+    ],
+    "label": "Create opening shot",
+    "steps": [
+      {
+        "id": "create",
+        "label": "Create opening shot",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [0],
+        "patch": [],
+        "reads": [{"kind": "scope", "ref": "timeline", "path": []}]
+      }
+    ],
+    "merge": "fields",
+    "reads": []
+  },
+  "reply": {
+    "data": {
+      "status": "accepted",
+      "base_revision_id": "rev-create-0",
+      "base_publication_id": "pub-create-0",
+      "previous_revision_id": "rev-create-0",
+      "previous_publication_id": "pub-create-0",
+      "accepted_revision_id": "rev-create-1",
+      "rebased_onto": null,
+      "canonical_document": {
+        "schema_version": 1,
+        "project_id": "project-1",
+        "timeline_id": "film-1",
+        "parent_revision": {
+          "revision_id": "rev-create-1",
+          "content_digest": "sha256:d3546764a26b60a2e6b6d0a91bbd39b7564c9cd58d9fbd89b901c0540ba108ee",
+          "payload": {
+            "config": {
+              "output": {"fps": 30},
+              "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+            },
+            "registry": {},
+            "clips": [],
+            "occurrences": [
+              {
+                "occurrence_id": "occ-new",
+                "shot_id": "shot-new",
+                "shot_revision_id": "shot-new-1",
+                "track": "picture",
+                "placement": {"start_ms": 0, "track": "picture"},
+                "duration_ms": 2000,
+                "source_offset": 0,
+                "speed": 1,
+                "gain": 1
+              }
+            ]
+          }
+        },
+        "shot_revisions": [
+          {
+            "shot_id": "shot-new",
+            "revision_id": "shot-new-1",
+            "internal_timeline_revision_id": "internal-new-1",
+            "content_digest": "sha256:d6f9b8b3d85ccafca5c675759f43c6987433a57e34708a3848635a0b357f2306",
+            "payload": {"name": "Opening", "items": [], "internal_timeline_revision_id": "internal-new-1"}
+          }
+        ],
+        "internal_timeline_revisions": [
+          {
+            "timeline_id": "film-1",
+            "revision_id": "internal-new-1",
+            "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
+            "payload": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
+          }
+        ],
+        "dependency_manifest": {
+          "shots": [
+            {
+              "shot_id": "shot-new",
+              "revision_id": "shot-new-1",
+              "internal_timeline_revision_id": "internal-new-1",
+              "content_digest": "sha256:d6f9b8b3d85ccafca5c675759f43c6987433a57e34708a3848635a0b357f2306"
+            }
+          ],
+          "internal_timelines": [
+            {
+              "timeline_id": "film-1",
+              "revision_id": "internal-new-1",
+              "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18"
+            }
+          ],
+          "media": [],
+          "documents": []
+        }
+      },
+      "document_digest": "sha256:da282a5a1240e00d2e4516951ac1ed7a54b5e8d32171a4cefed83a4514b05508",
+      "commands": [
+        {
+          "schema_version": 1,
+          "op": "occurrence.create",
+          "version": "1",
+          "select": "parent",
+          "args": {
+            "occurrence_id": "occ-new",
+            "shot_id": "shot-new",
+            "name": "Opening",
+            "track": "picture",
+            "on": 0,
+            "duration": 2
+          },
+          "created": ["shot:shot-new", "occurrence:occ-new"]
+        }
+      ],
+      "id_map": {},
+      "provider_version": "provider-v2",
+      "compiler_version": "compiler-v2",
+      "merge_mode": "fields",
+      "steps": [
+        {
+          "id": "create",
+          "label": "Create opening shot",
+          "intent": "",
+          "tags": [],
+          "command_ordinals": [0],
+          "patch": [
+            {
+              "op": "set",
+              "ref": "internal:film-1",
+              "path": [],
+              "before": {"state": "absent"},
+              "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
+            },
+            {
+              "op": "set",
+              "ref": "shot:shot-new",
+              "path": [],
+              "before": {"state": "absent"},
+              "value": {"name": "Opening", "items": [], "internal_timeline_revision_id": "internal-new-1"}
+            },
+            {
+              "op": "list.insert",
+              "ref": "parent",
+              "path": ["occurrences"],
+              "id": "occ-new",
+              "before": {"state": "absent"},
+              "order_before": [],
+              "after_id": null,
+              "value": {
+                "occurrence_id": "occ-new",
+                "shot_id": "shot-new",
+                "shot_revision_id": "shot-new-1",
+                "track": "picture",
+                "placement": {"start_ms": 0, "track": "picture"},
+                "duration_ms": 2000,
+                "source_offset": 0,
+                "speed": 1,
+                "gain": 1
+              }
+            }
+          ],
+          "reads": [{"kind": "scope", "ref": "timeline", "path": []}],
+          "dependencies": [{"kind": "scope", "ref": "timeline", "path": []}]
+        }
+      ],
+      "publisher": "principal-7",
+      "label": "Create opening shot"
+    },
+    "receipt": {
+      "receipt_id": "pub-create-1",
+      "command_kind": "timeline.commit",
+      "idempotency_key": "create-opening",
+      "request_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "project_id": "project-1",
+      "project_seq": [2, 2],
+      "event_ids": ["event-pub-create-1"],
+      "result": {
+        "status": "accepted",
+        "base_revision_id": "rev-create-0",
+        "base_publication_id": "pub-create-0",
+        "previous_revision_id": "rev-create-0",
+        "previous_publication_id": "pub-create-0",
+        "accepted_revision_id": "rev-create-1",
+        "rebased_onto": null,
+        "canonical_document": {
+          "schema_version": 1,
+          "project_id": "project-1",
+          "timeline_id": "film-1",
+          "parent_revision": {
+            "revision_id": "rev-create-1",
+            "content_digest": "sha256:d3546764a26b60a2e6b6d0a91bbd39b7564c9cd58d9fbd89b901c0540ba108ee",
+            "payload": {
+              "config": {
+                "output": {"fps": 30},
+                "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+              },
+              "registry": {},
+              "clips": [],
+              "occurrences": [
+                {
+                  "occurrence_id": "occ-new",
+                  "shot_id": "shot-new",
+                  "shot_revision_id": "shot-new-1",
+                  "track": "picture",
+                  "placement": {"start_ms": 0, "track": "picture"},
+                  "duration_ms": 2000,
+                  "source_offset": 0,
+                  "speed": 1,
+                  "gain": 1
+                }
+              ]
+            }
+          },
+          "shot_revisions": [
+            {
+              "shot_id": "shot-new",
+              "revision_id": "shot-new-1",
+              "internal_timeline_revision_id": "internal-new-1",
+              "content_digest": "sha256:d6f9b8b3d85ccafca5c675759f43c6987433a57e34708a3848635a0b357f2306",
+              "payload": {"name": "Opening", "items": [], "internal_timeline_revision_id": "internal-new-1"}
+            }
+          ],
+          "internal_timeline_revisions": [
+            {
+              "timeline_id": "film-1",
+              "revision_id": "internal-new-1",
+              "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
+              "payload": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
+            }
+          ],
+          "dependency_manifest": {
+            "shots": [
+              {
+                "shot_id": "shot-new",
+                "revision_id": "shot-new-1",
+                "internal_timeline_revision_id": "internal-new-1",
+                "content_digest": "sha256:d6f9b8b3d85ccafca5c675759f43c6987433a57e34708a3848635a0b357f2306"
+              }
+            ],
+            "internal_timelines": [
+              {
+                "timeline_id": "film-1",
+                "revision_id": "internal-new-1",
+                "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18"
+              }
+            ],
+            "media": [],
+            "documents": []
+          }
+        },
+        "document_digest": "sha256:da282a5a1240e00d2e4516951ac1ed7a54b5e8d32171a4cefed83a4514b05508",
+        "commands": [
+          {
+            "schema_version": 1,
+            "op": "occurrence.create",
+            "version": "1",
+            "select": "parent",
+            "args": {
+              "occurrence_id": "occ-new",
+              "shot_id": "shot-new",
+              "name": "Opening",
+              "track": "picture",
+              "on": 0,
+              "duration": 2
+            },
+            "created": ["shot:shot-new", "occurrence:occ-new"]
+          }
+        ],
+        "id_map": {},
+        "provider_version": "provider-v2",
+        "compiler_version": "compiler-v2",
+        "merge_mode": "fields",
+        "steps": [
+          {
+            "id": "create",
+            "label": "Create opening shot",
+            "intent": "",
+            "tags": [],
+            "command_ordinals": [0],
+            "patch": [
+              {
+                "op": "set",
+                "ref": "internal:film-1",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
+              },
+              {
+                "op": "set",
+                "ref": "shot:shot-new",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {"name": "Opening", "items": [], "internal_timeline_revision_id": "internal-new-1"}
+              },
+              {
+                "op": "list.insert",
+                "ref": "parent",
+                "path": ["occurrences"],
+                "id": "occ-new",
+                "before": {"state": "absent"},
+                "order_before": [],
+                "after_id": null,
+                "value": {
+                  "occurrence_id": "occ-new",
+                  "shot_id": "shot-new",
+                  "shot_revision_id": "shot-new-1",
+                  "track": "picture",
+                  "placement": {"start_ms": 0, "track": "picture"},
+                  "duration_ms": 2000,
+                  "source_offset": 0,
+                  "speed": 1,
+                  "gain": 1
+                }
+              }
+            ],
+            "reads": [{"kind": "scope", "ref": "timeline", "path": []}],
+            "dependencies": [{"kind": "scope", "ref": "timeline", "path": []}]
+          }
+        ],
+        "publisher": "principal-7",
+        "label": "Create opening shot"
+      },
+      "created_at": "2026-10-22T22:20:00Z"
+    }
+  },
+  "undo_request": {
+    "api_version": 1,
+    "project_id": "project-1",
+    "timeline_id": "film-1",
+    "base_revision_id": "rev-create-1",
+    "base_publication_id": "pub-create-1",
+    "commands": [
+      {
+        "schema_version": 1,
+        "op": "timeline.inverse",
+        "version": "1",
+        "select": null,
+        "args": {"publications": ["pub-create-1"]}
+      }
+    ],
+    "label": "Undo opening shot creation",
+    "steps": [
+      {
+        "id": "undo",
+        "label": "Undo opening shot creation",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [0],
+        "patch": []
+      }
+    ],
+    "merge": "fields",
+    "reads": []
+  },
+  "undo_reply": {
+    "data": {
+      "status": "accepted",
+      "base_revision_id": "rev-create-1",
+      "base_publication_id": "pub-create-1",
+      "previous_revision_id": "rev-create-1",
+      "previous_publication_id": "pub-create-1",
+      "accepted_revision_id": "rev-create-2",
+      "rebased_onto": null,
+      "canonical_document": {
+        "schema_version": 1,
+        "project_id": "project-1",
+        "timeline_id": "film-1",
+        "parent_revision": {
+          "revision_id": "rev-create-2",
+          "content_digest": "sha256:7db6941424344f29682efe9425283892d2f45c9fc96bd20cf21faaa8256eb16a",
+          "payload": {
+            "config": {
+              "output": {"fps": 30},
+              "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+            },
+            "registry": {},
+            "clips": [],
+            "occurrences": []
+          }
+        },
+        "shot_revisions": [],
+        "internal_timeline_revisions": [],
+        "dependency_manifest": {"shots": [], "internal_timelines": [], "media": [], "documents": []}
+      },
+      "document_digest": "sha256:ecdacf571218d4cc951583296e5f75e1593cbcc72d64fa4f062597d38bd57689",
+      "commands": [
+        {
+          "schema_version": 1,
+          "op": "timeline.inverse",
+          "version": "1",
+          "select": null,
+          "args": {"publications": ["pub-create-1"]}
+        }
+      ],
+      "id_map": {},
+      "provider_version": "provider-v2",
+      "compiler_version": "compiler-v2",
+      "merge_mode": "fields",
+      "steps": [
+        {
+          "id": "undo",
+          "label": "Undo opening shot creation",
+          "intent": "",
+          "tags": [],
+          "command_ordinals": [0],
+          "patch": [
+            {
+              "op": "list.remove",
+              "ref": "parent",
+              "path": ["occurrences"],
+              "id": "occ-new",
+              "before": {
+                "state": "present",
+                "value": {
+                  "occurrence_id": "occ-new",
+                  "shot_id": "shot-new",
+                  "shot_revision_id": "shot-new-1",
+                  "track": "picture",
+                  "placement": {"start_ms": 0, "track": "picture"},
+                  "duration_ms": 2000,
+                  "source_offset": 0,
+                  "speed": 1,
+                  "gain": 1
+                }
+              },
+              "order_before": ["occ-new"]
+            },
+            {
+              "op": "remove",
+              "ref": "shot:shot-new",
+              "path": [],
+              "before": {
+                "state": "present",
+                "value": {"name": "Opening", "items": [], "internal_timeline_revision_id": "internal-new-1"}
+              }
+            },
+            {
+              "op": "remove",
+              "ref": "internal:film-1",
+              "path": [],
+              "before": {
+                "state": "present",
+                "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
+              }
+            }
+          ],
+          "dependencies": [{"kind": "scope", "ref": "timeline", "path": []}]
+        }
+      ],
+      "publisher": "principal-7",
+      "label": "Undo opening shot creation"
+    },
+    "receipt": {
+      "receipt_id": "pub-create-2",
+      "command_kind": "timeline.commit",
+      "idempotency_key": "undo-opening",
+      "request_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "project_id": "project-1",
+      "project_seq": [3, 3],
+      "event_ids": ["event-pub-create-2"],
+      "result": {
+        "status": "accepted",
+        "base_revision_id": "rev-create-1",
+        "base_publication_id": "pub-create-1",
+        "previous_revision_id": "rev-create-1",
+        "previous_publication_id": "pub-create-1",
+        "accepted_revision_id": "rev-create-2",
+        "rebased_onto": null,
+        "canonical_document": {
+          "schema_version": 1,
+          "project_id": "project-1",
+          "timeline_id": "film-1",
+          "parent_revision": {
+            "revision_id": "rev-create-2",
+            "content_digest": "sha256:7db6941424344f29682efe9425283892d2f45c9fc96bd20cf21faaa8256eb16a",
+            "payload": {
+              "config": {
+                "output": {"fps": 30},
+                "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+              },
+              "registry": {},
+              "clips": [],
+              "occurrences": []
+            }
+          },
+          "shot_revisions": [],
+          "internal_timeline_revisions": [],
+          "dependency_manifest": {"shots": [], "internal_timelines": [], "media": [], "documents": []}
+        },
+        "document_digest": "sha256:ecdacf571218d4cc951583296e5f75e1593cbcc72d64fa4f062597d38bd57689",
+        "commands": [
+          {
+            "schema_version": 1,
+            "op": "timeline.inverse",
+            "version": "1",
+            "select": null,
+            "args": {"publications": ["pub-create-1"]}
+          }
+        ],
+        "id_map": {},
+        "provider_version": "provider-v2",
+        "compiler_version": "compiler-v2",
+        "merge_mode": "fields",
+        "steps": [
+          {
+            "id": "undo",
+            "label": "Undo opening shot creation",
+            "intent": "",
+            "tags": [],
+            "command_ordinals": [0],
+            "patch": [
+              {
+                "op": "list.remove",
+                "ref": "parent",
+                "path": ["occurrences"],
+                "id": "occ-new",
+                "before": {
+                  "state": "present",
+                  "value": {
+                    "occurrence_id": "occ-new",
+                    "shot_id": "shot-new",
+                    "shot_revision_id": "shot-new-1",
+                    "track": "picture",
+                    "placement": {"start_ms": 0, "track": "picture"},
+                    "duration_ms": 2000,
+                    "source_offset": 0,
+                    "speed": 1,
+                    "gain": 1
+                  }
+                },
+                "order_before": ["occ-new"]
+              },
+              {
+                "op": "remove",
+                "ref": "shot:shot-new",
+                "path": [],
+                "before": {
+                  "state": "present",
+                  "value": {"name": "Opening", "items": [], "internal_timeline_revision_id": "internal-new-1"}
+                }
+              },
+              {
+                "op": "remove",
+                "ref": "internal:film-1",
+                "path": [],
+                "before": {
+                  "state": "present",
+                  "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
+                }
+              }
+            ],
+            "dependencies": [{"kind": "scope", "ref": "timeline", "path": []}]
+          }
+        ],
+        "publisher": "principal-7",
+        "label": "Undo opening shot creation"
+      },
+      "created_at": "2026-10-22T22:20:00Z"
+    }
+  },
+  "expected_history": {
+    "created": [
+      {"ref": "shot:shot-new", "kind": "shot", "owner": null},
+      {"ref": "occurrence:occ-new", "kind": "occurrence", "owner": "parent"}
+    ],
+    "undo_of": ["pub-create-1"],
+    "undo_steps": null
+  },
+  "redo_request": {
+    "api_version": 1,
+    "project_id": "project-1",
+    "timeline_id": "film-1",
+    "base_revision_id": "rev-create-2",
+    "base_publication_id": "pub-create-2",
+    "commands": [
+      {
+        "schema_version": 1,
+        "op": "timeline.inverse",
+        "version": "1",
+        "select": null,
+        "args": {"publications": ["pub-create-2"]}
+      }
+    ],
+    "label": "Redo opening shot creation",
+    "steps": [
+      {
+        "id": "undo",
+        "label": "Redo opening shot creation",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [0],
+        "patch": []
+      }
+    ],
+    "merge": "fields",
+    "reads": []
+  },
+  "expected_redo": {
+    "status": "accepted",
+    "parent_payload": {
+      "config": {
+        "output": {"fps": 30},
+        "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+      },
+      "registry": {},
+      "clips": [],
+      "occurrences": [
+        {
+          "occurrence_id": "occ-new",
+          "shot_id": "shot-new",
+          "shot_revision_id": "shot-new-1",
+          "track": "picture",
+          "placement": {"start_ms": 0, "track": "picture"},
+          "duration_ms": 2000,
+          "source_offset": 0,
+          "speed": 1,
+          "gain": 1
+        }
+      ]
+    },
+    "shot_revisions": [
+      {
+        "shot_id": "shot-new",
+        "revision_id": "shot-new-1",
+        "internal_timeline_revision_id": "internal-new-1",
+        "content_digest": "sha256:d6f9b8b3d85ccafca5c675759f43c6987433a57e34708a3848635a0b357f2306",
+        "payload": {"name": "Opening", "items": [], "internal_timeline_revision_id": "internal-new-1"}
+      }
+    ],
+    "internal_timeline_revisions": [
+      {
+        "timeline_id": "film-1",
+        "revision_id": "internal-new-1",
+        "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
+        "payload": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
+      }
+    ],
+    "created": ["shot:shot-new", "occurrence:occ-new"],
+    "allocation_provenance": "inherit authenticated original allocation via pub-create-2"
+  },
+  "forbidden_patch_commands": [
+    {
+      "schema_version": 1,
+      "op": "doc.patch",
+      "version": "1",
+      "select": null,
+      "args": {
+        "changes": [
+          {
+            "op": "set",
+            "ref": "internal:film-1",
+            "path": [],
+            "before": {"state": "absent"},
+            "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": 1,
+      "op": "doc.patch",
+      "version": "1",
+      "select": null,
+      "args": {
+        "changes": [
+          {
+            "op": "remove",
+            "ref": "shot:shot-new",
+            "path": [],
+            "before": {
+              "state": "present",
+              "value": {"name": "Opening", "items": [], "internal_timeline_revision_id": "internal-new-1"}
+            }
+          }
+        ]
+      }
+    },
+    {
+      "schema_version": 1,
+      "op": "doc.patch",
+      "version": "1",
+      "select": null,
+      "args": {
+        "changes": [
+          {
+            "op": "set",
+            "ref": "parent",
+            "path": ["occurrences", "occurrence_id:occ-new", "shot_id"],
+            "before": {"state": "present", "value": "shot-new"},
+            "value": "shot-new"
+          }
+        ]
+      }
+    }
+  ],
+  "expected_forbidden": {"http_status": 422, "status": "invalid", "code": "managed_closure_write", "added_history_entries": 0}
+}
 ```
 
 ## 6. `meta` namespaces: placement, limits and preservation
@@ -1453,10 +2696,11 @@ Preservation scenario (the set carries the entire previous namespace value):
 
 ## 7. History: labels, steps and authoritative attribution
 
-Store accepted label, steps (including their complete patches), requested/effective
-merge modes and declared reads with the existing immutable acceptance/history
+Store accepted label, steps (including complete provider effect patches,
+verified step reads and authoritative dependencies), requested/effective
+merge modes and declared request reads with the existing immutable acceptance/history
 entry. `records.commands` remains the provider's authoritative command recorder;
-add `records.steps` for authoritative step boundaries/patches, and `undo_steps`
+add `records.steps` for authoritative step boundaries/patches/dependencies, and `undo_steps`
 as in §5. No parallel evidence ledger is introduced. Keep source, rationale,
 group ID, previous head pair, publication/revision IDs, receipt,
 provider/compiler versions and `records.undo_of`.
@@ -1578,7 +2822,13 @@ undo; R2r persists/lists labels, steps and authoritative attribution; R3 extends
 preview and structured errors; V1/V2 adopt metadata and validation; A2 consumes
 canonical replies through the persisted outbox; G2 provides the bounded Python
 function re-run. Existing passing behavior tests stay in place. C0 changes only
-this contract and its identical orchestrator design copy.
+this contract and its identical orchestrator design copy. C0b amends those same
+two files only; existing fixture track kinds are corrected from `video` to the
+schema enum `visual`, with recomputed digests and canonical-schema checks; implementation and behavioral qualification belong to R1/R2/R2r.
+The Runtime Python project/CI configure pytest but no prose lint or typecheck
+gate. The TypeScript client has a `tsc` build/test gate; it is N/A to these
+Markdown-only edits. The targeted generator tests below still exercise its DTO
+type fixtures. No full, browser or live-socket suite is required for C0b.
 
 Example parsing and copy equality were checked from the runtime worktree with:
 
@@ -1594,7 +2844,7 @@ assert repo.read_bytes() == shared.read_bytes()
 for path in (repo, shared):
     source = path.read_text()
     blocks = re.findall(r'^```json\n(.*?)^```$', source, re.M | re.S)
-    assert blocks
+    assert len(blocks) == 19
     for index, block in enumerate(blocks, 1):
         json.loads(block, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
     assert len(re.findall(r'^## [1-7]\. ', source, re.M)) == 7
@@ -1603,7 +2853,9 @@ PY
 ```
 
 The following fixture-consistency check also passed. It uses the existing
-Runtime digest function; it does not run an unimplemented v2 provider:
+Runtime digest/schema validators and applies the displayed effect transitions to fixture
+values; it does not run an unimplemented v2 provider or prove refusal, causal
+compiler capture, allocation authentication, rebase or replay behavior:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-runtime/bin/python - <<'PY'
@@ -1611,14 +2863,15 @@ import copy
 import json
 import re
 from pathlib import Path
-from runtime_protocol.timeline_commit_validation import digest
+from runtime_protocol.timeline_commit_validation import digest, validate_commit_value
 
 source = Path('contract/commit-v2.md').read_text()
 examples = [json.loads(block) for block in re.findall(r'^```json\n(.*?)^```$', source, re.M | re.S)]
-request, shapes, clears, structural, idless, created, reads, conflicts, accepted, merged, conflict, invalid, preview, undo, undo_cases, meta, history = examples
+request, shapes, clears, structural, idless, created, reads, conflicts, accepted, merged, conflict, invalid, preview, undo, undo_cases, sequential, creation, meta, history = examples
 for outcome in (accepted, merged, preview):
     data = outcome['data']
     document = data['canonical_document']
+    validate_commit_value(document, 'CanonicalDocument')
     assert digest(document) == data['document_digest']
     assert digest(document['parent_revision']['payload']) == document['parent_revision']['content_digest']
     assert data['commands'] == request['commands']
@@ -1655,7 +2908,139 @@ aba = next(case for case in undo_cases if case['case'] == 'A_to_B_to_A')
 assert aba['target']['after'] == aba['current'] == aba['later'][-1]['after']
 assert aba['expected'] == 'conflict' and aba['reason'] == 'intervening_write'
 assert meta['before']['meta']['com.other.tool'] == meta['expected']['meta']['com.other.tool']
+# C0b: consistency of complete closures/receipts and effect transitions. This
+# checks fixture arithmetic and guards, not the provider's acceptance/undo path.
+for outcome in (creation['reply'], creation['undo_reply']):
+    data = outcome['data']
+    document = data['canonical_document']
+    validate_commit_value(document, 'CanonicalDocument')
+    assert digest(document) == data['document_digest']
+    for image in [document['parent_revision'], *document['shot_revisions'], *document['internal_timeline_revisions']]:
+        assert digest(image['payload']) == image['content_digest']
+    assert document['dependency_manifest']['shots'] == [
+        {k: image[k] for k in ('shot_id', 'revision_id', 'internal_timeline_revision_id', 'content_digest')}
+        for image in document['shot_revisions']]
+    assert document['dependency_manifest']['internal_timelines'] == [
+        {k: image[k] for k in ('timeline_id', 'revision_id', 'content_digest')}
+        for image in document['internal_timeline_revisions']]
+    shots = {image['shot_id']: image for image in document['shot_revisions']}
+    internals = {image['revision_id']: image for image in document['internal_timeline_revisions']}
+    assert {row['shot_id'] for row in document['parent_revision']['payload']['occurrences']} == set(shots)
+    for row in document['parent_revision']['payload']['occurrences']:
+        assert row['shot_revision_id'] == shots[row['shot_id']]['revision_id']
+    for image in shots.values():
+        assert image['payload']['internal_timeline_revision_id'] == image['internal_timeline_revision_id']
+        assert image['internal_timeline_revision_id'] in internals
+    assert outcome['receipt']['result'] == data
+    assert outcome['receipt']['receipt_id'] == data['accepted_revision_id'].replace('rev-', 'pub-')
+    assert data['steps'][0]['dependencies'] == [{'kind': 'scope', 'ref': 'timeline', 'path': []}]
+for scenario in (sequential, creation):
+    document = scenario['base_document']
+    validate_commit_value(document, 'CanonicalDocument')
+    assert digest(document['parent_revision']['payload']) == document['parent_revision']['content_digest']
+    body = scenario['request']
+    assert [i for step in body['steps'] for i in step['command_ordinals']] == list(range(len(body['commands'])))
+
+def roots(document):
+    pairs = [('parent', document['parent_revision']['payload'])]
+    pairs += [('shot:' + image['shot_id'], image['payload']) for image in document['shot_revisions']]
+    pairs += [('internal:' + image['timeline_id'], image['payload']) for image in document['internal_timeline_revisions']]
+    assert len({ref for ref, value in pairs}) == len(pairs)
+    return copy.deepcopy(dict(pairs))
+
+def location(state, ref, path):
+    if not path:
+        return state, ref
+    node = state[ref]
+    for token in path[:-1]:
+        if isinstance(node, list):
+            key, value = token.split(':', 1)
+            node = next(row for row in node if row['id' if key == 'id' else key] == value)
+        else:
+            node = node[token]
+    return node, path[-1]
+
+def tagged(node, key):
+    return {'state': 'present', 'value': copy.deepcopy(node[key])} if key in node else {'state': 'absent'}
+
+def apply_effects(state, effects):
+    for effect in effects:
+        node, key = location(state, effect['ref'], effect['path'])
+        if effect['op'].startswith('list.'):
+            rows = node[key]
+            assert effect['path'] == ['occurrences']
+            assert [row['occurrence_id'] for row in rows] == effect['order_before']
+            index = next((i for i, row in enumerate(rows) if row['occurrence_id'] == effect['id']), None)
+            actual = {'state': 'absent'} if index is None else {'state': 'present', 'value': rows[index]}
+            assert actual == effect['before']
+            if effect['op'] == 'list.insert':
+                assert index is None and effect['after_id'] is None
+                rows.insert(0, copy.deepcopy(effect['value']))
+            else:
+                assert effect['op'] == 'list.remove'
+                rows.pop(index)
+        else:
+            assert tagged(node, key) == effect['before']
+            if effect['op'] == 'set':
+                node[key] = copy.deepcopy(effect['value'])
+            else:
+                assert effect['op'] == 'remove'
+                del node[key]
+
+state = roots(sequential['base_document'])
+for step in sequential['request']['steps']:
+    for read in step['reads']:
+        node, key = location(state, read['ref'], read['path'])
+        assert tagged(node, key) == read['state']
+    assert step['patch'] == [change for i in step['command_ordinals'] for change in sequential['request']['commands'][i]['args']['changes']]
+    apply_effects(state, step['patch'])
+assert state['parent'] == sequential['expected_commit']['parent_payload']
+dependency = sequential['expected_commit']['steps'][1]['dependencies'][0]
+first = sequential['request']['steps'][0]['patch'][0]
+assert (dependency['ref'], dependency['path']) == (first['ref'], first['path'])
+assert dependency['state'] == {'state': 'present', 'value': first['value']}
+assert dependency['state'] != first['before']  # B is not the batch-entry A.
+assert sequential['expected_refusal']['details']['reason'] == 'inverse_conflict'
+assert sequential['expected_after_refusal']['added_history_entries'] == 0
+assert sequential['undo_first_request']['commands'][0]['args']['steps'] == {'pub-reads-1': ['first']}
+assert sequential['undo_both_request']['commands'][0]['args']['steps'] == {'pub-reads-1': ['first', 'second']}
+apply_effects(state, sequential['expected_undo']['patch'])
+assert state == roots(sequential['base_document'])
+assert state['parent'] == sequential['expected_undo']['parent_payload']
+assert sequential['expected_undo']['reversed_steps'] == ['second', 'first']
+variant = sequential['request_read_variant']
+assert variant['reads'][0]['state'] == first['before']
+assert variant['expected_dependencies'] == [variant['reads'], variant['reads'] + [dependency]]
+assert sequential['uncaptured_variant']['required_dependencies_per_step'] == [{'kind': 'scope', 'ref': 'parent', 'path': []}]
+assert sequential['uncaptured_variant']['expected_merge_mode'] == 'atomic'
+state = roots(creation['base_document'])
+apply_effects(state, creation['reply']['data']['steps'][0]['patch'])
+assert state == roots(creation['reply']['data']['canonical_document'])
+apply_effects(state, creation['undo_reply']['data']['steps'][0]['patch'])
+assert state == roots(creation['base_document']) == roots(creation['undo_reply']['data']['canonical_document'])
+assert creation['request']['steps'][0]['patch'] == creation['undo_request']['steps'][0]['patch'] == []
+assert creation['reply']['data']['commands'] == creation['request']['commands']
+assert creation['undo_reply']['data']['commands'] == creation['undo_request']['commands']
+assert creation['undo_request']['commands'][0]['args']['publications'] == [creation['reply']['receipt']['receipt_id']]
+assert creation['redo_request']['commands'][0]['args']['publications'] == [creation['undo_reply']['receipt']['receipt_id']]
+assert creation['request']['commands'][0]['created'] == [item['ref'] for item in creation['expected_history']['created']]
+assert creation['expected_history']['undo_of'] == ['pub-create-1']
+for key in ('shot_revisions', 'internal_timeline_revisions'):
+    assert creation['expected_redo'][key] == creation['reply']['data']['canonical_document'][key]
+assert creation['expected_redo']['parent_payload'] == creation['reply']['data']['canonical_document']['parent_revision']['payload']
+assert creation['expected_forbidden']['code'] == 'managed_closure_write'
+assert creation['forbidden_patch_commands'][0]['args']['changes'][0]['before'] == {'state': 'absent'}
+assert creation['forbidden_patch_commands'][1]['args']['changes'][0]['op'] == 'remove'
+assert creation['forbidden_patch_commands'][2]['args']['changes'][0]['path'][-1] == 'shot_id'
 assert not any(line.rstrip() != line for line in source.splitlines())
-print('PASS: Runtime digests, receipt/result equality, step partition, ordered-list transitions, merged preservation, preview, structured errors, ABA, meta preservation and whitespace')
+print('PASS: Runtime digests, receipt/result equality, step partition, ordered-list transitions, merged preservation, preview, structured errors, ABA, meta preservation, C0b sequential reads/effect reversals/closure pins and whitespace; provider behavior unverified')
 PY
+```
+
+Required targeted contract controls (existing suites; no provider-v2 behavioral
+qualification implied) and whitespace gate:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-runtime/bin/python -m pytest -q tests/test_timeline_commit_contract.py tests/test_timeline_commit_type_generator.py
+git diff --check
 ```
