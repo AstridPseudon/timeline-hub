@@ -12,7 +12,7 @@ Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan:
 ## Decisions in force
 - Owner, 22 Oct:
   - hybrid design (PLAN §1);
-  - managers on Claude, all code, reviews and merges on Codex;
+  - leads and orchestrator on Claude doing minimal work; managers on Codex Sol; all code, reviews and merges on Codex;
   - Sol only for the tasks marked Sol;
   - gate 6 parity deferred (signed);
   - WC8-style stale working copies refused;

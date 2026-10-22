@@ -1,4 +1,4 @@
-> **v2.1 note (22 Oct):** managers run on Claude Sonnet by choice (the `MANAGERS_ON_CLAUDE` flag). Workers use Codex Luna (high), or Sol (high) with a `HARD:` brief line. The farm runs Claude workers (`CODEX_UNAVAILABLE` is set on the farm only).
+> **v2.1 note (22 Oct):** managers run on Codex Sol high (the owner, 22 Oct 21:45Z; the farm alone uses Claude via MANAGERS_ON_CLAUDE). Workers use Codex Luna (high), or Sol (high) with a `HARD:` brief line. The farm runs Claude workers (`CODEX_UNAVAILABLE` is set on the farm only).
 
 # Models (owner rule, 2026-10-19). This applies to the orchestrator, area leads, managers and workers.
 

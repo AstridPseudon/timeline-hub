@@ -16,6 +16,9 @@ the existing implementation says `rebased`; retain `rebased_onto` as the existin
 head-pin field. An old provider must reject unsupported input rather than
 silently ignoring merge policy, reads or steps. This is a coordinated schema
 and client change, not a promise that the frozen R4 provider accepts v2 input.
+Runtime's coordinator/port outcome validation must adopt `invalid` failures and
+`merged` successes along with the generated DTOs; its present failure check only
+admits `conflict`/`refused`. This document does not change those checks by itself.
 
 Read against Runtime `cc7410a1f` (`timeline_commit_store.py`,
 `timeline_commit_execution.py`) and Agent hub integration
@@ -249,6 +252,12 @@ Duplicate/missing identity keys in an identity collection are invalid. A token
 which looks like an index remains an ordinary key in an object, but is invalid
 as array traversal. IDs themselves cannot be changed by setting an `id` field:
 remove and create a different item with appropriate guards instead.
+`set` at an existing item token may replace that complete item only with the same
+ID. Inserting an absent item with `set`, or removing an item with plain `remove`,
+is invalid: use the corresponding `list.*` operation and its order guard.
+Whole-array/ancestor replacement is allowed with a complete tagged `before`;
+its authoritative diff still records membership/order effects and checks all
+introduced IDs and references. It cannot bypass allocation or closure rules.
 
 Tagged values have exactly one of these forms (fixture fragment):
 
@@ -365,7 +374,7 @@ Id-less-list scenario (the valid changes and invalid change are separate cases):
 ```
 
 Creation uses caller-generated stable IDs (also across outbox retries). Native
-`created` claims list the canonical entity refs; a `doc.patch` inserting a known
+`created` claims list the canonical entity refs; a `doc.patch` introducing a known
 entity must declare its created refs in the same command envelope. The provider
 verifies claims and records allocation ownership. The existing reservation
 checks apply across the timeline's full allocation history, not merely live
@@ -1458,8 +1467,8 @@ all pages share that pair and scope. Use the existing cursor/limit behavior
 (1–200, default 100), contiguous ancestry verification and authenticated reads.
 Do not mix a newly moved head into an existing pagination walk. List and
 single-entry reads return labels, steps and authoritative publisher without
-requiring a second metadata store. Legacy entries retain `intent:
-"legacy_unknown"`, missing attribution as null and missing step records as
+requiring a second metadata store. Legacy entries retain
+`intent: "legacy_unknown"`, missing attribution as null and missing step records as
 null/absent; never invent steps or guarded undo evidence for them. Preview,
 invalid, conflict, refused and unknown outcomes add no accepted history entries.
 

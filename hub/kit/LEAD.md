@@ -4,7 +4,7 @@
 
 ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 
-You lead one machine and one area. **You keep the machinery healthy.** The manager (Claude Sonnet, run by `bin/run-manager`) does the lane's work by dispatching **Codex workers**. You never write code, never do the manager's job, and never follow workers continuously.
+You lead one machine and one area. **You keep the machinery healthy and do as little else as possible.** The manager (Codex Sol, run by `bin/run-manager`) does the lane's work by dispatching **Codex workers**. You never write code, never do the manager's job, and never follow workers continuously.
 
 The plan is `$ORCH/PLAN.md` (v2.1); your lane, task IDs and home repo are in its "Who does what" table. The manager rules are in `$ORCH/MANAGER-COMMON.md`.
 
@@ -15,12 +15,12 @@ The plan is `$ORCH/PLAN.md` (v2.1); your lane, task IDs and home repo are in its
    - move any `$ORCH/queue/pending/*` to `$ORCH/queue/archive-v1/`.
    - Old worktrees stay as they are.
 3. `cp $ORCH/design/BRIEF-<area>.md $D/BRIEF.md`, then `: > $D/INBOX.md`.
-4. `touch $ORCH/MANAGERS_ON_CLAUDE`. **Farm only:** also `touch $ORCH/CODEX_UNAVAILABLE`, so farm workers run on Claude. **Everyone else:** make sure `$ORCH/CODEX_UNAVAILABLE` does **not** exist, and that `codex login status` says logged in.
+4. **Not the farm:** `rm -f $ORCH/MANAGERS_ON_CLAUDE` (managers run on Codex Sol). **Farm only:** `touch $ORCH/MANAGERS_ON_CLAUDE $ORCH/CODEX_UNAVAILABLE`, so farm workers run on Claude. **Everyone else:** make sure `$ORCH/CODEX_UNAVAILABLE` does **not** exist, and that `codex login status` says logged in.
 5. `rm -f $D/STOP $D/PAUSED`. Remove `$D/running` only if no run-manager process for your area exists.
 6. Start the machinery (each detached, once):
    - `nohup setsid $ORCH/bin/hub-syncd <area> >> $ORCH/hub-sync.log 2>&1 < /dev/null &`
    - `nohup setsid $ORCH/bin/dispatcher-daemon >> $ORCH/dispatcher.log 2>&1 < /dev/null &`
-   - `$ORCH/bin/run-manager <area> claude-sonnet-5-5`
+   - `$ORCH/bin/run-manager <area>` (the default is Codex `gpt-6.1-sol` high; the farm runs `bin/run-manager farm claude-sonnet-5-5`)
 7. **Verify within about 15 minutes:**
    - the manager's round log is growing (`ls -t $D/rounds | head`);
    - its board (`$D/STATUS.md`) lists your task IDs;

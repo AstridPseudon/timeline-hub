@@ -12,7 +12,7 @@
 | Schema & viewing | Timeline Child 2 | viewing (vw-) | composition (merge requests for the others) | V1, V3, V4 |
 | Farm | Timeline Child 5 | farm (tf-) | none, runs tests only (Claude runner) | F |
 
-- **Managers** run on Claude Sonnet (`MANAGERS_ON_CLAUDE` flag).
+- **Managers** run on **Codex Sol (high)**, via `bin/run-manager <area>` with its default model, in bounded 90-minute rounds. **Leads and the orchestrator** (Claude) do as little as possible: they keep the machinery healthy and hand everything else to the managers. The farm alone runs Claude workers.
 - **All code, reviews, merges, conflict resolution, generated files and pins** are done by Codex workers: Luna by default, Sol only with a `HARD:` brief line on the tasks marked Sol.
 - **Each lane's board** is its manager's `STATUS.md`, published as `hub/status/<area>.md`. The orchestrator's header is `design/BOARD-HEADER.md`.
 - **The contract** (task C0) is `design/commit-v2.md`.
