@@ -124,8 +124,10 @@ consulted. A request containing `doc.patch` with omitted `reads` has effective
 mode `atomic`, even if it asked for `fields`, and
 guards the complete touched document scopes. The result reports `merge_mode`.
 For each free-transform step in this fallback, persist scope dependencies for
-its complete touched scopes at its sequential input, including scopes of its
-derived effects. Optional step reads cannot waive this fallback. If scope
+the batch's complete touched scopes at that step's sequential input, including
+scopes of derived effects. Do not limit this to scopes that the step wrote: it
+may have consumed another step's output. Optional step reads cannot waive this
+fallback. If scope
 capture cannot bound the consulted closure, persist a `timeline` scope read.
 These dependencies remain undo guards after acceptance; reporting `atomic`
 alone is insufficient. A script consulting another scope must declare it; use
