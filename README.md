@@ -5,7 +5,9 @@
 Run locally with `python -m pytest -q -n 2`; avoid `-n auto` on small machines.
 Run the full default lane (`python -m pytest -q -n 2`) before pushing.
 Run the full nightly lane with `ASTRID_CHECKOUT` set:
-`python -m pytest -q -m "integration or darwin_native or live"`.
+`python -m pytest -q -m "integration or darwin_native or live"`. CI runs `integration`
+nightly and `darwin_native` in the `darwin-native` job; every skip is declared in
+`tests/lanes.py` and the run fails on an undeclared one.
 Nightly CI runs the integration subset on Linux with the pinned Astrid checkout
 installed into the runner interpreter. For a local integration run, use:
 `ASTRID_CHECKOUT=/path/to/astrid-agent .venv/bin/python -m pytest -m integration`.
