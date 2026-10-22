@@ -1,3 +1,5 @@
+> **v2.1 note (22:55Z):** this file is v1. The farm follows LEAD.md, design/BRIEF-farm.md and BOARD-HEADER. Legacy run-on-* requests are void.
+
 # LEAD-FARM — the Timeline test farm (owner decision 2026-10-21)
 
 ## Why this machine exists

@@ -46,5 +46,6 @@ Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan:
   - fetches: the lead, outside the sandbox.
 
   Only an auto-mode classifier or safety denial stops you.
-- **Upstream fetch before any U-task:** the lead runs `git -C /home/user/work/<repo> fetch -q origin "+refs/heads/main:refs/remotes/origin/main"`. The explicit refspec is needed because these repos' fetch config does not cover main. Then check that `git rev-parse origin/main` equals `git ls-remote origin refs/heads/main`. A merge against a stale origin/main is a FAIL.
+- **Upstream fetch (ROOT FIX, 22:55Z):** every lead runs this once per repo: `git -C /home/user/work/<repo> config --add remote.origin.fetch '+refs/heads/main:refs/remotes/origin/main'`. The repos were configured to fetch only an old v1 branch, so origin/main stayed stale. That broke U1, and would also have broken refresh-main and delivery-build. After that, a plain `git fetch origin` works. **Every U-task's acceptance includes** `git merge-base --is-ancestor $(git ls-remote origin refs/heads/main | cut -f1) HEAD`.
 - **Use the live `ls-remote` tip at merge time.** Upstream shas quoted by the orchestrator are snapshots; a newer tip that contains them is correct.
+- **Leads who cannot write their own manager INBOX** (harness denial): put the request in your lead line and send the orchestrator one line. The orchestrator delivers it through the hub inbox.

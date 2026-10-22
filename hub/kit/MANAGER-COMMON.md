@@ -78,3 +78,19 @@ Escalate a contract change, a need from another lane, a scope question, or a saf
 - **Decide everything PLAN, the contract and your brief cover.** Escalate only the items listed under "Escalate only" above.
 - **When you get an answer,** apply its principle to similar cases yourself.
 - **The orchestrator checks your board afterwards;** it does not pre-approve your work.
+
+## Mechanics (restored 22:55Z: the one-page rewrite had dropped them, which caused avoidable stalls)
+- **Dispatch flags:**
+  - `--net` for tasks whose tests open localhost sockets or browsers, or that install packages;
+  - `--heavy` for big suites, journeys and renders;
+  - `--timeout MIN` (default 180);
+  - `--base BRANCH`;
+  - `--merge-parent SHA`, which records a merge parent at commit.
+- **What workers cannot do in their sandbox:** git fetch, merge, commit or other writes to git internals, and localhost sockets (without `--net`). Use the routes:
+  - **the test service:** `bin/request-test <worker|integration:REPO> full|targeted --files "..."|<suite>`, then `bin/wait-test <id>`; it runs outside the sandbox, so localhost and browsers work;
+  - **merges:** `bin/merge-forward <worker> <base>`, run by you;
+  - **fetches:** your lead runs them.
+- **Merges into integration:** `bin/request-merge <worker>` (serialised; the result is in queue/done or queue/refused). For a non-home repo: `bin/request-merge-remote <repo> <worker> "<reason>"`.
+- **Stuck or dead workers:** `bin/request-stop <worker> "<reason>"` (the work in progress is committed to tl/<worker>), then a fresh resume worker with `--base tl/<worker>`. A worker that died in a container restart (a `running` marker but no process) is dead: re-dispatch it.
+- **Exact checkouts:** `bin/request-checkout <repo> <sha> "<reason>"`.
+- **Sandbox limits are not safety refusals.** Use the routes above. Only an auto-mode classifier or safety denial stops you.

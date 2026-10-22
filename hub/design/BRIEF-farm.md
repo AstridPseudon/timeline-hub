@@ -8,3 +8,5 @@ Read `$ORCH/PLAN.md` (v2.1) and `$ORCH/MANAGER-COMMON.md` first. You never edit 
 - **On request:** runs named in your INBOX by the orchestrator, or in other lanes' Blockers lines.
 
 Run at most 2 heavy runs at once. Preflight every run, listing everything missing in one go; zero tests executed counts as a FAIL.
+
+**v2.1 (22:55Z):** **Ignore every v1 `design/run-on-main-*` and `run-on-farm-*` request file.** Serve only the runs in this brief, in your INBOX, or named on BOARD-HEADER.
