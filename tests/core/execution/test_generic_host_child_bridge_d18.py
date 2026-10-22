@@ -3689,20 +3689,36 @@ def test_output_over_retention_limit_rejects_before_cas_read():
     row = {"association_id": "association", "task_id": "child-task", "run_id": "child-run",
            "project_id": "project", "attempt_id": "child-attempt", "durability": "durable",
            "lifecycle": {"state": "available"}, "role": "final", "object_id": oid,
-           "digest": oid, "size": 2}
+           "digest": oid, "size": 2, "output_port": "output", "media_type": "application/octet-stream",
+           "filename": "out.bin", "ordinal": 0}
+    # Settlement describes this exact output, so the descriptor check passes and
+    # only the retention-cap check can refuse it.
+    settled = {"kind": "object", "digest": oid, "size": 2, "output_port": "output",
+               "media_type": "application/octet-stream", "filename": "out.bin", "ordinal": 0}
+    cas_reads = []
+
+    def get_object(object_id):
+        cas_reads.append(object_id)
+        return b"ab"
+
     client = SimpleNamespace(
         child_outputs=lambda task_id: [row],
         child_output=lambda association_id: row,
-        get_object=lambda object_id: pytest.fail("oversized output requested CAS bytes"),
+        get_object=get_object,
     )
     bridge = object.__new__(HostChildBridge)
     bridge.client = client
     bridge.context = {"project_id": "project"}
     bridge.policy = {"limits": {"max_derived_bytes": 1}}
+    bridge._verified_outputs = {}
+    # Lease liveness is not under test; stubbing it keeps a reverted fix failing on the
+    # assertions below rather than on unrelated bridge state.
+    bridge._live = lambda: None
     task = {"id": "child-task", "run_id": "child-run", "attempt_id": "child-attempt",
-            "status": "completed", "result": {"outputs": []}}
-    with pytest.raises(ChildBridgeError, match="byte identity"):
+            "status": "completed", "result": {"outputs": [settled]}}
+    with pytest.raises(ChildBridgeError, match=r"^invalid child output byte identity$"):
         bridge._outputs(task)
+    assert cas_reads == []
 
 
 @pytest.mark.parametrize("size", [64 * 1024 * 1024, 5 * 1024 ** 3 + 1])
