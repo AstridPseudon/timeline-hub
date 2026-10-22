@@ -54,9 +54,10 @@ The adapter must generate this private spelling from the IDs, not from the displ
 echo, and return the original authored bundle unchanged. Never reconstruct a choice
 from accepted history, current text, or an ordinal after a source move.
 
-`tests/editing_conformance/word_binding_recipe.py` demonstrates that boundary as a
-**test-only parent-clip adapter and recipe**. Its `app.astrid.word_anchors` experiment
-is not a product registration, a default adapter, or a new contract in this port.
+`astrid/sdk/timeline/native_word_anchor.py` and
+`tests/editing_conformance/test_native_word_anchor.py` demonstrate that boundary as
+the native parent-clip adapter and its behavioral coverage. Its
+`app.astrid.word_anchors` path is not a new contract in this port.
 It preserves same-echo/different-ID canonical revisions, restore/undo/rebase and
 opaque fields. Legacy text is accepted only when exactly one source phrase matches;
 ambiguous text (including an ordinal without a stored choice) refuses with
