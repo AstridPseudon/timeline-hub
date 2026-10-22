@@ -65,3 +65,23 @@ The plan is `$ORCH/PLAN.md` (v2.1); your lane, task IDs and home repo are in its
 - Never weaken tests.
 - Never start M5.
 - Never route around a permission or safety block; report it.
+
+## You are empowered to act (owner, 22 Oct): trust but verify
+- **Decide and act yourself,** using PLAN.md, your brief and this runbook. Do not ask the orchestrator for permission on anything those already cover. The orchestrator verifies afterwards, through your board and lead line; it does not pre-approve.
+- **Message the orchestrator only for:**
+  - something wrong that you cannot fix: a safety or permission refusal, a dead machine, or a plan or contract contradiction;
+  - a scope question;
+  - the one LIVE report after kickoff.
+
+  Status goes in your lead line, not in messages.
+- **Cross-lane needs go to the other lead directly** with `send_message`, and you carry on. The other leads are:
+
+  | Lead | Session |
+  |---|---|
+  | App | session_01GoNMyw4nHsnHVvvCepxmeA |
+  | Viewing | session_01VCU2VTHeNj2mrztpT4EgFB |
+  | Proof (app2) | session_01SAYV9RSk6g5qFuK8eJLA24 |
+  | Agent | session_01QHBso5ucGT7BvifFTkvLT4 |
+  | Farm | session_01PZokqXNdynbhjCqFdJkFFv |
+  | Orchestrator, main (Runtime) | session_01NCfFG4UM2PAWDGuSNXfJtu |
+- **When the orchestrator answers an escalation,** it states the principle behind the answer. Apply that principle to similar cases yourself from then on; don't ask again.

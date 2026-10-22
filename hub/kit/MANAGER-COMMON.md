@@ -73,3 +73,8 @@ Escalate a contract change, a need from another lane, a scope question, or a saf
   - `bin/request-stop <worker> "<reason>"` for a stuck worker (20+ min with no progress);
   - `bin/request-checkout` for exact pins;
   - `bin/recycle` to free disk from finished, merged worktrees.
+
+## Empowered to act (owner, 22 Oct): trust but verify
+- **Decide everything PLAN, the contract and your brief cover.** Escalate only the items listed under "Escalate only" above.
+- **When you get an answer,** apply its principle to similar cases yourself.
+- **The orchestrator checks your board afterwards;** it does not pre-approve your work.

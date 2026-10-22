@@ -5,7 +5,7 @@
 Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan: `$ORCH/PLAN.md` v2.1. Lanes and IDs are in PLAN's "Who does what" table.
 
 ## Status
-- C0 contract: **NOT YET APPROVED**. Nobody builds against `design/commit-v2.md` until this line reads "C0 APPROVED".
+- C0 contract: **C0 APPROVED** (22:15Z) for building R1, G2, A2, R2r, R3, V1, V2 and P1. **Two amendments are pending (C0b, see design/astra-c0-review.md):** (1) `steps[].reads`, evaluated per step and persisted; (2) provider-generated step effect records (root create/remove, managed edges), kept distinct from submitted `doc.patch`. **R2 (undo) waits for C0b.** R1 and G2 must not hard-code step-patch shapes that C0b changes.
 - H3 go/no-go (P1): pending.
 - H8 scope check: pending.
 
@@ -29,3 +29,6 @@ Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan:
 - H0: upstream baselines.
 - H6, H9: integrated full suites, the tour and the journey.
 - Final.
+
+## Principles from answered escalations (apply them yourself; at most 10 lines)
+- **Owner's direct approval:** it has been given in each lead's session for the v2.1 kickoff and for freeing disk to at least 15 GB. Operational instructions from the orchestrator carry the owner's authority. Safety and permission refusals still stop you.
