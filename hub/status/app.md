@@ -1,10 +1,10 @@
-<!-- app | 2026-10-22T23:34:40Z | dispatcher heartbeat 1s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 4m -->
-# app board, 2026-10-22T23:30:41Z
+<!-- app | 2026-10-22T23:36:24Z | dispatcher heartbeat 0s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 0m -->
+# app board, 2026-10-22T23:35:45Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| U3a | Upstream deletions, docs/config/supabase | Luna high | — | review | app-U3a-repair-review-r1 | Five fixes complete: script11/text-case6/lint/discovery PASS; vendor/type/Supabase joins under independent review | tl/app-U3a-repair-r1 |
-| U3b | Upstream editor; retain outbox/transport/client | Luna high | — | doing | app-U3b-repair-r1 | Review FAIL: live placement adapter removed, placement test import fails, host props/type mismatch, trailing whitespace; first return active | 7b33f8f50 source |
-| U3c | QUICK harness plus retained journeys | Luna high | — | review | app-U3c-quick-adapter-review | Coverage reviewed; focused two-call QUICK defect fixed. Discovery14 normal/1 QUICK and lint PASS; final leaf review queued | tl/app-U3c-quick-adapter-fix |
+| U3a | Upstream deletions, docs/config/supabase | Luna high | — | doing | app-U3a-vendor-closure | Second review FAIL only dependency closure; Sol HARD split fixes incomplete package. Other four fixes PASS | a66702d9b source |
+| U3b | Upstream editor; retain outbox/transport/client | Luna high | — | review | app-U3b-repair-review-r1 | Repair author: tsc/lint PASS, required122 + provider173 + canary59 PASS; one inherited host assertion under independent attribution | 69099d6db |
+| U3c | QUICK harness plus retained journeys | Luna high | — | merging | app-U3c-quick-adapter-fix | Independent PASS: six original bodies/F2 retained, discovery14 normal/1 QUICK/lint PASS; integrated execution pending farm | 0ba5378cc |
 | U3 | True live upstream merge and Agent re-vendor | Luna high | U3a/U3b/U3c; merged U2 | todo | — | GitHub live ref verified equal to local origin/main 7c17cc9d9; repeat before final composition | — |
 | U4p | Adopt regenerated U1 client/schema | Luna high | U1, U3 | todo | — | Await official U1 tuple and composed U3 | — |
 | A2 | Save funnel and dependent local-document chain | Sol high | C0 APPROVED, U3b merged | todo | — | Brief ready; dispatch immediately after reviewed U3b merge | — |
