@@ -1,10 +1,9 @@
-import { getTimelineDurationInFrames, type CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
 import { getAdmittedElementSelection, subscribeAdmittedElements } from '../runtime/admitted-elements';
 import { AbsoluteFill, Sequence, useCurrentFrame, useRemotionEnvironment } from 'remotion';
 import { Component, createContext, memo, useContext, useMemo, useSyncExternalStore, type ComponentType, type FC, type ReactNode } from 'react';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { getAudioTracks, getVisualTracks } from '@/tools/video-editor/lib/editor-utils.ts';
-import { getClipDurationInFrames, resolveTimelineConfig, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
+import { getClipDurationInFrames, getTimelineDurationInFrames, resolveTimelineConfig, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { BUILTIN_CLIP_TYPES } from '@/sdk/video/timeline/clipTypes.ts';
 import { clipSourceTime } from '../clip-types/sourceTime';
 import {
@@ -59,7 +58,6 @@ import { boundCanonicalConfigClips } from '@/tools/video-editor/lib/canonicalRen
 import { resolveEndSpanningLayerPreviewParams } from '@/tools/video-editor/sequences/components/EndSpanningLayerSequence.tsx';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
-import { preparePlayerTrack } from './playerEvaluation.ts';
 
 const AstridElementHostContext = createContext<AstridElementHost | null>(null);
 const useAstridElementHost = () => requireAstridElementHost(useContext(AstridElementHostContext));
@@ -1262,7 +1260,6 @@ const ExtensionClipSequence: FC<ExtensionClipSequenceProps> = ({
 };
 
 interface VisualTrackProps {
-  compiledTransitions?: CompiledCanonicalTransitions;
   track: TrackDefinition;
   clips: ResolvedTimelineClip[];
   renderConfig: ResolvedTimelineConfig;
@@ -1279,7 +1276,6 @@ interface VisualTrackProps {
 // once per visual track. Keeps the dynamic-registry subscription out of the
 // per-clip dispatch loop.
 const VisualTrack: FC<VisualTrackProps> = ({
-  compiledTransitions,
   track,
   clips,
   renderConfig,
@@ -1293,24 +1289,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
   const host = useAstridElementHost();
   const { entries: dynamicEntries } = useSequenceComponentRegistrySnapshot();
   const clipTypeRegistry = useClipTypeRegistrySnapshot();
-  const { width, height } = parseResolution(resolution);
-  const usesNativeMedia = (clip: ResolvedTimelineClip) => {
-    const descriptor = host.describeClipCapability(clip, dynamicEntries);
-    return !(liveBindingRecordsByClip.get(clip.id)?.length)
-      && !isGeneratedRemotionModuleClip(clip)
-      && descriptor?.source !== 'generated-module'
-      && descriptor?.capabilities.preview !== 'placeholder'
-      && (!clip.clipType || (
-        !(!clip.elementRef && host.resolveComponent(clip.clipType, 'effect'))
-        && !isSequenceComponentClipType(host, clip.clipType, dynamicEntries)
-        && !clipTypeRegistry.get(clip.clipType)
-      ));
-  };
-  const hasCompiledTrack = compiledTransitions?.tracks.some(input => input.trackId === track.id);
-  const keepHostTrack = hasCompiledTrack && !clips.every(usesNativeMedia);
-  const evaluation = preparePlayerTrack(track, keepHostTrack ? boundCanonicalConfigClips(clips) : clips,
-    fps, width, height, usesNativeMedia, keepHostTrack ? undefined : compiledTransitions);
-  const sortedClips = evaluation.clips;
+  const sortedClips = sortClipsByAt(clips);
   if (sortedClips.length === 0) {
     return null;
   }
@@ -1577,7 +1556,6 @@ const VisualTrack: FC<VisualTrackProps> = ({
             track={track}
             fps={fps}
             predecessor={predecessor}
-            drawPlan={evaluation.plans.get(clip.id) ?? null}
           />
         );
       })}
@@ -1585,9 +1563,7 @@ const VisualTrack: FC<VisualTrackProps> = ({
   );
 };
 
-type TimelineRendererInput = { config: ResolvedTimelineConfig; compiledTransitions?: CompiledCanonicalTransitions };
-
-const TimelineRendererBody: FC<TimelineRendererInput> = memo(({ config, compiledTransitions }) => {
+const TimelineRendererBody: FC<{ config: ResolvedTimelineConfig }> = memo(({ config }) => {
   const host = useAstridElementHost();
   const { entries: dynamicSequenceEntries } = useSequenceComponentRegistrySnapshot();
   const clipTypeRegistry = useClipTypeRegistrySnapshot();
@@ -1604,13 +1580,12 @@ const TimelineRendererBody: FC<TimelineRendererInput> = memo(({ config, compiled
   const renderConfig = useMemo(() => {
     const outputConfig = projectOutputTimelineConfig(config).config;
     const materialized = materializeResolvedSequenceConfig(outputConfig);
-    const boundedClips = materialized.clips.flatMap(clip => compiledTransitions?.tracks.some(track => track.trackId === clip.track)
-      ? [clip] : boundCanonicalConfigClips([clip]));
+    const boundedClips = boundCanonicalConfigClips(materialized.clips);
     return boundedClips.length === materialized.clips.length
       && boundedClips.every((clip, index) => clip === materialized.clips[index])
       ? materialized
       : { ...materialized, clips: boundedClips };
-  }, [config, compiledTransitions]);
+  }, [config]);
   const shaderSnapshot = useShaderEffectRegistrySnapshot();
   const fps = renderConfig.output.fps;
   const theme = useMemo(() => resolveTimelineRenderTheme(renderConfig), [renderConfig]);
@@ -1697,7 +1672,6 @@ const TimelineRendererBody: FC<TimelineRendererInput> = memo(({ config, compiled
             <VisualTrack
               key={track.id}
               track={track}
-              compiledTransitions={compiledTransitions}
               clips={trackClips}
               renderConfig={renderConfig}
               fps={fps}
@@ -1739,7 +1713,6 @@ const TimelineRendererBody: FC<TimelineRendererInput> = memo(({ config, compiled
     liveDataRegistry,
     renderConfig,
     runtimeTheme,
-    compiledTransitions,
     visualTracks,
   ]);
 
@@ -1751,7 +1724,7 @@ const TimelineRendererBody: FC<TimelineRendererInput> = memo(({ config, compiled
       enabled={needsAudioAnalysis}
     >
       <LocalFontFaces />
-      <AbsoluteFill style={{ backgroundColor: theme.visual.color.bg, overflow: 'hidden' }}>
+      <AbsoluteFill style={{ backgroundColor: 'black', overflow: 'hidden' }}>
         <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center' }}>
           <AbsoluteFill style={{ position: 'relative', overflow: 'hidden' }}>
             {visualContent}
@@ -1790,9 +1763,9 @@ const TimelineRendererBody: FC<TimelineRendererInput> = memo(({ config, compiled
   );
 });
 
-export const TimelineRenderer: FC<TimelineRendererInput & { astridElementHost?: AstridElementHost }> = memo(({ config, compiledTransitions, astridElementHost }) => {
+export const TimelineRenderer: FC<{ config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost }> = memo(({ config, astridElementHost }) => {
   const runtime = useContext(VideoEditorRuntimeContext);
   const inheritedHost = useContext(AstridElementHostContext);
   const host = requireAstridElementHost(astridElementHost ?? inheritedHost ?? runtime?.astridElementHost);
-  return <AstridElementHostContext.Provider value={host}><TimelineRendererBody config={config} compiledTransitions={compiledTransitions} /></AstridElementHostContext.Provider>;
+  return <AstridElementHostContext.Provider value={host}><TimelineRendererBody config={config} /></AstridElementHostContext.Provider>;
 });

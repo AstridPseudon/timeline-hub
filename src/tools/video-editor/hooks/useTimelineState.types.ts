@@ -1,13 +1,4 @@
-import type { ClipScalarCapturePort } from '../commands/clipScalarGesture.ts';
-import type { ClipTrimCapturePort } from '../commands/clipTrimGesture.ts';
-import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
-import type { ClipParamsCapturePort } from '@/tools/video-editor/commands/clipParamsGesture.ts';
 import type { TranscriptPanelHost } from '@/tools/video-editor/lib/transcript-panel-host.ts';
-import type { ClipMoveCapturePort } from '@/tools/video-editor/commands/semanticGestures.ts';
-import type { ElementCapturePort } from '@/tools/video-editor/commands/elementGesture.ts';
-import type { OccurrenceAddMediaCapturePort, ParentClipAddMediaCapturePort, ParentClipSwapMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
-import type { OccurrenceDuplicateCapturePort } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
-import type { ShotSetCapturePort } from '@/tools/video-editor/commands/shotSetGesture.ts';
 import type { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import type { useClipEditing } from '@/tools/video-editor/hooks/useClipEditing.ts';
 import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts';
@@ -143,18 +134,6 @@ export interface TimelineEditorDataContextValue {
 }
 
 export interface TimelineEditorOpsContextValue {
-  /** Host-owned Agent capture + command/outbox acceptance for migrated moves. */
-  clipMove?: ClipMoveCapturePort;
-  element?: ElementCapturePort;
-  clipScalar?: ClipScalarCapturePort;
-  clipTrim?: ClipTrimCapturePort;
-  selectedParam?: ClipParamsCapturePort;
-  trackLabel?: TrackLabelCapturePort;
-  shotSet?: ShotSetCapturePort;
-  parentClipAddMedia?: ParentClipAddMediaCapturePort;
-  parentClipSwapMedia?: ParentClipSwapMediaCapturePort;
-  occurrenceAddMedia?: OccurrenceAddMediaCapturePort;
-  occurrenceDuplicate?: OccurrenceDuplicateCapturePort;
   setInputModality: (inputModality: TimelineInputModality) => void;
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
   setInteractionMode: (mode: TimelineInteractionMode) => void;
@@ -197,7 +176,6 @@ export interface TimelineEditorOpsContextValue {
   handleToggleMuteClips: ClipEditingHook['handleToggleMuteClips'];
   handleToggleMute: ClipEditingHook['handleToggleMute'];
   handleDetachAudioClip: ClipEditingHook['handleDetachAudioClip'];
-  handleTrackLabelEditStart: TimelineTrackManagementHook['handleTrackLabelEditStart'];
   handleTrackPopoverChange: TimelineTrackManagementHook['handleTrackPopoverChange'];
   handleMoveTrack: TimelineTrackManagementHook['handleMoveTrack'];
   handleRemoveTrack: TimelineTrackManagementHook['handleRemoveTrack'];
@@ -224,7 +202,6 @@ export interface TimelineEditorOpsContextValue {
 export interface TimelineEditorContextValue extends TimelineEditorDataContextValue, TimelineEditorOpsContextValue {}
 
 export interface TimelineChromeContextValue {
-  commandSession?: import('./useTimelineCommandSession.ts').TimelineCommandSessionSurface;
   timelineName: string | null;
   saveStatus: SaveStatus;
   isConflictExhausted: boolean;

@@ -77,7 +77,8 @@ function PreviewPanelComponent({
   }), shallow);
 
   if (!data || !resolvedConfig || !surface.hasConfig) {
-    const unavailable = surface.availability === 'unavailable';
+    // The card's paper is there from the shell's first frame, so nothing pops in when the timeline
+    // arrives. The surface slot stays behind the gate so the preview portal mounts exactly as before.
     return (
       <div
         className={cn(
@@ -86,22 +87,8 @@ function PreviewPanelComponent({
         )}
         role="region"
         aria-label="Preview panel"
-        aria-busy={unavailable ? undefined : 'true'}
-      >
-        <div
-          className="flex h-full min-h-[220px] items-center justify-center px-6 text-center"
-          {...(unavailable ? { role: 'alert' } : { role: 'status', 'aria-live': 'polite' })}
-        >
-          <div className="max-w-sm space-y-1">
-            <p className="text-sm font-medium text-foreground">
-              {unavailable ? 'Preview unavailable' : 'Loading preview…'}
-            </p>
-            {unavailable && surface.unavailableReason ? (
-              <p className="text-xs text-muted-foreground">{surface.unavailableReason}</p>
-            ) : null}
-          </div>
-        </div>
-      </div>
+        aria-busy="true"
+      />
     );
   }
 

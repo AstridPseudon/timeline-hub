@@ -10,13 +10,6 @@ import {
 } from '@/shared/lib/dnd/dragDrop';
 import { useExternalDrop } from './useExternalDrop';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider';
-import type { TimelineData } from '@/tools/video-editor/lib/timeline-data';
-import {
-  handleAssetDrop,
-  handleMultiGenerationDrop,
-  handleSingleGenerationDrop,
-  type TimelineDropPosition,
-} from '@/tools/video-editor/lib/external-drop-utils';
 
 const mockUseShots = vi.fn(() => ({
   shots: undefined,
@@ -172,41 +165,6 @@ function makeDropTestData(overrides: Partial<DropTestData> = {}): DropTestData {
   };
 }
 
-function makeDropPosition(overrides: Partial<TimelineDropPosition> = {}): TimelineDropPosition {
-  return {
-    time: 12,
-    rowIndex: 0,
-    trackId: 'V1',
-    trackKind: 'visual',
-    trackName: 'V1',
-    isNewTrack: false,
-    isReject: false,
-    isNewTrackTop: false,
-    newTrackKind: null,
-    screenCoords: {
-      rowTop: 0,
-      rowLeft: 0,
-      rowWidth: 0,
-      rowHeight: 0,
-      clipLeft: 0,
-      clipWidth: 0,
-      ghostCenter: 0,
-    },
-    ...overrides,
-  };
-}
-
-function registerGenerationForDrop(dataRef: React.MutableRefObject<DropTestData>) {
-  return vi.fn((generation: GenerationDropData & { assetId?: string }) => {
-    const assetId = generation.assetId ?? `asset-${generation.generationId}`;
-    dataRef.current.registry.assets[assetId] = {
-      file: generation.imageUrl,
-      type: generation.variantType === 'video' ? 'video/mp4' : 'image/png',
-    };
-    return assetId;
-  });
-}
-
 afterEach(() => {
   vi.restoreAllMocks();
   mockUseShots.mockReset();
@@ -228,103 +186,6 @@ afterEach(() => {
 });
 
 describe('useExternalDrop', () => {
-  it('propagates an async refusal from each generation and asset helper', async () => {
-    const dataRef = {
-      current: makeDropTestData(),
-    } as React.MutableRefObject<DropTestData>;
-    const generationData: GenerationDropData = {
-      generationId: 'generation-1',
-      variantType: 'image',
-      imageUrl: 'https://example.com/image.png',
-    };
-    const registerGenerationAsset = registerGenerationForDrop(dataRef);
-
-    await expect(handleMultiGenerationDrop({
-      generationItems: [generationData],
-      dataRef: dataRef as unknown as React.MutableRefObject<TimelineData | null>,
-      dropPosition: makeDropPosition(),
-      insertAtTop: false,
-      registerGenerationAsset,
-      selectedTrackId: null,
-      dropAsset: vi.fn(async () => false),
-    })).resolves.toBe(false);
-
-    await expect(handleSingleGenerationDrop({
-      generationData,
-      dataRef: dataRef as unknown as React.MutableRefObject<TimelineData | null>,
-      dropPosition: makeDropPosition(),
-      insertAtTop: false,
-      registerGenerationAsset,
-      selectedTrackId: null,
-      dropAsset: vi.fn(async () => false),
-    })).resolves.toBe(false);
-
-    await expect(handleAssetDrop({
-      assetKey: 'asset-1',
-      assetKind: 'visual',
-      dataRef: dataRef as unknown as React.MutableRefObject<TimelineData | null>,
-      dropPosition: makeDropPosition(),
-      insertAtTop: false,
-      selectedTrackId: null,
-      dropAsset: vi.fn(async () => false),
-    })).resolves.toBe(false);
-  });
-
-  it('does not report a rejected single-generation placement as a successful drop', async () => {
-    const dataRef = {
-      current: makeDropTestData(),
-    } as React.MutableRefObject<DropTestData>;
-    const rejection = new Error('placement refused');
-    const registerGenerationAsset = registerGenerationForDrop(dataRef);
-
-    await expect(handleSingleGenerationDrop({
-      generationData: {
-        generationId: 'generation-1',
-        variantType: 'image',
-        imageUrl: 'https://example.com/image.png',
-      },
-      dataRef: dataRef as unknown as React.MutableRefObject<TimelineData | null>,
-      dropPosition: makeDropPosition(),
-      insertAtTop: false,
-      registerGenerationAsset,
-      selectedTrackId: null,
-      dropAsset: vi.fn(() => Promise.reject(rejection)),
-    })).rejects.toBe(rejection);
-  });
-
-  it('does not seek after the general asset dispatch refuses asynchronously', async () => {
-    const dataRef = { current: makeDropTestData() } as React.MutableRefObject<TimelineData | null>;
-    const onSeekToTime = vi.fn();
-    const coordinator = {
-      update: vi.fn(() => makeDropPosition()),
-      showSecondaryGhosts: vi.fn(),
-      end: vi.fn(),
-      lastPosition: makeDropPosition(),
-      editAreaRef: { current: null },
-    };
-    const { result } = renderHook(() => useExternalDrop({
-      dataRef,
-      pendingOpsRef: { current: 0 },
-      scale: 1,
-      scaleWidth: 1,
-      selectedTrackId: null,
-      applyEdit: vi.fn(),
-      invalidateAssetRegistry: vi.fn(),
-      resolveAssetUrl: vi.fn(),
-      coordinator,
-      registerGenerationAsset: vi.fn(),
-      uploadImageGeneration: vi.fn(),
-      uploadVideoGeneration: vi.fn(),
-      handleAssetDrop: vi.fn(async () => false),
-      onSeekToTime,
-      finalVideoMap: new Map(),
-    }));
-
-    await result.current.onTimelineDrop(createDropEvent({ 'asset-key': 'asset-1', 'asset-kind': 'visual' }, ['asset-key']));
-
-    expect(onSeekToTime).not.toHaveBeenCalled();
-  });
-
   it('accepts generation-multi drags during drag over', () => {
     const dataRef = { current: null } as React.MutableRefObject<DropTestData | null>;
     const pendingOpsRef = { current: 0 } as React.MutableRefObject<number>;
@@ -543,8 +404,6 @@ describe('useExternalDrop', () => {
       if (trackId) {
         throw new Error('expected first multi-drop to create a new track');
       }
-
-      return true;
     });
 
     const coordinator = {
@@ -693,7 +552,6 @@ describe('useExternalDrop', () => {
     const uploadQueue = [firstUpload, secondUpload];
 
     const applyEdit = vi.fn();
-    const onSeekToTime = vi.fn();
     const uploadVideoGeneration = vi
       .fn<(file: File) => Promise<{
         generationId: string;
@@ -714,14 +572,6 @@ describe('useExternalDrop', () => {
 
         return nextUpload.promise;
       });
-    const handleAssetDrop = vi.fn(() => true);
-    const registerGenerationAsset = vi.fn((generation: { generationId: string; imageUrl: string }) => {
-      dataRef.current.registry.assets[`asset-${generation.generationId}`] = {
-        file: generation.imageUrl,
-        type: 'video/mp4',
-      };
-      return `asset-${generation.generationId}`;
-    });
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const coordinator = {
@@ -765,11 +615,10 @@ describe('useExternalDrop', () => {
       invalidateAssetRegistry: vi.fn(),
       assetResolver: { resolveAssetUrl: vi.fn(async (file: string) => `https://cdn.example/${file}`) },
       coordinator,
-      registerGenerationAsset,
+      registerGenerationAsset: vi.fn(),
       uploadImageGeneration: vi.fn(),
       uploadVideoGeneration,
-      handleAssetDrop,
-      onSeekToTime,
+      handleAssetDrop: vi.fn(),
       shots: mockUseShots().shots,
       finalVideoMap: mockUseFinalVideoAvailable().finalVideoMap,
     }));
@@ -779,14 +628,11 @@ describe('useExternalDrop', () => {
       new File(['two'], 'two.mp4', { type: 'video/mp4' }),
     ]);
 
-    let dropPromise!: Promise<void>;
     await act(async () => {
-      dropPromise = result.current.onTimelineDrop(event);
-      await waitFor(() => {
-        expect(uploadVideoGeneration).toHaveBeenCalledTimes(2);
-      });
+      await result.current.onTimelineDrop(event);
     });
 
+    expect(uploadVideoGeneration).toHaveBeenCalledTimes(2);
     expect(pendingOpsRef.current).toBe(2);
 
     firstUpload.resolve({
@@ -808,90 +654,9 @@ describe('useExternalDrop', () => {
     await waitFor(() => {
       expect(pendingOpsRef.current).toBe(0);
     });
-    await dropPromise;
 
     expect(consoleError).toHaveBeenCalledWith('[drop] Upload failed:', expect.any(Error));
     expect(applyEdit).toHaveBeenCalled();
-    expect(onSeekToTime).toHaveBeenCalledWith(12);
-  });
-
-  it.each([
-    ['returns false', () => false],
-    ['rejects', () => Promise.reject(new Error('placement refused'))],
-  ] as const)('does not seek when a file placement %s', async (_label, getPlacementResult) => {
-    mockRuntime.provider = { persistenceEnabled: true };
-    const dataRef = {
-      current: makeDropTestData({ registry: { assets: {} } }),
-    } as React.MutableRefObject<DropTestData>;
-    const pendingOpsRef = { current: 0 } as React.MutableRefObject<number>;
-    const applyEdit = vi.fn((mutation: unknown) => {
-      const edit = mutation as {
-        rows?: DropTestData['rows'];
-        metaUpdates?: DropTestData['meta'];
-        metaDeletes?: string[];
-      };
-      if (!dataRef.current) return;
-      const meta = { ...dataRef.current.meta, ...(edit.metaUpdates ?? {}) };
-      for (const clipId of edit.metaDeletes ?? []) delete meta[clipId];
-      dataRef.current = {
-        ...dataRef.current,
-        ...(edit.rows ? { rows: edit.rows } : {}),
-        meta,
-      };
-    });
-    const onSeekToTime = vi.fn();
-    const registerGenerationAsset = vi.fn((generation: { generationId: string; imageUrl: string }) => {
-      dataRef.current.registry.assets[`asset-${generation.generationId}`] = {
-        file: generation.imageUrl,
-        type: 'video/mp4',
-      };
-      return `asset-${generation.generationId}`;
-    });
-    const uploadVideoGeneration = vi.fn(async () => ({
-      generationId: 'generation-1',
-      variantType: 'video' as const,
-      imageUrl: 'https://cdn.example/clip.mp4',
-      thumbUrl: 'https://cdn.example/clip.jpg',
-      metadata: { content_type: 'video/mp4', original_filename: 'clip.mp4' },
-    }));
-    const handleAssetDrop = vi.fn(() => getPlacementResult());
-    const coordinator = {
-      update: vi.fn(() => makeDropPosition()),
-      showSecondaryGhosts: vi.fn(),
-      end: vi.fn(),
-      lastPosition: makeDropPosition(),
-      editAreaRef: { current: null },
-    };
-
-    const { result } = renderHook(() => useExternalDrop({
-      dataRef,
-      pendingOpsRef,
-      scale: 1,
-      scaleWidth: 1,
-      selectedTrackId: null,
-      applyEdit,
-      invalidateAssetRegistry: vi.fn(),
-      resolveAssetUrl: vi.fn(),
-      coordinator,
-      registerGenerationAsset,
-      uploadImageGeneration: vi.fn(),
-      uploadVideoGeneration,
-      handleAssetDrop,
-      onSeekToTime,
-      finalVideoMap: new Map(),
-    }));
-
-    await result.current.onTimelineDrop(createFileDropEvent([
-      new File(['video'], 'clip.mp4', { type: 'video/mp4' }),
-    ]));
-
-    expect(handleAssetDrop).toHaveBeenCalledTimes(1);
-    expect(applyEdit).toHaveBeenCalledWith(
-      expect.objectContaining({ metaDeletes: [expect.stringContaining('uploading-')] }),
-      { save: false },
-    );
-    expect(pendingOpsRef.current).toBe(0);
-    expect(onSeekToTime).not.toHaveBeenCalled();
   });
 
   it('uses the local bridge direct asset flow for non-generation audio without mutating the timeline before bytes and registry succeed', async () => {
@@ -919,7 +684,7 @@ describe('useExternalDrop', () => {
     const patchRegistry = vi.fn((assetId: string, entry: { file: string; type?: string; duration?: number }) => {
       dataRef.current.registry.assets[assetId] = entry;
     });
-    const handleAssetDrop = vi.fn(() => true);
+    const handleAssetDrop = vi.fn();
     const resolveAssetUrl = vi.fn(async (file: string) => `http://127.0.0.1:17333/${file}`);
 
     const coordinator = {
@@ -1031,8 +796,7 @@ describe('useExternalDrop', () => {
       throw new Error('Local asset drop requires a browser with File System Access support');
     });
     const patchRegistry = vi.fn();
-    const handleAssetDrop = vi.fn(() => true);
-    const onSeekToTime = vi.fn();
+    const handleAssetDrop = vi.fn();
 
     const coordinator = {
       update: vi.fn(),
@@ -1077,7 +841,6 @@ describe('useExternalDrop', () => {
       uploadImageGeneration: vi.fn(),
       uploadVideoGeneration: vi.fn(),
       handleAssetDrop,
-      onSeekToTime,
       shots: mockUseShots().shots,
       finalVideoMap: mockUseFinalVideoAvailable().finalVideoMap,
     }));
@@ -1094,7 +857,6 @@ describe('useExternalDrop', () => {
     expect(mockToastError).toHaveBeenCalledWith('Failed to save asset', {
       description: 'This editor backend does not support Runtime image/video imports',
     });
-    expect(onSeekToTime).not.toHaveBeenCalled();
   });
 
   it('drops a shot as one rows edit with group start plus ordered children from loop state and never calls handleAssetDrop', async () => {

@@ -58,50 +58,6 @@ function withOccurrenceRevision(
 }
 
 describe('canonical shot-composition downstream projection', () => {
-  it('retains arbitrary parent roots through the accepted occurrence projection', () => {
-    const opaque = JSON.parse('{"opaque":{"retained":[null,false,[]]},"nullable":null,"ordered":[2,0,1],"__proto__":{"constructor":{"prototype":null}},"constructor":false,"prototype":[]}');
-    const contract = { ...fixture, parent_composition: { ...fixture.parent_composition,
-      config: { ...fixture.parent_composition.config, ...opaque } } };
-    const before = JSON.stringify(contract);
-    const composition = createShotCompositionAdapter({ load: async () => contract }).prepare(contract);
-    const config = projectCanonicalComposition(composition).config;
-    expect(config).toMatchObject({ opaque: { retained: [null, false, []] } });
-    expect(JSON.stringify(Object.fromEntries(Object.keys(opaque).map((key) => [key, (config as unknown as Record<string, unknown>)[key]])))).toBe(JSON.stringify(opaque));
-    for (const key of Object.keys(opaque)) expect(Object.hasOwn(config, key)).toBe(true);
-    expect(Object.getPrototypeOf(config)).toBe(Object.prototype);
-    expect(JSON.stringify(contract)).toBe(before);
-    expect(config.clips.some((clip) => clip.id === 'occ-1:alpha-video')).toBe(true);
-  });
-
-  it('retains raw clip IDs with isolated occurrence owners for repeated sources', () => {
-    const projection = projectCanonicalComposition(prepared);
-    expect(projection.clipIdentities.get('occ-1:alpha-video')).toMatchObject({
-      rawClipId: 'alpha-video', ownerRef: 'occurrence:occ-1', clipRef: 'occurrence:occ-1/clip:alpha-video',
-    });
-    expect(projection.clipIdentities.get('occ-2:alpha-video')).toMatchObject({
-      rawClipId: 'alpha-video', ownerRef: 'occurrence:occ-2', clipRef: 'occurrence:occ-2/clip:alpha-video',
-    });
-    expect(projection.config.clips.find((clip) => clip.id === 'occ-2:alpha-video')?.at).toBe(4);
-  });
-
-  it('keeps fallback and ambiguous display identities unaddressable for commands', () => {
-    const composition = withOccurrenceRevision(prepared, 0, (timeline) => ({
-      ...timeline,
-      clips: [
-        { track: 'video', at: 0, hold: 0.1 },
-        { id: 'duplicate', track: 'video', at: 0.1, hold: 0.1 },
-        { id: 'duplicate', track: 'video', at: 0.2, hold: 0.1 },
-        { id: 'bad/id', track: 'video', at: 0.3, hold: 0.1 },
-        { id: 'bad::id', track: 'video', at: 0.4, hold: 0.1 },
-      ],
-    }));
-    const projection = projectCanonicalComposition(composition);
-    expect(projection.clipIdentities.get('occ-1:child-0')).toMatchObject({ rawClipId: null, clipRef: null });
-    expect(projection.clipIdentities.get('occ-1:duplicate')).toMatchObject({ rawClipId: 'duplicate', clipRef: null });
-    expect(projection.clipIdentities.get('occ-1:bad/id')?.clipRef).toBeNull();
-    expect(projection.clipIdentities.get('occ-1:bad::id')?.clipRef).toBeNull();
-  });
-
   it('merges shot-only lanes around shared picture layers and preserves authored properties', () => {
     const composition = withOccurrenceRevision(prepared, 0, (timeline) => ({
       ...timeline,
@@ -271,65 +227,6 @@ describe('canonical shot-composition downstream projection', () => {
       media_id: 'object-alpha-image',
       src: '/api/astrid/v1/objects/object-alpha-image',
     });
-  });
-
-  it.each([
-    { name: 'attenuates both levels', child: { gain: 0.8 }, occurrenceGain: 0.5, expected: 0.4 },
-    { name: 'preserves boosts at both levels', child: { gain: 1.5 }, occurrenceGain: 2, expected: 3 },
-    { name: 'preserves a zero child gain', child: { gain: 0 }, occurrenceGain: 2, expected: 0 },
-    { name: 'defaults a missing child gain to unity', child: {}, occurrenceGain: 2, expected: 2 },
-    { name: 'defaults a missing occurrence gain to unity', child: { gain: 1.5 }, expected: 1.5 },
-    { name: 'defaults both missing gains to unity', child: {}, expected: 1 },
-    { name: 'uses child volume when gain is null', child: { gain: null, volume: 0.25 }, occurrenceGain: 2, expected: 0.5 },
-    { name: 'gives child gain precedence over child volume', child: { gain: 0.75, volume: 0.25 }, occurrenceGain: 2, expected: 1.5 },
-  ])('multiplies child and occurrence gain and $name', ({ child, occurrenceGain, expected }) => {
-    const source = withOccurrenceRevision(prepared, 0, (timeline) => ({
-      ...timeline,
-      clips: [{
-        ...(timeline.clips as Array<Record<string, unknown>>)[0],
-        ...child,
-      }],
-    }));
-    const composition: PreparedShotComposition = {
-      ...source,
-      occurrences: source.occurrences.map((occurrence, index) => index === 0
-        ? { ...occurrence, gain: occurrenceGain }
-        : occurrence),
-    };
-
-    const clip = projectCanonicalComposition(composition).config.clips.find(
-      (candidate) => candidate.id === 'occ-1:alpha-video',
-    );
-
-    expect(clip).toMatchObject({
-      volume: expected,
-      app: { canonicalTiming: { gain: expected } },
-    });
-  });
-
-  it.each([
-    { name: 'child mute', child: { muted: true }, occurrence: { gain: 2 }, expected: 0 },
-    { name: 'occurrence mute', child: { gain: 2 }, occurrence: { gain: 2, muted: true }, expected: 0 },
-  ])('keeps $name as a final zeroing rule', ({ child, occurrence, expected }) => {
-    const source = withOccurrenceRevision(prepared, 0, (timeline) => ({
-      ...timeline,
-      clips: [{
-        ...(timeline.clips as Array<Record<string, unknown>>)[0],
-        ...child,
-      }],
-    }));
-    const composition: PreparedShotComposition = {
-      ...source,
-      occurrences: source.occurrences.map((candidate, index) => index === 0
-        ? { ...candidate, ...occurrence }
-        : candidate),
-    };
-
-    const clip = projectCanonicalComposition(composition).config.clips.find(
-      (candidate) => candidate.id === 'occ-1:alpha-video',
-    );
-
-    expect(clip?.volume).toBe(expected);
   });
 
   it('filters child Source lanes before extent, asset selection and track merging', () => {

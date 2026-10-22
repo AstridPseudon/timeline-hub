@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import fixture from './shotComposition.fixture.json';
 import {
   CanonicalShotCompositionHistory,
+  duplicateIndependentShot,
   duplicateLinkedOccurrence,
   hardDurationMs,
   moveCanonicalOccurrence,
@@ -120,6 +121,27 @@ describe('canonical shot-composition editor operations', () => {
       .toThrow('before active content');
   });
 
+  it('keeps linked reuse occurrence-distinct while independent duplication creates a new revision', () => {
+    const graph = parseShotComposition(fixture);
+    const linked = duplicateLinkedOccurrence(graph, 'occ-1', 'occ-linked');
+    const independent = duplicateIndependentShot(linked, 'occ-1', {
+      shotId: 'shot-alpha-independent',
+      revisionId: 'rev-independent',
+      internalTimelineRevisionId: 'timeline-independent',
+      occurrenceId: 'occ-independent',
+    });
+
+    const linkedOccurrence = independent.occurrences.find((candidate) => candidate.occurrence_id === 'occ-linked');
+    const independentOccurrence = independent.occurrences.find((candidate) => candidate.occurrence_id === 'occ-independent');
+    expect(linkedOccurrence).toMatchObject({ shot_id: 'shot-alpha', revision_id: 'rev-a' });
+    expect(independentOccurrence).toMatchObject({ shot_id: 'shot-alpha-independent', revision_id: 'rev-independent' });
+    expect(independent.shot_revisions).toContainEqual(expect.objectContaining({
+      shot_id: 'shot-alpha-independent',
+      revision_id: 'rev-independent',
+      internal_timeline_revision: expect.objectContaining({ revision_id: 'timeline-independent' }),
+    }));
+  });
+
   it('supports undo and redo over canonical graph edits', () => {
     const graph = parseShotComposition(fixture);
     const history = new CanonicalShotCompositionHistory(graph);
@@ -210,10 +232,10 @@ describe('canonical shot-composition editor operations', () => {
     expect(item.item_id).toBe(`${selected?.shot_id}:item-1`);
     expect(item.metadata).toMatchObject({
       source_item_id: item.item_id,
-      selected_item_id: 'item-1',
-      parent_item_id: 'item-1',
-      bound_item_id: 'item-1',
-      bound_item_ids: ['item-1'],
+      selected_item_id: item.item_id,
+      parent_item_id: item.item_id,
+      bound_item_id: item.item_id,
+      bound_item_ids: [item.item_id],
       opaque_literal: 'item-1',
     });
     expect((source.items as Record<string, any>[])[0].item_id).toBe('item-1');

@@ -1,6 +1,6 @@
 /**
  * useTimelineOps — host adapter that produces a stable TimelineOps instance
- * wired to the command session and existing commitData/history path.
+ * wired to the existing commitData/history path.
  *
  * Extensions and proposal machinery receive this adapter through
  * CreativeContext.timeline.  It wraps the pure compiler functions
@@ -28,18 +28,9 @@ import {
 } from '@/tools/video-editor/lib/timeline-patch';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability';
-import {
-  classifyGenericPatch,
-  type GenericPatchCapturePort,
-} from '../commands/genericPatchCapture.ts';
 import type { CommitDataOptions } from '@/tools/video-editor/hooks/useTimelineCommit';
 import type { Checkpoint } from '@/tools/video-editor/types/history';
 import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors.ts';
-import {
-  captureTrackLabelEdit,
-  submitTrackLabelEdit,
-  type TrackLabelCapturePort,
-} from '../commands/trackLabelGesture.ts';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -75,12 +66,6 @@ export interface UseTimelineOpsArgs {
 
   /** Normal host writer's edit-sequence acknowledgement barrier. */
   flushPendingSave?: () => Promise<number>;
-
-  /** Original authored track-label capture and the shared command outbox. */
-  trackLabelPort?: TrackLabelCapturePort;
-
-  /** One atomic native batch port; unsupported operation families refuse as one patch. */
-  genericPatchPort?: GenericPatchCapturePort;
 
   /** Host checkpoint creation (async fire-and-forget). */
   createManualCheckpoint: (label?: string) => Promise<void>;
@@ -129,8 +114,6 @@ export function useTimelineOps({
   dataRef,
   getConfigVersion,
   flushPendingSave,
-  trackLabelPort,
-  genericPatchPort,
   createManualCheckpoint,
   jumpToCheckpoint,
   checkpoints,
@@ -264,16 +247,6 @@ export function useTimelineOps({
         );
       }
 
-      // Retain the guarded snapshot/draft route for standalone operations
-      // until their command migration lands. Mixed patches must reach the
-      // native port so its whole-batch refusal remains atomic.
-      if (genericPatchPort && classifyGenericPatch(patch) !== 'unsupported') {
-        const captured = genericPatchPort.capture({ patch, current });
-        const finished = genericPatchPort.finish(captured);
-        genericPatchPort.submit(finished);
-        return previewTimelinePatch(finished.preview, current).diff;
-      }
-
       // 1. Validate the full batch
       const validation = validateTimelinePatch(patch);
       if (!validation.valid) {
@@ -298,22 +271,7 @@ export function useTimelineOps({
         );
       }
 
-      const labelUpdates = patch.operations.filter((operation) =>
-        operation.op === 'track.update' && operation.payload && 'label' in operation.payload);
-      if (labelUpdates.length > 0) {
-        const operation = labelUpdates[0];
-        const payload = operation.payload!;
-        if (patch.operations.length !== 1 || (payload.mode !== undefined && payload.mode !== 'merge')
-          || Object.keys(payload).some((key) => key !== 'label' && key !== 'mode')
-          || typeof payload.label !== 'string') {
-          throw new Error('TimelineOps.apply: only a single merge-mode label-only track.update is supported.');
-        }
-        const captured = captureTrackLabelEdit(trackLabelPort, current, operation.target);
-        submitTrackLabelEdit(captured, { values: { label: payload.label }, clear: [] });
-        return compiled.diff;
-      }
-
-      // 3. Unmigrated operations still use the existing snapshot path.
+      // 3. Commit once through commitData with semantic transaction metadata.
       //    History recording is enabled by default (skipHistory defaults to false).
       commitData(compiled.nextData, {
         save: true,
@@ -323,7 +281,7 @@ export function useTimelineOps({
       // 4. Return the semantic diff
       return compiled.diff;
     },
-    [assertTimelineEditable, commitData, dataRef, genericPatchPort, getCanonicalVersion, trackLabelPort],
+    [assertTimelineEditable, commitData, dataRef, getCanonicalVersion],
   );
 
   // ---- checkpoint ---------------------------------------------------------
@@ -474,17 +432,16 @@ export function useTimelineOps({
     return Object.freeze({ version: await barrier() });
   }, [dataRef]);
 
-  // Extensions retain this adapter for their activation lifetime. Dispatch
-  // through current callbacks as command ports and edit authority change.
-  const currentOps = useRef<TimelineOps>({ validate, preview, apply, flush, checkpoint, rollback, setAllTracksMuted });
-  currentOps.current = { validate, preview, apply, flush, checkpoint, rollback, setAllTracksMuted };
-  return useMemo<TimelineOps>(() => ({
-    validate: (patch) => currentOps.current.validate(patch),
-    preview: (patch) => currentOps.current.preview(patch),
-    apply: (patch) => currentOps.current.apply(patch),
-    flush: () => currentOps.current.flush(),
-    checkpoint: (label) => currentOps.current.checkpoint(label),
-    rollback: (id) => currentOps.current.rollback(id),
-    setAllTracksMuted: (muted) => currentOps.current.setAllTracksMuted(muted),
-  }), []);
+  return useMemo<TimelineOps>(
+    () => ({
+      validate,
+      preview,
+      apply,
+      flush,
+      checkpoint,
+      rollback,
+      setAllTracksMuted,
+    }),
+    [validate, preview, apply, flush, checkpoint, rollback, setAllTracksMuted],
+  );
 }

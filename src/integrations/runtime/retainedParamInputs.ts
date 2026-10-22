@@ -1,6 +1,5 @@
 import type { Project, WorkspaceClient } from './generated.ts';
 import type { DocumentPin, VerifiedDocument, VerifiedDocumentObject } from './timeline-commit-types.ts';
-
 type ReadPort = Pick<WorkspaceClient, 'getProjectVerifiedDocument' | 'getProjectVerifiedDocumentObject'>;
 const object = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
 const text = (value: unknown): value is string => typeof value === 'string' && value.length > 0;
@@ -10,7 +9,6 @@ const exactKeys = (value: Record<string, unknown>, expected: string[]) => Object
 const exactPin = (value: unknown): value is DocumentPin => object(value)
   && exactKeys(value, ['document_id', 'version', 'content_digest']) && text(value.document_id)
   && Number.isSafeInteger(value.version) && Number(value.version) > 0 && digest(value.content_digest);
-
 /** Read the exact retained project-pack inputs used by native PARAM capture. */
 export async function readRetainedParamInputs(
   client: ReadPort,

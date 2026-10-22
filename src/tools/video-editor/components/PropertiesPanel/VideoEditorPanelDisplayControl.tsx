@@ -25,7 +25,6 @@ export function VideoEditorPanelDisplayControl({ className = '', visible = true 
   const layout = preferences.rightPanelLayoutSlotsByPanelId[HOST_PROPERTIES_PANEL_KEY]
     ?? preferences.rightPanelLayoutSlotsByPanelId[currentKey]
     ?? 'dock';
-  // Only "Closed" (null) closes the dock: disabling the selected extension falls back to "tool".
   const open = selected !== null;
   const [menuOpen, setMenuOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);

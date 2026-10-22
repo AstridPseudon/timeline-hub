@@ -19,7 +19,7 @@ import {
 import { TimelineEventBus } from '@/tools/video-editor/hooks/useTimelineEventBus.ts';
 import { buildTrackClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { migrateToFlatTracks } from '@/tools/video-editor/lib/migrate.ts';
-import { serializeResolvedTimelineEdit } from '@/tools/video-editor/lib/serialize.ts';
+import { serializeForDisk } from '@/tools/video-editor/lib/serialize.ts';
 import { getConfigSignature } from '@/tools/video-editor/lib/config-utils.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 import { buildAssetReferenceMap, getAssetMediaId, getAssetResolutionToken, getAssetSourceForLocalEdit } from '@/tools/video-editor/lib/asset-registry.ts';
@@ -165,7 +165,6 @@ interface UseTimelineCommitOptions {
   eventBus: TimelineEventBus;
   lastSavedSignatureRef: MutableRefObject<string>;
   editability?: TimelineEditability;
-  snapshotWriteBlockedRef?: MutableRefObject<boolean>;
   initialData?: TimelineData;
   resolveAssetUrl?: (reference: string) => Promise<string>;
 }
@@ -204,7 +203,6 @@ export function useTimelineCommit({
   editability,
   initialData,
   resolveAssetUrl,
-  snapshotWriteBlockedRef,
 }: UseTimelineCommitOptions): UseTimelineCommitResult {
   const registryOwnersRef = useRef(new Map<string, OwnedRegistryMutation>());
   const registryReceiptsRef = useRef(new WeakMap<OwnedRegistryMutation, {
@@ -341,15 +339,7 @@ export function useTimelineCommit({
     options?: CommitDataOptions,
   ) => {
     const shouldSave = options?.save ?? true;
-    if (shouldSave && snapshotWriteBlockedRef?.current) {
-      throw new Error('Resolve pending timeline commands before snapshot edits');
-    }
     const currentData = dataRef.current;
-    // Legacy callers spread the displayed data; its fact cannot certify a later edit.
-    if (nextData.editProjection && (shouldSave
-      || (nextData !== currentData && nextData.editProjection === currentData?.editProjection))) {
-      nextData = { ...nextData, editProjection: undefined };
-    }
     if (options?.skipHistory && options?.updateLastSavedSignature) registryOwnersRef.current.clear();
     for (const [assetId, receipt] of registryOwnersRef.current) {
       const owned = registryReceiptsRef.current.get(receipt);
@@ -409,7 +399,7 @@ export function useTimelineCommit({
       editSeqRef.current += 1;
       eventBus.emit('scheduleSave', nextData);
     }
-  }, [eventBus, lastSavedSignatureRef, selectionOwner, snapshotWriteBlockedRef]);
+  }, [eventBus, lastSavedSignatureRef, selectionOwner]);
 
   const applyEdit = useCallback((
     mutation: TimelineEditMutation,
@@ -533,10 +523,9 @@ export function useTimelineCommit({
       preserveUploadingClips(
         current,
         buildDataFromCurrentRegistry(
-          serializeResolvedTimelineEdit(
+          serializeForDisk(
             mutation.resolvedConfig,
             mutation.pinnedShotGroupsOverride ?? current.config.pinnedShotGroups,
-            current.config,
           ),
           current,
         ),

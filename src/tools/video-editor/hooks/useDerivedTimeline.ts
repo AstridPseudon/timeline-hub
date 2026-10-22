@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
 import { getTrackById } from '@/tools/video-editor/lib/editor-utils.ts';
-import { parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
+import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { TrackDefinition } from '@/tools/video-editor/types/index.ts';

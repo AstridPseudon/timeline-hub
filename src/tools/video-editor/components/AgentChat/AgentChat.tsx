@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Info, Loader2, Mic, Send, Square, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Mic, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
+import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { isAcpUnavailable } from '@/integrations/astrid/acpRoutes.ts';
 import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox.tsx';
 import { Button } from '@/shared/components/ui/button.tsx';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
 import { useAgentChatBridge, useAgentChatActionsRegistry, type AgentChatActionsHandlers } from '@/shared/contexts/AgentChatContext.tsx';
 import { composerClearAttachments, composerRemoveAttachment } from '@/shared/state/selectionStore.ts';
 import { useCurrentAttachmentSet } from '@/shared/state/currentAttachmentSet.ts';
@@ -41,8 +41,9 @@ import type {
 import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup, type AgentChatAttachmentPreviewItem } from './AgentChatMessage.tsx';
 import { useChatScroll } from './useChatScroll';
 import { AgentTaskResults } from './AgentTaskResults';
-import { AgentChatSessionSelector } from './AgentChatSessionSelector';
-import { AgentChatNewChatButton, type NewChatAgentModels } from './AgentChatNewChatButton';
+import { AgentChatMenu, type AgentChatMenuHandle, type NewChatAgentModels } from './AgentChatMenu';
+import { AgentChatModelLine } from './AgentChatModelLine';
+import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded';
 import { AgentIcon, agentNames } from './agentIdentity';
 import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
 
@@ -209,7 +210,7 @@ function createMessageId() {
 interface AgentChatPanelProps {
   /** Whether chat currently fills the action pane vertically. */
   isExpanded?: boolean;
-  /** Keep the containing action pane visible while the session selector portal is open. */
+  /** Keep the containing action pane visible while a chat header menu's portal is open. */
   onSessionSelectorOpenChange?: (open: boolean) => void;
 }
 
@@ -263,6 +264,7 @@ function AvailableAgentChatPanel({
   const projectId = editorContext?.projectId ?? null;
   const sessions = useAgentSessions(timelineId, projectId);
   const localAgents = useLocalAgents();
+  const { setLocalServiceOutOfDate } = useRuntimeConnection();
   const projectChat = useProjectChat(projectId);
   const saveDraft = useSaveProjectDraft(projectId);
   const selectSession = useSelectProjectSession(projectId);
@@ -295,8 +297,9 @@ function AvailableAgentChatPanel({
     if (!modelId) return null;
     return models?.availableModels.find(model => model.modelId === modelId)?.name ?? modelName(activeSessionId, modelId);
   }, [activeSessionId, modelCatalog.data, modelName, projectChat.data]);
-  const chatThoughtLevel = modelCatalog.data?.localModels?.thoughtLevel;
-  const chatModelDescription = [chatModelName, chatThoughtLevel?.currentValue === 'default' ? null : chatThoughtLevel?.options.find(level => level.value === chatThoughtLevel.currentValue)?.name].filter(Boolean).join(' · ');
+  const chatThoughtLevel = modelCatalog.data?.localModels?.thoughtLevel ?? null;
+  // Some agents carry thinking inside the model option; that level is fixed with the model.
+  const chatThoughtLevelFixed = Boolean(chatThoughtLevel && (chatThoughtLevel.configId === 'model' || chatThoughtLevel.configId === modelCatalog.data?.localModels?.modelConfigId));
   const describeSession = useCallback((sessionId: string) => {
     const modelId = projectChat.data?.sessions.find(session => session.id === sessionId)?.model_id;
     return { agent: sessionAgentId(sessionId), model: sessionId === activeSessionId ? chatModelName : modelId ? modelName(sessionId, modelId) : null };
@@ -312,7 +315,7 @@ function AvailableAgentChatPanel({
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
   const [startingAgent, setStartingAgent] = useState<LocalAgentId | null>(null);
-  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; choice?: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; details: string } | null>(null);
+  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; choice?: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; details: string; updateNeeded: boolean } | null>(null);
   // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
   // and decoupled from pane open state so the close-path bug from the rev-4
   // setIsTasksPaneOpenProgrammatic approach can't recur.
@@ -361,8 +364,14 @@ function AvailableAgentChatPanel({
       chatNumber: index + 1,
     }]);
   }, [sessions.data, projectChat.data?.sessions]);
-  const showSessionSelector = sessionOptions.length > 0 && Boolean(projectChat.data) && (sessionOptions.length > 1 || hasMainContract);
   const [browseAgent, setBrowseAgent] = useState<LocalAgentId | null>(null);
+  const chatMenuRef = useRef<AgentChatMenuHandle>(null);
+  // The action pane stays shown while either header popover is open.
+  const headerOverlaysRef = useRef({ menu: false, model: false });
+  const setHeaderOverlayOpen = useCallback((overlay: 'menu' | 'model', open: boolean) => {
+    headerOverlaysRef.current[overlay] = open;
+    onSessionSelectorOpenChange?.(headerOverlaysRef.current.menu || headerOverlaysRef.current.model);
+  }, [onSessionSelectorOpenChange]);
   const agentCanBrowse = useMemo(() => ({ hermes: Boolean(localAgents.data?.agents.find(agent => agent.id === 'hermes')?.models.length) }), [localAgents.data]);
   const newChatModels = useMemo<NewChatAgentModels | null>(() => {
     if (!browseAgent) return null;
@@ -518,7 +527,9 @@ function AvailableAgentChatPanel({
     if (isFollower || startingAgent) voiceRef.current.cancelRecording();
   }, [isFollower, startingAgent]);
   const showNoProjectState = !hasProject && sessionOptions.length === 0;
-  const hasQueuedMessages = queue.some((item) => item.sessionId === activeSessionId);
+  // A saved row waiting for "Send now" is paused (`pausedQueuedIdsRef`): it never auto-sends, so it does not make the
+  // composer look busy. Only a row that will be sent when the running turn ends is a real queue.
+  const hasQueuedMessages = queue.some((item) => item.sessionId === activeSessionId && !pausedQueuedIdsRef.current.has(item.id));
   const activeQueue = startingAgent ? [] : queue.filter((item) => item.sessionId === activeSessionId);
   // A phone or tablet has no shortcut keys to press: its way to talk is the mic.
   const [coarsePointer] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true);
@@ -538,6 +549,15 @@ function AvailableAgentChatPanel({
   const chatUnavailable = chatFailures.some(isAcpUnavailable);
   const showEmptyState = !startingAgent && !activeSession.isLoading && renderedTurns.length === 0 && !isProcessing && !sendMessage.isPending;
   const turnFailure = chatFailures.find(Boolean);
+  // One update flow: a reply from the local chat service this page can't read also puts Settings on Update Astrid
+  // (it never gates the app). The next chat read that comes back readable clears it.
+  const chatServiceOutOfDate = startFailure?.updateNeeded === true
+    || [localAgents.error, ...chatFailures].some(isChatUpdateError);
+  const chatReadSucceeded = localAgents.isSuccess || sessions.isSuccess;
+  useEffect(() => {
+    if (chatServiceOutOfDate) setLocalServiceOutOfDate(true);
+    else if (chatReadSucceeded) setLocalServiceOutOfDate(false);
+  }, [chatServiceOutOfDate, chatReadSucceeded, setLocalServiceOutOfDate]);
   const turnFailureMessage = turnFailure instanceof Error ? turnFailure.message : turnFailure ? String(turnFailure) : 'Agent error. Try again or start a new conversation.';
 
   const handleAttachmentPreviewClick = useCallback(async (attachment: AgentChatAttachmentPreviewItem) => {
@@ -842,7 +862,8 @@ function AvailableAgentChatPanel({
       || isProcessing
       || sendMessage.isPending
       || optimisticMessage
-      || queue.some((item) => item.sessionId === activeSessionId)
+      // Paused rows are waiting on the person, not on a turn: a new message sends now, ahead of them, and they stay put.
+      || queue.some((row) => row.sessionId === activeSessionId && !pausedQueuedIdsRef.current.has(row.id))
     ) {
       setQueue((prev) => [...prev, item]);
       return;
@@ -884,6 +905,11 @@ function AvailableAgentChatPanel({
     })();
   }, [queue, pausedQueueHeadId, startingAgent, configurationFailed, isFollower, isProcessing, sendMessage.isPending, optimisticMessage, activeSessionId, projectId, sendNow]);
 
+  /** A saved row that is waiting for the person: not the one in flight, and never auto-sent. */
+  const notSent = (item: QueuedMessage) => pausedQueuedIdsRef.current.has(item.id)
+    && optimisticMessage?.id !== item.id
+    && !(sessionControl?.active && item.id === sessionControl.activeRequestId);
+
   const handleNewSession = useCallback(async (agent?: LocalAgentId, model?: string): Promise<string | null> => {
     if (!projectId) return null;
     if (!manualCreateOperationIdRef.current || manualCreateOperationIdRef.current.agent !== agent || manualCreateOperationIdRef.current.model !== model) {
@@ -915,7 +941,7 @@ function AvailableAgentChatPanel({
       // and applying the selected thinking level.
       if (sessionId) await configureSession.mutateAsync({ sessionId, model, thoughtLevel });
     } catch (error) {
-      setStartFailure({ agent: chosen, choice: agent, model, thoughtLevel, sessionId: sessionId ?? undefined, details: error instanceof Error ? error.message : String(error) });
+      setStartFailure({ agent: chosen, choice: agent, model, thoughtLevel, sessionId: sessionId ?? undefined, details: error instanceof Error ? error.message : String(error), updateNeeded: isChatUpdateError(error) });
     } finally {
       setStartingAgent(null);
     }
@@ -949,7 +975,7 @@ function AvailableAgentChatPanel({
 
   // Astrid is answering: the turn is running, being sent or queued behind one. The pane shows
   // it as "Thinking..."; it is published so an editor's own Astrid entry can say so too.
-  const agentWorking = isProcessing || sendMessage.isPending || (hasQueuedMessages && !pausedQueueHeadId);
+  const agentWorking = isProcessing || sendMessage.isPending || hasQueuedMessages;
 
   useEffect(() => {
     actionsRegistry.registerHandlers(stableHandlers);
@@ -976,51 +1002,60 @@ function AvailableAgentChatPanel({
     // No background of its own — sits on the parent pane's bg so the only
     // visible color change between halves is the divider line itself.
     <div className="flex h-full w-full flex-col overflow-hidden">
-      {/* Header */}
-      <div data-testid="agent-chat-header" className="@container/agent-header relative flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-2">
-        <div className="flex shrink-0 items-center gap-2">
-          {/* The chat's agent and model are fixed when it starts. */}
-          <span className="flex min-w-0 items-center gap-1.5" title={AGENT_CHAT_COPY.fixedModel}>
-            <AgentIcon agent={startingAgent ?? chatAgent} className="h-3.5 w-3.5 shrink-0 text-foreground/80" />
-            <span data-testid="agent-chat-identity" className="truncate text-sm font-medium normal-case" title={AGENT_CHAT_COPY.fixedModel}>
-              {agentNames[startingAgent ?? chatAgent]}{!startingAgent && chatModelName ? ` · ${chatModelName}` : ''}
-            </span>
-            {!startingAgent && chatModelName && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button type="button" aria-label="Chat model information" className="-m-1 rounded-sm p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                    <Info className="h-3 w-3" aria-hidden="true" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="text-xs normal-case">
-                  <div>{chatModelDescription}</div>
-                  <div className="text-muted-foreground">To use another model, start a new chat.</div>
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </span>
-          {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+      {/* Header: one menu names the chat (switch, start, rename); the small line under it is the chat's agent and model. */}
+      <div data-testid="agent-chat-header" className="relative flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-1.5">
+        <div className="-ml-1.5 flex min-w-0 flex-col items-start">
+          <AgentChatMenu
+            ref={chatMenuRef}
+            sessions={sessionOptions}
+            activeSessionId={activeSessionId}
+            mainSessionId={projectChat.data?.main_session_id ?? null}
+            settingMainSessionId={setMainSession.isPending ? setMainSession.variables?.sessionId ?? null : null}
+            describeSession={describeSession}
+            onSelectSession={(sessionId) => {
+              if (!projectId || !projectChat.data) return;
+              void selectSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId }).then(() => setActiveSessionId(sessionId)).catch(() => undefined);
+            }}
+            onSetMainSession={hasMainContract
+              ? (sessionId) => void handleSetMainSession(sessionId).catch(() => undefined)
+              : undefined}
+            onRenameSession={projectChat.data
+              ? (sessionId, title) => renameSession.mutateAsync({ expectedRevision: projectChat.data!.revision, sessionId, title })
+              : undefined}
+            starting={startingAgent !== null}
+            disabled={startingAgent !== null || !hasProject}
+            defaultAgent={defaultAgent}
+            agents={localAgents.data?.agents}
+            agentModelNames={agentModelNames}
+            agentCanBrowse={agentCanBrowse}
+            agentsLoading={localAgents.isLoading}
+            agentsError={localAgents.error instanceof Error ? localAgents.error : null}
+            newChatDisabled={createNewSession.isPending}
+            onBrowseAgent={setBrowseAgent}
+            agentModels={newChatModels}
+            onNewChat={(agent, model, thoughtLevel) => void startChatWith(agent, model, thoughtLevel)}
+            attachExisting={projectId ? { open: showAttachSessions, toggle: () => setShowAttachSessions((open) => !open) } : undefined}
+            onOpenChange={(open) => {
+              if (open) void localAgents.refetch();
+              setHeaderOverlayOpen('menu', open);
+            }}
+          />
+          <AgentChatModelLine
+            agent={startingAgent ?? chatAgent}
+            hasChat={Boolean(activeSessionId) && !startingAgent}
+            modelName={startingAgent ? null : activeSessionId ? chatModelName : agentModelNames[defaultAgent] ?? null}
+            thoughtLevel={activeSessionId ? chatThoughtLevel : null}
+            thoughtLevelFixed={chatThoughtLevelFixed}
+            thinkingLockedReason={isFollower
+              ? 'Take over this chat to change its thinking level.'
+              : isProcessing || sendMessage.isPending ? 'The thinking level can change once this reply finishes.' : null}
+            onChangeThinkingLevel={(thoughtLevel) => configureSession.mutateAsync({ sessionId: activeSessionId!, thoughtLevel })}
+            onChooseAnotherModel={() => chatMenuRef.current?.openModels(chatAgent)}
+            onOpenChange={(open) => setHeaderOverlayOpen('model', open)}
+          />
         </div>
-        <div className="flex min-w-0 shrink items-center justify-end gap-1">
-          {showSessionSelector && projectChat.data && (
-            <AgentChatSessionSelector
-              sessions={sessionOptions}
-              disabled={startingAgent !== null}
-              activeSessionId={activeSessionId}
-              mainSessionId={projectChat.data.main_session_id ?? null}
-              onOpenChange={onSessionSelectorOpenChange}
-              settingMainSessionId={setMainSession.isPending ? setMainSession.variables?.sessionId ?? null : null}
-              describeSession={describeSession}
-              onSelectSession={(sessionId) => {
-                if (!projectId) return;
-                void selectSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId }).then(() => setActiveSessionId(sessionId)).catch(() => undefined);
-              }}
-              onSetMainSession={hasMainContract
-                ? (sessionId) => void handleSetMainSession(sessionId).catch(() => undefined)
-                : undefined}
-              onRenameSession={(sessionId, title) => renameSession.mutateAsync({ expectedRevision: projectChat.data.revision, sessionId, title })}
-            />
-          )}
+        <div className="flex shrink-0 items-center gap-1">
+          {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-hidden="true" />}
           {showKillSwitch && (
             <Button
               type="button"
@@ -1035,30 +1070,18 @@ function AvailableAgentChatPanel({
               }}
               disabled={cancelSession.isPending}
               title="Stop agent"
+              aria-label="Stop agent"
             >
               <Square className="h-3.5 w-3.5" />
             </Button>
           )}
-          <AgentChatNewChatButton
-            defaultAgent={defaultAgent}
-            agents={localAgents.data?.agents}
-            agentModelNames={agentModelNames}
-            agentCanBrowse={agentCanBrowse}
-            agentsLoading={localAgents.isLoading}
-            agentsError={localAgents.error instanceof Error ? localAgents.error.message : null}
-            disabled={startingAgent !== null || createNewSession.isPending || !hasProject}
-            onMenuOpenChange={(open) => { if (open) void localAgents.refetch(); }}
-            onBrowseAgent={setBrowseAgent}
-            agentModels={newChatModels}
-            onNewChat={(agent, model, thoughtLevel) => void startChatWith(agent, model, thoughtLevel)}
-            attachExisting={projectId ? { open: showAttachSessions, toggle: () => setShowAttachSessions((open) => !open) } : undefined}
-          />
         </div>
       </div>
       {startFailure && (
         <div role="alert" className="border-b border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-          <p>{agentNames[startFailure.agent]} didn't start.</p>
-          <p>Details: {startFailure.details}</p>
+          {startFailure.updateNeeded
+            ? <ChatUpdateNeeded detail={startFailure.details} />
+            : <><p>{agentNames[startFailure.agent]} didn't start.</p><p>Details: {startFailure.details}</p></>}
           <button type="button" className="mt-1 underline" onClick={() => void startChatWith(startFailure.choice, startFailure.model, startFailure.thoughtLevel, startFailure.sessionId)}>Try again</button>
         </div>
       )}
@@ -1149,7 +1172,7 @@ function AvailableAgentChatPanel({
                 {coarsePointer
                   ? <p className="mt-1 text-xs">Tap the mic to talk</p>
                   : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>}
-                <p data-testid="agent-chat-runs-with" className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px] normal-case">
+                <p data-testid="agent-chat-runs-with" className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px]">
                   <AgentIcon agent={startingAgent ?? chatAgent} className="h-3 w-3 shrink-0" />
                   {agentNames[chatAgent]} · {chatModelName ?? 'default model'}
                 </p>
@@ -1205,6 +1228,12 @@ function AvailableAgentChatPanel({
       <div className="border-t border-border/70 px-3 py-3">
         {activeQueue.length > 0 && (
           <div className="mb-2 flex flex-col gap-2">
+            {draftSaveError && (
+              <p className="text-[11px] text-muted-foreground">
+                Couldn't save the queue.{' '}
+                <button type="button" className="underline" onClick={() => void flushDraftRef.current().catch(() => undefined)}>Retry</button>
+              </p>
+            )}
             {activeQueue.map((item, index) => (
               <div
                 key={item.id}
@@ -1213,18 +1242,28 @@ function AvailableAgentChatPanel({
                 <div className="flex-1 text-foreground">
                   <div className="line-clamp-2 break-words leading-relaxed">{item.text}</div>
                   {sessionControl?.active && item.id === sessionControl.activeRequestId && <div className="text-muted-foreground">{isFollower ? 'In progress in another tab' : 'In progress'}</div>}
-                  {item.id === pausedQueueHeadId && !isFollower && !activeSession.isLoading && !sessionControl?.active && <div className="text-muted-foreground">Delivery not confirmed. Retry checks saved history first; it may send this message again.</div>}
+                  {notSent(item) && <div className="text-muted-foreground">Not sent{item.id === pausedQueueHeadId && !isFollower ? '. Delivery not confirmed: Send now checks saved history first, and may send this message again.' : ''}</div>}
                 </div>
                 {item.attachments.length > 0 && (
                   <span className="shrink-0 rounded-full bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground">
                     {`📎 ${item.attachments.length}`}
                   </span>
                 )}
-                {item.id === pausedQueueHeadId && !isFollower && !sessionControl?.active && !activeSession.isLoading && (
-                  <button type="button" onClick={() => { void sendNow(item, sendMessage.hasCapturedMessage?.(item.sessionId, item.id) ?? false, true).catch(() => undefined); }}>
-                    Retry saved message
-                  </button>
-                )}
+                {notSent(item) && (isFollower ? (
+                  <Button type="button" size="sm" className="h-7 shrink-0 px-2 text-xs" disabled={takeOverSession.isPending || !activeSessionId || !projectId} onClick={() => takeOverSession.mutate()}>
+                    Take over to send
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-7 shrink-0 px-2 text-xs"
+                    disabled={Boolean(sessionControl?.active) || activeSession.isLoading || sendMessage.isPending || Boolean(optimisticMessage)}
+                    onClick={() => { void sendNow(item, sendMessage.hasCapturedMessage?.(item.sessionId, item.id) ?? false, true).catch(() => undefined); }}
+                  >
+                    Send now
+                  </Button>
+                ))}
                 <Button
                   type="button"
                   size="icon"
@@ -1333,7 +1372,7 @@ function AvailableAgentChatPanel({
 
         {!isProcessing && !sendMessage.isPending && !isCancelled && !chatUnavailable && (turnFailure || activeStatus === 'error') && (
           <div role="alert" className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            {turnFailureMessage}
+            {isChatUpdateError(turnFailure) ? <ChatUpdateNeeded detail={turnFailure.message} /> : turnFailureMessage}
             {(sessions.error || projectChat.error) && (
               <button type="button" className="ml-2 underline" disabled={sessions.isFetching || projectChat.isFetching}
                 onClick={() => { void sessions.refetch(); void projectChat.refetch(); }}>

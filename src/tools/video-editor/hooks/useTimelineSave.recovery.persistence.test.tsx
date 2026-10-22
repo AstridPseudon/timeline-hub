@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import { TimelineSchemaIncompatibleError, TimelineVersionConflictError, type DataProvider, type TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
+import { TimelineVersionConflictError, type DataProvider, type TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
 import type { TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { clearTimelineDraft, loadTimelineDraft, saveTimelineDraft } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { createTimelineStore } from '@/tools/video-editor/hooks/timelineStore.ts';
@@ -42,11 +42,10 @@ async function mountRecoveryEditor(options?: {
   seedRecovery?: boolean;
   head?: TimelineHeadRevision;
   draftMetadata?: TimelineDraftRecoveryMetadata;
-  draftConfig?: TimelineConfig;
   saveTimelineAtHead?: NonNullable<DataProvider['saveTimelineAtHead']>;
 }) {
   const canonical = timelineConfig('canonical');
-  const recovered = options?.draftConfig ?? timelineConfig('recovered');
+  const recovered = timelineConfig('recovered');
   if (options?.seedRecovery !== false) {
     await saveTimelineDraft(options?.head ? timelineId : 'previous-shot-session', { config: recovered, registry }, 5, {
       recoveryKey,
@@ -186,32 +185,6 @@ describe('useTimelineSave recovered Retry/Discard with real persistence', () => 
     await act(async () => { await hook.result.current.retryRecoveredDraft(); });
     await advance(1000);
     expect(saveTimelineAtHead).toHaveBeenCalledTimes(1);
-    hook.unmount();
-  });
-
-  it('rebuilds recovery storage from the original opaque roots and pin, keeping the display strict', async () => {
-    const opaque = { x_null: null, x_false: false, x_zero: 0, x_empty: [],
-      x_nested: { unknown: [null, false, 0, [], { value: 'original' }] } };
-    const draftConfig = { ...timelineConfig('recovered'), ...opaque };
-    const saveTimelineAtHead = vi.fn(async () => { throw new TimelineSchemaIncompatibleError('timeline_commit_required', []); });
-    const { hook } = await mountRecoveryEditor({
-      head: { projectId: 'project', timelineId, headRevisionId: 'today', headPublicationId: 'today-publication' },
-      initialConfig: { ...timelineConfig('canonical'), x_today: 'must not leak' } as TimelineConfig,
-      draftMetadata: { baseHeadProjectId: 'project', baseHeadTimelineId: timelineId, baseHeadRevisionId: 'original' },
-      draftConfig,
-      saveTimelineAtHead,
-    });
-    await act(async () => { await hook.result.current.retryRecoveredDraft(); });
-    await waitFor(() => expect(saveTimelineAtHead).toHaveBeenCalledOnce());
-    const kept = await loadTimelineDraft(recoveryKey);
-    expect(kept).toMatchObject({ baseVersion: 5, baseHeadProjectId: 'project', baseHeadTimelineId: timelineId,
-      baseHeadRevisionId: 'original', draft: { config: opaque } });
-    expect(kept!.draft.config).not.toHaveProperty('x_today');
-    expect(kept!.draft.config).not.toHaveProperty('x_absent');
-    expect(hook.result.current.data!.config).toMatchObject(opaque);
-    expect(hook.result.current.data!.resolvedConfig).toMatchObject(opaque);
-    expect(saveTimelineAtHead.mock.calls[0][2]).toEqual({ projectId: 'project', timelineId, headRevisionId: 'original' });
-    expect(hook.result.current.schemaIncompatible).toEqual([]);
     hook.unmount();
   });
 

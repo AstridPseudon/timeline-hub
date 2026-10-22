@@ -113,18 +113,6 @@ const operationalChromeState = {
   renderStatus: 'idle' as 'idle' | 'rendering' | 'done' | 'error',
 };
 
-const parentClipAddMediaPort = {
-  capture: vi.fn(),
-  finish: vi.fn(),
-  submit: vi.fn(),
-};
-
-const occurrenceAddMediaPort = {
-  capture: vi.fn(),
-  finish: vi.fn(),
-  submit: vi.fn(),
-};
-
 vi.mock('@/tools/video-editor/hooks/useEffects', () => ({
   useEffects: (...args: unknown[]) => useEffectsMock(...args),
 }));
@@ -208,8 +196,6 @@ vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
       selectedClip: null,
       selectedTrack: null,
       selectedClipHasPredecessor: false,
-      element: { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() },
-      occurrenceDuplicate: { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() },
       compositionSize: { width: 1920, height: 1080 },
       trackScaleMap: {},
       scale: 1,
@@ -333,8 +319,7 @@ vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
       editor,
       chrome,
       playback,
-      editorOps: { ...editor, transcriptHost: undefined, parentClipAddMedia: parentClipAddMediaPort,
-        occurrenceAddMedia: occurrenceAddMediaPort },
+      editorOps: { transcriptHost: undefined },
     };
   },
 }));
@@ -362,10 +347,6 @@ function Consumer() {
       <span>{typeof editorData.additiveSelectionRef?.current}</span>
       <span>{typeof editorOps.selectClip}</span>
       <span>{typeof editorOps.selectClips}</span>
-      <span data-testid="element-port-state">{editorOps.element ? 'mounted' : 'missing'}</span>
-      <span data-testid="occurrence-duplicate-port-state">{editorOps.occurrenceDuplicate ? 'mounted' : 'missing'}</span>
-      <span data-testid="parent-clip-add-media-port-state">{editorOps.parentClipAddMedia ? 'mounted' : 'missing'}</span>
-      <span data-testid="occurrence-add-media-port-state">{editorOps.occurrenceAddMedia ? 'mounted' : 'missing'}</span>
       <span>{chrome.saveStatus}</span>
       <span>{playback.currentTime}</span>
       <span data-testid="agent-chat-timeline-id">{agentChatBridge.timelineId}</span>
@@ -388,12 +369,6 @@ function Consumer() {
       </button>
     </div>
   );
-}
-
-function CaptureOccurrenceOps({ onCapture }: { onCapture: (ops: ReturnType<typeof useTimelineEditorOps>) => void }) {
-  const editorOps = useTimelineEditorOps();
-  onCapture(editorOps);
-  return null;
 }
 
 function buildCommandTimelineData(): TimelineData {
@@ -815,8 +790,6 @@ describe('VideoEditorProvider', () => {
     operationalChromeState.store = null;
     operationalChromeState.isConflictExhausted = false;
     operationalChromeState.renderStatus = 'idle';
-    Object.values(parentClipAddMediaPort).forEach((mock) => mock.mockClear());
-    Object.values(occurrenceAddMediaPort).forEach((mock) => mock.mockClear());
   });
 
 
@@ -1483,10 +1456,6 @@ describe('VideoEditorProvider', () => {
     }));
     expect(screen.getByText('false')).toBeInTheDocument();
     expect(screen.getByText('boolean')).toBeInTheDocument();
-    expect(screen.getByTestId('element-port-state')).toHaveTextContent('mounted');
-    expect(screen.getByTestId('occurrence-duplicate-port-state')).toHaveTextContent('mounted');
-    expect(screen.getByTestId('parent-clip-add-media-port-state')).toHaveTextContent('mounted');
-    expect(screen.getByTestId('occurrence-add-media-port-state')).toHaveTextContent('mounted');
     expect(screen.getAllByText('function')).toHaveLength(3);
     expect(screen.getByText('saved')).toBeInTheDocument();
     expect(screen.getByText('12.5')).toBeInTheDocument();
@@ -1508,62 +1477,6 @@ describe('VideoEditorProvider', () => {
       clipId: 'clip-1',
       url: 'https://example.com/image.png',
     }));
-  });
-
-  it('passes occurrence media capture to the parent session and refuses absent parent data', () => {
-    const provider: DataProvider = {
-      loadTimeline: vi.fn(),
-      saveTimeline: vi.fn(),
-      loadAssetRegistry: vi.fn(),
-      resolveAssetUrl: vi.fn(),
-    };
-    const parentPort = {
-      capture: vi.fn(),
-      finish: vi.fn(),
-      submit: vi.fn(),
-    };
-    const current = buildCommandTimelineData();
-    const getCurrent = vi.fn(() => current);
-    let editorOps!: ReturnType<typeof useTimelineEditorOps>;
-
-    render(
-      <MemoryRouter>
-        <QueryClientProvider client={new QueryClient()}>
-          <AgentChatProvider>
-            <VideoEditorProvider
-              dataProvider={provider}
-              projectId="project-1"
-              timelineId="timeline-1"
-              userId="user-1"
-              occurrenceAddMediaPort={parentPort}
-              getOccurrenceAddMediaCurrent={getCurrent}
-            >
-              <CaptureOccurrenceOps onCapture={(ops) => { editorOps = ops; }} />
-            </VideoEditorProvider>
-          </AgentChatProvider>
-        </QueryClientProvider>
-      </MemoryRouter>,
-    );
-
-    const input = {
-      ownerRef: 'occurrence:occ-1' as const,
-      row: { id: 'child-1', track: 'V1', clipType: 'hold' },
-      media: { id: 'media-1' },
-    };
-    editorOps.occurrenceAddMedia!.capture(input as never);
-    expect(getCurrent).toHaveBeenCalledOnce();
-    expect(parentPort.capture).toHaveBeenCalledWith({ ...input, current });
-
-    editorOps.occurrenceAddMedia!.finish('basis' as never, 'verified' as never);
-    editorOps.occurrenceAddMedia!.submit({ command: 'command' as never, preview: null });
-    expect(parentPort.finish).toHaveBeenCalledWith('basis', 'verified');
-    expect(parentPort.submit).toHaveBeenCalledWith({ command: 'command', preview: null });
-
-    getCurrent.mockReturnValue(null);
-    expect(() => editorOps.occurrenceAddMedia!.capture(input as never)).toThrow(
-      'Parent timeline data is unavailable for occurrence media add',
-    );
-    expect(parentPort.capture).toHaveBeenCalledOnce();
   });
 
   it('uses an injected effect catalog without enabling the legacy effect query', () => {

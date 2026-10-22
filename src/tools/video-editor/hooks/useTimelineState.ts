@@ -1,9 +1,3 @@
-import type { ClipScalarCapturePort } from '../commands/clipScalarGesture.ts';
-import type { ClipTrimCapturePort } from '../commands/clipTrimGesture.ts';
-import type { ClipParamsCapturePort } from '../commands/clipParamsGesture.ts';
-import type { TrackLabelCapturePort } from '@/tools/video-editor/commands/trackLabelGesture.ts';
-import type { ShotSetCapturePort } from '@/tools/video-editor/commands/shotSetGesture.ts';
-import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
 import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
 import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
 import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
@@ -25,7 +19,6 @@ import {
 } from '@/shared/state/selectionStore.ts';
 import { createInteractionState, type InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import type { MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ROW_HEIGHT, getTimelineLabelWidth } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type { UseAssetManagementResult } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import { useAssetOperations } from '@/tools/video-editor/hooks/useAssetOperations.ts';
@@ -45,7 +38,6 @@ import {
   createTimelineStore,
   seedTimelineStoreBeforeRender,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
-import { createTimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 import {
   createTimelineCommandRunner,
   MEDIA_COMMAND_DESCRIPTORS,
@@ -72,8 +64,7 @@ import {
   resolveTimelineDeviceClass,
 } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import { buildTimelineData, type TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
-import { canonicalJsonStringify } from '@/tools/video-editor/data/typed/timelineBundle.ts';
-import type { ResolvedTimelineConfig, TimelineConfig } from '@/tools/video-editor/types/index.ts';
+import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
 import { useTimelineTrackManagement } from '@/tools/video-editor/hooks/useTimelineTrackManagement.ts';
 import { useTimelineOps } from '@/tools/video-editor/hooks/useTimelineOps';
 import type { TimelineHostServiceHooks } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
@@ -93,47 +84,6 @@ type ClipEditingHook = ReturnType<typeof useClipEditing>;
 type ExternalDropHook = ReturnType<typeof useExternalDrop>;
 type TimelineHistoryHook = ReturnType<typeof useTimelineHistory>;
 type RenderStateHook = ReturnType<typeof useRenderState>;
-
-function visualSeamContractWithoutReport(value: unknown): Record<string, unknown> | undefined {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const contract = {...value as Record<string, unknown>};
-  delete contract.report;
-  return contract;
-}
-
-/**
- * Prepare the legacy seam acknowledgement snapshot while the native command
- * seam is still being qualified. The render admission report is a local,
- * derived diagnostic; only authored declarations and opaque app data belong
- * in this ordinary snapshot carrier.
- */
-export function prepareVisualSeamSnapshotConfig(
-  currentConfig: TimelineConfig,
-  acknowledgedConfig: ResolvedTimelineConfig,
-): TimelineConfig | null {
-  const acknowledgedContract = acknowledgedConfig.app?.visualSeamContract;
-  if (acknowledgedContract === null || typeof acknowledgedContract !== 'object' || Array.isArray(acknowledgedContract)) {
-    throw new Error('Visual seam declarations are missing from the acknowledged configuration.');
-  }
-  const persistedContract = visualSeamContractWithoutReport(acknowledgedContract)!;
-  const currentContractValue = currentConfig.app?.visualSeamContract;
-  const currentContract = visualSeamContractWithoutReport(currentContractValue);
-  if (canonicalJsonStringify(persistedContract) === canonicalJsonStringify(currentContract)) return null;
-  if (
-    currentContractValue !== null &&
-    typeof currentContractValue === 'object' &&
-    !Array.isArray(currentContractValue) &&
-    Object.prototype.hasOwnProperty.call(currentContractValue, 'report')
-  ) {
-    // Keep a legacy report already in the snapshot opaque; never copy the
-    // newly derived report from the acknowledged render configuration.
-    persistedContract.report = (currentContractValue as Record<string, unknown>).report;
-  }
-  return {
-    ...currentConfig,
-    app: { ...currentConfig.app, visualSeamContract: persistedContract },
-  };
-}
 
 export function useTimelineRenderRequest(
   timelineId: string,
@@ -183,13 +133,6 @@ function useTimelineEditorContextValue({
   clipEditing,
   externalDrop,
   trackManagement,
-  trackLabelPort,
-  clipScalarPort,
-  clipTrimPort,
-  selectedParamPort,
-  elementPort,
-  shotSetPort,
-  occurrenceAddMediaPort,
   uploadFiles,
   applyEdit,
   commands,
@@ -232,13 +175,6 @@ function useTimelineEditorContextValue({
   clipEditing: ClipEditingHook;
   externalDrop: ExternalDropHook;
   trackManagement: TimelineTrackManagementHook;
-  trackLabelPort?: TrackLabelCapturePort;
-  clipScalarPort?: ClipScalarCapturePort;
-  clipTrimPort?: ClipTrimCapturePort;
-  selectedParamPort?: ClipParamsCapturePort;
-  elementPort?: import('@/tools/video-editor/commands/elementGesture.ts').ElementCapturePort;
-  shotSetPort?: ShotSetCapturePort;
-  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
   uploadFiles: ReturnType<typeof useAssetOperations>['uploadFiles'];
   applyEdit: ReturnType<typeof useTimelineSave>['applyEdit'];
   commands: TimelineEditorCommands;
@@ -263,13 +199,6 @@ function useTimelineEditorContextValue({
   const moveSelectedClipsToTrack = trackManagement.moveSelectedClipsToTrack;
 
   return useMemo<TimelineEditorContextValue>(() => ({
-    clipScalar: clipScalarPort,
-    clipTrim: clipTrimPort,
-    selectedParam: selectedParamPort,
-    element: elementPort,
-    trackLabel: trackLabelPort,
-    shotSet: shotSetPort,
-    occurrenceAddMedia: occurrenceAddMediaPort,
     data,
     resolvedConfig: selection.resolvedConfig,
     deviceClass: interactionPolicy.deviceClass,
@@ -353,7 +282,6 @@ function useTimelineEditorContextValue({
     handleToggleMuteClips: clipEditing.handleToggleMuteClips,
     handleToggleMute: (...args) => { if (!getSelectedTimelineDataItems(selectionOwner).length) return handleToggleMute(...args); },
     handleDetachAudioClip: clipEditing.handleDetachAudioClip,
-    handleTrackLabelEditStart: trackManagement.handleTrackLabelEditStart,
     handleTrackPopoverChange: trackManagement.handleTrackPopoverChange,
     handleMoveTrack: trackManagement.handleMoveTrack,
     handleRemoveTrack: trackManagement.handleRemoveTrack,
@@ -394,7 +322,6 @@ function useTimelineEditorContextValue({
     dragCoordinator.coordinator,
     dragCoordinator.editAreaRef,
     dragCoordinator.indicatorRef,
-    elementPort,
     editorPreferences,
     externalDrop.onTimelineDragLeave,
     externalDrop.onTimelineDragOver,
@@ -415,7 +342,6 @@ function useTimelineEditorContextValue({
     registerAsset,
     scale,
     scaleWidth,
-    selectedParamPort,
     selectedTrackId,
     selection.additiveSelectionRef,
     selection.primaryClipId,
@@ -442,18 +368,12 @@ function useTimelineEditorContextValue({
     trackManagement.createTrackAndMoveClip,
     trackManagement.handleMoveTrack,
     trackManagement.handleRemoveTrack,
-    trackManagement.handleTrackLabelEditStart,
     trackManagement.handleTrackPopoverChange,
     trackManagement.moveClipToRow,
     trackManagement.applyResolvedClipMove,
     moveSelectedClipToTrack,
     moveSelectedClipsToTrack,
     trackScaleMap,
-    trackLabelPort,
-    clipScalarPort,
-    clipTrimPort,
-    shotSetPort,
-    occurrenceAddMediaPort,
     unpatchRegistry,
     uploadFiles,
   ]);
@@ -732,8 +652,14 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     if (permission && !permission.allowed) {
       throw new Error(`Timeline edits are temporarily unavailable (${permission.reason ?? 'read-only'}).`);
     }
-    const config = prepareVisualSeamSnapshotConfig(current.config, acknowledgedConfig);
-    if (!config) return;
+    const contract = acknowledgedConfig.app?.visualSeamContract;
+    if (!contract || typeof contract !== 'object' || Array.isArray(contract)) {
+      throw new Error('Visual seam declarations are missing from the acknowledged configuration.');
+    }
+    const config = {
+      ...current.config,
+      app: { ...current.config.app, visualSeamContract: contract },
+    };
     const nextData = await buildTimelineData(
       config,
       current.registry,
@@ -755,7 +681,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     save.flushPendingSave,
     persistVisualSeamConfig,
     canPersistVisualSeamConfig,
-    save.data,
   );
   const assetOperations = useAssetOperations(
     runtime.provider,
@@ -834,8 +759,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   const timelineOps = useTimelineOps({
     commitData: save.commitData,
     dataRef: save.dataRef,
-    trackLabelPort: save.commands.trackLabelPort,
-    genericPatchPort: save.commands.genericPatchPort,
     getConfigVersion,
     flushPendingSave: save.flushPendingSave,
     createManualCheckpoint,
@@ -940,25 +863,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     editability: runtime.timelineEditability,
   });
 
-  const runtimeProvider = runtime.provider;
-  const runtimeProjectId = runtime.project.projectId;
-  const parentMediaRuntime = useMemo(() => {
-    const provider = runtimeProvider as typeof runtimeProvider & {
-      getProjectVerifiedMedia?: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
-    };
-    const getProjectVerifiedMedia = provider.getProjectVerifiedMedia;
-    return typeof getProjectVerifiedMedia === 'function' && typeof runtimeProjectId === 'string'
-      ? { projectId: runtimeProjectId, getProjectVerifiedMedia: getProjectVerifiedMedia.bind(provider) }
-      : undefined;
-  }, [runtimeProjectId, runtimeProvider]);
-  const parentMediaCommands = useMemo(
-    () => createTimelineCommands(store, {
-      timelineEditability: runtime.timelineEditability,
-      parentMediaRuntime,
-    }),
-    [parentMediaRuntime, runtime.timelineEditability, store],
-  );
-
   const assetManagement = services.useAssetManagement({
     store,
     dataRef,
@@ -970,7 +874,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry,
     invalidateAssetRegistry,
     resolveAssetUrl,
-    commands: parentMediaCommands,
   });
 
   const clipResize = useClipResize({
@@ -980,8 +883,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   });
 
   const clipEditing = useClipEditing({
-    genericPatchPort: save.commands.genericPatchPort,
-    editability: runtime.timelineEditability,
     dataRef,
     resolvedConfig: selection.resolvedConfig,
     selectedClipId: selection.primaryClipId,
@@ -1042,7 +943,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     eventBus: save.eventBus,
     editability: runtime.timelineEditability,
     protectedTrackIds: canonicalShotTrackIds,
-    trackLabelPort: save.commands.trackLabelPort,
   });
 
   const timelineCommands = useMemo<TimelineEditorCommands>(() => {
@@ -1167,13 +1067,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     clipEditing,
     externalDrop,
     trackManagement,
-    trackLabelPort: save.commands.trackLabelPort,
-    clipScalarPort: save.commands.clipScalarPort,
-    clipTrimPort: save.commands.clipTrimPort,
-    selectedParamPort: save.commands.clipParamsPort,
-    elementPort: save.commands.elementPort,
-    shotSetPort: save.commands.shotSetPort,
-    occurrenceAddMediaPort: save.commands.occurrenceAddMediaPort,
     uploadFiles,
     applyEdit,
     commands: timelineCommands,
@@ -1259,17 +1152,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   useEffect(() => { void transcriptHost.refreshSources(); }, [transcriptHost, save.data?.transcriptReferences]);
 
   const editorOps = useMemo(() => ({
-    clipMove: save.commands.port,
-    clipScalar: save.commands.clipScalarPort,
-    clipTrim: save.commands.clipTrimPort,
-    selectedParam: save.commands.clipParamsPort,
-    element: save.commands.elementPort,
-    trackLabel: save.commands.trackLabelPort,
-    shotSet: save.commands.shotSetPort,
-    occurrenceAddMedia: save.commands.occurrenceAddMediaPort,
-    parentClipAddMedia: save.commands.parentClipAddMediaPort,
-    parentClipSwapMedia: save.commands.parentClipSwapMediaPort,
-    occurrenceDuplicate: save.commands.occurrenceDuplicatePort,
     transcriptHost,
     setInputModality: editor.setInputModality,
     setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
@@ -1313,7 +1195,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     handleToggleMuteClips: editor.handleToggleMuteClips,
     handleToggleMute: editor.handleToggleMute,
     handleDetachAudioClip: editor.handleDetachAudioClip,
-    handleTrackLabelEditStart: editor.handleTrackLabelEditStart,
     handleTrackPopoverChange: editor.handleTrackPopoverChange,
     handleMoveTrack: editor.handleMoveTrack,
     handleRemoveTrack: editor.handleRemoveTrack,
@@ -1328,10 +1209,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     patchRegistry: editor.patchRegistry,
     unpatchRegistry: editor.unpatchRegistry,
     registerAsset: editor.registerAsset,
-  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost,
-    save.commands.port, save.commands.clipScalarPort, save.commands.clipTrimPort, save.commands.clipParamsPort,
-    save.commands.elementPort, save.commands.trackLabelPort, save.commands.shotSetPort, save.commands.occurrenceAddMediaPort,
-    save.commands.parentClipAddMediaPort, save.commands.parentClipSwapMediaPort, save.commands.occurrenceDuplicatePort]);
+  }), [editor, onActionResizeStart, onClipEdgeResizeEnd, timelineCommands, transcriptHost]);
 
   const renderRequest = useTimelineRenderRequest(
     runtime.timelineId,
@@ -1341,7 +1219,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     selectedProjectId ?? '',
   );
 
-  const baseChrome = useTimelineChromeContextValue({
+  const chrome = useTimelineChromeContextValue({
     timelineName: runtime.timelineName ?? null,
     saveStatus,
     isConflictExhausted,
@@ -1406,25 +1284,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     retryLoad,
   });
 
-  const commandHistory = save.commands.ownsHistoryRef.current;
-  const chrome = useMemo(() => ({
-    ...baseChrome,
-    commandSession: save.commands.enabled ? {
-      state: save.commands.state, retry: save.commands.retry, recover: save.commands.recover,
-      useLatest: save.commands.useLatest, keepLabelChanges: save.commands.keepLabelChanges,
-      elementOverlay: save.commands.elementOverlay,
-    } : undefined,
-    ...(commandHistory ? {
-      undo: () => { void save.commands.undo().catch((error) => runtime.toast.error(error instanceof Error ? error.message : String(error))); },
-      canUndo: save.commands.state.canUndo,
-      canRedo: false,
-      redo: () => {},
-    } : {}),
-    ...(save.commands.activeRef.current ? {
-      retryPendingSave: save.commands.retry,
-      retrySaveAfterConflict: save.commands.retry,
-    } : {}),
-  }), [baseChrome, save.commands, commandHistory, runtime.toast]);
   const playbackValue = useTimelinePlaybackContextValue({ playback });
 
   // Seed the external store before descendants render for the first time so

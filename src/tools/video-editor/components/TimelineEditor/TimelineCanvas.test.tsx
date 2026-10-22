@@ -384,7 +384,6 @@ function renderCanvas(params?: {
     setInspectorTarget: ReturnType<typeof vi.fn>;
   };
   onSelectTrack?: React.ComponentProps<typeof TimelineCanvas>['onSelectTrack'];
-  onTrackLabelEditStart?: React.ComponentProps<typeof TimelineCanvas>['onTrackLabelEditStart'];
   onCursorDrag?: React.ComponentProps<typeof TimelineCanvas>['onCursorDrag'];
   onClickTimeArea?: React.ComponentProps<typeof TimelineCanvas>['onClickTimeArea'];
   onEditAreaPointerDown?: React.ComponentProps<typeof TimelineCanvas>['onEditAreaPointerDown'];
@@ -434,7 +433,6 @@ function renderCanvas(params?: {
       selectedTrackId={null}
       getActionRender={getActionRender}
       onSelectTrack={params?.onSelectTrack ?? vi.fn()}
-      onTrackLabelEditStart={params?.onTrackLabelEditStart}
       onTrackChange={vi.fn()}
       onRemoveTrack={vi.fn()}
       onTrackDragEnd={vi.fn()}
@@ -2498,31 +2496,4 @@ it('paints clip-empty row bands across the viewport without leaking grid below t
   expect(plane.style.backgroundImage).toBe('');
   expect(container.querySelector('[data-action-id]')).toBeNull();
   expect(container.querySelector('[data-sortable-id="track-V1"]')).toHaveClass('border-border');
-});
-
-
-describe('track label command capture forwarding', () => {
-  it.each(['phone', 'tablet'] as const)('forwards %s touch track selection to the Inspector target', (deviceClass) => {
-    const onSelectTrack = vi.fn();
-    renderCanvas({ deviceClass, onSelectTrack });
-    fireEvent.click(screen.getByText(track.label));
-    expect(onSelectTrack).toHaveBeenCalledExactlyOnceWith(track.id);
-  });
-
-  it('forwards the desktop name edit through the canvas and memoized row', () => {
-    const deviceClass = 'desktop' as const;
-    const finish = vi.fn();
-    const onTrackLabelEditStart = vi.fn(() => finish);
-    const onSelectTrack = vi.fn();
-    const onAddTrack = vi.fn();
-    renderCanvas({ deviceClass, onTrackLabelEditStart, onSelectTrack, onAddTrack });
-    const input = screen.getByRole('textbox', { name: 'Track name' });
-    fireEvent.focus(input);
-    expect(onTrackLabelEditStart).toHaveBeenCalledExactlyOnceWith(track.id);
-    fireEvent.change(input, { target: { value: 'Captured name' } });
-    expect(finish).not.toHaveBeenCalled();
-    fireEvent.blur(input);
-    expect(finish).toHaveBeenCalledExactlyOnceWith('Captured name');
-    expect(onAddTrack).not.toHaveBeenCalled();
-  });
 });

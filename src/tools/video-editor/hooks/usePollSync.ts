@@ -59,7 +59,6 @@ interface UsePollSyncOptions {
   interactionStateRef: InteractionStateRef;
   /** A nested canonical shot draft owns the parent composition while dirty. */
   canonicalShotDraftActive?: boolean;
-  commandSessionActiveRef?: MutableRefObject<boolean>;
   /** When true (a 409 put the editor into diverged), remote data is NOT adopted. */
   isConflictExhaustedRef?: MutableRefObject<boolean>;
 }
@@ -150,7 +149,6 @@ export function usePollSync({
   interactionStateRef,
   isConflictExhaustedRef,
   canonicalShotDraftActive = false,
-  commandSessionActiveRef,
 }: UsePollSyncOptions): void {
   const lastRegistryDataRef = useRef<Awaited<ReturnType<DataProvider['loadAssetRegistry']>> | null>(null);
   const commitDataRef = useRef(commitData);
@@ -216,7 +214,6 @@ export function usePollSync({
   }, [configVersionRef]);
 
   const getPollRejectionReason = useCallback((polledData: TimelineData, allowInitialSnapshot = false): string | null => {
-    if (commandSessionActiveRef?.current) return 'pending timeline commands';
     if (isConflictExhaustedRef?.current) return 'diverged';
     if (canonicalReloadInProgressRef?.current) return 'reloading';
     if (
@@ -239,8 +236,7 @@ export function usePollSync({
       if (currentHead && (currentHead.projectId !== polledData.head.projectId || currentHead.timelineId !== polledData.head.timelineId)) return 'different scope';
       // A same-payload remote publication still changes the CAS base. Local
       // counters have no ordering meaning across provider instances.
-      if (!currentHead || currentHead.headRevisionId !== polledData.head.headRevisionId
-        || currentHead.headPublicationId !== polledData.head.headPublicationId) {
+      if (!currentHead || currentHead.headRevisionId !== polledData.head.headRevisionId) {
         // The numeric version is not the CAS authority, but it is still a
         // useful freshness fence within this live editor. A delayed response
         // from the old head must not roll back a newer acknowledged head.
@@ -256,7 +252,6 @@ export function usePollSync({
       lastSavedStableSignature: lastSavedSignatureRef.current,
     });
   }, [
-    commandSessionActiveRef,
     configVersionRef,
     editSeqRef,
     isSavingRef,

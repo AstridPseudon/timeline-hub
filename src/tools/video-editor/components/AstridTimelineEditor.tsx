@@ -31,18 +31,21 @@ import { useShotGroups } from '@/tools/video-editor/hooks/useShotGroups.ts';
 import { shotGroupVideoKey } from '@/tools/video-editor/hooks/useShotGroups.ts';
 import { useSwitchToFinalVideo } from '@/tools/video-editor/hooks/useSwitchToFinalVideo.ts';
 import { useTimelineCommandsService } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
-import { captureOccurrenceDuplicateEdit, submitOccurrenceDuplicateEdit } from '@/tools/video-editor/commands/occurrenceDuplicateGesture.ts';
 import {
   useTimelineDataSelector,
   useTimelineChromeSelector,
   useTimelineConfigVersion,
   useTimelineOpsSelector,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { planGenerationAssetRegistration } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
 import { duplicateGenerationAsset } from '@/tools/video-editor/lib/generation-utils.ts';
 import {
   duplicateShotGroup,
   promotePrimaryVariant,
 } from '@/tools/video-editor/lib/shot-group-pack-commands.ts';
+import {
+  duplicateIndependentShot,
+} from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import type {
   CanonicalShotOccurrence,
   PreparedShotComposition,
@@ -180,18 +183,10 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     applyEdit,
     prepareGenerationAsset,
     registerGenerationAsset,
-    parentClipAddMedia,
-    shotSet,
-    occurrenceDuplicate,
-    occurrenceAddMedia,
   } = useTimelineOpsSelector((ops) => ({
     applyEdit: ops.applyEdit,
     prepareGenerationAsset: ops.prepareGenerationAsset,
     registerGenerationAsset: ops.registerGenerationAsset,
-    parentClipAddMedia: ops.parentClipAddMedia,
-    shotSet: ops.shotSet,
-    occurrenceDuplicate: ops.occurrenceDuplicate,
-    occurrenceAddMedia: ops.occurrenceAddMedia,
   }), shallow);
 
   const assetGenerationMap = useMemo<Record<string, string>>(() => {
@@ -393,20 +388,33 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
   }, []);
 
   const handleDuplicateDocumentShotGroup = useCallback(async (locator: { shotId: string; trackId: string; canonicalIdentity?: CanonicalShotOccurrence }) => {
-    if (locator.canonicalIdentity) {
+    if (locator.canonicalIdentity && runtime.shots?.shotComposition && runtime.shots.canonicalComposition) {
       const occurrence = locator.canonicalIdentity;
       const suffix = globalThis.crypto?.randomUUID?.().slice(0, 8) ?? String(Date.now());
       try {
-        if (!occurrenceDuplicate || !data) throw new Error('Native occurrence duplicate capture is unavailable');
-        const captured = captureOccurrenceDuplicateEdit(occurrenceDuplicate, data,
-          `occurrence:${occurrence.occurrenceId}`, {
-            occurrence_id: `${occurrence.occurrenceId}-copy-${suffix}`,
-            shot_id: `${occurrence.shotId}-copy-${suffix}`,
-          });
-        submitOccurrenceDuplicateEdit(captured);
+        const graph = duplicateIndependentShot(
+          runtime.shots.canonicalComposition.contract,
+          occurrence.occurrenceId,
+          {
+            shotId: `${occurrence.shotId}-copy-${suffix}`,
+            revisionId: `${occurrence.revisionId}-copy-${suffix}`,
+            internalTimelineRevisionId: `${occurrence.revisionId}-timeline-copy-${suffix}`,
+            occurrenceId: `${occurrence.occurrenceId}-copy-${suffix}`,
+          },
+        );
+        await runtime.shots.shotComposition.publish?.({
+          projectId: occurrence.projectId,
+          parentDocumentId: occurrence.parentDocumentId,
+          expectedHeadRevisionId: runtime.shots.canonicalComposition.headRevisionId,
+          graph,
+        });
+        runtime.shots.refetchShots();
         toast.success('Independent shot duplicated');
       } catch (error) {
-        normalizeAndPresentError(error, { context: 'video-editor:duplicate-canonical-shot', toastTitle: 'Failed to duplicate canonical shot' });
+        normalizeAndPresentError(error, {
+          context: 'video-editor:duplicate-canonical-shot',
+          toastTitle: 'Failed to duplicate canonical shot',
+        });
       }
       return;
     }
@@ -434,7 +442,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
         toastTitle: 'Failed to duplicate shot',
       });
     }
-  }, [configVersion, data, occurrenceDuplicate, reloadFromServer, runtime.project.projectId, runtime.timelineId]);
+  }, [configVersion, reloadFromServer, runtime.project.projectId, runtime.shots, runtime.timelineId]);
 
   const handlePromoteDocumentShotGroupPrimary = useCallback(async (locator: { shotId: string; trackId: string }) => {
     const projectSlug = runtime.project.projectId;
@@ -563,54 +571,38 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
       return;
     }
 
-    const originalSnapshot = {
-      data: current,
-      signature: current.signature,
-      stableSignature: current.stableSignature,
-      head: current.head ? { ...current.head } : undefined,
-      projection: current.editProjection ? structuredClone(current.editProjection) : undefined,
-    };
-
     setDuplicatingClipId(clipId);
     try {
-      // Capture the raw film/session basis before generation duplication. The
-      // native add path also captures later, but that is too late to protect
-      // this producer await from a pending local edit.
-      const originalPreparation = parentClipAddMedia?.prepare();
       const duplicatedGeneration = await duplicateGenerationAsset({
         generationId,
         projectId: selectedProjectId,
       });
-
-      const latest = dataRef.current;
-      if (!latest || latest !== originalSnapshot.data
-        || latest.signature !== originalSnapshot.signature
-        || latest.stableSignature !== originalSnapshot.stableSignature
-        || JSON.stringify(latest.head) !== JSON.stringify(originalSnapshot.head)
-        || JSON.stringify(latest.editProjection) !== JSON.stringify(originalSnapshot.projection)) {
-        throw new Error('The timeline changed while duplicating the generation; the duplicate was not inserted.');
-      }
-
-      if (originalPreparation) {
-        parentClipAddMedia?.assertPreparationCurrent(originalPreparation);
-      }
-
-      const preparedAsset = prepareGenerationAsset({
-        ...duplicatedGeneration,
-        assetId: duplicatedGeneration.mediaSelection?.asset,
-        durationSeconds: typeof assetEntry?.duration === 'number' ? assetEntry.duration : undefined,
+      const registrationPlan = planGenerationAssetRegistration({
+        generationId: duplicatedGeneration.generationId,
+        variantId: duplicatedGeneration.variantId,
+        variantType: duplicatedGeneration.variantType,
+        imageUrl: duplicatedGeneration.imageUrl,
+        thumbUrl: duplicatedGeneration.thumbUrl,
+        assetDurationSeconds: typeof assetEntry?.duration === 'number' ? assetEntry.duration : undefined,
         metadata: {
           content_type: assetEntry?.type ?? (
             duplicatedGeneration.variantType === 'video' ? 'video/mp4' : 'image/png'
           ),
         },
       });
-      if (!preparedAsset?.mediaSelection) {
-        throw new Error('The duplicated generation has no original Runtime media selection; native parent insertion is unavailable.');
+
+      if (!registrationPlan.ok) {
+        throw new Error('Failed to register the duplicated asset.');
       }
 
-      const result = await commands.addClip({
-        preparedAsset,
+      const result = commands.addClip({
+        preparedAsset: {
+          assetKey: registrationPlan.assetId,
+          mediaType: duplicatedGeneration.variantType,
+          durationSeconds: registrationPlan.assetEntry.duration ?? null,
+          entry: registrationPlan.assetEntry,
+          source: 'registered',
+        },
         afterClipId: clipId,
       });
       if (!result.ok) {
@@ -624,7 +616,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     } finally {
       setDuplicatingClipId((currentClipId) => (currentClipId === clipId ? null : currentClipId));
     }
-  }, [commands, dataRef, parentClipAddMedia, prepareGenerationAsset, selectedProjectId]);
+  }, [commands, dataRef, selectedProjectId]);
 
   return (
     <>
@@ -730,10 +722,6 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
                 shotRef={canonicalShotEditor.stableDeepLink}
                 initialComposition={publishedCanonicalComposition?.composition ?? runtime.shots.canonicalComposition ?? undefined}
                 onClose={() => setCanonicalShotEditor(null)}
-                shotSetPort={shotSet}
-                occurrenceAddMediaPort={occurrenceAddMedia}
-                getOccurrenceAddMediaCurrent={() => dataRef.current}
-                mediaProvider={runtime.provider}
                 onCanonicalCompositionPublished={handleCanonicalCompositionPublished}
                 onCanonicalDraftSessionChange={(scope, active) => {
                   if (active) runtime.shots?.beginCanonicalDraftSession?.(scope);

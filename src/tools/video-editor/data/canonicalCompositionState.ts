@@ -1,4 +1,3 @@
-import { boundCanonicalRenderConfig } from '../lib/canonicalRenderBounds.ts';
 import type { PreparedShotComposition } from './shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from './shotCompositionProjection.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
@@ -59,7 +58,7 @@ export function resolveCanonicalComposition({
     return {
       source: 'canonical',
       status: 'ready',
-      config: boundCanonicalRenderConfig(projectCanonicalComposition(composition, baseConfig).config),
+      config: projectCanonicalComposition(composition, baseConfig).config,
       error: null,
     };
   } catch (error) {

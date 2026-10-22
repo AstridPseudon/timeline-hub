@@ -1,26 +1,21 @@
-import { boundCanonicalRenderConfig } from '../../lib/canonicalRenderBounds.ts';
 // @vitest-environment jsdom
 import React from 'react';
-import { act, render, renderHook, screen } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
 import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
 import { useVideoEditorPreviewSurface } from './useVideoEditorPreviewSurface.tsx';
-import { PreviewPanel } from './PreviewPanel.tsx';
 
 const mocks = vi.hoisted(() => ({
   runtime: null as unknown,
   timeline: null as unknown,
   playback: null as unknown,
-  chrome: { saveStatus: 'saved' as const },
 }));
 
 vi.mock('@/tools/video-editor/hooks/timelineStore.ts', () => ({
   useTimelineDataSelector: (selector: (timeline: unknown) => unknown) => selector(mocks.timeline),
-  useTimelineChromeSelector: (selector: (chrome: unknown) => unknown) => selector(mocks.chrome),
   useTimelinePlaybackSelector: (selector: (playback: unknown) => unknown) => selector(mocks.playback),
-  useTimelineOpsSelector: (selector: (ops: unknown) => unknown) => selector({}),
 }));
 
 vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
@@ -28,7 +23,7 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
 }));
 
 vi.mock('@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx', () => ({
-  RemotionPreview: React.forwardRef(() => React.createElement('div')),
+  RemotionPreview: () => React.createElement('div'),
 }));
 
 function graphWithClipStart(atMs: number, head: string) {
@@ -40,13 +35,12 @@ function graphWithClipStart(atMs: number, head: string) {
 }
 
 describe('useVideoEditorPreviewSurface', () => {
-  it('keeps the draft base identity when the server head advances independently', () => {
+  it('previews the active shot draft before canonical publication is acknowledged', () => {
     const adapter = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() });
-    const canonical = adapter.prepare(graphWithClipStart(0, 'server-r2'));
-    const draft = adapter.prepare(graphWithClipStart(700, 'draft-r1'));
-    const advancedCanonical = adapter.prepare(graphWithClipStart(1200, 'server-r3'));
+    const canonical = adapter.prepare(fixture);
+    const draft = adapter.prepare(graphWithClipStart(700, 'draft-head'));
     const parentConfig = projectCanonicalComposition(canonical).config!;
-    const expectedDraftConfig = boundCanonicalRenderConfig(projectCanonicalComposition(draft, parentConfig).config!);
+    const expectedDraftConfig = projectCanonicalComposition(draft, parentConfig).config!;
     mocks.timeline = { resolvedConfig: parentConfig };
     mocks.playback = {
       currentTime: 0,
@@ -64,141 +58,13 @@ describe('useVideoEditorPreviewSurface', () => {
       },
     };
 
-    const { result, rerender } = renderHook(() => useVideoEditorPreviewSurface());
+    const { result } = renderHook(() => useVideoEditorPreviewSurface());
     const slot = document.createElement('div');
     act(() => result.current.slotRef(slot));
     const previewElement = (result.current.portal as unknown as { children: React.ReactElement }).children;
 
     expect(previewElement.props.config).toEqual(expectedDraftConfig);
-    expect(previewElement.props.previewRevision).toMatchObject({
-      kind: 'local',
-      baseRevisionId: draft.headRevisionId,
-    });
     expect(previewElement.props.currentTime).toBeUndefined();
-
-    mocks.runtime = {
-      userId: null,
-      shots: {
-        shotComposition: adapter,
-        canonicalComposition: advancedCanonical,
-        canonicalDraft: { composition: draft },
-        canonicalCompositionError: null,
-      },
-    };
-    rerender();
-    const advancedPreviewElement = (result.current.portal as unknown as { children: React.ReactElement }).children;
-    expect(advancedPreviewElement.props.config).toEqual(expectedDraftConfig);
-    expect(advancedPreviewElement.props.previewRevision).toMatchObject({
-      kind: 'local',
-      baseRevisionId: draft.headRevisionId,
-    });
-  });
-
-  it('pairs the current unavailable target with the actual canonical surface and clears it on recovery', () => {
-    const adapter = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() });
-    const canonical = adapter.prepare(graphWithClipStart(0, 'R1'));
-    const config = projectCanonicalComposition(canonical).config!;
-    const error = Object.assign(new Error('Runtime read failed'), { targetRevisionId: 'R2' });
-    mocks.timeline = { data: { rows: [], meta: {} }, resolvedConfig: config };
-    mocks.playback = {
-      currentTime: 0,
-      previewRef: { current: null },
-      playerContainerRef: { current: null },
-      onPreviewTimeUpdate: vi.fn(),
-    };
-    mocks.runtime = {
-      userId: null,
-      shots: {
-        shotComposition: adapter,
-        canonicalComposition: canonical,
-        canonicalDraft: null,
-        canonicalCompositionError: error,
-      },
-    };
-
-    const { result, rerender } = renderHook(() => useVideoEditorPreviewSurface());
-    act(() => result.current.slotRef(document.createElement('div')));
-    let previewElement = (result.current.portal as unknown as { children: React.ReactElement }).children;
-    const deliveredConfig = previewElement.props.config;
-    expect(previewElement.props.previewRevision).toMatchObject({
-      kind: 'committed',
-      revisionId: 'R1',
-      unavailableTarget: { targetRevisionId: 'R2' },
-    });
-
-    mocks.runtime = {
-      userId: null,
-      shots: {
-        shotComposition: adapter,
-        canonicalComposition: canonical,
-        canonicalDraft: null,
-        canonicalCompositionError: null,
-      },
-    };
-    rerender();
-    previewElement = (result.current.portal as unknown as { children: React.ReactElement }).children;
-    expect(previewElement.props.config).toBe(deliveredConfig);
-    expect(previewElement.props.previewRevision).toEqual({ kind: 'committed', revisionId: 'R1' });
-  });
-
-  it('shows an honest unavailable boundary without mounting a fake Player when no cache exists', () => {
-    const adapter = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() });
-    const config = projectCanonicalComposition(adapter.prepare(graphWithClipStart(0, 'R2'))).config!;
-    const configWithShotShell = {
-      ...config,
-      clips: [{ id: 'shot-shell', at: 0, track: 'video', clipType: 'shot' as const }],
-    };
-    mocks.timeline = { data: { rows: [], meta: {} }, resolvedConfig: configWithShotShell };
-    mocks.playback = {
-      currentTime: 0,
-      previewRef: { current: null },
-      playerContainerRef: { current: null },
-      onPreviewTimeUpdate: vi.fn(),
-    };
-    mocks.runtime = {
-      userId: null,
-      shots: {
-        shotComposition: adapter,
-        canonicalComposition: null,
-        canonicalDraft: null,
-        canonicalCompositionError: new Error('Canonical preview read failed'),
-      },
-    };
-
-    function SurfacePreview() {
-      return <PreviewPanel surface={useVideoEditorPreviewSurface()} showOverlayEditor={false} />;
-    }
-
-    render(<SurfacePreview />);
-    expect(screen.getByRole('alert')).toHaveTextContent('Preview unavailable');
-    expect(screen.getByRole('alert')).toHaveTextContent('Canonical preview read failed');
-    expect(screen.queryByTestId('video-editor-preview-surface')).toBeNull();
-  });
-
-  it('does not turn a saved status without a pinned head into committed preview metadata', () => {
-    mocks.timeline = {
-      data: { head: undefined },
-      resolvedConfig: {
-        output: { resolution: '1280x720', fps: 30, file: 'legacy.mp4' },
-        tracks: [],
-        clips: [],
-        registry: {},
-      },
-    };
-    mocks.playback = {
-      currentTime: 0,
-      previewRef: { current: null },
-      playerContainerRef: { current: null },
-      onPreviewTimeUpdate: vi.fn(),
-    };
-    mocks.runtime = null;
-
-    const { result } = renderHook(() => useVideoEditorPreviewSurface());
-    act(() => result.current.slotRef(document.createElement('div')));
-    const previewElement = (result.current.portal as unknown as { children: React.ReactElement }).children;
-
-    expect(previewElement.props.previewRevision).toMatchObject({ kind: 'unknown' });
-    expect(previewElement.props.previewRevision.revisionId).toBeUndefined();
   });
 
   it('retains the preview key across config updates and physical slot moves', () => {
