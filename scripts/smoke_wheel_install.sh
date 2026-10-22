@@ -141,10 +141,15 @@ exit_code = int(sys.argv[2])
 report = payload["diagnostic"]
 errors = d.validate_diagnostic(report)
 assert not errors, errors
-assert payload["ok"] is (exit_code == 0), (payload["ok"], exit_code)
-assert payload["ok"] is (report["problemCode"] is None), report["problemCode"]
-if not payload["ok"]:
-    assert payload["problem_code"] == report["problemCode"] in d.PROBLEM_CODES, payload["problem_code"]
+# Doctor prints one of two shapes: the observed report (the Runtime's own health document plus the
+# C2 diagnostic; "ok" appears only when the Runtime supplied it) or the fail-closed error payload
+# (always "ok": false).  The contract is therefore carried by the exit code and the diagnostic.
+healthy = report["problemCode"] is None
+assert healthy is (exit_code == 0), (report["problemCode"], exit_code)
+if "ok" in payload:
+    assert payload["ok"] is healthy, (payload["ok"], report["problemCode"])
+if not healthy:
+    assert payload.get("problem_code", report["problemCode"]) == report["problemCode"] in d.PROBLEM_CODES, payload.get("problem_code")
     assert report["failureBoundary"] in d.FAILURE_BOUNDARIES, report["failureBoundary"]
     assert report["nextActions"], "a failed diagnostic must carry a typed next action"
     for action in report["nextActions"]:
@@ -267,7 +272,7 @@ try:
         "wheel_sha256": harness.artifact_digest,
         "version": harness.installed_version,
         "family_census": sorted(census_names),
-        "doctor_ok": doctor_payload["ok"],
+        "doctor_ok": doctor.returncode == 0,
         "pack_manifests": len(pack_manifests),
         "resource_lane": resource_probe.as_dict(),
         "runtime_client_lane": runtime_client.as_dict(),
