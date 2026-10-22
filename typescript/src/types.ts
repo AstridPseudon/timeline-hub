@@ -16,9 +16,14 @@ export type ClipKeyframe = {
   [key: string]: unknown;
 };
 
+type OpaqueJsonValue = null | boolean | number | string | OpaqueJsonValue[] | {[key: string]: OpaqueJsonValue};
+type OpaqueMeta = Record<string, {[key: string]: OpaqueJsonValue}>;
+
 export type TimelineClip = {
   id: string;
   at: number;
+  /** Authored extension data; Composition does not interpret or traverse it. */
+  meta?: OpaqueMeta;
   /** Key-time zero in seconds relative to clip start; independent of media trim. */
   keyframeOrigin?: number;
   keyframes?: Record<string, ClipKeyframe[]>;
@@ -63,6 +68,8 @@ export type TrackDefinition = {
   id: string;
   kind: 'audio' | 'visual';
   label: string;
+  /** Authored extension data; Composition does not interpret or traverse it. */
+  meta?: OpaqueMeta;
   muted?: boolean;
   opacity?: number;
   scale?: number;
@@ -73,12 +80,16 @@ export type TimelineConfig = {
   theme: string;
   tracks?: TrackDefinition[];
   clips: TimelineClip[];
+  /** Authored extension data; Composition does not interpret or traverse it. */
+  meta?: OpaqueMeta;
   output?: unknown;
   pinnedShotGroups?: unknown;
   theme_overrides?: unknown;
 };
 
 export type AssetRegistryEntry = {
+  /** Authored extension data; Composition does not interpret or traverse it. */
+  meta?: OpaqueMeta;
   file?: string;
   type?: string;
   duration?: number;
