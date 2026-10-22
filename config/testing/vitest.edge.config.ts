@@ -13,6 +13,7 @@ const EDGE_UNIT_INCLUDE = [
   'supabase/functions/ai-generate-effect/**/*.test.ts',
   'supabase/functions/ai-generate-sequence/**/*.test.ts',
   'supabase/functions/ai-prompt/**/*.test.ts',
+  'supabase/functions/ai-timeline-agent/**/*.test.ts',
   'supabase/functions/ai-voice-prompt/**/*.test.ts',
   'supabase/functions/broadcast-realtime/**/*.test.ts',
   'supabase/functions/calculate-task-cost/**/*.test.ts',
@@ -28,6 +29,7 @@ const EDGE_UNIT_INCLUDE = [
   'supabase/functions/get-task-output/**/*.test.ts',
   'supabase/functions/get-task-status/**/*.test.ts',
   'supabase/functions/task-status/**/*.test.ts',
+  'supabase/functions/timeline-import/**/*.test.ts',
   'supabase/functions/get-orchestrator-children/**/*.test.ts',
   'supabase/functions/get-predecessor-output/**/*.test.ts',
   'supabase/functions/huggingface-upload/**/*.test.ts',
@@ -61,7 +63,6 @@ const GROQ_NPM_SPECIFIER = 'npm' + ':groq-sdk@0.26.0';
 
 export default defineConfig({
   resolve: {
-    dedupe: ['three', '@remotion/three', 'react', 'react-dom', 'remotion', '@remotion/layout-utils', '@remotion/media', '@banodoco/timeline-composition'],
     alias: {
       '@': path.resolve(__dirname, '../../src'),
       ...(astridSource ? { '@astrid': astridSource.sourceRoot } : {}),

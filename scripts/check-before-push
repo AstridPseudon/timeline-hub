@@ -6,6 +6,16 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
+# Git exports repository-local variables to hooks. Tests create disposable Git
+# repositories; inheriting these variables makes their Git commands target this
+# repository instead. Keep cwd, but let each child command discover its own repo.
+git_local_env_vars="$(git rev-parse --local-env-vars)"
+while IFS= read -r git_local_env_var; do
+  unset "$git_local_env_var"
+done <<EOF
+$git_local_env_vars
+EOF
+
 node scripts/quality/check-build-context.mjs
 npm test
 

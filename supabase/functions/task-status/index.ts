@@ -14,7 +14,8 @@ import { handleTaskStatus } from "./handler.ts";
  *
  *   { status, correlation_id?, message?, failure_code?, result?: { config_version?, timeline_id?, ... } }
  *
- * which is the contract expected by the Banodoco task-status poller.
+ * which is the contract expected by `pollBanodocoTaskStatus` in
+ * `supabase/functions/ai-timeline-agent/tools/delegateToBanodocoAgent.ts`.
  *
  * The legacy POST-only `get-task-status` function is left in place for any
  * existing callers; this is a separate function so we can ship the GET shape

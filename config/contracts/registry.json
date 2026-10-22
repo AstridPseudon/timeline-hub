@@ -500,8 +500,6 @@
         "ParserHandler",
         "ParserInput",
         "ParserResult",
-        "PanelFrameAnchor",
-        "PanelPreviewService",
         "ProcessContribution",
         "ProcessEnvFieldSpec",
         "ProcessLiveSourceBinding",

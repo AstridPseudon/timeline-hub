@@ -294,6 +294,44 @@ for structured reporting of the extension's own failures.
 Effects, transitions, shaders, and automation require trusted code and reject
 third-party declarations. Unknown kinds never validate.
 
+## Panels that can go full screen
+
+The host may move a panel's DOM node into a full-screen frame that covers the
+whole browser window, above the editor, chat and panes. This is not the browser
+Fullscreen API. The panel keeps its React instance, its `instanceId`, and its
+state. Where `Element.moveBefore` exists, iframes inside the panel keep running.
+Elsewhere, an iframe reloads once after the move.
+
+`PanelRenderProps` carries an optional field:
+
+```ts
+fullscreen?: { active: boolean; enter(): void; exit(): void }
+```
+
+The field is present only where the host offers full screen. Panels hide their
+own full-screen control when `fullscreen` is absent. The host's dock already has
+a Full screen button, so a panel's own control is only a shortcut to
+`fullscreen.enter()`. At most one panel is full screen at a time. Editor
+shortcuts are off while it is open, and Esc exits. The manifest does not change.
+
+Rules for panel authors:
+
+1. Measure with a `ResizeObserver`, or with container queries against the panel
+   wrapper (`@container/panel`). Do not measure once at mount, because the panel
+   may be re-parented and resized. Lay out from measured size, never from
+   `fullscreen.active`.
+2. Call `preventDefault` on keys the panel owns, such as Escape, so the frame's
+   Esc-to-exit does not also act.
+3. Mark the panel's first focus target with the `data-autofocus` attribute. On
+   open, focus goes to that element, or else to the first tabbable element.
+
+## Selecting clips from a panel
+
+`PanelVideoAdapter` (`props.video`) has an optional `select(clipIds)`. It replaces
+the timeline selection with those clips, through the editor's own selection ops;
+unknown ids are ignored and an empty list clears the selection. Call it as
+`props.video?.select?.([clipId])`, for example to select a clip the panel just added.
+
 ## Import-Boundary Rules
 
 Extension code uses:
