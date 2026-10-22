@@ -1,8 +1,8 @@
-<!-- app2 | 2026-10-22T22:13:50Z | dispatcher heartbeat 41s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 0m -->
+<!-- app2 | 2026-10-22T22:15:31Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 2 | status age 0m -->
 # app2 board, 2026-10-22T22:13:41Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
-| P1 | H3 real corpus + split/trim/Agent/lost-ack/restart chain | Luna high | C0 approval; R1 + A2 drafts to run | doing | ap2-P1-agent-cases; ap2-P1-app-chain-cases (queued) | Collection started; integrated execution pending; no GO claim | — |
+| P1 | H3 real corpus + split/trim/Agent/lost-ack/restart chain | Luna high | C0 approval; R1 + A2 drafts to run | doing | ap2-P1-agent-cases; ap2-P1-app-chain-cases (running) | Collection started; integrated execution pending; no GO claim | — |
 | P2 | three-products gesture tour | Luna high | A2, A3 merged | blocked:app | — | Not run; farm owns heavy tour | — |
 | P3 | gate-5 new-path journey | Luna high | A2, R2 merged | blocked:app+agent | — | Not run; farm owns heavy journey | — |
 | P4 | CLI/Python/sheet, 10-note commit + per-step undo | Luna high | G2, G3, R2 merged | blocked:agent | — | Not run | — |
