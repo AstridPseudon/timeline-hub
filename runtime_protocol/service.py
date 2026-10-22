@@ -1848,9 +1848,10 @@ class RuntimeService:
             "content_sha256": digest,
             "type": str(source["media_type"]),
         }
-        if existing is not None and existing != asset_entry:
+        if existing is not None and not same_asset_identity(existing, asset_entry):
             raise ConflictError("source object id collides with a different registry asset", details={"source_object_id": canonical_object_id})
-        changed_registry["assets"][canonical_object_id] = asset_entry
+        if existing is None:
+            changed_registry["assets"][canonical_object_id] = asset_entry
         changed_target["asset"] = canonical_object_id
 
         timestamp = now()

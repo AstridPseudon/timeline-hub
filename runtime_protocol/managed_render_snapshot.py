@@ -15,6 +15,8 @@ from copy import deepcopy
 import math
 from pathlib import Path
 
+from .asset_identity import same_asset_identity
+
 _LOGGER = logging.getLogger(__name__)
 _LoadTimelineFn = Callable[[str], tuple[Mapping[str, object], Mapping[str, object]]]
 
@@ -119,10 +121,11 @@ def expand_shot_clips(
         if not isinstance(child_assets, Mapping):
             raise ShotExpansionError(f"sub-timeline {child_ref} has an invalid asset registry")
         for asset_id, entry in child_assets.items():
-            if asset_id in merged_assets and merged_assets[asset_id] != entry:
+            if asset_id in merged_assets and not same_asset_identity(merged_assets[asset_id], entry):
                 raise ShotExpansionError(
                     f"asset key collision for {asset_id!r} while expanding {child_ref}"
                 )
+            # Same identity: keep the first entry; later ones differ only in decoration.
             merged_assets.setdefault(asset_id, entry)
         reject_unbounded_stills(child_clips)
 

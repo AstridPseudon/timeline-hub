@@ -836,3 +836,21 @@ def test_occurrence_speed_discrepancy_keeps_authored_values_and_marks_missing_pr
     assert 'render_timing' not in projected[0]
     assert 'does not apply occurrence speed/source_offset' in projected[0]['render_timing_unknown']
     assert projected[0]['authored_fields']['hold'] == 2
+
+
+def test_shot_clip_track_resolves_from_the_film_when_the_shot_defines_none(tmp_path):
+    service, project, _ = _service(tmp_path)
+    try:
+        publication = _publication(project)
+        publication["parent_composition"]["config"]["tracks"] = [
+            {"id": "picture", "kind": "visual", "label": "Film picture"},
+        ]
+        publication["internal_timeline_revisions"][0]["payload"].pop("tracks")
+        service.publish_parent_composition(project, "main", publication, idempotency_key="publish-film-tracks")
+
+        result = service.inspect_timeline(project, "main", {"limit": 10})
+        child = [clip for row in result["selected"] for clip in row["clips"]][0]
+        assert child["track_status"] == "resolved"
+        assert child["track"]["label"] == "Film picture"
+    finally:
+        service.close()
