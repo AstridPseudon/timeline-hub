@@ -1,19 +1,17 @@
-<!-- viewing | 2026-10-22T23:06:58Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 25m -->
-# viewing board, 2026-10-22T22:42:00Z
+<!-- viewing | 2026-10-22T23:08:08Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 0m -->
+# viewing board, 2026-10-22T23:08:11Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| V1-prep | schema source and drift inventory (read-only) | Luna high | H0 | doing | vw-V1-schema-inventory-fix | First review FAIL: registry meta validator gap, consumer attribution, post-U1 materializer qualifier, make gen map; one bounded Luna correction queued immediately. Four-copy SHA/cmp and Runtime generator/manifest checks PASS | No repo changes |
-| V1 | open meta namespaces and ignore behavior | Luna high | C0 APPROVED, U1 merged | blocked:runtime | — | No integrated proof; awaiting U1 reviewed merge and regenerated source | — |
-| V3 | one commit-named Composition artifact and consumer pins | Luna high | U2, U3 merged | blocked:agent+app | — | No integrated proof; upstream baseline integrations unmerged | — |
-| V4 | optional stale dirs/copy/block deletions | Luna high | U2, U3 merged (lane brief) | blocked:agent+app | — | Not started; first to cut | — |
+| V1-prep | schema source and drift inventory (read-only) | Luna high | H0 | review | vw-V1-schema-inventory-review2 | Corrected author exit0/report present; independent second review queued on tl/vw-V1-schema-inventory-fix. First FAIL received one bounded correction. Four-copy SHA/cmp + Runtime generator/manifest checks pass; no implementation proof | No repo changes |
+| V1 | bounded open meta and consumer ignore behavior | Luna high | C0 APPROVED, U1 merged | blocked:runtime | — | Awaiting U1 reviewed merged source and regeneration seam; contract section6 includes registry records and separate parent/config meta locations | — |
+| V3 | commit-named Composition artifact and both consumer pins | Luna high | U2, U3 merged | blocked:agent+app | — | Awaiting reviewed baseline merges; no artifact/pin work dispatched | — |
+| V4 | optional stale dirs/copy/block deletions | Luna high | U2, U3 merged per lane brief | blocked:agent+app | — | Not started; first to cut | — |
 
-Blockers: orchestrator/lead — unresolved cleanup permission refusal: bin/recycle app-pin-d00a6613 app-pin-0d432391 exit255/Permission denied at22:32Z. Cleanup stopped; no retry, alternate deletion or bypass. See escalations/viewing-20261022T2232Z-recycle-permission-refusal.md. Current disk reports16G available, above15GB decimal target; refusal still needs owner resolution.
-Blockers: Runtime — V1 needs merged U1; hub board22:35Z shows rt-U1-real-upstream repairing actual upstream merge on85b13f3b4 after sanctioned merge-forward; no reviewed merge yet. C0/C0b APPROVED in current header; C0c root-address amendment pending, no change to V1 section6. Inventory may continue read-only.
-Blockers: Agent/App — V3/V4 need merged U2/U3; current hub Agent22:18Z quarantines8a2677cd7 after failed upstream merge preparation; App U3a/b/c underway. No dependent implementation dispatched.
-Next ready: independently review corrected V1-prep on completion; V1 after reviewed merged U1; V3/V4 after merged U2+U3.
+Blockers: orchestrator/lead — bin/recycle app-pin-d00a6613 app-pin-0d432391 returned Permission denied at22:32Z; cleanup remains stopped, no retry or alternative deletion. Existing escalation viewing-20261022T2232Z-recycle-permission-refusal.md. Current disk ~16GB available, above15GB target.
+Blockers: Runtime — V1 needs reviewed merged U1 plus its canonical materializer source handoff. Latest synced Runtime22:42 board still has rt-U1-real-upstream doing; C0/C0b APPROVED, C0c pending root amendment does not change section6.
+Blockers: Agent/App — V3/V4 need U2/U3 merged. Latest synced Agent22:18 has U2 quarantined/retry blocked; App22:44 has U3a safety stop, U3b recovery and U3c review. Upstream completion unverified, so implementation stays gated.
+Next ready: V1-prep review disposition; V1 immediately after reviewed U1 merge; V3/V4 immediately after U2+U3 merged.
 
-Read through INBOX restart NEW item; no newer item. BOARD-HEADER v2.1 and contract section6 read. All preceding v1 work/rules remain VOID; no parity, old rendering or ledger work resumed. One read-only Luna correction queued after first independent FAIL; original/review completed without repo changes; no fixed worker quota in v2.1. Manager writes only briefs/status/escalations, no product/test/generated/pin changes. No ready implementation left waiting.
+Restart audit: corrected V1-prep author finished22:44Z, exit0/report; original restart-killed worker superseded by resume+fix. Queued independent Luna high review2 at23:08Z using existing bounded review brief. No v1 task/review/ledger resumed. No fixed worker target under v2.1. No ready authorized implementation left waiting. Manager writes only briefs/status/escalations; all code/tests/generated/pins remain workers' work.
 
-V1-prep source map published by worker: design/viewing-v1-schema-inventory.md. No prep result counted as V1 implementation or integrated meta proof. Review checks distinction between Runtime-owned materialization and pinned package authored source, plus actual raw payload/meta boundaries.
-
-First FAIL report: workers/vw-V1-schema-inventory-review/REPORT.md. Corrective brief maps all section6 authored meta locations and names actual validator/source seams; implementation still gated by merged U1. No test/assertion weakened and no product changes.
+Inventory: design/viewing-v1-schema-inventory.md, authored by worker. Runtime contract copy is canonical integration artifact; upstream package/materializer source provenance must stay truthful. Four actual duplicates include App node_modules alias, not four independent authored sources. Explicit gaps: Agent registry meta allowlist, Composition asset type, bounded raw meta validation; unknown meta must never become media references.
