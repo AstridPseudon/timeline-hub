@@ -213,6 +213,19 @@ function agentOf(astrid: AstridCli, seed: { timelineId: string; projectSlug: str
   return {
     checkout: () => astrid.astrid(['timelines', 'checkout', ...common, '--fresh', '--json']),
     edit: (...flags: string[]) => astrid.astrid(['timelines', 'edit', ...common, ...flags]),
+    /**
+     * Sets one field on a clip of the parent composition through Astrid's SDK working copy (one undo step, same checkout and
+     * publish path as `timelines edit`). The CLI's `--clip` selector addresses clips inside shots, and the QUICK fixture is a
+     * media-only parent composition (clips on the parent, no shots), the shape the App's editor itself writes.
+     */
+    editParentClip: (clipId: string, field: string, value: unknown, label: string) => astrid.python(['-c', [
+      'from astrid.sdk.timeline_checkout import Checkout',
+      `tl = Checkout.draft(${JSON.stringify(seed.projectSlug)}, ${JSON.stringify(seed.timelineId)})`,
+      `with tl.edit(${JSON.stringify(label)}, check=False, quiet=True):`,
+      `    hits = [c for c in tl.bundle["parent"]["clips"] if c.get("id") == ${JSON.stringify(clipId)}]`,
+      '    assert len(hits) == 1, "the parent composition has no unique clip with that id"',
+      `    hits[0][${JSON.stringify(field)}] = ${JSON.stringify(value)}`,
+    ].join('\n')]),
     publish: async (message: string, idempotencyKey: string) => {
       const envelope = await astrid.json<{ new_head: string; old_head: string; idempotency_key: string; published?: boolean }>(['timelines', 'publish', ...common, '-m', message, '--idempotency-key', idempotencyKey, '--json']);
       expect(envelope.ok, JSON.stringify(envelope)).toBe(true);
@@ -939,7 +952,7 @@ test('quick: Astrid edit then App edit are visible and readable on the adopted t
   await expect(renderedClip).toHaveCSS('opacity', '1');
 
   await agent.checkout();
-  await agent.edit('--clip', String(clip.id), '--set', 'opacity=0.5');
+  await agent.editParentClip(String(clip.id), 'opacity', 0.5, 'Quick Astrid edit');
   const astridPublished = await agent.publish('Quick Astrid edit', `quick-astrid-${descriptor!.timelineId}`);
   expect(astridPublished.old_head).toBe(baseRevisionId);
   const astridRevisionId = astridPublished.new_head;
