@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 import './TourCard.css';
 import { EDITOR_TOUR_SCRIPT as SCRIPT } from '../tourScript';
-import { TourStrip } from './TourStrip';
+import { TOUR_FINALE_ENTRANCE_MS, TourStrip } from './TourStrip';
 import { TourVisual } from './TourVisual';
-import { useTourCardEntrance } from './useTourCardEntrance';
+import { TOUR_CARD_ENTRANCE_MS, useTourCardEntrance } from './useTourCardEntrance';
 import { useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared/state/editorTourStore';
 import { ChevronLeft } from 'lucide-react';
 import { DiscordMark } from '@/pages/Home/PublicAstridSocialLinks';
@@ -37,7 +37,8 @@ export function TourCard({ act, beat, onPrimary, onBack, onSkip }: TourCardProps
   const key = `${runId}:${act}:${beat}`;
   const explains = beat === 'welcome' || beat === 'land' || beat === 'finale' || beat === 'feedback';
   // A card still showing the previous beat never reports ready for the new one.
-  const { settled, reducedMotion } = useTourCardEntrance(key, explains && live);
+  // The finale's entrance runs on until its chain has lit.
+  const { settled, reducedMotion } = useTourCardEntrance(key, explains && live, beat === 'finale' ? TOUR_FINALE_ENTRANCE_MS : TOUR_CARD_ENTRANCE_MS);
 
   return (
     <div
