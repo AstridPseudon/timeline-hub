@@ -1,6 +1,6 @@
 // @vitest-environment node
 import fs from 'node:fs';
-import {execFile, execFileSync} from 'node:child_process';
+import {execFileSync} from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -8,19 +8,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { generateElementAdmissionModule, verifyElementAdmissions } from '../../../../config/vite/astridElementAdmissions';
 const roots: string[] = [];
 afterEach(() => roots.splice(0).forEach(root => fs.rmSync(root, { recursive: true, force: true })));
-function runVerifier(file: string, options: {stdio?: 'pipe'} = {}) {
-  const childTempRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'admitted-element-child-'))); roots.push(childTempRoot);
-  const args = ['--import', 'tsx', path.resolve('scripts/verify-element-admission.ts'), file];
-  return execFileSync(process.execPath, args, {encoding: 'utf8', env: {...process.env, TMPDIR: childTempRoot}, ...options});
-}
-function runVerifierAsync(file: string) {
-  const childTempRoot = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'admitted-element-child-'))); roots.push(childTempRoot);
-  const args = ['--import', 'tsx', path.resolve('scripts/verify-element-admission.ts'), file];
-  return new Promise<{stdout: string}>((resolve, reject) => execFile(process.execPath, args, {encoding: 'utf8', env: {...process.env, TMPDIR: childTempRoot}}, (error, stdout) => {
-    if (error) reject(error);
-    else resolve({stdout});
-  }));
-}
 function fixture() {
   const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'admitted-element-'))); roots.push(root);
   const snapshot = path.join(root, 'immutable'); fs.mkdirSync(snapshot);
@@ -55,23 +42,15 @@ describe('external admitted element build input',()=>{
     f.manifest.elements[1]={...f.entry,descriptor:{...f.entry.descriptor,revision:'sha256:new'}};f.write();expect(verifyElementAdmissions(f.file).elements).toHaveLength(2);
   });
   it('runs the normal receiving compiler on pre-CAS candidate and empty init, rejecting invalid TSX before any publication',()=>{
-    const f=fixture();
-    const receipt=JSON.parse(runVerifier(f.file));
+    const f=fixture();const args=[path.resolve('node_modules/tsx/dist/cli.mjs'),path.resolve('scripts/verify-element-admission.ts'),f.file];
+    const receipt=JSON.parse(execFileSync(process.execPath,args,{encoding:'utf8'}));
     expect(receipt).toMatchObject({schema:'astrid.element-build/v1',selectionDigest:'sha256:'+createHash('sha256').update(fs.readFileSync(f.file)).digest('hex'),elements:[{packId:'project_pack',id:'blocks',revision:'sha256:old'}]});
     const validBytes=fs.readFileSync(f.file,'utf8');
     const bad='export default function Broken( {';fs.writeFileSync(path.join(f.snapshot,'component.tsx'),bad);f.entry.snapshot.files[0].sha256=createHash('sha256').update(bad).digest('hex');f.write();
-    expect(()=>runVerifier(f.file,{stdio:'pipe'})).toThrow();
+    expect(()=>execFileSync(process.execPath,args,{encoding:'utf8',stdio:'pipe'})).toThrow();
     // The verifier never publishes/writes a selection; the caller's candidate remains unchanged.
     expect(fs.readFileSync(f.file,'utf8')).not.toBe(validBytes);
-    f.manifest.elements=[];f.write();expect(JSON.parse(runVerifier(f.file)).elements).toEqual([]);
-  });
-  it('runs concurrent verifier children with the same script argv and isolated cleanup roots', async()=>{
-    const f=fixture();
-    const receipts=await Promise.all([runVerifierAsync(f.file),runVerifierAsync(f.file)]);
-    expect(receipts.map(({stdout})=>JSON.parse(stdout).elements)).toEqual([
-      [{projectId:'project',packId:'project_pack',kind:'effect',id:'blocks',revision:'sha256:old'}],
-      [{projectId:'project',packId:'project_pack',kind:'effect',id:'blocks',revision:'sha256:old'}],
-    ]);
+    f.manifest.elements=[];f.write();expect(JSON.parse(execFileSync(process.execPath,args,{encoding:'utf8'})).elements).toEqual([]);
   });
   it('keeps snapshot playback valid if canonical source is missing, and lazy discovery creates nothing',()=>{
     const f=fixture();expect(fs.existsSync(f.project.packRoot)).toBe(false);expect(verifyElementAdmissions(f.file).elements).toHaveLength(1);

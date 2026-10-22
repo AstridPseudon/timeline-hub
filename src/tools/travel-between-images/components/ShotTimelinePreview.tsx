@@ -1,5 +1,5 @@
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
+import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 import { AlertCircle, Film } from 'lucide-react';

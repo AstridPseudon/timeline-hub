@@ -1,5 +1,4 @@
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
-import type { JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { getAssetImmediateSource } from '../lib/asset-registry.ts';
 import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
 import { useMemo } from 'react';
@@ -24,7 +23,6 @@ import {
 } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
 import { readPositiveDurationSeconds } from '@/tools/video-editor/lib/timeline-asset-durations.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
-import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { moveTrackWithinKind } from '@/tools/video-editor/hooks/useTimelineTrackManagement.ts';
 import {
   hasMountedTimelineAvailability,
@@ -46,8 +44,6 @@ import {
 } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import { captureClipTrimEdit, submitClipTrimEdit } from '../commands/clipTrimGesture.ts';
-import { captureClipMove, submitClipMove } from '../commands/semanticGestures.ts';
 
 export type TimelineCommandErrorCode =
   | 'editor_not_mounted'
@@ -93,14 +89,6 @@ export interface AddClipCommandInput {
   replaceClipId?: string;
   pinnedShotGroupsOverride?: PinnedShotGroup[];
 }
-
-type QualifiedPreparedAsset = TimelineProvisionedAsset & { mediaSelection: MediaSelection };
-type QualifiedAddClipCommandInput = Omit<AddClipCommandInput, 'preparedAsset'> & {
-  preparedAsset: QualifiedPreparedAsset;
-};
-type VerifiedMediaProvider = DataProvider & {
-  getProjectVerifiedMedia?: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
-};
 
 export interface UpdateClipCommandInput {
   clipId: string;
@@ -171,15 +159,15 @@ export interface TimelineCommands {
    * Insert a registry-backed asset clip onto the timeline without exposing the
    * raw rows/meta/clipOrder mutation path.
    */
-  addClip(input: QualifiedAddClipCommandInput): Promise<TimelineCommandResult<{ clipId: string; trackId: string }>>;
-  addClip(input: AddClipCommandInput): TimelineCommandResult<{ clipId: string; trackId: string }>;
+  addClip: (input: AddClipCommandInput) => TimelineCommandResult<{ clipId: string; trackId: string }>;
   /**
    * Apply a shallow persisted-clip patch and route validation through the
    * canonical config mutation path.
    */
   updateClip: (input: UpdateClipCommandInput) => TimelineCommandResult<{ clipId: string }>;
   /**
-   * Capture a fixed, same-track clip.move v1 through the host command outbox.
+   * Move a clip by timeline time and/or track using the canonical config path.
+   * Pinned-group drag semantics stay internal for Sprint 2.
    */
   moveClip: (input: MoveClipCommandInput) => TimelineCommandResult<{ clipId: string; trackId: string; time: number }>;
   /**
@@ -365,10 +353,6 @@ export interface CreateTimelineCommandsOptions {
   managedObjectGuard?: ManagedObjectGuard | null;
   /** Optional host-owned policy that can deny all timeline mutations. */
   timelineEditability?: TimelineEditability;
-  parentMediaRuntime?: {
-    projectId: string;
-    getProjectVerifiedMedia: (projectId: string, selection: MediaSelection) => Promise<VerifiedMedia>;
-  };
 }
 
 /**
@@ -454,12 +438,8 @@ export function createTimelineCommands(
     return patch;
   };
 
-  function addClip(input: QualifiedAddClipCommandInput): Promise<TimelineCommandResult<{ clipId: string; trackId: string }>>;
-  function addClip(input: AddClipCommandInput): TimelineCommandResult<{ clipId: string; trackId: string }>;
-  function addClip(
-    input: AddClipCommandInput,
-  ): TimelineCommandResult<{ clipId: string; trackId: string }>
-    | Promise<TimelineCommandResult<{ clipId: string; trackId: string }>> {
+  const commands: TimelineCommands = {
+    addClip(input) {
       const readOnly = checkTimelineEditable();
       if (readOnly) return readOnly;
       const state = getMountedState();
@@ -470,86 +450,6 @@ export function createTimelineCommands(
       const current = getCurrentData(state);
       if (!current) {
         return failure('timeline_unavailable', 'Timeline data is not loaded.');
-      }
-
-      const suppliedSelection = input.preparedAsset?.mediaSelection;
-      if (suppliedSelection) {
-        return (async (): Promise<TimelineCommandResult<{ clipId: string; trackId: string }>> => {
-          const prepared = input.preparedAsset as QualifiedPreparedAsset;
-          if (prepared.mediaType !== 'video') {
-            return failure('unsupported_asset_type', 'Native prepared parent media currently accepts video assets only.');
-          }
-          if (input.afterClipId || input.removeClipId || input.removeClipIds?.length
-            || input.replaceClipId || input.pinnedShotGroupsOverride !== undefined) {
-            return failure('invalid_argument', 'Native prepared parent media only supports a new manual clip.');
-          }
-          if (typeof input.time !== 'number' || !Number.isFinite(input.time) || input.time < 0) {
-            return failure('invalid_argument', 'A native prepared asset requires a non-negative target time.');
-          }
-          const port = state.ops.parentClipAddMedia;
-          const runtime = options?.parentMediaRuntime;
-          if (!port || !runtime) {
-            return failure('mutation_failed', 'Native prepared media requires the durable command session and Runtime verification.');
-          }
-
-          const plannedDuration = readPositiveDurationSeconds(input.clipSpanSeconds)
-            ?? estimateAssetDuration(prepared.entry, 'visual');
-          const targetPlan = planAssetDropTarget({
-            current,
-            assetKind: 'visual',
-            trackId: input.trackId,
-            selectedTrackId: state.data.selectedTrackId,
-            forceNewTrack: input.forceNewTrack ?? false,
-            insertAtTop: input.insertAtTop ?? false,
-            time: input.time,
-            duration: plannedDuration,
-          });
-          if (!targetPlan.ok || targetPlan.preparedCurrent !== current) {
-            return failure('mutation_failed', 'Native prepared media requires an existing visual track.');
-          }
-          const command: PlacePreparedMediaCommand = {
-            type: 'place-prepared-media',
-            payload: {
-              asset: prepared,
-              ...(targetPlan.trackId !== undefined ? { trackId: targetPlan.trackId } : {}),
-              ...(state.data.selectedTrackId !== undefined ? { selectedTrackId: state.data.selectedTrackId } : {}),
-              at: input.time,
-              forceNewTrack: false,
-              insertAtTop: false,
-              ...(input.clipSpanSeconds !== undefined ? { clipSpanSeconds: input.clipSpanSeconds } : {}),
-            },
-          };
-          const preview = applyPreparedMediaCommand(current, command);
-          const detail = preview?.commandResult?.detail;
-          const clip = detail && typeof detail.clipId === 'string'
-            ? preview?.nextData.config.clips.find((candidate) => candidate.id === detail.clipId)
-            : undefined;
-          if (!detail || typeof detail.clipId !== 'string' || typeof detail.trackId !== 'string'
-            || !clip || clip.clipType !== 'media' || clip.asset !== prepared.assetKey) {
-            return failure('mutation_failed', 'Failed to build the native prepared media row.');
-          }
-
-          // Capture detached row, alias, selection, and session fences before
-          // the only await. Verification must never observe the caller's
-          // mutable selection object after this point.
-          const row = structuredClone(clip) as unknown as Record<string, JSON>;
-          if (row.clipType === 'media' && !Object.prototype.hasOwnProperty.call(row, 'hold')
-            && row.speed === 1
-            && typeof row.from === 'number' && Number.isFinite(row.from)
-            && typeof row.to === 'number' && Number.isFinite(row.to)
-            && row.to > row.from) {
-            row.hold = row.to - row.from;
-          }
-          try {
-            const basis = port.capture({ row, media: suppliedSelection, current });
-            const verifiedMedia = await runtime.getProjectVerifiedMedia(runtime.projectId, basis.media);
-            const captured = port.finish(basis, verifiedMedia);
-            port.submit(captured);
-            return success({ clipId: detail.clipId, trackId: detail.trackId });
-          } catch (cause) {
-            return failure('mutation_failed', cause instanceof Error ? cause.message : 'Native prepared media was refused.', { cause });
-          }
-        })();
       }
 
       if (input.preparedAsset) {
@@ -699,10 +599,7 @@ export function createTimelineCommands(
         },
         targetPlan.preparedCurrent,
       );
-  }
-
-  const commands: TimelineCommands = {
-    addClip,
+    },
 
     updateClip(input) {
       const readOnly = checkTimelineEditable();
@@ -776,7 +673,7 @@ export function createTimelineCommands(
         return failure('clip_not_found', `Clip '${input.clipId}' was not found.`);
       }
       if (isPinnedGroupClip(current, input.clipId)) {
-        return failure('pinned_group_edit_blocked', 'clip.move v1 does not support group moves.');
+        return failure('pinned_group_edit_blocked', 'Pinned shot-group clip movement stays on the internal gesture path in Sprint 2.');
       }
       if (input.trackId === undefined && input.time === undefined) {
         return failure('invalid_argument', 'moveClip requires a target track, a target time, or both.');
@@ -797,14 +694,27 @@ export function createTimelineCommands(
         return failure('invalid_argument', `Clip '${input.clipId}' cannot be moved to ${targetTrack.kind} track '${targetTrack.id}'.`);
       }
 
-      const nextTime = input.time ?? clip.at;
-      try {
-        const captured = captureClipMove(state.ops.clipMove, current, input.clipId);
-        submitClipMove(captured, nextTime, { trackId: nextTrackId });
-        return success({ clipId: input.clipId, trackId: nextTrackId, time: nextTime });
-      } catch (cause) {
-        return failure('mutation_failed', cause instanceof Error ? cause.message : 'Clip move failed.', { cause });
-      }
+      const nextTime = input.time === undefined ? clip.at : Math.max(0, roundTimelineValue(input.time));
+      const nextConfig = updateClipInConfig(current.resolvedConfig, input.clipId, (existingClip) => ({
+        ...existingClip,
+        at: nextTime,
+        track: nextTrackId,
+      }));
+
+      return applyValidatedMutation(
+        store,
+        current,
+        {
+          type: 'config',
+          resolvedConfig: nextConfig,
+        },
+        { clipId: input.clipId, trackId: nextTrackId, time: nextTime },
+        {
+          selectedClipId: input.clipId,
+          selectedTrackId: nextTrackId,
+          semantic: true,
+        },
+      );
     },
 
     trimClip(input) {
@@ -842,33 +752,6 @@ export function createTimelineCommands(
       }
       if (nextEnd <= nextStart) {
         return failure('invalid_argument', 'trimClip requires an end time after the start time.');
-      }
-
-      // The native trim contract owns source-window precision and recording,
-      // but does not move a clip on the timeline. A supported source-only
-      // trim must use that port; falling through to a snapshot mutation would
-      // report success without durable command acceptance when the session is
-      // absent, stale, or refuses the clip's ownership shape.
-      if (clip.clipType === 'media' && !isHoldClip(clip) && nextStart === currentStart) {
-        const trimPort = state.ops.clipTrim;
-        if (!trimPort) {
-          return failure('mutation_failed', 'Native clip trim is unavailable until the mounted command session is ready.');
-        }
-
-        try {
-          const captured = captureClipTrimEdit(trimPort, current, input.clipId);
-          const speed = clip.speed ?? 1;
-          const currentFrom = clip.from ?? 0;
-          const nextTo = currentFrom + (nextEnd - nextStart) * speed;
-          submitClipTrimEdit(captured, { out_s: nextTo });
-          return success({ clipId: input.clipId, startTime: nextStart, endTime: nextEnd });
-        } catch (cause) {
-          return failure(
-            'mutation_failed',
-            cause instanceof Error ? cause.message : 'Native clip trim failed.',
-            { cause },
-          );
-        }
       }
 
       const nextConfig = updateClipInConfig(current.resolvedConfig, input.clipId, (existingClip) => {
@@ -1189,18 +1072,8 @@ export function createTimelineCommands(
  */
 export function useTimelineCommandsService(): TimelineCommands {
   const store = useTimelineStoreApi();
-  const runtime = useOptionalVideoEditorRuntime();
-  const editability = runtime?.timelineEditability;
-  const provider = runtime?.provider as VerifiedMediaProvider | undefined;
-  const projectId = runtime?.project.projectId;
-  const getProjectVerifiedMedia = provider?.getProjectVerifiedMedia;
-  const parentMediaRuntime = typeof getProjectVerifiedMedia === 'function' && typeof projectId === 'string'
-    ? {
-        projectId,
-        getProjectVerifiedMedia: getProjectVerifiedMedia.bind(provider),
-      }
-    : undefined;
-  return useMemo(() => createTimelineCommands(store, { timelineEditability: editability, parentMediaRuntime }), [store, editability, parentMediaRuntime]);
+  const editability = useOptionalVideoEditorRuntime()?.timelineEditability;
+  return useMemo(() => createTimelineCommands(store, {timelineEditability: editability}), [store, editability]);
 }
 
 /**
@@ -1210,17 +1083,7 @@ export function useTimelineCommandsService(): TimelineCommands {
  * preserve their existing fallback behavior.
  */
 export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
-  const runtime = useOptionalVideoEditorRuntime();
-  const editability = runtime?.timelineEditability;
-  const provider = runtime?.provider as VerifiedMediaProvider | undefined;
-  const projectId = runtime?.project.projectId;
-  const getProjectVerifiedMedia = provider?.getProjectVerifiedMedia;
-  const parentMediaRuntime = typeof getProjectVerifiedMedia === 'function' && typeof projectId === 'string'
-    ? {
-        projectId,
-        getProjectVerifiedMedia: getProjectVerifiedMedia.bind(provider),
-      }
-    : undefined;
+  const editability = useOptionalVideoEditorRuntime()?.timelineEditability;
   const store = useTimelineStoreApiSafe();
   const availability = useTimelineAvailabilityState();
 
@@ -1228,6 +1091,6 @@ export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
     if (!store || !hasMountedTimelineAvailability(availability)) {
       return null;
     }
-    return createTimelineCommands(store, { timelineEditability: editability, parentMediaRuntime });
-  }, [availability.hasProvider, availability.mounted, store, editability, parentMediaRuntime]);
+    return createTimelineCommands(store, {timelineEditability: editability});
+  }, [availability.hasProvider, availability.mounted, store, editability]);
 }

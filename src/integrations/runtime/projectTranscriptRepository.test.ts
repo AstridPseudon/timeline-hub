@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AstridRuntimeClient } from './client.ts';
-import { RuntimeDataProvider } from './dataProvider.ts';
+import { RuntimeDataProvider, documentCreateKey } from './dataProvider.ts';
 import {
   transcriptDocumentId,
   type ProjectTranscriptContent,
@@ -51,6 +51,23 @@ describe('Runtime project transcript repository', () => {
     unsubscribe();
     await docs.update(d.document_id, content, 2);
     expect(changed).toHaveBeenCalledTimes(2);
+  });
+
+  it('builds Runtime-valid idempotency keys for create/update with colon and long ids', async () => {
+    const RUNTIME_KEY = /^[A-Za-z0-9][A-Za-z0-9._~-]{0,255}$/;
+    const d = await document();
+    const create = vi.spyOn(AstridRuntimeClient.prototype, 'createDocument').mockResolvedValue({ ...d, receipt: {} as any });
+    const update = vi.spyOn(AstridRuntimeClient.prototype, 'updateDocument').mockResolvedValue({ ...d, version: 2, receipt: {} as any });
+    const docs = new RuntimeDataProvider({ projectId: 'p' }).documents;
+    for (const id of ['world-library:proj:1', 'x:' + 'y'.repeat(600), '\u00e9:\u2603']) {
+      await docs.create('k', content, id);
+      await docs.update(id, content, 1);
+    }
+    await docs.create('k', content);
+    expect(create.mock.calls.length).toBe(4);
+    for (const call of create.mock.calls) expect(call[4]).toMatch(RUNTIME_KEY);
+    for (const call of update.mock.calls) expect(call[4]).toMatch(RUNTIME_KEY);
+    expect(create.mock.calls[0]?.[4]).toBe(await documentCreateKey('world-library:proj:1'));
   });
 
   it('uses kind-filtered pagination and validates every returned canonical document', async () => {

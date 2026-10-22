@@ -9,18 +9,14 @@ import {
 } from 'react';
 import { shallow } from 'zustand/shallow';
 import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
-import { useTimelineChromeSelector, useTimelineDataSelector, useTimelinePlaybackSelector } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { useTimelineDataSelector, useTimelinePlaybackSelector } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { useVideoEditorPreviewComposition } from './useVideoEditorPreviewComposition.ts';
-import { previewUnavailableLabel, type PreviewRevision } from './previewRevision.ts';
 
 export interface VideoEditorPreviewSurface {
   slotRef: RefCallback<HTMLDivElement>;
   portal: ReactPortal | null;
   hasConfig: boolean;
-  /** Why the surface has no Player-backed preview yet. */
-  availability?: 'loading' | 'unavailable' | 'ready';
-  unavailableReason?: string;
 }
 
 export function useVideoEditorPreviewSurface({
@@ -31,81 +27,10 @@ export function useVideoEditorPreviewSurface({
   touchChrome?: boolean;
 } = {}): VideoEditorPreviewSurface {
   const resolvedConfig = useTimelineDataSelector((timeline) => timeline.resolvedConfig);
-  const timelineData = useTimelineDataSelector((timeline) => timeline.data);
-  const saveStatus = useTimelineChromeSelector((chrome) => chrome.saveStatus);
   const runtime = useOptionalVideoEditorRuntime();
-  const compositionResolution = useVideoEditorPreviewComposition(resolvedConfig, timelineData);
+  const compositionResolution = useVideoEditorPreviewComposition(resolvedConfig);
   const previewConfig = compositionResolution.config;
   const previewSource = compositionResolution.source;
-  const compiledTransitions = compositionResolution.compiledTransitions;
-  const previewRevision = useMemo<PreviewRevision>(() => {
-    const fact = timelineData?.editProjection;
-    const paired = fact && previewConfig !== null && previewConfig === compositionResolution.pairedConfig;
-    const error = runtime?.userId === null ? runtime.shots?.canonicalCompositionError : null;
-    const unavailableTarget = fact && !paired
-      ? {
-        ...(fact.kind === 'accepted' ? { targetRevisionId: fact.head.revisionId } : {}),
-        reason: compositionResolution.error?.message ?? 'The command projection is unavailable.',
-      }
-      : error && typeof error === 'object'
-      && 'targetRevisionId' in error && typeof error.targetRevisionId === 'string'
-      ? { targetRevisionId: error.targetRevisionId, reason: error.message }
-      : error ? { reason: error.message } : undefined;
-    if (paired) {
-      return {
-        ...(fact.kind === 'accepted'
-          ? { kind: 'committed' as const, revisionId: fact.head.revisionId }
-          : { kind: 'local' as const, baseRevisionId: fact.base.revisionId }),
-        ...(unavailableTarget ? { unavailableTarget } : {}),
-      };
-    }
-    const canonicalDraft = runtime?.userId === null ? runtime.shots?.canonicalDraft : null;
-    const canonicalComposition = runtime?.userId === null ? runtime.shots?.canonicalComposition : null;
-
-    if (previewSource === 'canonical') {
-      if (canonicalDraft) {
-        return {
-          kind: 'local',
-          // The server head may advance while this draft remains the pixels
-          // being projected. Its own graph head is the only known base for
-          // the draft; the server snapshot is not an acknowledgement of it.
-          baseRevisionId: canonicalDraft.composition.headRevisionId,
-          ...(unavailableTarget ? { unavailableTarget } : {}),
-        };
-      }
-      if (canonicalComposition) {
-        return {
-          kind: 'committed',
-          revisionId: canonicalComposition.headRevisionId,
-          ...(unavailableTarget ? { unavailableTarget } : {}),
-        };
-      }
-      return unavailableTarget
-        ? { kind: 'unavailable', unavailableTarget }
-        : { kind: 'unknown', reason: compositionResolution.error?.message };
-    }
-
-    const baseRevisionId = timelineData?.head?.headRevisionId;
-    if (saveStatus !== 'saved') {
-      return {
-        kind: 'local',
-        baseRevisionId: baseRevisionId ?? null,
-        ...(unavailableTarget ? { unavailableTarget } : {}),
-      };
-    }
-    if (baseRevisionId) {
-      return {
-        kind: 'committed',
-        revisionId: baseRevisionId,
-        ...(unavailableTarget ? { unavailableTarget } : {}),
-      };
-    }
-    return unavailableTarget
-      ? { kind: 'unavailable', unavailableTarget }
-      : { kind: 'unknown', reason: 'The loaded timeline has no committed revision identity.' };
-  }, [compositionResolution.error?.message, compositionResolution.pairedConfig, previewConfig, previewSource, runtime?.shots?.canonicalComposition,
-    runtime?.shots?.canonicalCompositionError, runtime?.shots?.canonicalDraft, runtime?.userId,
-    saveStatus, timelineData]);
   const {
     currentTime,
     previewRef,
@@ -159,8 +84,6 @@ export function useVideoEditorPreviewSurface({
         key={`${runtime?.project?.projectId ?? ''}:${runtime?.timelineId ?? ''}:${previewSource}`}
         ref={previewRef}
         config={previewConfig}
-        compiledTransitions={compiledTransitions}
-        previewRevision={previewRevision}
         compact={compact}
         touchChrome={touchChrome}
         initialTime={currentTime}
@@ -179,8 +102,6 @@ export function useVideoEditorPreviewSurface({
     playerContainerRef,
     previewRef,
     previewConfig,
-    compiledTransitions,
-    previewRevision,
     previewSource,
     runtime?.project?.projectId,
     runtime?.timelineId,
@@ -190,16 +111,5 @@ export function useVideoEditorPreviewSurface({
     slotRef,
     portal,
     hasConfig: Boolean(previewConfig),
-    availability: previewConfig
-      ? 'ready'
-      : compositionResolution.status === 'error'
-        ? 'unavailable'
-        : 'loading',
-    ...(compositionResolution.status === 'error' && compositionResolution.error?.message
-      ? { unavailableReason: timelineData?.editProjection && previewRevision.unavailableTarget
-        ? `${previewUnavailableLabel(previewRevision.unavailableTarget)}: ${compositionResolution.error.message}`
-        : compositionResolution.error.message }
-      : {}),
-  }), [compositionResolution.error?.message, compositionResolution.status, portal, previewConfig,
-    previewRevision.unavailableTarget, slotRef, timelineData?.editProjection]);
+  }), [portal, previewConfig, slotRef]);
 }

@@ -6,7 +6,6 @@ import type {
   TimelineClip,
   TimelineConfig,
 } from '@/tools/video-editor/types/index.ts';
-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
 import {
   getConfigSignature,
   getStableConfigSignature,
@@ -15,6 +14,7 @@ import {
   type TimelineConfigSignatureInput,
 } from '@/sdk/video/timeline/configSignature.ts';
 import {
+  getCanonicalClipPlaybackRate,
   getConfigTimelineClipDuration,
   getConfigTimelineClipSourceDuration,
 } from './timeline-domain.ts';
@@ -40,7 +40,26 @@ export const getClipTimelineDuration = (clip: TimelineClip): number => {
   return getConfigTimelineClipDuration(clip);
 };
 
-export { computeMediaTrim as getSanitizedMediaTrimProps } from '@banodoco/timeline-composition/evaluation';
+export const getSanitizedMediaTrimProps = (
+  clip: Pick<TimelineClip, 'from' | 'to'>,
+  fps: number,
+): { trimBefore: number; trimAfter?: number } => {
+  const trimBeforeSeconds = typeof clip.from === 'number' && Number.isFinite(clip.from)
+    ? Math.max(0, clip.from)
+    : 0;
+  const trimAfterSeconds = typeof clip.to === 'number' && Number.isFinite(clip.to) && clip.to > trimBeforeSeconds
+    ? clip.to
+    : undefined;
+
+  return {
+    trimBefore: secondsToFrames(trimBeforeSeconds, fps),
+    ...(trimAfterSeconds === undefined ? {} : { trimAfter: secondsToFrames(trimAfterSeconds, fps) }),
+  };
+};
+
+export const getSanitizedPlaybackRate = (speed: TimelineClip['speed']): number => {
+  return getCanonicalClipPlaybackRate(speed);
+};
 
 export const getSanitizedVolume = (volume: number | undefined, fallback = 1): number => {
   return typeof volume === 'number' && Number.isFinite(volume)
@@ -82,7 +101,12 @@ export const getClipDurationInFrames = (clip: TimelineClip, fps: number): number
   return Math.max(1, secondsToFrames(getClipTimelineDuration(clip), fps));
 };
 
-export { getTimelineDurationInFrames };
+export const getTimelineDurationInFrames = (config: ResolvedTimelineConfig, fps: number): number => {
+  return Math.max(
+    1,
+    ...config.clips.map((clip) => secondsToFrames(clip.at, fps) + getClipDurationInFrames(clip, fps)),
+  );
+};
 
 export const getEffectValue = (
   effects: TimelineClip['effects'],

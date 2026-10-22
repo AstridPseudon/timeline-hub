@@ -33,7 +33,6 @@ import type { ProcessResultAttachRecord } from '@/tools/video-editor/runtime/com
 import type { HostOwnedExtensionOperationalEmitter } from '@/tools/video-editor/runtime/extensionReleaseControls.ts';
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
 import type { AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
-import type { EditorImagePlacementHost } from '@/tools/video-editor/commands/editorImagePlacement.ts';
 
 export interface VideoEditorRuntimeContextValue {
   /** Internal per-assembly chrome and host selection ownership. */
@@ -108,8 +107,6 @@ export interface VideoEditorRuntimeContextValue {
   timelineViewStore?: TimelineViewStoreApi;
   /** Host-owned runtime lock/read-only state; never serialized in timeline data. */
   timelineEditability?: TimelineEditability;
-  /** App-owned same-origin Runtime operation for automatic image placement. */
-  imagePlacementHost?: EditorImagePlacementHost;
 }
 
 export const VideoEditorRuntimeContext = createContext<VideoEditorRuntimeContextValue | null>(null);

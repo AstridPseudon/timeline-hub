@@ -13,8 +13,7 @@ import { useEffects } from '@/tools/video-editor/hooks/useEffects.ts';
  * store sync.
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { readyRuntimeTaskEvents, subscribeRuntimeTaskUpdates, useRuntimeTaskEvents } from '@/features/tasks/components/TasksPane/hooks/useRuntimeTaskEvents.ts';
+import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
 import { MediaLightbox, type MediaLightboxProps } from '@/domains/media-lightbox/MediaLightbox.tsx';
@@ -29,7 +28,6 @@ import { playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-su
 import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
-import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
 import {
   VideoEditorRuntimeProvider,
   useVideoEditorRuntime,
@@ -48,6 +46,8 @@ import { type VideoEditorSequenceComponentCatalog } from '@/tools/video-editor/h
 import { INSTALLED_TIMELINE_SERVICE_HOOKS } from '@/tools/video-editor/runtime/installedTimelineHostServiceHooks.ts';
 import { useTimelineClipsForAttachments } from '@/tools/video-editor/hooks/useTimelineClipsForAttachments.ts';
 import type {
+  TimelineActionResizeStart,
+  TimelineClipEdgeResizeEnd,
   TimelineEditorOpsContextValue,
 } from '@/tools/video-editor/hooks/useTimelineState.types.ts';
 import { useVideoEditorLightboxNavigation } from '@/tools/video-editor/hooks/useVideoEditorLightboxNavigation.ts';
@@ -86,6 +86,7 @@ import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnosti
 import { createProposalPersistenceBridge, type ProposalPersistenceProvider } from '@/tools/video-editor/lib/proposal-runtime.ts';
 import type { ProcessManager } from '@/tools/video-editor/runtime/processes/ProcessManager.ts';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
+import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
 import { publishLocalTestExtensionDiagnostics } from '@/app/localTestRuntime.ts';
 import {
   withCanonicalShotDraftLock,
@@ -101,9 +102,6 @@ import {
   type HostOwnedExtensionOperationalEmitter,
   type ExtensionOperationalEventSink,
 } from '@/tools/video-editor/runtime/extensionReleaseControls.ts';
-import { bindEditorImagePlacementHost } from '@/integrations/runtime/clientLocalAdapter.ts';
-import type { EditorImagePlacementHost } from '@/tools/video-editor/commands/editorImagePlacement.ts';
-import { RuntimeOperationHost } from '@/integrations/runtime/operationHost.ts';
 
 const log = import.meta.env.DEV ? (...args: Parameters<typeof console.log>) => console.log(...args) : () => {};
 
@@ -461,7 +459,7 @@ export function VideoEditorRuntimeContent({
   operationsEnabled?: boolean;
 }) {
   const runtime = useVideoEditorRuntime();
-  const { store, editor, editorOps: mountedEditorOps, chrome, transcriptHost } = sync;
+  const { store, editor, chrome, transcriptHost } = sync;
   useEffect(() => {
     const pending = store.getState().pendingWorkRegistry;
     if (!pending || !onPendingWorkChange) return;
@@ -752,30 +750,85 @@ export function VideoEditorRuntimeContent({
     });
   }, [lightboxAssetKey, lightboxClipId, lightboxFallbackMedia, lightboxGenerationId, lightboxQuery.data, lightboxQuery.isLoading]);
 
-  const editorOps = useMemo<TimelineEditorOpsContextValue>(() => {
-    const occurrenceAddMedia = occurrenceAddMediaPort
-      ? {
-          capture(input: Parameters<OccurrenceAddMediaCapturePort['capture']>[0]) {
-            const current = getOccurrenceAddMediaCurrent?.() ?? null;
-            if (!current) {
-              throw new Error('Parent timeline data is unavailable for occurrence media add');
-            }
-            return occurrenceAddMediaPort.capture({ ...input, current });
-          },
-          finish: occurrenceAddMediaPort.finish,
-          submit: occurrenceAddMediaPort.submit,
-        }
-      : mountedEditorOps.occurrenceAddMedia;
+  const onActionResizeStart: TimelineActionResizeStart = editor.onActionResizeStart;
+  const onClipEdgeResizeEnd: TimelineClipEdgeResizeEnd = editor.onClipEdgeResizeEnd;
+  const occurrenceAddMedia = useMemo(() => {
+    if (!occurrenceAddMediaPort) return undefined;
     return {
-      ...mountedEditorOps,
-      // SWAP remains dormant until its own supported consumer is activated.
-      parentClipSwapMedia: editor.parentClipSwapMedia,
-      occurrenceAddMedia,
-      transcriptHost,
-      onDoubleClickAsset,
-      setLightboxAssetKey,
-    };
-  }, [editor.parentClipSwapMedia, getOccurrenceAddMediaCurrent, mountedEditorOps, occurrenceAddMediaPort, transcriptHost, onDoubleClickAsset, setLightboxAssetKey]);
+      capture(input: Parameters<OccurrenceAddMediaCapturePort['capture']>[0]) {
+        const current = getOccurrenceAddMediaCurrent?.() ?? null;
+        if (!current) {
+          throw new Error('Parent timeline data is unavailable for occurrence media add');
+        }
+        return occurrenceAddMediaPort.capture({ ...input, current });
+      },
+      finish: occurrenceAddMediaPort.finish,
+      submit: occurrenceAddMediaPort.submit,
+    } satisfies OccurrenceAddMediaCapturePort;
+  }, [getOccurrenceAddMediaCurrent, occurrenceAddMediaPort]);
+
+  const editorOps = useMemo<TimelineEditorOpsContextValue>(() => ({
+    transcriptHost,
+    setInputModality: editor.setInputModality,
+    setInputModalityFromPointerType: editor.setInputModalityFromPointerType,
+    setInteractionMode: editor.setInteractionMode,
+    setGestureOwner: editor.setGestureOwner,
+    setContextTarget: editor.setContextTarget,
+    setInspectorTarget: editor.setInspectorTarget,
+    isClipSelected: editor.isClipSelected,
+    selectClip: editor.selectClip,
+    selectClips: editor.selectClips,
+    addToSelection: editor.addToSelection,
+    clearSelection: editor.clearSelection,
+    setSelectedTrackId: editor.setSelectedTrackId,
+    setActiveClipTab: editor.setActiveClipTab,
+    setAssetPanelState: editor.setAssetPanelState,
+    setSelectedRightPanelId: editor.setSelectedRightPanelId,
+    setRightPanelLayoutSlot: editor.setRightPanelLayoutSlot,
+    setShowDataLanes: editor.setShowDataLanes,
+    setShowTranscriptLane: editor.setShowTranscriptLane,
+    prepareGenerationAsset: editor.prepareGenerationAsset,
+    registerGenerationAsset: editor.registerGenerationAsset,
+    onCursorDrag: editor.onCursorDrag,
+    onClickTimeArea: editor.onClickTimeArea,
+    onActionResizeStart,
+    onClipEdgeResizeEnd,
+    onOverlayChange: editor.onOverlayChange,
+    onTimelineDragOver: editor.onTimelineDragOver,
+    onTimelineDragLeave: editor.onTimelineDragLeave,
+    onTimelineDrop: editor.onTimelineDrop,
+    handleAssetDrop: editor.handleAssetDrop,
+    handleUpdateClips: editor.handleUpdateClips,
+    handleUpdateClipsDeep: editor.handleUpdateClipsDeep,
+    handleDeleteClips: editor.handleDeleteClips,
+    handleDeleteClip: editor.handleDeleteClip,
+    handleSelectedClipChange: editor.handleSelectedClipChange,
+    handleResetClipPosition: editor.handleResetClipPosition,
+    handleResetClipsPosition: editor.handleResetClipsPosition,
+    handleSplitSelectedClip: editor.handleSplitSelectedClip,
+    handleSplitClipAtTime: editor.handleSplitClipAtTime,
+    handleSplitClipsAtPlayhead: editor.handleSplitClipsAtPlayhead,
+    handleToggleMuteClips: editor.handleToggleMuteClips,
+    handleToggleMute: editor.handleToggleMute,
+    handleDetachAudioClip: editor.handleDetachAudioClip,
+    handleTrackPopoverChange: editor.handleTrackPopoverChange,
+    handleMoveTrack: editor.handleMoveTrack,
+    handleRemoveTrack: editor.handleRemoveTrack,
+    moveSelectedClipToTrack: editor.moveSelectedClipToTrack,
+    moveSelectedClipsToTrack: editor.moveSelectedClipsToTrack,
+    moveClipToRow: editor.moveClipToRow,
+    applyResolvedClipMove: editor.applyResolvedClipMove,
+    createTrackAndMoveClip: editor.createTrackAndMoveClip,
+    uploadFiles: editor.uploadFiles,
+    applyEdit: editor.applyEdit,
+    commands: editor.commands,
+    patchRegistry: editor.patchRegistry,
+    unpatchRegistry: editor.unpatchRegistry,
+    registerAsset: editor.registerAsset,
+    onDoubleClickAsset,
+    setLightboxAssetKey,
+    occurrenceAddMedia,
+  }), [editor, occurrenceAddMedia, transcriptHost, onActionResizeStart, onClipEdgeResizeEnd, onDoubleClickAsset, setLightboxAssetKey]);
 
   useLayoutEffect(() => {
     store.getState().syncOpsSlice(editorOps);
@@ -885,29 +938,6 @@ function VideoEditorProviderInstance({
   extensionOperationalEventSink = dispatchExtensionOperationalEvent,
   children,
 }: VideoEditorProviderProps) {
-  const [imagePlacementHost, setImagePlacementHost] = useState<EditorImagePlacementHost>();
-  const taskQueries = useQueryClient();
-  useRuntimeTaskEvents(imagePlacementHost ? projectId ?? null : null);
-  useEffect(() => {
-    setImagePlacementHost(undefined);
-    if (!projectId) return;
-    const operationHost = new RuntimeOperationHost();
-    let current = true;
-    void bindEditorImagePlacementHost(operationHost, projectId).then((bound) => {
-      if (current) setImagePlacementHost({ ...bound,
-        taskEventsReady: () => readyRuntimeTaskEvents(taskQueries, projectId),
-        subscribe: (notify: () => void) => subscribeRuntimeTaskUpdates(taskQueries, projectId, notify),
-      });
-      else bound.retire?.();
-    }).catch(() => {
-      // Same-origin Runtime qualification is optional; the existing placement
-      // surface remains visibly unavailable when it cannot be established.
-    });
-    return () => {
-      current = false;
-      operationHost.dispose();
-    };
-  }, [projectId, taskQueries]);
   const shotsHost = useAstridShotsHost(projectId, timelineId, dataProvider.shotComposition);
   const effectiveTimelineEditability = useMemo(
     () => withCanonicalShotDraftLock(timelineEditability, Boolean(shotsHost.canonicalDraft)),
@@ -1138,8 +1168,7 @@ function VideoEditorProviderInstance({
     timelineOverlaysEnabled,
     timelineViewStore: assembly.timelineViewStoreRef.current ?? undefined,
     timelineEditability: effectiveTimelineEditability,
-    ...(imagePlacementHost ? { imagePlacementHost } : {}),
-  }), [agentChatHost, assembly.agentSelectionOwner, assembly.shellRootRef, dataProvider, effectiveTimelineEditability, extensionHostEnabled, imagePlacementHost, operationalEmitter, projectId, projectSlug, registerAgentChatTimeline, shotsHost, telemetryHost, timelineId, timelineName, userId, assembly.resolvedExtensionsConfig, assembly.extensionRuntime, assembly.processResultAttachRecords, assembly.processStatuses, assembly.recordProcessResultAttach, assembly.getRecoveryKey, assembly.incrementRecoveryKey, timelineOverlaysEnabled]);
+  }), [agentChatHost, assembly.agentSelectionOwner, assembly.shellRootRef, dataProvider, effectiveTimelineEditability, extensionHostEnabled, operationalEmitter, projectId, projectSlug, registerAgentChatTimeline, shotsHost, telemetryHost, timelineId, timelineName, userId, assembly.resolvedExtensionsConfig, assembly.extensionRuntime, assembly.processResultAttachRecords, assembly.processStatuses, assembly.recordProcessResultAttach, assembly.getRecoveryKey, assembly.incrementRecoveryKey, timelineOverlaysEnabled]);
 
   return (
     <VideoEditorRuntimeProvider value={runtimeValue}>

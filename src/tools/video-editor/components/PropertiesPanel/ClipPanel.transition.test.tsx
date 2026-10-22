@@ -316,7 +316,7 @@ describe('ClipPanel transition controls (T11)', () => {
     expect(within(section).getByText('Remove')).toBeInTheDocument();
   });
 
-  it('refuses Remove without command authority and keeps the legacy callback untouched', () => {
+  it('calls onChange with undefined transition on Remove click', () => {
     const onChange = vi.fn();
     const props = defaultProps({
       onChange,
@@ -329,10 +329,7 @@ describe('ClipPanel transition controls (T11)', () => {
 
     const section = getTransitionSection();
     fireEvent.click(within(section).getByText('Remove'));
-    expect(within(section).getByRole('alert')).toHaveTextContent(
-      'Transition clear requires an active timeline command session.',
-    );
-    expect(onChange).not.toHaveBeenCalled();
+    expect(onChange).toHaveBeenCalledWith({ transition: undefined });
   });
 
   // -- Missing / unresolvable transition --------------------------------------

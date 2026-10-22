@@ -1,6 +1,6 @@
 import { buildTrackClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { buildAssetReferenceMap } from '@/tools/video-editor/lib/asset-registry.ts';
-import { serializeResolvedTimelineEdit } from '@/tools/video-editor/lib/serialize.ts';
+import { serializeForDisk } from '@/tools/video-editor/lib/serialize.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 import {
   assembleTimelineData,
@@ -110,7 +110,6 @@ const buildDataFromSerializedConfig = (
   config: TimelineData['config'],
 ): TimelineData => {
   const resolvedConfig = {
-    ...config,
     output: { ...config.output },
     tracks: config.tracks ?? [],
     clips: config.clips.map((clip) => ({
@@ -207,10 +206,9 @@ export const previewTimelineMutation = (
 
     const nextData = buildDataFromSerializedConfig(
       current,
-      serializeResolvedTimelineEdit(
+      serializeForDisk(
         mutation.resolvedConfig,
         mutation.pinnedShotGroupsOverride ?? current.config.pinnedShotGroups,
-        current.config,
       ),
     );
 

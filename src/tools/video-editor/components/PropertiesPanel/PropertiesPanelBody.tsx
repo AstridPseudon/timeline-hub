@@ -1,4 +1,3 @@
-import { useClipScalarControl, useClipScalarControls } from '@/tools/video-editor/hooks/useClipScalarControl.ts';
 import { TimelineItemSelectionSummary } from './TimelineItemSelectionSummary.tsx';
 import { EMPTY_TIMELINE_DATA_ITEMS } from '@/shared/state/selectionStore.ts';
 import { memo, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
@@ -16,7 +15,6 @@ import {
   useTimelineEditorData,
   useTimelineEditorOps,
   useTimelinePlaybackContext,
-  useTimelineChromeContextSafe,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useShaderEffectRegistrySnapshot } from '@/tools/video-editor/shaders/registry/ShaderEffectRegistryContext.tsx';
 import type { EditorVariantPicker, VariantObservations } from '@/tools/video-editor/runtime/editorHostObservations.ts';
@@ -210,8 +208,6 @@ function PropertiesPanelComponent({
     inspectorTarget,
   } = useTimelineEditorData();
   const { currentTime } = useTimelinePlaybackContext();
-  const elementOverlay = useTimelineChromeContextSafe()?.commandSession?.elementOverlay;
-  const [elementOverlayDeleteError, setElementOverlayDeleteError] = useState<string | null>(null);
   const {
     clearSelection,
     handleUpdateClips,
@@ -233,32 +229,7 @@ function PropertiesPanelComponent({
     setInteractionMode,
     setSelectedTrackId,
     applyEdit,
-    clipTrim,
   } = useTimelineEditorOps();
-  useEffect(() => { setElementOverlayDeleteError(null); }, [selectedClip?.id]);
-  const deleteLiteralOverlay = () => {
-    const clip = selectedClip;
-    const ref = clip?.elementRef;
-    if (!clip || !ref || ref.kind !== 'effect' || ref.packId || clip.clipType !== ref.id) return false;
-    if (!data || !elementOverlay) {
-      throw new Error('Literal overlay deletion is unavailable until the native timeline session is ready.');
-    }
-    const canonical = clip.app && typeof clip.app === 'object' && !Array.isArray(clip.app)
-      ? (clip.app as { canonical?: unknown }).canonical : undefined;
-    let select: string | null = null;
-    if (canonical === undefined) {
-      select = !clip.id.includes('/') && !clip.id.includes('::') ? `parent/clip:${clip.id}` : null;
-    } else if (canonical && typeof canonical === 'object' && !Array.isArray(canonical)) {
-      const clipRef = (canonical as { clipRef?: unknown }).clipRef;
-      select = typeof clipRef === 'string' && /^parent\/clip:[^/]+$/.test(clipRef) && !clipRef.includes('::') ? clipRef : null;
-    }
-    if (!select) throw new Error('Literal overlay deletion is unavailable for occurrence-owned clips.');
-    const captured = elementOverlay.capture({ current: data, operation: { kind: 'delete', select } });
-    const prepared = elementOverlay.finish(captured);
-    elementOverlay.submit(prepared);
-    clearSelection();
-    return true;
-  };
   const shaderSnapshot = useShaderEffectRegistrySnapshot();
   const {
     staleAssetKeys,
@@ -269,13 +240,11 @@ function PropertiesPanelComponent({
     addVariantAsGenerationAfterClip,
     isAddingVariantAsGenerationPending,
   } = hostObservations;
-  const captureScalarEdit = useClipScalarControl(selectedClip?.id);
   // At a desk the panel stays mounted and a new clip is a change it sees. On touch the clip sheet
   // mounts the panel for the clip just tapped, so that clip counts as new and opens on its own tab.
   const prevClipIdRef = useRef(deviceClass === 'desktop' ? selectedClip?.id : undefined);
   const selectedDataItems = selectedDataItemsSnapshot ?? EMPTY_TIMELINE_DATA_ITEMS;
   const selectedClipIdsList = useMemo(() => [...selectedClipIds], [selectedClipIds]);
-  const captureScalarEdits = useClipScalarControls(selectedClipIdsList);
   // dataKind V2: resolve lane items from the SAME patched lane plane the
   // canvas renders — the render-side `useDataLanes` merge — never the
   // store's frozen-empty `dataLanes` default. Fetching goes through the
@@ -520,10 +489,6 @@ function PropertiesPanelComponent({
         ) : selectedClipIds.size > 1 ? (
           <BulkInspector
             effectResources={effectResources}
-            onScalarEditsStart={() => {
-              if (readOnly) throw new Error('Timeline is read-only');
-              return captureScalarEdits();
-            }}
             clips={bulkSelectedClips}
             visibleTabs={bulkVisibleTabs}
             compositionWidth={compositionSize.width}
@@ -558,38 +523,19 @@ function PropertiesPanelComponent({
             setActiveTab={setActiveClipTab}
           />
         ) : (
-          <>
-          {elementOverlayDeleteError && (
-            <div role="status" className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {elementOverlayDeleteError}
-            </div>
-          )}
           <ClipInspector
             readOnly={readOnly}
             effectResources={effectResources}
             VariantPicker={VariantPicker}
             EffectCreator={EffectCreator}
             clip={selectedClip}
-            current={data ?? undefined}
-            clipTrimPort={clipTrim}
             track={selectedTrack}
             deviceClass={deviceClass}
             hasPredecessor={selectedClipHasPredecessor}
             onChange={readOnly ? () => {} : handleSelectedClipChange}
-            onScalarEditStart={() => {
-              if (readOnly) throw new Error('Timeline is read-only');
-              return captureScalarEdit();
-            }}
             onResetPosition={readOnly ? () => {} : handleResetClipPosition}
             onClose={clearSelection}
-            onDelete={!readOnly && selectedClip ? () => {
-              setElementOverlayDeleteError(null);
-              try {
-                if (!deleteLiteralOverlay()) handleDeleteClip(selectedClip.id);
-              } catch (error) {
-                setElementOverlayDeleteError(error instanceof Error ? error.message : String(error));
-              }
-            } : undefined}
+            onDelete={!readOnly && selectedClip ? () => handleDeleteClip(selectedClip.id) : undefined}
             onToggleMute={readOnly ? () => {} : handleToggleMute}
             onDetachAudio={!readOnly && selectedClip ? () => handleDetachAudioClip(selectedClip.id) : undefined}
             onSplitAtPlayhead={() => {
@@ -619,7 +565,6 @@ function PropertiesPanelComponent({
             timelineFps={resolvedConfig?.output.fps}
             currentTime={currentTime}
           />
-          </>
         )}
       </div>
       {!readOnly && !selectedDataItems.length && selectedClipIds.size === 1 && (

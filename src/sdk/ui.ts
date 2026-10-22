@@ -29,6 +29,23 @@ export interface PanelPreviewService {
   showFrame(input: { readonly seconds: number; readonly anchor: PanelFrameAnchor }): DisposeHandle;
 }
 
+/** A clip an extension panel offers to the timeline. */
+export interface PanelClipSpec {
+  readonly clipType: string;
+  readonly from: number;
+  readonly to: number;
+  readonly speed?: number;
+  readonly label?: string;
+  readonly app?: Readonly<Record<string, unknown>>;
+}
+
+/** Props to spread on an element that should drag a clip onto the timeline. */
+export interface PanelClipDragProps {
+  readonly draggable: true;
+  readonly onDragStart: (event: { readonly dataTransfer: DataTransfer | null }) => void;
+  readonly onDragEnd: () => void;
+}
+
 /** Optional video context; a generic panel needs neither playback nor a lane. */
 export interface PanelVideoAdapter {
   readonly view: TimelineViewStore;
@@ -36,12 +53,18 @@ export interface PanelVideoAdapter {
   readonly preview?: PanelPreviewService;
   /** Seek through the host player. The adapter owns validation/projection. */
   seek(seconds: number): void;
+  /** Select these clips in the timeline, replacing the current selection. */
+  select?(clipIds: readonly string[]): void;
+  /** Make an element a drag source for a clip owned by this extension. */
+  dragSource?(spec: PanelClipSpec): PanelClipDragProps | null;
 }
 
 /** Props supplied to a registered trusted React panel renderer. */
 export interface PanelRenderProps {
   /** Host-controlled extension settings surface, when supplied by the dock. */
   readonly settings?: { readonly open: boolean; readonly onOpenChange: (open: boolean) => void };
+  /** Host-owned full-screen mode, present only where the host offers one. */
+  readonly fullscreen?: { readonly active: boolean; readonly enter: () => void; readonly exit: () => void };
   /** Stable for this contribution in this mounted host, distinct between hosts. */
   readonly instanceId: string;
   /** Hidden panels remain mounted; suspend observations while false. */

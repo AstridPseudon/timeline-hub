@@ -17,11 +17,13 @@ export function liveScenePromptContract(scope: LiveSceneScope): string {
   return `<astrid_live_scene_context>${JSON.stringify({
     schema: 'astrid.live-scene-context/v1', scope,
     instructions: [
+      'The live scene is a world: one HTML entry whose window.astridScene declares explore (required: start {position,target}, speed?, bounds?), events ([{name,start,end?}] in world time) and cameras ([{name,start,end,worldStart?}] in source time, non-overlapping, covering the duration). render({sourceTime,width,height,view?,worldTime?}) draws the authored camera for sourceTime, or exactly view at worldTime. Every edit must keep the world explorable and holding up from any viewpoint inside its bounds; never build something for one camera only.',
       'For live scene source/timing use one <astrid_live_scene_request>{JSON}</astrid_live_scene_request> block per final response. Each request uses schema astrid.live-scene-request/v1, a new requestId, this exact scope, and placementIds (1–16 scene clip IDs from the timeline).',
       'Read: action="read", offset>=0 and length=1..8192 (UTF-16 characters). Optional find is a unique exact substring (max 512 characters); offset then means characters before that match. Read bounded excerpts; never request entire multi-megabyte HTML.',
       'Publish: action="publish", capture copied exactly from the read result and replacements=[{before,after}] (1–16 exact, unique, non-overlapping text edits). before must be in a previously read excerpt. All other source bytes and assets are preserved by the rendering pack.',
+      'Edit one layer at a time: camera edits change only the cameras (start, end, worldStart, pose); event edits change the event object the world reads; world edits change construction or the world-time evaluator and show in every camera. Use find with a unique name (for example "const CAMERAS") to read the block you will edit. Full rules: rendering skill references/worlds-authoring.md; template templates/world-template.ts.',
       'Only the host astrid.live-scene-result/v1 with kind published, revision and flushReceipt establishes durable success. Wait for that result before claiming publication. A cancelledWithDurableCommit receipt is still a durable commit.',
-      'Maximum six result continuations per user turn, 32768 UTF-8 bytes per request. Use normal Astrid timeline tools for timing edits. Do not mix Elements edits into live-scene continuations.',
+      'Maximum six result continuations per user turn, 32768 UTF-8 bytes per request. Use normal Astrid timeline tools for clip timing (placement, trim, rate); camera and event timing lives in the world source. Publication keeps the manifest, so it cannot change the duration. Do not mix Elements edits into live-scene continuations.',
     ],
   })}</astrid_live_scene_context>`;
 }

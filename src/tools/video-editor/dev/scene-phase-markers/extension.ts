@@ -676,47 +676,18 @@ export function buildAlignShotsPatch(
   alignments: readonly ShotAlignment[],
   extensionId: string,
 ): TimelinePatch {
-  const seenTargets = new Set<string>();
-  // Decide the move shape from the original alignment batch. If any member
-  // keeps the legacy cross-track form, the complete batch remains legacy so
-  // the guarded compiler can apply it atomically instead of receiving a
-  // mixed native/legacy patch.
-  const nativeMoveBatch = alignments.every((alignment) => {
-    const currentClip = snapshot.clips.find((clip) => clip.id === alignment.clipId);
-    return currentClip?.track === alignment.trackId;
-  });
   const operations: TimelinePatchOperation[] = [];
   alignments.forEach((alignment) => {
-    if (seenTargets.has(alignment.clipId)) {
-      throw new Error(`Scene Phase Markers: ambiguous alignment for clip ${alignment.clipId}.`);
-    }
-    seenTargets.add(alignment.clipId);
-    if (!Number.isFinite(alignment.time) || alignment.time < 0) {
-      throw new Error(`Scene Phase Markers: invalid alignment time for clip ${alignment.clipId}.`);
-    }
-    if (alignment.hold !== undefined && (!Number.isFinite(alignment.hold) || alignment.hold <= 0)) {
-      throw new Error(`Scene Phase Markers: invalid alignment hold for clip ${alignment.clipId}.`);
-    }
-    // A wholly same-track batch can use the ordinary native member's `{ at }`
-    // shape. Cross-track or unresolved intent keeps the legacy `{ track, at }`
-    // shape for every member of the batch.
-    const movePayload = nativeMoveBatch
-      ? { at: alignment.time }
-      : { track: alignment.trackId, at: alignment.time };
     operations.push({
       op: 'clip.move',
       target: alignment.clipId,
-      payload: movePayload,
+      payload: { track: alignment.trackId, at: alignment.time },
     });
     if (alignment.hold !== undefined) {
       operations.push({
         op: 'clip.update',
         target: alignment.clipId,
-        payload: nativeMoveBatch
-          // Exact hold SETs use the generic ordinary capture path, which
-          // preserves an existing transition while resizing the clip.
-          ? { hold: alignment.hold }
-          : { hold: alignment.hold, mode: 'merge' },
+        payload: { hold: alignment.hold, mode: 'merge' },
       });
     }
   });

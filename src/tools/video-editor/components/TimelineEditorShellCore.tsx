@@ -2,7 +2,6 @@ import { useDataLanes } from '@/tools/video-editor/data-kinds/useDataLanes.ts';
 import { useDataKindRegistrySnapshot } from '@/tools/video-editor/data-kinds/DataKindRegistryContext.tsx';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
 import { CommandPalette } from '@/tools/video-editor/components/CommandPalette/CommandPalette.tsx';
 import { Images, Loader2, Maximize2, Sparkles } from 'lucide-react';
 import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
@@ -40,7 +39,7 @@ import {
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { isEditorKeyboardEvent, useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
 import { useTimelineRealtime } from '@/tools/video-editor/hooks/useTimelineRealtime.ts';
-import { parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
+import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
 import { buildKeyboardDeleteMutation } from '@/tools/video-editor/lib/keyboard-delete.ts';
 import { buildKeyboardTimeNudgeMutation } from '@/tools/video-editor/lib/keyboard-nudge.ts';
 import {
@@ -56,8 +55,6 @@ import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineO
 import { ExtensionActivityRegion, type ExtensionStatusEvent } from '@/tools/video-editor/components/ExtensionActivityRegion';
 import { ProposalPanel } from '@/tools/video-editor/components/ProposalPanel/ProposalPanel.tsx';
 import { TimelineEditorShellToolbar, TimelineUndoRedo } from './TimelineEditorShellToolbar.tsx';
-import { TimelineCommandRecovery } from './TimelineCommandRecovery.tsx';
-import { EditorImageGeneration } from './EditorImageGeneration.tsx';
 import { TimelineExportMenu } from './TimelineExportMenu.tsx';
 import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
 import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
@@ -302,7 +299,7 @@ function TimelineEditorShellCoreComponent({
   });
   const conflict = useTimelineRealtime({
     timelineId,
-    conflictExhausted: chrome.isConflictExhausted && chrome.commandSession?.state.status !== 'conflict',
+    conflictExhausted: chrome.isConflictExhausted,
     onKeepLocalChanges: chrome.retrySaveAfterConflict,
     onDiscardRemoteChanges: chrome.reloadFromServer,
   });
@@ -769,7 +766,7 @@ function TimelineEditorShellCoreComponent({
   // A save conflict is a choice between two versions, not an error: neutral, not destructive red.
   // The dialog and this bar offer the same two buttons: the dialog is the one place while it is open, and this bar is
   // the way back to the choice once it was dismissed.
-  const conflictBanner = chrome.isConflictExhausted && chrome.commandSession?.state.status !== 'conflict' && !conflict.isOpen ? (
+  const conflictBanner = chrome.isConflictExhausted && !conflict.isOpen ? (
     <div
       role="alert"
       className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-2 text-sm text-foreground"
@@ -848,8 +845,6 @@ function TimelineEditorShellCoreComponent({
       {incompatibleBanner}
       {watchdogBanner}
       {recoveryBanner}
-      <TimelineCommandRecovery commandSession={chrome.commandSession} />
-      {chrome.commandSession?.imageGeneration && <EditorImageGeneration placement={chrome.commandSession.imageGeneration} />}
       {chrome.loadError && !(recoveryCardShowing && hasLoadedTimeline) ? (
         // The hosted build's "Astrid stopped" / "restarted" card already says what to do about the same failure.
         recoveryCardShowing ? null : <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />
@@ -869,11 +864,11 @@ function TimelineEditorShellCoreComponent({
 
   return (
     <>
-      <div ref={setShellRoot} data-video-editor-instance={runtime.instanceScope?.instanceId ?? ''} data-command-session-ready={chrome.commandSession?.state.status === 'saved' ? 'true' : 'false'} tabIndex={-1} onFocusCapture={activateInstance} onPointerDownCapture={() => {
+      <div ref={setShellRoot} data-video-editor-instance={runtime.instanceScope?.instanceId ?? ''} tabIndex={-1} onFocusCapture={activateInstance} onPointerDownCapture={() => {
         activateInstance();
         if (!outerRef.current?.contains(document.activeElement)) outerRef.current?.focus({ preventScroll: true });
       }} className={cn(
-        'flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-transparent text-foreground',
+        'relative flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-transparent text-foreground',
         // The page draws edge to edge (viewport-fit=cover): keep touch chrome clear of the notch and rounded corners.
         mobileSinglePane && 'pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]',
       )}>

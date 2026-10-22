@@ -25,8 +25,6 @@ import {
 } from './clip-editing/index.ts';
 import type { ClipEditingContext } from './clip-editing/index.ts';
 import type { DeleteClipOptions } from './clip-editing/types.ts';
-import type { GenericPatchCapturePort } from '../commands/genericPatchCapture.ts';
-import type { TimelineEditability } from '../lib/timeline-editability.ts';
 
 export interface UseClipEditingArgs {
   dataRef: MutableRefObject<TimelineData | null>;
@@ -36,8 +34,6 @@ export interface UseClipEditingArgs {
   currentTime: number;
   selectClip: (clipId: string, opts?: SelectClipOptions) => void;
   setSelectedTrackId: Dispatch<SetStateAction<string | null>>;
-  genericPatchPort?: GenericPatchCapturePort;
-  editability?: TimelineEditability;
   applyEdit: TimelineApplyEdit;
 }
 
@@ -74,8 +70,6 @@ export function useClipEditing({
   selectClip,
   setSelectedTrackId,
   applyEdit,
-  genericPatchPort,
-  editability,
 }: UseClipEditingArgs): UseClipEditingResult {
   const currentTimeRef = useRef(currentTime);
 
@@ -301,8 +295,6 @@ export function useClipEditing({
     getValidClipIds,
     selectClip,
     setSelectedTrackId,
-    genericPatchPort,
-    editability,
   };
 
   const clipDeletion = useClipDeletion(clipEditingContext);

@@ -21,7 +21,6 @@ import type {
 import { createExtensionContext } from '@/tools/video-editor/runtime/extensionContextFactory';
 import { validateTimelinePatch } from '@/tools/video-editor/lib/timeline-patch';
 import { createTimelineViewStore } from '@/tools/video-editor/lib/timeline-view-store.ts';
-import { classifyGenericPatch } from '@/tools/video-editor/commands/genericPatchCapture.ts';
 import {
   FOOTER_RENDER_ID,
   MARK_PHASE_COMMAND,
@@ -759,103 +758,6 @@ describe('buildAlignShotsPatch', () => {
       { op: 'clip.move', target: 'clip-b', payload: { track: 'V1', at: 5 } },
     ]);
   });
-
-  it('normalizes same-track move and hold members for the ordinary native port', () => {
-    const snapshot = makeSnapshot({
-      clips: [
-        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
-      ],
-    });
-    const patch = buildAlignShotsPatch(snapshot, [
-      { clipId: 'clip-a', trackId: 'V1', time: 3, hold: 6 },
-    ], SCENE_PHASE_EXTENSION_ID);
-
-    expect(patch.operations).toEqual([
-      { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
-      { op: 'clip.update', target: 'clip-a', payload: { hold: 6 } },
-    ]);
-  });
-
-  it('keeps a batch with cross-track intent on the legacy guarded shape', () => {
-    const snapshot = makeSnapshot({
-      clips: [
-        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
-        { id: 'clip-b', track: 'V1', at: 20, duration: 4 },
-      ],
-    });
-    const patch = buildAlignShotsPatch(snapshot, [
-      { clipId: 'clip-a', trackId: 'A1', time: 3 },
-      { clipId: 'clip-b', trackId: 'V1', time: 9 },
-    ], SCENE_PHASE_EXTENSION_ID);
-
-    expect(patch.operations).toEqual([
-      { op: 'clip.move', target: 'clip-a', payload: { track: 'A1', at: 3 } },
-      { op: 'clip.move', target: 'clip-b', payload: { track: 'V1', at: 9 } },
-    ]);
-  });
-
-  it('keeps cross-track move and hold members wholly on the legacy guarded shape', () => {
-    const snapshot = makeSnapshot({
-      clips: [{ id: 'clip-a', track: 'V1', at: 12, duration: 4 }],
-    });
-    const patch = buildAlignShotsPatch(snapshot, [
-      { clipId: 'clip-a', trackId: 'A1', time: 3, hold: 6 },
-    ], SCENE_PHASE_EXTENSION_ID);
-
-    expect(patch.operations).toEqual([
-      { op: 'clip.move', target: 'clip-a', payload: { track: 'A1', at: 3 } },
-      { op: 'clip.update', target: 'clip-a', payload: { hold: 6, mode: 'merge' } },
-    ]);
-    expect(classifyGenericPatch(patch)).toBe('unsupported');
-  });
-
-  it('classifies a mixed same/cross-track move and hold batch as wholly legacy', () => {
-    const snapshot = makeSnapshot({
-      clips: [
-        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
-        { id: 'clip-b', track: 'V1', at: 20, duration: 4 },
-      ],
-    });
-    const patch = buildAlignShotsPatch(snapshot, [
-      { clipId: 'clip-a', trackId: 'V1', time: 3, hold: 6 },
-      { clipId: 'clip-b', trackId: 'A1', time: 9, hold: 2 },
-    ], SCENE_PHASE_EXTENSION_ID);
-
-    expect(patch.operations).toEqual([
-      { op: 'clip.move', target: 'clip-a', payload: { track: 'V1', at: 3 } },
-      { op: 'clip.update', target: 'clip-a', payload: { hold: 6, mode: 'merge' } },
-      { op: 'clip.move', target: 'clip-b', payload: { track: 'A1', at: 9 } },
-      { op: 'clip.update', target: 'clip-b', payload: { hold: 2, mode: 'merge' } },
-    ]);
-    expect(classifyGenericPatch(patch)).toBe('unsupported');
-  });
-
-  it('emits four native members for a complete same-track two-clip batch', () => {
-    const snapshot = makeSnapshot({
-      clips: [
-        { id: 'clip-a', track: 'V1', at: 12, duration: 4 },
-        { id: 'clip-b', track: 'V1', at: 20, duration: 4 },
-      ],
-    });
-    const patch = buildAlignShotsPatch(snapshot, [
-      { clipId: 'clip-a', trackId: 'V1', time: 3, hold: 6 },
-      { clipId: 'clip-b', trackId: 'V1', time: 9, hold: 2 },
-    ], SCENE_PHASE_EXTENSION_ID);
-
-    expect(patch.operations).toEqual([
-      { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
-      { op: 'clip.update', target: 'clip-a', payload: { hold: 6 } },
-      { op: 'clip.move', target: 'clip-b', payload: { at: 9 } },
-      { op: 'clip.update', target: 'clip-b', payload: { hold: 2 } },
-    ]);
-  });
-
-  it('refuses duplicate target alignments before a patch can be applied', () => {
-    expect(() => buildAlignShotsPatch(makeSnapshot(), [
-      { clipId: 'clip-a', trackId: 'V1', time: 3 },
-      { clipId: 'clip-a', trackId: 'V1', time: 9 },
-    ], SCENE_PHASE_EXTENSION_ID)).toThrow('ambiguous alignment');
-  });
 });
 
 describe('alignShotsToTransitions (unified panel action)', () => {
@@ -927,10 +829,10 @@ describe('alignShotsToTransitions (unified panel action)', () => {
     expect(patch.meta.kind).toBe('scene-phase-markers/align-shots');
     // clip-a -> marker 1 (3s), hold [3→9) = 6s; clip-b -> marker 2 (9s), tail = 2s default.
     expect(patch.operations).toEqual([
-      { op: 'clip.move', target: 'clip-a', payload: { at: 3 } },
-      { op: 'clip.update', target: 'clip-a', payload: { hold: 6 } },
-      { op: 'clip.move', target: 'clip-b', payload: { at: 9 } },
-      { op: 'clip.update', target: 'clip-b', payload: { hold: 2 } },
+      { op: 'clip.move', target: 'clip-a', payload: { track: 'V1', at: 3 } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 6, mode: 'merge' } },
+      { op: 'clip.move', target: 'clip-b', payload: { track: 'V1', at: 9 } },
+      { op: 'clip.update', target: 'clip-b', payload: { hold: 2, mode: 'merge' } },
     ]);
   });
 
@@ -955,9 +857,7 @@ describe('alignShotsToTransitions (unified panel action)', () => {
     const patch = applied[0]!;
     const updates = patch.operations.filter((op) => op.op === 'clip.update');
     // Interval [3→9) = 6s; tail = 5s from the input.
-    expect(updates.map((op) => (
-      (op.payload as { hold: number }).hold
-    ))).toEqual([6, 5]);
+    expect(updates.map((op) => (op.payload as Record<string, unknown>).hold)).toEqual([6, 5]);
   });
 
   it('is a no-op warning when there are no markers', () => {
@@ -1049,39 +949,10 @@ describe('split panel entry points (createShotsFromMarkers / moveExistingShotsTo
     expect(applied[0]!.meta.kind).toBe('scene-phase-markers/align-shots');
     // clip-a -> m1 (0s) hold 5; clip-b -> m2 (5s) hold 3.
     expect(applied[0]!.operations).toEqual([
-      { op: 'clip.move', target: 'clip-a', payload: { at: 0 } },
-      { op: 'clip.update', target: 'clip-a', payload: { hold: 5 } },
-      { op: 'clip.move', target: 'clip-b', payload: { at: 5 } },
-      { op: 'clip.update', target: 'clip-b', payload: { hold: 3 } },
-    ]);
-  });
-
-  it('keeps occurrence-projected visual clips in the ordinary membership', () => {
-    const snapshot = makeSnapshot({
-      tracks: [
-        { id: 'V1', kind: 'visual', label: 'V1' },
-        { id: 'plate', kind: 'visual', label: 'plate' },
-        { id: 'V2', kind: 'visual', label: 'V2' },
-      ],
-      clips: [
-        { id: 'parent-a', track: 'V1', at: 0, duration: 3 },
-        { id: 'parent-b', track: 'V1', at: 15, duration: 3 },
-        { id: 'occurrence:f2-occurrence/clip:f2-plate', track: 'plate', at: 0, duration: 12 },
-        { id: 'occurrence:f2-occurrence/clip:f2-agent-clip', track: 'V2', at: 3, duration: 3 },
-        { id: 'occurrence:f2-occurrence/clip:f2-agent-clear-clip', track: 'V2', at: 6, duration: 3 },
-      ],
-      app: markerApp(),
-    });
-    const { ctx, applied } = makeCtx(snapshot);
-
-    moveExistingShotsToMarkers(ctx, { trackId: 'V1', durationSeconds: 3 });
-
-    expect(applied[0]!.operations.map((operation) => operation.target)).toEqual([
-      'parent-a', 'parent-a',
-      'parent-b', 'parent-b',
-      'occurrence:f2-occurrence/clip:f2-plate', 'occurrence:f2-occurrence/clip:f2-plate',
-      'occurrence:f2-occurrence/clip:f2-agent-clip', 'occurrence:f2-occurrence/clip:f2-agent-clip',
-      'occurrence:f2-occurrence/clip:f2-agent-clear-clip', 'occurrence:f2-occurrence/clip:f2-agent-clear-clip',
+      { op: 'clip.move', target: 'clip-a', payload: { track: 'V1', at: 0 } },
+      { op: 'clip.update', target: 'clip-a', payload: { hold: 5, mode: 'merge' } },
+      { op: 'clip.move', target: 'clip-b', payload: { track: 'V1', at: 5 } },
+      { op: 'clip.update', target: 'clip-b', payload: { hold: 3, mode: 'merge' } },
     ]);
   });
 });
