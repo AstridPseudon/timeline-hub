@@ -1210,7 +1210,12 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
             packhome.mkdir(parents=True, exist_ok=True)
         # QUICK's Runtime door serves the App's test origin on an ephemeral loopback port, never the product
         # origin or the well-known port that a live Runtime on this machine may already hold.
-        door_args = ["--hosted-origin", f"https://{QUICK_HOSTED_HOST}:{_free_port()}", "--door-port", "0"] if tier == "quick" else []
+        door_args: list[str] = []
+        if tier == "quick":
+            # The App build embeds the door's port, so it is chosen now and handed to both sides.
+            door_port = _free_port()
+            env["ASTRID_APP_DIRECT_DOOR_PORT"] = str(door_port)
+            door_args = ["--hosted-origin", f"https://{QUICK_HOSTED_HOST}:{_free_port()}", "--door-port", str(door_port)]
         if tier == "quick" and (root / "data" / "runtime" / "discovery.json").exists():
             # Adoption leaves its own daemon (default hosted origin) running; `up` would reuse it and keep
             # that door, so stop it first and let `up` start the daemon with the App's origin.
