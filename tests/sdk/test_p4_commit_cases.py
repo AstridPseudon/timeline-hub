@@ -1,6 +1,7 @@
 """P4's provenance-backed early cases; execution waits for G2/G3/R2."""
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 from typing import Any
@@ -22,11 +23,58 @@ def _source(data: dict[str, Any], source_id: str) -> dict[str, Any]:
     return next(source for source in data["sources"] if source["id"] == source_id)
 
 
+def _source_function(source: dict[str, Any]) -> ast.FunctionDef:
+    path = ROOT / source["path"]
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    functions = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.AsyncFunctionDef, ast.FunctionDef))
+        and node.name == source["symbol"]
+    ]
+    assert len(functions) == 1, source["symbol"]
+    function = functions[0]
+    assert isinstance(function, ast.FunctionDef), source["symbol"]
+    return function
+
+
+def _assert_single_edit_source(source: dict[str, Any]) -> None:
+    function = _source_function(source)
+    operation = source["edit_operation"]
+    calls = [node for node in ast.walk(function) if isinstance(node, ast.Call)]
+
+    if source["kind"] == "python":
+        edits = [
+            call
+            for call in calls
+            if isinstance(call.func, ast.Attribute) and call.func.attr == operation
+        ]
+    else:
+        edits = [
+            call
+            for call in calls
+            if isinstance(call.func, ast.Name)
+            and call.func.id == "run"
+            and call.args
+            and isinstance(call.args[0], ast.Constant)
+            and call.args[0].value == "edit"
+            and any(
+                isinstance(argument, ast.Constant) and argument.value == "--on"
+                for argument in call.args
+            )
+        ]
+
+    assert len(edits) == 1, source["symbol"]
+
+
 def test_p4_sources_are_real_and_parseable() -> None:
     data = _load()
     for source in data["sources"]:
         path = ROOT / source["path"]
         assert path.is_file(), source["path"]
+
+    for source_id in ("cli", "python"):
+        _assert_single_edit_source(_source(data, source_id))
 
     sheet = parse_sheet((ROOT / _source(data, "sheet")["path"]).read_text(encoding="utf-8"))
     assert sheet["version"] == "0ca00d3ed76f"

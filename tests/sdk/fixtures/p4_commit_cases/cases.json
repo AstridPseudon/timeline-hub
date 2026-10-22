@@ -17,19 +17,20 @@
     {
       "id": "cli",
       "kind": "cli",
-      "path": "tests/packs/timeline/test_cli_native_sheet.py",
-      "symbol": "test_export_preview_apply_and_undo",
+      "path": "tests/packs/timeline/test_cli_commit_move.py",
+      "symbol": "test_ordinary_edit_literal_move_uses_native_outbox",
+      "edit_operation": "move",
       "commands": [
-        "timelines show t --as sheet --native",
-        "timelines apply t edited.sheet --native --json"
+        "timelines edit t --clip a --on 5 --json"
       ]
     },
     {
       "id": "python",
       "kind": "python",
       "path": "tests/sdk/test_timeline_sync.py",
-      "symbol": "initial_bundle",
-      "api": "astrid.sdk.timeline.sync.TimelineSession"
+      "symbol": "test_failed_ack_write_recovers_the_original_flight",
+      "edit_operation": "move",
+      "api": "astrid.sdk.timeline.sync.TimelineSession.move"
     },
     {
       "id": "document",
