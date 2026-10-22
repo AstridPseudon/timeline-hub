@@ -1,14 +1,15 @@
-<!-- main | 2026-10-22T23:39:49Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 3m -->
-# runtime board, 2026-10-22T23:34Z
+<!-- main | 2026-10-22T23:40:58Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-22T23:40Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 | commit-v2 contract | Sol author / Luna review | — | merged | rt-C0-contract; rt-C0-review | PASS: 34 targeted tests + JSON/digests/copy equality on tree identical to integrated 0d4c71a3c; C0 APPROVED | 0d4c71a3c |
 | C0b | per-step reads/provider effects | Sol author / Luna review | C0b APPROVED in header | merged | rt-C0b-undo-contract; rt-C0b-review-v2 | Independent Luna PASS: 34 tests + fixtures/digests + copy equality + whitespace; approved, integrated tree identical | 992136137 |
 | C0c | unambiguous closure-root addresses | Sol | orchestrator requested addressing principle | blocked:orchestrator | rt-C0c-addressing-resume; rt-C0c-review-resume | Independent Luna PASS: embedded model checks + 34 targeted tests + copy equality/whitespace; Astra approval pending | 77fc93fa6 |
 | U1 | real upstream merge, schema v32 | Luna → Sol repair / Luna review | — | merged | rt-U1-sol-repair; rt-U1-sol-review; rt-U1-live-tip-review | Independent Luna PASS: 244 targeted + 73 exact-tree service tests, generators/build/static no-new-diagnostic proof; live-tip/ancestry PASS at 23:31:53Z (4563bb5ff); merged 27f0306b9, integrated proof PASS runtime-targeted-1022233331-22415: 317 passed, 8 configured exclusions; integrated tree 8d70d0d9 matches snapshot | 27f0306b9 |
-| R2r | label/steps/patches, attribution/history | Luna | C0 approved, U1 merged | doing | rt-R2r-history | Active on integrated U1 27f0306b9: provider metadata/history preservation implementation; review/proof pending | 27f0306b9 base |
+| R2r | label/steps/patches, attribution/history | Luna | C0 approved, U1 merged | blocked:orchestrator | rt-R2r-history | STOPPED 23:40:10Z: auto-review rejected rm -f at 23:38:13Z; WIP preserved, no review/merge/proof credit | 7f8a9a67a WIP, unmerged |
 | P5 | original gates 2–4 acceptance | Luna | R1, R2 merged for implementation | todo | rt-P5-cases; rt-P5-cases-review-v2 | Collection review PASS; case map retained. No implementation/proof credit | — |
 | R5 | directly reject old save routes | Luna | A3, G4 merged per header | todo | — | — | — |
 Blockers: orchestrator — C0c READY FOR ASTRA REVIEW; independent Luna PASS; approval still required before C0c/R2 merge. C0b is approved and merged.
 Blockers: orchestrator — CLEANUP SAFETY REFUSAL remains in force: automatic review rejected abandoned v1 deletion at 22:37:44Z ("rm -f style commands are not permitted"). No retry or alternate deletion route. Disk 9.6 GB at 23:35Z versus 15 GB target; escalations/runtime-20261022T2238Z-cleanup-safety-refusal.md. Cleanup audit PASS only for seven obsolete v1 suite rows removed; no artifact deletions.
-Next ready: merge C0c immediately after header approval; R2r review on author completion; P5 after R1/R2 merge; R5 after A3/G4 header confirmation.
+Blockers: orchestrator/safety — NEW R2r automatic command rejection (23:38:13Z): rm -f /tmp/r2r-generate.log rejected as "rm -f style commands are not permitted". Worker stop confirmed 23:40:10Z; WIP 7f8a9a67a preserved; runtime round halted, no alternate cleanup or re-dispatch. See escalations/runtime-20261022T2340Z-R2r-safety-refusal.md.
+Next ready: halted for safety disposition; preserve stopped R2r WIP. After disposition: C0c merge only on header approval, R2r recovery/review, P5 after R1/R2 merge, R5 after A3/G4 header confirmation.
