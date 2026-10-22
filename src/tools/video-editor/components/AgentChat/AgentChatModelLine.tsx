@@ -21,7 +21,7 @@ interface AgentChatModelLineProps {
   /** Why the thinking level can't change right now, such as a reply in progress. */
   thinkingLockedReason?: string | null;
   onChangeThinkingLevel: (value: string) => Promise<unknown>;
-  /** Opens New chat on this agent's models: a chat keeps its model, so another model means another chat. */
+  /** Opens the new-chat menu on this agent's models: a chat keeps its model, so another model means another chat. */
   onChooseAnotherModel: () => void;
   onOpenChange?: (open: boolean) => void;
 }
@@ -101,7 +101,7 @@ export function AgentChatModelLine({ agent, modelName, thoughtLevel = null, thou
                 onSelect={() => {
                   handingOff.current = true;
                   changeOpen(false);
-                  // After this popover lets go of focus, so the chat menu keeps it.
+                  // After this popover lets go of focus, so the new-chat menu keeps it.
                   requestAnimationFrame(() => { handingOff.current = false; onChooseAnotherModel(); });
                 }}>
                 <span>New chat with another model</span>

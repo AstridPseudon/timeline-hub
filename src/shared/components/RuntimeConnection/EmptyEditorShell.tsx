@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
   Activity, ChevronDown, ChevronsUpDown, Download, GripHorizontal, History, Lock, Maximize2, Mic, PanelsTopLeft, Play,
-  PlusCircle, Redo2, Send, Settings, SkipBack, Sparkles, Star, Undo2, Video, Volume2, Wrench, ZoomIn, ZoomOut,
+  Plus, PlusCircle, Redo2, Send, Settings, SkipBack, Sparkles, Star, Undo2, Video, Volume2, Wrench, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import { AppSkyBackground } from '@/shared/components/TimeOfDay/TimeOfDayControl';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -176,9 +176,12 @@ function ChatPane() {
         </div>
       </section>
       <div className="flex min-h-0 flex-1 flex-col border-t-2 border-sidebar-border bg-background/60">
-        <div className="flex flex-col items-start border-b border-border/70 px-3 py-1.5">
-          <span className="-ml-1.5 flex h-6 items-center gap-1 px-1.5 text-sm font-medium text-foreground">New chat<ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /></span>
-          <span className="-ml-1.5 flex h-4 items-center gap-1 px-1.5 text-[11px] text-muted-foreground"><Sparkles className="h-3 w-3" />Astrid</span>
+        <div className="flex items-center justify-between gap-2 border-b border-border/70 px-3 py-1.5">
+          <div className="flex flex-col items-start">
+            <span className="-ml-1.5 flex h-6 items-center gap-1 px-1.5 text-sm font-medium text-foreground">New chat<ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /></span>
+            <span className="-ml-1.5 flex h-4 items-center gap-1 px-1.5 text-[11px] text-muted-foreground"><Sparkles className="h-3 w-3" />Astrid</span>
+          </div>
+          <span className="flex items-center text-muted-foreground"><Icon><Plus className="h-3.5 w-3.5" /></Icon><ChevronDown className="-ml-1 h-3.5 w-3.5" /></span>
         </div>
         <div className="flex-1" />
         <div className="h-[209px] shrink-0 border-t border-border/70 p-3">

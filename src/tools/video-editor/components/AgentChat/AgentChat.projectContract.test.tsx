@@ -192,7 +192,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     const view = mount();
     const selector = await screen.findByRole('button', { name: /^Chat: / });
     await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     if (choice === 'main') {
       fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
     } else {
@@ -448,7 +448,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
     const ensure = fixture.calls.find(c => c.route.endsWith('/sessions'))!;
     expect(ensure).toMatchObject({ route: '/acp/projects/p1/chat/sessions', body: { mode: 'ensure', connection_id: 'connection-1' } });
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
     await waitFor(() => expect(fixture.calls.filter(c => c.route.endsWith('/sessions'))).toHaveLength(2));
     await waitFor(() => expect(fixture.calls.some(c => c.body.params?.sessionId === fixture.chat('p1').selected_session_id)).toBe(true));
@@ -619,7 +619,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     });
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Draft for the new conversation' } });
     await waitFor(() => expect(delayed).toBe(true));
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
     await waitFor(() => expect(fixture.chat('p1').selected_session_id).not.toBe('session-p1'));
     const newId = fixture.chat('p1').selected_session_id;
@@ -642,7 +642,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     mount();
     await send('Old session operation');
     await waitFor(() => expect(fixture.calls.some(c => c.route.endsWith('/prompt'))).toBe(true));
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
     await waitFor(() => expect(fixture.chat('p1').selected_session_id).not.toBe('session-p1'));
     const newId = fixture.chat('p1').selected_session_id;

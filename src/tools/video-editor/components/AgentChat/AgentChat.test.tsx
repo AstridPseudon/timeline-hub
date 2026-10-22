@@ -377,7 +377,7 @@ describe('AgentChat', () => {
     const identity = await screen.findByTestId('agent-chat-identity');
     expect(identity).toHaveTextContent('Astrid · GPT 5');
     expect(screen.getByRole('button', { name: 'Astrid · GPT 5: model and thinking level' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     fireEvent.click(await screen.findByRole('button', { name: `Choose a ${name} model` }));
     expect(state.createSession.mutateAsync).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByRole('option', { name: /Exact model/ }));
@@ -420,7 +420,7 @@ describe('AgentChat', () => {
     mocks.useLocalAgents.mockReturnValue({ data: { defaultAgent: 'codex', agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'sol', name: 'Sol', thoughtLevel: { configId: 'reasoning_effort', name: 'Effort', currentValue: 'low', recommendedValue: 'high', options: [{ value: 'low', name: 'Low' }, { value: 'high', name: 'High' }] } }], defaultModel: 'sol' }] }, refetch: vi.fn() });
     renderAgentChat();
     await screen.findByTestId('agent-chat-identity');
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Codex model' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Choose a thinking level for Sol' }));
     fireEvent.click(screen.getByRole('option', { name: 'Low' }));
@@ -455,7 +455,7 @@ describe('AgentChat', () => {
     const input = await getInput();
     fireEvent.change(input, { target: { value: 'Retain this draft' } });
     expect(screen.getByText('Previous chat transcript')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Choose a Codex model' }));
     fireEvent.click(await screen.findByRole('option', { name: /^Sol/ }));
     await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalled());
@@ -507,7 +507,7 @@ describe('AgentChat', () => {
     });
     renderAgentChat();
     expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent('Astrid · GPT 5');
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
     await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledWith({ operationId: expect.any(String), agent: 'codex' }));
   });
@@ -522,7 +522,7 @@ describe('AgentChat', () => {
     }));
 
     renderAgentChat();
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Choose a Codex model' }));
     fireEvent.click(await screen.findByRole('option', { name: /Exact model/ }));
     const alert = await screen.findByRole('alert');
@@ -1202,15 +1202,16 @@ describe('AgentChat', () => {
       expect(panel.getByRole('option', { name: /High/ })).toHaveAttribute('aria-disabled', 'true');
     });
 
-    it('opens the chat menu on the chat\'s agent models from "New chat with another model"', async () => {
+    it('opens the new-chat menu on the chat\'s agent models from "New chat with another model"', async () => {
       mockFromState(createState());
       renderAgentChat();
       fireEvent.click(await screen.findByTestId('agent-chat-identity'));
       fireEvent.click(within(await panelOf()).getByRole('option', { name: 'New chat with another model' }));
       expect(await screen.findByPlaceholderText('Search Astrid models…')).toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'New chat' })).toBeInTheDocument();
     });
 
-    it('reports the header overlay open while the chat menu or the model line is open', async () => {
+    it('reports the header overlay open while the chat menu, the model line or the new-chat picker is open', async () => {
       mockFromState(createState());
       const onSelectorOpenChange = vi.fn();
       render(<AgentChatPanel onSessionSelectorOpenChange={onSelectorOpenChange} />);
@@ -1223,6 +1224,18 @@ describe('AgentChat', () => {
       expect(onSelectorOpenChange).toHaveBeenLastCalledWith(true);
       await user.keyboard('{Escape}');
       await waitFor(() => expect(onSelectorOpenChange).toHaveBeenLastCalledWith(false));
+      fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
+      expect(onSelectorOpenChange).toHaveBeenLastCalledWith(true);
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(onSelectorOpenChange).toHaveBeenLastCalledWith(false));
+    });
+
+    it('starts a new chat with the open chat\'s agent from the + button', async () => {
+      const state = createState();
+      mockFromState(state);
+      renderAgentChat();
+      fireEvent.click(await screen.findByRole('button', { name: /^New chat · Astrid/ }));
+      await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ agent: 'astrid' })));
     });
   });
 });
@@ -1321,7 +1334,7 @@ describe('project draft consumer ownership', () => {
     const composer = screen.getByRole('textbox');
     fireEvent.change(composer, { target: { value: 'Keep my unsent draft' } });
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1'));
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     if (choice === 'plain') fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
     else {
       fireEvent.click(await screen.findByRole('button', { name: 'Choose a Codex model' }));
@@ -1371,7 +1384,7 @@ describe('project draft consumer ownership', () => {
     state.createSession.mutateAsync.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
     const view = renderAgentChat();
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1'));
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
     state.projectId = 'project-2';
     rerenderAgentChat(view.rerender);
@@ -1393,7 +1406,7 @@ describe('project draft consumer ownership', () => {
     const composer = screen.getByRole('textbox');
     fireEvent.change(composer, { target: { value: 'Still my draft' } });
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1'));
-    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
     await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledOnce());
     expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1');
