@@ -2,19 +2,16 @@
  * Shared support for the direct journey (Plan A): the Chromium resolution, the worker-scoped fixtures, and the App
  * helpers that drive the hosted page. Moved out of direct-journey.spec.ts without changes (card F2-A).
  */
-import { chromium, expect, test as base, type Browser, type Page, type Request } from '@playwright/test';
+import { chromium, expect, test as base, type Browser, type Page } from '@playwright/test';
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
-import type { TimelineConfig } from '../../../../src/tools/video-editor/types/index.ts';
-import type { TimelineDraftRecord } from '../../../../src/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { OutboxRecord } from '../../../../src/tools/video-editor/commands/commitOutbox.ts';
 
 export const UI = {
   status: '[data-testid="runtime-connection-status"]',
   panel: '[data-testid="runtime-not-connected"]',
-  copySetup: 'Copy setup steps for your agent',
-  copySteps: 'Copy steps for your agent',
+  copy: 'Copy',
   connect: 'Connect',
   reload: 'Reload',
 };
@@ -24,9 +21,9 @@ export const APP_ENTRY_ROUTE = '/tools/video-editor';
 
 function resolveChromium(): string | undefined {
   if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE) return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
-  if (existsSync(chromium.executablePath())) return chromium.executablePath();
+  if (existsSync(chromium.executablePath())) return undefined;
   // The installed Playwright may expect a newer browser build than the one in the image; use what is there.
-  const browsers = process.env.PLAYWRIGHT_BROWSERS_PATH ?? '/opt/pw-browsers';
+  const browsers = process.env.PLAYWRIGHT_BROWSERS_PATH ?? '';
   const found = existsSync(browsers) ? readdirSync(browsers).filter((name) => /^chromium-\d+$/.test(name)).sort().pop() : undefined;
   const candidate = found ? path.join(browsers, found, 'chrome-linux', 'chrome') : undefined;
   return candidate && existsSync(candidate) ? candidate : undefined;
@@ -83,74 +80,11 @@ export async function openSeededTimeline(page: Page, harness: DirectHarness) {
   await expect(firstTrackName(page)).toBeVisible();
 }
 
-/** Opens the production embedded canonical ShotEditorView from the parent editor's shot-group label. */
-export async function openEmbeddedCanonicalShot(page: Page, occurrenceId: string, shotName: string) {
-  const label = page.locator('[data-shot-group-key]').filter({ hasText: shotName }).first();
-  await expect(label).toBeVisible();
-  await label.dblclick();
-  const dialog = page.getByRole('dialog');
-  await expect(dialog.locator(`[data-canonical-occurrence-id="${occurrenceId}"]`)).toBeVisible();
-  return dialog;
-}
-
-/** The visible native header input inside an embedded ShotEditorView.
- * The mounted timeline also contains track labels and combobox inputs, so the
- * production desktop header width identifies the shot-name field precisely.
- */
-export const embeddedShotNameInput = (dialog: import('@playwright/test').Locator) => (
-  dialog.locator('input[class*="w-[200px]"]:visible').first()
-);
-
 export async function editFirstTrackName(page: Page, name: string) {
   const field = firstTrackName(page);
   await field.fill(name);
   await field.press('Enter');
   await field.blur();
-}
-
-/** Hold command delivery before the Runtime sees it; persisted request identity remains product-owned. */
-export async function holdCommandRequests(page: Page) {
-  const commits = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
-  const requests: Request[] = [];
-  let release!: (send: boolean) => void;
-  const gate = new Promise<boolean>((resolve) => { release = resolve; });
-  const intercept = async (route: import('@playwright/test').Route) => {
-    if (route.request().method() !== 'POST') return route.fallback();
-    requests.push(route.request());
-    const send = await gate;
-    // Reload may have already cancelled the held browser request.
-    await (send ? route.continue() : route.abort('connectionreset')).catch(() => {});
-  };
-  await page.route(commits, intercept);
-  return {
-    requests,
-    async release(send = false) {
-      await page.unroute(commits, intercept);
-      release(send);
-    },
-  };
-}
-
-/** Hold the native timeline create long enough to inspect its reserved bootstrap owner. */
-export async function holdTimelineCreation(page: Page) {
-  const creates = /\/v1\/projects\/[^/]+\/timelines$/;
-  const requests: Request[] = [];
-  let release!: (send: boolean) => void;
-  const gate = new Promise<boolean>((resolve) => { release = resolve; });
-  const intercept = async (route: import('@playwright/test').Route) => {
-    if (route.request().method() !== 'POST') return route.fallback();
-    requests.push(route.request());
-    const send = await gate;
-    await (send ? route.continue() : route.abort('connectionreset')).catch(() => {});
-  };
-  await page.route(creates, intercept);
-  return {
-    requests,
-    async release(send = false) {
-      await page.unroute(creates, intercept);
-      release(send);
-    },
-  };
 }
 
 /**
@@ -162,10 +96,6 @@ export async function holdTimelineSaves(page: Page) {
   const saves = /\/timelines\/[^/]+\/composition-revisions$/;
   await page.route(saves, (route) => (route.request().method() === 'POST' ? new Promise<void>(() => {}) : route.fallback()));
   return () => page.unroute(saves);
-}
-
-export async function revisionBody(harness: DirectHarness, revisionId: string) {
-  return (await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions/${revisionId}`)).body;
 }
 
 /** Read the real browser outbox without creating, claiming or modifying an owner. */
@@ -189,6 +119,7 @@ export async function commandOutboxes(page: Page, timelineId: string): Promise<O
   return JSON.parse(encoded) as OutboxRecord[];
 }
 
+
 /** Actual pointerdown/move/drop: scale comes from the two rendered parent clips. */
 export async function dragTimelineClip(page: Page, clipId: string, referenceId: string, from: number, to: number, referenceAt: number, beforeDrop?: () => void | Promise<void>) {
   const clip = page.locator(`.clip-action[data-clip-id="${clipId}"]`).first();
@@ -209,65 +140,7 @@ export async function dragTimelineClip(page: Page, clipId: string, referenceId: 
   await page.mouse.up();
 }
 
-/** Dispatch the mounted timeline's real external-file drop with a browser File. */
-export async function dropFileOnTimeline(
-  page: Page,
-  file: { name: string; type: string; bytesBase64: string },
-  clipId: string,
-  referenceId: string,
-  from: number,
-  referenceAt: number,
-  time: number,
-) {
-  const clip = page.locator(`.clip-action[data-clip-id="${clipId}"]`).first();
-  const reference = page.locator(`.clip-action[data-clip-id="${referenceId}"]`).first();
-  const wrapper = page.locator('.timeline-wrapper').first();
-  await expect(clip).toBeVisible();
-  await expect(reference).toBeVisible();
-  const box = await clip.boundingBox();
-  const other = await reference.boundingBox();
-  const wrapperBox = await wrapper.boundingBox();
-  if (!box || !other || !wrapperBox || referenceAt === from) throw new Error('Cannot measure timeline file-drop scale');
-  const pixelsPerSecond = (other.x - box.x) / (referenceAt - from);
-  const clientX = box.x + (time - from) * pixelsPerSecond;
-  const clientY = box.y + box.height / 2;
-  if (clientX < wrapperBox.x || clientX > wrapperBox.x + wrapperBox.width) {
-    throw new Error(`Timeline file drop at ${time}s is outside the mounted timeline viewport`);
-  }
 
-  await page.evaluate(({ name, type, bytesBase64, clientX: x, clientY: y }) => {
-    const target = document.querySelector<HTMLElement>('.timeline-wrapper');
-    if (!target) throw new Error('Mounted timeline wrapper is missing');
-    const binary = atob(bytesBase64);
-    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
-    const transfer = new DataTransfer();
-    transfer.items.add(new File([bytes], name, { type }));
-    const event = (eventType: 'dragover' | 'drop') => target.dispatchEvent(new DragEvent(eventType, {
-      bubbles: true,
-      cancelable: true,
-      clientX: x,
-      clientY: y,
-      dataTransfer: transfer,
-    }));
-    event('dragover');
-    event('drop');
-  }, { ...file, clientX, clientY });
-}
-
-/** Read the legacy one-slot draft without creating or modifying recovery state. */
-export async function timelineDraft(page: Page, timelineId: string): Promise<(TimelineDraftRecord & { draft: { config?: TimelineConfig } }) | null> {
-  return page.evaluate(async (id) => {
-    if (!(await indexedDB.databases()).some((db) => db.name === 'astrid.timeline-drafts')) return null;
-    return new Promise<(TimelineDraftRecord & { draft: { config?: TimelineConfig } }) | null>((resolve, reject) => {
-      const opening = indexedDB.open('astrid.timeline-drafts');
-      opening.onerror = () => reject(opening.error);
-      opening.onsuccess = () => {
-        const db = opening.result;
-        const tx = db.transaction('timeline-drafts', 'readonly');
-        const read = tx.objectStore('timeline-drafts').get(id);
-        tx.oncomplete = () => { db.close(); resolve(read.result ?? null); };
-        tx.onabort = () => { db.close(); reject(tx.error); };
-      };
-    });
-  }, timelineId);
+export async function revisionBody(harness: DirectHarness, revisionId: string) {
+  return (await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${harness.seed.timelineId}/composition-revisions/${revisionId}`)).body;
 }
