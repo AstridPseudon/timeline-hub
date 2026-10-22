@@ -5,8 +5,8 @@ import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
 import { useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared/state/editorTourStore';
 import { TourCard } from '../card/TourCard';
 import { TourSpotlight } from './TourSpotlight';
-import { placeCard } from './cardPlacement';
 import { backEditorTour, finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
+import { useSettledCardPosition, useSettledRects } from './useSettledCardPosition';
 import { useSpotlightRects } from './useSpotlightRects';
 import { useTourKeys } from './useTourKeys';
 
@@ -60,29 +60,45 @@ function RunningTour() {
   const act = useEditorTour((s) => s.act);
   const beat = useEditorTour((s) => s.beat);
   const reducedMotion = useEditorTour((s) => s.reducedMotion);
-  const rects = useSpotlightRects(editorTourTargets(act, beat));
+  const runId = useEditorTour((s) => s.runId);
+  const beatKey = `${runId}:${act}:${beat}`;
+  const liveRects = useSpotlightRects(editorTourTargets(act, beat));
+  const rects = useSettledRects(beatKey, liveRects);
   // The Send button is the one thing outside the card the user may press.
   const sendRects = useSpotlightRects(beat === 'compose' ? [editorTourSelector(EDITOR_TOUR_ANCHORS.chatSend)] : []);
   const cardRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 360, height: 160 });
 
+  // Each beat swaps the card's content and size. Read the new size before paint so the first aim uses it.
   useLayoutEffect(() => {
     const card = cardRef.current;
     if (!card) return;
-    const observer = new ResizeObserver(() => setSize({ width: card.offsetWidth, height: card.offsetHeight }));
+    setSize((previous) => (previous.width === card.offsetWidth && previous.height === card.offsetHeight ? previous : { width: card.offsetWidth, height: card.offsetHeight }));
+  }, [beatKey]);
+
+  // Later size changes within a beat (content loading in).
+  useLayoutEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    const observer = new ResizeObserver(() => setSize((previous) => (previous.width === card.offsetWidth && previous.height === card.offsetHeight ? previous : { width: card.offsetWidth, height: card.offsetHeight })));
     observer.observe(card);
     return () => observer.disconnect();
   }, []);
 
-  const position = placeCard(rects, size, { width: window.innerWidth, height: window.innerHeight });
+  const { value: position, animate } = useSettledCardPosition(beatKey, liveRects, size);
   return (
     <>
       <TourSpotlight rects={rects} clickable={sendRects[0] ?? null} reducedMotion={reducedMotion} />
       <div
         ref={cardRef}
         data-editor-tour-card-host
-        className="fixed"
-        style={{ zIndex: UI_Z_LAYERS.EDITOR_TOUR_CARD, left: position.left, top: position.top, transition: reducedMotion ? 'none' : 'left 420ms cubic-bezier(0.22, 1, 0.36, 1), top 420ms cubic-bezier(0.22, 1, 0.36, 1)' }}
+        className="fixed left-0 top-0"
+        style={{
+          zIndex: UI_Z_LAYERS.EDITOR_TOUR_CARD,
+          transform: `translate3d(${position.left}px, ${position.top}px, 0)`,
+          willChange: 'transform',
+          transition: reducedMotion || !animate ? 'none' : 'transform 450ms cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
       >
         <TourCard onPrimary={runEditorTourPrimary} onBack={backEditorTour} onSkip={finishEditorTour} />
       </div>
