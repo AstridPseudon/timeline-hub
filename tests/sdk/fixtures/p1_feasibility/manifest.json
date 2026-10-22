@@ -94,7 +94,7 @@
       "fixture": "canonical_clip_trim.json",
       "source": "tests/editing_conformance/fixtures/recipe_m2_clip_trim.json",
       "source_sha256": "60fcc84d769a2a68b5330288e842ca286f3907510a5dd18bc240c6e314ee612c",
-      "provenance": "tests/editing_conformance/test_recipe_m1_commands.py::test_changed_map_source_owner_and_query_order_refuse",
+      "provenance": "tests/editing_conformance/test_recipe_m2_clip_trim.py::test_replay_consumed_source_identity_bounds_and_selection_but_preserves_disjoint_data",
       "document": "input",
       "edit": "commands[0]",
       "conflict": {

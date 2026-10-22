@@ -7,6 +7,7 @@ this branch, so its H3 execution remains pending rather than being simulated.
 """
 from __future__ import annotations
 
+import ast
 import copy
 import hashlib
 import json
@@ -56,6 +57,38 @@ def _canonical_bundle(case_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
     return bundle, fixture
 
 
+def _qualified_python_nodes(path: Path) -> set[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    nodes: set[str] = set()
+
+    def visit(body: list[ast.stmt], prefix: tuple[str, ...] = ()) -> None:
+        for node in body:
+            if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                qualified = (*prefix, node.name)
+                nodes.add("::".join(qualified))
+                if isinstance(node, ast.ClassDef):
+                    visit(node.body, qualified)
+
+    visit(tree.body)
+    return nodes
+
+
+def _provenance_references(provenance: str) -> list[tuple[Path, str | None]]:
+    references: list[tuple[Path, str | None]] = []
+    for raw_reference in provenance.split(";"):
+        reference = raw_reference.strip()
+        path_text, separator, node = reference.partition("::")
+        references.append((ROOT / path_text, node if separator else None))
+    return references
+
+
+def _source_family_markers(source: str) -> tuple[str, ...]:
+    stem = Path(source).stem
+    if stem.startswith("recipe_m2_scalar_"):
+        return "recipe_m2_scalar_", stem.removeprefix("recipe_m2_scalar_")
+    return (stem,)
+
+
 def test_manifest_is_complete_and_snapshots_are_provenanced() -> None:
     assert MANIFEST["status"] == "collection-only; doc.patch execution pending"
     assert len(CASES) == 11
@@ -72,6 +105,25 @@ def test_manifest_is_complete_and_snapshots_are_provenanced() -> None:
         assert case["provenance"]
         assert case["tags"]
         assert case["expected"]["effect"]
+
+        provenance_files = _provenance_references(case["provenance"])
+        for provenance_path, node in provenance_files:
+            assert provenance_path.is_file(), (case["id"], provenance_path)
+            if node is not None:
+                assert provenance_path.suffix == ".py", (case["id"], provenance_path)
+                test_node = node.rsplit("::", 1)[-1].split("[", 1)[0]
+                qualified_nodes = _qualified_python_nodes(provenance_path)
+                qualified_node = "::".join((*node.split("::")[:-1], test_node))
+                assert qualified_node in qualified_nodes, (case["id"], qualified_node)
+
+        if case["source"].startswith("tests/editing_conformance/fixtures/"):
+            markers = _source_family_markers(case["source"])
+            referenced_text = "\n".join(
+                path.read_text(encoding="utf-8")
+                for path, _ in provenance_files
+                if path.suffix == ".py"
+            )
+            assert all(marker in referenced_text for marker in markers), case["id"]
 
 
 @pytest.mark.parametrize(
