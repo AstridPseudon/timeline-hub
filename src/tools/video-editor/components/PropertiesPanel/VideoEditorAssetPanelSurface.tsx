@@ -50,6 +50,9 @@ function VideoEditorAssetPanelSurfaceComponent({
   const surfaceRef = useRef<HTMLDivElement>(null);
   const latestRuntime = useRef(runtime);
   latestRuntime.current = runtime;
+  const { setAssetPanelState, uploadFiles, transcriptHost } = useTimelineEditorOps();
+  // The panel asks the project for transcripts once per adapter. A rebuilt host starts empty, so a
+  // new host gets a new adapter and the panel asks it again.
   const panelVideo = useMemo(() => {
     const base = video ?? (store && view ? {
       view,
@@ -63,7 +66,7 @@ function VideoEditorAssetPanelSurfaceComponent({
       playedShotComposition(latestRuntime.current?.userId, latestRuntime.current?.shots),
       store.getState().data.data?.resolvedConfig,
     )) : base;
-  }, [video, store, view, framePreview.preview]);
+  }, [video, store, view, framePreview.preview, transcriptHost]);
   const clipTypeRegistry = useOptionalClipTypeRegistryContext()?.registry;
   // Each extension's panels get a drag source bound to that extension: it can only offer clip types
   // the extension owns, and only where the editor has a timeline to drop on.
@@ -87,7 +90,6 @@ function VideoEditorAssetPanelSurfaceComponent({
       extensionId: panel.extensionId ?? findContributionOwnerId(contributionIndex, 'panel', panel.id),
     }))
     .filter((key) => activePanelKey === undefined || key === activePanelKey));
-  const { setAssetPanelState, uploadFiles } = useTimelineEditorOps();
 
   const builtInPanel = includeBuiltIn && data ? (
     <div className="rounded-xl border border-border bg-card/80 p-3">
