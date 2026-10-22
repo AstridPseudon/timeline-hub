@@ -19,6 +19,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
+import { EDITOR_TOUR_VERSION } from '../../../../src/shared/lib/editorTourVersion.ts';
 import { loadQuickDescriptor, type QuickDescriptor } from './quick-descriptor.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -453,7 +454,12 @@ export class DirectHarness {
 
   /** Browser context options: the local-network permission is granted (the prompt itself is a manual-checklist item). */
   get contextOptions() {
-    return { permissions: ['local-network-access'] as string[] };
+    return {
+      permissions: ['local-network-access'] as string[],
+      // The first-run tour swaps the editor for its demo timeline while it runs, so no journey would be looking at the
+      // real timeline (and nothing polls its head). Every case here is about the real editor: the tour is already seen.
+      storageState: { cookies: [], origins: [{ origin: this.origin, localStorage: [{ name: `astrid-editor-tour-v${EDITOR_TOUR_VERSION}`, value: '1' }] }] },
+    };
   }
 
   /** Chromium arguments: host mapping, a pinned test certificate, and the hosted origin treated as a public address. */

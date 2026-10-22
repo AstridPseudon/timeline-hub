@@ -213,19 +213,6 @@ function agentOf(astrid: AstridCli, seed: { timelineId: string; projectSlug: str
   return {
     checkout: () => astrid.astrid(['timelines', 'checkout', ...common, '--fresh', '--json']),
     edit: (...flags: string[]) => astrid.astrid(['timelines', 'edit', ...common, ...flags]),
-    /**
-     * Sets one field on a clip of the parent composition through Astrid's SDK working copy (one undo step, same checkout and
-     * publish path as `timelines edit`). The CLI's `--clip` selector addresses clips inside shots, and the QUICK fixture is a
-     * media-only parent composition (clips on the parent, no shots), the shape the App's editor itself writes.
-     */
-    editParentClip: (clipId: string, field: string, value: unknown, label: string) => astrid.python(['-c', [
-      'from astrid.sdk.timeline_checkout import Checkout',
-      `tl = Checkout.draft(${JSON.stringify(seed.projectSlug)}, ${JSON.stringify(seed.timelineId)})`,
-      `with tl.edit(${JSON.stringify(label)}, check=False, quiet=True):`,
-      `    hits = [c for c in tl.bundle["parent"]["clips"] if c.get("id") == ${JSON.stringify(clipId)}]`,
-      '    assert len(hits) == 1, "the parent composition has no unique clip with that id"',
-      `    hits[0][${JSON.stringify(field)}] = ${JSON.stringify(value)}`,
-    ].join('\n')]),
     publish: async (message: string, idempotencyKey: string) => {
       const envelope = await astrid.json<{ new_head: string; old_head: string; idempotency_key: string; published?: boolean }>(['timelines', 'publish', ...common, '-m', message, '--idempotency-key', idempotencyKey, '--json']);
       expect(envelope.ok, JSON.stringify(envelope)).toBe(true);
@@ -952,16 +939,14 @@ test('quick: Astrid edit then App edit are visible and readable on the adopted t
   await expect(renderedClip).toHaveCSS('opacity', '1');
 
   await agent.checkout();
-  await agent.editParentClip(String(clip.id), 'opacity', 0.5, 'Quick Astrid edit');
+  await agent.edit('--clip', String(clip.id), '--set', 'opacity=0.5');
   const astridPublished = await agent.publish('Quick Astrid edit', `quick-astrid-${descriptor!.timelineId}`);
   expect(astridPublished.old_head).toBe(baseRevisionId);
   const astridRevisionId = astridPublished.new_head;
-  // The App catches up with the head by polling, and TanStack pauses that poll for a page that is not visible and focused.
-  await page.bringToFront();
-  const pageState = await page.evaluate(() => `${document.visibilityState}/${document.hasFocus() ? 'focused' : 'unfocused'}`);
-  await expect.poll(async () => (await currentHead(harness)), { message: 'the App observes Astrid’s published revision', ...CEILING }).toBe(astridRevisionId);
-  await expect.poll(() => reads.compositionRevisions.some((item) => item.id === astridRevisionId && item.payload?.clips?.some((candidate: any) => candidate.id === clip.id && candidate.opacity === 0.5)), { message: `the editor reads Astrid’s edited clip content (page ${pageState})`, ...CEILING }).toBe(true);
-  await expect(renderedClip, 'Astrid’s opacity edit is visible in the rendered editor').toHaveCSS('opacity', '0.5', CEILING);
+  // The open App catches up through its head poll (RuntimeDataProvider.refreshIntervalMs): no reload, no event. No fixed timeout; only a hang fails.
+  await expect.poll(async () => (await currentHead(harness)), { message: 'the App observes Astrid’s published revision', timeout: 0 }).toBe(astridRevisionId);
+  await expect.poll(() => reads.compositionRevisions.some((item) => item.id === astridRevisionId && item.payload?.clips?.some((candidate: any) => candidate.id === clip.id && candidate.opacity === 0.5)), { message: 'the editor reads Astrid’s edited clip content', timeout: 0 }).toBe(true);
+  await expect(renderedClip, 'Astrid’s opacity edit is visible in the rendered editor').toHaveCSS('opacity', '0.5', { timeout: 0 });
 
   const appLabel = 'QUICK App edit';
   const appSaved = page.waitForResponse((response) => response.request().method() === 'POST' && SAVES.test(new URL(response.url()).pathname), CEILING);
