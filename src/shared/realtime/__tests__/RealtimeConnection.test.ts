@@ -158,6 +158,7 @@ describe('out-of-order poll application', () => {
 // (c) Connection lifecycle proofs live against the fake bridge router.
 // =============================================================================
 
+import { BRIDGE_READ_RETRY_DELAYS_MS } from '@/integrations/astrid/transport';
 import { RealtimeConnection } from '../RealtimeConnection';
 import { dataFreshnessManager } from '../DataFreshnessManager';
 import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRuntimeRouter';
@@ -423,10 +424,11 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
 
   it('(c) hung bridge: transport timeout keeps the connection non-connected and retries', async () => {
     // Simulate the shared transport's 10 s deadline expiring against a hung
-    // socket: the read never resolves until we fire the deadline rejection.
-    let rejectRead!: (reason: unknown) => void;
+    // socket on every attempt. The transport retries an idempotent read quietly
+    // (250/1000/2500 ms) before it surfaces, so the connection stays
+    // "connecting" through those pauses and degrades only once they are spent.
     installRouter({
-      handle: () => new Promise<Response>((_, reject) => { rejectRead = reject; }),
+      handle: () => Promise.reject(new Error('The operation was aborted due to timeout')),
     } as unknown as FakeRuntimeRouter);
 
     const connection = freshConnection();
@@ -436,10 +438,11 @@ describe('RealtimeConnection — first-poll-then-connected (evidence b/c)', () =
       () => false,
     );
 
-    // Deadline expires → BridgeTransportFailure, never a route answer.
-    rejectRead(new Error('The operation was aborted due to timeout'));
     await vi.advanceTimersByTimeAsync(0);
+    expect(connection.getState().status).not.toBe('connected');
 
+    // The quiet retries are spent: a BridgeTransportFailure, never a route answer.
+    await vi.advanceTimersByTimeAsync(BRIDGE_READ_RETRY_DELAYS_MS.reduce((total, ms) => total + ms, 0));
     expect(connection.getState().status).not.toBe('connected');
     expect(['reconnecting', 'failed']).toContain(connection.getState().status);
 
