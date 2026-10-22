@@ -1169,6 +1169,8 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
     env["ASTRID_RUNTIME_DATA_ROOT"] = str(root / "data")
     if tier == "quick":
         _isolate_quick_pack_home(env, root)
+        # Adoption starts the daemon with its default door; never let that be the well-known live port.
+        env["ASTRID_RUNTIME_DOOR_PORT"] = "0"
     env["TMPDIR"] = str(root / "tmp")
     (root / "tmp").mkdir()
     changed = False
