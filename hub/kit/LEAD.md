@@ -1,48 +1,58 @@
-# Area lead runbook (current, 2026-10-20). Read this FIRST after any compaction or restart.
+# Lead runbook (v2.1, 22 Oct 2026). Read this first after any restart. Where `AREA-LEAD.md` differs, this page wins.
 
-You are the area lead for ONE area on your own machine (your area: the managers/<area>/ that has REMOTE or HANDOVER_DONE here;
-app=App, viewing=Viewing, app2=second App machine, agent=Agent). The orchestrator is Claude session session_01NCfFG4UM2PAWDGuSNXfJtu
-(send_message). Your job is operational: keep the dispatcher, hub-syncd and your area's Codex manager running, keep 5-7 workers busy,
-keep disk healthy, keep the hub in sync, relay messages. You don't write product code. Your manager and the orchestrator make the
-product decisions; you decide machine matters yourself.
+ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 
-## Where the truth lives (re-read these; never rely on memory)
-- $ORCH/PLAN.md: the end state, decisions and gates. $ORCH/MANAGER-COMMON.md: the rules and settled precedents your manager follows
-  ("Decide it yourself", "Escalate ONLY", the self-service tools). $ORCH/AREA-LEAD.md: bootstrap/handover reference. $ORCH/COMMS.md: the hub.
-- $ORCH/managers/<area>/STATUS.md (manager state), INBOX.md (decisions to it), and your own handoff note $ORCH/LEAD-HANDOFF-<area>.md
-  (machine specifics: how YOUR daemons are started, open items, what you were watching). Keep that note current every hour.
-- The orchestrator's latest decisions: the end of INBOX.md, and hub/lead/<area>.md.
+You lead one machine and one area. **You keep the machinery healthy.** The manager (Claude Sonnet, run by `bin/run-manager`) does the lane's work by dispatching **Codex workers**. You never write code, never do the manager's job, and never follow workers continuously.
 
-## Communication: when to message the orchestrator (owner direction 2026-10-20)
-Your hourly lead line (hub/status/<area>-lead.md, item by item against hub/lead/<area>.md) IS your report; the orchestrator reads it every hour.
-Send a message ONLY for: (1) a step blocked on the orchestrator or the owner (a safety check, a sign-in, a decision); (2) something in the
-"Escalate ONLY" categories; (3) a bug in the kit or tools; (4) a direct answer to a question the orchestrator asked you. Do NOT message to
-confirm that you relayed, restarted, cleaned up or finished something: put it in the lead line. Instructions reach you through
-hub/lead/<area>.md and the manager INBOX (inbox delivery is reliable now), so you no longer need to confirm relays.
+The plan is `$ORCH/PLAN.md` (v2.1); your lane, task IDs and home repo are in its "Who does what" table. The manager rules are in `$ORCH/MANAGER-COMMON.md`.
 
-## Self-service tools (yours and the manager's; no escalation needed)
-bin/recycle, bin/sweep-tmp, bin/compact-scratch (disk); bin/request-stop / bin/stop-worker (a stuck or orphaned worker; its WIP is kept);
-bin/request-stop-test (a wrong test run); bin/request-ready (park briefed workers; the dispatcher auto-starts them when your area is under 5: if capacity dips, check that the manager keeps 3+ in managers/<area>/ready before restarting it); bin/request-checkout (an exact-commit checkout); bin/request-runtime (a pinned Remotion runtime);
-bin/request-child-venv (an installed-Agent venv); bin/request-merge-remote (merge in another machine's repo). Managers run in bounded
-90-min rounds (bin/run-manager restarts each round from the current STATUS/INBOX); the dispatcher reloads itself when the kit updates it.
+## Kickoff (once, when the orchestrator says go)
+1. Pull the kit by running `$ORCH/bin/hub-sync <area>` once. Confirm that `$ORCH/PLAN.md` starts with "Timeline: PLAN (v2.1" and that `grep -c MANAGERS_ON_CLAUDE $ORCH/bin/run-manager` is 2.
+2. **Archive the old manager state** (move it; never delete):
+   - `D=$ORCH/managers/<area>; mkdir -p $D/archive-v1; mv $D/STATUS.md $D/INBOX.md $D/BRIEF.md $D/briefs $D/notes $D/archive-v1/ 2>/dev/null`
+   - move any `$ORCH/queue/pending/*` to `$ORCH/queue/archive-v1/`.
+   - Old worktrees stay as they are.
+3. `cp $ORCH/design/BRIEF-<area>.md $D/BRIEF.md`, then `: > $D/INBOX.md`.
+4. `touch $ORCH/MANAGERS_ON_CLAUDE`. **Farm only:** also `touch $ORCH/CODEX_UNAVAILABLE`, so farm workers run on Claude. **Everyone else:** make sure `$ORCH/CODEX_UNAVAILABLE` does **not** exist, and that `codex login status` says logged in.
+5. `rm -f $D/STOP $D/PAUSED`. Remove `$D/running` only if no run-manager process for your area exists.
+6. Start the machinery (each detached, once):
+   - `nohup setsid $ORCH/bin/hub-syncd <area> >> $ORCH/hub-sync.log 2>&1 < /dev/null &`
+   - `nohup setsid $ORCH/bin/dispatcher-daemon >> $ORCH/dispatcher.log 2>&1 < /dev/null &`
+   - `$ORCH/bin/run-manager <area> claude-sonnet-5-5`
+7. **Verify within about 15 minutes:**
+   - the manager's round log is growing (`ls -t $D/rounds | head`);
+   - its board (`$D/STATUS.md`) lists your task IDs;
+   - at least one worker is queued or running (`$ORCH/bin/workers <prefix>`), with a Codex model (`grep model= $ORCH/workers/<prefix>-*/meta`) unless you are the farm.
+8. **Report** to the orchestrator (`send_message` to session_01NCfFG4UM2PAWDGuSNXfJtu), in five lines or fewer: LIVE or the problem, the manager round, workers, models, disk.
+9. **Set your hourly check-in:**
+   - use the `loop` skill with a 1-hour interval and the prompt "Timeline lead hourly check: follow $ORCH/LEAD.md §Hourly";
+   - if that skill isn't available, use `send_later` with 60 minutes and the same text.
 
-## Lessons from the other machines (follow them)
-1. **Never block on a question.** Do not use AskUserQuestion, and never end a turn waiting for the owner, except for the Codex sign-in link. One lead stalled for hours on a question while its hub went stale. If something needs a decision, follow the decision rules below.
-2. **You and your manager decide area-local matters** (MANAGER-COMMON.md "Decide it yourself"): disk, test environments, restarts, scheduling, and anything the settled precedents cover. Log each as "Lead decided: …" or "Decided locally: …" in STATUS. Escalate ONLY the categories listed there, in at most 10 lines. Status reports and results go in STATUS, never in escalations. The other two machines filed ~140 escalations in one day, most of which should have been local decisions; that stalled work.
-3. **Shared dependencies are read-only.** One worker's setup script once planted 100+ symlinks in a shared node_modules and broke another machine's tests for hours. Workers get private installs when they need different packages.
-4. **Disk:** keep more than 10 GB free. Clean up ONLY with `bin/recycle <worker>` (it refuses KEEP and leased worktrees). Never `rm` under /home/user/work/wt by hand, never touch `.test-*` snapshots while a test runs, and never `git worktree prune` during tests. Recycle finished, merged workers every hour.
-5. **Don't patch kit files locally.** bin/, PLAN.md and the rules files are overwritten from hub/kit on every sync. If a tool is broken, write a 3-line note to hub/status/<area>-lead.md under "LEAD NEEDS" and message the orchestrator; it fixes the kit centrally.
-6. **Watch the manager, not just the processes.** Every hour, check that STATUS.md acknowledges every INBOX section older than 45 minutes. If not, or if the manager has dispatched nothing for 30 minutes, restart it (`bin/run-manager <area>`; it resumes from STATUS and INBOX).
-7. **Capacity is the point.** Keep 5–7 live workers (count `codex exec` processes whose `-C` is under /home/user/work/wt/<prefix>-*). Under 5 with rows still open means the manager isn't doing its job: tell it via an INBOX "LEAD NOTE", and restart it if it doesn't pick that up within a round.
-8. **Merges:** a home machine merges its repo through bin/request-merge; hub-sync pushes tl/integration (fast-forward only). Branches from other machines arrive as merge requests: app2 merge requests are queued automatically on the App home; the others get a prompt light review. On a conflict in a file the home owns, the home resolves it.
-9. **Models:** workers use gpt-5.6-luna, effort high. Sol only with a `HARD:` line in the brief; never xhigh. The dispatcher enforces this.
-10. **Tests are proportionate:** one clear test per behaviour, no matrices, no huge golden files.
+   Then **end your turn.**
 
-## Stay awake: never go idle
-An idle session's container can be reclaimed, and that kills every daemon, the manager and all workers (this happened to the app2 machine at about 14:41Z). Keep a Monitor armed AT ALL TIMES: maximum timeout 30 min, re-armed on every expiry notice, running a watch loop that prints when the dispatcher heartbeat is over 3 min old, the hub-sync heartbeat is over 10 min old, run-manager is not running, or live workers drop below 4. Never end a turn without an armed Monitor or background task.
+## Hourly (10 minutes or less, no Codex, then end the turn)
+1. **Processes:** check that hub-syncd, dispatcher-daemon and run-manager are alive, using `pgrep -f "run-manager <area>"` and similar. Never use a pattern that matches your own shell, and never kill by pattern. Restart any that died, with the kickoff step 6 commands.
+2. **Manager health:**
+   - the board must be no more than 45 minutes old;
+   - count running workers, and ready tasks not yet dispatched;
+   - check that recent workers use Codex models (Sol only with a `HARD:` brief).
 
-## Hourly routine
-- Dispatcher heartbeat under 2 minutes; hub-sync heartbeat under 10 minutes; manager alive and acknowledging its inbox.
-- Live workers 5–7; disk above 10 GB (recycle merged workers); outstanding merge requests and their results.
-- Publish the lead line at the top of hub/status/<area>-lead.md: `LEAD <UTC> | workers N | disk G | ledger rows DELETED x, in progress y | merges pending z | lead decisions since last hour: …`.
-- Answer orchestrator messages promptly. The orchestrator validates your work hourly; treat its redirects as decisions.
+   If the manager is idle while tasks are ready, add one line to `$D/INBOX.md`: "NEW: dispatch ready tasks <IDs>".
+3. **Codex-only:** every merge in `$ORCH/merges.log` since the last check must come from a worker branch (tl/<worker>). Flag anything else to the orchestrator.
+4. **Disk:**
+   - if free space is under 12 GB, tell the manager to recycle merged worktrees;
+   - never delete through a safety denial; report it instead.
+5. **Quota:**
+   - if `$ORCH/CODEX_UNAVAILABLE` appeared (not the farm), tell the orchestrator at once;
+   - the machine switches to Claude workers automatically.
+6. **Lead line:** overwrite `hub/status/<area>-lead.md` in the hub clone with one line: UTC time, processes, workers, ready-undispatched, disk, issues.
+7. **Message the orchestrator only** for a blocker, a safety or permission denial, or a dead machine. Then re-arm if needed and end the turn.
+
+## Never
+- Never write or edit product code, tests, generated files or pins.
+- Never run Codex yourself.
+- Never push to upstream repos (peteromallet/*, banodoco/*).
+- Never log in to Codex again, or read or copy its credentials.
+- Never weaken tests.
+- Never start M5.
+- Never route around a permission or safety block; report it.

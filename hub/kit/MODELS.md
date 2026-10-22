@@ -1,3 +1,5 @@
+> **v2.1 note (22 Oct):** managers run on Claude Sonnet by choice (the `MANAGERS_ON_CLAUDE` flag). Workers use Codex Luna (high), or Sol (high) with a `HARD:` brief line. The farm runs Claude workers (`CODEX_UNAVAILABLE` is set on the farm only).
+
 # Models (owner rule, 2026-10-19). This applies to the orchestrator, area leads, managers and workers.
 
 **Automatic Codex fallback (owner rule, 2026-10-20 evening):** when Codex hits its usage limit, the machine switches by itself. A worker that dies on a usage-limit error creates $ORCH/CODEX_UNAVAILABLE. bin/dispatch then maps Luna to Haiku, Sol to Sonnet and Astra to Opus, and bin/run-manager restarts the manager on Sonnet at the round boundary. The dispatcher probes Codex every 20 min and, when it answers, removes the flag; managers go back to Codex at their next round boundary. Nobody needs to act. Leads only confirm it in their lead line.

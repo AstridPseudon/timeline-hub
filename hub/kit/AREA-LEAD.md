@@ -1,3 +1,5 @@
+> **v2.1 note (22 Oct):** `LEAD.md` is the current runbook. This file is kept for the original bootstrap details only; where they differ, `LEAD.md` wins.
+
 # Area lead runbook (a remote Claude session leading ONE area: app or viewing)
 
 You are the **area lead** for one area of the Timeline project, on your own machine. The **orchestrator** (Claude, on the "main" machine) owns PLAN changes, gates and cross-area escalations; you and your manager decide area-local matters (see "Decide it yourself" in MANAGER-COMMON.md). You keep your area's Codex manager and workers running and healthy, and keep the shared hub current. You don't write product code yourself.
