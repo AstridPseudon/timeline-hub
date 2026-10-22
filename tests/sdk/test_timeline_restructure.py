@@ -355,6 +355,44 @@ def test_flatten_merges_track_copies_that_differ_only_by_non_conflicting_app_key
         flatten(stored)
 
 
+def shared_asset_film(digest: str):
+    """A chapter film whose shots carry handle and source on asset R; the film-level copy of R lacks them."""
+    stored = published(split(flat_film()))
+    for shot in stored["shots"].values():
+        held = shot["internal_timeline"]["registry"]["assets"]
+        if "R" in held:
+            held["R"].update(handle=digest, source=digest)
+    return stored
+
+
+def test_flatten_merges_asset_copies_that_differ_only_by_fields_the_film_copy_lacks():
+    """An App save dropped handle and source from the film-level copy of an asset; the chapter shots kept them."""
+    digest = "sha256:116b6dde"
+    stored = shared_asset_film(digest)
+    assert stored["parent"]["registry"]["assets"]["R"] == {"media_id": "m-r"}
+    flat = flatten(stored)
+    merged = flat["shots"][next(iter(flat["shots"]))]["internal_timeline"]["registry"]["assets"]["R"]
+    assert merged == {"media_id": "m-r", "handle": digest, "source": digest}
+    assert list(merged) == ["media_id", "handle", "source"]  # the held entry first, then the new fields
+
+
+def test_flatten_still_refuses_an_asset_copy_whose_shared_field_differs():
+    stored = shared_asset_film("sha256:116b6dde")
+    stored["parent"]["registry"]["assets"]["R"]["handle"] = "sha256:0000"
+    with pytest.raises(TimelineEditError, match="conflicting asset key 'R'"):
+        flatten(stored)
+
+
+def test_flatten_then_split_leaves_every_copy_of_an_asset_equal_to_the_union():
+    digest = "sha256:116b6dde"
+    union = {"media_id": "m-r", "handle": digest, "source": digest}
+    again = split(flatten(shared_asset_film(digest)))
+    assert again["parent"]["registry"]["assets"]["R"] == union
+    copies = [shot["internal_timeline"]["registry"]["assets"]["R"] for shot in again["shots"].values()
+              if "R" in shot["internal_timeline"]["registry"]["assets"]]
+    assert copies and all(copy_ == union for copy_ in copies)
+
+
 def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter(monkeypatch):
     """A chapter film is read flat; duplicating must copy its stored form (a shot per chapter), not the one flat
     shot, or the copy is stored as a single shot and every chapter reads back with the same shot id."""

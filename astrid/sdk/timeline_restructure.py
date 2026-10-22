@@ -130,6 +130,17 @@ def _view(bundle: Mapping[str, Any], *, base: bool) -> dict[str, Any]:
     return {"parent": parent or {}, "rows": rows, "shots": shots}
 
 
+def _union_asset(held: Any, value: Any, error: str) -> Any:
+    """Copies of one asset key merge into their union when no field present in both differs (an App save
+    can drop fields from the film-level copy only); a field present in both with other values raises ``error``."""
+    if held == value:
+        return copy.deepcopy(held)
+    if not isinstance(held, Mapping) or not isinstance(value, Mapping) \
+            or any(name in held and held[name] != field for name, field in value.items()):
+        raise TimelineEditError(error)
+    return {**copy.deepcopy(dict(held)), **copy.deepcopy(dict(value))}
+
+
 def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
     parent = copy.deepcopy(dict(view["parent"]))
     config = parent.setdefault("config", {})
@@ -147,9 +158,8 @@ def _flat_side(view: Mapping[str, Any]) -> dict[str, Any]:
     tracks: dict[str, Any] = {}
 
     def add_asset(key: str, value: Any) -> None:
-        if key in assets and assets[key] != value:
-            raise TimelineEditError(f"flatten has conflicting asset key {key!r}")
-        assets[key] = copy.deepcopy(value)
+        assets[key] = _union_asset(assets[key], value, f"flatten has conflicting asset key {key!r}") if key in assets \
+            else copy.deepcopy(value)
 
     def add_track(track: Mapping[str, Any], order: list[Mapping[str, Any]], index: int) -> None:
         """Track definitions are copied into the film and every chapter shot; tools may annotate one
@@ -421,9 +431,10 @@ def split(flat: Mapping[str, Any]) -> dict[str, Any]:
     registry = dict(parent.get("registry") or {}) if isinstance(parent.get("registry"), Mapping) else {}
     own = dict(registry.get("assets") or {})
     for key in planned.assets:
-        if key in film_assets | unused:
-            if key in own and own[key] != planned.assets[key]:
-                raise TimelineEditError(f"the film registry and the shot both define asset {key!r} differently")
+        if key in own:  # the film's copy becomes the union of its copy and the shots' (every copy of a key is the same)
+            own[key] = _union_asset(own[key], planned.assets[key],
+                                    f"the film registry and the shot both define asset {key!r} differently")
+        elif key in film_assets | unused:
             own[key] = copy.deepcopy(planned.assets[key])
     registry["assets"] = own
     parent["registry"] = registry
