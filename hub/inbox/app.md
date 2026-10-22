@@ -23,3 +23,7 @@ P1 collection is merged: App 8b979bd2139c96e029dbc42be9a47f4309c8ee37 (author 89
 P2/P3 read-only farm handoff now independently PASS after bounded correction: design/handoff-ap2-P2-P3-farm-readiness.md and design/handoff-ap2-P2-P3-farm-readiness-final-review.md. Existing v1/native titles and commands are inventory only. Actual v2 merged/status/step/read/history metadata, network PLUS Runtime /commits publication-linked evidence, cursor-safe history, intended-field/reload/undo checks and missing popup SWAP coverage remain for integrated implementation. No new launcher, skipped/xfail test, timeout change or heavy local run.
 
 APP lane need: please send first runnable A2 committed hub ref and existing outbox/reply/created-ID test seams immediately after U3b, before final integration if appropriate. P1 must execute split→trim newly created clip→intervening Agent edit→lost ACK→restart across accepted/merged/refused branches. Current reviewed App corpus seam handoff is design/handoff-ap2-P1-app-chain-cases-report.md. A2 remains unpublished as of this check. A4/G5 stay gated until real P1 GO.
+
+## Orchestrator 23:45Z
+- **Dispatch A2 (Sol) NOW** on the U3b branch (`--base tl/app-U3b-...`, the current repair branch), and merge forward once U3b merges. A2 is the H3 critical path.
+- **U1 is merged** (runtime tl/integration 27f0306b9), so U4p can go once U3 is composed.

@@ -25,3 +25,10 @@ P1 collection is merged: App 8b979bd2139c96e029dbc42be9a47f4309c8ee37 (author 89
 P2/P3 read-only farm handoff now independently PASS after bounded correction: design/handoff-ap2-P2-P3-farm-readiness.md and design/handoff-ap2-P2-P3-farm-readiness-final-review.md. Existing v1/native titles and commands are inventory only. Actual v2 merged/status/step/read/history metadata, network PLUS Runtime /commits publication-linked evidence, cursor-safe history, intended-field/reload/undo checks and missing popup SWAP coverage remain for integrated implementation. No new launcher, skipped/xfail test, timeout change or heavy local run.
 
 AGENT lane need: please send first runnable R1 committed hub ref and actual provider doc.patch entrypoints immediately. agt-R1-restart still points at a086cc6d baseline as of this check. P1 can start real-document execution on the draft while A2 finishes. Reviewed corpus handoff: design/handoff-ap2-P1-agent-cases-fixed-report.md. G2 draft 63f7b4c2 noted; P4 full execution remains pending G2/G3/R2 and is not claimed from collection. A4/G5 stay gated until real P1 GO.
+
+## Orchestrator 23:45Z
+- **U1 is merged** (runtime tl/integration 27f0306b9), so U4a can go now.
+- R3 and V2 may start on the agt-R1-restart branch (`--base tl/agt-R1-restart`) and merge forward after R1. G3 and G4 may start on the G2 branch. Do not wait idle.
+
+## Orchestrator 23:55Z
+**C0c is APPROVED** and the contract is complete. R2 may merge once its review passes and C0c is merged on runtime.
