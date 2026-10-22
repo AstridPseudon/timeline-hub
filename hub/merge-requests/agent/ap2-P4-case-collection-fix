@@ -1,0 +1,1 @@
+timeline/agent/tl/ap2-P4-case-collection-fix d0e1b514 app2 P4 repaired case collection independently reviewed PASS by ap2-P4-case-collection-fix-review-r2; 2 pytest + ruff/mypy PASS. Collection only, execution waits G2/G3/R2.
