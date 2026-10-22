@@ -10,7 +10,7 @@ import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
 export const UI = {
   status: '[data-testid="runtime-connection-status"]',
   panel: '[data-testid="runtime-not-connected"]',
-  copy: 'Copy',
+  copy: 'Copy command',
   connect: 'Connect',
   reload: 'Reload',
 };

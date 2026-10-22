@@ -134,7 +134,7 @@ test.describe('zero-click connection (App)', () => {
       await expect(panel).toBeVisible();
       await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
       await panel.getByRole('button', { name: UI.copy }).click();
-      await expect(panel.getByRole('button', { name: 'Copied' })).toBeVisible();
+      await expect(panel.getByRole('button', { name: 'Command copied' })).toBeVisible();
       const copied = await page.evaluate(() => navigator.clipboard.readText());
       expect(copied).toBe('curl -fsSL https://astrid.haus/install | sh');
       await harness.startRuntime();
