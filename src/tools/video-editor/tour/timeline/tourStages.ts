@@ -89,6 +89,17 @@ export function tourStageFocusClipId(stage: EditorTourStage): string | null {
 }
 
 /**
+ * The edit that takes the demo timeline back from `stage` to `stage - 1` (the user pressed Back): drops the
+ * rows the stage added (a removed track takes its clips with it), or for stage 1 the scene clip on the base row.
+ */
+export function createEditorTourStageRemovalPatch(stage: 1 | 2 | 3): TimelinePatch {
+  const operations: TimelinePatchOperation[] = stage === 1
+    ? [{ op: 'clip.remove', target: TOUR_CLIP_IDS.scene }]
+    : [{ op: 'track.remove', target: stage === 2 ? EDITOR_TOUR_TRACK_IDS.stills : EDITOR_TOUR_TRACK_IDS.videos }];
+  return { version: 0, operations, source: 'editor-tour' };
+}
+
+/**
  * The edit that takes the demo timeline from `stage - 1` to `stage`, in the editor's own patch
  * vocabulary: `track.add` (above the current top row), then `clip.add` + `clip.update` per clip.
  * `version: 0` skips the canonical-version check.

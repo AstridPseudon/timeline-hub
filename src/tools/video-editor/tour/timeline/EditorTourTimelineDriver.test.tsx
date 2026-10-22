@@ -175,6 +175,44 @@ describe('EditorTourTimelineDriver', () => {
     expect(previewHandle.play).toHaveBeenCalledTimes(2);
   });
 
+  it('steps back a stage by removing the later rows at once, and replays the landing going forward', async () => {
+    const { apply, previewHandle } = createHarness();
+    addScene('ready');
+    const rows = [EDITOR_TOUR_TRACK_IDS.stills, EDITOR_TOUR_TRACK_IDS.videos].map((id) => {
+      const row = document.createElement('div');
+      row.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, id);
+      document.body.append(row);
+      return row;
+    });
+    const targetsOf = () => apply.mock.calls.map(([patch]) => `${patch.operations[0].op}:${patch.operations[0].target}`);
+
+    goTo(1, 'land');
+    await waitFor(() => expect(ready()).toBe(true));
+    goTo(2, 'land');
+    await waitFor(() => expect(ready()).toBe(true));
+    expect(apply).toHaveBeenCalledTimes(2);
+
+    // Back from land(2) to compose(2): the stills row goes at once, nothing is replayed.
+    previewHandle.play.mockClear();
+    act_(() => setEditorTourBeat(2, 'compose', true));
+    await waitFor(() => expect(apply).toHaveBeenCalledTimes(3));
+    expect(targetsOf()[2]).toBe(`track.remove:${EDITOR_TOUR_TRACK_IDS.stills}`);
+    expect(previewHandle.play).not.toHaveBeenCalled();
+
+    // Forward again lands the stills row afresh.
+    goTo(2, 'land');
+    await waitFor(() => expect(apply).toHaveBeenCalledTimes(4));
+    expect(apply.mock.calls[3][0].operations[0].op).toBe('track.add');
+
+    // Back from land(1) to respond(1) removes the scene clip, with no warm-up and no waiting on a scene.
+    act_(() => setEditorTourBeat(1, 'respond', true));
+    await waitFor(() => expect(apply.mock.calls.slice(4).map(([patch]) => patch.operations[0].op)).toEqual(['track.remove', 'clip.remove']));
+    expect(apply.mock.calls[5][0].operations[0].target).toBe(TOUR_CLIP_IDS.scene);
+    await waitFor(() => expect(ready()).toBe(true));
+    expect(harness.warmups).toHaveLength(0);
+    rows.forEach((row) => row.remove());
+  });
+
   it('holds act 1 land at 0 until the visible scene has painted, then plays and reports ready', async () => {
     const { previewHandle } = createHarness();
     const scene = addScene('loading');

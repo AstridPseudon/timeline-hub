@@ -32,16 +32,16 @@ const NO_PROGRESS: TourChatProgress = { typed: 0, replyChars: 0, cards: 0 };
 // The tour never records: its mic is shown disabled while chat voice is on, and absent while it is off.
 const NO_VOICE = { isRecording: false, onToggle: () => undefined, onCancel: () => undefined, micDisabled: true };
 
-const TYPING_START_MS = 500;
-const THINKING_MS = 700;
-const STREAM_STEP_MS = 24;
-const STREAM_CHARS_PER_STEP = 3;
-const CARD_STEP_MS = 520;
+const TYPING_START_MS = 250;
+const THINKING_MS = 300;
+const STREAM_STEP_MS = 16;
+const STREAM_CHARS_PER_STEP = 6;
+const CARD_STEP_MS = 220;
 
 /** A natural typing rhythm: steady, with a small pulse per character and a pause after punctuation. */
 function typingDelayMs(typed: number, previous: string): number {
-  const pause = /[,.?!]/.test(previous) ? 140 : previous === ' ' ? 18 : 0;
-  return 34 + ((typed * 37) % 19) + pause;
+  const pause = /[,.?!]/.test(previous) ? 45 : previous === ' ' ? 6 : 0;
+  return 11 + ((typed * 37) % 7) + pause;
 }
 
 /**
@@ -55,6 +55,7 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
   const sent = useEditorTour((state) => state.sent);
   const chatReady = useEditorTour((state) => state.ready.chat);
   const reducedMotion = useEditorTour((state) => state.reducedMotion);
+  const instant = useEditorTour((state) => state.instant);
   const skipAnimation = useEditorTour((state) => state.skipAnimation);
   const setIsTasksPaneOpen = usePanesStore((state) => state.setIsTasksPaneOpen);
   const script = EDITOR_TOUR_SCRIPT.acts[act];
@@ -69,7 +70,9 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
 
   const beatKey = `${runId}:${act}:${beat}`;
   const [animation, setAnimation] = useState<{ key: string } & TourChatProgress>({ key: '', ...NO_PROGRESS });
-  const progress = animation.key === beatKey ? animation : NO_PROGRESS;
+  // Arriving by Back shows the beat finished from the first render: nothing types or streams again.
+  const finished: TourChatProgress = { typed: script.prompt.length, replyChars: script.reply.length, cards: script.toolCards.length };
+  const progress = instant ? finished : animation.key === beatKey ? animation : NO_PROGRESS;
   const finishRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -91,7 +94,7 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
       const { prompt } = script;
       const complete = () => finish({ typed: prompt.length });
       finishRef.current = complete;
-      if (reducedMotion) { complete(); } else {
+      if (reducedMotion || instant) { complete(); } else {
         const type = (typed: number) => {
           update({ typed });
           if (typed >= prompt.length) { markEditorTourReady('chat'); return; }
@@ -103,7 +106,7 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
       const { reply, toolCards } = script;
       const complete = () => finish({ replyChars: reply.length, cards: toolCards.length });
       finishRef.current = complete;
-      if (reducedMotion) { complete(); } else {
+      if (reducedMotion || instant) { complete(); } else {
         const showCard = (cards: number) => {
           update({ cards });
           if (cards >= toolCards.length) { markEditorTourReady('chat'); return; }
@@ -124,7 +127,7 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
       timers.forEach((timer) => window.clearTimeout(timer));
       finishRef.current = null;
     };
-  }, [beat, beatKey, reducedMotion, script]);
+  }, [beat, beatKey, reducedMotion, instant, script]);
 
   // The first Enter mid-animation (the runner bumps `skipAnimation`) jumps to the end of the current one.
   const lastSkip = useRef({ runId, skipAnimation });

@@ -109,4 +109,28 @@ describe('useTourKeys', () => {
     window.dispatchEvent(key({ key: 'Enter' }));
     expect(getEditorTourState()).toMatchObject({ act: 1, beat: 'land' });
   });
+
+  it.each(['ArrowLeft', 'Backspace'])('%s goes back one place, prevented', (name) => {
+    mountKeys(true);
+    setEditorTourBeat(2, 'land');
+    const event = key({ key: name });
+
+    window.dispatchEvent(event);
+
+    expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'compose', instant: true });
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('ArrowRight is swallowed and does not move the tour', () => {
+    mountKeys(true);
+    setEditorTourBeat(2, 'land');
+    window.dispatchEvent(key({ key: 'ArrowRight' }));
+    expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'land' });
+  });
+
+  it('Back does nothing on the welcome', () => {
+    mountKeys(true);
+    window.dispatchEvent(key({ key: 'ArrowLeft' }));
+    expect(getEditorTourState()).toMatchObject({ beat: 'welcome' });
+  });
 });

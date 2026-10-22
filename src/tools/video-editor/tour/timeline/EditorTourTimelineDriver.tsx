@@ -14,7 +14,7 @@ import {
 import { requestCenterTimelineClip } from '@/tools/video-editor/lib/timeline-viewport-events.ts';
 import { editorTourTrackSelector } from '@/tools/video-editor/tour/anchors.ts';
 import { loadTourLiveScene, TOUR_SCENE_SOURCE_FROM } from './tourSceneSource.ts';
-import { createEditorTourStagePatch, tourStageFocusClipId, tourTrackOrder } from './tourStages.ts';
+import { createEditorTourStagePatch, createEditorTourStageRemovalPatch, tourStageFocusClipId, tourTrackOrder } from './tourStages.ts';
 
 const SceneSurface = lazy(() => import('@astrid/packs/rendering/ui/threejs-live-editor/SceneSurface')
   .then((module) => ({ default: module.SceneSurface })));
@@ -87,7 +87,22 @@ export function EditorTourTimelineDriver() {
   }, []);
 
   useEffect(() => {
-    if (!loaded || !ops || !liveScene || applying.current || appliedStage >= stage) return;
+    if (!loaded || !ops || applying.current) return;
+    if (appliedStage > stage) {
+      // Back: the later acts' rows leave at once, one stage at a time (a move back is never more than one).
+      applying.current = true;
+      try {
+        ops.apply(createEditorTourStageRemovalPatch(appliedStage as 1 | 2 | 3));
+        setAppliedStage((appliedStage - 1) as EditorTourStage);
+      } catch (error) {
+        console.error('Editor tour: could not step the demo timeline back; retrying.', error);
+        window.setTimeout(() => setRetry((count) => count + 1), 250);
+      } finally {
+        applying.current = false;
+      }
+      return;
+    }
+    if (!liveScene || appliedStage >= stage) return;
     applying.current = true;
     const next = (appliedStage + 1) as 1 | 2 | 3;
     try {
@@ -101,7 +116,8 @@ export function EditorTourTimelineDriver() {
     }
   }, [loaded, ops, liveScene, stage, appliedStage, retry]);
 
-  const warming = act === 1 && beat === 'respond' && appliedStage === 0;
+  const instant = useEditorTour((state) => state.instant);
+  const warming = act === 1 && beat === 'respond' && appliedStage === 0 && !instant;
   useEffect(() => {
     if (!warming) return;
     const timer = window.setTimeout(() => setWarm(true), WARMUP_GIVE_UP_MS);
@@ -109,11 +125,11 @@ export function EditorTourTimelineDriver() {
   }, [warming]);
 
   useEffect(() => {
-    if (!loaded || appliedStage < stage) return;
+    if (!loaded || appliedStage !== stage) return;
     let cancelled = false;
     const isCancelled = () => cancelled;
     void (async () => {
-      if (beat === 'respond' && act === 1) await waitFor(() => warm, WARMUP_GIVE_UP_MS, isCancelled);
+      if (beat === 'respond' && act === 1 && !instant) await waitFor(() => warm, WARMUP_GIVE_UP_MS, isCancelled);
       if (beat === 'land') {
         const topTrack = tourTrackOrder(stage)[0];
         await waitFor(
@@ -129,7 +145,7 @@ export function EditorTourTimelineDriver() {
         previewRef.current?.seek(0);
         // The scene lands first: hold at 0 until its first frame is painted (an Enter during the wait skips it),
         // so the card never shows over an empty preview and the moonrise plays from its start.
-        if (act === 1) {
+        if (act === 1 && !instant) {
           const skipped = getEditorTourState().skipAnimation;
           await waitFor(
             () => document.querySelector(SCENE_READY_SELECTOR) !== null || getEditorTourState().skipAnimation !== skipped,
@@ -143,7 +159,7 @@ export function EditorTourTimelineDriver() {
       if (!cancelled) markEditorTourReady('timeline');
     })();
     return () => { cancelled = true; };
-  }, [runId, act, beat, stage, appliedStage, loaded, warm, previewRef]);
+  }, [runId, act, beat, stage, appliedStage, loaded, warm, instant, previewRef]);
 
   return warming && liveScene ? <SceneWarmup liveScene={liveScene} onWarm={() => setWarm(true)} /> : null;
 }

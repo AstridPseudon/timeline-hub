@@ -25,6 +25,11 @@ export interface EditorTourState {
   /** Reset on every beat change; each part sets its own flag once it has finished presenting the beat. */
   ready: Readonly<Record<EditorTourReadyKey, boolean>>;
   reducedMotion: boolean;
+  /**
+   * Set when the user arrived by Back, cleared on any forward move: every part finishes the beat at once,
+   * exactly as it does for reduced motion (nothing re-types, re-streams or re-reveals).
+   */
+  instant: boolean;
   /** Bumps when the user asks to finish the current animation now (first Enter mid-animation). */
   skipAnimation: number;
 }
@@ -39,6 +44,7 @@ const editorTourStore = createStore<EditorTourState>(() => ({
   sent: false,
   ready: NOT_READY,
   reducedMotion: false,
+  instant: false,
   skipAnimation: 0,
 }));
 
@@ -64,13 +70,14 @@ export function startEditorTour(): void {
     sent: false,
     ready: NOT_READY,
     reducedMotion: prefersReducedMotion(),
+    instant: false,
     skipAnimation: 0,
   }));
 }
 
-/** Runner only. */
-export function setEditorTourBeat(act: EditorTourAct, beat: EditorTourBeat): void {
-  editorTourStore.setState({ act, beat, sent: false, ready: NOT_READY });
+/** Runner only. `instant` is true only for a move back; any forward move clears it. */
+export function setEditorTourBeat(act: EditorTourAct, beat: EditorTourBeat, instant = false): void {
+  editorTourStore.setState({ act, beat, sent: false, ready: NOT_READY, instant });
 }
 
 /** Runner only. */
@@ -80,7 +87,7 @@ export function skipEditorTourAnimation(): void {
 
 /** Runner only: the demo timeline and tour chat unmount, and the user's own editor returns. */
 export function exitEditorTour(): void {
-  editorTourStore.setState({ status: 'idle', sent: false, ready: NOT_READY });
+  editorTourStore.setState({ status: 'idle', sent: false, ready: NOT_READY, instant: false });
 }
 
 /** Tour chat panel only. */

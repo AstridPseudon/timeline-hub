@@ -5,12 +5,15 @@ import { TourStrip } from './TourStrip';
 import { TourVisual } from './TourVisual';
 import { useTourCardEntrance } from './useTourCardEntrance';
 import { useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared/state/editorTourStore';
+import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 
 export interface TourCardProps {
   /** Next, "I got it", or (while the reply plays) finish it: the runner decides, as for Enter. */
   onPrimary: () => void;
+  /** Go back to the previous place the user acted. Without it the card shows no Back. */
+  onBack?: () => void;
   /** Leave the tour, as Esc does. Without it the card only names the key. */
   onSkip?: () => void;
 }
@@ -23,7 +26,7 @@ const ACT_COUNT = 3;
  * visual and the Three.js → frames → video strip; at the end it asks "Do you get it?". Presentational: the runner positions it and owns the
  * actions. It marks itself ready once its entrance has played (at once on reduced motion or a skip).
  */
-export function TourCard({ onPrimary, onSkip }: TourCardProps) {
+export function TourCard({ onPrimary, onBack, onSkip }: TourCardProps) {
   const act = useEditorTour((state) => state.act);
   const beat = useEditorTour((state) => state.beat);
   const runId = useEditorTour((state) => state.runId);
@@ -49,29 +52,41 @@ export function TourCard({ onPrimary, onSkip }: TourCardProps) {
         )}
       >
         {beat === 'welcome' && <Welcome onPrimary={onPrimary} onSkip={onSkip} />}
-        {beat === 'land' && <Explainer act={act} playing={!reducedMotion} onPrimary={onPrimary} onSkip={onSkip} />}
-        {beat === 'finale' && <Finale playing={!reducedMotion} onPrimary={onPrimary} />}
-        {!explains && <Hint act={act} beat={beat} onPrimary={onPrimary} onSkip={onSkip} />}
+        {beat === 'land' && <Explainer act={act} playing={!reducedMotion} onPrimary={onPrimary} onBack={onBack} onSkip={onSkip} />}
+        {beat === 'finale' && <Finale playing={!reducedMotion} onPrimary={onPrimary} onBack={onBack} />}
+        {!explains && <Hint act={act} beat={beat} onPrimary={onPrimary} onBack={onBack} onSkip={onSkip} />}
       </section>
     </div>
   );
 }
 
-function Explainer({ act, playing, onPrimary, onSkip }: { act: EditorTourAct; playing: boolean } & TourCardProps) {
+/** The top row of the Hint and the Explainer: "N of 3", Back right beside it, Skip on the right. */
+function CounterRow({ act, onBack, onSkip }: { act: EditorTourAct } & Pick<TourCardProps, 'onBack' | 'onSkip'>) {
+  return (
+    <div className="flex items-center justify-between leading-none text-muted-foreground">
+      <div className="flex items-center gap-3">
+        <span className="text-[11px] tabular-nums">{act} of {ACT_COUNT}</span>
+        <BackControl onBack={onBack} />
+      </div>
+      <SkipControl onSkip={onSkip} />
+    </div>
+  );
+}
+
+function Explainer({ act, playing, onPrimary, onBack, onSkip }: { act: EditorTourAct; playing: boolean } & TourCardProps) {
   const { title, body, visual, labels } = SCRIPT.acts[act].card;
   return (
     <>
-      <TourVisual visual={visual} labels={labels} playing={playing} />
-      <h2 className="mt-4 text-balance font-serif font-theme-heading text-xl leading-tight text-foreground">
-        <span className="tabular-nums text-muted-foreground">{act} · </span>
-        {title}
-      </h2>
+      <CounterRow act={act} onBack={onBack} onSkip={onSkip} />
+      <div className="mt-3">
+        <TourVisual visual={visual} labels={labels} playing={playing} />
+      </div>
+      <h2 className="mt-4 text-balance font-serif font-theme-heading text-xl leading-tight text-foreground">{title}</h2>
       <p className="mt-1.5 text-pretty text-sm leading-6 text-muted-foreground">{body}</p>
       <div className="mt-4">
         <TourStrip filled={act} labels={SCRIPT.strip} />
       </div>
-      <div className="mt-5 flex items-center justify-between gap-3">
-        <SkipControl onSkip={onSkip} />
+      <div className="mt-5 flex justify-end">
         <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} />
       </div>
     </>
@@ -101,14 +116,15 @@ function Welcome({ onPrimary, onSkip }: TourCardProps) {
   );
 }
 
-function Finale({ playing, onPrimary }: { playing: boolean; onPrimary: () => void }) {
+function Finale({ playing, onPrimary, onBack }: { playing: boolean; onPrimary: () => void; onBack?: () => void }) {
   return (
     <>
       <MinkTitle>{SCRIPT.finale.title}</MinkTitle>
       <div className="mt-6">
         <TourStrip filled={3} labels={SCRIPT.finale.recap} size="large" playing={playing} />
       </div>
-      <div className="mt-7 flex justify-end">
+      <div className="mt-7 flex items-center justify-between gap-3">
+        <BackControl onBack={onBack} />
         <PrimaryButton label={SCRIPT.finale.action} onPrimary={onPrimary} size="default" />
       </div>
     </>
@@ -116,16 +132,15 @@ function Finale({ playing, onPrimary }: { playing: boolean; onPrimary: () => voi
 }
 
 /** Compose: send the prompt (the chat's Send, or Enter). Respond: the reply's Next. */
-function Hint({ act, beat, onPrimary, onSkip }: { act: EditorTourAct; beat: EditorTourBeat } & TourCardProps) {
+function Hint({ act, beat, onPrimary, onBack, onSkip }: { act: EditorTourAct; beat: EditorTourBeat } & TourCardProps) {
   const compose = beat === 'compose';
+  // Only act 1 explains the reply; acts 2 and 3 pass through it, so their card is just the top row and Next.
+  const line = compose ? SCRIPT.hints.compose : act === 1 ? SCRIPT.hints.respond : null;
   return (
     <>
-      <div className="flex items-center justify-between text-[11px] leading-none text-muted-foreground">
-        <span className="tabular-nums">{act} of {ACT_COUNT}</span>
-        <SkipControl onSkip={onSkip} />
-      </div>
-      <div className="mt-2 flex min-h-9 items-center justify-between gap-3">
-        <p className="text-sm text-foreground">{compose ? SCRIPT.hints.compose : SCRIPT.hints.respond}</p>
+      <CounterRow act={act} onBack={onBack} onSkip={onSkip} />
+      <div className={cn('mt-2 flex min-h-9 items-center gap-3', line ? 'justify-between' : 'justify-end')}>
+        {line && <p className="text-sm text-foreground">{line}</p>}
         {compose ? <Kbd>↵</Kbd> : <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} />}
       </div>
     </>
@@ -138,6 +153,20 @@ function PrimaryButton({ label, onPrimary, size = 'sm' }: { label: string; onPri
       {label}
       <Kbd onPrimary>↵</Kbd>
     </Button>
+  );
+}
+
+function BackControl({ onBack }: { onBack?: () => void }) {
+  if (!onBack) return null;
+  return (
+    <button
+      type="button"
+      className="inline-flex items-center gap-0.5 rounded-sm text-xs leading-none text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      onClick={onBack}
+    >
+      <ChevronLeft className="h-3 w-3" aria-hidden />
+      {SCRIPT.controls.back}
+    </button>
   );
 }
 

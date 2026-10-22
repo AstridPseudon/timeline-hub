@@ -13,7 +13,7 @@ export interface EditorTourActScript {
   /** Streamed as Astrid's reply. */
   readonly reply: string;
   readonly toolCards: readonly EditorTourToolCard[];
-  /** The explainer on the act's `land` beat; the card numbers the title itself. */
+  /** The explainer on the act's `land` beat; the card's counter numbers it. */
   readonly card: {
     readonly title: string;
     readonly body: string;
@@ -27,15 +27,19 @@ export interface EditorTourScript {
   readonly acts: Readonly<Record<EditorTourAct, EditorTourActScript>>;
   /** The centred card before act 1: Astrid says hello. */
   readonly welcome: { readonly title: string; readonly body: string; readonly action: string };
-  /** The card's quiet line while the chat has the spotlight: before Send, and while the reply plays. */
+  /** The card's quiet line while the chat has the spotlight: before Send, and (act 1 only) while the reply plays. */
   readonly hints: { readonly compose: string; readonly respond: string };
-  readonly controls: { readonly next: string; readonly skip: string };
+  readonly controls: { readonly next: string; readonly back: string; readonly skip: string };
   /** Three.js frame → still → video: the card's strip, one step per act. */
   readonly strip: readonly [string, string, string];
   readonly finale: { readonly title: string; readonly action: string; readonly recap: readonly [string, string, string] };
 }
 
-/** Prompts keep the owner's wording. Captions keep the tour's three claims and read in about two seconds. */
+/**
+ * Prompts keep the owner's wording. Each act's card title says what the agent just did (it creates and uses
+ * extensions, generates with local models, brings it all together); the body carries the bigger picture.
+ * Captions keep the tour's three claims and read in about two seconds.
+ */
 export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
   acts: {
     1: {
@@ -46,8 +50,8 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
         { name: 'Placed it on the timeline', detail: 'Moon overlook · 10 s' },
       ],
       card: {
-        title: 'Create with your agent + extensions',
-        body: 'Astrid is built so you and your agent can create in all kinds of flexible ways. This is an example of using Three.js, right in your timeline.',
+        title: 'Your agent creates and uses extensions',
+        body: 'Lantern Valley is a live Three.js scene, on your timeline to play, test and give feedback on. You and your agent can create with any extension, or build your own.',
         visual: 'extension',
         labels: ['Three.js', 'extension'],
       },
@@ -60,8 +64,8 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
         { name: 'Qwen Image 2.1 × 2', detail: 'ComfyUI · frame → realistic still' },
       ],
       card: {
-        title: 'Generate with local models',
-        body: 'You can use ComfyUI, Wan2GP or any other inference framework to run models on your own machine, with your agent taking care of all the tricky work.',
+        title: 'Your agent generates with local models',
+        body: 'Qwen Image 2.1 made these realistic frames in ComfyUI, on your own machine. Your agent can run ComfyUI, Wan2GP or any inference framework, and handles the tricky setup.',
         visual: 'frame-to-still',
         labels: ['Frame', 'Qwen Image 2.1'],
       },
@@ -71,16 +75,16 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
       reply: 'MiniMax H3 turned your start and end frames into one 10-second shot that follows the scene’s motion. It’s on the top row, ready to play.',
       toolCards: [{ name: 'MiniMax H3', detail: 'start + end frames · 10 s' }],
       card: {
-        title: 'Production-level creative control',
-        body: 'MiniMax H3 turns your start and end frames into a finished 10-second shot that follows the scene’s motion: ultimate control over your tools and your output.',
+        title: 'Your agent brings it all together',
+        body: 'MiniMax H3 turned your frames into a 10-second shot that follows the Three.js motion. Every input you and your agent create gives you production-level creative control.',
         visual: 'still-to-video',
         labels: ['MiniMax H3', '10 s'],
       },
     },
   },
   welcome: { title: 'Welcome to Astrid', body: 'I’m just going to show you a very quick tour of what Astrid can do.', action: 'OK' },
-  hints: { compose: 'Press Send to ask Astrid', respond: 'See where it lands' },
-  controls: { next: 'Next', skip: 'Skip tour' },
+  hints: { compose: 'Press Send to ask Astrid', respond: 'Your agent uses creative and AI tools to deliver your request' },
+  controls: { next: 'Next', back: 'Back', skip: 'Skip tour' },
   strip: ['Three.js', 'Frames', 'Video'],
   finale: { title: 'Do you get it?', action: 'I got it', recap: ['Agent + extensions', 'Local models', 'Production'] },
 });

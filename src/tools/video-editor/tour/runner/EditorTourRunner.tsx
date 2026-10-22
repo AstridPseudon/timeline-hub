@@ -6,7 +6,7 @@ import { useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared
 import { TourCard } from '../card/TourCard';
 import { TourSpotlight } from './TourSpotlight';
 import { placeCard } from './cardPlacement';
-import { finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
+import { backEditorTour, finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
 import { useSpotlightRects } from './useSpotlightRects';
 import { useTourKeys } from './useTourKeys';
 
@@ -84,7 +84,7 @@ function RunningTour() {
         className="fixed"
         style={{ zIndex: UI_Z_LAYERS.EDITOR_TOUR_CARD, left: position.left, top: position.top, transition: reducedMotion ? 'none' : 'left 420ms cubic-bezier(0.22, 1, 0.36, 1), top 420ms cubic-bezier(0.22, 1, 0.36, 1)' }}
       >
-        <TourCard onPrimary={runEditorTourPrimary} onSkip={finishEditorTour} />
+        <TourCard onPrimary={runEditorTourPrimary} onBack={backEditorTour} onSkip={finishEditorTour} />
       </div>
     </>
   );

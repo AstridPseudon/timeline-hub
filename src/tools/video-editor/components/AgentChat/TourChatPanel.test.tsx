@@ -349,7 +349,7 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
 
     expect(screen.getByText('Thinking...')).toBeInTheDocument();
     expect(composer().placeholder).toBe('Type to queue next message...');
-    advance(1000);
+    advance(450);
     expect(transcript().textContent).toContain(ACT1.reply.slice(0, 20));
     expect(transcript().textContent).not.toContain(ACT1.reply);
     expect(chatReady()).toBe(false);
@@ -402,7 +402,7 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
     expect(sendButton()).toBeEnabled();
 
     act(() => setEditorTourBeat(1, 'respond'));
-    advance(1000);
+    advance(450);
     expect(transcript().textContent).not.toContain(ACT1.reply);
     act(() => skipEditorTourAnimation());
     expect(transcript().textContent).toContain(ACT1.reply);
@@ -445,6 +445,49 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
     expect(screen.queryByRole('button', { name: '[2 actions]' })).not.toBeNull();
     expect(chatReady()).toBe(true);
     expect(screen.queryByText('Thinking...')).toBeNull();
+  });
+
+  it('arriving by Back (instant) shows the compose prompt typed, unsent and sendable, with nothing typing', () => {
+    startAtCompose();
+    render(<AgentChatPanel />);
+    act(() => setEditorTourBeat(1, 'respond'));
+    act(() => skipEditorTourAnimation());
+    act(() => setEditorTourBeat(1, 'compose', true));
+
+    expect(composer().value).toBe(ACT1.prompt);
+    expect(chatReady()).toBe(true);
+    expect(sendButton()).toBeEnabled();
+    expect(getEditorTourState().sent).toBe(false);
+    expect(transcript().textContent).not.toContain(ACT1.prompt);
+
+    advance(5000);
+    expect(composer().value).toBe(ACT1.prompt);
+    fireEvent.click(sendButton());
+    // The runner's watcher (not mounted here) is what moves compose on; the panel only marks it sent.
+    expect(getEditorTourState().sent).toBe(true);
+  });
+
+  it('arriving at respond by Back shows the full reply and every tool card at once, without thinking', () => {
+    startAtCompose();
+    render(<AgentChatPanel />);
+    act(() => setEditorTourBeat(1, 'respond', true));
+
+    expect(transcript().textContent).toContain(ACT1.reply);
+    expect(screen.queryByRole('button', { name: '[2 actions]' })).not.toBeNull();
+    expect(chatReady()).toBe(true);
+    expect(screen.queryByText('Thinking...')).toBeNull();
+  });
+
+  it('plays a normal beat after Back once the user moves forward again', () => {
+    startAtCompose();
+    render(<AgentChatPanel />);
+    act(() => setEditorTourBeat(1, 'respond', true));
+    act(() => setEditorTourBeat(1, 'land'));
+    act(() => setEditorTourBeat(2, 'compose'));
+    expect(composer().value).toBe('');
+    expect(chatReady()).toBe(false);
+    advanceUntil(chatReady);
+    expect(composer().value).toBe(EDITOR_TOUR_SCRIPT.acts[2].prompt);
   });
 
   it('a new run resets the transcript and composer', () => {
