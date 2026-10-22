@@ -99,7 +99,9 @@ def _trim_selector(bundle, parsed):
     # row to its raw owner explicitly; display IDs never encode ownership.
     view = Checkout({})
     view.bundle = copy.deepcopy(bundle)
-    view.bundle.update(shots={}, placements=[])
+    # The lookup mixin also exposes parent-native clips. The synthetic views
+    # below represent every owner as a shot, so retain no second parent source.
+    view.bundle.update(parent={}, shots={}, placements=[])
     owners = ['parent', *('occurrence:' + row['occurrence_id'] for row in bundle.get('placements', []))]
     bindings = {}
     for owner in owners:

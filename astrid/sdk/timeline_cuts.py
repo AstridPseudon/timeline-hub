@@ -33,7 +33,7 @@ import math
 import re
 from typing import Any, Mapping, Sequence
 
-from astrid.core.timeline.astrid_ns import film_intent, read_app
+from astrid.core.timeline.astrid_ns import read_app
 
 __all__ = [
     "build_cut_table",
@@ -481,7 +481,12 @@ def _chapter_labels(bundle: Mapping[str, Any], rows: list[dict[str, Any]], end: 
 
     Renames each row's ``shot`` to its chapter and returns the chapter list; empty when the
     timeline has no labels (then chapters are its shots, as before)."""
-    table = _list(film_intent(_map(_map(bundle.get("parent")).get("config"))).get("chapters"))
+    from astrid.sdk.timeline_intent import film_chapter_labels
+    from astrid.sdk.timeline_restructure import shot_chapters
+
+    if shot_chapters(bundle) is not None:
+        return []  # a film that places several shots: the shots are the chapters (the rows already carry their names)
+    table = _list(film_chapter_labels(bundle))
     starts = {str(_map(row).get("from")): str(_map(row).get("name")) for row in table if _map(row).get("from")}
     if not starts:
         return []

@@ -114,6 +114,7 @@ def _run(
     callers: int,
     launcher_mode: str = "fixture",
     source_manifest: Path | None = None,
+    pinned_launcher: Path | None = None,
 ) -> dict[str, Any]:
     temporary_context = tempfile.TemporaryDirectory(
         prefix="astrid-runtime-reproducer-",
@@ -128,9 +129,7 @@ def _run(
             launcher.write_text(_LAUNCHER, encoding="utf-8")
             launcher.chmod(0o700)
         else:
-            launcher = Path("/Users/peteromalley/.pyenv/shims/astrid-runtime")
-            if not launcher.is_file():
-                raise RuntimeError(f"pinned launcher not found: {launcher}")
+            launcher = _require_pinned_launcher(pinned_launcher)
         state = data_root / "fixture-state"
         if launcher_mode == "fixture":
             state.mkdir()
@@ -151,7 +150,7 @@ def _run(
         environment = os.environ.copy()
         environment["ASTRID_RUNTIME_LAUNCHER"] = str(launcher)
         if launcher_mode == "pinned":
-            manifest = source_manifest or Path(__file__).resolve().parents[2] / ".astrid-data/runtime/source-profiles/astrid.json"
+            manifest = _disposable_manifest(root, source_manifest)
             environment["ASTRID_RUNTIME_SOURCE_MANIFEST"] = str(manifest)
         environment["PYTHONPATH"] = os.pathsep.join(
             [str(Path(__file__).resolve().parents[2]), environment.get("PYTHONPATH", "")]
@@ -268,11 +267,7 @@ def _run(
         }
         manifest_value = None
         if launcher_mode == "pinned":
-            manifest_value = str(
-                source_manifest
-                or Path(__file__).resolve().parents[2]
-                / ".astrid-data/runtime/source-profiles/astrid.json"
-            )
+            manifest_value = str(manifest)
         report = {
             "schema_version": 1,
             "harness": "runtime_lifecycle_reproducer",
@@ -365,35 +360,88 @@ def _terminate_pid(pid: int) -> None:
         pass
 
 
-def _run_recovery_case(case: str, source_manifest: Path | None = None) -> dict[str, Any]:
+def _disposable_manifest(root: Path, source_manifest: Path | None) -> Path:
+    """The source profile the pinned launcher boots: the caller's, else one written for this interpreter.
+
+    ``.astrid-data/runtime/source-profiles/astrid.json`` is a gitignored dev-stack file, absent on a fresh
+    checkout or CI runner, so a default pointing there fails with "source manifest is missing".  A pinned
+    install keeps the Runtime in this interpreter's site-packages, which is what its profile names.
+    """
+    if source_manifest is not None:
+        return source_manifest
+    import astrid_runtime
+
+    repo = Path(__file__).resolve().parents[2]
+    path = root / "source-profile.json"
+    path.write_text(json.dumps({
+        "profile": "astrid",
+        "source_checkout": str(repo),
+        "runtime_checkout": str(Path(astrid_runtime.__file__).resolve().parents[1]),
+        "runtime_environment": str(Path(sys.prefix).resolve()),
+    }), encoding="utf-8")
+    return path
+
+
+def _create_workspace(launcher: Path, data_root: Path, manifest: Path, environment: dict[str, str]) -> None:
+    """A stopped, empty workspace in the disposable support root, so ``ensure_runtime`` has something to start.
+    """
+    subprocess.run(
+        [str(launcher), "workspace", "create", "--profile", "astrid", "--data-root", str(data_root),
+         "--realm-root", str(data_root / "runtime" / "realms" / "recovery-realm"), "--realm-id", "recovery-realm",
+         "--source-manifest", str(manifest), "--json"],
+        env=environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True, timeout=60,
+    )
+
+
+def _require_pinned_launcher(launcher: Path | None) -> Path:
+    """The caller resolves the installed pinned astrid-runtime and passes it in; the harness never guesses a path."""
+    if launcher is None or not launcher.is_file():
+        raise RuntimeError(f"pinned launcher not found: {launcher}")
+    return launcher
+
+
+def _run_worker(command: list[str], environment: dict[str, str], repo: Path, label: str, data_root: Path) -> dict[str, Any]:
+    """One ensure_runtime worker's JSON outcome; a hang or malformed output is reported, with the stderr tail."""
+    try:
+        done = subprocess.run(
+            command, cwd=str(repo), env=environment, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, text=True, check=False, timeout=180,
+        )
+    except subprocess.TimeoutExpired as exc:
+        def tail(value: Any) -> str:
+            return (value.decode("utf-8", "replace") if isinstance(value, bytes) else value or "")[-1500:]
+        log = data_root / "runtime" / "runtime.log"
+        return {"ok": False, "error": {"type": f"{label}_worker_timeout", "message": tail(exc.stdout), "stderr": tail(exc.stderr),
+                                       "runtime_log": tail(log.read_text(errors="replace")) if log.is_file() else None}}
+    try:
+        return json.loads(done.stdout.strip().splitlines()[-1])
+    except (IndexError, json.JSONDecodeError):
+        return {"ok": False, "error": {"type": f"malformed_{label}_output", "message": done.stdout[-500:], "stderr": done.stderr[-1500:]}}
+
+
+def _run_recovery_case(case: str, source_manifest: Path | None = None, pinned_launcher: Path | None = None) -> dict[str, Any]:
     """Exercise pinned launcher repair against a disposable support root."""
     if case not in {"stale", "interrupted"}:
         raise ValueError(f"unsupported recovery case: {case}")
-    launcher = Path("/Users/peteromalley/.pyenv/shims/astrid-runtime")
-    if not launcher.is_file():
-        raise RuntimeError(f"pinned launcher not found: {launcher}")
+    launcher = _require_pinned_launcher(pinned_launcher)
     repo = Path(__file__).resolve().parents[2]
-    manifest = source_manifest or repo / ".astrid-data/runtime/source-profiles/astrid.json"
     temporary_context = tempfile.TemporaryDirectory(prefix="astrid-runtime-recovery-", dir="/private/tmp")
     with temporary_context as temporary:
         root = Path(temporary)
+        manifest = _disposable_manifest(root, source_manifest)
         data_root = root / "support"
         data_root.mkdir()
         environment = os.environ.copy()
         environment["ASTRID_RUNTIME_LAUNCHER"] = str(launcher)
         environment["ASTRID_RUNTIME_SOURCE_MANIFEST"] = str(manifest)
+        # The door's default loopback port belongs to a developer's own Runtime; take an ephemeral one.
+        environment["ASTRID_RUNTIME_DOOR_PORT"] = "0"
         environment["PYTHONPATH"] = os.pathsep.join(
             [str(repo), environment.get("PYTHONPATH", "")]
         ).rstrip(os.pathsep)
+        _create_workspace(launcher, data_root, manifest, environment)
         command = [sys.executable, "-c", _worker_code(data_root, launcher)]
-        first = subprocess.run(
-            command, cwd=str(repo), env=environment, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, text=True, check=False, timeout=30,
-        )
-        try:
-            first_outcome = json.loads(first.stdout.strip().splitlines()[-1])
-        except (IndexError, json.JSONDecodeError):
-            first_outcome = {"ok": False, "error": {"type": "malformed_initial_output", "message": first.stdout[-500:]}}
+        first_outcome = _run_worker(command, environment, repo, "initial", data_root)
         discovery_path = data_root / "runtime" / "discovery.json"
         initial_discovery = json.loads(discovery_path.read_text(encoding="utf-8")) if discovery_path.is_file() else {}
         initial_pid = int(initial_discovery.get("pid") or 0)
@@ -416,14 +464,7 @@ def _run_recovery_case(case: str, source_manifest: Path | None = None) -> dict[s
                 "runtime_instance_id": stale.get("runtime_instance_id", "partial"),
                 "realm_id": stale.get("active_realm", ""),
             }), encoding="utf-8")
-        recovered = subprocess.run(
-            command, cwd=str(repo), env=environment, stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE, text=True, check=False, timeout=30,
-        )
-        try:
-            recovered_outcome = json.loads(recovered.stdout.strip().splitlines()[-1])
-        except (IndexError, json.JSONDecodeError):
-            recovered_outcome = {"ok": False, "error": {"type": "malformed_recovery_output", "message": recovered.stdout[-500:]}}
+        recovered_outcome = _run_worker(command, environment, repo, "recovery", data_root)
         final_discovery = json.loads(discovery_path.read_text(encoding="utf-8")) if discovery_path.is_file() else {}
         final_pid = int(final_discovery.get("pid") or 0)
         lock_paths = sorted(data_root.glob("runtime/realms/*/owner.lock"))
@@ -475,14 +516,21 @@ def main() -> int:
     parser.add_argument("--launcher", choices=("fixture", "pinned"), default="fixture")
     parser.add_argument("--recovery-case", choices=("stale", "interrupted"))
     parser.add_argument("--source-manifest", type=Path)
+    parser.add_argument(
+        "--pinned-launcher",
+        type=Path,
+        help="path to the installed astrid-runtime; required for --launcher pinned and --recovery-case",
+    )
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     if not 2 <= args.callers <= 10:
         parser.error("--callers must be between 2 and 10")
+    if (args.recovery_case or args.launcher == "pinned") and args.pinned_launcher is None:
+        parser.error("--pinned-launcher is required for --launcher pinned and --recovery-case")
     report = (
-        _run_recovery_case(args.recovery_case, args.source_manifest)
+        _run_recovery_case(args.recovery_case, args.source_manifest, args.pinned_launcher)
         if args.recovery_case
-        else _run(args.mode, args.callers, args.launcher, args.source_manifest)
+        else _run(args.mode, args.callers, args.launcher, args.source_manifest, args.pinned_launcher)
     )
     rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.output:

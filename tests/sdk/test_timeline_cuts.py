@@ -111,13 +111,9 @@ def test_render_groups_rows_under_shots():
     assert timecode(165.9, 30) == "00:02:45:27"
 
 
-def test_summary_merges_consecutive_same_name_chapters_and_counts_all_cuts():
+def test_summary_of_a_film_with_several_shots_lists_the_shots_as_chapters_and_ignores_labels():
     bundle = _bundle()
-    bundle["parent"]["config"]["chapters"] = [
-        {"name": "04 BACK TO WORK", "from": "c1"},
-        {"name": "04 BACK TO WORK", "from": "c2"},
-        {"name": "05 OUTRO", "from": "c4"},
-    ]
+    bundle["parent"]["config"]["chapters"] = [{"name": "STALE", "from": "c1"}, {"name": "STALE 2", "from": "c4"}]
     for clips in (bundle["shots"]["intro"]["internal_timeline"]["clips"],
                   bundle["shots"]["outro"]["internal_timeline"]["clips"]):
         for clip in clips:
@@ -128,10 +124,9 @@ def test_summary_merges_consecutive_same_name_chapters_and_counts_all_cuts():
 
     summary = render_summary(build_cut_table(bundle), title="Timeline T")
     assert "2 chapters · 4 cuts" in summary
-    assert any("04 BACK TO WORK" in line and "0.00–5.00" in line and "3 cuts" in line
-               for line in summary.splitlines())
-    assert any("05 OUTRO" in line and "5.00–8.00" in line and "1 cuts" in line
-               for line in summary.splitlines())
+    assert "STALE" not in summary
+    assert any("01 INTRO" in line and "0.00–5.00" in line and "3 cuts" in line for line in summary.splitlines())
+    assert any("02 OUTRO" in line and "5.00–8.00" in line and "1 cuts" in line for line in summary.splitlines())
 
 
 def test_picture_bed_falls_back_to_the_widest_visual_track():

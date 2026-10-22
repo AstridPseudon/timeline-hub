@@ -1689,6 +1689,45 @@ def _acquire_scope_admission(scope_root: Path, *, timeout: float) -> int:
 class RoleBoundCustodyBroker:
     """One-role broker whose sealed durable ledger is later signal authority."""
 
+    # Declared on the class, not inferred from __init__: on every platform but Darwin __init__
+    # raises before assigning them, so mypy treats the assignments as unreachable and could not
+    # type their readers (has-type) on Linux CI.
+    launch_parent: Any
+    retain_channel: bool
+    channel: socket.socket | None
+    role: str
+    identity_provider: Callable[[int], Mapping[str, object] | None]
+    timeout: float
+    authority_journal: Path | None
+    authority_scope_root: Path | None
+    _authority_scope_descriptor: int | None
+    _authority_scope_guard: threading.Lock
+    run_id: str
+    root: Path
+    journal_path: Path
+    ledger_path: Path
+    cleanup_actor: AuthenticatedCleanupActor
+    role_authority: RoleCustodyAuthority
+    owner_epoch: str
+    custody_generation: int
+    socket_root: Path
+    socket_path: Path
+    listener: socket.socket
+    sequence: int
+    chain_head: str | None
+    state: str
+    registration: dict[str, object] | None
+    ack: dict[str, object] | None
+    error: BaseException | None
+    _post_exec_authority_validated: bool
+    _release_attempted: bool
+    _release_sent: bool
+    _cleanup_deadline: float | None
+    _observation_phase: str
+    _launch_pid: int | None
+    _ready: threading.Event
+    _thread: threading.Thread
+
     def __init__(
         self,
         *,
@@ -1708,7 +1747,7 @@ class RoleBoundCustodyBroker:
             raise CustodyError("Darwin audit-token custody is unavailable")
         self.launch_parent = launch_parent
         self.retain_channel = retain_channel
-        self.channel: socket.socket | None = None
+        self.channel = None
         self.role = role
         self.identity_provider = identity_provider
         self.timeout = timeout
@@ -1722,7 +1761,7 @@ class RoleBoundCustodyBroker:
         )
         if (self.authority_journal is None) != (self.authority_scope_root is None):
             raise CustodyError("custody authority journal and scope must be configured together")
-        self._authority_scope_descriptor: int | None = None
+        self._authority_scope_descriptor = None
         self._authority_scope_guard = threading.Lock()
         self.run_id = _digest_bytes(os.urandom(32))
         ledger_root.mkdir(parents=True, exist_ok=False, mode=0o700)
@@ -1773,17 +1812,17 @@ class RoleBoundCustodyBroker:
                 pass
             raise
         self.sequence = 0
-        self.chain_head: str | None = None
+        self.chain_head = None
         self.state = "accepting"
-        self.registration: dict[str, object] | None = None
-        self.ack: dict[str, object] | None = None
-        self.error: BaseException | None = None
+        self.registration = None
+        self.ack = None
+        self.error = None
         self._post_exec_authority_validated = False
         self._release_attempted = False
         self._release_sent = False
-        self._cleanup_deadline: float | None = None
+        self._cleanup_deadline = None
         self._observation_phase = "accept"
-        self._launch_pid: int | None = None
+        self._launch_pid = None
         self._ready = threading.Event()
         self._thread = threading.Thread(target=self._serve, daemon=True)
         try:
@@ -2630,10 +2669,14 @@ class _CommandInventoryOwner:
                     self.helpers[frame['operation_id']] = process
             if process is not None:
                 try:
-                    if process.poll() is None:
-                        terminate_tree(process)
-                    process.wait(timeout=5)
-                    verify_tree_absent(process)
+                    try:
+                        if process.poll() is None:
+                            terminate_tree(process)
+                    finally:
+                        # Termination/census uncertainty cannot let the owner
+                        # abandon its direct child or report a settled helper.
+                        process.wait(timeout=None)
+                        verify_tree_absent(process)
                 except BaseException as cleanup_error:
                     self.error = cleanup_error
             self.error = self.error or error
@@ -2711,6 +2754,8 @@ class _CommandInventoryOwner:
                 if channel is not None:
                     channel.close()
                 self.done.set()
+        # A daemon: the owner must never hold the launcher open behind a detached child (the pack host).
+        # The delegated helper is still reaped by serve()'s own finally before the thread ends.
         self.thread = threading.Thread(target=serve, name='astrid-command-inventory', daemon=True)
         self.thread.start()
 

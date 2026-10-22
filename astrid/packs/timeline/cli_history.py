@@ -7,7 +7,13 @@ from dataclasses import asdict
 from typing import Any
 
 from astrid.sdk.timeline._common import TimelineEditError
-from astrid.sdk.timeline.revisions import Revision, RuntimeRevisions, resolve_revision, split_ref
+from astrid.sdk.timeline.revisions import (
+    Revision,
+    RuntimeRevisions,
+    resolve_revision,
+    short_revision,
+    split_ref,
+)
 
 REASON = (
     "earlier revisions: this Runtime cannot list them (Runtime ask: composition revisions need "
@@ -20,10 +26,7 @@ def _store(parsed: Any) -> RuntimeRevisions:
 
 
 def _short(revision: Revision) -> str:
-    for prefix in ("authoring-parent-revision-", "astrid.editor.timeline.", "restore-"):
-        if revision.id.startswith(prefix):
-            return revision.id[len(prefix):][:8]
-    return revision.id[:8]
+    return short_revision(revision.id)
 
 
 def _row(revision: Revision) -> str:

@@ -9,7 +9,7 @@ Chat and other service logs (`service-*.log`) are excluded from the bundle.
 
 ## Before you start
 
-- Use Chrome or Edge. Safari and Firefox are untested (see [Known gaps](#known-gaps)).
+- Use Chrome or Edge. Safari cannot reach Astrid (WebKit blocks an https page from calling `http://127.0.0.1`; checked 21 Oct with Playwright WebKit 26.4, real Safari not yet confirmed). Firefox reached the health endpoint from astrid.haus (Playwright Firefox 150: 200, CORS-readable) but is not otherwise tested.
 - macOS and Linux: use Terminal. Windows: use **Windows PowerShell** (not Command Prompt).
 - You don't need administrator rights. Don't run the line with `sudo` or "Run as administrator".
 - Use a computer where Astrid holds nothing you need. The uninstall journey deletes Astrid's data at the end.
@@ -629,8 +629,8 @@ These are known. Report what you see, but don't stop testing for them.
 **Every OS**
 
 - Chrome's local-network permission is the browser's own prompt, and its wording varies by Chrome version. If you
-  block it, only the two steps in site settings undo that. Only Chrome and Edge are expected to work; Safari and
-  Firefox are untested.
+  block it, only the two steps in site settings undo that. Chrome and Edge are expected to work. Safari is blocked
+  (see Before you start); Firefox reached the health endpoint but is otherwise untested.
 - The install line doesn't set up a GPU engine.
 - The engine idle window defaults to 10 minutes. It can be changed in the service settings file under [Where things
   live](#where-things-live).

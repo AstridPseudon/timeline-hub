@@ -44,6 +44,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         self.fps = bundle_fps(bundle) or 30.0
         self.notes: list[str] = []
         self.report: list[str] = []  # what the last re-flow did, in plain words
+        self.head_moved_to: str | None = None  # set by Checkout.draft when a reused copy's base is behind the head
         self._mcache: dict[str, Any] | None = None
         # Re-flow keeps the music's ending: the bed is cut at a bar with a crossfade so it ends on the film's
         # end ("keep_end"). "plays_on" keeps the bed whole, as it was before (the picture moves against it).
@@ -401,6 +402,8 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         path = _store.draft_path(project_id, timeline_id, name)
         if path.is_file() and not fresh:
             tl = cls.load(path)
+            # A reused copy keeps the base it was made from; remember the head it no longer matches (no extra read).
+            tl.head_moved_to = _head if _head and tl.base_revision != _head else None
         else:
             fetched = _store.fetch_bundle(project, timeline, client=client)
             intent.migrate(fetched)  # checkout: legacy intent -> app.astrid in the working copy (its pinned base copies are migrated too, so the move is not an edit; the published revision is untouched)

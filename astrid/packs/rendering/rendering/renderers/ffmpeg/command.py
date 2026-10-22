@@ -288,7 +288,7 @@ def build_filter_graph(
             filters.append(
                 f"[{inp}:v]trim=start={start:.6f}:end={end:.6f},"
                 "setpts=PTS-STARTPTS,"
-                f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+                f"scale={width}:{height}:force_original_aspect_ratio=decrease:{_COLOUR_SCALE},"
                 f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,"
                 f"fps={fps},format=yuv420p[{label}]"
             )
@@ -447,6 +447,14 @@ def _asset_input_argv(inputs: RenderCommandInputs) -> list[str]:
     return argv
 
 
+# The film is BT.709, limited range, and says so. ffmpeg tags a bare scale with the matrix of the data (BT.601 for an
+# untagged source) and leaves the primaries and transfer unspecified; a player that finds the description incomplete
+# decodes an HD film as BT.709 whatever the matrix says (Chrome does), so every saturated colour in it shifts. The
+# scale converts to the BT.709 matrix and the encoder tags the whole description.
+_COLOUR_SCALE = "out_color_matrix=bt709:out_range=tv"
+_COLOUR_TAGS = ("-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv")
+
+
 def build_render_command_from_inputs(inputs: RenderCommandInputs) -> list[str]:
     """Return FFmpeg argv for already-resolved, strictly supported inputs."""
     filters, copy_video_input = build_filter_graph(inputs)
@@ -471,7 +479,7 @@ def build_render_command_from_inputs(inputs: RenderCommandInputs) -> list[str]:
             if copy_video_input is None
             else []
         ),
-        *(["-pix_fmt", "yuv420p"] if copy_video_input is None else []),
+        *(["-pix_fmt", "yuv420p", *_COLOUR_TAGS] if copy_video_input is None else []),
         *(
             ["-c:a", "aac", "-b:a", "192k"]
             if has_audio
