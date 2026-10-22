@@ -19,6 +19,8 @@ _COVERAGE_CACHE: dict[str, dict[str, Any]] = {}
 # Keep this narrow semantic projection here until those unowned declarations
 # are joined; a declaration present in the V3 manifest always takes priority.
 _COVERAGE_COMPAT: dict[str, dict[str, Any]] = {
+    # Generic media fills the canvas on any track; clearing its asset leaves an empty background.
+    "media": {"coverage": "picture", "background_unless": ["asset"]},
     "am-snap-plate": {"coverage": "picture", "background_unless": ["asset", "params.src"]},
     "am-footage": {"coverage": "picture"},
     "am-presenter": {"coverage": "picture"},

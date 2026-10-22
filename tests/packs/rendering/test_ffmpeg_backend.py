@@ -319,10 +319,13 @@ def test_build_render_command_encodes_visual_only_without_synthesizing_silence(
     filters = argv[argv.index("-filter_complex") + 1]
     assert (
         "[0:v]trim=start=0.000000:end=2.000000,setpts=PTS-STARTPTS,"
-        "scale=1920:1080:force_original_aspect_ratio=decrease,"
+        "scale=1920:1080:force_original_aspect_ratio=decrease:out_color_matrix=bt709:out_range=tv,"
         "pad=1920:1080:(ow-iw)/2:(oh-ih)/2,"
         "fps=30,format=yuv420p[v0]" in filters
     )
+    # The film says what it is: BT.709, limited range, the whole description (an incomplete one is decoded as BT.709 by Chrome).
+    colour = argv[argv.index("-colorspace"):argv.index("-colorspace") + 8]
+    assert colour == ["-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv"]
     assert "[v0]concat=n=1:v=1:a=0[vout]" in filters
     assert "anullsrc" not in filters
     assert "[aout]" not in argv

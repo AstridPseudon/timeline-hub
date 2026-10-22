@@ -2,8 +2,8 @@
 name: rendering
 description: >
   Author, inspect, edit, preview, render, and open runtime-owned Astrid
-  timelines, including Remotion output and render-time animation, transition,
-  and effect elements.
+  timelines, including Remotion output, explorable Three.js worlds, and
+  render-time animation, transition, and effect elements.
 ---
 
 # Timeline editing
@@ -23,23 +23,32 @@ When the request also needs
 new generated media (for example Foley audio), use [creative work](../../_core/docs/creative-work/SKILL.md)
 to find its generation capability, then return here to assemble the result.
 
-## Live Scenes extension route
+## Worlds (Three.js live scenes)
 
-When the task concerns native Three.js scene code or a
-`haus.astrid.liveScene` clip, first confirm that the corresponding
-registered extension/operation is active; installed documentation alone does
-not make the capability available. Then read [Live-scene authoring and
-conversion](references/live-scenes-authoring.md) for the supported public
-Astrid App read/exact-edit/publish loop, Runtime-owned package revisions, hosted
-lifecycle, source-time mapping, and bounded prepared-scene admission/export
-boundaries. Use the [two-shot Three.js template](templates/two-shot-threejs.ts)
-for the minimal reusable-set, animated-subject example with named camera cuts.
+When the task concerns native Three.js scene code, a world, or a
+`haus.astrid.liveScene` clip, first confirm that the Three.js Live Editor
+extension and its operations are active; installed documentation alone does
+not make the capability available.
 
-Ordinary clip placement, trim, repetition, playback rate, and audio remain on
-this general timeline route; use scene source/data for internal action or
-camera timing. Maple remains a continuous take. This extension route does not
-add a camera UI, retiming engine, scene-audio subsystem, generic ZIP importer,
-or second timeline authority.
+The contract: **worlds are always explorable; shots live within them.** A
+world is one self-contained HTML entry implementing `window.astridScene`. It
+declares `explore` (required: where the free view starts and may go), its
+`events` (in world time) and its `shots` (named source-time ranges, each
+with an optional `worldStart`). Its `render` draws the authored shot for a
+`sourceTime`, or exactly the World Explorer's `view` at `worldTime`. Before
+creating, converting or editing a world, read
+[Worlds: authoring explorable live scenes](references/worlds-authoring.md). It
+covers the four layers (world constructor → world state from world time,
+including events → shots → free view), holding up from any viewpoint,
+software-GL performance, the package contract, admission, and the
+read/exact-edit/publish loop. Start from the
+[world template](templates/world-template.ts).
+
+Ordinary clip placement, trim, repetition, playback rate and audio remain on
+this general timeline route. Events and shots live in the world's source.
+Maple Hollow is a continuous take (one implicit shot) and does not declare
+`explore` yet. This route does not add a retiming engine, a scene-audio
+subsystem, a generic ZIP importer or a second timeline authority.
 
 Treat the connected workspace runtime as the sole authority for projects,
 timeline documents, versions, media objects, tasks, runs, and render outputs.
@@ -69,10 +78,36 @@ The canvas and frame rate are stored in the parent-composition config at
 key is the supported retry path. The retired whole-document `timelines create`
 route and local timeline files are not authorities.
 
-## Visualize before rendering
+## Point the user to the editor; render only on request
 
-Start review with the canonical structural view, then use the public
-visualizer before spending a render attempt:
+After any timeline edit, publish, then give the user the editor link and the
+times to look at. Do not render, open a fresh render, or capture composed
+frames as a step of the work. Render, or run `timelines visualize` for composed
+frames, only when the user asks for a render, an exported file, or frames.
+
+To check your own edit without rendering, read timing and structure with
+`timelines show --as script` and declared placement with
+`timelines visualize --mode inputs`.
+
+Build the link from two ids:
+
+```text
+https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-id>
+```
+
+- `<project-id>` is `project_id` from `projects list --json` (the 32-hex id,
+  such as `811a657af5fe43e4b2b48a670de1f3e8`).
+- `<timeline-id>` is `timeline_id` from `timelines list --project <project>
+  --json`. Named timelines use their slug (`almost-ready-no-first-second-v2`);
+  others use a ULID. The editor also resolves a project slug, and a timeline
+  slug or ULID, to these ids, but use the ids.
+
+Each published revision shows in the editor at once.
+
+## Visualize (on request)
+
+The structural view and `--mode inputs` are render-free. Composed frames are
+for when the user asks for frames:
 
 ```bash
 python3 -m astrid timelines show <timeline> --project <project> --json
@@ -80,7 +115,7 @@ python3 -m astrid timelines visualize <timeline> --project <project> \
   --mode inputs --format md --format png --json
 ```
 
-Look at the film the way you mean to, one page each (pass a window and the view follows it):
+When the user asks for frames, look at the film the way they mean to, one page each (pass a window and the view follows it):
 
 ```bash
 python3 -m astrid timelines visualize <timeline> --project <project>                          # overview: a tile per cut
@@ -110,7 +145,7 @@ plus `rendering.render` with `timeline_ref`; there is intentionally no
 
 ## Render and validate output
 
-When a rendered export is required, use the supported runtime-owned route:
+Only when the user asks for a render or an exported file. When one is required, use the supported runtime-owned route:
 
 ```bash
 python3 -m astrid timelines render <timeline> --project <project> \
@@ -171,7 +206,7 @@ For repeatable draft narration synchronization, use `video_editing.sync_draft_vo
 
 ### CLI checks and journal
 
-Use `timelines check <timeline> --project <project> --sweep` for bounded checks across every cut. Changed edits sweep after a reflow, more than three changed cuts, or explicit `--sweep`; `--no-sweep` suppresses the sweep. A sweep returns 0 for expected results, 1 for unexpected picture changes, or 2 when capture was not made. An unchanged edit returns 3 without sweeping.
+Use `timelines check <timeline> --project <project> --sweep` for bounded checks across every cut. Changed edits sweep after a reflow, more than three changed cuts, or explicit `--sweep`; `--no-sweep` suppresses the sweep, which captures composed frames; pass it unless the user asks for frames. A sweep returns 0 for expected results, 1 for unexpected picture changes, or 2 when capture was not made. An unchanged edit returns 3 without sweeping.
 
 Use `timelines log <timeline> --project <project> --verify --json` to verify the journal hash chain. A broken chain returns 1 with `error.code: validation_error`; a missing journal returns 0. See the [timeline editing guide](../../../../docs/timeline-editing-guide.md) for filters and details.
 
@@ -423,7 +458,7 @@ Keep the returned `head`, parent/revision identity, candidate digest, and
 render identity together. A cursor is valid only for that complete scope;
 reopen the composition after a head change instead of continuing an old page.
 
-For visual continuity review, use the filmstrip. It composes the requested
+When the user asks for visual continuity review, use the filmstrip. It composes the requested
 frames from the exact saved canonical revision, including when a matching
 successful MP4 exists. `--render-run` can select the revision to inspect, but
 the MP4 never supplies frame pixels. The result is a PNG contact sheet,
@@ -480,7 +515,7 @@ results are intentional: open the numbered pages in order, then rerun with
 The frame index records the effective page size, page count, row ranges, and
 copyable navigation guidance.
 
-For a complete review pass, use `--show output,inputs,text,audio --every 5`.
+When the user asks for a complete review pass, use `--show output,inputs,text,audio --every 5`.
 The command reports the primary PNG, all numbered pages, and a bounded inspect
 command. Open the pages in order; then use `--range 0..25 --every 0.25 --detail`
 to zoom into one window, `--shot first` (or `--shot N`) to focus an authored
@@ -787,12 +822,8 @@ still use their current path. Stream copy is disabled for this overlay path.
 
 ## Render and open
 
-Before starting or repeating a preview render, ask whether the user is reviewing
-the timeline in the live interface, unless that is already established in the
-conversation. Remember their answer for the session. If they are using the live
-interface, save and validate edits for live review; do not render previews unless
-they explicitly request an export or rendered preview. Only use preview renders
-for the feedback cycle when they are not using the live interface. A previous
+Only when the user asks for a render, an exported file, or a rendered preview.
+Otherwise publish and give the editor link (see the section above). A previous
 render does not by itself authorize re-rendering after subsequent edits.
 
 When a preview render is needed (including reference-frame and storyboard
@@ -844,7 +875,8 @@ python3 -m astrid runs open <run-id> --project <project>
 ```
 
 Use `--default-timeline` for the project's default. If no matching successful
-render exists, render first or inspect `runs list/show`.
+render exists, inspect `runs list/show`, and render only if the user asked
+for one.
 
 The [render capability contract](../actions/render/STAGE.md) covers detailed
 SDK inputs and outputs; the [visualization contract](../actions/timeline_visualize/STAGE.md)

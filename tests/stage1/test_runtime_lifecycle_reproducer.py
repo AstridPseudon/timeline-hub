@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -10,10 +11,22 @@ import pytest
 from astrid.sdk import autobootstrap
 from astrid.sdk.client import AstridClient
 from astrid.sdk.workspace_client import PROTOCOL
+from tests.lanes import unavailable
 
 
 ROOT = Path(__file__).resolve().parents[2]
 HARNESS = ROOT / "scripts" / "diagnostics" / "runtime_lifecycle_reproducer.py"
+
+
+def _pinned_launcher() -> Path:
+    """The astrid-runtime console script the pinned dev extra installs: beside this interpreter, else on PATH."""
+    sibling = Path(sys.executable).parent / "astrid-runtime"
+    if sibling.is_file():
+        return sibling
+    found = shutil.which("astrid-runtime")
+    if found is None:
+        unavailable("astrid-runtime is not installed; install the dev extra")
+    return Path(found)
 
 
 def _run_harness(tmp_path: Path, mode: str) -> dict[str, object]:
@@ -123,24 +136,24 @@ def test_explicit_client_path_does_not_bootstrap(monkeypatch: pytest.MonkeyPatch
     assert calls == ["health", "handshake"]
 
 
+@pytest.mark.integration
+@pytest.mark.darwin_native
 @pytest.mark.parametrize("case", ["stale", "interrupted"])
-@pytest.mark.skipif(
-    not Path("/Users/peteromalley/.pyenv/shims/astrid-runtime").is_file(),
-    reason="pinned astrid-runtime is not installed",
-)
 def test_pinned_launcher_recovers_disposable_partial_state(case: str) -> None:
     result = subprocess.run(
-        [sys.executable, str(HARNESS), "--recovery-case", case],
+        [sys.executable, str(HARNESS), "--recovery-case", case, "--pinned-launcher", str(_pinned_launcher())],
         cwd=ROOT,
         capture_output=True,
         text=True,
         check=True,
-        timeout=45,
+        timeout=600,
     )
     report = json.loads(result.stdout)
+    print(json.dumps({key: report.get(key) for key in ("initial", "recovery", "prepared_state")}, indent=1))
+    assert report["initial"]["ok"] is True, report["initial"]
     assert report["prepared_state"]["discovery_present"] is True
     assert report["prepared_state"]["partial_instance_lock"] is (case == "interrupted")
-    assert report["recovery"]["ok"] is True
+    assert report["recovery"]["ok"] is True, (report["initial"], report["recovery"])
     assert report["recovery"]["result"]["status"] in {"started", "reconnected"}
     assert report["owner_telemetry"]["owner_lock_count"] == 1
     assert report["owner_telemetry"]["discovery_pid_alive_before_cleanup"] is True

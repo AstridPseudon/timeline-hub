@@ -614,8 +614,8 @@ def _group_survivors(pgid: int, *, leader_birth: str | None = None) -> list[int]
     return members
 
 
-def _stop_group(pgid: int, *, grace: float | None = None, leader_birth: str | None = None) -> None:
-    """TERM, wait, KILL the members of the group a registered leader anchored.
+def _stop_group(pgid: int, *, grace: float | None = None, leader_birth: str | None = None) -> bool:
+    """TERM, wait, KILL the anchored group; return whether SIGKILL was sent.
 
     The leader started its own session, so the group id equals the registered pid.
     Its birth token anchors the group. If the pid now names another incarnation,
@@ -624,13 +624,16 @@ def _stop_group(pgid: int, *, grace: float | None = None, leader_birth: str | No
     if pgid <= 1 or pgid == platform.process_group(os.getpid()):
         raise PackHostBootstrapError("refusing to signal an unsafe process group")
     grace = _GROUP_GRACE_SECONDS if grace is None else grace
+    forced = False
     for sig, wait in ((platform.TERM, grace), (platform.KILL, 3.0)):
         if not _group_survivors(pgid, leader_birth=leader_birth):
-            return
+            return forced
         if not leader_birth:
             raise PackHostBootstrapError("registered host group lacks a leader birth anchor")
         try:
             signal_observed_group(pgid, sig, leader_birth=leader_birth)
+            if sig == platform.KILL:
+                forced = True
         except ProcessLookupError:
             pass
         except PermissionError as exc:
@@ -640,15 +643,17 @@ def _stop_group(pgid: int, *, grace: float | None = None, leader_birth: str | No
             time.sleep(0.05)
     if _group_survivors(pgid):
         raise PackHostBootstrapError("prior host group survived SIGKILL; replacement blocked")
+    return forced
 
 
-def _terminate_old_host(state: Mapping[str, Any]) -> None:
-    """Stop the host a registration names (and any orphans of its group)."""
+def _terminate_old_host(state: Mapping[str, Any]) -> bool:
+    """Stop the registered host group and return whether shutdown sent SIGKILL."""
     status = _registered_host_status(state)
     if status == "foreign":
         raise PackHostBootstrapError("registered pid is not this Astrid pack host; not signalled")
     if status != "reused":
-        _stop_group(int(state["pid"]), leader_birth=str(state.get("process_birth_id") or "") or None)
+        return _stop_group(int(state["pid"]), leader_birth=str(state.get("process_birth_id") or "") or None)
+    return False
 
 
 def _retire_host_locked(state: Mapping[str, Any]) -> None:
@@ -1555,13 +1560,17 @@ def ensure_pack_host(
                 raise PackHostBootstrapError("prior Remotion host lacks launch validation; reconfigure explicitly")
             if reference is not None:
                 from astrid.core.env_vars import ASTRID_REMOTION_PROJECT_DIR
-                from astrid.core.rendering.remotion_runtime import _validated_runtime
+                from astrid.core.rendering.remotion_runtime import (
+                    RemotionValidationError,
+                    _validated_runtime,
+                )
                 if ready.get("remotion_validation") != reference:
                     raise PackHostBootstrapError("prior Remotion launch validation marker differs")
                 try:
                     _validated_runtime(Path(reuse_env[ASTRID_REMOTION_PROJECT_DIR]),
                                        environment={**reuse_env, **reference}, python_executable=host_python)
-                except (RuntimeError, OSError, ValueError, TypeError, ImportError, subprocess.SubprocessError):
+                except (KeyError, RemotionValidationError, RuntimeError, OSError, ValueError, TypeError, ImportError,
+                        subprocess.SubprocessError):
                     # This caller's render context wasn't validated by that launch
                     # (different PATH, packs, interpreter...): replace the host below,
                     # when idle, instead of refusing.
