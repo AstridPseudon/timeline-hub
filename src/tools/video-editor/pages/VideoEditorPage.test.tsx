@@ -1377,7 +1377,7 @@ describe("VideoEditorPage", () => {
     renderPage('/tools/video-editor?project=project-r&timeline=timeline-r');
 
     expect(await screen.findByTestId('runtime-connector-alert')).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: 'Timelines unavailable' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Timelines unavailable', hidden: true })).toBeInTheDocument();
     expect(state.runtimeCtor).not.toHaveBeenCalled();
   });
 
