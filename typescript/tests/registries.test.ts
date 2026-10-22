@@ -121,6 +121,55 @@ test('component capability receives the exact renderer-selected asset, including
   assert.equal(JSON.stringify(selectedAssets), before);
 });
 
+test('opaque meta does not change scene timing, asset selection, or rendered output', () => {
+  const baseTrack: TrackDefinition = {id: 'visual', kind: 'visual', label: 'Visual'};
+  const baseClips: TimelineClip[] = [
+    {id: 'first', track: baseTrack.id, at: 0, hold: 1, asset: 'selected', clipType: 'asset-probe'},
+    {id: 'second', track: baseTrack.id, at: 1, hold: 1, asset: 'other', clipType: 'asset-probe'},
+  ];
+  const baseAssets: AssetRegistry = {assets: {
+    selected: {file: 'https://example.test/selected.mp4', type: 'video/mp4', resolution: '1920x1080'},
+    other: {file: 'https://example.test/other.mp4', type: 'video/mp4', resolution: '1920x1080'},
+  }};
+  const meta = {
+    'com.other.tool': {
+      foreign_asset_id: 'other',
+      foreign_clip_id: 'second',
+      nested: {asset: 'missing'},
+      ids: ['selected', 'other'],
+      nullable: null,
+    },
+    'org.example.notes': {reviewed: true},
+  };
+  const opaqueTrack: TrackDefinition = {...baseTrack, meta};
+  const opaqueClips: TimelineClip[] = baseClips.map(clip => ({...clip, meta}));
+  const opaqueAssets: AssetRegistry = {assets: Object.fromEntries(
+    Object.entries(baseAssets.assets).map(([id, asset]) => [id, {...asset, meta}]),
+  )};
+  const AssetProbe = ({assetEntry}: EffectProps) => createElement('b', {'data-file': assetEntry?.file}, 'asset');
+  const registries = {effects: {'asset-probe': AssetProbe}};
+  const baseTimeline = {theme: 'default', tracks: [baseTrack], clips: baseClips};
+  const opaqueTimeline = {theme: 'default', tracks: [opaqueTrack], clips: opaqueClips, meta};
+  const before = JSON.stringify({timeline: opaqueTimeline, assets: opaqueAssets});
+  const baseScene = prepareCompositionScene([{track: baseTrack, clips: baseClips}], baseAssets,
+    30, theme, 1920, 1080, undefined, undefined, {}, '', {}, registries);
+  const opaqueScene = prepareCompositionScene([{track: opaqueTrack, clips: opaqueClips}], opaqueAssets,
+    30, theme, 1920, 1080, undefined, undefined, {}, '', {}, registries);
+  assert.deepEqual(opaqueScene.tracks.map(track => track.prepared), baseScene.tracks.map(track => track.prepared));
+  for (const [frame, clipId] of [[0, 'first'], [30, 'second'], [59, 'second']] as const) {
+    const baseFrame = querySceneFrame(baseScene, frame);
+    const opaqueFrame = querySceneFrame(opaqueScene, frame);
+    assert.deepEqual(opaqueFrame, baseFrame);
+    assert.deepEqual(opaqueFrame.layers.map(layer => layer.clipId), [clipId]);
+  }
+  const baseMarkup = render(createElement(TimelineComposition, {timeline: baseTimeline, assets: baseAssets, registries}), DEFAULT_THEME, registries);
+  const opaqueMarkup = render(createElement(TimelineComposition, {timeline: opaqueTimeline, assets: opaqueAssets, registries}), DEFAULT_THEME, registries);
+  assert.equal(opaqueMarkup, baseMarkup);
+  assert.match(opaqueMarkup, /selected\.mp4/);
+  assert.doesNotMatch(opaqueMarkup, /other\.mp4/);
+  assert.equal(JSON.stringify({timeline: opaqueTimeline, assets: opaqueAssets}), before);
+});
+
 test('host animation maps keep defaults, phase validation and unknown errors scoped', () => {
   const custom = ({text}: HookAnimationProps) => ({text, content: 'host animation'});
   const registries: CompositionRegistries = {animations: {custom}, animationDefaults: {custom: {durationFrames: 3}},
