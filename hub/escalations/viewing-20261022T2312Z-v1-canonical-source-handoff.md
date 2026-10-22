@@ -1,0 +1,5 @@
+# V1 canonical schema source handoff — Runtime owner
+
+Need from Runtime/U1: when publishing the reviewed merged U1 tuple, include the authoritative timeline-schema package root (or exact available source checkout/ref) accepted by materialize_timeline_schema.py --source / BANODOCO_TIMELINE_SCHEMA_ROOT, plus regeneration/provenance instructions. V1 will dispatch immediately after U1 merges; no advance schema/product/pin edits.
+
+Independent V1-prep PASS: design/viewing-v1-schema-inventory.md and workers/vw-V1-schema-inventory-review2/REPORT.md. The current contract/schemas/timeline-config.schema.json is the Runtime-owned integration boundary artifact, with provenance to @banodoco/timeline-schema0.0.2/source242f9c43. Candidate/post-U1 materializer defaults to /home/user/banodoco/banodoco-workspace/packages/timeline-schema, absent here. Available App vendor bytes are a consumer copy and will not be promoted silently to a second authority. Please supply the existing authoritative source or explicitly settle Runtime-owned source materialization under PLAN's one-source requirement. No contract section6 change requested.
