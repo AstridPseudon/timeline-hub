@@ -1211,6 +1211,10 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
         # QUICK's Runtime door serves the App's test origin on an ephemeral loopback port, never the product
         # origin or the well-known port that a live Runtime on this machine may already hold.
         door_args = ["--hosted-origin", f"https://{QUICK_HOSTED_HOST}:{_free_port()}", "--door-port", "0"] if tier == "quick" else []
+        if tier == "quick" and (root / "data" / "runtime" / "discovery.json").exists():
+            # Adoption leaves its own daemon (default hosted origin) running; `up` would reuse it and keep
+            # that door, so stop it first and let `up` start the daemon with the App's origin.
+            runner.phase("adopt_down", lambda: runner.command("adopt_down", [sys.executable, "-m", "astrid_runtime", "down", "--source-manifest", str(manifest_path)] + common, env, unbounded=True))
         runner.phase("up", lambda: runner.command("up", local + ["up", "--source-manifest", str(manifest_path)] + door_args + common, env, unbounded=(tier == "quick")))
         if tier == "quick":
             quick_journey = Journey(runner=runner, root=root, env=env, project=project, timeline=source_timeline,
