@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -17,8 +18,12 @@ type JsonObject = Record<string, unknown>;
 
 const appRoot = resolve(import.meta.dirname, '../../../../');
 
+function sourceRoot(source: Source): string {
+  return source.repo === 'app' ? appRoot : resolve('/home/user/work/agent');
+}
+
 function sourcePath(source: Source): string {
-  return source.repo === 'app' ? resolve(appRoot, source.path) : resolve('/home/user/work/agent', source.path);
+  return resolve(sourceRoot(source), source.path);
 }
 
 function readSource(source: Source): JsonObject {
@@ -26,7 +31,10 @@ function readSource(source: Source): JsonObject {
 }
 
 function sourceSha(source: Source): string {
-  return createHash('sha256').update(readFileSync(sourcePath(source))).digest('hex');
+  const bytes = execFileSync('git', ['-C', sourceRoot(source), 'show', `${source.commit}:${source.path}`], {
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  return createHash('sha256').update(bytes).digest('hex');
 }
 
 function parentClip(bundle: JsonObject, id: string): JsonObject {
