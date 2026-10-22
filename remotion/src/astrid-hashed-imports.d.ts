@@ -18,6 +18,11 @@ declare module '@pack-rendering-elements-effects/*' {
   export default component;
 }
 
+declare module '@pack-astrid_motion-elements-effects/*' {
+  const component: import('@banodoco/timeline-composition/theme-api').EffectComponent;
+  export default component;
+}
+
 declare module '@theme-elements-animations/*' {
   const component: import('@banodoco/timeline-composition/theme-api').AnimationComponent;
   export default component;
@@ -34,6 +39,11 @@ declare module '@pack-local-elements-animations/*' {
 }
 
 declare module '@pack-rendering-elements-animations/*' {
+  const component: import('@banodoco/timeline-composition/theme-api').AnimationComponent;
+  export default component;
+}
+
+declare module '@pack-astrid_motion-elements-animations/*' {
   const component: import('@banodoco/timeline-composition/theme-api').AnimationComponent;
   export default component;
 }
@@ -58,7 +68,7 @@ declare module '@pack-rendering-elements-transitions/*' {
   export default component;
 }
 
-declare module '@pack-astrid_motion-elements-effects/*' {
-  const component: import('@banodoco/timeline-composition/theme-api').EffectComponent;
+declare module '@pack-astrid_motion-elements-transitions/*' {
+  const component: import('@banodoco/timeline-composition/theme-api').TransitionComponent;
   export default component;
 }

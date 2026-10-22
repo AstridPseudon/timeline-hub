@@ -5,6 +5,7 @@ import copy
 import json
 import math
 import statistics
+from collections.abc import Callable
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -63,6 +64,8 @@ class _ReflowMixin:
     """Checkout: the voice track and re-flow, moments (resolve, retime, place), and time shifts inside shots."""
 
     _scope: list | None = None  # the changes of the open re-time scope (keep_end only): (film second, seconds, skip ids)
+    _orphan_reason: str  # set by Checkout.__init__; declared so this mixin's readers are typed
+    _parent_clips: Callable[[], list[dict[str, Any]]]  # defined on _LookupMixin; declared so this mixin's readers are typed
 
     @property
     def music(self) -> str:
@@ -1213,9 +1216,6 @@ class _ReflowMixin:
         return out
 
     def _shift_parent(self, after: float, delta: float) -> None:
-        parent = self.bundle.get("parent") or {}
-        # a parent may mirror its clips in config.clips (both are read; Runtime refuses two differing lists)
-        for clips in (parent.get("clips") or [], (parent.get("config") or {}).get("clips") or []):
-            for clip in clips:
-                if _num(clip.get("at")) >= after - 1e-6:
-                    clip["at"] = _r(_num(clip.get("at")) + delta)
+        for clip in self._parent_clips():  # one list: the config.clips mirror is the same object, shifted once
+            if _num(clip.get("at")) >= after - 1e-6:
+                clip["at"] = _r(_num(clip.get("at")) + delta)

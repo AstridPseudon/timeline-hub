@@ -11,6 +11,12 @@ from astrid.sdk.timeline_structure import carry_across, join_music, label_chapte
 from tests.sdk.test_timeline_checkout import bundle
 
 
+@pytest.fixture(autouse=True)
+def _authoring_films_are_not_flattened(monkeypatch):
+    """one_shot is the authoring-time flatten; these films are checked out as placed (not as a stored chapter film)."""
+    monkeypatch.setattr("astrid.sdk.timeline_restructure.is_split", lambda bundle: False)
+
+
 def two_chapters():
     data = bundle()
     # Complete detached test-authoring envelope; no real Runtime identity.

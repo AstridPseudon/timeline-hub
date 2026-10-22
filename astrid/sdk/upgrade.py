@@ -147,18 +147,22 @@ def stop_pack_host(data_root: str | Path) -> Mapping[str, Any]:
         if len({str(marker.get("pid")) for marker in live_markers}) > 1:
             raise UpgradeError("generic Astrid pack host markers identify multiple live owners")
         pid = (live_markers[0] if live_markers else candidate).get("pid")
+        forced = False
         if live_markers:
             if not state or not host_bootstrap._host_identity_matches(state):
                 raise UpgradeError("existing generic Astrid pack host cannot be verified safely")
-            if host_bootstrap._descendant_snapshot(int(pid)):
+            if not host_bootstrap._host_idle(int(pid), support):
                 raise UpgradeError("generic Astrid pack host has active child work; upgrade refused")
             try:
-                host_bootstrap._terminate_old_host(state)
+                forced = host_bootstrap._terminate_old_host(state)
             except Exception as exc:
                 raise UpgradeError(f"generic Astrid pack host could not be stopped: {exc}") from exc
         state_path.unlink(missing_ok=True)
         ready_path.unlink(missing_ok=True)
-        return {"host_status": "stopped", "host_pid": int(pid) if str(pid).isdigit() else None}
+        result = {"host_status": "stopped", "host_pid": int(pid) if str(pid).isdigit() else None}
+        if forced:
+            result["forced"] = True
+        return result
 
 
 def _launcher_upgrade(

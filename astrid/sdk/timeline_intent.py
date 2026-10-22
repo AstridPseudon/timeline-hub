@@ -252,13 +252,27 @@ def set_cut_note(bundle: dict[str, Any], cut_id: str, **fields: Any) -> None:
         _film_tidy(bundle)
 
 
-def chapters(bundle: Mapping[str, Any]) -> list[dict[str, str]]:
-    """``[{"name": "06 ASTRID", "from": "c30"}, …]``: each chapter starts at a cut."""
+def film_chapter_labels(bundle: Mapping[str, Any]) -> list[dict[str, str]]:
     value = _film(bundle).get("chapters")
     return [dict(row) for row in value if isinstance(row, Mapping)] if isinstance(value, list) else []
 
 
-def set_chapters(bundle: dict[str, Any], table: list[Mapping[str, Any]]) -> None:
+def chapters(bundle: Mapping[str, Any]) -> list[dict[str, str]]:
+    """``[{"name": "06 ASTRID", "from": "c30"}, …]``: each chapter starts at a cut. The one function every reader uses.
+    A film that places more than one shot has its shots as chapters (name = shot name, ``from`` = the first cut
+    inside it); a one-shot film (and the flat working form, which carries its shots' anchors) has its label list."""
+    from astrid.sdk.timeline_restructure import shot_chapters
+
+    shots = shot_chapters(bundle)
+    return shots if shots is not None else film_chapter_labels(bundle)
+
+
+def set_chapters(bundle: dict[str, Any], table: list[Mapping[str, Any]], *, _anchors: bool = False) -> None:
+    from astrid.sdk.timeline_restructure import is_split
+
+    if table and not _anchors and (bundle.get("structure_base") or is_split(bundle)):
+        from astrid.sdk.timeline._common import TimelineEditError
+        raise TimelineEditError("a split film's chapters are its shots: rename the shot instead")
     ns = _film_w(bundle)
     if table:
         ns["chapters"] = [dict(row) for row in table]

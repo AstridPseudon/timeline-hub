@@ -187,8 +187,6 @@ path	supabase/functions/_shared/reighAppendService.ts	supabase/functions/_shared
 path	scripts/reigh-	scripts/astrid-	app	inventory section 2 path move
 path	scripts/release/reigh-release-provenance	scripts/release/astrid-release-provenance	app	inventory section 2 path move
 path	docs/extensions/reigh-acp-local-bridge.md	docs/extensions/astrid-acp-local-bridge.md	app	inventory section 2 path move
-path	docs/local-runtime/02-reigh-plan.md	docs/local-runtime/02-astrid-app-plan.md	app	inventory section 2 path move
-path	docs/local-runtime/reviews/grok-reigh-review.md	docs/local-runtime/reviews/grok-astrid-app-review.md	app	inventory section 2 path move
 path	docs/video-editor/reigh-branch-census-and-convergence.md	docs/video-editor/astrid-app-branch-census-and-convergence.md	app	inventory section 2 path move
 prose	Reigh	Astrid App	mixed	file also names Astrid; section 5 rule 4
 prose	Reigh	Astrid	all	single-product prose; section 5 rule 4

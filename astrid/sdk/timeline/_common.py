@@ -6,9 +6,6 @@ import math
 import re
 from typing import Any, Mapping
 
-
-
-
 # Fields of a checkout that are provenance, not content. They are written compactly
 # (one line each) so a text edit of the content can never match them by accident.
 BASE_KEYS = ("base_parent", "base_parent_payload", "base_placements", "source_mapping", "structure_base")
@@ -92,3 +89,7 @@ def _num(value: Any, default: float = 0.0) -> float:
 
 def _r(value: float) -> float:
     return round(float(value), 6)
+
+
+# The shot id a clip carries when it sits directly on the parent composition (no shot).
+PARENT_SHOT = ""

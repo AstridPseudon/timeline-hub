@@ -440,7 +440,7 @@ def _frame_pixel(path: Path, frame: int, tmp_path: Path, x: int, y: int) -> tupl
             str(path),
             "-vf",
             f"select=eq(n\\,{frame})",
-            "-vsync",
+            "-fps_mode",
             "vfr",
             str(png),
         ],

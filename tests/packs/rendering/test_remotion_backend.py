@@ -1471,36 +1471,9 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
 # Regression: ordinary rendering.remotion still renders under the global
 # remotion.config.ts ANGLE (Chromium OpenGL renderer) setting.  The global
 # ANGLE change (batch 2, needed by Three.js WebGL) must not break the
-# ordinary Remotion path or its identity.  Skips ONLY for genuinely missing
-# environment; a render failure is never turned into a skip.
+# ordinary Remotion path or its identity.  These are integration tests: a
+# missing install fails them (tests/packs/conftest.py), it never skips them.
 # ---------------------------------------------------------------------------
-
-
-def _remotion_missing_environment() -> list[str]:
-    missing = [
-        f"{binary} executable"
-        for binary in ("ffprobe",)
-        if shutil.which(binary) is None
-    ]
-    node_executable = os.environ.get("ASTRID_NODE_EXECUTABLE", "").strip()
-    if not node_executable or not Path(node_executable).is_file():
-        missing.append("ASTRID_NODE_EXECUTABLE")
-    node_modules = ROOT / "remotion" / "node_modules"
-    if not node_modules.is_dir():
-        missing.append("remotion/node_modules")
-    cli = node_modules / "@remotion" / "cli" / "remotion-cli.js"
-    if not cli.is_file():
-        missing.append("remotion local CLI")
-    return missing
-
-
-def _require_remotion_environment() -> None:
-    missing = _remotion_missing_environment()
-    if missing:
-        pytest.skip(
-            "Remotion real render skipped: missing optional dependencies: "
-            + ", ".join(missing)
-        )
 
 
 def _remotion_text_timeline(tmp_path: Path) -> Path:
@@ -1532,14 +1505,15 @@ def _remotion_text_timeline(tmp_path: Path) -> Path:
     return path
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_remotion_real_render_under_global_angle_keeps_identity(
     tmp_path: Path,
+    remotion_launch_validation: None,
 ) -> None:
     """A real rendering.remotion render (full timeline, no planner) succeeds
     with the global ANGLE Chromium renderer on and its provenance says
     rendering.remotion — never rendering.threejs."""
-    _require_remotion_environment()
     timeline_path = _remotion_text_timeline(tmp_path)
     assets_path = tmp_path / "remotion-angle.assets.json"
     timeline.save_registry({"assets": {}}, assets_path)
@@ -1596,12 +1570,13 @@ def test_remotion_real_render_under_global_angle_keeps_identity(
     assert any(s["codec_type"] == "audio" and s["codec_name"] == "aac" for s in streams)
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_remotion_real_two_second_window_keeps_video_and_audio_duration(
     tmp_path: Path,
+    remotion_launch_validation: None,
 ) -> None:
     """A real service window slices both the rendered frames and muxed audio."""
-    _require_remotion_environment()
     timeline_path = tmp_path / "range.timeline.json"
     timeline.save_timeline(
         {
@@ -1847,15 +1822,16 @@ def test_alpha_stamp_appends_transparent_flags_to_remotion_cli(
     assert opaque_props["theme"]["visual"]["color"]["bg"] != "transparent"
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_alpha_stamped_real_render_is_mov_prores_and_declared_profile_matches(
     tmp_path: Path,
+    remotion_launch_validation: None,
 ) -> None:
     """A REAL alpha render through _protocol_render: strict validation
     passes and the probed artifact is the recorded batch-4-rework truth --
     mov/prores/yuva444p12le/time_base 1/90000/pcm_s16le, output remapped to
     .mov, and the corner pixel is fully transparent (alpha == 0)."""
-    _require_remotion_environment()
     timeline_path = _stamped_text_timeline(tmp_path, alpha=True)
     assets_path = tmp_path / "assets.json"
     timeline.save_registry({"assets": {}}, assets_path)
@@ -1891,13 +1867,14 @@ def test_alpha_stamped_real_render_is_mov_prores_and_declared_profile_matches(
     )
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_stamped_top_layer_via_real_service_is_mov_prores_with_alpha(
     tmp_path: Path,
+    remotion_launch_validation: None,
 ) -> None:
     """Stamped top layer via the REAL service path -> .mov/prores with alpha;
     unstamped via the same path -> .mp4/h264 opaque (frozen no-regression)."""
-    _require_remotion_environment()
     for alpha in (True, False):
         timeline_path = _stamped_text_timeline(tmp_path, alpha=alpha)
         assets_path = tmp_path / "assets.json"

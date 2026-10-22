@@ -87,3 +87,20 @@ def test_coverage_run_length_encodes_covered_gap_and_covered_but_empty():
     ]
     assert spans[0].content == "CONTENT"
     assert spans[2].content == "EMPTY"
+
+
+def test_a_plain_media_clip_is_the_picture_on_whatever_track_it_sits():
+    from astrid.core.timeline.onscreen import coverage, element_coverage
+
+    # The real element table, not a hand-written one: `media` declares nothing in an element.yaml, so this is the compat entry.
+    elements = element_coverage(["media"])
+    clips = [
+        {"id": "a", "clipType": "media", "track": "V2", "at": 0.0, "hold": 1.0, "asset": "A"},
+        {"id": "b", "clipType": "media", "track": "V2", "at": 1.0, "hold": 1.0},  # its asset was cleared
+    ]
+    spans = coverage({"tracks": [{"id": "V2"}], "clips": clips}, FPS, CANVAS, elements, start_frame=0, end_frame=90)
+    assert [(span.start_frame, span.end_frame, span.cls, span.content) for span in spans] == [
+        (0, 30, "COVERED", "CONTENT"),  # a picture on a track that is not `plate`
+        (30, 60, "COVERED", "EMPTY"),  # no asset: covered, nothing in it
+        (60, 90, "GAP", None),  # and past the last clip nothing covers the canvas
+    ]

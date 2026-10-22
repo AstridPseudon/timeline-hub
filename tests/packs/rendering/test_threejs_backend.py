@@ -18,8 +18,9 @@ shared Remotion execution helper + lock.  The test exercises:
 * a real render through the public service (Node + ffprobe + remotion
   project with three/@remotion/three/@react-three/fiber required).
 
-The real-render cases SKIP only when the environment is genuinely missing;
-a render failure is never turned into a skip.
+The real-render cases are integration tests: they need the provisioned
+Remotion install and its launch validation (``remotion_launch_validation`` in
+tests/packs/conftest.py) and fail, never skip, when either is missing.
 """
 
 from __future__ import annotations
@@ -27,7 +28,6 @@ from __future__ import annotations
 import hashlib
 import json
 import multiprocessing
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -57,45 +57,11 @@ MANIFEST = (
 )
 THREEJS_ID = "rendering.threejs"
 
+# Transport-spawned children must resolve the same node and the same python3
+# (with the banodoco timeline schema) as the test process.
+pytestmark = pytest.mark.usefixtures("renderer_execution_environment")
+
 CANVAS = {"width": 320, "height": 180, "fps": 24}
-
-
-def _missing_environment() -> list[str]:
-    missing = [
-        f"{binary} executable"
-        for binary in ("node", "npx", "ffprobe")
-        if shutil.which(binary) is None
-    ]
-    node_modules = REMOTION_PROJECT / "node_modules"
-    if not node_modules.is_dir():
-        missing.append("remotion/node_modules")
-    for package in ("three", "@remotion/three", "@react-three/fiber"):
-        if not (node_modules / package).is_dir():
-            missing.append(f"remotion/node_modules/{package}")
-    # The transport spawns `python3` from PATH; the active interpreter must
-    # carry the banodoco timeline schema or timeline serialization is refused.
-    try:
-        import banodoco_timeline_schema  # noqa: F401
-    except ImportError:
-        missing.append("banodoco_timeline_schema for the active python3")
-    return missing
-
-
-def _require_threejs_environment() -> None:
-    missing = _missing_environment()
-    if missing:
-        pytest.skip(
-            "Three.js backend real render skipped: missing optional "
-            "dependencies: " + ", ".join(missing)
-        )
-
-
-@pytest.fixture(autouse=True)
-def _threejs_exec_env():
-    """Transport-spawned children must resolve the same node and the same
-    python3 (with the banodoco timeline schema) as the test process."""
-    with _execution_env():
-        yield
 
 
 def _write_timeline(tmp_path: Path, payload: dict) -> Path:
@@ -547,11 +513,12 @@ def test_threejs_support_preflight_is_honest_when_environment_missing(
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_threejs_real_render_empty_timeline_through_public_service(
     tmp_path: Path,
+    remotion_launch_validation: None,
 ) -> None:
-    _require_threejs_environment()
     timeline_path = _empty_timeline(tmp_path)
     assets_path = tmp_path / "threejs-empty.assets.json"
     assets_path.write_text('{"assets": {}}', encoding="utf-8")
@@ -594,11 +561,12 @@ def test_threejs_real_render_empty_timeline_through_public_service(
     assert any(s["codec_type"] == "audio" and s["codec_name"] == "aac" for s in probe["streams"])
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_threejs_real_render_text_timeline_through_public_service(
     tmp_path: Path,
+    remotion_launch_validation: None,
 ) -> None:
-    _require_threejs_environment()
     # Two clips on the same track, non-overlapping: frame 0..5 shows "A",
     # frame 6..11 shows "B" — so the render is not a uniform background.
     timeline_path = _write_timeline(
@@ -802,12 +770,15 @@ def _set_npm_offline(value: str) -> None:
     )
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
-def test_threejs_real_render_works_with_npm_offline(tmp_path: Path) -> None:
+def test_threejs_real_render_works_with_npm_offline(
+    tmp_path: Path,
+    remotion_launch_validation: None,
+) -> None:
     """A real direct threejs render with `npm config set offline true` proves
     the runtime needs no package downloads.  The config is restored even on
     failure."""
-    _require_threejs_environment()
     timeline_path = _text_timeline(tmp_path)
     assets_path = tmp_path / "threejs-offline.assets.json"
     assets_path.write_text('{"assets": {}}', encoding="utf-8")
@@ -911,13 +882,14 @@ def _threejs_direct_request(timeline_path: Path) -> RenderRequest:
     ).for_backend(THREEJS_ID)
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_threejs_unstamped_real_render_corner_is_background_color(
     tmp_path: Path,
+    remotion_launch_validation: None,
 ) -> None:
     """Unstamped (no stamp) keeps the opaque path: the corner pixel is the
     theme background #1a1a2e with alpha 255 (frozen behavior)."""
-    _require_threejs_environment()
     timeline_path = _text_timeline(tmp_path)
     with _execution_env():
         threejs._protocol_render(
@@ -934,14 +906,15 @@ def test_threejs_unstamped_real_render_corner_is_background_color(
     assert all(abs(channel - expected) <= 1 for channel, expected in zip(corner[:3], (0x1A, 0x1A, 0x2E))), corner
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_threejs_alpha_stamped_real_render_declared_profile_matches_probe(
     tmp_path: Path,
+    remotion_launch_validation: None,
 ) -> None:
     """Stamped alpha through _protocol_render: strict validation passes and
     the probed artifact is the recorded batch-4-rework truth --
     mov/prores/yuva444p12le/time_base 1/90000/pcm_s16le, remapped to .mov."""
-    _require_threejs_environment()
     timeline_path = _threejs_stamped_timeline(tmp_path, alpha=True)
     with _execution_env():
         result = threejs._protocol_render(
@@ -965,11 +938,12 @@ def test_threejs_alpha_stamped_real_render_declared_profile_matches_probe(
     )
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_threejs_alpha_stamped_corner_pixel_is_fully_transparent(
     tmp_path: Path,
+    remotion_launch_validation: None,
 ) -> None:
-    _require_threejs_environment()
     timeline_path = _threejs_stamped_timeline(tmp_path, alpha=True)
     with _execution_env():
         threejs._protocol_render(

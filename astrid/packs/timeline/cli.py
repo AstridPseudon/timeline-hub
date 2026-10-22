@@ -3014,7 +3014,9 @@ def _publish_counts(checkout: Any) -> tuple[int, int]:
 def _publish_summary(receipt: Mapping[str, Any], parsed: argparse.Namespace, counts: tuple[int, int] | None) -> str:
     """Human publish output: the head move, the message, what changed, and the next verbs (the envelope is --json)."""
     def head(rev: Any) -> str:
-        return str(rev or "-").removeprefix("authoring-parent-revision-")[:8]
+        from astrid.sdk.timeline.revisions import short_revision
+
+        return short_revision(rev) if rev else "-"
 
     clips, cuts = counts or (0, 0)
     project = parsed.project or "<project>"
@@ -3661,7 +3663,7 @@ def _configure_checkout(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("--fresh", action="store_true", help="Check out the current head instead of reusing the selected working copy.")
     _add_json_flag(subparser)
-    subparser.set_defaults(handler=_as_timeline_verb(_cmd_checkout))
+    subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_checkout)))
 
 
 def _configure_status(subparser: argparse.ArgumentParser) -> None:
@@ -3674,7 +3676,7 @@ def _configure_status(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--render", action="store_true",
                            help="With --text: also look up the latest render of this timeline (scans the run history, ~10 s).")
     _add_json_flag(subparser)
-    subparser.set_defaults(handler=_as_timeline_verb(_cmd_status))
+    subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_status)))
 
 
 def _configure_publish(subparser: argparse.ArgumentParser) -> None:
@@ -3685,7 +3687,7 @@ def _configure_publish(subparser: argparse.ArgumentParser) -> None:
     _add_idempotency_key(subparser)
     subparser.add_argument("--force", action="store_true", help="Resolve overlapping edits in favor of this draft.")
     _add_json_flag(subparser, default=False)
-    subparser.set_defaults(handler=_as_timeline_verb(_cmd_publish))
+    subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_publish)))
 
 
 def _configure_edit(subparser: argparse.ArgumentParser) -> None:

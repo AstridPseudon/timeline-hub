@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -50,10 +51,11 @@ def test_beta_reference_family_preflight_is_truthful_on_this_machine():
 
     render = host.capabilities["rendering.render"]
     assert render.adapter.family == "render"
-    assert render.adapter.requires_remotion is True
-    assert "remotion" in render.preflight
+    # Remotion follows the renderer a task selects, so it reports but never gates readiness.
+    assert render.adapter.remotion == "selected"
+    assert render.preflight["remotion"]["gates"] == "tasks that render with rendering.remotion"
     if not render.ready:
-        assert not render.preflight["remotion"]["ok"] or render.preflight["binaries"]["missing"]
+        assert render.preflight["binaries"]["missing"]
 
     # These helpers are offline pack executors.  They share the rendering
     # namespace but do not inherit the final compositor's Remotion dependency.
@@ -65,7 +67,7 @@ def test_beta_reference_family_preflight_is_truthful_on_this_machine():
     ):
         helper = host.capabilities[capability_id]
         assert helper.adapter.family == "render"
-        assert helper.adapter.requires_remotion is False
+        assert helper.adapter.remotion == "never"
         assert "remotion" not in helper.preflight
         if capability_id == "rendering.sprite_sheet" and not helper.ready:
             assert helper.preflight["binaries"]["missing"] == ["ffmpeg"]
@@ -79,6 +81,19 @@ def test_beta_reference_family_preflight_is_truthful_on_this_machine():
     assert local.adapter.family == "local_generation"
     if not local.ready:
         assert local.preflight["packages"]["missing"]
+
+
+def test_pack_and_matrix_agree_on_render_remotion_requirement():
+    import yaml
+
+    pack = yaml.safe_load(Path("astrid/packs/rendering/pack.yaml").read_text(encoding="utf-8"))
+    declared = pack["actions"]["render"]["metadata"]["requires_remotion"]
+    matrix = json.loads(Path("config/astrid-beta-capabilities.json").read_text(encoding="utf-8"))
+    entry = next(item for item in matrix["capabilities"] if item["id"] == "rendering.render")
+
+    assert declared == entry["requires_remotion"] == "selected"
+    # Node is validated by the Remotion check, not by a binary the render needs always.
+    assert "node" not in entry["required_binaries"]
 
 
 def test_bounded_typed_media_is_optional_until_gpu_output_proof():

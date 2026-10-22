@@ -372,6 +372,9 @@ def compile_recorded(ctx, *, inverse_records=()):
                                     if ('word_anchors' in _namespace(row)
                                         or (has_beats and any(_legacy_beat(_namespace(row).get(field))
                                                               for field in ('on', 'until'))))]
+    config = projection['parent'].get('config')
+    if isinstance(config, dict) and isinstance(config.get('clips'), list):
+        config['clips'] = projection['parent']['clips']
     try:
         result = compile_authored(projection, bundle.get('source_mapping', {}).get('pinned_documents', []))
     except TimingCompileError as exc:
