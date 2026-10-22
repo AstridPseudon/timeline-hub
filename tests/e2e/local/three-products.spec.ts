@@ -956,8 +956,11 @@ test('quick: Astrid edit then App edit are visible and readable on the adopted t
   const astridPublished = await agent.publish('Quick Astrid edit', `quick-astrid-${descriptor!.timelineId}`);
   expect(astridPublished.old_head).toBe(baseRevisionId);
   const astridRevisionId = astridPublished.new_head;
+  // The App catches up with the head by polling, and TanStack pauses that poll for a page that is not visible and focused.
+  await page.bringToFront();
+  const pageState = await page.evaluate(() => `${document.visibilityState}/${document.hasFocus() ? 'focused' : 'unfocused'}`);
   await expect.poll(async () => (await currentHead(harness)), { message: 'the App observes Astrid’s published revision', ...CEILING }).toBe(astridRevisionId);
-  await expect.poll(() => reads.compositionRevisions.some((item) => item.id === astridRevisionId && item.payload?.clips?.some((candidate: any) => candidate.id === clip.id && candidate.opacity === 0.5)), { message: 'the editor reads Astrid’s edited clip content', ...CEILING }).toBe(true);
+  await expect.poll(() => reads.compositionRevisions.some((item) => item.id === astridRevisionId && item.payload?.clips?.some((candidate: any) => candidate.id === clip.id && candidate.opacity === 0.5)), { message: `the editor reads Astrid’s edited clip content (page ${pageState})`, ...CEILING }).toBe(true);
   await expect(renderedClip, 'Astrid’s opacity edit is visible in the rendered editor').toHaveCSS('opacity', '0.5', CEILING);
 
   const appLabel = 'QUICK App edit';
