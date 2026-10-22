@@ -1664,7 +1664,6 @@ class RuntimeService:
     @_durable_mutation
     def replace_timeline_clip(self, timeline_id, body, *, idempotency_key=None):
         self._require_timeline_command()
-
     def _timeline_name(self, name):
         if not isinstance(name, str):
             raise ValidationError("timeline name must be a string")
@@ -4309,6 +4308,61 @@ class RuntimeService:
             # A user command has neither a project sequence nor project receipt.
             return self._command_record("preferences.update", aggregate_id, idempotency_key, request_hash, {"data": result, "receipt": None})
         return self._command_record("preferences.update", aggregate_id, idempotency_key, request_hash, result, project_id=project_id)
+
+    APP_STATE_KEY_PATTERN = re.compile(r"[a-z0-9][a-z0-9._-]{0,63}")
+    APP_STATE_MAX_BYTES = 16 * 1024
+
+    def _app_state_target(self, key, identity):
+        actor = identity.get("actor") if isinstance(identity, dict) else None
+        if not isinstance(actor, str) or not actor:
+            raise AuthorizationError("authenticated actor is required")
+        if not isinstance(key, str) or not self.APP_STATE_KEY_PATTERN.fullmatch(key):
+            raise ValidationError("app-state key must be 1-64 characters of a-z, 0-9, '.', '_' or '-' and start with a letter or digit")
+        return actor
+
+    @staticmethod
+    def _app_state_resource(key, actor, row):
+        return {
+            "scope": "user", "actor_id": actor, "key": key,
+            "content": json.loads(row["content_json"]) if row else None,
+            "version": int(row["version"]) if row else 0,
+            "created_at": row["created_at"] if row else None,
+            "updated_at": row["updated_at"] if row else None,
+        }
+
+    def get_app_state(self, key, *, identity):
+        # Absent state reads as version zero and writes nothing.
+        with self.store._mutex:
+            actor = self._app_state_target(key, identity)
+            row = self.store.conn.execute("SELECT * FROM user_app_state WHERE actor_id=? AND key=?", (actor, key)).fetchone()
+            return self._app_state_resource(key, actor, row)
+
+    @_durable_mutation
+    def update_app_state(self, key, content, expected_version, idempotency_key, *, identity):
+        actor = self._app_state_target(key, identity)
+        require_idempotency_key(idempotency_key)
+        if not isinstance(content, dict):
+            raise ValidationError("app-state content must be a JSON object")
+        if isinstance(expected_version, bool) or not isinstance(expected_version, int) or expected_version < 0:
+            raise ValidationError("expected_version must be a non-negative integer")
+        encoded = canonical_json(content)
+        if len(encoded.encode("utf-8")) > self.APP_STATE_MAX_BYTES:
+            raise ValidationError(f"app-state content exceeds {self.APP_STATE_MAX_BYTES} bytes")
+        aggregate_id = f"app-state:user:{actor}:{key}"
+        request_hash = hashlib.sha256(canonical_json({"owner": actor, "key": key, "content": content, "expected_version": expected_version}).encode()).hexdigest()
+        replay = self._command_replay("app_state.update", aggregate_id, idempotency_key, request_hash)
+        if replay is not None:
+            return replay
+        current = self.get_app_state(key, identity=identity)
+        if current["version"] != expected_version:
+            raise ConflictError("app-state version conflict", details={"expected": expected_version, "actual": current["version"]})
+        timestamp = now()
+        if expected_version == 0:
+            self.store.conn.execute("INSERT INTO user_app_state(actor_id, key, content_json, version, created_at, updated_at) VALUES (?, ?, ?, 1, ?, ?)", (actor, key, encoded, timestamp, timestamp))
+        else:
+            self.store.conn.execute("UPDATE user_app_state SET content_json=?, version=?, updated_at=? WHERE actor_id=? AND key=?", (encoded, expected_version + 1, timestamp, actor, key))
+        result = self.get_app_state(key, identity=identity)
+        return self._command_record("app_state.update", aggregate_id, idempotency_key, request_hash, {"data": result, "receipt": None})
 
     @staticmethod
     def _transcript_document_id(project_id, media_id, source_id):

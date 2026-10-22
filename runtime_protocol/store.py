@@ -206,6 +206,7 @@ REQUIRED_SCHEMA_COLUMNS = {
     "composition_revision_occurrences": frozenset("parent_revision_id occurrence_id ordinal project_id shot_id shot_revision_id placement_json source_offset_json duration_ms speed_json track transform_json gain muted provenance_json".split()),
     "composition_revision_dependencies": frozenset("parent_revision_id dependency_kind dependency_id content_digest ordinal".split()),
     "objects": frozenset("digest size media_type original_name created_at".split()),
+    "user_app_state": frozenset({"actor_id", "key", "content_json", "version", "created_at", "updated_at"}),
     "user_preferences": frozenset("actor_id id content version created_at updated_at".split()),
     "project_documents": frozenset("id project_id kind content_json version created_at updated_at".split()),
     "project_objects": frozenset("project_id digest relation created_at".split()),
@@ -6165,15 +6166,16 @@ class RealmStore:
         legacy_timeline_schema = (
             actual_schema == 31
             and actual_format == CANONICAL_FORMAT_ID
-            and not missing_tables
+            and missing_tables == ["user_app_state"]
             and not missing_columns
             and not extra_columns
             and not unexpected_tables
+            and "timeline_commit_history" in actual_tables
         )
         schema_ok = (
             (actual_schema == SCHEMA_VERSION or legacy_timeline_schema)
             and actual_format == CANONICAL_FORMAT_ID
-            and not missing_tables
+            and (not missing_tables or legacy_timeline_schema)
             and not missing_columns
             and not extra_columns
             and not unexpected_tables

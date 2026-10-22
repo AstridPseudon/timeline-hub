@@ -647,7 +647,10 @@ def inspect(connection, project_id, timeline_id, options):
         )
         if occurrence_omissions:
             identity["omitted_fields"] = occurrence_omissions
-        internal_tracks = _track_catalog(internal_payload.get("tracks", []))
+        # A shot may omit track definitions; fall back to the film's.  The shot's
+        # own definition still wins here so its scope stays explicit (unlike
+        # render, where the film wins on id collision).
+        internal_tracks = {**parent_tracks, **_track_catalog(internal_payload.get("tracks", []))}
         internal_track_scope = {"kind": "internal_timeline", "id": internal_id}
         for binding_key in ("text_bindings", "audio_bindings"):
             binding_value = identity.get(binding_key)

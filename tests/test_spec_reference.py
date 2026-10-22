@@ -287,6 +287,7 @@ def test_v28_inline_spec_migrates_with_exact_replay_and_compacts(tmp_path):
             service.store.conn.execute("DELETE FROM objects WHERE digest=?", (ref["digest"].removeprefix("sha256:"),))
             walk_back_to_v30(service.store.conn)
             service.store.conn.execute("ALTER TABLE timelines DROP COLUMN name")
+            service.store.conn.execute("DROP TABLE user_app_state")
             service.store.conn.execute("UPDATE runtime_schema SET version=28 WHERE id=1")
         service.cas.path_for(ref["digest"].removeprefix("sha256:")).unlink()
         realm_id = service.realm["id"]

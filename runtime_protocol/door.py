@@ -152,6 +152,7 @@ WORKSPACE_ROUTES = (
     _entry("GET", "/v1/health"),
     _entry("POST", "/v1/handshake"),
     _entry("GET", "/v1/realm"),
+    _entry("GET,PUT", "/v1/app-state/user/:"),
     _entry("GET,POST", "/v1/projects"),
     _entry("GET,PATCH", "/v1/projects/:"),
     _entry("GET,POST", "/v1/projects/:/timelines"),

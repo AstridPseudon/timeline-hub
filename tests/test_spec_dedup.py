@@ -20,6 +20,7 @@ def _v27_copy(source, target):
     try:
         walk_back_to_v30(connection)
         connection.execute("ALTER TABLE timelines DROP COLUMN name")  # v30 -> v29: timelines.name is the only v30 change
+        connection.execute("DROP TABLE user_app_state")
         connection.execute("DROP INDEX idx_tasks_retention")
         for table in ("runs", "tasks"):
             connection.execute(f"ALTER TABLE {table} ADD COLUMN spec_json TEXT")

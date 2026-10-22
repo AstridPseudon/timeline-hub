@@ -123,6 +123,21 @@ paths:
       responses:
         '200': { description: Preference mutation, content: { application/json: { schema: { $ref: '#/components/schemas/PreferenceMutation' } } } }
         '409': { $ref: '#/components/responses/Conflict' }
+  /v1/app-state/user/{key}:
+    get:
+      operationId: getUserAppState
+      description: Read one actor-owned app-state record, a small JSON object an application keeps for its own use (for example a first-run flag). Ownership comes exclusively from bearer identity. Absent state returns null content and version zero without writing.
+      parameters: [ { $ref: '#/components/parameters/AppStateKey' } ]
+      responses:
+        '200': { description: App-state resource, content: { application/json: { schema: { $ref: '#/components/schemas/AppStateResource' } } } }
+    put:
+      operationId: updateUserAppState
+      description: Write one app-state record with compare-and-swap (expected_version 0 creates) and durable idempotency. Content must be a JSON object of at most 16384 bytes once canonicalized. Ownership comes exclusively from bearer identity.
+      parameters: [ { $ref: '#/components/parameters/AppStateKey' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpdateAppState' } } } }
+      responses:
+        '200': { description: App-state mutation, content: { application/json: { schema: { $ref: '#/components/schemas/AppStateMutation' } } } }
+        '409': { $ref: '#/components/responses/Conflict' }
   /v1/projects/{project_id}/documents:
     get:
       operationId: listDocuments
@@ -866,6 +881,11 @@ components:
       in: path
       required: true
       schema: { type: string, enum: [user, project] }
+    AppStateKey:
+      name: key
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[a-z0-9][a-z0-9._-]{0,63}$' }
     PreferenceProjectId:
       name: project_id
       in: query
@@ -1369,6 +1389,20 @@ components:
       additionalProperties: false
       required: [content, expected_version]
       properties: { content: { type: string }, expected_version: { type: integer, minimum: 0 } }
+    AppStateResource:
+      $ref: './schemas/app-state.json'
+    UpdateAppState:
+      type: object
+      additionalProperties: false
+      required: [content, expected_version]
+      properties: { content: { type: object }, expected_version: { type: integer, minimum: 0 } }
+    AppStateMutation:
+      type: object
+      additionalProperties: false
+      required: [data, receipt]
+      properties:
+        data: { $ref: '#/components/schemas/AppStateResource' }
+        receipt: { type: 'null' }
     PreferenceMutation:
       oneOf:
         - type: object

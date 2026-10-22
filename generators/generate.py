@@ -173,6 +173,34 @@ def render_typescript_client() -> str:
     snapshot_type = 'export interface RecoverableSnapshotRequest { lease_id: string; fence: number; runtime_epoch: number; revision: number; output: DerivedInputDescriptor }'
     if "export interface RecoverableSnapshotRequest " not in source:
         source = source.replace("export interface ObjectLocation", snapshot_type + "\nexport interface ObjectLocation", 1)
+    app_state_types = 'export interface AppStateResource { scope: "user"; actor_id: string; key: string; content: Record<string, unknown> | null; version: number; created_at: string | null; updated_at: string | null }\n'
+    if "export interface AppStateResource " not in source:
+        anchor = "export type PreferenceScope"
+        if anchor not in source:
+            raise SystemExit("TypeScript client is missing the app-state type insertion point")
+        source = source.replace(anchor, app_state_types + anchor, 1)
+    app_state_methods = '''  private appStateResource(value: unknown, key: string): AppStateResource {
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid app-state resource");
+    const v = value as Record<string, unknown>;
+    if (["scope", "actor_id", "key", "content", "version", "created_at", "updated_at"].some(name => !(name in v))) throw new Error("invalid app-state resource fields");
+    const content = v.content;
+    if (v.scope !== "user" || typeof v.actor_id !== "string" || !v.actor_id || v.key !== key || !(content === null || (typeof content === "object" && !Array.isArray(content))) || !Number.isInteger(v.version) || (v.version as number) < 0 || (content === null) !== (v.version === 0) || [v.created_at, v.updated_at].some(item => item !== null && typeof item !== "string")) throw new Error("invalid app-state resource ownership, content or version");
+    return v as unknown as AppStateResource;
+  }
+  async getUserAppState(key: string): Promise<AppStateResource> {
+    return this.appStateResource(this.json((await this.request("GET", `/v1/app-state/user/${encodeURIComponent(key)}`)).body), key);
+  }
+  async updateUserAppState(key: string, content: Record<string, unknown>, expectedVersion: number, idempotencyKey: string): Promise<AppStateResource> {
+    const value = this.json<Record<string, unknown>>((await this.request("PUT", `/v1/app-state/user/${encodeURIComponent(key)}`, new TextEncoder().encode(JSON.stringify({ content, expected_version: expectedVersion })), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body);
+    if (!value || typeof value !== "object" || !("data" in value) || value.receipt !== null) throw new Error("invalid app-state mutation: data and null receipt are required");
+    return this.appStateResource(value.data, key);
+  }
+'''
+    if "  async getUserAppState(" not in source:
+        anchor = "  async handshake("
+        if anchor not in source:
+            raise SystemExit("TypeScript client is missing the handshake insertion point")
+        source = source.replace(anchor, app_state_methods + anchor, 1)
     snapshot_method = '  async publishRecoverableSnapshot(attemptId: string, body: RecoverableSnapshotRequest, idempotencyKey: string): Promise<MutationResult<ManagedOutput>> { return this.mutation<ManagedOutput>((await this.request("POST", `/v1/attempts/${encodeURIComponent(attemptId)}/recoverable-snapshots`, new TextEncoder().encode(JSON.stringify(body)), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body) }'
     if "  async publishRecoverableSnapshot(" not in source:
         source = source.replace("  async issueChildAuthority(", snapshot_method + "\n  async issueChildAuthority(", 1)

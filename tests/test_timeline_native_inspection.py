@@ -1091,7 +1091,6 @@ def test_view_write_authority_and_key_before_any_persistence(tmp_path, monkeypat
             artifact = result["artifacts"][kind]
             assert owner.get_object(artifact["object_id"]).data == render(result["inspection"])
             assert daemon.service.object_location(project, artifact["object_id"])["verified"] is True
-        # View persistence needs no independent objects:write authority.
         assert WorkspaceClient(daemon.endpoint, writer).create_timeline_view(
             project, "main", options, idempotency_key="writer-view",
         ) == result
@@ -1110,5 +1109,23 @@ def test_view_retry_keeps_original_revision_after_head_advances(tmp_path):
         before = _snapshot(service)
         assert service.create_timeline_view(project, "main", idempotency_key="view-head") == original
         assert _snapshot(service) == before
+    finally:
+        service.close()
+
+
+def test_shot_clip_track_resolves_from_the_film_when_the_shot_defines_none(tmp_path):
+    service, project, _ = _service(tmp_path)
+    try:
+        publication = _publication(project)
+        publication["parent_composition"]["config"]["tracks"] = [
+            {"id": "picture", "kind": "visual", "label": "Film picture"},
+        ]
+        publication["internal_timeline_revisions"][0]["payload"].pop("tracks")
+        service.publish_parent_composition(project, "main", publication, idempotency_key="publish-film-tracks")
+
+        result = service.inspect_timeline(project, "main", {"limit": 10})
+        child = [clip for row in result["selected"] for clip in row["clips"]][0]
+        assert child["track_status"] == "resolved"
+        assert child["track"]["label"] == "Film picture"
     finally:
         service.close()

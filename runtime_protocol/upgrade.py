@@ -50,7 +50,7 @@ LEGACY_TABLES = frozenset(
     }
 )
 NEW_TABLES = frozenset({
-    "runtime_schema", "managed_output_associations", "managed_output_lifecycle", "user_preferences", "task_specs",
+    "runtime_schema", "managed_output_associations", "managed_output_lifecycle", "user_preferences", "user_app_state", "task_specs",
     "internal_timeline_revisions", "shot_revisions", "parent_composition_revisions",
     "shot_revision_heads", "parent_composition_heads", "composition_revision_occurrences",
     "composition_revision_dependencies",
@@ -346,6 +346,9 @@ def _canonical_shape_for(version: int) -> tuple[set[str], dict[str, set[str]]]:
         raise ValidationError(f"canonical schema version {version} is not supported")
     tables = set(REQUIRED_SCHEMA_TABLES)
     columns = {table: set(values) for table, values in REQUIRED_SCHEMA_COLUMNS.items()}
+    if version < APP_STATE_TARGET_SCHEMA_VERSION:
+        tables.remove("user_app_state")
+        columns.pop("user_app_state")
     if version < TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
         tables.remove("timeline_commit_history")
         columns.pop("timeline_commit_history")
@@ -409,6 +412,10 @@ def _canonical_schema_identity(
     if version == APP_STATE_TARGET_SCHEMA_VERSION and "timeline_commit_history" in tables:
         expected_tables = set(REQUIRED_SCHEMA_TABLES)
         expected_columns = {table: set(values) for table, values in REQUIRED_SCHEMA_COLUMNS.items()}
+        # Preserve the pre-U1 timeline-v31 layout separately from upstream's
+        # app-state-v31 layout. It has commit history but no app-state table.
+        expected_tables.remove("user_app_state")
+        expected_columns.pop("user_app_state")
     unknown = tables - expected_tables
     missing = expected_tables - tables
     if unknown or missing:
@@ -789,14 +796,21 @@ def _apply_v29_to_v30(connection: sqlite3.Connection) -> dict[str, object]:
 
 
 def _apply_v30_to_v31(connection: sqlite3.Connection) -> dict[str, object]:
-    """Advance the upstream app-state schema version to v31.
-
-    The app-state v31 layout is already represented by the current canonical
-    tables. Timeline commit persistence is deliberately the following v32
-    step so the two schema owners do not share a version number.
-    """
+    if "user_app_state" in _tables(connection):
+        raise ValidationError("v30 user app state table is already present")
+    connection.execute(
+        """
+        CREATE TABLE user_app_state (
+            actor_id TEXT NOT NULL, key TEXT NOT NULL,
+            content_json TEXT NOT NULL CHECK (json_valid(content_json)),
+            version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
+            created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+            PRIMARY KEY (actor_id, key)
+        )
+        """
+    )
     connection.execute("UPDATE runtime_schema SET version=? WHERE id=1", (APP_STATE_TARGET_SCHEMA_VERSION,))
-    return {"source_schema_version": 30, "target_schema_version": APP_STATE_TARGET_SCHEMA_VERSION}
+    return {"source_schema_version": 30, "target_schema_version": APP_STATE_TARGET_SCHEMA_VERSION, "added_tables": ["user_app_state"]}
 
 
 def _apply_v31_to_v32(connection: sqlite3.Connection) -> dict[str, object]:
@@ -804,10 +818,21 @@ def _apply_v31_to_v32(connection: sqlite3.Connection) -> dict[str, object]:
     from .timeline_commit_inputs import DOCUMENT_INPUT_SCHEMA_SQL
 
     existing_tables = _tables(connection)
+    if "user_app_state" not in existing_tables:
+        connection.execute(
+            """
+            CREATE TABLE user_app_state (
+                actor_id TEXT NOT NULL, key TEXT NOT NULL,
+                content_json TEXT NOT NULL CHECK (json_valid(content_json)),
+                version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
+                created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+                PRIMARY KEY (actor_id, key)
+            )
+            """
+        )
     if "timeline_commit_history" not in existing_tables:
         connection.execute("ALTER TABLE parent_composition_heads ADD COLUMN publication_id TEXT REFERENCES timeline_commit_history(publication_id)")
         connection.execute("ALTER TABLE parent_composition_revisions ADD COLUMN commit_manifest_json TEXT CHECK (commit_manifest_json IS NULL OR json_valid(commit_manifest_json))")
-        # executescript would commit the enclosing migration transaction.
         connection.execute(TIMELINE_COMMIT_SCHEMA_SQL)
         for statement in DOCUMENT_INPUT_SCHEMA_SQL.split(";"):
             if statement.strip():
@@ -1004,7 +1029,7 @@ def migrate_canonical_to_current(
             if int(current["version"]) == TIMELINE_NAME_TARGET_SCHEMA_VERSION:
                 steps.append(_apply_v30_to_v31(connection))
                 current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
-            if int(current["version"]) == APP_STATE_TARGET_SCHEMA_VERSION:
+            if current["version"] == APP_STATE_TARGET_SCHEMA_VERSION:
                 steps.append(_apply_v31_to_v32(connection))
             final = _canonical_schema_identity(connection, expected_realm_id=realm_id)
             if int(final["version"]) != TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
