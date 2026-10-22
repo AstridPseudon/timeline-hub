@@ -1,8 +1,8 @@
-<!-- agent | 2026-10-22T23:40:02Z | dispatcher heartbeat 5s | live 3 (sol 1, luna 2, other 0) | busy30 14 | status age 1m -->
-# agent board, 2026-10-22T23:38:57Z
+<!-- agent | 2026-10-22T23:41:18Z | dispatcher heartbeat 5s | live 3 (sol 1, luna 2, other 0) | busy30 15 | status age 0m -->
+# agent board, 2026-10-22T23:40:51Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
-| U2 | upstream merge, regenerated artifacts | Sol | — | merged | agt-U2-media-repair; agt-U2-integrated-proof | IndependentPASS; merge3f1ceaed1; integrated behavior/fastgate classification running, not yet done credit | 3f1ceaed1 |
+| U2 | upstream merge, regenerated artifacts | Sol | — | merged | agt-U2-media-repair; agt-U2-integrated-proof | Integrated184behaviorPASS+manifest/lockPASS. Global1922mypy/2151Ruff below oldbaselines;2 merge-induced typing repairs now agt-U2-fastgate-repair, no baseline weakening | 3f1ceaed1 |
 | U4a | regenerated Runtime client/schema | Luna | U1, U2 | todo | — | Exact existing95bd producer retained for U2; U1 adoption separate | — |
 | R1 | doc.patch semantics and guards | Sol | C0 approved; U2 before merge | doing | agt-R1-restart | Resumed clean original branch after container restart; implementation/review pending | — |
 | R2 | guarded whole/per-step undo | Sol | R1; C0c before merge | review | agt-R2-step-undo; agt-R2-core-review | Staged core548targetedPASS; scopedlint/typePASS. R1 provider dispatch/physical binding/effect projection still needed; C0c merge hold | b5b811066 |
