@@ -1,14 +1,14 @@
-<!-- agent | 2026-10-22T22:19:33Z | dispatcher heartbeat 13s | live 2 (sol 2, luna 0, other 0) | busy30 4 | status age 0m -->
-# agent board, 2026-10-22T22:18Z
+<!-- agent | 2026-10-22T23:07:07Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 45m -->
+# agent board, 2026-10-22T22:21Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream merge, rerere, regenerated artifacts | Luna | — | blocked:orchestrator | agt-U2-upstream; agt-U2-review | Independent review FAIL: tree unchanged; pytest collection/lint/typecheck fail; no integrated proof; MUST NOT LAND | 8a2677cd7 (quarantined branch) |
 | U4a | regenerated Runtime client/schema adoption | Luna | U1, U2 | todo | — | — | — |
-| R1 | doc.patch semantics and guards | Sol | C0 approved; U2 before merge | doing | agt-R1-doc-patch | Implementation queued; independent review/integrated proof pending | — |
+| R1 | doc.patch semantics and guards | Sol | C0 approved; U2 before merge | doing | agt-R1-doc-patch (hub timeline/agent/tl/agt-R1-doc-patch) | No implementation commit yet; P1 draft evidence follows worker completion | — |
 | R2 | guarded whole/per-step undo, A→B→A | Sol | R1, C0b approval | todo | — | — | — |
 | R3 | dry run and structured errors | Luna | R1 | todo | — | — | — |
 | V2 | timing/structure/element/parameter validation | Luna | R1 | todo | — | — | — |
-| G2 | open/commit and bounded rerun | Sol | C0 approved; R1, U2 before merge | doing | agt-G2-open-commit | Implementation queued; independent review/integrated proof pending | — |
+| G2 | open/commit and bounded rerun | Sol | C0 approved; R1, U2 before merge | doing | agt-G2-open-commit | Codex Sol running; independent review/integrated proof pending | — |
 | G3 | document patch emitter and helpers | Luna | G2 | todo | — | — | — |
 | G4 | remaining writers through commit | Luna | G2 | todo | — | — | — |
 | G5 | delete superseded paths | Luna | G3, G4; H3 go/no-go | todo | — | — | — |
