@@ -1,9 +1,9 @@
-<!-- app | 2026-10-22T23:19:19Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 4 | status age 7m -->
-# app board, 2026-10-22T23:14:00Z
+<!-- app | 2026-10-22T23:20:57Z | dispatcher heartbeat 2s | live 3 (sol 0, luna 3, other 0) | busy30 5 | status age 0m -->
+# app board, 2026-10-22T23:22:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| U3a | Upstream deletions, docs/config/supabase | Luna high | — | review | app-U3a-review-r2 | Fresh authorized review queued; prior denied scratch command remains prohibited | 7192c0127 source |
-| U3b | Upstream editor; retain outbox/transport/client | Luna high | — | doing | app-U3b-recover-r2 | Recovery queued; both interrupted dirty donor trees retained read-only | — |
+| U3a | Upstream deletions, docs/config/supabase | Luna high | — | doing | app-U3a-repair-r1 | Review FAIL: five direct issues; first repair active. Denied scratch action remains prohibited | 7192c0127 source |
+| U3b | Upstream editor; retain outbox/transport/client | Luna high | — | review | app-U3b-review-r2 | Author: 338 tests, lint173 PASS; two outer-host type errors remain; independent review active | 7b33f8f50 |
 | U3c | QUICK harness plus retained journeys | Luna high | — | doing | app-U3c-repair-r1 | First review FAIL: missing QUICK, six dropped journeys, eight zero-discovery configs; first Luna return queued | 1a036a917 source |
 | U3 | True live upstream merge and Agent re-vendor | Luna high | U3a/U3b/U3c; merged U2 | todo | — | Local origin/main 7c17cc9d9; live verification awaits normal Git access | — |
 | U4p | Adopt regenerated U1 client/schema | Luna high | U1, U3 | todo | — | Await official U1 tuple and composed U3 | — |
