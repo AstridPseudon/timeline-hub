@@ -1,8 +1,8 @@
-<!-- agent | 2026-10-22T23:28:20Z | dispatcher heartbeat 12s | live 4 (sol 2, luna 2, other 0) | busy30 11 | status age 1m -->
-# agent board, 2026-10-22T23:27:17Z
+<!-- agent | 2026-10-22T23:29:35Z | dispatcher heartbeat 12s | live 2 (sol 2, luna 0, other 0) | busy30 11 | status age 0m -->
+# agent board, 2026-10-22T23:28:43Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
-| U2 | upstream merge, regenerated artifacts | Sol | — | review | agt-U2-media-repair; agt-U2-repair-review | Sol restored media compatibility; author169acceptance+13neighborsPASS, changed typing/Ruff+manifest/lockPASS; final independent delta review pending | 3960b5256 |
+| U2 | upstream merge, regenerated artifacts | Sol | — | merging | agt-U2-media-repair; agt-U2-repair-review | IndependentPASS: originalregression4+13neighborsPASS; author169acceptancePASS; changedtyping/Ruff+manifest/lockPASS; inheritedglobalgatesRED | 3960b5256 |
 | U4a | regenerated Runtime client/schema | Luna | U1, U2 | todo | — | Exact existing95bd producer retained for U2; U1 adoption separate | — |
 | R1 | doc.patch semantics and guards | Sol | C0 approved; U2 before merge | doing | agt-R1-restart | Resumed clean original branch after container restart; implementation/review pending | — |
 | R2 | guarded whole/per-step undo | Sol | R1; C0c before merge | doing | agt-R2-step-undo | Early start explicitly authorized by inbox22:45; C0b implemented contract; no integrated proof | — |
