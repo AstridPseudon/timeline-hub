@@ -42,9 +42,10 @@ per-scope idempotency, verified closure, CAS and history chain remain authoritat
 C0b also rechecked Runtime hub integration `0d4c71a3c` and the same Agent hub
 ref, including native occurrence creation and root restoration/allocation paths.
 C0c rechecked those integration heads, Runtime closure validation and inherited
-allocation authentication, and Agent `commands.py`, `_recording.py`, `inverse.py`
-and `authoring_bundle.py`: materialized children can share the parent timeline ID
-while having distinct revision IDs. No product implementation is changed here.
+allocation authentication, and Agent `commands.py`, `_recording.py`, `inverse.py`,
+`native_occurrence_create.py` and `authoring_bundle.py`: materialized children
+can share the parent timeline ID while having distinct revision IDs. No product
+implementation is changed here.
 
 Examples are finite JSON: complete HTTP bodies/envelopes where stated, otherwise
 named fixture fragments or input/expected-output scenarios. A fragment is not an
@@ -322,12 +323,13 @@ image is addressable, never a guessed future compiler revision ID.
 
 Persist the resolved bindings in the existing authenticated command/step records,
 not just the alias text. A binding identifies the submitted ref, physical ref,
-image revision ID (including for `parent`), content digest, evaluation boundary (base/landing head pair and step/command/
-change ordinal or batch-read boundary), and the verified edge path when one was
-used. A `timeline` scope captures the complete set of these image bindings,
-not a fictitious single physical root. Bind scope/dependency captures too; step dependencies retain their original
-boundary rather than being re-resolved at final output. The C0c fixture below
-shows binding projections; they are provider facts, not caller instructions.
+image revision ID (including for `parent`), content digest, evaluation boundary
+(base/landing head pair and step/command/change ordinal or batch-read boundary),
+and the verified edge path when one was used. A `timeline` scope captures the
+complete set of these image bindings, not a fictitious single physical root. Bind
+scope/dependency captures too; step dependencies retain their original boundary
+rather than being re-resolved at final output. The C0c fixture below shows binding
+projections; they are provider facts, not caller instructions.
 Existing native `records.commands[].bindings`, materialization captures and
 `records.steps` carry these facts with their association to reads/effects. The
 schema adoption must preserve that association and reject forged caller facts;
@@ -342,9 +344,10 @@ rebase/undo may follow successors only through authenticated materialization
 records and verified managed-edge provenance connecting that image to its
 successor in the same ownership context. A still-reachable original binding
 stays on that image; another owner materializing a branch does not move it.
-Entity IDs, matching bytes or a search for the newest revision are not provenance. A fork/edge replacement is not an
-automatic continuation; no unique authenticated continuation means
-`binding_changed` (missing required history means `history_unavailable`). Reapply
+Entity IDs, matching bytes or a search for the newest revision are not
+provenance. A fork/edge replacement is not an automatic continuation; no unique
+authenticated continuation means `binding_changed` (missing required history means
+`history_unavailable`). Reapply
 field/collection guards and scan intervening history after this mapping. A
 revision change alone need not conflict with a disjoint field edit; it cannot
 conceal an intervening write, changed binding or A→B→A. Authenticated inverse
@@ -376,8 +379,8 @@ Existing native entity addresses (`parent/clip:<id>`,
 `parent/track:<id>`, `occurrence:<id>/clip:<id>`,
 `occurrence:<id>/track:<id>`, `occurrence:<id>/shot`, and occurrence source
 addresses) normalize to the same uniquely bound physical roots/paths for guards,
-conflicts, history and undo. Parent `clips`/`config.clips` and registry mirrors likewise
-have one logical identity. The provider updates required mirrors; a client may
+conflicts, history and undo. Parent `clips`/`config.clips` and registry mirrors
+likewise have one logical identity. The provider updates required mirrors; a client may
 not write contradictory copies. Alias normalization must happen before overlap
 checks: editing the same shared child through two occurrences is not disjoint.
 A ref outside the authenticated closure is `outside_closure`.
@@ -387,9 +390,9 @@ A ref outside the authenticated closure is `outside_closure`.
 relevant execution boundary, rather than only submitted-patch addresses.
 Resolve effect refs against the verified before/after **union**, deduplicated by
 physical image identity, not entity ID. `parent` remains the boundary anchor:
-bind its unique before image and unique after image separately. Child entity
-aliases must be unique across the union. A child alias is usable in an effect only
-when unique in that union; otherwise use the revision-qualified form. This
+bind its unique before image and unique after image separately. A child alias
+is usable in an effect only when unique in that union; otherwise use the
+revision-qualified form. This
 includes one entity's old/new revisions even if each side alone was unambiguous.
 Root creation binds the after image; removal binds the before image. Materialized
 successors are separate immutable images: record each entered/left root and its
@@ -2754,12 +2757,13 @@ from the authenticated recorder, not new request fields or proof that strings
 are authenticated. Input-boundary digests may differ within one batch. Effect
 bindings also retain side and physical revision/digest from the verified union:
 creations bind after, removals before, and parent edge writes bind both parent
-boundary images. The checker derives those bindings from the complete states. Grouped inverse/redo
-`effect_boundaries` give half-open ranges in the flat effect patch; each segment
-has its own verified before/after union. They retain transient restored roots
+boundary images. The checker derives those bindings from the complete states.
+Grouped inverse/redo `effect_boundaries` give half-open ranges in the flat effect
+patch; each segment has its own verified before/after union. They retain transient restored roots
 that appear in neither the command-entry nor command-exit closure.
-The field-level input capture for edit-a remains ia1/output.fps 30→24 with successor ia2;
-the expanded effect patch is not a submitted patch and cannot bypass ownership.
+The field-level input capture for edit-a remains ia1/output.fps 30→24 with
+successor ia2; the expanded effect patch is not a submitted patch and cannot
+bypass ownership.
 The checks exercise the recorded transitions and binding rules, using Runtime's
 canonical schema/digest validation. They do not authenticate real provider
 materialization records, prove compiler visibility/attribution, or execute v2
