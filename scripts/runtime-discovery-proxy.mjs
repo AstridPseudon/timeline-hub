@@ -12,6 +12,8 @@ const port = Number(process.env.ASTRID_RUNTIME_PROXY_PORT ?? '17336');
 export const CONNECT_TIMEOUT_MS = 10_000;
 export const IDLE_TIMEOUT_MS = 60_000;
 const ACP_IDLE_TIMEOUT_MS = 5 * 60_000;
+// Upstream requests currently open across the proxy, for the upstream error log line.
+let upstreamInFlight = 0;
 
 function fail(message, status = 503) {
   return { status, body: JSON.stringify({
@@ -153,6 +155,7 @@ export function createRuntimeProxyServer({
   headers.authorization = `Bearer ${runtime.token}`;
   if (chat) headers['x-astrid-bridge-version'] = 'v1';
 
+  const startedAt = Date.now();
   const upstream = request({
     hostname: runtime.endpoint.hostname,
     port: Number(runtime.endpoint.port),
@@ -169,6 +172,7 @@ export function createRuntimeProxyServer({
     response.writeHead(status, responseHeaders);
     upstreamResponse.pipe(response);
   });
+  upstreamInFlight += 1;
 
   const connectTimer = setTimeout(() => upstream.destroy(new Error('runtime connect timed out')), connectTimeoutMs);
   upstream.on('socket', (socket) => {
@@ -179,8 +183,14 @@ export function createRuntimeProxyServer({
     };
     if (socket.connecting) socket.once('connect', connected); else connected();
   });
-  upstream.on('close', () => clearTimeout(connectTimer));
-  upstream.on('error', (error) => writeFailure(response, fail(`runtime request failed: ${error.message}`, /timed out|timeout/.test(error.message) ? 504 : 503)));
+  upstream.on('close', () => {
+    clearTimeout(connectTimer);
+    upstreamInFlight -= 1;
+  });
+  upstream.on('error', (error) => {
+    console.error(`runtime proxy upstream error ${new Date().toISOString()} ${incoming.method} ${(incoming.url ?? '/').split('?')[0]} code=${error.code ?? 'none'} message=${error.message} reusedSocket=${upstream.reusedSocket} elapsedMs=${Date.now() - startedAt} inFlight=${upstreamInFlight}`);
+    writeFailure(response, fail(`runtime request failed: ${error.message}`, /timed out|timeout/.test(error.message) ? 504 : 503));
+  });
   incoming.on('aborted', () => upstream.destroy());
   incoming.pipe(upstream);
 });

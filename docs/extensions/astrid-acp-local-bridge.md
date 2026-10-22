@@ -81,7 +81,7 @@ agent); a failed start shows **Claude Code didn't start.**, its details, and
 
 Under the chat menu, a small line shows the chat's fixed agent, model and thinking
 level. It opens the chat's thinking level, which can change between replies, and
-**New chat with another model**, which opens the chat menu on that agent's models:
+**New chat with another model**, which opens the new-chat menu (the ▾ beside **+** at the right of the header) on that agent's models:
 model choice happens only when a chat starts.
 The service owns each catalog and its defaults, bootstrapping discovery when
 needed; the browser does not keep another model list or model preference.

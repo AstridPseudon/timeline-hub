@@ -1,6 +1,6 @@
 import { refreshProjectElementContext } from '../runtime/admitted-elements';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { AcpModelCatalog, ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
+import { type AcpModelCatalog, type ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';

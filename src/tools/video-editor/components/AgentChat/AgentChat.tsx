@@ -39,7 +39,8 @@ import type {
 import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup, type AgentChatAttachmentPreviewItem } from './AgentChatMessage.tsx';
 import { useChatScroll } from './useChatScroll';
 import { AgentTaskResults } from './AgentTaskResults';
-import { AgentChatMenu, type AgentChatMenuHandle, type NewChatAgentModels } from './AgentChatMenu';
+import { AgentChatMenu } from './AgentChatMenu';
+import { NewChatMenu, type NewChatAgentModels, type NewChatMenuHandle } from './NewChatMenu';
 import { AgentChatModelLine } from './AgentChatModelLine';
 import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded';
 import { AgentIcon, agentNames } from './agentIdentity';
@@ -218,13 +219,14 @@ function AvailableAgentChatPanel({
     const agent = localAgents.data?.agents.find(choice => choice.id === sessionAgentId(sessionId));
     return agent?.models.find(model => model.modelId === modelId)?.name ?? modelId;
   }, [localAgents.data]);
-  const chatModelName = useMemo(() => {
+  const chatModelId = useMemo(() => {
     if (!activeSessionId) return null;
-    const models = modelCatalog.data?.localModels;
-    const modelId = models?.currentModelId ?? projectChat.data?.sessions.find(session => session.id === activeSessionId)?.model_id;
-    if (!modelId) return null;
-    return models?.availableModels.find(model => model.modelId === modelId)?.name ?? modelName(activeSessionId, modelId);
-  }, [activeSessionId, modelCatalog.data, modelName, projectChat.data]);
+    return modelCatalog.data?.localModels?.currentModelId ?? projectChat.data?.sessions.find(session => session.id === activeSessionId)?.model_id ?? null;
+  }, [activeSessionId, modelCatalog.data, projectChat.data]);
+  const chatModelName = useMemo(() => {
+    if (!activeSessionId || !chatModelId) return null;
+    return modelCatalog.data?.localModels?.availableModels.find(model => model.modelId === chatModelId)?.name ?? modelName(activeSessionId, chatModelId);
+  }, [activeSessionId, chatModelId, modelCatalog.data, modelName]);
   const chatThoughtLevel = modelCatalog.data?.localModels?.thoughtLevel ?? null;
   // Some agents carry thinking inside the model option; that level is fixed with the model.
   const chatThoughtLevelFixed = Boolean(chatThoughtLevel && (chatThoughtLevel.configId === 'model' || chatThoughtLevel.configId === modelCatalog.data?.localModels?.modelConfigId));
@@ -293,12 +295,13 @@ function AvailableAgentChatPanel({
     }]);
   }, [sessions.data, projectChat.data?.sessions]);
   const [browseAgent, setBrowseAgent] = useState<LocalAgentId | null>(null);
-  const chatMenuRef = useRef<AgentChatMenuHandle>(null);
-  // The action pane stays shown while either header popover is open.
-  const headerOverlaysRef = useRef({ menu: false, model: false });
-  const setHeaderOverlayOpen = useCallback((overlay: 'menu' | 'model', open: boolean) => {
+  const chatMenuRef = useRef<NewChatMenuHandle>(null);
+  // The action pane stays shown while any header popover is open.
+  const headerOverlaysRef = useRef({ menu: false, model: false, newChat: false });
+  const setHeaderOverlayOpen = useCallback((overlay: 'menu' | 'model' | 'newChat', open: boolean) => {
     headerOverlaysRef.current[overlay] = open;
-    onSessionSelectorOpenChange?.(headerOverlaysRef.current.menu || headerOverlaysRef.current.model);
+    const overlays = headerOverlaysRef.current;
+    onSessionSelectorOpenChange?.(overlays.menu || overlays.model || overlays.newChat);
   }, [onSessionSelectorOpenChange]);
   const agentCanBrowse = useMemo(() => ({ hermes: Boolean(localAgents.data?.agents.find(agent => agent.id === 'hermes')?.models.length) }), [localAgents.data]);
   const newChatModels = useMemo<NewChatAgentModels | null>(() => {
@@ -934,11 +937,10 @@ function AvailableAgentChatPanel({
     // No background of its own — sits on the parent pane's bg so the only
     // visible color change between halves is the divider line itself.
     <div className="flex h-full w-full flex-col overflow-hidden">
-      {/* Header: one menu names the chat (switch, start, rename); the small line under it is the chat's agent and model. */}
+      {/* Header: the chat menu names the chat (switch, rename, Main, attach); the small line under it is the chat's agent and model; the split button starts a new chat (+ like this one, ▾ with any agent and model). */}
       <div data-testid="agent-chat-header" className="relative flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-1.5">
         <div className="-ml-1.5 flex min-w-0 flex-col items-start">
           <AgentChatMenu
-            ref={chatMenuRef}
             sessions={sessionOptions}
             activeSessionId={activeSessionId}
             mainSessionId={projectChat.data?.main_session_id ?? null}
@@ -956,21 +958,8 @@ function AvailableAgentChatPanel({
               : undefined}
             starting={startingAgent !== null}
             disabled={startingAgent !== null || !hasProject}
-            defaultAgent={defaultAgent}
-            agents={localAgents.data?.agents}
-            agentModelNames={agentModelNames}
-            agentCanBrowse={agentCanBrowse}
-            agentsLoading={localAgents.isLoading}
-            agentsError={localAgents.error instanceof Error ? localAgents.error : null}
-            newChatDisabled={createNewSession.isPending}
-            onBrowseAgent={setBrowseAgent}
-            agentModels={newChatModels}
-            onNewChat={(agent, model, thoughtLevel) => void startChatWith(agent, model, thoughtLevel)}
             attachExisting={projectId ? { open: showAttachSessions, toggle: () => setShowAttachSessions((open) => !open) } : undefined}
-            onOpenChange={(open) => {
-              if (open) void localAgents.refetch();
-              setHeaderOverlayOpen('menu', open);
-            }}
+            onOpenChange={(open) => setHeaderOverlayOpen('menu', open)}
           />
           <AgentChatModelLine
             agent={startingAgent ?? chatAgent}
@@ -986,7 +975,31 @@ function AvailableAgentChatPanel({
             onOpenChange={(open) => setHeaderOverlayOpen('model', open)}
           />
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 self-start">
+          <NewChatMenu
+            ref={chatMenuRef}
+            current={activeSessionId && !startingAgent ? {
+              agent: chatAgent,
+              model: chatModelId ?? undefined,
+              modelName: chatModelName,
+              thoughtLevel: chatThoughtLevel?.options.length && !chatThoughtLevelFixed ? chatThoughtLevel.currentValue : undefined,
+            } : null}
+            defaultAgent={defaultAgent}
+            agents={localAgents.data?.agents}
+            agentModelNames={agentModelNames}
+            agentCanBrowse={agentCanBrowse}
+            agentsLoading={localAgents.isLoading}
+            agentsError={localAgents.error instanceof Error ? localAgents.error : null}
+            disabled={startingAgent !== null || !hasProject}
+            newChatDisabled={createNewSession.isPending}
+            onBrowseAgent={setBrowseAgent}
+            agentModels={newChatModels}
+            onNewChat={(agent, model, thoughtLevel) => void startChatWith(agent, model, thoughtLevel)}
+            onOpenChange={(open) => {
+              if (open) void localAgents.refetch();
+              setHeaderOverlayOpen('newChat', open);
+            }}
+          />
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-hidden="true" />}
           {showKillSwitch && (
             <Button

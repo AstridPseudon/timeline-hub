@@ -43,6 +43,7 @@ const mocks = vi.hoisted(() => ({
   setIsTasksPaneOpen: vi.fn(),
 }));
 
+
 vi.mock('@/shared/contexts/AgentChatContext', () => ({
   useAgentChatBridge: (...args: unknown[]) => mocks.useAgentChatBridge(...args),
   useAgentChatActionsRegistry: (...args: unknown[]) => mocks.useAgentChatActionsRegistry(...args),
@@ -78,7 +79,8 @@ vi.mock('@/tools/video-editor/hooks/useAgentSession', () => ({
   useTakeOverSession: (...args: unknown[]) => mocks.useTakeOverSession(...args),
 }));
 
-vi.mock('@/tools/video-editor/hooks/useAgentVoice', () => ({
+vi.mock('@/tools/video-editor/hooks/useAgentVoice', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/tools/video-editor/hooks/useAgentVoice.ts')>()),
   useAgentVoice: (...args: unknown[]) => mocks.useAgentVoice(...args),
 }));
 

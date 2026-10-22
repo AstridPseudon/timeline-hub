@@ -12,6 +12,7 @@ import { EDITOR_TOUR_ANCHOR_ATTRIBUTE, EDITOR_TOUR_ANCHORS } from '@/tools/video
 import { EDITOR_TOUR_SCRIPT } from '@/tools/video-editor/tour/tourScript.ts';
 import { AgentChatComposer } from './AgentChatComposer';
 import { AgentChatMenu } from './AgentChatMenu';
+import { NewChatMenu } from './NewChatMenu';
 import { AgentChatModelLine } from './AgentChatModelLine';
 import { AgentIcon, agentNames } from './agentIdentity';
 import { AgentChatMessage, AgentChatToolGroup } from './AgentChatMessage.tsx';
@@ -154,9 +155,7 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
           <AgentChatMenu
             sessions={NO_SESSIONS}
             activeSessionId={null}
-            defaultAgent="astrid"
             onSelectSession={NO_OP}
-            onNewChat={NO_OP}
           />
           <AgentChatModelLine
             agent="astrid"
@@ -166,7 +165,9 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
             onChooseAnotherModel={NO_OP}
           />
         </div>
-        <div className="flex shrink-0 items-center gap-1" />
+        <div className="flex shrink-0 items-center gap-1 self-start">
+          <NewChatMenu defaultAgent="astrid" onNewChat={NO_OP} />
+        </div>
       </div>
 
       <div

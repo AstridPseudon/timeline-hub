@@ -26,7 +26,7 @@ import {
   agentSessionQueryKey,
 } from './useAgentSession.ts';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
-import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
+import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
 import { LOCAL_AGENT_TABLE } from '@/integrations/astrid/localAgents.ts';
 
 function wrapper({ children }: { children: React.ReactNode }) {

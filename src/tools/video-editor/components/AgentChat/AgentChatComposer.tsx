@@ -76,11 +76,14 @@ export function AgentChatComposer({
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-muted hover:bg-destructive hover:text-destructive-foreground"
-                onClick={voice.onCancel}
-                title="Cancel recording"
+                className={voice.isRecording
+                  ? 'relative h-full w-full rounded-xl bg-red-500 text-white transition-colors hover:bg-red-600'
+                  : 'relative h-full w-full rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
+                onClick={voice.onToggle}
+                disabled={voice.micDisabled}
+                title={voice.isRecording ? 'Stop recording' : 'Voice input (Cmd+Shift+R)'}
               >
-                <X className="h-3 w-3" />
+                {voice.isRecording ? <Square className="h-3 w-3" /> : <Mic className="h-3.5 w-3.5" />}
               </Button>
             )}
           </div>
