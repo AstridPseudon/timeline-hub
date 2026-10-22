@@ -10,7 +10,7 @@ export type EditorTourVisual = 'extension' | 'frame-to-still' | 'still-to-video'
 export interface EditorTourActScript {
   /** Typed into the chat composer; the user sends it. */
   readonly prompt: string;
-  /** A header on the act's compose card, above "Press Send" (acts 1 and 2: what you can ask your agent for). */
+  /** A header on the act's compose card, above "Press Send": what your agent can do in this act. */
   readonly composeHeader?: string;
   /** Streamed as Astrid's reply. */
   readonly reply: string;
@@ -47,7 +47,7 @@ export interface EditorTourScript {
 export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
   acts: {
     1: {
-      composeHeader: 'Ask your agent to do anything with creative tools',
+      composeHeader: 'Ask your agent to do any kind of creative work',
       prompt: 'Make me a Three.js journey through a valley with lanterns in it as the moon rises.',
       reply: 'Lantern Valley is on your timeline: 10 seconds of a live Three.js scene, with the moon up and the lanterns lifting off the water.',
       toolCards: [
@@ -62,7 +62,7 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
       },
     },
     2: {
-      composeHeader: 'Ask your agent to do anything with open models',
+      composeHeader: 'Your agent can do anything with open models',
       prompt: 'Can you make me realistic frames for that using Qwen Image 2.1?',
       reply: 'I made realistic start and end frames with Qwen Image 2.1 in ComfyUI. Both stills are on a new row above the scene.',
       toolCards: [
@@ -77,6 +77,7 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
       },
     },
     3: {
+      composeHeader: 'Your agent can combine different assets to create final generations',
       prompt: 'Now use MiniMax H3 to turn that into a 10-second video, following the motion in the Three.js scene.',
       reply: 'MiniMax H3 turned your start and end frames into one 10-second shot that follows the scene’s motion. It’s on the top row, ready to play.',
       toolCards: [{ name: 'MiniMax H3', detail: 'start + end frames · 10 s' }],
@@ -94,8 +95,8 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
   strip: ['Three.js', 'Frames', 'Video'],
   finale: { title: 'Do you get it?', action: 'I got it', recap: ['Agent + extensions', 'Local models', 'Production'] },
   feedback: {
-    title: 'Please share your feedback',
-    body: 'That’s what we’re aiming for, but Astrid is a very early-stage product in a very complex field, and in many ways it doesn’t get there yet. Feedback on any issue you hit helps us improve it: no problem is too large or too small.',
+    title: 'We actually need your feedback',
+    body: 'We’re aiming for a tool that helps unlock the creative potential of open models and the open‑source community. But Astrid is a very early-stage product, and in many ways it doesn’t get there yet. Feedback on any issue you hit helps us improve it: no problem is too large or too small.',
     discord: 'Join the Discord',
     action: 'Start creating',
   },
