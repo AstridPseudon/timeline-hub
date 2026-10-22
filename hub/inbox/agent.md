@@ -10,3 +10,6 @@ Follow only $ORCH/PLAN.md (v2.1), your BRIEF.md, design/BOARD-HEADER.md (its dec
 
 ## Orchestrator 22:37Z: STALE origin/main, re-fetch before U-merges
 Plain `git fetch origin main` does not update origin/main in these repos, because their fetch refspec does not cover main. Runtime U1 merged a stale origin/main for this reason. Your lead must run `git -C /home/user/work/agent fetch -q origin "+refs/heads/main:refs/remotes/origin/main"` and check the sha against `git ls-remote`. Expected tips: agent 940b2bbe7, app 3f4619da4. Only then run merge-forward. If a U-merge was already done against a stale origin/main, merge forward again onto the real one.
+
+## Orchestrator 22:41Z: upstream tip
+Use origin/main = **431681a6d**, the live ls-remote tip of peteromallet/astrid-agent. The U2 hold is released: merge forward onto origin/main. Always use the live tip at merge time.

@@ -5,7 +5,7 @@
 Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan: `$ORCH/PLAN.md` v2.1. Lanes and IDs are in PLAN's "Who does what" table.
 
 ## Status
-- C0 contract: **C0 APPROVED** (22:15Z) for building R1, G2, A2, R2r, R3, V1, V2 and P1. **Two amendments are pending (C0b, see design/astra-c0-review.md):** (1) `steps[].reads`, evaluated per step and persisted; (2) provider-generated step effect records (root create/remove, managed edges), kept distinct from submitted `doc.patch`. **R2 (undo) waits for C0b.** R1 and G2 must not hard-code step-patch shapes that C0b changes.
+- C0 contract: **C0 APPROVED** (22:15Z). **C0b APPROVED** (22:45Z), covering `steps[].reads` and the provider effect records; see design/astra-c0b-review.md. **C0c is pending:** root addressing (Astra 22:44Z). The principle is adopted now: *every root address resolves to exactly one physical closure image at its evaluation boundary; entity IDs are aliases.* `parent` and the unambiguous addresses are unchanged. `internal:<timeline_id>` and `shot:<shot_id>` are allowed only when they resolve to exactly one root; multiple matches are refused with `ambiguous_ref`, never selected or broadcast. There is an explicit `internal-revision:<revision_id>` form. Resolved bindings are persisted and aliases normalized before overlap checks. Successors are followed only through authenticated provenance, and an alias is never silently retargeted. **R2 may start now** against C0b plus this principle; **R2 merges only after C0c is approved.**
 - H3 go/no-go (P1): pending.
 - H8 scope check: pending.
 
@@ -46,4 +46,5 @@ Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan:
   - fetches: the lead, outside the sandbox.
 
   Only an auto-mode classifier or safety denial stops you.
-- **Upstream fetch before any U-task:** the lead fetches `origin main` in the work repo first. A merge against a stale `origin/main` is a FAIL.
+- **Upstream fetch before any U-task:** the lead runs `git -C /home/user/work/<repo> fetch -q origin "+refs/heads/main:refs/remotes/origin/main"`. The explicit refspec is needed because these repos' fetch config does not cover main. Then check that `git rev-parse origin/main` equals `git ls-remote origin refs/heads/main`. A merge against a stale origin/main is a FAIL.
+- **Use the live `ls-remote` tip at merge time.** Upstream shas quoted by the orchestrator are snapshots; a newer tip that contains them is correct.
