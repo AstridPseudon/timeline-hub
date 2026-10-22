@@ -740,6 +740,8 @@
         "LiveSceneRequest",
         "LiveSceneResult",
         "LiveSceneScope",
+        "PanelClipDragProps",
+        "PanelClipSpec",
         "PanelFrameAnchor",
         "PanelPreviewService",
         "PanelRenderProps",
