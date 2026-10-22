@@ -40,7 +40,7 @@ import {
 } from '@/tools/video-editor/runtime/ContributionErrorBoundary.tsx';
 import type { TimelineInspectorTarget } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 
-function InspectorRegistrySections({
+export function InspectorRegistrySections({
   placement,
   selection,
 }: {
@@ -100,7 +100,7 @@ type DataKindInspectorComponent = ComponentType<DataItemInspectorProps>;
  * one is registered (contained by the host boundary), otherwise the opaque
  * fallback that renders only frozen envelope facts.
  */
-function DataItemInspectorSection({ lane, view }: { lane: DataLaneView; view: DataLaneItemView }) {
+export function DataItemInspectorSection({ lane, view }: { lane: DataLaneView; view: DataLaneItemView }) {
   const { item } = view;
 
   if (!lane.inspector) {
@@ -140,7 +140,7 @@ function DataItemInspectorSection({ lane, view }: { lane: DataLaneView; view: Da
  * envelope facts the host owns — label, schemaRef, shape, item count.
  * Styling mirrors OpaqueDataItemInspector; payloads are never interpreted.
  */
-function DataLaneSummarySection({ lane }: { lane: DataLaneView }) {
+export function DataLaneSummarySection({ lane }: { lane: DataLaneView }) {
   return (
     <div
       data-testid="data-lane-summary"
