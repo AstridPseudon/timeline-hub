@@ -7,7 +7,13 @@ from dataclasses import asdict
 from typing import Any
 
 from astrid.sdk.timeline._common import TimelineEditError
-from astrid.sdk.timeline.revisions import Revision, RuntimeRevisions, resolve_revision, short_revision, split_ref
+from astrid.sdk.timeline.revisions import (
+    Revision,
+    RuntimeRevisions,
+    resolve_revision,
+    short_revision,
+    split_ref,
+)
 
 REASON = (
     "earlier revisions: this Runtime cannot list them (Runtime ask: composition revisions need "

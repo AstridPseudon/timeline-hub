@@ -752,7 +752,9 @@ def test_listener_signal_v2_foreign_authenticated_engine_never_signals():
 @pytest.mark.parametrize("field,value", [
     ("version", "other"), ("command", "observe_owned_listener_exit"), ("role", "engine"),
     ("operation_id", "other"), ("channel_id", "other"), ("owner_epoch", "other"),
-    ("signal", 15.0), ("signal", True), ("signal", 30), ("signal", int(signal.SIGCONT)),
+    ("signal", 15.0), ("signal", True), ("signal", 30),
+    pytest.param("signal", int(getattr(signal, "SIGCONT", 0)), id="signal-sigcont",
+                 marks=pytest.mark.skipif(sys.platform == "win32", reason="signal.SIGCONT does not exist on Windows")),
     ("generation", True), ("generation", 1.0), ("generation", 0),
     ("target", {}), ("target", []),
 ])

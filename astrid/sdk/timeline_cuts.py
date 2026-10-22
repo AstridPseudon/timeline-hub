@@ -33,7 +33,7 @@ import math
 import re
 from typing import Any, Mapping, Sequence
 
-from astrid.core.timeline.astrid_ns import film_intent, read_app
+from astrid.core.timeline.astrid_ns import read_app
 
 __all__ = [
     "build_cut_table",
