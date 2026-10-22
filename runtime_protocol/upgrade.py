@@ -1029,7 +1029,7 @@ def migrate_canonical_to_current(
             if int(current["version"]) == TIMELINE_NAME_TARGET_SCHEMA_VERSION:
                 steps.append(_apply_v30_to_v31(connection))
                 current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
-            if int(current["version"]) == APP_STATE_TARGET_SCHEMA_VERSION:
+            if current["version"] == APP_STATE_TARGET_SCHEMA_VERSION:
                 steps.append(_apply_v31_to_v32(connection))
             final = _canonical_schema_identity(connection, expected_realm_id=realm_id)
             if int(final["version"]) != TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:

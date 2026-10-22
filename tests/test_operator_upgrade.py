@@ -60,9 +60,6 @@ def _fixture(tmp_path, *, live=True, runtime_checkout=None, version=25):
         # Upstream app-state v31 adds this table; v30 and earlier must omit it.
         with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
             connection.execute("DROP TABLE user_app_state")
-    if version < 30:
-        with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
-            connection.execute("ALTER TABLE timelines DROP COLUMN name")
     if version < 28:
         # v28 -> v27 restores inline specs and drops task_specs.
         connection = sqlite3.connect(realm_root / "realm.sqlite3")

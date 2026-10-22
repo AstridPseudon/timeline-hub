@@ -1121,7 +1121,7 @@ def test_shot_clip_track_resolves_from_the_film_when_the_shot_defines_none(tmp_p
             {"id": "picture", "kind": "visual", "label": "Film picture"},
         ]
         publication["internal_timeline_revisions"][0]["payload"].pop("tracks")
-        service.publish_parent_composition(project, "main", publication, idempotency_key="publish-film-tracks")
+        _publish(service, project, publication, idempotency_key="publish-film-tracks")
 
         result = service.inspect_timeline(project, "main", {"limit": 10})
         child = [clip for row in result["selected"] for clip in row["clips"]][0]
