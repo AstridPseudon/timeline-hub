@@ -9,7 +9,6 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
-import shutil
 from pathlib import Path
 
 import pytest
@@ -79,7 +78,7 @@ def _descriptor(transport: WorkspaceClient, project_id: str, payload: bytes, *, 
     return {"object_id": object_id, "digest": object_id, "filename": filename, "required": True}
 
 
-@pytest.mark.skipif(not shutil.which("ffmpeg") or not shutil.which("ffprobe"), reason="ffmpeg/ffprobe required for CPU H3 composition")
+@pytest.mark.ffmpeg
 def test_runtime_response_loss_resumes_canonical_run_into_h3_verified_receipt(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime) -> None:
     daemon = real_runtime(tmp_path / "realm")
     try:

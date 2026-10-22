@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 from pathlib import Path
 from unittest.mock import patch
@@ -13,8 +12,6 @@ from astrid.packs.understanding.actions.video_understand.run import main
 
 
 def _write_test_video(path: Path, *, duration: float = 1.2) -> None:
-    if shutil.which("ffmpeg") is None:
-        pytest.skip("ffmpeg is required for video understanding tests")
     subprocess.run(
         [
             "ffmpeg",
@@ -43,6 +40,7 @@ def _write_test_video(path: Path, *, duration: float = 1.2) -> None:
     )
 
 
+@pytest.mark.ffmpeg
 def test_video_understand_extracts_window_dry_run(capsys, tmp_path):
     video = tmp_path / "source.mp4"
     _write_test_video(video)
@@ -70,6 +68,7 @@ def test_video_understand_extracts_window_dry_run(capsys, tmp_path):
     assert Path(payload["windows"][0]["path"]).is_file()
 
 
+@pytest.mark.ffmpeg
 def test_video_understand_best_mode_dry_run(capsys, tmp_path):
     video = tmp_path / "source.mp4"
     _write_test_video(video)
@@ -94,6 +93,7 @@ def test_understand_dispatches_video(monkeypatch):
     assert captured["argv"] == ["--video", "source.mp4", "--dry-run"]
 
 
+@pytest.mark.ffmpeg
 def test_video_understand_writes_universal_result_manifest(capsys, tmp_path):
     video = tmp_path / "source.mp4"
     _write_test_video(video)

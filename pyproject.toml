@@ -274,9 +274,10 @@ tmp_path_retention_policy = "failed"
 # megaplan baseline capture for ~an hour.) A test that legitimately runs longer
 # should raise its own bound with @pytest.mark.timeout(N).
 timeout = 600
-# Lanes (testing plan R-2): the default run leaves out tests that need another repo,
-# macOS, credentials or explicit opt-in; tests/lanes.py documents the heavy lane, which runs on request only.
-addopts = "-m 'not integration and not darwin_native and not live and not opt_in'"
+# Lanes (testing plan R-2): the default run leaves out the default_off lanes of tests/lanes.py (another repo,
+# macOS, the Remotion install, credentials, explicit opt-in); each is run by the CI job named in the registry or by hand.
+# --strict-markers: a lane marker must be one the registry declares.
+addopts = "--strict-markers -m 'not integration and not darwin_native and not live and not opt_in and not remotion and not chrome'"
 # Scope collection to Astrid's own tests; exclude vendored upstream test trees
 # (e.g. any pack's `ai_toolkit/upstream` submodule, which targets the upstream
 # project, needs heavy deps like torch, and is not part of Astrid's suite).

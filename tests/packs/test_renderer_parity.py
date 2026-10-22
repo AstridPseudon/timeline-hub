@@ -94,17 +94,10 @@ def _json(path: Path) -> dict:
     return payload
 
 
-def _require_ffmpeg() -> None:
-    if shutil.which("ffmpeg") is None:
-        pytest.skip("ffmpeg binary is unavailable")
-    assert shutil.which("ffprobe") is not None, "ffmpeg is installed but ffprobe is missing"
-
-
 @pytest.fixture(scope="session")
 def parity_media(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """Stage semantic JSON and generate the only binary test inputs."""
 
-    _require_ffmpeg()
     root = tmp_path_factory.mktemp("renderer-parity-media")
     shutil.copy2(FIXTURES / "assets.json", root / "assets.json")
     overrides = _json(FIXTURES / "theme-overrides.json")
@@ -371,6 +364,7 @@ def test_empty_timeline_is_rejected_and_failure_workspace_is_clean(
 
 
 @pytest.mark.parametrize("fixture", SEMANTIC_FIXTURES)
+@pytest.mark.ffmpeg
 def test_real_remotion_renders_each_semantic_variant(
     fixture: str,
     parity_media: Path,
@@ -409,6 +403,7 @@ def test_real_remotion_renders_each_semantic_variant(
 
 
 @pytest.mark.parametrize("fixture", ("media-only", "audio-reactive-colour"))
+@pytest.mark.ffmpeg
 def test_real_ffmpeg_renders_supported_semantic_variants(
     fixture: str,
     parity_media: Path,
@@ -431,6 +426,7 @@ def test_real_ffmpeg_renders_supported_semantic_variants(
         assert fragment["specialization"]["id"] == "audio-reactive-colour/v1"
 
 
+@pytest.mark.ffmpeg
 def test_raw_fixture_renderer_is_real_deterministic_and_honors_output_names(
     parity_media: Path,
     service: RenderService,
@@ -454,6 +450,7 @@ def test_raw_fixture_renderer_is_real_deterministic_and_honors_output_names(
     assert sha256_file(outputs[0]) == sha256_file(outputs[1])
 
 
+@pytest.mark.ffmpeg
 def test_audio_none_is_published_but_passthrough_requires_host_completion(
     parity_media: Path,
     service: RenderService,
@@ -555,6 +552,7 @@ def _fake_render_process(monkeypatch: pytest.MonkeyPatch) -> None:
     ("attached", "output_name"),
     ((False, "hype.mp4"), (True, "attached-parity.mp4")),
 )
+@pytest.mark.ffmpeg
 def test_public_facade_standalone_and_attached_run_ownership(
     attached: bool,
     output_name: str,

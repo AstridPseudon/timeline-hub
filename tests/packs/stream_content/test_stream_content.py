@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -16,8 +15,6 @@ def _write_json(path: Path, payload: object) -> Path:
 
 
 def _tiny_video(tmp_path: Path, duration: float = 2.0) -> Path:
-    if shutil.which("ffmpeg") is None:
-        pytest.skip("ffmpeg is required for the synthetic stream_content video fixture")
     video = tmp_path / "testsrc.mp4"
     subprocess.run(
         [
@@ -39,6 +36,7 @@ def _tiny_video(tmp_path: Path, duration: float = 2.0) -> Path:
     return video
 
 
+@pytest.mark.ffmpeg
 def test_segment_map_fuses_ocr_and_transcript_density(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     from astrid.packs.stream_content.actions.segment_map import core
 
@@ -130,6 +128,7 @@ def test_clip_candidates_scores_brief_matches_higher(tmp_path: Path) -> None:
     assert top["segment_label"] == "Main panel"
 
 
+@pytest.mark.ffmpeg
 def test_distill_dry_run_emits_plan_shape(tmp_path: Path) -> None:
     video = _tiny_video(tmp_path)
     transcript = _write_json(

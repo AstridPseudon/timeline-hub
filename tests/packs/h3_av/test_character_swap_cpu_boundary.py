@@ -8,6 +8,7 @@ import shutil
 import subprocess
 
 import pytest
+from tests.lanes import unavailable
 
 from astrid.packs.h3_av.shared.input_bundle import build_input_bundle
 from astrid.packs.h3_av.shared.request import normalize_request
@@ -430,12 +431,13 @@ def test_h3_synthetic_readiness_profile_uses_digest_bound_model_root(tmp_path: P
     assert binding.qualification_identity is None
 
 
+@pytest.mark.integration  # needs the Runtime and VibeComfy checkouts and the approved T9 readiness profile
 def test_character_swap_public_managed_cpu_boundary(tmp_path: Path) -> None:
     blockers = _boundary_blockers()
     if blockers:
-        pytest.skip("public managed CPU boundary is not qualified: " + "; ".join(blockers))
+        unavailable("public managed CPU boundary is not qualified: " + "; ".join(blockers))
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        pytest.skip("public managed CPU boundary requires ffmpeg and ffprobe")
+        unavailable("public managed CPU boundary requires ffmpeg and ffprobe")
 
     from PIL import Image
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -19,7 +18,7 @@ def _viewer_data():
     }
 
 
-@pytest.mark.skipif(shutil.which("node") is None, reason="node required")
+@pytest.mark.node
 def test_viewer_state_keeps_audio_selection_playback_loop_and_text_input_safe(tmp_path):
     script = tmp_path / "viewer-test.js"
     source = """
@@ -70,7 +69,7 @@ def test_rendered_viewer_contains_audio_controls_and_media_clock_fallback():
         assert marker in page
 
 
-@pytest.mark.skipif(shutil.which("node") is None, reason="node required")
+@pytest.mark.node
 def test_card_helpers_surface_only_declared_audio_and_frozen_speech_metadata(tmp_path):
     script = tmp_path / "card-audio-test.js"
     source = """
@@ -121,7 +120,7 @@ def test_rendered_viewer_contains_filmstrip_hierarchy_and_truthful_card_cues():
     assert page.index("header.append") < page.index("img.src")
 
 
-@pytest.mark.skipif(shutil.which("node") is None, reason="node required")
+@pytest.mark.node
 def test_browser_viewer_seeks_frame_target_from_frame_number_and_shot_filter(tmp_path):
     script = tmp_path / "viewer-dom-seek-test.js"
     source = """

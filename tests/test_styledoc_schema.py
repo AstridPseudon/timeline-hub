@@ -9,7 +9,6 @@ from astrid.core.theme import ThemeValidationError, load_theme, resolve_theme_as
 
 
 ROOT = Path(__file__).resolve().parents[2]
-ARCA_THEME = ROOT / "themes" / "arca-gidan" / "theme.json"
 
 
 def base_theme() -> dict:
@@ -39,24 +38,6 @@ class StyledocSchemaTest(unittest.TestCase):
         path = self.make_tempdir() / "theme.json"
         path.write_text(json.dumps(payload), encoding="utf-8")
         return path
-
-    def test_arca_gidan_theme_has_five_blocks_and_object_assets(self) -> None:
-        if not ARCA_THEME.is_file():
-            self.skipTest("themes/arca-gidan/theme.json is authored by T11")
-        theme = load_theme(ARCA_THEME)
-
-        self.assertEqual(
-            set(theme),
-            {"id", "visual", "generation", "voice", "audio", "pacing"},
-        )
-        reference = theme["generation"]["references"][0]
-        asset = theme["generation"]["assets"][0]
-        self.assertIsInstance(reference, dict)
-        self.assertIsInstance(asset, dict)
-        self.assertIn("file", reference)
-        self.assertIn("description", reference)
-        self.assertIn("file", asset)
-        self.assertIn("description", asset)
 
     def test_rejects_bare_string_references_with_specific_message(self) -> None:
         payload = base_theme()

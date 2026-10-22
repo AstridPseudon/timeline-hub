@@ -20,6 +20,7 @@ import uuid
 import zlib
 
 import pytest
+from tests.lanes import unavailable
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -240,9 +241,10 @@ def _assert_composed_view(client, project_id: str, *, mode: str, run_id: str | N
     }
 
 
+@pytest.mark.opt_in
 def test_public_visualizer_always_composes_current_saved_revision_with_matching_render(tmp_path, monkeypatch):
     if os.environ.get("ASTRID_C06_PUBLIC_ACCEPTANCE") != "1":
-        pytest.skip("set ASTRID_C06_PUBLIC_ACCEPTANCE=1 only in the bounded public acceptance run")
+        unavailable("set ASTRID_C06_PUBLIC_ACCEPTANCE=1 only in the bounded public acceptance run")
 
     run_root = Path(os.environ["ASTRID_STAGE1_ATTEMPT_ROOT"]).resolve()
     helper = _load_public_fixture()
@@ -436,12 +438,13 @@ def test_public_visualizer_always_composes_current_saved_revision_with_matching_
         raise operation_error
 
 
+@pytest.mark.opt_in
 @pytest.mark.parametrize("corruption", [None, "sidecar-bytes", "saved-revision", "requested-frame", "render-digest", "sidecar-path"])
 def test_saved_actual_filmstrip_v2_composed_capture_readback(tmp_path, corruption):
     """Replay a saved integration artifact; this does not claim a new lifecycle."""
     fixture = os.environ.get("ASTRID_C06_SAVED_FRAME_INDEX")
     if fixture is None:
-        pytest.skip("provide the saved actual public C06 frame-index artifact for affected readback replay")
+        unavailable("provide the saved actual public C06 frame-index artifact for affected readback replay")
     source = Path(fixture)
     index = json.loads(source.read_text(encoding="utf-8"))
     raw = (source.parent / index["snapshot_sidecar"]["path"]).read_bytes()

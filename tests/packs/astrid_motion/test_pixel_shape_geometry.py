@@ -1,8 +1,9 @@
 import json
-import shutil
 import subprocess
 import unittest
 from pathlib import Path
+
+import pytest
 
 from astrid.core.element.schema import load_element_definition
 
@@ -22,7 +23,7 @@ def _cells(shape: str, w: int, h: int, stroke: int, radius: int = 0) -> list[lis
     return json.loads(out)
 
 
-@unittest.skipUnless(shutil.which("node"), "node is needed to run the shape geometry")
+@pytest.mark.node
 class AmPixelShapeGeometryTest(unittest.TestCase):
     def test_dot_three_by_three_is_a_full_square(self) -> None:
         cells = _cells("dot", 3, 3, 1)
@@ -60,7 +61,7 @@ def _rect(w: int, h: int, stroke: int, radius: int) -> dict[str, list[list[int]]
     return json.loads(out)
 
 
-@unittest.skipUnless(shutil.which("node"), "node is needed to run the shape geometry")
+@pytest.mark.node
 class AmPixelShapeRectTest(unittest.TestCase):
     def test_rounded_tile_has_expected_cell_counts(self) -> None:
         # 16x16 r2: the silhouette loses one cell per corner (256 - 4 = 252).
@@ -112,7 +113,7 @@ def _blinking(frame: int, blink_at) -> bool:
     return json.loads(out)
 
 
-@unittest.skipUnless(shutil.which("node"), "node is needed to run the blink rule")
+@pytest.mark.node
 class AmPixelShapeBlinkTest(unittest.TestCase):
     def test_blink_hides_for_two_frames_at_each_listed_frame(self) -> None:
         # Same rule as am-sprite blinkAt: frames 14, 28, 42 hide the shape for two frames each.

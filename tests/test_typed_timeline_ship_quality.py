@@ -5,7 +5,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -30,7 +29,6 @@ RUNAWAY_COLOUR_GOLDEN_SHA256 = (
 RUNAWAY_TEXT_GOLDEN_SHA256 = (
     "8fff606a64c04fc41ef3a13c6b6603cfce516a36765743e7c91f48d05e8c5145"
 )
-FULL_RENDER_ENV = "ASTRID_RUN_FULL_RENDER_ACCEPTANCE"
 
 
 def _runaway_rows() -> list[dict]:
@@ -199,7 +197,7 @@ def test_admitted_rows_fail_closed_on_path_escape_shape_and_size(tmp_path: Path)
         )
 
 
-@pytest.mark.skipif(shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None, reason="ffmpeg toolchain required")
+@pytest.mark.ffmpeg
 def test_small_typed_timeline_real_render_has_exact_frame_count(tmp_path: Path) -> None:
     from astrid.packs.typed_timeline.common import ensure_tone_wav
 
@@ -236,14 +234,8 @@ def test_small_typed_timeline_real_render_has_exact_frame_count(tmp_path: Path) 
     assert output_path.stat().st_size > 1_000
 
 
-@pytest.mark.skipif(
-    os.environ.get(FULL_RENDER_ENV) != "1",
-    reason=f"set {FULL_RENDER_ENV}=1 for the release-candidate render gate",
-)
-@pytest.mark.skipif(
-    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
-    reason="ffmpeg toolchain required",
-)
+@pytest.mark.opt_in  # the release-candidate render gate: run by hand with -m opt_in
+@pytest.mark.ffmpeg
 def test_566_timeline_real_render_decodes_with_exact_stream_contract(
     tmp_path: Path,
 ) -> None:

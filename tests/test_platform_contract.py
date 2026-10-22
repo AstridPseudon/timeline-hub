@@ -1,24 +1,15 @@
 from __future__ import annotations
 
 import ast
-import importlib.util
 import json
 import os
 import subprocess
 import sys
 from pathlib import Path
 
-import pytest
 
 from tests._sdk_contract import EXPECTED_PUBLIC_NAMES, HEAVY_MODULES
 
-
-SDK_MODULE_MISSING = importlib.util.find_spec("astrid.sdk") is None
-
-pytestmark = pytest.mark.skipif(
-    SDK_MODULE_MISSING,
-    reason="public SDK facade lands in later execution batches",
-)
 
 
 def _fresh_contract_probe() -> dict[str, object]:

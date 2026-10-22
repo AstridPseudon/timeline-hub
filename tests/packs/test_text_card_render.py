@@ -1,5 +1,3 @@
-import json
-import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,11 +8,9 @@ from astrid.packs.rendering.actions.render import run as render_executor
 from astrid.core import timeline
 
 
-@pytest.mark.opt_in
+@pytest.mark.remotion
 class TextCardRenderTest(unittest.TestCase):
     def test_text_card_render_smoke(self) -> None:
-        if os.environ.get("RUN_RENDER_TESTS") != "1":
-            self.skipTest("Set RUN_RENDER_TESTS=1 to render MP4 fixtures")
         with tempfile.TemporaryDirectory(prefix="text-card-render-") as tmp_text:
             tmp = Path(tmp_text)
             timeline_path = tmp / "hype.timeline.json"

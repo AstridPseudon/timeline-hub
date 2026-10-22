@@ -49,7 +49,6 @@ from tests.core.rendering.test_service import (
     _real_media_inputs,
     _real_service,
     _request,
-    _require_ffmpeg,
     _service,
 )
 
@@ -160,13 +159,13 @@ def test_freeze_failure_paths_clean_temps_and_never_commit_sidecar(
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.ffmpeg
 def test_freeze_real_ffmpeg_transport_one_video_one_committed_sidecar(
     tmp_path: Path,
 ) -> None:
     """The real FFmpeg backend through the real CommandTransport commits
     exactly one video and one committed sidecar and leaves no temporary
     invocation workspace behind."""
-    _require_ffmpeg()
     timeline_path, assets_path = _real_media_inputs(tmp_path)
     service = _real_service(tmp_path)
     output = tmp_path / "freeze-real-ffmpeg.mp4"

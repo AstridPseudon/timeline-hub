@@ -12,7 +12,7 @@ from astrid.core.execution import generic_host, task_scope
 from astrid.core.execution.task_scope import TaskScopeUnresolved, spawn
 
 PY = sys.executable
-pytestmark = pytest.mark.skipif(not sys.platform.startswith(("darwin", "linux")), reason="posix only")
+pytestmark = pytest.mark.posix_native
 
 GRANDCHILDREN = (
     "import subprocess,sys,time;"

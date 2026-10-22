@@ -361,17 +361,6 @@ def test_real_remotion_render_through_registered_backend(
             assert source_path.is_file()
 
     if render_error is not None:
-        message = str(render_error)
-        environment_failures = (
-            "Failed to launch the browser process",
-            "MachPortRendezvous",
-            "Permission denied (1100)",
-        )
-        if any(reason in message for reason in environment_failures):
-            pytest.skip(
-                "Remotion backend smoke skipped: local browser/runtime is unavailable: "
-                + message.splitlines()[-1]
-            )
         raise render_error
 
     assert isinstance(result, RenderResult)

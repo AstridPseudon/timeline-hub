@@ -209,7 +209,7 @@ def test_recovered_group_refuses_member_drift_before_any_signal(monkeypatch, cha
         platform_helpers.signal_observed_group(100, platform.KILL, leader_birth="root")
 
 
-WINDOWS_ONLY = pytest.mark.skipif(sys.platform != "win32", reason="native Windows Job and SID APIs")
+WINDOWS_ONLY = pytest.mark.windows_native
 
 
 @WINDOWS_ONLY

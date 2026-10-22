@@ -129,7 +129,7 @@ def test_extract_thumbnail_converts_pillow_decompression_bomb_to_bounded_error(
         extract_thumbnail(source, tmp_path / "thumb.jpg", "image/png")
 
 
-@pytest.mark.skipif(not __import__("shutil").which("ffmpeg"), reason="ffmpeg is required")
+@pytest.mark.ffmpeg
 def test_extract_thumbnail_extracts_video_frame(tmp_path: Path):
     source = tmp_path / "source.mp4"
     destination = tmp_path / "thumb.jpg"

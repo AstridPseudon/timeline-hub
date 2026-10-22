@@ -582,12 +582,11 @@ def test_generator_pure_parts() -> None:
 
 # integration: builds a realm with the Runtime package (a second checkout) in subprocesses.
 @pytest.mark.integration
+@pytest.mark.ffmpeg
 def test_generated_reference_is_a_valid_stopped_reference(tmp_path: Path) -> None:
     import astrid_runtime  # noqa: F401
     import runtime_protocol.service  # noqa: F401
 
-    if subprocess.run(["which", "ffmpeg"], capture_output=True).returncode:
-        pytest.skip("ffmpeg is not installed")
     checkout = Path(journey.__file__).resolve().parents[3]
     reference = reference_realm.build_reference(
         tmp_path, env=journey.scrub_child_env(os.environ), source_checkout=checkout,

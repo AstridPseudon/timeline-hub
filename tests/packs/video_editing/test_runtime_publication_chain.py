@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.lanes import unavailable
+
 from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
 from astrid.packs.rendering.actions.assemble_timeline.run import build_authoring_proposal
 from astrid.packs.rendering.shared.runtime_stitch import publish_authoring_proposal
@@ -181,7 +183,7 @@ def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invo
 def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkeypatch, real_runtime):
     """Run the complete two-child continuation through the real pack host."""
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None or shutil.which("node") is None:
-        pytest.skip("ffmpeg, ffprobe, and node are required for the daemon render chain")
+        unavailable("ffmpeg, ffprobe, and node are required for the daemon render chain")
     astrid_root = Path(__file__).resolve().parents[3]
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(astrid_root / "remotion"))
     monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", shutil.which("node") or "node")

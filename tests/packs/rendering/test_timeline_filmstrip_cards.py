@@ -3,7 +3,6 @@ import copy
 import hashlib
 import json
 from pathlib import Path
-import shutil
 import subprocess
 
 import pytest
@@ -214,7 +213,7 @@ def test_shots_sample_authored_midpoint():
     assert [(c['frame'], c['sample_reasons']) for c in cards] == [(24, ['shot_midpoint'])]
 
 
-@pytest.mark.skipif(shutil.which('ffmpeg') is None, reason='ffmpeg required')
+@pytest.mark.ffmpeg
 def test_pack_uses_rendered_frames_without_html_artifact(tmp_path):
     video = tmp_path / 'render.mp4'
     subprocess.run(['ffmpeg', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=red:size=160x90:rate=24:duration=4', '-c:v', 'libx264', '-y', str(video)], check=True)
@@ -235,7 +234,7 @@ def test_pack_uses_rendered_frames_without_html_artifact(tmp_path):
     assert not list((tmp_path / 'pack').glob('*.svg'))
 
 
-@pytest.mark.skipif(shutil.which('ffmpeg') is None, reason='ffmpeg required')
+@pytest.mark.ffmpeg
 def test_pack_keeps_audio_navigation_links_separate_from_compact_receipt(tmp_path):
     video = tmp_path / 'render.mp4'
     subprocess.run(['ffmpeg', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=red:size=160x90:rate=24:duration=4', '-c:v', 'libx264', '-y', str(video)], check=True)
@@ -269,7 +268,7 @@ def test_pack_keeps_audio_navigation_links_separate_from_compact_receipt(tmp_pat
     assert index['audio_sidecar']['digest'] == 'sha256:' + hashlib.sha256((tmp_path / 'pack' / 'audio-analysis.json').read_bytes()).hexdigest()
 
 
-@pytest.mark.skipif(shutil.which('ffmpeg') is None, reason='ffmpeg required')
+@pytest.mark.ffmpeg
 def test_pack_keeps_audio_navigation_in_rich_result_index(tmp_path):
     video = tmp_path / 'render.mp4'
     subprocess.run(['ffmpeg', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=red:size=160x90:rate=24:duration=4', '-c:v', 'libx264', '-y', str(video)], check=True)

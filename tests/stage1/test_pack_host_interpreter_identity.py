@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from urllib.parse import unquote, urlparse
 
 import pytest
+from tests.lanes import unavailable
 
 from astrid.core.execution import generic_host
 from astrid.core.generation.vibecomfy_dependency import VIBECOMFY_ENGINE_REVISION
@@ -141,6 +142,7 @@ def test_pack_host_python_override_must_be_absolute_and_executable(tmp_path, mon
         bootstrap._pack_host_python_executable()
 
 
+@pytest.mark.integration  # needs VibeComfy installed editable in the pack-host interpreter
 def test_selected_pack_host_python_uses_editable_vibecomfy_checkout(tmp_path):
     selected_python = bootstrap._pack_host_python_executable()
     probe = (
@@ -163,7 +165,7 @@ def test_selected_pack_host_python_uses_editable_vibecomfy_checkout(tmp_path):
             pytest.fail(
                 f"configured pack-host Python cannot import VibeComfy: {result.stderr.strip()}"
             )
-        pytest.skip("the test interpreter has no installed VibeComfy distribution")
+        unavailable("the test interpreter has no installed VibeComfy distribution")
 
     provenance = json.loads(result.stdout)
     module_file = Path(provenance["module_file"]).resolve()
@@ -176,13 +178,14 @@ def test_selected_pack_host_python_uses_editable_vibecomfy_checkout(tmp_path):
         assert installed_checkout == Path(configured_checkout).expanduser().resolve()
 
 
+@pytest.mark.integration  # needs a VibeComfy checkout (ASTRID_VIBECOMFY_CHECKOUT)
 def test_selected_vibecomfy_checkout_survives_generic_host_worker_boundary(
     tmp_path
 ):
     """Exercise the selected source through GenericPackHost and its worker."""
     configured_checkout = os.environ.get("ASTRID_VIBECOMFY_CHECKOUT", "").strip()
     if not configured_checkout:
-        pytest.skip("ASTRID_VIBECOMFY_CHECKOUT is not configured")
+        unavailable("ASTRID_VIBECOMFY_CHECKOUT is not configured")
 
     checkout = Path(configured_checkout).expanduser().resolve()
     source_root = Path(__file__).resolve().parents[2]

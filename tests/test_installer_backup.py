@@ -189,7 +189,7 @@ def test_backup_size_propagates_unreadable_directory_errors(tmp_path, monkeypatc
         backend._backup_size(data, support=True)
 
 
-@pytest.mark.skipif(os.name == "nt", reason="POSIX permission modes")
+@pytest.mark.posix_native
 def test_support_rollback_preserves_posix_file_and_directory_modes(tmp_path, monkeypatch):
     backend, data, realm, version = workspace(tmp_path, "darwin")
     tool = data / "helpers/run"

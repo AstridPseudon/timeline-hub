@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import shutil
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -163,10 +162,7 @@ def test_compiler_exports_raw_h3_duration_not_requested_suffix_duration(tmp_path
     assert "('duration', '102', 'values.a', duration, None)" in workflow_source
 
 
-@pytest.mark.skipif(
-    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
-    reason="ffmpeg and ffprobe are required",
-)
+@pytest.mark.ffmpeg
 def test_muxed_continuation_composes_real_suffix_and_rejects_prior_noop(tmp_path: Path) -> None:
     source = tmp_path / "source.mkv"
     generated = tmp_path / "generated-full-timeline.mkv"
@@ -206,10 +202,7 @@ def test_muxed_continuation_composes_real_suffix_and_rejects_prior_noop(tmp_path
     assert suffix_red != source_blue
 
 
-@pytest.mark.skipif(
-    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
-    reason="ffmpeg and ffprobe are required",
-)
+@pytest.mark.ffmpeg
 def test_separate_video_audio_outputs_remain_supported_for_continuation(tmp_path: Path) -> None:
     source = tmp_path / "source.mkv"
     video = tmp_path / "generated-video.mkv"

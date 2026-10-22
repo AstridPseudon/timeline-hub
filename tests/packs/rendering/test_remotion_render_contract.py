@@ -22,17 +22,9 @@ TEXT_CARD = ROOT / "astrid" / "packs" / "rendering" / "rendering" / "elements" /
 
 class RemotionAugmentationImportTest(unittest.TestCase):
     def test_root_augmentation_import_resolves(self) -> None:
-        # `types.augmentations.ts` is a generated, gitignored artifact (see
-        # .gitignore `remotion/src/types.augmentations.*`). On a checkout that
-        # has not run the augmentation generation step it is simply absent; the
-        # contract check is an opportunistic smoke that only runs when the
-        # generated surface is present, mirroring the typecheck smoke below.
-        aug_path = REMOTION / "src" / "types.augmentations.ts"
-        if not aug_path.is_file():
-            self.skipTest(
-                "remotion/src/types.augmentations.ts absent (gitignored generated artifact); "
-                "augmentation import smoke skipped"
-            )
+        # The tracked augmentation surface is `types.augmentations.d.ts` (.gitignore keeps every other
+        # `remotion/src/types.augmentations.*` out of the tree).
+        aug_path = REMOTION / "src" / "types.augmentations.d.ts"
         root_tsx = (REMOTION / "src" / "Root.tsx").read_text(encoding="utf-8")
         # Collect the symbols Root.tsx imports from ./types.augmentations.
         match = re.search(
@@ -65,19 +57,9 @@ class TextCardVisibleMarkupTest(unittest.TestCase):
         self.assertRegex(src, r"<AbsoluteFill")
 
 
+@pytest.mark.remotion
 class RemotionTypecheckSmokeTest(unittest.TestCase):
     def test_remotion_typecheck_when_dependencies_present(self) -> None:
-        if not (REMOTION / "node_modules").is_dir():
-            self.skipTest("remotion/node_modules absent; typecheck smoke skipped")
-        # The typecheck depends on the generated augmentation surface
-        # (`types.augmentations.ts`, gitignored). A checkout that has not run
-        # the augmentation generation step cannot typecheck; skip rather than
-        # report a repo defect for a missing generated artifact.
-        if not (REMOTION / "src" / "types.augmentations.ts").is_file():
-            self.skipTest(
-                "remotion/src/types.augmentations.ts absent (gitignored generated artifact); "
-                "typecheck smoke skipped"
-            )
         result = subprocess.run(
             ["npm", "run", "typecheck"],
             cwd=str(REMOTION),
@@ -96,15 +78,13 @@ if __name__ == "__main__":
     unittest.main()
 
 
+@pytest.mark.node
 def test_frame_worker_cold_connection_retry_is_bounded_and_reported(tmp_path):
     """Execute the real worker with a fake renderer; no browser or build."""
     import json
     import os
     import shutil
     node = shutil.which('node')
-    if node is None:
-        import pytest
-        pytest.skip('Node unavailable')
     worker = tmp_path / 'remotion' / 'src' / 'worker.mjs'
     worker.parent.mkdir(parents=True)
     worker.write_bytes((REMOTION / 'src' / 'astrid-frame-worker.mjs').read_bytes())
@@ -164,14 +144,12 @@ export async function renderFrames() {if (process.env.CASE === 'render') throw n
 
 
 
+@pytest.mark.remotion
 def test_streaming_gate_uses_only_explicit_admitted_memory(tmp_path):
     import json
     import shutil
-    import pytest
     node = shutil.which('node')
     esbuild = REMOTION / 'node_modules' / 'esbuild' / 'lib' / 'main.js'
-    if node is None or not esbuild.is_file():
-        pytest.skip('qualified Node/esbuild unavailable')
     script = '''
 import {createRequire} from 'node:module';
 import {readFileSync} from 'node:fs';
@@ -195,18 +173,17 @@ assert.throws(() => module.installFrameStreaming({rendererEntry:'/renderer/index
 
 
 def _node_executable() -> str:
-    """ASTRID_NODE_EXECUTABLE if exported, else node on PATH; skip when neither exists."""
+    """ASTRID_NODE_EXECUTABLE if exported, else node on PATH (the remotion lane guarantees one)."""
     import os
     import shutil
 
     node = os.environ.get('ASTRID_NODE_EXECUTABLE') or shutil.which('node')
-    if not node:
-        pytest.skip('node executable unavailable (set ASTRID_NODE_EXECUTABLE)')
+    assert node, 'node executable unavailable (set ASTRID_NODE_EXECUTABLE)'
     return node
 
 
 # Needs remotion/node_modules (npm install in remotion/) and a node executable.
-@pytest.mark.integration
+@pytest.mark.remotion
 @pytest.mark.parametrize("close_fails", [False, True])
 def test_frame_worker_failed_browser_close_preserves_original_session(tmp_path, close_fails):
     """Actual qualified ESM close body on a synthetic receiver, no native graph claim."""
@@ -324,7 +301,7 @@ import pytest
 
 
 # Needs remotion/node_modules (npm install in remotion/) and a node executable.
-@pytest.mark.integration
+@pytest.mark.remotion
 @pytest.mark.parametrize('stream,budget', [('0', None), ('1', None), ('1', '0'), ('1', '4294967296'), ('1', '-1')])
 def test_real_cli_config_loader_captures_root_and_streaming_gate(tmp_path, stream, budget):
     """Use the selected CLI's real prepare/eval path; no renderer workload."""
@@ -387,7 +364,7 @@ console.log(JSON.stringify({renderer:fs.realpathSync(renderer), cli:fs.realpathS
 
 
 # Needs remotion/node_modules (npm install in remotion/) and a node executable.
-@pytest.mark.integration
+@pytest.mark.remotion
 def test_real_cli_config_rejects_missing_selected_config(tmp_path):
     import os
     node = _node_executable()
@@ -407,7 +384,7 @@ assert.throws(() => loader.executeConfigFile({...prepared,remotionRoot:process.a
 
 
 # Needs remotion/node_modules (npm install in remotion/) and a node executable.
-@pytest.mark.integration
+@pytest.mark.remotion
 def test_streaming_native_esm_install_requires_selected_absolute_root(tmp_path):
     import os
     node = _node_executable()
@@ -433,7 +410,7 @@ assert.equal(gate.shouldUseParallelEncoding({width:320,height:180}).hasEnoughMem
 
 
 # Needs remotion/node_modules (npm install in remotion/) and a node executable.
-@pytest.mark.integration
+@pytest.mark.remotion
 def test_actual_cli_compiler_resolves_full_selected_import_closure(tmp_path):
     """Actual production webpack compilation, without emit/browser/render."""
     import os
@@ -484,7 +461,7 @@ console.log(JSON.stringify({ok:true,resolution}));
 
 
 # Needs remotion/node_modules (npm install in remotion/) and a node executable.
-@pytest.mark.integration
+@pytest.mark.remotion
 @pytest.mark.parametrize('failure_stage', ['allocated', 'before-allocation'])
 @pytest.mark.parametrize('diagnostic_mode', ['unset', '0', '1'])
 def test_frame_worker_real_esm_spawn_capture_preserves_cold_failure(
