@@ -956,9 +956,9 @@ test('quick: Astrid edit then App edit are visible and readable on the adopted t
   const astridPublished = await agent.publish('Quick Astrid edit', `quick-astrid-${descriptor!.timelineId}`);
   expect(astridPublished.old_head).toBe(baseRevisionId);
   const astridRevisionId = astridPublished.new_head;
-  await expect.poll(async () => (await currentHead(harness)), { message: 'the App observes Astrid’s published revision' }).toBe(astridRevisionId);
-  await expect.poll(() => reads.compositionRevisions.some((item) => item.id === astridRevisionId && item.payload?.clips?.some((candidate: any) => candidate.id === clip.id && candidate.opacity === 0.5)), { message: 'the editor reads Astrid’s edited clip content' }).toBe(true);
-  await expect(renderedClip, 'Astrid’s opacity edit is visible in the rendered editor').toHaveCSS('opacity', '0.5');
+  await expect.poll(async () => (await currentHead(harness)), { message: 'the App observes Astrid’s published revision', ...CEILING }).toBe(astridRevisionId);
+  await expect.poll(() => reads.compositionRevisions.some((item) => item.id === astridRevisionId && item.payload?.clips?.some((candidate: any) => candidate.id === clip.id && candidate.opacity === 0.5)), { message: 'the editor reads Astrid’s edited clip content', ...CEILING }).toBe(true);
+  await expect(renderedClip, 'Astrid’s opacity edit is visible in the rendered editor').toHaveCSS('opacity', '0.5', CEILING);
 
   const appLabel = 'QUICK App edit';
   const appSaved = page.waitForResponse((response) => response.request().method() === 'POST' && SAVES.test(new URL(response.url()).pathname), CEILING);
