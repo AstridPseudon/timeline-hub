@@ -17,7 +17,7 @@ marker that has the lane's name (``@pytest.mark.ffmpeg``, ``@pytest.mark.posix_n
 in step). Every non-manual lane names the CI jobs that run it, and tests/test_lane_registry.py checks those jobs
 in .github/workflows/ci.yml: they set ``ASTRID_CI_JOB``, provision the dependency and select the lane.
 
-The guard (``_SkipGuard``) records every skip by test id. A skip that did not come from a registry lane, a
+The guard (``_SkipGuard``) records every skip by test id, and fails a run in which no test passed. A skip that did not come from a registry lane, a
 ``pytest.importorskip`` anywhere, a module-level skip at collection and every xfail turn into failures; the
 terminal summary lists the declared skips by name.
 
@@ -214,6 +214,16 @@ class _SkipGuard:
         if report.skipped:
             report.outcome = "failed"
             report.longrepr = f"{collector.nodeid}: a module-level skip hides its tests. Mark the module or its tests with a lane from tests/lanes.py."
+
+    @pytest.hookimpl(trylast=True)
+    def pytest_sessionfinish(self, session, exitstatus):
+        """A run that executed no test at all (everything skipped or deselected) is a failure, not a quiet pass."""
+        reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+        if exitstatus != pytest.ExitCode.OK or reporter is None or session.config.option.collectonly:
+            return
+        if not reporter.stats.get("passed"):
+            reporter.write_line("ERROR: no test passed in this run; a run that executes nothing is a failure")
+            session.exitstatus = pytest.ExitCode.TESTS_FAILED
 
     def pytest_terminal_summary(self, terminalreporter):
         if not self.declared:

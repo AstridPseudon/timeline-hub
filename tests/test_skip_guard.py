@@ -87,7 +87,7 @@ def test_a_declared_platform_skip_passes_and_is_listed_by_test_id(run) -> None:
 
 
 def test_a_declared_dependency_skip_passes_where_no_job_provides_it_and_is_listed(run) -> None:
-    result = run("import pytest\n\n@pytest.mark.ffmpeg\ndef test_x():\n    pass\n", bare_path_env=True)
+    result = run("import pytest\n\n@pytest.mark.ffmpeg\ndef test_x():\n    pass\n\ndef test_y():\n    pass\n", bare_path_env=True)
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*declared skips (1)*", "SKIPPED [[]ffmpeg] test_case.py::test_x: *"])
 
@@ -106,7 +106,7 @@ def test_a_missing_dependency_fails_in_a_lane_the_run_selected_by_name(run) -> N
 
 
 def test_a_test_in_several_lanes_is_one_declared_skip_where_one_of_them_does_not_hold(run) -> None:
-    result = run("import pytest\n\n@pytest.mark.posix_native\n@pytest.mark.linux_native\n@pytest.mark.darwin_native\ndef test_x():\n    pass\n", "-m", "darwin_native or linux_native")
+    result = run("import pytest\n\n@pytest.mark.posix_native\n@pytest.mark.linux_native\n@pytest.mark.darwin_native\ndef test_x():\n    pass\n\ndef test_y():\n    pass\n", "-m", "darwin_native or linux_native or not posix_native")
     # no OS is POSIX, Linux and macOS at once, so one lane is unmet; that is a single declared skip, never a failure
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*declared skips (1)*"])
@@ -116,3 +116,12 @@ def test_an_unregistered_marker_is_an_error_under_strict_markers(run) -> None:
     result = run("import pytest\n\n@pytest.mark.ffmpeg_typo\ndef test_x():\n    pass\n", "--strict-markers")
     assert result.ret != 0
     result.stdout.fnmatch_lines(["*'ffmpeg_typo' not found in `markers` configuration option*"])
+
+
+def test_a_run_in_which_every_test_is_skipped_or_deselected_fails(run) -> None:
+    other = "windows_native" if sys.platform != "win32" else "posix_native"
+    skipped = run(f"import pytest\n\n@pytest.mark.{other}\ndef test_x():\n    pass\n")
+    assert skipped.ret != 0
+    skipped.stdout.fnmatch_lines(["*no test passed in this run*"])
+    deselected = run("def test_x():\n    pass\n", "-k", "nothing_matches")
+    assert deselected.ret != 0  # pytest's own "no tests collected"
