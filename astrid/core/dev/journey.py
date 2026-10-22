@@ -23,6 +23,7 @@ import json
 import logging
 import os
 import shutil
+import socket
 import signal
 import subprocess
 import sys
@@ -402,6 +403,15 @@ def _assert_quick_ancestry(endpoint: str, token: str, descriptor: Mapping[str, A
         raise JourneyFailure("quick_browser", f"published revision history does not establish base → Astrid → App ancestry: {positions}")
 
 
+QUICK_HOSTED_HOST = "astrid.test"  # the App harness serves its page here and maps it to loopback
+
+
+def _free_port() -> int:
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        return probe.getsockname()[1]
+
+
 def _quick_browser_exchange(runner: Runner, *, root: Path, env: dict[str, str], app_checkout: Path,
                             source_manifest: Path, revisions: Mapping[str, Any], realm_id: str,
                             runtime_checkout: Path, source_checkout: Path) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -427,11 +437,14 @@ def _quick_browser_exchange(runner: Runner, *, root: Path, env: dict[str, str], 
         "version": 1, "dataRoot": str(data_root.resolve()), "sourceManifest": str(source_manifest.resolve()),
         "discoveryFile": str(discovery_file.resolve()), "productCredentialFile": str(app_credentials.resolve()),
         "astridCredentialFile": str(astrid_credential.resolve()), "projectId": project["project_id"],
+        "hostedOrigin": discovery.get("door_origin"), "doorEndpoint": discovery.get("door_endpoint"),
         "projectSlug": project["slug"], "timelineId": reference_realm.TIMELINE_ID,
         "headRevisionId": timeline["head_revision_id"], "realmId": realm_id, "runtimeInstanceId": instance_id,
         "revisions": {key: revisions[key]["head"] for key in ("astrid", "runtime", "app")},
         "resultFile": str((root / "quick-result.json").resolve()),
     }
+    if not (descriptor["hostedOrigin"] and descriptor["doorEndpoint"]):
+        raise JourneyFailure("quick_browser", "the adopted Runtime published no browser door; QUICK needs the door the App talks through")
     if any(not _sha(value) for value in descriptor["revisions"].values()):
         raise JourneyFailure("quick_browser", "all three tested checkouts need committed Git SHAs")
     descriptor_file = root / "quick-descriptor.json"
@@ -1193,7 +1206,10 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
             if packhome.is_symlink():
                 raise JourneyFailure("adopt", "QUICK pack home is an alias")
             packhome.mkdir(parents=True, exist_ok=True)
-        runner.phase("up", lambda: runner.command("up", local + ["up", "--source-manifest", str(manifest_path)] + common, env, unbounded=(tier == "quick")))
+        # QUICK's Runtime door serves the App's test origin on an ephemeral loopback port, never the product
+        # origin or the well-known port that a live Runtime on this machine may already hold.
+        door_args = ["--hosted-origin", f"https://{QUICK_HOSTED_HOST}:{_free_port()}", "--door-port", "0"] if tier == "quick" else []
+        runner.phase("up", lambda: runner.command("up", local + ["up", "--source-manifest", str(manifest_path)] + door_args + common, env, unbounded=(tier == "quick")))
         if tier == "quick":
             quick_journey = Journey(runner=runner, root=root, env=env, project=project, timeline=source_timeline,
                                     start=0, end=1, kill_start=0, checkout=checkout, backend=REMOTION_BACKEND)
