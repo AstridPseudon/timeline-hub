@@ -204,6 +204,53 @@ def test_identical_retry_after_restart_and_head_advance(realm):
         restarted.close()
 
 
+def test_modern_labels_steps_effects_reads_and_actor_roundtrip_after_restart(realm):
+    service, commits, project, head, root = realm
+    ctx = context(service, project, head, "modern")
+    request = ctx["request"]
+    effect = {"op": "set", "ref": "parent", "path": ["clips", "id:clip", "at"],
+              "before": {"state": "present", "value": 2}, "value": 3}
+    reads = [{"kind": "field", "ref": "parent", "path": ["clips", "id:clip", "at"],
+              "state": {"state": "present", "value": 2}}]
+    request.update({
+        "label": "Move opening clip",
+        "merge": "fields",
+        "reads": reads,
+        "steps": [{"id": "opening", "label": "Move opening", "intent": "Set opening position",
+                    "tags": ["opening"], "command_ordinals": [0], "patch": [effect],
+                    "reads": reads}],
+    })
+    ctx["invocation"]["body"] = copy.deepcopy(request)
+    ctx["request_hash"] = request_identity(ctx)
+    value = prepared(commits, ctx, revision="modern-parent", on=3)
+    value["records"]["commands"][0]["command"]["args"]["on"] = 3
+    value["records"]["commands"][0]["writes"] = [{"ref": "parent/clip:clip", "path": ["at"],
+        "before": {"state": "present", "value": 2}, "after": {"state": "present", "value": 3}}]
+    value["records"]["steps"] = [{**request["steps"][0], "patch": [effect]}]
+
+    result = accept(commits, ctx, value)
+    assert result["data"]["status"] == "accepted"
+    assert result["data"]["label"] == request["label"]
+    assert result["data"]["merge_mode"] == "fields"
+    assert result["data"]["steps"] == value["records"]["steps"]
+    assert result["data"]["publisher"] == "author"
+    entry = commits.history_entry(project, "main", result["receipt"]["receipt_id"])
+    assert entry["label"] == request["label"]
+    assert entry["merge"] == entry["merge_mode"] == "fields"
+    assert entry["reads"] == request["reads"]
+    assert entry["steps"] == entry["records"]["steps"] == value["records"]["steps"]
+    assert entry["publisher"] == result["data"]["publisher"] == "author"
+
+    service.close()
+    restarted = RuntimeService(root)
+    try:
+        replay_store = TimelineCommitStore(restarted.store, validate_prepared=validate_prepared)
+        assert replay_store.lookup(ctx, authorize=lambda: None) == result
+        assert replay_store.history_entry(project, "main", result["receipt"]["receipt_id"])["steps"] == value["records"]["steps"]
+    finally:
+        restarted.close()
+
+
 def test_recorder_digest_preserves_main_event_ids_and_stream_sequence(realm):
     service, commits, project, head, _ = realm
     ctx = context(service, project, head)

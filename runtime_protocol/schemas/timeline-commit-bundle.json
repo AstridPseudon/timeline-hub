@@ -3438,6 +3438,65 @@
     },
     "https://astrid.haus/workspace/v1/schemas/timeline-commit.json": {
       "$defs": {
+        "AcceptedStep": {
+          "additionalProperties": false,
+          "properties": {
+            "command_ordinals": {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "dependencies": {
+              "items": {
+                "$ref": "#/$defs/CommitRead"
+              },
+              "type": "array"
+            },
+            "id": {
+              "$ref": "#/$defs/ID"
+            },
+            "intent": {
+              "type": "string"
+            },
+            "label": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "patch": {
+              "items": {
+                "$ref": "#/$defs/PatchChange"
+              },
+              "type": "array"
+            },
+            "reads": {
+              "items": {
+                "$ref": "#/$defs/CommitRead"
+              },
+              "type": "array"
+            },
+            "tags": {
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "intent",
+            "tags",
+            "command_ordinals",
+            "patch"
+          ],
+          "type": "object"
+        },
         "AgentBinding": {
           "$ref": "edit-command.json#/$defs/AgentBinding"
         },
@@ -3678,6 +3737,9 @@
             "label": {
               "type": "string"
             },
+            "merge_mode": {
+              "$ref": "#/$defs/MergeMode"
+            },
             "previous_publication_id": {
               "$ref": "#/$defs/ID"
             },
@@ -3709,8 +3771,15 @@
             "status": {
               "enum": [
                 "accepted",
-                "rebased"
+                "rebased",
+                "merged"
               ]
+            },
+            "steps": {
+              "items": {
+                "$ref": "#/$defs/AcceptedStep"
+              },
+              "type": "array"
             }
           },
           "required": [
@@ -3903,6 +3972,9 @@
               },
               "type": "object"
             },
+            "merge_mode": {
+              "$ref": "#/$defs/MergeMode"
+            },
             "provider_version": {
               "$ref": "#/$defs/ID"
             },
@@ -3910,6 +3982,12 @@
               "enum": [
                 "preview"
               ]
+            },
+            "steps": {
+              "items": {
+                "$ref": "#/$defs/AcceptedStep"
+              },
+              "type": "array"
             }
           },
           "required": [
@@ -3942,6 +4020,97 @@
           ],
           "type": "object"
         },
+        "CommitRead": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "field"
+                },
+                "path": {
+                  "$ref": "edit-command.json#/$defs/TokenPath"
+                },
+                "ref": {
+                  "$ref": "#/$defs/ID"
+                },
+                "state": {
+                  "$ref": "#/$defs/AgentState"
+                }
+              },
+              "required": [
+                "kind",
+                "ref",
+                "path",
+                "state"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "collection"
+                },
+                "members": {
+                  "items": {
+                    "$ref": "#/$defs/ID"
+                  },
+                  "type": "array",
+                  "uniqueItems": true
+                },
+                "order": {
+                  "oneOf": [
+                    {
+                      "items": {
+                        "$ref": "#/$defs/ID"
+                      },
+                      "type": "array",
+                      "uniqueItems": true
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "path": {
+                  "$ref": "edit-command.json#/$defs/TokenPath"
+                },
+                "ref": {
+                  "$ref": "#/$defs/ID"
+                }
+              },
+              "required": [
+                "kind",
+                "ref",
+                "path",
+                "members",
+                "order"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "scope"
+                },
+                "path": {
+                  "$ref": "edit-command.json#/$defs/TokenPath"
+                },
+                "ref": {
+                  "$ref": "#/$defs/ID"
+                }
+              },
+              "required": [
+                "kind",
+                "ref",
+                "path"
+              ],
+              "type": "object"
+            }
+          ]
+        },
         "CommitRequest": {
           "additionalProperties": false,
           "properties": {
@@ -3965,7 +4134,11 @@
               "$ref": "#/$defs/ID"
             },
             "label": {
+              "minLength": 1,
               "type": "string"
+            },
+            "merge": {
+              "$ref": "#/$defs/MergeMode"
             },
             "project_id": {
               "$ref": "#/$defs/ID"
@@ -3973,8 +4146,21 @@
             "rationale": {
               "type": "string"
             },
+            "reads": {
+              "items": {
+                "$ref": "#/$defs/CommitRead"
+              },
+              "type": "array"
+            },
             "source": {
               "$ref": "#/$defs/Source"
+            },
+            "steps": {
+              "items": {
+                "$ref": "#/$defs/RequestedStep"
+              },
+              "minItems": 1,
+              "type": "array"
             },
             "timeline_id": {
               "$ref": "#/$defs/ID"
@@ -4140,6 +4326,12 @@
             "label": {
               "type": "string"
             },
+            "merge": {
+              "$ref": "#/$defs/MergeMode"
+            },
+            "merge_mode": {
+              "$ref": "#/$defs/MergeMode"
+            },
             "previous": {
               "oneOf": [
                 {
@@ -4176,6 +4368,12 @@
             "rationale": {
               "type": "string"
             },
+            "reads": {
+              "items": {
+                "$ref": "#/$defs/CommitRead"
+              },
+              "type": "array"
+            },
             "receipt": {
               "$ref": "#/$defs/MutationReceipt"
             },
@@ -4194,6 +4392,12 @@
             },
             "source": {
               "$ref": "#/$defs/Source"
+            },
+            "steps": {
+              "items": {
+                "$ref": "#/$defs/AcceptedStep"
+              },
+              "type": "array"
             }
           },
           "required": [
@@ -4458,6 +4662,12 @@
             }
           ]
         },
+        "MergeMode": {
+          "enum": [
+            "fields",
+            "atomic"
+          ]
+        },
         "MutationReceipt": {
           "$ref": "../openapi/workspace-v1.yaml#/components/schemas/CommittedMutation/properties/receipt"
         },
@@ -4526,6 +4736,59 @@
             "revision_id",
             "content_digest",
             "payload"
+          ],
+          "type": "object"
+        },
+        "PatchChange": {
+          "additionalProperties": false,
+          "properties": {
+            "after_id": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ID"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "before": {
+              "$ref": "#/$defs/AgentState"
+            },
+            "id": {
+              "$ref": "#/$defs/ID"
+            },
+            "op": {
+              "enum": [
+                "set",
+                "remove",
+                "list.insert",
+                "list.remove",
+                "list.move"
+              ]
+            },
+            "order_before": {
+              "items": {
+                "$ref": "#/$defs/ID"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            "path": {
+              "$ref": "edit-command.json#/$defs/TokenPath"
+            },
+            "ref": {
+              "$ref": "#/$defs/ID"
+            },
+            "value": {
+              "$ref": "#/$defs/JSON"
+            }
+          },
+          "required": [
+            "op",
+            "ref",
+            "path",
+            "before"
           ],
           "type": "object"
         },
@@ -4605,12 +4868,39 @@
               "const": 1,
               "type": "integer"
             },
+            "steps": {
+              "items": {
+                "$ref": "#/$defs/AcceptedStep"
+              },
+              "type": "array"
+            },
             "undo_of": {
               "items": {
                 "$ref": "#/$defs/ID"
               },
               "type": "array",
               "uniqueItems": true
+            },
+            "undo_steps": {
+              "oneOf": [
+                {
+                  "additionalProperties": {
+                    "items": {
+                      "$ref": "#/$defs/ID"
+                    },
+                    "minItems": 1,
+                    "type": "array",
+                    "uniqueItems": true
+                  },
+                  "propertyNames": {
+                    "$ref": "#/$defs/ID"
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -4618,6 +4908,59 @@
             "commands",
             "undo_of",
             "restored_from"
+          ],
+          "type": "object"
+        },
+        "RequestedStep": {
+          "additionalProperties": false,
+          "properties": {
+            "command_ordinals": {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "id": {
+              "$ref": "#/$defs/ID"
+            },
+            "intent": {
+              "type": "string"
+            },
+            "label": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "patch": {
+              "items": {
+                "$ref": "#/$defs/PatchChange"
+              },
+              "type": "array"
+            },
+            "reads": {
+              "items": {
+                "$ref": "#/$defs/CommitRead"
+              },
+              "type": "array"
+            },
+            "tags": {
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "intent",
+            "tags",
+            "command_ordinals",
+            "patch"
           ],
           "type": "object"
         },

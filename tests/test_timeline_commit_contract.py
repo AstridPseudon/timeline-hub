@@ -146,6 +146,8 @@ def test_command_opaque_values_null_and_absence_round_trip():
         lambda v: v.update(base_publication_id=None),
         lambda v: v.update(commands=[]),
         lambda v: v.update(source={"via": "gateway"}),
+        lambda v: v.update(actor="spoofed-principal"),
+        lambda v: v.update(publisher="spoofed-principal"),
         lambda v: v["commands"][0].update(unknown=True),
         lambda v: v["commands"][0].pop("version"),
         lambda v: v["commands"][0].update(
