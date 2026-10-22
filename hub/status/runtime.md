@@ -1,11 +1,11 @@
-<!-- main | 2026-10-22T23:28:57Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 2m -->
-# runtime board, 2026-10-22T23:26Z
+<!-- main | 2026-10-22T23:30:12Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-22T23:29Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 | commit-v2 contract | Sol author / Luna review | — | merged | rt-C0-contract; rt-C0-review | PASS: 34 targeted tests + JSON/digests/copy equality on tree identical to integrated 0d4c71a3c; C0 APPROVED | 0d4c71a3c |
 | C0b | per-step reads/provider effects | Sol author / Luna review | C0b APPROVED in header | merged | rt-C0b-undo-contract; rt-C0b-review-v2 | Independent Luna PASS: 34 tests + fixtures/digests + copy equality + whitespace; approved, integrated tree identical | 992136137 |
 | C0c | unambiguous closure-root addresses | Sol | orchestrator requested addressing principle | blocked:orchestrator | rt-C0c-addressing-resume; rt-C0c-review-resume | Independent Luna PASS: embedded model checks + 34 targeted tests + copy equality/whitespace; Astra approval pending | 77fc93fa6 |
-| U1 | real upstream merge, schema v32 | Sol after second Luna FAIL | second review repair | review | rt-U1-sol-repair; rt-U1-sol-review | Sol repair complete: 244 targeted tests PASS, 8 configured exclusions; static deltas improved; exact-final-tree service proof and independent Luna review queued | 34926c6f7 |
+| U1 | real upstream merge, schema v32 | Sol after second Luna FAIL | second review repair | review | rt-U1-sol-repair; rt-U1-sol-review | Sol repair complete: 244 targeted tests PASS, 8 configured exclusions; static deltas improved; exact-final-tree service generated-client PASS (rt-U1-sol-review-targeted-1022232725-10490: 73); independent Luna verdict pending | 34926c6f7 |
 | R2r | label/steps/patches, attribution/history | Luna | C0 approved, U1 merged | todo | — | Brief prepared; dispatch immediately after repaired U1 reviewed PASS and merged | — |
 | P5 | original gates 2–4 acceptance | Luna | R1, R2 merged for implementation | todo | rt-P5-cases; rt-P5-cases-review-v2 | Collection review PASS; case map retained. No implementation/proof credit | — |
 | R5 | directly reject old save routes | Luna | A3, G4 merged per header | todo | — | — | — |
