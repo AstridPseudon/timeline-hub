@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-22T23:11:17Z | dispatcher heartbeat 3s | live 4 (sol 3, luna 1, other 0) | busy30 4 | status age 0m -->
+<!-- agent | 2026-10-22T23:12:35Z | dispatcher heartbeat 5s | live 5 (sol 3, luna 2, other 0) | busy30 5 | status age 0m -->
 # agent board, 2026-10-22T23:10:39Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -13,8 +13,8 @@
 | G4 | remaining writers through commit | Luna | G2 | todo | — | — | — |
 | G5 | delete superseded paths | Luna | G3,G4; H3 go/no-go | todo | — | — | — |
 Blockers: runtime — U4a awaits merged U1 and exact regenerated producer/schema, plus U2.
-Blockers: orchestrator — R2 merge waits C0c approval. Local header still says C0b pending; inbox22:45 and current contract supersede that for starting work.
+Blockers: orchestrator — R2 merge waits C0c approval. C0b APPROVED; header now synchronized.
 Next ready: U4a after U1+U2; R2 landing/R3/V2 after R1; G3/G4 after G2. All four authorized independent early-start tasks dispatched and running.
-Restart recovery: acknowledged lead23:07 and all post-v2.1 inbox items. U2 old8a2677cd7 remains quarantined: unchanged tree must never land. Manager merge-forward now works; prior ORIG_HEAD preparation blocker resolved. Current integration a086cc6db.
+Restart recovery: acknowledged lead23:07 and all post-v2.1 inbox items. U2 old8a2677cd7 remains quarantined: unchanged tree must never land. Manager merge-forward now works; prior ORIG_HEAD preparation blocker resolved. Current integration9abb6ade3 includes external P1 corpus mergeb1c25f5c via queue at23:09Z; agt-P1-integrated-review dispatched for current-head targeted proof, no H3 claim.
 Upstream: origin/main431681a6d matches last explicit lead/orchestrator confirmation. Manager fresh ls-remote could not connect to configured proxy127.0.0.1:41903; no ref changed or network workaround attempted.
-Disk: sweep-tmp3 and compact-scratch completed;5 idle finished v1 worktrees recycled, branches/reports kept. Available15.41GB at23:10Z; monitor floor15GB.
+Disk: sweep-tmp3 and compact-scratch completed;5 idle finished v1 worktrees recycled, branches/reports kept. 13 idle finished v1 worktrees recycled in total; exact95bd checkout retained for active U2. Available15.49GB at23:11Z; monitor floor15GB.
