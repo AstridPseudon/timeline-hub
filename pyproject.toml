@@ -263,18 +263,17 @@ tmp_path_retention_policy = "failed"
 # `timeout` marker is registered below); set timeout(0) to disable for a
 # specific deliberately-long test.
 #
-# timeout_method = "signal": a SIGALRM is delivered to the test on the main
-# thread and raised AS A TEST FAILURE, so the hung test is actually ABORTED and
-# the suite CONTINUES. This is the property that makes the suite unable to hang.
+# timeout_method is left unset so pytest-timeout picks its platform default:
+# "signal" where SIGALRM exists (Unix), "thread" on Windows, which has no SIGALRM.
+# On Unix, a SIGALRM is delivered to the test on the main thread and raised AS A
+# TEST FAILURE, so the hung test is actually ABORTED and the suite CONTINUES. This
+# is the property that makes the suite unable to hang.
 # (The "thread" method only DUMPS a stack from a watchdog thread; it cannot
 # interrupt a blocked call, so a non-daemon hung test can still wedge the whole
 # `pytest` process at exit -- which is precisely the failure that wedged the
-# megaplan baseline capture for ~an hour. SIGALRM is Unix-only and fires on the
-# main thread, which matches how pytest runs tests on CI/macOS/Linux.) A test
-# that legitimately runs longer should raise its own bound with
-# @pytest.mark.timeout(N).
+# megaplan baseline capture for ~an hour.) A test that legitimately runs longer
+# should raise its own bound with @pytest.mark.timeout(N).
 timeout = 600
-timeout_method = "signal"
 # Lanes (testing plan R-2): the default run leaves out tests that need another repo,
 # macOS, credentials or explicit opt-in; tests/lanes.py documents the heavy lane, which runs on request only.
 addopts = "-m 'not integration and not darwin_native and not live and not opt_in'"
