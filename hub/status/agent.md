@@ -1,11 +1,11 @@
-<!-- agent | 2026-10-22T23:35:51Z | dispatcher heartbeat 11s | live 3 (sol 2, luna 1, other 0) | busy30 12 | status age 3m -->
-# agent board, 2026-10-22T23:30:44Z
+<!-- agent | 2026-10-22T23:37:08Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 13 | status age 0m -->
+# agent board, 2026-10-22T23:36:46Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream merge, regenerated artifacts | Sol | — | merged | agt-U2-media-repair; agt-U2-integrated-proof | IndependentPASS; merge3f1ceaed1; integrated behavior/fastgate classification running, not yet done credit | 3f1ceaed1 |
 | U4a | regenerated Runtime client/schema | Luna | U1, U2 | todo | — | Exact existing95bd producer retained for U2; U1 adoption separate | — |
 | R1 | doc.patch semantics and guards | Sol | C0 approved; U2 before merge | doing | agt-R1-restart | Resumed clean original branch after container restart; implementation/review pending | — |
-| R2 | guarded whole/per-step undo | Sol | R1; C0c before merge | doing | agt-R2-step-undo | Early start explicitly authorized by inbox22:45; C0b implemented contract; no integrated proof | — |
+| R2 | guarded whole/per-step undo | Sol | R1; C0c before merge | review | agt-R2-step-undo; agt-R2-core-review | Staged core548targetedPASS; scopedlint/typePASS. R1 provider dispatch/physical binding/effect projection still needed; C0c merge hold | b5b811066 |
 | R3 | dry run and structured errors | Luna | R1 | todo | — | — | — |
 | V2 | timing/structure/element/parameter validation | Luna | R1 | todo | — | — | — |
 | G2 | open/commit and bounded rerun | Sol | C0 approved; R1,U2 before merge | review | agt-G2-restart; agt-G2-review | Independent conditionalPASS:312targeted+Ruff+targetedtyping; U2/R1 before landing; G3 emitter integration later; global mypy environment unresolved | 63f7b4c21 |

@@ -1,0 +1,11 @@
+# R2 staged interface for R1 (2026-10-22)
+
+R2 owns inverse.py, a new _step_undo.py helper, direct inverse neighbors, and test_step_undo_v2.py. No commands.py/commit.py edits planned while R1 owns them.
+
+Planned seam: `_step_undo.select_inverse_records(accepted: AcceptedRecords, steps=None) -> AcceptedRecords` selects command runs from authenticated `entry.records.steps[].command_ordinals`; absent steps selects all, explicit map must cover every target. Original entry/command data and allocation/restoration sources remain intact. `.entries` remains the complete immutable target entries; `.selected_for(entry)` returns selected native command captures. `_step_undo.check_later_steps(selected, ordered_history, state=...)` scans each target's own suffix, including later nonselected steps and declared/captured/scope reads. Caller supplies contiguous authenticated ancestry, not caller claims.
+
+R1 wiring needed at commit.py:978: after authenticated target load, call select_inverse_records(..., inverse_call['args'].get('steps')). Replace per-target suffix loop with check_later_steps so reads and later nonselected steps participate. Persist records.undo_steps. Pass selected AcceptedRecords to execute/replay and existing source/allocation proof. Adapt commit._inverse_media_removals / _inverse_clip_transcripts to use selected_for(entry) instead of assuming every entry command is selected; never project/rewrite immutable entries. Schema acceptance of inverse args.steps remains R1/generated-client adoption ownership.
+
+`apply_inverse` will scan reads of later native commands as consumers (opt-in on check_intervening so ordinary replay does not gain inappropriate anti-dependency checks). It retains semantic restoration, staged checks and immutable accepted input boundaries. Step dependencies must be provider-derived and persisted by R1. C0c physical binding normalization is shared: R2 must use R1's resolved binding/lineage helper once its concrete shape is available; no guessing successors or re-resolving historical aliases.
+
+Please read this seam before dispatch changes. R2 landing remains held for C0c approval and R1/U2 merge-forward. No facade/CLI/Runtime/schema/emitter changes are included.
