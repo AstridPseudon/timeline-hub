@@ -10,6 +10,8 @@ export type EditorTourVisual = 'extension' | 'frame-to-still' | 'still-to-video'
 export interface EditorTourActScript {
   /** Typed into the chat composer; the user sends it. */
   readonly prompt: string;
+  /** A header on the act's compose card, above "Press Send" (acts 1 and 2: what you can ask your agent for). */
+  readonly composeHeader?: string;
   /** Streamed as Astrid's reply. */
   readonly reply: string;
   readonly toolCards: readonly EditorTourToolCard[];
@@ -28,7 +30,7 @@ export interface EditorTourScript {
   /** The centred card before act 1: Astrid says hello. */
   readonly welcome: { readonly title: string; readonly body: string; readonly action: string };
   /** The card's quiet line while the chat has the spotlight: before Send, and (act 1 only) while the reply plays. */
-  readonly hints: { readonly compose: string; readonly respond: string; readonly firstCompose: string };
+  readonly hints: { readonly compose: string; readonly respond: string };
   readonly controls: { readonly next: string; readonly back: string; readonly skip: string };
   /** Three.js frame → still → video: the card's strip, one step per act. */
   readonly strip: readonly [string, string, string];
@@ -45,6 +47,7 @@ export interface EditorTourScript {
 export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
   acts: {
     1: {
+      composeHeader: 'Ask your agent to do anything with creative tools',
       prompt: 'Make me a Three.js journey through a valley with lanterns in it as the moon rises.',
       reply: 'Lantern Valley is on your timeline: 10 seconds of a live Three.js scene, with the moon up and the lanterns lifting off the water.',
       toolCards: [
@@ -53,12 +56,13 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
       ],
       card: {
         title: 'Create together with your agent using extendable tools',
-        body: 'Lantern Valley is a live Three.js scene, on your timeline to play, test and give feedback on. You and your agent can create with any extension, or build your own.',
+        body: 'Your agent can find extensions from the ecosystem, or build its own, to help drive your creative process, all on your timeline.',
         visual: 'extension',
         labels: ['Three.js', 'extension'],
       },
     },
     2: {
+      composeHeader: 'Ask your agent to do anything with open models',
       prompt: 'Can you make me realistic frames for that using Qwen Image 2.1?',
       reply: 'I made realistic start and end frames with Qwen Image 2.1 in ComfyUI. Both stills are on a new row above the scene.',
       toolCards: [
@@ -67,7 +71,7 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
       ],
       card: {
         title: 'Your agent generates with local models, equipped with the ecosystem’s knowledge',
-        body: 'Qwen Image 2.1 made these realistic frames in ComfyUI, on your own machine. Your agent can run ComfyUI, Wan2GP or any inference framework, and handles the tricky setup.',
+        body: 'Your agent can run ComfyUI, Wan2GP or any inference framework, and handles the tricky setup and optimization.',
         visual: 'frame-to-still',
         labels: ['Frame', 'Qwen Image 2.1'],
       },
@@ -78,23 +82,20 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
       toolCards: [{ name: 'MiniMax H3', detail: 'start + end frames · 10 s' }],
       card: {
         title: 'Your agent uses everything on your timeline to create the final shot',
-        body: 'MiniMax H3 turned your frames into a 10-second shot that follows the Three.js motion. Every input you and your agent create gives you production‑level creative control.',
+        body: 'Every input you and your agent create gives you production‑level creative control.',
         visual: 'still-to-video',
         labels: ['MiniMax H3', '10 s'],
       },
     },
   },
   welcome: { title: 'Welcome to Astrid', body: 'I’m just going to show you a very quick tour of what Astrid can do.', action: 'OK' },
-  hints: { compose: 'Press Send to ask Astrid', respond: 'Your agent uses community-built tools to deliver your request',
-    /** Act 1's compose card only: a header above the "Press Send" line. */
-    firstCompose: 'Ask your agent to do anything with creative tools and open models',
-  },
+  hints: { compose: 'Press Send to ask Astrid', respond: 'Your agent uses community-built tools to deliver this request' },
   controls: { next: 'Next', back: 'Back', skip: 'Skip tour' },
   strip: ['Three.js', 'Frames', 'Video'],
   finale: { title: 'Do you get it?', action: 'I got it', recap: ['Agent + extensions', 'Local models', 'Production'] },
   feedback: {
     title: 'Please share your feedback',
-    body: 'That’s what we’re aiming for, but Astrid is a very early-stage product in a very complex field, and in many ways it doesn’t get there yet. Feedback on any issue you hit helps us improve it.',
+    body: 'That’s what we’re aiming for, but Astrid is a very early-stage product in a very complex field, and in many ways it doesn’t get there yet. Feedback on any issue you hit helps us improve it: no problem is too large or too small.',
     discord: 'Join the Discord',
     action: 'Start creating',
   },

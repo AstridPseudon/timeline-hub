@@ -54,7 +54,7 @@ export function TourCard({ act, beat, onPrimary, onBack, onSkip }: TourCardProps
           beat === 'land' && 'w-[380px] p-5',
           beat === 'finale' && 'w-[480px] p-6',
           beat === 'feedback' && 'w-[440px] p-6',
-          !explains && (beat === 'respond' || (beat === 'compose' && act === 1) ? 'w-[360px]' : 'w-[300px]') + ' px-4 py-3',
+          !explains && (beat === 'respond' || (beat === 'compose' && SCRIPT.acts[act].composeHeader) ? 'w-[360px]' : 'w-[300px]') + ' px-4 py-3',
         )}
       >
         {beat === 'welcome' && <Welcome onPrimary={onPrimary} onSkip={onSkip} />}
@@ -160,11 +160,12 @@ function Feedback({ onPrimary, onBack }: { onPrimary: () => void; onBack?: () =>
 /** Compose: send the prompt (the chat's Send, or Enter). Respond (act 1 only): the reply's Next. */
 function Hint({ act, beat, onPrimary, onBack, onSkip }: TourCardProps) {
   const compose = beat === 'compose';
+  const header = compose ? SCRIPT.acts[act].composeHeader : undefined;
   return (
     <>
       <CounterRow act={act} onBack={onBack} onSkip={onSkip} />
-      {compose && act === 1 && (
-        <h2 className="mt-3 text-pretty font-serif font-theme-heading text-lg leading-tight text-foreground">{SCRIPT.hints.firstCompose}</h2>
+      {header && (
+        <h2 className="mt-3 text-pretty font-serif font-theme-heading text-lg leading-tight text-foreground">{header}</h2>
       )}
       <div className="mt-2 flex min-h-9 items-center justify-between gap-3">
         <p className="text-sm text-foreground">{compose ? SCRIPT.hints.compose : SCRIPT.hints.respond}</p>

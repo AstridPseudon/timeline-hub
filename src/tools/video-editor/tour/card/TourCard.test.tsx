@@ -120,17 +120,19 @@ describe('TourCard', () => {
     expect(onPrimary).toHaveBeenCalledTimes(1);
   });
 
-  it('shows the first-run header only on act 1 compose, above the Press Send line', () => {
-    const { unmount } = renderAt(1, 'compose');
-    const header = screen.getByRole('heading', { name: SCRIPT.hints.firstCompose });
+  it.each([1, 2] as const)('shows act %i its own compose header, above the Press Send line', (tourAct) => {
+    renderAt(tourAct, 'compose');
+    const header = screen.getByRole('heading', { name: SCRIPT.acts[tourAct].composeHeader });
     expect(header.compareDocumentPosition(screen.getByText(SCRIPT.hints.compose)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getByText('1 of 3').compareDocumentPosition(header) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText(`${tourAct} of 3`).compareDocumentPosition(header) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(header.closest('section')).toHaveClass('w-[360px]');
-    unmount();
-    exitEditorTour();
-    for (const act of [2, 3] as const) {
+  });
+
+  it('gives acts 1 and 2 distinct compose headers, and act 3 none', () => {
+    expect(SCRIPT.acts[1].composeHeader).not.toBe(SCRIPT.acts[2].composeHeader);
+    for (const act of [3] as const) {
       const view = renderAt(act, 'compose');
-      expect(screen.queryByText(SCRIPT.hints.firstCompose)).toBeNull();
+      expect(screen.queryByRole('heading')).toBeNull();
       expect(screen.getByText(SCRIPT.hints.compose).closest('section')).toHaveClass('w-[300px]');
       view.unmount();
       exitEditorTour();
