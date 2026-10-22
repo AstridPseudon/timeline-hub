@@ -19,9 +19,20 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
+import { loadQuickDescriptor, type QuickDescriptor } from './quick-descriptor.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, '../../../..');
+const forbiddenEnvKeys = [
+  'BANODOCO_LOCAL_DATA_ROOT', 'BANODOCO_LOCAL_SOURCE_MANIFEST', 'BANODOCO_RUNTIME_DATA_ROOT', 'BANODOCO_RUNTIME_SOURCE_MANIFEST',
+  'ASTRID_LOCAL_DATA_ROOT', 'ASTRID_RUNTIME_DATA_ROOT', 'ASTRID_LOCAL_SOURCE_MANIFEST', 'ASTRID_RUNTIME_SOURCE_MANIFEST',
+];
+
+function cleanProcessEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const clean = { ...env };
+  for (const key of forbiddenEnvKeys) delete clean[key];
+  return clean;
+}
 
 /** The door's well-known port (Plan A D1). Override with ASTRID_APP_DIRECT_DOOR_PORT. */
 export const DOOR_PORT = Number(process.env.ASTRID_APP_DIRECT_DOOR_PORT ?? 17340);
@@ -91,7 +102,8 @@ export interface Managed {
 
 /** Starts `command` in its own process group. `exactEnv` gives it `options.env` alone; otherwise that is laid over this process's environment. */
 export function spawnGroup(command: string, args: string[], options: { cwd: string; env?: NodeJS.ProcessEnv; exactEnv?: boolean }): Managed {
-  const child = spawn(command, args, { cwd: options.cwd, env: options.exactEnv ? { ...options.env } : { ...process.env, ...options.env }, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const childEnv = options.exactEnv ? { ...options.env } : { ...cleanProcessEnv(), ...options.env };
+  const child = spawn(command, args, { cwd: options.cwd, env: childEnv, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
   if (!child.pid) throw new Error(`could not start ${command}`);
   liveGroups.add(child.pid);
   const managed: Managed = {
@@ -106,19 +118,27 @@ export function spawnGroup(command: string, args: string[], options: { cwd: stri
   return managed;
 }
 
-export async function stopGroup(managed: Managed | undefined, graceMs = 8000): Promise<void> {
+export async function stopGroup(managed: Managed | undefined, graceMs = 8000, strict = false): Promise<void> {
   if (!managed) return;
   const { pid, exitCode } = managed.child;
   if (!pid) return;
+  let forced = false;
   if (exitCode === null) {
     try { process.kill(-pid, 'SIGTERM'); } catch { /* already gone */ }
-    const timer = setTimeout(() => killGroupSync(pid), graceMs);
+    const timer = setTimeout(() => { forced = true; killGroupSync(pid); }, graceMs);
     await managed.exited;
     clearTimeout(timer);
   }
   // Reap stragglers (tsx/python helper children) of the group.
+  try { process.kill(-pid, 0); forced = true; } catch { /* process group is gone */ }
   killGroupSync(pid);
+  if (strict) {
+    let remains = false;
+    try { process.kill(-pid, 0); remains = true; } catch { /* ESRCH means the App-owned process group is gone. */ }
+    if (remains) throw new Error(`owned process group ${pid} remains after SIGKILL cleanup`);
+  }
   liveGroups.delete(pid);
+  if (strict && forced) throw new Error(`owned process group ${pid} required forced cleanup`);
 }
 
 async function waitFor<T>(label: string, probe: () => Promise<T | null | undefined | false>, timeoutMs: number, abort?: () => string | null): Promise<T> {
@@ -163,7 +183,7 @@ function makeCertificate(dir: string) {
   const key = path.join(dir, 'tls.key');
   const cert = path.join(dir, 'tls.crt');
   execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '2', '-subj', `/CN=${HOSTED_HOST}`,
-    '-addext', `subjectAltName=DNS:${HOSTED_HOST},DNS:${OTHER_HOST}`], { stdio: 'ignore' });
+    '-addext', `subjectAltName=DNS:${HOSTED_HOST},DNS:${OTHER_HOST}`], { stdio: 'ignore', env: cleanProcessEnv() });
   const x509 = new X509Certificate(readFileSync(cert));
   const spki = createHash('sha256').update(x509.publicKey.export({ type: 'spki', format: 'der' })).digest('base64');
   return { key: readFileSync(key), cert: readFileSync(cert), spki };
@@ -228,7 +248,7 @@ export function makePng(width = 64, height = 48): Buffer {
 function makeVideo(dir: string): { data: Buffer; mediaType: string; decodable: boolean } {
   const out = path.join(dir, 'clip.webm');
   try {
-    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=size=320x180:rate=15:duration=12', '-c:v', 'libvpx', '-b:v', '600k', '-g', '15', out], { stdio: 'ignore', timeout: 60_000 });
+    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=size=320x180:rate=15:duration=12', '-c:v', 'libvpx', '-b:v', '600k', '-g', '15', out], { stdio: 'ignore', timeout: 60_000, env: cleanProcessEnv() });
     return { data: readFileSync(out), mediaType: 'video/webm', decodable: true };
   } catch {
     return { data: readFileSync(path.join(REPO_ROOT, 'src/pages/Home/light-study-assets/first-light.mp4')), mediaType: 'video/mp4', decodable: false };
@@ -322,6 +342,14 @@ export interface ThreeProductsSeed {
   opaque: { config: Record<string, unknown>; clip: Record<string, unknown> };
 }
 
+export interface QuickSeed {
+  projectId: string;
+  projectSlug: string;
+  projectName: string;
+  timelineId: string;
+  headRevisionId: string;
+}
+
 export const THREE_PRODUCTS_OPAQUE = {
   config: { owner: 'f2', nested: [1, { k: 'v' }], flag: true },
   clip: { owner: 'f2', nested: [1, { k: 'v' }] },
@@ -390,6 +418,8 @@ window.astridScene = {
 }
 
 export class DirectHarness {
+  attachment: QuickDescriptor | null = null;
+  quickSeed?: QuickSeed;
   tmp = '';
   origin = '';
   originPort = 0;
@@ -400,7 +430,8 @@ export class DirectHarness {
   realmId = '';
   seed!: Seed;
   productToken = '';
-  readonly doorPort = DOOR_PORT;
+  /** The door's loopback port: the fixed default, or the adopted Runtime's own in attachment mode. */
+  doorPort = DOOR_PORT;
   private runtime?: Managed;
   private https?: HttpsServer;
   private stopped = false;
@@ -412,7 +443,7 @@ export class DirectHarness {
   /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
 
   get realmDir() { return path.join(this.tmp, 'realm'); }
-  get supportDir() { return path.join(this.tmp, 'support'); }
+  get supportDir() { return this.attachment ? path.dirname(this.attachment.discoveryFile) : path.join(this.tmp, 'support'); }
   get auditPath() { return path.join(this.tmp, 'door-audit.jsonl'); }
   /** The product credential the door acts with, as `astrid-runtime up` would provision it. */
   get credentialPath() { return path.join(this.tmp, 'product-credential.json'); }
@@ -442,21 +473,42 @@ export class DirectHarness {
   async start(): Promise<this> {
     process.on('SIGTERM', () => { void this.stop().finally(() => process.exit(143)); });
     try {
+      const descriptorText = process.env.ASTRID_QUICK_DESCRIPTOR;
+      if (descriptorText !== undefined) this.attachment = loadQuickDescriptor(descriptorText);
       this.tmp = mkdtempSync(path.join(tmpdir(), 'astrid-direct-'));
-      await assertPortFree(this.doorPort, 'door');
+      if (!this.attachment) await assertPortFree(this.doorPort, 'door');
       const tls = makeCertificate(this.tmp);
       this.spki = tls.spki;
-      this.originPort = Number(process.env.ASTRID_APP_DIRECT_ORIGIN_PORT ?? 0) || await freePort();
+      // The adopted Runtime's door already serves one hosted origin; the page must be served from exactly that.
+      this.originPort = this.attachment ? Number(new URL(this.attachment.hostedOrigin).port) : Number(process.env.ASTRID_APP_DIRECT_ORIGIN_PORT ?? 0) || await freePort();
+      if (this.attachment) this.doorPort = Number(new URL(this.attachment.doorEndpoint).port);
       this.https = await startHostedServer(tls, this.originPort);
       this.origin = `https://${HOSTED_HOST}:${this.originPort}`;
       this.otherOrigin = `https://${OTHER_HOST}:${this.originPort}`;
 
-      mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
-      this.realmId = await this.createRealm();
-      await this.startRuntime();
-      // The door listens from the start and answers `runtime_unavailable` until the product credential exists.
-      this.productToken = await this.provisionCredential(PRODUCT_ACTOR, path.basename(this.credentialPath));
-      this.seed = await this.seedRuntime();
+      if (this.attachment) {
+        this.realmId = this.attachment.realmId;
+        const discovery = this.discovery();
+        if (!/^https?:\/\//.test(discovery.endpoint)) throw new Error('adopted Runtime discovery endpoint must be an absolute HTTP URL');
+        if (discovery.active_realm !== this.attachment.realmId || discovery.runtime_instance_id !== this.attachment.runtimeInstanceId) throw new Error(`adopted Runtime discovery identity mismatch: realm ${discovery.active_realm}, instance ${discovery.runtime_instance_id}`);
+        this.runtimePort = Number(new URL(discovery.endpoint).port);
+        this.productToken = readCredentialToken(this.attachment.productCredentialFile);
+        await this.assertAttachedIdentity();
+        const project = await this.runtimeJson('GET', `/v1/projects/${this.attachment.projectId}`);
+        if (project.status !== 200) throw new Error(`adopted project lookup failed: ${project.status} ${JSON.stringify(project.body)}`);
+        const resource = project.body;
+        if (resource.project_id !== this.attachment.projectId || resource.realm_id !== this.realmId || resource.slug !== this.attachment.projectSlug) throw new Error(`adopted project identity mismatch: ${JSON.stringify(resource)}`);
+        const projectName = resource.name;
+        this.quickSeed = { projectId: this.attachment.projectId, projectSlug: this.attachment.projectSlug, projectName, timelineId: this.attachment.timelineId, headRevisionId: this.attachment.headRevisionId };
+        this.seed = { ...this.quickSeed, image: undefined, video: undefined, big: undefined } as unknown as Seed;
+      } else {
+        mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
+        this.realmId = await this.createRealm();
+        await this.startRuntime();
+        // The door listens from the start and answers `runtime_unavailable` until the product credential exists.
+        this.productToken = await this.provisionCredential(PRODUCT_ACTOR, path.basename(this.credentialPath));
+        this.seed = await this.seedRuntime();
+      }
     } catch (error) {
       await this.stop();
       throw error;
@@ -468,8 +520,19 @@ export class DirectHarness {
 
   private runtimeEnv(): NodeJS.ProcessEnv { return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1' }; }
 
+  /** Health identifies the running instance; the authenticated realm route identifies its realm. */
+  private async assertAttachedIdentity(): Promise<void> {
+    const healthResponse = await fetch(`${this.runtimeUrl}/v1/health`);
+    if (!healthResponse.ok) throw new Error(`adopted Runtime health failed: ${healthResponse.status}`);
+    const health = await healthResponse.json() as { runtime_instance_id?: string };
+    const realm = await this.runtimeJson('GET', '/v1/realm');
+    if (realm.status !== 200) throw new Error(`adopted realm lookup failed: ${realm.status} ${JSON.stringify(realm.body)}`);
+    if (realm.body.realm_id !== this.realmId || health.runtime_instance_id !== this.attachment!.runtimeInstanceId) throw new Error(`adopted Runtime identity mismatch: realm ${realm.body.realm_id}, instance ${health.runtime_instance_id}`);
+    this.runtimeInstanceId = health.runtime_instance_id;
+  }
+
   private async createRealm(): Promise<string> {
-    const output = execFileSync(runtimePython()!, ['-m', 'runtime_protocol.cli', 'create', '--root', this.realmDir, '--display-name', 'Direct Journey'], { cwd: this.tmp, env: { ...process.env, ...this.runtimeEnv() }, encoding: 'utf8' });
+    const output = execFileSync(runtimePython()!, ['-m', 'runtime_protocol.cli', 'create', '--root', this.realmDir, '--display-name', 'Direct Journey'], { cwd: this.tmp, env: cleanProcessEnv({ ...process.env, ...this.runtimeEnv() }), encoding: 'utf8' });
     return JSON.parse(output.trim().split('\n').pop()!).realm_id;
   }
 
@@ -478,6 +541,7 @@ export class DirectHarness {
    * Runtime), and the browser door for the hosted origin on its fixed port, acting with the product credential.
    */
   async startRuntime(port = 0): Promise<void> {
+    if (this.attachment) throw new Error('App attachment cannot start an adopted Runtime');
     if (this.runtime) throw new Error('Runtime already running');
     const managed = spawnGroup(runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
       '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath], { cwd: this.tmp, env: this.runtimeEnv() });
@@ -495,6 +559,7 @@ export class DirectHarness {
   }
 
   async stopRuntime(): Promise<void> {
+    if (this.attachment) return;
     await stopGroup(this.runtime);
     this.runtime = undefined;
   }
@@ -511,7 +576,7 @@ export class DirectHarness {
 
   get runtimeRunning() { return Boolean(this.runtime && this.runtime.child.exitCode === null); }
 
-  get runtimeUrl() { return `http://127.0.0.1:${this.runtimePort}`; }
+  get runtimeUrl() { return this.attachment ? this.discovery().endpoint.replace(/\/$/, '') : `http://127.0.0.1:${this.runtimePort}`; }
 
   /** A request straight to the Runtime with the product credential (the "direct" side of every comparison). */
   async runtimeFetch(pathAndQuery: string, init: RequestInit & { headers?: Record<string, string> } = {}): Promise<Response> {
@@ -550,7 +615,7 @@ export class DirectHarness {
    * re-reads it, so a restarted Runtime on a new port is followed with no special case. Throws when it is absent or unparsable.
    */
   discovery(): RuntimeDiscovery {
-    const parsed = JSON.parse(readFileSync(path.join(this.supportDir, 'discovery.json'), 'utf8'));
+    const parsed = JSON.parse(readFileSync(this.attachment?.discoveryFile ?? path.join(this.supportDir, 'discovery.json'), 'utf8'));
     for (const key of ['endpoint', 'active_realm', 'runtime_instance_id', 'worker_credential_file', 'worker_actor'] as const) {
       if (typeof parsed[key] !== 'string' || !parsed[key]) throw new Error(`discovery.json has no ${key}`);
     }
@@ -896,6 +961,7 @@ export class DirectHarness {
 
   /** Brings the Runtime and its door back to a serving state after a test that stopped it or took its credential away. */
   async resetToHealthy(): Promise<void> {
+    if (this.attachment) { await this.assertAttachedIdentity(); return; }
     this.restoreProductCredential();
     if (!this.runtimeRunning) { this.runtime = undefined; await this.startRuntime(); }
     const probe = await this.doorRequest('/v1/health').catch(() => null);
@@ -907,12 +973,20 @@ export class DirectHarness {
   async stop(): Promise<void> {
     if (this.stopped) return;
     this.stopped = true;
-    await stopGroup(this.runtime).catch(() => {});
+    let cleanupError: unknown;
+    if (!this.attachment) await stopGroup(this.runtime).catch((error) => { cleanupError ??= error; });
     await new Promise<void>((resolve) => { if (!this.https) return resolve(); this.https.closeAllConnections?.(); this.https.close(() => resolve()); });
     if (this.tmp) rmSync(this.tmp, { recursive: true, force: true });
+    if (cleanupError) throw cleanupError;
   }
 }
 
 export async function startDirectHarness(): Promise<DirectHarness> {
   return new DirectHarness().start();
+}
+
+function readCredentialToken(file: string): string {
+  const parsed = JSON.parse(readFileSync(file, 'utf8'));
+  if (typeof parsed.token !== 'string' || !parsed.token) throw new Error(`credential file ${file} has no token`);
+  return parsed.token;
 }

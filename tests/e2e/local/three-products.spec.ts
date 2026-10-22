@@ -34,7 +34,7 @@ import path from 'node:path';
 import { getTimelineLabelWidth } from '../../../src/tools/video-editor/lib/coordinate-utils.ts';
 import { PREVIEW_SURFACE, calibrateRuler, seekRulerToFrame, type RulerSeek } from '../support/previewRuler.ts';
 import { harnessUnavailableReason, type DirectHarness, type RenderSeed, type ThreeProductsSeed } from './support/harness.ts';
-import { currentHead, editFirstTrackName, expectConnected, firstTrackName, holdTimelineSaves, openApp, openSeededTimeline, revisionBody, test as appTest, UI } from './support/app.ts';
+import { closeQuickBrowser, currentHead, editFirstTrackName, expectConnected, firstTrackName, holdTimelineSaves, openApp, openSeededTimeline, revisionBody, test as appTest, UI } from './support/app.ts';
 import { AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 import { centreCell, gridDifference, letterbox, matches, pictureGrid, MATCH, type GridDifference, type PictureGrid, type Rect } from './support/pictures.ts';
 
@@ -43,16 +43,25 @@ const CEILING = { timeout: 90_000 };
 const SAVES = /\/timelines\/[^/]+\/composition-revisions$/;
 const CONFLICT_TITLE = 'This timeline changed somewhere else';
 
-const test = appTest.extend<object, { seed3: ThreeProductsSeed; astrid: AstridCli; browser: Browser }>({
+const test = appTest.extend<object, { seed3: ThreeProductsSeed; astrid: AstridCli; quickAstrid: AstridCli; browser: Browser }>({
   // Installed Google Chrome, not the bundled Chromium: the render is H.264 and AAC, which only Chrome decodes. `channel` is
   // used alone (never with an executablePath, which would win over it), so a missing Chrome fails here, at launch, by name.
   browser: [async ({ harness }, use) => {
-    const browser = await chromium.launch({ channel: 'chrome', args: harness.chromiumArgs });
-    try { await use(browser); } finally { await browser.close(); }
+    if (process.env.ASTRID_QUICK_DESCRIPTOR) {
+      // QUICK closes and verifies the browser's process group before F1 shuts the Runtime down.
+      const browserServer = await chromium.launchServer({ channel: 'chrome', args: harness.chromiumArgs });
+      let browser: Browser | undefined;
+      try { browser = await chromium.connect(browserServer.wsEndpoint()); await use(browser); }
+      finally { await closeQuickBrowser(browser, browserServer); }
+    } else {
+      const browser = await chromium.launch({ channel: 'chrome', args: harness.chromiumArgs });
+      try { await use(browser); } finally { await browser.close(); }
+    }
   }, { scope: 'worker' }],
   seed3: [async ({ harness }, use) => { await use(await harness.seedThreeProducts()); }, { scope: 'worker', timeout: 240_000 }],
   astrid: [async ({ harness, seed3 }, use) => {
     const astrid = await AstridCli.create(harness);
+    journey.activeAstrid = astrid;
     journey.identity = await astrid.preflight();
     // The seed must be something Astrid accepts as it is (a real finding otherwise): check a fresh working copy of it, then drop it.
     await astrid.astrid(['timelines', 'checkout', seed3.timelineId, '--project', seed3.projectSlug, '--fresh', '--json']);
@@ -61,6 +70,14 @@ const test = appTest.extend<object, { seed3: ThreeProductsSeed; astrid: AstridCl
     journey.preflightCalls = [...astrid.calls];
     await use(astrid);
   }, { scope: 'worker', timeout: 240_000 }],
+  quickAstrid: [async ({ harness }, use) => {
+    if (!harness.attachment) throw new Error('quick Astrid fixture requires ASTRID_QUICK_DESCRIPTOR');
+    const astrid = await AstridCli.create(harness);
+    journey.activeAstrid = astrid;
+    journey.identity = await astrid.preflight();
+    journey.preflightCalls = [...astrid.calls];
+    await use(astrid);
+  }, { scope: 'worker', timeout: 0 }],
 });
 
 test.describe.configure({ mode: 'serial' });
@@ -88,24 +105,28 @@ const journey = {
   identity: undefined as AstridIdentity | undefined,
   preflightCalls: [] as AstridCall[],
   cases: [] as CaseRecord[],
+  activeAstrid: undefined as AstridCli | undefined,
   /** What the running case has learned that the summary should carry (named facts, never verdicts on speed). */
   facts: {} as Record<string, unknown>,
   caseStart: { at: 0, load: 0, calls: 0 },
 };
 
-test.beforeEach(async ({ astrid }) => {
+test.beforeEach(() => {
   journey.facts = {};
-  journey.caseStart = { at: Date.now(), load: loadavg()[0], calls: astrid.calls.length };
+  journey.caseStart = { at: Date.now(), load: loadavg()[0], calls: journey.activeAstrid?.calls.length ?? 0 };
 });
 
-test.afterEach(async ({ astrid }, testInfo) => {
+// Playwright reads fixture dependencies from the destructuring pattern, so the empty pattern is required.
+// eslint-disable-next-line no-empty-pattern
+test.afterEach(async ({}, testInfo) => {
+  const astrid = journey.activeAstrid;
   journey.cases.push({
     name: testInfo.title,
     status: testInfo.status ?? 'unknown',
     durationMs: testInfo.duration,
     loadAverageStart: journey.caseStart.load,
     loadAverageEnd: loadavg()[0],
-    astridCalls: astrid.calls.slice(journey.caseStart.calls),
+    astridCalls: astrid?.calls.slice(journey.caseStart.calls) ?? [],
     facts: journey.facts,
   });
 });
@@ -137,10 +158,10 @@ function canonical(value: unknown): string {
   return JSON.stringify(value);
 }
 
-const timelineBase = (harness: DirectHarness, seed: ThreeProductsSeed) => `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}`;
+const timelineBase = (harness: DirectHarness, seed: Pick<ThreeProductsSeed, 'timelineId'>) => `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}`;
 
 /** Every composition revision of the seeded timeline, newest first. */
-async function allRevisions(harness: DirectHarness, seed: ThreeProductsSeed): Promise<Array<{ revision_id: string; is_current_head: boolean }>> {
+async function allRevisions(harness: DirectHarness, seed: Pick<ThreeProductsSeed, 'timelineId'>): Promise<Array<{ revision_id: string; is_current_head: boolean }>> {
   const items: Array<{ revision_id: string; is_current_head: boolean }> = [];
   let cursor: string | null = null;
   do {
@@ -298,7 +319,7 @@ async function openActionPane(page: Page) {
 
 /** What the page was told by the Runtime: the answers it received, keyed by what they are. */
 function watchPageReads(page: Page, harness: DirectHarness) {
-  const reads = { eventFeed: [] as Array<{ aggregate_type: string; aggregate_id: string; event_type: string }>, urls: [] as string[], internalRevisions: [] as Array<{ id: string; payload: any }> };
+  const reads = { eventFeed: [] as Array<{ aggregate_type: string; aggregate_id: string; event_type: string }>, urls: [] as string[], internalRevisions: [] as Array<{ id: string; payload: any }>, compositionRevisions: [] as Array<{ id: string; payload: any }> };
   page.on('response', (response) => {
     const url = response.url();
     if (!url.startsWith(harness.doorBase) || response.request().method() !== 'GET' || response.status() !== 200) return;
@@ -306,6 +327,8 @@ function watchPageReads(page: Page, harness: DirectHarness) {
     reads.urls.push(route);
     if (route.startsWith('/v1/events')) {
       void response.json().then((body) => { for (const item of body.items ?? []) reads.eventFeed.push({ aggregate_type: item.aggregate_type, aggregate_id: item.aggregate_id, event_type: item.event_type }); }).catch(() => {});
+    } else if (/\/composition-revisions\/[^/?]+$/.test(route)) {
+      void response.json().then((body) => { reads.compositionRevisions.push({ id: body.revision_id, payload: body.payload }); }).catch(() => {});
     } else if (/\/timelines\/[^/]+\/revisions\/[^/?]+$/.test(route)) {
       void response.json().then((body) => { reads.internalRevisions.push({ id: body.revision_id, payload: body.payload }); }).catch(() => {});
     }
@@ -872,5 +895,102 @@ test('Runtime restart with the App open: the draft survives, saves after the rel
   await expectOpaqueDataKept(harness, seed3);
 
   journey.facts = { ...journey.facts, instanceBefore: before.runtimeInstanceId, instanceAfter: after.runtime_instance_id, headBefore, headAfter };
+  await sniff.expectClean(page);
+});
+
+// ---------------------------------------------------------------------------------------------
+// QUICK: F1 owns the realm and Runtime; this case attaches the App and real Astrid CLI to that one timeline.
+
+test('quick: Astrid edit then App edit are visible and readable on the adopted timeline', async ({ page, harness, quickAstrid }) => {
+  const descriptor = harness.attachment;
+  const seed = harness.quickSeed;
+  expect(descriptor, 'the quick descriptor selected the attached harness').toBeTruthy();
+  expect(seed, 'the adopted project and timeline are available').toBeTruthy();
+  const quickSeed = { timelineId: seed!.timelineId, projectSlug: seed!.projectSlug };
+  const agent = agentOf(quickAstrid, quickSeed);
+  const sniff = new TokenSniff(secretsOf(harness, quickAstrid));
+  sniff.attach(page);
+  const reads = watchPageReads(page, harness);
+
+  await openApp(page, harness);
+  await expectConnected(page);
+  await openSeededTimeline(page, harness);
+  const sameRealm = await expectSameRealm(page, harness, quickAstrid);
+  expect(sameRealm.realmId).toBe(descriptor!.realmId);
+  expect(sameRealm.runtimeInstanceId).toBe(descriptor!.runtimeInstanceId);
+  expect(sameRealm.astridFile).toContain('astrid');
+
+  const baseRevisionId = descriptor!.headRevisionId;
+  const base = await revisionBody(harness, baseRevisionId);
+  const clips = (base.payload.clips ?? []) as Array<Record<string, any>>;
+  expect(clips.length, 'the fixture has an editable media clip').toBeGreaterThan(0);
+  const clip = clips[0];
+  const mediaId = base.payload.registry.assets[clip.asset].media_id as string;
+  const mediaUrl = `${harness.doorBase}/v1/objects/${encodeURIComponent(mediaId)}`;
+  const preview = page.getByTestId('video-editor-preview-surface');
+  const decodedFrame = preview.locator('[data-preview-media-src]');
+  // ReadinessVideo forwards this marker to the painted media element and reports its decoded source separately.
+  const renderedClip = preview.locator('[data-astrid-retry-token]');
+  await expect(decodedFrame, 'the preview contains the fixture media source').toHaveCount(1);
+  await expect(decodedFrame).toHaveAttribute('data-preview-media-src', mediaUrl);
+  await expect(decodedFrame, 'Chromium decoded the fixture media').toHaveAttribute('data-preview-decoded-frame', 'true');
+  await expect(renderedClip, 'one fixture media surface is rendered').toHaveCount(1);
+  await expect(renderedClip, 'the editor visibly renders the fixture media').toBeVisible();
+  await expect(renderedClip).toHaveCSS('opacity', '1');
+
+  await agent.checkout();
+  await agent.edit('--clip', String(clip.id), '--set', 'opacity=0.5');
+  const astridPublished = await agent.publish('Quick Astrid edit', `quick-astrid-${descriptor!.timelineId}`);
+  expect(astridPublished.old_head).toBe(baseRevisionId);
+  const astridRevisionId = astridPublished.new_head;
+  await expect.poll(async () => (await currentHead(harness)), { message: 'the App observes Astrid’s published revision' }).toBe(astridRevisionId);
+  await expect.poll(() => reads.compositionRevisions.some((item) => item.id === astridRevisionId && item.payload?.clips?.some((candidate: any) => candidate.id === clip.id && candidate.opacity === 0.5)), { message: 'the editor reads Astrid’s edited clip content' }).toBe(true);
+  await expect(renderedClip, 'Astrid’s opacity edit is visible in the rendered editor').toHaveCSS('opacity', '0.5');
+
+  const appLabel = 'QUICK App edit';
+  const appSaved = page.waitForResponse((response) => response.request().method() === 'POST' && SAVES.test(new URL(response.url()).pathname), CEILING);
+  await editFirstTrackName(page, appLabel);
+  const saveResponse = await appSaved;
+  expect(saveResponse.ok(), `App save returned ${saveResponse.status()}`).toBe(true);
+  expect(saveResponse.request().postDataJSON().expected_head, 'the App built on Astrid’s revision').toBe(astridRevisionId);
+  const saveEnvelope = await saveResponse.json();
+  const savedRevisionId = saveEnvelope.data?.new_head as string;
+  expect(savedRevisionId, 'the App response identifies its saved revision').toBeTruthy();
+  expect(saveEnvelope.data?.old_head, 'the App save receipt names Astrid’s revision as its parent').toBe(astridRevisionId);
+  expect(savedRevisionId).not.toBe(astridRevisionId);
+  expect(await currentHead(harness)).toBe(savedRevisionId);
+
+  const status = await agent.status();
+  const show = await agent.show();
+  expect(status.current_head, 'Astrid reads the App-saved revision').toBe(savedRevisionId);
+  expect(show.head_revision_id).toBe(savedRevisionId);
+  const lineage = (await allRevisions(harness, quickSeed)).map((revision) => revision.revision_id);
+  expect(lineage.indexOf(savedRevisionId), 'the App revision is the newest ancestor').toBeGreaterThanOrEqual(0);
+  expect(lineage.indexOf(savedRevisionId)).toBeLessThan(lineage.indexOf(astridRevisionId));
+  expect(lineage.indexOf(astridRevisionId)).toBeLessThan(lineage.indexOf(baseRevisionId));
+  const astridRead = await quickAstrid.readTimelineBundle(seed!.timelineId, seed!.projectSlug, savedRevisionId);
+  expect(astridRead.revisionId, 'Astrid opened the App-saved immutable revision').toBe(savedRevisionId);
+  const composition = astridRead.bundle.parent as Record<string, any>;
+  const labels = (composition.config.tracks as Array<Record<string, any>>).map((track) => track.label);
+  expect(labels, 'Astrid reads the App-edited track label as content').toContain(appLabel);
+
+  const revisions = revisionSet(journey.identity);
+  const observedRevisions = { app: revisions.appHead, astrid: revisions.astridHead, runtime: revisions.runtimeHead };
+  expect(observedRevisions).toEqual(descriptor!.revisions);
+  const result = {
+    realmId: sameRealm.realmId,
+    runtimeInstanceId: sameRealm.runtimeInstanceId,
+    baseRevisionId,
+    astridRevisionId,
+    savedRevisionId,
+    astridParentRevisionId: astridPublished.old_head,
+    appParentRevisionId: saveEnvelope.data.old_head as string,
+    astridLabel: 'Quick Astrid edit',
+    appLabel,
+    revisions: observedRevisions,
+  };
+  mkdirSync(path.dirname(descriptor!.resultFile), { recursive: true });
+  writeFileSync(descriptor!.resultFile, JSON.stringify(result, null, 2));
+  journey.facts = { ...journey.facts, ...result };
   await sniff.expectClean(page);
 });

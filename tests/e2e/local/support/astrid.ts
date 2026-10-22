@@ -2,11 +2,10 @@
  * The Astrid side of the three-product journey (card F2-C): the real `astrid` CLI and `astrid.core.dev.cross_client`, run
  * as subprocesses against the same Runtime the hosted page talks to.
  *
- * Every call gets an environment built from nothing (no ambient Astrid state, no ambient Runtime, no proxy), a state
- * root inside the harness's tmp (removed by `harness.stop()`), `PYTHONPATH` set to the Astrid checkout, and the four
- * `ASTRID_TIMELINE_EVAL_*` variables. The endpoint is read from the Runtime's discovery file before each call, so a restarted
- * Runtime on a new port is followed with no special case. The explicit context makes `astrid` skip the launcher and the pack
- * host (astrid/sdk/client.py `open_from_launcher`), which is also why this runs on Linux. The product token never enters it.
+ * Every call gets an environment built from nothing (no ambient Astrid state, no ambient Runtime, no proxy), `PYTHONPATH`
+ * set to the Astrid checkout, and the four `ASTRID_TIMELINE_EVAL_*` variables. Direct mode uses state inside the harness tmp;
+ * attachment mode reuses F1's data root and credential. The endpoint is read from discovery before each call. The explicit
+ * context makes `astrid` skip the launcher and pack host (astrid/sdk/client.py `open_from_launcher`). The product token never enters it.
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
@@ -17,7 +16,7 @@ import { ASTRID_ACTOR, REPO_ROOT, RUNTIME_CHECKOUT, spawnGroup, stopGroup, type 
 /** The Astrid tree to test. The editable install in a venv may point elsewhere, so `PYTHONPATH` puts this one first and the identity probe asserts it. */
 export const ASTRID_CHECKOUT = path.resolve(process.env.ASTRID_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
 export const ASTRID_PYTHON = process.env.ASTRID_PYTHON ?? path.join(ASTRID_CHECKOUT, '.venv', 'bin', 'python');
-/** A hang ceiling for one Astrid call (R-10): durations are recorded, never judged. */
+/** Existing direct-mode call ceiling; QUICK attachment calls have no elapsed-time cutoff. */
 export const ASTRID_CALL_CEILING_MS = 120_000;
 
 /** What `python -m astrid.core.dev.cross_client identity` prints (astrid/core/dev/cross_client.py). */
@@ -51,6 +50,14 @@ export interface AstridCall {
 
 export interface AstridRun { stdout: string; stderr: string; exitCode: number | null; durationMs: number }
 
+export interface AstridTimelineBundle {
+  bundle: {
+    parent: { config?: { tracks?: Array<{ id: string; label?: string }>; [key: string]: unknown }; [key: string]: unknown };
+    [key: string]: unknown;
+  };
+  revisionId: string;
+}
+
 /** The `--json` envelope the CLI prints (`{"ok": true, "data": ...}`). */
 export interface AstridEnvelope<T = any> { ok: boolean; data?: T; error?: unknown; [key: string]: unknown }
 
@@ -77,7 +84,9 @@ export function vendoredDigests(): { app: string; astrid: string } {
 }
 
 function gitHead(dir: string): string | null {
-  try { return execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 10_000 }).trim() || null; } catch { return null; }
+  const env = { ...process.env };
+  for (const key of ['BANODOCO_LOCAL_DATA_ROOT', 'BANODOCO_LOCAL_SOURCE_MANIFEST', 'BANODOCO_RUNTIME_DATA_ROOT', 'BANODOCO_RUNTIME_SOURCE_MANIFEST', 'ASTRID_LOCAL_DATA_ROOT', 'ASTRID_RUNTIME_DATA_ROOT', 'ASTRID_LOCAL_SOURCE_MANIFEST', 'ASTRID_RUNTIME_SOURCE_MANIFEST']) delete env[key];
+  try { return execFileSync('git', ['-C', dir, 'rev-parse', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 10_000, env }).trim() || null; } catch { return null; }
 }
 
 function vendorLock(file: string): { source_commit: string | null; producer_version: string | null } {
@@ -110,26 +119,41 @@ export class AstridCli {
   private readonly data: string;
   private readonly credentialFile: string;
   private readonly token: string;
+  readonly actorId: string;
   /** The marker's colour (the PNG and the 2 s clip): the executor's default orange. Fixed, because the render case asks the film's picture to be within 8 levels per channel of it, and a 4:2:0 limited-range H.264 film holds a light orange that closely but a dark saturated colour less so. It is the same on every `host` call (a different colour is a different capability digest, so a task admitted against one is never claimed by the other). */
   readonly markerColor = 'e8452c';
 
-  private constructor(private readonly harness: DirectHarness, token: string) {
-    // A real path: Astrid's credential reader refuses a symlink anywhere in it (the tmp root may be one).
-    const root = realpathSync(harness.tmp);
-    this.home = path.join(root, 'astrid-home');
-    this.state = path.join(root, 'astrid-state');
-    this.data = path.join(root, 'astrid-data');
-    this.credentialFile = path.join(root, 'astrid-credential.json');
+  private constructor(private readonly harness: DirectHarness, token: string, actorId = ASTRID_ACTOR) {
+    if (harness.attachment) {
+      this.home = harness.attachment.dataRoot;
+      this.state = harness.attachment.dataRoot;
+      this.data = harness.attachment.dataRoot;
+      this.credentialFile = harness.attachment.astridCredentialFile;
+    } else {
+      // A real path: Astrid's credential reader refuses a symlink anywhere in it (the tmp root may be one).
+      const root = realpathSync(harness.tmp);
+      this.home = path.join(root, 'astrid-home');
+      this.state = path.join(root, 'astrid-state');
+      this.data = path.join(root, 'astrid-data');
+      this.credentialFile = path.join(root, 'astrid-credential.json');
+    }
     this.token = token;
+    this.actorId = actorId;
   }
 
-  /** Mints the Astrid actor's credential through the Runtime's own route and makes its state roots inside the harness tmp. */
+  /** Mints a credential and isolated state for direct mode, or adopts F1's existing credential and workspace. */
   static async create(harness: DirectHarness): Promise<AstridCli> {
     const reason = astridUnavailableReason();
     if (reason) throw new Error(reason);
-    const token = await harness.provisionCredential(ASTRID_ACTOR, 'astrid-credential.json');
-    const cli = new AstridCli(harness, token);
-    for (const dir of [cli.home, cli.state]) mkdirSync(dir, { recursive: true, mode: 0o700 });
+    const credentialText = harness.attachment ? readFileSync(harness.attachment.astridCredentialFile, 'utf8') : null;
+    const credential = credentialText ? JSON.parse(credentialText) as { token?: string; actor_id?: string } : null;
+    if (harness.attachment && (!credential?.token || !credential.actor_id)) throw new Error(`Astrid credential file ${harness.attachment.astridCredentialFile} must contain token and actor_id`);
+    const token = credential?.token;
+    const mintedToken = harness.attachment
+      ? token!
+      : await harness.provisionCredential(ASTRID_ACTOR, 'astrid-credential.json');
+    const cli = new AstridCli(harness, mintedToken, credential?.actor_id ?? ASTRID_ACTOR);
+    if (!harness.attachment) for (const dir of [cli.home, cli.state]) mkdirSync(dir, { recursive: true, mode: 0o700 });
     return cli;
   }
 
@@ -144,6 +168,7 @@ export class AstridCli {
       HOME: this.home,
       XDG_STATE_HOME: this.state,
       ASTRID_RUNTIME_DATA_ROOT: this.data,
+      ...(this.harness.attachment ? { ASTRID_RUNTIME_SOURCE_MANIFEST: this.harness.attachment.sourceManifest } : {}),
       PYTHONPATH: ASTRID_CHECKOUT,
       PYTHONDONTWRITEBYTECODE: '1',
       PYTHONUNBUFFERED: '1',
@@ -151,7 +176,7 @@ export class AstridCli {
       ASTRID_TIMELINE_EVAL_CREDENTIAL: this.credentialFile,
       // The realm the harness made, not the one discovery names: Astrid refuses any other realm, so a mix-up fails loudly.
       ASTRID_TIMELINE_EVAL_REALM_ID: this.harness.realmId,
-      ASTRID_TIMELINE_EVAL_ACTOR_ID: ASTRID_ACTOR,
+      ASTRID_TIMELINE_EVAL_ACTOR_ID: this.actorId,
     };
   }
 
@@ -164,15 +189,16 @@ export class AstridCli {
     const loadAverageStart = loadavg()[0];
     const managed = spawnGroup(ASTRID_PYTHON, argv, { cwd: this.home, env, exactEnv: true });
     let hung = false;
-    const timer = setTimeout(() => { hung = true; void stopGroup(managed, 2000); }, options.timeoutMs ?? ASTRID_CALL_CEILING_MS);
+    const timeoutMs = options.timeoutMs ?? (this.harness.attachment ? undefined : ASTRID_CALL_CEILING_MS);
+    const timer = timeoutMs === undefined ? undefined : setTimeout(() => { hung = true; void stopGroup(managed, 2000); }, timeoutMs);
     const exitCode = await managed.exited;
-    clearTimeout(timer);
-    await stopGroup(managed, 2000); // reap a straggler child of the group, which also lets its pipes close
+    if (timer) clearTimeout(timer);
+    await stopGroup(managed, 2000, Boolean(this.harness.attachment)); // QUICK treats any forced cleanup or remaining child as a teardown failure
     await managed.closed; // every byte of stdout and stderr has been read
     const durationMs = Date.now() - started;
     this.calls.push({ argv, durationMs, exitCode, loadAverageStart, loadAverageEnd: loadavg()[0] });
     const run: AstridRun = { stdout: this.redact(managed.stdout), stderr: this.redact(managed.stderr), exitCode, durationMs };
-    if (hung) throw new Error(`astrid call hung past ${options.timeoutMs ?? ASTRID_CALL_CEILING_MS} ms: ${argv.join(' ')}\n${run.stderr.slice(-1200)}`);
+    if (hung) throw new Error(`astrid call hung past ${timeoutMs} ms: ${argv.join(' ')}\n${run.stderr.slice(-1200)}`);
     if ((exitCode === 0) !== (options.ok ?? true)) {
       throw new Error(`astrid call ${options.ok === false ? 'unexpectedly succeeded' : `exited ${exitCode}`}: ${argv.join(' ')}\n${run.stdout.slice(-1200)}\n${run.stderr.slice(-1200)}`);
     }
@@ -194,6 +220,15 @@ export class AstridCli {
   async identity(): Promise<AstridIdentity> {
     const run = await this.python(['-m', 'astrid.core.dev.cross_client', 'identity']);
     return JSON.parse(run.stdout.trim().split('\n').pop()!);
+  }
+
+  /** Reads the full authoring closure for one exact published revision through Astrid's read-only SDK. */
+  async readTimelineBundle(timelineId: string, projectSlug: string, revisionId: string): Promise<AstridTimelineBundle> {
+    const script = `import json\nfrom astrid.sdk.client import AstridClient\nwith AstridClient.open_from_launcher(start_pack_host=False, client_name="astrid-quick-read") as client:\n    result = client.timelines.open_bundle(${JSON.stringify(projectSlug)}, ${JSON.stringify(timelineId)}, revision_id=${JSON.stringify(revisionId)})\n    if not result.ok:\n        raise RuntimeError(str(result.error))\n    data = result.data\n    print(json.dumps({"bundle": data["bundle"], "revisionId": data["revision_id"]}))`;
+    const run = await this.python(['-c', script]);
+    const value = JSON.parse(run.stdout.trim().split('\n').at(-1)!) as AstridTimelineBundle;
+    if (value.revisionId !== revisionId) throw new Error(`Astrid SDK opened revision ${value.revisionId}, expected ${revisionId}`);
+    return value;
   }
 
   /**
@@ -233,6 +268,7 @@ export class AstridCli {
     }
     const disagreements = realmDisagreements('Astrid', identity, this.harness, digest);
     if (disagreements.length) throw new Error(disagreements.join('; '));
+    if (identity.actor_id !== this.actorId) throw new Error(`Astrid credential actor ${this.actorId} connected as ${identity.actor_id}`);
     return identity;
   }
 }
