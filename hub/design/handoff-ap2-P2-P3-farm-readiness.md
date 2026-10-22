@@ -12,14 +12,17 @@ The inspected App head is:
 ```text
 commit 8b979bd2139c96e029dbc42be9a47f4309c8ee37
 tree   e5cde440ce2f31bd0e20dbf2bb7d9d5cbd9d09da
-branch tl/ap2-P2-P3-farm-readiness-fix (based on tl/integration)
+branch tl/ap2-P2-P3-farm-readiness-sol-fix (based on tl/integration)
 ```
 
-The current source is clean before and after this document-only inventory. The
-Agent and Runtime heads required for a real three-products/farm run are not
-part of this App source inventory. Record their exact full SHAs, the integrated
-Runtime `/commits` implementation, and the farm seed/project before claiming
-qualification. Do not infer them from a branch name or from a browser door log.
+The current App source is clean before and after this document-only correction.
+Runtime integration was read statically at commit
+`992136137ce03bad618aea89f45de584ee0b0781`, tree
+`4002a708474f09f0824d5a411b328660fbf8bcc7`, only to verify the current history
+pagination API. This is not an integrated run pin. Record the exact full App,
+Agent and Runtime SHAs actually used, the integrated Runtime `/commits`
+implementation, and the farm seed/project before claiming qualification. Do
+not infer them from a branch name or from a browser door log.
 
 The existing runner is `npm run test:e2e:three-products`, configured by
 `playwright.three-products.config.ts` with `testMatch: 'three-products*.spec.ts'`,
@@ -32,6 +35,20 @@ migrated as passing tests with their behavior assertions retained. Do not add
 the old-route cases. The existing snapshot-route cases are baseline/migration
 coverage until A2 moves them to the v2 path; they are not a reason to weaken
 their successful behavior.
+
+## Required v2 compatibility defaults
+
+Contract `design/commit-v2.md` §1 requires new producers to supply a nonempty
+`label` and nonempty `steps`. For existing ABI-1 callers, omitted `label`
+normalizes to `"Timeline edit"`; omitted `steps` synthesizes one step with
+`id: "edit"`, `label: <normalized commit label>`, `intent: ""`, `tags: []`, and
+`command_ordinals` containing every command index in order. The provider derives
+that step's complete `patch`. Explicit empty/null `label` or `steps` is invalid;
+omission is not equivalent to `""`, `[]`, or `null`. Omitted `merge` defaults to
+`"fields"` (the allowed values are `"fields" | "atomic"`); omitted `dry_run`
+defaults to `false`. The conservative patch-read rule can make the effective
+`merge_mode` atomic. These are required contract behavior, not evidence that the
+current App DTOs or provider implement v2.
 
 ## Current v1/native inventory, not v2 evidence
 
@@ -49,12 +66,25 @@ types show:
   declared reads.
 
 The current test helper accepts `accepted|rebased` at
-`tests/e2e/local/three-products.spec.ts:803-808`, and the Gate-5 journeys
-assert `rebased` at lines 1050, 1186, 1352, and 2001. The current `history()`
-helper at lines 818-832 follows `next_cursor`, but does not pin a chosen
-`through` head for the complete pagination walk. Existing helper presence,
-current native command records, and current v1 `rebased` journeys are not v2
-execution evidence.
+`tests/e2e/local/three-products.spec.ts:803-808`. The M1 move and Gate-5 journeys
+assert `rebased` at lines 1050 and 1186 respectively. Line 1352 belongs to the
+ordinary-extension batch journey (starts at 1239); line 2001 belongs to the
+occurrence-duplicate journey (starts at 1888). Mixed editing starts at 2070.
+The stale `rebased` observation remains valid for those assertions.
+
+The current `history()` helper at lines 818-832 already follows `next_cursor`
+with `limit=50`. GET
+`/v1/projects/{project_id}/timelines/{timeline_id}/commits` accepts `limit` and
+`cursor` and returns `items`, `head`, and `next_cursor`. The first page selects
+the current head; each opaque cursor binds the scope and that fixed through
+head for subsequent pages. The helper relies on this binding but does not
+assert that each page's `head` equals the first page's `head`. Runtime sources:
+`runtime_protocol/server.py:535-545`, `service.py:2502-2529`, and
+`timeline_commit_store.py:282-322`. There is no current `through` query
+parameter. Contract §7's chosen-through requirement uses the existing cursor
+behavior; any future explicit query would be pending API work, not an available
+route. Existing helper presence, current native command records, and current
+v1 `rebased` journeys are not v2 execution evidence.
 
 For v2 qualification, every accepted App gesture and inverse must assert the
 authoritative history entry joined by its publication ID, not merely inspect
@@ -64,20 +94,25 @@ the network body or a door/audit log. The future test must:
    assert the expected command/body and idempotency behavior, and assert zero
    old-route writes (`SAVES`, `/composition-revisions`, or equivalent legacy
    snapshot POSTs).
-2. Read Runtime `/commits` at a pinned/cursor-safe `through` head. Follow every
-   cursor using that same pinned head, then join the new history entries to
-   network publications by `publication_id == receipt.receipt_id`.
+2. Read Runtime `/commits` using `limit` and then its returned `next_cursor`.
+   Capture the first page's `head`, follow every opaque cursor, and assert that
+   every page retains that head; do not start a fresh first-page read mid-walk
+   or add a `through` query. Join the new history entries to network
+   publications by `publication_id == receipt.receipt_id`.
 3. Assert the v2 result status (`accepted` at the requested base or `merged`
    on a disjoint later head), `intent: "recorded"`, non-null `records`, and
    `receipt.command_kind: "timeline.commit"` for normal edits. Reject any
    post-bootstrap `legacy_unknown`, `records: null`, or
    `parent_composition.publish` entry.
-4. Assert complete v2 history fields: `label`; step IDs, labels, intents, tags,
-   command ordinals and complete step patches; requested and effective merge
-   mode; declared `reads`; authoritative `publisher`; `records.commands`;
-   `records.steps`; and inverse `records.undo_steps`/`records.undo_of` (with
-   `undo_steps: null` for whole-commit undo). Preserve the command records'
-   authoritative reads, writes, bindings, dependencies and derived writes.
+4. Assert the exact contract §7 history fields: `label`, authoritative
+   `publisher`, `intent`, `merge` (requested), `merge_mode` (effective), `reads`
+   (declared), `steps`, `records`, and `receipt`; inspect `records.steps`,
+   `records.commands`, `records.undo_steps`, and `records.undo_of`. Assert step
+   IDs, labels, intents, tags, command ordinals and complete provider patches,
+   including verified step reads and authoritative dependencies. For
+   whole-commit undo, assert `records.undo_steps: null`. Preserve the command
+   records' authoritative reads, writes, bindings, dependencies and derived
+   writes.
 5. Compare the canonical before/after documents using an explicit allowlist of
    intended field deltas, then reload/reopen and verify the landed state. Click
    the mounted Undo action and assert a guarded `timeline.inverse`, its
@@ -86,8 +121,8 @@ the network body or a door/audit log. The future test must:
 ### P2 gesture inventory
 
 These are the current operation/selector rows and their intended allowlists.
-They are v1/native baseline rows until A2/A3, R2, and Runtime integration supply
-the v2 metadata and authoritative history checks above.
+They are v1/native baseline rows until U4p, R1, A2/A3, R2, and Runtime integration
+supply the v2 metadata and authoritative history checks above.
 
 | Gesture and expected command | Current source | Intended delta | Current qualification state |
 | --- | --- | --- | --- |
@@ -157,6 +192,11 @@ as passing tests; do not convert them to strict expected failures.
 
 ## Dependencies and missing work
 
+- R1/Agent (plus Runtime store integration) must provide `doc.patch` semantics,
+  previous-value checks, declared-read handling, membership/order conflict
+  detection, and inverse handling before these v2 journeys can qualify.
+- U4p/App must adopt the regenerated U1 schema/client, following U1 and U3;
+  the current App DTOs do not establish v2 request/reply/history support.
 - A2 must route App gesture writers through the v2 commit/outbox path, preserve
   dependent-intent chaining, exact retry, refusal/revalidation, reload recovery,
   and canonical reply handling.
@@ -189,17 +229,30 @@ not modify `suites.conf`, the selector, the launcher, or the test budget.
 
 ## Evidence collected here
 
-Read-only commands and results:
+Static checks for this correction:
 
-- `git status --short --branch` — clean before the document-only handoff.
+- `git status --short --branch` — App clean before and after correction.
 - `git show -s --format='commit=%H tree=%T branch=%D' HEAD` — recorded
   `8b979bd2139c96e029dbc42be9a47f4309c8ee37` and tree
   `e5cde440ce2f31bd0e20dbf2bb7d9d5cbd9d09da`.
-- `rg`/`nl` source checks over `timeline-commit-types.ts`,
-  `three-products.spec.ts`, `three-products.selected-param-dev.spec.ts`,
-  `commitSession.ts`, `parentClipSwapCapture.ts`, `elementCapture.ts`, and
-  central `tests/suites.conf` — confirmed the v1/native DTO/status/history
-  gaps, operation rows, missing popup SWAP journey, and suite registration.
+- `git -C /home/user/work/runtime show -s --format='commit=%H tree=%T branch=%D' HEAD`
+  — recorded the Runtime commit/tree above for static API inspection only.
+- `sed`/`rg` reads of PLAN v2.1 §3, the second FAIL review, and current
+  `design/commit-v2.md` §§1,7 — verified defaults, dependencies and exact history
+  wire names. `nl`/`rg` reads of App `timeline-commit-types.ts:68,80-94`,
+  `three-products.spec.ts:803-832,1050,1115-1136,1186,1239,1352,1888-1900,1990-2006,2070`,
+  and Runtime `server.py:535-545`, `service.py:2502-2529`,
+  `timeline_commit_store.py:282-322` — confirmed the v1 DTO/status inventory,
+  corrected journey citations, fixture reset, and existing cursor-bound API.
+- `cat playwright.three-products.config.ts` and
+  `rg -n 'full-e2e-three-products|e2e-m1-gesture|P2|P3'` against central
+  `tests/suites.conf` — confirmed the existing runner and missing P2/P3 named
+  registration; no configuration changed.
+- `git diff --check` — passed; App source/test diff is empty.
+
+Earlier list-only evidence retained from the prior handoff/review (not rerun
+for this correction):
+
 - `npx playwright test --config playwright.three-products.config.ts --list tests/e2e/local/three-products.spec.ts tests/e2e/local/three-products.selected-param-dev.spec.ts`
   — listed 14 tests in 2 files; list-only, no execution.
 - `npx playwright test --config playwright.three-products.config.ts --grep 'M1 real' --list`
