@@ -1,11 +1,11 @@
-<!-- viewing | 2026-10-22T23:42:26Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 3m -->
-# viewing board, 2026-10-22T23:39:17Z
+<!-- viewing | 2026-10-22T23:43:32Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 0m -->
+# viewing board, 2026-10-22T23:43:05Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema/drift inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; vw-V1-schema-inventory-review2 | Independent PASS; four-copy SHA/cmp and Runtime generators/manifestPASS; no-op receipt. Pre-U1 map, no implementation credit | 6c4d9342189b69d488b41f609b64aa2918eda955 |
 | V1-cases | early metadata acceptance map | Luna high | early schema case collection | merged | vw-V1-meta-acceptance-map-fix; vw-V1-meta-acceptance-map-review2 | Independent PASS after stale-command-path correction; merge receipt. Integrated/reviewed tree bothf529869d1438b1704e14aaba68278a16be360bac, no product change | 7a95a40b07ea0d273e17afb69dbc3456b603f2bc |
-| V1-comp | opaque meta consumer types/ignore behavior | Luna high | C0 APPROVED, U1 merged | doing | vw-V1-composition-meta | Dispatched after U1 merge; targeted compile/evaluator/registry/transition proof pending | — |
-| V1-schema | canonical meta schemas/generated producer | Luna high | C0 APPROVED, U1 merged | doing | vw-V1-runtime-meta-schema | Dispatched on U1 integration; source blocker resolved from actual post-U1 source. Targeted schemas/generator/client/static proof pending | — |
+| V1-comp | opaque meta consumer types/ignore behavior | Luna high | C0 APPROVED, U1 merged | merged | vw-V1-composition-meta; vw-V1-composition-meta-review | IndependentPASS: build:test/typecheck,3 targeted files,registrycheck. Integrated/reviewed tree5ab5191a equal; renderer unchanged. Composition slice only | 635f4de06fda22a85fc2e4cfc764d0153a4c9f40 |
+| V1-schema | canonical meta schemas/generated producer | Luna high | C0 APPROVED, U1 merged | review | vw-V1-runtime-meta-schema; vw-V1-runtime-meta-schema-review | Author87schema-neighborPASS, generator/manifest/clientbuild/scopedRuffPASS; independent review active. One sandbox-socket node queued via service vw-V1-runtime-meta-schema-targeted-1022234238-30265 | — |
 | V1-agent | exact meta limits/admission/preservation | Luna high | C0/U1, U2 merged | doing | vw-V1-agent-meta-validation | Dispatched on merged U2; reusable §6 validator, exact byte/depth limits and narrow renderer preservation; no integrated proof yet | — |
 | V3 | commit-named Composition artifact/both pins | Luna high | U2, U3 merged | blocked:app | — | U2 merged3f1ceaed1, proof owned Agent; U3 unmerged. Agent14/App13 difference is V3 scope | — |
 | V4 | optional stale dirs/copy/block deletions | Luna high | U2, U3 merged per lane brief | blocked:app | — | Not started; first to cut | — |
@@ -19,4 +19,6 @@ Decided locally: source blocker resolved after actual U1 inspection. Runtime int
 
 Runtime U1 DONE evidence: independent244targeted+73servicePASS, live upstream tip4563bb5ff/ancestryPASS, merged27f0306b9, integrated runtime-targeted-1022233331-22415 PASS317/8configuredexclusions on tree8d70d0d9. C0/C0b approved; pending C0c leaves §6 unchanged.
 
-Restart audit complete: V1-prep fix finished before23:06 restart and independently reviewed; no duplicate recovery. All v1 rules/tasks/ledgers/gate6/capacity mandates remain VOID. v2.1 has no fixed worker floor. Three independent implementation slices dispatched; no ready authorized lane work withheld. Manager writes only briefs/status/escalations; all product/tests/generated/pins and reviews/merges use Codex workers and sanctioned queues. Heavy proofs remain farm-owned.
+Restart audit complete: V1-prep fix finished before23:06 restart and independently reviewed; no duplicate recovery. All v1 rules/tasks/ledgers/gate6/capacity mandates remain VOID. v2.1 has no fixed worker floor. Composition slice merged; Runtime independent review and Agent implementation active; no ready authorized lane work withheld. Manager writes only briefs/status/escalations; all product/tests/generated/pins and reviews/merges use Codex workers and sanctioned queues. Heavy proofs remain farm-owned.
+
+23:43Z: Composition merge635f4de06 receipt confirmed; integrated and independently reviewed tree both5ab5191a296980a0a6bcd1178ab6902d6478a148. Runtime author terminal; independent review dispatched immediately, and its only EPERM socket node sent to sanctioned test service (not a safety refusal, no duplicate broad run). No full/farm proof claimed.
