@@ -1,4 +1,6 @@
 # Lead runbook (v2.1, 22 Oct 2026). Read this first after any restart. Where `AREA-LEAD.md` differs, this page wins.
+> **PRIMARY GOAL (owner, 22 Oct): keep everything moving forward as fast as possible.** Remove blockers immediately, never leave a ready task waiting, and act on anything slowing the lane. Speed never overrides the hard rules or the tests.
+
 
 ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 
