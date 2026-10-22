@@ -486,17 +486,17 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
         project,
         timeline_id=None,
         name: str | None = None,
+        slug: str | None = None,
         config: Mapping[str, Any] | None = None,
+        registry: Mapping[str, Any] | None = None,
         idempotency_key=None,
     ):
-        """Create a timeline that already has an empty current head.
+        """Create and initialize a timeline through the canonical commit door.
 
-        Runtime ``create_timeline`` makes the identity shell only; until a
-        parent composition is published the timeline has no head, so checkout,
-        show, visualize and render all refuse it.  The first publication (with
-        ``expected_head`` null, no shots, and the given parent config) gives it
-        that head.  Both writes derive from one caller key, so a retry replays
-        the committed shell and head instead of creating a second timeline.
+        ``create_timeline`` creates only the Runtime identity shell.  The
+        authored empty document is then committed with the caller's original
+        key.  A retry first checks accepted commit history, so an ambiguous
+        bootstrap acknowledgement never recaptures over a later edit.
         """
         from astrid.core.ids import generate_ulid
 
@@ -506,6 +506,7 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
             return resolved
         project_ref = str(resolved.data)
         timeline_key = str(timeline_id).strip() if timeline_id not in (None, "") else generate_ulid()
+        init_key = f"{key}-head"
         shell = self._typed(
             "create_timeline", project_ref, timeline_key,
             key=f"{key}-shell", idempotency_key=f"{key}-shell",
@@ -520,36 +521,139 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
                 ErrorObject("protocol_error", "runtime timeline create returned no project identity", {"timeline_id": timeline_key}),
                 idempotency_key=key,
             )
-        publication = {
-            "project_id": project_id,
-            "timeline_id": timeline_key,
-            "expected_head": None,
-            "parent_composition": {
-                "config": dict(config) if config is not None else {"tracks": []},
-                "registry": {},
-                "clips": [],
-                "occurrences": [],
-            },
-            "shot_revisions": [],
-            "internal_timeline_revisions": [],
-        }
-        head = self._typed(
-            "publish_parent_composition", project_id, timeline_key, publication,
-            key=f"{key}-head", idempotency_key=f"{key}-head",
+        replay = self._native_empty_replay(project_id, timeline_key, init_key, key)
+        if replay is not None:
+            return replay
+
+        try:
+            from copy import deepcopy
+            from types import SimpleNamespace
+
+            from astrid.sdk.timeline import open as open_timeline
+            from astrid.sdk.timeline._common import TimelineEditError
+            from astrid.sdk.timeline.sync import CommitConflict
+
+            bridge = SimpleNamespace(
+                _remote=SimpleNamespace(_transport=self._client),
+                timelines=self,
+            )
+            timeline = open_timeline(project_id, timeline_key, client=bridge)
+            init_name = name if name is not None else timeline_key
+            init_slug = slug if slug is not None else timeline_key.lower()
+            canonical_config = config is None or dict(config) == {"tracks": []}
+            if canonical_config and registry is None and slug is None:
+                timeline.command(
+                    {
+                        "schema_version": 1,
+                        "op": "timeline.init",
+                        "version": "1",
+                        "select": "parent",
+                        "args": {
+                            "name": init_name,
+                            "slug": init_slug,
+                            "output": {
+                                "resolution": "1280x720",
+                                "fps": 30,
+                                "file": "output.mp4",
+                                "background": None,
+                                "background_scale": None,
+                            },
+                        },
+                    },
+                    label="Create empty timeline",
+                    intent="Initialize an empty timeline",
+                )
+            else:
+                # G3's lossless document emitter is the only generic adapter.
+                # Mutate a copy of the opened closure so absent, null, and
+                # opaque caller fields remain authored exactly as supplied.
+                parent = timeline.bundle["parent"]
+                if config is not None:
+                    parent["config"] = deepcopy(dict(config))
+                if registry is not None:
+                    parent["registry"] = deepcopy(dict(registry))
+                parent["name"] = init_name
+                parent["slug"] = init_slug
+
+            committed = timeline.commit(
+                "Create empty timeline",
+                idempotency_key=init_key,
+            )
+            data = committed.get("data") if isinstance(committed, Mapping) else None
+            receipt = committed.get("receipt") if isinstance(committed, Mapping) else None
+            if not isinstance(data, Mapping) or not isinstance(receipt, Mapping):
+                return DomainResult.failure(
+                    ErrorObject("protocol_error", "native timeline initialization returned an invalid result", {}),
+                    idempotency_key=key,
+                )
+            return self._native_empty_result(project_id, timeline_key, init_name, data, receipt, key)
+        except CommitConflict as exc:
+            failure = exc.failure
+            return DomainResult.failure(
+                ErrorObject(failure["code"], failure["message"], failure["details"]),
+                idempotency_key=key,
+            )
+        except WorkspaceClientError as exc:
+            return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key)
+        except (ConnectionError, OSError) as exc:
+            return DomainResult.failure(
+                ErrorObject("unavailable", str(exc), {"timeline_id": timeline_key}),
+                idempotency_key=key,
+            )
+        except (TimelineEditError, KeyError, TypeError, ValueError) as exc:
+            return DomainResult.failure(
+                ErrorObject("validation_error", str(exc), {"timeline_id": timeline_key}),
+                idempotency_key=key,
+            )
+
+    def _native_empty_replay(self, project_id, timeline_id, init_key, result_key):
+        """Return an accepted bootstrap commit without recapturing it."""
+        try:
+            history = self._typed("list_timeline_commits", project_id, timeline_id, limit=50)
+        except AttributeError:
+            return None
+        if not history.ok:
+            return history
+        page = history.data if isinstance(history.data, Mapping) else {}
+        for entry in page.get("items", []):
+            if not isinstance(entry, Mapping):
+                continue
+            receipt = entry.get("receipt")
+            if not isinstance(receipt, Mapping) or receipt.get("idempotency_key") != init_key:
+                continue
+            data = receipt.get("result")
+            if (receipt.get("command_kind") != "timeline.commit"
+                    or not isinstance(data, Mapping)
+                    or not isinstance(data.get("commands"), list)
+                    or not data["commands"]):
+                return DomainResult.failure(
+                    ErrorObject("integrity_error", "native timeline initialization history is invalid", {}),
+                    idempotency_key=result_key,
+                )
+            return self._native_empty_result(project_id, timeline_id, None, data, receipt, result_key)
+        return None
+
+    @staticmethod
+    def _native_empty_result(project_id, timeline_id, name, data, receipt, result_key):
+        committed = CommandReceipt.from_dict(receipt)
+        command = next(
+            (command for command in data["commands"]
+             if isinstance(command, Mapping) and command.get("op") == "timeline.init"),
+            None,
         )
-        if not head.ok:
-            return head
-        published = head.data if isinstance(head.data, Mapping) else {}
+        init_name = name
+        if init_name is None and isinstance(command, Mapping):
+            init_name = command.get("args", {}).get("name")
         return DomainResult.success(
             {
                 "project_id": project_id,
-                "timeline_id": timeline_key,
-                **({"name": shell_row.get("name")} if name is not None else {}),
-                "head_revision_id": published.get("new_head") or published.get("revision_id"),
+                "timeline_id": timeline_id,
+                **({"name": init_name} if init_name is not None else {}),
+                "head_revision_id": data.get("accepted_revision_id"),
                 "created": True,
             },
-            receipt=head.receipt,
-            idempotency_key=key,
+            receipt=committed,
+            idempotency_key=result_key,
         )
 
     def rename(self, project, timeline_id: str, name: str, *, idempotency_key: str | None = None):
@@ -1225,234 +1329,20 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
     ):
         """Replace one selected clip in the canonical parent composition.
 
-        With exact old/new MediaSelections and the original publication ID,
-        submit a scoped native swap. ``occurrence_id=None`` selects a raw
-        parent clip; an occurrence ID selects its raw child. The digest must
-        agree with the new selection. Capture and validation happen at commit.
-
-        The digest-only adapter remains during paired consumer migration.
-        A parent composition is an immutable parent -> shot revision ->
-        internal-timeline closure.  This route opens that exact closure,
-        edits the selected internal clip in a detached authoring bundle, and
-        publishes one parent-CAS transaction.  It never falls back to the
-        legacy timeline-document store used by ``replace_clip``.
+        The old whole-closure publisher is intentionally not a fallback. The
+        caller must carry exact old/new selections and the original publication
+        pin so the native command preserves ownership, source windows, order,
+        opaque fields, and its durable retry body.
         """
         key = idempotency_key or uuid.uuid4().hex
-        if old_media is not None or media is not None or expected_publication is not None:
-            from .timeline_media_replacement import replace_selected_media
+        from .timeline_media_replacement import replace_selected_media
 
-            return replace_selected_media(
-                self, project, ref, occurrence_id=occurrence_id, clip_id=clip_id,
-                source_object_id=source_object_id, expected_head=expected_head,
-                expected_publication=expected_publication, old_media=old_media,
-                media=media, idempotency_key=key,
-            )
-        required = {
-            "project": project,
-            "occurrence_id": occurrence_id,
-            "clip_id": clip_id,
-            "source_object_id": source_object_id,
-            "expected_head": expected_head,
-        }
-        missing = [name for name, value in required.items() if not isinstance(value, str) or not value.strip()]
-        if missing:
-            return DomainResult.failure(
-                ErrorObject("validation_error", "parent-composition replacement has missing required fields", {"fields": missing}),
-                idempotency_key=key,
-            )
-
-        # Resolve only canonical Runtime identity here.  The replacement
-        # operation already opens the pinned parent composition below; a
-        # legacy document read would be both unnecessary and stale once the
-        # Runtime document route is retired.
-        timeline_result = self._resolve_timeline(project, ref)
-        if not timeline_result.ok:
-            return timeline_result
-        timeline = timeline_result.data
-        if not isinstance(timeline, Mapping):
-            return DomainResult.failure(
-                ErrorObject("protocol_error", "timeline read did not return an object", {"project": str(project), "timeline": str(ref)}),
-                idempotency_key=key,
-            )
-        project_id = str(timeline.get("project_id") or project)
-        timeline_id = str(timeline.get("timeline_id") or ref)
-
-        parent_result = self._typed(
-            "get_project_parent_composition_revision",
-            project_id,
-            timeline_id,
-            expected_head,
+        return replace_selected_media(
+            self, project, ref, occurrence_id=occurrence_id, clip_id=clip_id,
+            source_object_id=source_object_id, expected_head=expected_head,
+            expected_publication=expected_publication, old_media=old_media,
+            media=media, idempotency_key=key,
         )
-        if not parent_result.ok:
-            return parent_result
-        parent = parent_result.data
-        if not isinstance(parent, Mapping):
-            return DomainResult.failure(
-                ErrorObject("protocol_error", "parent-composition read did not return an object", {"timeline": timeline_id}),
-                idempotency_key=key,
-            )
-        payload = parent.get("payload")
-        occurrences = payload.get("occurrences", []) if isinstance(payload, Mapping) else []
-        target_occurrence = next(
-            (row for row in occurrences if isinstance(row, Mapping) and row.get("occurrence_id") == occurrence_id),
-            None,
-        )
-        if not isinstance(target_occurrence, Mapping):
-            return DomainResult.failure(
-                ErrorObject("not_found", "parent-composition occurrence was not found at the expected head", {"occurrence_id": occurrence_id, "expected_head": expected_head}),
-                idempotency_key=key,
-            )
-
-        # Read every pinned child, not mutable child heads.  The candidate is
-        # therefore a complete exact closure and can be published atomically.
-        shot_revisions: dict[str, Mapping[str, Any]] = {}
-        internal_revisions: dict[str, Mapping[str, Any]] = {}
-        for row in occurrences:
-            if not isinstance(row, Mapping):
-                continue
-            shot_id = row.get("shot_id")
-            shot_revision_id = row.get("shot_revision_id", row.get("revision_id"))
-            if not isinstance(shot_id, str) or not isinstance(shot_revision_id, str):
-                return DomainResult.failure(
-                    ErrorObject("protocol_error", "parent-composition occurrence is missing pinned shot identity", {"occurrence_id": row.get("occurrence_id")}),
-                    idempotency_key=key,
-                )
-            if shot_revision_id not in shot_revisions:
-                result = self._typed("get_project_shot_revision", project_id, shot_id, shot_revision_id)
-                if not result.ok:
-                    return result
-                if not isinstance(result.data, Mapping):
-                    return DomainResult.failure(ErrorObject("protocol_error", "shot revision read did not return an object", {"shot_revision_id": shot_revision_id}), idempotency_key=key)
-                shot_revisions[shot_revision_id] = result.data
-            shot = shot_revisions[shot_revision_id]
-            internal_revision_id = shot.get("internal_timeline_revision_id")
-            if not isinstance(internal_revision_id, str):
-                shot_payload = shot.get("payload")
-                internal_revision_id = shot_payload.get("internal_timeline_revision_id") if isinstance(shot_payload, Mapping) else None
-            if not isinstance(internal_revision_id, str):
-                return DomainResult.failure(ErrorObject("protocol_error", "shot revision is missing its pinned internal timeline", {"shot_revision_id": shot_revision_id}), idempotency_key=key)
-            if internal_revision_id not in internal_revisions:
-                result = self._typed("get_project_timeline_revision", project_id, timeline_id, internal_revision_id)
-                if not result.ok:
-                    return result
-                if not isinstance(result.data, Mapping):
-                    return DomainResult.failure(ErrorObject("protocol_error", "internal timeline revision read did not return an object", {"revision_id": internal_revision_id}), idempotency_key=key)
-                internal_revisions[internal_revision_id] = result.data
-
-        try:
-            from astrid.core.timeline.authoring_bundle import (
-                diff_authoring_candidate,
-                open_authoring_bundle,
-                preview_authoring_candidate,
-                publish_authoring_candidate,
-                validate_authoring_candidate,
-            )
-
-            candidate = open_authoring_bundle(
-                parent,
-                shot_revisions=list(shot_revisions.values()),
-                internal_timeline_revisions=list(internal_revisions.values()),
-            )
-            placements = candidate.get("source_mapping", {}).get("placements", {})
-            placement = placements.get(occurrence_id) if isinstance(placements, Mapping) else None
-            if not isinstance(placement, Mapping):
-                return DomainResult.failure(ErrorObject("not_found", "occurrence is absent from the authoring bundle", {"occurrence_id": occurrence_id}), idempotency_key=key)
-            authoring_shot_id = placement.get("shot_id")
-            shot = candidate.get("shots", {}).get(authoring_shot_id) if isinstance(candidate.get("shots"), Mapping) else None
-            internal = shot.get("internal_timeline") if isinstance(shot, Mapping) else None
-            clips = internal.get("clips", []) if isinstance(internal, Mapping) else []
-            clip = next((row for row in clips if isinstance(row, dict) and row.get("id") == clip_id), None)
-            if not isinstance(clip, dict):
-                return DomainResult.failure(ErrorObject("not_found", "selected clip is absent from the target internal timeline", {"clip_id": clip_id, "occurrence_id": occurrence_id}), idempotency_key=key)
-
-            source = str(source_object_id).strip()
-            normalized = source if source.startswith("sha256:") else ("sha256:" + source if re.fullmatch(r"[0-9a-fA-F]{64}", source) else source)
-            registry_candidates: list[Mapping[str, Any]] = []
-            for registry_owner in (internal, candidate.get("parent")):
-                registry = registry_owner.get("registry") if isinstance(registry_owner, Mapping) else None
-                assets = registry.get("assets") if isinstance(registry, Mapping) else None
-                if isinstance(assets, Mapping):
-                    registry_candidates.append(assets)
-            asset_key = None
-            for assets in registry_candidates:
-                for key_name, metadata in assets.items():
-                    if not isinstance(key_name, str) or not isinstance(metadata, Mapping):
-                        continue
-                    values = {str(metadata.get(field)) for field in ("media_id", "object_id", "digest", "content_sha256") if metadata.get(field) is not None}
-                    normalized_values = {value if value.startswith("sha256:") else "sha256:" + value for value in values if re.fullmatch(r"(?:sha256:)?[0-9a-fA-F]{64}", value)}
-                    if source in values or normalized in normalized_values:
-                        asset_key = key_name
-                        break
-                if asset_key is not None:
-                    break
-            for field in ("asset", "asset_id", "media_id", "object_id"):
-                clip.pop(field, None)
-            if asset_key is not None:
-                clip["asset"] = asset_key
-            elif re.fullmatch(r"sha256:[0-9a-fA-F]{64}", normalized):
-                clip["media_id"] = normalized.lower()
-            else:
-                return DomainResult.failure(ErrorObject("validation_error", "replacement media must be an admitted project-owned digest or registry asset", {"source_object_id": source}), idempotency_key=key)
-
-            validation = validate_authoring_candidate(candidate)
-            diff = diff_authoring_candidate(candidate)
-            preview = preview_authoring_candidate(candidate)
-
-            class _Writer:
-                def __init__(self, owner):
-                    self.owner = owner
-                    self.result = None
-
-                def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
-                    self.result = self.owner._typed(
-                        "publish_parent_composition",
-                        project_id,
-                        timeline_id,
-                        publication,
-                        key=idempotency_key,
-                        idempotency_key=idempotency_key,
-                    )
-                    if not self.result.ok:
-                        raise RuntimeError(self.result.error.message if self.result.error else "parent-composition publication failed")
-                    return self.result.data
-
-            writer = _Writer(self)
-            published = publish_authoring_candidate(candidate, writer, idempotency_key=key)
-            return DomainResult.success(
-                {
-                    "representation": "parent_composition",
-                    "project_id": project_id,
-                    "timeline_id": timeline_id,
-                    "occurrence_id": occurrence_id,
-                    "clip_id": clip_id,
-                    "expected_head": expected_head,
-                    "candidate_digest": preview.get("candidate_digest"),
-                    "validation": validation,
-                    "diff": diff,
-                    "preview": preview,
-                    "publication": published,
-                },
-                receipt=writer.result.receipt if writer.result is not None else None,
-                idempotency_key=key,
-            )
-        except RuntimeError:
-            # A typed publication failure was already captured by the writer;
-            # return it without attempting a second route or mutation.
-            if "writer" in locals() and writer.result is not None:
-                return writer.result
-            return DomainResult.failure(
-                ErrorObject(
-                    "validation_error",
-                    "parent-composition candidate could not be published",
-                    {"occurrence_id": occurrence_id, "clip_id": clip_id},
-                ),
-                idempotency_key=key,
-            )
-        except Exception as exc:
-            return DomainResult.failure(
-                ErrorObject("validation_error", "parent-composition candidate could not be prepared", {"reason": str(exc), "occurrence_id": occurrence_id, "clip_id": clip_id}),
-                idempotency_key=key,
-            )
     def diff(self, project, ref, *, from_version=None, to_version=None,
              from_revision=None, to_revision=None):
         """Compare two exact canonical closures, or explicit legacy versions."""
@@ -2022,32 +1912,24 @@ class RemoteTasks(_RemoteFamily):
             idempotency_key=f"fail-{attempt_id}-{int(fence)}",
         )
     def publish_timeline_render(self, attempt_id: str, publication: Mapping[str, Any], *, idempotency_key: str):
-        """Use the Runtime publication checkpoint with a typed wire body."""
-        if not isinstance(publication, Mapping):
-            return DomainResult.failure(
-                ErrorObject("validation_error", "timeline publication must be an object", {}),
-                idempotency_key=idempotency_key,
-            )
-        required = (
-            "lease_id", "fence", "runtime_epoch", "timeline_id",
-            "expected_version", "config", "registry", "render",
-        )
-        missing = [field for field in required if field not in publication]
-        if missing:
-            return DomainResult.failure(
-                ErrorObject("validation_error", "timeline publication is missing required fields", {"fields": missing}),
-                idempotency_key=idempotency_key,
-            )
-        return self._typed(
-            "publish_timeline_render", attempt_id, key=idempotency_key,
+        """Reject the renderer-owned film write until a requester commit is carried.
+
+        The existing call has only a renderer attempt fence and a whole
+        document payload. It does not carry the requester's authenticated
+        timeline session, base pair, commands, or producer guard. Forwarding
+        it would grant the renderer a second film-writing authority.
+        """
+        return DomainResult.failure(
+            ErrorObject(
+                "validation_error",
+                "render publication requires the authorized requester timeline commit",
+                {
+                    "required_call": "TimelineSession.queue_proposal(settled_proposal); session.flush(idempotency_key=...)",
+                    "missing": ["requester_session", "base_revision_id", "base_publication_id", "commands", "producer_guard"],
+                    "attempt_id": attempt_id,
+                },
+            ),
             idempotency_key=idempotency_key,
-            lease_id=publication["lease_id"], fence=publication["fence"],
-            runtime_epoch=publication["runtime_epoch"],
-            timeline_id=publication["timeline_id"],
-            expected_version=publication["expected_version"],
-            config=publication["config"], registry=publication["registry"],
-            render=publication["render"],
-            **{key: publication[key] for key in ("slug", "name") if key in publication},
         )
     def list(self, project_id, *, cursor=None, limit=50):
         return self._typed("list_project_tasks", project_id, cursor=cursor, limit=limit)
