@@ -19,11 +19,21 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
-import type { TimelineClip } from '@banodoco/timeline-schema';
-import { projectPackDocumentId } from '../../../../config/vite/projectElementSelection.ts';
+import { loadQuickDescriptor, type QuickDescriptor } from './quick-descriptor.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, '../../../..');
+const EDITOR_TOUR_VERSION = 1;
+const forbiddenEnvKeys = [
+  'BANODOCO_LOCAL_DATA_ROOT', 'BANODOCO_LOCAL_SOURCE_MANIFEST', 'BANODOCO_RUNTIME_DATA_ROOT', 'BANODOCO_RUNTIME_SOURCE_MANIFEST',
+  'ASTRID_LOCAL_DATA_ROOT', 'ASTRID_RUNTIME_DATA_ROOT', 'ASTRID_LOCAL_SOURCE_MANIFEST', 'ASTRID_RUNTIME_SOURCE_MANIFEST',
+];
+
+function cleanProcessEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const clean = { ...env };
+  for (const key of forbiddenEnvKeys) delete clean[key];
+  return clean;
+}
 
 /** The door's well-known port (Plan A D1). Override with ASTRID_APP_DIRECT_DOOR_PORT. */
 export const DOOR_PORT = Number(process.env.ASTRID_APP_DIRECT_DOOR_PORT ?? 17340);
@@ -35,18 +45,17 @@ export const ASTRID_ACTOR = 'astrid-f2';
 export const PRODUCT_SCOPES = ['handshake', 'projects:read', 'projects:write', 'tasks:read', 'tasks:write', 'objects:read', 'objects:write'];
 export const BIG_DOWNLOAD_BYTES = 60 * 1024 * 1024;
 export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
+/** Keep the App's reference sibling clear of the retained gesture moves. */
+export const THREE_PRODUCTS_REFERENCE_AT = 15;
 
-/** The selected Agent CLI consumes its explicit Runtime credential as a file path, not a bearer value. */
+/** Selected-parameter child processes receive a private credential path, never its bearer value. */
 export function selectedParamCliEnv(base: NodeJS.ProcessEnv, credentialFile: string): NodeJS.ProcessEnv {
   return { ...base, ASTRID_RUNTIME_CREDENTIAL: credentialFile };
 }
 
-/** Adds the selected child’s case-local Runtime context without changing its inherited process context. */
-export function selectedParamEvalEnv(
-  base: NodeJS.ProcessEnv,
-  credentialFile: string,
-  context: { endpoint: string; realmId: string; actorId: string },
-): NodeJS.ProcessEnv {
+/** Add selected-parameter evaluation context without replacing inherited runner state. */
+export function selectedParamEvalEnv(base: NodeJS.ProcessEnv, credentialFile: string,
+  context: { endpoint: string; realmId: string; actorId: string }): NodeJS.ProcessEnv {
   return {
     ...selectedParamCliEnv(base, credentialFile),
     ASTRID_TIMELINE_EVAL_ENDPOINT: context.endpoint,
@@ -56,16 +65,12 @@ export function selectedParamEvalEnv(
   };
 }
 
-export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT
-  ?? [path.join(REPO_ROOT, '..', 'astrid-runtime'), path.join(REPO_ROOT, '../..', 'runtime')]
-    .find((dir) => existsSync(path.join(dir, 'runtime_protocol', 'cli.py')))
-  ?? path.join(REPO_ROOT, '..', 'astrid-runtime'));
+export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-runtime'));
 const DIST_DIR = path.resolve(process.env.ASTRID_APP_DIRECT_DIST ?? path.join(REPO_ROOT, 'dist'));
 
 export function runtimePython(): string | null {
-  const python = process.env.ASTRID_RUNTIME_PYTHON
-    ?? [path.join(RUNTIME_CHECKOUT, '.venv/bin/python'), path.join(RUNTIME_CHECKOUT, '../venv-runtime/bin/python')].find(existsSync);
-  return python && existsSync(python) ? python : null;
+  const python = path.join(RUNTIME_CHECKOUT, '.venv', 'bin', 'python');
+  return existsSync(python) ? python : null;
 }
 
 /** Why the harness cannot run here, or null when it can. */
@@ -117,7 +122,8 @@ export interface Managed {
 
 /** Starts `command` in its own process group. `exactEnv` gives it `options.env` alone; otherwise that is laid over this process's environment. */
 export function spawnGroup(command: string, args: string[], options: { cwd: string; env?: NodeJS.ProcessEnv; exactEnv?: boolean }): Managed {
-  const child = spawn(command, args, { cwd: options.cwd, env: options.exactEnv ? { ...options.env } : { ...process.env, ...options.env }, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+  const childEnv = options.exactEnv ? { ...options.env } : { ...cleanProcessEnv(), ...options.env };
+  const child = spawn(command, args, { cwd: options.cwd, env: childEnv, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
   if (!child.pid) throw new Error(`could not start ${command}`);
   liveGroups.add(child.pid);
   const managed: Managed = {
@@ -132,19 +138,27 @@ export function spawnGroup(command: string, args: string[], options: { cwd: stri
   return managed;
 }
 
-export async function stopGroup(managed: Managed | undefined, graceMs = 8000): Promise<void> {
+export async function stopGroup(managed: Managed | undefined, graceMs = 8000, strict = false): Promise<void> {
   if (!managed) return;
   const { pid, exitCode } = managed.child;
   if (!pid) return;
+  let forced = false;
   if (exitCode === null) {
     try { process.kill(-pid, 'SIGTERM'); } catch { /* already gone */ }
-    const timer = setTimeout(() => killGroupSync(pid), graceMs);
+    const timer = setTimeout(() => { forced = true; killGroupSync(pid); }, graceMs);
     await managed.exited;
     clearTimeout(timer);
   }
   // Reap stragglers (tsx/python helper children) of the group.
+  try { process.kill(-pid, 0); forced = true; } catch { /* process group is gone */ }
   killGroupSync(pid);
+  if (strict) {
+    let remains = false;
+    try { process.kill(-pid, 0); remains = true; } catch { /* ESRCH means the App-owned process group is gone. */ }
+    if (remains) throw new Error(`owned process group ${pid} remains after SIGKILL cleanup`);
+  }
   liveGroups.delete(pid);
+  if (strict && forced) throw new Error(`owned process group ${pid} required forced cleanup`);
 }
 
 async function waitFor<T>(label: string, probe: () => Promise<T | null | undefined | false>, timeoutMs: number, abort?: () => string | null): Promise<T> {
@@ -189,7 +203,7 @@ function makeCertificate(dir: string) {
   const key = path.join(dir, 'tls.key');
   const cert = path.join(dir, 'tls.crt');
   execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '2', '-subj', `/CN=${HOSTED_HOST}`,
-    '-addext', `subjectAltName=DNS:${HOSTED_HOST},DNS:${OTHER_HOST}`], { stdio: 'ignore' });
+    '-addext', `subjectAltName=DNS:${HOSTED_HOST},DNS:${OTHER_HOST}`], { stdio: 'ignore', env: cleanProcessEnv() });
   const x509 = new X509Certificate(readFileSync(cert));
   const spki = createHash('sha256').update(x509.publicKey.export({ type: 'spki', format: 'der' })).digest('base64');
   return { key: readFileSync(key), cert: readFileSync(cert), spki };
@@ -254,7 +268,7 @@ export function makePng(width = 64, height = 48): Buffer {
 function makeVideo(dir: string): { data: Buffer; mediaType: string; decodable: boolean } {
   const out = path.join(dir, 'clip.webm');
   try {
-    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=size=320x180:rate=15:duration=12', '-c:v', 'libvpx', '-b:v', '600k', '-g', '15', out], { stdio: 'ignore', timeout: 60_000 });
+    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=size=320x180:rate=15:duration=12', '-c:v', 'libvpx', '-b:v', '600k', '-g', '15', out], { stdio: 'ignore', timeout: 60_000, env: cleanProcessEnv() });
     return { data: readFileSync(out), mediaType: 'video/webm', decodable: true };
   } catch {
     return { data: readFileSync(path.join(REPO_ROOT, 'src/pages/Home/light-study-assets/first-light.mp4')), mediaType: 'video/mp4', decodable: false };
@@ -283,9 +297,9 @@ export function compositionPublication(seed: { projectId: string; timelineId: st
     parent_composition: {
       slug: 'main',
       name,
-      config: { output: { resolution: '1280x720', fps, file: 'out.mp4' }, clips: [] as TimelineClip[], tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }] },
+      config: { output: { resolution: '1280x720', fps, file: 'out.mp4' }, clips: [], tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }] },
       registry: { assets: {} },
-      clips: [] as TimelineClip[],
+      clips: [],
       occurrences: [],
     },
     shot_revisions: [],
@@ -344,30 +358,16 @@ export interface ThreeProductsSeed {
   occurrenceId: string;
   /** The key the agent names for a task output (`--swap-asset f2-marker=task:T/marker#0`). It is new: the CLI refuses a key that already names other media. */
   markerAssetKey: string;
-  /** Opaque data neither client models; every later revision must carry it unchanged. */
-  opaque: { config: Record<string, unknown>; clip: Record<string, unknown>; shot: Record<string, unknown> };
+  /** Opaque data neither client models; every later revision must carry both unchanged. */
+  opaque: { config: Record<string, unknown>; clip: Record<string, unknown>; shot?: Record<string, unknown> };
 }
 
-export interface SelectedParamDevSeed {
+export interface QuickSeed {
   projectId: string;
   projectSlug: string;
-  timelineId: string;
-  clipId: string;
-  packId: string;
-  elementId: string;
-  p1: { packId: string; id: string; kind: 'effect'; revision: string };
-  p1DocumentPin: { document_id: string; version: number; content_digest: string };
-  sourceRoot: string;
-  elementRoot: string;
-}
-
-export interface CanonicalSettingsSeed {
-  projectSlug: string;
+  projectName: string;
   timelineId: string;
   headRevisionId: string;
-  shotId: string;
-  occurrenceId: string;
-  opaqueSettings: Record<string, unknown>;
 }
 
 export const THREE_PRODUCTS_OPAQUE = {
@@ -375,16 +375,57 @@ export const THREE_PRODUCTS_OPAQUE = {
   clip: { owner: 'f2', nested: [1, { k: 'v' }] },
   shot: { owner: 'f2-shot', nested: [1, { k: 'v' }], flag: true },
 } as const;
-
-/** The Scene Phase Markers extension reads these from the seeded timeline's project-data app entry. */
 export const THREE_PRODUCTS_SCENE_MARKER_EXTENSION_ID = 'haus.astrid.scene-phase-markers';
-export const THREE_PRODUCTS_SCENE_MARKERS = [
-  { id: 'ordinary-marker-a', time: 1 },
-  { id: 'ordinary-marker-b', time: 6 },
-] as const;
+export const THREE_PRODUCTS_SCENE_MARKERS = [{ id: 'ordinary-marker-a', time: 1 }, { id: 'ordinary-marker-b', time: 6 }] as const;
 
-/** Keep the App's reference sibling clear of the A5/B7 moves on the same track. */
-export const THREE_PRODUCTS_REFERENCE_AT = 15;
+/**
+ * The render journey's timeline (testing plan F2 steps 3 and 4): a 6 s film whose middle two seconds are the slot an agent fills
+ * with a marker clip. `placeholderGrey` is the solid grey the slot holds until then (and holds again in the revision published
+ * after the render was admitted); the render must show the marker, never this grey.
+ */
+export interface RenderSeed {
+  projectSlug: string;
+  timelineId: string;
+  /** The timeline's name, as the "Select timeline" combobox lists it. */
+  timelineName: string;
+  headRevisionId: string;
+  shotId: string;
+  occurrenceId: string;
+  /** The clip the agent fills (film seconds 2 to 4). */
+  slotClipId: string;
+  /** The key the agent names for the marker clip (new: the CLI refuses a key that already names other media). */
+  markerAssetKey: string;
+  /** The slot's asset in the seed, which the agent swaps back to for the negative control. */
+  placeholderAssetKey: string;
+  /** The placeholder's object id, so the swap back can be named by digest. */
+  placeholder: SeededObject;
+  placeholderGrey: { r: number; g: number; b: number };
+  /** The occurrence's block on the timeline (its label, which spans the block): its right edge is where the film, and so the seekable preview, ends. */
+  occurrenceBlockSelector: string;
+  fps: number;
+  durationSeconds: number;
+}
+
+export const RENDER_TIMELINE_NAME = 'F2 Render';
+const RENDER_GREY = { r: 0x80, g: 0x80, b: 0x80 };
+
+/**
+ * BT.601, limited range, said in the file. That is what VP8 is (ffmpeg reads every VP8 frame as such), and a clip that does not
+ * say it is decoded by guesswork: a browser's `<video>` and its WebCodecs path guess differently for the same clip, so the
+ * editor's preview and a player of the rendered film would disagree about the source before any renderer is involved.
+ */
+const BT601_FILTER = 'format=rgb24,scale=out_color_matrix=bt601:out_range=tv,format=yuv420p';
+const BT601_TAGS = ['-colorspace', 'smpte170m', '-color_primaries', 'smpte170m', '-color_trc', 'smpte170m', '-color_range', 'tv'];
+
+/** Runs ffmpeg or fails by name: this journey's media are real VP8/Opus, so there is no fallback file to use instead. */
+function ffmpegOrFail(args: string[], what: string): void {
+  try {
+    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', ...args], { stdio: ['ignore', 'ignore', 'pipe'], timeout: 120_000 });
+  } catch (error) {
+    const stderr = (error as { stderr?: Buffer }).stderr?.toString().trim().slice(-400);
+    throw new Error(`the render journey needs ffmpeg (with libvpx and libopus) to make ${what}: ${stderr || (error as Error).message}`);
+  }
+}
 
 const SCENE_MARKER = 'journey-scene';
 
@@ -400,6 +441,8 @@ window.astridScene = {
 }
 
 export class DirectHarness {
+  attachment: QuickDescriptor | null = null;
+  quickSeed?: QuickSeed;
   tmp = '';
   origin = '';
   originPort = 0;
@@ -410,28 +453,22 @@ export class DirectHarness {
   realmId = '';
   seed!: Seed;
   productToken = '';
-  readonly doorPort = DOOR_PORT;
+  /** The door's loopback port: the fixed default, or the adopted Runtime's own in attachment mode. */
+  doorPort = DOOR_PORT;
   private runtime?: Managed;
   private https?: HttpsServer;
   private stopped = false;
   private extensionsSeed?: ExtensionsSeed;
   private mediaSeed?: MediaSeed;
   private threeProductsSeed?: ThreeProductsSeed;
-  private selectedParamDevSeed?: SelectedParamDevSeed;
-  private selectedParamEnv?: NodeJS.ProcessEnv;
-  private selectedParamPython?: string;
-  private selectedParamVerifier?: string;
-  private devServer?: Managed;
-  private runtimeProxy?: Managed;
-  private runtimeProxyPort = 0;
-  private devPort = 0;
-  private canonicalSettingsSeed?: CanonicalSettingsSeed;
+  private renderSeed?: RenderSeed;
   private timelineAuthoring = false;
   private authoringPython?: string;
 
   /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
+
   get realmDir() { return path.join(this.tmp, 'realm'); }
-  get supportDir() { return path.join(this.tmp, 'support'); }
+  get supportDir() { return this.attachment ? path.dirname(this.attachment.discoveryFile) : path.join(this.tmp, 'support'); }
   get auditPath() { return path.join(this.tmp, 'door-audit.jsonl'); }
   /** The product credential the door acts with, as `astrid-runtime up` would provision it. */
   get credentialPath() { return path.join(this.tmp, 'product-credential.json'); }
@@ -441,7 +478,12 @@ export class DirectHarness {
 
   /** Browser context options: the local-network permission is granted (the prompt itself is a manual-checklist item). */
   get contextOptions() {
-    return { permissions: ['local-network-access'] as string[] };
+    return {
+      permissions: ['local-network-access'] as string[],
+      // The first-run tour swaps the editor for its demo timeline while it runs, so no journey would be looking at the
+      // real timeline (and nothing polls its head). Every case here is about the real editor: the tour is already seen.
+      storageState: { cookies: [], origins: [{ origin: this.origin, localStorage: [{ name: `astrid-editor-tour-v${EDITOR_TOUR_VERSION}`, value: '1' }] }] },
+    };
   }
 
   /** Chromium arguments: host mapping, a pinned test certificate, and the hosted origin treated as a public address. */
@@ -458,25 +500,45 @@ export class DirectHarness {
     ];
   }
 
-  async start(options: { seed?: boolean; beforeRuntimeStart?: (harness: this) => Promise<void> } = {}): Promise<this> {
+  async start(): Promise<this> {
     process.on('SIGTERM', () => { void this.stop().finally(() => process.exit(143)); });
     try {
+      const descriptorText = process.env.ASTRID_QUICK_DESCRIPTOR;
+      if (descriptorText !== undefined) this.attachment = loadQuickDescriptor(descriptorText);
       this.tmp = mkdtempSync(path.join(tmpdir(), 'astrid-direct-'));
-      await assertPortFree(this.doorPort, 'door');
+      if (!this.attachment) await assertPortFree(this.doorPort, 'door');
       const tls = makeCertificate(this.tmp);
       this.spki = tls.spki;
-      this.originPort = Number(process.env.ASTRID_APP_DIRECT_ORIGIN_PORT ?? 0) || await freePort();
+      // The adopted Runtime's door already serves one hosted origin; the page must be served from exactly that.
+      this.originPort = this.attachment ? Number(new URL(this.attachment.hostedOrigin).port) : Number(process.env.ASTRID_APP_DIRECT_ORIGIN_PORT ?? 0) || await freePort();
+      if (this.attachment) this.doorPort = Number(new URL(this.attachment.doorEndpoint).port);
       this.https = await startHostedServer(tls, this.originPort);
       this.origin = `https://${HOSTED_HOST}:${this.originPort}`;
       this.otherOrigin = `https://${OTHER_HOST}:${this.originPort}`;
 
-      mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
-      this.realmId = await this.createRealm();
-      await options.beforeRuntimeStart?.(this);
-      await this.startRuntime();
-      // The door listens from the start and answers `runtime_unavailable` until the product credential exists.
-      this.productToken = await this.provisionCredential(PRODUCT_ACTOR, path.basename(this.credentialPath));
-      if (options.seed !== false) this.seed = await this.seedRuntime();
+      if (this.attachment) {
+        this.realmId = this.attachment.realmId;
+        const discovery = this.discovery();
+        if (!/^https?:\/\//.test(discovery.endpoint)) throw new Error('adopted Runtime discovery endpoint must be an absolute HTTP URL');
+        if (discovery.active_realm !== this.attachment.realmId || discovery.runtime_instance_id !== this.attachment.runtimeInstanceId) throw new Error(`adopted Runtime discovery identity mismatch: realm ${discovery.active_realm}, instance ${discovery.runtime_instance_id}`);
+        this.runtimePort = Number(new URL(discovery.endpoint).port);
+        this.productToken = readCredentialToken(this.attachment.productCredentialFile);
+        await this.assertAttachedIdentity();
+        const project = await this.runtimeJson('GET', `/v1/projects/${this.attachment.projectId}`);
+        if (project.status !== 200) throw new Error(`adopted project lookup failed: ${project.status} ${JSON.stringify(project.body)}`);
+        const resource = project.body;
+        if (resource.project_id !== this.attachment.projectId || resource.realm_id !== this.realmId || resource.slug !== this.attachment.projectSlug) throw new Error(`adopted project identity mismatch: ${JSON.stringify(resource)}`);
+        const projectName = resource.name;
+        this.quickSeed = { projectId: this.attachment.projectId, projectSlug: this.attachment.projectSlug, projectName, timelineId: this.attachment.timelineId, headRevisionId: this.attachment.headRevisionId };
+        this.seed = { ...this.quickSeed, image: undefined, video: undefined, big: undefined } as unknown as Seed;
+      } else {
+        mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
+        this.realmId = await this.createRealm();
+        await this.startRuntime();
+        // The door listens from the start and answers `runtime_unavailable` until the product credential exists.
+        this.productToken = await this.provisionCredential(PRODUCT_ACTOR, path.basename(this.credentialPath));
+        this.seed = await this.seedRuntime();
+      }
     } catch (error) {
       await this.stop();
       throw error;
@@ -487,14 +549,31 @@ export class DirectHarness {
   // -- Runtime -------------------------------------------------------------------------------
 
   private runtimeEnv(): NodeJS.ProcessEnv {
-    const agent = path.resolve(process.env.ASTRID_CHECKOUT
-      ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
-        .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
-      ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
+    const agent = path.resolve(process.env.ASTRID_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
     return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', PYTHONPATH: [RUNTIME_CHECKOUT, agent].join(path.delimiter) };
   }
 
-  /** Seed with main's APIs first; startup verifies their original publication provenance. */
+  /** Health identifies the running instance; the authenticated realm route identifies its realm. */
+  private async assertAttachedIdentity(): Promise<void> {
+    const healthResponse = await fetch(`${this.runtimeUrl}/v1/health`);
+    if (!healthResponse.ok) throw new Error(`adopted Runtime health failed: ${healthResponse.status}`);
+    const health = await healthResponse.json() as { runtime_instance_id?: string };
+    const realm = await this.runtimeJson('GET', '/v1/realm');
+    if (realm.status !== 200) throw new Error(`adopted realm lookup failed: ${realm.status} ${JSON.stringify(realm.body)}`);
+    if (realm.body.realm_id !== this.realmId || health.runtime_instance_id !== this.attachment!.runtimeInstanceId) throw new Error(`adopted Runtime identity mismatch: realm ${realm.body.realm_id}, instance ${health.runtime_instance_id}`);
+    this.runtimeInstanceId = health.runtime_instance_id;
+  }
+
+  private async createRealm(): Promise<string> {
+    const output = execFileSync(runtimePython()!, ['-m', 'runtime_protocol.cli', 'create', '--root', this.realmDir, '--display-name', 'Direct Journey'], { cwd: this.tmp, env: cleanProcessEnv({ ...process.env, ...this.runtimeEnv() }), encoding: 'utf8' });
+    return JSON.parse(output.trim().split('\n').pop()!).realm_id;
+  }
+
+  /**
+   * Starts the daemon the way `astrid-runtime up` does: port 0, so every start gets a new port (discovery is rewritten by the
+   * Runtime), and the browser door for the hosted origin on its fixed port, acting with the product credential.
+   */
+  /** Restart with the Agent-authoring provider used by the retained commit journeys. */
   async enableTimelineAuthoring(python: string): Promise<void> {
     if (this.timelineAuthoring) return;
     await this.stopRuntime();
@@ -504,16 +583,8 @@ export class DirectHarness {
     await this.startRuntime();
   }
 
-  private async createRealm(): Promise<string> {
-    const output = execFileSync(runtimePython()!, ['-m', 'runtime_protocol.cli', 'create', '--root', this.realmDir, '--display-name', 'Direct Journey'], { cwd: this.tmp, env: { ...process.env, ...this.runtimeEnv() }, encoding: 'utf8' });
-    return JSON.parse(output.trim().split('\n').pop()!).realm_id;
-  }
-
-  /**
-   * Starts the daemon the way `astrid-runtime up` does: port 0, so every start gets a new port (discovery is rewritten by the
-   * Runtime), and the browser door for the hosted origin on its fixed port, acting with the product credential.
-   */
   async startRuntime(port = 0): Promise<void> {
+    if (this.attachment) throw new Error('App attachment cannot start an adopted Runtime');
     if (this.runtime) throw new Error('Runtime already running');
     const managed = spawnGroup(this.authoringPython ?? runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
       '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath,
@@ -532,6 +603,7 @@ export class DirectHarness {
   }
 
   async stopRuntime(): Promise<void> {
+    if (this.attachment) return;
     await stopGroup(this.runtime);
     this.runtime = undefined;
   }
@@ -548,12 +620,7 @@ export class DirectHarness {
 
   get runtimeRunning() { return Boolean(this.runtime && this.runtime.child.exitCode === null); }
 
-  get runtimeUrl() { return `http://127.0.0.1:${this.runtimePort}`; }
-
-  get devOrigin() {
-    if (!this.devPort) throw new Error('selected PARAM DEV server has not started');
-    return `http://127.0.0.1:${this.devPort}`;
-  }
+  get runtimeUrl() { return this.attachment ? this.discovery().endpoint.replace(/\/$/, '') : `http://127.0.0.1:${this.runtimePort}`; }
 
   /** A request straight to the Runtime with the product credential (the "direct" side of every comparison). */
   async runtimeFetch(pathAndQuery: string, init: RequestInit & { headers?: Record<string, string> } = {}): Promise<Response> {
@@ -571,7 +638,7 @@ export class DirectHarness {
 
   /**
    * A credential for `actorId`, minted through the Runtime's own route with the owner credential and written to
-   * `<tmp>/<file>` as the Runtime door's version 1 scoped JSON product credential, mode 0600.
+   * `<tmp>/<file>` as `{token, actor_id}`, mode 0600 (the shape the door's `--door-credential-file` and Astrid's reader accept).
    * Returns the token; it never leaves Node memory and that file, and the hosted server serves neither.
    */
   async provisionCredential(actorId: string, file: string): Promise<string> {
@@ -583,196 +650,8 @@ export class DirectHarness {
       body: JSON.stringify({ actor_id: actorId, credential: token, scope: 'astrid' }),
     });
     if (response.status !== 201) throw new Error(`credential provisioning for ${actorId} failed: ${response.status} ${await response.text()}`);
-    writeFileSync(path.join(this.tmp, file), JSON.stringify({ version: 1, scope: 'astrid', token, actor_id: actorId }), { mode: 0o600 });
+    writeFileSync(path.join(this.tmp, file), JSON.stringify({ token, actor_id: actorId }), { mode: 0o600 });
     return token;
-  }
-
-  private agentPython(): string {
-    const checkout = path.resolve(process.env.ASTRID_CHECKOUT
-      ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
-        .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
-      ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
-    const python = process.env.ASTRID_PYTHON
-      ?? [path.join(checkout, '.venv/bin/python'), path.join(checkout, '../venv-agent/bin/python')].find(existsSync)
-      ?? path.join(checkout, '.venv/bin/python');
-    if (!existsSync(python)) throw new Error(`Astrid Python not found at ${python}`);
-    return python;
-  }
-
-  private projectPackCommand(args: string[]): any {
-    if (!this.selectedParamPython || !this.selectedParamEnv) throw new Error('selected PARAM project-pack host is not initialized');
-    const output = execFileSync(this.selectedParamPython, ['-m', 'astrid.core.element.cli', 'project-pack', ...args], {
-      cwd: this.tmp,
-      env: this.selectedParamEnv,
-      encoding: 'utf8',
-      maxBuffer: 4_000_000,
-    });
-    return JSON.parse(output.trim());
-  }
-
-  private agentCommand(args: string[]): any {
-    if (!this.selectedParamPython || !this.selectedParamEnv) throw new Error('selected PARAM Agent host is not initialized');
-    const output = execFileSync(this.selectedParamPython, ['-m', 'astrid', ...args], {
-      cwd: this.tmp,
-      env: this.selectedParamEnv,
-      encoding: 'utf8',
-      maxBuffer: 4_000_000,
-    });
-    const result = JSON.parse(output.trim().split('\n').pop()!);
-    if (result.ok === false) throw new Error(`Agent command failed: ${JSON.stringify(result)}`);
-    return result.data ?? result;
-  }
-
-  private selectedParamDocumentPin(record: any): SelectedParamDevSeed['p1DocumentPin'] {
-    const binding = record?.binding;
-    if (!binding || binding.documentId !== projectPackDocumentId(this.seed.projectId)
-      || binding.projectId !== this.seed.projectId || !Number.isSafeInteger(binding.documentVersion)
-      || !/^sha256:[0-9a-f]{64}$/.test(binding.contentDigest)) {
-      throw new Error(`Project-pack resolver returned no exact selected DocumentPin: ${JSON.stringify(binding)}`);
-    }
-    return { document_id: binding.documentId, version: binding.documentVersion, content_digest: binding.contentDigest };
-  }
-
-  /**
-   * Seeds one real project-owned selected PARAM element through the existing
-   * Agent project-pack admission path, then publishes that exact P1 revision
-   * into the existing Runtime timeline. All source and build artifacts stay
-   * under this harness's throwaway directory.
-   */
-  async seedSelectedParamDev(): Promise<SelectedParamDevSeed> {
-    if (this.selectedParamDevSeed) return this.selectedParamDevSeed;
-    const python = this.agentPython();
-    const sourceRoot = path.join(this.tmp, 'selected-project-packs');
-    const artifactRoot = path.join(this.tmp, 'selected-element-artifacts');
-    const credentialFile = path.join(this.tmp, 'selected-agent-credential.json');
-    const verifier = path.join(this.tmp, 'selected-element-build-verifier.py');
-    mkdirSync(sourceRoot, { recursive: true, mode: 0o700 });
-    mkdirSync(artifactRoot, { recursive: true, mode: 0o700 });
-    writeFileSync(verifier, "import hashlib,json,sys\nfrom pathlib import Path\np=Path(sys.argv[1])\nselection=json.loads(p.read_text())\nprint(json.dumps({'schema':'astrid.element-build/v1','selectionDigest':'sha256:'+hashlib.sha256(p.read_bytes()).hexdigest(),'elements':[{'projectId':e['projectId'],**{k:e['descriptor'][k] for k in ('packId','id','kind','revision')}} for e in selection['elements']]}))\n");
-    this.selectedParamPython = python;
-    this.selectedParamVerifier = verifier;
-    const { projectId, timelineId, image } = this.seed;
-    const elementId = 'selected_param_fixture';
-    const clipId = 'selected-param-clip';
-    const clips = [
-      { id: 'selected-base-clip', at: 0, track: 'V1', clipType: 'media', asset: 'selected-image', from: 0, to: 3, speed: 1 },
-      // The normal native apply carrier starts from the unowned draft ref;
-      // Agent's accepted update-element command attaches the real P1 owner and
-      // its exact schema/object dependencies to history.
-      { id: clipId, at: 0, track: 'FX', clipType: elementId, hold: 3, elementRef: { id: elementId, kind: 'effect', revision: 'draft-1' }, params: { amount: 4 } },
-    ];
-    const publication = compositionPublication({ projectId, timelineId }, this.seed.headRevisionId, 'Selected PARAM', 30);
-    publication.parent_composition.config = { ...publication.parent_composition.config, clips, tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'FX', kind: 'visual', label: 'FX' }] } as typeof publication.parent_composition.config;
-    publication.parent_composition.clips = clips as unknown as typeof publication.parent_composition.clips;
-    publication.parent_composition.registry = { assets: { 'selected-image': { file: 'selected-image.png', type: 'image/png', media_id: image.objectId, content_sha256: image.digest } } } as unknown as typeof publication.parent_composition.registry;
-    const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
-    if (published.status !== 200) throw new Error(`selected PARAM timeline: ${published.status} ${JSON.stringify(published.body)}`);
-    await this.enableTimelineAuthoring(python);
-    await this.provisionCredential('astrid-selected-param', path.basename(credentialFile));
-    const discovery = this.discovery();
-    this.selectedParamEnv = {
-      ...selectedParamEvalEnv(process.env, credentialFile, {
-        endpoint: discovery.endpoint,
-        realmId: this.realmId,
-        actorId: 'astrid-selected-param',
-      }),
-      ...this.runtimeEnv(),
-      ASTRID_RUNTIME_ENDPOINT: this.runtimeUrl,
-      ASTRID_PROJECT_PACKS_ROOT: sourceRoot,
-      ASTRID_ELEMENT_ARTIFACT_ROOT: artifactRoot,
-      ASTRID_ELEMENT_BUILD_COMMAND: JSON.stringify([python, verifier]),
-    };
-    const initialized = this.projectPackCommand(['init', '--realm', this.realmId, '--project', projectId]);
-    const packId = initialized.packId;
-    const sourcePackRoot = initialized.packRoot;
-    const elementRoot = path.join(sourcePackRoot, 'rendering/elements/effects', elementId);
-    mkdirSync(elementRoot, { recursive: true });
-    writeFileSync(path.join(sourcePackRoot, 'pack.yaml'), `schema_version: 3\nid: ${packId}\nname: Project drafts\nversion: 0.1.0\nstatus: active\ndomain: media\nstability: experimental\nsupport: project\nvisibility: visible\ndescription: Editable project-owned visual elements.\npermissions:\n  - id: project_files\n    reason: Provides project-owned visual source.\ndocumentation:\n  kind: skill\n  path: docs/SKILL.md\nrendering:\n  effects/${elementId}:\n    type: element\n    path: rendering/elements/effects/${elementId}/element.yaml\n    resources:\n      - kind: implementation\n        path: rendering/elements/effects/${elementId}/component.tsx\n`);
-    writeFileSync(path.join(elementRoot, 'component.tsx'), "import React from 'react';\nimport {AbsoluteFill} from 'remotion';\nexport default function SelectedParamFixture() { return <AbsoluteFill />; }\n");
-    const writeDefinition = (maximum: number) => writeFileSync(path.join(elementRoot, 'element.yaml'), `schema_version: 1\nid: ${elementId}\nkind: effect\npack_id: ${packId}\nshort_description: Selected PARAM fixture.\ndefaults:\n  amount: 4\nschema:\n  title: Amount\n  type: object\n  properties:\n    amount:\n      type: number\n      minimum: 0\n      maximum: ${maximum}\n  required:\n    - amount\n  additionalProperties: false\nruntime:\n  adapter: remotion\n`);
-    writeDefinition(10);
-    const admitted = this.projectPackCommand(['admit', '--realm', this.realmId, '--project', projectId]);
-    if (!Array.isArray(admitted.elements) || admitted.elements.length !== 1) throw new Error(`selected PARAM admission did not admit one element: ${JSON.stringify(admitted)}`);
-    const p1 = admitted.elements[0].descriptor as SelectedParamDevSeed['p1'];
-    const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
-    if (project.status !== 200) throw new Error(`selected PARAM project read: ${project.status} ${JSON.stringify(project.body)}`);
-    const applied = this.agentCommand(['timelines', 'update-element', '--project', projectId, timelineId, '--realm', this.realmId,
-      '--clip-id', clipId, '--pack', p1.packId, '--element', p1.id, '--kind', p1.kind, '--revision', p1.revision,
-      '--expected-head', published.body.data.new_head, '--params-json', JSON.stringify({ amount: 4 }), '--json']);
-    const history = await this.runtimeJson<any>('GET', `/v1/projects/${projectId}/timelines/${timelineId}/commits?limit=50`);
-    if (history.status !== 200) throw new Error(`selected PARAM history: ${history.status} ${JSON.stringify(history.body)}`);
-    const accepted = history.body.items?.find((entry: any) => entry.revision_id === applied.new_head);
-    const operations = accepted?.receipt?.result?.commands?.map((command: any) => command.op);
-    if (JSON.stringify(operations) !== JSON.stringify(['clip.set-element', 'clip.set-params'])) {
-      throw new Error(`selected PARAM P1 did not use the native element producer: ${JSON.stringify(operations)}`);
-    }
-    const p1DocumentPin = this.selectedParamDocumentPin(this.projectPackCommand(['resolve', '--realm', this.realmId, '--project', projectId, '--pack', p1.packId, '--element', p1.id, '--kind', p1.kind, '--revision', p1.revision]));
-    this.selectedParamDevSeed = {
-      projectId, projectSlug: (project.body.data ?? project.body).slug, timelineId, clipId, packId: p1.packId, elementId, p1,
-      p1DocumentPin, sourceRoot: sourcePackRoot, elementRoot,
-    };
-    return this.selectedParamDevSeed;
-  }
-
-  /** Admit P2 with a changed schema, then remove only authored P1/P2 source. The retained P1 artifact remains the resolver authority. */
-  async advanceSelectedParamAndRemoveSource(seed: SelectedParamDevSeed): Promise<{ p2: SelectedParamDevSeed['p1']; p2DocumentPin: SelectedParamDevSeed['p1DocumentPin'] }> {
-    if (!this.selectedParamEnv || !this.selectedParamPython) throw new Error('selected PARAM seed has not been created');
-    writeFileSync(path.join(seed.elementRoot, 'element.yaml'), readFileSync(path.join(seed.elementRoot, 'element.yaml'), 'utf8').replace('maximum: 10', 'maximum: 20'));
-    const admitted = this.projectPackCommand(['admit', '--realm', this.realmId, '--project', seed.projectId]);
-    const p2 = admitted.elements.find((entry: any) => entry.descriptor?.id === seed.elementId && entry.descriptor?.revision !== seed.p1.revision)?.descriptor as SelectedParamDevSeed['p1'] | undefined;
-    if (!p2) throw new Error(`selected PARAM P2 admission did not produce a new revision: ${JSON.stringify(admitted)}`);
-    const resolved = this.projectPackCommand(['resolve', '--realm', this.realmId, '--project', seed.projectId, '--pack', p2.packId, '--element', p2.id, '--kind', p2.kind, '--revision', p2.revision]);
-    const p2DocumentPin = this.selectedParamDocumentPin(resolved);
-    rmSync(seed.elementRoot, { recursive: true, force: true });
-    return { p2, p2DocumentPin };
-  }
-
-  async startSelectedParamDevServer(): Promise<void> {
-    if (this.devServer) return;
-    const seed = this.selectedParamDevSeed;
-    if (!seed || !this.selectedParamEnv) throw new Error('selected PARAM seed must be created before starting DEV');
-    this.devPort = await freePort();
-    this.runtimeProxyPort = await freePort();
-    const agent = path.resolve(process.env.ASTRID_CHECKOUT
-      ?? [path.join(REPO_ROOT, '..', 'astrid-agent'), path.join(REPO_ROOT, '../..', 'agent')]
-        .find((dir) => existsSync(path.join(dir, 'astrid', '__init__.py')))
-      ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
-    const discoveryPath = path.join(this.supportDir, 'discovery.json');
-    this.runtimeProxy = spawnGroup(process.execPath, [path.join(REPO_ROOT, 'scripts/runtime-discovery-proxy.mjs')], {
-      cwd: REPO_ROOT,
-      env: {
-        ...this.selectedParamEnv,
-        ASTRID_RUNTIME_PROXY_PORT: String(this.runtimeProxyPort),
-        ASTRID_RUNTIME_OPERATION_ORIGIN: this.devOrigin,
-        ASTRID_WORKSPACE_DISCOVERY: discoveryPath,
-      },
-    });
-    await waitFor('selected PARAM Runtime discovery proxy', async () => {
-      const response = await fetch(`http://127.0.0.1:${this.runtimeProxyPort}/runtime-config/v1/workspace.json`).catch(() => null);
-      return response?.ok ? true : null;
-    }, 3_000, () => (this.runtimeProxy?.child.exitCode !== null
-      ? `proxy exited ${this.runtimeProxy?.child.exitCode}: ${this.runtimeProxy?.stderr.slice(-1200)}` : null));
-    const env = {
-      ...this.selectedParamEnv,
-      PORT: String(this.devPort),
-      VITE_WORKSPACE_RUNTIME_URL: `http://127.0.0.1:${this.runtimeProxyPort}`,
-      ASTRID_RUNTIME_OPERATION_ORIGIN: this.devOrigin,
-      WORKSPACE_RUNTIME_TOKEN_FILE: this.credentialPath,
-      VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID: PRODUCT_ACTOR,
-      VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID: this.realmId,
-      VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID: this.runtimeInstanceId,
-      ASTRID_CHECKOUT: agent,
-      ASTRID_RUNTIME_CHECKOUT: RUNTIME_CHECKOUT,
-      ASTRID_PROJECT_PACKS_ROOT: seed.sourceRoot,
-      ASTRID_ELEMENT_ARTIFACT_ROOT: this.selectedParamEnv.ASTRID_ELEMENT_ARTIFACT_ROOT,
-      ASTRID_ELEMENT_RESOLVE_COMMAND: JSON.stringify([this.selectedParamPython, '-m', 'astrid.core.element.cli']),
-      VITE_DISABLE_REMOTE_FONTS: '1',
-    };
-    this.devServer = spawnGroup(process.execPath, [path.join(REPO_ROOT, 'node_modules/vite/bin/vite.js'), '--config', path.join(REPO_ROOT, 'config/vite/vite.config.ts'), '--host', '127.0.0.1', '--port', String(this.devPort)], { cwd: REPO_ROOT, env });
-    await waitFor('selected PARAM DEV server', async () => {
-      const response = await fetch(`${this.devOrigin}/tools/video-editor`).catch(() => null);
-      return response?.ok ? true : null;
-    }, 60_000, () => (this.devServer?.child.exitCode !== null ? `Vite exited ${this.devServer?.child.exitCode}: ${this.devServer?.stderr.slice(-1200)}` : null));
   }
 
   /**
@@ -780,7 +659,7 @@ export class DirectHarness {
    * re-reads it, so a restarted Runtime on a new port is followed with no special case. Throws when it is absent or unparsable.
    */
   discovery(): RuntimeDiscovery {
-    const parsed = JSON.parse(readFileSync(path.join(this.supportDir, 'discovery.json'), 'utf8'));
+    const parsed = JSON.parse(readFileSync(this.attachment?.discoveryFile ?? path.join(this.supportDir, 'discovery.json'), 'utf8'));
     for (const key of ['endpoint', 'active_realm', 'runtime_instance_id', 'worker_credential_file', 'worker_actor'] as const) {
       if (typeof parsed[key] !== 'string' || !parsed[key]) throw new Error(`discovery.json has no ${key}`);
     }
@@ -833,7 +712,7 @@ export class DirectHarness {
     };
     const html = sceneEntryHtml();
     const entry = await ingest(html, 'text/html', 'scene.html');
-    // The package object: validateScenePackage (ui/live-scenes/runtime.ts) wants the manifest, the entry's object metadata and an assets array.
+    // The package object: validateScenePackage (ui/threejs-live-editor/runtime.ts) wants the manifest, the entry's object metadata and an assets array.
     const packageBody = JSON.stringify({
       manifest: { formatVersion: 1, entry: 'scene.html', duration: 5, authoredFps: 30 },
       entry: { object_id: entry.objectId, digest: entry.digest, media_type: entry.mediaType, size: entry.size, filename: entry.filename },
@@ -934,7 +813,7 @@ export class DirectHarness {
     const videoAsset = { file: `f2-video.${videoExtension}`, type: video.mediaType, duration: 12, media_id: video.objectId, content_sha256: video.digest };
     // The App's clips are the parent composition's own (the editor changes only the parent). The Astrid CLI reaches clips only
     // inside a placed shot's internal timeline (astrid/sdk/timeline/lookup.py `clips`), so the agent's two clips live in a shot
-    // placed independently: 0 s to 12 s on the film, clips at 3 s and 6 s inside it.
+    // placed between them: 3 s to 9 s on the film, clips at 0 s and 3 s inside it.
     const shotId = 'f2-shot';
     const internalRevisionId = randomUUID();
     const shotRevisionId = randomUUID();
@@ -943,39 +822,16 @@ export class DirectHarness {
       { id: ids.transitionClipId, at: referenceAt, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
     ];
     if (transitions === 'native-none') {
-      // Keep the original default crossfade as the single-clear control. The other
-      // selected clip carries an unknown revision and literal opaque JSON keys.
-      Object.assign(parentClips[0], JSON.parse(`{
-        "opaqueClip":{"nullable":null,"ordered":[false,0,"",[],{"z":2,"a":1}]},
-        "transition":{"type":"crossfade","duration":0.5,"revision":"native-none-unknown-revision",
-          "params":{"nullable":null,"__proto__":{"literal":true},"constructor":{"prototype":[null,false]}},
-          "future":{"ordered":[null,0,false]},"__proto__":{"outer":true},"prototype":false}
-      }`));
+      Object.assign(parentClips[0], JSON.parse('{"opaqueClip":{"nullable":null,"ordered":[false,0,"",[],{"z":2,"a":1}]},"transition":{"type":"crossfade","duration":0.5,"revision":"native-none-unknown-revision","params":{"nullable":null,"__proto__":{"literal":true},"constructor":{"prototype":[null,false]}},"future":{"ordered":[null,0,false]},"__proto__":{"outer":true},"prototype":false}}'));
     }
-    if (transitions === 'parent-delete') {
-      // Native delete refuses semantic dependencies. Keep the ordinary M1 seed intact.
-      delete parentClips[1].transition;
-      parentClips[0] = { ...parentClips[0], ...JSON.parse(`{
-        "opaque":{"nullable":null,"ordered":[false,0,"",[],{"z":2,"a":1}]},
-        "app":{"canonical":{"future":{"nullable":null,"ordered":[0,false,""]},
-          "__proto__":{"literal":true},"constructor":{"prototype":[null,false]}},
-          "future":{"prototype":false}},
-        "__proto__":{"raw":true},"constructor":{"prototype":{"literal":true}},"prototype":null
-      }`) };
-    }
+    if (transitions === 'parent-delete') delete parentClips[1].transition;
     const shotClips = [
       { id: 'f2-plate', at: 0, track: 'plate', clipType: 'media', asset: 'f2-plate', hold: 12 },
       { id: ids.agentClipId, at: 3, track: 'V2', clipType: 'media', asset: 'f2-placeholder', hold: 3, app: { f2Opaque: THREE_PRODUCTS_OPAQUE.clip } },
       { id: ids.agentClearClipId, at: 6, track: 'V2', clipType: 'media', asset: 'f2-clear', hold: 3 },
     ];
     const publication = compositionPublication({ projectId, timelineId }, headRevisionId, 'Main', 30);
-    publication.parent_composition.config = {
-      ...publication.parent_composition.config,
-      clips: parentClips,
-      tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }],
-      x_f2_opaque: THREE_PRODUCTS_OPAQUE.config,
-      app: { [THREE_PRODUCTS_SCENE_MARKER_EXTENSION_ID]: { sceneMarkers: [...THREE_PRODUCTS_SCENE_MARKERS] } },
-    } as unknown as typeof publication.parent_composition.config;
+    publication.parent_composition.config = { ...publication.parent_composition.config, clips: parentClips, tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }], x_f2_opaque: THREE_PRODUCTS_OPAQUE.config, app: { [THREE_PRODUCTS_SCENE_MARKER_EXTENSION_ID]: { sceneMarkers: [...THREE_PRODUCTS_SCENE_MARKERS] } } } as unknown as typeof publication.parent_composition.config;
     publication.parent_composition.clips = parentClips as unknown as typeof publication.parent_composition.clips;
     publication.parent_composition.registry = { assets: { 'f2-app': imageAsset('f2-app'), 'f2-video': videoAsset } } as unknown as typeof publication.parent_composition.registry;
     Object.assign(publication, {
@@ -993,14 +849,7 @@ export class DirectHarness {
         shot_id: shotId,
         revision_id: shotRevisionId,
         internal_timeline_revision_id: internalRevisionId,
-        payload: {
-          name: 'F2 canonical shot',
-          metadata: { title: 'F2 agent shot' },
-          items: [], pools: [], selected_variants: {},
-          provenance: { source: 'three-products-seed', revision: 1 },
-          x_f2_opaque: THREE_PRODUCTS_OPAQUE.shot,
-          generation_inputs: [], audio_bindings: [], text_bindings: [],
-        },
+        payload: { metadata: { title: 'F2 agent shot' }, items: [], pools: [], selected_variants: {}, provenance: {}, generation_inputs: {}, audio_bindings: [], text_bindings: [], x_f2_opaque: THREE_PRODUCTS_OPAQUE.shot },
       }],
     });
     (publication.parent_composition as Record<string, unknown>).occurrences = [{
@@ -1011,108 +860,102 @@ export class DirectHarness {
     if (published.status !== 200) throw new Error(`seed three products timeline: ${published.status} ${JSON.stringify(published.body)}`);
     this.threeProductsSeed = {
       projectSlug: (project.body.data ?? project.body).slug, timelineId, headRevisionId: published.body.data.new_head,
-      ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: {
-        config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip }, shot: { ...THREE_PRODUCTS_OPAQUE.shot },
-      },
+      ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: { config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip }, shot: { ...THREE_PRODUCTS_OPAQUE.shot } },
     };
     return this.threeProductsSeed;
   }
 
   /**
-   * Adds one canonical shot occurrence to the existing three-products timeline.
-   * The raw settings deliberately contain the two values that the mounted
-   * SettingsAutoDisable effect reconciles, plus an unknown settings sibling.
-   * The original F2 seed remains unchanged for the name and M1 journeys.
+   * The render journey's timeline, a second timeline in the seeded project made on first use (after the cases that open the
+   * seeded timeline, so none of them sees another timeline). The editor opens it from the "Select timeline" combobox.
+   *
+   * Parent: a visual track `S1` that hosts one occurrence of the shot over the whole film (0 s to 6 s), and an audio track `A1`
+   * with a 6 s 440 Hz Opus tone. The shot's internal timeline is one visual track `V2` of three VP8 clips, each with `from`/`to`
+   * bounds: a test pattern (0 s to 2 s), the slot `f2-render-slot` on a solid grey placeholder (2 s to 4 s), and the test
+   * pattern again (4 s to 6 s). The two cut frames (2 s and 4 s) declare nothing: the Runtime's seam check only advises render admission
+   * (it reports in `timeline_authority.visual_seam_report` and never blocks), so the render is not held up by them. Media are real: ffmpeg is required and there is no stand-in file.
    */
-  async seedCanonicalSettingsShot(): Promise<CanonicalSettingsSeed> {
-    if (this.canonicalSettingsSeed) return this.canonicalSettingsSeed;
-    const base = await this.seedThreeProducts();
-    const { projectId, timelineId, image } = this.seed;
-    const current = await this.runtimeJson('GET', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions/${base.headRevisionId}`);
-    if (current.status !== 200) throw new Error(`read settings fixture base: ${current.status} ${JSON.stringify(current.body)}`);
+  async seedRenderTimeline(): Promise<RenderSeed> {
+    if (this.renderSeed) return this.renderSeed;
+    const { projectId } = this.seed;
+    const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
+    if (project.status !== 200) throw new Error(`seed render project: ${project.status} ${JSON.stringify(project.body)}`);
+    const dir = path.join(this.tmp, 'render-media');
+    mkdirSync(dir, { recursive: true });
+    const pattern = path.join(dir, 'pattern.webm');
+    const grey = path.join(dir, 'placeholder.webm');
+    const tone = path.join(dir, 'tone.webm');
+    const { r, g, b } = RENDER_GREY;
+    const hex = [r, g, b].map((value) => value.toString(16).padStart(2, '0')).join('');
+    ffmpegOrFail(['-f', 'lavfi', '-i', 'testsrc=size=640x360:rate=30:duration=6', '-vf', BT601_FILTER, '-c:v', 'libvpx', '-pix_fmt', 'yuv420p', '-b:v', '1M', '-g', '30', ...BT601_TAGS, pattern], 'the test pattern video');
+    ffmpegOrFail(['-f', 'lavfi', '-i', `color=c=0x${hex}:s=640x360:r=30:d=4`, '-vf', BT601_FILTER, '-c:v', 'libvpx', '-pix_fmt', 'yuv420p', '-b:v', '500k', '-g', '30', ...BT601_TAGS, grey], 'the grey placeholder video');
+    ffmpegOrFail(['-f', 'lavfi', '-i', 'sine=frequency=440:duration=6', '-c:a', 'libopus', tone], 'the 440 Hz tone');
+    const ingest = async (file: string, mediaType: string, filename: string): Promise<SeededObject> => {
+      const data = readFileSync(file);
+      const response = await this.runtimeFetch(`/v1/projects/${projectId}/objects`, { method: 'POST', headers: { 'Content-Type': mediaType, 'Idempotency-Key': randomUUID(), 'X-Original-Name': filename }, body: new Uint8Array(data) });
+      if (response.status !== 201 && response.status !== 200) throw new Error(`seed ${filename}: ${response.status} ${await response.text()}`);
+      const body = await response.json();
+      if (body.data.digest !== sha256Hex(data)) throw new Error(`seed ${filename}: Runtime digest differs from local digest`);
+      return { objectId: body.data.object_id, digest: body.data.digest, size: data.length, mediaType };
+    };
+    const patternObject = await ingest(pattern, 'video/webm', 'f2-render-pattern.webm');
+    const placeholder = await ingest(grey, 'video/webm', 'f2-render-placeholder.webm');
+    const toneObject = await ingest(tone, 'audio/webm', 'f2-render-tone.webm');
+    const entry = (object: SeededObject, duration: number) => ({ ...this.registryLocator(object), media_id: object.objectId, content_sha256: object.digest, type: object.mediaType, duration });
 
-    const settingsShotId = 'settings-auto-disable-shot';
-    const settingsOccurrenceId = 'settings-auto-disable-occurrence';
+    const ids = { shotId: 'f2-render-shot', occurrenceId: 'f2-render-occurrence', slotClipId: 'f2-render-slot', markerAssetKey: 'f2-render-marker', placeholderAssetKey: 'f2-render-placeholder' };
+    const timelineId = randomUUID();
     const internalRevisionId = randomUUID();
     const shotRevisionId = randomUUID();
-    const opaqueSettings = {
-      owner: 'settings-auto-disable',
-      nested: [null, false, 0, { future: 'preserve' }],
-      nullable: null,
-    };
-    const parent = structuredClone(current.body.payload) as Record<string, any>;
-    const parentConfig = parent.config as Record<string, any>;
-    const tracks = Array.isArray(parentConfig.tracks) ? parentConfig.tracks : [];
-    const occurrence = {
-      occurrence_id: settingsOccurrenceId,
-      shot_id: settingsShotId,
-      shot_revision_id: shotRevisionId,
-      placement: { start_ms: 12000 },
-      source_offset: 0,
-      duration_ms: 3000,
-      speed: 1,
-      track: 'S2',
-      transform: {},
-      gain: 1,
-      mute: false,
-      provenance: {},
-    };
-    parent.config = {
-      ...parentConfig,
-      tracks: [...tracks, { id: 'S2', kind: 'visual', label: 'S2' }],
-      clips: Array.isArray(parentConfig.clips) ? parentConfig.clips : [],
-    };
-    parent.occurrences = [...(Array.isArray(parent.occurrences) ? parent.occurrences : []), occurrence];
-
-    const publication = compositionPublication({ projectId, timelineId }, base.headRevisionId, 'Main', 30);
-    publication.parent_composition = parent;
-    publication.internal_timeline_revisions = [{
-      timeline_id: timelineId,
-      revision_id: internalRevisionId,
-      payload: {
-        tracks: [{ id: 'settings', kind: 'visual', label: 'settings' }],
-        clips: [{ id: 'settings-plate', at: 0, track: 'settings', clipType: 'media', asset: 'settings-plate', hold: 3 }],
-        effects: [], audio: [], layout: {},
-        registry: {
-          assets: {
-            'settings-plate': { file: 'settings-plate.png', type: 'image/png', media_id: image.objectId, content_sha256: image.digest },
-          },
+    const clip = (id: string, at: number, asset: string, from: number, to: number) => ({ id, at, track: 'V2', clipType: 'media', asset, from, to, speed: 1 });
+    const shotClips = [
+      clip('f2-render-before', 0, 'f2-render-pattern', 0, 2),
+      clip(ids.slotClipId, 2, ids.placeholderAssetKey, 0, 2),
+      clip('f2-render-after', 4, 'f2-render-pattern', 4, 6),
+    ];
+    const parentClips = [{ id: 'f2-render-tone', at: 0, track: 'A1', clipType: 'media', asset: 'f2-render-tone', from: 0, to: 6, speed: 1, volume: 1 }];
+    const publication = compositionPublication({ projectId, timelineId }, null, RENDER_TIMELINE_NAME, 30);
+    publication.parent_composition.config = {
+      ...publication.parent_composition.config,
+      clips: parentClips,
+      tracks: [{ id: 'S1', kind: 'visual', label: 'S1' }, { id: 'A1', kind: 'audio', label: 'A1' }],
+    } as unknown as typeof publication.parent_composition.config;
+    publication.parent_composition.clips = parentClips as unknown as typeof publication.parent_composition.clips;
+    publication.parent_composition.registry = { assets: { 'f2-render-tone': entry(toneObject, 6) } } as unknown as typeof publication.parent_composition.registry;
+    Object.assign(publication, {
+      internal_timeline_revisions: [{
+        timeline_id: timelineId,
+        revision_id: internalRevisionId,
+        payload: {
+          tracks: [{ id: 'V2', kind: 'visual', label: 'V2' }],
+          clips: shotClips, effects: [], audio: [], layout: {},
+          registry: { assets: { 'f2-render-pattern': entry(patternObject, 6), [ids.placeholderAssetKey]: entry(placeholder, 4) } },
+          assets: [],
         },
-        assets: [],
-      },
-    }];
-    publication.shot_revisions = [{
-      shot_id: settingsShotId,
-      revision_id: shotRevisionId,
-      internal_timeline_revision_id: internalRevisionId,
-      payload: {
-        name: 'Settings auto-disable shot',
-        metadata: { title: 'Settings auto-disable fixture' },
-        settings: {
-          turboMode: true,
-          advancedMode: true,
-          motionMode: 'advanced',
-          prompt: 'fixture prompt remains raw',
-          negativePrompt: null,
-          x_settings_opaque: opaqueSettings,
-        },
-        provenance: { source: 'settings-auto-disable-seed', revision: 1 },
-        items: [], pools: [], selected_variants: {},
-        generation_inputs: [], audio_bindings: [], text_bindings: [],
-      },
+      }],
+      shot_revisions: [{
+        shot_id: ids.shotId,
+        revision_id: shotRevisionId,
+        internal_timeline_revision_id: internalRevisionId,
+        payload: { metadata: { title: 'F2 render shot' }, items: [], pools: [], selected_variants: {}, provenance: {}, generation_inputs: {}, audio_bindings: [], text_bindings: [] },
+      }],
+    });
+    (publication.parent_composition as Record<string, unknown>).occurrences = [{
+      occurrence_id: ids.occurrenceId, shot_id: ids.shotId, shot_revision_id: shotRevisionId,
+      placement: { start_ms: 0 }, source_offset: 0, duration_ms: 6000, speed: 1, track: 'S1', transform: {}, gain: 1, mute: false, provenance: {},
     }];
     const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
-    if (published.status !== 200) throw new Error(`seed canonical settings shot: ${published.status} ${JSON.stringify(published.body)}`);
-    const project = await this.runtimeJson<any>('GET', `/v1/projects/${projectId}`);
-    this.canonicalSettingsSeed = {
-      projectSlug: (project.body.data ?? project.body).slug,
-      timelineId,
-      headRevisionId: published.body.data.new_head,
-      shotId: settingsShotId,
-      occurrenceId: settingsOccurrenceId,
-      opaqueSettings,
+    if (published.status !== 200) throw new Error(`seed render timeline: ${published.status} ${JSON.stringify(published.body)}`);
+    this.renderSeed = {
+      projectSlug: (project.body.data ?? project.body).slug, timelineId, timelineName: RENDER_TIMELINE_NAME, headRevisionId: published.body.data.new_head,
+      ...ids, placeholder, placeholderGrey: { ...RENDER_GREY }, occurrenceBlockSelector: `[data-action-id="shot-group-label"][data-shot-group-drag-anchor-clip-id="${ids.occurrenceId}"]`, fps: 30, durationSeconds: 6,
     };
-    return this.canonicalSettingsSeed;
+    return this.renderSeed;
+  }
+
+  /** The `file` the App publishes next to an asset's identity (dataProvider `withManagedFileRoute`): the object's route, which the Runtime keeps out of the render's frozen inputs. */
+  private registryLocator(object: SeededObject): { file: string } {
+    return { file: `/v1/objects/${encodeURIComponent(object.objectId)}` };
   }
 
   // -- Door ----------------------------------------------------------------------------------
@@ -1166,6 +1009,7 @@ export class DirectHarness {
 
   /** Brings the Runtime and its door back to a serving state after a test that stopped it or took its credential away. */
   async resetToHealthy(): Promise<void> {
+    if (this.attachment) { await this.assertAttachedIdentity(); return; }
     this.restoreProductCredential();
     if (!this.runtimeRunning) { this.runtime = undefined; await this.startRuntime(); }
     const probe = await this.doorRequest('/v1/health').catch(() => null);
@@ -1177,14 +1021,20 @@ export class DirectHarness {
   async stop(): Promise<void> {
     if (this.stopped) return;
     this.stopped = true;
-    await stopGroup(this.devServer).catch(() => {});
-    await stopGroup(this.runtimeProxy).catch(() => {});
-    await stopGroup(this.runtime).catch(() => {});
+    let cleanupError: unknown;
+    if (!this.attachment) await stopGroup(this.runtime).catch((error) => { cleanupError ??= error; });
     await new Promise<void>((resolve) => { if (!this.https) return resolve(); this.https.closeAllConnections?.(); this.https.close(() => resolve()); });
     if (this.tmp) rmSync(this.tmp, { recursive: true, force: true });
+    if (cleanupError) throw cleanupError;
   }
 }
 
 export async function startDirectHarness(): Promise<DirectHarness> {
   return new DirectHarness().start();
+}
+
+function readCredentialToken(file: string): string {
+  const parsed = JSON.parse(readFileSync(file, 'utf8'));
+  if (typeof parsed.token !== 'string' || !parsed.token) throw new Error(`credential file ${file} has no token`);
+  return parsed.token;
 }

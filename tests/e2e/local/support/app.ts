@@ -3,6 +3,7 @@
  * helpers that drive the hosted page. Moved out of direct-journey.spec.ts without changes (card F2-A).
  */
 import { chromium, expect, test as base, type Browser, type Page, type Request } from '@playwright/test';
+import type { ChildProcess } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
@@ -22,6 +23,25 @@ export const UI = {
 /** The workspace route a visitor opens on the hosted origin. `/` itself is the public landing page in the WEB build (src/app/routes.tsx:77). */
 export const APP_ENTRY_ROUTE = '/tools/video-editor';
 
+/** QUICK shares the F1 browser/runtime boundary, so teardown verifies the Playwright server group is gone. */
+export async function closeQuickBrowser(browser: Browser | undefined, browserServer: Awaited<ReturnType<typeof chromium.launchServer>>): Promise<void> {
+  const child: ChildProcess = browserServer.process();
+  const pid = child.pid;
+  if (!pid) throw new Error('Playwright browser server has no child PID');
+  let cleanupError: unknown;
+  if (browser) try { await browser.close(); } catch (error) { cleanupError = error; }
+  try { await browserServer.close(); } catch (error) { cleanupError ??= error; }
+  if (child.exitCode === null && child.signalCode === null) await new Promise<void>((resolve) => child.once('exit', () => resolve()));
+  if (child.signalCode === 'SIGKILL') cleanupError ??= new Error(`QUICK Chromium process ${pid} exited after SIGKILL`);
+  let groupRemains = false;
+  try { process.kill(-pid, 0); groupRemains = true; } catch { /* browser group exited */ }
+  if (groupRemains) {
+    try { process.kill(-pid, 'SIGKILL'); } catch { /* exited between check and cleanup */ }
+    cleanupError ??= new Error(`QUICK Chromium process group ${pid} remained after browser server close and was force-cleaned`);
+  }
+  if (cleanupError) throw cleanupError;
+}
+
 function resolveChromium(): string | undefined {
   if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE) return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
   if (existsSync(chromium.executablePath())) return chromium.executablePath();
@@ -38,10 +58,17 @@ export const test = base.extend<object, { harness: DirectHarness; browser: Brows
   harness: [async ({}, use) => {
     const harness = await startDirectHarness();
     try { await use(harness); } finally { await harness.stop(); }
-  }, { scope: 'worker', timeout: 240_000 }],
+  }, { scope: 'worker', timeout: process.env.ASTRID_QUICK_DESCRIPTOR ? 0 : 240_000 }],
   browser: [async ({ harness }, use) => {
-    const browser = await chromium.launch({ args: harness.chromiumArgs, executablePath: resolveChromium() });
-    try { await use(browser); } finally { await browser.close(); }
+    if (process.env.ASTRID_QUICK_DESCRIPTOR) {
+      const browserServer = await chromium.launchServer({ args: harness.chromiumArgs, executablePath: resolveChromium() });
+      let browser: Browser | undefined;
+      try { browser = await chromium.connect(browserServer.wsEndpoint()); await use(browser); }
+      finally { await closeQuickBrowser(browser, browserServer); }
+    } else {
+      const browser = await chromium.launch({ args: harness.chromiumArgs, executablePath: resolveChromium() });
+      try { await use(browser); } finally { await browser.close(); }
+    }
   }, { scope: 'worker' }],
   context: async ({ browser, harness }, use) => {
     const context = await browser.newContext(harness.contextOptions as Parameters<Browser['newContext']>[0]);
