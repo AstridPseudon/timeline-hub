@@ -111,7 +111,7 @@ def _ack(result, body, flight, identity):
             _pin(data["evaluated_head"])
             require(not any(key in data for key in ("accepted_revision_id", "publisher", "accepted_publication_id")))
         else:
-            require(data["status"] in {"accepted", "rebased"})
+            require(data["status"] in {"accepted", "merged", "rebased"})
             CommandReceipt.from_dict(receipt)
             require(receipt["command_kind"] == "timeline.commit")
             require(receipt["project_id"] == body["project_id"] and receipt["idempotency_key"] == flight["key"])
@@ -418,6 +418,37 @@ class TimelineSession:
         """Send/retry exactly one prefix; leave newer local commands untouched."""
         return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
+    def submit(self, commands, *, label, steps, merge="fields", reads=None,
+               idempotency_key=None, dry_run=False, expected_state, base=None, evaluation=None):
+        """Freeze an already captured v2 batch, without recapturing its guards.
+
+        A replacement is allowed only after an explicit conflict. Transport
+        retries use flush(), which retains the entire original request.
+        """
+        commands = [_native_command(command) for command in commands]
+        options = {"label": label, "steps": copy.deepcopy(steps), "merge": merge}
+        if reads is not None:
+            options["reads"] = copy.deepcopy(reads)
+
+        def prepare(state):
+            if state != expected_state:
+                raise TimelineEditError("outbox changed during evaluation; nothing was submitted")
+            if state["pending"] or state["flight"] is not None:
+                if state.get("conflict", {}).get("details", {}).get("status") != "conflict":
+                    raise TimelineEditError("retry the original in-flight request before another edit")
+                if state["flight"]["count"] != len(state["pending"]):
+                    raise TimelineEditError("pending dependent commands require revalidation before recomputing")
+                if idempotency_key is not None and idempotency_key == state["flight"]["key"]:
+                    raise TimelineEditError("recomputed intent requires a fresh idempotency key")
+            state["base"] = _pin(base or state["base"])
+            state["pending"] = copy.deepcopy(commands)
+            state["flight"] = None
+            state.pop("conflict", None)
+            state["commit_options"] = options
+            state["evaluation"] = copy.deepcopy(evaluation)
+
+        return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, prepare=prepare)
+
     def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None):
         with self.outbox.locked():
             state = self._state()
@@ -435,6 +466,7 @@ class TimelineSession:
                         "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
                 if 'rationale' in state:
                     body['rationale'] = state['rationale']
+                body.update(copy.deepcopy(state.get("commit_options", {})))
                 key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
                 if key == state.get("preview_key"):
                     raise TimelineEditError("use a fresh key after a preview")
@@ -453,7 +485,7 @@ class TimelineSession:
             ))
         except Exception as exc:
             details = getattr(exc, "details", {})
-            if isinstance(details, dict) and details.get("status") in {"conflict", "refused"}:
+            if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
                 with self.outbox.locked():
                     state = self._state()
@@ -477,6 +509,11 @@ class TimelineSession:
                                            "publication_id": receipt["receipt_id"]})
                     del state["pending"][:flight["count"]]
                     state.pop('rationale', None)
+                if "commit_options" in state:
+                    if dry_run:
+                        del state["pending"][:flight["count"]]
+                    state.pop("commit_options", None)
+                    state.pop("evaluation", None)
                 state["flight"] = None
                 state.pop("conflict", None)
                 self.outbox.write(state)
