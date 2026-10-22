@@ -181,7 +181,7 @@ function ChatPane() {
             <span className="-ml-1.5 flex h-6 items-center gap-1 px-1.5 text-sm font-medium text-foreground">New chat<ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /></span>
             <span className="-ml-1.5 flex h-4 items-center gap-1 px-1.5 text-[11px] text-muted-foreground"><Sparkles className="h-3 w-3" />Astrid</span>
           </div>
-          <span className="flex items-center text-muted-foreground"><Icon><Plus className="h-3.5 w-3.5" /></Icon><ChevronDown className="-ml-1 h-3.5 w-3.5" /></span>
+          <span className="flex h-6 items-center self-start text-muted-foreground"><Icon><Plus className="h-3.5 w-3.5" /></Icon><ChevronDown className="-ml-1 h-3.5 w-3.5" /></span>
         </div>
         <div className="flex-1" />
         <div className="h-[209px] shrink-0 border-t border-border/70 p-3">

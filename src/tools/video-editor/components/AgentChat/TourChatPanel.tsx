@@ -163,7 +163,7 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
             onChooseAnotherModel={NO_OP}
           />
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 self-start">
           <NewChatMenu defaultAgent="astrid" onNewChat={NO_OP} />
         </div>
       </div>

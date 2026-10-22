@@ -48,7 +48,7 @@ export function AgentChatModelLine({ agent, modelName, thoughtLevel = null, thou
 
   const changeOpen = (next: boolean) => {
     setOpen(next);
-    if (next) setError(null);
+    if (next) { setError(null); handingOff.current = false; }
     onOpenChange?.(next);
   };
   const chooseLevel = async (value: string) => {
@@ -99,10 +99,11 @@ export function AgentChatModelLine({ agent, modelName, thoughtLevel = null, thou
             <CommandGroup>
               <CommandItem value="another-model" className="gap-2 text-xs [@media(pointer:coarse)]:min-h-[44px]"
                 onSelect={() => {
+                  // Until it next opens, this popover hands focus on rather than back to its trigger: its close animation
+                  // ends after the new-chat menu has focused its search.
                   handingOff.current = true;
                   changeOpen(false);
-                  // After this popover lets go of focus, so the new-chat menu keeps it.
-                  requestAnimationFrame(() => { handingOff.current = false; onChooseAnotherModel(); });
+                  requestAnimationFrame(() => onChooseAnotherModel());
                 }}>
                 <span>New chat with another model</span>
                 <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />

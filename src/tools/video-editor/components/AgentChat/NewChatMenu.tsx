@@ -1,4 +1,4 @@
-import { forwardRef, Fragment, useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent } from 'react';
+import { forwardRef, Fragment, useCallback, useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent } from 'react';
 import { Check, ChevronDown, ChevronRight, Copy, Plus } from 'lucide-react';
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
@@ -188,15 +188,34 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
     setHighlighted('agent:hermes');
     onBrowseAgent?.(null);
   }, [browsing, onBrowseAgent, submenu]);
+  // Highlights a model and brings it into view: cmdk scrolls only for its own key moves, not for a value set here.
+  const revealHighlight = useRef(false);
+  const highlightModel = useCallback((id: string) => { revealHighlight.current = true; setHighlighted(`model:${id}`); }, []);
+  useEffect(() => {
+    if (!revealHighlight.current) return;
+    // A frame on, once cmdk has marked the row.
+    const frame = requestAnimationFrame(() => {
+      revealHighlight.current = false;
+      root.current?.querySelector('[cmdk-item][data-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [highlighted]);
   // A model list opens on the agent's default model (or its first), not on the back row.
   useEffect(() => {
     if (!landOnModel.current || !submenu || submenu.models.length === 0) return;
     const target = submenu.models.find(model => model.id === submenu.defaultModel) ?? submenu.models[0];
     // After cmdk settles its own first-item pick for the freshly mounted list.
-    const frame = requestAnimationFrame(() => { landOnModel.current = false; setHighlighted(`model:${target.id}`); });
+    const frame = requestAnimationFrame(() => { landOnModel.current = false; highlightModel(target.id); });
     return () => cancelAnimationFrame(frame);
-  }, [submenu]);
+  }, [submenu, highlightModel]);
   const shownModels = (submenu?.models ?? []).filter(model => !query || matches(query, `${model.name} ${model.detail ?? ''} ${model.id}`));
+  // A search lands on its first match, so Enter starts it rather than going back (cmdk picks the back row, the first item).
+  const firstMatch = query ? shownModels[0]?.id : undefined;
+  useEffect(() => {
+    if (!firstMatch) return;
+    const frame = requestAnimationFrame(() => highlightModel(firstMatch));
+    return () => cancelAnimationFrame(frame);
+  }, [query, firstMatch, highlightModel]);
 
   const agentRows = agents?.map(choice => {
     const id = choice.id;
@@ -229,7 +248,7 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
 
   return (
     <Popover open={open} onOpenChange={changeOpen}>
-      <div role="group" aria-label="New chat" className="flex shrink-0 items-center">
+      <div role="group" aria-label="New chat" className="flex shrink-0 items-center rounded-md transition-colors hover:has-[:enabled]:bg-accent/50 has-[[aria-expanded=true]]:bg-accent/50">
         <button type="button" disabled={disabled || newChatDisabled} aria-label={quickLabel} title={quickLabel}
           className={cn(SPLIT_BUTTON, 'w-6 rounded-l-md [@media(pointer:coarse)]:w-8')}
           onClick={() => start(current?.agent, current?.model, current?.thoughtLevel)}>
