@@ -19,3 +19,26 @@ export function rememberModelThoughtSelection(agent: LocalAgentId, model: string
   try { globalThis.localStorage?.setItem(thoughtSelectionsKey(agent), JSON.stringify(next)); } catch { /* The menu retains its in-memory choice. */ }
   return next;
 }
+
+/** What the + button starts next, chosen in the ▾ menu: an agent, and optionally one of its models and a thinking level. */
+export interface NewChatChoice { agent: LocalAgentId; model?: string; modelName?: string | null; thoughtLevel?: string }
+const CHOICE_KEY = 'astrid.app.newChatChoice';
+
+export function readNewChatChoice(): NewChatChoice | null {
+  try {
+    const value: unknown = JSON.parse(globalThis.localStorage?.getItem(CHOICE_KEY) ?? 'null');
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const { agent, model, modelName, thoughtLevel } = value as Record<string, unknown>;
+    if (typeof agent !== 'string') return null;
+    return {
+      agent: agent as LocalAgentId,
+      ...(typeof model === 'string' ? { model } : {}),
+      ...(typeof modelName === 'string' ? { modelName } : {}),
+      ...(typeof thoughtLevel === 'string' ? { thoughtLevel } : {}),
+    };
+  } catch { return null; }
+}
+
+export function rememberNewChatChoice(choice: NewChatChoice): void {
+  try { globalThis.localStorage?.setItem(CHOICE_KEY, JSON.stringify(choice)); } catch { /* The menu retains its in-memory choice. */ }
+}

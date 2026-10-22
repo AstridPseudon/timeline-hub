@@ -41,7 +41,7 @@ function renderMenu(props: MenuProps = {}) {
 /** Renders the split button and opens the picker from its chevron. */
 function openMenu(props: MenuProps = {}) {
   const rendered = renderMenu(props);
-  fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
   return rendered;
 }
 
@@ -74,17 +74,17 @@ describe('NewChatMenu + button', () => {
   it('is disabled while a chat is starting or there is no project, and its chevron only without a project', () => {
     const { rerender } = renderMenu({ newChatDisabled: true });
     expect(screen.getByRole('button', { name: /^New chat/ })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Choose the agent and model for new chats' })).toBeEnabled();
     rerender({ newChatDisabled: false, disabled: true });
     expect(screen.getByRole('button', { name: /^New chat/ })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Choose the agent and model for new chats' })).toBeDisabled();
   });
 
   it('reports open and close of the picker through onOpenChange', async () => {
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     renderMenu({ onOpenChange });
-    await user.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
+    await user.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
     expect(onOpenChange).toHaveBeenLastCalledWith(true);
     await user.keyboard('{Escape}');
     await waitFor(() => expect(onOpenChange).toHaveBeenLastCalledWith(false));
@@ -93,7 +93,7 @@ describe('NewChatMenu + button', () => {
 
   it('opens with the open chat\'s agent highlighted, and the default agent otherwise', () => {
     const { view } = renderMenu({ current: { agent: 'codex' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
     expect(screen.getByRole('option', { name: /Codex/ })).toHaveAttribute('aria-selected', 'true');
     view.unmount();
     openMenu();
@@ -111,6 +111,8 @@ describe('NewChatMenu agent rows', () => {
   it('starts a chat with a ready agent row that has no model list, using its default model', () => {
     const { onNewChat } = openMenu({ agentCanBrowse: { codex: false } });
     fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'New chat · Codex' }));
     expect(onNewChat).toHaveBeenCalledExactlyOnceWith('codex', undefined);
   });
 
@@ -122,19 +124,24 @@ describe('NewChatMenu agent rows', () => {
     expect(screen.getByPlaceholderText('Search Codex models…')).toBeTruthy();
   });
 
-  it('starts the agent when its row opened a model list that turns out empty', async () => {
+  it('chooses the agent when its row opened a model list that turns out empty', async () => {
     const { onNewChat, rerender } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: true } });
     fireEvent.click(screen.getByRole('option', { name: /Hermes/ }));
     rerender({ agentModels: { agent: 'hermes', models: [], loading: false } });
-    await waitFor(() => expect(onNewChat).toHaveBeenCalledWith('hermes', undefined));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'New chat · Hermes' })).toBeInTheDocument());
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'New chat · Hermes' }));
+    expect(onNewChat).toHaveBeenCalledWith('hermes', undefined);
   });
 
-  it('closes the menu when a ready agent starts a chat', async () => {
+  it('closes the menu when a ready agent is chosen, without starting a chat', async () => {
     const onOpenChange = vi.fn();
     const { onNewChat } = openMenu({ onOpenChange, agentCanBrowse: { codex: false }, agents: ready.map(choice => choice.id === 'codex' ? choice : { ...choice, state: 'sign-in' as const, line: null }) });
     fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
-    expect(onNewChat).toHaveBeenCalledWith('codex', undefined);
+    expect(onNewChat).not.toHaveBeenCalled();
     expect(onOpenChange).toHaveBeenLastCalledWith(false);
+    fireEvent.click(screen.getByRole('button', { name: 'New chat · Codex' }));
+    expect(onNewChat).toHaveBeenCalledWith('codex', undefined);
   });
 
   it('disables agent rows while a new chat cannot start', () => {
@@ -153,7 +160,7 @@ describe('NewChatMenu agent rows', () => {
     openMenu({ agentsError: new Error('Failed to fetch') });
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent('Could not load agents: Failed to fetch');
-    expect(screen.getByText('New chat with')).toBeInTheDocument();
+    expect(screen.getByText('Use for new chats')).toBeInTheDocument();
     expect(screen.queryByText(RUNTIME_CONNECTION_COPY.chatNeedsUpdate)).toBeNull();
   });
 
@@ -161,6 +168,27 @@ describe('NewChatMenu agent rows', () => {
     openMenu({ agents: [{ id: 'hermes', name: 'Hermes', state: 'not-installed', line: 'Install with `hermes install`.' }] });
     expect(screen.getByRole('option', { name: /Hermes/ })).toHaveTextContent('Not installed');
     expect(screen.getByRole('option', { name: /Hermes/ })).toHaveTextContent('Install with hermes install.');
+  });
+});
+
+describe('NewChatMenu choice', () => {
+  it('names the chosen agent on +, ticks it, and remembers it across a remount', () => {
+    const { onNewChat, view } = openMenu({ agentCanBrowse: { codex: false }, agentModelNames: { codex: 'gpt-5.5' } });
+    fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
+    expect(onNewChat).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'New chat · Codex · gpt-5.5' })).toBeInTheDocument();
+    view.unmount();
+    const again = openMenu({ agentCanBrowse: { codex: false }, agentModelNames: { codex: 'gpt-5.5' } });
+    expect(screen.getByRole('button', { name: 'New chat · Codex · gpt-5.5' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Codex/ }).querySelector('svg.opacity-100')).not.toBeNull();
+    expect(screen.getByRole('option', { name: /Claude Code/ }).querySelector('svg.opacity-100')).toBeNull();
+    again.view.unmount();
+  });
+
+  it('ignores a stored choice whose agent is no longer usable', () => {
+    localStorage.setItem('astrid.app.newChatChoice', JSON.stringify({ agent: 'codex' }));
+    renderMenu({ agents: ready.map(choice => choice.id === 'codex' ? { ...choice, state: 'not-installed' as const, line: null } : choice) });
+    expect(screen.getByRole('button', { name: /^New chat · Claude Code/ })).toBeInTheDocument();
   });
 });
 
@@ -203,6 +231,8 @@ describe('NewChatMenu model list', () => {
     rerender({ agentModels: { agent: 'codex', models: [], loading: false } });
     fireEvent.click(screen.getByRole('option', { name: 'Use the agent’s default model' }));
     expect(onBrowseAgent).toHaveBeenCalledWith('codex');
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
     expect(onNewChat).toHaveBeenCalledExactlyOnceWith('codex', undefined);
     expect(screen.queryByPlaceholderText('Search Codex models...')).toBeNull();
   });
@@ -212,6 +242,8 @@ describe('NewChatMenu model list', () => {
     expect(screen.getByRole('option', { name: /Hermes/ })).toHaveTextContent('Ready');
     expect(screen.queryByRole('button', { name: 'Choose a Hermes model' })).toBeNull();
     fireEvent.click(screen.getByRole('option', { name: /Hermes/ }));
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
     expect(onNewChat).toHaveBeenCalledWith('hermes', undefined);
   });
 
@@ -247,6 +279,8 @@ describe('NewChatMenu model list', () => {
     expect(screen.getByRole('option', { name: /Sonnet/ })).toHaveAttribute('aria-current', 'true');
     await waitFor(() => expect(screen.getByRole('option', { name: /Sonnet/ })).toHaveAttribute('aria-selected', 'true'));
     fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
     expect(onNewChat).toHaveBeenCalledWith('claude-code', 'opus');
   });
 
@@ -269,7 +303,7 @@ describe('NewChatMenu model list', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
     fireEvent.click(screen.getByRole('option', { name: /Claude Code/ }));
     expect(onBrowseAgent).toHaveBeenLastCalledWith(null);
-    expect(screen.getByText('New chat with')).toBeInTheDocument();
+    expect(screen.getByText('Use for new chats')).toBeInTheDocument();
   });
 
   it('explains when an agent has not reported its models yet', () => {
@@ -303,9 +337,32 @@ describe('NewChatMenu model list', () => {
     expect(detail.parentElement).toHaveClass('flex-1', 'flex-col');
     expect(detail).not.toHaveClass('truncate');
     expect(selector).toHaveTextContent('High');
-    expect(selector).toHaveClass('ml-auto', 'self-start', 'h-6', 'px-1.5', 'rounded', '[@media(pointer:coarse)]:min-h-[44px]');
+    expect(selector).toHaveClass('h-6', 'px-1', 'rounded', '[@media(pointer:coarse)]:min-h-[44px]');
     expect(selector.className.split(/\s+/).some(token => token === 'border' || token.startsWith('border-'))).toBe(false);
     expect(selector).not.toHaveClass('min-h-[44px]', 'min-w-[44px]');
+  });
+
+  it('shows the level the row would use next to the model name', () => {
+    localStorage.setItem('astrid.app.modelThoughtSelections.claude-code', JSON.stringify({ opus: 'low' }));
+    openMenu({ agentModels: effortModels });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    const selector = screen.getByRole('button', { name: 'Choose a thinking level for Opus' });
+    expect(selector).toHaveClass('text-[11px]');
+    expect(selector.previousElementSibling).toHaveTextContent('Opus');
+    expect(selector).toHaveTextContent('· Low');
+  });
+
+  it("starts exactly one chat from a row's New chat button, and selecting the row starts none", () => {
+    localStorage.setItem('astrid.app.modelThoughtSelections.claude-code', JSON.stringify({ opus: 'low' }));
+    const { onNewChat } = openMenu({ agentModels: effortModels });
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
+    fireEvent.click(screen.getByRole('button', { name: 'New chat with Opus · Low' }));
+    expect(onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
+    expect(screen.getByRole('button', { name: /^New chat · Claude Code · Opus/ })).toBeInTheDocument();
   });
 
   it('highlights the selector while its level popover is open', () => {
@@ -325,6 +382,8 @@ describe('NewChatMenu model list', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
     await waitFor(() => expect(screen.getByRole('option', { name: /Opus/ })).toHaveAttribute('aria-selected', 'true'));
     fireEvent.keyDown(document.querySelector('[cmdk-root]')!, { key: 'Enter' });
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
     expect(onNewChat).toHaveBeenCalledWith('claude-code', 'opus', 'high');
   });
 
@@ -367,6 +426,8 @@ describe('NewChatMenu model list', () => {
     expect(screen.getByRole('option', { name: 'Low' })).toHaveAttribute('aria-current', 'true');
     fireEvent.keyDown(screen.getByRole('option', { name: 'Low' }), { key: 'Escape' });
     fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
+    expect(reopened.onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
     expect(reopened.onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
   });
 
@@ -381,6 +442,8 @@ describe('NewChatMenu model list', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
       expect(screen.getByRole('button', { name: 'Choose a thinking level for Opus' })).toHaveTextContent('Low');
       fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
+      expect(onNewChat).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
       expect(onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
     } finally { save.mockRestore(); }
   });
@@ -409,6 +472,8 @@ describe('NewChatMenu model list', () => {
     await waitFor(() => expect(search).toHaveFocus());
     expect(row).toHaveAttribute('aria-selected', 'true');
     await user.keyboard('{Enter}');
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
     expect(onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
   });
 
@@ -426,6 +491,8 @@ describe('NewChatMenu model list', () => {
     expect(screen.getByRole('option', { name: /Sonnet/ })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('button', { name: 'Choose a thinking level for Sonnet' })).toHaveTextContent('High');
     await user.keyboard('{ArrowUp}{Enter}');
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
     expect(onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', 'opus', 'low');
   });
 
@@ -455,6 +522,8 @@ describe('NewChatMenu model list', () => {
     } }] } });
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
     fireEvent.click(screen.getByRole('option', { name: /Opus/ }));
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
     expect(onNewChat).toHaveBeenCalledWith('claude-code', 'opus', 'default');
   });
 
@@ -465,7 +534,9 @@ describe('NewChatMenu model list', () => {
     ] } });
     fireEvent.click(screen.getByRole('button', { name: `Choose a ${LOCAL_AGENT_TABLE[agent].name} model` }));
     expect(screen.queryByRole('button', { name: /Choose a thinking level/ })).toBeNull();
-    fireEvent.click(screen.getByRole('option', { name: 'Model A' }));
+    fireEvent.click(screen.getByRole('option', { name: /^Model A/ }));
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
     expect(onNewChat).toHaveBeenCalledWith(agent, 'a');
   });
 
@@ -488,6 +559,8 @@ describe('NewChatMenu model list', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Choose a Claude Code model' }));
     expect(screen.getByText('Start one first.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('option', { name: 'Use the agent’s default model' }));
+    expect(onNewChat).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^New chat ·/ }));
     expect(onNewChat).toHaveBeenCalledExactlyOnceWith('claude-code', undefined);
   });
 });

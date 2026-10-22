@@ -195,7 +195,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     if (choice === 'main') {
       fireEvent.click(await screen.findByRole('button', { name: /^New chat · Astrid/ }));
     } else {
-      fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
       if (choice === 'agent') {
         fireEvent.click(await screen.findByRole('button', { name: 'Choose a Codex model' }));
         fireEvent.click(await screen.findByRole('option', { name: /Model A/ }));
@@ -204,6 +204,8 @@ describe('real panel → real hooks → owned ACP transport', () => {
         fireEvent.click(await screen.findByRole('button', { name: 'Choose a Astrid model' }));
         fireEvent.click(await screen.findByRole('option', { name: /Model B/ }));
       }
+      expect(fixture.calls.filter(call => call.route.endsWith('/sessions') && call.body.mode === 'new')).toEqual([]);
+      fireEvent.click(await screen.findByRole('button', { name: /^New chat ·/ }));
     }
     await waitFor(() => expect(fixture.chat('p1').selected_session_id).not.toBe(firstId));
     const newId = fixture.chat('p1').selected_session_id;

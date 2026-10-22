@@ -105,7 +105,7 @@ export function AgentChatModelLine({ agent, modelName, thoughtLevel = null, thou
                   changeOpen(false);
                   requestAnimationFrame(() => onChooseAnotherModel());
                 }}>
-                <span>New chat with another model</span>
+                <span>Change model for new chats</span>
                 <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
               </CommandItem>
             </CommandGroup>
