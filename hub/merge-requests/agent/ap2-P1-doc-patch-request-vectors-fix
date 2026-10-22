@@ -1,0 +1,1 @@
+timeline/agent/tl/ap2-P1-doc-patch-request-vectors-fix 309cb2d3 app2 P1 independently reviewed PASS25 pytest plus Ruff/mypy; corrected real doc.patch operand collection only, no H3 claim
