@@ -1,6 +1,10 @@
 {
   "type": "object",
   "properties": {
+    "meta": {
+      "$ref": "common.json#/$defs/Meta",
+      "description": "Runtime-owned opaque extension metadata; ignored by TimelineConfig consumers."
+    },
     "theme": {
       "type": "string"
     },
@@ -72,6 +76,9 @@
           "app": {
             "type": "object",
             "additionalProperties": {}
+          },
+          "meta": {
+            "$ref": "common.json#/$defs/Meta"
           }
         },
         "required": [
@@ -390,6 +397,9 @@
         "derived_output": {
           "type": "object",
           "additionalProperties": {}
+        },
+        "meta": {
+          "$ref": "common.json#/$defs/Meta"
         }
       },
       "required": [
@@ -527,6 +537,9 @@
         },
         "thumbnailUrl": {
           "type": "string"
+        },
+        "meta": {
+          "$ref": "common.json#/$defs/Meta"
         }
       },
       "additionalProperties": false

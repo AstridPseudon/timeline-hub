@@ -5,6 +5,42 @@
   "type": "object",
   "additionalProperties": false,
   "$defs": {
+    "MetaNamespaceKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "ASCII namespace key for opaque extension metadata."
+    },
+    "MetaValue": {
+      "description": "A finite JSON descendant of an opaque metadata namespace.",
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/MetaValue" }
+        },
+        {
+          "type": "array",
+          "items": { "$ref": "#/$defs/MetaValue" }
+        },
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "MetaNamespaceValue": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/MetaValue" },
+      "description": "Opaque namespace payload; the namespace root is always an object."
+    },
+    "Meta": {
+      "type": "object",
+      "maxProperties": 64,
+      "propertyNames": { "$ref": "#/$defs/MetaNamespaceKey" },
+      "additionalProperties": { "$ref": "#/$defs/MetaNamespaceValue" },
+      "description": "Optional bounded namespace map. Canonical byte and depth limits are provider-enforced."
+    },
     "Id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$" },
     "Digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
     "Version": { "type": "integer", "minimum": 1 },
