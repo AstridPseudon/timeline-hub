@@ -58,3 +58,22 @@ def test_quick_failing_command_output_is_in_failure_evidence(tmp_path: Path) -> 
     evidence = Path(_keep_failure_logs(root, tmp_path / "summary.json"))
     assert (evidence / "first_open.stdout.log").read_text().strip() == "open-out"
     assert (evidence / "first_open.stderr.log").read_text().strip() == "open-err"
+
+
+def test_a_failed_journey_exits_nonzero_through_the_dev_command(tmp_path: Path, monkeypatch) -> None:
+    """The process status is the gate: a summary that says ok=false must never come with exit 0."""
+    import json
+
+    from astrid.core.dev import journey
+    from astrid.core.gateway import dev_operator
+
+    summary = tmp_path / "quick.json"
+
+    def failing_run(*_args, **_kwargs) -> int:
+        summary.write_text(json.dumps({"ok": False, "outcome": "failure", "error": "quick_browser: exit 1"}))
+        return 1
+
+    monkeypatch.setattr(journey, "run", failing_run)
+    argv = ["journey", "--tier", "quick", "--reference", "generated", "--summary", str(summary)]
+    assert dev_operator.main(argv) == 1
+    assert json.loads(summary.read_text())["ok"] is False
