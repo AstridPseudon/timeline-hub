@@ -40,6 +40,8 @@ The plan is `$ORCH/PLAN.md` (v2.1); your lane, task IDs and home repo are in its
    Then **end your turn.**
 
 ## Hourly (10 minutes or less, no Codex, then end the turn)
+**Step 0 (proper fix, 22:40Z):** run `$ORCH/bin/ensure-daemons <area>` first. It idempotently restarts dead daemons and the manager, and queues dead workers for re-dispatch. A **durable hourly keepalive** scheduled by the orchestrator also wakes you to run it, so a container restart is recovered within the hour even if your own loop died with it. On each keepalive, re-arm your 30-minute loop if it is gone.
+
 1. **Processes:** check that hub-syncd, dispatcher-daemon and run-manager are alive, using `pgrep -f "run-manager <area>"` and similar. Never use a pattern that matches your own shell, and never kill by pattern. Restart any that died, with the kickoff step 6 commands.
 2. **Manager health:**
    - the board must be no more than 45 minutes old;

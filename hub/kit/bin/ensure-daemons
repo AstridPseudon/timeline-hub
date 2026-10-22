@@ -6,7 +6,6 @@
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 A=$1; [ -n "$A" ] && [ -d $O/managers/$A ] || { echo "usage: ensure-daemons AREA"; exit 2; }
 M=$A; [ $A = runtime ] && M=main          # hub-sync machine name
-alive(){ ps -eo args | awk -v s="$1" '$1=="/bin/bash" && $2 ~ s"$" && ($3==""||$3==ARGV[2]) {f=1} END{exit !f}' - 2>/dev/null; }
 has(){ ps -eo args | awk -v p="$1" -v a="$2" '$1=="/bin/bash" && $2 ~ ("bin/" p "$") && (a=="" || $3==a) {f=1} END{exit !f}'; }
 started=""
 has hub-syncd "$M" || { nohup setsid $O/bin/hub-syncd $M >> $O/hub-sync.log 2>&1 < /dev/null & started="$started hub-syncd"; }

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-22T22:39:44Z | dispatcher heartbeat 3s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 1m -->
-# runtime board, 2026-10-22T22:38Z
+<!-- main | 2026-10-22T22:41:02Z | dispatcher heartbeat 6s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 0m -->
+# runtime board, 2026-10-22T22:40Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 | commit-v2 contract | Sol author / Luna review | — | merged | rt-C0-contract; rt-C0-review | PASS: 34 targeted tests + JSON/digests/copy equality on tree identical to integrated 0d4c71a3c; C0 APPROVED | 0d4c71a3c |
@@ -10,5 +10,5 @@
 | P5 | original gate 2–4 acceptance | Luna | R1, R2 merged for implementation | todo | rt-P5-cases; rt-P5-cases-review-v2 | Collection review PASS; concrete map in reviewer report. No implementation/proof credit | — |
 | R5 | refuse old save routes | Luna | A3, G4 merged per header | todo | — | — | — |
 Blockers: orchestrator — C0c addressing amendment rt-C0c-addressing active under adopted Astra principle; approval required before R2 merge. C0b approved/review PASS and merged 992136137; prior C0b approval escalation resolved.
-Blockers: orchestrator — CLEANUP SAFETY REFUSAL at 22:37:44Z: auto-review rejected rm -rf abandoned v1 sources ("rm -f style commands are not permitted"). Stop requested immediately; no alternate deletion route. Disk 9.9 GB vs 15 GB. See escalations/runtime-20261022T2238Z-cleanup-safety-refusal.md. Recovered report: original deletion also denied; prior board was inaccurate. Only seven v1 suite rows changed, no artifact deletions. Remaining classified inventory 1.34 GB cannot alone reach target. Luna rt-U1-v1-cleanup-audit queued for read-only review.
+Blockers: orchestrator — CLEANUP SAFETY REFUSAL at 22:37:44Z: auto-review rejected rm -rf abandoned v1 sources ("rm -f style commands are not permitted"). Stop requested immediately; no alternate deletion route. Disk 9.9 GB vs 15 GB. See escalations/runtime-20261022T2238Z-cleanup-safety-refusal.md. Recovered report: original deletion also denied; prior board was inaccurate. Only seven v1 suite rows changed, no artifact deletions. Remaining classified inventory 1.34 GB cannot alone reach target. Independent Luna rt-U1-v1-cleanup-audit PASS: only seven obsolete v1 suite rows removed, 103 valid rows/common controls preserved, no artifact deletions or active reference loss. Cleanup remains stopped, target unmet.
 Next ready: U1 independent review on repair completion; R2r immediately after U1 merge; P5 after R1/R2; R5 after A3/G4 header confirmation.
