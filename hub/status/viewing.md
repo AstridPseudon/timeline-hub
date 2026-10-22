@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-22T23:52:53Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 1m -->
-# viewing board, 2026-10-22T23:51:47Z
+<!-- viewing | 2026-10-22T23:53:56Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 0m -->
+# viewing board, 2026-10-22T23:53:21Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema/drift inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; vw-V1-schema-inventory-review2 | IndependentPASS; four-copy SHA/cmp and Runtime generators/manifestPASS; no-op receipt. Pre-U1 map, no implementation credit | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -23,3 +23,5 @@ Source decision resolved: actual U1 does not include the frozen-candidate materi
 U1 DONE evidence: reviewed244targeted+73service, live-tip4563bb5ff ancestryPASS, merged27f0306b9, integrated runtime-targeted-1022233331-22415 PASS317/8configuredexclusions/tree8d70d0d9. U2 merged3f1ceaed1. U3 live composition active on latest App board23:42; U3b final EOF review; U3c merged1c62edf19. Heavy full/journey proofs remain farm-owned.
 
 Round result/handoff23:51Z: V1 prep and early-case evidence complete; Composition source slice landed before retrospective refusals known. Runtime and Agent independent reviews found real issues, each sent back once before the refusal audit; no test weakening. Later expanded safety audit is now the controlling blocker. STOP receipts confirmed; zero live Viewing workers; no remote code merge or consumer pin request issued. Reports/logs/branches retained. All v1 instructions/ledgers/gate6/capacity rules remain VOID. Manager writes only briefs/status/escalations; product/tests/generated/pins/reviews/merges remain worker/queue-owned.
+
+Restart verification 2026-10-22T23:53:21Z: Read PLAN v2.1 first, current MANAGER-COMMON, lane BRIEF, BOARD-HEADER, post-restart INBOX and refusal escalation. No safety resolution is present; the 23:45 source/start permission predates the refusals and does not clear them. bin/workers vw- confirms every V1/V3/V4 worker terminal, including stopped Agent correction/V3/V4; no affected work re-dispatched, reviewed, merged, packed, adopted or cleaned. Disk measured 16,331,788,288 bytes free (>15 GB). Preserve all refusal evidence and already-merged Composition qualification hold. Round stops under the explicit safety-refusal rule; orchestrator/lead resolution is the only next dependency. No v1 work is revived.
