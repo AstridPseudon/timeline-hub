@@ -23,6 +23,13 @@ def test_identity_prefers_media_id_then_digest_then_file():
     assert asset_identity("not an entry") is None
 
 
+
+def test_identity_requires_every_shared_identity_field_to_match():
+    assert same_asset_identity({"media_id": "m1", "content_sha256": "aa"}, {"content_sha256": "sha256:AA"})
+    assert not same_asset_identity({"media_id": "m1", "content_sha256": "aa"}, {"content_sha256": "bb"})
+    assert not same_asset_identity({"content_sha256": "aa", "file": "x.mp4"}, {"content_sha256": "aa", "file": "y.mp4"})
+    assert same_asset_identity({"content_sha256": "aa", "file": "x.mp4"}, {"content_sha256": "aa"})
+
 def _expand(parent_entry, child_entry):
     config = {"clips": [{"id": "shot", "clipType": "shot", "at": 0, "hold": 1,
                          "params": {"shot_id": "shot-1", "timeline_document_id": "child"}}]}

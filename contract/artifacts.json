@@ -1,6 +1,6 @@
 {
   "artifacts": {
-    "conformance/fixtures/asset-identity.json": "sha256:9d5424bfcf18446ceedcd63c421ef0789ab2df8b72c7e9d3da774b8c884f2f7e",
+    "conformance/fixtures/asset-identity.json": "sha256:32c6e6baf6a68adbcf2a0e2c3ac681da8f2e2881cbe55b71fb6b8d6e4b44da1f",
     "conformance/fixtures/canonical-timeline-parity.json": "sha256:8404ad42d817e60f6255113624e0f17a8100e3c6d0c4baf24029e818d8e5ff00",
     "conformance/fixtures/event.json": "sha256:29c739974e7bad256804feaceccd44e5a4633d144c1a6229cfe853737bca8ead",
     "conformance/fixtures/handshake.json": "sha256:259f06fa225aec0cb0e0cfc593fa89db4578fc26db9664e2b7632ce2f4fec234",
@@ -73,5 +73,5 @@
     "packages/typescript/tsconfig.json": "sha256:48bc718286b70c7ff5af00d1adfea37ad7c7f8820d3050117dc9d6aea239181b"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:0bca93866abc95d684ea2b1a0e6aa34d60ddd3b6558967f489b78869b12d4d7d"
+  "version": "sha256:1dcf8fb5925e8a5918ff71ae928c17be2b709308b04fa344247a2a0c13225fe5"
 }
