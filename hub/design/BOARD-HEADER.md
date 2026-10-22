@@ -1,6 +1,6 @@
 # BOARD HEADER (orchestrator only), Timeline v2.1
 
-Clock: **H0 = (set at kickoff)**. Plan: `$ORCH/PLAN.md` v2.1. Lanes and IDs are in PLAN's "Who does what" table.
+Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan: `$ORCH/PLAN.md` v2.1. Lanes and IDs are in PLAN's "Who does what" table.
 
 ## Status
 - C0 contract: **NOT YET APPROVED**. Nobody builds against `design/commit-v2.md` until this line reads "C0 APPROVED".
