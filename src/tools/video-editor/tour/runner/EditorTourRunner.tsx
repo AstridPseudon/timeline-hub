@@ -6,7 +6,8 @@ import { useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared
 import { TourCard } from '../card/TourCard';
 import { TourSpotlight } from './TourSpotlight';
 import { backEditorTour, finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
-import { useSettledCardPosition, useSettledRects } from './useSettledCardPosition';
+import { placeCard } from './cardPlacement';
+import { useSettledRects } from './useSettledRects';
 import { useSpotlightRects } from './useSpotlightRects';
 import { useTourKeys } from './useTourKeys';
 
@@ -62,19 +63,22 @@ function RunningTour() {
   const reducedMotion = useEditorTour((s) => s.reducedMotion);
   const runId = useEditorTour((s) => s.runId);
   const beatKey = `${runId}:${act}:${beat}`;
-  const liveRects = useSpotlightRects(editorTourTargets(act, beat));
-  const rects = useSettledRects(beatKey, liveRects);
+  // The card and spotlight show the beat whose targets have settled; it trails the store's beat by a frame or two.
+  const settled = useSettledRects(beatKey, useSpotlightRects(editorTourTargets(act, beat)));
+  const [, shownAct, shownBeat] = settled.beatKey.split(':') as [string, `${EditorTourAct}`, EditorTourBeat];
+  const pending = settled.beatKey !== beatKey;
   // The Send button is the one thing outside the card the user may press.
   const sendRects = useSpotlightRects(beat === 'compose' ? [editorTourSelector(EDITOR_TOUR_ANCHORS.chatSend)] : []);
   const cardRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 360, height: 160 });
 
-  // Each beat swaps the card's content and size. Read the new size before paint so the first aim uses it.
+  // The shown beat swaps the card's content and size. Read the new size before paint, so the move starts
+  // toward the spot for the new card and the content changes as the card starts to move.
   useLayoutEffect(() => {
     const card = cardRef.current;
     if (!card) return;
     setSize((previous) => (previous.width === card.offsetWidth && previous.height === card.offsetHeight ? previous : { width: card.offsetWidth, height: card.offsetHeight }));
-  }, [beatKey]);
+  }, [settled.beatKey]);
 
   // Later size changes within a beat (content loading in).
   useLayoutEffect(() => {
@@ -85,10 +89,10 @@ function RunningTour() {
     return () => observer.disconnect();
   }, []);
 
-  const { value: position, animate } = useSettledCardPosition(beatKey, liveRects, size);
+  const position = placeCard(settled.value, size, { width: window.innerWidth, height: window.innerHeight });
   return (
     <>
-      <TourSpotlight rects={rects} clickable={sendRects[0] ?? null} reducedMotion={reducedMotion} />
+      <TourSpotlight rects={settled.value} clickable={sendRects[0] ?? null} reducedMotion={reducedMotion} />
       <div
         ref={cardRef}
         data-editor-tour-card-host
@@ -97,10 +101,12 @@ function RunningTour() {
           zIndex: UI_Z_LAYERS.EDITOR_TOUR_CARD,
           transform: `translate3d(${position.left}px, ${position.top}px, 0)`,
           willChange: 'transform',
-          transition: reducedMotion || !animate ? 'none' : 'transform 450ms cubic-bezier(0.22, 1, 0.36, 1)',
+          transition: reducedMotion || !settled.animate ? 'none' : 'transform 450ms cubic-bezier(0.22, 1, 0.36, 1)',
+          // Between the store's beat changing and the card showing it, the old card's buttons would act on the new beat.
+          pointerEvents: pending ? 'none' : undefined,
         }}
       >
-        <TourCard onPrimary={runEditorTourPrimary} onBack={backEditorTour} onSkip={finishEditorTour} />
+        <TourCard act={Number(shownAct) as EditorTourAct} beat={shownBeat} onPrimary={runEditorTourPrimary} onBack={backEditorTour} onSkip={finishEditorTour} />
       </div>
     </>
   );

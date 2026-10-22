@@ -1,20 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
-import { placeCard, type CardPosition } from './cardPlacement';
 import type { SpotlightRect } from './useSpotlightRects';
 
 /** Quiet frames needed before a move starts. */
 const STABLE_FRAMES = 2;
 /** The longest a move waits for things to stop shifting. */
 const SETTLE_CAP_MS = 300;
-/** Within a beat the card only re-aims when its spot has moved further than this. */
-export const REAIM_DISTANCE = 24;
-/** The spotlight follows its targets more closely than the card does. */
+/** Within a beat the cutouts (and the card beside them) move again only for a change bigger than this. */
 const RECT_DISTANCE = 2;
 
 interface Settled<T> {
   value: T;
   /** False for the first placement and for a viewport resize, which should jump, not glide. */
   animate: boolean;
+  /** The run:act:beat `value` was committed for: the beat the tour is showing, which trails the store's by the settle. */
+  beatKey: string;
 }
 
 interface SettleOptions<T> {
@@ -36,7 +35,7 @@ interface SettleOptions<T> {
  * value passes through unanimated.
  */
 export function useSettledValue<T>({ beatKey, value, signature, isFar, jumpKey }: SettleOptions<T>): Settled<T> {
-  const [state, setState] = useState<{ value: T; animate: boolean } | null>(null);
+  const [state, setState] = useState<Settled<T> | null>(null);
   const committed = useRef<{ value: T; beatKey: string; jumpKey: string } | null>(null);
   const latest = useRef({ value, beatKey, jumpKey });
   latest.current = { value, beatKey, jumpKey };
@@ -52,7 +51,7 @@ export function useSettledValue<T>({ beatKey, value, signature, isFar, jumpKey }
     const { value: next, beatKey: key, jumpKey: jump } = latest.current;
     clearCap();
     committed.current = { value: next, beatKey: key, jumpKey: jump };
-    setState({ value: next, animate });
+    setState({ value: next, animate, beatKey: key });
   };
 
   useEffect(() => {
@@ -86,7 +85,7 @@ export function useSettledValue<T>({ beatKey, value, signature, isFar, jumpKey }
 
   useEffect(() => clearCap, []);
 
-  return state ?? { value, animate: false };
+  return state ?? { value, animate: false, beatKey };
 }
 
 function useViewportKey(): { width: number; height: number } {
@@ -106,28 +105,11 @@ function useViewportKey(): { width: number; height: number } {
 const rectsSignature = (rects: readonly SpotlightRect[]) => rects.map((r) => `${r.x},${r.y},${r.width},${r.height}`).join(';');
 
 /**
- * Where the card should travel to. The card moves once per beat, after its targets and its own size
- * have stopped shifting, and then re-aims only for a real change (see `useSettledValue`). A viewport
- * resize re-aims at once with `animate: false`.
+ * The spotlight's rects, settled so the cutouts and the card glide once per beat instead of chasing targets
+ * that are still moving (a row sliding in, the timeline scrolling). The returned `beatKey` is the beat they
+ * belong to: the card shows that beat, so its content changes as it starts to move, not before.
  */
-export function useSettledCardPosition(
-  beatKey: string,
-  rects: readonly SpotlightRect[],
-  size: { width: number; height: number },
-): Settled<CardPosition> {
-  const viewport = useViewportKey();
-  const position = placeCard(rects, size, viewport);
-  return useSettledValue<CardPosition>({
-    beatKey,
-    value: position,
-    signature: `${rectsSignature(rects)}|${size.width}x${size.height}|${position.left},${position.top}`,
-    isFar: (a, b) => Math.hypot(a.left - b.left, a.top - b.top) > REAIM_DISTANCE,
-    jumpKey: `${viewport.width}x${viewport.height}`,
-  });
-}
-
-/** The spotlight's rects, settled the same way so its cutouts glide once instead of chasing moving targets. */
-export function useSettledRects(beatKey: string, rects: readonly SpotlightRect[]): readonly SpotlightRect[] {
+export function useSettledRects(beatKey: string, rects: readonly SpotlightRect[]): Settled<readonly SpotlightRect[]> {
   const viewport = useViewportKey();
   return useSettledValue<readonly SpotlightRect[]>({
     beatKey,
@@ -135,5 +117,5 @@ export function useSettledRects(beatKey: string, rects: readonly SpotlightRect[]
     signature: rectsSignature(rects),
     isFar: (a, b) => a.length !== b.length || a.some((r, i) => [r.x - b[i].x, r.y - b[i].y, r.width - b[i].width, r.height - b[i].height].some((d) => Math.abs(d) > RECT_DISTANCE)),
     jumpKey: `${viewport.width}x${viewport.height}`,
-  }).value;
+  });
 }

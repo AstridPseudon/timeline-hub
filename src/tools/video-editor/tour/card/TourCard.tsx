@@ -10,6 +10,9 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 
 export interface TourCardProps {
+  /** The beat to show: the runner's settled beat, which trails the store's while the card is about to move. */
+  act: EditorTourAct;
+  beat: EditorTourBeat;
   /** Next, "I got it", or (while the reply plays) finish it: the runner decides, as for Enter. */
   onPrimary: () => void;
   /** Go back to the previous place the user acted. Without it the card shows no Back. */
@@ -26,13 +29,13 @@ const ACT_COUNT = 3;
  * visual and the Three.js → frames → video strip; at the end it asks "Do you get it?". Presentational: the runner positions it and owns the
  * actions. It marks itself ready once its entrance has played (at once on reduced motion or a skip).
  */
-export function TourCard({ onPrimary, onBack, onSkip }: TourCardProps) {
-  const act = useEditorTour((state) => state.act);
-  const beat = useEditorTour((state) => state.beat);
+export function TourCard({ act, beat, onPrimary, onBack, onSkip }: TourCardProps) {
   const runId = useEditorTour((state) => state.runId);
+  const live = useEditorTour((state) => state.act === act && state.beat === beat);
   const key = `${runId}:${act}:${beat}`;
   const explains = beat === 'welcome' || beat === 'land' || beat === 'finale';
-  const { settled, reducedMotion } = useTourCardEntrance(key, explains);
+  // A card still showing the previous beat never reports ready for the new one.
+  const { settled, reducedMotion } = useTourCardEntrance(key, explains && live);
 
   return (
     <div
@@ -73,7 +76,7 @@ function CounterRow({ act, onBack, onSkip }: { act: EditorTourAct } & Pick<TourC
   );
 }
 
-function Explainer({ act, playing, onPrimary, onBack, onSkip }: { act: EditorTourAct; playing: boolean } & TourCardProps) {
+function Explainer({ act, playing, onPrimary, onBack, onSkip }: { act: EditorTourAct; playing: boolean } & Omit<TourCardProps, 'act' | 'beat'>) {
   const { title, body, visual, labels } = SCRIPT.acts[act].card;
   return (
     <>
@@ -103,7 +106,7 @@ function MinkTitle({ children }: { children: ReactNode }) {
   );
 }
 
-function Welcome({ onPrimary, onSkip }: TourCardProps) {
+function Welcome({ onPrimary, onSkip }: Omit<TourCardProps, 'act' | 'beat'>) {
   return (
     <>
       <MinkTitle>{SCRIPT.welcome.title}</MinkTitle>
@@ -132,7 +135,7 @@ function Finale({ playing, onPrimary, onBack }: { playing: boolean; onPrimary: (
 }
 
 /** Compose: send the prompt (the chat's Send, or Enter). Respond (act 1 only): the reply's Next. */
-function Hint({ act, beat, onPrimary, onBack, onSkip }: { act: EditorTourAct; beat: EditorTourBeat } & TourCardProps) {
+function Hint({ act, beat, onPrimary, onBack, onSkip }: TourCardProps) {
   const compose = beat === 'compose';
   return (
     <>

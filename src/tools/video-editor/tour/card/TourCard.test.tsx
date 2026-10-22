@@ -23,7 +23,7 @@ function renderAt(tourAct: EditorTourAct, beat: EditorTourBeat, options: { reduc
   startEditorTour();
   setEditorTourBeat(tourAct, beat);
   const onPrimary = vi.fn();
-  const view = render(<TourCard onPrimary={onPrimary} onSkip={onSkip} />);
+  const view = render(<TourCard act={tourAct} beat={beat} onPrimary={onPrimary} onSkip={onSkip} />);
   return { ...view, onPrimary, onSkip };
 }
 
@@ -129,11 +129,14 @@ describe('TourCard', () => {
   });
 
   it('replays the entrance for the next beat after a skip', () => {
-    renderAt(1, 'land');
+    const view = renderAt(1, 'land');
     act(() => skipEditorTourAnimation());
     expect(cardReady()).toBe(true);
     act(() => setEditorTourBeat(2, 'land'));
     expect(cardReady()).toBe(false);
+    advance(TOUR_CARD_ENTRANCE_MS);
+    expect(cardReady()).toBe(false); // still showing act 1: the runner has not moved the card on yet
+    view.rerender(<TourCard act={2} beat="land" onPrimary={view.onPrimary} onSkip={view.onSkip} />);
     advance(TOUR_CARD_ENTRANCE_MS);
     expect(cardReady()).toBe(true);
   });
@@ -158,13 +161,23 @@ describe('TourCard', () => {
     expect(screen.getByText('Esc')).toBeInTheDocument();
   });
 
+  it('a card still showing the previous beat never reports ready for the new one', () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
+    startEditorTour();
+    setEditorTourBeat(1, 'compose'); // the store has moved on; the runner still shows the welcome
+    const { container } = render(<TourCard act={1} beat="welcome" onPrimary={vi.fn()} onSkip={vi.fn()} />);
+    advance(TOUR_CARD_ENTRANCE_MS * 2);
+    expect(container.querySelector('[data-editor-tour-card]')).toHaveAttribute('data-settled');
+    expect(cardReady()).toBe(false);
+  });
+
   describe('Back', () => {
     function renderWithBack(tourAct: EditorTourAct, beat: EditorTourBeat) {
       vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
       startEditorTour();
       setEditorTourBeat(tourAct, beat);
       const onBack = vi.fn();
-      const view = render(<TourCard onPrimary={vi.fn()} onBack={onBack} onSkip={vi.fn()} />);
+      const view = render(<TourCard act={tourAct} beat={beat} onPrimary={vi.fn()} onBack={onBack} onSkip={vi.fn()} />);
       return { ...view, onBack };
     }
 
@@ -199,7 +212,7 @@ describe('TourCard', () => {
       vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
       startEditorTour();
       setEditorTourBeat(3, 'land', true);
-      const { container } = render(<TourCard onPrimary={vi.fn()} onBack={vi.fn()} onSkip={vi.fn()} />);
+      const { container } = render(<TourCard act={3} beat="land" onPrimary={vi.fn()} onBack={vi.fn()} onSkip={vi.fn()} />);
       expect(cardReady()).toBe(true);
       expect(container.querySelector('[data-editor-tour-card]')).toHaveAttribute('data-settled');
     });
