@@ -22,7 +22,8 @@ for d in $O/workers/*/; do
   [ -n "$wt" ] || continue
   ps -eo args | grep -F -- "$wt" | grep -qv grep && continue          # a live process still uses the worktree
   [ $(( $(date +%s) - $(stat -c %Y $d/running) )) -lt 300 ] && continue  # just launched; give it time
-  mv $d/running $d/died-$(date -u +%Y%m%dT%H%MZ); dead="$dead $w"
+  $O/bin/stop-worker $w "died in container restart (ensure-daemons)" >/dev/null 2>&1   # finalizes the orphan: commits WIP to tl/<worker>
+  dead="$dead $w"
 done
 if [ -n "$dead" ]; then
   printf '\n## ensure-daemons %s: workers died (container restart)\nRe-dispatch fresh (on the same branch with `--base tl/<worker>` if it has commits):%s\n' "$(date -u +%FT%TZ)" "$dead" >> $O/managers/$A/INBOX.md

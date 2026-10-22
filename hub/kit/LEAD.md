@@ -15,6 +15,15 @@ You lead one machine and one area. **You keep the machinery healthy and do as li
 
 The plan is `$ORCH/PLAN.md` (v2.1); your lane, task IDs and home repo are in its "Who does what" table. The manager rules are in `$ORCH/MANAGER-COMMON.md`.
 
+## STAY AWAKE: never go idle (ROOT CAUSE of tonight's restarts, restored 23:10Z)
+**An idle session's container is reclaimed after about 30 minutes, killing every daemon, the manager and all workers.** Background processes do not count as activity. The v1 runbook had this rule; v2.1 dropped it, which is why containers kept "restarting".
+
+**Keep a Monitor armed at all times.** Its timeout is at most 30 min; re-arm it on every expiry notice. Its command is:
+
+`while true; do out=$($ORCH/bin/ensure-daemons <area> 2>&1); echo "$out" | grep -qE 'started: none; dead workers: none' || echo "$out"; sleep 120; done`
+
+Never end a turn without an armed Monitor.
+
 ## Kickoff (once, when the orchestrator says go)
 1. Pull the kit by running `$ORCH/bin/hub-sync <area>` once. Confirm that `$ORCH/PLAN.md` starts with "Timeline: PLAN (v2.1" and that `grep -c MANAGERS_ON_CLAUDE $ORCH/bin/run-manager` is 2.
 2. **Archive the old manager state** (move it; never delete):
