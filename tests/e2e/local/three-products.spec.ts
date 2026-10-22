@@ -2790,8 +2790,8 @@ test('quick: Astrid edit then App edit are visible and readable on the adopted t
   expect(savedRevisionId).not.toBe(astridRevisionId);
   expect(await currentHead(harness)).toBe(savedRevisionId);
 
-  const status = await quickAstrid.status();
-  const show = await quickAstrid.show();
+  const status = await agent.status();
+  const show = await agent.show();
   expect(status.current_head).toBe(savedRevisionId);
   expect(show.head_revision_id).toBe(savedRevisionId);
   const lineage = (await allRevisions(harness, quickSeed)).map((revision) => revision.revision_id);
