@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-22T23:38:45Z | dispatcher heartbeat 4s | live 4 (sol 1, luna 3, other 0) | busy30 14 | status age 2m -->
-# agent board, 2026-10-22T23:36:46Z
+<!-- agent | 2026-10-22T23:40:02Z | dispatcher heartbeat 5s | live 3 (sol 1, luna 2, other 0) | busy30 14 | status age 1m -->
+# agent board, 2026-10-22T23:38:57Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream merge, regenerated artifacts | Sol | — | merged | agt-U2-media-repair; agt-U2-integrated-proof | IndependentPASS; merge3f1ceaed1; integrated behavior/fastgate classification running, not yet done credit | 3f1ceaed1 |
@@ -8,7 +8,7 @@
 | R2 | guarded whole/per-step undo | Sol | R1; C0c before merge | review | agt-R2-step-undo; agt-R2-core-review | Staged core548targetedPASS; scopedlint/typePASS. R1 provider dispatch/physical binding/effect projection still needed; C0c merge hold | b5b811066 |
 | R3 | dry run and structured errors | Luna | R1 | todo | — | — | — |
 | V2 | timing/structure/element/parameter validation | Luna | R1 | todo | — | — | — |
-| G2 | open/commit and bounded rerun | Sol | C0 approved; R1,U2 before merge | review | agt-G2-restart; agt-G2-review | Independent conditionalPASS:312targeted+Ruff+targetedtyping; U2/R1 before landing; G3 emitter integration later; global mypy environment unresolved | 63f7b4c21 |
+| G2 | open/commit and bounded rerun | Sol | C0 approved; R1,U2 before merge | review | agt-G2-restart; agt-G2-forward-U2 | Independent conditionalPASS312tests; clean actual merge-forward to landedU2 prepared, workerchecking; R1 before landing, G3 emitter later. Private declaredtypecheck4modulesPASS | 63f7b4c21 |
 | G3 | document patch emitter and helpers | Luna | G2 | todo | — | — | — |
 | G4 | remaining writers through commit | Luna | G2 | todo | — | — | — |
 | G5 | delete superseded paths | Luna | G3,G4; H3 go/no-go | todo | — | — | — |
