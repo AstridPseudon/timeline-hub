@@ -10,6 +10,7 @@ import {
 import { usePanesStore } from '@/shared/state/panesStore.ts';
 import { EDITOR_TOUR_ANCHOR_ATTRIBUTE, EDITOR_TOUR_ANCHORS } from '@/tools/video-editor/tour/anchors.ts';
 import { EDITOR_TOUR_SCRIPT } from '@/tools/video-editor/tour/tourScript.ts';
+import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/useAgentVoice.ts';
 import { AgentChatComposer } from './AgentChatComposer';
 import { AgentChatMenu } from './AgentChatMenu';
 import { NewChatMenu } from './NewChatMenu';
@@ -20,7 +21,7 @@ import { buildRenderedTurns } from './buildRenderedTurns';
 import { buildTourTurns, tourActStartMs, type TourChatProgress } from './tourChatTurns';
 import { useChatScroll } from './useChatScroll';
 
-const IDLE_PLACEHOLDER = 'Type or press Cmd+Shift+R to talk...';
+const IDLE_PLACEHOLDER = CHAT_VOICE_ENABLED ? 'Type or press Cmd+Shift+R to talk...' : 'Type a message...';
 const COARSE_PLACEHOLDER = 'Type, or tap the mic to talk...';
 const BUSY_PLACEHOLDER = 'Type to queue next message...';
 // The header of a fresh chat: untitled, on the default agent. Static, so nothing here reaches a session.
@@ -177,9 +178,9 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
         {renderedTurns.length === 0 && (
           <div className="flex min-h-full flex-col items-center justify-center py-8 text-center text-sm text-muted-foreground">
             <p>✨ I can do almost anything</p>
-            {coarsePointer
+            {CHAT_VOICE_ENABLED && (coarsePointer
               ? <p className="mt-1 text-xs">Tap the mic to talk</p>
-              : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>}
+              : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>)}
             <p className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px]">
               <AgentIcon agent="astrid" className="h-3 w-3 shrink-0" />
               {agentNames.astrid} · default model
@@ -215,7 +216,7 @@ export function TourChatPanel({ isExpanded = false }: { isExpanded?: boolean }) 
           value={composerText}
           readOnly
           rows={isExpanded ? 8 : 4}
-          placeholder={busy ? BUSY_PLACEHOLDER : coarsePointer ? COARSE_PLACEHOLDER : IDLE_PLACEHOLDER}
+          placeholder={busy ? BUSY_PLACEHOLDER : coarsePointer && CHAT_VOICE_ENABLED ? COARSE_PLACEHOLDER : IDLE_PLACEHOLDER}
           voice={NO_VOICE}
           onSend={() => {
             if (!getEditorTourState().sent) markEditorTourSent();

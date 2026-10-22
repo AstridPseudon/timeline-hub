@@ -43,6 +43,8 @@ const mocks = vi.hoisted(() => ({
   setIsTasksPaneOpen: vi.fn(),
 }));
 
+import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/useAgentVoice.ts';
+
 vi.mock('@/shared/contexts/AgentChatContext', () => ({
   useAgentChatBridge: (...args: unknown[]) => mocks.useAgentChatBridge(...args),
   useAgentChatActionsRegistry: (...args: unknown[]) => mocks.useAgentChatActionsRegistry(...args),
@@ -78,7 +80,8 @@ vi.mock('@/tools/video-editor/hooks/useAgentSession', () => ({
   useTakeOverSession: (...args: unknown[]) => mocks.useTakeOverSession(...args),
 }));
 
-vi.mock('@/tools/video-editor/hooks/useAgentVoice', () => ({
+vi.mock('@/tools/video-editor/hooks/useAgentVoice', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/tools/video-editor/hooks/useAgentVoice.ts')>()),
   useAgentVoice: (...args: unknown[]) => mocks.useAgentVoice(...args),
 }));
 
@@ -289,7 +292,8 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
     expect(screen.getByText('Astrid', { selector: 'span' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Chat: New chat' }).closest('div[class*="border-b"]')!.querySelector('img')).toBeNull();
     expect(screen.getByText('✨ I can do almost anything')).toBeInTheDocument();
-    expect(composer().placeholder).toBe('Type or press Cmd+Shift+R to talk...');
+    expect(composer().placeholder).toBe(CHAT_VOICE_ENABLED ? 'Type or press Cmd+Shift+R to talk...' : 'Type a message...');
+    expect(screen.queryByTitle(/Voice input/)).toBeNull();
 
     act(() => skipEditorTourAnimation());
     fireEvent.click(sendButton());
@@ -461,7 +465,7 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
     expect(getEditorTourState().runId).toBe(runId + 1);
     expect(getEditorTourState().act).toBe(1);
     expect(composer().value).toBe('');
-    expect(transcript().textContent).toBe('✨ I can do almost anythingPress Cmd+Shift+R to talkAstrid · default model');
+    expect(transcript().textContent).toBe(`✨ I can do almost anything${CHAT_VOICE_ENABLED ? 'Press Cmd+Shift+R to talk' : ''}Astrid · default model`);
     expect(within(transcript()).queryByText(ACT1.prompt)).toBeNull();
     expect(transcript().textContent).not.toContain(ACT1.reply);
 

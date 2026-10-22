@@ -2,6 +2,7 @@ import type { KeyboardEvent, Ref } from 'react';
 import { Mic, Send, Square, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { EDITOR_TOUR_ANCHOR_ATTRIBUTE, EDITOR_TOUR_ANCHORS } from '@/tools/video-editor/tour/anchors.ts';
+import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/useAgentVoice.ts';
 
 export interface AgentChatComposerVoice {
   isRecording: boolean;
@@ -54,33 +55,35 @@ export function AgentChatComposer({
         />
 
         <div className="absolute inset-y-4 right-2 z-10 flex w-8 flex-col gap-2">
-          <div className="relative flex min-h-0 flex-1 items-center justify-center">
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              className={voice.isRecording
-                ? 'relative h-full w-full rounded-xl bg-red-500 text-white transition-colors hover:bg-red-600'
-                : 'relative h-full w-full rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
-              onClick={voice.onToggle}
-              disabled={voice.micDisabled}
-              title={voice.isRecording ? 'Stop recording' : 'Voice input (Cmd+Shift+R)'}
-            >
-              {voice.isRecording ? <Square className="h-3 w-3" /> : <Mic className="h-3.5 w-3.5" />}
-            </Button>
-            {voice.isRecording && (
+          {CHAT_VOICE_ENABLED && (
+            <div className="relative flex min-h-0 flex-1 items-center justify-center">
               <Button
                 type="button"
                 size="icon"
                 variant="ghost"
-                className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-muted hover:bg-destructive hover:text-destructive-foreground"
-                onClick={voice.onCancel}
-                title="Cancel recording"
+                className={voice.isRecording
+                  ? 'relative h-full w-full rounded-xl bg-red-500 text-white transition-colors hover:bg-red-600'
+                  : 'relative h-full w-full rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
+                onClick={voice.onToggle}
+                disabled={voice.micDisabled}
+                title={voice.isRecording ? 'Stop recording' : 'Voice input (Cmd+Shift+R)'}
               >
-                <X className="h-3 w-3" />
+                {voice.isRecording ? <Square className="h-3 w-3" /> : <Mic className="h-3.5 w-3.5" />}
               </Button>
-            )}
-          </div>
+              {voice.isRecording && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-muted hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={voice.onCancel}
+                  title="Cancel recording"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          )}
 
           <div className="flex min-h-0 flex-1 items-center justify-center">
             <Button

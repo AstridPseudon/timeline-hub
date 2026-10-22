@@ -15,7 +15,8 @@ vi.mock('@/shared/contexts/AgentChatContext', () => ({
   useAgentChatBridge: () => ({ timelineId: null, editorContext: { projectId: 'project-1' } }),
   useAgentChatActionsRegistry: () => ({ registerHandlers: () => {}, publishState: () => {}, unregister: () => {} }),
 }));
-vi.mock('@/tools/video-editor/hooks/useAgentVoice', () => ({
+vi.mock('@/tools/video-editor/hooks/useAgentVoice', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/tools/video-editor/hooks/useAgentVoice.ts')>()),
   useAgentVoice: () => ({ isRecording: false, isProcessing: false, cancelRecording: () => {} }),
 }));
 

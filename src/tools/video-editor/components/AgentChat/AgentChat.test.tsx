@@ -41,6 +41,8 @@ const mocks = vi.hoisted(() => ({
   panesState: { isTasksPaneLocked: false, setIsTasksPaneOpen: vi.fn() },
 }));
 
+import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/useAgentVoice.ts';
+
 vi.mock('@/shared/contexts/AgentChatContext', () => ({
   useAgentChatBridge: (...args: unknown[]) => mocks.useAgentChatBridge(...args),
   useAgentChatActionsRegistry: (...args: unknown[]) => mocks.useAgentChatActionsRegistry(...args),
@@ -82,7 +84,8 @@ vi.mock('@/shared/state/panesStore', () => ({
   usePanesStore: (selector: (state: typeof mocks.panesState) => unknown) => selector(mocks.panesState),
 }));
 
-vi.mock('@/tools/video-editor/hooks/useAgentVoice', () => ({
+vi.mock('@/tools/video-editor/hooks/useAgentVoice', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/tools/video-editor/hooks/useAgentVoice.ts')>()),
   useAgentVoice: (...args: unknown[]) => mocks.useAgentVoice(...args),
 }));
 
@@ -479,7 +482,7 @@ describe('AgentChat', () => {
       expect(input).toHaveAttribute('placeholder', 'Starting Codex…');
       expect(input).toHaveValue('');
       expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
-      expect(screen.getByRole('button', { name: 'Voice input (Cmd+Shift+R)' })).toBeDisabled();
+      expect(screen.queryByRole('button', { name: 'Voice input (Cmd+Shift+R)' })).toBeNull();
       fireEvent.keyDown(input, { key: 'Enter' });
       fireEvent.keyDown(window, { key: 'r', metaKey: true, shiftKey: true });
       expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
@@ -891,7 +894,20 @@ describe('AgentChat', () => {
     expect(state.createSession.mutate).not.toHaveBeenCalled();
   });
 
-  it('Cmd+Shift+R remains available for project chat without a timeline', async () => {
+  it.skipIf(CHAT_VOICE_ENABLED)('Cmd+Shift+R and the mic stay off while chat voice is disabled', async () => {
+    const state = createState();
+    state.timelineId = null;
+    state.sessionsData = [];
+    mockFromState(state);
+
+    renderAgentChat();
+
+    expect(fireEvent.keyDown(window, { key: 'r', metaKey: true, shiftKey: true })).toBe(true);
+    expect(state.voice.startRecording).not.toHaveBeenCalled();
+    expect(screen.queryByTitle('Voice input (Cmd+Shift+R)')).toBeNull();
+  });
+
+  it.skipIf(!CHAT_VOICE_ENABLED)('Cmd+Shift+R remains available for project chat without a timeline', async () => {
     const state = createState();
     state.timelineId = null;
     state.sessionsData = [];
@@ -1094,7 +1110,7 @@ describe('AgentChat', () => {
     expect(screen.queryByText(/Delivery not confirmed/)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Send now' })).toBeNull();
     expect(screen.queryByTitle('Stop agent')).toBeNull();
-    expect(screen.getByTitle('Voice input (Cmd+Shift+R)')).toBeDisabled();
+    expect(screen.queryByTitle('Voice input (Cmd+Shift+R)')).toBeNull();
     expect(screen.queryByRole('combobox', { name: 'Agent model' })).toBeNull();
     expect(getQueuedTexts()).toEqual(['Already running', 'Waiting behind it']);
     expect(state.projectChats['project-1'].draft.queued_messages.map(row => row.id)).toEqual(['active-request', 'queued-next']);
@@ -1266,7 +1282,7 @@ describe('project-only Astrid chat', () => {
     const context = { tool: 'video-editor', projectId: 'project-1', projectSlug: 'first', timelineId: null, timelineName: null };
     mocks.useAgentChatBridge.mockReturnValue({ timelineId: null, editorContext: context });
     render(<AgentChatPanel isExpanded />);
-    const composer = screen.getByPlaceholderText('Type or press Cmd+Shift+R to talk...');
+    const composer = screen.getByPlaceholderText(CHAT_VOICE_ENABLED ? 'Type or press Cmd+Shift+R to talk...' : 'Type a message...');
     expect(composer).not.toBeDisabled();
     fireEvent.change(composer, { target: { value: 'Remember model B for this project' } });
     fireEvent.keyDown(composer, { key: 'Enter', code: 'Enter' });
