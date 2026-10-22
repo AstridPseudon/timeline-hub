@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { disabledBuiltInExtensions } from '@/shared/settings/declarations';
+import { getSettingsStore } from '@/shared/settings/instance';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -3681,7 +3683,7 @@ describe('ExtensionManager — built-in extensions section (T2.4)', () => {
       ).toBeInTheDocument();
     });
     expect(
-      JSON.parse(window.localStorage.getItem(DISABLED_STORAGE_KEY)!),
+      getSettingsStore().get(disabledBuiltInExtensions.ref()),
     ).toEqual([]);
   });
 
@@ -3711,7 +3713,7 @@ describe('ExtensionManager — built-in extensions section (T2.4)', () => {
       ).toBeInTheDocument();
     });
     expect(
-      JSON.parse(window.localStorage.getItem(DISABLED_STORAGE_KEY)!),
+      getSettingsStore().get(disabledBuiltInExtensions.ref()),
     ).toEqual([LOCAL_ID]);
   });
 
@@ -3798,7 +3800,7 @@ describe('ExtensionManager — built-in extensions section (T2.4)', () => {
         })).toBeInTheDocument();
       });
       expect(
-        JSON.parse(window.localStorage.getItem(DISABLED_STORAGE_KEY)!),
+        getSettingsStore().get(disabledBuiltInExtensions.ref()),
       ).toEqual([REVIEWED_ID]);
     });
 

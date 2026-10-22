@@ -4,7 +4,8 @@ import type {
   ExtensionDiagnostic,
   LiveSourceDiagnostic,
 } from '@astrid/editor-sdk';
-import { DIAGNOSTIC_SOURCE_EXTENSION, getSettingsPrefix } from '@astrid/editor-sdk';
+import { createRuntimeSettingsBacking } from './extensionSettingsBacking';
+import { DIAGNOSTIC_SOURCE_EXTENSION } from '@astrid/editor-sdk';
 import type {
   CapabilityFinding,
   RenderBlocker,
@@ -134,7 +135,8 @@ export function syncPlannerDiagnosticsToCollection(
 
 
 /**
- * Clear all localStorage settings keys for a given extension.
+ * Clear all saved settings for a given extension (its `ext.<id>` record in the settings store, and any old
+ * browser keys not yet imported).
  *
  * This is the settings-derived UI state reset counterpart to
  * removeExtensionDiagnosticsFromCollection. Callers should invoke both from
@@ -142,18 +144,9 @@ export function syncPlannerDiagnosticsToCollection(
  * guarantee that disable/unload clears the targeted extension's diagnostics
  * and settings UI state without touching unrelated extension state.
  */
-export function clearExtensionSettingsFromLocalStorage(extensionId: string): void {
-  const prefix = getSettingsPrefix(extensionId);
-  try {
-    for (let i = localStorage.length - 1; i >= 0; i--) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(prefix)) {
-        localStorage.removeItem(key);
-      }
-    }
-  } catch {
-    // localStorage unavailable — silently no-op
-  }
+export function clearExtensionSettings(extensionId: string): void {
+  const backing = createRuntimeSettingsBacking(extensionId);
+  for (const key of backing.keys()) backing.remove(key);
 }
 
 export function syncLiveDiagnosticsToCollection(

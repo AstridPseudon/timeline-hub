@@ -132,7 +132,7 @@ import {
 } from '@/tools/video-editor/runtime/agentToolInvocationService.ts';
 import type { ProcessStatus } from '@/sdk/video/families/processes';
 import {
-  clearExtensionSettingsFromLocalStorage,
+  clearExtensionSettings,
   removeExtensionDiagnosticsFromCollection,
   syncExtensionDiagnosticsToCollection,
   syncLiveDiagnosticsToCollection,
@@ -1092,7 +1092,7 @@ function RuntimeEffectRegistryLifecycle({
       effectRegistry.unregisterOwner(extensionId);
       agentToolRegistry?.unregisterAll(extensionId);
       removeExtensionDiagnosticsFromCollection(diagnosticCollection, extensionId);
-      clearExtensionSettingsFromLocalStorage(extensionId);
+      clearExtensionSettings(extensionId);
     });
     return () => handle.dispose();
   }, [commandRegistryRef, diagnosticCollection, effectRegistry, lifecycleHostRef, agentToolRegistryRef, rendererRegistryRef]);
@@ -1149,7 +1149,7 @@ function RuntimeTransitionRegistryLifecycle({
       commandRegistry?.unregisterAll(extensionId);
       transitionRegistry.unregisterOwner(extensionId);
       removeExtensionDiagnosticsFromCollection(diagnosticCollection, extensionId);
-      clearExtensionSettingsFromLocalStorage(extensionId);
+      clearExtensionSettings(extensionId);
     });
     return () => handle.dispose();
   }, [commandRegistryRef, diagnosticCollection, transitionRegistry, lifecycleHostRef]);
@@ -1185,7 +1185,7 @@ function RuntimeShaderRegistryLifecycle({
     const handle = host.onLifecycleDisposed((extensionId: string) => {
       shaderRegistry.unregisterOwner(extensionId);
       removeExtensionDiagnosticsFromCollection(diagnosticCollection, extensionId);
-      clearExtensionSettingsFromLocalStorage(extensionId);
+      clearExtensionSettings(extensionId);
     });
     return () => handle.dispose();
   }, [diagnosticCollection, shaderRegistry, lifecycleHostRef]);
@@ -1241,7 +1241,7 @@ function RuntimeClipTypeRegistryLifecycle({
       commandRegistry?.unregisterAll(extensionId);
       clipTypeRegistry.unregisterOwner(extensionId);
       removeExtensionDiagnosticsFromCollection(diagnosticCollection, extensionId);
-      clearExtensionSettingsFromLocalStorage(extensionId);
+      clearExtensionSettings(extensionId);
     });
     return () => handle.dispose();
   }, [commandRegistryRef, diagnosticCollection, clipTypeRegistry, lifecycleHostRef]);

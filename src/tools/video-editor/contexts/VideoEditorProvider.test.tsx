@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs';
+import { extensionSettingsGroup } from '@/tools/video-editor/runtime/extensionSettingsBacking';
+import { getSettingsStore } from '@/shared/settings/instance';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -78,6 +80,13 @@ import type {
   ExtensionPackRecord,
   ExtensionLifecycleEvent,
 } from '@/tools/video-editor/runtime/extensionStateRepository';
+
+/** What an extension's setting holds in the settings store, as JSON text (null when nothing is saved). */
+function savedExtensionSetting(extensionId: string, key: string): string | null {
+  const value = getSettingsStore().get({ group: extensionSettingsGroup(extensionId), field: key, default: undefined, validate: () => true });
+  return value === undefined ? null : JSON.stringify(value);
+}
+
 
 const fixtureAstridElementHost: import('@/tools/video-editor/runtime/astrid-element-host').AstridElementHost = { descriptors: [], sequenceRegistry: {}, resolveComponent: () => undefined, resolveSequenceClipEntry: () => undefined, describeClipCapability: () => undefined };
 
@@ -3761,9 +3770,7 @@ describe('VideoEditorProvider', () => {
 
       // Verify the value was persisted to localStorage
       await waitFor(() => {
-        const raw = localStorage.getItem(
-          `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-        );
+        const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
         expect(raw).toBe('"my-secret-key"');
       });
 
@@ -3839,9 +3846,7 @@ describe('VideoEditorProvider', () => {
       // The save should have been blocked — SchemaForm validateAndFocus
       // returns false, so no localStorage write should have occurred
       await waitFor(() => {
-        const raw = localStorage.getItem(
-          `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-        );
+        const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
         // Should still be null (no save occurred)
         expect(raw).toBeNull();
       });
@@ -3910,9 +3915,7 @@ describe('VideoEditorProvider', () => {
       fireEvent.click(saveBtn);
 
       await waitFor(() => {
-        const raw = localStorage.getItem(
-          `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-        );
+        const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
         expect(raw).toBe('"some-key"');
       });
 
@@ -3924,9 +3927,7 @@ describe('VideoEditorProvider', () => {
 
       // Verify localStorage key was cleared and form reverted to default (empty)
       await waitFor(() => {
-        const raw = localStorage.getItem(
-          `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-        );
+        const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
         expect(raw).toBeNull();
       });
 
@@ -3993,9 +3994,7 @@ describe('VideoEditorProvider', () => {
       fireEvent.click(saveBtn);
 
       await waitFor(() => {
-        const raw = localStorage.getItem(
-          `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-        );
+        const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
         expect(raw).toBe('"saved-key"');
       });
 
@@ -4014,9 +4013,7 @@ describe('VideoEditorProvider', () => {
       });
 
       // localStorage should still have the saved value (not the unsaved change)
-      const raw = localStorage.getItem(
-        `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-      );
+      const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
       expect(raw).toBe('"saved-key"');
     });
 
@@ -4100,10 +4097,10 @@ describe('VideoEditorProvider', () => {
 
       // Both extensions' settings should be in localStorage
       expect(
-        localStorage.getItem(`astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`),
+        savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey'),
       ).toBe('"settings-key-vp"');
       expect(
-        localStorage.getItem(`astrid.ext.${OTHER_EXTENSION_ID}.otherKey`),
+        savedExtensionSetting(OTHER_EXTENSION_ID, 'otherKey'),
       ).toBe('"other-key-vp"');
 
       // Disable the settings extension (remove from props)
@@ -4112,13 +4109,13 @@ describe('VideoEditorProvider', () => {
       await waitFor(() => {
         // Targeted extension's settings localStorage must be cleared
         expect(
-          localStorage.getItem(`astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`),
+          savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey'),
         ).toBeNull();
       });
 
       // Unrelated extension's settings localStorage must be preserved
       expect(
-        localStorage.getItem(`astrid.ext.${OTHER_EXTENSION_ID}.otherKey`),
+        savedExtensionSetting(OTHER_EXTENSION_ID, 'otherKey'),
       ).toBe('"other-key-vp"');
 
       // Targeted extension's diagnostics must be cleared
