@@ -87,7 +87,7 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
   welcome: { title: 'Welcome to Astrid', body: 'I’m just going to show you a very quick tour of what Astrid can do.', action: 'OK' },
   hints: { compose: 'Press Send to ask Astrid', respond: 'Your agent uses community-built tools to deliver your request',
     /** Act 1's compose card only: a header above the "Press Send" line. */
-    firstCompose: 'You can ask your agent to do anything with creative tools and open models',
+    firstCompose: 'Ask your agent to do anything with creative tools and open models',
   },
   controls: { next: 'Next', back: 'Back', skip: 'Skip tour' },
   strip: ['Three.js', 'Frames', 'Video'],
