@@ -569,7 +569,5 @@ def test_same_asset_follows_the_runtime_identity_fixture():
 
     cases = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "asset-identity.json").read_text())["cases"]
     for case in cases:
-        if any(k in case["a"] or k in case["b"] for k in ("duration", "resolution", "fps")):
-            continue  # render-affecting fields are not part of Astrid's rule
         assert same_asset(case["a"], case["b"]) is case["same"], case["name"]
     assert same_asset({"media_id": "m", "duration": 3}, {"media_id": "m", "duration": 4})

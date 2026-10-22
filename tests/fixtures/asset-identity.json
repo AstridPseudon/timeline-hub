@@ -1,5 +1,5 @@
 {
- "_source": "Copied from the Runtime, branch feat/asset-identity, conformance/fixtures/asset-identity.json; Astrid's rule skips cases with render-affecting fields.",
+ "_source": "Copied from the Runtime, branch main at 4563bb5, conformance/fixtures/asset-identity.json; Astrid's rule skips cases with render-affecting fields.",
  "cases": [
   {
    "a": {
