@@ -18,6 +18,7 @@ import type {
   ExtensionContext,
   CreativeContext,
 } from '@/sdk/context';
+import { createRuntimeSettingsBacking } from './extensionSettingsBacking';
 import { createCreativeContext, CONTEXT_DISPOSE_SYMBOL } from '@/sdk/context';
 import type { TimelineOps } from '@/sdk/video/timeline/timelineOps';
 import type {
@@ -269,9 +270,12 @@ export function createExtensionContext(
     },
   };
 
-  // ---- settings service (injectable factory, localStorage-backed) -----------
+  // ---- settings service (injectable factory, Runtime-backed through the settings store) ----
   const { service: settingsService, dispose: disposeSettings } =
-    createExtensionSettingsService(extensionId, manifest, settingsServiceOptions);
+    createExtensionSettingsService(extensionId, manifest, {
+      ...settingsServiceOptions,
+      backing: settingsServiceOptions?.backing ?? createRuntimeSettingsBacking(extensionId),
+    });
 
   // ---- i18n service (with manifest message bundle fallback) ----------------
   const messages: Record<string, string> | undefined =

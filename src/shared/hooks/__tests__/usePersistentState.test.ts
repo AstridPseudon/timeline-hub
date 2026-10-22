@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { dispatchAppEvent } from '@/shared/lib/typedEvents';
 
 // Mock errorHandler before importing hook
 vi.mock('@/shared/components/ui/runtime/sonner', () => ({
@@ -104,40 +103,43 @@ describe('usePersistentState', () => {
     expect(result.current[0]).toBe('fallback');
   });
 
-  it('broadcasts changes to other hook instances via custom event', () => {
-    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
-
-    const { result } = renderHook(() => usePersistentState('shared-key', 'initial'));
+  it('syncs other hook instances with the same key in this tab through the settings store', () => {
+    const first = renderHook(() => usePersistentState('shared-key', 'initial'));
+    const second = renderHook(() => usePersistentState('shared-key', 'initial'));
 
     act(() => {
-      result.current[1]('updated');
+      first.result.current[1]('updated');
     });
 
-    expect(dispatchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'persistentStateChange',
-        detail: { key: 'shared-key', value: 'updated' },
-      })
-    );
-
-    dispatchSpy.mockRestore();
+    expect(first.result.current[0]).toBe('updated');
+    expect(second.result.current[0]).toBe('updated');
   });
 
-  it('responds to external persistent state change events', () => {
+  it('responds to a change another tab makes to the same key (a storage event)', () => {
     const { result } = renderHook(() => usePersistentState('shared-key', 'initial'));
 
     act(() => {
-      dispatchAppEvent('persistentStateChange', { key: 'shared-key', value: 'external-update' });
+      localStorageMock['shared-key'] = JSON.stringify('external-update');
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'shared-key',
+        newValue: JSON.stringify('external-update'),
+        storageArea: localStorage,
+      }));
     });
 
     expect(result.current[0]).toBe('external-update');
   });
 
-  it('ignores external events for different keys', () => {
+  it('ignores another tab\'s change to a different key', () => {
     const { result } = renderHook(() => usePersistentState('my-key', 'initial'));
 
     act(() => {
-      dispatchAppEvent('persistentStateChange', { key: 'other-key', value: 'should-not-apply' });
+      localStorageMock['other-key'] = JSON.stringify('should-not-apply');
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'other-key',
+        newValue: JSON.stringify('should-not-apply'),
+        storageArea: localStorage,
+      }));
     });
 
     expect(result.current[0]).toBe('initial');

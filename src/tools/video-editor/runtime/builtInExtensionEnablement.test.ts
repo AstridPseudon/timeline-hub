@@ -5,18 +5,30 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FakeAppStateApi } from '@/test/settingsStoreHarness';
 
 const DISABLED_KEY = 'astrid.dev-extensions.disabled';
+/** The Runtime app-state record that holds the disabled list (`extensions.disabled`). */
+const RUNTIME_RECORD = 'ui.extensions';
 
 // Each test gets a fresh module instance (cache + listeners) so snapshot
 // identity and notification counts are fully isolated.
 let store: typeof import('./builtInExtensionEnablement');
+let settings: typeof import('@/shared/settings/instance');
+let fake: FakeAppStateApi;
 
 beforeEach(async () => {
   vi.resetModules();
   localStorage.clear();
   store = await import('./builtInExtensionEnablement');
+  // Imported after the reset so it shares this test's module instances.
+  const harness = await import('@/test/settingsStoreHarness');
+  settings = await import('@/shared/settings/instance');
+  ({ fake } = harness.installTestSettingsStore());
 });
+
+const flush = () => settings.getSettingsStore().flush();
+const refresh = () => settings.getSettingsStore().refresh();
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -73,7 +85,7 @@ describe('no-op writes', () => {
     unsubscribe();
   });
 
-  it('notifies exactly once and persists for a real toggle', () => {
+  it('notifies exactly once and saves the list to the Runtime for a real toggle', async () => {
     const listener = vi.fn();
     const unsubscribe = store.subscribe(listener);
 
@@ -81,7 +93,8 @@ describe('no-op writes', () => {
 
     expect(listener).toHaveBeenCalledTimes(1);
     expect(store.getSnapshot().has('ext-a')).toBe(true);
-    expect(JSON.parse(localStorage.getItem(DISABLED_KEY)!)).toEqual(['ext-a']);
+    await flush();
+    expect(fake.record(RUNTIME_RECORD).content).toEqual({ disabled: ['ext-a'] });
     unsubscribe();
   });
 });
@@ -112,26 +125,28 @@ describe('corrupt storage', () => {
     expect(store.getSnapshot()).toBe(first);
   });
 
-  it('heals corrupt storage on the next real toggle', () => {
+  it('heals corrupt storage on the next real toggle', async () => {
     localStorage.setItem(DISABLED_KEY, '{broken');
     expect(store.getSnapshot().size).toBe(0);
 
     store.setBuiltInExtensionEnabled('ext-a', false);
 
-    expect(JSON.parse(localStorage.getItem(DISABLED_KEY)!)).toEqual(['ext-a']);
     expect(store.getSnapshot().has('ext-a')).toBe(true);
+    await flush();
+    expect(fake.record(RUNTIME_RECORD).content).toEqual({ disabled: ['ext-a'] });
   });
 });
 
 describe('storage event synchronization', () => {
-  it('updates subscribers exactly once for a relevant key change', () => {
+  it('updates subscribers exactly once when another tab\'s change is read from the Runtime', async () => {
     const listener = vi.fn();
     const unsubscribe = store.subscribe(listener);
+    await refresh();
+    listener.mockClear();
 
-    // A real cross-tab write is immediately visible in this tab's shared
-    // storage area and is accompanied by exactly one storage event.
-    localStorage.setItem(DISABLED_KEY, '["tab-ext"]');
-    dispatchStorageEvent({ key: DISABLED_KEY, newValue: '["tab-ext"]' });
+    // Another tab saves the list; this tab picks it up when the Runtime is read again (window focus).
+    fake.writeElsewhere(RUNTIME_RECORD, { disabled: ['tab-ext'] });
+    await refresh();
 
     expect(listener).toHaveBeenCalledTimes(1);
     expect(store.getSnapshot().has('tab-ext')).toBe(true);
@@ -149,15 +164,17 @@ describe('storage event synchronization', () => {
     unsubscribe();
   });
 
-  it('treats a full clear() as relevant and empties the snapshot', () => {
-    localStorage.setItem(DISABLED_KEY, '["ext-a"]');
+  it('empties the snapshot when the Runtime record is cleared elsewhere', async () => {
+    fake.writeElsewhere(RUNTIME_RECORD, { disabled: ['ext-a'] });
     const listener = vi.fn();
     const unsubscribe = store.subscribe(listener);
+    await refresh();
+    expect(store.getSnapshot().has('ext-a')).toBe(true);
+    listener.mockClear();
 
-    // Simulate another tab calling storage.clear(): the shared area is
-    // emptied and one storage event (key === null) is delivered.
-    localStorage.removeItem(DISABLED_KEY);
-    dispatchStorageEvent({ key: null, newValue: null });
+    // Another tab clears the saved list; the next read sees an empty record.
+    fake.writeElsewhere(RUNTIME_RECORD, {});
+    await refresh();
 
     expect(listener).toHaveBeenCalledTimes(1);
     expect(store.getSnapshot().size).toBe(0);
@@ -227,30 +244,34 @@ describe('subscribe', () => {
 });
 
 describe('setBuiltInExtensionEnabled', () => {
-  it('persists a sorted JSON array of disabled ids', () => {
+  it('saves a sorted list of disabled ids to the Runtime', async () => {
     store.setBuiltInExtensionEnabled('z-ext', false);
     store.setBuiltInExtensionEnabled('a-ext', false);
-    expect(localStorage.getItem(DISABLED_KEY)).toBe('["a-ext","z-ext"]');
+    await flush();
+    expect(fake.record(RUNTIME_RECORD).content).toEqual({ disabled: ['a-ext', 'z-ext'] });
   });
 
-  it('removes an id when re-enabled', () => {
+  it('removes an id when re-enabled', async () => {
     store.setBuiltInExtensionEnabled('ext-a', false);
     store.setBuiltInExtensionEnabled('ext-b', false);
     store.setBuiltInExtensionEnabled('ext-a', true);
 
-    expect(JSON.parse(localStorage.getItem(DISABLED_KEY)!)).toEqual(['ext-b']);
     expect(store.getSnapshot().has('ext-a')).toBe(false);
+    await flush();
+    expect(fake.record(RUNTIME_RECORD).content).toEqual({ disabled: ['ext-b'] });
   });
 });
 
 describe('SSR safety', () => {
-  it('returns an empty snapshot and no-ops writes without localStorage', () => {
+  it('starts empty and keeps changes in memory without localStorage', async () => {
     vi.stubGlobal('localStorage', undefined);
+    // A store built now sees the missing localStorage (the one from beforeEach was built with it).
+    vi.resetModules();
+    const ext = await import('./builtInExtensionEnablement');
 
-    expect(store.getSnapshot().size).toBe(0);
-    expect(() => store.setBuiltInExtensionEnabled('ext-a', false)).not.toThrow();
-    expect(store.getSnapshot().size).toBe(0);
-    expect(store.getSnapshot().size).toBe(0);
+    expect(ext.getSnapshot().size).toBe(0);
+    expect(() => ext.setBuiltInExtensionEnabled('ext-a', false)).not.toThrow();
+    expect(ext.getSnapshot().has('ext-a')).toBe(true);
   });
 
   it('skips attaching a storage listener when the browser has no storage events', () => {

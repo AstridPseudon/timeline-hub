@@ -1,82 +1,41 @@
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from '@/shared/components/ui/runtime/sonner';
-import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
-import { dispatchAppEvent, useAppEventListener } from '@/shared/lib/typedEvents';
+import { useCallback, useMemo } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import { disabledBuiltInExtensions, skyPreviewEnvironment, tasksPaneLocked, themeHour } from '@/shared/settings/declarations';
+import type { SettingDeclaration } from '@/shared/settings/defineSetting';
+import { validatorFor } from '@/shared/settings/defineSetting';
+import { useSettingRef } from '@/shared/settings/useSetting';
+import type { SettingRef } from '@/shared/settings/settingsStore';
 
-const MAX_LOCAL_STORAGE_ITEM_LENGTH = 4 * 1024 * 1024; // 4MB
+/** The declared settings an old call site still names by its browser key. */
+const DECLARED_BY_STORAGE_KEY = new Map<string, SettingDeclaration<unknown>>(
+  [
+    ['astrid.tasks-pane-locked.v1', tasksPaneLocked],
+    ['theme-hour', themeHour],
+    ['theme-include-environment', skyPreviewEnvironment],
+    ['astrid.dev-extensions.disabled', disabledBuiltInExtensions],
+  ] as Array<[string, SettingDeclaration<unknown>]>,
+);
 
-// Check if localStorage is available (can fail in iOS Safari private mode)
-function isLocalStorageAvailable(): boolean {
-  try {
-    const test = '__localStorage_test__';
-    localStorage.setItem(test, test);
-    localStorage.removeItem(test);
-    return true;
-  } catch {
-    return false;
+const deviceRefs = new Map<string, SettingRef>();
+function refForStorageKey<T>(key: string, defaultValue: T): SettingRef<T> {
+  const declared = DECLARED_BY_STORAGE_KEY.get(key);
+  if (declared) return declared.ref() as SettingRef<T>;
+  // An undeclared key is a device setting: it stays in this browser, behind the same store.
+  let ref = deviceRefs.get(key);
+  if (!ref) {
+    ref = { group: 'device', field: key, default: defaultValue, validate: validatorFor(defaultValue), device: true };
+    deviceRefs.set(key, ref);
   }
+  return ref as SettingRef<T>;
 }
 
-export function usePersistentState<T>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-  const [state, setState] = useState<T>(() => {
-    // Mobile Safari in private mode can throw on localStorage access
-    if (!isLocalStorageAvailable()) {
-      return defaultValue;
-    }
-
-    try {
-      const storedValue = localStorage.getItem(key);
-      if (storedValue) {
-        return JSON.parse(storedValue) as T;
-      }
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'usePersistentState', showToast: false });
-    }
-    return defaultValue;
-  });
-
-  // Listen for updates from other components using the same key
-  const handleExternalUpdate = useCallback((detail: { key: string; value: unknown }) => {
-    if (detail?.key === key) {
-      setState(detail.value as T);
-    }
-  }, [key]);
-
-  useAppEventListener('persistentStateChange', handleExternalUpdate);
-
-  useEffect(() => {
-    // Skip localStorage writes if not available
-    if (!isLocalStorageAvailable()) {
-      return;
-    }
-
-    try {
-      const serializedState = JSON.stringify(state);
-      if (serializedState.length > MAX_LOCAL_STORAGE_ITEM_LENGTH) {
-        toast.warning("Could not save settings locally.", {
-          description: "The data size exceeds the 4MB limit for local storage.",
-        });
-        return;
-      }
-      localStorage.setItem(key, serializedState);
-
-      // Broadcast change to other hook instances in the same tab
-      dispatchAppEvent('persistentStateChange', { key, value: state });
-    } catch (error) {
-      // Different error message for mobile users
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const errorDescription = isMobile
-        ? "Local storage may be disabled in private browsing mode. Settings will be lost when the tab is closed."
-        : "There was an error writing to your browser's local storage.";
-
-      normalizeAndPresentError(error, {
-        context: 'usePersistentState',
-        toastTitle: 'Could not save settings locally.',
-        logData: { reason: errorDescription }
-      });
-    }
-  }, [key, state]);
-
-  return [state, setState];
+/**
+ * A value saved under a key. A thin adapter onto the settings store: keys with a declaration (see
+ * `shared/settings/declarations.ts`) are kept in the Runtime, any other key stays on this device.
+ */
+export function usePersistentState<T>(key: string, defaultValue: T): [T, Dispatch<SetStateAction<T>>] {
+  const ref = useMemo(() => refForStorageKey(key, defaultValue), [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [value, set] = useSettingRef(ref);
+  const setState = useCallback<Dispatch<SetStateAction<T>>>((update) => set(update), [set]);
+  return [value, setState];
 }
-

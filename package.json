@@ -91,6 +91,7 @@
     "test:e2e:extension-visual": "playwright test --config playwright.extension-visual.config.ts --workers=1",
     "test:e2e:timeline": "node scripts/portable-developer-command.mjs timeline",
     "test:e2e:direct": "playwright test --config playwright.direct.config.ts",
+    "test:e2e:settings-persist": "playwright test --config playwright.direct.config.ts settings-persist",
     "test:e2e:three-products": "playwright test --config playwright.three-products.config.ts",
     "test:acceptance:local-project": "node scripts/acceptance/verify-local-project-gallery.mjs",
     "test:acceptance:local-project:matrix": "node scripts/portable-developer-command.mjs acceptance-matrix",

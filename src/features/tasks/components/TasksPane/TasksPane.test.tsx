@@ -4,6 +4,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TasksPane } from './TasksPane';
+import { installTestSettingsStore } from '@/test/settingsStoreHarness';
 
 const useLocationMock = vi.fn();
 const useTasksPaneControllerMock = vi.fn();
@@ -369,7 +370,8 @@ describe('TasksPane', () => {
     expect(toggleLockMock).not.toHaveBeenCalled();
   });
 
-  it('status clicks and keyboard focus peek tasks; pinning restores the persistent split', () => {
+  it('status clicks and keyboard focus peek tasks; pinning restores the persistent split', async () => {
+    const { store, fake } = installTestSettingsStore();
     renderTasksPane();
     const processing = screen.getByRole('button', { name: 'Show processing tasks (2)' });
     fireEvent.focus(processing);
@@ -384,10 +386,12 @@ describe('TasksPane', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Lock tasks open' })[0]);
     expect(screen.getByTestId('agent-chat-panel')).toHaveAttribute('data-expanded', 'false');
     expect(screen.getByTestId('task-list')).toBeTruthy();
-    expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:expandedHalf', 'split');
+    await store.flush();
+    expect(fake.record('ui.panes').content?.['tasks.expandedHalf']).toBe('split');
   });
 
-  it('the sole header lock reserves half the pane including its header, and unlock restores compact mode', () => {
+  it('the sole header lock reserves half the pane including its header, and unlock restores compact mode', async () => {
+    const { store, fake } = installTestSettingsStore();
     const { container } = renderTasksPane();
     const chat = screen.getByTestId('agent-chat-panel');
     fireEvent.click(screen.getByRole('button', { name: 'Show processing tasks (2)' }));
@@ -402,6 +406,8 @@ describe('TasksPane', () => {
     expect(lock.className).toContain('group-hover/tasks-header:opacity-100');
     expect(lock.className).toContain('focus-visible:opacity-100');
     fireEvent.click(lock);
+    await store.flush();
+    expect(fake.record('ui.panes').content?.['tasks.expandedHalf']).toBe('split');
     expect(panel.classList.contains('h-[calc(50%_-_5rem)]')).toBe(true);
     expect(panel.classList.contains('absolute')).toBe(false);
     fireEvent.mouseLeave(panel, { relatedTarget: chat });
@@ -413,15 +419,20 @@ describe('TasksPane', () => {
     fireEvent.click(within(header).getByRole('button', { name: 'Unlock tasks' }));
     expect(screen.queryByTestId('task-list')).toBeNull();
     expect(screen.getByTestId('agent-chat-panel')).toBe(chat);
-    expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:expandedHalf', 'chat');
+    await store.flush();
+    expect(fake.record('ui.panes').content?.['tasks.expandedHalf']).toBe('chat');
   });
 
-  it('migrates the old tasks-full preference into pinned half-height with chat visible', () => {
+  it('migrates the old tasks-full preference into pinned half-height with chat visible', async () => {
+    const { store, fake } = installTestSettingsStore();
     (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation((key: string) => key === 'tasksPane:expandedHalf' ? 'tasks' : null);
     renderTasksPane();
     expect(screen.getByTestId('agent-chat-panel')).toBeTruthy();
     expect(screen.getByTestId('task-list')).toBeTruthy();
-    expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:expandedHalf', 'split');
+    // The first flush waits for the first read; the legacy import it reveals is written by the second.
+    await store.flush();
+    await store.flush();
+    expect(fake.record('ui.panes').content?.['tasks.expandedHalf']).toBe('split');
   });
 
   it('preserves an explicit split preference and shows tasks on non-tool routes', () => {
@@ -498,7 +509,8 @@ describe('TasksPane', () => {
     expect(screen.getByRole('button', { name: 'Keep tasks open' })).toHaveAttribute('aria-pressed', 'false');
   });
 
-  it('ignores old split and transient-open preferences when initializing Runtime history', () => {
+  it('ignores old split and transient-open preferences when initializing Runtime history', async () => {
+    const { store, fake } = installTestSettingsStore();
     (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation((key: string) => {
       if (key === 'tasksPane:expandedHalf') return 'split';
       if (key === 'tasksPane:runtimeHistoryOpen') return 'open';
@@ -525,10 +537,13 @@ describe('TasksPane', () => {
     expect(screen.queryByTestId('runtime-task-list')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /show (processing|succeeded|failed) tasks/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Keep tasks open' })).toHaveAttribute('aria-pressed', 'false');
-    expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:runtimeHistoryPinned', 'unpinned');
+    await store.flush();
+    // Mounting writes nothing for history: the default is not persisted, only an explicit toggle is.
+    expect(fake.record('ui.panes').content?.['tasks.runtimeHistoryPinned']).toBeUndefined();
   });
 
-  it('restores a pinned-history preference and leaves visibility to the arrow when unlocked', () => {
+  it('restores a pinned-history preference and leaves visibility to the arrow when unlocked', async () => {
+    const { store, fake } = installTestSettingsStore();
     (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation((key: string) =>
       key === 'tasksPane:runtimeHistoryPinned' ? 'pinned' : null,
     );
@@ -555,7 +570,8 @@ describe('TasksPane', () => {
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Stop peeking at tasks' }));
     expect(screen.queryByTestId('runtime-task-list')).not.toBeInTheDocument();
-    expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:runtimeHistoryPinned', 'unpinned');
+    await store.flush();
+    expect(fake.record('ui.panes').content?.['tasks.runtimeHistoryPinned']).toBe(false);
   });
 
   it('keeps the composer button hidden until AgentChatPanel registers actions', () => {
@@ -619,15 +635,20 @@ describe('TasksPane', () => {
     expect(paneControlProps.actions.composerButton.secondary).toBeUndefined();
   });
 
-  it('restores the chat-filled layout preference and persists it when toggled', () => {
-    (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockReturnValue('chat');
+  it('restores the chat-filled layout preference and persists it when toggled', async () => {
+    const { store, fake } = installTestSettingsStore();
+    (window.localStorage.getItem as ReturnType<typeof vi.fn>).mockImplementation((key: string) => key === 'tasksPane:expandedHalf' ? 'chat' : null);
 
     renderTasksPane();
 
     expect(screen.getByTestId('agent-chat-panel')).toHaveAttribute('data-expanded', 'true');
-    expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:expandedHalf', 'chat');
+    // The legacy 'chat' value is imported into the store on first read.
+    await store.flush();
+    await store.flush();
+    expect(fake.record('ui.panes').content?.['tasks.expandedHalf']).toBe('chat');
     fireEvent.click(screen.getAllByRole('button', { name: 'Lock tasks open' })[0]);
-    expect(window.localStorage.setItem).toHaveBeenCalledWith('tasksPane:expandedHalf', 'split');
+    await store.flush();
+    expect(fake.record('ui.panes').content?.['tasks.expandedHalf']).toBe('split');
   });
 
   it('routes the explicit Runtime editor identity to the Runtime task list', () => {

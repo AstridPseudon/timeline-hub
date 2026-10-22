@@ -1,10 +1,19 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
+import { setSettingsStoreForTests } from '@/shared/settings/instance';
 
 // Automatic DOM cleanup after each test
 afterEach(() => {
   cleanup();
+  // The settings store keeps values in memory: every test starts from a fresh one.
+  setSettingsStoreForTests(null);
+  if (typeof localStorage !== 'undefined') {
+    // ...and without the store's first-paint snapshots, which would carry a value into the next test.
+    try {
+      for (const key of Object.keys(localStorage)) if (key.startsWith('astrid.settings.snapshot.v1:')) localStorage.removeItem(key);
+    } catch { /* A test that stubbed storage has nothing to clear. */ }
+  }
 });
 
 if (typeof window !== 'undefined') {

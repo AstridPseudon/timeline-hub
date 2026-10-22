@@ -6,7 +6,7 @@
  * {@link analyzeManifestSettingsSchema} to produce a SchemaForm-compatible
  * schema with supported/unsupported classification,
  * {@link reconcileSettingsSnapshot} for loading and classifying saved values,
- * {@link createExtensionSettingsService} for localStorage-backed persistence,
+ * {@link createExtensionSettingsService} for Runtime-backed persistence (the settings store),
  * and {@link SchemaForm} for rendering, validation, and focus management.
  *
  * Behaviours:
@@ -22,6 +22,7 @@
  *  - Cancel: revert the form state to the reconciled baseline values.
  */
 
+import { createRuntimeSettingsBacking } from '@/tools/video-editor/runtime/extensionSettingsBacking';
 import {
   useCallback,
   useEffect,
@@ -152,7 +153,7 @@ export function ExtensionSettingsPanel({
   // ---- Settings service (lazily created, idempotent per mount) -------------
   const serviceRef = useRef<ExtensionSettingsService | null>(null);
   if (!serviceRef.current) {
-    const result = createExtensionSettingsService(extensionId, manifest);
+    const result = createExtensionSettingsService(extensionId, manifest, { backing: createRuntimeSettingsBacking(extensionId) });
     serviceRef.current = result.service;
   }
   const settings = serviceRef.current;
