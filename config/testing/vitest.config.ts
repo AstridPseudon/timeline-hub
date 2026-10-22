@@ -4,6 +4,7 @@ import fs from 'fs';
 import { createElementAdmissionsPlugin } from '../vite/astridElementAdmissions';
 import { resolveAstridSource, validateAstridToolCatalog } from '../vite/astridSource';
 import { CHECKOUT_LANE } from './lanes';
+import SkipGuardReporter from './skipGuardReporter';
 
 const projectRoot = path.resolve(__dirname, '../..');
 const checkoutLane = process.env.VITEST_LANE === 'checkout';
@@ -85,6 +86,9 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    // No invisible skips: `.only` fails the run, and SkipGuardReporter fails it on any undeclared skip.
+    allowOnly: false,
+    reporters: ['default', new SkipGuardReporter()],
     // Hang guard only (testing plan R-10): durations never fail a run, so the
     // per-test and per-hook ceilings are generous; only a genuine hang trips them.
     testTimeout: 120_000,

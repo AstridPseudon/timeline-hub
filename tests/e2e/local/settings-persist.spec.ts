@@ -7,6 +7,7 @@
  */
 import { expect, type Page } from '@playwright/test';
 import { EDITOR_TOUR_VERSION } from '../../../src/shared/lib/editorTourVersion.ts';
+import { skipWhen } from '../support/declaredSkip.ts';
 import { harnessUnavailableReason } from './support/harness.ts';
 import { expectConnected, openApp, test } from './support/app.ts';
 
@@ -22,8 +23,7 @@ const SNAPSHOT_KEY = 'astrid.settings.snapshot.v1:ui.panes';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeEach(() => {
-  const reason = harnessUnavailableReason();
-  test.skip(reason !== null, reason ?? '');
+  skipWhen('direct-journey-harness', harnessUnavailableReason());
 });
 
 test('a changed Tasks pane lock holds after clearing the browser and reloading (the Runtime holds it)', async ({ page, harness }) => {

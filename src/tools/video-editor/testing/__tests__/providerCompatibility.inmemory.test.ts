@@ -28,9 +28,10 @@ const inMemoryFactory: ProviderFactory = (seed) => {
 
 describe('InMemoryDataProvider compatibility (testing version)', () => {
   runProviderCompatibilitySuite(inMemoryFactory, {
-    skipCheckpoints: false,
+    // The testing InMemoryDataProvider does not implement the optional checkpoint API (DataProvider.ts); the
+    // cases used to return early and pass without checking anything.
+    skipCheckpoints: true,
     versionConflictIsSoft: false,
     timelineId: 'compat-test-timeline',
-    skipRegisterAsset: false,
   });
 });

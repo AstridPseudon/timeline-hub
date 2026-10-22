@@ -38,6 +38,5 @@ describe('InMemoryDataProvider compatibility (browser-runtime)', () => {
     skipCheckpoints: false,
     versionConflictIsSoft: false,
     timelineId: 'compat-test-timeline',
-    skipRegisterAsset: false,
   });
 });

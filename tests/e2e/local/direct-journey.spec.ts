@@ -37,6 +37,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { BIG_DOWNLOAD_BYTES, BIG_UPLOAD_BYTES, DirectHarness, DOOR_PORT, harnessUnavailableReason, rawRequest, sha256Hex, compositionPublication } from './support/harness.ts';
 import { APP_ENTRY_ROUTE, UI, currentHead, editFirstTrackName, expectConnected, firstTrackName, holdTimelineSaves, openApp, openSeededTimeline, revisionBody, test, waitForAudit } from './support/app.ts';
+import { skipWhen } from '../support/declaredSkip.ts';
 import { SpeedTable } from './support/measure.ts';
 import { LOCAL_NETWORK_PERMISSION, readLocalNetworkState, setLocalNetworkPermission } from './support/permission.ts';
 
@@ -47,8 +48,7 @@ const REALM_DISPLAY_NAME = 'Direct Journey';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeEach(() => {
-  const reason = harnessUnavailableReason();
-  test.skip(reason !== null, reason ?? '');
+  skipWhen('direct-journey-harness', harnessUnavailableReason());
 });
 
 const speed = new SpeedTable();
@@ -518,7 +518,7 @@ test.describe('media', () => {
 
   test('a video loads, and seeking it is a 206 Range read', async ({ page, harness }) => {
     const { video } = harness.seed;
-    test.skip(!video.decodable, 'ffmpeg is not installed; the fallback MP4 cannot be decoded by stock Chromium (Range is still checked below)');
+    skipWhen('direct-journey-ffmpeg', !video.decodable, 'ffmpeg is not installed; the fallback MP4 cannot be decoded by stock Chromium');
     await openHostedPage(page, harness);
     const result = await page.evaluate(({ src }) => new Promise<{ duration: number; seekedTo: number } | string>((resolve) => {
       const element = document.createElement('video');

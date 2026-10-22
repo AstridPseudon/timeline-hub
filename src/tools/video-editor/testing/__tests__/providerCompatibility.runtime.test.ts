@@ -125,7 +125,6 @@ describe('RuntimeDataProvider compatibility (runtimeFixture)', () => {
     // canonical revisions and restores through a current-head CAS").
     skipCheckpoints: true,
     timelineId: TIMELINE_ID,
-    skipRegisterAsset: false,
     // Runtime treats `config.output` as host-derived: saves drop it and loads
     // re-materialise defaults (dataProvider.ts saveTimelineInOrder).
     derivedOutputOnSave: true,

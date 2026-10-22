@@ -104,7 +104,8 @@ export default defineConfig({
     timeout: 5_000,
   },
   fullyParallel: true,
-  reporter: process.env.CI ? 'github' : 'list',
+  forbidOnly: !!process.env.CI,
+  reporter: [[process.env.CI ? 'github' : 'list'], ['./config/testing/playwrightSkipGuard.ts']],
   use: {
     baseURL,
     storageState: astridOnboardedStorageState(baseURL),
