@@ -333,7 +333,7 @@ def _canonical_fixture(root, version):
     return f"realm-v{version}"
 
 
-@pytest.mark.parametrize("source_version, expected_steps", [(24, 7), (25, 6), (26, 5), (29, 2), (30, 1)])
+@pytest.mark.parametrize("source_version, expected_steps", [(24, 8), (25, 7), (26, 6), (29, 3), (30, 2)])
 def test_complete_canonical_migration_chain_reaches_current_schema(tmp_path, source_version, expected_steps):
     root = tmp_path / f"realm-{source_version}"
     realm_id = _canonical_fixture(root, source_version)

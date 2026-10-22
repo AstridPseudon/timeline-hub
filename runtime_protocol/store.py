@@ -42,7 +42,7 @@ from .visual_seam import (
 from .visual_boundary import finite as _visual_finite, js_round as _visual_js_round
 from .idempotency import command_result, compact_result, expired_result, EXPIRED, RESULT_WINDOW_SECONDS, IdempotencyWindowExpired
 
-SCHEMA_VERSION = 31
+SCHEMA_VERSION = 32
 IDEMPOTENCY_RESULT_WINDOW_SECONDS = 24 * 60 * 60
 IDEMPOTENCY_RESULT_MARKER = "__runtime_idempotency_result_expired_v1"
 IDEMPOTENCY_RESULT_MARKER_PREFIX = '{"' + IDEMPOTENCY_RESULT_MARKER + '":'
@@ -6158,8 +6158,20 @@ class RealmStore:
             table for table in actual_tables
             if not str(table).startswith("sqlite_") and table not in REQUIRED_SCHEMA_TABLES
         )
+        # Runtime's pre-upstream v31 already had the complete timeline commit
+        # layout. Keep that exact shape readable while its explicit offline
+        # migration advances the metadata to v32; upstream's app-state v31
+        # lacks these tables and is therefore not admitted here.
+        legacy_timeline_schema = (
+            actual_schema == 31
+            and actual_format == CANONICAL_FORMAT_ID
+            and not missing_tables
+            and not missing_columns
+            and not extra_columns
+            and not unexpected_tables
+        )
         schema_ok = (
-            actual_schema == SCHEMA_VERSION
+            (actual_schema == SCHEMA_VERSION or legacy_timeline_schema)
             and actual_format == CANONICAL_FORMAT_ID
             and not missing_tables
             and not missing_columns

@@ -294,8 +294,8 @@ def test_v28_inline_spec_migrates_with_exact_replay_and_compacts(tmp_path):
         service.close()
 
     migrated = migrate_canonical_to_current(root, confirmation=f"MIGRATE CANONICAL {realm_id}")
-    assert migrated["steps"][-1]["target_schema_version"] == 31
-    assert migrated["steps"][-2]["target_schema_version"] == 30
+    assert migrated["steps"][-1]["target_schema_version"] == 32
+    assert migrated["steps"][-2]["target_schema_version"] == 31
     spec_reference_step = next(step for step in migrated["steps"] if step["target_schema_version"] == 29)
     assert spec_reference_step["referenced_pairs"] == 1
     reopened = RuntimeService(root)

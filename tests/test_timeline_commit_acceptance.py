@@ -678,9 +678,9 @@ def test_original_retry_ignores_corrupt_later_acceptance(realm, column, replacem
     assert list(conn.iterdump()) == before
 
 
-def test_v30_schema_migration_installs_empty_history_without_invented_baselines(tmp_path):
+def test_upstream_v31_schema_migration_installs_empty_history_without_invented_baselines(tmp_path):
     import sqlite3
-    from runtime_protocol.upgrade import _apply_v30_to_v31, _canonical_schema_identity, migrate_canonical_to_current
+    from runtime_protocol.upgrade import _apply_v31_to_v32, _canonical_schema_identity, migrate_canonical_to_current
 
     root = tmp_path / "old-realm"
     initial = RealmStore.initialize(root)
@@ -693,20 +693,22 @@ def test_v30_schema_migration_installs_empty_history_without_invented_baselines(
         connection.execute("ALTER TABLE parent_composition_revisions DROP COLUMN commit_manifest_json")
         for table in ("timeline_commit_history", "timeline_document_input_links", "timeline_document_input_bindings", "timeline_document_input_contents"):
             connection.execute(f"DROP TABLE {table}")
-        connection.execute("UPDATE runtime_schema SET version=30 WHERE id=1")
-        assert _canonical_schema_identity(connection)["version"] == 30
-        connection.execute("BEGIN IMMEDIATE")
-        assert _apply_v30_to_v31(connection)["target_schema_version"] == 31
-        assert connection.in_transaction
+        # The upstream v31 realm has the app-state version but not Runtime's
+        # timeline commit tables. U1 owns the following v32 transition.
+        connection.execute("UPDATE runtime_schema SET version=31 WHERE id=1")
         assert _canonical_schema_identity(connection)["version"] == 31
+        connection.execute("BEGIN IMMEDIATE")
+        assert _apply_v31_to_v32(connection)["target_schema_version"] == 32
+        assert connection.in_transaction
+        assert _canonical_schema_identity(connection)["version"] == 32
         assert connection.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == 0
         assert connection.execute("SELECT COUNT(*) FROM timeline_document_input_contents").fetchone()[0] == 0
         connection.rollback()
-        assert _canonical_schema_identity(connection)["version"] == 30
+        assert _canonical_schema_identity(connection)["version"] == 31
     finally:
         connection.close()
     result = migrate_canonical_to_current(root, confirmation=f"MIGRATE CANONICAL {realm_id}")
-    assert result["target_schema_version"] == 31
+    assert result["target_schema_version"] == 32
     assert len(result["steps"]) == 1
     reopened = RealmStore(root)
     try:

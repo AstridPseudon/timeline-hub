@@ -72,7 +72,8 @@ USER_PREFERENCES_TARGET_SCHEMA_VERSION = 27
 SPEC_DEDUP_TARGET_SCHEMA_VERSION = 28
 SPEC_REFERENCE_TARGET_SCHEMA_VERSION = 29
 TIMELINE_NAME_TARGET_SCHEMA_VERSION = 30
-TIMELINE_COMMIT_TARGET_SCHEMA_VERSION = 31
+APP_STATE_TARGET_SCHEMA_VERSION = 31
+TIMELINE_COMMIT_TARGET_SCHEMA_VERSION = 32
 HISTORICAL_OUTPUT_MIGRATION_CONFIRMATION = "MIGRATE MANAGED OUTPUTS"
 GENERIC_MEDIA_TYPE_REPAIR_CONFIRMATION = "REPAIR GENERIC MEDIA TYPES"
 _VIDEO_SUFFIXES = frozenset({".mp4", ".mov", ".webm", ".mkv"})
@@ -339,6 +340,7 @@ def _canonical_shape_for(version: int) -> tuple[set[str], dict[str, set[str]]]:
         SPEC_DEDUP_TARGET_SCHEMA_VERSION,
         SPEC_REFERENCE_TARGET_SCHEMA_VERSION,
         TIMELINE_NAME_TARGET_SCHEMA_VERSION,
+        APP_STATE_TARGET_SCHEMA_VERSION,
         TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,
     }:
         raise ValidationError(f"canonical schema version {version} is not supported")
@@ -401,6 +403,12 @@ def _canonical_schema_identity(
     if version < CANONICAL_PREVIOUS_SCHEMA_VERSION:
         raise ValidationError(f"canonical schema v{version} is not a supported migration source")
     expected_tables, expected_columns = _canonical_shape_for(version)
+    # v31 was used by the timeline integration before upstream reserved that
+    # number for app-state. Accept that historical commit-table shape solely
+    # so it can be advanced to v32 without losing its recorded history.
+    if version == APP_STATE_TARGET_SCHEMA_VERSION and "timeline_commit_history" in tables:
+        expected_tables = set(REQUIRED_SCHEMA_TABLES)
+        expected_columns = {table: set(values) for table, values in REQUIRED_SCHEMA_COLUMNS.items()}
     unknown = tables - expected_tables
     missing = expected_tables - tables
     if unknown or missing:
@@ -781,19 +789,33 @@ def _apply_v29_to_v30(connection: sqlite3.Connection) -> dict[str, object]:
 
 
 def _apply_v30_to_v31(connection: sqlite3.Connection) -> dict[str, object]:
+    """Advance the upstream app-state schema version to v31.
+
+    The app-state v31 layout is already represented by the current canonical
+    tables. Timeline commit persistence is deliberately the following v32
+    step so the two schema owners do not share a version number.
+    """
+    connection.execute("UPDATE runtime_schema SET version=? WHERE id=1", (APP_STATE_TARGET_SCHEMA_VERSION,))
+    return {"source_schema_version": 30, "target_schema_version": APP_STATE_TARGET_SCHEMA_VERSION}
+
+
+def _apply_v31_to_v32(connection: sqlite3.Connection) -> dict[str, object]:
     from .canonical_schema import TIMELINE_COMMIT_SCHEMA_SQL
     from .timeline_commit_inputs import DOCUMENT_INPUT_SCHEMA_SQL
 
-    connection.execute("ALTER TABLE parent_composition_heads ADD COLUMN publication_id TEXT REFERENCES timeline_commit_history(publication_id)")
-    connection.execute("ALTER TABLE parent_composition_revisions ADD COLUMN commit_manifest_json TEXT CHECK (commit_manifest_json IS NULL OR json_valid(commit_manifest_json))")
-    # executescript would commit the enclosing migration transaction.
-    connection.execute(TIMELINE_COMMIT_SCHEMA_SQL)
-    for statement in DOCUMENT_INPUT_SCHEMA_SQL.split(";"):
-        if statement.strip():
-            connection.execute(statement)
-    connection.execute("UPDATE runtime_schema SET version=31 WHERE id=1")
-    return {"source_schema_version": 30, "target_schema_version": 31,
-            "baseline_required": True}
+    existing_tables = _tables(connection)
+    if "timeline_commit_history" not in existing_tables:
+        connection.execute("ALTER TABLE parent_composition_heads ADD COLUMN publication_id TEXT REFERENCES timeline_commit_history(publication_id)")
+        connection.execute("ALTER TABLE parent_composition_revisions ADD COLUMN commit_manifest_json TEXT CHECK (commit_manifest_json IS NULL OR json_valid(commit_manifest_json))")
+        # executescript would commit the enclosing migration transaction.
+        connection.execute(TIMELINE_COMMIT_SCHEMA_SQL)
+        for statement in DOCUMENT_INPUT_SCHEMA_SQL.split(";"):
+            if statement.strip():
+                connection.execute(statement)
+    connection.execute("UPDATE runtime_schema SET version=? WHERE id=1", (TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,))
+    return {"source_schema_version": APP_STATE_TARGET_SCHEMA_VERSION,
+            "target_schema_version": TIMELINE_COMMIT_TARGET_SCHEMA_VERSION,
+            "baseline_required": "timeline_commit_history" not in existing_tables}
 
 
 def migrate_canonical_v24_to_v25(
@@ -922,9 +944,9 @@ def migrate_canonical_to_current(
     confirmation: str | None = None,
     expected_realm_id: str | None = None,
 ) -> dict:
-    """Atomically run every supported canonical step through pinned v30.
+    """Atomically run every supported canonical step through pinned v32.
 
-    Current v30 is a read-only idempotent result.  Unknown, alternate, and
+    Current v32 is a read-only idempotent result.  Unknown, alternate, and
     newer layouts are rejected by the read-only preflight before an owner-lock
     marker, SQLite sidecar, journal, process signal, or schema mutation occurs.
     """
@@ -978,12 +1000,15 @@ def migrate_canonical_to_current(
                 current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
             if int(current["version"]) == SPEC_REFERENCE_TARGET_SCHEMA_VERSION:
                 steps.append(_apply_v29_to_v30(connection))
-            current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
+                current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
             if int(current["version"]) == TIMELINE_NAME_TARGET_SCHEMA_VERSION:
                 steps.append(_apply_v30_to_v31(connection))
+                current = _canonical_schema_identity(connection, expected_realm_id=realm_id)
+            if int(current["version"]) == APP_STATE_TARGET_SCHEMA_VERSION:
+                steps.append(_apply_v31_to_v32(connection))
             final = _canonical_schema_identity(connection, expected_realm_id=realm_id)
             if int(final["version"]) != TIMELINE_COMMIT_TARGET_SCHEMA_VERSION:
-                raise ValidationError("canonical migration did not produce the pinned v31 layout")
+                raise ValidationError("canonical migration did not produce the pinned v32 layout")
             if _quick_check(connection, float(timeout_seconds)) != "ok":
                 raise ValidationError("migrated database failed SQLite integrity check")
             foreign_keys = _foreign_key_errors(connection, float(timeout_seconds))
