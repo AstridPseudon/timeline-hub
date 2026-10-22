@@ -3684,6 +3684,27 @@ def _materialization_readback_override(world, monkeypatch, child, row, **changes
     return replacement
 
 
+def test_output_over_retention_limit_rejects_before_cas_read():
+    oid = digest(b"ab")
+    row = {"association_id": "association", "task_id": "child-task", "run_id": "child-run",
+           "project_id": "project", "attempt_id": "child-attempt", "durability": "durable",
+           "lifecycle": {"state": "available"}, "role": "final", "object_id": oid,
+           "digest": oid, "size": 2}
+    client = SimpleNamespace(
+        child_outputs=lambda task_id: [row],
+        child_output=lambda association_id: row,
+        get_object=lambda object_id: pytest.fail("oversized output requested CAS bytes"),
+    )
+    bridge = object.__new__(HostChildBridge)
+    bridge.client = client
+    bridge.context = {"project_id": "project"}
+    bridge.policy = {"limits": {"max_derived_bytes": 1}}
+    task = {"id": "child-task", "run_id": "child-run", "attempt_id": "child-attempt",
+            "status": "completed", "result": {"outputs": []}}
+    with pytest.raises(ChildBridgeError, match="byte identity"):
+        bridge._outputs(task)
+
+
 @pytest.mark.parametrize("size", [64 * 1024 * 1024, 5 * 1024 ** 3 + 1])
 def test_materialization_large_object_and_hard_cap(world, monkeypatch, size):
     b, child, rows = _materialization_fixture(world, expose=False,
