@@ -6,6 +6,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useNavigate } from "react-router-dom";
@@ -1558,8 +1559,14 @@ describe("VideoEditorPage", () => {
     await waitFor(() => expect(screen.getByTestId("video-editor-provider")).toHaveAttribute(
       "data-timeline-id", "22222222-2222-2222-2222-222222222222",
     ));
+    // The closed trigger now carries the primary star for the current timeline.
+    expect(
+      within(screen.getByRole("combobox", { name: "Select timeline" })).getByRole("img", { name: "Primary timeline" }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("combobox", { name: "Select timeline" }));
-    expect(screen.getByText("Primary")).toBeInTheDocument();
+    const row = await screen.findByRole("option", { name: /Alt Cut/ });
+    expect(within(row).getByRole("img", { name: "Primary timeline" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Make Alt Cut primary" })).toBeNull();
   });
 
   it("rejects a timeline id discovered under a different project", async () => {

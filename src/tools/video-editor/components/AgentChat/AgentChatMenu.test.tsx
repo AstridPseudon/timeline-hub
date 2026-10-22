@@ -93,10 +93,12 @@ describe('AgentChatMenu chats', () => {
     expect(onOpenChange).toHaveBeenLastCalledWith(false);
   });
 
-  it('shows no Chats group or search field without chats', () => {
+  it('shows the Chats heading with the empty text and no search field without chats', () => {
     openMenu({ sessions: [] });
-    expect(screen.queryByText('Chats')).toBeNull();
+    expect(screen.getByText('Chats')).toBeInTheDocument();
+    expect(screen.getByText('No chats yet. Use + to start one.')).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Search chats…')).toBeNull();
+    expect(screen.queryByRole('option')).toBeNull();
   });
 
   it('uses titles in the rows, keeps fallback names, and searches both titles and fallback names', () => {
@@ -129,9 +131,12 @@ describe('AgentChatMenu chats', () => {
     openMenu({ sessions: [{ id: 'one', title: label }, { id: 'two' }], activeSessionId: 'one', mainSessionId: 'one', onRenameSession: vi.fn() });
     const row = await screen.findByRole('option', { name: new RegExp(`^${label}`) });
     expect(within(row).getByTitle(label)).toHaveTextContent(label);
-    const main = within(row).getByTitle('Main chat');
+    const main = within(row).getByRole('img', { name: 'Main chat' });
+    expect(main).toHaveAttribute('title', 'Main chat');
     expect(main.querySelector('svg')).toHaveClass('fill-current');
-    expect(within(main).getByText('Main')).toHaveClass('sr-only');
+    expect(within(row).queryByText('Main', { exact: true })).toBeNull();
+    // The star sits on the right, after the title.
+    expect(within(row).getByTitle(label).compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(within(row).getByRole('button', { name: `Rename ${label}` })).toBeInTheDocument();
     expect(within(screen.getByRole('option', { name: 'Chat 2' })).getByTitle('Chat 2')).toBeInTheDocument();
   });
@@ -233,14 +238,18 @@ describe('AgentChatMenu attach and empty states', () => {
   it('keeps attaching an existing chat in the same menu', () => {
     const toggle = vi.fn();
     openMenu({ attachExisting: { open: false, toggle } });
-    fireEvent.click(screen.getByRole('option', { name: /Attach an existing chat/ }));
+    const attach = screen.getByRole('button', { name: /Attach an existing chat/ });
+    expect(attach.closest('[role="listbox"]')).toBeNull();
+    fireEvent.click(attach);
     expect(toggle).toHaveBeenCalledOnce();
   });
 
   it('offers Hide existing chats while attached chats are shown', () => {
     const toggle = vi.fn();
     openMenu({ attachExisting: { open: true, toggle } });
-    fireEvent.click(screen.getByRole('option', { name: /Hide existing chats/ }));
+    const hide = screen.getByRole('button', { name: /Hide existing chats/ });
+    expect(hide.closest('[role="listbox"]')).toBeNull();
+    fireEvent.click(hide);
     expect(toggle).toHaveBeenCalledOnce();
   });
 
@@ -255,6 +264,17 @@ describe('AgentChatMenu attach and empty states', () => {
     openMenu({ sessions: [], attachExisting: { open: false, toggle: vi.fn() } });
     expect(screen.getByText('No chats yet. Use + to start one.')).toBeInTheDocument();
     expect(screen.queryByText('No chats found.')).toBeNull();
-    expect(screen.getByRole('option', { name: /Attach an existing chat/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Attach an existing chat/ })).toBeInTheDocument();
+  });
+
+  it('shows the Main star on the trigger when the open chat is Main, and not otherwise', () => {
+    const { rerender } = renderMenu({ sessions: sessionsTwo, activeSessionId: 'one', mainSessionId: 'one' });
+    const trigger = screen.getByRole('button', { name: 'Chat: Planning' });
+    expect(within(trigger).getByRole('img', { name: 'Main chat' })).toBeInTheDocument();
+    expect(trigger).toHaveTextContent('Planning');
+    rerender({ activeSessionId: 'two' });
+    const other = screen.getByRole('button', { name: 'Chat: Chat 2' });
+    expect(other).toHaveTextContent('Chat 2');
+    expect(within(other).queryByRole('img', { name: 'Main chat' })).toBeNull();
   });
 });

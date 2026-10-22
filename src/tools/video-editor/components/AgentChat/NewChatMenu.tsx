@@ -1,10 +1,10 @@
 import { forwardRef, Fragment, useCallback, useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent } from 'react';
 import { Check, ChevronDown, ChevronRight, Copy, Plus } from 'lucide-react';
-import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from '@/shared/components/ui/command.tsx';
+import { Command, CommandGroup, CommandItem, CommandList } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import type { LocalAgentChoice, LocalAgentId } from '@/integrations/astrid/localAgents.ts';
-import { ROW_BUTTON, matches } from './AgentChatMenu.tsx';
+import { PICKER_GROUP, PICKER_PANEL, PickerSearch, ROW_BUTTON, matches } from '@/shared/components/ui/picker-menu.tsx';
 import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded.tsx';
 import { AGENT_IDS, AgentIcon, agentAvailability, agentNames } from './agentIdentity.tsx';
 import { readModelThoughtSelections, rememberModelThoughtSelection } from './newChatThinkingSelection.ts';
@@ -90,6 +90,8 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   const landOnModel = useRef(false);
   const landOnAgent = useRef<string | null>(null);
   const wasBrowsing = useRef(false);
+  // The agent row itself opened the model list, so an empty catalog falls back to starting that agent.
+  const startedFromRow = useRef(false);
 
   const homeValue = `agent:${current?.agent ?? defaultAgent}`;
   const availability = (id: LocalAgentId) => agentAvailability(agents?.find(choice => choice.id === id));
@@ -102,6 +104,7 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
 
   const browse = (agent: LocalAgentId | null) => {
     landOnModel.current = agent !== null;
+    if (agent === null) startedFromRow.current = false;
     // Coming back lands on the agent that was open, so ← then → returns to the same place.
     landOnAgent.current = agent ? null : `agent:${browsing ?? defaultAgent}`;
     setHighlighted(agent ? '' : `agent:${browsing ?? defaultAgent}`);
@@ -183,10 +186,12 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
     if (browsing !== 'hermes' || !submenu || submenu.loading || submenu.models.length > 0) return;
     // Hermes may not publish a model catalog. Return to the agent list once an
     // empty result is known, so the menu never leaves an empty model picker open.
+    if (startedFromRow.current) { startedFromRow.current = false; start('hermes'); return; }
     setBrowsing(null);
     setQuery('');
     setHighlighted('agent:hermes');
     onBrowseAgent?.(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [browsing, onBrowseAgent, submenu]);
   // Highlights a model and brings it into view: cmdk scrolls only for its own key moves, not for a value set here.
   const revealHighlight = useRef(false);
@@ -223,7 +228,7 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
     const model = state.usable ? agentModelNames?.[id] : null;
     return (
       <CommandItem key={id} value={`agent:${id}`} disabled={newChatDisabled}
-        className="items-start gap-2 pr-1 [@media(pointer:coarse)]:min-h-[44px]" onSelect={() => { if (state.usable) start(id); }}>
+        className="items-start gap-2 pr-1 [@media(pointer:coarse)]:min-h-[44px]" onSelect={() => { if (canBrowse(id)) { startedFromRow.current = true; browse(id); } else if (state.usable) start(id); }}>
         <AgentIcon agent={id} className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', state.usable ? 'text-foreground/80' : 'text-muted-foreground/60')} />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="flex items-baseline gap-2">
@@ -261,14 +266,14 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
           </button>
         </PopoverTrigger>
       </div>
-      <PopoverContent align="end" aria-label="New chat" className="w-72 max-w-[calc(100vw-2rem)] p-0"
+      <PopoverContent align="end" aria-label="New chat" className={PICKER_PANEL}
         initialFocus={(type) => (type === 'touch' ? null : search.current) ?? root.current}>
         <Command ref={root} loop value={highlighted} onValueChange={setHighlighted} onKeyDown={onKeyDown} className="outline-none" shouldFilter={false}>
           {/* An out-of-date Astrid is the one thing to act on, so its update stays at the top, outside the scrolling list. */}
           {!browsing && updateNeeded && (
             <div role="alert" className="border-b border-border px-3 py-2 text-xs"><ChatUpdateNeeded detail={updateNeeded.message} /></div>
           )}
-          {browsing && <CommandInput ref={search} autoFocus placeholder={`Search ${agentNames[browsing]} models…`} className="h-8" value={query} onValueChange={setQuery} />}
+          {browsing && <PickerSearch ref={search} autoFocus placeholder={`Search ${agentNames[browsing]} models…`} value={query} onValueChange={setQuery} />}
           <CommandList className={updateNeeded && !browsing ? 'max-h-48' : 'max-h-96'}>
             {browsing ? (
               <NewChatModels agent={browsing} submenu={submenu} models={shownModels} levelSelections={levelSelections[browsing]} openLevelSelector={openLevelSelector}
@@ -285,7 +290,7 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
                   <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: <AgentLine agent="astrid" line={astridSignInLine} copiedCommands={copiedCommands} onCopy={(command, index) => void copyLine('astrid', command, index)} /></p>
                 )} />
             ) : (
-              <CommandGroup heading="New chat with">
+              <CommandGroup heading="New chat with" className={PICKER_GROUP}>
                 {agentsLoading && <p className="px-2 pb-1 text-[11px] text-muted-foreground">Checking agent availability…</p>}
                 {agentsError && !updateNeeded && <p role="alert" className="px-2 pb-1 text-[11px] text-destructive">Could not load agents: {agentsError.message}</p>}
                 {agentRows}

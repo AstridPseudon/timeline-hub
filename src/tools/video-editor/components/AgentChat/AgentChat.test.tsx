@@ -501,14 +501,16 @@ describe('AgentChat', () => {
   it('starts the default agent from its row with no model, so the service repeats its remembered model', async () => {
     const state = createState();
     mockFromState(state);
+    // An agent with no model list: its row starts it directly, and the drill-in offers only the agent default (no model sent).
     mocks.useLocalAgents.mockReturnValue({
-      data: { defaultAgent: 'codex', agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'remembered', name: 'Remembered' }], defaultModel: 'remembered' }] },
+      data: { defaultAgent: 'codex', agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [], defaultModel: null }] },
       isLoading: false, error: null, refetch: vi.fn(),
     });
     renderAgentChat();
     expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent('Astrid · GPT 5');
     fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
     fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Use the agent’s default model' }));
     await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledWith({ operationId: expect.any(String), agent: 'codex' }));
   });
 
@@ -661,7 +663,7 @@ describe('AgentChat', () => {
 
     const user = userEvent.setup();
     await user.click(selector);
-    expect(screen.getByText('Main', { exact: true })).toBeInTheDocument();
+    expect(within(await screen.findByRole('option', { name: /^Chat 2/ })).getByRole('img', { name: 'Main chat' })).toBeInTheDocument();
     await user.click(await screen.findByRole('option', { name: /Chat 1/ }));
     await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
 
@@ -1325,7 +1327,7 @@ describe('project draft consumer ownership', () => {
     const key = ['project-agent-chat', 'project-1'];
     client.setQueryData(key, state.projectChats['project-1']);
     mocks.useProjectChat.mockImplementation(() => useQuery({ queryKey: key, queryFn: async () => state.projectChats['project-1'], enabled: false }));
-    mocks.useLocalAgents.mockReturnValue({ data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: [{ modelId: 'codex-default', name: 'Codex Default' }], defaultModel: 'codex-default' }], defaultAgent: 'astrid' }, refetch: vi.fn() });
+    mocks.useLocalAgents.mockReturnValue({ data: { agents: [{ id: 'codex', name: 'Codex', state: 'ready', line: null, models: choice === 'plain' ? [] : [{ modelId: 'codex-default', name: 'Codex Default' }], defaultModel: choice === 'plain' ? null : 'codex-default' }], defaultAgent: 'astrid' }, refetch: vi.fn() });
     let finish!: (session: { id: string }) => void;
     state.createSession.mutateAsync.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
     const newId = choice === 'plain' ? 'session-2' : 'codex:session-2';
@@ -1335,7 +1337,10 @@ describe('project draft consumer ownership', () => {
     fireEvent.change(composer, { target: { value: 'Keep my unsent draft' } });
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1'));
     fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
-    if (choice === 'plain') fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
+    if (choice === 'plain') {
+      fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
+      fireEvent.click(await screen.findByRole('option', { name: 'Use the agent’s default model' }));
+    }
     else {
       fireEvent.click(await screen.findByRole('button', { name: 'Choose a Codex model' }));
       fireEvent.click(await screen.findByRole('option', { name: /Codex Default/ }));
@@ -1358,7 +1363,7 @@ describe('project draft consumer ownership', () => {
     expect(selector).not.toBeDisabled();
     expect(composer).toHaveFocus();
     fireEvent.click(selector);
-    expect(await screen.findByRole('option', { name: /^Chat 2/ })).toHaveTextContent('Main');
+    expect(within(await screen.findByRole('option', { name: /^Chat 2/ })).getByRole('img', { name: 'Main chat' })).toBeInTheDocument();
     fireEvent.click(selector);
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith(newId, 'project-1'));
     expect(selector).toHaveTextContent('Chat 2');
@@ -1384,8 +1389,7 @@ describe('project draft consumer ownership', () => {
     state.createSession.mutateAsync.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
     const view = renderAgentChat();
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1'));
-    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
-    fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^New chat · Astrid/ }));
     state.projectId = 'project-2';
     rerenderAgentChat(view.rerender);
     if (returnToOrigin) { state.projectId = 'project-1'; rerenderAgentChat(view.rerender); }
@@ -1406,8 +1410,7 @@ describe('project draft consumer ownership', () => {
     const composer = screen.getByRole('textbox');
     fireEvent.change(composer, { target: { value: 'Still my draft' } });
     await waitFor(() => expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1'));
-    fireEvent.click(screen.getByRole('button', { name: 'Choose an agent and model for a new chat' }));
-    fireEvent.click(await screen.findByRole('option', { name: /^Astrid/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^New chat · Astrid/ }));
     await waitFor(() => expect(state.createSession.mutateAsync).toHaveBeenCalledOnce());
     expect(mocks.useAgentSession).toHaveBeenLastCalledWith('session-1', 'project-1');
     expect(composer).toHaveValue('Still my draft');

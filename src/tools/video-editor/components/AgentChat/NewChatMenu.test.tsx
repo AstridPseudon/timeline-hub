@@ -108,15 +108,30 @@ describe('NewChatMenu agent rows', () => {
     expect(screen.queryByText('Last used')).toBeNull();
   });
 
-  it('starts a chat with a ready agent row using its default agent', () => {
-    const { onNewChat } = openMenu();
+  it('starts a chat with a ready agent row that has no model list, using its default model', () => {
+    const { onNewChat } = openMenu({ agentCanBrowse: { codex: false } });
     fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
     expect(onNewChat).toHaveBeenCalledExactlyOnceWith('codex', undefined);
   });
 
+  it('opens a browsable agent row\'s model list instead of starting a chat', () => {
+    const { onNewChat, onBrowseAgent } = openMenu();
+    fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
+    expect(onBrowseAgent).toHaveBeenLastCalledWith('codex');
+    expect(onNewChat).not.toHaveBeenCalled();
+    expect(screen.getByPlaceholderText('Search Codex models…')).toBeTruthy();
+  });
+
+  it('starts the agent when its row opened a model list that turns out empty', async () => {
+    const { onNewChat, rerender } = openMenu({ defaultAgent: 'hermes', agentCanBrowse: { hermes: true } });
+    fireEvent.click(screen.getByRole('option', { name: /Hermes/ }));
+    rerender({ agentModels: { agent: 'hermes', models: [], loading: false } });
+    await waitFor(() => expect(onNewChat).toHaveBeenCalledWith('hermes', undefined));
+  });
+
   it('closes the menu when a ready agent starts a chat', async () => {
     const onOpenChange = vi.fn();
-    const { onNewChat } = openMenu({ onOpenChange, agents: ready.map(choice => choice.id === 'codex' ? choice : { ...choice, state: 'sign-in' as const, line: null }) });
+    const { onNewChat } = openMenu({ onOpenChange, agentCanBrowse: { codex: false }, agents: ready.map(choice => choice.id === 'codex' ? choice : { ...choice, state: 'sign-in' as const, line: null }) });
     fireEvent.click(screen.getByRole('option', { name: /Codex/ }));
     expect(onNewChat).toHaveBeenCalledWith('codex', undefined);
     expect(onOpenChange).toHaveBeenLastCalledWith(false);

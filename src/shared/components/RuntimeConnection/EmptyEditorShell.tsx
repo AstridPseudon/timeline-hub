@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import {
-  Activity, ChevronDown, ChevronsUpDown, Download, GripHorizontal, History, Lock, Maximize2, Mic, PanelsTopLeft, Play,
+  Activity, ChevronDown, Download, GripHorizontal, History, Lock, Maximize2, Mic, PanelsTopLeft, Play,
   Plus, PlusCircle, Redo2, Send, Settings, SkipBack, Sparkles, Star, Undo2, Video, Volume2, Wrench, ZoomIn, ZoomOut,
 } from 'lucide-react';
 import { AppSkyBackground } from '@/shared/components/TimeOfDay/TimeOfDayControl';
@@ -42,7 +42,7 @@ function Header() {
       <img src={LOGO_SRC} alt="" className="h-[30px] w-[30px] shrink-0" />
       <span className={`${PANE_CONTROL} h-8 w-36 gap-1.5 px-2`}>
         <span className="h-2.5 w-20 rounded-full bg-muted" />
-        <ChevronsUpDown className="ml-auto h-3.5 w-3.5 opacity-50" />
+        <ChevronDown className="ml-auto h-3.5 w-3.5 opacity-50" />
       </span>
       <span className={`${PANE_CONTROL} h-7 w-7 justify-center`}><Wrench className="h-3.5 w-3.5" /></span>
       <span className={`${PANE_CONTROL} h-7 gap-1.5 whitespace-nowrap px-2 text-xs`}><PlusCircle className="h-3.5 w-3.5" />New project</span>
@@ -68,7 +68,7 @@ function Preview() {
       <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 px-3 py-3">
         <div className="flex flex-col items-start gap-1">
           <span className={`${PANE_CONTROL} h-8 gap-1.5 px-2 text-xs`}>
-            <Star className="h-3 w-3 fill-current text-primary" />Main<ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+            <Star className="h-3 w-3 fill-current text-primary" />Main<ChevronDown className="h-3.5 w-3.5 opacity-50" />
           </span>
           <span className="rounded-md border border-border/70 bg-card/90 px-1.5 py-0.5 font-mono text-[11px] tabular-nums tracking-[0.08em] text-muted-foreground">0:00.00</span>
         </div>
@@ -178,7 +178,7 @@ function ChatPane() {
       <div className="flex min-h-0 flex-1 flex-col border-t-2 border-sidebar-border bg-background/60">
         <div className="flex items-center justify-between gap-2 border-b border-border/70 px-3 py-1.5">
           <div className="flex flex-col items-start">
-            <span className="-ml-1.5 flex h-6 items-center gap-1 px-1.5 text-sm font-medium text-foreground">New chat<ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /></span>
+            <span className="flex h-7 items-center gap-1.5 rounded-md border border-border/70 bg-card/90 px-2 text-xs text-foreground">New chat<ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /></span>
             <span className="-ml-1.5 flex h-4 items-center gap-1 px-1.5 text-[11px] text-muted-foreground"><Sparkles className="h-3 w-3" />Astrid</span>
           </div>
           <span className="flex h-6 items-center self-start text-muted-foreground"><Icon><Plus className="h-3.5 w-3.5" /></Icon><ChevronDown className="-ml-1 h-3.5 w-3.5" /></span>
