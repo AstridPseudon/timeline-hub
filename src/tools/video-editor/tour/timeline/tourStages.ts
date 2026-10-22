@@ -8,6 +8,9 @@ import { EDITOR_TOUR_SCRIPT } from '@/tools/video-editor/tour/tourScript.ts';
 import { TOUR_SCENE_SOURCE_FROM, TOUR_SCENE_SOURCE_TO } from './tourSceneSource.ts';
 
 export const EDITOR_TOUR_TIMELINE_ID = 'tour-timeline';
+/** The names the editor header shows while the tour runs; the tour has no real project or timeline. */
+export const EDITOR_TOUR_PROJECT_NAME = 'Onboarding project';
+export const EDITOR_TOUR_TIMELINE_NAME = 'Lantern Valley';
 export const EDITOR_TOUR_LIVE_SCENE_CLIP_TYPE = 'haus.astrid.liveScene';
 /** The scene's length on the timeline, which the video row spans too. */
 export const TOUR_SCENE_SECONDS = 10;

@@ -1946,6 +1946,8 @@ describe("VideoEditorPage", () => {
       const tourProvider = state.selectedProvider!;
       expect(tourProvider).not.toBe(userProvider);
       expect(tourProvider.persistenceEnabled).toBe(false);
+      expect(screen.getByRole("combobox", { name: "Select project" })).toHaveTextContent("Onboarding project");
+      expect(screen.getByRole("combobox", { name: "Select timeline" })).toHaveTextContent("Lantern Valley");
       await expect(tourProvider.saveTimeline("tour-timeline", {} as never, 1)).rejects.toThrow(/in memory only/);
       // The user's Runtime provider is neither rebuilt nor reached; the tour made no request.
       expect(state.runtimeCtor.mock.calls.length).toBe(runtimeConstructions);
