@@ -133,7 +133,7 @@ describe('EditorTourTimelineDriver', () => {
     await waitFor(() => expect(ready()).toBe(true));
     expect(apply).toHaveBeenCalledTimes(1);
     expect(apply.mock.calls[0][0]).toMatchObject({ source: 'editor-tour', version: 0 });
-    expect(apply.mock.calls[0][0].operations.map((operation: { op: string }) => operation.op)).toEqual(['clip.add', 'clip.update']);
+    expect(apply.mock.calls[0][0].operations.map((operation: { op: string }) => operation.op)).toEqual(['track.update', 'clip.add', 'clip.update']);
     expect(harness.centered).toEqual([TOUR_CLIP_IDS.scene]);
     expect(previewHandle.seek).toHaveBeenCalledWith(0);
     expect(previewHandle.play).toHaveBeenCalledTimes(1);
@@ -208,6 +208,7 @@ describe('EditorTourTimelineDriver', () => {
     act_(() => setEditorTourBeat(1, 'respond', true));
     await waitFor(() => expect(apply.mock.calls.slice(4).map(([patch]) => patch.operations[0].op)).toEqual(['track.remove', 'clip.remove']));
     expect(apply.mock.calls[5][0].operations[0].target).toBe(TOUR_CLIP_IDS.scene);
+    expect(apply.mock.calls[5][0].operations[1]).toMatchObject({ op: 'track.update', target: EDITOR_TOUR_TRACK_IDS.scene, payload: { label: 'V1' } });
     await waitFor(() => expect(ready()).toBe(true));
     expect(harness.warmups).toHaveLength(0);
     rows.forEach((row) => row.remove());

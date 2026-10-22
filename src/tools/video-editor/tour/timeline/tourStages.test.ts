@@ -14,6 +14,7 @@ import {
   TOUR_SCENE_SECONDS,
   createEditorTourAssetRegistry,
   createEditorTourStagePatch,
+  createEditorTourStageRemovalPatch,
   createEditorTourTimeline,
 } from './tourStages.ts';
 
@@ -45,6 +46,8 @@ describe('editor tour timeline stages', () => {
     const data = await buildStartData();
     expect(trackIdsTopFirst(data)).toEqual([EDITOR_TOUR_TRACK_IDS.scene]);
     expect(data.config.clips).toEqual([]);
+    // The base row carries the editor's ordinary first-track label until the scene lands.
+    expect(data.config.tracks?.[0].label).toBe('V1');
   });
 
   it('stage 1 places the live scene clip on the scene track', async () => {
@@ -53,6 +56,7 @@ describe('editor tour timeline stages', () => {
 
     expect(trackIdsTopFirst(data)).toEqual([EDITOR_TOUR_TRACK_IDS.scene]);
     expect(data.config.clips).toHaveLength(1);
+    expect(data.config.tracks?.find((track) => track.id === EDITOR_TOUR_TRACK_IDS.scene)?.label).toBe('Three.js');
 
     const clip = data.config.clips[0];
     expect(clip.id).toBe(TOUR_CLIP_IDS.scene);
@@ -62,6 +66,14 @@ describe('editor tour timeline stages', () => {
     expect(clip.from).toBe(50);
     expect(clip.to).toBe(60);
     expect(clip.app?.liveScene).toEqual(fakeLiveScene);
+  });
+
+  it('the stage 1 removal patch takes the scene clip off and restores the base label', async () => {
+    const landed = applyStage(await buildStartData(), createEditorTourStagePatch(1, fakeLiveScene));
+    const data = applyStage(landed, createEditorTourStageRemovalPatch(1));
+
+    expect(data.config.clips).toEqual([]);
+    expect(data.config.tracks?.find((track) => track.id === EDITOR_TOUR_TRACK_IDS.scene)?.label).toBe('V1');
   });
 
   it('stage 2 adds the frames row above the scene: a 1 s start frame at 0 s and a 1 s end frame at 9 s', async () => {

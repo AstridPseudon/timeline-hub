@@ -441,6 +441,14 @@ describe('TimelineEditorShellCore surface slots', () => {
     expect(screen.getAllByTestId('preview-portal')).toHaveLength(1);
   });
 
+  it('gives the condensed stage the tour preview anchor, on exactly one element', () => {
+    render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed />);
+
+    const anchored = document.querySelectorAll('[data-editor-tour="preview"]');
+    expect(anchored).toHaveLength(1);
+    expect(anchored[0]).toHaveAttribute('data-video-editor-shell-region', 'preview');
+  });
+
   it('mounts the shared preview portal for the condensed layout, which has no PreviewPanel', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed />);
 

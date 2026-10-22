@@ -237,7 +237,7 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
   let requestRawSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    vi.useFakeTimers();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date', 'performance', 'requestAnimationFrame', 'cancelAnimationFrame'] });
     vi.clearAllMocks();
     mockRealChatHooks();
     fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('fetch must not run during the tour'));
@@ -388,6 +388,23 @@ describe('TourChatPanel (AgentChatPanel during the editor tour)', () => {
     expect(composer().value.length).toBeGreaterThan(0);
     expect(ACT2.prompt.startsWith(composer().value)).toBe(true);
     expect(chatReady()).toBe(false);
+  });
+
+  it('paces typing by elapsed time: one long stall jumps ahead instead of delaying the end', () => {
+    startAtCompose();
+    render(<AgentChatPanel />);
+    advance(500);
+    expect(composer().value.length).toBeLessThan(ACT1.prompt.length);
+    expect(chatReady()).toBe(false);
+
+    // The main thread stalls: the next frame sees a clock far past the end of the whole prompt.
+    const now = performance.now();
+    const nowSpy = vi.spyOn(performance, 'now').mockReturnValue(now + 60_000);
+    advance(16);
+    nowSpy.mockRestore();
+
+    expect(composer().value).toBe(ACT1.prompt);
+    expect(chatReady()).toBe(true);
   });
 
   it('skipAnimation finishes the typing and the reply at once', () => {

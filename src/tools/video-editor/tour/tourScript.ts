@@ -76,7 +76,7 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
       toolCards: [{ name: 'MiniMax H3', detail: 'start + end frames · 10 s' }],
       card: {
         title: 'Your agent brings it all together',
-        body: 'MiniMax H3 turned your frames into a 10-second shot that follows the Three.js motion. Every input you and your agent create gives you production-level creative control.',
+        body: 'MiniMax H3 turned your frames into a 10-second shot that follows the Three.js motion. Every input you and your agent create gives you production‑level creative control.',
         visual: 'still-to-video',
         labels: ['MiniMax H3', '10 s'],
       },

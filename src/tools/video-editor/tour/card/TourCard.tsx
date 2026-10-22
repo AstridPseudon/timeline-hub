@@ -51,7 +51,7 @@ export function TourCard({ act, beat, onPrimary, onBack, onSkip }: TourCardProps
           beat === 'welcome' && 'w-[400px] p-6',
           beat === 'land' && 'w-[380px] p-5',
           beat === 'finale' && 'w-[480px] p-6',
-          !explains && 'w-[300px] px-4 py-3',
+          !explains && (beat === 'respond' ? 'w-[360px]' : 'w-[300px]') + ' px-4 py-3',
         )}
       >
         {beat === 'welcome' && <Welcome onPrimary={onPrimary} onSkip={onSkip} />}
@@ -68,7 +68,7 @@ function CounterRow({ act, onBack, onSkip }: { act: EditorTourAct } & Pick<TourC
   return (
     <div className="flex items-center justify-between leading-none text-muted-foreground">
       <div className="flex items-center gap-3">
-        <span className="text-[11px] tabular-nums">{act} of {ACT_COUNT}</span>
+        <span className="text-xs tabular-nums">{act} of {ACT_COUNT}</span>
         <BackControl onBack={onBack} />
       </div>
       <SkipControl onSkip={onSkip} />
@@ -162,7 +162,7 @@ function BackControl({ onBack }: { onBack?: () => void }) {
   return (
     <button
       type="button"
-      className="inline-flex items-center gap-0.5 rounded-sm text-xs leading-none text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="-mx-1 -my-1.5 inline-flex items-center gap-0.5 rounded-sm px-1 py-1.5 text-xs leading-none text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       onClick={onBack}
     >
       <ChevronLeft className="h-3 w-3" aria-hidden />

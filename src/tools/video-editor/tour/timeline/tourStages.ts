@@ -1,6 +1,7 @@
 import type { TimelinePatch, TimelinePatchOperation } from '@/sdk/video/timeline/patch.ts';
 import type { AssetRegistry, AssetRegistryEntry, TimelineConfig } from '@/tools/video-editor/types/index.ts';
 import type { EditorTourStage } from '@/shared/state/editorTourStore.ts';
+import { DEFAULT_VIDEO_TRACKS } from '@/tools/video-editor/lib/defaults.ts';
 import { EDITOR_TOUR_TRACK_IDS } from '@/tools/video-editor/tour/anchors.ts';
 import { EDITOR_TOUR_MEDIA, type EditorTourMediaSlot } from '@/tools/video-editor/tour/tourMedia.ts';
 import { EDITOR_TOUR_SCRIPT } from '@/tools/video-editor/tour/tourScript.ts';
@@ -39,10 +40,14 @@ const NEUTRAL_FRAME_URL = `data:image/svg+xml,${encodeURIComponent(
  * The empty demo timeline. The scene row exists from the start (a config with no tracks is migrated
  * into V1-V3), so stage 1 only has to place the clip and stages 2 and 3 add rows above.
  */
+/** The base row starts with the editor's ordinary first-track label and is renamed when the scene lands. */
+const BASE_TRACK_LABEL = DEFAULT_VIDEO_TRACKS[0].label;
+const SCENE_TRACK_LABEL = 'Three.js';
+
 export function createEditorTourTimeline(): TimelineConfig {
   return {
     output: { resolution: '1280x720', fps: 30, file: 'tour.mp4' },
-    tracks: [{ id: EDITOR_TOUR_TRACK_IDS.scene, kind: 'visual', label: 'Three.js' }],
+    tracks: [{ id: EDITOR_TOUR_TRACK_IDS.scene, kind: 'visual', label: BASE_TRACK_LABEL }],
     clips: [],
   };
 }
@@ -94,7 +99,10 @@ export function tourStageFocusClipId(stage: EditorTourStage): string | null {
  */
 export function createEditorTourStageRemovalPatch(stage: 1 | 2 | 3): TimelinePatch {
   const operations: TimelinePatchOperation[] = stage === 1
-    ? [{ op: 'clip.remove', target: TOUR_CLIP_IDS.scene }]
+    ? [
+      { op: 'clip.remove', target: TOUR_CLIP_IDS.scene },
+      { op: 'track.update', target: EDITOR_TOUR_TRACK_IDS.scene, payload: { mode: 'merge', label: BASE_TRACK_LABEL } },
+    ]
     : [{ op: 'track.remove', target: stage === 2 ? EDITOR_TOUR_TRACK_IDS.stills : EDITOR_TOUR_TRACK_IDS.videos }];
   return { version: 0, operations, source: 'editor-tour' };
 }
@@ -111,6 +119,7 @@ export function createEditorTourStagePatch(
   const operations: TimelinePatchOperation[] = [];
   if (stage === 1) {
     operations.push(
+      { op: 'track.update', target: EDITOR_TOUR_TRACK_IDS.scene, payload: { mode: 'merge', label: SCENE_TRACK_LABEL } },
       {
         op: 'clip.add',
         target: TOUR_CLIP_IDS.scene,

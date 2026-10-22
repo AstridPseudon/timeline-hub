@@ -110,10 +110,22 @@ describe('useTourKeys', () => {
     expect(getEditorTourState()).toMatchObject({ act: 1, beat: 'land' });
   });
 
-  it.each(['ArrowLeft', 'Backspace'])('%s goes back one place, prevented', (name) => {
+  it('Backspace does nothing (the composer holds text) but is still swallowed', () => {
+    mountKeys(true);
+    setEditorTourBeat(2, 'compose');
+    const event = key({ key: 'Backspace' });
+
+    window.dispatchEvent(event);
+
+    expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'compose' });
+    expect(getEditorTourState().instant).not.toBe(true);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('ArrowLeft goes back one place, prevented', () => {
     mountKeys(true);
     setEditorTourBeat(2, 'land');
-    const event = key({ key: name });
+    const event = key({ key: 'ArrowLeft' });
 
     window.dispatchEvent(event);
 

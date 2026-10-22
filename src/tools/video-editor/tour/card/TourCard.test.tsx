@@ -155,6 +155,16 @@ describe('TourCard', () => {
     expect(play).toHaveBeenCalled();
   });
 
+  it('plays the act-3 video when the card is reached by Back (instant)', () => {
+    startEditorTour();
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
+    setEditorTourBeat(3, 'land', true);
+    expect(getEditorTourState().instant).toBe(true);
+    render(<TourCard act={3} beat="land" onPrimary={vi.fn()} onSkip={vi.fn()} />);
+    expect(play).toHaveBeenCalled();
+    expect(cardReady()).toBe(true);
+  });
+
   it('names Esc without a skip handler', () => {
     renderAt(1, 'land', { onSkip: undefined });
     expect(screen.queryByRole('button', { name: /Skip tour/ })).toBeNull();
