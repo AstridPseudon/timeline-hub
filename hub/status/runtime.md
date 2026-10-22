@@ -1,11 +1,11 @@
-<!-- main | 2026-10-22T22:41:02Z | dispatcher heartbeat 6s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 0m -->
-# runtime board, 2026-10-22T22:40Z
+<!-- main | 2026-10-22T22:42:19Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 0m -->
+# runtime board, 2026-10-22T22:42Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 | commit-v2 contract | Sol author / Luna review | — | merged | rt-C0-contract; rt-C0-review | PASS: 34 targeted tests + JSON/digests/copy equality on tree identical to integrated 0d4c71a3c; C0 APPROVED | 0d4c71a3c |
 | C0b | per-step reads/provider effects amendment | Sol author / Luna review | C0b APPROVED in header | merged | rt-C0b-undo-contract; rt-C0b-review-v2 | Independent Luna PASS: 34 tests + embedded fixtures/digests + copy equality + whitespace. C0b APPROVED; integrated 992136137 tree identical to tested branch | 992136137 |
-| C0c | unambiguous closure-root addresses | Sol | orchestrator requested addressing principle | doing | rt-C0c-addressing | Queued: aliases require uniqueness, revision-qualified bindings, two-child creation/edit/undo fixture; Astra approval pending | 756eeb3d2 base |
-| U1 | real upstream merge, schema v32 | Luna | first review repair | doing | rt-U1-real-upstream | Sanctioned merge-forward prepared real origin/main 4563bb5ff; 17 conflict preimages recorded by rerere. Repair must prove upstream-v31 fixture, fix +1 type delta, regenerate clients, pass tests/review | 85b13f3b4 base |
+| C0c | unambiguous closure-root addresses | Sol | orchestrator requested addressing principle | doing | rt-C0c-addressing | Author active: addressing prose plus two-child executable fixture assembled; fixture/check validation pending; Astra approval pending | 756eeb3d2 base |
+| U1 | real upstream merge, schema v32 | Luna | first review repair | doing | rt-U1-real-upstream | Sanctioned merge-forward prepared real origin/main 4563bb5ff; 17 conflict preimages recorded by rerere. Author reports generator/artifact checks PASS and exact-upstream fixture with PROVENANCE.json; unit/type/lint/service checks and independent review pending | 85b13f3b4 base |
 | R2r | store label/steps/patches, attribution | Luna | C0 approved, U1 merged | todo | — | Brief ready; dispatch immediately after repaired U1 reviewed PASS and merged | — |
 | P5 | original gate 2–4 acceptance | Luna | R1, R2 merged for implementation | todo | rt-P5-cases; rt-P5-cases-review-v2 | Collection review PASS; concrete map in reviewer report. No implementation/proof credit | — |
 | R5 | refuse old save routes | Luna | A3, G4 merged per header | todo | — | — | — |

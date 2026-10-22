@@ -1,12 +1,14 @@
-# Timeline commit contract v2 (C0 + C0b)
+# Timeline commit contract v2 (C0 + C0b + C0c)
 
 Normative contract for PLAN v2.1 §2, 22 October 2026. Runtime is the only writer;
 the Python Agent provider computes semantics, validation, rebase and inverses.
 App, CLI, Python, scripts and sheets submit the same commit operation. There is
 no TypeScript executor, document overwrite route or force-conflict option.
 Changes to this contract require the orchestrator. C0 is approved for dependents;
-C0b supplies the undo amendments for review and does not claim their approval or
-implementation. R2 waits for C0b review.
+C0b is approved independently. C0c supplies the closure-root addressing amendment
+for Astra/orchestrator review; it does not approve itself or claim implementation.
+R2 may proceed against C0b and the adopted addressing principle, but merges only
+after C0c approval.
 
 This extends the existing `commitTimeline` engine, not a second store or journal.
 The document version is v2; request `api_version: 1`, command `schema_version: 1`
@@ -39,6 +41,10 @@ Runtime's existing acceptance transaction, publisher-bound request hashing,
 per-scope idempotency, verified closure, CAS and history chain remain authoritative.
 C0b also rechecked Runtime hub integration `0d4c71a3c` and the same Agent hub
 ref, including native occurrence creation and root restoration/allocation paths.
+C0c rechecked those integration heads, Runtime closure validation and inherited
+allocation authentication, and Agent `commands.py`, `_recording.py`, `inverse.py`
+and `authoring_bundle.py`: materialized children can share the parent timeline ID
+while having distinct revision IDs. No product implementation is changed here.
 
 Examples are finite JSON: complete HTTP bodies/envelopes where stated, otherwise
 named fixture fragments or input/expected-output scenarios. A fragment is not an
@@ -277,15 +283,73 @@ An empty path identifies the addressed payload root, subject to the ownership
 restrictions below. Missing ancestors are not implicitly made: first set the
 missing object, then set its child, or set the complete new object in one change.
 
-Addressable closure roots are:
+**Closure-root identity (C0c).** Every root address resolves to exactly one
+physical closure image at its evaluation boundary. Entity IDs are shorthand
+aliases, not physical identities. Reachability is determined by verified pins,
+not by payload equality, array order, the first match or the latest revision.
+Two occurrences pointing to one image count as one match; two revisions with
+identical payloads still count as two. Project/scope authorization applies to
+all forms, including explicit revision refs.
 
 | `ref` | Authored value addressed | Atomic touched scope |
 | --- | --- | --- |
-| `parent` | Parent composition payload, including config, clips, occurrences and registry | Parent payload |
-| `shot:<shot_id>` | One reachable shot payload | That shot payload |
-| `internal:<timeline_id>` | One reachable child timeline payload | That child payload |
+| `parent` | The evaluated parent composition payload | Parent payload |
+| `shot:<shot_id>` | Exactly one reachable revision of that shot ID | That shot payload |
+| `shot-revision:<revision_id>` | The reachable shot image with this revision ID | That shot payload |
+| `internal:<timeline_id>` | Exactly one reachable child revision with that timeline ID | That child payload |
+| `internal-revision:<revision_id>` | The reachable internal image with this revision ID | That child payload |
 
-These roots address payloads of the verified base closure; commands never write
+Revision ID suffixes are literal strings (split at the first colon); they do not
+contain an entity-ID lookup or imply permission to read an arbitrary stored
+revision. No match is `outside_closure`; multiple matches are `ambiguous_ref`.
+Never select one or broadcast. This rule applies to submitted changes, declared
+reads, semantic selections and authoritative effects. `timeline` is the existing
+read-only whole-closure scope, not a payload root. Parent and existing
+unambiguous native addresses retain their spelling and behavior. In particular,
+an occurrence address follows its exact shot revision pin, even when the shot-ID
+alias is ambiguous. A shared *revision* edit affects every occurrence of that
+image, not every revision carrying the same shot ID.
+
+Resolve request reads at batch input, step reads at step input, and each command
+operand/change at its sequential input, including preceding creations/removals.
+A future creation cannot satisfy an earlier lookup; a detached image cannot
+satisfy a later lookup. Resolve and normalize to the physical image and logical
+path before previous-value, overlap, collection, scope, dependency or undo
+checks. Different spellings for one image overlap; identical entity IDs on
+different images do not by themselves overlap. Preserve C0b's deferred compiler
+visibility and causal attribution: only a materialized/verified intermediate
+image is addressable, never a guessed future compiler revision ID.
+
+Persist the resolved bindings in the existing authenticated command/step records,
+not just the alias text. A binding identifies the submitted ref, physical ref,
+content digest, evaluation boundary (base/landing head pair and step/command/
+change ordinal or batch-read boundary), and the verified edge path when one was
+used. Bind scope/dependency captures too; step dependencies retain their original
+boundary rather than being re-resolved at final output. The C0c fixture below
+shows binding projections; they are provider facts, not caller instructions.
+Existing native `records.commands[].bindings`, materialization captures and
+`records.steps` carry these facts with their association to reads/effects. The
+schema adoption must preserve that association and reject forged caller facts;
+this document does not add a client-controlled binding override.
+
+During landing-head replay a submitted alias must still have exactly one match,
+and that match must be the recorded image or its unique authenticated successor.
+A newly ambiguous alias conflicts with `ambiguous_ref`; a unique but unrelated
+replacement conflicts with `binding_changed`, even if its value/digest matches.
+Never silently retarget. Explicit revision refs identify the original image;
+rebase/undo may follow successors only through authenticated materialization
+records and verified managed-edge provenance connecting that image to its
+successor in the same ownership context. A still-reachable original binding
+stays on that image; another owner materializing a branch does not move it. Entity IDs, matching bytes or a search
+for the newest revision are not provenance. A fork/edge replacement is not an
+automatic continuation; no unique authenticated continuation means
+`binding_changed` (missing required history means `history_unavailable`). Reapply
+field/collection guards and scan intervening history after this mapping. A
+revision change alone need not conflict with a disjoint field edit; it cannot
+conceal an intervening write, changed binding or A→B→A. Authenticated inverse
+restoration/redo may return to an earlier image using the same provenance rules.
+
+These roots address payloads of the verified sequential closure; commands never write
 `CanonicalDocument` image wrappers, project/timeline identity, revision IDs,
 content digests, dependency manifests, receipts, history or authorization.
 Root `set` is a guarded replacement of an existing payload, validated with all
@@ -303,14 +367,14 @@ Occurrence rows are addressed under `parent` at
 and shot-to-internal revision links are provider-managed closure edges, not
 ordinary patchable properties; use semantic creation/fork/attachment operations.
 Existing edges are preserved verbatim until the provider regenerates their
-revision pins for a changed child. A changed shared shot affects every occurrence
-of it; clients wanting occurrence-local ownership must fork first. No implicit
+revision pins for a changed child. A changed shared shot revision affects every occurrence
+of that image; clients wanting occurrence-local ownership must fork first. No implicit
 fork is performed by a field patch.
 
 Existing native entity addresses (`parent/clip:<id>`,
 `parent/track:<id>`, `occurrence:<id>/clip:<id>`,
 `occurrence:<id>/track:<id>`, `occurrence:<id>/shot`, and occurrence source
-addresses) normalize to the same physical roots/paths for guards, conflicts,
+addresses) normalize to the same uniquely bound physical roots/paths for guards, conflicts,
 history and undo. Parent `clips`/`config.clips` and registry mirrors likewise
 have one logical identity. The provider updates required mirrors; a client may
 not write contradictory copies. Alias normalization must happen before overlap
@@ -320,6 +384,22 @@ A ref outside the authenticated closure is `outside_closure`.
 **Provider-generated effect records.** Accepted `steps[].patch` and
 `records.steps[].patch` describe the verified before/after closure union at the
 relevant execution boundary, rather than only submitted-patch addresses.
+Resolve effect refs against the verified before/after **union**, deduplicated by
+physical image identity, not entity ID. An alias is usable in an effect only
+when unique in that union; otherwise use the revision-qualified form. This
+includes one entity's old/new revisions even if each side alone was unambiguous.
+Root creation binds the after image; removal binds the before image. Materialized
+successors are separate immutable images: record each entered/left root and its
+managed-edge changes with their distinct physical refs, plus the authenticated
+source→successor relation. An unchanged shared old image stays present and is
+not removed. A field-level authored capture retains its before/after binding
+and path even when the authoritative effect patch must represent revision
+turnover as root remove/create. Those structural effects cannot erase its causal
+step or turn unrelated fields into authored overlaps. Root membership/edge
+consumers and explicit scope reads still guard the complete affected images.
+Effect ordering must preserve guards; final reachability and pins must verify.
+Intermediate detached/allocated images are authenticated staging values, never
+additional roots a caller may submit.
 Alongside ordinary changes, they may contain root creation (`set`, `path: []`,
 `before: {"state": "absent"}` with the complete new payload), root removal
 (`remove`, `path: []`, complete present `before`), and managed closure-edge
@@ -1230,7 +1310,8 @@ Complete invalid envelope for the id-less-list case:
 
 Other stable reasons include `previous_value_mismatch`, `invalid_path`,
 `invalid_document`, `invalid_steps`, `identity_collision`, `outside_closure`,
-`managed_field`, `unsupported_operation`, `selection_changed`,
+`managed_field`, `unsupported_operation`, `selection_changed`, `ambiguous_ref`,
+`binding_changed`,
 `atomic_scope_changed`, `inverse_conflict`, `intervening_write`,
 `surviving_dependents`, `history_unavailable`, `head_busy` and
 `idempotency_mismatch`. Classification follows origin: a malformed base request
@@ -1427,6 +1508,18 @@ allocation, caller-supplied closure image or inferred provenance may authorize
 restoration. Corrupt provenance is rejected, and unavailable boundary/history
 is `history_unavailable`. Removing a root from the live closure does not erase
 its immutable image or free its reserved ID.
+
+Use the target's persisted physical bindings for inverse/redo and every later
+history scan; do not resolve its historical alias text anew at the current head.
+A formerly unique alias may now name several images. That does not authorize
+choosing another image, nor does it invalidate a proven bound continuation by
+itself. Normalize later reads/writes/edges through the same authenticated lineage
+before checking overlap and surviving references. This differs from replaying a
+new submitted alias, which must pass uniqueness at its replay boundary. Undo of
+creation removes only the bound created roots and edges (and their authenticated
+successors); unrelated children with the same timeline ID survive. Inverse
+restoration effects use explicit refs wherever the before/after union is
+ambiguous, and redo inherits bindings/allocation sources from its accepted undo.
 
 Two guards are required: (1) current values/identities/collection shape match the
 selected effects' recorded after states, adjusted only for other selected
@@ -2629,6 +2722,1867 @@ these scenarios against the provider; fixture checks alone do not qualify them.
 }
 ```
 
+### C0c: two created children, physical bindings and revision turnover
+
+The following executable scenario is a fixture object, not one HTTP body.
+`request` and each nested `request`/`ambiguous_request` are complete bodies with
+fresh Idempotency-Keys named by their scenario keys. `reply_projection` omits the
+already-specified full receipt/result envelope; `documents` and
+`document_digests` supply complete expected closure states. `a` and `ab` are
+verified sequential materialization boundaries inside the batch, not separately
+published heads. Only `edited` is the batch's accepted state. Providers must
+expose these intermediate images before a subsequent qualified operand uses
+them, or refuse unsupported input; a producer must not guess their IDs. The
+literal revision IDs stand for the verified IDs supplied by semantic
+materialization, just as the existing single-child fixture uses fixture IDs.
+Both children inherit `film-1`, even though ia1 and ib1 have equal payload bytes.
+The patch edits only ia1. Its immutable successor ia2 changes the managed shot
+and occurrence pins; ib1/sb1 stay unchanged. No alias in the effect union can
+collapse ia1/ia2/ib1 or sa1/sa2 into an entity-ID dictionary.
+
+`bindings_projection` and `materialization_projection` display required facts
+from the authenticated recorder, not new request fields or proof that strings
+are authenticated. Input-boundary digests may differ within one batch. Effect
+bindings also retain side and physical revision/digest from the verified union:
+creations bind after, removals before, and parent edge writes bind both parent
+boundary images. The checker derives those bindings from the complete states.
+The field-level input capture for edit-a remains ia1/note A→B with successor ia2;
+the expanded effect patch is not a submitted patch and cannot bypass ownership.
+The checks exercise the recorded transitions and binding rules, using Runtime's
+canonical schema/digest validation. They do not authenticate real provider
+materialization records, prove compiler visibility/attribution, or execute v2
+rebase/undo. R1/R2/R2r must qualify those behaviors against these same requests.
+
+Undo/redo branches start independently: undo-edit then redo-edit; or undo-all
+then redo-all. Their expected payload states reuse `documents` but get fresh
+parent revision/publication IDs in the reply projections. Undo edit restores ia1
+and sa1 through authenticated source provenance; undo all reverses edit-a,
+create-b, create-a. Redo all replays those boundaries in forward order with
+inherited allocation provenance, not fresh allocations. Partial undo of create-a
+alone refuses because edit-a survives; every refusal leaves its evaluated head
+and history unchanged. The ambiguous-internal request reaches the two-child
+boundary, refuses, and rolls back *both* creations. A lookup after the removal
+of its last reachable owner likewise fails `outside_closure`.
+
+`multi` is a separate authenticated base with two reachable shot-a revisions,
+sa1 and sa2. An occurrence holds each pin. `shot:shot-a` refuses; the qualified
+sa1 edit produces sa3 and changes only occ-a-old's edge. sa2/ia2 and shared ia1
+stay intact. The final replay cases are binding probes: they test uniqueness
+and authenticated continuation only; a full replay still applies read/write
+and later-history guards. In particular an overlapping note edit cannot merge
+merely because a successor exists. Matching bytes on an unrelated child never
+authorize retargeting.
+
+```json
+{
+  "case": "C0c_two_children_and_shot_revisions",
+  "documents": {
+    "empty": {
+      "schema_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "parent_revision": {
+        "revision_id": "rev-c0",
+        "content_digest": "sha256:7db6941424344f29682efe9425283892d2f45c9fc96bd20cf21faaa8256eb16a",
+        "payload": {
+          "config": {
+            "output": {"fps": 30},
+            "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+          },
+          "registry": {},
+          "clips": [],
+          "occurrences": []
+        }
+      },
+      "shot_revisions": [],
+      "internal_timeline_revisions": [],
+      "dependency_manifest": {"shots": [], "internal_timelines": [], "media": [], "documents": []}
+    },
+    "a": {
+      "schema_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "parent_revision": {
+        "revision_id": "rev-c1",
+        "content_digest": "sha256:e346204627c0863213d52daaa81945a2fc55c8e1a748865f3ad346867976cb4d",
+        "payload": {
+          "config": {
+            "output": {"fps": 30},
+            "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+          },
+          "registry": {},
+          "clips": [],
+          "occurrences": [
+            {
+              "occurrence_id": "occ-a",
+              "shot_id": "shot-a",
+              "shot_revision_id": "sa1",
+              "track": "picture",
+              "placement": {"start_ms": 0, "track": "picture"},
+              "duration_ms": 2000,
+              "source_offset": 0,
+              "speed": 1,
+              "gain": 1
+            }
+          ]
+        }
+      },
+      "shot_revisions": [
+        {
+          "shot_id": "shot-a",
+          "internal_timeline_revision_id": "ia1",
+          "revision_id": "sa1",
+          "content_digest": "sha256:117d90b8103422352f805cfab292feb3be00a4a08c21e1fc17d18113d7b05288",
+          "payload": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}
+        }
+      ],
+      "internal_timeline_revisions": [
+        {
+          "timeline_id": "film-1",
+          "revision_id": "ia1",
+          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
+          "payload": {
+            "output": {"fps": 30},
+            "tracks": [],
+            "clips": [],
+            "registry": {"assets": {}},
+            "meta": {"org.example.timeline": {"note": "A"}}
+          }
+        }
+      ],
+      "dependency_manifest": {
+        "shots": [
+          {
+            "shot_id": "shot-a",
+            "revision_id": "sa1",
+            "internal_timeline_revision_id": "ia1",
+            "content_digest": "sha256:117d90b8103422352f805cfab292feb3be00a4a08c21e1fc17d18113d7b05288"
+          }
+        ],
+        "internal_timelines": [
+          {
+            "timeline_id": "film-1",
+            "revision_id": "ia1",
+            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+          }
+        ],
+        "media": [],
+        "documents": []
+      }
+    },
+    "ab": {
+      "schema_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "parent_revision": {
+        "revision_id": "rev-c2",
+        "content_digest": "sha256:83568c2f6c5fc93ac50909d7e0b812b9865cb17380b7d19968eb4f05b7818e78",
+        "payload": {
+          "config": {
+            "output": {"fps": 30},
+            "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+          },
+          "registry": {},
+          "clips": [],
+          "occurrences": [
+            {
+              "occurrence_id": "occ-a",
+              "shot_id": "shot-a",
+              "shot_revision_id": "sa1",
+              "track": "picture",
+              "placement": {"start_ms": 0, "track": "picture"},
+              "duration_ms": 2000,
+              "source_offset": 0,
+              "speed": 1,
+              "gain": 1
+            },
+            {
+              "occurrence_id": "occ-b",
+              "shot_id": "shot-b",
+              "shot_revision_id": "sb1",
+              "track": "picture",
+              "placement": {"start_ms": 2000, "track": "picture"},
+              "duration_ms": 2000,
+              "source_offset": 0,
+              "speed": 1,
+              "gain": 1
+            }
+          ]
+        }
+      },
+      "shot_revisions": [
+        {
+          "shot_id": "shot-a",
+          "internal_timeline_revision_id": "ia1",
+          "revision_id": "sa1",
+          "content_digest": "sha256:117d90b8103422352f805cfab292feb3be00a4a08c21e1fc17d18113d7b05288",
+          "payload": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}
+        },
+        {
+          "shot_id": "shot-b",
+          "internal_timeline_revision_id": "ib1",
+          "revision_id": "sb1",
+          "content_digest": "sha256:f27e0d4c5a37301033fa89f23bbc180f800f5088ae74316e02a7f0541c78822b",
+          "payload": {"name": "B", "items": [], "internal_timeline_revision_id": "ib1"}
+        }
+      ],
+      "internal_timeline_revisions": [
+        {
+          "timeline_id": "film-1",
+          "revision_id": "ia1",
+          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
+          "payload": {
+            "output": {"fps": 30},
+            "tracks": [],
+            "clips": [],
+            "registry": {"assets": {}},
+            "meta": {"org.example.timeline": {"note": "A"}}
+          }
+        },
+        {
+          "timeline_id": "film-1",
+          "revision_id": "ib1",
+          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
+          "payload": {
+            "output": {"fps": 30},
+            "tracks": [],
+            "clips": [],
+            "registry": {"assets": {}},
+            "meta": {"org.example.timeline": {"note": "A"}}
+          }
+        }
+      ],
+      "dependency_manifest": {
+        "shots": [
+          {
+            "shot_id": "shot-a",
+            "revision_id": "sa1",
+            "internal_timeline_revision_id": "ia1",
+            "content_digest": "sha256:117d90b8103422352f805cfab292feb3be00a4a08c21e1fc17d18113d7b05288"
+          },
+          {
+            "shot_id": "shot-b",
+            "revision_id": "sb1",
+            "internal_timeline_revision_id": "ib1",
+            "content_digest": "sha256:f27e0d4c5a37301033fa89f23bbc180f800f5088ae74316e02a7f0541c78822b"
+          }
+        ],
+        "internal_timelines": [
+          {
+            "timeline_id": "film-1",
+            "revision_id": "ia1",
+            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+          },
+          {
+            "timeline_id": "film-1",
+            "revision_id": "ib1",
+            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+          }
+        ],
+        "media": [],
+        "documents": []
+      }
+    },
+    "edited": {
+      "schema_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "parent_revision": {
+        "revision_id": "rev-c3",
+        "content_digest": "sha256:15f8f3c435bc65104d0456b01b356d0ddd6af8a5f71ac8d62af299ff6127de77",
+        "payload": {
+          "config": {
+            "output": {"fps": 30},
+            "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+          },
+          "registry": {},
+          "clips": [],
+          "occurrences": [
+            {
+              "occurrence_id": "occ-a",
+              "shot_id": "shot-a",
+              "shot_revision_id": "sa2",
+              "track": "picture",
+              "placement": {"start_ms": 0, "track": "picture"},
+              "duration_ms": 2000,
+              "source_offset": 0,
+              "speed": 1,
+              "gain": 1
+            },
+            {
+              "occurrence_id": "occ-b",
+              "shot_id": "shot-b",
+              "shot_revision_id": "sb1",
+              "track": "picture",
+              "placement": {"start_ms": 2000, "track": "picture"},
+              "duration_ms": 2000,
+              "source_offset": 0,
+              "speed": 1,
+              "gain": 1
+            }
+          ]
+        }
+      },
+      "shot_revisions": [
+        {
+          "shot_id": "shot-a",
+          "internal_timeline_revision_id": "ia2",
+          "revision_id": "sa2",
+          "content_digest": "sha256:3d02b808627b9bc0d9348d558d4792cd2f848ac02e7fde42517e38205b20ee81",
+          "payload": {"name": "A", "items": [], "internal_timeline_revision_id": "ia2"}
+        },
+        {
+          "shot_id": "shot-b",
+          "internal_timeline_revision_id": "ib1",
+          "revision_id": "sb1",
+          "content_digest": "sha256:f27e0d4c5a37301033fa89f23bbc180f800f5088ae74316e02a7f0541c78822b",
+          "payload": {"name": "B", "items": [], "internal_timeline_revision_id": "ib1"}
+        }
+      ],
+      "internal_timeline_revisions": [
+        {
+          "timeline_id": "film-1",
+          "revision_id": "ia2",
+          "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b",
+          "payload": {
+            "output": {"fps": 30},
+            "tracks": [],
+            "clips": [],
+            "registry": {"assets": {}},
+            "meta": {"org.example.timeline": {"note": "B"}}
+          }
+        },
+        {
+          "timeline_id": "film-1",
+          "revision_id": "ib1",
+          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
+          "payload": {
+            "output": {"fps": 30},
+            "tracks": [],
+            "clips": [],
+            "registry": {"assets": {}},
+            "meta": {"org.example.timeline": {"note": "A"}}
+          }
+        }
+      ],
+      "dependency_manifest": {
+        "shots": [
+          {
+            "shot_id": "shot-a",
+            "revision_id": "sa2",
+            "internal_timeline_revision_id": "ia2",
+            "content_digest": "sha256:3d02b808627b9bc0d9348d558d4792cd2f848ac02e7fde42517e38205b20ee81"
+          },
+          {
+            "shot_id": "shot-b",
+            "revision_id": "sb1",
+            "internal_timeline_revision_id": "ib1",
+            "content_digest": "sha256:f27e0d4c5a37301033fa89f23bbc180f800f5088ae74316e02a7f0541c78822b"
+          }
+        ],
+        "internal_timelines": [
+          {
+            "timeline_id": "film-1",
+            "revision_id": "ia2",
+            "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b"
+          },
+          {
+            "timeline_id": "film-1",
+            "revision_id": "ib1",
+            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+          }
+        ],
+        "media": [],
+        "documents": []
+      }
+    },
+    "multi": {
+      "schema_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "parent_revision": {
+        "revision_id": "rev-m0",
+        "content_digest": "sha256:fd9d43b9ec0b70a631eb59568cbff597044a94b30d9b8fab2818d3e6816a2fa7",
+        "payload": {
+          "config": {
+            "output": {"fps": 30},
+            "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+          },
+          "registry": {},
+          "clips": [],
+          "occurrences": [
+            {
+              "occurrence_id": "occ-a",
+              "shot_id": "shot-a",
+              "shot_revision_id": "sa2",
+              "track": "picture",
+              "placement": {"start_ms": 0, "track": "picture"},
+              "duration_ms": 2000,
+              "source_offset": 0,
+              "speed": 1,
+              "gain": 1
+            },
+            {
+              "occurrence_id": "occ-b",
+              "shot_id": "shot-b",
+              "shot_revision_id": "sb1",
+              "track": "picture",
+              "placement": {"start_ms": 2000, "track": "picture"},
+              "duration_ms": 2000,
+              "source_offset": 0,
+              "speed": 1,
+              "gain": 1
+            },
+            {
+              "occurrence_id": "occ-a-old",
+              "shot_id": "shot-a",
+              "shot_revision_id": "sa1",
+              "track": "picture",
+              "placement": {"start_ms": 4000, "track": "picture"},
+              "duration_ms": 2000,
+              "source_offset": 0,
+              "speed": 1,
+              "gain": 1
+            }
+          ]
+        }
+      },
+      "shot_revisions": [
+        {
+          "shot_id": "shot-a",
+          "internal_timeline_revision_id": "ia1",
+          "revision_id": "sa1",
+          "content_digest": "sha256:117d90b8103422352f805cfab292feb3be00a4a08c21e1fc17d18113d7b05288",
+          "payload": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}
+        },
+        {
+          "shot_id": "shot-a",
+          "internal_timeline_revision_id": "ia2",
+          "revision_id": "sa2",
+          "content_digest": "sha256:3d02b808627b9bc0d9348d558d4792cd2f848ac02e7fde42517e38205b20ee81",
+          "payload": {"name": "A", "items": [], "internal_timeline_revision_id": "ia2"}
+        },
+        {
+          "shot_id": "shot-b",
+          "internal_timeline_revision_id": "ib1",
+          "revision_id": "sb1",
+          "content_digest": "sha256:f27e0d4c5a37301033fa89f23bbc180f800f5088ae74316e02a7f0541c78822b",
+          "payload": {"name": "B", "items": [], "internal_timeline_revision_id": "ib1"}
+        }
+      ],
+      "internal_timeline_revisions": [
+        {
+          "timeline_id": "film-1",
+          "revision_id": "ia1",
+          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
+          "payload": {
+            "output": {"fps": 30},
+            "tracks": [],
+            "clips": [],
+            "registry": {"assets": {}},
+            "meta": {"org.example.timeline": {"note": "A"}}
+          }
+        },
+        {
+          "timeline_id": "film-1",
+          "revision_id": "ia2",
+          "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b",
+          "payload": {
+            "output": {"fps": 30},
+            "tracks": [],
+            "clips": [],
+            "registry": {"assets": {}},
+            "meta": {"org.example.timeline": {"note": "B"}}
+          }
+        },
+        {
+          "timeline_id": "film-1",
+          "revision_id": "ib1",
+          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
+          "payload": {
+            "output": {"fps": 30},
+            "tracks": [],
+            "clips": [],
+            "registry": {"assets": {}},
+            "meta": {"org.example.timeline": {"note": "A"}}
+          }
+        }
+      ],
+      "dependency_manifest": {
+        "shots": [
+          {
+            "shot_id": "shot-a",
+            "revision_id": "sa1",
+            "internal_timeline_revision_id": "ia1",
+            "content_digest": "sha256:117d90b8103422352f805cfab292feb3be00a4a08c21e1fc17d18113d7b05288"
+          },
+          {
+            "shot_id": "shot-a",
+            "revision_id": "sa2",
+            "internal_timeline_revision_id": "ia2",
+            "content_digest": "sha256:3d02b808627b9bc0d9348d558d4792cd2f848ac02e7fde42517e38205b20ee81"
+          },
+          {
+            "shot_id": "shot-b",
+            "revision_id": "sb1",
+            "internal_timeline_revision_id": "ib1",
+            "content_digest": "sha256:f27e0d4c5a37301033fa89f23bbc180f800f5088ae74316e02a7f0541c78822b"
+          }
+        ],
+        "internal_timelines": [
+          {
+            "timeline_id": "film-1",
+            "revision_id": "ia1",
+            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+          },
+          {
+            "timeline_id": "film-1",
+            "revision_id": "ia2",
+            "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b"
+          },
+          {
+            "timeline_id": "film-1",
+            "revision_id": "ib1",
+            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+          }
+        ],
+        "media": [],
+        "documents": []
+      }
+    },
+    "multi_edited": {
+      "schema_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "parent_revision": {
+        "revision_id": "rev-m1",
+        "content_digest": "sha256:7feda6f8114e093b74b1a0534800b8e3aa6b07319507c42db978121e626ad18d",
+        "payload": {
+          "config": {
+            "output": {"fps": 30},
+            "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}]
+          },
+          "registry": {},
+          "clips": [],
+          "occurrences": [
+            {
+              "occurrence_id": "occ-a",
+              "shot_id": "shot-a",
+              "shot_revision_id": "sa2",
+              "track": "picture",
+              "placement": {"start_ms": 0, "track": "picture"},
+              "duration_ms": 2000,
+              "source_offset": 0,
+              "speed": 1,
+              "gain": 1
+            },
+            {
+              "occurrence_id": "occ-b",
+              "shot_id": "shot-b",
+              "shot_revision_id": "sb1",
+              "track": "picture",
+              "placement": {"start_ms": 2000, "track": "picture"},
+              "duration_ms": 2000,
+              "source_offset": 0,
+              "speed": 1,
+              "gain": 1
+            },
+            {
+              "occurrence_id": "occ-a-old",
+              "shot_id": "shot-a",
+              "shot_revision_id": "sa3",
+              "track": "picture",
+              "placement": {"start_ms": 4000, "track": "picture"},
+              "duration_ms": 2000,
+              "source_offset": 0,
+              "speed": 1,
+              "gain": 1
+            }
+          ]
+        }
+      },
+      "shot_revisions": [
+        {
+          "shot_id": "shot-a",
+          "internal_timeline_revision_id": "ia2",
+          "revision_id": "sa2",
+          "content_digest": "sha256:3d02b808627b9bc0d9348d558d4792cd2f848ac02e7fde42517e38205b20ee81",
+          "payload": {"name": "A", "items": [], "internal_timeline_revision_id": "ia2"}
+        },
+        {
+          "shot_id": "shot-a",
+          "internal_timeline_revision_id": "ia1",
+          "revision_id": "sa3",
+          "content_digest": "sha256:a50939a571dd41c3b744cf65ca14a84a90b25417d8865b5c2f7e2fd47bbe8105",
+          "payload": {"name": "Old branch", "items": [], "internal_timeline_revision_id": "ia1"}
+        },
+        {
+          "shot_id": "shot-b",
+          "internal_timeline_revision_id": "ib1",
+          "revision_id": "sb1",
+          "content_digest": "sha256:f27e0d4c5a37301033fa89f23bbc180f800f5088ae74316e02a7f0541c78822b",
+          "payload": {"name": "B", "items": [], "internal_timeline_revision_id": "ib1"}
+        }
+      ],
+      "internal_timeline_revisions": [
+        {
+          "timeline_id": "film-1",
+          "revision_id": "ia1",
+          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
+          "payload": {
+            "output": {"fps": 30},
+            "tracks": [],
+            "clips": [],
+            "registry": {"assets": {}},
+            "meta": {"org.example.timeline": {"note": "A"}}
+          }
+        },
+        {
+          "timeline_id": "film-1",
+          "revision_id": "ia2",
+          "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b",
+          "payload": {
+            "output": {"fps": 30},
+            "tracks": [],
+            "clips": [],
+            "registry": {"assets": {}},
+            "meta": {"org.example.timeline": {"note": "B"}}
+          }
+        },
+        {
+          "timeline_id": "film-1",
+          "revision_id": "ib1",
+          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
+          "payload": {
+            "output": {"fps": 30},
+            "tracks": [],
+            "clips": [],
+            "registry": {"assets": {}},
+            "meta": {"org.example.timeline": {"note": "A"}}
+          }
+        }
+      ],
+      "dependency_manifest": {
+        "shots": [
+          {
+            "shot_id": "shot-a",
+            "revision_id": "sa2",
+            "internal_timeline_revision_id": "ia2",
+            "content_digest": "sha256:3d02b808627b9bc0d9348d558d4792cd2f848ac02e7fde42517e38205b20ee81"
+          },
+          {
+            "shot_id": "shot-a",
+            "revision_id": "sa3",
+            "internal_timeline_revision_id": "ia1",
+            "content_digest": "sha256:a50939a571dd41c3b744cf65ca14a84a90b25417d8865b5c2f7e2fd47bbe8105"
+          },
+          {
+            "shot_id": "shot-b",
+            "revision_id": "sb1",
+            "internal_timeline_revision_id": "ib1",
+            "content_digest": "sha256:f27e0d4c5a37301033fa89f23bbc180f800f5088ae74316e02a7f0541c78822b"
+          }
+        ],
+        "internal_timelines": [
+          {
+            "timeline_id": "film-1",
+            "revision_id": "ia1",
+            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+          },
+          {
+            "timeline_id": "film-1",
+            "revision_id": "ia2",
+            "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b"
+          },
+          {
+            "timeline_id": "film-1",
+            "revision_id": "ib1",
+            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+          }
+        ],
+        "media": [],
+        "documents": []
+      }
+    }
+  },
+  "document_digests": {
+    "empty": "sha256:f8cc39f9ebed677fce15fdf5f4b13bb8ca6b034df3be8e339ab4f79cc4437b1e",
+    "a": "sha256:cd31b1e4f990e0c4231c0acda1421684f6edfb0277e63319b8b80eb3c4839e8d",
+    "ab": "sha256:a1545cfc3df7b83b061c4987a900d765ceb7eb0b7e4535958c1f9d29d20b9710",
+    "edited": "sha256:8aadf94c3b0179a7607de8fa22bdcee28e58d69e516adea2106ebf055b4003ab",
+    "multi": "sha256:fb3b3bcbcf200a9d603464fed4ec97be7d0d7282c75c8972ea44ddf8d4cae48c",
+    "multi_edited": "sha256:ab8a70b69301b86162502007eb381ee4f0ced978946e72904088f1d28fe264f8"
+  },
+  "request": {
+    "api_version": 1,
+    "project_id": "project-1",
+    "timeline_id": "film-1",
+    "base_revision_id": "rev-c0",
+    "base_publication_id": "pub-c0",
+    "commands": [
+      {
+        "schema_version": 1,
+        "op": "occurrence.create",
+        "version": "1",
+        "select": "parent",
+        "args": {"occurrence_id": "occ-a", "shot_id": "shot-a", "name": "A", "track": "picture", "on": 0, "duration": 2},
+        "created": ["shot:shot-a", "occurrence:occ-a"]
+      },
+      {
+        "schema_version": 1,
+        "op": "occurrence.create",
+        "version": "1",
+        "select": "parent",
+        "args": {"occurrence_id": "occ-b", "shot_id": "shot-b", "name": "B", "track": "picture", "on": 2, "duration": 2},
+        "created": ["shot:shot-b", "occurrence:occ-b"]
+      },
+      {
+        "schema_version": 1,
+        "op": "doc.patch",
+        "version": "1",
+        "select": null,
+        "args": {
+          "changes": [
+            {
+              "op": "set",
+              "ref": "internal-revision:ia1",
+              "path": ["meta", "org.example.timeline", "note"],
+              "before": {"state": "present", "value": "A"},
+              "value": "B"
+            }
+          ]
+        }
+      }
+    ],
+    "label": "Create two children and edit A",
+    "steps": [
+      {
+        "id": "create-a",
+        "label": "create-a",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [0],
+        "patch": [],
+        "reads": [{"kind": "scope", "ref": "timeline", "path": []}]
+      },
+      {
+        "id": "create-b",
+        "label": "create-b",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [1],
+        "patch": [],
+        "reads": [{"kind": "scope", "ref": "timeline", "path": []}]
+      },
+      {
+        "id": "edit-a",
+        "label": "edit-a",
+        "intent": "",
+        "tags": [],
+        "command_ordinals": [2],
+        "patch": [
+          {
+            "op": "set",
+            "ref": "internal-revision:ia1",
+            "path": ["meta", "org.example.timeline", "note"],
+            "before": {"state": "present", "value": "A"},
+            "value": "B"
+          }
+        ],
+        "reads": [
+          {
+            "kind": "field",
+            "ref": "internal-revision:ia1",
+            "path": ["meta", "org.example.timeline", "note"],
+            "state": {"state": "present", "value": "A"}
+          }
+        ]
+      }
+    ],
+    "merge": "fields",
+    "reads": []
+  },
+  "reply_projection": {
+    "data": {
+      "status": "accepted",
+      "base_revision_id": "rev-c0",
+      "base_publication_id": "pub-c0",
+      "accepted_revision_id": "rev-c3",
+      "steps": [
+        {
+          "id": "create-a",
+          "label": "create-a",
+          "intent": "",
+          "tags": [],
+          "command_ordinals": [0],
+          "patch": [
+            {
+              "op": "set",
+              "ref": "internal-revision:ia1",
+              "path": [],
+              "before": {"state": "absent"},
+              "value": {
+                "output": {"fps": 30},
+                "tracks": [],
+                "clips": [],
+                "registry": {"assets": {}},
+                "meta": {"org.example.timeline": {"note": "A"}}
+              }
+            },
+            {
+              "op": "set",
+              "ref": "shot-revision:sa1",
+              "path": [],
+              "before": {"state": "absent"},
+              "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}
+            },
+            {
+              "op": "list.insert",
+              "ref": "parent",
+              "path": ["occurrences"],
+              "id": "occ-a",
+              "before": {"state": "absent"},
+              "value": {
+                "occurrence_id": "occ-a",
+                "shot_id": "shot-a",
+                "shot_revision_id": "sa1",
+                "track": "picture",
+                "placement": {"start_ms": 0, "track": "picture"},
+                "duration_ms": 2000,
+                "source_offset": 0,
+                "speed": 1,
+                "gain": 1
+              },
+              "order_before": [],
+              "after_id": null
+            }
+          ],
+          "dependencies": [{"kind": "scope", "ref": "timeline", "path": []}]
+        },
+        {
+          "id": "create-b",
+          "label": "create-b",
+          "intent": "",
+          "tags": [],
+          "command_ordinals": [1],
+          "patch": [
+            {
+              "op": "set",
+              "ref": "internal-revision:ib1",
+              "path": [],
+              "before": {"state": "absent"},
+              "value": {
+                "output": {"fps": 30},
+                "tracks": [],
+                "clips": [],
+                "registry": {"assets": {}},
+                "meta": {"org.example.timeline": {"note": "A"}}
+              }
+            },
+            {
+              "op": "set",
+              "ref": "shot-revision:sb1",
+              "path": [],
+              "before": {"state": "absent"},
+              "value": {"name": "B", "items": [], "internal_timeline_revision_id": "ib1"}
+            },
+            {
+              "op": "list.insert",
+              "ref": "parent",
+              "path": ["occurrences"],
+              "id": "occ-b",
+              "before": {"state": "absent"},
+              "value": {
+                "occurrence_id": "occ-b",
+                "shot_id": "shot-b",
+                "shot_revision_id": "sb1",
+                "track": "picture",
+                "placement": {"start_ms": 2000, "track": "picture"},
+                "duration_ms": 2000,
+                "source_offset": 0,
+                "speed": 1,
+                "gain": 1
+              },
+              "order_before": ["occ-a"],
+              "after_id": "occ-a"
+            }
+          ],
+          "dependencies": [{"kind": "scope", "ref": "timeline", "path": []}]
+        },
+        {
+          "id": "edit-a",
+          "label": "edit-a",
+          "intent": "",
+          "tags": [],
+          "command_ordinals": [2],
+          "patch": [
+            {
+              "op": "set",
+              "ref": "internal-revision:ia2",
+              "path": [],
+              "before": {"state": "absent"},
+              "value": {
+                "output": {"fps": 30},
+                "tracks": [],
+                "clips": [],
+                "registry": {"assets": {}},
+                "meta": {"org.example.timeline": {"note": "B"}}
+              }
+            },
+            {
+              "op": "set",
+              "ref": "shot-revision:sa2",
+              "path": [],
+              "before": {"state": "absent"},
+              "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia2"}
+            },
+            {
+              "op": "set",
+              "ref": "parent",
+              "path": ["occurrences", "occurrence_id:occ-a", "shot_revision_id"],
+              "before": {"state": "present", "value": "sa1"},
+              "value": "sa2"
+            },
+            {
+              "op": "remove",
+              "ref": "shot-revision:sa1",
+              "path": [],
+              "before": {"state": "present", "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}}
+            },
+            {
+              "op": "remove",
+              "ref": "internal-revision:ia1",
+              "path": [],
+              "before": {
+                "state": "present",
+                "value": {
+                  "output": {"fps": 30},
+                  "tracks": [],
+                  "clips": [],
+                  "registry": {"assets": {}},
+                  "meta": {"org.example.timeline": {"note": "A"}}
+                }
+              }
+            }
+          ],
+          "dependencies": [
+            {
+              "kind": "field",
+              "ref": "internal-revision:ia1",
+              "path": ["meta", "org.example.timeline", "note"],
+              "state": {"state": "present", "value": "A"}
+            }
+          ]
+        }
+      ]
+    },
+    "receipt": {"receipt_id": "pub-c3"}
+  },
+  "step_states": ["a", "ab", "edited"],
+  "bindings_projection": [
+    {
+      "ref": "parent",
+      "physical_ref": "parent",
+      "content_digest": "sha256:7db6941424344f29682efe9425283892d2f45c9fc96bd20cf21faaa8256eb16a",
+      "boundary": {
+        "base_revision_id": "rev-c0",
+        "base_publication_id": "pub-c0",
+        "step_id": "create-a",
+        "command_ordinal": 0,
+        "phase": "input"
+      }
+    },
+    {
+      "ref": "parent",
+      "physical_ref": "parent",
+      "content_digest": "sha256:e346204627c0863213d52daaa81945a2fc55c8e1a748865f3ad346867976cb4d",
+      "boundary": {
+        "base_revision_id": "rev-c0",
+        "base_publication_id": "pub-c0",
+        "step_id": "create-b",
+        "command_ordinal": 1,
+        "phase": "input"
+      }
+    },
+    {
+      "ref": "internal-revision:ia1",
+      "physical_ref": "internal-revision:ia1",
+      "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
+      "boundary": {
+        "base_revision_id": "rev-c0",
+        "base_publication_id": "pub-c0",
+        "step_id": "edit-a",
+        "command_ordinal": 2,
+        "change_ordinal": 0,
+        "phase": "input"
+      }
+    }
+  ],
+  "materialization_projection": [
+    {
+      "step_id": "edit-a",
+      "source": "internal-revision:ia1",
+      "successor": "internal-revision:ia2",
+      "owner": "occurrence:occ-a/shot",
+      "edge_before": "shot-revision:sa1",
+      "edge_after": "shot-revision:sa2"
+    },
+    {
+      "step_id": "edit-a",
+      "source": "shot-revision:sa1",
+      "successor": "shot-revision:sa2",
+      "owner": "occurrence:occ-a/shot",
+      "edge_before": "internal-revision:ia1",
+      "edge_after": "internal-revision:ia2"
+    }
+  ],
+  "ambiguous_internal": {
+    "request": {
+      "api_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "base_revision_id": "rev-c0",
+      "base_publication_id": "pub-c0",
+      "commands": [
+        {
+          "schema_version": 1,
+          "op": "occurrence.create",
+          "version": "1",
+          "select": "parent",
+          "args": {"occurrence_id": "occ-a", "shot_id": "shot-a", "name": "A", "track": "picture", "on": 0, "duration": 2},
+          "created": ["shot:shot-a", "occurrence:occ-a"]
+        },
+        {
+          "schema_version": 1,
+          "op": "occurrence.create",
+          "version": "1",
+          "select": "parent",
+          "args": {"occurrence_id": "occ-b", "shot_id": "shot-b", "name": "B", "track": "picture", "on": 2, "duration": 2},
+          "created": ["shot:shot-b", "occurrence:occ-b"]
+        },
+        {
+          "schema_version": 1,
+          "op": "doc.patch",
+          "version": "1",
+          "select": null,
+          "args": {
+            "changes": [
+              {
+                "op": "set",
+                "ref": "internal:film-1",
+                "path": ["meta", "org.example.timeline", "note"],
+                "before": {"state": "present", "value": "A"},
+                "value": "B"
+              }
+            ]
+          }
+        }
+      ],
+      "label": "Create two children and edit A",
+      "steps": [
+        {
+          "id": "create-a",
+          "label": "create-a",
+          "intent": "",
+          "tags": [],
+          "command_ordinals": [0],
+          "patch": [],
+          "reads": [{"kind": "scope", "ref": "timeline", "path": []}]
+        },
+        {
+          "id": "create-b",
+          "label": "create-b",
+          "intent": "",
+          "tags": [],
+          "command_ordinals": [1],
+          "patch": [],
+          "reads": [{"kind": "scope", "ref": "timeline", "path": []}]
+        },
+        {
+          "id": "edit-a",
+          "label": "edit-a",
+          "intent": "",
+          "tags": [],
+          "command_ordinals": [2],
+          "patch": [
+            {
+              "op": "set",
+              "ref": "internal:film-1",
+              "path": ["meta", "org.example.timeline", "note"],
+              "before": {"state": "present", "value": "A"},
+              "value": "B"
+            }
+          ],
+          "reads": []
+        }
+      ],
+      "merge": "fields",
+      "reads": []
+    },
+    "http_status": 422,
+    "reply": {
+      "code": "invalid",
+      "message": "Use internal-revision:ia1 or internal-revision:ib1.",
+      "details": {
+        "status": "invalid",
+        "code": "ambiguous_ref",
+        "reason": "ambiguous_ref",
+        "path": ["commands", "2", "args", "changes", "0", "ref"],
+        "hint": "Use internal-revision:ia1 or internal-revision:ib1.",
+        "suggested_command": "timeline show --history"
+      }
+    },
+    "expected_head": {"revision_id": "rev-c0", "publication_id": "pub-c0"},
+    "added_history_entries": 0
+  },
+  "undo_edit": {
+    "request": {
+      "api_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "base_revision_id": "rev-c3",
+      "base_publication_id": "pub-c3",
+      "commands": [
+        {
+          "schema_version": 1,
+          "op": "timeline.inverse",
+          "version": "1",
+          "select": null,
+          "args": {"publications": ["pub-c3"], "steps": {"pub-c3": ["edit-a"]}}
+        }
+      ],
+      "label": "Undo A edit",
+      "steps": [{"id": "inverse", "label": "inverse", "intent": "", "tags": [], "command_ordinals": [0], "patch": []}],
+      "merge": "fields",
+      "reads": []
+    },
+    "reply_projection": {
+      "data": {
+        "status": "accepted",
+        "accepted_revision_id": "rev-c4",
+        "steps": [
+          {
+            "id": "inverse",
+            "label": "inverse",
+            "intent": "",
+            "tags": [],
+            "command_ordinals": [0],
+            "patch": [
+              {
+                "op": "set",
+                "ref": "internal-revision:ia1",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {
+                  "output": {"fps": 30},
+                  "tracks": [],
+                  "clips": [],
+                  "registry": {"assets": {}},
+                  "meta": {"org.example.timeline": {"note": "A"}}
+                }
+              },
+              {
+                "op": "set",
+                "ref": "shot-revision:sa1",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": ["occurrences", "occurrence_id:occ-a", "shot_revision_id"],
+                "before": {"state": "present", "value": "sa2"},
+                "value": "sa1"
+              },
+              {
+                "op": "remove",
+                "ref": "shot-revision:sa2",
+                "path": [],
+                "before": {"state": "present", "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia2"}}
+              },
+              {
+                "op": "remove",
+                "ref": "internal-revision:ia2",
+                "path": [],
+                "before": {
+                  "state": "present",
+                  "value": {
+                    "output": {"fps": 30},
+                    "tracks": [],
+                    "clips": [],
+                    "registry": {"assets": {}},
+                    "meta": {"org.example.timeline": {"note": "B"}}
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "receipt": {"receipt_id": "pub-c4"}
+    },
+    "expected_payload_state": "ab",
+    "restoration_sources": ["pub-c3:edit-a"]
+  },
+  "redo_edit": {
+    "request": {
+      "api_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "base_revision_id": "rev-c4",
+      "base_publication_id": "pub-c4",
+      "commands": [
+        {
+          "schema_version": 1,
+          "op": "timeline.inverse",
+          "version": "1",
+          "select": null,
+          "args": {"publications": ["pub-c4"]}
+        }
+      ],
+      "label": "Redo A edit",
+      "steps": [{"id": "inverse", "label": "inverse", "intent": "", "tags": [], "command_ordinals": [0], "patch": []}],
+      "merge": "fields",
+      "reads": []
+    },
+    "reply_projection": {
+      "data": {
+        "status": "accepted",
+        "accepted_revision_id": "rev-c5",
+        "steps": [
+          {
+            "id": "inverse",
+            "label": "inverse",
+            "intent": "",
+            "tags": [],
+            "command_ordinals": [0],
+            "patch": [
+              {
+                "op": "set",
+                "ref": "internal-revision:ia2",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {
+                  "output": {"fps": 30},
+                  "tracks": [],
+                  "clips": [],
+                  "registry": {"assets": {}},
+                  "meta": {"org.example.timeline": {"note": "B"}}
+                }
+              },
+              {
+                "op": "set",
+                "ref": "shot-revision:sa2",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia2"}
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": ["occurrences", "occurrence_id:occ-a", "shot_revision_id"],
+                "before": {"state": "present", "value": "sa1"},
+                "value": "sa2"
+              },
+              {
+                "op": "remove",
+                "ref": "shot-revision:sa1",
+                "path": [],
+                "before": {"state": "present", "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}}
+              },
+              {
+                "op": "remove",
+                "ref": "internal-revision:ia1",
+                "path": [],
+                "before": {
+                  "state": "present",
+                  "value": {
+                    "output": {"fps": 30},
+                    "tracks": [],
+                    "clips": [],
+                    "registry": {"assets": {}},
+                    "meta": {"org.example.timeline": {"note": "A"}}
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "receipt": {"receipt_id": "pub-c5"}
+    },
+    "expected_payload_state": "edited",
+    "restoration_sources": ["pub-c4", "pub-c3:edit-a"]
+  },
+  "undo_all": {
+    "request": {
+      "api_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "base_revision_id": "rev-c3",
+      "base_publication_id": "pub-c3",
+      "commands": [
+        {
+          "schema_version": 1,
+          "op": "timeline.inverse",
+          "version": "1",
+          "select": null,
+          "args": {"publications": ["pub-c3"]}
+        }
+      ],
+      "label": "Undo both creations and edit",
+      "steps": [{"id": "inverse", "label": "inverse", "intent": "", "tags": [], "command_ordinals": [0], "patch": []}],
+      "merge": "fields",
+      "reads": []
+    },
+    "reply_projection": {
+      "data": {
+        "status": "accepted",
+        "accepted_revision_id": "rev-c6",
+        "steps": [
+          {
+            "id": "inverse",
+            "label": "inverse",
+            "intent": "",
+            "tags": [],
+            "command_ordinals": [0],
+            "patch": [
+              {
+                "op": "set",
+                "ref": "internal-revision:ia1",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {
+                  "output": {"fps": 30},
+                  "tracks": [],
+                  "clips": [],
+                  "registry": {"assets": {}},
+                  "meta": {"org.example.timeline": {"note": "A"}}
+                }
+              },
+              {
+                "op": "set",
+                "ref": "shot-revision:sa1",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": ["occurrences", "occurrence_id:occ-a", "shot_revision_id"],
+                "before": {"state": "present", "value": "sa2"},
+                "value": "sa1"
+              },
+              {
+                "op": "remove",
+                "ref": "shot-revision:sa2",
+                "path": [],
+                "before": {"state": "present", "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia2"}}
+              },
+              {
+                "op": "remove",
+                "ref": "internal-revision:ia2",
+                "path": [],
+                "before": {
+                  "state": "present",
+                  "value": {
+                    "output": {"fps": 30},
+                    "tracks": [],
+                    "clips": [],
+                    "registry": {"assets": {}},
+                    "meta": {"org.example.timeline": {"note": "B"}}
+                  }
+                }
+              },
+              {
+                "op": "list.remove",
+                "ref": "parent",
+                "path": ["occurrences"],
+                "id": "occ-b",
+                "before": {
+                  "state": "present",
+                  "value": {
+                    "occurrence_id": "occ-b",
+                    "shot_id": "shot-b",
+                    "shot_revision_id": "sb1",
+                    "track": "picture",
+                    "placement": {"start_ms": 2000, "track": "picture"},
+                    "duration_ms": 2000,
+                    "source_offset": 0,
+                    "speed": 1,
+                    "gain": 1
+                  }
+                },
+                "order_before": ["occ-a", "occ-b"]
+              },
+              {
+                "op": "remove",
+                "ref": "shot-revision:sb1",
+                "path": [],
+                "before": {"state": "present", "value": {"name": "B", "items": [], "internal_timeline_revision_id": "ib1"}}
+              },
+              {
+                "op": "remove",
+                "ref": "internal-revision:ib1",
+                "path": [],
+                "before": {
+                  "state": "present",
+                  "value": {
+                    "output": {"fps": 30},
+                    "tracks": [],
+                    "clips": [],
+                    "registry": {"assets": {}},
+                    "meta": {"org.example.timeline": {"note": "A"}}
+                  }
+                }
+              },
+              {
+                "op": "list.remove",
+                "ref": "parent",
+                "path": ["occurrences"],
+                "id": "occ-a",
+                "before": {
+                  "state": "present",
+                  "value": {
+                    "occurrence_id": "occ-a",
+                    "shot_id": "shot-a",
+                    "shot_revision_id": "sa1",
+                    "track": "picture",
+                    "placement": {"start_ms": 0, "track": "picture"},
+                    "duration_ms": 2000,
+                    "source_offset": 0,
+                    "speed": 1,
+                    "gain": 1
+                  }
+                },
+                "order_before": ["occ-a"]
+              },
+              {
+                "op": "remove",
+                "ref": "shot-revision:sa1",
+                "path": [],
+                "before": {"state": "present", "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}}
+              },
+              {
+                "op": "remove",
+                "ref": "internal-revision:ia1",
+                "path": [],
+                "before": {
+                  "state": "present",
+                  "value": {
+                    "output": {"fps": 30},
+                    "tracks": [],
+                    "clips": [],
+                    "registry": {"assets": {}},
+                    "meta": {"org.example.timeline": {"note": "A"}}
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "receipt": {"receipt_id": "pub-c6"}
+    },
+    "expected_payload_state": "empty",
+    "restoration_sources": ["pub-c3"]
+  },
+  "redo_all": {
+    "request": {
+      "api_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "base_revision_id": "rev-c6",
+      "base_publication_id": "pub-c6",
+      "commands": [
+        {
+          "schema_version": 1,
+          "op": "timeline.inverse",
+          "version": "1",
+          "select": null,
+          "args": {"publications": ["pub-c6"]}
+        }
+      ],
+      "label": "Redo both creations and edit",
+      "steps": [{"id": "inverse", "label": "inverse", "intent": "", "tags": [], "command_ordinals": [0], "patch": []}],
+      "merge": "fields",
+      "reads": []
+    },
+    "reply_projection": {
+      "data": {
+        "status": "accepted",
+        "accepted_revision_id": "rev-c7",
+        "steps": [
+          {
+            "id": "inverse",
+            "label": "inverse",
+            "intent": "",
+            "tags": [],
+            "command_ordinals": [0],
+            "patch": [
+              {
+                "op": "set",
+                "ref": "internal-revision:ia1",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {
+                  "output": {"fps": 30},
+                  "tracks": [],
+                  "clips": [],
+                  "registry": {"assets": {}},
+                  "meta": {"org.example.timeline": {"note": "A"}}
+                }
+              },
+              {
+                "op": "set",
+                "ref": "shot-revision:sa1",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}
+              },
+              {
+                "op": "list.insert",
+                "ref": "parent",
+                "path": ["occurrences"],
+                "id": "occ-a",
+                "before": {"state": "absent"},
+                "value": {
+                  "occurrence_id": "occ-a",
+                  "shot_id": "shot-a",
+                  "shot_revision_id": "sa1",
+                  "track": "picture",
+                  "placement": {"start_ms": 0, "track": "picture"},
+                  "duration_ms": 2000,
+                  "source_offset": 0,
+                  "speed": 1,
+                  "gain": 1
+                },
+                "order_before": [],
+                "after_id": null
+              },
+              {
+                "op": "set",
+                "ref": "internal-revision:ib1",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {
+                  "output": {"fps": 30},
+                  "tracks": [],
+                  "clips": [],
+                  "registry": {"assets": {}},
+                  "meta": {"org.example.timeline": {"note": "A"}}
+                }
+              },
+              {
+                "op": "set",
+                "ref": "shot-revision:sb1",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {"name": "B", "items": [], "internal_timeline_revision_id": "ib1"}
+              },
+              {
+                "op": "list.insert",
+                "ref": "parent",
+                "path": ["occurrences"],
+                "id": "occ-b",
+                "before": {"state": "absent"},
+                "value": {
+                  "occurrence_id": "occ-b",
+                  "shot_id": "shot-b",
+                  "shot_revision_id": "sb1",
+                  "track": "picture",
+                  "placement": {"start_ms": 2000, "track": "picture"},
+                  "duration_ms": 2000,
+                  "source_offset": 0,
+                  "speed": 1,
+                  "gain": 1
+                },
+                "order_before": ["occ-a"],
+                "after_id": "occ-a"
+              },
+              {
+                "op": "set",
+                "ref": "internal-revision:ia2",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {
+                  "output": {"fps": 30},
+                  "tracks": [],
+                  "clips": [],
+                  "registry": {"assets": {}},
+                  "meta": {"org.example.timeline": {"note": "B"}}
+                }
+              },
+              {
+                "op": "set",
+                "ref": "shot-revision:sa2",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia2"}
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": ["occurrences", "occurrence_id:occ-a", "shot_revision_id"],
+                "before": {"state": "present", "value": "sa1"},
+                "value": "sa2"
+              },
+              {
+                "op": "remove",
+                "ref": "shot-revision:sa1",
+                "path": [],
+                "before": {"state": "present", "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}}
+              },
+              {
+                "op": "remove",
+                "ref": "internal-revision:ia1",
+                "path": [],
+                "before": {
+                  "state": "present",
+                  "value": {
+                    "output": {"fps": 30},
+                    "tracks": [],
+                    "clips": [],
+                    "registry": {"assets": {}},
+                    "meta": {"org.example.timeline": {"note": "A"}}
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "receipt": {"receipt_id": "pub-c7"}
+    },
+    "expected_payload_state": "edited",
+    "restoration_sources": ["pub-c6", "pub-c3"]
+  },
+  "undo_creation_only": {
+    "request": {
+      "api_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "base_revision_id": "rev-c3",
+      "base_publication_id": "pub-c3",
+      "commands": [
+        {
+          "schema_version": 1,
+          "op": "timeline.inverse",
+          "version": "1",
+          "select": null,
+          "args": {"publications": ["pub-c3"], "steps": {"pub-c3": ["create-a"]}}
+        }
+      ],
+      "label": "Undo A creation only",
+      "steps": [{"id": "inverse", "label": "inverse", "intent": "", "tags": [], "command_ordinals": [0], "patch": []}],
+      "merge": "fields",
+      "reads": []
+    },
+    "http_status": 409,
+    "reply": {
+      "code": "conflict",
+      "message": "Undo create-a with its consuming edit-a step.",
+      "details": {
+        "status": "conflict",
+        "code": "surviving_dependents",
+        "reason": "surviving_dependents",
+        "path": ["commands", "0"],
+        "hint": "Undo create-a with its consuming edit-a step.",
+        "suggested_command": "timeline show --history",
+        "current": {"revision_id": "rev-c3", "publication_id": "pub-c3"}
+      }
+    },
+    "added_history_entries": 0
+  },
+  "multiple_shot_revisions": {
+    "base_state": "multi",
+    "request": {
+      "api_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "base_revision_id": "rev-m0",
+      "base_publication_id": "pub-m0",
+      "commands": [
+        {
+          "schema_version": 1,
+          "op": "doc.patch",
+          "version": "1",
+          "select": null,
+          "args": {
+            "changes": [
+              {
+                "op": "set",
+                "ref": "shot-revision:sa1",
+                "path": ["name"],
+                "before": {"state": "present", "value": "A"},
+                "value": "Old branch"
+              }
+            ]
+          }
+        }
+      ],
+      "label": "Edit only the old shot revision",
+      "steps": [
+        {
+          "id": "old-shot",
+          "label": "old-shot",
+          "intent": "",
+          "tags": [],
+          "command_ordinals": [0],
+          "patch": [
+            {
+              "op": "set",
+              "ref": "shot-revision:sa1",
+              "path": ["name"],
+              "before": {"state": "present", "value": "A"},
+              "value": "Old branch"
+            }
+          ]
+        }
+      ],
+      "merge": "fields",
+      "reads": []
+    },
+    "reply_projection": {
+      "data": {
+        "status": "accepted",
+        "accepted_revision_id": "rev-m1",
+        "steps": [
+          {
+            "id": "old-shot",
+            "label": "old-shot",
+            "intent": "",
+            "tags": [],
+            "command_ordinals": [0],
+            "patch": [
+              {
+                "op": "set",
+                "ref": "shot-revision:sa3",
+                "path": [],
+                "before": {"state": "absent"},
+                "value": {"name": "Old branch", "items": [], "internal_timeline_revision_id": "ia1"}
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": ["occurrences", "occurrence_id:occ-a-old", "shot_revision_id"],
+                "before": {"state": "present", "value": "sa1"},
+                "value": "sa3"
+              },
+              {
+                "op": "remove",
+                "ref": "shot-revision:sa1",
+                "path": [],
+                "before": {"state": "present", "value": {"name": "A", "items": [], "internal_timeline_revision_id": "ia1"}}
+              }
+            ]
+          }
+        ]
+      },
+      "receipt": {"receipt_id": "pub-m1"}
+    },
+    "expected_state": "multi_edited",
+    "ambiguous_request": {
+      "api_version": 1,
+      "project_id": "project-1",
+      "timeline_id": "film-1",
+      "base_revision_id": "rev-m0",
+      "base_publication_id": "pub-m0",
+      "commands": [
+        {
+          "schema_version": 1,
+          "op": "doc.patch",
+          "version": "1",
+          "select": null,
+          "args": {
+            "changes": [
+              {
+                "op": "set",
+                "ref": "shot:shot-a",
+                "path": ["name"],
+                "before": {"state": "present", "value": "A"},
+                "value": "Old branch"
+              }
+            ]
+          }
+        }
+      ],
+      "label": "Edit only the old shot revision",
+      "steps": [
+        {
+          "id": "old-shot",
+          "label": "old-shot",
+          "intent": "",
+          "tags": [],
+          "command_ordinals": [0],
+          "patch": [
+            {
+              "op": "set",
+              "ref": "shot:shot-a",
+              "path": ["name"],
+              "before": {"state": "present", "value": "A"},
+              "value": "Old branch"
+            }
+          ]
+        }
+      ],
+      "merge": "fields",
+      "reads": []
+    },
+    "http_status": 422,
+    "ambiguous_reply": {
+      "code": "invalid",
+      "message": "Use shot-revision:sa1 or shot-revision:sa2.",
+      "details": {
+        "status": "invalid",
+        "code": "ambiguous_ref",
+        "reason": "ambiguous_ref",
+        "path": ["commands", "0", "args", "changes", "0", "ref"],
+        "hint": "Use shot-revision:sa1 or shot-revision:sa2.",
+        "suggested_command": "timeline show --history"
+      }
+    },
+    "added_history_entries_on_refusal": 0
+  },
+  "replay_cases": [
+    {
+      "case": "new_second_match",
+      "base_state": "a",
+      "landing_state": "ab",
+      "ref": "internal:film-1",
+      "bound": "internal-revision:ia1",
+      "expected": "ambiguous_ref"
+    },
+    {
+      "case": "unique_unrelated_same_bytes",
+      "base_state": "a",
+      "landing_state": "only_b",
+      "ref": "internal:film-1",
+      "bound": "internal-revision:ia1",
+      "expected": "binding_changed"
+    },
+    {
+      "case": "authenticated_successor",
+      "base_state": "a",
+      "landing_state": "only_edited_a",
+      "ref": "internal:film-1",
+      "bound": "internal-revision:ia1",
+      "expected": "internal-revision:ia2"
+    },
+    {
+      "case": "qualified_without_provenance",
+      "base_state": "a",
+      "landing_state": "only_edited_a",
+      "ref": "internal-revision:ia1",
+      "bound": "internal-revision:ia1",
+      "expected": "binding_changed"
+    }
+  ]
+}
+```
+
 ## 6. `meta` namespaces: placement, limits and preservation
 
 `meta` is an optional JSON object on authored parent composition payloads,
@@ -2699,7 +4653,8 @@ Preservation scenario (the set carries the entire previous namespace value):
 Store accepted label, steps (including complete provider effect patches,
 verified step reads and authoritative dependencies), requested/effective
 merge modes and declared request reads with the existing immutable acceptance/history
-entry. `records.commands` remains the provider's authoritative command recorder;
+entry, including the resolved physical bindings and authenticated successor/edge
+provenance from §2. `records.commands` remains the provider's authoritative command recorder;
 add `records.steps` for authoritative step boundaries/patches/dependencies, and `undo_steps`
 as in §5. No parallel evidence ledger is introduced. Keep source, rationale,
 group ID, previous head pair, publication/revision IDs, receipt,
@@ -2823,12 +4778,12 @@ preview and structured errors; V1/V2 adopt metadata and validation; A2 consumes
 canonical replies through the persisted outbox; G2 provides the bounded Python
 function re-run. Existing passing behavior tests stay in place. C0 changes only
 this contract and its identical orchestrator design copy. C0b amends those same
-two files only; existing fixture track kinds are corrected from `video` to the
+two files only; C0c amends their addressing rules and executable fixtures. Existing fixture track kinds are corrected from `video` to the
 schema enum `visual`, with recomputed digests and canonical-schema checks; implementation and behavioral qualification belong to R1/R2/R2r.
 The Runtime Python project/CI configure pytest but no prose lint or typecheck
 gate. The TypeScript client has a `tsc` build/test gate; it is N/A to these
 Markdown-only edits. The targeted generator tests below still exercise its DTO
-type fixtures. No full, browser or live-socket suite is required for C0b.
+type fixtures. No full, browser or live-socket suite is required for C0b/C0c.
 
 Example parsing and copy equality were checked from the runtime worktree with:
 
@@ -2844,7 +4799,7 @@ assert repo.read_bytes() == shared.read_bytes()
 for path in (repo, shared):
     source = path.read_text()
     blocks = re.findall(r'^```json\n(.*?)^```$', source, re.M | re.S)
-    assert len(blocks) == 19
+    assert len(blocks) == 20
     for index, block in enumerate(blocks, 1):
         json.loads(block, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
     assert len(re.findall(r'^## [1-7]\. ', source, re.M)) == 7
@@ -2867,7 +4822,7 @@ from runtime_protocol.timeline_commit_validation import digest, validate_commit_
 
 source = Path('contract/commit-v2.md').read_text()
 examples = [json.loads(block) for block in re.findall(r'^```json\n(.*?)^```$', source, re.M | re.S)]
-request, shapes, clears, structural, idless, created, reads, conflicts, accepted, merged, conflict, invalid, preview, undo, undo_cases, sequential, creation, meta, history = examples
+request, shapes, clears, structural, idless, created, reads, conflicts, accepted, merged, conflict, invalid, preview, undo, undo_cases, sequential, creation, addressing, meta, history = examples
 for outcome in (accepted, merged, preview):
     data = outcome['data']
     document = data['canonical_document']
@@ -2974,8 +4929,10 @@ def apply_effects(state, effects):
             actual = {'state': 'absent'} if index is None else {'state': 'present', 'value': rows[index]}
             assert actual == effect['before']
             if effect['op'] == 'list.insert':
-                assert index is None and effect['after_id'] is None
-                rows.insert(0, copy.deepcopy(effect['value']))
+                assert index is None
+                anchor = effect['after_id']
+                offset = 0 if anchor is None else next(i for i, row in enumerate(rows) if row['occurrence_id'] == anchor) + 1
+                rows.insert(offset, copy.deepcopy(effect['value']))
             else:
                 assert effect['op'] == 'list.remove'
                 rows.pop(index)
@@ -3032,6 +4989,224 @@ assert creation['expected_forbidden']['code'] == 'managed_closure_write'
 assert creation['forbidden_patch_commands'][0]['args']['changes'][0]['before'] == {'state': 'absent'}
 assert creation['forbidden_patch_commands'][1]['args']['changes'][0]['op'] == 'remove'
 assert creation['forbidden_patch_commands'][2]['args']['changes'][0]['path'][-1] == 'shot_id'
+# C0c: bind physical images; execute all displayed creation/edit/inverse/redo
+# effects and verify pins at every boundary. This is a contract model, not the
+# provider implementation or cryptographic provenance verification.
+class RefError(Exception):
+    pass
+
+def image_pairs(document):
+    return [('parent', document['parent_revision'])] + [
+        ('shot-revision:' + im['revision_id'], im) for im in document['shot_revisions']
+    ] + [('internal-revision:' + im['revision_id'], im)
+         for im in document['internal_timeline_revisions']]
+
+def physical_roots(document):
+    pairs = image_pairs(document)
+    assert len(dict(pairs)) == len(pairs)
+    return {ref: copy.deepcopy(im['payload']) for ref, im in pairs}
+
+def resolve(document, ref):
+    if ref == 'parent':
+        return ref, document['parent_revision']
+    if ref.startswith('occurrence:'):
+        owner, suffix = ref.split('/', 1)
+        assert suffix == 'shot'
+        row = next(row for row in document['parent_revision']['payload']['occurrences']
+                   if row['occurrence_id'] == owner.removeprefix('occurrence:'))
+        return resolve(document, 'shot-revision:' + row['shot_revision_id'])
+    kind, identity = ref.split(':', 1)
+    family = 'shot_revisions' if kind.startswith('shot') else 'internal_timeline_revisions'
+    key = 'revision_id' if kind.endswith('-revision') else 'shot_id' if kind == 'shot' else 'timeline_id'
+    matches = [im for im in document[family] if im[key] == identity]
+    if not matches:
+        raise RefError('outside_closure')
+    if len(matches) != 1:
+        raise RefError('ambiguous_ref')
+    physical = ('shot-revision:' if family == 'shot_revisions' else 'internal-revision:') + matches[0]['revision_id']
+    return physical, matches[0]
+
+def ref_error(document, ref):
+    try:
+        resolve(document, ref)
+    except RefError as exc:
+        return str(exc)
+    raise AssertionError('expected a refused lookup: ' + ref)
+
+def validate_document(document):
+    validate_commit_value(document, 'CanonicalDocument')
+    pairs = image_pairs(document)
+    assert len(dict(pairs)) == len(pairs)
+    for ref, im in pairs:
+        assert digest(im['payload']) == im['content_digest']
+    shots = document['shot_revisions']
+    internals = document['internal_timeline_revisions']
+    assert shots == sorted(shots, key=lambda im: (im['shot_id'], im['revision_id']))
+    assert internals == sorted(internals, key=lambda im: (im['timeline_id'], im['revision_id']))
+    manifest = document['dependency_manifest']
+    assert manifest['shots'] == [{k: im[k] for k in ('shot_id', 'revision_id', 'internal_timeline_revision_id', 'content_digest')} for im in shots]
+    assert manifest['internal_timelines'] == [{k: im[k] for k in ('timeline_id', 'revision_id', 'content_digest')} for im in internals]
+    rows = document['parent_revision']['payload']['occurrences']
+    assert len({row['occurrence_id'] for row in rows}) == len(rows)
+    assert {(row['shot_id'], row['shot_revision_id']) for row in rows} == {(im['shot_id'], im['revision_id']) for im in shots}
+    assert {im['internal_timeline_revision_id'] for im in shots} == {im['revision_id'] for im in internals}
+    for im in shots:
+        assert im['payload']['internal_timeline_revision_id'] == im['internal_timeline_revision_id']
+
+def verify_effect_bindings(before, after, effects):
+    # Only authenticated execution may supply this union. Alias ambiguity is
+    # checked across both sides, even if each side separately has one match.
+    union = copy.deepcopy(before)
+    for family in ('shot_revisions', 'internal_timeline_revisions'):
+        images = {im['revision_id']: im for im in before[family]}
+        for im in after[family]:
+            assert im['revision_id'] not in images or im == images[im['revision_id']]
+            images[im['revision_id']] = im
+        union[family] = list(images.values())
+    for effect in effects:
+        physical, im = resolve(union, effect['ref'])
+        assert physical == effect['ref']  # This fixture uses normalized refs.
+        if not effect['path']:
+            side = after if effect['op'] == 'set' else before
+            bound, side_image = resolve(side, physical)
+            assert bound == physical and side_image['content_digest'] == im['content_digest']
+            payload = effect['value'] if effect['op'] == 'set' else effect['before']['value']
+            assert payload == im['payload']
+    state = physical_roots(before)
+    apply_effects(state, effects)
+    assert state == physical_roots(after)
+    return union
+
+states = addressing['documents']
+for name, document in states.items():
+    validate_document(document)
+    assert digest(document) == addressing['document_digests'][name]
+assert states['ab']['internal_timeline_revisions'][0]['content_digest'] == states['ab']['internal_timeline_revisions'][1]['content_digest']
+body = addressing['request']
+steps = addressing['reply_projection']['data']['steps']
+assert addressing['reply_projection']['data']['accepted_revision_id'] == states['edited']['parent_revision']['revision_id']
+assert [i for st in body['steps'] for i in st['command_ordinals']] == list(range(len(body['commands'])))
+state = states['empty']
+for ordinal, (submitted, actual, name, binding) in enumerate(zip(body['steps'], steps, addressing['step_states'], addressing['bindings_projection'])):
+    assert submitted['command_ordinals'] == actual['command_ordinals'] == [ordinal]
+    assert submitted['id'] == actual['id'] == binding['boundary']['step_id']
+    assert binding['boundary']['base_revision_id'] == body['base_revision_id']
+    assert binding['boundary']['base_publication_id'] == body['base_publication_id']
+    assert binding['boundary']['command_ordinal'] == ordinal and binding['boundary']['phase'] == 'input'
+    physical, im = resolve(state, binding['ref'])
+    assert physical == binding['physical_ref'] and im['content_digest'] == binding['content_digest']
+    for dependency in submitted['reads']:
+        if dependency['ref'] != 'timeline':
+            bound, _ = resolve(state, dependency['ref'])
+            node, key = location(physical_roots(state), bound, dependency['path'])
+            assert tagged(node, key) == dependency['state']
+    assert actual['dependencies'] == submitted['reads']
+    if body['commands'][ordinal]['op'] == 'doc.patch':
+        assert submitted['patch'] == body['commands'][ordinal]['args']['changes']
+        authored = physical_roots(state)
+        apply_effects(authored, submitted['patch'])
+        assert authored['internal-revision:ia1'] == physical_roots(states[name])['internal-revision:ia2']
+    verify_effect_bindings(state, states[name], actual['patch'])
+    state = states[name]
+assert resolve(states['a'], 'internal:film-1')[0] == 'internal-revision:ia1'
+assert resolve(states['a'], 'shot:shot-a')[0] == resolve(states['a'], 'occurrence:occ-a/shot')[0] == 'shot-revision:sa1'
+assert ref_error(states['empty'], 'internal-revision:ia1') == 'outside_closure'
+assert ref_error(states['ab'], 'internal:film-1') == 'ambiguous_ref'
+assert ref_error(states['multi'], 'shot:shot-a') == 'ambiguous_ref'
+union = verify_effect_bindings(states['ab'], states['edited'], steps[2]['patch'])
+assert ref_error(union, 'shot:shot-a') == 'ambiguous_ref'  # Unique on each side.
+assert ref_error(union, 'internal:film-1') == 'ambiguous_ref'
+for fact in addressing['materialization_projection']:
+    assert fact['source'] in physical_roots(states['ab'])
+    assert fact['successor'] in physical_roots(states['edited'])
+    assert fact['owner'] == 'occurrence:occ-a/shot'
+assert 'internal-revision:ib1' in physical_roots(states['edited'])
+assert physical_roots(states['ab'])['internal-revision:ib1'] == physical_roots(states['edited'])['internal-revision:ib1']
+
+# The alias refusal is reached only after both creations; all staged writes
+# must then roll back. Evaluate the lookup rather than only checking its label.
+bad = addressing['ambiguous_internal']
+staged = physical_roots(states['empty'])
+for st in steps[:2]:
+    apply_effects(staged, st['patch'])
+assert staged == physical_roots(states['ab'])
+assert bad['request']['steps'][2]['patch'] == bad['request']['commands'][2]['args']['changes']
+failed_ref = bad['request']['commands'][2]['args']['changes'][0]['ref']
+assert ref_error(states['ab'], failed_ref) == bad['reply']['details']['code'] == 'ambiguous_ref'
+assert bad['http_status'] == 422 and bad['added_history_entries'] == 0
+assert bad['expected_head'] == {'revision_id': body['base_revision_id'], 'publication_id': body['base_publication_id']}
+# Restore the staged transaction input; a real provider must leave storage/head unchanged.
+staged = physical_roots(states['empty'])
+assert staged != physical_roots(states['ab'])
+
+for key, before in (('undo_edit', 'edited'), ('redo_edit', 'ab'), ('undo_all', 'edited'), ('redo_all', 'empty')):
+    scenario = addressing[key]
+    after = scenario['expected_payload_state']
+    effects = scenario['reply_projection']['data']['steps'][0]['patch']
+    verify_effect_bindings(states[before], states[after], effects)
+    assert scenario['request']['steps'][0]['patch'] == []
+    assert scenario['request']['commands'][0]['op'] == 'timeline.inverse'
+    assert scenario['restoration_sources']
+assert addressing['undo_edit']['request']['commands'][0]['args']['steps'] == {'pub-c3': ['edit-a']}
+for redo, undo in (('redo_edit', 'undo_edit'), ('redo_all', 'undo_all')):
+    assert addressing[redo]['request']['commands'][0]['args']['publications'] == [addressing[undo]['reply_projection']['receipt']['receipt_id']]
+    assert addressing[redo]['request']['base_publication_id'] == addressing[undo]['reply_projection']['receipt']['receipt_id']
+partial = addressing['undo_creation_only']
+assert partial['request']['commands'][0]['args']['steps'] == {'pub-c3': ['create-a']}
+created_refs = {effect['ref'] for effect in steps[0]['patch'] if effect['path'] == []}
+consumed_refs = {dependency['ref'] for dependency in steps[2]['dependencies']}
+assert created_refs & consumed_refs == {'internal-revision:ia1'}
+assert partial['reply']['details']['code'] == 'surviving_dependents' and partial['added_history_entries'] == 0
+
+multiple = addressing['multiple_shot_revisions']
+change = multiple['request']['commands'][0]['args']['changes'][0]
+assert multiple['request']['steps'][0]['patch'] == [change]
+assert multiple['request']['base_revision_id'] == states['multi']['parent_revision']['revision_id']
+assert resolve(states['multi'], change['ref'])[0] == 'shot-revision:sa1'
+authored = physical_roots(states['multi'])
+apply_effects(authored, [change])
+assert authored['shot-revision:sa1'] == physical_roots(states['multi_edited'])['shot-revision:sa3']
+verify_effect_bindings(states['multi'], states['multi_edited'], multiple['reply_projection']['data']['steps'][0]['patch'])
+assert ref_error(states['multi'], multiple['ambiguous_request']['commands'][0]['args']['changes'][0]['ref']) == multiple['ambiguous_reply']['details']['code']
+assert multiple['added_history_entries_on_refusal'] == 0
+for ref in ('shot-revision:sa2', 'internal-revision:ia1', 'internal-revision:ia2', 'internal-revision:ib1'):
+    assert physical_roots(states['multi'])[ref] == physical_roots(states['multi_edited'])[ref]
+
+# Model only verified successor facts from the accepted edit fixture. An actual
+# provider must authenticate the native records and edge path before using them.
+successors = {fact['source']: fact['successor'] for fact in addressing['materialization_projection']}
+only_b = copy.deepcopy(states['ab'])
+only_b['internal_timeline_revisions'] = [im for im in only_b['internal_timeline_revisions'] if im['revision_id'] == 'ib1']
+only_a2 = copy.deepcopy(states['edited'])
+only_a2['internal_timeline_revisions'] = [im for im in only_a2['internal_timeline_revisions'] if im['revision_id'] == 'ia2']
+probe_states = dict(states, only_b=only_b, only_edited_a=only_a2)
+for case in addressing['replay_cases']:
+    assert resolve(probe_states[case['base_state']], case['ref'])[0] == case['bound']
+    landing = probe_states[case['landing_state']]
+    proven = successors if case['case'] == 'authenticated_successor' else {}
+    try:
+        physical, _ = resolve(landing, case['ref'])
+        result = physical if physical == case['bound'] or proven.get(case['bound']) == physical else 'binding_changed'
+    except RefError as exc:
+        continuation = proven.get(case['bound'])
+        result = continuation if continuation in physical_roots(landing) else 'binding_changed' if str(exc) == 'outside_closure' else str(exc)
+    assert result == case['expected']
+
+# Guard normalization: aliases of one image overlap; equal timeline/shot IDs
+# alone do not. Authenticated edge continuation joins history for one owner.
+def overlapping(left, right):
+    return left[:len(right)] == right or right[:len(left)] == left
+bound = resolve(states['a'], 'internal:film-1')[0]
+assert bound == resolve(states['a'], 'internal-revision:ia1')[0]
+assert overlapping(path, path) and successors[bound] == 'internal-revision:ia2'
+assert successors[bound] != 'internal-revision:ib1'
+assert resolve(states['multi'], 'occurrence:occ-a-old/shot')[0] == 'shot-revision:sa1'
+assert resolve(states['multi'], 'occurrence:occ-a/shot')[0] == 'shot-revision:sa2'
+# The old branch remains reachable: do not follow occ-a's successor for occ-a-old.
+assert resolve(states['multi'], 'shot-revision:sa1')[0] != resolve(states['multi'], 'shot-revision:sa2')[0]
+# Scan writes, not only final bytes: equal final A still has an overlapping B tail.
+assert any(overlapping(path, write['path']) for write in [{'path': path, 'before': 'A', 'after': 'B'}, {'path': path, 'before': 'B', 'after': 'A'}])
+print('PASS C0c: 6 schema/digest/pin states, 3 sequential steps, alias/union bindings, 4 inverse/redo transitions, rollback/dependency refusals, multi-shot edit, 4 replay binding probes and guard normalization; provider proof deferred')
 assert not any(line.rstrip() != line for line in source.splitlines())
 print('PASS: Runtime digests, receipt/result equality, step partition, ordered-list transitions, merged preservation, preview, structured errors, ABA, meta preservation, C0b sequential reads/effect reversals/closure pins and whitespace; provider behavior unverified')
 PY
