@@ -1,5 +1,5 @@
-<!-- app | 2026-10-22T23:52:48Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 13 | status age 4m -->
-# app board, 2026-10-22T23:48:16Z
+<!-- app | 2026-10-22T23:54:25Z | dispatcher heartbeat 2s | live 2 (sol 1, luna 1, other 0) | busy30 13 | status age 0m -->
+# app board, 2026-10-22T23:53:58Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3a | Upstream deletions, docs/config/supabase | Luna high | — | doing | app-U3-live-compose | Sol verified vendor is exact live upstream; composition with U3b must qualify Supabase imports. Other four fixes independently PASS | a66702d9b donor |
@@ -13,7 +13,8 @@
 | P1 | Proof lane App chain case collection | Luna high | C0 | merged | ap2-P1-app-chain-cases | Peer PASS: 12 Vitest, tsc/lint; integrated H3 execution awaits farm | 8b979bd21 merge / 898476b0e source |
 Upstream: Resolved locally through the connected GitHub read tool. Canonical repository banodoco/astrid-app live refs/heads/main equals local origin/main 7c17cc9d9f9504b578862e2ffd27623fca08a04f. Repeat live check at final merge.
 Sources: U2 merged3f1ceaed1, exact Agent checkout queued for re-vendor. U1 merged27f0306b9, clean exact producer ready at /home/user/work/wt/rt-pin-27f0306b. U4p/re-vendor follow composed U3 source.
-Blockers: Runtime/generated v2 join: A2 current pinned DTOs omit steps/merge/reads/doc.patch and merged/invalid. Official generation/adoption is required; A2 continues local durable-chain implementation. Escalation app-20261022T2350-a2-generated-v2-join.md.
+Blockers: Runtime/generated v2 join: A2 current DTOs omit steps/merge/reads/doc.patch and merged/invalid. Official generation/adoption needed; A2 local-chain work continues. Runtime board reports R2r safety HOLD, no restart or workaround requested. Escalation app-20261022T2350-a2-generated-v2-join.md.
+Blockers: Viewing/V3: qualified one-artifact packaging/adoption is safety-held after automatic cleanup-command rejection on that lane. Do not repack or adopt an alternate artifact to resolve the U3 Composition-source mismatch.
 Blockers: Farm: qualify composed U3 baseline and integrated H3/P1 chain with accepted/merged/refused replies; no duplicate local heavy runs.
 Next ready: Review first A2 funnel slice on completion; dispatch A3 as soon as A2 merges. Review true-upstream composition, then U4p/re-vendor when official U1/U2 handoffs arrive. A4 stays behind real H3 GO.
 Disk: 17GB free. Resumed overlapping manager ended after independent cleanup: 14 finished v1 source/pin trees recycled with branches/reports retained, current worktrees/shared dependencies untouched. Manager also recycled the two finished v1 App trees; sweep/compact found no eligible scratch.
