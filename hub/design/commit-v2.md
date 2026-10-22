@@ -388,7 +388,7 @@ relevant execution boundary, rather than only submitted-patch addresses.
 Resolve effect refs against the verified before/after **union**, deduplicated by
 physical image identity, not entity ID. `parent` remains the boundary anchor:
 bind its unique before image and unique after image separately. Child entity
-aliases must be unique across the union. An alias is usable in an effect only
+aliases must be unique across the union. A child alias is usable in an effect only
 when unique in that union; otherwise use the revision-qualified form. This
 includes one entity's old/new revisions even if each side alone was unambiguous.
 Root creation binds the after image; removal binds the before image. Materialized
@@ -2758,7 +2758,7 @@ boundary images. The checker derives those bindings from the complete states. Gr
 `effect_boundaries` give half-open ranges in the flat effect patch; each segment
 has its own verified before/after union. They retain transient restored roots
 that appear in neither the command-entry nor command-exit closure.
-The field-level input capture for edit-a remains ia1/note A→B with successor ia2;
+The field-level input capture for edit-a remains ia1/output.fps 30→24 with successor ia2;
 the expanded effect patch is not a submitted patch and cannot bypass ownership.
 The checks exercise the recorded transitions and binding rules, using Runtime's
 canonical schema/digest validation. They do not authenticate real provider
@@ -2781,7 +2781,7 @@ sa1 and sa2. An occurrence holds each pin. `shot:shot-a` refuses; the qualified
 sa1 edit produces sa3 and changes only occ-a-old's edge. sa2/ia2 and shared ia1
 stay intact. The final replay cases are binding probes: they test uniqueness
 and authenticated continuation only; a full replay still applies read/write
-and later-history guards. In particular an overlapping note edit cannot merge
+and later-history guards. In particular an overlapping fps edit cannot merge
 merely because a successor exists. Matching bytes on an unrelated child never
 authorize retargeting.
 
@@ -2852,14 +2852,8 @@ authorize retargeting.
         {
           "timeline_id": "film-1",
           "revision_id": "ia1",
-          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
-          "payload": {
-            "output": {"fps": 30},
-            "tracks": [],
-            "clips": [],
-            "registry": {"assets": {}},
-            "meta": {"org.example.timeline": {"note": "A"}}
-          }
+          "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
+          "payload": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
         }
       ],
       "dependency_manifest": {
@@ -2875,7 +2869,7 @@ authorize retargeting.
           {
             "timeline_id": "film-1",
             "revision_id": "ia1",
-            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+            "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18"
           }
         ],
         "media": [],
@@ -2942,26 +2936,14 @@ authorize retargeting.
         {
           "timeline_id": "film-1",
           "revision_id": "ia1",
-          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
-          "payload": {
-            "output": {"fps": 30},
-            "tracks": [],
-            "clips": [],
-            "registry": {"assets": {}},
-            "meta": {"org.example.timeline": {"note": "A"}}
-          }
+          "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
+          "payload": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
         },
         {
           "timeline_id": "film-1",
           "revision_id": "ib1",
-          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
-          "payload": {
-            "output": {"fps": 30},
-            "tracks": [],
-            "clips": [],
-            "registry": {"assets": {}},
-            "meta": {"org.example.timeline": {"note": "A"}}
-          }
+          "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
+          "payload": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
         }
       ],
       "dependency_manifest": {
@@ -2983,12 +2965,12 @@ authorize retargeting.
           {
             "timeline_id": "film-1",
             "revision_id": "ia1",
-            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+            "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18"
           },
           {
             "timeline_id": "film-1",
             "revision_id": "ib1",
-            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+            "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18"
           }
         ],
         "media": [],
@@ -3055,26 +3037,14 @@ authorize retargeting.
         {
           "timeline_id": "film-1",
           "revision_id": "ia2",
-          "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b",
-          "payload": {
-            "output": {"fps": 30},
-            "tracks": [],
-            "clips": [],
-            "registry": {"assets": {}},
-            "meta": {"org.example.timeline": {"note": "B"}}
-          }
+          "content_digest": "sha256:e6fe0947443b4d861dcaaa7bc76caebb789cd42de4be88de54ce2c76d2f53f74",
+          "payload": {"output": {"fps": 24}, "tracks": [], "clips": [], "registry": {"assets": {}}}
         },
         {
           "timeline_id": "film-1",
           "revision_id": "ib1",
-          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
-          "payload": {
-            "output": {"fps": 30},
-            "tracks": [],
-            "clips": [],
-            "registry": {"assets": {}},
-            "meta": {"org.example.timeline": {"note": "A"}}
-          }
+          "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
+          "payload": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
         }
       ],
       "dependency_manifest": {
@@ -3096,12 +3066,12 @@ authorize retargeting.
           {
             "timeline_id": "film-1",
             "revision_id": "ia2",
-            "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b"
+            "content_digest": "sha256:e6fe0947443b4d861dcaaa7bc76caebb789cd42de4be88de54ce2c76d2f53f74"
           },
           {
             "timeline_id": "film-1",
             "revision_id": "ib1",
-            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+            "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18"
           }
         ],
         "media": [],
@@ -3186,38 +3156,20 @@ authorize retargeting.
         {
           "timeline_id": "film-1",
           "revision_id": "ia1",
-          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
-          "payload": {
-            "output": {"fps": 30},
-            "tracks": [],
-            "clips": [],
-            "registry": {"assets": {}},
-            "meta": {"org.example.timeline": {"note": "A"}}
-          }
+          "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
+          "payload": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
         },
         {
           "timeline_id": "film-1",
           "revision_id": "ia2",
-          "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b",
-          "payload": {
-            "output": {"fps": 30},
-            "tracks": [],
-            "clips": [],
-            "registry": {"assets": {}},
-            "meta": {"org.example.timeline": {"note": "B"}}
-          }
+          "content_digest": "sha256:e6fe0947443b4d861dcaaa7bc76caebb789cd42de4be88de54ce2c76d2f53f74",
+          "payload": {"output": {"fps": 24}, "tracks": [], "clips": [], "registry": {"assets": {}}}
         },
         {
           "timeline_id": "film-1",
           "revision_id": "ib1",
-          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
-          "payload": {
-            "output": {"fps": 30},
-            "tracks": [],
-            "clips": [],
-            "registry": {"assets": {}},
-            "meta": {"org.example.timeline": {"note": "A"}}
-          }
+          "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
+          "payload": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
         }
       ],
       "dependency_manifest": {
@@ -3245,17 +3197,17 @@ authorize retargeting.
           {
             "timeline_id": "film-1",
             "revision_id": "ia1",
-            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+            "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18"
           },
           {
             "timeline_id": "film-1",
             "revision_id": "ia2",
-            "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b"
+            "content_digest": "sha256:e6fe0947443b4d861dcaaa7bc76caebb789cd42de4be88de54ce2c76d2f53f74"
           },
           {
             "timeline_id": "film-1",
             "revision_id": "ib1",
-            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+            "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18"
           }
         ],
         "media": [],
@@ -3340,38 +3292,20 @@ authorize retargeting.
         {
           "timeline_id": "film-1",
           "revision_id": "ia1",
-          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
-          "payload": {
-            "output": {"fps": 30},
-            "tracks": [],
-            "clips": [],
-            "registry": {"assets": {}},
-            "meta": {"org.example.timeline": {"note": "A"}}
-          }
+          "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
+          "payload": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
         },
         {
           "timeline_id": "film-1",
           "revision_id": "ia2",
-          "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b",
-          "payload": {
-            "output": {"fps": 30},
-            "tracks": [],
-            "clips": [],
-            "registry": {"assets": {}},
-            "meta": {"org.example.timeline": {"note": "B"}}
-          }
+          "content_digest": "sha256:e6fe0947443b4d861dcaaa7bc76caebb789cd42de4be88de54ce2c76d2f53f74",
+          "payload": {"output": {"fps": 24}, "tracks": [], "clips": [], "registry": {"assets": {}}}
         },
         {
           "timeline_id": "film-1",
           "revision_id": "ib1",
-          "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
-          "payload": {
-            "output": {"fps": 30},
-            "tracks": [],
-            "clips": [],
-            "registry": {"assets": {}},
-            "meta": {"org.example.timeline": {"note": "A"}}
-          }
+          "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
+          "payload": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
         }
       ],
       "dependency_manifest": {
@@ -3399,17 +3333,17 @@ authorize retargeting.
           {
             "timeline_id": "film-1",
             "revision_id": "ia1",
-            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+            "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18"
           },
           {
             "timeline_id": "film-1",
             "revision_id": "ia2",
-            "content_digest": "sha256:6e40bededc671f6b7b7ab9ceb85677556523eec784c636f0641284023ea8025b"
+            "content_digest": "sha256:e6fe0947443b4d861dcaaa7bc76caebb789cd42de4be88de54ce2c76d2f53f74"
           },
           {
             "timeline_id": "film-1",
             "revision_id": "ib1",
-            "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba"
+            "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18"
           }
         ],
         "media": [],
@@ -3419,11 +3353,11 @@ authorize retargeting.
   },
   "document_digests": {
     "empty": "sha256:f8cc39f9ebed677fce15fdf5f4b13bb8ca6b034df3be8e339ab4f79cc4437b1e",
-    "a": "sha256:cd31b1e4f990e0c4231c0acda1421684f6edfb0277e63319b8b80eb3c4839e8d",
-    "ab": "sha256:a1545cfc3df7b83b061c4987a900d765ceb7eb0b7e4535958c1f9d29d20b9710",
-    "edited": "sha256:8aadf94c3b0179a7607de8fa22bdcee28e58d69e516adea2106ebf055b4003ab",
-    "multi": "sha256:fb3b3bcbcf200a9d603464fed4ec97be7d0d7282c75c8972ea44ddf8d4cae48c",
-    "multi_edited": "sha256:ab8a70b69301b86162502007eb381ee4f0ced978946e72904088f1d28fe264f8"
+    "a": "sha256:80d16e39eea6c6395ee32d56b1476b82fbd0eb0fb0b07840db247ee05d0c9f4b",
+    "ab": "sha256:e8ac1463f7a421f9a0f2f484eb59dc44ac1f495d37321717e60caa94f4308c2b",
+    "edited": "sha256:40cb47bc1214194d7d9affb9e02c2da48173183afd7c33ab146ae0ae2e8d0623",
+    "multi": "sha256:cf755404c00ec7c702533d256fd79d5b6d9a883f902904e05dabe90825facc2f",
+    "multi_edited": "sha256:83f68f81759a41c7de2f71b270c6471531dd5dca9641ccb4870a9eebd96c44a5"
   },
   "request": {
     "api_version": 1,
@@ -3458,9 +3392,9 @@ authorize retargeting.
             {
               "op": "set",
               "ref": "internal-revision:ia1",
-              "path": ["meta", "org.example.timeline", "note"],
-              "before": {"state": "present", "value": "A"},
-              "value": "B"
+              "path": ["output", "fps"],
+              "before": {"state": "present", "value": 30},
+              "value": 24
             }
           ]
         }
@@ -3496,17 +3430,17 @@ authorize retargeting.
           {
             "op": "set",
             "ref": "internal-revision:ia1",
-            "path": ["meta", "org.example.timeline", "note"],
-            "before": {"state": "present", "value": "A"},
-            "value": "B"
+            "path": ["output", "fps"],
+            "before": {"state": "present", "value": 30},
+            "value": 24
           }
         ],
         "reads": [
           {
             "kind": "field",
             "ref": "internal-revision:ia1",
-            "path": ["meta", "org.example.timeline", "note"],
-            "state": {"state": "present", "value": "A"}
+            "path": ["output", "fps"],
+            "state": {"state": "present", "value": 30}
           }
         ]
       }
@@ -3533,13 +3467,7 @@ authorize retargeting.
               "ref": "internal-revision:ia1",
               "path": [],
               "before": {"state": "absent"},
-              "value": {
-                "output": {"fps": 30},
-                "tracks": [],
-                "clips": [],
-                "registry": {"assets": {}},
-                "meta": {"org.example.timeline": {"note": "A"}}
-              }
+              "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
             },
             {
               "op": "set",
@@ -3583,13 +3511,7 @@ authorize retargeting.
               "ref": "internal-revision:ib1",
               "path": [],
               "before": {"state": "absent"},
-              "value": {
-                "output": {"fps": 30},
-                "tracks": [],
-                "clips": [],
-                "registry": {"assets": {}},
-                "meta": {"org.example.timeline": {"note": "A"}}
-              }
+              "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
             },
             {
               "op": "set",
@@ -3633,13 +3555,7 @@ authorize retargeting.
               "ref": "internal-revision:ia2",
               "path": [],
               "before": {"state": "absent"},
-              "value": {
-                "output": {"fps": 30},
-                "tracks": [],
-                "clips": [],
-                "registry": {"assets": {}},
-                "meta": {"org.example.timeline": {"note": "B"}}
-              }
+              "value": {"output": {"fps": 24}, "tracks": [], "clips": [], "registry": {"assets": {}}}
             },
             {
               "op": "set",
@@ -3667,13 +3583,7 @@ authorize retargeting.
               "path": [],
               "before": {
                 "state": "present",
-                "value": {
-                  "output": {"fps": 30},
-                  "tracks": [],
-                  "clips": [],
-                  "registry": {"assets": {}},
-                  "meta": {"org.example.timeline": {"note": "A"}}
-                }
+                "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
               }
             }
           ],
@@ -3681,8 +3591,8 @@ authorize retargeting.
             {
               "kind": "field",
               "ref": "internal-revision:ia1",
-              "path": ["meta", "org.example.timeline", "note"],
-              "state": {"state": "present", "value": "A"}
+              "path": ["output", "fps"],
+              "state": {"state": "present", "value": 30}
             }
           ]
         }
@@ -3695,8 +3605,6 @@ authorize retargeting.
     {
       "ref": "parent",
       "physical_ref": "parent",
-      "revision_id": "ia1",
-      "revision_id": "rev-c1",
       "revision_id": "rev-c0",
       "content_digest": "sha256:7db6941424344f29682efe9425283892d2f45c9fc96bd20cf21faaa8256eb16a",
       "boundary": {
@@ -3719,12 +3627,13 @@ authorize retargeting.
         "step_id": "create-b",
         "command_ordinal": 1,
         "phase": "input"
-      }
+      },
+      "revision_id": "rev-c1"
     },
     {
       "ref": "internal-revision:ia1",
       "physical_ref": "internal-revision:ia1",
-      "content_digest": "sha256:1a95ab79df2d20ed4a18b446e3169cb9c5b19632bcf67d24a47c0f5966cad6ba",
+      "content_digest": "sha256:44480cc6477dcc476f4a2b1c694dd95918b819ab0a98aec573cb360072201a18",
       "boundary": {
         "base_revision_id": "rev-c0",
         "base_publication_id": "pub-c0",
@@ -3733,7 +3642,8 @@ authorize retargeting.
         "command_ordinal": 2,
         "change_ordinal": 0,
         "phase": "input"
-      }
+      },
+      "revision_id": "ia1"
     }
   ],
   "materialization_projection": [
@@ -3788,9 +3698,9 @@ authorize retargeting.
               {
                 "op": "set",
                 "ref": "internal:film-1",
-                "path": ["meta", "org.example.timeline", "note"],
-                "before": {"state": "present", "value": "A"},
-                "value": "B"
+                "path": ["output", "fps"],
+                "before": {"state": "present", "value": 30},
+                "value": 24
               }
             ]
           }
@@ -3826,9 +3736,9 @@ authorize retargeting.
             {
               "op": "set",
               "ref": "internal:film-1",
-              "path": ["meta", "org.example.timeline", "note"],
-              "before": {"state": "present", "value": "A"},
-              "value": "B"
+              "path": ["output", "fps"],
+              "before": {"state": "present", "value": 30},
+              "value": 24
             }
           ],
           "reads": []
@@ -3891,13 +3801,7 @@ authorize retargeting.
                 "ref": "internal-revision:ia1",
                 "path": [],
                 "before": {"state": "absent"},
-                "value": {
-                  "output": {"fps": 30},
-                  "tracks": [],
-                  "clips": [],
-                  "registry": {"assets": {}},
-                  "meta": {"org.example.timeline": {"note": "A"}}
-                }
+                "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
               },
               {
                 "op": "set",
@@ -3925,13 +3829,7 @@ authorize retargeting.
                 "path": [],
                 "before": {
                   "state": "present",
-                  "value": {
-                    "output": {"fps": 30},
-                    "tracks": [],
-                    "clips": [],
-                    "registry": {"assets": {}},
-                    "meta": {"org.example.timeline": {"note": "B"}}
-                  }
+                  "value": {"output": {"fps": 24}, "tracks": [], "clips": [], "registry": {"assets": {}}}
                 }
               }
             ]
@@ -3981,13 +3879,7 @@ authorize retargeting.
                 "ref": "internal-revision:ia2",
                 "path": [],
                 "before": {"state": "absent"},
-                "value": {
-                  "output": {"fps": 30},
-                  "tracks": [],
-                  "clips": [],
-                  "registry": {"assets": {}},
-                  "meta": {"org.example.timeline": {"note": "B"}}
-                }
+                "value": {"output": {"fps": 24}, "tracks": [], "clips": [], "registry": {"assets": {}}}
               },
               {
                 "op": "set",
@@ -4015,13 +3907,7 @@ authorize retargeting.
                 "path": [],
                 "before": {
                   "state": "present",
-                  "value": {
-                    "output": {"fps": 30},
-                    "tracks": [],
-                    "clips": [],
-                    "registry": {"assets": {}},
-                    "meta": {"org.example.timeline": {"note": "A"}}
-                  }
+                  "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
                 }
               }
             ]
@@ -4071,13 +3957,7 @@ authorize retargeting.
                 "ref": "internal-revision:ia1",
                 "path": [],
                 "before": {"state": "absent"},
-                "value": {
-                  "output": {"fps": 30},
-                  "tracks": [],
-                  "clips": [],
-                  "registry": {"assets": {}},
-                  "meta": {"org.example.timeline": {"note": "A"}}
-                }
+                "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
               },
               {
                 "op": "set",
@@ -4105,13 +3985,7 @@ authorize retargeting.
                 "path": [],
                 "before": {
                   "state": "present",
-                  "value": {
-                    "output": {"fps": 30},
-                    "tracks": [],
-                    "clips": [],
-                    "registry": {"assets": {}},
-                    "meta": {"org.example.timeline": {"note": "B"}}
-                  }
+                  "value": {"output": {"fps": 24}, "tracks": [], "clips": [], "registry": {"assets": {}}}
                 }
               },
               {
@@ -4147,13 +4021,7 @@ authorize retargeting.
                 "path": [],
                 "before": {
                   "state": "present",
-                  "value": {
-                    "output": {"fps": 30},
-                    "tracks": [],
-                    "clips": [],
-                    "registry": {"assets": {}},
-                    "meta": {"org.example.timeline": {"note": "A"}}
-                  }
+                  "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
                 }
               },
               {
@@ -4189,13 +4057,7 @@ authorize retargeting.
                 "path": [],
                 "before": {
                   "state": "present",
-                  "value": {
-                    "output": {"fps": 30},
-                    "tracks": [],
-                    "clips": [],
-                    "registry": {"assets": {}},
-                    "meta": {"org.example.timeline": {"note": "A"}}
-                  }
+                  "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
                 }
               }
             ]
@@ -4250,13 +4112,7 @@ authorize retargeting.
                 "ref": "internal-revision:ia1",
                 "path": [],
                 "before": {"state": "absent"},
-                "value": {
-                  "output": {"fps": 30},
-                  "tracks": [],
-                  "clips": [],
-                  "registry": {"assets": {}},
-                  "meta": {"org.example.timeline": {"note": "A"}}
-                }
+                "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
               },
               {
                 "op": "set",
@@ -4290,13 +4146,7 @@ authorize retargeting.
                 "ref": "internal-revision:ib1",
                 "path": [],
                 "before": {"state": "absent"},
-                "value": {
-                  "output": {"fps": 30},
-                  "tracks": [],
-                  "clips": [],
-                  "registry": {"assets": {}},
-                  "meta": {"org.example.timeline": {"note": "A"}}
-                }
+                "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
               },
               {
                 "op": "set",
@@ -4330,13 +4180,7 @@ authorize retargeting.
                 "ref": "internal-revision:ia2",
                 "path": [],
                 "before": {"state": "absent"},
-                "value": {
-                  "output": {"fps": 30},
-                  "tracks": [],
-                  "clips": [],
-                  "registry": {"assets": {}},
-                  "meta": {"org.example.timeline": {"note": "B"}}
-                }
+                "value": {"output": {"fps": 24}, "tracks": [], "clips": [], "registry": {"assets": {}}}
               },
               {
                 "op": "set",
@@ -4364,13 +4208,7 @@ authorize retargeting.
                 "path": [],
                 "before": {
                   "state": "present",
-                  "value": {
-                    "output": {"fps": 30},
-                    "tracks": [],
-                    "clips": [],
-                    "registry": {"assets": {}},
-                    "meta": {"org.example.timeline": {"note": "A"}}
-                  }
+                  "value": {"output": {"fps": 30}, "tracks": [], "clips": [], "registry": {"assets": {}}}
                 }
               }
             ]
@@ -4826,12 +4664,18 @@ from pathlib import Path
 repo = Path('contract/commit-v2.md')
 shared = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-v2.md')
 assert repo.read_bytes() == shared.read_bytes()
+def unique_object(pairs):
+    result = dict(pairs)
+    if len(result) != len(pairs):
+        raise ValueError('duplicate JSON object keys')
+    return result
+
 for path in (repo, shared):
     source = path.read_text()
     blocks = re.findall(r'^```json\n(.*?)^```$', source, re.M | re.S)
     assert len(blocks) == 20
     for index, block in enumerate(blocks, 1):
-        json.loads(block, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
+        json.loads(block, object_pairs_hook=unique_object, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
     assert len(re.findall(r'^## [1-7]\. ', source, re.M)) == 7
     print(f'{path}: {len(blocks)} JSON blocks parsed; 7 required headings')
 PY
@@ -5315,14 +5159,14 @@ bound = resolve(states['a'], 'internal:film-1')[0]
 assert guard_overlap(bound, path, states['a'], 'internal-revision:ia1', path, 'occurrence:occ-a/shot')
 assert not guard_overlap(bound, path, states['ab'], 'internal-revision:ib1', path, 'occurrence:occ-a/shot')
 assert guard_overlap(bound, path, states['edited'], 'internal-revision:ia2', path, 'occurrence:occ-a/shot')
-assert not guard_overlap(bound, path, states['edited'], 'internal-revision:ia2', ['output', 'fps'], 'occurrence:occ-a/shot')
+assert not guard_overlap(bound, path, states['edited'], 'internal-revision:ia2', ['registry'], 'occurrence:occ-a/shot')
 # The old branch remains reachable: do not follow occ-a's successor for occ-a-old.
 assert not guard_overlap('shot-revision:sa1', ['name'], states['multi'], 'occurrence:occ-a/shot', ['name'], 'occurrence:occ-a-old/shot')
 assert guard_overlap('shot-revision:sa1', ['name'], states['multi'], 'occurrence:occ-a-old/shot', ['name'], 'occurrence:occ-a-old/shot')
-# Scan writes, not only final bytes: equal final A still has an overlapping B tail.
-tail = [{'ref': 'internal-revision:ia2', 'path': path, 'before': 'A', 'after': 'B'},
-        {'ref': 'internal-revision:ia2', 'path': path, 'before': 'B', 'after': 'A'}]
-assert tail[-1]['after'] == 'A'
+# Scan writes, not only final bytes: the 30→24→30 tail still overlaps.
+tail = [{'ref': 'internal-revision:ia2', 'path': path, 'before': 30, 'after': 24},
+        {'ref': 'internal-revision:ia2', 'path': path, 'before': 24, 'after': 30}]
+assert tail[-1]['after'] == 30
 assert any(guard_overlap(bound, path, states['edited'], write['ref'], write['path'], 'occurrence:occ-a/shot') for write in tail)
 print('PASS C0c: 6 schema/digest/pin states, 3 sequential steps, alias/union bindings, 4 inverse/redo transitions, rollback/dependency refusals, multi-shot edit, 4 replay binding probes and guard normalization; provider proof deferred')
 assert not any(line.rstrip() != line for line in source.splitlines())
