@@ -40,3 +40,10 @@ Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan:
   4. The harness commits the merge when the worker exits.
 
   The alternative is dispatching with `--merge-parent <sha>`. Apply this to U2 and U3a–c without asking.
+- **Sandbox limits are not safety refusals.** Worker sandboxes cannot open localhost sockets or write git internals; that is by design, with designed routes:
+  - tests needing localhost or browsers: the test service (`bin/request-test`), or dispatch with `--net`;
+  - merges: `bin/merge-forward`;
+  - fetches: the lead, outside the sandbox.
+
+  Only an auto-mode classifier or safety denial stops you.
+- **Upstream fetch before any U-task:** the lead fetches `origin main` in the work repo first. A merge against a stale `origin/main` is a FAIL.
