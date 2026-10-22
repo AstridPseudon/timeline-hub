@@ -109,4 +109,40 @@ describe('useTourKeys', () => {
     window.dispatchEvent(key({ key: 'Enter' }));
     expect(getEditorTourState()).toMatchObject({ act: 1, beat: 'land' });
   });
+
+  it('Backspace does nothing (the composer holds text) but is still swallowed', () => {
+    mountKeys(true);
+    setEditorTourBeat(2, 'compose');
+    const event = key({ key: 'Backspace' });
+
+    window.dispatchEvent(event);
+
+    expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'compose' });
+    expect(getEditorTourState().instant).not.toBe(true);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('ArrowLeft goes back one place, prevented', () => {
+    mountKeys(true);
+    setEditorTourBeat(2, 'land');
+    const event = key({ key: 'ArrowLeft' });
+
+    window.dispatchEvent(event);
+
+    expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'compose', instant: true });
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('ArrowRight is swallowed and does not move the tour', () => {
+    mountKeys(true);
+    setEditorTourBeat(2, 'land');
+    window.dispatchEvent(key({ key: 'ArrowRight' }));
+    expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'land' });
+  });
+
+  it('Back does nothing on the welcome', () => {
+    mountKeys(true);
+    window.dispatchEvent(key({ key: 'ArrowLeft' }));
+    expect(getEditorTourState()).toMatchObject({ beat: 'welcome' });
+  });
 });

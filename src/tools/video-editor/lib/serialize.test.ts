@@ -8,7 +8,7 @@ import {
   serializeTimelinePair,
   validateTimelineConfigSnapshot,
 } from '@/tools/video-editor/lib/timeline-domain';
-import type { ResolvedTimelineConfig, TimelineConfig, TimelineClip } from '@/tools/video-editor/types';
+import type { AssetRegistryEntry, ResolvedTimelineConfig, TimelineConfig, TimelineClip } from '@/tools/video-editor/types';
 
 describe('video-editor serialization', () => {
   it('preserves exact source fields and strips resolved-only data', () => {
@@ -323,6 +323,35 @@ describe('video-editor serialization', () => {
       tracks: [{ id: 'V1', kind: 'visual', label: 'V1', extra: 'nope' }],
       clips: [{ id: 'clip-1', at: 0, track: 'V1', clipType: 'hold', hold: 1 }],
     } as TimelineConfig)).toThrow(TimelineDomainError);
+  });
+
+  it('save payload keeps unknown registry fields and drops App-only src', () => {
+    // Edit path: an unknown Astrid field on a registry entry must survive the
+    // save; the App-only resolved locator must not.
+    const config: TimelineConfig = {
+      output: { resolution: '1280x720', fps: 30, file: 'output.mp4' },
+      clips: [{ id: 'clip-1', at: 0, track: 'video', asset: 'asset-1' }],
+    };
+    const pair = serializeTimelinePair(config, {
+      assets: {
+        'asset-1': {
+          file: 'video.mp4',
+          duration: 3.5,
+          handle: 'ref:hero-still',
+          source: { kind: 'generation', run_id: 'run-1' },
+          zz_future_astrid_field: { a: 1 },
+          src: 'blob:http://localhost/abc',
+        } as AssetRegistryEntry,
+      },
+    });
+    const saved = JSON.parse(JSON.stringify(pair.registry.assets['asset-1']));
+    expect(saved).toEqual({
+      file: 'video.mp4',
+      duration: 3.5,
+      handle: 'ref:hero-still',
+      source: { kind: 'generation', run_id: 'run-1' },
+      zz_future_astrid_field: { a: 1 },
+    });
   });
 
   it('serializes config-only and pair-aware contracts through the shared domain serializer', () => {

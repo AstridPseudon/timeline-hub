@@ -758,18 +758,30 @@ describe('sanitizeAssetRegistryEntry', () => {
     ]);
   });
 
-  it('strips fields not in ASSET_REGISTRY_ENTRY_FIELDS', () => {
+  it('keeps unknown fields unchanged and drops the App-only src locator', () => {
     const entry = {
       ...baseEntry,
-      extraField: 'should-be-stripped',
+      extraField: 'kept',
       anotherExtra: 123,
+      src: 'blob:http://localhost/abc',
     } as any;
-    const result = sanitizeAssetRegistryEntry(entry);
-    expect((result as any).extraField).toBeUndefined();
-    expect((result as any).anotherExtra).toBeUndefined();
+    const result = sanitizeAssetRegistryEntry(entry) as any;
+    expect(result.extraField).toBe('kept');
+    expect(result.anotherExtra).toBe(123);
+    expect('src' in result).toBe(false);
     // Known fields preserved
     expect(result.file).toBe('assets/photo.jpg');
     expect(result.type).toBe('image/jpeg');
+  });
+
+  it('round-trips an unknown future field alongside handle and source', () => {
+    const entry = {
+      ...baseEntry,
+      handle: 'ref:hero-still',
+      source: { kind: 'generation', run_id: 'run-1' },
+      zz_future_astrid_field: { a: 1 },
+    } as AssetRegistryEntry;
+    expect(sanitizeAssetRegistryEntry(entry)).toEqual(entry);
   });
 
   it('keeps Astrid media identity fields (handle, source, pixel_provenance) through sanitize', () => {

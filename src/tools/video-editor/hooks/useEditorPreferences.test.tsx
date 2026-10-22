@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getSettingsStore } from '@/shared/settings/instance';
+import { installTestSettingsStore, type FakeAppStateApi } from '@/test/settingsStoreHarness';
 import {
   defaultPreferences,
   defaultPreferencesForViewport,
@@ -9,6 +11,15 @@ import {
 } from './useEditorPreferences';
 
 describe('useEditorPreferences right panel state', () => {
+  let fake: FakeAppStateApi;
+
+  /** Writes everything pending to the fake Runtime, then reads what a timeline's record holds. */
+  const flush = () => getSettingsStore().flush();
+  /** What the Runtime holds for a timeline's preferences, as JSON (an undefined field is not kept). */
+  const savedFor = (timelineId: string): Record<string, unknown> => JSON.parse(JSON.stringify(
+    fake.record(`ui.timeline.${timelineId}`).content?.['timeline.preferences'] ?? {},
+  ));
+
   beforeEach(() => {
     const values = new Map<string, string>();
     const storage = {
@@ -20,6 +31,7 @@ describe('useEditorPreferences right panel state', () => {
     vi.stubGlobal('localStorage', storage);
     Object.defineProperty(window, 'localStorage', { configurable: true, value: storage });
     localStorage.clear();
+    fake = installTestSettingsStore().fake;
     vi.useFakeTimers();
   });
 
@@ -43,7 +55,7 @@ describe('useEditorPreferences right panel state', () => {
     expect(JSON.parse(localStorage.getItem('video-editor:preferences:demo') ?? '{}')).toEqual({ scaleWidth: 222 });
   });
 
-  it('migrates older timeline records and persists panel, slot, and lane choices', () => {
+  it('migrates older timeline records and persists panel, slot, and lane choices', async () => {
     localStorage.setItem('video-editor:preferences:legacy', JSON.stringify({
       scaleWidth: 190,
       activeClipTab: 'timing',
@@ -63,7 +75,8 @@ describe('useEditorPreferences right panel state', () => {
     });
     act(() => vi.advanceTimersByTime(250));
 
-    const saved = JSON.parse(localStorage.getItem('video-editor:preferences:legacy') ?? '{}');
+    await flush();
+    const saved = savedFor('legacy');
     expect(saved.selectedRightPanelId).toBe('haus.astrid.transcript-lane:transcript-lane-panel');
     expect(saved.rightPanelLayoutSlotsByPanelId).toEqual({
       'haus.astrid.transcript-lane:transcript-lane-panel': 'compact',
@@ -113,23 +126,27 @@ describe('useEditorPreferences right panel state', () => {
     expect(result.current.preferences.selectedRightPanelId).toBeNull();
   });
 
-  it('never turns the viewport default into a saved choice: a narrow first open still opens the dock on a wide one', () => {
+  it('never turns the viewport default into a saved choice: a narrow first open still opens the dock on a wide one', async () => {
     const narrow = renderHook(() => useEditorPreferences('narrow-first', 420));
     expect(narrow.result.current.preferences.selectedRightPanelId).toBeNull();
     act(() => vi.advanceTimersByTime(1_000));
-    expect(localStorage.getItem('video-editor:preferences:narrow-first')).toBeNull();
+    await flush();
+    // Mounting (and the default it shows) writes nothing: only an explicit set does.
+    expect(fake.puts()).toEqual([]);
+    expect(fake.record('ui.timeline.narrow-first').content).toBeNull();
     narrow.unmount();
 
     const wide = renderHook(() => useEditorPreferences('narrow-first', 1600));
     expect(wide.result.current.preferences.selectedRightPanelId).toBe('host:properties');
   });
 
-  it('keeps the panel selection out of the record when an unrelated setting is saved, so the default is re-derived', () => {
+  it('keeps the panel selection out of the record when an unrelated setting is saved, so the default is re-derived', async () => {
     const narrow = renderHook(() => useEditorPreferences('zoomed-narrow', 420));
     act(() => narrow.result.current.setScaleWidth(240));
     act(() => narrow.result.current.setShowDataLanes(true));
     act(() => vi.advanceTimersByTime(1_000));
-    const saved = JSON.parse(localStorage.getItem('video-editor:preferences:zoomed-narrow') ?? '{}');
+    await flush();
+    const saved = savedFor('zoomed-narrow');
     expect(saved.scaleWidth).toBe(240);
     expect(saved.showDataLanes).toBe(true);
     expect('selectedRightPanelId' in saved).toBe(false);
@@ -140,11 +157,12 @@ describe('useEditorPreferences right panel state', () => {
     expect(wide.result.current.preferences.selectedRightPanelId).toBe('host:properties');
   });
 
-  it('saves an explicit panel choice, including closed, and that choice wins on every later load', () => {
+  it('saves an explicit panel choice, including closed, and that choice wins on every later load', async () => {
     const wide = renderHook(() => useEditorPreferences('explicit-closed', 1600));
     act(() => wide.result.current.setSelectedRightPanelId(null));
     act(() => vi.advanceTimersByTime(1_000));
-    expect(JSON.parse(localStorage.getItem('video-editor:preferences:explicit-closed') ?? '{}').selectedRightPanelId).toBeNull();
+    await flush();
+    expect(savedFor('explicit-closed').selectedRightPanelId).toBeNull();
     wide.unmount();
 
     expect(renderHook(() => useEditorPreferences('explicit-closed', 1600)).result.current.preferences.selectedRightPanelId).toBeNull();

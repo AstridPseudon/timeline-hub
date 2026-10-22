@@ -44,6 +44,13 @@ export function usePaneLockPolicyState() {
   const [isEditorPaneOpenState, setIsEditorPaneOpenState] = useState(false);
   const [isTasksPaneOpenState, setIsTasksPaneOpenState] = useState(false);
 
+  // The saved lock can arrive after first paint (a new browser reads it from the Runtime): apply it when it differs.
+  useEffect(() => {
+    if (transientPanes || savedTasksLock === null) return;
+    setLocks((previous) => (previous.tasks === savedTasksLock ? previous : { ...previous, tasks: savedTasksLock }));
+    setIsTasksPaneOpenState(savedTasksLock);
+  }, [savedTasksLock, transientPanes]);
+
   useEffect(() => {
     if (transientPanes) {
       setLocks(UNLOCKED_PANES);

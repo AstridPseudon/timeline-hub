@@ -5,12 +5,20 @@ import { TourStrip } from './TourStrip';
 import { TourVisual } from './TourVisual';
 import { useTourCardEntrance } from './useTourCardEntrance';
 import { useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared/state/editorTourStore';
+import { ChevronLeft } from 'lucide-react';
+import { DiscordMark } from '@/pages/Home/PublicAstridSocialLinks';
+import { DISCORD_URL } from '@/pages/Home/publicAstridLinks';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 
 export interface TourCardProps {
+  /** The beat to show: the runner's settled beat, which trails the store's while the card is about to move. */
+  act: EditorTourAct;
+  beat: EditorTourBeat;
   /** Next, "I got it", or (while the reply plays) finish it: the runner decides, as for Enter. */
   onPrimary: () => void;
+  /** Go back to the previous place the user acted. Without it the card shows no Back. */
+  onBack?: () => void;
   /** Leave the tour, as Esc does. Without it the card only names the key. */
   onSkip?: () => void;
 }
@@ -23,13 +31,13 @@ const ACT_COUNT = 3;
  * visual and the Three.js → frames → video strip; at the end it asks "Do you get it?". Presentational: the runner positions it and owns the
  * actions. It marks itself ready once its entrance has played (at once on reduced motion or a skip).
  */
-export function TourCard({ onPrimary, onSkip }: TourCardProps) {
-  const act = useEditorTour((state) => state.act);
-  const beat = useEditorTour((state) => state.beat);
+export function TourCard({ act, beat, onPrimary, onBack, onSkip }: TourCardProps) {
   const runId = useEditorTour((state) => state.runId);
+  const live = useEditorTour((state) => state.act === act && state.beat === beat);
   const key = `${runId}:${act}:${beat}`;
-  const explains = beat === 'welcome' || beat === 'land' || beat === 'finale';
-  const { settled, reducedMotion } = useTourCardEntrance(key, explains);
+  const explains = beat === 'welcome' || beat === 'land' || beat === 'finale' || beat === 'feedback';
+  // A card still showing the previous beat never reports ready for the new one.
+  const { settled, reducedMotion } = useTourCardEntrance(key, explains && live);
 
   return (
     <div
@@ -39,39 +47,53 @@ export function TourCard({ onPrimary, onSkip }: TourCardProps) {
       className={cn('editor-tour-card', reducedMotion ? 'editor-tour-card-reduced' : !settled && 'editor-tour-card-playing')}
     >
       <section
-        aria-label={beat === 'welcome' ? SCRIPT.welcome.title : beat === 'finale' ? SCRIPT.finale.title : `Tour, step ${act} of ${ACT_COUNT}`}
+        aria-label={beat === 'welcome' ? SCRIPT.welcome.title : beat === 'finale' ? SCRIPT.finale.title : beat === 'feedback' ? SCRIPT.feedback.title : `Tour, step ${act} of ${ACT_COUNT}`}
         className={cn(
           'editor-tour-rise rounded-xl border border-border bg-card text-card-foreground shadow-xl',
           beat === 'welcome' && 'w-[400px] p-6',
           beat === 'land' && 'w-[380px] p-5',
           beat === 'finale' && 'w-[480px] p-6',
-          !explains && 'w-[300px] px-4 py-3',
+          beat === 'feedback' && 'w-[440px] p-6',
+          !explains && (beat === 'respond' || (beat === 'compose' && SCRIPT.acts[act].composeHeader) ? 'w-[360px]' : 'w-[300px]') + ' px-4 py-3',
         )}
       >
         {beat === 'welcome' && <Welcome onPrimary={onPrimary} onSkip={onSkip} />}
-        {beat === 'land' && <Explainer act={act} playing={!reducedMotion} onPrimary={onPrimary} onSkip={onSkip} />}
-        {beat === 'finale' && <Finale playing={!reducedMotion} onPrimary={onPrimary} />}
-        {!explains && <Hint act={act} beat={beat} onPrimary={onPrimary} onSkip={onSkip} />}
+        {beat === 'land' && <Explainer act={act} playing={!reducedMotion} onPrimary={onPrimary} onBack={onBack} onSkip={onSkip} />}
+        {beat === 'finale' && <Finale playing={!reducedMotion} onPrimary={onPrimary} onBack={onBack} />}
+        {beat === 'feedback' && <Feedback onPrimary={onPrimary} onBack={onBack} />}
+        {!explains && <Hint act={act} beat={beat} onPrimary={onPrimary} onBack={onBack} onSkip={onSkip} />}
       </section>
     </div>
   );
 }
 
-function Explainer({ act, playing, onPrimary, onSkip }: { act: EditorTourAct; playing: boolean } & TourCardProps) {
+/** The top row of the Hint and the Explainer: "N of 3", Back right beside it, Skip on the right. */
+function CounterRow({ act, onBack, onSkip }: { act: EditorTourAct } & Pick<TourCardProps, 'onBack' | 'onSkip'>) {
+  return (
+    <div className="flex items-center justify-between leading-none text-muted-foreground">
+      <div className="flex items-center gap-3">
+        <span className="text-xs tabular-nums">{act} of {ACT_COUNT}</span>
+        <BackControl onBack={onBack} />
+      </div>
+      <SkipControl onSkip={onSkip} />
+    </div>
+  );
+}
+
+function Explainer({ act, playing, onPrimary, onBack, onSkip }: { act: EditorTourAct; playing: boolean } & Omit<TourCardProps, 'act' | 'beat'>) {
   const { title, body, visual, labels } = SCRIPT.acts[act].card;
   return (
     <>
-      <TourVisual visual={visual} labels={labels} playing={playing} />
-      <h2 className="mt-4 text-balance font-serif font-theme-heading text-xl leading-tight text-foreground">
-        <span className="tabular-nums text-muted-foreground">{act} · </span>
-        {title}
-      </h2>
+      <CounterRow act={act} onBack={onBack} onSkip={onSkip} />
+      <div className="mt-3">
+        <TourVisual visual={visual} labels={labels} playing={playing} />
+      </div>
+      <h2 className="mt-4 text-pretty font-serif font-theme-heading text-lg leading-tight text-foreground">{title}</h2>
       <p className="mt-1.5 text-pretty text-sm leading-6 text-muted-foreground">{body}</p>
       <div className="mt-4">
         <TourStrip filled={act} labels={SCRIPT.strip} />
       </div>
-      <div className="mt-5 flex items-center justify-between gap-3">
-        <SkipControl onSkip={onSkip} />
+      <div className="mt-5 flex justify-end">
         <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} />
       </div>
     </>
@@ -88,7 +110,7 @@ function MinkTitle({ children }: { children: ReactNode }) {
   );
 }
 
-function Welcome({ onPrimary, onSkip }: TourCardProps) {
+function Welcome({ onPrimary, onSkip }: Omit<TourCardProps, 'act' | 'beat'>) {
   return (
     <>
       <MinkTitle>{SCRIPT.welcome.title}</MinkTitle>
@@ -101,29 +123,50 @@ function Welcome({ onPrimary, onSkip }: TourCardProps) {
   );
 }
 
-function Finale({ playing, onPrimary }: { playing: boolean; onPrimary: () => void }) {
+function Finale({ playing, onPrimary, onBack }: { playing: boolean; onPrimary: () => void; onBack?: () => void }) {
   return (
     <>
       <MinkTitle>{SCRIPT.finale.title}</MinkTitle>
       <div className="mt-6">
         <TourStrip filled={3} labels={SCRIPT.finale.recap} size="large" playing={playing} />
       </div>
-      <div className="mt-7 flex justify-end">
+      <div className="mt-7 flex items-center justify-between gap-3">
+        <BackControl onBack={onBack} />
         <PrimaryButton label={SCRIPT.finale.action} onPrimary={onPrimary} size="default" />
       </div>
     </>
   );
 }
 
-/** Compose: send the prompt (the chat's Send, or Enter). Respond: the reply's Next. */
-function Hint({ act, beat, onPrimary, onSkip }: { act: EditorTourAct; beat: EditorTourBeat } & TourCardProps) {
-  const compose = beat === 'compose';
+function Feedback({ onPrimary, onBack }: { onPrimary: () => void; onBack?: () => void }) {
   return (
     <>
-      <div className="flex items-center justify-between text-[11px] leading-none text-muted-foreground">
-        <span className="tabular-nums">{act} of {ACT_COUNT}</span>
-        <SkipControl onSkip={onSkip} />
+      <MinkTitle>{SCRIPT.feedback.title}</MinkTitle>
+      <p className="mt-3 text-pretty text-[15px] leading-6 text-muted-foreground">{SCRIPT.feedback.body}</p>
+      <Button asChild variant="outline" className="mt-4 gap-2">
+        <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer">
+          <DiscordMark />
+          {SCRIPT.feedback.discord}
+        </a>
+      </Button>
+      <div className="mt-6 flex items-center justify-between gap-3">
+        <BackControl onBack={onBack} />
+        <PrimaryButton label={SCRIPT.feedback.action} onPrimary={onPrimary} size="default" />
       </div>
+    </>
+  );
+}
+
+/** Compose: send the prompt (the chat's Send, or Enter). Respond (act 1 only): the reply's Next. */
+function Hint({ act, beat, onPrimary, onBack, onSkip }: TourCardProps) {
+  const compose = beat === 'compose';
+  const header = compose ? SCRIPT.acts[act].composeHeader : undefined;
+  return (
+    <>
+      <CounterRow act={act} onBack={onBack} onSkip={onSkip} />
+      {header && (
+        <h2 className="mt-3 text-pretty font-serif font-theme-heading text-lg leading-tight text-foreground">{header}</h2>
+      )}
       <div className="mt-2 flex min-h-9 items-center justify-between gap-3">
         <p className="text-sm text-foreground">{compose ? SCRIPT.hints.compose : SCRIPT.hints.respond}</p>
         {compose ? <Kbd>↵</Kbd> : <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} />}
@@ -138,6 +181,20 @@ function PrimaryButton({ label, onPrimary, size = 'sm' }: { label: string; onPri
       {label}
       <Kbd onPrimary>↵</Kbd>
     </Button>
+  );
+}
+
+function BackControl({ onBack }: { onBack?: () => void }) {
+  if (!onBack) return null;
+  return (
+    <button
+      type="button"
+      className="-mx-1 -my-1.5 inline-flex items-center gap-0.5 rounded-sm px-1 py-1.5 text-xs leading-none text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      onClick={onBack}
+    >
+      <ChevronLeft className="h-3 w-3" aria-hidden />
+      {SCRIPT.controls.back}
+    </button>
   );
 }
 

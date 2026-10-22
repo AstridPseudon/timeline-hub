@@ -39,22 +39,11 @@ import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
 import { isElementWithinKnownOverlay } from '@/shared/components/ui/overlay';
+import { tasksPaneExpandedHalf, tasksPaneRuntimeHistoryPinned } from '@/shared/settings/declarations';
+import { useSetting } from '@/shared/settings/useSetting';
 import { useAppEventListener } from '@/shared/lib/typedEvents';
 
-const EXPANDED_HALF_STORAGE_KEY = 'tasksPane:expandedHalf';
-const RUNTIME_HISTORY_PINNED_STORAGE_KEY = 'tasksPane:runtimeHistoryPinned';
 type ExpandedHalf = 'chat' | null;
-
-function readPersistedExpandedHalf(): ExpandedHalf {
-  if (typeof window === 'undefined') return 'chat';
-  const stored = window.localStorage.getItem(EXPANDED_HALF_STORAGE_KEY);
-  return stored === 'split' || stored === 'tasks' ? null : 'chat';
-}
-
-function readPersistedRuntimeHistoryPinned(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.localStorage.getItem(RUNTIME_HISTORY_PINNED_STORAGE_KEY) === 'pinned';
-}
 
 const TasksPaneComponent: React.FC = () => {
   useRenderBudget('TasksPane', 5);
@@ -207,23 +196,13 @@ const TasksPaneComponent: React.FC = () => {
 
   // Keep the established stored preference: chat = compact tasks; split =
   // tasks pinned at their normal half-height. Legacy tasks-full maps to split.
-  const [expandedHalf, setExpandedHalf] = useState<ExpandedHalf>(readPersistedExpandedHalf);
-  const [runtimeHistoryPinned, setRuntimeHistoryPinned] = useState(readPersistedRuntimeHistoryPinned);
-  const [runtimeHistoryOpen, setRuntimeHistoryOpen] = useState(readPersistedRuntimeHistoryPinned);
+  const [savedExpandedHalf, saveExpandedHalf] = useSetting(tasksPaneExpandedHalf);
+  const expandedHalf: ExpandedHalf = savedExpandedHalf === 'chat' ? 'chat' : null;
+  const setExpandedHalf = useCallback((next: ExpandedHalf) => saveExpandedHalf(next === 'chat' ? 'chat' : 'split'), [saveExpandedHalf]);
+  const [runtimeHistoryPinned, setRuntimeHistoryPinned] = useSetting(tasksPaneRuntimeHistoryPinned);
+  const [runtimeHistoryOpen, setRuntimeHistoryOpen] = useState(runtimeHistoryPinned);
   const [runtimeTaskInspectionRequest, setRuntimeTaskInspectionRequest] = useState<RuntimeTaskInspectionRequest | null>(null);
   const clearRuntimeTaskInspectionRequest = useCallback(() => setRuntimeTaskInspectionRequest(null), []);
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (expandedHalf) {
-      window.localStorage.setItem(EXPANDED_HALF_STORAGE_KEY, expandedHalf);
-    } else {
-      window.localStorage.setItem(EXPANDED_HALF_STORAGE_KEY, 'split');
-    }
-  }, [expandedHalf]);
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(RUNTIME_HISTORY_PINNED_STORAGE_KEY, runtimeHistoryPinned ? 'pinned' : 'unpinned');
-  }, [runtimeHistoryPinned]);
   const showChatHalf = isToolRoute;
   const [isTasksPeeking, setIsTasksPeeking] = useState(false);
   const compactTasks = isToolRoute;

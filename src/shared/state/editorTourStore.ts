@@ -7,8 +7,8 @@ import { createStore, useStore } from 'zustand';
  */
 
 export type EditorTourAct = 1 | 2 | 3;
-/** `welcome` comes once, before act 1's `compose`; the acts then run compose → respond → land; `finale` ends. */
-export type EditorTourBeat = 'welcome' | 'compose' | 'respond' | 'land' | 'finale';
+/** `welcome` comes once, before act 1's `compose`; the acts then run compose → respond → land; `finale` and then `feedback` end. */
+export type EditorTourBeat = 'welcome' | 'compose' | 'respond' | 'land' | 'finale' | 'feedback';
 /** Rows on the demo timeline: 0 none · 1 scene · 2 + stills row · 3 + video row. */
 export type EditorTourStage = 0 | 1 | 2 | 3;
 export type EditorTourStatus = 'idle' | 'running';
@@ -25,6 +25,11 @@ export interface EditorTourState {
   /** Reset on every beat change; each part sets its own flag once it has finished presenting the beat. */
   ready: Readonly<Record<EditorTourReadyKey, boolean>>;
   reducedMotion: boolean;
+  /**
+   * Set when the user arrived by Back, cleared on any forward move: every part finishes the beat at once,
+   * exactly as it does for reduced motion (nothing re-types, re-streams or re-reveals).
+   */
+  instant: boolean;
   /** Bumps when the user asks to finish the current animation now (first Enter mid-animation). */
   skipAnimation: number;
 }
@@ -39,6 +44,7 @@ const editorTourStore = createStore<EditorTourState>(() => ({
   sent: false,
   ready: NOT_READY,
   reducedMotion: false,
+  instant: false,
   skipAnimation: 0,
 }));
 
@@ -51,7 +57,7 @@ function prefersReducedMotion(): boolean {
 /** Each act's result lands on its `land` beat and stays for the rest of the tour. */
 export function editorTourStage(act: EditorTourAct, beat: EditorTourBeat): EditorTourStage {
   if (beat === 'welcome') return 0;
-  if (beat === 'finale') return 3;
+  if (beat === 'finale' || beat === 'feedback') return 3;
   return (beat === 'land' ? act : act - 1) as EditorTourStage;
 }
 
@@ -64,13 +70,14 @@ export function startEditorTour(): void {
     sent: false,
     ready: NOT_READY,
     reducedMotion: prefersReducedMotion(),
+    instant: false,
     skipAnimation: 0,
   }));
 }
 
-/** Runner only. */
-export function setEditorTourBeat(act: EditorTourAct, beat: EditorTourBeat): void {
-  editorTourStore.setState({ act, beat, sent: false, ready: NOT_READY });
+/** Runner only. `instant` is true only for a move back; any forward move clears it. */
+export function setEditorTourBeat(act: EditorTourAct, beat: EditorTourBeat, instant = false): void {
+  editorTourStore.setState({ act, beat, sent: false, ready: NOT_READY, instant });
 }
 
 /** Runner only. */
@@ -80,7 +87,7 @@ export function skipEditorTourAnimation(): void {
 
 /** Runner only: the demo timeline and tour chat unmount, and the user's own editor returns. */
 export function exitEditorTour(): void {
-  editorTourStore.setState({ status: 'idle', sent: false, ready: NOT_READY });
+  editorTourStore.setState({ status: 'idle', sent: false, ready: NOT_READY, instant: false });
 }
 
 /** Tour chat panel only. */

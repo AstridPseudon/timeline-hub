@@ -44,6 +44,7 @@ import {
 import { autoConnectRequested, consumeAutoConnectQuery, takeAutoConnectRequest } from './autoConnectRequest.ts';
 import type { Realm } from './generated.ts';
 import { RUNTIME_ACCEPTED_SCHEMA_DIGESTS } from './contract-metadata.ts';
+import { getSettingsStore } from '@/shared/settings/instance';
 
 export const POLL_INTERVAL_MS = 3000;
 const PROBE_TIMEOUT_MS = 5000;
@@ -269,6 +270,12 @@ export function RuntimeConnectionProvider({
   }, [fetchImpl, permissions]);
 
   const isConnected = outcome?.kind === 'connected';
+
+  // Saved settings are read from the Runtime only once it has answered (never before the permission prompt).
+  const settingsMayConnect = !gated || isConnected;
+  useEffect(() => {
+    if (settingsMayConnect) void getSettingsStore().connect();
+  }, [settingsMayConnect]);
 
   // Granted: probe at once, then on an interval and on focus, until connected.
   useEffect(() => {

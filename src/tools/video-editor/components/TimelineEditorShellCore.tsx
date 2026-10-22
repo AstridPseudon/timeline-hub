@@ -1,4 +1,5 @@
 import { useDataLanes } from '@/tools/video-editor/data-kinds/useDataLanes.ts';
+import { EDITOR_TOUR_ANCHOR_ATTRIBUTE, EDITOR_TOUR_ANCHORS } from '@/tools/video-editor/tour/anchors';
 import { useDataKindRegistrySnapshot } from '@/tools/video-editor/data-kinds/DataKindRegistryContext.tsx';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
@@ -1054,7 +1055,7 @@ function TimelineEditorShellCoreComponent({
                 content: <>
                   {/* One continuous stage: letterbox bars share the frame's
                       black instead of showing slivers of panel. */}
-                  <div className="relative min-h-0 flex-1 bg-[var(--video-editor-stage-bg)]" style={VIDEO_EDITOR_THEME_VARS} {...shellRegionAttrs('preview')}>
+                  <div className="relative min-h-0 flex-1 bg-[var(--video-editor-stage-bg)]" style={VIDEO_EDITOR_THEME_VARS} {...shellRegionAttrs('preview')} {...{ [EDITOR_TOUR_ANCHOR_ATTRIBUTE]: EDITOR_TOUR_ANCHORS.preview }}>
                     {previewOverlay}
                     <div ref={previewSurface.slotRef} data-testid="video-editor-preview-surface" className="flex h-full w-full min-h-0 items-center justify-center" />
                   </div>

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TourCard } from './TourCard';
 import { TOUR_CARD_ENTRANCE_MS } from './useTourCardEntrance';
 import { EDITOR_TOUR_SCRIPT as SCRIPT } from '../tourScript';
+import { DISCORD_URL } from '@/pages/Home/publicAstridLinks';
 import {
   exitEditorTour,
   getEditorTourState,
@@ -23,7 +24,7 @@ function renderAt(tourAct: EditorTourAct, beat: EditorTourBeat, options: { reduc
   startEditorTour();
   setEditorTourBeat(tourAct, beat);
   const onPrimary = vi.fn();
-  const view = render(<TourCard onPrimary={onPrimary} onSkip={onSkip} />);
+  const view = render(<TourCard act={tourAct} beat={beat} onPrimary={onPrimary} onSkip={onSkip} />);
   return { ...view, onPrimary, onSkip };
 }
 
@@ -67,8 +68,8 @@ describe('TourCard', () => {
     expect(cardReady()).toBe(false);
   });
 
-  it('on respond offers the reply its Next', () => {
-    const { onPrimary } = renderAt(2, 'respond');
+  it('on respond (act 1) offers the reply its Next, with the hint', () => {
+    const { onPrimary } = renderAt(1, 'respond');
     expect(screen.getByText(SCRIPT.hints.respond)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Next/ }));
     expect(onPrimary).toHaveBeenCalledTimes(1);
@@ -79,7 +80,14 @@ describe('TourCard', () => {
   it.each([1, 2, 3] as const)('explains act %i on land and reports ready once its entrance has played', (tourAct) => {
     const { onPrimary, onSkip, container } = renderAt(tourAct, 'land');
     const { title, body, labels } = SCRIPT.acts[tourAct].card;
-    expect(screen.getByRole('heading')).toHaveTextContent(`${tourAct} · ${title}`);
+    expect(screen.getByRole('heading')).toHaveTextContent(title);
+    expect(screen.queryByRole('heading', { name: new RegExp(`^${tourAct} · `) })).toBeNull();
+    // The top row: the "N of 3" counter and Skip share it; Next stays in the bottom row.
+    const topRow = screen.getByText(`${tourAct} of 3`).closest('.justify-between');
+    expect(topRow).not.toBeNull();
+    expect(topRow).toContainElement(screen.getByRole('button', { name: /Skip tour/ }));
+    expect(topRow).not.toContainElement(screen.getByRole('button', { name: /Next/ }));
+    expect(screen.queryByRole('button', { name: /Back/ })).toBeNull();
     expect(screen.getByText(body)).toBeInTheDocument();
     for (const label of labels) expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     for (const step of SCRIPT.strip) expect(screen.getAllByText(step).length).toBeGreaterThan(0);
@@ -112,6 +120,40 @@ describe('TourCard', () => {
     expect(onPrimary).toHaveBeenCalledTimes(1);
   });
 
+  it.each([1, 2] as const)('shows act %i its own compose header, above the Press Send line', (tourAct) => {
+    renderAt(tourAct, 'compose');
+    const header = screen.getByRole('heading', { name: SCRIPT.acts[tourAct].composeHeader });
+    expect(header.compareDocumentPosition(screen.getByText(SCRIPT.hints.compose)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText(`${tourAct} of 3`).compareDocumentPosition(header) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(header.closest('section')).toHaveClass('w-[360px]');
+  });
+
+  it('gives acts 1 and 2 distinct compose headers, and act 3 none', () => {
+    expect(SCRIPT.acts[1].composeHeader).not.toBe(SCRIPT.acts[2].composeHeader);
+    for (const act of [3] as const) {
+      const view = renderAt(act, 'compose');
+      expect(screen.queryByRole('heading')).toBeNull();
+      expect(screen.getByText(SCRIPT.hints.compose).closest('section')).toHaveClass('w-[300px]');
+      view.unmount();
+      exitEditorTour();
+    }
+  });
+
+  it('asks for feedback at the end, with a Discord link that opens in a new tab', () => {
+    const { onPrimary } = renderAt(3, 'feedback');
+    expect(screen.getByRole('heading')).toHaveTextContent(SCRIPT.feedback.title);
+    expect(screen.getByText(SCRIPT.feedback.body)).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: SCRIPT.feedback.discord });
+    expect(link).toHaveAttribute('href', DISCORD_URL);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.queryByRole('button', { name: /Skip tour/ })).toBeNull();
+    advance(TOUR_CARD_ENTRANCE_MS);
+    expect(cardReady()).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${SCRIPT.feedback.action}`) }));
+    expect(onPrimary).toHaveBeenCalledTimes(1);
+  });
+
   it('settles at once on a skipAnimation bump', () => {
     const { container } = renderAt(2, 'land');
     advance(200);
@@ -122,11 +164,14 @@ describe('TourCard', () => {
   });
 
   it('replays the entrance for the next beat after a skip', () => {
-    renderAt(1, 'land');
+    const view = renderAt(1, 'land');
     act(() => skipEditorTourAnimation());
     expect(cardReady()).toBe(true);
     act(() => setEditorTourBeat(2, 'land'));
     expect(cardReady()).toBe(false);
+    advance(TOUR_CARD_ENTRANCE_MS);
+    expect(cardReady()).toBe(false); // still showing act 1: the runner has not moved the card on yet
+    view.rerender(<TourCard act={2} beat="land" onPrimary={view.onPrimary} onSkip={view.onSkip} />);
     advance(TOUR_CARD_ENTRANCE_MS);
     expect(cardReady()).toBe(true);
   });
@@ -145,9 +190,85 @@ describe('TourCard', () => {
     expect(play).toHaveBeenCalled();
   });
 
+  it('plays the act-3 video when the card is reached by Back (instant)', () => {
+    startEditorTour();
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
+    setEditorTourBeat(3, 'land', true);
+    expect(getEditorTourState().instant).toBe(true);
+    render(<TourCard act={3} beat="land" onPrimary={vi.fn()} onSkip={vi.fn()} />);
+    expect(play).toHaveBeenCalled();
+    expect(cardReady()).toBe(true);
+  });
+
   it('names Esc without a skip handler', () => {
     renderAt(1, 'land', { onSkip: undefined });
     expect(screen.queryByRole('button', { name: /Skip tour/ })).toBeNull();
     expect(screen.getByText('Esc')).toBeInTheDocument();
+  });
+
+  it('a card still showing the previous beat never reports ready for the new one', () => {
+    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
+    startEditorTour();
+    setEditorTourBeat(1, 'compose'); // the store has moved on; the runner still shows the welcome
+    const { container } = render(<TourCard act={1} beat="welcome" onPrimary={vi.fn()} onSkip={vi.fn()} />);
+    advance(TOUR_CARD_ENTRANCE_MS * 2);
+    expect(container.querySelector('[data-editor-tour-card]')).toHaveAttribute('data-settled');
+    expect(cardReady()).toBe(false);
+  });
+
+  describe('Back', () => {
+    function renderWithBack(tourAct: EditorTourAct, beat: EditorTourBeat) {
+      vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
+      startEditorTour();
+      setEditorTourBeat(tourAct, beat);
+      const onBack = vi.fn();
+      const view = render(<TourCard act={tourAct} beat={beat} onPrimary={vi.fn()} onBack={onBack} onSkip={vi.fn()} />);
+      return { ...view, onBack };
+    }
+
+    it.each(['compose', 'respond', 'land'] as const)('sits right of the counter on the %s top row, with Skip after it', (beat) => {
+      const { onBack } = renderWithBack(2, beat);
+      const counter = screen.getByText('2 of 3');
+      const back = screen.getByRole('button', { name: /Back/ });
+      const skip = screen.getByRole('button', { name: /Skip tour/ });
+      expect(counter.nextElementSibling).toBe(back);
+      expect(counter.closest('.justify-between')).toContainElement(skip);
+      expect(back.compareDocumentPosition(skip) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      fireEvent.click(back);
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('is bottom-left on the finale, opposite the primary action', () => {
+      const { onBack } = renderWithBack(3, 'finale');
+      const back = screen.getByRole('button', { name: /Back/ });
+      const primary = screen.getByRole('button', { name: new RegExp(`^${SCRIPT.finale.action}`) });
+      expect(back.parentElement).toBe(primary.parentElement);
+      expect(back.compareDocumentPosition(primary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      fireEvent.click(back);
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('is bottom-left on the feedback card, opposite Start creating', () => {
+      const { onBack } = renderWithBack(3, 'feedback');
+      const back = screen.getByRole('button', { name: /Back/ });
+      const primary = screen.getByRole('button', { name: new RegExp(`^${SCRIPT.feedback.action}`) });
+      expect(back.parentElement).toBe(primary.parentElement);
+      fireEvent.click(back);
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('is absent on the welcome', () => {
+      renderWithBack(1, 'welcome');
+      expect(screen.queryByRole('button', { name: /Back/ })).toBeNull();
+    });
+
+    it('arrives settled and ready at once when the beat was reached by Back', () => {
+      vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
+      startEditorTour();
+      setEditorTourBeat(3, 'land', true);
+      const { container } = render(<TourCard act={3} beat="land" onPrimary={vi.fn()} onBack={vi.fn()} onSkip={vi.fn()} />);
+      expect(cardReady()).toBe(true);
+      expect(container.querySelector('[data-editor-tour-card]')).toHaveAttribute('data-settled');
+    });
   });
 });
