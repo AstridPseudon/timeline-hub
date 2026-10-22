@@ -454,14 +454,16 @@ def test_stop_group_reports_sigkill_escalation_without_live_processes(monkeypatc
             assert leader_birth == "birth-current"
         return [4321] if state["alive"] else []
 
-    def killpg(pgid, signum):
+    def signal_group(pgid, signum, *, leader_birth):
+        assert leader_birth == "birth-current"
         calls.append((pgid, signum))
         if signum == signal.SIGKILL:
             state["alive"] = False
 
     monkeypatch.setattr(host_bootstrap, "_group_survivors", survivors)
-    monkeypatch.setattr(host_bootstrap.os, "getpgrp", lambda: 8765)
-    monkeypatch.setattr(host_bootstrap.os, "killpg", killpg)
+    monkeypatch.setattr(host_bootstrap.os, "getpid", lambda: 9999)
+    monkeypatch.setattr(host_bootstrap.platform, "process_group", lambda _pid: 8765)
+    monkeypatch.setattr(host_bootstrap, "signal_observed_group", signal_group)
 
     forced = host_bootstrap._stop_group(4321, grace=0, leader_birth="birth-current")
 
@@ -478,10 +480,11 @@ def test_process_census_catches_declared_failure_without_hiding_programming_erro
     assert host_bootstrap._descendant_snapshot(4321) == {}
 
     def broken():
-        raise ValueError("invalid census implementation")
+        raise RuntimeError("invalid census implementation")
 
+    # Main also tolerates OSError and ValueError from a census; a bug such as this one still surfaces.
     monkeypatch.setattr(host_bootstrap, "_process_snapshot", broken)
-    with pytest.raises(ValueError, match="invalid census implementation"):
+    with pytest.raises(RuntimeError, match="invalid census implementation"):
         host_bootstrap._host_birth_identity(4321)
-    with pytest.raises(ValueError, match="invalid census implementation"):
+    with pytest.raises(RuntimeError, match="invalid census implementation"):
         host_bootstrap._descendant_snapshot(4321)
