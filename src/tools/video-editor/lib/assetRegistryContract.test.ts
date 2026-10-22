@@ -29,7 +29,7 @@ describe('asset registry contract helpers', () => {
       generationId: 'gen-1',
       variantId: 'variant-1',
       thumbnailUrl: 'https://cdn.example.com/main.jpg',
-      // @ts-expect-error verifying unknown fields are stripped.
+      // @ts-expect-error verifying unknown fields are kept unchanged.
       ignored: true,
     });
 
@@ -53,6 +53,7 @@ describe('asset registry contract helpers', () => {
       generationId: 'gen-1',
       variantId: 'variant-1',
       thumbnailUrl: 'https://cdn.example.com/main.jpg',
+      ignored: true,
     });
   });
 
@@ -158,17 +159,17 @@ describe('asset registry contract helpers', () => {
     expect(sanitized.variantId).toBe('variant-xyz');
   });
 
-  it('strips unknown fields during sanitization', () => {
+  it('keeps unknown fields unchanged during sanitization', () => {
     const sanitized = sanitizeAssetRegistryEntry({
       file: 'a.mp4',
-      // @ts-expect-error verifying unknown fields are stripped.
-      extraField: 'should-be-removed',
-      // @ts-expect-error verifying unknown fields are stripped.
+      // @ts-expect-error verifying unknown fields are kept.
+      extraField: 'kept',
+      // @ts-expect-error verifying unknown fields are kept.
       anotherUnknown: 42,
     });
 
-    expect(sanitized).not.toHaveProperty('extraField');
-    expect(sanitized).not.toHaveProperty('anotherUnknown');
+    expect(sanitized).toHaveProperty('extraField', 'kept');
+    expect(sanitized).toHaveProperty('anotherUnknown', 42);
   });
 
   it('handles minimal asset entry with only file', () => {

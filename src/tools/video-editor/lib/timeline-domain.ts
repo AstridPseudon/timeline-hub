@@ -20,7 +20,7 @@ import type {
   TimelineShaderScope,
   TrackDefinition,
 } from '../types/index.ts';
-import { validateAssetMetadata } from './assetMetadata';
+import { isPassThroughRegistryField, validateAssetMetadata } from './assetMetadata';
 import { getAssetResolutionToken } from './asset-registry.ts';
 import {
   sameCompositionShaderIdentity,
@@ -2519,6 +2519,17 @@ export const sanitizeAssetRegistryEntry = (entry: AssetRegistryEntry): AssetRegi
         sanitizedEntries.push([field, validated]);
       }
     } else {
+      sanitizedEntries.push([field, value]);
+    }
+  }
+  // Fields the App does not model are opaque (owned by Astrid or a later
+  // schema): keep them byte-equal, except App-only runtime fields and values
+  // that cannot be saved.
+  const modelled = new Set<string>(ASSET_REGISTRY_ENTRY_FIELDS);
+  for (const field of Object.keys(entry)) {
+    if (modelled.has(field)) continue;
+    const value = (entry as Record<string, unknown>)[field];
+    if (isPassThroughRegistryField(field, value)) {
       sanitizedEntries.push([field, value]);
     }
   }
