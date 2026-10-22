@@ -322,9 +322,10 @@ image is addressable, never a guessed future compiler revision ID.
 
 Persist the resolved bindings in the existing authenticated command/step records,
 not just the alias text. A binding identifies the submitted ref, physical ref,
-content digest, evaluation boundary (base/landing head pair and step/command/
+image revision ID (including for `parent`), content digest, evaluation boundary (base/landing head pair and step/command/
 change ordinal or batch-read boundary), and the verified edge path when one was
-used. Bind scope/dependency captures too; step dependencies retain their original
+used. A `timeline` scope captures the complete set of these image bindings,
+not a fictitious single physical root. Bind scope/dependency captures too; step dependencies retain their original
 boundary rather than being re-resolved at final output. The C0c fixture below
 shows binding projections; they are provider facts, not caller instructions.
 Existing native `records.commands[].bindings`, materialization captures and
@@ -340,8 +341,8 @@ Never silently retarget. Explicit revision refs identify the original image;
 rebase/undo may follow successors only through authenticated materialization
 records and verified managed-edge provenance connecting that image to its
 successor in the same ownership context. A still-reachable original binding
-stays on that image; another owner materializing a branch does not move it. Entity IDs, matching bytes or a search
-for the newest revision are not provenance. A fork/edge replacement is not an
+stays on that image; another owner materializing a branch does not move it.
+Entity IDs, matching bytes or a search for the newest revision are not provenance. A fork/edge replacement is not an
 automatic continuation; no unique authenticated continuation means
 `binding_changed` (missing required history means `history_unavailable`). Reapply
 field/collection guards and scan intervening history after this mapping. A
@@ -349,8 +350,8 @@ revision change alone need not conflict with a disjoint field edit; it cannot
 conceal an intervening write, changed binding or A→B→A. Authenticated inverse
 restoration/redo may return to an earlier image using the same provenance rules.
 
-These roots address payloads of the verified sequential closure; commands never write
-`CanonicalDocument` image wrappers, project/timeline identity, revision IDs,
+These roots address payloads of the verified sequential closure; commands never
+write `CanonicalDocument` image wrappers, project/timeline identity, revision IDs,
 content digests, dependency manifests, receipts, history or authorization.
 Root `set` is a guarded replacement of an existing payload, validated with all
 other changes, not a publication overwrite. Root `remove` is invalid. A missing
@@ -367,15 +368,15 @@ Occurrence rows are addressed under `parent` at
 and shot-to-internal revision links are provider-managed closure edges, not
 ordinary patchable properties; use semantic creation/fork/attachment operations.
 Existing edges are preserved verbatim until the provider regenerates their
-revision pins for a changed child. A changed shared shot revision affects every occurrence
-of that image; clients wanting occurrence-local ownership must fork first. No implicit
-fork is performed by a field patch.
+revision pins for a changed child. A changed shared shot revision affects every
+occurrence of that image; clients wanting occurrence-local ownership must fork
+first. No implicit fork is performed by a field patch.
 
 Existing native entity addresses (`parent/clip:<id>`,
 `parent/track:<id>`, `occurrence:<id>/clip:<id>`,
 `occurrence:<id>/track:<id>`, `occurrence:<id>/shot`, and occurrence source
-addresses) normalize to the same uniquely bound physical roots/paths for guards, conflicts,
-history and undo. Parent `clips`/`config.clips` and registry mirrors likewise
+addresses) normalize to the same uniquely bound physical roots/paths for guards,
+conflicts, history and undo. Parent `clips`/`config.clips` and registry mirrors likewise
 have one logical identity. The provider updates required mirrors; a client may
 not write contradictory copies. Alias normalization must happen before overlap
 checks: editing the same shared child through two occurrences is not disjoint.
@@ -385,7 +386,9 @@ A ref outside the authenticated closure is `outside_closure`.
 `records.steps[].patch` describe the verified before/after closure union at the
 relevant execution boundary, rather than only submitted-patch addresses.
 Resolve effect refs against the verified before/after **union**, deduplicated by
-physical image identity, not entity ID. An alias is usable in an effect only
+physical image identity, not entity ID. `parent` remains the boundary anchor:
+bind its unique before image and unique after image separately. Child entity
+aliases must be unique across the union. An alias is usable in an effect only
 when unique in that union; otherwise use the revision-qualified form. This
 includes one entity's old/new revisions even if each side alone was unambiguous.
 Root creation binds the after image; removal binds the before image. Materialized
@@ -397,7 +400,13 @@ and path even when the authoritative effect patch must represent revision
 turnover as root remove/create. Those structural effects cannot erase its causal
 step or turn unrelated fields into authored overlaps. Root membership/edge
 consumers and explicit scope reads still guard the complete affected images.
-Effect ordering must preserve guards; final reachability and pins must verify.
+For a grouped inverse/redo, retain each reversed/replayed target-step boundary
+in the authenticated command recorder and associate its ordered effect range
+with that boundary. Intermediate roots may occur in neither the whole command
+input nor output. Use that segment's verified union, not the final union or all
+historical images. The exposed step patch is the ordered concatenation; it does
+not erase segment bindings. Effect ordering must preserve guards; final
+reachability and pins must verify.
 Intermediate detached/allocated images are authenticated staging values, never
 additional roots a caller may submit.
 Alongside ordinary changes, they may contain root creation (`set`, `path: []`,
@@ -2745,7 +2754,10 @@ from the authenticated recorder, not new request fields or proof that strings
 are authenticated. Input-boundary digests may differ within one batch. Effect
 bindings also retain side and physical revision/digest from the verified union:
 creations bind after, removals before, and parent edge writes bind both parent
-boundary images. The checker derives those bindings from the complete states.
+boundary images. The checker derives those bindings from the complete states. Grouped inverse/redo
+`effect_boundaries` give half-open ranges in the flat effect patch; each segment
+has its own verified before/after union. They retain transient restored roots
+that appear in neither the command-entry nor command-exit closure.
 The field-level input capture for edit-a remains ia1/note A→B with successor ia2;
 the expanded effect patch is not a submitted patch and cannot bypass ownership.
 The checks exercise the recorded transitions and binding rules, using Runtime's
@@ -3683,10 +3695,14 @@ authorize retargeting.
     {
       "ref": "parent",
       "physical_ref": "parent",
+      "revision_id": "ia1",
+      "revision_id": "rev-c1",
+      "revision_id": "rev-c0",
       "content_digest": "sha256:7db6941424344f29682efe9425283892d2f45c9fc96bd20cf21faaa8256eb16a",
       "boundary": {
         "base_revision_id": "rev-c0",
         "base_publication_id": "pub-c0",
+        "evaluated_head": {"revision_id": "rev-c0", "publication_id": "pub-c0"},
         "step_id": "create-a",
         "command_ordinal": 0,
         "phase": "input"
@@ -3699,6 +3715,7 @@ authorize retargeting.
       "boundary": {
         "base_revision_id": "rev-c0",
         "base_publication_id": "pub-c0",
+        "evaluated_head": {"revision_id": "rev-c0", "publication_id": "pub-c0"},
         "step_id": "create-b",
         "command_ordinal": 1,
         "phase": "input"
@@ -3711,6 +3728,7 @@ authorize retargeting.
       "boundary": {
         "base_revision_id": "rev-c0",
         "base_publication_id": "pub-c0",
+        "evaluated_head": {"revision_id": "rev-c0", "publication_id": "pub-c0"},
         "step_id": "edit-a",
         "command_ordinal": 2,
         "change_ordinal": 0,
@@ -4187,7 +4205,12 @@ authorize retargeting.
       "receipt": {"receipt_id": "pub-c6"}
     },
     "expected_payload_state": "empty",
-    "restoration_sources": ["pub-c3"]
+    "restoration_sources": ["pub-c3"],
+    "effect_boundaries": [
+      {"before": "edited", "after": "ab", "range": [0, 5]},
+      {"before": "ab", "after": "a", "range": [5, 8]},
+      {"before": "a", "after": "empty", "range": [8, 11]}
+    ]
   },
   "redo_all": {
     "request": {
@@ -4357,7 +4380,12 @@ authorize retargeting.
       "receipt": {"receipt_id": "pub-c7"}
     },
     "expected_payload_state": "edited",
-    "restoration_sources": ["pub-c6", "pub-c3"]
+    "restoration_sources": ["pub-c6", "pub-c3"],
+    "effect_boundaries": [
+      {"before": "empty", "after": "a", "range": [0, 3]},
+      {"before": "a", "after": "ab", "range": [3, 6]},
+      {"before": "ab", "after": "edited", "range": [6, 11]}
+    ]
   },
   "undo_creation_only": {
     "request": {
@@ -4383,13 +4411,13 @@ authorize retargeting.
     "http_status": 409,
     "reply": {
       "code": "conflict",
-      "message": "Undo create-a with its consuming edit-a step.",
+      "message": "Undo the whole creation batch, including dependent steps.",
       "details": {
         "status": "conflict",
         "code": "surviving_dependents",
         "reason": "surviving_dependents",
         "path": ["commands", "0"],
-        "hint": "Undo create-a with its consuming edit-a step.",
+        "hint": "Undo the whole creation batch, including dependent steps.",
         "suggested_command": "timeline show --history",
         "current": {"revision_id": "rev-c3", "publication_id": "pub-c3"}
       }
@@ -4778,8 +4806,10 @@ preview and structured errors; V1/V2 adopt metadata and validation; A2 consumes
 canonical replies through the persisted outbox; G2 provides the bounded Python
 function re-run. Existing passing behavior tests stay in place. C0 changes only
 this contract and its identical orchestrator design copy. C0b amends those same
-two files only; C0c amends their addressing rules and executable fixtures. Existing fixture track kinds are corrected from `video` to the
-schema enum `visual`, with recomputed digests and canonical-schema checks; implementation and behavioral qualification belong to R1/R2/R2r.
+two files only; C0c amends their addressing rules and executable fixtures.
+C0b corrected existing fixture track kinds from `video` to the schema enum
+`visual`, with recomputed digests and canonical-schema checks; implementation
+and behavioral qualification belong to R1/R2/R2r.
 The Runtime Python project/CI configure pytest but no prose lint or typecheck
 gate. The TypeScript client has a `tsc` build/test gate; it is N/A to these
 Markdown-only edits. The targeted generator tests below still exercise its DTO
@@ -5095,6 +5125,8 @@ for ordinal, (submitted, actual, name, binding) in enumerate(zip(body['steps'], 
     assert binding['boundary']['command_ordinal'] == ordinal and binding['boundary']['phase'] == 'input'
     physical, im = resolve(state, binding['ref'])
     assert physical == binding['physical_ref'] and im['content_digest'] == binding['content_digest']
+    assert im['revision_id'] == binding['revision_id']
+    assert binding['boundary']['evaluated_head'] == {'revision_id': body['base_revision_id'], 'publication_id': body['base_publication_id']}
     for dependency in submitted['reads']:
         if dependency['ref'] != 'timeline':
             bound, _ = resolve(state, dependency['ref'])
@@ -5106,6 +5138,17 @@ for ordinal, (submitted, actual, name, binding) in enumerate(zip(body['steps'], 
         authored = physical_roots(state)
         apply_effects(authored, submitted['patch'])
         assert authored['internal-revision:ia1'] == physical_roots(states[name])['internal-revision:ia2']
+    if body['commands'][ordinal]['op'] == 'occurrence.create':
+        cmd = body['commands'][ordinal]
+        args = cmd['args']
+        occurrence = actual['patch'][-1]['value']
+        assert occurrence['occurrence_id'] == args['occurrence_id']
+        assert occurrence['shot_id'] == args['shot_id']
+        assert occurrence['placement']['start_ms'] == args['on'] * 1000
+        assert occurrence['duration_ms'] == args['duration'] * 1000
+        _, shot = resolve(states[name], 'shot-revision:' + occurrence['shot_revision_id'])
+        assert shot['payload']['name'] == args['name']
+        assert cmd['created'] == ['shot:' + args['shot_id'], 'occurrence:' + args['occurrence_id']]
     verify_effect_bindings(state, states[name], actual['patch'])
     state = states[name]
 assert resolve(states['a'], 'internal:film-1')[0] == 'internal-revision:ia1'
@@ -5123,27 +5166,62 @@ for fact in addressing['materialization_projection']:
 assert 'internal-revision:ib1' in physical_roots(states['edited'])
 assert physical_roots(states['ab'])['internal-revision:ib1'] == physical_roots(states['edited'])['internal-revision:ib1']
 
-# The alias refusal is reached only after both creations; all staged writes
-# must then roll back. Evaluate the lookup rather than only checking its label.
+# A small transactional contract model uses supplied authoritative transitions;
+# it checks operand bindings and rolls back staging when any lookup fails.
+# It does not implement occurrence.create or prove provider transactionality.
+def contract_transaction(initial, request, authoritative, outputs):
+    staged = physical_roots(initial)
+    boundary = initial
+    visited = 0
+    try:
+        for submitted, recorded, output in zip(request['steps'], authoritative, outputs):
+            for read in submitted.get('reads', []):
+                if read['ref'] != 'timeline':
+                    bound, _ = resolve(boundary, read['ref'])
+                    node, key = location(staged, bound, read['path'])
+                    assert tagged(node, key) == read['state']
+            for ordinal in submitted['command_ordinals']:
+                command = request['commands'][ordinal]
+                if command['op'] == 'doc.patch':
+                    for change in command['args']['changes']:
+                        bound, _ = resolve(boundary, change['ref'])
+                        node, key = location(staged, bound, change['path'])
+                        assert tagged(node, key) == change['before']
+            apply_effects(staged, recorded['patch'])
+            assert staged == physical_roots(output)
+            boundary, visited = output, visited + 1
+        return 'accepted', staged, visited
+    except RefError as exc:
+        return str(exc), physical_roots(initial), visited
+
+outcome, staged, visited = contract_transaction(states['empty'], body, steps,
+                                               [states[name] for name in addressing['step_states']])
+assert outcome == 'accepted' and staged == physical_roots(states['edited']) and visited == 3
 bad = addressing['ambiguous_internal']
-staged = physical_roots(states['empty'])
-for st in steps[:2]:
-    apply_effects(staged, st['patch'])
-assert staged == physical_roots(states['ab'])
 assert bad['request']['steps'][2]['patch'] == bad['request']['commands'][2]['args']['changes']
-failed_ref = bad['request']['commands'][2]['args']['changes'][0]['ref']
-assert ref_error(states['ab'], failed_ref) == bad['reply']['details']['code'] == 'ambiguous_ref'
+outcome, staged, visited = contract_transaction(states['empty'], bad['request'], steps,
+                                               [states[name] for name in addressing['step_states']])
+assert outcome == bad['reply']['details']['code'] == 'ambiguous_ref' and visited == 2
+assert staged == physical_roots(states['empty'])
 assert bad['http_status'] == 422 and bad['added_history_entries'] == 0
 assert bad['expected_head'] == {'revision_id': body['base_revision_id'], 'publication_id': body['base_publication_id']}
-# Restore the staged transaction input; a real provider must leave storage/head unchanged.
-staged = physical_roots(states['empty'])
-assert staged != physical_roots(states['ab'])
 
 for key, before in (('undo_edit', 'edited'), ('redo_edit', 'ab'), ('undo_all', 'edited'), ('redo_all', 'empty')):
     scenario = addressing[key]
     after = scenario['expected_payload_state']
     effects = scenario['reply_projection']['data']['steps'][0]['patch']
-    verify_effect_bindings(states[before], states[after], effects)
+    boundaries = scenario.get('effect_boundaries', [{'before': before, 'after': after, 'range': [0, len(effects)]}])
+    cursor = 0
+    previous = before
+    for boundary in boundaries:
+        start, end = boundary['range']
+        assert start == cursor and end > start and boundary['before'] == previous
+        verify_effect_bindings(states[boundary['before']], states[boundary['after']], effects[start:end])
+        cursor, previous = end, boundary['after']
+    assert cursor == len(effects) and previous == after
+    combined = physical_roots(states[before])
+    apply_effects(combined, effects)
+    assert combined == physical_roots(states[after])
     assert scenario['request']['steps'][0]['patch'] == []
     assert scenario['request']['commands'][0]['op'] == 'timeline.inverse'
     assert scenario['restoration_sources']
@@ -5168,6 +5246,11 @@ apply_effects(authored, [change])
 assert authored['shot-revision:sa1'] == physical_roots(states['multi_edited'])['shot-revision:sa3']
 verify_effect_bindings(states['multi'], states['multi_edited'], multiple['reply_projection']['data']['steps'][0]['patch'])
 assert ref_error(states['multi'], multiple['ambiguous_request']['commands'][0]['args']['changes'][0]['ref']) == multiple['ambiguous_reply']['details']['code']
+msteps = multiple['reply_projection']['data']['steps']
+for key, expected in (('request', 'accepted'), ('ambiguous_request', 'ambiguous_ref')):
+    outcome, staged, visited = contract_transaction(states['multi'], multiple[key], msteps, [states['multi_edited']])
+    assert outcome == expected
+    assert staged == physical_roots(states['multi_edited' if outcome == 'accepted' else 'multi'])
 assert multiple['added_history_entries_on_refusal'] == 0
 for ref in ('shot-revision:sa2', 'internal-revision:ia1', 'internal-revision:ia2', 'internal-revision:ib1'):
     assert physical_roots(states['multi'])[ref] == physical_roots(states['multi_edited'])[ref]
@@ -5175,10 +5258,24 @@ for ref in ('shot-revision:sa2', 'internal-revision:ia1', 'internal-revision:ia2
 # Model only verified successor facts from the accepted edit fixture. An actual
 # provider must authenticate the native records and edge path before using them.
 successors = {fact['source']: fact['successor'] for fact in addressing['materialization_projection']}
-only_b = copy.deepcopy(states['ab'])
-only_b['internal_timeline_revisions'] = [im for im in only_b['internal_timeline_revisions'] if im['revision_id'] == 'ib1']
-only_a2 = copy.deepcopy(states['edited'])
-only_a2['internal_timeline_revisions'] = [im for im in only_a2['internal_timeline_revisions'] if im['revision_id'] == 'ia2']
+def single_owner_probe(document, occurrence_id, revision):
+    result = copy.deepcopy(document)
+    parent = result['parent_revision']
+    parent['revision_id'] = revision
+    rows = parent['payload']['occurrences']
+    rows[:] = [row for row in rows if row['occurrence_id'] == occurrence_id]
+    shot_ids = {row['shot_revision_id'] for row in rows}
+    result['shot_revisions'] = [im for im in result['shot_revisions'] if im['revision_id'] in shot_ids]
+    internal_ids = {im['internal_timeline_revision_id'] for im in result['shot_revisions']}
+    result['internal_timeline_revisions'] = [im for im in result['internal_timeline_revisions'] if im['revision_id'] in internal_ids]
+    manifest = result['dependency_manifest']
+    manifest['shots'] = [pin for pin in manifest['shots'] if pin['revision_id'] in shot_ids]
+    manifest['internal_timelines'] = [pin for pin in manifest['internal_timelines'] if pin['revision_id'] in internal_ids]
+    parent['content_digest'] = digest(parent['payload'])
+    validate_document(result)
+    return result
+only_b = single_owner_probe(states['ab'], 'occ-b', 'rev-probe-b')
+only_a2 = single_owner_probe(states['edited'], 'occ-a', 'rev-probe-a2')
 probe_states = dict(states, only_b=only_b, only_edited_a=only_a2)
 for case in addressing['replay_cases']:
     assert resolve(probe_states[case['base_state']], case['ref'])[0] == case['bound']
@@ -5192,20 +5289,41 @@ for case in addressing['replay_cases']:
         result = continuation if continuation in physical_roots(landing) else 'binding_changed' if str(exc) == 'outside_closure' else str(exc)
     assert result == case['expected']
 
-# Guard normalization: aliases of one image overlap; equal timeline/shot IDs
-# alone do not. Authenticated edge continuation joins history for one owner.
+# Guard normalization uses the bound image if it survives, and follows only
+# the fixture's verified continuation for its exact owner when it has left.
+def continue_binding(bound, document, owner, facts):
+    if bound in physical_roots(document):
+        return bound
+    candidates = {fact['successor'] for fact in facts if fact['source'] == bound and fact['owner'] == owner}
+    if len(candidates) != 1:
+        raise RefError('binding_changed')
+    successor = candidates.pop()
+    if successor not in physical_roots(document):
+        raise RefError('binding_changed')
+    return successor
+
 def overlapping(left, right):
     return left[:len(right)] == right or right[:len(left)] == left
+
+def guard_overlap(bound, path, document, other_ref, other_path, owner):
+    physical = continue_binding(bound, document, owner, addressing['materialization_projection'])
+    other, _ = resolve(document, other_ref)
+    return physical == other and overlapping(path, other_path)
+
+path = steps[2]['dependencies'][0]['path']
 bound = resolve(states['a'], 'internal:film-1')[0]
-assert bound == resolve(states['a'], 'internal-revision:ia1')[0]
-assert overlapping(path, path) and successors[bound] == 'internal-revision:ia2'
-assert successors[bound] != 'internal-revision:ib1'
-assert resolve(states['multi'], 'occurrence:occ-a-old/shot')[0] == 'shot-revision:sa1'
-assert resolve(states['multi'], 'occurrence:occ-a/shot')[0] == 'shot-revision:sa2'
+assert guard_overlap(bound, path, states['a'], 'internal-revision:ia1', path, 'occurrence:occ-a/shot')
+assert not guard_overlap(bound, path, states['ab'], 'internal-revision:ib1', path, 'occurrence:occ-a/shot')
+assert guard_overlap(bound, path, states['edited'], 'internal-revision:ia2', path, 'occurrence:occ-a/shot')
+assert not guard_overlap(bound, path, states['edited'], 'internal-revision:ia2', ['output', 'fps'], 'occurrence:occ-a/shot')
 # The old branch remains reachable: do not follow occ-a's successor for occ-a-old.
-assert resolve(states['multi'], 'shot-revision:sa1')[0] != resolve(states['multi'], 'shot-revision:sa2')[0]
+assert not guard_overlap('shot-revision:sa1', ['name'], states['multi'], 'occurrence:occ-a/shot', ['name'], 'occurrence:occ-a-old/shot')
+assert guard_overlap('shot-revision:sa1', ['name'], states['multi'], 'occurrence:occ-a-old/shot', ['name'], 'occurrence:occ-a-old/shot')
 # Scan writes, not only final bytes: equal final A still has an overlapping B tail.
-assert any(overlapping(path, write['path']) for write in [{'path': path, 'before': 'A', 'after': 'B'}, {'path': path, 'before': 'B', 'after': 'A'}])
+tail = [{'ref': 'internal-revision:ia2', 'path': path, 'before': 'A', 'after': 'B'},
+        {'ref': 'internal-revision:ia2', 'path': path, 'before': 'B', 'after': 'A'}]
+assert tail[-1]['after'] == 'A'
+assert any(guard_overlap(bound, path, states['edited'], write['ref'], write['path'], 'occurrence:occ-a/shot') for write in tail)
 print('PASS C0c: 6 schema/digest/pin states, 3 sequential steps, alias/union bindings, 4 inverse/redo transitions, rollback/dependency refusals, multi-shot edit, 4 replay binding probes and guard normalization; provider proof deferred')
 assert not any(line.rstrip() != line for line in source.splitlines())
 print('PASS: Runtime digests, receipt/result equality, step partition, ordered-list transitions, merged preservation, preview, structured errors, ABA, meta preservation, C0b sequential reads/effect reversals/closure pins and whitespace; provider behavior unverified')
