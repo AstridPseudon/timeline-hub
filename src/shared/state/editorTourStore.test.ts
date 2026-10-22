@@ -20,6 +20,7 @@ describe('editorTourStore', () => {
     expect(editorTourStage(3, 'respond')).toBe(2);
     expect(editorTourStage(3, 'land')).toBe(3);
     expect(editorTourStage(3, 'finale')).toBe(3);
+    expect(editorTourStage(3, 'feedback')).toBe(3);
   });
 
   it('starts a fresh run and resets per-beat flags on every beat change', () => {

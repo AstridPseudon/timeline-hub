@@ -17,7 +17,7 @@ const ACT_TRACK: Record<EditorTourAct, string> = {
   3: EDITOR_TOUR_TRACK_IDS.videos,
 };
 
-/** What each beat spotlights: chat composer and Send, the transcript, the act's new row with the preview, or nothing (the welcome and the finale, centred). */
+/** What each beat spotlights: chat composer and Send, the transcript, the act's new row with the preview, or nothing (the welcome, the finale and the feedback card, centred). */
 export function editorTourTargets(act: EditorTourAct, beat: EditorTourBeat): string[] {
   switch (beat) {
     case 'compose':
@@ -28,6 +28,7 @@ export function editorTourTargets(act: EditorTourAct, beat: EditorTourBeat): str
       return [editorTourTrackSelector(ACT_TRACK[act]), editorTourSelector(EDITOR_TOUR_ANCHORS.preview)];
     case 'welcome':
     case 'finale':
+    case 'feedback':
       return [];
   }
 }

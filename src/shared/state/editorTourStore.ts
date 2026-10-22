@@ -7,8 +7,8 @@ import { createStore, useStore } from 'zustand';
  */
 
 export type EditorTourAct = 1 | 2 | 3;
-/** `welcome` comes once, before act 1's `compose`; the acts then run compose → respond → land; `finale` ends. */
-export type EditorTourBeat = 'welcome' | 'compose' | 'respond' | 'land' | 'finale';
+/** `welcome` comes once, before act 1's `compose`; the acts then run compose → respond → land; `finale` and then `feedback` end. */
+export type EditorTourBeat = 'welcome' | 'compose' | 'respond' | 'land' | 'finale' | 'feedback';
 /** Rows on the demo timeline: 0 none · 1 scene · 2 + stills row · 3 + video row. */
 export type EditorTourStage = 0 | 1 | 2 | 3;
 export type EditorTourStatus = 'idle' | 'running';
@@ -57,7 +57,7 @@ function prefersReducedMotion(): boolean {
 /** Each act's result lands on its `land` beat and stays for the rest of the tour. */
 export function editorTourStage(act: EditorTourAct, beat: EditorTourBeat): EditorTourStage {
   if (beat === 'welcome') return 0;
-  if (beat === 'finale') return 3;
+  if (beat === 'finale' || beat === 'feedback') return 3;
   return (beat === 'land' ? act : act - 1) as EditorTourStage;
 }
 

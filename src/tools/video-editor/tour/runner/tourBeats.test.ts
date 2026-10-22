@@ -108,7 +108,7 @@ describe('tour beat machine', () => {
     expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'compose', sent: false });
   });
 
-  it('plays the whole three-act journey and ends on finale primary', () => {
+  it('plays the whole three-act journey and ends on the feedback primary', () => {
     const stages: number[] = [];
     for (const act of [1, 2, 3] as const) {
       // compose: send; act 1 then stops on respond for its Next, acts 2 and 3 go straight to land
@@ -135,8 +135,20 @@ describe('tour beat machine', () => {
     expect(getEditorTourState()).toMatchObject({ beat: 'finale', status: 'running' });
 
     markEditorTourReady('card');
-    runEditorTourPrimary();
+    runEditorTourPrimary(); // I got it
+    expect(getEditorTourState()).toMatchObject({ act: 3, beat: 'feedback', status: 'running' });
+    expect(recordEditorTour).not.toHaveBeenCalledWith(expect.objectContaining({ outcome: 'completed' }));
+
+    markEditorTourReady('card');
+    runEditorTourPrimary(); // Start creating
     expect(getEditorTourState()).toMatchObject({ status: 'idle' });
+    expect(vi.mocked(recordEditorTour).mock.calls.at(-1)?.[0]).toMatchObject({ outcome: 'completed', step: 'act3/feedback' });
+  });
+
+  it('the feedback card waits on card readiness', () => {
+    setEditorTourBeat(3, 'feedback');
+    runEditorTourPrimary();
+    expect(getEditorTourState()).toMatchObject({ beat: 'feedback', status: 'running' });
   });
 
   it('Esc finishes the tour from every beat', () => {
@@ -146,6 +158,7 @@ describe('tour beat machine', () => {
       [1, 'respond'],
       [2, 'land'],
       [3, 'finale'],
+      [3, 'feedback'],
     ] as const;
     for (const [act, beat] of beats) {
       startEditorTour();
@@ -222,14 +235,14 @@ describe('tour beat machine', () => {
 describe('the recorded outcome', () => {
   const lastRecord = () => vi.mocked(recordEditorTour).mock.calls.at(-1)?.[0];
 
-  it('finishing from the finale is completed, with where it ended', () => {
-    setEditorTourBeat(3, 'finale');
+  it('finishing from the feedback card is completed, with where it ended', () => {
+    setEditorTourBeat(3, 'feedback');
     markEditorTourReady('card');
 
     runEditorTourPrimary();
 
     expect(getEditorTourState().status).toBe('idle');
-    expect(lastRecord()).toMatchObject({ version: 1, outcome: 'completed', step: 'act3/finale' });
+    expect(lastRecord()).toMatchObject({ version: 1, outcome: 'completed', step: 'act3/feedback' });
     expect(Date.parse(lastRecord()!.at)).not.toBeNaN();
   });
 
@@ -257,6 +270,15 @@ describe('the recorded outcome', () => {
     expect(lastRecord()).toMatchObject({ outcome: 'completed', step: 'act3/finale' });
   });
 
+  it('Esc on the feedback card counts as completed', () => {
+    setEditorTourBeat(3, 'feedback');
+
+    finishEditorTour();
+
+    expect(getEditorTourState().status).toBe('idle');
+    expect(lastRecord()).toMatchObject({ outcome: 'completed', step: 'act3/feedback' });
+  });
+
   it('records nothing when no tour is running', () => {
     exitEditorTour();
     vi.mocked(recordEditorTour).mockClear();
@@ -281,6 +303,7 @@ describe('tour Back', () => {
     [{ act: 3, beat: 'compose' }, { act: 2, beat: 'land' }],
     [{ act: 3, beat: 'land' }, { act: 3, beat: 'compose' }],
     [{ act: 3, beat: 'finale' }, { act: 3, beat: 'land' }],
+    [{ act: 3, beat: 'feedback' }, { act: 3, beat: 'finale' }],
   ] as const)('from %o goes to %o, finished (instant) and unsent', (from, to) => {
     at(from.act, from.beat);
     backEditorTour();
@@ -311,14 +334,14 @@ describe('tour Back', () => {
   });
 
   it('walks the whole journey back to the welcome through the places the user acted', () => {
-    at(3, 'finale');
+    at(3, 'feedback');
     const visited: string[] = [];
     for (let i = 0; i < 20 && getEditorTourState().beat !== 'welcome'; i += 1) {
       backEditorTour();
       const { act, beat } = getEditorTourState();
       visited.push(`${act}:${beat}`);
     }
-    expect(visited).toEqual(['3:land', '3:compose', '2:land', '2:compose', '1:land', '1:respond', '1:compose', '1:welcome']);
+    expect(visited).toEqual(['3:finale', '3:land', '3:compose', '2:land', '2:compose', '1:land', '1:respond', '1:compose', '1:welcome']);
   });
 });
 

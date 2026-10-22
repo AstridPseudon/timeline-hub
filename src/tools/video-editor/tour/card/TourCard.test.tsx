@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TourCard } from './TourCard';
 import { TOUR_CARD_ENTRANCE_MS } from './useTourCardEntrance';
 import { EDITOR_TOUR_SCRIPT as SCRIPT } from '../tourScript';
+import { DISCORD_URL } from '@/pages/Home/publicAstridLinks';
 import {
   exitEditorTour,
   getEditorTourState,
@@ -119,6 +120,38 @@ describe('TourCard', () => {
     expect(onPrimary).toHaveBeenCalledTimes(1);
   });
 
+  it('shows the first-run header only on act 1 compose, above the Press Send line', () => {
+    const { unmount } = renderAt(1, 'compose');
+    const header = screen.getByRole('heading', { name: SCRIPT.hints.firstCompose });
+    expect(header.compareDocumentPosition(screen.getByText(SCRIPT.hints.compose)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText('1 of 3').compareDocumentPosition(header) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(header.closest('section')).toHaveClass('w-[360px]');
+    unmount();
+    exitEditorTour();
+    for (const act of [2, 3] as const) {
+      const view = renderAt(act, 'compose');
+      expect(screen.queryByText(SCRIPT.hints.firstCompose)).toBeNull();
+      expect(screen.getByText(SCRIPT.hints.compose).closest('section')).toHaveClass('w-[300px]');
+      view.unmount();
+      exitEditorTour();
+    }
+  });
+
+  it('asks for feedback at the end, with a Discord link that opens in a new tab', () => {
+    const { onPrimary } = renderAt(3, 'feedback');
+    expect(screen.getByRole('heading')).toHaveTextContent(SCRIPT.feedback.title);
+    expect(screen.getByText(SCRIPT.feedback.body)).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: SCRIPT.feedback.discord });
+    expect(link).toHaveAttribute('href', DISCORD_URL);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(screen.queryByRole('button', { name: /Skip tour/ })).toBeNull();
+    advance(TOUR_CARD_ENTRANCE_MS);
+    expect(cardReady()).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${SCRIPT.feedback.action}`) }));
+    expect(onPrimary).toHaveBeenCalledTimes(1);
+  });
+
   it('settles at once on a skipAnimation bump', () => {
     const { container } = renderAt(2, 'land');
     advance(200);
@@ -209,6 +242,15 @@ describe('TourCard', () => {
       const primary = screen.getByRole('button', { name: new RegExp(`^${SCRIPT.finale.action}`) });
       expect(back.parentElement).toBe(primary.parentElement);
       expect(back.compareDocumentPosition(primary) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      fireEvent.click(back);
+      expect(onBack).toHaveBeenCalledTimes(1);
+    });
+
+    it('is bottom-left on the feedback card, opposite Start creating', () => {
+      const { onBack } = renderWithBack(3, 'feedback');
+      const back = screen.getByRole('button', { name: /Back/ });
+      const primary = screen.getByRole('button', { name: new RegExp(`^${SCRIPT.feedback.action}`) });
+      expect(back.parentElement).toBe(primary.parentElement);
       fireEvent.click(back);
       expect(onBack).toHaveBeenCalledTimes(1);
     });

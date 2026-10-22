@@ -24,7 +24,7 @@ const STORE_MODULE = '/src/shared/state/editorTourStore.ts';
 const COMPOSER = '[data-editor-tour="chat-composer"]';
 const SHIELD = '[data-editor-tour-shield]';
 
-type Beat = 'welcome' | 'compose' | 'respond' | 'land' | 'finale';
+type Beat = 'welcome' | 'compose' | 'respond' | 'land' | 'finale' | 'feedback';
 
 test.use({
   viewport: { width: 1440, height: 900 },
@@ -50,7 +50,7 @@ async function waitSettled(page: Page, act: number, beat: Beat): Promise<void> {
     const state = await tourState(page);
     const ready = beat === 'compose' || beat === 'respond' ? state.ready.chat
       : beat === 'land' ? state.ready.timeline && state.ready.card
-        : state.ready.card; // welcome, finale
+        : state.ready.card; // welcome, finale, feedback
     return state.status === 'running' && state.act === act && state.beat === beat && ready;
   }, { message: `act ${act} ${beat} is ready`, timeout: 60_000 }).toBe(true);
   await page.locator(`[data-editor-tour-card="${beat}"][data-settled]`).waitFor({ timeout: 10_000 });
@@ -281,6 +281,8 @@ test.describe('editor tour', () => {
     expect(await page.evaluate(() => Object.keys(window.localStorage).filter((key) => key.includes('tour-timeline')))).toEqual([]);
     await shot(page, '11-finale');
     await pressPrimary(page, { act: 3, beat: 'finale' }); // I got it
+    await waitSettled(page, 3, 'feedback');
+    await pressPrimary(page, { act: 3, beat: 'feedback' }); // Start creating
 
     await expectRealEditor(page);
     await expectRealComposerFocused(page);
@@ -291,7 +293,7 @@ test.describe('editor tour', () => {
 
     // The Runtime now holds the outcome, so it outlives this browser's storage.
     await expect.poll(async () => (await runtimeTourRecord()).content?.outcome).toBe('completed');
-    expect((await runtimeTourRecord()).content).toMatchObject({ version: 1, outcome: 'completed', step: 'act3/finale' });
+    expect((await runtimeTourRecord()).content).toMatchObject({ version: 1, outcome: 'completed', step: 'act3/feedback' });
 
     // "Seen" was stored at the start: a reload goes straight to the editor.
     await page.reload({ waitUntil: 'domcontentloaded' });

@@ -6,6 +6,8 @@ import { TourVisual } from './TourVisual';
 import { useTourCardEntrance } from './useTourCardEntrance';
 import { useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared/state/editorTourStore';
 import { ChevronLeft } from 'lucide-react';
+import { DiscordMark } from '@/pages/Home/PublicAstridSocialLinks';
+import { DISCORD_URL } from '@/pages/Home/publicAstridLinks';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 
@@ -33,7 +35,7 @@ export function TourCard({ act, beat, onPrimary, onBack, onSkip }: TourCardProps
   const runId = useEditorTour((state) => state.runId);
   const live = useEditorTour((state) => state.act === act && state.beat === beat);
   const key = `${runId}:${act}:${beat}`;
-  const explains = beat === 'welcome' || beat === 'land' || beat === 'finale';
+  const explains = beat === 'welcome' || beat === 'land' || beat === 'finale' || beat === 'feedback';
   // A card still showing the previous beat never reports ready for the new one.
   const { settled, reducedMotion } = useTourCardEntrance(key, explains && live);
 
@@ -45,18 +47,20 @@ export function TourCard({ act, beat, onPrimary, onBack, onSkip }: TourCardProps
       className={cn('editor-tour-card', reducedMotion ? 'editor-tour-card-reduced' : !settled && 'editor-tour-card-playing')}
     >
       <section
-        aria-label={beat === 'welcome' ? SCRIPT.welcome.title : beat === 'finale' ? SCRIPT.finale.title : `Tour, step ${act} of ${ACT_COUNT}`}
+        aria-label={beat === 'welcome' ? SCRIPT.welcome.title : beat === 'finale' ? SCRIPT.finale.title : beat === 'feedback' ? SCRIPT.feedback.title : `Tour, step ${act} of ${ACT_COUNT}`}
         className={cn(
           'editor-tour-rise rounded-xl border border-border bg-card text-card-foreground shadow-xl',
           beat === 'welcome' && 'w-[400px] p-6',
           beat === 'land' && 'w-[380px] p-5',
           beat === 'finale' && 'w-[480px] p-6',
-          !explains && (beat === 'respond' ? 'w-[360px]' : 'w-[300px]') + ' px-4 py-3',
+          beat === 'feedback' && 'w-[440px] p-6',
+          !explains && (beat === 'respond' || (beat === 'compose' && act === 1) ? 'w-[360px]' : 'w-[300px]') + ' px-4 py-3',
         )}
       >
         {beat === 'welcome' && <Welcome onPrimary={onPrimary} onSkip={onSkip} />}
         {beat === 'land' && <Explainer act={act} playing={!reducedMotion} onPrimary={onPrimary} onBack={onBack} onSkip={onSkip} />}
         {beat === 'finale' && <Finale playing={!reducedMotion} onPrimary={onPrimary} onBack={onBack} />}
+        {beat === 'feedback' && <Feedback onPrimary={onPrimary} onBack={onBack} />}
         {!explains && <Hint act={act} beat={beat} onPrimary={onPrimary} onBack={onBack} onSkip={onSkip} />}
       </section>
     </div>
@@ -134,12 +138,34 @@ function Finale({ playing, onPrimary, onBack }: { playing: boolean; onPrimary: (
   );
 }
 
+function Feedback({ onPrimary, onBack }: { onPrimary: () => void; onBack?: () => void }) {
+  return (
+    <>
+      <MinkTitle>{SCRIPT.feedback.title}</MinkTitle>
+      <p className="mt-3 text-pretty text-[15px] leading-6 text-muted-foreground">{SCRIPT.feedback.body}</p>
+      <Button asChild variant="outline" className="mt-4 gap-2">
+        <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer">
+          <DiscordMark />
+          {SCRIPT.feedback.discord}
+        </a>
+      </Button>
+      <div className="mt-6 flex items-center justify-between gap-3">
+        <BackControl onBack={onBack} />
+        <PrimaryButton label={SCRIPT.feedback.action} onPrimary={onPrimary} size="default" />
+      </div>
+    </>
+  );
+}
+
 /** Compose: send the prompt (the chat's Send, or Enter). Respond (act 1 only): the reply's Next. */
 function Hint({ act, beat, onPrimary, onBack, onSkip }: TourCardProps) {
   const compose = beat === 'compose';
   return (
     <>
       <CounterRow act={act} onBack={onBack} onSkip={onSkip} />
+      {compose && act === 1 && (
+        <h2 className="mt-3 text-pretty font-serif font-theme-heading text-lg leading-tight text-foreground">{SCRIPT.hints.firstCompose}</h2>
+      )}
       <div className="mt-2 flex min-h-9 items-center justify-between gap-3">
         <p className="text-sm text-foreground">{compose ? SCRIPT.hints.compose : SCRIPT.hints.respond}</p>
         {compose ? <Kbd>↵</Kbd> : <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} />}

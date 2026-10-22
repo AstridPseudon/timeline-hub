@@ -12,7 +12,7 @@ import {
 
 /**
  * The beat machine, and the only writer of `act`/`beat`.
- *   welcome -(OK)-> compose -(sent)-> respond -(Next)-> land -(Next)-> next act's compose ... -> finale -(I got it)-> exit
+ *   welcome -(OK)-> compose -(sent)-> respond -(Next)-> land -(Next)-> next act's compose ... -> finale -(I got it)-> feedback -(Start creating)-> exit
  * Act 1 stops on respond to explain the reply; on acts 2 and 3, Send goes straight to land.
  * Back returns to the previous place where the user acted (see `backEditorTour`).
  */
@@ -29,6 +29,7 @@ export function isEditorTourBeatReady({ beat, ready }: EditorTourState): boolean
       return ready.timeline && ready.card;
     case 'welcome':
     case 'finale':
+    case 'feedback':
       return ready.card;
   }
 }
@@ -41,6 +42,7 @@ function advanceBeat(): void {
   if (beat === 'land') {
     return act < LAST_ACT ? setEditorTourBeat((act + 1) as typeof LAST_ACT, 'compose') : setEditorTourBeat(LAST_ACT, 'finale');
   }
+  if (beat === 'finale') return setEditorTourBeat(LAST_ACT, 'feedback');
   finishEditorTour();
 }
 
@@ -75,18 +77,20 @@ export function backEditorTour(): void {
       return act === 1 ? setEditorTourBeat(1, 'respond', true) : setEditorTourBeat(act, 'compose', true);
     case 'finale':
       return setEditorTourBeat(LAST_ACT, 'land', true);
+    case 'feedback':
+      return setEditorTourBeat(LAST_ACT, 'finale', true);
   }
 }
 
 /**
- * Esc, Skip, leaving the page, and the end of the finale: leave the tour and hand the user their own chat.
- * Ending at the finale is "completed"; ending anywhere earlier is "skipped". Either is recorded with where it ended.
+ * Esc, Skip, leaving the page, and the end of the feedback card: leave the tour and hand the user their own chat.
+ * Ending at the finale or feedback card is "completed"; ending anywhere earlier is "skipped". Either is recorded with where it ended.
  */
 export function finishEditorTour(): void {
   const { status, act, beat } = getEditorTourState();
   if (status !== 'running') return;
   exitEditorTour();
-  void recordEditorTour(buildEditorTourRecord(beat === 'finale' ? 'completed' : 'skipped', act, beat));
+  void recordEditorTour(buildEditorTourRecord(beat === 'finale' || beat === 'feedback' ? 'completed' : 'skipped', act, beat));
   focusRealComposer();
 }
 

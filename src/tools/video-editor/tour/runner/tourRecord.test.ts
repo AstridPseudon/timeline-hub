@@ -22,7 +22,7 @@ vi.mock('@/integrations/runtime/client', () => ({
 
 const conflict = Object.assign(new Error('app-state version conflict'), { status: 409 });
 const absent = { version: 0, content: null };
-const record = buildEditorTourRecord('completed', 3, 'finale', new Date('2026-10-21T10:00:00Z'));
+const record = buildEditorTourRecord('completed', 3, 'feedback', new Date('2026-10-21T10:00:00Z'));
 
 beforeEach(() => {
   client.getUserAppState.mockReset().mockResolvedValue(absent);
@@ -44,7 +44,7 @@ describe('shouldAutoStartEditorTour', () => {
 
 describe('buildEditorTourRecord', () => {
   it('carries the tour version, outcome, act/beat and an ISO time', () => {
-    expect(record).toEqual({ version: EDITOR_TOUR_VERSION, outcome: 'completed', step: 'act3/finale', at: '2026-10-21T10:00:00.000Z' });
+    expect(record).toEqual({ version: EDITOR_TOUR_VERSION, outcome: 'completed', step: 'act3/feedback', at: '2026-10-21T10:00:00.000Z' });
   });
 });
 
@@ -56,6 +56,11 @@ describe('readRuntimeTourStatus', () => {
 
   it.each(['started', 'completed', 'skipped'] as const)('is seen once a "%s" record exists for this tour version', async (outcome) => {
     client.getUserAppState.mockResolvedValue({ version: 2, content: { version: EDITOR_TOUR_VERSION, outcome, step: 'act1/welcome', at: 't' } });
+    await expect(readRuntimeTourStatus()).resolves.toBe('seen');
+  });
+
+  it.each(['act3/finale', 'act3/feedback'])('is seen for a completed record ending at %s: old records still parse', async (step) => {
+    client.getUserAppState.mockResolvedValue({ version: 2, content: { version: EDITOR_TOUR_VERSION, outcome: 'completed', step, at: 't' } });
     await expect(readRuntimeTourStatus()).resolves.toBe('seen');
   });
 
