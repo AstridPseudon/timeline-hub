@@ -50,7 +50,7 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
         { name: 'Placed it on the timeline', detail: 'Moon overlook · 10 s' },
       ],
       card: {
-        title: 'Your agent creates and uses extensions',
+        title: 'Your agent creates with extendable tools',
         body: 'Lantern Valley is a live Three.js scene, on your timeline to play, test and give feedback on. You and your agent can create with any extension, or build your own.',
         visual: 'extension',
         labels: ['Three.js', 'extension'],
