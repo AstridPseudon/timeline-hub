@@ -1,0 +1,31 @@
+#!/bin/bash
+# ensure-daemons AREA: idempotent machine recovery, safe to run any time and after every container restart.
+# Starts hub-syncd, dispatcher-daemon and run-manager AREA if they are not running, and marks workers that died
+# (a `running` marker but no process using their worktree) as dead, queueing a re-dispatch note in the manager's INBOX.
+# Prints one status line. AREA: runtime (main machine) | agent | app | app2 | viewing | farm.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+A=$1; [ -n "$A" ] && [ -d $O/managers/$A ] || { echo "usage: ensure-daemons AREA"; exit 2; }
+M=$A; [ $A = runtime ] && M=main          # hub-sync machine name
+alive(){ ps -eo args | awk -v s="$1" '$1=="/bin/bash" && $2 ~ s"$" && ($3==""||$3==ARGV[2]) {f=1} END{exit !f}' - 2>/dev/null; }
+has(){ ps -eo args | awk -v p="$1" -v a="$2" '$1=="/bin/bash" && $2 ~ ("bin/" p "$") && (a=="" || $3==a) {f=1} END{exit !f}'; }
+started=""
+has hub-syncd "$M" || { nohup setsid $O/bin/hub-syncd $M >> $O/hub-sync.log 2>&1 < /dev/null & started="$started hub-syncd"; }
+has dispatcher-daemon "" || { nohup setsid $O/bin/dispatcher-daemon >> $O/dispatcher.log 2>&1 < /dev/null & started="$started dispatcher"; }
+if ! has run-manager "$A" && [ ! -f $O/managers/$A/STOP ]; then
+  rm -f $O/managers/$A/running
+  if [ $A = farm ]; then $O/bin/run-manager farm claude-sonnet-5-5 >/dev/null; else $O/bin/run-manager $A >/dev/null; fi
+  started="$started run-manager"
+fi
+dead=""
+for d in $O/workers/*/; do
+  [ -f $d/running ] && [ -f $d/meta ] || continue
+  w=$(basename $d); wt=$(sed -n 's/^worktree=//p' $d/meta)
+  [ -n "$wt" ] || continue
+  ps -eo args | grep -F -- "$wt" | grep -qv grep && continue          # a live process still uses the worktree
+  [ $(( $(date +%s) - $(stat -c %Y $d/running) )) -lt 300 ] && continue  # just launched; give it time
+  mv $d/running $d/died-$(date -u +%Y%m%dT%H%MZ); dead="$dead $w"
+done
+if [ -n "$dead" ]; then
+  printf '\n## ensure-daemons %s: workers died (container restart)\nRe-dispatch fresh (on the same branch with `--base tl/<worker>` if it has commits):%s\n' "$(date -u +%FT%TZ)" "$dead" >> $O/managers/$A/INBOX.md
+fi
+echo "$(date -u +%FT%TZ) ensure-daemons $A: uptime $(awk '{printf "%d", $1/60}' /proc/uptime)m; started:${started:- none}; dead workers:${dead:- none}; disk $(df -BG --output=avail /home/user | tail -1 | tr -d ' ')"

@@ -1,14 +1,14 @@
-<!-- main | 2026-10-22T22:38:26Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 9 | status age 0m -->
-# runtime board, 2026-10-22T22:37Z
+<!-- main | 2026-10-22T22:39:44Z | dispatcher heartbeat 3s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 1m -->
+# runtime board, 2026-10-22T22:38Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 | commit-v2 contract | Sol author / Luna review | — | merged | rt-C0-contract; rt-C0-review | PASS: 34 targeted tests + JSON/digests/copy equality on tree identical to integrated 0d4c71a3c; C0 APPROVED | 0d4c71a3c |
-| C0b | per-step reads/provider effects amendment | Sol author / Luna review | C0b APPROVED in header | merging | rt-C0b-undo-contract; rt-C0b-review-v2 | Independent Luna PASS: 34 tests + embedded fixtures/digests + copy equality + whitespace. C0b APPROVED; merge queued | 756eeb3d2 (branch) |
+| C0b | per-step reads/provider effects amendment | Sol author / Luna review | C0b APPROVED in header | merged | rt-C0b-undo-contract; rt-C0b-review-v2 | Independent Luna PASS: 34 tests + embedded fixtures/digests + copy equality + whitespace. C0b APPROVED; integrated 992136137 tree identical to tested branch | 992136137 |
 | C0c | unambiguous closure-root addresses | Sol | orchestrator requested addressing principle | doing | rt-C0c-addressing | Queued: aliases require uniqueness, revision-qualified bindings, two-child creation/edit/undo fixture; Astra approval pending | 756eeb3d2 base |
 | U1 | real upstream merge, schema v32 | Luna | first review repair | doing | rt-U1-real-upstream | Sanctioned merge-forward prepared real origin/main 4563bb5ff; 17 conflict preimages recorded by rerere. Repair must prove upstream-v31 fixture, fix +1 type delta, regenerate clients, pass tests/review | 85b13f3b4 base |
 | R2r | store label/steps/patches, attribution | Luna | C0 approved, U1 merged | todo | — | Brief ready; dispatch immediately after repaired U1 reviewed PASS and merged | — |
 | P5 | original gate 2–4 acceptance | Luna | R1, R2 merged for implementation | todo | rt-P5-cases; rt-P5-cases-review-v2 | Collection review PASS; concrete map in reviewer report. No implementation/proof credit | — |
 | R5 | refuse old save routes | Luna | A3, G4 merged per header | todo | — | — | — |
-Blockers: orchestrator — C0c addressing amendment rt-C0c-addressing active under adopted Astra principle; approval required before R2 merge. C0b approved/review PASS and merge queued; prior C0b approval escalation resolved.
-Blockers: orchestrator — CLEANUP SAFETY REFUSAL at 22:37:44Z: auto-review rejected rm -rf abandoned v1 sources ("rm -f style commands are not permitted"). Stop requested immediately; no alternate deletion route. Disk 9.9 GB vs 15 GB. See escalations/runtime-20261022T2238Z-cleanup-safety-refusal.md. Prior partial cleanup/config changes still require read-only audit.
-Next ready: U1 independent review on repair completion; C0b merge after independent PASS plus header approval; R2r immediately after U1 merge; P5 after R1/R2; R5 after A3/G4 header confirmation.
+Blockers: orchestrator — C0c addressing amendment rt-C0c-addressing active under adopted Astra principle; approval required before R2 merge. C0b approved/review PASS and merged 992136137; prior C0b approval escalation resolved.
+Blockers: orchestrator — CLEANUP SAFETY REFUSAL at 22:37:44Z: auto-review rejected rm -rf abandoned v1 sources ("rm -f style commands are not permitted"). Stop requested immediately; no alternate deletion route. Disk 9.9 GB vs 15 GB. See escalations/runtime-20261022T2238Z-cleanup-safety-refusal.md. Recovered report: original deletion also denied; prior board was inaccurate. Only seven v1 suite rows changed, no artifact deletions. Remaining classified inventory 1.34 GB cannot alone reach target. Luna rt-U1-v1-cleanup-audit queued for read-only review.
+Next ready: U1 independent review on repair completion; R2r immediately after U1 merge; P5 after R1/R2; R5 after A3/G4 header confirmation.
