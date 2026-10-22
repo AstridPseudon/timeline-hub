@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createExtensionSettingsService } from '@/sdk/extensionSettingsService';
 import type { ExtensionManifest } from '@/sdk/manifest';
 import { createFakeAppStateApi, installTestSettingsStore } from '@/test/settingsStoreHarness';
+import { clearExtensionSettings } from './diagnosticCollectionSync';
 import { createRuntimeSettingsBacking, extensionSettingsGroup } from './extensionSettingsBacking';
 
 const manifest = { id: 'acme.tool', settingsDefaults: { theme: 'light' } } as unknown as ExtensionManifest;
@@ -69,5 +70,23 @@ describe('extension settings in the Runtime', () => {
 
     expect(calls).toBe(1);
     expect(service.get('theme')).toBe('dark');
+  });
+
+  it('clearExtensionSettings (uninstall or reset) erases the record, and a service disposing does not', async () => {
+    const fake = createFakeAppStateApi();
+    fake.writeElsewhere('ext.acme.tool', { theme: 'dark' });
+    const { store } = installTestSettingsStore(fake);
+    const { service, dispose } = createExtensionSettingsService('acme.tool', manifest, { backing: createRuntimeSettingsBacking('acme.tool') });
+    await store.flush();
+
+    dispose();
+    await store.flush();
+    expect(fake.record('ext.acme.tool').content).toEqual({ theme: 'dark' });
+    expect(service.get('theme')).toBe('dark');
+
+    clearExtensionSettings('acme.tool');
+    await store.flush();
+    await store.flush();
+    expect(fake.record('ext.acme.tool').content).toEqual({});
   });
 });

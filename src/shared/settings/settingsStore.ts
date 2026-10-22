@@ -73,8 +73,8 @@ interface Group {
   loading: Promise<void> | null;
   flushing: Promise<void> | null;
   flushAgain: boolean;
-  /** The pending changes do not fit the Runtime's record limit: nothing more is sent until the next change. */
-  tooLarge: boolean;
+  /** The Runtime refused the pending changes (too large, or a 4xx): nothing more is sent until the next change. */
+  blocked: boolean;
 }
 
 function sameJson(a: unknown, b: unknown): boolean {
@@ -237,7 +237,7 @@ export class SettingsStore {
 
   private flushGroup(g: Group): Promise<void> {
     if (g.timer) { clearTimeout(g.timer); g.timer = null; }
-    if (g.tooLarge || !this.connected) return Promise.resolve();
+    if (g.blocked || !this.connected) return Promise.resolve();
     // A write already in flight: this call resolves after the changes made meanwhile have been sent too.
     if (g.flushing) { g.flushAgain = true; return g.flushing.then(() => (g.pending.size > 0 ? this.flushGroup(g) : undefined)); }
     // A load in flight may import legacy values: wait for it, then send what it left pending.
@@ -254,7 +254,7 @@ export class SettingsStore {
         }
         if (new TextEncoder().encode(JSON.stringify(body)).length > APP_STATE_MAX_BYTES) {
           console.warn(`[settings] ${g.name} is over the ${APP_STATE_MAX_BYTES} byte limit; the change stays on this browser`);
-          g.tooLarge = true;
+          g.blocked = true;
           return;
         }
         try {
@@ -277,10 +277,10 @@ export class SettingsStore {
             continue;
           }
           if (status !== undefined && status >= 400 && status < 500 && status !== 401 && status !== 408 && status !== 429) {
-            // The Runtime refuses this content for good; keep it on this browser and stop retrying.
-            console.warn(`[settings] ${g.name} was refused (${status})`);
-            for (const [field, value] of sent) if (g.pending.get(field) === value) g.pending.delete(field);
-            this.rebuild(g);
+            // The Runtime refuses this content: keep the change (and its old browser key) here and stop
+            // retrying until the next change.
+            console.warn(`[settings] ${g.name} was refused (${status}); the change stays on this browser`);
+            g.blocked = true;
             return;
           }
           g.status = 'unreachable';
@@ -303,7 +303,7 @@ export class SettingsStore {
       g = {
         name, content: {}, server: {}, version: 0, status: 'idle', pending: new Map(), refs: new Map(), legacy: new Map(),
         legacyGarbage: new Set(), legacyPrefixes: new Set(), listeners: new Set(), timer: null, loading: null,
-        flushing: null, flushAgain: false, tooLarge: false,
+        flushing: null, flushAgain: false, blocked: false,
       };
       this.restoreSnapshot(g);
       this.groups.set(name, g);
@@ -368,7 +368,7 @@ export class SettingsStore {
 
   private mutate(g: Group, field: string, value: Pending, debounceMs: number | undefined): void {
     g.pending.set(field, value);
-    g.tooLarge = false;
+    g.blocked = false;
     const legacy = g.legacy.get(field);
     if (legacy) { g.legacyGarbage.add(legacy.key); g.legacy.delete(field); }
     this.rebuild(g);
@@ -412,9 +412,14 @@ export class SettingsStore {
       const snapshot = JSON.parse(raw) as { content?: unknown; pending?: unknown; removed?: unknown };
       if (!snapshot.content || typeof snapshot.content !== 'object' || Array.isArray(snapshot.content)) return;
       g.content = snapshot.content as Record<string, unknown>;
+      // The snapshot is the last state this browser knew of the Runtime (less its unsent changes): until the Runtime
+      // answers, changes are laid on top of it. A write always loads first, so this seed is never sent as is.
+      g.server = { ...g.content };
       // Changes this browser made but the Runtime never confirmed (the tab closed first) are still to be sent.
       if (Array.isArray(snapshot.pending)) {
-        for (const field of snapshot.pending) if (typeof field === 'string' && field in g.content) g.pending.set(field, g.content[field]);
+        for (const field of snapshot.pending) {
+          if (typeof field === 'string' && field in g.content) { g.pending.set(field, g.content[field]); delete g.server[field]; }
+        }
       }
       if (Array.isArray(snapshot.removed)) {
         for (const field of snapshot.removed) if (typeof field === 'string') g.pending.set(field, REMOVED);

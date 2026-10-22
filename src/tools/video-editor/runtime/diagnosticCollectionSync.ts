@@ -135,14 +135,12 @@ export function syncPlannerDiagnosticsToCollection(
 
 
 /**
- * Clear all saved settings for a given extension (its `ext.<id>` record in the settings store, and any old
+ * Erase all saved settings for a given extension (its `ext.<id>` record in the settings store, and any old
  * browser keys not yet imported).
  *
- * This is the settings-derived UI state reset counterpart to
- * removeExtensionDiagnosticsFromCollection. Callers should invoke both from
- * the shared ExtensionLifecycleHost.onLifecycleDisposed callback to
- * guarantee that disable/unload clears the targeted extension's diagnostics
- * and settings UI state without touching unrelated extension state.
+ * The settings are the user's, kept in the Runtime on every device: call this only when the user uninstalls the
+ * extension or resets its settings, never from lifecycle dispose (disable, editor unmount), which only clears
+ * diagnostics and registries.
  */
 export function clearExtensionSettings(extensionId: string): void {
   const backing = createRuntimeSettingsBacking(extensionId);

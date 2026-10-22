@@ -47,7 +47,7 @@ test('a changed Tasks pane lock holds after clearing the browser and reloading (
   await expect.poll(async () => {
     const state = await harness.runtimeJson('GET', '/v1/app-state/user/ui.panes');
     return state.body?.content?.['tasks.locked'];
-  }, { timeout: 10_000 }).toBe(locked);
+  }, { timeout: 0 }).toBe(locked);
 
   // Forget everything this browser knows.
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });

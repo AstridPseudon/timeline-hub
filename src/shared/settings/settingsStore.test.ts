@@ -272,6 +272,63 @@ describe('before the Runtime connects', () => {
   });
 });
 
+describe('a refused write', () => {
+  it('keeps the change and the legacy key, stops retrying, and tries again on the next change', async () => {
+    let refuse = true;
+    const puts: number[] = [];
+    const api: AppStateApi = {
+      get: async () => ({ version: 0, content: null }),
+      put: async (_key, content, version) => {
+        puts.push(version);
+        if (refuse) throw Object.assign(new Error('refused'), { status: 422 });
+        return { version: version + 1, content };
+      },
+    };
+    store.dispose();
+    store = new SettingsStore({ api, storage: window.localStorage });
+    localStorage.setItem('legacy.a', JSON.stringify('legacy-value'));
+    const a: SettingRef<string> = { group: 'ui.panes', field: 'a', default: 'A', validate: (v) => typeof v === 'string', legacyKey: 'legacy.a' };
+
+    store.get(a);
+    await settle();
+    store.set(a, 'user-choice');
+    await settle();
+
+    expect(store.get(a)).toBe('user-choice');
+    expect(JSON.parse(localStorage.getItem(PANES_SNAPSHOT)!)).toMatchObject({ content: { a: 'user-choice' }, pending: ['a'] });
+    const attempts = puts.length;
+
+    await store.refresh();
+    await settle();
+    expect(puts).toHaveLength(attempts); // no retry loop
+    expect(store.get(a)).toBe('user-choice');
+    expect(localStorage.getItem('legacy.a')).not.toBeNull(); // the Runtime never confirmed it
+
+    refuse = false;
+    store.set(a, 'second-choice');
+    await settle();
+    expect(puts.length).toBeGreaterThan(attempts);
+    expect(store.get(a)).toBe('second-choice');
+    expect(localStorage.getItem('legacy.a')).toBeNull();
+  });
+});
+
+describe('the snapshot as last-known Runtime state', () => {
+  it('keeps the other snapshot fields readable and saved when one field changes before the Runtime answers', async () => {
+    store.dispose();
+    store = new SettingsStore({ api: fake.api, storage: window.localStorage, connected: false });
+    localStorage.setItem(PANES_SNAPSHOT, JSON.stringify({ content: { a: 'A-saved', b: 'B-saved' }, pending: [], removed: [] }));
+    const field = (name: string): SettingRef<string> => ({ group: 'ui.panes', field: name, default: `${name}-default`, validate: (v) => typeof v === 'string' });
+
+    expect(store.get(field('a'))).toBe('A-saved');
+    store.set(field('c'), 'C-new');
+
+    expect(store.get(field('a'))).toBe('A-saved');
+    expect(store.get(field('b'))).toBe('B-saved');
+    expect(JSON.parse(localStorage.getItem(PANES_SNAPSHOT)!).content).toEqual({ a: 'A-saved', b: 'B-saved', c: 'C-new' });
+  });
+});
+
 describe('refresh on focus', () => {
   it('re-reads another tab\'s write and notifies subscribers', async () => {
     const ref = tasksPaneLocked.ref();

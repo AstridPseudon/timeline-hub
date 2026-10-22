@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { clearExtensionSettings } from '@/tools/video-editor/runtime/diagnosticCollectionSync';
 import {
   ChevronDown,
   ChevronRight,
@@ -300,6 +301,7 @@ export function PackageSettingsSection({
 
     try {
       await repository.deleteSettingsSnapshot(extensionId);
+      clearExtensionSettings(extensionId);
       if (mountedRef.current) {
         setSavedSnapshot(null);
         setReconciliationResult(null);

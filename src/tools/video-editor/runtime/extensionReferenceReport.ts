@@ -11,6 +11,7 @@
  * the extension.
  */
 
+import { clearExtensionSettings } from './diagnosticCollectionSync';
 import type { ExtensionDiagnostic } from '@astrid/editor-sdk';
 
 // ---------------------------------------------------------------------------
@@ -551,6 +552,8 @@ export async function performUninstallRepositoryCleanup(
     await repository.deletePackRecord(extensionId);
     await repository.deleteEnablementState(extensionId);
     await repository.deleteSettingsSnapshot(extensionId);
+    // The user's saved settings live in the Runtime: they go only when the extension is uninstalled.
+    clearExtensionSettings(extensionId);
     await repository.deleteDevOverride(extensionId);
 
     // Append uninstall lifecycle event (preserved for audit)

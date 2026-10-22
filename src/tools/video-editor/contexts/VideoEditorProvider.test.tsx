@@ -4019,7 +4019,7 @@ describe('VideoEditorProvider', () => {
 
     // Shared cleanup helper — diagnostics removal and settings UI state reset
     // on disable/unload, preserving unrelated extension state.
-    it('disable clears targeted extension diagnostics and settings while preserving unrelated extension state', async () => {
+    it('disable clears the targeted extension diagnostics and keeps all saved extension settings (they live in the Runtime)', async () => {
       const OTHER_EXTENSION_ID = 'com.example.other.vp';
       const otherManifest = {
         id: OTHER_EXTENSION_ID as never,
@@ -4106,12 +4106,10 @@ describe('VideoEditorProvider', () => {
       // Disable the settings extension (remove from props)
       rerender(<Host includeSettings={false} />);
 
-      await waitFor(() => {
-        // Targeted extension's settings localStorage must be cleared
-        expect(
-          savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey'),
-        ).toBeNull();
-      });
+      // The targeted extension's saved settings are kept: only uninstall or reset erases them.
+      expect(
+        savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey'),
+      ).toBe('"settings-key-vp"');
 
       // Unrelated extension's settings localStorage must be preserved
       expect(
