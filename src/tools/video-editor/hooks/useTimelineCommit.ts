@@ -397,6 +397,7 @@ export function useTimelineCommit({
 
     if (shouldSave) {
       editSeqRef.current += 1;
+      eventBus.emit('localCommit', currentData, nextData);
       eventBus.emit('scheduleSave', nextData);
     }
   }, [eventBus, lastSavedSignatureRef, selectionOwner]);
