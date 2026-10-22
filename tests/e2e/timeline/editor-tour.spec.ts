@@ -265,9 +265,12 @@ test.describe('editor tour', () => {
       await shot(page, composeShot);
       await pressPrimary(page, { act, beat: 'compose' }); // Send
 
-      await waitSettled(page, act, 'respond');
-      await shot(page, respondShot);
-      await pressPrimary(page, { act, beat: 'respond' }); // Next
+      // Act 1 explains the reply on respond; acts 2 and 3 go straight from Send to land.
+      if (act === 1) {
+        await waitSettled(page, act, 'respond');
+        await shot(page, respondShot);
+        await pressPrimary(page, { act, beat: 'respond' }); // Next
+      }
 
       await waitSettled(page, act, 'land');
       await expect(page.locator(`[data-track-id="tour-${['scene', 'stills', 'videos'][index]}"]`)).toHaveCount(1);
