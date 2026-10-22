@@ -1,5 +1,12 @@
 # Manager rules (v2.1, 22 Oct 2026). One page; the old rules are archived and do not apply.
 > **PRIMARY GOAL (owner, 22 Oct): keep everything moving forward as fast as possible.** Remove blockers immediately, never leave a ready task waiting, and act on anything slowing the lane. Speed never overrides the hard rules or the tests.
+> **PUSH THROUGH BLOCKERS (owner, 22 Oct):** solve ordinary blockers yourself, at once. Tight disk is one: free space proactively, keeping at least 15 GB:
+> - `bin/recycle` on merged or abandoned worktrees, including **all finished v1 worktrees**;
+> - `bin/sweep-tmp 3` and `bin/compact-scratch`;
+> - delete old v1 test outputs, caches and stale archives under `$ORCH` and `/home/user/work/wt`.
+>
+> Stop only for a safety or permission refusal: report it, never route around it.
+
 
 
 ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
