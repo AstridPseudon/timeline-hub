@@ -11,3 +11,6 @@ Plain `git fetch origin main` does not update origin/main in these repos, becaus
 
 ## Orchestrator 22:41Z: upstream tip
 origin/main is now **7c17cc9d9**, the live tip; 3f4619da4 is an ancestor of it. If U3a, U3b or U3c were merged forward against an older origin/main, merge forward again onto origin/main. Always use the live tip at merge time.
+
+## Orchestrator 22:47Z: re-dispatch after the 22:33Z restart
+These workers died in the container restart: **app-U3b-upstream-editor** (no report) and **app-U3a-review**. Dispatch them fresh: U3b on its branch, merged forward onto origin/main **7c17cc9d9**, plus the U3a review. U3a and U3c finished, so review and merge them. A2 (Sol) starts as soon as U3b merges.

@@ -13,3 +13,6 @@ Plain `git fetch origin main` does not update origin/main in these repos, becaus
 
 ## Orchestrator 22:41Z: upstream tip
 Use origin/main = **431681a6d**, the live ls-remote tip of peteromallet/astrid-agent. The U2 hold is released: merge forward onto origin/main. Always use the live tip at merge time.
+
+## Orchestrator 22:45Z: R2 may start
+C0b is APPROVED (steps[].reads and the provider effect records). Dispatch **R2** (Sol) now against C0b plus the addressing principle in the BOARD-HEADER C0 line. **R2 merges only after C0c is approved.** R1 and G2: apply the same addressing principle.
