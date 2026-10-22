@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-22T23:19:49Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 1m -->
-# viewing board, 2026-10-22T23:18:34Z
+<!-- viewing | 2026-10-22T23:20:53Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
+# viewing board, 2026-10-22T23:20:02Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema source and drift inventory (read-only) | Luna high | H0 | merged | vw-V1-schema-inventory-fix; vw-V1-schema-inventory-review2 | Independent PASS: all four first-review findings closed; four SHA/cmp copies and Runtime generator/manifest checks PASS on current read roots. No-op merge receipt confirms same integrated head; no implementation credit | 6c4d9342189b69d488b41f609b64aa2918eda955 (unchanged) |
@@ -19,3 +19,5 @@ Restart audit: original22:30-killed author superseded by resume+fix; correction 
 23:13Z dependency recheck: U1 and U2 are moving again, neither reviewed merged. No new inbox instruction, no Viewing worker failure/stall. Free disk16,411,017,216 bytes (>15GB); cleanup remains stopped.
 
 23:18Z loop recheck: new Runtime/Agent review progress recorded; neither baseline merged yet. Inbox/header unchanged; hub heartbeat23:17Z fresh. No ready task undispatched.
+
+Round handoff: V1-prep independently PASS and no-op merged; next loop found U1/U2 in review, U3 unmerged. All remaining lane tasks have explicit dependency blockers and no ready task is undispatched. Cleanup refusal stays parked with orchestrator; no retries or alternate cleanup.
