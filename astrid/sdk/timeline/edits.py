@@ -9,11 +9,19 @@ from typing import Any, Mapping, Sequence
 
 from astrid.core.timeline import moments as mo
 from astrid.sdk import timeline_intent as intent
-
 from astrid.sdk.timeline import store as _store
-from astrid.sdk.timeline._common import (CANVAS, ELEMENT_TRACK, SAFE_MARGIN, TIME_RE, TimelineEditError, _num, _r)
-from astrid.sdk.timeline.doc import (_free_key, _set_length)
-from astrid.sdk.timeline.model import (Clip, Cut, Word, music_keyword, validate_param_value)
+from astrid.sdk.timeline._common import (
+    CANVAS,
+    ELEMENT_TRACK,
+    PARENT_SHOT,
+    SAFE_MARGIN,
+    TIME_RE,
+    TimelineEditError,
+    _num,
+    _r,
+)
+from astrid.sdk.timeline.doc import _free_key, _set_length
+from astrid.sdk.timeline.model import Clip, Cut, Word, music_keyword, validate_param_value
 
 _ASSET_REGISTRY_FIELDS = ("media_id", "content_sha256", "type", "duration", "resolution", "size", "size_bytes",
                           "handle", "filename", "pixel_provenance")
@@ -374,13 +382,16 @@ class _EditMixin:
         return changed
 
     def _registry(self, shot_id: str) -> dict[str, Any]:
-        registry = self._internal(shot_id).setdefault("registry", {})
+        holder = self._internal(shot_id)
+        if shot_id == PARENT_SHOT and "registry" not in holder and (holder.get("config") or {}).get("registry"):
+            holder = holder["config"]  # the parent's registry lives under config: keep it single
+        registry = holder.setdefault("registry", {})
         return registry.setdefault("assets", {})
 
     def assets(self, key: str | None = None) -> list[dict[str, Any]]:
         """Registry assets with their timeline clip addresses, in key order."""
         entries: dict[str, dict[str, Any]] = {}
-        for sid in self._shot_ids():
+        for sid in [*self._shot_ids(), *([PARENT_SHOT] if self._parent_clips() else [])]:
             for name, entry in self._registry(sid).items():
                 if key is not None and name != key:
                     continue
