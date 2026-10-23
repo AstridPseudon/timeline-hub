@@ -11,7 +11,7 @@ import copy
 from collections.abc import Mapping
 from typing import Any
 
-from ._command_state import equal, present
+from ._command_state import present
 from ._common import TimelineEditError
 
 
@@ -22,6 +22,14 @@ class DocumentPatchError(TimelineEditError):
 # Kept as a discoverable name for callers migrating from the detached adapter.
 DocumentEmitterError = DocumentPatchError
 _MISSING = object()
+
+
+def _same(left: Any, right: Any) -> bool:
+    from .commit import _json
+
+    if left is _MISSING or right is _MISSING:
+        return left is right
+    return _json(left) == _json(right)
 
 
 def _state(value: Any) -> dict[str, Any]:
@@ -36,60 +44,7 @@ def _path(path: tuple[str, ...] | list[str]) -> list[str]:
     return list(path)
 
 
-def _identity_key(rows: list[Any], path: tuple[str, ...]) -> str | None:
-    """Return the schema-level identity convention available to this bundle.
-
-    Authoring collections use ``id``; the closure's occurrence collection uses
-    ``occurrence_id``.  Anything else is intentionally treated as an id-less
-    array and is replaced as one guarded value.
-    """
-    if path and path[-1] == "occurrences":
-        key = "occurrence_id"
-    else:
-        key = "id"
-    if not rows or not all(isinstance(row, Mapping) and isinstance(row.get(key), str)
-                           and bool(row[key]) for row in rows):
-        return None
-    identities = [row[key] for row in rows]
-    return key if len(set(identities)) == len(identities) else None
-
-
-def _ref_for_internal(bundle: Mapping[str, Any], shot_id: str, shot: Mapping[str, Any]) -> str:
-    source = bundle.get("source_mapping")
-    source_shots = source.get("shots", {}) if isinstance(source, Mapping) else {}
-    source_row = source_shots.get(shot_id) if isinstance(source_shots, Mapping) else None
-    for value in (
-        shot.get("internal_timeline_id"),
-        source_row.get("internal_timeline_id") if isinstance(source_row, Mapping) else None,
-        bundle.get("timeline_id"),
-        "main",
-    ):
-        if isinstance(value, str) and value:
-            return "internal:" + value
-    raise DocumentPatchError(f"shot {shot_id!r} has no verified internal timeline identity")
-
-
-def _protected(ref: str, path: tuple[str, ...]) -> bool:
-    """Reject fields whose meaning is a managed closure edge or immutable pin."""
-    if not path:
-        return False
-    if ref == "parent" and path[0] == "occurrences":
-        # Occurrence membership and shot pins are semantic closure operations.
-        if len(path) == 1 or "occurrence_id:" in path:
-            return True
-    if ref.startswith("internal:") and path[:1] in (("internal_timeline_revision_id",),):
-        return True
-    if any(token in {"revision_id", "content_digest", "shot_revision_id", "internal_timeline_revision_id"}
-           for token in path):
-        return True
-    return False
-
-
 def _change(op: str, ref: str, path: tuple[str, ...], before: Any, value: Any = _MISSING) -> dict[str, Any]:
-    if _protected(ref, path):
-        raise DocumentPatchError(
-            f"{ref}/{'.'.join(path) or '<root>'} is a managed closure edge; use its semantic command"
-        )
     change: dict[str, Any] = {"op": op, "ref": ref, "path": _path(path), "before": _state(before)}
     if op == "set":
         if value is _MISSING:
@@ -99,14 +54,14 @@ def _change(op: str, ref: str, path: tuple[str, ...], before: Any, value: Any = 
 
 
 def _list_changes(before: list[Any], after: list[Any], ref: str, path: tuple[str, ...], out: list[dict[str, Any]]) -> None:
-    if _protected(ref, path):
-        raise DocumentPatchError(
-            f"{ref}/{'.'.join(path) or '<root>'} membership/order is managed; use its semantic command"
-        )
-    key = _identity_key(before or after, path)
+    from ._doc_patch import identities, identity_key
+
+    key = identity_key(ref, path)
     if key is None:
         out.append(_change("set", ref, path, before, after))
         return
+    identities(before, key, ref=ref, path=path)
+    identities(after, key, ref=ref, path=path)
 
     old = {row[key]: row for row in before}
     new = {row[key]: row for row in after}
@@ -160,11 +115,11 @@ def _list_changes(before: list[Any], after: list[Any], ref: str, path: tuple[str
         if identity not in old:
             continue
         _diff(old[identity], new[identity], ref,
-              path + (f"{key}:{identity}",), out, identity_token=key)
+              path + (f"{key}:{identity}",), out)
 
 
-def _diff(before: Any, after: Any, ref: str, path: tuple[str, ...], out: list[dict[str, Any]], *, identity_token: str | None = None) -> None:
-    if equal(before, after):
+def _diff(before: Any, after: Any, ref: str, path: tuple[str, ...], out: list[dict[str, Any]]) -> None:
+    if _same(before, after):
         return
     if before is _MISSING or after is _MISSING:
         if after is _MISSING:
@@ -185,23 +140,6 @@ def _diff(before: Any, after: Any, ref: str, path: tuple[str, ...], out: list[di
     out.append(_change("set", ref, path, before, after))
 
 
-def _roots(bundle: Mapping[str, Any]) -> list[tuple[str, Any, Any]]:
-    parent = bundle.get("parent")
-    shots = bundle.get("shots")
-    if not isinstance(parent, Mapping) or not isinstance(shots, Mapping):
-        raise DocumentPatchError("timeline bundle must contain a parent and shot map")
-    roots: list[tuple[str, Any, Any]] = [("parent", parent, "parent")]
-    for shot_id in sorted(shots):
-        shot = shots[shot_id]
-        if not isinstance(shot_id, str) or not isinstance(shot, Mapping):
-            raise DocumentPatchError("timeline shot roots must be named objects")
-        if not isinstance(shot.get("payload"), Mapping) or not isinstance(shot.get("internal_timeline"), Mapping):
-            raise DocumentPatchError(f"shot {shot_id!r} has malformed closure payloads")
-        roots.append((f"shot:{shot_id}", shot["payload"], shot_id))
-        roots.append((_ref_for_internal(bundle, shot_id, shot), shot["internal_timeline"], shot_id))
-    return roots
-
-
 def _outside(bundle: Mapping[str, Any]) -> dict[str, Any]:
     value = copy.deepcopy(dict(bundle))
     value.pop("parent", None)
@@ -215,69 +153,142 @@ def _outside(bundle: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _payload_for_emit(ref: str, payload: Any) -> Any:
-    """Hide the authored ``clips`` mirror when it is represented by ``clips``.
+    """Validate schema collections before hiding redundant parent mirrors."""
+    from ._doc_patch import validate_payload
 
-    Authoring bundles retain both spellings for compatibility, while the
-    provider treats them as one logical collection and regenerates the mirror.
-    Emitting both changes would be a duplicate membership operation.
-    """
-    if ref != "parent" or not isinstance(payload, Mapping):
-        return payload
-    config = payload.get("config")
-    if not isinstance(config, Mapping) or not isinstance(payload.get("clips"), list):
-        return payload
-    if not equal(payload.get("clips"), config.get("clips", _MISSING)):
+    validate_payload(ref, payload)
+    if ref != "parent":
         return payload
     value = copy.deepcopy(dict(payload))
-    value["config"] = copy.deepcopy(dict(config))
-    value["config"].pop("clips", None)
+    config = value.get("config")
+    if isinstance(config, dict):
+        for key in ("clips", "registry"):
+            if key in value and key in config:
+                config.pop(key)
     return value
 
 
-def emit_document_commands(before_bundle: Mapping[str, Any], after_bundle: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """Emit the minimal ordered generic patch for two raw authoring bundles.
+def _root_pairs(before: Mapping[str, Any], after: Mapping[str, Any]):
+    from astrid.core.timeline.authoring_bundle import _remap_known_item_references
 
-    The inputs are copied by the caller-facing G2 seam; this function also
-    copies every value placed in a command so later local mutation cannot alter
-    the durable request body.
+    from ._doc_patch import Closure
+
+    yield "parent", before["parent"], after["parent"]
+    changed = any(not _same(before["shots"][key][field], after["shots"][key][field])
+                  for key in before["shots"] for field in ("payload", "internal_timeline"))
+    # Detached bundles can still express parent-only patches. Child edits need
+    # the source-bound physical resolver, never an entity/timeline-ID fallback.
+    closure = Closure(before) if changed else None
+    roots: dict[str, tuple[Any, Any]] = {}
+    source = before.get("source_mapping", {}).get("shots", {})
+    for local, shot in before["shots"].items():
+        other = after["shots"][local]
+        for field, kind in (("payload", "shot"), ("internal_timeline", "internal")):
+            old, new = shot[field], other[field]
+            if closure is None:
+                # Validate even unchanged known collections.
+                _payload_for_emit("shot:" if kind == "shot" else "internal:", old)
+                continue
+            origin = source.get(local, {})
+            revision = origin.get("revision_id" if kind == "shot" else "internal_timeline_revision_id")
+            if not isinstance(revision, str) or not revision:
+                raise DocumentPatchError(f"shot {local!r} has no verified {kind} revision")
+            ref = closure.resolve(kind + "-revision:" + revision)
+            if kind == "shot":
+                mapping = {v: k for k, v in origin.get("item_id_map", {}).items()}
+                old = _remap_known_item_references(old, mapping)
+                new = _remap_known_item_references(new, mapping)
+            pair = (old, new)
+            if ref in roots and any(not _same(left, right) for left, right in zip(roots[ref], pair)):
+                raise DocumentPatchError(f"closure root {ref!r} has contradictory authoring aliases; use a semantic command")
+            roots[ref] = pair
+    for ref, (old, new) in roots.items():
+        yield ref, old, new
+
+
+def _created(changes: list[dict[str, Any]], before: Mapping[str, Any]) -> list[str]:
+    """Use R1's allocation rules on introduced subtrees, in change order."""
+    from ._doc_patch import Closure, allocations, identity_key
+
+    closure = None
+    created: list[str] = []
+    for change in changes:
+        if change["op"] not in ("set", "list.insert"):
+            continue
+        ref, path = change["ref"], change["path"]
+        if any(identity_key(ref, path[:index]) for index in range(len(path))):
+            continue  # Fields inside existing items cannot introduce schema entities.
+        if ref != "parent" and closure is None:
+            closure = Closure(before)
+        old = change["before"].get("value", _MISSING)
+        new = change["value"]
+        if change["op"] == "list.insert":
+            old, new = [], [new]
+        for token in reversed(path):
+            old = {} if old is _MISSING else {token: old}
+            new = {token: new}
+        if ref == "parent":
+            old.setdefault("config", {})
+            new.setdefault("config", {})
+        created.extend(row["ref"] for row in allocations(closure, ref, old, new))
+    return created
+
+
+def emit_document_commands(before_bundle: Mapping[str, Any], after_bundle: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Emit guarded payload changes, bound to the verified input closure.
+
+    R1 owns physical resolution, schema identities, managed edges and allocation
+    rules. Unknown arrays remain whole values; unknown object keys stay literal.
+    This adapter never infers what a free transform read.
     """
+    from ._command_state import CommandError
+    from ._doc_patch import managed_edges
+
     if not isinstance(before_bundle, Mapping) or not isinstance(after_bundle, Mapping):
         raise DocumentPatchError("document emitter requires mapping bundles")
     if before_bundle.get("project_id") != after_bundle.get("project_id") or before_bundle.get("timeline_id") != after_bundle.get("timeline_id"):
         raise DocumentPatchError("document and Runtime bundle have different project/timeline scope")
-    if not equal(_outside(before_bundle), _outside(after_bundle)):
+    for bundle in (before_bundle, after_bundle):
+        if not isinstance(bundle.get("parent"), Mapping) or not isinstance(bundle.get("shots"), Mapping):
+            raise DocumentPatchError("timeline bundle must contain a parent and shot map")
+        for local, shot in bundle["shots"].items():
+            if not isinstance(local, str) or not isinstance(shot, Mapping) or any(
+                    not isinstance(shot.get(field), Mapping) for field in ("payload", "internal_timeline")):
+                raise DocumentPatchError("timeline shot roots must have object payloads")
+    if not _same(_outside(before_bundle), _outside(after_bundle)):
         raise DocumentPatchError("closure membership or provenance changed; use a semantic command")
 
-    def root_map(bundle: Mapping[str, Any]) -> dict[str, list[Any]]:
-        result: dict[str, list[Any]] = {}
-        for ref, payload, _ in _roots(bundle):
-            result.setdefault(ref, []).append(payload)
-        return result
-
-    before_root_lists = root_map(before_bundle)
-    after_root_lists = root_map(after_bundle)
-    if set(before_root_lists) != set(after_root_lists):
-        raise DocumentPatchError("closure root creation/removal requires a semantic command")
-    before_roots: dict[str, Any] = {}
-    after_roots: dict[str, Any] = {}
-    for ref in before_root_lists:
-        before_list = before_root_lists[ref]
-        after_list = after_root_lists[ref]
-        if len(before_list) != len(after_list):
-            raise DocumentPatchError(f"closure root {ref!r} is ambiguous")
-        if len(before_list) > 1:
-            if all(equal(left, right) for left, right in zip(before_list, after_list)):
-                continue
-            raise DocumentPatchError(f"closure root {ref!r} is ambiguous")
-        before_roots[ref] = _payload_for_emit(ref, before_list[0])
-        after_roots[ref] = _payload_for_emit(ref, after_list[0])
     changes: list[dict[str, Any]] = []
-    for ref in before_roots:
-        _diff(before_roots[ref], after_roots[ref], ref, (), changes)
-    if not changes:
-        return []
-    return [{"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
-             "args": {"changes": copy.deepcopy(changes)}}]
+    try:
+        for ref, old, new in _root_pairs(before_bundle, after_bundle):
+            if not _same(managed_edges(ref, old), managed_edges(ref, new)):
+                raise DocumentPatchError(f"{ref} changes managed closure edges; use a semantic command")
+            _diff(_payload_for_emit(ref, old), _payload_for_emit(ref, new), ref, (), changes)
+        if not changes:
+            return []
+        commands: list[dict[str, Any]] = []
+        pending: list[dict[str, Any]] = []
+        parent = before_bundle["parent"]
+        mirrored = "clips" in parent and "clips" in parent.get("config", {})
+        for index, change in enumerate(changes):
+            pending.append(change)
+            # Native item setters refresh clip mirrors at command completion.
+            # Keep the next operand's closure consistent at that boundary.
+            clip_item = change["ref"] == "parent" and change["path"][:1] == ["clips"] and len(change["path"]) > 1
+            if index != len(changes) - 1 and not (mirrored and clip_item):
+                continue
+            command: dict[str, Any] = {
+                "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+                "args": {"changes": copy.deepcopy(pending)},
+            }
+            created = _created(pending, before_bundle)
+            if created:
+                command["created"] = created
+            commands.append(command)
+            pending = []
+        return commands
+    except (CommandError, ValueError, KeyError) as exc:
+        raise DocumentPatchError(f"cannot emit a source-bound doc.patch: {exc}") from exc
 
 
 __all__ = ["DocumentPatchError", "DocumentEmitterError", "emit_document_commands"]
