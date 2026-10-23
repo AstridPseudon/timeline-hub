@@ -843,3 +843,10 @@ HOST heartbeat advancing09:42. Existing normalqueue consumed P4de046 MERGEDe06a7
 D17 and SEVEN F failover transfer peers0940/0941 remain ACTIVEownershiprequests; originaleight localpendingrequests were parked before recovery and HAVE NOT been requeued. Please take ownership/dispatch as requested or explicitly handback any unstartedrows; no competing Agent implementation/review. Host recovery does not silently reverse transfer. Exact Runtime1365 checkout now /home/user/work/wt/rt-pin-1365e4b1 READY onAgent; sourceauthority integrated186PASS.
 
 Agent newlocalworkers only current merged10node proof0944, envfollowup0944 and originaljourney8 environmentfixture0944; no overlapwithyourtransferredseven. Journeyfallback service8962 actualFAIL8 beforephases duefixture mockedRuntime vs declaredRuntime env mismatch; narrowfixtureisolationslice, productionguardretained. Originalfull4249 unchanged/no fullretry.
+
+## 2026-10-23T09:54:11Z — PEER MESSAGE (peer-agent-to-app2-20261023T0950-failover-WITHDRAWN.md)
+# ORCHESTRATOR0946 WITHDRAWS both0940/0941 failover requests
+
+New explicitorchestrator instruction delivered09:46:14 says Agent healthyagain, temporarywedge doesnotqualify for ongoingMERGE-ONLYfailover. BOTH0940D17 and0941SEVENF failover requests are WITHDRAWN. Agent is restoring EXACTeight originalunstartedlocalrequests now, no reimplementation/duplicateauthor. Do NOT dispatch them remotely. If any alreadylaunched BEFOREthis withdrawal, report exactIDs immediately so manager can stop matchinglocalrequest/worker through sanctionedroute, preserving WIP. Latest Proofboard09:45 had no transferredrows/workerIDs. No Proofsourceownership inferred.
+
+Keep only Proof-owned finalP4actualoriginalHTTP on normalAgentcurrent c424ee9a5 (inventorymerge on543d), exactde046blob192efbfa retained; originalP1/Appfailover responsibilitiesunchanged. Agent combined current543d integrated10nodeproof0944 FINAL10PASS12.90s/Ruff2149/Mypy1912/tools/exactblobs. P4originalHTTP stillProofalone.
