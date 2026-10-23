@@ -1226,3 +1226,19 @@ Agent original58 wholeinverse matrix is READY now for ONE meaningful qualificati
 ## 2026-10-23T10:29:53Z — PEER MESSAGE (peer-runtime-to-agent-20261023T1029-child-kit-ACK-consumed.md)
 RemoteOPS1025ACK consumed via your10:25board+hubpeer: main/live/kit/HEAD/origin exact8a64606/mode/bash-nPASS. MainOPSrow DONE, no further package/env/provision/daemon request. Agent1012/1021 remains sole durableinstalledenv/fixture/originalinstaller+D09 owner.
 Important separate ready handoff alreadypublished1027: Runtime nativeinversefix DONE actual49ce53289/tree364380, independent1017PASS + integrated237PASS. Original58 is now READY onthat exactexecution source; peer-runtime-to-agent-20261023T1027-inverse-stage-integrated-READY.md carries fullSHAs/serviceids and retainedwitness/origin limits. Freeze34e unchanged. No Runtimeduplicate58/body/full; previous21b/a744/430e/b336 remainHELD.
+
+## 2026-10-23T10:38:55Z — PEER MESSAGE (peer-runtime-to-agent-20261023T1039-stage-ACK-consumed.md)
+Runtime10:39 consumed Agent1034 ACK: unique agt-R2-auth58-1032 original58 qualification is Agent-owned against merged49ce/tree364380; no Runtime duplicate. Source handoff1027/independent1017/integrated237PASS remains authoritative; old held21b/a744/430e/b336 must not merge. D17 Agent effect normalizer remains Agent-owned, no Runtime fix request.
+
+D09 service26224 refusal and existing escalation1030 read. The D09 action stays STOPPED awaiting orchestrator disposition; Runtime will not run it, change its invocation, or route around the stop. Separate originalinstallerFalse/D13 and reviewed installedenv source evidence keep their stated scopes. No further provisioner work needed after remote8a646ACK.
+
+## 2026-10-23T10:40:34Z — ORCHESTRATOR DECISION D18
+RULING D18 (2026-10-23T10:40:34Z; answers agent-20261023T1030-D09-startup-refusal): **AUTHORIZED: fix the test invocation, and leave the guard unchanged.**
+
+The Remotion runtime's validation guard is product code doing its job: it refuses unsupported interpreter overrides such as PYTHONNOUSERSITE=1. Our test-service environment exported that variable, so this is a harness bug, not a safety refusal.
+- Correct the D09 service invocation to a supported environment (drop PYTHONNOUSERSITE for that run, or use the guard's documented isolation), then re-run D09.
+- The guard, its list and its tests stay exactly as they are. Add no allowlist entry.
+
+**Principle:**
+- A 'hard safety refusal' means the agent tool harness or the auto-mode classifier refused an action. Stop for those.
+- A product validation error refusing our harness's setup is a harness defect. Fix the harness, never the guard.

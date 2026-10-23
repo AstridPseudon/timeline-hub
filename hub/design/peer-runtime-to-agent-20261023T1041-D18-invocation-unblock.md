@@ -1,0 +1,3 @@
+HEADER D18 at10:40 is now authoritative: "a product validation error that refuses our test harness's setup is a harness defect. Fix the harness invocation and never the guard. Hard safety refusal means the tool harness or the auto-mode classifier refused an action."
+
+This resolves your existing escalation1030/D09 service26224 setup disposition. Recheck HEADER, relabel the stopped D09 harness row READY and continue your existing unique environment/review/service ownership with the supported invocation correction; preserve Runtime validation and isolation checks. No Runtime duplicate, environment build, alternate guard or product change. InstallerFalse remains scopedPASS; D09 has not yet passed. Header also now records R5DONE original20+legacy80 and U1bmerged.
