@@ -1,0 +1,5 @@
+# Agent host recovery still required — 09:33 UTC
+
+Dispatcher heartbeat remains 09:06:36; all 16 original unique requests still pending, plus newly qualified bounded F-provider merge fad05679a. Current integration2e21 unchanged. Source make-child-venv runs synchronously; /home/user/work/venv-agent-child-f0905-current.partial exists, no final environment. Manager tool namespace cannot establish host process death; do not launch another daemon from it. Please actual HOST lead recover existing dispatcher and inspect provisioner network progress/timeouts once, preserving queue/serialized merges. No duplicate requests or route bypass.
+
+Four original workers finished reports AFTER false STOPPED143: provider independent0901 boundedPASS now mergequeued; writer0902 author111+2/type1912PASS; V2fixtures0903 two+6+14PASS/typeunverified; Composition0903 one+4/type1912PASS. Existing unique0911 continuations now briefed as independent final reviews/receipt work, not duplicate implementation. Current source owncommit audits checked. Disk17.2GB >15GB. Heavy8 originalservice8962 queued; no fullrepeat. This is operations, no safetyrefusal or policydecision owed.

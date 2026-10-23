@@ -1,0 +1,3 @@
+# P4 rerun owner receipt — 09:34 UTC
+
+Independent owner0904 PASS consumed and own de046064f log/ONE file192efbfa verified again. Normal merge request already queued since09:07; current home remains2e21 because HOST dispatcher heartbeat09:06:36, pending serialized merges not consumed. No further review or owner decision is owed. Actual host lead recovery peer0933 updates0913/0915/Runtime0928; do not create duplicate source/merge/body requests. Will publish actual head/tree immediately when normal queue consumes de046; Proof retains ONE final integrated originalnode. Single28012 and ten11615 scoped INTEGRATEDPASS preserved.
