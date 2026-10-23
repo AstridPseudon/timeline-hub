@@ -407,3 +407,27 @@ def test_list_follows_every_cursor_page(monkeypatch, capsys) -> None:
     payload = _json_result(capsys)
     assert [row["timeline_id"] for row in payload["data"][0]] == ["film", "trial-a"]
     assert payload["data"][1] is None
+
+
+def test_checkout_and_status_hints_use_the_existing_document_commit(tmp_path, monkeypatch, capsys):
+    from types import SimpleNamespace
+
+    from astrid.packs.timeline.cli_common import checkout_summary, status_text
+
+    path = tmp_path / "working copy.json"
+    local = SimpleNamespace(
+        path=path, base_revision="head-1", _cut_groups=lambda: ["cut"],
+        cut_count=lambda: "1 cut", clips=lambda: [], words=lambda: [],
+        changes=lambda: ["name changed"], edits=lambda: {"changes": []},
+        check=lambda: SimpleNamespace(valid=True, brief=lambda **_kwargs: ["valid"]),
+    )
+    parsed = timeline_cli.build_parser(object()).parse_args([
+        "status", "main", "--project", "p1", "--draft", "working", "--text",
+    ])
+    summary = "\n".join(checkout_summary(parsed, local, existed=True))
+    monkeypatch.setattr(Checkout, "load", classmethod(lambda *_args: local))
+    assert status_text(parsed, "p1", "t1", "head-2", "working", path) == 0
+    output = summary + capsys.readouterr().out
+    expected = timeline_cli._document_edit_commands(str(path))["commit"]
+    assert output.count(expected) == 2
+    assert "timelines publish" not in output and "three-way" not in output

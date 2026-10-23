@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import copy
+import json
+import sys
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -168,18 +170,87 @@ def commit_move(session, parsed, options):
         raise
 
 
-def commit_edit(parsed, *, sheet=False, edit=None):
+def _verify_commit_selection(session, parsed):
+    from types import SimpleNamespace
+
+    from astrid.core.receipts.contract import CommandReceipt
+    from astrid.sdk.timeline.revisions import RuntimeRevisions
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    entries = {}
+
+    def read(project, timeline, **options):
+        result = session.client.timelines.history(project, timeline, **options)
+        if result.ok and isinstance(result.data, dict):
+            entries.update((row["publication_id"], row) for row in result.data["items"])
+        return result
+
+    # Reuse the public reader's pinned pagination and complete ancestry checks.
+    history = RuntimeRevisions(SimpleNamespace(history=read)).list(
+        session.project_id, session.timeline_id, limit=sys.maxsize)
+    head = ({"revision_id": history[0].id, "publication_id": history[0].publication_id}
+            if history else None)
+
+    def require(condition, message):
+        if not condition:
+            raise WorkspaceClientError(0, "history_unavailable", message, {
+                "path": "/commands/0/args/publications", "head": head,
+            })
+
+    ordered = [revision.publication_id for revision in reversed(history or [])
+               if revision.publication_id in parsed.commit]
+    require(ordered == parsed.commit, "select exact accepted commit receipts, oldest first")
+    for publication in parsed.commit:
+        entry = entries[publication]
+        receipt = CommandReceipt.from_dict(entry["receipt"])
+        data, records = receipt.result, entry["records"]
+        require(entry["intent"] == "recorded" and isinstance(records, dict)
+                and isinstance(data, dict), "selected commit has no guarded accepted history")
+        require(receipt.receipt_id == publication and receipt.project_id == session.project_id
+                and receipt.command_kind == "timeline.commit"
+                and data.get("accepted_revision_id") == entry["revision_id"]
+                and data.get("publisher") == entry["publisher"]
+                and all(data.get(key) == entry[key] for key in ("provider_version", "compiler_version"))
+                and {"revision_id": data.get("previous_revision_id"),
+                     "publication_id": data.get("previous_publication_id")} == entry["previous"],
+                "selected history does not match its exact accepted receipt")
+        document = data.get("canonical_document", {})
+        require(document.get("project_id") == session.project_id
+                and document.get("timeline_id") == session.timeline_id
+                and document.get("parent_revision", {}).get("revision_id") == entry["revision_id"],
+                "selected receipt belongs to a different canonical timeline closure")
+        require(all(key in data and data[key] == records.get(key) == entry.get(key)
+                    for key in ("label", "steps", "merge_mode")),
+                "selected label and steps do not match accepted receipt history")
+        if parsed.command == "redo":
+            require(bool(records.get("undo_of")), "redo requires an accepted undo commit receipt")
+
+
+def commit_edit(parsed, *, sheet=False, edit=None, inverse=False):
     from astrid.core.receipts.contract import CommandReceipt
     from astrid.sdk.contracts import ErrorObject
     from astrid.sdk.timeline._common import TimelineEditError
     from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 
     try:
+        if inverse:
+            if not parsed.commit:
+                raise TimelineEditError("commit options require --commit RECEIPT_ID")
+            if parsed.draft or parsed.steps is not None or isinstance(parsed.steps_option, int):
+                raise TimelineEditError("--commit cannot be combined with a local draft or edit count")
+            if (any(not value.strip() for value in parsed.commit)
+                    or len(set(parsed.commit)) != len(parsed.commit)):
+                raise TimelineEditError("--commit requires unique exact receipt IDs, oldest first")
+            if parsed.steps_option is not None and set(parsed.steps_option) != set(parsed.commit):
+                raise TimelineEditError("--steps must map every selected commit to its step IDs")
         if sheet and parsed.draft:
             raise TimelineEditError("a sheet commit cannot be combined with a local draft")
         session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client)
         options = {"idempotency_key": parsed.idempotency_key, "dry_run": parsed.dry_run, "via": "cli"}
-        if edit is not None:
+        if inverse:
+            _verify_commit_selection(session, parsed)
+            result = session.undo(parsed.commit, steps=parsed.steps_option, **options)
+        elif edit is not None:
             result = edit(session, parsed, options)
             if result is NotImplemented:
                 return NotImplemented
@@ -205,7 +276,18 @@ def commit_edit(parsed, *, sheet=False, edit=None):
             error = ErrorObject(exc.failure["code"], message, exc.failure["details"])
         else:
             error = ErrorObject(getattr(exc, "code", "timeline_edit_error"), message, getattr(exc, "details", {}))
-        shown = DomainResult.failure(error)
+        if inverse:
+            import shlex
+
+            details = dict(error.details)
+            details.setdefault("path", "/commands/0/args/publications")
+            details.setdefault("head", details.get("current"))
+            details.setdefault("hint", "Read accepted history and select exact receipt IDs, oldest first; retry ambiguous outcomes with the original key.")
+            details.setdefault("suggested_command", shlex.join([
+                "astrid", "timelines", "history", parsed.ref, "--project", parsed.project, "--json",
+            ]))
+            error = ErrorObject(error.code, error.message, details)
+        shown = DomainResult.failure(error, idempotency_key=(parsed.idempotency_key or "") if inverse else "")
     return print_result(shown, as_json=parsed.json,
                         human_renderer=lambda value: _render_commit_result(value, dry_run=parsed.dry_run))
 def configure_edit_options(subparser):
@@ -223,5 +305,34 @@ def configure_apply_options(subparser):
     from astrid.packs.timeline.cli import _add_idempotency_key, _add_json_flag
 
     subparser.add_argument("--dry-run", action="store_true", help="Preview the sheet commit without publishing.")
+    _add_idempotency_key(subparser)
+    _add_json_flag(subparser, default=False)
+
+
+def history_steps(value):
+    import argparse
+
+    from astrid.packs.timeline.cli import _positive_int
+
+    if not value.lstrip().startswith("{"):
+        return _positive_int(value)
+    try:
+        steps = json.loads(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("steps must be a JSON map of receipt IDs to step-ID lists") from exc
+    if (not steps or not all(isinstance(key, str) and key.strip()
+                             and isinstance(ids, list) and ids
+                             and all(isinstance(step, str) and step.strip() for step in ids)
+                             and len(set(ids)) == len(ids) for key, ids in steps.items())):
+        raise argparse.ArgumentTypeError("steps must map each receipt ID to nonempty unique step IDs")
+    return steps
+
+
+def configure_history_options(subparser):
+    from astrid.packs.timeline.cli import _add_idempotency_key, _add_json_flag
+
+    subparser.add_argument("--commit", action="append", metavar="RECEIPT_ID",
+                           help="Reverse an accepted Runtime commit; for redo select the accepted undo. Repeat oldest first.")
+    subparser.add_argument("--dry-run", action="store_true", help="Preview the inverse without accepting a commit.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser, default=False)

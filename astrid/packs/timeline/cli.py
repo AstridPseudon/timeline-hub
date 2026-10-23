@@ -3527,12 +3527,24 @@ def _cmd_apply(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_undo(parsed: argparse.Namespace) -> int:
+    if parsed.commit or parsed.dry_run or parsed.idempotency_key:
+        from astrid.packs.timeline.cli_native import commit_edit
+
+        return commit_edit(parsed, inverse=True)
     tl=_edit_checkout(parsed); labels=tl.undo(parsed.steps)
+    if parsed.json:
+        return print_result(DomainResult.success({"undone": labels}), as_json=True)
     print("undid "+"; ".join(labels)); return 0
 
 
 def _cmd_redo(parsed: argparse.Namespace) -> int:
+    if parsed.commit or parsed.dry_run or parsed.idempotency_key:
+        from astrid.packs.timeline.cli_native import commit_edit
+
+        return commit_edit(parsed, inverse=True)
     tl=_edit_checkout(parsed); labels=tl.redo(parsed.steps)
+    if parsed.json:
+        return print_result(DomainResult.success({"redone": labels}), as_json=True)
     print("redid "+"; ".join(labels)); return 0
 
 
@@ -3540,7 +3552,10 @@ def _with_steps(handler):
     """``undo TL 3`` and ``undo TL --steps 3`` both mean three edits (default one)."""
     @wraps(handler)
     def run(parsed):
-        parsed.steps = parsed.steps_option or parsed.steps or 1
+        if not parsed.commit:
+            if isinstance(parsed.steps_option, dict):
+                raise _VerbError("step IDs require --commit RECEIPT_ID", 2)
+            parsed.steps = parsed.steps_option or parsed.steps or 1
         return handler(parsed)
     return run
 
@@ -3787,7 +3802,11 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
     subparser.add_argument("ref")
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("steps", nargs="?", type=_positive_int, default=None, help="How many edits (default 1).")
-    subparser.add_argument("--steps", dest="steps_option", type=_positive_int, default=None, help="The same, as an option.")
+    from astrid.packs.timeline.cli_native import configure_history_options, history_steps
+
+    subparser.add_argument("--steps", dest="steps_option", type=history_steps, default=None,
+                           help="Local edit count, or with --commit a JSON map of receipt IDs to step-ID lists.")
+    configure_history_options(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _with_steps(handler))))
 
 
@@ -3797,8 +3816,8 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
     CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
     CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
-    CommandSpec("undo", help="Undo edits to a detached working copy.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
-    CommandSpec("redo", help="Redo unsent draft edits.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
+    CommandSpec("undo", help="Undo local edits, or an accepted Runtime commit with --commit.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
+    CommandSpec("redo", help="Redo local edits, or reverse an accepted undo with --commit.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
     CommandSpec("check", help="Validate a working copy and optionally sweep every cut.", configure=_configure_check),
     CommandSpec("status", help="Show the canonical head and an existing working copy.", configure=_configure_status),
     CommandSpec("discard", help="Drop a working copy (its unpublished edits).", configure=_configure_working_verb("discard")),
