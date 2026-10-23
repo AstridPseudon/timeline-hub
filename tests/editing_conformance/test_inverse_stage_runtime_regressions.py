@@ -14,16 +14,18 @@ from pathlib import Path
 
 import pytest
 
+from astrid.sdk.timeline._clip_commands import capture_clip_add
 from astrid.sdk.timeline._command_state import ABSENT
-from astrid.sdk.timeline.commit import _digest, _manifest
+from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline.commit import bundle_from_document, create_runtime_commit_service
 from tests.editing_conformance.test_doc_patch_mirrors import (
+    change,
     declared_reads,
-    original_document,
+    patch,
     split_patch,
 )
 from tests.editing_conformance.test_doc_patch_v2 import step
 from tests.helpers.runtime import use_runtime
-from tests.sdk.test_timeline_commit_provider_document import MEDIA
 
 pytestmark = pytest.mark.integration
 
@@ -45,14 +47,6 @@ CASES = (
     pytest.param("40", ["config", "clips"], True, id="case-40-two-step-config-clips-after"),
     pytest.param("49", None, None, id="case-49-native-whole"),
 )
-
-
-def _replace(value, old, new):
-    if isinstance(value, dict):
-        return {key: _replace(child, old, new) for key, child in value.items()}
-    if isinstance(value, list):
-        return [_replace(child, old, new) for child in value]
-    return new if value == old else value
 
 
 def _public_inverse(publications):
@@ -161,10 +155,7 @@ def runtime_case(tmp_path, monkeypatch):
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
     from runtime_protocol.timeline_commit_store import TimelineCommitStore
-    from test_timeline_commit_acceptance import context, prepared, validate_prepared
-    from test_timeline_native_inspection import _canonical_publication
-
-    from astrid.sdk.timeline.commit import create_runtime_commit_service
+    from test_timeline_commit_acceptance import validate_prepared
 
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
@@ -173,46 +164,68 @@ def runtime_case(tmp_path, monkeypatch):
     service.create_timeline(project, "main", idempotency_key="timeline")
     commits = TimelineCommitStore(service.store, validate_prepared=validate_prepared)
     commits.bootstrap(project, "main", authorize=lambda: None)
-    media = service.ingest(
-        project, b"R2 durable inverse fixture", media_type="image/png",
-        original_name="r2.png", idempotency_key="media",
-    )["data"]["object_id"]
-    document = _replace(original_document(), MEDIA, media)
-    document["project_id"] = project
-    document["timeline_id"] = "main"
-    document["internal_timeline_revisions"][0]["timeline_id"] = "main"
-    for image in [document["parent_revision"], *document["shot_revisions"],
-                  *document["internal_timeline_revisions"]]:
-        image["content_digest"] = _digest(image["payload"])
-    document["dependency_manifest"] = _manifest(
-        document["shot_revisions"], document["internal_timeline_revisions"],
-        [{"media_id": media, "content_digest": media}], [],
-    )
-
-    # Install the complete fixture as an authenticated Runtime closure.  The
-    # synthetic baseline is deliberately a no-write historical edge: the
-    # forward cases below own every actual semantic write under test.
-    head = commits.head(project, "main")
-    seed_context = context(service, project, head, "seed")
-    seed = prepared(commits, seed_context, expected=head, revision="known-baseline")
-    publication = {"parent_revision_id": "known-baseline",
-                   "parent_composition": document["parent_revision"]["payload"],
-                   "shot_revisions": document["shot_revisions"],
-                   "internal_timeline_revisions": document["internal_timeline_revisions"]}
-    seed["canonical_document"] = _canonical_publication(
-        project, publication, commits.revision_closure(project, "main", head["revision_id"]),
-    )
-    seed["document_digest"] = _digest(seed["canonical_document"])
-    seed_record = seed["records"]["commands"][0]
-    seed_record.update(writes=[], reads=[], selections=[], bindings=[], created=[], dependencies=[],
-                      derived_writes=[])
-    seed_record["command"]["created"] = []
-    seed["records"].pop("steps", None)
-    from test_timeline_commit_acceptance import accept
-
-    accept(commits, seed_context, seed)
     service.register_timeline_commit_provider(create_runtime_commit_service())
-    document = commits.revision_closure(project, "main", "known-baseline")
+
+    # Build the baseline through the public provider/store path.  These are
+    # ordinary authored births from the real empty bootstrap, not a fabricated
+    # closure or directly accepted prepared history.
+    document = commits.revision_closure(project, "main", commits.head(project, "main")["revision_id"])
+    track = capture_track_create(
+        bundle_from_document(document), "parent",
+        {"id": "picture", "kind": "visual", "role": "output"},
+    )
+    tracked = _submit(
+        service, project,
+        _full_request(
+            service, project, [track], steps=[step("create track", 0, track)],
+            label="R2 baseline track", reads=[], key="unused",
+            source={"via": "python"}, rationale="Ordinary baseline creation",
+            group_id="r2-baseline-track",
+        ),
+        "baseline-track",
+    )
+    document = tracked["data"]["canonical_document"]
+    clip_a = {"id": "clip-a", "clipType": "text", "track": "picture", "at": 1, "hold": 2}
+    add_a = capture_clip_add(bundle_from_document(document), "parent", clip_a)
+    added_a = _submit(
+        service, project,
+        _full_request(
+            service, project, [add_a], steps=[step("create clip a", 0, add_a)],
+            label="R2 baseline clip a", reads=[], key="unused",
+            source={"via": "python"}, rationale="Ordinary baseline creation",
+            group_id="r2-baseline-clip-a",
+        ),
+        "baseline-clip-a",
+    )
+    document = added_a["data"]["canonical_document"]
+    clip_b = {"id": "clip-b", "clipType": "text", "track": "picture", "at": 5, "hold": 2}
+    add_b = capture_clip_add(bundle_from_document(document), "parent", clip_b)
+    added_b = _submit(
+        service, project,
+        _full_request(
+            service, project, [add_b], steps=[step("create clip b", 0, add_b)],
+            label="R2 baseline clip b", reads=[], key="unused",
+            source={"via": "python"}, rationale="Ordinary baseline creation",
+            group_id="r2-baseline-clip-b",
+        ),
+        "baseline-clip-b",
+    )
+    document = added_b["data"]["canonical_document"]
+    output = patch(
+        change(["config", "output"], ABSENT, {"file": "out.mp4"}),
+        change(["unknown"], ABSENT, {}),
+    )
+    output_accepted = _submit(
+        service, project,
+        _full_request(
+            service, project, [output], steps=[step("create output", 0, output)],
+            label="R2 baseline output", reads=[], key="unused",
+            source={"via": "python"}, rationale="Ordinary baseline creation",
+            group_id="r2-baseline-output",
+        ),
+        "baseline-output",
+    )
+    document = output_accepted["data"]["canonical_document"]
     origin = _origin_snapshot()
     _assert_source_identity(origin)
     try:
