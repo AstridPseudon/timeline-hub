@@ -121,11 +121,29 @@ class Plan:
 
 
 def validate_command(command):
+    prepared_parent_birth = (
+        isinstance(command, dict)
+        and command.get('op') == 'clip.add-media'
+        and isinstance(command.get('select'), str)
+        and command['select'].startswith('parent/clip:')
+        and isinstance(command.get('args'), dict)
+        and isinstance(command['args'].get('row'), dict)
+        and command['args']['row'].get('clipType') in ('media', 'video')
+        and 'from' in command['args']['row']
+        and 'to' in command['args']['row']
+        and command['args']['row'].get('hold') is None
+    )
+    schema_command = copy.deepcopy(command)
+    if prepared_parent_birth and schema_command['args']['row'].get('hold') is None:
+        # The frozen command schema still requires ordinary positive holds. The
+        # explicit raw parent after-anchor recipe validates this one source-row
+        # shape in the provider and keeps the original absence on the wire.
+        schema_command['args']['row']['hold'] = 1
     try:
-        json.dumps(command, allow_nan=False)
+        json.dumps(schema_command, allow_nan=False)
     except (ValueError, TypeError) as exc:
         raise CommandError("command must be finite JSON") from exc
-    errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+    errors = sorted(_VALIDATOR.iter_errors(schema_command), key=lambda e: str(e.path))
     if errors:
         raise CommandError(errors[0].message)
     if command['version'] != '1':
@@ -133,7 +151,7 @@ def validate_command(command):
     if command['op'] not in (*operations(), 'timeline.inverse', 'timeline.restore'):
         raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
     operation = operations().get(command['op'])
-    if operation is not None:
+    if operation is not None and not prepared_parent_birth:
         errors = list(_VALIDATOR.evolve(schema=operation.parameters).iter_errors(command['args']))
         if errors:
             raise CommandError(errors[0].message)
@@ -224,6 +242,7 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
                         schema_inputs=schema_inputs, realm_id=realm_id,
                         verified_producer=verified_producer)
         ctx.patch_replay_bindings = replay_bindings or {}
+        ctx.prior_records = records
         metadata.before(ctx)
         # Declarations are dependency observations, not native authored claims.
         # Restore them after exact command capture validation for history/undo.

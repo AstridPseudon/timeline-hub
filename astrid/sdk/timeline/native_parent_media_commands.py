@@ -2,11 +2,67 @@
 from __future__ import annotations
 
 import copy
+import math
+import re
+
+from astrid.core.timeline.duration import clip_timeline_duration
 
 from ._command_state import CommandError, State
 from ._media_inputs import _verified
-from .capture import rate
+from .capture import number, rate
 from .native_occurrence_media_commands import _clip, _registry
+
+
+def _start(row):
+    """Return the authored raw start without selecting a display projection."""
+    if 'at' not in row:
+        raise CommandError('parent after-clip anchor requires an authored at', kind='unsupported_timing')
+    start = number(row['at'], 'clip.at')
+    if start < 0:
+        raise CommandError('clip.at must not be negative', kind='unsupported_timing')
+    if ('at_ms' in row and row['at_ms'] is not None
+            and not math.isclose(number(row['at_ms'], 'clip.at_ms') / 1000, start, abs_tol=1e-9)):
+        raise CommandError('contradictory at/at_ms timing codecs', kind='unsupported_timing')
+    return start
+
+
+def _after_row(source, requested, media, *, start):
+    """Clone the raw source row, changing only reserved destination identities."""
+    if not isinstance(requested, dict) or not isinstance(requested.get('id'), str):
+        raise CommandError('after-clip birth requires a reserved destination id')
+    if requested.get('track', source.get('track')) != source.get('track'):
+        raise CommandError('after-clip birth cannot change the source track', kind='unsupported_ownership')
+    if requested.get('asset', media.get('asset')) != media.get('asset'):
+        raise CommandError('after-clip birth asset differs from the reserved selection', kind='dependency_changed')
+    row = copy.deepcopy(source)
+    row['id'] = requested['id']
+    row['asset'] = media['asset']
+    if 'at' in source:
+        row['at'] = start
+    if 'at_ms' in source:
+        row['at_ms'] = start * 1000
+    for key in ('effectId', 'effect_id'):
+        if key in source or key in requested:
+            row[key] = copy.deepcopy(requested.get(key, f'effect-{requested["id"]}'))
+    return row
+
+
+def _source_duration(row):
+    try:
+        return clip_timeline_duration(row)
+    except ValueError as exc:
+        raise CommandError(str(exc), kind='unsupported_timing') from exc
+
+
+def _after_capture_row(bundle, after, row, media):
+    if not isinstance(after, str) or not re.fullmatch(r'parent/clip:(?!.*::)[^/]+', after):
+        raise CommandError('parent after-clip capture requires a raw parent clip', kind='unsupported_ownership')
+    source = State(bundle).entity(after, optional=True)
+    if not isinstance(source, dict):
+        raise CommandError('after-clip anchor is missing', kind='selection_changed', ref=after)
+    start = _start(source)
+    duration = max(0.05, _source_duration(source))
+    return _after_row(source, row, media, start=start + duration)
 
 
 def assembled_target(ctx, command):
@@ -28,15 +84,55 @@ def add_media(ctx, command):
     rate(ctx.read('parent', ['config', 'output', 'fps']))
     if ctx.read('parent/source', ['source_window']) is not None:
         raise CommandError('parent source_window is unsupported', kind='unsupported_map')
+    after = None if command['select'] == 'parent' else command['select']
+    prior_records = getattr(ctx, 'prior_records', ())
+    replacing = bool(prior_records and
+                     prior_records[-1]['command']['op'] == 'timeline.assembled-target')
+    raw_window = after is not None and not replacing
+    if row.get('hold') is None and not raw_window:
+        raise CommandError('media edit requires a positive clip.hold', kind='unsupported_timing')
     ctx.bind('media.owner', 'parent')
-    _clip(ctx, 'parent', row, float('inf'), kind, [value])
+    _clip(ctx, 'parent', row, float('inf'), kind, [value], raw_window=raw_window)
     for occurrence in ctx.select('collection.occurrences', 'parent'):
         for path in (['placement', 'track'], ['track']):
             if ctx.read(occurrence, path) == row['track']:
                 raise CommandError('track is the lane of an occurrence-owned shot',
                                    kind='unsupported_ownership')
     _registry(ctx, 'parent', pin, kind, create=True, alias=row['asset'])
-    after = None if command['select'] == 'parent' else command['select']
+    if after is not None and not replacing:
+        if not after.startswith('parent/clip:'):
+            raise CommandError('parent after-clip birth requires a raw parent clip',
+                               kind='unsupported_ownership')
+        source = ctx.read(after)
+        if not isinstance(source, dict) or source.get('track') != row.get('track'):
+            raise CommandError('after-clip anchor track changed', kind='dependency_changed', ref=after)
+        source_asset = source.get('asset')
+        if not isinstance(source_asset, str):
+            raise CommandError('after-clip anchor has no raw media identity', kind='unsupported_media', ref=after)
+        ctx.read('parent/asset:' + source_asset)
+        ctx.bind('parent.after-clip', after)
+        ctx.bind('parent.after-track', 'parent/track:' + str(source['track']))
+        start = _start(source)
+        duration = max(0.05, _source_duration(source))
+        expected = _after_row(source, row, pin, start=start + duration)
+        if expected != row:
+            raise CommandError('after-clip birth row is not the captured source clone',
+                               kind='capture_mismatch', ref=after)
+        members = ['parent/clip:' + clip['id']
+                   for clip in ctx.state.collection('parent', 'clip')
+                   if isinstance(clip, dict) and isinstance(clip.get('id'), str)]
+        if after not in members:
+            raise CommandError('parent after-clip anchor is missing', kind='selection_changed', ref=after)
+        for ref in members[members.index(after) + 1:]:
+            if ctx.read(ref, ['track']) != source['track']:
+                continue
+            later = ctx.read(ref)
+            later_start = _start(later)
+            shifted = later_start + duration
+            ctx.write(ref, ['at'], shifted)
+            if 'at_ms' in later:
+                ctx.write(ref, ['at_ms'], shifted * 1000)
+        ctx.compile_mirrors()
     ctx.create('parent', 'clip', row, after=after)
     # Automatic builders may add original-state read constraints to this literal
     # birth. Observe them ourselves; caller snapshots never become record facts.
@@ -88,6 +184,8 @@ def capture_clip_add_media(bundle, row, media, *, verified_media, after=None):
     """Birth preserves the complete authored row and inserts after a stable boundary or appends."""
     from .commands import execute
 
+    if after is not None:
+        row = _after_capture_row(bundle, after, row, media)
     return execute(bundle, [{'schema_version': 1, 'op': 'clip.add-media', 'version': '1',
                              'select': 'parent' if after is None else after,
                              'args': {'row': copy.deepcopy(row), 'media': copy.deepcopy(media)}}],
