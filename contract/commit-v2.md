@@ -1297,11 +1297,98 @@ Complete conflict envelope (409; no writes):
 ```
 
 Invalid means the request cannot be valid at its claimed base, including malformed
-patches, incorrect previous values, unsupported operations or final validation
-failure. It is 422 with `details.status: "invalid"`. Include the failing document
-path when known; for envelope errors use the request field path. `current` is
-null only if validation happened before the authorized head could be loaded.
+patches, incorrect previous values, unsupported operations or a final-validation
+failure under the rule below. It is 422 with `details.status: "invalid"`. Include
+the failing document path when known; for envelope errors use the request field
+path. `current` is null only if validation happened before the authorized head
+could be loaded.
 Do not turn a later-head guard failure into an invalid-base diagnosis.
+
+The existing mounted Agent provider performs final validation on the completed
+candidate: return 422 `invalid` when a commit creates or modifies an unresolvable
+timing/reference declaration, or makes a previously resolvable declaration
+unresolvable (including by removing or moving its referenced target). An
+unresolvable legacy declaration already in the base is preserved byte-for-byte
+and cannot block an unrelated edit when the declaration and its referenced
+targets are unchanged; `dry_run`/validate may report it only as a non-blocking
+diagnostic. Guards still apply to every value written or invalidated: no binding
+is invented and no declaration is stripped.
+
+Normative fixture (executable assertions; this models the contract, not provider
+implementation proof):
+
+```python
+import copy
+import json
+
+fixture = json.loads(r'''
+{
+  "base": {
+    "config": {
+      "tracks": [{"id": "track-1", "kind": "visual", "label": "Picture"}],
+      "clips": [
+        {
+          "id": "clip-1", "clipType": "video", "track": "track-1", "at": 0, "hold": 2,
+          "app": {"astrid": {"on": "old-anchor", "until": "end"}},
+          "params": {"note": "A"}
+        },
+        {
+          "id": "clip-2", "clipType": "video", "track": "track-1", "at": 2, "hold": 1,
+          "app": {"astrid": {"on": "clip-1", "until": "end"}},
+          "params": {"note": "B"}
+        },
+        {
+          "id": "clip-3", "clipType": "video", "track": "track-1", "at": 3, "hold": 1,
+          "app": {}, "params": {"note": "C"}
+        }
+      ]
+    }
+  },
+  "cases": {
+    "unrelated_edit": {
+      "change": {"op": "set", "ref": "parent", "path": ["clips", "id:clip-1", "params", "note"], "before": {"state": "present", "value": "A"}, "value": "B"},
+      "expected_status": "accepted"
+    },
+    "create_unresolved": {
+      "change": {"op": "set", "ref": "parent", "path": ["clips", "id:clip-3", "app", "astrid"], "before": {"state": "absent"}, "value": {"on": "new-anchor", "until": "end"}},
+      "expected": {"http_status": 422, "code": "invalid_document", "details": {"status": "invalid", "code": "invalid_document", "path": ["clips", "id:clip-3", "app", "astrid"], "hint": "Bind the timing declaration to an existing target", "suggested_command": "timeline edit"}}
+    },
+    "modify_unresolved": {
+      "change": {"op": "set", "ref": "parent", "path": ["clips", "id:clip-2", "app", "astrid", "on"], "before": {"state": "present", "value": "clip-1"}, "value": "missing-anchor"},
+      "expected": {"http_status": 422, "code": "invalid_document", "details": {"status": "invalid", "code": "invalid_document", "path": ["clips", "id:clip-2", "app", "astrid", "on"], "hint": "Bind the timing declaration to an existing target", "suggested_command": "timeline edit"}}
+    },
+    "remove_referenced_target": {
+      "change": {"op": "list.remove", "ref": "parent", "path": ["clips"], "id": "clip-1", "before": {"state": "present", "value": {"id": "clip-1", "clipType": "video", "track": "track-1", "at": 0, "hold": 2, "app": {"astrid": {"on": "old-anchor", "until": "end"}}, "params": {"note": "A"}}}, "order_before": ["clip-1", "clip-2", "clip-3"]},
+      "expected": {"http_status": 422, "code": "invalid_document", "details": {"status": "invalid", "code": "invalid_document", "path": ["clips", "id:clip-2", "app", "astrid", "on"], "hint": "Keep the referenced target or update the declaration", "suggested_command": "timeline edit"}}
+    }
+  }
+}
+''')
+
+base = fixture["base"]
+clips = base["config"]["clips"]
+target_ids = {clip["id"] for clip in clips}
+assert "old-anchor" not in target_ids
+legacy = clips[0]["app"]["astrid"]
+legacy_bytes = json.dumps(legacy, separators=(",", ":"), ensure_ascii=False)
+
+candidate = copy.deepcopy(base)
+candidate["config"]["clips"][0]["params"]["note"] = "B"
+assert fixture["cases"]["unrelated_edit"]["change"]["path"] == ["clips", "id:clip-1", "params", "note"]
+assert json.dumps(candidate["config"]["clips"][0]["app"]["astrid"], separators=(",", ":"), ensure_ascii=False) == legacy_bytes
+assert candidate["config"]["clips"][0]["params"]["note"] == "B"
+assert fixture["cases"]["unrelated_edit"]["expected_status"] == "accepted"
+
+for case in ("create_unresolved", "modify_unresolved", "remove_referenced_target"):
+    expected = fixture["cases"][case]["expected"]
+    assert expected["http_status"] == 422
+    assert expected["code"] == expected["details"]["code"]
+    assert expected["details"]["status"] == "invalid"
+    assert expected["details"]["path"]
+    assert expected["details"]["hint"] and expected["details"]["suggested_command"]
+
+print("PASS: unrelated edit preserves unresolved legacy bytes; new, modified, and target-invalidating declarations are 422 invalid")
+```
 
 Complete invalid envelope for the id-less-list case:
 
