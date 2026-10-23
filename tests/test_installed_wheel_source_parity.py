@@ -66,26 +66,11 @@ def test_build_replaces_stale_generated_package_files(tmp_path):
     stale.parent.mkdir(parents=True)
     stale.write_text("# stale generated module must never enter the wheel\n")
 
-    builder = None
-    for candidate in (sys.executable, "python3.11", "python3.12", "python3.13", "python3", "python"):
-        try:
-            probe = subprocess.run(
-                [candidate, "-c", "import setuptools.build_meta"],
-                capture_output=True,
-                check=False,
-            )
-        except OSError:
-            continue
-        if probe.returncode == 0:
-            builder = candidate
-            break
-    assert builder is not None, "the stale-build regression needs a setuptools builder"
-
     wheelhouse = tmp_path / "wheelhouse"
     wheelhouse.mkdir()
     subprocess.run(
         [
-            builder,
+            sys.executable,
             "-m",
             "pip",
             "wheel",
@@ -97,7 +82,6 @@ def test_build_replaces_stale_generated_package_files(tmp_path):
             str(wheelhouse),
             str(source),
         ],
-        env={**os.environ, "SETUPTOOLS_USE_DISTUTILS": "stdlib"},
         check=True,
     )
     wheels = list(wheelhouse.glob("astrid_runtime-*.whl"))

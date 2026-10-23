@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 
 from tests.astrid_checkout import astrid_importable  # noqa: F401  (fixture)
-from tests.wheel_builder import find_wheel_builder
 from tests.lanes import pytest_collection_modifyitems, pytest_configure  # noqa: F401  (lanes)
 from tests.process_groups import ProcessGroups
 
@@ -113,18 +112,14 @@ def _group_exists(pgid: int) -> bool:
 def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """One offline venv containing both installed runtime packages.
 
-    The test runner may be a development Python without setuptools (notably
-    the system 3.14 build on this host).  Build local wheels with whichever
-    available interpreter has the build backend, then install those wheels
-    into the clean target venv without consulting a package index.
+    Local wheels are built with the running interpreter (the `test` extra
+    pins setuptools>=70.1, which ships bdist_wheel), then installed into the
+    clean target venv without consulting a package index.
     """
     root = Path(__file__).resolve().parents[1]
     environment = tmp_path_factory.mktemp("stage1-runtime") / "venv"
     wheelhouse = environment.parent / "wheelhouse"
     source = environment.parent / "source"
-    builder = find_wheel_builder()
-    if builder is None:
-        raise RuntimeError("Stage 1 tests require an available Python that can build wheels (setuptools.build_meta plus bdist_wheel)")
     # setuptools writes build/ and egg-info beside the source tree. Build
     # from a private copy so concurrent pytest sessions cannot delete or
     # replace each other's generated package files in the checkout.
@@ -144,9 +139,8 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path
     subprocess.run([sys.executable, "-m", "venv", str(environment)], check=True)
     wheelhouse.mkdir()
     subprocess.run(
-        [builder, "-m", "pip", "wheel", "--no-index", "--no-build-isolation", "--no-deps", "--wheel-dir", str(wheelhouse), str(source), str(client_source)],
+        [sys.executable, "-m", "pip", "wheel", "--no-index", "--no-build-isolation", "--no-deps", "--wheel-dir", str(wheelhouse), str(source), str(client_source)],
         cwd=str(source),
-        env={**os.environ, "SETUPTOOLS_USE_DISTUTILS": "stdlib"},
         check=True,
     )
     scripts = "Scripts" if os.name == "nt" else "bin"
