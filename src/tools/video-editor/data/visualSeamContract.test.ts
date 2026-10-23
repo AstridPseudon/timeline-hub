@@ -58,7 +58,7 @@ describe('visual seam contract', () => {
     const report = analyzeVisualSeams(base);
 
     expect(report.structuralIssues).toHaveLength(1);
-    expect(report.structuralIssues[0]).toContain('video: picture-a ends at frame 30, picture-b starts at frame 60');
+    expect(report.structuralIssues[0]).toContain("0:02.0 · Gap on Picture between 'picture-a' and 'picture-b'");
   });
 
   it('uses frame ownership rather than float seconds for a contiguous hard cut', () => {
@@ -115,23 +115,16 @@ describe('visual seam contract', () => {
       },
     ]));
 
-    expect(report.boundaries[0]).toMatchObject({ frame: 1259, unacknowledgedRisk: true });
+    // An overlay effect of undisclosed timing is not a full-screen picture: it is not opaque and raises no warning.
+    expect(report.boundaries[0]).toMatchObject({ frame: 1259, unacknowledgedRisk: false });
     expect(report.boundaries[0]?.participants).toEqual(expect.arrayContaining([
       expect.objectContaining({ ownerId: 'occ-11', behavior: 'enters', path: ['parent', 'timeline', 'occurrence', 'occ-11', 'clip', 'shot-11'] }),
-      expect.objectContaining({ clipId: 'fx-process-v3', behavior: 'opaque' }),
     ]));
-    expect(report.opaqueElements).toContainEqual(expect.objectContaining({
-      clipId: 'fx-process-v3',
-      clipType: 'custom-process',
-      ownerId: 'fx-process-v3',
-      startFrame: 1259,
-      endFrame: 1274,
-      reason: 'custom-clip-type',
-      elementRef: { id: 'fx-process-v3', kind: 'effect', revision: 'rev-1' },
-    }));
+    expect(report.boundaries[0]?.participants.some((item) => item.behavior === 'opaque')).toBe(false);
+    expect(report.opaqueElements).toEqual([]);
   });
 
-  it('reports opaque effects that began before and remain active across a cut without loading media', () => {
+  it('does not flag overlay effects active across a cut, and analyses without loading media', () => {
     const source = config([
       media('a', 0, 2, 'a'),
       media('b', 2, 2, 'b'),
@@ -152,17 +145,8 @@ describe('visual seam contract', () => {
     });
 
     const report = analyzeVisualSeams(metadataOnly);
-    expect(report.boundaries[0]).toMatchObject({ frame: 60, unacknowledgedRisk: true });
-    expect(report.boundaries[0]?.participants).toContainEqual(expect.objectContaining({
-      clipId: 'long-effect',
-      behavior: 'opaque',
-    }));
-    expect(report.opaqueElements).toContainEqual(expect.objectContaining({
-      clipId: 'long-effect',
-      elementRef: { id: 'wipe-v2', kind: 'effect', revision: 'rev-7', packId: 'pack-a' },
-      startFrame: 15,
-      endFrame: 75,
-    }));
+    expect(report.boundaries[0]).toMatchObject({ frame: 60, unacknowledgedRisk: false });
+    expect(report.opaqueElements).toEqual([]);
   });
 
   it('does not treat adjacency between effect clips as structural picture continuity', () => {
@@ -179,7 +163,7 @@ describe('visual seam contract', () => {
     ]));
 
     expect(report.structuralIssues).toEqual([]);
-    expect(report.opaqueElements).toHaveLength(2);
+    expect(report.opaqueElements).toHaveLength(0);
   });
 
   it('honors explicit frame intent over implicit transition metadata and synchronized cues', () => {
@@ -190,7 +174,7 @@ describe('visual seam contract', () => {
     ]);
     expect(analyzeVisualSeams(base).boundaries[0]).toMatchObject({ intent: 'transition', requiresIntent: true, unacknowledgedRisk: true });
     const synchronized = withVisualSeamIntent(base, 60, 'synchronized');
-    expect(analyzeVisualSeams(synchronized).boundaries[0]).toMatchObject({ intent: 'synchronized', requiresIntent: false, unacknowledgedRisk: true });
+    expect(analyzeVisualSeams(synchronized).boundaries[0]).toMatchObject({ intent: 'synchronized', requiresIntent: false, unacknowledgedRisk: false });
     const explicitHardCut = withVisualSeamIntent(base, 60, 'hard-cut');
     expect(analyzeVisualSeams(explicitHardCut).boundaries[0]).toMatchObject({ intent: 'hard-cut', requiresIntent: true, unacknowledgedRisk: true });
     expect(() => assertVisualSeamAdmission(explicitHardCut, { enforceIntent: true })).toThrow(VisualSeamAdmissionError);
@@ -220,7 +204,7 @@ describe('visual seam contract', () => {
     expect(() => assertVisualSeamAdmission(unsafe, { enforceIntent: true })).toThrow(VisualSeamAdmissionError);
     const acknowledged = withVisualSeamIntent(unsafe, 60, 'synchronized');
     expect(() => assertVisualSeamAdmission(acknowledged, { enforceIntent: true })).not.toThrow();
-    expect(analyzeVisualSeams(acknowledged).boundaries[0]).toMatchObject({ intent: 'synchronized', requiresIntent: false, unacknowledgedRisk: true });
+    expect(analyzeVisualSeams(acknowledged).boundaries[0]).toMatchObject({ intent: 'synchronized', requiresIntent: false, unacknowledgedRisk: false });
   });
 
   it('binds stored intent to the current boundary participants and leaves a second boundary untouched', () => {
@@ -258,5 +242,29 @@ describe('visual seam contract', () => {
     analyzeVisualSeams(metadataOnly);
     const report = analyzeVisualSeams(metadataOnly);
     expect(report.boundaries).toHaveLength(499);
+  });
+
+  it('does not flag same-track overlaps on overlay tracks, or mark custom overlay clips opaque', () => {
+    const report = analyzeVisualSeams(config([
+      media('picture-a', 0, 2, 'a'),
+      {id: 'flap', clipType: 'am-flap', track: 'fx', at: 0.5, hold: 1, elementRef: {id: 'flap', kind: 'element'}},
+      {id: 'c-skip-pill', clipType: 'am-pill', track: 'fx', at: 0.8, hold: 1, elementRef: {id: 'pill', kind: 'element'}, label: 'Skip'},
+      {id: 'sprite-1', clipType: 'media', track: 'fx', asset: 's', at: 0.6, hold: 1, width: 200, height: 100},
+      {id: 'sprite-2', clipType: 'media', track: 'fx', asset: 's', at: 0.7, hold: 1, width: 200, height: 100},
+    ]));
+
+    expect(report.structuralIssues).toEqual([]);
+    expect(report.opaqueElements).toEqual([]);
+    expect(report.warningCount).toBe(0);
+  });
+
+  it('reports overlapping full-frame picture clips in one plain line', () => {
+    const report = analyzeVisualSeams(config([
+      media('a', 0, 2, 'a', {label: 'Opening'}),
+      media('b', 1.5, 2, 'b', {label: 'Plate'}),
+    ]));
+
+    expect(report.structuralIssues).toEqual(["0:01.5 · Two full-screen clips overlap on Picture: 'Opening' and 'Plate'"]);
+    expect(report.blocked).toBe(true);
   });
 });

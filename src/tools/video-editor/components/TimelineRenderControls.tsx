@@ -47,6 +47,12 @@ function isAbortError(error: unknown): boolean {
   return typeof error === 'object' && error !== null && 'name' in error && error.name === 'AbortError';
 }
 
+function formatTimecode(seconds: number): string {
+  const tenths = Math.round(seconds * 10);
+  const minutes = Math.floor(tenths / 600);
+  return `${minutes}:${((tenths - minutes * 600) / 10).toFixed(1).padStart(4, '0')}`;
+}
+
 function VisualBoundaryReport({ report, canDeclareSeamsAsHardCuts, declareSeamsAsHardCuts, canAcknowledgeVisualCues, acknowledgeVisualCuesAsSynchronized }: {
   report: VisualSeamReport;
   canDeclareSeamsAsHardCuts?: boolean;
@@ -57,28 +63,32 @@ function VisualBoundaryReport({ report, canDeclareSeamsAsHardCuts, declareSeamsA
   return (
     <section className="mt-2 space-y-2 border-t border-current/15 pt-2" aria-label="Visual seam admission report">
       <p className="font-medium text-zinc-100">Visual boundary report</p>
-      {report.boundaries.filter((boundary) => boundary.unacknowledgedRisk || boundary.structuralIssues.length > 0).map((boundary) => (
-        <div key={boundary.frame} className="rounded border border-white/10 bg-white/5 px-2 py-1.5 text-zinc-200">
-          <p>Frame {boundary.frame} · {boundary.timeSeconds.toFixed(2)}s</p>
-          <p className="text-zinc-400">
-            {boundary.participants.map((participant) => participant.cue?.kind ?? participant.behavior).join(', ') || 'Boundary'}
-          </p>
-          {boundary.participants.map((participant) => (
-            <p key={`${participant.ownerId}:${participant.path.join('/')}:${participant.behavior}:${participant.cue?.kind ?? ''}:${participant.cue?.id ?? ''}:${participant.cue?.frame ?? ''}`} className="break-all text-zinc-500">
-              {participant.path.join(' / ')}
-            </p>
-          ))}
-          {boundary.structuralIssues.map((issue) => <p key={issue} className="text-red-300">{issue}</p>)}
-        </div>
-      ))}
       {report.structuralIssues.map((issue) => (
-        <p key={issue} className="text-red-300">Structural issue: {issue}</p>
+        <p key={issue} className="text-red-300">{issue}</p>
       ))}
-      {report.opaqueElements.length > 0 && (
-        <p className="text-amber-200">
-          Opaque visual elements ({report.opaqueElements.length}): {[...new Set(report.opaqueElements.map((element) => element.clipType))].join(', ')}
+      {report.boundaries.filter((boundary) => boundary.unacknowledgedRisk).map((boundary) => (
+        <p key={boundary.frame} className="text-zinc-200">
+          {formatTimecode(boundary.timeSeconds)} · Possible visual change at this cut
         </p>
-      )}
+      ))}
+      <details className="text-zinc-400">
+        <summary className="cursor-pointer">Technical details</summary>
+        {report.boundaries.filter((boundary) => boundary.unacknowledgedRisk).map((boundary) => (
+          <div key={boundary.frame} className="mt-1">
+            <p>Frame {boundary.frame} · {boundary.participants.map((participant) => participant.cue?.kind ?? participant.behavior).join(', ') || 'Boundary'}</p>
+            {boundary.participants.map((participant) => (
+              <p key={`${participant.ownerId}:${participant.path.join('/')}:${participant.behavior}:${participant.cue?.kind ?? ''}:${participant.cue?.id ?? ''}:${participant.cue?.frame ?? ''}`} className="break-all text-zinc-500">
+                {participant.path.join(' / ')}
+              </p>
+            ))}
+          </div>
+        ))}
+        {report.opaqueElements.length > 0 && (
+          <p className="mt-1 text-amber-200">
+            Full-screen clips with undisclosed timing ({report.opaqueElements.length}): {[...new Set(report.opaqueElements.map((element) => element.clipType))].join(', ')}
+          </p>
+        )}
+      </details>
       {(() => {
         const raw = report.rawDiagnostics;
         const rawBoundaries = Array.isArray(raw?.boundaries) ? raw.boundaries : [];

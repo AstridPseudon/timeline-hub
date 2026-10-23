@@ -32,7 +32,8 @@ describe('visual seam metadata performance', () => {
     for (let index = 0; index < 5; index += 1) analyzeVisualSeams(metadataOnly);
     const reports = Array.from({ length: 25 }, () => analyzeVisualSeams(metadataOnly));
     for (const report of reports) {
-      expect(report.opaqueElements).toHaveLength(100);
+      // Overlay effects of undisclosed timing are not full-screen pictures, so they are never reported as opaque.
+      expect(report.opaqueElements).toHaveLength(0);
     }
     expect(reports.at(-1)).toEqual(reports[0]);
   });
