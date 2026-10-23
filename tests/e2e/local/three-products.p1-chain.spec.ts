@@ -5,6 +5,7 @@ import type { CommitRequest } from '../../../src/integrations/runtime/timeline-c
 import { APP_ENTRY_ROUTE, commandOutboxes, expectConnected, firstTrackName, test as appTest } from './support/app.ts';
 import { ASTRID_PYTHON, AstridCli } from './support/astrid.ts';
 import { compositionPublication, harnessUnavailableReason, type DirectHarness } from './support/harness.ts';
+import { logDiagnostic, redactDiagnosticText, redactDiagnosticValue } from './p1-diagnostic-safety.ts';
 
 const CEILING = { timeout: 90_000 };
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
@@ -74,12 +75,12 @@ function assertSuccessfulReply(post: Pick<CommitPost, 'status' | 'response'>, la
   const hint = [details.hint, body.hint, nestedError.hint].find((value) => typeof value === 'string');
   const hasStructuredData = body.data !== null && typeof body.data === 'object' && !Array.isArray(body.data);
   if (post.status !== 200 || !hasStructuredData) {
-    console.log(`[P1 ${label} structural reply diagnostic] ${JSON.stringify({
+    logDiagnostic(`P1 ${label} structural reply diagnostic`, {
       status: post.status ?? null,
       ...(code === undefined ? {} : { code }),
       ...(path === undefined ? {} : { path }),
       ...(hint === undefined ? {} : { hint }),
-    })}`);
+    });
   }
   expect(post.status, `${label} expected HTTP 200`).toBe(200);
   expect(hasStructuredData, `${label} expected structured success data`).toBe(true);
@@ -201,7 +202,11 @@ async function openChain(page: Page, harness: DirectHarness, seed: ChainSeed, fa
     await expect(firstTrackName(page)).toBeVisible();
     await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
   } catch (error) {
-    await openChainDiagnostics(page, seed.timelineId, runtimeResponses, pageErrors, consoleErrors);
+    try {
+      await openChainDiagnostics(page, seed.timelineId, runtimeResponses, pageErrors, consoleErrors);
+    } catch {
+      // Failure-only diagnostics must never replace the original assertion failure.
+    }
     throw error;
   }
 }
@@ -332,36 +337,6 @@ function diagnosticConnectionState(value: string | null): DiagnosticConnectionSt
   return (DIAGNOSTIC_CONNECTION_STATES as readonly string[]).includes(value ?? '') ? value as DiagnosticConnectionState : 'unknown';
 }
 
-function redactDiagnosticText(value: string) {
-  return value
-    .replace(/https?:\/\/[^\s"'<>]+/gi, (raw) => {
-      try {
-        const url = new URL(raw);
-        return `${url.origin}${url.pathname}`;
-      } catch {
-        return '[REDACTED_URL]';
-      }
-    })
-    .replace(/([/?][^\s"'<>?]*)\?[^\s"'<>]*/g, '$1[QUERY_REDACTED]')
-    .replace(/\bBearer\s+[^\s,;]+/gi, 'Bearer [REDACTED]')
-    .replace(/\b(authorization|cookie|set-cookie|token|secret|password|credential|api[_-]?key)\b\s*[:=]\s*[^\s,;]+/gi, '$1=[REDACTED]')
-    .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '[REDACTED_JWT]')
-    .slice(0, 500);
-}
-
-function redactDiagnosticValue(value: unknown, depth = 0): unknown {
-  if (depth > 8) return '[REDACTED_DEPTH]';
-  if (typeof value === 'string') return redactDiagnosticText(value);
-  if (Array.isArray(value)) return value.slice(0, DIAGNOSTIC_LIMIT).map((item) => redactDiagnosticValue(item, depth + 1));
-  if (!value || typeof value !== 'object') return value;
-  const result: Record<string, unknown> = {};
-  for (const [key, item] of Object.entries(value)) {
-    if (/authorization|cookie|credential|password|secret|token|api[_-]?key/i.test(key)) continue;
-    result[key] = redactDiagnosticValue(item, depth + 1);
-  }
-  return result;
-}
-
 function diagnosticHead(value: unknown): { revisionId: string; publicationId: string | null } | null {
   if (!value || typeof value !== 'object') return null;
   const record = value as Record<string, any>;
@@ -464,7 +439,7 @@ async function openChainDiagnostics(
   const panelState = await runtimePanel.getAttribute('data-state').catch(() => null);
   const selectedTimelineId = await provider.getAttribute('data-timeline-id').catch(() => null);
   const alertCount = await page.locator('[role="alert"]:visible').count().catch(() => 0);
-  console.log(`[P1 openChain diagnostics] ${JSON.stringify({
+  logDiagnostic('P1 openChain diagnostics', {
     outboxReadFailed,
     outboxes: outboxSummary,
     ui: {
@@ -480,7 +455,7 @@ async function openChainDiagnostics(
       page: { count: pageErrors.length, known: pageErrors.filter((signal) => signal !== 'unknown') },
       console: { count: consoleErrors.length, known: consoleErrors.filter((signal) => signal !== 'unknown') },
     },
-  })}`);
+  });
 }
 
 async function captureSecondCaseFailureDiagnostics({
@@ -547,7 +522,7 @@ async function captureSecondCaseFailureDiagnostics({
       reply: redactDiagnosticValue(post.response),
       replyHead: diagnosticHead(post.response),
     }));
-    console.log(`[P1 second-case failure diagnostics] ${JSON.stringify({
+    logDiagnostic('P1 second-case failure diagnostics', {
       case: {
         title: 'P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message',
         phase: 'after-source-in-before-original-post-count-wait',
@@ -598,9 +573,9 @@ async function captureSecondCaseFailureDiagnostics({
         console: signals.consoleErrors.slice(0, DIAGNOSTIC_LIMIT),
         requestFailures: signals.requestFailures.slice(0, DIAGNOSTIC_LIMIT),
       },
-    })}`);
+    });
   } catch {
-    console.log('[P1 second-case failure diagnostics] {"capture":"failed"}');
+    logDiagnostic('P1 second-case failure diagnostics', { capture: 'failed' });
   }
 }
 
@@ -768,7 +743,11 @@ test('P1 split -> trim new clip: a real Agent move refuses the stale trim and th
   try {
     await expect.poll(() => traffic.posts.length, CEILING).toBe(2);
   } catch (error) {
-    await captureSecondCaseFailureDiagnostics({ page, harness, seed, traffic, signals, before, originalClip, rightId, split, agent });
+    try {
+      await captureSecondCaseFailureDiagnostics({ page, harness, seed, traffic, signals, before, originalClip, rightId, split, agent });
+    } catch {
+      // Failure-only diagnostics must never replace the original assertion failure.
+    }
     throw error;
   }
   await expect.poll(() => traffic.posts[1].status, CEILING).not.toBeUndefined();
