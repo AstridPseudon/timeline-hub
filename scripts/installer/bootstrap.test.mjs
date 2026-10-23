@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
@@ -22,7 +22,7 @@ test('POSIX explains first-run preparation before Python setup completes', () =>
   assert.equal((await output.result).code, 0);
 }));
 
-test('POSIX uses developer manifest, XDG bootstrap, exact local commits and Python without external shims', () => scenario(async (context) => {
+test('POSIX uses developer manifest, the per-OS data layout (HOME-based on macOS, XDG on Linux), exact local commits and Python without external shims', () => scenario(async (context) => {
   context.manifest.agent.repo = path.join(context.root, 'source with spaces');
   context.manifest.runtime.repo = pathToFileURL(path.join(context.root, 'runtime source')).href;
   const committedSource = '# committed source\n';
@@ -140,6 +140,15 @@ test('POSIX streams an unbuffered installer stage before the transaction can fin
   assert.equal(result.code, 0, result.stderr);
   assert.match(result.stdout, /Astrid is ready\./);
   assert.ok((await context.calls()).at(-1).includes('-u'));
+}));
+
+test('POSIX keeps the log directory private, even when it already exists with looser permissions', () => scenario(async (context) => {
+  const logDirectory = path.dirname(context.env.MOCK_LOG);
+  await mkdir(logDirectory, { recursive: true });
+  await chmod(logDirectory, 0o755);
+  const result = await run(context, []);
+  assert.equal(result.code, 0, result.stderr);
+  assert.equal((await stat(logDirectory)).mode & 0o777, 0o700);
 }));
 
 test('POSIX preserves a native core exit code without the core failure paragraph', () => scenario(async (context) => {
