@@ -24,6 +24,7 @@ import type { VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRunt
 import type { TimelineEditability } from '../lib/timeline-editability';
 import { createCommitOutbox } from '../commands/commitOutbox.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
+import * as timelineDiagnostics from '../lib/timeline-diagnostics';
 
 vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOriginal) => ({
   ...await importOriginal<typeof import('@/integrations/runtime/generated-contract-metadata.ts')>(),
@@ -1256,7 +1257,7 @@ describe('useTimelineSave mounted save diagnostics', () => {
         await expect(captured).rejects.toThrow('Local edits preceded the original verified read');
         expect(send).not.toHaveBeenCalled();
         expect(records.find((record) => record.phase === 'capture-rejected')).toMatchObject({
-          errorCode: 'operation-rejected', errorStage: 'capture' });
+          errorCode: 'owner-original-read-invalidated', errorClass: 'TimelineVersionConflictError', errorStage: 'capture' });
         expect(harness.hook.result.current.originalLocalSaveBasis?.status).toBe('unavailable');
       } else {
         await act(async () => { await captured; });
@@ -1298,6 +1299,69 @@ describe('useTimelineSave mounted save diagnostics', () => {
       harness.hook.unmount();
       expect(records.some((record) => record.phase === 'owner-closed')).toBe(true);
       window.removeEventListener('timeline:save-diagnostic', listener);
+      if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+      else Reflect.deleteProperty(navigator, 'locks');
+    }
+  });
+
+  it.each(['head', 'gesture', 'closed owner'] as const)('preserves real mounted %s capture refusals with diagnostics enabled, disabled or failing', async (kind) => {
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+      request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}),
+    } });
+    const messages: string[] = [];
+    try {
+      for (const enabled of [false, true, 'dispatch failure'] as const) {
+        resetFakeIndexedDB();
+        vi.stubGlobal('indexedDB', createFakeIndexedDB());
+        vi.stubGlobal('__timelineSaveDiagnosticsEnabled', enabled !== false);
+        const data = makeTimelineData('guard');
+        data.head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
+        const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+          { timelineId: 'timeline-1' }).data.canonical_document;
+        document.parent_revision.payload = { config: data.config, clips: data.config.clips, registry: data.registry, occurrences: [] };
+        document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+        const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>();
+        const harness = setup(async () => { throw new Error('Legacy save must not be called'); }, undefined, {
+          data, loadBasis: vi.fn(async () => ({ head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document })),
+          capabilities: { commitTimeline: send, getRecoverableIdentity: vi.fn(async () => ({ actorId: 'private', realmId: 'private' })) },
+        });
+        try {
+          await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.ownerId).toBeTruthy());
+          const save = harness.hook.result.current.localDocumentSave!;
+          const next = structuredClone({ config: data.config, registry: data.registry, head: data.head });
+          const gesture = structuredClone({ kind: 'trim' as const, clipId: 'clip-guard', patch: { hold: 3 },
+            config: data.config, registry: data.registry });
+          if (kind === 'head') next.head.headRevisionId = 'other';
+          if (kind === 'gesture') gesture.config.clips[0].at = 9;
+          if (kind === 'closed owner') harness.hook.unmount();
+          const mark = vi.spyOn(timelineDiagnostics, 'markTimelineSaveRejection');
+          const dispatch = vi.spyOn(window, 'dispatchEvent').mockImplementation(() => {
+            if (enabled === 'dispatch failure') throw new Error('diagnostic failure');
+            return true;
+          });
+          const error = await save.capture(next, gesture).catch((caught: unknown) => caught);
+          expect(error).toBeInstanceOf(TimelineVersionConflictError);
+          expect(mark.mock.calls.some(([original]) => original === error)).toBe(true);
+          const code = kind === 'head' ? 'capture-input-head-unavailable' : kind === 'gesture' ? 'gesture-basis-mismatch' : 'capture-owner-unavailable';
+          if (enabled) {
+            const events = dispatch.mock.calls.map(([event]) => (event as CustomEvent).detail);
+            expect(events.find((event) => event.phase === 'capture-rejected')).toMatchObject({
+              errorCode: code, errorClass: 'TimelineVersionConflictError', errorStage: 'capture' });
+          } else expect(dispatch).not.toHaveBeenCalled();
+          dispatch.mockRestore();
+          mark.mockRestore();
+          messages.push((error as Error).message);
+          expect(send).not.toHaveBeenCalled();
+          expect(harness.saveTimeline).not.toHaveBeenCalled();
+          expect(harness.hook.result.current.localSaveState?.status).toBe('saved');
+          expect(harness.hook.result.current.dataRef.current?.head).toEqual(data.head);
+        } finally { harness.hook.unmount(); }
+      }
+      expect(messages[1]).toBe(messages[0]);
+      expect(messages[2]).toBe(messages[0]);
+    } finally {
+      vi.restoreAllMocks();
       if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
       else Reflect.deleteProperty(navigator, 'locks');
     }

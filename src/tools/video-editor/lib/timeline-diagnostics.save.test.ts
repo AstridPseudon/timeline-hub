@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { emitTimelineSaveDiagnostic } from './timeline-diagnostics';
+import { emitTimelineSaveDiagnostic, markTimelineSaveRejection } from './timeline-diagnostics';
 
 describe('timeline save diagnostic projection', () => {
   afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
@@ -72,5 +72,50 @@ describe('timeline save diagnostic projection', () => {
       mounted: { config: { clips } }, state: { status: 'secret' } }));
     expect((dispatch.mock.calls[0][0] as CustomEvent).detail).toMatchObject({ timelineId: 'UNKNOWN', status: 'UNKNOWN',
       mountedClip: { from: 'UNKNOWN', fromState: 'UNKNOWN' } });
+  });
+
+  it('classifies only tagged local exceptions without reading or changing error properties', () => {
+    vi.stubGlobal('__timelineSaveDiagnosticsEnabled', true);
+    const dispatch = vi.spyOn(window, 'dispatchEvent').mockReturnValue(true);
+    const error = Object.freeze(new Error('private error text'));
+    const descriptors = Object.getOwnPropertyDescriptors(error);
+    expect(markTimelineSaveRejection(error, 'owner-identity-invalidated', 'Error')).toBe(error);
+    for (const phase of ['capture-rejected', 'basis-error', 'owner-error'] as const) {
+      emitTimelineSaveDiagnostic(phase, () => ({ error }));
+      expect((dispatch.mock.lastCall![0] as CustomEvent).detail).toMatchObject({
+        errorCode: 'owner-identity-invalidated', errorClass: 'Error' });
+    }
+    expect(Object.getOwnPropertyDescriptors(error)).toEqual(descriptors);
+    emitTimelineSaveDiagnostic('capture-resolved', () => ({ error }));
+    expect((dispatch.mock.lastCall![0] as CustomEvent).detail).toMatchObject({ errorCode: 'UNKNOWN', errorClass: 'UNKNOWN' });
+    expect(JSON.stringify(dispatch.mock.calls.map(([event]) => (event as CustomEvent).detail))).not.toContain('private');
+  });
+
+  it('keeps foreign, forged, unreadable and proxy errors generic without executing traps', () => {
+    vi.stubGlobal('__timelineSaveDiagnosticsEnabled', true);
+    const dispatch = vi.spyOn(window, 'dispatchEvent').mockReturnValue(true);
+    const trap = vi.fn(() => { throw new Error('private'); });
+    const revoked = Proxy.revocable({}, {});
+    revoked.revoke();
+    const accessor = Object.defineProperties({}, { message: { get: trap }, stack: { get: trap }, name: { get: trap } });
+    const hostile = new Proxy({}, { get: trap, getOwnPropertyDescriptor: trap, getPrototypeOf: trap });
+    for (const error of [undefined, null, 'private', new Error('private'),
+      { errorCode: 'gesture-basis-mismatch', errorClass: 'TimelineVersionConflictError' }, accessor, hostile, revoked.proxy]) {
+      expect(() => emitTimelineSaveDiagnostic('capture-rejected', () => ({ error }))).not.toThrow();
+      expect((dispatch.mock.lastCall![0] as CustomEvent).detail).toMatchObject({ errorCode: 'operation-rejected', errorClass: 'UNKNOWN' });
+    }
+    expect(trap).not.toHaveBeenCalled();
+  });
+
+  it('leaves exceptions unchanged when tagging is disabled or diagnostics fail', () => {
+    const error = new Error('private');
+    vi.stubGlobal('__timelineSaveDiagnosticsEnabled', false);
+    expect(markTimelineSaveRejection(error, 'capture-owner-unavailable')).toBe(error);
+    vi.stubGlobal('__timelineSaveDiagnosticsEnabled', true);
+    const dispatch = vi.spyOn(window, 'dispatchEvent').mockReturnValue(true);
+    emitTimelineSaveDiagnostic('capture-rejected', () => ({ error }));
+    expect((dispatch.mock.lastCall![0] as CustomEvent).detail).toMatchObject({ errorCode: 'operation-rejected', errorClass: 'UNKNOWN' });
+    Object.defineProperty(window, '__timelineSaveDiagnosticsEnabled', { configurable: true, get() { throw new Error('flag'); } });
+    expect(markTimelineSaveRejection(error, 'capture-owner-unavailable')).toBe(error);
   });
 });
