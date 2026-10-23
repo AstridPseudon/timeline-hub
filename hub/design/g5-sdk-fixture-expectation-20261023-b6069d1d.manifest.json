@@ -1,0 +1,72 @@
+{
+  "schema": "timeline.g5.sdk.fixture-expectation-manifest/v1",
+  "packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/g5-sdk-fixture-expectation-20261023-b6069d1d.json",
+  "packet_sha256": "0903352e81ae45fc9ac85c680bd1efb42c6a48f5ba26e88e5bfd27e314da6483",
+  "scope": "EXPECTATION ONLY, no accepted-history authority",
+  "required_parent_digest": "sha256:b6069d1ddccc0279e871b142773b63b73b107ebf9d0adc11ab73832b69097afb",
+  "derivation": {
+    "source_parent": {
+      "archive": "/home/user/work/wt/rt-pin-9ce4242b/tests/fixtures/precut-v31.tar.gz",
+      "archive_sha256": "e304773208ff96cea0dca545c69cfa3fcb7ef605c01c306017ed8bcfc654a6b5",
+      "realm_read_mode": "sqlite mode=ro",
+      "source_revision": "film-parent-v1",
+      "source_parent_digest": "sha256:3df0dbb371b6add88b147b444f6ee01006b12655d9bde5f67f184f05be38f750"
+    },
+    "exact_mutations": [
+      "append config.tracks {id: music-other, kind: audio}",
+      "set clips[0].app to the exact on/until/until_film_end/astrid object in the packet",
+      "append the exact music-other clip with extension.opaque [null, {keep: true}]",
+      "set config.clips = deep copy of clips"
+    ],
+    "canonicalization": "json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False); sha256",
+    "mutation_source": "tests/editing_conformance/test_commit_runtime_m1.py lines 35-48"
+  },
+  "source_hashes": {
+    "agent_head": "e8a29acc0c896b2c3c0b78fd6c258b6f809ae721",
+    "agent_tests_sdk_sha256": "2575cb71554a104a48eba75bc5edb0998901e1014dca865a42088844a966db2a",
+    "agent_tests_m1_sha256": "a95ee868774b20b093c015eef40b48a12f695ddaa9c06d6f1a8b8329b2092776",
+    "agent_timing_validation_sha256": "871a4b140be60863a8238ac60acf1ab12f56d7a71d4a59bc4f3f3792de46f58f",
+    "agent_native_word_anchor_sha256": "771d833188de33556a1853e95e84703e7ce5b36e2a6b2d2c55cb975f93f36744",
+    "runtime_precut_fixture_sha256": "c7fed3953a0de5147260a6e4fd1cb4a3d28b4fb87b04f8bacba928bf1397fff1",
+    "runtime_film_fixture_sha256": "7fa6dd0212dae2a8c5157a297c30c3369ec3d68f123bab43ca3552978a123398",
+    "runtime_checkout_tree": "92ab1f5f739ffdfedf7b25fbd2a7b46ae42c5d1a"
+  },
+  "original_four_body_locks": {
+    "test_checkout_reload_undo_cli_redo_uses_retained_history": {
+      "ast_body_sha256": "e1163f29661c3c824bdd63f22f6699ec59ef9d2d7cf6445bf6fb893d563832cf",
+      "function_source_sha256": "1ea4f8c1a8342c049933e580f70282a9fef87fdc73f9f45366c854664b513056"
+    },
+    "test_open_bundle_keeps_http_rows_raw_and_round_trips_canonical_images": {
+      "ast_body_sha256": "05b4cf4915ef9bb1220b1c9333f72bd9b2e456001fcb3bef72ca83503c98744c",
+      "function_source_sha256": "0d9c76abdb1304c760cc667273f592c5ba7f987e84170aaa67b7ea2a6722a8d6"
+    },
+    "test_retained_restore_does_not_reopen_consumed_draft_steps": {
+      "ast_body_sha256": "609dfdb23b5800ca07974af9214d859079894a6402d1bb7494826feab056b3f8",
+      "function_source_sha256": "43a5cab36e8464974c86af04ed37e138ea7ec441c3d1180235587bba4b363b1f"
+    },
+    "test_catalog_recover_uses_real_http_and_preserves_closure_before_revision_restore": {
+      "ast_body_sha256": "96177bd02c8ead8461cc565c73b45bb403617ac1beec8d9a1f3bb0b01123fc97",
+      "function_source_sha256": "dcbeca79c3ff4830a6535646edcd76f81646a05e024d17756769e11262140627"
+    }
+  },
+  "read_only_inventory_result": {
+    "inspected_parent_rows": 28,
+    "inspected_archives": 12,
+    "matching_required_parent_rows": 0,
+    "archive_inventory_scope": "existing committed Runtime 9ce fixture catalog only; unlisted operator backups were not searched",
+    "recovered_original_tmp_json": false,
+    "old_proof": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-sdk-bootstrap-sol-1604.md",
+    "old_proof_sha256": "a720152a5a1ea1b6445bff204ed503eaa5b30b63895fc46a5332fbd5f5c9c56f",
+    "old_worker_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-sdk-bootstrap-sol-1604/log.txt",
+    "old_worker_log_sha256": "09cbcbfc8f88c2d61038f410340d9d261c6b8eef151a01507bf63f563d88aa75"
+  },
+  "verification": {
+    "required_digest_match": true,
+    "child_and_media_hashes_recomputed_read_only": true,
+    "accepted_history_created": false,
+    "archive_modified": false,
+    "hmac_key_printed": false,
+    "db_written": false,
+    "integration_bodies_run": false
+  }
+}
