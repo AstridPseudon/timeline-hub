@@ -488,67 +488,184 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
         config: Mapping[str, Any] | None = None,
         idempotency_key=None,
     ):
-        """Create a timeline that already has an empty current head.
+        """Create and initialize a timeline through Runtime's commit door."""
+        import copy
+        import re
+        from types import SimpleNamespace
 
-        Runtime ``create_timeline`` makes the identity shell only; until a
-        parent composition is published the timeline has no head, so checkout,
-        show, visualize and render all refuse it.  The first publication (with
-        ``expected_head`` null, no shots, and the given parent config) gives it
-        that head.  Both writes derive from one caller key, so a retry replays
-        the committed shell and head instead of creating a second timeline.
-        """
         from astrid.core.ids import generate_ulid
 
         key = idempotency_key or uuid.uuid4().hex
         resolved = self._resolve_project_ref(project)
         if not resolved.ok:
             return resolved
-        project_ref = str(resolved.data)
         timeline_key = str(timeline_id).strip() if timeline_id not in (None, "") else generate_ulid()
         shell = self._typed(
-            "create_timeline", project_ref, timeline_key,
+            "create_timeline", str(resolved.data), timeline_key,
             key=f"{key}-shell", idempotency_key=f"{key}-shell",
             **({"name": name} if name is not None else {}),
         )
         if not shell.ok:
             return shell
-        shell_row = shell.data if isinstance(shell.data, Mapping) else {}
-        project_id = shell_row.get("project_id")
+        row = shell.data if isinstance(shell.data, Mapping) else {}
+        project_id = row.get("project_id")
         if not isinstance(project_id, str) or not project_id:
             return DomainResult.failure(
                 ErrorObject("protocol_error", "runtime timeline create returned no project identity", {"timeline_id": timeline_key}),
                 idempotency_key=key,
             )
-        publication = {
-            "project_id": project_id,
-            "timeline_id": timeline_key,
-            "expected_head": None,
-            "parent_composition": {
-                "config": dict(config) if config is not None else {"tracks": []},
-                "registry": {},
-                "clips": [],
-                "occurrences": [],
-            },
-            "shot_revisions": [],
-            "internal_timeline_revisions": [],
-        }
-        head = self._typed(
-            "publish_parent_composition", project_id, timeline_key, publication,
-            key=f"{key}-head", idempotency_key=f"{key}-head",
-        )
-        if not head.ok:
-            return head
-        published = head.data if isinstance(head.data, Mapping) else {}
+
+        init_key = f"{key}-head"
+        replay = self._native_empty_replay(project_id, timeline_key, init_key, key)
+        if replay is not None:
+            return replay
+
+        try:
+            from .timeline._common import TimelineEditError
+            from .timeline.commands import execute
+            from .timeline.emitter import emit_document_commands
+            from .timeline.native_initialize import capture_initialize
+            from .timeline.sync import CommitConflict, TimelineSession
+
+            # TimelineSession is a public-client facade.  RemoteTimelines is
+            # already the authenticated facade over this exact transport, so
+            # keep reads and the commit on the same WorkspaceClient identity.
+            client = SimpleNamespace(
+                timelines=self,
+                _remote=SimpleNamespace(_transport=self._client),
+            )
+            session = TimelineSession.open(project_id, timeline_key, client=client)
+            with session.outbox.locked():
+                state = session._state()
+
+            # An ambiguous/structured first attempt leaves the exact sealed
+            # request in the Session outbox. Retry it; never recapture defaults
+            # over a later edit or an inverse that happens to restore bytes.
+            if state["flight"] is not None:
+                result = session.flush()
+                return self._native_empty_result(project_id, timeline_key, name, result, key)
+            if state["pending"]:
+                result = session.flush(idempotency_key=init_key)
+                return self._native_empty_result(project_id, timeline_key, name, result, key)
+
+            before = session._bundle(state)
+            canonical_name = name if name is not None else "Main"
+            slug = re.sub(r"[^a-z0-9]+", "-", canonical_name.lower()).strip("-") or "timeline"
+            default_output = {
+                "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+                "background": None, "background_scale": None,
+            }
+            commands = [capture_initialize(
+                before, name=canonical_name, slug=slug, output=default_output,
+            )]
+            initialized = execute(before, commands).bundle
+            authored_config = copy.deepcopy(dict(config)) if config is not None else {"tracks": []}
+            canvas = authored_config.get("theme_overrides")
+            for field in ("visual", "canvas"):
+                canvas = canvas.get(field) if isinstance(canvas, Mapping) else None
+            if canvas:
+                default_output = {
+                    **default_output,
+                    "resolution": f"{canvas.get('width', 1280)}x{canvas.get('height', 720)}",
+                    "fps": canvas.get("fps", 30),
+                }
+            authored_config.setdefault("output", default_output)
+            authored_config.setdefault("clips", [])
+            after = copy.deepcopy(initialized)
+            after["parent"]["config"] = authored_config
+            commands.extend(emit_document_commands(initialized, after))
+            label = "Create empty timeline"
+            timeline_scope_read = [{"kind": "scope", "ref": "timeline", "path": []}]
+            steps = [{
+                "id": "initialize", "label": label, "intent": label, "tags": [],
+                "command_ordinals": [0], "patch": [], "reads": copy.deepcopy(timeline_scope_read),
+            }]
+            if len(commands) > 1:
+                steps.append({
+                    "id": "config", "label": label, "intent": label, "tags": [],
+                    "command_ordinals": list(range(1, len(commands))),
+                    "patch": [copy.deepcopy(change) for command in commands[1:]
+                              for change in command["args"]["changes"]],
+                    "reads": copy.deepcopy(timeline_scope_read),
+                })
+            result = session.commit_many(
+                commands, idempotency_key=init_key, label=label, steps=steps,
+                merge="atomic", reads=[],
+            )
+            return self._native_empty_result(project_id, timeline_key, name, result, key)
+        except CommitConflict as exc:
+            failure = exc.failure
+            return DomainResult.failure(
+                ErrorObject(failure["code"], failure["message"], failure["details"]),
+                idempotency_key=key,
+            )
+        except WorkspaceClientError as exc:
+            return DomainResult.failure(
+                ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key,
+            )
+        except (ConnectionError, OSError) as exc:
+            return DomainResult.failure(
+                ErrorObject("unavailable", str(exc), {"timeline_id": timeline_key}),
+                idempotency_key=key,
+            )
+        except (TimelineEditError, KeyError, TypeError, ValueError) as exc:
+            return DomainResult.failure(
+                ErrorObject("validation_error", str(exc), {"timeline_id": timeline_key}),
+                idempotency_key=key,
+            )
+
+    def _native_empty_replay(self, project_id, timeline_id, init_key, result_key):
+        cursor, seen = None, set()
+        while True:
+            options = {"limit": 100}
+            if cursor is not None:
+                options["cursor"] = cursor
+            history = self._typed("list_timeline_commits", project_id, timeline_id, **options)
+            if not history.ok:
+                return history
+            page = history.data if isinstance(history.data, Mapping) else {}
+            for entry in page.get("items", []):
+                if not isinstance(entry, Mapping):
+                    continue
+                receipt = entry.get("receipt")
+                if not isinstance(receipt, Mapping) or receipt.get("idempotency_key") != init_key:
+                    continue
+                data = receipt.get("result")
+                if (receipt.get("command_kind") != "timeline.commit"
+                        or not isinstance(data, Mapping)
+                        or not any(isinstance(command, Mapping)
+                                   and command.get("op") == "timeline.init"
+                                   for command in data.get("commands", []))):
+                    return DomainResult.failure(
+                        ErrorObject("integrity_error", "native timeline initialization history is invalid", {}),
+                        idempotency_key=result_key,
+                    )
+                return self._native_empty_result(project_id, timeline_id, None,
+                                                 {"data": data, "receipt": receipt}, result_key)
+            next_cursor = page.get("next_cursor")
+            if next_cursor is None or next_cursor in seen:
+                return None
+            seen.add(next_cursor)
+            cursor = next_cursor
+
+    @staticmethod
+    def _native_empty_result(project_id, timeline_id, name, result, result_key):
+        data = result.get("data") if isinstance(result, Mapping) else None
+        receipt = result.get("receipt") if isinstance(result, Mapping) else None
+        if not isinstance(data, Mapping) or not isinstance(receipt, Mapping):
+            raise ValueError("native timeline initialization returned an invalid result")
+        committed = CommandReceipt.from_dict(receipt)
+        document = data.get("canonical_document")
+        payload = document.get("parent_revision", {}).get("payload", {}) if isinstance(document, Mapping) else {}
+        payload = payload if isinstance(payload, Mapping) else {}
+        init_name = name if name is not None else payload.get("name")
         return DomainResult.success(
             {
-                "project_id": project_id,
-                "timeline_id": timeline_key,
-                **({"name": shell_row.get("name")} if name is not None else {}),
-                "head_revision_id": published.get("new_head") or published.get("revision_id"),
-                "created": True,
+                **dict(data), "project_id": project_id, "timeline_id": timeline_id,
+                **({"name": init_name} if init_name is not None else {}),
+                "head_revision_id": data.get("accepted_revision_id"), "created": True,
             },
-            receipt=head.receipt,
-            idempotency_key=key,
+            receipt=committed, idempotency_key=result_key,
         )
 
     def rename(self, project, timeline_id: str, name: str, *, idempotency_key: str | None = None):
