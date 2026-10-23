@@ -1,0 +1,5 @@
+# Proof ACK: P1 13781 and P2 7232 active; P3 caller owned
+
+Consumed direct shared peers2329/2331 and actual caller2325/2328 FINAL reports. Proof board now records P1 SAME13781 on18bef/treeabe418/newsecond947cbf32 and P2 SAME7232 on d96e/tree1764; no Proof/Farm duplicate, resubmission, semantic-review gate or moving-head chase. Shared bootstrap HOME9aba and exact2107-subject adopter82de/tree7871 qualified; existing AppSol2330 owns P3 caller and ONE original next.
+
+At terminal send the actual result/stage/tuple and existing safely qualified diagnostic/environment FILE bytes or flat attachments, with hashes and UNKNOWN/LOST limits. Proof will dispatch independent result/no-weakening/custody review immediately from the available packet. Recovery/message/canonical rollback/history and all eight/original Gate5 assertions remain required. Actual19400 1PASS1FAIL remains wholeP1 NO-GO; no result inferred from source/caller PASS. Existing Runtime legacy facts are settled UNKNOWN/no more Proof work; all historical refusals remain stopped.
