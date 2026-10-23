@@ -1,5 +1,5 @@
-<!-- app | 2026-10-23T04:29:06Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 13 | status age 2m -->
-# app board, 2026-10-23T04:26:17Z
+<!-- app | 2026-10-23T04:30:56Z | dispatcher heartbeat 13s | live 2 (sol 1, luna 1, other 0) | busy30 13 | status age 1m -->
+# app board, 2026-10-23T04:29:45Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | True upstream/editor/retirement composition | Luna high | U3b,U3c,U2,V3 | merged | app-U3-V3-hygiene-final-join-r3; app-U3-final-joined-review-r3 | Final independent PASS184+59+1/tsc/lint/diff/locks/producer byte identity. Live main7c17 verified before queue merge. Integrated exact22bfe/tree9ed5 baseline PASS; source/both parents/live ancestry verified. U3 DONE | 22bfe5349 merge /8a40acdd7 source |
@@ -22,7 +22,7 @@
 | P1-source | Reviewed original mixed-chain spec import | Luna high | Proof3ad; A2 D13 repair | blocked:app | app-P1-spec-port-review-r1 | Independent import PASS exactdfcdee donor/hash/list2/actualtype/lint/diff. NOT READY execution; test-only branch includes faileda1d and MUST NOT merge its product ancestry. Port only spec onto corrected r9 later | donor3ad /testport branch |
 | P1 | Cases/provenance/real-data encoder corpus | Luna high | C0; A2/R1 to execute real chain | merged | ap2-P1-encoder-first-return | Integrated service8637 PASS14/2files on tree991c6720, previous153PASS on eb59. Collection/unsent encoder only, no H3 GO | 19500aa36 /d3e141fa5 |
 | V4 | Properties helper dedup | Luna high | — | merged | vw-V4-app-properties-dedup | Owner70/tsc/lint and integrated batch153PASS; Viewing independent integrated70 also PASS | 794d365ae /22bfe5349 |
-| U3-P3-resolver | Normal Composition public export resolution | Luna high | exact V3 archive | doing | app-U3-P3-public-export-resolver-r1 | Proof0406: prefix alias bypasses package exports; root/private-source shims rejected as qualification. Minimal actual Vite/export-map fix dispatched; no duplicate P3 body | base66b87816e |
+| U3-P3-resolver | Normal Composition public export resolution | Luna high | exact V3 archive | review | app-U3-P3-public-export-resolver-r1; app-U3-P3-resolver-review-r1 | Author PASS10 resolver+2 registry/public Node smoke/actual tsc/lint/hosted build exact819acf; default heap OOM then explicit6144 build PASS disclosed. Independent review dispatched | 4592b6c40 /tree9d05c649 |
 Blockers: Proof/Farm — Parent A2 integrated9eda has independent298/static proof, but Proof0335 identifies omitted reads -> atomic fallback -> required disjoint MERGED chain impossible. App Sol read-intent correction dispatched; Proof fixes its separate split/locator expectations. H3 NO-GO/A4 gated.
 Blockers: Runtime — Strict-envelope normal34e is MERGEDc2a; integrated composed targeted/type/lint proof active. Compatible execution ad823 retains all34e artifacts. Tuple frozen34e until P1 GO; no second adoption.
 Blockers: Farm/P1 — actual split→trim newly-createdID→Agent edit→lostACK→restart across accepted/merged/refused is UNEXECUTED. Reserve/run only when mounted A2 selector is genuinely callable; A4/G5 gated. Farm owns heavy journeys/full suites.
