@@ -28,7 +28,7 @@ from runtime_protocol.timeline_commit_port import CommitUnavailable
 # media swap bundle).
 retired_writer = pytest.mark.xfail(
     strict=True, raises=RetiredRouteError,
-    reason="ledger D04: direct clip replacement retired; awaiting commit-path replacement",
+    reason="[declared-xfail:timeline-clip-replacement] ledger D04: direct clip replacement retired; awaiting commit-path replacement",
 )
 
 

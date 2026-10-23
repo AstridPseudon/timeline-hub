@@ -267,7 +267,7 @@ def test_generated_python_client_exercises_versioned_domains_on_real_daemon(tmp_
 @pytest.mark.xfail(
     strict=True,
     raises=_RetiredTimelinePublication,
-    reason="RT02/D04 held: legacy timeline publication (update_timeline) is retired (410); restored by the /v1 commit replacement",
+    reason="[declared-xfail:runtime-domains-publication] RT02/D04 held: legacy timeline publication (update_timeline) is retired (410); restored by the /v1 commit replacement",
 )
 def test_generated_python_client_timeline_publication_is_retired_pending_commit_replacement(tmp_path):
     RealmStore.initialize(tmp_path / "realm").close()
@@ -560,7 +560,7 @@ def test_generated_historical_timeline_recover_refuses_before_writes(tmp_path, m
 
 
 @pytest.mark.xfail(strict=True, raises=_RetiredTimelineUpdate,
-                  reason="direct timeline update writer remains retired")
+                  reason="[declared-xfail:runtime-domains-update] direct timeline update writer remains retired")
 def test_generated_direct_timeline_shot_reference_writers_remain_retired(tmp_path):
     """Keep the former direct-writer expectations until their command paths land."""
     RealmStore.initialize(tmp_path / "realm").close()

@@ -15,7 +15,7 @@ from runtime_protocol import platform
 from runtime_protocol.dirfd import _retry_windows_sharing_violation
 from runtime_protocol.dirfd import _WindowsFilesystem as WindowsFilesystem
 from runtime_protocol.errors import ConflictError
-from tests.lanes import requires_windows_dirfd_adapter, skip_windows_symlink_creation_unavailable
+from tests.lanes import requires_windows_dirfd_adapter, skip_for_declared_error
 
 _PARENT_FD = 1000010
 
@@ -349,9 +349,7 @@ def test_windows_real_symlink_refused(tmp_path, directory):
     try:
         alias.symlink_to(target, target_is_directory=directory)
     except OSError as exc:
-        if exc.winerror == 1314:
-            skip_windows_symlink_creation_unavailable()
-        raise
+        skip_for_declared_error("windows-symlink-creation", exc)
     with pytest.raises(OSError):
         dirfd.filesystem.open(alias, os.O_RDONLY | dirfd.filesystem.O_NOFOLLOW)
     assert stat.S_ISLNK(dirfd.filesystem.stat(alias, follow_symlinks=False).st_mode)

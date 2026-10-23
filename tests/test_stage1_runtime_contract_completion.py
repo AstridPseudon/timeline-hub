@@ -51,7 +51,7 @@ def test_targeted_mutations_replay_the_same_committed_receipt(tmp_path: Path) ->
 # Direct timeline update/archive/recover are retired (ledger D04). The receipt
 # replay they asserted returns when the commit path covers these edits
 # (Agent popup swap / occurrence media swap bundle).
-@pytest.mark.xfail(strict=True, raises=RetiredRouteError, reason="ledger D04: direct timeline writes retired; awaiting commit-path replacement")
+@pytest.mark.xfail(strict=True, raises=RetiredRouteError, reason="[declared-xfail:stage1-runtime-contract] ledger D04: direct timeline writes retired; awaiting commit-path replacement")
 def test_timeline_update_archive_recover_replay_the_same_committed_receipt(tmp_path: Path) -> None:
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")

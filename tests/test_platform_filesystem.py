@@ -11,7 +11,7 @@ from tests.lanes import (
     requires_windows_dirfd_adapter,
     requires_windows_reparse_point_rejection,
     requires_windows_sqlite_backup,
-    skip_windows_symlink_creation_unavailable,
+    skip_for_declared_error,
 )
 
 
@@ -92,8 +92,8 @@ def test_windows_directory_descriptor_rejects_symlink_component(tmp_path):
     alias = tmp_path / "alias"
     try:
         alias.symlink_to(target, target_is_directory=True)
-    except (OSError, NotImplementedError):
-        skip_windows_symlink_creation_unavailable()
+    except (OSError, NotImplementedError) as exc:
+        skip_for_declared_error("windows-symlink-creation", exc)
     with pytest.raises(OSError):
         filesystem.open(alias, os.O_RDONLY | filesystem.O_DIRECTORY | filesystem.O_NOFOLLOW)
 

@@ -112,10 +112,9 @@ def _group_exists(pgid: int) -> bool:
 def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """One offline venv containing both installed runtime packages.
 
-    The test runner may be a development Python without setuptools (notably
-    the system 3.14 build on this host).  Build local wheels with whichever
-    available interpreter has the build backend, then install those wheels
-    into the clean target venv without consulting a package index.
+    Local wheels are built with the running interpreter (the `test` extra
+    pins setuptools>=70.1, which ships bdist_wheel), then installed into the
+    clean target venv without consulting a package index.
     """
     root = Path(__file__).resolve().parents[1]
     environment = tmp_path_factory.mktemp("stage1-runtime") / "venv"
