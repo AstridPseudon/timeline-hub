@@ -1,5 +1,5 @@
-<!-- main | 2026-10-23T12:57:37Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 5 | status age 2m -->
-# runtime board, 2026-10-23T12:55:00Z
+<!-- main | 2026-10-23T12:59:39Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 5 | status age 1m -->
+# runtime board, 2026-10-23T12:58:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | R2r-D17-stage | authenticated native aggregate inverse normalization | Sol after Luna failures / independent Luna | independent1115 PASS | merged | author1105/review1115; service28978+4445 | DONE5768 MERGED3b926/treeb794 EXACTreviewedtree. Integrated238PASS=204normal34.04s+34marked16.29s; independent137+101/REALSTORE/static0added. Originalfour2PASS2AgentmissingbindingsFAIL retained | 3b926efab /5768a3a63 |
@@ -72,3 +72,5 @@ Checkpoint12:50: D21 consumedbenchdispatcher/report-allpreflight/bodyhash+harnes
 Checkpoint12:52: Luna1249 exact ONErowconfig delta/hash/bodyASTproof READY. Named v2-auth-current-integration runsall8files/-oaddopts=, no body edits/secondreview perD21. Sol1240 source28controlsPASS; addedpubliccapturedtranscriptpositive stillfailing/investigating, no prematurefulltargetedcandidate service or merge. Finalcandidateexactservice -> independentLunaproductreview remainsnext.
 
 Checkpoint12:55: newINBOXthroughAgent1248 consumed; currentAgentboard12:43 explicitlyowns restructure faithfultransport1250 QUEUED, so G5diagnosis remainsblocked:agent until meaningfulactualsmoke. No blind503 retry or duplicateinverseauthor. Sol1240 LIVE15min/source28PASS, realcapturedtranscriptpositive exposed acceptedhistoryreplayvalidationfail and isbeingcorrected; no candidate service until coherentfinalsource. Agentheldimage8eb/9345authorpositivesdoNOTreleasefailed9345, peer1255 sentAgent/Proof. Namedexact8fileservice1249ready/D21bodyhash; productreviewstillmandatory. Farm12:24 blocked:agent fullrecipe1235/1240 alreadyowned; no duplicatefull. Main9.3GiBabove8floor. DeferredRuntime6162unchanged.
+
+Checkpoint12:58: Sol1240 targeted273PASS74.41s includingcapturedtranscriptpositive/refusals; staticRuff12vs13/Pyright35same/noadded/frozen77/original23auth+44portASTretained. Finalnormalizationrestriction stillrequiresverification, sourceuncommitted/noPASSclaim. Existingservice31318 actual2socketfiles PASS (awaitexactcount/origin), nocandidatefull8queuedbymanageruntilfinal. Independentreviewbrief1256READY. Agent1250fixtureownershipACK andProof1254P1credentialsetupFAILconsumed; no newRuntimeowner/productrequest.
