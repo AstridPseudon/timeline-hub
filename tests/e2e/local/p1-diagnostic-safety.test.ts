@@ -15,6 +15,11 @@ import {
   formatDiagnostic,
   formatDiagnosticArtifact,
   formatPriorityDiagnostic,
+  MOUNTED_DIAGNOSTIC_EVENT,
+  MOUNTED_DIAGNOSTIC_MAX_RECORDS,
+  MOUNTED_DIAGNOSTIC_PHASES,
+  mountedDiagnosticInitScript,
+  projectMountedDiagnosticDetail,
   logDiagnostic,
   logPriorityDiagnostic,
   redactDiagnosticText,
@@ -37,6 +42,118 @@ test('P1 diagnostics redact quoted credential fields before formatting', () => {
   assert.equal(output.includes('quoted-cookie'), false);
   assert.equal(output.includes('quoted-token'), false);
   assert.equal(redactDiagnosticText('{"authorization":{"value":"nested-secret"}}').includes('nested-secret'), false);
+});
+
+test('P1 mounted seam projection accepts the exact App record and nested observations', () => {
+  const hostile = {
+    version: 1,
+    sequence: 4,
+    time: 12.5,
+    phase: 'capture-called',
+    projectId: 'project-safe',
+    timelineId: 'timeline-safe',
+    clipId: 'clip-safe',
+    ownerAlias: 1,
+    generation: 0,
+    sessionPresent: true,
+    closed: false,
+    current: 'current',
+    identityPresent: false,
+    scopeMatched: true,
+    mountedHead: { revisionId: 'mounted-revision', publicationId: 'mounted-publication' },
+    originalHead: { revisionId: 'original-revision', publicationId: null },
+    basisStatus: 'ready',
+    gestureKind: 'trim',
+    patch: { from: 0, fromState: 'present', to: null, toState: 'null', speed: 1, speedState: 'present' },
+    mountedClip: { from: 0, fromState: 'present' },
+    sourceClip: { from: 0, fromState: 'present', to: 3, toState: 'present' },
+    gestureClip: { at: 0, atState: 'present' },
+    originalClip: { hold: 3, holdState: 'present' },
+    status: 'accepted',
+    ownerPresent: true,
+    recoverableOwnerCount: 1,
+    intentsPendingCount: 0,
+    errorStage: 'UNKNOWN',
+    errorCode: 'UNKNOWN',
+    token: 'must-not-enter',
+    body: 'must-not-enter',
+    get errorClass() { throw new Error('hostile getter'); },
+  };
+  const result = projectMountedDiagnosticDetail(hostile);
+  assert.equal(result.accepted, true);
+  if (!result.accepted) return;
+  assert.equal(result.record.phase, 'capture-called');
+  assert.deepEqual(result.record.mountedHead, { revisionId: 'mounted-revision', publicationId: 'mounted-publication' });
+  assert.deepEqual(result.record.originalHead, { revisionId: 'original-revision', publicationId: null });
+  assert.deepEqual(result.record.patch, { from: 0, fromState: 'present', to: null, toState: 'null', at: 'UNKNOWN', atState: 'absent', hold: 'UNKNOWN', holdState: 'absent', speed: 1, speedState: 'present' });
+  assert.deepEqual(result.record.sourceClip, { from: 0, fromState: 'present', to: 3, toState: 'present', at: 'UNKNOWN', atState: 'absent', hold: 'UNKNOWN', holdState: 'absent', speed: 'UNKNOWN', speedState: 'absent' });
+  assert.equal(result.record.intentsPendingCount, 'UNKNOWN');
+  assert.equal(result.record.errorClass, 'UNKNOWN');
+  assert.equal('token' in result.record, false);
+  assert.equal('body' in result.record, false);
+  const artifact = JSON.parse(formatDiagnosticArtifact({ mountedObservations: {
+    status: 'observed', buffer: 'case1',
+    records: [result.record], accepted: 1, rejected: 0, overflow: 0, listenerErrors: 0,
+  } }));
+  assert.equal(artifact.mountedObservations.records[0].sourceClip.to, 3);
+  assert.equal(JSON.stringify(artifact).includes('must-not-enter'), false);
+});
+
+test('P1 mounted seam accepts every published phase and rejects unknown metadata', () => {
+  for (const phase of MOUNTED_DIAGNOSTIC_PHASES) {
+    assert.equal(projectMountedDiagnosticDetail({ version: 1, phase }).accepted, true, phase);
+  }
+  assert.equal(projectMountedDiagnosticDetail({ version: 2, phase: 'schedule' }).accepted, false);
+  assert.equal(projectMountedDiagnosticDetail({ version: 1, phase: 'evil.phase' }).accepted, false);
+  const missing = projectMountedDiagnosticDetail({ version: 1, phase: 'schedule' });
+  assert.equal(missing.accepted, true);
+  if (missing.accepted) {
+    assert.equal(missing.record.projectId, 'UNKNOWN');
+    assert.deepEqual(missing.record.mountedHead, { revisionId: 'UNKNOWN', publicationId: 'UNKNOWN' });
+    assert.equal((missing.record.patch as Record<string, unknown>).fromState, 'UNKNOWN');
+    assert.equal(missing.record.intentsPendingCount, 'UNKNOWN');
+    assert.equal(missing.record.errorClass, 'UNKNOWN');
+  }
+
+  const listeners = new Map<string, (event: unknown) => void>();
+  const window = {
+    __timelineSaveDiagnosticsEnabled: false,
+    addEventListener: (name: string, listener: (event: unknown) => void) => { listeners.set(name, listener); },
+  } as Record<string, unknown>;
+  runInNewContext(mountedDiagnosticInitScript({
+    buffer: 'case1',
+    maxRecords: MOUNTED_DIAGNOSTIC_MAX_RECORDS,
+  }), { window, Object, Set, Number, JSON });
+  const snapshot = window.__timelineSaveDiagnosticsSnapshot as () => Record<string, unknown>;
+  assert.equal(window.__timelineSaveDiagnosticsEnabled, true);
+  assert.equal(snapshot().status, 'UNKNOWN');
+  assert.equal(Array.isArray(snapshot().records), true);
+});
+
+test('P1 mounted seam listener is bounded and disposable under hostile events', () => {
+  const listeners = new Map<string, (event: unknown) => void>();
+  const window = {
+    __timelineSaveDiagnosticsEnabled: false,
+    addEventListener: (name: string, listener: (event: unknown) => void) => { listeners.set(name, listener); },
+  } as Record<string, unknown>;
+  runInNewContext(mountedDiagnosticInitScript({
+    buffer: 'case2',
+    maxRecords: 2,
+  }), { window, Object, Set, Number, JSON });
+  const listener = listeners.get(MOUNTED_DIAGNOSTIC_EVENT);
+  assert.ok(listener);
+  listener!({ detail: { version: 1, phase: 'schedule', sequence: 1, status: 'accepted', token: 'secret' } });
+  listener!({ detail: { version: 1, phase: 'schedule', sequence: 2, status: 'merged' } });
+  listener!({ detail: { version: 1, phase: 'schedule', sequence: 3, status: 'rejected' } });
+  listener!({ detail: new Proxy({}, { get() { throw new Error('detail getter'); } }) });
+  const snapshot = (window.__timelineSaveDiagnosticsSnapshot as () => Record<string, any>)();
+  assert.equal(snapshot.buffer, 'case2');
+  assert.equal(snapshot.accepted, 3);
+  assert.equal(snapshot.rejected, 1);
+  assert.equal(snapshot.overflow, 1);
+  assert.equal(snapshot.listenerErrors, 0);
+  assert.equal(snapshot.records.length, 2);
+  assert.equal(JSON.stringify(snapshot.records).includes('secret'), false);
 });
 
 test('P1 diagnostics bound breadth, depth, arrays, strings, and bytes', () => {
