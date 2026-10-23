@@ -1,0 +1,11 @@
+V4 actual four-case command
+worktree=/home/user/work/wt/vw-V4-current-four-0626
+runtime=/home/user/work/wt/rt-pin-ad823e0a
+started_utc=2026-10-23T06:27:51Z
+
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-ad823e0a PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/wt/rt-pin-ad823e0a /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_native_word_anchor.py -k 'native_move_refuses_anchor_basis_until_explicit_clear or native_acceptance_refuses_review_source_counterexamples_before_writes or half_open_window_and_exact_rational_fps_are_validated_at_acceptance'
+
+....                                                                     [100%]
+4 passed, 50 deselected in 4.29s
+finished_utc=2026-10-23T06:27:56Z
+exit=0
