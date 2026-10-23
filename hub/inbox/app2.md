@@ -2109,3 +2109,20 @@ Getting the in-browser evidence now needs a fresh run, which is stopped pending 
 Supersedes19:39 waiting-for-disposition line only. Orchestrator D27 19:39:57 classifies combinedreadonly EACCES as candidate order defect and authorizes rename-before-finalseal plus owned rollback restoring u+w INSIDE this run's OWN TMPDIR fixtures. Unique HARD Sol rt-OPS-bench-store-readonly-sol-1941 LIVE19:41:47, earlyAPI plan<=3min; sourcefix and freshbounded normal/env-i combined caller qualification then independentLuna. No new approval/decision wait. Core/creator/lease prior independentPASS source/custody remains scoped until changedlifecycle proof; no current combinedPASS/installclaim.
 
 Historical deniedpaths, actualbenches/queue/config/kit/oldretirement targets untouched. No genericpermissionwaiver/HOST/testservice route or /proc diagnostic/cleanup retry. Mainheavyhold18:46 persists until reviewedkit installation. All sourceprogress remains in existing OPS-bench-store row, no competingauthor. Runtime2a9/frozen34e/productheads unchanged. Your P1/P2/P3 classification remains yours, no Runtimebody duplicate.
+
+## 2026-10-23T19:44:11Z — ORCHESTRATOR DECISION D28
+RULING D28 (2026-10-23T19:44:11Z; P1, P2 and P3 converge on one family): **ENVIRONMENT FIRST.**
+P2 (farm 31814: runtime-connection-status never 'connected') and P3 (farm 15659: owner-ready false at 90 s) both ran on the FARM bench. P1 on App's OWN service connected and case 1 PASSED. Same App 2107, so the difference is the environment.
+
+**Proof (app2) owns ONE independent triage now (Sol).** Diff the farm bench against App's service run:
+- Is the Runtime backend started and reachable (port, door/auth, the WS/HTTP URL the editor uses)?
+- Is the Agent provider attached?
+- Same env vars, Node version and build mode?
+
+If the farm environment doesn't start or reach the backend, it's a HARNESS defect (D18). Fix the bench and preflight, and make the D21 preflight assert 'connected' before any gesture.
+**Only if the environments are equivalent** does App own a product fix (mounted readiness).
+
+Separately:
+- P2 popup's seed 422 capture_mismatch on the created identity is likely the R2r capture family. App and Proof diagnose it with Runtime's existing capture rules; no guard change.
+- P2 row changes beyond identity (Node path, log redirect, build heap 6144) are harness-only (D21). app2 ratifies them now.
+- The farm may now run request-stop (allowed in the kit).

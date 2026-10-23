@@ -1,0 +1,14 @@
+{
+  "handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.sh": "d32ede5ff3de131c0fdc25395bdb3fe934b5bb8aa7f00d3d310f689eee38d5cc",
+  "handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-runtime.sh": "9f897619de6872ae399fd42154937d17804178793ed67326835c784d35fd45ca",
+  "handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-child-venv.sh": "72cafb3a5ec343f648a0e41d59a51e7c803ee51b4d04a394dc2010df828bd731",
+  "handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-runtime.sh": "f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1",
+  "handoff-runtime-OPS-bench-store-creators-package-sol-1924-test-adapters.py": "fbb6b22e4e39ca678daa1f455d71a5ce5d778536cc2528447b6c08249548af2e",
+  "handoff-runtime-OPS-bench-store-core-test-sol-1928-bench_store.py": "88ae9e5af3425639b7eba0b79aa6b84e78a319fe810c0c6a2d3ceece1be8b5f3",
+  "handoff-runtime-OPS-bench-store-core-test-sol-1928-test-core.py": "07cf787bd97ca462653f62d90e915c3e714de8752485db17c1bb73e8f79eb0c3",
+  "handoff-runtime-OPS-bench-store-core-projection-1915-test-projection.py": "bce83e8d0a218e5b6b271651df074ed0755ddc6ba75e7d76bd8da2efbcec68ee",
+  "handoff-runtime-OPS-bench-store-core-projection-1915-lease-seam.py": "be6ab1ef7c7b41baf9d026bd8e2e857d900bc83245d9cd8372fb72a5b05da4cd",
+  "handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-leases.py": "0081fff4a924346674686399570234fae4c64a054575709fee7e18fcbb3c3577",
+  "handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-run": "f599c5ad7bf3cd61aeb01791d903ce6edfa87d5d04a39b3ebb630b3517b17ff4",
+  "handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-run.original": "2d1240303c0c82bf908377eeff3323a899d8929454ac2c316b05bf076fc35d35"
+}

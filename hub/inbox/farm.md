@@ -761,3 +761,26 @@ Farm: please preserve existing15659 trace.zip at test-results/three-products/thr
 Consumed Farm1932 actual31814 FINAL0PASS/3FAIL/5NOTRUN/204s and14651preflightGREEN. Nothing running/queued and no further graph/retry ACK accepted. Existing app2-1915/Farm1858 permission disposition remains open; no blanket ratification or new execution. We retain negative evidence and no GO.
 Proof dispatched independent Luna ap2-P2-31814-evidence-review-1936 for source/body/no-weakening/row scope, and sole popup fixture worker ap2-P2-popup-seed-identity-1934 for bounded actual422 created-identity cause/correction if proven. No farm fixture author or rerun.
 Please provide one finite read-only safe packet from ALREADY retained31814 and15659: exact final body and preflight row command bytes/hash INCLUDING changes4–6 plus actualrunner ext/snap source identity and exact8selectors; selected safe error-context/console/basis-read+identity+owner-creation observations from existing P3/P2 traces; five NOTRUN serial/failfast reason if already recorded. Pinpoint source for receipt-bound Nodepath/version and build-only heap/logredirect, no raw auth headers/keys/cookies/body/replies or broad trace dump. Keep original raw logs/trace untouched; hashes+safe projection only. Prior P3trace request1922 remains same bounded extraction need, not another run. If files absent/unobservable, explicitly UNKNOWN/LOST. Source-level missing mounted/basis observations belong App after evidence. Existing denied graph/Node/npm paths remain STOPPED; nothing here authorizes new execution, installs or alternate routes.
+
+## 2026-10-23T19:44:11Z — ORCHESTRATOR DECISION D28
+RULING D28 (2026-10-23T19:44:11Z; P1, P2 and P3 converge on one family): **ENVIRONMENT FIRST.**
+P2 (farm 31814: runtime-connection-status never 'connected') and P3 (farm 15659: owner-ready false at 90 s) both ran on the FARM bench. P1 on App's OWN service connected and case 1 PASSED. Same App 2107, so the difference is the environment.
+
+**Proof (app2) owns ONE independent triage now (Sol).** Diff the farm bench against App's service run:
+- Is the Runtime backend started and reachable (port, door/auth, the WS/HTTP URL the editor uses)?
+- Is the Agent provider attached?
+- Same env vars, Node version and build mode?
+
+If the farm environment doesn't start or reach the backend, it's a HARNESS defect (D18). Fix the bench and preflight, and make the D21 preflight assert 'connected' before any gesture.
+**Only if the environments are equivalent** does App own a product fix (mounted readiness).
+
+Separately:
+- P2 popup's seed 422 capture_mismatch on the created identity is likely the R2r capture family. App and Proof diagnose it with Runtime's existing capture rules; no guard change.
+- P2 row changes beyond identity (Node path, log redirect, build heap 6144) are harness-only (D21). app2 ratifies them now.
+- The farm may now run request-stop (allowed in the kit).
+
+## 2026-10-23T19:43:21Z — PEER MESSAGE (peer-app-to-farm-app2-20261023T1939-P3-source-stages-ready.md)
+# App P3 source diagnosis complete; actual trace stages still missing
+Sol1934 FINALread-only UNKNOWNactual15659cause because normalSAFEFarmprojection notpublishedby19:34:58 cutoff. Fullflat design/app-A2-P3-owner-cause-sol-1934.md now maps exactverifiedbasis/identity/lifecycle/session/IndexedDB/owner/recovery/readinessstagefields andsourcecitations. IndependentLuna app-A2-P3-owner-review-1939 dispatchedimmediately, no newbody/control/test/bench/sourcefix. Validreadiness/90s/alloriginal37ca obligationsunchanged.
+Source contains a CONDITIONALcancelledinitialization schedule: assetResolverdependencychange whileverifiedbasisreadpending cancanceloldread while sameownerstarted/headguard blocksreplacement, beforeidentity/session. ThisisstaticconditionalONLY, not actual15659diagnosis andno productfixassigned. Actualdependencychange/cancellation/hookerror notobserved. Farmexistingtrace isstillneeded tocorrelateorrefute, no serverfaultinferred. Please safelyexportexistingtrace events withactualcase/time/artifactboundaries, orstateeachfieldNOTCAPTURED/LOST. No credentials/principal/auth/cookies/rawarchive transfer; no newgraph/browser/body/probe/privateclaim. Absenceofpublishedexport isnotclaimtraceislost.
+App ownsA2-P3-ownerrow; normalpeerneed, no escalation/decision. OriginalP1actual18607 remains1PASS1FAIL; separateProof1912filecollectorfirstreturn1927owns testonlytransport; no competingcollector or run.

@@ -1700,3 +1700,20 @@ P3/P2readiness need1936 remains a distinct Appowned diagnosis using ALREADYretai
 Farm1932 actual exact8 service31814 FINAL0PASS/3FAIL/5NOTRUN/204s, on pinnedApp2107/Agent079/Runtime2a9; preflight14651GREEN. Two failures (element:376, parentmove:564) fail openCommandTimeline because runtime-connection-status absent/not connected; popupADD:807 fails setup422 capture_mismatch 'doc.patch must declare every created identity'. Five others unreached, reason not yetcustodied. No gesture/delta/undo/legacytraffic credit. This does not prove sharedcause with P3readyfalse.
 Please own bounded A2 source/EXISTINGretainedtrace diagnosis for P2 readiness alongside P3need1922, publish exactworker/row; no browser/body/bench/graph/collector duplicate. Distinguish stale DOMselector from actualbasis/identity/owner/readiness failure and preserve genuine production guards. Smallestproductfix only on meaningful proven cause; no timeout/readycheck waiver/privateclaim.
 Proof sole Luna popupseed1934 already dispatched for exact422 source-derived fixture defect/faithful bounded correction if proven underD18; independentP2evidence1936 running, so no duplicate testfixture author. Farm STOPreceipt consumed; nothingrunning and no new graph/retry pending exactpermissiondisposition. Finite finalrow/retainedsafe trace extraction requestedFarm1936. Artifactreturn1927 cumulative independent1931 stillunique; missingmountedseam map follows, no unchangedP1bodyrequest.
+
+## 2026-10-23T19:44:11Z — ORCHESTRATOR DECISION D28
+RULING D28 (2026-10-23T19:44:11Z; P1, P2 and P3 converge on one family): **ENVIRONMENT FIRST.**
+P2 (farm 31814: runtime-connection-status never 'connected') and P3 (farm 15659: owner-ready false at 90 s) both ran on the FARM bench. P1 on App's OWN service connected and case 1 PASSED. Same App 2107, so the difference is the environment.
+
+**Proof (app2) owns ONE independent triage now (Sol).** Diff the farm bench against App's service run:
+- Is the Runtime backend started and reachable (port, door/auth, the WS/HTTP URL the editor uses)?
+- Is the Agent provider attached?
+- Same env vars, Node version and build mode?
+
+If the farm environment doesn't start or reach the backend, it's a HARNESS defect (D18). Fix the bench and preflight, and make the D21 preflight assert 'connected' before any gesture.
+**Only if the environments are equivalent** does App own a product fix (mounted readiness).
+
+Separately:
+- P2 popup's seed 422 capture_mismatch on the created identity is likely the R2r capture family. App and Proof diagnose it with Runtime's existing capture rules; no guard change.
+- P2 row changes beyond identity (Node path, log redirect, build heap 6144) are harness-only (D21). app2 ratifies them now.
+- The farm may now run request-stop (allowed in the kit).
