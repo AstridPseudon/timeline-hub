@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { hasFreshSettledOwner, isFreshlyConnected, readExistingReadonly } from './mounted-readiness-safety.ts';
+import { clearMountedBootstrapFailure, hasFreshSettledOwner, isFreshlyConnected, MountedBootstrapError, readExistingReadonly, readMountedBootstrapFailure, recordMountedBootstrapFailure } from './mounted-readiness-safety.ts';
 
 test('missing database is unavailable, not a verified empty baseline', async () => {
   let reads = 0;
@@ -39,4 +39,13 @@ test('a disconnected selection read cannot retain the initial connected claim', 
   assert.equal(isFreshlyConnected({ attached: true, state: 'connected' }), true);
   assert.equal(isFreshlyConnected({ attached: true, state: 'disconnected' }), false);
   assert.equal(isFreshlyConnected({ attached: 'UNKNOWN', state: 'connected' }), false);
+});
+
+test('mounted bootstrap failures expose only a finite safe projection', () => {
+  clearMountedBootstrapFailure();
+  const cause = new Error('private cause remains on the error');
+  recordMountedBootstrapFailure(new MountedBootstrapError({ stage: 'selection', code: 'mounted-bootstrap', class: 'mounted-bootstrap' }, cause));
+  assert.deepEqual(readMountedBootstrapFailure(), { stage: 'selection', code: 'mounted-bootstrap', class: 'mounted-bootstrap' });
+  clearMountedBootstrapFailure();
+  assert.equal(readMountedBootstrapFailure(), undefined);
 });
