@@ -31,6 +31,89 @@ REQUESTS = json.loads((CORPUS / "doc_patch_requests.json").read_text(encoding="u
 VECTORS = {vector["id"]: vector for vector in REQUESTS["vectors"]}
 
 
+def _runtime_document_for_bundle(bundle: dict[str, Any]) -> dict[str, Any]:
+    """Project the fixture's complete pinned bundle into Runtime's document ABI."""
+    source_shots = bundle["source_mapping"]["shots"]
+    parent = copy.deepcopy(bundle["parent"])
+    parent["occurrences"] = []
+    for placement in bundle["placements"]:
+        source = source_shots[placement["shot_id"]]
+        parent["occurrences"].append(
+            {
+                **copy.deepcopy(placement),
+                "shot_id": source["shot_id"],
+                "shot_revision_id": source["revision_id"],
+            }
+        )
+
+    seen_shots: set[str] = set()
+    shots: list[dict[str, Any]] = []
+    internals: list[dict[str, Any]] = []
+    for local_id, source in source_shots.items():
+        if source["revision_id"] in seen_shots:
+            continue
+        seen_shots.add(source["revision_id"])
+        local = bundle["shots"][local_id]
+        internal_revision = source["internal_timeline_revision_id"]
+        shots.append(
+            {
+                "shot_id": source["shot_id"],
+                "revision_id": source["revision_id"],
+                "internal_timeline_revision_id": internal_revision,
+                "content_digest": _digest(local["payload"]),
+                "payload": copy.deepcopy(local["payload"]),
+            }
+        )
+        internals.append(
+            {
+                "timeline_id": source["internal_timeline_id"],
+                "revision_id": internal_revision,
+                "content_digest": _digest(local["internal_timeline"]),
+                "payload": copy.deepcopy(local["internal_timeline"]),
+            }
+        )
+
+    return {
+        "schema_version": 1,
+        "project_id": bundle["project_id"],
+        "timeline_id": bundle["timeline_id"],
+        "parent_revision": {
+            "revision_id": bundle["base_parent"]["revision_id"],
+            "content_digest": _digest(parent),
+            "payload": parent,
+        },
+        "shot_revisions": sorted(shots, key=lambda row: (row["shot_id"], row["revision_id"])),
+        "internal_timeline_revisions": sorted(
+            internals, key=lambda row: (row["timeline_id"], row["revision_id"])
+        ),
+        "dependency_manifest": {
+            "shots": [
+                {
+                    key: row[key]
+                    for key in (
+                        "shot_id",
+                        "revision_id",
+                        "internal_timeline_revision_id",
+                        "content_digest",
+                    )
+                }
+                for row in sorted(shots, key=lambda row: (row["shot_id"], row["revision_id"]))
+            ],
+            "internal_timelines": [
+                {
+                    key: row[key]
+                    for key in ("timeline_id", "revision_id", "content_digest")
+                }
+                for row in sorted(
+                    internals, key=lambda row: (row["timeline_id"], row["revision_id"])
+                )
+            ],
+            "media": [],
+            "documents": [],
+        },
+    }
+
+
 def _fixture(vector_id: str) -> dict[str, Any]:
     vector = VECTORS[vector_id]
     return json.loads(
@@ -42,7 +125,7 @@ def _bundle(vector_id: str) -> dict[str, Any]:
     fixture = _fixture(vector_id)
     if "input" in fixture:
         return bundle_from_document(fixture["input"])
-    return copy.deepcopy(fixture["bundle"])
+    return bundle_from_document(_runtime_document_for_bundle(copy.deepcopy(fixture["bundle"])))
 
 
 def _service_call(
@@ -53,6 +136,11 @@ def _service_call(
     base: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     context = realm.context(commands, base=base)
+    current_document = realm.documents[realm.head["revision_id"]]
+    context["request"].update(
+        project_id=current_document["project_id"],
+        timeline_id=current_document["timeline_id"],
+    )
     context["request"].update(copy.deepcopy(controls))
     context["invocation"]["body"] = copy.deepcopy(context["request"])
     context["request_hash"] = _digest(context["invocation"])
@@ -89,6 +177,24 @@ def test_collected_vectors_execute_against_real_r1(vector_id: str) -> None:
         actual = document_from_bundle(plan.bundle)
         expected = fixture["output"]
         assert actual["parent_revision"]["payload"] == expected["parent_revision"]["payload"]
+    elif vector_id in {
+        "params-absent-to-explicit-values",
+        "params-null-to-object",
+        "params-remove-and-preserve-opaque",
+        "disjoint-field-merge",
+    }:
+        expected_clip = next(
+            clip
+            for clip in next(iter(fixture["after_bundle"]["shots"].values()))[
+                "internal_timeline"
+            ]["clips"]
+            if clip["id"] == "c"
+        )
+        actual_clips = [
+            next(clip for clip in shot["internal_timeline"]["clips"] if clip["id"] == "c")
+            for shot in plan.bundle["shots"].values()
+        ]
+        assert actual_clips == [expected_clip] * len(actual_clips)
     elif vector_id == "ordered-list-move-and-order-refusal":
         actual = document_from_bundle(plan.bundle)["parent_revision"]["payload"]
         assert [row["id"] for row in actual["clips"]] == ["clip-b", "clip-a"]
@@ -123,6 +229,82 @@ def test_parent_vectors_use_runtime_commit_service_and_inverse(
         )
         original = fixture["input"]["parent_revision"]["payload"]
         assert undone["data"]["canonical_document"]["parent_revision"]["payload"] == original
+
+
+@pytest.mark.parametrize(
+    "vector_id",
+    [
+        "params-absent-to-explicit-values",
+        "params-null-to-object",
+        "params-remove-and-preserve-opaque",
+    ],
+)
+def test_child_vectors_use_runtime_commit_service_and_preserve_shared_alias(
+    vector_id: str, runtime_abi: Any
+) -> None:
+    vector = VECTORS[vector_id]
+    fixture = _fixture(vector_id)
+    realm = _realm_for(vector_id)
+    result = _service_call(realm, vector["request"]["commands"], controls=vector["request"])
+
+    assert result["data"]["status"] == vector["expected"]["status"]
+    document = result["data"]["canonical_document"]
+    expected_clip = next(
+        clip
+        for clip in next(iter(fixture["after_bundle"]["shots"].values()))["internal_timeline"][
+            "clips"
+        ]
+        if clip["id"] == "c"
+    )
+    internal_clips = [
+        next(clip for clip in row["payload"]["clips"] if clip["id"] == "c")
+        for row in document["internal_timeline_revisions"]
+    ]
+    assert internal_clips == [expected_clip]
+    assert _round_trip(document) == document
+
+
+def test_disjoint_child_merge_executes_through_service_on_complete_closure(
+    runtime_abi: Any,
+) -> None:
+    vector = VECTORS["disjoint-field-merge"]
+    realm = _realm_for("disjoint-field-merge")
+    original_head = copy.deepcopy(realm.head)
+    competing = _doc_patch(
+        {
+            "op": "set",
+            "ref": "internal-revision:ir",
+            "path": ["clips", "id:c", "params", "y"],
+            "before": _present(None),
+            "value": False,
+        }
+    )
+    competing_result = _service_call(
+        realm, [competing], controls={"merge": "fields", "reads": []}
+    )
+    result = _service_call(
+        realm,
+        vector["request"]["commands"],
+        controls=vector["request"],
+        base=original_head,
+    )
+
+    assert competing_result["data"]["status"] == "accepted"
+    assert result["data"]["status"] == vector["expected"]["status"]
+    assert result["data"]["rebased_onto"]["publication_id"] == (
+        competing_result["receipt"]["receipt_id"]
+    )
+    document = result["data"]["canonical_document"]
+    clip = next(
+        clip
+        for row in document["internal_timeline_revisions"]
+        for clip in row["payload"]["clips"]
+        if clip["id"] == "c"
+    )
+    assert clip["params"]["x"] == 2
+    assert clip["params"]["y"] is False
+    assert clip["params"]["opaque"] == {"keep": [False, {}, ""]}
+    assert _round_trip(document) == document
 
 
 def _doc_patch(change: dict[str, Any]) -> dict[str, Any]:
