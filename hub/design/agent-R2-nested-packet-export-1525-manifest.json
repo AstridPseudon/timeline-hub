@@ -1,0 +1,53 @@
+{
+  "artifact": "agent-R2-nested-packet-export-1525",
+  "kind": "evidence-only-source-complete-packet",
+  "source": {
+    "packet": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-staged-redo-sol-1500/agent-R2-staged-redo-1500-3a718d9537faec49.json",
+      "bytes": 4790931,
+      "sha256": "3a718d9537faec492723efcd0b49a86675054ae03cfa580361058c58ba780c09"
+    },
+    "independent_report": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-nested-contract-review-1515/report.md",
+      "bytes": 832,
+      "sha256": "4eced28cb1c8894e89270e86eacc888a52fc2ea76dbb0bf0af15a43bf6f80c8d"
+    }
+  },
+  "published": {
+    "packet": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-R2-staged-redo-1500-3a718d9537faec49.json",
+      "bytes": 4790931,
+      "sha256": "3a718d9537faec492723efcd0b49a86675054ae03cfa580361058c58ba780c09",
+      "equal_to_source": true
+    },
+    "independent_report": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-R2-nested-contract-review-1515.md",
+      "bytes": 832,
+      "sha256": "4eced28cb1c8894e89270e86eacc888a52fc2ea76dbb0bf0af15a43bf6f80c8d",
+      "equal_to_source": true
+    },
+    "manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-R2-nested-packet-export-1525-manifest.json"
+    },
+    "export_report": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-R2-nested-packet-export-1525.md"
+    }
+  },
+  "verification": {
+    "hash_algorithm": "SHA-256",
+    "packet_size_and_hash": "PASS",
+    "packet_byte_equality": "PASS",
+    "independent_report_byte_equality": "PASS",
+    "diagnostic_controls": "8 PASS",
+    "strict_positive": "1 FAIL",
+    "retained_controls": "14 PASS",
+    "retained_ruff": "2149/2149",
+    "retained_mypy": "1912/1912"
+  },
+  "disposition": {
+    "runtime_owner": "private nested range authentication under one outward public inverse step",
+    "public_identity_change": false,
+    "public_carrier_schema_history_change": false,
+    "contract_decision": "none; implementation seam only"
+  }
+}
