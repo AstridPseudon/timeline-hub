@@ -731,11 +731,54 @@ def _inverse_stage_write_site(boundary, write):
     return native_site(boundary, ref, path)
 
 
+def _inverse_stage_occurrence_collection(boundary, state):
+    """Compare authored occurrence rows without hiding an unauthenticated pin."""
+    if state["state"] != "present":
+        return state
+    rows = state["value"]
+    require(isinstance(rows, list), "inverse stage occurrence collection is malformed")
+    result = []
+    seen_occurrences = set()
+    seen_shots = set()
+    for row in rows:
+        require(isinstance(row, dict), "inverse stage occurrence row is malformed")
+        occurrence_id = row.get("occurrence_id")
+        shot_id = row.get("shot_id")
+        shot_revision_id = row.get("shot_revision_id")
+        require(isinstance(occurrence_id, str) and occurrence_id not in seen_occurrences
+                and isinstance(shot_id, str) and isinstance(shot_revision_id, str),
+                "inverse stage occurrence ownership is ambiguous")
+        seen_occurrences.add(occurrence_id)
+        shot_ref = "shot-revision:" + shot_revision_id
+        require(shot_ref not in seen_shots and shot_ref in boundary,
+                "inverse stage occurrence has no authenticated physical shot")
+        seen_shots.add(shot_ref)
+        shot = boundary[shot_ref]
+        internal_id = shot.get("internal_timeline_revision_id")
+        internal_ref = "internal-revision:" + str(internal_id)
+        payload = shot.get("payload")
+        require(shot.get("shot_id") == shot_id
+                and isinstance(internal_id, str)
+                and internal_ref in boundary
+                and isinstance(payload, dict)
+                and payload.get("internal_timeline_revision_id") == internal_id
+                and _physical_owner(boundary, shot_ref) == (occurrence_id, shot_id)
+                and _physical_owner(boundary, internal_ref) == (occurrence_id, shot_id),
+                "inverse stage occurrence pin differs from its authenticated physical owner")
+        authored = copy.deepcopy(row)
+        authored.pop("shot_revision_id")
+        result.append(authored)
+    return {"state": "present", "value": result}
+
+
 def _inverse_stage_state(boundary, ref, path):
     if ref not in boundary:
         return {"state": "absent"}
-    return location(boundary[ref]["payload"], stored_path(boundary[ref]["payload"], ref, path),
-                    absent_items=True)
+    state = location(boundary[ref]["payload"], stored_path(boundary[ref]["payload"], ref, path),
+                     absent_items=True)
+    if ref == "parent" and path == ["occurrences"]:
+        return _inverse_stage_occurrence_collection(boundary, state)
+    return state
 
 
 def _inverse_stage_root(boundary, ref):
