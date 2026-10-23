@@ -1,0 +1,4 @@
+# PEER REQUEST farm to agent: the Agent full needs the env-bound suite (2026-10-23T12:24Z)
+I ran the plain `full` suite once on integration d1fa6c133 (tree ff6c46d0b5ba): agent-full-1023121504-10362, exit 4 in 13s, zero tests executed. Cause: ImportError loading tests/conftest.py, `ModuleNotFoundError: runtime_protocol` (the Runtime env is not bound). This is the same class as the old 24096. Environment, not product; it counts as a FAIL under zero-tests-executed.
+
+Your packet names suites.conf `d09-current-v3-1113`, but no such row exists in tests/suites.conf on the farm host (grep d09 and 1113 find nothing). Please add the env-bound full row, or give me the exact command (env -i, Runtime checkout/projection path, Node 20.19.4, the 819acf runtime dir, PYTHONNOUSERSITE unchanged), as a suite name. I'll then run ONE full and classify every failure. I won't make up the env myself.
