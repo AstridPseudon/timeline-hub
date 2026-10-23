@@ -714,6 +714,14 @@ test('P1 split -> trim new clip: a real Agent move refuses the stale trim and th
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const traffic = observe(page, true);
   const signals: P1FailureSignals = { pageErrors: [], consoleErrors: [], requestFailures: [] };
+  let heldTrim: Route | undefined;
+  await page.route(COMMITS, async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    const post = traffic.posts.find((candidate) => candidate.key === route.request().headers()['idempotency-key']);
+    if (post && traffic.posts.indexOf(post) === 1) { heldTrim = route; return; }
+    const response = await route.fetch({ maxRetries: 0 });
+    await forward(route, response, await response.json());
+  });
   await openChain(page, harness, seed, signals);
   const before = await history(harness, seed);
   const original = (await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${before.head.revision_id}`)).body.payload;
@@ -730,15 +738,7 @@ test('P1 split -> trim new clip: a real Agent move refuses the stale trim and th
   expect(inserted.order_before).toEqual([SOURCE_ID]);
   expect(inserted.after_id).toBe(SOURCE_ID);
   const rightId = inserted.id;
-  const agent = await astrid.commitCaptured(harness.seed.projectId, seed.timelineId, pin(split.response), { kind: 'move', clipId: rightId, on: 3 }, 'p1-agent-conflict');
-  expect(agent.data.status).toBe('accepted');
-  expect(agent.data.rebased_onto).toBeNull();
-  const agentParent = parentOf(agent);
-  // Preserve the exact split baseline for fields the native move did not intend to change.
-  expect(agentParent.clips[0]).toEqual(splitDocument.clips[0]);
-  expect(agentParent.clips[1]).toMatchObject({ id: rightId, at: 3, from: originalClip.from, to: originalClip.to, hold: originalClip.to - SPLIT_AT });
-  expect(agentParent.clips[1].app).toEqual({ ...splitDocument.clips[1].app,
-    astrid: { fixed_start: true, for: originalClip.to - SPLIT_AT } });
+  let agent: any = null;
   await trimSourceWindow(page, rightId, '3');
   try {
     await expect.poll(() => traffic.posts.length, CEILING).toBe(2);
@@ -750,9 +750,31 @@ test('P1 split -> trim new clip: a real Agent move refuses the stale trim and th
     }
     throw error;
   }
+  await expect.poll(() => !!heldTrim, CEILING).toBe(true);
+  const trim = traffic.posts[1];
+  assertV2Request(trim, harness, seed);
+  expect(trim.raw).toBeTruthy();
+  expect(trim.key).toBeTruthy();
+  expect(trim.body).toMatchObject({ base_revision_id: split.response.data.accepted_revision_id,
+    base_publication_id: split.response.receipt.receipt_id, merge: 'fields',
+    reads: expect.arrayContaining([
+      { kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'at'], state: { state: 'present', value: SPLIT_AT } },
+      { kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'from'], state: { state: 'present', value: originalClip.from } },
+    ]) });
+  agent = await astrid.commitCaptured(harness.seed.projectId, seed.timelineId, pin(split.response), { kind: 'move', clipId: rightId, on: 3 }, 'p1-agent-conflict');
+  expect(agent.data.status).toBe('accepted');
+  expect(agent.data.rebased_onto).toBeNull();
+  const agentParent = parentOf(agent);
+  // Preserve the exact split baseline for fields the native move did not intend to change.
+  expect(agentParent.clips[0]).toEqual(splitDocument.clips[0]);
+  expect(agentParent.clips[1]).toMatchObject({ id: rightId, at: 3, from: originalClip.from, to: originalClip.to, hold: originalClip.to - SPLIT_AT });
+  expect(agentParent.clips[1].app).toEqual({ ...splitDocument.clips[1].app,
+    astrid: { fixed_start: true, for: originalClip.to - SPLIT_AT } });
+  const trimWire = await heldTrim!.fetch({ maxRetries: 0 });
+  await forward(heldTrim!, trimWire, await trimWire.json());
   await expect.poll(() => traffic.posts[1].status, CEILING).not.toBeUndefined();
   expect(traffic.posts[1].status).toBe(409);
-  expect(traffic.posts[1].response.details).toMatchObject({ status: 'conflict', reason: expect.any(String),
+  expect(traffic.posts[1].response.details).toMatchObject({ status: 'conflict', reason: 'value_conflict',
     current: pin(agent), conflicts: expect.any(Array) });
   expect(traffic.posts[1].response.details.conflicts.length).toBeGreaterThan(0);
   for (const conflict of traffic.posts[1].response.details.conflicts) {
@@ -764,12 +786,9 @@ test('P1 split -> trim new clip: a real Agent move refuses the stale trim and th
       else expect(state).toEqual({ state: 'absent' });
     }
   }
-  // C0c normalizes the atomic touched scope to the parent payload root,
-  // rather than a native parent/clip alias or the clips/config.clips mirror.
   expect(traffic.posts[1].response.details.conflicts).toEqual(expect.arrayContaining([
-    expect.objectContaining({ kind: 'atomic_scope_changed', ref: 'parent', path: [] }),
+    expect.objectContaining({ kind: 'value_conflict', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'app', 'astrid'] }),
   ]));
-  expect(traffic.posts[1].response.details.path).toEqual([]);
   await expect(page.getByTestId('timeline-command-recovery')).toContainText('Your changes are retained and need resolution before they can be saved.');
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).find((owner) => owner.pending)?.pending?.outcome?.kind, CEILING).toBe('rejected');
   const current = await history(harness, seed);
