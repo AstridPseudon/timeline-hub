@@ -12,6 +12,7 @@ from astrid.core.timeline.banodoco_schema import (
     _validate_shared_timeline,
 )
 from astrid.core.timeline.kinds import normalize_track_kind
+from astrid.core.timeline.validators.meta import validate_timeline_meta_locations
 
 # Registry lookups are late-imported through banodoco_schema so that
 # mock.patch.object(banodoco_schema, ...) still affects internal callers.
@@ -200,6 +201,7 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
     """
     if not isinstance(config, dict):
         raise ValueError("Timeline must be a JSON object")
+    validate_timeline_meta_locations(config)
     theme = config.get("theme")
     if theme is not None and (not isinstance(theme, str) or not theme):
         raise ValueError("Timeline.theme must be a non-empty slug")
