@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T07:47:19Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 1m -->
-# viewing board, 2026-10-23T07:45:58Z
+<!-- viewing | 2026-10-23T07:48:32Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 2 | status age 0m -->
+# viewing board, 2026-10-23T07:48:09Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | Independent PASS four copies, SHA/cmp/generators/manifest; inventory only | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -28,7 +28,9 @@
 | V4-undo | equal-text anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | ruling04:40 | EXACT two originals unchanged/unskipped/visibly failing known v2 regressions; guarded intervening_write. Never54PASS | originals retained |
 | V4-recipe | optional duplicate recipe deletion | Luna historical | H9 cut | cut:H9 | no worker | Original recipes and original clip.anchor assertions retained. Do not reopen | originals retained |
 
-| DB-composition-dry | fresh-clone squash/build/pin verification | Luna high | orchestrator07:40; source635f/live upstream | doing | vw-DB-composition-dry-0746 | Dispatching delivery dry-run; live upstream probe pending worker --net; no PASS claimed | source635f / upstream snapshot67b8 |
+| DB-composition-dry | fresh-clone squash/build/pin verification | Luna high | orchestrator07:40; source635f/live upstream | doing | vw-DB-composition-dry-0746 | RUNNING: core squash/bundle/freshapply tree5ab5191 PASS; tool exit1 missing required README template, separate narrow prerequisite worker active; build/pins pending | source635f / upstream snapshot67b8 |
+
+| DB-composition-template | required delivery input repair | Luna high | missing README template | doing | vw-DB-composition-template-0749 | Existing tool core trees PASS; initial command exit1 missing template. Bounded worker restores required v2 input then retries dry command; no product/script change | source635f |
 
 V1 metadata and V3 shared artifact scopes are DONE on their recorded integrated proofs. V3 is immutable archive819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234,73451 bytes,80 members, source635f; one artifact does not prove rendering parity or H3 GO. V4App DONE; all already-merged V4 work stays. Whole V4Agent NOT DONE and residual repairs CUT at H9.
 
@@ -38,7 +40,7 @@ Resolved: Agent and Runtime — both stale V1 donor requests now have actual hub
 Blockers: farm — final full suites/journeys are farm/test-service owned; report V4 suite AS IS including unchanged/unskipped known failures. No Viewing duplicate full/native14/browser/heavy run. No inferred52/54 PASS.
 Blockers: lead/orchestrator — old recycle Permission denied for agt-pin-b70b9d56 and app-pin-d00a6613/app-pin-0d432391 remains PARKED; no retry/chmod/chown/alternate deletion. Escalation viewing-20261023T002713Z-recycle-b70-permission-refusal.md retained. No new refusal.
 
-Next ready: DB-composition-dry dispatched immediately on new orchestrator07:40 request. Prior V1/V3/V4 workers terminal. Support final integration on request; farm final original V4 suite AS IS. No residual repair/review/proof dispatch and no actionable product merge request. Both Agent and Runtime stale V1 donor requests are closed SUPERSEDED in the actual hub results.
+Next ready: DB-composition-dry + required-template repair dispatched immediately on new orchestrator07:40 request. Prior V1/V3/V4 workers terminal. Support final integration on request; farm final original V4 suite AS IS. No residual repair/review/proof dispatch and no actionable product merge request. Both Agent and Runtime stale V1 donor requests are closed SUPERSEDED in the actual hub results.
 
 Evidence: design/handoff-vw-V4-D16-window-0637-REPORT.md + first.log (failed bound-anchor replacement1FAIL/53deselected/1.53s); handoff-vw-V4-D16-window-review-0642-REPORT.md (independent no-weakening FAIL and path-origin warning); handoff-vw-V4-D16-window-first-return-0647-REPORT.md (original legacy restored/static PASS/behavior PENDING). D16 unavailable positive disposition handoff-vw-V4-D16-rebase-disposition-0637-REPORT.md independently reviewed handoff-vw-V4-D16-rebase-review-0641-REPORT.md. These prose reports are flat design files, not product merges. Peer-viewing-to-agent-20261023T0647-D16-first-return-and-disposition.md has H9 override WITHDRAWING new provider repair request.
 
