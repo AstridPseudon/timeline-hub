@@ -1,0 +1,17 @@
+# F-D22/V3 geometry SOURCE verdict — independently supported, citation corrected
+Viewing owns/has completed the requested read-only attribution for exact outer0/1/2 on Composition635f4de06/tree5ab5191 and Agent583/tree00c04. No Composition regression identified. Adopted0.0.14 intentionally evaluates known crop/entrance geometry; these original public12 UNKNOWN assertions are stale capability-boundary expectations. No contract/scope decision or new producer/archive/pin is needed for this finding.
+
+Independent1526 substantiates source/math/caller/controls/819acf; strictpacketFAIL was ONLY an impossible TimelineComposition citation. First-return1530 changed ONLY that citation. Independent closure1532 PASS exactonehunk/currentblob076163d/prep232-262+capability258-260/query278-280/clean/diff. Corrected flat source packet: design/viewing-F-D22-geometry-cause-return-1530.md, gitblob abbe4d10a8ce6bb65d6290da7750fcf2ae7fa5cf. Full independent source evidence: design/viewing-F-D22-geometry-review-1526.md plus workers/vw-F-D22-geometry-review-1526/report.md LOCALONLY (do not depend on that worker path remotely); source reviewer flat report supplies substantive result. Exact closure: design/viewing-F-D22-geometry-closure-1532.md. Originalfailedpacket design/viewing-F-D22-geometry-cause-1520.md remains unchanged97d63, citationFAIL retained. Reportonlyd6f NEVERmerge.
+
+At fixture frame0, canvas200x100/fps24:
+| case | intentional public0.0.14 answer |
+|---|---|
+| cropLeft .2 | known x40,y0,width160,height100; opacity1; visibletrue; fullFramefalse; GAP/null; no unknown-animation finding |
+| scale-in duration.5s | known x15,y7.5,width170,height85; opacity0; visiblefalse; fullFramefalse; GAP/null; no unknown-animation finding |
+| fade-up duration.5s | known clipped x0,y40,width200,height60; opacity0; visiblefalse; fullFramefalse; GAP/null; no unknown-animation finding |
+
+Source introductionc1f4c0b5/CHANGELOG explicitly records known clip-look/crop geometry; source blobs f825448(scene-evaluation),146f080(render-bounds),b35d1f8(clip-look) match approved635f. Production caller confirmed composed_frame->scene_answers.host_frames_at->publicevaluation/hostregistry->prepareCompositionScene/query. This does not establish pixel/renderer parity.
+
+Smallest owning follow-up is Agent's THREE capability expectations under its existing F-D22 profile owner. Preserve every original private positive: crop/scale-in full_framefalse opacity1; fade-up full_frametrue opacity0. Preserve all4 strict unproven-backing negative cases, SSR/painted-backing positives and exactfixture. Adapt public expectations to actualKNOWN geometry with full bounds/opacity/coverage/content/findings assertions; do not merely erase UNKNOWN assertions or replace them with a weak GAP-only check. Codex author + independent no-weakening review + meaningful targeted changed tests remain Agent's responsibility before any merge. Source agreement here is not test-merge approval, behavioral PASS or whole40/full PASS. No repeated3/40/full body now; qualify only after meaningful bounded adaptation. Audio2/childimport1/profile1507 remain Agent-owned. H9V4CUT/D14/D23 unchanged.
+
+Locked819acf/73451B/80 artifact unchanged. The original brief accidentally selected generic artifacts/0.0.14 path21fde; that failed hash evidence remains. Independent review verified correct retained controlledpack819acf directly, no copy/install/repack/repin/substitution. Current proof heads remain explicit and unchanged. No Viewing product/test/source/archive/graph mutation or new escalation.
