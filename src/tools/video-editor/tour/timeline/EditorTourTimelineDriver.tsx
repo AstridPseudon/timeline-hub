@@ -3,6 +3,7 @@ import {
   editorTourStage,
   getEditorTourState,
   markEditorTourReady,
+  startEditorTour,
   useEditorTour,
   type EditorTourStage,
 } from '@/shared/state/editorTourStore.ts';
@@ -24,10 +25,10 @@ const SceneSurface = lazy(() => import('@astrid/packs/rendering/ui/threejs-live-
 const RENDER_WAIT_MS = 3000;
 export const TOUR_ANCHOR_DWELL_MS = 1200;
 const WARMUP_GIVE_UP_MS = 8000;
-/** The longest `land` waits for the visible scene's first painted frame before showing the card over it anyway. */
-const SCENE_READY_GIVE_UP_MS = 8000;
+/** A slow first frame gets recovery UI, never permission to advance an unpainted scene. */
+const SCENE_PREPARING_NOTICE_MS = 8000;
 /** The visible live scene reports its phase on this element (the warm-up's `onReady` is the same signal). */
-const SCENE_READY_SELECTOR = '[data-testid="astrid-live-scene-entry"][data-phase="ready"]';
+const SCENE_SELECTOR = '[data-testid="astrid-live-scene-entry"]';
 
 function nextFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -37,6 +38,30 @@ function nextFrame(): Promise<void> {
 async function waitFor(check: () => boolean, timeoutMs: number, isCancelled: () => boolean): Promise<void> {
   const deadline = performance.now() + timeoutMs;
   while (!isCancelled() && !check() && performance.now() < deadline) await nextFrame();
+}
+
+/** Only the real preview's acknowledged opening frame can release stage 1 playback.
+ * The warm-up and timeline thumbnails own separate iframes/GPU contexts, and cannot vouch for it. */
+async function waitForTourSceneFrame(
+  revision: unknown,
+  isCancelled: () => boolean,
+  onPreparing: (state: 'waiting' | 'error') => void,
+): Promise<boolean> {
+  const noticeAt = performance.now() + SCENE_PREPARING_NOTICE_MS;
+  const openingTime = TOUR_SCENE_SOURCE_FROM.toFixed(3);
+  while (!isCancelled()) {
+    const preview = document.querySelector(editorTourSelector('preview'));
+    const scene = [...(preview?.querySelectorAll<HTMLElement>(SCENE_SELECTOR) ?? [])]
+      .find(element => element.dataset.desiredRevision === revision);
+    if (scene?.dataset.phase === 'ready'
+      && scene.dataset.displayedRevision === revision
+      && scene.dataset.desiredTime === openingTime
+      && scene.dataset.sourceTime === openingTime) return true;
+    if (scene?.dataset.phase === 'error') onPreparing('error');
+    else if (performance.now() >= noticeAt) onPreparing('waiting');
+    await nextFrame();
+  }
+  return false;
 }
 
 /** A timeline row may mount before the paused player's debounced composition and decoder. */
@@ -100,6 +125,7 @@ export function EditorTourTimelineDriver() {
   const [warm, setWarm] = useState(false);
   const [sceneLoadAttempt, setSceneLoadAttempt] = useState(0);
   const [sceneLoadError, setSceneLoadError] = useState(false);
+  const [scenePreparing, setScenePreparing] = useState<'waiting' | 'error' | null>(null);
   const [retry, setRetry] = useState(0);
   const applying = useRef(false);
 
@@ -202,27 +228,32 @@ export function EditorTourTimelineDriver() {
             return;
           }
           previewRef.current?.seek(0);
-          // Wait for the first painted world frame before playing the flight.
-          if (act === 1 && !instant) {
-            const skipped = getEditorTourState().skipAnimation;
-            await waitFor(
-              () => document.querySelector(SCENE_READY_SELECTOR) !== null || getEditorTourState().skipAnimation !== skipped,
-              SCENE_READY_GIVE_UP_MS,
-              isCancelled,
-            );
-          }
-          if (!isCancelled()) previewRef.current?.play();
+          if (act === 1) {
+            setScenePreparing(null);
+            const sceneWaitCancelled = () => isCancelled() || getEditorTourState().skipAnimation !== skippedAtStart;
+            const painted = await waitForTourSceneFrame(liveScene?.revision, sceneWaitCancelled, setScenePreparing);
+            // Skipping an animation may advance the card, but must not run an unready scene clock.
+            // Back/instant entry still needs the actual opening frame before it can autoplay.
+            if (painted && !sceneWaitCancelled()) previewRef.current?.play();
+            if (!isCancelled()) setScenePreparing(null);
+          } else if (!isCancelled()) previewRef.current?.play();
         }
       }
       if (!isCancelled()) markEditorTourReady('timeline');
     })();
     return () => { cancelled = true; };
-  }, [runId, act, beat, stage, appliedStage, loaded, warm, instant, previewRef]);
+  }, [runId, act, beat, stage, appliedStage, loaded, warm, instant, previewRef, liveScene]);
 
   if (sceneLoadError) return (
     <div role="alert" className="fixed bottom-6 left-1/2 z-[2147483647] flex -translate-x-1/2 items-center gap-3 rounded-lg border bg-background p-4 text-sm text-foreground shadow-lg">
       <span>The Lantern Valley demo could not load. Check your connection and try again.</span>
       <button type="button" className="shrink-0 rounded-md bg-primary px-3 py-2 text-primary-foreground" onClick={() => setSceneLoadAttempt((count) => count + 1)}>Retry demo</button>
+    </div>
+  );
+  if (scenePreparing && act === 1 && beat === 'land') return (
+    <div role={scenePreparing === 'error' ? 'alert' : 'status'} className="fixed bottom-6 left-1/2 z-[2147483647] flex -translate-x-1/2 items-center gap-3 rounded-lg border bg-background p-4 text-sm text-foreground shadow-lg">
+      <span>{scenePreparing === 'error' ? 'The 3D world could not render.' : 'Preparing the 3D world. Playback will start when its first frame is ready.'}</span>
+      <button type="button" className="shrink-0 rounded-md bg-primary px-3 py-2 text-primary-foreground" onClick={() => { setScenePreparing(null); startEditorTour(); }}>Restart demo</button>
     </div>
   );
   return warming && liveScene ? <SceneWarmup liveScene={liveScene} onWarm={() => setWarm(true)} /> : null;
