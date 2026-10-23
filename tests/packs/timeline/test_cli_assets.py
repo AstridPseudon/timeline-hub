@@ -33,7 +33,7 @@ def test_edit_replace_asset_and_swap_asset_forward_to_the_sdk(monkeypatch, capsy
             calls.append(("swap", asset))
 
     class FakeCheckout:
-        music = "keep_end"
+        music, path = "keep_end", Path("draft.json")
         version = 0
 
         def document(self):
