@@ -269,10 +269,12 @@ class CommitPatch:
         self.inputs, self.outputs, self.dependencies = {}, {}, {}
         self.batch_dependencies = []
         self.closures = {}
+        self.records = {}
         self.boundaries = {}
         self.compiler_effects = []
         self.inverse_stages = {}
         self.inverse_sources = {}
+        self.execution_boundaries = []
 
     def step(self, ordinal):
         return next(step for step in self.steps if ordinal in step['command_ordinals'])
@@ -331,6 +333,31 @@ class CommitPatch:
                     'command_ordinal': ordinal, 'phase': 'input'}
         self.boundaries[ordinal] = boundary
         self.closures[ordinal] = Closure(copy.deepcopy(ctx.state.bundle))
+        def replay_binding(expected):
+            if isinstance(expected, str):
+                return expected
+            step_id, source, owner, owners = expected
+            source = replay_binding(source)
+            prior = next(step for step in self.steps if step['id'] == step_id)
+            if prior['command_ordinals'][-1] >= ordinal or step_id not in self.outputs:
+                raise CommandError('sequential binding precedes its source', kind='binding_changed')
+            before, after = Closure(self.inputs[step_id]), Closure(self.outputs[step_id])
+            record = {'bindings': []}
+            self.materializations(record, before, after,
+                self.boundaries[prior['command_ordinals'][-1]], prior,
+                [write for index in prior['command_ordinals'] for write in self.records[index]['writes']])
+            successors = {binding['successor'] for binding in record['bindings']
+                          if binding['physical_ref'] == source and binding['owner'] == owner
+                          and binding['owners'] == owners}
+            if len(successors) != 1:
+                raise CommandError('sequential image has no unique authenticated successor',
+                                   kind='binding_changed', ref=source)
+            return successors.pop()
+
+        # Staged IDs name the original execution. Resolve only through a completed
+        # step's actual source-bound materialization at this replay boundary.
+        ctx.patch_replay_bindings = {key: replay_binding(value) if key[0] == ordinal else value
+                                     for key, value in ctx.patch_replay_bindings.items()}
         # Runtime authenticates the next input against the preceding command's observations.
         if ordinal > step['command_ordinals'][0]:
             previous = self.closures[ordinal - 1]
@@ -402,6 +429,7 @@ class CommitPatch:
         if not self.active:
             return
         ordinal = ctx.record['ordinal']
+        self.records[ordinal] = ctx.record
         step = self.step(ordinal)
         if hasattr(ctx, 'inverse_stages'):
             self.inverse_sources[ordinal] = ctx.inverse_sources
@@ -426,6 +454,12 @@ class CommitPatch:
                 binding['boundary'] = {**self.boundaries[ordinal], **binding['boundary']}
         if ordinal == step['command_ordinals'][-1]:
             self.outputs[step['id']] = copy.deepcopy(ctx.state.bundle)
+        if self.v2 and len(self.calls) > 1:
+            self.execution_boundaries.append({
+                'boundary': copy.deepcopy(self.boundaries[ordinal]),
+                'input': copy.deepcopy(self.closures[ordinal].document),
+                'output': inverse_closure(ctx.state.bundle, self.inverse_sources.get(ordinal, [])).document,
+            })
 
     def finish(self, plan):
         if not self.active:
@@ -569,6 +603,8 @@ class CommitPatch:
                         binding.update(key='commit.atomic', policy='fixed', dependencies=[], path=[])
                         plan.records[start]['bindings'].append(binding)
         plan.steps, plan.label, plan.merge_mode = self.steps, self.label, self.merge_mode
+        # Private execution custody stays outside the public prepared recorder.
+        setattr(plan, '_sequential_execution', self.execution_boundaries)
         return plan
 
     @staticmethod
@@ -723,6 +759,8 @@ def rebase_patch(plan, entries, head_bundle, *, load_boundary):
     staged_predecessors = {binding['successor']: binding['physical_ref']
                           for record in plan.records for binding in record['bindings']
                           if binding.get('key') == 'commit.materialization'}
+    staged_bindings = [binding for record in plan.records for binding in record['bindings']
+                       if binding.get('key') == 'commit.materialization']
     transitions, sites, missing = [], [], set()
     for entry in entries:
         before_bundle, after_bundle = load_boundary(entry)
@@ -765,19 +803,30 @@ def rebase_patch(plan, entries, head_bundle, *, load_boundary):
             ref = staged_predecessors[ref]
         return continuation(ref)
 
+    def replay_ref(ref, ordinal):
+        sources = [binding for binding in staged_bindings if binding['successor'] == ref
+                   and binding['boundary']['command_ordinal'] < ordinal]
+        if not sources:
+            return continuation(ref)
+        binding = max(sources, key=lambda source: source['boundary']['command_ordinal'])
+        source_ordinal = binding['boundary']['command_ordinal']
+        return (binding['step_id'], replay_ref(binding['physical_ref'], source_ordinal),
+                binding['owner'], binding['owners'])
+
     guards = []
     expected = {}
     for record in plan.records:
         # Generated patch bindings provide exact physical/path captures for patch operands.
         for binding in record['bindings']:
-            if binding.get('key') == 'commit.read' and 'physical_ref' in binding and binding['physical_ref'] not in staged_roots:
+            if (binding.get('key') == 'commit.read' and 'physical_ref' in binding
+                    and (binding['physical_ref'] not in staged_roots or binding['physical_ref'] in staged_predecessors)):
                 if binding['ref'].startswith(('shot:', 'internal:')):
                     try:
                         landing.resolve(binding['ref'])
                     except CommandError as exc:
                         if exc.kind == 'ambiguous_ref':
                             raise
-                bound = continuation(binding['physical_ref'])
+                bound = replay_ref(binding['physical_ref'], record['ordinal'])
                 expected[(record['ordinal'], 'read', binding['ref'], tuple(binding['path']),
                           binding['boundary']['phase'])] = bound
             if binding.get('key', '').startswith('doc.patch:'):
@@ -789,8 +838,9 @@ def rebase_patch(plan, entries, head_bundle, *, load_boundary):
                         if exc.kind == 'ambiguous_ref':
                             raise
                 ref, path = continuation(binding['physical_ref']), binding['path']
-                if binding['physical_ref'] not in staged_roots:
-                    expected[(record['ordinal'], binding['boundary']['change_ordinal'])] = ref
+                if binding['physical_ref'] not in staged_roots or binding['physical_ref'] in staged_predecessors:
+                    expected[(record['ordinal'], binding['boundary']['change_ordinal'])] = replay_ref(
+                        binding['physical_ref'], record['ordinal'])
                 guards.append({'kind': 'field', 'ref': ref,
                                'path': [*path, 'id:' + change['id']] if change['op'].startswith('list.') else path})
                 if change['op'].startswith('list.'):
