@@ -700,6 +700,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     ctx.inverse_sources = ([source for entry in records.entries for source in records.load_boundary(entry)]
                            if isinstance(records, AcceptedRecords) else [])
     ctx.inverse_stages = []
+    ctx.inverse_effects = []
     for publication, step_id, commands in inverse_stages(records):
         stage_before = copy.deepcopy(ctx.state.bundle)
         physical = None
@@ -720,6 +721,9 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                     arrange(ctx.state, owner, kind, original)
             arrange_restored(ctx.state, record, root_orders.get(id(record)))
             ctx.compile_mirrors()
+        from ._root_inverse import restore_root_baselines
+
+        restore_root_baselines(ctx.state, records, publication, commands)
         if physical is not None:
             from ._doc_patch_materialize import remember
 
@@ -729,6 +733,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                 physical.owners[ref] = [(owner, local) for owner, local in physical.owners[ref] if owner in live]
                 remember(physical, ref)
         ctx.inverse_stages.append((stage_before, copy.deepcopy(ctx.state.bundle)))
+        ctx.inverse_effects.append(commands[0].get('_inverse_effects') if len(commands) == 1 else None)
         if step_id is not None:
             # Keep native segment boundaries in the authenticated recorder. The
             # provider's effect projection uses these to retain transient roots.

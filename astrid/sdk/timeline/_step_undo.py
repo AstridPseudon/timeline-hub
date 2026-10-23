@@ -137,7 +137,37 @@ def inverse_stages(records):
         for step, originals, _ in reversed(_steps(entry)):
             chosen = [commands[record['ordinal']] for record in originals if record['ordinal'] in commands]
             if chosen:
-                yield entry.get('publication_id'), step['id'] if step is not None else None, chosen
+                nested = ([binding for binding in chosen[0].get('bindings', [])
+                           if binding['key'] == 'inverse.stage'] if len(chosen) == 1
+                          and chosen[0]['command']['op'] == 'timeline.inverse' else [])
+                if not nested:
+                    yield entry.get('publication_id'), step['id'] if step is not None else None, chosen
+                    continue
+                record = chosen[0]
+                cursor = 0
+                effect_cursor = 0
+                for binding in nested:
+                    boundary = binding['boundary']
+                    start, end = boundary['native_write_range']
+                    first, last = boundary['effect_range']
+                    if (binding['ref'] != 'parent' or binding['policy'] != 'fixed'
+                            or binding['dependencies'] != []
+                            or boundary['publication_id'] not in record['command']['args']['publications']
+                            or start != cursor or not start < end <= len(record['writes'])
+                            or first != effect_cursor or not first < last <= len(step['patch'])
+                            or record.get('derived_writes')):
+                        raise CommandError('nested inverse ranges differ from accepted history',
+                                           kind='history_unavailable')
+                    cursor, effect_cursor = end, last
+                if cursor != len(record['writes']) or effect_cursor != len(step['patch']):
+                    raise CommandError('nested inverse ranges omit accepted history', kind='history_unavailable')
+                for binding in reversed(nested):
+                    start, end = binding['boundary']['native_write_range']
+                    first, last = binding['boundary']['effect_range']
+                    from ._doc_patch import inverse_changes
+
+                    yield entry['publication_id'], step['id'], [{**record, 'writes': record['writes'][start:end],
+                        '_inverse_effects': inverse_changes(step['patch'][first:last])}]
 
 
 def _causal_commands(entry, commands):

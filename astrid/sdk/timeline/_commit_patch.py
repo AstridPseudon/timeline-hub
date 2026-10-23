@@ -14,6 +14,10 @@ def _text(value):
     return isinstance(value, str) and bool(value.strip())
 
 
+def _effect_key(effect):
+    return json.dumps(effect, sort_keys=True, separators=(',', ':'))
+
+
 def validate_reads(reads):
     from .commands import _SCHEMA
 
@@ -272,6 +276,7 @@ class CommitPatch:
         self.boundaries = {}
         self.compiler_effects = []
         self.inverse_stages = {}
+        self.inverse_effects = {}
         self.inverse_sources = {}
 
     def step(self, ordinal):
@@ -405,6 +410,7 @@ class CommitPatch:
         step = self.step(ordinal)
         if hasattr(ctx, 'inverse_stages'):
             self.inverse_sources[ordinal] = ctx.inverse_sources
+            self.inverse_effects[ordinal] = getattr(ctx, 'inverse_effects', [])
             _restore_inverse_baselines(ctx.state.bundle, ctx.inverse_sources)
             stages = self.inverse_stages[ordinal] = []
             # Equal historical bytes must not replace the authenticated input revision.
@@ -482,7 +488,14 @@ class CommitPatch:
                     stages = [binding for binding in record['bindings'] if binding['key'] == 'inverse.stage']
                     index = sum(1 for binding in stages if 'effect_range' in binding['boundary'])
                     start_effect = len(effects)
-                    effects.extend(effect_diff(first, second))
+                    changes = effect_diff(first, second)
+                    inherited = self.inverse_effects.get(ordinal, [])
+                    if index < len(inherited) and inherited[index] is not None:
+                        captured = inherited[index]
+                        if sorted(map(_effect_key, changes)) != sorted(map(_effect_key, captured)):
+                            raise CommandError('nested inverse effects differ from execution', kind='capture_mismatch')
+                        changes = copy.deepcopy(captured)
+                    effects.extend(changes)
                     if index < len(stages):
                         stages[index]['boundary']['effect_range'] = [start_effect, len(effects)]
                     previous = second

@@ -162,6 +162,36 @@ def recover_rebound_sources(state, records):
             recover_source(state, value, sources[0])
 
 
+def restore_root_baselines(state, records, publication, commands):
+    """Keep a restored native root on its immediate accepted compiler baseline."""
+    if not isinstance(records, AcceptedRecords) or not any('_inverse_effects' in record for record in commands):
+        return
+    from astrid.core.timeline.authoring_bundle import _RestoredShot
+
+    entry = next(entry for entry in records.entries if entry['publication_id'] == publication)
+    before, _ = records.load_boundary(entry)
+    for record in commands:
+        if record['command']['op'] != 'timeline.inverse' or '_inverse_effects' not in record:
+            continue
+        for write in record['writes']:
+            if (not write['ref'].startswith('shot:') or write['path']
+                    or write['after'] != ABSENT or write['before'] == ABSENT):
+                continue
+            identity = write['ref'][5:]
+            prior = before['shots'].get(identity)
+            shot = state.bundle['shots'].get(identity)
+            owners = {row['occurrence_id'] for row in state.bundle['placements']
+                      if row['shot_id'] == identity}
+            if (prior is None or shot is None or not owners
+                    or owners != {row['occurrence_id'] for row in before['placements']
+                                  if row['shot_id'] == identity}
+                    or not equal(shot['payload'], prior['payload'])
+                    or not state.matches(write['ref'], [], write['before'])):
+                raise CommandError('restored root differs from accepted source', kind='history_unavailable')
+            state.bundle['shots'][identity] = _RestoredShot(
+                shot, copy.deepcopy(before['source_mapping']['_runtime_document']))
+
+
 def occurrence_orders(state, records, changes):
     """Only absent-to-present reversals need an authenticated insertion position."""
     removed = {w['ref'] for w in changes if not w['path'] and w['before'] != ABSENT
