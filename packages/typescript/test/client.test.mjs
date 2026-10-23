@@ -265,6 +265,8 @@ test("default fetch receives Blob directly", async () => {
     await new WorkspaceClient("http://runtime").importProjectMedia("project", blob, "image/png", "media");
   } finally {
     globalThis.fetch = previousFetch;
+  }
+});
 
 
 test("persisted timeline view sends explicit key and preserves the plain view response", async () => {
