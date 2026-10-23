@@ -143,6 +143,22 @@ export const validateSerializedConfig = (config: TimelineConfig): void => {
   assertValidTimelineConfigSnapshot(config);
 };
 
+/** Numeric hold controls row duration without clearing authored source fields. */
+export function withHeldClipSourceFields(
+  config: TimelineConfig,
+  meta: Readonly<Record<string, Pick<TimelineClip, 'hold' | 'from' | 'to' | 'speed'>>>,
+): TimelineConfig {
+  return { ...config, clips: config.clips.map((clip) => {
+    const source = meta[clip.id];
+    if (typeof source?.hold !== 'number') return clip;
+    const restored = { ...clip };
+    for (const key of ['from', 'to', 'speed'] as const) {
+      if (source[key] !== undefined) restored[key] = source[key];
+    }
+    return restored;
+  }) };
+}
+
 export const serializeForDisk = (
   resolved: ResolvedTimelineConfig,
   pinnedShotGroups?: TimelineConfig['pinnedShotGroups'],

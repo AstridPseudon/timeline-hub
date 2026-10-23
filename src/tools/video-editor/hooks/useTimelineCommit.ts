@@ -20,7 +20,7 @@ import {
 import { TimelineEventBus } from '@/tools/video-editor/hooks/useTimelineEventBus.ts';
 import { buildTrackClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { migrateToFlatTracks } from '@/tools/video-editor/lib/migrate.ts';
-import { serializeResolvedTimelineEdit } from '@/tools/video-editor/lib/serialize.ts';
+import { serializeResolvedTimelineEdit, withHeldClipSourceFields } from '@/tools/video-editor/lib/serialize.ts';
 import { getConfigSignature } from '@/tools/video-editor/lib/config-utils.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 import { buildAssetReferenceMap, getAssetMediaId, getAssetResolutionToken, getAssetSourceForLocalEdit } from '@/tools/video-editor/lib/asset-registry.ts';
@@ -313,7 +313,7 @@ export function useTimelineCommit({
     // rowsToConfig receives the untouched pinnedShotGroups from the current config;
     // callers that need to update group membership must pass `pinnedShotGroupsOverride`
     // explicitly on the mutation, which `applyEdit` handles below.
-    const config = rowsToConfig(
+    const config = withHeldClipSourceFields(rowsToConfig(
       rows,
       meta,
       current.output,
@@ -321,7 +321,7 @@ export function useTimelineCommit({
       current.tracks,
       current.config.pinnedShotGroups,
       current.config,
-    );
+    ), meta);
 
     const registry = registryOverride ?? current.registry;
     const resolvedRegistry = Object.fromEntries(
