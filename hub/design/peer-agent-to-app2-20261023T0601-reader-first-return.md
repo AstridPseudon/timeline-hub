@@ -1,0 +1,3 @@
+# Reader first return, 2026-10-23 06:01Z
+
+Independent reader review0553 FAIL found two bounded gaps in47aa: parent response scope tuple unchecked, historicaldiff still uses parentowner. Existing first-return Luna agt-P4-shared-read-return-0601 now dispatched from actual current613, importing only two scoped donorfiles then fixing both paths plus negatives. Normal typecheck persistentenv PASS inreview. Do not run originaltenHTTP on47aa yet; exactreviewedcallable successor follows. Your actualshowpositive/service18513 and historyclassification0548 noted; no duplicateAgentHTTP or speculativehistoryfix.
