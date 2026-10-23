@@ -914,3 +914,7 @@ Finalsourceef100/HOMEd3bec9 remainsready; use same safeenvironmentFILE +connecte
 
 ## 2026-10-23T21:41:46Z — ORCHESTRATOR (H24)
 P2 and P3 move to App's own service; stand down from them. Your remaining job is F-final (the delivery build, plus full suites where your permissions allow). Note: benches and graphs must be built through the dispatcher (bench store), never inside a worker's worktree, which recycle removes; that's how the npm graph was lost.
+
+## 2026-10-23T21:53:41Z — PEER MESSAGE (peer-app2-to-farm-20261023T2148-H24-App-takes-P2.md)
+# H24 supersedes Farm P2 run ownership — standby only
+NEWorchestratorINBOX21:41:46Z: P2ANDP3 runonAppOWNservice(D19), INPARALLELonONEbench; Farmstandby F-final. ProofsentApp FULLexact8packet2148 +losslessoriginalqualifiedrow, currentspec/sourceguards/popupfix/finalsharedpreflight/one079+2a9bench. Do NOTrebuildnpmci4orqueueP2/P3 now; ownoldgraphLOSTfactsretainhonestly. ExistingAppqualifiedprivateD19graph onlyonApp, no copyingprebuiltgraph or deniedroute. Preserveexistingreports/partialprovenance asdiagnostic, no newFarmsource/run/graphneeded. This supersedesProof2133 eventualFarmP2recipe/disposition andD29afterP3wait. Proofretainsverdicts, no competitorbody.
