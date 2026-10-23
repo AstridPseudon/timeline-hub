@@ -1,8 +1,5 @@
 """The retired timeline family cannot publish, including before retry lookup.
 
-publish_parent_composition is not in that family: it stays live for headless timelines
-until the App migration lands, and refuses only a tracked timeline (below).
-
 Run the whole file through the central restore-integration lane with the actual
 Agent checkout. Only the HTTP cases need sockets; service cases run directly.
 """
@@ -26,7 +23,8 @@ from test_shot_composition_runtime import restore_provider as actual_provider  #
 
 FAMILIES = (
     "update_timeline", "replace_timeline_clip", "create_timeline_document",
-    "replace_parent_composition_media",
+    "replace_parent_composition_media", "publish_parent_composition",
+    "publish_timeline_render",
 )
 STATES = ("tracked", "fresh", "unused")
 
@@ -69,7 +67,9 @@ def snapshot(service):
         database = tuple(service.store.conn.iterdump())
         objects = {str(path.relative_to(service.store.cas_root)): path.read_bytes()
                    for path in service.store.cas_root.rglob("*") if path.is_file()}
-    return database, objects
+        staging = {str(path.relative_to(service.store.staging_root)): path.read_bytes()
+                   for path in service.store.staging_root.rglob("*") if path.is_file()}
+    return database, objects, staging
 
 
 def _recover_request_hash(timeline_id, body):
@@ -119,6 +119,7 @@ def legacy_request(case, family, timeline):
         "replace_parent_composition_media": ("POST", f"/v1/projects/{project}/timelines/{timeline}/replace-parent-media",
                                              {"expected_head": head or "old-parent", "occurrence_id": "occurrence",
                                               "clip_id": "clip", "source_object_id": object_id}),
+        "publish_timeline_render": ("POST", f"/v1/attempts/{timeline}/publish-timeline-render", {}),
         "archive_timeline": ("POST", f"/v1/timelines/{timeline}/archive", {"expected_version": version}),
         "recover_timeline": ("POST", f"/v1/timelines/{timeline}/recover", {"expected_version": version, "version": 1}),
     }
@@ -126,10 +127,14 @@ def legacy_request(case, family, timeline):
 
 
 def call_service(case, family, timeline, body, key):
-    args = (case.project, body) if family == "create_timeline_document" else (
-        (case.project, timeline, body) if family in ("publish_parent_composition", "replace_parent_composition_media")
-        else (timeline, body)
-    )
+    if family == "publish_timeline_render":
+        args = (timeline, body)
+    elif family == "create_timeline_document":
+        args = (case.project, body)
+    elif family in ("publish_parent_composition", "replace_parent_composition_media"):
+        args = (case.project, timeline, body)
+    else:
+        args = (timeline, body)
     return getattr(case.service, family)(*args, idempotency_key=key)
 
 
@@ -190,9 +195,9 @@ def test_http_authenticated_legacy_family_refuses_without_writes(http_case, monk
                                  headers={"Content-Type": "application/json", "Idempotency-Key": key})
         assert error.value.status == 410
         assert error.value.code == "retired_route"
-        # createTimelineDocument already retires in the handler, before service.
-        if family != "create_timeline_document":
-            assert error.value.details["reason"] == "timeline_commit_required"
+        assert error.value.details["reason"] == "timeline_commit_required"
+        assert error.value.details["hint"]
+        assert error.value.details["suggested_command"]
         assert snapshot(case.service) == before
         assert case.service.store.conn.total_changes == changes
 
@@ -221,7 +226,7 @@ def test_service_publish_parent_composition_refuses_tracked_timeline_without_wri
     for key in ("legacy-key", "legacy-key"):
         with pytest.raises(RuntimeErrorBase) as error:
             call_service(case, "publish_parent_composition", "tracked", body, key)
-        assert error.value.status == 409
+        assert error.value.status == 410
         assert error.value.details["reason"] == "timeline_commit_required"
         assert snapshot(case.service) == before
         assert case.service.store.conn.total_changes == changes
@@ -234,10 +239,74 @@ def test_http_publish_parent_composition_refuses_tracked_timeline_without_writes
     with pytest.raises(ApiError) as error:
         case.client._request(method, path, body=json.dumps(body).encode(),
                              headers={"Content-Type": "application/json", "Idempotency-Key": "legacy-key"})
-    assert error.value.status == 409
+    assert error.value.status == 410
     assert error.value.details["reason"] == "timeline_commit_required"
     assert snapshot(case.service) == before
     assert case.service.store.conn.total_changes == changes
+
+
+@pytest.mark.parametrize("operation", ("create", "update"))
+def test_service_documents_cannot_carry_timeline_id(service_case, operation, monkeypatch):
+    case = service_case
+    service = case.service
+    if operation == "create":
+        body = {"document_id": "ordinary-document", "kind": "example.notes",
+                "timeline_id": "tracked", "content": {"draft": True}}
+
+        def call():
+            return service.create_document(case.project, body, idempotency_key="document-timeline")
+
+    else:
+        created = service.create_document(
+            case.project,
+            {"document_id": "ordinary-document", "kind": "example.notes", "content": {"draft": True}},
+            idempotency_key="document-create",
+        )
+        body = {"expected_version": created["data"]["version"], "timeline_id": "tracked",
+                "content": {"draft": False}}
+
+        def call():
+            return service.update_document(
+                case.project, "ordinary-document", body, idempotency_key="document-timeline",
+            )
+
+    def replay(*args, **kwargs):
+        pytest.fail("timeline-bearing document write consulted idempotency replay")
+
+    monkeypatch.setattr(service, "_command_replay", replay)
+    before = snapshot(service)
+    with pytest.raises(RetiredRouteError) as error:
+        call()
+    assert error.value.status == 410
+    assert error.value.details["reason"] == "timeline_commit_required"
+    assert snapshot(service) == before
+
+
+def test_http_documents_cannot_carry_timeline_id_but_ordinary_metadata_stays_live(http_case):
+    case = http_case
+    ordinary = case.client.create_document(
+        case.project, "ordinary-document", "example.notes", {"draft": True},
+        idempotency_key="ordinary-create",
+    )
+    before = snapshot(case.service)
+    for method, path, body, key in (
+        ("POST", f"/v1/projects/{case.project}/documents",
+         {"document_id": "smuggled", "kind": "example.notes", "timeline_id": "tracked",
+          "content": {"draft": True}}, "smuggled-create"),
+        ("PATCH", f"/v1/projects/{case.project}/documents/ordinary-document",
+         {"expected_version": ordinary.version, "timeline_id": "tracked",
+          "content": {"draft": False}}, "smuggled-update"),
+    ):
+        with pytest.raises(ApiError) as error:
+            case.client._request(
+                method, path, body=json.dumps(body).encode(),
+                headers={"Content-Type": "application/json", "Idempotency-Key": key},
+            )
+        assert error.value.status == 410
+        assert error.value.code == "retired_route"
+        assert error.value.details["reason"] == "timeline_commit_required"
+        assert snapshot(case.service) == before
+    assert case.client.get_document(case.project, "ordinary-document").content == {"draft": True}
 
 
 def test_service_catalog_visibility_unarchives_current_or_absent_version(service_case):

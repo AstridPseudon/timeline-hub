@@ -585,13 +585,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             return self._send(200, getattr(self.runtime, read)(path[2], *args, authorize=authorize))
         if len(path) == 4 and path[:2] == ["v1", "projects"] and path[3] == "timeline-documents" and method == "POST":
             self._identity("projects:write")
-            raise RetiredRouteError(
-                "timeline-document creation is retired; publish a canonical parent composition",
-                details={"replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/composition-revisions"},
-            )
+            self.runtime._require_timeline_command()
         if len(path) == 6 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "composition-revisions" and method == "POST":
             self._identity("projects:write")
-            return self._send(200, self.runtime.publish_parent_composition(path[2], path[4], self._project_mutation_body(), idempotency_key=self._idempotency_key()))
+            self.runtime._require_timeline_command()
         if len(path) == 6 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "composition-revisions" and method == "GET":
             self._identity("projects:read")
             query = parse_qs(urlsplit(self.path).query)
@@ -606,7 +603,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             return self._send(200, self.runtime.create_timeline_view(path[2], path[4], self._timeline_options(), idempotency_key=self._idempotency_key()))
         if len(path) == 6 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "replace-parent-media" and method == "POST":
             self._identity("projects:write")
-            return self._send(200, self.runtime.replace_parent_composition_media(path[2], path[4], self._project_mutation_body(), idempotency_key=self._idempotency_key()))
+            self.runtime._require_timeline_command()
         if len(path) == 7 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "composition-revisions" and method == "GET":
             self._identity("projects:read")
             return self._send(200, self.runtime.get_project_parent_composition_revision(path[2], path[4], path[6]))
@@ -645,10 +642,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 raise ProtocolError("Idempotency-Key header is required")
             return self._send(201, self.runtime.create_shot(path[2], body, idempotency_key=key) if path[3] == "shots" else self.runtime.create_reference(path[2], body, idempotency_key=key))
         if len(path) == 3 and path[:2] == ["v1", "timelines"] and method == "PATCH":
-            self._identity("projects:write"); return self._send(200, self.runtime.update_timeline(path[2], self._body(), idempotency_key=self._idempotency_key()))
+            self._identity("projects:write"); self.runtime._require_timeline_command()
         if len(path) == 4 and path[:2] == ["v1", "timelines"] and path[3] == "replace-clip" and method == "POST":
             self._identity("projects:write")
-            return self._send(200, self.runtime.replace_timeline_clip(path[2], self._body(), idempotency_key=self._idempotency_key()))
+            self.runtime._require_timeline_command()
         if len(path) == 4 and path[:2] == ["v1", "timelines"] and path[3] in ("history", "diff") and method == "GET":
             self._identity("projects:read")
             query = parse_qs(urlsplit(self.path).query)
@@ -716,13 +713,11 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 if method == "POST":
                     body = self._body()
                     if isinstance(body, dict) and (
-                        str(body.get("document_id", "")).startswith("timeline:")
+                        "timeline_id" in body
+                        or str(body.get("document_id", "")).startswith("timeline:")
                         or body.get("kind") == "timeline.composition"
                     ):
-                        raise RetiredRouteError(
-                            "timeline documents are retired; publish a canonical parent composition",
-                            details={"replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/composition-revisions"},
-                        )
+                        self.runtime._require_timeline_command()
                     return self._send(201, self.runtime.create_document(selector, body, idempotency_key=self._idempotency_key()))
             if len(path) == 5 and path[3] == "documents" and method in ("GET", "PATCH"):
                 self._identity("projects:read" if method == "GET" else "projects:write")
@@ -732,7 +727,10 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                         details={"replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/inspect"},
                     )
                 if method == "GET": return self._send(200, self.runtime.get_document(selector, path[4]))
-                return self._send(200, self.runtime.update_document(selector, path[4], self._body(), idempotency_key=self._idempotency_key()))
+                body = self._body()
+                if isinstance(body, dict) and "timeline_id" in body:
+                    self.runtime._require_timeline_command()
+                return self._send(200, self.runtime.update_document(selector, path[4], body, idempotency_key=self._idempotency_key()))
             if len(path) == 4 and path[3] == "media-imports" and method == "POST":
                 identity = self._identity("projects:write")
                 key = self._idempotency_key()
@@ -1057,8 +1055,7 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                 return self._send(200, self.runtime.prepare_reboot(body, identity=identity))
             if action == "checkpoint": return self._send(201, self.runtime.checkpoint_attempt(path[2], self._body(), identity=identity))
             if action == "publish-timeline-render":
-                key = self._idempotency_key()
-                return self._send(200, self.runtime.publish_timeline_render(path[2], self._body(), idempotency_key=key, identity=identity))
+                self.runtime._require_timeline_command()
             if action == "settle":
                 key = self._idempotency_key()
                 value = self.runtime.settle_attempt(path[2], self._body(), idempotency_key=key, identity=identity)
