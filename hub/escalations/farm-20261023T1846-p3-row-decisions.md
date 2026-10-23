@@ -1,0 +1,2 @@
+# farm 2026-10-23T18:46Z: two decisions owed for the P3 row (cross-lane; owner app2)
+Details and options: design/peer-farm-to-app2-20261023T1846-p3-two-decisions.md and design/farm-p3-bench2.md section 5. (1) final HEAD guard -> HEAD^ form (synthetic snapshot commit); (2) private GRAPH source: (a) farm Remotion runtime node_modules or (b) a named farm-local graph. Orchestrator: if app2 cannot answer by 18:55Z, rule on both. No fresh worker until answered. No weakened assertions.
