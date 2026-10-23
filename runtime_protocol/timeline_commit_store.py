@@ -484,6 +484,27 @@ class TimelineCommitStore:
             self._verify_inputs(document)
             return document
 
+    def source_revision_closure(self, project_id, timeline_id, revision_id, publication_id,
+                                content_digest):
+        """Return one authenticated historical source closure.
+
+        The source pair is deliberately checked separately from the request's
+        destination head.  A revision ID alone is not a source authority: the
+        accepted publication edge and the immutable parent digest must agree
+        with the caller's exact reference.
+        """
+        with self.store._mutex:
+            entry = self.history_entry(project_id, timeline_id, publication_id)
+            if entry["revision_id"] != revision_id:
+                reject("dependency_unavailable", "source publication and revision pins disagree")
+            document = self.revision_closure(project_id, timeline_id, revision_id)
+            if document is not None:
+                parent = document.get("parent_revision")
+                if not isinstance(parent, dict) or parent.get("content_digest") != content_digest:
+                    reject("dependency_unavailable", "source revision content digest disagrees")
+                return document
+            reject("dependency_unavailable", "source revision closure is unavailable")
+
     def _verify_inputs(self, document):
         for pin in document["dependency_manifest"]["documents"]:
             row = self.conn.execute("SELECT c.content_json, c.content_size, b.kind FROM timeline_document_input_contents c "
