@@ -97,16 +97,136 @@ describe('P1 real corpus document patch encoder', () => {
     const split = readAgentSplit();
     const before = split.input;
     const after = authoredPayloadAfter(before, split.output);
+    const inputSnapshot = copy(split.input);
+    const outputSnapshot = copy(split.output);
+    const afterSnapshot = copy(after);
     const proposal = documentPatchIntent(intent(before, after, 'Real Agent split')) as JsonObject;
     const inserted = (proposal.changes as JsonObject[]).find((change) => change.op === 'list.insert');
+    const beforePayload = parentPayload(before);
+    const afterPayload = parentPayload(after);
+    const beforeClip = clip(before, 'clip-a');
+    const afterClip = clip(after, 'clip-a');
+    const afterInserted = clip(after, 'right');
 
-    expect(inserted).toMatchObject({
-      op: 'list.insert', ref: 'parent', path: ['clips'], id: 'right', before: { state: 'absent' },
-      order_before: ['clip-a', 'clip-b'], after_id: 'clip-a',
-    });
+    expect(proposal.roots).toEqual([parentRoot(before)]);
+    expect(proposal.changes).toEqual([
+      {
+        op: 'list.insert',
+        ref: 'parent',
+        path: ['clips'],
+        id: 'right',
+        before: { state: 'absent' },
+        value: {
+          id: 'right',
+          track: 'picture',
+          asset: 'picture',
+          clipType: 'media',
+          at: 3,
+          hold: 4,
+          app: {
+            'org.example': { literal: 'clip-a', clear: null },
+            astrid: { for: 2, opaque: { for: 'literal' } },
+          },
+          from: 6,
+          to: 10,
+          speed: 2,
+          opaque: { nested: [null, false, 0, {}, []], literal: 'clip-a' },
+          params: { volume: 0.7, unknown: [null, false] },
+        },
+        order_before: ['clip-a', 'clip-b'],
+        after_id: 'clip-a',
+      },
+      {
+        op: 'set',
+        ref: 'parent',
+        path: ['clips', 'id:clip-a', 'hold'],
+        before: present(8),
+        value: 4,
+      },
+      {
+        op: 'set',
+        ref: 'parent',
+        path: ['clips', 'id:clip-a', 'app', 'astrid', 'for'],
+        before: present(4),
+        value: 2,
+      },
+      {
+        op: 'set',
+        ref: 'parent',
+        path: ['clips', 'id:clip-a', 'to'],
+        before: present(10),
+        value: 6,
+      },
+    ]);
     expect(proposal.created).toEqual(['parent/clip:right']);
-    expect((inserted!.value as JsonObject).id).toBe('right');
-    expect((proposal.changes as JsonObject[]).some((change) => change.path?.join('.') === 'id:right.from')).toBe(false);
+    expect(inserted).toEqual((proposal.changes as JsonObject[])[0]);
+    expect(inserted!.value).toEqual(afterInserted);
+    expect(beforeClip).toEqual({
+      id: 'clip-a',
+      track: 'picture',
+      asset: 'picture',
+      clipType: 'media',
+      at: 1,
+      hold: 8,
+      app: {
+        'org.example': { literal: 'clip-a', clear: null },
+        astrid: { for: 4, opaque: { for: 'literal' } },
+      },
+      from: 2,
+      to: 10,
+      speed: 2,
+      opaque: { nested: [null, false, 0, {}, []], literal: 'clip-a' },
+      params: { volume: 0.7, unknown: [null, false] },
+    });
+    expect(afterClip).toEqual({
+      id: 'clip-a',
+      track: 'picture',
+      asset: 'picture',
+      clipType: 'media',
+      at: 1,
+      hold: 4,
+      app: {
+        'org.example': { literal: 'clip-a', clear: null },
+        astrid: { for: 2, opaque: { for: 'literal' } },
+      },
+      from: 2,
+      to: 6,
+      speed: 2,
+      opaque: { nested: [null, false, 0, {}, []], literal: 'clip-a' },
+      params: { volume: 0.7, unknown: [null, false] },
+    });
+    expect(afterInserted).toEqual({
+      id: 'right',
+      track: 'picture',
+      asset: 'picture',
+      clipType: 'media',
+      at: 3,
+      hold: 4,
+      app: {
+        'org.example': { literal: 'clip-a', clear: null },
+        astrid: { for: 2, opaque: { for: 'literal' } },
+      },
+      from: 6,
+      to: 10,
+      speed: 2,
+      opaque: { nested: [null, false, 0, {}, []], literal: 'clip-a' },
+      params: { volume: 0.7, unknown: [null, false] },
+    });
+    expect(beforePayload.clips).toEqual([beforeClip, clip(before, 'clip-b')]);
+    expect(afterPayload.clips).toEqual([afterClip, afterInserted, clip(after, 'clip-b')]);
+    expect((beforePayload.config as JsonObject).clips).toEqual(beforePayload.clips);
+    expect((afterPayload.config as JsonObject).clips).toEqual(afterPayload.clips);
+    expect(afterPayload.registry).toEqual(beforePayload.registry);
+    expect(afterPayload.name).toBe(beforePayload.name);
+    expect(afterPayload.unknown).toEqual(beforePayload.unknown);
+    expect((afterPayload.config as JsonObject).output).toEqual((beforePayload.config as JsonObject).output);
+    expect(afterClip.opaque).toEqual(beforeClip.opaque);
+    expect(afterClip.params).toEqual(beforeClip.params);
+    expect(afterInserted.opaque).toEqual(afterClip.opaque);
+    expect(afterInserted.params).toEqual(afterClip.params);
+    expect(split.input).toEqual(inputSnapshot);
+    expect(split.output).toEqual(outputSnapshot);
+    expect(after).toEqual(afterSnapshot);
     expect(corpus.h3_chain.status).toBe('authored-not-go');
     expect(corpus.h3_chain.required_seams).toContain('App split capture/submit port for clip.split and created-id binding');
     expect(corpus.h3_chain.required_seams).toContain('App mixed-command queue acceptance of clip.trim against a newly created id');
