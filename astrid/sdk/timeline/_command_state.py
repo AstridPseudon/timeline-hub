@@ -288,6 +288,8 @@ class State:
             raise CommandError('occurrence references missing shot', kind='identity_conflict', ref=ref)
 
     def get(self, ref, path):
+        if ref == 'parent' and list(path) == ['occurrences']:
+            return present(copy.deepcopy(self.bundle['placements']))
         if '/collection:' in ref:
             from ._collections import shape
             owner, kind = ref.rsplit('/collection:', 1)
@@ -365,6 +367,17 @@ class State:
         return False
 
     def set(self, ref, path, state):
+        if ref == 'parent' and list(path) == ['occurrences']:
+            before = self.bundle['placements']
+            after = state.get('value')
+            if (state['state'] != 'present' or not isinstance(after, list)
+                    or len(after) != len(before)
+                    or not equal(sorted(after, key=lambda row: row['occurrence_id']),
+                                 sorted(before, key=lambda row: row['occurrence_id']))):
+                raise CommandError('occurrence order writes must preserve every authored row',
+                                   kind='identity_conflict', ref=ref, path=path)
+            self.bundle['placements'] = copy.deepcopy(after)
+            return
         if '/text-binding:' in ref:
             from .native_text_binding import binding_key, binding_rows
             if path:

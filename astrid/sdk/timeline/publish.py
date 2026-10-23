@@ -89,33 +89,41 @@ class _PublishMixin:
 
     def publish(self, message: str = "", *, idempotency_key: str | None = None, client: Any = None,
                 force: bool = False, restructure: bool = False) -> dict[str, Any]:
-        """Check, then publish one revision.
-
-        If someone published since this checkout, the edit is merged onto their head clip by
-        clip (three-way: your base, their head, your candidate). Changes to different clips
-        merge; a clip both sides changed refuses with a conflict list. ``force=True``
-        overwrites their change, explicitly. Nothing is ever overwritten silently.
-        """
+        """Commit this checkout through Runtime, then reconcile narration and transcripts."""
+        if force:
+            raise TimelineEditError("publication uses guarded commits; force is unavailable")
         self.notes.extend(self._sync_film_length())  # the film's length follows its content, before the check
         # Publication is guarded by the structural/core validator only.  The
         # full check may import the renderer and evaluate visual diagnostics,
         # neither of which is part of the writer's safety decision.
-        report = self._check_core()
+        if restructure:
+            from astrid.sdk.timeline.checkout import Checkout
+
+            report = Checkout(copy.deepcopy(self.bundle))._check_core()
+        else:
+            checked = copy.copy(self)
+            checked.bundle = copy.deepcopy(self.bundle)
+            report = checked._check_core()
         if not report.valid:
             raise TimelineEditError("not publishing: " + "; ".join(report.problems or ["the candidate is invalid"]))
         key = idempotency_key or f"edit-{re.sub(r'[^a-z0-9]+', '-', message.lower())[:40].strip('-') or 'timeline'}-{uuid.uuid4().hex[:8]}"
         stored = self.stored_document(restructure=restructure)  # chapters as shots only for a film that opted in
-        if restructure or self.edits().get("changes") or not self.narration_changes():
-            receipt = _store.publish_bundle(stored, key, client=client, force=force)
-        else:  # only the narration binding is behind (a retry after it failed): pin it, nothing else to publish
-            receipt = {"old_head": self.base_revision, "new_head": self.base_revision, "structure": "unchanged"}
+        if restructure:
+            receipt = self._commit_restructure(message, idempotency_key=idempotency_key, client=client, force=force)
+            key = receipt.pop("_restructure_key")
+            receipt.update(idempotency_key=key, structure="changed", merged=None)
+        else:
+            receipt = self._commit_document(stored, message, idempotency_key=idempotency_key, client=client)
+            key = receipt.get("idempotency_key", key)
         receipt["narration_pinned"] = []
-        if self.narration_changes():
+        if restructure or receipt.pop("_narration_pending", False) or self.narration_changes():
+            from astrid.sdk.workspace_client import WorkspaceClientError
+
             # A line's text changed (or the shots are new): bind each such shot's narration now that
             # the shots exist, then publish the pins as a second, small revision.
             try:
                 receipt.update(self._publish_narration(key, client=client))
-            except TimelineEditError as exc:  # the structure IS published: say so, and how to finish
+            except (TimelineEditError, WorkspaceClientError) as exc:  # the cut is already durable
                 receipt["narration_error"] = (f"{exc}. The cut is published (head {receipt.get('new_head')}); only the "
                                               "narration binding is behind: retry the original publish to reconcile "
                                               "the durable narration commit")
@@ -145,8 +153,255 @@ class _PublishMixin:
                                     reason=message or None, before=before,
                                     after=_journal.document_digest(self.document()),
                                     evidence=({"kind": "revision", "id": receipt.get("new_head")},))
-        receipt["message"] = message
+        receipt["message"] = receipt.pop("_message", message)
         return receipt
+
+    def _commit_document(self, stored: Mapping[str, Any], message: str, *,
+                         idempotency_key: str | None, client: Any) -> dict[str, Any]:
+        from astrid.sdk.timeline._command_state import equal
+        from astrid.sdk.timeline.emitter import emit_document_commands
+        from astrid.sdk.timeline.sync import TimelineSession
+
+        if client is None:
+            from astrid.sdk import AstridClient
+
+            with AstridClient.open_from_launcher(start_pack_host=False) as opened:
+                return self._commit_document(stored, message, idempotency_key=idempotency_key, client=opened)
+        project, timeline = str(stored["project_id"]), str(stored["timeline_id"])
+        session = TimelineSession.open(project, timeline, client=client)
+        with session.outbox.locked():
+            state = session._state()
+        base_revision = self.base_revision
+        changed = self.edits().get("changes")
+        flight = state["flight"]
+        key = idempotency_key
+        accepted = None
+        authored = {"parent": stored["parent"], "placements": stored["placements"],
+                    "shots": {identity: {field: shot[field] for field in ("payload", "internal_timeline")}
+                              for identity, shot in stored["shots"].items()}}
+        candidate_digest = hashlib.sha256(json.dumps(authored, sort_keys=True).encode()).hexdigest()
+        entries = []
+        cursor, seen = None, set()
+        while True:
+            history = client.timelines.history(project, timeline, cursor=cursor, limit=200)
+            if not history.ok:
+                raise TimelineEditError(f"could not read publication history: {history.error}")
+            entries.extend(history.data["items"])
+            cursor = history.data.get("next_cursor")
+            if cursor is None:
+                break
+            if cursor in seen:
+                raise TimelineEditError("publication history cursor repeated")
+            seen.add(cursor)
+        if flight is not None:
+            body = json.loads(flight["body"])
+            if body.get("label") == "Bind narration":
+                key = flight["key"].removesuffix("-narration")
+            elif (state.get("evaluation") or {}).get("kind") == "checkout-publish":
+                if message and message != body["label"]:
+                    raise TimelineEditError("in-flight request is immutable; retry its original label")
+                if (candidate_digest != state["evaluation"]["candidate_digest"]
+                        and (base_revision == body["base_revision_id"] or changed)):
+                    raise TimelineEditError("local edits differ from the original request; reopen to reconcile it")
+                result = session.flush(idempotency_key=idempotency_key)
+                return {"old_head": result["data"].get("previous_revision_id"),
+                        "new_head": result["data"]["accepted_revision_id"],
+                        "receipt": result["receipt"], "idempotency_key": flight["key"],
+                        "structure": "changed", "merged": result["data"]["status"] == "merged",
+                        "_message": body["label"]}
+            else:
+                raise TimelineEditError("reconcile the original timeline request before publishing")
+        if key is not None:
+            for entry in entries:
+                receipt = entry.get("receipt") or {}
+                if receipt.get("idempotency_key") == key:
+                    accepted = entry
+                    if (receipt["result"].get("label") != (message or "Timeline edit")
+                            or not all(record["command"]["op"] == "doc.patch"
+                                       for record in (entry.get("records") or {}).get("commands", []))):
+                        raise TimelineEditError("the idempotency key belongs to a different timeline commit")
+        if flight is not None and accepted is not None and not changed:
+            receipt = accepted["receipt"]
+            return {"old_head": receipt["result"].get("previous_revision_id"),
+                    "new_head": accepted["revision_id"], "receipt": receipt,
+                    "idempotency_key": key, "structure": "unchanged", "_narration_pending": True}
+        if state["pending"] or flight is not None:
+            raise TimelineEditError("flush pending commands before publishing")
+        original_publication = stored["base_parent"].get("publication_id")
+        matches = [entry for entry in entries if entry["revision_id"] == base_revision
+                   and (original_publication is None or entry["publication_id"] == original_publication)]
+        if len(matches) != 1:
+            raise TimelineEditError("checkout has no unique publication base; reopen the timeline")
+        base_pair = {"revision_id": base_revision, "publication_id": matches[0]["publication_id"]}
+        base = _store.fetch_bundle(project, timeline, revision_id=base_revision,
+                                   publication_id=base_pair["publication_id"], client=client)
+        provenance = _strip_derived(base)
+        if (stored["base_parent"] != base["base_parent"]
+                or set(stored["shots"]) != set(base["shots"])
+                or not equal(stored["placements"], base["placements"])
+                or any(not equal(stored.get(field), provenance.get(field))
+                       for field in ("source_mapping", "base_parent_payload", "base_placements"))
+                or any(not equal({field: value for field, value in shot.items()
+                                  if field not in {"payload", "internal_timeline"}},
+                                 {field: value for field, value in provenance["shots"][identity].items()
+                                  if field not in {"payload", "internal_timeline"}})
+                       for identity, shot in stored["shots"].items())):
+            raise TimelineEditError("closure membership changes require a semantic command")
+        candidate = copy.deepcopy(base)
+        candidate["parent"] = copy.deepcopy(stored["parent"])
+        for identity, shot in stored["shots"].items():
+            for field in ("payload", "internal_timeline"):
+                candidate["shots"][identity][field] = copy.deepcopy(shot[field])
+        commands = emit_document_commands(base, candidate)
+        captured_helpers = _journal.helper_batch(self, base, candidate)
+        if captured_helpers is not None:
+            commands = captured_helpers[0]
+        # Acknowledged cuts can still have an unstarted narration follow-up.
+        # Recover their identity from Runtime history, never a second journal.
+        for entry in entries:
+            prior = entry.get("receipt") or {}
+            result = prior.get("result") or {}
+            captured = result.get("commands") or []
+            if (commands and entry.get("previous") == base_pair
+                    and result.get("label") == (message or "Timeline edit")
+                    and len(captured) == len(commands)
+                    and all(equal({field: record.get(field) for field in call}, call)
+                            for call, record in zip(commands, captured))
+                    and (key is None or key == prior.get("idempotency_key"))):
+                return {"old_head": result.get("previous_revision_id"),
+                        "new_head": entry["revision_id"], "receipt": prior,
+                        "idempotency_key": prior["idempotency_key"], "structure": "unchanged"}
+        key = key or f"timeline-edit-{uuid.uuid4().hex}"
+        if not commands:
+            if accepted is not None:
+                receipt = accepted["receipt"]
+                return {"old_head": receipt["result"].get("previous_revision_id"),
+                        "new_head": accepted["revision_id"], "receipt": receipt,
+                        "idempotency_key": key, "structure": "unchanged"}
+            return {"old_head": base_revision, "new_head": base_revision,
+                    "structure": "unchanged", "idempotency_key": key}
+        result = session.submit(commands, label=message or "Timeline edit",
+            merge="fields" if captured_helpers is not None else "atomic",
+            reads=captured_helpers[1][0]["reads"] if captured_helpers is not None else None,
+            steps=captured_helpers[1] if captured_helpers is not None else [
+                   {"id": "edit", "label": message or "Timeline edit", "intent": message,
+                    "tags": [], "command_ordinals": list(range(len(commands))),
+                    "patch": [copy.deepcopy(change) for call in commands for change in call["args"]["changes"]],
+                    "reads": [{"kind": "scope", "ref": "timeline", "path": []}]}],
+            expected_state=state, base=base_pair, idempotency_key=key,
+            evaluation={"kind": "checkout-publish", "count": 0, "candidate_digest": candidate_digest})
+        return {"old_head": result["data"].get("previous_revision_id"),
+                "new_head": result["data"]["accepted_revision_id"], "receipt": result["receipt"],
+                "idempotency_key": key, "structure": "changed", "merged": result["data"]["status"] == "merged"}
+
+    def _commit_restructure(self, message: str, *, idempotency_key: str | None,
+                            client: Any, force: bool) -> dict[str, Any]:
+        """Commit the cut once; an interrupted follow-up keeps its original cut receipt."""
+        from astrid.sdk.timeline.emitter import emit_document_commands
+        from astrid.sdk.timeline.sync import TimelineSession
+        from astrid.sdk.timeline_restructure import STRUCTURE_KEY
+
+        if force:
+            raise TimelineEditError("restructure uses guarded commits; force is unavailable")
+        if client is None:
+            from astrid.sdk import AstridClient
+
+            with AstridClient.open_from_launcher(start_pack_host=False) as opened:
+                return self._commit_restructure(message, idempotency_key=idempotency_key,
+                                                client=opened, force=False)
+        project, timeline = str(self.bundle["project_id"]), str(self.bundle["timeline_id"])
+        session = TimelineSession.open(project, timeline, client=client)
+        with session.outbox.locked():
+            state = session._state()
+        flight = state.get("flight")
+        key = idempotency_key or "restructure-" + hashlib.sha256(
+            json.dumps([project, timeline, self.bundle["base_parent"], message], sort_keys=True).encode()
+        ).hexdigest()[:64]
+        if flight is not None:
+            body = json.loads(flight["body"])
+            if body.get("label") == "Bind narration":
+                key = flight["key"].removesuffix("-narration")
+            elif any(call.get("op") == "timeline.restructure" for call in body.get("commands", [])):
+                key = flight["key"]
+            else:
+                raise TimelineEditError("reconcile the original request before restructuring")
+        # History is Runtime-owned. It also covers a process restart between
+        # accepting the cut and staging its narration, without a second journal.
+        cursor = None
+        seen: set[str] = set()
+        narration_flight = flight is not None and body.get("label") == "Bind narration"
+        while True:
+            history = client.timelines.history(project, timeline, cursor=cursor, limit=200)
+            if not history.ok:
+                raise TimelineEditError(f"could not read restructure history: {history.error}")
+            for entry in history.data["items"]:
+                receipt = entry.get("receipt") or {}
+                cut = any(record['command']['op'] == 'timeline.restructure'
+                          for record in (entry.get('records') or {}).get('commands', []))
+                if (flight is None and idempotency_key is None and STRUCTURE_KEY in self.bundle
+                        and entry['publication_id'] == state['base']['publication_id'] and cut):
+                    key = receipt['idempotency_key']
+                if receipt.get("idempotency_key") == key and (flight is None or narration_flight):
+                    if not cut:
+                        raise TimelineEditError("the idempotency key belongs to a different timeline commit")
+                    return {"old_head": receipt["result"].get("previous_revision_id"),
+                            "new_head": entry["revision_id"], "receipt": receipt, "_restructure_key": key}
+            cursor = history.data.get("next_cursor")
+            if cursor is None:
+                break
+            if cursor in seen:
+                raise TimelineEditError("restructure history cursor repeated")
+            seen.add(cursor)
+        if narration_flight:
+            raise TimelineEditError("the original restructure receipt is unavailable; reconcile narration directly")
+        if flight is not None:
+            result = session.flush(idempotency_key=key)
+        else:
+            if state["pending"]:
+                raise TimelineEditError("flush pending commands before restructuring")
+            base = session._bundle(state)
+            local = self.document()
+            # Detached checkouts may have been opened by revision alone. Bind
+            # that original revision through the verified public pair reader;
+            # retain local pins and provenance so mismatches still refuse.
+            original = _store.fetch_bundle(
+                project, timeline, revision_id=local["base_parent"]["revision_id"],
+                publication_id=local["base_parent"].get("publication_id", state["base"]["publication_id"]),
+                client=client,
+            )
+            local["base_parent"] = {**original["base_parent"], **local["base_parent"]}
+            local["source_mapping"] = {**original["source_mapping"], **local["source_mapping"]}
+            if (local["base_parent"] != base["base_parent"]
+                    or set(local["shots"]) != set(base["shots"])):
+                raise TimelineEditError("restructure requires its exact current closure; reopen the timeline")
+            candidate = copy.deepcopy(base)
+            candidate["parent"] = local["parent"]
+            for identity, shot in local["shots"].items():
+                for field in ("payload", "internal_timeline"):
+                    candidate["shots"][identity][field] = shot[field]
+            from astrid.sdk.timeline.checkout import Checkout
+
+            checked = Checkout(copy.deepcopy(candidate))
+            checked._sync_film_length()
+            if local["placements"] != checked.bundle["placements"]:
+                raise TimelineEditError("restructure placement edits require a semantic command")
+            commands = emit_document_commands(base, candidate)
+            commands.append({"schema_version": 1, "op": "timeline.restructure", "version": "1",
+                             "select": "parent", "args": {}})
+            from astrid.sdk.timeline.commands import execute
+
+            commands[-1] = execute(candidate, [commands[-1]]).commands[0]
+            result = session.submit(commands, label=message or "Restructure chapters", merge="atomic",
+                reads=[{"kind": "scope", "ref": "timeline", "path": []}],
+                steps=[{"id": f"restructure-{index}", "label": message or "Restructure chapters",
+                        "intent": "Store chapters as shots", "tags": ["restructure"],
+                        "command_ordinals": [index],
+                        "patch": copy.deepcopy(call['args']['changes']) if call['op'] == 'doc.patch' else []}
+                       for index, call in enumerate(commands)],
+                expected_state=state, idempotency_key=key)
+        return {"old_head": result["data"].get("previous_revision_id"),
+                "new_head": result["data"]["accepted_revision_id"], "receipt": result["receipt"],
+                "_restructure_key": key}
 
     def _reset_base(self, *, client: Any = None) -> None:
         """Re-read the new head as this working copy's bundle and save it with no undo step. Never fails the publish."""

@@ -78,7 +78,7 @@ def test_successful_publish_with_failed_reset_does_not_reopen_old_steps(draft, m
         bundle["base_parent"]["revision_id"] = "accepted-B"
         return bundle
 
-    monkeypatch.setattr(store, "publish_bundle", publish_bundle)
+    monkeypatch.setattr(draft, "_commit_document", lambda candidate, message, **kw: publish_bundle(candidate))
     monkeypatch.setattr(store, "fetch_bundle", unavailable if failure == "read" else head)
     if failure == "write":
         monkeypatch.setattr(draft, "_save_locked", unavailable)

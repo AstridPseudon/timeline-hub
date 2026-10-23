@@ -15,9 +15,13 @@ from astrid.core.timeline.authoring_bundle import open_authoring_bundle, publish
 from astrid.core.timeline.authoring_feedback import authoring_change_summary, publication_feedback
 from astrid.packs.timeline.cli import _configure_diff, _configure_show, _configure_visualize
 from astrid.sdk.authoring_remote import AuthoringRemoteError, TargetBoundAuthoringBundle
-from astrid.sdk.timeline.document_diff import DocumentDiffError, document_diff_to_commands
+from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.emitter import DocumentPatchError, emit_document_commands
 from astrid.sdk.timeline_editing import duplicate_authoring_shot, remove_authoring_shot
 from astrid.sdk.workspace_client import WorkspaceClientError
+from tests.editing_conformance.test_document_patch_emitter_engine import source as emitter_bundle
+from tests.sdk.test_timeline_commit_provider import DetachedRealm
+from tests.sdk.test_timeline_commit_provider_document import document_fixture
 from tests.timeline.test_authoring_bundle import NEW, OLD, _closure, _digest
 
 
@@ -145,40 +149,116 @@ def test_timing_fields_on_one_clip_count_one_adjustment_and_no_images():
     assert result["summary"]["media_selections"]["image"]["updated"] == 0
 
 
-def test_document_view_adapter_emits_native_command_for_explicit_parent_timing():
+def test_document_emitter_emits_guarded_parent_timing_patch():
     work = bundle()
     base = copy.deepcopy(work)
     work["parent"]["clips"][0]["at"] = 4
     work["parent"]["config"]["clips"][0]["at"] = 4
 
-    native = document_diff_to_commands(work, base)
+    commands = emit_document_commands(base, work)
 
-    assert [command["op"] for command in native["commands"]] == ["clip.move"]
-    assert native["commands"][0]["select"] == "parent/clip:direct"
+    assert [command["op"] for command in commands] == ["doc.patch"]
+    assert commands[0]["args"]["changes"] == [{
+        "op": "set", "ref": "parent", "path": ["clips", "id:direct", "at"],
+        "before": {"state": "present", "value": 3}, "value": 4,
+    }]
 
 
-def test_document_view_adapter_holds_narration_and_same_alias_media_changes():
-    work = bundle()
+def test_document_emitter_emits_narration_and_media_patches():
+    work = emitter_bundle()
     base = copy.deepcopy(work)
     shot = next(iter(work["shots"].values()))
     shot["payload"]["text_bindings"][0]["text"] = "changed"
-    with pytest.raises(DocumentDiffError, match="payload/narration"):
-        document_diff_to_commands(work, base)
+    commands = emit_document_commands(base, work)
+    assert commands == [{
+        "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+        "args": {"changes": [{
+            "op": "set", "ref": "shot-revision:shot-1", "path": ["text_bindings"],
+            "before": {"state": "present", "value": [{"slot": "narration", "text": "A chapter"}]},
+            "value": [{"slot": "narration", "text": "changed"}],
+        }]},
+    }]
 
-    work = bundle()
+    work = emitter_bundle()
+    base = copy.deepcopy(work)
     shot = next(iter(work["shots"].values()))
-    shot["internal_timeline"]["registry"]["assets"]["old-picture"]["media_id"] = NEW
-    with pytest.raises(DocumentDiffError, match="exact Runtime media selection"):
-        document_diff_to_commands(work, bundle())
+    shot["internal_timeline"]["registry"]["assets"]["picture"]["media_id"] = NEW
+    commands = emit_document_commands(base, work)
+    assert commands[0]["args"]["changes"] == [{
+        "op": "set", "ref": "internal-revision:internal-1",
+        "path": ["registry", "assets", "picture", "media_id"],
+        "before": {"state": "present", "value": OLD}, "value": NEW,
+    }]
 
 
-def test_document_view_adapter_requires_the_exact_pinned_base():
+@pytest.mark.parametrize("invalid", ["param", "unknown", "media"])
+def test_document_emitter_provider_refuses_invalid_param_and_unverified_media(invalid):
+    document = document_fixture(shared=False)
+    before = bundle_from_document(document)
+    if invalid in {"param", "unknown"}:
+        for rows in (before["parent"]["clips"], before["parent"]["config"]["clips"]):
+            rows[0].update(
+                clipType="am-type" if invalid == "param" else "am-flap",
+                params=(
+                    {"text": "hello"}
+                    if invalid == "param" else {"values": [{"text": "hello", "at": 0}]}
+                ),
+            )
+    after = copy.deepcopy(before)
+    if invalid == "param":
+        for rows in (after["parent"]["clips"], after["parent"]["config"]["clips"]):
+            rows[0]["params"]["text"] = None
+        expected = {
+            "wire_code": "validation_error", "code": "invalid_document", "reason": "invalid_document",
+            "hint": "Read the timeline and submit a valid canonical document change",
+            "suggested_command": "timeline edit",
+        }
+    elif invalid == "unknown":
+        for rows in (after["parent"]["clips"], after["parent"]["config"]["clips"]):
+            rows[0]["params"]["null"] = None
+        expected = {
+            "wire_code": "validation_error", "code": "invalid_document", "reason": "invalid_document",
+            "hint": "Read the timeline and submit a valid canonical document change",
+            "suggested_command": "timeline edit",
+        }
+    else:
+        after["parent"]["registry"]["assets"]["picture"]["media_id"] = "sha256:" + "9" * 64
+        expected = {
+            "wire_code": "conflict", "code": "dependency_changed", "reason": "dependency_changed",
+            "hint": "Read the current dependency and reapply the intended change",
+            "suggested_command": "timeline show",
+        }
+
+    commands = emit_document_commands(before, after)
+    assert commands and all(command["op"] == "doc.patch" for command in commands)
+    realm = DetachedRealm(document_from_bundle(before))
+    head = copy.deepcopy(realm.head)
+    entries = copy.deepcopy(realm.entries)
+    documents = copy.deepcopy(realm.documents)
+    from runtime_protocol.timeline_commit import CommitRejected
+
+    with pytest.raises(CommitRejected) as refusal:
+        realm.call(commands)
+    failure = refusal.value.failure
+    details = failure["details"]
+    assert failure["code"] == expected["wire_code"]
+    assert details["code"] == expected["code"]
+    assert details["reason"] == expected["reason"]
+    assert details["path"] == []
+    assert details["hint"] == expected["hint"]
+    assert details["suggested_command"] == expected["suggested_command"]
+    assert realm.head == head
+    assert realm.entries == entries
+    assert realm.documents == documents
+
+
+def test_document_emitter_refuses_a_noncanonical_pinned_base():
     work = bundle()
     base = bundle()
     base["parent"]["clips"][0]["at"] = 9
 
-    with pytest.raises(DocumentDiffError, match="exact pinned parent base"):
-        document_diff_to_commands(work, base)
+    with pytest.raises(DocumentPatchError, match="contradictory parent mirrors"):
+        emit_document_commands(base, work)
 
 
 @pytest.mark.parametrize(
@@ -193,7 +273,7 @@ def test_document_view_adapter_requires_the_exact_pinned_base():
         "child_asset",
     ],
 )
-def test_document_view_adapter_refuses_matched_row_presence_changes(family):
+def test_document_emitter_refuses_matched_row_presence_changes(family):
     work = bundle(shared=False)
     base = copy.deepcopy(work)
     probe = "presence_probe"
@@ -239,13 +319,13 @@ def test_document_view_adapter_refuses_matched_row_presence_changes(family):
     candidate_row.pop(probe)
     before, pinned = copy.deepcopy(work), copy.deepcopy(base)
 
-    with pytest.raises(DocumentDiffError):
-        document_diff_to_commands(work, base)
+    with pytest.raises(DocumentPatchError):
+        emit_document_commands(base, work)
     assert work == before
     assert base == pinned
 
 
-def test_document_view_adapter_refuses_presence_loss_masked_by_a_valid_move():
+def test_document_emitter_refuses_presence_loss_masked_by_a_valid_move():
     work = bundle(shared=False)
     base = copy.deepcopy(work)
     probe = "presence_probe"
@@ -258,61 +338,73 @@ def test_document_view_adapter_refuses_presence_loss_masked_by_a_valid_move():
     work["parent"]["config"]["clips"][0].pop(probe)
     before, pinned = copy.deepcopy(work), copy.deepcopy(base)
 
-    with pytest.raises(DocumentDiffError):
-        document_diff_to_commands(work, base)
+    with pytest.raises(DocumentPatchError):
+        emit_document_commands(base, work)
     assert work == before
     assert base == pinned
 
 
-def test_document_view_adapter_clears_present_null_hold_without_zero_command():
+def test_document_emitter_clears_present_null_hold_without_zero_command():
     work = bundle()
     base = copy.deepcopy(work)
-    for parent in (base["parent"], work["base_parent_payload"], work["parent"]):
+    for parent in (base["parent"], work["parent"]):
         for rows in (parent["clips"], parent["config"]["clips"]):
             rows[0].update({"from": 0, "to": 1, "hold": None})
     for rows in (work["parent"]["clips"], work["parent"]["config"]["clips"]):
         rows[0].pop("hold")
 
-    native = document_diff_to_commands(work, base)
+    commands = emit_document_commands(base, work)
 
-    assert [command["op"] for command in native["commands"]] == ["clip.set"]
-    assert native["commands"][0]["args"] == {"values": {}, "clear": ["hold"]}
-    assert "hold" not in native["bundle"]["parent"]["clips"][0]
-    assert "hold" not in native["bundle"]["parent"]["config"]["clips"][0]
+    assert [command["op"] for command in commands] == ["doc.patch"]
+    assert commands[0]["args"]["changes"] == [{
+        "op": "remove", "ref": "parent", "path": ["clips", "id:direct", "hold"],
+        "before": {"state": "present", "value": None},
+    }]
+    assert "hold" not in work["parent"]["clips"][0]
+    assert "hold" not in work["parent"]["config"]["clips"][0]
 
 
-def test_document_view_adapter_clears_a_present_nonnull_param():
-    work = bundle()
+def test_document_emitter_clears_a_present_nonnull_param():
+    work = emitter_bundle()
     base = copy.deepcopy(work)
     shot = next(iter(work["shots"].values()))
     base_shot = next(iter(base["shots"].values()))
-    for timeline in (base_shot["internal_timeline"], shot["base_internal_timeline"],
-                     shot["internal_timeline"]):
+    for timeline in (base_shot["internal_timeline"], shot["internal_timeline"]):
         timeline["clips"][0]["clipType"] = "am-type"
         timeline["clips"][0]["params"] = {"text": "hello"}
     shot["internal_timeline"]["clips"][0]["params"] = {}
 
-    native = document_diff_to_commands(work, base)
+    commands = emit_document_commands(base, work)
+    internal_ref = "internal-revision:" + document_from_bundle(base)[
+        "internal_timeline_revisions"
+    ][0]["revision_id"]
+    clip_id = base["shots"][next(iter(base["shots"]))]["internal_timeline"]["clips"][0]["id"]
 
-    assert [command["op"] for command in native["commands"]] == ["clip.set-params"]
-    assert native["commands"][0]["args"] == {"values": {}, "clear": ["text"]}
-    assert native["bundle"]["shots"][shot["shot_id"]]["internal_timeline"]["clips"][0][
-        "params"] == {}
+    assert [command["op"] for command in commands] == ["doc.patch"]
+    assert commands[0]["args"]["changes"] == [{
+        "op": "remove", "ref": internal_ref,
+        "path": ["clips", f"id:{clip_id}", "params", "text"],
+        "before": {"state": "present", "value": "hello"},
+    }]
+    assert work["shots"][shot["shot_id"]]["internal_timeline"]["clips"][0]["params"] == {}
 
 
-def test_document_view_adapter_validates_parent_track_rename_against_captured_result():
+def test_document_emitter_validates_parent_track_rename_against_captured_result():
     work = bundle()
     base = copy.deepcopy(work)
     work["parent"]["config"]["tracks"][0]["label"] = "Renamed"
 
-    native = document_diff_to_commands(work, base)
+    commands = emit_document_commands(base, work)
 
-    assert [command["op"] for command in native["commands"]] == ["track.set"]
-    assert native["commands"][0]["args"] == {"values": {"label": "Renamed"}, "clear": []}
-    assert native["bundle"]["parent"]["config"]["tracks"][0]["label"] == "Renamed"
+    assert [command["op"] for command in commands] == ["doc.patch"]
+    assert commands[0]["args"]["changes"] == [{
+        "op": "set", "ref": "parent", "path": ["config", "tracks", "id:picture", "label"],
+        "before": {"state": "absent"}, "value": "Renamed",
+    }]
+    assert work["parent"]["config"]["tracks"][0]["label"] == "Renamed"
 
 
-def test_document_view_adapter_refuses_candidate_only_mirror_field_matching_move_result():
+def test_document_emitter_refuses_candidate_only_mirror_field_matching_move_result():
     work = bundle()
     base = copy.deepcopy(work)
     work["parent"]["clips"][0]["at"] = 4
@@ -321,8 +413,8 @@ def test_document_view_adapter_refuses_candidate_only_mirror_field_matching_move
     mirror["app"] = {"astrid": {"fixed_start": True, "for": 1.0}}
 
     before, pinned = copy.deepcopy(work), copy.deepcopy(base)
-    with pytest.raises(DocumentDiffError, match="candidate-only"):
-        document_diff_to_commands(work, base)
+    with pytest.raises(DocumentPatchError, match="source-bound|closure|managed"):
+        emit_document_commands(base, work)
     assert work == before and base == pinned
 
 

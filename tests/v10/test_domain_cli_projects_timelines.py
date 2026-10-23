@@ -27,6 +27,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -1129,7 +1131,7 @@ def test_timeline_navigation_preserves_resolved_scope_and_editing_resources() ->
     assert "--project astrid-intro" in shown["commands"]["visualize"]
     assert "--timeline-slug main-final" in shown["commands"]["visualize"]
     assert "--revision-id rev-42" in shown["commands"]["visualize"]
-    assert shown["editing"]["workflow"] == ["checkout", "edit", "check", "publish"]
+    assert shown["editing"]["workflow"] == ["checkout", "edit", "check", "commit"]
     assert shown["editing"]["checkout_revision"].startswith("current Runtime head")
     assert Path(shown["editing"]["guide"]).is_file()
     assert Path(shown["editing"]["script"]).is_file()
@@ -1175,6 +1177,257 @@ def test_visualization_human_navigation_footer_is_compact(capsys) -> None:
     assert "edit JSON (current head):" in output
     assert "visualize: python3 -m astrid timelines visualize" not in output
     assert "exact frame:" not in output
+
+
+@pytest.fixture
+def guidance_source(tmp_path):
+    """Own one trusted-seeded Runtime and use its public exact-pair reader."""
+    import copy
+
+    from tests.helpers.runtime import use_runtime
+
+    use_runtime()
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    from astrid.sdk.workspace_client import WorkspaceClient
+    from tests.helpers.trusted_seed import seed_trusted_parent
+    from tests.sdk.test_timeline_restructure import flat_film
+
+    root = tmp_path / "saved-source"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    try:
+        project = service.create_project({"slug": "saved", "name": "Saved source"})["id"]
+        service.create_timeline(project, "t", idempotency_key="source")
+        source = flat_film()
+
+        # Reuse the saved-film fixture's trusted setup; this is not edit evidence.
+        def ingest(value):
+            if isinstance(value, dict):
+                for key, item in value.items():
+                    if key == "media_id" and isinstance(item, str):
+                        value[key] = service.ingest(
+                            project, item.encode(), original_name=item + ".bin",
+                            media_type="application/octet-stream", idempotency_key="media-" + item,
+                        )["data"]["object_id"]
+                    else:
+                        ingest(item)
+            elif isinstance(value, list):
+                for item in value:
+                    ingest(item)
+
+        ingest(source)
+        shots, internals = [], []
+        for sid, shot in source["shots"].items():
+            internal_id = "internal-" + sid
+            internals.append({"timeline_id": "t", "revision_id": internal_id, "payload": shot["internal_timeline"]})
+            shots.append({"shot_id": sid, "revision_id": "shot-" + sid,
+                          "internal_timeline_revision_id": internal_id, "payload": shot["payload"]})
+        parent = source["parent"]
+        parent["occurrences"] = [{**row, "shot_revision_id": "shot-" + row["shot_id"]} for row in source["placements"]]
+        seed_trusted_parent(service, {
+            "project_id": project, "timeline_id": "t", "parent_revision_id": "saved-parent",
+            "parent_composition": parent, "shot_revisions": shots, "internal_timeline_revisions": internals,
+        }, idempotency_key="saved-source")
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+
+        bodies = []
+
+        def send(p, t, body, *, idempotency_key):
+            assert p == project and t == "t"
+            bodies.append(copy.deepcopy(body))
+            return service.commit_timeline(
+                p, t, body, idempotency_key=idempotency_key, publisher="editor",
+                invocation_path=f"/v1/projects/{p}/timelines/{t}/commit", authorize=lambda: None,
+            )
+
+        generated = SimpleNamespace(
+            commit_timeline=send,
+            list_timeline_commits=lambda p, t, cursor=None, limit=200: service.list_timeline_commits(
+                p, t, cursor=cursor, limit=limit, authorize=lambda: None),
+            get_project_parent_composition_revision=service.get_project_parent_composition_revision,
+            get_project_shot_revision=service.get_project_shot_revision,
+            get_project_timeline_revision=service.get_project_timeline_revision,
+        )
+        transport = WorkspaceClient.__new__(WorkspaceClient)
+        transport._generated = generated
+        transport._last_handshake = {"realm_id": service.realm["id"], "actor_id": "editor"}
+        client = SimpleNamespace(_remote=SimpleNamespace(_transport=transport), timelines=RemoteTimelines(transport))
+        client.timelines._resolve_timeline = lambda p, t: DomainResult.success({"project_id": project, "timeline_id": "t"})
+
+        def inspection(p, t, **kwargs):
+            head = service.get_project_timeline(project, "t")["head_revision_id"]
+            return DomainResult.success({
+                "native_inspection": {"project_id": project, "timeline_id": "t", "head_revision_id": head},
+                "summary": {"head_revision_id": head},
+            })
+
+        client.timelines.open_composition = inspection
+
+        def document(timeline):
+            history = client.timelines.history(project, timeline, limit=100)
+            assert history.ok, history.error
+            opened = client.timelines.open_bundle(project, timeline, **history.data["head"])
+            assert opened.ok, opened.error
+            return opened.data["bundle"]["source_mapping"]["_runtime_document"]
+
+        yield client, project, document, bodies, service
+    finally:
+        service.close()
+
+
+@pytest.mark.parametrize("damage", [
+    "wrong_publication", "wrong_pair", "receipt_pair", "parent_digest", "shot_digest",
+    "internal_digest", "canonical_document", "media_manifest", "dependency_manifest",
+])
+def test_timeline_guidance_reader_rejects_wrong_authority_without_writes(
+    guidance_source, damage,
+) -> None:
+    import copy
+
+    from astrid.sdk.timeline.commit import _digest
+
+    client, project, document, bodies, service = guidance_source
+    before = document("t")
+    history = client.timelines.history(project, "t", limit=100).data
+    rows = tuple(service.store.conn.iterdump())
+    pin = dict(history["head"])
+    generated = client._remote._transport._generated
+    with pytest.MonkeyPatch.context() as patcher:
+        if damage == "wrong_publication":
+            pin["publication_id"] = "unavailable-publication"
+        elif damage == "wrong_pair":
+            pin["publication_id"] = next(row["publication_id"] for row in history["items"]
+                                         if row["revision_id"] != pin["revision_id"])
+        elif damage in {"receipt_pair", "canonical_document", "media_manifest", "dependency_manifest"}:
+            read_history = generated.list_timeline_commits
+
+            def damaged_history(*args, **kwargs):
+                page = copy.deepcopy(read_history(*args, **kwargs))
+                entry = next(row for row in page["items"] if row["publication_id"] == pin["publication_id"])
+                if damage == "receipt_pair":
+                    entry["receipt"]["receipt_id"] = "wrong-receipt"
+                else:
+                    canonical = entry["receipt"]["result"]["canonical_document"]
+                    if damage == "canonical_document":
+                        canonical["parent_revision"]["payload"]["config"]["wrong"] = True
+                        canonical["parent_revision"]["content_digest"] = _digest(canonical["parent_revision"]["payload"])
+                    elif damage == "media_manifest":
+                        assert canonical["dependency_manifest"]["media"]
+                        canonical["dependency_manifest"]["media"] = []
+                    else:
+                        canonical["dependency_manifest"]["internal_timelines"] = []
+                return page
+
+            patcher.setattr(generated, "list_timeline_commits", damaged_history)
+        else:
+            name = {"parent_digest": "get_project_parent_composition_revision",
+                    "shot_digest": "get_project_shot_revision",
+                    "internal_digest": "get_project_timeline_revision"}[damage]
+            read_revision = getattr(generated, name)
+
+            def damaged_revision(*args, **kwargs):
+                row = copy.deepcopy(read_revision(*args, **kwargs))
+                row["content_digest"] = "sha256:" + "0" * 64
+                return row
+
+            patcher.setattr(generated, name, damaged_revision)
+
+        refused = client.timelines.open_bundle(project, "t", **pin)
+        assert not refused.ok
+        assert refused.error.code == "protocol_error"
+        assert bodies == []
+        assert tuple(service.store.conn.iterdump()) == rows
+    assert client.timelines.history(project, "t", limit=100).data == history
+    assert document("t") == before
+
+
+@pytest.mark.parametrize("mode", ["checkout", "file", "draft"])
+def test_timeline_editing_guidance_consumes_its_json(
+    guidance_source, tmp_path, monkeypatch, capsys, mode,
+) -> None:
+    from contextlib import nullcontext
+
+    from astrid.packs.rendering.docs.scripts import timeline_document as helper
+    from astrid.packs.timeline import cli
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline_checkout import Checkout
+    client, project, document, bodies, _ = guidance_source
+    original = document("t")
+    original_head = client.timelines.history(project, "t", limit=100).data["head"]
+    path = tmp_path / "draft 'with spaces'.json"
+    project_ref, timeline_ref = "project 'with spaces'", "timeline with spaces"
+    client.projects = SimpleNamespace(show=lambda ref: DomainResult.success({"project_id": project}))
+    transport = client._remote._transport
+    monkeypatch.setattr(helper.AstridClient, "open_from_launcher", lambda **kw: nullcontext(client))
+    monkeypatch.setattr(helper, "workspace", lambda: transport)
+
+    def run(command):
+        argv = shlex.split(command)
+        assert argv[:2] == ["python3", "-m"]
+        assert argv[2] == "astrid.packs.rendering.docs.scripts.timeline_document"
+        monkeypatch.setattr(sys, "argv", argv[2:])
+        helper.main()
+        return json.loads(capsys.readouterr().out)
+
+    if mode == "checkout":
+        navigation = cli._editing_navigation(project=project_ref, timeline=timeline_ref, file_path=str(path))
+        argv = shlex.split(navigation["commands"]["checkout"])
+        assert argv[argv.index("--project") + 1] == project_ref
+        assert argv[argv.index("--timeline") + 1] == timeline_ref
+        run(navigation["commands"]["checkout"])
+        candidate = json.loads(path.read_text())
+        candidate["parent"]["config"]["opaque_guidance"] = [None, False, "kept"]
+        shot = next(iter(candidate["shots"].values()))
+        shot["payload"]["name"] = "Edited shot"
+        next(row for row in shot["internal_timeline"]["clips"] if row["id"] == "inside")["params"]["x"] = 90
+        path.write_text(json.dumps(candidate))
+        commands = navigation["commands"]
+    else:
+        checkout = Checkout(bundle_from_document(original))
+        checkout.save(path, quiet=True)
+        monkeypatch.setattr(cli, "_edit_checkout", lambda parsed: Checkout.load(path))
+        monkeypatch.setattr("astrid.packs.timeline.cli_sweep.auto_sweep_after_edit", lambda *a, **kw: 0)
+        args = (["--file", str(path)] if mode == "file" else [timeline_ref, "--project", project_ref])
+        # --set uses canvas pixels; am-sprite stores x on its six-pixel grid.
+        # Match the checkout branch's stored x=90 with 540 canvas pixels.
+        parsed = cli.build_parser(None).parse_args(["edit", *args, "--clip", "inside", "--set", "x=540"])
+        assert parsed.handler(parsed) == 0
+        output = capsys.readouterr().out
+        lines = output.splitlines()
+        prepare = next(line.split(": ", 2)[2] for line in lines if line.startswith("next: export"))
+        prepared = shlex.split(prepare)
+        assert prepared[-2:] == [str(path), str(path) + ".commit.json"]
+        subprocess.run([sys.executable, *prepared[1:]], check=True)
+        commands = dict(zip(("check", "commit"), [line[6:] for line in lines if line.startswith("next: python3 -m astrid.packs.rendering")]))
+        if mode == "draft":
+            shown = shlex.split(next(line[6:].removesuffix(" (your change)") for line in lines if line.startswith("next: python3 -m astrid timelines show")))
+            assert shown[5] == timeline_ref and shown[7] == project_ref
+
+    checked = run(commands["check"])
+    assert checked["validation"]["valid"]
+    committed = run(commands["commit"])
+    result = committed["publication"]
+    assert result["data"]["status"] == "accepted" and result["receipt"]
+    body = bodies[-1]
+    head = client.timelines.history(project, "t", limit=100).data
+    assert body["base_revision_id"] == original["parent_revision"]["revision_id"]
+    assert body["base_publication_id"] == original_head["publication_id"]
+    assert body["merge"] == "atomic" and body["label"] == "Publish document"
+    assert body["steps"][0]["command_ordinals"] == [0]
+    assert body["steps"][0]["patch"] == body["commands"][0]["args"]["changes"]
+    assert body["commands"][0]["op"] == "doc.patch"
+    landed = document("t")
+    inside = next(row for row in landed["internal_timeline_revisions"][0]["payload"]["clips"] if row["id"] == "inside")
+    assert inside["params"]["x"] == 90
+    if mode == "checkout":
+        assert landed["parent_revision"]["payload"]["config"]["opaque_guidance"] == [None, False, "kept"]
+        assert landed["shot_revisions"][0]["payload"]["name"] == "Edited shot"
+    assert run(commands["commit"])["publication"] == result
+    assert client.timelines.history(project, "t", limit=100).data == head
+    assert document("t") == landed
 
 
 @pytest.mark.integration

@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 from astrid.core.timeline.authoring_bundle import open_authoring_bundle
-from astrid.sdk.timeline import commands, store
+from astrid.sdk.timeline import commands
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commit import bundle_from_document
@@ -364,7 +364,7 @@ def test_unrelated_and_detached_publish_never_consume_global_pending_or_flight(c
     def held_candidate(*args, **kwargs):
         raise TimelineEditError('detached candidate retained')
 
-    monkeypatch.setattr(store, 'publish_bundle', held_candidate)
+    monkeypatch.setattr(detached, '_commit_document', held_candidate)
     for in_flight in (False, True):
         if in_flight:
             generated.lose_ack = True

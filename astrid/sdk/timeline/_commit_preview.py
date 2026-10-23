@@ -22,6 +22,64 @@ def prepared_records(plan, *, undo_of, restored_from):
     return records
 
 
+def capture_sequential_execution(port, context, original, plan, replay_bindings, prepared):
+    """Carry generated original/landing execution to the request-scoped port."""
+    from ._command_state import CommandError
+    from .commit import _digest
+
+    boundaries = getattr(original, '_sequential_execution', [])
+    if not boundaries:
+        return
+    base = {'revision_id': context['request']['base_revision_id'],
+            'publication_id': context['request']['base_publication_id']}
+    staged = [binding for record in original.records for binding in record['bindings']
+              if binding.get('key') == 'commit.materialization']
+    required = prepared['expected_head'] != base and any(
+        source['successor'] == binding.get('physical_ref')
+        and source['boundary']['command_ordinal'] < record['ordinal']
+        for source in staged
+        for record in original.records for binding in record['bindings']
+        if binding.get('key') == 'commit.read' or binding.get('key', '').startswith('doc.patch:'))
+    capture = getattr(port, 'capture_sequential_execution', None)
+    if not callable(capture):
+        if required:
+            raise CommandError('Runtime port cannot authenticate original sequential execution',
+                               kind='sequential_proof_unavailable')
+        return
+
+    def source(value):
+        if isinstance(value, str):
+            return value
+        step_id, previous, owner, owners = value
+        return {'step_id': step_id, 'source': source(previous), 'owner': owner,
+                'owners': copy.deepcopy(owners)}
+
+    bindings = []
+    for key, value in replay_bindings.items():
+        if len(key) == 2:
+            item = {'command_ordinal': key[0], 'kind': 'patch', 'change_ordinal': key[1]}
+        else:
+            ordinal, _, ref, path, phase = key
+            item = {'command_ordinal': ordinal, 'kind': 'read', 'ref': ref,
+                    'path': list(path), 'phase': phase}
+        bindings.append({**item, 'source': source(value)})
+
+    def execution(executed, head):
+        records = prepared_records(executed, undo_of=prepared['records']['undo_of'],
+                                   restored_from=prepared['records']['restored_from'])
+        records['undo_steps'] = copy.deepcopy(prepared['records']['undo_steps'])
+        return {'evaluated_head': copy.deepcopy(head),
+                'commands': copy.deepcopy(getattr(executed, '_sequential_execution', [])),
+                'records': records}
+
+    capture(copy.deepcopy({
+        'schema_version': 1, 'context': context,
+        'original': execution(original, base),
+        'landing': execution(plan, prepared['expected_head']),
+        'replay_bindings': bindings, 'prepared_digest': _digest(prepared),
+    }))
+
+
 def complete_preview(result, prepared, request, evaluated_head):
     """Expose the landing head and authoritative v2 candidate metadata.
 
