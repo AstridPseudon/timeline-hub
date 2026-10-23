@@ -7,7 +7,9 @@ import pytest
 
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline._common import TimelineEditError
-from astrid.sdk.timeline.store import three_way
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.emitter import emit_document_commands
+from astrid.sdk.timeline.rebase import replay
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_restructure import (
     STRUCTURE_KEY,
@@ -239,23 +241,37 @@ def test_reflow_that_moves_a_wall_rehomes_a_clip_between_film_and_chapter():
     assert [r["shot_id"] for r in after["placements"]] == [r["shot_id"] for r in stored["placements"]]
 
 
-def test_three_way_merge_works_on_the_stored_form():
-    base = published(split(flat_film()))
-    mine = Checkout(copy.deepcopy(base))
-    mine.clip("late").data["hold"] = 1.5
-    mine.clip("bed").data["volume"] = 0.9
-    candidate = mine.stored_document()
+def test_three_way_merge_works_on_the_stored_form(restructure_runtime):
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    env = restructure_runtime
+    Checkout.open(env.project, "t", client=env.client).publish(
+        "Stored merge fixture", restructure=True, client=env.client)
+    base = bundle_from_document(env.document())
+    candidate = copy.deepcopy(base)
+    next(c for shot in candidate["shots"].values() for c in shot["internal_timeline"]["clips"]
+         if c["id"] == "late")["hold"] = 1.5
+    next(c for c in candidate["parent"]["clips"] if c["id"] == "bed")["volume"] = 0.9
     head = copy.deepcopy(base)
     first = head["shots"][head["placements"][0]["shot_id"]]
     first["internal_timeline"]["clips"][0]["hold"] = 3.9  # someone else touched a different clip in another chapter
-    merged, conflicts = three_way(base, head, candidate)
+    # The retired store merger's witness now exercises the commit engine's
+    # guarded emitter/replay: disjoint changes survive, overlapping ones refuse.
+    pending = execute(base, emit_document_commands(base, candidate))
+    conflicts = []
+    try:
+        merged = replay(pending, head).bundle
+    except TimelineEditError as exc:
+        conflicts.append(str(exc))
     assert conflicts == []
     by_id = {c["id"]: c for s in merged["shots"].values() for c in s["internal_timeline"]["clips"]}
     assert by_id["late"]["hold"] == 1.5 and by_id["p1"]["hold"] == 3.9
     assert next(c for c in merged["parent"]["clips"] if c["id"] == "bed")["volume"] == 0.9
     theirs = copy.deepcopy(base)
     next(c for c in theirs["parent"]["clips"] if c["id"] == "bed")["volume"] = 0.1
-    _, conflicts = three_way(base, theirs, candidate)
+    with pytest.raises(TimelineEditError) as conflict:
+        replay(pending, theirs)
+    conflicts = [str(conflict.value.to_json())]
     assert any("bed" in line for line in conflicts)  # the same film-level clip changed on both sides refuses
 
 
@@ -326,6 +342,375 @@ def test_splitting_is_opt_in_per_film():
     again = Checkout(published(split_doc))  # read back flat for editing
     assert len(again._shot_ids()) == 1
     assert len(again.stored_document()["placements"]) == 3  # later publishes keep its chapters
+
+
+@pytest.fixture
+def restructure_runtime(tmp_path, monkeypatch):
+    """Build the source with ordinary commands; every film write uses the real provider."""
+    from types import SimpleNamespace
+
+    from tests.helpers.runtime import use_runtime
+
+    runtime = use_runtime()
+    from pathlib import Path
+
+    import runtime_protocol
+
+    assert Path(runtime_protocol.__file__).resolve().parent.parent == runtime.resolve()
+    monkeypatch.syspath_prepend(str(runtime / 'tests'))
+    from runtime_protocol.errors import NotFoundError
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+    from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
+
+    from astrid.sdk.contracts import DomainResult, ErrorObject
+    from astrid.sdk.remote import RemoteTimelines
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.emitter import emit_document_commands
+    from astrid.sdk.workspace_client import WorkspaceClient
+
+    names = ('P', 'R', 'Q', 'U')
+    def effect(project):
+        return _effect(project, groups=[{'group_key': 'main', 'selectors': [
+            {'selector': name, 'ordinal': i, 'variant_key': name, 'output_port': 'image'}
+            for i, name in enumerate(names)]}])
+    service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
+    project = project['id']
+    _settle(service, attempt, [_output(name.encode(), output_port='image', group_key='main',
+        variant_key=name, ordinal=i, filename=name + '.png', media_type='image/png')
+        for i, name in enumerate(names)], effect=admitted)
+    pins = {row['variant_key']: service.get_project_media_selection(project, {
+        'association_id': row['association_id'], 'object_id': row['object_id'],
+        'version': row['lifecycle']['version']}, authorize=lambda: None)
+        for row in service.managed_outputs(task['task']['id'])}
+    service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+    service.create_timeline(project, 't', idempotency_key='create')
+    service.list_timeline_commits(project, 't', authorize=lambda: None)
+
+    def document():
+        head = service.get_project_timeline(project, 't')
+        return service._timeline_commits()[0].revision_closure(project, 't', head['head_revision_id'])
+
+    calls, replies = [], []
+    def send(p, t, body, *, idempotency_key):
+        assert (p, t) == (project, 't')
+        calls.append((copy.deepcopy(body), idempotency_key))
+        result = service.commit_timeline(project, t, body, idempotency_key=idempotency_key,
+            publisher='editor', invocation_path=f'/v1/projects/{project}/timelines/{t}/commit',
+            authorize=lambda: None)
+        replies.append(copy.deepcopy(result))
+        return result
+
+    generated = SimpleNamespace(commit_timeline=send, list_timeline_commits=lambda p, t, cursor=None, limit=200:
+        service.list_timeline_commits(p, t, cursor=cursor, limit=limit, authorize=lambda: None))
+    transport = WorkspaceClient.__new__(WorkspaceClient)
+    transport._generated = generated
+    transport._last_handshake = {'realm_id': service.realm['id'], 'actor_id': 'editor'}
+    client = SimpleNamespace(_remote=SimpleNamespace(_transport=transport), timelines=RemoteTimelines(transport))
+    client.timelines.open_composition = lambda p, t: DomainResult.success({
+        'native_inspection': {'project_id': project, 'timeline_id': t},
+        'summary': {'head_revision_id': service.get_project_timeline(project, t)['head_revision_id']}})
+    client.timelines._resolve_timeline = lambda p, t: DomainResult.success({'project_id': project, 'timeline_id': t})
+    client.timelines.open_bundle = lambda p, t, revision_id=None, **kw: DomainResult.success({'bundle':
+        bundle_from_document(service._timeline_commits()[0].revision_closure(project, t,
+            revision_id or service.get_project_timeline(project, t)['head_revision_id']))})
+    client.projects = SimpleNamespace(show=lambda p: DomainResult.success({'project_id': project}))
+    client.media = SimpleNamespace(import_bytes=lambda **kw: DomainResult.success(service.ingest(
+        project, kw['data'], original_name=kw['filename'], media_type=kw['media_type'],
+        idempotency_key=kw['idempotency_key'])['data']))
+    document_calls = []
+    def show(identity, **kw):
+        document_calls.append('show')
+        try:
+            return DomainResult.success(service.get_document(project, identity))
+        except NotFoundError:
+            return DomainResult.failure(ErrorObject(code='not_found', message='document not found', details={}))
+    def create(**kw):
+        document_calls.append('create')
+        return DomainResult.success(service.create_document(project, {
+            key: kw[key] for key in ('document_id', 'kind', 'content')}))
+    client.documents = SimpleNamespace(show=show, create=create)
+
+    def commit(commands, key):
+        head = service.get_project_timeline(project, 't')
+        body = {'api_version': 1, 'project_id': project, 'timeline_id': 't',
+            'base_revision_id': head['head_revision_id'], 'base_publication_id': head['head_publication_id'],
+            'commands': commands, 'label': key, 'merge': 'fields', 'reads': [],
+            'steps': [{'id': 'setup', 'label': key, 'intent': '', 'tags': [],
+                'command_ordinals': list(range(len(commands))),
+                'patch': [change for call in commands if call['op'] == 'doc.patch' for change in call['args']['changes']]}]}
+        return send(project, 't', body, idempotency_key=key)
+    try:
+        from astrid.sdk.timeline.capture import capture_track_create
+        from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+        from astrid.sdk.timeline.native_occurrence_media_commands import (
+            capture_occurrence_add_media,
+        )
+
+        base = bundle_from_document(document())
+        commit([capture_track_create(base, 'parent', {'id': 'picture', 'kind': 'visual'})], 'track')
+        base = bundle_from_document(document())
+        commit([capture_occurrence_create(base, 'occ-film', 'film', name='FILM',
+            track='picture', on=0, duration=12)], 'shot')
+        base = bundle_from_document(document())
+        commit([capture_track_create(base, 'occurrence:occ-film', {'id': 'plate', 'kind': 'visual'})], 'child-track')
+        for name, pin in pins.items():
+            base = bundle_from_document(document())
+            verified = service.get_project_verified_media(project, pin, authorize=lambda: None)
+            commit([capture_occurrence_add_media(base, 'occurrence:occ-film', {
+                'id': 'seed-' + name, 'clipType': 'image', 'track': 'plate',
+                'asset': pin['asset'], 'at': 0, 'hold': 1}, pin, verified_media=[verified])], 'source-' + name)
+        base = bundle_from_document(document())
+        candidate = copy.deepcopy(base)
+        film = flat_film()
+        for name, asset in film['shots']['film']['internal_timeline']['registry']['assets'].items():
+            asset['media_id'] = pins[name]['object_id']
+        candidate['parent'] = film['parent']
+        identity = candidate['placements'][0]['shot_id']
+        candidate['shots'][identity]['payload'].update(film['shots']['film']['payload'])
+        candidate['shots'][identity]['internal_timeline'].update(film['shots']['film']['internal_timeline'])
+        # Opaque authored fields exercise explicit null and absence preservation.
+        candidate['parent']['opaque'] = {'null': None, 'ordered': [None, False, 0]}
+        commit(emit_document_commands(base, candidate), 'source-content')
+        calls.clear()
+        replies.clear()
+        yield SimpleNamespace(client=client, project=project, document=document, calls=calls,
+            replies=replies, generated=generated, send=send, service=service, document_calls=document_calls)
+    finally:
+        service.close()
+
+
+def test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups(restructure_runtime):
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+    from astrid.packs.timeline import cli
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    env = restructure_runtime
+    original = copy.deepcopy(env.document())
+    original_head = env.client.timelines.history(env.project, 't', limit=1).data['head']
+    before = Checkout(bundle_from_document(original))
+    expected = compile_authoring_candidate(before.stored_document(restructure=True)).publication
+    parsed = cli.build_parser(env.client).parse_args(['restructure', 't', '--project', env.project])
+    assert parsed.handler(parsed) == 0
+    assert len(env.calls) == len(env.replies) == 2
+    cut = env.replies[0]['data']['canonical_document']
+    assert cut['parent_revision']['payload'] == expected['parent_composition']
+    assert cut['shot_revisions'] == expected['shot_revisions']
+    assert cut['internal_timeline_revisions'] == expected['internal_timeline_revisions']
+    assert cut['dependency_manifest'] == {**expected['dependency_manifest'], 'documents': []}
+    rows = cut['parent_revision']['payload']['occurrences']
+    assert len(rows) == len({row['shot_id'] for row in rows}) == len({row['occurrence_id'] for row in rows}) == 3
+    assert all(row['occurrence_id'] != 'occ-film' for row in rows)
+    assert [shot['payload']['name'] for row in rows for shot in cut['shot_revisions']
+            if shot['shot_id'] == row['shot_id']] == ['01 ONE', '02 TWO', '03 THREE']
+    assert cut['parent_revision']['payload']['opaque'] == {'null': None, 'ordered': [None, False, 0]}
+    assert 'missing' not in cut['parent_revision']['payload']['opaque']
+    assert_equivalent(before.bundle, bundle_from_document(cut))
+    body = env.calls[0][0]
+    assert body['api_version'] == 1 and body['merge'] == 'atomic'
+    assert body['base_revision_id'] == original['parent_revision']['revision_id']
+    assert body['base_publication_id'] == original_head['publication_id']
+    assert body['commands'][-1]['op'] == 'timeline.restructure'
+    assert env.calls[1][0]['commands'][0]['op'] == 'text-binding.set'
+    assert env.document_calls == ['show', 'create']
+    assert env.document()['parent_revision']['revision_id'] == env.replies[1]['data']['accepted_revision_id']
+
+
+def test_restructure_retries_the_original_commit_after_lost_ack(restructure_runtime):
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    env = restructure_runtime
+    original = Checkout.open(env.project, 't', client=env.client)
+    lost = False
+    def send(*args, **kwargs):
+        nonlocal lost
+        result = env.send(*args, **kwargs)
+        if not lost:
+            lost = True
+            raise WorkspaceClientError('lost ACK')
+        return result
+    env.generated.commit_timeline = send
+    with pytest.raises(WorkspaceClientError):
+        original.publish('Restructure', restructure=True, client=env.client, idempotency_key='retry-structure')
+    reopened = Checkout.open(env.project, 't', client=env.client)
+    result = reopened.publish('Restructure', restructure=True, client=env.client, idempotency_key='retry-structure')
+    assert env.calls[0] == env.calls[1]
+    assert env.replies[0] == env.replies[1]
+    assert len(env.calls) == 3
+    assert result['new_head'] == env.document()['parent_revision']['revision_id']
+    assert result['narration_pinned'] and result['transcripts'][0]['status'] == 'created'
+    assert len(env.client.timelines.history(env.project, 't', limit=200).data['items']) == 11
+
+
+def test_restructure_reconciles_narration_without_republishing_the_cut(restructure_runtime):
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    env = restructure_runtime
+    original = Checkout.open(env.project, 't', client=env.client)
+    lost = False
+    def send(*args, **kwargs):
+        nonlocal lost
+        result = env.send(*args, **kwargs)
+        if len(env.calls) == 2 and not lost:
+            lost = True
+            raise WorkspaceClientError('lost narration ACK')
+        return result
+    env.generated.commit_timeline = send
+    first = original.publish('Restructure', restructure=True, client=env.client, idempotency_key='narration-retry')
+    assert first['new_head'] == env.replies[0]['data']['accepted_revision_id'] and first['narration_error']
+    reopened = Checkout.open(env.project, 't', client=env.client)
+    result = reopened.publish('Restructure', restructure=True, client=env.client, idempotency_key='narration-retry')
+    assert env.calls[1] == env.calls[2]
+    assert env.replies[1] == env.replies[2]
+    assert len(env.calls) == 3
+    assert result['receipt'] == first['receipt']
+    assert result['new_head'] == env.document()['parent_revision']['revision_id']
+    assert result['narration_pinned'] and result['transcripts'][0]['status'] == 'unchanged'
+    assert env.document_calls.count('create') == 1
+
+
+@pytest.mark.parametrize('damage', ['foreign', 'before', 'order', 'identity', 'media', 'occupied', 'stale'])
+def test_restructure_provider_refuses_changed_inputs_without_writes(restructure_runtime, damage):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    env = restructure_runtime
+    base = bundle_from_document(env.document())
+    command = execute(base, [{'schema_version': 1, 'op': 'timeline.restructure',
+        'version': '1', 'select': 'parent', 'args': {}}]).commands[0]
+    head = env.client.timelines.history(env.project, 't', limit=1).data['head']
+    body = {'api_version': 1, 'project_id': env.project, 'timeline_id': 't',
+        'base_revision_id': head['revision_id'], 'base_publication_id': head['publication_id'],
+        'commands': [command], 'label': 'Restructure', 'merge': 'atomic',
+        'reads': [{'kind': 'scope', 'ref': 'timeline', 'path': []}],
+        'steps': [{'id': 'cut', 'label': 'Restructure', 'intent': '', 'tags': [],
+            'command_ordinals': [0], 'patch': []}]}
+    if damage == 'foreign':
+        body['project_id'] = 'foreign'
+    elif damage == 'before':
+        command['reads'][0]['state']['value']['content_digest'] = 'sha256:' + '0' * 64
+    elif damage == 'order':
+        command['created'].reverse()
+    elif damage == 'identity':
+        command['created'][0] = 'shot:forged'
+    elif damage == 'media':
+        command['args']['media'] = [{'media_id': 'sha256:' + '0' * 64}]
+    elif damage == 'stale':
+        from astrid.sdk.timeline import open as open_timeline
+
+        timeline = open_timeline(env.project, 't', client=env.client)
+        timeline.bundle['parent']['opaque']['concurrent'] = True
+        timeline.commit('Concurrent edit', idempotency_key='concurrent')
+    else:
+        from astrid.sdk.timeline.capture import capture_track_create
+        from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+
+        env.service.create_timeline(env.project, 'occupier', idempotency_key='occupier')
+        def occupy(calls, key):
+            current = env.service.get_project_timeline(env.project, 'occupier')
+            return env.service.commit_timeline(env.project, 'occupier', {
+                'api_version': 1, 'project_id': env.project, 'timeline_id': 'occupier',
+                'base_revision_id': current['head_revision_id'],
+                'base_publication_id': current['head_publication_id'], 'commands': calls},
+                idempotency_key=key, publisher='editor',
+                invocation_path=f'/v1/projects/{env.project}/timelines/occupier/commit', authorize=lambda: None)
+        current = env.service.get_project_timeline(env.project, 'occupier')
+        empty = bundle_from_document(env.service._timeline_commits()[0].revision_closure(
+            env.project, 'occupier', current['head_revision_id']))
+        tracked = occupy([capture_track_create(empty, 'parent', {'id': 'picture', 'kind': 'visual'})], 'occupied-track')
+        empty = bundle_from_document(tracked['data']['canonical_document'])
+        identity = command['created'][0].removeprefix('shot:')
+        occupy([capture_occurrence_create(empty, 'reserved', identity, name='Occupied',
+            track='picture', on=0, duration=1)], 'occupied-shot')
+    original, stored = copy.deepcopy(env.document()), tuple(env.service.store.conn.iterdump())
+    history = env.client.timelines.history(env.project, 't', limit=200).data
+    with pytest.raises(RuntimeErrorBase):
+        env.send(env.project, 't', body, idempotency_key='bad-' + damage)
+    assert env.document() == original
+    assert env.client.timelines.history(env.project, 't', limit=200).data == history
+    assert tuple(env.service.store.conn.iterdump()) == stored
+
+
+def test_restructure_reuses_an_existing_chapter_root(restructure_runtime):
+    from astrid.sdk.timeline import open as open_timeline
+
+    env = restructure_runtime
+    timeline = open_timeline(env.project, 't', client=env.client)
+    shot = timeline.bundle['shots'][timeline.bundle['placements'][0]['shot_id']]
+    shot['payload']['name'] = '02 TWO'
+    timeline.commit('Name source chapter', idempotency_key='chapter-name')
+    original = env.document()
+    old_row = original['parent_revision']['payload']['occurrences'][0]
+    checkout = Checkout.open(env.project, 't', client=env.client)
+    checkout.publish('Restructure', restructure=True, client=env.client, idempotency_key='reuse-root')
+    rows = env.document()['parent_revision']['payload']['occurrences']
+    assert rows[1]['shot_id'] == old_row['shot_id']
+    assert rows[1]['occurrence_id'] == old_row['occurrence_id']
+    assert len({row['shot_id'] for row in rows}) == 3
+
+
+def test_restructure_retries_narration_before_a_flight_exists(restructure_runtime):
+    from astrid.sdk.timeline._common import TimelineEditError
+
+    env = restructure_runtime
+    ingest = env.client.media.import_bytes
+    def unavailable(**kw):
+        raise TimelineEditError('ingest unavailable')
+    env.client.media.import_bytes = unavailable
+    first = Checkout.open(env.project, 't', client=env.client).publish(
+        'Restructure', restructure=True, client=env.client)
+    assert first['narration_error'] and len(env.calls) == 1
+    env.client.media.import_bytes = ingest
+    result = Checkout.open(env.project, 't', client=env.client).publish(
+        'Restructure', restructure=True, client=env.client)
+    assert result['receipt'] == first['receipt'] and result['narration_pinned']
+    assert len(env.calls) == 2 and env.calls[1][0]['commands'][0]['op'] == 'text-binding.set'
+
+
+def test_restructure_order_carrier_only_permutes_unchanged_rows():
+    from astrid.sdk.timeline._command_state import CommandError, State, present
+
+    bundle = flat_film()
+    state = State(bundle)
+    original = copy.deepcopy(bundle['placements'])
+    with pytest.raises(CommandError, match='preserve every authored row'):
+        state.set('parent', ['occurrences'], present([]))
+    changed = copy.deepcopy(original)
+    changed[0]['shot_id'] = 'foreign'
+    with pytest.raises(CommandError, match='preserve every authored row'):
+        state.set('parent', ['occurrences'], present(changed))
+    changed = copy.deepcopy(original)
+    changed[0]['muted'] = 0
+    with pytest.raises(CommandError, match='preserve every authored row'):
+        state.set('parent', ['occurrences'], present(changed))
+    assert bundle['placements'] == original
+
+
+def test_restructure_provider_preview_has_no_writes(restructure_runtime):
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    env = restructure_runtime
+    base = bundle_from_document(env.document())
+    command = execute(base, [{'schema_version': 1, 'op': 'timeline.restructure',
+        'version': '1', 'select': 'parent', 'args': {}}]).commands[0]
+    head = env.client.timelines.history(env.project, 't', limit=1).data['head']
+    body = {'api_version': 1, 'project_id': env.project, 'timeline_id': 't',
+        'base_revision_id': head['revision_id'], 'base_publication_id': head['publication_id'],
+        'commands': [command], 'label': 'Preview restructure', 'merge': 'atomic',
+        'reads': [{'kind': 'scope', 'ref': 'timeline', 'path': []}],
+        'steps': [{'id': 'cut', 'label': 'Preview restructure', 'intent': 'Preserve the film',
+            'tags': ['restructure'], 'command_ordinals': [0], 'patch': [], 'reads': []}],
+        'source': {'via': 'python'}, 'rationale': 'Preview the chapter cut', 'group_id': 'chapter-cut',
+        'dry_run': True}
+    original, stored = copy.deepcopy(env.document()), tuple(env.service.store.conn.iterdump())
+    result = env.send(env.project, 't', body, idempotency_key='preview')
+    assert result['receipt'] is None
+    assert result['data']['status'] == 'preview' and result['data']['would_status'] == 'accepted'
+    assert_equivalent(base, bundle_from_document(result['data']['canonical_document']))
+    assert env.document() == original
+    assert tuple(env.service.store.conn.iterdump()) == stored
 
 
 def test_flatten_merges_track_copies_that_differ_only_by_non_conflicting_app_keys():

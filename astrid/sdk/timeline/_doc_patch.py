@@ -334,6 +334,81 @@ def validate_submitted_change(change):
                 raise CommandError('replacement changes provider-managed edges', kind='managed_closure_write', ref=ref, path=path)
 
 
+def apply_change(root, change, *, physical=None):
+    """Apply one guarded payload change; closure authority stays with the caller."""
+    ref, path, op = change['ref'], change['path'], change['op']
+    physical = physical or ref
+    validate_submitted_change(change)
+    old_root = copy.deepcopy(root)
+    if op.startswith('list.'):
+        state = value_at(root, physical, path)
+        rows = state.get('value')
+        key = identity_key(physical, path)
+        ordered = identities(rows, key, ref=ref, path=path)
+        if ordered != change['order_before']:
+            error = CommandError('original collection order changed', kind='previous_value_mismatch', ref=ref, path=path)
+            error.dependency_kind = 'collection'
+            raise error
+        identity = change['id']
+        index = ordered.index(identity) if identity in ordered else None
+        before = ABSENT.copy() if index is None else present(rows[index])
+    else:
+        before = value_at(root, physical, path)
+    if not equal(before, change['before']) or op in ('remove', 'list.remove', 'list.move') and before == ABSENT:
+        raise CommandError('patch previous value does not match', kind='previous_value_mismatch',
+                           ref=ref, path=path, base=change['before'], theirs=before)
+    if op.startswith('list.'):
+        if op == 'list.insert':
+            if before != ABSENT:
+                raise CommandError('insert identity is occupied', kind='identity_collision', ref=ref, path=path)
+            item = copy.deepcopy(change['value'])
+            if not isinstance(item, dict) or item.get(key) != identity:
+                raise CommandError('insert value has a different identity', kind='identity_conflict', ref=ref, path=path)
+        else:
+            item = rows.pop(index)
+        if op != 'list.remove':
+            remaining = identities(rows, key, ref=ref, path=path)
+            anchor = change['after_id']
+            if anchor == identity or anchor is not None and anchor not in remaining:
+                raise CommandError('invalid list anchor', ref=ref, path=path)
+            rows.insert(0 if anchor is None else remaining.index(anchor) + 1, item)
+        after = present(rows)
+        root = replace_at(root, physical, path, after)
+    else:
+        if path and path[-1] in ('id', 'occurrence_id'):
+            if (len(path) > 1 and identity_key(physical, path[:-2]) == path[-1]
+                    and path[-2].startswith(path[-1] + ':')):
+                raise CommandError('item identity cannot change', kind='identity_conflict', ref=ref, path=path)
+        after = present(change['value']) if op == 'set' else ABSENT.copy()
+        root = replace_at(root, physical, path, after)
+    # Mirrors share one guarded authored value, including explicit absence.
+    if physical == 'parent':
+        for mirror in ('clips', 'registry'):
+            config = root.get('config', {})
+            old_config = old_root.get('config', {})
+            if (path == ['config'] and op == 'set' and mirror in old_root
+                    and (mirror in old_config or mirror in config)):
+                if mirror in config:
+                    root[mirror] = copy.deepcopy(config[mirror])
+                else:
+                    root.pop(mirror, None)
+            elif mirror in old_root and mirror in old_config:
+                if path[:1] == [mirror]:
+                    if mirror in root:
+                        config[mirror] = copy.deepcopy(root[mirror])
+                    else:
+                        config.pop(mirror, None)
+                elif path[:2] == ['config', mirror]:
+                    if mirror in config:
+                        root[mirror] = copy.deepcopy(config[mirror])
+                    else:
+                        root.pop(mirror, None)
+    if not equal(managed_edges(physical, old_root), managed_edges(physical, root)):
+        raise CommandError('replacement changes provider-managed edges', kind='managed_closure_write', ref=ref, path=path)
+    validate_payload(physical, root)
+    return root, before
+
+
 def patch(ctx, command):
     closure = Closure(ctx.state.bundle)
     ctx.patch_closure = closure
@@ -350,72 +425,7 @@ def patch(ctx, command):
             raise CommandError('root alias changed its physical binding', kind='binding_changed', ref=ref, path=path)
         root = closure.payload(physical)
         old_root = copy.deepcopy(root)
-        if op.startswith('list.'):
-            state = value_at(root, physical, path)
-            rows = state.get('value')
-            key = identity_key(physical, path)
-            ordered = identities(rows, key, ref=ref, path=path)
-            if ordered != change['order_before']:
-                error = CommandError('original collection order changed', kind='previous_value_mismatch', ref=ref, path=path)
-                error.dependency_kind = 'collection'
-                raise error
-            identity = change['id']
-            index = ordered.index(identity) if identity in ordered else None
-            before = ABSENT.copy() if index is None else present(rows[index])
-        else:
-            before = value_at(root, physical, path)
-        if not equal(before, change['before']) or op in ('remove', 'list.remove', 'list.move') and before == ABSENT:
-            raise CommandError('patch previous value does not match', kind='previous_value_mismatch',
-                               ref=ref, path=path, base=change['before'], theirs=before)
-        if op.startswith('list.'):
-            if op == 'list.insert':
-                if before != ABSENT:
-                    raise CommandError('insert identity is occupied', kind='identity_collision', ref=ref, path=path)
-                item = copy.deepcopy(change['value'])
-                if not isinstance(item, dict) or item.get(key) != identity:
-                    raise CommandError('insert value has a different identity', kind='identity_conflict', ref=ref, path=path)
-            else:
-                item = rows.pop(index)
-            if op != 'list.remove':
-                remaining = identities(rows, key, ref=ref, path=path)
-                anchor = change['after_id']
-                if anchor == identity or anchor is not None and anchor not in remaining:
-                    raise CommandError('invalid list anchor', ref=ref, path=path)
-                rows.insert(0 if anchor is None else remaining.index(anchor) + 1, item)
-            after = present(rows)
-            root = replace_at(root, physical, path, after)
-        else:
-            if path and path[-1] in ('id', 'occurrence_id'):
-                if (len(path) > 1 and identity_key(physical, path[:-2]) == path[-1]
-                        and path[-2].startswith(path[-1] + ':')):
-                    raise CommandError('item identity cannot change', kind='identity_conflict', ref=ref, path=path)
-            after = present(change['value']) if op == 'set' else ABSENT.copy()
-            root = replace_at(root, physical, path, after)
-        # Mirrors share one guarded authored value, including explicit absence.
-        if physical == 'parent':
-            for mirror in ('clips', 'registry'):
-                config = root.get('config', {})
-                old_config = old_root.get('config', {})
-                if (path == ['config'] and op == 'set' and mirror in old_root
-                        and (mirror in old_config or mirror in config)):
-                    if mirror in config:
-                        root[mirror] = copy.deepcopy(config[mirror])
-                    else:
-                        root.pop(mirror, None)
-                elif mirror in old_root and mirror in old_config:
-                    if path[:1] == [mirror]:
-                        if mirror in root:
-                            config[mirror] = copy.deepcopy(root[mirror])
-                        else:
-                            config.pop(mirror, None)
-                    elif path[:2] == ['config', mirror]:
-                        if mirror in config:
-                            root[mirror] = copy.deepcopy(config[mirror])
-                        else:
-                            root.pop(mirror, None)
-        if not equal(managed_edges(physical, old_root), managed_edges(physical, root)):
-            raise CommandError('replacement changes provider-managed edges', kind='managed_closure_write', ref=ref, path=path)
-        validate_payload(physical, root)
+        root, before = apply_change(root, change, physical=physical)
         verify_media(ctx, physical, old_root, root)
         created = allocations(closure, physical, old_root, root)
         ctx.record['created'].extend(created)

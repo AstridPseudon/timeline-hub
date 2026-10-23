@@ -66,7 +66,7 @@ def test_successful_publish_with_failed_reset_does_not_reopen_old_steps(draft, m
     edit(draft, 99)
     accepted = []
 
-    def publish_bundle(candidate, *args, **kwargs):
+    def commit_document(candidate, message, *, idempotency_key=None, client=None):
         accepted.append(copy.deepcopy(candidate))
         return {"new_head": "accepted-B"}
 
@@ -78,7 +78,7 @@ def test_successful_publish_with_failed_reset_does_not_reopen_old_steps(draft, m
         bundle["base_parent"]["revision_id"] = "accepted-B"
         return bundle
 
-    monkeypatch.setattr(store, "publish_bundle", publish_bundle)
+    monkeypatch.setattr(draft, "_commit_document", commit_document)
     monkeypatch.setattr(store, "fetch_bundle", unavailable if failure == "read" else head)
     if failure == "write":
         monkeypatch.setattr(draft, "_save_locked", unavailable)

@@ -1,16 +1,84 @@
 from __future__ import annotations
 
+import copy
+import hashlib
 import json
 
 import pytest
 
+from astrid.core.receipts.canonical import canonical_json
 from astrid.packs.timeline import cli as timeline_cli
+from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.timeline import store as timeline_store
+from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline_checkout import Checkout
+from tests.sdk.test_timeline_commit_provider import runtime_abi  # noqa: F401
+from tests.sdk.test_timeline_public_command import public_session  # noqa: F401
 
 
 def _json_result(capsys):
     return json.loads(capsys.readouterr().out)
+
+
+@pytest.fixture
+def normal_commit(public_session, tmp_path):  # noqa: F811 - imported fixture
+    """Run the normal timeline CLI commit against the public fixture closure."""
+    opened, realm, sent, client, _ = public_session
+    document = copy.deepcopy(realm.documents[realm.head["revision_id"]])
+    candidate = bundle_from_document(document)
+    candidate["base_parent"]["publication_id"] = realm.head["publication_id"]
+    path = tmp_path / "timeline.json"
+    path.write_text(json.dumps(candidate), encoding="utf-8")
+
+    typed = client.timelines._typed
+    replays = {}
+
+    def runtime_idempotency(operation, *args, **kwargs):
+        if operation != "commit_timeline":
+            return typed(operation, *args, **kwargs)
+        body = copy.deepcopy(args[-1])
+        invocation = {
+            "operation": "commitTimeline",
+            "path": "/v1/projects/project-1/timelines/film/commit",
+            "publisher": "actor-1",
+            "request": body,
+        }
+        request_hash = hashlib.sha256(canonical_json(invocation).encode()).hexdigest()
+        identity = (body["project_id"], body["timeline_id"], kwargs["idempotency_key"])
+        previous = replays.get(identity)
+        if previous is not None:
+            if previous["request_hash"] != request_hash:
+                return DomainResult.failure(
+                    ErrorObject(
+                        "conflict",
+                        "idempotency_mismatch",
+                        {
+                            "status": "refused",
+                            "reason": "idempotency_mismatch",
+                            "base": None,
+                            "current": None,
+                            "conflicts": [],
+                        },
+                    ),
+                    idempotency_key=kwargs["idempotency_key"],
+                )
+            return copy.deepcopy(previous["result"])
+        result = typed(operation, *args, **kwargs)
+        if result.ok and result.receipt is not None:
+            replays[identity] = {"request_hash": request_hash, "result": copy.deepcopy(result)}
+        return result
+
+    client.timelines._typed = runtime_idempotency
+    parser = timeline_cli.build_parser(client)
+
+    def run(*args, message="Timeline edit", as_json=True):
+        argv = ["commit", "film", "--project", "project-1", "--file", str(path), "-m", message, *args]
+        if as_json:
+            argv.append("--json")
+        parsed = parser.parse_args(argv)
+        return parsed.handler(parsed)
+
+    return run, path, realm, sent, opened, client
 
 
 def test_status_absent_draft_reports_head_without_creating(tmp_path, monkeypatch, capsys) -> None:
@@ -183,41 +251,31 @@ def test_checkout_fresh_refuses_parent_config_edit_when_clip_diff_is_empty(tmp_p
     assert calls == []
 
 
-def test_publish_forwards_key_and_force_to_sdk_once(tmp_path, monkeypatch, capsys) -> None:
-    parser = timeline_cli.build_parser(object())
-    path = tmp_path / "draft.json"
-    path.write_text("draft", encoding="utf-8")
-    monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
-    calls = []
+def test_normal_commit_forwards_key_through_the_authenticated_closure(normal_commit, capsys) -> None:
+    run, path, realm, sent, _, _ = normal_commit
+    candidate = json.loads(path.read_text(encoding="utf-8"))
+    candidate["parent"]["name"] = "Committed Film"
+    path.write_text(json.dumps(candidate), encoding="utf-8")
 
-    class FakeCheckout:
-        @staticmethod
-        def load(_path):
-            return FakeCheckout()
-
-        def publish(self, message, **kwargs):
-            calls.append((message, kwargs))
-            return {"new_head": "head-4", "narration_pinned": []}
-
-    monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
-    parsed = parser.parse_args([
-        "publish", "main", "--project", "p1", "--idempotency-key", "edit-42", "--force", "-m", "edit", "--json",
-    ])
-
-    assert parsed.handler(parsed) == 0
+    assert run("--idempotency-key", "edit-42", message="Committed Film") == 0
     payload = _json_result(capsys)
     assert payload["ok"] is True
-    assert payload["data"]["new_head"] == "head-4"
-    assert payload["idempotency_key"] == "edit-42"
-    assert calls == [("edit", {"idempotency_key": "edit-42", "client": parsed.client, "force": True})]
+    assert payload["data"]["status"] == "accepted"
+    assert payload["receipt"]["idempotency_key"] == "edit-42"
+    assert sent[-1]["base_revision_id"] == realm.entries[0]["revision_id"]
+    assert sent[-1]["base_publication_id"] == "bootstrap"
+    assert realm.entries[-1]["receipt"]["idempotency_key"] == "edit-42"
+    assert sent[-1]["label"] == "Committed Film"
 
 
 @pytest.mark.parametrize("as_json", [False, True])
-def test_publish_partial_narration_error_preserves_receipt_and_does_not_retry(tmp_path, monkeypatch, capsys, as_json) -> None:
-    parser = timeline_cli.build_parser(object())
-    path = tmp_path / "draft.json"
-    path.write_text("draft", encoding="utf-8")
-    monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
+def test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry(
+    normal_commit, monkeypatch, capsys, as_json,
+) -> None:
+    run, path, realm, _, _, client = normal_commit
+    candidate = json.loads(path.read_text(encoding="utf-8"))
+    candidate["parent"]["name"] = "Partial Film"
+    path.write_text(json.dumps(candidate), encoding="utf-8")
     receipt = {
         "old_head": "head-1",
         "new_head": "head-2",
@@ -225,27 +283,19 @@ def test_publish_partial_narration_error_preserves_receipt_and_does_not_retry(tm
         "narration_error": "binding CAS conflict",
     }
     calls = []
+    original = client.timelines._typed
 
-    class FakeCheckout:
-        @staticmethod
-        def load(_path):
-            return FakeCheckout()
+    def refusal(operation, *args, **kwargs):
+        if operation == "commit_timeline":
+            calls.append((args, kwargs))
+            return DomainResult.failure(
+                ErrorObject("partial_publication", "binding CAS conflict", {"receipt": receipt}),
+                idempotency_key=kwargs["idempotency_key"],
+            )
+        return original(operation, *args, **kwargs)
 
-        def edits(self):
-            return {"changes": []}
-
-        def changed_cut_ids(self):
-            return []
-
-        def publish(self, _message, **_kwargs):
-            calls.append(True)
-            return dict(receipt)
-
-    monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
-    args = ["publish", "main", "--project", "p1", "--idempotency-key", "edit-43", "-m", "edit"]
-    parsed = parser.parse_args(args + (["--json"] if as_json else []))
-
-    assert parsed.handler(parsed) == 1
+    monkeypatch.setattr(client.timelines, "_typed", refusal)
+    assert run("--idempotency-key", "edit-43", message="Partial Film", as_json=as_json) == 1
     captured = capsys.readouterr()
     if as_json:
         payload = json.loads(captured.out)
@@ -256,131 +306,82 @@ def test_publish_partial_narration_error_preserves_receipt_and_does_not_retry(tm
     else:
         assert captured.out == ""
         assert "error partial_publication:" in captured.err
-    assert calls == [True]
-
-
-
-
-def test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope(tmp_path, monkeypatch, capsys) -> None:
-    parser = timeline_cli.build_parser(object())
-    path = tmp_path / "draft.json"
-    path.write_text("draft", encoding="utf-8")
-    monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
-    receipt = {
-        "old_head": "authoring-parent-revision-abcdef1234567890",
-        "new_head": "head-2",
-        "narration_pinned": [],
-        "message": "tighten c3",
-        "structure": "x" * 200_000,
-    }
-    calls = []
-
-    class FakeCheckout:
-        @staticmethod
-        def load(_path):
-            return FakeCheckout()
-
-        def edits(self):
-            calls.append("edits")
-            assert "publish" not in calls
-            return {"changes": [{"clip_id": "a"}, {"clip_id": "b"}]}
-
-        def changed_cut_ids(self):
-            calls.append("cuts")
-            assert "publish" not in calls
-            return ["c3"]
-
-        def publish(self, _message, **_kwargs):
-            calls.append("publish")
-            return dict(receipt)
-
-    monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
-
-    human = parser.parse_args(["publish", "main", "--project", "p1", "-m", "tighten c3"])
-    assert human.handler(human) == 0
-    out = capsys.readouterr().out
-    lines = out.splitlines()
-    assert lines[0] == "published abcdef12 → head-2: tighten c3"
-    assert lines[1] == "changed: 2 clips in 1 cut"
-    assert lines[2].startswith("next: timelines edit main --project p1")
-    assert len(out) < 1000 and "{" not in out
-    assert calls == ["edits", "cuts", "publish"]
-
-    calls.clear()
-    as_json = parser.parse_args(["publish", "main", "--project", "p1", "-m", "tighten c3", "--json"])
-    assert as_json.handler(as_json) == 0
-    payload = _json_result(capsys)
-    assert set(payload) == {"ok", "data", "error", "receipt", "idempotency_key"}
-    assert payload["data"] == receipt
-    assert calls == ["publish"]
-
-
-def test_publish_still_requires_a_revision_message() -> None:
-    parser = timeline_cli.build_parser(object())
-    with pytest.raises(SystemExit) as error:
-        parser.parse_args(["publish", "main", "--project", "p1"])
-    assert error.value.code == 2
+    assert calls and len(calls) == 1
+    assert len(realm.entries) == 1
 
 
 @pytest.mark.parametrize("as_json", [False, True])
-def test_publish_cas_refusal_is_not_retried_or_reported_as_success(tmp_path, monkeypatch, capsys, as_json) -> None:
-    path = tmp_path / "draft.json"
-    path.write_text("draft", encoding="utf-8")
-    monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
-    calls = []
-    conflict = RuntimeError("CAS head changed")
-    class FakeCheckout:
-        def edits(self):
-            return {"changes": []}
+def test_normal_commit_retry_reuses_the_same_receipt_without_a_second_write(normal_commit, capsys, as_json) -> None:
+    run, path, realm, _, _, _ = normal_commit
+    candidate = json.loads(path.read_text(encoding="utf-8"))
+    candidate["parent"]["name"] = "Retryable Film"
+    path.write_text(json.dumps(candidate), encoding="utf-8")
 
-        def changed_cut_ids(self):
-            return []
-
-        def publish(self, message, **kwargs):
-            calls.append((message, kwargs))
-            raise conflict
-
-    monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
-    args = ["publish", "main", "--project", "p1", "-m", "edit", "--idempotency-key", "cas-key"]
-    parsed = timeline_cli.build_parser(object()).parse_args(args + (["--json"] if as_json else []))
-    with pytest.raises(RuntimeError) as error:
-        parsed.handler(parsed)
-    assert error.value is conflict
-    assert calls == [("edit", {"idempotency_key": "cas-key", "client": parsed.client, "force": False})]
-    assert capsys.readouterr().out == ""
+    key = "edit-43-json" if as_json else "edit-43"
+    assert run("--idempotency-key", key, as_json=as_json) == 0
+    first = capsys.readouterr()
+    assert len(realm.entries) == 2
+    assert run("--idempotency-key", key, as_json=as_json) == 0
+    second = capsys.readouterr()
+    if as_json:
+        assert json.loads(second.out) == json.loads(first.out)
+    else:
+        assert second.out == first.out
+    assert len(realm.entries) == 2
 
 
-def test_publish_of_a_clean_working_copy_publishes_nothing(tmp_path, monkeypatch, capsys) -> None:
-    parser = timeline_cli.build_parser(object())
-    path = tmp_path / "draft.json"
-    path.write_text("draft", encoding="utf-8")
-    monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
-    calls = []
 
-    class FakeCheckout:
-        @staticmethod
-        def load(_path):
-            return FakeCheckout()
 
-        def document(self):
-            return {}
+def test_normal_commit_output_keeps_summary_and_receipt(normal_commit, capsys) -> None:
+    run, path, realm, sent, _, _ = normal_commit
+    candidate = json.loads(path.read_text(encoding="utf-8"))
+    candidate["parent"]["name"] = "Summary Film"
+    path.write_text(json.dumps(candidate), encoding="utf-8")
 
-        def narration_changes(self):
-            return {}
+    assert run("--idempotency-key", "edit-44", message="Summary Film", as_json=False) == 0
+    output = capsys.readouterr().out
+    assert "accepted revision" in output
+    assert len(output) < 1000 and "canonical_document" not in output
+    assert sent[-1]["label"] == "Summary Film"
+    assert realm.entries[-1]["receipt"]["idempotency_key"] == "edit-44"
 
-        def publish(self, *_args, **_kwargs):
-            calls.append("publish")
-            return {"new_head": "head-empty"}
 
-    monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
-    monkeypatch.setattr(timeline_cli, "_checkout_change_units", lambda _checkout: (True, []))
-    parsed = parser.parse_args(["publish", "main", "--project", "p1", "-m", "nothing", "--json"])
+@pytest.mark.parametrize("as_json", [False, True])
+def test_normal_commit_cas_refusal_preserves_file_and_does_not_retry(normal_commit, capsys, as_json) -> None:
+    from tests.sdk.test_timeline_public_command import rename
 
-    assert parsed.handler(parsed) == 0
+    run, path, realm, _, opened, _ = normal_commit
+    candidate = json.loads(path.read_text(encoding="utf-8"))
+    candidate["parent"]["name"] = "Local Film"
+    path.write_text(json.dumps(candidate), encoding="utf-8")
+    before = path.read_bytes()
+    opened.command(rename(value="Peer Film"), reads=[])
+    opened.commit("Peer edit", reads=[])
+    capsys.readouterr()
+
+    key = "cas-key-json" if as_json else "cas-key"
+    assert run("--idempotency-key", key, as_json=as_json) == 1
+    captured = capsys.readouterr()
+    if as_json:
+        payload = json.loads(captured.out)
+        assert payload["ok"] is False
+        assert payload["error"]["code"] == "conflict"
+    else:
+        assert captured.out == ""
+        assert "error conflict:" in captured.err
+    assert path.read_bytes() == before
+    assert len(realm.entries) == 2
+
+
+def test_normal_commit_of_a_clean_working_copy_writes_nothing(normal_commit, capsys) -> None:
+    run, path, realm, _, _, _ = normal_commit
+    before = path.read_bytes()
+    assert run("--idempotency-key", "clean-key") == 0
     payload = _json_result(capsys)
     assert payload["ok"] is True
-    assert payload["data"]["published"] is False
-    assert calls == []
+    assert payload["receipt"] is None
+    assert len(realm.entries) == 1
+    assert path.read_bytes() == before
 
 
 def test_list_follows_every_cursor_page(monkeypatch, capsys) -> None:
@@ -407,3 +408,27 @@ def test_list_follows_every_cursor_page(monkeypatch, capsys) -> None:
     payload = _json_result(capsys)
     assert [row["timeline_id"] for row in payload["data"][0]] == ["film", "trial-a"]
     assert payload["data"][1] is None
+
+
+def test_checkout_and_status_hints_use_the_existing_document_commit(tmp_path, monkeypatch, capsys):
+    from types import SimpleNamespace
+
+    from astrid.packs.timeline.cli_common import checkout_summary, status_text
+
+    path = tmp_path / "working copy.json"
+    local = SimpleNamespace(
+        path=path, base_revision="head-1", _cut_groups=lambda: ["cut"],
+        cut_count=lambda: "1 cut", clips=lambda: [], words=lambda: [],
+        changes=lambda: ["name changed"], edits=lambda: {"changes": []},
+        check=lambda: SimpleNamespace(valid=True, brief=lambda **_kwargs: ["valid"]),
+    )
+    parsed = timeline_cli.build_parser(object()).parse_args([
+        "status", "main", "--project", "p1", "--draft", "working", "--text",
+    ])
+    summary = "\n".join(checkout_summary(parsed, local, existed=True))
+    monkeypatch.setattr(Checkout, "load", classmethod(lambda *_args: local))
+    assert status_text(parsed, "p1", "t1", "head-2", "working", path) == 0
+    output = summary + capsys.readouterr().out
+    expected = timeline_cli._document_edit_commands(str(path))["commit"]
+    assert output.count(expected) == 2
+    assert "timelines publish" not in output and "three-way" not in output
