@@ -290,7 +290,35 @@ def test_http_note_conflict_reruns_public_function_from_verified_peer_document(r
         outbox_path=tmp_path / "note-rerun-reloaded.json",
     )
     assert _note_values(reloaded.bundle) == {**expected_notes, "note-04": PEER_VALUE + SUFFIX}
-    _assert_full_closure(reloaded.bundle, original)
+    assert "_runtime_document" not in reloaded.bundle["source_mapping"]
+    reloaded_head = {
+        "revision_id": result["data"]["accepted_revision_id"],
+        "publication_id": result["receipt"]["receipt_id"],
+    }
+    assert reloaded.head == reloaded_head
+    reloaded_read = runtime.client().timelines.open_bundle(
+        runtime.project, "film", revision_id=reloaded_head["revision_id"],
+        publication_id=reloaded_head["publication_id"],
+    )
+    assert reloaded_read.ok
+    authenticated_reloaded = reloaded_read.data["bundle"]
+    canonical = authenticated_reloaded["source_mapping"]["_runtime_document"]
+    assert authenticated_reloaded == {
+        **reloaded.bundle,
+        "source_mapping": {
+            **reloaded.bundle["source_mapping"], "_runtime_document": canonical,
+        },
+        "base_parent": {
+            **reloaded.bundle["base_parent"],
+            "publication_id": reloaded_head["publication_id"],
+        },
+    }
+    assert reloaded_read.data["project_id"] == runtime.project
+    assert reloaded_read.data["timeline_id"] == "film"
+    assert reloaded_read.data["revision_id"] == reloaded_head["revision_id"]
+    assert reloaded_read.data["is_current_head"] is True
+    assert canonical["parent_revision"]["revision_id"] == reloaded_head["revision_id"]
+    _assert_full_closure(authenticated_reloaded, original)
     state = json.loads(reloaded.session.outbox.path.read_text(encoding="utf-8"))
     assert state["pending"] == [] and state["flight"] is None
     assert seeded["receipt"]["receipt_id"]
