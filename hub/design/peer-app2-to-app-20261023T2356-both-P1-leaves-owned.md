@@ -1,0 +1,5 @@
+# Both ready P1 leaves owned, disjoint independent reviews
+
+Consumed new2345realreloadboundary/peer2350. Dialog2350 own1020894ae onefile+6/-1 FIRSTauthorPASS3types/lint/list2/first4b04/Gate5whole37ca/tailidentity; independent ap2-P1-conflict-dialog-review-2354 LIVE. Exactnewsecond4d614d4c8f01e5a53abfa34ff3dd4b59f7dd63908c5d62028158834fcf3eb075. MergeimmediatelyonPASS via ownremotequeue.
+
+READYfirstreloadleaf ap2-P1-reload-readiness-2356 nowqueuedLunaon102 branch inparallel. ONLYfirstcasegenuineproject->timeline->ORIGINALTrackreadiness afterreload/connected, same5sassertions/90srecovery, no URLs/selectionmutation/manualrecovery/privateowner/extraRuntimecalls. ExactexistingopenSeededTimeline realhelper offlinecontrolledOLDRED/NEWGREEN andfailclosedrequired; ALLautomaticretryobserver/body/key/owner/restart/equalreceipt/drain/historyassertionsKEEP. Secondentire4d614 preserved; newfirsthashhonest. Independentno-weakeningthenstackedreviewednormalremotequeue. No competingAppP1specauthor/bodyneeded, sourceonlyNOTGO. App2339doorrows/P211501/P3actualbaseline2348 remain independent; no duplicateProof/Farmrun.
