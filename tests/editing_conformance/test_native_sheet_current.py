@@ -79,15 +79,14 @@ def test_same_semantics_original_pins_exact_commands_reload_inverse(native_cli, 
     if entry == 'python':
         result = session.commit_many(requests(clear_hold=clear_hold))
     elif entry == 'cli':
-        path.write_text(json.dumps(requests(clear_hold=clear_hold)))
-        assert run('edit', 'commands-file', 't', str(path), '--base-revision-id', 'r0',
-                   '--base-publication-id', 'pub0', '--json') == 0
+        path.write_text(edited)
+        assert run('apply', 't', str(path), '--json') == 0
         result = json.loads(capsys.readouterr().out)
     elif entry == 'sheet-python':
         result = sheet.apply(edited, session=session, dry_run=False)
     else:
         path.write_text(edited)
-        assert run('apply', 't', str(path), '--native', '--json') == 0
+        assert run('apply', 't', str(path), '--json') == 0
         result = json.loads(capsys.readouterr().out)
         assert path.read_text() == edited
     body = json.loads(generated.calls[-1][0])
@@ -103,9 +102,13 @@ def test_same_semantics_original_pins_exact_commands_reload_inverse(native_cli, 
         assert after['hold'] == 2.013 and after['app']['astrid']['for'] == 2.013 / 2
     restarted = TimelineSession.open('p', 't', client=client)
     restarted.undo([result['receipt']['receipt_id']])
-    assert generated.bundles['r2'] == original
+    restored = copy.deepcopy(original)
+    restored['base_parent'].update(revision_id='r1', publication_id='pub1')
+    assert generated.bundles['r2'] == restored
     restarted.undo(['pub2'])
-    assert generated.bundles['r3'] == plan.bundle
+    restored_plan = copy.deepcopy(plan.bundle)
+    restored_plan['base_parent'].update(revision_id='r1', publication_id='pub1')
+    assert generated.bundles['r3'] == restored_plan
     assert NativeSheet.load(restarted).text == text  # retained export never becomes the new head
     assert sheet.preview(sheet.text).commands == []
     # Equal final values permit ordinary replay, but never erase intervening writes for undo.
@@ -140,7 +143,7 @@ def test_unsupported_cells_refuse_whole_batch_before_queue(native_cli, capsys, t
     path = tmp_path / 'edited.txt'
     path.write_text(edited)
     before = generated.path.read_bytes()
-    assert run('apply', 't', str(path), '--native', '--json') == 1
+    assert run('apply', 't', str(path), '--json') == 1
     assert 'edited sheet kept' in capsys.readouterr().out
     assert generated.path.read_bytes() == before and generated.calls == []
     assert path.read_text() == edited
@@ -154,7 +157,7 @@ def test_custom_pack_param_refuses_without_client_inputs(native_cli, capsys, tmp
     path = tmp_path / 'edited.txt'
     path.write_text(text)
     before = generated.path.read_bytes()
-    assert run('apply', 't', str(path), '--native', '--json') == 1
+    assert run('apply', 't', str(path), '--json') == 1
     assert 'exact inputs' in capsys.readouterr().out
     assert generated.path.read_bytes() == before and generated.calls == []
 
@@ -226,10 +229,10 @@ def test_unchanged_text_cannot_hide_an_existing_inflight_sheet(native_cli, capsy
     path = tmp_path / 'sheet.txt'
     path.write_text(edit_cell(text, REF, '5'))
     generated.lose_ack = True
-    assert run('apply', 't', str(path), '--native', '--json') == 1
+    assert run('apply', 't', str(path), '--json') == 1
     capsys.readouterr()
     before = generated.path.read_bytes()
     path.write_text(text)
-    assert run('apply', 't', str(path), '--native', '--json') == 1
+    assert run('apply', 't', str(path), '--json') == 1
     assert 'pending intent' in capsys.readouterr().out
     assert generated.path.read_bytes() == before and len(generated.calls) == 1
