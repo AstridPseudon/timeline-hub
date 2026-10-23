@@ -244,7 +244,15 @@ class _SkipGuard:
         reason = reason.removeprefix("Skipped: ")
         match = _DECLARED_TAG.search(reason)
         if match and match.group(1) in SKIP_REGISTRY:
-            self.declared.append((report.nodeid, reason))
+            entry = SKIP_REGISTRY[match.group(1)]
+            if entry.applies(CURRENT):
+                self.declared.append((report.nodeid, reason))
+            else:
+                # The declared reason does not hold here, so the skip hides a test that should run.
+                self.undeclared.append((
+                    report.nodeid,
+                    f"{entry.tag} used where its condition ({entry.skip_when}) is false on this host: {reason}",
+                ))
         else:
             self.undeclared.append((report.nodeid, reason))
 

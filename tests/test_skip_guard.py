@@ -174,3 +174,19 @@ def test_skips_of_non_blocking_entries_are_listed_under_their_own_header(sandbox
         "declared skips whose tests run only in non-blocking CI jobs (1):",
         "  NON-BLOCKING *::test_platform_only: [[]declared:*",
     ])
+
+
+def test_a_declared_skip_where_its_condition_is_false_here_fails_the_run(sandbox):
+    # An entry whose condition is false on this host: the tag is registered but the reason does not apply.
+    # `name`'s condition is false on this host (so the skip hides a test that should run); `right`'s is true.
+    name, right = ("posix-fork", "windows-security") if sys.platform != "win32" else ("windows-security", "posix-fork")
+    result = _run(sandbox, f"""
+        import pytest
+        @pytest.mark.skipif(True, reason="[declared:{name}] misused")
+        def test_misused(): pass
+        @pytest.mark.skipif(True, reason="[declared:{right}] fine")
+        def test_proper(): pass
+        def test_runs(): pass
+        """)
+    assert result.ret != 0
+    result.stdout.fnmatch_lines(["UNDECLARED SKIP *::test_misused: *[[]declared:" + name + "] used where its condition*is false*"])
