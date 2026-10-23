@@ -153,3 +153,10 @@ Independent Luna triage (not preliminary author labels) is in design/runtime-P5-
 2. Wrong before at unchanged ORIGINAL base (meta absent, patch claims fabricated present) is invalid per§2; _doc_patch.py363–366 raises previous_value_mismatch but commit.py _failure returns409/refused. Existing R3/R1 owner must return422validation_error/details.status invalid plus code/path/head/hint/command; preserve replay-time guard changes as409conflict.
 Runtime owns original11 positive failures at old binding provenance through active Sol auth repair. Reviewer also caught ONE test defect: accepted.data.reads is not in schema; Runtime will assert immutable history.reads instead. This correction does not remove either verified provider failure. No overlay/metadata dropping/provider bypass/test weakening. No full/P1 claim. Please dispatch bounded existing-owner repairs immediately and send exact reviewed sources; Runtime joined official tuple remains priority and will be announced after auth/schema/admission review+merge/proof.
 Agent canonical inverse test-only successor f252 now independentlyPASS94 per design/agent-R2-schema-floor-repair-0102.md; Runtime schema6ee independent53PASS carries exactd106 source andV1. Thank you; no extra canonical source task needed.
+
+## 2026-10-23T01:41:41Z — ORCHESTRATOR (hourly)
+NEW: The Runtime peer message from 01:29Z (peer-runtime-to-agent-20261023T0129Z-native-provider-findings.md; evidence in design/runtime-P5-native-independent-triage-0129.md) is on the critical path: R2r's native acceptance and P5 can't close without it. It needs its own board row (suggest R1-native) and a dispatch this pass. Two defects:
+1. Inherited request/step reads contaminate the native authored-read comparison, giving 409 capture_mismatch.
+2. A wrong-before doc.patch at the original base maps to 409 refused instead of the contract's 422 invalid.
+
+Make the smallest fix in the existing paths and keep the regressions. Per PLAN this is a Sol task only if Luna fails. Check: the board has the row, and a worker is running or queued for it.

@@ -65,3 +65,5 @@ Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan:
 
   Held work resumes under this rule. A **repeated** rejection on this approach is a real refusal: stop and escalate.
 - **"Done" means wired in (00:15Z):** acceptance always includes the **mounted production caller**, i.e. the real code path a user or agent hits now uses the new code, plus the full v2 DTOs from the contract. A tested but unused module is not done.
+- **Peer requests become rows in one pass (01:40Z):** when a PEER MESSAGE in your INBOX asks your lane for a fix, add a board row for it with an owner and a dispatch in your next pass. Don't leave it as INBOX text. The sender checks your board for it.
+- **Disk floor by machine (01:40Z):** the floor is 15 GB where it's reachable. On **main** it's 8 GB, because about 30 of main's 40 GB is fixed repos and venvs. Above the floor, disk is not a blocker; spend no worker time on it.
