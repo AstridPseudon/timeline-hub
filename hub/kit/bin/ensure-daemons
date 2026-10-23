@@ -6,13 +6,16 @@
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 A=$1; [ -n "$A" ] && [ -d $O/managers/$A ] || { echo "usage: ensure-daemons AREA"; exit 2; }
 M=$A; [ $A = runtime ] && M=main          # hub-sync machine name
+# one run at a time: overlapping runs (keepalive loop + hourly check) would stop the same dead worker twice
+exec 9>$O/.ensure-daemons.$A.lock
+flock -n 9 || { echo "$(date -u +%FT%TZ) ensure-daemons $A: started: none; dead workers: none (another run in progress)"; exit 0; }
 has(){ ps -eo args | awk -v p="$1" -v a="$2" '$1=="/bin/bash" && $2 ~ ("bin/" p "$") && (a=="" || $3==a) {f=1} END{exit !f}'; }
 started=""
-has hub-syncd "$M" || { nohup setsid $O/bin/hub-syncd $M >> $O/hub-sync.log 2>&1 < /dev/null & started="$started hub-syncd"; }
-has dispatcher-daemon "" || { nohup setsid $O/bin/dispatcher-daemon >> $O/dispatcher.log 2>&1 < /dev/null & started="$started dispatcher"; }
+has hub-syncd "$M" || { nohup setsid $O/bin/hub-syncd $M >> $O/hub-sync.log 2>&1 < /dev/null 9>&- & started="$started hub-syncd"; }
+has dispatcher-daemon "" || { nohup setsid $O/bin/dispatcher-daemon >> $O/dispatcher.log 2>&1 < /dev/null 9>&- & started="$started dispatcher"; }
 if ! has run-manager "$A" && [ ! -f $O/managers/$A/STOP ]; then
   rm -f $O/managers/$A/running
-  if [ $A = farm ]; then $O/bin/run-manager farm claude-sonnet-5-5 >/dev/null; else $O/bin/run-manager $A >/dev/null; fi
+  if [ $A = farm ]; then $O/bin/run-manager farm claude-sonnet-5-5 >/dev/null 9>&-; else $O/bin/run-manager $A >/dev/null 9>&-; fi
   started="$started run-manager"
 fi
 dead=""
