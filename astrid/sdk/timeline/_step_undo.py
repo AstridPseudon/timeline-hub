@@ -1,6 +1,8 @@
 """Select native inverse stages without rewriting immutable accepted history."""
 from __future__ import annotations
 
+import copy
+
 from ._collections import AcceptedRecords
 from ._command_state import CommandError, equal
 
@@ -126,6 +128,55 @@ def selected_dependencies(records):
     return result
 
 
+def _nested_mirrors(record, step, nested):
+    """Partition compiler mirrors by their accepted canonical effect images."""
+    from ._doc_patch import replace_at, value_at
+
+    writes = record.get('derived_writes', [])
+    if not writes:
+        return [[] for _ in nested]
+    if any(write.get('ref') != 'parent' or write.get('path') != ['config', 'clips']
+           or type(write.get('cause')) is not int or write['cause'] != record['ordinal']
+           for write in writes):
+        raise CommandError('nested inverse derived attribution differs from history', kind='history_unavailable')
+    cursor, result = 0, []
+    for binding in nested:
+        first, last = binding['boundary']['effect_range']
+        effects = [effect for effect in step['patch'][first:last]
+                   if effect['ref'] == 'parent' and effect['path'][:2] == ['config', 'clips']]
+        start = cursor
+        if effects:
+            if cursor == len(writes) or writes[cursor]['before'].get('state') != 'present':
+                raise CommandError('nested inverse mirror input is unavailable', kind='history_unavailable')
+            state = writes[cursor]['before']
+            image = {'config': {'clips': copy.deepcopy(state['value'])}}
+            try:
+                for effect in effects:
+                    if effect['op'] not in ('set', 'remove') or not equal(
+                            value_at(image, 'parent', effect['path']), effect['before']):
+                        raise CommandError('nested inverse mirror effect input differs from history')
+                    replacement = ({'state': 'present', 'value': effect['value']}
+                                   if effect['op'] == 'set' else {'state': 'absent'})
+                    replace_at(image, 'parent', effect['path'], replacement)
+            except CommandError as exc:
+                raise CommandError('nested inverse mirror effects differ from history', kind='history_unavailable') from exc
+            target = value_at(image, 'parent', ['config', 'clips'])
+            while cursor < len(writes):
+                write = writes[cursor]
+                if not equal(write['before'], state):
+                    raise CommandError('nested inverse mirror chain differs from effects', kind='history_unavailable')
+                state = write['after']
+                cursor += 1
+                if equal(state, target):
+                    break
+            else:
+                raise CommandError('nested inverse mirrors omit accepted effects', kind='history_unavailable')
+        result.append(writes[start:cursor])
+    if cursor != len(writes):
+        raise CommandError('nested inverse mirrors exceed accepted effects', kind='history_unavailable')
+    return result
+
+
 def inverse_stages(records):
     """Yield reverse execution groups with their original immutable step IDs."""
     if not isinstance(records, AcceptedRecords):
@@ -164,19 +215,20 @@ def inverse_stages(records):
                             or binding['dependencies'] != []
                             or boundary['publication_id'] not in record['command']['args']['publications']
                             or start != cursor or not start < end <= len(record['writes'])
-                            or first != effect_cursor or not first < last <= len(step['patch'])
-                            or record.get('derived_writes')):
+                            or first != effect_cursor or not first < last <= len(step['patch'])):
                         raise CommandError('nested inverse ranges differ from accepted history',
                                            kind='history_unavailable')
                     cursor, effect_cursor = end, last
                 if cursor != len(record['writes']) or effect_cursor != len(step['patch']):
                     raise CommandError('nested inverse ranges omit accepted history', kind='history_unavailable')
-                for binding in reversed(nested):
+                mirrors = _nested_mirrors(record, step, nested)
+                for binding, derived in reversed(list(zip(nested, mirrors))):
                     start, end = binding['boundary']['native_write_range']
                     first, last = binding['boundary']['effect_range']
                     from ._doc_patch import inverse_changes
 
                     yield entry['publication_id'], step['id'], [{**record, 'writes': record['writes'][start:end],
+                        'derived_writes': derived,
                         '_inverse_effects': inverse_changes(step['patch'][first:last])}]
 
 
