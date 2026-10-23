@@ -21,6 +21,7 @@ from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.emitter import emit_document_commands
+from astrid.sdk.timeline.native_occurrence_fork import capture_occurrence_fork
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_editing import add_track
@@ -244,7 +245,7 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
     return document, receipt
 
 
-def seed_emitter_parent(runtime):
+def seed_document_diff_parent(runtime):
     """Seed real App-shaped rows exercised by the current document emitter."""
     def prepare(parent, shots, internals):
         parent_rows = parent['payload']['clips']
@@ -261,7 +262,7 @@ def seed_emitter_parent(runtime):
 
 
 def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime):
-    _document, setup = seed_emitter_parent(runtime)
+    _document, setup = seed_document_diff_parent(runtime)
     runtime.restart()
     session = runtime.session(name='emitter')
     loaded = session.client.timelines.open_bundle(runtime.project, 'film')
@@ -295,23 +296,25 @@ def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime
     assert persisted_bundle(before) == public_before
     source = occurrence_source_pin(before, OCCURRENCE_TARGET)
     assert source['text_bindings'] == [{'slot': 'voiceover', 'text': 'hello'}]
+    fork = capture_occurrence_fork(before, 'occurrence:f2-occurrence', 'emitter-selected-shot')
+    # Project the registered fork so the emitter addresses its unique physical
+    # source. Both commands still land in the original single transaction.
+    projected = bundle_from_document(document_from_bundle(execute(before, [fork]).bundle))
 
     def child(candidate):
-        shot = next(iter(candidate['shots'].values()))
-        return next(row for row in shot['internal_timeline']['clips']
-                    if row['id'] == 'f2-agent-clip')
+        return State(candidate).entity(OCCURRENCE_TARGET)
 
-    unsupported = copy.deepcopy(before)
+    unsupported = copy.deepcopy(projected)
     child(unsupported)['params']['text'] = None
     head_before_refusal = copy.deepcopy(runtime.history()['head'])
     history_before_refusal = copy.deepcopy(runtime.history()['items'])
     calls_before_refusal = len(runtime.calls)
-    invalid_commands = emit_document_commands(before, unsupported)
-    assert invalid_commands == [{
+    invalid_commands = [fork, *emit_document_commands(projected, unsupported)]
+    assert invalid_commands == [fork, {
         'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
         'args': {'changes': [{
-            'op': 'set', 'ref': 'internal-revision:' + before['source_mapping']['shots'][
-                next(row for row in before['placements']
+            'op': 'set', 'ref': 'internal-revision:' + projected['source_mapping']['shots'][
+                next(row for row in projected['placements']
                      if row['occurrence_id'] == 'f2-occurrence')['shot_id']
             ]['internal_timeline_revision_id'],
             'path': ['clips', 'id:f2-agent-clip', 'params', 'text'],
@@ -320,7 +323,8 @@ def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime
     }]
     invalid_session = runtime.session(name='emitter-invalid')
     with pytest.raises(CommitConflict) as refusal:
-        invalid_session.commit_many(invalid_commands, idempotency_key='emitter-invalid-param')
+        invalid_session.commit_many(invalid_commands, idempotency_key='emitter-invalid-param',
+                                    label='Invalid occurrence-local parameter')
     details = refusal.value.failure['details']
     assert refusal.value.failure['code'] == 'validation_error'
     assert details['reason'] == details['code'] == 'invalid_document'
@@ -331,7 +335,7 @@ def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime
     assert runtime.history()['items'] == history_before_refusal
     assert len(runtime.calls) == calls_before_refusal + 1
 
-    candidate = copy.deepcopy(before)
+    candidate = copy.deepcopy(projected)
     for rows in (candidate['parent']['clips'], candidate['parent']['config']['clips']):
         next(row for row in rows if row['id'] == 'f2-app-clip').pop('hold')
     edited_child = child(candidate)
@@ -339,13 +343,13 @@ def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime
     edited_child['params'] = {}
     candidate['parent']['config']['tracks'][0]['label'] = 'Renamed'
 
-    commands = emit_document_commands(before, candidate)
-    target_shot = next(row for row in before['placements']
+    commands = [fork, *emit_document_commands(projected, candidate)]
+    target_shot = next(row for row in projected['placements']
                        if row['occurrence_id'] == 'f2-occurrence')['shot_id']
-    internal_ref = 'internal-revision:' + before['source_mapping']['shots'][target_shot][
+    internal_ref = 'internal-revision:' + projected['source_mapping']['shots'][target_shot][
         'internal_timeline_revision_id']
-    assert [command['op'] for command in commands] == ['doc.patch', 'doc.patch']
-    assert [change for command in commands for change in command['args']['changes']] == [
+    assert [command['op'] for command in commands] == ['occurrence.fork', 'doc.patch', 'doc.patch']
+    assert [change for command in commands[1:] for change in command['args']['changes']] == [
         {'op': 'set', 'ref': 'parent', 'path': ['config', 'tracks', 'id:V1', 'label'],
          'before': {'state': 'absent'}, 'value': 'Renamed'},
         {'op': 'remove', 'ref': 'parent', 'path': ['clips', 'id:f2-app-clip', 'hold'],
@@ -357,15 +361,20 @@ def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime
          'path': ['clips', 'id:f2-agent-clip', 'params', 'text'],
          'before': {'state': 'present', 'value': 'hello'}},
     ]
-    # Accepted responses carry commands; the recorder is published by history.
-    expected_records = execute(before, commands).records
-    result = session.commit_many(commands, idempotency_key='emitter-roundtrip')
+    # Match the session's normal command capture, then compare the complete v2
+    # recorder against the exact submitted request and authenticated base pair.
+    commands = execute(before, commands).commands
+    result = session.commit_many(commands, idempotency_key='emitter-roundtrip',
+                                 label='Occurrence-local emitter roundtrip')
     assert result['data']['commands'] == commands
     body = json.loads(runtime.calls[-1][0])
     assert body['commands'] == commands
     assert body['source'] == {'via': 'python'}
+    assert body['base_revision_id'] == base['revision_id']
+    assert body['base_publication_id'] == base['publication_id']
+    expected_records = execute(before, commands, commit_request=body, evaluated_head=base).records
 
-    expected_input = execute(before, commands, commit_request={}).bundle
+    expected_input = execute(before, commands, commit_request=body, evaluated_head=base).bundle
     expected_document = document_from_bundle(expected_input)
     assert result['data']['canonical_document'] == expected_document
     accepted = bundle_from_document(result['data']['canonical_document'])
@@ -389,6 +398,11 @@ def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime
     assert target_pin['internal_timeline_revision_id'] != source['internal_timeline_revision_id']
     assert sibling_pin == occurrence_source_pin(before, OCCURRENCE_SIBLING)
     assert State(accepted).entity(OCCURRENCE_SIBLING) == State(before).entity(OCCURRENCE_SIBLING)
+    assert original_document['shot_revisions'][0] in result['data']['canonical_document']['shot_revisions']
+    assert original_document['internal_timeline_revisions'][0] in result['data'][
+        'canonical_document']['internal_timeline_revisions']
+    assert [row['occurrence_id'] for row in accepted['placements']] == [
+        row['occurrence_id'] for row in before['placements']]
     before_occurrences = {row['occurrence_id']: row for row in before['placements']}
     for row in accepted['placements']:
         original = before_occurrences[row['occurrence_id']]
