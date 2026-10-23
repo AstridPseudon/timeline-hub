@@ -22,6 +22,7 @@ const runtime = vi.hoisted(() => ({
   requests: [] as Array<{ body: string; key: string }>,
   replies: new Map<string, unknown>(),
   loseAck: false,
+  mergeNext: false,
   /** Runs once, before the next publish is checked — simulates a sibling publish. */
   beforePublish: null as null | (() => void),
 }));
@@ -81,7 +82,9 @@ vi.mock('@/integrations/runtime/dataProvider', () => ({
       runtime.requests.push({ body: JSON.stringify(request), key });
       const replay = runtime.replies.get(key);
       if (replay) return replay;
-      if (request.base_revision_id !== runtime.head) {
+      const merged = request.base_revision_id !== runtime.head && runtime.mergeNext;
+      runtime.mergeNext = false;
+      if (request.base_revision_id !== runtime.head && !merged) {
         throw new ApiError(409, 'conflict', 'intervening_write', '', { status: 'conflict' });
       }
       const document = canonicalDocument();
@@ -92,7 +95,7 @@ vi.mock('@/integrations/runtime/dataProvider', () => ({
       runtime.registry = structuredClone(document.parent_revision.payload.registry);
       runtime.publishes.push(runtime.head);
       const accepted = { revisionId: runtime.head, publicationId: `pub-${runtime.head}` };
-      const reply = { response: { data: { status: 'accepted', canonical_document: document }, receipt: { receipt_id: accepted.publicationId } },
+      const reply = { response: { data: { status: merged ? 'merged' : 'accepted', canonical_document: document }, receipt: { receipt_id: accepted.publicationId } },
         accepted, canonicalDocument: document, graph: {}, receipt: { receipt_id: accepted.publicationId } };
       runtime.replies.set(key, reply);
       if (runtime.loseAck) { runtime.loseAck = false; throw new Error('lost acknowledgement'); }
@@ -146,6 +149,7 @@ describe('placementService under Workspace v1', () => {
     runtime.requests = [];
     runtime.replies = new Map();
     runtime.loseAck = false;
+    runtime.mergeNext = false;
     runtime.beforePublish = null;
     vi.stubGlobal('indexedDB', createFakeIndexedDB());
     vi.stubGlobal('navigator', { locks: { request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}) } });
@@ -206,5 +210,27 @@ describe('placementService under Workspace v1', () => {
     await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' });
     expect(runtime.requests).toHaveLength(2);
     expect(runtime.requests[1]).toEqual(runtime.requests[0]);
+  });
+
+  it('adopts recovered canonical closure before a later placement merges over an intervening head', async () => {
+    installV1Fetch();
+    const { placeGeneration, batchUpdatePlacementFrames } = await loadService();
+    runtime.loseAck = true;
+    await expect(placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' }))
+      .rejects.toThrow('unacknowledged');
+
+    runtime.config = { ...(runtime.config as object), recoveredSibling: { preserved: true } };
+    runtime.head = 'rev-intervening';
+    runtime.mergeNext = true;
+    await batchUpdatePlacementFrames({
+      projectSlug: PROJECT,
+      shotId: SHOT,
+      updates: [{ entryId: 'sg-shot-1-gen-1', timelineFrame: 12 }],
+    });
+
+    expect(runtime.requests).toHaveLength(3);
+    expect(runtime.requests[1]).toEqual(runtime.requests[0]);
+    expect(JSON.parse(runtime.requests[2]!.body).base_revision_id).toBe('rev-2');
+    expect((runtime.config as Record<string, unknown>).recoveredSibling).toEqual({ preserved: true });
   });
 });

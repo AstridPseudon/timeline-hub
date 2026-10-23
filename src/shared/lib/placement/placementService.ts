@@ -14,13 +14,13 @@
 
 import { AstridLocalClient } from '@/integrations/astrid/client';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider';
+import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types';
 import type { TimelineCommandBasis, TimelineSaveReceipt } from '@/tools/video-editor/data/DataProvider';
 import { toOutboxJson } from '@/tools/video-editor/commands/commitOutbox';
 import { createLocalSaveSession, type LocalSaveSession } from '@/tools/video-editor/commands/localSaveSession';
+import { canonicalJsonStringify } from '@/tools/video-editor/data/typed/timelineBundle';
 import { authoringBundleFromDocument } from '@/tools/video-editor/commands/authoringBundle';
-import { createTimelineLocalSaveHandoff, type TimelineSaveSource } from '@/tools/video-editor/hooks/timelineLocalSaveHandoff';
-import { cloneAssetRegistry } from '@/tools/video-editor/lib/timeline-domain';
-import { withDefaultTimelineOutput } from '@/tools/video-editor/lib/defaults';
+import type { TimelineSaveSource } from '@/tools/video-editor/hooks/timelineLocalSaveHandoff';
 import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors';
 import { resolveGenerationAsset } from '@/tools/video-editor/data/generationAssetResolver';
 import type { TimelineConfig } from '@/tools/video-editor/types/index';
@@ -69,7 +69,157 @@ interface PlacementSaveDocument extends LoadedDocument {
   basis: TimelineCommandBasis;
   source: TimelineSaveSource;
   session: LocalSaveSession;
-  handoff: ReturnType<typeof createTimelineLocalSaveHandoff>;
+  handoff: TimelineLocalSaveHandoff;
+}
+
+interface TimelineLocalSaveHandoff {
+  capture(source: TimelineSaveSource): Promise<void>;
+  flush(): Promise<TimelineSaveReceipt>;
+}
+
+const sameJson = (a: unknown, b: unknown): boolean => canonicalJsonStringify(a) === canonicalJsonStringify(b);
+const hasOwn = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
+
+function authoredJson(value: unknown): ReturnType<typeof toOutboxJson> {
+  if (Array.isArray(value)) return value.map(authoredJson);
+  if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
+    return Object.fromEntries(Object.entries(value)
+      .filter(([, item]) => item !== undefined)
+      .map(([key, item]) => [key, authoredJson(item)]));
+  }
+  return toOutboxJson(value);
+}
+
+function sourceFromBasis(basis: TimelineCommandBasis): TimelineSaveSource {
+  const parent = basis.canonicalDocument.parent_revision.payload as Record<string, unknown>;
+  if (!parent.config || typeof parent.config !== 'object' || Array.isArray(parent.config)
+    || !parent.registry || typeof parent.registry !== 'object' || Array.isArray(parent.registry)) {
+    throw new TimelineVersionConflictError(
+      `Runtime timeline ${basis.canonicalDocument.timeline_id} has no authored parent config/registry`,
+    );
+  }
+  const rawConfig = structuredClone(parent.config) as TimelineConfig & { bundle?: TimelineBundleEnvelope | null };
+  const { bundle, ...config } = rawConfig;
+  return {
+    config,
+    registry: structuredClone(parent.registry) as LoadedDocument['registry'],
+    head: {
+      projectId: basis.canonicalDocument.project_id,
+      timelineId: basis.canonicalDocument.timeline_id,
+      headRevisionId: basis.head.revisionId,
+      headPublicationId: basis.head.publicationId,
+    },
+    ...(hasOwn(rawConfig, 'bundle') ? { bundle: bundle ?? null } : {}),
+  };
+}
+
+function refusePlacement(message: string): never {
+  throw new TimelineVersionConflictError(`Local document save retained: ${message}`);
+}
+
+function checkPlacementHead(initial: TimelineCommandBasis, source: TimelineSaveSource): void {
+  if (!initial.head.revisionId || !initial.head.publicationId
+    || initial.canonicalDocument.parent_revision.revision_id !== initial.head.revisionId
+    || source.head?.projectId !== initial.canonicalDocument.project_id
+    || source.head.timelineId !== initial.canonicalDocument.timeline_id
+    || source.head.headRevisionId !== initial.head.revisionId
+    || source.head.headPublicationId !== initial.head.publicationId) {
+    refusePlacement('original verified authoring head is unavailable');
+  }
+}
+
+/**
+ * Placement owns the parent root explicitly. Child/occurrence images remain in the verified
+ * closure and are never flattened into the display source or changed by this adapter.
+ */
+function createPlacementLocalSaveHandoff(options: {
+  initial: TimelineCommandBasis;
+  source: TimelineSaveSource;
+  session: LocalSaveSession;
+  adopted(basis: TimelineCommandBasis): { receipt: TimelineSaveReceipt; source: TimelineSaveSource };
+}): TimelineLocalSaveHandoff {
+  let initial = structuredClone(options.initial);
+  let source = structuredClone(options.source);
+  let document = structuredClone(options.initial.canonicalDocument);
+
+  function checkSource(current: TimelineSaveSource, before: CanonicalDocument): void {
+    const parent = before.parent_revision.payload as Record<string, unknown>;
+    const rawConfig = structuredClone(parent.config) as Record<string, unknown>;
+    const { bundle, ...config } = rawConfig;
+    if (!sameJson(current.config, config)
+      || !sameJson(current.registry, parent.registry)
+      || (hasOwn(rawConfig, 'bundle') && !sameJson(current.bundle, bundle))
+      || (!hasOwn(rawConfig, 'bundle') && current.bundle !== undefined)) {
+      refusePlacement('placement source differs from the verified authored parent');
+    }
+  }
+
+  return {
+    capture(input) {
+      try {
+        const next = structuredClone(input);
+        checkPlacementHead(initial, source);
+        checkPlacementHead(initial, next);
+        const before = options.session.getDocument() as unknown as CanonicalDocument;
+        if (!sameJson(before, document)) refusePlacement('local authored document changed outside this handoff');
+        checkSource(source, before);
+
+        const after = structuredClone(before);
+        const payload = after.parent_revision.payload as Record<string, unknown>;
+        const nextConfig = authoredJson(next.config) as Record<string, unknown>;
+        if (next.bundle !== undefined) nextConfig.bundle = structuredClone(next.bundle);
+        payload.config = nextConfig;
+        payload.registry = authoredJson(next.registry) as Record<string, unknown>;
+        for (const key of ['clips', 'tracks'] as const) {
+          if (!hasOwn(payload, key)) continue;
+          const parentConfig = payload.config as Record<string, unknown>;
+          if (!sameJson(payload[key], (before.parent_revision.payload.config as Record<string, unknown>)[key])) {
+            refusePlacement(`contradictory parent ${key} mirror`);
+          }
+          payload[key] = structuredClone(parentConfig[key]);
+        }
+
+        const authoredAfter = authoredJson(after) as unknown as CanonicalDocument;
+        const pending = options.session.appendDocument({
+          before,
+          after: authoredAfter,
+          roots: [{ ref: 'parent', revisionId: before.parent_revision.revision_id,
+            contentDigest: before.parent_revision.content_digest }],
+          label: 'Edit timeline',
+          step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: 'Save placement changes', tags: [] },
+        });
+        source = authoredJson(next) as unknown as TimelineSaveSource;
+        document = structuredClone(authoredAfter);
+        return pending;
+      } catch (error) {
+        return Promise.reject(error instanceof TimelineVersionConflictError ? error
+          : new TimelineVersionConflictError(`Local document save retained: ${error instanceof Error ? error.message : String(error)}`));
+      }
+    },
+    async flush() {
+      try {
+        const basis = await options.session.flush();
+        const adopted = options.adopted(basis);
+        const head = adopted.receipt.head;
+        if (head.projectId !== initial.canonicalDocument.project_id
+          || head.timelineId !== initial.canonicalDocument.timeline_id
+          || head.headRevisionId !== basis.head.revisionId
+          || head.headPublicationId !== basis.head.publicationId
+          || !sameJson(adopted.source.head, head)) {
+          refusePlacement('canonical assembly did not adopt the accepted head');
+        }
+        initial = structuredClone(basis);
+        source = structuredClone(adopted.source);
+        document = structuredClone(basis.canonicalDocument);
+        return adopted.receipt;
+      } catch (error) {
+        if (['blocked', 'conflict', 'error', 'recovery'].includes(options.session.getState().status)) {
+          refusePlacement(error instanceof Error ? error.message : String(error));
+        }
+        throw error;
+      }
+    },
+  };
 }
 
 /** One load/save pair over the Runtime's canonical commit path. */
@@ -103,24 +253,12 @@ function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
   return {
     async load() {
       const basis = await provider.loadTimelineCommandBasis(ref);
-      const parent = basis.canonicalDocument.parent_revision.payload as Record<string, unknown>;
-      if (!parent.config || typeof parent.config !== 'object' || Array.isArray(parent.config)
-        || !parent.registry || typeof parent.registry !== 'object' || Array.isArray(parent.registry)) {
-        throw new TimelineVersionConflictError(`Runtime timeline ${ref} has no authored parent config/registry`);
-      }
       // Validate the complete pinned closure before authoring any local transform. The
-      // placement operations themselves remain parent-owned; the existing handoff refuses
-      // child/occurrence writes unless an explicit carrier is supplied.
+      // placement operation below owns only the explicit parent physical root; child and
+      // occurrence images are validated dependencies and remain untouched.
       await authoringBundleFromDocument(basis.canonicalDocument);
-      const rawConfig = structuredClone(parent.config) as TimelineConfig & { bundle?: TimelineBundleEnvelope | null };
-      const { bundle, ...configWithoutBundle } = rawConfig;
-      const source: TimelineSaveSource = {
-        config: { ...configWithoutBundle, ...withDefaultTimelineOutput(configWithoutBundle) },
-        registry: cloneAssetRegistry(parent.registry as LoadedDocument['registry']),
-        head: { projectId: basis.canonicalDocument.project_id, timelineId: basis.canonicalDocument.timeline_id,
-          headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId },
-        ...(Object.prototype.hasOwnProperty.call(rawConfig, 'bundle') ? { bundle: bundle ?? null } : {}),
-      };
+      let saveBasis = basis;
+      let source = sourceFromBasis(saveBasis);
       const identity = await provider.getRecoverableIdentity();
       const session = await createLocalSaveSession({
         scope: { ...identity, projectId: basis.canonicalDocument.project_id, timelineId: basis.canonicalDocument.timeline_id },
@@ -135,26 +273,27 @@ function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
         changed() {},
       });
       const owners = session.getState().recoverableOwners;
-      if (owners.length === 1) await session.recover(owners[0]!);
-      else if (owners.length > 1) {
+      if (owners.length === 1) {
+        try {
+          await session.recover(owners[0]!);
+          // A recovered ACK (including a merged ACK after an intervening head) is the
+          // authoring basis for this new placement transform, never the stale load above.
+          saveBasis = await session.flush();
+          source = sourceFromBasis(saveBasis);
+        } catch (error) {
+          await session.dispose();
+          throw error;
+        }
+      } else if (owners.length > 1) {
         await session.dispose();
         throw new TimelineVersionConflictError('Multiple placement save owners require explicit recovery');
       }
-      const handoff = createTimelineLocalSaveHandoff({
-        initial: basis,
+      const handoff = createPlacementLocalSaveHandoff({
+        initial: saveBasis,
         source,
         session,
         adopted(nextBasis) {
-          const nextParent = nextBasis.canonicalDocument.parent_revision.payload as Record<string, unknown>;
-          const nextConfig = nextParent.config as TimelineConfig & { bundle?: TimelineBundleEnvelope | null };
-          const { bundle: nextBundle, ...nextConfigWithoutBundle } = nextConfig;
-          const nextSource: TimelineSaveSource = {
-            config: { ...nextConfigWithoutBundle, ...withDefaultTimelineOutput(nextConfigWithoutBundle) },
-            registry: cloneAssetRegistry(nextParent.registry as LoadedDocument['registry']),
-            head: { projectId: nextBasis.canonicalDocument.project_id, timelineId: nextBasis.canonicalDocument.timeline_id,
-              headRevisionId: nextBasis.head.revisionId, headPublicationId: nextBasis.head.publicationId },
-            ...(Object.prototype.hasOwnProperty.call(nextConfig, 'bundle') ? { bundle: nextBundle ?? null } : {}),
-          };
+          const nextSource = sourceFromBasis(nextBasis);
           const receipt: TimelineSaveReceipt = {
             configVersion: target.configVersion + 1,
             head: nextSource.head!,
@@ -166,8 +305,8 @@ function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
         config: structuredClone(source.config),
         registry: structuredClone(source.registry),
         expectedVersion: target.configVersion,
-        headRevisionId: basis.head.revisionId,
-        basis,
+        headRevisionId: saveBasis.head.revisionId,
+        basis: saveBasis,
         source,
         session,
         handoff,

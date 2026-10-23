@@ -43,11 +43,20 @@ function canonicalDocument() {
     project_id: PROJECT,
     timeline_id: TIMELINE,
     parent_revision: { revision_id: runtime.head, content_digest: 'parent-digest', payload: {
-      config: structuredClone(runtime.config), registry: structuredClone(runtime.registry), occurrences: [],
+      config: structuredClone(runtime.config), registry: structuredClone(runtime.registry), occurrences: [{
+        occurrence_id: 'occurrence-1', shot_id: 'shot-child', shot_revision_id: 'shot-r1', revision_id: 'occurrence-r1',
+      }],
       opaque: { nested: [null, false] },
     } },
-    shot_revisions: [], internal_timeline_revisions: [],
-    dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] },
+    shot_revisions: [{ shot_id: 'shot-child', revision_id: 'shot-r1', internal_timeline_revision_id: 'internal-r1',
+      content_digest: 'shot-digest', payload: { items: [] } }],
+    internal_timeline_revisions: [{ timeline_id: 'child-timeline', revision_id: 'internal-r1',
+      content_digest: 'internal-digest', payload: { items: [] } }],
+    dependency_manifest: {
+      shots: [{ shot_id: 'shot-child', revision_id: 'shot-r1', internal_timeline_revision_id: 'internal-r1', content_digest: 'shot-digest' }],
+      internal_timelines: [{ timeline_id: 'child-timeline', revision_id: 'internal-r1', content_digest: 'internal-digest' }],
+      media: [], documents: [],
+    },
   };
 }
 
