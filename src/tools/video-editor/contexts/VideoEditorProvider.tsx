@@ -224,7 +224,7 @@ function LocalTestDiagnosticsBridge({ collection }: { collection?: DiagnosticCol
 /** Registers video-editor state into the app-level AgentChatContext and keeps
  *  timeline attachment metadata synchronized in the selection store. */
 function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsEnabled?: boolean }) {
-  const { timelineId, timelineName, project, provider, agentChat, liveSceneOperationPort, agentSelectionOwner, astridElementHost, timelineEditability } = useVideoEditorRuntime();
+  const { timelineId, timelineName, project, provider, agentChat, liveSceneOperationPort, agentSelectionOwner, astridElementHost, timelineEditability, userId, shots } = useVideoEditorRuntime();
   const { registerTimeline, unregisterTimeline } = agentChat;
   const operationAuthority = useRef({ active: true, operationsEnabled, timelineEditability });
   operationAuthority.current.operationsEnabled = operationsEnabled;
@@ -335,8 +335,11 @@ function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsE
   } | null>(null);
 
   useEffect(() => {
-    clipRegistration.current = setTimelineClipData(allClips, agentSelectionOwner);
-  }, [allClips, agentSelectionOwner]);
+    clipRegistration.current = setTimelineClipData(allClips, agentSelectionOwner,
+      userId === null && shots.shotComposition ? {
+        projectId: project.projectId, timelineId, composition: shots.canonicalComposition,
+      } : undefined);
+  }, [allClips, agentSelectionOwner, userId, shots.shotComposition, shots.canonicalComposition, project.projectId, timelineId]);
 
   useEffect(() => () => {
     clipRegistration.current?.();
