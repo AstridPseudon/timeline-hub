@@ -120,6 +120,7 @@ class RequestCommitPort:
         self.__producers = {}
         self.__history_pins = []
         self.__preview = None
+        self.__sequential_capture = None
         self.__request = self.__context["request"]
         self.__project = self.__request["project_id"]
         self.__timeline = self.__request["timeline_id"]
@@ -173,8 +174,38 @@ class RequestCommitPort:
     def _provider_context(self):
         return copy.deepcopy(self.__context)
 
+    def capture_sequential_execution(self, capture: dict) -> None:
+        """Retain one private, request-bound sequential execution proof.
+
+        This is deliberately not part of ``PreparedCommit``.  Agent calls it
+        immediately before each candidate preview/accept, so the port owns the
+        custody boundary and can discard the proof after that attempt.
+        """
+        if self.__closed:
+            raise AuthorizationError("timeline commit port is closed")
+        # A new candidate attempt always supersedes any prior proof, including
+        # when the replacement itself is rejected as malformed.
+        self.__sequential_capture = None
+        capture = detached(capture)
+        if not isinstance(capture, dict):
+            raise ValidationError("sequential execution capture is invalid")
+        expected = {"schema_version", "context", "original", "landing",
+                    "replay_bindings", "prepared_digest"}
+        if set(capture) != expected or type(capture["schema_version"]) is not int or capture["schema_version"] != 1:
+            raise ValidationError("sequential execution capture has an invalid shape")
+        if canonical_json(capture["context"]) != canonical_json(self.__context):
+            raise refused("invocation_mismatch", "sequential execution capture belongs to another request")
+        if not isinstance(capture["original"], dict) or not isinstance(capture["landing"], dict):
+            raise ValidationError("sequential execution capture executions are invalid")
+        if not isinstance(capture["replay_bindings"], list) or not isinstance(capture["prepared_digest"], str):
+            raise ValidationError("sequential execution capture is incomplete")
+        # Detach before retaining: the provider cannot mutate a proof after it
+        # has crossed the private port boundary.
+        self.__sequential_capture = capture
+
     def close(self):
         self.__closed = True
+        self.__sequential_capture = None
 
     def _read(self, call):
         if self.__closed:
@@ -606,24 +637,41 @@ class RequestCommitPort:
         return prepared
 
     def preview(self, prepared):
-        if not self.__request.get("dry_run", False):
-            raise refused("preview_requires_dry_run", "preview requires dry_run")
-        prepared = self._prepared(prepared)
-        result = self.__store.preview(self.__context, prepared, authorize=self.__authorize, inputs=self)
-        self.__preview = copy.deepcopy(result)
-        return copy.deepcopy(result)
+        try:
+            if not self.__request.get("dry_run", False):
+                raise refused("preview_requires_dry_run", "preview requires dry_run")
+            prepared = self._prepared(prepared)
+            result = self.__store.preview(self.__context, prepared, authorize=self.__authorize, inputs=self)
+            self.__preview = copy.deepcopy(result)
+            return copy.deepcopy(result)
+        finally:
+            self.__sequential_capture = None
 
     def accept(self, prepared):
-        if self.__request.get("dry_run", False):
-            raise refused("dry_run_accept", "dry run cannot accept")
-        prepared = self._prepared(prepared)
         from .timeline_commit import StaleHead
         try:
+            if self.__request.get("dry_run", False):
+                raise refused("dry_run_accept", "dry run cannot accept")
+            prepared = self._prepared(prepared)
             return self.__store.accept(self.__context, prepared, authorize=self.__authorize, inputs=self)
         except StaleHead as exc:
             if any(item.get("op") == "timeline.restore" for item in self.__request["commands"]):
                 raise refused("stale_head", "restore head pair changed", current=exc.current_head) from exc
             raise
+        finally:
+            self.__sequential_capture = None
+
+    def _validate_sequential_execution(self, prepared, source, base, continuations, history):
+        capture = self.__sequential_capture
+        self.__sequential_capture = None
+        if capture is None:
+            return None
+        from .timeline_commit_auth import validate_sequential_capture
+        proof = validate_sequential_capture(
+            self.__request, prepared, capture, source, base, continuations, history,
+        )
+        proof["retained_capture"] = capture
+        return proof
 
     def verify_outcome(self, outcome):
         if isinstance(outcome, dict) and outcome.get("receipt", True) is None and outcome != self.__preview:
