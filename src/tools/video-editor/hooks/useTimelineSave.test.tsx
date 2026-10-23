@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { act, renderHook } from '@testing-library/react';
+import { act, fireEvent, renderHook, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
@@ -12,7 +12,8 @@ import { useTimelineSave } from './useTimelineSave';
 import type { UsePollSyncQueries } from './usePollSync';
 import { useClipEditing } from './useClipEditing';
 import { VideoEditorRuntimeProvider } from '../contexts/VideoEditorRuntimeContext';
-import { createTimelineStore } from './timelineStore';
+import { createTimelineStore, TimelineStoreProvider } from './timelineStore';
+import { ShotTimelineMediaControls } from '@/tools/travel-between-images/components/ShotTimelineMediaControls.tsx';
 import { createInteractionState, type InteractionStateRef } from '../lib/interaction-state';
 import { buildTimelineData, configToRows, type TimelineData } from '../lib/timeline-data';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
@@ -87,7 +88,7 @@ interface SetupResult {
 function setup(
   saveTimelineImpl: DataProvider['saveTimeline'],
   timelineEditability?: TimelineEditability,
-  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis']; capabilities?: Partial<DataProvider>; strict?: boolean },
+  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis']; capabilities?: Partial<DataProvider>; strict?: boolean; mediaControls?: boolean },
 ): SetupResult {
   const saveTimeline = vi.fn(saveTimelineImpl);
   const provider: DataProvider = {
@@ -124,7 +125,12 @@ function setup(
   } as unknown as VideoEditorRuntimeContextValue;
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <VideoEditorRuntimeProvider value={runtime}>{original?.strict ? <React.StrictMode>{children}</React.StrictMode> : children}</VideoEditorRuntimeProvider>
+      <VideoEditorRuntimeProvider value={runtime}>
+        <TimelineStoreProvider store={store}>
+          {original?.strict ? <React.StrictMode>{children}</React.StrictMode> : children}
+          {original?.mediaControls ? <ShotTimelineMediaControls occurrenceId="occ-1" parentDocumentId="timeline-1" /> : null}
+        </TimelineStoreProvider>
+      </VideoEditorRuntimeProvider>
     </QueryClientProvider>
   );
   const hook = renderHook(
@@ -132,6 +138,18 @@ function setup(
       const save = useTimelineSave(queries, provider, interactionStateRef, store, original?.data);
       const history = useTimelineHistory({ dataRef: save.dataRef, commitData: save.commitData,
         interactionStateRef, pendingOpsRef: save.pendingOpsRef, remoteHistory: save.localDocumentSave });
+      React.useLayoutEffect(() => {
+        if (!original?.mediaControls) return;
+        const state = store.getState();
+        state.syncSlices({
+          data: { ...state.data, data: save.data, dataRef: save.dataRef,
+            resolvedConfig: save.data?.resolvedConfig ?? null, selectedTrackId: 'V1', selectedClipIds: new Set() },
+          ops: { ...state.ops, applyEdit: save.applyEdit, patchRegistry: save.patchRegistry,
+            selectClip: vi.fn(), setSelectedTrackId: save.setSelectedTrackId },
+          chrome: { ...state.chrome, saveStatus: save.saveStatus },
+          playback: { ...state.playback, currentTime: 1.25 },
+        });
+      }, [save.data, save.saveStatus]);
       return { ...save, history };
     },
     { wrapper },
@@ -170,6 +188,155 @@ describe('useTimelineSave — recovered draft durability', () => {
     vi.clearAllTimers();
     vi.useRealTimers();
   });
+
+  it.each(['accepted', 'merged', 'conflict', 'missing selection', 'retry', 'dependent conflict'] as const)(
+    'routes mounted shot prepared media through the persisted semantic outbox: %s', async outcome => {
+      // Transport fixtures prove App routing/adoption, not Runtime media authority or Python execution.
+      const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+      Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+        request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}),
+      } });
+      const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' };
+      const head = { projectId: scope.projectId, timelineId: scope.timelineId, headRevisionId: 'r0', headPublicationId: 'p0' };
+      const config = createDefaultTimelineConfig();
+      const initialReply = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { timelineId: scope.timelineId });
+      const document = initialReply.data.canonical_document;
+      document.parent_revision.payload = { config: JSON.parse(JSON.stringify(config)), clips: [], registry: { assets: {} }, occurrences: [] };
+      document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+      const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+      const data = await buildTimelineData(config, { assets: {} }, undefined, 1, undefined, head);
+      const media = { asset: 'variant-new', generation_id: 'generation-new', variant_id: 'variant-new',
+        object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` };
+      const entry = { file: 'runtime-import.png', type: 'image/png', media_id: media.object_id };
+      const instance = runtimeFixture();
+      const posts: Array<{ body: string; key: string }> = [];
+      let harness: SetupResult | undefined;
+      let landed: ReturnType<typeof acceptedCommit> | undefined;
+      const runtime = new RuntimeDataProvider({ projectId: scope.projectId, transport: async (method, path, headers, body) => {
+        if (method !== 'POST' || !path.endsWith('/commit')) return instance.transport(method, path, headers, body);
+        posts.push({ body: new TextDecoder().decode(body), key: headers['Idempotency-Key'] });
+        const [durable] = await createCommitOutbox().list(scope);
+        expect(durable.pending?.request).toMatchObject(posts.at(-1)!);
+        if (outcome === 'conflict' || (outcome === 'dependent conflict' && posts.length === 2)) return { status: 409, headers: {}, body: json({ code: 'conflict',
+          message: 'Media track changed; draft retained', details: { status: 'conflict', reason: 'dependency_changed',
+            base: { revision_id: 'r0', publication_id: 'p0' }, current: { revision_id: 'agent-r', publication_id: 'agent-p' }, conflicts: [] } }) };
+        if (!landed) {
+          const request = JSON.parse(posts[0].body) as CommitRequest;
+          landed = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' }, { timelineId: scope.timelineId, commands: request.commands });
+          const canonical = landed.data.canonical_document;
+          const local = harness!.hook.result.current.dataRef.current!;
+          const canonicalConfig = JSON.parse(JSON.stringify(local.config)) as typeof config;
+          canonicalConfig.clips[0].at = 2.25;
+          canonical.parent_revision.payload = { config: canonicalConfig, clips: canonicalConfig.clips,
+            registry: JSON.parse(JSON.stringify(local.registry)), occurrences: [], metadata: { provider: 'canonical result' } };
+          canonical.parent_revision.content_digest = fixtureDigest(canonical.parent_revision.payload);
+          landed.data.document_digest = fixtureDigest(canonical);
+          landed.data.label = request.label;
+          landed.data.steps = request.steps;
+          landed.data.merge_mode = request.merge;
+          if (outcome === 'merged') Object.assign(landed.data, { status: 'merged', previous_revision_id: 'agent-r',
+            previous_publication_id: 'agent-p', rebased_onto: { revision_id: 'agent-r', publication_id: 'agent-p' } });
+          landed.receipt.idempotency_key = posts[0].key;
+        }
+        if (outcome === 'retry' && posts.length === 1) throw new Error('Acknowledgement lost');
+        return { status: 200, headers: {}, body: json(landed) };
+      } });
+      try {
+        harness = setup(async () => { throw new Error('No legacy save'); }, undefined, { data,
+          loadBasis: async () => landed ? { head: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: landed.data.canonical_document } : initial,
+          mediaControls: true, capabilities: {
+            getRecoverableIdentity: async () => ({ realmId: scope.realmId, actorId: scope.actorId }),
+            commitTimeline: (request, key) => runtime.commitTimeline(request, key),
+            prepareMediaImport: vi.fn(async () => ({ provider: 'runtime', project: scope.projectId, importOperationId: 'import-new',
+              generationId: media.generation_id, variantId: media.variant_id, assetId: 'import-alias', entry,
+              ...(outcome === 'missing selection' ? {} : { mediaSelection: media }) })),
+          } });
+        await vi.waitFor(() => expect(harness!.hook.result.current.localSaveState?.ownerId).toBeTruthy());
+        await settleInitialRecoveryCheck();
+        await act(async () => {
+          fireEvent.click(screen.getByRole('button', { name: 'Add media' }));
+          fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), {
+            target: { files: [new File(['image'], 'new.png', { type: 'image/png' })] },
+          });
+        });
+        if (outcome === 'missing selection') {
+          await vi.waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Runtime project media selection'));
+          expect(screen.getByRole('alert')).toHaveTextContent('Import the media again');
+          expect(harness.hook.result.current.dataRef.current!.config.clips).toEqual([]);
+          await act(async () => { await harness!.hook.result.current.flushPendingSave(); });
+          expect(posts).toEqual([]);
+          expect((await createCommitOutbox().list(scope))[0].intents).toEqual([]);
+          return;
+        }
+        await vi.waitFor(() => expect(harness!.hook.result.current.dataRef.current!.config.clips).toHaveLength(1));
+        if (outcome === 'dependent conflict') {
+          const editing = renderHook(() => useClipEditing({ dataRef: harness!.hook.result.current.dataRef,
+            resolvedConfig: harness!.hook.result.current.dataRef.current!.resolvedConfig,
+            selectedClipId: harness!.hook.result.current.selectedClipId, selectedTrack: null, currentTime: 0,
+            selectClip: vi.fn(), setSelectedTrackId: vi.fn(), applyEdit: harness!.hook.result.current.applyEdit }));
+          await act(async () => { editing.result.current.handleSelectedClipChange({ hold: 1 }); });
+          editing.unmount();
+        }
+        await act(async () => {
+          const saving = harness!.hook.result.current.flushPendingSave();
+          if (['conflict', 'retry', 'dependent conflict'].includes(outcome)) await expect(saving).rejects.toThrow();
+          else await saving;
+        });
+        const [stored] = await createCommitOutbox().list(scope);
+        const request = JSON.parse(posts[0].body) as CommitRequest;
+        expect(request).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+          base_revision_id: 'r0', base_publication_id: 'p0', label: 'Add media', merge: 'fields', dry_run: false,
+          source: { via: 'app' }, steps: [{ id: expect.any(String), label: 'Add media', intent: 'Add media', tags: [], command_ordinals: [0], patch: [] }],
+          commands: [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent', intent: { ownership: 'parent' },
+            args: { media, row: { asset: 'import-alias', at: 1.2667, track: 'V1' } } }] });
+        expect(request.commands).toHaveLength(1);
+        expect(request.commands[0].args.media).toEqual(media);
+        expect(request).not.toHaveProperty('reads');
+        expect(posts[0].key).toBeTruthy();
+        expect(harness.saveTimeline).not.toHaveBeenCalled();
+        if (outcome === 'dependent conflict') {
+          expect(posts).toHaveLength(2);
+          const suffix = JSON.parse(posts[1].body) as CommitRequest;
+          expect(suffix).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1', merge: 'fields',
+            commands: [{ op: 'doc.patch' }], reads: expect.arrayContaining([
+              { kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${request.commands[0].args.row.id}`, 'at'],
+                state: { state: 'present', value: 1.2667 } },
+            ]) });
+          expect(suffix.steps![0].patch).toEqual(suffix.commands[0].args.changes);
+          expect(stored.intents).toHaveLength(1);
+          expect(stored.intents[0].basis).toEqual({ after: stored.accepted!.intentId });
+          expect(stored.pending?.outcome).toMatchObject({ kind: 'rejected', error: { details: { reason: 'dependency_changed' } } });
+          expect(stored.intents[0].payload).toMatchObject({ after: { parent_revision: { payload: { config: { clips: [{ hold: 1, at: 1.2667 }] } } } } });
+          expect(harness.hook.result.current.dataRef.current!.config.clips[0].at).toBe(2.25);
+          expect(harness.hook.result.current.localSaveState?.error).toMatchObject({ message: expect.stringContaining('Media track changed') });
+          return;
+        }
+        if (outcome === 'conflict') {
+          expect(stored.pending?.outcome).toMatchObject({ kind: 'rejected', error: { details: { reason: 'dependency_changed',
+            current: { revision_id: 'agent-r', publication_id: 'agent-p' } } } });
+          expect(stored.intents).toHaveLength(1);
+          expect(stored.intents[0].payload).toMatchObject({ after: { parent_revision: { payload: { config: { clips: [expect.any(Object)] } } } } });
+          expect(harness.hook.result.current.dataRef.current!.config.clips).toEqual([]);
+          expect(harness.hook.result.current.localSaveState?.error).toMatchObject({ message: expect.stringContaining('Media track changed') });
+          return;
+        }
+        if (outcome === 'retry') {
+          expect(stored.pending?.request).toMatchObject(posts[0]);
+          await act(async () => { await harness!.hook.result.current.localDocumentSave!.flush(); });
+          expect(posts).toHaveLength(2);
+          expect(posts[1]).toEqual(posts[0]);
+        }
+        expect(harness.hook.result.current.dataRef.current!.config.clips[0].at).toBe(2.25);
+        const [settled] = await createCommitOutbox().list(scope);
+        expect(settled.intents).toEqual([]);
+        expect(settled.accepted?.value).toMatchObject({ response: landed, receipt: landed!.receipt,
+          canonicalDocument: landed!.data.canonical_document });
+      } finally {
+        harness?.hook.unmount();
+        if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+        else Reflect.deleteProperty(navigator, 'locks');
+      }
+    });
 
   it.each(['before poll adoption', 'during original read', 'after owner ready'] as const)(
     'traces split ACK -> Agent head -> inspector Source In at %s', async (boundary) => {

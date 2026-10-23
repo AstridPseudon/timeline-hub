@@ -353,6 +353,8 @@ export interface CreateTimelineCommandsOptions {
   managedObjectGuard?: ManagedObjectGuard | null;
   /** Optional host-owned policy that can deny all timeline mutations. */
   timelineEditability?: TimelineEditability;
+  /** Runtime save hosts need the original selection before admitting new media. */
+  preparedMediaRequiresSelection?: boolean;
 }
 
 /**
@@ -453,6 +455,10 @@ export function createTimelineCommands(
       }
 
       if (input.preparedAsset) {
+        if (options?.preparedMediaRequiresSelection && !current.registry.assets[input.preparedAsset.assetKey]
+          && !input.preparedAsset.mediaSelection) {
+          return failure('invalid_argument', 'Could not resolve the Runtime project media selection. Import the media again.');
+        }
         let preparedAt = input.time;
         const preparedTrackId = input.trackId;
         if (input.afterClipId) {
@@ -1072,8 +1078,10 @@ export function createTimelineCommands(
  */
 export function useTimelineCommandsService(): TimelineCommands {
   const store = useTimelineStoreApi();
-  const editability = useOptionalVideoEditorRuntime()?.timelineEditability;
-  return useMemo(() => createTimelineCommands(store, {timelineEditability: editability}), [store, editability]);
+  const runtime = useOptionalVideoEditorRuntime();
+  const editability = runtime?.timelineEditability;
+  const preparedMediaRequiresSelection = Boolean(runtime?.provider.commitTimeline);
+  return useMemo(() => createTimelineCommands(store, {timelineEditability: editability, preparedMediaRequiresSelection}), [store, editability, preparedMediaRequiresSelection]);
 }
 
 /**
@@ -1083,7 +1091,9 @@ export function useTimelineCommandsService(): TimelineCommands {
  * preserve their existing fallback behavior.
  */
 export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
-  const editability = useOptionalVideoEditorRuntime()?.timelineEditability;
+  const runtime = useOptionalVideoEditorRuntime();
+  const editability = runtime?.timelineEditability;
+  const preparedMediaRequiresSelection = Boolean(runtime?.provider.commitTimeline);
   const store = useTimelineStoreApiSafe();
   const availability = useTimelineAvailabilityState();
 
@@ -1091,6 +1101,6 @@ export function useTimelineCommandsServiceSafe(): TimelineCommands | null {
     if (!store || !hasMountedTimelineAvailability(availability)) {
       return null;
     }
-    return createTimelineCommands(store, {timelineEditability: editability});
-  }, [availability.hasProvider, availability.mounted, store, editability]);
+    return createTimelineCommands(store, {timelineEditability: editability, preparedMediaRequiresSelection});
+  }, [availability.hasProvider, availability.mounted, store, editability, preparedMediaRequiresSelection]);
 }
