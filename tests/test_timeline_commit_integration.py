@@ -8,8 +8,8 @@ from __future__ import annotations
 import copy
 import json
 import sys
-import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime, timedelta
 from threading import Barrier, Lock
 from types import SimpleNamespace
 
@@ -25,7 +25,7 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
-def film(tmp_path):
+def film(tmp_path, monkeypatch):
     captured = load_precut_realm_fixture(tmp_path, variant="music-documents")
     pins = captured.pins
     fixture = FilmFixture(
@@ -51,8 +51,27 @@ def film(tmp_path):
         original_events = [tuple(row) for row in service.store.conn.execute(
             "SELECT * FROM timeline_events ORDER BY id",
         )]
+        assert service.store.conn is not None
+        timestamps = [datetime.fromisoformat(row[0]) for row in service.store.conn.execute(
+            "SELECT created_at FROM command_idempotency",
+        )]
     finally:
         service.close()
+    # Continue just after the capture, inside the real receipt replay window.
+    # Keep normal pruning enabled and leave the captured bytes untouched.
+    captured_now = max(timestamps) + timedelta(seconds=1)
+    from runtime_protocol import idempotency, store, util
+
+    assert captured_now.tzinfo == UTC
+    assert min(timestamps) > captured_now - timedelta(seconds=store.IDEMPOTENCY_RESULT_WINDOW_SECONDS)
+
+    class CaptureClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return captured_now.astimezone(tz) if tz else captured_now.replace(tzinfo=None)
+
+    for module in (store, idempotency, util):
+        monkeypatch.setattr(module, "datetime", CaptureClock)
     return SimpleNamespace(fixture=fixture, publication=publication, original_events=original_events)
 
 
@@ -160,10 +179,6 @@ class Editing:
 @pytest.fixture
 def editing(film, agent):
     service = RuntimeService(film.fixture.duplicate_root)
-    # The captured publication predates the result replay window. Keep this
-    # fixture's existing receipt body intact while exercising the test's
-    # mutations; this changes only the in-memory prune schedule.
-    service.store._last_idempotency_prune = time.monotonic()
     try:
         service.register_timeline_commit_provider(agent.provider())
         result = Editing(service, film, agent)
@@ -211,6 +226,7 @@ def test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip(editing):
     disjoint = editing.body([editing.move("music-other", 2, document=document)], base)
     conflicting = editing.body([editing.move("music-bed", 3, document=document)], base)
     first = editing.commit(first_body, "move-first")
+    assert editing.service.store._last_idempotency_prune > 0
     second = editing.commit(disjoint, "move-disjoint")
     assert first["data"]["status"] == "accepted"
     assert second["data"]["status"] == "rebased"
@@ -406,10 +422,7 @@ def _start_door(film, tmp_path):
         film.fixture.duplicate_root, support_root=tmp_path / "support", authoring_profile="astrid",
         door=DoorConfig(origin=HOSTED, port=0, credential_file=credential),
     ).start()
-    # See ``editing``: do not compact the aged captured publication while the
-    # integration cases assert its exact original receipt.
     assert daemon.service is not None
-    daemon.service.store._last_idempotency_prune = time.monotonic()
     world = DoorWorld(tmp_path, daemon, credential)
     world.provision()
     handshake = world.call("/api/runtime/v1/handshake", "POST", body=b"{}",
@@ -481,19 +494,6 @@ def _assert_route_scope_refusal_unchanged(edit, response, before_rows, before_he
     assert edit.history() == before_history
 
 
-def _assert_write_scope_refusal_unchanged(edit, response, before_rows, before_head,
-                                          before_history):
-    assert response.status == 401, response.body
-    payload = response.json()
-    assert payload["code"] == "unauthorized"
-    assert payload["message"] == "credential lacks required scope"
-    assert payload["details"] == {"scope": "projects:write"}
-    assert isinstance(payload["request_id"], str) and payload["request_id"]
-    assert rows(edit.service) == before_rows
-    assert edit.head() == before_head
-    assert edit.history() == before_history
-
-
 def test_real_door_commit_admission_checks_origin_auth_and_project_scope(film, agent, tmp_path, monkeypatch):
     from runtime_protocol import door as door_module
     from tests.door_helpers import PRODUCT_ACTOR, write_owner_only
@@ -556,33 +556,27 @@ def test_real_door_commit_admission_checks_origin_auth_and_project_scope(film, a
 
             assert world.daemon.credentials is not None
             credential_store = world.daemon.credentials
+            reduced_scopes = [scope for scope in door_module.PRODUCT_SCOPES if scope != "projects:write"]
             readonly_token, _ = credential_store.provision(
-                PRODUCT_ACTOR, ["handshake", "projects:read"], rotate=True,
+                PRODUCT_ACTOR, reduced_scopes, rotate=True,
             )
-            # The real door's product profile is exact by design. Configure
-            # this fixture as the same accepted product actor with only its
-            # read scope, so the mounted commit route reaches its real
-            # projects:write check instead of the identity mismatch guard.
+            identity = credential_store.require(readonly_token, "handshake")
+            assert identity["actor"] == PRODUCT_ACTOR
+            assert identity["scopes"] == reduced_scopes
+            # The unchanged door requires the exact product scope set before
+            # dispatch, so missing write authority fails profile admission.
             write_owner_only(world.credential_file, {
                 "version": 1, "scope": "astrid", "actor_id": PRODUCT_ACTOR,
                 "token": readonly_token,
             })
-            with monkeypatch.context() as readonly_profile:
-                readonly_profile.setattr(door_module, "PRODUCT_SCOPES",
-                                         ("handshake", "projects:read"))
-                refused = world.call(path, "POST", body=encoded,
-                                     headers={**headers, "Idempotency-Key": "door-read-only-credential"})
-            _assert_write_scope_refusal_unchanged(
-                edit, refused, before, before_head, before_history,
+            refused = world.call(path, "POST", body=encoded,
+                                 headers={**headers, "Idempotency-Key": "door-read-only-credential"})
+            _assert_door_refusal_unchanged(
+                edit, refused, 503, {"error": "runtime_identity_mismatch"},
+                before, before_head, before_history,
             )
 
-            write_token, _ = credential_store.provision(
-                PRODUCT_ACTOR, list(door_module.PRODUCT_SCOPES), rotate=True,
-            )
-            write_owner_only(world.credential_file, {
-                "version": 1, "scope": "astrid", "actor_id": PRODUCT_ACTOR,
-                "token": write_token,
-            })
+            world.provision()
 
             foreign = copy.deepcopy(negative_body)
             foreign["project_id"] = "foreign-project"
@@ -599,6 +593,10 @@ def test_real_door_commit_admission_checks_origin_auth_and_project_scope(film, a
 
         accepted = _post_door(world, edit.path, body, "door-admission")
         assert accepted["data"]["status"] == "accepted"
+        assert accepted["data"]["publisher"] == PRODUCT_ACTOR
+        assert edit.history()[-1]["publisher"] == PRODUCT_ACTOR
+        edit.assert_readback(accepted)
+        edit.assert_baseline()
     finally:
         world.stop()
 
