@@ -185,10 +185,19 @@ export class WorkspaceClient {
   async listProjectParentCompositionRevisions(projectId: string, timelineId: string, cursor?: string, limit = 50): Promise<Page<Record<string, unknown>>> { return this.page((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/composition-revisions?limit=${limit}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`)).body) }
   async restoreProjectParentCompositionRevision(projectId: string, timelineId: string, revision: string, expectedHead: string, expectedPublicationId: string, idempotencyKey: string): Promise<CommitAcceptedMutation> { return this.commitResponse((await this.request("POST", `/v1/projects/${encodeURIComponent(projectId)}/timelines/${encodeURIComponent(timelineId)}/composition-revisions/${encodeURIComponent(revision)}/restore`, new TextEncoder().encode(JSON.stringify({ expected_head: expectedHead, expected_publication_id: expectedPublicationId })), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body, false) as CommitAcceptedMutation }
   private commitResponse(body: Uint8Array, preview: boolean): CommitAcceptedMutation | CommitPreviewResponse {
-    const value = this.json<CommitAcceptedMutation | CommitPreviewResponse>(body);
-    if (!value || !value.data || typeof value.data !== "object" || !("receipt" in value)) throw new Error("invalid commit response");
-    if (preview ? value.data.status !== "preview" || value.receipt !== null : !["accepted", "rebased", "merged"].includes(value.data.status) || !value.receipt || typeof value.receipt !== "object" || Array.isArray(value.receipt)) throw new Error("invalid commit status or receipt");
-    return value;
+    const value = this.json<Record<string, unknown>>(body);
+    if (!value || typeof value !== "object" || Array.isArray(value) || !value.data || typeof value.data !== "object" || Array.isArray(value.data) || !("receipt" in value)) throw new Error("invalid commit response");
+    const data = value.data as Record<string, unknown>;
+    const receipt = value.receipt;
+    if (preview) {
+      if (data.status !== "preview" || !["accepted", "merged"].includes(data.would_status as string) || receipt !== null) throw new Error("invalid commit preview status, would_status or receipt");
+    } else {
+      if (!["accepted", "rebased", "merged"].includes(data.status as string) || !receipt || typeof receipt !== "object" || Array.isArray(receipt)) throw new Error("invalid commit status or receipt");
+      const committed = receipt as Record<string, unknown>;
+      const sequence = committed.project_seq;
+      if (["receipt_id", "command_kind", "idempotency_key", "request_hash", "project_id", "created_at"].some(key => typeof committed[key] !== "string") || !("result" in committed) || !Array.isArray(sequence) || sequence.length !== 2 || sequence.some(item => !Number.isInteger(item) || item < 1) || !Array.isArray(committed.event_ids) || committed.event_ids.some(item => typeof item !== "string")) throw new Error("invalid commit receipt fields");
+    }
+    return value as unknown as CommitAcceptedMutation | CommitPreviewResponse;
   }
   async commitTimeline(projectId: string, timelineId: string, request: CommitRequest, idempotencyKey: string): Promise<CommitAcceptedMutation | CommitPreviewResponse> {
     const body = JSON.stringify(request, (_key, value) => { if (typeof value === "number" && !Number.isFinite(value)) throw new Error("nonfinite commit value"); return value; });
