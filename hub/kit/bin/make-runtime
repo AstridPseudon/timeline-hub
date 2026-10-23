@@ -154,10 +154,6 @@ pathlib.Path(staging, ".runtime-suite").write_text("agent " + name + "-nodes " +
 REGISTRATION
 }
 registration validate || missing+=("registration:template-or-exact-source-identity")
-[ ! -e "$O/tests/$N.env" ] && [ ! -L "$O/tests/$N.env" ] || missing+=("existing-env:$N")
-if grep -q "^agent $N-nodes " "$O/tests/suites.conf" 2>/dev/null; then
-  missing+=("existing-suite:$N-nodes")
-fi
 [[ "$(uname -s 2>/dev/null || true)/$(uname -m 2>/dev/null || true)" = Linux/x86_64 ]] || missing+=("platform:requires-Linux/x86_64")
 python3 -c 'import ctypes; ctypes.CDLL(None, use_errno=True).renameat2' 2>/dev/null || missing+=("atomic-publish:libc.renameat2")
 git -C "$A" rev-parse --is-inside-work-tree >/dev/null 2>&1 || missing+=("agent-checkout:$A")
@@ -306,8 +302,8 @@ try:
                                       if key in source_entry):
             raise ValueError("installed component provenance")
     if text(".astrid-artifact-integrity") != artifact(): raise ValueError("artifact integrity")
-    for path in root.rglob("*"):
-        if path.is_file() and path.stat().st_mode & 0o222: raise ValueError("writable artifact")
+    for path in [root, *root.rglob("*")]:
+        if not path.is_symlink() and path.lstat().st_mode & 0o222: raise ValueError("writable artifact")
 except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
     print("invalid same-tree graph: " + str(error), file=sys.stderr)
     raise SystemExit(2)
@@ -334,71 +330,59 @@ if [ "${#missing[@]}" -ne 0 ]; then
   exit 2
 fi
 
-reuse_runtime() {
-  local candidate found="" rc
-  shopt -s nullglob
-  for candidate in "$W"/runtimes/agent-remotion-*; do
-    if [[ "$candidate" == *.partial.* ]]; then
-      echo "REFUSED: partial Remotion graph: $candidate" >&2
-      return 2
-    fi
-    candidate_matches "$candidate" >/dev/null 2>&1; rc=$?
-    if [ "$rc" = 0 ]; then
-      [ -z "$found" ] || { echo "REFUSED: ambiguous qualified Remotion graph for tree $REMOTION_TREE" >&2; return 2; }
-      found=$candidate
-    elif [ "$rc" = 2 ]; then
-      echo "REFUSED: tampered or incomplete same-tree Remotion graph: $candidate" >&2
-      return 2
-    fi
-  done
-  shopt -u nullglob
-  [ -n "$found" ] || return 1
-  printf '%s\n' "$found"
-}
-
-if candidate=$(reuse_runtime); then
-  [ ! -e "$O/tests/$N.env" ] && [ ! -L "$O/tests/$N.env" ] || { echo "REFUSED: existing env: $N" >&2; exit 2; }
-  ! grep -q "^agent $N-nodes " "$O/tests/suites.conf" 2>/dev/null || { echo "REFUSED: existing suite: $N-nodes" >&2; exit 2; }
-  T=$(mktemp -d "$W/.runtime-reuse.XXXXXXXX")
-  RUNTIME_PROJECT_DIR=$candidate RUNTIME_BUILD_ORIGIN_AGENT_COMMIT=$(cat "$candidate/.astrid-agent-source-commit") registration render
-  mv "$T/.runtime-env" "$O/tests/$N.env"
-  cat "$T/.runtime-suite" >> "$O/tests/suites.conf"
-  rm "$T/.runtime-suite"
-  rmdir "$T"
-  printf 'status=reused\nruntime=%s\nrequested_name=%s\nrequested_agent_sha=%s\nrequested_runtime_sha=%s\nbuild_origin_agent_sha=%s\nremotion_tree_sha=%s\nlock_sha256=%s\ncomponent_identity=%s\nreuse=verified\n' \
-    "$candidate" "$N" "$S" "$RS" "$(cat "$candidate/.astrid-agent-source-commit")" "$REMOTION_TREE" "$LOCK_SHA" "$COMPONENT_SHA"
-  exit 0
-else
-  rc=$?
-  [ "$rc" = 1 ] || exit "$rc"
-fi
-[ -z "$L" ] || [ "$LOCK_SHA" = "$L" ] || missing+=("lock-sha256:expected=$L,actual=$LOCK_SHA")
-git -C "$A" show "$S:remotion/package.json" 2>/dev/null | python3 -c '
-import json,sys
-p=json.load(sys.stdin)
-assert p["engines"] == {"node":"=20.19.4", "npm":"=10.8.2"}, p.get("engines")
-' 2>/dev/null || missing+=("agent-engines:requires-exact-Node20.19.4/npm10.8.2")
-FREE=$(df -P -B1 "$W" 2>/dev/null | awk 'NR==2 {print $4}') || FREE=
-[[ "$FREE" =~ ^[0-9]+$ ]] && [ "$FREE" -ge 2147483648 ] || missing+=("disk:requires-2147483648-free-bytes,actual=${FREE:-unknown}")
-if [ "${#missing[@]}" -ne 0 ]; then
-  printf 'PREFLIGHT FAILED name=%s agent=%s free_bytes=%s\n' "$N" "$S" "${FREE:-unknown}" >&2
-  printf 'missing_prerequisite=%s\n' "${missing[@]}" >&2
-  exit 2
-fi
-# Offline qualification may ask the normal build branch to stop before any
-# installer/network work. This branch is only a private fixture control; the
-# production caller never sets it.
-if [ "${RUNTIME_BUILD_MOCK:-}" = 1 ]; then
-  printf 'status=build-required\nrequested_name=%s\nrequested_agent_sha=%s\nremotion_tree_sha=%s\ninstaller=not-run\n' \
-    "$N" "$S" "$REMOTION_TREE"
-  exit 3
-fi
-# Bound the entire host job, including child processes. The inherited marker is
-# only for this self-exec; preserve every positional source argument.
-if [ "${RUNTIME_BUILDER_BOUNDED:-}" != 1 ]; then
-  exec timeout --signal=TERM --kill-after=10s 840s env RUNTIME_BUILDER_BOUNDED=1 bash "$0" "$@"
-fi
-T=$(mktemp -d "$D.partial.XXXXXXXX")
+# Store authority is mandatory on the normal dispatcher route, including env -i.
+STORE_HELPER=$O/bin/bench_store.py
+[ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
+STORE_ROOT=$W/bench-store
+export STORE_CONTEXT="$(declare -p O W A S N R RS SUITE NODE_BIN NODE_VERSION NPM_VERSION NODE_SHA SUMS_SHA LOCK_SHA PACKAGE_SHA REMOTION_TREE COMPONENT_SHA; declare -f registration candidate_matches artifact_integrity)"
+python3 -I - "$0" "$STORE_HELPER" "$STORE_ROOT" "$O/tests" "$N" "$S" "$RS" "$REMOTION_TREE" "$LOCK_SHA" "$COMPONENT_SHA" <<'STORE_PY'
+import importlib.util, os, pathlib, shlex, subprocess, sys, tempfile
+script, helper, root, tests, name, agent, backend, tree, lock, component = sys.argv[1:]
+sys.dont_write_bytecode = True
+spec = importlib.util.spec_from_file_location('bench_store', helper)
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+store = module.Store(root, tests)
+source = pathlib.Path(script).read_text()
+body = source.split('# STORE_BUILD_BEGIN\n', 1)[1].split('# STORE_BUILD_END', 1)[0]
+context = os.environ['STORE_CONTEXT']
+def shell(code, *args, **kw):
+    bounded = kw.pop('bounded', False)
+    command = ['bash', '-Eeuo', 'pipefail', '-c', context + '\n' + code, 'store-adapter', *map(str, args)]
+    if bounded: command = ['timeout', '--signal=TERM', '--kill-after=10s', '840s', *command]
+    return subprocess.run(command, check=True, **kw)
+def build(stage, final):
+    if os.environ.get('RUNTIME_BUILD_MOCK') == '1':
+        raise RuntimeError('build required; installer not run (fixture control)')
+    shell('T=$1; D=$2; FREE=$(df -P -B1 \"$W\" | awk \'NR==2 {print $4}\'); [[ \"$FREE\" =~ ^[0-9]+$ ]] && [ \"$FREE\" -ge 2147483648 ]\n' + body, stage, final, bounded=True)
+def seal(path):
+    shell('chmod -R a-w "$1"', path, bounded=True)
+def verify(path):
+    shell('candidate_matches "$1"', path)
+def registration(path, final, reused):
+    origin = (pathlib.Path(path) / '.astrid-agent-source-commit').read_text().strip()
+    with tempfile.TemporaryDirectory(prefix='runtime-registration-', dir=os.environ.get('TMPDIR')) as temp:
+        shell('T=$1; RUNTIME_PROJECT_DIR=$2 RUNTIME_BUILD_ORIGIN_AGENT_COMMIT=$3 registration render', temp, final, origin)
+        return {'name': name, 'env': pathlib.Path(temp, '.runtime-env').read_text(),
+                'suite': pathlib.Path(temp, '.runtime-suite').read_text(), 'requires': []}
+try:
+    entry = store.ensure('runtime', {'remotion_tree': tree}, registration, build, verify, seal=seal)
+except Exception as error:
+    print('REFUSED: bench store: ' + str(error), file=sys.stderr)
+    sys.exit(2)
+path = pathlib.Path(entry['path'])
+origin = (path / '.astrid-agent-source-commit').read_text().strip()
+print('status=' + ('reused' if entry['reused'] else 'created'))
+print('runtime=' + str(path))
+print('requested_name=' + name + '\nrequested_agent_sha=' + agent + '\nrequested_runtime_sha=' + backend)
+print('build_origin_agent_sha=' + origin + '\nremotion_tree_sha=' + tree + '\nlock_sha256=' + lock + '\ncomponent_identity=' + component + '\nkey=' + entry['key'] + '\nreuse=verified')
+if not entry['reused']:
+    print('created ' + str(path) + ' from agent ' + agent + ' (lock ' + lock + ', node v20.19.4/npm 10.8.2); env tests/' + name + '.env; suite ' + name + '-nodes')
+STORE_PY
+exit $?
+: <<'STORE_BUILD_BODY'
+# STORE_BUILD_BEGIN
 stage=staging
 fail() {
   local rc=$?
@@ -477,26 +461,5 @@ printf 'v%s\n' "$NODE_VERSION" > "$T/.astrid-node-version"
 printf '%s\n' "$NPM_VERSION" > "$T/.astrid-npm-version"
 printf '%s\n' "$(sha256sum "$T/node_modules/.package-lock.json" | cut -d' ' -f1)" > "$T/.astrid-node-modules-lock-sha256"
 printf '%s\n' "$(artifact_integrity "$T")" > "$T/.astrid-artifact-integrity"
-stage=prepare-registration
-RUNTIME_BUILD_ORIGIN_AGENT_COMMIT=$S registration render
-stage=read-only
-find "$T" -type f -exec chmod a-w {} +
-stage=immutable-publish
-# Linux RENAME_NOREPLACE is atomic and refuses even an empty raced destination.
-python3 - "$T" "$D" <<'PY'
-import ctypes, os, sys
-libc = ctypes.CDLL(None, use_errno=True)
-if libc.renameat2(-100, os.fsencode(sys.argv[1]), -100, os.fsencode(sys.argv[2]), 1):
-    error = ctypes.get_errno()
-    raise OSError(error, os.strerror(error), sys.argv[2])
-PY
-trap - ERR TERM INT
-# Registration never overwrites an existing env. A post-publish registration
-# failure is reported explicitly; the immutable runtime is retained.
-if ! ( set -o noclobber; cat "$D/.runtime-env" > "$O/tests/$N.env" ); then
-  echo "FAILED registration; immutable runtime retained: $D" >&2; exit 1
-fi
-if ! cat "$D/.runtime-suite" >> "$O/tests/suites.conf"; then
-  echo "FAILED suite registration; immutable runtime retained: $D" >&2; exit 1
-fi
-echo "created $D from agent $S (lock $LOCK_SHA, node v$NODE_VERSION/npm $NPM_VERSION); env tests/$N.env; suite $N-nodes"
+# STORE_BUILD_END
+STORE_BUILD_BODY
