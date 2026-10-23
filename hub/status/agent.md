@@ -1,10 +1,10 @@
-<!-- agent | 2026-10-23T03:52:56Z | dispatcher heartbeat 8s | live 4 (sol 0, luna 4, other 0) | busy30 20 | status age 2m -->
-# agent board, 2026-10-23T03:50:41Z
+<!-- agent | 2026-10-23T03:54:20Z | dispatcher heartbeat 2s | live 3 (sol 0, luna 3, other 0) | busy30 20 | status age 0m -->
+# agent board, 2026-10-23T03:53:51Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; agt-U2-ratchet-review | Integrated 184 + manifest/lock PASS; Ruff2151/mypy1915 baseline | 3f1ceaed1;649ba6481 |
 | U4a | normal U1 client/schema | Luna | U1,U2 | merged | agt-U4a-integrated-proof | Independent138+60; integrated150 +15 exact mappings/manifest PASS | 3cc21e71b |
-| U4a-v2 | strict-envelope adoption | Luna; independent Luna | frozen 34e | review | agt-U4a-envelope-review-0353 | Author PASS46 Agent +48 official controls, normal15 mappings/manifest/2151/1915. Independent review active; no runtime blocker. | 723b94bb94/tree d24f25a6 |
+| U4a-v2 | strict-envelope adoption | Luna; independent Luna | frozen 34e | merging | agt-U4a-envelope-review-0353 | Author PASS46 Agent +48 official controls, normal15 mappings/manifest/2151/1915. Independent0353 PASS46+48 and actual4positive2negative;15mappings,2151/1915. Home merge queued. | 723b94bb94/tree d24f25a6 |
 | R1 | physical doc.patch guards | Sol; Luna review | C0,U2 | merged | agt-R1-current-review-0039; integrated0047 | Independent353+25; integrated115 + normal ratchets PASS. Actual mounted P1 chain separate. | b7a32c523;mergee5c260c83 |
 | R1-native | inherited request/step reads | Sol author before01:41 rule; Luna review | R1 | merged | agt-R1-reads-integrated-0149 | Independent and integrated119+16+3 PASS; authored native claims preserved with full dependency union. | 169293c92;merge1951ee928 |
 | R2 | guarded whole/per-step undo | Sol author; Luna merge/review | R1,C0c,R2r | merged | agt-R2-R3-meta-review-0250 | Integratedcedc tree4775 EXACT reviewedfc515; author216+2subtests/independent72+8 and2151/1915 PASS. Actual wire follows adoption. | 11176f5fe;4454 product |
@@ -21,6 +21,7 @@
 | V3-owner | common Composition artifact | Luna | U2; App same archive | merged | agt-V3-integrated-proof-0111; vw-V3-agent-integrated0114 | Both exactfa2 terminal PASS: own30 and Viewing130 plus gen/types/caller. Archive819acf/73451B/80. Package only; no parity claim. | b56828de5;mergefa2cf5b66 |
 | V1-copies | normal691 copies/meta allowlists | Luna | RuntimeV1 merged | merged | agt-V1-integrated-proof-0147 | Independent and integrated64+163subtests PASS; exact15 mapped691, normal2151/1915/lock/artifacts/caller. | ffcec5d33 |
 | P4-owner | five reviewed test-only imports | Luna | compatible G3/R2/client | ready | agt-P4-final-schema-review-0337 | Five-file packet0314 PASS15/exact1 collection; final schema forward001802 exactdonors/d106/f252, author15/scoped quality PASS. Final0337 PASS15; exact5 donor files and d106/f252 verified; home import after callable combined join. Proof owns later HTTP body. | 001802c7a |
+| G2-step-undo | public selected-step undo bridge | Luna | G2/R2 contracted selectors | doing | agt-G2-public-step-undo-0353 | Peer0341 reproduced missing public steps keyword; bounded sync.py/API test bridge dispatched. No semantic/schema change. | base44ea02571 |
 | G5 | delete superseded paths | Luna | G3,G4,P1 GO | gated:P1 | — | H3 NO-GO; no deletion work started. | — |
 Resolved: runtime — Official strict-envelope producer34eac0041/tree98535748 announced0334; independent75Python+63TS and integrated75 PASS, four positive/two negative public probes PASS. Normal Agent adoption0339 active. Existing21482/780 immutable and superseded.
 Resolved: runtime — Text alias/materialization source944fc5ea independently PASS133+all21 original Agent cases, mergedad823e0a/tree33904550 integrated133 PASS. Compatible server announcement0333 follows; no repeated old780 failures.
@@ -34,7 +35,6 @@ Decided locally: source merge dropped approved inverse.args.steps; restore exact
 Environment: private /tmp/astrid-u2-typecheck/bin/python valid. Shared dependencies read-only. Official780 exact checkout exists; subsequent producer will use request-checkout. Workers <=30min/timeout45; no full/browser/farm duplication.
 Disk: 15.65GB at03:40, above15GB floor. sweep-tmp3 removed4 old dirs; compact-scratch0; removed four audited finished review scratch trees (no live process or reference). Dirty abandoned agt-G2-open-commit recycle refusal respected, left untouched. No safety/permission denial. All ready independent work dispatched; v1 quota/rules do not apply.
 
-| G2-step-undo | public selected-step undo bridge | Luna | G2/R2 contracted selectors | doing | agt-G2-public-step-undo-0353 | Peer0341 reproduced missing public steps keyword; bounded sync.py/API test bridge dispatched. No semantic/schema change. | base44ea02571 |
 Resolved: runtime — ad823 execution source READY0336, all8 strict-envelope producer paths identical34e. Frozen34e/ad823 adopted ONCE; no text-alias blocker.
 Decided locally: H6 combined join worker composes approved G3 44ea, writers f303, render b538 and bootstrap/inverse076 onto adoption723b. Separate independent inverse review and public undo selector worker; no duplicate pin or heavy execution. D13 native move app fields confirmed intentional to Proof through shared peer note.
-Workers: five new ready tasks dispatched0353; v1 capacity quotas void. Board owners rechecked through delivered Runtime0334/0336 because hub/status mirror is absent locally; all blocked runtime rows cleared. Disk ~15.05GB before active workers, cleanup monitoring.
+Workers: five new ready tasks dispatched0353; v1 capacity quotas void. Board owners rechecked through delivered Runtime0334/0336 because hub/status mirror is absent locally; all blocked runtime rows cleared. Disk floor maintained: sweep-tmp3 removed31 old dirs, ~400MB recovered. No safety/permission denial.
