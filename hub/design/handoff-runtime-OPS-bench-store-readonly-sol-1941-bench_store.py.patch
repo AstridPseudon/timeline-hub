@@ -8,7 +8,7 @@
          check(path in (Path(entry['path']), self.root / 'staging' / entry['key']), 'deletion path authority')
          check(inode(path) == entry['node'] and path.is_dir(), 'deletion inode authority')
          marker = path / '.bench-owner.json'
-@@ -366,7 +367,26 @@
+@@ -366,7 +367,29 @@
          root_fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
          try:
              root_info = os.fstat(root_fd)
@@ -29,14 +29,17 @@
 +                            os.close(child_fd)
 +            validate_children(root_fd)
 +            self._checkpoint('deletion:validated')
-+            self._owned_dir(path, entry) if marker.exists() else check(not os.listdir(root_fd), 'missing deletion marker')
++            if marker.exists() or marker.is_symlink():
++                self._owned_dir(path, entry)
++            else:
++                check(not os.listdir(root_fd), 'missing deletion marker')
 +            check(inode(path) == entry['node'], 'deletion root replaced')
 +            check(inode(self.root / 'locks' / self._entry_id(entry['component'], entry['key'])) == entry['lock'], 'lease inode changed')
 +            os.fchmod(root_fd, root_info.st_mode | stat.S_IWUSR)
              def delete_children(directory_fd, top=False):
                  for name in os.listdir(directory_fd):
                      if top and name == '.bench-owner.json':
-@@ -378,7 +398,14 @@
+@@ -378,7 +401,14 @@
                          try:
                              opened = os.fstat(child_fd)
                              check((opened.st_dev, opened.st_ino) == (info.st_dev, info.st_ino), 'child directory replaced')
@@ -51,7 +54,7 @@
                          finally:
                              os.close(child_fd)
                          os.rmdir(name, dir_fd=directory_fd)
-@@ -514,6 +541,9 @@
+@@ -514,6 +544,9 @@
                  if journal['kind'] == 'eviction':
                      for eid in journal['victims']:
                          held.append(self._lock(eid, journal['before']['entries'][eid], True))
@@ -61,7 +64,7 @@
                  self._roll(journal, journal['kind'] == 'eviction')
              finally:
                  for fd in held:
-@@ -543,7 +573,7 @@
+@@ -543,7 +576,7 @@
          reg['hash'] = digest(canonical(reg))
          return name, reg
  
@@ -70,7 +73,7 @@
          key = key_for(component, identity)
          eid = self._entry_id(component, key)
          with self.mutex():
-@@ -577,13 +607,21 @@
+@@ -577,13 +610,21 @@
                      entry['node'] = inode(stage)
                      atomic(stage / '.bench-owner.json', canonical({'owner': self.owner['id'], 'component': component, 'key': key, 'identity': identity}))
                      self._save_journal(journal)

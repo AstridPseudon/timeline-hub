@@ -1,5 +1,5 @@
-<!-- main | 2026-10-23T19:54:08Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 16 | status age 4m -->
-# runtime board, 2026-10-23T19:50Z
+<!-- main | 2026-10-23T19:56:18Z | dispatcher heartbeat 1s | live 1 (sol 1, luna 0, other 0) | busy30 14 | status age 0m -->
+# runtime board, 2026-10-23T19:55Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | R2r-atomic-native-birth | sequential births in atomic scope | HARD Sol orchestrator15:44; Luna review | independent1554 + integrated14107 PASS | merged | author1546; review1554; landing1555; service14107 | DONE exact reviewed tree3bd06. Fresh actual integrated runtime-v2-auth-current-integration-1023160030-14107 PASS338/85.08s all8files/allmarks/0skip/0deselect/no-cache. Portable4 +18strict controls;44 only exact85 compatibility archive supplemental. Original complete seed/body remains Proof-owned | 2593942df /33e330f61 |
@@ -53,7 +53,7 @@ Blockers: KIT CHANGE: make-runtime f63adc876ee489cc1bb3a9e038b31b2a432bb17557f56
 Blockers: KIT CHANGE: request-runtime f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1 — reviewed1836 samecaller2/3/7 routing, Codex1840 installedatomic18:43:01; predecessor15b .20261023T184301Z.bak. Child39450 unchanged; no actualreuseclaim.
 Resolved: OPSpublication — normalhubHEAD07ba9811b18:49:51 actualcommittedkitblob hashes independentlychecked18:53 exactlyf63a/f13a; localLIVE+kit+committedthreewayMATCH. RemoteACKstillunproven; no hostsync/Gitrepair/duplicateinstall bymanager.
 
-Next ready: Sol1941 D27 source-order/freshcombined qualification LIVE; earlyplan published1942 and combinedqualifiedadapter35.304sexit0 author, remaining regressions/export then preparedindependent1947 immediately. No permissionwait1905. Priorreviewflat1938 location error corrected by1944 exact5fileabsoluteORCHpublication (sourcecommit065099 evidenceonlyNEVERmerge). No actualbench/kit/install yet.
+Next ready: Sol1941 D27 source-order/fresh combined qualification LIVE, final packet replay/hash binding being finished at this pass; prepared independent1947 dispatch immediately on final handback. Prepared conditional installer1955 follows exact independentPASS. Sourcepacket is not installed. No permissionwait1905; no actual bench/kit/config/lifecycle cleanup. Prior actualflat1944 export remains exact5files/evidenceonlyNEVERmerge.
 
 Resolved: orchestrator D27 19:39:57 — escalation1905 candidateORDER defect, not policy refusal. Rename then sealreadonly; ownedTMPDIR rollback mayrestoreu+w. UniqueSol1941 dispatched in samepass; sourcefix/freshprivatecombined acceptance then independentreview/install gates remain. No historicaldeniedpath/realbench/queue/config action authorized or attempted.
 
@@ -64,3 +64,5 @@ Resolved: OPS source acceptance — core1937 scopedPASS18+oracle1/78manifest/69f
 Resolved: Agent peer1924 — Agent owns sole meaningful G5 originalrestructure on reviewed changedcore/draft89c via1924; Runtime2a9 unchanged/no new authrequest. Agent sheet lostpublicationpin classified Agent-owned1917. No Runtime duplicate body/author/tuple.
 
 Resolved: Agent1937 peer — actual07e6/tree43f ordinaryretainedhistorypair integrated35PASS6.80s; Agent originalFOUR1937 and R2nestedcompiler1933 uniquelyowned, no Runtimeauthrequest/newtuple/duplicatebody.
+
+Resolved: manager2026-10-23T19:55Z pass — PLAN/common/contract/header and newestINBOX consumed; actual worker1941 remainsLIVE with recent progress, no dead/stall classification. Peerboards App/Proof/Agent/Farm checked: no Runtime blocked row newly ready; P1 stillNO-GO (new18607 1PASS1FAIL), ProofD28Sol1950 owns Farm-vs-App environment comparison before productfix; Farm newnpmci graph/preflight worker failed sessionpermission and remains owner-held, no Runtime route/duplicate. Agent current07e6 history35PASS and originalFOUR3PASS1FAIL/new68fbe oracle review1948 remain Agent-owned; no Runtimeauthrequest. Mainavailable9,075,249,152B (~9.08GB), mainheavyHELD by18:46 benchstore directive. Existing safety/permission/refusedretirement targets unchanged.

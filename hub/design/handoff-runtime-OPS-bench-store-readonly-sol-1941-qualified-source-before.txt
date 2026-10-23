@@ -1,0 +1,4 @@
+5e8da2efeeeec1523a2a81cef2fcc2346c1a106f58a915646b575f4062d7b355  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-test-adapters.py
+6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-bench_store.py
+89d82618c6c67819e40cc73d32b6d1c372f95889761d5170bb1af3a83dc5fcff  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-make-child-venv.sh
+99cca067330fd87e1f8c475045ab8282e944b2455e25d44d4c6072e77e9e4e28  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-make-runtime.sh

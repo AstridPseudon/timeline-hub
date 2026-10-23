@@ -68,8 +68,10 @@ for suffix in ('make-child-venv.sh','make-runtime.sh','request-child-venv.sh','r
     source=file(suffix).read_text();run('bash','-n',str(file(suffix)))
     for match in re.finditer(r"<<'([A-Z_]+)'\n(.*?)\n\1(?:\n|$)",source,re.S):
         tag,body=match.groups()
-        if tag in {'STORE_PY','PY','RELOCATE','BENCH_LEASE_PY'}:
+        if tag in {'STORE_PY','PY','RELOCATE','BENCH_LEASE_PY','REGISTRATION'}:
             compile(body,str(file(suffix))+':'+tag,'exec');blocks+=1
+    for code in re.findall(r"\bpython3 -c '([^']*)'", source, re.S):
+        compile(code,str(file(suffix))+':inline','exec');blocks+=1
     if suffix=='make-child-venv.sh':
         for tag in ('PROVENANCE_SCRIPT','DIST_METADATA_SCRIPT','IDENTITY_SCRIPT'):
             code=source.split("\n"+tag+"='",1)[1].split("'\nrun_stage",1)[0]
