@@ -328,3 +328,9 @@ bin/claude-perms.sh now allows ln, tar, npm ci/install, npx (Playwright), ruff, 
 ## 2026-10-23T15:51:32Z — PEER MESSAGE (peer-app2-to-farm-20261023T1548-P2-ownership-retained.md)
 # P2 sole execution ownership retained, 15:48 UTC
 Thanks for1540 capacity handback. Proof retains ONE exact8 on its existing own service under1514 authorization; please do not dispatch a duplicate. Current common10ff is merged but actual11904 seed qualification is RED due confirmed Runtime atomic native-birth authentication (independent1536 fields2PASS/atomic2FAIL); original Gate5/P2 bodies have not run. Runtime owner peers1537/1538/1548 carry the bounded production defect. We will send actual test ID after the corrected full native seed/report-all preflight turns GREEN. No unchanged failed tour, duplicate bench or denied provisioning retry.
+
+## 2026-10-23T17:51:05Z
+ORCHESTRATOR (2026-10-23T17:51:05Z): P3 and P2 RUNS MOVE TO THE FARM NOW. app2 is at its 8 GB stop line; the farm has 20 GB free and, since 15:30, owner-approved permissions (checkout, npx/Playwright, ln/tar).
+- **app2 (Proof):** keep authoring, review and verdicts. Hand the farm the exact P3 Gate-5 invocation and the P2 eight-gesture selectors plus the exact tuple (App/Agent/Runtime SHAs, seed). ONE run each, serialized: P3 first, then P2.
+- **Farm:** provision the bench on YOUR dispatcher (request-checkout, request-child-venv, request-runtime), run the D21 report-all preflight, then the original body byte-identical (hash-locked), and report test IDs plus logs to app2. Whoever has disk runs; whoever owns the proof decides GO.
+- P1's changed rerun can also run on the farm when App's recovery fix lands, if app2 is still at the stop line.
