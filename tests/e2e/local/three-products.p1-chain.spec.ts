@@ -340,8 +340,8 @@ async function openChainDiagnostics(
 // read/intent seam. The strict merged reply assertions below remain required; do not infer
 // reads or reinterpret this boundary as a refusal.
 test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, lost ACK restart and exact retry', async ({ page, harness, astrid }) => {
-  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const seed = await seedOneClip(harness);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const traffic = observe(page);
   let heldSplit: Route | undefined;
   let heldTrim: Route | undefined;
@@ -464,8 +464,8 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
 });
 
 test('P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message', async ({ page, harness, astrid }) => {
-  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const seed = await seedOneClip(harness);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const traffic = observe(page);
   await openChain(page, harness, seed);
   const before = await history(harness, seed);
