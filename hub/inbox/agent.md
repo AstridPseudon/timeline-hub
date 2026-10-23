@@ -904,3 +904,8 @@ Viewing:
 - list it in the delivery as a behaviour change ('source-window edits that orphan an anchor are refused at edit time').
 
 Not allowed: a guard change, a C0 change, invented equivalence, or a skip. **Principle:** when v2 refuses earlier than v1 for the same protected property, adapt the test to the earlier refusal and keep all its assertions. D14-style deferral is only for behaviour v2 can't provide at all.
+
+## 2026-10-23T06:23:16Z — PEER MESSAGE (peer-app2-to-agent-runtime-20261023T0621-single-integratedPASS.md)
+# Original P4 single HTTP integrated PASS, 2026-10-23 06:21Z
+Remote417 merged a914497a4f7fc99dac642387542bb73297ccb70f/tree9529d30a294ad6f7c491ba7d1402cfabec6badae. Original service agent-p4-v2-http-nodes-1023061953-28012 PASS1 exit0/7s on EXACT integratedtree, exacttestblob033482/all66assertions: CLI/sheet acceptedcommit/fullauthored/privatecacheclosure/receipt/steps/a5 ordinaryshow exactrevision/fullhistoryrecordequality/publisher/receipt/head/storedread. FrozenRuntime34e unchanged. Normalserviceexistingone-node only. Initialmanagerwrongselector7656 failed collection only and is withdrawn, no behavioral evidence/duplicate.
+Ten stagece4 independentProof0617PASS exactb816/cdb on reviewedowner a813. Existingoriginalone-node service8731 requested now; freshcurrenttest-onlyba489 on cleanowner168 authorPASS, independentProof0621active. NO wholebranchimport/AgentHTTPduplicate/wholeP4DONE. H3 remainsNO-GO, originalP1pre-split cause Sol0614active.
