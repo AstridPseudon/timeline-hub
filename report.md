@@ -1,4 +1,111 @@
-# P4 authentic canonical genesis — correction prepared; acceptance BLOCKED
+# Independent P4 scoped source/fidelity review — source PASS; acceptance BLOCKED
+
+## Review verdict
+
+Reviewed candidate commit `3696239c48f9705568af30f2704855cc6a9175e5`
+(`94f7f4ff4d60a798d9cd664638a2b182234ad82c`) against its same-branch base
+`0afe4e082fd01fc7ffbff469b842538dc21fa50b`
+(`41b002d59bcbcca0840a774b2bb8b7620e4c92f4`), PLAN §3 P4, and C0c §§2/4/5.
+
+**Source review: PASS. Acceptance: BLOCKED. No P4 GO.** The correction is
+bounded to genesis setup and does not alter the original P4 assertions. The
+remaining blockers are genuine reader/projection seams, so this review does
+not request an HTTP/body rerun and does not change source assertions.
+
+## Scope and fidelity
+
+- `git diff --name-status HEAD^ HEAD` reports only this report and
+  `tests/editing_conformance/test_p4_ten_note_v2_runtime.py`.
+- The original fixture, `cases.json`, and all ten-note assertions are unchanged;
+  `_note_values` through the end of the test are byte-for-byte identical to the
+  base. The changed setup removes `compile_authoring_candidate`, performs no
+  compiler materialization, and routes bytes through the existing
+  `RuntimeService.ingest` API.
+- `tiny.png` is exactly 69 bytes with SHA-256
+  `b1ff9c8ea3a780bad09b346c423d2d0e46815926879b18e841d928376a946640`.
+  The setup asserts the returned `object_id == digest == sha256:<hash>`,
+  `relation == managed`, and the observed size, then uses that digest in all
+  three original `media_id` locations. The reverse map and full encoded source
+  equality assertion preserve types, null/absence, ordering, opaque fields,
+  timing, and identity.
+- The original two occurrences remain exactly
+  `chapter-shot/shot-1`; the sole internal image remains
+  `chapter-1/internal-1`. The unchanged trusted setup helper receives that
+  canonical closure. The only new owner operation is the normal
+  `RuntimeService.create_timeline(project, "chapter-1", ...)` call required for
+  Runtime admission. No new compiler fork, direct store mutation, auth bypass,
+  product/client/schema/pin change, or assertion weakening is present.
+
+The unchanged body was reviewed for the full C0 v2 surface: base revision and
+publication pair; commands; label; ten per-step patches; declared reads;
+`fields` merge and reads; dry-run/key assertions; accepted and merged reply
+shapes; canonical head/document digest; receipt; step dependencies; history,
+conflict, rerun, invalid/refusal, inverse and redo assertions. It remains
+unexecuted in this review. The production caller is real: `timeline.open` →
+`fetch_bundle` → `RemoteTimelines.open_bundle`.
+
+## Independent seam classification
+
+1. **Working aliases versus physical closure: genuine projection seam, not a
+   C0c failure.** C0c §2 requires each root alias to resolve to exactly one
+   physical closure image; two occurrences pointing at one image count as one,
+   and entity IDs are aliases rather than physical identity. It does not require
+   authoring working aliases to be equal. The current adapter intentionally
+   derives occurrence-specific `shot-placement-*` IDs in
+   `astrid/core/timeline/authoring_bundle.py:218–228,413–456`, while its
+   `source_mapping` retains one `chapter-shot/shot-1` image. The offline witness
+   reproduced two distinct working placement IDs and one physical source image.
+   The unchanged positive at test line 196 compares the working IDs, so it
+   cannot pass on this faithful closure. Preserve the shared physical boundary;
+   the eventual positive should use a physical-boundary/source-mapping oracle
+   if that is the accepted contract. Do not retarget product identity or weaken
+   the positive solely from the earlier report.
+
+2. **Internal read scope: genuine owned production-path bug, not unused code.**
+   `timeline.open` calls `fetch_bundle` (`astrid/sdk/timeline/store.py:641–651`),
+   which calls `open_bundle`; after reading the parent and shot, the reader
+   requests `get_project_timeline_revision(project_id, timeline_id,
+   internal_revision)` at `astrid/sdk/_remote_timeline.py:73–89`. For this
+   faithful case that sends `film`, but the immutable row is owned by
+   `chapter-1`. Pinned Runtime enforces the owner in
+   `runtime_protocol/service.py:2312–2317` with SQL predicates on
+   `(project_id, timeline_id, revision)`, yielding `internal timeline revision
+   not found` for `(film, internal-1)`. The same incorrect parent scope exists
+   in `astrid/sdk/authoring_revision_diff.py:56–64`. Creating `chapter-1`
+   correctly fixes seed admission, not this read. The candidate report’s
+   `_validate_closure` lines 607–614 citation is stale; the pinned source
+   enforcing this owner is `_record_internal_revision:1410–1416`.
+
+## Evidence and limits
+
+Commands run offline in this worktree:
+
+```text
+stat -c '%s bytes %n' tests/packs/builtin/generate_image/fixtures/tiny.png
+sha256sum tests/packs/builtin/generate_image/fixtures/tiny.png
+PYTHONDONTWRITEBYTECODE=1 TMPDIR=... PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-app2-native/bin/python - <<'PY'  # pure _original_publication → _closure → bundle_from_document witness
+PY
+PYTHONDONTWRITEBYTECODE=1 TMPDIR=... PYTHONPATH="$PWD:/home/user/work/runtime" /home/user/work/venv-app2-native/bin/python -m pytest -q -o addopts= -p no:cacheprovider --collect-only tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo
+PYTHONDONTWRITEBYTECODE=1 TMPDIR=... ruff check --no-cache --config pyproject.toml tests/editing_conformance/test_p4_ten_note_v2_runtime.py
+PYTHONDONTWRITEBYTECODE=1 TMPDIR=... mypy --config-file pyproject.toml --no-incremental --cache-dir .../mypy-cache tests/editing_conformance/test_p4_ten_note_v2_runtime.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/commit_session.py astrid/sdk/timeline/emitter.py astrid/sdk/timeline/sync.py
+git diff --check
+```
+
+Results: 69 bytes/hash matched; offline witness PASS; exactly one test
+collected (existing unknown `timeout` warning); Ruff PASS; private mypy PASS
+(the two existing unchecked-body notes); diff check PASS. An initial witness
+attempt lacked the Runtime PYTHONPATH and failed at import only; the corrected
+offline witness passed. No HTTP, socket, service instantiation/call, test
+body, central test request, browser, build, full suite, or unchanged rerun was
+run. Therefore ingest persistence, authenticated readback, accepted/merged
+live replies, history, and inverse/redo remain unverified.
+
+The prepared source is review-ready, but acceptance remains **BLOCKED** on the
+working-identity oracle/adapter decision and the Agent reader owner-scope fix.
+
+---
+
+# Candidate handoff — correction prepared; acceptance BLOCKED
 
 Base: `tl/ap2-P4-ten-seed-return-0507` resolves exactly to
 `0afe4e082fd01fc7ffbff469b842538dc21fa50b`, tree
