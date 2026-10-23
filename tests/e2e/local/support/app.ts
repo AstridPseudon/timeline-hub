@@ -2,7 +2,7 @@
  * Shared support for the direct journey (Plan A): the Chromium resolution, the worker-scoped fixtures, and the App
  * helpers that drive the hosted page. Moved out of direct-journey.spec.ts without changes (card F2-A).
  */
-import { chromium, expect, test as base, type Browser, type Page, type Request } from '@playwright/test';
+import { chromium, expect, test as base, type Browser, type BrowserContext, type Page, type Request } from '@playwright/test';
 import type { ChildProcess } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -97,6 +97,19 @@ export async function openApp(page: Page, harness: DirectHarness) {
   page.on('request', (request) => { if (request.url().startsWith(`http://127.0.0.1:${DOOR_PORT}/`)) doorRequests.push(`${request.method()} ${request.url()}`); });
   await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}`);
   return doorRequests;
+}
+
+/** Mounts the real editor once so a fresh context can establish its own durable outbox baseline. */
+export async function bootstrapMountedBaseline(context: BrowserContext, harness: DirectHarness): Promise<OutboxRecord[]> {
+  const page = await context.newPage();
+  try {
+    await openApp(page, harness);
+    await expectConnected(page);
+    await openSeededTimeline(page, harness);
+    return await commandOutboxes(page, harness.seed.timelineId);
+  } finally {
+    await page.close();
+  }
 }
 
 export const expectConnected = (page: Page) => expect(page.locator(UI.status)).toHaveAttribute('data-state', 'connected');
