@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T23:53:24Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 17 | status age 0m -->
+<!-- agent | 2026-10-23T23:55:33Z | dispatcher heartbeat 3s | live 5 (sol 0, luna 5, other 0) | busy30 19 | status age 1m -->
 # agent board, 2026-10-23T23:48:55Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -144,7 +144,7 @@
 
 | F-postG5-D09-invocation | supported source-mode D09 fixture | Luna harness proof | exact managed c36/abd47 bench | merged | agt-F-D09-invocation-return-2255 FINAL PASS | Original3PASS510.58s/exactbodyhashes/sourceprofile/NodePATH/installedRuntime/guardunchanged/origins+receipt+stderr+nowrite96KB. Priorsetup failures retained;015f root harnessscript proofONLY nevermerge. D21 noextra review | env-only |
 
-| F-postG5-R2-equal-write | original scalar old-inverse acceptance | HARD Sol source owner | actual full original scalar failure | doing | agt-F-R2-integrated-2349 QUEUED | Sol2306 confirmed fork-output equal-clear guard gap; bounded inverse.py+new regression only. Author6+20+16+8 and actualRuntime caller PASS, 2319FAIL missing materialization provenance; Sol2324RETURN31+45+16+8+4PASS completeuniqueprovenance; independent2337FINALPASS/cumulative+actualRuntimeprobe; clean2343own ed32691PASS normalMERGEDf88; integrated2349 current91+47+public1 queued, d7ancestryexcluded. Originalassertion/ABA/physicalguards unchanged; no fullcredit | c36 base |
+| F-postG5-R2-equal-write | original scalar old-inverse acceptance | HARD Sol source owner | actual full original scalar failure | doing | agt-F-R2-integrated-2349 FINALPASS139 | Sol2306 confirmed fork-output equal-clear guard gap; bounded inverse.py+new regression only. Author6+20+16+8 and actualRuntime caller PASS, 2319FAIL missing materialization provenance; Sol2324RETURN31+45+16+8+4PASS completeuniqueprovenance; independent2337FINALPASS/cumulative+actualRuntimeprobe; clean2343own ed32691PASS normalMERGEDf88; integrated2349 FINAL current91+47+public1 ALL139PASS/quality/tools/origins, actualf88, d7ancestryexcluded. Originalassertion/ABA/physicalguards unchanged; no fullcredit | c36 base |
 | F-postG5-graph-roots | five original graph-root failures | Luna readonly | retained full traces/source | merged | agt-F-five-integrated-2340 FINALPASS | Rootown1a450 normalMERGED19646; integrated2340 FINAL17PASS/sourceidentity/quality. Inversefourreasoncases newed326 independently2337+clean2343PASS91, mergedf88; current2349proofownsfull91. No unknownsourceauthority bypass | c36 base |
 
 | F-postG5-scene-fixture | retired save in source-certification setup | Luna author/review | same full terminal before head movement | merged | agt-F-five-integrated-2340 FINALPASS | Own915b normalMERGEDd36->19646; integrated2340 FINAL27capture+4scenePASS; all34->35+29assertions/privatequality/tools/origins. ActualauthenticRuntime publicseed/no retiredroute/DBinjection; no fullclaim | c36 base | 
@@ -156,6 +156,8 @@
 
 | F-postG5-cli-surface | current CLI generation/canonical census/docs | Luna author | source2346 confirmed | doing | agt-F-cli-surface-2355 QUEUED | Normalgen_cli_surface tool+7originalfailureobligations; no production/guard edit or obsoletepositiveweakening | f88 base |
 | F-postG5-observer | nestedpytest inherited plugin harness | Luna harness | source2346 confirmed | doing | agt-F-observer-harness-2355 QUEUED | Explicitouter/xdist -p observer with25originalguards BODYhashlocked; no PYTEST_PLUGINS leak/guardwaiver/fullretry; D21harness-only | proof-only |
+
+| F-postG5-env-cohort | exact installed child/startup failures | Luna harness/proof | existingc36/abd47managedbench | doing | agt-F-env-cohort-2356 QUEUED | Same86originalenvironmentnodes (+7onlyifcausal) onexistingmanagedc886/realreport-all/bodyhashlock, no newbench/fullretry orguardchange | c36scopeONLY |
 
 Resolved: G5 merged c36 after H24 case1+P4 criterion; actual350+SDK4+c2711 PASS, independent2155 custody audit PASS with130 raw packet loss disclosed. P4/P5/R5 retained scoped DONE. D14/D23/H9 tests unchanged, unskipped, visibly failing.
 Integration: f88cc5242d4b6c87b97a83878b86ec3168daa3db/treec8ce72197087f4ef7dc86c979ca0c8fb43ff1581. Full25691 terminal+AFTERsource/profile/originsdurable; FIVE reviewedchanges normalMERGED19646/tree f5a756. Uniqueintegrated2340 FINAL378PASS+2148/1911/manifest onEXACT19646; currentf88addsONLYreviewedR2guard, scoped2349proof queued; sourceauthors/reviewscontinue. Frozen34e/d106/819acf unchanged.
