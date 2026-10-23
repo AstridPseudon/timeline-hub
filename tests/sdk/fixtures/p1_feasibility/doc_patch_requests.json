@@ -1,6 +1,6 @@
 {
   "corpus": "timeline-h3-agent-feasibility",
-  "status": "collection-only; provider execution pending",
+  "status": "provider-executed on real R1; membership-removal precedence red; Runtime HTTP/App H3 proof pending",
   "contract": "Timeline commit contract v2, sections 1-3",
   "request_shape": {
     "required_runtime_fields": [
@@ -55,6 +55,25 @@
                   "path": ["clips", "id:clip-a", "to"],
                   "before": {"state": "present", "value": 6},
                   "value": 5
+                },
+                {
+                  "op": "set",
+                  "ref": "parent",
+                  "path": ["clips", "id:clip-a", "hold"],
+                  "before": {"state": "present", "value": 17},
+                  "value": 4.0
+                },
+                {
+                  "op": "remove",
+                  "ref": "parent",
+                  "path": ["clips", "id:clip-a", "app", "astrid", "for"],
+                  "before": {"state": "present", "value": 19}
+                },
+                {
+                  "op": "remove",
+                  "ref": "parent",
+                  "path": ["clips", "id:clip-a", "app", "astrid", "until"],
+                  "before": {"state": "present", "value": null}
                 }
               ]
             }
@@ -65,7 +84,10 @@
         "status": "accepted",
         "authored_deltas": [
           {"ref": "parent", "path": ["clips", "id:clip-a", "from"], "before": 2, "after": 1},
-          {"ref": "parent", "path": ["clips", "id:clip-a", "to"], "before": 6, "after": 5}
+          {"ref": "parent", "path": ["clips", "id:clip-a", "to"], "before": 6, "after": 5},
+          {"ref": "parent", "path": ["clips", "id:clip-a", "hold"], "before": 17, "after": 4.0},
+          {"ref": "parent", "path": ["clips", "id:clip-a", "app", "astrid", "for"], "before": 19, "after": {"state": "absent"}},
+          {"ref": "parent", "path": ["clips", "id:clip-a", "app", "astrid", "until"], "before": null, "after": {"state": "absent"}}
         ],
         "provider_effects_from_real_edit": {
           "hold": {"before": 17, "after": 4.0},
@@ -77,7 +99,7 @@
           "config.opaque": {"timestamp": "authored timestamp", "v": [null, false, 0]}
         }
       },
-      "unexecuted_provider_cases": ["accepted doc.patch at Runtime base/publication", "provider-derived hold and app cleanup"]
+      "unexecuted_provider_cases": ["Runtime HTTP publication and App/UI H3 chain"]
     },
     {
       "id": "created-track-and-clip-list-inserts",
@@ -178,7 +200,7 @@
         "source_sha256": "9687956ee3850c5d873580a28cd6e8354f0b76dcb9a17bf56eb6ae0213f24b36",
         "provenance": "tests/editing_conformance/test_recipe_scalar_commands.py::test_portable_scalar_capture_goldens[params_absent]"
       },
-      "scope": {"project_id": "p", "timeline_id": "main", "base_revision_id": "pr", "physical_root": "occurrence:o/clip:c"},
+      "scope": {"project_id": "p", "timeline_id": "main", "base_revision_id": "pr", "physical_root": "internal-revision:ir"},
       "request": {
         "merge": "fields",
         "reads": [],
@@ -192,8 +214,8 @@
               "changes": [
                 {
                   "op": "set",
-                  "ref": "occurrence:o/clip:c",
-                  "path": ["params"],
+                  "ref": "internal-revision:ir",
+                  "path": ["clips", "id:c", "params"],
                   "before": {"state": "absent"},
                   "value": {"": "", "a.b[0]::c": {"literal": [null, false, "ƒ(keep)"]}, "null": null}
                 }
@@ -205,11 +227,11 @@
       "expected": {
         "status": "accepted",
         "authored_deltas": [
-          {"path": ["params"], "before": {"state": "absent"}, "after": {"": "", "a.b[0]::c": {"literal": [null, false, "ƒ(keep)"]}, "null": null}}
+          {"ref": "internal-revision:ir", "path": ["clips", "id:c", "params"], "before": {"state": "absent"}, "after": {"": "", "a.b[0]::c": {"literal": [null, false, "ƒ(keep)"]}, "null": null}}
         ],
         "tagged_states": {"params": "absent", "params.null": "absent", "params.old": "absent"}
       },
-      "unexecuted_provider_cases": ["provider validation of arbitrary opaque parameter values"]
+      "unexecuted_provider_cases": ["Runtime HTTP publication and App/UI H3 chain"]
     },
     {
       "id": "params-null-to-object",
@@ -219,7 +241,7 @@
         "source_sha256": "15e945496b805af2554d78777be4585aa684615de575960352376f1dd4eaba74",
         "provenance": "tests/editing_conformance/test_recipe_scalar_commands.py::test_portable_scalar_capture_goldens[params_null]"
       },
-      "scope": {"project_id": "p", "timeline_id": "main", "base_revision_id": "pr", "physical_root": "occurrence:o/clip:c"},
+      "scope": {"project_id": "p", "timeline_id": "main", "base_revision_id": "pr", "physical_root": "internal-revision:ir"},
       "request": {
         "merge": "fields",
         "reads": [],
@@ -233,8 +255,8 @@
               "changes": [
                 {
                   "op": "set",
-                  "ref": "occurrence:o/clip:c",
-                  "path": ["params"],
+                  "ref": "internal-revision:ir",
+                  "path": ["clips", "id:c", "params"],
                   "before": {"state": "present", "value": null},
                   "value": {"": "", "a.b[0]::c": {"literal": [null, false, "ƒ(keep)"]}, "null": null}
                 }
@@ -246,11 +268,11 @@
       "expected": {
         "status": "accepted",
         "authored_deltas": [
-          {"path": ["params"], "before": {"state": "present", "value": null}, "after": {"": "", "a.b[0]::c": {"literal": [null, false, "ƒ(keep)"]}, "null": null}}
+          {"ref": "internal-revision:ir", "path": ["clips", "id:c", "params"], "before": {"state": "present", "value": null}, "after": {"": "", "a.b[0]::c": {"literal": [null, false, "ƒ(keep)"]}, "null": null}}
         ],
         "tagged_states": {"params": "present-null", "params.null": "absent", "params.old": "absent"}
       },
-      "unexecuted_provider_cases": ["provider schema validation of params container replacement"]
+      "unexecuted_provider_cases": ["Runtime HTTP publication and App/UI H3 chain"]
     },
     {
       "id": "params-remove-and-preserve-opaque",
@@ -260,7 +282,7 @@
         "source_sha256": "ae9f96e55432d0cf892f6045285e56265c6adc66058caf146bf4a7d7b1869638",
         "provenance": "tests/editing_conformance/test_recipe_scalar_commands.py::test_portable_scalar_capture_goldens[params_object]"
       },
-      "scope": {"project_id": "p", "timeline_id": "main", "base_revision_id": "pr", "physical_root": "occurrence:o/clip:c"},
+      "scope": {"project_id": "p", "timeline_id": "main", "base_revision_id": "pr", "physical_root": "internal-revision:ir"},
       "request": {
         "merge": "fields",
         "reads": [],
@@ -272,10 +294,10 @@
             "select": null,
             "args": {
               "changes": [
-                {"op": "remove", "ref": "occurrence:o/clip:c", "path": ["params", "old"], "before": {"state": "present", "value": null}},
-                {"op": "set", "ref": "occurrence:o/clip:c", "path": ["params", ""], "before": {"state": "absent"}, "value": ""},
-                {"op": "set", "ref": "occurrence:o/clip:c", "path": ["params", "a.b[0]::c"], "before": {"state": "absent"}, "value": {"literal": [null, false, "ƒ(keep)"]}},
-                {"op": "set", "ref": "occurrence:o/clip:c", "path": ["params", "null"], "before": {"state": "absent"}, "value": null}
+                {"op": "remove", "ref": "internal-revision:ir", "path": ["clips", "id:c", "params", "old"], "before": {"state": "present", "value": null}},
+                {"op": "set", "ref": "internal-revision:ir", "path": ["clips", "id:c", "params", ""], "before": {"state": "absent"}, "value": ""},
+                {"op": "set", "ref": "internal-revision:ir", "path": ["clips", "id:c", "params", "a.b[0]::c"], "before": {"state": "absent"}, "value": {"literal": [null, false, "ƒ(keep)"]}},
+                {"op": "set", "ref": "internal-revision:ir", "path": ["clips", "id:c", "params", "null"], "before": {"state": "absent"}, "value": null}
               ]
             }
           }
@@ -284,15 +306,15 @@
       "expected": {
         "status": "accepted",
         "authored_deltas": [
-          {"path": ["params", "old"], "before": {"state": "present", "value": null}, "after": {"state": "absent"}},
-          {"path": ["params", ""], "before": {"state": "absent"}, "after": ""},
-          {"path": ["params", "a.b[0]::c"], "before": {"state": "absent"}, "after": {"literal": [null, false, "ƒ(keep)"]}},
-          {"path": ["params", "null"], "before": {"state": "absent"}, "after": null}
+          {"ref": "internal-revision:ir", "path": ["clips", "id:c", "params", "old"], "before": {"state": "present", "value": null}, "after": {"state": "absent"}},
+          {"ref": "internal-revision:ir", "path": ["clips", "id:c", "params", ""], "before": {"state": "absent"}, "after": ""},
+          {"ref": "internal-revision:ir", "path": ["clips", "id:c", "params", "a.b[0]::c"], "before": {"state": "absent"}, "after": {"literal": [null, false, "ƒ(keep)"]}},
+          {"ref": "internal-revision:ir", "path": ["clips", "id:c", "params", "null"], "before": {"state": "absent"}, "after": null}
         ],
         "opaque_preserved": {"params.opaque": {"keep": [false, {}, ""]}, "params.x": 1, "params.y": null},
         "tagged_states": {"params.old": "removed", "params.null": "present-null"}
       },
-      "unexecuted_provider_cases": ["remove-versus-null validation", "provider preservation of opaque siblings"]
+      "unexecuted_provider_cases": ["Runtime HTTP publication and App/UI H3 chain"]
     },
     {
       "id": "disjoint-field-merge",
@@ -302,7 +324,7 @@
         "source_sha256": "0aab88bff6040ad741771fe8ed2198c141347970420ede78a981ba1416f6e866",
         "provenance": "tests/editing_conformance/test_recipe_scalar_commands.py::test_portable_scalar_capture_goldens[disjoint]"
       },
-      "scope": {"project_id": "p", "timeline_id": "main", "base_revision_id": "pr", "physical_root": "occurrence:o/clip:c"},
+      "scope": {"project_id": "p", "timeline_id": "main", "base_revision_id": "pr", "physical_root": "internal-revision:ir"},
       "request": {
         "merge": "fields",
         "reads": [],
@@ -314,20 +336,20 @@
             "select": null,
             "args": {
               "changes": [
-                {"op": "set", "ref": "occurrence:o/clip:c", "path": ["params", "x"], "before": {"state": "present", "value": 1}, "value": 2}
+                {"op": "set", "ref": "internal-revision:ir", "path": ["clips", "id:c", "params", "x"], "before": {"state": "present", "value": 1}, "value": 2}
               ]
             }
           }
         ]
       },
       "expected": {
-        "status": "merged",
+        "status": "rebased",
         "rebased_onto": "fixture head_bundle",
-        "authored_deltas": [{"path": ["params", "x"], "before": 1, "after": 2}],
+        "authored_deltas": [{"ref": "internal-revision:ir", "path": ["clips", "id:c", "params", "x"], "before": 1, "after": 2}],
         "head_change_preserved": {"path": ["params", "y"], "before": null, "after": false},
         "exact_expected_fields": {"params.x": 2, "params.y": false}
       },
-      "unexecuted_provider_cases": ["Runtime merged reply and head CAS", "provider physical binding replay"]
+        "unexecuted_provider_cases": ["Runtime HTTP publication and App/UI H3 chain"]
     },
     {
       "id": "same-field-refusal",

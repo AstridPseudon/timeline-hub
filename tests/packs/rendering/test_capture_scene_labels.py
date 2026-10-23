@@ -55,7 +55,7 @@ def host(tmp_path_factory):
     expected = {"0.0.10": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
                 "0.0.12": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
                 "0.0.13": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
-                "0.0.14": "21fde4d2a5d62a83f97a85d4b8d9f9d3f707a6489c07eb421c6331eccf893e6e"}
+                "0.0.14": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234"}
     with tarfile.open(artifact) as archive:
         version = json.load(archive.extractfile("package/package.json"))["version"]
         assert hashlib.sha256(artifact.read_bytes()).hexdigest() == expected[version]
