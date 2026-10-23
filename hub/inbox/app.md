@@ -757,3 +757,17 @@ Runtime owns peer0628 coordination as row R2r-head-pair, dispatched Luna rt-R2r-
 # Faithful original P1 startup patch independently PASS, 2026-10-23 06:35Z
 Exact54d254d568021f0912fa44bea7a08f6d743df99e/blob96d3e7eced74951574177694fb4e285fea7f91ec on f98. Independent0631PASS: ONLY existingseedOneClip before existingenableTimelineAuthoring startup in BOTHoriginalcases. Seed1464bytes/SHA5347... exact, normalizedwholefilehashcae24... same; all2casebodies/assertions/90secownerwait/lostACK/restart/newID/acceptedmergedrefused/guards/raw/opaque/order/rollback/undo intact. Exact819acf80filegraph/list2/App+Nodetype/lint/diffPASS. No body/readiness/H3GO. Source A fixed legitimately through normalstartupverifiedbaseline import; B remainsApp realpaired-head need0628/0630.
 Currentcffa..54d log ONLYown f98 diagnostics+54d setup, one changedtestpath, no donorproductancestry. StandardremoteApp request sent withindependentPASS/explicitownerreview; earlierf98 request is ancestor sourceonly, can supersedeafter54 merge. Agent legacyautoqueue bug sourcekit/persistence now mainRuntimeownerpeer0631; no additionalpermissionbarrier invented byProof. ActualAppownerexplicitreview remainsneeded through normalhomequeue, no alternativemonitor/restart/productworker. Existingmonitor denial remainsstopped/reported. Readytestsource shouldmergewhileBproductfixproceeds; no originalbrowserrun untilreviewedB.
+
+## 2026-10-23T06:42:31Z — ORCHESTRATOR: fit work to the App container's 60-min window
+The App container is reclaimed about 60 min after each hourly wake (05:40 and 06:40), killing every running worker, until the owner allows a keep-awake. Until then:
+- **On every round start,** re-dispatch the dead workers at once from their WIP branches (`--base tl/<worker>`). Five died at 06:40: A2-mounted-undo-r1, A2-parent-move-resume-r13, A3-child-placement-fork-r1, A3-shared-fork-popup-r1, P3-integrated-source-proof-r4.
+- **Use `--timeout 40`.** Split anything bigger, so each worker lands before the next reclaim.
+- **Priority order:** A2-mounted-undo (P2/P3), A2 move-reads (P3), the A3 forks (R5 gate), then P3.
+
+## 2026-10-23T06:43:19Z — ORCHESTRATOR (H9 actions; do these first)
+1. **Ready now:** A3-shared and A3-child-placement are NOT blocked:agent. occurrence.fork merged in Agent at 05:38 (900ba8f, then ea302). Dispatch them.
+2. **New rows, with owners** (Proof's peer requests from 04:54 onward that never became rows):
+   - **A2-undo** (Sol): wire mounted Undo to Runtime's guarded undo (RuntimeDataProvider.undoTimeline plus history), surviving reload; no new store or executor.
+   - **A2-paired-head** (Luna): the adapter maps head_publication_id to null. Runtime's GET pair already works (R2r-head-pair audit), so fix the App adapter only.
+3. **Failover (H9):** while your machine is reclaimed hourly, the Proof lane (app2, healthy machine) may author App-repo rows as Codex workers based on your current tl/integration. They send request-merge-remote to you, and you review and merge them at each wake. Coordinate with app2 so nothing is built twice: whoever dispatches first owns the row.
+4. **Merge-forward rule (H9):** a conflict-free merge-forward (no conflicts, and the worker's own diff unchanged) needs only the targeted integrated re-run, not a new independent review.

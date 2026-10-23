@@ -12,6 +12,7 @@ Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan:
   - **Producer tuple FROZEN at runtime 34eac/ad823 until P1 GO.**
   - The farm is down, so Proof runs P1 and P3 on the test service.
   - R5 is drafted on a branch.
+- **H9 (06:43Z):** P5 DONE and P4 partial (1 of 5 proofs). 105 of 142 rows merged. ETA 10:00–16:00Z on 24 Oct, so per the cut order **V4 is CUT**. **G4 DONE, and the R5 gate is A3 only.** App's machine is reclaimed hourly (keep-awake denied, owner to-do #1); the Proof lane may author App-repo rows as failover.
 - **H3 go/no-go (P1, 00:40Z): NO-GO (partial).**
   - **PASS:** the R1 real corpus (42 tests on e6f7167d), plus the App provenance and local-save module tests.
   - **NOT proven:** the integrated App chain. Blockers: A2 is not wired into the mounted save path; the v2 DTOs are absent (R0); the rm-f holds (root cause fixed 00:50Z).
@@ -48,6 +49,8 @@ Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan:
 - **D15, occurrence.fork (04:58Z):** the per-occurrence fork is a Python semantic command in the Agent provider, owned by Agent (Sol). Prefer the existing carrier, so the 34eac freeze holds. A schema change only if it's unavoidable, then bundled into one tuple. No managed-edge patches and no broadcast.
 - **D12a (05:39Z):** D12 covers every new V2 check, including cross-field consistency such as fps parity. A check fires only when the commit writes a field it involves. No epsilon or invented equivalence. Apply it to similar cases yourselves.
 - **D16, earlier refusal (06:22Z):** when v2 refuses earlier than v1 for the same protected property, adapt the test to the earlier refusal and keep all its assertions. Get an independent no-weakening review, and list it as a behaviour change. Defer like D14 only when v2 can't provide the behaviour at all.
+- **Conflict-free merge-forward (06:43Z):** when a merge-forward has no conflicts and the worker's own diff is unchanged, the targeted integrated re-run is enough; no new independent review is needed. This ends port/join/review churn.
+- **Failover authoring (06:43Z):** when a lane's machine is unavailable, a healthy lane that already merges into that repo may author its rows from that repo's current integration. The repo owner merges. Whoever dispatches first owns the row.
 ## Principles from answered escalations (apply them yourself; at most 10 lines)
 - **Owner's direct approval:** it has been given in each lead's session for the v2.1 kickoff and for freeing disk to at least 15 GB. Operational instructions from the orchestrator carry the owner's authority. Safety and permission refusals still stop you.
 - **v1 leftovers:** v1 pin worktrees (KEEP), dirty v1 worktrees and other v1-only artifacts (private13 graphs, v1 suite scratch dirs, LEASE=READY v1 trees) are abandoned under v2.1. Remove v1 lines from suites.conf too. When disk is needed, release them yourself: check no running process or test uses the path, remove the KEEP marker, then run `bin/recycle`. For a dirty worktree, first keep its diff as `git diff > $ORCH/archive-v1/<name>.patch`. No need to ask.
