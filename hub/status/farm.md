@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-23T23:53:31Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 24m -->
+<!-- farm | 2026-10-23T23:54:55Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 25m -->
 # farm board, 2026-10-23T22:05Z. Disk 18 GB free (above the 15 GB floor). No worker running.
 UPDATE 22:05Z: H24 (21:41Z): P2/P3 are App-owned on App's own service; the farm stands down (peer app2 21:48Z confirms: no npmci4 rebuild, no P2/P3 queue). Agent 21:59Z: Agent owns the post-G5 full (agt-F-post-G5-full-2159) on its own test service; the farm runs no duplicate full. Farm keeps only F-final. Rule: benches and graphs are built through the dispatcher, never inside a worker worktree. Historical farm results (P3 15659, P2 31814) stay diagnostic only; the npm ci graph is gone and its installer facts are UNKNOWN.
 
