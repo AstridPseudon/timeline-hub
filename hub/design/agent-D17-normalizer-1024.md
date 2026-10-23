@@ -5,7 +5,7 @@ The requested raw-parent and repeated-physical-root repair passes against unchan
 ## Delivered
 
 - `Recording.assign` refreshes its existing mirror flag when the whole parent config is replaced. A copied raw parent with no `config.clips` stays that way; it no longer inherits the empty destination's mirror topology.
-- `effect_diff` retains its normal alias effects when topology is stable. When either clips/registry storage presence changes, it emits the existing provider-only complete parent effect with the raw before/value images. Authenticated physical bindings and Runtime projection therefore see the same exact bytes. This avoids pretending a config alias can encode removal of a raw mirror.
+- `effect_diff` retains its normal alias effects when topology is stable. When either clips/registry storage presence changes, it emits the existing provider-only complete parent effect with the raw before/value images. Contradictory mirrors are still validated at both boundaries before choosing the effect representation. Authenticated physical bindings and Runtime projection therefore see the same exact bytes. This avoids pretending a config alias can encode removal of a raw mirror.
 - The existing root-inverse helper rejoins only unchanged working aliases of a selected physical aggregate, using exact authenticated source links and payload images. Changed alias payload/internal content refuses. The original aggregate and leaf guards, later-history scans, source links, stage execution, and physical sharing remain active. Historical inverse read reconstruction uses the same normalization. The existing validation adapter also handles shared roots restored by redo.
 - Complete accepted root commands that actually read the closure scope reverse their retained-input deltas through the existing `_copy_manifest` path. The helper requires complete selected accepted command records and exact loaded boundaries, and leaves ordinary root creation inverses on their existing path. Hydration verifies restored media and document inputs without prematurely adding redo pins to the input image. Surviving media/document consumers refuse. There is no new request field, journal, authority path, receipt format, or cached source.
 - Fixed the four prior Ruff findings in `test_timeline_restructure.py`: fixture re-export/import ordering, and the local import separation. The two original duplicate test bodies and their complete assertions are unchanged; `original-node-preservation.json` records exact AST equality against HEAD for both functions.
@@ -52,7 +52,7 @@ The two scratch Python helpers used for logging and origin capture are copied in
 ### source-copy
 
 ```sh
-/home/user/work/venv-agent/bin/python -m pytest -q --tb=short -o addopts= -p no:cacheprovider -p evidence --timeout=45 --basetemp=/tmp/w-e409539a14/pytest-final4 tests/sdk/test_timeline_restructure.py::test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter tests/sdk/test_timeline_restructure.py::test_duplicate_commit_keeps_a_repeated_shot_shared tests/editing_conformance/test_commit_runtime_source_copy.py tests/editing_conformance/test_recipe_timeline_source_copy.py
+/home/user/work/venv-agent/bin/python -m pytest -q --tb=short -o addopts= -p no:cacheprovider -p evidence --timeout=45 --basetemp=/tmp/w-e409539a14/pytest-final5 tests/sdk/test_timeline_restructure.py::test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter tests/sdk/test_timeline_restructure.py::test_duplicate_commit_keeps_a_repeated_shot_shared tests/editing_conformance/test_commit_runtime_source_copy.py tests/editing_conformance/test_recipe_timeline_source_copy.py
 ```
 
 Actual exit: `0`. Log: `source-copy.log`.
@@ -60,7 +60,7 @@ Actual exit: `0`. Log: `source-copy.log`.
 ### inverse-neighbors
 
 ```sh
-/home/user/work/venv-agent/bin/python -m pytest -q --tb=short -o addopts= -p no:cacheprovider --timeout=45 --basetemp=/tmp/w-e409539a14/pytest-inverse-final2 tests/editing_conformance/test_doc_patch_mirrors.py tests/editing_conformance/test_inverse_clip_mirrors.py tests/editing_conformance/test_inverse_stage_images.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_grouped_clip_cache_inverse.py tests/editing_conformance/test_step_undo_v2.py tests/editing_conformance/test_provider_step_undo_v2.py tests/editing_conformance/test_recording_clear.py
+/home/user/work/venv-agent/bin/python -m pytest -q --tb=short -o addopts= -p no:cacheprovider --timeout=45 --basetemp=/tmp/w-e409539a14/pytest-inverse-final3 tests/editing_conformance/test_doc_patch_mirrors.py tests/editing_conformance/test_inverse_clip_mirrors.py tests/editing_conformance/test_inverse_stage_images.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_grouped_clip_cache_inverse.py tests/editing_conformance/test_step_undo_v2.py tests/editing_conformance/test_provider_step_undo_v2.py tests/editing_conformance/test_recording_clear.py
 ```
 
 Actual exit: `0`. Log: `inverse-neighbors.log`.
@@ -128,7 +128,7 @@ artifacts.json is current
 ### legacy-shared-current
 
 ```sh
-/home/user/work/venv-agent/bin/python -m pytest -q --tb=short -o addopts= -p no:cacheprovider --timeout=45 --basetemp=/tmp/w-e409539a14/pytest-legacy-final tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_slot_move_inverse_redo_and_rematerialization
+/home/user/work/venv-agent/bin/python -m pytest -q --tb=short -o addopts= -p no:cacheprovider --timeout=45 --basetemp=/tmp/w-e409539a14/pytest-legacy-final2 tests/editing_conformance/test_commit_runtime_shared_inverse.py::test_shared_slot_move_inverse_redo_and_rematerialization
 ```
 
 Actual exit: `1`. Log: `legacy-shared-current.log`.
@@ -156,10 +156,10 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/w-e409539a14/baseline:/home/user/work/
 
 Actual result: **2 failed in 3.04s**, same first-edit timing bound failure as current, with module origin `/tmp/w-e409539a14/baseline/astrid/sdk/timeline/commit.py`. No missing prior-worker artifact is used as proof.
 
-The initial exploratory neighbor command (actual **10 failed, 77 passed in 27.19s**) was:
+The initial exploratory command (actual **10 failed, 77 passed in 27.19s**) was:
 
 ```sh
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/wt/rt-pin-1365e4b1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-1365e4b1 /home/user/work/venv-agent/bin/python -m pytest -q --tb=short -o addopts= -p no:cacheprovider --timeout=45 --basetemp=/tmp/w-e409539a14/pytest-neighbors tests/editing_conformance/test_doc_patch_mirrors.py tests/editing_conformance/test_inverse_clip_mirrors.py tests/editing_conformance/test_inverse_stage_images.py tests/editing_conformance/test_commit_runtime_shared_inverse.py tests/editing_conformance/test_recipe_timeline_source_copy.py tests/editing_conformance/test_commit_runtime_source_copy.py
 ```
 
-Its complete output is in the tool transcript; the stable current and baseline representative logs reproduce the failure independently. It was not a full suite or the original58 qualification.
+Its complete output is in the tool transcript; the stable representative baseline and current logs reproduce the timing failure independently. It was not a full suite or the original58 qualification.
