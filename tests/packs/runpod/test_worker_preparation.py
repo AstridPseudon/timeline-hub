@@ -19,6 +19,7 @@ from astrid.packs.runpod.worker_preparation import (
     resolve_existing_volume,
     write_target_record,
 )
+from tests.helpers.runtime import use_runtime
 
 
 def _contract(**overrides: Any) -> RunPodTargetContract:
@@ -134,9 +135,11 @@ def test_exact_account_pod_image_gpu_and_volume_are_proved() -> None:
     assert observed.network_volume_size_gb == 250
 
 
+@pytest.mark.integration  # the owner imports runtime_protocol; needs a Runtime checkout (ASTRID_RUNTIME_CHECKOUT)
 def test_runtime_activation_checkpoints_restore_only_the_exact_process(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    use_runtime()
     from astrid.packs.runpod.worker_owner import (
         PreparedRunPodHost,
         RunPodRemoteWorkerPreparer,

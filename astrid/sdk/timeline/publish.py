@@ -6,7 +6,7 @@ import re
 import sys
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Mapping
+from typing import Any, Mapping
 
 from astrid.sdk import timeline_intent as intent
 from astrid.core.timeline.cuts import (
@@ -20,14 +20,13 @@ from astrid.sdk.timeline.doc import (_row_start, _set_length, _strip_derived)
 from astrid.sdk.timeline.model import Voice
 from astrid.sdk import timeline_transcripts as _transcripts  # module access: its functions resolve at call time
 
-if TYPE_CHECKING:
-    from astrid.sdk.timeline.checkout import Checkout
-
-
 class _PublishMixin:
     """Checkout: publish, narration binding, and the document as it is saved (annotated) and read back (absorb)."""
 
-    def publish(self: Checkout, message: str = "", *, idempotency_key: str | None = None, client: Any = None,
+    bundle: dict[str, Any]  # set by Checkout.__init__; declared so this mixin's readers are typed
+    _journal: list[tuple[str, str | None]]
+
+    def publish(self, message: str = "", *, idempotency_key: str | None = None, client: Any = None,
                 force: bool = False, restructure: bool = False) -> dict[str, Any]:
         """Check, then publish one revision.
 
@@ -37,7 +36,7 @@ class _PublishMixin:
         overwrites their change, explicitly. Nothing is ever overwritten silently.
         """
         self.notes.extend(self._sync_film_length())  # the film's length follows its content, before the check
-        report = self._check_core()
+        report = self.check()
         if not report.valid:
             raise TimelineEditError("not publishing: " + "; ".join(report.problems or ["the candidate is invalid"]))
         key = idempotency_key or f"edit-{re.sub(r'[^a-z0-9]+', '-', message.lower())[:40].strip('-') or 'timeline'}-{uuid.uuid4().hex[:8]}"
@@ -47,9 +46,6 @@ class _PublishMixin:
             receipt = _store.publish_bundle(stored, key, client=client, force=force)
         else:  # only the narration binding is behind (a retry after it failed): pin it, nothing else to publish
             receipt = {"old_head": self.base_revision, "new_head": self.base_revision, "structure": "unchanged"}
-        # Acceptance consumes the local steps before any follow-up read or
-        # narration work can fail. This also fences a reload of a stale draft.
-        self._retire_draft_history()
         receipt["narration_pinned"] = []
         if chapter_film or self.narration_changes():
             # A line's text changed (or the shots are new): bind each such shot's narration now that
@@ -89,9 +85,8 @@ class _PublishMixin:
         receipt["message"] = message
         return receipt
 
-    def _reset_base(self: Checkout, *, client: Any = None) -> None:
+    def _reset_base(self, *, client: Any = None) -> None:
         """Re-read the new head as this working copy's bundle and save it with no undo step. Never fails the publish."""
-        self._retire_draft_history()
         try:
             head = _store.fetch_bundle(str(self.bundle["project_id"]), str(self.bundle["timeline_id"]), client=client)
         except Exception as exc:  # noqa: BLE001 - the publish stands; the working copy keeps its old base
@@ -101,15 +96,14 @@ class _PublishMixin:
         from astrid.sdk.timeline_restructure import flatten
 
         head = flatten(head)
-        old, old_disk = self.bundle, self._disk
-        journal: list[tuple[str, str | None]] = []
-        self.bundle, self._mcache, self._journal, self._disk = head, None, journal, None
+        old, old_journal = self.bundle, list(self._journal)
+        self.bundle, self._mcache, self._journal, self._disk = head, None, [], None
         try:
             target = Path(self.path)
             with _store._file_lock(target):
                 self._save_locked(target, force=True, record=False)
         except Exception as exc:  # noqa: BLE001
-            self.bundle, self._disk = old, old_disk
+            self.bundle, self._journal = old, old_journal
             self.notes.append(f"published, but this working copy could not be reset to the new head ({exc}); "
                               "its base is still the old one")
 

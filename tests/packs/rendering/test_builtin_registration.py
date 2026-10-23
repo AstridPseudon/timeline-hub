@@ -4,7 +4,6 @@ import builtins
 import hashlib
 import importlib
 import json
-import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -115,24 +114,6 @@ def _request(
 
 def _write_request(path: Path, request: RenderRequest) -> None:
     path.write_text(json.dumps(request.to_dict()), encoding="utf-8")
-
-
-def _missing_remotion_dependencies() -> list[str]:
-    missing = [
-        f"{binary} executable"
-        for binary in ("ffprobe",)
-        if shutil.which(binary) is None
-    ]
-    node = os.environ.get("ASTRID_NODE_EXECUTABLE", "").strip()
-    if not node or not Path(node).is_file():
-        missing.append("ASTRID_NODE_EXECUTABLE")
-    if not (REMOTION_PROJECT / "node_modules").is_dir():
-        missing.append("remotion/node_modules")
-    if not (
-        REMOTION_PROJECT / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
-    ).is_file():
-        missing.append("remotion local CLI")
-    return missing
 
 
 def test_rendering_pack_and_builtin_manifests_validate() -> None:
@@ -274,30 +255,14 @@ def test_real_ffmpeg_render_through_registered_backend(tmp_path: Path) -> None:
     assert not list(tmp_path.glob(".ffmpeg-smoke.mp4.*"))
 
 
+@pytest.mark.integration
 def test_real_remotion_render_through_registered_backend(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    remotion_launch_validation: None,
 ) -> None:
-    missing = _missing_remotion_dependencies()
-    if missing:
-        pytest.skip(
-            "Remotion backend smoke skipped: missing optional dependencies: "
-            + ", ".join(missing)
-        )
-
     ffmpeg = shutil.which("ffmpeg")
-    ffprobe = shutil.which("ffprobe")
-    if ffmpeg is None or ffprobe is None:
-        missing_media = [
-            f"{binary} executable"
-            for binary, path in (("ffmpeg", ffmpeg), ("ffprobe", ffprobe))
-            if path is None
-        ]
-        pytest.skip(
-            "Remotion backend smoke skipped: missing optional media dependencies: "
-            + ", ".join(missing_media)
-        )
-
+    assert ffmpeg is not None
     source_path = tmp_path / "source.mp4"
     subprocess.run(
         [
@@ -389,7 +354,11 @@ def test_real_remotion_render_through_registered_backend(
         for server in asset_servers:
             assert server.port == 0
             assert server.thread is None or not server.thread.is_alive()
-            assert not server.staging_dir.exists()
+            # The only asset is a caller-owned materialized path, so the server serves
+            # the caller's root in place (AssetMaterializer.serving_root); closing it
+            # must leave that root and its source intact, not remove it as a disposable stage.
+            assert server.staging_dir == tmp_path.resolve()
+            assert source_path.is_file()
 
     if render_error is not None:
         message = str(render_error)

@@ -38,8 +38,9 @@ def _preset_max() -> dict[str, float]:
 
 
 def _short_rev(revision: Any) -> str:
-    text = str(revision or "")
-    return text.removeprefix("authoring-parent-revision-")[:8] or text
+    from astrid.sdk.timeline.revisions import short_revision
+
+    return short_revision(revision)
 
 
 def _clips_changed(n: int) -> str:

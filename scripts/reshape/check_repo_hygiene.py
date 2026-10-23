@@ -107,6 +107,8 @@ TRACKED_PATH_ALLOWLISTS = (
     # output: render-element plates and cards, and the h3_av inpaint masks.
     "astrid/packs/*/rendering/elements/**/assets/*",
     "astrid/packs/h3_av/workflows/**/mask_*.png",
+    # Authored sample timeline stills a world tracks on purpose (see its README).
+    "astrid/packs/rendering/worlds/*/stills/t*_640x360.png",
     # Docs *about* credentials (setup/reference prose), never credential values.
     "docs/**/*credentials*.md",
 )

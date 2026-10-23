@@ -160,10 +160,10 @@ def assert_copy_equals_source(source: Mapping[str, Any], copied: Mapping[str, An
             raise TimelineEditError(f"placement of shot {a['shot_id']!r} changed its start or length in the copy")
     if len({str(r["shot_id"]) for r in new_rows}) != len({str(r["shot_id"]) for r in src_rows}):
         raise TimelineEditError("the copy has a different number of distinct shots than its source")
-    source = copy.deepcopy(dict(source))
-    migrate_bundle(source)  # the copy carries intent under app.astrid
+    migrated: dict[str, Any] = copy.deepcopy(dict(source))
+    migrate_bundle(migrated)  # the copy carries intent under app.astrid
     for old, new in shot_map.items():
-        want = _remap_values(copy.deepcopy(dict((source["shots"][old].get("internal_timeline")) or {})), shot_map)
+        want = _remap_values(copy.deepcopy(dict((migrated["shots"][old].get("internal_timeline")) or {})), shot_map)
         got = (copied.get("shots") or {}).get(new, {}).get("internal_timeline") or {}
         if (want.get("clips") or []) != (got.get("clips") or []):
             raise TimelineEditError(f"shot {old!r} was not copied faithfully into {new!r} (its clips differ)")

@@ -21,7 +21,7 @@ Choose the route by the requested result. Read only that route's guidance:
 | Request | Start here |
 | --- | --- |
 | Find a project, inspect a run, or open a render | The CLI recipes below |
-| Change timing, text, layout, effects, or existing timeline clips, then render | [Timeline editing](../../rendering/docs/SKILL.md) |
+| Change timing, text, layout, effects, or existing timeline clips, then publish and point the user to the editor (render only if asked) | [Timeline editing](../../rendering/docs/SKILL.md) |
 | Generate images, video, or audio (including Foley); understand, assemble, compare, or publish work | [Creative work](creative-work/SKILL.md), then the relevant pack |
 | Reuse a character or other saved subject | [References](../../media/docs/references.md) |
 | Build your own reusable tool, workflow, or visual element | [Pack builder](pack-builder/SKILL.md) |
@@ -45,7 +45,10 @@ On Windows, run in PowerShell:
 irm https://astrid.haus/install.ps1 | iex
 ```
 
-Then open [astrid.haus](https://astrid.haus) and follow its setup steps. Do not
+The installer checks that Astrid is healthy and opens astrid.haus itself. Tell
+the user to choose Allow if Chrome or Edge asks to reach their computer, then
+confirm astrid.haus shows Connected. That is the end of setup. (Connecting
+local engines such as ComfyUI or Wan2GP is not covered here yet.) Do not
 install or clone `astrid-app`; it is for app developers.
 
 ## Commands for outside agents
@@ -129,8 +132,11 @@ After installation, the commands below work with the installed Runtime. For a
 new machine, follow the setup path above and open astrid.haus.
 
 ```bash
-python3 -m astrid doctor --json
+curl -fsSL https://astrid.haus/install | sh -s -- --doctor
 ```
+
+On Windows PowerShell use
+`& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --doctor`.
 
 If Astrid isn't running, run the install line again.
 
@@ -193,7 +199,8 @@ python3 -m astrid media references list --project <project> --include-archived -
 ```
 
 Use `timelines show`, `history`, `diff`, `visualize`, and `render` for
-timeline work. Whole-document timeline saves are retired; edits are published
+timeline work; render and composed `visualize` frames only when the user asks,
+and otherwise point them to the editor link. Whole-document timeline saves are retired; edits are published
 through the detached authoring bundle. Read the [timeline editing skill](../../rendering/docs/SKILL.md)
 for the canonical authoring, Remotion, visualization, effects, and playback
 route. Use `tasks` and `runs` to inspect or manage admitted work:

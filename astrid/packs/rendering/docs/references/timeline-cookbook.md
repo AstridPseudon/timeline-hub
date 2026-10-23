@@ -95,6 +95,9 @@ different extension or codec from a backend alias.
 
 ## Visual evidence
 
+Only when the user asks for a render or frames. By default, publish and point
+the user to the editor link instead.
+
 `timelines visualize` accepts `png` or `md` formats and always produces the
 paired rendered filmstrip. A successful managed render is required;
 the returned manifest and pack root are navigation artifacts for that render,

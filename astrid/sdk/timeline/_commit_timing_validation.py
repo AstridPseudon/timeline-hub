@@ -76,6 +76,17 @@ def validate_candidate_timing(candidate: Mapping[str, Any]) -> None:
             if app.get("astrid") is None:
                 app["astrid"] = {}
             app["astrid"][field] = selected.declaration
+            # Parent clips may be mirrored under config.clips.  The detached
+            # validation view rewrites the authoritative declaration from the
+            # captured binding, so keep the mirror in lockstep before the
+            # timing lookup checks the two canonical representations.
+            mirrors = projection["parent"].get("config", {}).get("clips")
+            if isinstance(mirrors, list):
+                mirror = next((row for row in mirrors if row.get("id") == clip.get("id")), None)
+                if isinstance(mirror, dict):
+                    mirror_app = mirror.setdefault("app", {})
+                    mirror_astrid = mirror_app.setdefault("astrid", {})
+                    mirror_astrid[field] = selected.declaration
     compile_timing(TimingInputs(
         projection,
         sources=[row for row in sources if row["document"]["kind"] == "media.transcript"],

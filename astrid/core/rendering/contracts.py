@@ -22,6 +22,10 @@ from .verified_source import VerifiedTimelineSource, inherited_source, reject_so
 
 SCHEMA_VERSION = 1
 
+#: Qualified ids of the two renderers a host may choose between by readiness.
+REMOTION_RENDERER_ID = "rendering.remotion"
+FFMPEG_RENDERER_ID = "rendering.ffmpeg"
+
 BackendConfig: TypeAlias = dict[str, dict[str, Any]]
 RendererErrorKind: TypeAlias = Literal[
     "protocol",

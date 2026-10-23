@@ -1,16 +1,19 @@
 """Test lanes (testing plan R-2).
 
 Lanes. The default run deselects tests marked ``integration``, ``darwin_native``,
-``live`` or ``opt_in`` (see ``addopts`` in pyproject.toml). The nightly lane runs exactly
-those: ``pytest -m "integration or darwin_native or live or opt_in"``. Together the two lanes are the
-whole suite, by construction. A ``darwin_native`` test is skipped off macOS.
+``live`` or ``opt_in`` (see ``addopts`` in pyproject.toml). The heavy lane is exactly those:
+``pytest -m "integration or darwin_native or live or opt_in"`` (no workflow schedules it yet; see the
+testing plan's Owned debt). Together the two lanes are the whole suite, by construction. A
+``darwin_native`` test is skipped off macOS.
 
 Skips on import (testing plan R-6). ``pytest.importorskip`` is allowed locally but fails in a required
 lane, where a skip would hide a broken install: any lane run by CI (``CI`` set) and any run that selects
 the ``integration`` tests. A declared dev dependency is imported plainly. A module only the integration
 lane provides (a second checkout or an optional library) is loaded with ``require_module``: it fails in a
 lane that runs integration tests and skips the module in the default lane, which deselects every test that
-needs it.
+needs it. A fixture that needs a second checkout is named in its module's ``INTEGRATION_FIXTURES``: every test
+that requests it is an ``integration`` test, so the default lane deselects it instead of skipping it, and the
+fixture calls ``unavailable`` when the checkout is missing.
 
 Leaked file descriptors (testing plan LEAK.2). The run fails if the pytest process
 ends holding more than FD_LEAK_ALLOWANCE descriptors beyond what it held at start.
@@ -66,7 +69,7 @@ _config = None
 
 
 def runs_integration(config) -> bool:
-    """True when the run selects the ``integration`` tests with a marker expression (the nightly lane)."""
+    """True when the run selects the ``integration`` tests with a marker expression (the heavy lane, run on request)."""
     expression = (config.getoption("markexpr", default="") or "").strip()
     return "integration" in expression and "not integration" not in expression
 
@@ -125,6 +128,9 @@ def pytest_configure(config):
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(config, items):
     for item in items:
+        needs_checkout = set(getattr(getattr(item, "module", None), "INTEGRATION_FIXTURES", ()))
+        if needs_checkout & set(getattr(item, "fixturenames", ())):
+            item.add_marker(pytest.mark.integration)
         if sys.platform != "darwin" and item.get_closest_marker("darwin_native"):
             item.add_marker(pytest.mark.skip(reason="darwin_native: needs macOS"))
         if os.name != "posix" and item.get_closest_marker("posix_native"):
