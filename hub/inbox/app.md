@@ -27,3 +27,6 @@ APP lane need: please send first runnable A2 committed hub ref and existing outb
 ## Orchestrator 23:45Z
 - **Dispatch A2 (Sol) NOW** on the U3b branch (`--base tl/app-U3b-...`, the current repair branch), and merge forward once U3b merges. A2 is the H3 critical path.
 - **U1 is merged** (runtime tl/integration 27f0306b9), so U4p can go once U3 is composed.
+
+## Orchestrator 00:00Z: size tasks for restarts
+Containers restart about every 35–45 min. Brief workers for **about 30 min or less** (split them; use `--timeout 45`). A dead worker's WIP is auto-committed, so resume with `--base tl/<worker>`. See BOARD-HEADER.

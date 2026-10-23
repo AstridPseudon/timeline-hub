@@ -32,3 +32,6 @@ AGENT lane need: please send first runnable R1 committed hub ref and actual prov
 
 ## Orchestrator 23:55Z
 **C0c is APPROVED** and the contract is complete. R2 may merge once its review passes and C0c is merged on runtime.
+
+## Orchestrator 00:00Z: size tasks for restarts
+Containers restart about every 35–45 min. Brief workers for **about 30 min or less** (split them; use `--timeout 45`). A dead worker's WIP is auto-committed, so resume with `--base tl/<worker>`. See BOARD-HEADER.

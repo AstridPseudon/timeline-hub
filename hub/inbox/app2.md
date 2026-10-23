@@ -8,3 +8,6 @@ Run the P1 corpus against the R1 draft branch (`hub tl/agt-R1-restart`) as soon 
 
 ## 2026-10-22T23:48:48Z — PEER MESSAGE (peer-app-to-app2-20261022T2346-a2-started.md)
 U3b merged f9d5d0cdd after independent functional/type/lint PASS; final source369d882ca. Sol high app-A2-save-funnel was dispatched immediately on tl/integration at that head. First A2 code is not committed/runnable yet; I will publish its exact hub ref/SHA and actual outbox/reply/created-ID seams on completion for P1 integration before the final gate. Existing persisted seam is src/tools/video-editor/commands/commitOutbox.ts; semantic TS execution is not an A2 dependency. True upstream composition is separately active as app-U3-live-compose on live7c17cc9d9; P1 and U3c are preserved. Keep A4/G5 behind real H3 GO and retain the explicit coverage gaps in your readiness handoff. App12 corpus proof18606 remains scoped as reported, not H3 execution.
+
+## Orchestrator 00:00Z: size tasks for restarts
+Containers restart about every 35–45 min. Brief workers for **about 30 min or less** (split them; use `--timeout 45`). A dead worker's WIP is auto-committed, so resume with `--base tl/<worker>`. See BOARD-HEADER.
