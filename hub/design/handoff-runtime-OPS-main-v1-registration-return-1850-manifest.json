@@ -1,0 +1,59 @@
+{
+  "task": "OPS-main-v1-registration",
+  "result": "corrected finite proposal only",
+  "supersedes": "author1840 no-op; independent1848 FAIL",
+  "source": {
+    "path": "ORCH/tests/suites.conf",
+    "archive": "ORCH/workers/rt-OPS-main-v1-registration-1840/evidence-before/suites.conf",
+    "original_cmp": "PASS",
+    "sha256": "f64e1f4be56cb6045058494db95fd10878946fefdf50f4563af532887a89c1d0",
+    "rows": 106,
+    "unique_keys": 106
+  },
+  "proposal": {
+    "path": "TMPDIR/proposed-suites.conf (ephemeral; not installed)",
+    "sha256": "570680d5a9941c87a9cb566471aeab91b95fabaac94f2036c8f0a48194bec70d",
+    "rows": 97,
+    "unique_keys": 97,
+    "old_refs_absent_from_executable_rows": true,
+    "only_nine_complete_rows_removed": true,
+    "patch": "handoff-runtime-OPS-main-v1-registration-return-1850-proposal.patch"
+  },
+  "removed_rows": [
+    {"line": 5, "suite": "registered7d-current-integration", "before_line_sha256": "8a6d36d5d483c8c5669d122496e70a115dec300ec28f7921936b853aca4820f3", "after": "absent"},
+    {"line": 85, "suite": "registered-native-render-integration", "before_line_sha256": "ca865986221775bb6db7abe0ffbde85be755857f5cc54f6fb52827294d476fe2", "after": "absent"},
+    {"line": 92, "suite": "registered014-render-integration", "before_line_sha256": "6c27e4d676e6c219e4b97bb721701334cfeb65246d354e2b3bf9caa0527f6353", "after": "absent"},
+    {"line": 105, "suite": "custody-root-cause-exact7d-trace", "before_line_sha256": "de4ac0a0092e21121abd26ccedc54ac04229ed5836dd13d8252e41f39b6fba1e", "after": "absent"},
+    {"line": 109, "suite": "custody-root-cause-exact7d-trace-clean", "before_line_sha256": "7e24566761c38fee5a222ae80ae1d7e2970fa967ff0778b9e5356fa0d1693eca", "after": "absent"},
+    {"line": 111, "suite": "custody-root-cause-exact7d-original-order", "before_line_sha256": "fc1f0c3ef28312326716247cdbd12b1601bbb4e056d2631688c23297de26c2e4", "after": "absent"},
+    {"line": 113, "suite": "custody-root-cause-exact7d-guard-context", "before_line_sha256": "c7ae7baacd735f94acbf52e93b7dc4f05b6a64eef080a9edf9491b773f77d013", "after": "absent"},
+    {"line": 114, "suite": "venv-agent-child-s2-c13-c13-full", "before_line_sha256": "e53d5bb0c12234f5cda78252070fbcaab78ac937ee1572194216ef4db77aae4e", "after": "absent"},
+    {"line": 120, "suite": "full-remotion13-s2-integration", "before_line_sha256": "da81f16c1b179fa7b57fb255beb5dc620641c100f6f79f995c522250c98b1ffe", "after": "absent"}
+  ],
+  "protected": {
+    "row_56_lf_stripped_sha256": "ffdb0b13c65f106d7b818208343feb3f438dfc943f4af57c5f612ddcf73dc036",
+    "env_sha256": {
+      "agent-remotion-0010.env": "943c0f49bc896097af0589b84c4dd4df06058fbe22e0c6fd999bcbf40f9a38a0",
+      "agent-remotion-0012.env": "be340c6b77684d2438d1c46a674746188b851cbb23abec0c6dcf21a0742fd03a",
+      "agent-remotion-0013.env": "e03e177251a99e37820c001f6fe6f88f2f503d1f939a5f67eed6ed59eeca2d07",
+      "agent-remotion-current.env": "7faf606e9780385d7a32c053367b2a63e1b58246c52f14d14c226dbf9b20fa6c",
+      "agent-remotion.env": "e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02"
+    },
+    "current_v2_pending_running_leased_rows": "unchanged; no non-hidden records found",
+    "frozen_C0v2_34e": "unchanged"
+  },
+  "lifecycle": {
+    "hidden_why_files": "refusal explanations, not executable pending records",
+    "completed_history": "c13 creation is completed history, not active use",
+    "supported_pending_running_leased": {"pending": 0, "running": 0, "leased": 0},
+    "newstore_core": "staged only; review and install required before any production caller use",
+    "eviction_or_retirement": "not requested or performed"
+  },
+  "scope": {
+    "config_edit": "proposal in TMPDIR only",
+    "actual_target_request": false,
+    "cleanup_retry_chmod_provision_daemon_probe": false,
+    "product_tests_typecheck_lint_generated_pins_git_source_changes": false,
+    "host_or_proc_probe": false
+  }
+}

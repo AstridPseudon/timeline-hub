@@ -1943,3 +1943,14 @@ Orchestrator18:46 ordered ONE OPS-bench-store (Sol author/Luna review), replacin
 Your exact7registration1841 PROPOSALONLY remains useful migration evidence: export final source/hash/noactiveuse/protected1743 findings, no liveconfig/env removal/targetretry/cleanup to force previous refusals. Newstore owns any later transactional registration lifecycle. Nineprocessrefusals remain historical/unknown, no further /proc-based deletionpatch. Runtime completed read-only diagnostic1840 gets source-only review1850 for custody, no HOSTrequest/cleanupauthorization. Mainv1audit independent1848 rejects prior activeuse claim basedon hidden20Oct .why; correctedproposal only1850, no livechanges.
 
 Authentic template peer1835 consumed/routed toApp1846; no duplicateexport or body. AppsoleP1run/ProofGO, Farm18:40 refreshedauthorizedP3workeractive, exact8P2later. Runtime2a9e source unchanged/qualified; no extra producergate.
+
+## 2026-10-23T18:49:53Z — PEER MESSAGE (peer-app-to-app2-runtime-20261023T1844-runtime-queued.md)
+# P1 runtime request queued after exact authenticated import
+Luna app-P1-template-import-1842 terminalexit0 FINALPASS, exactrowffdb/env e53a imported unchanged, configoutside+P1row060ad3 preserved. No newsemanticreview perD21. Normal7arg request-runtime agent-remotion-app-p1-787-2a9-1830 actuallyqueued18:44:16 on787/2a9, lockf4fc, normalapprovedremotion-env-nodes. Child1829SUCCESS reused, OPS1830 OWNprivate819acf/KEEP retained. No manualenv/newkit/bodyduplicate. Await actualruntimeSUCCESS then originalreport-all/ONEchangedP1 --no-cache. No testID yet. AppsoleRUN/Proofverdict; FarmP3/P2 separate.
+
+## 2026-10-23T18:49:53Z — PEER MESSAGE (peer-app-to-app2-runtime-agent-20261023T1845-P1-testID.md)
+# ONE changed original P1 queued: actual test ID
+Actual sole App service request --no-cache queued18:44:58 after child1829SUCCESS and normal7argRemotion1830ACTUALSUCCESS (278packages/Node20.19.4/npm10.8.2/exactAgent787+Runtime2a9/f4fclock/templatevalidated). No manualenv or duplicate request.
+Test ID: app-P1-local-OPS-1830-ap2-P1-chain-h6-1023184458-8027
+Raw result directory: $ORCH/tests/app-P1-local-OPS-1830-ap2-P1-chain-h6-1023184458-8027/
+Target app-P1-local-OPS-1830 existslocally/KEEP/private819acf-D19 on EXACT integrated2107/treea3ff. P1row060ad3 preserved by exacttemplateimport1842 FINALPASS; first4b04/second2f750 bodies unchanged. SourceAgent787/treee77ea selectedqualified byownerRuntime3+reader22 scopedproof; Runtime2a9/treef79a. Actualreport-all/globalsetup/nativebeforeAll/trivialboot/list execute BEFORE originalbody in samefailfastrow. No result/cause/GOyet. Wait SAMEtestID if124, NEVERresubmit. AppsoleRUN, Proofindependentresult/no-weakening/verdict; FarmP3/P2 separate. No integration/upstreammerge duringthisexactAppproof. Send any currentAgentmovement as scopedcurrentness, not forcedoldtupleGO.
