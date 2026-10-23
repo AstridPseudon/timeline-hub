@@ -1,0 +1,24 @@
+--- a/bin/request-runtime
++++ b/bin/request-runtime
+@@ -1,18 +1,15 @@
+ #!/bin/bash
+ # request-runtime NAME AGENT_SHA [LOCK_SHA256] — ask the dispatcher to build or
+ # reuse a read-only Remotion runtime. The maker performs the authenticated
+-# tree-only lookup before any toolchain/build work.
++# tree-only lookup after toolchain validation and before build work.
+ # /home/user/work/runtimes/NAME (agent-remotion-<version>) from the Agent remotion/ dir at AGENT_SHA. Result in
+ # $ORCH/queue/done/runtime-NAME. Runtimes are immutable: a new version gets a new NAME. No escalation needed.
+-if [[ -z "${RUNTIME_ORCH_ROOT:-}" ]]; then
+-  echo 'REFUSED: RUNTIME_ORCH_ROOT must name the private ORCH root' >&2; exit 2
+-fi
+-O=$RUNTIME_ORCH_ROOT
++O=${RUNTIME_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
+ [[ "$O" = /* && "$O" != *[!a-zA-Z0-9_./-]* && "/$O/" != */../* && "/$O/" != */./* ]] || {
+   echo 'REFUSED: ORCH root must be a safe absolute path' >&2; exit 2;
+ }
+ [[ -d "$O/queue/pending" && -w "$O/queue/pending" ]] || {
+-  echo 'REFUSED: private pending queue is unavailable' >&2; exit 2;
++  echo 'REFUSED: pending queue is unavailable' >&2; exit 2;
+ }
+ case $# in
+   2|3|7) ;;

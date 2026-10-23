@@ -1,0 +1,21 @@
+--- a/bin/make-runtime
++++ b/bin/make-runtime
+@@ -12,15 +12,9 @@
+ # Runtime checkout identity is registration metadata, never a graph key.
+ set -Eeuo pipefail
+ 
+-if [[ -z "${RUNTIME_ORCH_ROOT:-}" ]]; then
+-  echo 'REFUSED: RUNTIME_ORCH_ROOT must name the private ORCH root' >&2; exit 2
+-fi
+-O=$RUNTIME_ORCH_ROOT
+-A=${RUNTIME_AGENT_CHECKOUT:-}
+-if [[ -z "${RUNTIME_WORK_ROOT:-}" ]]; then
+-  echo 'REFUSED: RUNTIME_WORK_ROOT must name the private work root' >&2; exit 2
+-fi
+-W=$RUNTIME_WORK_ROOT
++O=${RUNTIME_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
++A=${RUNTIME_AGENT_CHECKOUT:-/home/user/work/agent}
++W=${RUNTIME_WORK_ROOT:-/home/user/work}
+ NODE_BIN=${RUNTIME_NODE_BIN:-}
+ NODE_VERSION=20.19.4
+ NPM_VERSION=10.8.2

@@ -1,0 +1,24 @@
+bash -n /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/make-runtime.sh: exit=0
+cmp maker implementation from NODE_BIN onward vs reviewed1811: identical
+scoped Python compile make-runtime:REGISTRATION: PASS
+scoped Python compile make-runtime:PY: PASS
+scoped Python compile make-runtime:PY: PASS
+scoped Python compile make-runtime:PY: PASS
+scoped Python compile make-runtime:PY: PASS
+cmp -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/make-runtime.sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-remotion-reuse-sol-1824-make-runtime.sh: exit=0
+cmp -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/make-runtime.patch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-remotion-reuse-sol-1824-make-runtime.patch: exit=0
+patch --batch --output=/tmp/w-1a7207d41c/make-runtime.patch-output /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/make-runtime.baseline /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/make-runtime.patch: exit=0; cmp exact source PASS
+cmp -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/make-runtime.root-fix.patch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-remotion-reuse-sol-1824-make-runtime.root-fix.patch: exit=0
+patch --batch --output=/tmp/w-1a7207d41c/make-runtime.root-fix.patch-output /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/make-runtime.root-fix.baseline /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/make-runtime.root-fix.patch: exit=0; cmp exact source PASS
+bash -n /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/request-runtime.sh: exit=0
+cmp -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/request-runtime.sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-remotion-reuse-sol-1824-request-runtime.sh: exit=0
+cmp -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/request-runtime.patch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-remotion-reuse-sol-1824-request-runtime.patch: exit=0
+patch --batch --output=/tmp/w-1a7207d41c/request-runtime.patch-output /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/request-runtime.baseline /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/request-runtime.patch: exit=0; cmp exact source PASS
+cmp -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/request-runtime.root-fix.patch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-remotion-reuse-sol-1824-request-runtime.root-fix.patch: exit=0
+patch --batch --output=/tmp/w-1a7207d41c/request-runtime.root-fix.patch-output /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/request-runtime.root-fix.baseline /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/request-runtime.root-fix.patch: exit=0; cmp exact source PASS
+compile /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/test_reuse.py: PASS
+compile /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-sol-1824/evidence/verify_packet.py: PASS
+git diff --check: exit=0
+git status --porcelain: exit=0, empty (Runtime clean)
+Runtime HEAD=2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d
+sha256sum -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-remotion-reuse-sol-1824-hashmanifest.txt: exit=0 (14 files)
