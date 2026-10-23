@@ -80,6 +80,7 @@ def test_registered_requester_commits_original_target_then_admits_exact_renderer
     assert body['label'] == 'Assemble timeline' and body['merge'] == 'atomic'
     assert body['reads'] == [] and body['dry_run'] is False
     assert body['source'] == {'via': 'python'}
+    assert 'group_id' not in body
     assert body['steps'] == [{'id': 'assembly', 'label': 'Assemble timeline',
                               'intent': proposal['rationale'], 'tags': [],
                               'command_ordinals': [0, 1], 'patch': []}]
@@ -100,14 +101,28 @@ def test_requester_lost_commit_ack_retries_identical_v2_flight_after_restart(tmp
     session, generated, proposal, renders, _ = requester(tmp_path)
     generated.lose_ack = True
     with pytest.raises(WorkspaceClientError):
-        publish(session, proposal)
+        publish(session, proposal, group_id='stitch-group')
     assert not renders and len(generated.accepted) == 1
     saved = session.outbox.read()['flight']
     restarted = TimelineSession.open('p', 't', client=session.client, outbox_path=generated.path)
-    result = publish(restarted, proposal)
+    result = publish(restarted, proposal, group_id='stitch-group')
     assert generated.calls[0] == generated.calls[1]
+    assert json.loads(generated.calls[0][0])['group_id'] == 'stitch-group'
+    assert json.loads(saved['body'])['group_id'] == 'stitch-group'
     assert saved['key'] == 'publish' and result['render_task_id'] == 'render-1'
     assert len(generated.accepted) == 1
+
+
+def test_changed_group_id_cannot_replace_same_pending_assembly_request(tmp_path):
+    session, generated, proposal, renders, _ = requester(tmp_path)
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        publish(session, proposal, group_id='stitch-group')
+    sealed = session.outbox.read()
+    with pytest.raises(WorkspaceClientError, match='retry the original assembly commit'):
+        publish(session, proposal, group_id='different-group')
+    assert session.outbox.read() == sealed
+    assert len(generated.calls) == 1 and not renders
 
 
 def test_lost_render_ack_replays_original_acceptance_after_peer_head_moves(tmp_path):
@@ -163,10 +178,11 @@ def test_video_editing_production_wrapper_uses_requester_commit(tmp_path):
     result = publish_stitched_render(
         session.client, project='p', timeline_ref='t', expected_version=1,
         proposal=proposal, requester_session=session, render_capability_digest=DIGEST,
-        idempotency_key='wrapper',
+        group_id='wrapper-group', idempotency_key='wrapper',
     )
     assert result['render_task_id'] == 'render-1'
     assert generated.calls[0][1] == 'wrapper'
+    assert json.loads(generated.calls[0][0])['group_id'] == 'wrapper-group'
     assert renders[0]['idempotency_key'] == 'wrapper:render'
 
 

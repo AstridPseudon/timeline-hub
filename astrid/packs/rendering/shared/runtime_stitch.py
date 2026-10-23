@@ -114,6 +114,7 @@ def publish_authoring_proposal(
     idempotency_key: str,
     requester_session=None,
     label="Assemble timeline", steps=None, merge="fields", reads=None, dry_run=False,
+    group_id=None,
 ) -> Mapping[str, Any]:
     """Requester commit followed by ordinary, exact-revision render admission.
 
@@ -140,7 +141,7 @@ def publish_authoring_proposal(
     result = client.tasks.publish_timeline_render(
         producer.get("attempt_id"), proposal, requester_session=requester_session,
         idempotency_key=idempotency_key, label=label, steps=steps, merge=merge,
-        reads=reads, dry_run=dry_run,
+        reads=reads, group_id=group_id, dry_run=dry_run,
     )
     if not result.ok:
         from astrid.sdk.workspace_client import WorkspaceClientError

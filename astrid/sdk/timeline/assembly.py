@@ -168,7 +168,7 @@ def read_assembly_proposal(session, task_id, attempt_id):
 
 
 def commit_assembly(session, proposal, *, idempotency_key, label, steps=None,
-                    merge="fields", reads=None, dry_run=False):
+                    merge="fields", reads=None, group_id=None, dry_run=False):
     """Commit the exact settled proposal under its original requesting actor.
 
     Requeueing a completed batch deliberately retains its original base and body:
@@ -190,6 +190,8 @@ def commit_assembly(session, proposal, *, idempotency_key, label, steps=None,
     options = {'label': label, 'steps': copy.deepcopy(steps), 'merge': merge}
     if reads is not None:
         options['reads'] = copy.deepcopy(reads)
+    if group_id is not None:
+        options['group_id'] = group_id
     base = {'revision_id': batch['base_revision_id'],
             'publication_id': batch['base_publication_id']}
     with session.outbox.locked():

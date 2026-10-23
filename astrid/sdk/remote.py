@@ -2023,7 +2023,7 @@ class RemoteTasks(_RemoteFamily):
     def publish_timeline_render(self, attempt_id: str, publication: Mapping[str, Any], *,
                                 idempotency_key: str, requester_session=None,
                                 label="Assemble timeline", steps=None, merge="fields",
-                                reads=None, dry_run=False):
+                                reads=None, group_id=None, dry_run=False):
         """Publish a settled assembler result through its requester's commit outbox."""
         from .timeline._common import TimelineEditError
         from .timeline.assembly import commit_assembly
@@ -2038,6 +2038,7 @@ class RemoteTasks(_RemoteFamily):
             result = commit_assembly(
                 requester_session, publication, idempotency_key=idempotency_key,
                 label=label, steps=steps, merge=merge, reads=reads, dry_run=dry_run,
+                group_id=group_id,
             )
             return DomainResult.success(
                 result["data"], receipt=CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None,
