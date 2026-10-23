@@ -6,7 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from runtime_protocol.errors import AuthorizationError, ProtocolError
+from runtime_protocol.contract_metadata import SCHEMA_DIGEST
+from runtime_protocol.errors import AuthorizationError, ProtocolError, RuntimeErrorBase
 from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_execution import CommitExecutionCoordinator, CommitOutcomeUnknown
 from runtime_protocol.timeline_commit_store import request_identity
@@ -45,6 +46,93 @@ def test_commit_duplicate_move_winner_between_lookup_and_execution(realm):
 
 def test_commit_duplicate_add_winner_between_lookup_and_execution(realm):
     _winner_before_lock(realm, "clip.add")
+
+
+def test_mounted_service_forwards_full_v2_context_and_structured_invalid_reply(request):
+    service, _, project, head, _ = request.getfixturevalue("realm")
+    reads = [{"kind": "scope", "ref": "parent", "path": []}]
+    patch = {
+        "op": "set",
+        "ref": "parent",
+        "path": ["config", "title"],
+        "before": {"state": "absent"},
+        "value": "Opening",
+    }
+    body = {
+        "api_version": 1,
+        "project_id": project,
+        "timeline_id": "main",
+        "base_revision_id": head["revision_id"],
+        "base_publication_id": head["publication_id"],
+        "commands": [{
+            "schema_version": 1,
+            "op": "doc.patch",
+            "version": "1",
+            "select": None,
+            "args": {"changes": [patch]},
+        }],
+        "label": "Opening title",
+        "steps": [{
+            "id": "opening",
+            "label": "Opening title",
+            "intent": "Set the opening title",
+            "tags": ["title"],
+            "command_ordinals": [0],
+            "patch": [patch],
+            "reads": reads,
+        }],
+        "merge": "fields",
+        "reads": reads,
+        "source": {"via": "app", "detail": "mounted-v2"},
+    }
+    seen = []
+
+    class InvalidProvider:
+        provider_id = "astrid-v1"
+        interface_version = 1
+        contract_digest = SCHEMA_DIGEST
+
+        def commit(self, context, port):
+            seen.append((copy.deepcopy(context), port._provider_context()))
+            return {
+                "http_status": 422,
+                "code": "invalid_commit",
+                "message": "fixture provider rejected the candidate",
+                "details": {
+                    "status": "invalid",
+                    "reason": "fixture_rejection",
+                    "base": None,
+                    "current": None,
+                    "conflicts": [],
+                    "path": ["commands", 0, "args", "changes"],
+                    "hint": "inspect the patch",
+                    "suggested_command": "timeline show",
+                },
+            }
+
+    service.register_timeline_commit_provider(InvalidProvider())
+    with pytest.raises(RuntimeErrorBase) as error:
+        service.commit_timeline(
+            project,
+            "main",
+            body,
+            idempotency_key="mounted-v2-invalid",
+            publisher="authenticated-editor",
+            invocation_path=f"/v1/projects/{project}/timelines/main/commit",
+            authorize=lambda: None,
+        )
+
+    assert error.value.status == 422
+    assert error.value.code == "invalid_commit"
+    assert error.value.details["status"] == "invalid"
+    assert error.value.details["path"] == ["commands", 0, "args", "changes"]
+    assert len(seen) == 1
+    context, provider_context = seen[0]
+    assert context["request"] == body
+    assert context["invocation"]["body"] == body
+    assert provider_context == context
+    assert context["publisher"] == "authenticated-editor"
+    assert context["idempotency_key"] == "mounted-v2-invalid"
 
 
 def _winner_before_lock(realm, op):
