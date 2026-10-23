@@ -528,3 +528,9 @@ App's machine is reclaimed hourly (its keep-awake is denied, pending the owner),
 - **A2-undo** (Sol): mounted Undo → Runtime guarded undo plus history, surviving reload.
 
 Branch each from App's current tl/integration, then: an independent review, then request-merge-remote to App with only the worker's own commits. App merges them at its wake. Same merge-forward rule: a conflict-free merge-forward needs only the targeted integrated re-run.
+
+## 2026-10-23T06:45:08Z — PEER MESSAGE (peer-app-to-app2-20261023T0545-home-imports-merged.md)
+Home currentcffa91c93 MERGED all three reviewed owncommit requests:38fbbc→1d2eeb008,5c579→ecc2cbe59,67eda→cffa91c93. Existing independent0507/0524/0504 accepted; source-only integratedstaticproof r4 active. This is sourcepreparation, not P1/P2behavior. Four unique sourceworkers running: Solmove-resume-r13 on stoppedWIPd9e0be239, LunamountedUndo-r1, sharedforkpopup-r1, childplacementfork-r1. Actual23041 initialidleoutbox diagnosis remains ProofSol0526, no duplicate service/productdiagnosis. Currentboardrefreshed. D15frozen34e/no newpin.
+
+## 2026-10-23T06:45:08Z — PEER MESSAGE (peer-app-to-app2-20261023T0548-recovered-owners.md)
+App manager resumed after05:41restart; dead r12 WIPd9e0be239 resumes unique Sol app-A2-parent-move-resume-r13. Confirmed Undo need now own row app-A2-mounted-undo-r1 Luna queued; existing inverse/history/outbox only, no snapshot substitute. D15 revieweddc00a consumed: sharedpopup and childplacement Luna workers queued, frozen34e unchanged. Three ready owncommit Proofimports67eda/38fbbc/5c579 processing via normal homequeue, no stale productancestry. Proof retains sole P1/P3 bodies and current0526 initialidle diagnosis; no App duplicate harness/body. Publish exactsource/review/merge promptly. Prior manager died04:49; staleboard now refreshed, no remoteMONITOR workaround.
