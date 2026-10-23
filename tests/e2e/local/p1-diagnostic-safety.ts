@@ -6,6 +6,7 @@ export const DIAGNOSTIC_MAX_KEYS = 40;
 export const DIAGNOSTIC_MAX_ARRAY_ITEMS = 40;
 export const DIAGNOSTIC_MAX_STRING = 500;
 const DIAGNOSTIC_MAX_INPUT_STRING = 4 * 1024;
+const DIAGNOSTIC_PRIORITY_MAX_ITEMS = 4;
 
 const SENSITIVE_KEY = /^(?:authorization|cookie|set-cookie|x-api-key|api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|client[_-]?secret|private[_-]?key|session)$/i;
 const SENSITIVE_ASSIGNMENT = /(["']?)([A-Za-z0-9_-]*(?:authorization|cookie|set-cookie|x-api-key|api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|client[_-]?secret|private[_-]?key|session)[A-Za-z0-9_-]*)\1(\s*[:=]\s*)(?:"(?:\\.|[^"\\])*"?|'(?:\\.|[^'\\])*'?|\{[\s\S]*|\[[\s\S]*|[^\s,;}\]]+)/gi;
@@ -38,6 +39,15 @@ export function redactDiagnosticText(value: string): string {
     .replace(/([/?][^\s"'<>?]*)\?[^\s"'<>]*/g, '$1[QUERY_REDACTED]')
     .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '[REDACTED_JWT]');
   return truncateUtf8(redacted, DIAGNOSTIC_MAX_STRING);
+}
+
+export type DiagnosticDomObservation = { attached: boolean; visible: boolean };
+
+export function diagnosticObservedVisibility(observations: readonly DiagnosticDomObservation[]): boolean | 'UNKNOWN' {
+  if (observations.length !== 1) return 'UNKNOWN';
+  const observation = observations[0];
+  if (typeof observation.attached !== 'boolean' || typeof observation.visible !== 'boolean') return 'UNKNOWN';
+  return observation.attached ? observation.visible : 'UNKNOWN';
 }
 
 function isSensitiveKey(key: string): boolean {
@@ -124,28 +134,29 @@ function priorityRecord(value: unknown, keys: readonly string[]): unknown {
   return result;
 }
 
-function priorityList(value: unknown): unknown {
+function priorityList(value: unknown, transform: (item: unknown) => unknown = redactDiagnosticValue): unknown {
   if (!Array.isArray(value)) return redactDiagnosticValue(value);
-  const items = value.slice(0, DIAGNOSTIC_MAX_ARRAY_ITEMS).map((item) => {
+  const items = value.slice(0, DIAGNOSTIC_PRIORITY_MAX_ITEMS).map((item) => {
     try {
-      return redactDiagnosticValue(item);
+      return transform(item);
     } catch {
       return '[UNREADABLE]';
     }
   });
-  return { count: value.length, items, summarized: true, truncated: value.length > DIAGNOSTIC_MAX_ARRAY_ITEMS };
+  return { count: value.length, items, summarized: true, truncated: value.length > DIAGNOSTIC_PRIORITY_MAX_ITEMS };
 }
 
 function priorityReads(value: unknown): unknown {
   if (Array.isArray(value)) {
-    return { count: value.length, summarized: true, truncated: value.length > DIAGNOSTIC_MAX_ARRAY_ITEMS };
+    const items = value.slice(0, DIAGNOSTIC_MAX_ARRAY_ITEMS).map((item) => priorityRecord(item, ['kind', 'ref', 'path', 'state']));
+    return { count: value.length, items, summarized: true, truncated: value.length > DIAGNOSTIC_MAX_ARRAY_ITEMS };
   }
   return redactDiagnosticValue(value);
 }
 
 function priorityBasis(value: unknown): unknown {
   if (!Array.isArray(value)) return redactDiagnosticValue(value);
-  const items = value.slice(0, DIAGNOSTIC_MAX_ARRAY_ITEMS).map((item) => {
+  const items = value.slice(0, DIAGNOSTIC_PRIORITY_MAX_ITEMS).map((item) => {
     const safeRecord = priorityRecord(item, ['index', 'key', 'baseRevisionId', 'basePublicationId', 'merge']);
     if (!safeRecord || typeof safeRecord !== 'object' || Array.isArray(safeRecord)) return safeRecord;
     const record = safeRecord as Record<string, unknown>;
@@ -158,7 +169,33 @@ function priorityBasis(value: unknown): unknown {
     }
     return record;
   });
-  return { count: value.length, items, summarized: true, truncated: value.length > DIAGNOSTIC_MAX_ARRAY_ITEMS };
+  return { count: value.length, items, summarized: true, truncated: value.length > DIAGNOSTIC_PRIORITY_MAX_ITEMS };
+}
+
+function priorityOwner(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return redactDiagnosticValue(value);
+  const record = value as Record<string, unknown>;
+  const result = priorityRecord(record, ['ownerId', 'generation', 'intentCount', 'acceptedHead']);
+  try {
+    if (Object.prototype.hasOwnProperty.call(record, 'pending')) {
+      const pending = record.pending;
+      if (!pending || typeof pending !== 'object' || Array.isArray(pending)) {
+        result.pending = redactDiagnosticValue(pending);
+      } else {
+        const pendingRecord = pending as Record<string, unknown>;
+        result.pending = priorityRecord(pendingRecord, ['intentId', 'request', 'outcome']);
+        if (pendingRecord.request && typeof pendingRecord.request === 'object' && !Array.isArray(pendingRecord.request)) {
+          (result.pending as Record<string, unknown>).request = priorityRecord(pendingRecord.request, ['method', 'path', 'key']);
+        }
+        if (pendingRecord.outcome && typeof pendingRecord.outcome === 'object' && !Array.isArray(pendingRecord.outcome)) {
+          (result.pending as Record<string, unknown>).outcome = priorityRecord(pendingRecord.outcome, ['kind', 'status', 'reason']);
+        }
+      }
+    }
+  } catch {
+    result.pending = '[UNREADABLE]';
+  }
+  return result;
 }
 
 function priorityOutbox(value: unknown): unknown {
@@ -167,7 +204,7 @@ function priorityOutbox(value: unknown): unknown {
   const result = priorityRecord(record, ['readFailed', 'summary']);
   try {
     if (Object.prototype.hasOwnProperty.call(record, 'owners')) {
-      result.owners = Array.isArray(record.owners) ? priorityList(record.owners) : redactDiagnosticValue(record.owners);
+      result.owners = Array.isArray(record.owners) ? priorityList(record.owners, priorityOwner) : redactDiagnosticValue(record.owners);
     }
   } catch {
     result.owners = '[UNREADABLE]';
@@ -207,8 +244,16 @@ function priorityValue(value: unknown): unknown {
   if (!recognized) return null;
   if ('displayedHead' in result && result.displayedHead && typeof result.displayedHead === 'object') {
     const displayedHead = result.displayedHead as Record<string, unknown>;
-    for (const key of ['commitReplies', 'currentWireHeads', 'readonlyReplies']) {
-      if (Array.isArray(displayedHead[key])) displayedHead[key] = priorityList(displayedHead[key]);
+    if (Array.isArray(displayedHead.commitReplies)) {
+      displayedHead.commitReplies = priorityList(displayedHead.commitReplies, (item) => priorityRecord(item, ['index', 'head']));
+    }
+    if (Array.isArray(displayedHead.currentWireHeads)) {
+      displayedHead.currentWireHeads = priorityList(displayedHead.currentWireHeads, (item) => priorityRecord(item, [
+        'method', 'route', 'key', 'status', 'head', 'replyReadFailed',
+      ]));
+    }
+    if (Array.isArray(displayedHead.readonlyReplies)) {
+      displayedHead.readonlyReplies = priorityList(displayedHead.readonlyReplies, (item) => priorityRecord(item, ['route', 'status', 'head']));
     }
   }
   if ('outbox' in result && result.outbox && typeof result.outbox === 'object') {

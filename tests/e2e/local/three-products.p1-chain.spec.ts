@@ -5,7 +5,13 @@ import type { CommitRequest } from '../../../src/integrations/runtime/timeline-c
 import { APP_ENTRY_ROUTE, commandOutboxes, expectConnected, firstTrackName, test as appTest } from './support/app.ts';
 import { ASTRID_PYTHON, AstridCli } from './support/astrid.ts';
 import { harnessUnavailableReason, type DirectHarness } from './support/harness.ts';
-import { logDiagnostic, logPriorityDiagnostic, redactDiagnosticText, redactDiagnosticValue } from './p1-diagnostic-safety.ts';
+import {
+  diagnosticObservedVisibility,
+  logDiagnostic,
+  logPriorityDiagnostic,
+  redactDiagnosticText,
+  redactDiagnosticValue,
+} from './p1-diagnostic-safety.ts';
 
 const CEILING = { timeout: 90_000 };
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
@@ -18,7 +24,6 @@ type CommitPost = { body: CommitRequest; raw: string; key: string; status?: numb
 type DiagnosticReadonlyTraffic = {
   method: string;
   route: string;
-  requestBody: string | null;
   status?: number;
   reply?: unknown;
 };
@@ -365,7 +370,7 @@ function observe(page: Page, captureReadonlyTraffic = false) {
     }
     const route = captureReadonlyTraffic ? diagnosticRoute(path) : undefined;
     if (route && !COMMITS.test(path)) {
-      const record = { method: request.method(), route, requestBody: request.postData() ?? null };
+      const record = { method: request.method(), route };
       boundedPush(readonlyTraffic, record);
       readonlyByRequest.set(request, record);
     }
@@ -463,53 +468,67 @@ async function splitSource(page: Page, seed: ChainSeed) {
 async function sourceWindowSnapshot(page: Page, clipId: string, input: any): Promise<DiagnosticSourceWindow> {
   const sourceIn: DiagnosticSourceWindow['sourceIn'] = { value: 'UNKNOWN', numericValue: 'UNKNOWN', visible: 'UNKNOWN' };
   try {
-    sourceIn.visible = await input.isVisible();
+    const snapshots = await input.evaluateAll((nodes: Element[]) => nodes.slice(0, 2).map((node) => {
+      const element = node as HTMLInputElement;
+      const style = window.getComputedStyle(element);
+      const box = element.getBoundingClientRect();
+      return {
+        attached: node.isConnected,
+        visible: style.visibility !== 'hidden' && style.display !== 'none' && box.width > 0 && box.height > 0,
+        value: element.value,
+      };
+    }));
+    sourceIn.visible = diagnosticObservedVisibility(snapshots);
+    if (snapshots.length === 1 && snapshots[0].attached) {
+      const value = snapshots[0].value;
+      sourceIn.value = redactDiagnosticText(value);
+      const numericValue = Number(value);
+      sourceIn.numericValue = value.trim() !== '' && Number.isFinite(numericValue) ? numericValue : 'UNKNOWN';
+    }
   } catch {
     sourceIn.visible = 'UNKNOWN';
-  }
-  try {
-    const value = await input.inputValue();
-    sourceIn.value = redactDiagnosticText(value);
-    const numericValue = Number(value);
-    sourceIn.numericValue = value.trim() !== '' && Number.isFinite(numericValue) ? numericValue : 'UNKNOWN';
-  } catch {
     sourceIn.value = 'UNKNOWN';
     sourceIn.numericValue = 'UNKNOWN';
   }
 
-  const selectedClip = page.locator(`.clip-action[data-clip-id="${clipId}"]`).first();
+  const selectedClip = page.locator(`.clip-action[data-clip-id="${clipId}"]`);
   let identity: DiagnosticSourceWindow['selectedClip']['identity'] = 'UNKNOWN';
   let status: DiagnosticSourceWindow['selectedClip']['status'] = 'UNKNOWN';
   let text: DiagnosticSourceWindow['selectedClip']['text'] = 'UNKNOWN';
   try {
-    const details = await selectedClip.evaluate((node) => ({
-      tagName: node.tagName,
-      id: node.id || null,
-      clipId: node.getAttribute('data-clip-id'),
-      testId: node.getAttribute('data-testid'),
-      ariaSelected: node.getAttribute('aria-selected'),
-      className: typeof node.className === 'string' ? node.className : null,
-      status: node.getAttribute('data-status') ?? node.getAttribute('data-state') ?? 'UNKNOWN',
-      text: node.textContent?.trim() ?? '',
+    const snapshots = await selectedClip.evaluateAll((nodes: Element[]) => nodes.slice(0, 2).map((node) => {
+      const style = window.getComputedStyle(node);
+      const box = node.getBoundingClientRect();
+      return {
+        attached: node.isConnected,
+        visible: style.visibility !== 'hidden' && style.display !== 'none' && box.width > 0 && box.height > 0,
+        identity: {
+          tagName: node.tagName,
+          id: node.id || null,
+          clipId: node.getAttribute('data-clip-id'),
+          testId: node.getAttribute('data-testid'),
+          ariaSelected: node.getAttribute('aria-selected'),
+          className: typeof node.className === 'string' ? node.className : null,
+        },
+        status: node.getAttribute('data-status') ?? node.getAttribute('data-state') ?? 'UNKNOWN',
+        text: node.textContent?.trim() ?? '',
+      };
     }));
-    identity = {
-      tagName: details.tagName,
-      id: details.id,
-      clipId: details.clipId,
-      testId: details.testId,
-      ariaSelected: details.ariaSelected,
-      className: details.className,
-    };
-    status = details.status;
-    text = redactDiagnosticText(details.text);
+    const visibility = diagnosticObservedVisibility(snapshots);
+    if (snapshots.length === 1 && snapshots[0].attached) {
+      const details = snapshots[0];
+      identity = details.identity;
+      status = details.status;
+      text = redactDiagnosticText(details.text);
+      return { rightId: clipId, sourceIn, selectedClip: { identity, visible: visibility, status, text } };
+    }
+    return { rightId: clipId, sourceIn, selectedClip: { identity, visible: 'UNKNOWN', status, text } };
   } catch {
     identity = 'UNKNOWN';
     status = 'UNKNOWN';
     text = 'UNKNOWN';
   }
-  let visible: DiagnosticSourceWindow['selectedClip']['visible'] = 'UNKNOWN';
-  try { visible = await selectedClip.isVisible(); } catch { visible = 'UNKNOWN'; }
-  return { rightId: clipId, sourceIn, selectedClip: { identity, visible, status, text } };
+  return { rightId: clipId, sourceIn, selectedClip: { identity, visible: 'UNKNOWN', status, text } };
 }
 
 async function trimSourceWindow(page: Page, clipId: string, value: string) {
@@ -642,28 +661,43 @@ function diagnosticHead(value: unknown): { revisionId: string; publicationId: st
   return null;
 }
 
+function summarizeBasisReads(value: unknown) {
+  if (!Array.isArray(value)) return { count: 'UNKNOWN', items: [], summarized: true, truncated: false };
+  const items = value.slice(0, DIAGNOSTIC_LIMIT).map((read) => {
+    if (!read || typeof read !== 'object' || Array.isArray(read)) return { kind: 'UNKNOWN', ref: 'UNKNOWN', path: 'UNKNOWN' };
+    const record = read as Record<string, unknown>;
+    return {
+      kind: typeof record.kind === 'string' ? record.kind : 'UNKNOWN',
+      ref: typeof record.ref === 'string' ? record.ref : 'UNKNOWN',
+      path: Array.isArray(record.path) ? record.path.filter((part): part is string => typeof part === 'string') : 'UNKNOWN',
+      state: record.state && typeof record.state === 'object' && !Array.isArray(record.state)
+        ? ((record.state as Record<string, unknown>).state ?? 'UNKNOWN')
+        : 'UNKNOWN',
+    };
+  });
+  return { count: value.length, items, summarized: true, truncated: value.length > DIAGNOSTIC_LIMIT };
+}
+
 function summarizeFailureOutboxes(records: any[]) {
   return records.slice(0, DIAGNOSTIC_LIMIT).map((record) => ({
-    ownerId: record.ownerId,
-    generation: record.generation,
-    intents: Array.isArray(record.intents) ? record.intents.slice(0, DIAGNOSTIC_LIMIT).map((intent: any) => ({
-      id: intent.id,
-      basis: redactDiagnosticValue(intent.basis),
-      readyBase: redactDiagnosticValue(intent.readyBase),
-      conflict: redactDiagnosticValue(intent.conflict),
-    })) : [],
+    ownerId: typeof record.ownerId === 'string' ? record.ownerId : 'UNKNOWN',
+    generation: typeof record.generation === 'number' ? record.generation : 'UNKNOWN',
+    intentCount: Array.isArray(record.intents) ? record.intents.length : 'UNKNOWN',
     pending: record.pending ? {
-      intentId: record.pending.intentId,
+      intentId: typeof record.pending.intentId === 'string' ? record.pending.intentId : 'UNKNOWN',
       request: record.pending.request ? {
-        method: record.pending.request.method,
-        path: String(record.pending.request.path ?? '').split(/[?#]/, 1)[0],
-        key: record.pending.request.key,
-        body: redactDiagnosticText(String(record.pending.request.body ?? '')),
+        method: typeof record.pending.request.method === 'string' ? record.pending.request.method : 'UNKNOWN',
+        path: String(record.pending.request.path ?? '').split(/[?#]/, 1)[0] || 'UNKNOWN',
+        key: typeof record.pending.request.key === 'string' ? record.pending.request.key : 'UNKNOWN',
       } : null,
-      outcome: redactDiagnosticValue(record.pending.outcome),
+      outcome: record.pending.outcome ? {
+        kind: typeof record.pending.outcome.kind === 'string' ? record.pending.outcome.kind : 'UNKNOWN',
+        status: typeof record.pending.outcome.status === 'number' ? record.pending.outcome.status : 'UNKNOWN',
+        reason: typeof record.pending.outcome.reason === 'string' ? record.pending.outcome.reason : 'UNKNOWN',
+      } : null,
     } : null,
     rejected: record.pending?.outcome?.kind === 'rejected',
-    acceptedHead: redactDiagnosticValue(record.accepted?.head),
+    acceptedHead: diagnosticHead(record.accepted?.head),
   }));
 }
 
@@ -797,17 +831,13 @@ async function captureSecondCaseFailureDiagnostics({
     const readonlyTraffic = traffic.readonlyTraffic.slice(0, DIAGNOSTIC_LIMIT).map((record) => ({
       method: record.method,
       route: record.route,
-      requestBody: record.requestBody === null ? null : redactDiagnosticText(record.requestBody),
       status: record.status ?? null,
-      reply: redactDiagnosticValue(record.reply),
       displayedHead: diagnosticHead(record.reply),
     }));
     const commitTraffic = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
       index,
       key: post.key,
       status: post.status ?? null,
-      request: { raw: redactDiagnosticText(post.raw), body: redactDiagnosticValue(post.body) },
-      reply: redactDiagnosticValue(post.response),
       replyHead: diagnosticHead(post.response),
     }));
     const basis = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
@@ -816,7 +846,7 @@ async function captureSecondCaseFailureDiagnostics({
       baseRevisionId: (post.body as any).base_revision_id ?? null,
       basePublicationId: (post.body as any).base_publication_id ?? null,
       merge: (post.body as any).merge ?? null,
-      reads: redactDiagnosticValue((post.body as any).reads),
+      reads: summarizeBasisReads((post.body as any).reads),
     }));
     const priorityBasis = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
       index,
@@ -848,8 +878,7 @@ async function captureSecondCaseFailureDiagnostics({
       console: signals.consoleErrors.slice(0, 4),
       requestFailures: signals.requestFailures.slice(0, 4),
     };
-    // Keep causal state ahead of the verbose readonly packet. The latter can contain a
-    // large response and is intentionally retained below as failure evidence.
+    // Keep causal state ahead of the bounded structural traffic summaries.
     logPriorityDiagnostic('P1 second-case priority diagnostics', {
       case: {
         projectId: harness.seed.projectId,
