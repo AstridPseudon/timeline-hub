@@ -388,6 +388,101 @@ def test_rebase_follows_shared_physical_successor_for_disjoint_child_fields():
     assert images[0]['payload']['source_window'] == {'start': 4, 'end': 8}
 
 
+@pytest.mark.parametrize('damage', [
+    'missing', 'digest', 'owner', 'edge_before', 'edge_after', 'boundary', 'unrelated', 'effect_before', 'effects_missing',
+])
+def test_rebase_requires_source_bound_materialization_and_exact_managed_edges(monkeypatch, damage):
+    realm = DetachedRealm()
+    base = copy.deepcopy(realm.head)
+    submit(realm, patch(change(['unknown'], present([1, 2]), [3], ref='internal:chapter-1')), reads=[])
+    head, accepted = copy.deepcopy(realm.head), len(realm.accepted)
+    history = DetachedPort.history
+
+    def altered_history(port, *args, **kwargs):
+        page = history(port, *args, **kwargs)
+        for entry in page['items']:
+            if damage == 'effects_missing':
+                entry['records']['steps'][0].pop('patch')
+            elif damage == 'effect_before':
+                effect = next(effect for effect in entry['records']['steps'][0]['patch']
+                              if effect['ref'] == 'parent' and effect['path'][-1] == 'shot_revision_id')
+                effect['before'] = present('unrelated-shot')
+            for record in entry['records']['commands']:
+                if damage == 'missing':
+                    record['bindings'] = [b for b in record['bindings'] if b['key'] != 'commit.materialization']
+                for binding in record['bindings']:
+                    if binding['key'] != 'commit.materialization':
+                        continue
+                    if damage == 'digest':
+                        binding['content_digest'] = 'sha256:' + '0' * 64
+                    elif damage in ('owner', 'edge_before', 'edge_after'):
+                        binding[damage] = 'unrelated'
+                    elif damage == 'boundary':
+                        binding['boundary']['evaluated_head'] = head
+        return page
+
+    monkeypatch.setattr(DetachedPort, 'history', altered_history)
+    if damage == 'unrelated':
+        # An authorized closure may replace pins with byte-equal, unrelated
+        # images. The earlier accepted source proof does not authorize them.
+        document = realm.documents[head['revision_id']]
+        child, shot = document['internal_timeline_revisions'][0], document['shot_revisions'][0]
+        child['revision_id'] = 'unrelated-child'
+        shot.update(revision_id='unrelated-shot', internal_timeline_revision_id=child['revision_id'])
+        shot['payload']['internal_timeline_revision_id'] = child['revision_id']
+        shot['content_digest'] = _digest(shot['payload'])
+        for row in document['parent_revision']['payload']['occurrences']:
+            row['shot_revision_id'] = shot['revision_id']
+        document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+        from astrid.sdk.timeline.commit import _manifest
+        document['dependency_manifest'] = _manifest([shot], [child], document['dependency_manifest']['media'], [])
+    document = copy.deepcopy(realm.documents[head['revision_id']])
+    with pytest.raises(CommitRejected) as error:
+        submit(realm, patch(change(['source_window'], present({'start': 4, 'end': 9}), {'start': 4, 'end': 8},
+                                  ref='internal-revision:internal-1')), reads=[], base=base)
+    assert error.value.failure['details']['reason'] == 'history_unavailable'
+    assert realm.head == head and len(realm.accepted) == accepted
+    assert realm.documents[head['revision_id']] == document
+
+
+@pytest.mark.parametrize('grouped', [False, True])
+def test_authenticated_successor_chain_lands_on_exact_physical_image(grouped):
+    realm = DetachedRealm()
+    base = copy.deepcopy(realm.head)
+    calls = [patch(change(['unknown'], present(old), new, ref='internal:chapter-1'))
+             for old, new in (([1, 2], [3]), ([3], [4]))]
+    if grouped:
+        submit(realm, *calls, reads=[], steps=[step('first', 0, calls[0]), step('second', 1, calls[1])])
+    else:
+        for call in calls:
+            submit(realm, call, reads=[])
+    landing = copy.deepcopy(realm.documents[realm.head['revision_id']])
+    accepted = submit(realm, patch(change(['source_window'], present({'start': 4, 'end': 9}), {'start': 4, 'end': 8},
+                                         ref='internal-revision:internal-1')), reads=[], base=base)
+    assert accepted['data']['rebased_onto']['revision_id'] == landing['parent_revision']['revision_id']
+    bindings = realm.entries[-1]['records']['commands'][0]['bindings']
+    source = next(b for b in bindings if b['key'].startswith('doc.patch:'))
+    assert source['physical_ref'] == 'internal-revision:' + landing['internal_timeline_revisions'][0]['revision_id']
+    image = accepted['data']['canonical_document']['internal_timeline_revisions'][0]
+    assert image['payload']['unknown'] == [4]
+    assert image['payload']['source_window'] == {'start': 4, 'end': 8}
+
+
+def test_native_parent_mirrors_capture_one_logical_effect_and_undo_exactly():
+    realm = DetachedRealm()
+    original = copy.deepcopy(realm.documents[realm.head['revision_id']])
+    call = {'schema_version': 1, 'op': 'clip.set', 'version': '1', 'select': 'parent/clip:clip-a',
+            'args': {'values': {'hold': 3}, 'clear': []}}
+    accepted = submit(realm, call, reads=[])
+    effects = realm.entries[-1]['records']['steps'][0]['patch']
+    assert effects == [change(['config', 'clips', 'id:clip-a', 'hold'], present(2), 3)]
+    landed = accepted['data']['canonical_document']['parent_revision']['payload']
+    assert landed['clips'] == landed['config']['clips']
+    assert landed['clips'][0]['hold'] == 3
+    restored = realm.call([inverse([accepted['receipt']['receipt_id']])])['data']['canonical_document']
+    assert restored == original
+
+
 def test_still_reachable_original_image_does_not_follow_other_owners_branch():
     document = document_fixture()
     for occurrence in document['parent_revision']['payload']['occurrences']:

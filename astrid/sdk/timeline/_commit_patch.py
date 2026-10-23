@@ -177,7 +177,20 @@ def effect_diff(before, after):
             item['value'] = copy.deepcopy(right['value'])
         result.append(item)
 
-    walk('parent', [], present(old['parent']['payload']), present(new['parent']['payload']))
+    def logical_parent(image):
+        payload = copy.deepcopy(image['payload'])
+        for mirror in ('clips', 'registry'):
+            if mirror not in payload:
+                continue
+            value = payload.pop(mirror)
+            config = payload.setdefault('config', {})
+            if mirror in config and not equal(present(config[mirror]), present(value)):
+                raise CommandError('contradictory parent mirrors', kind='capture_mismatch',
+                                   ref='parent', path=['config', mirror])
+            config[mirror] = value
+        return payload
+
+    walk('parent', [], present(logical_parent(old['parent'])), present(logical_parent(new['parent'])))
     for ref in sorted(old.keys() & new.keys() - {'parent'}):
         walk(ref, [], present(old[ref]['payload']), present(new[ref]['payload']))
     for prefix in ('shot-revision:', 'internal-revision:'):
@@ -415,10 +428,13 @@ class CommitPatch:
                 if before.document == after.document or all(
                         change['ref'] == 'parent' for i in step['command_ordinals']
                         for change in self.calls[i]['args']['changes']):
-                    effects = [copy.deepcopy(binding['change']) for i in step['command_ordinals']
+                    effects = [{**copy.deepcopy(binding['change']),
+                                'path': normalized_path(binding['physical_ref'], binding['change']['path'])}
+                               for i in step['command_ordinals']
                                for binding in plan.records[i]['bindings']
                                if binding.get('key', '').startswith('doc.patch:')]
-            elif step['patch'] and any(claim not in effects for claim in step['patch']):
+            elif step['patch'] and any({**claim, 'path': normalized_path(claim['ref'], claim['path'])}
+                                      not in effects for claim in step['patch']):
                 raise CommandError('semantic step assertion differs from execution', kind='capture_mismatch')
             step['patch'] = effects
             step['dependencies'] = dependencies
@@ -524,6 +540,54 @@ def _shape_changed(site, dependency):
     return set(old) != set(new) or dependency.get('order') is not None and old != new
 
 
+def _managed_boundaries(entry, before, after):
+    """Project managed edges through authenticated step effects, including transient roots."""
+    from ._doc_patch import replace_at
+    from .commit import _digest
+
+    images = {ref: image for ref, image in before.images.items() if ref != 'parent'}
+    parent = {'occurrences': copy.deepcopy(before.images['parent']['payload']['occurrences'])}
+    steps = entry['records'].get('steps', [])
+    if not steps:
+        yield images, parent['occurrences'], {
+            ref: image for ref, image in after.images.items() if ref != 'parent'
+        }, after.images['parent']['payload']['occurrences'], entry['records']['commands'], None
+        return
+    for step in steps:
+        output, result = copy.deepcopy(images), copy.deepcopy(parent)
+        for effect in step['patch']:
+            ref, path = effect['ref'], effect['path']
+            replacement = present(effect['value']) if effect['op'] == 'set' else ABSENT
+            if ref == 'parent' and (not path or path[:1] == ['occurrences']):
+                expected = (present(effect['before']['value']['occurrences']) if not path else effect['before'])
+                actual = present(result['occurrences']) if not path else value_at(result, ref, path)
+                if not equal(actual, expected):
+                    raise CommandError('managed edge input differs from history', kind='history_unavailable')
+                if not path:
+                    result['occurrences'] = copy.deepcopy(effect['value']['occurrences'])
+                else:
+                    replace_at(result, ref, path, replacement)
+            elif ref != 'parent' and not path:
+                actual = present(output[ref]['payload']) if ref in output else ABSENT
+                if not equal(actual, effect['before']):
+                    raise CommandError('physical root input differs from history', kind='history_unavailable')
+                if replacement == ABSENT:
+                    output.pop(ref, None)
+                else:
+                    output[ref] = {'revision_id': ref.partition(':')[2],
+                                   'content_digest': _digest(effect['value']),
+                                   'payload': copy.deepcopy(effect['value'])}
+                    if ref.startswith('shot-revision:'):
+                        output[ref]['internal_timeline_revision_id'] = effect['value']['internal_timeline_revision_id']
+        records = [entry['records']['commands'][ordinal] for ordinal in step['command_ordinals']]
+        yield images, parent['occurrences'], output, result['occurrences'], records, step
+        images, parent = output, result
+    actual = {ref: image['content_digest'] for ref, image in after.images.items() if ref != 'parent'}
+    if ({ref: image['content_digest'] for ref, image in images.items()} != actual
+            or parent['occurrences'] != after.images['parent']['payload']['occurrences']):
+        raise CommandError('step effects do not reach the verified closure', kind='history_unavailable')
+
+
 def rebase_patch(plan, entries, head_bundle, *, load_boundary):
     """Scan authenticated history before replay; final-byte equality never erases a write."""
     landing = Closure(head_bundle)
@@ -533,36 +597,21 @@ def rebase_patch(plan, entries, head_bundle, *, load_boundary):
     staged_predecessors = {binding['successor']: binding['physical_ref']
                           for record in plan.records for binding in record['bindings']
                           if binding.get('key') == 'commit.materialization'}
-    transitions, sites = [], []
+    transitions, sites, missing = [], [], set()
     for entry in entries:
         before_bundle, after_bundle = load_boundary(entry)
         boundary = Closure(before_bundle)
         output = Closure(after_bundle)
         records = entry['records']['commands']
+        site_start = len(sites)
         for record in records:
             sites.extend(record_sites(record, boundary))
-        site_start = len(sites) - sum(len(record_sites(record, boundary)) for record in records)
-        before_rows = {row['occurrence_id']: row for row in boundary.document['parent_revision']['payload']['occurrences']}
-        after_rows = {row['occurrence_id']: row for row in output.document['parent_revision']['payload']['occurrences']}
-        for identity in before_rows.keys() & after_rows.keys():
-            owner = 'occurrence:' + identity
-            # Native ownership replacement/fork is not continuation authority.
-            rebound = any(write['ref'] == owner and (not write['path'] or write['path'] == ['shot_id'])
-                          for record in records for write in record['writes'])
-            if rebound:
-                continue
-            old_shot = 'shot-revision:' + before_rows[identity]['shot_revision_id']
-            new_shot = 'shot-revision:' + after_rows[identity]['shot_revision_id']
-            old_internal = 'internal-revision:' + boundary.images[old_shot]['internal_timeline_revision_id']
-            new_internal = 'internal-revision:' + output.images[new_shot]['internal_timeline_revision_id']
-            for old, new in ((old_shot, new_shot), (old_internal, new_internal)):
-                if old != new:
-                    # These immutable boundaries and their native records were loaded
-                    # through Runtime's authenticated history port, never client facts.
-                    transitions.append((old, new, owner))
-                    for site in sites[site_start:]:
-                        if site['ref'] == old and site.get('owner') == owner:
-                            site['ref'] = new
+        try:
+            for old_images, old_rows, new_images, new_rows, records, step in _managed_boundaries(entry, boundary, output):
+                _materialization_sites(entry, old_images, old_rows, new_images, new_rows, records, step,
+                                       transitions, missing, sites[site_start:])
+        except (KeyError, TypeError, IndexError) as exc:
+            raise CommandError('incomplete materialization history', kind='history_unavailable') from exc
 
     def continuation(ref):
         if ref in staged_roots:
@@ -575,6 +624,9 @@ def rebase_patch(plan, entries, head_bundle, *, load_boundary):
                 raise CommandError('cyclic materialization history', kind='history_unavailable', ref=ref)
             visited.add(current)
             candidates = {new for old, new, _ in transitions if old == current}
+            if current in missing:
+                raise CommandError('missing authenticated materialization history',
+                                   kind='history_unavailable', ref=ref)
             if len(candidates) != 1:
                 raise CommandError('bound image has no unique authenticated successor', kind='binding_changed', ref=ref)
             current = candidates.pop()
@@ -650,3 +702,60 @@ def rebase_patch(plan, entries, head_bundle, *, load_boundary):
                 raise CommandError('intervening publication changed a guarded address', kind=kind,
                                    ref=guard['ref'], path=guard['path'])
     return expected
+
+
+def _materialization_sites(entry, old_images, old_rows, new_images, new_rows, records, step,
+                           transitions, missing, sites):
+    before_rows = {row['occurrence_id']: row for row in old_rows}
+    after_rows = {row['occurrence_id']: row for row in new_rows}
+    for identity in before_rows.keys() & after_rows.keys():
+        owner = 'occurrence:' + identity
+        # Native ownership replacement/fork is not continuation authority.
+        rebound = any(write['ref'] == owner and (not write['path'] or write['path'] == ['shot_id'])
+                      for record in records for write in record['writes'])
+        if rebound:
+            continue
+        old_shot = 'shot-revision:' + before_rows[identity]['shot_revision_id']
+        new_shot = 'shot-revision:' + after_rows[identity]['shot_revision_id']
+        old_internal = 'internal-revision:' + old_images[old_shot]['internal_timeline_revision_id']
+        new_internal = 'internal-revision:' + new_images[new_shot]['internal_timeline_revision_id']
+        for old, new, edge_before, edge_after in (
+                (old_shot, new_shot, old_internal, new_internal),
+                (old_internal, new_internal, old_shot, new_shot)):
+            if old != new:
+                # Pin turnover proves reachability, not continuation. Require the
+                # accepted source binding and both exact managed-edge boundaries.
+                proven = False
+                for record in records:
+                    for binding in record['bindings']:
+                        if (binding.get('key') != 'commit.materialization'
+                                or binding.get('physical_ref') != old
+                                or binding.get('owner') != owner + '/shot'):
+                            continue
+                        captured = binding.get('boundary', {})
+                        source = {'ref': old, 'physical_ref': old,
+                                  'revision_id': old_images[old]['revision_id'],
+                                  'content_digest': old_images[old]['content_digest'],
+                                  'owners': ['occurrence:' + row['occurrence_id'] + '/shot' for row in old_rows
+                                      if old == 'shot-revision:' + row['shot_revision_id'] or old == 'internal-revision:'
+                                      + old_images['shot-revision:' + row['shot_revision_id']]['internal_timeline_revision_id']]}
+                        if (any(binding.get(key) != value for key, value in source.items())
+                                or binding.get('successor') != new
+                                or binding.get('edge_before') != edge_before
+                                or binding.get('edge_after') != edge_after
+                                or captured.get('evaluated_head') != entry['previous']
+                                or captured.get('phase') != 'input'
+                                or captured.get('command_ordinal') != record['ordinal']
+                                or captured.get('step_id') != binding.get('step_id')
+                                or step is None or binding.get('step_id') != step['id']
+                                or record['ordinal'] != step['command_ordinals'][-1]):
+                            raise CommandError('materialization proof differs from verified edges',
+                                               kind='history_unavailable', ref=old)
+                        proven = True
+                if not proven:
+                    missing.add(old)
+                    continue
+                transitions.append((old, new, owner))
+                for site in sites:
+                    if site['ref'] == old and site.get('owner') == owner:
+                        site['ref'] = new
