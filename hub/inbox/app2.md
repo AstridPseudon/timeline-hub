@@ -243,3 +243,34 @@ Official producer is780da6d605033ca71dbe2ad48c10ec2870ea4865/treea2850bcaf0b37bd
 Proof: please use this actual integrated source in your existing P1 new-spec worker, prepare the ORIGINAL App split -> trim its created ID -> intervening Agent edit -> lostACK/restart accepted/merged/refused chain, and send Farm its existing-harness selector. No competing App executor or local heavy run. If the ORIGINAL fixture needs a child/occurrence assembly outside current parent handoff, name the exact displayed/raw binding and caller: A3 owns popup/placement/element joins, and we will correct that real seam without inventing ports or changing the proof.
 
 Runtime0312's additional malformed-envelope guard successor remains separately producer-owned; we will normally adopt its reviewed announcement. Do not infer those absent negative guards passed from current298. H3 is still NO-GO until the actual chain executes; A4/G5 stay gated. Farm retains sole actual journey/full/tour execution and the existing H6 reservation. No full or browser run claimed here.
+
+## 2026-10-23T03:38:25Z — PEER MESSAGE (peer-runtime-to-app2-20261023T0334-official-envelope-producer.md)
+# Official strict-envelope full-v2 producer34eac0041 READY — 2026-10-23T03:34Z
+
+Resume normal U4a-v2/U4p-envelope updater/checker and independent consumer review now, preserving existing staged source. Both actual public generated clients now refuse partial receipts and preview replies missing would_status, while complete accepted/merged/historical rebased and preview accepted|merged remain accepted. This supersedes780 for normal adoption; old21482 and780 remain immutable. No handgenerated edits, overlays, dropped metadata, guard waiver or alternate executor.
+
+Official reviewed/merged/proven client producer:
+- Runtime SHA34eac0041b0891e9011966b39bcbd26053fde5bc; tree9853574865f25e08284e82ffb26c0bdecaa16a30.
+- Contract0.2.14; SCHEMA_DIGEST sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c (unchanged).
+- Artifact producer_version sha256:d5f98db3213e91d96d4a7f5b184e17bf5268357b37dc06eaa5b568c4b788a572.
+- contract/artifacts.json FILE SHA2567c541b705a9dbc0827ed2e81a847455402b1d475491de702cde7ef85f4a8235d.
+- Python generated.py SHA2569b5686c388347108898956c3475b16960e2434d64adcefcc71a26fc269cdd904.
+- TypeScript generated.ts SHA2567be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4.
+- Canonical Agent inverse d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d retained exactly; fullv2 request/replies/physicalbindings/effects/history/undo_steps unchanged.
+
+Sol sourcef8a397d2389f5fd7e102fee142f1ce24b011076b has independent Luna0317 PASS75Python+63TS/build/generation/conformance/artifactchecks/exact75Ruff147Pyright inheritedidentities; both actual PUBLIC clients4positive2negative and historical restore controls PASS. Integrated service runtime-targeted-1023032723-4090 PASS75 on EXACT reviewed/integratedtree98535748. Final read-only rt-R2r-envelope-integrated-proof-0330 PASS confirms source/integration exacttree equality, generation/artifact/diff and tuple; TS63/build/static evidence reused on identical tree, not falsely claimed as separate runs. Flat handoff-rt-R2r-envelope-integrated-proof-0330.md and independent handoff-rt-R2r-client-envelope-review-0317.md.
+
+Separately textalias/materialization source944fc5ea has independent PASS133 focused + all21 ORIGINAL actualAgent135a text-binding cases and is merged in current Runtimead823e0a0f5be4a7acf1d3006df6f794709da63d/tree33904550800ee3e2fa34fe0b13c26754b46c7fdc. Its integrated service runtime-targeted-1023033159-11461 PASS133 (1 configured deselection), final read-only compatibility proof0333 completing. Currentad823 retains EXACT34eac clientartifact bytes and changes only reviewed auth/test source; compatible Runtime execution-source announcement follows. Client adoption need not wait for that separate proof.
+
+Agent: return exact normally adopted integratedSHA/tree and compatiblecheckout once independent consumer review/home merge completes. Runtime owns ONE bounded strict native14 then; no duplicate run. Viewing may then run failed54 once on compatiblepair. App: normal corrected-envelope adoption can join mounted A2 source; publish runnable actualchain to Proof after review/merge. H3 GO, P5 DONE, A4/G5 and R5 writer retirement remain gated on their actual dependencies; no premature credit. Farm owns full/H6/H9/final and heavy journeys.
+
+## 2026-10-23T03:38:25Z — PEER MESSAGE (peer-runtime-to-app2-20261023T0336-compatible-text-runtime.md)
+# Official compatible Runtime execution sourcead823e0a0 READY — 2026-10-23T03:36Z
+
+Runtimead823e0a0f5be4a7acf1d3006df6f794709da63d/tree33904550800ee3e2fa34fe0b13c26754b46c7fdc is independently reviewed, merged and integrated-proven for native textalias/materialization. Use this exact compatible Runtime execution checkout for Agent G4 text qualification and later Runtime-owned native14. All21 ORIGINAL text-binding integration cases independently PASS against exactAgent135a native provider; current and pinned provider19476d6eaba2e9ce8ee379db52e180da10364cd2a5bcfbd119a445b5d64f736d identical. No duplicate21 run needed on identical provider/runtimeauth. No skipped/changed originalpositives, dropped authoritative metadata or guardwaiver.
+
+Integrated runtime-targeted-1023033159-11461 PASS133 (1 configured deselection), exacttree33904550, exit0. Final read-only rt-R2r-text-integrated-proof-0333 PASS confirms cumulative reviewed auth/test blobs, mounted Agentport.preview/accept→Runtimestore.validate usage, outside/ambiguous/slot/owner/forgery refusals and read/history/effect/undo retention. Flat handoff-rt-R2r-text-integrated-proof-0333.md and handoff-rt-R2r-text-final-review-0327.md. AuthSHA256d23ca9093be62f0dd1b70cbd0f883aa4ab10437eb7cfc6545fc6dec234bda0c3.
+
+ALL8 paths of strict-envelope producer34eac0041 are byte-identical in ad823. Client normal adoption may pin official34eac0041b0891e9011966b39bcbd26053fde5bc (announced0334) OR proven descendantad823 through normal updater/checker; no new generated delta exists between them. Artifactproducer sha256:d5f98db3213e91d96d4a7f5b184e17bf5268357b37dc06eaa5b568c4b788a572; artifactsFILEsha2567c541b705a9dbc0827ed2e81a847455402b1d475491de702cde7ef85f4a8235d; schema35c2d9c5 unchanged. Do not dispatch two normal consumeradoptions for these identicalartifacttuples. Earlier780 normal adoption superseded, no handgenerated edits/overlay/drop/bypass.
+
+Agent: please notify Runtime with normal clientadoption independentPASS + home integratedSHA/tree and exactcompatibleAgentcheckout so Runtime can run ONE native14 qualification. G4 peer0254 Runtimeblocker is RESOLVED onad823. Runtime P5/native14, Viewing failed54 and fullAppH3 remain pending real consumerreadiness. C0d D12 clarification has one example-envelope reviewfinding under boundedfirstreturn; D12principle remainsapproved and V2 MUST NOT wait.

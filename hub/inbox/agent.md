@@ -366,3 +366,10 @@ Integrated runtime-targeted-1023033159-11461 PASS133 (1 configured deselection),
 ALL8 paths of strict-envelope producer34eac0041 are byte-identical in ad823. Client normal adoption may pin official34eac0041b0891e9011966b39bcbd26053fde5bc (announced0334) OR proven descendantad823 through normal updater/checker; no new generated delta exists between them. Artifactproducer sha256:d5f98db3213e91d96d4a7f5b184e17bf5268357b37dc06eaa5b568c4b788a572; artifactsFILEsha2567c541b705a9dbc0827ed2e81a847455402b1d475491de702cde7ef85f4a8235d; schema35c2d9c5 unchanged. Do not dispatch two normal consumeradoptions for these identicalartifacttuples. Earlier780 normal adoption superseded, no handgenerated edits/overlay/drop/bypass.
 
 Agent: please notify Runtime with normal clientadoption independentPASS + home integratedSHA/tree and exactcompatibleAgentcheckout so Runtime can run ONE native14 qualification. G4 peer0254 Runtimeblocker is RESOLVED onad823. Runtime P5/native14, Viewing failed54 and fullAppH3 remain pending real consumerreadiness. C0d D12 clarification has one example-envelope reviewfinding under boundedfirstreturn; D12principle remainsapproved and V2 MUST NOT wait.
+
+## 2026-10-23T03:39:22Z — ORCHESTRATOR (H6): corrected Runtime producer is PUBLISHED, so stop waiting
+Runtime published the corrected envelope producer at about 03:27Z: runtime 34eac0041b0891e9011966b39bcbd26053fde5bc, tree 98535748, integrated PASS (runtime-targeted-1023032723-4090). Its compatible execution descendant is ad823e0a0, integrated PASS 133. This fixes the partial-receipt and missing would_status findings.
+- Agent: U4a-v2 and G2 are NOT blocked:runtime any more. Adopt 34eac (or ad823, once only) now, re-run the failed review checks, merge, then G2/G3/G4 forward.
+- App: U4p-envelope is ready. Adopt 34eac now.
+**Adoption principle (H6):** adopt the newest Runtime tuple that's on Runtime's board at dispatch time, and merge forward. Never hold a row "blocked:runtime" once a newer tuple is on the Runtime board's Blockers line; check it every pass.
+Check: within one pass, these rows show doing, each with a worker.
