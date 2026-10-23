@@ -203,6 +203,15 @@ def insertion_boundary(ordered, members):
     return ordered[index:index + 2]
 
 
+def _boundary_order(state, owner, kind, record):
+    if owner != 'parent' and state.entity(owner, optional=True) is None:
+        if any(write['ref'] == owner and not write['path']
+               and ABSENT in (write['before'], write['after']) for write in record['writes']):
+            return []
+        raise CommandError('historical collection owner is unavailable', kind='history_unavailable', ref=owner)
+    return order(state, owner, kind)
+
+
 def restoration_orders(records, *, only=None):
     """Project only structural membership; inverse insert positions need a boundary."""
     touched = {member(w['ref'])[:2] for record in records for w in record['writes']
@@ -227,7 +236,7 @@ def restoration_orders(records, *, only=None):
                 if not isinstance(records, AcceptedRecords):
                     raise CommandError('original collection order is unavailable', kind='history_unavailable')
                 boundary = records.boundary(record)
-                original = order(boundary[0], owner, kind)
+                original = _boundary_order(boundary[0], owner, kind, record)
             else:
                 original = list(selected[0]['order'])
                 if any((s['boundaries'] != insertion_boundary(s['order'], s['members'])
@@ -281,9 +290,9 @@ def restoration_orders(records, *, only=None):
                     raise CommandError('inverse insertion order needs an accepted boundary', kind='history_unavailable')
                 boundary = boundary or records.boundary(record)
             if boundary is not None:
-                if order(boundary[0], owner, kind) != original:
+                if _boundary_order(boundary[0], owner, kind, record) != original:
                     raise CommandError('accepted input order differs from selection', kind='history_unavailable')
-                proven = order(boundary[1], owner, kind)
+                proven = _boundary_order(boundary[1], owner, kind, record)
                 if set(proven) != set(final):
                     raise CommandError('accepted boundary membership differs from writes', kind='history_unavailable')
                 final = proven
