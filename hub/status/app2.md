@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-23T03:32:58Z | dispatcher heartbeat 1s | live 1 (sol 1, luna 0, other 0) | busy30 5 | status age 3m -->
+<!-- app2 | 2026-10-23T03:34:20Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 6 | status age 1m -->
 # app2 board, 2026-10-23T03:29:44Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -10,6 +10,7 @@
 | P3 | Gate-5 on new path | Luna | A2,R2 | blocked:app+agent | ap2-P2-P3-farm-readiness-final-review PASS | Reviewed handoff only; actual v2 journey UNEXECUTED | — |
 | P4 | CLI/Python/sheet, ten notes, per-step undo, conflict/rerun | Luna | normal successor + G2/G3/R2 join | blocked:agent+runtime | agt-P4-five-file-review-0314 PASS | 15 fake/detached controls + exact1 HTTP collection and donor bytes/scoped quality PASS; actual Runtime/CLI/history/stepundo lifecycle open | owner d7b8e1206 |
 | P4-HTTP | Original clip:a0→5; actual CLI/sheet/show/history | Luna | reviewed normal strict-envelope producer + compatible owner join | blocked:agent+runtime | ap2-P4-http-readback-review-0242 PASS; service0307 PASS | Only source/collection/Ruff/mypy/diff. HTTP body UNEXECUTED; use p4-v2-http-nodes and exact original node on future joined worker | ddff86c18 imported test-only in d7b8 |
+| P4-ten-note-HTTP-source | Original ten notes/one commit/per-step inverse over HTTP | Luna high | callable d7b8 source; body waits strict successor | doing | ap2-P4-ten-note-wire-source-0334 | NEW source preparation only; no duplicate detached/fake/P5 run, no body credit | — |
 Blockers: app+agent+runtime — P1 RESULT: NO-GO. Actual split→trim new ID while predecessor pending→intervening Agent→accepted/merged/refused→lost durable ACK→restart UNEXECUTED. A4/G5 gated. Existing escalation app2-20261023T0040Z-h3-no-go.md.
 Blockers: app — normal780+trim merged cbf70fc08/treef09b. Mounted canonical-before-suffix dc51 reviewed PASS211; final f7764de59/tree674b629b has298PASS/13files/type/lint/lock after explicit unsupported-contract fixture setup, independent composed review r7 active. No new split port or TS executor requirement. A3 return owns nullable/raw add/reorder/registry gaps.
 Blockers: runtime — NEW malformed-envelope defect CONFIRMED by Agent: generated client accepts partial receipt and preview without would_status. Canonical Sol rt-R2r-client-envelope-sol-0311 + independent audit owner-active.780 merged-success readiness remains scoped; next reviewed producer/normal adoption required before actual P4. No consumer override, vendor edit, dropped field or duplicate repair.
