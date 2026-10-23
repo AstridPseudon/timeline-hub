@@ -1,0 +1,3 @@
+request-retire-venv: staged == installed (cmp exit 0)
+dispatcher-daemon: staged == installed (cmp exit 0)
+retire-child-venv: staged != installed (diff exit 1; exactly one intended line)
