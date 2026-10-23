@@ -1,13 +1,13 @@
-<!-- app | 2026-10-23T00:51:48Z | dispatcher heartbeat 13s | live 3 (sol 1, luna 2, other 0) | busy30 5 | status age 4m -->
-# app board, 2026-10-23T00:47:13Z
+<!-- app | 2026-10-23T00:53:42Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 5 | status age 1m -->
+# app board, 2026-10-23T00:52:16Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3a/U3 | Retired-tree repair + reviewed normal vendor join | Luna high | U3 joins,U2 | doing | app-U3-focused-repair-r1 | Prior composed review FAIL: resurrected retired edges, whitespace/lint, vendor. Focused repair now based reviewed vendor child | 064dca1e0 merge /216d5116d vendor |
 | U3b | Upstream editor + retained outbox/client/door | Luna high | — | merged | app-U3b-eof-fix | Independent tests/tsc/lint PASS; overall integrated U3 proof pending | f9d5d0cdd |
 | U3c | QUICK and retained journeys | Luna high | — | merged | app-U3c-quick-adapter-fix | Independent coverage/discovery PASS; browser proof farm pending | 1c62edf19 |
-| U3/V3 | Three Composition export attribution | Luna high | U3 source | doing | app-U3-export-attribution-r2 | Resumed stopped WIP under explicit safer deletion rule; source-only cause diagnosis | tl/app-U3-export-attribution |
+| U3/V3 | Three Composition export attribution | Luna high | U3 source | doing | app-U3-export-attribution-r2 | Source attribution PASS: composed064 restored stale helpers; current U3b has no callers. Existing agreed V3 artifact still needed for registry/theme | tl/app-U3-export-attribution |
 | U4p | Official U1 client/schema adoption | Luna high | repaired U3 | review | app-U4p-review | Independent scoped PASS:13 artifacts exact,81tests/lint/diff; parent U3 FAIL currently holds landing | b24a8ca4a |
-| A2 | Session + encoder + production save handoff | Sol/Luna high | C0c,U3b; R0 for transport activation | doing | app-A2-encoder-review-r1; app-A2-production-local-handoff-r1 | Session279/tsc/lint reviewed PASS integrated. Encoder71 author PASS now independent review. Mounted save still snapshot; complete A2 not claimed | 05dabd460 session /tl/app-A2-document-patch-intent encoder |
+| A2 | Session + encoder + production save handoff | Sol/Luna high | C0c,U3b; R0 for transport activation | doing | app-A2-encoder-review-r1; app-A2-production-local-handoff-r1 | Session279/tsc/lint reviewed PASS integrated. Encoder independent71/tsc/lint/diff PASS; merge requested immediately. Mounted save still snapshot; complete A2 not claimed | 05dabd460 session /tl/app-A2-document-patch-intent encoder |
 | A3 | Popup/placement/element/registerAsset through A2 | Luna high | A2 production | todo | — | No writer retirement claimed | — |
 | A4 | Delete executor/capture ports/adapter/goldens | Luna high | A2,A3,H3 GO | blocked:orchestrator | — | P1 real chain NO-GO; no deletion starts | — |
 | P1 | Proof collection + provenance repair | Luna high | C0; A2,R1 to execute | merged | ap2-P1-app-provenance-fix-r2 | Existing queue receipt confirms provenance repair merged before this round;12 collection tests prior PASS, no integrated real chain | 39d774110 merge /b6baa5ce4 |
