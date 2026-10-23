@@ -70,11 +70,14 @@ describe('upstream local document handoff', () => {
     const [authored] = await env.outboxes.list(env.scope);
     const originalB = structuredClone(authored.intents[1].payload);
     const intent = originalB.documentIntent as { reads: { kind: string; path: string[] }[] };
+    expect(intent.merge).toBe('fields');
     expect(authored.intents[1].basis).toEqual({ after: authored.intents[0].id });
     expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:authored', 'at'],
       state: { state: 'present', value: 5 } });
     expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:sibling', 'hold'],
       state: { state: 'present', value: 2 } });
+    expect(intent.reads).toContainEqual({ kind: 'collection', ref: 'parent', path: ['config', 'clips'],
+      members: ['authored', 'sibling'], order: ['authored', 'sibling'] });
     expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'tracks', 'id:V1', 'kind'],
       state: { state: 'present', value: 'visual' } });
     expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'pinnedShotGroups'],
