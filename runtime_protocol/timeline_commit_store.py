@@ -999,7 +999,9 @@ class TimelineCommitStore:
             candidate["merge_mode"] = _effective_merge_mode(request)
             if "steps" in prepared["records"]:
                 candidate["steps"] = prepared["records"]["steps"]
-            return {"data": {"status": "preview", "base_revision_id": request["base_revision_id"],
+            base = {"revision_id": request["base_revision_id"], "publication_id": request["base_publication_id"]}
+            return {"data": {"status": "preview", "would_status": "accepted" if prepared["expected_head"] == base else "merged",
+                            "base_revision_id": request["base_revision_id"],
                             "base_publication_id": request["base_publication_id"],
                             "evaluated_head": prepared["expected_head"], **candidate}, "receipt": None}
 

@@ -1074,6 +1074,12 @@
             "preview"
           ]
         },
+        "would_status": {
+          "enum": [
+            "accepted",
+            "merged"
+          ]
+        },
         "base_revision_id": {
           "$ref": "#/$defs/ID"
         },
@@ -1121,6 +1127,7 @@
       },
       "required": [
         "status",
+        "would_status",
         "base_revision_id",
         "base_publication_id",
         "evaluated_head",

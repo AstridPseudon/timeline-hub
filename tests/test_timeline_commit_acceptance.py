@@ -461,14 +461,20 @@ def test_failure_between_projection_steps_rolls_back_and_restart_retry_publishes
         restarted.close()
 
 
-def test_preview_is_validated_and_reserves_nothing(realm):
+@pytest.mark.parametrize("intervening", [False, True])
+def test_preview_is_validated_and_reserves_nothing(realm, intervening):
     service, commits, project, head, _ = realm
+    if intervening:
+        intervening_ctx = context(service, project, head, "intervening")
+        accept(commits, intervening_ctx, prepared(commits, intervening_ctx, revision="intervening"))
     ctx = context(service, project, head, dry_run=True)
-    value = prepared(commits, ctx)
+    evaluated_head = commits.head(project, "main")
+    value = prepared(commits, ctx, expected=evaluated_head)
     before = counts(service)
     preview = commits.preview(ctx, value, authorize=lambda: None)
     assert preview["receipt"] is None
-    assert preview["data"]["evaluated_head"] == head
+    assert preview["data"]["would_status"] == ("merged" if intervening else "accepted")
+    assert preview["data"]["evaluated_head"] == evaluated_head
     assert preview["data"]["commands"] == [r["command"] for r in value["records"]["commands"]]
     with pytest.raises(CommitRejected) as error:
         accept(commits, ctx, value)

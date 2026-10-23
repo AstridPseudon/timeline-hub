@@ -4432,10 +4432,17 @@
                 "$ref": "#/$defs/AcceptedStep"
               },
               "type": "array"
+            },
+            "would_status": {
+              "enum": [
+                "accepted",
+                "merged"
+              ]
             }
           },
           "required": [
             "status",
+            "would_status",
             "base_revision_id",
             "base_publication_id",
             "evaluated_head",

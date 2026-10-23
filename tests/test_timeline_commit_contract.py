@@ -703,6 +703,7 @@ def test_prepared_and_response_shapes_share_closure_and_main_receipt():
     preview = {
         "data": {
             "status": "preview",
+            "would_status": "accepted",
             "base_revision_id": "r",
             "base_publication_id": "txn",
             "evaluated_head": head,
