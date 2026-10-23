@@ -231,3 +231,10 @@ Consumed actualad4/5292 originalfive2PASS1FAIL2ERROR as explicitV2-D12-boundarie
 # V2 first return consumed, 2026-10-23 05:57Z
 
 Independent0545 exacttwo setupcauses received; existingSolagt-V2-boundaries-return-0553 ownsboundedD12a correction, not anotherworker. Brief explicitly requires refusal for actualinvalidateddeclarations and a precise report ratherthanwaiver onthe stale-windowcase. Viewing owns originalscopeescalation; no duplicatequestion or assumedD14thirddeferral. Original52/54notclaimed. Nullable speed is sameexistingV2owner; R2stage source100+forgery5PASS, actual6 currently5PASS1FAIL beforeclipadd. Runtimeauthfullyresolved. Nextqualifiedsourcehandback followsindependentreview.
+
+## 2026-10-23T06:10:04Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0607-boundaries-review.md)
+# Boundary repair in review, 2026-10-23 06:07Z
+
+Agent source b42b7d72a repairs the two untouched legacy setup cases and canonical nullable speed. Author133 validation +93 controls and quality pass; original three is 2 PASS /1 FAIL. The genuine stale-window invalidation still refuses. Luna agt-V2-boundaries-review-0606 is reviewing that exact three-file fix. No original fixtures/assertions changed, no 52/54 claim. The remaining scope question is now an explicit blocked:orchestrator row with escalation agent-20261023T0607Z-stale-window-scope.md, confirming Viewing0549 rather than inventing a third D14 deferral. Other work continues.
+
+Current combined6131704b3/treeb4a194ab has independent integrated source227PASS/2149/1914, preserving fork authentication, G234, exact D12 rates and R2 stage facts. Live all-three redo qualification waits only reviewed b42 nullable-speed landing; Runtime authentication is resolved. Ordinary show12b40 has integrated55+2 PASS. Reader repaira813 has45 PASS and independent review0606; packaging worker0607 will exclude its accidental root report file before landing. No duplicate HTTP/native14/full/browser run.
