@@ -8,7 +8,8 @@ from typing import Any
 import pytest
 
 from astrid.sdk import timeline
-from astrid.sdk.timeline.commit import _digest, bundle_from_document
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.emitter import emit_document_commands
 from tests.editing_conformance import test_native_batch_ingress
 from tests.editing_conformance.test_p4_ten_note_v2_runtime import (
@@ -102,7 +103,26 @@ def _assert_request(
     assert body["source"] == {"via": "python"}
 
 
-def _assert_success(result: dict[str, Any], body: dict[str, Any]) -> None:
+def _expected_plan(runtime: Any, body: dict[str, Any], head: dict[str, str]) -> Any:
+    """Execute the retry from its authenticated pre-edit closure independently."""
+    assert body["base_revision_id"] == head["revision_id"]
+    assert body["base_publication_id"] == head["publication_id"]
+    preedit = runtime.client().timelines.open_bundle(
+        runtime.project, "film", revision_id=head["revision_id"],
+        publication_id=head["publication_id"],
+    )
+    assert preedit.ok
+    authenticated = preedit.data["bundle"]
+    canonical = authenticated["source_mapping"]["_runtime_document"]
+    plan = execute(
+        bundle_from_document(canonical), copy.deepcopy(body["commands"]),
+        commit_request=body, evaluated_head=head,
+    )
+    assert plan.commands == [record["command"] for record in plan.records]
+    return plan
+
+
+def _assert_success(result: dict[str, Any], body: dict[str, Any], expected_plan: Any) -> None:
     data = result["data"]
     receipt = result["receipt"]
     assert data["status"] in {"accepted", "merged"}
@@ -117,7 +137,12 @@ def _assert_success(result: dict[str, Any], body: dict[str, Any]) -> None:
     )
     assert data["accepted_revision_id"] == canonical["parent_revision"]["revision_id"]
     assert data["accepted_publication_id"] == receipt["receipt_id"]
-    assert data["commands"] == body["commands"]
+    assert data["commands"] == expected_plan.commands
+    assert data["commands"] == [record["command"] for record in expected_plan.records]
+    for submitted, authoritative in zip(body["commands"], data["commands"]):
+        assert set(submitted) <= set(authoritative)
+        for field, value in submitted.items():
+            assert authoritative[field] == value
     assert data["steps"] == body["steps"] or (
         len(data["steps"]) == 1
         and data["steps"][0]["id"] == "step-1"
@@ -238,6 +263,7 @@ def test_http_note_conflict_reruns_public_function_from_verified_peer_document(r
     }
     _assert_request(first_body, runtime=runtime, base=original_base, change=first_change)
     _assert_request(retry_body, runtime=runtime, base=peer_pin, change=retry_change)
+    expected_plan = _expected_plan(runtime, retry_body, peer_pin)
     assert outer_calls[1][1] == "p4-note-original"
     assert outer_calls[2][1] != outer_calls[1][1]
 
@@ -256,13 +282,15 @@ def test_http_note_conflict_reruns_public_function_from_verified_peer_document(r
     assert details["base"] == original_base
     assert not conflict.get("receipt")
 
-    _assert_success(result, retry_body)
+    _assert_success(result, retry_body, expected_plan)
     data = result["data"]
     assert opened.head == {
         "revision_id": data["accepted_revision_id"],
         "publication_id": result["receipt"]["receipt_id"],
     }
     landed = bundle_from_document(data["canonical_document"])
+    assert data["canonical_document"] == document_from_bundle(expected_plan.bundle)
+    assert data["steps"] == expected_plan.steps
     assert _note_values(landed) == {**expected_notes, "note-04": PEER_VALUE + SUFFIX}
     _assert_full_closure(landed, original)
     assert len(landed["shots"]) == len(original["shots"]) == 2
@@ -277,6 +305,8 @@ def test_http_note_conflict_reruns_public_function_from_verified_peer_document(r
     assert stored["publisher"] == data["publisher"]
     assert stored["merge_mode"] == "atomic"
     assert stored["steps"] == data["steps"]
+    assert stored["records"]["commands"] == expected_plan.records
+    assert stored["records"]["steps"] == expected_plan.steps
     assert stored["records"]["steps"] == data["steps"]
     record = stored["records"]["commands"][0]
     assert {"writes", "reads", "selections", "bindings", "created", "dependencies", "derived_writes"} <= record.keys()
