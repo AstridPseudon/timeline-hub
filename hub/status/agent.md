@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T23:31:50Z | dispatcher heartbeat 10s | live 3 (sol 1, luna 2, other 0) | busy30 15 | status age 1m -->
+<!-- agent | 2026-10-23T23:33:44Z | dispatcher heartbeat 2s | live 4 (sol 1, luna 3, other 0) | busy30 15 | status age 1m -->
 # agent board, 2026-10-23T23:30:42Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -145,7 +145,7 @@
 | F-postG5-D09-invocation | supported source-mode D09 fixture | Luna harness proof | exact managed c36/abd47 bench | merged | agt-F-D09-invocation-return-2255 FINAL PASS | Original3PASS510.58s/exactbodyhashes/sourceprofile/NodePATH/installedRuntime/guardunchanged/origins+receipt+stderr+nowrite96KB. Priorsetup failures retained;015f root harnessscript proofONLY nevermerge. D21 noextra review | env-only |
 
 | F-postG5-R2-equal-write | original scalar old-inverse acceptance | HARD Sol source owner | actual full original scalar failure | doing | agt-F-R2-equal-write-return-sol-2324 QUEUED | Sol2306 confirmed fork-output equal-clear guard gap; bounded inverse.py+new regression only. Author6+20+16+8 and actualRuntime caller PASS, independent2319FAIL missing internal materialization provenance; Sol2324samebranchreturn. Originalassertion/ABA/physicalguards unchanged; no fullcredit | c36 base |
-| F-postG5-graph-roots | five original graph-root failures | Luna readonly | retained full traces/source | doing | agt-F-created-root-review-2329 QUEUED | Readonly2306 complete: createdchild redo root-source guard; four child-alias reason mismatches inferred same d7 outputguard. Sol2322 ownrootfix focused15PASS/originalcreatedchildPASS; combined37PASS4FAIL owned2324. Independent2329 root-only; author420KBcaptureTMPDIRLOST disclosed, committedregressions survive | c36 base |
+| F-postG5-graph-roots | five original graph-root failures | Luna readonly | retained full traces/source | doing | agt-F-created-root-clean-port-2333 QUEUED | Readonly2306 complete: createdchild redo root-source guard; four child-alias reason mismatches inferred same d7 outputguard. Sol2322 ownrootfix focused15PASS/originalcreatedchildPASS; combined37PASS4FAIL owned2324. Independent2329 FINAL17PASS/scopedquality/durableowncapture; clean2333 porttwoEXACTreviewedblobs only avoidsfailedd7ancestry. Author420KBscratchLOST disclosed; no wholegraphPASS | c36 base |
 
 | F-postG5-scene-fixture | retired save in source-certification setup | Luna author/review | same full terminal before head movement | ready | agt-F-scene-fixture-review-2326 FINALPASS | Own915bd uses Runtime verifiedmedia+semantic acceptedclosure; author27capture+4scenePASS/scopedquality. Independent2326 FINAL27+4PASS/exactorigins6047/predicateAST34->35+29unchanged/privateMypyPASS. Ready915mergeafterfullterminal; no product/guard edits/fullcredit | c36 base |
 
