@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T01:54:26Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 18 | status age 2m -->
+<!-- agent | 2026-10-23T01:55:47Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 18 | status age 0m -->
 # agent board, 2026-10-23T01:51:48Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -6,7 +6,7 @@
 | U4a | normal U1 client/schema | Luna | U1,U2 | merged | agt-U4a-integrated-proof | Independent138+60; integrated150+15exact/manifest PASS | 3cc21e71b |
 | U4a-v2 | official full-v2 adoption | Luna | reviewed merged R2r | blocked:runtime | — | Ready to dispatch normal updater/checker immediately on official tuple; no draft pin/schema workaround | — |
 | R1 | physical doc.patch guards | Sol; Luna review | C0,U2 | merged | agt-R1-current-review-0039; integrated0047 | Independent353+25; integrated115 + normal1915/2151 PASS; native wire/P1 chain still open | b7a32c523;mergee5c260c83 |
-| R1-native | inherited request/step reads | Sol author before late01:41 instruction; Luna review | R1 | merged | agt-R1-reads-integrated-0149 | Independent119+16+3 PASS; 5 production lines preserve native authored claims and full dependency union. Integrated proof active on195 | 169293c92;merge1951ee928 |
+| R1-native | inherited request/step reads | Sol author before late01:41 instruction; Luna review | R1 | merged | agt-R1-reads-integrated-0149 | Independent119+16+3 PASS; 5 production lines preserve native authored claims and full dependency union. Integrated195 PASS119+16+3, normal1915/2151 | 169293c92;merge1951ee928 |
 | R2 | guarded whole/per-step undo | Sol; Luna review | R1,C0c,R2r | blocked:runtime | agt-R2-forward-review-0105 | True4454 independent70+98 PASS; author403+382; original16 wire failures retained | 4454a7a2f |
 | R2-schema | canonical inverse selectors | Luna | R2 source | blocked:runtime | agt-R2-schema-floor-review-0119 | Independent94 PASS plus Ruff/private mypy; TEST ONLY f252, d106 schema unchanged, final verdict sent Runtime | f2521256c;schema7689/d106 |
 | R3 | dry-run/structured errors | Luna | R1,R2r | blocked:runtime | agt-R3-invalid-review-0142 | Independent93 PASS: original-base wrong-before422invalid vs replay409conflict. Product73df already correct; new2cc test-only. Prior204+17+12+86 PASS | 2cc23d0aa;product73df0a99b |
@@ -18,7 +18,7 @@
 | G4 | create_empty/parent-media | Sol after Luna FAIL; Luna review | G3,R2r | blocked:runtime | agt-G4-bootstrap-review-0136 | Independent SOURCE PASS; creator36PASS3Runtime provenance FAIL, nonwire26PASS; canonical names/defaults/customcanvas/originals restored;1913mypy/2150Ruff | 681f4c6e7 |
 | G4 | requester render publication | Sol after Luna FAIL; Luna review | G3,R2r | blocked:runtime | agt-G4-render-ratchet-review-0117 | Source independent234+13+19 PASS; baseline-only6ae13PASS/Ruff2149/mypy1915. Original3 setup/wire/digest failures retained | 6ae94db34 |
 | V3-owner | common Composition artifact | Luna | U2; App samearchive | merged | agt-V3-integrated-proof-0111; vw-V3-agent-integrated0114 | Exactfa2 both terminal PASS: own30+gen/types/caller and Viewing130+gen/types/caller; archive819acf/73451B/80. Package only, not parity | b56828de5;mergefa2cf5b66 |
-| V1-copies | normal691 copies + meta allowlists | Luna | RuntimeV1 merged | merged | agt-V1-integrated-proof-0147 | Independent64PASS+163subtests, boundary probes,15mapped exact691,2151Ruff/1915mypy. Mergedffcec; integrated proof active | ffcec5d33;source838/b23 |
+| V1-copies | normal691 copies + meta allowlists | Luna | RuntimeV1 merged | merged | agt-V1-integrated-proof-0147 | Independent64PASS+163subtests, boundary probes,15mapped exact691,2151Ruff/1915mypy. Integratedffcec PASS64+163subtests, exact15mapped691/normal lock/artifacts/caller | ffcec5d33;source838/b23 |
 | G5 | delete superseded paths | Luna | G3,G4,actual P1 GO | todo | — | Hard held by H3 NO-GO; no deletion work started | — |
 Blockers: runtime — full-v2 wire/auth tuple not yet reviewed/merged/announced. Runtime final623c4ad187 author224PASS + component auth207/schema53/admission45; final reviews0143 active. No drop/overlay/alternate executor. Normal U4a-v2 immediately on official tuple.
 Blockers: proof/orchestrator — four original P1 child fixtures retain app.astrid.on=old-anchor without transcript binding, exposed after V2 null/identity repair. Need authentic fixture or explicit inherited-declaration policy; guard/assertions unchanged. escalations/agent-20261023T0151-P1-unbound-anchor.md.
