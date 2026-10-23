@@ -8,8 +8,11 @@ import pytest
 
 from astrid.sdk.timeline import journal
 from astrid.sdk.timeline import open as open_timeline
+from astrid.sdk.timeline._clip_commands import capture_clip_add
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.checkout import Checkout
+from astrid.sdk.timeline.commands import CommandError, execute
+from astrid.sdk.timeline.native_word_anchor import capture_anchor
 from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.sdk import test_timeline_restructure
 
@@ -27,6 +30,72 @@ def peer_edit(env, clip='p2'):
     peer = open_timeline(env.project, 't', client=env.client)
     peer.clip(clip).data['opaque'] = {'peer': True}
     peer.commit('Peer', idempotency_key='peer')
+
+
+def _genuine_anchor_capture(env):
+    """Build one exact native anchor from the Runtime-owned inline-word source."""
+    from runtime_protocol.timeline_commit_inputs import content_digest
+
+    from astrid.sdk.media_transcript import build_transcript, transcript_document_id
+
+    tl = open_timeline(env.project, 't', client=env.client)
+    source_bundle = copy.deepcopy(tl.bundle)
+    internal = source_bundle['shots']['film']['internal_timeline']
+    source = next(row for row in internal['clips'] if row['id'] == 'vo2')
+    media_id = internal['registry']['assets'][source['asset']]['media_id']
+    content = build_transcript(media_id, 's2', 'second', [[0.1, 0.4, 'second']])
+    document_id = transcript_document_id(env.project, media_id, content['source_id'])
+    created = env.client.documents.create(document_id=document_id, kind='media.transcript', content=content,
+                                          project=env.project)
+    assert created.ok
+    document = env.service.get_document(env.project, document_id)
+    pin = {'document_id': document_id, 'version': document['version'],
+           'content_digest': content_digest(document['content'])}
+    captured = {'pin': pin, 'document': copy.deepcopy(document)}
+    source_bundle['source_mapping']['pinned_documents'] = [captured]
+
+    carrier = {'id': 'anchor-carrier', 'clipType': 'am-type', 'track': 'picture',
+               'at': 4.6, 'hold': 1.0, 'params': {}}
+    add = capture_clip_add(source_bundle, 'parent', carrier)
+    source_bundle = execute(source_bundle, [add]).bundle
+    word = document['content']['segments'][0]['words'][0]
+    choice = {'source': 'occurrence:occ-film/clip:vo2', 'document': pin,
+              'word_ids': [word['id']], 'edge': 'start', 'offset_s': 0, 'offset_frames': 0}
+    anchor = capture_anchor(source_bundle, 'parent/clip:anchor-carrier', 'on', '"second"', choice)
+    plan = execute(source_bundle, [anchor])
+    return source_bundle, pin, choice, anchor, plan.records[0]
+
+
+def test_genuine_anchor_capture_has_exact_source_scope_and_base_pair(restructure_runtime):
+    env = restructure_runtime
+    bundle, pin, choice, command, record = _genuine_anchor_capture(env)
+    runtime_document = env.document()
+    assert {'project_id', 'timeline_id', 'parent_revision', 'dependency_manifest'} <= set(runtime_document)
+    assert (runtime_document['project_id'], runtime_document['timeline_id']) == (env.project, 't')
+    assert bundle['base_parent']['publication_id']
+    assert bundle['base_parent']['revision_id'] == runtime_document['parent_revision']['revision_id']
+    assert bundle['source_mapping']['pinned_documents'][0]['pin'] == pin
+    assert bundle['source_mapping']['pinned_documents'][0]['document']['project_id'] == env.project
+    assert command['op'] == 'clip.anchor'
+    assert command['args']['choice'] == choice
+    assert any(dep['key'] == 'anchor.transcript' and dep['pin'] == pin
+               for dep in record['dependencies'])
+    assert command['bindings']['anchor.source'] == choice['source']
+
+
+@pytest.mark.parametrize('damage', ['missing-pin', 'forged-word'])
+def test_missing_or_forged_anchor_binding_never_writes(restructure_runtime, damage):
+    env = restructure_runtime
+    bundle, pin, choice, _command, _record = _genuine_anchor_capture(env)
+    if damage == 'missing-pin':
+        bundle['source_mapping']['pinned_documents'] = []
+    else:
+        choice = copy.deepcopy(choice)
+        choice['word_ids'] = ['word:' + '0' * 64]
+    before = tuple(env.service.store.conn.iterdump())
+    with pytest.raises((CommandError, TimelineEditError), match='(exact transcript pin|stable word)'):
+        capture_anchor(bundle, 'parent/clip:anchor-carrier', 'on', '"second"', choice)
+    assert tuple(env.service.store.conn.iterdump()) == before
 
 
 def test_nudge_restart_merges_peer_other_clip(restructure_runtime, tmp_path, monkeypatch):
