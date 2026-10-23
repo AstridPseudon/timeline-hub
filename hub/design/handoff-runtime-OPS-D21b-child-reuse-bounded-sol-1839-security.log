@@ -1,0 +1,96 @@
+FOOTPRINT before-source-group logical=139665 allocated=245760 cap=104857600
+FOOTPRINT after-source-group logical=446975 allocated=851968 cap=104857600
+FOOTPRINT before-reset-group logical=636793 allocated=1228800 cap=104857600
+FOOTPRINT after-reset-group logical=636801 allocated=1228800 cap=104857600
+FOOTPRINT positive-before logical=636801 allocated=1228800 cap=104857600
+FOOTPRINT positive-after logical=637031 allocated=1232896 cap=104857600
+PASS positive rc=0
+FOOTPRINT positive-maker-before logical=637031 allocated=1232896 cap=104857600
+FOOTPRINT positive-maker-after logical=637261 allocated=1236992 cap=104857600
+PASS positive-maker rc=0
+FOOTPRINT before-reset-group logical=637261 allocated=1236992 cap=104857600
+FOOTPRINT after-reset-group logical=637261 allocated=1236992 cap=104857600
+FOOTPRINT standard-lib64-before logical=637264 allocated=1236992 cap=104857600
+FOOTPRINT standard-lib64-after logical=637494 allocated=1241088 cap=104857600
+PASS standard-lib64 rc=0
+FOOTPRINT standard-lib64-maker-before logical=637494 allocated=1241088 cap=104857600
+FOOTPRINT standard-lib64-maker-after logical=637724 allocated=1245184 cap=104857600
+PASS standard-lib64-maker rc=0
+FOOTPRINT positive-env-i-before logical=637724 allocated=1245184 cap=104857600
+FOOTPRINT positive-env-i-after logical=637952 allocated=1249280 cap=104857600
+PASS positive-env-i rc=0
+FOOTPRINT before-reset-group logical=637952 allocated=1249280 cap=104857600
+FOOTPRINT after-reset-group logical=637952 allocated=1249280 cap=104857600
+FOOTPRINT bad-agent-marker-before logical=637951 allocated=1249280 cap=104857600
+FOOTPRINT bad-agent-marker-after logical=638012 allocated=1253376 cap=104857600
+PASS bad-agent-marker rc=2
+FOOTPRINT bad-agent-marker-maker-before logical=638012 allocated=1253376 cap=104857600
+FOOTPRINT bad-agent-marker-maker-after logical=638063 allocated=1257472 cap=104857600
+PASS bad-agent-marker-maker rc=2
+FOOTPRINT before-reset-group logical=638063 allocated=1257472 cap=104857600
+FOOTPRINT after-reset-group logical=638064 allocated=1257472 cap=104857600
+FOOTPRINT bad-runtime-marker-before logical=638063 allocated=1257472 cap=104857600
+FOOTPRINT bad-runtime-marker-after logical=638124 allocated=1261568 cap=104857600
+PASS bad-runtime-marker rc=2
+FOOTPRINT bad-runtime-marker-maker-before logical=638124 allocated=1261568 cap=104857600
+FOOTPRINT bad-runtime-marker-maker-after logical=638175 allocated=1265664 cap=104857600
+PASS bad-runtime-marker-maker rc=2
+FOOTPRINT before-reset-group logical=638175 allocated=1265664 cap=104857600
+FOOTPRINT after-reset-group logical=638176 allocated=1265664 cap=104857600
+FOOTPRINT partial-marker-before logical=637952 allocated=1265664 cap=104857600
+FOOTPRINT partial-marker-after logical=638013 allocated=1269760 cap=104857600
+PASS partial-marker rc=2
+FOOTPRINT partial-marker-maker-before logical=638013 allocated=1269760 cap=104857600
+FOOTPRINT partial-marker-maker-after logical=638064 allocated=1273856 cap=104857600
+PASS partial-marker-maker rc=2
+FOOTPRINT before-reset-group logical=638064 allocated=1273856 cap=104857600
+FOOTPRINT after-reset-group logical=638288 allocated=1273856 cap=104857600
+FOOTPRINT missing-marker-before logical=638288 allocated=1273856 cap=104857600
+FOOTPRINT missing-marker-after logical=638349 allocated=1277952 cap=104857600
+PASS missing-marker rc=2
+FOOTPRINT missing-marker-maker-before logical=638349 allocated=1277952 cap=104857600
+FOOTPRINT missing-marker-maker-after logical=638400 allocated=1282048 cap=104857600
+PASS missing-marker-maker rc=2
+FOOTPRINT before-reset-group logical=638400 allocated=1282048 cap=104857600
+FOOTPRINT after-reset-group logical=638441 allocated=1286144 cap=104857600
+FOOTPRINT clientbyte-before logical=638428 allocated=1286144 cap=104857600
+FOOTPRINT clientbyte-after logical=638554 allocated=1290240 cap=104857600
+PASS clientbyte rc=2
+FOOTPRINT clientbyte-maker-before logical=638554 allocated=1290240 cap=104857600
+FOOTPRINT clientbyte-maker-after logical=638670 allocated=1294336 cap=104857600
+PASS clientbyte-maker rc=2
+FOOTPRINT before-reset-group logical=638670 allocated=1294336 cap=104857600
+FOOTPRINT after-reset-group logical=638683 allocated=1294336 cap=104857600
+FOOTPRINT agentbyte-before logical=638671 allocated=1294336 cap=104857600
+FOOTPRINT agentbyte-after logical=638781 allocated=1298432 cap=104857600
+PASS agentbyte rc=2
+FOOTPRINT agentbyte-maker-before logical=638781 allocated=1298432 cap=104857600
+FOOTPRINT agentbyte-maker-after logical=638881 allocated=1302528 cap=104857600
+PASS agentbyte-maker rc=2
+FOOTPRINT before-reset-group logical=638881 allocated=1302528 cap=104857600
+FOOTPRINT after-reset-group logical=638893 allocated=1302528 cap=104857600
+FOOTPRINT runtimebyte-before logical=638881 allocated=1302528 cap=104857600
+FOOTPRINT runtimebyte-after logical=639007 allocated=1306624 cap=104857600
+PASS runtimebyte rc=2
+FOOTPRINT runtimebyte-maker-before logical=639007 allocated=1306624 cap=104857600
+FOOTPRINT runtimebyte-maker-after logical=639123 allocated=1310720 cap=104857600
+PASS runtimebyte-maker rc=2
+FOOTPRINT before-reset-group logical=639123 allocated=1310720 cap=104857600
+FOOTPRINT after-reset-group logical=639135 allocated=1310720 cap=104857600
+FOOTPRINT version-before logical=639135 allocated=1310720 cap=104857600
+FOOTPRINT version-after logical=639239 allocated=1314816 cap=104857600
+PASS version rc=2
+FOOTPRINT version-maker-before logical=639239 allocated=1314816 cap=104857600
+FOOTPRINT version-maker-after logical=639333 allocated=1318912 cap=104857600
+PASS version-maker rc=2
+FOOTPRINT before-reset-group logical=639333 allocated=1318912 cap=104857600
+FOOTPRINT after-reset-group logical=639333 allocated=1318912 cap=104857600
+FOOTPRINT url-before logical=639251 allocated=1318912 cap=104857600
+FOOTPRINT url-after logical=639351 allocated=1323008 cap=104857600
+PASS url rc=2
+FOOTPRINT url-maker-before logical=639351 allocated=1323008 cap=104857600
+FOOTPRINT url-maker-after logical=639441 allocated=1327104 cap=104857600
+PASS url-maker rc=2
+FOOTPRINT before-reset-group logical=639441 allocated=1327104 cap=104857600
+FOOTPRINT after-reset-group logical=639523 allocated=1327104 cap=104857600
+FOOTPRINT editable-before logical=639522 allocated=1327104 cap=104857600

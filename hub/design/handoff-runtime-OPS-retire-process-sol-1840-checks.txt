@@ -1,0 +1,20 @@
+PASS permission matrix: 24 observations x 3 denial forms; no next-observation sentinel reached
+PASS exe-error post-existence denial x 3
+PASS pid-after-cmdline race exit 4
+PASS pid-after-exe race exit 4
+PASS empty-ENOENT exit 0
+PASS nonempty-ENOENT exit 2
+PASS hidden-root exit 3
+PASS cmdline-ENOENT exit 4
+PASS pid-exit-race exit 4
+PASS readable-target-use-unqualified exit 0
+PASS empty-table exit 0
+PASS cmdline-limit exit 3
+PASS unknown-exe-error exit 2
+PASS pid-scan-limit exit 3
+PASS mountinfo-ENOENT exit 3
+PASS namespace-EIO exit 3
+PASS proc-st_size-zero does not imply empty argv; allowlist and secret sentinels on every model run
+PASS exact command private disk fixture with dangling exe symlink and secret mountinfo/cmdline/namespace contents; exit 0
+PASS script sha256 15890ed6fa650527751e6c3c6de3312ed9e2dc87a0176133eaf28c494f57c55f
+PASS command sha256 a7a3a54d6f04c0be0f753519f3214d4c4403cf8395c85173a12043d0b3fcff27

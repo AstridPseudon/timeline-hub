@@ -1,0 +1,96 @@
+--- 1811/make-child-venv
++++ 1826/make-child-venv
+@@ -1,12 +1,12 @@
+ #!/bin/bash
+-# make-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME] — dispatcher child venv.
+-# RUNTIME remains the optional Remotion graph used for suite substitution.
++# make-child-venv NAME AGENT_SHA [BASE_SUITE REMOTION_GRAPH] — dispatcher child venv.
++# The fourth argument remains the optional Remotion graph used for suite substitution.
+ set -u -o pipefail
+ 
+-O=${CHILD_VENV_ORCH_ROOT:-}
+-A=${CHILD_VENV_AGENT_CHECKOUT:-}
+-R=${CHILD_VENV_RUNTIME_CHECKOUT:-}
+-W=${CHILD_VENV_WORK_ROOT:-}
++O=${CHILD_VENV_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
++A=${CHILD_VENV_AGENT_CHECKOUT:-/home/user/work/agent}
++R=${CHILD_VENV_RUNTIME_CHECKOUT:-/home/user/work/runtime}
++W=${CHILD_VENV_WORK_ROOT:-/home/user/work}
+ PYTHON=${CHILD_VENV_PYTHON:-python3.13}
+ TIMEOUT_BIN=${CHILD_VENV_TIMEOUT_BIN:-timeout}
+ 
+@@ -19,10 +19,6 @@
+ PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
+ REQUIREMENTS_PATH=${CHILD_VENV_REQUIREMENTS_PATH:-requirements/proof.lock}
+ 
+-if [ -z "$O" ] || [ -z "$A" ] || [ -z "$R" ] || [ -z "$W" ]; then
+-  echo 'REFUSED: child venv roots and source checkouts must be supplied explicitly' >&2
+-  exit 2
+-fi
+ case "$O:$A:$R:$W" in
+   /*:/*:/*:/*) ;;
+   *) echo 'REFUSED: child venv roots and source checkouts must be absolute' >&2; exit 2;;
+@@ -38,12 +34,31 @@
+   venv-agent-child-[a-z0-9-]*) ;;
+   *) echo "REFUSED: name must be venv-agent-child-<suffix>"; exit 2 ;;
+ esac
+-[ -n "$S" ] || { echo "REFUSED: agent commit is required"; exit 2; }
++[[ "$N" =~ ^venv-agent-child-[a-z0-9-]+$ ]] || { echo 'REFUSED: invalid child name'; exit 2; }
++[[ "$S" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: exact Agent commit required'; exit 2; }
++[ "$#" -le 4 ] || { echo 'REFUSED: invalid call shape'; exit 2; }
++
++# Authenticate source state before either existing-target lookup or build setup.
++source_state() {
++  local checkout=$1 wanted=$2 actual status
++  actual=$(git -C "$checkout" rev-parse --verify HEAD^{commit} 2>/dev/null) || return 1
++  [ "$actual" = "$wanted" ] || return 1
++  status=$(git -C "$checkout" status --porcelain --untracked-files=all 2>/dev/null) || return 1
++  [ -z "$status" ]
++}
++source_state "$A" "$S" || { echo 'REFUSED: Agent checkout/commit is unavailable, mismatched or dirty'; exit 2; }
++RUNTIME_SHA=$(git -C "$R" rev-parse --verify HEAD^{commit} 2>/dev/null) || { echo 'REFUSED: Runtime checkout unavailable'; exit 2; }
++source_state "$R" "$RUNTIME_SHA" || { echo 'REFUSED: Runtime checkout is dirty'; exit 2; }
+ 
+ D=$W/$N
+ if [ -e "$D" ] || [ -L "$D" ]; then
+-  echo "exists: $D (child venvs are immutable; pick a new name)"
+-  exit 0
++  # The same verifier used by the requester must authenticate this exact target.
++  # This runs before timeout, temporary sources, reports or any provisioning.
++  SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
++  REQUESTER=$SCRIPT_DIR/request-child-venv
++  [ -f "$REQUESTER" ] || REQUESTER=$SCRIPT_DIR/request-child-venv.sh
++  CHILD_VENV_REUSE_ONLY=1 CHILD_VENV_REUSE_TARGET="$D" "$REQUESTER" "$@"
++  exit "$?"
+ fi
+ 
+ # Run the body under one bounded budget. The dispatcher invokes this script
+@@ -141,9 +156,7 @@
+ fi
+ progress "source agent=$S runtime=$RUNTIME_SHA requirements=$REQUIREMENTS_PATH lock_sha256=$LOCK_SHA"
+ 
+-# D21b key material is the generated Runtime client only.  The installed
+-# Runtime backend remains independently recorded by .astrid-runtime-source-
+-# commit and is never relabelled when a client-only key matches.
++# Keep backend custody: the D21b full-bench/client-only key decision is pending.
+ CLIENT_IDENTITY=$(git -C "$R" ls-tree -r --name-only "$RUNTIME_SHA" packages/python/astrid_runtime_client/ | while IFS= read -r path; do
+   [ -n "$path" ] || continue
+   printf '%s=' "$path"
+@@ -151,7 +164,7 @@
+ done)
+ [ -n "$CLIENT_IDENTITY" ] || failure 2 runtime-client-identity
+ 
+-run_stage venv "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -m venv "$T"
++run_stage venv "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -m venv --copies "$T"
+ P=$T/bin/python
+ PIP_ARGS=(--no-cache-dir --disable-pip-version-check --progress-bar off --retries "$PIP_RETRIES" --timeout "$PIP_NETWORK_TIMEOUT_SECONDS")
+ run_stage bootstrap-pip "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q \
+@@ -316,6 +329,8 @@
+    while IFS= read -r file; do sed -i "s#$1#$2#g" "$file"; done < <(grep -rl -- "$1" "$3/bin" 2>/dev/null || true)' \
+   _ "$T" "$D" "$T"
+ run_stage origin-relocation "$LOCAL_TIMEOUT_SECONDS" sed -i "s#$T#$D#g" "$T/.astrid-import-origins"
++source_state "$A" "$S" && source_state "$R" "$RUNTIME_SHA" || failure 2 source-changed-during-build
++run_stage readonly-source "$LOCAL_TIMEOUT_SECONDS" chmod -R a-w "$SRC"
+ run_stage readonly-final "$LOCAL_TIMEOUT_SECONDS" chmod -R a-w "$T"
+ 
+ if [ -e "$D" ] || [ -L "$D" ]; then

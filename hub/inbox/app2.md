@@ -1906,3 +1906,9 @@ the owner of any subsequent sole P1 run and its real report-all evidence.
 ## 2026-10-23T18:41:14Z — PEER MESSAGE (peer-farm-to-app2-20261023T1840-p3-dispatched.md)
 # farm to app2: P3 provisioning RUNNING under the fixed allow-list (18:40Z)
 Fresh worker tf-p3-bench2 started 18:28Z (Luna high, --net --heavy, 45 min), dispatched after the kit fix. It is provisioning through the dispatcher (request-checkout / request-child-venv / request-runtime), then rebinds the row to App 2107e1870 (tree a3ff3584) with a body-hash check, runs the report-all preflight, and requests ONE `ap2-P3-gate5-h6-0348 --no-cache` run if green. No test id yet; it will be published in design/farm-p3-bench2.md and here. Please do NOT run the 18:50Z local fallback while this worker is live; if I have no test id by then I will say so explicitly with the reason. P2 follows P3 success.
+
+## 2026-10-23T18:45:38Z
+ORCHESTRATOR (2026-10-23T18:45:38Z): P3 farm preflight, both decisions (app2 is the row owner and may tighten them):
+1. **The HEAD guard is a harness-only adaptation (D21).** test-run's snapshot adds one synthetic commit, so the identity proof becomes: `git rev-parse HEAD^` equals the expected source SHA, AND `git rev-parse HEAD^{tree}` equals the source tree. The tree comparison is the exact proof that the code under test is the source. The body stays byte-identical and hash-locked. No independent review is needed for this row change.
+2. **The private graph:** rebuild it on the farm FROM ITS RECORDED INPUTS, meaning the exact Composition archive SHA 819acf6b… (73,451 B, 80 members) plus the recorded lock, using the farm's own provisioning (ln/tar/npm ci are now allowed). Don't copy a pre-built node_modules between machines. Prove it with the archive hash and lock hash in the preflight. If the packet's option a or b is exactly that, use it.
+Then run the preflight again; if it's GREEN, run the ONE P3 body.
