@@ -210,6 +210,124 @@ describe("canonical project transcript consistency", () => {
     expect((row.payload as any).words[0].id).toBe("w-one");
     expect(r.create).toHaveBeenCalledTimes(1);
   });
+
+  it("keeps the production association planes replayable and distinguishes null from absent source fields", async () => {
+    const { r, documents } = repository();
+    const a = await editor(r);
+    const before = structuredClone(a.dataRef.current);
+    a.dataRef.current = {
+      ...a.dataRef.current,
+      config: {
+        ...a.dataRef.current.config,
+        clips: a.dataRef.current.config.clips.map((clip) => ({
+          ...clip,
+          app: { opaque: { keep: [null, false, 0] } },
+        })),
+      },
+    };
+    const imported = {
+      sourceId: "reviewed",
+      segments: [
+        {
+          id: "with-null-speaker",
+          start: 1,
+          end: 4,
+          text: "hello world",
+          speaker: null,
+          words: [{ id: "w-one", start: 1, end: 2, text: "hello" }],
+        },
+        { id: "without-speaker", start: 4, end: 5, text: "next" },
+      ],
+    };
+    const receipt = await a.host.importTranscript({
+      document: imported,
+      associationAssetId: "alias",
+    });
+    const document = documents.get(docId(receipt))!;
+    const next = a.dataRef.current;
+    const items = next.sourceItemsBySchemaRef![TRANSCRIPT_SCHEMA_REF];
+
+    expect(document.content.segments).toEqual([
+      {
+        id: "with-null-speaker",
+        start: 1,
+        end: 4,
+        text: "hello world",
+        speaker: null,
+        words: [{ id: "w-one", start: 1, end: 2, text: "hello" }],
+      },
+      { id: "without-speaker", start: 4, end: 5, text: "next" },
+    ]);
+    expect(items.map((item) => item.id)).toEqual([
+      "with-null-speaker",
+      "without-speaker",
+    ]);
+    expect(items[0].payload).toMatchObject({ speaker: null });
+    expect(items[1].payload).not.toHaveProperty("speaker");
+    expect(next.config.clips[0]).toMatchObject({
+      app: { opaque: { keep: [null, false, 0] } },
+    });
+    expect(next.head).toEqual(before.head);
+    expect(next.registry).toEqual(before.registry);
+    expect(before.sourceItemsBySchemaRef).toBeUndefined();
+
+    const replay = parseTimelineBundle({
+      schema_version: 1,
+      itemsBySchemaRef: persistedTranscriptItems(next.sourceItemsBySchemaRef!),
+      transcriptReferences: next.transcriptReferences,
+    });
+    const reopened = await editor(r, "alias");
+    reopened.dataRef.current = await buildTimelineData(
+      reopened.dataRef.current.config,
+      reopened.dataRef.current.registry,
+      (f) => f,
+      reopened.dataRef.current.configVersion,
+      replay.itemsBySchemaRef,
+      next.head,
+      replay.transcriptReferences,
+    );
+    await reopened.host.selectProjectSource({
+      assetId: "alias",
+      documentId: document.document_id,
+    });
+    expect(
+      reopened.dataRef.current.sourceItemsBySchemaRef![TRANSCRIPT_SCHEMA_REF].map(
+        (item) => item.id,
+      ),
+    ).toEqual(["with-null-speaker", "without-speaker"]);
+  });
+
+  it("uses the loaded document version as the production replacement guard", async () => {
+    const { r, documents } = repository();
+    const a = await editor(r);
+    const first = await a.host.importTranscript({
+      document: handoff,
+      associationAssetId: "alias",
+    });
+    const id = docId(first);
+    const replacement = {
+      ...handoff,
+      segments: [{ ...handoff.segments[0], text: "replacement" }],
+    };
+
+    await a.host.importTranscript({
+      document: replacement,
+      associationAssetId: "alias",
+    });
+
+    expect(r.update).toHaveBeenCalledWith(
+      id,
+      expect.objectContaining({
+        segments: [expect.objectContaining({ text: "replacement" })],
+      }),
+      1,
+      expect.any(String),
+    );
+    expect(documents.get(id)!.version).toBe(2);
+    expect(
+      a.dataRef.current.sourceItemsBySchemaRef![TRANSCRIPT_SCHEMA_REF][0].payload,
+    ).toMatchObject({ text: "replacement" });
+  });
   it('looks up media inside a played shot through the supplied registry', async () => {
     const { r } = repository();
     const document = await r.create({
