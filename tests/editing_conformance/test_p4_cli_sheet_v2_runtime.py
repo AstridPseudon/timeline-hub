@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import copy
 import json
+import shlex
 
 import pytest
 
@@ -15,7 +16,11 @@ from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.packs.timeline.cli import build_parser
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.commit import (
+    _digest,
+    bundle_from_document,
+    document_from_bundle,
+)
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.timeline_sheet import NativeSheet
 from tests.editing_conformance import test_native_batch_ingress
@@ -102,11 +107,43 @@ def test_cli_sheet_v2_runtime_preserves_document_and_reads_back(
     assert accepted["parent"]["config"] == original["parent"]["config"]
     assert accepted["placements"] == original["placements"]
     assert accepted["shots"] == original["shots"]
-    accepted_mapping = copy.deepcopy(accepted["source_mapping"])
-    expected_mapping = copy.deepcopy(expected_bundle["source_mapping"])
-    accepted_mapping.pop("_runtime_document")
-    expected_mapping.pop("_runtime_document")
-    assert accepted_mapping == expected_mapping
+    # The ordinary revision read has no authenticated document cache; execute
+    # preserves that boundary. Opening an accepted canonical document adds it.
+    assert "_runtime_document" not in source["source_mapping"]
+    assert "_runtime_document" not in original["source_mapping"]
+    assert "_runtime_document" not in expected_bundle["source_mapping"]
+    assert original["source_mapping"] == source["source_mapping"]
+    assert expected_bundle["source_mapping"] == original["source_mapping"]
+    assert accepted["source_mapping"] == {
+        **expected_bundle["source_mapping"], "_runtime_document": accepted_document,
+    }
+
+    base_head = {
+        "revision_id": seeded["data"]["accepted_revision_id"],
+        "publication_id": seeded["receipt"]["receipt_id"],
+    }
+    base_read = client.timelines.open_bundle(
+        runtime.project, "film", revision_id=base_head["revision_id"],
+        publication_id=base_head["publication_id"],
+    )
+    assert base_read.ok
+    authenticated_base = base_read.data["bundle"]
+    base_document = authenticated_base["source_mapping"]["_runtime_document"]
+    assert authenticated_base == {
+        **original,
+        "source_mapping": {**original["source_mapping"], "_runtime_document": base_document},
+        "base_parent": {**original["base_parent"],
+                        "publication_id": base_head["publication_id"]},
+    }
+    assert base_document["parent_revision"]["revision_id"] == base_head["revision_id"]
+    # Use the real original publication's closure and the full recorded request
+    # for the provider's physical bindings, effects and immutable successor ids.
+    expected_plan = execute(
+        authenticated_base, [expected_command], commit_request=request,
+        evaluated_head=base_head,
+    )
+    assert expected_plan.bundle["source_mapping"] == authenticated_base["source_mapping"]
+    assert accepted_document == document_from_bundle(expected_plan.bundle)
 
     expected_step = {
         "id": "sheet-1",
@@ -145,6 +182,19 @@ def test_cli_sheet_v2_runtime_preserves_document_and_reads_back(
     assert data["steps"][0]["command_ordinals"] == [0]
     assert data["merge_mode"] == "fields"
     assert reply["receipt"]["receipt_id"]
+    assert data["document_digest"] == _digest(accepted_document)
+    assert data["accepted_revision_id"] == accepted_document["parent_revision"]["revision_id"]
+    assert data["previous_revision_id"] == base_head["revision_id"]
+    assert data["previous_publication_id"] == base_head["publication_id"]
+    assert data["steps"] == expected_plan.steps
+    assert data == {
+        **reply["receipt"]["result"],
+        "accepted_publication_id": reply["receipt"]["receipt_id"],
+        "show_command": shlex.join([
+            "astrid", "timelines", "show", "film", "--project", runtime.project,
+            "--published", "--revision-id", data["accepted_revision_id"],
+        ]),
+    }
 
     show_code, shown = _run(
         runtime, capsys, "show", "film", "--published",
@@ -178,3 +228,23 @@ def test_cli_sheet_v2_runtime_preserves_document_and_reads_back(
     assert item["publisher"]
     assert item["steps"][0]["patch"] == data["steps"][0]["patch"]
     assert item["merge_mode"] == "fields"
+    assert item["records"]["commands"] == expected_plan.records
+    assert item["steps"] == data["steps"]
+    assert item["previous"] == base_head
+    assert item["receipt"] == reply["receipt"]
+    accepted_head = {
+        "revision_id": data["accepted_revision_id"],
+        "publication_id": reply["receipt"]["receipt_id"],
+    }
+    assert raw_history.data["head"] == accepted_head
+    stored = client.timelines.open_bundle(
+        runtime.project, "film", revision_id=accepted_head["revision_id"],
+        publication_id=accepted_head["publication_id"],
+    )
+    assert stored.ok
+    assert stored.data["is_current_head"] is True
+    assert stored.data["bundle"] == {
+        **accepted,
+        "base_parent": {**accepted["base_parent"],
+                        "publication_id": accepted_head["publication_id"]},
+    }
