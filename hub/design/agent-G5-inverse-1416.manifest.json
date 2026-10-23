@@ -1,0 +1,41 @@
+{
+  "files": [
+    {
+      "bytes": 1931658,
+      "credential_scan": {
+        "clean": true,
+        "findings": []
+      },
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-inverse-1416-actual-a94e094388a4c315.json",
+      "roundtrip_equal": true,
+      "sha256": "a94e094388a4c3159b25d2f1b2a088a15729142e54113ad01f40f0b0f3ca96c0",
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-restructure-inverse-sol-1416/evidence/original-observed.json"
+    },
+    {
+      "bytes": 557388,
+      "credential_scan": {
+        "clean": true,
+        "findings": []
+      },
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-inverse-1416-offline-cfa-a141c3702335878e.json",
+      "roundtrip_equal": true,
+      "sha256": "a141c3702335878e9b964900ec2f3aed9ca5b733ddb9b44bda23389ddc4c0b7c",
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-restructure-inverse-sol-1416/evidence/offline-cfa.json"
+    },
+    {
+      "bytes": 557388,
+      "credential_scan": {
+        "clean": true,
+        "findings": []
+      },
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-inverse-1416-offline-859-d57677670e1a2246.json",
+      "roundtrip_equal": true,
+      "sha256": "d57677670e1a22466dbd93f4e02e9d566b1333b4982e993a75e4d9b38db60e1b",
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-restructure-inverse-sol-1416/evidence/offline-859.json"
+    }
+  ],
+  "product_changed": false,
+  "protocol": "timeline.g5.inverse.causal-correction.v1",
+  "source_packet_sha256": "01ccdec35f2a8f3e72e99541092f99ec20bda2de036adc6fe77d7f773157aaeb",
+  "status": "BLOCKED"
+}
