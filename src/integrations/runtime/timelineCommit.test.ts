@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
 import type { CanonicalDocument, Transport } from './generated.ts';
 import { classifyRuntimeCommitFailure, AstridRuntimeClient } from './client.ts';
+import { decodeAcceptedTimelineCommit } from './dataProvider.ts';
 import { ApiError } from './generated.ts';
 import { RuntimeDataProvider } from './dataProvider.ts';
 import { RUNTIME_SCHEMA_DIGEST } from './contract-metadata.ts';
@@ -106,6 +107,15 @@ describe('Runtime timeline commit capability', () => {
     expect(classifyRuntimeCommitFailure(new ApiError(409, 'conflict', 'busy', '', { status: 'refused', reason: 'head_busy' }))).toBe('unknown');
     expect(classifyRuntimeCommitFailure(new ApiError(422, 'invalid', 'bad'))).toBe('validation');
     expect(classifyRuntimeCommitFailure(new ApiError(503, 'not_ready', 'unknown'))).toBe('unknown');
+  });
+
+  it('accepts the v2 merged status in the shared commit decoder', () => {
+    const response = accepted('r1', 'p1', 'r0', 'p0');
+    response.data.status = 'merged';
+    expect(decodeAcceptedTimelineCommit(response, PROJECT_ID, TIMELINE_ID).accepted).toEqual({
+      revisionId: 'r1',
+      publicationId: 'p1',
+    });
   });
 
   it('preserves repeated occurrences, scoped child images, opaque fields and explicit nulls', async () => {
