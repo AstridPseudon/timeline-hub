@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import type { TestInfo } from '@playwright/test';
+import type { TestInfo, WorkerInfo } from '@playwright/test';
 
 export const D21_ENVIRONMENT_FILE = 'd21-environment.json';
 export const D21_ENVIRONMENT_LIMIT = 32 * 1024;
@@ -316,9 +316,36 @@ export function serializeD21Environment(artifact: D21EnvironmentArtifact): strin
   return text;
 }
 
-export async function persistD21Environment(testInfo: TestInfo, artifact: D21EnvironmentArtifact): Promise<void> {
-  const output = testInfo.outputPath(D21_ENVIRONMENT_FILE);
-  const text = serializeD21Environment(artifact);
+function isTestInfo(info: TestInfo | WorkerInfo): info is TestInfo {
+  return typeof (info as TestInfo).outputPath === 'function' && typeof (info as TestInfo).attach === 'function';
+}
+
+function workerArtifactPath(workerInfo: WorkerInfo): string {
+  if (!Number.isSafeInteger(workerInfo.workerIndex) || workerInfo.workerIndex < 0) {
+    throw new Error('Playwright worker index is not safe for an artifact path');
+  }
+  const outputDir = path.resolve(workerInfo.project.outputDir);
+  const workerDir = path.join(outputDir, `worker-${workerInfo.workerIndex}`);
+  const relativeWorkerDir = path.relative(outputDir, workerDir);
+  if (relativeWorkerDir.startsWith('..') || path.isAbsolute(relativeWorkerDir)) {
+    throw new Error('Playwright worker artifact path escaped the project output directory');
+  }
+  mkdirSync(workerDir, { recursive: true, mode: 0o700 });
+  return path.join(workerDir, D21_ENVIRONMENT_FILE);
+}
+
+function writeD21Artifact(output: string, text: string): void {
   writeFileSync(output, text, { encoding: 'utf8', mode: 0o600 });
-  await testInfo.attach(D21_ENVIRONMENT_FILE, { path: output, contentType: 'application/json' });
+  chmodSync(output, 0o600);
+}
+
+export async function persistD21Environment(info: TestInfo | WorkerInfo, artifact: D21EnvironmentArtifact): Promise<void> {
+  const text = serializeD21Environment(artifact);
+  if (!isTestInfo(info)) {
+    writeD21Artifact(workerArtifactPath(info), text);
+    return;
+  }
+  const output = info.outputPath(D21_ENVIRONMENT_FILE);
+  writeD21Artifact(output, text);
+  await info.attach(D21_ENVIRONMENT_FILE, { path: output, contentType: 'application/json' });
 }
