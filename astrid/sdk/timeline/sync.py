@@ -196,12 +196,15 @@ class TimelineSession:
         from astrid.sdk.timeline.store import fetch_bundle
 
         commands = [*state["pending"], *extra_commands]
-        source = ({"publication_id": state["base"]["publication_id"]}
-                  if any(command["op"] == "doc.patch" for command in commands) else {})
+        # Hydrate every captured closure from the authenticated revision /
+        # publication pair.  Detached document preflight has no pending
+        # command, so conditioning this pin on doc.patch would silently turn
+        # that read into revision-only hydration.
+        source = {"publication_id": state["base"]["publication_id"]}
         bundle = fetch_bundle(self.project_id, self.timeline_id,
                               revision_id=state["base"]["revision_id"], client=self.client, **source)
         materialize_transcript_inputs(
-            bundle, [*state["pending"], *extra_commands],
+            bundle, commands,
             client=self.client.timelines._client, project=self.project_id)
         return execute(bundle, state["pending"]).bundle if state["pending"] else bundle
 
