@@ -136,6 +136,34 @@ describe('RuntimeDataProvider', () => {
       && requestPath !== '/v1/handshake')).toEqual([]);
   });
 
+  it('refreshes the immutable basis when polling sees a new publication at the same revision', async () => {
+    const fixture = runtimeFixture();
+    let publicationId = 'publication-p1';
+    const publicPath = `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`;
+    const transport: typeof fixture.transport = async (method, path, headers, body) => {
+      if (method === 'GET' && path === publicPath) {
+        return { status: 200, headers: {}, body: json({
+          project_id: PROJECT_ID,
+          timeline_id: TIMELINE_ID,
+          head_revision_id: 'parent-r1',
+          head_publication_id: publicationId,
+        }) };
+      }
+      return fixture.transport(method, path, headers, body);
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
+
+    const initial = await provider.loadTimeline(TIMELINE_ID);
+    publicationId = 'publication-p2';
+    const polled = await provider.loadTimeline(TIMELINE_ID, { poll: true });
+
+    expect(initial.head).toEqual({ projectId: PROJECT_ID, timelineId: TIMELINE_ID, headRevisionId: 'parent-r1', headPublicationId: 'publication-p1' });
+    expect(polled.head).toEqual({ projectId: PROJECT_ID, timelineId: TIMELINE_ID, headRevisionId: 'parent-r1', headPublicationId: 'publication-p2' });
+    expect(polled.config).toEqual(initial.config);
+    expect(polled.configVersion).toBe(2);
+    expect(fixture.requests.filter((request) => request.path.endsWith('/composition-revisions/parent-r1'))).toHaveLength(2);
+  });
+
   it('freezes the original five-field selection before an asynchronous read', async () => {
     const fixture = runtimeFixture();
     const selection = preparedMediaSelection();

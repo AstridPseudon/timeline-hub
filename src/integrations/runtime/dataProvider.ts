@@ -1425,7 +1425,10 @@ export class RuntimeDataProvider implements DataProvider {
       if (mismatch || !inspection) throw new TimelineVersionConflictError(mismatch ?? 'Workspace Runtime timeline head pair is unavailable');
       this.rememberFreshHead(this.projectId, timelineId, inspection);
       const previous = this.canonicalTimelineState.get(timelineId);
+      const sameVerifiedPublication = previous?.headPublicationId === null
+        || previous?.headPublicationId === headPublicationId;
       const parentComposition = previous?.headRevisionId === headRevisionId
+        && sameVerifiedPublication
         ? previous.parentComposition
         : headRevisionId === null
           ? { config: {}, registry: { assets: {} }, clips: [], occurrences: [] }
@@ -1443,6 +1446,7 @@ export class RuntimeDataProvider implements DataProvider {
       }
       const clips = canonicalParentClips(parentComposition, config);
       const version = previous && previous.headRevisionId === headRevisionId
+        && sameVerifiedPublication
         ? previous.version
         : (previous?.version ?? 0) + 1;
       this.canonicalTimelineState.set(timelineId, {
