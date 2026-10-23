@@ -169,7 +169,7 @@ def restore_root_baselines(state, records, publication, commands):
     from astrid.core.timeline.authoring_bundle import _RestoredShot
 
     entry = next(entry for entry in records.entries if entry['publication_id'] == publication)
-    before, _ = records.load_boundary(entry)
+    before, after = records.load_boundary(entry)
     for record in commands:
         if record['command']['op'] != 'timeline.inverse' or '_inverse_effects' not in record:
             continue
@@ -179,13 +179,40 @@ def restore_root_baselines(state, records, publication, commands):
                 continue
             identity = write['ref'][5:]
             prior = before['shots'].get(identity)
+            expected = State(before)
+            if '_inverse_stage' in record:
+                original, _, boundary = record['_inverse_stage']
+                if not any(equal(original, item) for item in entry_records(records, entry)):
+                    raise CommandError('root stage differs from accepted source', kind='history_unavailable')
+                start, end = boundary['native_write_range']
+                if not equal(record['writes'], original['writes'][start:end]):
+                    raise CommandError('root stage writes differ from accepted source', kind='history_unavailable')
+                # Native stages can precede later edits to the restored root.
+                # Project only into a detached guard state; retain the full
+                # accepted document as the compiler's source baseline below.
+                projected = State(copy.deepcopy(before))
+                for source_record in entry['records']['commands']:
+                    for index, change in enumerate(source_record['writes']):
+                        if equal(source_record, original) and index == start:
+                            expected = State(copy.deepcopy(projected.bundle))
+                        guard(projected, change['ref'], change['path'], change['before'],
+                              kind='history_unavailable')
+                        projected.set(change['ref'], change['path'], change['after'])
+                guard(projected, write['ref'], [], State(after).get(write['ref'], []),
+                      kind='history_unavailable')
+                if ({row['occurrence_id'] for row in projected.bundle['placements']
+                     if row['shot_id'] == identity} !=
+                        {row['occurrence_id'] for row in after['placements'] if row['shot_id'] == identity}):
+                    raise CommandError('root source owners changed', kind='history_unavailable')
             shot = state.bundle['shots'].get(identity)
             owners = {row['occurrence_id'] for row in state.bundle['placements']
                       if row['shot_id'] == identity}
             if (prior is None or shot is None or not owners
                     or owners != {row['occurrence_id'] for row in before['placements']
                                   if row['shot_id'] == identity}
-                    or not equal(shot['payload'], prior['payload'])
+                    or owners != {row['occurrence_id'] for row in expected.bundle['placements']
+                                  if row['shot_id'] == identity}
+                    or not equal(state.get(write['ref'], []), expected.get(write['ref'], []))
                     or not state.matches(write['ref'], [], write['before'])):
                 raise CommandError('restored root differs from accepted source', kind='history_unavailable')
             state.bundle['shots'][identity] = _RestoredShot(
