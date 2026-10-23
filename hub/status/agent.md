@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T23:22:11Z | dispatcher heartbeat 6s | live 4 (sol 0, luna 4, other 0) | busy30 15 | status age 1m -->
+<!-- agent | 2026-10-23T23:24:08Z | dispatcher heartbeat 1s | live 5 (sol 2, luna 3, other 0) | busy30 16 | status age 0m -->
 # agent board, 2026-10-23T23:21:13Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -144,8 +144,8 @@
 
 | F-postG5-D09-invocation | supported source-mode D09 fixture | Luna harness proof | exact managed c36/abd47 bench | merged | agt-F-D09-invocation-return-2255 FINAL PASS | Original3PASS510.58s/exactbodyhashes/sourceprofile/NodePATH/installedRuntime/guardunchanged/origins+receipt+stderr+nowrite96KB. Priorsetup failures retained;015f root harnessscript proofONLY nevermerge. D21 noextra review | env-only |
 
-| F-postG5-R2-equal-write | original scalar old-inverse acceptance | HARD Sol source owner | actual full original scalar failure | doing | agt-F-R2-equal-write-review-2319 LIVE | Sol2306 confirmed fork-output equal-clear guard gap; bounded inverse.py+new regression only. Author6+20+16+8 and actualRuntime caller PASS, now independent2319. Originalassertion/ABA/physicalguards unchanged; no fullcredit | c36 base |
-| F-postG5-graph-roots | five original graph-root failures | Luna readonly | retained full traces/source | doing | agt-F-graph-root-diagnosis-2306 LIVE | First created-child stages reload inverse refuses restored-root source equality; exact5node/phase/source vsfixture ownership audit, no failedbodyrepeat or competinginverse author | c36 base |
+| F-postG5-R2-equal-write | original scalar old-inverse acceptance | HARD Sol source owner | actual full original scalar failure | doing | agt-F-R2-equal-write-return-sol-2324 QUEUED | Sol2306 confirmed fork-output equal-clear guard gap; bounded inverse.py+new regression only. Author6+20+16+8 and actualRuntime caller PASS, independent2319FAIL missing internal materialization provenance; Sol2324samebranchreturn. Originalassertion/ABA/physicalguards unchanged; no fullcredit | c36 base |
+| F-postG5-graph-roots | five original graph-root failures | Luna readonly | retained full traces/source | doing | agt-F-created-root-redo-sol-2322 QUEUED | Readonly2306 complete: createdchild redo root-source guard; four child-alias reason mismatches inferred same d7 outputguard. Sol2322 owns _root_inverse+new regression ONLY on d7, inverse.py unchanged/reserved; source causality before new bounded originalproof | c36 base |
 
 | F-postG5-scene-fixture | retired save in source-certification setup | Luna fixture owner | actual full2Scene setup failures | doing | agt-F-scene-fixture-2312 LIVE | open_source_runtime usesretiredpublish_parent_composition; existingguardcorrect. Faithfulauthenticseed/capturefixture continuation only, allsource/custody positives+forgery checks KEEP; no Runtime/product/guard edit | c36 base |
 
