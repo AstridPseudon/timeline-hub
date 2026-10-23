@@ -221,6 +221,10 @@ def _schema_for_selected(
         return None
     if not isinstance(realm_id, str) or not realm_id:
         _fail("elementRef", "selected project elements require retained schema authority")
+
+    # The retained closure may contain more than one admission for the same
+    # pack owner.  Select the immutable element identity first; pack_id alone
+    # is only a namespace and must never choose the declaration or pin.
     matches = []
     for item in schema_inputs:
         if not isinstance(item, (tuple, list)) or len(item) != 2:
@@ -230,33 +234,48 @@ def _schema_for_selected(
             continue
         document = verified.get("document")
         content = document.get("content") if isinstance(document, Mapping) else None
-        if isinstance(content, Mapping) and content.get("pack_id") == reference.get("packId"):
-            matches.append((verified, objects))
-    if len(matches) != 1:
+        if not isinstance(content, Mapping) or content.get("pack_id") != reference.get("packId"):
+            continue
+        admissions = content.get("admissions")
+        if not isinstance(admissions, list):
+            continue
+        exact = [admission for admission in admissions
+                 if isinstance(admission, Mapping) and all(
+                     admission.get(key) == reference.get(key)
+                     for key in ("id", "kind", "revision"))]
+        if len(exact) == 1:
+            matches.append((verified, objects, exact[0]))
+    if not matches:
         _fail("elementRef", "selected project element has no unique retained schema")
-    admission = None
-    document = matches[0][0].get("document")
-    content = document.get("content") if isinstance(document, Mapping) else None
-    if isinstance(content, Mapping):
-        admissions = content.get("admissions", [])
-        admission = next((item for item in admissions if isinstance(item, Mapping) and all(
-            item.get(key) == reference.get(key) for key in ("id", "kind", "revision")
-        )), None)
-    if not isinstance(admission, Mapping):
-        _fail("elementRef", "selected element is not admitted by the retained pack")
-    admission_map = cast(Mapping[str, Any], admission)
-    descriptor_ref = admission_map.get("snapshot_object")
-    snapshot = matches[0][1].get(descriptor_ref.get("object_id")) if isinstance(descriptor_ref, Mapping) else None
-    try:
-        from astrid.core.element.project_packs import admitted_element_snapshot_descriptor
+    from astrid.core.element.project_packs import admitted_element_snapshot_descriptor
 
-        descriptor = admitted_element_snapshot_descriptor(
-            realm_id, project, dict(reference), matches[0][0],
-            snapshot,
-        )
-    except (KeyError, StopIteration, TypeError, ValueError) as exc:
-        _fail("elementRef", f"retained element declaration is unavailable: {exc}")
-    return descriptor.get("schema") if isinstance(descriptor, Mapping) else None
+    # A commit may retain several exact DocumentPins for equal immutable
+    # element identities.  Only the pin whose portable object was consumed by
+    # this candidate can qualify; other retained pins may intentionally have
+    # no object in this provider invocation.
+    declarations = []
+    for verified, objects, admission in matches:
+        admission_map = cast(Mapping[str, Any], admission)
+        descriptor_ref = admission_map.get("snapshot_object")
+        object_id = descriptor_ref.get("object_id") if isinstance(descriptor_ref, Mapping) else None
+        snapshot = objects.get(object_id) if isinstance(object_id, str) else None
+        if snapshot is None:
+            continue
+        try:
+            descriptor = admitted_element_snapshot_descriptor(
+                realm_id, project, dict(reference), verified,
+                snapshot,
+            )
+        except (KeyError, StopIteration, TypeError, ValueError) as exc:
+            _fail("elementRef", f"retained element declaration is unavailable: {exc}")
+        if isinstance(descriptor, Mapping):
+            declarations.append(descriptor)
+    if not declarations:
+        _fail("elementRef", "retained element declaration is unavailable")
+    schemas = [declaration.get("schema") for declaration in declarations]
+    if any(schema != schemas[0] for schema in schemas[1:]):
+        _fail("elementRef", "selected project element has ambiguous retained declarations")
+    return schemas[0] if isinstance(schemas[0], Mapping) else None
 
 
 def _validate_params(
@@ -266,10 +285,23 @@ def _validate_params(
     params = clip.get("params", {})
     if not isinstance(params, Mapping):
         _fail(f"{path}.params", "must be an object")
+    previous = baseline.get("params", {}) if isinstance(baseline, Mapping) else {}
+    previous = previous if isinstance(previous, Mapping) else {}
+    changed = {key: value for key, value in params.items()
+               if key not in previous or not equal(previous[key], value)}
+    if not changed:
+        return
+
     element_ref = clip.get("elementRef") or clip.get("element_ref")
     element = element_ref.get("id") if isinstance(element_ref, Mapping) else clip.get("clipType", "media")
     if not isinstance(element, str):
         _fail(f"{path}.clipType", "must identify an element")
+    # A newly added selected clip can carry opaque literal params before its
+    # separate selection command supplies the retained declaration.  Once a
+    # selected clip already exists, a changed PARAM requires that authority.
+    selected = isinstance(element_ref, Mapping) and element_ref.get("packId")
+    if selected and baseline is None:
+        return
     schema = _schema_for_selected(clip, schema_inputs=schema_inputs, realm_id=realm_id, project=project)
     if schema is None:
         from astrid.sdk.timeline_address import element_schema
@@ -278,11 +310,19 @@ def _validate_params(
     properties = schema.get("properties", {}) if isinstance(schema, Mapping) else {}
     if not isinstance(properties, Mapping):
         properties = {}
-    previous = baseline.get("params", {}) if isinstance(baseline, Mapping) else {}
-    previous = previous if isinstance(previous, Mapping) else {}
     validator = Draft202012Validator(dict(schema), registry=Registry())
-    additional = schema.get("additionalProperties", True) if isinstance(schema, Mapping) else True
-    for key, value in params.items():
+    # Sealed built-in manifests are normalized by element_schema under the
+    # short ``additional`` key; retained project JSON Schemas use the standard
+    # ``additionalProperties`` spelling.  Keep their policies separate.
+    if selected:
+        # Project declarations validate known fields only; unknown authored
+        # values remain opaque by the retained-parameter compatibility rule.
+        additional = True
+    elif isinstance(schema, Mapping):
+        additional = schema.get("additional", schema.get("additionalProperties", True))
+    else:
+        additional = True
+    for key, value in changed.items():
         if key in properties:
             if key in previous and equal(previous[key], value):
                 continue

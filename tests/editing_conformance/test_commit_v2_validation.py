@@ -59,3 +59,24 @@ def test_known_element_parameter_uses_declared_value_schema():
     value["parent"]["config"]["clips"][0].update(clipType="am-sprite", params={"scale": 0})
     with pytest.raises(AuthoringBundleError, match="minimum"):
         validate_final_candidate(value)
+
+
+def test_sealed_builtin_rejects_new_undeclared_parameter_but_retains_opaque_history():
+    before = candidate()
+    value = copy.deepcopy(before)
+    clip = value["parent"]["clips"][0]
+    clip.update(clipType="am-flap", params={"legacy": {"keep": [None, False]}})
+    value["parent"]["config"]["clips"][0].update(
+        clipType="am-flap", params={"legacy": {"keep": [None, False]}})
+    with pytest.raises(AuthoringBundleError, match="not declared"):
+        validate_final_candidate(value, baseline=before)
+
+    clip["params"]["opaque"] = {"keep": [None, False, {}]}
+    value["parent"]["config"]["clips"][0]["params"]["opaque"] = copy.deepcopy(
+        clip["params"]["opaque"])
+    # Existing opaque values remain eligible for round-trip retention.
+    baseline = copy.deepcopy(value)
+    clip["params"]["opaque"] = {"keep": [None, False, {}, "changed"]}
+    value["parent"]["config"]["clips"][0]["params"]["opaque"] = copy.deepcopy(
+        clip["params"]["opaque"])
+    validate_final_candidate(value, baseline=baseline)
