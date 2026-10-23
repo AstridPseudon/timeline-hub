@@ -8,13 +8,11 @@ import { execFileSync } from 'node:child_process';
 import { createServer } from 'node:net';
 import { mkdirSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { APP_ENTRY_ROUTE, commandOutboxes, openSeededTimeline, test as appTest, UI } from './support/app.ts';
 import { ASTRID_CHECKOUT, ASTRID_PYTHON } from './support/astrid.ts';
 import { RUNTIME_CHECKOUT, spawnGroup, stopGroup, type DirectHarness } from './support/harness.ts';
-import {
-  classifyRuntimePost,
-  isExpectedInverseRequest,
-} from './support/auto-real-proxy-helpers.ts';
+import { classifyRuntimePost, normalRuntimeCommitPath, requireAuthoritativeHead } from './support/auto-real-proxy-helpers.ts';
 import { normalAcpEnvironment } from '../../../scripts/testing/auto-real-proxy-main95.mjs';
 import type { ThreeProductsSeed } from './support/harness.ts';
 
@@ -37,7 +35,277 @@ const test = appTest.extend<{ workspace: Workspace }>({
 
 type Workspace = { harness: DirectHarness; seed: ThreeProductsSeed; vite: ViteWorkspace };
 type ViteWorkspace = { origin: string; restart(): Promise<void>; stop(): Promise<void> };
-type Wire = { method: string; body: string; key: string; receipt?: Record<string, unknown> };
+type Wire = { method: string; body: string; key: string; receipt?: Record<string, unknown> | null; receiptBody?: string };
+type JsonRecord = Record<string, any>;
+type PlacementSnapshot = { parent: JsonRecord; shot: JsonRecord; inner: JsonRecord };
+
+function record(value: unknown, label: string): JsonRecord {
+  expect(value, label).toBeTruthy();
+  expect(typeof value, label).toBe('object');
+  expect(Array.isArray(value), label).toBe(false);
+  return value as JsonRecord;
+}
+
+function assertFullV2Request(wire: Wire, projectId: string, timelineId: string): JsonRecord {
+  const body = JSON.parse(wire.body) as JsonRecord;
+  expect(wire.method).toBe('POST');
+  expect(wire.key).toEqual(expect.any(String));
+  expect(wire.key).toBeTruthy();
+  expect(body).toMatchObject({
+    api_version: 1, project_id: projectId, timeline_id: timelineId,
+    base_revision_id: expect.any(String), base_publication_id: expect.any(String),
+    commands: expect.any(Array), label: expect.any(String), steps: expect.any(Array),
+    merge: expect.stringMatching(/^(fields|atomic)$/), dry_run: false, source: { via: 'app' },
+  });
+  expect(body.label.length).toBeGreaterThan(0);
+  expect(body.commands.length).toBeGreaterThan(0);
+  expect(body.steps.length).toBeGreaterThan(0);
+  for (const step of body.steps as JsonRecord[]) {
+    expect(step).toMatchObject({ id: expect.any(String), label: expect.any(String), intent: expect.any(String),
+      tags: expect.any(Array), command_ordinals: expect.any(Array), patch: expect.any(Array) });
+    if (step.reads !== undefined) expect(step.reads).toEqual(expect.any(Array));
+  }
+  if (body.reads !== undefined) expect(body.reads).toEqual(expect.any(Array));
+  if (body.rationale !== undefined) expect(body.rationale).toEqual(expect.any(String));
+  if (body.group_id !== undefined) expect(body.group_id).toEqual(expect.any(String));
+  for (const command of body.commands as JsonRecord[]) {
+    expect(command).toMatchObject({ schema_version: 1, version: '1' });
+    if (command.reads !== undefined) expect(command.reads).toEqual(expect.any(Array));
+  }
+  return body;
+}
+
+function assertFullV2Reply(wire: Wire, projectId: string, timelineId: string): JsonRecord {
+  const envelope = record(wire.receipt, 'full v2 commit envelope');
+  const data = record(envelope.data, 'full v2 commit data');
+  const requestBody = JSON.parse(wire.body) as JsonRecord;
+  if (data.status === 'preview') {
+    expect(data.would_status).toMatch(/^(accepted|merged)$/);
+    expect(envelope.receipt).toBeNull();
+    return data;
+  }
+  if (data.status === 'conflict' || data.status === 'refused') {
+    expect(data).toMatchObject({ reason: expect.any(String), head: expect.any(Object) });
+    return data;
+  }
+  if (data.status === 'invalid') {
+    expect(data).toMatchObject({ code: expect.any(String), path: expect.any(Array), hint: expect.any(String), command: expect.any(Object) });
+    return data;
+  }
+  const receipt = record(envelope.receipt, 'full v2 receipt');
+  expect(['accepted', 'merged', 'rebased']).toContain(data.status);
+  expect(data).toMatchObject({
+    base_revision_id: expect.any(String), base_publication_id: expect.any(String),
+    previous_revision_id: expect.any(String), previous_publication_id: expect.any(String),
+    accepted_revision_id: expect.any(String), canonical_document: expect.any(Object), document_digest: expect.any(String),
+    commands: expect.any(Array), label: expect.any(String), steps: expect.any(Array),
+    id_map: expect.any(Object),
+    merge_mode: expect.stringMatching(/^(fields|atomic)$/), publisher: expect.any(String),
+    provider_version: expect.any(String), compiler_version: expect.any(String),
+  });
+  expect(data.base_revision_id).toBe(requestBody.base_revision_id);
+  expect(data.base_publication_id).toBe(requestBody.base_publication_id);
+  expect(data.label).toBe(requestBody.label);
+  expect(data.merge_mode).toBe(requestBody.merge);
+  expect(data.source).toEqual(requestBody.source);
+  for (const field of ['rationale', 'group_id'] as const) {
+    if (requestBody[field] !== undefined) expect(data[field]).toEqual(requestBody[field]);
+  }
+  expect(data.canonical_document).toMatchObject({ schema_version: 1, project_id: projectId, timeline_id: timelineId,
+    parent_revision: expect.any(Object), shot_revisions: expect.any(Array), internal_timeline_revisions: expect.any(Array),
+    dependency_manifest: expect.any(Object) });
+  expect(data.accepted_revision_id).toBe(data.canonical_document.parent_revision.revision_id);
+  expect(wire.receiptBody).toEqual(expect.any(String));
+  expect(JSON.parse(wire.receiptBody!)).toEqual(envelope);
+  // Preserve Runtime's number spelling (1.0 vs 1) from the raw reply and use its official digest.
+  const documentDigest = execFileSync(ASTRID_PYTHON, ['-c',
+    'import json, sys; sys.path.insert(0, sys.argv[1]); from runtime_protocol.timeline_commit_validation import digest; print(digest(json.load(sys.stdin)["data"]["canonical_document"]))',
+    RUNTIME_CHECKOUT], { input: wire.receiptBody, encoding: 'utf8',
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' }, timeout: 30_000 }).trim();
+  expect(data.document_digest).toBe(documentDigest);
+  assertReplyLanding(data);
+  expect(receipt).toMatchObject({ receipt_id: expect.any(String), command_kind: 'timeline.commit',
+    project_id: projectId, idempotency_key: wire.key });
+  expect(receipt.receipt_id).toBeTruthy();
+  expect(receipt.result).toEqual(data);
+  expect(data.steps.length).toBeGreaterThan(0);
+  expect(data.commands).toHaveLength(requestBody.commands.length);
+  for (const [ordinal, command] of (data.commands as JsonRecord[]).entries()) {
+    for (const [field, value] of Object.entries((requestBody.commands as JsonRecord[])[ordinal])) {
+      expect(command[field], `authoritative command ${ordinal}.${field}`).toEqual(value);
+    }
+    expect(command).toMatchObject({ intent: expect.any(Object), resolved: expect.any(Array), reads: expect.any(Array),
+      selections: expect.any(Array), bindings: expect.any(Array), created: expect.any(Array) });
+  }
+  expect(data.steps).toHaveLength(requestBody.steps.length);
+  for (const [ordinal, step] of (data.steps as JsonRecord[]).entries()) {
+    const submitted = (requestBody.steps as JsonRecord[])[ordinal];
+    expect(step).toMatchObject({ id: submitted.id, label: submitted.label, intent: submitted.intent, tags: submitted.tags,
+      command_ordinals: submitted.command_ordinals });
+    expect(step).toMatchObject({ id: expect.any(String), label: expect.any(String), intent: expect.any(String),
+      tags: expect.any(Array), command_ordinals: expect.any(Array), patch: expect.any(Array), dependencies: expect.any(Array) });
+  }
+  return data;
+}
+
+function assertReplyLanding(data: JsonRecord): void {
+  const previous = { revision_id: data.previous_revision_id, publication_id: data.previous_publication_id };
+  const base = { revision_id: data.base_revision_id, publication_id: data.base_publication_id };
+  if (data.status === 'accepted') {
+    expect(data.rebased_onto).toBeNull();
+    expect(previous).toEqual(base);
+  } else {
+    expect(['merged', 'rebased']).toContain(data.status);
+    expect(data.rebased_onto).toEqual(previous);
+    expect(previous).not.toEqual(base);
+  }
+}
+
+function isExpectedV2InverseRequest(request: { method(): string; url(): string; postDataJSON(): unknown; headers(): Record<string, string> }, projectId: string,
+  timelineId: string, publicationId: string): boolean {
+  if (request.method() !== 'POST') return false;
+  let url: URL;
+  let body: JsonRecord;
+  try {
+    url = new URL(request.url());
+    body = request.postDataJSON() as JsonRecord;
+  } catch { return false; }
+  if (!body || Array.isArray(body) || typeof body !== 'object' || url.search || url.hash
+    || url.pathname !== normalRuntimeCommitPath(projectId, timelineId)
+    || !request.headers()['idempotency-key']
+    || typeof body.base_revision_id !== 'string' || !body.base_revision_id
+    || typeof body.base_publication_id !== 'string' || !body.base_publication_id
+    || !Array.isArray(body.steps) || body.steps.length !== 1
+    || typeof body.steps[0]?.id !== 'string' || !body.steps[0].id) return false;
+  const command = {
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: [publicationId] },
+  };
+  // commitSession's Undo builder supplies this metadata; only the persisted intent ID varies.
+  const expected = {
+    api_version: 1, project_id: projectId, timeline_id: timelineId,
+    base_revision_id: body.base_revision_id, base_publication_id: body.base_publication_id,
+    commands: [command], label: 'Undo timeline',
+    steps: [{ id: body.steps[0].id, label: 'Undo timeline', intent: 'Undo timeline',
+      tags: [], command_ordinals: [0], patch: [] }],
+    merge: 'fields', dry_run: false, source: { via: 'app' },
+  } as JsonRecord;
+  if (Object.hasOwn(body, 'reads')) expected.reads = [];
+  for (const field of ['rationale', 'group_id'] as const) {
+    if (Object.hasOwn(body, field)) {
+      if (typeof body[field] !== 'string' || (field === 'group_id' && !body[field])) return false;
+      expected[field] = body[field];
+    }
+  }
+  return isDeepStrictEqual(body, expected);
+}
+
+async function currentPlacementSnapshot(harness: DirectHarness, seed: ThreeProductsSeed): Promise<PlacementSnapshot> {
+  const history = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commits?limit=50`);
+  const head = requireAuthoritativeHead(history.body);
+  const parent = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${head.revision_id}`)).body;
+  const payload = record(parent.payload, 'current parent payload');
+  const occurrence = (payload.occurrences as JsonRecord[]).find((item) => item.occurrence_id === seed.occurrenceId);
+  expect(occurrence, 'seed occurrence').toBeTruthy();
+  const shot = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/shots/${seed.shotId}/revisions/${occurrence!.shot_revision_id}`)).body;
+  const inner = (await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/revisions/${shot.internal_timeline_revision_id}`)).body;
+  return { parent: payload, shot: record(shot.payload, 'current shot payload'), inner: record(inner.payload, 'current child payload') };
+}
+
+function replyPlacementSnapshot(data: JsonRecord, seed: ThreeProductsSeed): PlacementSnapshot {
+  const document = record(data.canonical_document, 'accepted canonical document');
+  const parent = record(record(document.parent_revision, 'accepted parent revision').payload, 'accepted parent payload');
+  const shotRevision = (document.shot_revisions as JsonRecord[]).find((item) => item.shot_id === seed.shotId);
+  expect(shotRevision, 'accepted shot revision').toBeTruthy();
+  const innerRevision = (document.internal_timeline_revisions as JsonRecord[]).find((item) => item.revision_id === shotRevision!.internal_timeline_revision_id);
+  expect(innerRevision, 'accepted internal revision').toBeTruthy();
+  return { parent, shot: record(shotRevision!.payload, 'accepted shot payload'), inner: record(innerRevision!.payload, 'accepted child payload') };
+}
+
+function assertPlacementCanonicalDelta(before: PlacementSnapshot, after: PlacementSnapshot, seed: ThreeProductsSeed, clipId: string, objectId: string, media: JsonRecord): void {
+  const beforeOccurrence = (before.parent.occurrences as JsonRecord[]).find((item) => item.occurrence_id === seed.occurrenceId)!;
+  const afterOccurrence = (after.parent.occurrences as JsonRecord[]).find((item) => item.occurrence_id === seed.occurrenceId)!;
+  expect(Object.keys(after.parent).sort()).toEqual(Object.keys(before.parent).sort());
+  for (const [key, value] of Object.entries(before.parent)) {
+    if (key !== 'occurrences') expect(after.parent[key]).toEqual(value);
+  }
+  expect(after.parent.occurrences).toEqual((before.parent.occurrences as JsonRecord[]).map((item) => item.occurrence_id === seed.occurrenceId
+    ? { ...item, shot_revision_id: afterOccurrence.shot_revision_id } : item));
+  expect(after.shot).toEqual(before.shot);
+  expect(Object.keys(after.inner).sort()).toEqual(Object.keys(before.inner).sort());
+  for (const [key, value] of Object.entries(before.inner)) {
+    if (key !== 'clips' && key !== 'registry') expect(after.inner[key]).toEqual(value);
+  }
+  const beforeClips = before.inner.clips as JsonRecord[];
+  const afterClips = after.inner.clips as JsonRecord[];
+  expect(afterClips).toHaveLength(beforeClips.length + 1);
+  expect(afterClips.slice(0, beforeClips.length)).toEqual(beforeClips);
+  expect(afterClips.at(-1)).toEqual({ id: clipId, clipType: 'image', asset: media.asset, track: 'V2', at: 6, hold: 5 });
+  const beforeAssets = record(before.inner.registry, 'before registry').assets as JsonRecord;
+  const afterAssets = record(after.inner.registry, 'after registry').assets as JsonRecord;
+  expect(Object.keys(afterAssets)).toEqual([...Object.keys(beforeAssets), String(media.asset)]);
+  for (const [key, value] of Object.entries(beforeAssets)) expect(afterAssets[key]).toEqual(value);
+  expect(afterAssets[media.asset]).toEqual({ media_id: objectId, type: 'image', generationId: media.generation_id, variantId: media.variant_id });
+  expect(after.inner.registry).toEqual({ ...before.inner.registry, assets: afterAssets });
+  expect(afterOccurrence.occurrence_id).toBe(beforeOccurrence.occurrence_id);
+}
+
+function assertUndoRecords(records: JsonRecord, commands: JsonRecord[], undoOf: string[]): void {
+  const inverse = commands.find((command) => command.op === 'timeline.inverse');
+  expect(records.undo_of).toEqual(undoOf);
+  expect(inverse?.args.publications ?? []).toEqual(undoOf);
+  const steps = inverse?.args.steps;
+  if (steps !== undefined) {
+    const selected = record(steps, 'requested inverse step map');
+    expect(Object.keys(selected).sort()).toEqual([...undoOf].sort());
+    for (const ids of Object.values(selected)) {
+      expect(ids).toEqual(expect.any(Array));
+      expect(ids.length).toBeGreaterThan(0);
+      expect(ids.every((id: unknown) => typeof id === 'string' && id.length > 0)).toBe(true);
+      expect(new Set(ids).size).toBe(ids.length);
+    }
+  }
+  expect(Object.hasOwn(records, 'undo_steps')).toBe(true);
+  expect(records.undo_steps).toEqual(steps === undefined ? null : steps);
+}
+
+function assertHistoryPlacement(entry: JsonRecord, data: JsonRecord, publicationId: string, wire: Wire, undoOf: string[] = []): void {
+  const envelope = record(wire.receipt, 'history acceptance envelope');
+  const requestBody = JSON.parse(wire.body) as JsonRecord;
+  expect(entry).toMatchObject({ publication_id: publicationId, revision_id: data.accepted_revision_id, intent: 'recorded',
+    records: expect.any(Object), steps: data.steps, label: data.label, publisher: data.publisher,
+    provider_version: data.provider_version, compiler_version: data.compiler_version,
+    merge_mode: data.merge_mode, source: data.source });
+  expect(entry.previous).toEqual({ revision_id: data.previous_revision_id, publication_id: data.previous_publication_id });
+  expect(entry.receipt).toEqual(envelope.receipt);
+  expect(entry.receipt.receipt_id).toBe(publicationId);
+  expect(entry.receipt.result).toEqual(data);
+  expect(entry.steps).toEqual(data.steps);
+  expect(entry.source).toEqual(data.source);
+  expect(entry.merge).toBe(requestBody.merge);
+  const records = record(entry.records, 'history records');
+  expect(records).toMatchObject({ schema_version: 1, commands: expect.any(Array), steps: data.steps, undo_of: undoOf,
+    label: data.label, merge_mode: data.merge_mode });
+  expect(records.steps).toEqual(data.steps);
+  expect(records.commands.map((command: JsonRecord) => command.command)).toEqual(data.commands);
+  assertUndoRecords(records, requestBody.commands, undoOf);
+  for (const [ordinal, command] of (records.commands as JsonRecord[]).entries()) {
+    expect(command).toMatchObject({ ordinal, command: expect.any(Object), writes: expect.any(Array), reads: expect.any(Array),
+      bindings: expect.any(Array), dependencies: expect.any(Array), derived_writes: expect.any(Array) });
+  }
+}
+
+function assertNoOldRoutePublications(history: JsonRecord, baseline: JsonRecord[], publications: string[]): void {
+  expect(history.next_cursor, 'bounded journey must inspect every Runtime /commits item').toBeNull();
+  const items = history.items as JsonRecord[];
+  expect(items.map((entry) => entry.publication_id)).toEqual([...baseline.map((entry) => entry.publication_id), ...publications]);
+  expect(items.slice(0, baseline.length), 'seed publications remain unchanged').toEqual(baseline);
+  // Runtime history authenticates the writer through receipt.command_kind, not a caller-supplied route/source annotation.
+  const oldRoutePublications = items.filter((entry) => !baseline.some((seed) => seed.publication_id === entry.publication_id)
+    && (entry.intent !== 'recorded' || entry.receipt?.command_kind !== 'timeline.commit'));
+  expect(oldRoutePublications, 'Runtime /commits has zero new old-route publications').toEqual([]);
+  for (const entry of items) expect(entry.receipt.receipt_id).toBe(entry.publication_id);
+}
 function sanitizedError(error: unknown): string {
   return (error instanceof Error ? error.message : String(error)).replace(/Bearer\s+\S+/ig, 'Bearer <redacted>').slice(0, 800);
 }
@@ -344,6 +612,10 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await page.goto(`${vite.origin}${APP_ENTRY_ROUTE}`);
   await expectConnectedWithDiagnostics(page, diagnostics, failures, pendingFailures);
   await openSeededTimeline(page, harness);
+  const beforePlacement = await currentPlacementSnapshot(harness, seed);
+  const baselineHistory = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commits?limit=50`);
+  expect(baselineHistory.body.next_cursor).toBeNull();
+  const seededPublications = baselineHistory.body.items as JsonRecord[];
   await expect.poll(
     () => responses.filter((entry) => entry.startsWith('200 /api/runtime/v1/events')).length,
     CEILING,
@@ -441,12 +713,17 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   let lost: Wire | undefined;
   await page.route(COMMIT_PATH, async (route) => {
     const response = await route.fetch();
-    lost = { method: route.request().method(), body: route.request().postData() ?? '', key: route.request().headers()['idempotency-key'] ?? '', receipt: await response.json() };
+    const receiptBody = await response.text();
+    lost = { method: route.request().method(), body: route.request().postData() ?? '', key: route.request().headers()['idempotency-key'] ?? '', receipt: JSON.parse(receiptBody), receiptBody };
     await route.abort('connectionreset');
   });
   await clickRecovery(page, retained!.ownerId);
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).find((item) => item.ownerId === retained!.ownerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
   expect(lost?.body).toBeTruthy();
+  // The first response is intentionally discarded by the browser, but the operation proxy
+  // still returned the Runtime's complete v2 reply before the connection reset.
+  assertFullV2Request(lost!, harness.seed.projectId, seed.timelineId);
+  assertFullV2Reply(lost!, harness.seed.projectId, seed.timelineId);
   await canonicalImage(harness, seed, objectId!);
 
   await harness.restartRuntime();
@@ -466,31 +743,64 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await page.route(COMMIT_PATH, async (route) => {
     const response = await route.fetch();
     const body = await response.body();
-    retry = { method: route.request().method(), body: route.request().postData() ?? '', key: route.request().headers()['idempotency-key'] ?? '', receipt: JSON.parse(body.toString()) };
+    retry = { method: route.request().method(), body: route.request().postData() ?? '', key: route.request().headers()['idempotency-key'] ?? '', receipt: JSON.parse(body.toString()), receiptBody: body.toString() };
     await route.fulfill({ status: response.status(), headers: response.headers(), body });
   });
   await clickRecovery(page, recovered.ownerId);
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).every((item) => !item.pending && !item.intents.length && !item.placementContinuations?.some((placement) => !placement.placement?.accepted)), CEILING).toBe(true);
   expect(retry).toMatchObject({ method: lost!.method, body: lost!.body, key: lost!.key, receipt: lost!.receipt });
+  const retryRequest = assertFullV2Request(retry!, harness.seed.projectId, seed.timelineId);
+  const retryData = assertFullV2Reply(retry!, harness.seed.projectId, seed.timelineId);
+  expect(retryRequest.base_revision_id).toBe(retryData.base_revision_id);
+  expect(retryRequest.base_publication_id).toBe(retryData.base_publication_id);
   const completed = (await commandOutboxes(page, seed.timelineId)).find((item) => item.ownerId === recovered.ownerId);
   const inversePublicationId = completed?.placementContinuations?.find((placement) => placement.id === recovered.placementContinuations?.[0]?.id)?.placement?.accepted?.head.publicationId;
   if (!inversePublicationId) throw new Error('automatic placement did not retain its accepted publication for guarded undo');
+  const completedPlacement = completed?.placementContinuations?.find((placement) => placement.id === recovered.placementContinuations?.[0]?.id);
+  const createdClipId = completedPlacement?.input.createdIds[0];
+  const mediaPin = record(completedPlacement?.mediaPin, 'saved immutable generated media pin');
+  if (!createdClipId) throw new Error('automatic placement did not retain its created clip identity');
+  const afterPlacement = await currentPlacementSnapshot(harness, seed);
+  expect(replyPlacementSnapshot(retryData, seed)).toEqual(afterPlacement);
+  assertPlacementCanonicalDelta(beforePlacement, afterPlacement, seed, createdClipId, objectId!, mediaPin);
+  const placementHistory = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commits?limit=50`);
+  expect(placementHistory.body.head).toEqual({ revision_id: retryData.accepted_revision_id, publication_id: inversePublicationId });
+  const placementEntry = (placementHistory.body.items as JsonRecord[]).find((entry) => entry.publication_id === inversePublicationId);
+  expect(placementEntry, 'Runtime /commits contains the accepted placement publication').toBeTruthy();
+  assertHistoryPlacement(placementEntry!, retryData, inversePublicationId, retry!);
+  assertNoOldRoutePublications(placementHistory.body, seededPublications, [inversePublicationId]);
   await canonicalImage(harness, seed, objectId!);
 
   await page.unroute(COMMIT_PATH);
   await reloadEditor(page, `${vite.origin}${APP_ENTRY_ROUTE}`);
   await expectConnectedWithDiagnostics(page, diagnostics, failures, pendingFailures);
   await openSeededTimeline(page, harness);
+  expect(await currentPlacementSnapshot(harness, seed)).toEqual(afterPlacement);
   await canonicalImage(harness, seed, objectId!);
   const beforeUndo = operation.length;
-  const undoRequest = page.waitForRequest((request) => isExpectedInverseRequest(request, harness.seed.projectId, seed.timelineId, inversePublicationId), CEILING);
+  const undoRequest = page.waitForRequest((request) => isExpectedV2InverseRequest(request, harness.seed.projectId, seed.timelineId, inversePublicationId), CEILING);
+  const undoResponse = page.waitForResponse((response) => response.request().method() === 'POST' && /\/commit$/.test(new URL(response.url()).pathname), CEILING);
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   const undoBody = JSON.parse((await undoRequest).postData() ?? '{}') as { base_revision_id?: string; base_publication_id?: string; commands?: Array<{ op?: string }> };
   expect(undoBody).toMatchObject({ base_revision_id: expect.any(String), base_publication_id: expect.any(String), commands: [{ op: 'timeline.inverse' }] });
+  const undoResponseValue = await undoResponse;
+  const undoReceiptBody = await undoResponseValue.text();
+  const undoWire: Wire = { method: undoResponseValue.request().method(), body: undoResponseValue.request().postData() ?? '', key: undoResponseValue.request().headers()['idempotency-key'] ?? '', receipt: JSON.parse(undoReceiptBody), receiptBody: undoReceiptBody };
+  const undoRequestV2 = assertFullV2Request(undoWire, harness.seed.projectId, seed.timelineId);
+  const undoData = assertFullV2Reply(undoWire, harness.seed.projectId, seed.timelineId);
+  expect(undoRequestV2.commands[0]).toMatchObject({ op: 'timeline.inverse' });
   await expect.poll(() => operation.length, CEILING).toBeGreaterThan(beforeUndo);
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
 
   const history = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commits?limit=50`);
+  const inversePublication = record(record(undoWire.receipt, 'guarded undo envelope').receipt, 'guarded undo receipt').receipt_id as string;
+  const inverseEntry = (history.body.items as JsonRecord[]).find((entry) => entry.publication_id === inversePublication);
+  expect(inverseEntry, 'Runtime /commits contains the guarded inverse publication').toBeTruthy();
+  assertHistoryPlacement(inverseEntry!, undoData, inversePublication, undoWire, [inversePublicationId]);
+  const inverseRecords = record(inverseEntry!.records, 'guarded inverse records');
+  expect(inverseRecords.undo_of).toEqual([inversePublicationId]);
+  expect(inverseRecords.undo_steps).toBeNull();
+  assertNoOldRoutePublications(history.body, seededPublications, [inversePublicationId, inversePublication]);
   const current = requireAuthoritativeHead(history.body);
   const undone = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${current.revision_id}`);
   const occurrence = undone.body.payload.occurrences.find((item: any) => item.occurrence_id === seed.occurrenceId);
