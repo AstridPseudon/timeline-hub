@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T23:27:59Z | dispatcher heartbeat 4s | live 4 (sol 1, luna 3, other 0) | busy30 15 | status age 1m -->
+<!-- agent | 2026-10-23T23:29:53Z | dispatcher heartbeat 12s | live 4 (sol 1, luna 3, other 0) | busy30 15 | status age 0m -->
 # agent board, 2026-10-23T23:26:28Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -145,7 +145,7 @@
 | F-postG5-D09-invocation | supported source-mode D09 fixture | Luna harness proof | exact managed c36/abd47 bench | merged | agt-F-D09-invocation-return-2255 FINAL PASS | Original3PASS510.58s/exactbodyhashes/sourceprofile/NodePATH/installedRuntime/guardunchanged/origins+receipt+stderr+nowrite96KB. Priorsetup failures retained;015f root harnessscript proofONLY nevermerge. D21 noextra review | env-only |
 
 | F-postG5-R2-equal-write | original scalar old-inverse acceptance | HARD Sol source owner | actual full original scalar failure | doing | agt-F-R2-equal-write-return-sol-2324 QUEUED | Sol2306 confirmed fork-output equal-clear guard gap; bounded inverse.py+new regression only. Author6+20+16+8 and actualRuntime caller PASS, independent2319FAIL missing internal materialization provenance; Sol2324samebranchreturn. Originalassertion/ABA/physicalguards unchanged; no fullcredit | c36 base |
-| F-postG5-graph-roots | five original graph-root failures | Luna readonly | retained full traces/source | doing | agt-F-created-root-redo-sol-2322 QUEUED | Readonly2306 complete: createdchild redo root-source guard; four child-alias reason mismatches inferred same d7 outputguard. Sol2322 owns _root_inverse+new regression ONLY on d7, inverse.py unchanged/reserved; source causality before new bounded originalproof | c36 base |
+| F-postG5-graph-roots | five original graph-root failures | Luna readonly | retained full traces/source | doing | agt-F-created-root-review-2329 QUEUED | Readonly2306 complete: createdchild redo root-source guard; four child-alias reason mismatches inferred same d7 outputguard. Sol2322 ownrootfix focused15PASS/originalcreatedchildPASS; combined37PASS4FAIL owned2324. Independent2329 root-only; author420KBcaptureTMPDIRLOST disclosed, committedregressions survive | c36 base |
 
 | F-postG5-scene-fixture | retired save in source-certification setup | Luna author/review | actual full2Scene setup failures | review | agt-F-scene-fixture-review-2326 QUEUED | Own915bd uses Runtime verifiedmedia+semantic acceptedclosure; author27capture+4scenePASS/scopedquality. Independent2326 verifies exactRuntimeorigins/oldpredicatefidelity/privateMypy; no product/guard edits/fullcredit | c36 base |
 
