@@ -1079,6 +1079,7 @@ class RuntimeCommitService:
                                resolve_inputs=resolve_inputs, verified_producer=verified_producer,
                                commit_request=request, evaluated_head=base)
             for attempt in range(3):
+                bindings = {}
                 if attempt:
                     current = port.head()
                 # An equal document after undo is still a later publication.
@@ -1160,7 +1161,7 @@ class RuntimeCommitService:
                 )
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
                                                 inverse_records=inverse_records)
-                from ._commit_preview import prepared_records
+                from ._commit_preview import capture_sequential_execution, prepared_records
 
                 records = prepared_records(plan, undo_of=undo_of,
                                            restored_from=restored_from)
@@ -1176,6 +1177,7 @@ class RuntimeCommitService:
                     "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
                 }
                 try:
+                    capture_sequential_execution(port, context, original, plan, bindings, prepared)
                     if request.get("dry_run", False):
                         # Runtime authenticates and retains this exact outcome on
                         # the port.  Any response projection after this call
