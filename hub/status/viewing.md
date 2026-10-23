@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T00:27:22Z | dispatcher heartbeat 8s | live 4 (sol 1, luna 3, other 0) | busy30 13 | status age 0m -->
-# viewing board, 2026-10-23T00:27:13Z
+<!-- viewing | 2026-10-23T00:28:28Z | dispatcher heartbeat 13s | live 3 (sol 1, luna 2, other 0) | busy30 13 | status age 0m -->
+# viewing board, 2026-10-23T00:28:19Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema/drift inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | IndependentPASS, four-copy SHA/cmp and generators/manifestPASS; no implementation credit | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -9,7 +9,7 @@
 | V1-agent | admission/opaque media preservation | Luna high | C0/U1/U2; 00:15 resolution | doing | vw-V1-agent-media-sol | Second independentFAIL on06d0: global meta-key skip hides params.meta.media_id from manifests/inventory. Narrow Sol-high repair dispatched immediately with HARD reason; no merge request | 06d0c8ec8 unqualified |
 | V3-pack | one commit-named artifact | Luna high | U2 merged; branch-start approval; 00:15 resolution | merged | vw-V3-pack-resume; vw-V3-pack-review | IndependentPASS exact source635f/tree5ab5191a archive819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234/73451bytes80members, strict NodeNext+all exports; artifact complete, consumers NOT done | source635f4de06 |
 | V3-consumers | same archive, both pins/stale tests | Luna high | independent archivePASS; U2 / U3branch | doing | vw-V3-agent-consumer; vw-V3-app-consumer | BOTH dispatched after archivePASS. Agent base649ba/App trueU3draft064d; normal file-pin/lock generation, private resolved artifact and stale-pin tests | — |
-| V4-agent | optional stale dirs/recipe duplicate | Luna high | U2; 00:15 resolution | review | vw-V4-agent-dirs-only; vw-V4-agent-dirs-review | First return restores both original recipe blobs;4catalog+54canonicalPASS and manifestPASS. Independent narrowed review active; recipe removal deferred, old1failure preserved unchanged | ef6455ebdff80d20a2d15f9cae9e5e58e393d5ca |
+| V4-agent | optional stale dirs/recipe duplicate | Luna high | U2; 00:15 resolution | merging | vw-V4-agent-dirs-only; vw-V4-agent-dirs-review | IndependentPASS58targets/manifest/diff; both recipe blobs byte-identical original incl unique assertion;6stale editor files only. Remote owner request00:28; recipe removal deferred | ef6455ebdff80d20a2d15f9cae9e5e58e393d5ca |
 | V4-app | optional PropertiesPanel duplicate | Luna high | U3b branch; 00:15 resolution | merging | vw-V4-app-review-resume | IndependentPASS70tests/type/lint/source-equivalence; remote request issued00:19, actual U3 composition/integrated proof pending | a476329ef56fa1ed81c82b88e1ea5bdc563071a6 |
 
 Blockers: Agent/App — final V1 schema copies must be adopted through normal U4/vendor tools after reviewed Runtime merge. Runtime contract/schemas/timeline-config.schema.json remains sole source; no generated hand edits. V2 reuses V1 validator. Existing coordination: escalations/viewing-20261022T2312Z-v1-canonical-source-handoff.md.
