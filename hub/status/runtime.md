@@ -1,5 +1,5 @@
-<!-- main | 2026-10-23T02:20:56Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
-# runtime board, 2026-10-23T02:21:00Z
+<!-- main | 2026-10-23T02:22:24Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 0m -->
+# runtime board, 2026-10-23T02:21:41Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 | commit-v2 contract | Sol author / Luna review | — | merged | rt-C0-contract; rt-C0-review | PASS: 34 targeted tests + JSON/digests/copy equality on tree identical to integrated 0d4c71a3c; C0 APPROVED | 0d4c71a3c |
@@ -10,7 +10,7 @@
 | R2r-schema | canonical inverse selector/undo_steps carrier | Luna author/review | canonicalAgent768/d106 + f252 independentPASS94 | merged | rt-R2r-integration-join-review-0207 | Normal generated canonicald106 + outerundo_steps preserved; final independentPASS and integrated runtime-targeted-1023021438-6715 PASS225 exacttree7a182a69. DONE | 21482a416d1f0f976ec563b9e1bf96a765f80e56 |
 | R2r-admission | mounted full-v2 forwarding | Luna author/review | joinedauth/schema | merged | rt-R2r-integration-join-review-0207 | Actual mounted route/coordinator/store fullv2 forwarding independently verified; integrated runtime-targeted-1023021438-6715 PASS225. Producer complete; cross-repo actualnative/P1 acceptance still pending consumers | 21482a416d1f0f976ec563b9e1bf96a765f80e56 |
 | P5 | crash integrated; native acceptance waits Agent | Luna author/merge/review | Agent R3+normal U4a-v2 | blocked:agent | native source1d7/bdb + finalreview0207 | Native14 exact reviewed testblob8994 merged21482; collection/compile/no-newstatic/sourceJOINPASS. Crash integrated runtime-marked-integration-1023021438-14111 PASS24. Actual HTTP14 waits compatible AgentR3 and normal U4a-v2; not DONE | 21482a416d1f0f976ec563b9e1bf96a765f80e56 |
-| P5-ready | strict gate2–4 proof readiness census | Luna | official21482 producer | doing | rt-P5-readiness-0221 | Read-only mapping current native14/crash24 to promised acceptance; no premature native run | 21482a416 |
+| P5-ready | strict gate2–4 proof readiness census | Luna | official21482 producer | blocked:agent | rt-P5-readiness-0221 | Census complete: strict native14 covers renderer-off/auth/retry/key-mismatch; crash24 passed separately. Execution readiness blocked actualR3/U4a-v2; no Runtime regression. | 21482a416 |
 | R5 | directly reject old save routes | Luna | A3, G4 merged per header | todo | — | — | — |
 | V1-runtime | incoming canonical meta schema/conformance | Luna author / Luna home review | C0/U1 merged; remote request | merged | rt-V1-conformance-repair; rt-V1-conformance-review | Independent re-review PASS47 + TS/build/generators/artifact/digest/no-pollution; integrated proof runtime-targeted-1023003547-277 PASS47 at tree ffc21fef1ea446d601521fce9c56d7e8b0119ece; DONE | 691a9436c merge / de61264fb source |
 Blockers: consumers — U1 tuple: runtime 27f0306b94d136d25f237edf4b8225b5d8487be0; upstream 4563bb5ff06171b3290fc5e2300e08d7fa125b01; realm schema v32 above upstream app-state v31; regenerated client SCHEMA_DIGEST sha256:55abcf13df4f7c8fb0af135d5f43a4f65a65e5d1c5d5a95d6e45e8ac82f44292; integrated proof runtime-targeted-1022233331-22415 PASS (317 tests).
