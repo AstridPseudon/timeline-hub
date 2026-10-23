@@ -371,6 +371,7 @@ def test_host_publishes_its_in_flight_task_count(tmp_path):
 
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_stop_group_signals_anchored_group_and_refuses_a_reused_leader(owned_process_groups):
     from astrid.core.execution.process_group import process_birth_identity
     code = ("import subprocess,sys,time;"

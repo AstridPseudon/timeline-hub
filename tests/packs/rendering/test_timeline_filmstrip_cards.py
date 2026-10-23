@@ -1,15 +1,18 @@
-from fractions import Fraction
 import copy
 import hashlib
 import json
-from pathlib import Path
-import shutil
 import subprocess
+from fractions import Fraction
+from pathlib import Path
 
 import pytest
 
 from astrid.packs.rendering.actions.timeline_visualize import filmstrip_cards
-from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import plan_filmstrip, build_filmstrip_pack, _attach_input_navigation
+from astrid.packs.rendering.actions.timeline_visualize.filmstrip_cards import (
+    _attach_input_navigation,
+    build_filmstrip_pack,
+    plan_filmstrip,
+)
 from astrid.packs.rendering.actions.timeline_visualize.filmstrip_options import filmstrip_options
 
 
@@ -214,7 +217,7 @@ def test_shots_sample_authored_midpoint():
     assert [(c['frame'], c['sample_reasons']) for c in cards] == [(24, ['shot_midpoint'])]
 
 
-@pytest.mark.skipif(shutil.which('ffmpeg') is None, reason='ffmpeg required')
+@pytest.mark.ffmpeg
 def test_pack_uses_rendered_frames_without_html_artifact(tmp_path, monkeypatch):
     drawn_text = []
     draw_text = filmstrip_cards._png_draw_text
@@ -250,7 +253,7 @@ def test_pack_uses_rendered_frames_without_html_artifact(tmp_path, monkeypatch):
     assert not list((tmp_path / 'pack').glob('*.svg'))
 
 
-@pytest.mark.skipif(shutil.which('ffmpeg') is None, reason='ffmpeg required')
+@pytest.mark.ffmpeg
 def test_pack_keeps_audio_navigation_links_separate_from_compact_receipt(tmp_path):
     video = tmp_path / 'render.mp4'
     subprocess.run(['ffmpeg', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=red:size=160x90:rate=24:duration=4', '-c:v', 'libx264', '-y', str(video)], check=True)
@@ -284,7 +287,7 @@ def test_pack_keeps_audio_navigation_links_separate_from_compact_receipt(tmp_pat
     assert index['audio_sidecar']['digest'] == 'sha256:' + hashlib.sha256((tmp_path / 'pack' / 'audio-analysis.json').read_bytes()).hexdigest()
 
 
-@pytest.mark.skipif(shutil.which('ffmpeg') is None, reason='ffmpeg required')
+@pytest.mark.ffmpeg
 def test_pack_keeps_audio_navigation_in_rich_result_index(tmp_path):
     video = tmp_path / 'render.mp4'
     subprocess.run(['ffmpeg', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=red:size=160x90:rate=24:duration=4', '-c:v', 'libx264', '-y', str(video)], check=True)
@@ -335,7 +338,7 @@ def test_float_arithmetic_noise_does_not_move_cut_boundary():
 
 @pytest.mark.parametrize('fps', [24, 30000 / 1001])
 def test_clip_labels_and_cuts_use_canonical_renderer_frames(fps):
-    from astrid.core.timeline.duration import clip_start_frame, clip_end_frame
+    from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
     clip = dict(id='offset', kind='video', at=1.01, **{'from': 0, 'to': 1.02, 'speed': 1.3})
     rational = Fraction(str(fps)).limit_denominator(100000)
     start, end = clip_start_frame(clip, fps), clip_end_frame(clip, fps)

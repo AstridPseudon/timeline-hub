@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -381,9 +380,8 @@ def test_character_swap_rejects_spatial_and_channel_specific_composition_before_
         compile_preparation(_preparation(raw, _files(tmp_path, source=True)), out_dir=tmp_path / "voice-only")
 
 
+@pytest.mark.ffmpeg
 def test_character_swap_preserve_only_publishes_authoritative_source_bytes(tmp_path: Path) -> None:
-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        pytest.skip("ffmpeg and ffprobe are required for the source-preservation regression")
 
     from astrid.packs.h3_av.shared.compose import compose_candidate
     from astrid.packs.h3_av.actions.prepare.prepare import prepare_request

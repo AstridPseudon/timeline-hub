@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
 
 TOOL_SOURCE = Path(__file__).resolve().parents[1]
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
@@ -267,9 +266,7 @@ def test_report_merges_lists_each_mixed_prose_file(tmp_path: Path) -> None:
 
 
 def test_real_map_keeps_community_names_and_rewrites_agent_url() -> None:
-    real_map = TOOL_SOURCE / "rename-map.tsv"
-    if not real_map.exists():
-        pytest.skip("N-MAP's real map is not in this checkout yet")
+    assert (TOOL_SOURCE / "rename-map.tsv").is_file()
     result = subprocess.run(
         [str(TOOL_SOURCE / "rename.py"), "--text", "--as", "astrid"],
         input=(

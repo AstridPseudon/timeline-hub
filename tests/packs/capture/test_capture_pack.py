@@ -18,14 +18,7 @@ from astrid.packs.capture.actions.web_page import run as capture_run
 PACK_ROOT = Path(__file__).resolve().parents[3] / "astrid" / "packs" / "capture"
 
 
-def _chrome_or_none() -> str | None:
-    try:
-        return capture_run.find_chrome()
-    except AstridError:
-        return None
-
-
-needs_chrome = pytest.mark.skipif(_chrome_or_none() is None, reason="no provisioned headless Chromium on this machine")
+REMOTION = Path(__file__).resolve().parents[3] / "remotion"
 
 
 def _admit_origin(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, origin: str) -> None:
@@ -155,8 +148,10 @@ def test_cli_refuses_plain_http_before_launching_a_browser(tmp_path: Path) -> No
     assert not (tmp_path / "out" / "screenshot.png").exists()
 
 
-@needs_chrome
+@pytest.mark.chrome
 def test_refused_connection_fails_with_browser_error(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION))
+    monkeypatch.delenv("ASTRID_CAPTURE_CHROME", raising=False)
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         closed_port = sock.getsockname()[1]

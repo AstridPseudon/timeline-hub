@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import shutil
 import struct
 import subprocess
 import wave
@@ -24,7 +23,7 @@ def _stereo_wav(path, frames: list[tuple[float, float]], rate: int = 1000) -> st
     return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-@pytest.mark.skipif(shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None, reason="ffmpeg and ffprobe required")
+@pytest.mark.ffmpeg
 def test_analysis_preserves_channels_and_measures_rational_quiet_gaps(tmp_path):
     frames = (
         [(0.0, 0.0)] * 200
@@ -48,7 +47,7 @@ def test_analysis_preserves_channels_and_measures_rational_quiet_gaps(tmp_path):
     assert result["presentation_origin"]["seconds"] == [0, 1]
 
 
-@pytest.mark.skipif(shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None, reason="ffmpeg and ffprobe required")
+@pytest.mark.ffmpeg
 def test_analysis_has_explicit_no_stream_and_digest_identity(tmp_path):
     path = tmp_path / "video.mp4"
     subprocess.run([
@@ -65,7 +64,7 @@ def test_analysis_has_explicit_no_stream_and_digest_identity(tmp_path):
         analyze_audio(path, render_digest="sha256:" + "0" * 64)
 
 
-@pytest.mark.skipif(shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None, reason="ffmpeg and ffprobe required")
+@pytest.mark.ffmpeg
 def test_analysis_bounds_gap_sidecar(tmp_path):
     path = tmp_path / "gaps.wav"
     digest = _stereo_wav(path, [(0.0, 0.0), (0.5, 0.5)] * 100, rate=100)

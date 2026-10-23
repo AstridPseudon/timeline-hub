@@ -298,8 +298,6 @@ def _git(cwd: Path, *args: str) -> None:
 
 @pytest.fixture
 def pack_repo(tmp_path: Path) -> Path:
-    if shutil.which("git") is None:
-        pytest.skip("git is required for the untracked-pack check")
     root = tmp_path / "repo"
     (root / "astrid/packs/generation").mkdir(parents=True)
     (root / "astrid/packs/generation/pack.yaml").write_text("id: generation\n", encoding="utf-8")

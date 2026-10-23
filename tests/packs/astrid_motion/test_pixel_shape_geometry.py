@@ -5,11 +5,24 @@ import subprocess
 import unittest
 from pathlib import Path
 
+import pytest
+
 from astrid.core.element.schema import load_element_definition
 
 ROOT = Path(__file__).resolve().parents[3]
 ELEMENT = ROOT / "astrid" / "packs" / "astrid_motion" / "rendering" / "elements" / "effects" / "am-pixel-shape"
 CELLS = ELEMENT / "shape-cells.ts"
+# The pinned Node (20.19.4) cannot run TypeScript, so esbuild (installed with the Remotion renderer) transpiles the source.
+ESBUILD = ROOT / "remotion" / "node_modules" / "esbuild" / "lib" / "main.js"
+LOADER = """
+import {createRequire} from 'node:module';
+import {readFileSync} from 'node:fs';
+const require = createRequire(import.meta.url);
+const esbuild = require(process.argv[1]);
+const js = esbuild.transformSync(readFileSync(process.argv[2], 'utf8'), {loader: 'ts', format: 'esm'}).code;
+const m = await import('data:text/javascript;base64,' + Buffer.from(js).toString('base64'));
+console.log(JSON.stringify(eval(process.argv[3])));
+"""
 
 
 def _find_esbuild() -> Path | None:
@@ -37,7 +50,8 @@ def _shape_module(expression: str):
         )
     script = load + f"console.log(JSON.stringify({expression}));"
     out = subprocess.run(
-        ["node", "--input-type=module", "-e", script], check=True, capture_output=True, text=True
+        [shutil.which("node") or "node", "--input-type=module", "-e", script],
+        check=True, capture_output=True, text=True,
     ).stdout
     return json.loads(out)
 
@@ -46,7 +60,7 @@ def _cells(shape: str, w: int, h: int, stroke: int, radius: int = 0) -> list[lis
     return _shape_module(f"m.shapeCells({json.dumps(shape)}, {w}, {h}, {stroke}, {radius})")
 
 
-@unittest.skipUnless(shutil.which("node"), "node is needed to run the shape geometry")
+@pytest.mark.remotion
 class AmPixelShapeGeometryTest(unittest.TestCase):
     def test_dot_three_by_three_is_a_full_square(self) -> None:
         cells = _cells("dot", 3, 3, 1)
@@ -77,7 +91,7 @@ def _rect(w: int, h: int, stroke: int, radius: int) -> dict[str, list[list[int]]
     return _shape_module(f"m.rectCells({w}, {h}, {stroke}, {radius})")
 
 
-@unittest.skipUnless(shutil.which("node"), "node is needed to run the shape geometry")
+@pytest.mark.remotion
 class AmPixelShapeRectTest(unittest.TestCase):
     def test_rounded_tile_has_expected_cell_counts(self) -> None:
         # 16x16 r2: the silhouette loses one cell per corner (256 - 4 = 252).
@@ -122,7 +136,7 @@ def _blinking(frame: int, blink_at) -> bool:
     return _shape_module(f"m.isBlinking({frame}, {json.dumps(blink_at)})")
 
 
-@unittest.skipUnless(shutil.which("node"), "node is needed to run the blink rule")
+@pytest.mark.remotion
 class AmPixelShapeBlinkTest(unittest.TestCase):
     def test_blink_hides_for_two_frames_at_each_listed_frame(self) -> None:
         # Same rule as am-sprite blinkAt: frames 14, 28, 42 hide the shape for two frames each.

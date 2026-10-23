@@ -638,10 +638,9 @@ def _v6_elements():
     return {e.id: e for e in elements}, maths
 
 
-def _own_or_skip(maths, element):
+def _own(maths, element):
     values = maths.at(element, 0, V6_PUSHED["fps"])
-    if values is None:
-        pytest.skip(f"element maths unavailable here: {maths.note}")
+    assert values is not None, f"element maths unavailable: {maths.note}"
     return values
 
 
@@ -651,10 +650,11 @@ def test_elements_ship_their_own_motion():
     assert all(path.name == "motion.ts" and (path.parent / "element.yaml").is_file() for path in found.values())
 
 
+@pytest.mark.remotion
 def test_a_real_v6_push_comes_from_the_element():
     """c16 (48.53 s): plate and presenter push 1 -> 1.35 over 100 frames; c07: zoom 3 -> 1 from frame 98."""
     by_id, maths = _v6_elements()
-    _own_or_skip(maths, by_id["c16-00-am-snap-plate"])
+    _own(maths, by_id["c16-00-am-snap-plate"])
     fps = V6_PUSHED["fps"]
     for clip in ("c16-00-am-snap-plate", "c16-01-am-presenter"):
         element = by_id[clip]
@@ -683,10 +683,11 @@ def test_without_node_the_mirror_answers_and_says_so(monkeypatch):
     assert model.props_at(plate, plate.start + 50 / 30 + 1e-6, 30)["zoom"] == pytest.approx(1.175)
 
 
+@pytest.mark.remotion
 def test_the_fallback_mirror_still_matches_the_element_on_v6_pushes():
     """If presenter-core.ts changes, this names the drift in motion/model.py (the fallback only)."""
     by_id, maths = _v6_elements()
-    _own_or_skip(maths, by_id["c07-00-am-snap-plate"])
+    _own(maths, by_id["c07-00-am-snap-plate"])
     for element in by_id.values():
         frames = round((element.end - element.start) * 30)
         for f in range(frames):

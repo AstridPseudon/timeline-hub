@@ -232,6 +232,7 @@ def test_success_waits_for_owned_cleanup_after_detached_leader_exit(
     assert final_communicate_index == len(events) - 1
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_detached_worker_is_cleaned_after_successful_leader_exit(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -491,6 +492,7 @@ def test_nonzero_exit_is_internal_and_captures_both_streams(tmp_path: Path) -> N
     assert "renderer stderr" in caught.value.details["stderr"]
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_timeout_kills_process_group_and_reaps_direct_child(tmp_path: Path, monkeypatch) -> None:
     payload, parent_pid_path, child_pid_path = _tree_request(tmp_path)
     deadlines = []
@@ -526,6 +528,7 @@ def test_sigterm_ignoring_child_is_escalated_and_reaped(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("timeout", [10, None])
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_sigint_kills_process_group_reaps_and_reraises(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, timeout: float | None
 ) -> None:
@@ -801,6 +804,7 @@ def test_pinned_renderer_runtime_is_propagated_to_protocol_child(
     }
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_renderer_cleanup_never_substitutes_numeric_group_signal(monkeypatch):
     calls = []
     process = SimpleNamespace(_astrid_process_group_id=12, communicate=lambda **_: ("", ""))

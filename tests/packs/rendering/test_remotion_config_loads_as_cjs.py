@@ -35,7 +35,7 @@ esbuild.build({entryPoints: [root + '/remotion.config.ts'], bundle: true, platfo
 """
 
 
-@pytest.mark.skipif(NODE is None or not ESBUILD.is_file(), reason="needs Node and the installed renderer (npm ci in remotion/)")
+@pytest.mark.remotion
 def test_remotion_config_loads_the_way_remotions_cjs_loader_evaluates_it() -> None:
     done = subprocess.run([NODE, "-e", _LOAD_CONFIG, str(ESBUILD), "-", str(REMOTION)],
                           capture_output=True, text=True, timeout=120)

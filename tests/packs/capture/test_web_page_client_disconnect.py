@@ -20,7 +20,7 @@ import pytest
 
 from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
 
-pytestmark = pytest.mark.skipif(os.name != "posix", reason="process groups are POSIX")
+pytestmark = pytest.mark.posix_native
 
 FAKE_BROWSER = """\
 import os, subprocess, sys, time

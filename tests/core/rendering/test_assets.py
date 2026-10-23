@@ -44,10 +44,7 @@ def server():
 
     def start(staging: Path) -> InvocationAssetServer:
         value = InvocationAssetServer(staging)
-        try:
-            value.__enter__()
-        except PermissionError:
-            pytest.skip("local HTTP server bind is not permitted in this sandbox")
+        value.__enter__()
         servers.append(value)
         return value
 

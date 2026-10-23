@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 import subprocess
 import sys
 from dataclasses import replace
@@ -947,11 +946,6 @@ def test_audio_completer_dropping_attachments_is_rejected(tmp_path: Path) -> Non
 # ---------------------------------------------------------------------------
 
 
-def _require_ffmpeg() -> None:
-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        pytest.skip("real FFmpeg smoke dependency is unavailable")
-
-
 def _real_service(tmp_path: Path) -> RenderService:
     renderers, planners, finalizers = load_default_registries(
         tmp_path
@@ -1088,6 +1082,7 @@ def _add_audio_track(timeline_path: Path) -> None:
     ["plain", "audio"],
     ids=["nominal", "with-audio"],
 )
+@pytest.mark.ffmpeg
 def test_real_ffmpeg_renders_through_generic_service(
     tmp_path: Path,
     media_kind: str,
@@ -1096,7 +1091,6 @@ def test_real_ffmpeg_renders_through_generic_service(
     one committed sidecar through the real CommandTransport (no fake
     transport), including the whole-media optimized path when the source
     probe supports it."""
-    _require_ffmpeg()
     timeline_path, assets_path = _real_media_inputs(tmp_path)
     if media_kind == "audio":
         _add_audio_track(timeline_path)
@@ -1206,12 +1200,12 @@ def _real_audio_reactive_inputs(tmp_path: Path) -> tuple[Path, Path]:
     return timeline_path, assets_path
 
 
+@pytest.mark.ffmpeg
 def test_real_ffmpeg_audio_reactive_through_generic_service(
     tmp_path: Path,
 ) -> None:
     """The service drives the real FFmpeg backend through its audio-reactive
     colour specialization end to end (no fake transport)."""
-    _require_ffmpeg()
     timeline_path, assets_path = _real_audio_reactive_inputs(tmp_path)
     service = _real_service(tmp_path)
     output = tmp_path / "real-reactive.mp4"

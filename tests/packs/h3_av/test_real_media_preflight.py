@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -12,10 +11,7 @@ from astrid.packs.vibecomfy import invocation_preflight
 from astrid.packs.vibecomfy.actions.run import run as worker_run
 
 
-pytestmark = pytest.mark.skipif(
-    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
-    reason="ffmpeg and ffprobe are required for real media preflight tests",
-)
+pytestmark = pytest.mark.ffmpeg
 
 
 def _ffmpeg(*arguments: str) -> None:

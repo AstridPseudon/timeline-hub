@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 from pathlib import Path
 from unittest.mock import patch
@@ -13,7 +12,6 @@ from astrid.core.timeline.validators.timeline import validate_timeline
 from astrid.packs.rendering.actions.render import audio_reactive_colour
 from astrid.packs.rendering.actions.render import run as render_run
 
-HAS_FFMPEG = shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
 
 
 def _timeline(*, events: list[dict] | None = None) -> dict:
@@ -160,7 +158,7 @@ def test_render_dispatches_compact_effect_to_ffmpeg_specialization(
     mocked.assert_not_called()
 
 
-@pytest.mark.skipif(not HAS_FFMPEG, reason="ffmpeg and ffprobe are required")
+@pytest.mark.ffmpeg
 def test_real_ffmpeg_render_has_exact_marker_frames_and_audio(tmp_path: Path) -> None:
     audio_path = tmp_path / "tone.wav"
     subprocess.run(

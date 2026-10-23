@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from tests.lanes import unavailable
 
 
 TOOLS_ROOT = Path(__file__).resolve().parents[3]
@@ -283,7 +284,7 @@ def test_hype_cut_invariants_on_synthetic_run(tmp_path: Path) -> None:
 def test_hype_cut_invariants_on_discovered_run_dirs() -> None:
     brief_dirs = _discovered_brief_dirs()
     if not brief_dirs:
-        pytest.skip(
+        unavailable(
             "No arrangement-mode brief directories selected; set HYPE_BRIEF_DIR to target one "
             "explicitly or HYPE_DISCOVER_RUNS=1 to scan local tools/runs output."
         )

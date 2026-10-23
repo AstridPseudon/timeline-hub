@@ -483,9 +483,7 @@ def test_secret_verifier_rejects_replacement_or_mode_drift(tmp_path: Path) -> No
         subject._secret_fact(path)
 
 
-@pytest.mark.skipif(
-    not Path("/proc/self/stat").exists(), reason="exact process start/stop requires Linux"
-)
+@pytest.mark.linux_native
 def test_linux_owned_host_survives_launcher_and_exact_stop(tmp_path: Path, monkeypatch: Any) -> None:
     monkeypatch.delattr(os, "pidfd_open", raising=False)
     monkeypatch.delattr(signal, "pidfd_send_signal", raising=False)

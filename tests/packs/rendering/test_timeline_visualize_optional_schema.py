@@ -10,7 +10,10 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_parity_suite_runs_without_external_schema_package() -> None:
-    """Only the canonical-schema cases may skip when the package is absent."""
+    """With the schema package blocked, only the canonical-schema cases are deselected (never skipped).
+
+    The rest of the parity suite must still pass and run without the optional package.
+    """
 
     blocker = r'''
 import importlib.abc
@@ -36,6 +39,8 @@ raise SystemExit(
         [
             "-q",
             "--disable-warnings",
+            "-k",
+            "not canonical_timeline_schema",
             "tests/packs/rendering/test_timeline_visualize_parity.py",
         ]
     )
@@ -51,4 +56,4 @@ raise SystemExit(
     output = result.stdout + result.stderr
     assert result.returncode == 0, output
     assert "28 passed" in output, output
-    assert "10 skipped" in output, output
+    assert "skipped" not in output, output

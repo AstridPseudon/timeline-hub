@@ -8,6 +8,7 @@ import shutil
 import subprocess
 
 import pytest
+from tests.lanes import unavailable
 
 from astrid.packs.h3_av.shared.input_bundle import build_input_bundle
 from astrid.packs.h3_av.shared.request import normalize_request
@@ -66,7 +67,11 @@ import astrid
 from astrid.core.execution.generic_host import _install_host_vibecomfy_import_root, _host_product_import_origins, HostError
 from astrid.sdk.host_bootstrap import _host_render_environment
 keys=json.loads(sys.argv[1]);checkout=Path(sys.argv[2]);before=_host_product_import_origins();oldpath=sys.path[:]
-environment=_host_render_environment(Path(astrid.__file__).resolve().parent.parent)
+import astrid_runtime_client
+# The installed product tree is what holds astrid and its client: site-packages in a wheel install, the checkout
+# when the venv lives inside it, and their common ancestor when astrid is an editable install (CI).
+product=Path(os.path.commonpath([Path(astrid.__file__).resolve().parent,Path(astrid_runtime_client.__file__).resolve().parent]))
+environment=_host_render_environment(product)
 assert {key:environment.get(key) for key in keys} == {key:os.environ.get(key) for key in keys}
 os.environ.clear();os.environ.update(environment)
 try:
@@ -430,12 +435,13 @@ def test_h3_synthetic_readiness_profile_uses_digest_bound_model_root(tmp_path: P
     assert binding.qualification_identity is None
 
 
+@pytest.mark.integration  # needs the Runtime and VibeComfy checkouts and the approved T9 readiness profile
 def test_character_swap_public_managed_cpu_boundary(tmp_path: Path) -> None:
     blockers = _boundary_blockers()
     if blockers:
-        pytest.skip("public managed CPU boundary is not qualified: " + "; ".join(blockers))
+        unavailable("public managed CPU boundary is not qualified: " + "; ".join(blockers))
     if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        pytest.skip("public managed CPU boundary requires ffmpeg and ffprobe")
+        unavailable("public managed CPU boundary requires ffmpeg and ffprobe")
 
     from PIL import Image
 

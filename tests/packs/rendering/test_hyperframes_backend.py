@@ -28,6 +28,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.lanes import unavailable
+
 from astrid.core.rendering.contracts import AudioOwnership, RenderRequest, SCHEMA_VERSION
 from astrid.core.rendering.registry import load_default_registries
 from astrid.core.rendering.service import RenderService
@@ -42,13 +44,13 @@ NODE = shutil.which("node")
 
 
 def _require_hyperframes_environment() -> str:
-    """Return a node >= 22 executable, or skip.
+    """Return a node >= 22 executable, or fail (these tests are in the manual ``integration`` lane).
 
     Prefers a system/nvm node that satisfies HyperFrames' Node 22+
     requirement (v20 on PATH is common; a newer nvm node usually exists).
     """
     if shutil.which("ffmpeg") is None:
-        pytest.skip("ffmpeg is unavailable")
+        unavailable("ffmpeg is unavailable")
     candidates: list[str] = []
     if NODE is not None:
         candidates.append(NODE)
@@ -69,7 +71,7 @@ def _require_hyperframes_environment() -> str:
             continue
         if major >= 22:
             return node
-    pytest.skip("node >= 22 required for hyperframes (checked system + nvm)")
+    unavailable("node >= 22 required for hyperframes (checked system + nvm)")
 
 
 @contextmanager
@@ -279,7 +281,7 @@ def test_hyperframes_real_render_through_public_service(tmp_path: Path) -> None:
     except Exception as exc:  # noqa: BLE001 - network/CLI availability
         message = str(exc)
         if "npx" in message or "ENOTFOUND" in message or "network" in message:
-            pytest.skip(f"hyperframes CLI unavailable: {message[:120]}")
+            unavailable(f"hyperframes CLI unavailable: {message[:120]}")
         raise
 
     assert Path(published).is_file()
@@ -379,7 +381,7 @@ def test_hyperframes_real_media_render_through_public_service(tmp_path: Path) ->
     except Exception as exc:  # noqa: BLE001 - network/CLI availability
         message = str(exc)
         if "npx" in message or "ENOTFOUND" in message or "network" in message:
-            pytest.skip(f"hyperframes CLI unavailable: {message[:120]}")
+            unavailable(f"hyperframes CLI unavailable: {message[:120]}")
         raise
 
     assert Path(published).is_file()
@@ -477,6 +479,7 @@ def _combined_timeline(tmp_path: Path) -> Path:
     return path
 
 
+@pytest.mark.integration
 @pytest.mark.timeout(900)
 def test_hyperframes_remotion_combined_render(tmp_path: Path) -> None:
     """hyperframes.planner collates HyperFrames + Remotion via FFmpeg concat.
@@ -492,7 +495,7 @@ def test_hyperframes_remotion_combined_render(tmp_path: Path) -> None:
     """
     node = _require_hyperframes_environment()
     if not (ROOT / "remotion" / "node_modules").is_dir():
-        pytest.skip("remotion/node_modules absent; combined render skipped")
+        unavailable("remotion/node_modules absent; the combined render needs it")
     source = _source_video(tmp_path)
     assets = tmp_path / "real-assets.json"
     assets.write_text(
@@ -536,7 +539,7 @@ def test_hyperframes_remotion_combined_render(tmp_path: Path) -> None:
     except Exception as exc:  # noqa: BLE001 - network/CLI availability
         message = str(exc)
         if "npx" in message or "ENOTFOUND" in message or "network" in message:
-            pytest.skip(f"hyperframes CLI unavailable: {message[:120]}")
+            unavailable(f"hyperframes CLI unavailable: {message[:120]}")
         raise
 
     assert Path(published).is_file()

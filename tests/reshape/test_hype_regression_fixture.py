@@ -35,8 +35,6 @@ def _ensure_deterministic_media(path: Path, *, duration: float, resolution: str,
     if path.is_file():
         return
     ffmpeg = shutil.which("ffmpeg")
-    if ffmpeg is None:
-        pytest.skip(f"ffmpeg is required to create deterministic fixture media: {path.name}")
     cmd = [
         ffmpeg,
         "-hide_banner",
@@ -94,6 +92,7 @@ def test_hype_regression_required_small_fixtures_exist_and_validate() -> None:
         assert manifest["source_artifacts"][name]["sha256"] == _sha256(FIXTURE_ROOT / name)
 
 
+@pytest.mark.ffmpeg
 def test_hype_regression_media_manifest_covers_optional_mp4_assets() -> None:
     assets_payload = _read_json(FIXTURE_ROOT / "hype.assets.json")
     manifest = _read_json(FIXTURE_ROOT / "media_manifest.json")

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -384,7 +383,7 @@ class TestNoAbsolutePathsOrSecrets:
         assert manifest["inputs"]["root"] == root.name
 
 
-@pytest.mark.skipif(sys.platform != "darwin", reason="clonefile is a macOS/APFS capability")
+@pytest.mark.darwin_native
 class TestCopyOnWriteMedia:
     """Imported media is independent while avoiding eager byte duplication."""
 

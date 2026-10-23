@@ -311,10 +311,10 @@ def test_demo_manifest_shapes_match_across_modes(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_demo_cloud_never_imports_vibecomfy(tmp_path: Path) -> None:
+def test_demo_cloud_never_imports_vibecomfy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Demo cloud execution path must NOT import vibecomfy."""
-    if "vibecomfy" in sys.modules:
-        pytest.skip("vibecomfy already imported — cannot test lazy-import")
+    for name in [m for m in sys.modules if m == "vibecomfy" or m.startswith("vibecomfy.")]:
+        monkeypatch.delitem(sys.modules, name)  # an earlier test may have imported it; prove this run does not
 
     from astrid.packs.generation.actions.generate_image.run import main
 

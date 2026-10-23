@@ -16,13 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.lanes import require_module
-
-pytestmark = [pytest.mark.integration, pytest.mark.skipif(
-    sys.platform != "linux", reason="SIGKILL crash evidence runs on Linux",
-)]
-require_module("astrid_runtime")
-require_module("runtime_protocol")
+pytestmark = [pytest.mark.integration, pytest.mark.linux_native]  # SIGKILL crash evidence; needs the Runtime
 
 from astrid_runtime.bootstrap import BootstrapConfig, SourceProfile
 from astrid_runtime.paths import RuntimePaths

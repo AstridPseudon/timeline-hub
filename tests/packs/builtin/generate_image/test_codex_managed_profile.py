@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import sys
 import pytest
+from tests.lanes import unavailable
 
 import astrid.sdk as sdk
 from astrid.sdk.invocation import _kernel_invoke
@@ -84,8 +85,10 @@ def test_generation_publication_resolves_project_slug_once():
     assert captured["settlement_effect"]["target_id"] == "canonical-id"
 
 
-@pytest.mark.skipif(sys.platform != "darwin" or not shutil.which("codex"), reason="requires macOS Codex CLI")
+@pytest.mark.opt_in  # needs the macOS Codex CLI; no CI job has it
 def test_codex_native_binary_starts_in_host_sandbox(tmp_path):
+    if sys.platform != "darwin" or not shutil.which("codex"):
+        unavailable("requires macOS and the Codex CLI on PATH")
     from astrid.core.execution.generic_host import _network_sandbox_argv
     command = _network_sandbox_argv([shutil.which("codex"), "--version"], tmp_path, "http://127.0.0.1:12345")
     result = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=15)

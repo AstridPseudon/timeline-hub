@@ -268,7 +268,7 @@ def _init_worker(state_path: str, experiment_id: str, result_q):
         result_q.put(("error", repr(exc)))
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="POSIX flock cross-process init")
+@pytest.mark.posix_native
 class TestCrossProcessInit:
     """Two processes initializing for different experiments: exactly one wins."""
 
@@ -301,7 +301,7 @@ class TestCrossProcessInit:
         assert st["draft"] == {}
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="POSIX flock cross-process CAS")
+@pytest.mark.posix_native
 class TestCrossProcessCAS:
     def test_concurrent_saves_at_same_base_exactly_one_wins(self, tmp_path):
         path = tmp_path / "review.state.json"

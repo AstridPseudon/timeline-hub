@@ -138,7 +138,6 @@ def test_forged_candidate_digest_is_not_certified_by_capture_labels(client):
 
 
 @pytest.mark.parametrize("working_copy", [False, True])
-@pytest.mark.xfail(strict=True, reason="Runtime-validated capture publication must restore SDK/ref/host handoff; admission double has no publisher")
 def test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies(client, monkeypatch, tmp_path, working_copy):
     """Real SDK enrichment/publication and host handoff; Runtime admission doubled."""
     import hashlib

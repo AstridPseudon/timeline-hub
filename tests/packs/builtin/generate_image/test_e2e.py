@@ -14,6 +14,7 @@ from pathlib import Path
 from urllib.request import Request
 
 import pytest
+from tests.lanes import unavailable
 
 from astrid.core.util.http import HttpClient
 
@@ -494,10 +495,10 @@ def test_e2e_flux_dev_t2i_unsupported_image_ref_warns(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_e2e_cloud_never_imports_vibecomfy(tmp_path: Path) -> None:
+def test_e2e_cloud_never_imports_vibecomfy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Running execution=cloud must NOT import vibecomfy."""
-    if "vibecomfy" in sys.modules:
-        pytest.skip("vibecomfy already imported -- cannot test lazy-import")
+    for name in [m for m in sys.modules if m == "vibecomfy" or m.startswith("vibecomfy.")]:
+        monkeypatch.delitem(sys.modules, name)  # an earlier test may have imported it; prove this run does not
 
     from astrid.packs.generation.actions.generate_image.run import main
 
@@ -546,10 +547,10 @@ def _comfyui_binary_present() -> bool:
 
 @pytest.mark.integration
 @pytest.mark.opt_in
-@pytest.mark.skipif(not _vibecomfy_importable(), reason="vibecomfy not importable")
-@pytest.mark.skipif(not _comfyui_binary_present(), reason="comfyui binary not on PATH")
 def test_e2e_local_smoke(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Smoke test: execution=local with z-image t2i mode runs without crashing."""
+    if not _vibecomfy_importable() or not _comfyui_binary_present():
+        unavailable("needs vibecomfy importable and the comfyui binary on PATH")
     from astrid.packs.generation.actions.generate_image.run import main
 
     out = tmp_path / "out"

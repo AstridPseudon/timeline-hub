@@ -1,4 +1,6 @@
-"""The import-skip guard, `require_module` and the Runtime locator (testing plan, R-6 and UA.3)."""
+"""Lane collection (`require_module`, modules of a deselected lane) and the Runtime locator (testing plan, R-6 and UA.3).
+
+The skip guard itself is tests/test_skip_guard.py."""
 
 from __future__ import annotations
 
@@ -7,61 +9,39 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 REPO = Path(__file__).resolve().parents[1]
 
 
 def _run(
-    tmp_path: Path, source: str, *args: str, ci: bool = False, extra_env: dict[str, str] | None = None,
+    tmp_path: Path, source: str, *args: str, extra_env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    (tmp_path / "conftest.py").write_text("from tests.lanes import pytest_configure  # noqa: F401\n")
+    (tmp_path / "conftest.py").write_text(
+        "from tests.lanes import pytest_collection_modifyitems, pytest_configure, pytest_ignore_collect  # noqa: F401\n"
+    )
     (tmp_path / "test_case.py").write_text(source)
-    env = {key: value for key, value in os.environ.items() if key not in ("CI", "PYTEST_ADDOPTS")}
+    env = {key: value for key, value in os.environ.items() if key not in ("CI", "PYTEST_ADDOPTS", "ASTRID_CI_JOB")}
     env["PYTHONPATH"] = str(REPO)
-    if ci:
-        env["CI"] = "true"
     env.update(extra_env or {})
     return subprocess.run(
         [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-o", "addopts=", "--rootdir", str(tmp_path),
-         "--confcutdir", str(tmp_path), *args, str(tmp_path / "test_case.py")],
+         "--confcutdir", str(tmp_path), *args, str(tmp_path)],
         cwd=tmp_path, env=env, capture_output=True, text=True, timeout=120, check=False,
     )
 
 
-IMPORTORSKIP = "import pytest\n\n@pytest.mark.integration\ndef test_x():\n    pytest.importorskip('astrid_no_such_dependency')\n"
-MODULE_LEVEL = "import pytest\n\npytestmark = pytest.mark.integration\npytest.importorskip('astrid_no_such_dependency')\n\ndef test_x():\n    pass\n"
+DEFAULT = ("-m", "not integration and not live and not opt_in")
+HEAVY = ("-m", "integration or live or opt_in")
 REQUIRE = (
     "import pytest\nfrom tests.lanes import require_module\n\npytestmark = pytest.mark.integration\n"
     "require_module('astrid_no_such_dependency')\n\ndef test_x():\n    pass\n"
 )
 
 
-@pytest.mark.parametrize("source", [IMPORTORSKIP, MODULE_LEVEL], ids=["in-test", "module-level"])
-def test_a_skip_on_import_is_allowed_locally(tmp_path: Path, source: str) -> None:
-    done = _run(tmp_path, source)
-    assert done.returncode in (0, 5), done.stdout + done.stderr  # skipped; 5 = nothing collected
-
-
-@pytest.mark.parametrize("source", [IMPORTORSKIP, MODULE_LEVEL], ids=["in-test", "module-level"])
-def test_a_skip_on_import_fails_in_ci_and_in_the_integration_lane(tmp_path: Path, source: str) -> None:
-    in_ci = _run(tmp_path, source, ci=True)
-    assert in_ci.returncode != 0 and "hides a broken install" in in_ci.stdout, in_ci.stdout + in_ci.stderr
-    nightly = _run(tmp_path, source, "-m", "integration or live or opt_in")
-    assert nightly.returncode != 0 and "hides a broken install" in nightly.stdout, nightly.stdout + nightly.stderr
-
-
-def test_a_private_module_import_failure_is_not_hidden_in_ci(tmp_path: Path) -> None:
-    source = "import sys\nsys.modules['runpod_lifecycle'] = None\n" + IMPORTORSKIP.replace("astrid_no_such_dependency", "runpod_lifecycle")
-    done = _run(tmp_path, source, ci=True)
-    assert done.returncode != 0 and "hides a broken install" in done.stdout, done.stdout + done.stderr
-
-
-def test_require_module_skips_in_the_default_lane_and_fails_in_the_integration_lane(tmp_path: Path) -> None:
-    default = _run(tmp_path, REQUIRE, "-m", "not integration and not live and not opt_in", ci=True)
-    assert default.returncode in (0, 5), default.stdout + default.stderr
-    nightly = _run(tmp_path, REQUIRE, "-m", "integration or live or opt_in", ci=True)
-    assert nightly.returncode != 0 and "astrid_no_such_dependency" in nightly.stdout, nightly.stdout + nightly.stderr
+def test_a_module_of_a_lane_the_run_deselects_is_not_imported_and_fails_in_the_run_that_selects_it(tmp_path: Path) -> None:
+    default = _run(tmp_path, REQUIRE, *DEFAULT)
+    assert default.returncode == 5 and "skipped" not in default.stdout, default.stdout + default.stderr  # 5: nothing collected
+    heavy = _run(tmp_path, REQUIRE, *HEAVY)
+    assert heavy.returncode != 0 and "astrid_no_such_dependency" in heavy.stdout, heavy.stdout + heavy.stderr
 
 
 NO_RUNTIME = (
@@ -70,12 +50,12 @@ NO_RUNTIME = (
 )
 
 
-def test_a_missing_runtime_skips_the_module_in_the_default_lane_and_fails_in_the_integration_lane(tmp_path: Path) -> None:
+def test_a_missing_runtime_is_not_looked_for_in_the_default_lane_and_fails_in_the_integration_lane(tmp_path: Path) -> None:
     missing = {"ASTRID_RUNTIME_CHECKOUT": str(tmp_path / "no-runtime")}
-    default = _run(tmp_path, NO_RUNTIME, "-m", "not integration and not live and not opt_in", extra_env=missing)
-    assert default.returncode in (0, 5), default.stdout + default.stderr
-    nightly = _run(tmp_path, NO_RUNTIME, "-m", "integration or live or opt_in", ci=True, extra_env=missing)
-    assert nightly.returncode != 0 and "no Runtime checkout" in nightly.stdout, nightly.stdout + nightly.stderr
+    default = _run(tmp_path, NO_RUNTIME, *DEFAULT, extra_env=missing)
+    assert default.returncode == 5 and "skipped" not in default.stdout, default.stdout + default.stderr
+    heavy = _run(tmp_path, NO_RUNTIME, *HEAVY, extra_env=missing)
+    assert heavy.returncode != 0 and "no Runtime checkout" in heavy.stdout, heavy.stdout + heavy.stderr
 
 
 def test_the_runtime_locator_takes_the_override_and_never_falls_through_from_it(tmp_path: Path, monkeypatch) -> None:

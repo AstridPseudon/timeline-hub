@@ -5,29 +5,18 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import pytest
+
 from astrid.packs.rendering.actions.render import run as render_executor
 from astrid.core import timeline
 from tests.packs.rendering._helpers import _execution_env
 
 
 ROOT = Path(__file__).resolve().parents[2]
-HAS_AUDIO_RENDER_DEPS = (
-    shutil.which("ffmpeg") is not None
-    and shutil.which("ffprobe") is not None
-    and (ROOT / "remotion" / "node_modules").exists()
-)
 
 
-def remotion_launch_blocked(error: RuntimeError) -> bool:
-    message = str(error)
-    return (
-        "Failed to launch the browser process" in message
-        or "MachPortRendezvous" in message
-        or "Permission denied (1100)" in message
-    )
-
-
-@unittest.skipUnless(HAS_AUDIO_RENDER_DEPS, "ffmpeg/ffprobe and remotion/node_modules are required")
+@pytest.mark.remotion
+@pytest.mark.usefixtures("remotion_launch_validation")  # no host here to issue the launch proof a real render requires
 class AudioRenderTest(unittest.TestCase):
     def test_rendered_mp4_contains_audio_stream(self) -> None:
         tmp_dir = Path(tempfile.mkdtemp(prefix="audio-render-"))
@@ -125,23 +114,18 @@ class AudioRenderTest(unittest.TestCase):
         timeline.save_timeline(config, timeline_path)
         timeline.save_registry(registry, assets_path)
 
-        try:
-            with _execution_env():
-                output = render_executor.render(
-                    timeline_path,
-                    assets_path,
-                    out_path,
-                    project_dir=ROOT / "remotion",
-                    materialized_root=tmp_dir,
-                    materialized_objects={
-                        "silent-object": str(silent_path),
-                        "tone-object": str(tone_path),
-                    },
-                )
-        except RuntimeError as exc:
-            if remotion_launch_blocked(exc):
-                self.skipTest(f"Remotion browser launch is blocked in this environment: {exc}")
-            raise
+        with _execution_env():
+            output = render_executor.render(
+                timeline_path,
+                assets_path,
+                out_path,
+                project_dir=ROOT / "remotion",
+                materialized_root=tmp_dir,
+                materialized_objects={
+                    "silent-object": str(silent_path),
+                    "tone-object": str(tone_path),
+                },
+            )
 
         self.assertTrue(output.exists())
         probe = subprocess.run(
