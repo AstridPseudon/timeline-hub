@@ -107,3 +107,86 @@ def test_pristine_init_crash_resume_reload_undo_retry_and_redo(tmp_path, monkeyp
         assert len(service.list_timeline_commits(project, 'film', authorize=lambda: None)['items']) == 4
     finally:
         service.close()
+
+
+def test_remote_create_empty_uses_live_commit_bootstrap_and_exact_replay(
+    tmp_path, monkeypatch, real_runtime,
+):
+    """The public creator must reach the native commit path on a normal client."""
+    use_runtime(commit=vendored_runtime_commit())
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    daemon = real_runtime(authoring_profile="astrid")
+    project = daemon.service.create_project({"slug": "live-create", "name": "Live create"})["id"]
+    client = open_client(daemon)
+    config = {
+        "tracks": [],
+        "theme_overrides": {"visual": {"canvas": {"width": 640, "height": 360, "fps": 24}}},
+        "meta": {"org.example": {"opaque": [None, False], "empty": None}},
+    }
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("create_empty used the retired parent publisher")
+
+    monkeypatch.setattr(daemon.service, "publish_parent_composition", forbidden)
+    created = client.timelines.create_empty(
+        project=project, timeline_id="film", name="Main", config=config,
+        idempotency_key="live-create",
+    )
+    assert created.ok, created.as_dict()
+    document = created.data["canonical_document"]
+    assert document["parent_revision"]["payload"]["name"] == "Main"
+    assert document["parent_revision"]["payload"]["config"]["meta"] == config["meta"]
+    assert document["parent_revision"]["payload"]["config"]["output"] == {
+        "resolution": "640x360", "fps": 24, "file": "output.mp4",
+        "background": None, "background_scale": None,
+    }
+    opened = client.timelines.open_bundle(project, "film")
+    assert opened.ok, opened.as_dict()
+    assert opened.data["bundle"]["parent"]["config"]["meta"] == config["meta"]
+
+    from astrid.sdk.timeline import open as open_timeline
+
+    outbox = tmp_path / "reload-outbox.json"
+    timeline = open_timeline(project, "film", client=client, outbox_path=outbox)
+    assert timeline.bundle["parent"]["config"]["meta"] == config["meta"]
+    head = client.timelines.history(project, "film", limit=1)
+    assert head.ok, head.as_dict()
+    pin = head.data["head"]
+    later_change = {
+        "op": "set", "ref": "parent",
+        "path": ["config", "meta", "org.example", "later"],
+        "before": {"state": "absent"}, "value": "edit",
+    }
+    later_command = {
+        "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+        "args": {"changes": [later_change]},
+    }
+    later = client.timelines.commit(
+        project, "film", {
+            "api_version": 1, "project_id": project, "timeline_id": "film",
+            "base_revision_id": pin["revision_id"], "base_publication_id": pin["publication_id"],
+            "commands": [later_command], "label": "later edit", "merge": "atomic",
+            "steps": [{"id": "later", "label": "later edit", "intent": "later edit",
+                        "tags": [], "command_ordinals": [0], "patch": [later_change]}],
+        }, idempotency_key="live-later-edit",
+    )
+    assert later.ok, later.as_dict()
+    reloaded = open_timeline(project, "film", client=client, outbox_path=tmp_path / "reload-2.json")
+    assert reloaded.bundle["parent"]["config"]["meta"]["org.example"]["later"] == "edit"
+
+    transport = client._remote._transport
+
+    def forbidden_commit(*args, **kwargs):
+        raise AssertionError("exact create retry submitted a second commit")
+
+    monkeypatch.setattr(transport, "commit_timeline", forbidden_commit)
+    replayed = client.timelines.create_empty(
+        project=project, timeline_id="film", name="Main", config=config,
+        idempotency_key="live-create",
+    )
+    assert replayed.ok, replayed.as_dict()
+    assert replayed.receipt == created.receipt
+    assert replayed.data["canonical_document"] == created.data["canonical_document"]
+    after_retry = open_timeline(project, "film", client=client, outbox_path=tmp_path / "reload-3.json")
+    assert after_retry.bundle["parent"]["config"]["meta"]["org.example"]["later"] == "edit"

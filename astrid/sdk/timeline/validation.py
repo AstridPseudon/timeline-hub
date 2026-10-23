@@ -219,7 +219,7 @@ def _baseline_clips(bundle: Mapping[str, Any]) -> dict[tuple[str, str], Mapping[
 
 def _schema_for_selected(
     clip: Mapping[str, Any], *, schema_inputs: Sequence[Any], realm_id: str | None, project: str,
-    required: bool = True,
+    required: bool = True, identity_only: bool = False,
 ) -> Mapping[str, Any] | None:
     reference = clip.get("elementRef") or clip.get("element_ref")
     if not isinstance(reference, Mapping) or not reference.get("packId"):
@@ -277,7 +277,9 @@ def _schema_for_selected(
         if isinstance(descriptor, Mapping):
             declarations.append(descriptor)
     if not declarations:
-        if not required:
+        # An element-only inverse can restore an authenticated retained
+        # admission without consuming that revision's portable params schema.
+        if not required or identity_only:
             return None
         _fail("elementRef", "retained element declaration is unavailable")
     schemas = [declaration.get("schema") for declaration in declarations]
@@ -288,14 +290,75 @@ def _schema_for_selected(
     return schemas[0]
 
 
+def _text_reference_basis(bundle: Mapping[str, Any], shot_id: str, reference: Mapping[str, Any]) -> Any:
+    shots = bundle.get("shots", {})
+    owners = sorted(shots) if shot_id == "parent" else [shot_id]
+    bindings: list[tuple[str, Mapping[str, Any]]] = []
+    for owner in owners:
+        rows = shots.get(owner, {}).get("payload", {}).get("text_bindings", [])
+        if not isinstance(rows, list):
+            _fail("text_bindings", "must be a list")
+        bindings.extend((owner, row) for row in rows if isinstance(row, Mapping)
+                        and row.get("binding_id") == reference["binding_id"])
+    source = bundle.get("source_mapping", {})
+    documents = [row for row in source.get("pinned_documents", [])
+                 if row.get("pin", {}).get("document_id") == reference["anchor"]["document_id"]]
+    return (bundle.get("project_id"), bundle.get("timeline_id"),
+            {owner: source.get("shots", {}).get(owner) for owner in owners}, bindings, documents)
+
+
+def _validate_element_reference(
+    clip: Mapping[str, Any], *, path: str, baseline: Mapping[str, Any] | None,
+    candidate: Mapping[str, Any], baseline_bundle: Mapping[str, Any] | None, shot_id: str,
+) -> bool:
+    """Retain historical text bindings without treating them as element selections."""
+    from astrid.sdk.timeline.commands import _SCHEMA, _VALIDATOR
+
+    references = {key: clip[key] for key in ("elementRef", "element_ref") if key in clip}
+    if not references:
+        return False
+    text = False
+    for key, reference in references.items():
+        if isinstance(reference, Mapping) and reference.get("kind") == "text" and "binding_id" in reference:
+            anchor = reference.get("anchor")
+            if (set(reference) != {"kind", "binding_id", "anchor"}
+                    or not isinstance(reference["binding_id"], str) or not reference["binding_id"].strip()
+                    or not isinstance(anchor, Mapping) or set(anchor) != {"document_id", "word_id"}
+                    or any(not isinstance(anchor[field], str) or not anchor[field].strip()
+                           for field in ("document_id", "word_id"))):
+                _fail(f"{path}.{key}", "invalid historical text binding reference")
+            # This historical form has no immutable transcript pin with which
+            # the native word-reference validator could authorize a new choice.
+            # D12 permits only its exact retained declaration and source basis.
+            from astrid.sdk.timeline.commit import _json
+
+            previous = {name: baseline[name] for name in ("elementRef", "element_ref")
+                        if baseline is not None and name in baseline}
+            if (baseline is None or baseline_bundle is None
+                    or _json(references) != _json(previous)
+                    or clip.get("clipType") != baseline.get("clipType")
+                    or _json(_text_reference_basis(candidate, shot_id, reference))
+                    != _json(_text_reference_basis(baseline_bundle, shot_id, reference))):
+                _fail(f"{path}.{key}", "historical text binding requires an unchanged declaration and source")
+            text = True
+        else:
+            errors = list(_VALIDATOR.evolve(schema=_SCHEMA["$defs"]["ElementRef"]).iter_errors(reference))
+            if errors:
+                _fail(f"{path}.{key}", errors[0].message)
+    if text and len(references) != 1:
+        _fail(path, "historical text binding has ambiguous reference aliases")
+    return text
+
+
 def _validate_params(
     clip: Mapping[str, Any], *, path: str, baseline: Mapping[str, Any] | None,
     schema_inputs: Sequence[Any], realm_id: str | None, project: str,
+    text_reference: bool = False,
 ) -> None:
     params = clip.get("params", {})
     # Guarded inverse may restore this literal container after a PARAM write.
     if params is None:
-        return
+        params = {}
     if not isinstance(params, Mapping):
         _fail(f"{path}.params", "must be an object")
     previous = baseline.get("params", {}) if isinstance(baseline, Mapping) else {}
@@ -303,19 +366,21 @@ def _validate_params(
     changed = {key: value for key, value in params.items()
                if key not in previous or not equal(previous[key], value)}
     element_ref = clip.get("elementRef") or clip.get("element_ref")
-    element = element_ref.get("id") if isinstance(element_ref, Mapping) else clip.get("clipType", "media")
+    element = (element_ref.get("id") if isinstance(element_ref, Mapping) and not text_reference
+               else clip.get("clipType", "media"))
     if not isinstance(element, str):
         _fail(f"{path}.clipType", "must identify an element")
-    # A newly added selected clip can carry opaque literal params before its
-    # separate selection command supplies the retained declaration.  Once a
-    # selected clip already exists, a changed PARAM requires that authority.
     selected = isinstance(element_ref, Mapping) and element_ref.get("packId")
+    # Native creation retains opaque literals until a separate selection
+    # supplies authority; preserve that existing command lifecycle.
     if selected and baseline is None:
         return
     if selected:
+        previous_ref = (baseline.get("elementRef") or baseline.get("element_ref")) if baseline else None
         schema = _schema_for_selected(
             clip, schema_inputs=schema_inputs, realm_id=realm_id, project=project,
-            required=bool(changed))
+            required=bool(changed) or not equal(element_ref, previous_ref),
+            identity_only=not changed)
         if schema is None:
             return
     else:
@@ -357,8 +422,8 @@ def validate_final_candidate(
 ) -> None:
     """Validate one complete candidate without changing it.
 
-    ``baseline`` is used only to distinguish a newly authored parameter from
-    an older opaque parameter that must survive a round trip.  ``schema_inputs``
+    ``baseline`` distinguishes newly authored declarations from unchanged
+    legacy declarations that must survive a round trip.  ``schema_inputs``
     are the exact retained Runtime captures collected for this commit; this
     helper never resolves a mutable project-pack source.
     """
@@ -424,14 +489,25 @@ def validate_final_candidate(
         baseline_internal = baseline_shot.get("internal_timeline", {}) if isinstance(baseline_shot, Mapping) else {}
         before_child = _identity_rows(baseline_internal.get("clips", []), "baseline.clips", "id") if isinstance(baseline_internal, Mapping) and isinstance(baseline_internal.get("clips"), list) else {}
         for clip_id, clip in child_clips.items():
+            clip_path = f"candidate.shots[{shot_id!r}].internal_timeline.clips[{clip_id!r}]"
+            text_reference = _validate_element_reference(
+                clip, path=clip_path, baseline=before_child.get(clip_id),
+                candidate=candidate, baseline_bundle=baseline, shot_id=shot_id,
+            )
             _validate_params(
-                clip, path=f"candidate.shots[{shot_id!r}].internal_timeline.clips[{clip_id!r}]",
+                clip, path=clip_path, text_reference=text_reference,
                 baseline=before_child.get(clip_id), schema_inputs=schema_inputs,
                 realm_id=realm_id, project=str(candidate.get("project_id", "")),
             )
     for clip_id, clip in clips.items():
+        prior = _baseline_clips(baseline or {}).get(("parent", clip_id))
+        clip_path = f"candidate.parent.clips[{clip_id!r}]"
+        text_reference = _validate_element_reference(
+            clip, path=clip_path, baseline=prior, candidate=candidate,
+            baseline_bundle=baseline, shot_id="parent",
+        )
         _validate_params(
-            clip, path=f"candidate.parent.clips[{clip_id!r}]", baseline=_baseline_clips(baseline or {}).get(("parent", clip_id)),
+            clip, path=clip_path, baseline=prior, text_reference=text_reference,
             schema_inputs=schema_inputs, realm_id=realm_id, project=str(candidate.get("project_id", "")),
         )
 

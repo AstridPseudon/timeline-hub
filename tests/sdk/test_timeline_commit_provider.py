@@ -8,11 +8,13 @@ import types
 import pytest
 
 from astrid.sdk.timeline._trim_commands import capture_clip_trim
+from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import (
     _digest,
     bundle_from_document,
     create_runtime_commit_service,
 )
+from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.staging_recipes import (
     install_staging_operations,
     staged_move,
@@ -290,6 +292,40 @@ def test_provider_accepts_trim_after_move_and_undoes_only_trim():
     assert undone["data"]["canonical_document"] == moved["data"]["canonical_document"]
 
 
+def test_legacy_rebase_records_landing_step_metadata():
+    realm = DetachedRealm()
+    base = copy.deepcopy(realm.head)
+    command = realm.move()
+    realm.call([track_create("unrelated-track")])
+    landing = copy.deepcopy(realm.head)
+
+    accepted = realm.call([command], base=base)
+
+    assert accepted["data"]["rebased_onto"] == landing
+    records = realm.entries[-1]["records"]
+    assert records["steps"] and records["steps"][0]["dependencies"]
+    bindings = records["commands"][0]["bindings"]
+    assert bindings
+    assert records["steps"][0]["patch"]
+
+
+def test_replay_accepts_legacy_request_head_and_builds_steps():
+    realm = DetachedRealm()
+    command = realm.move()
+    context = realm.context([command])
+    base = copy.deepcopy(realm.head)
+    request = context["request"]
+    input_bundle = bundle_from_document(realm.documents[base["revision_id"]])
+    original = execute(input_bundle, [command],
+                       commit_request=request, evaluated_head=base)
+    landing = {"revision_id": "landing-revision", "publication_id": "landing-publication"}
+
+    replayed = replay(original, input_bundle, commit_request=request, evaluated_head=landing)
+
+    assert replayed.steps and replayed.steps[0]["patch"]
+    assert replayed.steps[0]["dependencies"]
+
+
 def track_create(identity="reserved-track", owner="parent"):
     return {"schema_version": 1, "op": "track.create", "version": "1",
             "select": owner, "args": {"row": {"id": identity, "kind": "visual",
@@ -425,6 +461,39 @@ def test_undo_detects_aba_and_unchanged_write_publications():
         with pytest.raises(CommitRejected) as error:
             realm.call([inverse([target])])
         assert error.value.failure["details"]["reason"] == "intervening_write"
+
+
+def test_timeline_scope_inverse_binding_skips_entity_dispatch_but_keeps_guards(monkeypatch):
+    from astrid.sdk.timeline._command_state import CommandError, State, present
+    from astrid.sdk.timeline.inverse import _validate_inputs, check_intervening
+
+    bundle = bundle_from_document(document_fixture())
+    pin = {key: bundle["base_parent"][key] for key in ("revision_id", "content_digest")}
+    scope = {"ref": "timeline", "path": [], "state": present(pin)}
+    binding = {"key": "commit.read", "ref": "timeline", "path": [],
+               "physical_ref": "parent", **pin}
+    record = {"command": {"op": "timeline.init"}, "writes": [], "reads": [scope],
+              "selections": [], "bindings": [binding], "created": []}
+
+    mismatched = copy.deepcopy(record)
+    mismatched["bindings"][0]["revision_id"] = "different-revision"
+    with pytest.raises(CommandError, match="unsupported entity reference 'timeline'"):
+        _validate_inputs(State(bundle), mismatched, [])
+
+    original_entity = State.entity
+
+    def entity(state, ref, *, optional=False):
+        if ref == "timeline":
+            raise AssertionError("timeline scope must not dispatch through State.entity")
+        return original_entity(state, ref, optional=optional)
+
+    monkeypatch.setattr(State, "entity", entity)
+    _validate_inputs(State(bundle), record, [])
+
+    later = {"writes": [{"ref": "parent", "path": [], "before": present({}),
+                          "after": present({"changed": True})}]}
+    with pytest.raises(CommandError, match="intervening publication wrote a guarded address"):
+        check_intervening([record], [later])
 
 
 def test_dependent_unsent_original_guards_allow_equal_state_aba_at_fresh_base():

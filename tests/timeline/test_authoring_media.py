@@ -905,8 +905,17 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     publication = publication_receipt['publication']
     assert publication['data']['status'] == 'accepted'
     assert [command['op'] for command in publication['data']['commands']] == [
-        'occurrence.swap-media', 'clip.move', 'clip.set',
+        'occurrence.swap-media', 'doc.patch',
     ]
+    changes = publication['data']['commands'][1]['args']['changes']
+    assert [(change['op'], change['path'], change['before'], change['value'])
+            for change in changes] == [
+        ('set', ['clips', 'id:clip-1', 'at'],
+         {'state': 'present', 'value': 0}, 0.125),
+        ('set', ['clips', 'id:clip-1', 'hold'],
+         {'state': 'present', 'value': 1.8}, 0.75),
+    ]
+    assert changes[0]['ref'] == changes[1]['ref']
     published_document = publication['data']['canonical_document']
     new_digest = 'sha256:' + hashlib.sha256(new_path.read_bytes()).hexdigest()
     published_internal = next(
