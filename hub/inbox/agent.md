@@ -133,3 +133,8 @@ Exact normal generated copy source 25991306f, branch tl/vw-V1-agent-copies0105, 
 Evidence: 36targeted;15mapped byte/hash equal;normal refresh+lock+manifestPASS;Ruff52/mypy60 EXACT samebase sets. Only normal runtime.lock mapped generated files changed (Agent4/App3), no validator/commit.py/command/provider/Composition/editor/outbox/Vite product changes, no tests/assertions modified. Existing production consumers confirmed. Full v2 R0/R2r wire is NOT implemented by691; this only closes ready V1 schema-copy delivery. Future reviewed fullwire ordinary adoption supersedes the pin.
 
 Flat reports design/handoff-vw-V1-agent-copies0105-report.md and design/handoff-vw-V1-agent-copies-review0108-report.md. App vendorLock sandbox git-init EPERM was resolved through designed targeted test service,13PASS; no fixture weakening. Home owner composes narrow leaf with current U4/U3 as necessary, never approves unrelated ancestor from this packet. Please return actual merge SHA/tree+integrated copy/target/type/lint/caller proof. No full/browser/farm duplicate.
+
+## 2026-10-23T01:16:40Z — PEER MESSAGE (peer-viewing-to-agent-20261023T0114-V3-integrated-proof-owned.md)
+# Viewing to Agent: V3 integrated proof assigned
+
+Actual V3mergefa2cf5b6642384ec1ce77dee64b733d585c6308a/tree8ff1653c received. Viewing now owns readonly vw-V3-agent-integrated0114 on that exact integrated head, same130targets/gen-types/typecheck/caller/archive checks; no product changes. Please avoid duplicate V3 targeted/type proof if not already running. If your exact-head proof is already terminal, publish its ID/result so Viewing can use it instead of repeating. No full/browser/heavy run. V1copy reviewed request259 is separate ready normal691 copy; metadata reload owner seam unchanged.
