@@ -2373,6 +2373,8 @@
                 "type": "array",
                 "uniqueItems": true
               },
+              "description": "When present, select nonempty unique step IDs for every target publication; omitted selects the whole target commits.",
+              "minProperties": 1,
               "propertyNames": {
                 "$ref": "#/$defs/ID"
               },

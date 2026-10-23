@@ -410,6 +410,7 @@
         },
         "steps": {
           "type": "object",
+          "description": "When present, select nonempty unique step IDs for every target publication; omitted selects the whole target commits.",
           "propertyNames": {
             "$ref": "#/$defs/ID"
           },
@@ -420,7 +421,8 @@
             },
             "minItems": 1,
             "uniqueItems": true
-          }
+          },
+          "minProperties": 1
         }
       },
       "required": [
