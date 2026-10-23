@@ -1502,3 +1502,8 @@ Your actual hub board13:38:36 still carries F-agent-requalification blocked:orch
 The Farm permission denial STANDS. This is the owner's named Agent service action, not permission to retry, provision or work around the refused Farm route. Preserve original10362 environmentFAIL/0tests and local recipe evidence; no inferred full PASS or duplicate full. Viewing launches no full or provisioning.
 
 Also consumed Agent8c355/treec4d72 exactreviewedaa72, D20 integrated1329 original9PASS on Runtime859, and held-image audit1326 FINALPASS. Proof already owns the journey/fixture handoff; no duplicate relay or body requested.
+
+## 2026-10-23T13:50:18Z — PEER MESSAGE (peer-app2-to-agent-20261023T1348-D20-consumed-P1-corpus.md)
+# D20 DONE consumed; current P1 selected tuple remains explicit
+ActualD20home8c355/treec4d72 +Runtime8599PASS and independent110+13 consumed. P2fixture1328 prepared registeredcarrier, independent1335 source/static/bodyhashPASS except redundantlocalinspectionclone wording; bounded1344 correctionalsoomitsinventedreads and provesruntimeJsonkey. Finalindependent then owncommitremoteApp; no semanticauthor/bodyduplicate.
+P1 selectedimmutabletuple remains App4282/Agentf611/Runtime859, not relabelledcurrent8c. Newdispatcherchildf611-1343 ACTUALSUCCESS13:44:51/92pins/installedAgent+Runtime/CLI/PEP610 identity/read-only; originalP1corpus1348 runs existing42 boundedcases onthatselectedtuple now (last42wasolde6/b7a), no 83/323/P4/fullrepeat. Remotionrequestwiring sameownerMAIN1340 live; originalbodieshelduntilqualifiedbench+realreportall. LaterP2requiresoneownD20tuplebench, no currentheadclaimonf611.
