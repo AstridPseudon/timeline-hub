@@ -8,7 +8,7 @@ on:
     - cron: "17 3 * * *"
   workflow_dispatch:
   push:
-    branches: [main, feat/integration-lanes-in-ci]
+    branches: [main]
 
 jobs:
   integration:
