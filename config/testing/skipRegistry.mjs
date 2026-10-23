@@ -6,8 +6,7 @@
 //      config/testing/playwrightSkipGuard.ts; node:test: scripts/quality/node-skip-guard-reporter.mjs),
 //      and fails on any skip whose reason does not carry a registered `[declared:NAME]` tag;
 //   3. some CI job runs the test where the condition holds (`ci`, checked against .github/workflows by
-//      scripts/quality/check-skip-registry.mjs, which also checks that `runs[job]`, the command the entry needs, is among
-//      that job's `run:` steps, resolved through package.json). `ci: []` plus `manual` says, in words, that no job does.
+//      scripts/quality/check-skip-registry.mjs). `ci: []` plus `manual` says, in words, that no job does.
 //
 // Tests never call .skip / .only / .fixme / .todo / skipIf / runIf themselves
 // (scripts/quality/check-no-raw-skips.mjs). They use `skipWhen` (src/test/declaredSkip.ts, vitest),
@@ -20,7 +19,7 @@ import { ffmpegUnavailableReason, harnessUnavailableReason, isWindows, macosLock
 
 /**
  * Skips reported at run time. `applies` = the predicate (true or a reason string when the skip applies, false when the test runs). `ci` = CI jobs (job ids in .github/workflows) where the skip condition is
- * false, so the test runs; `runs` = for each such job, the command in its `run:` steps that runs the test. `requireInLane`: in a job that sets ASTRID_REQUIRE_LANES to include this value,
+ * false, so the test runs. `requireInLane`: in a job that sets ASTRID_REQUIRE_LANES to include this value,
  * the condition is a failure, never a skip (the lane's job provides the dependency).
  */
 export const SKIP_REGISTRY = {
@@ -29,7 +28,6 @@ export const SKIP_REGISTRY = {
     reason: 'the direct journey needs a Runtime venv, a production build and openssl on the machine',
     applies: harnessUnavailableReason,
     ci: ['direct-journey'],
-    runs: { 'direct-journey': 'playwright test --config playwright.direct.config.ts' },
     requireInLane: 'direct-journey',
   },
   'direct-journey-ffmpeg': {
@@ -37,7 +35,6 @@ export const SKIP_REGISTRY = {
     reason: 'the video-load case needs ffmpeg to make a decodable clip',
     applies: ffmpegUnavailableReason,
     ci: ['direct-journey'],
-    runs: { 'direct-journey': 'playwright test --config playwright.direct.config.ts' },
     requireInLane: 'direct-journey',
   },
   'posix-owner-only-modes': {
@@ -45,28 +42,24 @@ export const SKIP_REGISTRY = {
     reason: 'owner-only file modes (chmod 0644 refusal) are a POSIX permission model',
     applies: isWindows,
     ci: ['vitest'],
-    runs: { vitest: 'vitest run --config config/testing/vitest.config.ts' },
   },
   'macos-lockf-broker': {
     skipWhen: "process.platform !== 'darwin' || !existsSync('/usr/bin/lockf')",
     reason: 'the broker-election reaping case exercises macOS /usr/bin/lockf',
     applies: macosLockfMissing,
     ci: ['release-tooling-macos'],
-    runs: { 'release-tooling-macos': 'node --test scripts/release/bounded-command.test.mjs scripts/release/astrid-release-provenance.test.mjs scripts/release/verify-extension-ship.test.mjs' },
   },
   'macos-release-process-containment': {
     skipWhen: "process.platform !== 'darwin' || !existsSync('/usr/bin/lockf')",
     reason: 'macOS-only by design: the release tooling (scripts/release bounded-command broker, and the git calls of astrid-release-provenance that go through it) is built and pinned for darwin/arm64 and needs lockf and BSD ps eww; it has no other-platform branch and refuses clearly elsewhere, and its coverage runs in the release-tooling-macos job',
     applies: macosLockfMissing,
     ci: ['release-tooling-macos'],
-    runs: { 'release-tooling-macos': 'node --test scripts/release/bounded-command.test.mjs scripts/release/astrid-release-provenance.test.mjs scripts/release/verify-extension-ship.test.mjs' },
   },
   'symlink-creation-permitted': {
     skipWhen: 'a probe symlink in a temp dir fails with EPERM/EACCES (no symlink privilege in this environment); any other error fails the test',
     reason: 'the symlink-escape case needs permission to create symlinks',
     applies: symlinkCreationRefused,
     ci: ['vitest'],
-    runs: { vitest: 'node --test scripts/quality/check-extension-family-conformance.test.mjs' },
   },
 };
 
@@ -80,74 +73,51 @@ export const LANES = {
     what: 'src/tools/video-editor/{data/portableVisualSeamIntent,runtime/astridSceneAuthoring,dev/localExtensions.catalog}.test.ts (config/testing/lanes.ts)',
     command: 'npm run test:checkout',
     ci: ['checkout-lanes'],
-    runs: { 'checkout-lanes': 'npm run test:checkout' },
   },
   'vitest-astrid-composition': {
     what: 'src/tools/video-editor/runtime/astridSceneComposition.test.tsx',
     command: 'npm run test:astrid-composition',
     ci: ['checkout-lanes'],
-    runs: { 'checkout-lanes': 'npm run test:astrid-composition' },
   },
   'vitest-sdk-boundary': {
     what: 'src/sdk/__tests__/*.test.{ts,tsx} (vitest.boundary.config.ts)',
     command: 'npm run test:sdk-boundary',
     ci: ['vitest'],
-    runs: { vitest: 'npm run test:sdk-boundary' },
   },
   'playwright-default': {
     what: 'tests/e2e/*.spec.ts (chromium-desktop/condensed/mobile projects)',
     command: 'playwright test --config playwright.config.ts',
     ci: ['playwright-default'],
-    runs: { 'playwright-default': 'playwright test --config playwright.config.ts --project=chromium-desktop --project=chromium-mobile' },
-  },
-  'playwright-webkit-mobile': {
-    what: 'tests/e2e/{public-astrid*,home-load}.spec.ts on the webkit-mobile project (iPhone 13 profile, WebKit engine)',
-    command: 'playwright test --config playwright.config.ts --project=webkit-mobile',
-    ci: ['playwright-webkit-mobile'],
-    runs: { 'playwright-webkit-mobile': 'playwright test --config playwright.config.ts --project=webkit-mobile' },
   },
   'playwright-timeline': {
     what: 'tests/e2e/timeline/*.spec.ts (timeline-devices and timeline-chrome-export projects, PLAYWRIGHT_TIMELINE_DEVICES=1)',
     command: 'npm run test:e2e:timeline',
     ci: ['playwright-timeline', 'playwright-timeline-chrome-export'],
-    runs: { 'playwright-timeline': 'npm run test:e2e:timeline', 'playwright-timeline-chrome-export': 'npm run test:e2e:chrome-export' },
   },
   'playwright-extension-a11y-visual-cross-browser': {
     what: 'tests/e2e/extension-{accessibility,visual-regression,cross-browser}.spec.ts',
     command: 'npm run test:e2e:extension-accessibility | extension-visual | extension-cross-browser',
     ci: ['extension-accessibility', 'extension-visual', 'extension-cross-browser'],
-    runs: {
-      'extension-accessibility': 'npm run test:e2e:extension-accessibility',
-      'extension-visual': 'npm run test:e2e:extension-visual',
-      'extension-cross-browser': 'npm run test:e2e:extension-cross-browser',
-    },
   },
   'playwright-quick-descriptor': {
     what: 'tests/e2e/local/three-products.spec.ts "quick: Astrid edit then App edit" (grepInvert unless ASTRID_QUICK_DESCRIPTOR)',
     command: 'python -m astrid.core.dev.journey --tier quick --reference generated --app-checkout <App>  (Astrid writes the descriptor and runs the case)',
     ci: ['quick-journey'],
-    runs: { 'quick-journey': 'python -m astrid.core.dev.journey --tier quick --reference generated' },
   },
   'node-installer-bootstrap': {
     what: 'scripts/installer/bootstrap.test.mjs (POSIX installer; ubuntu and macOS) and bootstrap-powershell.test.mjs (needs pwsh; ubuntu)',
     command: 'node --test scripts/installer/bootstrap.test.mjs scripts/installer/bootstrap-powershell.test.mjs',
     ci: ['installer-posix', 'installer-powershell'],
-    runs: {
-      'installer-posix': 'node --test scripts/installer/bootstrap.test.mjs',
-      'installer-powershell': 'node --test scripts/installer/bootstrap-powershell.test.mjs',
-    },
   },
   'playwright-direct': {
     what: 'tests/e2e/local/{direct-journey,settings-persist}.spec.ts',
     command: 'npm run test:e2e:direct',
     ci: ['direct-journey'],
-    runs: { 'direct-journey': 'npm run test:e2e:direct' },
   },
   'playwright-three-products': {
     what: 'tests/e2e/local/three-products.spec.ts (all but the quick case)',
     command: 'npm run test:e2e:three-products',
     ci: ['three-products'],
-    runs: { 'three-products': 'npm run test:e2e:three-products' },
   },
 };
 

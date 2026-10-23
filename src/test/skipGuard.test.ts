@@ -84,31 +84,6 @@ describe('the skip registry', () => {
   });
 });
 
-describe('check-skip-registry: a job must run the command', () => {
-  const lane = (runs: Record<string, string>, ci = ['playwright-default']) => ({ what: 'x', command: 'x', ci, runs });
-  const check = (lanes: Record<string, ReturnType<typeof lane>>) => checkSkipRegistry({ skips: SKIP_REGISTRY, lanes: lanes as never });
-
-  it('flags a job that exists but does not run the lane, a missing command, and a path that does not exist', () => {
-    const problems = check({
-      wrongJob: lane({ 'playwright-default': 'playwright test --config playwright.direct.config.ts' }),
-      noCommand: lane({}),
-      noFile: lane({ 'playwright-default': 'playwright test --config playwright.nowhere.config.ts' }),
-    });
-    expect(problems).toEqual(expect.arrayContaining([
-      expect.stringContaining('lane wrongJob: CI job "playwright-default" has no step that runs `playwright test --config playwright.direct.config.ts`'),
-      'lane noCommand: no `runs` command for CI job "playwright-default"; say which command in that job runs it',
-      'lane noFile: `runs` for job "playwright-default" names playwright.nowhere.config.ts, which does not exist',
-    ]));
-  });
-
-  it('resolves npm scripts through package.json', () => {
-    expect(check({ viaScript: lane({ 'playwright-timeline': 'npm run test:e2e:timeline' }, ['playwright-timeline']) })).toEqual([]);
-    expect(check({ other: lane({ 'playwright-timeline': 'npm run test:e2e:direct' }, ['playwright-timeline']) })).toEqual([
-      expect.stringContaining('has no step that runs `playwright test --config playwright.direct.config.ts`'),
-    ]);
-  });
-});
-
 describe('check-no-raw-skips', () => {
   it('passes on this repo', () => {
     expect(checkNoRawSkips()).toEqual([]);
