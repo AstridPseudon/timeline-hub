@@ -15,7 +15,8 @@ from typing import Any
 import pytest
 
 from astrid.sdk import timeline
-from astrid.sdk.timeline.commit import _digest, _json, bundle_from_document
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import _digest, _json, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.emitter import emit_document_commands
 from tests.editing_conformance import test_native_batch_ingress
 from tests.helpers.trusted_seed import seed_trusted_parent
@@ -342,6 +343,13 @@ def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsy
             "patch": command["args"]["changes"], "reads": [],
         }
 
+    expected_plan = execute(
+        bundle_from_document(canonical), request["commands"],
+        commit_request=request, evaluated_head=base_head,
+    )
+    assert expected_plan.bundle["source_mapping"] == authenticated_base["source_mapping"]
+    assert data["canonical_document"] == document_from_bundle(expected_plan.bundle)
+
     assert data["merge_mode"] == "fields"
     for key in (
         "canonical_document", "document_digest", "accepted_revision_id", "commands",
@@ -358,7 +366,9 @@ def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsy
     assert data["id_map"] == {}
     assert data["rebased_onto"] is None
     assert data["publisher"]
-    assert data["commands"] == request["commands"]
+    assert data["commands"] == [record["command"] for record in expected_plan.records]
+    for submitted, record in zip(request["commands"], expected_plan.records):
+        assert {key: record["command"][key] for key in submitted} == submitted
     assert len(data["steps"]) == 10
     for step, note in zip(data["steps"], _notes()):
         _assert_step_patch(step, note)
@@ -390,6 +400,14 @@ def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsy
     assert stored["label"] == "Add ten review notes"
     assert stored["publisher"]
     assert stored["merge_mode"] == "fields"
+    assert stored["records"]["schema_version"] == 1
+    assert stored["records"]["commands"] == expected_plan.records
+    assert stored["records"]["steps"] == expected_plan.steps
+    assert stored["records"]["label"] == expected_plan.label
+    assert stored["records"]["merge_mode"] == expected_plan.merge_mode
+    assert stored["records"]["undo_of"] == []
+    assert stored["records"]["restored_from"] is None
+    assert stored["records"]["undo_steps"] is None
     assert len(stored["steps"]) == 10
     for step, note in zip(stored["steps"], _notes()):
         _assert_step_patch(step, note)
