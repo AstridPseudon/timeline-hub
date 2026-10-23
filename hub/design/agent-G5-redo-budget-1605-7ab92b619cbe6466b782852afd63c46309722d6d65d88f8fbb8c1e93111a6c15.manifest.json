@@ -1,0 +1,711 @@
+{
+  "task": "agt-G5-redo-budget-sol-1605",
+  "classification": "diagnostic capture PASS; public redo behavior FAIL; no retry",
+  "source": {
+    "agent": "91ac58a9fc6f1f752be16c0e4b8a1bf17095acee",
+    "runtime": "9ce4242bc01f100bab9efc51032a73985cefb2b2",
+    "body": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d",
+    "observer": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-budget-1605-observer.py",
+      "sha256": "6f8b44eac8d94d78be1939b14c5d8b2190a9e4e9d597bd222e37ab78c2f2d9a7"
+    }
+  },
+  "packet": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-redo-budget-sol-1605/evidence/agent-G5-redo-budget-1605-7ab92b619cbe6466b782852afd63c46309722d6d65d88f8fbb8c1e93111a6c15.packet.jsonl",
+    "sha256": "7ab92b619cbe6466b782852afd63c46309722d6d65d88f8fbb8c1e93111a6c15",
+    "bytes": 24089759,
+    "events": 320,
+    "all_event_hashes_verified": true,
+    "immutable_mode": "0444"
+  },
+  "execution": {
+    "exit_code": 1,
+    "outer_budget_seconds": 180,
+    "final_event_elapsed_seconds": 19.629248,
+    "live_invocations": 1,
+    "reruns": 0,
+    "command_document": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-redo-budget-sol-1605/invocation.md"
+  },
+  "no_write_equality": {
+    "document": true,
+    "head": true,
+    "history": true,
+    "sql": true
+  },
+  "same_process_final_origins": {
+    "astrid.sdk.timeline": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/__init__.py",
+      "sha256": "6c249c62db888e4d01de16ea893f859bba07221733202d286437d5d2b39d6a0a"
+    },
+    "astrid.sdk.timeline._clip_commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_clip_commands.py",
+      "sha256": "50a0164ddcc7686e3d13aa90f43ccbec044a975809c4aa0a6fb9e8dc49fe080e"
+    },
+    "astrid.sdk.timeline._clip_scalar_commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_clip_scalar_commands.py",
+      "sha256": "131ba969cd5fa04ce4af85de5700db57ba27f0917ccc9b2a446980ae5d85f869"
+    },
+    "astrid.sdk.timeline._collections": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_collections.py",
+      "sha256": "8884266df20d4d597befaac51d72114d7a3ff03ac0e58c01749e889c3b99bbc5"
+    },
+    "astrid.sdk.timeline._command_state": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_command_state.py",
+      "sha256": "5584a8d08edecf480aa223c3dcf73a5e3064cee14758ebbeef19836043db0384"
+    },
+    "astrid.sdk.timeline._commit_errors": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_commit_errors.py",
+      "sha256": "c0e11dcdd2e6f511f18ce08afd60eff5d54554bcfb93855ab667c7e047a476e3"
+    },
+    "astrid.sdk.timeline._commit_patch": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_commit_patch.py",
+      "sha256": "7dab773aa33e5fde203d6e5de329a190851de6478fa880f9145327c4889e2acf"
+    },
+    "astrid.sdk.timeline._commit_preview": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_commit_preview.py",
+      "sha256": "924dc930b624f6a9a85c38745b1070a0e35f35c8d905287d23eadf5cc51e4924"
+    },
+    "astrid.sdk.timeline._commit_timing_validation": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_commit_timing_validation.py",
+      "sha256": "871a4b140be60863a8238ac60acf1ab12f56d7a71d4a59bc4f3f3792de46f58f"
+    },
+    "astrid.sdk.timeline._common": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_common.py",
+      "sha256": "f05689fda870353180f01aed0f1bf17371e90359fdc282c23028748d271b8b12"
+    },
+    "astrid.sdk.timeline._delete_commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_delete_commands.py",
+      "sha256": "cddd2c344dbb0841e93c1ae7b7df28f9f9301eb37b5a67b6101f8c87607f695d"
+    },
+    "astrid.sdk.timeline._doc_patch": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_doc_patch.py",
+      "sha256": "72581e40dd59271db332c65041dc1244c2c8e0b5c6df2d14db82cd5cbe3b1e83"
+    },
+    "astrid.sdk.timeline._doc_patch_materialize": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_doc_patch_materialize.py",
+      "sha256": "42d8806a93f93beeca0c551ea2aecadb1e387aaf057d82ae36680f1793d916d9"
+    },
+    "astrid.sdk.timeline._media_inputs": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_media_inputs.py",
+      "sha256": "5309f3b47699932089580bea65615e3f10c4866ca88e6719ba709a1be113b29d"
+    },
+    "astrid.sdk.timeline._recording": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_recording.py",
+      "sha256": "85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43"
+    },
+    "astrid.sdk.timeline._root_inverse": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_root_inverse.py",
+      "sha256": "44cb4aa3481a11b1b13bd6f3995905bfdda41edf411ff484311ebc5ca1fc80cd"
+    },
+    "astrid.sdk.timeline._scalar_commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_scalar_commands.py",
+      "sha256": "6b5c1a0db9fcf78533f16ca14d9ab14d96ca31ce19875c062b0470954488b34c"
+    },
+    "astrid.sdk.timeline._shot_commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_shot_commands.py",
+      "sha256": "acc15628aa48ca4b7efcabbc2b0aad6f8830c736d41cd71ee113d8e04775ad94"
+    },
+    "astrid.sdk.timeline._split_commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_split_commands.py",
+      "sha256": "7ce58cbc538ec87658094b2f87fb435a8b8b28414c947c6068a604881a869450"
+    },
+    "astrid.sdk.timeline._step_undo": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_step_undo.py",
+      "sha256": "27fd6a86b215ac99ea163222aa286cabf0ca319af15086cbc567323340991fb7"
+    },
+    "astrid.sdk.timeline._timing_evaluators": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_timing_evaluators.py",
+      "sha256": "a3f6247434b2bb5258ce044fa7e0391d9405ad36d33749e49365eb7c5db79749"
+    },
+    "astrid.sdk.timeline._trim_commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_trim_commands.py",
+      "sha256": "24103da402b410d4373efc00d0362b82559cd6bbb3d3f4bf36f57822eac4eb83"
+    },
+    "astrid.sdk.timeline.capture": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/capture.py",
+      "sha256": "d96af5fb7b20e61671e17e23ac3c259c85c3c2da906b2af8751ad92ad7883af7"
+    },
+    "astrid.sdk.timeline.check": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/check.py",
+      "sha256": "2c82dfe31c09d5dbd237f94956d1cbae4a538c30d2c54a698e3ae1d58ff86928"
+    },
+    "astrid.sdk.timeline.checkout": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/checkout.py",
+      "sha256": "635dc3d4319da0a1fc887b84b37a39551a85bb3319a3366aa66fc18ade109d80"
+    },
+    "astrid.sdk.timeline.commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/commands.py",
+      "sha256": "dc5c79379a254d52ad5e6931deb92d71819111094ed2b7e5994f060fd9f6f6ca"
+    },
+    "astrid.sdk.timeline.commit": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/commit.py",
+      "sha256": "741e8afcca27577e3a620b60351880a8df60aa2f4b48f15e0961fb63695edabc"
+    },
+    "astrid.sdk.timeline.commit_session": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/commit_session.py",
+      "sha256": "72d1d68b69dd0efb63d4a1e4727f8d1f8861e509f98da3016e8265ef67cee4d7"
+    },
+    "astrid.sdk.timeline.compiler": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/compiler.py",
+      "sha256": "148e496685c7a70e8c9a6f6f02ed666e7d85663ad2a2cd888069f94a44c05fc6"
+    },
+    "astrid.sdk.timeline.doc": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/doc.py",
+      "sha256": "d7821531e807c085787e00fe8ca15df1e7332ba359f69f49402fc20bef7940fb"
+    },
+    "astrid.sdk.timeline.edits": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/edits.py",
+      "sha256": "58bd92963a39dce6764399a247b49133d02013328743d83fd75ff13a94ac25a9"
+    },
+    "astrid.sdk.timeline.emitter": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/emitter.py",
+      "sha256": "ca09ea41f41b598ce78d9083b4b46993867891b67ca586896baefa99edce5ee7"
+    },
+    "astrid.sdk.timeline.inverse": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/inverse.py",
+      "sha256": "fdae9b17f000a6968009222233327a0662748d0289d090a03c36f0e213121ee7"
+    },
+    "astrid.sdk.timeline.journal": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/journal.py",
+      "sha256": "7e7f257f1f8a5e3ad7df3a1e5350e5c138034b061cc5ba58644d25943de5471c"
+    },
+    "astrid.sdk.timeline.look": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/look.py",
+      "sha256": "723df10be6b02fa4198db1a9b1d92c175c17970065534b1b5389766bfdc6903e"
+    },
+    "astrid.sdk.timeline.lookup": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/lookup.py",
+      "sha256": "bd3ea841988dd4fc92f1b1132a5314dd115c81be9af9ccb2f45d3e59f6293f09"
+    },
+    "astrid.sdk.timeline.model": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/model.py",
+      "sha256": "40579679913fc29229852ffa947ccee39da3c57820e76404c34213682f925707"
+    },
+    "astrid.sdk.timeline.native_initialize": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_initialize.py",
+      "sha256": "9ba19ebc1212cca4fbde005728a410e68a128297abb4e39ccf3f2abd2e39df82"
+    },
+    "astrid.sdk.timeline.native_occurrence_create": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_occurrence_create.py",
+      "sha256": "962016ffdba404dfd88ed4fbf62bd4882e96e42038a0548549a0cf727ef25d22"
+    },
+    "astrid.sdk.timeline.native_occurrence_delete": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_occurrence_delete.py",
+      "sha256": "fea3a2352d66dae9156f5daaa526c1185f26130ccad31732066fa4b76a7f5886"
+    },
+    "astrid.sdk.timeline.native_occurrence_duplicate": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_occurrence_duplicate.py",
+      "sha256": "d3bb8b88ef5f315ebba67e375b97f3da6f622112901ce35dc1f97bb584e83156"
+    },
+    "astrid.sdk.timeline.native_occurrence_fork": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_occurrence_fork.py",
+      "sha256": "bb129592203eb0e8bd6353c804d335ce13dca1441813ad266451016d7c7a0d7d"
+    },
+    "astrid.sdk.timeline.native_occurrence_media_commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_occurrence_media_commands.py",
+      "sha256": "7c1bfd20b3939df38d505a53e92c3a95f6a3f662b0382ac71b33cb4fd820181c"
+    },
+    "astrid.sdk.timeline.native_parent_media_commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_parent_media_commands.py",
+      "sha256": "6a2fe70b66f208414eea6e2832b2532cc3b3d1867b9c2bd0ccea1aa75b4dfbc8"
+    },
+    "astrid.sdk.timeline.native_placement_commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_placement_commands.py",
+      "sha256": "4ee48519ad712ea20042b3d1903d6dd8d866ca56a3500b30aab19505211720fd"
+    },
+    "astrid.sdk.timeline.native_restructure": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_restructure.py",
+      "sha256": "800247535bbe034777fe84beb0612d96ea11992f8d77ad52ba7503dff56afb43"
+    },
+    "astrid.sdk.timeline.native_shot_pool_commands": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_shot_pool_commands.py",
+      "sha256": "b87d614a8a49b31a3ba039818738ca2c16d9bef67b411e6aeb082d11443f453c"
+    },
+    "astrid.sdk.timeline.native_source_inputs": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_source_inputs.py",
+      "sha256": "e985af62bca9728436b04f64bef59f3c11cce9943254eccc8eff3ffc05a7bedc"
+    },
+    "astrid.sdk.timeline.native_text_binding": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_text_binding.py",
+      "sha256": "19476d6eaba2e9ce8ee379db52e180da10364cd2a5bcfbd119a445b5d64f736d"
+    },
+    "astrid.sdk.timeline.native_timeline_duplicate": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_timeline_duplicate.py",
+      "sha256": "c51409007bde2241682c86da37254524b6b5d201b3e335ba3e81b1c1d75f900f"
+    },
+    "astrid.sdk.timeline.native_word_anchor": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/native_word_anchor.py",
+      "sha256": "771d833188de33556a1853e95e84703e7ce5b36e2a6b2d2c55cb975f93f36744"
+    },
+    "astrid.sdk.timeline.outbox": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/outbox.py",
+      "sha256": "768eacddae74cc7bb18feebb862636b25e6fd631d1e4cb20423578286b9aac1b"
+    },
+    "astrid.sdk.timeline.producer": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/producer.py",
+      "sha256": "420d44af09fef5f793d34fa0eeddb111bc94b750f58c7466f4d28690268be32f"
+    },
+    "astrid.sdk.timeline.publish": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/publish.py",
+      "sha256": "8283ce0079c59fcafe8741a0442dc08b063ee5cdb1ca5526b1b63f1240a092e4"
+    },
+    "astrid.sdk.timeline.rebase": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/rebase.py",
+      "sha256": "883e48d4b3475e984dbb9cc9af2575f6d211a4404567ddd15b3e2644f08c970e"
+    },
+    "astrid.sdk.timeline.reflow": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/reflow.py",
+      "sha256": "12df819bffb139f476c74237162aec6786582c1cebee424b7ce16432c5bcdf3d"
+    },
+    "astrid.sdk.timeline.revisions": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/revisions.py",
+      "sha256": "e71e2440c4bf37d3b67a00c2db7fa08a82fb961fcbb8b294632da0f74ea6ac58"
+    },
+    "astrid.sdk.timeline.selection": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/selection.py",
+      "sha256": "d3020d608e04bc401f2ca4462117e6eafd754c087197f90ca42157ccbdcd1c28"
+    },
+    "astrid.sdk.timeline.store": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/store.py",
+      "sha256": "121142906eaa85a281e94341eb5bbedc33c26b18dfa31bc98361f6a82a2438ea"
+    },
+    "astrid.sdk.timeline.sync": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/sync.py",
+      "sha256": "3e9ccf0aafa1b7fe0718fcd8c05b35d50fc137d2a81b7ec6ff709943b0100a7f"
+    },
+    "astrid.sdk.timeline.transaction": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/transaction.py",
+      "sha256": "a468173f103cbc8d6cd4f8fc399caee7a3f3010277cab5e66600d93683ebaa3f"
+    },
+    "astrid.sdk.timeline.units": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/units.py",
+      "sha256": "41ae64ab7c5c687f44c8420017718a27c59b2aaaf11bd8434eea88829dd40c6f"
+    },
+    "astrid.sdk.timeline.validation": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/validation.py",
+      "sha256": "b62443267646bb4643830ab6dfde780edecefb512f594a8a9e72d79b3dcef635"
+    },
+    "astrid.sdk.timeline_address": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline_address.py",
+      "sha256": "14ce2107a59ec0edac63907179c25c2b8390d06278a34cad00fddcc9788986cc"
+    },
+    "astrid.sdk.timeline_checkout": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline_checkout.py",
+      "sha256": "0ef1e4320c8a1d6f84845e314a9be8b516f0fa84089ebc39e4dfc354a0fdaff5"
+    },
+    "astrid.sdk.timeline_cuts": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline_cuts.py",
+      "sha256": "bfa767a43ce944fec7905b38a07ca3f0cf1ddb60cd69889bf51e67ed9f4d8887"
+    },
+    "astrid.sdk.timeline_editing": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline_editing.py",
+      "sha256": "6a94406aab11c11a623f757e28a79045c3c7a18a2eb18f540ee7c282429a345c"
+    },
+    "astrid.sdk.timeline_intent": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline_intent.py",
+      "sha256": "7d4cdf012c0924c34c1a38df69a1e87192e32644a2e6dbaa27f46a34d147e30b"
+    },
+    "astrid.sdk.timeline_restructure": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline_restructure.py",
+      "sha256": "842850e1e867eaf2a8c003897b6624bb040a2b7c8f910eecad1d5aa8c9f851ee"
+    },
+    "astrid.sdk.timeline_transcripts": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline_transcripts.py",
+      "sha256": "36868a1e0937c067d1f06cdf589841ef59647a5e81bfe076e89a6fcae36a6281"
+    },
+    "runtime_protocol": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/__init__.py",
+      "sha256": "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2"
+    },
+    "runtime_protocol.timeline_commit": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit.py",
+      "sha256": "9de452322b2225fd3322a55adb2f7f118c857054b5c8e6d2871e4368f5e8f739"
+    },
+    "runtime_protocol.timeline_commit_auth": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_auth.py",
+      "sha256": "27ff45721dcd2af70908b0e1afc582543e1a8f2988cd89ca9c9395a3b493e38c"
+    },
+    "runtime_protocol.timeline_commit_baseline": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_baseline.py",
+      "sha256": "36076f4a0ffa26e6544ec9704000a22a6bd46370cacb6577ea9f5dadac346e31"
+    },
+    "runtime_protocol.timeline_commit_execution": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_execution.py",
+      "sha256": "2b0c256757f1bf0b3ab3124840250d2d8ef5dbec31a259c4b1e924e295619dd6"
+    },
+    "runtime_protocol.timeline_commit_inputs": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_inputs.py",
+      "sha256": "bf04dc5d26fd6e6283ae11c7d0fa55fa5730c45f19e1c55bda529062cab696e4"
+    },
+    "runtime_protocol.timeline_commit_port": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_port.py",
+      "sha256": "d78dd313220634baaf37c9a6cb7a578b4453c3c94060eb13c02778834eeac867"
+    },
+    "runtime_protocol.timeline_commit_producer": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_producer.py",
+      "sha256": "12bc59c54e47db5a950dd8e4828609931fabf481fce760d7d6fe794d72f7b33b"
+    },
+    "runtime_protocol.timeline_commit_producer_checkpoint": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_producer_checkpoint.py",
+      "sha256": "7ce299ffd987462f0fefa7dc7973e9f8515d10e3945bdc5677b5b19f77205795"
+    },
+    "runtime_protocol.timeline_commit_provider": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_provider.py",
+      "sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf"
+    },
+    "runtime_protocol.timeline_commit_reference_projection": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_reference_projection.py",
+      "sha256": "8143e69bc50775ab045d77977a3824923b37affc44eb8dd35930ab9927449370"
+    },
+    "runtime_protocol.timeline_commit_store": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_store.py",
+      "sha256": "243d312fe404f5ed80f0ef1aa9d7405b93ff77949eef5157827a7779c6323b9f"
+    },
+    "runtime_protocol.timeline_commit_types": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_types.py",
+      "sha256": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"
+    },
+    "runtime_protocol.timeline_commit_validation": {
+      "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/timeline_commit_validation.py",
+      "sha256": "8ed708729acc4987944442d4de3762c5528f1190678f722d2ff6355f868239d6"
+    },
+    "tests.sdk.test_timeline_restructure_guarded_runtime": {
+      "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/tests/sdk/test_timeline_restructure_guarded_runtime.py",
+      "sha256": "d7dc8942c49b4c464535280b8849520adfba4b67d4dc0560a5b68203abf7983b"
+    }
+  },
+  "preflight": {
+    "pass": true,
+    "checks": {
+      "immutable_sources": true,
+      "compile": true,
+      "inherited_function_roundtrip_smoke": true,
+      "cycle": true,
+      "fsync_before_call_and_critical_json_auth_roundtrip": true,
+      "wrappers_return_exception_identity_and_order": true,
+      "exact_pins_and_clean": true,
+      "body_assertions_hashlock": true,
+      "same_process_import_origins": true,
+      "actual_tmp_directory": true
+    },
+    "source_sha256": "6f8b44eac8d94d78be1939b14c5d8b2190a9e4e9d597bd222e37ab78c2f2d9a7",
+    "body_sha256": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d",
+    "agent": "/home/user/work/wt/agt-G5-redo-budget-sol-1605",
+    "runtime": "/home/user/work/wt/rt-pin-9ce4242b",
+    "origins": {
+      "astrid.sdk.timeline": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/__init__.py",
+        "sha256": "6c249c62db888e4d01de16ea893f859bba07221733202d286437d5d2b39d6a0a"
+      },
+      "astrid.sdk.timeline._common": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_common.py",
+        "sha256": "f05689fda870353180f01aed0f1bf17371e90359fdc282c23028748d271b8b12"
+      },
+      "astrid.sdk.timeline_intent": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline_intent.py",
+        "sha256": "7d4cdf012c0924c34c1a38df69a1e87192e32644a2e6dbaa27f46a34d147e30b"
+      },
+      "runtime_protocol": {
+        "path": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/__init__.py",
+        "sha256": "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2"
+      },
+      "astrid.sdk.timeline.doc": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/doc.py",
+        "sha256": "d7821531e807c085787e00fe8ca15df1e7332ba359f69f49402fc20bef7940fb"
+      },
+      "astrid.sdk.timeline.journal": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/journal.py",
+        "sha256": "7e7f257f1f8a5e3ad7df3a1e5350e5c138034b061cc5ba58644d25943de5471c"
+      },
+      "astrid.sdk.timeline.revisions": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/revisions.py",
+        "sha256": "e71e2440c4bf37d3b67a00c2db7fa08a82fb961fcbb8b294632da0f74ea6ac58"
+      },
+      "astrid.sdk.timeline.store": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/store.py",
+        "sha256": "121142906eaa85a281e94341eb5bbedc33c26b18dfa31bc98361f6a82a2438ea"
+      },
+      "astrid.sdk.timeline.look": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/look.py",
+        "sha256": "723df10be6b02fa4198db1a9b1d92c175c17970065534b1b5389766bfdc6903e"
+      },
+      "astrid.sdk.timeline.selection": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/selection.py",
+        "sha256": "d3020d608e04bc401f2ca4462117e6eafd754c087197f90ca42157ccbdcd1c28"
+      },
+      "astrid.sdk.timeline.units": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/units.py",
+        "sha256": "41ae64ab7c5c687f44c8420017718a27c59b2aaaf11bd8434eea88829dd40c6f"
+      },
+      "astrid.sdk.timeline.model": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/model.py",
+        "sha256": "40579679913fc29229852ffa947ccee39da3c57820e76404c34213682f925707"
+      },
+      "astrid.sdk.timeline.check": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/check.py",
+        "sha256": "2c82dfe31c09d5dbd237f94956d1cbae4a538c30d2c54a698e3ae1d58ff86928"
+      },
+      "astrid.sdk.timeline.edits": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/edits.py",
+        "sha256": "58bd92963a39dce6764399a247b49133d02013328743d83fd75ff13a94ac25a9"
+      },
+      "astrid.sdk.timeline.lookup": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/lookup.py",
+        "sha256": "bd3ea841988dd4fc92f1b1132a5314dd115c81be9af9ccb2f45d3e59f6293f09"
+      },
+      "astrid.sdk.timeline_transcripts": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline_transcripts.py",
+        "sha256": "36868a1e0937c067d1f06cdf589841ef59647a5e81bfe076e89a6fcae36a6281"
+      },
+      "astrid.sdk.timeline.publish": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/publish.py",
+        "sha256": "8283ce0079c59fcafe8741a0442dc08b063ee5cdb1ca5526b1b63f1240a092e4"
+      },
+      "astrid.sdk.timeline.reflow": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/reflow.py",
+        "sha256": "12df819bffb139f476c74237162aec6786582c1cebee424b7ce16432c5bcdf3d"
+      },
+      "astrid.sdk.timeline.transaction": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/transaction.py",
+        "sha256": "a468173f103cbc8d6cd4f8fc399caee7a3f3010277cab5e66600d93683ebaa3f"
+      },
+      "astrid.sdk.timeline.checkout": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/checkout.py",
+        "sha256": "635dc3d4319da0a1fc887b84b37a39551a85bb3319a3366aa66fc18ade109d80"
+      },
+      "astrid.sdk.timeline.outbox": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/outbox.py",
+        "sha256": "768eacddae74cc7bb18feebb862636b25e6fd631d1e4cb20423578286b9aac1b"
+      },
+      "astrid.sdk.timeline.sync": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/sync.py",
+        "sha256": "3e9ccf0aafa1b7fe0718fcd8c05b35d50fc137d2a81b7ec6ff709943b0100a7f"
+      },
+      "astrid.sdk.timeline_checkout": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline_checkout.py",
+        "sha256": "0ef1e4320c8a1d6f84845e314a9be8b516f0fa84089ebc39e4dfc354a0fdaff5"
+      },
+      "astrid.sdk.timeline_restructure": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline_restructure.py",
+        "sha256": "842850e1e867eaf2a8c003897b6624bb040a2b7c8f910eecad1d5aa8c9f851ee"
+      },
+      "tests.sdk.test_timeline_restructure_guarded_runtime": {
+        "path": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/tests/sdk/test_timeline_restructure_guarded_runtime.py",
+        "sha256": "d7dc8942c49b4c464535280b8849520adfba4b67d4dc0560a5b68203abf7983b"
+      }
+    },
+    "runtime_import": "/home/user/work/wt/rt-pin-9ce4242b/runtime_protocol/__init__.py"
+  },
+  "first_throw": {
+    "sequence": 313,
+    "kind": "guard.astrid.sdk.timeline.inverse",
+    "phase": "public-redo",
+    "module": "astrid.sdk.timeline.inverse",
+    "ref": "parent",
+    "path": [
+      "config"
+    ],
+    "expected": {
+      "state": "present",
+      "value": {
+        "app": {
+          "astrid": {
+            "chapters": [
+              {
+                "from": "c1",
+                "name": "01 ONE"
+              },
+              {
+                "from": "c2",
+                "name": "02 TWO"
+              },
+              {
+                "from": "c3",
+                "name": "03 THREE"
+              }
+            ]
+          }
+        },
+        "clips": [],
+        "registry": {},
+        "theme_overrides": {
+          "visual": {
+            "canvas": {
+              "fps": 30,
+              "height": 180,
+              "width": 320
+            }
+          }
+        },
+        "tracks": [
+          {
+            "id": "picture",
+            "kind": "visual"
+          }
+        ]
+      }
+    },
+    "actual_before": {
+      "state": "present",
+      "value": {
+        "app": {
+          "astrid": {
+            "chapters": [
+              {
+                "from": "c1",
+                "name": "01 ONE"
+              },
+              {
+                "from": "c2",
+                "name": "02 TWO"
+              },
+              {
+                "from": "c3",
+                "name": "03 THREE"
+              }
+            ]
+          }
+        },
+        "clips": [],
+        "theme_overrides": {
+          "visual": {
+            "canvas": {
+              "fps": 30,
+              "height": 180,
+              "width": 320
+            }
+          }
+        },
+        "tracks": [
+          {
+            "id": "picture",
+            "kind": "visual"
+          }
+        ]
+      }
+    },
+    "exception": {
+      "type": "CommandError",
+      "message": "original authored guard changed",
+      "code": null,
+      "status": null,
+      "details": null,
+      "failure": null,
+      "to_json": {
+        "base": {
+          "state": "present",
+          "value": {
+            "app": {
+              "astrid": {
+                "chapters": [
+                  {
+                    "from": "c1",
+                    "name": "01 ONE"
+                  },
+                  {
+                    "from": "c2",
+                    "name": "02 TWO"
+                  },
+                  {
+                    "from": "c3",
+                    "name": "03 THREE"
+                  }
+                ]
+              }
+            },
+            "clips": [],
+            "registry": {},
+            "theme_overrides": {
+              "visual": {
+                "canvas": {
+                  "fps": 30,
+                  "height": 180,
+                  "width": 320
+                }
+              }
+            },
+            "tracks": [
+              {
+                "id": "picture",
+                "kind": "visual"
+              }
+            ]
+          }
+        },
+        "choices": [],
+        "kind": "inverse_conflict",
+        "ours": {
+          "state": "absent"
+        },
+        "path": [
+          "config"
+        ],
+        "ref": "parent",
+        "theirs": {
+          "state": "present",
+          "value": {
+            "app": {
+              "astrid": {
+                "chapters": [
+                  {
+                    "from": "c1",
+                    "name": "01 ONE"
+                  },
+                  {
+                    "from": "c2",
+                    "name": "02 TWO"
+                  },
+                  {
+                    "from": "c3",
+                    "name": "03 THREE"
+                  }
+                ]
+              }
+            },
+            "clips": [],
+            "theme_overrides": {
+              "visual": {
+                "canvas": {
+                  "fps": 30,
+                  "height": 180,
+                  "width": 320
+                }
+              }
+            },
+            "tracks": [
+              {
+                "id": "picture",
+                "kind": "visual"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "frames": [
+      {
+        "file": "/home/user/work/wt/agt-G5-redo-budget-sol-1605/astrid/sdk/timeline/_recording.py",
+        "function": "guard",
+        "line": 286,
+        "source_sha256": "85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43",
+        "local_keys": [
+          "actual",
+          "expected",
+          "kind",
+          "path",
+          "ref",
+          "state"
+        ]
+      }
+    ]
+  },
+  "observed_provider_stack": "commit.py:1072 -> commands.py:250 -> inverse.py:640 -> _recording.py:286; translated at commit.py:1204",
+  "limits": [
+    "Later overlap assertions not reached",
+    "Throw site and mismatch captured; creator of missing registry not established",
+    "No static common-cause attribution with a29df",
+    "Observed redo request has no reads/rationale/group_id; observer does not synthesize absent wire fields",
+    "No pytest/full/P1-P4/native14/browser test run",
+    "New invocation completed below 30 seconds; old timeout mechanism known, historical scheduling/overhead not established"
+  ]
+}
