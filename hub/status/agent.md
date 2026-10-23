@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T05:19:33Z | dispatcher heartbeat 14s | live 5 (sol 1, luna 4, other 0) | busy30 22 | status age 0m -->
-# agent board, 2026-10-23T05:19:06Z
+<!-- agent | 2026-10-23T05:21:35Z | dispatcher heartbeat 14s | live 5 (sol 1, luna 4, other 0) | busy30 21 | status age 0m -->
+# agent board, 2026-10-23T05:21:15Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -30,7 +30,7 @@
 | V4-fixture-status | canonical created/C0 status corrections | Viewing Luna; independent Luna | C0 | merged | vw-V4-C0-status-adaptation | Reviewed5292 scopedPASS4+fixture38ePASS1; homef95 merged. Overall54 remains open; no arithmetic/full replay credit | 5292b388a;f95f1e169 |
 | R2-derived-undo | two deferred anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | Viewing owns original failing evidence | D14 retain tests unchanged/unskipped/visibly failing; no C0 change/guard exception/54PASS claim | ruling04:40 |
 | A3-fork-plan | same-selected-owner plan | Sol; Luna review | D15 | merged | agt-A3-source-plan-review-0455 | Design readinessPASS; decision D15 RESOLVED. Implementation separate active row, no production success claim | plan0445 |
-| A3-fork-wire | D15 occurrence.fork provider | Sol explicit D15 | D15 | doing | agt-A3-occurrence-fork-0504 | Runtime existing carrier independently PASS31; no schema/client re-adoption needed, frozen34e holds. Registration/handler/inverse author active | base9cf |
+| A3-fork-wire | D15 occurrence.fork provider | Sol author; Luna review | D15 | review | agt-A3-fork-review-0520 | Authordc00 PASS244+1 real RuntimeServicebe584; no newtuple. Independentreviewqueued, App exactdraftcall handoff0520, mountedApp/sharedHTTP unproved | dc00a764c |
 | R2-bootstrap-redo | authenticate stage inputs and redo IDs | Sol author; Luna review | Runtime inverse claim repair | blocked:runtime | agt-R2-stage-review-0507 | Source-scoped100 PASS; original3redo FAIL invalid_records. Independent narrow Runtime validate_claims inverse created equality finding; peer0507 supplemented0523. No overall PASS | 48d7c597 |
 | V2-fps | canonical numeric/rational FPS compatibility | Sol after LunaFAIL; independenttrace | Viewing0454+Agent0453 | doing | agt-V2-FPS-D12-repair-0513; policyreview0513 | Peer0502 retractsequivalence;9ea154PASS but newroundtrippolicyUNAPPROVED. ApplyD12unchangedlegacyparity, exactnormalizersretained | base9cf |
 | G4-assembly-auth | native assembly alias authentication | Runtime Luna author/review | Runtime source | merged | rt-R2r-assembly-alias-0441; review0445 | Published be584/tree d6f20 EXACT reviewed0ed; independent68+integrated80 PASS. No generated tuple/pin change. Live G4 review uses compatiblebe584 | be5848e17 |
@@ -40,6 +40,6 @@ Blockers: agent — MERGE HOLD per late-consumed orchestrator04:40: actual f95 c
 Resolved: orchestrator — D15 fork implementation active; existing carrier PASS/no new tuple. D12 applies untouched legacy FPS parity with exact normalizers retained; repair0513 active, speculative9ea equivalence UNAPPROVED. D14 undo2 deferred unchanged/unskipped/visibly failing.
 Blockers: proof/app — H3 NO-GO; P1 actual mounted split→trim-new-ID→Agent edit→lostACK→restart chain unproved. G5 stays gated:P1. Proof owns P4 HTTP after reviewed staged callable source.
 Blockers: farm — H6/H9/full/tour/journey farm/test-service owned; no Agent heavy duplicates; header farm down, Proof owns P1/P3 service bodies.
-Next ready: six-file P4 staged assembly→independent review→Proof exact callable handback; G4create review→currentG234 correction review→home merge/proof; replaymetadata repair→review→narrow current forward; V2 scoped integrated proof; A3 Sol sourceplan→orchestrator decision.
+Next ready: audit038c final independentreview+fresh currentport -> merge/proof; V2elementRef736c independent/live2; D12FPS0513 author -> review; c793 replay currentport after audit; forkdc00 independentreview and App mounted adoption. G5 gated:P1.
 Integration: f95f1e1691b82dce74a49eb7ca444f97eb364037 / treea356b2d27e4228db745bfd61e27dd088b0dec1d7. V2 merged; ccc product ancestry explicitly unqualified. Proven prior normal34e headf894/tree d24f25a6 retained for old scoped evidence.
 Environment: terminal reports consumed0523; ready audit port/final review and elementRef review queued. FPS0513 and fork0504 active; no stale Runtime assembly hold. Luna default; Sol only explicitD15/core/secondfailure. <=30min/timeout45. No safety/permission refusal. Disk15.3GB above15GB floor.
