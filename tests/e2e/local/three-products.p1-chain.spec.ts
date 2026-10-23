@@ -374,7 +374,7 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   const rightId = inserted.id;
   expect(split.body).toMatchObject({ api_version: 1, project_id: harness.seed.projectId, timeline_id: seed.timelineId,
     base_revision_id: before.head.revision_id, base_publication_id: before.head.publication_id,
-    source: { via: 'app' }, merge: 'atomic', dry_run: false, label: expect.any(String), commands: [splitCommand] });
+    source: { via: 'app' }, merge: 'fields', dry_run: false, label: expect.any(String), commands: [splitCommand] });
   expect(split.body.steps[0]).toMatchObject({ command_ordinals: [0], patch: splitCommand.args.changes });
 
   // Release only after the dependent has been authored locally. The outbox must persist it
