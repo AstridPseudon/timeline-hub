@@ -1061,9 +1061,11 @@ class RuntimeCommitService:
                 }
                 try:
                     if request.get("dry_run", False):
-                        from ._commit_preview import complete_preview
-
-                        return complete_preview(port.preview(prepared), prepared, request, current)
+                        # Runtime authenticates and retains this exact outcome on
+                        # the port.  Any response projection after this call
+                        # would make the provider's result differ from the
+                        # authenticated candidate.
+                        return port.preview(prepared)
                     return port.accept(prepared)
                 except StaleHead as exc:
                     current = copy.deepcopy(exc.current_head)
