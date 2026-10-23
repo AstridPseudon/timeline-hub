@@ -132,7 +132,7 @@ def test_final_parent_reuse_keeps_the_exact_projected_effect_boundary(service, b
 
 
 @pytest.mark.parametrize("mutation", [
-    "empty_patch", "different_command", "foreign_alias", "foreign_base", "foreign_publication",
+    "empty_patch", "different_command", "foreign_alias", "wrong_physical_root", "foreign_base", "foreign_publication",
     "foreign_head", "foreign_step", "foreign_ordinal", "foreign_phase", "different_path",
     "different_change", "outside_write_range", "output_image_as_input",
 ])
@@ -148,6 +148,8 @@ def test_forged_provider_records_are_rejected_without_writes(service, mutation, 
             record["command"]["args"]["changes"][0]["value"] = {"forged": True}
         elif mutation == "foreign_alias":
             binding["ref"] = "foreign-alias"
+        elif mutation == "wrong_physical_root":
+            binding["physical_ref"] = "shot-revision:foreign"
         elif mutation == "foreign_base":
             boundary["base_revision_id"] = "foreign"
         elif mutation == "foreign_publication":
@@ -210,6 +212,49 @@ def test_native_text_alias_duplicate_slot_is_ambiguous():
     }
     with pytest.raises(CommitRejected):
         site(boundary, "occurrence:occ-1/text-binding:prompt:hero", [])
+
+
+@pytest.mark.parametrize(("alias", "path", "expected"), [
+    ("parent/source", ["source_window"], ("parent", ["config", "source_window"])),
+    ("parent/collection:asset", [], ("parent", [])),
+])
+def test_native_assembly_aliases_project_to_their_agent_physical_sites(alias, path, expected):
+    boundary = {"parent": {"revision_id": "parent-1", "content_digest": "digest",
+                            "payload": {"config": {"registry": {"assets": {}}},
+                                        "registry": {"assets": {}}}}}
+    assert site(boundary, alias, path) == expected
+
+
+@pytest.mark.parametrize("alias", [
+    "parent/source/extra",
+    "parent/collection:asset/extra",
+    "parent/collection:unknown",
+    "foreign/collection:asset",
+])
+def test_native_assembly_aliases_reject_malformed_or_foreign_sites(alias):
+    boundary = {"parent": {"revision_id": "parent-1", "content_digest": "digest",
+                            "payload": {"config": {"registry": {"assets": {}}}}}}
+    with pytest.raises(CommitRejected):
+        site(boundary, alias, [])
+
+
+@pytest.mark.parametrize(("alias", "read", "dependency"), [
+    ("parent/source", {"ref": "parent/source", "path": ["source_window"],
+                       "state": {"state": "absent"}},
+     {"kind": "field", "ref": "parent", "path": ["config", "source_window"],
+      "state": {"state": "absent"}}),
+    ("parent/collection:asset", {"ref": "parent/collection:asset", "path": [],
+                                  "state": {"state": "present", "value": {}}},
+     {"kind": "scope", "ref": "parent", "path": []}),
+])
+def test_native_assembly_aliases_authenticate_at_the_sealed_boundary(service, alias, read, dependency):
+    def mutate(value):
+        value["records"]["commands"][0]["reads"] = [read]
+        value["records"]["steps"][0]["dependencies"] = [dependency]
+
+    provider(service, mutate)
+    result = commit(service, body(service), key="native-assembly-alias-" + alias.replace("/", "-").replace(":", "-"))
+    assert result["data"]["status"] == "accepted"
 
 
 def test_materialization_turnover_requires_the_captured_physical_owner():
