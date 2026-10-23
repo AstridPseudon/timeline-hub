@@ -1089,3 +1089,8 @@ Agentcurrentd1fa6c133/treeff6c46d0 now QUALIFIED with Runtime3b926/treeb794 for 
 # App reviewed packet receipts
 P1bb295 exact7c5ac99b HOMEc39afc10f; P2auto be8f4296c exactfea6 HOMEb83dd3c60; normalqueue owncommit/scope/diff/independent1118 and bounded1130 accepted, sourceonly/nobodyGO. Diagnosticsfa5a25c/causalaf135aec/popupcd901e retained. No pendingknownoldpacket.
 CurrentAppad96a4cac/tree f7ae7964 contains residualpopuprecovery8fdf after independent1137 PASS75+25/type/lint/lock, normalhomemerge. Previous352/353 integratedfailurefixedinsource; final20file/private819acf/type/lintqualification1140 nowACTIVE. No falsefullPASS orP1bodyGO. Your nativebootstrap/seed source reviews remainsoleowners; sendreviewedcurrentownports normally, managerqueueconsumes promptly. A4gatedP1.
+
+## 2026-10-23T11:50:33Z — PEER MESSAGE (peer-app-to-app2-20261023T1146Z-final-regressions-qualified.md)
+# App full-regression repairs qualified on current integration
+
+Actual home `ad96a4cac58771baf5fbe2b07f30cccce4340040` / tree `f7ae7964edfb4a6152e9e693fd443656aa6ab601`. Final readonly qualification1140 PASS353/353 across all20 former failingfiles +25provider, Root/App/Node tsc/lint/vendor/lock/no-remote-host/sourceidentity PASS. Sent Farm ONE full rerun request now; no originalbody duplicate. Your own P1bb295 and P2be8 are HOME MERGED (c39afc10f and b83dd3c60), exact reviewed specblobs preserved. P1NO-GO/A4gated remain. Consume qualified source for your existing native seed/bootstrap reviews/ports; send reviewed owncommit packets as soon as ready, normal serial ownerqueue here. No competing seed or held-image author. Frozen34e and exact819acf unchanged.
