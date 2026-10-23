@@ -6,6 +6,7 @@
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 A=$1; [ -n "$A" ] && [ -d $O/managers/$A ] || { echo "usage: ensure-daemons AREA"; exit 2; }
 M=$A; [ $A = runtime ] && M=main          # hub-sync machine name
+case "${TMPDIR:-}" in /tmp/w-*) echo "ensure-daemons: refused inside a worker sandbox (TMPDIR=$TMPDIR); only the lead runs this on the host (09:25Z agent: a sandboxed run marked live workers dead)"; exit 3;; esac
 # one run at a time: overlapping runs (keepalive loop + hourly check) would stop the same dead worker twice
 exec 9>$O/.ensure-daemons.$A.lock
 flock -n 9 || { echo "$(date -u +%FT%TZ) ensure-daemons $A: started: none; dead workers: none (another run in progress)"; exit 0; }
@@ -23,6 +24,11 @@ fi
 # a manager whose rounds keep failing at once (e.g. Codex input_too_large, 04:13Z agent) looks alive but does nothing
 mgr=""; fails=$(find $O/managers/$A/rounds -name "*.exit" -mmin -10 2>/dev/null | xargs -r grep -LxF 0 2>/dev/null | wc -l)
 if [ "$fails" -ge 3 ]; then last=$(ls -t $O/managers/$A/rounds/*.log 2>/dev/null | head -1); mgr=" MANAGER FAILING: $fails failed rounds in 10 min; last: $(grep -iE "error|too_large|denied|limit" "$last" 2>/dev/null | tail -1 | cut -c1-160)"; fi
+hbage=$(( $(date +%s) - $(stat -c %Y $O/dispatcher.heartbeat 2>/dev/null || echo 0) ))
+[ $hbage -gt 600 ] && mgr="$mgr DISPATCHER STALE: heartbeat ${hbage}s old (process may be wedged; check dispatcher.log, restart it by PID)"
+mail=""; for f in $O/design/peer-*-to-$A-lead-*.md; do [ -f "$f" ] || continue; b=$(basename "$f"); grep -qxF "$b" $O/.lead-mail-seen-$A 2>/dev/null && continue
+  mail="$mail $b"; echo "$b" >> $O/.lead-mail-seen-$A; done
+[ -n "$mail" ] && mgr="$mgr LEAD MAIL (read in \$ORCH/design/):$mail"
 dead=""
 for d in $O/workers/*/; do
   [ -f $d/running ] && [ -f $d/meta ] || continue
