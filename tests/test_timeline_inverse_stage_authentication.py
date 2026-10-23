@@ -928,3 +928,223 @@ def test_retained_native_order_packet_rejects_coordinated_forgery(retained_nativ
         validate(request=inputs["context"]["request"], prepared=prepared,
                  source=inputs["source"], base=inputs["previous"], history=inputs["history"])
     assert error.value.failure["details"]["reason"] == "invalid_records"
+
+
+@pytest.fixture
+def retained_nested_inverse():
+    import hashlib
+    import json
+    from pathlib import Path
+
+    raw = (Path(__file__).parent / "fixtures" / "timeline_nested_inverse_1543.json").read_bytes()
+    inputs = json.loads(raw)
+    # Immediate accepted entry and auth-only inverse projection extracted from the credential-scanned
+    # 1404 packet (SHA-256 9a47bb934b879efa0f6147d673038cee76299ba4e30ab22b6d5bcb1377ade589).
+    assert hashlib.sha256(raw).hexdigest() == "8798a4b3a66b6922367add8cae44183a112dea54e4ec15b4e67a47ae7e8b6a13"
+    return next(iter(inputs["history"].values()))
+
+
+def _nested_projection(entry):
+    source = entry["records"]["commands"][0]
+    source_step = entry["records"]["steps"][0]
+    writes = [{**copy.deepcopy(write), "before": copy.deepcopy(write["after"]),
+               "after": copy.deepcopy(write["before"])} for write in reversed(source["writes"])]
+    patch = []
+    for effect in reversed(source_step["patch"]):
+        inverse = {"op": "set" if effect["before"]["state"] == "present" else "remove",
+                   "ref": effect["ref"], "path": effect["path"],
+                   "before": {"state": "present", "value": effect["value"]}
+                   if effect["op"] == "set" else {"state": "absent"}}
+        if inverse["op"] == "set":
+            inverse["value"] = effect["before"]["value"]
+        patch.append(inverse)
+    bindings = []
+    for binding in reversed(source["bindings"]):
+        if binding["key"] != "inverse.stage":
+            continue
+        boundary = binding["boundary"]
+        start, end = boundary["native_write_range"]
+        first, last = boundary["effect_range"]
+        bindings.append({**copy.deepcopy(binding), "boundary": {
+            "publication_id": entry["publication_id"], "step_id": source_step["id"],
+            "command_ordinals": source_step["command_ordinals"],
+            "native_write_range": [len(writes) - end, len(writes) - start],
+            "effect_range": [len(patch) - last, len(patch) - first]}})
+    command = {"schema_version": 1, "op": "timeline.inverse", "version": "1", "select": None,
+               "args": {"publications": [entry["publication_id"]]}}
+    record = {"ordinal": 0, "command": command, "writes": writes, "bindings": bindings,
+              "reads": [], "selections": [], "created": [], "dependencies": [], "derived_writes": []}
+    return {"id": "undo", "command_ordinals": [0], "patch": patch}, {
+        "commands": [record], "undo_of": [entry["publication_id"]], "undo_steps": None}
+
+
+def test_retained_nested_ranges_bind_immediate_identity_and_exact_captures(retained_nested_inverse):
+    from runtime_protocol.timeline_commit_auth import _inverse_stage_ranges
+
+    entry = retained_nested_inverse
+    step, records = _nested_projection(entry)
+    original = copy.deepcopy((entry, step, records))
+    stages = _inverse_stage_ranges(step, records, {entry["publication_id"]: entry})
+    assert [(stage["native_range"], stage["effect_range"]) for stage in stages] == [
+        ([0, 2], [0, 4]), ([2, 3], [4, 9])]
+    assert [(write["ref"], write["path"]) for write in records["commands"][0]["writes"]] == [
+        ("shot:selected-shot", []), ("occurrence:f2-occurrence", ["shot_id"]),
+        ("occurrence:f2-occurrence/clip:f2-agent-clip", ["params", "text"])]
+    assert (entry, step, records) == original
+
+
+@pytest.mark.parametrize("mutation", [None, "publication", "step", "ordinal", "order", "omitted",
+                                      "overlap", "effect", "native-before", "native-after", "digest"])
+def test_nested_inverse_authenticates_boundaries_without_durable_forgery(service, mutation):
+    service.test_provider.action = _seed
+    port_tests.commit(service, _seed_request(service), key="nested-seed")
+    store = service._timeline_commits()[0]
+    publication = store.head(service.test_project, "main")["publication_id"]
+    service.test_provider.action = lambda context, port: port.accept(_prepared(context, port))
+    port_tests.commit(service, _request(service, publication), key="nested-source")
+    publication = store.head(service.test_project, "main")["publication_id"]
+    entry = store.history_entry(service.test_project, "main", publication)
+    before = tuple(service.store.conn.iterdump())
+
+    def execute(context, port):
+        request = context["request"]
+        source = port.revision_closure(port.head()["revision_id"])
+        step, records = _nested_projection(entry)
+        step = {**request["steps"][0], "patch": step["patch"], "dependencies": []}
+        records.update(schema_version=1, restored_from=None, label=request["label"], merge_mode="fields",
+                       steps=[step])
+        first = copy.deepcopy(source["parent_revision"])
+        first["payload"]["meta"]["org.example.stage"].pop("two")
+        first.update(revision_id="nested-intermediate", content_digest=digest(first["payload"]))
+        final = copy.deepcopy(first)
+        final["payload"].pop("meta")
+        final.update(revision_id="nested-final", content_digest=digest(final["payload"]))
+        record = records["commands"][0]
+        for index, pair in enumerate(((source["parent_revision"], first), (first, final))):
+            for side, image in zip(("before", "after"), pair):
+                record["bindings"].append({
+                    "key": "commit.effect", "ref": "parent", "physical_ref": "parent", "policy": "fixed",
+                    "dependencies": [], "path": step["patch"][index]["path"],
+                    "revision_id": image["revision_id"], "content_digest": image["content_digest"],
+                    "step_id": "undo", "effect_ordinal": index,
+                    "boundary": {"base_revision_id": request["base_revision_id"],
+                                 "base_publication_id": request["base_publication_id"],
+                                 "evaluated_head": port.head(), "command_ordinal": 0,
+                                 "step_id": "undo", "phase": "effect", "side": side}})
+        stages = record["bindings"][:2]
+        if mutation in {"publication", "step", "ordinal"}:
+            key, value = {"publication": ("publication_id", "foreign"), "step": ("step_id", "foreign"),
+                          "ordinal": ("command_ordinals", [1])}[mutation]
+            stages[0]["boundary"][key] = value
+        elif mutation == "order":
+            record["bindings"][:2] = reversed(stages)
+        elif mutation == "omitted":
+            record["bindings"].pop(0)
+        elif mutation == "overlap":
+            stages[1]["boundary"]["native_write_range"] = [0, 2]
+        elif mutation == "effect":
+            step["patch"][0]["path"] = ["forged"]
+        elif mutation in {"native-before", "native-after"}:
+            record["writes"][0][mutation.removeprefix("native-")] = {"state": "present", "value": "forged"}
+        elif mutation == "digest":
+            record["bindings"][-1]["content_digest"] = "sha256:" + "0" * 64
+        document = {**copy.deepcopy(source), "parent_revision": final}
+        value = {"expected_head": port.head(), "canonical_document": document, "document_digest": digest(document),
+                 "records": records, "id_map": {}, "semantic_events": [], "provider_version": "nested-test",
+                 "compiler_version": "fixture-1"}
+        return port.accept(value)
+
+    service.test_provider.action = execute
+    request = _request(service, publication)
+    if mutation is None:
+        result = port_tests.commit(service, request, key="nested-valid")
+        assert result["data"]["status"] == "accepted"
+        assert "meta" not in result["data"]["canonical_document"]["parent_revision"]["payload"]
+        assert store.history_entry(service.test_project, "main", result["receipt"]["receipt_id"])[
+            "records"]["undo_of"] == [publication]
+    else:
+        with pytest.raises(RuntimeErrorBase) as error:
+            port_tests.commit(service, request, key="nested-forged")
+        assert error.value.details is not None
+        assert error.value.details["reason"] == "invalid_records"
+        assert tuple(service.store.conn.iterdump()) == before
+
+
+@pytest.fixture
+def retained_nested_auth_input(retained_nested_inverse):
+    import json
+    from pathlib import Path
+
+    return json.loads((Path(__file__).parent / "fixtures" / "timeline_nested_inverse_1543.json").read_bytes())
+
+
+def test_actual_nested_inverse_authenticates_complete_retained_boundaries(retained_nested_auth_input):
+    from runtime_protocol.timeline_commit_auth import validate
+
+    inputs = retained_nested_auth_input
+    before = copy.deepcopy(inputs)
+    validate(**inputs)
+    assert inputs == before
+
+
+@pytest.mark.parametrize("mutation", [
+    "owner", "pin", "digest", "read", "foreign", "future", "self", "omitted", "flattened", "overlap",
+    "order", "native-before", "native-after", "effect-before", "effect-after", "effect-binding",
+    "history-overlap", "history-gap", "history-self", "history-foreign",
+])
+def test_actual_nested_inverse_forgeries_refuse_losslessly(retained_nested_auth_input, mutation):
+    from runtime_protocol.timeline_commit import CommitRejected
+    from runtime_protocol.timeline_commit_auth import validate
+
+    inputs = retained_nested_auth_input
+    prepared = inputs["prepared"]
+    record = prepared["records"]["commands"][0]
+    stages = [binding for binding in record["bindings"] if binding["key"] == "inverse.stage"]
+    source = next(iter(inputs["history"].values()))
+    if mutation == "owner":
+        prepared["canonical_document"]["shot_revisions"][0]["shot_id"] = "foreign-owner"
+    elif mutation == "pin":
+        prepared["canonical_document"]["shot_revisions"][0]["payload"]["internal_timeline_revision_id"] = "foreign-pin"
+    elif mutation == "digest":
+        next(binding for binding in record["bindings"] if binding["key"] == "commit.effect")[
+            "content_digest"] = "sha256:" + "0" * 64
+    elif mutation == "read":
+        record["reads"].append({"ref": "parent", "path": ["forged"], "state": {"state": "present", "value": True}})
+    elif mutation in {"foreign", "future", "self"}:
+        stages[0]["boundary"]["publication_id"] = (
+            prepared["canonical_document"]["parent_revision"]["revision_id"] if mutation == "future"
+            else "foreign-publication" if mutation == "foreign" else "self")
+    elif mutation == "omitted":
+        record["bindings"].remove(stages[0])
+    elif mutation == "flattened":
+        record["bindings"] = [binding for binding in record["bindings"] if binding["key"] != "inverse.stage"]
+    elif mutation == "overlap":
+        stages[1]["boundary"]["effect_range"] = [0, 9]
+    elif mutation == "order":
+        stages[0]["boundary"], stages[1]["boundary"] = stages[1]["boundary"], stages[0]["boundary"]
+    elif mutation in {"native-before", "native-after"}:
+        record["writes"][0][mutation.removeprefix("native-")] = {"state": "present", "value": "forged"}
+    elif mutation in {"effect-before", "effect-after"}:
+        effect = prepared["records"]["steps"][0]["patch"][0]
+        if mutation == "effect-before":
+            effect["before"] = {"state": "present", "value": None}
+        else:
+            effect["op"] = "remove"
+            effect.pop("value", None)
+    elif mutation == "effect-binding":
+        record["bindings"] = [binding for binding in record["bindings"] if binding["key"] != "commit.effect"]
+    else:
+        binding = next(binding for binding in source["records"]["commands"][0]["bindings"]
+                       if binding["key"] == "inverse.stage")
+        if mutation == "history-overlap":
+            binding["boundary"]["native_write_range"] = [0, 3]
+        elif mutation == "history-gap":
+            binding["boundary"]["effect_range"] = [1, 5]
+        else:
+            binding["boundary"]["publication_id"] = (source["publication_id"] if mutation == "history-self"
+                                                       else "foreign")
+    before = copy.deepcopy(inputs)
+    with pytest.raises(CommitRejected) as error:
+        validate(**inputs)
+    assert error.value.failure["details"]["reason"] == "invalid_records"
+    assert inputs == before
