@@ -1,0 +1,272 @@
+/**
+ * D28 mounted-readiness preflight. The native fixture is seeded by the real Runtime,
+ * then the production hosted editor must connect and claim a fresh durable owner.
+ * This is deliberately before, and separate from, every gesture and commit journey.
+ */
+import { expect, type Page, type TestInfo } from '@playwright/test';
+import { writeFileSync } from 'node:fs';
+import { harnessUnavailableReason, startDirectHarness, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
+import { commandOutboxes, expectConnected, openApp, openSeededTimeline, test as appTest, UI } from './support/app.ts';
+
+const CEILING = { timeout: 90_000 };
+const UNKNOWN = 'UNKNOWN' as const;
+const MAX_STAGES = 3;
+const MAX_ROUTE_STATUS_ERRORS = 16;
+const DIAGNOSTIC_FILE = 'mounted-readiness-diagnostics.json';
+
+type Unknownable<T> = T | typeof UNKNOWN;
+
+interface OutboxSummary {
+  success: boolean;
+  newOwnerCount: Unknownable<number>;
+  pendingCount: Unknownable<number>;
+  intentsCount: Unknownable<number>;
+}
+
+interface ConnectionSummary {
+  attached: Unknownable<boolean>;
+  state: string;
+}
+
+interface StageSnapshot {
+  stage: string;
+  status: ConnectionSummary;
+  actualConnected: Unknownable<boolean>;
+  readonlyOutbox: OutboxSummary;
+  selectionEquality: Unknownable<boolean>;
+}
+
+interface MountedReadinessDiagnostics {
+  version: 1;
+  endpoints: ReturnType<typeof endpointComponents>;
+  stages: StageSnapshot[];
+  notRunStages: string[];
+  routeStatusErrors: Array<{ stage: string; route: string; status: number; code: string; class: 'route-status' }>;
+  failure?: { stage: string; code: 'assertion' | 'timeout' | 'setup'; class: 'assertion' | 'timeout' | 'setup' };
+}
+
+const test = appTest.extend<object, { seed3: ThreeProductsSeed }>({
+  // Keep the same P3 bootstrap: defer the empty timeline, then let the native full seed create the fixture.
+  // eslint-disable-next-line no-empty-pattern
+  harness: [async ({}, use) => {
+    const harness = await startDirectHarness({ deferTimelineInitialization: true });
+    try { await use(harness); } finally { await harness.stop(); }
+  }, { scope: 'worker', timeout: process.env.ASTRID_QUICK_DESCRIPTOR ? 0 : 240_000 }],
+  seed3: [async ({ harness }, use) => {
+    await use(await harness.seedThreeProducts());
+  }, { scope: 'worker', timeout: 240_000 }],
+});
+
+test.beforeAll(() => {
+  const reason = harnessUnavailableReason();
+  if (reason) throw new Error(`mounted-readiness preflight cannot run: ${reason}`);
+});
+
+function safeRoute(url: string): string | undefined {
+  let pathname: string;
+  try { pathname = new URL(url).pathname; } catch { return undefined; }
+  if (pathname === '/api/runtime/v1/health') return '/health';
+  if (pathname === '/api/runtime/v1/realm') return '/realm';
+  if (/^\/api\/runtime\/v1\/projects$/.test(pathname)) return '/projects';
+  if (/^\/api\/runtime\/v1\/projects\/[^/]+$/.test(pathname)) return '/projects/:project';
+  if (/^\/api\/runtime\/v1\/projects\/[^/]+\/timelines$/.test(pathname)) return '/projects/:project/timelines';
+  if (/^\/api\/runtime\/v1\/projects\/[^/]+\/timelines\/[^/]+$/.test(pathname)) return '/projects/:project/timelines/:timeline';
+  if (/^\/api\/runtime\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commits$/.test(pathname)) return '/projects/:project/timelines/:timeline/commits';
+  if (/^\/api\/runtime\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/.test(pathname)) return '/projects/:project/timelines/:timeline/commit';
+  return undefined;
+}
+
+function endpointComponents(harness: DirectHarness) {
+  const parsedRuntime = new URL(harness.runtimeUrl);
+  return {
+    hosted: { host: new URL(harness.origin).hostname, port: Number(new URL(harness.origin).port), path: '/tools/video-editor' },
+    door: { host: '127.0.0.1', port: harness.doorPort, prefix: harness.doorPrefix },
+    runtime: { host: parsedRuntime.hostname, port: Number(parsedRuntime.port), path: parsedRuntime.pathname || '/' },
+  };
+}
+
+function blankOutboxSummary(): OutboxSummary {
+  return { success: false, newOwnerCount: UNKNOWN, pendingCount: UNKNOWN, intentsCount: UNKNOWN };
+}
+
+function blankConnection(): ConnectionSummary {
+  return { attached: UNKNOWN, state: UNKNOWN };
+}
+
+function createDiagnostics(harness: DirectHarness): MountedReadinessDiagnostics {
+  return {
+    version: 1,
+    endpoints: endpointComponents(harness),
+    stages: [],
+    notRunStages: ['connected-selection', 'fresh-owner-reconnected'],
+    routeStatusErrors: [],
+  };
+}
+
+function persistDiagnostics(testInfo: TestInfo, diagnostics: MountedReadinessDiagnostics): void {
+  try {
+    writeFileSync(testInfo.outputPath(DIAGNOSTIC_FILE), JSON.stringify(diagnostics));
+  } catch {
+    // Diagnostics must never replace the original assertion or make the preflight fail differently.
+  }
+}
+
+function failureProjection(error: unknown, stage: string): MountedReadinessDiagnostics['failure'] {
+  const timeout = error instanceof Error && error.name === 'TimeoutError';
+  return { stage, code: timeout ? 'timeout' : stage === 'before-load' ? 'setup' : 'assertion', class: timeout ? 'timeout' : stage === 'before-load' ? 'setup' : 'assertion' };
+}
+
+function stageSnapshot(diagnostics: MountedReadinessDiagnostics, snapshot: StageSnapshot): void {
+  diagnostics.notRunStages = diagnostics.notRunStages.filter((stage) => stage !== snapshot.stage);
+  const index = diagnostics.stages.findIndex((item) => item.stage === snapshot.stage);
+  if (index >= 0) diagnostics.stages[index] = snapshot;
+  else if (diagnostics.stages.length < MAX_STAGES) diagnostics.stages.push(snapshot);
+}
+
+async function connectionSummary(page: Page): Promise<ConnectionSummary> {
+  try {
+    const locator = page.locator(UI.status);
+    const attached = (await locator.count()) > 0;
+    if (!attached) return { attached, state: 'MISSING' };
+    const state = (await locator.getAttribute('data-state', { timeout: 1_000 })) ?? 'MISSING';
+    return { attached, state: ['connected', 'connecting', 'disconnected', 'MISSING'].includes(state) ? state : UNKNOWN };
+  } catch {
+    return blankConnection();
+  }
+}
+
+async function selectionEquality(page: Page, harness: DirectHarness): Promise<Unknownable<boolean>> {
+  try {
+    const project = page.getByRole('combobox', { name: 'Select project' });
+    const timeline = page.getByRole('combobox', { name: 'Select timeline' });
+    const track = page.getByRole('textbox', { name: 'Track name' }).first();
+    const projectText = await project.textContent({ timeout: 1_000 });
+    return Boolean(projectText?.includes(harness.seed.projectName))
+      && await timeline.isVisible({ timeout: 1_000 })
+      && await track.isVisible({ timeout: 1_000 });
+  } catch {
+    return UNKNOWN;
+  }
+}
+
+async function outboxSummary(page: Page, timelineId: string, previousOwnerIds: ReadonlySet<string>): Promise<OutboxSummary> {
+  try {
+    const owners = await commandOutboxes(page, timelineId);
+    return {
+      success: true,
+      newOwnerCount: owners.filter((owner) => !previousOwnerIds.has(owner.ownerId)).length,
+      pendingCount: owners.filter((owner) => Boolean(owner.pending)).length,
+      intentsCount: owners.reduce((total, owner) => total + owner.intents.length, 0),
+    };
+  } catch {
+    return blankOutboxSummary();
+  }
+}
+
+function attachRouteStatusErrors(page: Page, diagnostics: MountedReadinessDiagnostics, currentStage: () => string): void {
+  page.on('response', (response) => {
+    if (response.status() < 400 || diagnostics.routeStatusErrors.length >= MAX_ROUTE_STATUS_ERRORS) return;
+    const route = safeRoute(response.url());
+    if (!route) return;
+    diagnostics.routeStatusErrors.push({
+      stage: currentStage(), route, status: response.status(), code: `http_${response.status()}`, class: 'route-status',
+    });
+  });
+}
+
+async function snapshot(
+  page: Page,
+  seed: ThreeProductsSeed,
+  previousOwnerIds: ReadonlySet<string>,
+  stage: string,
+  diagnostics: MountedReadinessDiagnostics,
+  testInfo: TestInfo,
+  values: Partial<Pick<StageSnapshot, 'status' | 'actualConnected' | 'readonlyOutbox' | 'selectionEquality'>> = {},
+): Promise<StageSnapshot> {
+  const result: StageSnapshot = {
+    stage,
+    status: values.status ?? blankConnection(),
+    actualConnected: values.actualConnected ?? UNKNOWN,
+    readonlyOutbox: values.readonlyOutbox ?? await outboxSummary(page, seed.timelineId, previousOwnerIds),
+    selectionEquality: values.selectionEquality ?? UNKNOWN,
+  };
+  stageSnapshot(diagnostics, result);
+  persistDiagnostics(testInfo, diagnostics);
+  return result;
+}
+
+test('D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture', async ({ page, harness, seed3 }, testInfo) => {
+  const diagnostics = createDiagnostics(harness);
+  let currentStage = 'before-load';
+  attachRouteStatusErrors(page, diagnostics, () => currentStage);
+  stageSnapshot(diagnostics, { stage: 'before-load', status: blankConnection(), actualConnected: UNKNOWN, readonlyOutbox: blankOutboxSummary(), selectionEquality: UNKNOWN });
+  persistDiagnostics(testInfo, diagnostics);
+  let previousOwners: Awaited<ReturnType<typeof commandOutboxes>> = [];
+  let initialOutboxRead = false;
+  try {
+    await page.goto(`${harness.origin}/__blank.html`);
+    previousOwners = await commandOutboxes(page, seed3.timelineId);
+    initialOutboxRead = true;
+  } catch {
+    // The setup read is intentionally readonly; the diagnostics retain UNKNOWN rather than exposing an error.
+  }
+  const previousOwnerIds = new Set(previousOwners.map((owner) => owner.ownerId));
+
+  await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo, {
+    readonlyOutbox: initialOutboxRead
+      ? { success: true, newOwnerCount: 0, pendingCount: previousOwners.filter((owner) => Boolean(owner.pending)).length, intentsCount: previousOwners.reduce((total, owner) => total + owner.intents.length, 0) }
+      : blankOutboxSummary(),
+  });
+  try {
+    expect(initialOutboxRead, 'the mounted preflight must read the scoped outbox before loading the editor').toBe(true);
+  } catch (error) {
+    diagnostics.failure = failureProjection(error, currentStage);
+    persistDiagnostics(testInfo, diagnostics);
+    throw error;
+  }
+
+  try {
+    currentStage = 'connected-selection';
+    await openApp(page, harness);
+    const connected = await connectionSummary(page);
+    await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo, {
+      status: connected,
+      actualConnected: connected.attached === true && connected.state === 'connected',
+      selectionEquality: await selectionEquality(page, harness),
+    });
+    await expectConnected(page);
+    await openSeededTimeline(page, harness);
+    await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo, {
+      status: connected,
+      actualConnected: true,
+      selectionEquality: true,
+    });
+
+    currentStage = 'fresh-owner-reconnected';
+    await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo);
+    await expect.poll(async () => {
+      const owners = await commandOutboxes(page, seed3.timelineId);
+      const ready = owners.some((owner) => !previousOwnerIds.has(owner.ownerId) && !owner.pending && owner.intents.length === 0);
+      await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo, {
+        readonlyOutbox: {
+          success: true,
+          newOwnerCount: owners.filter((owner) => !previousOwnerIds.has(owner.ownerId)).length,
+          pendingCount: owners.filter((owner) => Boolean(owner.pending)).length,
+          intentsCount: owners.reduce((total, owner) => total + owner.intents.length, 0),
+        },
+      });
+      return ready;
+    }, { ...CEILING, message: 'the mounted editor must claim a new durable command owner before the gesture' }).toBe(true);
+    const reconnected = await connectionSummary(page);
+    await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo, {
+      status: reconnected,
+      actualConnected: reconnected.attached === true && reconnected.state === 'connected',
+    });
+    await expectConnected(page);
+  } catch (error) {
+    diagnostics.failure = failureProjection(error, currentStage);
+    throw error;
+  } finally {
+    persistDiagnostics(testInfo, diagnostics);
+  }
+});
