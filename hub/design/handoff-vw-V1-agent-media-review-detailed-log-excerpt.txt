@@ -1,0 +1,59 @@
+the helper-level behavior is repaired. However, the real canonical-document
+consumer still rejects the repaired output when authored `meta` contains a
+media-looking digest.
+
+## Findings
+
+- `_timeline_media_view` strips only known authored `meta` seams while leaving
+  nested component `params.meta` available to `_collect_media`. `compile` and
+  `authoring_media_inventory` both use that view, preserve the authored values,
+  and discover normal nested params media.
+- The production reload path is not safe: `astrid/sdk/timeline/commit.py:139`
+  calls `_collect_media(row["payload"])` directly from `_verify_document`.
+  Since the repair removed `_collect_media`'s global `meta` skip, a canonical
+  publication with authored `meta: {"org.example.notes": {"media_id":
+  PHANTOM}}` has a manifest containing only the three real pins, then
+  `bundle_from_document` raises `AuthoringBundleError: missing media dependency`.
+  This violates contract §6's rule that opaque meta descendants do not create
+  phantom manifest entries and fails the brief's production-caller criterion.
+- The same witness reports compile manifest and inventory media as exactly
+  `OLD`, `AUDIO`, and `NEW`, and the authored metadata remains present; only
+  the actual consumer/reload validation fails.
+- The pre-fix bounded witness against `06d0c8ec8` fails the new regression
+  assertion (the `params.meta.media_id` pin is absent); the current bounded
+  witness passes. The normal nested `params` positive also passes.
+- `git diff 06d0c8ec8..HEAD` contains only the two requested files. No
+  generated, pin, provider, framework, or schema files changed. No product
+  edits were made in this review worktree.
+
+## Evidence
+
+- `PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/runtime/packages/python:/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/timeline/test_authoring_bundle.py tests/timeline/test_authoring_media.py tests/timeline/test_shot_composition.py tests/timeline/test_meta_validator.py tests/timeline/test_timeline_roundtrip_fixture.py tests/timeline/test_asset_registry_contract.py tests/timeline/test_shot_composition_projection.py`
+  → **169 passed, 3 deselected, 2 subtests passed**.
+- `... pytest ... tests/timeline/test_authoring_bundle.py::test_component_params_meta_media_is_discovered_but_authored_meta_is_opaque`
+  → **1 passed**.
+- Bounded pre-fix witness loading `astrid/core/timeline/authoring_bundle.py` from
+  `06d0c8ec8` in memory and calling the same regression function → **failed as
+  expected** at the `NEW` manifest assertion.
+- Bounded current production witness: `open_authoring_bundle` →
+  `compile_authoring_candidate` → canonical document →
+  `astrid.sdk.timeline.commit.bundle_from_document` → **FAIL**, exact error
+  `AuthoringBundleError: missing media dependency`.
+- Normal nested params witness (`params.component.source.media_id`) →
+  **`NORMAL_PARAMS_MEDIA=PASS`** for both compile manifest and inventory.
+- Selected preserved-validation checks (`test_authored_meta_is_preserved_without_phantom_media_dependencies`, `test_authoring_open_and_compile_validate_parent_and_shot_payload_meta`, `test_timing_is_admitted_but_competing_selected_media_fails_before_publish`, `test_conflicting_parent_registry_locations_rejected_by_compiler`) → **4 passed**.
+- Scoped `/home/user/work/venv-agent/bin/ruff check --no-cache ...` over the
+  retained V1 file/test set → **All checks passed**.
+- Mypy comparison with the retained pre-fix source, `--no-pretty` and private
+  caches: seven-file lane → **24 errors vs 24 baseline, identical diagnostics**;
+  `authoring_bundle.py` lane → **2 vs 2, identical diagnostics**. Mypy is not
+  globally green.
+- `git diff --check` and `git diff --check 06d0c8ec8 HEAD` → **pass**.
+- Worktree status is clean.
+
+## Required next step
+
+Repair the production `_verify_document` media-discovery call so it applies the
+same known-location meta filtering as compile/inventory while retaining nested
+component `params.meta` discovery, then rerun this bounded canonical reload
+witness and the exact targeted suite. No broader hardening or cleanup is
