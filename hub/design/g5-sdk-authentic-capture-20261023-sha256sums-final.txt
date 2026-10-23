@@ -1,0 +1,9 @@
+06ce5273db4176cba0aaec57d9925dc942bf8da94a1a666f0b5cc0c8a17a6ab3  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-adapter.py
+c99ed59abc115894d37c7f5e7dc36e4d50bfa5882dcd078764fe665ddd2f3148  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-b6069d1d-backup-manifest.json
+d5756987d74c637944ab1a6d976abc7e26fec0e7791a386482a49b2d4518d752  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-b6069d1d-fullraw.json
+2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-b6069d1d.tar.gz
+bfaa7b7b7f162de0bb1a12e8c6d77b5896a4a5bd6dd5ca19b96b4784d60b81b7  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-final-artifact-check.log
+9579e763b4ad1a3ad67a1da729548e57617134615e7efe908ab4d2135461bf3b  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-provenance.json
+fa70a3ceec6b54918f81c77c25ebf576bc950390db6f8509962db02bf7e71da5  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-restore.json
+665cdfc4dffaa2ef54dfcbc2463f83cc2f4166e245a499bbdaa57fb26d9d8887  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-sha256sums-final.txt
+03b1ca98582692d8e1a32ef9250cd8a1eb1033009475405fa22c165adc43b7d8  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-sha256sums.txt

@@ -1,0 +1,55 @@
+{
+  "export": "runtime-G5-fixture-export-1641",
+  "source_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence",
+  "destination_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design",
+  "files": [
+    {
+      "source": "design/evidence/g5-sdk-authentic-capture-20261023-b6069d1d.tar.gz",
+      "name": "g5-sdk-authentic-capture-20261023-b6069d1d.tar.gz",
+      "sha256": "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3",
+      "size": 26543
+    },
+    {
+      "source": "design/evidence/g5-sdk-authentic-capture-20261023-b6069d1d-fullraw.json",
+      "name": "g5-sdk-authentic-capture-20261023-b6069d1d-fullraw.json",
+      "sha256": "d5756987d74c637944ab1a6d976abc7e26fec0e7791a386482a49b2d4518d752",
+      "size": 193108
+    },
+    {
+      "source": "design/evidence/g5-sdk-authentic-capture-20261023-b6069d1d-backup-manifest.json",
+      "name": "g5-sdk-authentic-capture-20261023-b6069d1d-backup-manifest.json",
+      "sha256": "c99ed59abc115894d37c7f5e7dc36e4d50bfa5882dcd078764fe665ddd2f3148",
+      "size": 1061
+    },
+    {
+      "source": "design/evidence/g5-sdk-authentic-capture-20261023-provenance.json",
+      "name": "g5-sdk-authentic-capture-20261023-provenance.json",
+      "sha256": "9579e763b4ad1a3ad67a1da729548e57617134615e7efe908ab4d2135461bf3b",
+      "size": 81473
+    },
+    {
+      "source": "design/evidence/g5-sdk-authentic-capture-20261023-restore.json",
+      "name": "g5-sdk-authentic-capture-20261023-restore.json",
+      "sha256": "fa70a3ceec6b54918f81c77c25ebf576bc950390db6f8509962db02bf7e71da5",
+      "size": 55391
+    },
+    {
+      "source": "design/evidence/g5-sdk-authentic-capture-20261023-adapter.py",
+      "name": "g5-sdk-authentic-capture-20261023-adapter.py",
+      "sha256": "06ce5273db4176cba0aaec57d9925dc942bf8da94a1a666f0b5cc0c8a17a6ab3",
+      "size": 13717
+    },
+    {
+      "source": "design/evidence/g5-sdk-authentic-capture-20261023-final-artifact-check.log",
+      "name": "g5-sdk-authentic-capture-20261023-final-artifact-check.log",
+      "sha256": "bfaa7b7b7f162de0bb1a12e8c6d77b5896a4a5bd6dd5ca19b96b4784d60b81b7",
+      "size": 26367
+    },
+    {
+      "source": "design/evidence/g5-sdk-authentic-capture-20261023-sha256sums-final.txt",
+      "name": "g5-sdk-authentic-capture-20261023-sha256sums-final.txt",
+      "sha256": "6f66479969acabe4f56188128e9b94e26708a09f369737f931c9cc3876fa8ff0",
+      "size": 1960
+    }
+  ]
+}
