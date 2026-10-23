@@ -1,0 +1,38 @@
+{
+  "astrid/sdk/timeline/_commit_patch.py": {
+    "sha256": "06e35825df4f6578ef192de92ab27dbc5131484d99c4953f001293f9bad9490c",
+    "base_sha256": "06e35825df4f6578ef192de92ab27dbc5131484d99c4953f001293f9bad9490c"
+  },
+  "astrid/sdk/timeline/_root_inverse.py": {
+    "sha256": "0d81d995582622367cca770855d7604735d3a707a7e8d6d6d5d6102367c4949a",
+    "base_sha256": "0d81d995582622367cca770855d7604735d3a707a7e8d6d6d5d6102367c4949a"
+  },
+  "astrid/sdk/timeline/_step_undo.py": {
+    "sha256": "493b458084b9bb6b2e2450d611fe833bae45e1480fc9ad46f6c3cd6a24098b4d",
+    "base_sha256": "6cedff390a06ff74a957b962199efb4144b82e2e7e48664269098f39fbae8915"
+  },
+  "astrid/sdk/timeline/inverse.py": {
+    "sha256": "fb0cb16bab8a4fbd72a24c9dffadd6992e397925b383ce9ec79f6cc6bbb00d5a",
+    "base_sha256": "fb0cb16bab8a4fbd72a24c9dffadd6992e397925b383ce9ec79f6cc6bbb00d5a"
+  },
+  "tests/editing_conformance/test_captured_nested_redo.py": {
+    "sha256": "e8b9849e198a33a2026fb47ab5a36574171678f33037f6a953647d0e26ea9a7b",
+    "base_sha256": "36e2ea620e558e7516ccf93e0090c65d4f3fa85a3487ecc4c0d001a741b20fa4"
+  },
+  "tests/editing_conformance/test_captured_registry_redo.py": {
+    "sha256": "ad96279d8cee5bbf1fcf6e0a91f053bb26019ae4096e1c3e2c737fc290882606",
+    "base_sha256": "ad96279d8cee5bbf1fcf6e0a91f053bb26019ae4096e1c3e2c737fc290882606"
+  },
+  "capture": {
+    "bytes": 444166,
+    "sha256": "9a47bb934b879efa0f6147d673038cee76299ba4e30ab22b6d5bcb1377ade589"
+  },
+  "request_body": {
+    "sha256": "9a7586bbefe0ed9281eabd1d0de3a03008f15ece347bf70a6acd26b770637449"
+  },
+  "emission": {
+    "bytes": 91932,
+    "sha256": "e2eace2a358ffdedf3e778ad96b3ef47a4ee16c5b813c21cecb27ff54a52c830",
+    "records_steps_request_canonical_unchanged": true
+  }
+}
