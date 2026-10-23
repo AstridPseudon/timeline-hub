@@ -8,6 +8,8 @@
 # both require the existing approved row/env hashes below. Other hosts must supply
 # authentic template facts for review; a retired or fabricated row is refused.
 # Build in private staging; never modify an existing runtime or toolchain.
+# A qualified existing graph is selected by the committed remotion/ tree only.
+# Runtime checkout identity is registration metadata, never a graph key.
 set -Eeuo pipefail
 
 O=${RUNTIME_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
@@ -23,6 +25,7 @@ N=${1:-}; S=${2:-}; L=${3:-}
 R=${RUNTIME_RUNTIME_CHECKOUT:-}
 RS=${RUNTIME_RUNTIME_SHA:-}
 SUITE=${RUNTIME_TEMPLATE_SUITE:-agent-remotion-0013-nodes}
+PROJECT_DIR=${RUNTIME_PROJECT_DIR:-}
 case $# in
   2|3) ;; # Legacy callers still require inherited exact-source declarations.
   6|7)
@@ -45,9 +48,15 @@ case $# in
     ;;
   *) echo 'REFUSED: expected NAME AGENT_SHA [LOCK_SHA256] or NAME AGENT_SHA LOCK_SHA256 AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA [TEMPLATE_SUITE]' >&2; exit 2 ;;
 esac
+[[ -n "$A" ]] || { echo 'REFUSED: Agent checkout is required' >&2; exit 2; }
 [[ "$N" =~ ^agent-remotion-[0-9a-z][0-9a-z-]*$ ]] || { echo 'REFUSED: invalid immutable runtime name' >&2; exit 2; }
 [[ "$S" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: exact 40-character Agent commit required' >&2; exit 2; }
 [[ -z "$L" || "$L" =~ ^[0-9a-f]{64}$ ]] || { echo 'REFUSED: invalid lock SHA-256' >&2; exit 2; }
+for root in "$O" "$W" "$A"; do
+  [[ "$root" = /* && "$root" != *[!a-zA-Z0-9_./-]* && "/$root/" != */../* && "/$root/" != */./* ]] || {
+    echo 'REFUSED: root must be a safe absolute path' >&2; exit 2;
+  }
+done
 D=$W/runtimes/$N
 if [ -e "$D" ] || [ -L "$D" ]; then
   echo "REFUSED: exists: $D (immutable; pick a fresh name)" >&2
@@ -118,10 +127,13 @@ if mode == "validate":
     sys.exit(0)
 # Revalidate at registration time; never execute a template as shell input.
 values = dict(line.split("=", 1) for line in env_text.splitlines())
-values.update(ASTRID_REMOTION_PROJECT_DIR=str(pathlib.Path(work) / "runtimes" / name),
+project_dir = os.environ.get("RUNTIME_PROJECT_DIR") or str(pathlib.Path(work) / "runtimes" / name)
+values.update(ASTRID_REMOTION_PROJECT_DIR=project_dir,
               ASTRID_NODE_EXECUTABLE=node + "/node", ASTRID_CHECKOUT=agent,
               ASTRID_RUNTIME_CHECKOUT=runtime, ASTRID_AGENT_SOURCE_COMMIT=sha,
-              ASTRID_RUNTIME_SOURCE_COMMIT=runtime_sha)
+              ASTRID_RUNTIME_SOURCE_COMMIT=runtime_sha,
+              ASTRID_BUILD_ORIGIN_AGENT_COMMIT=os.environ.get("RUNTIME_BUILD_ORIGIN_AGENT_COMMIT", ""),
+              ASTRID_RUNTIME_TEMPLATE=suite, ASTRID_RUNTIME_PROFILE=suite)
 # Acquired tools move with the immutable runtime; rewrite only the staging prefix.
 def relocated(value):
     return value.replace(staging + "/", str(pathlib.Path(work) / "runtimes" / name) + "/")
@@ -155,14 +167,154 @@ for file in package.json package-lock.json; do
 done
 LOCK_SHA=$(git -C "$A" show "$S:remotion/package-lock.json" 2>/dev/null | sha256sum | cut -d' ' -f1) || LOCK_SHA=
 PACKAGE_SHA=$(git -C "$A" show "$S:remotion/package.json" 2>/dev/null | sha256sum | cut -d' ' -f1) || PACKAGE_SHA=
-[ -z "$L" ] || [ "$LOCK_SHA" = "$L" ] || missing+=("lock-sha256:expected=$L,actual=$LOCK_SHA")
+REMOTION_TREE=$(git -C "$A" rev-parse "$S:remotion" 2>/dev/null) || REMOTION_TREE=
+read -r COMPONENT_SHA REMOTION_VERSION COMPOSITION_VERSION < <(python3 - "$A" "$S" <<'PY'
+import hashlib, json, subprocess, sys
+agent, commit = sys.argv[1:]
+show = lambda path: subprocess.check_output(["git", "-C", agent, "show", f"{commit}:remotion/{path}"])
+lock = json.loads(show("package-lock.json"))
+package = json.loads(show("package.json"))
+packages = lock.get("packages", {})
+names = ("remotion", "@banodoco/timeline-composition")
+identity = {"package": package, "lock": {name: packages.get("node_modules/" + name) for name in names}}
+print(hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest(), end=" ")
+print(packages["node_modules/remotion"]["version"], end=" ")
+print(packages["node_modules/@banodoco/timeline-composition"]["version"])
+PY
+) || { echo 'REFUSED: cannot determine authentic Remotion component identity' >&2; exit 2; }
+[ "$REMOTION_TREE" ] || { echo 'REFUSED: missing committed remotion tree' >&2; exit 2; }
+[ -z "$L" ] || [ "$LOCK_SHA" = "$L" ] || {
+  echo "REFUSED: lock-sha256:expected=$L,actual=$LOCK_SHA" >&2; exit 2;
+}
 git -C "$A" show "$S:remotion/package.json" 2>/dev/null | python3 -c '
 import json,sys
 p=json.load(sys.stdin)
 assert p["engines"] == {"node":"=20.19.4", "npm":"=10.8.2"}, p.get("engines")
-' 2>/dev/null || missing+=("agent-engines:requires-exact-Node20.19.4/npm10.8.2")
-FREE=$(df -P -B1 "$W" 2>/dev/null | awk 'NR==2 {print $4}') || FREE=
-[[ "$FREE" =~ ^[0-9]+$ ]] && [ "$FREE" -ge 2147483648 ] || missing+=("disk:requires-2147483648-free-bytes,actual=${FREE:-unknown}")
+' 2>/dev/null || { echo 'REFUSED: Agent Remotion requires exact Node20.19.4/npm10.8.2' >&2; exit 2; }
+
+# The manifest excludes only generated identity/registration files. It covers
+# source and installed bytes, so marker-only or partial graphs cannot qualify.
+artifact_integrity() {
+  python3 - "$1" <<'PY'
+import hashlib, pathlib, sys
+root = pathlib.Path(sys.argv[1]).resolve()
+excluded = {".astrid-agent-source-commit", ".astrid-remotion-tree",
+    ".astrid-package-lock-sha256", ".astrid-package-sha256",
+    ".astrid-component-identity", ".astrid-node-version", ".astrid-npm-version",
+    ".astrid-node-modules-lock-sha256", ".astrid-artifact-integrity",
+    ".runtime-env", ".runtime-suite", ".provision-failure"}
+out = hashlib.sha256()
+for path in sorted(root.rglob("*"), key=lambda p: p.relative_to(root).as_posix()):
+    if path.name in excluded: continue
+    rel = path.relative_to(root).as_posix()
+    if path.is_symlink(): value = b"L:" + path.readlink().as_posix().encode()
+    elif path.is_file(): value = b"F:" + hashlib.sha256(path.read_bytes()).hexdigest().encode()
+    else: continue
+    out.update(rel.encode() + b"\0" + value + b"\n")
+print(out.hexdigest())
+PY
+}
+
+# 0 = exact qualified graph, 1 = no same-tree graph, 2 = matching-tree graph
+# is incomplete/tampered/ambiguous and must not be silently rebuilt.
+candidate_matches() {
+  python3 - "$1" "$REMOTION_TREE" "$LOCK_SHA" "$PACKAGE_SHA" "$COMPONENT_SHA" "$NODE_VERSION" "$NPM_VERSION" "$A" <<'PY'
+import hashlib, json, pathlib, re, sys
+import subprocess
+root = pathlib.Path(sys.argv[1])
+tree, lock_sha, package_sha, component_sha, node_version, npm_version, agent = sys.argv[2:]
+marker = root / ".astrid-remotion-tree"
+if not marker.is_file(): raise SystemExit(1)
+marker_tree = marker.read_text().strip()
+if marker_tree != tree:
+    # A graph for another source tree is normal build input. If its retained
+    # origin authenticates to this requested tree, however, the marker itself
+    # was tampered and must refuse closed.
+    origin_path = root / ".astrid-agent-source-commit"
+    if origin_path.is_file() and re.fullmatch(r"[0-9a-f]{40}", origin_path.read_text().strip()):
+        origin = origin_path.read_text().strip()
+        try:
+            source_tree = subprocess.check_output(
+                ["git", "-C", agent, "rev-parse", origin + ":remotion"], text=True).strip()
+            if source_tree == tree:
+                print("invalid same-tree graph: Remotion tree marker", file=sys.stderr)
+                raise SystemExit(2)
+        except (OSError, subprocess.CalledProcessError, ValueError) as error:
+            if isinstance(error, ValueError):
+                print("invalid same-tree graph: " + str(error), file=sys.stderr)
+                raise SystemExit(2)
+    raise SystemExit(1)
+excluded = {".astrid-agent-source-commit", ".astrid-remotion-tree",
+    ".astrid-package-lock-sha256", ".astrid-package-sha256",
+    ".astrid-component-identity", ".astrid-node-version", ".astrid-npm-version",
+    ".astrid-node-modules-lock-sha256", ".astrid-artifact-integrity",
+    ".runtime-env", ".runtime-suite", ".provision-failure"}
+def text(name):
+    path = root / name
+    if not path.is_file(): raise ValueError("missing " + name)
+    return path.read_text().strip()
+def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
+def artifact():
+    out = hashlib.sha256()
+    for path in sorted(root.rglob("*"), key=lambda p: p.relative_to(root).as_posix()):
+        if path.name in excluded: continue
+        rel = path.relative_to(root).as_posix()
+        if path.is_symlink(): value = b"L:" + path.readlink().as_posix().encode()
+        elif path.is_file(): value = b"F:" + digest(path).encode()
+        else: continue
+        out.update(rel.encode() + b"\0" + value + b"\n")
+    return out.hexdigest()
+try:
+    if not root.is_dir() or root.is_symlink(): raise ValueError("not a physical directory")
+    origin = text(".astrid-agent-source-commit")
+    if not re.fullmatch(r"[0-9a-f]{40}", origin): raise ValueError("invalid truthful build-origin Agent SHA")
+    try:
+        subprocess.run(["git", "-C", agent, "cat-file", "-e", origin + "^{commit}"],
+                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        source_tree = subprocess.check_output(
+            ["git", "-C", agent, "rev-parse", origin + ":remotion"], text=True).strip()
+        if source_tree != tree: raise ValueError("build-origin Remotion tree")
+        for filename, expected in (("package-lock.json", lock_sha), ("package.json", package_sha)):
+            actual = subprocess.check_output(
+                ["git", "-C", agent, "show", origin + ":remotion/" + filename])
+            if hashlib.sha256(actual).hexdigest() != expected:
+                raise ValueError("build-origin source bytes")
+    except (OSError, subprocess.CalledProcessError, ValueError) as error:
+        raise ValueError("unauthenticated build-origin source: " + str(error)) from error
+    if text(".astrid-package-lock-sha256") != lock_sha: raise ValueError("lock identity")
+    if text(".astrid-package-sha256") != package_sha: raise ValueError("package identity")
+    if text(".astrid-component-identity") != component_sha: raise ValueError("component identity")
+    if text(".astrid-node-version") != "v" + node_version: raise ValueError("Node engine")
+    if text(".astrid-npm-version") != npm_version: raise ValueError("npm engine")
+    if digest(root / "package-lock.json") != lock_sha or digest(root / "package.json") != package_sha:
+        raise ValueError("source bytes")
+    lock = json.loads((root / "package-lock.json").read_text())
+    for name in ("remotion", "@banodoco/timeline-composition"):
+        package = root / "node_modules" / name / "package.json"
+        expected = lock["packages"]["node_modules/" + name]["version"]
+        if not package.is_file() or json.loads(package.read_text())["version"] != expected:
+            raise ValueError("installed component")
+    installed_lock = root / "node_modules/.package-lock.json"
+    if text(".astrid-node-modules-lock-sha256") != digest(installed_lock):
+        raise ValueError("installed lock integrity")
+    installed = json.loads(installed_lock.read_text()).get("packages", {})
+    for name in ("remotion", "@banodoco/timeline-composition"):
+        source_entry = lock["packages"]["node_modules/" + name]
+        installed_entry = installed.get("node_modules/" + name)
+        if not installed_entry or any(installed_entry.get(key) != source_entry.get(key)
+                                      for key in ("version", "resolved", "integrity")
+                                      if key in source_entry):
+            raise ValueError("installed component provenance")
+    if text(".astrid-artifact-integrity") != artifact(): raise ValueError("artifact integrity")
+    for path in root.rglob("*"):
+        if path.is_file() and path.stat().st_mode & 0o222: raise ValueError("writable artifact")
+except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
+    print("invalid same-tree graph: " + str(error), file=sys.stderr)
+    raise SystemExit(2)
+raise SystemExit(0)
+PY
+}
+
 verify_node() {
   [ -x "$1/node" ] && [ -x "$1/npm" ] &&
     [ "$(timeout -k 2s 10s "$1/node" --version 2>/dev/null)" = "v$NODE_VERSION" ] &&
@@ -175,10 +327,71 @@ else
     if verify_node "$candidate"; then NODE_BIN=$candidate; break; fi
   done
 fi
+[ -n "$NODE_BIN" ] || missing+=("selected-toolchain:requires-Node$NODE_VERSION/npm$NPM_VERSION")
+if [ "${#missing[@]}" -ne 0 ]; then
+  printf 'PREFLIGHT FAILED name=%s agent=%s\n' "$N" "$S" >&2
+  printf 'missing_prerequisite=%s\n' "${missing[@]}" >&2
+  exit 2
+fi
+
+reuse_runtime() {
+  local candidate found="" rc
+  shopt -s nullglob
+  for candidate in "$W"/runtimes/agent-remotion-*; do
+    if [[ "$candidate" == *.partial.* ]]; then
+      echo "REFUSED: partial Remotion graph: $candidate" >&2
+      return 2
+    fi
+    candidate_matches "$candidate" >/dev/null 2>&1; rc=$?
+    if [ "$rc" = 0 ]; then
+      [ -z "$found" ] || { echo "REFUSED: ambiguous qualified Remotion graph for tree $REMOTION_TREE" >&2; return 2; }
+      found=$candidate
+    elif [ "$rc" = 2 ]; then
+      echo "REFUSED: tampered or incomplete same-tree Remotion graph: $candidate" >&2
+      return 2
+    fi
+  done
+  shopt -u nullglob
+  [ -n "$found" ] || return 1
+  printf '%s\n' "$found"
+}
+
+if candidate=$(reuse_runtime); then
+  [ ! -e "$O/tests/$N.env" ] && [ ! -L "$O/tests/$N.env" ] || { echo "REFUSED: existing env: $N" >&2; exit 2; }
+  ! grep -q "^agent $N-nodes " "$O/tests/suites.conf" 2>/dev/null || { echo "REFUSED: existing suite: $N-nodes" >&2; exit 2; }
+  T=$(mktemp -d "$W/.runtime-reuse.XXXXXXXX")
+  RUNTIME_PROJECT_DIR=$candidate RUNTIME_BUILD_ORIGIN_AGENT_COMMIT=$(cat "$candidate/.astrid-agent-source-commit") registration render
+  mv "$T/.runtime-env" "$O/tests/$N.env"
+  cat "$T/.runtime-suite" >> "$O/tests/suites.conf"
+  rm "$T/.runtime-suite"
+  rmdir "$T"
+  printf 'status=reused\nruntime=%s\nrequested_name=%s\nrequested_agent_sha=%s\nrequested_runtime_sha=%s\nbuild_origin_agent_sha=%s\nremotion_tree_sha=%s\nlock_sha256=%s\ncomponent_identity=%s\nreuse=verified\n' \
+    "$candidate" "$N" "$S" "$RS" "$(cat "$candidate/.astrid-agent-source-commit")" "$REMOTION_TREE" "$LOCK_SHA" "$COMPONENT_SHA"
+  exit 0
+else
+  rc=$?
+  [ "$rc" = 1 ] || exit "$rc"
+fi
+[ -z "$L" ] || [ "$LOCK_SHA" = "$L" ] || missing+=("lock-sha256:expected=$L,actual=$LOCK_SHA")
+git -C "$A" show "$S:remotion/package.json" 2>/dev/null | python3 -c '
+import json,sys
+p=json.load(sys.stdin)
+assert p["engines"] == {"node":"=20.19.4", "npm":"=10.8.2"}, p.get("engines")
+' 2>/dev/null || missing+=("agent-engines:requires-exact-Node20.19.4/npm10.8.2")
+FREE=$(df -P -B1 "$W" 2>/dev/null | awk 'NR==2 {print $4}') || FREE=
+[[ "$FREE" =~ ^[0-9]+$ ]] && [ "$FREE" -ge 2147483648 ] || missing+=("disk:requires-2147483648-free-bytes,actual=${FREE:-unknown}")
 if [ "${#missing[@]}" -ne 0 ]; then
   printf 'PREFLIGHT FAILED name=%s agent=%s free_bytes=%s\n' "$N" "$S" "${FREE:-unknown}" >&2
   printf 'missing_prerequisite=%s\n' "${missing[@]}" >&2
   exit 2
+fi
+# Offline qualification may ask the normal build branch to stop before any
+# installer/network work. This branch is only a private fixture control; the
+# production caller never sets it.
+if [ "${RUNTIME_BUILD_MOCK:-}" = 1 ]; then
+  printf 'status=build-required\nrequested_name=%s\nrequested_agent_sha=%s\nremotion_tree_sha=%s\ninstaller=not-run\n' \
+    "$N" "$S" "$REMOTION_TREE"
+  exit 3
 fi
 # Bound the entire host job, including child processes. The inherited marker is
 # only for this self-exec; preserve every positional source argument.
@@ -257,10 +470,15 @@ for (const name of ["remotion", "@banodoco/timeline-composition"]) {
 ' ) > "$T/.astrid-installed-module-origins"
 printf '%s\n' "$S" > "$T/.astrid-agent-source-commit"
 printf '%s\n' "$LOCK_SHA" > "$T/.astrid-package-lock-sha256"
+printf '%s\n' "$PACKAGE_SHA" > "$T/.astrid-package-sha256"
+printf '%s\n' "$REMOTION_TREE" > "$T/.astrid-remotion-tree"
+printf '%s\n' "$COMPONENT_SHA" > "$T/.astrid-component-identity"
 printf 'v%s\n' "$NODE_VERSION" > "$T/.astrid-node-version"
 printf '%s\n' "$NPM_VERSION" > "$T/.astrid-npm-version"
+printf '%s\n' "$(sha256sum "$T/node_modules/.package-lock.json" | cut -d' ' -f1)" > "$T/.astrid-node-modules-lock-sha256"
+printf '%s\n' "$(artifact_integrity "$T")" > "$T/.astrid-artifact-integrity"
 stage=prepare-registration
-registration render
+RUNTIME_BUILD_ORIGIN_AGENT_COMMIT=$S registration render
 stage=read-only
 find "$T" -type f -exec chmod a-w {} +
 stage=immutable-publish

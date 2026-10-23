@@ -32,6 +32,7 @@ mail=""; for f in $O/design/peer-*-to-$A-lead-*.md; do [ -f "$f" ] || continue; 
 dead=""
 for d in $O/workers/*/; do
   [ -f $d/running ] && [ -f $d/meta ] || continue
+  [ -f $d/ended ] || [ -f $d/exit ] && continue   # finished, but its running marker not yet cleared: not a death (18:42Z farm)
   w=$(basename $d); wt=$(sed -n 's/^worktree=//p' $d/meta)
   [ -n "$wt" ] || continue
   ps -eo args | grep -F -- "$wt" | grep -qv grep && continue          # a live process still uses the worktree
