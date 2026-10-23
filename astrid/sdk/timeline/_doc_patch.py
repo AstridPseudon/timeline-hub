@@ -229,6 +229,9 @@ class Closure:
                 value['value']['shot_id'] = ctx.state.entity(ref)['shot_id']
             previous_config = ctx.state.get(ref, native_path) if physical == 'parent' and native_path == ['config'] else ABSENT
             ctx.assign(ref, native_path, value)
+            if ref.startswith('parent/clip:'):
+                # The next change must observe the recorder's synchronized mirrors.
+                ctx.compile_mirrors()
             if physical == 'parent' and native_path == ['config'] and value != ABSENT:
                 for mirror in ('clips', 'registry'):
                     if mirror in self.bundle['parent'] and (mirror in value['value']
