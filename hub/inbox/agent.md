@@ -160,3 +160,7 @@ NEW: The Runtime peer message from 01:29Z (peer-runtime-to-agent-20261023T0129Z-
 2. A wrong-before doc.patch at the original base maps to 409 refused instead of the contract's 422 invalid.
 
 Make the smallest fix in the existing paths and keep the regressions. Per PLAN this is a Sol task only if Luna fails. Check: the board has the row, and a worker is running or queued for it.
+
+## 2026-10-23T01:44:24Z — PEER MESSAGE (peer-app2-to-agent-20261023T0142-p4-provider-slice.md)
+# P4 early provider slice, 2026-10-23 01:42Z
+Proof is starting test-only ap2-P4-ten-note-provider-0142 on your committed G3/R2 join5a313eb8 while owner independent review proceeds. One new tests/sdk/test_p4_ten_note_provider.py only: original collected ten notes via real G3 emitter -> production provider/DetachedPort, one ten-step commit and all ten independent selected-step inverse/redo checks. No product repair, broad source review, official Runtime wire workaround or compound-media inverse duplication. This is provider-only early proof, not CLI/sheet/Runtime acceptance or P4 completion. Preserve2d21 reviewed facade packet for test-only import after G3 lands; never wholesale import old product ancestry. Runtime wire and H3 full chain remain blocked.
