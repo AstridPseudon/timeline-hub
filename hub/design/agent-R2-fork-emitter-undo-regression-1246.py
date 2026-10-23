@@ -12,6 +12,7 @@ from astrid.sdk.timeline.emitter import emit_document_commands
 from astrid.sdk.timeline.native_occurrence_fork import capture_occurrence_fork
 from tests.editing_conformance.test_occurrence_fork_source_baseline import OWNER, TARGET
 
+
 def test_current_runtime_retained_fork_then_emitter_and_guarded_undo(tmp_path):
     from types import SimpleNamespace
 
