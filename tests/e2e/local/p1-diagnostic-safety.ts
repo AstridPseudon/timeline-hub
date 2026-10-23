@@ -14,6 +14,165 @@ export const DIAGNOSTIC_READ_TIMEOUT_MS = 150;
 export const DIAGNOSTIC_ARTIFACT_TIMEOUT_MS = 500;
 export const DIAGNOSTIC_COLLECTION_TIMEOUT_MS = 1_000;
 
+export const MOUNTED_DIAGNOSTIC_EVENT = 'timeline:save-diagnostic';
+// The producer's final typed handoff has not published these literals yet. Keep
+// them in one place so the adapter can be aligned without changing the journey.
+export const MOUNTED_DIAGNOSTIC_SCOPE = 'timeline';
+export const MOUNTED_DIAGNOSTIC_TYPE = 'save-diagnostic';
+export const MOUNTED_DIAGNOSTIC_MAX_RECORDS = 32;
+
+const MOUNTED_DIAGNOSTIC_NUMERIC_KEYS = new Set([
+  'sequence', 'time', 'generation', 'from', 'to', 'at', 'hold', 'speed', 'intents', 'pendingCounts',
+]);
+const MOUNTED_DIAGNOSTIC_BOOLEAN_KEYS = new Set(['present']);
+const MOUNTED_DIAGNOSTIC_SCALAR_KEYS = new Set([
+  'version', 'scope', 'type', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'sessionState',
+  'status', 'start', 'resolve', 'reject', 'code', 'class', 'stage',
+]);
+const MOUNTED_DIAGNOSTIC_CONTAINER_KEYS = new Set([
+  'mounted', 'originalBasis', 'basis', 'mountedHead', 'originalHead', 'headPair', 'capture', 'scopedOwner',
+  'adoption', 'error', 'records', 'unknown',
+]);
+const MOUNTED_DIAGNOSTIC_ALLOWED_KEYS = new Set([
+  ...MOUNTED_DIAGNOSTIC_NUMERIC_KEYS,
+  ...MOUNTED_DIAGNOSTIC_BOOLEAN_KEYS,
+  ...MOUNTED_DIAGNOSTIC_SCALAR_KEYS,
+  ...MOUNTED_DIAGNOSTIC_CONTAINER_KEYS,
+]);
+
+export type MountedDiagnosticSnapshot = {
+  status: 'observed' | 'UNKNOWN';
+  scope: string | 'UNKNOWN';
+  type: string | 'UNKNOWN';
+  records: unknown[];
+  accepted: number;
+  rejected: number;
+  overflow: number;
+  listenerErrors: number;
+};
+
+type MountedDiagnosticProjection = { accepted: true; record: Record<string, unknown> } | { accepted: false };
+
+function mountedOwnData(value: object, key: string): { present: boolean; value?: unknown } {
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor || !('value' in descriptor)) return { present: false };
+    return { present: true, value: descriptor.value };
+  } catch {
+    return { present: false };
+  }
+}
+
+function mountedSafeText(value: unknown): string | null | 'UNKNOWN' {
+  return value === null ? null : typeof value === 'string' && value.length <= 200 ? redactDiagnosticText(value) : 'UNKNOWN';
+}
+
+function mountedSafeField(key: string, value: unknown, depth: number): unknown {
+  if (depth > 4) return 'UNKNOWN';
+  if (MOUNTED_DIAGNOSTIC_NUMERIC_KEYS.has(key)) return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1_000_000_000 ? value : value === null ? null : 'UNKNOWN';
+  if (MOUNTED_DIAGNOSTIC_BOOLEAN_KEYS.has(key)) return typeof value === 'boolean' || value === null ? value : 'UNKNOWN';
+  if (MOUNTED_DIAGNOSTIC_SCALAR_KEYS.has(key)) return mountedSafeText(value);
+  if (!MOUNTED_DIAGNOSTIC_CONTAINER_KEYS.has(key) || !value || typeof value !== 'object') return 'UNKNOWN';
+  if (Array.isArray(value)) return value.slice(0, 8).map((item) => mountedSafeField(key, item, depth + 1));
+  const result: Record<string, unknown> = {};
+  for (const childKey of MOUNTED_DIAGNOSTIC_ALLOWED_KEYS) {
+    const child = mountedOwnData(value, childKey);
+    if (child.present) result[childKey] = mountedSafeField(childKey, child.value, depth + 1);
+  }
+  return result;
+}
+
+export function projectMountedDiagnosticDetail(
+  detail: unknown,
+  expectedScope = MOUNTED_DIAGNOSTIC_SCOPE,
+  expectedType = MOUNTED_DIAGNOSTIC_TYPE,
+): MountedDiagnosticProjection {
+  if (!detail || typeof detail !== 'object' || Array.isArray(detail)) return { accepted: false };
+  const version = mountedOwnData(detail, 'version');
+  const scope = mountedOwnData(detail, 'scope');
+  const type = mountedOwnData(detail, 'type');
+  if (version.value !== 1 || scope.value !== expectedScope || type.value !== expectedType) return { accepted: false };
+  const record: Record<string, unknown> = {};
+  for (const key of MOUNTED_DIAGNOSTIC_ALLOWED_KEYS) {
+    const field = mountedOwnData(detail, key);
+    if (field.present) record[key] = mountedSafeField(key, field.value, 0);
+  }
+  record.version = 1;
+  record.scope = expectedScope;
+  record.type = expectedType;
+  return { accepted: true, record };
+}
+
+/** Source for page.addInitScript; it intentionally has no imports or closures. */
+export function mountedDiagnosticInitScript(options: { scope: string; type: string; buffer: string; maxRecords: number }) {
+  const source = (config: { scope: string; type: string; buffer: string; maxRecords: number }) => {
+    const win = window as Window & Record<string, unknown>;
+    if (win.__timelineSaveDiagnosticsEnabled !== true) win.__timelineSaveDiagnosticsEnabled = true;
+    const own = (value: object, key: string) => {
+      try {
+        const descriptor = Object.getOwnPropertyDescriptor(value, key);
+        return descriptor && 'value' in descriptor ? { present: true, value: descriptor.value } : { present: false };
+      } catch { return { present: false }; }
+    };
+    const numeric = new Set(['sequence', 'time', 'generation', 'from', 'to', 'at', 'hold', 'speed', 'intents', 'pendingCounts']);
+    const booleans = new Set(['present']);
+    const scalars = new Set(['version', 'scope', 'type', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'sessionState', 'status', 'start', 'resolve', 'reject', 'code', 'class', 'stage']);
+    const containers = new Set(['mounted', 'originalBasis', 'basis', 'mountedHead', 'originalHead', 'headPair', 'capture', 'scopedOwner', 'adoption', 'adoption', 'error', 'records', 'unknown']);
+    const allowed = new Set([...numeric, ...booleans, ...scalars, ...containers]);
+    const safeText = (value: unknown) => value === null ? null : typeof value === 'string' && value.length <= 200 ? value : 'UNKNOWN';
+    const project = (key: string, value: unknown, depth: number): unknown => {
+      if (depth > 4) return 'UNKNOWN';
+      if (numeric.has(key)) return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1_000_000_000 ? value : value === null ? null : 'UNKNOWN';
+      if (booleans.has(key)) return typeof value === 'boolean' || value === null ? value : 'UNKNOWN';
+      if (scalars.has(key)) return safeText(value);
+      if (!containers.has(key) || !value || typeof value !== 'object') return 'UNKNOWN';
+      if (Array.isArray(value)) return value.slice(0, 8).map((item) => project(key, item, depth + 1));
+      const result: Record<string, unknown> = {};
+      for (const childKey of allowed) {
+        const child = own(value, childKey);
+        if (child.present) result[childKey] = project(childKey, child.value, depth + 1);
+      }
+      return result;
+    };
+    const state = { records: [] as unknown[], accepted: 0, rejected: 0, overflow: 0, listenerErrors: 0 };
+    const snapshot = () => ({ status: state.records.length > 0 ? 'observed' : 'UNKNOWN', scope: config.scope, type: config.type, buffer: config.buffer, records: state.records.slice(), accepted: state.accepted, rejected: state.rejected, overflow: state.overflow, listenerErrors: state.listenerErrors });
+    const snapshotName = '__timelineSaveDiagnosticsSnapshot';
+    win[snapshotName] = snapshot;
+    try {
+      window.addEventListener('timeline:save-diagnostic', (event: Event) => {
+        try {
+          const detail = own(event, 'detail');
+          let detailValue = detail.value;
+          if (!detail.present && typeof CustomEvent !== 'undefined' && event instanceof CustomEvent) {
+            try { detailValue = event.detail; } catch { detailValue = undefined; }
+          }
+          if (detailValue === undefined || !detailValue || typeof detailValue !== 'object' || Array.isArray(detailValue)) { state.rejected += 1; return; }
+          const source = detailValue as object;
+          const version = own(source, 'version');
+          const scope = own(source, 'scope');
+          const type = own(source, 'type');
+          if (version.value !== 1 || scope.value !== config.scope || type.value !== config.type) { state.rejected += 1; return; }
+          const record: Record<string, unknown> = {};
+          for (const key of allowed) {
+            const field = own(source, key);
+            if (field.present) record[key] = project(key, field.value, 0);
+          }
+          record.version = 1; record.scope = config.scope; record.type = config.type;
+          if (state.records.length >= config.maxRecords) { state.records.shift(); state.overflow += 1; }
+          state.records.push(record); state.accepted += 1;
+        } catch { state.listenerErrors += 1; }
+      });
+    } catch { state.listenerErrors += 1; }
+  };
+  const serialized = source.toString()
+    .replaceAll('__name(', '')
+    .replaceAll(',"own")', '')
+    .replaceAll(',"safeText")', '')
+    .replaceAll(',"project")', '')
+    .replaceAll(',"snapshot")', '');
+  return `(${serialized})(${JSON.stringify(options)});`;
+}
+
 const SENSITIVE_KEY = /^(?:body|principal|authorization|cookie|set-cookie|x-api-key|api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|client[_-]?secret|private[_-]?key|session)$/i;
 const SENSITIVE_ASSIGNMENT = /(["']?)([A-Za-z0-9_-]*(?:body|principal|authorization|cookie|set-cookie|x-api-key|api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|client[_-]?secret|private[_-]?key|session)[A-Za-z0-9_-]*)\1(\s*[:=]\s*)(?:"(?:\\.|[^"\\])*"?|'(?:\\.|[^'\\])*'?|\{[\s\S]*|\[[\s\S]*|[^\s,;}\]]+)/gi;
 
@@ -66,6 +225,8 @@ const DIAGNOSTIC_CONTAINERS = new Set([
   'sourceWindow', 'before', 'after', 'sourceIn', 'selectedClip', 'identity', 'tuple', 'available',
   'unknowns', 'losses', 'failureContext', 'wireHeads', 'requestProjections', 'keyProjection', 'bodyProjection', 'recovery', 'transport', 'captureData',
   'ui', 'errors', 'errorSignals', 'page', 'console', 'requestFailures', 'runtimeResponses',
+  'mountedObservations', 'mounted', 'originalBasis', 'basis', 'mountedHead', 'originalHead', 'headPair',
+  'scopedOwner', 'adoption', 'error', 'capture', 'records', 'unknown',
 ]);
 const DIAGNOSTIC_PRIMITIVES = new Set([
   'title', 'phase', 'projectId', 'projectSlug', 'timelineId', 'sourceId', 'originalClipId', 'rightId',
@@ -80,7 +241,9 @@ const DIAGNOSTIC_PRIMITIVES = new Set([
   'connectionState', 'runtimePanelVisible', 'recoveryVisible', 'recoveryMessage',
   'timelineErrorVisible', 'timelineErrorMessage', 'alertCount', 'type', 'signal', 'message',
   'error', 'count', 'summarized', 'truncated', 'outboxReadFailed', 'selectedTimelineMatchesExpectedId',
-  'known', 'capture', 'captureData', 'mountedDataRef', 'mountedObservations', 'callbackPatch', 'diagnostic',
+  'known', 'capture', 'captureData', 'mountedDataRef', 'callbackPatch', 'diagnostic', 'buffer', 'accepted', 'overflow', 'listenerErrors',
+  'version', 'scope', 'sequence', 'time', 'ownerAlias', 'sessionState', 'start', 'resolve', 'reject', 'code', 'class', 'stage',
+  'from', 'to', 'at', 'hold', 'speed', 'intents', 'pendingCounts',
   'schemaVersion', 'expectedStatus', 'capturedAt', 'durationMs', 'cappedConsole', 'captureResolution', 'sourceAsset', 'present', 'bytes', 'sameAsPrevious', 'sameAsIndex',
 ]);
 

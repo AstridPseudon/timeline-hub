@@ -15,6 +15,12 @@ import {
   formatDiagnostic,
   formatDiagnosticArtifact,
   formatPriorityDiagnostic,
+  MOUNTED_DIAGNOSTIC_EVENT,
+  MOUNTED_DIAGNOSTIC_MAX_RECORDS,
+  MOUNTED_DIAGNOSTIC_SCOPE,
+  MOUNTED_DIAGNOSTIC_TYPE,
+  mountedDiagnosticInitScript,
+  projectMountedDiagnosticDetail,
   logDiagnostic,
   logPriorityDiagnostic,
   redactDiagnosticText,
@@ -37,6 +43,99 @@ test('P1 diagnostics redact quoted credential fields before formatting', () => {
   assert.equal(output.includes('quoted-cookie'), false);
   assert.equal(output.includes('quoted-token'), false);
   assert.equal(redactDiagnosticText('{"authorization":{"value":"nested-secret"}}').includes('nested-secret'), false);
+});
+
+test('P1 mounted seam projection accepts only the agreed finite safe fields', () => {
+  const hostile = {
+    version: 1,
+    scope: MOUNTED_DIAGNOSTIC_SCOPE,
+    type: MOUNTED_DIAGNOSTIC_TYPE,
+    sequence: 4,
+    phase: 'capture.resolve',
+    projectId: 'project-safe',
+    timelineId: 'timeline-safe',
+    clipId: 'clip-safe',
+    from: 0,
+    to: 3,
+    speed: 1,
+    token: 'must-not-enter',
+    body: 'must-not-enter',
+    get status() { throw new Error('hostile getter'); },
+    capture: { start: 'observed', resolve: 'observed', reject: null, rawBody: 'must-not-enter' },
+  };
+  const result = projectMountedDiagnosticDetail(hostile);
+  assert.equal(result.accepted, true);
+  if (!result.accepted) return;
+  assert.deepEqual(result.record, {
+    version: 1,
+    scope: MOUNTED_DIAGNOSTIC_SCOPE,
+    type: MOUNTED_DIAGNOSTIC_TYPE,
+    sequence: 4,
+    phase: 'capture.resolve',
+    projectId: 'project-safe',
+    timelineId: 'timeline-safe',
+    clipId: 'clip-safe',
+    from: 0,
+    to: 3,
+    speed: 1,
+    capture: { start: 'observed', resolve: 'observed', reject: null },
+  });
+  const artifact = JSON.parse(formatDiagnosticArtifact({ mountedObservations: {
+    status: 'observed', scope: MOUNTED_DIAGNOSTIC_SCOPE, type: MOUNTED_DIAGNOSTIC_TYPE,
+    records: [result.record], accepted: 1, rejected: 0, overflow: 0, listenerErrors: 0,
+  } }));
+  assert.equal(artifact.mountedObservations.records[0].capture.resolve, 'observed');
+  assert.equal(JSON.stringify(artifact).includes('must-not-enter'), false);
+});
+
+test('P1 mounted seam rejects foreign metadata and keeps missing emission UNKNOWN', () => {
+  assert.equal(projectMountedDiagnosticDetail({ version: 2, scope: MOUNTED_DIAGNOSTIC_SCOPE, type: MOUNTED_DIAGNOSTIC_TYPE }).accepted, false);
+  assert.equal(projectMountedDiagnosticDetail({ version: 1, scope: 'foreign', type: MOUNTED_DIAGNOSTIC_TYPE }).accepted, false);
+  assert.equal(projectMountedDiagnosticDetail({ version: 1, scope: MOUNTED_DIAGNOSTIC_SCOPE, type: 'foreign' }).accepted, false);
+
+  const listeners = new Map<string, (event: unknown) => void>();
+  const window = {
+    __timelineSaveDiagnosticsEnabled: false,
+    addEventListener: (name: string, listener: (event: unknown) => void) => { listeners.set(name, listener); },
+  } as Record<string, unknown>;
+  runInNewContext(mountedDiagnosticInitScript({
+    scope: MOUNTED_DIAGNOSTIC_SCOPE,
+    type: MOUNTED_DIAGNOSTIC_TYPE,
+    buffer: 'case1',
+    maxRecords: MOUNTED_DIAGNOSTIC_MAX_RECORDS,
+  }), { window, Object, Set, Number, JSON });
+  const snapshot = window.__timelineSaveDiagnosticsSnapshot as () => Record<string, unknown>;
+  assert.equal(window.__timelineSaveDiagnosticsEnabled, true);
+  assert.equal(snapshot().status, 'UNKNOWN');
+  assert.equal(Array.isArray(snapshot().records), true);
+});
+
+test('P1 mounted seam listener is bounded and disposable under hostile events', () => {
+  const listeners = new Map<string, (event: unknown) => void>();
+  const window = {
+    __timelineSaveDiagnosticsEnabled: false,
+    addEventListener: (name: string, listener: (event: unknown) => void) => { listeners.set(name, listener); },
+  } as Record<string, unknown>;
+  runInNewContext(mountedDiagnosticInitScript({
+    scope: MOUNTED_DIAGNOSTIC_SCOPE,
+    type: MOUNTED_DIAGNOSTIC_TYPE,
+    buffer: 'case2',
+    maxRecords: 2,
+  }), { window, Object, Set, Number, JSON });
+  const listener = listeners.get(MOUNTED_DIAGNOSTIC_EVENT);
+  assert.ok(listener);
+  listener!({ detail: { version: 1, scope: MOUNTED_DIAGNOSTIC_SCOPE, type: MOUNTED_DIAGNOSTIC_TYPE, sequence: 1, status: 'accepted', token: 'secret' } });
+  listener!({ detail: { version: 1, scope: MOUNTED_DIAGNOSTIC_SCOPE, type: MOUNTED_DIAGNOSTIC_TYPE, sequence: 2, status: 'merged' } });
+  listener!({ detail: { version: 1, scope: MOUNTED_DIAGNOSTIC_SCOPE, type: MOUNTED_DIAGNOSTIC_TYPE, sequence: 3, status: 'rejected' } });
+  listener!({ detail: new Proxy({}, { get() { throw new Error('detail getter'); } }) });
+  const snapshot = (window.__timelineSaveDiagnosticsSnapshot as () => Record<string, any>)();
+  assert.equal(snapshot.buffer, 'case2');
+  assert.equal(snapshot.accepted, 3);
+  assert.equal(snapshot.rejected, 1);
+  assert.equal(snapshot.overflow, 1);
+  assert.equal(snapshot.listenerErrors, 0);
+  assert.equal(snapshot.records.length, 2);
+  assert.equal(JSON.stringify(snapshot.records).includes('secret'), false);
 });
 
 test('P1 diagnostics bound breadth, depth, arrays, strings, and bytes', () => {
