@@ -108,6 +108,8 @@ class RequestCommitPort:
         self.__authorize = authorize
         self.__closed = False
         self.__closures = {}
+        self.__source_closures = {}
+        self.__source_refs = {}
         self.__shots = {}
         self.__media = {}
         self.__raw_media = {}
@@ -221,6 +223,9 @@ class RequestCommitPort:
         return self._read(read)
 
     def revision_closure(self, revision_id):
+        if isinstance(revision_id, dict):
+            return self.source_revision_closure(revision_id)
+
         def read():
             if revision_id in self.__closures:
                 return self.__closures[revision_id]
@@ -244,6 +249,52 @@ class RequestCommitPort:
                     raise refused("history_unavailable", "base pins disagree")
             value = self.__store.revision_closure(self.__project, self.__timeline, revision_id)
             self.__closures[revision_id] = copy.deepcopy(value)
+            self.__declared.extend(objects(value))
+            return value
+        return self._read(read)
+
+    def source_revision_closure(self, source_ref):
+        """Capture one exact, authenticated source-timeline closure.
+
+        Source authority is request-private.  It does not change the
+        destination scope used by ordinary ``revision_closure`` or grant a
+        provider a general project read capability.
+        """
+        if (not isinstance(source_ref, dict)
+                or set(source_ref) != {"project_id", "timeline_id", "revision_id",
+                                       "publication_id", "content_digest"}
+                or any(not isinstance(source_ref[key], str) or not source_ref[key]
+                       for key in source_ref)):
+            raise ValidationError("source reference requires project, timeline, revision, publication, and digest")
+        ref = copy.deepcopy(source_ref)
+        key = canonical_json(ref)
+
+        def read():
+            if ref["project_id"] != self.__project:
+                raise refused("dependency_unavailable", "source project is outside the destination project")
+            if ref["timeline_id"] == self.__timeline:
+                raise refused("dependency_unavailable", "source timeline must differ from the destination timeline")
+            # Reuse the authenticated request identity and the service's
+            # canonical realm/membership check for the source scope.  The
+            # callback is not a caller-supplied source grant.
+            self.__service._timeline_authorize(
+                ref["project_id"], ref["timeline_id"], self.__authorize,
+                mutation=False,
+            )()
+            if key in self.__source_closures:
+                return self.__source_closures[key]
+            value = self.__store.source_revision_closure(
+                ref["project_id"], ref["timeline_id"], ref["revision_id"],
+                ref["publication_id"], ref["content_digest"],
+            )
+            if (value["project_id"], value["timeline_id"],
+                    value["parent_revision"]["revision_id"],
+                    value["parent_revision"]["content_digest"]) != (
+                        ref["project_id"], ref["timeline_id"], ref["revision_id"],
+                        ref["content_digest"]):
+                raise refused("dependency_unavailable", "source closure identity changed")
+            self.__source_closures[key] = copy.deepcopy(value)
+            self.__source_refs[key] = copy.deepcopy(ref)
             self.__declared.extend(objects(value))
             return value
         return self._read(read)
@@ -322,6 +373,8 @@ class RequestCommitPort:
         def read():
             reachable = [item for closure in self.__closures.values()
                          for item in closure["dependency_manifest"]["documents"]]
+            reachable.extend(item for closure in self.__source_closures.values()
+                             for item in closure["dependency_manifest"]["documents"])
             reachable.extend(item for closure in self.__shots.values() for item in closure["documents"])
             reachable.extend(self.__history_pins)
             if pin not in self.__declared and pin not in reachable:
@@ -415,6 +468,16 @@ class RequestCommitPort:
         for revision, captured in self.__closures.items():
             if self.__store.revision_closure(self.__project, self.__timeline, revision) != captured:
                 raise refused("dependency_unavailable", "captured revision changed")
+        for key, captured in self.__source_closures.items():
+            ref = self.__source_refs[key]
+            self.__service._timeline_authorize(
+                ref["project_id"], ref["timeline_id"], self.__authorize,
+                mutation=False,
+            )()
+            if self.__store.source_revision_closure(
+                    ref["project_id"], ref["timeline_id"], ref["revision_id"],
+                    ref["publication_id"], ref["content_digest"]) != captured:
+                raise refused("dependency_unavailable", "captured source revision changed")
         for (shot, revision), captured in self.__shots.items():
             if self.__store.shot_closure(self.__project, shot, revision) != captured:
                 raise refused("dependency_unavailable", "captured shot changed")
