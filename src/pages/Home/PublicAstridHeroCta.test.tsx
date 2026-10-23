@@ -16,9 +16,12 @@ describe('PublicAstridHeroCta', () => {
     cleanup();
   });
 
-  it('opens on the app step only; the computer step now lives in the editor', () => {
+  it('opens the welcome first and keeps app installation optional', () => {
     render(<PublicAstridHeroCta active />);
-    fireEvent.click(screen.getByRole('button', { name: 'Set up Astrid' }));
+    const start = screen.getByRole('link', { name: 'Try Astrid' });
+    expect(start).toHaveAttribute('href', '/tools/video-editor');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Get the app' }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Get the Astrid app' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Use it in the browser' })).toBeInTheDocument();

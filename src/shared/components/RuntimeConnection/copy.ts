@@ -9,7 +9,7 @@ import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection
  *
  * Rules for this file:
  * - Screen headings, body text, command lines and Copy labels live here.
- * - Visible text says Astrid and never names a Runtime, workspace, port or command outside the code block.
+ * - Routine recovery text says Astrid; first-run explanation names Runtime so people understand what they are connecting.
  * - Straight apostrophes only: the journey matches `Astrid isn't running` exactly.
  * - Gate states name their screens: connecting, blocked, set_up, not_running, update_needed and connected.
  *   Permission, pending and phone screens come from browser context. Polling never adds a checking indicator.
@@ -85,6 +85,7 @@ interface Message {
 }
 
 export interface RuntimeConnectionCopy {
+  readonly firstRun: { readonly title: string; readonly sentence: string };
   readonly commands: typeof ASTRID_COMMANDS;
   /** Accessible name for the panel region. */
   readonly panelLabel: string;
@@ -140,6 +141,10 @@ export interface RuntimeConnectionCopy {
 }
 
 export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
+  firstRun: {
+    title: 'Connect your machine',
+    sentence: "Astrid's Runtime runs on your machine. Connect it to work with your files and generate using your own GPU or connected providers.",
+  },
   commands: ASTRID_COMMANDS,
 
   panelLabel: 'Connect to Astrid',
@@ -156,7 +161,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     connect: 'Connect',
     pending: {
       title: 'Choose Allow in {browser}',
-      sentence: '{browser} is asking at the top left of this window.',
+      sentence: '{browser} is asking at the top left of this window. This is how we access the data and tools to run this locally.',
       /** The word on the arrow that points at the prompt, as the install dialog's says "Up here". */
       pointer: 'Up here',
     },

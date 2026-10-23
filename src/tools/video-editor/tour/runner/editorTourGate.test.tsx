@@ -35,7 +35,7 @@ function fakeRuntime() {
 
 /** What VideoEditorPage does: the tour host runs with the user's selection once the page is mounted. */
 function EditorPage() {
-  useEditorTourHost(true);
+  useEditorTourHost();
   return <div data-testid="editor" />;
 }
 
@@ -50,7 +50,7 @@ afterEach(() => {
 });
 
 describe('the editor tour and the connection gate', () => {
-  it('cannot start under the connection card: the page mounts beneath it while it hands over, and the tour waits for it to leave', async () => {
+  it('does not start a second tour when the connected editor mounts or its connection card leaves', async () => {
     const runtime = fakeRuntime();
     let leave: (() => void) | null = null;
     render(
@@ -79,6 +79,6 @@ describe('the editor tour and the connection gate', () => {
 
     act(() => leave!());
     await waitFor(() => expect(screen.queryByTestId('panel')).toBeNull());
-    await waitFor(() => expect(getEditorTourState().status).toBe('running'));
+    expect(getEditorTourState().status).toBe('idle');
   });
 });

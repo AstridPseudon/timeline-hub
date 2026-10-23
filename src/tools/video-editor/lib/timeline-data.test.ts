@@ -7,6 +7,8 @@ import {
   loadTranscript,
   rowsToConfig,
 } from '@/tools/video-editor/lib/timeline-data';
+import { previewTimelineMutation } from '@/tools/video-editor/lib/timeline-mutation-engine';
+import { splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils';
 import { decideRenderRoute } from '@/tools/video-editor/lib/renderRouter';
 import { serializeForDisk, validateSerializedConfig } from '@/tools/video-editor/lib/serialize';
 import type { AssetResolver } from '@/tools/video-editor/data/AssetResolver';
@@ -547,14 +549,92 @@ describe('timeline data extension project data round trip', () => {
 
     const data = await buildTimelineData(config, assets);
 
-    expect(data.meta['clip-1']?.label).toBe('first take.mp4');
-    expect(data.meta['clip-2']?.label).toBe('Video 2');
-    expect(data.meta['clip-3']?.label).toBe('A quiet room tone');
+    expect(data.meta['clip-1']?.displayName).toBe('first take.mp4');
+    expect(data.meta['clip-2']?.displayName).toBe('Video 2');
+    expect(data.meta['clip-3']?.displayName).toBe('A quiet room tone');
+    // The display name is derived; none of it (nor the junk labels clip-1 and clip-2 carried) is a stored label.
+    expect(data.meta['clip-1']?.label).toBeUndefined();
+    expect(data.meta['clip-2']?.label).toBeUndefined();
+    expect(data.meta['clip-3']?.label).toBeUndefined();
     expect(data.resolvedConfig.clips.map(({ label }) => label)).toEqual([
       'first take.mp4',
       'Video 2',
       'A quiet room tone',
     ]);
+  });
+});
+
+describe('clip label is persisted only when a user or agent set it', () => {
+  const baseConfig = (clip: Record<string, unknown> = {}): TimelineConfig => ({
+    output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+    tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+    clips: [{ id: 'clip-1', at: 0, track: 'V1', clipType: 'media', asset: 'asset-1', from: 0, to: 2, ...clip }],
+  });
+  const assetsNamed = (name: string): AssetRegistry => ({
+    assets: { 'asset-1': { type: 'video/mp4', file: '/media/opaque-video-1', media_id: 'media-1', original_filename: name } },
+  });
+  const save = (data: Awaited<ReturnType<typeof buildTimelineData>>) =>
+    rowsToConfig(data.rows, data.meta, data.output, data.clipOrder, data.tracks, data.config.pinnedShotGroups, data.config);
+
+  it('save, load, then the asset changes: the name follows the asset', async () => {
+    const first = await buildTimelineData(baseConfig(), assetsNamed('first take.mp4'));
+    expect(first.meta['clip-1']?.displayName).toBe('first take.mp4');
+
+    const saved = save(first);
+    expect(saved.clips[0]).not.toHaveProperty('label');
+
+    const reloaded = await buildTimelineData(saved, assetsNamed('second take.mp4'));
+    expect(reloaded.meta['clip-1']?.displayName).toBe('second take.mp4');
+    expect(reloaded.resolvedConfig.clips[0]?.label).toBe('second take.mp4');
+  });
+
+  it('keeps a label an agent or user set, across save and load and an asset change', async () => {
+    const first = await buildTimelineData(baseConfig({ label: 'Hero shot' }), assetsNamed('first take.mp4'));
+    expect(first.meta['clip-1']).toMatchObject({ label: 'Hero shot', displayName: 'Hero shot' });
+
+    const saved = save(first);
+    expect(saved.clips[0]?.label).toBe('Hero shot');
+
+    const reloaded = await buildTimelineData(saved, assetsNamed('second take.mp4'));
+    expect(reloaded.meta['clip-1']).toMatchObject({ label: 'Hero shot', displayName: 'Hero shot' });
+  });
+
+  it('a command edit of the resolved config does not save the derived name, but saves a label it sets', async () => {
+    const data = await buildTimelineData(baseConfig(), assetsNamed('first take.mp4'));
+    const edit = (patch: Record<string, unknown>) => {
+      const result = previewTimelineMutation(data, {
+        type: 'config',
+        resolvedConfig: { ...data.resolvedConfig, clips: data.resolvedConfig.clips.map((clip) => ({ ...clip, ...patch })) },
+      });
+      if (!result.ok) throw new Error('mutation failed');
+      return result.nextData.config.clips[0];
+    };
+
+    expect(edit({ volume: 0.5 })).toMatchObject({ volume: 0.5 });
+    expect(edit({ volume: 0.5 })).not.toHaveProperty('label');
+    expect(edit({ label: 'Hero shot' })).toMatchObject({ label: 'Hero shot' });
+  });
+
+  it('splitting a clip saves no derived label on either half, and keeps one that was set', async () => {
+    const split = async (clip: Record<string, unknown>) => {
+      const data = await buildTimelineData(baseConfig({ to: 4, ...clip }), assetsNamed('first take.mp4'));
+      const { config } = splitClipAtPlayhead(data.resolvedConfig, 'clip-1', 2);
+      const result = previewTimelineMutation(data, { type: 'config', resolvedConfig: config });
+      if (!result.ok) throw new Error('mutation failed');
+      expect(result.nextData.config.clips).toHaveLength(2);
+      return result.nextData.config.clips;
+    };
+
+    for (const half of await split({})) expect(half).not.toHaveProperty('label');
+    for (const half of await split({ label: 'Hero shot' })) expect(half.label).toBe('Hero shot');
+  });
+
+  it('treats a label saved before this rule (equal to the current derived name) as unset', async () => {
+    const legacy = await buildTimelineData(baseConfig({ label: 'first take.mp4' }), assetsNamed('first take.mp4'));
+    expect(legacy.meta['clip-1']?.label).toBeUndefined();
+
+    const reloaded = await buildTimelineData(save(legacy), assetsNamed('second take.mp4'));
+    expect(reloaded.meta['clip-1']?.displayName).toBe('second take.mp4');
   });
 });
 

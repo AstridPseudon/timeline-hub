@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSe
 // Import from new modules
 import { STATUS_GROUPS, type FilterGroup } from './constants';
 import { PaginationControls } from './components/PaginationControls';
+import { TasksPaneSurface, TasksPaneChatSlot } from './components/TasksPaneSurface';
 import { useTasksLightbox } from './hooks/useTasksLightbox';
 import { useShotActions } from './hooks/useShotActions';
 import { useTasksPaneController } from './hooks/useTasksPaneController';
@@ -320,14 +321,8 @@ const TasksPaneComponent: React.FC = () => {
           zIndex: UI_Z_LAYERS.TASKS_PANE_CONTENT,
         }}
       >
-        <div
-          {...paneProps}
-          data-tasks-pane="true"
-          data-scroll-lock-scrollable="true"
-          className={cn(
-            'absolute top-0 right-0 h-full w-full bg-sidebar/95 border-l border-sidebar-border text-sidebar-foreground shadow-xl transform transition-transform duration-300 ease-smooth flex flex-col pointer-events-auto',
-            transformClass
-          )}
+        <TasksPaneSurface {...paneProps}
+          className={cn('absolute top-0 right-0 transform transition-transform duration-300 ease-smooth', transformClass)}
         >
           {/* The pane-open-transition pointer-events gate is applied only to
               the tasks half (the original gated content). The chat half is the
@@ -637,23 +632,15 @@ const TasksPaneComponent: React.FC = () => {
             )}
             {/* Chat remains mounted while tasks peek, pin, or collapse. */}
             {showChatHalf && (
-              <div
-                className={cn(
-                  // bg sits on the wrapper, NOT inside AgentChatPanel, so the
-                  // pane bg → chat bg transition happens precisely at the
-                  // border-t-2 divider line.
-                  'overflow-hidden border-t-2 border-sidebar-border relative bg-background/60',
-                  'flex-1 min-h-0'
-                )}
-              >
+              <TasksPaneChatSlot>
                 <AgentChatPanel
                   isExpanded={!showTasksHalf}
                   onSessionSelectorOpenChange={setAgentSessionSelectorOpen}
                 />
-              </div>
+              </TasksPaneChatSlot>
             )}
           </div>
-        </div>
+        </TasksPaneSurface>
       </div>
 
       {/* Centralized MediaLightbox */}

@@ -54,9 +54,6 @@ vi.mock('@/features/gallery/components/GenerationsPane/GenerationsPane', () => (
 vi.mock('@/shared/components/SettingsModal/SettingsModal', () => ({
   SettingsModal: () => <div data-testid="settings-modal" />,
 }));
-vi.mock('@/shared/components/modals/OnboardingModal', () => ({
-  OnboardingModal: () => null,
-}));
 vi.mock('@/shared/components/AstridLoading', () => ({
   AstridLoading: () => <div data-testid="astrid-loading" />,
 }));
@@ -85,9 +82,6 @@ vi.mock('./hooks/useSettingsModal', () => ({
 }));
 vi.mock('./hooks/useReplayEditorTour', () => ({
   useReplayEditorTour: () => undefined,
-}));
-vi.mock('./hooks/useOnboardingFlow', () => ({
-  useOnboardingFlow: () => ({ showOnboardingModal: false, handleOnboardingClose: vi.fn() }),
 }));
 vi.mock('./hooks/useResetCurrentShotOnRouteChange', () => ({
   useResetCurrentShotOnRouteChange: () => undefined,

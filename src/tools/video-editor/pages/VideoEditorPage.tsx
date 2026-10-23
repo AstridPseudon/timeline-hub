@@ -343,8 +343,8 @@ export default function VideoEditorPage() {
   });
 
   const tourSelection = useEditorTourSelection();
-  // The trigger sees the USER's selection, which the tour's own selection never replaces.
-  useEditorTourHost(!!userProviderSelection);
+  // Register explicit replays; first-run welcome already finished before this editor opens.
+  useEditorTourHost();
   const providerSelection = tourSelection ?? userProviderSelection;
 
   // dataKind V1 golden path (groken round 4): DEV-only fixture provider so the

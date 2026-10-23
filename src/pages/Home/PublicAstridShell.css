@@ -262,9 +262,14 @@
 }
 .astrid-install-command code span { color: rgba(29, 25, 20, .55); }
 .astrid-install-command svg { flex: 0 0 auto; }
-.astrid-hero-cta { display: grid; }
+.astrid-hero-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+}
 .astrid-hero-cta > * {
-  grid-area: 1 / 1;
   transition:
     opacity 280ms ease,
     translate 420ms cubic-bezier(.22,.61,.36,1),
@@ -280,8 +285,18 @@
   filter: blur(4px);
   pointer-events: none;
 }
-/* The outgoing button sinks and blurs away; the incoming one follows a beat later, rising into place. */
+/* Keep each action in its own row while the staged hero states fade between them. */
 .astrid-hero-cta > [data-active="true"] { transition-delay: 70ms, 70ms, 70ms, 70ms, 0s; }
+.astrid-hero-cta-secondary {
+  min-height: 36px;
+  justify-content: center;
+  padding: 6px 12px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--astrid-muted);
+  font-size: 13px;
+}
+.astrid-hero-cta-secondary:hover { color: var(--astrid-ink); text-decoration: underline; text-underline-offset: 3px; }
 .astrid-hero-note {
   /* Pinned to the bottom of the hero column, level with the stage's bottom edge: a quiet signature
      line of muted social icons. */
@@ -1537,23 +1552,9 @@
     translate: 0 5px;
     pointer-events: none;
   }
-  /* Keep the orange shell painted continuously; only the transparent action layers fade.
-     Their shared grid cell also keeps the label and affordance anchored during reversals. */
-  .astrid-hero-cta { height: 52px; border-radius: 11px; background: #ed6b23; }
-  .astrid-hero-cta:has(> [data-active="true"]:hover) { background: #f17b35; }
-  .astrid-hero-cta > .astrid-button {
-    min-width: 0;
-    height: 52px;
-    background: transparent;
-    border-color: transparent;
-    translate: none;
-    scale: none;
-    filter: none;
-    transition: opacity 220ms ease 60ms, visibility 0s;
-  }
-  .astrid-hero-cta > .astrid-button[data-active="false"] {
-    transition: opacity 120ms ease, visibility 0s 120ms;
-  }
+  /* The main action and quiet app-download option occupy separate rows. */
+  .astrid-hero-cta { gap: 2px; }
+  .astrid-hero-cta > .astrid-hero-cta-secondary { min-height: 36px; height: auto; }
   .astrid-hero-cta > .astrid-button > :not(.astrid-visually-hidden) {
     transition: translate 280ms cubic-bezier(.22,.61,.36,1);
   }

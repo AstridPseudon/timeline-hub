@@ -45,10 +45,7 @@ test('full/dialog save, reopen, canonical import, selected agent CAS and host Ta
     const evidence = (window as EvidenceWindow).editorWorkflowEvidence;
     return Promise.all(['workflow-full', 'workflow-dialog'].map(id => evidence.provider.loadTimeline(id)));
   });
-  // The edit (fade, hold, track) is what must agree. The full editor's own save also persists the clip's readable
-  // display name (`label`, from the asset's filename); the agent's patch on the dialog's head does not write one.
-  const withoutLabel = ({ label: _label, ...clip }: (typeof pair)[number]['config']['clips'][number]) => clip;
-  expect(withoutLabel(pair[0].config.clips[0])).toEqual(withoutLabel(pair[1].config.clips[0]));
+  expect(pair[0].config.clips[0]).toEqual(pair[1].config.clips[0]);
   await page.getByTestId('import-dialog').click();
   await expect(page.getByTestId('result-dialog')).toContainText('"ok":true');
   const importedClipId = JSON.parse((await page.getByTestId('result-dialog').textContent())!).data.clipId;

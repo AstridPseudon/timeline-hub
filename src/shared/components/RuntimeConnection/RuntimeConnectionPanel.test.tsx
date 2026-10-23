@@ -55,6 +55,17 @@ const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
 ];
 
 describe('RuntimeConnectionPanel', () => {
+  it('explains first-run local work in the existing connection card without duplicate controls', () => {
+    const connect = vi.fn();
+    render(<RuntimeConnectionPanel firstRun connection={connectionFor({ status: 'connecting' }, { awaitingConnect: true, connect })} />);
+    expect(screen.getAllByRole('heading')).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'Connect your machine' })).toBeInTheDocument();
+    expect(screen.getByText(/own GPU or connected providers/)).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    expect(connect).toHaveBeenCalledOnce();
+  });
+
   it.each(ALL_SCREENS)('%s: speaks of Astrid and never names a Runtime, workspace, port or command', (_name, connection) => {
     panel(connection());
     expect(shownText()).toContain('Astrid');
@@ -170,7 +181,7 @@ describe('RuntimeConnectionPanel', () => {
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'pending');
     expect(screen.getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeInTheDocument();
-    expect(screen.getByText('Chrome is asking at the top left of this window.')).toBeInTheDocument();
+    expect(screen.getByText('Chrome is asking at the top left of this window. This is how we access the data and tools to run this locally.')).toBeInTheDocument();
     expect(screen.getByText(COPY.waiting)).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByText('Connecting…')).not.toBeInTheDocument();
@@ -191,7 +202,7 @@ describe('RuntimeConnectionPanel', () => {
     inEdge();
     panel(connectionFor({ status: 'connecting' }, { awaitingConnect: true, isChecking: true }));
     expect(screen.getByRole('heading', { name: 'Choose Allow in Edge' })).toBeInTheDocument();
-    expect(screen.getByText('Edge is asking at the top left of this window.')).toBeInTheDocument();
+    expect(screen.getByText('Edge is asking at the top left of this window. This is how we access the data and tools to run this locally.')).toBeInTheDocument();
     cleanup();
 
     panel(connectionFor({ status: 'connecting' }, { awaitingConnect: true }));

@@ -110,3 +110,28 @@ export function deriveTimelineClipDisplayNames(
 
   return labels;
 }
+
+/**
+ * The names a set of clips shows, and the names they would show with no `label` at all. A `label` is explicit
+ * (set by a user or agent) only when the derivation used it and it is not just the name the clip gets anyway;
+ * anything else, such as a saved copy of the filename, is derived and must not be saved as a label.
+ */
+export function deriveClipNameBasis(
+  clips: readonly TimelineClip[],
+  registry: Readonly<Record<string, AssetRegistryEntry>>,
+  tracks: readonly TrackDefinition[],
+): { shown: Map<string, string>; natural: Map<string, string> } {
+  return {
+    shown: deriveTimelineClipDisplayNames(clips, registry, tracks),
+    natural: deriveTimelineClipDisplayNames(clips.map(({ label: _label, ...clip }) => clip), registry, tracks),
+  };
+}
+
+export function isExplicitClipLabel(
+  label: string | undefined,
+  clipId: string,
+  basis: { shown: ReadonlyMap<string, string>; natural: ReadonlyMap<string, string> },
+): boolean {
+  const stored = label?.trim();
+  return stored !== undefined && stored === basis.shown.get(clipId) && stored !== basis.natural.get(clipId);
+}
