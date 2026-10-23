@@ -310,7 +310,36 @@ def test_http_note_conflict_reruns_public_function_from_verified_peer_document(r
     assert stored["records"]["steps"] == data["steps"]
     record = stored["records"]["commands"][0]
     assert {"writes", "reads", "selections", "bindings", "created", "dependencies", "derived_writes"} <= record.keys()
-    assert record["writes"] and record["bindings"] and record["dependencies"]
+    assert record["writes"] == [{
+        "ref": "parent/clip:clip-a", "path": NOTE_PATH[2:],
+        "before": retry_change["before"],
+        "after": {"state": "present", "value": retry_change["value"]},
+    }]
+    # C0 §1 keeps raw captures separate from the step's undo dependency union.
+    assert record["selections"] == record["created"] == record["dependencies"] == []
+    scope = {"kind": "scope", "ref": "timeline", "path": []}
+    assert data["steps"][0] == {
+        **retry_body["steps"][0],
+        "patch": [{**retry_change, "path": CANONICAL_NOTE_PATH}],
+        "dependencies": [scope, {
+            "kind": "field", "ref": "parent", "path": CANONICAL_NOTE_PATH,
+            "state": retry_change["before"],
+        }],
+    }
+    atomic_bindings = [binding for binding in record["bindings"]
+                       if binding["key"] == "commit.atomic"]
+    assert [binding["physical_ref"] for binding in atomic_bindings] == [
+        "parent", "shot-revision:shot-1", "internal-revision:internal-1",
+    ]
+    for binding in atomic_bindings:
+        assert binding["ref"] == "timeline"
+        assert binding["path"] == []
+        assert binding["boundary"] == {
+            "base_revision_id": peer_pin["revision_id"],
+            "base_publication_id": peer_pin["publication_id"],
+            "evaluated_head": peer_pin, "step_id": "step-1",
+            "command_ordinal": 0, "phase": "input",
+        }
     assert data["steps"][0]["patch"] == [{**retry_change, "path": CANONICAL_NOTE_PATH}]
     assert data["steps"][0]["dependencies"]
     assert {"kind": "scope", "ref": "timeline", "path": []} in data["steps"][0]["dependencies"]
