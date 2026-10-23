@@ -3,6 +3,7 @@ import { Button } from '@/shared/components/ui/button.tsx';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { setRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
 import { CopyInstallCommand } from './CopyInstallCommand.tsx';
+import { UI_Z_LAYERS } from '@/shared/lib/uiLayers.ts';
 import { RUNTIME_CONNECTION_COPY as COPY, withCommandShell } from './copy.ts';
 import { useRuntimeRestartWatch } from './useRuntimeRestartWatch.ts';
 
@@ -16,7 +17,9 @@ export interface RuntimeConnectionPillProps {
 }
 
 /** Fixed bottom-right with a 16px gutter; on a phone it sits above the floating lock/gallery toolbar. */
-const CARD_CLASS = 'fixed bottom-20 right-4 z-50 w-[calc(100%-2rem)] max-w-sm space-y-3 rounded-2xl border border-border bg-card p-5 text-center text-card-foreground shadow-md sm:bottom-4';
+const CARD_CLASS = 'fixed bottom-20 right-4 w-[calc(100%-2rem)] max-w-sm space-y-3 rounded-2xl border border-border bg-card p-5 text-center text-card-foreground shadow-md sm:bottom-4';
+
+const CARD_STYLE = { zIndex: UI_Z_LAYERS.RUNTIME_RECOVERY_CARD } as const;
 
 function CardText({ title, sentence }: { title: string; sentence: string }) {
   return (
@@ -61,7 +64,7 @@ export function RuntimeConnectionPill({
 
   if (restart === 'stopped') {
     return (
-      <div data-testid="runtime-connection-status" data-state="stopped" role="alert" className={CARD_CLASS}>
+      <div data-testid="runtime-connection-status" data-state="stopped" role="alert" className={CARD_CLASS} style={CARD_STYLE}>
         <CardText title={COPY.stopped.title} sentence={withCommandShell(COPY.stopped.sentence)} />
         <CopyInstallCommand mode="install" />
       </div>
@@ -69,7 +72,7 @@ export function RuntimeConnectionPill({
   }
 
   return (
-    <div data-testid="runtime-connection-status" data-state="restarted" role="alert" className={CARD_CLASS}>
+    <div data-testid="runtime-connection-status" data-state="restarted" role="alert" className={CARD_CLASS} style={CARD_STYLE}>
       <CardText title={COPY.restarted.title} sentence={COPY.restarted.sentence} />
       <Button type="button" className="w-full sm:w-auto" onClick={onReload}>{COPY.restarted.reload}</Button>
     </div>

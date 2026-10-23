@@ -31,7 +31,7 @@
  *   a visible install/update command and a button named "Copy" inside that panel
  *   a button named "Reload" in the "Astrid restarted" card; the "Astrid stopped" card clears by itself
  */
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page, type Route } from '@playwright/test';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -254,9 +254,18 @@ test.describe('permission gate and readiness (App)', () => {
       await expect(panel.getByRole('button', { name: UI.connect })).toHaveCount(0);
       expect(doorRequests, 'a fresh profile does not probe the door while showing setup').toEqual([]);
 
+      // The installer handoff asks Chrome at once. Chrome holds the door request until the person answers its prompt, and headless
+      // Chromium has no prompt (it fails the request instead, which sends the page back to setup), so the test holds the request
+      // the way the prompt does and releases it with the grant.
+      const heldRequests: Route[] = [];
+      let promptOpen = true;
+      await page.route(`http://127.0.0.1:${DOOR_PORT}/**`, (route) => (promptOpen ? void heldRequests.push(route) : void route.continue()));
       await page.goto(`${harness.origin}/?connect=1#continue`);
       await expect(page.locator(UI.panel).getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeVisible();
+      await expect.poll(() => heldRequests.length, { message: 'the page asked the door once the installer handoff took it in' }).toBeGreaterThan(0);
+      promptOpen = false;
       await context.grantPermissions([LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
+      await Promise.all(heldRequests.splice(0).map((route) => route.continue().catch(() => undefined)));
       await expectConnected(page);
       expect(doorRequests.length).toBeGreaterThan(0);
     } finally {
@@ -943,6 +952,7 @@ test.describe('pack extensions (App)', () => {
 // The seeded timeline has no clips, so this case opens the harness's media timeline (an image clip and a video clip, both Runtime objects).
 test.describe('media (App)', () => {
   test('App: the seeded image and video thumbnail render from the door', async ({ page, harness }) => {
+    skipWhen('direct-journey-ffmpeg');
     const { image, video } = harness.seed;
     const { seed } = await openSeededTimelineByUrl(page, harness, await harness.seedMedia());
     const doorObject = (objectId: string) => `/v1/objects/${encodeURIComponent(objectId)}`;
@@ -957,12 +967,10 @@ test.describe('media (App)', () => {
     const imageAudit = await waitForAudit(harness, (entry) => entry.path === auditPath(image.objectId) && entry.status === 200 && entry.origin === harness.origin);
     expect(imageAudit.length, 'the browser sent the hosted Origin for the image').toBeGreaterThan(0);
 
-    // The video clip is drawn too (it has no thumbnail of its own). The fallback MP4 cannot be decoded by stock Chromium when ffmpeg is missing (the same limit as the video case in "media").
+    // The video clip is drawn too (it has no thumbnail of its own), and its bytes come from the door with the hosted Origin.
     await expect(page.locator(`[data-clip-id="${seed.videoClipId}"]`).first()).toBeVisible();
-    if (video.decodable) {
-      const videoAudit = await waitForAudit(harness, (entry) => entry.path === auditPath(video.objectId) && [200, 206].includes(entry.status) && entry.origin === harness.origin);
-      expect(videoAudit.length, 'the browser sent the hosted Origin for the video').toBeGreaterThan(0);
-    }
+    const videoAudit = await waitForAudit(harness, (entry) => entry.path === auditPath(video.objectId) && [200, 206].includes(entry.status) && entry.origin === harness.origin);
+    expect(videoAudit.length, 'the browser sent the hosted Origin for the video').toBeGreaterThan(0);
   });
 });
 
