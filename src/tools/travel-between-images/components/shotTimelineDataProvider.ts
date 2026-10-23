@@ -4,7 +4,9 @@ import {
   verifiedRetainedRawClipIds,
 } from '@/tools/video-editor/lib/serialize.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
-import type { LoadedTimeline } from '@/tools/video-editor/data/DataProvider.ts';
+import type {
+  LoadedTimeline,
+} from '@/tools/video-editor/data/DataProvider.ts';
 import type {
   MediaSelection,
   MediaSelectionQuery,
@@ -31,6 +33,9 @@ import {
   hardDurationMs,
   updateCanonicalShotTimeline,
 } from '@/tools/video-editor/data/shotCompositionEditor.ts';
+import { createLocalSaveSession, type LocalSaveSession } from '@/tools/video-editor/commands/localSaveSession.ts';
+import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
+import { toOutboxJson, type OutboxJson } from '@/tools/video-editor/commands/commitOutbox.ts';
 import type {
   ResolvedAssetRegistryEntry,
   ResolvedTimelineConfig,
@@ -257,7 +262,114 @@ type ShotTimelineDataProvider = DataProvider & {
   setDraftState: (dirty: boolean) => void;
   setDraftGeneration: (generation: number) => PreparedShotComposition;
   adoptCleanBaseline: (config: ResolvedTimelineConfig, composition: PreparedShotComposition) => boolean;
+  dispose: () => Promise<void>;
 };
+
+type PopupLocalSaveProvider = Pick<DataProvider,
+  'loadTimelineCommandBasis' | 'getRecoverableIdentity' | 'commitTimeline'>;
+
+const POPUP_TIMELINE_FIELDS = new Set([
+  'id', 'at', 'track', 'clipType', 'asset', 'from', 'to', 'speed', 'hold', 'volume',
+  'x', 'y', 'width', 'height', 'cropTop', 'cropBottom', 'cropLeft', 'cropRight',
+  'opacity', 'text', 'entrance', 'exit', 'continuous', 'transition', 'elementRef',
+  'effects', 'params', 'pool_id', 'clip_order', 'source_uuid', 'generation', 'app',
+  'label', 'keyframes',
+  // Runtime's older child transport spelling is replaced by the editor form.
+  'at_ms', 'duration_ms', 'asset_id', 'clip_type', 'active', 'disabled', 'hidden', 'deleted',
+  'mute', 'muted',
+]);
+const POPUP_TRACK_FIELDS = new Set([
+  'id', 'kind', 'label', 'role', 'scale', 'fit', 'opacity', 'volume', 'muted', 'blendMode', 'app',
+]);
+
+function object(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function sameJson(left: unknown, right: unknown): boolean {
+  return stableStringify(left) === stableStringify(right);
+}
+
+function mergeAuthoredRows(
+  raw: unknown,
+  authored: unknown,
+  key: 'clips' | 'tracks',
+): OutboxJson[] {
+  if (!Array.isArray(raw) || !Array.isArray(authored)) {
+    throw new Error(`Popup save requires the verified child ${key} collection`);
+  }
+  const rawRows = new Map(raw.map((value) => [object(value)?.id, object(value)]));
+  const authoredRows = authored.map((value) => object(value));
+  if (authoredRows.some((value) => !value || typeof value.id !== 'string')
+    || rawRows.size !== raw.length
+    || authoredRows.length !== raw.length
+    || authoredRows.some((value, index) => value?.id !== object(raw[index])?.id)) {
+    throw new Error(`Popup ${key} add, remove, or reorder requires the later A3 writer seam`);
+  }
+  const fields = key === 'clips' ? POPUP_TIMELINE_FIELDS : POPUP_TRACK_FIELDS;
+  return authoredRows.map((value) => {
+    const authoredRow = value!;
+    const rawRow = rawRows.get(authoredRow.id);
+    if (!rawRow) throw new Error(`Popup save lost the verified child ${key} identity`);
+    const opaque = Object.fromEntries(Object.entries(rawRow).filter(([field]) => !fields.has(field)));
+    const row = { ...opaque, ...authoredRow } as Record<string, unknown>;
+    const rawApp = object(rawRow.app);
+    const authoredHasApp = Object.prototype.hasOwnProperty.call(authoredRow, 'app');
+    if (rawApp && !authoredHasApp) row.app = rawRow.app;
+    else if (rawApp && object(authoredRow.app)) row.app = { ...rawApp, ...object(authoredRow.app) };
+    return toOutboxJson(row) as OutboxJson;
+  });
+}
+
+type PopupDocumentEdit = {
+  document: CanonicalDocument;
+  root: { ref: `internal-revision:${string}`; revisionId: string; contentDigest: string };
+};
+
+function popupDocumentAfter(
+  before: CanonicalDocument,
+  nextConfig: TimelineConfig,
+  composition: PreparedShotComposition,
+  occurrenceId: string,
+): PopupDocumentEdit {
+  const document = structuredClone(before);
+  const parent = object(document.parent_revision.payload);
+  const occurrences = Array.isArray(parent?.occurrences) ? parent.occurrences : [];
+  const occurrence = occurrences.find((value) => object(value)?.occurrence_id === occurrenceId);
+  const occurrenceRecord = object(occurrence);
+  if (!occurrenceRecord) throw new Error('Popup save has no verified physical occurrence binding');
+  const shotId = occurrenceRecord.shot_id;
+  const shotRevisionId = occurrenceRecord.shot_revision_id;
+  const shot = document.shot_revisions.find((value) => value.shot_id === shotId && value.revision_id === shotRevisionId);
+  if (!shot) throw new Error('Popup save has no verified child shot revision binding');
+  const shared = occurrences.filter((value) => object(value)?.shot_revision_id === shotRevisionId);
+  if (shared.length !== 1) throw new Error('Popup save refuses a shared child revision; use the later copy-on-write A3 seam');
+  const internal = document.internal_timeline_revisions.find((value) => value.revision_id === shot.internal_timeline_revision_id);
+  if (!internal) throw new Error('Popup save has no verified child timeline root binding');
+  const rawTimeline = object(internal.payload);
+  if (!rawTimeline) throw new Error('Popup save has no verified raw child timeline');
+
+  // This is the existing graph identity join. It restores raw clip IDs/app
+  // collisions from the retained closure instead of guessing from display IDs.
+  const authoredTimeline = createCanonicalTimeline(nextConfig, composition);
+  const nextTimeline: Record<string, unknown> = {
+    ...rawTimeline,
+    ...Object.fromEntries(Object.entries(authoredTimeline).filter(([key]) => !['clips', 'tracks'].includes(key))),
+    clips: mergeAuthoredRows(rawTimeline.clips, authoredTimeline.clips, 'clips'),
+    tracks: mergeAuthoredRows(rawTimeline.tracks, authoredTimeline.tracks, 'tracks'),
+  };
+  internal.payload = nextTimeline as typeof internal.payload;
+  return {
+    document,
+    root: {
+      ref: `internal-revision:${internal.revision_id}`,
+      revisionId: internal.revision_id,
+      contentDigest: internal.content_digest,
+    },
+  };
+}
 
 /** Ephemeral shot-local geometry projection; it never changes the CAS graph. */
 export function projectShotTimelineDraftComposition(
@@ -306,6 +418,7 @@ export function createShotTimelineDataProvider(
   editorHeadState?: { current: ShotTimelineEditorHeadState },
   initialDraftGeneration = 0,
   mediaProvider?: ShotTimelineMediaProvider,
+  timelineDataProvider?: PopupLocalSaveProvider,
 ): ShotTimelineDataProvider {
   let registry: { assets: Record<string, ResolvedAssetRegistryEntry> } = {
     assets: Object.fromEntries(Object.entries(config.registry).map(([assetId, entry]) => ([assetId, {
@@ -365,12 +478,43 @@ export function createShotTimelineDataProvider(
   let draftGeneration = initialDraftGeneration;
   let draftDirty = false;
   let pendingPublishes = 0;
+  let localSaveSessionPromise: Promise<LocalSaveSession> | undefined;
+  const localSaveEnabled = Boolean(
+    timelineDataProvider?.loadTimelineCommandBasis
+      && timelineDataProvider.getRecoverableIdentity
+      && timelineDataProvider.commitTimeline,
+  );
+  if (timelineDataProvider && !localSaveEnabled) {
+    throw new Error('Popup A2 save requires the existing command-basis, identity, and commit transport seam');
+  }
+  if (localSaveEnabled) {
+    localSaveSessionPromise = (async () => {
+      const [initial, identity] = await Promise.all([
+        timelineDataProvider!.loadTimelineCommandBasis!(composition.parentDocumentId),
+        timelineDataProvider!.getRecoverableIdentity!(),
+      ]);
+      if (initial.head.revisionId !== composition.headRevisionId
+        || initial.canonicalDocument.project_id !== composition.projectId
+        || initial.canonicalDocument.timeline_id !== composition.parentDocumentId) {
+        throw new Error('Popup A2 save requires the original verified canonical closure');
+      }
+      return createLocalSaveSession({
+        scope: { ...identity, projectId: composition.projectId, timelineId: composition.parentDocumentId },
+        initial,
+        document: toOutboxJson(initial.canonicalDocument),
+        send: (request, key) => timelineDataProvider!.commitTimeline!(request, key),
+        loadLatest: () => timelineDataProvider!.loadTimelineCommandBasis!(composition.parentDocumentId),
+        changed: () => {},
+        prepareDisplay: async (basis) => ({ document: toOutboxJson(basis.canonicalDocument), adopt: () => {} }),
+      });
+    })();
+  }
 
   const provider: ShotTimelineDataProvider = {
     get timelineQueryIdentity() {
       return timelineQueryIdentity;
     },
-    persistenceEnabled: Boolean(shotCompositionAdapter?.publish),
+    persistenceEnabled: Boolean(shotCompositionAdapter?.publish || localSaveEnabled),
     ...(mediaProvider?.supportsDirectAssetUpload !== undefined
       ? { supportsDirectAssetUpload: mediaProvider.supportsDirectAssetUpload }
       : {}),
@@ -512,6 +656,41 @@ export function createShotTimelineDataProvider(
       const rawComposition = composition;
       const draftRegistry = nextRegistry ?? registry;
       assertEditorHeadIsCurrent();
+      if (localSaveEnabled) {
+        if (!shotCompositionAdapter) throw new Error('Popup A2 save requires the validated canonical composition adapter');
+        if (nextRegistry && !sameJson(nextRegistry, registry)) {
+          throw new Error('Popup asset registry changes require the later A3 registerAsset seam');
+        }
+        const session = await localSaveSessionPromise!;
+        const before = session.getDocument() as unknown as CanonicalDocument;
+        const edit = popupDocumentAfter(before, nextConfig, rawComposition, occurrenceId);
+        await session.appendDocument({
+          before,
+          after: edit.document,
+          roots: [edit.root],
+          label: 'Edit shot timeline',
+          step: {
+            id: globalThis.crypto?.randomUUID?.() ?? `popup-edit-${Date.now()}`,
+            label: 'Edit shot timeline',
+            intent: 'Save shot-local timeline changes',
+            tags: ['shot-popup'],
+          },
+        });
+        const basis = await session.flush();
+        if (!basis.graph) throw new Error('Popup A2 save received no accepted canonical closure');
+        const published = shotCompositionAdapter.prepare(basis.graph);
+        if (!published.occurrences.some((value) => value.occurrenceId === occurrenceId)) {
+          throw new Error('Popup A2 save received a canonical closure without the edited occurrence');
+        }
+        adoptCanonicalBase(published, true);
+        composition = published;
+        canonicalTimelineConfig = nextConfig;
+        timelineConfig = nextConfig;
+        pendingPublication = null;
+        publishCallback?.(published, publicationGeneration, before.parent_revision.revision_id);
+        configVersion += 1;
+        return configVersion;
+      }
       if (!shotCompositionAdapter?.publish) {
         throw new Error('The canonical shot-composition provider is read-only');
       }
@@ -689,6 +868,9 @@ export function createShotTimelineDataProvider(
       adoptCanonicalBase(nextComposition);
       timelineQueryIdentity = nextComposition.headRevisionId;
       return true;
+    },
+    dispose: async () => {
+      await localSaveSessionPromise?.then((session) => session.dispose());
     },
   };
   return provider;

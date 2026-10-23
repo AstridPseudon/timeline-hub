@@ -1,6 +1,7 @@
 import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
+import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { AlertCircle, Film } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider.tsx';
@@ -38,6 +39,8 @@ type ShotTimelinePreviewProps = {
   composition: PreparedShotComposition;
   occurrenceId: string;
   shotCompositionAdapter?: ShotCompositionAdapter;
+  /** Parent Runtime provider; popup saves reuse its A2 document outbox. */
+  timelineDataProvider?: DataProvider;
   onCanonicalCompositionPublished?: (
     composition: PreparedShotComposition,
     publication?: CanonicalShotTimelinePublication,
@@ -385,6 +388,7 @@ export function ShotTimelinePreview({
   composition,
   occurrenceId,
   shotCompositionAdapter,
+  timelineDataProvider,
   onCanonicalCompositionPublished,
   onCanonicalDraftStateChange,
   onCanonicalDraftSessionChange,
@@ -520,6 +524,9 @@ export function ShotTimelinePreview({
           shotCompositionAdapter,
           handleCanonicalCompositionPublished,
           editorHeadStateRef,
+          0,
+          undefined,
+          timelineDataProvider,
         )
       : null,
     // Keep one provider/editor session. Its query identity advances with the
@@ -529,12 +536,13 @@ export function ShotTimelinePreview({
     // recreating it for either would reset query/editor/recovery identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [hasProjectionConfig, currentComposition.parentDocumentId,
-      currentComposition.projectId, occurrenceId, shotCompositionAdapter],
+      currentComposition.projectId, occurrenceId, shotCompositionAdapter, timelineDataProvider],
   );
   const initialTimelineData = useMemo(
     () => projectionConfig ? createShotTimelineInitialData(projectionConfig) : undefined,
     [projectionConfig],
   );
+  useEffect(() => () => { void dataProvider?.dispose().catch(() => {}); }, [dataProvider]);
   const handleActiveConfigChange = useCallback((nextConfig: ResolvedTimelineConfig) => {
     if (!dataProvider) return;
     draftDirtyRef.current = true;
