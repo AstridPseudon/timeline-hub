@@ -16,6 +16,7 @@ import {
   batchUpdatePlacementFrames,
   placeGeneration,
   unplaceGeneration,
+  type PlaceGenerationRequest,
 } from '@/shared/lib/placement/placementService';
 import { placementEntryId } from '@/shared/lib/placement/documentPlacement';
 import {
@@ -345,10 +346,13 @@ export const usePositionExistingGenerationInShot = () => {
       shot_id,
       generation_id,
       project_id,
+      ownerRef,
     }: {
       shot_id: string;
       generation_id: string;
       project_id: string;
+      /** Authenticated canonical occurrence owner; absent keeps parent-only callers unchanged. */
+      ownerRef?: PlaceGenerationRequest['ownerRef'];
     }) => {
       const projectSlug = project_id || getProjectSelectionFallbackId();
       if (!projectSlug) {
@@ -361,6 +365,7 @@ export const usePositionExistingGenerationInShot = () => {
         projectSlug,
         shotId: shot_id,
         generationId: generation_id,
+        ...(ownerRef === undefined ? {} : { ownerRef }),
       });
 
       return { shot_id, generation_id, project_id, placement };

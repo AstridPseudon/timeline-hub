@@ -1,5 +1,5 @@
 import { getProjectSelectionFallbackId } from '@/shared/contexts/projectSelectionStore';
-import { placeGeneration } from '@/shared/lib/placement/placementService';
+import { placeGeneration, type PlaceGenerationRequest } from '@/shared/lib/placement/placementService';
 import { isQuotaOrServerError } from './shotMutationHelpers';
 
 export interface AddImageToShotVariables {
@@ -8,6 +8,8 @@ export interface AddImageToShotVariables {
   project_id: string;
   imageUrl?: string;
   thumbUrl?: string;
+  /** Authenticated canonical occurrence owner; absent keeps parent-only callers unchanged. */
+  ownerRef?: PlaceGenerationRequest['ownerRef'];
   timelineFrame?: number | null;
   abortSignal?: AbortSignal;
   onMaterializeProgress?: (progress: number) => void;
@@ -42,6 +44,7 @@ export async function runAddImageMutation(
     projectSlug,
     shotId: shot_id,
     generationId: generation_id,
+    ...(variables.ownerRef === undefined ? {} : { ownerRef: variables.ownerRef }),
     timelineFrame,
   });
 

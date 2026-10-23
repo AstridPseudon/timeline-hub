@@ -251,6 +251,21 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
     })).toThrow('uniquely bound canonical occurrence');
   });
 
+  it('refuses an ambiguous canonical occurrence owner', () => {
+    const document = canonicalDocument();
+    document.parent_revision.payload.occurrences.push({
+      occurrence_id: 'occurrence-1', shot_id: 'shot-child', shot_revision_id: 'shot-r1', revision_id: 'occurrence-r2',
+    });
+
+    expect(() => buildOccurrenceForkCommand(document, {
+      projectSlug: PROJECT,
+      timelineRef: TIMELINE,
+      configVersion: 1,
+      ownerRef: 'occurrence:occurrence-1',
+      shotId: 'shot-fork',
+    })).toThrow('uniquely bound canonical occurrence');
+  });
+
   it('uses the explicit occurrence owner in the production placement caller', async () => {
     const router = createFakeRuntimeRouter();
     installRuntime(router);
@@ -276,6 +291,20 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
       occurrence_id: 'occurrence-1', shot_id: 'shot-fork', shot_revision_id: 'shot-fork-revision', revision_id: 'occurrence-r1',
     }, sibling]);
     expect(runtime.shotRevisions.map((shot) => shot.revision_id)).toEqual(['shot-r1', 'shot-fork-revision']);
+  });
+
+  it('fails closed for an explicitly supplied malformed occurrence owner', async () => {
+    const router = createFakeRuntimeRouter();
+    installRuntime(router);
+    const generationId = firstSeededGenerationId(router);
+
+    await expect(placeGeneration({
+      projectSlug: PROJECT,
+      shotId: SHOT,
+      generationId,
+      ownerRef: '' as `occurrence:${string}`,
+    })).rejects.toThrow('one explicit canonical occurrence owner');
+    expect(runtime.commits).toHaveLength(0);
   });
 
   it('keeps every raw root at the provider boundary across placement, frame update, pooling and removal', async () => {

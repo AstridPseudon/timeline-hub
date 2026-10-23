@@ -456,7 +456,7 @@ export async function placeGeneration(request: PlaceGenerationRequest): Promise<
   }
 
   const target = await resolveLegacyPlacementTarget(request.projectSlug);
-  if (request.ownerRef) {
+  if (request.ownerRef !== undefined) {
     await forkOccurrence({ ...target, ownerRef: request.ownerRef, shotId: request.shotId });
   }
   return (await mutateTimelineDocument(target, (document) =>

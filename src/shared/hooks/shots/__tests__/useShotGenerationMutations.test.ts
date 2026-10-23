@@ -40,6 +40,7 @@ import {
   useAddImageToShot,
   useRemoveImageFromShot,
   useUpdateShotImageOrder,
+  usePositionExistingGenerationInShot,
 } from '../useShotGenerationMutations';
 
 function createWrapper() {
@@ -144,6 +145,37 @@ describe('useAddImageToShot', () => {
       expect.objectContaining({ timelineFrame: 100 }),
     );
     expect(data).toHaveProperty('timeline_frame', 100);
+  });
+
+  it('passes the authenticated canonical occurrence owner to placement', async () => {
+    mockPlaceGeneration.mockResolvedValue({
+      entryId: entryId('shot-1', 'gen-1'),
+      shotId: 'shot-1',
+      generationId: 'gen-1',
+      timelineFrame: 100,
+      assetKey: 'gen:gen-1',
+    });
+
+    const { wrapper } = createWrapper();
+    const { result } = renderHook(() => useAddImageToShot(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        shot_id: 'shot-1',
+        generation_id: 'gen-1',
+        project_id: 'project-1',
+        ownerRef: 'occurrence:selected-occurrence',
+        timelineFrame: 100,
+      });
+    });
+
+    expect(mockPlaceGeneration).toHaveBeenCalledWith({
+      projectSlug: 'project-1',
+      shotId: 'shot-1',
+      generationId: 'gen-1',
+      ownerRef: 'occurrence:selected-occurrence',
+      timelineFrame: 100,
+    });
   });
 
   it('invalidates shot, segment, and unified data after a successful add', async () => {
@@ -313,5 +345,40 @@ describe('useUpdateShotImageOrder', () => {
       ],
     });
     expect(data).toHaveProperty('projectId', 'project-1');
+  });
+});
+
+describe('usePositionExistingGenerationInShot', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('passes the authenticated canonical occurrence owner to auto-positioning', async () => {
+    mockPlaceGeneration.mockResolvedValue({
+      entryId: entryId('shot-1', 'gen-1'),
+      shotId: 'shot-1',
+      generationId: 'gen-1',
+      timelineFrame: 150,
+      assetKey: 'gen:gen-1',
+    });
+
+    const { wrapper } = createWrapper();
+    const { result } = renderHook(() => usePositionExistingGenerationInShot(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        shot_id: 'shot-1',
+        generation_id: 'gen-1',
+        project_id: 'project-1',
+        ownerRef: 'occurrence:selected-occurrence',
+      });
+    });
+
+    expect(mockPlaceGeneration).toHaveBeenCalledWith({
+      projectSlug: 'project-1',
+      shotId: 'shot-1',
+      generationId: 'gen-1',
+      ownerRef: 'occurrence:selected-occurrence',
+    });
   });
 });
