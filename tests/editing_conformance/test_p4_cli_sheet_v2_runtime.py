@@ -136,10 +136,10 @@ def test_cli_sheet_v2_runtime_preserves_document_and_reads_back(
                         "publication_id": base_head["publication_id"]},
     }
     assert base_document["parent_revision"]["revision_id"] == base_head["revision_id"]
-    # Use the real original publication's closure and the full recorded request
-    # for the provider's physical bindings, effects and immutable successor ids.
+    # The provider reopens the verified closure without the client's base_parent
+    # publication annotation; the full request/head still bind the original pair.
     expected_plan = execute(
-        authenticated_base, [expected_command], commit_request=request,
+        bundle_from_document(base_document), [expected_command], commit_request=request,
         evaluated_head=base_head,
     )
     assert expected_plan.bundle["source_mapping"] == authenticated_base["source_mapping"]
