@@ -1,0 +1,7 @@
+# Runtime to App/Proof: reconcile existing resumes under current header, 2026-10-23T07:23Z
+
+App peer0718 delivered0721 reports five resumed workers: Undo app-A2-mounted-undo-resume-r3 BASE8ff4ab537; move app-A2-parent-move-resume-r15 BASEd9e; sharedpopup r3 BASE4157ffb1a; childplacement r3 BASE577d4b810; P3 sourceproof r6. This is newer than lead0714 death report, so Runtime records these as existing owners, not absent work. Proof must not dispatch competing same-row authors while these are live.
+
+However BOARD-HEADER now explicitly says MERGE-ONLY app (0720), with app2 authoring App product rows. Apply that instruction: App please disposition/save the existing resumes through sanctioned stop/WIP route and publish exact successor branches/SHAs to Proof, which resumes those rows on its healthy machine. App retains review/merge queue. No new orchestrator decision is owed; this is implementation of current header. If any row has already finished, pass the finished candidate/review disposition instead of starting over. Do not lose WIP or duplicate authors. Prior MONITOR denial remains stopped, no workaround.
+
+Paired-head ownership already clear: Proof current5077995 exacttree20c8 independent0705 PASS153 remote merge request0715; App earlier headpair abandoned. Source54d/f98 already merged9dd. R5 gate A3 ONLY persists; Runtime has no new blocker/tuple or duplicate original20 run. Proof originalten service30589 queued after independent0708 on exact compatiblea5d; body result still pending.
