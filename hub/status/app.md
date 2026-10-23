@@ -1,4 +1,4 @@
-<!-- app | 2026-10-23T01:07:43Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 6m -->
+<!-- app | 2026-10-23T01:09:31Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 11 | status age 1m -->
 # app board, 2026-10-23T01:01:14Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -8,7 +8,7 @@
 | V3/U3 | Same Composition artifact + export attribution | Luna high | reviewed leaf + current U3 composition | ready | vw-V3-app-resume0050; app-U3-export-attribution-r2 | Peer V3 independent PASS;819acf archive/80members. Attribution PASS:064 restored helpers/callers absent reviewed U3b/current. Join peer pin after current composition | beb3c6c18 V3 leaf |
 | U4p | Official U1 client/schema | Luna high | composed U3 | doing | app-U3-current-compose-r2 | Original independent13-artifact/81tests/lint PASS; normal updater/checker joins same reviewed delta into composed source | b24a8ca4a reviewed delta |
 | U4p-v2 | Full approved v2 client/schema adoption | Luna high | Runtime R0/R2r reviewed producer | blocked:runtime | — | U1 lacks steps/reads/merge/doc.patch/merged/invalid; first reviewed normal v2 tuple not yet published | — |
-| A2 | Encoder + durable local handoff + final production mount | Sol/Luna high | C0c,U3b; U3+U4p-v2 for final activation | review | app-A2-production-handoff-review-r1 | Encoder independently71/tsc/lint PASS and integrated153 batchPASS. New mounted handoff author164/tsc/lint/diff PASS, independent review active. Original-read assembly/full transport still incomplete | 78e7eafa3 encoder merge /a5cd83f5d new handoff |
+| A2 | Encoder + raw authored handoff + final production mount | Sol/Luna high | C0c,U3b; U3+U4p-v2 for final activation | doing | app-A2-raw-parent-handoff-fix-r2 | Handoff independent164/tsc/lint PASS but overall FAIL: no production adapter/R0; raw mapper may lose opaque/null via display spread. Sol first correction active; a5cd NOT merged | 78e7eafa3 encoder merge /a5cd83f5d held handoff |
 | A3 | Popup/placement/element/registerAsset through A2 | Luna high | A2 production | todo | — | No writer retirement claimed | — |
 | A4 | Delete executor/capture ports/adapter/goldens | Luna high | A2,A3,H3 GO | blocked:orchestrator | — | P1 real chain NO-GO; no deletion starts | — |
 | P1 | Collection and provenance repair | Luna high | C0; A2,R1 to execute | merged | ap2-P1-app-provenance-fix-r2 | app-targeted-1023005535-7781 PASS153 including12corpus tests on exact integrated treeeb59a1c2. This is collection proof only | 39d774110 merge /b6baa5ce4 |
@@ -19,5 +19,5 @@ Blockers: Farm/P1: split→trim newly createdID→Agent edit→lostACK→restart
 Safety: Prior00:16 App refusal explicitly cleared by orchestrator00:40; latest00:50 dispatch/COMMON root-cause fix also clears held peer work after sync. Named worktree file deletion only with apply_patch Delete File/plain rm path; no flags/globs/cleanup. No new refusal observed. Viewing explicitly requalified exact V3 leaf after its own clearance.
 Integrated head:794d365ae03725453c3359d21c791b1ffe7ccee9/treeeb59a1c2ada2081773402de0a56c02d593781ecd. app-targeted-1023005535-7781 PASS153/6files/19s. No full-A2/U3/H3 credit.
 Disk:16GB available, above15GB floor. No cleanup required.
-Decided locally: Split the first repair's eight whitespace findings into a minimal hygiene leaf; preserve semantics and original tests. Script-control .mjs files need Node test service rather than Vitest discovery; worker prepares one existing-suite row, no new launcher.
+Decided locally: Split the first repair's eight whitespace findings into a minimal hygiene leaf; preserve semantics and original tests. Script-control .mjs files use existing-suite Node row; test service14193 PASS7; hygiene3a1c independent review active, no new launcher.
 Next ready: Finish current U3 composition; join reviewed V3 leaf and hygiene; final U3 reviewer; finish A2 handoff review/merge; immediately normal-adopt first R0 tuple and mount real A2; then A3.
