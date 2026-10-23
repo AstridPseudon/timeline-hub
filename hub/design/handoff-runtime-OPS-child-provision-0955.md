@@ -1,59 +1,57 @@
-# Runtime handoff — OPS-child-provision-0955
+# Runtime handoff — OPS-child-provision bounded process-group correction
 
-Candidate-only operational handoff. The Runtime product repository, dispatcher,
-request wrapper, queue, daemon, tests, generated files, schemas, pins, and
-configs were not changed.
+Result: the independent 1005 finding is corrected in a fresh candidate. Live
+`make-child-venv` remains unchanged pending the next independent install
+review.
 
-## Inputs captured
+Candidate: worker `rt-OPS-child-return-1006`
 
-Live main ORCH/bin/make-child-venv:
+```text
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-child-return-1006/evidence/candidate/make-child-venv
+SHA-256 01bfbf9a17db0ae54e059a4badac5e1b13a8f6f52ae4b7e61c699f14b277f67f
+mode 755
+```
 
-- mode 755
-- SHA-256 ea4a1f53722ddd9f943b217021b6b4ed4828f34d10de76bae7ddc71fa470d6bc
-- existing per-pip timeout 600 and freeze timeout 120 preserved
+Failed predecessor retained:
 
-Candidate evidence:
+```text
+SHA-256 526e16145c3b014fb613618c27fe6d1a007857d769f31bfe5169ce423c71b52a
+```
 
-- worker evidence directory:
-  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-child-provision-0955/evidence
-- candidate SHA-256:
-  526e16145c3b014fb613618c27fe6d1a007857d769f31bfe5169ce423c71b52a
-- candidate mode 755
-- offline harness passes all required stub scenarios
+Live capture, rechecked:
 
-## What the candidate stages
+```text
+path /home/user/timeline-hub/hub/kit/bin/make-child-venv
+SHA-256 ea4a1f53722ddd9f943b217021b6b4ed4828f34d10de76bae7ddc71fa470d6bc
+mode 755, owner root:root
+```
 
-It retains the existing make-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME]
-API and existing dispatcher -> make-child-venv -> request-child-venv route.
-RUNTIME continues to mean the Remotion graph substitution. Runtime protocol
-source is obtained separately from the current local Runtime integration
-checkout at /home/user/work/runtime, archived at its exact HEAD SHA, and
-installed noneditably with --no-deps. Agent remains an exact requested SHA
-archive and also has a separate source marker.
+Exact diff from 526e16: remove `--foreground` from the existing overall and
+stage GNU `timeout` calls; explanatory comments only otherwise. Default GNU
+`timeout` process groups cover descendants and inherited dispatcher FIFO
+stdout while retaining the existing finite overall/stage budgets and
+`--kill-after` grace. Dispatcher/request/queue shapes and all product files
+are unchanged.
 
-The candidate adds a finite overall build budget, finite git/pip network
-timeouts and retries, UTC stage progress, unique partial/failure identity,
-actual python -I import-origin checks for astrid, astrid_runtime,
-runtime_protocol, and astrid_runtime_client, CLI checks, freeze identity,
-prepublish shebang relocation/read-only validation, and atomic final publish.
-Failed partials do not occupy the immutable final destination; an exact same
-name can be retried.
+Evidence report and scripts are in the candidate worker's `evidence/`:
 
-## Qualification boundary
+- `report.md`
+- `test_stubs.sh`
+- `test_descendant.sh`
 
-The only executed qualification was offline fake Python/pip/git/timeout/filesystem
-testing. It covered success, prompt timeout, failing Runtime install, missing
-isolated import, immutable existing destination, no incomplete publish, and
-same-name recovery. No real child venv body, package install, HTTP/socket,
-full suite, D09, daemon, or heavy graph run was performed.
+Checks passed: all three `bash -n` checks; retained offline success,
+timeout, Runtime-failure, missing-import, immutable, and recovery stubs; and
+the new real-GNU-timeout descendant/FIFO probe. The descendant probe returned
+in 2 seconds, left no final environment or live descendant, and then ran a
+following fake queue job successfully. ShellCheck was unavailable. No real
+install, network, daemon, dispatcher, D09, full suite, or heavy graph was run.
 
-## Ready install
+Ready publication instruction after independent review only:
 
-Independent review must approve the candidate before host publication. The
-host-side install should replace only the existing main ORCH/bin/make-child-venv
-file, preserving mode 755:
+```text
+install -m 755 <worker-evidence>/candidate/make-child-venv \
+  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv
+```
 
-    install -m 755 <worker-evidence>/candidate/make-child-venv <ORCH>/bin/make-child-venv
-
-Then the independent owner may run the representative child provision and
-Runtime/D09 checks. No new launcher or dispatcher/process rule is required.
+Agent0958 remains owner of the original installer/D09 and real private
+Agent+Runtime environment. Original failure `20851` remains retained.
