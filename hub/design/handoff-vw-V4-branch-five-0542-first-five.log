@@ -1,0 +1,2260 @@
+EE.F.                                                                    [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_native_acceptance_refuses_review_source_counterexamples_before_writes[short-occurrence] _
+
+self = <astrid.sdk.timeline.commit.RuntimeCommitService object at 0x7ff6d5778410>
+context = {'idempotency_key': 'initial', 'invocation': {'body': {'api_version': 1, 'base_publication_id': 'txn-001c432547bd4de8b...bca98d55556/timelines/film/commit'}, 'publisher': 'timing-editor', 'realm_id': '756bd53d2154447db7e21533501eb90a', ...}
+port = <runtime_protocol.timeline_commit_port.RequestCommitPort object at 0x7ff6d51561d0>
+
+    def commit(self, context, port):
+        from runtime_protocol.timeline_commit import CommitRejected, StaleHead
+    
+        from astrid.sdk.timeline._collections import AcceptedRecords
+        from astrid.sdk.timeline._command_state import State
+        from astrid.sdk.timeline._commit_patch import inverse_address_resolver, rebase_patch
+        from astrid.sdk.timeline._step_undo import check_later_steps, select_inverse_records
+        from astrid.sdk.timeline.commands import CommandError, execute
+        from astrid.sdk.timeline.producer import capture_producer
+        from astrid.sdk.timeline.rebase import replay
+    
+        context = copy.deepcopy(context)
+        request = context["request"]
+        base = {"revision_id": request["base_revision_id"],
+                "publication_id": request["base_publication_id"]}
+        current = None
+        try:
+            calls = request["commands"]
+            from astrid.sdk.timeline.commands import validate_command
+            verified_media = []
+            # Step selection is provider control over authenticated history. The
+            # native ABI still executes the existing whole-record inverse form.
+            execution_calls = copy.deepcopy(calls)
+            for call in execution_calls:
+                if call.get('op') == 'timeline.inverse' and isinstance(call.get('args'), dict):
+                    call['args'].pop('steps', None)
+                validate_command(call)
+            verified_producer = capture_producer(port, request)
+            for call in calls:
+                if call['op'] == 'text-binding.set' and 'text' in call['args']:
+                    verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
+                if call['op'] in ('clip.add-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
+                                'shot.pool'):
+                    for key in ('old_media', 'media'):
+                        if key in call['args']:
+                            verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
+            restore = any(call["op"] == "timeline.restore" for call in calls)
+            if restore:
+                current = port.head()
+                if len(calls) != 1:
+                    raise CommitRejected(_failure("invalid_commands", "restore must be the sole command",
+                                                  base, current))
+                if current != base:
+                    raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                  base, current))
+            bundle = _load(port, context, base["revision_id"])
+            current = port.head()
+            base_entry = port.history_entry(base["publication_id"])
+            if base_entry["revision_id"] != base["revision_id"]:
+                raise CommitRejected(_failure("history_unavailable", "base publication/revision mismatch",
+                                              base, current))
+            initialize = any(call['op'] == 'timeline.init' for call in calls)
+            if initialize and (base_entry['intent'] != 'bootstrap'
+                               or base_entry['previous'] is not None or current != base):
+                raise CommandError('initialization requires the original bootstrap publication',
+                                   kind='not_pristine')
+            undo_of, undo_steps = [], None
+            if sum(call["op"] == "timeline.inverse" for call in calls) > 1:
+                raise CommitRejected(_failure("unsupported_operation",
+                                              "use one inverse command listing all target publications",
+                                              base, current))
+            for call in calls:
+                if call["op"] == "timeline.inverse":
+                    if 'steps' in call['args'] and not isinstance(call['args']['steps'], dict):
+                        raise CommandError('inverse steps must be a publication map', kind='invalid_steps')
+                    undo_steps = copy.deepcopy(call["args"].get("steps"))
+                    for publication in call["args"]["publications"]:
+                        if publication not in undo_of:
+                            undo_of.append(publication)
+            inverse_records, inverse_intervening, inverse_sources = [], [], []
+            if undo_of:
+                targets = [port.history_entry(publication) for publication in undo_of]
+                segments = []
+                for target in targets:
+                    pin = {"revision_id": target["revision_id"],
+                           "publication_id": target["publication_id"]}
+                    # Loading the exact target also verifies source scope; no
+                    # client-provided inverse writes enter the core engine.
+                    _load(port, context, target["revision_id"])
+                    segment = [target, *_history(port, base, pin, CommitRejected, base)]
+                    segments.append(segment)
+                # The longest segment begins at the earliest targeted edge.
+                ordered = max(segments, key=len)
+                if undo_of != [entry["publication_id"] for entry in ordered
+                               if entry["publication_id"] in undo_of]:
+                    raise CommitRejected(_failure("invalid_inverse_order",
+                                                  "inverse publications must be oldest to newest",
+                                                  base, current))
+                accepted = [entry for entry in ordered if entry['publication_id'] in undo_of]
+    
+                def load_boundary(entry):
+                    previous = entry.get('previous')
+                    if not previous:
+                        raise CommandError('inverse input boundary is unavailable', kind='history_unavailable')
+                    prior = port.history_entry(previous['publication_id'])
+                    if prior['revision_id'] != previous['revision_id']:
+                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
+                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
+                    _history(port, pin, previous, CommitRejected, base)
+                    return (_load(port, context, previous['revision_id']),
+                            _load(port, context, entry['revision_id']))
+    
+                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
+                _records(ordered, CommitRejected, base, current)
+                accepted_records = AcceptedRecords(accepted, [record for entry in accepted
+                    for record in entry['records']['commands']], load_boundary)
+                inverse_history = ordered
+    
+                def select_at(head_bundle, history):
+                    resolver = (inverse_address_resolver(history, head_bundle, load_boundary=load_boundary)
+                        if any('physical_ref' in binding for record in accepted_records
+                               for binding in record['bindings']) else None)
+                    selected = select_inverse_records(accepted_records, undo_steps, address_resolver=resolver)
+                    check_later_steps(selected, history, state=State(head_bundle))
+                    return selected
+    
+                inverse_records = select_at(bundle, inverse_history)
+            closures, restored_from = {}, None
+            if restore:
+                restored_from = copy.deepcopy(calls[0]['args'])
+                source = _load(port, context, restored_from['revision_id'])
+                image = source['source_mapping']['_runtime_document']['parent_revision']
+                _require(image['content_digest'] == restored_from['content_digest'],
+                         "restore source digest mismatch")
+                closures[restored_from['revision_id']] = source
+            else:
+                # Only authenticated accepted writes can authorize an inverse
+                # closure replacement. Never accept a caller-supplied image.
+                for write in (write for record in inverse_records for write in record['writes']):
+                    if write['ref'] == 'timeline' and not write['path']:
+                        pin = write['before']['value']
+                        source = _load(port, context, pin['revision_id'])
+                        image = source['source_mapping']['_runtime_document']['parent_revision']
+                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+                                 "inverse historical closure pin mismatch")
+                        closures[pin['revision_id']] = source
+            # The port captures exactly the resulting document inputs. Discarded
+            # current/source closures must not retain unrelated document pins.
+            schema_inputs = []
+            for source in closures.values():
+                schema_inputs.extend(_hydrate(port, source))
+            if not closures:
+                schema_inputs = _hydrate(port, bundle, calls, inverse_records=inverse_records,
+                                         inverse_sources=inverse_sources)
+            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                              context=context, through=base)
+            original = execute(bundle, execution_calls, inverse_records=inverse_records,
+                               intervening_records=inverse_intervening, closures=closures,
+                               verified_media=verified_media, realm_id=context['realm_id'],
+                               resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                               commit_request=request, evaluated_head=base)
+            for attempt in range(3):
+                if attempt:
+                    current = port.head()
+                # An equal document after undo is still a later publication.
+                # CAS retries must recheck this fact before ordinary replay.
+                if initialize and current != base:
+                    raise CommandError('initialization cannot rebase over an accepted edit',
+                                       kind='not_pristine')
+                if current == base:
+                    plan = original
+                else:
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                      base, current))
+                    entries = _history(port, current, base, CommitRejected, base)
+                    head_bundle = _load(port, context, current["revision_id"])
+                    if undo_of:
+                        inverse_records = select_at(head_bundle, [*inverse_history, *entries])
+                    if not closures:
+                        schema_inputs = _hydrate(port, head_bundle, calls, inverse_records=inverse_records,
+                                             inverse_sources=inverse_sources)
+                    resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                                      context=context, through=current)
+                    if undo_of or any(call['op'] == 'doc.patch' for call in calls) or any(
+                            key in request for key in ('merge', 'reads', 'steps')):
+                        _records(entries, CommitRejected, base, current)
+                        def patch_boundary(entry):
+                            previous = entry.get('previous')
+                            if previous is None:
+                                raise CommandError('missing history boundary', kind='history_unavailable')
+                            return (_load(port, context, previous['revision_id']),
+                                    _load(port, context, entry['revision_id']))
+                        bindings = ({} if undo_of else rebase_patch(
+                            original, entries, head_bundle, load_boundary=patch_boundary))
+                        try:
+                            replay_calls = (execution_calls if undo_of else [
+                                call if call['op'] == 'doc.patch' else original.commands[index]
+                                for index, call in enumerate(calls)])
+                            plan = execute(head_bundle, replay_calls, inverse_records=inverse_records,
+                                           intervening_records=[] if undo_of else _records(
+                                               entries, CommitRejected, base, current), closures=closures,
+                                           verified_media=verified_media, realm_id=context['realm_id'],
+                                           resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                                           commit_request=request, evaluated_head=current,
+                                           replay_bindings=bindings)
+                        except CommandError as exc:
+                            if exc.kind == 'previous_value_mismatch':
+                                exc.kind = ('selection_changed' if getattr(exc, 'dependency_kind', None) == 'collection'
+                                            else 'dependency_changed')
+                            raise
+                    else:
+                        plan = replay(original, head_bundle, inverse_records=inverse_records,
+                                  intervening_records=[] if undo_of else _records(
+                                      entries, CommitRejected, base, current), closures=closures,
+                                  verified_media=verified_media, realm_id=context['realm_id'],
+                                  resolve_inputs=resolve_inputs, verified_producer=verified_producer)
+                        plan.steps = copy.deepcopy(original.steps)
+                        plan.label, plan.merge_mode = original.label, original.merge_mode
+                for record in plan.records:
+                    if record['command']['op'] == 'timeline.inverse' and undo_steps is not None:
+                        record['command']['args']['steps'] = copy.deepcopy(undo_steps)
+                _check_reservations(port, plan, current, CommitRejected, base)
+                from astrid.sdk.timeline.validation import validate_final_candidate
+    
+>               validate_final_candidate(
+                    plan.bundle,
+                    baseline=bundle if current == base else head_bundle,
+                    schema_inputs=schema_inputs,
+                    realm_id=context.get('realm_id'),
+                )
+
+astrid/sdk/timeline/commit.py:1119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/validation.py:458: in validate_final_candidate
+    child_clips = _validate_clip_list(
+astrid/sdk/timeline/validation.py:231: in _validate_clip_list
+    _fail(clip_path, "timeline interval must fit the occurrence's half-open bounds")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = "candidate.shots['shot'].internal_timeline.clips['voice']"
+message = "timeline interval must fit the occurrence's half-open bounds"
+
+    def _fail(path: str, message: str) -> NoReturn:
+>       raise FinalCandidateError(f"{path}: {message}")
+E       astrid.sdk.timeline.validation.FinalCandidateError: candidate.shots['shot'].internal_timeline.clips['voice']: timeline interval must fit the occurrence's half-open bounds
+
+astrid/sdk/timeline/validation.py:31: FinalCandidateError
+
+The above exception was the direct cause of the following exception:
+
+self = <runtime_protocol.service.RuntimeService object at 0x7ff6d590ced0>
+project_id = 'd1007312fccf4c81908e2bca98d55556', timeline_id = 'film'
+request = {'api_version': 1, 'base_publication_id': 'txn-001c432547bd4de8b250e84f58e17c36', 'base_revision_id': 'initial-parent'...nitial', 'kind': 'audio'}}, 'created': ['parent/track:initial'], 'op': 'track.create', 'schema_version': 1, ...}], ...}
+original_body = {'api_version': 1, 'base_publication_id': 'txn-001c432547bd4de8b250e84f58e17c36', 'base_revision_id': 'initial-parent'...nitial', 'kind': 'audio'}}, 'created': ['parent/track:initial'], 'op': 'track.create', 'schema_version': 1, ...}], ...}
+
+    def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
+                                 operation, idempotency_key, publisher, invocation_path, authorize):
+        from .timeline_commit import CommitRejected
+        from .timeline_commit_port import CommitUnavailable, RequestCommitPort, detached, public_failure
+        if not isinstance(publisher, str) or not publisher:
+            raise AuthorizationError("authenticated publisher is required")
+        idempotency_key = require_idempotency_key(idempotency_key)
+        check = self._timeline_authorize(project_id, timeline_id, authorize)
+        invocation = {"operation": operation, "path": invocation_path, "body": detached(original_body)}
+        request_hash = hashlib.sha256(canonical_json({
+            "operation": operation, "path": invocation_path,
+            "publisher": publisher, "request": invocation["body"],
+        }).encode()).hexdigest()
+        context = {"request": detached(request), "invocation": invocation,
+                   "request_hash": request_hash, "idempotency_key": idempotency_key,
+                   "publisher": publisher, "realm_id": self.realm["id"]}
+        commits, coordinator = self._timeline_commits()
+        with self.store._mutex:
+            self._timeline_commit_started = True
+            provider = self._timeline_commit_provider
+        def port_factory(bound_context):
+            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
+            return RequestCommitPort(self, commits, bound_context, check)
+        try:
+            if provider is None:
+                replay = commits.lookup(context, authorize=check)
+                if replay is not None:
+                    return replay
+                raise CommitUnavailable()
+>           outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../rt-pin-ad823e0a/runtime_protocol/service.py:2478: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../rt-pin-ad823e0a/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+../rt-pin-ad823e0a/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <astrid.sdk.timeline.commit.RuntimeCommitService object at 0x7ff6d5778410>
+context = {'idempotency_key': 'initial', 'invocation': {'body': {'api_version': 1, 'base_publication_id': 'txn-001c432547bd4de8b...bca98d55556/timelines/film/commit'}, 'publisher': 'timing-editor', 'realm_id': '756bd53d2154447db7e21533501eb90a', ...}
+port = <runtime_protocol.timeline_commit_port.RequestCommitPort object at 0x7ff6d51561d0>
+
+    def commit(self, context, port):
+        from runtime_protocol.timeline_commit import CommitRejected, StaleHead
+    
+        from astrid.sdk.timeline._collections import AcceptedRecords
+        from astrid.sdk.timeline._command_state import State
+        from astrid.sdk.timeline._commit_patch import inverse_address_resolver, rebase_patch
+        from astrid.sdk.timeline._step_undo import check_later_steps, select_inverse_records
+        from astrid.sdk.timeline.commands import CommandError, execute
+        from astrid.sdk.timeline.producer import capture_producer
+        from astrid.sdk.timeline.rebase import replay
+    
+        context = copy.deepcopy(context)
+        request = context["request"]
+        base = {"revision_id": request["base_revision_id"],
+                "publication_id": request["base_publication_id"]}
+        current = None
+        try:
+            calls = request["commands"]
+            from astrid.sdk.timeline.commands import validate_command
+            verified_media = []
+            # Step selection is provider control over authenticated history. The
+            # native ABI still executes the existing whole-record inverse form.
+            execution_calls = copy.deepcopy(calls)
+            for call in execution_calls:
+                if call.get('op') == 'timeline.inverse' and isinstance(call.get('args'), dict):
+                    call['args'].pop('steps', None)
+                validate_command(call)
+            verified_producer = capture_producer(port, request)
+            for call in calls:
+                if call['op'] == 'text-binding.set' and 'text' in call['args']:
+                    verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
+                if call['op'] in ('clip.add-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
+                                'shot.pool'):
+                    for key in ('old_media', 'media'):
+                        if key in call['args']:
+                            verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
+            restore = any(call["op"] == "timeline.restore" for call in calls)
+            if restore:
+                current = port.head()
+                if len(calls) != 1:
+                    raise CommitRejected(_failure("invalid_commands", "restore must be the sole command",
+                                                  base, current))
+                if current != base:
+                    raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                  base, current))
+            bundle = _load(port, context, base["revision_id"])
+            current = port.head()
+            base_entry = port.history_entry(base["publication_id"])
+            if base_entry["revision_id"] != base["revision_id"]:
+                raise CommitRejected(_failure("history_unavailable", "base publication/revision mismatch",
+                                              base, current))
+            initialize = any(call['op'] == 'timeline.init' for call in calls)
+            if initialize and (base_entry['intent'] != 'bootstrap'
+                               or base_entry['previous'] is not None or current != base):
+                raise CommandError('initialization requires the original bootstrap publication',
+                                   kind='not_pristine')
+            undo_of, undo_steps = [], None
+            if sum(call["op"] == "timeline.inverse" for call in calls) > 1:
+                raise CommitRejected(_failure("unsupported_operation",
+                                              "use one inverse command listing all target publications",
+                                              base, current))
+            for call in calls:
+                if call["op"] == "timeline.inverse":
+                    if 'steps' in call['args'] and not isinstance(call['args']['steps'], dict):
+                        raise CommandError('inverse steps must be a publication map', kind='invalid_steps')
+                    undo_steps = copy.deepcopy(call["args"].get("steps"))
+                    for publication in call["args"]["publications"]:
+                        if publication not in undo_of:
+                            undo_of.append(publication)
+            inverse_records, inverse_intervening, inverse_sources = [], [], []
+            if undo_of:
+                targets = [port.history_entry(publication) for publication in undo_of]
+                segments = []
+                for target in targets:
+                    pin = {"revision_id": target["revision_id"],
+                           "publication_id": target["publication_id"]}
+                    # Loading the exact target also verifies source scope; no
+                    # client-provided inverse writes enter the core engine.
+                    _load(port, context, target["revision_id"])
+                    segment = [target, *_history(port, base, pin, CommitRejected, base)]
+                    segments.append(segment)
+                # The longest segment begins at the earliest targeted edge.
+                ordered = max(segments, key=len)
+                if undo_of != [entry["publication_id"] for entry in ordered
+                               if entry["publication_id"] in undo_of]:
+                    raise CommitRejected(_failure("invalid_inverse_order",
+                                                  "inverse publications must be oldest to newest",
+                                                  base, current))
+                accepted = [entry for entry in ordered if entry['publication_id'] in undo_of]
+    
+                def load_boundary(entry):
+                    previous = entry.get('previous')
+                    if not previous:
+                        raise CommandError('inverse input boundary is unavailable', kind='history_unavailable')
+                    prior = port.history_entry(previous['publication_id'])
+                    if prior['revision_id'] != previous['revision_id']:
+                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
+                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
+                    _history(port, pin, previous, CommitRejected, base)
+                    return (_load(port, context, previous['revision_id']),
+                            _load(port, context, entry['revision_id']))
+    
+                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
+                _records(ordered, CommitRejected, base, current)
+                accepted_records = AcceptedRecords(accepted, [record for entry in accepted
+                    for record in entry['records']['commands']], load_boundary)
+                inverse_history = ordered
+    
+                def select_at(head_bundle, history):
+                    resolver = (inverse_address_resolver(history, head_bundle, load_boundary=load_boundary)
+                        if any('physical_ref' in binding for record in accepted_records
+                               for binding in record['bindings']) else None)
+                    selected = select_inverse_records(accepted_records, undo_steps, address_resolver=resolver)
+                    check_later_steps(selected, history, state=State(head_bundle))
+                    return selected
+    
+                inverse_records = select_at(bundle, inverse_history)
+            closures, restored_from = {}, None
+            if restore:
+                restored_from = copy.deepcopy(calls[0]['args'])
+                source = _load(port, context, restored_from['revision_id'])
+                image = source['source_mapping']['_runtime_document']['parent_revision']
+                _require(image['content_digest'] == restored_from['content_digest'],
+                         "restore source digest mismatch")
+                closures[restored_from['revision_id']] = source
+            else:
+                # Only authenticated accepted writes can authorize an inverse
+                # closure replacement. Never accept a caller-supplied image.
+                for write in (write for record in inverse_records for write in record['writes']):
+                    if write['ref'] == 'timeline' and not write['path']:
+                        pin = write['before']['value']
+                        source = _load(port, context, pin['revision_id'])
+                        image = source['source_mapping']['_runtime_document']['parent_revision']
+                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+                                 "inverse historical closure pin mismatch")
+                        closures[pin['revision_id']] = source
+            # The port captures exactly the resulting document inputs. Discarded
+            # current/source closures must not retain unrelated document pins.
+            schema_inputs = []
+            for source in closures.values():
+                schema_inputs.extend(_hydrate(port, source))
+            if not closures:
+                schema_inputs = _hydrate(port, bundle, calls, inverse_records=inverse_records,
+                                         inverse_sources=inverse_sources)
+            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                              context=context, through=base)
+            original = execute(bundle, execution_calls, inverse_records=inverse_records,
+                               intervening_records=inverse_intervening, closures=closures,
+                               verified_media=verified_media, realm_id=context['realm_id'],
+                               resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                               commit_request=request, evaluated_head=base)
+            for attempt in range(3):
+                if attempt:
+                    current = port.head()
+                # An equal document after undo is still a later publication.
+                # CAS retries must recheck this fact before ordinary replay.
+                if initialize and current != base:
+                    raise CommandError('initialization cannot rebase over an accepted edit',
+                                       kind='not_pristine')
+                if current == base:
+                    plan = original
+                else:
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                      base, current))
+                    entries = _history(port, current, base, CommitRejected, base)
+                    head_bundle = _load(port, context, current["revision_id"])
+                    if undo_of:
+                        inverse_records = select_at(head_bundle, [*inverse_history, *entries])
+                    if not closures:
+                        schema_inputs = _hydrate(port, head_bundle, calls, inverse_records=inverse_records,
+                                             inverse_sources=inverse_sources)
+                    resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                                      context=context, through=current)
+                    if undo_of or any(call['op'] == 'doc.patch' for call in calls) or any(
+                            key in request for key in ('merge', 'reads', 'steps')):
+                        _records(entries, CommitRejected, base, current)
+                        def patch_boundary(entry):
+                            previous = entry.get('previous')
+                            if previous is None:
+                                raise CommandError('missing history boundary', kind='history_unavailable')
+                            return (_load(port, context, previous['revision_id']),
+                                    _load(port, context, entry['revision_id']))
+                        bindings = ({} if undo_of else rebase_patch(
+                            original, entries, head_bundle, load_boundary=patch_boundary))
+                        try:
+                            replay_calls = (execution_calls if undo_of else [
+                                call if call['op'] == 'doc.patch' else original.commands[index]
+                                for index, call in enumerate(calls)])
+                            plan = execute(head_bundle, replay_calls, inverse_records=inverse_records,
+                                           intervening_records=[] if undo_of else _records(
+                                               entries, CommitRejected, base, current), closures=closures,
+                                           verified_media=verified_media, realm_id=context['realm_id'],
+                                           resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                                           commit_request=request, evaluated_head=current,
+                                           replay_bindings=bindings)
+                        except CommandError as exc:
+                            if exc.kind == 'previous_value_mismatch':
+                                exc.kind = ('selection_changed' if getattr(exc, 'dependency_kind', None) == 'collection'
+                                            else 'dependency_changed')
+                            raise
+                    else:
+                        plan = replay(original, head_bundle, inverse_records=inverse_records,
+                                  intervening_records=[] if undo_of else _records(
+                                      entries, CommitRejected, base, current), closures=closures,
+                                  verified_media=verified_media, realm_id=context['realm_id'],
+                                  resolve_inputs=resolve_inputs, verified_producer=verified_producer)
+                        plan.steps = copy.deepcopy(original.steps)
+                        plan.label, plan.merge_mode = original.label, original.merge_mode
+                for record in plan.records:
+                    if record['command']['op'] == 'timeline.inverse' and undo_steps is not None:
+                        record['command']['args']['steps'] = copy.deepcopy(undo_steps)
+                _check_reservations(port, plan, current, CommitRejected, base)
+                from astrid.sdk.timeline.validation import validate_final_candidate
+    
+                validate_final_candidate(
+                    plan.bundle,
+                    baseline=bundle if current == base else head_bundle,
+                    schema_inputs=schema_inputs,
+                    realm_id=context.get('realm_id'),
+                )
+                document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
+                                                inverse_records=inverse_records)
+                from ._commit_preview import prepared_records
+    
+                records = prepared_records(plan, undo_of=undo_of,
+                                           restored_from=restored_from)
+                # R2's guarded per-step inverse selection is part of the
+                # authenticated recorder, including when the official v2
+                # preview helper builds the common record fields.
+                records["undo_steps"] = copy.deepcopy(undo_steps)
+                prepared = {
+                    "expected_head": copy.deepcopy(current), "canonical_document": document,
+                    "document_digest": _digest(document),
+                    "records": records,
+                    "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
+                    "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
+                }
+                try:
+                    if request.get("dry_run", False):
+                        # Runtime authenticates and retains this exact outcome on
+                        # the port.  Any response projection after this call
+                        # would make the provider's result differ from the
+                        # authenticated candidate.
+                        return port.preview(prepared)
+                    return port.accept(prepared)
+                except StaleHead as exc:
+                    current = copy.deepcopy(exc.current_head)
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore head changed at acceptance",
+                                                      base, current)) from exc
+                    continue
+            raise CommitRejected(_failure("head_busy", "timeline head changed on three attempts",
+                                          base, current))
+        except AuthoringBundleError as exc:
+>           raise CommitRejected(_failure("invalid_document", str(exc), base, current,
+                                          invalid=current == base or current is None)) from exc
+E           runtime_protocol.timeline_commit.CommitRejected: candidate.shots['shot'].internal_timeline.clips['voice']: timeline interval must fit the occurrence's half-open bounds
+
+astrid/sdk/timeline/commit.py:1159: CommitRejected
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/tmp/w-d5b80f7170/pytest-of-root/pytest-0/test_native_acceptance_refuses0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff6d5809d90>
+request = <function retained.<locals>.request at 0x7ff6d51bb4c0>
+
+    @pytest.fixture
+    def retained(tmp_path, monkeypatch, request):
+        use_runtime()
+        from runtime_protocol.service import RuntimeService
+        from runtime_protocol.timeline_commit_port import route_path
+    
+        root = tmp_path / 'realm'
+        historical = (Path(os.environ['ASTRID_WORD_ANCHOR_SEED_RUNTIME'])
+                      if os.environ.get('ASTRID_WORD_ANCHOR_SEED_RUNTIME')
+                      else runtime_checkout('80973d34ae10e498d7213c30287012c9876f4b1a'))
+        script = """
+    import json, sys
+    from tests.editing_conformance.native_word_anchor_fixture import seed
+    options = json.loads(sys.argv[2])
+    print(json.dumps(seed(sys.argv[1], options.pop('reused', False), **options)))
+    """
+        options = getattr(request, 'param', False)
+        options = options if isinstance(options, dict) else {'reused': options}
+        seeded = subprocess.run([sys.executable, '-c', script, str(root),
+            json.dumps(options)], text=True, capture_output=True, check=True,
+            env={**os.environ, 'PYTHONPATH': str(Path(__file__).resolve().parents[2]) + os.pathsep + str(historical),
+                 'PYTHONDONTWRITEBYTECODE': '1'}, cwd=tmp_path)
+        values = json.loads(seeded.stdout)
+        project, pin, source = (values[key] for key in ('project', 'pin', 'source'))
+        service = RuntimeService(root)
+        case = SimpleNamespace(service=service, root=root, project=project, pin=pin, source=source,
+                               hydrated=[], documents={})
+    
+        class NoSceneImports:
+            def find_spec(self, fullname, path=None, target=None):
+                if fullname.startswith(('composition', 'remotion', 'astrid.sdk.authoring_render_preview')) or '.scene' in fullname:
+                    raise AssertionError('commit imported scene evaluation: ' + fullname)
+    
+        def no_renderer(*args, **kwargs):
+            raise AssertionError('commit evaluated a scene with the renderer off')
+    
+        import runtime_protocol.service as service_module
+        import runtime_protocol.visual_seam as visual_seam
+    
+        monkeypatch.setattr(sys, 'meta_path', [NoSceneImports(), *sys.meta_path])
+        monkeypatch.setattr(service_module, 'evaluate_closure', no_renderer)
+        monkeypatch.setattr(visual_seam, 'evaluate_closure', no_renderer)
+    
+        def head():
+            value = case.service.get_project_timeline(project, "film")
+            return {"revision_id": value["head_revision_id"], "publication_id": value["head_publication_id"]}
+    
+        def request(commands, base=None):
+            base = base or head()
+            return {"api_version": 1, "project_id": project, "timeline_id": "film",
+                    "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
+                    "commands": commands}
+    
+        def submit(body, key, authorize=lambda: None):
+            result = case.service.commit_timeline(project, "film", body, idempotency_key=key,
+                publisher="timing-editor", invocation_path=route_path(project, "film"), authorize=authorize)
+            document = result["data"]["canonical_document"]
+            case.documents[document["parent_revision"]["revision_id"]] = document
+            return result
+    
+        service.register_timeline_commit_provider(agent.create_runtime_commit_service())
+        hydrate = agent._hydrate
+    
+        def observed(port, bundle, calls=(), **kwargs):
+            result = hydrate(port, bundle, calls, **kwargs)
+            case.hydrated.append(copy.deepcopy(bundle))
+            return result
+    
+        monkeypatch.setattr(agent, "_hydrate", observed)
+>       case.seed = submit(request([{"schema_version": 1, "op": "track.create", "version": "1",
+            "select": "parent", "created": ["parent/track:initial"],
+            "args": {"row": {"id": "initial", "kind": "audio"}}}]), "initial")
+
+tests/editing_conformance/native_word_anchor_fixture.py:194: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/native_word_anchor_fixture.py:179: in submit
+    result = case.service.commit_timeline(project, "film", body, idempotency_key=key,
+../rt-pin-ad823e0a/runtime_protocol/service.py:2443: in commit_timeline
+    return self._execute_timeline_commit(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <runtime_protocol.service.RuntimeService object at 0x7ff6d590ced0>
+project_id = 'd1007312fccf4c81908e2bca98d55556', timeline_id = 'film'
+request = {'api_version': 1, 'base_publication_id': 'txn-001c432547bd4de8b250e84f58e17c36', 'base_revision_id': 'initial-parent'...nitial', 'kind': 'audio'}}, 'created': ['parent/track:initial'], 'op': 'track.create', 'schema_version': 1, ...}], ...}
+original_body = {'api_version': 1, 'base_publication_id': 'txn-001c432547bd4de8b250e84f58e17c36', 'base_revision_id': 'initial-parent'...nitial', 'kind': 'audio'}}, 'created': ['parent/track:initial'], 'op': 'track.create', 'schema_version': 1, ...}], ...}
+
+    def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
+                                 operation, idempotency_key, publisher, invocation_path, authorize):
+        from .timeline_commit import CommitRejected
+        from .timeline_commit_port import CommitUnavailable, RequestCommitPort, detached, public_failure
+        if not isinstance(publisher, str) or not publisher:
+            raise AuthorizationError("authenticated publisher is required")
+        idempotency_key = require_idempotency_key(idempotency_key)
+        check = self._timeline_authorize(project_id, timeline_id, authorize)
+        invocation = {"operation": operation, "path": invocation_path, "body": detached(original_body)}
+        request_hash = hashlib.sha256(canonical_json({
+            "operation": operation, "path": invocation_path,
+            "publisher": publisher, "request": invocation["body"],
+        }).encode()).hexdigest()
+        context = {"request": detached(request), "invocation": invocation,
+                   "request_hash": request_hash, "idempotency_key": idempotency_key,
+                   "publisher": publisher, "realm_id": self.realm["id"]}
+        commits, coordinator = self._timeline_commits()
+        with self.store._mutex:
+            self._timeline_commit_started = True
+            provider = self._timeline_commit_provider
+        def port_factory(bound_context):
+            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
+            return RequestCommitPort(self, commits, bound_context, check)
+        try:
+            if provider is None:
+                replay = commits.lookup(context, authorize=check)
+                if replay is not None:
+                    return replay
+                raise CommitUnavailable()
+            outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+            if "http_status" in outcome:
+                raise public_failure(outcome)
+            return outcome
+        except CommitRejected as exc:
+>           raise public_failure(exc.failure) from exc
+E           runtime_protocol.errors.RuntimeErrorBase: candidate.shots['shot'].internal_timeline.clips['voice']: timeline interval must fit the occurrence's half-open bounds
+
+../rt-pin-ad823e0a/runtime_protocol/service.py:2483: RuntimeErrorBase
+_ ERROR at setup of test_native_acceptance_refuses_review_source_counterexamples_before_writes[raw-source-window] _
+
+candidate = {'base_parent': {'content_digest': 'sha256:0efd6b721188fde0e3bbceb0d06985e77881af41fc30e498c1835dfa6117d029', 'revisio...: {...}}}}, 'tracks': [{'id': 'picture', 'kind': 'visual'}, {'id': 'initial', 'kind': 'audio'}]}, 'registry': {}}, ...}
+
+    def validate_final_candidate(
+        candidate: Mapping[str, Any], *,
+        baseline: Mapping[str, Any] | None = None,
+        schema_inputs: Sequence[Any] = (),
+        realm_id: str | None = None,
+    ) -> None:
+        """Validate one complete candidate without changing it.
+    
+        ``baseline`` distinguishes new declarations from untouched legacy values
+        that must survive a round trip.  ``schema_inputs``
+        are the exact retained Runtime captures collected for this commit; this
+        helper never resolves a mutable project-pack source.
+        """
+        if not isinstance(candidate, Mapping):
+            _fail("candidate", "must be an object")
+        try:
+            json.dumps(candidate, allow_nan=False)
+        except (TypeError, ValueError) as exc:
+            _fail("candidate", f"must be finite JSON: {exc}")
+        _validate_fps(candidate, baseline)
+        parent_value: Any = candidate.get("parent")
+        if not isinstance(parent_value, Mapping):
+            _fail("candidate.parent", "must be an object")
+        parent: Mapping[str, Any] = parent_value
+        config_value: Any = parent.get("config")
+        if not isinstance(config_value, Mapping):
+            _fail("candidate.parent.config", "must be an object")
+        config: Mapping[str, Any] = config_value
+        tracks = _identity_rows(config.get("tracks", []), "candidate.parent.config.tracks", "id")
+        try:
+            registry = effective_parent_registry(parent)
+        except ParentRegistryError as exc:
+            _fail("candidate.parent.registry", str(exc))
+        clips = _validate_clip_list(
+            parent.get("clips", config.get("clips")), path="candidate.parent.clips",
+            tracks=tracks, registry=registry,
+        )
+        mirror = config.get("clips")
+        if isinstance(mirror, list) and isinstance(parent.get("clips"), list) and mirror and mirror != parent["clips"]:
+            _fail("candidate.parent.config.clips", "does not match parent.clips")
+    
+        placements = _identity_rows(candidate.get("placements", []), "candidate.placements", "occurrence_id")
+        shots_value: Any = candidate.get("shots")
+        if not isinstance(shots_value, Mapping):
+            _fail("candidate.shots", "must be an object")
+        shots: Mapping[str, Any] = shots_value
+        for occurrence_id, placement in placements.items():
+            shot_id_value = placement.get("shot_id")
+            if not isinstance(shot_id_value, str):
+                _fail(f"candidate.placements[{occurrence_id!r}].shot_id", "must be a string")
+            shot_id = cast(str, shot_id_value)
+            if shot_id not in shots:
+                _fail(f"candidate.placements[{occurrence_id!r}].shot_id", "references a missing shot")
+            duration_ms = _number(placement.get("duration_ms"), f"candidate.placements[{occurrence_id!r}].duration_ms", positive=True)
+            start_ms = (placement.get("placement") or {}).get("start_ms", placement.get("at_ms", 0))
+            start = _number(start_ms, f"candidate.placements[{occurrence_id!r}].placement.start_ms") / 1000
+            if start < 0:
+                _fail(f"candidate.placements[{occurrence_id!r}].placement.start_ms", "must not be negative")
+            bound = duration_ms / 1000
+            shot_value: Any = shots[shot_id]
+            internal_value = shot_value.get("internal_timeline") if isinstance(shot_value, Mapping) else None
+            if not isinstance(internal_value, Mapping):
+                _fail(f"candidate.shots[{shot_id!r}].internal_timeline", "must be an object")
+            child_config = cast(Mapping[str, Any], internal_value)
+            child_tracks = _identity_rows(child_config.get("tracks", []), f"candidate.shots[{shot_id!r}].internal_timeline.tracks", "id")
+            child_clips = _validate_clip_list(
+                child_config.get("clips", []), path=f"candidate.shots[{shot_id!r}].internal_timeline.clips",
+                tracks=child_tracks, registry=child_config.get("registry", {}), bound=bound,
+            )
+            baseline_shot = ((baseline or {}).get("shots") or {}).get(shot_id, {})
+            baseline_internal = baseline_shot.get("internal_timeline", {}) if isinstance(baseline_shot, Mapping) else {}
+            before_child = _identity_rows(baseline_internal.get("clips", []), "baseline.clips", "id") if isinstance(baseline_internal, Mapping) and isinstance(baseline_internal.get("clips"), list) else {}
+            for clip_id, clip in child_clips.items():
+                _validate_params(
+                    clip, path=f"candidate.shots[{shot_id!r}].internal_timeline.clips[{clip_id!r}]",
+                    baseline=before_child.get(clip_id), schema_inputs=schema_inputs,
+                    realm_id=realm_id, project=str(candidate.get("project_id", "")),
+                )
+        for clip_id, clip in clips.items():
+            _validate_params(
+                clip, path=f"candidate.parent.clips[{clip_id!r}]", baseline=_baseline_clips(baseline or {}).get(("parent", clip_id)),
+                schema_inputs=schema_inputs, realm_id=realm_id, project=str(candidate.get("project_id", "")),
+            )
+    
+        from astrid.sdk.timeline._commit_timing_validation import validate_candidate_timing
+    
+        try:
+>           validate_candidate_timing(candidate, baseline=baseline)
+
+astrid/sdk/timeline/validation.py:480: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/_commit_timing_validation.py:379: in validate_candidate_timing
+    compile_timing(inputs)
+astrid/sdk/timeline/compiler.py:136: in compile_timing
+    timings = evaluate(bundle, inputs.sources, inputs.bindings, inputs.policy,
+astrid/sdk/timeline/_timing_evaluators.py:482: in evaluate
+    _maps(clip, str(owner))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = {'asset': 'take', 'at': 1, 'clipType': 'media', 'from': 2, ...}
+label = "('occ', 'shot', 'voice')"
+
+    def _maps(value, label):
+        for key in ("source_window", "time_map", "timeMap", "from_ms", "to_ms", "children", "clips"):
+            if value.get(key) is not None:
+>               raise TimingCompileError(f"{label}: unsupported explicit map {key}")
+E               astrid.sdk.timeline.compiler.TimingCompileError: ('occ', 'shot', 'voice'): unsupported explicit map source_window
+
+astrid/sdk/timeline/_timing_evaluators.py:51: TimingCompileError
+
+During handling of the above exception, another exception occurred:
+
+self = <astrid.sdk.timeline.commit.RuntimeCommitService object at 0x7ff6d5a5e010>
+context = {'idempotency_key': 'initial', 'invocation': {'body': {'api_version': 1, 'base_publication_id': 'txn-52751349ffff4bf0b...c0927c6d4be/timelines/film/commit'}, 'publisher': 'timing-editor', 'realm_id': '3af1e022adbd45fba1f51441fdf89bff', ...}
+port = <runtime_protocol.timeline_commit_port.RequestCommitPort object at 0x7ff6d33b9990>
+
+    def commit(self, context, port):
+        from runtime_protocol.timeline_commit import CommitRejected, StaleHead
+    
+        from astrid.sdk.timeline._collections import AcceptedRecords
+        from astrid.sdk.timeline._command_state import State
+        from astrid.sdk.timeline._commit_patch import inverse_address_resolver, rebase_patch
+        from astrid.sdk.timeline._step_undo import check_later_steps, select_inverse_records
+        from astrid.sdk.timeline.commands import CommandError, execute
+        from astrid.sdk.timeline.producer import capture_producer
+        from astrid.sdk.timeline.rebase import replay
+    
+        context = copy.deepcopy(context)
+        request = context["request"]
+        base = {"revision_id": request["base_revision_id"],
+                "publication_id": request["base_publication_id"]}
+        current = None
+        try:
+            calls = request["commands"]
+            from astrid.sdk.timeline.commands import validate_command
+            verified_media = []
+            # Step selection is provider control over authenticated history. The
+            # native ABI still executes the existing whole-record inverse form.
+            execution_calls = copy.deepcopy(calls)
+            for call in execution_calls:
+                if call.get('op') == 'timeline.inverse' and isinstance(call.get('args'), dict):
+                    call['args'].pop('steps', None)
+                validate_command(call)
+            verified_producer = capture_producer(port, request)
+            for call in calls:
+                if call['op'] == 'text-binding.set' and 'text' in call['args']:
+                    verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
+                if call['op'] in ('clip.add-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
+                                'shot.pool'):
+                    for key in ('old_media', 'media'):
+                        if key in call['args']:
+                            verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
+            restore = any(call["op"] == "timeline.restore" for call in calls)
+            if restore:
+                current = port.head()
+                if len(calls) != 1:
+                    raise CommitRejected(_failure("invalid_commands", "restore must be the sole command",
+                                                  base, current))
+                if current != base:
+                    raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                  base, current))
+            bundle = _load(port, context, base["revision_id"])
+            current = port.head()
+            base_entry = port.history_entry(base["publication_id"])
+            if base_entry["revision_id"] != base["revision_id"]:
+                raise CommitRejected(_failure("history_unavailable", "base publication/revision mismatch",
+                                              base, current))
+            initialize = any(call['op'] == 'timeline.init' for call in calls)
+            if initialize and (base_entry['intent'] != 'bootstrap'
+                               or base_entry['previous'] is not None or current != base):
+                raise CommandError('initialization requires the original bootstrap publication',
+                                   kind='not_pristine')
+            undo_of, undo_steps = [], None
+            if sum(call["op"] == "timeline.inverse" for call in calls) > 1:
+                raise CommitRejected(_failure("unsupported_operation",
+                                              "use one inverse command listing all target publications",
+                                              base, current))
+            for call in calls:
+                if call["op"] == "timeline.inverse":
+                    if 'steps' in call['args'] and not isinstance(call['args']['steps'], dict):
+                        raise CommandError('inverse steps must be a publication map', kind='invalid_steps')
+                    undo_steps = copy.deepcopy(call["args"].get("steps"))
+                    for publication in call["args"]["publications"]:
+                        if publication not in undo_of:
+                            undo_of.append(publication)
+            inverse_records, inverse_intervening, inverse_sources = [], [], []
+            if undo_of:
+                targets = [port.history_entry(publication) for publication in undo_of]
+                segments = []
+                for target in targets:
+                    pin = {"revision_id": target["revision_id"],
+                           "publication_id": target["publication_id"]}
+                    # Loading the exact target also verifies source scope; no
+                    # client-provided inverse writes enter the core engine.
+                    _load(port, context, target["revision_id"])
+                    segment = [target, *_history(port, base, pin, CommitRejected, base)]
+                    segments.append(segment)
+                # The longest segment begins at the earliest targeted edge.
+                ordered = max(segments, key=len)
+                if undo_of != [entry["publication_id"] for entry in ordered
+                               if entry["publication_id"] in undo_of]:
+                    raise CommitRejected(_failure("invalid_inverse_order",
+                                                  "inverse publications must be oldest to newest",
+                                                  base, current))
+                accepted = [entry for entry in ordered if entry['publication_id'] in undo_of]
+    
+                def load_boundary(entry):
+                    previous = entry.get('previous')
+                    if not previous:
+                        raise CommandError('inverse input boundary is unavailable', kind='history_unavailable')
+                    prior = port.history_entry(previous['publication_id'])
+                    if prior['revision_id'] != previous['revision_id']:
+                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
+                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
+                    _history(port, pin, previous, CommitRejected, base)
+                    return (_load(port, context, previous['revision_id']),
+                            _load(port, context, entry['revision_id']))
+    
+                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
+                _records(ordered, CommitRejected, base, current)
+                accepted_records = AcceptedRecords(accepted, [record for entry in accepted
+                    for record in entry['records']['commands']], load_boundary)
+                inverse_history = ordered
+    
+                def select_at(head_bundle, history):
+                    resolver = (inverse_address_resolver(history, head_bundle, load_boundary=load_boundary)
+                        if any('physical_ref' in binding for record in accepted_records
+                               for binding in record['bindings']) else None)
+                    selected = select_inverse_records(accepted_records, undo_steps, address_resolver=resolver)
+                    check_later_steps(selected, history, state=State(head_bundle))
+                    return selected
+    
+                inverse_records = select_at(bundle, inverse_history)
+            closures, restored_from = {}, None
+            if restore:
+                restored_from = copy.deepcopy(calls[0]['args'])
+                source = _load(port, context, restored_from['revision_id'])
+                image = source['source_mapping']['_runtime_document']['parent_revision']
+                _require(image['content_digest'] == restored_from['content_digest'],
+                         "restore source digest mismatch")
+                closures[restored_from['revision_id']] = source
+            else:
+                # Only authenticated accepted writes can authorize an inverse
+                # closure replacement. Never accept a caller-supplied image.
+                for write in (write for record in inverse_records for write in record['writes']):
+                    if write['ref'] == 'timeline' and not write['path']:
+                        pin = write['before']['value']
+                        source = _load(port, context, pin['revision_id'])
+                        image = source['source_mapping']['_runtime_document']['parent_revision']
+                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+                                 "inverse historical closure pin mismatch")
+                        closures[pin['revision_id']] = source
+            # The port captures exactly the resulting document inputs. Discarded
+            # current/source closures must not retain unrelated document pins.
+            schema_inputs = []
+            for source in closures.values():
+                schema_inputs.extend(_hydrate(port, source))
+            if not closures:
+                schema_inputs = _hydrate(port, bundle, calls, inverse_records=inverse_records,
+                                         inverse_sources=inverse_sources)
+            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                              context=context, through=base)
+            original = execute(bundle, execution_calls, inverse_records=inverse_records,
+                               intervening_records=inverse_intervening, closures=closures,
+                               verified_media=verified_media, realm_id=context['realm_id'],
+                               resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                               commit_request=request, evaluated_head=base)
+            for attempt in range(3):
+                if attempt:
+                    current = port.head()
+                # An equal document after undo is still a later publication.
+                # CAS retries must recheck this fact before ordinary replay.
+                if initialize and current != base:
+                    raise CommandError('initialization cannot rebase over an accepted edit',
+                                       kind='not_pristine')
+                if current == base:
+                    plan = original
+                else:
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                      base, current))
+                    entries = _history(port, current, base, CommitRejected, base)
+                    head_bundle = _load(port, context, current["revision_id"])
+                    if undo_of:
+                        inverse_records = select_at(head_bundle, [*inverse_history, *entries])
+                    if not closures:
+                        schema_inputs = _hydrate(port, head_bundle, calls, inverse_records=inverse_records,
+                                             inverse_sources=inverse_sources)
+                    resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                                      context=context, through=current)
+                    if undo_of or any(call['op'] == 'doc.patch' for call in calls) or any(
+                            key in request for key in ('merge', 'reads', 'steps')):
+                        _records(entries, CommitRejected, base, current)
+                        def patch_boundary(entry):
+                            previous = entry.get('previous')
+                            if previous is None:
+                                raise CommandError('missing history boundary', kind='history_unavailable')
+                            return (_load(port, context, previous['revision_id']),
+                                    _load(port, context, entry['revision_id']))
+                        bindings = ({} if undo_of else rebase_patch(
+                            original, entries, head_bundle, load_boundary=patch_boundary))
+                        try:
+                            replay_calls = (execution_calls if undo_of else [
+                                call if call['op'] == 'doc.patch' else original.commands[index]
+                                for index, call in enumerate(calls)])
+                            plan = execute(head_bundle, replay_calls, inverse_records=inverse_records,
+                                           intervening_records=[] if undo_of else _records(
+                                               entries, CommitRejected, base, current), closures=closures,
+                                           verified_media=verified_media, realm_id=context['realm_id'],
+                                           resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                                           commit_request=request, evaluated_head=current,
+                                           replay_bindings=bindings)
+                        except CommandError as exc:
+                            if exc.kind == 'previous_value_mismatch':
+                                exc.kind = ('selection_changed' if getattr(exc, 'dependency_kind', None) == 'collection'
+                                            else 'dependency_changed')
+                            raise
+                    else:
+                        plan = replay(original, head_bundle, inverse_records=inverse_records,
+                                  intervening_records=[] if undo_of else _records(
+                                      entries, CommitRejected, base, current), closures=closures,
+                                  verified_media=verified_media, realm_id=context['realm_id'],
+                                  resolve_inputs=resolve_inputs, verified_producer=verified_producer)
+                        plan.steps = copy.deepcopy(original.steps)
+                        plan.label, plan.merge_mode = original.label, original.merge_mode
+                for record in plan.records:
+                    if record['command']['op'] == 'timeline.inverse' and undo_steps is not None:
+                        record['command']['args']['steps'] = copy.deepcopy(undo_steps)
+                _check_reservations(port, plan, current, CommitRejected, base)
+                from astrid.sdk.timeline.validation import validate_final_candidate
+    
+>               validate_final_candidate(
+                    plan.bundle,
+                    baseline=bundle if current == base else head_bundle,
+                    schema_inputs=schema_inputs,
+                    realm_id=context.get('realm_id'),
+                )
+
+astrid/sdk/timeline/commit.py:1119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/validation.py:482: in validate_final_candidate
+    _fail("candidate.timing", str(exc))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = 'candidate.timing'
+message = "('occ', 'shot', 'voice'): unsupported explicit map source_window"
+
+    def _fail(path: str, message: str) -> NoReturn:
+>       raise FinalCandidateError(f"{path}: {message}")
+E       astrid.sdk.timeline.validation.FinalCandidateError: candidate.timing: ('occ', 'shot', 'voice'): unsupported explicit map source_window
+
+astrid/sdk/timeline/validation.py:31: FinalCandidateError
+
+The above exception was the direct cause of the following exception:
+
+self = <runtime_protocol.service.RuntimeService object at 0x7ff6d33bb410>
+project_id = '14e7c5ab0dfb4d19bbae3c0927c6d4be', timeline_id = 'film'
+request = {'api_version': 1, 'base_publication_id': 'txn-52751349ffff4bf0b291f8b0745dc89f', 'base_revision_id': 'initial-parent'...nitial', 'kind': 'audio'}}, 'created': ['parent/track:initial'], 'op': 'track.create', 'schema_version': 1, ...}], ...}
+original_body = {'api_version': 1, 'base_publication_id': 'txn-52751349ffff4bf0b291f8b0745dc89f', 'base_revision_id': 'initial-parent'...nitial', 'kind': 'audio'}}, 'created': ['parent/track:initial'], 'op': 'track.create', 'schema_version': 1, ...}], ...}
+
+    def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
+                                 operation, idempotency_key, publisher, invocation_path, authorize):
+        from .timeline_commit import CommitRejected
+        from .timeline_commit_port import CommitUnavailable, RequestCommitPort, detached, public_failure
+        if not isinstance(publisher, str) or not publisher:
+            raise AuthorizationError("authenticated publisher is required")
+        idempotency_key = require_idempotency_key(idempotency_key)
+        check = self._timeline_authorize(project_id, timeline_id, authorize)
+        invocation = {"operation": operation, "path": invocation_path, "body": detached(original_body)}
+        request_hash = hashlib.sha256(canonical_json({
+            "operation": operation, "path": invocation_path,
+            "publisher": publisher, "request": invocation["body"],
+        }).encode()).hexdigest()
+        context = {"request": detached(request), "invocation": invocation,
+                   "request_hash": request_hash, "idempotency_key": idempotency_key,
+                   "publisher": publisher, "realm_id": self.realm["id"]}
+        commits, coordinator = self._timeline_commits()
+        with self.store._mutex:
+            self._timeline_commit_started = True
+            provider = self._timeline_commit_provider
+        def port_factory(bound_context):
+            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
+            return RequestCommitPort(self, commits, bound_context, check)
+        try:
+            if provider is None:
+                replay = commits.lookup(context, authorize=check)
+                if replay is not None:
+                    return replay
+                raise CommitUnavailable()
+>           outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../rt-pin-ad823e0a/runtime_protocol/service.py:2478: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../rt-pin-ad823e0a/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+../rt-pin-ad823e0a/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <astrid.sdk.timeline.commit.RuntimeCommitService object at 0x7ff6d5a5e010>
+context = {'idempotency_key': 'initial', 'invocation': {'body': {'api_version': 1, 'base_publication_id': 'txn-52751349ffff4bf0b...c0927c6d4be/timelines/film/commit'}, 'publisher': 'timing-editor', 'realm_id': '3af1e022adbd45fba1f51441fdf89bff', ...}
+port = <runtime_protocol.timeline_commit_port.RequestCommitPort object at 0x7ff6d33b9990>
+
+    def commit(self, context, port):
+        from runtime_protocol.timeline_commit import CommitRejected, StaleHead
+    
+        from astrid.sdk.timeline._collections import AcceptedRecords
+        from astrid.sdk.timeline._command_state import State
+        from astrid.sdk.timeline._commit_patch import inverse_address_resolver, rebase_patch
+        from astrid.sdk.timeline._step_undo import check_later_steps, select_inverse_records
+        from astrid.sdk.timeline.commands import CommandError, execute
+        from astrid.sdk.timeline.producer import capture_producer
+        from astrid.sdk.timeline.rebase import replay
+    
+        context = copy.deepcopy(context)
+        request = context["request"]
+        base = {"revision_id": request["base_revision_id"],
+                "publication_id": request["base_publication_id"]}
+        current = None
+        try:
+            calls = request["commands"]
+            from astrid.sdk.timeline.commands import validate_command
+            verified_media = []
+            # Step selection is provider control over authenticated history. The
+            # native ABI still executes the existing whole-record inverse form.
+            execution_calls = copy.deepcopy(calls)
+            for call in execution_calls:
+                if call.get('op') == 'timeline.inverse' and isinstance(call.get('args'), dict):
+                    call['args'].pop('steps', None)
+                validate_command(call)
+            verified_producer = capture_producer(port, request)
+            for call in calls:
+                if call['op'] == 'text-binding.set' and 'text' in call['args']:
+                    verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
+                if call['op'] in ('clip.add-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
+                                'shot.pool'):
+                    for key in ('old_media', 'media'):
+                        if key in call['args']:
+                            verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
+            restore = any(call["op"] == "timeline.restore" for call in calls)
+            if restore:
+                current = port.head()
+                if len(calls) != 1:
+                    raise CommitRejected(_failure("invalid_commands", "restore must be the sole command",
+                                                  base, current))
+                if current != base:
+                    raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                  base, current))
+            bundle = _load(port, context, base["revision_id"])
+            current = port.head()
+            base_entry = port.history_entry(base["publication_id"])
+            if base_entry["revision_id"] != base["revision_id"]:
+                raise CommitRejected(_failure("history_unavailable", "base publication/revision mismatch",
+                                              base, current))
+            initialize = any(call['op'] == 'timeline.init' for call in calls)
+            if initialize and (base_entry['intent'] != 'bootstrap'
+                               or base_entry['previous'] is not None or current != base):
+                raise CommandError('initialization requires the original bootstrap publication',
+                                   kind='not_pristine')
+            undo_of, undo_steps = [], None
+            if sum(call["op"] == "timeline.inverse" for call in calls) > 1:
+                raise CommitRejected(_failure("unsupported_operation",
+                                              "use one inverse command listing all target publications",
+                                              base, current))
+            for call in calls:
+                if call["op"] == "timeline.inverse":
+                    if 'steps' in call['args'] and not isinstance(call['args']['steps'], dict):
+                        raise CommandError('inverse steps must be a publication map', kind='invalid_steps')
+                    undo_steps = copy.deepcopy(call["args"].get("steps"))
+                    for publication in call["args"]["publications"]:
+                        if publication not in undo_of:
+                            undo_of.append(publication)
+            inverse_records, inverse_intervening, inverse_sources = [], [], []
+            if undo_of:
+                targets = [port.history_entry(publication) for publication in undo_of]
+                segments = []
+                for target in targets:
+                    pin = {"revision_id": target["revision_id"],
+                           "publication_id": target["publication_id"]}
+                    # Loading the exact target also verifies source scope; no
+                    # client-provided inverse writes enter the core engine.
+                    _load(port, context, target["revision_id"])
+                    segment = [target, *_history(port, base, pin, CommitRejected, base)]
+                    segments.append(segment)
+                # The longest segment begins at the earliest targeted edge.
+                ordered = max(segments, key=len)
+                if undo_of != [entry["publication_id"] for entry in ordered
+                               if entry["publication_id"] in undo_of]:
+                    raise CommitRejected(_failure("invalid_inverse_order",
+                                                  "inverse publications must be oldest to newest",
+                                                  base, current))
+                accepted = [entry for entry in ordered if entry['publication_id'] in undo_of]
+    
+                def load_boundary(entry):
+                    previous = entry.get('previous')
+                    if not previous:
+                        raise CommandError('inverse input boundary is unavailable', kind='history_unavailable')
+                    prior = port.history_entry(previous['publication_id'])
+                    if prior['revision_id'] != previous['revision_id']:
+                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
+                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
+                    _history(port, pin, previous, CommitRejected, base)
+                    return (_load(port, context, previous['revision_id']),
+                            _load(port, context, entry['revision_id']))
+    
+                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
+                _records(ordered, CommitRejected, base, current)
+                accepted_records = AcceptedRecords(accepted, [record for entry in accepted
+                    for record in entry['records']['commands']], load_boundary)
+                inverse_history = ordered
+    
+                def select_at(head_bundle, history):
+                    resolver = (inverse_address_resolver(history, head_bundle, load_boundary=load_boundary)
+                        if any('physical_ref' in binding for record in accepted_records
+                               for binding in record['bindings']) else None)
+                    selected = select_inverse_records(accepted_records, undo_steps, address_resolver=resolver)
+                    check_later_steps(selected, history, state=State(head_bundle))
+                    return selected
+    
+                inverse_records = select_at(bundle, inverse_history)
+            closures, restored_from = {}, None
+            if restore:
+                restored_from = copy.deepcopy(calls[0]['args'])
+                source = _load(port, context, restored_from['revision_id'])
+                image = source['source_mapping']['_runtime_document']['parent_revision']
+                _require(image['content_digest'] == restored_from['content_digest'],
+                         "restore source digest mismatch")
+                closures[restored_from['revision_id']] = source
+            else:
+                # Only authenticated accepted writes can authorize an inverse
+                # closure replacement. Never accept a caller-supplied image.
+                for write in (write for record in inverse_records for write in record['writes']):
+                    if write['ref'] == 'timeline' and not write['path']:
+                        pin = write['before']['value']
+                        source = _load(port, context, pin['revision_id'])
+                        image = source['source_mapping']['_runtime_document']['parent_revision']
+                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+                                 "inverse historical closure pin mismatch")
+                        closures[pin['revision_id']] = source
+            # The port captures exactly the resulting document inputs. Discarded
+            # current/source closures must not retain unrelated document pins.
+            schema_inputs = []
+            for source in closures.values():
+                schema_inputs.extend(_hydrate(port, source))
+            if not closures:
+                schema_inputs = _hydrate(port, bundle, calls, inverse_records=inverse_records,
+                                         inverse_sources=inverse_sources)
+            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                              context=context, through=base)
+            original = execute(bundle, execution_calls, inverse_records=inverse_records,
+                               intervening_records=inverse_intervening, closures=closures,
+                               verified_media=verified_media, realm_id=context['realm_id'],
+                               resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                               commit_request=request, evaluated_head=base)
+            for attempt in range(3):
+                if attempt:
+                    current = port.head()
+                # An equal document after undo is still a later publication.
+                # CAS retries must recheck this fact before ordinary replay.
+                if initialize and current != base:
+                    raise CommandError('initialization cannot rebase over an accepted edit',
+                                       kind='not_pristine')
+                if current == base:
+                    plan = original
+                else:
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                      base, current))
+                    entries = _history(port, current, base, CommitRejected, base)
+                    head_bundle = _load(port, context, current["revision_id"])
+                    if undo_of:
+                        inverse_records = select_at(head_bundle, [*inverse_history, *entries])
+                    if not closures:
+                        schema_inputs = _hydrate(port, head_bundle, calls, inverse_records=inverse_records,
+                                             inverse_sources=inverse_sources)
+                    resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                                      context=context, through=current)
+                    if undo_of or any(call['op'] == 'doc.patch' for call in calls) or any(
+                            key in request for key in ('merge', 'reads', 'steps')):
+                        _records(entries, CommitRejected, base, current)
+                        def patch_boundary(entry):
+                            previous = entry.get('previous')
+                            if previous is None:
+                                raise CommandError('missing history boundary', kind='history_unavailable')
+                            return (_load(port, context, previous['revision_id']),
+                                    _load(port, context, entry['revision_id']))
+                        bindings = ({} if undo_of else rebase_patch(
+                            original, entries, head_bundle, load_boundary=patch_boundary))
+                        try:
+                            replay_calls = (execution_calls if undo_of else [
+                                call if call['op'] == 'doc.patch' else original.commands[index]
+                                for index, call in enumerate(calls)])
+                            plan = execute(head_bundle, replay_calls, inverse_records=inverse_records,
+                                           intervening_records=[] if undo_of else _records(
+                                               entries, CommitRejected, base, current), closures=closures,
+                                           verified_media=verified_media, realm_id=context['realm_id'],
+                                           resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                                           commit_request=request, evaluated_head=current,
+                                           replay_bindings=bindings)
+                        except CommandError as exc:
+                            if exc.kind == 'previous_value_mismatch':
+                                exc.kind = ('selection_changed' if getattr(exc, 'dependency_kind', None) == 'collection'
+                                            else 'dependency_changed')
+                            raise
+                    else:
+                        plan = replay(original, head_bundle, inverse_records=inverse_records,
+                                  intervening_records=[] if undo_of else _records(
+                                      entries, CommitRejected, base, current), closures=closures,
+                                  verified_media=verified_media, realm_id=context['realm_id'],
+                                  resolve_inputs=resolve_inputs, verified_producer=verified_producer)
+                        plan.steps = copy.deepcopy(original.steps)
+                        plan.label, plan.merge_mode = original.label, original.merge_mode
+                for record in plan.records:
+                    if record['command']['op'] == 'timeline.inverse' and undo_steps is not None:
+                        record['command']['args']['steps'] = copy.deepcopy(undo_steps)
+                _check_reservations(port, plan, current, CommitRejected, base)
+                from astrid.sdk.timeline.validation import validate_final_candidate
+    
+                validate_final_candidate(
+                    plan.bundle,
+                    baseline=bundle if current == base else head_bundle,
+                    schema_inputs=schema_inputs,
+                    realm_id=context.get('realm_id'),
+                )
+                document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
+                                                inverse_records=inverse_records)
+                from ._commit_preview import prepared_records
+    
+                records = prepared_records(plan, undo_of=undo_of,
+                                           restored_from=restored_from)
+                # R2's guarded per-step inverse selection is part of the
+                # authenticated recorder, including when the official v2
+                # preview helper builds the common record fields.
+                records["undo_steps"] = copy.deepcopy(undo_steps)
+                prepared = {
+                    "expected_head": copy.deepcopy(current), "canonical_document": document,
+                    "document_digest": _digest(document),
+                    "records": records,
+                    "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
+                    "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
+                }
+                try:
+                    if request.get("dry_run", False):
+                        # Runtime authenticates and retains this exact outcome on
+                        # the port.  Any response projection after this call
+                        # would make the provider's result differ from the
+                        # authenticated candidate.
+                        return port.preview(prepared)
+                    return port.accept(prepared)
+                except StaleHead as exc:
+                    current = copy.deepcopy(exc.current_head)
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore head changed at acceptance",
+                                                      base, current)) from exc
+                    continue
+            raise CommitRejected(_failure("head_busy", "timeline head changed on three attempts",
+                                          base, current))
+        except AuthoringBundleError as exc:
+>           raise CommitRejected(_failure("invalid_document", str(exc), base, current,
+                                          invalid=current == base or current is None)) from exc
+E           runtime_protocol.timeline_commit.CommitRejected: candidate.timing: ('occ', 'shot', 'voice'): unsupported explicit map source_window
+
+astrid/sdk/timeline/commit.py:1159: CommitRejected
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/tmp/w-d5b80f7170/pytest-of-root/pytest-0/test_native_acceptance_refuses0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff6d33ba410>
+request = <function retained.<locals>.request at 0x7ff6d4bde8e0>
+
+    @pytest.fixture
+    def retained(tmp_path, monkeypatch, request):
+        use_runtime()
+        from runtime_protocol.service import RuntimeService
+        from runtime_protocol.timeline_commit_port import route_path
+    
+        root = tmp_path / 'realm'
+        historical = (Path(os.environ['ASTRID_WORD_ANCHOR_SEED_RUNTIME'])
+                      if os.environ.get('ASTRID_WORD_ANCHOR_SEED_RUNTIME')
+                      else runtime_checkout('80973d34ae10e498d7213c30287012c9876f4b1a'))
+        script = """
+    import json, sys
+    from tests.editing_conformance.native_word_anchor_fixture import seed
+    options = json.loads(sys.argv[2])
+    print(json.dumps(seed(sys.argv[1], options.pop('reused', False), **options)))
+    """
+        options = getattr(request, 'param', False)
+        options = options if isinstance(options, dict) else {'reused': options}
+        seeded = subprocess.run([sys.executable, '-c', script, str(root),
+            json.dumps(options)], text=True, capture_output=True, check=True,
+            env={**os.environ, 'PYTHONPATH': str(Path(__file__).resolve().parents[2]) + os.pathsep + str(historical),
+                 'PYTHONDONTWRITEBYTECODE': '1'}, cwd=tmp_path)
+        values = json.loads(seeded.stdout)
+        project, pin, source = (values[key] for key in ('project', 'pin', 'source'))
+        service = RuntimeService(root)
+        case = SimpleNamespace(service=service, root=root, project=project, pin=pin, source=source,
+                               hydrated=[], documents={})
+    
+        class NoSceneImports:
+            def find_spec(self, fullname, path=None, target=None):
+                if fullname.startswith(('composition', 'remotion', 'astrid.sdk.authoring_render_preview')) or '.scene' in fullname:
+                    raise AssertionError('commit imported scene evaluation: ' + fullname)
+    
+        def no_renderer(*args, **kwargs):
+            raise AssertionError('commit evaluated a scene with the renderer off')
+    
+        import runtime_protocol.service as service_module
+        import runtime_protocol.visual_seam as visual_seam
+    
+        monkeypatch.setattr(sys, 'meta_path', [NoSceneImports(), *sys.meta_path])
+        monkeypatch.setattr(service_module, 'evaluate_closure', no_renderer)
+        monkeypatch.setattr(visual_seam, 'evaluate_closure', no_renderer)
+    
+        def head():
+            value = case.service.get_project_timeline(project, "film")
+            return {"revision_id": value["head_revision_id"], "publication_id": value["head_publication_id"]}
+    
+        def request(commands, base=None):
+            base = base or head()
+            return {"api_version": 1, "project_id": project, "timeline_id": "film",
+                    "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
+                    "commands": commands}
+    
+        def submit(body, key, authorize=lambda: None):
+            result = case.service.commit_timeline(project, "film", body, idempotency_key=key,
+                publisher="timing-editor", invocation_path=route_path(project, "film"), authorize=authorize)
+            document = result["data"]["canonical_document"]
+            case.documents[document["parent_revision"]["revision_id"]] = document
+            return result
+    
+        service.register_timeline_commit_provider(agent.create_runtime_commit_service())
+        hydrate = agent._hydrate
+    
+        def observed(port, bundle, calls=(), **kwargs):
+            result = hydrate(port, bundle, calls, **kwargs)
+            case.hydrated.append(copy.deepcopy(bundle))
+            return result
+    
+        monkeypatch.setattr(agent, "_hydrate", observed)
+>       case.seed = submit(request([{"schema_version": 1, "op": "track.create", "version": "1",
+            "select": "parent", "created": ["parent/track:initial"],
+            "args": {"row": {"id": "initial", "kind": "audio"}}}]), "initial")
+
+tests/editing_conformance/native_word_anchor_fixture.py:194: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/native_word_anchor_fixture.py:179: in submit
+    result = case.service.commit_timeline(project, "film", body, idempotency_key=key,
+../rt-pin-ad823e0a/runtime_protocol/service.py:2443: in commit_timeline
+    return self._execute_timeline_commit(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <runtime_protocol.service.RuntimeService object at 0x7ff6d33bb410>
+project_id = '14e7c5ab0dfb4d19bbae3c0927c6d4be', timeline_id = 'film'
+request = {'api_version': 1, 'base_publication_id': 'txn-52751349ffff4bf0b291f8b0745dc89f', 'base_revision_id': 'initial-parent'...nitial', 'kind': 'audio'}}, 'created': ['parent/track:initial'], 'op': 'track.create', 'schema_version': 1, ...}], ...}
+original_body = {'api_version': 1, 'base_publication_id': 'txn-52751349ffff4bf0b291f8b0745dc89f', 'base_revision_id': 'initial-parent'...nitial', 'kind': 'audio'}}, 'created': ['parent/track:initial'], 'op': 'track.create', 'schema_version': 1, ...}], ...}
+
+    def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
+                                 operation, idempotency_key, publisher, invocation_path, authorize):
+        from .timeline_commit import CommitRejected
+        from .timeline_commit_port import CommitUnavailable, RequestCommitPort, detached, public_failure
+        if not isinstance(publisher, str) or not publisher:
+            raise AuthorizationError("authenticated publisher is required")
+        idempotency_key = require_idempotency_key(idempotency_key)
+        check = self._timeline_authorize(project_id, timeline_id, authorize)
+        invocation = {"operation": operation, "path": invocation_path, "body": detached(original_body)}
+        request_hash = hashlib.sha256(canonical_json({
+            "operation": operation, "path": invocation_path,
+            "publisher": publisher, "request": invocation["body"],
+        }).encode()).hexdigest()
+        context = {"request": detached(request), "invocation": invocation,
+                   "request_hash": request_hash, "idempotency_key": idempotency_key,
+                   "publisher": publisher, "realm_id": self.realm["id"]}
+        commits, coordinator = self._timeline_commits()
+        with self.store._mutex:
+            self._timeline_commit_started = True
+            provider = self._timeline_commit_provider
+        def port_factory(bound_context):
+            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
+            return RequestCommitPort(self, commits, bound_context, check)
+        try:
+            if provider is None:
+                replay = commits.lookup(context, authorize=check)
+                if replay is not None:
+                    return replay
+                raise CommitUnavailable()
+            outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+            if "http_status" in outcome:
+                raise public_failure(outcome)
+            return outcome
+        except CommitRejected as exc:
+>           raise public_failure(exc.failure) from exc
+E           runtime_protocol.errors.RuntimeErrorBase: candidate.timing: ('occ', 'shot', 'voice'): unsupported explicit map source_window
+
+../rt-pin-ad823e0a/runtime_protocol/service.py:2483: RuntimeErrorBase
+=================================== FAILURES ===================================
+___ test_stale_anchor_refuses_when_intervening_window_excludes_selected_word ___
+
+candidate = {'base_parent': {'content_digest': 'sha256:7f6ce426aa69f809271024bdbbfc368501e3114901522342d0d64af60e1f6665', 'revisio...ind': 'visual'}, {'id': 'initial', 'kind': 'audio'}, {'id': 'recipe-initial', 'kind': 'audio'}]}, 'registry': {}}, ...}
+
+    def validate_final_candidate(
+        candidate: Mapping[str, Any], *,
+        baseline: Mapping[str, Any] | None = None,
+        schema_inputs: Sequence[Any] = (),
+        realm_id: str | None = None,
+    ) -> None:
+        """Validate one complete candidate without changing it.
+    
+        ``baseline`` distinguishes new declarations from untouched legacy values
+        that must survive a round trip.  ``schema_inputs``
+        are the exact retained Runtime captures collected for this commit; this
+        helper never resolves a mutable project-pack source.
+        """
+        if not isinstance(candidate, Mapping):
+            _fail("candidate", "must be an object")
+        try:
+            json.dumps(candidate, allow_nan=False)
+        except (TypeError, ValueError) as exc:
+            _fail("candidate", f"must be finite JSON: {exc}")
+        _validate_fps(candidate, baseline)
+        parent_value: Any = candidate.get("parent")
+        if not isinstance(parent_value, Mapping):
+            _fail("candidate.parent", "must be an object")
+        parent: Mapping[str, Any] = parent_value
+        config_value: Any = parent.get("config")
+        if not isinstance(config_value, Mapping):
+            _fail("candidate.parent.config", "must be an object")
+        config: Mapping[str, Any] = config_value
+        tracks = _identity_rows(config.get("tracks", []), "candidate.parent.config.tracks", "id")
+        try:
+            registry = effective_parent_registry(parent)
+        except ParentRegistryError as exc:
+            _fail("candidate.parent.registry", str(exc))
+        clips = _validate_clip_list(
+            parent.get("clips", config.get("clips")), path="candidate.parent.clips",
+            tracks=tracks, registry=registry,
+        )
+        mirror = config.get("clips")
+        if isinstance(mirror, list) and isinstance(parent.get("clips"), list) and mirror and mirror != parent["clips"]:
+            _fail("candidate.parent.config.clips", "does not match parent.clips")
+    
+        placements = _identity_rows(candidate.get("placements", []), "candidate.placements", "occurrence_id")
+        shots_value: Any = candidate.get("shots")
+        if not isinstance(shots_value, Mapping):
+            _fail("candidate.shots", "must be an object")
+        shots: Mapping[str, Any] = shots_value
+        for occurrence_id, placement in placements.items():
+            shot_id_value = placement.get("shot_id")
+            if not isinstance(shot_id_value, str):
+                _fail(f"candidate.placements[{occurrence_id!r}].shot_id", "must be a string")
+            shot_id = cast(str, shot_id_value)
+            if shot_id not in shots:
+                _fail(f"candidate.placements[{occurrence_id!r}].shot_id", "references a missing shot")
+            duration_ms = _number(placement.get("duration_ms"), f"candidate.placements[{occurrence_id!r}].duration_ms", positive=True)
+            start_ms = (placement.get("placement") or {}).get("start_ms", placement.get("at_ms", 0))
+            start = _number(start_ms, f"candidate.placements[{occurrence_id!r}].placement.start_ms") / 1000
+            if start < 0:
+                _fail(f"candidate.placements[{occurrence_id!r}].placement.start_ms", "must not be negative")
+            bound = duration_ms / 1000
+            shot_value: Any = shots[shot_id]
+            internal_value = shot_value.get("internal_timeline") if isinstance(shot_value, Mapping) else None
+            if not isinstance(internal_value, Mapping):
+                _fail(f"candidate.shots[{shot_id!r}].internal_timeline", "must be an object")
+            child_config = cast(Mapping[str, Any], internal_value)
+            child_tracks = _identity_rows(child_config.get("tracks", []), f"candidate.shots[{shot_id!r}].internal_timeline.tracks", "id")
+            child_clips = _validate_clip_list(
+                child_config.get("clips", []), path=f"candidate.shots[{shot_id!r}].internal_timeline.clips",
+                tracks=child_tracks, registry=child_config.get("registry", {}), bound=bound,
+            )
+            baseline_shot = ((baseline or {}).get("shots") or {}).get(shot_id, {})
+            baseline_internal = baseline_shot.get("internal_timeline", {}) if isinstance(baseline_shot, Mapping) else {}
+            before_child = _identity_rows(baseline_internal.get("clips", []), "baseline.clips", "id") if isinstance(baseline_internal, Mapping) and isinstance(baseline_internal.get("clips"), list) else {}
+            for clip_id, clip in child_clips.items():
+                _validate_params(
+                    clip, path=f"candidate.shots[{shot_id!r}].internal_timeline.clips[{clip_id!r}]",
+                    baseline=before_child.get(clip_id), schema_inputs=schema_inputs,
+                    realm_id=realm_id, project=str(candidate.get("project_id", "")),
+                )
+        for clip_id, clip in clips.items():
+            _validate_params(
+                clip, path=f"candidate.parent.clips[{clip_id!r}]", baseline=_baseline_clips(baseline or {}).get(("parent", clip_id)),
+                schema_inputs=schema_inputs, realm_id=realm_id, project=str(candidate.get("project_id", "")),
+            )
+    
+        from astrid.sdk.timeline._commit_timing_validation import validate_candidate_timing
+    
+        try:
+>           validate_candidate_timing(candidate, baseline=baseline)
+
+astrid/sdk/timeline/validation.py:480: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/_commit_timing_validation.py:351: in validate_candidate_timing
+    selected = legacy_binding(projection, target, field, declarations[field], sources)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+bundle = {'base_parent': {'content_digest': 'sha256:7f6ce426aa69f809271024bdbbfc368501e3114901522342d0d64af60e1f6665', 'revisio...ind': 'visual'}, {'id': 'initial', 'kind': 'audio'}, {'id': 'recipe-initial', 'kind': 'audio'}]}, 'registry': {}}, ...}
+target = 'parent/clip:card', field = 'on'
+declaration = '"again" in line #2 +1f', sources = []
+
+    def legacy_binding(bundle, target, field, declaration, sources):
+        """Only an unambiguous legacy text lookup is safe without a stored choice."""
+        moment = moments.parse(declaration)
+        hits = []
+        for capture in sources:
+            if capture['document']['kind'] != 'media.transcript':
+                continue
+            content = capture["document"]["content"]
+            for row in bundle["placements"]:
+                internal = bundle["shots"][row["shot_id"]]["internal_timeline"]
+                for clip in internal["clips"]:
+                    asset = internal.get("registry", {}).get("assets", {}).get(clip.get("asset"), {})
+                    if asset.get("media_id") != content["media_id"]:
+                        continue
+                    origin = Fraction(row["placement"]["start_ms"], 1000) + Fraction(str(clip["at"]))
+                    words = []
+                    for segment in content["segments"]:
+                        for index, word in enumerate(segment["words"]):
+                            if not clip["from"] <= word["start"] < word["end"] <= clip["to"]:
+                                continue
+                            times = {key: source_to_timeline_time(Fraction(str(word[key])),
+                                source_start=Fraction(str(clip["from"])), timeline_start=origin,
+                                speed=clip["speed"]) for key in ("start", "end")}
+                            words.append(SimpleNamespace(**dict(word, **times), segment=segment["id"], index=index))
+                    for phrase in moments.find_words(replace(moment, n=None), words):
+                        pin = capture["pin"]
+                        hits.append(WordBinding(("parent", "", target.removeprefix("parent/clip:")), field,
+                            declaration, (row["occurrence_id"], row["shot_id"], clip["id"]),
+                            pin["document_id"], pin["version"], pin["content_digest"],
+                            tuple(word.id for word in phrase)))
+        if len(hits) > 1:
+            raise TimingCompileError("ambiguous anchor; choose occurrence")
+        if not hits:
+>           raise TimingCompileError("legacy word anchor is missing")
+E           astrid.sdk.timeline.compiler.TimingCompileError: legacy word anchor is missing
+
+astrid/sdk/timeline/native_word_anchor.py:169: TimingCompileError
+
+During handling of the above exception, another exception occurred:
+
+self = <astrid.sdk.timeline.commit.RuntimeCommitService object at 0x7ff6d5630390>
+context = {'idempotency_key': 'trim-before-anchor', 'invocation': {'body': {'api_version': 1, 'base_publication_id': 'txn-cdf14c...e51d89ed635/timelines/film/commit'}, 'publisher': 'timing-editor', 'realm_id': '57bc038f6454487f9fc3da8f52fc55c5', ...}
+port = <runtime_protocol.timeline_commit_port.RequestCommitPort object at 0x7ff6d4a39c50>
+
+    def commit(self, context, port):
+        from runtime_protocol.timeline_commit import CommitRejected, StaleHead
+    
+        from astrid.sdk.timeline._collections import AcceptedRecords
+        from astrid.sdk.timeline._command_state import State
+        from astrid.sdk.timeline._commit_patch import inverse_address_resolver, rebase_patch
+        from astrid.sdk.timeline._step_undo import check_later_steps, select_inverse_records
+        from astrid.sdk.timeline.commands import CommandError, execute
+        from astrid.sdk.timeline.producer import capture_producer
+        from astrid.sdk.timeline.rebase import replay
+    
+        context = copy.deepcopy(context)
+        request = context["request"]
+        base = {"revision_id": request["base_revision_id"],
+                "publication_id": request["base_publication_id"]}
+        current = None
+        try:
+            calls = request["commands"]
+            from astrid.sdk.timeline.commands import validate_command
+            verified_media = []
+            # Step selection is provider control over authenticated history. The
+            # native ABI still executes the existing whole-record inverse form.
+            execution_calls = copy.deepcopy(calls)
+            for call in execution_calls:
+                if call.get('op') == 'timeline.inverse' and isinstance(call.get('args'), dict):
+                    call['args'].pop('steps', None)
+                validate_command(call)
+            verified_producer = capture_producer(port, request)
+            for call in calls:
+                if call['op'] == 'text-binding.set' and 'text' in call['args']:
+                    verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
+                if call['op'] in ('clip.add-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
+                                'shot.pool'):
+                    for key in ('old_media', 'media'):
+                        if key in call['args']:
+                            verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
+            restore = any(call["op"] == "timeline.restore" for call in calls)
+            if restore:
+                current = port.head()
+                if len(calls) != 1:
+                    raise CommitRejected(_failure("invalid_commands", "restore must be the sole command",
+                                                  base, current))
+                if current != base:
+                    raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                  base, current))
+            bundle = _load(port, context, base["revision_id"])
+            current = port.head()
+            base_entry = port.history_entry(base["publication_id"])
+            if base_entry["revision_id"] != base["revision_id"]:
+                raise CommitRejected(_failure("history_unavailable", "base publication/revision mismatch",
+                                              base, current))
+            initialize = any(call['op'] == 'timeline.init' for call in calls)
+            if initialize and (base_entry['intent'] != 'bootstrap'
+                               or base_entry['previous'] is not None or current != base):
+                raise CommandError('initialization requires the original bootstrap publication',
+                                   kind='not_pristine')
+            undo_of, undo_steps = [], None
+            if sum(call["op"] == "timeline.inverse" for call in calls) > 1:
+                raise CommitRejected(_failure("unsupported_operation",
+                                              "use one inverse command listing all target publications",
+                                              base, current))
+            for call in calls:
+                if call["op"] == "timeline.inverse":
+                    if 'steps' in call['args'] and not isinstance(call['args']['steps'], dict):
+                        raise CommandError('inverse steps must be a publication map', kind='invalid_steps')
+                    undo_steps = copy.deepcopy(call["args"].get("steps"))
+                    for publication in call["args"]["publications"]:
+                        if publication not in undo_of:
+                            undo_of.append(publication)
+            inverse_records, inverse_intervening, inverse_sources = [], [], []
+            if undo_of:
+                targets = [port.history_entry(publication) for publication in undo_of]
+                segments = []
+                for target in targets:
+                    pin = {"revision_id": target["revision_id"],
+                           "publication_id": target["publication_id"]}
+                    # Loading the exact target also verifies source scope; no
+                    # client-provided inverse writes enter the core engine.
+                    _load(port, context, target["revision_id"])
+                    segment = [target, *_history(port, base, pin, CommitRejected, base)]
+                    segments.append(segment)
+                # The longest segment begins at the earliest targeted edge.
+                ordered = max(segments, key=len)
+                if undo_of != [entry["publication_id"] for entry in ordered
+                               if entry["publication_id"] in undo_of]:
+                    raise CommitRejected(_failure("invalid_inverse_order",
+                                                  "inverse publications must be oldest to newest",
+                                                  base, current))
+                accepted = [entry for entry in ordered if entry['publication_id'] in undo_of]
+    
+                def load_boundary(entry):
+                    previous = entry.get('previous')
+                    if not previous:
+                        raise CommandError('inverse input boundary is unavailable', kind='history_unavailable')
+                    prior = port.history_entry(previous['publication_id'])
+                    if prior['revision_id'] != previous['revision_id']:
+                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
+                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
+                    _history(port, pin, previous, CommitRejected, base)
+                    return (_load(port, context, previous['revision_id']),
+                            _load(port, context, entry['revision_id']))
+    
+                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
+                _records(ordered, CommitRejected, base, current)
+                accepted_records = AcceptedRecords(accepted, [record for entry in accepted
+                    for record in entry['records']['commands']], load_boundary)
+                inverse_history = ordered
+    
+                def select_at(head_bundle, history):
+                    resolver = (inverse_address_resolver(history, head_bundle, load_boundary=load_boundary)
+                        if any('physical_ref' in binding for record in accepted_records
+                               for binding in record['bindings']) else None)
+                    selected = select_inverse_records(accepted_records, undo_steps, address_resolver=resolver)
+                    check_later_steps(selected, history, state=State(head_bundle))
+                    return selected
+    
+                inverse_records = select_at(bundle, inverse_history)
+            closures, restored_from = {}, None
+            if restore:
+                restored_from = copy.deepcopy(calls[0]['args'])
+                source = _load(port, context, restored_from['revision_id'])
+                image = source['source_mapping']['_runtime_document']['parent_revision']
+                _require(image['content_digest'] == restored_from['content_digest'],
+                         "restore source digest mismatch")
+                closures[restored_from['revision_id']] = source
+            else:
+                # Only authenticated accepted writes can authorize an inverse
+                # closure replacement. Never accept a caller-supplied image.
+                for write in (write for record in inverse_records for write in record['writes']):
+                    if write['ref'] == 'timeline' and not write['path']:
+                        pin = write['before']['value']
+                        source = _load(port, context, pin['revision_id'])
+                        image = source['source_mapping']['_runtime_document']['parent_revision']
+                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+                                 "inverse historical closure pin mismatch")
+                        closures[pin['revision_id']] = source
+            # The port captures exactly the resulting document inputs. Discarded
+            # current/source closures must not retain unrelated document pins.
+            schema_inputs = []
+            for source in closures.values():
+                schema_inputs.extend(_hydrate(port, source))
+            if not closures:
+                schema_inputs = _hydrate(port, bundle, calls, inverse_records=inverse_records,
+                                         inverse_sources=inverse_sources)
+            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                              context=context, through=base)
+            original = execute(bundle, execution_calls, inverse_records=inverse_records,
+                               intervening_records=inverse_intervening, closures=closures,
+                               verified_media=verified_media, realm_id=context['realm_id'],
+                               resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                               commit_request=request, evaluated_head=base)
+            for attempt in range(3):
+                if attempt:
+                    current = port.head()
+                # An equal document after undo is still a later publication.
+                # CAS retries must recheck this fact before ordinary replay.
+                if initialize and current != base:
+                    raise CommandError('initialization cannot rebase over an accepted edit',
+                                       kind='not_pristine')
+                if current == base:
+                    plan = original
+                else:
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                      base, current))
+                    entries = _history(port, current, base, CommitRejected, base)
+                    head_bundle = _load(port, context, current["revision_id"])
+                    if undo_of:
+                        inverse_records = select_at(head_bundle, [*inverse_history, *entries])
+                    if not closures:
+                        schema_inputs = _hydrate(port, head_bundle, calls, inverse_records=inverse_records,
+                                             inverse_sources=inverse_sources)
+                    resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                                      context=context, through=current)
+                    if undo_of or any(call['op'] == 'doc.patch' for call in calls) or any(
+                            key in request for key in ('merge', 'reads', 'steps')):
+                        _records(entries, CommitRejected, base, current)
+                        def patch_boundary(entry):
+                            previous = entry.get('previous')
+                            if previous is None:
+                                raise CommandError('missing history boundary', kind='history_unavailable')
+                            return (_load(port, context, previous['revision_id']),
+                                    _load(port, context, entry['revision_id']))
+                        bindings = ({} if undo_of else rebase_patch(
+                            original, entries, head_bundle, load_boundary=patch_boundary))
+                        try:
+                            replay_calls = (execution_calls if undo_of else [
+                                call if call['op'] == 'doc.patch' else original.commands[index]
+                                for index, call in enumerate(calls)])
+                            plan = execute(head_bundle, replay_calls, inverse_records=inverse_records,
+                                           intervening_records=[] if undo_of else _records(
+                                               entries, CommitRejected, base, current), closures=closures,
+                                           verified_media=verified_media, realm_id=context['realm_id'],
+                                           resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                                           commit_request=request, evaluated_head=current,
+                                           replay_bindings=bindings)
+                        except CommandError as exc:
+                            if exc.kind == 'previous_value_mismatch':
+                                exc.kind = ('selection_changed' if getattr(exc, 'dependency_kind', None) == 'collection'
+                                            else 'dependency_changed')
+                            raise
+                    else:
+                        plan = replay(original, head_bundle, inverse_records=inverse_records,
+                                  intervening_records=[] if undo_of else _records(
+                                      entries, CommitRejected, base, current), closures=closures,
+                                  verified_media=verified_media, realm_id=context['realm_id'],
+                                  resolve_inputs=resolve_inputs, verified_producer=verified_producer)
+                        plan.steps = copy.deepcopy(original.steps)
+                        plan.label, plan.merge_mode = original.label, original.merge_mode
+                for record in plan.records:
+                    if record['command']['op'] == 'timeline.inverse' and undo_steps is not None:
+                        record['command']['args']['steps'] = copy.deepcopy(undo_steps)
+                _check_reservations(port, plan, current, CommitRejected, base)
+                from astrid.sdk.timeline.validation import validate_final_candidate
+    
+>               validate_final_candidate(
+                    plan.bundle,
+                    baseline=bundle if current == base else head_bundle,
+                    schema_inputs=schema_inputs,
+                    realm_id=context.get('realm_id'),
+                )
+
+astrid/sdk/timeline/commit.py:1119: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/validation.py:482: in validate_final_candidate
+    _fail("candidate.timing", str(exc))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+path = 'candidate.timing', message = 'legacy word anchor is missing'
+
+    def _fail(path: str, message: str) -> NoReturn:
+>       raise FinalCandidateError(f"{path}: {message}")
+E       astrid.sdk.timeline.validation.FinalCandidateError: candidate.timing: legacy word anchor is missing
+
+astrid/sdk/timeline/validation.py:31: FinalCandidateError
+
+The above exception was the direct cause of the following exception:
+
+self = <runtime_protocol.service.RuntimeService object at 0x7ff6d4ac6050>
+project_id = '949eaa8cd2a44218a8219e51d89ed635', timeline_id = 'film'
+request = {'api_version': 1, 'base_publication_id': 'txn-cdf14c2aa2814bc687331991dc024359', 'base_revision_id': 'authoring-paren...: {'from': 4, 'to': 6}, 'op': 'fixture.window', 'schema_version': 1, 'select': 'occurrence:occ/clip:voice', ...}], ...}
+original_body = {'api_version': 1, 'base_publication_id': 'txn-cdf14c2aa2814bc687331991dc024359', 'base_revision_id': 'authoring-paren...: {'from': 4, 'to': 6}, 'op': 'fixture.window', 'schema_version': 1, 'select': 'occurrence:occ/clip:voice', ...}], ...}
+
+    def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
+                                 operation, idempotency_key, publisher, invocation_path, authorize):
+        from .timeline_commit import CommitRejected
+        from .timeline_commit_port import CommitUnavailable, RequestCommitPort, detached, public_failure
+        if not isinstance(publisher, str) or not publisher:
+            raise AuthorizationError("authenticated publisher is required")
+        idempotency_key = require_idempotency_key(idempotency_key)
+        check = self._timeline_authorize(project_id, timeline_id, authorize)
+        invocation = {"operation": operation, "path": invocation_path, "body": detached(original_body)}
+        request_hash = hashlib.sha256(canonical_json({
+            "operation": operation, "path": invocation_path,
+            "publisher": publisher, "request": invocation["body"],
+        }).encode()).hexdigest()
+        context = {"request": detached(request), "invocation": invocation,
+                   "request_hash": request_hash, "idempotency_key": idempotency_key,
+                   "publisher": publisher, "realm_id": self.realm["id"]}
+        commits, coordinator = self._timeline_commits()
+        with self.store._mutex:
+            self._timeline_commit_started = True
+            provider = self._timeline_commit_provider
+        def port_factory(bound_context):
+            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
+            return RequestCommitPort(self, commits, bound_context, check)
+        try:
+            if provider is None:
+                replay = commits.lookup(context, authorize=check)
+                if replay is not None:
+                    return replay
+                raise CommitUnavailable()
+>           outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../rt-pin-ad823e0a/runtime_protocol/service.py:2478: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../rt-pin-ad823e0a/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+../rt-pin-ad823e0a/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <astrid.sdk.timeline.commit.RuntimeCommitService object at 0x7ff6d5630390>
+context = {'idempotency_key': 'trim-before-anchor', 'invocation': {'body': {'api_version': 1, 'base_publication_id': 'txn-cdf14c...e51d89ed635/timelines/film/commit'}, 'publisher': 'timing-editor', 'realm_id': '57bc038f6454487f9fc3da8f52fc55c5', ...}
+port = <runtime_protocol.timeline_commit_port.RequestCommitPort object at 0x7ff6d4a39c50>
+
+    def commit(self, context, port):
+        from runtime_protocol.timeline_commit import CommitRejected, StaleHead
+    
+        from astrid.sdk.timeline._collections import AcceptedRecords
+        from astrid.sdk.timeline._command_state import State
+        from astrid.sdk.timeline._commit_patch import inverse_address_resolver, rebase_patch
+        from astrid.sdk.timeline._step_undo import check_later_steps, select_inverse_records
+        from astrid.sdk.timeline.commands import CommandError, execute
+        from astrid.sdk.timeline.producer import capture_producer
+        from astrid.sdk.timeline.rebase import replay
+    
+        context = copy.deepcopy(context)
+        request = context["request"]
+        base = {"revision_id": request["base_revision_id"],
+                "publication_id": request["base_publication_id"]}
+        current = None
+        try:
+            calls = request["commands"]
+            from astrid.sdk.timeline.commands import validate_command
+            verified_media = []
+            # Step selection is provider control over authenticated history. The
+            # native ABI still executes the existing whole-record inverse form.
+            execution_calls = copy.deepcopy(calls)
+            for call in execution_calls:
+                if call.get('op') == 'timeline.inverse' and isinstance(call.get('args'), dict):
+                    call['args'].pop('steps', None)
+                validate_command(call)
+            verified_producer = capture_producer(port, request)
+            for call in calls:
+                if call['op'] == 'text-binding.set' and 'text' in call['args']:
+                    verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
+                if call['op'] in ('clip.add-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
+                                'shot.pool'):
+                    for key in ('old_media', 'media'):
+                        if key in call['args']:
+                            verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
+            restore = any(call["op"] == "timeline.restore" for call in calls)
+            if restore:
+                current = port.head()
+                if len(calls) != 1:
+                    raise CommitRejected(_failure("invalid_commands", "restore must be the sole command",
+                                                  base, current))
+                if current != base:
+                    raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                  base, current))
+            bundle = _load(port, context, base["revision_id"])
+            current = port.head()
+            base_entry = port.history_entry(base["publication_id"])
+            if base_entry["revision_id"] != base["revision_id"]:
+                raise CommitRejected(_failure("history_unavailable", "base publication/revision mismatch",
+                                              base, current))
+            initialize = any(call['op'] == 'timeline.init' for call in calls)
+            if initialize and (base_entry['intent'] != 'bootstrap'
+                               or base_entry['previous'] is not None or current != base):
+                raise CommandError('initialization requires the original bootstrap publication',
+                                   kind='not_pristine')
+            undo_of, undo_steps = [], None
+            if sum(call["op"] == "timeline.inverse" for call in calls) > 1:
+                raise CommitRejected(_failure("unsupported_operation",
+                                              "use one inverse command listing all target publications",
+                                              base, current))
+            for call in calls:
+                if call["op"] == "timeline.inverse":
+                    if 'steps' in call['args'] and not isinstance(call['args']['steps'], dict):
+                        raise CommandError('inverse steps must be a publication map', kind='invalid_steps')
+                    undo_steps = copy.deepcopy(call["args"].get("steps"))
+                    for publication in call["args"]["publications"]:
+                        if publication not in undo_of:
+                            undo_of.append(publication)
+            inverse_records, inverse_intervening, inverse_sources = [], [], []
+            if undo_of:
+                targets = [port.history_entry(publication) for publication in undo_of]
+                segments = []
+                for target in targets:
+                    pin = {"revision_id": target["revision_id"],
+                           "publication_id": target["publication_id"]}
+                    # Loading the exact target also verifies source scope; no
+                    # client-provided inverse writes enter the core engine.
+                    _load(port, context, target["revision_id"])
+                    segment = [target, *_history(port, base, pin, CommitRejected, base)]
+                    segments.append(segment)
+                # The longest segment begins at the earliest targeted edge.
+                ordered = max(segments, key=len)
+                if undo_of != [entry["publication_id"] for entry in ordered
+                               if entry["publication_id"] in undo_of]:
+                    raise CommitRejected(_failure("invalid_inverse_order",
+                                                  "inverse publications must be oldest to newest",
+                                                  base, current))
+                accepted = [entry for entry in ordered if entry['publication_id'] in undo_of]
+    
+                def load_boundary(entry):
+                    previous = entry.get('previous')
+                    if not previous:
+                        raise CommandError('inverse input boundary is unavailable', kind='history_unavailable')
+                    prior = port.history_entry(previous['publication_id'])
+                    if prior['revision_id'] != previous['revision_id']:
+                        raise CommandError('inverse input boundary mismatch', kind='history_unavailable')
+                    pin = {key: entry[key] for key in ('revision_id', 'publication_id')}
+                    _history(port, pin, previous, CommitRejected, base)
+                    return (_load(port, context, previous['revision_id']),
+                            _load(port, context, entry['revision_id']))
+    
+                inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
+                _records(ordered, CommitRejected, base, current)
+                accepted_records = AcceptedRecords(accepted, [record for entry in accepted
+                    for record in entry['records']['commands']], load_boundary)
+                inverse_history = ordered
+    
+                def select_at(head_bundle, history):
+                    resolver = (inverse_address_resolver(history, head_bundle, load_boundary=load_boundary)
+                        if any('physical_ref' in binding for record in accepted_records
+                               for binding in record['bindings']) else None)
+                    selected = select_inverse_records(accepted_records, undo_steps, address_resolver=resolver)
+                    check_later_steps(selected, history, state=State(head_bundle))
+                    return selected
+    
+                inverse_records = select_at(bundle, inverse_history)
+            closures, restored_from = {}, None
+            if restore:
+                restored_from = copy.deepcopy(calls[0]['args'])
+                source = _load(port, context, restored_from['revision_id'])
+                image = source['source_mapping']['_runtime_document']['parent_revision']
+                _require(image['content_digest'] == restored_from['content_digest'],
+                         "restore source digest mismatch")
+                closures[restored_from['revision_id']] = source
+            else:
+                # Only authenticated accepted writes can authorize an inverse
+                # closure replacement. Never accept a caller-supplied image.
+                for write in (write for record in inverse_records for write in record['writes']):
+                    if write['ref'] == 'timeline' and not write['path']:
+                        pin = write['before']['value']
+                        source = _load(port, context, pin['revision_id'])
+                        image = source['source_mapping']['_runtime_document']['parent_revision']
+                        _require(pin == {key: image[key] for key in ('revision_id', 'content_digest')},
+                                 "inverse historical closure pin mismatch")
+                        closures[pin['revision_id']] = source
+            # The port captures exactly the resulting document inputs. Discarded
+            # current/source closures must not retain unrelated document pins.
+            schema_inputs = []
+            for source in closures.values():
+                schema_inputs.extend(_hydrate(port, source))
+            if not closures:
+                schema_inputs = _hydrate(port, bundle, calls, inverse_records=inverse_records,
+                                         inverse_sources=inverse_sources)
+            resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                              context=context, through=base)
+            original = execute(bundle, execution_calls, inverse_records=inverse_records,
+                               intervening_records=inverse_intervening, closures=closures,
+                               verified_media=verified_media, realm_id=context['realm_id'],
+                               resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                               commit_request=request, evaluated_head=base)
+            for attempt in range(3):
+                if attempt:
+                    current = port.head()
+                # An equal document after undo is still a later publication.
+                # CAS retries must recheck this fact before ordinary replay.
+                if initialize and current != base:
+                    raise CommandError('initialization cannot rebase over an accepted edit',
+                                       kind='not_pristine')
+                if current == base:
+                    plan = original
+                else:
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore requires the exact head pair",
+                                                      base, current))
+                    entries = _history(port, current, base, CommitRejected, base)
+                    head_bundle = _load(port, context, current["revision_id"])
+                    if undo_of:
+                        inverse_records = select_at(head_bundle, [*inverse_history, *entries])
+                    if not closures:
+                        schema_inputs = _hydrate(port, head_bundle, calls, inverse_records=inverse_records,
+                                             inverse_sources=inverse_sources)
+                    resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
+                                                      context=context, through=current)
+                    if undo_of or any(call['op'] == 'doc.patch' for call in calls) or any(
+                            key in request for key in ('merge', 'reads', 'steps')):
+                        _records(entries, CommitRejected, base, current)
+                        def patch_boundary(entry):
+                            previous = entry.get('previous')
+                            if previous is None:
+                                raise CommandError('missing history boundary', kind='history_unavailable')
+                            return (_load(port, context, previous['revision_id']),
+                                    _load(port, context, entry['revision_id']))
+                        bindings = ({} if undo_of else rebase_patch(
+                            original, entries, head_bundle, load_boundary=patch_boundary))
+                        try:
+                            replay_calls = (execution_calls if undo_of else [
+                                call if call['op'] == 'doc.patch' else original.commands[index]
+                                for index, call in enumerate(calls)])
+                            plan = execute(head_bundle, replay_calls, inverse_records=inverse_records,
+                                           intervening_records=[] if undo_of else _records(
+                                               entries, CommitRejected, base, current), closures=closures,
+                                           verified_media=verified_media, realm_id=context['realm_id'],
+                                           resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                                           commit_request=request, evaluated_head=current,
+                                           replay_bindings=bindings)
+                        except CommandError as exc:
+                            if exc.kind == 'previous_value_mismatch':
+                                exc.kind = ('selection_changed' if getattr(exc, 'dependency_kind', None) == 'collection'
+                                            else 'dependency_changed')
+                            raise
+                    else:
+                        plan = replay(original, head_bundle, inverse_records=inverse_records,
+                                  intervening_records=[] if undo_of else _records(
+                                      entries, CommitRejected, base, current), closures=closures,
+                                  verified_media=verified_media, realm_id=context['realm_id'],
+                                  resolve_inputs=resolve_inputs, verified_producer=verified_producer)
+                        plan.steps = copy.deepcopy(original.steps)
+                        plan.label, plan.merge_mode = original.label, original.merge_mode
+                for record in plan.records:
+                    if record['command']['op'] == 'timeline.inverse' and undo_steps is not None:
+                        record['command']['args']['steps'] = copy.deepcopy(undo_steps)
+                _check_reservations(port, plan, current, CommitRejected, base)
+                from astrid.sdk.timeline.validation import validate_final_candidate
+    
+                validate_final_candidate(
+                    plan.bundle,
+                    baseline=bundle if current == base else head_bundle,
+                    schema_inputs=schema_inputs,
+                    realm_id=context.get('realm_id'),
+                )
+                document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
+                                                inverse_records=inverse_records)
+                from ._commit_preview import prepared_records
+    
+                records = prepared_records(plan, undo_of=undo_of,
+                                           restored_from=restored_from)
+                # R2's guarded per-step inverse selection is part of the
+                # authenticated recorder, including when the official v2
+                # preview helper builds the common record fields.
+                records["undo_steps"] = copy.deepcopy(undo_steps)
+                prepared = {
+                    "expected_head": copy.deepcopy(current), "canonical_document": document,
+                    "document_digest": _digest(document),
+                    "records": records,
+                    "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
+                    "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
+                }
+                try:
+                    if request.get("dry_run", False):
+                        # Runtime authenticates and retains this exact outcome on
+                        # the port.  Any response projection after this call
+                        # would make the provider's result differ from the
+                        # authenticated candidate.
+                        return port.preview(prepared)
+                    return port.accept(prepared)
+                except StaleHead as exc:
+                    current = copy.deepcopy(exc.current_head)
+                    if restore:
+                        raise CommitRejected(_failure("stale_head", "restore head changed at acceptance",
+                                                      base, current)) from exc
+                    continue
+            raise CommitRejected(_failure("head_busy", "timeline head changed on three attempts",
+                                          base, current))
+        except AuthoringBundleError as exc:
+>           raise CommitRejected(_failure("invalid_document", str(exc), base, current,
+                                          invalid=current == base or current is None)) from exc
+E           runtime_protocol.timeline_commit.CommitRejected: candidate.timing: legacy word anchor is missing
+
+astrid/sdk/timeline/commit.py:1159: CommitRejected
+
+The above exception was the direct cause of the following exception:
+
+recipe = namespace(service=<runtime_protocol.service.RuntimeService object at 0x7ff6d4ac6050>, root=PosixPath('/tmp/w-d5b80f717...t=<function retained.<locals>.restart at 0x7ff6d563a700>, create=<function retained.<locals>.create at 0x7ff6d563a5c0>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff6d31a4cd0>
+
+    def test_stale_anchor_refuses_when_intervening_window_excludes_selected_word(recipe, monkeypatch):
+        from runtime_protocol.errors import RuntimeErrorBase
+    
+        case = recipe
+        selected = pick(case, 1)
+        base = case.head()
+        # No authored reference exists yet, so the fixture can narrow the window.
+>       case.submit(case.request([window_command(monkeypatch, 4, 6)]), "trim-before-anchor")
+
+tests/editing_conformance/test_native_word_anchor.py:528: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/editing_conformance/native_word_anchor_fixture.py:179: in submit
+    result = case.service.commit_timeline(project, "film", body, idempotency_key=key,
+../rt-pin-ad823e0a/runtime_protocol/service.py:2443: in commit_timeline
+    return self._execute_timeline_commit(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <runtime_protocol.service.RuntimeService object at 0x7ff6d4ac6050>
+project_id = '949eaa8cd2a44218a8219e51d89ed635', timeline_id = 'film'
+request = {'api_version': 1, 'base_publication_id': 'txn-cdf14c2aa2814bc687331991dc024359', 'base_revision_id': 'authoring-paren...: {'from': 4, 'to': 6}, 'op': 'fixture.window', 'schema_version': 1, 'select': 'occurrence:occ/clip:voice', ...}], ...}
+original_body = {'api_version': 1, 'base_publication_id': 'txn-cdf14c2aa2814bc687331991dc024359', 'base_revision_id': 'authoring-paren...: {'from': 4, 'to': 6}, 'op': 'fixture.window', 'schema_version': 1, 'select': 'occurrence:occ/clip:voice', ...}], ...}
+
+    def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
+                                 operation, idempotency_key, publisher, invocation_path, authorize):
+        from .timeline_commit import CommitRejected
+        from .timeline_commit_port import CommitUnavailable, RequestCommitPort, detached, public_failure
+        if not isinstance(publisher, str) or not publisher:
+            raise AuthorizationError("authenticated publisher is required")
+        idempotency_key = require_idempotency_key(idempotency_key)
+        check = self._timeline_authorize(project_id, timeline_id, authorize)
+        invocation = {"operation": operation, "path": invocation_path, "body": detached(original_body)}
+        request_hash = hashlib.sha256(canonical_json({
+            "operation": operation, "path": invocation_path,
+            "publisher": publisher, "request": invocation["body"],
+        }).encode()).hexdigest()
+        context = {"request": detached(request), "invocation": invocation,
+                   "request_hash": request_hash, "idempotency_key": idempotency_key,
+                   "publisher": publisher, "realm_id": self.realm["id"]}
+        commits, coordinator = self._timeline_commits()
+        with self.store._mutex:
+            self._timeline_commit_started = True
+            provider = self._timeline_commit_provider
+        def port_factory(bound_context):
+            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
+            return RequestCommitPort(self, commits, bound_context, check)
+        try:
+            if provider is None:
+                replay = commits.lookup(context, authorize=check)
+                if replay is not None:
+                    return replay
+                raise CommitUnavailable()
+            outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+            if "http_status" in outcome:
+                raise public_failure(outcome)
+            return outcome
+        except CommitRejected as exc:
+>           raise public_failure(exc.failure) from exc
+E           runtime_protocol.errors.RuntimeErrorBase: candidate.timing: legacy word anchor is missing
+
+../rt-pin-ad823e0a/runtime_protocol/service.py:2483: RuntimeErrorBase
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_native_word_anchor.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word
+ERROR tests/editing_conformance/test_native_word_anchor.py::test_native_acceptance_refuses_review_source_counterexamples_before_writes[short-occurrence]
+ERROR tests/editing_conformance/test_native_word_anchor.py::test_native_acceptance_refuses_review_source_counterexamples_before_writes[raw-source-window]
+1 failed, 2 passed, 49 deselected, 2 errors in 5.67s
+
+EXIT_CODE=1
