@@ -1,1 +1,1 @@
-2026-10-23T02:17:02Z procs: dispatcher-daemon hub-syncd ; manager NOT running (run-manager start denied, awaiting owner); workers 0; ready-undispatched n/a; disk 22G free; uptime 187m; issues: origin remotes added but not reported to orchestrator
+2026-10-23T03:18:39Z procs: dispatcher-daemon hub-syncd ; manager NOT running (run-manager start denied, awaiting owner); workers 0; ready-undispatched n/a; disk 22G free; uptime 21m; issues: container restarted ~02:57Z, daemons restarted; origin remotes added but not reported to orchestrator
