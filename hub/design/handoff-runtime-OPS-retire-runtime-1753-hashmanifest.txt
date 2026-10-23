@@ -1,0 +1,16 @@
+954d5d87fe2e6fcf42b34953ec0edc519a2eb97ade8f66f0f2f96f523516b791  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-runtime-1753/evidence/kit/retire-child-venv
+48cac6c70578b9435a259da7cb9adbd07bf045a3346d77235a401ca848e02ed5  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/retire-child-venv
+a500d2a1fcf0fc69ab159830dbb839b66c06a8a16469e75d8a0585d31a6b5fe4  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-venv-v2-return-1735/evidence/kit/retire-child-venv
+21f61833a6718794ab2a06a3a96d34ca58c050ccd0151622e16866ac78758139  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-runtime-1753/evidence/kit/request-retire-venv
+4713b456ae4b0dcabdbc64ddf41aff731ac10fe4d11695d315e6743b864aef10  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-retire-venv
+44c61283c9ed37b46dc21092ead48fabc99aff3c940ec47f6ea3062f4da0e328  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-venv-v2-return-1735/evidence/kit/request-retire-venv
+f18bc20b23010dc47a6891d4ef7a357da5991a620b83b5cdc67e0c8741892c15  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-runtime-1753/evidence/kit/dispatcher-daemon
+f18bc20b23010dc47a6891d4ef7a357da5991a620b83b5cdc67e0c8741892c15  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatcher-daemon
+f18bc20b23010dc47a6891d4ef7a357da5991a620b83b5cdc67e0c8741892c15  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-venv-v2-return-1735/evidence/kit/dispatcher-daemon
+9fc7f72a7d03fcb4618310ad57f5c9cf111b78a59b2c02caa702073d0951fd09  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime
+3e1e528bf3a5438d3930a832a44a4af5ed971451f0dad801d7b81649b5101a1d  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-runtime-1753/independent-review.sh
+7a88b5dafd5a79b9e8793e3e23f0177424f99b44b9b9aaa9cb1998528041c7ed  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-runtime-1753/dispatcher-boundary-test.sh
+7edbf0f292c75533add44777b714de7cc7f452c60bd2dde072026b890f8504af  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-runtime-1753/fixtures/test_runtime_retire.py
+d397bbc7f65b76b4cde6c8af04ee36e315403e9904243faea639fd29f1a3db9a  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-runtime-1753/fixtures/test_retire_guard_v2.py
+28734c89aff56e6d76214984a8949860dbcef371e4ed3d62c64ee6ec81b9497f  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-runtime-1753/fixtures_prior7/test_retire_guard.py
+6354aa3985fe6f22709b5092598a8d80802bf3a33155fd7cdafc745a3d9a671d  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-retire-runtime-1753/fixtures/test_obsolete_source_names.py

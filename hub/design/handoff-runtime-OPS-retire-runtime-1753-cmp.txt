@@ -1,0 +1,8 @@
+retire-child-venv staged_vs_installed_cmp_exit=1 (expected 1)
+request-retire-venv staged_vs_installed_cmp_exit=1 (expected 1)
+dispatcher-daemon staged_vs_installed_cmp_exit=0
+dispatcher-daemon staged_vs_v2_cmp_exit=0
+retire-child-venv v2_layer_lines=197
+request-retire-venv v2_layer_lines=26
+retire-child-venv installed_patch_lines=553
+request-retire-venv installed_patch_lines=52
