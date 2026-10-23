@@ -7,7 +7,7 @@ import { ApiError } from '@/integrations/runtime/generated.ts';
 import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
 import type { DataProvider, TimelineCommandBasis, TimelineCommitResult } from '@/tools/video-editor/data/DataProvider.ts';
-import type { CanonicalDocument, CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { CanonicalDocument, CommitRequest, MediaSelection, MediaSelectionQuery } from '@/integrations/runtime/timeline-commit-types.ts';
 import { createCommitOutbox, type OutboxRecord } from '@/tools/video-editor/commands/commitOutbox.ts';
 import { createShotTimelineDataProvider } from './shotTimelineDataProvider.ts';
 
@@ -91,7 +91,9 @@ function harness(before = canonicalDocument()) {
   const send = vi.fn<(request: CommitRequest, key: string) => Promise<TimelineCommitResult>>();
   const load = vi.fn(async () => initial);
   const transport = { loadTimelineCommandBasis: load,
-    getRecoverableIdentity: vi.fn(async () => scope), commitTimeline: send } as unknown as DataProvider;
+    getRecoverableIdentity: vi.fn(async () => scope), commitTimeline: send } as DataProvider & {
+      getProjectMediaSelection?: (query: MediaSelectionQuery) => Promise<MediaSelection>;
+    };
   const published = vi.fn();
   const mount = () => createShotTimelineDataProvider(config, composition, occurrence.occurrenceId,
     adapter, published, undefined, 0, undefined, transport);
@@ -122,7 +124,7 @@ function harness(before = canonicalDocument()) {
     return { response, accepted: { revisionId: 'rev-a3-accepted', publicationId: 'pub-a3-accepted' },
       canonicalDocument: canonical, graph, receipt: response.receipt };
   };
-  return { adapter, oldPublish, composition, config, initial, before, send, load, mount, published, records, reply, add };
+  return { adapter, oldPublish, composition, config, initial, before, send, load, mount, published, records, reply, add, transport };
 }
 
 function savedDocument(record: OutboxRecord): CanonicalDocument {
@@ -130,6 +132,43 @@ function savedDocument(record: OutboxRecord): CanonicalDocument {
 }
 
 describe('shot popup A3 save ingress', () => {
+  it.each(['add', 'swap'] as const)('forks a shared occurrence before the existing media %s command in one durable request', async (kind) => {
+    const before = canonicalDocument();
+    const parent = before.parent_revision.payload;
+    const selected = (parent.occurrences as Array<Record<string, unknown>>)[0];
+    (parent.occurrences as unknown[]).push({ ...selected, occurrence_id: 'occ-sibling' });
+    const h = harness(before);
+    const originalAsset = h.config.clips[0].asset;
+    const replacementAsset = 'popup-shared-replacement';
+    h.config.registry[originalAsset] = { ...h.config.registry[originalAsset], generationId: 'generation-old', variantId: 'variant-old' };
+    h.config.registry[replacementAsset] = { file: replacementAsset, type: 'image', generationId: 'generation-new', variantId: 'variant-new' };
+    h.transport.getProjectMediaSelection = vi.fn(async (query: MediaSelectionQuery) => ({
+      ...query, object_id: `sha256:${'1'.repeat(64)}`, catalog_digest: `sha256:${'2'.repeat(64)}`,
+    }));
+    let captured!: OutboxRecord;
+    h.send.mockImplementation(async (request, key) => {
+      [captured] = await h.records();
+      return JSON.parse(JSON.stringify(h.reply(request, key, savedDocument(captured))));
+    });
+    const provider = h.mount();
+    const next = kind === 'add'
+      ? h.add()
+      : { ...h.config, clips: h.config.clips.map((clip, index) => index === 0
+        ? { ...clip, asset: replacementAsset } : clip) };
+    await expect(provider.saveTimeline('popup-timeline', next, 1)).resolves.toBe(2);
+    const [request] = h.send.mock.calls[0];
+    expect(request.commands.map((command) => command.op)).toEqual([
+      'occurrence.fork', kind === 'add' ? 'occurrence.add-media' : 'occurrence.swap-media',
+    ]);
+    expect(request.commands[0]).toMatchObject({ select: 'occurrence:occ-3', args: { shot_id: expect.stringMatching(/^shot-fork-/) },
+      intent: { ownership: 'occurrence' }, created: [expect.stringMatching(/^shot:shot-fork-/)] });
+    expect(request.commands[1]).toMatchObject({ select: kind === 'add' ? 'occurrence:occ-3' : 'occurrence:occ-3/clip:alpha-video-b',
+      intent: { ownership: 'occurrence' } });
+    expect(captured.intents[0].payload).toMatchObject({ commands: request.commands });
+    expect(h.transport.getProjectMediaSelection).toHaveBeenCalled();
+    await provider.dispose();
+  });
+
   it('uses the A2 session for a uniquely owned child root and publishes its accepted closure', async () => {
     const h = harness();
     let captured!: OutboxRecord;
