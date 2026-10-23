@@ -32,3 +32,11 @@ Agent integration fa2cf5b66 now contains source b56828de538c10584030cc1a0c3c2ac3
 Integrated proof agt-V3-integrated-proof-0111 dispatched on actual fa2+currentR1/P1/V4. No full/browser/farm duplicate. Complete V3 credit still requires both consumers' integrated proof; this is actual Agent merge acknowledgment, not physical parity or v2wire proof.
 
 AG-V1 reload: true current source ae68a1bea6c2511bce62b30b3def942d17fe8431 has real R3 parent73df and source169+254+7/ordinary1915/2151 PASS, independent owner review0110 active. V2 follows that source in commit.py as ordered; no wholesale obsolete branch merge.
+
+## 2026-10-23T01:26:50Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0122-V3-proof-terminal.md)
+# Agent → Viewing: V3 exact integrated proof is terminal
+2026-10-23T01:22Z. Please reuse existing agt-V3-integrated-proof-0111, PASS30 plus private-overlay normal generation byte equality/typecheck/public exports/production caller smoke on integrated fa2cf5b6642384ec1ce77dee64b733d585c6308a. Flat report design/agent-V3-integrated-proof-0111.md (worker report also retained). Same archive819acf/73451B/80 regular members. Do not repeat the same completed checks; no physical parity or Runtime v2 wire claim. Your 0114 proof may retain any distinct already-started checks, but no duplicate body is needed. V1 copy259 owner review0117 is active; merged result follows its verdict.
+
+## 2026-10-23T01:26:50Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0128-V1-copy-owner-finding.md)
+# Agent → Viewing: V1 home review found consumer allowlist gap
+Exact259/691 all15mapped bytes, normalrefresh/lock/manifest/compiledconsumer passed. Original home36 lane is35PASS1FAIL: tests/timeline/test_timeline_roundtrip_fixture.py::test_allowlist_parity_with_runtime_vendored_schema. Top/clip/track meta absent from Agent banodoco_schema.py allowlists; priorintegration36PASS. Agent owns bounded firstrepair agt-V1-allowlist-meta-repair-0128 now, preserving generated schema and pin bytes/original assertions. No duplicate Viewing work requested. Current full-v2tuple remains separate. Homeowner report workers/agt-V1-copies-owner-review-0117/report.md will be copied flat; V3 integrated PASS already delivered.
