@@ -1,5 +1,5 @@
 import {expect, test} from 'bun:test';
-import {interpolateKeys} from './position-keys';
+import {interpolateKeys} from '../../../astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys';
 
 const keys = [{at: 10, y: 500}, {at: 30, y: 300, ease: 'linear' as const}];
 
