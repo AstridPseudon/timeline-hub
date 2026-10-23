@@ -945,8 +945,8 @@ class WorkspaceClient:
         if preview:
             if data.get("status") != "preview" or receipt is not None:
                 raise ApiError(0, "invalid_response", "preview requires preview status and null receipt")
-        elif data.get("status") not in ("accepted", "rebased") or not isinstance(receipt, dict):
-            raise ApiError(0, "invalid_response", "acceptance requires accepted status and committed receipt")
+        elif data.get("status") not in ("accepted", "rebased", "merged") or not isinstance(receipt, dict):
+            raise ApiError(0, "invalid_response", "acceptance requires accepted, rebased, or merged status and committed receipt")
         return value
 
     def commit_timeline(self, project_id: str, timeline_id: str, request: CommitRequest, *, idempotency_key: str) -> CommitAcceptedMutation | CommitPreviewResponse:

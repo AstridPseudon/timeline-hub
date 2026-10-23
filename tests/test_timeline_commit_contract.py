@@ -408,6 +408,92 @@ def test_generated_python_commit_preserves_exact_envelope_and_retry(preview):
     assert calls[0][2]["Idempotency-Key"] == "retry"
 
 
+def _authoritative_commit_response(status: str = "merged") -> dict[str, Any]:
+    candidate = {
+        "canonical_document": document(),
+        "document_digest": DIGEST,
+        "commands": [command()],
+        "id_map": {},
+        "provider_version": "provider-v2",
+        "compiler_version": "compiler-v2",
+    }
+    data = {
+        "status": status,
+        "base_revision_id": "r",
+        "base_publication_id": "txn",
+        "previous_revision_id": "head-r",
+        "previous_publication_id": "head-txn",
+        "accepted_revision_id": "next-r",
+        "rebased_onto": {"revision_id": "head-r", "publication_id": "head-txn"}
+        if status == "merged"
+        else None,
+        "publisher": "actor",
+        **candidate,
+    }
+    receipt = {
+        "receipt_id": "merged-receipt" if status == "merged" else "accepted-receipt",
+        "command_kind": "timeline.commit",
+        "idempotency_key": "key",
+        "request_hash": DIGEST,
+        "project_id": "p",
+        "project_seq": [1, 1],
+        "event_ids": [],
+        "result": data,
+        "created_at": "2026-10-23T00:00:00Z",
+    }
+    response = {"data": data, "receipt": receipt}
+    validator("CommitAcceptedMutation").validate(response)
+    return response
+
+
+@pytest.mark.parametrize("status", ["accepted", "merged"])
+def test_generated_python_commit_preserves_authoritative_status_receipt_and_preview(status):
+    response = _authoritative_commit_response(status)
+    calls = []
+
+    def transport(method, path, headers, body):
+        calls.append((method, path, headers, body))
+        return 200, {}, json.dumps(response).encode()
+
+    client = WorkspaceClient("http://runtime", transport=transport)
+    assert client.commit_timeline("p", "t", request(), idempotency_key="key") == response
+    preview = {
+        "data": {
+            "status": "preview",
+            "would_status": status,
+            "base_revision_id": "r",
+            "base_publication_id": "txn",
+            "evaluated_head": {"revision_id": "head-r", "publication_id": "head-txn"},
+            **{key: value for key, value in response["data"].items() if key not in {"status", "publisher", "previous_revision_id", "previous_publication_id", "accepted_revision_id", "rebased_onto"}},
+        },
+        "receipt": None,
+    }
+    validator("CommitPreviewResponse").validate(preview)
+    preview_response = {"data": preview["data"], "receipt": None}
+    preview_transport = lambda *args: (200, {}, json.dumps(preview_response).encode())
+    assert WorkspaceClient("http://runtime", transport=preview_transport).commit_timeline(
+        "p", "t", {**request(), "dry_run": True}, idempotency_key="preview"
+    ) == preview_response
+    assert calls[0][0:2] == ("POST", "/v1/projects/p/timelines/t/commit")
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        {"data": {**_authoritative_commit_response()["data"], "status": "conflict"}, "receipt": _authoritative_commit_response()["receipt"]},
+        {"data": _authoritative_commit_response()["data"], "receipt": None},
+        {"data": _authoritative_commit_response()["data"], "receipt": []},
+    ],
+)
+def test_generated_python_commit_refuses_malformed_status_or_receipt(response):
+    client = WorkspaceClient(
+        "http://runtime",
+        transport=lambda *args: (200, {}, json.dumps(response).encode()),
+    )
+    with pytest.raises(ApiError, match="invalid_response"):
+        client.commit_timeline("p", "t", request(), idempotency_key="key")
+
+
 @pytest.mark.parametrize("number", [float("nan"), float("inf"), -float("inf")])
 def test_generated_python_refuses_nonfinite_even_in_opaque_values(number):
     value = request()
@@ -630,9 +716,15 @@ def test_generated_typescript_commit_contract(tmp_path):
         + ";\n"
         + r"""
 import assert from "node:assert/strict";
-const request = { api_version: 1, project_id: "p", timeline_id: "t", base_revision_id: "r", base_publication_id: "txn", commands: [{ schema_version: 1, op: "vendor.decorate", version: "1", select: null, args: { opaque: [null, { op: "clear" }] } }] };
+    const request = { api_version: 1, project_id: "p", timeline_id: "t", base_revision_id: "r", base_publication_id: "txn", commands: [{ schema_version: 1, op: "clip.move", version: "1", select: "parent/clip:c", args: { on: 2 } }] };
 const calls = [];
-let response = { data: { status: "accepted", opaque: null }, receipt: { receipt_id: "accepted" } };
+    const digest = "sha256:" + "a".repeat(64);
+    const canonicalDocument = { project_id: "p", timeline_id: "t", parent_revision: { revision_id: "r", content_digest: digest, payload: { config: { clips: [], tracks: [] }, registry: {}, clips: [], occurrences: [], opaque: { null: null, clear: { op: "clear" } } } }, shot_revisions: [], internal_timeline_revisions: [], dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] } };
+    const command = { schema_version: 1, op: "clip.move", version: "1", select: "parent/clip:c", args: { on: 2 } };
+    const fullData = (status) => ({ status, base_revision_id: "r", base_publication_id: "txn", previous_revision_id: "head-r", previous_publication_id: "head-txn", accepted_revision_id: "next-r", rebased_onto: status === "merged" ? { revision_id: "head-r", publication_id: "head-txn" } : null, canonical_document: canonicalDocument, document_digest: digest, commands: [command], id_map: {}, provider_version: "provider-v2", compiler_version: "compiler-v2", publisher: "actor" });
+    const fullReceipt = (data) => ({ receipt_id: data.status + "-receipt", command_kind: "timeline.commit", idempotency_key: "key", request_hash: digest, project_id: "p", project_seq: [1, 1], event_ids: [], result: data, created_at: "2026-10-23T00:00:00Z" });
+    const authoritative = (status) => { const data = fullData(status); return { data, receipt: fullReceipt(data) }; };
+    let response = authoritative("merged");
 const transport = async (method, path, headers, body) => {
   calls.push({ method, path, headers, body: body ? JSON.parse(new TextDecoder().decode(body)) : null });
   return { status: 200, headers: {}, body: new TextEncoder().encode(JSON.stringify(response)) };
@@ -641,12 +733,25 @@ const client = new WorkspaceClient("http://runtime", "token", transport);
 assert.deepEqual(await client.commitTimeline("p", "t", request, "key"), response);
 assert.deepEqual(calls.at(-1).body, request);
 assert.equal(calls.at(-1).headers["Idempotency-Key"], "key");
-response = { data: { status: "preview" }, receipt: null };
-assert.deepEqual(await client.commitTimeline("p", "t", { ...request, dry_run: true }, "preview"), response);
-await assert.rejects(client.commitTimeline("p", "t", request, "key"), /invalid commit/);
+    assert.deepEqual(await client.commitTimeline("p", "t", request, "key"), response);
+    for (const status of ["accepted", "merged"]) {
+      response = authoritative(status);
+      assert.deepEqual(await client.commitTimeline("p", "t", request, "key"), response);
+      const previewData = { status: "preview", would_status: status, base_revision_id: "r", base_publication_id: "txn", evaluated_head: { revision_id: "head-r", publication_id: "head-txn" }, canonical_document: canonicalDocument, document_digest: digest, commands: [command], id_map: {}, provider_version: "provider-v2", compiler_version: "compiler-v2" };
+      response = { data: previewData, receipt: null };
+      assert.deepEqual(await client.commitTimeline("p", "t", { ...request, dry_run: true }, "preview"), response);
+    }
+    for (const malformed of [
+      { data: { ...fullData("merged"), status: "conflict" }, receipt: fullReceipt(fullData("merged")) },
+      { data: fullData("merged"), receipt: null },
+      { data: fullData("merged"), receipt: [] },
+    ]) {
+      response = malformed;
+      await assert.rejects(client.commitTimeline("p", "t", request, "key"), /invalid commit/);
+    }
 for (const number of [NaN, Infinity, -Infinity]) {
   const invalid = structuredClone(request);
-  invalid.commands[0].args.opaque.push(number);
+      invalid.commands[0].args.on = number;
   const count = calls.length;
   await assert.rejects(client.commitTimeline("p", "t", invalid, "key"), /nonfinite/);
   assert.equal(calls.length, count);
