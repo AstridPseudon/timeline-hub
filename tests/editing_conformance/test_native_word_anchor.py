@@ -128,7 +128,7 @@ def test_native_acceptance_refuses_review_source_counterexamples_before_writes(r
     with pytest.raises(RuntimeErrorBase, match=match) as error:
         case.submit(case.request([call]), 'review-counterexample')
     assert error.value.details['reason'] == 'invalid_anchor'
-    assert error.value.details['status'] == 'refused'
+    assert error.value.details['status'] == 'invalid'
     assert case.service.get_project_timeline(case.project, 'film') == head
     assert history(case) == accepted
     ctx = Recording(bundle(case), call, 0)
@@ -512,7 +512,7 @@ def test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance(rec
     with pytest.raises(RuntimeErrorBase, match="outside the half-open source window") as error:
         case.submit(case.request([invalid]), "exclude-word")
     assert error.value.details["reason"] == "invalid_anchor"
-    assert error.value.details["status"] == "refused"
+    assert error.value.details["status"] == "invalid"
     assert case.head() == head
     undo(case, accepted, "undo-window")
     assert projected(case).timings[TARGET]["start_frame"] == 148
@@ -530,7 +530,7 @@ def test_stale_anchor_refuses_when_intervening_window_excludes_selected_word(rec
     with pytest.raises(RuntimeErrorBase, match="outside the half-open source window") as error:
         case.submit(case.request([selected], base), "stale-outside-window")
     assert error.value.details["reason"] == "invalid_anchor"
-    assert error.value.details["status"] == "refused"
+    assert error.value.details["status"] == "conflict"
     assert case.head() == head
 
 
