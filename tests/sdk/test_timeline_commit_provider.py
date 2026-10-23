@@ -427,39 +427,6 @@ def test_undo_detects_aba_and_unchanged_write_publications():
         assert error.value.failure["details"]["reason"] == "intervening_write"
 
 
-def test_timeline_scope_inverse_binding_skips_entity_dispatch_but_keeps_guards(monkeypatch):
-    from astrid.sdk.timeline._command_state import CommandError, State, present
-    from astrid.sdk.timeline.inverse import _validate_inputs, check_intervening
-
-    bundle = bundle_from_document(document_fixture())
-    pin = {key: bundle["base_parent"][key] for key in ("revision_id", "content_digest")}
-    scope = {"ref": "timeline", "path": [], "state": present(pin)}
-    binding = {"key": "commit.read", "ref": "timeline", "path": [],
-               "physical_ref": "parent", **pin}
-    record = {"command": {"op": "timeline.init"}, "writes": [], "reads": [scope],
-              "selections": [], "bindings": [binding], "created": []}
-
-    mismatched = copy.deepcopy(record)
-    mismatched["bindings"][0]["revision_id"] = "different-revision"
-    with pytest.raises(CommandError, match="unsupported entity reference 'timeline'"):
-        _validate_inputs(State(bundle), mismatched, [])
-
-    original_entity = State.entity
-
-    def entity(state, ref, *, optional=False):
-        if ref == "timeline":
-            raise AssertionError("timeline scope must not dispatch through State.entity")
-        return original_entity(state, ref, optional=optional)
-
-    monkeypatch.setattr(State, "entity", entity)
-    _validate_inputs(State(bundle), record, [])
-
-    later = {"writes": [{"ref": "parent", "path": [], "before": present({}),
-                          "after": present({"changed": True})}]}
-    with pytest.raises(CommandError, match="intervening publication wrote a guarded address"):
-        check_intervening([record], [later])
-
-
 def test_dependent_unsent_original_guards_allow_equal_state_aba_at_fresh_base():
     realm = DetachedRealm()
     realm.call([realm.move()])

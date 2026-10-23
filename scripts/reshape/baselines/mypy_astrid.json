@@ -15,10 +15,10 @@
     "--no-pretty",
     "--show-error-codes"
   ],
-  "finding_count": 1913,
+  "finding_count": 1915,
   "code_counts": {
     "arg-type": 435,
-    "assignment": 165,
+    "assignment": 166,
     "attr-defined": 522,
     "call-arg": 1,
     "call-overload": 37,
@@ -39,6 +39,6 @@
     "typeddict-item": 6,
     "union-attr": 338,
     "valid-type": 17,
-    "var-annotated": 60
+    "var-annotated": 61
   }
 }

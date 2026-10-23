@@ -14,7 +14,7 @@
     },
     "astrid_runtime_client/generated.py": {
       "from": "packages/python/astrid_runtime_client/generated.py",
-      "sha256": "sha256:aa616ed7e9dc5708ef36fed43070b4e2e7d7c903ad791faa723dcbd4e25ccf37"
+      "sha256": "sha256:f4ee7ce3919c12b3baae3cbf202c2df2afc16616be733dbd2cab89fbc4472f18"
     },
     "astrid_runtime_client/timeline_commit_types.py": {
       "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
@@ -63,6 +63,6 @@
   },
   "manifest": "contract/artifacts.json",
   "producer": "astrid-runtime",
-  "producer_version": "sha256:604f56a434f72d717180d1cd0e988d47800caf21907e9f3eaf697493f038552f",
-  "source_commit": "21482a416d1f0f976ec563b9e1bf96a765f80e56"
+  "producer_version": "sha256:b0a15d84defb5528f75d846413df8e575a0f4e18cd89855d486ee0ce54a83085",
+  "source_commit": "780da6d605033ca71dbe2ad48c10ec2870ea4865"
 }

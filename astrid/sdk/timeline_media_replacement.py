@@ -1,7 +1,6 @@
-"""Submit selected-media and source-bound document edits through the outbox."""
+"""Submit an exact selected-media swap through the durable timeline session."""
 from __future__ import annotations
 
-import copy
 import re
 from collections.abc import Mapping
 
@@ -140,8 +139,6 @@ def _pending_matches(command, *, owner, clip_id, source_object_id, old_media, me
 def _domain(result, key):
     data = result.get("data") if isinstance(result, Mapping) else None
     receipt = result.get("receipt") if isinstance(result, Mapping) else None
-    if isinstance(data, Mapping) and data.get('status') == 'preview' and receipt is None:
-        return DomainResult.success(dict(data), idempotency_key=key or '')
     if not isinstance(data, Mapping) or not isinstance(receipt, Mapping):
         return _failure("Runtime returned an invalid native timeline acknowledgement", key=key,
                         code="protocol_error")
@@ -169,7 +166,6 @@ def replace_selected_media(
     old_media=None,
     media=None,
     idempotency_key,
-    dry_run=False,
 ):
     """Flush one exact native media swap, preserving the original outbox intent."""
     key = idempotency_key
@@ -229,8 +225,8 @@ def replace_selected_media(
                 raise ValueError("pending native replacement does not match this exact request")
             if state.get("flight") is not None:
                 flight_key = state["flight"].get("key")
-                return _domain(session.flush(dry_run=dry_run), flight_key)
-            return _domain(session.flush(idempotency_key=key, dry_run=dry_run), key)
+                return _domain(session.flush(), flight_key)
+            return _domain(session.flush(idempotency_key=key), key)
 
         bundle = session._bundle(state)
         target = _target_pin(bundle, owner, clip_id)
@@ -254,114 +250,17 @@ def replace_selected_media(
             session.commit(
                 command,
                 idempotency_key=key,
-                verified_media=[old_verified, new_verified], dry_run=dry_run,
-                label="Replace parent media",
-                steps=[{'id': 'edit', 'label': 'Replace parent media',
-                        'intent': 'Replace the selected clip media', 'tags': [],
-                        'command_ordinals': [0], 'patch': []}],
-                merge="fields",
+                verified_media=[old_verified, new_verified],
             ),
             key,
         )
     except Exception as exc:  # noqa: BLE001 - preserve the DomainResult boundary
-        failure = getattr(exc, "failure", {})
-        details = failure.get("details", getattr(exc, "details", {}))
+        details = getattr(exc, "details", {})
         if not isinstance(details, Mapping):
             details = {}
         return _failure(
-            failure.get("message", str(getattr(exc, "message", exc))),
+            str(getattr(exc, "message", exc)),
             key=key,
             details=dict(details),
-            code=failure.get("code", getattr(exc, "code", "validation_error")),
+            code=getattr(exc, "code", "validation_error"),
         )
-
-
-def open_document_session(timelines, project, ref, revision, publication=None):
-    """Bind an existing requester session to one unambiguous accepted base."""
-    from types import SimpleNamespace
-
-    from .timeline.sync import TimelineSession
-
-    if publication is None:
-        matches = []
-        cursor = None
-        while True:
-            result = timelines.history(project, ref, cursor=cursor, limit=200)
-            if not result.ok:
-                from .workspace_client import WorkspaceClientError
-
-                error = result.error
-                raise WorkspaceClientError(0, error.code, error.message, dict(error.details))
-            page = result.data
-            matches.extend(row for row in page['items'] if row['revision_id'] == revision)
-            cursor = page.get('next_cursor')
-            if cursor is None:
-                break
-        if len(matches) != 1:
-            raise ValueError("revision has no unique accepted publication; supply expected_publication")
-        publication = matches[0]['publication_id']
-    client = SimpleNamespace(timelines=timelines,
-                             _remote=SimpleNamespace(_transport=timelines._client))
-    return TimelineSession.open(project, ref, client=client,
-                                base_revision_id=revision, base_publication_id=publication)
-
-
-def read_document_bundle(session):
-    """Project immutable Runtime read envelopes without inventing a manifest."""
-    from .timeline.commit import (
-        INTERNAL_IMAGE_FIELDS,
-        PARENT_IMAGE_FIELDS,
-        SHOT_IMAGE_FIELDS,
-        bundle_from_document,
-    )
-
-    transport = session.client.timelines._client
-    project, timeline = session.project_id, session.timeline_id
-    revision = session._state()['base']['revision_id']
-    parent = _plain(transport.get_project_parent_composition_revision(project, timeline, revision))
-    if parent.get('revision_id') != revision:
-        raise ValueError("Runtime returned a different immutable parent revision")
-    manifest = parent.get('dependency_manifest')
-    if not isinstance(manifest, Mapping):
-        raise ValueError("accepted revision has no Runtime-verified dependency manifest")
-    shots, internals = [], []
-    for pin in manifest['shots']:
-        row = _plain(transport.get_project_shot_revision(project, pin['shot_id'], pin['revision_id']))
-        shots.append({key: row[key] for key in SHOT_IMAGE_FIELDS})
-    for pin in manifest['internal_timelines']:
-        row = _plain(transport.get_project_timeline_revision(project, pin['timeline_id'], pin['revision_id']))
-        internals.append({key: row[key] for key in INTERNAL_IMAGE_FIELDS})
-    return bundle_from_document({
-        'schema_version': 1, 'project_id': project, 'timeline_id': timeline,
-        'parent_revision': {key: parent[key] for key in PARENT_IMAGE_FIELDS},
-        'shot_revisions': shots, 'internal_timeline_revisions': internals,
-        'dependency_manifest': copy.deepcopy(dict(manifest)),
-    })
-
-
-def commit_document_bundle(session, before, after, *, label, key, dry_run=False):
-    """Emit G3 patches and freeze their complete v2 metadata in the outbox."""
-    from .timeline.emitter import emit_document_commands
-
-    commands = emit_document_commands(before, after)
-    if not commands:
-        raise ValueError("no pending timeline edits")
-    steps = [{'id': 'edit', 'label': label, 'intent': label, 'tags': [],
-              'command_ordinals': list(range(len(commands))),
-              'patch': [copy.deepcopy(change) for command in commands
-                        for change in command['args']['changes']],
-              'reads': [{'kind': 'scope', 'ref': 'timeline', 'path': []}]}]
-    with session.outbox.locked():
-        state = session._state()
-    if state['pending'] or state['flight'] is not None:
-        if (state['pending'] != commands or state.get('commit_options') != {
-                'label': label, 'steps': steps, 'merge': 'atomic'}):
-            raise ValueError("pending intent differs; retry the original request")
-        result = session.flush(idempotency_key=key, dry_run=dry_run)
-    else:
-        result = session.submit(commands, label=label, steps=steps, merge='atomic',
-                                idempotency_key=key, dry_run=dry_run, expected_state=state)
-    receipt = result['receipt']
-    return DomainResult.success(result['data'],
-                                receipt=CommandReceipt.from_dict(receipt) if receipt else None,
-                                idempotency_key=key)
