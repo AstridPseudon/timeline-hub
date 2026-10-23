@@ -1,4 +1,4 @@
-<!-- app | 2026-10-22T23:57:33Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 1m -->
+<!-- app | 2026-10-22T23:59:21Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 1m -->
 # app board, 2026-10-22T23:56:13Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -18,3 +18,4 @@ Blockers: Viewing/V3: qualified one-artifact packaging/adoption is safety-held a
 Blockers: Farm: qualify composed U3 baseline and integrated H3/P1 chain with accepted/merged/refused replies; no duplicate local heavy runs.
 Next ready: Review first A2 funnel slice on completion; dispatch A3 as soon as A2 merges. Review true-upstream composition, then U4p/re-vendor when official U1/U2 handoffs arrive. A4 stays behind real H3 GO.
 Disk: 17GB free. Resumed overlapping manager ended after independent cleanup: 14 finished v1 source/pin trees recycled with branches/reports retained, current worktrees/shared dependencies untouched. Manager also recycled the two finished v1 App trees; sweep/compact found no eligible scratch.
+Blockers: Lead: repeated duplicate manager rounds are yielding harmlessly but consume Sol capacity; suppress duplicate starts while original23:09 round is active. Escalation app-20261022T2358-duplicate-manager-watchdog.md.
