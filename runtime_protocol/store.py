@@ -129,6 +129,25 @@ EXPIRABLE_RESULT_SQL = (
 )
 
 
+def _scoped_expirable_result_sql(project_id):
+    """Limit an online sweep to receipts owned by one project.
+
+    The receipt ledger intentionally has no second ownership index.  Project
+    identity is already part of the recorded result or can be resolved from
+    its existing stream references, so a timeline-scoped mutation can
+    sweep its own stale bodies without rewriting another project's receipt.
+    """
+    return (
+        " AND ("
+        "json_extract(c.result_json, '$.project_id') = ? "
+        "OR json_extract(c.result_json, '$.project.id') = ? "
+        "OR (c.command_kind IN ('project.create','project.update') AND c.aggregate_id = ?) "
+        "OR c.primary_stream_id IN (SELECT id FROM runs WHERE project_id=?) "
+        "OR c.primary_stream_id IN (SELECT id FROM timelines WHERE project_id=?) "
+        ")"
+    ), (project_id,) * 5
+
+
 def expired_command_result(result_json):
     return canonical_json({IDEMPOTENCY_RESULT_MARKER: hashlib.sha256(result_json.encode()).hexdigest()})
 
@@ -644,6 +663,7 @@ class RealmStore:
         store._mutex = threading.RLock()
         store.conn = None
         store._admission_active = False
+        store._last_idempotency_prune = time.monotonic()
         store.admission_timeout = REALM_ADMISSION_TIMEOUT_SECONDS
         parent_fd = -1
         published = False
@@ -746,6 +766,7 @@ class RealmStore:
         self._mutex = threading.RLock()
         self.conn = None
         self._admission_active = False
+        self._last_idempotency_prune = time.monotonic()
         try:
             # Serialize the complete admission transition without creating a
             # persistent marker in the realm. This closes the gap between
@@ -3387,11 +3408,17 @@ class RealmStore:
         clock = time.monotonic()
         if clock - getattr(self, "_last_idempotency_prune", 0) >= 15 * 60:
             cutoff = (datetime.now(timezone.utc) - timedelta(seconds=IDEMPOTENCY_RESULT_WINDOW_SECONDS)).isoformat(timespec="milliseconds")
+            ownership_sql, ownership_params = (
+                _scoped_expirable_result_sql(project_id)
+                if command_kind == "timeline.commit" and project_id != "unscoped"
+                else ("", ())
+            )
             rows = self.conn.execute(
-                "SELECT rowid, command_kind, result_json FROM command_idempotency "
-                "WHERE created_at < ? AND substr(result_json, 1, ?) <> ? "
-                "AND " + EXPIRABLE_RESULT_SQL +
-                "LIMIT 100", (cutoff, len(IDEMPOTENCY_RESULT_MARKER_PREFIX), IDEMPOTENCY_RESULT_MARKER_PREFIX),
+                "SELECT c.rowid, c.command_kind, c.result_json FROM command_idempotency c "
+                "WHERE c.created_at < ? AND substr(c.result_json, 1, ?) <> ? "
+                "AND " + EXPIRABLE_RESULT_SQL + ownership_sql +
+                "LIMIT 100", (cutoff, len(IDEMPOTENCY_RESULT_MARKER_PREFIX), IDEMPOTENCY_RESULT_MARKER_PREFIX,
+                                *ownership_params),
             ).fetchall()
             for old in rows:
                 self.conn.execute(

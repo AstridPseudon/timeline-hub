@@ -52,6 +52,60 @@ def test_large_result_window_refuses_reexecution_and_preserves_receipt(tmp_path)
         service.close()
 
 
+def test_timeline_receipt_sweep_expires_only_owned_stale_bodies(tmp_path, monkeypatch):
+    _, service = _service(tmp_path)
+    try:
+        conn = service.store.conn
+        assert conn is not None
+        own = service.create_project({"slug": "own", "name": "Own"}, idempotency_key="own-project")["id"]
+        foreign = service.create_project({"slug": "foreign", "name": "Foreign"}, idempotency_key="foreign-project")["id"]
+        request_hash = hashlib.sha256(b"request").hexdigest()
+        service._command_record(
+            "test.owned", "own", "owned-key", request_hash,
+            {"project_id": own, "body": "x" * 20000}, project_id=own,
+        )
+        service._command_record(
+            "test.foreign", "foreign", "foreign-key", request_hash,
+            {"project_id": foreign, "body": "y" * 20000}, project_id=foreign,
+        )
+        old = (datetime.now(timezone.utc) - timedelta(days=2)).isoformat(timespec="milliseconds")
+        conn.execute("UPDATE command_idempotency SET created_at=?", (old,))
+        owned_before = conn.execute(
+            "SELECT result_json FROM command_idempotency WHERE command_kind='test.owned'"
+        ).fetchone()[0]
+        foreign_before = conn.execute(
+            "SELECT result_json FROM command_idempotency WHERE command_kind='test.foreign'"
+        ).fetchone()[0]
+
+        clocks = iter((1000.0, 1901.0))
+        monkeypatch.setattr("runtime_protocol.store.time.monotonic", lambda: next(clocks))
+        service.store._last_idempotency_prune = 0
+        service._command_record(
+            "timeline.commit", "[own,main]", "timeline-key", request_hash,
+            {"project_id": own, "accepted": True}, project_id=own,
+        )
+        owned = conn.execute(
+            "SELECT result_json FROM command_idempotency WHERE command_kind='test.owned'"
+        ).fetchone()[0]
+        assert owned == canonical_json({
+            "__runtime_idempotency_result_expired_v1": hashlib.sha256(owned_before.encode()).hexdigest(),
+        })
+        with pytest.raises(IdempotencyWindowExpired):
+            service._command_replay("test.owned", "own", "owned-key", request_hash, project_id=own)
+        assert conn.execute(
+            "SELECT result_json FROM command_idempotency WHERE command_kind='test.foreign'"
+        ).fetchone()[0] == foreign_before
+        assert service.store._last_idempotency_prune == 1000.0
+
+        service._command_record(
+            "timeline.commit", "[own,main]", "timeline-key-2", request_hash,
+            {"project_id": own, "accepted": True}, project_id=own,
+        )
+        assert service.store._last_idempotency_prune == 1901.0
+    finally:
+        service.close()
+
+
 def test_session_claim_replay_keeps_permanent_ledger_empty(tmp_path):
     _, service = _service(tmp_path)
     try:
