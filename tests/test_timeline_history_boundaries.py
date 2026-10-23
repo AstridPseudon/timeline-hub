@@ -11,7 +11,7 @@ from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import digest
 
-from test_timeline_commit_port import PreparedProvider, prepared
+from test_timeline_commit_port import PreparedProvider, _complete_v2_metadata, prepared
 from tests.http_helpers import Api
 
 
@@ -75,6 +75,7 @@ def _child_candidate(context, port, label):
         "media": [], "documents": [],
     }
     candidate["document_digest"] = digest(document)
+    _complete_v2_metadata(context, port, document, candidate["expected_head"], candidate["records"])
     return port.accept(candidate)
 
 
