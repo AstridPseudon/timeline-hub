@@ -49,17 +49,7 @@ const FULL_SHA = /^[0-9a-f]{40}$/;
 
 const test = appTest.extend<object, { seed3: ThreeProductsSeed; astrid: AstridCli; quickAstrid: AstridCli }>({
   seed3: [async ({ harness }, use) => {
-    const seed = await harness.seedThreeProducts();
-    // The seed is published through the legacy composition route so the fixture can author
-    // the complete parent/shot/internal closure. Adopt that exact baseline before any Agent
-    // checkout: current Agent reads owner-qualified dependency manifests, which legacy rows
-    // do not retain until the existing Runtime adoption boundary runs.
-    await harness.enableTimelineAuthoring(ASTRID_PYTHON);
-    const adopted = await harness.runtimeJson('POST', `/v1/projects/${harness.seed.projectId}/timelines`, {
-      timeline_id: seed.timelineId, name: 'Main',
-    });
-    if (adopted.status !== 201) throw new Error(`adopt three-products timeline baseline: ${adopted.status} ${JSON.stringify(adopted.body)}`);
-    await use(seed);
+    await use(await harness.seedThreeProducts());
   }, { scope: 'worker', timeout: 240_000 }],
   astrid: [async ({ harness, seed3 }, use) => {
     const astrid = await AstridCli.create(harness);

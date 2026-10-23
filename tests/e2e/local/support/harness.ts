@@ -347,7 +347,7 @@ export interface ThreeProductsSeed {
   projectSlug: string;
   /** The harness's own seeded timeline: the seed is published onto it, so the editor still opens the only project and timeline. */
   timelineId: string;
-  /** The head the seed produced; `seed.headRevisionId` stays the empty timeline it was published onto. */
+  /** The canonical head produced by the native Runtime commit that seeded the closure. */
   headRevisionId: string;
   appClipId: string;
   agentClipId: string;
@@ -654,6 +654,130 @@ export class DirectHarness {
     return token;
   }
 
+  /** Seed the Gate-5 closure through the authoring provider, not the retired snapshot writer. */
+  private async commitThreeProductsNative(payload: Record<string, unknown>): Promise<string> {
+    const python = this.authoringPython;
+    if (!python) throw new Error('three-products native seed requires the authoring Runtime');
+    const credential = path.join(this.tmp, 'three-products-seed-credential.json');
+    await this.provisionCredential(ASTRID_ACTOR, path.basename(credential));
+    const script = String.raw`
+import copy, json, os, sys
+from astrid.sdk.client import AstridClient
+from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.emitter import emit_document_commands
+from astrid.sdk.timeline.native_initialize import capture_initialize
+from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
+from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
+
+case = json.loads(sys.argv[1])
+client = AstridClient.open_from_launcher(credential=case['credential'])
+opened = client.timelines.open_bundle(case['project_id'], case['timeline_id'], revision_id=case['head_revision_id'])
+if not opened.ok:
+    raise RuntimeError(str(opened.error))
+bundle = opened.data['bundle']
+commands = []
+verified = [item['verified'] for item in case['media'].values()]
+pins = {key: item['pin'] for key, item in case['media'].items()}
+
+def add(command):
+    global bundle
+    commands.append(command)
+    bundle = execute(bundle, [command], verified_media=verified).bundle
+
+add(capture_initialize(bundle, name='Main', slug='main', output={
+    'resolution': '1280x720', 'fps': 30, 'file': 'output.mp4',
+    'background': None, 'background_scale': None,
+}))
+add(capture_track_create(bundle, 'parent', {'id': 'V1', 'kind': 'visual', 'label': 'V1'}))
+add(capture_track_create(bundle, 'parent', {'id': 'S1', 'kind': 'visual', 'label': 'S1'}))
+add(capture_clip_add_media(bundle, {
+    'id': 'f2-app-clip', 'at': 0, 'track': 'V1', 'clipType': 'image',
+    'asset': 'f2-app', 'hold': 3,
+}, pins['f2-app'], verified_media=verified))
+transition = {
+    'id': 'f2-transition-clip', 'at': case['reference_at'], 'track': 'V1',
+    'clipType': 'video', 'asset': 'f2-video', 'from': 0, 'to': 3, 'hold': 3,
+    'speed': 1, 'transition': {'type': 'crossfade', 'duration': 0.5},
+}
+add(capture_clip_add_media(bundle, transition, pins['f2-video'], verified_media=verified))
+add(capture_occurrence_create(bundle, 'f2-occurrence', 'f2-shot', name='F2 agent shot', track='S1', on=0, duration=12))
+add(capture_track_create(bundle, 'occurrence:f2-occurrence', {'id': 'plate', 'kind': 'visual', 'label': 'plate'}))
+add(capture_track_create(bundle, 'occurrence:f2-occurrence', {'id': 'V2', 'kind': 'visual', 'label': 'V2'}))
+for row, key in [
+    ({'id': 'f2-plate', 'at': 0, 'track': 'plate', 'clipType': 'image', 'asset': 'f2-plate', 'hold': 12}, 'f2-plate'),
+    ({'id': 'f2-agent-clip', 'at': 3, 'track': 'V2', 'clipType': 'image', 'asset': 'f2-placeholder', 'hold': 3}, 'f2-placeholder'),
+    ({'id': 'f2-agent-clear-clip', 'at': 6, 'track': 'V2', 'clipType': 'image', 'asset': 'f2-clear', 'hold': 3}, 'f2-clear'),
+]:
+    add(capture_occurrence_add_media(bundle, 'occurrence:f2-occurrence', row, pins[key], verified_media=verified))
+
+def asset(alias, source, pin):
+    row = {'file': source['file'], 'type': source['type'], 'media_id': source['object_id'],
+           'content_sha256': source['digest']}
+    row.update({'generationId': pin['generation_id'], 'variantId': pin['variant_id']})
+    return row
+
+image = case['image']
+video = case['video']
+parent_clips = [
+    {'id': 'f2-app-clip', 'at': 0, 'track': 'V1', 'clipType': 'media', 'asset': 'f2-app', 'from': 0, 'to': 3, 'speed': 1},
+    {'id': 'f2-transition-clip', 'at': case['reference_at'], 'track': 'V1', 'clipType': 'media', 'asset': 'f2-video', 'from': 0, 'to': 3, 'speed': 1, 'transition': {'type': 'crossfade', 'duration': 0.5}},
+]
+if case['transitions'] == 'native-none':
+    parent_clips[0].update(json.loads('{"opaqueClip":{"nullable":null,"ordered":[false,0,"",[],{"z":2,"a":1}]},"transition":{"type":"crossfade","duration":0.5,"revision":"native-none-unknown-revision","params":{"nullable":null,"__proto__":{"literal":true},"constructor":{"prototype":[null,false]}},"future":{"ordered":[null,0,false]},"__proto__":{"outer":true},"prototype":false}}'))
+elif case['transitions'] == 'parent-delete':
+    parent_clips[1].pop('transition', None)
+parent_registry = {
+    'f2-app': asset('f2-app', {'file': 'f2-app.png', 'type': 'image/png', 'object_id': image['object_id'], 'digest': image['digest']}, pins['f2-app']),
+    'f2-video': asset('f2-video', {'file': video['file'], 'type': video['media_type'], 'object_id': video['object_id'], 'digest': video['digest']}, pins['f2-video']),
+}
+parent_registry['f2-video']['duration'] = 12
+before = copy.deepcopy(bundle)
+bundle_parent = bundle['parent']
+bundle_parent['config'] = {**bundle_parent['config'], 'clips': copy.deepcopy(parent_clips),
+    'tracks': [{'id': 'V1', 'kind': 'visual', 'label': 'V1'}, {'id': 'S1', 'kind': 'visual', 'label': 'S1'}],
+    'output': {'resolution': '1280x720', 'fps': 30, 'file': 'out.mp4'},
+    'x_f2_opaque': case['opaque']['config'],
+    'app': {'haus.astrid.scene-phase-markers': {'sceneMarkers': [{'id': 'ordinary-marker-a', 'time': 1}, {'id': 'ordinary-marker-b', 'time': 6}]}},
+}
+bundle_parent['clips'] = copy.deepcopy(parent_clips)
+bundle_parent['registry'] = {'assets': parent_registry}
+shot = bundle['shots']['f2-shot']
+shot['payload'] = {'metadata': {'title': 'F2 agent shot'}, 'items': [], 'pools': [], 'selected_variants': {},
+    'provenance': {}, 'generation_inputs': {}, 'audio_bindings': [], 'text_bindings': [],
+    'x_f2_opaque': case['opaque']['shot']}
+shot['internal_timeline']['clips'] = [
+    {'id': 'f2-plate', 'at': 0, 'track': 'plate', 'clipType': 'media', 'asset': 'f2-plate', 'hold': 12},
+    {'id': 'f2-agent-clip', 'at': 3, 'track': 'V2', 'clipType': 'media', 'asset': 'f2-placeholder', 'hold': 3, 'app': {'f2Opaque': case['opaque']['clip']}},
+    {'id': 'f2-agent-clear-clip', 'at': 6, 'track': 'V2', 'clipType': 'media', 'asset': 'f2-clear', 'hold': 3},
+]
+shot['internal_timeline']['registry'] = {'assets': {
+    key: asset(key, ({'file': key + '.png', 'type': 'image/png', 'object_id': image['object_id'], 'digest': image['digest']}), pins[key])
+    for key in ('f2-plate', 'f2-placeholder', 'f2-clear')
+}}
+after = copy.deepcopy(bundle)
+patches = emit_document_commands(before, after)
+if patches:
+    bundle = execute(before, patches, verified_media=verified).bundle
+    commands.extend(patches)
+
+body = {'api_version': 1, 'project_id': case['project_id'], 'timeline_id': case['timeline_id'],
+        'base_revision_id': case['head_revision_id'], 'base_publication_id': case['base_publication_id'],
+        'commands': commands, 'source': {'via': 'python'}}
+result = client.timelines.commit(case['project_id'], case['timeline_id'], body, idempotency_key=case['idempotency_key'])
+if not result.ok:
+    raise RuntimeError(str(result.error))
+print(json.dumps({'head_revision_id': result.data['accepted_revision_id']}))
+`;
+    const output = execFileSync(python, ['-c', script, JSON.stringify({ ...payload, credential })], {
+      cwd: this.tmp, env: this.runtimeEnv(), encoding: 'utf8', timeout: 120_000,
+    });
+    const result = JSON.parse(output.trim().split('\n').pop() ?? '{}') as { head_revision_id?: string };
+    if (!result.head_revision_id) throw new Error(`native three-products seed returned no head: ${output}`);
+    return result.head_revision_id;
+  }
+
   /**
    * What the Runtime last published about itself (`<support>/discovery.json`, rewritten on every start). Every Astrid call
    * re-reads it, so a restarted Runtime on a new port is followed with no special case. Throws when it is absent or unparsable.
@@ -803,63 +927,55 @@ export class DirectHarness {
    */
   async seedThreeProducts(referenceAt = THREE_PRODUCTS_REFERENCE_AT, transitions: 'ordinary' | 'native-none' | 'parent-delete' = 'ordinary'): Promise<ThreeProductsSeed> {
     if (this.threeProductsSeed) return this.threeProductsSeed;
-    const { projectId, timelineId, image, video, headRevisionId } = this.seed;
+    const { projectId, timelineId, image, video } = this.seed;
     const project = await this.runtimeJson('GET', `/v1/projects/${projectId}`);
     if (project.status !== 200) throw new Error(`seed three products project: ${project.status} ${JSON.stringify(project.body)}`);
+    const authoringPython = process.env.ASTRID_PYTHON ?? path.resolve(process.env.ASTRID_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-agent'), '.venv/bin/python');
+    await this.enableTimelineAuthoring(authoringPython);
+    const created = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines`, { timeline_id: timelineId, name: 'Main' });
+    if (created.status !== 201) throw new Error(`create three-products timeline: ${created.status} ${JSON.stringify(created.body)}`);
+    const timeline = await this.runtimeJson('GET', `/v1/projects/${projectId}/timelines/${timelineId}`);
+    if (timeline.status !== 200) throw new Error(`read three-products bootstrap: ${timeline.status} ${JSON.stringify(timeline.body)}`);
+    const bootstrapHead = (timeline.body as any).head_revision_id;
+    if (typeof bootstrapHead !== 'string' || !bootstrapHead) throw new Error(`three-products bootstrap has no canonical head: ${JSON.stringify(timeline.body)}`);
+    const bootstrapPublication = (timeline.body as any).head_publication_id;
+    if (typeof bootstrapPublication !== 'string' || !bootstrapPublication) throw new Error(`three-products bootstrap has no canonical publication: ${JSON.stringify(timeline.body)}`);
+
+    const importManaged = async (source: SeededObject & { decodable?: boolean }, filename: string, duration?: number) => {
+      const object = await this.runtimeFetch(`/v1/objects/${encodeURIComponent(source.objectId)}`);
+      if (object.status !== 200) throw new Error(`read three-products media ${filename}: ${object.status}`);
+      const imported = await this.runtimeFetch(`/v1/projects/${projectId}/media-imports`, {
+        method: 'POST',
+        headers: { 'Content-Type': source.mediaType, 'Idempotency-Key': randomUUID(), 'X-Original-Name': filename, ...(duration === undefined ? {} : { 'X-Media-Duration-Seconds': String(duration) }) },
+        body: new Uint8Array(await object.arrayBuffer()),
+      });
+      const importedBody = await imported.json() as any;
+      if (imported.status !== 201) throw new Error(`import three-products media ${filename}: ${imported.status} ${JSON.stringify(importedBody)}`);
+      const importedData = importedBody.data ?? importedBody;
+      const selection = await this.runtimeJson('GET', `/v1/projects/${projectId}/media-selection?asset=${encodeURIComponent(importedData.variant_id)}&generation_id=${encodeURIComponent(importedData.generation_id)}&variant_id=${encodeURIComponent(importedData.variant_id)}`);
+      if (selection.status !== 200) throw new Error(`select three-products media ${filename}: ${selection.status} ${JSON.stringify(selection.body)}`);
+      const pin = (selection.body as any).data ?? selection.body;
+      if (pin.object_id !== source.objectId || pin.asset !== importedData.variant_id) throw new Error(`three-products media selection changed ${filename}: ${JSON.stringify(pin)}`);
+      const verified = await this.runtimeJson('GET', `/v1/projects/${projectId}/media-selection/verified?asset=${encodeURIComponent(pin.asset)}&generation_id=${encodeURIComponent(pin.generation_id)}&variant_id=${encodeURIComponent(pin.variant_id)}&object_id=${encodeURIComponent(pin.object_id)}&catalog_digest=${encodeURIComponent(pin.catalog_digest)}`);
+      if (verified.status !== 200) throw new Error(`verify three-products media ${filename}: ${verified.status} ${JSON.stringify(verified.body)}`);
+      return { pin, verified: (verified.body as any).data ?? verified.body };
+    };
+    const imageMedia = await importManaged(image, 'f2-image.png');
+    const videoMedia = await importManaged(video, `f2-video.${video.mediaType === 'video/webm' ? 'webm' : 'mp4'}`, 12);
     const ids = { appClipId: 'f2-app-clip', agentClipId: 'f2-agent-clip', transitionClipId: 'f2-transition-clip', agentClearClipId: 'f2-agent-clear-clip' };
     const markerAssetKey = 'f2-marker';
-    const videoExtension = video.mediaType === 'video/webm' ? 'webm' : 'mp4';
-    const imageAsset = (name: string) => ({ file: `${name}.png`, type: 'image/png', media_id: image.objectId, content_sha256: image.digest });
-    const videoAsset = { file: `f2-video.${videoExtension}`, type: video.mediaType, duration: 12, media_id: video.objectId, content_sha256: video.digest };
-    // The App's clips are the parent composition's own (the editor changes only the parent). The Astrid CLI reaches clips only
-    // inside a placed shot's internal timeline (astrid/sdk/timeline/lookup.py `clips`), so the agent's two clips live in a shot
-    // placed between them: 3 s to 9 s on the film, clips at 0 s and 3 s inside it.
     const shotId = 'f2-shot';
-    const internalRevisionId = randomUUID();
-    const shotRevisionId = randomUUID();
-    const parentClips = [
-      { id: ids.appClipId, at: 0, track: 'V1', clipType: 'media', asset: 'f2-app', from: 0, to: 3, speed: 1 },
-      { id: ids.transitionClipId, at: referenceAt, track: 'V1', clipType: 'media', asset: 'f2-video', from: 0, to: 3, speed: 1, transition: { type: 'crossfade', duration: 0.5 } },
-    ];
-    if (transitions === 'native-none') {
-      Object.assign(parentClips[0], JSON.parse('{"opaqueClip":{"nullable":null,"ordered":[false,0,"",[],{"z":2,"a":1}]},"transition":{"type":"crossfade","duration":0.5,"revision":"native-none-unknown-revision","params":{"nullable":null,"__proto__":{"literal":true},"constructor":{"prototype":[null,false]}},"future":{"ordered":[null,0,false]},"__proto__":{"outer":true},"prototype":false}}'));
-    }
-    if (transitions === 'parent-delete') delete parentClips[1].transition;
-    const shotClips = [
-      { id: 'f2-plate', at: 0, track: 'plate', clipType: 'media', asset: 'f2-plate', hold: 12 },
-      { id: ids.agentClipId, at: 3, track: 'V2', clipType: 'media', asset: 'f2-placeholder', hold: 3, app: { f2Opaque: THREE_PRODUCTS_OPAQUE.clip } },
-      { id: ids.agentClearClipId, at: 6, track: 'V2', clipType: 'media', asset: 'f2-clear', hold: 3 },
-    ];
-    const publication = compositionPublication({ projectId, timelineId }, headRevisionId, 'Main', 30);
-    publication.parent_composition.config = { ...publication.parent_composition.config, clips: parentClips, tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }, { id: 'S1', kind: 'visual', label: 'S1' }], x_f2_opaque: THREE_PRODUCTS_OPAQUE.config, app: { [THREE_PRODUCTS_SCENE_MARKER_EXTENSION_ID]: { sceneMarkers: [...THREE_PRODUCTS_SCENE_MARKERS] } } } as unknown as typeof publication.parent_composition.config;
-    publication.parent_composition.clips = parentClips as unknown as typeof publication.parent_composition.clips;
-    publication.parent_composition.registry = { assets: { 'f2-app': imageAsset('f2-app'), 'f2-video': videoAsset } } as unknown as typeof publication.parent_composition.registry;
-    Object.assign(publication, {
-      internal_timeline_revisions: [{
-        timeline_id: timelineId,
-        revision_id: internalRevisionId,
-        payload: {
-          tracks: [{ id: 'plate', kind: 'visual', label: 'plate' }, { id: 'V2', kind: 'visual', label: 'V2' }],
-          clips: shotClips, effects: [], audio: [], layout: {},
-          registry: { assets: { 'f2-plate': imageAsset('f2-plate'), 'f2-placeholder': imageAsset('f2-placeholder'), 'f2-clear': imageAsset('f2-clear') } },
-          assets: [],
-        },
-      }],
-      shot_revisions: [{
-        shot_id: shotId,
-        revision_id: shotRevisionId,
-        internal_timeline_revision_id: internalRevisionId,
-        payload: { metadata: { title: 'F2 agent shot' }, items: [], pools: [], selected_variants: {}, provenance: {}, generation_inputs: {}, audio_bindings: [], text_bindings: [], x_f2_opaque: THREE_PRODUCTS_OPAQUE.shot },
-      }],
+    const headRevisionId = await this.commitThreeProductsNative({
+      project_id: projectId, timeline_id: timelineId, head_revision_id: bootstrapHead,
+      base_publication_id: bootstrapPublication,
+      reference_at: referenceAt, transitions, image: { file: 'f2-image.png', type: image.mediaType, object_id: image.objectId, digest: image.digest },
+      video: { file: `f2-video.${video.mediaType === 'video/webm' ? 'webm' : 'mp4'}`, media_type: video.mediaType, object_id: video.objectId, digest: video.digest },
+      media: { 'f2-app': imageMedia, 'f2-plate': imageMedia, 'f2-placeholder': imageMedia, 'f2-clear': imageMedia, 'f2-video': videoMedia },
+      opaque: { config: THREE_PRODUCTS_OPAQUE.config, clip: THREE_PRODUCTS_OPAQUE.clip, shot: THREE_PRODUCTS_OPAQUE.shot },
+      idempotency_key: randomUUID(),
     });
-    (publication.parent_composition as Record<string, unknown>).occurrences = [{
-      occurrence_id: 'f2-occurrence', shot_id: shotId, shot_revision_id: shotRevisionId,
-      placement: { start_ms: 0 }, source_offset: 0, duration_ms: 12000, speed: 1, track: 'S1', transform: {}, gain: 1, mute: false, provenance: {},
-    }];
-    const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, publication);
-    if (published.status !== 200) throw new Error(`seed three products timeline: ${published.status} ${JSON.stringify(published.body)}`);
     this.threeProductsSeed = {
-      projectSlug: (project.body.data ?? project.body).slug, timelineId, headRevisionId: published.body.data.new_head,
+      projectSlug: (project.body.data ?? project.body).slug, timelineId, headRevisionId,
       ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: { config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip }, shot: { ...THREE_PRODUCTS_OPAQUE.shot } },
     };
     return this.threeProductsSeed;
