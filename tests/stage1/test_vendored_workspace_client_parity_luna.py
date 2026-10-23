@@ -98,12 +98,12 @@ def test_timeline_commit_methods_and_dtos_are_generated() -> None:
 def test_timeline_commit_response_union_requires_data_and_receipt_pair() -> None:
     client = object.__new__(WorkspaceClient)
     accepted = client._commit_response(
-        b'{"data":{"status":"accepted"},"receipt":{"receipt_id":"r1"}}', preview=False
+        b'{"data":{"status":"accepted"},"receipt":{"receipt_id":"r1","command_kind":"timeline.commit","idempotency_key":"k1","request_hash":"sha256:0000000000000000000000000000000000000000000000000000000000000000","project_id":"p1","project_seq":[1,1],"event_ids":[],"result":{"status":"accepted"},"created_at":"2026-10-23T00:00:00Z"}}', preview=False
     )
     assert accepted["data"]["status"] == "accepted" and accepted["receipt"]["receipt_id"] == "r1"
 
-    preview = client._commit_response(b'{"data":{"status":"preview"},"receipt":null}', preview=True)
-    assert preview == {"data": {"status": "preview"}, "receipt": None}
+    preview = client._commit_response(b'{"data":{"status":"preview","would_status":"accepted"},"receipt":null}', preview=True)
+    assert preview == {"data": {"status": "preview", "would_status": "accepted"}, "receipt": None}
 
     with pytest.raises(ApiError, match="preview requires"):
         client._commit_response(b'{"data":{"status":"preview"},"receipt":{}}', preview=True)
