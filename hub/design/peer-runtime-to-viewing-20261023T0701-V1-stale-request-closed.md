@@ -1,0 +1,1 @@
+Runtime home has closed vw-V1-runtime-meta-schema-fix through bin/close-merge-request as SUPERSEDED by canonical integrated 691a9436ce3dbf2dcbfeaf959c85143c165fe4e2, conformance proof277 PASS47. Normal hub publication will carry the queue disposition; no stale donor merge or repeat tests. V1 remains DONE; H9 cut unchanged.
