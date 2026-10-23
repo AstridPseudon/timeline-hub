@@ -100,22 +100,33 @@ class _PublishMixin:
         # Publication is guarded by the structural/core validator only.  The
         # full check may import the renderer and evaluate visual diagnostics,
         # neither of which is part of the writer's safety decision.
-        report = self._check_core()
+        if restructure:
+            from astrid.sdk.timeline.checkout import Checkout
+
+            report = Checkout(copy.deepcopy(self.bundle))._check_core()
+        else:
+            report = self._check_core()
         if not report.valid:
             raise TimelineEditError("not publishing: " + "; ".join(report.problems or ["the candidate is invalid"]))
         key = idempotency_key or f"edit-{re.sub(r'[^a-z0-9]+', '-', message.lower())[:40].strip('-') or 'timeline'}-{uuid.uuid4().hex[:8]}"
         stored = self.stored_document(restructure=restructure)  # chapters as shots only for a film that opted in
-        if restructure or self.edits().get("changes") or not self.narration_changes():
+        if restructure:
+            receipt = self._commit_restructure(message, idempotency_key=idempotency_key, client=client, force=force)
+            key = receipt.pop("_restructure_key")
+            receipt.update(idempotency_key=key, structure="changed", merged=None)
+        elif self.edits().get("changes") or not self.narration_changes():
             receipt = _store.publish_bundle(stored, key, client=client, force=force)
         else:  # only the narration binding is behind (a retry after it failed): pin it, nothing else to publish
             receipt = {"old_head": self.base_revision, "new_head": self.base_revision, "structure": "unchanged"}
         receipt["narration_pinned"] = []
-        if self.narration_changes():
+        if restructure or self.narration_changes():
+            from astrid.sdk.workspace_client import WorkspaceClientError
+
             # A line's text changed (or the shots are new): bind each such shot's narration now that
             # the shots exist, then publish the pins as a second, small revision.
             try:
                 receipt.update(self._publish_narration(key, client=client))
-            except TimelineEditError as exc:  # the structure IS published: say so, and how to finish
+            except (TimelineEditError, WorkspaceClientError) as exc:  # the cut is already durable
                 receipt["narration_error"] = (f"{exc}. The cut is published (head {receipt.get('new_head')}); only the "
                                               "narration binding is behind: retry the original publish to reconcile "
                                               "the durable narration commit")
@@ -147,6 +158,105 @@ class _PublishMixin:
                                     evidence=({"kind": "revision", "id": receipt.get("new_head")},))
         receipt["message"] = message
         return receipt
+
+    def _commit_restructure(self, message: str, *, idempotency_key: str | None,
+                            client: Any, force: bool) -> dict[str, Any]:
+        """Commit the cut once; an interrupted follow-up keeps its original cut receipt."""
+        from astrid.sdk.timeline.emitter import emit_document_commands
+        from astrid.sdk.timeline.sync import TimelineSession
+        from astrid.sdk.timeline_restructure import STRUCTURE_KEY
+
+        if force:
+            raise TimelineEditError("restructure uses guarded commits; force is unavailable")
+        if client is None:
+            from astrid.sdk import AstridClient
+
+            with AstridClient.open_from_launcher(start_pack_host=False) as opened:
+                return self._commit_restructure(message, idempotency_key=idempotency_key,
+                                                client=opened, force=False)
+        project, timeline = str(self.bundle["project_id"]), str(self.bundle["timeline_id"])
+        session = TimelineSession.open(project, timeline, client=client)
+        with session.outbox.locked():
+            state = session._state()
+        flight = state.get("flight")
+        key = idempotency_key or "restructure-" + hashlib.sha256(
+            json.dumps([project, timeline, self.bundle["base_parent"], message], sort_keys=True).encode()
+        ).hexdigest()[:64]
+        if flight is not None:
+            body = json.loads(flight["body"])
+            if body.get("label") == "Bind narration":
+                key = flight["key"].removesuffix("-narration")
+            elif any(call.get("op") == "timeline.restructure" for call in body.get("commands", [])):
+                key = flight["key"]
+            else:
+                raise TimelineEditError("reconcile the original request before restructuring")
+        # History is Runtime-owned. It also covers a process restart between
+        # accepting the cut and staging its narration, without a second journal.
+        cursor = None
+        seen: set[str] = set()
+        narration_flight = flight is not None and body.get("label") == "Bind narration"
+        while True:
+            history = client.timelines.history(project, timeline, cursor=cursor, limit=200)
+            if not history.ok:
+                raise TimelineEditError(f"could not read restructure history: {history.error}")
+            for entry in history.data["items"]:
+                receipt = entry.get("receipt") or {}
+                cut = any(record['command']['op'] == 'timeline.restructure'
+                          for record in (entry.get('records') or {}).get('commands', []))
+                if (flight is None and idempotency_key is None and STRUCTURE_KEY in self.bundle
+                        and entry['publication_id'] == state['base']['publication_id'] and cut):
+                    key = receipt['idempotency_key']
+                if receipt.get("idempotency_key") == key and (flight is None or narration_flight):
+                    if not cut:
+                        raise TimelineEditError("the idempotency key belongs to a different timeline commit")
+                    return {"old_head": receipt["result"].get("previous_revision_id"),
+                            "new_head": entry["revision_id"], "receipt": receipt, "_restructure_key": key}
+            cursor = history.data.get("next_cursor")
+            if cursor is None:
+                break
+            if cursor in seen:
+                raise TimelineEditError("restructure history cursor repeated")
+            seen.add(cursor)
+        if narration_flight:
+            raise TimelineEditError("the original restructure receipt is unavailable; reconcile narration directly")
+        if flight is not None:
+            result = session.flush(idempotency_key=key)
+        else:
+            if state["pending"]:
+                raise TimelineEditError("flush pending commands before restructuring")
+            base = session._bundle(state)
+            local = self.document()
+            if (local["base_parent"] != base["base_parent"]
+                    or set(local["shots"]) != set(base["shots"])):
+                raise TimelineEditError("restructure requires its exact current closure; reopen the timeline")
+            candidate = copy.deepcopy(base)
+            candidate["parent"] = local["parent"]
+            for identity, shot in local["shots"].items():
+                for field in ("payload", "internal_timeline"):
+                    candidate["shots"][identity][field] = shot[field]
+            from astrid.sdk.timeline.checkout import Checkout
+
+            checked = Checkout(copy.deepcopy(candidate))
+            checked._sync_film_length()
+            if local["placements"] != checked.bundle["placements"]:
+                raise TimelineEditError("restructure placement edits require a semantic command")
+            commands = emit_document_commands(base, candidate)
+            commands.append({"schema_version": 1, "op": "timeline.restructure", "version": "1",
+                             "select": "parent", "args": {}})
+            from astrid.sdk.timeline.commands import execute
+
+            commands[-1] = execute(candidate, [commands[-1]]).commands[0]
+            result = session.submit(commands, label=message or "Restructure chapters", merge="atomic",
+                reads=[{"kind": "scope", "ref": "timeline", "path": []}],
+                steps=[{"id": f"restructure-{index}", "label": message or "Restructure chapters",
+                        "intent": "Store chapters as shots", "tags": ["restructure"],
+                        "command_ordinals": [index],
+                        "patch": copy.deepcopy(call['args']['changes']) if call['op'] == 'doc.patch' else []}
+                       for index, call in enumerate(commands)],
+                expected_state=state, idempotency_key=key)
+        return {"old_head": result["data"].get("previous_revision_id"),
+                "new_head": result["data"]["accepted_revision_id"], "receipt": result["receipt"],
+                "_restructure_key": key}
 
     def _reset_base(self, *, client: Any = None) -> None:
         """Re-read the new head as this working copy's bundle and save it with no undo step. Never fails the publish."""
