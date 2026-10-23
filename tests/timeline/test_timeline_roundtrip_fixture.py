@@ -9,7 +9,8 @@ The regression gate for the `Timeline` domain class. Three assertions:
 3. Astrid's Python allowlists (`_TIMELINE_TOP_ALLOWED`, `_CLIP_ALLOWED`,
    `_TRACK_ALLOWED`) match the canonical Runtime-vendored TimelineConfig JSON
    Schema, with Astrid's documented top-level `app` and clip-level
-   render-provenance extension metadata retained around the renderable shape.
+   render-provenance and opaque `meta` extension metadata retained around the
+   renderable shape.
 """
 
 from __future__ import annotations
@@ -199,7 +200,7 @@ class TimelineRoundTripFixtureTest(unittest.TestCase):
         shared_track = set((track_items.get("properties") or {}).keys())
 
         # The Runtime-vendored schema is the source of truth. Astrid retains the
-        # documented top-level/row metadata overlays and the clip-level
+        # documented top-level/row opaque metadata overlays and the clip-level
         # render-admission provenance overlay around the shape.
         expected_top = shared_top | _ASTRID_TOP_LEVEL_OVERLAY
         self.assertEqual(

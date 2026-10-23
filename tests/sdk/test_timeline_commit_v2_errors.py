@@ -4,8 +4,10 @@ import copy
 
 import pytest
 
+from astrid.sdk.timeline._command_state import present
 from astrid.sdk.timeline._commit_errors import failure
 from astrid.sdk.timeline._commit_preview import complete_preview
+from tests.editing_conformance.test_doc_patch_v2 import change, patch, submit
 from tests.sdk.test_timeline_commit_provider import DetachedRealm, detached
 
 
@@ -46,6 +48,52 @@ def test_intervening_head_is_conflict_with_actual_current_head():
     assert isinstance(details["path"], list)
     assert isinstance(details["hint"], str) and details["hint"]
     assert isinstance(details["suggested_command"], str) and details["suggested_command"]
+
+
+def test_wrong_previous_value_at_original_base_is_invalid_without_writes():
+    realm = DetachedRealm()
+    base = detached(realm.head)
+    call = patch(change(["name"], present("wrong"), "B"))
+
+    from runtime_protocol.timeline_commit import CommitRejected
+
+    with pytest.raises(CommitRejected) as raised:
+        submit(realm, call, reads=[])
+
+    failure_body = raised.value.failure
+    details = failure_body["details"]
+    assert failure_body["http_status"] == 422
+    assert failure_body["code"] == "validation_error"
+    assert details["status"] == "invalid"
+    assert details["reason"] == "previous_value_mismatch"
+    assert details["path"] == ["name"]
+    assert details["base"] == base
+    assert details["current"] == base
+    assert details["hint"]
+    assert details["suggested_command"]
+    assert realm.head == base
+    assert realm.accepted == []
+    assert realm.prepared == []
+
+
+def test_changed_head_replay_remains_a_conflict():
+    realm = DetachedRealm()
+    base = detached(realm.head)
+    submit(realm, patch(change(["name"], present("Renamed Film"), "B")), reads=[])
+
+    from runtime_protocol.timeline_commit import CommitRejected
+
+    with pytest.raises(CommitRejected) as raised:
+        submit(realm, patch(change(["name"], present("Renamed Film"), "C")),
+               reads=[], base=base)
+
+    failure_body = raised.value.failure
+    assert failure_body["http_status"] == 409
+    assert failure_body["code"] == "conflict"
+    assert failure_body["details"]["status"] == "conflict"
+    assert failure_body["details"]["reason"] == "value_conflict"
+    assert failure_body["details"]["current"] == realm.head
+    assert len(realm.accepted) == 1
 
 
 def test_malformed_command_at_base_is_invalid():

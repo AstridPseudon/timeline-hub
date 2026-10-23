@@ -1,17 +1,13 @@
-"""Validation for the opaque ``meta`` extension at authored timeline seams.
-
-The contents of a namespace are deliberately not interpreted here.  This
-module only checks the bounded JSON envelope needed to admit and preserve the
-extension without allowing it to become a second reference or timing model.
-"""
+"""Validation for opaque ``meta`` at authored timeline seams."""
 
 from __future__ import annotations
 
-import json
 import math
 import re
 from collections.abc import Mapping
 from typing import Any
+
+from astrid.core.receipts.canonical import CanonicalizationError, canonical_bytes
 
 META_MAX_NAMESPACES = 64
 META_MAX_NAMESPACE_BYTES = 65_536
@@ -70,27 +66,21 @@ def _validate_descendant(value: Any, path: str, *, depth: int) -> None:
     raise _invalid(path, "must contain only finite JSON values")
 
 
-def _canonical_bytes(value: Any, path: str) -> int:
+def _canonical_size(value: Any, path: str) -> int:
     try:
-        encoded = json.dumps(
-            value,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-            allow_nan=False,
-        ).encode("utf-8")
-    except (TypeError, UnicodeError, ValueError) as exc:  # pragma: no cover - guarded by the walk above
+        # The validator only needs to distinguish values at or below the V1
+        # total limit from values above it. A one-byte-over probe keeps the
+        # shared helper's canonical encoding while preserving the required
+        # ``meta_limit_exceeded`` classification for very large input.
+        return len(canonical_bytes(value, max_bytes=META_MAX_BYTES + 1))
+    except CanonicalizationError as exc:
+        if str(exc).startswith("canonical JSON exceeds"):
+            return META_MAX_BYTES + 1
         raise _invalid(path, "must contain only finite JSON values") from exc
-    return len(encoded)
 
 
 def validate_meta(meta: Any, *, path: str = "meta") -> None:
-    """Validate one authored ``meta`` object without changing its value.
-
-    ``meta`` is optional at its call sites; callers invoke this function only
-    when the key is present.  No descendant is inspected for IDs, references,
-    or schema-owned fields.
-    """
+    """Validate one optional authored ``meta`` object without changing it."""
 
     if not isinstance(meta, dict):
         raise _invalid(path, "must be an object; omit it or remove it explicitly to clear it")
@@ -113,24 +103,18 @@ def validate_meta(meta: Any, *, path: str = "meta") -> None:
         if not isinstance(value, dict):
             raise _invalid(namespace_path, "namespace value must be an object and must not be null")
         _validate_descendant(value, namespace_path, depth=1)
-        namespace_bytes = _canonical_bytes(value, namespace_path)
-        if namespace_bytes > META_MAX_NAMESPACE_BYTES:
+        if _canonical_size(value, namespace_path) > META_MAX_NAMESPACE_BYTES:
             raise _limited(
                 namespace_path,
                 f"namespace value must be at most {META_MAX_NAMESPACE_BYTES} canonical UTF-8 bytes",
             )
 
-    total_bytes = _canonical_bytes(meta, path)
-    if total_bytes > META_MAX_BYTES:
+    if _canonical_size(meta, path) > META_MAX_BYTES:
         raise _limited(path, f"meta must be at most {META_MAX_BYTES} canonical UTF-8 bytes")
 
 
 def validate_timeline_meta_locations(config: Mapping[str, Any], *, path: str = "config") -> None:
-    """Validate ``meta`` on a timeline config, its tracks, and its clips.
-
-    This is intentionally an explicit allowlist of authored locations.  It
-    does not walk arbitrary extension objects such as ``app`` or ``params``.
-    """
+    """Validate only timeline, track, and clip ``meta`` locations."""
 
     if "meta" in config:
         validate_meta(config["meta"], path=f"{path}.meta")
