@@ -58,17 +58,9 @@ def test_build_replaces_stale_generated_package_files(tmp_path):
     root = Path(__file__).resolve().parents[1]
     source = tmp_path / "source"
     source.mkdir()
-    for filename in ("pyproject.toml", "setup.py", "LICENSE"):
-        shutil.copy2(root / filename, source / filename)
-    for package in ("astrid_runtime", "runtime_protocol"):
-        shutil.copytree(root / package, source / package)
-
-    stale = source / "build" / "lib" / "astrid_runtime" / "bootstrap.py"
-    stale.parent.mkdir(parents=True)
-    stale.write_text("# stale generated module must never enter the wheel\n")
-
+    builders = [sys.executable, "python3.11", "python3.12", "python3.13", "python3", "python"]
     builder = None
-    for candidate in (sys.executable, "python3.11", "python3.12", "python3.13", "python3", "python"):
+    for candidate in builders:
         try:
             probe = subprocess.run(
                 [candidate, "-c", "import setuptools.build_meta"],
@@ -80,7 +72,16 @@ def test_build_replaces_stale_generated_package_files(tmp_path):
         if probe.returncode == 0:
             builder = candidate
             break
-    assert builder is not None, "the stale-build regression needs a setuptools builder"
+    if builder is None:
+        raise RuntimeError("the stale-build regression needs a setuptools builder")
+    for filename in ("pyproject.toml", "setup.py", "LICENSE"):
+        shutil.copy2(root / filename, source / filename)
+    for package in ("astrid_runtime", "runtime_protocol"):
+        shutil.copytree(root / package, source / package)
+
+    stale = source / "build" / "lib" / "astrid_runtime" / "bootstrap.py"
+    stale.parent.mkdir(parents=True)
+    stale.write_text("# stale generated module must never enter the wheel\n")
 
     wheelhouse = tmp_path / "wheelhouse"
     wheelhouse.mkdir()

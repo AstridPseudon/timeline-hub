@@ -15,7 +15,7 @@ import pytest
 from astrid_runtime import operator_upgrade
 from runtime_protocol.store import SCHEMA_VERSION
 from runtime_protocol.upgrade import inspect_canonical_schema
-from lanes import requires_posix_process_groups
+from tests.lanes import requires_posix_process_groups
 from test_operator_upgrade import _Boundary, _fixture
 from tests.schema_fixtures import walk_back_to_v30
 
