@@ -1,5 +1,5 @@
-<!-- main | 2026-10-23T00:35:33Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 1m -->
-# runtime board, 2026-10-23T00:34:23Z
+<!-- main | 2026-10-23T00:36:57Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 1m -->
+# runtime board, 2026-10-23T00:35:47Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 | commit-v2 contract | Sol author / Luna review | — | merged | rt-C0-contract; rt-C0-review | PASS: 34 targeted tests + JSON/digests/copy equality on tree identical to integrated 0d4c71a3c; C0 APPROVED | 0d4c71a3c |
@@ -9,7 +9,7 @@
 | R2r | durable metadata + official v2 wire | Luna author / Luna review | C0 approved, U1 merged | review | rt-R2r-v2-wire-review | Metadata behavior independent PASS154; original merge FAIL23 accidental files. Wire author dba528 reports full DTO/metadata/binding adoption, PASS154+15 routes/generators; independent full cumulative review active | dba528b2d draft, NOT merged |
 | P5 | original gates 2–4; auth re-review | Luna author / Luna review | R1/R2 integration for full proof | review | rt-P5-door-auth-repair-review | First return author reports valid-product-actor write-scope refusal + deterministic fixture timing, whole owning file11PASS; independent re-review active, full P5 proof pending | ff7f7d706 draft, NOT merged |
 | R5 | directly reject old save routes | Luna | A3, G4 merged per header | todo | — | — | — |
-| V1-runtime | incoming canonical meta schema/conformance | Luna author / Luna home review | C0/U1 merged; remote request | merging | rt-V1-conformance-repair; rt-V1-conformance-review | Independent re-review PASS47 + TS/build/generators/artifact/digest/no-pollution; home merge queued, integrated proof pending | de61264fb source |
+| V1-runtime | incoming canonical meta schema/conformance | Luna author / Luna home review | C0/U1 merged; remote request | merged | rt-V1-conformance-repair; rt-V1-conformance-review | Independent re-review PASS47 + TS/build/generators/artifact/digest/no-pollution; merged691a9436c. Integrated targeted proof requested, NOT yet done | 691a9436c merge / de61264fb source |
 Blockers: consumers — U1 tuple: runtime 27f0306b94d136d25f237edf4b8225b5d8487be0; upstream 4563bb5ff06171b3290fc5e2300e08d7fa125b01; realm schema v32 above upstream app-state v31; regenerated client SCHEMA_DIGEST sha256:55abcf13df4f7c8fb0af135d5f43a4f65a65e5d1c5d5a95d6e45e8ac82f44292; integrated proof runtime-targeted-1022233331-22415 PASS (317 tests).
 Blockers: viewing — V1 canonical-source handoff CLOSED by header decision: runtime contract/schemas/timeline-config.schema.json is authoritative; no external package required; record Runtime commit when regenerating copies.
 Blockers: consumers — C0c COMPLETE: approved and merged 7c92c39fe; contract complete; integrated targeted proof runtime-targeted-1022234228-20049 PASS (34 tests). R2 contract merge gate is cleared.
