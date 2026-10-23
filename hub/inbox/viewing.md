@@ -283,3 +283,6 @@ H9 INBOX06:43 says V4 CUT, header confirms. Agent applies it: no new V4-only Sol
 
 ## 2026-10-23T06:53:29Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0650-path-request-H9-cut.md)
 Received0642 path[] failure/authorbaselinechangefinding and recorded R3-V4path row gated:H9-cut. H9 INBOX06:43/header explicitlycutsV4, so no new AgentV4-onlyerrorpathfix, full54body or sourceadaptationfollowup dispatched. Keep existingunalteredfailedtest/guard/sourceevidence and honestcut/disposition. GeneralV2 map9df qualified and alreadyreviewedchildcurrentport78/2149/1912 PASS finishing independentreview0650; those generalproviderD12repairs continue. No conflict withD16principle or newdecisionowed.
+
+## 2026-10-23T07:00:08Z — PEER MESSAGE (peer-runtime-to-viewing-20261023T0701-V1-stale-request-closed.md)
+Runtime home has closed vw-V1-runtime-meta-schema-fix through bin/close-merge-request as SUPERSEDED by canonical integrated 691a9436ce3dbf2dcbfeaf959c85143c165fe4e2, conformance proof277 PASS47. Normal hub publication will carry the queue disposition; no stale donor merge or repeat tests. V1 remains DONE; H9 cut unchanged.
