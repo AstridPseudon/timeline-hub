@@ -1,0 +1,404 @@
+--- /home/user/timeline-hub/hub/kit/bin/make-child-venv
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-ap2-P1-bench-portability-1303-make-child-venv.sh
+@@ -1,176 +1,86 @@
+ #!/bin/bash
+-# make-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME] — dispatcher child-vEnv
+-# builder.  This keeps the existing API: RUNTIME is the Remotion graph used by
+-# the optional suite substitution, never the Runtime checkout.
++# make-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME] — dispatcher child venv.
++# RUNTIME remains the optional Remotion graph used for suite substitution.
+ set -u -o pipefail
+-
+ O=${CHILD_VENV_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
+ A=${CHILD_VENV_AGENT_CHECKOUT:-/home/user/work/agent}
+ R=${CHILD_VENV_RUNTIME_CHECKOUT:-/home/user/work/runtime}
+ W=${CHILD_VENV_WORK_ROOT:-/home/user/work}
+ PYTHON=${CHILD_VENV_PYTHON:-python3.13}
+ TIMEOUT_BIN=${CHILD_VENV_TIMEOUT_BIN:-timeout}
+-
+-PIP_TIMEOUT_SECONDS=${CHILD_VENV_PIP_TIMEOUT_SECONDS:-600}
+-GIT_TIMEOUT_SECONDS=${CHILD_VENV_GIT_TIMEOUT_SECONDS:-120}
+ LOCAL_TIMEOUT_SECONDS=${CHILD_VENV_LOCAL_TIMEOUT_SECONDS:-600}
+-FREEZE_TIMEOUT_SECONDS=${CHILD_VENV_FREEZE_TIMEOUT_SECONDS:-120}
++PIP_TIMEOUT_SECONDS=${CHILD_VENV_PIP_TIMEOUT_SECONDS:-600}
+ BUILD_TIMEOUT_SECONDS=${CHILD_VENV_BUILD_TIMEOUT_SECONDS:-3600}
+ KILL_AFTER_SECONDS=${CHILD_VENV_KILL_AFTER_SECONDS:-30}
+ PIP_NETWORK_TIMEOUT_SECONDS=${CHILD_VENV_PIP_NETWORK_TIMEOUT_SECONDS:-30}
+ PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
+-
++REQUIREMENTS_PATH=${CHILD_VENV_REQUIREMENTS_PATH:-requirements/proof.lock}
+ progress() { printf '%s child-venv %s\n' "$(date -u +%FT%TZ)" "$*"; }
+-
+-N=${1:-}
+-S=${2:-}
+-BS=${3:-}
+-RT=${4:-}
+-case "$N" in
+-  venv-agent-child-[a-z0-9-]*) ;;
+-  *) echo "REFUSED: name must be venv-agent-child-<suffix>"; exit 2 ;;
+-esac
+-[ -n "$S" ] || { echo "REFUSED: agent commit is required"; exit 2; }
+-
++N=${1:-}; S=${2:-}; BS=${3:-}; RT=${4:-}
++case "$N" in venv-agent-child-[a-z0-9-]*) ;; *) echo 'REFUSED: name must be venv-agent-child-<suffix>'; exit 2;; esac
++[ -n "$S" ] || { echo 'REFUSED: agent commit is required'; exit 2; }
+ D=$W/$N
+-if [ -e "$D" ] || [ -L "$D" ]; then
+-  echo "exists: $D (child venvs are immutable; pick a new name)"
+-  exit 0
++[ -e "$D" ] || [ -L "$D" ] && { echo "exists: $D (child venvs are immutable; pick a new name)"; exit 0; }
++
++missing=()
++require_command() { command -v "$1" >/dev/null 2>&1 || missing+=("command:$1"); }
++for c in git tar mktemp sha256sum timeout grep sed find chmod mv df awk; do require_command "$c"; done
++for p in "$W" "$A" "$R" "$O/tests"; do [ -d "$p" ] || missing+=("directory:$p"); done
++[ -w "$O/tests" ] || missing+=("writable:$O/tests")
++check() { "$@" >/dev/null 2>&1 || missing+=("$*"); }
++check git -C "$A" rev-parse --is-inside-work-tree
++check git -C "$R" rev-parse --is-inside-work-tree
++check git -C "$A" cat-file -e "$S^{commit}"
++check git -C "$R" cat-file -e 'HEAD^{commit}'
++check git -C "$A" cat-file -e "$S:$REQUIREMENTS_PATH"
++check git -C "$A" cat-file -e "$S:pyproject.toml"
++check git -C "$R" cat-file -e 'HEAD:pyproject.toml'
++check "$PYTHON" -c 'import sys; assert sys.version_info >= (3, 11)'
++check "$PYTHON" -m venv --help
++check df -P -B1 "$W"
++if command -v "$PYTHON" >/dev/null 2>&1; then PYTHON_ACTUAL=$($PYTHON --version 2>&1 || true); else PYTHON_ACTUAL=unavailable; fi
++RUNTIME_SHA=$(git -C "$R" rev-parse --verify HEAD^{commit} 2>/dev/null || true)
++if git -C "$A" cat-file -e "$S:$REQUIREMENTS_PATH" >/dev/null 2>&1; then LOCK_SHA=$(git -C "$A" show "$S:$REQUIREMENTS_PATH" | sha256sum | cut -d' ' -f1); else LOCK_SHA=unavailable; fi
++FREE_BYTES=$(df -P -B1 "$W" 2>/dev/null | awk 'NR == 2 { print $4 }')
++if [ "${#missing[@]}" -ne 0 ]; then
++  printf '%s child-venv PREFLIGHT FAILED name=%s agent=%s requirements=%s\n' "$(date -u +%FT%TZ)" "$N" "$S" "$REQUIREMENTS_PATH" >&2
++  printf 'inventory=python:%s runtime_sha:%s requirements_lock_sha256:%s free_bytes:%s\n' "$PYTHON_ACTUAL" "$RUNTIME_SHA" "$LOCK_SHA" "$FREE_BYTES" >&2
++  printf 'missing_prerequisite=%s\n' "${missing[@]}" >&2
++  exit 2
+ fi
+ 
+-# Run the body under one bounded budget. The dispatcher invokes this script
+-# inline, so a timed-out child must return to its FIFO loop with a non-zero
+-# identity rather than being reported as an existing/successful environment.
+ if [ "${CHILD_VENV_BUILD_INNER:-0}" != 1 ]; then
+   export CHILD_VENV_BUILD_INNER=1
+-  # GNU timeout creates a private process group by default. Keep this
+-  # background process-group mode so a timed-out descendant (including one holding the
+-  # dispatcher's inherited stdout/FIFO) receives the same bounded kill grace.
+   "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$BUILD_TIMEOUT_SECONDS" "$0" "$@"
+-  rc=$?
+-  if [ "$rc" -ne 0 ]; then
+-    partial=$(find "$W" -maxdepth 1 -type d -name "$N.partial.*" -print -quit 2>/dev/null || true)
+-    printf '%s child-venv FAILED stage=overall-build-budget rc=%s name=%s agent=%s partial=%s\n' \
+-      "$(date -u +%FT%TZ)" "$rc" "$N" "$S" "${partial:-none}" >&2
+-  fi
+-  exit "$rc"
++  exit $?
+ fi
+-
+ RUN_ID=$(date -u +%Y%m%dT%H%M%SZ)-$$
+-T=$D.partial.$RUN_ID
+-SRC=$(mktemp -d "$W/.child-venv-source-$N-$RUN_ID.XXXXXX")
+-REPORT_DIR=$O/tests/provision
+-REPORT_TMP=$REPORT_DIR/.${N}.freeze.$RUN_ID
+-F=$REPORT_DIR/$N.txt
+-CURRENT_STAGE=initialise
+-
+-failure() {
+-  rc=$1
+-  stage=$2
+-  if [ -d "$T" ]; then
+-    printf 'status=failed\nstage=%s\nrc=%s\nagent_sha=%s\nruntime_sha=%s\npartial=%s\nsource=%s\n' \
+-      "$stage" "$rc" "$S" "${RUNTIME_SHA:-unknown}" "$T" "$SRC" > "$T/.provision-failure"
+-  fi
+-  printf '%s child-venv FAILED stage=%s rc=%s name=%s agent=%s runtime=%s partial=%s source=%s\n' \
+-    "$(date -u +%FT%TZ)" "$stage" "$rc" "$N" "$S" "${RUNTIME_SHA:-unknown}" "$T" "$SRC" >&2
+-  exit "$rc"
+-}
+-
+-run_stage() {
+-  stage=$1
+-  budget=$2
+-  shift 2
+-  CURRENT_STAGE=$stage
+-  progress "stage=$stage start budget=${budget}s"
+-  # Do not use foreground mode: it deliberately leaves descendants outside the
+-  # timeout's process-group termination and can wedge the inline dispatcher.
+-  CHILD_VENV_STAGE=$stage "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$budget" "$@"
+-  rc=$?
+-  if [ "$rc" -ne 0 ]; then
+-    failure "$rc" "$stage"
+-  fi
+-  progress "stage=$stage complete"
+-}
+-
+-if ! git -C "$A" cat-file -e "$S^{commit}" 2>/dev/null; then
+-  run_stage agent-fetch "$GIT_TIMEOUT_SECONDS" git -C "$A" fetch -q hub
+-  git -C "$A" cat-file -e "$S^{commit}" 2>/dev/null || failure 1 agent-source
+-fi
+-RUNTIME_SHA=$(git -C "$R" rev-parse --verify HEAD^{commit}) || failure 1 runtime-source
+-progress "source agent=$S runtime=$RUNTIME_SHA"
+-
+-run_stage venv "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -m venv "$T"
+-P=$T/bin/python
++T=$D.partial.$RUN_ID; SRC=$(mktemp -d "$W/.child-venv-source-$N-$RUN_ID.XXXXXX")
++REPORT_DIR=$O/tests/provision; REPORT_TMP=$REPORT_DIR/.${N}.freeze.$RUN_ID; F=$REPORT_DIR/$N.txt
++failure() { rc=$1; stage=$2; [ -d "$T" ] && printf 'status=failed\nstage=%s\nrc=%s\nagent_sha=%s\nruntime_sha=%s\npartial=%s\n' "$stage" "$rc" "$S" "$RUNTIME_SHA" "$T" > "$T/.provision-failure"; printf '%s child-venv FAILED stage=%s rc=%s name=%s partial=%s\n' "$(date -u +%FT%TZ)" "$stage" "$rc" "$N" "$T" >&2; exit "$rc"; }
++stage() { name=$1; shift; progress "stage=$name start"; CHILD_VENV_STAGE=$name "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$LOCAL_TIMEOUT_SECONDS" "$@" || failure $? "$name"; progress "stage=$name complete"; }
++progress "source agent=$S runtime=$RUNTIME_SHA requirements=$REQUIREMENTS_PATH lock_sha256=$LOCK_SHA"
++stage venv "$PYTHON" -m venv "$T"; P=$T/bin/python
+ PIP_ARGS=(--no-cache-dir --disable-pip-version-check --progress-bar off --retries "$PIP_RETRIES" --timeout "$PIP_NETWORK_TIMEOUT_SECONDS")
+-run_stage bootstrap-pip "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q \
+-  'pip==26.2.1' 'setuptools==80.9.0' 'wheel==0.46.3'
+-
+-run_stage requirements "$LOCAL_TIMEOUT_SECONDS" mkdir -p "$REPORT_DIR"
+-REQ=$T/.provision-requirements.txt
+-run_stage filter-requirements "$LOCAL_TIMEOUT_SECONDS" bash -c \
+-  'grep -v -e "^astrid @" -e "^pip==" -e "^setuptools==" -e "^wheel==" "$1" > "$2"' \
+-  _ "$O/tests/provision/venv-agent-child-s2.txt" "$REQ"
+-run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps -r "$REQ"
+-
+-AGENT_SRC=$SRC/agent
+-RUNTIME_SRC=$SRC/runtime
+-run_stage source-directories "$LOCAL_TIMEOUT_SECONDS" mkdir -p "$AGENT_SRC" "$RUNTIME_SRC"
+-run_stage archive-agent "$LOCAL_TIMEOUT_SECONDS" bash -c \
+-  'set -o pipefail; git -C "$1" archive "$2" | tar -x -C "$3"' \
+-  _ "$A" "$S" "$AGENT_SRC"
+-run_stage archive-runtime "$LOCAL_TIMEOUT_SECONDS" bash -c \
+-  'set -o pipefail; git -C "$1" archive "$2" | tar -x -C "$3"' \
+-  _ "$R" "$RUNTIME_SHA" "$RUNTIME_SRC"
+-
+-run_stage install-agent "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$AGENT_SRC"
+-run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$RUNTIME_SRC"
+-printf '%s\n' "$S" > "$T/.astrid-source-commit"
+-printf '%s\n' "$RUNTIME_SHA" > "$T/.astrid-runtime-source-commit"
+-
+-run_stage import-provenance "$LOCAL_TIMEOUT_SECONDS" "$P" -I -c \
+-  'import importlib.util, pathlib
+-names = ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")
+-for name in names:
+-    spec = importlib.util.find_spec(name)
+-    assert spec is not None and spec.origin, name
+-    origin = pathlib.Path(spec.origin).resolve()
+-    assert "site-packages" in origin.parts, (name, origin)
+-    print(f"{name}={origin}")'
+-run_stage runtime-cli "$LOCAL_TIMEOUT_SECONDS" bash -c \
+-  'set -e; "$1" --help >/dev/null; "$2" --help >/dev/null; "$3" -I -m astrid_runtime --help >/dev/null' \
+-  _ "$T/bin/astrid-runtime" "$T/bin/astrid-runtime-protocol" "$P"
+-run_stage markers "$LOCAL_TIMEOUT_SECONDS" bash -c \
+-  'test "$(cat "$1")" = "$2" && test "$(cat "$3")" = "$4"' \
+-  _ "$T/.astrid-source-commit" "$S" "$T/.astrid-runtime-source-commit" "$RUNTIME_SHA"
+-
+-run_stage freeze "$FREEZE_TIMEOUT_SECONDS" bash -c \
+-  '"$1" -I -m pip freeze --all > "$2"' _ "$P" "$REPORT_TMP"
+-run_stage freeze-identity "$LOCAL_TIMEOUT_SECONDS" bash -c \
+-  'grep -q "^astrid==" "$1" && grep -q "^astrid-runtime==" "$1"' _ "$REPORT_TMP"
+-run_stage cleanup-source "$LOCAL_TIMEOUT_SECONDS" rm -rf -- "$SRC"
+-
+-# Venv launchers contain the partial path. Fix them before the atomic publish;
+-# no complete destination exists until all validation above has passed.
+-run_stage shebang-relocation "$LOCAL_TIMEOUT_SECONDS" bash -c \
+-  'set -e
+-   while IFS= read -r file; do sed -i "s#$1#$2#g" "$file"; done < <(grep -rl -- "$1" "$3/bin" 2>/dev/null || true)' \
+-  _ "$T" "$D" "$T"
+-run_stage readonly-final "$LOCAL_TIMEOUT_SECONDS" chmod -R a-w "$T"
+-
+-if [ -e "$D" ] || [ -L "$D" ]; then
+-  failure 1 immutable-publish-race
+-fi
+-run_stage publish "$LOCAL_TIMEOUT_SECONDS" mv -T "$T" "$D"
+-run_stage provision-report "$LOCAL_TIMEOUT_SECONDS" mv -T "$REPORT_TMP" "$F"
+-
+-if [ -n "$BS" ] && [ -n "$RT" ]; then
+-  if ! grep -q "^agent $N-full " "$O/tests/suites.conf"; then
+-    L=$(grep "^agent $BS " "$O/tests/suites.conf" || true)
+-    if [ -n "$L" ]; then
+-      echo "$L" | sed "s#^agent $BS #agent $N-full #; s#venv-agent-child-s2#$N#g; s#agent-remotion-0012#$RT#g" >> "$O/tests/suites.conf"
+-    fi
+-  fi
+-fi
+-
+-echo "created $D (astrid from ${S:0:12}, runtime from ${RUNTIME_SHA:0:12}, $(wc -l < "$F") pins, read-only)$( [ -n "$BS" ] && echo "; suite $N-full")"
+-echo "imports validated: astrid astrid_runtime runtime_protocol astrid_runtime_client; CLI validated"
++stage bootstrap-pip "$P" -m pip install "${PIP_ARGS[@]}" -q pip==26.2.1 setuptools==80.9.0 wheel==0.46.3
++stage requirements mkdir -p "$REPORT_DIR"; REQ=$T/.provision-requirements.txt
++stage filter-requirements bash -c 'set -o pipefail; git -C "$1" show "$2:$3" | grep -v -e "^astrid @" -e "^pip==" -e "^setuptools==" -e "^wheel==" > "$4"' _ "$A" "$S" "$REQUIREMENTS_PATH" "$REQ"
++stage pinned-requirements "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps -r "$REQ"
++AGENT_SRC=$SRC/agent; RUNTIME_SRC=$SRC/runtime; stage source-directories mkdir -p "$AGENT_SRC" "$RUNTIME_SRC"
++stage archive-agent bash -c 'set -o pipefail; git -C "$1" archive "$2" | tar -x -C "$3"' _ "$A" "$S" "$AGENT_SRC"
++stage archive-runtime bash -c 'set -o pipefail; git -C "$1" archive "$2" | tar -x -C "$3"' _ "$R" "$RUNTIME_SHA" "$RUNTIME_SRC"
++stage install-agent "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$AGENT_SRC"
++stage install-runtime "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$RUNTIME_SRC"
++printf '%s\n' "$S" > "$T/.astrid-source-commit"; printf '%s\n' "$RUNTIME_SHA" > "$T/.astrid-runtime-source-commit"
++stage import-provenance bash -c 'set -e; "$1" -I -c '\''import importlib.util, pathlib
++for name in ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client"):
++ spec=importlib.util.find_spec(name); assert spec is not None and spec.origin, name
++ origin=pathlib.Path(spec.origin).resolve(); assert "site-packages" in origin.parts, (name, origin); print(f"{name}={origin}")'\'' > "$2"' _ "$P" "$T/.astrid-import-origins"
++stage runtime-cli bash -c 'set -e; "$1" --help >/dev/null; "$2" --help >/dev/null; "$3" -I -m astrid_runtime --help >/dev/null' _ "$T/bin/astrid-runtime" "$T/bin/astrid-runtime-protocol" "$P"
++stage freeze bash -c 'set -e; { printf "status=passed\nagent_sha=%s\nruntime_sha=%s\nrequirements_path=%s\nrequirements_lock_sha256=%s\n" "$4" "$5" "$6" "$7"; printf "installed_import_origins:\n"; cat "$3"; printf "pip_freeze:\n"; "$1" -I -m pip freeze --all; } > "$2"' _ "$P" "$REPORT_TMP" "$T/.astrid-import-origins" "$S" "$RUNTIME_SHA" "$REQUIREMENTS_PATH" "$LOCK_SHA"
++stage freeze-identity bash -c 'grep -q "^status=passed$" "$1" && grep -q "^astrid==" "$1" && grep -q "^astrid-runtime==" "$1"' _ "$REPORT_TMP"
++stage shebang-relocation bash -c 'set -e; while IFS= read -r file; do sed -i "s#$1#$2#g" "$file"; done < <(grep -rl -- "$1" "$3/bin" 2>/dev/null || true)' _ "$T" "$D" "$T"; stage readonly-final chmod -R a-w "$T"
++[ -e "$D" ] || [ -L "$D" ] && failure 1 immutable-publish-race
++stage publish mv -T "$T" "$D"; stage provision-report mv -T "$REPORT_TMP" "$F"
++if [ -n "$BS" ] && [ -n "$RT" ] && ! grep -q "^agent $N-full " "$O/tests/suites.conf"; then L=$(grep "^agent $BS " "$O/tests/suites.conf" || true); [ -z "$L" ] || echo "$L" | sed "s#^agent $BS #agent $N-full #; s#venv-agent-child-[^ /]*#$N#g; s#agent-remotion-[^ /]*#$RT#g" >> "$O/tests/suites.conf"; fi
++echo "created $D (astrid from ${S:0:12}, runtime from ${RUNTIME_SHA:0:12}, read-only)"
+--- /home/user/timeline-hub/hub/kit/bin/make-runtime
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-ap2-P1-bench-portability-1303-make-runtime.sh
+@@ -1,17 +1,143 @@
+ #!/bin/bash
+-# make-runtime NAME AGENT_SHA [LOCK_SHA256] — run by the dispatcher (outside the sandbox; uses the network for npm ci).
+-# Builds a NEW read-only Remotion runtime /home/user/work/runtimes/<NAME> from the Agent repo's remotion/ directory at
+-# AGENT_SHA (exact package-lock bytes, verified against LOCK_SHA256 when given), with Node 20 and `npm ci`. Writes
+-# $ORCH/tests/<NAME>.env and a "<NAME>-nodes" suite (cloned from the remotion-0012-nodes line). Never touches an existing runtime.
+-O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; A=/home/user/work/agent
+-N=$1; S=$2; L=$3; case "$N" in agent-remotion-[0-9a-z]*) ;; *) echo "REFUSED: name must be agent-remotion-<version>"; exit 2;; esac
+-D=/home/user/work/runtimes/$N; [ -e $D ] && { echo "exists: $D (runtimes are immutable; pick a new name)"; exit 0; }
+-git -C $A cat-file -e "$S^{commit}" 2>/dev/null || git -C $A fetch -q hub 2>/dev/null; git -C $A cat-file -e "$S^{commit}" || { echo "unknown agent commit $S"; exit 1; }
+-NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin; T=$D.partial; rm -rf $T; mkdir -p $T
+-git -C $A archive "$S" remotion | tar -x -C $T --strip-components=1 || { echo "archive failed"; exit 1; }
+-got=$(sha256sum $T/package-lock.json | cut -d' ' -f1); [ -z "$L" ] || [ "$got" = "$L" ] || { echo "REFUSED: lock sha256 $got != $L"; rm -rf $T; exit 1; }
+-( cd $T && PATH=$NODE:$PATH npm ci --no-audit --no-fund --loglevel=error ) || { echo "npm ci failed"; rm -rf $T; exit 1; }
+-mv $T $D; find $D -path '*/node_modules/.cache' -prune -o -path '*/node_modules/.vite*' -prune -o -type f -exec chmod a-w {} +
+-sed "s#agent-remotion-0012#$N#g" $O/tests/agent-remotion-0012.env > $O/tests/$N.env
+-grep -q "^agent $N-nodes " $O/tests/suites.conf || grep '^agent remotion-0012-nodes ' $O/tests/suites.conf | sed "s#remotion-0012-nodes#$N-nodes#; s#agent-remotion-0012#$N#g" >> $O/tests/suites.conf
+-echo "created $D from agent ${S:0:12} (lock $got), read-only; env tests/$N.env; suite '$N-nodes'; remotion $(PATH=$NODE:$PATH node -e "console.log(require('$D/node_modules/remotion/package.json').version)" 2>/dev/null)"
++# make-runtime NAME AGENT_SHA [LOCK_SHA256] — host dispatcher builder.
++# The public API is unchanged; only the host-selected exact Node toolchain may
++# run npm ci, and every runtime is published once under a new immutable name.
++set -u -o pipefail
++
++O=${RUNTIME_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
++A=${RUNTIME_AGENT_CHECKOUT:-/home/user/work/agent}
++W=${RUNTIME_WORK_ROOT:-/home/user/work}
++NODE_BIN=${RUNTIME_NODE_BIN:-}
++NODE_VERSION=20.19.4
++NPM_VERSION=10.8.2
++
++N=${1:-}
++S=${2:-}
++L=${3:-}
++case "$N" in
++  agent-remotion-[0-9a-z-]*) ;;
++  *) echo "REFUSED: name must be agent-remotion-<version>"; exit 2 ;;
++esac
++[ -n "$S" ] || { echo "REFUSED: agent commit is required"; exit 2; }
++
++D=$W/runtimes/$N
++if [ -e "$D" ] || [ -L "$D" ]; then
++  echo "exists: $D (runtimes are immutable; pick a new name)"
++  exit 0
++fi
++
++# Do not use ambient Node 22 (or an unpinned Node 20). A host dispatcher may
++# select another exact path through RUNTIME_NODE_BIN.
++if [ -z "$NODE_BIN" ]; then
++  for candidate in \
++    "$W/toolchain/node-v$NODE_VERSION-linux-x64/bin" \
++    "/opt/node-v$NODE_VERSION-linux-x64/bin" \
++    "/opt/node$NODE_VERSION/bin"; do
++    if [ -x "$candidate/node" ] && [ -x "$candidate/npm" ]; then
++      NODE_BIN=$candidate
++      break
++    fi
++  done
++fi
++
++missing=()
++require_command() { command -v "$1" >/dev/null 2>&1 || missing+=("command:$1"); }
++for command_name in git tar sha256sum cut grep find mkdir mv chmod df awk; do
++  require_command "$command_name"
++done
++[ -d "$W" ] || missing+=("directory:$W")
++[ -d "$W/runtimes" ] || missing+=("directory:$W/runtimes")
++[ -d "$A" ] || missing+=("directory:$A")
++[ -d "$O/tests" ] || missing+=("directory:$O/tests")
++[ -w "$O/tests" ] || missing+=("writable:$O/tests")
++[ -r "$O/tests/agent-remotion-0012.env" ] || missing+=("template:$O/tests/agent-remotion-0012.env")
++[ -w "$O/tests/suites.conf" ] || missing+=("writable:$O/tests/suites.conf")
++[ -n "$NODE_BIN" ] || missing+=("exact-toolchain:Node-$NODE_VERSION/npm-$NPM_VERSION")
++[ -x "${NODE_BIN:-/nonexistent}/node" ] || missing+=("executable:${NODE_BIN:-unset}/node")
++[ -x "${NODE_BIN:-/nonexistent}/npm" ] || missing+=("executable:${NODE_BIN:-unset}/npm")
++
++NODE_ACTUAL=
++NPM_ACTUAL=
++if [ -x "${NODE_BIN:-/nonexistent}/node" ]; then
++  NODE_ACTUAL=$("$NODE_BIN/node" --version 2>/dev/null || true)
++fi
++if [ -x "${NODE_BIN:-/nonexistent}/npm" ]; then
++  NPM_ACTUAL=$(PATH="$NODE_BIN:$PATH" "$NODE_BIN/npm" --version 2>/dev/null || true)
++fi
++[ "$NODE_ACTUAL" = "v$NODE_VERSION" ] || missing+=("node-version:expected=v$NODE_VERSION actual=${NODE_ACTUAL:-unavailable}")
++[ "$NPM_ACTUAL" = "$NPM_VERSION" ] || missing+=("npm-version:expected=$NPM_VERSION actual=${NPM_ACTUAL:-unavailable}")
++
++if ! git -C "$A" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
++  missing+=("agent-checkout:$A")
++fi
++if ! git -C "$A" cat-file -e "$S^{commit}" >/dev/null 2>&1; then
++  missing+=("agent-commit:$S")
++fi
++if ! git -C "$A" cat-file -e "$S:remotion/package-lock.json" >/dev/null 2>&1; then
++  missing+=("agent-lock:$S:remotion/package-lock.json")
++fi
++if ! git -C "$A" cat-file -e "$S:remotion/package.json" >/dev/null 2>&1; then
++  missing+=("agent-package:$S:remotion/package.json")
++fi
++if ! df -P -B1 "$W" >/dev/null 2>&1; then
++  missing+=("disk:$W")
++fi
++DISK_AVAILABLE_BYTES=$(df -P -B1 "$W" 2>/dev/null | awk 'NR == 2 { print $4 }')
++
++LOCK_SHA=
++if git -C "$A" cat-file -e "$S:remotion/package-lock.json" >/dev/null 2>&1; then
++  LOCK_SHA=$(git -C "$A" show "$S:remotion/package-lock.json" | sha256sum | cut -d' ' -f1)
++  if [ -n "$L" ] && [ "$LOCK_SHA" != "$L" ]; then
++    missing+=("lock-sha256:expected=$L actual=$LOCK_SHA")
++  fi
++fi
++
++if [ "${#missing[@]}" -ne 0 ]; then
++  printf '%s runtime PREFLIGHT FAILED name=%s agent=%s expected_node=v%s expected_npm=%s\n' \
++    "$(date -u +%FT%TZ)" "$N" "$S" "$NODE_VERSION" "$NPM_VERSION" >&2
++  printf 'inventory=node:%s npm:%s lock_sha256:%s free_bytes:%s\n' \
++    "${NODE_ACTUAL:-unavailable}" "${NPM_ACTUAL:-unavailable}" \
++    "${LOCK_SHA:-unavailable}" "${DISK_AVAILABLE_BYTES:-unavailable}" >&2
++  printf 'missing_prerequisite=%s\n' "${missing[@]}" >&2
++  exit 2
++fi
++
++RUN_ID=$(date -u +%Y%m%dT%H%M%SZ)-$$
++T=$D.partial.$RUN_ID
++mkdir -p "$T"
++
++if ! git -C "$A" archive "$S" remotion | tar -x -C "$T" --strip-components=1; then
++  printf 'status=failed\nstage=archive\nagent_sha=%s\nlock_sha256=%s\npartial=%s\n' \
++    "$S" "$LOCK_SHA" "$T" > "$T/.provision-failure" 2>/dev/null || true
++  echo "archive failed (partial retained: $T)" >&2
++  exit 1
++fi
++if ! ( cd "$T" && PATH="$NODE_BIN:$PATH" "$NODE_BIN/npm" ci --no-audit --no-fund --loglevel=error ); then
++  printf 'status=failed\nstage=npm-ci\nagent_sha=%s\nlock_sha256=%s\nnode=%s\nnpm=%s\npartial=%s\n' \
++    "$S" "$LOCK_SHA" "$NODE_ACTUAL" "$NPM_ACTUAL" "$T" > "$T/.provision-failure"
++  echo "npm ci failed (partial retained: $T)" >&2
++  exit 1
++fi
++
++printf '%s\n' "$S" > "$T/.astrid-agent-source-commit"
++printf '%s\n' "$LOCK_SHA" > "$T/.astrid-package-lock-sha256"
++printf '%s\n' "$NODE_ACTUAL" > "$T/.astrid-node-version"
++printf '%s\n' "$NPM_ACTUAL" > "$T/.astrid-npm-version"
++{
++  printf 'remotion=%s\n' "$(cd "$T" && PATH="$NODE_BIN:$PATH" "$NODE_BIN/node" -e "console.log(require('./node_modules/remotion/package.json').version)")"
++  printf 'timeline_composition=%s\n' "$(cd "$T" && PATH="$NODE_BIN:$PATH" "$NODE_BIN/node" -e "console.log(require('./node_modules/@banodoco/timeline-composition/package.json').version)")"
++  printf 'package_lock_sha256=%s\n' "$LOCK_SHA"
++} > "$T/.astrid-installed-module-origins"
++find "$T" \( -path '*/node_modules/.cache' -o -path '*/node_modules/.vite*' \) -prune -o -type f -exec chmod a-w {} +
++
++if [ -e "$D" ] || [ -L "$D" ]; then
++  printf 'status=failed\nstage=immutable-publish-race\nagent_sha=%s\nlock_sha256=%s\npartial=%s\n' \
++    "$S" "$LOCK_SHA" "$T" > "$T/.provision-failure"
++  echo "REFUSED: destination appeared during build; partial retained: $T" >&2
++  exit 1
++fi
++mv -T "$T" "$D"
++
++sed "s#agent-remotion-0012#$N#g" "$O/tests/agent-remotion-0012.env" > "$O/tests/$N.env"
++grep -q "^agent $N-nodes " "$O/tests/suites.conf" || grep '^agent remotion-0012-nodes ' "$O/tests/suites.conf" | sed "s#remotion-0012-nodes#$N-nodes#; s#agent-remotion-0012#$N#g" >> "$O/tests/suites.conf"
++echo "created $D from agent ${S:0:12} (lock $LOCK_SHA, node $NODE_ACTUAL/npm $NPM_ACTUAL), read-only; env tests/$N.env; suite '$N-nodes'; remotion $(PATH="$NODE_BIN:$PATH" "$NODE_BIN/node" -e "console.log(require('$D/node_modules/remotion/package.json').version)" 2>/dev/null)"
