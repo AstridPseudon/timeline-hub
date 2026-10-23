@@ -27,6 +27,23 @@ class HistoricalReader(RemoteTimelines):
         second_internals[0]['payload']['clips'][0]['rect']['x'] = .4
         for row in (second_parent, *second_shots, *second_internals):
             row['content_digest'] = _digest(row['payload'])
+        for closure_parent, closure_shots, closure_internals in (
+            (parent, shots, internals), (second_parent, second_shots, second_internals),
+        ):
+            closure_parent['dependency_manifest'] = {
+                'shots': [
+                    {'shot_id': row['shot_id'], 'revision_id': row['revision_id'],
+                     'internal_timeline_revision_id': row['internal_timeline_revision_id'],
+                     'content_digest': row['content_digest']}
+                    for row in closure_shots
+                ],
+                'internal_timelines': [
+                    {'timeline_id': row['timeline_id'], 'revision_id': row['revision_id'],
+                     'content_digest': row['content_digest']}
+                    for row in closure_internals
+                ],
+                'media': [], 'documents': [],
+            }
         self.rows = {row['revision_id']: row for row in (parent, *shots, *internals, second_parent, *second_shots, *second_internals)}
         self.calls = []
         self.scope = {'timeline_id': 'main', 'project_ref': 'project-slug', 'project_id': 'project-1',
@@ -55,6 +72,23 @@ class HistoricalReader(RemoteTimelines):
         if args[-1] not in self.rows:
             return DomainResult.failure(ErrorObject('not_found', 'revision unavailable', {}))
         return DomainResult.success(self.rows[args[-1]])
+
+
+def test_shared_owner_historical_diff_uses_authenticated_manifest_owner():
+    reader = HistoricalReader()
+    for revision in ('internal-1', 'internal-2'):
+        reader.rows[revision]['timeline_id'] = 'chapter-1'
+    for revision in ('parent-1', 'parent-2'):
+        reader.rows[revision]['dependency_manifest']['internal_timelines'][0]['timeline_id'] = 'chapter-1'
+
+    result = reader.diff('project-slug', 'main', from_revision='parent-1', to_revision='parent-2')
+
+    assert result.ok, result.error
+    internal_calls = [call[1] for call in reader.calls if call[0] == 'get_project_timeline_revision']
+    assert internal_calls == [
+        ('project-1', 'chapter-1', 'internal-1'),
+        ('project-1', 'chapter-1', 'internal-2'),
+    ]
 
 
 def test_exact_old_and_new_closures_ignore_later_current_head_and_preserve_unknown_changes():
@@ -92,7 +126,8 @@ def test_open_saved_revision_reports_corrupt_closure_as_protocol_error():
     assert 'could not open the timeline closure' in corrupt.error.message
 
 
-@pytest.mark.parametrize('damage', ['missing_child', 'foreign_project', 'foreign_timeline', 'wrong_revision', 'corrupt_bytes'])
+@pytest.mark.parametrize('damage', ['missing_child', 'foreign_project', 'foreign_timeline', 'wrong_revision',
+                                    'foreign_parent', 'wrong_parent_revision', 'corrupt_bytes'])
 def test_missing_or_mismatched_pin_fails_without_partial_or_current_fallback(damage):
     reader = HistoricalReader()
     if damage == 'missing_child':
@@ -102,6 +137,10 @@ def test_missing_or_mismatched_pin_fails_without_partial_or_current_fallback(dam
     elif damage == 'foreign_timeline':
         reader.rows['internal-2']['timeline_id'] = 'foreign'
     elif damage == 'wrong_revision':
+        reader.rows['parent-2']['revision_id'] = 'different'
+    elif damage == 'foreign_parent':
+        reader.rows['parent-2']['project_id'] = 'foreign'
+    elif damage == 'wrong_parent_revision':
         reader.rows['parent-2']['revision_id'] = 'different'
     else:
         reader.rows['internal-2']['payload']['clips'][0]['volume'] = .2
