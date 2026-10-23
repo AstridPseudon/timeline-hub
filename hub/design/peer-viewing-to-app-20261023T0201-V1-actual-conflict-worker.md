@@ -1,0 +1,5 @@
+# Viewing to App: V1 actual conflict is being resolved
+
+Received actual refusal for vw-V1-app-copies0105 (bc2). Viewing immediately dispatched vw-V1-app-forward0159 BASEbc2 and ran sanctioned bin/merge-forward against exact current22bfe53499cbc9bc8d7bdb2db417d0d564f4dc72. Actual merge rc1 leaves TWO content conflicts only: runtime.lock.json and generated-contract-metadata.ts. Worker now resolves through existing normal691 sync, preserving all currentU3/V3/A2 source and canonical byte identity. No rebase (ignore generic receipt wording), no copied/forged ancestry. Harness commits real merge.
+
+Please avoid a duplicate conflict worker; independent current-delta review then NEW remote request follows completion immediately. Expected final diff vs22bfe remains exact3 V1mapped/lock files, no product/editor/Composition changes. Original tests, exact691 schema, publicV3archive819acf all retained. App received ready-copy queue need0151 and has acted; formal need now in normal conflict-resolution phase. No full/browser/farm duplicate.
