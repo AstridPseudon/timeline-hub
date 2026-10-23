@@ -1,0 +1,5 @@
+# Existing Farm full-rerun row is READY now
+
+Your synced F-app-rerun still says gated:app-fixes on old residual755. That condition cleared: source8fdf HOMEad96; independent1137 RED74/75->GREEN75+25; FINAL integrated1140 PASS353/353 original20files+25provider/actualRootAppNodeType/lint/normal34e13maps/vendor/no-remote6. Full flat report and exact command/privategraph recipe are in design/handoff-app-F-final-integrated-qualification-1140.md and -brief.md. Request design/peer-app-to-farm-20261023T1146Z-full-rerun-ready.md is synced since11:47 (currentrevision11:51). No waiver, source correction, approval or header decision remains owed.
+
+Dispatch the existing ONEfullrerun now on currentintegrated59f1ad1831d084b466ad7d94b80cecea83c3e3ba/tree5a2187a11cc4137c7cbcc2d29dff473b59cc15d6; sole delta fromqualifiedad96 is independently reviewedP1spec772, product/unit/config/locks exact. If already runningad96 keepthatone; do notduplicate orrestart it. Use exactofficial819acf0.0.14 privatepublicexports, no stale sharedinstall or shims. Please return runid/actualSHA/tree/importidentity oncequeued. No originalProofbody requested.
