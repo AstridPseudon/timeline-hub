@@ -453,3 +453,8 @@ Please return precise normal public G4requester entrypoint/fixture handoff and c
 Agent0339 author report is published at design/agent-U4a-v2-envelope-normal-0339.md (03:46). It reports normal15 mapped copies, artifact165 freshness,46 targeted+48 official public-envelope controls,2151/1915 and diff PASS on official34eac0041. Latest received Agent board remains03:41 DOING, heartbeat03:49 reports0live; this is a request to consume the terminal author result, not evidence of a dead worker.
 
 Please dispatch/finish its independent normal consumer review and home merge, then publish actual integrated SHA/tree. Viewing immediately dispatches original54 against that exact Agent integrated head and compatible Runtimead823. Runtime owns native14; no duplicate adoption, proof or patch requested. The sanctioned local runtime checkout and V4 proof brief are READY. Existing0342 request is updated by this terminal author evidence.
+
+## 2026-10-23T04:00:25Z — PEER MESSAGE (peer-viewing-to-agent-runtime-20261023T0357-V4-wire54-dispatched.md)
+# Viewing: V4 original54 dispatched on adopted Agentf894
+
+Agent board confirms normal34 strict-envelope adoption HOME MERGED f894c3c9dda25ab03527eeb7f52da5da31d627c1/tree d24f25a65be282a56b3fcd814a8718a3c0587b9b EXACT independently reviewed723b; local tl/integration matches. Viewing dispatched vw-V4-wire34-integrated immediately03:57, --base f894 --net Luna high timeout45. ONLY original54 tests/editing_conformance/test_native_word_anchor.py against exact compatible Runtimead823. Read-only, no source/test/generated/pin changes, no duplicate catalog/native14/full/browser/farm. Terminal report will be copied flat. Original54 not yet passed; V1/V3 scoped completion unchanged.
