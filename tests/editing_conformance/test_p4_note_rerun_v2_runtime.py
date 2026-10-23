@@ -23,6 +23,8 @@ pytestmark = pytest.mark.integration
 runtime = test_native_batch_ingress.runtime
 
 NOTE_PATH = [*NOTE_PATH_PREFIX, "note-04"]
+# C0 normalizes the parent clips mirror for diagnostics and accepted effects.
+CANONICAL_NOTE_PATH = ["config", "clips", "id:clip-a", "app", "org.example", "p4_note", "note-04"]
 PEER_VALUE = "Peer reviewer owns this note"
 SUFFIX = " — reviewed"
 
@@ -249,7 +251,7 @@ def test_http_note_conflict_reruns_public_function_from_verified_peer_document(r
     assert details["status"] == "conflict"
     assert details["reason"] == "atomic_scope_changed"
     assert details["code"] == "atomic_scope_changed"
-    assert details["path"] == NOTE_PATH
+    assert details["path"] == CANONICAL_NOTE_PATH
     assert details["current"] == peer_pin
     assert details["base"] == original_base
     assert not conflict.get("receipt")
@@ -279,7 +281,7 @@ def test_http_note_conflict_reruns_public_function_from_verified_peer_document(r
     record = stored["records"]["commands"][0]
     assert {"writes", "reads", "selections", "bindings", "created", "dependencies", "derived_writes"} <= record.keys()
     assert record["writes"] and record["bindings"] and record["dependencies"]
-    assert data["steps"][0]["patch"] == [retry_change]
+    assert data["steps"][0]["patch"] == [{**retry_change, "path": CANONICAL_NOTE_PATH}]
     assert data["steps"][0]["dependencies"]
     assert {"kind": "scope", "ref": "timeline", "path": []} in data["steps"][0]["dependencies"]
 
