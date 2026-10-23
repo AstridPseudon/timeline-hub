@@ -1,0 +1,20 @@
+test_absent_report_leaves_foreign_same_name_bytes_untouched (__main__.ProjectionTests.test_absent_report_leaves_foreign_same_name_bytes_untouched) ... ok
+test_creation_report_crash_rolls_back_exact_bytes (__main__.ProjectionTests.test_creation_report_crash_rolls_back_exact_bytes) ... ok
+test_custom_existing_row_leases_all_managed_dependencies_real_flock (__main__.ProjectionTests.test_custom_existing_row_leases_all_managed_dependencies_real_flock) ... ok
+test_empty_absent_report_preserves_old_metadata (__main__.ProjectionTests.test_empty_absent_report_preserves_old_metadata) ... ok
+test_eviction_removes_all_only_owned_report_and_held_survives (__main__.ProjectionTests.test_eviction_removes_all_only_owned_report_and_held_survives) ... ok
+test_eviction_report_crash_recovers_forward (__main__.ProjectionTests.test_eviction_report_crash_recovers_forward) ... ok
+test_exact_report_callback_reuse_and_controls (__main__.ProjectionTests.test_exact_report_callback_reuse_and_controls) ... ok
+test_foreign_fixed_path_and_directory_symlink (__main__.ProjectionTests.test_foreign_fixed_path_and_directory_symlink) ... ok
+test_frozen_baseline_custom_row_old_red (__main__.ProjectionTests.test_frozen_baseline_custom_row_old_red) ... ok
+test_missing_tampered_managed_row_never_falls_through (__main__.ProjectionTests.test_missing_tampered_managed_row_never_falls_through) ... ok
+test_pending_report_hash_mutation_refuses_without_writes (__main__.ProjectionTests.test_pending_report_hash_mutation_refuses_without_writes) ... ok
+test_real_process_crash_report_rollback (__main__.ProjectionTests.test_real_process_crash_report_rollback) ... ok
+test_report_symlink_hardlink_directory_and_oversize_refuse (__main__.ProjectionTests.test_report_symlink_hardlink_directory_and_oversize_refuse) ... ok
+test_tamper_refuses_before_any_changes (__main__.ProjectionTests.test_tamper_refuses_before_any_changes) ... ok
+test_type_size_source_claim_and_path_refused (__main__.ProjectionTests.test_type_size_source_claim_and_path_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 1.141s
+
+OK

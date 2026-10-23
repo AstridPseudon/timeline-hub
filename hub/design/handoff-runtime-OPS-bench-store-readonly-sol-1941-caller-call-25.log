@@ -1,0 +1,42 @@
+2026-10-23T19:51:23Z child-venv source agent=6666666666666666666666666666666666666666 runtime=000000000000000000000000000000000000000b requirements=requirements/proof.lock lock_sha256=5e457f5a2181499514106befd3b9fab8f9c2566b53a9e83e65f836b0c5fe81ca
+2026-10-23T19:51:23Z child-venv stage=venv start budget=600s
+2026-10-23T19:51:23Z child-venv stage=venv complete
+2026-10-23T19:51:23Z child-venv stage=bootstrap-pip start budget=600s
+2026-10-23T19:51:24Z child-venv stage=bootstrap-pip complete
+2026-10-23T19:51:24Z child-venv stage=requirements start budget=600s
+2026-10-23T19:51:24Z child-venv stage=requirements complete
+2026-10-23T19:51:24Z child-venv stage=filter-requirements start budget=600s
+2026-10-23T19:51:24Z child-venv stage=filter-requirements complete
+2026-10-23T19:51:24Z child-venv stage=pinned-requirements start budget=600s
+2026-10-23T19:51:24Z child-venv stage=pinned-requirements complete
+2026-10-23T19:51:24Z child-venv stage=source-directories start budget=600s
+2026-10-23T19:51:24Z child-venv stage=source-directories complete
+2026-10-23T19:51:24Z child-venv stage=archive-agent start budget=600s
+2026-10-23T19:51:24Z child-venv stage=archive-agent complete
+2026-10-23T19:51:24Z child-venv stage=archive-runtime start budget=600s
+2026-10-23T19:51:24Z child-venv stage=archive-runtime complete
+2026-10-23T19:51:24Z child-venv stage=install-agent start budget=600s
+2026-10-23T19:51:24Z child-venv stage=install-agent complete
+2026-10-23T19:51:24Z child-venv stage=install-runtime start budget=600s
+2026-10-23T19:51:24Z child-venv stage=install-runtime complete
+2026-10-23T19:51:24Z child-venv stage=import-provenance start budget=600s
+2026-10-23T19:51:24Z child-venv stage=import-provenance complete
+2026-10-23T19:51:24Z child-venv stage=runtime-cli start budget=600s
+2026-10-23T19:51:24Z child-venv stage=runtime-cli complete
+2026-10-23T19:51:24Z child-venv stage=markers start budget=600s
+2026-10-23T19:51:24Z child-venv stage=markers complete
+2026-10-23T19:51:24Z child-venv stage=distribution-provenance start budget=600s
+2026-10-23T19:51:24Z child-venv stage=distribution-provenance complete
+2026-10-23T19:51:24Z child-venv stage=freeze start budget=120s
+2026-10-23T19:51:24Z child-venv stage=freeze complete
+2026-10-23T19:51:24Z child-venv stage=freeze-identity start budget=600s
+2026-10-23T19:51:24Z child-venv stage=freeze-identity complete
+2026-10-23T19:51:24Z child-venv stage=shebang-relocation start budget=600s
+2026-10-23T19:51:24Z child-venv stage=shebang-relocation complete
+2026-10-23T19:51:24Z child-venv stage=origin-relocation start budget=600s
+2026-10-23T19:51:24Z child-venv stage=origin-relocation complete
+2026-10-23T19:51:25Z child-venv stage=path-metadata-relocation start budget=600s
+2026-10-23T19:51:25Z child-venv stage=path-metadata-relocation complete
+2026-10-23T19:51:25Z child-venv stage=readonly-source start budget=600s
+2026-10-23T19:51:25Z child-venv stage=readonly-source complete
+REFUSED: bench store: forced lifecycle failure: creation:build

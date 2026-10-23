@@ -1,0 +1,32 @@
+bound_sha256_before={'/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-bench_store.py': '6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-test-run': 'f599c5ad7bf3cd61aeb01791d903ce6edfa87d5d04a39b3ebb630b3517b17ff4', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-test-run.original': '2d1240303c0c82bf908377eeff3323a899d8929454ac2c316b05bf076fc35d35', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-lease-seam.py': 'be6ab1ef7c7b41baf9d026bd8e2e857d900bc83245d9cd8372fb72a5b05da4cd', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-test-leases.py': 'c9f58ffe720dce88e7681a3e8be7bdd9b83fa0ebbf132d8b6a6b759d8115fe67'}
+test_cancel_release (__main__.LeaseTests.test_cancel_release) ... ok
+test_custom_absolute_managed_path_is_leased_until_exit (__main__.LeaseTests.test_custom_absolute_managed_path_is_leased_until_exit) ... ok
+test_custom_with_managed_entries_conservatively_holds_all (__main__.LeaseTests.test_custom_with_managed_entries_conservatively_holds_all) ... ok
+test_exact_python_entry_distinguishes_refusal_from_suite_125 (__main__.LeaseTests.test_exact_python_entry_distinguishes_refusal_from_suite_125) ... ok
+test_exact_shell_suite_branch_cancel_releases_timeout_group (__main__.LeaseTests.test_exact_shell_suite_branch_cancel_releases_timeout_group) ... ok
+test_exact_shell_suite_branch_uses_inherited_lease (__main__.LeaseTests.test_exact_shell_suite_branch_uses_inherited_lease) ... ok
+test_failure_release (__main__.LeaseTests.test_failure_release) ... ok
+test_fake_snapshot_setup_is_leased (__main__.LeaseTests.test_fake_snapshot_setup_is_leased) ... ok
+test_forged_registration_and_path_refuse (__main__.LeaseTests.test_forged_registration_and_path_refuse) ... ok
+test_legacy_without_managed_entries_has_no_lease (__main__.LeaseTests.test_legacy_without_managed_entries_has_no_lease) ... ok
+test_normal_and_descendant_lifetime (__main__.LeaseTests.test_normal_and_descendant_lifetime) ... ok
+test_original_row_whitespace_is_bound_without_changing_command (__main__.LeaseTests.test_original_row_whitespace_is_bound_without_changing_command) ... ok
+test_parent_death_releases_after_stopping_command (__main__.LeaseTests.test_parent_death_releases_after_stopping_command) ... ok
+test_path_name_refuses (__main__.LeaseTests.test_path_name_refuses) ... ok
+test_resolve_then_eviction_refuses_before_command (__main__.LeaseTests.test_resolve_then_eviction_refuses_before_command) ... ok
+test_row_removed_or_tampered_between_resolution_and_acquire_refuses (__main__.LeaseTests.test_row_removed_or_tampered_between_resolution_and_acquire_refuses) ... ok
+test_sigkill_inherited_fd_retains_until_command_finishes (__main__.LeaseTests.test_sigkill_inherited_fd_retains_until_command_finishes) ... ok
+test_simultaneous_acquire_and_evict (__main__.LeaseTests.test_simultaneous_acquire_and_evict) ... ok
+test_suite_exit_125_is_preserved (__main__.LeaseTests.test_suite_exit_125_is_preserved) ... ok
+test_symlink_store_root_refuses_before_command (__main__.LeaseTests.test_symlink_store_root_refuses_before_command) ... ok
+test_term_release (__main__.LeaseTests.test_term_release) ... ok
+test_timeout_release (__main__.LeaseTests.test_timeout_release) ... ok
+test_two_components_held (__main__.LeaseTests.test_two_components_held) ... ok
+test_cached_branch_and_original_guards (__main__.SourceTests.test_cached_branch_and_original_guards) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 8.955s
+
+OK
+bound_sha256_after={'/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-bench_store.py': '6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-test-run': 'f599c5ad7bf3cd61aeb01791d903ce6edfa87d5d04a39b3ebb630b3517b17ff4', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-test-run.original': '2d1240303c0c82bf908377eeff3323a899d8929454ac2c316b05bf076fc35d35', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-lease-seam.py': 'be6ab1ef7c7b41baf9d026bd8e2e857d900bc83245d9cd8372fb72a5b05da4cd', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-test-leases.py': 'c9f58ffe720dce88e7681a3e8be7bdd9b83fa0ebbf132d8b6a6b759d8115fe67'}
+core_sha256=6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8

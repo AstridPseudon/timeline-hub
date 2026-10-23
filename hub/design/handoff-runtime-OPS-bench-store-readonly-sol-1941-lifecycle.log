@@ -1,0 +1,16 @@
+test_child_symlink_race_refuses_without_chmod (__main__.LifecycleTests.test_child_symlink_race_refuses_without_chmod) ... ok
+test_crash_recovery_at_every_creation_boundary (__main__.LifecycleTests.test_crash_recovery_at_every_creation_boundary) ... ok
+test_failure_at_every_creation_boundary_rolls_back_owned_readonly (__main__.LifecycleTests.test_failure_at_every_creation_boundary_rolls_back_owned_readonly) ... ok
+test_final_seal_precedes_verify_projection_and_reuse_never_reseals (__main__.LifecycleTests.test_final_seal_precedes_verify_projection_and_reuse_never_reseals) ... ok
+test_final_verifier_refuses_incomplete_seal (__main__.LifecycleTests.test_final_verifier_refuses_incomplete_seal) ... ok
+test_foreign_marker_and_symlink_refused_without_chmod (__main__.LifecycleTests.test_foreign_marker_and_symlink_refused_without_chmod) ... ok
+test_readonly_eviction_keeps_latest_two_and_lease (__main__.LifecycleTests.test_readonly_eviction_keeps_latest_two_and_lease) ... ok
+test_recovery_requires_stable_exclusive_creation_lock (__main__.LifecycleTests.test_recovery_requires_stable_exclusive_creation_lock) ... ok
+test_replaced_lock_and_path_refused_before_restoring_write (__main__.LifecycleTests.test_replaced_lock_and_path_refused_before_restoring_write) ... ok
+test_root_race_after_validation_refuses_without_chmod (__main__.LifecycleTests.test_root_race_after_validation_refuses_without_chmod) ... ok
+test_seal_callback_failure_rolls_back_partially_sealed_tree (__main__.LifecycleTests.test_seal_callback_failure_rolls_back_partially_sealed_tree) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.530s
+
+OK

@@ -1,0 +1,23 @@
+test_all_owned_registration_rows_removed_only (__main__.CoreTests.test_all_owned_registration_rows_removed_only) ... ok
+test_before_build_crash_has_completed_reclamation (__main__.CoreTests.test_before_build_crash_has_completed_reclamation) ... ok
+test_concurrent_same_key_builds_once (__main__.CoreTests.test_concurrent_same_key_builds_once) ... ok
+test_exact_keys_and_immutable_registration (__main__.CoreTests.test_exact_keys_and_immutable_registration) ... ok
+test_failed_verify_rolls_back_new_publication (__main__.CoreTests.test_failed_verify_rolls_back_new_publication) ... ok
+test_forged_marker_and_suite_duplicate_refuse (__main__.CoreTests.test_forged_marker_and_suite_duplicate_refuse) ... ok
+test_latest_two_plus_all_leases_and_release_reap (__main__.CoreTests.test_latest_two_plus_all_leases_and_release_reap) ... ok
+test_projection_write_failure_rolls_back_new_only (__main__.CoreTests.test_projection_write_failure_rolls_back_new_only) ... ok
+test_real_crash_creation_index_rolls_back_projection (__main__.CoreTests.test_real_crash_creation_index_rolls_back_projection) ... ok
+test_real_crash_creation_publish (__main__.CoreTests.test_real_crash_creation_publish) ... ok
+test_real_crash_eviction_index (__main__.CoreTests.test_real_crash_eviction_index) ... ok
+test_real_crash_eviction_journal (__main__.CoreTests.test_real_crash_eviction_journal) ... ok
+test_real_crash_eviction_projection (__main__.CoreTests.test_real_crash_eviction_projection) ... ok
+test_real_crash_partial_deletion (__main__.CoreTests.test_real_crash_partial_deletion) ... ok
+test_reclamation_is_real_before_callback_and_failure_preserves_eviction (__main__.CoreTests.test_reclamation_is_real_before_callback_and_failure_preserves_eviction) ... ok
+test_reserve_refuses_before_callback (__main__.CoreTests.test_reserve_refuses_before_callback) ... ok
+test_tampered_projection_refuses_before_delete_or_build (__main__.CoreTests.test_tampered_projection_refuses_before_delete_or_build) ... ok
+test_unknown_paths_symlinks_crosskey_and_lock_replacement (__main__.CoreTests.test_unknown_paths_symlinks_crosskey_and_lock_replacement) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 1.799s
+
+OK

@@ -1,0 +1,42 @@
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-one rc=0
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-two rc=0
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-three rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-one rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-two rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-badsource rc=2
+PASS restored negative __init__.py
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-badrecord rc=2
+PASS restored negative RECORD
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-editable rc=2
+PASS restored negative direct_url.json
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-writable rc=2
+PASS restored negative __init__.py
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-marker rc=2
+PASS restored negative .astrid-runtime-source-commit
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-tamper rc=2
+PASS restored negative package.json
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-template rc=2
+PASS restored negative agent-remotion.env
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-toolchain rc=2
+PASS restored negative node
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-twoarg rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-threearg rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-backend rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-client rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-client rc=0
+PASS backend/client keys distinct; max2 keeps leased entry; eviction removes only owned projection
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-buildfail rc=2
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-regfail rc=2
+PASS build and registration failures preserve exact prior suites
+PASS caller integration normal/env-i; tree-only runtime reuse; child exact-key reuse
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-tree3 rc=0
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-tree3reuse rc=0
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-tree4 rc=0
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-tree4reuse rc=0
+PASS three runtime tree keys: original plus two new trees, each verified reuse
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-fault0 rc=2
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-readonly-sol-1941-test-adapters.py", line 345, in <module>
+    assert (W/'bench-store/index.json').read_bytes()==baseline
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

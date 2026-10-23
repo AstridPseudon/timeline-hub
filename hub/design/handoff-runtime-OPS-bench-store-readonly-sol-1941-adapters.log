@@ -1,0 +1,57 @@
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-one rc=0
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-two rc=0
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-three rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-one rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-two rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-badsource rc=2
+PASS restored negative __init__.py
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-badrecord rc=2
+PASS restored negative RECORD
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-editable rc=2
+PASS restored negative direct_url.json
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-writable rc=2
+PASS restored negative __init__.py
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-marker rc=2
+PASS restored negative .astrid-runtime-source-commit
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-tamper rc=2
+PASS restored negative package.json
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-template rc=2
+PASS restored negative agent-remotion.env
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-toolchain rc=2
+PASS restored negative node
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-twoarg rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-threearg rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-backend rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-client rc=0
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-client rc=0
+PASS backend/client keys distinct; max2 keeps leased entry; eviction removes only owned projection
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-buildfail rc=2
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-regfail rc=2
+PASS build and registration failures preserve exact prior suites
+PASS caller integration normal/env-i; tree-only runtime reuse; child exact-key reuse
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-tree3 rc=0
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-tree3reuse rc=0
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-tree4 rc=0
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-tree4reuse rc=0
+PASS three runtime tree keys: original plus two new trees, each verified reuse
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-fault0 rc=2
+PASS queued failure/recovery CHILDVENV creation:stage
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-fault1 rc=2
+PASS queued failure/recovery CHILDVENV creation:build
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-fault2 rc=2
+PASS queued failure/recovery CHILDVENV creation:publish
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-fault3 rc=77
+PASS queued failure/recovery CHILDVENV creation:seal
+PASS actual requester/dispatcher/maker CHILDVENV venv-agent-child-fault4 rc=2
+PASS queued failure/recovery CHILDVENV projection:suites.conf
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-fault0 rc=2
+PASS queued failure/recovery RUNTIME creation:stage
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-fault1 rc=2
+PASS queued failure/recovery RUNTIME creation:build
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-fault2 rc=2
+PASS queued failure/recovery RUNTIME creation:publish
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-fault3 rc=77
+PASS queued failure/recovery RUNTIME creation:seal
+PASS actual requester/dispatcher/maker RUNTIME agent-remotion-fault4 rc=2
+PASS queued failure/recovery RUNTIME projection:suites.conf
+PASS footprint allocated=1228800 real_installers=0 network=0 fixture=/tmp/w-76ff35a4d0/creator-fixture-2a6b2xen
