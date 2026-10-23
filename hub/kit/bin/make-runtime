@@ -1,5 +1,12 @@
 #!/bin/bash
 # make-runtime NAME AGENT_SHA [LOCK_SHA256] — host dispatcher only.
+# Queued exact-source form (also accepted by the unchanged request-runtime):
+# NAME AGENT_SHA LOCK_SHA256 AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA [TEMPLATE_SUITE]
+# Supply the entire group, full SHAs and absolute paths without shell metacharacters.
+# Positional identities cannot be combined with inherited identity/template inputs.
+# Templates: MAIN agent-remotion-0013-nodes (default), or remotion-env-nodes;
+# both require the existing approved row/env hashes below. Other hosts must supply
+# authentic template facts for review; a retired or fabricated row is refused.
 # Build in private staging; never modify an existing runtime or toolchain.
 set -Eeuo pipefail
 
@@ -13,6 +20,31 @@ NPM_VERSION=10.8.2
 NODE_SHA=7a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4
 SUMS_SHA=f8537bd20c8fdc951a20a4278e380e03e58e0a1689eaaa5c170b221435f3a22e
 N=${1:-}; S=${2:-}; L=${3:-}
+R=${RUNTIME_RUNTIME_CHECKOUT:-}
+RS=${RUNTIME_RUNTIME_SHA:-}
+SUITE=${RUNTIME_TEMPLATE_SUITE:-agent-remotion-0013-nodes}
+case $# in
+  2|3) ;; # Legacy callers still require inherited exact-source declarations.
+  6|7)
+    for key in RUNTIME_AGENT_CHECKOUT RUNTIME_RUNTIME_CHECKOUT RUNTIME_RUNTIME_SHA RUNTIME_TEMPLATE_SUITE; do
+      if [[ -v "$key" ]]; then
+        echo "REFUSED: ambiguous positional and inherited source: $key" >&2; exit 2
+      fi
+    done
+    [[ "$L" =~ ^[0-9a-f]{64}$ ]] || { echo 'REFUSED: positional sources require lock SHA-256' >&2; exit 2; }
+    A=$4; R=$5; RS=$6; SUITE=${7-agent-remotion-0013-nodes}
+    for path in "$A" "$R"; do
+      [[ "$path" = /* && "$path" != *[!a-zA-Z0-9_./-]* && "/$path/" != */../* && "/$path/" != */./* ]] || {
+        echo 'REFUSED: source checkout must be a safe absolute path' >&2; exit 2;
+      }
+    done
+    [[ "$RS" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: exact 40-character Runtime commit required' >&2; exit 2; }
+    [[ "$SUITE" = agent-remotion-0013-nodes || "$SUITE" = remotion-env-nodes ]] || {
+      echo 'REFUSED: unapproved registration template' >&2; exit 2;
+    }
+    ;;
+  *) echo 'REFUSED: expected NAME AGENT_SHA [LOCK_SHA256] or NAME AGENT_SHA LOCK_SHA256 AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA [TEMPLATE_SUITE]' >&2; exit 2 ;;
+esac
 [[ "$N" =~ ^agent-remotion-[0-9a-z][0-9a-z-]*$ ]] || { echo 'REFUSED: invalid immutable runtime name' >&2; exit 2; }
 [[ "$S" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: exact 40-character Agent commit required' >&2; exit 2; }
 [[ -z "$L" || "$L" =~ ^[0-9a-f]{64}$ ]] || { echo 'REFUSED: invalid lock SHA-256' >&2; exit 2; }
@@ -37,8 +69,8 @@ done
 # Runtime source identity cannot be inferred from a Remotion package lock.
 registration() {
   python3 - "$1" "$O" "$W" "$A" "$S" "$N" "${T:-}" "$NODE_BIN" \
-    "${RUNTIME_TEMPLATE_SUITE:-agent-remotion-0013-nodes}" \
-    "${RUNTIME_RUNTIME_CHECKOUT:-}" "${RUNTIME_RUNTIME_SHA:-}" <<'REGISTRATION'
+    "$SUITE" \
+    "$R" "$RS" <<'REGISTRATION'
 import hashlib, os, pathlib, re, shlex, subprocess, sys
 mode, orch, work, agent, sha, name, staging, node, suite, runtime, runtime_sha = sys.argv[1:]
 tests = pathlib.Path(orch) / "tests"
@@ -149,7 +181,7 @@ if [ "${#missing[@]}" -ne 0 ]; then
   exit 2
 fi
 # Bound the entire host job, including child processes. The inherited marker is
-# only for this self-exec; callers use the unchanged three-argument API.
+# only for this self-exec; preserve every positional source argument.
 if [ "${RUNTIME_BUILDER_BOUNDED:-}" != 1 ]; then
   exec timeout --signal=TERM --kill-after=10s 840s env RUNTIME_BUILDER_BOUNDED=1 bash "$0" "$@"
 fi
