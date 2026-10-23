@@ -32,6 +32,15 @@ function run(source, options = {}) {
   return runBoundedCommand(NODE, ['-e', source], { ...BASE, ...options });
 }
 
+function processState(pid) {
+  try {
+    return execFileSync('/bin/ps', ['-p', String(pid), '-o', 'stat='], { encoding: 'utf8' }).trim();
+  } catch (error) {
+    if (error?.status === 1) return '';
+    throw error;
+  }
+}
+
 // The broker and process-scope containment run on macOS (lockf, ps eww); see `macos-release-process-containment`.
 // The cases that need no broker still run everywhere.
 describe('runBoundedCommand', () => {
@@ -466,8 +475,10 @@ describe('runBoundedCommand', () => {
   it('fails closed and locally drains the scope when the shared broker is killed', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-broker-death-'));
     const ready = resolve(root, 'target-ready');
+    const childReady = resolve(root, 'orphan-child-ready');
     const marker = resolve(root, 'broker-death-orphan');
     const moduleUrl = new URL('./bounded-command.mjs', import.meta.url).href;
+    let orphanChildPid = null;
     const workerSource = `
       const { parentPort, workerData } = require('node:worker_threads');
       import(workerData.moduleUrl).then(({ runBoundedCommand }) => {
@@ -475,14 +486,29 @@ describe('runBoundedCommand', () => {
       }).catch((error) => parentPort.postMessage({ workerError: error.stack || error.message }));
     `;
     try {
+      const initial = run("process.stdout.write('broker-ready')", { allowFailure: true });
+      assert.equal(initial.failureType, 'success');
+      const ownedBrokerPattern = new RegExp(
+        `bounded-command-wrapper\\.mjs --broker\\s+\\S+\\s+\\S+\\s+${process.pid}\\s+`,
+      );
+      const ownedBrokers = execFileSync('/bin/ps', ['-axo', 'pid=,ppid=,command='], { encoding: 'utf8' })
+        .split('\n')
+        .map((line) => line.match(/^\s*(\d+)\s+(\d+)\s+(.*)$/))
+        .filter((match) => match
+          && ownedBrokerPattern.test(match[3])
+          && !match[3].startsWith('/usr/bin/lockf '));
+      assert.equal(ownedBrokers.length, 1, 'expected exactly one broker owned by this test process');
+      const brokerPid = Number(ownedBrokers[0][1]);
+
       const targetSource = [
         "const { spawn } = require('node:child_process');",
-        "const { writeFileSync } = require('node:fs');",
-        `writeFileSync(${JSON.stringify(ready)}, 'ready');`,
+        "const { existsSync, writeFileSync } = require('node:fs');",
         `const child = spawn(process.execPath, ['-e', ${JSON.stringify(
-          `setTimeout(() => require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'orphan'), 2_500);`,
+          `require('node:fs').writeFileSync(${JSON.stringify(childReady)}, String(process.pid)); setTimeout(() => require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'orphan'), 60_000);`,
         )}], { detached: true, stdio: 'ignore' });`,
-        'child.unref(); setInterval(() => {}, 1_000);',
+        'child.unref();',
+        `const readyTimer = setInterval(() => { if (existsSync(${JSON.stringify(childReady)})) { clearInterval(readyTimer); writeFileSync(${JSON.stringify(ready)}, 'ready'); } }, 20);`,
+        'setInterval(() => {}, 1_000);',
       ].join('');
       const resultPromise = new Promise((resolvePromise, reject) => {
         const worker = new Worker(workerSource, {
@@ -500,24 +526,26 @@ describe('runBoundedCommand', () => {
       while (!existsSync(ready) && Date.now() < deadline) {
         await new Promise((resolvePromise) => setTimeout(resolvePromise, 25));
       }
-      assert.equal(existsSync(ready), true, 'target did not become ready before broker kill');
-      const brokerRow = execFileSync('/bin/ps', ['-axo', 'pid=,ppid=,command='], { encoding: 'utf8' })
-        .split('\n')
-        .map((line) => ({ line, match: line.match(/^\s*(\d+)\s+(\d+)\s+(.*)$/) }))
-        .find(({ match }) => match
-          && match[3].includes('bounded-command-wrapper.mjs --broker')
-          && !match[3].startsWith('/usr/bin/lockf '));
-      assert.ok(brokerRow?.match, 'shared broker process was not found');
-      process.kill(Number(brokerRow.match[1]), 'SIGKILL');
+      assert.equal(existsSync(ready), true, 'target and detached child did not become ready before broker kill');
+      orphanChildPid = Number(readFileSync(childReady, 'utf8'));
+      assert.ok(Number.isSafeInteger(orphanChildPid) && orphanChildPid > 0, 'detached child did not report its PID');
+      process.kill(brokerPid, 'SIGKILL');
       const result = await resultPromise;
       assert.equal(result.failureType, 'cleanup-error');
       assert.match(result.cleanupError?.message ?? '', /broker failed; local fallback cleanup completed/);
       const recovered = run("process.stdout.write('recovered')", { timeoutMs: HANG_GUARD_MS, allowFailure: true });
       assert.equal(recovered.failureType, 'success');
       assert.equal(recovered.stdout, 'recovered');
-      await new Promise((resolvePromise) => setTimeout(resolvePromise, 2_800));
+      const childState = processState(orphanChildPid);
+      assert.equal(childState === '' || childState.startsWith('Z'), true, 'detached descendant remained live after local fallback');
       assert.equal(existsSync(marker), false);
     } finally {
+      if (orphanChildPid) {
+        const childState = processState(orphanChildPid);
+        if (childState && !childState.startsWith('Z')) {
+          try { process.kill(orphanChildPid, 'SIGKILL'); } catch { /* already exited */ }
+        }
+      }
       rmSync(root, { recursive: true, force: true });
     }
   });
