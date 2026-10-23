@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { TestInfo } from '@playwright/test';
 
@@ -25,7 +25,10 @@ export interface D21EnvironmentArtifact {
     start: Fact<string>;
     completion: Fact<string>;
     error: Fact<{ code: string; class: string; stage: string }>;
-    exit: Fact<number>;
+    exit: Fact<number | null>;
+    exitAt: Fact<string>;
+    launch: { module: Fact<string>; profile: Fact<string> };
+    process: { interpreterPath: Fact<string>; module: Fact<string> };
     host: Fact<string>;
     port: Fact<number>;
     imports: {
@@ -86,6 +89,9 @@ export function createD21Environment(): D21EnvironmentArtifact {
       completion: UNKNOWN('DirectHarness does not expose daemon completion timestamp'),
       error: UNKNOWN('no daemon error observed'),
       exit: UNKNOWN('daemon exit is not observed before teardown'),
+      exitAt: UNKNOWN('daemon exit is not observed before teardown'),
+      launch: { module: UNKNOWN('daemon launch module is not exposed'), profile: UNKNOWN('daemon launch profile is not exposed') },
+      process: { interpreterPath: UNKNOWN('actual daemon interpreter is not exposed'), module: UNKNOWN('actual daemon argv module is not exposed') },
       host: UNKNOWN('backend endpoint not yet observed'),
       port: UNKNOWN('backend endpoint not yet observed'),
       imports: { daemon: emptyImports(), launcher: emptyImports(), cli: emptyImports() },
@@ -163,6 +169,19 @@ export function observeD21Harness(artifact: D21EnvironmentArtifact, input: {
   agentCommit?: string;
   runtimeCommit?: string;
   backendInterpreterPath?: string;
+  lifecycle?: {
+    startedAt: string;
+    readyAt?: string;
+    exitedAt?: string;
+    exitCode?: number | null;
+    launchInterpreter: string;
+    launchModule: string;
+    launchProfile: string;
+    actualInterpreter?: string;
+    actualModule?: string;
+    doorOriginEquality?: boolean;
+    failure?: { code: string; class: string; stage: string };
+  };
 }): void {
   const backend = safeEndpoint(input.runtimeUrl);
   const door = safeEndpoint(input.doorBase);
@@ -177,9 +196,24 @@ export function observeD21Harness(artifact: D21EnvironmentArtifact, input: {
   }
   artifact.door.authPresence = observed(input.productCredentialPresent);
   if (input.backendInterpreterPath) artifact.backend.interpreter.publicPath = declared(input.backendInterpreterPath);
-  artifact.door.allowedOriginEquality = UNKNOWN('door allowed-origin metadata unavailable');
-  artifact.provider.sourceObserved = input.authoringProfile === 'astrid' ? declared('authoring-profile:astrid') : UNKNOWN('authoring profile unavailable');
+  artifact.door.allowedOriginEquality = input.lifecycle?.doorOriginEquality === undefined
+    ? UNKNOWN('door allowed-origin metadata unavailable') : observed(input.lifecycle.doorOriginEquality);
+  artifact.provider.sourceObserved = input.authoringProfile === 'astrid' ? declared('runtime-launch-profile:astrid') : UNKNOWN('authoring profile unavailable');
   artifact.provider.attached = UNKNOWN('DirectHarness has no provider attachment API');
+  if (input.lifecycle) {
+    artifact.backend.start = observed(input.lifecycle.startedAt);
+    artifact.backend.completion = input.lifecycle.readyAt ? observed(input.lifecycle.readyAt) : UNKNOWN('daemon did not reach health readiness');
+    artifact.backend.launch.module = declared(input.lifecycle.launchModule);
+    artifact.backend.launch.profile = declared(input.lifecycle.launchProfile);
+    artifact.backend.process.interpreterPath = input.lifecycle.actualInterpreter
+      ? observed(input.lifecycle.actualInterpreter) : UNKNOWN('actual daemon interpreter is not exposed');
+    artifact.backend.process.module = input.lifecycle.actualModule
+      ? observed(input.lifecycle.actualModule) : UNKNOWN('actual daemon argv module is not exposed');
+    artifact.backend.exit = input.lifecycle.exitCode === undefined
+      ? UNKNOWN('daemon exit is not observed before teardown') : observed(input.lifecycle.exitCode);
+    artifact.backend.exitAt = input.lifecycle.exitedAt ? observed(input.lifecycle.exitedAt) : UNKNOWN('daemon exit is not observed before teardown');
+    if (input.lifecycle.failure) artifact.backend.error = observed(input.lifecycle.failure);
+  }
   artifact.sourceCommits.launcher = shaList(input.agentCommit, input.runtimeCommit).length
     ? declared(shaList(input.agentCommit, input.runtimeCommit))
     : UNKNOWN('launcher source commits not declared');
@@ -191,15 +225,20 @@ export function observeD21Harness(artifact: D21EnvironmentArtifact, input: {
   artifact.tools.build.mode = distPresent === true ? declared('hosted-production-dist') : UNKNOWN('build mode not observed');
   const require = createRequire(import.meta.url);
   artifact.tools.node = { publicPath: observed(process.execPath), version: observed(process.version) };
-  try {
-    const npmPath = require.resolve('npm/package.json');
-    const npmPackage = require(npmPath) as { version?: unknown };
-    artifact.tools.npm = {
-      publicPath: observed(npmPath),
-      version: typeof npmPackage.version === 'string' ? observed(npmPackage.version) : UNKNOWN('npm package version unavailable'),
-    };
-  } catch {
-    artifact.tools.npm = { publicPath: UNKNOWN('npm public path unavailable'), version: UNKNOWN('npm package version unavailable') };
+  const npmExecPath = process.env.npm_execpath;
+  if (npmExecPath && existsSync(npmExecPath)) {
+    const npmPackagePath = path.resolve(npmExecPath, '..', '..', 'package.json');
+    try {
+      const npmPackage = JSON.parse(readFileSync(npmPackagePath, 'utf8')) as { version?: unknown };
+      artifact.tools.npm = {
+        publicPath: observed(npmExecPath),
+        version: typeof npmPackage.version === 'string' ? observed(npmPackage.version) : UNKNOWN('npm package version unavailable'),
+      };
+    } catch {
+      artifact.tools.npm = { publicPath: observed(npmExecPath), version: UNKNOWN('npm package version unavailable') };
+    }
+  } else {
+    artifact.tools.npm = { publicPath: UNKNOWN('actual npm process path unavailable'), version: UNKNOWN('actual npm package version unavailable') };
   }
   try {
     const playwrightPath = require.resolve('@playwright/test');
