@@ -1,0 +1,779 @@
+--- a/astrid/sdk/timeline/_commit_patch.py
++++ b/astrid/sdk/timeline/_commit_patch.py
+@@ -244,10 +244,12 @@
+         self.inputs, self.outputs, self.dependencies = {}, {}, {}
+         self.batch_dependencies = []
+         self.closures = {}
++        self.records = {}
+         self.boundaries = {}
+         self.compiler_effects = []
+         self.inverse_stages = {}
+         self.inverse_sources = {}
++        self.execution_boundaries = []
+ 
+     def step(self, ordinal):
+         return next(step for step in self.steps if ordinal in step['command_ordinals'])
+@@ -306,6 +308,31 @@
+                     'command_ordinal': ordinal, 'phase': 'input'}
+         self.boundaries[ordinal] = boundary
+         self.closures[ordinal] = Closure(copy.deepcopy(ctx.state.bundle))
++        def replay_binding(expected):
++            if isinstance(expected, str):
++                return expected
++            step_id, source, owner, owners = expected
++            source = replay_binding(source)
++            prior = next(step for step in self.steps if step['id'] == step_id)
++            if prior['command_ordinals'][-1] >= ordinal or step_id not in self.outputs:
++                raise CommandError('sequential binding precedes its source', kind='binding_changed')
++            before, after = Closure(self.inputs[step_id]), Closure(self.outputs[step_id])
++            record = {'bindings': []}
++            self.materializations(record, before, after,
++                self.boundaries[prior['command_ordinals'][-1]], prior,
++                [write for index in prior['command_ordinals'] for write in self.records[index]['writes']])
++            successors = {binding['successor'] for binding in record['bindings']
++                          if binding['physical_ref'] == source and binding['owner'] == owner
++                          and binding['owners'] == owners}
++            if len(successors) != 1:
++                raise CommandError('sequential image has no unique authenticated successor',
++                                   kind='binding_changed', ref=source)
++            return successors.pop()
++
++        # Staged IDs name the original execution. Resolve only through a completed
++        # step's actual source-bound materialization at this replay boundary.
++        ctx.patch_replay_bindings = {key: replay_binding(value) if key[0] == ordinal else value
++                                     for key, value in ctx.patch_replay_bindings.items()}
+         # Runtime authenticates the next input against the preceding command's observations.
+         if ordinal > step['command_ordinals'][0]:
+             previous = self.closures[ordinal - 1]
+@@ -377,6 +404,7 @@
+         if not self.active:
+             return
+         ordinal = ctx.record['ordinal']
++        self.records[ordinal] = ctx.record
+         step = self.step(ordinal)
+         if hasattr(ctx, 'inverse_stages'):
+             self.inverse_sources[ordinal] = ctx.inverse_sources
+@@ -400,6 +428,12 @@
+                 binding['boundary'] = {**self.boundaries[ordinal], **binding['boundary']}
+         if ordinal == step['command_ordinals'][-1]:
+             self.outputs[step['id']] = copy.deepcopy(ctx.state.bundle)
++        if self.v2 and len(self.calls) > 1:
++            self.execution_boundaries.append({
++                'boundary': copy.deepcopy(self.boundaries[ordinal]),
++                'input': copy.deepcopy(self.closures[ordinal].document),
++                'output': inverse_closure(ctx.state.bundle, self.inverse_sources.get(ordinal, [])).document,
++            })
+ 
+     def finish(self, plan):
+         if not self.active:
+@@ -543,6 +577,8 @@
+                         binding.update(key='commit.atomic', policy='fixed', dependencies=[], path=[])
+                         plan.records[start]['bindings'].append(binding)
+         plan.steps, plan.label, plan.merge_mode = self.steps, self.label, self.merge_mode
++        # Private execution custody stays outside the public prepared recorder.
++        setattr(plan, '_sequential_execution', self.execution_boundaries)
+         return plan
+ 
+     @staticmethod
+@@ -697,6 +733,8 @@
+     staged_predecessors = {binding['successor']: binding['physical_ref']
+                           for record in plan.records for binding in record['bindings']
+                           if binding.get('key') == 'commit.materialization'}
++    staged_bindings = [binding for record in plan.records for binding in record['bindings']
++                       if binding.get('key') == 'commit.materialization']
+     transitions, sites, missing = [], [], set()
+     for entry in entries:
+         before_bundle, after_bundle = load_boundary(entry)
+@@ -739,19 +777,30 @@
+             ref = staged_predecessors[ref]
+         return continuation(ref)
+ 
++    def replay_ref(ref, ordinal):
++        sources = [binding for binding in staged_bindings if binding['successor'] == ref
++                   and binding['boundary']['command_ordinal'] < ordinal]
++        if not sources:
++            return continuation(ref)
++        binding = max(sources, key=lambda source: source['boundary']['command_ordinal'])
++        source_ordinal = binding['boundary']['command_ordinal']
++        return (binding['step_id'], replay_ref(binding['physical_ref'], source_ordinal),
++                binding['owner'], binding['owners'])
++
+     guards = []
+     expected = {}
+     for record in plan.records:
+         # Generated patch bindings provide exact physical/path captures for patch operands.
+         for binding in record['bindings']:
+-            if binding.get('key') == 'commit.read' and 'physical_ref' in binding and binding['physical_ref'] not in staged_roots:
++            if (binding.get('key') == 'commit.read' and 'physical_ref' in binding
++                    and (binding['physical_ref'] not in staged_roots or binding['physical_ref'] in staged_predecessors)):
+                 if binding['ref'].startswith(('shot:', 'internal:')):
+                     try:
+                         landing.resolve(binding['ref'])
+                     except CommandError as exc:
+                         if exc.kind == 'ambiguous_ref':
+                             raise
+-                bound = continuation(binding['physical_ref'])
++                bound = replay_ref(binding['physical_ref'], record['ordinal'])
+                 expected[(record['ordinal'], 'read', binding['ref'], tuple(binding['path']),
+                           binding['boundary']['phase'])] = bound
+             if binding.get('key', '').startswith('doc.patch:'):
+@@ -763,8 +812,9 @@
+                         if exc.kind == 'ambiguous_ref':
+                             raise
+                 ref, path = continuation(binding['physical_ref']), binding['path']
+-                if binding['physical_ref'] not in staged_roots:
+-                    expected[(record['ordinal'], binding['boundary']['change_ordinal'])] = ref
++                if binding['physical_ref'] not in staged_roots or binding['physical_ref'] in staged_predecessors:
++                    expected[(record['ordinal'], binding['boundary']['change_ordinal'])] = replay_ref(
++                        binding['physical_ref'], record['ordinal'])
+                 guards.append({'kind': 'field', 'ref': ref,
+                                'path': [*path, 'id:' + change['id']] if change['op'].startswith('list.') else path})
+                 if change['op'].startswith('list.'):
+--- a/astrid/sdk/timeline/_commit_preview.py
++++ b/astrid/sdk/timeline/_commit_preview.py
+@@ -20,6 +20,64 @@
+         if value is not None:
+             records[key] = copy.deepcopy(value)
+     return records
++
++
++def capture_sequential_execution(port, context, original, plan, replay_bindings, prepared):
++    """Carry generated original/landing execution to the request-scoped port."""
++    from ._command_state import CommandError
++    from .commit import _digest
++
++    boundaries = getattr(original, '_sequential_execution', [])
++    if not boundaries:
++        return
++    base = {'revision_id': context['request']['base_revision_id'],
++            'publication_id': context['request']['base_publication_id']}
++    staged = [binding for record in original.records for binding in record['bindings']
++              if binding.get('key') == 'commit.materialization']
++    required = prepared['expected_head'] != base and any(
++        source['successor'] == binding.get('physical_ref')
++        and source['boundary']['command_ordinal'] < record['ordinal']
++        for source in staged
++        for record in original.records for binding in record['bindings']
++        if binding.get('key') == 'commit.read' or binding.get('key', '').startswith('doc.patch:'))
++    capture = getattr(port, 'capture_sequential_execution', None)
++    if not callable(capture):
++        if required:
++            raise CommandError('Runtime port cannot authenticate original sequential execution',
++                               kind='sequential_proof_unavailable')
++        return
++
++    def source(value):
++        if isinstance(value, str):
++            return value
++        step_id, previous, owner, owners = value
++        return {'step_id': step_id, 'source': source(previous), 'owner': owner,
++                'owners': copy.deepcopy(owners)}
++
++    bindings = []
++    for key, value in replay_bindings.items():
++        if len(key) == 2:
++            item = {'command_ordinal': key[0], 'kind': 'patch', 'change_ordinal': key[1]}
++        else:
++            ordinal, _, ref, path, phase = key
++            item = {'command_ordinal': ordinal, 'kind': 'read', 'ref': ref,
++                    'path': list(path), 'phase': phase}
++        bindings.append({**item, 'source': source(value)})
++
++    def execution(executed, head):
++        records = prepared_records(executed, undo_of=prepared['records']['undo_of'],
++                                   restored_from=prepared['records']['restored_from'])
++        records['undo_steps'] = copy.deepcopy(prepared['records']['undo_steps'])
++        return {'evaluated_head': copy.deepcopy(head),
++                'commands': copy.deepcopy(getattr(executed, '_sequential_execution', [])),
++                'records': records}
++
++    capture(copy.deepcopy({
++        'schema_version': 1, 'context': context,
++        'original': execution(original, base),
++        'landing': execution(plan, prepared['expected_head']),
++        'replay_bindings': bindings, 'prepared_digest': _digest(prepared),
++    }))
+ 
+ 
+ def complete_preview(result, prepared, request, evaluated_head):
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -1079,6 +1079,7 @@
+                                resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                                commit_request=request, evaluated_head=base)
+             for attempt in range(3):
++                bindings = {}
+                 if attempt:
+                     current = port.head()
+                 # An equal document after undo is still a later publication.
+@@ -1160,7 +1161,7 @@
+                 )
+                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
+                                                 inverse_records=inverse_records)
+-                from ._commit_preview import prepared_records
++                from ._commit_preview import capture_sequential_execution, prepared_records
+ 
+                 records = prepared_records(plan, undo_of=undo_of,
+                                            restored_from=restored_from)
+@@ -1176,6 +1177,7 @@
+                     "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
+                 }
+                 try:
++                    capture_sequential_execution(port, context, original, plan, bindings, prepared)
+                     if request.get("dry_run", False):
+                         # Runtime authenticates and retains this exact outcome on
+                         # the port.  Any response projection after this call
+--- /dev/null
++++ b/tests/editing_conformance/test_doc_patch_sequential_rebase.py
+@@ -0,0 +1,179 @@
++"""Physical sequential patch/read inputs survive authenticated head turnover."""
++from __future__ import annotations
++
++import copy
++import json
++import sqlite3
++
++import pytest
++
++from astrid.sdk.timeline._command_state import present
++from astrid.sdk.timeline._doc_patch import Closure
++from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.commit import bundle_from_document
++from tests.editing_conformance import test_commit_runtime_source_copy
++from tests.editing_conformance.test_doc_patch_v2 import change, patch, step
++from tests.sdk.test_timeline_restructure import flat_film
++
++saved_source = test_commit_runtime_source_copy.saved_source
++pytestmark = pytest.mark.integration
++
++
++@pytest.fixture(autouse=True)
++def origins(request):
++    from tests.helpers.runtime import use_runtime
++
++    use_runtime()
++    import runtime_protocol.timeline_commit_port as port
++
++    import astrid.sdk.timeline._commit_patch as provider
++
++    for phase in ('before', 'after'):
++        print(json.dumps({'case': request.node.nodeid, 'phase': phase,
++                          'provider': provider.__file__, 'runtime': port.__file__}))
++        if phase == 'before':
++            yield
++
++
++def dump(tmp_path):
++    with sqlite3.connect(tmp_path / 'saved-source' / 'realm.sqlite3') as connection:
++        return list(connection.iterdump())
++
++
++def setup(saved_source, *, declared=True):
++    client, project, document, _ = saved_source(flat_film())
++    original = document('t')
++    base = client.timelines.history(project, 't', limit=100).data['head']
++    bundle = bundle_from_document(original)
++    ref = Closure(bundle).resolve('internal:t')
++    first = patch(change(['clips', 'id:cross', 'at'], present(3.5), 4.0, ref=ref))
++    projected = execute(bundle, [first], commit_request={'reads': []})
++    staged = Closure(projected.bundle).resolve('internal:t')
++    second = patch(change(['clips', 'id:cross', 'at'], present(4.0), 4.1, ref=staged))
++    reads = []
++    if declared:
++        clips = Closure(projected.bundle).payload(staged)['clips']
++        reads = [
++            {'kind': 'field', 'ref': staged, 'path': ['clips', 'id:cross'],
++             'state': present(next(row for row in clips if row['id'] == 'cross'))},
++            {'kind': 'field', 'ref': staged, 'path': ['clips', 'id:vo2', 'app'],
++             'state': present(next(row for row in clips if row['id'] == 'vo2')['app'])},
++            {'kind': 'collection', 'ref': staged, 'path': ['clips'],
++             'members': sorted(row['id'] for row in clips),
++             'order': [row['id'] for row in clips]},
++        ]
++    request = {'api_version': 1, 'project_id': project, 'timeline_id': 't',
++               'base_revision_id': base['revision_id'], 'base_publication_id': base['publication_id'],
++               'commands': [first, second], 'label': 'Two nudges', 'merge': 'fields', 'reads': [],
++               'steps': [step('first', 0, first), step('second', 1, second, reads=reads)],
++               'dry_run': False, 'source': {'via': 'python'}, 'rationale': 'Sequential physical inputs',
++               'group_id': 'sequential'}
++    for item in request['steps']:
++        item.update(intent='Nudge cross', tags=['nudge'])
++    send = client._remote._transport._generated.commit_timeline
++    return client, project, document, send, request, ref
++
++
++def peer_request(client, project, call):
++    head = client.timelines.history(project, 't', limit=100).data['head']
++    return {'api_version': 1, 'project_id': project, 'timeline_id': 't',
++            'base_revision_id': head['revision_id'], 'base_publication_id': head['publication_id'],
++            'commands': [call], 'label': 'Peer', 'merge': 'fields', 'reads': []}
++
++
++@pytest.mark.parametrize('declared', [False, True])
++@pytest.mark.parametrize('moved', [False, True])
++def test_sequential_physical_inputs_land_at_actual_step_boundaries(saved_source, tmp_path, declared, moved):
++    client, project, document, send, request, ref = setup(saved_source, declared=declared)
++    if moved:
++        peer = patch(change(['clips', 'id:late', 'params', 'text'], present('hi'), 'peer', ref=ref))
++        send(project, 't', peer_request(client, project, peer), idempotency_key='peer')
++    landing = copy.deepcopy(document('t'))
++    head = client.timelines.history(project, 't', limit=100).data['head']
++    before = dump(tmp_path)
++    try:
++        preview = send(project, 't', {**request, 'dry_run': True}, idempotency_key='preview')
++    finally:
++        assert dump(tmp_path) == before
++        assert document('t') == landing
++    assert preview['receipt'] is None
++    assert preview['data']['would_status'] == ('merged' if moved else 'accepted')
++    assert dump(tmp_path) == before
++    result = send(project, 't', request, idempotency_key='sequential')
++    assert result['data']['status'] == ('merged' if moved else 'accepted')
++    assert result['receipt']['result'] == result['data']
++    assert document('t') == result['data']['canonical_document']
++    clips = document('t')['internal_timeline_revisions'][0]['payload']['clips']
++    assert next(row for row in clips if row['id'] == 'cross')['at'] == 4.1
++    assert next(row for row in clips if row['id'] == 'late')['params']['text'] == ('peer' if moved else 'hi')
++    history = client.timelines.history(project, 't', limit=100).data
++    entry = next(row for row in history['items'] if row['publication_id'] == result['receipt']['receipt_id'])
++    assert all(entry[key] == request[key] for key in ('source', 'rationale', 'group_id'))
++    assert [row['command_ordinals'] for row in entry['records']['steps']] == [[0], [1]]
++    for actual, submitted in zip(entry['records']['steps'], request['steps']):
++        assert all(actual[key] == submitted[key]
++                   for key in ('id', 'label', 'intent', 'tags', 'command_ordinals'))
++    first = execute(bundle_from_document(landing), [patch(change(
++        ['clips', 'id:cross', 'at'], present(3.5), 4.0,
++        ref='internal-revision:' + landing['internal_timeline_revisions'][0]['revision_id']))],
++        commit_request={'reads': []})
++    inputs = [Closure(bundle_from_document(landing)), Closure(first.bundle)]
++    for ordinal, record in enumerate(entry['records']['commands']):
++        captures = [binding for binding in record['bindings']
++                    if binding['key'].startswith('doc.patch:') or binding['key'] == 'commit.read']
++        assert captures
++        for binding in captures:
++            assert binding['boundary']['evaluated_head'] == head
++            assert binding['boundary']['command_ordinal'] == ordinal
++            assert binding['boundary']['step_id'] == request['steps'][ordinal]['id']
++            assert binding['content_digest'] == inputs[ordinal].images[binding['physical_ref']]['content_digest']
++    assert send(project, 't', request, idempotency_key='sequential') == result
++    assert client.timelines.history(project, 't', limit=100).data == history
++
++
++@pytest.mark.parametrize('damage', ['field', 'consulted', 'membership', 'source', 'continuation'])
++def test_sequential_refusal_has_no_writes(saved_source, tmp_path, monkeypatch, damage):
++    from runtime_protocol.errors import RuntimeErrorBase
++    from runtime_protocol.timeline_commit_port import RequestCommitPort
++
++    client, project, document, send, request, ref = setup(saved_source)
++    if damage == 'field':
++        peer = patch(change(['clips', 'id:cross', 'at'], present(3.5), 3.7, ref=ref))
++    elif damage == 'consulted':
++        peer = patch(change(['clips', 'id:vo2', 'app', 'astrid', 'text'],
++                            present('second line'), 'changed', ref=ref))
++    elif damage == 'membership':
++        clips = document('t')['internal_timeline_revisions'][0]['payload']['clips']
++        peer = patch(change(['clips'], present(clips[-1]), op='list.remove', ref=ref,
++                            id=clips[-1]['id'], order_before=[row['id'] for row in clips]))
++    elif damage == 'source':
++        request['commands'][1]['args']['changes'][0]['ref'] = 'internal-revision:unrelated'
++        request['steps'][1]['patch'] = copy.deepcopy(request['commands'][1]['args']['changes'])
++        peer = patch(change(['clips', 'id:late', 'params', 'text'], present('hi'), 'peer', ref=ref))
++    else:
++        peer = patch(change(['clips', 'id:late', 'params', 'text'], present('hi'), 'peer', ref=ref))
++    send(project, 't', peer_request(client, project, peer), idempotency_key='peer')
++    if damage == 'continuation':
++        history = RequestCommitPort.history
++
++        def forged_history(port, *args, **kwargs):
++            page = history(port, *args, **kwargs)
++            for entry in page['items']:
++                for record in (entry.get('records') or {}).get('commands', []):
++                    for binding in record['bindings']:
++                        if binding['key'] == 'commit.materialization':
++                            binding['edge_before'] = 'shot-revision:forged'
++            return page
++
++        monkeypatch.setattr(RequestCommitPort, 'history', forged_history)
++    before, landed = dump(tmp_path), copy.deepcopy(document('t'))
++    with pytest.raises(RuntimeErrorBase) as error:
++        send(project, 't', request, idempotency_key='refused')
++    print(json.dumps({'damage': damage, 'code': error.value.code, 'details': error.value.details}))
++    assert error.value.code == 'conflict'
++    assert error.value.details['reason'] == {
++        'field': 'value_conflict', 'consulted': 'value_conflict', 'membership': 'selection_changed',
++        'source': 'outside_closure', 'continuation': 'history_unavailable',
++    }[damage]
++    assert document('t') == landed
++    assert dump(tmp_path) == before
+--- /dev/null
++++ b/tests/editing_conformance/test_private_sequential_capture.py
+@@ -0,0 +1,238 @@
++"""Private original/landing transport through the actual Agent provider."""
++from __future__ import annotations
++
++import copy
++import json
++
++import pytest
++
++from astrid.sdk.timeline._command_state import present
++from astrid.sdk.timeline._doc_patch import Closure
++from astrid.sdk.timeline.commands import execute
++from astrid.sdk.timeline.commit import _digest, bundle_from_document, create_runtime_commit_service
++from tests.editing_conformance.test_doc_patch_v2 import change, patch, step, submit
++from tests.sdk.test_timeline_commit_provider import CommitRejected, DetachedPort, DetachedRealm
++from tests.sdk.test_timeline_commit_provider import runtime_abi as runtime_abi
++
++
++def sequential(realm):
++    base = copy.deepcopy(realm.head)
++    bundle = bundle_from_document(realm.documents[base['revision_id']])
++    first = patch(change(['unknown'], present([1, 2]), [3], ref='internal-revision:internal-1'))
++    projected = execute(bundle, [first], commit_request={'reads': []})
++    staged = Closure(projected.bundle).resolve('internal:chapter-1')
++    second = patch(change(['unknown'], present([3]), [4], ref=staged))
++    reads = [{'kind': 'field', 'ref': staged, 'path': ['unknown'], 'state': present([3])}]
++    context = realm.context([first, second], base=base)
++    context['request'].update(label='Sequential private proof', reads=[], merge='fields',
++                              steps=[step('first', 0, first), step('second', 1, second, reads=reads)],
++                              group_id='capture')
++    context['invocation']['body'] = copy.deepcopy(context['request'])
++    context['request_hash'] = _digest(context['invocation'])
++    return context, staged
++
++
++def peer(realm):
++    submit(realm, patch(change(['source_window', 'end'], present(9), 8,
++                              ref='internal-revision:internal-1')), reads=[])
++
++
++@pytest.mark.parametrize('dry_run', [False, True])
++def test_private_capture_keeps_full_original_and_landing_custody(monkeypatch, dry_run):
++    realm = DetachedRealm()
++    context, staged = sequential(realm)
++    context['request']['dry_run'] = dry_run
++    context['invocation']['body'] = copy.deepcopy(context['request'])
++    context['request_hash'] = _digest(context['invocation'])
++    peer(realm)
++    captured, candidates = [], []
++
++    def capture(port, value):
++        assert value['context'] == port.context
++        captured.append(json.loads(json.dumps(value, allow_nan=False)))
++        value['context']['request']['steps'].clear()  # Detached from execution/request custody.
++
++    method = DetachedPort.preview if dry_run else DetachedPort.accept
++
++    def finish(port, prepared):
++        assert captured[-1]['prepared_digest'] == _digest(prepared)
++        assert captured[-1]['landing']['records'] == prepared['records']
++        candidates.append(copy.deepcopy(prepared))
++        return method(port, prepared)
++
++    monkeypatch.setattr(DetachedPort, 'capture_sequential_execution', capture, raising=False)
++    monkeypatch.setattr(DetachedPort, 'preview' if dry_run else 'accept', finish)
++    original_context = copy.deepcopy(context)
++    create_runtime_commit_service().commit(context, DetachedPort(realm, context))
++    assert context == original_context
++    assert len(captured) == len(candidates) == 1
++    proof = captured[0]
++    assert set(proof) == {'schema_version', 'context', 'original', 'landing',
++                          'replay_bindings', 'prepared_digest'}
++    assert proof['schema_version'] == 1
++    original, landing = proof['original'], proof['landing']
++    assert original['evaluated_head'] != landing['evaluated_head']
++    assert original['commands'][0]['input'] == realm.documents[context['request']['base_revision_id']]
++    assert landing['commands'][0]['input'] == realm.documents[landing['evaluated_head']['revision_id']]
++    for execution in (original, landing):
++        before, after = execution['commands']
++        assert before['output'] == after['input']
++        assert execution['records']['label'] == context['request']['label']
++        assert execution['records']['undo_steps'] is None
++        for ordinal, command in enumerate(execution['commands']):
++            boundary = command['boundary']
++            assert boundary == {'base_revision_id': context['request']['base_revision_id'],
++                                'base_publication_id': context['request']['base_publication_id'],
++                                'evaluated_head': execution['evaluated_head'],
++                                'step_id': ('first', 'second')[ordinal],
++                                'command_ordinal': ordinal, 'phase': 'input'}
++            for document in (command['input'], command['output']):
++                bundle_from_document(document)  # Verify all immutable digests and managed edges.
++            bindings = execution['records']['commands'][ordinal]['bindings']
++            assert any(binding['key'].startswith('doc.patch:') for binding in bindings)
++            for binding in bindings:
++                if 'physical_ref' in binding and binding['boundary']['phase'] == 'input':
++                    images = Closure(bundle_from_document(command['input'])).images
++                    assert binding['content_digest'] == images[binding['physical_ref']]['content_digest']
++        assert execution['records']['steps'][1]['reads'] == context['request']['steps'][1]['reads']
++        assert execution['records']['steps'][1]['dependencies']
++        materialization = next(binding for binding in execution['records']['commands'][0]['bindings']
++                               if binding['key'] == 'commit.materialization'
++                               and binding['physical_ref'].startswith('internal-revision:'))
++        assert materialization['owners'] == ['occurrence:occ-a/shot', 'occurrence:occ-b/shot']
++        assert materialization['owner'] in materialization['owners']
++        assert materialization['edge_before'] and materialization['edge_after']
++    original_binding = next(binding for binding in original['records']['commands'][1]['bindings']
++                            if binding['key'].startswith('doc.patch:'))
++    landing_binding = next(binding for binding in landing['records']['commands'][1]['bindings']
++                           if binding['key'].startswith('doc.patch:'))
++    assert original_binding['ref'] == landing_binding['ref'] == staged
++    assert original_binding['physical_ref'] == staged != landing_binding['physical_ref']
++    assert original_binding['change']['before'] == landing_binding['change']['before'] == present([3])
++    assert original_binding['boundary']['change_ordinal'] == landing_binding['boundary']['change_ordinal'] == 0
++    mapped = next(item for item in proof['replay_bindings']
++                  if item['command_ordinal'] == 1 and item['kind'] == 'patch')
++    assert mapped['change_ordinal'] == 0
++    expected_source = Closure(bundle_from_document(landing['commands'][0]['input'])).resolve('internal:chapter-1')
++    assert mapped['source'] == {'step_id': 'first', 'source': expected_source,
++                                'owner': mapped['source']['owner'],
++                                'owners': ['occurrence:occ-a/shot', 'occurrence:occ-b/shot']}
++    assert mapped['source']['owner'] in mapped['source']['owners']
++    assert any(item['kind'] == 'read' and item['ref'] == staged for item in proof['replay_bindings'])
++
++
++@pytest.mark.parametrize('method', [None, False])
++def test_required_proof_fails_closed_on_unsupported_port(monkeypatch, method):
++    realm = DetachedRealm()
++    context, _ = sequential(realm)
++    peer(realm)
++    before = copy.deepcopy((realm.head, realm.documents, realm.entries, realm.accepted, realm.prepared))
++    monkeypatch.setattr(DetachedPort, 'capture_sequential_execution', method, raising=False)
++    with pytest.raises(CommitRejected) as error:
++        create_runtime_commit_service().commit(context, DetachedPort(realm, context))
++    assert error.value.failure['details']['reason'] == 'sequential_proof_unavailable'
++    assert (realm.head, realm.documents, realm.entries, realm.accepted, realm.prepared) == before
++
++
++@pytest.mark.parametrize('dry_run', [False, True])
++def test_private_port_refusal_cannot_fall_through_to_accept(monkeypatch, dry_run):
++    """Port verification is Runtime-owned; every refusal must stop the provider."""
++    realm = DetachedRealm()
++    context, _ = sequential(realm)
++    context['request']['dry_run'] = dry_run
++    context['invocation']['body'] = copy.deepcopy(context['request'])
++    context['request_hash'] = _digest(context['invocation'])
++    peer(realm)
++    before = copy.deepcopy((realm.head, realm.documents, realm.entries, realm.accepted, realm.prepared))
++
++    def refuse(port, capture):
++        assert capture['context'] == port.context
++        raise CommitRejected({'http_status': 422, 'code': 'invalid', 'message': 'rejected proof',
++                              'details': {'status': 'invalid', 'reason': 'invalid_records'}})
++
++    monkeypatch.setattr(DetachedPort, 'capture_sequential_execution', refuse, raising=False)
++    with pytest.raises(CommitRejected) as error:
++        create_runtime_commit_service().commit(context, DetachedPort(realm, context))
++    assert error.value.failure['message'] == 'rejected proof'
++    assert (realm.head, realm.documents, realm.entries, realm.accepted, realm.prepared) == before
++
++
++def test_unchanged_head_sequential_path_keeps_legacy_private_abi():
++    realm = DetachedRealm()
++    context, _ = sequential(realm)
++    accepted = create_runtime_commit_service().commit(context, DetachedPort(realm, context))
++    assert accepted['data']['status'] == 'accepted'
++    assert set(realm.prepared[0]) == {'expected_head', 'canonical_document', 'document_digest',
++                                    'records', 'id_map', 'semantic_events', 'provider_version',
++                                    'compiler_version'}
++
++
++def test_each_cas_retry_captures_its_own_landing_without_replacing_original(monkeypatch):
++    realm = DetachedRealm()
++    context, _ = sequential(realm)
++    captured = []
++    monkeypatch.setattr(DetachedPort, 'capture_sequential_execution',
++                        lambda port, capture: captured.append(copy.deepcopy(capture)), raising=False)
++    realm.before_accept = lambda: peer(realm)
++    create_runtime_commit_service().commit(context, DetachedPort(realm, context))
++    assert len(captured) == 2
++    assert captured[0]['context'] == captured[1]['context'] == context
++    assert captured[0]['original'] == captured[1]['original']
++    assert captured[0]['landing']['evaluated_head'] != captured[1]['landing']['evaluated_head']
++    assert captured[0]['prepared_digest'] != captured[1]['prepared_digest']
++    assert captured[0]['replay_bindings'] == []
++    assert captured[1]['replay_bindings']
++    assert captured[1]['prepared_digest'] == _digest(realm.prepared[-1])
++
++
++def test_recursive_sequential_lineage_keeps_source_steps_and_complete_owners(monkeypatch):
++    realm = DetachedRealm()
++    context, _ = sequential(realm)
++    request = context['request']
++    bundle = bundle_from_document(realm.documents[request['base_revision_id']])
++    source = execute(bundle, request['commands'], commit_request=request,
++                     evaluated_head=copy.deepcopy(realm.head))
++    staged = Closure(source.bundle).resolve('internal:chapter-1')
++    third = patch(change(['unknown'], present([4]), [5], ref=staged))
++    request['commands'].append(third)
++    request['steps'].append(step('third', 2, third))
++    context['invocation']['body'] = copy.deepcopy(request)
++    context['request_hash'] = _digest(context['invocation'])
++    peer(realm)
++    captured = []
++    monkeypatch.setattr(DetachedPort, 'capture_sequential_execution',
++                        lambda port, capture: captured.append(copy.deepcopy(capture)), raising=False)
++    create_runtime_commit_service().commit(context, DetachedPort(realm, context))
++    proof = captured[0]
++    mapping = next(item for item in proof['replay_bindings']
++                   if item['kind'] == 'patch' and item['command_ordinal'] == 2)
++    assert mapping['change_ordinal'] == 0
++    assert mapping['source']['step_id'] == 'second'
++    assert mapping['source']['source']['step_id'] == 'first'
++    first_input = proof['landing']['commands'][0]['input']
++    physical = Closure(bundle_from_document(first_input)).resolve('internal:chapter-1')
++    assert mapping['source']['source']['source'] == physical
++    for source in (mapping['source'], mapping['source']['source']):
++        assert source['owners'] == ['occurrence:occ-a/shot', 'occurrence:occ-b/shot']
++        assert source['owner'] in source['owners']
++    for execution in (proof['original'], proof['landing']):
++        assert len(execution['commands']) == 3
++        assert execution['commands'][1]['output'] == execution['commands'][2]['input']
++
++
++@pytest.mark.parametrize('field', ['original', 'replay_bindings'])
++def test_caller_cannot_supply_private_execution_authority(monkeypatch, field):
++    realm = DetachedRealm()
++    context, _ = sequential(realm)
++    context['request'][field] = {'forged': 'caller execution'}
++    context['invocation']['body'] = copy.deepcopy(context['request'])
++    context['request_hash'] = _digest(context['invocation'])
++    before = copy.deepcopy((realm.head, realm.documents, realm.entries, realm.accepted, realm.prepared))
++
++    def forbidden_capture(port, capture):
++        pytest.fail('caller execution claims must not reach private capture')
++
++    monkeypatch.setattr(DetachedPort, 'capture_sequential_execution', forbidden_capture, raising=False)
++    with pytest.raises(CommitRejected, match='unknown commit control fields'):
++        create_runtime_commit_service().commit(context, DetachedPort(realm, context))
++    assert (realm.head, realm.documents, realm.entries, realm.accepted, realm.prepared) == before
+--- /dev/null
++++ b/tests/editing_conformance/test_private_sequential_capture_runtime.py
+@@ -0,0 +1,128 @@
++"""Capture proof from the real provider/port; Runtime verification is separate."""
++from __future__ import annotations
++
++import copy
++import json
++import os
++from pathlib import Path
++
++import pytest
++
++from astrid.sdk.timeline import _commit_preview
++from astrid.sdk.timeline._command_state import present
++from astrid.sdk.timeline._doc_patch import Closure
++from astrid.sdk.timeline.commit import _digest, bundle_from_document
++from tests.editing_conformance import test_commit_runtime_source_copy
++from tests.editing_conformance.test_doc_patch_sequential_rebase import (
++    dump,
++    peer_request,
++    setup,
++)
++from tests.editing_conformance.test_doc_patch_v2 import change, patch
++
++pytestmark = pytest.mark.integration
++saved_source = test_commit_runtime_source_copy.saved_source
++
++
++@pytest.fixture(autouse=True)
++def origins(request):
++    from tests.helpers.runtime import use_runtime
++
++    use_runtime()
++    import runtime_protocol.timeline_commit_auth as auth
++    import runtime_protocol.timeline_commit_port as port
++
++    from astrid.sdk.timeline import _commit_patch, commands, commit
++
++    files = [module.__file__ for module in (_commit_patch, commands, commit, _commit_preview, port, auth)]
++    print(json.dumps({'phase': 'before', 'case': request.node.nodeid, 'origins': files}))
++    yield
++    print(json.dumps({'phase': 'after', 'case': request.node.nodeid, 'origins': files}))
++
++
++@pytest.mark.parametrize('declared', [False, True])
++@pytest.mark.parametrize('dry_run', [False, True])
++def test_real_provider_delivers_original_and_replay_before_acceptance(
++        saved_source, tmp_path, monkeypatch, declared, dry_run):
++    from runtime_protocol.errors import RuntimeErrorBase
++    from runtime_protocol.timeline_commit import CommitRejected
++    from runtime_protocol.timeline_commit_port import RequestCommitPort
++
++    client, project, document, send, request, ref = setup(saved_source, declared=declared)
++    original = copy.deepcopy(document('t'))
++    peer = patch(change(['clips', 'id:late', 'params', 'text'], present('hi'), 'peer', ref=ref))
++    send(project, 't', peer_request(client, project, peer), idempotency_key='peer')
++    landing = copy.deepcopy(document('t'))
++    history = copy.deepcopy(client.timelines.history(project, 't', limit=100).data)
++    request['dry_run'] = dry_run
++    packet = {'request': copy.deepcopy(request), 'source': original,
++              'head_document': landing, 'history': history}
++    deliver = _commit_preview.capture_sequential_execution
++
++    def provider_capture(port, context, source_plan, landing_plan, bindings, prepared):
++        packet['prepared'] = copy.deepcopy(prepared)
++        deliver(port, context, source_plan, landing_plan, bindings, prepared)
++
++    def receive(port, capture):
++        assert capture['context'] == port._provider_context()
++        packet['capture'] = copy.deepcopy(capture)
++        raise CommitRejected({'http_status': 422, 'code': 'invalid',
++                              'message': 'Stopped at private capture; no verifier installed',
++                              'details': {'status': 'invalid', 'reason': 'capture_complete'}})
++
++    monkeypatch.setattr(_commit_preview, 'capture_sequential_execution', provider_capture)
++    monkeypatch.setattr(RequestCommitPort, 'capture_sequential_execution', receive, raising=False)
++    before = dump(tmp_path)
++    with pytest.raises(RuntimeErrorBase) as error:
++        send(project, 't', request, idempotency_key='capture')
++    assert error.value.details['reason'] == 'capture_complete'
++    assert document('t') == landing
++    assert dump(tmp_path) == before
++    assert client.timelines.history(project, 't', limit=100).data == history
++    capture = packet['capture']
++    assert capture['prepared_digest'] == _digest(packet['prepared'])
++    assert capture['context']['request'] == request
++    assert capture['landing']['records'] == packet['prepared']['records']
++    for name, image in (('original', original), ('landing', landing)):
++        execution = capture[name]
++        first, second = execution['commands']
++        assert first['input'] == image
++        assert first['output'] == second['input']
++        assert second['boundary']['command_ordinal'] == 1
++        assert second['boundary']['step_id'] == 'second'
++        assert second['boundary']['evaluated_head'] == execution['evaluated_head']
++        assert execution['records']['steps'][1]['dependencies']
++        for item in execution['commands']:
++            bundle_from_document(item['input'])
++            bundle_from_document(item['output'])
++    assert capture['original']['evaluated_head'] != capture['landing']['evaluated_head']
++    submitted = request['commands'][1]['args']['changes'][0]['ref']
++    original_input = Closure(bundle_from_document(capture['original']['commands'][1]['input']))
++    landing_input = Closure(bundle_from_document(capture['landing']['commands'][1]['input']))
++    assert submitted in original_input.images and submitted not in landing_input.images
++    assert capture['replay_bindings']
++    if declared:
++        assert any(item['kind'] == 'read' and item['command_ordinal'] == 1
++                   and item['ref'] == submitted for item in capture['replay_bindings'])
++    if directory := os.environ.get('R1_EVIDENCE_DIR'):
++        content = json.dumps(packet, sort_keys=True, separators=(',', ':'), ensure_ascii=False,
++                             allow_nan=False)
++        target = Path(directory) / f'capture-{int(declared)}-{int(dry_run)}.json'
++        target.write_text(content + '\n', encoding='utf-8')
++
++
++def test_real_unsupported_port_refuses_required_proof_without_writes(saved_source, tmp_path, monkeypatch):
++    from runtime_protocol.errors import RuntimeErrorBase
++    from runtime_protocol.timeline_commit_port import RequestCommitPort
++
++    monkeypatch.setattr(RequestCommitPort, 'capture_sequential_execution', None, raising=False)
++    client, project, document, send, request, ref = setup(saved_source)
++    peer = patch(change(['clips', 'id:late', 'params', 'text'], present('hi'), 'peer', ref=ref))
++    send(project, 't', peer_request(client, project, peer), idempotency_key='peer')
++    landing = copy.deepcopy(document('t'))
++    before = dump(tmp_path)
++    with pytest.raises(RuntimeErrorBase) as error:
++        send(project, 't', request, idempotency_key='unsupported-proof')
++    assert error.value.details['reason'] == 'sequential_proof_unavailable'
++    assert document('t') == landing
++    assert dump(tmp_path) == before
