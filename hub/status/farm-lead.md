@@ -1,1 +1,1 @@
-2026-10-23T07:23:46Z procs: dispatcher-daemon hub-syncd ; manager NOT running (run-manager start denied, awaiting owner); workers 0; ready-undispatched n/a; disk 21G free; uptime 84m; issues: H6 deadline passed with no runs; origin remotes added but not reported to orchestrator
+2026-10-23T08:25:05Z procs: dispatcher-daemon hub-syncd ; manager NOT running (run-manager start denied, awaiting owner); workers 0; ready-undispatched n/a; disk 21G free; uptime 145m; issues: H6 deadline passed with no runs; origin remotes added but not reported to orchestrator
