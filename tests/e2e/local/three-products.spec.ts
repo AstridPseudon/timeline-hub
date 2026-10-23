@@ -1207,6 +1207,51 @@ async function ownerWithTwoMoves(page: Page, seed: ThreeProductsSeed) {
   return owner;
 }
 
+type MountedDocumentIntent = {
+  basis: unknown;
+  before: CanonicalDocument;
+  after: CanonicalDocument;
+  label: string;
+  step: { id: string; label: string; intent: string; tags: string[]; reads?: unknown[] };
+  changes: Array<Record<string, unknown>>;
+  merge?: 'fields' | 'atomic';
+  reads?: unknown[];
+};
+
+/** The mounted editor persists its original document intent before Runtime records authoritative effects. */
+function mountedDocumentIntentOf(payload: unknown): MountedDocumentIntent {
+  const intent = (payload as { documentIntent?: unknown }).documentIntent;
+  expect(intent).toMatchObject({
+    kind: 'document-patch-intent',
+    basis: expect.any(Object),
+    before: expect.any(Object),
+    after: expect.any(Object),
+    step: { id: expect.any(String), label: expect.any(String), intent: expect.any(String), tags: expect.any(Array) },
+    changes: expect.any(Array),
+  });
+  return intent as MountedDocumentIntent;
+}
+
+async function ownerWithTwoMountedDocuments(page: Page, seed: ThreeProductsSeed) {
+  await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => owner.intents.length === 2), CEILING).toBe(true);
+  const owner = (await commandOutboxes(page, seed.timelineId)).find((candidate) => candidate.intents.length === 2)!;
+  expect(owner.pending?.request).toBeTruthy();
+  expect(owner.intents[1].basis).toEqual({ after: owner.intents[0].id });
+  expect(owner.intents[1].readyBase, 'dependent B has never been sent').toBeUndefined();
+  const first = mountedDocumentIntentOf(owner.intents[0].payload);
+  const second = mountedDocumentIntentOf(owner.intents[1].payload);
+  expect(second.basis).toEqual({ after: owner.intents[0].id });
+  expect(second.before).toEqual(first.after);
+  expect(position(second.before, seed.appClipId)).toBe(5);
+  expect(position(second.after, seed.appClipId)).toBe(7);
+  expect(second.changes).toEqual([{
+    op: 'set', ref: 'parent', path: ['clips', `id:${seed.appClipId}`, 'at'],
+    before: { state: 'present', value: 5 }, value: 7,
+  }]);
+  expect(second.step).toMatchObject({ label: second.label, intent: 'Save local editor changes', tags: [] });
+  return owner;
+}
+
 async function openCommandTimeline(page: Page, harness: DirectHarness, seed: ThreeProductsSeed) {
   // A case selected alone must establish its own verified authoring baseline.
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
@@ -1274,6 +1319,34 @@ async function prepareAfterAckLossMoves(page: Page, harness: DirectHarness, seed
     expect(wire.attempts, 'B stays unsent behind unacknowledged A').toBe(1);
   });
   const owner = await ownerWithTwoMoves(page, seed);
+  expect(owner.scope).toEqual({ realmId: harness.realmId, actorId: a.data.publisher, projectId: harness.seed.projectId, timelineId: seed.timelineId });
+  expect(owner.pending!.request).toEqual({ method: 'POST', path: `${timelineBase(harness, seed)}/commit`,
+    body: wire.posts[0].body, key: wire.posts[0].key });
+  expect(wire.posts).toHaveLength(1);
+  return { wire, before, a, owner };
+}
+
+async function prepareAfterAckLossMountedDocuments(page: Page, harness: DirectHarness, seed: ThreeProductsSeed,
+  ackLostFirst?: (a: CommitAcceptedMutation, wire: CommandWire) => Promise<void>) {
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  const wire = await faultFirstCommit(page);
+  await openCommandTimeline(page, harness, seed);
+  const before = await history(harness, seed);
+  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 0, 5, THREE_PRODUCTS_REFERENCE_AT, () => {
+    expect(wire.attempts, 'pointer movement previews; the actual drop commits').toBe(0);
+  });
+  await expect.poll(() => wire.posts.length, CEILING).toBe(1);
+  const a = accepted(wire.posts[0]);
+  const bodyA = JSON.parse(wire.posts[0].body) as CommitRequest;
+  expect(bodyA).toMatchObject({ base_revision_id: before.head.revision_id, base_publication_id: before.head.publication_id,
+    commands: [{ op: 'doc.patch', select: null, args: { changes: expect.any(Array) } }] });
+  expect(position(a.data.canonical_document, seed.appClipId)).toBe(5);
+  expect((await history(harness, seed)).head.revision_id).toBe(pinOf(a).revision_id);
+  await ackLostFirst?.(a, wire);
+  await dragTimelineClip(page, seed.appClipId, seed.transitionClipId, 5, 7, THREE_PRODUCTS_REFERENCE_AT, async () => {
+    expect(wire.attempts, 'B stays unsent behind unacknowledged A').toBe(1);
+  });
+  const owner = await ownerWithTwoMountedDocuments(page, seed);
   expect(owner.scope).toEqual({ realmId: harness.realmId, actorId: a.data.publisher, projectId: harness.seed.projectId, timelineId: seed.timelineId });
   expect(owner.pending!.request).toEqual({ method: 'POST', path: `${timelineBase(harness, seed)}/commit`,
     body: wire.posts[0].body, key: wire.posts[0].key });
@@ -1459,7 +1532,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   const reset = await resetResponse;
   expect(reset.status(), await reset.text()).toBe(200);
   await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
-  const { wire, before, a, owner } = await prepareAfterAckLossMoves(page, harness, seed3, async (acceptedA, commandWire) => {
+  const { wire, before, a, owner } = await prepareAfterAckLossMountedDocuments(page, harness, seed3, async (acceptedA, commandWire) => {
     c = await astrid.commitCaptured(harness.seed.projectId, seed3.timelineId, pinOf(acceptedA),
       { kind: 'track', id: 'f2-gate5-independent-C' }, 'f2-gate5-independent-C');
     expect(c.data.publisher).not.toBe(acceptedA.data.publisher);
@@ -1518,9 +1591,16 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   expect(await expectV2History(harness, seed3, wire.posts[1], 'accepted')).toEqual(recordedA);
   const b = accepted(wire.posts[2]);
   const requestB = JSON.parse(wire.posts[2].body) as CommitRequest;
+  const mountedB = mountedDocumentIntentOf(owner.intents[1].payload);
   expect(wire.posts[2].key).not.toBe(wire.posts[0].key);
   expect(requestB).toMatchObject({ base_revision_id: pinOf(a).revision_id, base_publication_id: pinOf(a).publication_id });
-  expect(requestB.commands).toEqual(commandsOf(owner.intents[1].payload));
+  expect(requestB.commands).toEqual([{ schema_version: 1, op: 'doc.patch', version: '1', select: null,
+    args: { changes: mountedB.changes } }]);
+  expect(requestB.label).toBe(mountedB.label);
+  expect(requestB.merge).toBe(mountedB.merge ?? 'atomic');
+  expect(requestB.steps).toEqual([{ ...mountedB.step, command_ordinals: [0], patch: mountedB.changes }]);
+  if (mountedB.reads === undefined) expect(requestB).not.toHaveProperty('reads');
+  else expect(requestB.reads).toEqual(mountedB.reads);
   expect(b.data.publisher).toBe(a.data.publisher);
   expect(b.data.status).toBe('merged');
   expect(b.data.previous_publication_id).toBe(pinOf(c).publication_id);
@@ -1575,7 +1655,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   expect(wire.legacy, 'the post-loss B gesture and inverse never use legacy snapshot traffic').toEqual([]);
   journey.facts = { ...journey.facts, sourceTuple: revisionSet(journey.identity), renderer: 'not started',
     authoringLaunch: { profile: 'astrid', python: ASTRID_PYTHON }, headA: pinOf(a), headB: pinOf(b), independentC: pinOf(c),
-    originalB: commandsOf(owner.intents[1].payload), exactRetry: { body: originalARequest.body, key: originalARequest.key },
+    originalB: mountedB.changes, exactRetry: { body: originalARequest.body, key: originalARequest.key },
     legacySaveCount: wire.legacy.length };
   await sniff.expectClean(reopened, seed3.timelineId);
 });
