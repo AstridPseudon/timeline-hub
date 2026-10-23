@@ -833,9 +833,345 @@
           "minItems": 1,
           "type": "array"
         },
+        "CommitRead": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "field"
+                },
+                "path": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "ref": {
+                  "pattern": "^(timeline|parent|(?:shot|shot-revision|internal|internal-revision):.+)$",
+                  "type": "string"
+                },
+                "state": {
+                  "$ref": "#/$defs/AgentState"
+                }
+              },
+              "required": [
+                "ref",
+                "path",
+                "kind",
+                "state"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "collection"
+                },
+                "members": {
+                  "items": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "uniqueItems": true
+                },
+                "order": {
+                  "anyOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "items": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "type": "array",
+                      "uniqueItems": true
+                    }
+                  ]
+                },
+                "path": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "ref": {
+                  "pattern": "^(timeline|parent|(?:shot|shot-revision|internal|internal-revision):.+)$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ref",
+                "path",
+                "kind",
+                "members",
+                "order"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "scope"
+                },
+                "path": {
+                  "const": []
+                },
+                "ref": {
+                  "pattern": "^(timeline|parent|(?:shot|shot-revision|internal|internal-revision):.+)$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ref",
+                "path",
+                "kind"
+              ],
+              "type": "object"
+            }
+          ]
+        },
         "Digest": {
           "pattern": "^sha256:[0-9a-f]{64}$",
           "type": "string"
+        },
+        "DocPatchArgs": {
+          "additionalProperties": false,
+          "properties": {
+            "changes": {
+              "items": {
+                "$ref": "#/$defs/DocPatchChange"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "changes"
+          ],
+          "type": "object"
+        },
+        "DocPatchChange": {
+          "oneOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "before": {
+                  "$ref": "#/$defs/AgentState"
+                },
+                "op": {
+                  "const": "set"
+                },
+                "path": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "ref": {
+                  "pattern": "^(parent|(?:shot|shot-revision|internal|internal-revision):.+)$",
+                  "type": "string"
+                },
+                "value": {
+                  "$ref": "#/$defs/JSON"
+                }
+              },
+              "required": [
+                "ref",
+                "path",
+                "before",
+                "op",
+                "value"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "before": {
+                  "$ref": "#/$defs/AgentState"
+                },
+                "op": {
+                  "const": "remove"
+                },
+                "path": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "ref": {
+                  "pattern": "^(parent|(?:shot|shot-revision|internal|internal-revision):.+)$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ref",
+                "path",
+                "before",
+                "op"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "after_id": {
+                  "anyOf": [
+                    {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "before": {
+                  "$ref": "#/$defs/AgentState"
+                },
+                "id": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "op": {
+                  "const": "list.insert"
+                },
+                "order_before": {
+                  "items": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "uniqueItems": true
+                },
+                "path": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "ref": {
+                  "pattern": "^(parent|(?:shot|shot-revision|internal|internal-revision):.+)$",
+                  "type": "string"
+                },
+                "value": {
+                  "$ref": "#/$defs/JSON"
+                }
+              },
+              "required": [
+                "ref",
+                "path",
+                "before",
+                "op",
+                "value",
+                "id",
+                "order_before",
+                "after_id"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "before": {
+                  "$ref": "#/$defs/AgentState"
+                },
+                "id": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "op": {
+                  "const": "list.remove"
+                },
+                "order_before": {
+                  "items": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "uniqueItems": true
+                },
+                "path": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "ref": {
+                  "pattern": "^(parent|(?:shot|shot-revision|internal|internal-revision):.+)$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ref",
+                "path",
+                "before",
+                "op",
+                "id",
+                "order_before"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "properties": {
+                "after_id": {
+                  "anyOf": [
+                    {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "before": {
+                  "$ref": "#/$defs/AgentState"
+                },
+                "id": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "op": {
+                  "const": "list.move"
+                },
+                "order_before": {
+                  "items": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "uniqueItems": true
+                },
+                "path": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "ref": {
+                  "pattern": "^(parent|(?:shot|shot-revision|internal|internal-revision):.+)$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ref",
+                "path",
+                "before",
+                "op",
+                "id",
+                "order_before",
+                "after_id"
+              ],
+              "type": "object"
+            }
+          ]
         },
         "DocumentPin": {
           "additionalProperties": false,
@@ -1802,6 +2138,35 @@
                   "select": {
                     "pattern": "^occurrence:(?!.*::)[^/]+$",
                     "type": "string"
+                  },
+                  "version": {
+                    "const": "1"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "op": {
+                    "const": "doc.patch"
+                  }
+                },
+                "required": [
+                  "op"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "args": {
+                    "$ref": "#/$defs/DocPatchArgs"
+                  },
+                  "intent": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  },
+                  "select": {
+                    "type": "null"
                   },
                   "version": {
                     "const": "1"
@@ -3633,7 +3998,7 @@
           "properties": {
             "bindings": {
               "items": {
-                "$ref": "#/$defs/AgentBinding"
+                "$ref": "#/$defs/PhysicalBinding"
               },
               "type": "array"
             },
@@ -4808,6 +5173,113 @@
           ],
           "type": "object"
         },
+        "PhysicalBinding": {
+          "additionalProperties": false,
+          "properties": {
+            "boundary": {
+              "additionalProperties": {
+                "$ref": "#/$defs/JSON"
+              },
+              "type": "object"
+            },
+            "change": {
+              "$ref": "#/$defs/PatchChange"
+            },
+            "change_ordinal": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "command_ordinal": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "content_digest": {
+              "$ref": "#/$defs/Digest"
+            },
+            "dependencies": {
+              "items": {
+                "$ref": "#/$defs/ID"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            "dependency": {
+              "$ref": "#/$defs/CommitRead"
+            },
+            "edge_after": {
+              "$ref": "#/$defs/ID"
+            },
+            "edge_before": {
+              "$ref": "#/$defs/ID"
+            },
+            "effect_ordinal": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "key": {
+              "$ref": "#/$defs/ID"
+            },
+            "owner": {
+              "$ref": "#/$defs/ID"
+            },
+            "owners": {
+              "items": {
+                "$ref": "#/$defs/ID"
+              },
+              "type": "array",
+              "uniqueItems": true
+            },
+            "path": {
+              "$ref": "edit-command.json#/$defs/TokenPath"
+            },
+            "phase": {
+              "$ref": "#/$defs/ID"
+            },
+            "physical_ref": {
+              "$ref": "#/$defs/ID"
+            },
+            "policy": {
+              "enum": [
+                "follow",
+                "fixed"
+              ]
+            },
+            "ref": {
+              "$ref": "#/$defs/ID"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/ID"
+            },
+            "side": {
+              "enum": [
+                "before",
+                "after"
+              ]
+            },
+            "step_id": {
+              "$ref": "#/$defs/ID"
+            },
+            "successor": {
+              "$ref": "#/$defs/ID"
+            },
+            "write_range": {
+              "items": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "maxItems": 2,
+              "minItems": 2,
+              "type": "array"
+            }
+          },
+          "required": [
+            "key",
+            "ref",
+            "policy",
+            "dependencies"
+          ],
+          "type": "object"
+        },
         "PreparedCommit": {
           "additionalProperties": false,
           "properties": {
@@ -4869,6 +5341,13 @@
                 "$ref": "#/$defs/CommandRecord"
               },
               "type": "array"
+            },
+            "label": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "merge_mode": {
+              "$ref": "#/$defs/MergeMode"
             },
             "restored_from": {
               "oneOf": [

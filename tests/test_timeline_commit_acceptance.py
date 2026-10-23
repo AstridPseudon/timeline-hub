@@ -226,7 +226,26 @@ def test_modern_labels_steps_effects_reads_and_actor_roundtrip_after_restart(rea
     value["records"]["commands"][0]["command"]["args"]["on"] = 3
     value["records"]["commands"][0]["writes"] = [{"ref": "parent/clip:clip", "path": ["at"],
         "before": {"state": "present", "value": 2}, "after": {"state": "present", "value": 3}}]
-    value["records"]["steps"] = [{**request["steps"][0], "patch": [effect]}]
+    value["records"]["commands"][0]["bindings"] = [{
+        "key": "doc.patch:0", "ref": "parent", "physical_ref": "parent",
+        "revision_id": value["canonical_document"]["parent_revision"]["revision_id"],
+        "content_digest": value["canonical_document"]["parent_revision"]["content_digest"],
+        "boundary": {"base_revision_id": request["base_revision_id"],
+                     "base_publication_id": request["base_publication_id"],
+                     "evaluated_head": head, "step_id": "opening",
+                     "command_ordinal": 0, "phase": "input"},
+        "policy": "fixed", "dependencies": [], "path": ["config", "clips", "id:clip", "at"],
+        "change": effect, "write_range": [0, 1], "command_ordinal": 0,
+        "change_ordinal": 0, "phase": "input",
+    }]
+    value["records"].update(label=request["label"], merge_mode="fields")
+    value["records"]["steps"] = [{**request["steps"][0], "patch": [effect], "dependencies": reads}]
+
+    spoofed = copy.deepcopy(value)
+    spoofed["records"]["commands"][0]["bindings"][0]["content_digest"] = "sha256:" + "0" * 64
+    with pytest.raises(CommitRejected) as error:
+        accept(commits, ctx, spoofed)
+    assert error.value.failure["details"]["reason"] == "invalid_records"
 
     result = accept(commits, ctx, value)
     assert result["data"]["status"] == "accepted"

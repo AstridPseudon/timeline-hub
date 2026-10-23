@@ -261,6 +261,52 @@
       "required": ["id", "label", "intent", "tags", "command_ordinals", "patch"],
       "additionalProperties": false
     },
+    "PhysicalBinding": {
+      "type": "object",
+      "properties": {
+        "key": { "$ref": "#/$defs/ID" },
+        "ref": { "$ref": "#/$defs/ID" },
+        "physical_ref": { "$ref": "#/$defs/ID" },
+        "revision_id": { "$ref": "#/$defs/ID" },
+        "content_digest": { "$ref": "#/$defs/Digest" },
+        "boundary": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/JSON" }
+        },
+        "policy": { "enum": ["follow", "fixed"] },
+        "dependencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ID" },
+          "uniqueItems": true
+        },
+        "path": { "$ref": "edit-command.json#/$defs/TokenPath" },
+        "change": { "$ref": "#/$defs/PatchChange" },
+        "dependency": { "$ref": "#/$defs/CommitRead" },
+        "write_range": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "command_ordinal": { "type": "integer", "minimum": 0 },
+        "change_ordinal": { "type": "integer", "minimum": 0 },
+        "phase": { "$ref": "#/$defs/ID" },
+        "side": { "enum": ["before", "after"] },
+        "owners": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ID" },
+          "uniqueItems": true
+        },
+        "step_id": { "$ref": "#/$defs/ID" },
+        "effect_ordinal": { "type": "integer", "minimum": 0 },
+        "successor": { "$ref": "#/$defs/ID" },
+        "owner": { "$ref": "#/$defs/ID" },
+        "edge_before": { "$ref": "#/$defs/ID" },
+        "edge_after": { "$ref": "#/$defs/ID" }
+      },
+      "required": ["key", "ref", "policy", "dependencies"],
+      "additionalProperties": false
+    },
     "CommitRequest": {
       "type": "object",
       "properties": {
@@ -673,7 +719,7 @@
         "bindings": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/AgentBinding"
+            "$ref": "#/$defs/PhysicalBinding"
           }
         },
         "created": {
@@ -740,6 +786,13 @@
         "steps": {
           "type": "array",
           "items": { "$ref": "#/$defs/AcceptedStep" }
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "merge_mode": {
+          "$ref": "#/$defs/MergeMode"
         },
         "undo_of": {
           "type": "array",
