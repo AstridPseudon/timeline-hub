@@ -1,0 +1,22 @@
+{
+  "make-child-venv": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+    "bytes": 15385,
+    "sha256": "39450feacd8ff7d566e19fd6ce0aadc5c02366db1bccd9c88f9cd3a3ceef614f"
+  },
+  "request-child-venv": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv",
+    "bytes": 681,
+    "sha256": "f9e5ea6f2ff577ebd25218a1eba751e17fafd474b1e1a3a3adbb8524a80c440e"
+  },
+  "make-runtime": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime",
+    "bytes": 27482,
+    "sha256": "f63adc876ee489cc1bb3a9e038b31b2a432bb17557f566c84d93305c35dbccec"
+  },
+  "request-runtime": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-runtime",
+    "bytes": 1899,
+    "sha256": "f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1"
+  }
+}
