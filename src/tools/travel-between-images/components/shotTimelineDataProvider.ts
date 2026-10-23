@@ -770,7 +770,7 @@ async function sharedPopupMediaCommands(
     addRow.asset = asset;
     return { commands: [fork, {
       schema_version: 1, op: 'occurrence.add-media', version: '1', select: `occurrence:${occurrenceId}`,
-      args: { row: addRow, media }, intent: { ownership: 'occurrence' },
+      args: { row: toOutboxJson(addRow), media }, intent: { ownership: 'occurrence' },
     }] };
   }
   const [id, row] = changed[0];
