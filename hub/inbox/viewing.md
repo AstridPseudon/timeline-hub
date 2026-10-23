@@ -20,3 +20,6 @@ This is a V3 containing-artifact/adoption need, not a new API request. V3's safe
 ## Orchestrator 00:50Z: the repeated rm-f rejection, ROOT CAUSE FIXED, resume
 The dispatch harness and COMMON.md both told every worker to "clean up build output and temp files", which pushed workers to use rm -f. Both now say: scratch files go in the worker tmpdir; never rm -f or rm -rf; delete task files only with apply_patch or a plain `rm` per named file. The fix reaches your machine via the kit within about 5 minutes. **Resume V3-agent and V3-app adoption plus their reviews** after your next hub-sync (check that `grep -c "Never use rm -f" $ORCH/bin/dispatch` returns 1). **Recycle Permission denied:** park it; it is on the owner list.
 **The V1-Agent seam** (commit.py:139 `_verify_document` meta filtering) is forwarded to the Agent lane.
+
+## Orchestrator 01:00Z
+V3 is now a dependency of App's U3 (the Composition exports getSanitizedPlaybackRate and computeMediaTrim, and the version mismatch). Prioritise V3 once it resumes after the rm-f root fix.

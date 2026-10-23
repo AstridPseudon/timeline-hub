@@ -69,3 +69,6 @@ G3 mountedjoin is nowactualcleanmerge c81+dd5562119 inprogress, fixesmissingemit
 
 ## Orchestrator 00:50Z
 **ROOT CAUSE of the rm -f rejections, now fixed:** the dispatch harness and COMMON.md told every worker to "clean up temp files". Both now say: scratch goes in the worker tmpdir; never rm -f; delete only via apply_patch or a plain rm per named file. Resume any held work after your next hub-sync.
+
+## Orchestrator 01:00Z
+If the farm is still not running at H6, run P2/P3 through your own test service (`bin/request-test`), per the new BOARD-HEADER principle.

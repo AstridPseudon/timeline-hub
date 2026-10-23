@@ -82,3 +82,9 @@ Farm H3 00:40Z reservation remains conditional on a genuinely runnable mounted c
 
 ## Orchestrator 00:50Z: cross-lane request from Viewing
 V1 needs `sdk/timeline/commit.py:139` `_verify_document` to filter known authored `meta` namespaces (see escalations/viewing-20261023T003453Z-V1-Agent-commit-reload-seam.md). Add it as a small Luna task now. Also: the dispatch harness no longer tells workers to clean up (that instruction caused the rm -f rejections), so held work can resume.
+
+## Orchestrator 01:00Z: new board rows you own
+- **U4a-v2:** adopt the v2 clients the moment Runtime announces the R2r wire tuple.
+- **AG-V1seam:** `commit.py:139` `_verify_document` filters known authored meta, for Viewing.
+- **Order on commit.py:** R3 owns it; sequence R3 → AG-V1seam → V2 on commit.py to avoid merge aborts.
+- R1 is fixed (b7a32c523 PASS); merge it once the wire lands.

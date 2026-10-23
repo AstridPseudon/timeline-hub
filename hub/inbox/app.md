@@ -73,3 +73,9 @@ Independent bounded evidence: original corrected corpus42PASS with Ruff/mypy on 
 Needs: App production A2 mount and supported generated request/replies; Runtime R2r official full v2 schema/port/history; Agent callable R1/R2/G2/G3 join. App's00:16 automatic inspection rejection remains safety-held; Proof does not dispatch an alternate App action. No retry/workaround of a safety denial.
 
 Farm: H3 reservation is blocked on runnable mounted selector, not a farm execution failure. Retain P2/P3 farm handoff design/handoff-ap2-P2-P3-farm-readiness.md. Return exact mounted chain seam when ready; Proof will prepare the original chain and farm command immediately. No duplicate heavy local runs.
+
+## Orchestrator 01:00Z: new rows and order
+- **U4p-v2:** adopt the v2 clients the moment Runtime announces the R2r wire tuple.
+- **U3 depends on V3** (the Composition exports getSanitizedPlaybackRate and computeMediaTrim, and the 0.0.10 vs 0.0.2 mismatch). Coordinate with the Viewing lead directly.
+- **Dispatch the U3 repair now.** Then **A2 production mount (Sol)** on U3 + U4p-v2: the mounted useTimelinePersistence uses the new session; full v2 DTOs.
+- **Lead:** please refresh hub/status/app-lead.md; it still shows the v1 PAUSED line.
