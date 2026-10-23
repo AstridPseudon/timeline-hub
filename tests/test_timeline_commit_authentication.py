@@ -10,7 +10,12 @@ from test_timeline_commit_port import commit, request, rows
 
 from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.timeline_commit import CommitRejected
-from runtime_protocol.timeline_commit_auth import _coherent_materialization, site, validate_claims
+from runtime_protocol.timeline_commit_auth import (
+    _coherent_materialization,
+    command_output,
+    site,
+    validate_claims,
+)
 from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.timeline_commit_validation import digest, validate_commit_value
 
@@ -436,6 +441,75 @@ def test_sequential_step_reads_use_the_prior_step_output_and_keep_batch_reads(se
         assert commit(service, submitted) == result
 
 
+def test_sequential_created_child_boundary_uses_the_native_birth_not_future_output():
+    parent = {"config": {"output": {"fps": 24}}, "occurrences": []}
+    boundary = {"parent": {"revision_id": "base-parent", "content_digest": digest(parent),
+                            "payload": parent}}
+    shot_payload = {"name": "Opening", "items": []}
+    internal_payload = {"output": {"fps": 24}, "tracks": [], "clips": [], "registry": {"assets": {}}}
+    occurrence = {"occurrence_id": "occ-new", "shot_id": "shot-new", "track": "picture",
+                  "placement": {"start_ms": 0}, "duration_ms": 1000, "source_offset": 0,
+                  "speed": 1, "gain": 1}
+    canonical_shot = {**shot_payload, "internal_timeline_revision_id": "internal-new"}
+    accepted = {
+        "parent": {"revision_id": "accepted-parent",
+                    "content_digest": digest({**parent, "occurrences": [{**occurrence,
+                                                                            "shot_revision_id": "shot-new-r1"}]}),
+                    "payload": {**parent, "occurrences": [{**occurrence,
+                                                               "shot_revision_id": "shot-new-r1"}]}},
+        "shot-revision:shot-new-r1": {"shot_id": "shot-new", "revision_id": "shot-new-r1",
+                                       "internal_timeline_revision_id": "internal-new",
+                                       "payload": canonical_shot, "content_digest": digest(canonical_shot)},
+        "internal-revision:internal-new": {"timeline_id": "shot-new", "revision_id": "internal-new",
+                                            "payload": {**internal_payload, "future": "must-not-read"},
+                                            "content_digest": digest({**internal_payload, "future": "must-not-read"})},
+    }
+    record = {
+        "writes": [
+            {"ref": "shot:shot-new", "path": [], "before": {"state": "absent"},
+             "after": {"state": "present", "value": {"payload": shot_payload,
+                                                        "internal_timeline": internal_payload}}},
+            {"ref": "occurrence:occ-new", "path": [], "before": {"state": "absent"},
+             "after": {"state": "present", "value": occurrence}},
+        ],
+        "derived_writes": [],
+        "created": [{"ref": "shot:shot-new", "kind": "shot", "owner": None},
+                    {"ref": "occurrence:occ-new", "kind": "occurrence", "owner": "parent"}],
+    }
+    next_record = {"writes": [], "reads": [{"ref": "occurrence:occ-new/source", "path": ["output", "fps"],
+                                               "state": {"state": "present", "value": 24}}],
+                   "bindings": [
+                       {"ref": "parent", "physical_ref": "parent",
+                        "revision_id": "created-parent", "content_digest": digest(
+                            {**parent, "occurrences": [{**occurrence, "shot_revision_id": "shot-new-r1"}]}),
+                        "boundary": {"phase": "input"}},
+                       {"ref": "occurrence:occ-new/source", "physical_ref": "internal-revision:internal-new",
+                        "revision_id": "internal-new", "content_digest": digest(internal_payload),
+                        "boundary": {"phase": "input"}},
+                   ]}
+
+    result = command_output(boundary, record, next_record, accepted=accepted)
+    assert result["parent"]["payload"]["occurrences"] == [{**occurrence, "shot_revision_id": "shot-new-r1"}]
+    assert result["internal-revision:internal-new"]["payload"] == internal_payload
+
+    ambiguous = copy.deepcopy(accepted)
+    ambiguous["shot-revision:shot-new-r2"] = copy.deepcopy(ambiguous["shot-revision:shot-new-r1"])
+    ambiguous["shot-revision:shot-new-r2"]["revision_id"] = "shot-new-r2"
+    with pytest.raises(CommitRejected, match="ambiguous accepted physical shot"):
+        command_output(boundary, record, next_record, accepted=ambiguous)
+
+    wrong_owner = copy.deepcopy(accepted)
+    wrong_owner["parent"]["payload"]["occurrences"][0]["shot_revision_id"] = "foreign-shot-r1"
+    with pytest.raises(CommitRejected, match="ambiguous accepted owner"):
+        command_output(boundary, record, next_record, accepted=wrong_owner)
+
+    foreign = copy.deepcopy(next_record)
+    foreign["reads"][0]["ref"] = "occurrence:foreign/source"
+    foreign["bindings"][1]["ref"] = "occurrence:foreign/source"
+    with pytest.raises(CommitRejected):
+        command_output(boundary, record, foreign, accepted=accepted)
+
+
 @pytest.mark.parametrize("assert_effect", [False, True])
 @pytest.mark.parametrize("omit_effect", [False, True])
 def test_native_record_assertions_and_additional_effects_on_a_real_film(tmp_path, assert_effect, omit_effect):
@@ -682,3 +756,222 @@ def test_rebased_child_bindings_follow_only_authenticated_owner_edges(tmp_path, 
                 first = result
     finally:
         runtime.close()
+
+
+@pytest.fixture
+def created_child_public(tmp_path, astrid_importable, request):
+    with_parent_media = getattr(request, "param", False)
+    from importlib import import_module
+
+    from test_generation_publish_v1_settlement import (
+        _effect,
+        _fixture,
+        _output,
+        _settle,
+    )
+    from test_timeline_commit_read_basis import _canonical_from_public_reads
+
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    capture_track_create = import_module("astrid.sdk.timeline.capture").capture_track_create
+    execute = import_module("astrid.sdk.timeline.commands").execute
+    bundle_from_document = import_module("astrid.sdk.timeline.commit").bundle_from_document
+    capture_occurrence_create = import_module("astrid.sdk.timeline.native_occurrence_create").capture_occurrence_create
+    capture_occurrence_add_media = import_module("astrid.sdk.timeline.native_occurrence_media_commands").capture_occurrence_add_media
+
+    def image_effect(project):
+        return _effect(project, groups=[{"group_key": "main", "selectors": [{
+            "selector": "image", "ordinal": 0, "variant_key": "image", "output_port": "image"}]}])
+
+    runtime, project, task, attempt, effect = _fixture(tmp_path, effect_factory=image_effect)
+    project = project["id"]
+    runtime.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+
+    def document():
+        page = runtime.list_timeline_commits(project, "film", authorize=lambda: None)
+        return _canonical_from_public_reads(runtime, project, "film", page)
+
+    def build_request(commands):
+        head = runtime.get_project_timeline(project, "film")
+        return {"api_version": 1, "project_id": project, "timeline_id": "film",
+                "base_revision_id": head["head_revision_id"], "base_publication_id": head["head_publication_id"],
+                "commands": commands, "label": "Created child", "merge": "fields", "reads": [], "dry_run": False,
+                "steps": [{"id": "child", "label": "Created child", "intent": "Use sequential native reads",
+                           "tags": ["r2r"], "command_ordinals": list(range(len(commands))), "patch": [], "reads": []}],
+                "source": {"via": "python"}, "rationale": "Authenticate created child", "group_id": "created-child"}
+
+    def publish(submitted, key):
+        return runtime.commit_timeline(project, "film", submitted, idempotency_key=key, publisher="editor",
+                                       invocation_path=route_path(project, "film"), authorize=lambda: None)
+
+    try:
+        _settle(runtime, attempt, [_output(b"created-child-image", output_port="image", group_key="main",
+                                         variant_key="image", ordinal=0, filename="image.png", media_type="image/png")],
+                effect=effect)
+        association = runtime.managed_outputs(task["task"]["id"])[0]
+        pin = runtime.get_project_media_selection(project, {"association_id": association["association_id"],
+            "object_id": association["object_id"], "version": association["lifecycle"]["version"]}, authorize=lambda: None)
+        verified = runtime.get_project_verified_media(project, pin, authorize=lambda: None)
+        runtime.create_timeline(project, "film", idempotency_key="bootstrap")
+        bundle = bundle_from_document(document())
+        publish(build_request([capture_track_create(bundle, "parent", {"id": "picture", "kind": "visual"})]), "parent-track")
+        source = document()
+        bundle = bundle_from_document(source)
+        prefix = []
+        if with_parent_media:
+            capture_media = import_module("astrid.sdk.timeline.native_parent_media_commands").capture_clip_add_media
+            overlay = capture_track_create(bundle, "parent", {"id": "overlay", "kind": "visual"})
+            bundle = execute(bundle, [overlay]).bundle
+            parent_media = capture_media(bundle, {"id": "parent-image", "clipType": "image", "asset": pin["asset"],
+                "track": "overlay", "at": 0, "hold": 3, "opaque": [None, False]}, pin, verified_media=[verified])
+            bundle = execute(bundle, [parent_media], verified_media=[verified]).bundle
+            prefix = [overlay, parent_media]
+        birth = capture_occurrence_create(bundle, "new", "new-shot", name="Opening", track="picture", on=0, duration=10)
+        born = execute(bundle, [birth]).bundle
+        track = capture_track_create(born, "occurrence:new", {"id": "picture", "kind": "visual"})
+        tracked = execute(born, [track]).bundle
+        held = {"id": "held", "clipType": "image", "asset": pin["asset"], "track": "picture",
+                "at": 0, "hold": 2, "opaque": [None, False]}
+        media = capture_occurrence_add_media(tracked, "occurrence:new", held, pin, verified_media=[verified])
+        yield runtime, project, source, build_request([*prefix, birth, track, media]), held, document, publish
+    finally:
+        runtime.close()
+
+
+def _forge_created_child_promotion(value, source, target):
+    # Keep the exact 1204 equal-byte forgery: only intermediate input claims,
+    # their parent pins and dependency union change; canonical effects stay intact.
+    from runtime_protocol.timeline_commit_auth import _authoring_identity, images
+
+    records = value["records"]["commands"]
+    scope = source["project_id"], source["timeline_id"]
+    born = command_output(images(source), records[0], records[1],
+                          accepted=images(value["canonical_document"]), identity_scope=scope)
+    source_ref = next(ref for ref in born if ref.startswith("internal-revision:"))
+    payload = copy.deepcopy(born[source_ref]["payload"])
+    payload["tracks"].append({"id": "picture", "kind": "visual"})
+    media = next(binding for binding in records[2]["bindings"] if binding["key"] == "media.track")
+    original_ref = media["physical_ref"]
+    target_id = target.partition(":")[2]
+    media.update(physical_ref=target, revision_id=target_id, content_digest=digest(payload))
+    owner = next(image for image in born.values() if image.get("internal_timeline_revision_id") == source_ref.partition(":")[2])
+    shot_payload = copy.deepcopy(owner["payload"])
+    shot_payload["internal_timeline_revision_id"] = target_id
+    successor = _authoring_identity("authoring-shot-revision", scope[0], owner["shot_id"], shot_payload)
+    parent = copy.deepcopy(born["parent"]["payload"])
+    next(row for row in parent["occurrences"] if row["shot_revision_id"] == owner["revision_id"])["shot_revision_id"] = successor
+    for binding in records[2]["bindings"]:
+        if binding.get("physical_ref") == "parent" and binding.get("boundary", {}).get("phase") == "input":
+            binding.update(revision_id="future-parent", content_digest=digest(parent))
+    for dependency in value["records"]["steps"][0]["dependencies"]:
+        if dependency["ref"] in {source_ref, original_ref}:
+            dependency["ref"] = target
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("mutation", [None, "foreign", "future", "wrong-owner", "missing-input", "ambiguous",
+                                     "pin-revision", "parent-revision", "birth-parent", "digest", "before",
+                                     "effect-range", "missing-effects", "order", "foreign-source", "ambiguous-birth", "unpromoted"])
+def test_created_child_public_acceptance_and_strict_refusals(created_child_public, monkeypatch, mutation):
+    from runtime_protocol.timeline_commit_auth import _authoring_identity
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    runtime, project, source, submitted, held, document, publish = created_child_public
+    before_db = tuple(runtime.store.conn.iterdump())
+    before_history = runtime.list_timeline_commits(project, "film", authorize=lambda: None)
+    accept = RequestCommitPort.accept
+    reached = []
+
+    def checked_accept(port, prepared):
+        value = copy.deepcopy(prepared)
+        records = value["records"]["commands"]
+        following = records[2]
+        media = next(binding for binding in following["bindings"] if binding["key"] == "media.track")
+        if mutation in {"foreign", "future", "wrong-owner"}:
+            target = "internal-revision:future-foreign-root"
+            if mutation == "future":
+                target = "internal-revision:" + value["canonical_document"]["internal_timeline_revisions"][0]["revision_id"]
+            elif mutation == "wrong-owner":
+                payload = {"clips": [], "output": {}, "registry": {"assets": {}},
+                           "tracks": [{"id": "picture", "kind": "visual"}]}
+                target = "internal-revision:" + _authoring_identity(
+                    "authoring-timeline-revision", project, "film", "foreign-shot", payload)
+            _forge_created_child_promotion(value, source, target)
+        elif mutation == "unpromoted":
+            from runtime_protocol.timeline_commit_auth import images
+            born = command_output(images(source), records[0], records[1],
+                                  accepted=images(value["canonical_document"]), identity_scope=(project, "film"))
+            target = next(ref for ref in born if ref.startswith("internal-revision:"))
+            _forge_created_child_promotion(value, source, target)
+            for binding in following["bindings"]:
+                if binding.get("physical_ref") == "parent" and binding["boundary"]["phase"] == "input":
+                    binding["revision_id"] = born["parent"]["revision_id"]
+        elif mutation == "missing-input":
+            following["bindings"].remove(media)
+            following["reads"] = [read for read in following["reads"] if not read["ref"].endswith("/source")]
+        elif mutation == "ambiguous":
+            duplicate = copy.deepcopy(media)
+            duplicate.update(physical_ref="internal-revision:ambiguous", revision_id="ambiguous")
+            following["bindings"].append(duplicate)
+        elif mutation == "pin-revision":
+            media["revision_id"] = "foreign-revision"
+        elif mutation in {"parent-revision", "birth-parent"}:
+            for binding in records[1 if mutation == "birth-parent" else 2]["bindings"]:
+                if binding.get("physical_ref") == "parent" and binding["boundary"]["phase"] == "input":
+                    binding["revision_id"] = "foreign-parent"
+        elif mutation == "digest":
+            media["content_digest"] = "sha256:" + "0" * 64
+        elif mutation == "before":
+            records[1]["writes"][0]["before"] = {"state": "present", "value": {"id": "picture", "kind": "visual"}}
+        elif mutation == "effect-range":
+            next(binding for binding in following["bindings"] if binding["key"] == "commit.effect")["effect_ordinal"] = 99
+        elif mutation == "missing-effects":
+            value["records"]["steps"][0]["patch"] = []
+        elif mutation == "order":
+            records[0], records[1] = records[1], records[0]
+        elif mutation == "foreign-source":
+            media["ref"] = "occurrence:foreign/track:picture"
+        elif mutation == "ambiguous-birth":
+            shot = copy.deepcopy(value["canonical_document"]["shot_revisions"][0])
+            shot["revision_id"] = "ambiguous-shot"
+            value["canonical_document"]["shot_revisions"].append(shot)
+        reached.append(copy.deepcopy(value))
+        return accept(port, value)
+
+    monkeypatch.setattr(RequestCommitPort, "accept", checked_accept)
+    if mutation is not None:
+        with pytest.raises(RuntimeErrorBase) as error:
+            publish(submitted, "child")
+        reason = "identity_collision" if mutation == "ambiguous-birth" else "invalid_records"
+        assert error.value.details is not None and error.value.details["reason"] == reason
+        assert reached
+        assert tuple(runtime.store.conn.iterdump()) == before_db
+        assert runtime.list_timeline_commits(project, "film", authorize=lambda: None) == before_history
+        assert document() == source
+    else:
+        result = publish(submitted, "child")
+        assert result["data"]["status"] == "accepted"
+        assert result["receipt"]["receipt_id"] != submitted["base_publication_id"]
+        canonical = document()
+        assert canonical == result["data"]["canonical_document"]
+        assert canonical["internal_timeline_revisions"][0]["payload"]["clips"] == [held]
+        assert canonical["internal_timeline_revisions"][0]["payload"]["tracks"] == [{"id": "picture", "kind": "visual"}]
+        assert len(canonical["parent_revision"]["payload"]["occurrences"]) == 1
+        assert len(runtime.list_timeline_commits(project, "film", authorize=lambda: None)["items"]) == 3
+        assert publish(submitted, "child") == result
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("created_child_public", [True], indirect=True)
+def test_created_child_promotion_keeps_prior_parent_media_and_mirror_writes(created_child_public):
+    runtime, project, _source, submitted, held, document, publish = created_child_public
+    result = publish(submitted, "child-after-parent-media")
+    canonical = document()
+    assert canonical == result["data"]["canonical_document"]
+    assert canonical["internal_timeline_revisions"][0]["payload"]["clips"] == [held]
+    parent = canonical["parent_revision"]["payload"]
+    assert parent["clips"] == parent["config"]["clips"] == [{
+        "id": "parent-image", "clipType": "image", "asset": held["asset"], "track": "overlay",
+        "at": 0, "hold": 3, "opaque": [None, False]}]
+    assert canonical["dependency_manifest"]["media"]
+    assert len(runtime.list_timeline_commits(project, "film", authorize=lambda: None)["items"]) == 3

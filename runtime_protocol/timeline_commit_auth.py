@@ -6,10 +6,12 @@ Command execution, conflict detection and inverse construction belong to Agent.
 from __future__ import annotations
 
 import copy
+import hashlib
 import re
 
 from .timeline_commit_producer import value_equal
 from .timeline_commit_validation import digest
+from .util import canonical_json
 
 
 def require(condition, message):
@@ -296,22 +298,28 @@ def validate_claims(request, records):
                 "provider executed a different command")
 
 
-def validate_step(request, records, step, boundary, batch_reads, continuations):
+def _authoring_identity(kind, *parts):
+    encoded = "\0".join([kind, *(canonical_json(part) for part in parts)]).encode("utf-8")
+    return f"{kind}-" + hashlib.sha256(encoded).hexdigest()
+
+
+def validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs=None):
     submitted = next((item for item in request.get("steps", []) if item["id"] == step["id"]), None)
     dependencies = step["dependencies"]
     for read in [*batch_reads, *(validate_read(boundary, read, continuations) for read in (submitted or {}).get("reads", []))]:
         require(covers(dependencies, read), "provider dependency union omits a declared read")
     for ordinal in step["command_ordinals"]:
         record = records["commands"][ordinal]
+        command_boundary = (command_inputs or {}).get(ordinal, boundary)
         created = {item["ref"] for item in record["created"]}
         for read in record["reads"]:
             if read["ref"] in created and read["state"] == {"state": "absent"}:
                 continue
-            ref, path = native_site(boundary, read["ref"], read["path"])
+            ref, path = native_site(command_boundary, read["ref"], read["path"])
             if ref == "timeline" or not path or "/collection:" in read["ref"]:
                 capture = {"kind": "scope", "ref": ref, "path": []}
                 if "/collection:" in read["ref"] and ref != "timeline":
-                    observed = location(boundary[ref]["payload"], path).get("value")
+                    observed = location(command_boundary[ref]["payload"], path).get("value")
                     if isinstance(observed, list):
                         if read["ref"].endswith("/collection:text-binding"):
                             owner = read["ref"].rsplit("/collection:", 1)[0]
@@ -994,14 +1002,225 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
     return effect_boundaries
 
 
-def command_output(boundary, record, following):
+def _authoring_parent_identity(boundary, identity_scope, manifest):
+    """Derive the parent pin from sequential images and retained input pins."""
+    project_id, timeline_id = identity_scope
+    manifest = copy.deepcopy(manifest or {"media": [], "documents": []})
+    for family, prefix, keys, order in (
+            ("shots", "shot-revision:", ("shot_id", "revision_id", "internal_timeline_revision_id", "content_digest"),
+             ("shot_id", "revision_id")),
+            ("internal_timelines", "internal-revision:", ("timeline_id", "revision_id", "content_digest"),
+             ("timeline_id", "revision_id"))):
+        manifest[family] = sorted(({key: image[key] for key in keys} for ref, image in boundary.items()
+                                   if ref.startswith(prefix)), key=lambda row: tuple(row[key] for key in order))
+    return "authoring-parent-revision-" + digest({
+        "project_id": project_id, "timeline_id": timeline_id,
+        "parent": boundary["parent"]["payload"], "manifest": manifest,
+    }).removeprefix("sha256:")
+
+
+def _project_created_child(boundary, record, following, accepted, identity_scope=None):
+    """Carry an authenticated occurrence birth into the next command input.
+
+    Native occurrence creation records authored aggregate roots, while the
+    Runtime closure stores their physical shot/internal images.  A later
+    command in the same step must see the birth, but must not inherit the
+    later command's final payload. Build the intermediate view and scoped
+    allocation identities from creation writes; check the accepted owner
+    edges without borrowing their later payloads.
+    """
+    created = {item.get("ref"): item for item in record.get("created", [])}
+    projected_roots = set()
+    future_refs = [read.get("ref") for read in following.get("reads", [])]
+    future_refs.extend(binding.get("ref") for binding in following.get("bindings", []))
+    future_refs.extend(write.get("ref") for write in following.get("writes", []))
+
+    for occurrence_ref, allocation in created.items():
+        if not (isinstance(occurrence_ref, str) and occurrence_ref.startswith("occurrence:")
+                and "/" not in occurrence_ref
+                and any(ref == occurrence_ref or isinstance(ref, str) and ref.startswith(occurrence_ref + "/")
+                        for ref in future_refs)):
+            continue
+        occurrence_write = next((write for write in record.get("writes", [])
+                                 if write.get("ref") == occurrence_ref and not write.get("path")), None)
+        occurrence_value = ((occurrence_write or {}).get("after", {}).get("value"))
+        shot_id = occurrence_value.get("shot_id") if isinstance(occurrence_value, dict) else None
+        if (allocation.get("kind") != "occurrence" or allocation.get("owner") != "parent"
+                or not isinstance(shot_id, str)):
+            require(False, "provider created occurrence root is not an authenticated parent birth")
+            continue
+        require(occurrence_write is not None
+                and occurrence_write.get("before") == {"state": "absent"}
+                and occurrence_write.get("after", {}).get("state") == "present",
+                "provider created occurrence lacks its absent-to-present root write")
+
+        accepted_shot_refs = [ref for ref, image in accepted.items()
+                              if ref.startswith("shot-revision:") and image.get("shot_id") == shot_id]
+        require(len(accepted_shot_refs) == 1,
+                "provider created occurrence has an ambiguous accepted physical shot")
+        if len(accepted_shot_refs) != 1:
+            require(False, "provider created occurrence has no accepted physical shot")
+            continue
+        accepted_shot_ref = accepted_shot_refs[0]
+        accepted_shot = accepted[accepted_shot_ref]
+        accepted_internal_id = accepted_shot.get("internal_timeline_revision_id")
+        if not isinstance(accepted_internal_id, str):
+            require(False, "provider created occurrence has no accepted physical internal timeline")
+            continue
+        accepted_internal_ref = "internal-revision:" + str(accepted_internal_id)
+        if accepted_internal_ref not in accepted:
+            require(False, "provider created occurrence has no accepted physical internal timeline")
+            continue
+        accepted_internal = accepted[accepted_internal_ref]
+
+        shot_write = next((write for write in record.get("writes", [])
+                           if write.get("ref") == "shot:" + shot_id and not write.get("path")), None)
+        if not isinstance(shot_write, dict):
+            require(False, "provider created occurrence lacks its authored shot birth")
+            continue
+        require(shot_write.get("before") == {"state": "absent"}
+                and shot_write.get("after", {}).get("state") == "present",
+                "provider created occurrence lacks its authored shot birth")
+        shot_value = shot_write["after"]["value"]
+        require(isinstance(shot_value, dict)
+                and isinstance(shot_value.get("payload"), dict)
+                and isinstance(shot_value.get("internal_timeline"), dict),
+                "provider created shot birth is malformed")
+        if (not isinstance(shot_value, dict)
+                or not isinstance(shot_value.get("payload"), dict)
+                or not isinstance(shot_value.get("internal_timeline"), dict)):
+            continue
+        initial_shot = copy.deepcopy(shot_value["payload"])
+        authored_shot = copy.deepcopy(initial_shot)
+        initial_internal = copy.deepcopy(shot_value["internal_timeline"])
+        if identity_scope is None:
+            shot_ref = accepted_shot_ref
+            internal_ref = accepted_internal_ref
+            internal_id = accepted_internal_id
+            shot_revision_id = shot_ref.partition(":")[2]
+        else:
+            project_id, timeline_id = identity_scope
+            require(accepted_internal.get("timeline_id") == timeline_id,
+                    "provider created occurrence internal timeline has a foreign owner")
+            internal_id = _authoring_identity("authoring-timeline-revision", project_id, timeline_id,
+                                              shot_id, initial_internal)
+            initial_shot["internal_timeline_revision_id"] = internal_id
+            shot_revision_id = _authoring_identity("authoring-shot-revision", project_id, shot_id,
+                                                   initial_shot)
+            shot_ref = "shot-revision:" + shot_revision_id
+            internal_ref = "internal-revision:" + internal_id
+        internal_image = copy.deepcopy(accepted_internal)
+
+        # Every physical alias claimed by the next command must still belong
+        # to this exact created occurrence. A source pin cannot retarget the
+        # child to a foreign or future physical image.
+        for binding in following.get("bindings", []):
+            ref = binding.get("ref")
+            if not (isinstance(ref, str) and (ref == occurrence_ref or ref.startswith(occurrence_ref + "/"))):
+                continue
+            physical = binding.get("physical_ref")
+            if physical is None:
+                continue
+            require(physical in {"parent", shot_ref, internal_ref},
+                    "provider created occurrence source pin is foreign")
+            if ref == occurrence_ref + "/source":
+                require(physical == internal_ref,
+                        "provider created occurrence source pin differs from its child")
+
+        accepted_occurrences = accepted["parent"]["payload"].get("occurrences", [])
+        accepted_occurrence = [row for row in accepted_occurrences
+                               if row.get("occurrence_id") == occurrence_ref.partition(":")[2]]
+        require(len(accepted_occurrence) == 1
+                and accepted_occurrence[0].get("shot_id") == shot_id
+                and accepted_occurrence[0].get("shot_revision_id") == accepted_shot_ref.partition(":")[2],
+                "provider created occurrence has an ambiguous accepted owner")
+        # Keep authored creation fields from the earlier native write; only the
+        # managed shot revision edge comes from the accepted physical closure.
+        intermediate_occurrence = copy.deepcopy(occurrence_value)
+        intermediate_occurrence["shot_revision_id"] = shot_revision_id
+        if identity_scope is not None:
+            accepted_payload = accepted_shot.get("payload")
+            require(isinstance(accepted_payload, dict)
+                    and {key: value for key, value in accepted_payload.items()
+                         if key != "internal_timeline_revision_id"} == authored_shot,
+                    "provider created occurrence accepted shot is not its authored allocation")
+            projected_parent = copy.deepcopy(boundary["parent"]["payload"])
+            projected_parent.setdefault("occurrences", []).append(intermediate_occurrence)
+            parent_pins = [binding for binding in following.get("bindings", [])
+                           if binding.get("physical_ref") == "parent"
+                           and binding.get("boundary", {}).get("phase") == "input"
+                           and binding.get("content_digest") == digest(projected_parent)]
+            require(parent_pins,
+                    "provider created occurrence lacks an authenticated authoring allocation mapping")
+        require(all(accepted_occurrence[0].get(key) == value
+                    for key, value in occurrence_value.items()),
+                "provider created occurrence differs from its accepted owner")
+
+        result_parent = boundary["parent"]
+        payload = copy.deepcopy(result_parent["payload"])
+        occurrences = payload.setdefault("occurrences", [])
+        require(not any(row.get("occurrence_id") == intermediate_occurrence["occurrence_id"]
+                        for row in occurrences),
+                "provider created occurrence is already present at its input boundary")
+        occurrences.append(intermediate_occurrence)
+        result_parent["payload"] = payload
+        result_parent["content_digest"] = digest(payload)
+
+        require(shot_ref not in boundary and internal_ref not in boundary,
+                "provider created occurrence physical roots overlap its input boundary")
+        result_shot = copy.deepcopy(accepted_shot)
+        result_shot["revision_id"] = shot_revision_id
+        result_shot["internal_timeline_revision_id"] = internal_id
+        result_shot["payload"] = initial_shot
+        result_shot["content_digest"] = digest(initial_shot)
+        result_internal = copy.deepcopy(internal_image)
+        result_internal["revision_id"] = internal_id
+        result_internal["payload"] = initial_internal
+        result_internal["content_digest"] = digest(initial_internal)
+        for binding in following.get("bindings", []):
+            if binding.get("ref") == occurrence_ref + "/source":
+                require(binding.get("content_digest") == result_internal["content_digest"],
+                        "provider created occurrence source digest differs from its birth")
+        boundary[shot_ref] = result_shot
+        boundary[internal_ref] = result_internal
+        projected_roots.update({"shot:" + shot_id, occurrence_ref})
+    return projected_roots
+
+
+def _following_read_observes(boundary, following, physical_ref):
+    for read in following.get("reads", []):
+        ref, path = native_site(boundary, read["ref"], read["path"])
+        if ref != physical_ref:
+            continue
+        if not path and "/collection:" in read["ref"]:
+            return True
+        if not path:
+            continue
+        observed = location(boundary[ref]["payload"], stored_path(boundary[ref]["payload"], ref, path))
+        if value_equal(observed, read.get("state")):
+            return True
+    return False
+
+
+def command_output(boundary, record, following, *, accepted=None, identity_scope=None, manifest=None):
     """Project full recorder observations needed by a subsequent input binding."""
     result = copy.deepcopy(boundary)
+    projected_roots = (_project_created_child(result, record, following, accepted, identity_scope)
+                       if accepted is not None else set())
+    created_roots = {item.get("ref") for item in record.get("created", [])
+                     if re.fullmatch(r"(?:shot|occurrence):[^/]+", item.get("ref", ""))}
     for capture in [*record["writes"], *record["derived_writes"]]:
+        if capture.get("ref") in created_roots & projected_roots and not capture.get("path"):
+            # The authored aggregate root was installed above through its
+            # physical closure images; it has no direct Runtime image site.
+            continue
         ref, path = native_site(result, capture["ref"], capture["path"])
         require(ref in result, "provider intermediate command lacks an authenticated physical observation")
         payload = result[ref]["payload"]
         path = stored_path(payload, ref, path)
+        before_payload = boundary.get(ref, result[ref])["payload"] if "cause" in capture else payload
+        require(value_equal(location(before_payload, path, absent_items=True), capture["before"]),
+                "provider intermediate command has a different input observation")
         result[ref]["payload"] = project_observation(payload, path, capture["after"])
         if ref == "parent":
             for mirror in ("clips", "registry"):
@@ -1009,15 +1228,107 @@ def command_output(boundary, record, following):
                 if mirror in projected and mirror in projected.get("config", {}):
                     projected[mirror] = copy.deepcopy(projected["config"][mirror])
         result[ref]["content_digest"] = digest(result[ref]["payload"])
-    for ref, image in result.items():
+    for ref, image in list(result.items()):
+        if ref not in boundary:
+            continue
         if image["content_digest"] == boundary[ref]["content_digest"]:
             continue
         pins = [binding for binding in following["bindings"] if binding.get("physical_ref") == ref
                 and binding.get("boundary", {}).get("phase") == "input"
                 and binding.get("content_digest") == image["content_digest"]]
-        require(bool(pins) and len({pin["revision_id"] for pin in pins}) == 1,
-                "provider intermediate image differs from recorded command observations")
-        image["revision_id"] = pins[0]["revision_id"]
+        if pins:
+            require(len({pin["revision_id"] for pin in pins}) == 1,
+                    "provider intermediate image differs from recorded command observations")
+            require(ref == "parent",
+                    "provider intermediate changed payload retains its immutable physical identity")
+            image["revision_id"] = pins[0]["revision_id"]
+        else:
+            aliases = [binding for binding in following["bindings"]
+                       if isinstance(binding.get("physical_ref"), str)
+                       and binding["physical_ref"].startswith(("shot-revision:", "internal-revision:"))
+                       and binding.get("physical_ref") != ref
+                       and binding.get("boundary", {}).get("phase") == "input"
+                       and binding.get("content_digest") == image["content_digest"]]
+            if aliases:
+                require(len({binding["physical_ref"] for binding in aliases}) == 1,
+                        "provider intermediate image has ambiguous authenticated promotion")
+                alias = aliases[0]
+                target = alias["physical_ref"]
+                require(target.split(":", 1)[0] == ref.split(":", 1)[0]
+                        and alias["revision_id"] == target.partition(":")[2],
+                        "provider intermediate promotion changes its physical kind or identity")
+                require(target not in result,
+                        "provider intermediate image promotion overlaps an authenticated root")
+                if identity_scope is None:
+                    require(False, "provider intermediate promotion lacks an authenticated allocation")
+                    continue
+                project_id, timeline_id = identity_scope
+                target_id = target.partition(":")[2]
+                source_id = ref.partition(":")[2]
+                if ref.startswith("internal-revision:"):
+                    owners = [(owner_ref, owner) for owner_ref, owner in result.items()
+                              if owner_ref.startswith("shot-revision:")
+                              and owner.get("internal_timeline_revision_id") == source_id]
+                    require(len(owners) == 1,
+                            "provider intermediate image has an ambiguous physical owner")
+                    old_shot_ref, owner = owners[0]
+                    shot_id = owner["shot_id"]
+                    require(target_id == _authoring_identity(
+                        "authoring-timeline-revision", project_id, timeline_id, owner["shot_id"], image["payload"]),
+                        "provider intermediate promotion differs from its sequential allocation")
+                    payload = owner["payload"]
+                    require(payload.get("internal_timeline_revision_id") == source_id,
+                            "provider intermediate image owner has a different physical edge")
+                    owner["internal_timeline_revision_id"] = target_id
+                    payload["internal_timeline_revision_id"] = target_id
+                    owner["content_digest"] = digest(payload)
+                    successor_shot_id = _authoring_identity(
+                        "authoring-shot-revision", project_id, owner["shot_id"], payload)
+                    successor_shot_ref = "shot-revision:" + successor_shot_id
+                    require(successor_shot_ref not in result,
+                            "provider intermediate shot promotion overlaps an authenticated root")
+                    owner["revision_id"] = successor_shot_id
+                    result[successor_shot_ref] = result.pop(old_shot_ref)
+                else:
+                    shot_id = image["shot_id"]
+                    require(target_id == _authoring_identity(
+                        "authoring-shot-revision", project_id, image["shot_id"], image["payload"]),
+                        "provider intermediate shot promotion differs from its sequential allocation")
+                    old_shot_ref, successor_shot_id = ref, target_id
+                parent = result["parent"]["payload"]
+                owners = [row for row in parent.get("occurrences", [])
+                          if row.get("shot_revision_id") == old_shot_ref.partition(":")[2]]
+                require(owners and all(row.get("shot_id") == shot_id for row in owners),
+                        "provider intermediate promotion lacks its authenticated parent owner")
+                for row in owners:
+                    row["shot_revision_id"] = successor_shot_id
+                result["parent"]["content_digest"] = digest(parent)
+                image["revision_id"] = target_id
+                result[target] = result.pop(ref)
+                expected_parent = _authoring_parent_identity(result, identity_scope, manifest)
+                parent_pins = [binding for binding in following["bindings"]
+                               if binding.get("physical_ref") == "parent"
+                               and binding.get("boundary", {}).get("phase") == "input"]
+                require(parent_pins and all(pin.get("revision_id") == expected_parent
+                                           and pin.get("content_digest") == result["parent"]["content_digest"]
+                                           for pin in parent_pins),
+                        "provider intermediate parent promotion differs from its sequential allocation")
+                result["parent"]["revision_id"] = expected_parent
+            else:
+                require(not ref.startswith(("shot-revision:", "internal-revision:")),
+                        "provider intermediate image lacks an authenticated physical promotion")
+                require(_following_read_observes(result, following, ref),
+                        "provider intermediate image lacks a next-command authenticated read")
+    if projected_roots and identity_scope is not None:
+        expected_parent = _authoring_parent_identity(result, identity_scope, manifest)
+        parent_pins = [binding for binding in following["bindings"]
+                       if binding.get("physical_ref") == "parent"
+                       and binding.get("boundary", {}).get("phase") == "input"]
+        require(parent_pins and all(pin.get("revision_id") == expected_parent
+                                   and pin.get("content_digest") == result["parent"]["content_digest"]
+                                   for pin in parent_pins),
+                "provider created parent differs from its sequential allocation")
+        result["parent"]["revision_id"] = expected_parent
     return result
 
 
@@ -1034,21 +1345,45 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
     validate_claims(request, records)
     accepted = images(prepared["canonical_document"])
     touched = set()
+    manifest = copy.deepcopy(source["dependency_manifest"])
     if records["merge_mode"] == "atomic":
         for record in records["commands"]:
             for capture in [*record["writes"], *record["reads"], *record["derived_writes"]]:
                 touched.add(native_site(boundary, capture["ref"], capture["path"])[0])
             touched.update(binding["physical_ref"] for binding in record["bindings"] if "physical_ref" in binding)
     for step in records["steps"]:
-        validate_step(request, records, step, boundary, batch_reads, continuations)
+        command_inputs = {step["command_ordinals"][0]: boundary}
+        command_manifests = {}
+        for ordinal in step["command_ordinals"]:
+            # Consumed input pins are checked by the request-private port at
+            # acceptance. Only earlier commands contribute to this boundary;
+            # a following binding cannot allocate a physical identity.
+            for dependency in records["commands"][ordinal]["dependencies"]:
+                pin = dependency.get("pin", {})
+                if dependency.get("kind") == "media":
+                    media_id = pin.get("object_id", pin.get("media_id"))
+                    if media_id is not None:
+                        media = {row["media_id"]: row for row in manifest["media"]}
+                        media[media_id] = {"media_id": media_id, "content_digest": media_id}
+                        manifest["media"] = sorted(media.values(), key=lambda row: row["media_id"])
+                elif dependency.get("kind") == "document" and pin not in manifest["documents"]:
+                    manifest["documents"].append(copy.deepcopy(pin))
+                    manifest["documents"].sort(key=lambda row: (row["document_id"], row["version"], row["content_digest"]))
+            command_manifests[ordinal] = copy.deepcopy(manifest)
+        for ordinal, next_ordinal in zip(step["command_ordinals"], step["command_ordinals"][1:]):
+            command_inputs[next_ordinal] = command_output(
+                command_inputs[ordinal], records["commands"][ordinal], records["commands"][next_ordinal],
+                accepted=accepted, identity_scope=(source["project_id"], source["timeline_id"]),
+                manifest=command_manifests[ordinal])
+        validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs)
         for ref in touched:
             require(covers(step["dependencies"], {"kind": "scope", "ref": ref, "path": []}),
                     "provider atomic dependency union omits a touched scope")
         output = step_output(boundary, step, records, accepted, original)
         effect_boundaries = _inverse_stage_boundaries(boundary, output, step, records, accepted, original, history)
-        command_input = boundary
         for ordinal in step["command_ordinals"]:
             record = records["commands"][ordinal]
+            command_input = command_inputs[ordinal]
             if record["command"]["op"] == "doc.patch":
                 indices = [binding.get("boundary", {}).get("change_ordinal") for binding in record["bindings"]
                            if binding["key"].startswith("doc.patch:")]
@@ -1056,8 +1391,6 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
                         "provider patch bindings do not cover its ordered changes")
             validate_bindings(request, records, prepared["expected_head"], command_input, output, step, ordinal,
                               continuations, original, boundary, effect_boundaries)
-            if ordinal != step["command_ordinals"][-1]:
-                command_input = command_output(command_input, record, records["commands"][ordinal + 1])
         for ordinal in step["command_ordinals"]:
             for binding in records["commands"][ordinal]["bindings"]:
                 if binding.get("key") == "commit.materialization":
