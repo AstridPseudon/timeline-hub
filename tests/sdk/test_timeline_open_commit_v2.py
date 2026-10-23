@@ -92,7 +92,7 @@ def test_public_session_undo_preserves_whole_shape_and_forwards_steps(connected,
     publication = accepted["receipt"]["receipt_id"]
 
     selector = None if selected is None else {publication: selected}
-    tl.session.undo([publication], steps=selector)
+    tl.undo(publications=[publication], steps=selector)
 
     inverse = json.loads(generated.calls[-1][0])["commands"][0]
     assert inverse["args"]["publications"] == [publication]
