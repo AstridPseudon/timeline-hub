@@ -13,7 +13,7 @@ import { sanitizeTimelineClipSnapshot } from '@/tools/video-editor/lib/timeline-
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
 import type { ProjectObjectMetadata } from '@astrid/editor-sdk';
 import { MANAGED_OBJECT_DIGEST, MANAGED_OBJECT_ID, PROJECT_ID, TIMELINE_ID, json, runtimeFixture, sha256Digest } from '@/test/fakeWorkspaceRuntime.ts';
-import type { MediaSelection, VerifiedMedia } from './generated.ts';
+import type { MediaSelection, MediaSelectionQuery, VerifiedMedia } from './generated.ts';
 
 const MANAGED_OBJECT_URL = `http://runtime.test/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`;
 
@@ -132,6 +132,33 @@ describe('RuntimeDataProvider', () => {
 
     await expect(provider.getProjectVerifiedMedia(PROJECT_ID, selection)).resolves.toEqual(verified);
     expect(verifiedRequests).toEqual([path]);
+    expect(fixture.requests.filter(({ method, path: requestPath }) => method !== 'GET'
+      && requestPath !== '/v1/handshake')).toEqual([]);
+  });
+
+  it('reads the exact project media selection through the authenticated Runtime facade', async () => {
+    const fixture = runtimeFixture();
+    const query: MediaSelectionQuery = {
+      asset: 'asset-popup', generation_id: 'generation-popup', variant_id: 'variant-popup',
+    };
+    const selected: MediaSelection = {
+      ...query,
+      object_id: MANAGED_OBJECT_DIGEST,
+      catalog_digest: `sha256:${'d'.repeat(64)}`,
+    };
+    const path = `/v1/projects/${encodeURIComponent(PROJECT_ID)}/media-selection?asset=${encodeURIComponent(query.asset)}&generation_id=${encodeURIComponent(query.generation_id)}&variant_id=${encodeURIComponent(query.variant_id)}`;
+    const selectionRequests: string[] = [];
+    const transport: typeof fixture.transport = async (method, requestPath, headers, body) => {
+      if (method === 'GET' && requestPath === path) {
+        selectionRequests.push(requestPath);
+        return { status: 200, headers: {}, body: json(selected) };
+      }
+      return fixture.transport(method, requestPath, headers, body);
+    };
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: publicTimelineTransport(fixture, transport) });
+
+    await expect(provider.getProjectMediaSelection(PROJECT_ID, query)).resolves.toEqual(selected);
+    expect(selectionRequests).toEqual([path]);
     expect(fixture.requests.filter(({ method, path: requestPath }) => method !== 'GET'
       && requestPath !== '/v1/handshake')).toEqual([]);
   });

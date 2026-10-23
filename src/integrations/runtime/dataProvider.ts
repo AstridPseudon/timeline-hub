@@ -7,6 +7,7 @@ import type {
   EditCommand,
   HistoryPage,
   MediaSelection,
+  MediaSelectionQuery,
   VerifiedMedia,
 } from './generated.ts';
 import {
@@ -843,6 +844,18 @@ export class RuntimeDataProvider implements DataProvider {
 
   async resolveTimelineCommandAsset(file: string, registry: AssetRegistry): Promise<string> {
     return this.resolveAssetUrlFromRegistry(file, registry);
+  }
+
+  async getProjectMediaSelection(
+    projectId: string,
+    selection: MediaSelectionQuery,
+  ): Promise<MediaSelection> {
+    if (projectId !== this.projectId) {
+      throw new Error(
+        `Workspace Runtime media selection read requires project ${this.projectId}, got ${projectId}`,
+      );
+    }
+    return this.client.getProjectMediaSelection(projectId, selection);
   }
 
   async getProjectVerifiedMedia(
