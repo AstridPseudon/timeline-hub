@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T12:44:27Z | dispatcher heartbeat 3s | live 4 (sol 1, luna 3, other 0) | busy30 25 | status age 1m -->
+<!-- agent | 2026-10-23T12:46:57Z | dispatcher heartbeat 15s | live 4 (sol 2, luna 2, other 0) | busy30 25 | status age 1m -->
 # agent board, 2026-10-23T12:43:02Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -91,9 +91,11 @@
 | R1-atomic-scope | completeJSON atomic scope dependency union | Sol; independentLuna | author1216PASS | review | agt-R1-atomic-integrated-1243 QUEUED | AuthrealREDGREEN3new+211impacted+33RuntimeguardPASS/2149/1912/tools, sameprocessorigins; sourcefix independentofG5gate. Independent3+211/2149/1912/toolsPASS; logONLYowndcb4 verified, MERGED5b1/tree f641 EXACTrevieweddcb4; integrated3proof1243queued | dcb4cee322;5b1b4db82 |
 | F-agent-requalification | current full after F/source repairs | Farm/testservice; Luna envhandoff | currentd1fa+Runtime3b | doing | farm10362 FINAL envFAIL; agt-F-full-env-review-1235 FINALPASS; Farmpeer1240 READY | 0tests exit4 missingruntime_protocol; Author supported819acf/current3b full-current-v3-1229 row/collect16913of17598/685declared PASS; independentrecipe reviewPASS/6xdist origins/row9035, exactportable row sentFarm1240, no localfullbody. No secondbody/fullPASS | currentd1fa |
 
-| A3-fork-source-baseline | preserve verified copied media baseline | Sol D15; Luna next | sourcecausal1225 | doing | agt-A3-fork-source-baseline-1232 QUEUED | ActualApp fork preview copies retainedaudio but compilernewbaseline loses it; bounded newselection/forgery/sibling/undo guards required, no Runtimechange | based1fa |
+| A3-fork-source-baseline | preserve verified copied media baseline | Sol D15; independentLuna | author1232PASS | review | agt-A3-fork-baseline-review-1246 QUEUED | Author105/new17/current3b preview+acceptPASS/2149/1912/tools; reconstructedverifiedimmutablebaseline retainsaudio/sibling. Combinedfork+patch wholeundoFAIL separatelyowned1246; no journeycredit | bfcf78db99 |
 
 | G4-shared-seed | exact shared-popup source authority | Luna existing-source qualification | decisionnewsharedplacement | blocked:orchestrator | agt-G4-shared-seed-authority-1237 FINAL; escalation1242 | Noqualifyingexactpopupbackup/12archivenames23realms; 7carrier gaps independently1222 confirmed. MinimalSAME-TIMELINE authenticatedsharedplacement UNAPPLIED; orchestratorneedsdecide1242, no guessedAPI | no productchange |
+
+| R2-fork-emitter-undo | combined fork+patch native stage coverage | Sol R2 causaldiagnosis | author1232 retainedactualFAIL | doing | agt-R2-fork-emitter-undo-diagnosis-1246 QUEUED | Acceptedforward then wholeundo native/effectcoverage refusal; fork-onlyundoPASS. Exactactualcandidate+stagehistory classification before any guard/sourcefix, no broadmatrix | sourcebfcf/current3b |
 
 Resolved: D17 Runtime3b independent1115+integrated238PASS and Agent78f independent1123+ownmergedd1fa jointlyQUALIFIED actual323PASS byAgent1132. Missingmetadata/nativeaggregate blockerscleared. No original58replacementclaim.
 Blockers: farm/agent — existing full10362 FINAL environmentFAIL/0tests, not productproof. Unique Agentenvhandoff1229 prepares verified exact command/row for Farm; Farm remains sole full/finalbuild owner. App privategraph denial remains stopped; no workaround.
