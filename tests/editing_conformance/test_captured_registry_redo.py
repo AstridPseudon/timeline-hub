@@ -74,6 +74,136 @@ def test_captured_registry_redo_preserves_exact_config_and_sources(captured):
     assert bundle == replay(captured)[0]
 
 
+def test_captured_occurrence_guard_folds_same_command_aliases(captured):
+    original = copy.deepcopy(captured)
+    bundle, records = replay(captured)
+    original_records = copy.deepcopy(list(records))
+    changes = coalesce(records, State(bundle))
+    aggregate = next(write for write in changes
+                     if write['ref'] == 'parent' and write['path'] == ['occurrences'])
+    assert aggregate['before'] == records[0]['writes'][3]['before']
+    assert aggregate['after'] == present(bundle['placements'])
+    assert [row['occurrence_id'] for row in aggregate['after']['value']] == ['occ-film']
+    # Guard projection must retain the native alias facts for reversal and scans.
+    aliases = [write for write in records[0]['writes'] if write['ref'].startswith('occurrence:')]
+    assert all(write in changes for write in aliases)
+    assert list(records) == original_records
+    assert captured == original
+
+
+def test_captured_redo_passes_canonical_occurrence_landing_guard(captured, monkeypatch):
+    from astrid.sdk.timeline import inverse
+
+    bundle, records = replay(captured)
+    original = copy.deepcopy((bundle, captured, list(records)))
+    passed = []
+
+    def observe(state, ref, path, expected, **kwargs):
+        guard(state, ref, path, expected, **kwargs)
+        if ref == 'parent' and path == ['occurrences']:
+            passed.append(copy.deepcopy(expected))
+
+    monkeypatch.setattr(inverse, 'guard', observe)
+    try:
+        run(captured, bundle, records)
+    except CommandError:
+        # Later historical staging is a separate boundary; this assertion must
+        # also hold when that continuation eventually completes the redo.
+        pass
+    assert passed and passed[0] == present(bundle['placements'])
+    assert (bundle, captured, list(records)) == original
+
+
+@pytest.mark.parametrize('mutation', ['row', 'missing', 'extra', 'duplicate',
+                                     'parent-null', 'parent-empty', 'parent-rows'])
+def test_captured_occurrence_landing_refuses_changed_rows(captured, mutation):
+    bundle, records = replay(captured)
+    if mutation == 'row':
+        bundle['placements'][0]['gain'] = 0.5
+    elif mutation == 'missing':
+        bundle['placements'].clear()
+    elif mutation.startswith('parent-'):
+        bundle['parent']['occurrences'] = (None if mutation == 'parent-null' else
+                                         {} if mutation == 'parent-empty' else copy.deepcopy(bundle['placements']))
+    else:
+        row = copy.deepcopy(bundle['placements'][0])
+        if mutation == 'extra':
+            row['occurrence_id'] = 'foreign-occurrence'
+        bundle['placements'].append(row)
+    original = copy.deepcopy((bundle, captured, list(records)))
+    with pytest.raises((CommandError, ValueError)):
+        run(captured, bundle, records)
+    assert (bundle, captured, list(records)) == original
+
+
+@pytest.mark.parametrize('mutation', ['alias-before', 'alias-owner', 'aggregate-row', 'aggregate-order',
+                                     'missing-alias', 'duplicate-alias', 'absent', 'null', 'empty'])
+def test_captured_occurrence_folding_refuses_contradictory_history(captured, mutation):
+    writes = captured['entry']['records']['commands'][0]['writes']
+    aggregate = next(write for write in writes
+                     if write['ref'] == 'parent' and write['path'] == ['occurrences'])
+    alias = next(write for write in writes if write['ref'].startswith('occurrence:')
+                 and write['after']['state'] == 'absent')
+    if mutation == 'alias-before':
+        alias['before']['value']['gain'] = 0.5
+    elif mutation == 'alias-owner':
+        alias['before']['value']['shot_id'] = 'foreign-shot'
+    elif mutation == 'aggregate-row':
+        aggregate['after']['value'][0]['gain'] = 0.5
+    elif mutation == 'aggregate-order':
+        aggregate['after']['value'].reverse()
+    elif mutation == 'missing-alias':
+        writes.remove(alias)
+    elif mutation == 'duplicate-alias':
+        writes.append(copy.deepcopy(alias))
+    elif mutation == 'absent':
+        aggregate['after'] = {'state': 'absent'}
+    else:
+        aggregate['after'] = present(None if mutation == 'null' else {})
+    original = copy.deepcopy(captured)
+    with pytest.raises((CommandError, ValueError)):
+        bundle, records = replay(captured)
+        saved = copy.deepcopy(bundle)
+        try:
+            run(captured, bundle, records)
+        finally:
+            assert bundle == saved
+    assert captured == original
+
+
+@pytest.mark.parametrize('mutation', ['publication', 'step', 'negative-ordinal', 'extra-ordinal',
+                                     'native-range', 'effect-range'])
+def test_captured_occurrence_folding_requires_exact_source_partition(captured, mutation):
+    stage = next(binding['boundary'] for binding in captured['entry']['records']['commands'][0]['bindings']
+                 if binding['key'] == 'inverse.stage')
+    if mutation == 'publication':
+        stage['publication_id'] = 'foreign-publication'
+    elif mutation == 'step':
+        stage['step_id'] = 'foreign-step'
+    elif mutation == 'negative-ordinal':
+        stage['command_ordinals'] = [-1]
+    elif mutation == 'extra-ordinal':
+        stage['command_ordinals'].append(1)
+    else:
+        stage['native_write_range' if mutation == 'native-range' else 'effect_range'][1] -= 1
+    original = copy.deepcopy(captured)
+    with pytest.raises((CommandError, ValueError)):
+        replay(captured)
+    assert captured == original
+
+
+@pytest.mark.parametrize('accepted', [False, True])
+def test_captured_occurrence_folding_requires_physical_resolver(captured, accepted):
+    bundle, records = replay(captured)
+    unbound = (AcceptedRecords(records.entries, list(records), records.load_boundary)
+               if accepted else list(records))
+    changes = coalesce(unbound, State(bundle))
+    aggregate = next(write for write in changes
+                     if write['ref'] == 'parent' and write['path'] == ['occurrences'])
+    assert aggregate == records[0]['writes'][3]
+    assert len(aggregate['after']['value']) == 3
+
+
 @pytest.mark.parametrize('mutation', ['empty-mirror', 'null-mirror', 'config', 'registry', 'owner'])
 def test_captured_registry_redo_refuses_changed_head_without_writes(captured, mutation):
     bundle, records = replay(captured)

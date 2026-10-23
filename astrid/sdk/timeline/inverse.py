@@ -161,7 +161,37 @@ def coalesce(records, state=None, *, cache_stages=None):
 
     result = []
     for record in records:
-        for raw in [*record['writes'], *(cache_stages or {}).get(id(record), [])]:
+        writes = copy.deepcopy(record['writes'])
+        resolver = getattr(records, 'address_resolver', None)
+        aggregate = None
+        for raw, projected in zip(record['writes'], writes):
+            if raw['ref'] == 'parent' and raw['path'] == ['occurrences']:
+                aggregate = projected if isinstance(records, AcceptedRecords) and resolver is not None else None
+            elif (aggregate is not None and raw['ref'].startswith('occurrence:')
+                    and '/' not in raw['ref'] and not raw['path']):
+                identity = raw['ref'].removeprefix('occurrence:')
+                rows = aggregate['after'].get('value')
+                if (resolver(raw, raw['ref'], raw['path'])
+                        != ('parent', ('occurrences', ('occurrence_id', identity)))
+                        or aggregate['after']['state'] != 'present' or not isinstance(rows, list)
+                        or any(not isinstance(row, dict) or not isinstance(row.get('occurrence_id'), str)
+                               for row in rows)
+                        or len({row['occurrence_id'] for row in rows}) != len(rows)):
+                    raise CommandError('occurrence aggregate binding is unavailable', kind='history_unavailable')
+                indices = [i for i, row in enumerate(rows) if row['occurrence_id'] == identity]
+                if (len(indices) != 1 or not equal(present(rows[indices[0]]), raw['before'])
+                        or (raw['after'] != ABSENT
+                            and (not isinstance(raw['after'].get('value'), dict)
+                                 or raw['after']['value'].get('occurrence_id') != identity))):
+                    raise CommandError('occurrence aggregate alias changed', kind='history_unavailable',
+                                       ref=raw['ref'])
+                # Project only the landing guard. Keep every native alias write
+                # for sequential guards, source restoration and history scans.
+                if raw['after'] == ABSENT:
+                    rows.pop(indices[0])
+                else:
+                    rows[indices[0]] = copy.deepcopy(raw['after']['value'])
+        for raw in [*writes, *(cache_stages or {}).get(id(record), [])]:
             write = copy.deepcopy(raw)
             address = value_address(write)
             ancestor = next((old for old in result if value_address(old)[0] == address[0]
@@ -641,7 +671,17 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
             raise CommandError('inverse collection membership/order changed',
                                kind='selection_changed', ref=owner)
     for write in guarded_changes:
-        guard(ctx.state, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+        landing = ctx.state
+        if (isinstance(records, AcceptedRecords) and address_resolver is not None
+                and write['ref'] == 'parent' and write['path'] == ['occurrences']):
+            # Authoring bundles store the physical parent occurrence rows in
+            # placements, outside the editable parent payload.
+            if 'occurrences' in ctx.state.bundle['parent']:
+                raise CommandError('occurrence aggregate has contradictory storage', kind='inverse_conflict',
+                                   ref='parent', path=['occurrences'])
+            landing = State({**ctx.state.bundle, 'parent': {
+                **ctx.state.bundle['parent'], 'occurrences': ctx.state.bundle['placements']}})
+        guard(landing, write['ref'], write['path'], write['after'], kind='inverse_conflict')
     from ._root_inverse import recover_rebound_sources
 
     recover_rebound_sources(ctx.state, records)
