@@ -70,9 +70,9 @@ afterEach(() => {
     expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.queryByText("Agent chat isn't on this page yet.")).toBeNull();
     expect(screen.queryByRole('link', { name: 'Open the full editor' })).toBeNull();
-    await waitFor(() => expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent('Astrid · GPT 5.6 Sol'));
+    const identity = await screen.findByRole('button', { name: 'Astrid · GPT 5.6 Sol: model and thinking level' });
     const user = userEvent.setup();
-    await user.click(screen.getByTestId('agent-chat-identity'));
+    await user.click(identity);
     expect(within(await screen.findByRole('dialog', { name: 'Model and thinking level' })).getByText('Astrid · GPT 5.6 Sol')).toBeInTheDocument();
     const urls = fetchSpy.mock.calls.map(([url]) => String(url));
     await waitFor(() => expect(fetchSpy.mock.calls.map(([url]) => String(url))).toContain(`${GATEWAY}/api/astrid/acp/connection-1/models?sessionId=saved-chat`));

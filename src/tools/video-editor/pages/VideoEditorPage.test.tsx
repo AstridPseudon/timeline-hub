@@ -306,6 +306,7 @@ vi.mock(
           project,
           projectsQuery: {
             data: listed ?? undefined,
+            isSuccess: listed !== null && !override.projectsError,
             isLoading: listPending,
             isFetching: listPending,
             error: override.projectsError,
@@ -1189,12 +1190,28 @@ describe("VideoEditorPage", () => {
     expect(await screen.findByText("No projects yet")).toBeInTheDocument();
     expect(screen.getByText("Expected to see your work? It may be in another Astrid folder on this computer.")).toBeInTheDocument();
     expect(screen.getByText("Find my work")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Take the editor tour" })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "New project" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("combobox", { name: "Select project" }),
     ).toHaveTextContent("Select project");
+  });
+
+  it("does not offer the tour for a nonempty or failed project discovery result", async () => {
+    const nonempty = renderPage("/tools/video-editor");
+    expect(await screen.findByRole("combobox", { name: "Select project" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Take the editor tour" })).toBeNull();
+    nonempty.unmount();
+
+    state.discovery.projects = [];
+    state.runtimeDiscovery.omitRuntimeProject = true;
+    state.runtimeDiscovery.projectsError = new Error("Runtime busy");
+    state.runtimeDiscovery.retainDiscoveryDataOnError = true;
+    renderPage("/tools/video-editor");
+    expect((await screen.findAllByText("Runtime busy")).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Take the editor tour" })).toBeNull();
   });
 
   it("keeps canonical Runtime identity and full live editor context when a timeline is present", async () => {

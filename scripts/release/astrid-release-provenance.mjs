@@ -352,8 +352,42 @@ export function inspectCandidateController({
     fail('candidate..HEAD contains no evidence descendant commits');
   }
 
+  // Full commit IDs name immutable objects, and replacement refs are disabled
+  // by runGit. Reuse reads only within this inspection: each bounded subprocess
+  // must complete its process-scope drain, even when Git itself takes only ms.
+  // Inventory the three allowed path roots together to avoid repeating that
+  // drain for the manifest, ledger, and evidence at the same commit.
+  const evidenceDirectory = releaseEvidenceDirectory(release);
+  const entriesByCommit = new Map();
+  const jsonByCommitPath = new Map();
+  const ancestryByParent = new Map([[candidateCommit, true], [headCommit, true]]);
+  const entriesAt = (commit) => {
+    if (!entriesByCommit.has(commit)) {
+      entriesByCommit.set(commit, treeEntries(repoRoot, commit, [
+        RELEASE_MANIFEST_PATH, RELEASE_LEDGER_PATH, evidenceDirectory,
+      ]));
+    }
+    return entriesByCommit.get(commit);
+  };
+  const evidenceEntriesAt = (commit) => new Map(
+    [...entriesAt(commit)].filter(([path]) => isEvidenceArtifactPath(path, release)),
+  );
+  const jsonAt = (commit, path) => {
+    const key = `${commit}:${path}`;
+    if (!jsonByCommitPath.has(key)) {
+      jsonByCommitPath.set(key, readJsonAtCommit(repoRoot, commit, path));
+    }
+    return jsonByCommitPath.get(key);
+  };
+  const descendsFromCandidate = (parent) => {
+    if (!ancestryByParent.has(parent)) {
+      ancestryByParent.set(parent, isAncestor(repoRoot, candidateCommit, parent));
+    }
+    return ancestryByParent.get(parent);
+  };
+
   const changedPaths = new Set();
-  const candidateEvidenceEntries = treeEntries(repoRoot, candidateCommit, [releaseEvidenceDirectory(release)]);
+  const candidateEvidenceEntries = evidenceEntriesAt(candidateCommit);
   for (const [path, entry] of candidateEvidenceEntries) {
     assertOrdinaryBlob(entry, candidateCommit, path);
   }
@@ -363,7 +397,7 @@ export function inspectCandidateController({
     if (parents.length === 0) fail(`release descendant ${commit} has no parent`);
     const commitChangedPaths = new Set();
     for (const parent of parents) {
-      if (parent !== candidateCommit && !isAncestor(repoRoot, candidateCommit, parent)) {
+      if (!descendsFromCandidate(parent)) {
         fail(`release descendant ${commit} merges parent ${parent} from outside the candidate history`);
       }
       const edgePaths = changedPathsOnEdge(repoRoot, parent, commit);
@@ -373,13 +407,13 @@ export function inspectCandidateController({
       }
       if (edgePaths.includes(RELEASE_MANIFEST_PATH)) {
         assertOrdinaryBlob(
-          treeEntries(repoRoot, commit, [RELEASE_MANIFEST_PATH]).get(RELEASE_MANIFEST_PATH),
+          entriesAt(commit).get(RELEASE_MANIFEST_PATH),
           commit,
           RELEASE_MANIFEST_PATH,
         );
         const manifestErrors = validateManifestEdge(
-          readJsonAtCommit(repoRoot, parent, RELEASE_MANIFEST_PATH),
-          readJsonAtCommit(repoRoot, commit, RELEASE_MANIFEST_PATH),
+          jsonAt(parent, RELEASE_MANIFEST_PATH),
+          jsonAt(commit, RELEASE_MANIFEST_PATH),
         );
         if (manifestErrors.length > 0) {
           fail(`invalid release manifest edge ${parent}..${commit}:\n${manifestErrors.join('\n')}`);
@@ -387,13 +421,13 @@ export function inspectCandidateController({
       }
       if (edgePaths.includes(RELEASE_LEDGER_PATH)) {
         assertOrdinaryBlob(
-          treeEntries(repoRoot, commit, [RELEASE_LEDGER_PATH]).get(RELEASE_LEDGER_PATH),
+          entriesAt(commit).get(RELEASE_LEDGER_PATH),
           commit,
           RELEASE_LEDGER_PATH,
         );
         const ledgerErrors = validateLedgerEdge(
-          readJsonAtCommit(repoRoot, parent, RELEASE_LEDGER_PATH),
-          readJsonAtCommit(repoRoot, commit, RELEASE_LEDGER_PATH),
+          jsonAt(parent, RELEASE_LEDGER_PATH),
+          jsonAt(commit, RELEASE_LEDGER_PATH),
           candidateCommit,
         );
         if (ledgerErrors.length > 0) {
@@ -405,11 +439,11 @@ export function inspectCandidateController({
     const evidencePathsChangedOnEdge = [...commitChangedPaths]
       .filter((path) => isEvidenceArtifactPath(path, release));
     if (evidencePathsChangedOnEdge.length > 0) {
-      const commitEntries = treeEntries(repoRoot, commit, [releaseEvidenceDirectory(release)]);
+      const commitEntries = evidenceEntriesAt(commit);
       const parentEntries = new Map(
         parents.map((parent) => [
           parent,
-          treeEntries(repoRoot, parent, [releaseEvidenceDirectory(release)]),
+          evidenceEntriesAt(parent),
         ]),
       );
       for (const path of evidencePathsChangedOnEdge) {
@@ -460,13 +494,13 @@ export function inspectCandidateController({
     );
   }
 
-  const candidateManifest = readJsonAtCommit(repoRoot, candidateCommit, RELEASE_MANIFEST_PATH);
-  const controllerManifest = readJsonAtCommit(repoRoot, headCommit, RELEASE_MANIFEST_PATH);
+  const candidateManifest = jsonAt(candidateCommit, RELEASE_MANIFEST_PATH);
+  const controllerManifest = jsonAt(headCommit, RELEASE_MANIFEST_PATH);
   const manifestErrors = validateManifestFreezeTransition(candidateManifest, controllerManifest);
   if (manifestErrors.length > 0) fail(manifestErrors.join('\n'));
 
-  const candidateLedger = readJsonAtCommit(repoRoot, candidateCommit, RELEASE_LEDGER_PATH);
-  const controllerLedger = readJsonAtCommit(repoRoot, headCommit, RELEASE_LEDGER_PATH);
+  const candidateLedger = jsonAt(candidateCommit, RELEASE_LEDGER_PATH);
+  const controllerLedger = jsonAt(headCommit, RELEASE_LEDGER_PATH);
   const ledgerErrors = validateLedgerFreezeTransition(
     candidateLedger,
     controllerLedger,
