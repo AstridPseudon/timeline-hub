@@ -1,0 +1,77 @@
+{
+  "task": "OPS-D29-child-source-carrier",
+  "base": "tl/rt-OPS-D29-child-source-carrier-2054",
+  "source_baselines": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv",
+      "sha256": "72cafb3a5ec343f648a0e41d59a51e7c803ee51b4d04a394dc2010df828bd731",
+      "bytes": 12083,
+      "mode": "0755"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "sha256": "89d82618c6c67819e40cc73d32b6d1c372f95889761d5170bb1af3a83dc5fcff",
+      "bytes": 32441,
+      "mode": "0755"
+    }
+  ],
+  "final_scripts": [
+    {
+      "path": "ops-handoff/request-child-venv",
+      "sha256": "3b771253b465a6ba06b57ab16d6049273114dc75f491ce81d0132fedb3c8aa33",
+      "bytes": 13326,
+      "mode": "0755"
+    },
+    {
+      "path": "ops-handoff/make-child-venv",
+      "sha256": "c887a1bef4831f2ca5a43372ee28430000b2f20b9d290bffb237f27ffc404ff2",
+      "bytes": 33373,
+      "mode": "0755"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "ops-handoff/child-source.patch",
+      "sha256": "1f2de6b706e7c9ed2ae3a9645359e23e51499f0d6a3be70ef9583410c500fdbd",
+      "bytes": 7157,
+      "mode": "0644"
+    },
+    {
+      "path": "ops-handoff/test-child-carrier.py",
+      "sha256": "6971eef9f09c6922dabfb4a84ecacd791090acf5c0b11f3dd49cdc3c5fe4de53",
+      "bytes": 5436,
+      "mode": "0755"
+    }
+  ],
+  "carrier_shape": "NAME AGENT_SHA BASE_SUITE REMOTION_GRAPH --source-carrier AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA",
+  "legacy_shapes": ["NAME AGENT_SHA", "NAME AGENT_SHA BASE_SUITE", "NAME AGENT_SHA BASE_SUITE REMOTION_GRAPH"],
+  "production_command": [
+    "/tmp/.../orch/bin/request-child-venv",
+    "venv-agent-child-d29-source-return-2108",
+    "079580ca46af77e0292d49dc34386b25c8391f99",
+    "remotion-env-nodes",
+    "agent-remotion-ap2-current-079-2a9-1743",
+    "--source-carrier",
+    "/home/user/work/wt/agt-pin-079580ca",
+    "/home/user/work/wt/rt-pin-2a9e347f",
+    "2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d"
+  ],
+  "production_constraints": [
+    "fresh child name; do not reuse an existing bench name",
+    "canonical Agent 079 checkout and canonical Runtime 2a9 checkout",
+    "actual remotion-env-nodes suite; not MAIN-only0013"
+  ],
+  "installed_baseline_hashes_unchanged": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv": "72cafb3a5ec343f648a0e41d59a51e7c803ee51b4d04a394dc2010df828bd731",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv": "89d82618c6c67819e40cc73d32b6d1c372f95889761d5170bb1af3a83dc5fcff"
+  },
+  "validation": {
+    "literal_patch": "patch --batch --fuzz=0; cmp both full outputs: PASS",
+    "shell_syntax": "bash -n both scripts: PASS",
+    "fixture_compile": "python3 -m py_compile: PASS",
+    "fixture_lint": "ruff check: PASS",
+    "fixture": "cases=16 queued=4 dispatcher=1 maker_preflight=6 refusals=6",
+    "diff_check": "git diff --no-index --check: PASS",
+    "installed_hashes": "PASS; both exact baseline hashes unchanged"
+  }
+}

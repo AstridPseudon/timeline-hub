@@ -1,0 +1,229 @@
+#!/bin/bash
+# request-child-venv NAME AGENT_SHA [BASE_SUITE REMOTION_GRAPH]
+# Explicit source carrier: ... --source-carrier AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA
+# D21c retains exact Agent, Runtime backend and generated client custody.
+set -u -o pipefail
+O=${CHILD_VENV_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
+W=${CHILD_VENV_WORK_ROOT:-/home/user/work}
+A=${CHILD_VENV_AGENT_CHECKOUT:-/home/user/work/agent}
+R=${CHILD_VENV_RUNTIME_CHECKOUT:-/home/user/work/runtime}
+N=${1:-}; S=${2:-}; BS=${3:-}; REMOTION=${4:-}
+RUNTIME_SHA=
+refuse() { echo "REFUSED: $*" >&2; exit 2; }
+case "$O:$W" in /*:/*) ;; *) refuse 'roots must be absolute';; esac
+[[ "$N" =~ ^venv-agent-child-[a-z0-9-]+$ ]] || refuse 'invalid child name'
+[[ "$S" =~ ^[0-9a-f]{40}$ ]] || refuse 'exact 40-character Agent commit required'
+if [ "$#" -eq 8 ] && [ "$5" = --source-carrier ]; then
+  A=$6; R=$7; RUNTIME_SHA=$8
+elif [ "$#" -gt 4 ]; then
+  refuse 'call shape is NAME AGENT_SHA [BASE_SUITE REMOTION_GRAPH] [--source-carrier AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA]'
+fi
+case "$A:$R" in /*:/*) ;; *) refuse 'source checkouts must be absolute';; esac
+[[ "$A" =~ ^/[A-Za-z0-9._/-]+$ && "$R" =~ ^/[A-Za-z0-9._/-]+$ ]] || refuse 'source checkout path contains unsafe characters'
+[ "$A" = "$(readlink -e -- "$A" 2>/dev/null)" ] || refuse 'Agent checkout path is missing or symlinked'
+[ "$R" = "$(readlink -e -- "$R" 2>/dev/null)" ] || refuse 'Runtime checkout path is missing or symlinked'
+if [ -z "$RUNTIME_SHA" ]; then
+  RUNTIME_SHA=$(git -C "$R" rev-parse --verify HEAD^{commit} 2>/dev/null) || refuse 'Runtime source unavailable'
+fi
+[[ "$RUNTIME_SHA" =~ ^[0-9a-f]{40}$ ]] || refuse 'exact 40-character Runtime commit required'
+source_state() {
+  local checkout=$1 wanted=$2 actual status
+  actual=$(git -C "$checkout" rev-parse --verify HEAD^{commit} 2>/dev/null) || return 1
+  [ "$actual" = "$wanted" ] || return 1
+  status=$(git -C "$checkout" status --porcelain --untracked-files=all 2>/dev/null) || return 1
+  [ -z "$status" ]
+}
+source_state "$A" "$S" || refuse 'requested Agent checkout/commit is unavailable, mismatched or dirty'
+source_state "$R" "$RUNTIME_SHA" || refuse 'Runtime checkout is dirty'
+CLIENT_IDENTITY=$(git -C "$R" ls-tree -r --name-only "$RUNTIME_SHA" packages/python/astrid_runtime_client/ | while IFS= read -r path; do
+  [ -n "$path" ] || continue; printf '%s=' "$path"; git -C "$R" show "$RUNTIME_SHA:$path" | sha256sum | cut -d' ' -f1
+done) || refuse 'client source unavailable'
+[ -n "$CLIENT_IDENTITY" ] || refuse 'generated Runtime client identity is incomplete'
+qualified=()
+# A retained destination with the requested name must authenticate itself.
+# Another matching bench cannot conceal a corrupt or partial same-name path.
+TARGET=${CHILD_VENV_REUSE_TARGET:-}
+if [ -e "$W/$N" ] || [ -L "$W/$N" ]; then TARGET=$W/$N; fi
+for d in "$W"/venv-agent-child-*; do
+  [[ "$(basename "$d")" =~ ^venv-agent-child-[a-z0-9-]+$ ]] || continue
+  [ -z "$TARGET" ] || [ "$d" = "$TARGET" ] || continue
+  [ -d "$d" ] && [ ! -L "$d" ] && [ -x "$d/bin/python" ] || continue
+  [ -f "$d/.astrid-source-commit" ] && [ "$(<"$d/.astrid-source-commit")" = "$S" ] || continue
+  [ -f "$d/.astrid-runtime-source-commit" ] && [ "$(<"$d/.astrid-runtime-source-commit")" = "$RUNTIME_SHA" ] || continue
+  [ -f "$d/.astrid-runtime-client-identity" ] && [ "$(<"$d/.astrid-runtime-client-identity")" = "$CLIENT_IDENTITY" ] || continue
+  if python3 -I - "$d" "$CLIENT_IDENTITY" "$A" "$S" "$R" "$RUNTIME_SHA" "$W" "${CHILD_VENV_PYTHON:-python3.13}" <<'PY'
+import base64, csv, fnmatch, hashlib, importlib.metadata as md, importlib.machinery, io, json, pathlib, re, shutil, stat, subprocess, sys, tarfile, tomllib
+from urllib.parse import unquote, urlparse
+
+def fail(message):
+    raise SystemExit(message)
+
+def readonly(root):
+    if root.is_symlink() or not root.is_dir():
+        fail(f'missing or symlinked root: {root}')
+    for path in [root, *root.rglob('*')]:
+        mode = path.lstat().st_mode
+        # venv --copies can create this one standard internal directory link.
+        # Its target is traversed and checked independently; all other links refuse.
+        if stat.S_ISLNK(mode) and path == root / 'lib64' and path.readlink() == pathlib.Path('lib') and (root / 'lib').is_dir() and not (root / 'lib').is_symlink():
+            continue
+        if stat.S_ISLNK(mode) or not (stat.S_ISDIR(mode) or stat.S_ISREG(mode)) or mode & 0o222:
+            fail(f'unsafe or writable retained path: {path}')
+
+root = pathlib.Path(sys.argv[1])
+readonly(root)
+interpreter = shutil.which(sys.argv[8])
+if interpreter is None or (root / 'bin/python').read_bytes() != pathlib.Path(interpreter).read_bytes():
+    fail('child interpreter differs from maker interpreter')
+root = root.resolve()
+sites = list((root / 'lib').glob('python*/site-packages'))
+if len(sites) != 1:
+    fail('site-packages layout incomplete or ambiguous')
+site = sites[0].resolve()
+if not site.is_relative_to(root):
+    fail('site-packages escapes child')
+expected_client = dict(item.removeprefix('packages/python/').split('=', 1) for item in sys.argv[2].splitlines())
+checkouts = {'astrid': (sys.argv[3], sys.argv[4]), 'astrid-runtime': (sys.argv[5], sys.argv[6])}
+work = pathlib.Path(sys.argv[7]).resolve()
+origins = {}
+for line in (root / '.astrid-import-origins').read_text().splitlines():
+    name, origin = line.split('=', 1)
+    if name in origins:
+        fail('duplicate import origin')
+    origins[name] = pathlib.Path(origin).resolve()
+for name in ('astrid', 'astrid_runtime', 'runtime_protocol', 'astrid_runtime_client'):
+    spec = importlib.machinery.PathFinder.find_spec(name, [str(site)])
+    if spec is None or not spec.origin:
+        fail(f'missing import origin: {name}')
+    origin = pathlib.Path(spec.origin).resolve()
+    if not origin.is_relative_to(site) or origins.get(name) != origin:
+        fail(f'import origin mismatch: {name}')
+if set(origins) != {'astrid', 'astrid_runtime', 'runtime_protocol', 'astrid_runtime_client'}:
+    fail('incomplete import provenance')
+
+def committed_files(checkout, commit):
+    data = subprocess.check_output(['git', '-C', checkout, 'archive', commit])
+    files = {}
+    with tarfile.open(fileobj=io.BytesIO(data)) as archive:
+        for entry in archive:
+            if entry.isdir():
+                continue
+            if not entry.isfile():
+                fail('unsupported committed source file')
+            files[entry.name] = archive.extractfile(entry).read()
+    return files
+
+sources = {}
+rows_by_name = {}
+for name, (checkout, commit) in checkouts.items():
+    matches = [d for d in md.distributions(path=[str(site)])
+               if re.sub(r'[-_.]+', '-', d.metadata.get('Name', '')).lower() == name]
+    if len(matches) != 1:
+        fail(f'missing or ambiguous distribution: {name}')
+    dist = matches[0]
+    dist_path = pathlib.Path(dist._path)
+    if not dist_path.resolve().is_relative_to(site):
+        fail('distribution escapes site')
+    files = committed_files(checkout, commit)
+    config = tomllib.loads(files['pyproject.toml'].decode())
+    project = config['project']
+    if dist.metadata['Name'] != project['name'] or dist.version != project['version']:
+        fail(f'distribution name/version mismatch: {name}')
+    direct = json.loads((dist_path / 'direct_url.json').read_text())
+    parsed = urlparse(direct.get('url', ''))
+    if parsed.scheme != 'file' or parsed.netloc not in ('', 'localhost') or parsed.query or parsed.fragment:
+        fail('invalid source URL')
+    source = pathlib.Path(unquote(parsed.path))
+    if source.is_symlink() or source != source.resolve() or not source.is_relative_to(work):
+        fail('source root escapes retained work root')
+    if source.name != ('agent' if name == 'astrid' else 'runtime') or not source.parent.name.startswith('.child-venv-source-'):
+        fail('source root is not a maker snapshot')
+    info = direct.get('dir_info')
+    if not isinstance(info, dict) or info.get('editable', False) is not False or 'archive_info' in direct:
+        fail('source is not a noneditable directory install')
+    readonly(source.parent)
+    for rel, content in files.items():
+        path = source / rel
+        if not path.is_file() or path.read_bytes() != content:
+            fail(f'retained source differs from requested commit: {name}/{rel}')
+    sources[name] = source
+    rows = {}
+    record = dist_path / 'RECORD'
+    for row in csv.reader(io.StringIO(record.read_text()), strict=True):
+        if len(row) != 3 or not row[0] or '\\' in row[0]:
+            fail(f'malformed {name} RECORD row')
+        rel, encoded, size = row
+        pure = pathlib.PurePosixPath(rel)
+        installed = (site / rel).resolve()
+        if pure.is_absolute() or not installed.is_relative_to(root) or rel in rows or str(pure) != rel:
+            fail(f'unsafe or duplicate {name} RECORD path')
+        if not installed.is_file():
+            fail(f'missing {name} RECORD file: {rel}')
+        content = installed.read_bytes()
+        if not encoded and not size:
+            if installed != record and not (rel.endswith('.pyc') and '__pycache__' in pure.parts):
+                fail('unhashed non-RECORD/non-pyc row')
+        else:
+            if not re.fullmatch(r'sha256=[A-Za-z0-9_-]{43}', encoded) or not re.fullmatch(r'0|[1-9][0-9]*', size):
+                fail(f'malformed {name} RECORD digest/size')
+            digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip('=')
+            if encoded != 'sha256=' + digest or int(size) != len(content):
+                fail(f'{name} RECORD bytes mismatch: {rel}')
+        package = pure.parts[0]
+        prefixes = ('astrid', 'astrid_runtime_client') if name == 'astrid' else ('astrid_runtime', 'runtime_protocol')
+        if package in prefixes and not rel.endswith('.pyc'):
+            if rel not in files or files[rel] != content:
+                fail(f'installed source bytes mismatch: {name}/{rel}')
+        rows[rel] = encoded
+    discovery = config['tool']['setuptools']['packages']['find']
+    modules = {rel for rel in files if rel.endswith('.py')
+               and any(fnmatch.fnmatch(str(pathlib.PurePosixPath(rel).parent).replace('/', '.'), pattern)
+                       for pattern in discovery['include'])
+               and not any(fnmatch.fnmatch(str(pathlib.PurePosixPath(rel).parent).replace('/', '.'), pattern)
+                           for pattern in discovery.get('exclude', []))}
+    if not modules.issubset(rows):
+        fail(f'incomplete installed source modules: {name}')
+    rows_by_name[name] = rows
+if sources['astrid'].parent != sources['astrid-runtime'].parent:
+    fail('source snapshots have different custody roots')
+agent_rows = rows_by_name['astrid']
+runtime_rows = rows_by_name['astrid-runtime']
+if set(agent_rows) & set(runtime_rows):
+    fail('overlapping distribution RECORD ownership')
+client_rows = {p for p in agent_rows if p.startswith('astrid_runtime_client/') and not p.endswith('.pyc')}
+if client_rows != set(expected_client) or any(p.startswith('astrid_runtime_client/') for p in runtime_rows):
+    fail('client RECORD ownership/file set mismatch')
+for rel, digest in expected_client.items():
+    if hashlib.sha256((site / rel).read_bytes()).hexdigest() != digest:
+        fail('canonical client bytes mismatch')
+for package, owner in (('astrid', 'astrid'), ('astrid_runtime_client', 'astrid'), ('astrid_runtime', 'astrid-runtime'), ('runtime_protocol', 'astrid-runtime')):
+    for path in (site / package).rglob('*'):
+        if path.is_file() and str(path.relative_to(site)) not in rows_by_name[owner]:
+            fail(f'unowned installed package file: {path}')
+readonly(root)
+readonly(sources['astrid'].parent)
+PY
+  then qualified+=("$d"); fi
+done
+# Check again after the installed/source scan: never return or queue a changed tuple.
+source_state "$A" "$S" && source_state "$R" "$RUNTIME_SHA" || refuse 'source changed during qualification'
+if [ "${#qualified[@]}" -gt 1 ]; then
+  refuse 'ambiguous qualified child benches'
+elif [ "${#qualified[@]}" -eq 1 ]; then
+  printf 'reused child venv path=%s agent=%s runtime=%s remotion=%s registration=existing status=passed\n' "${qualified[0]}" "$S" "$RUNTIME_SHA" "${REMOTION:-none}"
+  exit 0
+fi
+[ "${CHILD_VENV_REUSE_ONLY:-0}" != 1 ] || refuse 'existing target failed identity/preflight'
+[ ! -e "$W/$N" ] && [ ! -L "$W/$N" ] || refuse 'existing same-name target failed identity/preflight'
+# The installed dispatcher uses word splitting, not eval. Keep legacy fields
+# simple, while allowing only the canonical absolute carrier paths.
+for arg in "$N" "$S" "$BS" "$REMOTION"; do
+  [ -z "$arg" ] || [[ "$arg" =~ ^[a-zA-Z0-9_-]+$ ]] || refuse 'dispatcher arguments must be simple names'
+done
+if [ "$#" -eq 8 ]; then
+  [[ "$A" =~ ^/[A-Za-z0-9._/-]+$ && "$R" =~ ^/[A-Za-z0-9._/-]+$ && "$RUNTIME_SHA" =~ ^[0-9a-f]{40}$ ]] || refuse 'dispatcher carrier contains unsafe fields'
+  printf 'CHILDVENV %s %s%s%s --source-carrier %s %s %s\n' "$N" "$S" "${BS:+ $BS}" "${REMOTION:+ $REMOTION}" "$A" "$R" "$RUNTIME_SHA" > "$O/queue/pending/childvenv-$N"
+else
+  printf 'CHILDVENV %s %s%s%s\n' "$N" "$S" "${BS:+ $BS}" "${REMOTION:+ $REMOTION}" > "$O/queue/pending/childvenv-$N"
+fi
+echo "child venv $N queued; result in $O/queue/done/childvenv-$N"
