@@ -1,0 +1,20 @@
+Final command (worktree cwd):
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD:$PWD/packages/python:/home/user/work/agent ASTRID_CHECKOUT=/home/user/work/agent /home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_timeline_inverse_stage_authentication.py
+141 passed in 44.44s; exit 0.
+
+Baseline old-source normal-preimport overlay command is reproduced exactly in report.md.
+AUTH ORIGIN /tmp/w-1573be8190/baseline/runtime_protocol/timeline_commit_auth.py
+1 failed, 138 deselected in 1.11s; exit 1.
+Failure: inverse stage native writes do not cover its authenticated effect image (line 1373).
+
+/home/user/work/venv-agent/bin/ruff check runtime_protocol/timeline_commit_auth.py tests/test_timeline_inverse_stage_authentication.py
+All checks passed!; exit 0.
+
+git diff --check
+No output; exit 0.
+
+Both changed Python files compile in memory; exit 0.
+All pre-existing test/fixture ASTs unchanged against HEAD.
+Exact projected fixture values equal immutable retained 060 packet values.
+Captured before==after; no_write/head_unchanged/history_unchanged true.
+No full suite, browser, live socket, original c271 or public undo/redo qualification.
