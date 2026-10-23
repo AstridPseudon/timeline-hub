@@ -10,7 +10,12 @@ from test_timeline_commit_port import commit, request, rows
 
 from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.timeline_commit import CommitRejected
-from runtime_protocol.timeline_commit_auth import _coherent_materialization, site, validate_claims
+from runtime_protocol.timeline_commit_auth import (
+    _coherent_materialization,
+    command_output,
+    site,
+    validate_claims,
+)
 from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.timeline_commit_validation import digest, validate_commit_value
 
@@ -434,6 +439,75 @@ def test_sequential_step_reads_use_the_prior_step_output_and_keep_batch_reads(se
         result = commit(service, submitted)
         assert result["data"]["steps"][-1]["dependencies"] == [batch_read, step_read]
         assert commit(service, submitted) == result
+
+
+def test_sequential_created_child_boundary_uses_the_native_birth_not_future_output():
+    parent = {"config": {"output": {"fps": 24}}, "occurrences": []}
+    boundary = {"parent": {"revision_id": "base-parent", "content_digest": digest(parent),
+                            "payload": parent}}
+    shot_payload = {"name": "Opening", "items": []}
+    internal_payload = {"output": {"fps": 24}, "tracks": [], "clips": [], "registry": {"assets": {}}}
+    occurrence = {"occurrence_id": "occ-new", "shot_id": "shot-new", "track": "picture",
+                  "placement": {"start_ms": 0}, "duration_ms": 1000, "source_offset": 0,
+                  "speed": 1, "gain": 1}
+    canonical_shot = {**shot_payload, "internal_timeline_revision_id": "internal-new"}
+    accepted = {
+        "parent": {"revision_id": "accepted-parent",
+                    "content_digest": digest({**parent, "occurrences": [{**occurrence,
+                                                                            "shot_revision_id": "shot-new-r1"}]}),
+                    "payload": {**parent, "occurrences": [{**occurrence,
+                                                               "shot_revision_id": "shot-new-r1"}]}},
+        "shot-revision:shot-new-r1": {"shot_id": "shot-new", "revision_id": "shot-new-r1",
+                                       "internal_timeline_revision_id": "internal-new",
+                                       "payload": canonical_shot, "content_digest": digest(canonical_shot)},
+        "internal-revision:internal-new": {"timeline_id": "shot-new", "revision_id": "internal-new",
+                                            "payload": {**internal_payload, "future": "must-not-read"},
+                                            "content_digest": digest({**internal_payload, "future": "must-not-read"})},
+    }
+    record = {
+        "writes": [
+            {"ref": "shot:shot-new", "path": [], "before": {"state": "absent"},
+             "after": {"state": "present", "value": {"payload": shot_payload,
+                                                        "internal_timeline": internal_payload}}},
+            {"ref": "occurrence:occ-new", "path": [], "before": {"state": "absent"},
+             "after": {"state": "present", "value": occurrence}},
+        ],
+        "derived_writes": [],
+        "created": [{"ref": "shot:shot-new", "kind": "shot", "owner": None},
+                    {"ref": "occurrence:occ-new", "kind": "occurrence", "owner": "parent"}],
+    }
+    next_record = {"writes": [], "reads": [{"ref": "occurrence:occ-new/source", "path": ["output", "fps"],
+                                               "state": {"state": "present", "value": 24}}],
+                   "bindings": [
+                       {"ref": "parent", "physical_ref": "parent",
+                        "revision_id": "created-parent", "content_digest": digest(
+                            {**parent, "occurrences": [{**occurrence, "shot_revision_id": "shot-new-r1"}]}),
+                        "boundary": {"phase": "input"}},
+                       {"ref": "occurrence:occ-new/source", "physical_ref": "internal-revision:internal-new",
+                        "revision_id": "internal-new", "content_digest": digest(internal_payload),
+                        "boundary": {"phase": "input"}},
+                   ]}
+
+    result = command_output(boundary, record, next_record, accepted=accepted)
+    assert result["parent"]["payload"]["occurrences"] == [{**occurrence, "shot_revision_id": "shot-new-r1"}]
+    assert result["internal-revision:internal-new"]["payload"] == internal_payload
+
+    ambiguous = copy.deepcopy(accepted)
+    ambiguous["shot-revision:shot-new-r2"] = copy.deepcopy(ambiguous["shot-revision:shot-new-r1"])
+    ambiguous["shot-revision:shot-new-r2"]["revision_id"] = "shot-new-r2"
+    with pytest.raises(CommitRejected, match="ambiguous accepted physical shot"):
+        command_output(boundary, record, next_record, accepted=ambiguous)
+
+    wrong_owner = copy.deepcopy(accepted)
+    wrong_owner["parent"]["payload"]["occurrences"][0]["shot_revision_id"] = "foreign-shot-r1"
+    with pytest.raises(CommitRejected, match="ambiguous accepted owner"):
+        command_output(boundary, record, next_record, accepted=wrong_owner)
+
+    foreign = copy.deepcopy(next_record)
+    foreign["reads"][0]["ref"] = "occurrence:foreign/source"
+    foreign["bindings"][1]["ref"] = "occurrence:foreign/source"
+    with pytest.raises(CommitRejected):
+        command_output(boundary, record, foreign, accepted=accepted)
 
 
 @pytest.mark.parametrize("assert_effect", [False, True])
