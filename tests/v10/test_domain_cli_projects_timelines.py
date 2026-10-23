@@ -636,6 +636,7 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
 
     assert tuple(spec.name for spec in COMMANDS) == (
         "checkout",
+        "commit",
         "edit",
         "assets",
         "find",
@@ -644,7 +645,6 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "redo",
         "check",
         "status",
-        "publish",
         "discard",
         "duplicate",
         "rename",
@@ -674,6 +674,7 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
     # ``transcripts`` mount (narration transcript sync).
     assert _subparser_choices(build_parser(_FakeClient())) == {
         "checkout",
+        "commit",
         "edit",
         "assets",
         "find",
@@ -682,7 +683,6 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
         "redo",
         "check",
         "status",
-        "publish",
         "discard",
         "duplicate",
         "rename",

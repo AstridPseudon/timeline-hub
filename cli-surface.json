@@ -1710,9 +1710,6 @@
             "--json": {
               "required": false
             },
-            "--native": {
-              "required": false
-            },
             "--project": {
               "required": false
             }
@@ -1809,6 +1806,35 @@
             },
             "--project": {
               "required": false
+            }
+          },
+          "positionals": [
+            "ref"
+          ],
+          "verbs": {}
+        },
+        "commit": {
+          "flags": {
+            "--dry-run": {
+              "required": false
+            },
+            "--file": {
+              "required": true
+            },
+            "--idempotency-key": {
+              "required": true
+            },
+            "--json": {
+              "required": false
+            },
+            "--message": {
+              "required": true
+            },
+            "--project": {
+              "required": false
+            },
+            "-m": {
+              "required": true
             }
           },
           "positionals": [
@@ -2190,90 +2216,7 @@
           "positionals": [
             "ref"
           ],
-          "verbs": {
-            "commands-file": {
-              "flags": {
-                "--base-publication-id": {
-                  "required": true
-                },
-                "--base-revision-id": {
-                  "required": true
-                },
-                "--dry-run": {
-                  "required": false
-                },
-                "--idempotency-key": {
-                  "required": false
-                },
-                "--json": {
-                  "required": false
-                },
-                "--project": {
-                  "required": false
-                }
-              },
-              "positionals": [
-                "ref",
-                "commands_file"
-              ],
-              "verbs": {}
-            },
-            "move": {
-              "flags": {
-                "--clip": {
-                  "required": true
-                },
-                "--dry-run": {
-                  "required": false
-                },
-                "--idempotency-key": {
-                  "required": false
-                },
-                "--json": {
-                  "required": false
-                },
-                "--on": {
-                  "required": true
-                },
-                "--project": {
-                  "required": false
-                }
-              },
-              "positionals": [
-                "ref"
-              ],
-              "verbs": {}
-            },
-            "track-label": {
-              "flags": {
-                "--clear": {
-                  "required": false
-                },
-                "--dry-run": {
-                  "required": false
-                },
-                "--idempotency-key": {
-                  "required": false
-                },
-                "--json": {
-                  "required": false
-                },
-                "--project": {
-                  "required": false
-                },
-                "--set": {
-                  "required": false
-                },
-                "--track": {
-                  "required": true
-                }
-              },
-              "positionals": [
-                "ref"
-              ],
-              "verbs": {}
-            }
-          }
+          "verbs": {}
         },
         "elements": {
           "flags": {
@@ -2519,35 +2462,6 @@
           ],
           "verbs": {}
         },
-        "publish": {
-          "flags": {
-            "--draft": {
-              "required": false
-            },
-            "--force": {
-              "required": false
-            },
-            "--idempotency-key": {
-              "required": false
-            },
-            "--json": {
-              "required": false
-            },
-            "--message": {
-              "required": true
-            },
-            "--project": {
-              "required": false
-            },
-            "-m": {
-              "required": true
-            }
-          },
-          "positionals": [
-            "ref"
-          ],
-          "verbs": {}
-        },
         "recover": {
           "flags": {
             "--idempotency-key": {
@@ -2567,6 +2481,9 @@
         },
         "redo": {
           "flags": {
+            "--commit": {
+              "required": false
+            },
             "--draft": {
               "required": false
             },
@@ -2580,9 +2497,6 @@
               "required": false
             },
             "--project": {
-              "required": false
-            },
-            "--publication": {
               "required": false
             },
             "--steps": {
@@ -3085,6 +2999,9 @@
         },
         "undo": {
           "flags": {
+            "--commit": {
+              "required": false
+            },
             "--draft": {
               "required": false
             },
@@ -3098,9 +3015,6 @@
               "required": false
             },
             "--project": {
-              "required": false
-            },
-            "--publication": {
               "required": false
             },
             "--steps": {
