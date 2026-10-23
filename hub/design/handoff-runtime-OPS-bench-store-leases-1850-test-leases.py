@@ -368,4 +368,9 @@ if __name__ == '__main__':
         except Exception as exc:
             print('BENCH-LEASE REFUSED:', exc)
             sys.exit(125)
-    unittest.main(verbosity=2)
+    dependency_hash = hashlib.sha256(CORE.read_bytes()).hexdigest()
+    result = unittest.main(verbosity=2, exit=False)
+    if hashlib.sha256(CORE.read_bytes()).hexdigest() != dependency_hash:
+        raise AssertionError('core source changed during fixture run; qualification invalid')
+    print('core_sha256=' + dependency_hash)
+    sys.exit(0 if result.result.wasSuccessful() else 1)
