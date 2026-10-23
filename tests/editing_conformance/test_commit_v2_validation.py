@@ -56,6 +56,25 @@ def test_source_interval_is_checked_against_retained_asset_extent():
         validate_final_candidate(value)
 
 
+@pytest.mark.parametrize("owner", ["parent", "child"])
+def test_explicit_null_source_start_is_zero_for_arithmetic_and_remains_authored(owner):
+    value = candidate()
+    timeline = (value["parent"] if owner == "parent" else
+                value["shots"]["chapter-shot"]["internal_timeline"])
+    clip = timeline["clips"][0]
+    clip.update(**{"from": None, "to": 2})
+    timeline["registry"]["assets"]["picture"]["duration"] = 2
+    if owner == "parent":
+        timeline["config"]["clips"] = copy.deepcopy(timeline["clips"])
+    before = copy.deepcopy(value)
+    validate_final_candidate(value)
+    assert value == before
+    assert clip["from"] is None
+    clip["to"] = 3
+    with pytest.raises(AuthoringBundleError, match="source interval exceeds"):
+        validate_final_candidate(value)
+
+
 def test_known_element_parameter_uses_declared_value_schema():
     value = candidate()
     clip = value["parent"]["clips"][0]

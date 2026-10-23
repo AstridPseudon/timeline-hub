@@ -48,6 +48,75 @@ def test_retained_nonunit_rational_rate_preserves_shared_occurrence_inputs():
     assert document_from_bundle(value) == document
 
 
+@pytest.mark.parametrize("ownership", [
+    "shared", "shared-patch", "shared-via-shot-revisions", "distinct-revision", "fork", "equal-forks",
+])
+def test_cut_identity_follows_physical_child_images_and_keeps_occurrences_local(ownership, monkeypatch):
+    from astrid.sdk.timeline import _commit_timing_validation as adapter
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import _manifest, bundle_from_document, document_from_bundle
+    from tests.editing_conformance.test_doc_patch_v2 import change, patch
+
+    document = document_fixture(shared=True)
+    internal = document["internal_timeline_revisions"][0]
+    internal["payload"]["output"]["fps"] = 30
+    document["parent_revision"]["payload"]["config"]["output"]["fps"] = 30
+    internal["payload"]["clips"][0]["app"]["astrid"] = {"cut": "c1", "until": "end"}
+    internal["content_digest"] = _digest(internal["payload"])
+    if ownership in ("distinct-revision", "shared-via-shot-revisions"):
+        # Identical bytes and the same timeline ID still describe two images.
+        if ownership == "distinct-revision":
+            second = copy.deepcopy(internal)
+            second["revision_id"] = "internal-2"
+            document["internal_timeline_revisions"].append(second)
+        shot = copy.deepcopy(document["shot_revisions"][0])
+        revision = "internal-2" if ownership == "distinct-revision" else "internal-1"
+        shot.update(revision_id="shot-2", internal_timeline_revision_id=revision)
+        shot["payload"]["internal_timeline_revision_id"] = revision
+        shot["payload"]["name"] = "Another shot revision"
+        shot["content_digest"] = _digest(shot["payload"])
+        document["shot_revisions"].append(shot)
+        document["parent_revision"]["payload"]["occurrences"][1]["shot_revision_id"] = "shot-2"
+    document["parent_revision"]["content_digest"] = _digest(document["parent_revision"]["payload"])
+    document["dependency_manifest"] = _manifest(
+        document["shot_revisions"], document["internal_timeline_revisions"],
+        document["dependency_manifest"]["media"], [],
+    )
+    value = bundle_from_document(document)
+    if ownership == "shared-patch":
+        value = execute(value, [patch(change(
+            ["clips", "id:clip-a", "params"], {"state": "absent"}, {"x": 1},
+            ref="internal-revision:internal-1",
+        ))]).bundle
+    elif ownership in ("fork", "equal-forks"):
+        for shot in value["shots"].values():
+            shot["internal_timeline"]["clips"][0]["params"] = {"x": 1}
+            if ownership == "fork":
+                break
+    before = encoded(value)
+    converted = encoded(document_from_bundle(value))
+    results = []
+
+    def capture(inputs):
+        result = compile_timing(inputs)
+        results.append(result)
+        return result
+
+    monkeypatch.setattr(adapter, "compile_timing", capture)
+    if ownership in ("distinct-revision", "fork", "equal-forks"):
+        with pytest.raises(TimingCompileError, match="ambiguous cut identity"):
+            validate_candidate_timing(value)
+    else:
+        validate_candidate_timing(value)
+        intervals = {owner[0]: interval for owner, interval in results[0].timings.items()
+                     if owner[2] == "clip-a" and owner[0] != "parent"}
+        assert [(intervals[occ]["start"], intervals[occ]["end"])
+                for occ in ("occ-a", "occ-b")] == [(1, 10), (11, 20)]
+        assert len(document_from_bundle(value)["internal_timeline_revisions"]) == 1
+    assert encoded(value) == before
+    assert encoded(document_from_bundle(value)) == converted
+
+
 @pytest.mark.parametrize(("owner", "field", "value"), [
     ("parent", "for", 0), ("parent", "for", -1),
     ("parent", "on", "c999"), ("parent", "until", "c999"),

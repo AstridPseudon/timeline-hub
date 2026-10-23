@@ -134,7 +134,7 @@ def _clip_duration(clip: Mapping[str, Any], path: str) -> tuple[Fraction, Fracti
     if start < 0:
         _fail(f"{path}.at", "must not be negative")
     speed = _number(clip.get("speed", 1), f"{path}.speed", positive=True)
-    source_start = _number(clip.get("from", 0), f"{path}.from")
+    source_start = _number(0 if clip.get("from") is None else clip["from"], f"{path}.from")
     if source_start < 0:
         _fail(f"{path}.from", "must not be negative")
     source_to = clip.get("to")
@@ -192,7 +192,7 @@ def _validate_clip_list(
         if asset_key is not None:
             if asset_key not in assets or not isinstance(assets[asset_key], Mapping):
                 _fail(f"{clip_path}.asset", f"unknown asset {asset_key!r}")
-            source_start = _number(clip.get("from", 0), f"{clip_path}.from")
+            source_start = _number(0 if clip.get("from") is None else clip["from"], f"{clip_path}.from")
             source_duration = _asset_duration(assets[asset_key])
             # The authored source window is independent of an image's hold.
             source_end = (_number(clip["to"], f"{clip_path}.to") if clip.get("to") is not None

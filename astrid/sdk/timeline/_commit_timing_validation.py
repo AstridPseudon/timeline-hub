@@ -20,7 +20,8 @@ def validate_candidate_timing(candidate: Mapping[str, Any]) -> None:
     The canonical compiler guards changes to occurrence source maps. As in
     shot_composition_projection._project_clip, retained occurrence speed and
     source_offset are provenance, while child windows supply timing. Only that
-    placement representation is adapted; no clip or declaration is discarded.
+    placement representation and physical child identities are adapted; no clip
+    or declaration is discarded.
     """
     publication = compile_authoring_candidate(candidate).publication
     projection = copy.deepcopy(dict(candidate))
@@ -34,6 +35,23 @@ def validate_candidate_timing(candidate: Mapping[str, Any]) -> None:
             canvas = canvas[key]
         canvas.setdefault("fps", copy.deepcopy(output["fps"]))
     projection["placements"] = copy.deepcopy(publication["parent_composition"]["occurrences"])
+    if "_runtime_document" in candidate["source_mapping"]:
+        from astrid.sdk.timeline.commit import document_from_bundle
+
+        # Use the provider's physical closure, including shared patch successors
+        # and unchanged reused images, rather than the compiler's local copies.
+        document = document_from_bundle(candidate)
+        occurrences = {row["occurrence_id"]: row for row in document["parent_revision"]["payload"]["occurrences"]}
+        shots = {row["revision_id"]: row for row in document["shot_revisions"]}
+        internals = {row["revision_id"]: row for row in document["internal_timeline_revisions"]}
+        for row in projection["placements"]:
+            physical = shots[occurrences[row["occurrence_id"]]["shot_revision_id"]]
+            internal = internals[physical["internal_timeline_revision_id"]]
+            projection["source_mapping"]["shots"][row["shot_id"]] = {
+                "internal_timeline_id": internal["timeline_id"],
+                "internal_timeline_revision_id": internal["revision_id"],
+                "internal_timeline_content_digest": internal["content_digest"],
+            }
     for row in projection["placements"]:
         path = f"candidate.placements[{row['occurrence_id']!r}]"
         _placement_speed(row.get("speed"), path=f"{path}.speed")
