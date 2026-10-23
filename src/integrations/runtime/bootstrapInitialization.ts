@@ -66,7 +66,7 @@ function initializationResult(saved: NonNullable<OutboxRecord['initialization']>
   const data = result?.response?.data;
   const receipt = result?.response?.receipt;
   const document = data?.canonical_document;
-  requireValue((data?.status === 'accepted' || data?.status === 'rebased')
+  requireValue((data?.status === 'accepted' || data?.status === 'rebased' || data?.status === 'merged')
     && data.base_revision_id === body.base_revision_id && data.base_publication_id === body.base_publication_id
     && equal(data.commands, body.commands)
     && !!head.revisionId && !!head.publicationId && result && sameHead(result.accepted, head)

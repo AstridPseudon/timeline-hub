@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
-import type { CanonicalDocument, Transport } from './generated.ts';
+import { WorkspaceClient, type CanonicalDocument, type Transport } from './generated.ts';
 import { classifyRuntimeCommitFailure, AstridRuntimeClient } from './client.ts';
+import { decodeAcceptedTimelineCommit } from './dataProvider.ts';
 import { ApiError } from './generated.ts';
 import { RuntimeDataProvider } from './dataProvider.ts';
 import { RUNTIME_SCHEMA_DIGEST } from './contract-metadata.ts';
@@ -106,6 +107,103 @@ describe('Runtime timeline commit capability', () => {
     expect(classifyRuntimeCommitFailure(new ApiError(409, 'conflict', 'busy', '', { status: 'refused', reason: 'head_busy' }))).toBe('unknown');
     expect(classifyRuntimeCommitFailure(new ApiError(422, 'invalid', 'bad'))).toBe('validation');
     expect(classifyRuntimeCommitFailure(new ApiError(503, 'not_ready', 'unknown'))).toBe('unknown');
+  });
+
+  it('accepts the v2 merged status in the shared commit decoder', () => {
+    const response = accepted('r1', 'p1', 'r0', 'p0');
+    response.data.status = 'merged';
+    expect(decodeAcceptedTimelineCommit(response, PROJECT_ID, TIMELINE_ID).accepted).toEqual({
+      revisionId: 'r1',
+      publicationId: 'p1',
+    });
+  });
+
+  it('accepts a complete merged closure through the generated WorkspaceClient', async () => {
+    const change = {
+      op: 'set' as const,
+      ref: 'parent',
+      path: ['clips', 'id:x', 'meta', 'org.example.notes', 'note'],
+      before: { state: 'absent' as const },
+      value: 'B',
+    };
+    const command = {
+      schema_version: 1 as const,
+      op: 'doc.patch' as const,
+      version: '1',
+      select: null,
+      args: { changes: [change] },
+    };
+    const step = {
+      id: 'note-1',
+      label: 'Revise the first note',
+      intent: 'Clarify the opening',
+      tags: ['notes'],
+      command_ordinals: [0] as [number],
+      patch: [change],
+      dependencies: [],
+    };
+    const mergedRequest = {
+      ...request(),
+      commands: [command] as [typeof command],
+      label: 'Clarify opening note',
+      steps: [step] as [typeof step],
+      merge: 'fields' as const,
+      reads: [],
+      dry_run: false,
+    };
+    const response = acceptedCommit(
+      { revision_id: 'r2', publication_id: 'p2' },
+      { revision_id: 'r0', publication_id: 'p0' },
+      { commands: mergedRequest.commands },
+    );
+    response.data.status = 'merged';
+    response.data.previous_revision_id = 'r1';
+    response.data.previous_publication_id = 'p1';
+    response.data.rebased_onto = { revision_id: 'r1', publication_id: 'p1' };
+    response.data.merge_mode = 'fields';
+    response.data.label = mergedRequest.label;
+    response.data.steps = [step];
+    response.receipt.idempotency_key = 'merged-key';
+    response.receipt.request_hash = fixtureDigest({
+      operation: 'commitTimeline',
+      path: `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/commit`,
+      publisher: response.data.publisher,
+      request: mergedRequest,
+    }).slice(7);
+
+    const sent: { method: string; path: string; headers: Record<string, string>; body: unknown }[] = [];
+    const fakeHTTP: Transport = async (method, path, headers, body) => {
+      sent.push({
+        method,
+        path,
+        headers,
+        body: JSON.parse(new TextDecoder().decode(body as Uint8Array)),
+      });
+      return { status: 200, headers: {}, body: json(response) };
+    };
+    const client = new WorkspaceClient('http://runtime.test', 'token', fakeHTTP);
+
+    const result = await client.commitTimeline(PROJECT_ID, TIMELINE_ID, mergedRequest, 'merged-key');
+
+    expect(result.data.status).toBe('merged');
+    expect(result.data.canonical_document.parent_revision.revision_id).toBe('r2');
+    expect(result.data.steps).toEqual([step]);
+    expect(result.receipt).toMatchObject({
+      receipt_id: 'p2',
+      idempotency_key: 'merged-key',
+      result: response.data,
+    });
+    expect(sent).toEqual([{
+      method: 'POST',
+      path: `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/commit`,
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Bearer token',
+        'Content-Type': 'application/json',
+        'Idempotency-Key': 'merged-key',
+      },
+      body: mergedRequest,
+    }]);
   });
 
   it('preserves repeated occurrences, scoped child images, opaque fields and explicit nulls', async () => {
