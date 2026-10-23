@@ -44,7 +44,7 @@ def test_idle_host_claims_work_admitted_after_the_runtime_restarts(
     realm, support = tmp_path / "realm", tmp_path / "support"
 
     def start(port: int = 0):
-        return real_runtime(realm, support_root=support, port=port, production_worker_credentials=True)
+        return real_runtime(realm, support_root=support, port=port)
 
     daemon = start()
     port = daemon.httpd.server_port

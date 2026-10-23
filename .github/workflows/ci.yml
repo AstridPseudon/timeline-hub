@@ -1,5 +1,6 @@
-# Default run per push (testing plan UA.1). The heavy lanes (integration, darwin_native, live, opt_in;
-# tests/lanes.py) have no scheduled run yet: they run only on request, locally (testing plan, Owned debt).
+# Default run per push (testing plan UA.1). The heavy lanes run elsewhere: darwin_native, remotion, chrome and codex_cli
+# in the darwin-native job below; integration and opt_in nightly in .github/workflows/lanes.yml. The lanes with no job
+# (workstation, omp, gpu, live) are listed by name at the end of every run (tests/lanes.py).
 name: CI
 
 on:
@@ -161,9 +162,12 @@ jobs:
         run: npx remotion browser ensure
         working-directory: remotion
 
-      # The lanes the default run deselects and only this job provides: native macOS, the Remotion install, headless Chromium.
+      - name: Install the Codex CLI (the codex_cli lane starts its native binary in the host sandbox)
+        run: npm install -g @openai/codex@0.163.0
+
+      # The lanes the default run deselects and only this job provides: native macOS, the Remotion install, headless Chromium, the Codex CLI.
       - name: Darwin native, Remotion and browser tests
-        run: python -m pytest -q -m "darwin_native or remotion or chrome"
+        run: python -m pytest -q -m "darwin_native or remotion or chrome or codex_cli"
 
   # Release wheel (testing plan R-1: kept from the old m8 artifact job). Hashed build tools, one wheel,
   # installed with only the hashed runtime lock, and the toolchain recorded next to it. It is also the

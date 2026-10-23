@@ -15,7 +15,7 @@ RUNNER = ROOT / "projects/astrid-intro/build/h3/continuation-poc-v1/run-on-5090.
 
 # The runner exists only on the 5090 workstation checkout (never tracked in git), so
 # every test here needs that local run artifact.
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.workstation
 
 
 def test_h3_runner_reuses_only_a_compatible_named_session() -> None:

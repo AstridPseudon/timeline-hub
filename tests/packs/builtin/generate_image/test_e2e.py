@@ -545,8 +545,7 @@ def _comfyui_binary_present() -> bool:
     return shutil.which("comfyui") is not None
 
 
-@pytest.mark.integration
-@pytest.mark.opt_in
+@pytest.mark.gpu
 def test_e2e_local_smoke(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Smoke test: execution=local with z-image t2i mode runs without crashing."""
     if not _vibecomfy_importable() or not _comfyui_binary_present():

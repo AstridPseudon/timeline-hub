@@ -46,8 +46,10 @@ NODE = shutil.which("node")
 def _require_hyperframes_environment() -> str:
     """Return a node >= 22 executable, or fail (these tests are in the manual ``integration`` lane).
 
-    Prefers a system/nvm node that satisfies HyperFrames' Node 22+
-    requirement (v20 on PATH is common; a newer nvm node usually exists).
+    Prefers a node that satisfies HyperFrames' Node 22+ requirement (v20 on
+    PATH is common): the PATH node, then nvm versions, then the GitHub runner
+    tool cache (``RUNNER_TOOL_CACHE/node/<version>/<arch>``, where a second
+    ``actions/setup-node`` step leaves Node 22 without changing the PATH node).
     """
     if shutil.which("ffmpeg") is None:
         unavailable("ffmpeg is unavailable")
@@ -61,6 +63,12 @@ def _require_hyperframes_environment() -> str:
             for path in sorted(nvm_versions.iterdir(), reverse=True)
             if (path / "bin" / "node").is_file()
         )
+    tool_cache = os.environ.get("RUNNER_TOOL_CACHE")
+    if tool_cache:
+        candidates.extend(
+            str(path)
+            for path in sorted(Path(tool_cache).glob("node/*/*/bin/node"), reverse=True)
+        )
     for node in candidates:
         version = subprocess.run(
             [node, "--version"], capture_output=True, text=True, check=False
@@ -71,7 +79,7 @@ def _require_hyperframes_environment() -> str:
             continue
         if major >= 22:
             return node
-    unavailable("node >= 22 required for hyperframes (checked system + nvm)")
+    unavailable("node >= 22 required for hyperframes (checked PATH, nvm and the runner tool cache)")
 
 
 @contextmanager

@@ -1,14 +1,15 @@
 """GenericPackHost acceptance for the real Remotion render capability.
 
-The test is intentionally opt-in through a provisioned dependency tree.  A
-normal source checkout does not carry ``remotion/node_modules``; when the
-tree is available, the test copies it into the temporary workspace so the
-host's preflight and the Remotion CLI both see an owned runtime.
+The test uses the repository's own provisioned dependency tree
+(``npm ci --prefix remotion``, which the lanes workflow runs) and links it into
+the temporary workspace so the host's preflight and the Remotion CLI both see an
+owned runtime.
 """
 
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 import shutil
@@ -20,13 +21,9 @@ import pytest
 from tests.lanes import unavailable
 
 ROOT = Path(__file__).resolve().parents[2]
-SCHEMA_ROOT = ROOT.parent / "astrid-app" / "vendor" / "timeline-schema" / "python"
-DEPENDENCY_ROOT = Path(
-    os.environ.get(
-        "ASTRID_TEST_REMOTION_DEPENDENCY_ROOT",
-        str(ROOT.parent / "Astrid-beta-convergence" / "remotion" / "node_modules"),
-    )
-).expanduser()
+# The pinned timeline-schema dependency is installed with the dev extras; its install root is the schema root.
+SCHEMA_ROOT = Path(importlib.util.find_spec("banodoco_timeline_schema").origin).resolve().parent.parent
+DEPENDENCY_ROOT = ROOT / "remotion" / "node_modules"
 
 from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient  # noqa: E402
 from astrid_runtime_client import WorkspaceClient  # noqa: E402
@@ -37,7 +34,7 @@ pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout
 @pytest.fixture(autouse=True)
 def _remotion_dependency_root() -> None:
     if not DEPENDENCY_ROOT.is_dir():
-        unavailable("provisioned Remotion dependency root is unavailable; set ASTRID_TEST_REMOTION_DEPENDENCY_ROOT")
+        unavailable("remotion/node_modules is unavailable; run `npm ci --prefix remotion`")
 
 
 def _make_media(root: Path) -> tuple[Path, Path]:
@@ -191,7 +188,7 @@ def test_generic_host_remotion_register_claim_execute_settle_and_cas(
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(remotion.resolve()))
     timeline_path, assets_path = _make_media(workspace)
 
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
         generated.handshake(

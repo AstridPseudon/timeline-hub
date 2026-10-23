@@ -9,7 +9,8 @@ marker that has the lane's name (``@pytest.mark.ffmpeg``, ``@pytest.mark.posix_n
   dependency is missing the test is skipped and the skip is declared, EXCEPT in a job that is meant to
   provide it (the job's ``ASTRID_CI_JOB`` is in the lane's ``jobs``), and in a lane the run selected by
   name (``default_off``): there a missing dependency is a failure.
-* ``manual``: needs something no CI job has (a second checkout, credentials, opt-in). Always ``default_off``,
+* ``scheduled``: needs nothing the other lanes do not name; too slow for every push, so a scheduled job runs it.
+* ``manual``: needs something no CI job has (credentials, a GPU, the owner's workstation files). Always ``default_off``,
   so the default run deselects these tests; running one by hand with ``-m`` fails, never skips, when its
   dependency is missing.
 
@@ -52,10 +53,22 @@ REPO = Path(__file__).resolve().parents[1]
 UBUNTU = "unit-shard-ubuntu-latest"
 WINDOWS = "unit-shard-windows-latest"
 DARWIN = "darwin-native"
+INTEGRATION = "lanes-integration"  # .github/workflows/lanes.yml
+OPT_IN = "lanes-opt-in"  # .github/workflows/lanes.yml
 
 
 def has_media_tools() -> bool:
     return bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
+
+
+def has_runtime() -> bool:
+    from tests.helpers.runtime import locate_runtime
+
+    return locate_runtime() is not None
+
+
+def has_codex() -> bool:
+    return bool(shutil.which("codex"))
 
 
 def has_font() -> bool:
@@ -75,7 +88,7 @@ def has_remotion() -> bool:
 
 @dataclass(frozen=True)
 class Lane:
-    kind: str  # "platform" | "dependency" | "manual"
+    kind: str  # "platform" | "dependency" | "scheduled" | "manual"
     reason: str
     available: Callable[[], bool]
     jobs: tuple[str, ...] = ()  # the CI jobs (ASTRID_CI_JOB) that run these tests where `available` holds
@@ -84,7 +97,7 @@ class Lane:
 
     @property
     def requires_dependency(self) -> bool:
-        return self.kind != "platform"
+        return self.kind in ("dependency", "manual")
 
 
 def _never() -> bool:
@@ -108,9 +121,19 @@ LANES: dict[str, Lane] = {
         "dependency", "needs Node, ffmpeg and the Remotion install (npm ci --prefix remotion)", has_remotion,
         (DARWIN,), default_off=True, provision="npm ci --prefix remotion",
     ),
-    "integration": Lane("manual", "needs a long-lived subprocess, a second checkout (Runtime, VibeComfy) or the network; no CI job", _never, default_off=True),
+    "integration": Lane(
+        "dependency", "needs a real Runtime checkout (ASTRID_RUNTIME_CHECKOUT) and, per test, VibeComfy at its pin, the Remotion install, ffmpeg or the network",
+        has_runtime, (INTEGRATION,), default_off=True, provision="astrid-runtime",
+    ),
+    "opt_in": Lane("scheduled", "slow tests the per-push run leaves to the nightly lanes workflow", lambda: True, (OPT_IN,), default_off=True),
+    "codex_cli": Lane(
+        "dependency", "needs the macOS Codex CLI on PATH (npm install -g @openai/codex)", has_codex,
+        (DARWIN,), default_off=True, provision="@openai/codex",
+    ),
+    "workstation": Lane("manual", "needs files only the owner's workstation holds (untracked runner scripts, local run output, saved acceptance artifacts, approved readiness profiles); no CI job", _never, default_off=True),
+    "omp": Lane("manual", "needs an OMP source checkout (ASTRID_OMP_TEST_PACKAGE_ROOT) and Bun; no CI job", _never, default_off=True),
+    "gpu": Lane("manual", "needs ComfyUI with model weights on a GPU machine; no CI job", _never, default_off=True),
     "live": Lane("manual", "needs real provider credentials; no CI job", _never, default_off=True),
-    "opt_in": Lane("manual", "explicitly opt-in (an environment variable or a GPU); no CI job", _never, default_off=True),
 }
 DEFAULT_OFF = tuple(name for name, lane in LANES.items() if lane.default_off)
 DECLARED = re.compile(r"\[declared:([a-z_]+)\]")

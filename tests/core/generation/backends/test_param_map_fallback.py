@@ -71,7 +71,7 @@ def _make_vibecomfy_entry(
                         template=template,
                         template_hash=(
                             "sha256:"
-                            "1021529f44192360dd5ff1724a3a72697993d1bbe40c795e1f0bdb2afe24156a"
+                            "074ef3e2219d2a4ea3c9e1508d96a76ff578883d770b1ffd03ad1b5dd47dc6fc"
                         ),
                         param_map=param_map if param_map is not None else {},
                     )
@@ -409,17 +409,17 @@ class TestVibeComfyParamMapFallback:
         #   from vibecomfy.runtime.run import run_sync
         # We need to patch the source modules before generate() runs.
 
-        # Import vibecomfy so its submodules are in sys.modules
-        import vibecomfy  # noqa: F401
+        # Import the submodules explicitly so they are in sys.modules to patch
+        # (``import vibecomfy`` alone does not import them).
+        # ``vibecomfy.runtime.run`` is shadowed by a function of the same name
+        # on the package, so fetch the module itself rather than ``import ... as``.
+        import importlib
 
-        # Patch the actual module objects in sys.modules
-        ready_mod = sys.modules.get("vibecomfy.registry.ready")
-        run_mod = sys.modules.get("vibecomfy.runtime.run")
+        ready_mod = importlib.import_module("vibecomfy.registry.ready")
+        run_mod = importlib.import_module("vibecomfy.runtime.run")
 
-        if ready_mod is not None:
-            patch.object(ready_mod, "workflow_from_ready", return_value=wf).start()
-        if run_mod is not None:
-            patch.object(run_mod, "run_sync", return_value=wf).start()
+        patch.object(ready_mod, "workflow_from_ready", return_value=wf).start()
+        patch.object(run_mod, "run_sync", return_value=wf).start()
 
     @staticmethod
     def _unmock_vibecomfy_imports():

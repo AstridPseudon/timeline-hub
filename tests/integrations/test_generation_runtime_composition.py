@@ -57,19 +57,76 @@ def _solid_png(rgba: tuple[int, int, int, int]) -> bytes:
     )
 
 
-def _fixture_pack(root: Path) -> Path:
-    pack = root / "typed-image-cpu"
-    executor = pack / "executors" / "generate_image"
-    executor.mkdir(parents=True)
-    (pack / "pack.yaml").write_text(
-        "schema_version: 1\n"
-        "id: typed_image_cpu\n"
-        "name: Typed Image CPU Fixture\n"
-        "version: 1.0\n"
-        "capabilities: [generate_image]\n"
-        "content:\n  executors: executors\n",
-        encoding="utf-8",
+def _executor_token(daemon, executor_id: str) -> str:
+    """A credential bound to one executor with the Runtime's worker scopes (no
+    owner/admin scope); the host registers and claims with it."""
+    from runtime_protocol.daemon import WORKER_SCOPES
+
+    token, _path = daemon.credentials.provision(executor_id, list(WORKER_SCOPES))
+    return token
+
+
+def _shipped_executor_definition(pack_id: str, action_id: str) -> dict:
+    """Project one shipped pack action into the executor-manifest shape the
+    CPU fixture packs below rewrite (packs now declare actions in pack.yaml)."""
+    import yaml
+
+    manifest = yaml.safe_load(
+        (Path(__file__).resolve().parents[2] / "astrid/packs" / pack_id / "pack.yaml").read_text(
+            encoding="utf-8"
+        )
     )
+    action = json.loads(json.dumps(manifest["actions"][action_id]))
+    action.pop("resources", None)
+    invocation = action.pop("invocation")
+    definition = {
+        "schema_version": 1,
+        "id": f"{pack_id}.{action_id}",
+        "kind": "external",
+        "version": action.pop("version", manifest["version"]),
+        "command": invocation["command"],
+        **action,
+    }
+    return definition
+
+
+def _write_action_pack(pack: Path, definition: dict) -> None:
+    """Write a one-action V3 pack.yaml from an executor-shaped definition.
+
+    The pack id is the capability's pack prefix, so the action surfaces under
+    the shipped capability id (for example ``generation.generate_image``).
+    """
+    import yaml
+
+    pack_id, action_id = str(definition["id"]).split(".", 1)
+    action = {
+        key: value
+        for key, value in definition.items()
+        if key not in ("schema_version", "id", "kind", "command")
+    }
+    action.setdefault("description", str(definition.get("name", action_id)))
+    action.setdefault("short_description", action["description"])
+    action["invocation"] = {"kind": "command", "command": definition["command"]}
+    manifest = {
+        "schema_version": 3,
+        "id": pack_id,
+        "name": f"{pack_id} CPU fixture",
+        "version": "1.0.0",
+        "status": "active",
+        "domain": "media",
+        "stability": "experimental",
+        "support": "core",
+        "visibility": "visible",
+        "description": "CPU substitute fixture for the shipped capability.",
+        "capabilities": [],
+        "actions": {action_id: action},
+    }
+    (pack / "pack.yaml").write_text(yaml.safe_dump(manifest, sort_keys=False), encoding="utf-8")
+
+
+def _fixture_pack(root: Path) -> Path:
+    pack = root / "generation"
+    pack.mkdir(parents=True, exist_ok=True)
     script = f"""
 import base64, hashlib, json, sys
 from pathlib import Path
@@ -94,8 +151,11 @@ image_entries = [descriptor('generated_images', image, ordinal=index, primary=in
 image_group = {{'name': 'generated_images', 'artifact_type': 'image/png', 'path': 'images', 'entries': [{{**{{key: value for key, value in entry.items() if key != 'path'}}, 'path': Path(entry['path']).name}} for entry in image_entries]}}
 (out / 'manifest.json').write_text(json.dumps({{'outputs': [image_group, descriptor('request_receipt', request, ordinal=2)]}}, sort_keys=True), encoding='utf-8')
 """
-    (executor / "executor.yaml").write_text(
-        json.dumps(
+    # Pack argv entries are single-line, so the script ships as a file.
+    runner = pack / "cpu_image_runner.py"
+    runner.write_text(script, encoding="utf-8")
+    _write_action_pack(
+        pack,
             {
                 "schema_version": 1,
                 "id": "generation.generate_image",
@@ -119,8 +179,7 @@ image_group = {{'name': 'generated_images', 'artifact_type': 'image/png', 'path'
                 "command": {
                     "argv": [
                         "{python_exec}",
-                        "-c",
-                        script,
+                        str(runner),
                         "{task_spec_json}",
                         "{out}",
                         "{model}",
@@ -161,8 +220,6 @@ image_group = {{'name': 'generated_images', 'artifact_type': 'image/png', 'path'
                     ],
                 },
             }
-        ),
-        encoding="utf-8",
     )
     return pack
 
@@ -181,27 +238,12 @@ def _registered_image_executor_fixture(
     fixture wrapper uses the production Fal backend with only its HTTP
     transport substituted, so no provider request leaves the test process.
     """
-    pack = root / "typed_image_cpu"
-    executor = pack / "executors" / "generate_image"
-    executor.mkdir(parents=True)
+    pack = root / "generation"
+    pack.mkdir(parents=True, exist_ok=True)
     (pack / "__init__.py").write_text("", encoding="utf-8")
-    (pack / "pack.yaml").write_text(
-        "schema_version: 1\n"
-        "id: typed_image_cpu\n"
-        "name: Typed Image CPU Transport Fixture\n"
-        "version: 1.0\n"
-        "capabilities: [generate_image]\n"
-        "content:\n  executors: executors\n",
-        encoding="utf-8",
-    )
-    definition = json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / f"astrid/packs/generation/executors/{manifest_name}/executor.yaml"
-        ).read_text(encoding="utf-8")
-    )
+    definition = _shipped_executor_definition("generation", manifest_name)
     definition["kind"] = "external"
-    definition["command"]["argv"][2] = "typed_image_cpu.runtime"
+    definition["command"]["argv"][2] = "generation.runtime"
     definition["isolation"] = {"mode": "subprocess", "network": False}
     metadata = dict(definition["metadata"])
     metadata.pop("env", None)
@@ -214,9 +256,7 @@ def _registered_image_executor_fixture(
         metadata["estimated_output_bytes"] = 64 * 1024 * 1024
     definition["metadata"] = metadata
     definition.pop("scoped_configs", None)
-    (executor / "executor.yaml").write_text(
-        json.dumps(definition), encoding="utf-8"
-    )
+    _write_action_pack(pack, definition)
     (pack / "runtime.py").write_text(
         f"""
 import base64
@@ -399,24 +439,9 @@ def _restore_cpu_readiness_environment(previous: dict[str, str | None]) -> None:
 
 def _video_enhance_cpu_fixture(root: Path) -> Path:
     """Build a CPU provider-stub executor through the shipped media runner."""
-    pack = root / "typed-video-enhance-cpu"
-    executor = pack / "executors" / "video_enhance"
-    executor.mkdir(parents=True)
-    (pack / "pack.yaml").write_text(
-        "schema_version: 1\n"
-        "id: typed_video_enhance_cpu\n"
-        "name: Typed Video Enhance CPU Fixture\n"
-        "version: 1.0\n"
-        "capabilities: [vibecomfy.video_enhance]\n"
-        "content:\n  executors: executors\n",
-        encoding="utf-8",
-    )
-    definition = json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / "astrid/packs/vibecomfy/executors/video_enhance/executor.yaml"
-        ).read_text(encoding="utf-8")
-    )
+    pack = root / "vibecomfy"
+    pack.mkdir(parents=True, exist_ok=True)
+    definition = _shipped_executor_definition("vibecomfy", "video_enhance")
     source_bytes = b"cpu-video-source"
     runner, readiness_path, readiness_hash = _shipped_cpu_media_runner(
         pack,
@@ -448,30 +473,15 @@ def _video_enhance_cpu_fixture(root: Path) -> Path:
     metadata["adapter_family"] = "cpu"
     metadata["resource_keys"] = ["cpu"]
     definition["metadata"] = metadata
-    (executor / "executor.yaml").write_text(json.dumps(definition), encoding="utf-8")
+    _write_action_pack(pack, definition)
     return pack
 
 
 def _character_animation_cpu_fixture(root: Path) -> Path:
     """Build a CPU provider-stub executor through the shipped media runner."""
-    pack = root / "typed-character-animation-cpu"
-    executor = pack / "executors" / "character_animation"
-    executor.mkdir(parents=True)
-    (pack / "pack.yaml").write_text(
-        "schema_version: 1\n"
-        "id: typed_character_animation_cpu\n"
-        "name: Typed Character Animation CPU Fixture\n"
-        "version: 1.0\n"
-        "capabilities: [vibecomfy.character_animation]\n"
-        "content:\n  executors: executors\n",
-        encoding="utf-8",
-    )
-    definition = json.loads(
-        (
-            Path(__file__).resolve().parents[2]
-            / "astrid/packs/vibecomfy/executors/character_animation/executor.yaml"
-        ).read_text(encoding="utf-8")
-    )
+    pack = root / "vibecomfy"
+    pack.mkdir(parents=True, exist_ok=True)
+    definition = _shipped_executor_definition("vibecomfy", "character_animation")
     image_bytes = b"cpu-character-image"
     motion_bytes = b"cpu-motion-video"
     runner, readiness_path, readiness_hash = _shipped_cpu_media_runner(
@@ -505,18 +515,18 @@ def _character_animation_cpu_fixture(root: Path) -> Path:
     metadata["adapter_family"] = "cpu"
     metadata["resource_keys"] = ["cpu"]
     definition["metadata"] = metadata
-    (executor / "executor.yaml").write_text(json.dumps(definition), encoding="utf-8")
+    _write_action_pack(pack, definition)
     return pack
 
 
 def test_typed_image_admission_crosses_runtime_host_and_cas(tmp_path: Path, real_runtime) -> None:
     pack = _fixture_pack(tmp_path)
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
         owner.handshake("typed-image-cpu-test", "0.1.0", ["projects:read", "worker:execute"])
-        client = RuntimeProtocolClient(daemon.endpoint, daemon.token)
+        client = RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "typed-image-cpu-host"))
         probe = GenericPackHost(pack_roots=[pack])
         record = probe.discover()[0]
         assert record.id == "generation.generate_image"
@@ -593,7 +603,7 @@ def test_typed_video_enhance_admission_settles_variant_and_readback(tmp_path: Pa
     """Exercise the bounded video contract through CPU Runtime custody."""
     pack = _video_enhance_cpu_fixture(tmp_path)
     previous_readiness = _set_cpu_readiness_environment(pack)
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -602,7 +612,7 @@ def test_typed_video_enhance_admission_settles_variant_and_readback(tmp_path: Pa
             "0.1.0",
             ["projects:read", "projects:write", "objects:read", "objects:write", "worker:execute"],
         )
-        client = RuntimeProtocolClient(daemon.endpoint, daemon.token)
+        client = RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "typed-video-enhance-cpu-host"))
         probe = GenericPackHost(pack_roots=[pack])
         record = probe.discover()[0]
         assert record.id == "vibecomfy.video_enhance"
@@ -702,7 +712,7 @@ def test_typed_character_animation_admission_consumes_ordered_cas_and_readback(t
     """Exercise the bounded two-input character profile through CPU custody."""
     pack = _character_animation_cpu_fixture(tmp_path)
     previous_readiness = _set_cpu_readiness_environment(pack)
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -711,7 +721,7 @@ def test_typed_character_animation_admission_consumes_ordered_cas_and_readback(t
             "0.1.0",
             ["projects:read", "projects:write", "objects:read", "objects:write", "worker:execute"],
         )
-        client = RuntimeProtocolClient(daemon.endpoint, daemon.token)
+        client = RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "typed-character-animation-cpu-host"))
         probe = GenericPackHost(pack_roots=[pack])
         record = probe.discover()[0]
         assert record.id == "vibecomfy.character_animation"
@@ -840,7 +850,7 @@ def test_astrid_character_animation_producer_composes_runtime_and_gallery_readba
     """Prove the paired Astrid App producer → Runtime → shipped host → gallery path."""
     pack = _character_animation_cpu_fixture(tmp_path)
     previous_readiness = _set_cpu_readiness_environment(pack)
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -849,7 +859,7 @@ def test_astrid_character_animation_producer_composes_runtime_and_gallery_readba
             "0.1.0",
             ["projects:read", "projects:write", "objects:read", "objects:write", "worker:execute"],
         )
-        client = RuntimeProtocolClient(daemon.endpoint, daemon.token)
+        client = RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "astrid-character-animation-paired-host"))
         probe = GenericPackHost(pack_roots=[pack])
         record = probe.discover()[0]
         assert record.id == "vibecomfy.character_animation"
@@ -1138,7 +1148,7 @@ fal_module.default_client = lambda: HttpClient(transport=_transport)
             return env, secrets
 
     _BrokerHandler._forward_http = fake_forward
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -1147,7 +1157,7 @@ fal_module.default_client = lambda: HttpClient(transport=_transport)
             "0.1.0",
             ["projects:read", "projects:write", "objects:read", "objects:write", "worker:execute"],
         )
-        client = RuntimeProtocolClient(daemon.endpoint, daemon.token)
+        client = RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "production-t2i-command-host"))
         host = ProductionHost(
             pack_roots=[generation_root],
             client=client,
@@ -1365,7 +1375,7 @@ def test_production_t2i_command_uses_https_connect_and_auth(
             env["SSL_CERT_FILE"] = str(child_cert)
             return env, secrets
 
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -1374,7 +1384,7 @@ def test_production_t2i_command_uses_https_connect_and_auth(
             "0.1.0",
             ["projects:read", "projects:write", "objects:read", "objects:write", "worker:execute"],
         )
-        client = RuntimeProtocolClient(daemon.endpoint, daemon.token)
+        client = RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "production-t2i-https-host"))
         host = ProductionHost(
             pack_roots=[generation_root],
             client=client,
@@ -1587,7 +1597,7 @@ def test_production_i2i_command_uses_ordered_cas_through_https_connect_and_auth(
             env["SSL_CERT_FILE"] = str(child_cert)
             return env, secrets
 
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -1596,7 +1606,7 @@ def test_production_i2i_command_uses_ordered_cas_through_https_connect_and_auth(
             "0.1.0",
             ["projects:read", "projects:write", "objects:read", "objects:write", "worker:execute"],
         )
-        client = RuntimeProtocolClient(daemon.endpoint, daemon.token)
+        client = RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "production-i2i-https-host"))
         host = ProductionHost(
             pack_roots=[generation_root],
             client=client,
@@ -1845,7 +1855,7 @@ def test_production_qwen_edit_command_uses_ordered_cas_through_https_connect_and
             env["SSL_CERT_FILE"] = str(child_cert)
             return env, secrets
 
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -1854,7 +1864,7 @@ def test_production_qwen_edit_command_uses_ordered_cas_through_https_connect_and
             "0.1.0",
             ["projects:read", "projects:write", "objects:read", "objects:write", "worker:execute"],
         )
-        client = RuntimeProtocolClient(daemon.endpoint, daemon.token)
+        client = RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "production-qwen-https-host"))
         host = ProductionHost(
             pack_roots=[generation_root],
             client=client,
@@ -2144,7 +2154,7 @@ def test_production_unified_edit_profiles_settle_variant_and_readback(
             env["SSL_CERT_FILE"] = str(child_cert)
             return env, secrets
 
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -2153,7 +2163,7 @@ def test_production_unified_edit_profiles_settle_variant_and_readback(
             "0.1.0",
             ["projects:read", "projects:write", "objects:read", "objects:write", "worker:execute"],
         )
-        client = RuntimeProtocolClient(daemon.endpoint, daemon.token)
+        client = RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, f"production-{profile['id']}-https-host"))
         host = ProductionHost(
             pack_roots=[generation_root],
             client=client,
@@ -2282,7 +2292,7 @@ def test_production_i2i_rejects_extra_or_misordered_single_cas_inputs(tmp_path: 
         tmp_path,
         manifest_name="generate_image_cloud_i2i",
     )
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -2293,7 +2303,7 @@ def test_production_i2i_rejects_extra_or_misordered_single_cas_inputs(tmp_path: 
         )
         host = GenericPackHost(
             pack_roots=[pack],
-            client=RuntimeProtocolClient(daemon.endpoint, daemon.token),
+            client=RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "production-i2i-cas-order-host")),
             executor_id="production-i2i-cas-order-host",
             credential_source={"FAL_KEY": "fixture-key"},
         )
@@ -2386,7 +2396,7 @@ def test_registered_image_executor_consumes_cas_image_and_cleans_attempt(
         oversized_output_index=oversized_output_index,
         preserve_production_metadata=mode == "t2i",
     )
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -2401,7 +2411,7 @@ def test_registered_image_executor_consumes_cas_image_and_cleans_attempt(
                 "worker:execute",
             ],
         )
-        client = RuntimeProtocolClient(daemon.endpoint, daemon.token)
+        client = RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "typed-image-registered-host"))
         host = GenericPackHost(
             pack_roots=[pack],
             client=client,
@@ -2520,7 +2530,7 @@ def test_registered_qwen_edit_failure_is_terminal_and_does_not_settle(
         manifest_name="generate_image_edit",
         oversized_output=failure == "oversized_output",
     )
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -2535,7 +2545,7 @@ def test_registered_qwen_edit_failure_is_terminal_and_does_not_settle(
                 "worker:execute",
             ],
         )
-        client = RuntimeProtocolClient(daemon.endpoint, daemon.token)
+        client = RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "typed-image-qwen-failure-host"))
         host = GenericPackHost(
             pack_roots=[pack],
             client=client,

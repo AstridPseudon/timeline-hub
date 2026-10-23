@@ -127,7 +127,9 @@ def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tm
         assert result["timeline_version"] == 2
         assert service.store.conn.execute("SELECT COUNT(*) FROM tasks WHERE capability=?", (render_cap,)).fetchone()[0] == 1
         render = service.task(result["render_task_id"])["task"]
-        assert render["spec"]["spec"]["inputs"]["timeline_snapshot"]["config"] == proposal["timeline"]
+        snapshot_ref = render["spec"]["spec"]["inputs"]["timeline_snapshot_ref"]
+        snapshot = json.loads(service.object(snapshot_ref["digest"])[1])
+        assert snapshot["config"] == proposal["timeline"]
         assert render["spec"]["spec"]["inputs"]["expected_version"] == 2
         # The checkpoint admits the ordinary public renderer; the next worker
         # claim therefore sees rendering.render without a stitch-specific task.
@@ -191,7 +193,7 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
         "ASTRID_TIMELINE_SCHEMA_PYTHONPATH",
         str(astrid_root / "remotion/node_modules/@banodoco/timeline-schema/python"),
     )
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     service = daemon.service
     host = GenericPackHost(
         pack_roots=[astrid_root / "astrid/packs/rendering"],
@@ -322,13 +324,8 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
                 "idempotency_key": "host-chain-author",
             }
         )["task"]["id"]
-        author_claim = service.claim_next(
-            {
-                "executor_id": "astrid-pack-host",
-                "capability_ids": ["rendering.assemble_timeline"],
-                "runtime_epoch": service.health()["runtime_epoch"],
-            },
-            idempotency_key="host-chain-claim-author",
+        author_claim = host.client.claim_next(
+            executor_id="astrid-pack-host", capability_ids=["rendering.assemble_timeline"], idempotency_key="host-chain-claim-author",
         )
         host.run_task(
             {
@@ -350,13 +347,8 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
         author_result = service.task(author)["task"]["result"]
         publication = author_result["timeline_render_publication"]
         render_task_id = publication["render_task_id"]
-        render_claim = service.claim_next(
-            {
-                "executor_id": "astrid-pack-host",
-                "capability_ids": ["rendering.render"],
-                "runtime_epoch": service.health()["runtime_epoch"],
-            },
-            idempotency_key="host-chain-claim-render",
+        render_claim = host.client.claim_next(
+            executor_id="astrid-pack-host", capability_ids=["rendering.render"], idempotency_key="host-chain-claim-render",
         )
         host.run_task(
             {

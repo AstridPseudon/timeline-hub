@@ -32,6 +32,7 @@ from astrid.sdk.client import AstridClient
 from astrid.sdk.invocation import _sdk_module
 from astrid.sdk.remote import RemoteAstridClient
 from astrid.sdk.workspace_client import WorkspaceClient
+from tests.helpers.runtime import executor_token
 
 ASTRID_ROOT = Path(__file__).resolve().parents[3]
 
@@ -60,7 +61,7 @@ def _connected(daemon) -> tuple[AstridClient, WorkspaceClient]:
         ["projects:read", "projects:write", "objects:read", "objects:write", "tasks:read", "tasks:write"],
     )
     sdk_client = AstridClient(remote=RemoteAstridClient(transport))
-    worker = WorkspaceClient(daemon.endpoint, daemon.worker_token)
+    worker = WorkspaceClient(daemon.endpoint, executor_token(daemon, "h3-cpu-recovery-worker"))
     return sdk_client, worker
 
 

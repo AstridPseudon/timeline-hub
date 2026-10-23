@@ -106,7 +106,7 @@ def _write_pack(root: Path) -> Path:
 
 def test_publication_contract_producer_upload_fenced_settlement_roundtrip(tmp_path: Path, real_runtime) -> None:
     pack_root = _write_pack(tmp_path / "publication-pack")
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host: GenericPackHost | None = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)

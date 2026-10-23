@@ -122,3 +122,18 @@ def new_runtime_daemon(root: str | Path, *, commit: str | None = None, **kwargs:
 
     initialize_runtime_realm(root)
     return RuntimeDaemon(root, **kwargs)
+
+
+EXECUTOR_SCOPES = ("handshake", "worker:execute", "tasks:read", "objects:read", "objects:write")
+
+
+def executor_token(daemon: Any, executor_id: str) -> str:
+    """A bearer bound to one executor id, without owner or registration scope.
+
+    Since Runtime 8c9b77d every daemon hands out only the scoped shared worker credential
+    (``daemon.worker_token``, actor ``astrid-pack-host``); it operates only an executor of that same id.
+    A test that plays another executor provisions its own bound credential, as the Runtime's
+    ``tests/runtime_credentials.py`` does, and registers the executor with the owner token.
+    """
+    token, _path = daemon.credentials.provision(executor_id, list(EXECUTOR_SCOPES))
+    return token

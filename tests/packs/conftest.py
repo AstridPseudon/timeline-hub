@@ -29,6 +29,11 @@ from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
 from tests.packs.rendering._helpers import _execution_env
 
 REMOTION = Path(__file__).resolve().parents[2] / "remotion"
+_LOADER_INTERPRETER_OVERRIDES = (
+    "PYTHONEXECUTABLE", "__PYVENV_LAUNCHER__", "PYTHONHOME", "NODE_OPTIONS", "NODE_PATH", "NODE_ICU_DATA",
+    "OPENSSL_CONF", "PYTHONUSERBASE", "PYTHONNOUSERSITE", "PYTHONSAFEPATH", "PYTHONPYCACHEPREFIX",
+    "PYTHONPLATLIBDIR", "PYTHONCASEOK", "PYTHONUTF8", "PYTHONCOERCECLOCALE", "PYTHONSTARTUP",
+)
 REQUIRED_BINARIES = ("node", "npx", "ffmpeg", "ffprobe")
 REQUIRED_PACKAGES = (
     "@banodoco/timeline-composition",
@@ -89,6 +94,13 @@ def remotion_launch_validation(
         ASTRID_REMOTION_VALIDATION_ROLE,
     ):
         monkeypatch.delenv(name, raising=False)
+
+    # The runtime refuses loader/interpreter overrides (probe_context). A CI runner legitimately carries some
+    # (actions/setup-python exports LD_LIBRARY_PATH on Linux), so the test gives the validator the clean
+    # environment a production worker has; the validator stays strict.
+    for name in list(os.environ):
+        if name.startswith(("DYLD_", "LD_")) or name in _LOADER_INTERPRETER_OVERRIDES:
+            monkeypatch.delenv(name)
 
     monkeypatch.setenv(ASTRID_REMOTION_PROJECT_DIR, str(REMOTION.resolve()))
     node_value = os.environ.get(ASTRID_NODE_EXECUTABLE) or shutil.which("node")

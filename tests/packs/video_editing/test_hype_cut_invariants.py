@@ -279,8 +279,7 @@ def test_hype_cut_invariants_on_synthetic_run(tmp_path: Path) -> None:
     _assert_hype_cut_invariants(_build_synthetic_run(tmp_path))
 
 
-@pytest.mark.integration
-@pytest.mark.opt_in
+@pytest.mark.workstation
 def test_hype_cut_invariants_on_discovered_run_dirs() -> None:
     brief_dirs = _discovered_brief_dirs()
     if not brief_dirs:

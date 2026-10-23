@@ -17,13 +17,13 @@ import yaml
 from tests import lanes
 
 REPO = Path(__file__).resolve().parents[1]
-WORKFLOW = yaml.safe_load((REPO / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+WORKFLOWS = [yaml.safe_load((REPO / ".github" / "workflows" / name).read_text(encoding="utf-8")) for name in ("ci.yml", "lanes.yml")]
 
 
 def _jobs_by_name() -> dict[str, dict]:
     """CI jobs keyed by the ASTRID_CI_JOB they set, a matrix job expanded to one entry per OS."""
     found: dict[str, dict] = {}
-    for job in WORKFLOW["jobs"].values():
+    for job in (job for workflow in WORKFLOWS for job in workflow["jobs"].values()):
         name = (job.get("env") or {}).get("ASTRID_CI_JOB")
         if not name:
             continue

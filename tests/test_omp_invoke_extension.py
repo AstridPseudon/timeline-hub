@@ -10,7 +10,7 @@ import pytest
 from tests.lanes import unavailable
 
 
-@pytest.mark.opt_in
+@pytest.mark.omp
 def test_real_omp_registers_and_executes_packaged_admission_tool(tmp_path):
     omp_root = os.environ.get("ASTRID_OMP_TEST_PACKAGE_ROOT")
     bun = shutil.which("bun")
