@@ -116,7 +116,18 @@ export async function bootstrapMountedBaseline(context: BrowserContext, harness:
     await run('navigation', () => openApp(page!, harness).then(() => undefined));
     await run('connection', () => expectConnected(page!));
     await run('selection', () => openSeededTimeline(page!, harness));
-    return await run('outbox-read', () => commandOutboxes(page!, harness.seed.timelineId));
+    return await run('outbox-read', async () => {
+      let owners: OutboxRecord[] = [];
+      // Track visibility precedes the verified basis/identity reads and durable
+      // session claim. Keep the real editor alive until that claim has persisted.
+      await expect.poll(async () => {
+        const exists = await page!.evaluate(async () => (await indexedDB.databases()).some((db) => db.name === 'astrid.command-outbox'));
+        if (!exists) return false;
+        owners = await commandOutboxes(page!, harness.seed.timelineId);
+        return owners.some((owner) => owner.scope.projectId === harness.seed.projectId && !owner.pending && owner.intents.length === 0);
+      }, { message: 'the bootstrap editor must persist its scoped command owner before closing' }).toBe(true);
+      return owners;
+    });
   } catch (error) {
     recordMountedBootstrapFailure(error);
     throw error;
