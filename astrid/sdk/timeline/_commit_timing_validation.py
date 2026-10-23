@@ -66,7 +66,9 @@ def _reference_shape(clip: Mapping[str, Any]) -> dict[str, Any]:
     return value
 
 
-def _reference_basis(bundle: Mapping[str, Any], key: tuple[Any, ...], clip: Mapping[str, Any]) -> dict[str, Any]:
+def _reference_basis(
+    bundle: Mapping[str, Any], key: tuple[Any, ...], clip: Mapping[str, Any], declaration: str,
+) -> dict[str, Any]:
     """Identify the authored target of one legacy timing declaration."""
     kind, owner, _ = key
     basis: dict[str, Any] = {"clip": _reference_shape(clip)}
@@ -74,6 +76,28 @@ def _reference_basis(bundle: Mapping[str, Any], key: tuple[Any, ...], clip: Mapp
     basis["documents"] = copy.deepcopy(
         source.get("pinned_documents", []) if isinstance(source, Mapping) else []
     )
+    try:
+        word = moments.parse(declaration).kind == "word"
+    except (TypeError, ValueError, moments.MomentError):
+        word = False
+    if word:
+        # Legacy text lookup searches every occurrence. An unresolved word has
+        # no selected binding, so retain the complete search basis and physical
+        # owners rather than guessing which source it meant to reference.
+        basis["parent_owner"] = copy.deepcopy(bundle.get("base_parent"))
+        basis["placements"] = copy.deepcopy(bundle.get("placements", []))
+        basis["source_shots"] = copy.deepcopy(source.get("shots", {}))
+        basis["word_sources"] = {
+            shot_id: {
+                "shot_id": shot.get("shot_id"),
+                "clips": [{**_reference_shape(row), "declarations": copy.deepcopy(intent._app(row))}
+                          for row in shot["internal_timeline"]["clips"]],
+                "inputs": {field: copy.deepcopy(shot["internal_timeline"][field])
+                           for field in ("tracks", "registry", "output", "source_window", "time_map", "timeMap")
+                           if field in shot["internal_timeline"]},
+            }
+            for shot_id, shot in bundle.get("shots", {}).items()
+        }
     if kind == "parent":
         parent = bundle.get("parent", {})
         clips = parent.get("clips", []) if isinstance(parent, Mapping) else []
@@ -232,8 +256,8 @@ def _legacy_exemptions(
         prior_values = _legacy_declarations(prior)
         for field, value in current_values.items():
             if (prior_values.get(field) == value
-                    and _reference_basis(candidate, key, clip)
-                    == _reference_basis(baseline, key, prior)
+                    and _reference_basis(candidate, key, clip, value)
+                    == _reference_basis(baseline, key, prior, value)
                     and not _legacy_declaration_is_resolvable(baseline, key, field, value)):
                 exemptions.add((key, field))
     return exemptions
@@ -261,7 +285,8 @@ def validate_candidate_timing(
     """
     publication = compile_authoring_candidate(candidate).publication
     projection = copy.deepcopy(dict(candidate))
-    legacy_declarations = _legacy_inputs(candidate, _legacy_exemptions(candidate, baseline))
+    exemptions = _legacy_exemptions(candidate, baseline)
+    legacy_declarations = _legacy_inputs(candidate, exemptions)
     config = projection["parent"]["config"]
     output = config.get("output") or {}
     if "fps" in output:
@@ -321,6 +346,8 @@ def validate_candidate_timing(
                 selected = binding(projection, target, field, refs[field], sources)
             elif declarations.get(field) and isinstance(declarations[field], str) and moments.parse(
                     declarations[field]).kind == "word":
+                if (("parent", "", clip["id"]), field) in exemptions:
+                    continue
                 selected = legacy_binding(projection, target, field, declarations[field], sources)
             else:
                 continue
