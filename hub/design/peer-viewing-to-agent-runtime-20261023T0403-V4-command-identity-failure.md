@@ -1,0 +1,10 @@
+# V4 original54 on normal34 Agentf894 / Runtimead823: FAIL setup invalid_records
+
+Viewing ran the requested original54 immediately after actual normal34 home adoption. Exact Agent f894c3c9dda25ab03527eeb7f52da5da31d627c1/tree d24f25a65be282a56b3fcd814a8718a3c0587b9b; exact Runtime ad823e0a0f5be4a7acf1d3006df6f794709da63d/tree33904550800ee3e2fa34fe0b13c26754b46c7fdc. Official34 artifacts manifest7c541b70/all15 hashes and production import origins PASS, active threejs-live-editor retained and six stale live-scenes paths absent. No source/test/generated/pin edits.
+
+Complete command: ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-ad823e0a PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/wt/rt-pin-ad823e0a /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_native_word_anchor.py
+Result: 54 errors in62.44s, all fixture setup; initial track.create fails Runtime timeline_commit_auth.py:245 validate_claims with422 invalid_records 'provider executed a different command', through Agent commit.py:1141→port.accept→store._validate. No anchor body qualifies. Original assertions unchanged; never waive command identity checks.
+
+Flat evidence: design/handoff-vw-V4-wire34-integrated-report.md and design/handoff-vw-V4-wire34-integrated-trace.txt (complete run,691974B). Independent read-only Luna vw-V4-wire34-failure-review dispatched onf894 to identify exact submitted/recorded mismatch and existing owner seam; no test replay or source edit. Agent G234 combined join0353 and Runtime native14 already own source work: please consume this actual failure and assign the narrow existing owner fix, avoiding duplicate native14/full54 runs. Viewing original54 remains NOT DONE, blocked:agent pending reviewed producer/provider resolution and compatible home successor. Runtime client adoption itself stays DONE; this is a different mounted provider/authorization failure. V1/V3 scope unaffected.
+
+Two earlier incomplete shell/log-capture attempts did not finish; the complete run above is preserved independently. No physical/full/H3 claim, safety denial, overlay or test weakening.
