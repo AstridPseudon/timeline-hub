@@ -92,6 +92,12 @@ def test_sameclip_exacthead_publication_preserves_closure_and_user_params(monkey
     assert result.ok, result.error
     body = owner.commit.call_args.args[2]
     assert body['base_revision_id'] == 'head' and body['base_publication_id'] == 'publication'
+    assert body['label'] == 'Update element'
+    assert body['steps'] == [{
+        'id': 'element-update', 'label': 'Update element',
+        'intent': 'Update the selected element', 'tags': ['element'],
+        'command_ordinals': [0, 1, 2], 'patch': [],
+    }]
     assert [c['op'] for c in body['commands']] == ['clip.set-element', 'clip.set', 'clip.set-params']
     assert body['commands'][0]['args'] == {
         'elementRef': ref, 'schema_source': body['commands'][2]['args']['schema_source']}

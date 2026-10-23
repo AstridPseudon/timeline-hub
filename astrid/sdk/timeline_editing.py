@@ -165,7 +165,7 @@ def add_track(container: MutableMapping[str, Any], *, kind: str = "video", name:
 
     attached = container if isinstance(container, AttachedCheckout) else None
     if attached is not None:
-        timeline = _timeline(container.bundle["parent"])
+        timeline = _timeline(attached.bundle["parent"])
     else:
         timeline = _timeline(container)
     tracks = _tracks(timeline)

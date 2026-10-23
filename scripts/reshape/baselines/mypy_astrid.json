@@ -15,11 +15,11 @@
     "--no-pretty",
     "--show-error-codes"
   ],
-  "finding_count": 1922,
+  "finding_count": 1915,
   "code_counts": {
     "arg-type": 435,
     "assignment": 166,
-    "attr-defined": 529,
+    "attr-defined": 522,
     "call-arg": 1,
     "call-overload": 37,
     "dict-item": 34,

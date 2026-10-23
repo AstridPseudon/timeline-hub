@@ -142,6 +142,23 @@ def _result(session, data, receipt, before, clip_id, expected_head, key):
     }, receipt=CommandReceipt.from_dict(receipt), idempotency_key=key)
 
 
+def _step(calls):
+    """Describe one semantic element edit for the v2 commit envelope.
+
+    Native commands carry their authoritative effects; Runtime fills the step
+    patch from those effects.  Keeping this as a semantic step avoids a second
+    document-diff/emitter implementation in the element helper.
+    """
+    return [{
+        'id': 'element-update',
+        'label': 'Update element',
+        'intent': 'Update the selected element',
+        'tags': ['element'],
+        'command_ordinals': list(range(len(calls))),
+        'patch': [],
+    }]
+
+
 def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str, clip_id: str,
                           element: dict[str, str], expected_head: str, duration: float | None = None,
                           params: dict[str, Any] | None = None, idempotency_key: str | None = None,
@@ -270,9 +287,31 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
                 clip_id, element, duration, params, clear_params, pin),
                 schema_inputs=inputs, realm_id=realm).commands
 
-        # Also recognize the old batch shape without changing an existing flight.
-        session._stage(capture, lambda pending: _matches(pending, calls) or _matches(pending, fresh_calls))
-        committed = session.flush(idempotency_key=key)
+        # A persisted flight is immutable: recognize its old batch shape and
+        # retry it verbatim.  New batches use the v2 request envelope with one
+        # semantic step, while the existing command executor remains the sole
+        # source of element validation, retained inputs and compiler mirrors.
+        with session.outbox.locked():
+            state = session._state()
+
+        def matches(pending):
+            return _matches(pending, calls) or _matches(pending, fresh_calls)
+
+        if state['pending'] or state['flight'] is not None:
+            session._stage(capture, matches)
+            committed = session.flush(idempotency_key=key)
+        else:
+            captured = capture(state)
+            committed = session.submit(
+                captured,
+                label='Update element',
+                steps=_step(captured),
+                merge='fields',
+                idempotency_key=key,
+                expected_state=state,
+                base=state['base'],
+                evaluation={'kind': 'label', 'count': 0},
+            )
         return _result(session, committed['data'], committed['receipt'], before, clip_id, expected_head, key)
     except CommitConflict as exc:
         failure = exc.failure

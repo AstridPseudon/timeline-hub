@@ -31,6 +31,7 @@ def operations():
     from ._clip_commands import clip_add
     from ._clip_scalar_commands import clip_set, clip_set_element
     from ._delete_commands import delete
+    from ._doc_patch import patch
     from ._scalar_commands import clip_set_params, track_set
     from ._shot_commands import SHOT_INTENT, shot_set
     from ._split_commands import clip_split
@@ -58,7 +59,8 @@ def operations():
     from .native_text_binding import TEXT_INTENT, text_binding_set
     from .native_word_anchor import declare
     from .producer import producer_guard
-    return {'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
+    return {'doc.patch': Operation(_SCHEMA['$defs']['DocPatchArgs'], patch, {}),
+            'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
             'timeline.init': Operation(_SCHEMA['$defs']['TimelineInitArgs'], initialize, {}),
             'clip.anchor': Operation(_SCHEMA['$defs']['ClipAnchorArgs'], declare, {'anchor': 'follow'}, True),
             'occurrence.create': Operation(_SCHEMA['$defs']['OccurrenceCreateArgs'], occurrence_create,
@@ -97,6 +99,9 @@ class Plan:
     bundle: dict
     records: list[dict]
     semantic_events: list[dict] = dataclass_field(default_factory=list)
+    steps: list[dict] = dataclass_field(default_factory=list)
+    label: str = 'Timeline edit'
+    merge_mode: str = 'fields'
 
     @property
     def commands(self):
@@ -120,6 +125,10 @@ def validate_command(command):
         errors = list(_VALIDATOR.evolve(schema=operation.parameters).iter_errors(command['args']))
         if errors:
             raise CommandError(errors[0].message)
+    if command['op'] == 'doc.patch':
+        from ._doc_patch import validate_submitted_change
+        for change in command['args']['changes']:
+            validate_submitted_change(change)
     if command['op'] == 'track.create':
         if command['select'] != 'parent' and not (
                 isinstance(command['select'], str) and command['select'].startswith('occurrence:')
@@ -170,7 +179,7 @@ def _verify_claims(ctx, command):
 
 def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
             closures=None, verified_media=(), schema_inputs=(), realm_id=None, resolve_inputs=None,
-            verified_producer=None):
+            verified_producer=None, commit_request=None, evaluated_head=None, replay_bindings=None):
     """Execute atomically. History inputs must already be authenticated by provider.
 
     Empty intervening_records means proven empty ancestry, never unavailable
@@ -187,12 +196,19 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         raise CommandError("id_map must contain identity pairs only", kind='identity_collision')
     if any(call.get('op') == 'timeline.restore' for call in commands) and len(commands) != 1:
         raise CommandError("restore must be the sole command", kind='invalid_commands')
+    from ._commit_patch import CommitPatch
+
+    for supplied in commands:
+        validate_command(supplied)
     candidate, records = copy.deepcopy(bundle), []
+    metadata = CommitPatch(commit_request, commands, bundle, evaluated_head=evaluated_head)
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)
         ctx = Recording(candidate, command, ordinal, closures=closures, verified_media=verified_media,
                         schema_inputs=schema_inputs, realm_id=realm_id,
                         verified_producer=verified_producer)
+        ctx.patch_replay_bindings = replay_bindings or {}
+        metadata.before(ctx)
         _verify_claims(ctx, command)
         if resolve_inputs is not None:
             ctx.prior_records = records
@@ -224,8 +240,10 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
             from .native_word_anchor import compile_recorded
 
             compile_recorded(ctx, inverse_records=inverse_records)
+            metadata.compiler(ctx, records)
         ctx.compile_mirrors()
         record = ctx.finish(capture=True)
+        metadata.after(ctx)
         for field in ('resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'):
             if field not in command:
                 continue
@@ -249,4 +267,4 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         # Keep original claims and metadata after they have been verified.
         record['command'].update({k: v for k, v in command.items() if k != 'intent'})
         records.append(record)
-    return Plan(candidate, records)
+    return metadata.finish(Plan(candidate, records))
