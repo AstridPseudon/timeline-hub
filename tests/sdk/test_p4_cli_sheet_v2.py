@@ -49,7 +49,6 @@ def test_cli_sheet_v2_front_door_preserves_provenance_and_unrelated_fields(
         "apply", "t", str(sheet_path), "--project", "p", "--json",
         "--idempotency-key", "p4-cli-sheet-v2",
     ])
-    assert parsed.native is False
     assert parsed.handler(parsed) == 0
     reply = json.loads(capsys.readouterr().out)
     assert reply["ok"] is True

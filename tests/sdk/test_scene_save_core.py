@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import builtins
 import copy
-import hashlib
 import os
 import subprocess
 import sys
@@ -13,6 +12,7 @@ import pytest
 
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline_checkout import Checkout, TimelineEditError
+from tests.editing_conformance.test_commit_runtime_source_copy import saved_source  # noqa: F401
 from tests.sdk import test_timeline_transaction as transactions
 
 draft = transactions.draft
@@ -140,24 +140,24 @@ def test_offcanvas_stays_explicitly_invalid_but_saves_and_publishes_exactly(tmp_
     assert draft.clip("c1.rocket").data["params"]["x"] == 10000
 
 
-def test_duplicate_preflights_and_publication_are_core_only(monkeypatch, no_renderer):
+def test_duplicate_preflights_and_publication_are_core_only(saved_source, no_renderer):  # noqa: F811
     from astrid.sdk import timeline_duplicate as duplicate
+    from tests.sdk.test_timeline_restructure import flat_film
 
-    source, target = Checkout(tiny()), Checkout(tiny())
-    source.clip("c1.rocket").data["params"]["x"] = 10000
-    target.bundle["timeline_id"] = "copy"
-    monkeypatch.setattr(Checkout, "open", classmethod(
-        lambda cls, project, timeline, **kw: source if timeline == "t" else target))
-    writes = []
-    client = client_for(target, writes)
-    client.timelines.create_empty = lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "copy"})
+    source = flat_film()
+    next(clip for clip in source["shots"]["film"]["internal_timeline"]["clips"]
+         if clip["id"] == "inside")["params"]["x"] = 10000
+    client, project, document, writes = saved_source(source)
+    before = document("t")
     client.timelines.archive = lambda *a: pytest.fail("core-valid duplicate was archived")
-    client.shots = SimpleNamespace(set_text_binding=lambda project, **kw: SimpleNamespace(ok=True, data={
-        "kind": kw["kind"], "shot_id": kw["shot_id"], "head": kw["expected_head"] + 1,
-        "content_hash": "sha256:" + hashlib.sha256(kw["text"].encode()).hexdigest(),
-    }))
-    result = duplicate.duplicate_timeline("p", "t", client=client)
-    assert result["timeline_id"] == "copy" and result["new_head"] == "accepted" and len(writes) == 2
+    result = duplicate.duplicate_timeline(project, "t", slug="copy", client=client)
+    copied = document("copy")
+    assert result["timeline_id"] == "copy" and result["new_head"] == copied["parent_revision"]["revision_id"]
+    assert len(writes) == 1 and writes[0]["commands"][0]["op"] == "timeline.duplicate"
+    sprite = next(clip for row in copied["internal_timeline_revisions"]
+                  for clip in row["payload"]["clips"] if clip["id"] == "inside")
+    assert sprite["params"]["x"] == 10000
+    assert document("t") == before
 
 
 def test_implicit_cli_edit_report_and_save_are_core_only(tmp_path, request):

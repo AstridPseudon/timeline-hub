@@ -1,9 +1,7 @@
 """Thin native-command CLI adapters; schemas and capture stay in the SDK."""
 from __future__ import annotations
 
-import argparse
 import copy
-import json
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -170,25 +168,16 @@ def commit_move(session, parsed, options):
         raise
 
 
-def commit_edit(parsed, *, undo: bool = False, command=None, sheet=False, edit=None):
+def commit_edit(parsed, *, sheet=False, edit=None):
     from astrid.core.receipts.contract import CommandReceipt
     from astrid.sdk.contracts import ErrorObject
     from astrid.sdk.timeline._common import TimelineEditError
     from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 
     try:
-        if undo and (parsed.steps_option is not None or parsed.steps != 1 or parsed.draft):
-            raise TimelineEditError("--publication cannot be combined with local draft/step undo")
         if sheet and parsed.draft:
-            raise TimelineEditError("--native cannot be combined with a local draft")
-        batch = None
-        base = {}
-        if getattr(parsed, "commands_file", None) is not None:
-            batch = json.loads(Path(parsed.commands_file).read_text(encoding="utf-8"))
-            if not isinstance(batch, list) or not batch:
-                raise TimelineEditError("commands file must contain a nonempty JSON array of EditCommands")
-            base = {"base_revision_id": parsed.base_revision_id, "base_publication_id": parsed.base_publication_id}
-        session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client, **base)
+            raise TimelineEditError("a sheet commit cannot be combined with a local draft")
+        session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client)
         options = {"idempotency_key": parsed.idempotency_key, "dry_run": parsed.dry_run, "via": "cli"}
         if edit is not None:
             result = edit(session, parsed, options)
@@ -205,12 +194,8 @@ def commit_edit(parsed, *, undo: bool = False, command=None, sheet=False, edit=N
                     "status": "preview" if parsed.dry_run else "unchanged", "commands": result.commands,
                 }), as_json=parsed.json, human_renderer=lambda _: (
                     "preview only; no publication accepted" if parsed.dry_run else "no change (the sheet matches its original export)"))
-        elif batch is not None:
-            result = session.commit_many(batch, label="CLI commands-file", **options)
-        elif command is not None:
-            result = session.commit(command, label=f"CLI {command}", **options)
         else:
-            result = session.undo(parsed.publication, **options) if undo else session.move(parsed.clip, parsed.on, **options)
+            result = session.move(parsed.clip, parsed.on, **options)
         receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
         shown = DomainResult.success(result["data"], receipt=receipt,
                                      idempotency_key=result["idempotency_key"])
@@ -223,62 +208,11 @@ def commit_edit(parsed, *, undo: bool = False, command=None, sheet=False, edit=N
         shown = DomainResult.failure(error)
     return print_result(shown, as_json=parsed.json,
                         human_renderer=lambda value: _render_commit_result(value, dry_run=parsed.dry_run))
-
-
-def configure_track_label(parser):
-    from astrid.packs.timeline.cli import (
-        _add_idempotency_key,
-        _add_json_flag,
-        _add_project_arg,
-    )
-    from astrid.sdk.timeline.commands import operations
-
-    parameters = operations()['track.set'].parameters
-    field, schema = next(iter(parameters['properties']['values']['properties'].items()))
-    parser.description = 'Commit a guarded parent-track label through the native command registry.'
-    _add_project_arg(parser, required=False)
-    parser.add_argument('ref', help='Timeline id or slug.')
-    parser.add_argument('--track', required=True, help='Stable parent/track:ID selector.')
-    choice = parser.add_mutually_exclusive_group(required=True)
-    choice.add_argument('--set', dest='label', metavar=schema['type'].upper(),
-                        help=f'Set {field}; an empty string is a real value.')
-    choice.add_argument('--clear', action='store_true', help=f'Remove {field}.')
-    parser.add_argument('--dry-run', action='store_true', help='Validate without accepting a publication.')
-    _add_idempotency_key(parser)
-    _add_json_flag(parser, default=False)
-
-    def run(parsed):
-        command = {'schema_version': 1, 'op': 'track.set', 'version': '1',
-                   'select': parsed.track,
-                   'args': {'values': {} if parsed.clear else {field: parsed.label},
-                            'clear': [field] if parsed.clear else []}}
-        return commit_edit(parsed, command=command)
-
-    parser.set_defaults(command='track-label', handler=run)
-
-
-def configure_commit_move(subparser):
-    from astrid.packs.timeline.cli import _add_idempotency_key, _add_json_flag, _add_project_arg
-
-    _add_project_arg(subparser, required=False)
-    subparser.add_argument("ref", help="Timeline id or slug.")
-    subparser.add_argument("--clip", required=True, help="Stable parent/clip:ID or occurrence:ID/clip:ID selector.")
-    subparser.add_argument("--on", required=True, type=float, metavar="SECONDS")
-    subparser.add_argument("--dry-run", action="store_true", help="Validate without accepting a publication.")
-    _add_idempotency_key(subparser)
-    _add_json_flag(subparser, default=False)
-    subparser.set_defaults(command="move", handler=commit_edit)
-
-
 def configure_edit_options(subparser):
     from astrid.packs.timeline.cli import _add_idempotency_key, _add_json_flag
 
-    subparser.description = ("Use edit move TL --clip SCOPED_ID --on SECONDS or edit track-label TL "
-                             "--track parent/track:ID --set LABEL (or --clear) for native commits. "
-                             "Use edit commands-file TL FILE --base-revision-id REV "
-                             "--base-publication-id PUB for a native batch. "
-                             "Ordinary --trim-in/--trim-out on literal parent media also commit directly "
-                             "when no detached working copy exists. Other flags edit a legacy detached working copy.")
+    subparser.description = ("Literal clip moves and trims commit through the durable timeline session. "
+                             "Other flags edit a legacy detached working copy.")
     subparser.add_argument("--dry-run", action="store_true", help="Preview a native trim without accepting a publication.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser, default=False)
@@ -288,54 +222,6 @@ def configure_edit_options(subparser):
 def configure_apply_options(subparser):
     from astrid.packs.timeline.cli import _add_idempotency_key, _add_json_flag
 
-    subparser.add_argument("--native", action="store_true",
-                           help="Commit using the original sheet export retained in the scoped outbox.")
-    subparser.add_argument("--dry-run", action="store_true", help="Preview native commands locally without publishing.")
+    subparser.add_argument("--dry-run", action="store_true", help="Preview the sheet commit without publishing.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser, default=False)
-
-
-def configure_history_options(subparser):
-    from astrid.packs.timeline.cli import _add_idempotency_key, _add_json_flag
-
-    subparser.add_argument("--publication", action="append",
-                           help="Reverse an accepted publication (for redo, name the undo publication); repeat oldest first.")
-    subparser.add_argument("--dry-run", action="store_true")
-    _add_idempotency_key(subparser)
-    _add_json_flag(subparser, default=False)
-
-
-def configure_commands_file(parser):
-    from astrid.packs.timeline.cli import (
-        _add_idempotency_key,
-        _add_json_flag,
-        _add_project_arg,
-    )
-    from astrid.sdk.timeline.commands import operations
-
-    parser.description = ('Commit a JSON array of registered EditCommands atomically on an explicit '
-                          'original revision/publication. Supplied capture claims are verified, never '
-                          'refreshed. Missing capture inputs refuse the batch; the file is kept.')
-    parser.formatter_class = argparse.RawDescriptionHelpFormatter
-    parser.epilog = 'Installed operations:\n  ' + '\n  '.join(operations())
-    _add_project_arg(parser, required=False)
-    parser.add_argument('ref', help='Timeline id or slug.')
-    parser.add_argument('commands_file', metavar='FILE', help='JSON array of existing EditCommands.')
-    parser.add_argument('--base-revision-id', required=True, help='Original immutable revision id.')
-    parser.add_argument('--base-publication-id', required=True, help='Original publication id.')
-    parser.add_argument('--dry-run', action='store_true', help='Validate without accepting a publication.')
-    _add_idempotency_key(parser)
-    _add_json_flag(parser, default=False)
-    parser.set_defaults(command='commands-file', handler=commit_edit)
-
-
-def configure_native_edit_parsers(parser, client):
-    from astrid.packs.timeline.cli_parser import TimelinesParser
-
-    parser.native_edit_parsers = {}
-    for name, configure in (("move", configure_commit_move), ("track-label", configure_track_label),
-                            ("commands-file", configure_commands_file)):
-        native = TimelinesParser(prog=f"astrid timelines edit {name}")
-        configure(native)
-        native.set_defaults(client=client)
-        parser.native_edit_parsers[name] = native
