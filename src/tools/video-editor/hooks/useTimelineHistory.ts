@@ -33,6 +33,7 @@ import type {
   UndoSnapshot,
 } from '@/tools/video-editor/types/history.ts';
 import type { CanonicalShotCompositionHistoryEntry } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import type { TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
 
 const UNDO_STACK_LIMIT = 100;
 const CHECKPOINT_LIMIT = 30;
@@ -57,6 +58,7 @@ export interface UseTimelineHistoryArgs {
    */
   pendingOpsRef: MutableRefObject<number>;
   editability?: TimelineEditability;
+  remoteHistory?: Pick<TimelineLocalSaveHandoff, 'remoteHistoryAvailable' | 'canUndo' | 'canRedo' | 'undo' | 'redo'>;
 }
 
 export interface UseTimelineHistoryResult {
@@ -206,6 +208,7 @@ export function useTimelineHistory({
   interactionStateRef,
   pendingOpsRef,
   editability,
+  remoteHistory,
 }: UseTimelineHistoryArgs): UseTimelineHistoryResult {
   const { provider, timelineId, project, toast } = useVideoEditorRuntime();
   const historyProjectId = project.projectId;
@@ -422,6 +425,15 @@ export function useTimelineHistory({
   }, [syncHistoryState]);
 
   const undo = useCallback(() => {
+    if (remoteHistory) {
+      if (!remoteHistory.remoteHistoryAvailable() || !remoteHistory.canUndo()
+        || pendingOpsRef.current > 0 || isInteractionActive(interactionStateRef)
+        || (editability?.checkTimeline && !editability.checkTimeline().allowed)) return;
+      void remoteHistory.undo().catch((error: unknown) => {
+        toast.error('Could not undo timeline', { description: error instanceof Error ? error.message : String(error) });
+      });
+      return;
+    }
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
     if (pendingOpsRef.current > 0) {
       // Dev-only diagnostic (stripped in prod); the toolbar communicates the
@@ -452,9 +464,18 @@ export function useTimelineHistory({
       },
     ].slice(-UNDO_STACK_LIMIT);
     syncHistoryState();
-  }, [dataRef, editability, interactionStateRef, pendingOpsRef, restoreHistoryEntry, syncHistoryState]);
+  }, [dataRef, editability, interactionStateRef, pendingOpsRef, remoteHistory, restoreHistoryEntry, syncHistoryState, toast]);
 
   const redo = useCallback(() => {
+    if (remoteHistory) {
+      if (!remoteHistory.remoteHistoryAvailable() || !remoteHistory.canRedo()
+        || pendingOpsRef.current > 0 || isInteractionActive(interactionStateRef)
+        || (editability?.checkTimeline && !editability.checkTimeline().allowed)) return;
+      void remoteHistory.redo().catch((error: unknown) => {
+        toast.error('Could not redo timeline', { description: error instanceof Error ? error.message : String(error) });
+      });
+      return;
+    }
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
     if (pendingOpsRef.current > 0) {
       console.log('[TimelineHistory] redo ignored: paused while media uploads finish', {
@@ -483,7 +504,7 @@ export function useTimelineHistory({
       },
     ].slice(-UNDO_STACK_LIMIT);
     syncHistoryState();
-  }, [dataRef, editability, interactionStateRef, pendingOpsRef, restoreHistoryEntry, syncHistoryState]);
+  }, [dataRef, editability, interactionStateRef, pendingOpsRef, remoteHistory, restoreHistoryEntry, syncHistoryState, toast]);
 
   const jumpToCheckpoint = useCallback((checkpointId: string) => {
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
@@ -615,8 +636,8 @@ export function useTimelineHistory({
   const historyPausedForUploads = pendingOpsRef.current > 0;
 
   return {
-    canUndo: canUndo && !historyPausedForUploads,
-    canRedo: canRedo && !historyPausedForUploads,
+    canUndo: (remoteHistory ? remoteHistory.canUndo() : canUndo) && !historyPausedForUploads,
+    canRedo: (remoteHistory ? remoteHistory.canRedo() : canRedo) && !historyPausedForUploads,
     historyPausedForUploads,
     checkpoints,
     canonicalHistory,

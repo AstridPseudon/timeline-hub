@@ -644,6 +644,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     interactionStateRef,
     pendingOpsRef: save.pendingOpsRef,
     editability: runtime.timelineEditability,
+    remoteHistory: save.localDocumentSave,
   });
   const derived = useDerivedTimeline(save.data, save.selectedClipId, save.selectedTrackId);
   const timelineDataRef = save.dataRef;

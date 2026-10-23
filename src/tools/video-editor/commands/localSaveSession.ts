@@ -171,7 +171,8 @@ export async function createLocalSaveSession(options: Options) {
               command_ordinals: commands.map((_, index) => index), patch: [] }], merge: 'fields' };
           const request: CommitRequest = { api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
             base_revision_id: head.revisionId, base_publication_id: head.publicationId,
-            commands, label: original.label, dry_run: false, source: { via: 'app' } };
+            commands, source: { via: 'app' } };
+          Object.assign(request, { label: original.label, dry_run: false });
           if (fullV2) Object.assign(request, metadata);
           return { method: 'POST',
             path: `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`,

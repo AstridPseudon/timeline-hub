@@ -1,4 +1,4 @@
-import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { CanonicalDocument, EditCommand, HistoryPage } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { LocalSaveSession } from '../commands/localSaveSession.ts';
 import { toOutboxJson, type OutboxJson } from '../commands/commitOutbox.ts';
 import { canonicalJsonStringify, type TimelineBundleEnvelope } from '../data/typed/timelineBundle.ts';
@@ -28,6 +28,12 @@ export type TimelineGestureReadBasis = {
 export interface TimelineLocalSaveHandoff {
   capture(source: TimelineSaveSource, gestureBasis?: TimelineGestureReadBasis): Promise<void>;
   flush(): Promise<TimelineSaveReceipt>;
+  /** True only when the durable owner is settled and has an accepted target. */
+  remoteHistoryAvailable(): boolean;
+  canUndo(): boolean;
+  canRedo(): boolean;
+  undo(): Promise<void>;
+  redo(): Promise<void>;
 }
 
 const same = (a: unknown, b: unknown) => a === undefined || b === undefined
@@ -112,13 +118,40 @@ export function createTimelineLocalSaveHandoff(options: {
   source: TimelineSaveSource;
   session: LocalSaveSession;
   /** Read the upstream assembly after the session has adopted the complete canonical result. */
+  loadHistory?(): Promise<TimelineCommandBasis>;
   adopted(basis: TimelineCommandBasis): { receipt: TimelineSaveReceipt; source: TimelineSaveSource };
 }): TimelineLocalSaveHandoff {
+  checkHead(options.initial, options.source);
   let initial = structuredClone(options.initial);
   let source = structuredClone(options.source);
   let authoringSource = structuredClone(options.source);
   let document = structuredClone(options.initial.canonicalDocument);
   let sourceChecked = false;
+  let targets = historyTargets(options.initial.history, options.initial.head);
+  let inversePending = false;
+
+  async function appendInverse(kind: 'undo' | 'redo'): Promise<void> {
+    if (!remoteHistoryAvailable()) refuse('durable timeline history is not settled');
+    const target = targets[kind].at(-1);
+    if (!target) refuse(`no persisted ${kind} target is available`);
+    inversePending = true;
+    try {
+      const before = options.session.getDocument();
+      const command: EditCommand = {
+        schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+        args: { publications: [target] },
+      };
+      await options.session.append({ before, after: before,
+        label: `${kind === 'undo' ? 'Undo' : 'Redo'} timeline`, commands: [command] });
+      await handoff.flush();
+    } finally {
+      inversePending = false;
+    }
+  }
+
+  function remoteHistoryAvailable(): boolean {
+    return !inversePending && options.session.getState().status === 'saved';
+  }
   function changes(raw: unknown, previous: unknown, next: unknown, path: string[]): unknown {
     if (same(previous, next)) return structuredClone(raw);
     if (Array.isArray(previous) && Array.isArray(next) && path.length === 2
@@ -169,7 +202,7 @@ export function createTimelineLocalSaveHandoff(options: {
     }
     return authoredJson(next);
   }
-  return {
+  const handoff: TimelineLocalSaveHandoff = {
     capture(input, gestureBasis) {
       try {
         const next = structuredClone(input);
@@ -302,6 +335,11 @@ export function createTimelineLocalSaveHandoff(options: {
         authoringSource = structuredClone(adopted.source);
         document = structuredClone(basis.canonicalDocument);
         sourceChecked = false;
+        targets = historyTargets(basis.history, basis.head);
+        if (options.loadHistory) {
+          const latest = await options.loadHistory();
+          targets = historyTargets(same(latest.head, basis.head) ? latest.history : undefined, basis.head);
+        }
         return adopted.receipt;
       }
       catch (error) {
@@ -311,5 +349,54 @@ export function createTimelineLocalSaveHandoff(options: {
         throw error;
       }
     },
+    remoteHistoryAvailable,
+    canUndo: () => remoteHistoryAvailable() && targets.undo.length > 0,
+    canRedo: () => remoteHistoryAvailable() && targets.redo.length > 0,
+    undo: () => appendInverse('undo'),
+    redo: () => appendInverse('redo'),
   };
+  return handoff;
+}
+
+function historyTargets(history: HistoryPage | undefined, head: TimelineCommandBasis['head']): { undo: string[]; redo: string[] } {
+  if (!history?.items?.length || history.next_cursor !== null
+    || history.head.revision_id !== head.revisionId || history.head.publication_id !== head.publicationId) return { undo: [], redo: [] };
+  // Follow the authoritative ancestry so pagination/display ordering cannot
+  // change the target. Unknown and partial-step entries are history barriers.
+  const entries = new Map(history.items.map((entry) => [entry.publication_id, entry]));
+  const ordered = [];
+  const seen = new Set<string>();
+  let publication: string | undefined = history.head.publication_id;
+  while (publication) {
+    if (seen.has(publication)) return { undo: [], redo: [] };
+    seen.add(publication);
+    const entry = entries.get(publication);
+    if (!entry) return { undo: [], redo: [] };
+    ordered.push(entry);
+    publication = entry.previous?.publication_id;
+  }
+  const undo: string[] = [];
+  const redo: string[] = [];
+  for (const entry of ordered.reverse()) {
+    if (entry.intent !== 'recorded' || !entry.records || entry.records.undo_steps != null) {
+      undo.length = 0;
+      redo.length = 0;
+      continue;
+    }
+    const targets = entry.records.undo_of;
+    if (!targets.length) {
+      undo.push(entry.publication_id);
+      redo.length = 0;
+    } else if (targets.every((target) => undo.includes(target))) {
+      for (const target of targets) undo.splice(undo.lastIndexOf(target), 1);
+      redo.push(entry.publication_id);
+    } else if (targets.every((target) => redo.includes(target))) {
+      for (const target of targets) redo.splice(redo.lastIndexOf(target), 1);
+      undo.push(entry.publication_id);
+    } else {
+      undo.length = 0;
+      redo.length = 0;
+    }
+  }
+  return { undo, redo };
 }
