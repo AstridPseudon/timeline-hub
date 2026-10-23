@@ -27,12 +27,10 @@ __all__ = ["duplicate_timeline", "id_map", "copy_content"]
 
 def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, label: str,
                    client: Any, idempotency_key: str) -> dict[str, Any]:
-    """Commit a prepared bundle through the public session and G3 emitter.
+    """Commit a source-copy command or a structural edit through the outbox.
 
-    New closure identities must be introduced by the existing semantic carrier;
-    authored parent and child content is then emitted as source-bound patches.
-    Keeping the session's generated closure metadata avoids rebuilding Runtime
-    identities in this caller.
+    Cross-timeline copies carry an exact source reference, never source bytes.
+    Restructure retains the existing semantic births and G3 payload patches.
     """
     from astrid.sdk.timeline import open as open_timeline
     from astrid.sdk.workspace_client import WorkspaceClientError
@@ -52,11 +50,20 @@ def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, l
         # before reconciling the separate durable narration flight below.
         result = _copy_acceptance(client, project, timeline, state["base"]["publication_id"], idempotency_key)
     else:
-        if not state["pending"] and flight is None:
-            _stage_bundle(session, desired)
-        # An unknown outcome owns its original body/key. Reconcile it before
-        # capturing any new births or patches, including after a restart.
-        result = session.commit(label, merge="atomic", idempotency_key=idempotency_key)
+        # Reconcile an unknown outcome with its original body/key before
+        # capturing another source copy, including after a restart.
+        source_command = desired.get("_duplicate_command")
+        if source_command is not None and not state["pending"] and flight is None:
+            result = session.session.submit(
+                [copy.deepcopy(source_command)], label=label, merge="atomic", reads=[],
+                steps=[{"id": "copy", "label": label, "intent": "Copy authenticated source",
+                        "tags": ["duplicate"], "command_ordinals": [0], "patch": [], "reads": []}],
+                expected_state=state, idempotency_key=idempotency_key)
+            session._accepted(result)
+        else:
+            if not state["pending"] and flight is None:
+                _stage_bundle(session, desired)
+            result = session.commit(label, merge="atomic", idempotency_key=idempotency_key)
     data = result["data"]
     receipt = {
         "old_head": data.get("previous_revision_id"),
@@ -363,6 +370,24 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
     if not report.valid:
         raise TimelineEditError(f"not duplicating {source}: its head is not valid ("
                                 + "; ".join((report.blocking or report.problems or ["invalid"])[:3]) + "); nothing was created")
+    content = src.bundle.get(STRUCTURE_KEY) or src.bundle
+    source_revision = content["base_parent"]["revision_id"]
+    cursor, seen = None, set()
+    while True:
+        history = client.timelines.history(project, source, cursor=cursor, limit=200)
+        if not history.ok:
+            raise TimelineEditError(f"could not authenticate duplicate source publication: {history.error}")
+        entry = next((item for item in history.data["items"] if item["revision_id"] == source_revision), None)
+        if entry is not None:
+            source_publication = entry["publication_id"]
+            break
+        cursor = history.data.get("next_cursor")
+        if cursor is None or cursor in seen:
+            raise TimelineEditError("the exact source publication is unavailable; nothing was created")
+        seen.add(cursor)
+    source_ref = {"project_id": content["project_id"], "timeline_id": content["timeline_id"],
+                  "revision_id": source_revision, "publication_id": source_publication,
+                  "content_digest": content["base_parent"]["content_digest"]}
     created = client.timelines.create_empty(
         project=project,
         timeline_id=slug or None,
@@ -383,6 +408,12 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
         # form: copying the flat shot would store the duplicate as a single shot whose chapters all share one id.
         content = src.bundle.get(STRUCTURE_KEY) or src.bundle
         bundle, notes = copy_content(content, dst.bundle, new_slug=slug or new_id)
+        from astrid.sdk.timeline.native_timeline_duplicate import copy_command
+
+        bundle["_duplicate_command"] = copy_command(
+            source_ref,
+            id_map(list(dict.fromkeys(str(row["shot_id"]) for row in content["placements"])), slug or new_id),
+            id_map([str(row["occurrence_id"]) for row in content["placements"]], f"occ-{slug or new_id}"))
         dst.bundle = flatten(bundle)  # a chapter film is edited and published flat; publish splits it back into its stored form
         dst.notes.extend(notes)
         # What publish will store for the copy must have as many distinct shots as what the SOURCE stores. The source
