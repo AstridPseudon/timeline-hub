@@ -18,9 +18,12 @@ agt-F-D22-full-1342-full-current-v3-1229-1023134453-10679
 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-F-D22-full-1342-full-current-v3-1229-1023134453-10679/
 ```
 
-Initial state at handoff: `queued` (the service owns the 90-minute full run).
-The retained snapshot must be checked from `status`, `summary`, `log.txt`,
-and `snap`; do not stop or duplicate this service.
+Initial state at handoff: `queued`; it entered `running` on the retained
+snapshot. At the worker's 30-minute limit (2026-10-23 14:10:01 UTC), it was
+still `running`, with the raw pytest progress at approximately 71% and
+`log.txt` size 14,970 bytes. The retained snapshot must be checked from
+`status`, `summary`, `log.txt`, and `snap`; do not stop or duplicate this
+service.
 
 ## Preflight result
 
@@ -71,7 +74,10 @@ the retained service evidence.
 
 ## Terminal result
 
-To be filled from the retained service result only. Preserve every failing
-node, skip/deselection/xfail inventory, and classify each failure as source,
-fixture, or environment. Historic 4249 classifications are not current
-causality evidence.
+**Pending service completion.** No terminal `summary`, exit code, or complete
+failure inventory exists at the worker handoff. The visible progress included
+`F`, `E`, `s`, and `u` markers, but none is classified here. After the service
+reaches a terminal state, preserve every failing node, skip/deselection/xfail
+inventory, and classify each failure as source, fixture, or environment.
+Historic 4249 classifications are not current causality evidence. Do not
+rerun or broadly repeat any node before that classification.
