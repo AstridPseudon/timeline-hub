@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T07:03:20Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 5m -->
-# agent board, 2026-10-23T06:58:00Z
+<!-- agent | 2026-10-23T07:04:55Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 0m -->
+# agent board, 2026-10-23T07:04:02Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -52,9 +52,11 @@ Resolved: runtime — Normal frozen strict34e adoption DONE; compatible executio
 Resolved: agent audit — ccc scope hold CLEARED at auditedbf40; currentG234 reviewed31a5 and currentfork900 merged ea302 with integrated131+2replay+2live PASS. Owncommit checks retained.
 Resolved: orchestrator — D12a applies everyV2 check, no inventednormalization; D15fork900/currentea302 integratedPASS; D14two undo positives deferred unchanged/unskipped/visiblyfailing, no54PASS.
 Resolved: orchestrator — D16 answers stale-window scope: invalidating source-window edit refuses earlier422 with reference path. Viewing owns bounded expectation adaptation with independent no-weakening review; peer0628 sent. Strict guard retained, no third deferral.
-Blockers: proof/app — H3 NO-GO actualmountedchain unproved; G5gated:P1. Proof owns P4 HTTP on boundedreviewedstagedsource, readerfix47aa review0553 active.
+Blockers: proof/app — H3 NO-GO actual mounted chain unproved; G5 gated:P1. Reader is RESOLVED at168/integrated45PASS; original single HTTP a914/28012 PASS1 all66. Proof owns ten-note/conflict HTTP and App paired-head failover; no Agent duplicate bodies.
 Blockers: farm — H6/H9/full/tour/journey farm/test-service owned; no Agent heavyduplicates.
-Next ready: childactual4edc integrated0658 -> FINALPASS/handback. Opsremote0648 FINALPASS/ACK0650; map9df FINALPASS60. No Viewing mergepacket:15d exceptionfinished behaviorPENDING/cut:H9, no sourcefix/54. TenHTTP admission Runtime0641/Proof conflict-rerun0647 owned externally. G5 gated:P1.
+Next ready: child4edc integrated0658 running, progress78+6PASS in log; await terminal report before FINAL credit/handback. No ready Agent product task waiting. Runtime gain admission RESOLVED a5d/integrated49; Proof service/port review0658 owns ten HTTP. G5 gated:P1. V4 remains cut:H9; NEVER merge15d/2f/706.
 Integration: 4edc4b321 (oneown387 child compiler + reducedbaseline on qualifiedmap9df). Map9df integrated0642 PASS60/exactoriginalrealprobe/2149/1914/tools; child387 independent0650 PASS42/2149/1912/tools, finaljoined proof0658 active. G4DONE header; actual3e+Runtime85 prior6PASS/all3redo remains exact recorded proof. SingleHTTP actuala914 integrated28012 PASS1/all66; tenHTTP admissionRuntimeowned, wholeP4/H3 notclaimed.
-Environment: privatepersistenttypeenv0529 active. Approvedsweep3 removed27dirs, compact packed0/gzipped15 oldlogs; free~15.6GiB abovefloor. No safety/permission refusal.
+Environment: private typecheck env0529 active. Free16.05GB (16050618368 bytes), above15GB floor; finished v1 Agent worktree inventory empty. Prior sweep3/compact retained. No local safety/permission refusal.
 Resolved: runtime operations — main reviewed exact3line784bf repair published and actualAgentremote0648 PASS; committedkit/live/daemon/stub verified, ACK0650. No automaticap2 merge or persistenceblocker.
+
+Resolved: Viewing stale V1 queue — close-merge-request vw-V1-agent-copies0105 completed; hub result now SUPERSEDED byffcec5d33/integrated0147 PASS. No stale donor merge/retest. Runtimea5d gain admission and owner-route784bf both published/proven; no stale runtime blocker.
