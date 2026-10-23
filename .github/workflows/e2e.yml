@@ -1,0 +1,70 @@
+# The three Playwright lanes that used to run nowhere (config/testing/skipRegistry.mjs LANES:
+# playwright-default, playwright-timeline, playwright-extension-a11y-visual-cross-browser).
+# Every config attaches config/testing/playwrightSkipGuard.ts, so an undeclared skip fails the job.
+name: E2E
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - ".github/workflows/e2e.yml"
+      - "src/**"
+      - "tests/e2e/**"
+      - "config/testing/**"
+      - "playwright*.config.ts"
+      - "package-lock.json"
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: "true"
+  NODE_OPTIONS: --max-old-space-size=4096
+
+jobs:
+  playwright-default:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.19.0", cache: npm }
+      - run: npm ci --legacy-peer-deps
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright test --config playwright.config.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: playwright-default-results, path: test-results, if-no-files-found: ignore }
+
+  playwright-timeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.19.0", cache: npm }
+      - run: npm ci --legacy-peer-deps
+      - run: npx playwright install --with-deps chromium chrome
+      - run: npm run test:e2e:timeline
+      - run: npm run test:e2e:chrome-export
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: playwright-timeline-results, path: test-results, if-no-files-found: ignore }
+
+  playwright-extension-a11y-visual-cross-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.19.0", cache: npm }
+      - run: npm ci --legacy-peer-deps
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run test:e2e:extension-accessibility
+      - run: npm run test:e2e:extension-visual
+      - run: npm run test:e2e:extension-cross-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: playwright-extension-results, path: artifacts, if-no-files-found: ignore }
