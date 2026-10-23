@@ -26,6 +26,7 @@ from astrid.core.timeline.shot_composition_projection import (
     ShotCompositionProjectionError,
     project_runtime_parent_composition,
 )
+from astrid.core.timeline.validators.meta import MetaValidationError
 from astrid.packs.rendering.actions.render.managed_timeline import ManagedRenderSnapshot
 from astrid.sdk.authoring_render_preview import (
     candidate_preview_snapshot,
@@ -43,6 +44,7 @@ from astrid.sdk.timeline_editing import (
 OLD = "sha256:" + "1" * 64
 NEW = "sha256:" + "2" * 64
 AUDIO = "sha256:" + "3" * 64
+PHANTOM = "sha256:" + "9" * 64
 
 
 def _digest(value):
@@ -256,6 +258,60 @@ def test_compile_materializes_shared_identity_and_keeps_untouched_content():
         NEW,
         AUDIO,
     }
+
+
+def test_authored_meta_is_preserved_without_phantom_media_dependencies():
+    parent, shots, timelines = _closure(shared=False)
+    authored_meta = {"org.example.notes": {"media_id": PHANTOM, "note": "keep"}}
+    parent["payload"]["meta"] = authored_meta
+    parent["content_digest"] = _digest(parent["payload"])
+
+    candidate = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+    )
+    publication = compile_authoring_candidate(candidate).publication
+
+    assert publication["parent_composition"]["meta"] == authored_meta
+    assert PHANTOM not in {
+        row["media_id"] for row in publication["dependency_manifest"]["media"]
+    }
+    assert PHANTOM not in {
+        row["media_id"] for row in authoring_media_inventory(candidate)["media"]
+    }
+
+
+def test_authoring_open_and_compile_validate_parent_and_shot_payload_meta():
+    parent, shots, timelines = _closure(shared=False)
+    parent["payload"]["meta"] = {"org.example.notes": None}
+    parent["content_digest"] = _digest(parent["payload"])
+    with pytest.raises(MetaValidationError, match="parent_revision.payload.meta"):
+        open_authoring_bundle(
+            parent, shot_revisions=shots, internal_timeline_revisions=timelines
+        )
+
+    parent, shots, timelines = _closure(shared=False)
+    shots[0]["payload"]["meta"] = {"org.example.notes": None}
+    shots[0]["content_digest"] = _digest(shots[0]["payload"])
+    with pytest.raises(MetaValidationError, match=r"shot_revisions\[shot-rev-1\].payload.meta"):
+        open_authoring_bundle(
+            parent, shot_revisions=shots, internal_timeline_revisions=timelines
+        )
+
+    parent, shots, timelines = _closure(shared=False)
+    candidate = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+    )
+    candidate["parent"]["meta"] = {"org.example.notes": None}
+    with pytest.raises(MetaValidationError, match="candidate.parent.meta"):
+        compile_authoring_candidate(candidate)
+
+    candidate = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+    )
+    shot_id = candidate["placements"][0]["shot_id"]
+    candidate["shots"][shot_id]["payload"]["meta"] = {"org.example.notes": None}
+    with pytest.raises(MetaValidationError, match="candidate.shots.*payload.meta"):
+        compile_authoring_candidate(candidate)
 
 
 @pytest.mark.parametrize("codec", ["item_id", "id", "both", "opaque-id"])

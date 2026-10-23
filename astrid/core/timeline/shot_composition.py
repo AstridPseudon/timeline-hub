@@ -534,6 +534,9 @@ def validate_shot_composition(raw: Mapping[str, Any]) -> dict[str, Any]:
         revision = _mapping(raw_revision, path)
         if "meta" in revision:
             validate_meta(revision["meta"], path=f"{path}.meta")
+        shot_payload = revision.get("payload")
+        if isinstance(shot_payload, Mapping) and "meta" in shot_payload:
+            validate_meta(shot_payload["meta"], path=f"{path}.payload.meta")
         shot_id = _string(revision.get("shot_id"), f"{path}.shot_id")
         revision_id = _string(revision.get("revision_id"), f"{path}.revision_id")
         key = (shot_id, revision_id)
