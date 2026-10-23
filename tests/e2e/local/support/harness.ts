@@ -464,6 +464,8 @@ export class DirectHarness {
   private renderSeed?: RenderSeed;
   private timelineAuthoring = false;
   private authoringPython?: string;
+  private seedInitialized = false;
+  private seedHead?: { revisionId: string; publicationId: string };
 
   /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
 
@@ -500,7 +502,7 @@ export class DirectHarness {
     ];
   }
 
-  async start(): Promise<this> {
+  async start(options: { deferTimelineInitialization?: boolean } = {}): Promise<this> {
     process.on('SIGTERM', () => { void this.stop().finally(() => process.exit(143)); });
     try {
       const descriptorText = process.env.ASTRID_QUICK_DESCRIPTOR;
@@ -537,7 +539,7 @@ export class DirectHarness {
         await this.startRuntime();
         // The door listens from the start and answers `runtime_unavailable` until the product credential exists.
         this.productToken = await this.provisionCredential(PRODUCT_ACTOR, path.basename(this.credentialPath));
-        this.seed = await this.seedRuntime();
+        this.seed = await this.seedRuntime(options.deferTimelineInitialization);
       }
     } catch (error) {
       await this.stop();
@@ -654,17 +656,18 @@ export class DirectHarness {
     return token;
   }
 
-  /** Seed the Gate-5 closure through the authoring provider, not the retired snapshot writer. */
-  private async commitThreeProductsNative(payload: Record<string, unknown>): Promise<string> {
+  /** Initialize the common empty timeline or author the Gate-5 closure through the provider. */
+  private async commitNativeSeed(payload: Record<string, unknown>): Promise<{ revisionId: string; publicationId: string }> {
     const python = this.authoringPython;
-    if (!python) throw new Error('three-products native seed requires the authoring Runtime');
+    if (!python) throw new Error('native seed requires the authoring Runtime');
     const credential = path.join(this.tmp, 'three-products-seed-credential.json');
     await this.provisionCredential(ASTRID_ACTOR, path.basename(credential));
     const script = String.raw`
-import copy, json, os, sys
+import copy, hashlib, json, sys
 from astrid.sdk.client import AstridClient
 from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.emitter import emit_document_commands
 from astrid.sdk.timeline.native_initialize import capture_initialize
 from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
@@ -672,110 +675,183 @@ from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurre
 from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
 
 case = json.loads(sys.argv[1])
-client = AstridClient.open_from_launcher(credential=case['credential'])
-opened = client.timelines.open_bundle(case['project_id'], case['timeline_id'], revision_id=case['head_revision_id'])
+client = AstridClient.open(endpoint=case['endpoint'], credential=case['credential'],
+                           realm_id=case['realm_id'], actor_id=case['actor_id'],
+                           client_name='journey-seed', client_version='1', protocol_version='workspace.v1')
+opened = client.timelines.open_bundle(case['project_id'], case['timeline_id'], revision_id=case['head_revision_id'], publication_id=case['base_publication_id'])
 if not opened.ok:
     raise RuntimeError(str(opened.error))
 bundle = opened.data['bundle']
 commands = []
-verified = [item['verified'] for item in case['media'].values()]
-pins = {key: item['pin'] for key, item in case['media'].items()}
+verified = [item['verified'] for item in case.get('media', {}).values()]
+pins = {key: item['pin'] for key, item in case.get('media', {}).items()}
 
 def add(command):
     global bundle
     commands.append(command)
     bundle = execute(bundle, [command], verified_media=verified).bundle
 
-add(capture_initialize(bundle, name='Main', slug='main', output={
-    'resolution': '1280x720', 'fps': 30, 'file': 'output.mp4',
-    'background': None, 'background_scale': None,
-}))
-add(capture_track_create(bundle, 'parent', {'id': 'V1', 'kind': 'visual', 'label': 'V1'}))
-add(capture_track_create(bundle, 'parent', {'id': 'S1', 'kind': 'visual', 'label': 'S1'}))
-add(capture_clip_add_media(bundle, {
-    'id': 'f2-app-clip', 'at': 0, 'track': 'V1', 'clipType': 'image',
-    'asset': 'f2-app', 'hold': 3,
-}, pins['f2-app'], verified_media=verified))
-transition = {
-    'id': 'f2-transition-clip', 'at': case['reference_at'], 'track': 'V1',
-    'clipType': 'video', 'asset': 'f2-video', 'from': 0, 'to': 3, 'hold': 3,
-    'speed': 1, 'transition': {'type': 'crossfade', 'duration': 0.5},
-}
-add(capture_clip_add_media(bundle, transition, pins['f2-video'], verified_media=verified))
-add(capture_occurrence_create(bundle, 'f2-occurrence', 'f2-shot', name='F2 agent shot', track='S1', on=0, duration=12))
-add(capture_track_create(bundle, 'occurrence:f2-occurrence', {'id': 'plate', 'kind': 'visual', 'label': 'plate'}))
-add(capture_track_create(bundle, 'occurrence:f2-occurrence', {'id': 'V2', 'kind': 'visual', 'label': 'V2'}))
-for row, key in [
-    ({'id': 'f2-plate', 'at': 0, 'track': 'plate', 'clipType': 'image', 'asset': 'f2-plate', 'hold': 12}, 'f2-plate'),
-    ({'id': 'f2-agent-clip', 'at': 3, 'track': 'V2', 'clipType': 'image', 'asset': 'f2-placeholder', 'hold': 3}, 'f2-placeholder'),
-    ({'id': 'f2-agent-clear-clip', 'at': 6, 'track': 'V2', 'clipType': 'image', 'asset': 'f2-clear', 'hold': 3}, 'f2-clear'),
-]:
-    add(capture_occurrence_add_media(bundle, 'occurrence:f2-occurrence', row, pins[key], verified_media=verified))
+if case['initialize']:
+    add(capture_initialize(bundle, name='Main', slug='main', output={
+        'resolution': '1280x720', 'fps': 30, 'file': 'output.mp4',
+        'background': None, 'background_scale': None,
+    }))
+if case['fixture'] == 'three-products':
+    if not case['initialize']:
+        assert bundle['parent']['config']['tracks'] == [{'id': 'V1', 'kind': 'visual', 'label': 'V1'}]
+    else:
+        add(capture_track_create(bundle, 'parent', {'id': 'V1', 'kind': 'visual', 'label': 'V1'}))
+    add(capture_track_create(bundle, 'parent', {'id': 'S1', 'kind': 'visual', 'label': 'S1'}))
+    add(capture_clip_add_media(bundle, {
+        'id': 'f2-app-clip', 'at': 0, 'track': 'V1', 'clipType': 'image',
+        'asset': 'f2-app', 'hold': 3,
+    }, pins['f2-app'], verified_media=verified))
+    transition = {
+        'id': 'f2-transition-clip', 'at': case['reference_at'], 'track': 'V1',
+        'clipType': 'video', 'asset': 'f2-video', 'from': 0, 'to': 3, 'hold': 3,
+        'speed': 1,
+    }
+    add(capture_clip_add_media(bundle, transition, pins['f2-video'], verified_media=verified))
+    add(capture_occurrence_create(bundle, 'f2-occurrence', 'f2-shot', name='F2 agent shot', track='S1', on=0, duration=12))
+    add(capture_track_create(bundle, 'occurrence:f2-occurrence', {'id': 'plate', 'kind': 'visual', 'label': 'plate'}))
+    add(capture_track_create(bundle, 'occurrence:f2-occurrence', {'id': 'V2', 'kind': 'visual', 'label': 'V2'}))
+    for row, key in [
+        ({'id': 'f2-plate', 'at': 0, 'track': 'plate', 'clipType': 'image', 'asset': 'f2-plate', 'hold': 12}, 'f2-plate'),
+        ({'id': 'f2-agent-clip', 'at': 3, 'track': 'V2', 'clipType': 'image', 'asset': 'f2-placeholder', 'hold': 3}, 'f2-placeholder'),
+        ({'id': 'f2-agent-clear-clip', 'at': 6, 'track': 'V2', 'clipType': 'image', 'asset': 'f2-clear', 'hold': 3}, 'f2-clear'),
+    ]:
+        row['asset'] = pins[key]['asset']
+        add(capture_occurrence_add_media(bundle, 'occurrence:f2-occurrence', row, pins[key], verified_media=verified))
 
-def asset(alias, source, pin):
-    row = {'file': source['file'], 'type': source['type'], 'media_id': source['object_id'],
-           'content_sha256': source['digest']}
-    row.update({'generationId': pin['generation_id'], 'variantId': pin['variant_id']})
-    return row
+    def asset(source):
+        row = {'file': source['file'], 'type': source['type'], 'media_id': source['object_id'],
+               'content_sha256': source['digest']}
+        return row
 
-image = case['image']
-video = case['video']
-parent_clips = [
-    {'id': 'f2-app-clip', 'at': 0, 'track': 'V1', 'clipType': 'media', 'asset': 'f2-app', 'from': 0, 'to': 3, 'speed': 1},
-    {'id': 'f2-transition-clip', 'at': case['reference_at'], 'track': 'V1', 'clipType': 'media', 'asset': 'f2-video', 'from': 0, 'to': 3, 'speed': 1, 'transition': {'type': 'crossfade', 'duration': 0.5}},
-]
-if case['transitions'] == 'native-none':
-    parent_clips[0].update(json.loads('{"opaqueClip":{"nullable":null,"ordered":[false,0,"",[],{"z":2,"a":1}]},"transition":{"type":"crossfade","duration":0.5,"revision":"native-none-unknown-revision","params":{"nullable":null,"__proto__":{"literal":true},"constructor":{"prototype":[null,false]}},"future":{"ordered":[null,0,false]},"__proto__":{"outer":true},"prototype":false}}'))
-elif case['transitions'] == 'parent-delete':
-    parent_clips[1].pop('transition', None)
-parent_registry = {
-    'f2-app': asset('f2-app', {'file': 'f2-app.png', 'type': 'image/png', 'object_id': image['object_id'], 'digest': image['digest']}, pins['f2-app']),
-    'f2-video': asset('f2-video', {'file': video['file'], 'type': video['media_type'], 'object_id': video['object_id'], 'digest': video['digest']}, pins['f2-video']),
-}
-parent_registry['f2-video']['duration'] = 12
-before = copy.deepcopy(bundle)
-bundle_parent = bundle['parent']
-bundle_parent['config'] = {**bundle_parent['config'], 'clips': copy.deepcopy(parent_clips),
-    'tracks': [{'id': 'V1', 'kind': 'visual', 'label': 'V1'}, {'id': 'S1', 'kind': 'visual', 'label': 'S1'}],
-    'output': {'resolution': '1280x720', 'fps': 30, 'file': 'out.mp4'},
-    'x_f2_opaque': case['opaque']['config'],
-    'app': {'haus.astrid.scene-phase-markers': {'sceneMarkers': [{'id': 'ordinary-marker-a', 'time': 1}, {'id': 'ordinary-marker-b', 'time': 6}]}},
-}
-bundle_parent['clips'] = copy.deepcopy(parent_clips)
-bundle_parent['registry'] = {'assets': parent_registry}
-shot = bundle['shots']['f2-shot']
-shot['payload'] = {'metadata': {'title': 'F2 agent shot'}, 'items': [], 'pools': [], 'selected_variants': {},
-    'provenance': {}, 'generation_inputs': {}, 'audio_bindings': [], 'text_bindings': [],
-    'x_f2_opaque': case['opaque']['shot']}
-shot['internal_timeline']['clips'] = [
-    {'id': 'f2-plate', 'at': 0, 'track': 'plate', 'clipType': 'media', 'asset': 'f2-plate', 'hold': 12},
-    {'id': 'f2-agent-clip', 'at': 3, 'track': 'V2', 'clipType': 'media', 'asset': 'f2-placeholder', 'hold': 3, 'app': {'f2Opaque': case['opaque']['clip']}},
-    {'id': 'f2-agent-clear-clip', 'at': 6, 'track': 'V2', 'clipType': 'media', 'asset': 'f2-clear', 'hold': 3},
-]
-shot['internal_timeline']['registry'] = {'assets': {
-    key: asset(key, ({'file': key + '.png', 'type': 'image/png', 'object_id': image['object_id'], 'digest': image['digest']}), pins[key])
-    for key in ('f2-plate', 'f2-placeholder', 'f2-clear')
-}}
-after = copy.deepcopy(bundle)
-patches = emit_document_commands(before, after)
-if patches:
-    bundle = execute(before, patches, verified_media=verified).bundle
-    commands.extend(patches)
+    image = case['image']
+    video = case['video']
+    parent_clips = [
+        {'id': 'f2-app-clip', 'at': 0, 'track': 'V1', 'clipType': 'media', 'asset': 'f2-app', 'from': 0, 'to': 3, 'speed': 1},
+        {'id': 'f2-transition-clip', 'at': case['reference_at'], 'track': 'V1', 'clipType': 'media', 'asset': 'f2-video', 'from': 0, 'to': 3, 'speed': 1, 'transition': {'type': 'crossfade', 'duration': 0.5}},
+    ]
+    if case['transitions'] == 'native-none':
+        parent_clips[0].update(json.loads('{"opaqueClip":{"nullable":null,"ordered":[false,0,"",[],{"z":2,"a":1}]},"transition":{"type":"crossfade","duration":0.5,"revision":"native-none-unknown-revision","params":{"nullable":null,"__proto__":{"literal":true},"constructor":{"prototype":[null,false]}},"future":{"ordered":[null,0,false]},"__proto__":{"outer":true},"prototype":false}}'))
+    elif case['transitions'] == 'parent-delete':
+        parent_clips[1].pop('transition', None)
+    parent_registry = {
+        'f2-app': asset({'file': 'f2-app.png', 'type': 'image/png', 'object_id': image['object_id'], 'digest': image['digest']}),
+        'f2-video': asset({'file': video['file'], 'type': video['media_type'], 'object_id': video['object_id'], 'digest': video['digest']}),
+    }
+    parent_registry['f2-video']['duration'] = 12
+    before = copy.deepcopy(bundle)
+    bundle_parent = bundle['parent']
+    bundle_parent['config'] = {**bundle_parent['config'], 'clips': copy.deepcopy(parent_clips),
+        'tracks': [{'id': 'V1', 'kind': 'visual', 'label': 'V1'}, {'id': 'S1', 'kind': 'visual', 'label': 'S1'}],
+        'output': {'resolution': '1280x720', 'fps': 30, 'file': 'out.mp4'},
+        'x_f2_opaque': case['opaque']['config'],
+        'app': {'haus.astrid.scene-phase-markers': {'sceneMarkers': [{'id': 'ordinary-marker-a', 'time': 1}, {'id': 'ordinary-marker-b', 'time': 6}]}},
+    }
+    bundle_parent['clips'] = copy.deepcopy(parent_clips)
+    bundle_parent['registry'] = {'assets': parent_registry}
+    shot = bundle['shots']['f2-shot']
+    shot['payload'] = {'metadata': {'title': 'F2 agent shot'}, 'items': [], 'pools': [], 'selected_variants': {},
+        'provenance': {}, 'generation_inputs': {}, 'audio_bindings': [], 'text_bindings': [],
+        'x_f2_opaque': case['opaque']['shot']}
+    shot['internal_timeline']['clips'] = [
+        {'id': 'f2-plate', 'at': 0, 'track': 'plate', 'clipType': 'media', 'asset': 'f2-plate', 'hold': 12},
+        {'id': 'f2-agent-clip', 'at': 3, 'track': 'V2', 'clipType': 'media', 'asset': 'f2-placeholder', 'hold': 3, 'app': {'f2Opaque': case['opaque']['clip']}},
+        {'id': 'f2-agent-clear-clip', 'at': 6, 'track': 'V2', 'clipType': 'media', 'asset': 'f2-clear', 'hold': 3},
+    ]
+    shot['internal_timeline']['registry'] = {'assets': {
+        key: asset({'file': key + '.png', 'type': 'image/png', 'object_id': image['object_id'], 'digest': image['digest']})
+        for key in ('f2-plate', 'f2-placeholder', 'f2-clear')
+    }}
+    shot['internal_timeline'].pop('output', None)
+    shot['internal_timeline'].update(effects=[], audio=[], layout={}, assets=[])
+    after = copy.deepcopy(bundle)
+    # Project the provider's occurrence edges for payload-only emission.
+    occurrences = document_from_bundle(before)['parent_revision']['payload']['occurrences']
+    before['parent']['occurrences'] = copy.deepcopy(occurrences)
+    after['parent']['occurrences'] = copy.deepcopy(occurrences)
+    occurrence = after['parent']['occurrences'][0]
+    occurrence.update(placement={'start_ms': 0}, source_offset=0, duration_ms=12000, speed=1,
+                      track='S1', transform={}, gain=1, mute=False, provenance={})
+    patches = emit_document_commands(before, after)
+    if patches:
+        bundle = execute(before, patches, verified_media=verified).bundle
+        commands.extend(patches)
+else:
+    before = copy.deepcopy(bundle)
+    after = copy.deepcopy(bundle)
+    after['parent']['config'] = {'output': {'resolution': '1280x720', 'fps': 30, 'file': 'out.mp4'},
+                                 'clips': [], 'tracks': [{'id': 'V1', 'kind': 'visual', 'label': 'V1'}]}
+    for command in emit_document_commands(before, after):
+        add(command)
 
+expected_parent = copy.deepcopy(after['parent'])
+expected_parent.pop('occurrences', None)
+
+label = 'Seed three products' if case['fixture'] == 'three-products' else 'Initialize journey timeline'
+scope_reads = [{'kind': 'scope', 'ref': 'timeline', 'path': []}]
+steps = [{'id': 'seed-' + str(ordinal), 'label': command['op'], 'intent': label, 'tags': [],
+          'command_ordinals': [ordinal],
+          'patch': copy.deepcopy(command['args']['changes']) if command['op'] == 'doc.patch' else [],
+          'reads': copy.deepcopy(scope_reads)} for ordinal, command in enumerate(commands)]
 body = {'api_version': 1, 'project_id': case['project_id'], 'timeline_id': case['timeline_id'],
         'base_revision_id': case['head_revision_id'], 'base_publication_id': case['base_publication_id'],
-        'commands': commands, 'source': {'via': 'python'}}
+        'commands': commands, 'label': label, 'steps': steps, 'merge': 'atomic',
+        'reads': scope_reads, 'dry_run': False, 'source': {'via': 'python'}}
+with open(case['acceptance_file'], 'w') as stream:
+    json.dump({'request': body, 'idempotency_key': case['idempotency_key']}, stream)
 result = client.timelines.commit(case['project_id'], case['timeline_id'], body, idempotency_key=case['idempotency_key'])
 if not result.ok:
     raise RuntimeError(str(result.error))
-print(json.dumps({'head_revision_id': result.data['accepted_revision_id']}))
+from astrid.core.receipts.canonical import canonical_json
+accepted = result.as_dict()
+data, receipt = accepted['data'], accepted['receipt']
+with open(case['acceptance_file'], 'w') as stream:
+    json.dump({'request': body, 'idempotency_key': case['idempotency_key'], **accepted}, stream)
+assert data['status'] == 'accepted', data
+assert receipt['result'] == data and receipt['idempotency_key'] == case['idempotency_key']
+assert data['base_revision_id'] == data['previous_revision_id'] == case['head_revision_id']
+assert data['base_publication_id'] == data['previous_publication_id'] == case['base_publication_id']
+assert receipt['receipt_id'] and receipt['receipt_id'] != case['base_publication_id']
+assert receipt['command_kind'] == 'timeline.commit' and receipt['project_id'] == case['project_id']
+assert data['publisher'] == case['actor_id'] and data['rebased_onto'] is None
+invocation = {'operation': 'commitTimeline', 'path': case['commit_path'], 'publisher': case['actor_id'], 'request': body}
+assert receipt['request_hash'] == hashlib.sha256(canonical_json(invocation).encode()).hexdigest()
+document = data['canonical_document']
+assert document['project_id'] == case['project_id'] and document['timeline_id'] == case['timeline_id']
+assert document['parent_revision']['revision_id'] == data['accepted_revision_id']
+assert data['document_digest'] == 'sha256:' + hashlib.sha256(canonical_json(document).encode()).hexdigest()
+bundle_from_document(document)  # Verify the returned raw closure, content digests and manifest pins.
+assert data['steps'] and data['commands'] and data['merge_mode'] == 'atomic'
+raw_parent = copy.deepcopy(document['parent_revision']['payload'])
+raw_occurrences = raw_parent.pop('occurrences')
+assert canonical_json(raw_parent) == canonical_json(expected_parent), 'seed changed authored parent payload'
+if case['fixture'] == 'three-products':
+    assert len(raw_occurrences) == len(document['shot_revisions']) == len(document['internal_timeline_revisions']) == 1
+    raw_occurrence = copy.deepcopy(raw_occurrences[0])
+    raw_shot, raw_internal = document['shot_revisions'][0], document['internal_timeline_revisions'][0]
+    assert raw_occurrence.pop('shot_revision_id') == raw_shot['revision_id']
+    expected_occurrence = {'occurrence_id': 'f2-occurrence', 'shot_id': 'f2-shot',
+        'placement': {'start_ms': 0}, 'source_offset': 0, 'duration_ms': 12000, 'speed': 1,
+        'track': 'S1', 'transform': {}, 'gain': 1, 'mute': False, 'provenance': {}}
+    assert canonical_json(raw_occurrence) == canonical_json(expected_occurrence), 'seed changed authored occurrence'
+    expected_shot = {**shot['payload'], 'internal_timeline_revision_id': raw_internal['revision_id']}
+    assert raw_shot['shot_id'] == 'f2-shot' and raw_internal['timeline_id'] == case['timeline_id']
+    assert canonical_json(raw_shot['payload']) == canonical_json(expected_shot), 'seed changed authored shot payload'
+    assert canonical_json(raw_internal['payload']) == canonical_json(shot['internal_timeline']), 'seed changed authored internal payload'
+else:
+    assert raw_occurrences == document['shot_revisions'] == document['internal_timeline_revisions'] == []
+print(json.dumps({'revisionId': data['accepted_revision_id'], 'publicationId': receipt['receipt_id']}))
 `;
-    const output = execFileSync(python, ['-c', script, JSON.stringify({ ...payload, credential })], {
+    const output = execFileSync(python, ['-c', script, JSON.stringify({ ...payload, credential, endpoint: this.runtimeUrl, realm_id: this.realmId, actor_id: ASTRID_ACTOR, commit_path: `/v1/projects/${payload.project_id}/timelines/${payload.timeline_id}/commit`, acceptance_file: path.join(this.tmp, `seed-${payload.idempotency_key}-accepted.json`) })], {
       cwd: this.tmp, env: this.runtimeEnv(), encoding: 'utf8', timeout: 120_000,
     });
-    const result = JSON.parse(output.trim().split('\n').pop() ?? '{}') as { head_revision_id?: string };
-    if (!result.head_revision_id) throw new Error(`native three-products seed returned no head: ${output}`);
-    return result.head_revision_id;
+    const result = JSON.parse(output.trim().split('\n').pop() ?? '{}') as { revisionId: string; publicationId: string };
+    if (!result.revisionId || !result.publicationId) throw new Error(`native seed returned no head pair: ${output}`);
+    return result;
   }
 
   /**
@@ -790,14 +866,27 @@ print(json.dumps({'head_revision_id': result.data['accepted_revision_id']}))
     return parsed as RuntimeDiscovery;
   }
 
-  private async seedRuntime(): Promise<Seed> {
+  private async seedRuntime(deferTimelineInitialization = false): Promise<Seed> {
     const projectName = `Direct Journey ${randomBytes(3).toString('hex')}`;
     const project = await this.runtimeJson('POST', '/v1/projects', { name: projectName });
     if (project.status !== 201) throw new Error(`seed project: ${project.status} ${JSON.stringify(project.body)}`);
     const projectId: string = project.body.data.project_id;
     const timelineId = randomUUID();
-    const published = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines/${timelineId}/composition-revisions`, compositionPublication({ projectId, timelineId }, null, 'Main', 30));
-    if (published.status !== 200) throw new Error(`seed timeline: ${published.status} ${JSON.stringify(published.body)}`);
+    const python = process.env.ASTRID_PYTHON ?? path.resolve(process.env.ASTRID_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-agent'), '.venv/bin/python');
+    await this.enableTimelineAuthoring(python);
+    const created = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines`, { timeline_id: timelineId, name: 'Main' });
+    if (created.status !== 201) throw new Error(`seed timeline: ${created.status} ${JSON.stringify(created.body)}`);
+    const timeline = await this.runtimeJson('GET', `/v1/projects/${projectId}/timelines/${timelineId}`);
+    if (timeline.status !== 200) throw new Error(`seed head: ${timeline.status} ${JSON.stringify(timeline.body)}`);
+    const { head_revision_id: revisionId, head_publication_id: publicationId } = timeline.body;
+    if (typeof revisionId !== 'string' || !revisionId || typeof publicationId !== 'string' || !publicationId) throw new Error('seed timeline has no Runtime head pair');
+    // P3 initializes this pristine shell once with its complete authored fixture. Other callers receive the original empty config.
+    const head = deferTimelineInitialization ? { revisionId, publicationId } : await this.commitNativeSeed({
+      fixture: 'empty', initialize: true, project_id: projectId, timeline_id: timelineId, head_revision_id: revisionId,
+      base_publication_id: publicationId, idempotency_key: randomUUID(),
+    });
+    this.seedInitialized = !deferTimelineInitialization;
+    this.seedHead = head;
     const ingest = async (data: Buffer, mediaType: string, filename: string): Promise<SeededObject> => {
       const response = await this.runtimeFetch(`/v1/projects/${projectId}/objects`, { method: 'POST', headers: { 'Content-Type': mediaType, 'Idempotency-Key': randomUUID(), 'X-Original-Name': filename }, body: new Uint8Array(data) });
       if (response.status !== 201 && response.status !== 200) throw new Error(`seed ${filename}: ${response.status} ${await response.text()}`);
@@ -809,7 +898,7 @@ print(json.dumps({'head_revision_id': result.data['accepted_revision_id']}))
     const big = randomBytes(BIG_DOWNLOAD_BYTES);
     return {
       projectId, projectName, timelineId,
-      headRevisionId: published.body.data.new_head,
+      headRevisionId: head.revisionId,
       image: await ingest(makePng(), 'image/png', 'gradient.png'),
       video: { ...(await ingest(video.data, video.mediaType, `clip.${video.mediaType === 'video/webm' ? 'webm' : 'mp4'}`)), decodable: video.decodable },
       big: await ingest(big, 'application/octet-stream', 'big-60mb.bin'),
@@ -932,14 +1021,13 @@ print(json.dumps({'head_revision_id': result.data['accepted_revision_id']}))
     if (project.status !== 200) throw new Error(`seed three products project: ${project.status} ${JSON.stringify(project.body)}`);
     const authoringPython = process.env.ASTRID_PYTHON ?? path.resolve(process.env.ASTRID_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-agent'), '.venv/bin/python');
     await this.enableTimelineAuthoring(authoringPython);
-    const created = await this.runtimeJson('POST', `/v1/projects/${projectId}/timelines`, { timeline_id: timelineId, name: 'Main' });
-    if (created.status !== 201) throw new Error(`create three-products timeline: ${created.status} ${JSON.stringify(created.body)}`);
     const timeline = await this.runtimeJson('GET', `/v1/projects/${projectId}/timelines/${timelineId}`);
     if (timeline.status !== 200) throw new Error(`read three-products bootstrap: ${timeline.status} ${JSON.stringify(timeline.body)}`);
     const bootstrapHead = (timeline.body as any).head_revision_id;
     if (typeof bootstrapHead !== 'string' || !bootstrapHead) throw new Error(`three-products bootstrap has no canonical head: ${JSON.stringify(timeline.body)}`);
     const bootstrapPublication = (timeline.body as any).head_publication_id;
     if (typeof bootstrapPublication !== 'string' || !bootstrapPublication) throw new Error(`three-products bootstrap has no canonical publication: ${JSON.stringify(timeline.body)}`);
+    if (this.seedHead?.revisionId !== bootstrapHead || this.seedHead.publicationId !== bootstrapPublication) throw new Error('three-products initialization base changed after common bootstrap');
 
     const importManaged = async (source: SeededObject & { decodable?: boolean }, filename: string, duration?: number) => {
       const object = await this.runtimeFetch(`/v1/objects/${encodeURIComponent(source.objectId)}`);
@@ -965,7 +1053,8 @@ print(json.dumps({'head_revision_id': result.data['accepted_revision_id']}))
     const ids = { appClipId: 'f2-app-clip', agentClipId: 'f2-agent-clip', transitionClipId: 'f2-transition-clip', agentClearClipId: 'f2-agent-clear-clip' };
     const markerAssetKey = 'f2-marker';
     const shotId = 'f2-shot';
-    const headRevisionId = await this.commitThreeProductsNative({
+    const head = await this.commitNativeSeed({
+      fixture: 'three-products', initialize: !this.seedInitialized,
       project_id: projectId, timeline_id: timelineId, head_revision_id: bootstrapHead,
       base_publication_id: bootstrapPublication,
       reference_at: referenceAt, transitions, image: { file: 'f2-image.png', type: image.mediaType, object_id: image.objectId, digest: image.digest },
@@ -974,8 +1063,10 @@ print(json.dumps({'head_revision_id': result.data['accepted_revision_id']}))
       opaque: { config: THREE_PRODUCTS_OPAQUE.config, clip: THREE_PRODUCTS_OPAQUE.clip, shot: THREE_PRODUCTS_OPAQUE.shot },
       idempotency_key: randomUUID(),
     });
+    this.seedInitialized = true;
+    this.seedHead = head;
     this.threeProductsSeed = {
-      projectSlug: (project.body.data ?? project.body).slug, timelineId, headRevisionId,
+      projectSlug: (project.body.data ?? project.body).slug, timelineId, headRevisionId: head.revisionId,
       ...ids, shotId, occurrenceId: 'f2-occurrence', markerAssetKey, opaque: { config: { ...THREE_PRODUCTS_OPAQUE.config }, clip: { ...THREE_PRODUCTS_OPAQUE.clip }, shot: { ...THREE_PRODUCTS_OPAQUE.shot } },
     };
     return this.threeProductsSeed;
@@ -1145,8 +1236,8 @@ print(json.dumps({'head_revision_id': result.data['accepted_revision_id']}))
   }
 }
 
-export async function startDirectHarness(): Promise<DirectHarness> {
-  return new DirectHarness().start();
+export async function startDirectHarness(options: { deferTimelineInitialization?: boolean } = {}): Promise<DirectHarness> {
+  return new DirectHarness().start(options);
 }
 
 function readCredentialToken(file: string): string {

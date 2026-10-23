@@ -32,7 +32,7 @@ import { cpus, loadavg } from 'node:os';
 import path from 'node:path';
 import { getTimelineLabelWidth } from '../../../src/tools/video-editor/lib/coordinate-utils.ts';
 import { PREVIEW_SURFACE, calibrateRuler, seekRulerToFrame, type RulerSeek } from '../support/previewRuler.ts';
-import { harnessUnavailableReason, sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
+import { harnessUnavailableReason, startDirectHarness, sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { APP_ENTRY_ROUTE, commandOutboxes, currentHead, dragTimelineClip, dropFileOnTimeline, editFirstTrackName, expectConnected, firstTrackName, holdCommandRequests, holdTimelineCreation, openApp, openSeededTimeline, revisionBody, test as appTest, timelineDraft, UI, waitForAudit } from './support/app.ts';
 import { allowlistedEvidenceMethod, allowlistedEvidenceStatus, relevantEvidenceRoute, type EvidenceMethod, type EvidenceRoute } from './support/auto-real-proxy-helpers.ts';
 import { timelineBase as runtimeTimelineBase, timelineFromList, type TimelineListPage, type TimelineScope } from './support/timeline-scope.ts';
@@ -48,6 +48,12 @@ const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
 const FULL_SHA = /^[0-9a-f]{40}$/;
 
 const test = appTest.extend<object, { seed3: ThreeProductsSeed; astrid: AstridCli; quickAstrid: AstridCli }>({
+  // P3 owns initialization of the common bootstrap's single pristine Runtime shell.
+  // eslint-disable-next-line no-empty-pattern
+  harness: [async ({}, use) => {
+    const harness = await startDirectHarness({ deferTimelineInitialization: true });
+    try { await use(harness); } finally { await harness.stop(); }
+  }, { scope: 'worker', timeout: process.env.ASTRID_QUICK_DESCRIPTOR ? 0 : 240_000 }],
   seed3: [async ({ harness }, use) => {
     await use(await harness.seedThreeProducts());
   }, { scope: 'worker', timeout: 240_000 }],
