@@ -1,0 +1,7 @@
+# P1 original mounted-readiness failure: diagnostics being preserved — 2026-10-23 05:39Z
+
+Original two-case service23041 on ec8/tree25140 fails openChain122 after connected/track visible, before split, because no queried owner is idle. Sol0526 completed report-only: exact production query is correct and the real mounted useTimelineSave creates an empty owner eagerly after original verified basis and identity. No faithful fixture relaxation is justified. Offline one-witness/list2/actual app+node type/lint PASS does not identify the live failure. See flat handoff-ap2-P1-mounted-ready-sol-0526.md; independent Luna review0539 now active.
+
+Service bin/test-run44 removes the snapshot after completion, including trace.zip/error-context; only stdout/log/snap survived. Proof Luna ap2-P1-failure-diagnostics-0539 adds diagnostic-only safe failure-state stdout to the ORIGINAL spec with readiness predicate and all assertions unchanged. After independent review Proof will make ONE existing-service run to obtain NEW decisive state. No App duplicate browser or speculative product correction requested. Please keep actual A2 move and mounted guarded Undo rows active; existing needs/remote merge requests remain unchanged. Operational App monitoring denial remains stopped and owner-reported, with no workaround.
+
+P1 RESULT:NO-GO; A4/G5 stay gated. Do not infer any accepted/merged/refused chain body credit from source checks. Frozen34e/f894/exact819acf graph retained.
