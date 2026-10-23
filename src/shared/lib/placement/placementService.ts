@@ -14,7 +14,7 @@
 
 import { AstridLocalClient } from '@/integrations/astrid/client';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider';
-import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types';
+import type { CanonicalDocument, EditCommand } from '@/integrations/runtime/timeline-commit-types';
 import type { TimelineCommandBasis, TimelineSaveReceipt } from '@/tools/video-editor/data/DataProvider';
 import { toOutboxJson } from '@/tools/video-editor/commands/commitOutbox';
 import { createLocalSaveSession, type LocalSaveSession } from '@/tools/video-editor/commands/localSaveSession';
@@ -369,6 +369,75 @@ export interface PlaceGenerationRequest {
   generationId: string;
   /** `undefined` → auto-position; `null` → pooled; number → explicit frame. */
   timelineFrame?: number | null;
+}
+
+/**
+ * The selected occurrence is an authenticated closure binding, not a display shot id.
+ * The destination shot is allocated by the caller and is retained verbatim across retries.
+ */
+export interface OccurrenceForkRequest extends ActiveTimelineTarget {
+  ownerRef: `occurrence:${string}`;
+  shotId: string;
+}
+
+export function buildOccurrenceForkCommand(document: CanonicalDocument, request: OccurrenceForkRequest): EditCommand {
+  if (!/^occurrence:(?!.*::)[^/]+$/.test(request.ownerRef)) {
+    throw new TimelineVersionConflictError('Occurrence fork requires one explicit canonical occurrence owner');
+  }
+  if (!/^(?!.*::)[^/]+$/.test(request.shotId)) {
+    throw new TimelineVersionConflictError('Occurrence fork requires one reserved shot identity');
+  }
+  const occurrenceId = request.ownerRef.slice('occurrence:'.length);
+  const payload = document.parent_revision.payload as Record<string, unknown>;
+  const occurrences = payload.occurrences;
+  if (!Array.isArray(occurrences)) {
+    throw new TimelineVersionConflictError('Occurrence fork has no canonical occurrence closure');
+  }
+  const owners = occurrences.filter((row) => row && typeof row === 'object'
+    && !Array.isArray(row) && (row as Record<string, unknown>).occurrence_id === occurrenceId);
+  if (owners.length !== 1) {
+    throw new TimelineVersionConflictError('Occurrence fork requires one uniquely bound canonical occurrence');
+  }
+  const sourceShotId = (owners[0] as Record<string, unknown>).shot_id;
+  if (typeof sourceShotId !== 'string' || sourceShotId === request.shotId) {
+    throw new TimelineVersionConflictError('Occurrence fork requires a fresh shot identity distinct from its source');
+  }
+  const shotRevisions = document.shot_revisions.filter((shot) => shot.shot_id === request.shotId);
+  if (shotRevisions.length !== 0) {
+    throw new TimelineVersionConflictError('Occurrence fork destination shot identity is already occupied');
+  }
+  return {
+    schema_version: 1,
+    op: 'occurrence.fork',
+    version: '1',
+    select: request.ownerRef,
+    args: { shot_id: request.shotId },
+    intent: { ownership: 'occurrence' },
+    created: [`shot:${request.shotId}`],
+  };
+}
+
+/**
+ * Materialize one selected occurrence through the registered Agent fork before a child-owned
+ * placement/media command is authored. This deliberately uses the existing A2 LocalSaveSession;
+ * it does not create a second transport or patch managed closure edges in TypeScript.
+ */
+export async function forkOccurrence(request: OccurrenceForkRequest): Promise<TimelineCommandBasis> {
+  const store = createDocumentStore(request);
+  const document = await store.load();
+  try {
+    const command = buildOccurrenceForkCommand(document.basis.canonicalDocument, request);
+    const before = document.session.getDocument();
+    await document.session.append({
+      before,
+      after: before,
+      label: 'Fork selected occurrence',
+      commands: [command],
+    });
+    return await document.session.flush();
+  } finally {
+    await document.session.dispose();
+  }
 }
 
 /**

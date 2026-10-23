@@ -8,6 +8,7 @@ import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults';
 
 import {
   batchUpdatePlacementFrames,
+  buildOccurrenceForkCommand,
   fetchGalleryRows,
   fetchProjectPlacements,
   placeGeneration,
@@ -174,6 +175,32 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
   });
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it('builds the registered fork from the explicit canonical occurrence owner', () => {
+    const document = canonicalDocument();
+    expect(buildOccurrenceForkCommand(document, {
+      projectSlug: PROJECT,
+      timelineRef: TIMELINE,
+      configVersion: 1,
+      ownerRef: 'occurrence:occurrence-1',
+      shotId: 'shot-fork',
+    })).toEqual({
+      schema_version: 1,
+      op: 'occurrence.fork',
+      version: '1',
+      select: 'occurrence:occurrence-1',
+      args: { shot_id: 'shot-fork' },
+      intent: { ownership: 'occurrence' },
+      created: ['shot:shot-fork'],
+    });
+    expect(() => buildOccurrenceForkCommand(document, {
+      projectSlug: PROJECT,
+      timelineRef: TIMELINE,
+      configVersion: 1,
+      ownerRef: 'occurrence:shot-child',
+      shotId: 'shot-fork',
+    })).toThrow('uniquely bound canonical occurrence');
   });
 
   it('keeps every raw root at the provider boundary across placement, frame update, pooling and removal', async () => {
