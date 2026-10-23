@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-23T17:15:27Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 6m -->
-# app2 board, 2026-10-23T17:08Z
+<!-- app2 | 2026-10-23T17:17:18Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 1m -->
+# app2 board, 2026-10-23T17:15Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Original mounted mixed chain | Sol OPS PASS; independent evidence Luna1649 | App noPOST/recovery causes; liveevidenceaudit | blocked:app | service22122 FINALFAIL2/510s; review1649FINALPASS evidence-quality / actualFAIL2 | Actual4c4/98ef/259 original2executed. Corrected rawApp passes; firstnewfailure recoveryretryPOST894-5 afterlostACK/restart, secondstillonly1POST943. ParseablepriorityJSON nowretained; no fabricatedcause/currentGO | App4c4/Agent98ef/Runtime259 |
@@ -25,7 +25,7 @@
 | P3 | Original Gate5 journey | Sol OPS1625 PASS | P1service22122 terminal; actualfullseedGREEN | blocked:runtime | service20942 / Sol1653 FINALPASS | Gate5originalinvocation/grep protected, selectedcurrent sourceguards/55tailguardsPASS. Samepublicdeferredbootstrap/full21+history beforebody; actualseedNOTRUN | App4c4 / Agentbac / Runtimed9e |
 | P4 | CLI/Python/sheet/ten notes/conflict/rerun | Sol/Luna independent; service | resolved | merged | integrated17739 / single28012 / ten11615 | DONE: singlePASS1/all66; tenPASS1/all10UndoRedo/restart/show/history; rerunPASS1/6.18s 200-409-200/key/canonical/records/stepdeps. ExactAgent543d/treef6cda + Runtimea5d; cache14121 exacttree HIT disclosed | a914;e837;543d |
 
-| P1-correlated-diagnostics | Both-case failure/UI/SourceIn evidence | Luna | current4c4; original22122 evidence | review | ap2-P1-correlated-collector-review-1708 | Author439f PASS6/RootAppNode/lint/list2; firstsuffix582dc8 exact. Review1708 checks timing/scope/no-throw; no actual replay until PASS | 439f6ddbfe |
+| P1-correlated-diagnostics | Both-case failure/UI/SourceIn evidence | Luna | current4c4; original22122 evidence | doing | ap2-P1-correlated-collector-return-1715 | independent1708 FINALFAIL(rawbodylogs/missingDOMfalse); FIRSTRETURN1715 fixes exactfindings+realisticprioritybudget; originalsuffix582dc8 exact | 439f HELD |
 
 
 Blockers: Proof — P1 RESULT: NO-GO. Original service22122 FINAL FAIL2/510s on App4c4/Agent98ef/Runtime259. First reached lostACK/reload/restart/reconnect through893 then no recoveryPOST894; secondary pageclosed895. Second onlysplitPOST943, Agentmove/409/refusal UNREACHED. Independent1649 evidencequality FINALPASS with bounded loss. A4/G5 gated:P1 until ORIGINAL current-integrated chainPASS + independentno-weakeningPASS.
@@ -47,3 +47,5 @@ Checkpoint17:02: actual20942 FINALFAIL2/85s wait-test consumed. Globalsetup/actu
 Checkpoint17:07: readonlycausal1702 FINAL completed no productedits/no rerun. Runtime sequentialclaimkind/ordinal match seam identified, actualfailingclaim UNKNOWN aftertmpcleanup; flatpacket+peer1707sentRuntime. Collector1659 pinnedNode20finalquality finishing, originalsuffix582dc8 preserved. Approvedsweep3terminal removed1staledir (~2MiB), compact0scratch/13losslesslogs (~19MiB); no immutablebench removed. Actualfree9706590208bytes >8GB.
 
 Checkpoint17:09: collector1659 terminalown439f/treef535 authorPASS6actualNode20+RootAppNode/lint/list2/outsideidentity/originalsuffix582dc8. Independent1708 dispatched immediately, explicit helper timing/race + firstfailureoutbox scope/no-throw review beyondbodyhash. App uniqueSolrecovery-noPOST1657 owns both actualcauses; no Proofproductauthor. Current Runtime producerpeer1702/1707 delivered bynormal sync, awaitownrow; no escalationdecisionowed.
+
+Checkpoint17:15: independent1708 FINALFAIL exact439f retained; pure6/RootAppNode/lint/list2 allPASS doesnotqualifycaller. Inheritedrawrequestlogs violate newpacketallowlist, absentDOMisVisiblefalse mustbeUNKNOWN. UniqueLunafirstreturn1715 dispatchedsamebranch immediately; no merge/replay. Additionalrealisticmaxwireheadbudget regressionrequired. SecondindependentLunaFAIL escalatesSolHARD.
