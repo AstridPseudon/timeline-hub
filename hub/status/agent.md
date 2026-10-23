@@ -1,16 +1,16 @@
-<!-- agent | 2026-10-23T00:04:05Z | dispatcher heartbeat 12s | live 6 (sol 2, luna 4, other 0) | busy30 30 | status age 1m -->
-# agent board, 2026-10-23T00:02:15Z
+<!-- agent | 2026-10-23T00:05:24Z | dispatcher heartbeat 0s | live 5 (sol 3, luna 2, other 0) | busy30 31 | status age 0m -->
+# agent board, 2026-10-23T00:05:01Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
-| U2 | upstream merge and quality repairs | Luna→Sol; Luna review | — | merged | agt-U2-media-repair; agt-U2-fastgate-review | Integrated184tests+manifest/lockPASS on3f1ceaed1. Two merge-induced typing fixes8ed78 reviewed next; no done credit for pending quality repair | 3f1ceaed1; staged8ed78af51 |
+| U2 | upstream merge and quality repairs | Luna→Sol; Luna review | — | merged | agt-U2-media-repair; agt-U2-fastgate-review | Integrated184tests+manifest/lockPASS on3f1ceaed1. Two merge-induced typingfixes8ed78 finalratchet/sourcePASS, mergerequestqueued; no done credit for pending quality repair | 3f1ceaed1; staged8ed78af51 |
 | U4a | normal U1 generated-client adoption | Luna | U1,U2 merged | review | agt-U4a-client-schema; agt-U4a-review | Author138provider+60transportPASS; normal27f lock/client/manifestPASS; independent review active | 2e0081158 |
 | R1 | doc.patch, guards, reads and inverse | Sol; Luna review/forward | C0 approved; U2 merged | review | agt-R1-restart; agt-R1-review; agt-R1-forward-U2 | Author326acceptance+27neighborsPASS; changedlint/typePASS. Runnable committed draft relayed toP1/Runtime; actual clean U2forward prepared | 8a66b1ac8 |
 | R2 | guarded whole/per-step undo | Sol; Luna core review | R1 provider integration | review | agt-R2-step-undo; agt-R2-core-review | IndependentPASS-core548tests+scopedlint/type. Provider dispatch/physical normalization/effect projection still missing; C0c approved+merged7c92c39fe | b5b811066 |
 | R3 | dry run and structured errors | Luna | R1 before landing | doing | agt-R3-preview-repair | IndependentFAIL: mutates preview after Runtimeauth; original2realprovider tests fail; Luna repairing before newreview | ab1f8aa2a draft |
-| V2 | timing/structure/element/parameter checks | Luna | R1 before landing | doing | agt-V2-validator | Early start explicitly authorized; existing compiler reuse, no scene/save dependency | — |
-| G2 | open/commit and bounded rerun | Sol; Luna forward/review | R1 before landing | review | agt-G2-forward-U2; agt-G2-forward-review | IndependentPASS94changed tests, sourceblobs preserved; author312targetedPASS; wholeRuff2150/mypy1922PASS on forward | 9d6c8ea12 |
+| V2 | timing/structure/element/parameter checks | Sol after LunaFAIL | R1 before landing | doing | agt-V2-validity-repair | IndependentFAIL timingkernel gaps/closedbuiltinparams/exactimmutablepin; boundedSolrepairactive | 6f4baa076 draft |
+| G2 | open/commit and bounded rerun | Sol; Luna forward/review | R1 before landing | review | agt-G2-forward-U2; agt-G2-forward-review | IndependentPASS94changedtests+wholegates; author312PASS. LandingalsoheldforRuntimev2request/schemaadoption, notjustR1 | 9d6c8ea12 |
 | G3 | document patch emitter and frontends | Luna | G2/R1 before landing | doing | agt-G3-emitter | Early start on reviewed G2forward authorized; no alternate executor | — |
-| G4 | remaining writers through commit | Luna | G2 before landing | doing | agt-G4-remote-writers; agt-G4-narration; agt-G4-elements | Remote fd629 reviewFAIL5originalpositives; Solrepairactive. Elements fc9cd and narration drafts in independentreview; no writerregressions landed | — |
+| G4 | remaining writers through commit | Luna | G2 before landing | doing | agt-G4-remote-writers; agt-G4-narration; agt-G4-elements | Remote fd629 reviewFAIL5originalpositives; Solrepairactive. Elements fc9cd sourcePASS but23realintegrationfail unsupportedRuntimev2fields; narrationreviewactive; no writerregressions landed | — |
 | G5 | delete superseded paths | Luna | G3,G4; real P1 H3 GO | todo | — | Explicitly held; collection/native unit tests are not H3 proof | — |
 Blockers: runtime/orchestrator — R2r was stopped by automatic safety review rejecting rm-f; Runtime-owned v2 request/schema/metadata adoption remains pending. No replacement worker or bypass dispatched by Agent. See Runtime board; current U4a intentionally adopts merged U1 only.
 Blockers: agent — R2 provider integration awaits R1 forward source and review; core proof alone does not qualify C0c undo/redo. C0c contract approval/merge hold is cleared.
