@@ -143,12 +143,16 @@ def request(kind,args,success=True,minimal=False):
     global count
     script='request-child-venv' if kind=='CHILDVENV' else 'request-runtime'
     env=base_env if minimal else {**os.environ,**base_env}
-    queued=subprocess.run([str(O/'bin'/script),*args],env=env,capture_output=True,text=True)
+    command=[str(O/'bin'/script),*args]
+    if minimal: command=['/usr/bin/env','-i',*[key+'='+value for key,value in base_env.items()],*command]
+    queued=subprocess.run(command,env=env,capture_output=True,text=True)
     assert queued.returncode==0,queued
     pending=O/'queue/pending'/('childvenv-' if kind=='CHILDVENV' else 'runtime-')
     pending=Path(str(pending)+args[0])
     assert pending.read_text()==kind+' '+' '.join(args)+'\n'
-    result=subprocess.run([str(ROOT/'dispatch'),str(pending)],env=env,capture_output=True,text=True)
+    command=[str(ROOT/'dispatch'),str(pending)]
+    if minimal: command=['/usr/bin/env','-i',*[key+'='+value for key,value in base_env.items()],*command]
+    result=subprocess.run(command,env=env,capture_output=True,text=True)
     (ROOT/('call-'+str(count)+'.log')).write_text(result.stdout+result.stderr)
     count+=1
     assert (result.returncode==0)==success,(args,result)
@@ -189,6 +193,7 @@ if '--build-body-smoke' in sys.argv:
 helper = HERE / 'handoff-runtime-OPS-bench-store-core-resume-1854-bench_store.py'
 assert helper.is_file(), 'core source not published yet'
 shutil.copyfile(helper, O / 'bin/bench_store.py')
+sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('bench_store', helper)
 core = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = core
@@ -211,6 +216,35 @@ child=request('CHILDVENV',['venv-agent-child-one',db['agent'],'child-base','agen
 child2=request('CHILDVENV',['venv-agent-child-two',db['agent'],'child-base','agent-remotion-three'])
 assert 'reused child venv path=' in child2.stdout
 assert events()==['runtime-build','child-build']
+# Production adapter negatives: restore only the named tiny fixture file.
+def negative(path, content, kind, args, writable=False):
+    assert path.resolve().is_relative_to(ROOT)
+    prior, mode = path.read_bytes(), path.stat().st_mode & 0o777
+    try:
+        path.chmod(mode | 0o200)
+        path.write_bytes(content)
+        path.chmod(mode | 0o200 if writable else mode)
+        request(kind,args,success=False)
+    finally:
+        path.chmod(mode | 0o200)
+        path.write_bytes(prior)
+        path.chmod(mode)
+    print('PASS restored negative',path.name,flush=True)
+child_path=Path(re.search(r'reused child venv path=(\S+)',child2.stdout).group(1))
+site=next((child_path/'lib').glob('python*/site-packages'))
+negative(site/'astrid/__init__.py',b'TAMPER=1\n','CHILDVENV',['venv-agent-child-badsource',db['agent'],'child-base','agent-remotion-three'])
+record=next(site.glob('astrid-*.dist-info/RECORD'))
+negative(record,b'bad-row\n','CHILDVENV',['venv-agent-child-badrecord',db['agent'],'child-base','agent-remotion-three'])
+direct=record.parent/'direct_url.json'
+value=json.loads(direct.read_text());value['dir_info']['editable']=True
+negative(direct,json.dumps(value).encode(),'CHILDVENV',['venv-agent-child-editable',db['agent'],'child-base','agent-remotion-three'])
+negative(site/'astrid/__init__.py',(site/'astrid/__init__.py').read_bytes(),'CHILDVENV',['venv-agent-child-writable',db['agent'],'child-base','agent-remotion-three'],writable=True)
+negative(child_path/'.astrid-runtime-source-commit',('0'*40+'\n').encode(),'CHILDVENV',['venv-agent-child-marker',db['agent'],'child-base','agent-remotion-three'])
+runtime_path=Path(re.search(r'^runtime=(.*)$',third.stdout,re.M).group(1))
+negative(runtime_path/'package.json',b'{}','RUNTIME',runtime_args('agent-remotion-tamper'))
+negative(O/'tests/agent-remotion.env',envtext.encode()+b'BAD=1\n','RUNTIME',runtime_args('agent-remotion-template'))
+negative(node/'node',b'#!/bin/bash\necho v99.0.0\n','RUNTIME',runtime_args('agent-remotion-toolchain'))
+assert events()==['runtime-build','child-build'],'negative accidentally invoked builder'
 # Supported optional forms register metadata without fabricating a suite.
 request('CHILDVENV',['venv-agent-child-twoarg',db['agent']],minimal=True)
 request('CHILDVENV',['venv-agent-child-threearg',db['agent'],'child-base'])
@@ -228,7 +262,12 @@ with store.acquire(['venv-agent-child-one']):
     request('CHILDVENV',['venv-agent-child-client',db['agent'],'child-base','agent-remotion-three'],minimal=True)
     assert store.registered('venv-agent-child-one')
 request('CHILDVENV',['venv-agent-child-client',db['agent'],'child-base','agent-remotion-three'])
-assert not store.registered('venv-agent-child-one')
+try:
+    store.registered('venv-agent-child-one')
+except core.Refused:
+    pass
+else:
+    raise AssertionError('retired child registration remained usable')
 assert store.registered('venv-agent-child-backend')
 print('PASS backend/client keys distinct; max2 keeps leased entry; eviction removes only owned projection')
 # A real build-stage failure and postbuild registration refusal roll back exact public rows.

@@ -39,6 +39,12 @@ with tempfile.TemporaryDirectory(prefix='creator-patch-', dir=os.environ['TMPDIR
     assert actual == expected
     compile(actual, 'exact-child1839-verifier', 'exec')
     print('PASS byte-exact terminal1839 full child custody verifier')
+    request = artifact('request-child-venv.sh').read_text()
+    compile(request.split("<<'PY'\n", 1)[1].split('\nPY\n', 1)[0], 'request-child-verifier', 'exec')
+    for name in ('PROVENANCE_SCRIPT', 'DIST_METADATA_SCRIPT', 'IDENTITY_SCRIPT'):
+        code = child.split(name + "='", 1)[1].split("'\nrun_stage", 1)[0]
+        compile(code, name, 'exec')
+    compile(child.split("<<'RELOCATE'\n", 1)[1].split('\nRELOCATE\n', 1)[0], 'path-relocation', 'exec')
     original = (ORCH / 'bin/make-runtime').read_text()
     runtime = artifact('make-runtime.sh').read_text()
     for start, end in [('registration() {', 'registration validate'), ('artifact_integrity() {', 'verify_node() {')]:

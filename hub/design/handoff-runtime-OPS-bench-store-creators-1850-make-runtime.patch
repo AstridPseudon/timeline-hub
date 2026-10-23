@@ -11,7 +11,7 @@
  [[ "$(uname -s 2>/dev/null || true)/$(uname -m 2>/dev/null || true)" = Linux/x86_64 ]] || missing+=("platform:requires-Linux/x86_64")
  python3 -c 'import ctypes; ctypes.CDLL(None, use_errno=True).renameat2' 2>/dev/null || missing+=("atomic-publish:libc.renameat2")
  git -C "$A" rev-parse --is-inside-work-tree >/dev/null 2>&1 || missing+=("agent-checkout:$A")
-@@ -334,71 +330,56 @@
+@@ -334,71 +330,57 @@
    exit 2
  fi
  
@@ -88,6 +88,7 @@
 +python3 -I - "$0" "$STORE_HELPER" "$STORE_ROOT" "$O/tests" "$N" "$S" "$RS" "$REMOTION_TREE" "$LOCK_SHA" "$COMPONENT_SHA" <<'STORE_PY'
 +import importlib.util, os, pathlib, shlex, subprocess, sys, tempfile
 +script, helper, root, tests, name, agent, backend, tree, lock, component = sys.argv[1:]
++sys.dont_write_bytecode = True
 +spec = importlib.util.spec_from_file_location('bench_store', helper)
 +module = importlib.util.module_from_spec(spec)
 +sys.modules[spec.name] = module
@@ -133,7 +134,7 @@
  stage=staging
  fail() {
    local rc=$?
-@@ -477,26 +458,7 @@
+@@ -477,26 +459,7 @@
  printf '%s\n' "$NPM_VERSION" > "$T/.astrid-npm-version"
  printf '%s\n' "$(sha256sum "$T/node_modules/.package-lock.json" | cut -d' ' -f1)" > "$T/.astrid-node-modules-lock-sha256"
  printf '%s\n' "$(artifact_integrity "$T")" > "$T/.astrid-artifact-integrity"

@@ -338,6 +338,7 @@ export STORE_CONTEXT="$(declare -p O W A S N R RS SUITE NODE_BIN NODE_VERSION NP
 python3 -I - "$0" "$STORE_HELPER" "$STORE_ROOT" "$O/tests" "$N" "$S" "$RS" "$REMOTION_TREE" "$LOCK_SHA" "$COMPONENT_SHA" <<'STORE_PY'
 import importlib.util, os, pathlib, shlex, subprocess, sys, tempfile
 script, helper, root, tests, name, agent, backend, tree, lock, component = sys.argv[1:]
+sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('bench_store', helper)
 module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module

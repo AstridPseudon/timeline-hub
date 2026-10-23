@@ -144,6 +144,7 @@ export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECOND
 python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" <<'STORE_PY'
 import importlib.util, os, pathlib, shlex, subprocess, sys
 script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion = sys.argv[1:]
+sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('bench_store', helper)
 module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
