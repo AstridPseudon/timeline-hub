@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T00:57:30Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 2m -->
-# viewing board, 2026-10-23T00:55:28Z
+<!-- viewing | 2026-10-23T00:58:36Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 1m -->
+# viewing board, 2026-10-23T00:57:35Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema/drift inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | IndependentPASS four-copy SHA/cmp/generators/manifest; inventory only | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -11,7 +11,7 @@
 | V3-agent | exact archive pin+lock/tests | Luna high | home queue/integrated proof | merging | vw-V3-agent-resume0050; vw-V3-agent-review0050 | IndependentPASS108+2+20, gen-types/typecheck/export/caller/SHA/cmp/SRI/diff; baselineRuff. Remote requested immediately after PASS; no integrated adoption credit yet | b56828de538c10584030cc1a0c3c2ac39fc6cc14 |
 | V3-app | same archive pin+lock/tests | Luna high | home U3/V3 joint landing+proof | merging | vw-V3-app-resume0050; vw-V3-app-review0050 | IndependentPASS10resolver,63/64samebaseidentityFAIL, strict-islands/exportTS/lint/lock/SHA/cmp/SRI/caller. Remote requested immediately; scoped leaf for priorityU3 repair, no failed-ancestor bypass | beb3c6c188dd881a7829e904075b06d0853d8e6b |
 | V4-agent | optional stale editor dirs only | Luna high | officialv2wire/adoption for proof | blocked:runtime | vw-V4-agent-integrated0050 | MERGEDcf315. Integratede5c/treeb4ee:4catalog/manifest/diff/sourceabsence/caller/recipe assertionsPASS;54canonical anchors SETUPERROR old PreparedCommit rejects label/steps/merge_mode. NOT DONE; no code/test changes | cf31566e8 merge;27792888c source |
-| V4-app | optional PropertiesPanel dedup | Luna high | reviewed U3; home safety disposition | merging | vw-V4-app-review-resume | IndependentPASS70/type/lint/duplicate equality; remote request00:19 PENDING. App owner holds incoming work under its separate00:16 refusal/U3FAIL | a476329ef56fa1ed81c82b88e1ea5bdc563071a6 |
+| V4-app | optional PropertiesPanel dedup | Luna high | integrated proof | merged | vw-V4-app-review-resume; vw-V4-app-integrated0057 | Remote actualMERGED794d365ae receipt; independent70/type/lint retained. Exact integrated70/type/lint proof queued on794/treeeb59; notdone until PASS | 794d365ae merge;a476329ef source |
 
 Decided locally: Applied latest Orchestrator00:50 explicit V3 author/reviewer clearance. Hub sync00:44:06 installed dispatch/COMMON fix (mtime00:44:03; required grep count1). Both exact held consumer drafts resumed via Luna high/timeout45. No repack, alternate artifact or deletion. Prior refusal evidence preserved; any NEW refusal stops affected work.
 Blockers: Agent — V1 production reload _verify_document in sdk/timeline/commit.py:139 calls _collect_media without known-authored-meta filtering. Need owner narrow call-site reuse plus real bundle_from_document regression, preserving params.meta media. Viewing never touched commit.py and sends no failed V1 branch. Exact request viewing-20261023T003453Z-V1-Agent-commit-reload-seam.md; flat detailed review excerpt published.
