@@ -7,6 +7,7 @@ import { expect, type Page, type TestInfo } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
 import { harnessUnavailableReason, startDirectHarness, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { commandOutboxes, expectConnected, openApp, openSeededTimeline, test as appTest, UI } from './support/app.ts';
+import { hasFreshSettledOwner, isFreshlyConnected, readExistingReadonly, type ReadonlyOutboxRead } from './mounted-readiness-safety.ts';
 
 const CEILING = { timeout: 90_000 };
 const UNKNOWN = 'UNKNOWN' as const;
@@ -135,6 +136,17 @@ async function connectionSummary(page: Page): Promise<ConnectionSummary> {
   }
 }
 
+async function commandOutboxDatabaseExists(page: Page): Promise<boolean> {
+  return page.evaluate(async () => (await indexedDB.databases()).some((database) => database.name === 'astrid.command-outbox'));
+}
+
+async function readExistingCommandOutboxes(page: Page, timelineId: string): Promise<ReadonlyOutboxRead<Awaited<ReturnType<typeof commandOutboxes>>>> {
+  return readExistingReadonly(
+    () => commandOutboxDatabaseExists(page),
+    () => commandOutboxes(page, timelineId),
+  );
+}
+
 async function selectionEquality(page: Page, harness: DirectHarness): Promise<Unknownable<boolean>> {
   try {
     const project = page.getByRole('combobox', { name: 'Select project' });
@@ -150,17 +162,15 @@ async function selectionEquality(page: Page, harness: DirectHarness): Promise<Un
 }
 
 async function outboxSummary(page: Page, timelineId: string, previousOwnerIds: ReadonlySet<string>): Promise<OutboxSummary> {
-  try {
-    const owners = await commandOutboxes(page, timelineId);
-    return {
-      success: true,
-      newOwnerCount: owners.filter((owner) => !previousOwnerIds.has(owner.ownerId)).length,
-      pendingCount: owners.filter((owner) => Boolean(owner.pending)).length,
-      intentsCount: owners.reduce((total, owner) => total + owner.intents.length, 0),
-    };
-  } catch {
-    return blankOutboxSummary();
-  }
+  const read = await readExistingCommandOutboxes(page, timelineId);
+  if (read.status === 'unknown') return blankOutboxSummary();
+  const owners = read.value;
+  return {
+    success: true,
+    newOwnerCount: owners.filter((owner) => !previousOwnerIds.has(owner.ownerId)).length,
+    pendingCount: owners.filter((owner) => Boolean(owner.pending)).length,
+    intentsCount: owners.reduce((total, owner) => total + owner.intents.length, 0),
+  };
 }
 
 function attachRouteStatusErrors(page: Page, diagnostics: MountedReadinessDiagnostics, currentStage: () => string): void {
@@ -201,24 +211,23 @@ test('D28 mounted readiness: connected editor claims a fresh scoped owner before
   attachRouteStatusErrors(page, diagnostics, () => currentStage);
   stageSnapshot(diagnostics, { stage: 'before-load', status: blankConnection(), actualConnected: UNKNOWN, readonlyOutbox: blankOutboxSummary(), selectionEquality: UNKNOWN });
   persistDiagnostics(testInfo, diagnostics);
-  let previousOwners: Awaited<ReturnType<typeof commandOutboxes>> = [];
-  let initialOutboxRead = false;
+  let initialOutboxRead: ReadonlyOutboxRead<Awaited<ReturnType<typeof commandOutboxes>>> = { status: 'unknown', reason: 'unavailable' };
   try {
     await page.goto(`${harness.origin}/__blank.html`);
-    previousOwners = await commandOutboxes(page, seed3.timelineId);
-    initialOutboxRead = true;
+    initialOutboxRead = await readExistingCommandOutboxes(page, seed3.timelineId);
   } catch {
     // The setup read is intentionally readonly; the diagnostics retain UNKNOWN rather than exposing an error.
   }
+  const previousOwners = initialOutboxRead.status === 'verified' ? initialOutboxRead.value : [];
   const previousOwnerIds = new Set(previousOwners.map((owner) => owner.ownerId));
 
   await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo, {
-    readonlyOutbox: initialOutboxRead
+    readonlyOutbox: initialOutboxRead.status === 'verified'
       ? { success: true, newOwnerCount: 0, pendingCount: previousOwners.filter((owner) => Boolean(owner.pending)).length, intentsCount: previousOwners.reduce((total, owner) => total + owner.intents.length, 0) }
       : blankOutboxSummary(),
   });
   try {
-    expect(initialOutboxRead, 'the mounted preflight must read the scoped outbox before loading the editor').toBe(true);
+    expect(initialOutboxRead.status, 'the mounted preflight must verify the scoped outbox before loading the editor').toBe('verified');
   } catch (error) {
     diagnostics.failure = failureProjection(error, currentStage);
     persistDiagnostics(testInfo, diagnostics);
@@ -236,24 +245,31 @@ test('D28 mounted readiness: connected editor claims a fresh scoped owner before
     });
     await expectConnected(page);
     await openSeededTimeline(page, harness);
+    const selected = await connectionSummary(page);
+    const selectedEquality = await selectionEquality(page, harness);
     await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo, {
-      status: connected,
-      actualConnected: true,
-      selectionEquality: true,
+      status: selected,
+      actualConnected: isFreshlyConnected(selected),
+      selectionEquality: selectedEquality,
     });
+    expect(isFreshlyConnected(selected), 'the mounted editor must remain connected after selection').toBe(true);
+    expect(selectedEquality, 'the mounted editor must show the selected seeded timeline').toBe(true);
 
     currentStage = 'fresh-owner-reconnected';
     await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo);
     await expect.poll(async () => {
-      const owners = await commandOutboxes(page, seed3.timelineId);
-      const ready = owners.some((owner) => !previousOwnerIds.has(owner.ownerId) && !owner.pending && owner.intents.length === 0);
+      const read = await readExistingCommandOutboxes(page, seed3.timelineId);
+      const owners = read.status === 'verified' ? read.value : [];
+      const ready = read.status === 'verified' && hasFreshSettledOwner(owners, previousOwnerIds);
       await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo, {
-        readonlyOutbox: {
-          success: true,
-          newOwnerCount: owners.filter((owner) => !previousOwnerIds.has(owner.ownerId)).length,
-          pendingCount: owners.filter((owner) => Boolean(owner.pending)).length,
-          intentsCount: owners.reduce((total, owner) => total + owner.intents.length, 0),
-        },
+        readonlyOutbox: read.status === 'verified'
+          ? {
+            success: true,
+            newOwnerCount: owners.filter((owner) => !previousOwnerIds.has(owner.ownerId)).length,
+            pendingCount: owners.filter((owner) => Boolean(owner.pending)).length,
+            intentsCount: owners.reduce((total, owner) => total + owner.intents.length, 0),
+          }
+          : blankOutboxSummary(),
       });
       return ready;
     }, { ...CEILING, message: 'the mounted editor must claim a new durable command owner before the gesture' }).toBe(true);
