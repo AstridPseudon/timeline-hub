@@ -128,8 +128,6 @@ class SharedAssetEntry(TypedDict, total=False):
     generationId: str
     variantId: str
     thumbnailUrl: str
-    # Opaque application/extension metadata admitted at the registry seam.
-    meta: dict[str, Any]
 
 AssetEntry = SharedAssetEntry
 
@@ -393,7 +391,6 @@ _ASSET_ENTRY_ALLOWED = frozenset(
         "generationId",
         "variantId",
         "thumbnailUrl",
-        "meta",
     }
 )
 METADATA_VERSION = 1
@@ -485,9 +482,9 @@ def _known_timeline_payload(config: Mapping[str, Any]) -> dict[str, Any]:
     }
     known.pop("app", None)
     # ``meta`` is an admitted authored extension, not part of the current
-    # shared render schema.  Keep it on the caller's value while excluding it
-    # from the strict render-shape check; the local validator checks its exact
-    # bounded envelope at each known location.
+    # shared render schema. Keep it on the caller's value while excluding it
+    # from the strict render-shape check; the local validator checks its
+    # bounded envelope at the known timeline/clip/track seams.
     known.pop("meta", None)
     render_provenance_fields = {"shot_id", "shot_occurrence_id", "shot_name", "elementRef"}
     for collection in ("clips", "tracks"):
