@@ -161,7 +161,7 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     connect: 'Connect',
     pending: {
       title: 'Choose Allow in {browser}',
-      sentence: '{browser} is asking at the top left of this window.',
+      sentence: '{browser} is asking at the top left of this window. This is how we access the data and tools to run this locally.',
       /** The word on the arrow that points at the prompt, as the install dialog's says "Up here". */
       pointer: 'Up here',
     },

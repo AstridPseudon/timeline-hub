@@ -37,8 +37,8 @@ vi.mock('@/tools/video-editor/tour/runner/EditorTourRunner.tsx', () => ({ Editor
 // extension and its registered renderer real; stub only the iframe boundary.
 vi.mock('@astrid/packs/rendering/ui/threejs-live-editor/SceneSurface', async () => {
   const React = await import('react');
-  return { SceneSurface: ({ source, sourceTime, onReady }: { source?: unknown; sourceTime: number; onReady?: () => void }) => {
-    React.useEffect(() => onReady?.(), [onReady]);
+  return { SceneSurface: ({ source, sourceTime, onReady }: { source?: unknown; sourceTime: number; onReady?: (reported?: unknown) => void }) => {
+    React.useEffect(() => onReady?.({ events: [], shots: [], explore: null }), []);
     return <div data-testid="scene-renderer-ready" data-phase="ready" data-source-time={sourceTime}
       data-has-source={String(!!source)} />;
   } };
@@ -69,6 +69,10 @@ it('admits the bundled world and applies all three stages with only shipped asse
   expect(main).toHaveStyle({ '--tasks-pane-width': '300px' });
   expect(main.lastElementChild).toBe(pane);
   expect(main).toHaveClass('md:grid-cols-[minmax(0,1fr)_var(--tasks-pane-width)]');
+  const extensionsDock = screen.getByTestId('video-editor-right-panel-dock');
+  expect(extensionsDock).toHaveAttribute('data-open', 'true');
+  expect(within(extensionsDock).getByRole('tab', { name: 'Extensions' })).toHaveAttribute('aria-selected', 'true');
+  expect(await within(extensionsDock).findByRole('region', { name: 'World Explorer' })).toBeInTheDocument();
   const chat = pane.querySelector('[data-tasks-pane-chat]')!;
   expect(within(pane).getByRole('textbox')).toHaveAttribute('readonly');
   expect(chat.querySelector('[data-editor-tour="chat-composer"]')).not.toBeNull();

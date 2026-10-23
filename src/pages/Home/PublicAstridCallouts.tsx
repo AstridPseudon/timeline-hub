@@ -219,7 +219,10 @@ function calloutTiming(index: number, audience: PublicAstridAudience, id: string
   const endpoint = 180;
   const connectorLead = card + 40;
   const mobileIndex = calloutSequenceIndex(audience, id, true);
-  const start = 450 + index * (connectorLead + connector + endpoint + 20);
+  // Keep the card and its connector choreography intact, but let the next
+  // card enter while the previous connector is drawing instead of serializing
+  // three full card→connector turns on the first page load.
+  const start = 120 + index * 360;
   return {
     '--astrid-callout-index': index,
     '--astrid-mobile-callout-index': mobileIndex,
@@ -880,14 +883,17 @@ export function PublicAstridCallouts({ stageRef, audience, reducedMotion, active
       // Content can resize inside a fixed-size chat panel after the move has ended.
       // Mutation observation handles arrival; target resize observation handles later layout.
       for (const callout of callouts) {
-        if (callout.phoneTarget) stageElement.querySelectorAll(callout.phoneTarget).forEach((element) => resizeObserver?.observe(element));
+        const selectors = new Set([callout.target, callout.phoneTarget].filter((selector): selector is string => Boolean(selector)));
+        for (const selector of selectors) {
+          stageElement.querySelectorAll(selector).forEach((element) => resizeObserver?.observe(element));
+        }
       }
       schedule();
     };
       // The lazy editor and conversation arrive after the callouts. Observe structure, never the
     // inline styles / SVG attributes written by draw(), so this cannot restart its own work.
     const mutationObserver = new MutationObserver(observeGeometry);
-    mutationObserver.observe(stageElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'data-revealed', 'data-audience'] });
+    mutationObserver.observe(stageElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'hidden', 'aria-hidden', 'data-state', 'data-revealed', 'data-audience'] });
     // Paint the retracted transition state synchronously before the browser can
     // expose the newly committed audience surface/card arrangement.
     draw();
