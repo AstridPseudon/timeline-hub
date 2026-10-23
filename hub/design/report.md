@@ -49,3 +49,13 @@ central result.
 
 See `design/handoff-ap2-P1-current-R1-corpus.md` for the detailed handoff.
 
+## P1 corrected encoder corpus review (2026-10-23)
+
+- **PASS — only for the new `p1EncoderCorpus.test.ts` encoder corpus test; not H3 GO.** Reviewed HEAD `d3e141fa5bb544db6eb083d0e08a564f92df67ad`, tree `991c6720b89302e5a375845542ae03a9af4bb666`. The cumulative product diff from App integration `794d365ae03725453c3359d21c791b1ffe7ccee9` is exactly one added file: `src/tools/video-editor/commands/p1EncoderCorpus.test.ts`.
+- The corrected split case asserts the complete `list.insert` payload, absent guard, parent physical root, stable created ID, prior order and insertion anchor, all three original `clip-a` before-values and intended updates, exact resulting clip rows, mirrored `config.clips`, preserved registry/name/unknown/output and opaque/params data, and source/after-document immutability. Whole-array `toEqual` rejects omitted or unexpected changes. The existing trim assertions and all 7 current / 8 historical provenance checks are unchanged.
+- Exact pinned corpus verification passed for all 8 cases. Actual `documentPatchIntent` imports are only its implementation, `documentPatchIntent.test.ts`, and this corpus test; there is no production encoder caller or mount. This is therefore interim isolated test coverage, not a production-path or H3 claim. The split→trim-new-clip→intervening-Agent-edit→lost-ack→restart chain remains `authored-not-go`.
+- Required checks: combined Vitest command **PASS** (2 files, 14 tests); `node node_modules/typescript/bin/tsc --noEmit` **PASS**; targeted ESLint with `--max-warnings 0` **PASS**; `git diff --check` **PASS**. No full/browser/heavy/install run was performed.
+- Separately unverified: the full v2 ABI/request and reply boundary—ABI 1 scope/base/commands, label, step metadata/patch/optional reads, `fields|atomic`, reads, dry-run and `Idempotency-Key`; accepted/merged canonical closure/digest/heads/`rebased_onto`, authentic receipt, commands, authoritative steps/dependencies/merge mode; conflict reason/head; invalid code/path/hint/suggestion; and dry-run/history behavior.
+
+See [the corrected encoder handoff](handoff-ap2-P1-encoder-corrected-review.md) for exact command output and limits.
+
