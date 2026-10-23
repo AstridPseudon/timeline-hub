@@ -160,11 +160,15 @@ def _runtime_child(pipe, film, tmp, first_capture):
             context = local.context
             assert store is service.store
             assert store.conn.in_transaction == (stage == "before")
-            envelope = commits._lookup(context)
-            assert envelope is not None
-            pipe.send({"barrier": stage, "in_transaction": store.conn.in_transaction,
-                       "context": context, "envelope": envelope, "rows": _rows(store.conn),
-                       "calls": list(calls), "reads": list(reads), "compiled": list(compiled)})
+            barrier = {"barrier": stage, "in_transaction": store.conn.in_transaction,
+                       "context": context, "rows": _rows(store.conn),
+                       "head": head(service, film), "calls": list(calls),
+                       "reads": list(reads), "compiled": list(compiled)}
+            if stage != "pre":
+                envelope = commits._lookup(context)
+                assert envelope is not None
+                barrier["envelope"] = envelope
+            pipe.send(barrier)
             # No release path: the only successful continuation is SIGKILL.
             threading.Event().wait(120)
             raise AssertionError("parent failed to kill paused Runtime")
@@ -182,6 +186,8 @@ def _runtime_child(pipe, film, tmp, first_capture):
         def observed_accept(store, context, prepared, **kwargs):
             local.context = context
             try:
+                if armed.get("stage") == "pre":
+                    pause(store.store, "pre")
                 return accept(store, context, prepared, **kwargs)
             finally:
                 local.context = None
@@ -342,13 +348,13 @@ def _assert_one_acceptance(before, after, accepted, captures=(), first_capture=F
 
 
 @pytest.mark.parametrize("operation", ["commit", "restore"])
-@pytest.mark.parametrize("stage", ["before", "after"])
+@pytest.mark.parametrize("stage", ["pre", "before", "after"])
 def test_real_process_death_at_acceptance_boundary(tmp_path, astrid_importable, monkeypatch, operation, stage):
     _crash_boundary(tmp_path, monkeypatch, build_film_fixture(tmp_path), operation, stage)
 
 
 @pytest.mark.parametrize("operation", ["commit", "restore"])
-@pytest.mark.parametrize("stage", ["before", "after"])
+@pytest.mark.parametrize("stage", ["pre", "before", "after"])
 def test_retained_inputs_process_death(retained, tmp_path, monkeypatch, operation, stage):
     case = retained
     assert case.current["version"] == 2
@@ -359,7 +365,7 @@ def test_retained_inputs_process_death(retained, tmp_path, monkeypatch, operatio
 
 
 @pytest.mark.parametrize("source_kind", ["transcript", "config"])
-@pytest.mark.parametrize("stage", ["before", "after"])
+@pytest.mark.parametrize("stage", ["pre", "before", "after"])
 def test_host_boundary_first_capture_process_death(tmp_path, astrid_importable, monkeypatch, source_kind, stage):
     # HOST-BOUNDARY: proves input blob/header/link atomicity, not Agent semantics.
     from runtime_protocol.service import RuntimeService
@@ -408,6 +414,7 @@ def _crash_boundary(tmp_path, monkeypatch, film, operation, stage, captures=(), 
         assert runtime.control("arm", stage) == {"armed": stage}
         with ThreadPoolExecutor(max_workers=1) as pool:
             response = pool.submit(runtime.post, path, encoded, key)
+            staged = None
             try:
                 barrier = runtime.receive()
                 assert barrier["barrier"] == stage
@@ -421,13 +428,19 @@ def _crash_boundary(tmp_path, monkeypatch, film, operation, stage, captures=(), 
                 assert context["publisher"] == PRODUCT_ACTOR
                 assert context["idempotency_key"] == key
                 assert barrier["calls"] == before["calls"] + [key]
-                staged = barrier["envelope"]
                 expected_hash = hashlib.sha256(canonical_json({
                     "operation": context["invocation"]["operation"], "path": path,
                     "publisher": PRODUCT_ACTOR, "request": request,
                 }).encode()).hexdigest()
-                assert staged["receipt"]["request_hash"] == context["request_hash"] == expected_hash
-                _assert_one_acceptance(before["rows"], barrier["rows"], staged, captures, first_capture)
+                assert context["request_hash"] == expected_hash
+                if stage == "pre":
+                    assert barrier["rows"] == before["rows"]
+                    assert barrier["head"] == before["head"]
+                    assert "envelope" not in barrier
+                else:
+                    staged = barrier["envelope"]
+                    assert staged["receipt"]["request_hash"] == context["request_hash"]
+                    _assert_one_acceptance(before["rows"], barrier["rows"], staged, captures, first_capture)
                 consumed = barrier["reads"][len(before["reads"]):]
                 assert all(capture in captures for capture in consumed)
                 assert all(capture in consumed for capture in captures)
@@ -436,15 +449,17 @@ def _crash_boundary(tmp_path, monkeypatch, film, operation, stage, captures=(), 
                     # Restore also compiles intermediate images to record its writes.
                     assert compilations and compilations[-1] == captures
                     assert all(pins == captures for pins in compilations if pins)
-                if operation == "restore":
-                    assert staged["data"]["canonical_document"]["parent_revision"]["payload"] == (
-                        initial["document"]["parent_revision"]["payload"])
-                elif not first_capture:
-                    parent = staged["data"]["canonical_document"]["parent_revision"]["payload"]
-                    assert parent["clips"][0]["at"] == 1
-                    assert parent["clips"][0]["app"]["astrid"]["fixed_start"] is True
-                    assert parent["occurrences"] == initial["document"]["parent_revision"]["payload"]["occurrences"]
-                visible = before["rows"] if stage == "before" else barrier["rows"]
+                if stage != "pre":
+                    assert staged is not None
+                    if operation == "restore":
+                        assert staged["data"]["canonical_document"]["parent_revision"]["payload"] == (
+                            initial["document"]["parent_revision"]["payload"])
+                    elif not first_capture:
+                        parent = staged["data"]["canonical_document"]["parent_revision"]["payload"]
+                        assert parent["clips"][0]["at"] == 1
+                        assert parent["clips"][0]["app"]["astrid"]["fixed_start"] is True
+                        assert parent["occurrences"] == initial["document"]["parent_revision"]["payload"]["occurrences"]
+                visible = before["rows"] if stage in ("pre", "before") else barrier["rows"]
                 assert _disk_rows(film) == visible
                 # Commit writes no content-addressed object; a killed flight leaves no orphan either.
                 assert _objects(film) == objects
@@ -464,12 +479,21 @@ def _crash_boundary(tmp_path, monkeypatch, film, operation, stage, captures=(), 
         assert runtime.ready["handshake"]["actor_id"] == PRODUCT_ACTOR
         recovered = runtime.control("inspect")
         assert recovered["rows"] == visible
-        if stage == "before":
+        if stage in ("pre", "before"):
             assert recovered["head"] == before["head"]
             accepted = _accepted(runtime, path, request, key)
             _assert_one_acceptance(before["rows"], runtime.control("inspect")["rows"], accepted,
                                    captures, first_capture)
+            if stage == "pre" and not first_capture:
+                candidate = accepted["data"]["canonical_document"]["parent_revision"]["payload"]
+                if operation == "restore":
+                    assert candidate == initial["document"]["parent_revision"]["payload"]
+                else:
+                    assert candidate["clips"][0]["at"] == 1
+                    assert candidate["clips"][0]["app"]["astrid"]["fixed_start"] is True
+                    assert candidate["occurrences"] == initial["document"]["parent_revision"]["payload"]["occurrences"]
         else:
+            assert staged is not None
             accepted = staged
             assert recovered["head"]["publication_id"] == staged["receipt"]["receipt_id"]
 
