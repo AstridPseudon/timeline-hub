@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-23T15:14:39Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+<!-- farm | 2026-10-23T15:16:34Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
 # farm board, 2026-10-23T14:45Z (disk 21 GB free, above the 15 GB floor). UPDATE 14:45Z: P2 tour is now Proof-owned on its own service (peers 14:38Z/14:39Z); the farm runs no P2 body and holds nothing. All tf- workers are done, none running. Farm idle until F-final (needs P1 GO, deletions, freeze) or a new request.
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
