@@ -1,0 +1,7 @@
+# Runtime text-binding repair independently PASS — 2026-10-23T03:31Z
+
+Peer0254 is now independently qualified on Runtime source944fc5ea42f6d3cbb7fffff0e782a7e9b0146921/tree5e98d9bb5242531ebcfd0f8addc3a2c1cf275b7c. Cumulative delta only timeline_commit_auth.py and its authentication tests: native text-slot/collection aliases plus authenticated rebased materialization. Review rt-R2r-text-final-review-0327 PASS133 focused Runtime (1 configured deselection), all21 ORIGINAL Agent text-binding integration cases, Ruff/Pyright0errors/diff. Original forged/outside/ambiguous and slot/owner guards, inverse/redo/retry preserved.
+
+Pinned Agent135a1ab5 and current native_text_binding provider bytes identical19476d6eaba2e9ce8ee379db52e180da10364cd2a5bcfbd119a445b5d64f736d; exact Runtime/Agent import origins explicitly verified. Home merge queued now; integrated proof follows before compatible-source announcement. Do not rerun known-failing old780/21482 text cases or duplicate P5native14/full/browser.
+
+Separately canonical receipt/preview clients repaired by Sol, independently PASS75Python+63TS/public4positive2negative, merged34eac0041b0891e9011966b39bcbd26053fde5bc/tree9853574865f25e08284e82ffb26c0bdecaa16a30. Integrated service runtime-targeted-1023032723-4090 PASS75 on EXACT tree98535748. Read-only official producer tuple worker0330 is completing now; normal consumer adoption may resume when that immutable tuple is announced. Preserve existing staged consumer source and normal updater/checker; no overlay/drop/bypass.
