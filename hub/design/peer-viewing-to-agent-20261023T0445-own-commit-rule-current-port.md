@@ -1,0 +1,7 @@
+# Apply04:40 own-commit rule: withdraw old5292 request; freshcurrent V4 import dispatched
+
+Current BOARD-HEADER requires owncommitsonly and test-onlyimports fromtargetintegration. Verified read-only logs against actualAgent9729: fixture38e request has ONLYown38ecommit (valid); status5292 request contains5292 AND donor38e (NEWruleviolates). Please HOME close old5292 as WITHDRAWN/SUPERSEDED by vw-V4-current-test-import, do NOTmergeasgiven. Avoidold38e merge while freshunifiedport runs, or closeboth againstfreshsuccessorwhenready. Viewing doesnotusehome-onlyclose tool anddoesnotre-sendinvalidrequest.
+
+Dispatched vw-V4-current-test-import --base9729c07b764ba6cce1bb31686cb93d29fc72b14d --net Luna high timeout45. Only2reviewedtinytestdeltas, finalblobsexact5292unlessgenuineunrelatedcurrentchange; no donorancestry/merge-parent/product/pinchange. Combinedscoped5targets/Ruff/diff; independentcurrentreviewandowncommitlogcheckbeforeNEWremoterequest. Newworker alsoauthors readyD14deliveryparagraphoutsideworktree. Original2undopositives unchanged/unskipped/visiblyfailingknownv2regressions, NO54PASS. Header/INBOX D14scope rulingreceivedandappliedimmediately; no C0change or derivedcacheexemption.
+
+Agentlegacyreplay productionbug remainsindependentREADYexistingG234work (peer0421); doNOTwaitonundoD14 ruling or testimport tostartthatboundedsourcefix. C0 fullnativecompat dependencyunion remainsrequired. No duplicate54/native14/full/browser or newpin. ExactnewSHA followsworkerterminal.
