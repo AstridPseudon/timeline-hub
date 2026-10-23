@@ -6,9 +6,9 @@
 import { expect, type Page, type TestInfo } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
 import { harnessUnavailableReason, runtimePython, startDirectHarness, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
-import { commandOutboxes, expectConnected, openApp, openSeededTimeline, test as appTest, UI } from './support/app.ts';
+import { bootstrapMountedBaseline, commandOutboxes, expectConnected, openApp, openSeededTimeline, test as appTest, UI } from './support/app.ts';
 import { hasFreshSettledOwner, isFreshlyConnected, readExistingReadonly, type ReadonlyOutboxRead } from './mounted-readiness-safety.ts';
-import { createD21Environment, observeD21Harness, observeD21Page, persistD21Environment, recordD21Error, recordD21Readiness, recordD21Stage } from './d21-environment.ts';
+import { createD21Environment, observeD21Harness, observeD21Page, persistD21Environment, recordD21Error, recordD21Readiness, recordD21Stage, type D21EnvironmentArtifact } from './d21-environment.ts';
 
 const CEILING = { timeout: 90_000 };
 const UNKNOWN = 'UNKNOWN' as const;
@@ -47,22 +47,69 @@ interface MountedReadinessDiagnostics {
   failure?: { stage: string; code: 'assertion' | 'timeout' | 'setup'; class: 'assertion' | 'timeout' | 'setup' };
 }
 
-const test = appTest.extend<object, { seed3: ThreeProductsSeed }>({
-  // Keep the same P3 bootstrap: defer the empty timeline, then let the native full seed create the fixture.
+function observeHarnessEnvironment(environment: D21EnvironmentArtifact, harness: DirectHarness): void {
+  observeD21Harness(environment, {
+    runtimeUrl: harness.runtimeUrl,
+    doorBase: harness.doorBase,
+    doorPrefix: harness.doorPrefix,
+    editorOrigin: harness.origin,
+    productCredentialPresent: Boolean(harness.productToken),
+    authoringProfile: harness.lifecycleObservation?.launchProfile === 'astrid' ? 'astrid' : 'UNKNOWN',
+    distPath: process.env.ASTRID_APP_DIRECT_DIST ?? 'dist',
+    agentCommit: process.env.TIMELINE_BUNDLE_AGENT_HEAD,
+    runtimeCommit: process.env.TIMELINE_BUNDLE_RUNTIME_HEAD,
+    backendInterpreterPath: runtimePython() ?? undefined,
+    lifecycle: harness.lifecycleObservation,
+  });
+}
+
+const test = appTest.extend<object, { environment: D21EnvironmentArtifact; harness: DirectHarness; seed3: ThreeProductsSeed }>({
+  // Persist a bounded carrier before worker setup so harness/seed failures retain setup evidence.
   // eslint-disable-next-line no-empty-pattern
-  harness: [async ({}, use) => {
-    const harness = await startDirectHarness({ deferTimelineInitialization: true });
-    try { await use(harness); } finally { await harness.stop(); }
+  environment: [async ({}, use, testInfo) => {
+    const environment = createD21Environment();
+    await persistD21Environment(testInfo, environment);
+    await use(environment);
+  }, { scope: 'worker' }],
+  // Keep the same P3 bootstrap: defer the empty timeline, then let the native full seed create the fixture.
+  harness: [async ({ environment }, use, testInfo) => {
+    let harness: DirectHarness | undefined;
+    try {
+      harness = await startDirectHarness({ deferTimelineInitialization: true });
+      observeHarnessEnvironment(environment, harness);
+      await persistD21Environment(testInfo, environment);
+    } catch (error) {
+      environment.status = 'failed';
+      recordD21Error(environment, { code: 'setup_failed', class: 'setup', stage: 'harness' });
+      await persistD21Environment(testInfo, environment).catch(() => {});
+      throw error;
+    }
+    try { await use(harness); }
+    finally {
+      if (harness) {
+        try { await harness.stop(); } catch { /* Preserve the primary setup or leaf result. */ }
+      }
+    }
   }, { scope: 'worker', timeout: process.env.ASTRID_QUICK_DESCRIPTOR ? 0 : 240_000 }],
-  seed3: [async ({ harness }, use) => {
-    await use(await harness.seedThreeProducts());
+  seed3: [async ({ environment, harness }, use, testInfo) => {
+    let seed: ThreeProductsSeed;
+    try {
+      seed = await harness.seedThreeProducts();
+      observeHarnessEnvironment(environment, harness);
+      await persistD21Environment(testInfo, environment);
+    } catch (error) {
+      environment.status = 'failed';
+      observeHarnessEnvironment(environment, harness);
+      recordD21Error(environment, { code: 'setup_failed', class: 'setup', stage: 'seed' });
+      await persistD21Environment(testInfo, environment).catch(() => {});
+      throw error;
+    }
+    await use(seed);
   }, { scope: 'worker', timeout: 240_000 }],
 });
 
-// eslint-disable-next-line no-empty-pattern
-test.beforeAll(async ({}, testInfo) => {
-  // The carrier is valid before any leaf operation. It intentionally contains no process, browser, or service facts.
-  await persistD21Environment(testInfo, createD21Environment());
+test.beforeAll(async ({ environment }, testInfo) => {
+  await persistD21Environment(testInfo, environment);
 });
 
 test.beforeAll(() => {
@@ -212,21 +259,9 @@ async function snapshot(
   return result;
 }
 
-test('D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture', async ({ page, harness, seed3 }, testInfo) => {
+test('D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture', async ({ page, harness, seed3, environment }, testInfo) => {
   const diagnostics = createDiagnostics(harness);
-  const environment = createD21Environment();
-  observeD21Harness(environment, {
-    runtimeUrl: harness.runtimeUrl,
-    doorBase: harness.doorBase,
-    doorPrefix: harness.doorPrefix,
-    editorOrigin: harness.origin,
-    productCredentialPresent: Boolean(harness.productToken),
-    authoringProfile: 'astrid',
-    distPath: process.env.ASTRID_APP_DIRECT_DIST ?? 'dist',
-    agentCommit: process.env.TIMELINE_BUNDLE_AGENT_HEAD,
-    runtimeCommit: process.env.TIMELINE_BUNDLE_RUNTIME_HEAD,
-    backendInterpreterPath: runtimePython() ?? undefined,
-  });
+  observeHarnessEnvironment(environment, harness);
   recordD21Stage(environment, 'before-load', 'NOTRUN');
   await persistD21Environment(testInfo, environment);
   let currentStage = 'before-load';
@@ -237,6 +272,9 @@ test('D28 mounted readiness: connected editor claims a fresh scoped owner before
   persistDiagnostics(testInfo, diagnostics);
   let initialOutboxRead: ReadonlyOutboxRead<Awaited<ReturnType<typeof commandOutboxes>>> = { status: 'unknown', reason: 'unavailable' };
   try {
+    // A fresh context has no IndexedDB until the real editor mounts a verified timeline.
+    // This is the production bootstrap boundary; the subsequent blank-page read remains readonly.
+    await bootstrapMountedBaseline(page.context(), harness);
     await page.goto(`${harness.origin}/__blank.html`);
     observeD21Page(environment, { url: page.url() });
     recordD21Stage(environment, 'before-load', 'OBSERVED');

@@ -11,7 +11,7 @@
  */
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
 import { createHash, randomBytes, randomUUID, X509Certificate } from 'node:crypto';
-import { accessSync, constants as fsConstants, createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { accessSync, constants as fsConstants, createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer as createHttpsServer, type Server as HttpsServer } from 'node:https';
 import { request as httpRequest, type IncomingHttpHeaders } from 'node:http';
 import { createServer as createNetServer } from 'node:net';
@@ -128,6 +128,36 @@ export interface Managed {
   exited: Promise<number | null>;
   /** Resolves once the process has ended and its stdout and stderr are fully read (`exited` can come first). */
   closed: Promise<void>;
+}
+
+export interface RuntimeLifecycleObservation {
+  startedAt: string;
+  readyAt?: string;
+  exitedAt?: string;
+  exitCode?: number | null;
+  launchInterpreter: string;
+  launchModule: 'runtime_protocol.cli';
+  launchProfile: 'neutral' | 'astrid';
+  actualInterpreter?: string;
+  actualModule?: 'runtime_protocol.cli';
+  doorOriginEquality?: boolean;
+  failure?: { code: 'startup_failed'; class: 'startup'; stage: 'spawn' | 'endpoint' | 'health' };
+}
+
+function timestamp(): string { return new Date().toISOString(); }
+
+function actualRuntimeProcess(pid: number): Pick<RuntimeLifecycleObservation, 'actualInterpreter' | 'actualModule'> {
+  try {
+    const actualInterpreter = readlinkSync(`/proc/${pid}/exe`);
+    const argv = readFileSync(`/proc/${pid}/cmdline`, 'utf8').split('\0');
+    const module = argv[argv.indexOf('-m') + 1];
+    return {
+      actualInterpreter: actualInterpreter || undefined,
+      actualModule: module === 'runtime_protocol.cli' ? module : undefined,
+    };
+  } catch {
+    return {};
+  }
 }
 
 /** Starts `command` in its own process group. `exactEnv` gives it `options.env` alone; otherwise that is laid over this process's environment. */
@@ -474,6 +504,7 @@ export class DirectHarness {
   private renderSeed?: RenderSeed;
   private timelineAuthoring = false;
   private authoringPython?: string;
+  private runtimeLifecycle?: RuntimeLifecycleObservation;
   private seedInitialized = false;
   private seedHead?: { revisionId: string; publicationId: string };
 
@@ -598,20 +629,47 @@ export class DirectHarness {
   async startRuntime(port = 0): Promise<void> {
     if (this.attachment) throw new Error('App attachment cannot start an adopted Runtime');
     if (this.runtime) throw new Error('Runtime already running');
-    const managed = spawnGroup(this.authoringPython ?? runtimePython()!, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
+    const interpreter = this.authoringPython ?? runtimePython()!;
+    const profile = this.timelineAuthoring ? 'astrid' : 'neutral';
+    const lifecycle: RuntimeLifecycleObservation = {
+      startedAt: timestamp(), launchInterpreter: interpreter, launchModule: 'runtime_protocol.cli', launchProfile: profile,
+    };
+    this.runtimeLifecycle = lifecycle;
+    let managed: Managed;
+    try {
+      managed = spawnGroup(interpreter, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
       '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath,
       ...(this.timelineAuthoring ? ['--authoring-profile', 'astrid'] : [])], { cwd: this.tmp, env: this.runtimeEnv() });
+    } catch {
+      lifecycle.failure = { code: 'startup_failed', class: 'startup', stage: 'spawn' };
+      throw new Error('Runtime start failed');
+    }
     this.runtime = managed;
+    void managed.exited.then((code) => { lifecycle.exitedAt = timestamp(); lifecycle.exitCode = code; });
+    Object.assign(lifecycle, actualRuntimeProcess(managed.child.pid!));
     const endpoint = await waitFor<string>('Runtime start', async () => {
       const line = managed.stdout.split('\n').find((candidate) => candidate.trim().startsWith('{') && candidate.includes('"endpoint"'));
       return line ? JSON.parse(line).endpoint : null;
-    }, 60_000, () => (managed.child.exitCode !== null ? `Runtime exited ${managed.child.exitCode}: ${managed.stdout.slice(-800)}${managed.stderr.slice(-800)}` : null));
+    }, 60_000, () => (managed.child.exitCode !== null ? 'Runtime exited before endpoint readiness' : null)).catch((error) => {
+      lifecycle.failure = { code: 'startup_failed', class: 'startup', stage: 'endpoint' };
+      throw error;
+    });
     this.runtimePort = Number(new URL(endpoint).port);
     const health = await waitFor<any>('Runtime health', async () => {
       const response = await fetch(`${endpoint}/v1/health`);
       return response.ok ? response.json() : null;
-    }, 30_000);
+    }, 30_000).catch((error) => {
+      lifecycle.failure = { code: 'startup_failed', class: 'startup', stage: 'health' };
+      throw error;
+    });
     this.runtimeInstanceId = health.runtime_instance_id;
+    lifecycle.readyAt = timestamp();
+    try {
+      const discovery = JSON.parse(readFileSync(path.join(this.supportDir, 'discovery.json'), 'utf8')) as { door_origin?: unknown };
+      lifecycle.doorOriginEquality = typeof discovery.door_origin === 'string' && discovery.door_origin === this.origin;
+    } catch {
+      lifecycle.doorOriginEquality = undefined;
+    }
   }
 
   async stopRuntime(): Promise<void> {
@@ -631,6 +689,10 @@ export class DirectHarness {
   }
 
   get runtimeRunning() { return Boolean(this.runtime && this.runtime.child.exitCode === null); }
+
+  get lifecycleObservation(): RuntimeLifecycleObservation | undefined {
+    return this.runtimeLifecycle ? { ...this.runtimeLifecycle, failure: this.runtimeLifecycle.failure && { ...this.runtimeLifecycle.failure } } : undefined;
+  }
 
   get runtimeUrl() { return this.attachment ? this.discovery().endpoint.replace(/\/$/, '') : `http://127.0.0.1:${this.runtimePort}`; }
 

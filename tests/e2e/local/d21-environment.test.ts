@@ -47,6 +47,59 @@ test('safe observations retain public endpoint facts and never URL queries', () 
   assert.doesNotMatch(serializeD21Environment(artifact), /private|fragment/);
 });
 
+test('lifecycle projection distinguishes declared launch facts from observed process facts', () => {
+  const artifact = createD21Environment();
+  observeD21Harness(artifact, {
+    runtimeUrl: 'http://127.0.0.1:19001',
+    doorBase: 'http://127.0.0.1:19002/api/runtime',
+    doorPrefix: '/api/runtime',
+    editorOrigin: 'https://astrid.test:19003',
+    productCredentialPresent: true,
+    authoringProfile: 'astrid',
+    lifecycle: {
+      startedAt: '2026-10-23T20:00:00.000Z',
+      readyAt: '2026-10-23T20:00:01.000Z',
+      launchInterpreter: '/approved/python',
+      launchModule: 'runtime_protocol.cli',
+      launchProfile: 'astrid',
+      actualInterpreter: '/proc/123/exe',
+      actualModule: 'runtime_protocol.cli',
+      doorOriginEquality: true,
+    },
+  });
+  assert.deepEqual(artifact.backend.launch.module, { observation: 'DECLARED', value: 'runtime_protocol.cli' });
+  assert.deepEqual(artifact.backend.launch.profile, { observation: 'DECLARED', value: 'astrid' });
+  assert.deepEqual(artifact.backend.process.module, { observation: 'OBSERVED', value: 'runtime_protocol.cli' });
+  assert.deepEqual(artifact.door.allowedOriginEquality, { observation: 'OBSERVED', value: true });
+  assert.equal(artifact.provider.attached.observation, 'UNKNOWN');
+  assert.doesNotMatch(serializeD21Environment(artifact), /stdout|--root|credential|token/);
+});
+
+test('startup failure and observed signal exit remain finite facts', () => {
+  const artifact = createD21Environment();
+  observeD21Harness(artifact, {
+    runtimeUrl: 'http://127.0.0.1:19001',
+    doorBase: 'http://127.0.0.1:19002/api/runtime',
+    doorPrefix: '/api/runtime',
+    editorOrigin: 'https://astrid.test:19003',
+    productCredentialPresent: false,
+    authoringProfile: 'UNKNOWN',
+    lifecycle: {
+      startedAt: '2026-10-23T20:00:00.000Z',
+      launchInterpreter: '/approved/python',
+      launchModule: 'runtime_protocol.cli',
+      launchProfile: 'neutral',
+      exitCode: null,
+      exitedAt: '2026-10-23T20:00:00.500Z',
+      failure: { code: 'startup_failed', class: 'startup', stage: 'health' },
+    },
+  });
+  assert.deepEqual(artifact.backend.error, { observation: 'OBSERVED', value: { code: 'startup_failed', class: 'startup', stage: 'health' } });
+  assert.deepEqual(artifact.backend.exit, { observation: 'OBSERVED', value: null });
+  assert.deepEqual(artifact.backend.exitAt, { observation: 'OBSERVED', value: '2026-10-23T20:00:00.500Z' });
+  assert.equal(artifact.backend.process.module.observation, 'UNKNOWN');
+});
+
 test('unknown provider and owner observations stay unknown, including a connected-false control', () => {
   const artifact = createD21Environment();
   recordD21Readiness(artifact, false, 'UNKNOWN');
