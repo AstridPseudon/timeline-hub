@@ -1,0 +1,25 @@
+{
+  "predecessor": "343664dc79644a38b7dbabc180bacb84587e7a2e",
+  "terminal_marker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2r-sequential-return-1435/ended",
+  "handoff_recovered_from_git": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-R2r-sequential-return-1435.md",
+    "sha256": "6a32d2c02012bc85b9e2cbac99755068c5bf28a3c87181f75cd675c3c0580430"
+  },
+  "complete_1435_packet_recovered": false,
+  "missing_artifacts": {
+    "capture-0.json": "a0dc79b1716b5bdb5a31c17f1af08ccf6bfbe21ddb2f7317529a2a5040d80ec7",
+    "capture-1.json": "26b34cec169b56ba8e5650a1becb2a1009f82889b112c67c885dd06d8acca354",
+    "capture-2.json": "4b08a3bba6f0b53f79953de71066f9158d128c3bc4be4fab5a819db9c58b91e7",
+    "capture-3.json": "b0d73b1ed85d8c81823952f37f91614f397c7ffa119a138782e4364c29cd9d0f"
+  },
+  "search_result": "Recycled predecessor worktree absent; /tmp/w-2f30f24c4d absent; predecessor worker has no evidence directory; git commit contains two handoffs only under design; log JSON scan finds only older 59e329 full packet. Full original logs and partial diagnostic excerpts retained unchanged, not represented as complete captures.",
+  "preserved_logs": {
+    "1435-original-worker.log": "51d26be906763ede61641f6105bf76855fb91a7c0d6b8c5b1af4379b0ff6a064",
+    "1428-original-worker.log": "ae2ff5fb0c08075bcb52df8388110d002187f13519c7c2793377a1977dae05f4"
+  },
+  "prior_packet": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2r-sequential-sol-1452/evidence/agent-R1-private-sequential-packet-59e329b65a9b83c3.json",
+    "sha256": "59e329b65a9b83c38f257ae5b87157072e30d71e63e0506b8b6908aa89231619"
+  },
+  "qualification": "Current Agent 67ba original9 NOT RUN; complete 1435 input prerequisite unavailable. No substitute transport/body run."
+}
