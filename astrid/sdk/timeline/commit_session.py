@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Any
+from typing import Any, cast
 
 from ._common import TimelineEditError
 from .checkout import Checkout
@@ -53,6 +53,20 @@ class Timeline(Checkout):
     @property
     def head(self):
         return copy.deepcopy(self._basis)
+
+    def undo(self, steps: int | dict[str, list[str]] | None = 1, *,
+             publications: list[str] | None = None, client: Any = None, **options: Any):
+        """Undo local draft steps or dispatch an accepted-publication inverse.
+
+        ``Checkout.undo`` owns the detached numeric draft history.  A Runtime
+        timeline instead sends publication inverses through its already-open
+        session, including the v2 publication-to-step selector.
+        """
+        if publications is None:
+            return super().undo(cast(int, steps), client=client, **options)
+        if steps is not None and not isinstance(steps, dict) and steps != 1:
+            raise TimelineEditError("publication undo cannot be combined with draft steps")
+        return self.session.undo(publications, steps=None if steps == 1 else steps, **options)
 
     def _capture_free_edits(self):
         if self.bundle != self._command_bundle:

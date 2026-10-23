@@ -522,19 +522,19 @@ def main(argv: list[str] | None = None) -> int:
         timeline_path = args.out / "timeline.json"
         assets_path = args.out / "assets.json"
         proposal_path = args.out / "authoring-proposal.json"
-        write_json_atomic(timeline_path, proposal["timeline"])
-        write_json_atomic(assets_path, proposal["registry"])
+        write_json_atomic(timeline_path, assembled["timeline"])
+        write_json_atomic(assets_path, assembled["registry"])
         write_json_atomic(proposal_path, proposal)
         manifest = build_manifest(
             kind="rendering.assemble_timeline",
-            inputs={"resolved_children": args.resolved_children, "continuation_id": proposal["continuation_id"]},
+            inputs={"resolved_children": args.resolved_children, "continuation_id": assembled["continuation_id"]},
             outputs=[
                 {"name": "timeline", "path": timeline_path.name, "type": "file", "artifact_type": "timeline"},
                 {"name": "assets", "path": assets_path.name, "type": "file", "artifact_type": "timeline/assets"},
                 {"name": "authoring_proposal", "path": proposal_path.name, "type": "file", "artifact_type": "timeline/authoring-proposal"},
             ],
             created=datetime.now(timezone.utc).isoformat(),
-            continuation_id=proposal["continuation_id"],
+            continuation_id=assembled["continuation_id"],
         )
         write_manifest(args.out / "manifest.json", manifest)
         return 0
