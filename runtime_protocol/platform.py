@@ -778,6 +778,33 @@ def _spawn_windows_tree(argv, *, detached=False, hidden=False, **kwargs):
             os.set_handle_inheritable(job.handle, False)
 
 
+def _posix_group_has_live_member(pgid):
+    """True unless `ps` proves every remaining member of the group is a zombie."""
+    try:
+        listing = subprocess.run(["ps", "-A", "-o", "pgid=", "-o", "stat="],
+                                 capture_output=True, text=True, check=True).stdout
+    except (OSError, subprocess.SubprocessError):
+        return True
+    for line in listing.splitlines():
+        fields = line.split()
+        if len(fields) >= 2 and fields[0] == str(pgid) and not fields[1].startswith("Z"):
+            return True
+    return False
+
+
+def _signal_posix_group(pgid, signum):
+    try:
+        os.killpg(pgid, signum)
+    except PermissionError as error:
+        # macOS answers EPERM, not ESRCH, when a group has only zombies left
+        # (an unreaped leader whose descendants are all gone). Treat that as
+        # an already-gone group, but only once `ps` proves it; any other EPERM
+        # is a real permission failure.
+        if _posix_group_has_live_member(pgid):
+            raise
+        raise ProcessLookupError(errno.ESRCH, "process group has only zombie members") from error
+
+
 def signal_tree(process_or_pid, signum):
     pid = process_or_pid if isinstance(process_or_pid, int) else process_or_pid.pid
     if sys.platform == "linux":
@@ -786,7 +813,7 @@ def signal_tree(process_or_pid, signum):
         with getattr(process_or_pid, "_waitpid_lock", nullcontext()):
             _signal_linux_group(process_or_pid, signum)
     elif sys.platform != "win32":
-        os.killpg(pid, signum)
+        _signal_posix_group(pid, signum)
     elif signum == KILL:
         job = getattr(process_or_pid, "_runtime_job", None)
         if job:

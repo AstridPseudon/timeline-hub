@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from tests.astrid_checkout import astrid_importable  # noqa: F401  (fixture)
+from tests.wheel_builder import find_wheel_builder
 from tests.lanes import pytest_collection_modifyitems, pytest_configure  # noqa: F401  (lanes)
 from tests.process_groups import ProcessGroups
 
@@ -121,22 +122,9 @@ def stage1_runtime_environment(tmp_path_factory: pytest.TempPathFactory) -> Path
     environment = tmp_path_factory.mktemp("stage1-runtime") / "venv"
     wheelhouse = environment.parent / "wheelhouse"
     source = environment.parent / "source"
-    builders = [sys.executable, "python3.11", "python3.12", "python3.13", "python3", "python"]
-    builder = None
-    for candidate in builders:
-        try:
-            probe = subprocess.run(
-                [candidate, "-c", "import setuptools.build_meta"],
-                capture_output=True,
-                check=False,
-            )
-        except OSError:
-            continue
-        if probe.returncode == 0:
-            builder = candidate
-            break
+    builder = find_wheel_builder()
     if builder is None:
-        raise RuntimeError("Stage 1 tests require an available Python with setuptools.build_meta")
+        raise RuntimeError("Stage 1 tests require an available Python that can build wheels (setuptools.build_meta plus bdist_wheel)")
     # setuptools writes build/ and egg-info beside the source tree. Build
     # from a private copy so concurrent pytest sessions cannot delete or
     # replace each other's generated package files in the checkout.
