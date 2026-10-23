@@ -13,6 +13,7 @@ import pytest
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import (
     _digest,
+    _manifest,
     bundle_from_document,
     create_runtime_commit_service,
     document_from_bundle,
@@ -432,6 +433,79 @@ def test_unchanged_valid_legacy_child_timing_uses_rational_compiler_result(
     inputs, timing = compiled[-1]
     assert inputs.legacy_declarations == ()
     assert timing.timings[("occ-a", "chapter-shot", "clip-b")]["start"] == Fraction(29029, 30000)
+
+
+@pytest.mark.parametrize(
+    ("carrier", "declaration"),
+    [
+        ({"beats": [0, 1, 2]}, "beat 1 after c1"),
+        ({"beats": {"downbeats": [0, 1, 2]}}, "downbeat 1 after c1"),
+    ],
+)
+def test_shared_physical_shots_keep_valid_beat_inputs_in_provider_timing(
+    carrier: dict[str, Any], declaration: str, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from astrid.sdk.timeline import _commit_timing_validation as timing_validation
+    from astrid.sdk.timeline._commit_timing_validation import _legacy_rows
+
+    document = document_fixture(shared=True)
+    internal = document["internal_timeline_revisions"][0]
+    internal["payload"]["tracks"].append({"id": "audio", "kind": "audio"})
+    internal["payload"]["clips"][0]["track"] = "audio"
+    internal["payload"]["clips"][0]["app"]["astrid"] = {"cut": "c1", **carrier}
+    internal["payload"]["clips"][1]["app"]["astrid"] = {
+        "cut": "c1", "on": declaration,
+    }
+    internal["content_digest"] = _digest(internal["payload"])
+
+    second_shot = copy.deepcopy(document["shot_revisions"][0])
+    second_shot.update(revision_id="shot-2", internal_timeline_revision_id="internal-1")
+    second_shot["payload"]["internal_timeline_revision_id"] = "internal-1"
+    second_shot["payload"]["name"] = "Another shot revision"
+    second_shot["content_digest"] = _digest(second_shot["payload"])
+    document["shot_revisions"].append(second_shot)
+    document["parent_revision"]["payload"]["occurrences"][1]["shot_revision_id"] = "shot-2"
+    document["parent_revision"]["content_digest"] = _digest(
+        document["parent_revision"]["payload"]
+    )
+    document["dependency_manifest"] = _manifest(
+        document["shot_revisions"], document["internal_timeline_revisions"],
+        document["dependency_manifest"]["media"], [],
+    )
+
+    captured = []
+    original_compile = timing_validation.compile_timing
+
+    def capture(inputs):
+        captured.append(inputs)
+        return original_compile(inputs)
+
+    monkeypatch.setattr(timing_validation, "compile_timing", capture)
+    realm = DetachedRealm(document)
+    result = _service_call(
+        realm,
+        [_doc_patch({
+            "op": "set",
+            "ref": "parent",
+            "path": ["name"],
+            "before": {"state": "present", "value": "Renamed Film"},
+            "value": "Unrelated parent name",
+        })],
+        controls={"merge": "fields", "reads": []},
+    )
+
+    assert result["data"]["status"] == "accepted"
+    assert all(
+        declaration not in [row[2] for row in inputs.legacy_declarations]
+        for inputs in captured
+    )
+    assert any(
+        any(
+            clip.get("app", {}).get("astrid", {}).get("on") == declaration
+            for _, clip in _legacy_rows(inputs.bundle)
+        )
+        for inputs in captured
+    )
 
 
 def _doc_patch(change: dict[str, Any]) -> dict[str, Any]:

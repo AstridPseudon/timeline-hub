@@ -9,7 +9,6 @@ from astrid.core.timeline import moments
 from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.core.timeline.shot_composition_projection import _placement_speed
 from astrid.sdk import timeline_intent as intent
-from astrid.sdk.timeline._timing_evaluators import _fps, _ReadLookup
 from astrid.sdk.timeline.compiler import TimingCompileError, TimingInputs, compile_timing
 from astrid.sdk.timeline.native_word_anchor import binding, legacy_binding
 from astrid.sdk.timeline.units import _time_fraction
@@ -107,6 +106,63 @@ def _clear_legacy_declarations(bundle: dict[str, Any], keep: tuple[tuple[Any, ..
                 intent._set(clip, field, None)
 
 
+def _physical_shot_context(bundle: Mapping[str, Any], shot_id: str) -> dict[str, Any] | None:
+    """Return one exact authoring-shot context for the existing evaluator."""
+    placements = [
+        copy.deepcopy(row)
+        for row in bundle.get("placements", [])
+        if isinstance(row, Mapping) and row.get("shot_id") == shot_id
+    ]
+    shots = bundle.get("shots", {})
+    source_mapping = bundle.get("source_mapping", {})
+    source_shots = source_mapping.get("shots", {}) if isinstance(source_mapping, Mapping) else {}
+    if len(placements) != 1 or not isinstance(shots, Mapping) or shot_id not in shots:
+        return None
+    if not isinstance(source_shots, Mapping) or shot_id not in source_shots:
+        return None
+
+    context = copy.deepcopy(dict(bundle))
+    context["placements"] = placements
+    context["base_placements"] = {
+        row["occurrence_id"]: copy.deepcopy(row)
+        for row in bundle.get("base_placements", {}).values()
+        if isinstance(row, Mapping) and row.get("shot_id") == shot_id
+    }
+    # The exact authoring shot ID is occurrence-scoped; do not resolve by the
+    # source shot/timeline alias when narrowing this validation context.
+    context["shots"] = {shot_id: copy.deepcopy(shots[shot_id])}
+    narrowed = context["source_mapping"]
+    narrowed["placements"] = copy.deepcopy(context["base_placements"])
+    narrowed["shots"] = {shot_id: copy.deepcopy(source_shots[shot_id])}
+    return context
+
+
+def _legacy_beat_only(bundle: Mapping[str, Any]) -> bool:
+    rows = list(_legacy_rows(bundle))
+    if any(key[0] == "parent" and _legacy_declarations(clip) for key, clip in rows):
+        return False
+    declarations = [value for _, clip in rows for value in _legacy_declarations(clip).values()]
+    if not declarations:
+        return False
+    try:
+        return all(moments.parse(value).kind in {"beat", "downbeat"} for value in declarations)
+    except (TypeError, ValueError, moments.MomentError):
+        return False
+
+
+def _known_unresolvable_timing_error(error: BaseException) -> bool:
+    message = str(error)
+    return any(
+        marker in message
+        for marker in (
+            "missing cut anchor",
+            "no beat",
+            "no downbeat",
+            "clip starts before its occurrence",
+        )
+    )
+
+
 def _legacy_declaration_is_resolvable(
     bundle: Mapping[str, Any], key: tuple[Any, ...], field: str, declaration: str,
 ) -> bool:
@@ -137,20 +193,26 @@ def _legacy_declaration_is_resolvable(
     try:
         validate_candidate_timing(probe)
     except (TimingCompileError, KeyError, TypeError, ValueError) as exc:
-        # A detached shared-child probe can fail on its duplicate physical
-        # images before reaching this declaration. Structural cut resolution is
-        # still enough to distinguish a valid legacy cut/end from a missing one.
-        if "ambiguous cut identity" not in str(exc):
-            return False
-        if moment.kind not in {"cut", "cut_end", "end", "cut_start"}:
-            return False
+        # A detached shared-child probe can fail on a sibling physical image
+        # before reaching this declaration. Re-run the same evaluator against
+        # this declaration's exact occurrence-scoped image; unresolved or
+        # unknown results must never be converted into an exemption.
+        if "ambiguous cut identity" not in str(exc) and "clip starts before its occurrence" not in str(exc):
+            # An unclassified failure is not proof that this declaration was
+            # unresolvable in the base, so keep it in the real validation path.
+            return not _known_unresolvable_timing_error(exc)
+        context = _physical_shot_context(probe, key[1]) if key[0] == "shot" else None
+        if context is None:
+            return True
         try:
-            lookup = _ReadLookup(probe, _fps(probe))
-            cut = moment.cut or intent.cut_of(target)
-            if not cut or lookup._cut_id(cut) not in {group["id"] for group in lookup._cut_groups()}:
-                return False
-        except (KeyError, TypeError, ValueError, AttributeError, TimingCompileError):
-            return False
+            validate_candidate_timing(context)
+        except (TimingCompileError, KeyError, TypeError, ValueError) as context_error:
+            # A second ambiguity is unknown, not proof of an unresolvable
+            # declaration. Known invalid/missing inputs remain exemptible.
+            if "ambiguous cut identity" in str(context_error):
+                return True
+            return not _known_unresolvable_timing_error(context_error)
+        return True
     return True
 
 
@@ -187,6 +249,7 @@ def _legacy_inputs(
 
 def validate_candidate_timing(
     candidate: Mapping[str, Any], *, baseline: Mapping[str, Any] | None = None,
+    _allow_physical_context_fallback: bool = True,
 ) -> None:
     """Compile a detached validation view, leaving authored JSON and pins intact.
 
@@ -279,9 +342,41 @@ def validate_candidate_timing(
                     mirror_app = mirror.setdefault("app", {})
                     mirror_astrid = mirror_app.setdefault("astrid", {})
                     mirror_astrid[field] = selected.declaration
-    compile_timing(TimingInputs(
+    inputs = TimingInputs(
         projection,
         sources=[row for row in sources if row["document"]["kind"] == "media.transcript"],
         bindings=bindings,
         legacy_declarations=legacy_declarations,
-    ))
+    )
+    try:
+        compile_timing(inputs)
+    except TimingCompileError as exc:
+        if (not _allow_physical_context_fallback
+                or not any(marker in str(exc) for marker in (
+                    "ambiguous cut identity", "clip starts before its occurrence"))
+                or not _legacy_beat_only(candidate)):
+            raise
+        # A sibling physical image may make the global cut basis ambiguous even
+        # though each unchanged beat/downbeat declaration resolves in its own
+        # exact authoring-shot context. Keep all declarations and re-run the
+        # existing evaluator per physical image; an exact-context failure still
+        # rejects the candidate.
+        shot_ids: list[str] = []
+        for row in candidate.get("placements", []):
+            shot_id = row.get("shot_id") if isinstance(row, Mapping) else None
+            if isinstance(shot_id, str):
+                shot_ids.append(shot_id)
+        if not shot_ids:
+            raise
+        for shot_id in shot_ids:
+            context = _physical_shot_context(candidate, shot_id)
+            if context is None:
+                raise
+            context_baseline = (
+                _physical_shot_context(baseline, shot_id) if baseline is not None else None
+            )
+            validate_candidate_timing(
+                context,
+                baseline=context_baseline,
+                _allow_physical_context_fallback=False,
+            )
