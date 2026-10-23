@@ -244,9 +244,9 @@ export class AstridCli {
       '    else: command = capture_move(bundle, "parent/clip:" + operation["clipId"], operation["on"])',
       '    body = {"api_version": 1, "project_id": project, "timeline_id": timeline, "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"], "commands": [command], "source": {"via": "python"}}',
       '    result = client.timelines.commit(project, timeline, body, idempotency_key=key); assert result.ok, result.as_dict(); print(json.dumps(result.as_dict()))',
-    ].join("\\n");
+    ].join('\n');
     const run = await this.python(['-c', program, JSON.stringify([projectId, timelineId, base, operation, key])]);
-    const result = JSON.parse(run.stdout.trim().split('\\n').pop()!);
+    const result = JSON.parse(run.stdout.trim().split('\n').pop()!);
     if (!result.ok || !result.receipt) throw new Error(`Agent command was not accepted: ${JSON.stringify(result)}`);
     return { data: result.data, receipt: result.receipt } as CommitAcceptedMutation;
   }
