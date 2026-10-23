@@ -363,6 +363,27 @@ def _materialized_payload_read(state, read, record, records):
     return False
 
 
+def _authenticated_timeline_scope_binding(record, binding):
+    """Recognize the closure scope binding without treating it as an entity."""
+    if (binding.get('key') not in {'commit.read', 'commit.atomic'}
+            or binding.get('ref') != 'timeline' or binding.get('path') != []
+            or not isinstance(binding.get('physical_ref'), str)
+            or not isinstance(binding.get('revision_id'), str)
+            or not isinstance(binding.get('content_digest'), str)):
+        return False
+    pin = {'revision_id': binding['revision_id'], 'content_digest': binding['content_digest']}
+    return any(read['ref'] == 'timeline' and read['path'] == []
+               and equal(read['state'], present(pin)) for read in record['reads'])
+
+
+def _authenticated_timeline_scope_read(record, read):
+    if read['ref'] != 'timeline' or read['path'] != [] or read['state']['state'] != 'present':
+        return False
+    return any(_authenticated_timeline_scope_binding(record, binding)
+               and equal(read['state'], present({key: binding[key] for key in ('revision_id', 'content_digest')}))
+               for binding in record.get('bindings', []))
+
+
 def _validate_inputs(state, record, records):
     sites = None
 
@@ -394,11 +415,13 @@ def _validate_inputs(state, record, records):
                               if equal(selection(stage, selected['key'], selected['owner'],
                                                  selected['members']), selected))
             bindings.update(binding['ref'] for binding in record.get('bindings', [])
-                            if stage.entity(binding['ref'], optional=True) is not None)
+                            if (_authenticated_timeline_scope_binding(record, binding)
+                                or stage.entity(binding['ref'], optional=True) is not None))
         return reads, selections, bindings
 
     for read in record['reads']:
-        if state.matches(read['ref'], read['path'], read['state']):
+        if (_authenticated_timeline_scope_read(record, read)
+                or state.matches(read['ref'], read['path'], read['state'])):
             continue
         if sites is None:
             sites = proven_sites()
@@ -417,7 +440,8 @@ def _validate_inputs(state, record, records):
     created = {item['ref'] for item in record['created']}
     for binding in record.get('bindings', []):
         ref = binding['ref']
-        if ref not in created and state.entity(ref, optional=True) is None:
+        if (ref not in created and not _authenticated_timeline_scope_binding(record, binding)
+                and state.entity(ref, optional=True) is None):
             if sites is None:
                 sites = proven_sites()
             if ref not in sites[2]:
