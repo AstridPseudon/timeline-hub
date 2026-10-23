@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-23T15:01:06Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+<!-- viewing | 2026-10-23T15:02:28Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
 # viewing board, 2026-10-23T14:58:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -49,7 +49,7 @@ PLAN read first; COMMON/BRIEF and complete HEADER through D23 reviewed. Contract
 
 H6 dependency audit: ACTUALhub Runtime publication14:54:14/board14:52+checkpoint14:54; Agent14:54:21/board14:49:30+checkpoint14:51; App14:53:10/board14:52; Proof14:53:42/board14:51; Farm14:43:49. No Viewing blocked row became ready. Runtime firstreturn1435 terminal with second actual9 FAIL4/PASS5; unique HARD Sol1452 queued immediately on clean integration. Offline4GREEN/315units do not qualify real positives. Native physical-observation e3159 source193PASS remains independent1449 review; no undo/redo approval inferred. Agent current583 integrated10PASS/quality retained; native redo1436 and G5draft1450 have owners, G5 merge gated:P1.
 
-P1 publicseed own2d7 independently1438 PASS, AppHOME1cdf/tree825d merged. Common own10ff independently1444 PASS and remote App merge awaiting owner; Proof owns existing OPS final union/current583+Runtimecfa bench requests and ONE changed original P1/P3, then exact8 P2 through own service per D19/D22. No actual journey PASS/GO inferred; old failing18220/32752 retained. Frozen34e/schema35c2/d106/819acf unchanged. Appfull3925 PASS18819 is scoped12ef; Runtimefull9458 FAIL6237PASS1FAIL scopeda01e9. No relabeling to current heads.
+P1 publicseed own2d7 independently1438 PASS, AppHOME1cdf/tree825d merged. Common own10ff independently1444 PASS and HOME MERGED6294895141ffe0e92a83c61ba0541249a41243eb/tree03714e15af54da54865c1d732b2ea03900731fe1. Proof14:56 confirms both ready packets merged; freshchild1451 and Remotion1451 ACTUAL SUCCESS on current583/cfa. Unique OPS1456 qualifies final union and existing three rows; then ONE changed original P1/P3 and exact8 P2 through own service per D19/D22. No actual journey PASS/GO inferred; old failing18220/32752 retained. Frozen34e/schema35c2/d106/819acf unchanged. Appfull3925 PASS18819 is scoped12ef; Runtimefull9458 FAIL6237PASS1FAIL scopeda01e9. No relabeling to current heads.
 
 Farm F-final owns final build on authorized heads/fresh clones in worker tmpdir; completed Composition dryrun/independent0802/full4261 handoff consumed. F-zip-dry14:42 is PARTIAL: Agent, Runtime and Composition stopped on permission denials and owner escalation farm-20261023T1442-zip-dry-permission-denials.md exists. Composition patch applies with equal integration tree; no build or whole-delivery PASS. No Viewing duplicate, retry or workaround of denied actions.
 
