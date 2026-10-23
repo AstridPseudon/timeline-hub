@@ -42,6 +42,7 @@ function RuntimeTaskItem({
     <article
       className="rounded-md border border-border bg-card/60 p-3 text-xs text-card-foreground"
       data-runtime-task-row="true"
+      data-runtime-task-id={task.task_id}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">

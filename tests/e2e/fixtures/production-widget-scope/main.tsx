@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
+import { RuntimeAuthorityProvider } from '@/app/runtime/RuntimeAuthorityProvider';
 import { AgentChatProvider, useAgentChatBridge, useAgentChatRegistry } from '@/shared/contexts/AgentChatContext';
 import { activateTimelineClipData } from '@/shared/state/selectionStore';
 import { BrowserVideoEditor } from '@/tools/video-editor/browser/BrowserVideoEditor';
@@ -92,6 +93,13 @@ const gate = (kind: 'media' | 'task') => new Promise<void>(resolve => { if (kind
 const taskProjects = new Map<string,string>();
 type ManagedOutput = {association_id:string;project_id:string;run_id:string;task_id:string;attempt_id:string;output_port:string;role:string;object_id:string;digest:string;size:number;filename:string;media_type:string;state:string;version:number;provenance:{executor_id:string;lease_id:string;fence:number;runtime_epoch:number}};
 const managedOutputs = new Map<string, ManagedOutput>();
+// The page is launched bound to one Runtime identity (the Vite env the Playwright config sets); the fixture's
+// Runtime answers as that identity, or the client refuses the session as a different profile.
+const expectedIdentity = {
+  actor: import.meta.env.VITE_WORKSPACE_RUNTIME_EXPECTED_ACTOR_ID as string,
+  realm: import.meta.env.VITE_WORKSPACE_RUNTIME_EXPECTED_REALM_ID as string,
+  instance: import.meta.env.VITE_WORKSPACE_RUNTIME_EXPECTED_INSTANCE_ID as string,
+};
 const originalFetch = window.fetch.bind(window);
 const json = (value: unknown) => new Response(JSON.stringify(value), {headers: {'Content-Type':'application/json'}});
 window.fetch = async (input, init) => {
@@ -100,12 +108,15 @@ window.fetch = async (input, init) => {
   if (!path.startsWith('/api/astrid') && !path.startsWith('/api/runtime')) return originalFetch(input, init);
   const body = request.method === 'POST' ? await request.clone().json() : undefined;
   requests.push({method: request.method, path, ...(body ? {body} : {})});
-  if (path.endsWith('/v1/health')) return json({protocol:'workspace.v1',schema_digest:RUNTIME_SCHEMA_DIGEST,runtime_epoch:1,status:'ok'});
-  if (path.endsWith('/v1/handshake')) return json({protocol:'workspace.v1',schema_digest:RUNTIME_SCHEMA_DIGEST,session_id:'fixture-session',actor_id:'fixture',realm_id:'fixture',scopes:[...RUNTIME_CLIENT_SCOPES],capabilities:[RUNTIME_TARGETED_EXECUTION_CAPABILITY]});
-  if (path.endsWith('/v1/realm')) return json({realm_id:'fixture',display_name:'Fixture',version:1,created_at:new Date().toISOString()});
+  if (path.endsWith('/v1/health')) return json({protocol:'workspace.v1',schema_digest:RUNTIME_SCHEMA_DIGEST,runtime_epoch:1,runtime_instance_id:expectedIdentity.instance,status:'ok'});
+  if (path.endsWith('/v1/handshake')) return json({protocol:'workspace.v1',schema_digest:RUNTIME_SCHEMA_DIGEST,session_id:'fixture-session',actor_id:expectedIdentity.actor,realm_id:expectedIdentity.realm,scopes:[...RUNTIME_CLIENT_SCOPES],capabilities:[RUNTIME_TARGETED_EXECUTION_CAPABILITY]});
+  if (path.endsWith('/v1/realm')) return json({realm_id:expectedIdentity.realm,display_name:'Fixture',version:1,created_at:new Date().toISOString()});
   const taskMatch = path.match(/\/v1\/tasks\/([^/]+)/);
   const projectMatch = path.match(/\/projects\/([^/]+)/);
-  const project = projectMatch?.[1] ?? body?.project ?? (path.includes('/generations/generation-project-b') ? 'project-b' : undefined) ?? (taskMatch ? taskProjects.get(taskMatch[1]) : undefined) ?? 'project-a';
+  // The host's ProjectProvider selects the Runtime project row by id (the fake router's one row, whose slug is the
+  // fixture project), so a request can name that row instead of a fixture project slug; it is the full editor's project.
+  const named = projectMatch?.[1];
+  const project = (named && bridges.has(named) ? named : undefined) ?? body?.project ?? (path.includes('/generations/generation-project-b') ? 'project-b' : undefined) ?? (taskMatch ? taskProjects.get(taskMatch[1]) : undefined) ?? 'project-a';
   if (taskMatch && !path.endsWith('/managed-outputs') && request.method === 'GET' && pendingTask) await gate('task');
   if (path.endsWith('/managed-outputs') && taskMatch) return json({items:[managedOutputs.get(taskMatch[1])], next_cursor:null});
   if (/\/managed-outputs\/.+\/export$/.test(path)) {
@@ -123,12 +134,19 @@ window.fetch = async (input, init) => {
   }
   return response;
 };
+// The pane counts a success only when it is recent (the past hour), so a completion is stamped when it happens,
+// as the Runtime does, rather than carrying the router's fixed seed date.
+const completeNow = (bridge: ReturnType<typeof createFakeRuntimeRouter>, taskId: string, output: {role:string;media_id:string;is_primary?:boolean}) => {
+  bridge.completeTask(taskId, output);
+  const now = new Date().toISOString();
+  for (const record of [bridge.state.tasks.get(taskId), bridge.state.admittedByTaskId.get(taskId)]) if (record && typeof record === 'object') (record as {updated_at:string}).updated_at = now;
+};
 const admitted: Record<string,string> = {};
 for (const [name, project, timeline] of [['full','project-a','workflow-full'],['dialog',dialogProject,'workflow-dialog'],['background',dialogProject,'workflow-dialog']]) {
   const result = await createTask({project,capability_id:'rendering.render',capability_digest:`sha256:${'d'.repeat(64)}`,schema_version:'1',input_object_ids:[],spec:{family:'rendering.render',params:{timeline_ref:timeline},output_policy:{}},storage_estimate:{scratch_bytes:0,output_bytes:0},settlement_effect:{}});
   admitted[name] = result.task_id; taskProjects.set(result.task_id,project);
   const bridge = bridges.get(project)!;
-  if (name !== 'background') bridge.completeTask(result.task_id,{role:'video',media_id:galleryMediaId,is_primary:true});
+  if (name !== 'background') completeNow(bridge,result.task_id,{role:'video',media_id:galleryMediaId,is_primary:true});
   else bridge.state.tasks.get(result.task_id)!.status = 'running';
   managedOutputs.set(result.task_id,{association_id:`output-${name}`,project_id:project,run_id:`run-${name}`,task_id:result.task_id,attempt_id:`attempt-${name}`,output_port:'video',role:'render',object_id:galleryMediaId,digest:galleryMediaId,size:12,filename:`${name}.mp4`,media_type:'video/mp4',state:'available',version:1,provenance:{executor_id:'fixture',lease_id:'fixture-lease',fence:1,runtime_epoch:1}});
 }
@@ -138,7 +156,7 @@ const evidence = {
   setTaskPending: (value: boolean) => { pendingTask = value; },
   releaseMedia: () => { pendingMedia = false; releaseMedia?.(); },
   releaseTask: () => { pendingTask = false; releaseTask?.(); },
-  completeBackground: () => { bridges.get(dialogProject)!.completeTask(admitted.background, {role:'video',media_id:galleryMediaId,is_primary:true}); },
+  completeBackground: () => { completeNow(bridges.get(dialogProject)!, admitted.background, {role:'video',media_id:galleryMediaId,is_primary:true}); },
   backgroundState: () => bridges.get(dialogProject)!.state.tasks.get(admitted.background)?.status,
   refreshTasks: () => queryClient.invalidateQueries({queryKey:['runtime-tasks']}),
 };
@@ -190,4 +208,4 @@ function Host() {
     {widgets && <><GenerationsPane/><TasksPane onOpenSettings={()=>{}}/></>}
   </main>;
 }
-createRoot(document.getElementById('root')!).render(<QueryClientProvider client={queryClient}><MemoryRouter initialEntries={['/tools/video-editor?localTest=1&runtime=1&runtimeProject=project-a&runtimeTimeline=workflow-full&timeline=workflow-full']}><AuthProvider><UserSettingsProvider><ProjectProvider><ShotsContextProvider value={{shots:[],isLoading:false,error:null,refetchShots(){}}}><IncomingTasksProvider><TooltipProvider><AgentChatProvider><Host/></AgentChatProvider></TooltipProvider></IncomingTasksProvider></ShotsContextProvider></ProjectProvider></UserSettingsProvider></AuthProvider></MemoryRouter></QueryClientProvider>);
+createRoot(document.getElementById('root')!).render(<QueryClientProvider client={queryClient}><MemoryRouter initialEntries={['/tools/video-editor?project=project-a&timeline=workflow-full']}><AuthProvider><UserSettingsProvider><ProjectProvider><ShotsContextProvider value={{shots:[],isLoading:false,error:null,refetchShots(){}}}><IncomingTasksProvider><TooltipProvider><RuntimeAuthorityProvider value={{runtimeAuthority:true,runtimeProjectId:'project-a'}}><AgentChatProvider><Host/></AgentChatProvider></RuntimeAuthorityProvider></TooltipProvider></IncomingTasksProvider></ShotsContextProvider></ProjectProvider></UserSettingsProvider></AuthProvider></MemoryRouter></QueryClientProvider>);
