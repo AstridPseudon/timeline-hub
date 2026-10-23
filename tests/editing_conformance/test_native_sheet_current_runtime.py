@@ -19,7 +19,7 @@ from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._track_commands import capture_track_set
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.emitter import emit_document_commands
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
@@ -266,8 +266,33 @@ def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime
     session = runtime.session(name='emitter')
     loaded = session.client.timelines.open_bundle(runtime.project, 'film')
     assert loaded.ok
-    before = loaded.data['bundle']
-    assert setup['data']['accepted_revision_id'] == runtime.history()['head']['revision_id']
+    public_before = loaded.data['bundle']
+    assert '_runtime_document' not in public_before['source_mapping']
+    base = {
+        'revision_id': setup['data']['accepted_revision_id'],
+        'publication_id': setup['receipt']['receipt_id'],
+    }
+    assert base == runtime.history()['head']
+    # Production Timeline._execution_bundle hydrates this exact pair before
+    # invoking the pure emitter for child edits.
+    hydrated = session.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=base['revision_id'],
+        publication_id=base['publication_id'],
+    )
+    assert hydrated.ok
+    assert hydrated.data['project_id'] == runtime.project
+    assert hydrated.data['timeline_id'] == 'film'
+    assert hydrated.data['revision_id'] == base['revision_id']
+    assert hydrated.data['is_current_head'] is True
+    original_document = hydrated.data['bundle']['source_mapping']['_runtime_document']
+    assert original_document == setup['data']['canonical_document']
+    assert _digest(original_document) == setup['data']['document_digest']
+    before = bundle_from_document(original_document)
+    assert hydrated.data['bundle'] == {
+        **before,
+        'base_parent': {**before['base_parent'], 'publication_id': base['publication_id']},
+    }
+    assert persisted_bundle(before) == public_before
     source = occurrence_source_pin(before, OCCURRENCE_TARGET)
     assert source['text_bindings'] == [{'slot': 'voiceover', 'text': 'hello'}]
 
@@ -340,15 +365,7 @@ def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime
     assert body['commands'] == commands
     assert body['source'] == {'via': 'python'}
 
-    # ``open_bundle`` and the emitter result are intentionally detached.
-    # The accepted setup document is the exact original base/publication and
-    # carries the private compilation context required by the pure projector.
-    original_document = setup['data']['canonical_document']
-    original = bundle_from_document(original_document)
-    assert persisted_bundle(original) == persisted_bundle(before)
     expected_input = execute(before, commands, commit_request={}).bundle
-    expected_input['source_mapping']['_runtime_document'] = copy.deepcopy(
-        original['source_mapping']['_runtime_document'])
     expected_document = document_from_bundle(expected_input)
     assert result['data']['canonical_document'] == expected_document
     accepted = bundle_from_document(result['data']['canonical_document'])
