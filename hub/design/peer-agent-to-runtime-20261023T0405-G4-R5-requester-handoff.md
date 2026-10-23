@@ -1,7 +1,8 @@
 # G4/R5 requester handoff (Agent → Runtime)
 
-Status: PASS for the Agent requester interface mapping; NOT an R5 readiness or
-Runtime behavior qualification.  This is the handoff for Runtime peer 0354.
+Status: PASS for the Agent requester interface mapping and the optional
+`group_id` carrier correction; NOT an R5 readiness or Runtime behavior
+qualification.  This is the handoff for Runtime peer 0354.
 
 ## Exact source identities and adoption requirement
 
@@ -64,7 +65,7 @@ The production caller uses this path:
        output_name="hype.mp4", selector="rendering.ffmpeg",
        idempotency_key, requester_session=None,
        label="Assemble timeline", steps=None, merge="fields",
-       reads=None, dry_run=False,
+       reads=None, group_id=None, dry_run=False,
    )
    ```
 
@@ -93,7 +94,7 @@ The production caller uses this path:
        client, *, project, timeline_ref, expected_version,
        config=None, registry=None, proposal=None,
        requester_session=None, label="Assemble timeline", steps=None,
-       merge="fields", reads=None, dry_run=False,
+       merge="fields", reads=None, group_id=None, dry_run=False,
        output_name="hype.mp4", selector="rendering.ffmpeg",
        runtime_attempt=None, render_capability_digest=None,
        idempotency_key,
@@ -127,6 +128,29 @@ suggested command.  Preview retains `status: preview`, no receipt, and
 `would_status` of `accepted` or `merged`.  Do not drop fields when the render
 admission envelope is built; the render pin is derived from the accepted
 canonical revision/publication/content digest.
+
+`group_id` is now threaded unchanged through the existing production caller
+`publish_stitched_render` → `publish_authoring_proposal` →
+`RemoteTasks.publish_timeline_render` → `commit_assembly`. When omitted it is
+absent from `commit_options`, so `TimelineSession._flush` seals the same body
+shape as before; when present it remains the exact caller value in the sealed
+request and exact-key retries. This adds no group semantics and does not alter
+the proposal rationale or producer guard.
+
+## Exact current G4 caller limitations
+
+The frozen Agent source at `5f0fb2edb72aae37ba86e3ffe28f5e79b63aa026` still has
+no production `RemoteTasks.admit`. The post-commit render-admission caller in
+`publish_authoring_proposal` calls `client.tasks.admit`, but the 15 Agent seam
+tests install that attribute as a fixture fake. Therefore the frozen source
+must not be called executable for the complete publication path or adoption
+done. The real admission-caller repair remains active0408-owned and is
+separate from this G4 `group_id` forwarding correction.
+
+Those 15 Agent tests are requester-seam coverage only; they do not qualify the
+20 Runtime authority/publication scenarios. No claim is made here that all 20
+behaviors pass, that frozen `5f0fb2e` is executable end to end, or that Runtime
+R5 is ready.
 
 ## Agent fixture and test nodes Runtime can port
 
