@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import {
@@ -8,10 +10,12 @@ import {
   diagnosticListener,
   diagnosticObservedVisibility,
   formatDiagnostic,
+  formatDiagnosticArtifact,
   formatPriorityDiagnostic,
   logDiagnostic,
   logPriorityDiagnostic,
   redactDiagnosticText,
+  writeDiagnosticArtifact,
 } from './p1-diagnostic-safety.ts';
 
 test('P1 diagnostics redact quoted credential fields before formatting', () => {
@@ -113,6 +117,76 @@ test('P1 priority diagnostics keep an oversized value finite, redacted, and pars
   assert.ok(new TextEncoder().encode(output).length <= DIAGNOSTIC_MAX_BYTES);
   assert.deepEqual(JSON.parse(body), { diagnostic: 'priority_over_budget' });
   assert.equal(output.includes('should-not-leak'), false);
+});
+
+test('P1 diagnostic artifacts retain uncapped safe files and exact correlation unknowns', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'p1-diagnostic-artifact-'));
+  const artifactPath = join(directory, 'p1-diagnostic.json');
+  const attachments: Array<{ name: string; path: string; contentType: string }> = [];
+  const testInfo = {
+    outputPath: () => artifactPath,
+    attach: async (name: string, options: { path: string; contentType: string }) => { attachments.push({ name, ...options }); },
+  };
+  const payload = {
+    schemaVersion: 1,
+    title: 'P1 exact case title',
+    status: 'failed',
+    expectedStatus: 'passed',
+    capturedAt: '2026-10-23T19:12:00.000Z',
+    phase: 'afterEach_failure_continuation',
+    tuple: { projectId: 'project-safe', timelineId: 'timeline-safe', sourceId: 'UNKNOWN', rightId: 'right-safe' },
+    mountedObservations: 'UNKNOWN',
+    available: {
+      wireHeads: [{ method: 'POST', route: '/api/runtime/v1/projects/:project/timelines/:timeline/commit', status: 200,
+        head: { revisionId: 'revision-safe', publicationId: 'publication-safe' }, keyProjection: { present: true, bytes: 36 } }],
+      requestProjections: Array.from({ length: 40 }, (_, index) => ({
+        index, method: 'POST', route: '/api/runtime/v1/projects/:project/timelines/:timeline/commit', status: 200,
+        bodyProjection: { present: true, bytes: 700, sameAsPrevious: index > 0 },
+        keyProjection: { present: true, bytes: 36, sameAsPrevious: index > 0 },
+        message: `available-${index} ${'x'.repeat(500)}`,
+      })),
+      errors: { console: [{ message: '{"nested":{"token":"nested-token-secret","cookie":"nested-cookie-secret"}}' }] },
+    },
+    captureData: 'UNKNOWN',
+    unknowns: { mountedDataRef: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+    losses: { cappedConsole: true, mountedObservations: 'UNKNOWN' },
+  };
+  let deepAvailable: Record<string, unknown> = { message: 'deep-safe-end' };
+  for (let index = 0; index < 12; index += 1) deepAvailable = { available: deepAvailable };
+  (payload.available as Record<string, unknown>).available = deepAvailable;
+
+  const fileWritten = await writeDiagnosticArtifact(testInfo, payload);
+  assert.equal(fileWritten, true);
+  const contents = readFileSync(artifactPath, 'utf8');
+  assert.ok(new TextEncoder().encode(contents).length > DIAGNOSTIC_MAX_BYTES);
+  const parsed = JSON.parse(contents) as Record<string, any>;
+  assert.equal(parsed.title, payload.title);
+  assert.equal(parsed.status, payload.status);
+  assert.equal(parsed.tuple.timelineId, payload.tuple.timelineId);
+  assert.equal(parsed.mountedObservations, 'UNKNOWN');
+  assert.equal(contents.includes('deep-safe-end'), true);
+  assert.equal(contents.includes('[REDACTED_DEPTH]'), false);
+  assert.equal(parsed.available.requestProjections.at(-1).message.startsWith('available-39 '), true);
+  assert.equal(parsed.available.requestProjections.at(-1).message.endsWith('[TRUNCATED]'), true);
+  assert.equal(contents.includes('nested-token-secret'), false);
+  assert.equal(contents.includes('nested-cookie-secret'), false);
+  assert.equal(attachments[0].name, 'p1-diagnostic');
+  assert.equal(attachments[0].path, artifactPath);
+  assert.equal(attachments[0].contentType, 'application/json');
+
+  const capped = formatPriorityDiagnostic('capped console', payload.available);
+  assert.ok(new TextEncoder().encode(capped).length <= DIAGNOSTIC_MAX_BYTES);
+  assert.doesNotThrow(() => JSON.parse(capped.slice(capped.indexOf('] ') + 2)));
+});
+
+test('P1 diagnostic artifact write failure is disposable and cannot replace a test failure', async () => {
+  const testInfo = {
+    outputPath: () => { throw new Error('output unavailable'); },
+    attach: async () => { throw new Error('attach unavailable'); },
+  };
+  assert.equal(await writeDiagnosticArtifact(testInfo, { title: 'safe', status: 'failed' }), false);
+  const original = new Error('original test failure');
+  assert.throws(() => { throw original; }, (error) => error === original);
 });
 
 test('P1 failure continuation keeps the realistic causal core under the byte budget', () => {
