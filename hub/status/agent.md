@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T04:48:35Z | dispatcher heartbeat 11s | live 5 (sol 2, luna 3, other 0) | busy30 16 | status age 1m -->
+<!-- agent | 2026-10-23T04:50:02Z | dispatcher heartbeat 6s | live 5 (sol 3, luna 2, other 0) | busy30 14 | status age 0m -->
 # agent board, 2026-10-23T04:47:17Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -11,14 +11,14 @@
 | R2-schema | canonical inverse steps | Luna | R2 | merged | agt-R2-R3-meta-review-0250 | Canonicald106 and f252 floors retained in actual f894; joins preserve exact | 7689/d106;mergecedc07280 |
 | R3 | dry-run/structured errors | Luna | R1,R2r | merged | agt-R3-meta-integrated-0235 | Integratedd6f equals reviewedce863:150+2 and7+3+1 PASS; original422 vs replay409 | 360826a17;73df0a99b |
 | AG-V1seam | authored meta reload | Luna | R3,V1 | merged | agt-R3-meta-integrated-0235 | Independent+integrated150+7+3+1; real params.meta dependency preserved, ViewingACK0247 | ce8639a26 |
-| V2 | D12 no new invalidity | Sol; Luna review/proof | R1,D12 | merging | agt-V2-home-proof-0445 | Independent0414 PASS147/2151/1915; reviewed89c home9729; scoped integrated proof active | 89c700ade;9729c07b7 |
+| V2 | D12 no new invalidity | Sol; Luna review/proof | R1,D12 | merged | agt-V2-home-proof-0445 | Independent147; actual9729 scoped144 PASS/2150/1915. ccc removed3 unrelatedmeta tests; currentcorrection restores, no wholehome claim | 89c700ade;9729c07b7 |
 | G2 | open/commit bounded rerun | Sol; Luna review | R1,U2,34e | doing | agt-G234-home-correction-0442 | Review0401 FAIL live create_empty; actualccc unqualified; current-preserving correction active | approved5f0;home9729 |
 | G3 | emitter/CLI/sheet | Sol; Luna review | G2 | doing | agt-G234-home-correction-0442 | Correct actualhome to approved5f0 with publicfacade and retainedV2; no stale ancestry approval | 5f0fb2ed |
 | G4-writers | narration/update-element | Sol join; Luna review | G2 | doing | agt-G234-home-correction-0442 | Reviewed f303 source retained in current-preserving assembled correction | f303→5f0 |
 | G4-media | live create_empty/parent-media | Luna; independent Luna | G2 | review | agt-G4-create-empty-review-0442 | Independent0442 PASS14direct+1live,24vendor/artifact,2149/1914; original redo3 separatelyaudit0446. Current assembly active | f677e9bab |
 | G4-render | requester render publication | Luna; Sol join | G2 | doing | agt-G234-home-correction-0442 | Independent0416 PASS actualRemoteTasks.create1+13; group independent0421 PASS25; current join active | 33fc3879;e045b37f |
 | G2-step-undo | public selected-step undo | Luna; Luna review | G2,R2 | review | agt-P4-final-six-join-0442 | Independent facade0416 PASS107+2; exact2-file246f current port; final six-test assembly active | 9fbb84ac;246f925 |
-| P4-owner | exact six tests/current facade | Luna; independent review next | G2,G3,R2 | doing | agt-P4-final-six-join-0442 | Five exact0018 files+sixth5ee8; no HTTP bodies; Proof owns execution after final review | 246f925+c4c test |
+| P4-owner | exact six tests/current facade | Luna; independent review next | G2,G3,R2 | doing | agt-P4-six-final-review-0449 | Author15+107+2 and bothHTTP2collected,2149/1915PASS; independent final scoped review active | 246f925+c4c test |
 | V3-owner | same Composition artifact | Luna | U2,App archive | merged | agt-V3-integrated-proof-0111; vw-V3-agent-integrated0114 | Exactfa2 both integrated proofs30 and130/gen/types/caller PASS, archive819acf/73451B/80. Package only | b56828de5;mergefa2cf5b66 |
 | V1-copies | canonical691 copies | Luna | RuntimeV1 | merged | agt-V1-integrated-proof-0147 | Independent+integrated64+163subtests PASS;15 mapped691, normal ratchets/artifact/caller | ffcec5d33 |
 | G4-R5-handoff | public requester migration map | Luna; independent Luna | G4 | doing | agt-G234-home-correction-0442 | Prior handoffFAIL corrected source33fc independentPASS; Runtime owns20-scenario testport0418, no duplication | 33fc3879 |
@@ -31,7 +31,7 @@
 | R2-derived-undo | anchor/cache undo scope | Sol source diagnosis; decision owed | C0 §5 | blocked:orchestrator | Viewing0421 diagnosis | Two original positives need causal-cache scope ruling; guards/tests unchanged; escalation0445 written | no change |
 | A3-fork-plan | same-selected-owner semantic source plan | Sol after Luna FAIL | independent0422 | doing | agt-A3-same-owner-plan-0445 | duplicate creates third occurrence; no same-owner carrier; source proposal only pending frozen exception | no product delta |
 | A3-fork-wire | canonical same-owner carrier disposition | orchestrator/Agent | frozen34e | blocked:orchestrator | escalation0445 | App shared editing and child placement need missing carrier; no guessed op or managed-edge patch | no change |
-| R2-bootstrap-redo | authenticate root restore redo observations | Luna diagnosis; Sol R2 if needed | original3 real failures | doing | agt-R2-bootstrap-redo-audit-0446 | Read existing actual traces; no unchanged3/native14 repeat, no guard waiver; coordinate replay0442 | sourcef677 |
+| R2-bootstrap-redo | authenticate root restore redo observations | Sol R2; Luna review next | audit0446 | doing | agt-R2-bootstrap-redo-fix-0450 | Exact inverse stage input-image/binding mismatch, inherited5f0; separate from legacyreplay. Original3 actual cases retained | basef677 |
 Resolved: runtime — Normal frozen strict34e adoption DONEf894/all15/d106; executionad823 compatible. Runtime P5 independent strict14+fresh crash24 PASS on62c454/f894; no duplicate qualification.
 Blockers: agent — Actual home9729 includes UNQUALIFIEDccc P4 product ancestry. Sol current-preserving correction0442 active; G234 and wholehome acceptance unclaimed until independent review and integrated proof.
 Blockers: orchestrator — R2 derived-cache undo2 scope and A3 same-owner carrier/frozen tuple exception owed; escalations agent-20261023T0445Z-derived-undo-scope.md and same-owner-carrier.md written this pass.
