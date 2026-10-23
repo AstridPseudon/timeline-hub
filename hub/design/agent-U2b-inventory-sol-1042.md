@@ -80,6 +80,19 @@ Required acceptance command:
 Result: pending; run is still active after 89 completed nodes, near the RunPod
 adapter test. This report will be finalized with the actual outcome.
 
+An independent minimal environment probe reproduced an asynchronous thread
+handoff stall without importing pytest, Astrid, or RunPod:
+
+```
+PYTHONDONTWRITEBYTECODE=1 timeout 15 /home/user/work/venv-agent-child-f1012-installed/venv/bin/python -c 'import asyncio; asyncio.run(asyncio.to_thread(lambda: print("asyncio thread completed", flush=True)))'
+```
+
+Result: **exit 124** after printing `asyncio thread completed`. The executor
+function finishes but the event loop does not return. This supports an
+environment-level asynchronous wakeup problem rather than an effect of the
+inventory-test deletion. No workaround or test/environment modification was
+introduced to suppress the issue.
+
 Other commands and results:
 
 - `RUFF_CACHE_DIR="$TMPDIR/ruff-cache" make PY=/home/user/work/venv-agent/bin/python ruff` — exit 0, **2149/2149** findings.
