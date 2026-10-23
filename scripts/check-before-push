@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The one pre-push command: run it before every push (testing plan R-12).
-# It runs the build-context guard and the default vitest suite, then flags runtime-facing changes that need the thin full journey (R-11).
+# It runs the build-context guard and default suite, then flags runtime-facing changes for thin full journeys (R-11).
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,8 +16,49 @@ done <<EOF
 $git_local_env_vars
 EOF
 
-node scripts/quality/check-build-context.mjs
-npm test
+expected_node_version="$(tr -d '[:space:]' < .nvmrc)"
+node_bin=""
+node_candidates=()
+if [[ -n "${NVM_DIR:-}" ]]; then
+  node_candidates+=("$NVM_DIR/versions/node/v${expected_node_version}/bin/node")
+fi
+node_candidates+=("$HOME/.nvm/versions/node/v${expected_node_version}/bin/node")
+for candidate in "${node_candidates[@]}"; do
+  if [[ -x "$candidate" && "$("$candidate" --version 2>/dev/null || true)" == "v${expected_node_version}" ]]; then
+    node_bin="$candidate"
+    break
+  fi
+done
+if [[ -z "$node_bin" ]]; then
+  candidate="$(command -v node || true)"
+  if [[ -n "$candidate" && "$("$candidate" --version 2>/dev/null || true)" == "v${expected_node_version}" ]]; then
+    node_bin="$candidate"
+  fi
+fi
+if [[ -z "$node_bin" ]]; then
+  echo "Pre-push requires the pinned Node.js v${expected_node_version} from .nvmrc; install it with nvm or put it on PATH." >&2
+  exit 1
+fi
+npm_bin="$(dirname "$node_bin")/npm"
+if [[ ! -x "$npm_bin" ]]; then
+  echo "Pinned npm was not found next to $node_bin." >&2
+  exit 1
+fi
+export PATH="$(dirname "$node_bin"):$PATH"
+npm_version="$("$npm_bin" --version)"
+
+# Resolve symlinked temp roots (notably /var -> /private/var on macOS) before
+# Node/Vitest creates temporary files, so later checks see the same paths.
+tmp_root="${TMPDIR:-/tmp}"
+mkdir -p "$tmp_root"
+export TMPDIR="$(cd "$tmp_root" && pwd -P)"
+export ASTRID_PREPUSH_NODE_VERSION="$expected_node_version"
+export ASTRID_PREPUSH_NPM_VERSION="$npm_version"
+export ASTRID_PREPUSH_NPM_BIN="$npm_bin"
+
+"$node_bin" scripts/check-before-push-cache.mjs --phase build-context -- "$node_bin" scripts/quality/check-build-context.mjs
+"$node_bin" scripts/check-before-push-cache.mjs --phase app-tests -- "$npm_bin" run test:app
+"$node_bin" scripts/check-before-push-cache.mjs --phase node-tests -- "$npm_bin" run test:node
 
 changed=""
 if git rev-parse --verify --quiet origin/main >/dev/null; then
