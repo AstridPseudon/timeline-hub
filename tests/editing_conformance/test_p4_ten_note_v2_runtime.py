@@ -7,19 +7,19 @@ transport; no transport or provider is substituted here.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.sdk import timeline
-from astrid.sdk.timeline.commit import _digest, bundle_from_document
+from astrid.sdk.timeline.commit import _digest, _json, bundle_from_document
 from astrid.sdk.timeline.emitter import emit_document_commands
 from tests.editing_conformance import test_native_batch_ingress
 from tests.helpers.trusted_seed import seed_trusted_parent
-from tests.sdk.test_timeline_commit_provider_document import document_fixture
+from tests.sdk.test_timeline_commit_provider_document import MEDIA, document_fixture
 
 pytestmark = pytest.mark.integration
 runtime = test_native_batch_ingress.runtime
@@ -38,37 +38,96 @@ def _notes() -> list[dict[str, Any]]:
     return _case()["notes"]
 
 
-def _seed_original(runtime: Any) -> dict[str, Any]:
-    """Install the compiled original shared fixture before acceptance observation.
+def _original_publication(project: str, media_id: str) -> dict[str, Any]:
+    """Clone the canonical shared fixture, mapping only its physical media pin.
 
     The note namespace is an isolated empty-container genesis setup: the
     original fixture has no note keys, while doc.patch requires the parent
     object to exist before setting each independently addressed child.
     """
-    source = document_fixture(shared=True)
-    source["project_id"] = runtime.project
+    original = document_fixture(shared=True)
+    source = copy.deepcopy(original)
+    media_paths = [
+        ("parent_revision", "payload", "registry", "assets", "picture", "media_id"),
+        ("shot_revisions", 0, "payload", "items", 0, "media_id"),
+        ("internal_timeline_revisions", 0, "payload", "registry", "assets", "picture", "media_id"),
+    ]
+    found = []
+
+    def map_media(value: Any, path: tuple[Any, ...] = ()) -> Any:
+        if isinstance(value, dict):
+            mapped = {}
+            for key, child in value.items():
+                if key == "media_id":
+                    assert child == MEDIA
+                    found.append((*path, key))
+                    mapped[key] = media_id
+                else:
+                    mapped[key] = map_media(child, (*path, key))
+            return mapped
+        if isinstance(value, list):
+            return [map_media(child, (*path, index)) for index, child in enumerate(value)]
+        return value
+
+    for key in ("parent_revision", "shot_revisions", "internal_timeline_revisions"):
+        source[key] = map_media(source[key], (key,))
+    assert found == media_paths
+    restored = copy.deepcopy(source)
+    for path in media_paths:
+        target = restored
+        for part in path[:-1]:
+            target = target[part]
+        assert target[path[-1]] == media_id
+        target[path[-1]] = MEDIA
+    assert _json(restored) == _json(original)
+
+    source["project_id"] = project
     source["timeline_id"] = "film"
     source["parent_revision"]["revision_id"] = "p4-ten-note-baseline"
     payload = source["parent_revision"]["payload"]
     for clips in (payload["clips"], payload["config"]["clips"]):
         clip = next(row for row in clips if row["id"] == "clip-a")
         clip["app"]["org.example"]["p4_note"] = {}
-    source["parent_revision"]["content_digest"] = _digest(payload)
-    candidate = bundle_from_document(source)
-    compiled = compile_authoring_candidate(candidate).publication
-    parent = copy.deepcopy(compiled["parent_composition"])
-    parent.setdefault("registry", {})
-    publication = {
-        "project_id": runtime.project,
+    for image in [source["parent_revision"], *source["shot_revisions"],
+                  *source["internal_timeline_revisions"]]:
+        image["content_digest"] = _digest(image["payload"])
+    assert [(row["shot_id"], row["shot_revision_id"]) for row in payload["occurrences"]] == [
+        ("chapter-shot", "shot-1"), ("chapter-shot", "shot-1"),
+    ]
+    assert len(source["shot_revisions"]) == len(source["internal_timeline_revisions"]) == 1
+    return {
+        "project_id": project,
         "timeline_id": "film",
         "expected_head": None,
         "parent_revision_id": "p4-ten-note-baseline",
-        "parent_composition": parent,
-        "shot_revisions": compiled["shot_revisions"],
-        "internal_timeline_revisions": compiled["internal_timeline_revisions"],
+        "parent_composition": payload,
+        "shot_revisions": source["shot_revisions"],
+        "internal_timeline_revisions": source["internal_timeline_revisions"],
     }
+
+
+def _seed_original(runtime: Any) -> dict[str, Any]:
+    """Install real bytes and the original shared closure before observing edits."""
+    service = runtime.service()
+    media = ROOT / "packs" / "builtin" / "generate_image" / "fixtures" / "tiny.png"
+    data = media.read_bytes()
+    expected = "sha256:" + hashlib.sha256(data).hexdigest()
+    ingested = service.ingest(
+        runtime.project, data, media_type="image/png", original_name=media.name,
+        expected_digest=expected, idempotency_key="p4-ten-note-source",
+    )
+    managed = ingested["data"]
+    assert managed["object_id"] == managed["digest"] == expected
+    assert managed["relation"] == "managed"
+    assert managed["size"] == len(data)
+    publication = _original_publication(runtime.project, managed["object_id"])
+    # Keep the original internal owner, rather than rewriting its source scope.
+    for image in publication["internal_timeline_revisions"]:
+        service.create_timeline(
+            runtime.project, image["timeline_id"], idempotency_key="p4-ten-note-internal-owner",
+        )
     seeded = seed_trusted_parent(
-        runtime.service(), publication, idempotency_key="p4-ten-note-baseline"
+        service, publication, idempotency_key="p4-ten-note-baseline"
     )
     runtime.restart()
     return seeded
