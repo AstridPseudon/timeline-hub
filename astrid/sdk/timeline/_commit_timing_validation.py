@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import copy
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 from astrid.core.timeline import moments
@@ -250,6 +250,7 @@ def _legacy_inputs(
 def validate_candidate_timing(
     candidate: Mapping[str, Any], *, baseline: Mapping[str, Any] | None = None,
     _allow_physical_context_fallback: bool = True,
+    source_bundles: Sequence[Mapping[str, Any]] = (),
 ) -> None:
     """Compile a detached validation view, leaving authored JSON and pins intact.
 
@@ -277,7 +278,7 @@ def validate_candidate_timing(
 
         # Use the provider's physical closure, including shared patch successors
         # and unchanged reused images, rather than the compiler's local copies.
-        document = document_from_bundle(candidate)
+        document = document_from_bundle(candidate, source_bundles=source_bundles)
         occurrences = {row["occurrence_id"]: row for row in document["parent_revision"]["payload"]["occurrences"]}
         shots = {row["revision_id"]: row for row in document["shot_revisions"]}
         internals = {row["revision_id"]: row for row in document["internal_timeline_revisions"]}
@@ -379,4 +380,5 @@ def validate_candidate_timing(
                 context,
                 baseline=context_baseline,
                 _allow_physical_context_fallback=False,
+                source_bundles=source_bundles,
             )

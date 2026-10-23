@@ -41,6 +41,7 @@ def operations():
     from .native_occurrence_create import occurrence_create
     from .native_occurrence_delete import occurrence_delete
     from .native_occurrence_duplicate import OCCURRENCE_INTENT, occurrence_duplicate
+    from .native_occurrence_fork import FORK_PARAMETERS, occurrence_fork
     from .native_occurrence_media_commands import (
         MEDIA_INTENT,
         add_media,
@@ -75,6 +76,7 @@ def operations():
             'shot.pool': Operation(_SCHEMA['$defs']['ShotPoolArgs'], shot_pool, POOL_INTENT, True),
             'occurrence.duplicate': Operation(_SCHEMA['$defs']['OccurrenceDuplicateArgs'], occurrence_duplicate,
                                               OCCURRENCE_INTENT, True),
+            'occurrence.fork': Operation(FORK_PARAMETERS, occurrence_fork, OCCURRENCE_INTENT, True),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
             'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
             'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),

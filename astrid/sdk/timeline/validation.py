@@ -354,6 +354,7 @@ def validate_final_candidate(
     baseline: Mapping[str, Any] | None = None,
     schema_inputs: Sequence[Any] = (),
     realm_id: str | None = None,
+    source_bundles: Sequence[Mapping[str, Any]] = (),
 ) -> None:
     """Validate one complete candidate without changing it.
 
@@ -361,6 +362,8 @@ def validate_final_candidate(
     an older opaque parameter that must survive a round trip.  ``schema_inputs``
     are the exact retained Runtime captures collected for this commit; this
     helper never resolves a mutable project-pack source.
+    ``source_bundles`` are authenticated inverse boundaries used for immutable
+    child reuse when the inverse restores a source absent from the current head.
     """
     if not isinstance(candidate, Mapping):
         _fail("candidate", "must be an object")
@@ -438,7 +441,10 @@ def validate_final_candidate(
     from astrid.sdk.timeline._commit_timing_validation import validate_candidate_timing
 
     try:
-        validate_candidate_timing(candidate, baseline=baseline)
+        if source_bundles:
+            validate_candidate_timing(candidate, baseline=baseline, source_bundles=source_bundles)
+        else:
+            validate_candidate_timing(candidate, baseline=baseline)
     except (TimingCompileError, KeyError, TypeError, ValueError) as exc:
         _fail("candidate.timing", str(exc))
 
