@@ -296,7 +296,8 @@ def saved_source(tmp_path, monkeypatch):
 
 # D17 must restore repeated physical roots through guarded inverse without
 # inventing config mirrors or relaxing authored guards. Single-shot undo is green.
-def test_repeated_source_copy_real_port_idempotency_and_guarded_inverse(saved_source):
+@pytest.mark.parametrize('with_content', [False, True])
+def test_repeated_source_copy_real_port_idempotency_and_guarded_inverse(saved_source, with_content):
     from astrid.sdk.timeline import open as open_timeline
     from astrid.sdk.timeline_duplicate import duplicate_timeline
     from tests.sdk.test_timeline_restructure import flat_film
@@ -306,6 +307,14 @@ def test_repeated_source_copy_real_port_idempotency_and_guarded_inverse(saved_so
     source['parent']['registry'] = {}
     source['shots']['film']['internal_timeline']['clips'] = []
     source['shots']['film']['internal_timeline']['registry'] = {'assets': {}}
+    if with_content:
+        source['shots']['film']['payload']['items'] = [
+            {'item_id': 'source-item', 'media_id': 'picture', 'metadata': {'opaque': [None, False]}}]
+        source['shots']['film']['internal_timeline']['clips'] = [
+            {'id': 'picture-clip', 'clipType': 'image', 'track': 'plate',
+             'asset': 'picture', 'at': 0, 'hold': 2, 'opaque': [None, False]}]
+        source['shots']['film']['internal_timeline']['registry']['assets']['picture'] = {
+            'type': 'image', 'media_id': 'picture'}
     again = copy.deepcopy(source['placements'][0])
     again.update(occurrence_id='again', placement={'start_ms': 12000})
     source['placements'].append(again)
@@ -381,7 +390,8 @@ def test_source_copy_unknown_outcome_retains_destination_and_exact_retry(saved_s
     assert final['pending'] == [] and final['flight'] is None
 
 
-def test_source_copy_real_port_preserves_raw_parent_config_presence(saved_source):
+@pytest.mark.parametrize('mirrors', [(), ('clips',), ('registry',), ('clips', 'registry')])
+def test_source_copy_real_port_preserves_raw_parent_config_presence(saved_source, mirrors):
     from astrid.sdk.timeline_duplicate import duplicate_timeline
     from tests.sdk.test_timeline_restructure import flat_film
 
@@ -390,10 +400,174 @@ def test_source_copy_real_port_preserves_raw_parent_config_presence(saved_source
     source['parent']['registry'] = {}
     source['shots']['film']['internal_timeline']['clips'] = []
     source['shots']['film']['internal_timeline']['registry'] = {'assets': {}}
+    for key in mirrors:
+        source['parent']['config'][key] = copy.deepcopy(source['parent'][key])
     client, project, document, bodies = saved_source(source)
     original = document('t')['parent_revision']['payload']
-    assert 'clips' not in original['config']
+    assert ('clips' in original['config']) == ('clips' in mirrors)
     duplicate_timeline(project, 't', slug='copy', client=client)
     copied = document('copy')['parent_revision']['payload']
     assert {key: value for key, value in copied.items() if key != 'occurrences'} == {
         key: value for key, value in original.items() if key != 'occurrences'}
+
+
+def test_source_copy_retained_inputs_whole_undo_redo(source_copy, monkeypatch):
+    from runtime_protocol.timeline_commit_inputs import (
+        DocumentInputLink,
+        capture_document_input,
+        persist_document_input_links,
+        validate_captured_document_inputs,
+    )
+
+    from astrid.sdk.timeline.commit import _digest
+    from tests.helpers import trusted_seed
+
+    service, document, request, commit, command = source_copy
+    project = command['args']['source_ref']['project_id']
+    content = {'schema': 'copy.config/v1', 'opaque': [None, False, 2]}
+    service.create_document(project, {'document_id': 'retained', 'kind': 'copy.config',
+        'content': content}, idempotency_key='retained-config')
+    pin = {'document_id': 'retained', 'version': 1, 'content_digest': _digest(content)}
+    media = service.ingest(project, b'retained-only', original_name='retained.bin',
+        media_type='application/octet-stream', idempotency_key='retained-media')['data']['object_id']
+    capture = capture_document_input(service.store.conn, project, pin,
+        expected_kind='copy.config', expected_schema=content['schema'])
+    class Inputs:
+        def validate(self, candidate):
+            validate_captured_document_inputs(service.store.conn, [capture])
+        def persist(self, candidate, publication_id, revision_id):
+            persist_document_input_links(service.store.conn, project_id=project, timeline_id='source',
+                publication_id=publication_id, revision_id=revision_id,
+                links=[DocumentInputLink(capture, 'source', 0)])
+
+    # Trusted saved-film setup only. The copy and both inverse acceptances use
+    # the production provider and real scoped captures without any adapter.
+    commits = service._timeline_commits()[0]
+    closure, accept = trusted_seed._closure, commits.accept
+    def retained_closure(*args):
+        result = closure(*args)
+        result['dependency_manifest']['documents'] = [pin]
+        result['dependency_manifest']['media'].append({'media_id': media, 'content_digest': media})
+        return result
+    source = document('source')
+    with monkeypatch.context() as setup:
+        setup.setattr(trusted_seed, '_closure', retained_closure)
+        setup.setattr(commits, 'accept', lambda *args, **kw: accept(*args, **kw, inputs=Inputs()))
+        trusted_seed.seed_trusted_parent(service, {'project_id': project, 'timeline_id': 'source',
+            'parent_revision_id': 'retained-source', 'parent_composition': source['parent_revision']['payload'],
+            'shot_revisions': source['shot_revisions'],
+            'internal_timeline_revisions': source['internal_timeline_revisions']}, idempotency_key='retained-source')
+    original = document('source')
+    head = service.get_project_timeline(project, 'source')
+    command['args']['source_ref'].update(revision_id=head['head_revision_id'],
+        publication_id=head['head_publication_id'], content_digest=original['parent_revision']['content_digest'])
+    before = document('destination')
+    copied = commit('destination', request('destination', [command]), 'retained-copy')
+    after = document('destination')
+    assert after['dependency_manifest']['documents'] == [pin]
+    assert after['dependency_manifest']['media'] == original['dependency_manifest']['media']
+    def inverse(result, key):
+        call = {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
+                'args': {'publications': [result['receipt']['receipt_id']]}}
+        return commit('destination', request('destination', [call]), key)
+    undone = inverse(copied, 'retained-undo')
+    assert document('destination') == before
+    inverse(undone, 'retained-redo')
+    assert document('destination') == after
+    assert document('source') == original
+
+
+@pytest.mark.parametrize('damage', ['archived-after-capture', 'forged-physical-media'])
+def test_source_copy_captured_authority_still_guards_acceptance(source_copy, monkeypatch, damage):
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    service, document, request, commit, command = source_copy
+    project = command['args']['source_ref']['project_id']
+    media = service.ingest(project, b'outside-source', original_name='outside.bin',
+        media_type='application/octet-stream', idempotency_key='outside-media')['data']['object_id']
+    original = RequestCommitPort.source_revision_closure
+    snapshots = []
+    def captured(port, ref):
+        result = original(port, ref)
+        if damage == 'archived-after-capture':
+            head = service.get_project_timeline(project, 'source')
+            service.archive_timeline('source', {'expected_version': head['version']},
+                                     idempotency_key='archive-captured-source')
+        else:
+            result['dependency_manifest']['media'].append({'media_id': media, 'content_digest': media})
+        snapshots.append(tuple(service.store.conn.iterdump()))
+        return result
+    monkeypatch.setattr(RequestCommitPort, 'source_revision_closure', captured)
+    before = document('destination')
+    with pytest.raises(RuntimeErrorBase):
+        commit('destination', request('destination', [command]), damage)
+    assert snapshots and tuple(service.store.conn.iterdump()) == snapshots[-1]
+    assert document('destination') == before
+
+
+@pytest.mark.parametrize('aba', [False, True])
+def test_source_copy_inverse_refuses_later_leaf_writes_atomically(source_copy, aba):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    from astrid.sdk.timeline._command_state import present
+
+    service, document, request, commit, command = source_copy
+    copied = commit('destination', request('destination', [command]), 'guard-copy')
+    shot = document('destination')['shot_revisions'][0]
+    original = shot['payload']['name']
+    def rename(before, value, key):
+        change = {'op': 'set', 'ref': 'shot-revision:' + shot['revision_id'],
+                  'path': ['name'], 'before': present(before), 'value': value}
+        call = {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                'args': {'changes': [change]}}
+        body = request('destination', [call])
+        body['merge'] = 'fields'
+        body['steps'][0]['patch'] = [change]
+        return commit('destination', body, key)
+    changed = rename(original, 'Later', 'later-leaf')
+    if aba:
+        shot = changed['data']['canonical_document']['shot_revisions'][0]
+        rename('Later', original, 'aba-leaf')
+    before = document('destination')
+    stored = tuple(service.store.conn.iterdump())
+    call = {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1', 'select': None,
+            'args': {'publications': [copied['receipt']['receipt_id']]}}
+    with pytest.raises(RuntimeErrorBase):
+        commit('destination', request('destination', [call]), 'guard-inverse')
+    assert document('destination') == before
+    assert tuple(service.store.conn.iterdump()) == stored
+
+
+def test_source_copy_known_refusal_archives_actual_destination(saved_source):
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.timeline_duplicate import duplicate_timeline
+    from tests.sdk.test_timeline_restructure import flat_film
+
+    source = flat_film()
+    source['shots']['film']['internal_timeline']['clips'] = []
+    source['shots']['film']['internal_timeline']['registry'] = {'assets': {}}
+    client, project, document, bodies = saved_source(source)
+    original = document('t')
+    generated = client._remote._transport._generated
+    send, archive = generated.commit_timeline, client.timelines.archive
+    archived = []
+    destinations = []
+    def refuse(p, t, body, *, idempotency_key):
+        destinations.append(document(t))
+        invalid = copy.deepcopy(body)
+        invalid['commands'][0]['args']['source_ref']['content_digest'] = 'sha256:' + '0' * 64
+        return send(p, t, invalid, idempotency_key=idempotency_key)
+    def cleanup(p, t):
+        result = archive(p, t)
+        archived.append((t, result.data))
+        return result
+    generated.commit_timeline = refuse
+    client.timelines.archive = cleanup
+    with pytest.raises(TimelineEditError, match='archived again'):
+        duplicate_timeline(project, 't', slug='refused-copy', client=client)
+    assert len(archived) == 1 and archived[0][0] == 'refused-copy'
+    assert archived[0][1]['data']['archived'] is True
+    assert archived[0][1]['data']['head_revision_id'] == destinations[0]['parent_revision']['revision_id']
+    assert destinations[0]['parent_revision']['payload']['occurrences'] == []
+    assert document('t') == original

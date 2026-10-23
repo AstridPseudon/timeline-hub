@@ -206,6 +206,10 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
     for supplied in commands:
         validate_command(supplied)
     candidate, records = copy.deepcopy(bundle), []
+    if any(call['op'] == 'timeline.inverse' for call in commands):
+        from ._root_inverse import normalize_root_inputs
+
+        normalize_root_inputs(candidate, inverse_records or ())
     metadata = CommitPatch(commit_request, commands, bundle, evaluated_head=evaluated_head)
     for ordinal, supplied in enumerate(commands):
         command = _normalize(supplied)

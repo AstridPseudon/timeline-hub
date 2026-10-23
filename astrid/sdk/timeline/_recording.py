@@ -130,6 +130,12 @@ class Recording:
         self.record['writes'].append({"ref": ref, "path": list(path),
                                        "before": before, "after": copy.deepcopy(after)})
         self.state.set(ref, path, after)
+        if ref == 'parent' and list(path) == ['config']:
+            parent = self.state.bundle['parent']
+            config = parent.get('config')
+            self.mirrored_clips = (isinstance(parent.get('clips'), list)
+                                   and isinstance(config, dict) and isinstance(config.get('clips'), list)
+                                   and equal(parent['clips'], config['clips']))
 
     def write(self, ref, path, value):
         self.assign(ref, path, present(value))

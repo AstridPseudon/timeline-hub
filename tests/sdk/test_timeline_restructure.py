@@ -5,13 +5,24 @@ import copy
 
 import pytest
 
-from tests.editing_conformance.test_commit_runtime_source_copy import saved_source as saved_source
-
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.store import three_way
 from astrid.sdk.timeline_checkout import Checkout
-from astrid.sdk.timeline_restructure import STRUCTURE_KEY, _stable_id, assert_equivalent, differences, flatten, is_split, plan, split, walls_of
+from astrid.sdk.timeline_restructure import (
+    STRUCTURE_KEY,
+    _stable_id,
+    assert_equivalent,
+    differences,
+    flatten,
+    is_split,
+    plan,
+    split,
+    walls_of,
+)
+from tests.editing_conformance import test_commit_runtime_source_copy
+
+saved_source = test_commit_runtime_source_copy.saved_source
 
 TRACKS = [{"id": "type", "kind": "visual"}, {"id": "sprite", "kind": "visual"}, {"id": "plate", "kind": "visual"},
           {"id": "vo", "kind": "audio"}, {"id": "music", "kind": "audio"}]
@@ -556,6 +567,7 @@ def test_split_routes_a_new_clip_by_placement_and_a_wall_crosser_to_the_film():
 def test_same_asset_follows_the_runtime_identity_fixture():
     import json
     from pathlib import Path
+
     from astrid.sdk.timeline_restructure import same_asset
 
     cases = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "asset-identity.json").read_text())["cases"]
