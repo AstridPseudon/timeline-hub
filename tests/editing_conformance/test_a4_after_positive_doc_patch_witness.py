@@ -313,6 +313,32 @@ def test_app_positive_doc_patch_witness_replays_exact_input_through_registered_p
     assert request["merge"] == "atomic"
 
     captured_request = copy.deepcopy(request)
+    changes = captured_request["commands"][0]["args"]["changes"]
+    insert_change = next(change for change in changes
+                         if change["op"] == "list.insert" and change["ref"] == "parent"
+                         and change["path"] == ["clips"] and change["id"] == "clip-0")
+    later_change = next(change for change in changes
+                        if change["op"] == "set" and change["ref"] == "parent"
+                        and change["path"] == ["clips", "id:later", "at"])
+    registry_change = next(change for change in changes
+                           if change["op"] == "set" and change["ref"] == "parent"
+                           and change["path"] == ["registry", "assets", insert_change["value"]["asset"]])
+    expected_anchor = copy.deepcopy(source_pins["anchor"])
+    if case == "old video with subminimum duration":
+        anchor_change = next(change for change in changes
+                             if change["op"] == "set" and change["ref"] == "parent"
+                             and change["path"] == ["clips", "id:anchor", "hold"])
+        expected_anchor["hold"] = anchor_change["value"]
+    # Copy literal captured values; do not recompute App timing semantics.
+    expected_payload = copy.deepcopy(document["parent_revision"]["payload"])
+    expected_payload["clips"] = [
+        expected_anchor,
+        copy.deepcopy(insert_change["value"]),
+        {**source_pins["later"], "at": later_change["value"]},
+        copy.deepcopy(source_pins["sibling"]),
+    ]
+    expected_payload["config"]["clips"] = copy.deepcopy(expected_payload["clips"])
+    expected_payload["registry"]["assets"][registry_change["path"][-1]] = copy.deepcopy(registry_change["value"])
     realm = DetachedRealm(document)
     realm.head["publication_id"] = "p0"
     realm.entries[0]["publication_id"] = "p0"
@@ -418,21 +444,25 @@ def test_app_positive_doc_patch_witness_replays_exact_input_through_registered_p
     payload = result["data"]["canonical_document"]["parent_revision"]["payload"]
     assert [row["id"] for row in payload["clips"]] == ["anchor", "clip-0", "later", "sibling"]
     inserted = next(row for row in payload["clips"] if row["id"] == "clip-0")
-    expected = request["commands"][0]["args"]["changes"][0]["value"]
+    expected = insert_change["value"]
     assert inserted == expected
     if case == "old video with missing hold":
         assert "hold" not in inserted
     elif case == "old video with explicit null hold":
         assert inserted["hold"] is None
     elif case == "old video with subminimum duration":
+        assert payload["clips"][0]["hold"] == 0
         assert inserted["hold"] == 0.0667
+        assert payload["clips"][2]["at"] == 5.0667
     else:
         assert inserted["transition"] == {"type": "crossfade", "duration": 0.5, "opaque": [False, None]}
-    assert payload["clips"][0] == source_pins["anchor"]
-    assert payload["clips"][2]["at"] == request["commands"][0]["args"]["changes"][1]["value"]
+    assert payload["clips"][0] == expected_anchor
+    if case != "old video with subminimum duration":
+        assert payload["clips"][0] == source_pins["anchor"]
+    assert payload["clips"][2]["at"] == later_change["value"]
     assert payload["clips"][3] == source_pins["sibling"]
     assert payload["config"]["clips"] == payload["clips"]
     assert payload["registry"]["assets"]["asset-source"] == source_pins["source_asset"]
     assert payload["registry"]["assets"]["asset-peer"] == {"file": "peer.png", "type": "image/png"}
-    registry_change = request["commands"][0]["args"]["changes"][-1]
     assert payload["registry"]["assets"][registry_change["path"][-1]] == registry_change["value"]
+    assert payload == expected_payload
