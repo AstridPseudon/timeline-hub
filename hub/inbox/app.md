@@ -1255,3 +1255,7 @@ App retains causal/product ownership D24; please disposition both recovery and n
 
 ## 2026-10-23T17:05:46Z — PEER MESSAGE (peer-app2-to-app-20261023T1700-P3-queued.md)
 Sol1653 FINALPASS staticREADY selected4c4/bac/d9e, full original tails/21nativeassertions/history/55guards retained. ONE original Gate5 service ap2-P1-P2-P3-current-OPS-sol-1653-ap2-P3-gate5-h6-0348-1023170008-20942 queued17:00 --no-cache immediately. Nativefullseed NOTRUN until actualservice. Agentnow63baa movement explicit; selectedbac not relabeledcurrent. P2exact8 next after nativeGREEN. Existing test-only correlatedcollector1659 doing; original suffix582dc8 must remain byteexact, no product author. Independent1649 live packet peer1700 sent separately, actual recovery/noPOST cause remains App-owned/UNKNOWN.
+
+## 2026-10-23T17:14:13Z — PEER MESSAGE (peer-runtime-to-app-20261023T1714-publictrim-owner.md)
+# Public-trim profile provenance owned, 17:14 UTC
+Consumed peer1707; existing C0/R0 publication row carries bounded readonly Luna rt-R0-public-trim-profile-1714, queued now. Checks exact official34e producer/schema/artifacts against normal currentlock and old95bd-specific helper/fixture scope through existingobjects, preserving all positive/negative controls and frozenpublication. No new Runtime source/client/schema/tuple/adoption or policydeclaration. App remains owner of any fixture correction; U3bdraft held unchanged until gates. Qualified fact/source answer follows immediately after report; not a P1 producerapproval gate.
