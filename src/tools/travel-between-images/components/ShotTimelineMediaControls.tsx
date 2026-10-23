@@ -15,6 +15,65 @@ type ShotTimelineMediaControlsProps = {
   parentDocumentId: string;
 };
 
+type ClipSelectionSnapshot = {
+  id: string;
+  track: string;
+  at: number;
+  asset?: string;
+  ownerRef?: string;
+  clipRef?: string;
+};
+
+type SelectionSnapshot = {
+  selectedIds: string[];
+  selectedTrackId: string | null;
+  clip: ClipSelectionSnapshot | null;
+};
+
+function clipSelectionSnapshot(
+  selectedIds: ReadonlySet<string>,
+  selectedTrackId: string | null,
+  clip: { id: string; track: string; at: number; asset?: string; app?: Record<string, unknown> } | undefined,
+): SelectionSnapshot {
+  const canonical = clip?.app?.canonical;
+  const identity = canonical && typeof canonical === 'object' && !Array.isArray(canonical)
+    ? canonical as Record<string, unknown>
+    : undefined;
+  return {
+    selectedIds: [...selectedIds].sort(),
+    selectedTrackId,
+    clip: clip
+      ? {
+          id: clip.id,
+          track: clip.track,
+          at: clip.at,
+          ...(clip.asset !== undefined ? { asset: clip.asset } : {}),
+          ...(typeof identity?.ownerRef === 'string' ? { ownerRef: identity.ownerRef } : {}),
+          ...(typeof identity?.clipRef === 'string' ? { clipRef: identity.clipRef } : {}),
+        }
+      : null,
+  };
+}
+
+function sameSelection(left: SelectionSnapshot, right: SelectionSnapshot): boolean {
+  if (left.selectedTrackId !== right.selectedTrackId
+    || left.selectedIds.length !== right.selectedIds.length
+    || left.selectedIds.some((id, index) => id !== right.selectedIds[index])) {
+    return false;
+  }
+  if (left.clip === null || right.clip === null) return left.clip === right.clip;
+  return left.clip.id === right.clip.id
+    && left.clip.track === right.clip.track
+    && left.clip.at === right.clip.at
+    && left.clip.asset === right.clip.asset
+    && left.clip.ownerRef === right.clip.ownerRef
+    && left.clip.clipRef === right.clip.clipRef;
+}
+
+function validatedProjectId(projectId: string | null): string | null {
+  return typeof projectId === 'string' && projectId.trim().length > 0 ? projectId : null;
+}
+
 /** File selection uses Runtime import and the mounted editor's A2 command route. */
 export function ShotTimelineMediaControls({
   occurrenceId,
@@ -28,6 +87,12 @@ export function ShotTimelineMediaControls({
   const ops = useTimelineEditorOps();
   const { currentTime } = useTimelinePlaybackContext();
   const commands = useTimelineCommandsService();
+  const editorRef = useRef(editor);
+  editorRef.current = editor;
+  const runtimeRef = useRef(runtime);
+  runtimeRef.current = runtime;
+  const contextRef = useRef({ occurrenceId, parentDocumentId });
+  contextRef.current = { occurrenceId, parentDocumentId };
   const assets = useAssetManagement({
     dataRef: editor.dataRef,
     selectedTrackId: editor.selectedTrackId,
@@ -39,6 +104,10 @@ export function ShotTimelineMediaControls({
     invalidateAssetRegistry: async () => {},
     resolveAssetUrl: async file => runtime.assetResolver.resolveAssetUrl(file),
   });
+  const assetsRef = useRef(assets);
+  assetsRef.current = assets;
+  const commandsRef = useRef(commands);
+  commandsRef.current = commands;
   const inputRef = useRef<HTMLInputElement>(null);
   const mounted = useRef(true);
   useEffect(() => {
@@ -57,8 +126,12 @@ export function ShotTimelineMediaControls({
     && visualTracks.some(track => track.id === selectedClip?.track);
   const supported = Boolean(runtime.provider.prepareMediaImport);
   const editable = runtime.timelineEditability?.checkTimeline?.().allowed !== false;
+  const projectId = validatedProjectId(runtime.project.projectId);
+  const displayTime = typeof currentTime === 'number' && Number.isFinite(currentTime)
+    ? `${currentTime.toFixed(2)}s`
+    : 'an available time';
   type Target = {
-    data: typeof editor.data;
+    data: NonNullable<typeof editor.dataRef.current>;
     saveStatus: typeof saveStatus;
     projectId: string;
     timelineId: string;
@@ -66,6 +139,7 @@ export function ShotTimelineMediaControls({
     parentDocumentId: string;
     trackId: string;
     time: number;
+    selection: SelectionSnapshot;
     replaceClipId?: string;
   };
   const targetRef = useRef<Target | null>(null);
@@ -73,17 +147,34 @@ export function ShotTimelineMediaControls({
   const choose = (swap: boolean) => {
     setError(null);
     try {
-      if (!supported || !editable || !trackId || !editor.dataRef.current || (swap && !canSwap)) return;
+      const currentProjectId = validatedProjectId(runtime.project.projectId);
+      const data = editor.dataRef.current;
+      const selection = clipSelectionSnapshot(editor.selectedClipIds, editor.selectedTrackId, selectedClip);
+      const time = swap ? selectedClip?.at : currentTime;
+      if (!supported || !editable || !trackId || !data || (swap && !canSwap)) return;
+      if (!currentProjectId) {
+        setError('The current project scope is unavailable. Choose the target again.');
+        return;
+      }
+      if (data.head?.projectId !== undefined && data.head.projectId !== currentProjectId) {
+        setError('The current project scope does not match this shot. Choose the target again.');
+        return;
+      }
+      if (typeof time !== 'number' || !Number.isFinite(time)) {
+        setError('The current media placement time is unavailable. Choose the target again.');
+        return;
+      }
       // Capture the mounted document and physical occurrence before any async import.
       targetRef.current = {
-        data: editor.dataRef.current,
+        data,
         saveStatus,
-        projectId: runtime.project.projectId,
+        projectId: currentProjectId,
         timelineId: runtime.timelineId,
         occurrenceId,
         parentDocumentId,
         trackId: swap ? selectedClip!.track : trackId,
-        time: currentTime,
+        time,
+        selection,
         ...(swap ? { replaceClipId: selectedClip!.id } : {}),
       };
       inputRef.current?.click();
@@ -105,20 +196,46 @@ export function ShotTimelineMediaControls({
         ? await assets.uploadImageGeneration(file)
         : await assets.uploadVideoGeneration(file);
       if (!mounted.current) return;
-      if (editor.dataRef.current !== target.data
+      const currentEditor = editorRef.current;
+      const currentRuntime = runtimeRef.current;
+      const currentData = currentEditor.dataRef.current;
+      const currentConfig = currentData?.resolvedConfig ?? currentEditor.resolvedConfig;
+      const currentSelectedClip = currentEditor.selectedClipIds.size === 1
+        ? currentConfig?.clips.find(clip => currentEditor.selectedClipIds.has(clip.id))
+        : undefined;
+      const currentSelection = clipSelectionSnapshot(
+        currentEditor.selectedClipIds,
+        currentEditor.selectedTrackId,
+        currentSelectedClip,
+      );
+      const currentProjectId = validatedProjectId(currentRuntime.project.projectId);
+      const currentHead = currentData?.head;
+      const dataStillCurrent = currentData === target.data
+        && currentData.configVersion === target.data.configVersion
+        && currentData.signature === target.data.signature
+        && currentData.stableSignature === target.data.stableSignature
+        && currentHead?.projectId === target.data.head?.projectId
+        && currentHead?.headRevisionId === target.data.head?.headRevisionId
+        && currentHead?.headPublicationId === target.data.head?.headPublicationId;
+      const editabilityStillCurrent = currentRuntime.timelineEditability?.checkTimeline?.().allowed !== false;
+      if (!dataStillCurrent
         || saveStatusRef.current !== target.saveStatus
-        || runtime.project.projectId !== target.projectId
-        || runtime.timelineId !== target.timelineId
-        || occurrenceId !== target.occurrenceId
-        || parentDocumentId !== target.parentDocumentId) {
+        || currentProjectId !== target.projectId
+        || currentRuntime.timelineId !== target.timelineId
+        || contextRef.current.occurrenceId !== target.occurrenceId
+        || contextRef.current.parentDocumentId !== target.parentDocumentId
+        || !sameSelection(currentSelection, target.selection)
+        || !editabilityStillCurrent
+        || (currentData?.head?.projectId !== undefined && currentData.head.projectId !== target.projectId)) {
         throw new Error('The shot changed while choosing media. Choose the target again.');
       }
-      const preparedAsset = assets.prepareGenerationAsset(uploaded);
+      const preparedAsset = assetsRef.current.prepareGenerationAsset(uploaded);
       if (!preparedAsset) throw new Error('Could not resolve the registered project media selection.');
-      const result = commands.addClip({
+      const result = commandsRef.current.addClip({
         preparedAsset,
         trackId: target.trackId,
-        ...(target.replaceClipId ? { replaceClipId: target.replaceClipId } : { time: target.time }),
+        time: target.time,
+        ...(target.replaceClipId ? { replaceClipId: target.replaceClipId } : {}),
       });
       if (!result.ok) throw new Error(result.error.message);
     } catch (cause) {
@@ -130,14 +247,14 @@ export function ShotTimelineMediaControls({
 
   return <div className="space-y-1" data-shot-timeline-media-controls="true">
     <div className="flex flex-wrap items-center gap-2">
-      <Button type="button" size="sm" variant="outline" disabled={!supported || !editable || busy || !trackId} onClick={() => choose(false)}>
+      <Button type="button" size="sm" variant="outline" disabled={!supported || !editable || !projectId || busy || !trackId} onClick={() => choose(false)}>
         Add media
       </Button>
-      <Button type="button" size="sm" variant="outline" disabled={!supported || !editable || busy || !canSwap} onClick={() => choose(true)}>
+      <Button type="button" size="sm" variant="outline" disabled={!supported || !editable || !projectId || busy || !canSwap} onClick={() => choose(true)}>
         Swap selected clip
       </Button>
       <span className="text-xs text-muted-foreground">
-        {busy ? 'Importing media…' : canSwap ? `Selected clip: ${selectedClip!.id}` : `Add at ${currentTime.toFixed(2)}s on ${trackId ?? 'a visual track'}; select one media clip to swap.`}
+        {busy ? 'Importing media…' : canSwap ? `Selected clip: ${selectedClip!.id}` : `Add at ${displayTime} on ${trackId ?? 'a visual track'}; select one media clip to swap.`}
       </span>
       <input
         ref={inputRef}
