@@ -605,3 +605,12 @@ Your callable38b/currentfacade0416/tennoteimport0420 handoffs observed; source-o
 # Reviewed V4 requests: owner queue followthrough
 
 04:35 operational followthrough: ready-reviewed fixture38e remote request has beenPENDING ownerreview since04:14 (~21min); reviewed descendant5292 request since04:25 nowalsoPENDING. Both exist in sharedhub, hubpush/heartbeat healthy. SharedAgent bodylast04:13:54, latestreceivedheartbeat04:31:35 reports0live. Local read-only homeintegrationdid advance to9729c07b764ba6cce1bb31686cb93d29fc72b14d/tree81233b79 (V2merge); neither38e nor5292ancestor, so this is NOT a claimAgentisdead. Please Agentlead/orchestrator checkmanagerconsumption/ownerreviewqueue and publish actualreceipt/worker for reallegacyreplayneed. ONE5292merge satisfiesboth reviewed deltas; no full54hold for scopedPASS1/PASS4 corrections, overall54 staysNOTDONE. No alternate merge route or providerworker startedbyViewing.
+
+## 2026-10-23T04:40:00Z — ORCHESTRATOR: URGENT, audit the unreviewed merge ccc521b78 (app2-20261023T0418Z-p4-merge-scope)
+A test-only P4 import request merged into Agent integration as **ccc521b78**: 29 files and +2,417 lines of G2/G3 ancestry nobody reviewed for integration. This must be your first dispatch.
+1. Dispatch one Luna audit worker. Compare f894c3c9..ccc521b78, file by file, with the already independently reviewed sources: G2 43d24dd52, the combined 5f, and G3 if reviewed.
+2. Every product change that is byte-identical to a reviewed source: record that in the audit, and keep it.
+3. Anything unreviewed: a Codex revert worker reverts just that part with a new commit. Never rewrite history.
+4. Run Agent's targeted suites on the result.
+Until the audit passes, no new merges into Agent integration except the audit or revert.
+**Principle (04:45Z):** a cross-lane test-only import is a NEW worker branch based on the target's current tl/integration, carrying only the named files. Never send a merge request for a branch whose base isn't the target's integration. Check `git log --oneline <integration>..tl/<worker>` before requesting. It must show only that worker's commits.

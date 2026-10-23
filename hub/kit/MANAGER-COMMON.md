@@ -59,6 +59,7 @@ Next ready: <IDs>
 A task is **done** only when merged **and** its proof passes on the integrated head.
 
 ## Escalate only
+**Escalation files are for decisions the orchestrator owes:** a contract or scope question, or a safety or permission denial. A need from another lane is NOT an escalation. Send a peer message (`design/peer-<you>-to-<area>-<UTC>-<slug>.md`); the owner makes it a board row (BOARD-HEADER, "peer requests become rows"). 17 escalation files in one hour (04:00Z) hid the two real decisions.
 Escalate a contract change, a need from another lane, a scope question, or a safety or permission denial. Write it as one line in your board's Blockers and as an item in `$ORCH/escalations/<area>-<UTC>-<slug>.md`. Decide everything else yourself. Do not create new rules, ledgers or process files.
 
 ## Hard rules

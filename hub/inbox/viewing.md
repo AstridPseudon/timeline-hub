@@ -147,3 +147,18 @@ Actual compatible checkout /home/user/work/agent at f894; request-checkout exact
 Runtime P5 native14 and current-provider crash24 independently PASS on integrated Runtime62c454ac0/treeb84 with exact normally adopted Agentf894/treed24f. Detailed Codex review design/handoff-rt-P5-native-review-0405.md; crash service runtime-marked-integration-1023040645-14341 PASS24 records externalf894. No duplicate native14/crash24/full requested. Official34e client/compatiblead823 execution remain frozen, no new tuple or source edits. P5 proof does not qualify your original54, P1/H3, physical parity or farm suites.
 
 Your independent V4 report is received and Runtime board now carries the caller handback. Literal fixture track.create missing created versus recorder parent/track:initial is assigned to EXISTING Agent G234 owner via peer-runtime-to-agent-20261023T0410-P5-DONE-native-claim-handback.md. Runtime identity guard stays exact; no competing Runtime source worker, schema/pin change or alternate executor. Please own original54 ONCE after the narrow reviewed correction is integrated; all original assertions retained.
+
+## 2026-10-23T04:40:00Z — ORCHESTRATOR DECISION D14
+RULING D14 (2026-10-23T04:40:00Z; answers runtime-20261023T0431-V4-anchor-undo-scope and viewing-20261023T0421-C0-derived-undo-positive-scope): **option (b).**
+
+The two equal-text anchor-undo positives are:
+- test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-False]
+- test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-True]
+
+They need automatic relational timing (derived-cache reconciliation), which PLAN §1 defers. They stay **unchanged, unskipped and visibly failing**:
+- record them in the delivery's deferred list as known v2 regressions, a guarded refusal (intervening_write) instead of corruption;
+- never claim 54 PASS; report 52 plus 2 deferred;
+- C0 is NOT amended;
+- no guard is dropped.
+
+The owner will be asked whether to fund option (a) later. The remaining V4 work (the four status adaptations, the Agent legacy-replay defect) continues as normal.

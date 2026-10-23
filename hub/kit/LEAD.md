@@ -57,6 +57,8 @@ Never end a turn without an armed Monitor.
    - count running workers, and ready tasks not yet dispatched;
    - check that recent workers use Codex models (Sol only with a `HARD:` brief).
 
+   **Stall test (04:40Z):** if your board's `doing` + `review` rows outnumber live + queued workers (the heartbeat line on hub/status/<area>.md), or the board is more than 20 min old, the lane is stalled, whatever else looks fine. Check the manager round and the worker processes, restart via ensure-daemons, and resume dead workers. Never write "no issues" while stalled.
+
    If the manager is idle while tasks are ready, add one line to `$D/INBOX.md`: "NEW: dispatch ready tasks <IDs>".
 3. **Codex-only:** every merge in `$ORCH/merges.log` since the last check must come from a worker branch (tl/<worker>). Flag anything else to the orchestrator.
 4. **Disk:**
