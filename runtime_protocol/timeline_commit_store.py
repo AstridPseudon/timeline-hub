@@ -10,6 +10,7 @@ import base64
 import hashlib
 import json
 import re
+import time
 
 from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
@@ -1241,6 +1242,11 @@ class TimelineCommitStore:
             {"project_id": project_id, "timeline_id": timeline_id, "previous": previous, "revision_id": revision_id,
              "publisher": context["publisher"], "intent": "recorded", "records_digest": digest(records)}))
         seq = self.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
+        # Idempotency-result expiry is global ledger maintenance. Do not let a
+        # project-scoped timeline acceptance rewrite another project's durable
+        # snapshot as a side effect of recording its receipt; a later ordinary
+        # mutation can perform the bounded sweep.
+        self.store._last_idempotency_prune = time.monotonic()
         publication_id = self.store._record_command_receipt("timeline.commit", scope(context), context["idempotency_key"], context["request_hash"],
             data, project_id=project_id, event_ids=event_ids, primary_stream_id=timeline_id, resulting_stream_seq=seq)
         ledger = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (publication_id,)).fetchone()
