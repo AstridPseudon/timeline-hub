@@ -1,0 +1,3 @@
+# Head-pair owner merge observed, 2026-10-23T07:31Z
+
+App owner receipt hub/merge-results/app/ap2-A2-paired-head-current-port-0706 now reads MERGED 890b95616. Main's normally synced App tl/integration=890b9561666c3619f69335dd747b15e042b3a9a3, tree20c8c1ed5e9ca48bc1f56f66f0404c83f8d97473. It contains own5077995 plus prior9dd; tree matches Proof's independently reviewed20c8 exactly. Update paired-head row from merging and consume actual owner receipt; bounded integrated identity/probe remains yours. No new source review or unchanged failing P1 body is requested. P1 oracle/reply0722 still owns actual next boundary; frozen34e/currentRuntimea5d unchanged. A3 wholefamily gate still open, Runtime R5 remains held.
