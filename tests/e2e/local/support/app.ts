@@ -10,6 +10,7 @@ import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
 import type { TimelineConfig } from '../../../../src/tools/video-editor/types/index.ts';
 import type { TimelineDraftRecord } from '../../../../src/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { OutboxRecord } from '../../../../src/tools/video-editor/commands/commitOutbox.ts';
+import { clearMountedBootstrapFailure, MountedBootstrapError, recordMountedBootstrapFailure, type MountedBootstrapStage } from '../mounted-readiness-safety.ts';
 
 export const UI = {
   status: '[data-testid="runtime-connection-status"]',
@@ -101,14 +102,26 @@ export async function openApp(page: Page, harness: DirectHarness) {
 
 /** Mounts the real editor once so a fresh context can establish its own durable outbox baseline. */
 export async function bootstrapMountedBaseline(context: BrowserContext, harness: DirectHarness): Promise<OutboxRecord[]> {
-  const page = await context.newPage();
+  clearMountedBootstrapFailure();
+  let page: Page | undefined;
+  const run = async <T>(stage: MountedBootstrapStage, operation: () => Promise<T>): Promise<T> => {
+    try {
+      return await operation();
+    } catch (cause) {
+      throw new MountedBootstrapError({ stage, code: 'mounted-bootstrap', class: 'mounted-bootstrap' }, cause);
+    }
+  };
   try {
-    await openApp(page, harness);
-    await expectConnected(page);
-    await openSeededTimeline(page, harness);
-    return await commandOutboxes(page, harness.seed.timelineId);
+    page = await run('context', () => context.newPage());
+    await run('navigation', () => openApp(page!, harness).then(() => undefined));
+    await run('connection', () => expectConnected(page!));
+    await run('selection', () => openSeededTimeline(page!, harness));
+    return await run('outbox-read', () => commandOutboxes(page!, harness.seed.timelineId));
+  } catch (error) {
+    recordMountedBootstrapFailure(error);
+    throw error;
   } finally {
-    await page.close();
+    await page?.close();
   }
 }
 
