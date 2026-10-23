@@ -9,7 +9,6 @@
  */
 import { expect, type Page, type Request, type Response } from '@playwright/test';
 import {
-  compositionPublication,
   makePng,
   sha256Hex,
   THREE_PRODUCTS_REFERENCE_AT,
@@ -206,11 +205,45 @@ async function importMedia(harness: DirectHarness, file: { name: string; type: s
   return { ...media, entry: { media_id: object_id, type: 'image', generationId: generation_id, variantId: variant_id } };
 }
 
+async function commitFixtureCommand(
+  harness: DirectHarness,
+  seed: ThreeProductsSeed,
+  base: HeadPin,
+  command: CommitRequest['commands'][number],
+  label: string,
+  patch: PatchChange[] = [],
+): Promise<HeadPin> {
+  const body: CommitRequest = {
+    api_version: 1,
+    project_id: harness.seed.projectId,
+    timeline_id: seed.timelineId,
+    base_revision_id: base.revision_id,
+    base_publication_id: base.publication_id,
+    commands: [command],
+    label,
+    steps: [{ id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-'), label, intent: label, tags: [], command_ordinals: [0], patch }],
+    merge: 'atomic',
+    reads: [],
+    dry_run: false,
+    source: { via: 'python' },
+  };
+  const result = await harness.runtimeJson<CommitAcceptedMutation>(
+    'POST',
+    `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commit`,
+    body,
+  );
+  expect(result.status, JSON.stringify(result.body)).toBe(200);
+  expect(result.body.data.status).toBe('accepted');
+  expect(result.body.data.base_revision_id).toBe(base.revision_id);
+  expect(result.body.data.base_publication_id).toBe(base.publication_id);
+  expect(result.body.data.rebased_onto).toBeNull();
+  return pinOf(result.body);
+}
+
 async function preparePopupSeed(harness: DirectHarness): Promise<PopupSeed> {
   const seed = await harness.seedThreeProducts(THREE_PRODUCTS_REFERENCE_AT, 'native-none');
   const before = await canonicalAt(harness, seed, seed.headRevisionId);
-  const parent = clone(before.parent_revision.payload as unknown as JsonObject);
-  const occurrences = array(parent.occurrences, 'seed occurrences');
+  const occurrences = array(before.parent_revision.payload.occurrences, 'seed occurrences');
   const sourceOccurrence = object(occurrences.find((row) => row.occurrence_id === seed.occurrenceId), 'seed occurrence');
   const shot = before.shot_revisions.find((row) => row.shot_id === sourceOccurrence.shot_id
     && row.revision_id === sourceOccurrence.shot_revision_id);
@@ -225,54 +258,38 @@ async function preparePopupSeed(harness: DirectHarness): Promise<PopupSeed> {
   const childPayload = clone(internal!.payload as unknown as JsonObject);
   const childClips = array(childPayload.clips, 'seed child clips');
   const target = object(childClips.find((row) => row.id === TARGET_CLIP_ID), 'selected child clip');
-  target.asset = oldMedia.asset;
-  const registry = object(childPayload.registry, 'child registry');
-  const assets = object(registry.assets, 'child registry assets');
-  assets[oldMedia.asset] = oldMedia.entry;
+  const originalTargetAsset = target.asset;
 
   const sharedOccurrenceId = 'f2-occurrence-copy';
-  parent.occurrences = [
-    ...occurrences,
-    {
-      ...clone(sourceOccurrence),
-      occurrence_id: sharedOccurrenceId,
-      placement: { ...(object(sourceOccurrence.placement, 'source placement')), start_ms: 12000 },
-    },
-  ];
-  parent['p2_popup_opaque'] = { keep: [null, false, 0, { source: 'fixture' }] };
+  const initial = await history(harness, seed);
+  const placed = await commitFixtureCommand(harness, seed, initial.head, {
+    schema_version: 1,
+    op: 'occurrence.place-shared',
+    version: '1',
+    select: `occurrence:${seed.occurrenceId}`,
+    args: { occurrence_id: sharedOccurrenceId, on: 12 },
+    intent: { ownership: 'occurrence' },
+    created: [`occurrence:${sharedOccurrenceId}`],
+  }, 'P2 popup shared placement');
 
-  const publication: Omit<ReturnType<typeof compositionPublication>, 'parent_composition' | 'shot_revisions' | 'internal_timeline_revisions'> & {
-    parent_composition: JsonObject;
-    shot_revisions: JsonObject[];
-    internal_timeline_revisions: JsonObject[];
-  } = compositionPublication(
-    { projectId: harness.seed.projectId, timelineId: seed.timelineId },
-    before.parent_revision.revision_id,
-    'P2 popup fixture',
-    30,
-  );
-  publication.parent_composition = parent;
-  publication.shot_revisions = [{
-    shot_id: shot!.shot_id,
-    revision_id: shot!.revision_id,
-    internal_timeline_revision_id: shot!.internal_timeline_revision_id,
-    payload: clone(shot!.payload),
-  }];
-  publication.internal_timeline_revisions = [{
-    timeline_id: internal!.timeline_id,
-    revision_id: internal!.revision_id,
-    payload: childPayload,
-  }];
-  const published = await harness.runtimeJson<JsonObject>(
-    'POST',
-    `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions`,
-    publication,
-  );
-  expect(published.status, JSON.stringify(published.body)).toBe(200);
-  const setupHead = String(object(published.body.data, 'popup fixture publication').new_head);
+  const opaque = { keep: [null, false, 0, { source: 'fixture' }] };
+  const changes: PatchChange[] = [
+    { op: 'set', ref: 'parent', path: ['p2_popup_opaque'], before: { state: 'absent' }, value: opaque },
+    { op: 'set', ref: `internal-revision:${internal!.revision_id}`, path: ['clips', `id:${TARGET_CLIP_ID}`, 'asset'],
+      before: { state: 'present', value: originalTargetAsset as string }, value: oldMedia.asset },
+    { op: 'set', ref: `internal-revision:${internal!.revision_id}`, path: ['registry', 'assets', oldMedia.asset],
+      before: { state: 'absent' }, value: oldMedia.entry as PatchChange['value'] },
+  ];
+  const setupHead = (await commitFixtureCommand(harness, seed, placed, {
+    schema_version: 1,
+    op: 'doc.patch',
+    version: '1',
+    select: null,
+    args: { changes },
+  }, 'P2 popup authored media', changes));
   return {
     ...seed,
-    headRevisionId: setupHead,
+    headRevisionId: setupHead.revision_id,
     sourceOccurrenceId: seed.occurrenceId,
     sharedOccurrenceId,
     oldMedia,
