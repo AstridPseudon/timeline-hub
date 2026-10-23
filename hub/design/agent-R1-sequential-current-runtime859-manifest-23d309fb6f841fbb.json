@@ -1,0 +1,45 @@
+{
+  "included_sources": [
+    {
+      "bytes": 737092,
+      "file": "current-capture",
+      "path": "/tmp/w-a8a9b99ca/r1-859-capture.json",
+      "sha256": "646d5351edfe9d84ac18ead93593fce4169d3f3aa3ffe910b35a00765d011a3f"
+    },
+    {
+      "bytes": 111659,
+      "file": "capture-001-execution.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R1-sequential-rebase-sol-1317/evidence/capture-001-execution.json",
+      "sha256": "ff448524c2c51a5f46bd3fd639667bc4e5fe762d8ce73409df74078d7cf4a10e"
+    },
+    {
+      "bytes": 132351,
+      "file": "capture-002-execution.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R1-sequential-rebase-sol-1317/evidence/capture-002-execution.json",
+      "sha256": "095c4f129de754417e7cf472f4bd9b03395893e9965d8ff72e062f0a613162e4"
+    },
+    {
+      "bytes": 102759,
+      "file": "capture-003-auth-error.json",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R1-sequential-rebase-sol-1317/evidence/capture-003-auth-error.json",
+      "sha256": "93bf8451204a0aace65ef2c7efee19ee2b8b975a41d223bba564805c957f0200"
+    }
+  ],
+  "lossless_rule": "Prior capture JSON is embedded as UTF-8 text without parsing or reserialization; current capture is embedded as the complete sanitized JSON object.",
+  "manifest_kind": "timeline-r1-sequential-current-runtime-qualification-manifest",
+  "manifest_version": 1,
+  "no_second_export_queue": true,
+  "packet": {
+    "bytes": 1159680,
+    "file": "agent-R1-sequential-current-runtime859-packet-23d309fb6f841fbb.json",
+    "sha256": "23d309fb6f841fbba8560317c336b495ec4fcf2700a7e4c69bb7e1ea5c0f7ca7"
+  },
+  "runtime_pin": {
+    "git_head": "8592822fd11275540f596562f43c715676f2bc0f",
+    "path": "/home/user/work/wt/rt-pin-8592822f"
+  },
+  "source_tree": {
+    "git_head": "851439d95647820815e69b4d7163e179540f28db",
+    "worktree": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/wt/agt-R1-sequential-current-review-1335"
+  }
+}
