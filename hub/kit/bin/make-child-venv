@@ -1,7 +1,6 @@
 #!/bin/bash
-# make-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME] — dispatcher child-vEnv
-# builder.  This keeps the existing API: RUNTIME is the Remotion graph used by
-# the optional suite substitution, never the Runtime checkout.
+# make-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME] — dispatcher child venv.
+# RUNTIME remains the optional Remotion graph used for suite substitution.
 set -u -o pipefail
 
 O=${CHILD_VENV_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
@@ -12,13 +11,13 @@ PYTHON=${CHILD_VENV_PYTHON:-python3.13}
 TIMEOUT_BIN=${CHILD_VENV_TIMEOUT_BIN:-timeout}
 
 PIP_TIMEOUT_SECONDS=${CHILD_VENV_PIP_TIMEOUT_SECONDS:-600}
-GIT_TIMEOUT_SECONDS=${CHILD_VENV_GIT_TIMEOUT_SECONDS:-120}
 LOCAL_TIMEOUT_SECONDS=${CHILD_VENV_LOCAL_TIMEOUT_SECONDS:-600}
 FREEZE_TIMEOUT_SECONDS=${CHILD_VENV_FREEZE_TIMEOUT_SECONDS:-120}
 BUILD_TIMEOUT_SECONDS=${CHILD_VENV_BUILD_TIMEOUT_SECONDS:-3600}
 KILL_AFTER_SECONDS=${CHILD_VENV_KILL_AFTER_SECONDS:-30}
 PIP_NETWORK_TIMEOUT_SECONDS=${CHILD_VENV_PIP_NETWORK_TIMEOUT_SECONDS:-30}
 PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
+REQUIREMENTS_PATH=${CHILD_VENV_REQUIREMENTS_PATH:-requirements/proof.lock}
 
 progress() { printf '%s child-venv %s\n' "$(date -u +%FT%TZ)" "$*"; }
 
@@ -44,8 +43,8 @@ fi
 if [ "${CHILD_VENV_BUILD_INNER:-0}" != 1 ]; then
   export CHILD_VENV_BUILD_INNER=1
   # GNU timeout creates a private process group by default. Keep this
-  # background process-group mode so a timed-out descendant (including one holding the
-  # dispatcher's inherited stdout/FIFO) receives the same bounded kill grace.
+  # background process-group mode so a timed-out descendant (including one holding
+  # the dispatcher's inherited stdout/FIFO) receives the same bounded kill grace.
   "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$BUILD_TIMEOUT_SECONDS" "$0" "$@"
   rc=$?
   if [ "$rc" -ne 0 ]; then
@@ -62,7 +61,6 @@ SRC=$(mktemp -d "$W/.child-venv-source-$N-$RUN_ID.XXXXXX")
 REPORT_DIR=$O/tests/provision
 REPORT_TMP=$REPORT_DIR/.${N}.freeze.$RUN_ID
 F=$REPORT_DIR/$N.txt
-CURRENT_STAGE=initialise
 
 failure() {
   rc=$1
@@ -92,12 +90,47 @@ run_stage() {
   progress "stage=$stage complete"
 }
 
-if ! git -C "$A" cat-file -e "$S^{commit}" 2>/dev/null; then
-  run_stage agent-fetch "$GIT_TIMEOUT_SECONDS" git -C "$A" fetch -q hub
-  git -C "$A" cat-file -e "$S^{commit}" 2>/dev/null || failure 1 agent-source
+missing=()
+require_command() { command -v "$1" >/dev/null 2>&1 || missing+=("command:$1"); }
+for command_name in git tar mktemp sha256sum cut grep sed find chmod mv df awk; do
+  require_command "$command_name"
+done
+for path in "$W" "$A" "$R" "$O/tests"; do
+  [ -d "$path" ] || missing+=("directory:$path")
+done
+[ -w "$O/tests" ] || missing+=("writable:$O/tests")
+check() { "$@" >/dev/null 2>&1 || missing+=("$*"); }
+check git -C "$A" rev-parse --is-inside-work-tree
+check git -C "$R" rev-parse --is-inside-work-tree
+check git -C "$A" cat-file -e "$S^{commit}"
+check git -C "$R" cat-file -e 'HEAD^{commit}'
+check git -C "$A" cat-file -e "$S:$REQUIREMENTS_PATH"
+check git -C "$A" cat-file -e "$S:pyproject.toml"
+check git -C "$R" cat-file -e 'HEAD:pyproject.toml'
+check "$PYTHON" -c 'import sys; assert sys.version_info >= (3, 11)'
+check "$PYTHON" -m venv --help
+check df -P -B1 "$W"
+if command -v "$PYTHON" >/dev/null 2>&1; then
+  PYTHON_ACTUAL=$($PYTHON --version 2>&1 || true)
+else
+  PYTHON_ACTUAL=unavailable
 fi
-RUNTIME_SHA=$(git -C "$R" rev-parse --verify HEAD^{commit}) || failure 1 runtime-source
-progress "source agent=$S runtime=$RUNTIME_SHA"
+RUNTIME_SHA=$(git -C "$R" rev-parse --verify HEAD^{commit} 2>/dev/null || true)
+if git -C "$A" cat-file -e "$S:$REQUIREMENTS_PATH" >/dev/null 2>&1; then
+  LOCK_SHA=$(git -C "$A" show "$S:$REQUIREMENTS_PATH" | sha256sum | cut -d' ' -f1)
+else
+  LOCK_SHA=unavailable
+fi
+FREE_BYTES=$(df -P -B1 "$W" 2>/dev/null | awk 'NR == 2 { print $4 }')
+if [ "${#missing[@]}" -ne 0 ]; then
+  printf '%s child-venv PREFLIGHT FAILED name=%s agent=%s requirements=%s\n' \
+    "$(date -u +%FT%TZ)" "$N" "$S" "$REQUIREMENTS_PATH" >&2
+  printf 'inventory=python:%s runtime_sha:%s requirements_lock_sha256:%s free_bytes:%s\n' \
+    "$PYTHON_ACTUAL" "$RUNTIME_SHA" "$LOCK_SHA" "$FREE_BYTES" >&2
+  printf 'missing_prerequisite=%s\n' "${missing[@]}" >&2
+  failure 2 preflight
+fi
+progress "source agent=$S runtime=$RUNTIME_SHA requirements=$REQUIREMENTS_PATH lock_sha256=$LOCK_SHA"
 
 run_stage venv "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -m venv "$T"
 P=$T/bin/python
@@ -108,8 +141,8 @@ run_stage bootstrap-pip "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@
 run_stage requirements "$LOCAL_TIMEOUT_SECONDS" mkdir -p "$REPORT_DIR"
 REQ=$T/.provision-requirements.txt
 run_stage filter-requirements "$LOCAL_TIMEOUT_SECONDS" bash -c \
-  'grep -v -e "^astrid @" -e "^pip==" -e "^setuptools==" -e "^wheel==" "$1" > "$2"' \
-  _ "$O/tests/provision/venv-agent-child-s2.txt" "$REQ"
+  'set -o pipefail; git -C "$1" show "$2:$3" | grep -v -e "^astrid @" -e "^pip==" -e "^setuptools==" -e "^wheel==" > "$4"' \
+  _ "$A" "$S" "$REQUIREMENTS_PATH" "$REQ"
 run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps -r "$REQ"
 
 AGENT_SRC=$SRC/agent
@@ -127,8 +160,7 @@ run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS
 printf '%s\n' "$S" > "$T/.astrid-source-commit"
 printf '%s\n' "$RUNTIME_SHA" > "$T/.astrid-runtime-source-commit"
 
-run_stage import-provenance "$LOCAL_TIMEOUT_SECONDS" "$P" -I -c \
-  'import importlib.util, pathlib
+PROVENANCE_SCRIPT='import importlib.util, pathlib
 names = ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")
 for name in names:
     spec = importlib.util.find_spec(name)
@@ -136,6 +168,8 @@ for name in names:
     origin = pathlib.Path(spec.origin).resolve()
     assert "site-packages" in origin.parts, (name, origin)
     print(f"{name}={origin}")'
+run_stage import-provenance "$LOCAL_TIMEOUT_SECONDS" bash -c \
+  'set -e; "$1" -I -c "$2" > "$3"' _ "$P" "$PROVENANCE_SCRIPT" "$T/.astrid-import-origins"
 run_stage runtime-cli "$LOCAL_TIMEOUT_SECONDS" bash -c \
   'set -e; "$1" --help >/dev/null; "$2" --help >/dev/null; "$3" -I -m astrid_runtime --help >/dev/null' \
   _ "$T/bin/astrid-runtime" "$T/bin/astrid-runtime-protocol" "$P"
@@ -144,10 +178,10 @@ run_stage markers "$LOCAL_TIMEOUT_SECONDS" bash -c \
   _ "$T/.astrid-source-commit" "$S" "$T/.astrid-runtime-source-commit" "$RUNTIME_SHA"
 
 run_stage freeze "$FREEZE_TIMEOUT_SECONDS" bash -c \
-  '"$1" -I -m pip freeze --all > "$2"' _ "$P" "$REPORT_TMP"
+  'set -e; { printf "status=passed\\nagent_sha=%s\\nruntime_sha=%s\\nrequirements_path=%s\\nrequirements_lock_sha256=%s\\n" "$4" "$5" "$6" "$7"; printf "installed_import_origins:\\n"; cat "$3"; printf "pip_freeze:\\n"; "$1" -I -m pip freeze --all; } > "$2"' \
+  _ "$P" "$REPORT_TMP" "$T/.astrid-import-origins" "$S" "$RUNTIME_SHA" "$REQUIREMENTS_PATH" "$LOCK_SHA"
 run_stage freeze-identity "$LOCAL_TIMEOUT_SECONDS" bash -c \
-  'grep -q "^astrid==" "$1" && grep -q "^astrid-runtime==" "$1"' _ "$REPORT_TMP"
-run_stage cleanup-source "$LOCAL_TIMEOUT_SECONDS" rm -rf -- "$SRC"
+  'grep -q "^status=passed$" "$1" && grep -q "^astrid==" "$1" && grep -q "^astrid-runtime==" "$1"' _ "$REPORT_TMP"
 
 # Venv launchers contain the partial path. Fix them before the atomic publish;
 # no complete destination exists until all validation above has passed.
@@ -167,7 +201,7 @@ if [ -n "$BS" ] && [ -n "$RT" ]; then
   if ! grep -q "^agent $N-full " "$O/tests/suites.conf"; then
     L=$(grep "^agent $BS " "$O/tests/suites.conf" || true)
     if [ -n "$L" ]; then
-      echo "$L" | sed "s#^agent $BS #agent $N-full #; s#venv-agent-child-s2#$N#g; s#agent-remotion-0012#$RT#g" >> "$O/tests/suites.conf"
+      echo "$L" | sed "s#^agent $BS #agent $N-full #; s#venv-agent-child-[^ /]*#$N#g; s#agent-remotion-0012#$RT#g" >> "$O/tests/suites.conf"
     fi
   fi
 fi
