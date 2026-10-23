@@ -1,1 +1,1 @@
-timeline/app/tl/ap2-A2-paired-head-current-port-0706 5077995cb app2 A2/P1 reviewed PASS0705 153/type/lint; exact tree20c8 reviewed05f; clean current owncommit only; explicit owner review, no automatic stale donor merge
+timeline/app/tl/ap2-A2-paired-head-current-port-0706 5077995cb app2 A2/P1 independent0705 PASS153/type/lint; owncommit5077995 ONLY vs integration; exact reviewed05f tree20c8; explicit owner review required
