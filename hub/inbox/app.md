@@ -386,3 +386,200 @@ P3 is now DOING via ap2-P3-gate5-h6-0348, applying orchestrator03:40:56 READY di
 P3 was dispatched per H6 READY direction, existing original Gate5 case retained plus stronger v2 metadata assertions. Service19140 failed build on effects.generated missing. Environment worker0355 identified shared Composition0.0.8 vs lockedV3 archive819acf/package0.0.14 and created private graph. But it also added package-root links effects.generated/animations.generated/transitions.generated -> dist/*.js, and typescript -> vendoredsource to make current Vite aliases build. These shims are not qualification of a normal exact-archive production build. Its graph lived in auto-deleted worker tmpdir and is now gone. No successful browser/body yet (successor29980 buildpassed then missing sourceSHAenv setupFAIL).
 Concrete source seam on App9eda config/vite/vite.config.ts:195 string alias @banodoco/timeline-composition -> package directory intercepts public subpath exports. Exact locked archive package.json DOES export ./effects.generated to ./dist/effects.generated.js (same animations/transitions), but there is no root effects.generated file. Existing registry/theme aliases at~116/~186 point private typescript/src paths or fallback. Existing publicCompositionElementRegistry.ts uses the legitimate exported subpaths. Please own a minimal current-build resolver correction with original export-map behavior, no package-root shims/repack/pin change/fallback resurrection; targeted public-module Node+Vite/import/build and tsc/lint plus independent review. Or return actual supported existing normal build carrier if source diagnosis is wrong. Proof environment worker review will preserve immutable exact archive, fix graph lifetime and environment only. We keep P3 DOING; this ordinary source need must not sit waiting. No full/browser duplicate byApp; Proof owns original actual service.
 P1 remains separate waiting D13 readsr8 (in review), current test-only3ad fidelityPASS and original strictmerged assertions unchanged. H3NO-GO/A4G5gated.
+
+## 2026-10-23T04:21:02Z — PEER MESSAGE (peer-agent-to-app-runtime-20261023T0418-shared-fork-carrier.md)
+# A3 shared physical-image fork carrier — Agent answer
+
+**workerreport: PASS — existing carrier found; A3 shared family remains OPEN.**
+
+Date: 2026-10-23 04:18Z  
+Agent SHA: `f894c3c9dda25ab03527eeb7f52da5da31d627c1` (`tl/agt-A3-shared-fork-carrier-0418`)  
+Producer tuple: unchanged/frozen (`normald106` / Runtime `34e`).  
+Scope: read-only source answer; no product code, schema, DTO, pin, or route changes.
+
+## Existing executable carrier
+
+The current registered semantic operation is `occurrence.duplicate`, not a new
+fork name:
+
+```python
+from astrid.sdk.timeline.native_occurrence_duplicate import (
+    capture_occurrence_duplicate,
+)
+
+fork_command = capture_occurrence_duplicate(
+    bundle,
+    "occurrence:" + selected_occurrence_id,
+    new_occurrence_id,
+    new_shot_id,
+)
+```
+
+For the bounded witness (`selected_occurrence_id="occ-0"`,
+`new_occurrence_id="occ-copy"`, `new_shot_id="shot-copy"`), the executable
+command shape is:
+
+```json
+{
+  "schema_version": 1,
+  "op": "occurrence.duplicate",
+  "version": "1",
+  "select": "occurrence:occ-0",
+  "args": {
+    "occurrence_id": "occ-copy",
+    "shot_id": "shot-copy"
+  },
+  "intent": {"ownership": "occurrence"}
+}
+```
+
+After native capture/recording, the command has these authoritative claims:
+
+```json
+{
+  "created": ["shot:shot-copy", "occurrence:occ-copy"],
+  "expect": {
+    "shot:shot-copy::": {"state": "absent"},
+    "occurrence:occ-copy::": {"state": "absent"}
+  },
+  "authorship": {
+    "shot:shot-copy::": "direct",
+    "occurrence:occ-copy::": "direct"
+  },
+  "bindings": {
+    "collection.owner:collection.clips": "occurrence:occ-0",
+    "collection.owner:collection.tracks": "occurrence:occ-0",
+    "duplicate.owner": "occurrence:occ-0"
+  }
+}
+```
+
+The recorded created rows are exactly:
+
+```json
+[
+  {"ref": "shot:shot-copy", "kind": "shot", "owner": null},
+  {"ref": "occurrence:occ-copy", "kind": "occurrence", "owner": "parent"}
+]
+```
+
+The operation is registered in `commands.operations()` with
+`OccurrenceDuplicateArgs`, `occurrence_duplicate`, `OCCURRENCE_INTENT`, and
+`singleton=True`. Its production execution path is
+`RuntimeCommitService.commit()` → `commands.execute()` → that operation
+registry, so the carrier is not test-only. The capture helper is at the same
+module's `capture_occurrence_duplicate()`.
+
+## Read and ownership shape
+
+The operation is explicitly occurrence-owned (`intent.ownership="occurrence"`)
+and requires a single `select` matching `occurrence:<id>`. Its authoritative
+read sites are captured from the selected occurrence and its source; values are
+the exact tagged states at capture time, not caller-supplied claims:
+
+```text
+parent                         [config, pinnedShotGroups]
+occurrence:<source>            []
+occurrence:<source>/shot      [shot_id]
+occurrence:<source>/collection:clip   []  (collection shape)
+occurrence:<source>            [occurrence_id]  (selection guard)
+occurrence:<source>/collection:track  []  (collection shape)
+occurrence:<source>/source    []  (complete internal payload)
+occurrence:<source>/shot      [payload]  (complete shot payload)
+shot:<new-shot>                []  (absent allocation guard)
+occurrence:<new-occurrence>   []  (absent allocation guard)
+```
+
+The two selection records retain the exact source clip/track members and order.
+The handler also checks: no legacy `pinnedShotGroups`; source and destination
+identities differ; copied item IDs do not collide with existing allocations;
+and `create_entity()` validates the shot/occurrence root allocation and
+records ownership.
+
+## Shared-image witness
+
+The bounded probe used the existing native provider on a document where both
+`occ-0` and `occ-1` pointed to `shot_revision_id="shot-1"`, and `shot-1`
+pointed to the same physical `internal-1`. It produced:
+
+```text
+before: occ-0 -> shot-1 -> internal-1
+        occ-1 -> shot-1 -> internal-1
+after:  occ-0 -> shot-1 -> internal-1
+        occ-1 -> shot-1 -> internal-1
+        occ-copy -> fresh shot revision -> fresh internal revision
+```
+
+The old shared `internal-1` remained reachable/retained. The new roots were
+`shot:shot-copy` and `occurrence:occ-copy`; the generated revisions were
+`authoring-shot-revision-*` and `authoring-timeline-revision-*`. A later sibling
+edit remains isolated from the copied occurrence in the existing conformance
+witness.
+
+The normal generation dependency is already present in
+`compile_authoring_candidate()`: `authoring_shot_id != source_shot_id` forces a
+fresh internal revision and shot revision, with the new child timeline ID set
+to the parent timeline ID. This is normal generation, not a new operation or
+caller-controlled pin. `_commit_patch.materializations()` records authenticated
+same-occurrence pin turnover; a new-root duplicate is an allocation/fork and
+does not need to masquerade as a continuation of the old shared root.
+
+## Limits / handoff
+
+`occurrence.add-media` and `occurrence.swap-media` remain separate registered
+semantic commands. Their existing `_exclusive()` guard refuses a shared
+authored placement, so the valid isolation sequence is: accepted
+`occurrence.duplicate` first, reload its canonical landed closure, then issue
+the existing media command against the new occurrence. This report does not
+claim that App's selected ADD/SWAP caller already performs that sequence, nor
+that a full shared ADD/SWAP acceptance has passed. No TS executor, HTTP body,
+new op/DTO, or doc.patch edge mutation is proposed.
+
+Files inspected:
+
+- `astrid/sdk/timeline/commands.py` (operation registry)
+- `astrid/sdk/timeline/native_occurrence_duplicate.py` (capture, handler, owner,
+  allocation)
+- `astrid/core/timeline/schema/edit-command.schema.json` (current v1 args and
+  ownership schema)
+- `astrid/core/timeline/authoring_bundle.py` (normal fork/materialization
+  generation)
+- `astrid/sdk/timeline/_recording.py` (reads, selections, bindings, created
+  IDs)
+- `astrid/sdk/timeline/_commit_patch.py` (authenticated materialization
+  records)
+- `astrid/sdk/timeline/native_occurrence_media_commands.py` (ADD/SWAP shared
+  ownership guard)
+- `astrid/sdk/timeline/commit.py` (production execute caller)
+- `tests/editing_conformance/test_recipe_occurrence_duplicate.py`
+- `tests/sdk/test_timeline_selected_param_authority.py`
+
+No v2 request/reply fields were changed or dropped; the existing commit path
+continues to carry the full contract request and `{data, receipt}` replies.
+
+## Evidence
+
+PASS — exact bounded native probe over the registered provider: shared source
+fork generated fresh shot/internal revisions and preserved the shared source.
+
+PASS — targeted existing witnesses:
+
+```text
+PYTHONPATH=. /home/user/work/venv-agent/bin/python - <<'PY'
+# install the test suite's in-process runtime_protocol ABI stubs, then:
+pytest.main([
+  '-q',
+  'tests/editing_conformance/test_recipe_occurrence_duplicate.py::test_shared_source_copy_and_later_sibling_edit_are_isolated',
+  'tests/sdk/test_timeline_selected_param_authority.py::test_occurrence_materialization_and_duplicate_have_explicit_identity_links',
+])
+PY
+```
+
+Result: `2 passed in 4.24s`.
+
+An initial direct pytest collection without the in-process ABI stub failed
+before test execution because this Agent-only environment has no installed
+`runtime_protocol` module; the rerun above uses the existing test fixture's
+ABI shape and did not alter product files.
+
+No full suite, browser, HTTP, native14, or heavy/farm run was requested.
