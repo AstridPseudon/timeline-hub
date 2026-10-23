@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T00:49:49Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 0m -->
-# viewing board, 2026-10-23T00:49:17Z
+<!-- viewing | 2026-10-23T00:50:54Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 0m -->
+# viewing board, 2026-10-23T00:50:54Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema/drift inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | IndependentPASS four-copy SHA/cmp/generators/manifest; inventory only | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -9,7 +9,7 @@
 | V1-agent | metadata admission/preservation | Luna then Sol repair | Agent-owned commit reload seam | blocked:agent | vw-V1-agent-media-sol; vw-V1-agent-media-review | ReviewFAIL: real commit.bundle_from_document reload still traverses authored meta via _verify_document.169targets/Ruff/samebaseline typing retained, no qualification/remote request | 610966d184771f18eb002d07d7196db9bfd3e59e |
 | V3-pack | commit-named single archive | Luna high | source635f;00:15 clearance | merged | vw-V3-pack-resume; vw-V3-pack-review | Archive-only independentPASS819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234/73451bytes80members/source635f/tree5ab5191a. Predates new consumer refusals; NO adoption credit | source635f4de06 |
 | V3-agent | exact archive pin+lock/tests | Luna high | independent review | review | vw-V3-agent-review0050 | Resumed author PASS on unchanged b568:108+2+20 targets, gen-types/typecheck/export/caller smoke/SHA/cmp/diff; Ruff same baseline. Independent review queued immediately | b56828de538c10584030cc1a0c3c2ac39fc6cc14 |
-| V3-app | same archive pin+lock/tests | Luna high | harness fix verified; U3 before landing | doing | vw-V3-app-resume0050 | Explicit latest clearance applied; retained beb3 draft requalification active. Prior63/64 with one base identity failure retained; independent resumed review next | beb3c6c188dd881a7829e904075b06d0853d8e6b |
+| V3-app | same archive pin+lock/tests | Luna high | independent review; U3 joint landing | review | vw-V3-app-review0050 | Resumed author PASS on unchanged beb3:10resolver,63/64focused (same inherited identity FAIL on base), strict-islands/export TS/lint/diff/SHA/cmp/SRI/caller PASS. Independent review queued immediately; U3 now depends on this leaf | beb3c6c188dd881a7829e904075b06d0853d8e6b |
 | V4-agent | optional stale editor dirs only | Luna high | U2;00:15 clearance | merged | vw-V4-agent-dirs-only; vw-V4-agent-dirs-review | Remote home result MERGED cf31566e8; independent branch PASS58/manifest/diff retained. Integrated-head proof not returned, so NOT done. Both recipe files preserved | cf31566e8 merge; 27792888c source |
 | V4-app | optional PropertiesPanel dedup | Luna high | reviewed U3; home safety disposition | merging | vw-V4-app-review-resume | IndependentPASS70/type/lint/duplicate equality; remote request00:19 PENDING. App owner holds incoming work under its separate00:16 refusal/U3FAIL | a476329ef56fa1ed81c82b88e1ea5bdc563071a6 |
 
