@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { astridOnboardedStorageState } from './fixtures/astridOnboardedStorageState';
 import { editorPath, resetFakeRuntimeBaseline, seedEditorPreferences } from './timeline/support';
 
 const COMPOSED_URL = editorPath({ params: { transcriptLaneFixture: 'render-matrix' } });
@@ -158,3 +159,18 @@ for (const viewport of viewports) {
     });
   });
 }
+
+// What a first-time desktop user sees: nothing saved for the Activity pane, so it opens locked as a column beside the
+// editor (`tasksPaneLocked`) and the timeline is that much narrower. The cases above seed it unlocked, to pin the lanes.
+test.describe('desktop first-run composed timeline', () => {
+  test.use({
+    viewport: { width: 1440, height: 960 },
+    storageState: astridOnboardedStorageState(process.env.BASE_URL!, { activityPaneUnlocked: false }),
+  });
+
+  test('matches the composed extension timeline beside the locked Activity pane', async ({ page }) => {
+    await openComposedEditor(page);
+    await expect(page.getByLabel('Runtime activity')).toBeVisible();
+    await expectTimelineSnapshot(page, 'composed-desktop-first-run.png');
+  });
+});

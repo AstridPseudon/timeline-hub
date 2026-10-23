@@ -190,6 +190,7 @@ function GenerationsPaneSurface({ controller }: { controller: GenerationsPaneCon
             generationFilters: filters.generationFilters,
             currentViewingShotId: filters.currentShotId || undefined,
             onAddGenerationToTimeline: addGenerationToTimeline,
+            addTargetProjectMismatch: navigation.addTargetProjectMismatch,
             config: gallery.config,
             readOnly: gallery.readOnly,
             emptyStateMessage: gallery.emptyStateMessage,

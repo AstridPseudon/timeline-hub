@@ -85,6 +85,9 @@ const extensionHarnessDependencies = ['extension-harness-setup'];
 // The same-machine direct journey needs a Runtime checkout, a gateway and its
 // own config (`playwright.direct.config.ts`, `npm run test:e2e:direct`).
 const LOCAL_JOURNEY_SPECS = /tests[\\/]e2e[\\/]local[\\/].*\.spec\.ts$/;
+// These two specs set their own desktop viewport and drive the pointer editor, so the device projects would only
+// repeat the desktop run; chromium-desktop runs them.
+const DESKTOP_ONLY_SPECS = /(?:production-widget-scope|video-editor-instance-lifecycle)\.spec\.ts$/;
 const defaultProjectIgnores = [
   TIMELINE_DEVICE_SPECS,
   EXTENSION_HARNESS_SETUP_SPEC,
@@ -161,7 +164,7 @@ export default defineConfig({
     },
     {
       name: 'chromium-condensed',
-      testIgnore: defaultProjectIgnores,
+      testIgnore: [...defaultProjectIgnores, DESKTOP_ONLY_SPECS],
       dependencies: extensionHarnessDependencies,
       // The device profile defaults to WebKit; these projects are Chromium (the launch args below are
       // Chromium-only and mobile WebKit is not a gate here).
@@ -169,7 +172,7 @@ export default defineConfig({
     },
     {
       name: 'chromium-mobile',
-      testIgnore: defaultProjectIgnores,
+      testIgnore: [...defaultProjectIgnores, DESKTOP_ONLY_SPECS],
       dependencies: extensionHarnessDependencies,
       use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' },
     },

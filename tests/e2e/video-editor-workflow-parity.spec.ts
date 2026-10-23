@@ -134,20 +134,40 @@ test('an offline editor draft survives close/reopen and clears only after the sa
 });
 
 test('the explicitly supported local browser renderer exports real media from the same editor', async ({ page }, testInfo) => {
-  // Chromium's save-file picker waits on a native dialog nothing answers here; without it the editor takes its
-  // anchor-download path (Firefox and Safari), which is what Playwright can observe as a download.
-  await page.addInitScript(() => { delete (window as { showSaveFilePicker?: unknown }).showSaveFilePicker; });
+  // Chrome saves through `showSaveFilePicker`, whose native dialog Playwright cannot see. The stub is the file the user
+  // would pick: its writable collects the bytes the editor pipes in, and the test reads them back as the saved file.
+  await page.addInitScript(() => {
+    const saved = { name: '', chunks: [] as Uint8Array[], closed: false };
+    (window as unknown as { __savedFilm: typeof saved }).__savedFilm = saved;
+    (window as unknown as { showSaveFilePicker: unknown }).showSaveFilePicker = async (options: { suggestedName?: string }) => {
+      saved.name = options.suggestedName ?? '';
+      return {
+        createWritable: async () => new WritableStream<Uint8Array>({
+          write(chunk) { saved.chunks.push(chunk); },
+          close() { saved.closed = true; },
+        }),
+      };
+    };
+  });
   await page.goto(fixtureUrl);
   await expect(page.getByTestId('version-full')).toHaveText('1');
   const full = page.locator('[data-video-editor-instance="full"]');
   await full.getByRole('button', { name: 'Render', exact: true }).click();
-  await expect(page.getByTestId('render-full')).toHaveText('done', { timeout: 60000 });
+  // Waits end only with the test's own hang limit; the render has no time budget.
+  await expect(page.getByTestId('render-full')).toHaveText('done', { timeout: 0 });
   // f0cad8b19: a finished render opens in the editor's player; saving the file is the explicit Download.
-  const downloadPromise = page.waitForEvent('download', { timeout: 60000 });
   await page.getByRole('dialog', { name: 'Rendered film' }).getByRole('button', { name: 'Download' }).click();
-  const download = await downloadPromise;
-  const output = testInfo.outputPath(download.suggestedFilename());
-  await download.saveAs(output);
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __savedFilm: { closed: boolean } }).__savedFilm.closed), { timeout: 0 }).toBe(true);
+  const saved = await page.evaluate(async () => {
+    const film = (window as unknown as { __savedFilm: { name: string; chunks: Uint8Array[] } }).__savedFilm;
+    const bytes = new Uint8Array(await new Blob(film.chunks as BlobPart[]).arrayBuffer());
+    let binary = '';
+    for (let index = 0; index < bytes.length; index += 0x8000) binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+    return { name: film.name, base64: btoa(binary) };
+  });
+  expect(saved.name).toMatch(/^timeline-render-.*\.mp4$/);
+  const output = testInfo.outputPath(saved.name);
+  await writeFile(output, Buffer.from(saved.base64, 'base64'));
   const { stdout } = await execFileAsync('ffprobe', ['-v', 'error', '-count_frames', '-show_streams', '-show_format', '-of', 'json', output]);
   const metadata = JSON.parse(stdout);
   expect(metadata.streams[0]).toMatchObject({ codec_type: 'video', width: 320, height: 180, nb_read_frames: '12' });

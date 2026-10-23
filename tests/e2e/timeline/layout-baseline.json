@@ -54,6 +54,61 @@
       "rightPanelOpen": true
     }
   },
+  "desktopFirstRun": {
+    "viewport": {
+      "w": 1600,
+      "h": 1000
+    },
+    "rects": {
+      "preview": {
+        "x": 12,
+        "y": 60,
+        "w": 804,
+        "h": 512
+      },
+      "editArea": {
+        "x": 12,
+        "y": 656,
+        "w": 804,
+        "h": 288
+      },
+      "createTools": {
+        "x": 164,
+        "y": 772,
+        "w": 84,
+        "h": 24
+      },
+      "trackLabelColumn": {
+        "x": 12,
+        "y": 656,
+        "w": 144,
+        "h": 36
+      },
+      "ruler": {
+        "x": 12,
+        "y": 624,
+        "w": 804,
+        "h": 32
+      },
+      "firstClip": {
+        "x": 156,
+        "y": 660,
+        "w": 128,
+        "h": 28
+      }
+    },
+    "counts": {
+      "tracks": 3,
+      "modeUiElements": 0,
+      "paneTabOverlaps": 0,
+      "toolButtonOverlaps": 0
+    },
+    "flags": {
+      "armedBarPresent": false,
+      "gutterPadding": "144px",
+      "rightPanelOpen": true
+    }
+  },
   "phone": {
     "viewport": {
       "w": 420,

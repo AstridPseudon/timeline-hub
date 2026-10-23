@@ -1,4 +1,4 @@
-import {devices,expect,test,type Page} from '@playwright/test';
+import {expect,test,type Page} from '@playwright/test';
 import {writeFile} from 'node:fs/promises';
 
 type AssetEntry = {file?:string;media_id?:string;type?:string;duration?:number;generationId?:string};
@@ -16,9 +16,6 @@ interface ProductionWidgetEvidence {
 }
 type EvidenceWindow = Window & {productionWidgetEvidence:ProductionWidgetEvidence};
 const diagnostic = new WeakMap<Page,{errors:string[];console:Array<{level:string;text:string}>}>();
-// The spec sets its own 1440 px desktop viewport and drives the pointer editor and Widgets, so it pins the desktop
-// device profile (user agent included) whichever device project runs it.
-test.use({...devices['Desktop Chrome']});
 test.beforeEach(async({page})=>{
  const logs={errors:[] as string[],console:[] as Array<{level:string;text:string}>};diagnostic.set(page,logs);
  page.on('pageerror',e=>logs.errors.push(e.message));page.on('console',e=>{if(['error','warning'].includes(e.type()))logs.console.push({level:e.type(),text:e.text()});});
@@ -39,8 +36,9 @@ async function open(page:Page,sameProject:boolean){
 // The Tasks pane is the Runtime activity dock: its history (the Processing / Succeeded / Failed lists) opens
 // from the dock's "Keep tasks open" control, and stays open once kept.
 async function showTasks(page:Page,filter:'Processing'|'Succeeded'){
- const keep=page.getByRole('button',{name:'Keep tasks open'});
- if(await keep.count())await keep.click();
+ const keep=page.getByRole('button',{name:/^(Keep|Stop keeping) tasks open$/});
+ await expect(keep).toBeVisible();
+ if(await keep.getAttribute('aria-pressed')!=='true')await keep.click();
  await page.getByRole('button',{name:new RegExp(`^${filter} \\(`)}).click();
 }
 // A task's row, and the one export control a row offers (its label names the task kind, not its id).
@@ -50,9 +48,21 @@ async function gallerySend(page:Page){
  const item=page.locator('[data-testid="generations-pane"] [data-gallery-item-id]').first();await expect(item).toBeVisible();await item.click();
  await page.getByTestId('add-selected-generation-to-timeline').click();
 }
+// The gallery lists the route's project (8c28e1847), and an add lands in the selected editor. In the same project the
+// load is captured for the dialog; in another project the add is refused (the Runtime would refuse a foreign object).
+test('production Gallery refuses to add a route-project item to a dialog of another project',async({page})=>{
+ await open(page,false);
+ const item=page.locator('[data-testid="generations-pane"] [data-gallery-item-id]').first();await expect(item).toBeVisible();await item.click();
+ const add=page.getByTestId('add-selected-generation-to-timeline');
+ await expect(add).toBeVisible();await expect(add).toBeDisabled();
+ const evidence=await page.evaluate(()=>{const e=(window as unknown as EvidenceWindow).productionWidgetEvidence;return {loads:e.loads,writes:e.writes,route:document.querySelector('[data-testid="route"]')?.textContent};});
+ expect(evidence.loads).toEqual([]);
+ expect(evidence.writes).toEqual([]);
+ expect(evidence.route).toBe('/tools/video-editor?project=project-a&timeline=workflow-full');
+});
 for(const sameProject of [true,false]){
- test(`production Gallery targets selected dialog with route A (${sameProject?'same':'different'} project) and captures pending load`,async({page},info)=>{
-  await open(page,sameProject);
+ if(sameProject)test('production Gallery targets selected dialog in the same project and captures pending load',async({page},info)=>{
+  await open(page,true);
   await page.evaluate(()=>(window as unknown as EvidenceWindow).productionWidgetEvidence.setMediaPending(true));
   await expect(page.locator('[data-testid="generations-pane"] [data-gallery-item-id]').first()).toBeVisible();
   await page.screenshot({path:info.outputPath('selected-dialog-gallery.png'),fullPage:true});
@@ -69,11 +79,8 @@ for(const sameProject of [true,false]){
   await expect(page.getByTestId('config-dialog')).toContainText(importedAssetId!);
   const evidence=await page.evaluate(async()=>{const e=(window as unknown as EvidenceWindow).productionWidgetEvidence;return {route:document.querySelector('[data-testid="route"]')?.textContent,galleryMediaId:e.galleryMediaId,variantIdentities:e.variantIdentities,loads:e.loads,requests:e.requests,writes:e.writes,full:await e.provider.loadAssetRegistry('workflow-full'),dialog:await e.provider.loadAssetRegistry('workflow-dialog'),head:await e.provider.loadTimeline('workflow-dialog')};});
   expect(Object.values(evidence.full.assets).some((a)=>a.generationId===evidence.loads[0].generationId)).toBe(false);
-  // The gallery lists the route's project (8c28e1847: one canonical project id for ProjectContext, gallery and chat;
-  // it no longer follows the selected editor). Its variants are read from that project, and the load is then scoped
-  // to the selected dialog's own project.
-  expect(evidence.variantIdentities.some((variant)=>variant.project==='project-a'&&variant.object_id===evidence.galleryMediaId)).toBe(true);
-  expect(evidence.loads).toEqual([{instance:'dialog',project:sameProject?'project-a':'project-b',generationId:expect.any(String)}]);
+  expect(evidence.variantIdentities.some((variant)=>variant.project===evidence.loads[0].project&&variant.object_id===evidence.galleryMediaId)).toBe(true);
+  expect(evidence.loads).toEqual([{instance:'dialog',project:'project-a',generationId:expect.any(String)}]);
   expect(evidence.route).toBe('/tools/video-editor?project=project-a&timeline=workflow-full');
   expect(evidence.head.configVersion).toBeGreaterThan(1);
   expect(evidence.writes.every((w)=>w.timelineId==='workflow-dialog')).toBe(true);
