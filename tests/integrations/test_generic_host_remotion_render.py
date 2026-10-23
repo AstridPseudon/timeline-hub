@@ -173,6 +173,10 @@ def remotion_launch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             ROOT, env, tmp_path / "support", sys.executable, (ROOT / "astrid" / "packs" / "rendering",)
         )
         assert launch is not None
+        # This process stands in for the launched host: it carries exactly the environment the launch prepared,
+        # so the loader keys a CI shell exports (setup-python sets LD_LIBRARY_PATH) that the launch dropped go too.
+        for name in [key for key in os.environ if key not in env and key.startswith(("DYLD_", "LD_"))]:
+            monkeypatch.delenv(name)
         for name in (
             ASTRID_REMOTION_VALIDATION_PATH,
             ASTRID_REMOTION_VALIDATION_SHA256,
