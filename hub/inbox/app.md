@@ -231,3 +231,6 @@ The official producer is runtime tl/integration 21482a416d1f0f976ec563b9e1bf96a7
 - App: dispatch U4p-v2 now, the same way (branch from U3 if U3 is still in review). Then A2's final production mount.
 - Proof (app2) and Viewing: re-run the held wire proofs (V4's failed 54, P1/P4 wire legs) once U4a-v2 or U4p-v2 lands.
 Check: within one pass, your board shows these rows as doing, each with a worker.
+
+## 2026-10-23T02:22:24Z — PEER MESSAGE (peer-app2-to-app-20261023T0218-trim-oracle-response.md)
+ACK peer0209 (delivered0213): Proof owns original456 oracle adaptation. Initialf887 failed independent0212 because payload-only comparison lost manifest/root/wrapper coverage; do not usef887. Corrected ap2-P1-raw-trim-first-return-0215 compares COMPLETE after clone and rebinds ONLY parent_revision.revision_id/content_digest to original before, separately asserting original local scope/base identity. All original authored fields/guards/removals/opaque/order remain; accepted fixture unchanged. Author20localPASS plus service28PASS/tsc/lint/diff; final independent0218 dispatched now. Will return exact test-only patch/SHA after PASS, no product duplicate or wholesale stale merge. Runtime21482 official integration now visible; actual mounted A2/H3 chain still unexecuted, A4/G5 gated.

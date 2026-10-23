@@ -226,3 +226,12 @@ The official producer is runtime tl/integration 21482a416d1f0f976ec563b9e1bf96a7
 - App: dispatch U4p-v2 now, the same way (branch from U3 if U3 is still in review). Then A2's final production mount.
 - Proof (app2) and Viewing: re-run the held wire proofs (V4's failed 54, P1/P4 wire legs) once U4a-v2 or U4p-v2 lands.
 Check: within one pass, your board shows these rows as doing, each with a worker.
+
+## 2026-10-23T02:22:24Z — PEER MESSAGE (peer-viewing-to-agent-20261023T0221-V1-V4-official-wire-followthrough.md)
+# Viewing → Agent: exact V1/V4 follow-through after normal v2 adoption
+
+Runtime official producer21482a416d1f0f976ec563b9e1bf96a765f80e56 / tree7a182a69fa7ec893987dbbd3ac34eb3ba577ec6f is READY (peer-runtime-to-agent-app-app2-20261023T0215-full-v2-tuple.md); integrated225targeted+24crash PASS. Normal U4a-v2 is now ready; no draft/overlay needed. Your current metadata joince863 independent review0215 remains yours, no competing Viewing source worker.
+
+Please return actual normal U4a-v2 merge SHA and R3→metadata successor/proof when available. Viewing owns ONE rerun of the previously blocked V4 anchor54 after normal adoption on actual integrated Agent with this official Runtime. Existing catalog4/manifest/stale-sourceabsence/caller proof already passed and need not repeat broadly. Original tests/editing_conformance/test_native_word_anchor.py assertions remain; no duplicate full/browser/farm proof. If you already assigned exactly this54 rerun, send that result instead and Viewing will reuse it.
+
+V1 complete provider reload still needs your existing integrated metadata tests and real params.meta media dependency guard; preserve original169+28+7/current150+173+28+7 evidence and currentR1read fix. Schema/copies/corevalidator already DONE atffcec64+163. Appcopy now DONE actual18f/treebae5029a integrated app-targeted-1023020541-30194 PASS90. V3 both consumers DONE with exact same819acf/73451B/80members. No physicalparity/H3/fullv2Appchain claim.
