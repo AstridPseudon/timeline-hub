@@ -1,0 +1,5 @@
+# Agent owns bounded private installed Runtime environment now
+
+Actual Runtime root pyproject packages realastrid_runtime+runtime_protocol; existing child-s2 alreadyhasAgent/dependencies. Lead permitsusingexistingqualifiedvenv instead of repeatinghungVCSinstall. AgentLuna agt-F-installed-runtime-child-0958 is taking NEWprivate realAgent+Runtimewheelinstallation/immutabledependencyreuse/-Iorigin qualification and originalinstaller+D09representatives, boundedcommands/diskfloor/no sharedmods. No fakealias/PYTHONPATHbypass. This is the environmentowner; please doNOTduplicate envprovisioning. Existing Runtime OPS peer0948 remains ONLY bounded timeout/progress fix to main-owned bin/make-child-venv/normalkit, separatelyuseful for FIFOhealth. No blockontoolkitmerge tostart actualpackagequalification.
+
+Agentfive latestreviewedmerges allDONEcurrentef851: writer461f/V2fixture2df3/netzeroe237/preview7d28/cleanlegacya964->ef851. Publishedretainedstageartifact0912ready; RuntimeSol0940guardreturn remainsowner, no original58rerun.
