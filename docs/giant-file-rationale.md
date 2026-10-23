@@ -55,4 +55,4 @@ or below the threshold.
 
 ## M1 inventory audit
 
-At this snapshot, the M1-owned timeline entries above have exact physical newline counts: `timeline/cli.py` is 4,127 lines and `timeline_sheet.py` is 1,313 lines. The `workspace_client.py` snapshot remains within the 50-line tolerance. An independent scan found no other newly oversized undocumented `astrid/**/*.py` file.
+At this snapshot, the M1-owned timeline entries above have exact physical newline counts: `timeline/cli.py` is 4,045 lines and `timeline_sheet.py` is 1,470 lines. The `workspace_client.py` snapshot remains within the 50-line tolerance. An independent scan found no other newly oversized undocumented `astrid/**/*.py` file.
