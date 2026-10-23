@@ -1,0 +1,12 @@
+# App P1 D25 custody review 1916
+
+**Independent verdict: PASS for restored original18607 raw-log custody and safe export.** This does not turn the execution into a behavior PASS or GO.
+
+- Raw `log.txt`: exact **26,440 bytes / 62 lines**, SHA-256 `a83cc89c1909877b7f01dfe4c83e994a31b8450afae80767a01e87781bf3728b`; current bytes equal the complete 62-line deletion-hunk reconstruction retained in worker `app-P1-result-custody-1909`.
+- Overwritten replacement is distinct and not treated as raw: **18,661 bytes**, SHA-256 `28f8c39b6587228a5cba3056e56a5a83ace6a7382a7269821da13c209ee372ec`.
+- `result-custody.safe.json` and this design packet's safe JSON copy are valid, byte-identical, and SHA-256 `97b088b687ec4779eb85dfc94c9ebb43d03bae30ae5ba96d608544d540e0c1e8`. The safe packet's raw metadata, companion `request/summary/snap/ext/exit/status` hashes, source identities, and first/second source slices match retained evidence.
+- Retained line-10 and line-11 projections exactly match their raw source bytes and recorded ranges/hashes. Capped line 12 has authentic range/hash metadata but is explicitly unparseable; its unavailable state is not reconstructed. Qualified safety bounds pass and no credentials, tokens, raw packets, full request bodies, or full success `{data, receipt}` payloads are disclosed.
+- Original execution remains **first case PASS 27.4s; second case FAIL with 1 POST versus 2 expected and test/`afterEach` timeouts; Agent move/409/App rollback assertions unreached; overall 1 PASS / 1 FAIL / exit 1 / 744s**. No GO or causal verdict.
+- D25 tuple: App `2107e1870e51c650d59315f4cc1ab6af338f198c`/`a3ff3584e9b559bbb3c3a82b77be7516ed8e761c`, Agent `78738040d72ce74c42ddf7731221aecb06f9246d`/`e77ea239789dd8ae9103c68fef79b49329cf2c6e`, Runtime `2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d`/`f79a2355cfb39d9ada7721978bd20d5702105778`. These are historical run snapshot identities; no current cross-repo-head claim is made.
+- Production source still uses `createLocalSaveSession` → durable outbox → `commitTimeline`; no product/test/collector/config/dependency/pin/Git changes were made. Contract §§1–5 fields not present in the safe projection remain sealed in raw evidence or explicitly unavailable; no reconstruction or disclosure expansion was performed.
+- No tests, typecheck, lint, body, service, probe, browser, network, benchmark, collector, or test rerun was performed; unchanged-code report-only review.
