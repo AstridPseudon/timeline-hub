@@ -1,0 +1,27 @@
+{
+  "task": "rt-G5-native-order-public-1456",
+  "classification": "R2r/G5 report-only; whole public inverse FAIL at distinct redo boundary",
+  "source": {
+    "agent": {"head": "91ac58a9fc6f1f752be16c0e4b8a1bf17095acee", "tree": "ac1251cdc911b99d690d303cdd777fe14643bdb1"},
+    "runtime": {"head": "9ce4242bc01f100bab9efc51032a73985cefb2b2", "tree": "92ab1f5f739ffdfedf7b25fbd2a7b46ae42c5d1a"},
+    "clean_before_after": true,
+    "body": {"path": "/home/user/work/wt/agt-pin-91ac58a9/tests/sdk/test_timeline_restructure_guarded_runtime.py", "bytes": 6798, "sha256": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d"},
+    "public_method": "_PublishMixin._commit_restructure(self, message: str, *, idempotency_key: str | None, client: Any, force: bool) -> dict[str, Any]"
+  },
+  "preflight": {
+    "result": "2 passed in 24.16s",
+    "closure": {"sha256": "d56502af04957d888dcc84436feb57f45769994c648bb231e52923a5cfe12840", "local_equals_base": true, "base_revision_id": "authoring-parent-revision-b7e8280b13fb48c958b23395cc548757ed7783ecac8fa5a245ce2ad03b2c240b", "base_publication_id": "txn-4a5890ffdcbe4676aa4ca0bf3effa23f", "content_digest": "sha256:60d787f4ac4c630a36cc4ebdb0d96bc55a26df847296dc8f9bab3838a6bf4dbc"},
+    "forward": {"sha256": "dd016c0524245d1cd941f4f9ae2fa8463c2e0365fd759ada7e200eca6248e125", "native_input_count": 3, "base_revision_id": "authoring-parent-revision-38559810ce93f0a8f009a46c302414bac23092890bb576264ce12a6a29e54747", "base_publication_id": "txn-6007591fbdd54c2f956720812620a802", "reply_statuses": ["preview", "accepted", "accepted"]},
+    "origins": {"agent_native": "/home/user/work/wt/agt-pin-91ac58a9/astrid/sdk/timeline/native_restructure.py", "agent_test": "/home/user/work/wt/agt-pin-91ac58a9/tests/sdk/test_timeline_restructure_guarded_runtime.py", "runtime": "/home/user/work/wt/rt-G5-native-order-public-1456/runtime_protocol/__init__.py"}
+  },
+  "qualification": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-G5-native-order-public-1456 PYTHONPATH=/home/user/work/wt/agt-pin-91ac58a9:/home/user/work/wt/rt-G5-native-order-public-1456:/home/user/work/wt/rt-G5-native-order-public-1456/packages/python /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=60 tests/sdk/test_timeline_restructure_guarded_runtime.py::test_restructure_whole_inverse_redo_and_intervening_overlap_refusal",
+    "result": "1 failed in 11.56s",
+    "progress": ["forward restructure accepted", "whole undo accepted", "redo refused before redo assertions"],
+    "error": {"runtime_code": "conflict", "runtime_message": "original authored guard changed", "agent_exception": "CommitConflict", "agent_path": "astrid/sdk/timeline/sync.py:558", "provider_guard": "astrid/sdk/timeline/_recording.py:286", "replay_path": "astrid/sdk/timeline/commit.py:_check_reservations -> _load -> Runtime port revision_closure -> history replay"},
+    "receipt": null,
+    "unverified": ["final overlap-refusal assertions were not reached", "post-redo SQL/history/canonical no-write equality was not captured by the completed uninstrumented run", "historical 503 behavior remains unproven"]
+  },
+  "observer_attempt": {"result": "invalid diagnostic; pytest timeout after 61.59s", "reason": "trace overhead during Runtime history replay", "packet_sha256": "e5be14569f10253fb082a61fd3bd86e522a1c19cac0215a251ecaf1cfda55606", "events_sha256": "c8dbb4460bead131ea3b20284b961b893146a3bcb446444d1db4f717a714b7b8", "not_acceptance": true},
+  "evidence": {"preflight_closure": "workers/rt-G5-native-order-public-1456/evidence/preflight-closure.json", "preflight_forward": "workers/rt-G5-native-order-public-1456/evidence/preflight-forward.json", "qualification_log": "workers/rt-G5-native-order-public-1456/evidence/original-uninstrumented.log", "qualification_log_sha256": "9c3e062ef5c4dae367b8b5019c125a9babd96ece936c26e5c03bb0727b1ee752", "after_integrity": "workers/rt-G5-native-order-public-1456/evidence/after-integrity.log"}
+}
