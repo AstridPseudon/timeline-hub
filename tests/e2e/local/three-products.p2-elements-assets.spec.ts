@@ -206,7 +206,7 @@ function assertAcceptedReply(post: CommitPost, before: HeadPin): CommitAcceptedM
   expect(post.response.status(), JSON.stringify(post.json)).toBe(200);
   const envelope = object(post.json, 'commit envelope');
   const data = object(envelope.data, 'commit data');
-  expect(['accepted', 'merged', 'historicalrebased']).toContain(data.status);
+  expect(['accepted', 'merged', 'rebased']).toContain(data.status);
   expect(data.base_revision_id).toBe(before.revision_id);
   expect(data.base_publication_id).toBe(before.publication_id);
   expect(data.previous_revision_id).toBe(before.revision_id);
