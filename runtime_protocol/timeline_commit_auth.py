@@ -1563,11 +1563,6 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
     accepted = images(prepared["canonical_document"])
     touched = set()
     manifest = copy.deepcopy(source["dependency_manifest"])
-    if records["merge_mode"] == "atomic":
-        for record in records["commands"]:
-            for capture in [*record["writes"], *record["reads"], *record["derived_writes"]]:
-                touched.add(native_site(boundary, capture["ref"], capture["path"])[0])
-            touched.update(binding["physical_ref"] for binding in record["bindings"] if "physical_ref" in binding)
     for step in records["steps"]:
         command_inputs = {step["command_ordinals"][0]: boundary}
         input_manifest = copy.deepcopy(manifest)
@@ -1600,10 +1595,16 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
                 command_inputs[ordinal], records["commands"][ordinal], records["commands"][next_ordinal],
                 accepted=accepted, identity_scope=(source["project_id"], source["timeline_id"]),
                 manifest=command_manifests[ordinal])
+        if records["merge_mode"] == "atomic":
+            # Resolve aliases only after earlier commands establish their input
+            # images; the complete batch union is checked against every step below.
+            for ordinal in step["command_ordinals"]:
+                record = records["commands"][ordinal]
+                command_boundary = command_inputs[ordinal]
+                for capture in [*record["writes"], *record["reads"], *record["derived_writes"]]:
+                    touched.add(native_site(command_boundary, capture["ref"], capture["path"])[0])
+                touched.update(binding["physical_ref"] for binding in record["bindings"] if "physical_ref" in binding)
         validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs)
-        for ref in touched:
-            require(covers(step["dependencies"], {"kind": "scope", "ref": ref, "path": []}),
-                    "provider atomic dependency union omits a touched scope")
         output = step_output(boundary, step, records, accepted, original)
         effect_boundaries = _inverse_stage_boundaries(boundary, output, step, records, accepted, original, history)
         for ordinal in step["command_ordinals"]:
@@ -1621,6 +1622,10 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
                 if binding.get("key") == "commit.materialization":
                     continuations.setdefault(binding["physical_ref"], set()).add(binding["successor"])
         boundary = output
+    for step in records["steps"]:
+        for ref in touched:
+            require(covers(step["dependencies"], {"kind": "scope", "ref": ref, "path": []}),
+                    "provider atomic dependency union omits a touched scope")
     # Materialization can reuse a historical parent revision with these exact
     # bytes. Step bindings still name the projected execution image above;
     # immutable destination provenance is checked separately by the store.
