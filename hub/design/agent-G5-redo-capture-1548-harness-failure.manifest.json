@@ -1,0 +1,14 @@
+{
+  "task": "agt-G5-redo-capture-1548",
+  "classification": "diagnostic capture failure",
+  "artifact": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-capture-1548-harness-failure.json",
+    "sha256": "88662e8547e37d0c16d8e6c302aa2bdb358b9dc3463d5b3f52184b20c4b554be"
+  },
+  "source_sha256": "153be3ff0db9e473bde9289e9964ea7900e8666713073677a8d4251c42c91740",
+  "agent_head": "91ac58a9fc6f1f752be16c0e4b8a1bf17095acee",
+  "runtime_head": "9ce4242bc01f100bab9efc51032a73985cefb2b2",
+  "execution_exit": 1,
+  "redo_verdict_available": false,
+  "credentials_included": false
+}

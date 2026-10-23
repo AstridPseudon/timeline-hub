@@ -1,0 +1,88 @@
+{
+  "task": "agt-G5-redo-capture-1548",
+  "classification": "single fresh G5 diagnostic invocation; harness capture failure",
+  "verdict": "FAIL: artifact serialization failed after scenario execution; redo verdict is unavailable",
+  "preflight": {
+    "agent_root": "/home/user/work/wt/agt-G5-redo-capture-1548",
+    "agent_head": "91ac58a9fc6f1f752be16c0e4b8a1bf17095acee",
+    "agent_tree": "ac1251cdc911b99d690d303cdd777fe14643bdb1",
+    "agent_status": "clean",
+    "runtime_root": "/home/user/work/runtime",
+    "runtime_head": "9ce4242bc01f100bab9efc51032a73985cefb2b2",
+    "runtime_tree": "92ab1f5f739ffdfedf7b25fbd2a7b46ae42c5d1a",
+    "runtime_status": "clean",
+    "diagnostic_source": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-reproducer-1534-7e4b.py",
+      "sha256": "153be3ff0db9e473bde9289e9964ea7900e8666713073677a8d4251c42c91740",
+      "bytes": 27333,
+      "lines": 664
+    },
+    "target_body": {
+      "path": "/home/user/work/wt/agt-G5-redo-capture-1548/tests/sdk/test_timeline_restructure_guarded_runtime.py",
+      "file_sha256": "d7dc8942c49b4c464535280b8849520adfba4b67d4dc0560a5b68203abf7983b",
+      "body_sha256": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d",
+      "body_bytes": 6798,
+      "matches_c271": true
+    },
+    "genesis": "restructure_runtime.__wrapped__ followed by restructure_inverse_runtime.__wrapped__; ordinary fixture native setup plus unchanged public Name source chapter commit",
+    "closure": "open_bundle(project, timeline, revision_id=head_revision_id, publication_id=head_publication_id); compare runtime_document and base_parent revision/publication pins to service head",
+    "method_signatures": {
+      "restructure_runtime": "(tmp_path, monkeypatch)",
+      "restructure_inverse_runtime": "(restructure_runtime, monkeypatch)",
+      "target": "(restructure_inverse_runtime, tmp_path, monkeypatch)"
+    },
+    "runtime_pair": {
+      "agent_head": "91ac58a9fc6f1f752be16c0e4b8a1bf17095acee",
+      "runtime_head": "9ce4242bc01f100bab9efc51032a73985cefb2b2"
+    },
+    "module_origins": {
+      "astrid.sdk.timeline": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/__init__.py", "6c249c62db888e4d01de16ea893f859bba07221733202d286437d5d2b39d6a0a"],
+      "astrid.sdk.timeline._common": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/_common.py", "f05689fda870353180f01aed0f1bf17371e90359fdc282c23028748d271b8b12"],
+      "astrid.sdk.timeline.check": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/check.py", "2c82dfe31c09d5dbd237f94956d1cbae4a538c30d2c54a698e3ae1d58ff86928"],
+      "astrid.sdk.timeline.checkout": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/checkout.py", "635dc3d4319da0a1fc887b84b37a39551a85bb3319a3366aa66fc18ade109d80"],
+      "astrid.sdk.timeline.doc": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/doc.py", "d7821531e807c085787e00fe8ca15df1e7332ba359f69f49402fc20bef7940fb"],
+      "astrid.sdk.timeline.edits": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/edits.py", "58bd92963a39dce6764399a247b49133d02013328743d83fd75ff13a94ac25a9"],
+      "astrid.sdk.timeline.journal": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/journal.py", "7e7f257f1f8a5e3ad7df3a1e5350e5c138034b061cc5ba58644d25943de5471c"],
+      "astrid.sdk.timeline.look": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/look.py", "723df10be6b02fa4198db1a9b1d92c175c17970065534b1b5389766bfdc6903e"],
+      "astrid.sdk.timeline.lookup": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/lookup.py", "bd3ea841988dd4fc92f1b1132a5314dd115c81be9af9ccb2f45d3e59f6293f09"],
+      "astrid.sdk.timeline.model": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/model.py", "40579679913fc29229852ffa947ccee39da3c57820e76404c34213682f925707"],
+      "astrid.sdk.timeline.outbox": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/outbox.py", "768eacddae74cc7bb18feebb862636b25e6fd631d1e4cb20423578286b9aac1b"],
+      "astrid.sdk.timeline.publish": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/publish.py", "8283ce0079c59fcafe8741a0442dc08b063ee5cdb1ca5526b1b63f1240a092e4"],
+      "astrid.sdk.timeline.reflow": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/reflow.py", "12df819bffb139f476c74237162aec6786582c1cebee424b7ce16432c5bcdf3d"],
+      "astrid.sdk.timeline.revisions": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/revisions.py", "e71e2440c4bf37d3b67a00c2db7fa08a82fb961fcbb8b294632da0f74ea6ac58"],
+      "astrid.sdk.timeline.selection": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/selection.py", "d3020d608e04bc401f2ca4462117e6eafd754c087197f90ca42157ccbdcd1c28"],
+      "astrid.sdk.timeline.store": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/store.py", "121142906eaa85a281e94341eb5bbedc33c26b18dfa31bc98361f6a82a2438ea"],
+      "astrid.sdk.timeline.sync": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/sync.py", "3e9ccf0aafa1b7fe0718fcd8c05b35d50fc137d2a81b7ec6ff709943b0100a7f"],
+      "astrid.sdk.timeline.transaction": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/transaction.py", "a468173f103cbc8d6cd4f8fc399caee7a3f3010277cab5e66600d93683ebaa3f"],
+      "astrid.sdk.timeline.units": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline/units.py", "41ae64ab7c5c687f44c8420017718a27c59b2aaaf11bd8434eea88829dd40c6f"],
+      "astrid.sdk.timeline_checkout": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline_checkout.py", "0ef1e4320c8a1d6f84845e314a9be8b516f0fa84089ebc39e4dfc354a0fdaff5"],
+      "astrid.sdk.timeline_intent": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline_intent.py", "7d4cdf012c0924c34c1a38df69a1e87192e32644a2e6dbaa27f46a34d147e30b"],
+      "astrid.sdk.timeline_restructure": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline_restructure.py", "842850e1e867eaf2a8c003897b6624bb040a2b7c8f910eecad1d5aa8c9f851ee"],
+      "astrid.sdk.timeline_transcripts": ["/home/user/work/wt/agt-G5-redo-capture-1548/astrid/sdk/timeline_transcripts.py", "36868a1e0937c067d1f06cdf589841ef59647a5e81bfe076e89a6fcae36a6281"],
+      "runtime_protocol": ["/home/user/work/runtime/runtime_protocol/__init__.py", "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2"],
+      "tests.sdk.test_timeline_restructure_guarded_runtime": ["/home/user/work/wt/agt-G5-redo-capture-1548/tests/sdk/test_timeline_restructure_guarded_runtime.py", "d7dc8942c49b4c464535280b8849520adfba4b67d4dc0560a5b68203abf7983b"]
+    }
+  },
+  "execution": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=/home/user/work/wt/agt-G5-redo-capture-1548:/home/user/work/runtime:/home/user/work/runtime/packages/python timeout 30s /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-reproducer-1534-7e4b.py --agent-root /home/user/work/wt/agt-G5-redo-capture-1548 --runtime-root /home/user/work/runtime --net --tmpdir /tmp/w-5cf44c0e30/g5-redo-capture-1548 --out /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-redo-capture-1548/evidence",
+    "exit_code": 1,
+    "elapsed_seconds": 16.6,
+    "timeout": false,
+    "scenario_reached": true,
+    "artifact_written": false,
+    "artifact_directory": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-redo-capture-1548/evidence",
+    "invocation_log": "/tmp/w-5cf44c0e30/g5-redo-capture-1548/invocation.log",
+    "stderr": "Traceback (most recent call last):\n  File \"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-reproducer-1534-7e4b.py\", line 664, in <module>\n    raise SystemExit(main())\n  File \"/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-reproducer-1534-7e4b.py\", line 655, in main\n    artifact.write_text(json.dumps(report, sort_keys=True, indent=2) + \"\\n\")\n  File \"/usr/lib/python3.13/json/__init__.py\", line 242, in dumps\n    **kw).encode(obj)\n  File \"/usr/lib/python3.13/json/encoder.py\", line 191, in encode\n    chunks = self.iterencode(o, _one_shot=True)\n  File \"/usr/lib/python3.13/json/encoder.py\", line 195, in iterencode\n    return _iterencode(o, 0)\nTypeError: Object of type function is not JSON serializable\n",
+    "stdout": "",
+    "guard_or_provider_verdict": "unavailable because the lossless report was not serialized",
+    "redo_verdict": "unavailable; do not classify as PASS or expected redo refusal"
+  },
+  "safety": {
+    "original_body_retry": false,
+    "pytest_or_c271_extra": false,
+    "product_test_script_source_edits": false,
+    "credentials_or_environment_dump": false,
+    "partial_capture": "only invocation traceback and preflight metadata survived; scenario records were held in memory and lost when serialization failed"
+  },
+  "recommended_next_step": "Manager-owned harness-only serialization repair that preserves function-valued observer records losslessly, followed by a separately authorized fresh diagnostic run; this worker did not retry."
+}
