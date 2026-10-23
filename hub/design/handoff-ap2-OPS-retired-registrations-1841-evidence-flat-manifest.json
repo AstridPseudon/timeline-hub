@@ -1,0 +1,72 @@
+{
+  "packet": "ap2-OPS-retired-registrations-1841",
+  "decision": "PROPOSE_ONLY_NO_LIVE_MUTATION",
+  "export": "unchanged exact-byte flat publication for COMMS visibility",
+  "files": [
+    {
+      "old": "handoff-ap2-OPS-retired-registrations-1841-evidence/suites.conf.original",
+      "new": "handoff-ap2-OPS-retired-registrations-1841-evidence-suites.conf.original",
+      "sha256": "07dfac86a0a63b3449a5d3393327ea95cc5688c342413fe1d9e323f3cfd9a330",
+      "bytes": 140559,
+      "lines": 169
+    },
+    {
+      "old": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-p1-f611-1346.env.original",
+      "new": "handoff-ap2-OPS-retired-registrations-1841-evidence-agent-remotion-ap2-p1-f611-1346.env.original",
+      "sha256": "551fa8ffae56d106fe1d01f10742ddac1942cdf75968c10fd2742f7eb8d83c8b",
+      "bytes": 927,
+      "lines": 8
+    },
+    {
+      "old": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-8c355-1402.env.original",
+      "new": "handoff-ap2-OPS-retired-registrations-1841-evidence-agent-remotion-ap2-current-8c355-1402.env.original",
+      "sha256": "bbb1400511a1a33f14d40b55aee3debcad73101dfd7e0dfe819fc1f43861f904",
+      "bytes": 945,
+      "lines": 8
+    },
+    {
+      "old": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-8c-cfa-1415.env.original",
+      "new": "handoff-ap2-OPS-retired-registrations-1841-evidence-agent-remotion-ap2-current-8c-cfa-1415.env.original",
+      "sha256": "c9c463cf9bb9427b33db24a5eb54e6bd78b567a423876acf8bc152621c7c8dcc",
+      "bytes": 948,
+      "lines": 8
+    },
+    {
+      "old": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-583-cfa-1451.env.original",
+      "new": "handoff-ap2-OPS-retired-registrations-1841-evidence-agent-remotion-ap2-current-583-cfa-1451.env.original",
+      "sha256": "e28d3585802f86aca412390329d2624e019e80dc26f3511ad8d07a80cd1bc8ce",
+      "bytes": 951,
+      "lines": 8
+    },
+    {
+      "old": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-583-9ce-1513.env.original",
+      "new": "handoff-ap2-OPS-retired-registrations-1841-evidence-agent-remotion-ap2-current-583-9ce-1513.env.original",
+      "sha256": "fe77f26fe4455ae95a3d8567736d98bef8138dbe693608c66e0c6a554ded4f84",
+      "bytes": 951,
+      "lines": 8
+    },
+    {
+      "old": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-98ef-259-1608.env.original",
+      "new": "handoff-ap2-OPS-retired-registrations-1841-evidence-agent-remotion-ap2-current-98ef-259-1608.env.original",
+      "sha256": "cbf4f2e2667ccbecc31eaf04965dac11535045bb2eed5660ecf17d03bc0c6e65",
+      "bytes": 954,
+      "lines": 8
+    },
+    {
+      "old": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-bac-d9e-1643.env.original",
+      "new": "handoff-ap2-OPS-retired-registrations-1841-evidence-agent-remotion-ap2-current-bac-d9e-1643.env.original",
+      "sha256": "8aa4514c482ff410d6174b8dfc93c067003a1e3f626deb35ed83e33adc2c988d",
+      "bytes": 951,
+      "lines": 8
+    }
+  ],
+  "review_links": {
+    "independent_review": "handoff-ap2-OPS-retired-registrations-review-1847.md",
+    "author_handoff": "handoff-ap2-OPS-retired-registrations-1841.md",
+    "author_report": "../workers/ap2-OPS-retired-registrations-1841/report.md",
+    "patch": "handoff-ap2-OPS-retired-registrations-1841.patch",
+    "source_manifest": "handoff-ap2-OPS-retired-registrations-1841-manifest.json",
+    "runtime_peer": "peer-runtime-to-app2-20261023T1834-runtime-reference-disposition.md"
+  },
+  "flat_copy_check": "Each new file was compared byte-for-byte with its old source before publication."
+}
