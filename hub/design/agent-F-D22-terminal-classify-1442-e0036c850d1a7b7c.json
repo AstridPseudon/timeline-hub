@@ -34,10 +34,11 @@
     },
     "classification_groups": {
       "child-probe": 17,
-      "child-import-or-recipe": 97,
+      "child-import-or-recipe": 87,
+      "custody-process-assertion": 11,
       "fixture-declared-gap": 2,
       "g5-inverse": 23,
-      "profile-fixture": 38,
+      "profile-fixture": 37,
       "child-import": 9,
       "d13-preflight": 1,
       "r1-private": 7,
@@ -156,8 +157,6 @@
       "tests/core/rendering/test_service.py::test_real_ffmpeg_renders_through_generic_service[with-audio]",
       "tests/core/rendering/test_service.py::test_real_ffmpeg_audio_reactive_through_generic_service",
       "tests/core/execution/test_custody_broker.py::test_isolated_wrapper_reaches_fake_peer_without_workload_startup_hook",
-      "tests/core/execution/test_custody_broker.py::test_isolated_wrapper_target_restores_network_hook_and_original_environment[command]",
-      "tests/core/execution/test_custody_broker.py::test_isolated_wrapper_target_restores_network_hook_and_original_environment[engine]",
       "tests/core/execution/test_worker_startup_identity.py::test_sanitized_child_import_proves_current_host_sdk_version_and_vendored_client",
       "tests/core/execution/test_generic_host_actions_v3.py::test_static_discover_admit_dry_run_and_owned_child",
       "tests/core/execution/test_generic_host_actions_v3.py::test_python_action_receives_original_host_bridge_before_import",
@@ -212,13 +211,6 @@
       "tests/core/execution/test_generic_host_actions_v3.py::test_legacy_orchestrator_child_command_route",
       "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[False-False]",
       "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[False-True]",
-      "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-False]",
-      "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-True]",
-      "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-False]",
-      "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-True]",
-      "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-False]",
-      "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-True]",
-      "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_cannot_close_unproved_real_attempt[observation]",
       "tests/core/pack/test_source_setup.py::test_real_outer_command_inventory_route_retains_sibling_creator_waits_and_graph",
       "tests/core/pack/test_source_setup.py::test_real_filtered_command_root_cf_pin_preserves_all_four_inventory_operations",
       "tests/core/rendering/test_conformance.py::test_minimal_render_wire_parity",
@@ -229,9 +221,8 @@
       "tests/core/rendering/test_conformance.py::test_intentional_failure_wire_parity",
       "tests/packs/rendering/test_builtin_registration.py::test_real_ffmpeg_render_through_registered_backend",
       "tests/core/rendering/test_freeze.py::test_freeze_real_ffmpeg_transport_one_video_one_committed_sidecar",
-      "tests/core/rendering/test_installed_registry_security.py::test_installed_native_readiness_context_must_match_projected_context",
       "tests/packs/rendering/test_ffmpeg_backend.py::test_manifest_command_dispatches_from_pack_root",
-      "tests/core/rendering/test_installed_registry_security.py::test_installed_actual_worker_environment_matches_launch_projection[command]",
+      "tests/packs/rendering/test_remotion_backend.py::test_manifest_command_runs_from_owning_pack_root",
       "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable",
       "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_empty_and_exact_text_fields",
       "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
@@ -249,6 +240,19 @@
       "tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen",
       "tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[False-0]",
       "tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[True-1]"
+    ],
+    "custody-process-assertion": [
+      "tests/core/execution/test_custody_broker.py::test_isolated_wrapper_target_restores_network_hook_and_original_environment[command]",
+      "tests/core/execution/test_custody_broker.py::test_isolated_wrapper_target_restores_network_hook_and_original_environment[engine]",
+      "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-False]",
+      "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-True]",
+      "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-False]",
+      "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-True]",
+      "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-False]",
+      "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-True]",
+      "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_cannot_close_unproved_real_attempt[observation]",
+      "tests/core/rendering/test_installed_registry_security.py::test_installed_native_readiness_context_must_match_projected_context",
+      "tests/core/rendering/test_installed_registry_security.py::test_installed_actual_worker_environment_matches_launch_projection[command]"
     ],
     "fixture-declared-gap": [
       "tests/editing_conformance/test_compile_contracts.py::test_audio_vector[fade-in-needs-prepared-envelope-source]",
@@ -280,7 +284,6 @@
       "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins"
     ],
     "profile-fixture": [
-      "tests/packs/rendering/test_remotion_backend.py::test_manifest_command_runs_from_owning_pack_root",
       "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_registry_generation_regenerates_when_generated_output_is_missing",
       "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_registry_generation_regenerates_when_state_hash_differs",
       "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_registry_generation_uses_pack_registry_and_composition_env",
@@ -422,24 +425,40 @@
     {
       "outcome": "failed",
       "node": "tests/core/execution/test_custody_broker.py::test_isolated_wrapper_target_restores_network_hook_and_original_environment[command]",
-      "group": "child-import-or-recipe",
-      "classification": "environment_recipe_blocker",
+      "group": "custody-process-assertion",
+      "classification": "source_backed_direct_custody_or_process_assertion",
       "status": "unconfirmed",
-      "owner": "Full-suite recipe/child environment owner",
-      "source": "terminal traceback for this node",
-      "evidence": "predominant trace is ModuleNotFoundError: runtime_protocol, missing result.json after child failure, or missing profile/binding",
-      "missing_fact": "node-specific child stderr and the exact effective child environment; terminal summary alone cannot prove a product regression"
+      "owner": "childenv1454 (LIVE); owning source handoff",
+      "source": "custody_broker.py:child_exec_from_environment",
+      "evidence": "raw-terminal.log:1972-2028; denied=False (expected True)",
+      "missing_fact": "Node-specific child/process trace and owning-source acceptance checks are missing; this trace does not establish environment-wide causality or a new regression.",
+      "handoff": {
+        "raw_trace": "raw-terminal.log:1972-2028; denied=False (expected True)",
+        "source_function": "custody_broker.py:child_exec_from_environment",
+        "owned_allowed_files": [
+          "astrid/core/execution/custody_broker.py"
+        ],
+        "acceptance_brief": "allow first endpoint, deny second with NetworkPolicyError, clear custody keys, preserve role-specific engine fd, exit 0; capture child stderr/env"
+      }
     },
     {
       "outcome": "failed",
       "node": "tests/core/execution/test_custody_broker.py::test_isolated_wrapper_target_restores_network_hook_and_original_environment[engine]",
-      "group": "child-import-or-recipe",
-      "classification": "environment_recipe_blocker",
+      "group": "custody-process-assertion",
+      "classification": "source_backed_direct_custody_or_process_assertion",
       "status": "unconfirmed",
-      "owner": "Full-suite recipe/child environment owner",
-      "source": "terminal traceback for this node",
-      "evidence": "predominant trace is ModuleNotFoundError: runtime_protocol, missing result.json after child failure, or missing profile/binding",
-      "missing_fact": "node-specific child stderr and the exact effective child environment; terminal summary alone cannot prove a product regression"
+      "owner": "childenv1454 (LIVE); owning source handoff",
+      "source": "custody_broker.py:child_exec_from_environment",
+      "evidence": "raw-terminal.log:2031-2087; denied=False (expected True), engine_fd=False",
+      "missing_fact": "Node-specific child/process trace and owning-source acceptance checks are missing; this trace does not establish environment-wide causality or a new regression.",
+      "handoff": {
+        "raw_trace": "raw-terminal.log:2031-2087; denied=False (expected True), engine_fd=False",
+        "source_function": "custody_broker.py:child_exec_from_environment",
+        "owned_allowed_files": [
+          "astrid/core/execution/custody_broker.py"
+        ],
+        "acceptance_brief": "allow first endpoint, deny second with NetworkPolicyError, clear custody keys, preserve engine_fd=True, exit 0; capture child stderr/env"
+      }
     },
     {
       "outcome": "failed",
@@ -1060,79 +1079,140 @@
     {
       "outcome": "failed",
       "node": "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-False]",
-      "group": "child-import-or-recipe",
-      "classification": "environment_recipe_blocker",
+      "group": "custody-process-assertion",
+      "classification": "source_backed_direct_custody_or_process_assertion",
       "status": "unconfirmed",
-      "owner": "Full-suite recipe/child environment owner",
-      "source": "terminal traceback for this node",
-      "evidence": "predominant trace is ModuleNotFoundError: runtime_protocol, missing result.json after child failure, or missing profile/binding",
-      "missing_fact": "node-specific child stderr and the exact effective child environment; terminal summary alone cannot prove a product regression"
+      "owner": "childenv1454 (LIVE); owning source handoff",
+      "source": "generic_host.py:_run_command_definition, _observe_owned_review_session, _retire_owned_review_session",
+      "evidence": "raw-terminal.log:12988-13035; line 1497: observed=[] and active process unsettled",
+      "missing_fact": "Node-specific child/process trace and owning-source acceptance checks are missing; this trace does not establish environment-wide causality or a new regression.",
+      "handoff": {
+        "raw_trace": "raw-terminal.log:12988-13035; line 1497: observed=[] and active process unsettled",
+        "source_function": "generic_host.py:_run_command_definition, _observe_owned_review_session, _retire_owned_review_session",
+        "owned_allowed_files": [
+          "astrid/core/execution/generic_host.py"
+        ],
+        "acceptance_brief": "keep_attempt=True/drift=False: launch owned receiver, observe one URL, cancel, settle process/scope, retain attempt; capture child launch/marker"
+      }
     },
     {
       "outcome": "failed",
       "node": "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-True]",
-      "group": "child-import-or-recipe",
-      "classification": "environment_recipe_blocker",
+      "group": "custody-process-assertion",
+      "classification": "source_backed_direct_custody_or_process_assertion",
       "status": "unconfirmed",
-      "owner": "Full-suite recipe/child environment owner",
-      "source": "terminal traceback for this node",
-      "evidence": "predominant trace is ModuleNotFoundError: runtime_protocol, missing result.json after child failure, or missing profile/binding",
-      "missing_fact": "node-specific child stderr and the exact effective child environment; terminal summary alone cannot prove a product regression"
+      "owner": "childenv1454 (LIVE); owning source handoff",
+      "source": "generic_host.py:_run_command_definition, _observe_owned_review_session, _retire_owned_review_session",
+      "evidence": "raw-terminal.log:13036-13083; line 1497: observed=[] and active process unsettled",
+      "missing_fact": "Node-specific child/process trace and owning-source acceptance checks are missing; this trace does not establish environment-wide causality or a new regression.",
+      "handoff": {
+        "raw_trace": "raw-terminal.log:13036-13083; line 1497: observed=[] and active process unsettled",
+        "source_function": "generic_host.py:_run_command_definition, _observe_owned_review_session, _retire_owned_review_session",
+        "owned_allowed_files": [
+          "astrid/core/execution/generic_host.py"
+        ],
+        "acceptance_brief": "keep_attempt=True/drift=True: observe one URL, raise HostError on foreign descriptor drift, preserve marker, settle process/scope; capture child launch/marker"
+      }
     },
     {
       "outcome": "failed",
       "node": "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-False]",
-      "group": "child-import-or-recipe",
-      "classification": "environment_recipe_blocker",
+      "group": "custody-process-assertion",
+      "classification": "source_backed_direct_custody_or_process_assertion",
       "status": "unconfirmed",
-      "owner": "Full-suite recipe/child environment owner",
-      "source": "terminal traceback for this node",
-      "evidence": "predominant trace is ModuleNotFoundError: runtime_protocol, missing result.json after child failure, or missing profile/binding",
-      "missing_fact": "node-specific child stderr and the exact effective child environment; terminal summary alone cannot prove a product regression"
+      "owner": "childenv1454 (LIVE); owning source handoff",
+      "source": "generic_host.py:GenericPackHost.run_task, GenericPackHost.shutdown, _ManagedTaskAdapter",
+      "evidence": "raw-terminal.log:13084-13133; lines 1768-1770: shutdown-entered absent",
+      "missing_fact": "Node-specific child/process trace and owning-source acceptance checks are missing; this trace does not establish environment-wide causality or a new regression.",
+      "handoff": {
+        "raw_trace": "raw-terminal.log:13084-13133; lines 1768-1770: shutdown-entered absent",
+        "source_function": "generic_host.py:GenericPackHost.run_task, GenericPackHost.shutdown, _ManagedTaskAdapter",
+        "owned_allowed_files": [
+          "astrid/core/execution/generic_host.py",
+          "astrid/core/execution/process_group.py"
+        ],
+        "acceptance_brief": "shared_accounting=False/keep_attempt=False: start worker, observe marker, settle one process, cancelled=True/no failures, clear scopes, remove attempt"
+      }
     },
     {
       "outcome": "failed",
       "node": "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-True]",
-      "group": "child-import-or-recipe",
-      "classification": "environment_recipe_blocker",
+      "group": "custody-process-assertion",
+      "classification": "source_backed_direct_custody_or_process_assertion",
       "status": "unconfirmed",
-      "owner": "Full-suite recipe/child environment owner",
-      "source": "terminal traceback for this node",
-      "evidence": "predominant trace is ModuleNotFoundError: runtime_protocol, missing result.json after child failure, or missing profile/binding",
-      "missing_fact": "node-specific child stderr and the exact effective child environment; terminal summary alone cannot prove a product regression"
+      "owner": "childenv1454 (LIVE); owning source handoff",
+      "source": "generic_host.py:GenericPackHost.run_task, GenericPackHost.shutdown, _ManagedTaskAdapter",
+      "evidence": "raw-terminal.log:13134-13183; lines 1768-1770: shutdown-entered absent",
+      "missing_fact": "Node-specific child/process trace and owning-source acceptance checks are missing; this trace does not establish environment-wide causality or a new regression.",
+      "handoff": {
+        "raw_trace": "raw-terminal.log:13134-13183; lines 1768-1770: shutdown-entered absent",
+        "source_function": "generic_host.py:GenericPackHost.run_task, GenericPackHost.shutdown, _ManagedTaskAdapter",
+        "owned_allowed_files": [
+          "astrid/core/execution/generic_host.py",
+          "astrid/core/execution/process_group.py"
+        ],
+        "acceptance_brief": "shared_accounting=False/keep_attempt=True: start worker, observe marker, settle process, cancelled=True/no failures, clear scopes, retain attempt"
+      }
     },
     {
       "outcome": "failed",
       "node": "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-False]",
-      "group": "child-import-or-recipe",
-      "classification": "environment_recipe_blocker",
+      "group": "custody-process-assertion",
+      "classification": "source_backed_direct_custody_or_process_assertion",
       "status": "unconfirmed",
-      "owner": "Full-suite recipe/child environment owner",
-      "source": "terminal traceback for this node",
-      "evidence": "predominant trace is ModuleNotFoundError: runtime_protocol, missing result.json after child failure, or missing profile/binding",
-      "missing_fact": "node-specific child stderr and the exact effective child environment; terminal summary alone cannot prove a product regression"
+      "owner": "childenv1454 (LIVE); owning source handoff",
+      "source": "generic_host.py:GenericPackHost.run_task, GenericPackHost.shutdown, _ManagedTaskAdapter",
+      "evidence": "raw-terminal.log:13184-13233; lines 1768-1770: shutdown-entered absent",
+      "missing_fact": "Node-specific child/process trace and owning-source acceptance checks are missing; this trace does not establish environment-wide causality or a new regression.",
+      "handoff": {
+        "raw_trace": "raw-terminal.log:13184-13233; lines 1768-1770: shutdown-entered absent",
+        "source_function": "generic_host.py:GenericPackHost.run_task, GenericPackHost.shutdown, _ManagedTaskAdapter",
+        "owned_allowed_files": [
+          "astrid/core/execution/generic_host.py",
+          "astrid/core/execution/process_group.py"
+        ],
+        "acceptance_brief": "shared_accounting=True/keep_attempt=False: start through claim slot, observe marker, settle process, cancelled=True/no failures, clear scopes, remove attempt"
+      }
     },
     {
       "outcome": "failed",
       "node": "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-True]",
-      "group": "child-import-or-recipe",
-      "classification": "environment_recipe_blocker",
+      "group": "custody-process-assertion",
+      "classification": "source_backed_direct_custody_or_process_assertion",
       "status": "unconfirmed",
-      "owner": "Full-suite recipe/child environment owner",
-      "source": "terminal traceback for this node",
-      "evidence": "predominant trace is ModuleNotFoundError: runtime_protocol, missing result.json after child failure, or missing profile/binding",
-      "missing_fact": "node-specific child stderr and the exact effective child environment; terminal summary alone cannot prove a product regression"
+      "owner": "childenv1454 (LIVE); owning source handoff",
+      "source": "generic_host.py:GenericPackHost.run_task, GenericPackHost.shutdown, _ManagedTaskAdapter",
+      "evidence": "raw-terminal.log:13234-13283; lines 1768-1770: shutdown-entered absent",
+      "missing_fact": "Node-specific child/process trace and owning-source acceptance checks are missing; this trace does not establish environment-wide causality or a new regression.",
+      "handoff": {
+        "raw_trace": "raw-terminal.log:13234-13283; lines 1768-1770: shutdown-entered absent",
+        "source_function": "generic_host.py:GenericPackHost.run_task, GenericPackHost.shutdown, _ManagedTaskAdapter",
+        "owned_allowed_files": [
+          "astrid/core/execution/generic_host.py",
+          "astrid/core/execution/process_group.py"
+        ],
+        "acceptance_brief": "shared_accounting=True/keep_attempt=True: start through claim slot, observe marker, settle process, cancelled=True/no failures, clear scopes, retain attempt"
+      }
     },
     {
       "outcome": "failed",
       "node": "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_cannot_close_unproved_real_attempt[observation]",
-      "group": "child-import-or-recipe",
-      "classification": "environment_recipe_blocker",
+      "group": "custody-process-assertion",
+      "classification": "source_backed_direct_custody_or_process_assertion",
       "status": "unconfirmed",
-      "owner": "Full-suite recipe/child environment owner",
-      "source": "terminal traceback for this node",
-      "evidence": "predominant trace is ModuleNotFoundError: runtime_protocol, missing result.json after child failure, or missing profile/binding",
-      "missing_fact": "node-specific child stderr and the exact effective child environment; terminal summary alone cannot prove a product regression"
+      "owner": "childenv1454 (LIVE); owning source handoff",
+      "source": "generic_host.py:GenericPackHost.run_task, GenericPackHost.shutdown; process_group.py:verify_tree_absent",
+      "evidence": "raw-terminal.log:13284-13332; line 1816: uncertain-shutdown-entered absent",
+      "missing_fact": "Node-specific child/process trace and owning-source acceptance checks are missing; this trace does not establish environment-wide causality or a new regression.",
+      "handoff": {
+        "raw_trace": "raw-terminal.log:13284-13332; line 1816: uncertain-shutdown-entered absent",
+        "source_function": "generic_host.py:GenericPackHost.run_task, GenericPackHost.shutdown; process_group.py:verify_tree_absent",
+        "owned_allowed_files": [
+          "astrid/core/execution/generic_host.py",
+          "astrid/core/execution/process_group.py"
+        ],
+        "acceptance_brief": "start real attempt, prove tree before shutdown, refuse unsafe closure with CleanupUncertainError; retain evidence"
+      }
     },
     {
       "outcome": "failed",
@@ -1489,13 +1569,22 @@
     {
       "outcome": "failed",
       "node": "tests/core/rendering/test_installed_registry_security.py::test_installed_native_readiness_context_must_match_projected_context",
-      "group": "child-import-or-recipe",
-      "classification": "environment_recipe_blocker",
+      "group": "custody-process-assertion",
+      "classification": "source_backed_direct_custody_or_process_assertion",
       "status": "unconfirmed",
-      "owner": "Full-suite recipe/child environment owner",
-      "source": "terminal traceback for this node",
-      "evidence": "predominant trace is ModuleNotFoundError: runtime_protocol, missing result.json after child failure, or missing profile/binding",
-      "missing_fact": "node-specific child stderr and the exact effective child environment; terminal summary alone cannot prove a product regression"
+      "owner": "childenv1454 (LIVE); owning source handoff",
+      "source": "generic_host.py:_child_environment, _launch_worker_probe_environments; remotion_runtime.py:_registry_context",
+      "evidence": "raw-terminal.log:14790-14828; line 97: unexpected ASTRID_TIMELINE_SCHEMA_PYTHONPATH, context not projected",
+      "missing_fact": "Node-specific child/process trace and owning-source acceptance checks are missing; this trace does not establish environment-wide causality or a new regression.",
+      "handoff": {
+        "raw_trace": "raw-terminal.log:14790-14828; line 97: unexpected ASTRID_TIMELINE_SCHEMA_PYTHONPATH, context not projected",
+        "source_function": "generic_host.py:_child_environment, _launch_worker_probe_environments; remotion_runtime.py:_registry_context",
+        "owned_allowed_files": [
+          "astrid/core/execution/generic_host.py",
+          "astrid/core/rendering/remotion_runtime.py"
+        ],
+        "acceptance_brief": "installed native readiness: observed registry context equals projected context, schema Pythonpath consistent, isolation preserved; capture env/context"
+      }
     },
     {
       "outcome": "failed",
@@ -1511,277 +1600,286 @@
     {
       "outcome": "failed",
       "node": "tests/core/rendering/test_installed_registry_security.py::test_installed_actual_worker_environment_matches_launch_projection[command]",
-      "group": "child-import-or-recipe",
-      "classification": "environment_recipe_blocker",
+      "group": "custody-process-assertion",
+      "classification": "source_backed_direct_custody_or_process_assertion",
       "status": "unconfirmed",
-      "owner": "Full-suite recipe/child environment owner",
-      "source": "terminal traceback for this node",
-      "evidence": "predominant trace is ModuleNotFoundError: runtime_protocol, missing result.json after child failure, or missing profile/binding",
-      "missing_fact": "node-specific child stderr and the exact effective child environment; terminal summary alone cannot prove a product regression"
+      "owner": "childenv1454 (LIVE); owning source handoff",
+      "source": "generic_host.py:_child_environment, _run_command_definition; remotion_runtime.py:_registry_context",
+      "evidence": "raw-terminal.log:14870-14924; line 265: unexpected ASTRID_TIMELINE_SCHEMA_PYTHONPATH versus projection",
+      "missing_fact": "Node-specific child/process trace and owning-source acceptance checks are missing; this trace does not establish environment-wide causality or a new regression.",
+      "handoff": {
+        "raw_trace": "raw-terminal.log:14870-14924; line 265: unexpected ASTRID_TIMELINE_SCHEMA_PYTHONPATH versus projection",
+        "source_function": "generic_host.py:_child_environment, _run_command_definition; remotion_runtime.py:_registry_context",
+        "owned_allowed_files": [
+          "astrid/core/execution/generic_host.py",
+          "astrid/core/rendering/remotion_runtime.py"
+        ],
+        "acceptance_brief": "installed command worker: actual probe/registry contexts equal projection, no PYTHONPATH or ASTRID_PACKS_PATH leakage; capture envs"
+      }
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_backend.py::test_manifest_command_runs_from_owning_pack_root",
-      "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
-      "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "group": "child-import-or-recipe",
+      "classification": "environment_recipe_blocker",
+      "status": "unconfirmed",
+      "owner": "childenv1454 (LIVE); remotion pack-root environment owner",
+      "source": "tests/packs/rendering/test_remotion_backend.py::test_manifest_command_runs_from_owning_pack_root",
+      "evidence": "raw-terminal.log:14927-14960 and 22648; owning-pack-root child reports ModuleNotFoundError: runtime_protocol",
+      "missing_fact": "Child stderr, effective child environment, and whether owning-pack-root command receives qualified Runtime3b protocol path."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_registry_generation_regenerates_when_generated_output_is_missing",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_registry_generation_regenerates_when_state_hash_differs",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_registry_generation_uses_pack_registry_and_composition_env",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_remotion_render_env_is_explicit_not_host_inherited",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_render_provenance_matches_registry_and_local_overlay_discovery",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_render_regenerates_registries_before_remotion_and_writes_props",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_render_registry_cache_tracks_element_edits_and_missing_outputs",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_render_removes_staged_assets_and_props_after_remotion_failure",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_backend.py::RemotionBackendRegistryGenerationTest::test_render_stages_only_used_effect_assets_and_removes_them_after_success",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_layer_tail_compat.py::test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_layer_tail_compat.py::test_fully_covered_pre_tail_root_callback_accepts_native_extent",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_layer_tail_compat.py::test_ordinary_full_tail_and_no_clock_controls_remain_distinct",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_layer_tail_compat.py::test_legacy_service_keeps_covered_pre_tail_output[0-30]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_layer_tail_compat.py::test_legacy_service_keeps_covered_pre_tail_output[150-165]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_layer_tail_compat.py::test_middle_pre_tail_window_keeps_absolute_clips_and_tail_outside_output",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_layer_tail_compat.py::test_unlayered_original_clock_native_windows_unchanged[0-30]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_layer_tail_compat.py::test_unlayered_original_clock_native_windows_unchanged[150-165]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_layer_tail_compat.py::test_unlayered_original_clock_native_windows_unchanged[300-330]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_layer_tail_compat.py::test_support_and_locked_props_keep_pre_tail_positive[0-30]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_layer_tail_compat.py::test_support_and_locked_props_keep_pre_tail_positive[150-165]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_typecheck_mappings.py::test_every_scope_the_generator_emits_is_declared_and_mapped[effects]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_typecheck_mappings.py::test_every_scope_the_generator_emits_is_declared_and_mapped[animations]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
       "node": "tests/packs/rendering/test_remotion_typecheck_mappings.py::test_every_scope_the_generator_emits_is_declared_and_mapped[transitions]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_remotion_backend.py; test_remotion_layer_tail_compat.py; test_remotion_typecheck_mappings.py",
-      "evidence": "profile is locked at composition 0.0.14 while backend expects 0.0.13; legacy layer chunk is absent; @banodoco type mappings are unmapped",
-      "missing_fact": "whether profile lock/archive and these test expectations are meant to be qualified together"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "failed",
@@ -2436,155 +2534,155 @@
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_real_plate_background_picture_and_gap[False]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_real_plate_background_picture_and_gap[True]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_empty_raw_plate_stays_unknown",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_registered_plate_ssr_preserves_existing_draw_and_default_theme",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_managed_transparent_image_has_opaque_backing_without_media_alpha_proof",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_real_plate_fade_dip_and_translucent_gap",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_real_plate_wipe_mosaic_pan_and_tint_keep_the_painted_backing",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params0]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params1]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params2]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params3]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer0]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer1]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
       "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer2]",
       "group": "profile-fixture",
-      "classification": "environment_profile_fixture_mismatch",
-      "status": "existing_profile_fixture_mismatch_not_product_regression",
-      "owner": "Composition/profile qualification",
+      "classification": "causal_profile_oracle_mismatch",
+      "status": "unconfirmed",
+      "owner": "profile1454 (LIVE)",
       "source": "tests/packs/rendering/test_am_snap_plate_scene_capability.py:47",
-      "evidence": "asserted installed package file count 77; locked profile supplied 80",
-      "missing_fact": "whether the locked 0.0.14 profile is the intended qualification fixture or the test expectation must be refreshed"
+      "evidence": "Run-local profile/oracle mismatch across 37 nodes: archive 80 vs expected 77 (14), composition 0.0.14 vs 0.0.13 (9), missing chunk-SE4TPVLW.js (11), unmapped generated scopes (3). This does not prove pre-existing or non-regression behavior.",
+      "missing_fact": "Causal qualification of the locked profile against the oracle on actual 8c355; do not treat this mismatch as pre-existing."
     },
     {
       "outcome": "error",
@@ -2614,5 +2712,83 @@
     "No source classification is promoted to a proven new regression: actual snapshot 8c355 differs from readonly comparison base 58316, and current terminal traces include environment/profile/fixture failures.",
     "Prior 1416 live markers and prior 4249 inventory are comparison context only; this terminal result is authoritative for current failure/error nodes.",
     "No test suite was invoked by this worker."
-  ]
+  ],
+  "review_return": {
+    "decision": "classification FAIL; exact 204-node inventory PASS separately",
+    "updated_from": "agent-F-D22-terminal-classify-1442",
+    "preserved_identity": {
+      "service": "agt-F-D22-full-1342-full-current-v3-1229-1023134453-10679",
+      "agent_commit": "8c355a48e4cc2a8ec9d5ed6873a585d2540a2dbe",
+      "agent_tree": "c4d72b065d6e68c92e4335120cc016cadf53b06a",
+      "runtime": "3b926efab2eed122d374540baee297d4cdcec62a",
+      "profile": "agent-remotion-v3-819acf-1110",
+      "profile_archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+      "raw_terminal_sha256": "e0036c850d1a7b7c78d14e3d287350795ccb8c4b03c9cd30103d9f8b9a3c60a5"
+    },
+    "exact_groups_counts": {
+      "child-probe": 17,
+      "child-import-or-recipe": 87,
+      "custody-process-assertion": 11,
+      "fixture-declared-gap": 2,
+      "g5-inverse": 23,
+      "profile-fixture": 37,
+      "child-import": 9,
+      "d13-preflight": 1,
+      "r1-private": 7,
+      "g5-publisher": 2,
+      "g5-schema": 2,
+      "r3-docs": 1,
+      "d09-probe": 3,
+      "r5-retired-route": 2
+    },
+    "custody_process_assertion": {
+      "count": 11,
+      "status": "source-backed assertion mismatch, unconfirmed causal ownership",
+      "owner": "childenv1454 (LIVE) with owning source owners",
+      "nodes": [
+        "tests/core/execution/test_custody_broker.py::test_isolated_wrapper_target_restores_network_hook_and_original_environment[command]",
+        "tests/core/execution/test_custody_broker.py::test_isolated_wrapper_target_restores_network_hook_and_original_environment[engine]",
+        "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-False]",
+        "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-True]",
+        "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-False]",
+        "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-True]",
+        "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-False]",
+        "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-True]",
+        "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_cannot_close_unproved_real_attempt[observation]",
+        "tests/core/rendering/test_installed_registry_security.py::test_installed_native_readiness_context_must_match_projected_context",
+        "tests/core/rendering/test_installed_registry_security.py::test_installed_actual_worker_environment_matches_launch_projection[command]"
+      ]
+    },
+    "environment_reclassification": {
+      "child_import_or_recipe_count": 87,
+      "old_environment_trace_nodes_remaining": 86,
+      "moved_from_profile": "tests/packs/rendering/test_remotion_backend.py::test_manifest_command_runs_from_owning_pack_root",
+      "owner": "childenv1454 (LIVE)"
+    },
+    "profile_mismatch": {
+      "count": 37,
+      "status": "UNCONFIRMED causal profile/oracle mismatch",
+      "owner": "profile1454 (LIVE)",
+      "archive_80_vs_77": 14,
+      "composition_0_0_14_vs_0_0_13": 9,
+      "missing_chunk_SE4TPVLW": 11,
+      "unmapped_generated_scopes": 3,
+      "guardrail": "Never label these pre-existing, non-regression, deferred, or PASS from this service."
+    },
+    "guardrails": {
+      "terminal_result": "FAIL; exit 1; 185 failed, 16733 passed, 4 skipped, 19 errors, 86 warnings, 565 passed subtests",
+      "skips": "count 4; identities unavailable; no xfail/xpass or deselection identities retained",
+      "d14_nodes_exercised": [],
+      "d23_nodes_exercised": [],
+      "new_deferred_or_pass_claim": false,
+      "comparison_base": "58316fd6e0ce8a1fb3b2b3826ec71906d29080de",
+      "comparison_rule": "8c355 actual run snapshot remains distinct from Base583; compare own source only where causal, and no source change is inferred by this handoff.",
+      "live_handoffs": [
+        "childenv1454",
+        "profile1454",
+        "inventory1456",
+        "existing inverse/private owners"
+      ]
+    }
+  }
 }
