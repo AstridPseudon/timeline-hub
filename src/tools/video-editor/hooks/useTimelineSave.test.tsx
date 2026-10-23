@@ -8,7 +8,8 @@ import { useTimelineSave } from './useTimelineSave';
 import { VideoEditorRuntimeProvider } from '../contexts/VideoEditorRuntimeContext';
 import { createTimelineStore } from './timelineStore';
 import { createInteractionState, type InteractionStateRef } from '../lib/interaction-state';
-import { configToRows, type TimelineData } from '../lib/timeline-data';
+import { buildTimelineData, configToRows, type TimelineData } from '../lib/timeline-data';
+import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { getConfigSignature, getStableConfigSignature } from '../lib/config-utils';
 import { createDefaultTimelineConfig } from '../lib/defaults';
 import { TimelineVersionConflictError, type DataProvider } from '../data/DataProvider';
@@ -70,6 +71,7 @@ interface SetupResult {
 function setup(
   saveTimelineImpl: DataProvider['saveTimeline'],
   timelineEditability?: TimelineEditability,
+  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis'] },
 ): SetupResult {
   const saveTimeline = vi.fn(saveTimelineImpl);
   const provider: DataProvider = {
@@ -78,6 +80,7 @@ function setup(
     loadAssetRegistry: vi.fn(async () => ({ assets: {} })),
     saveTimeline,
     resolveAssetUrl: vi.fn(async (file: string) => file),
+    ...(original ? { loadTimelineCommandBasis: original.loadBasis } : {}),
   };
   const queries = {
     timelineQuery: { data: undefined, isLoading: false },
@@ -107,7 +110,7 @@ function setup(
     </QueryClientProvider>
   );
   const hook = renderHook(
-    () => useTimelineSave(queries, provider, interactionStateRef, store),
+    () => useTimelineSave(queries, provider, interactionStateRef, store, original?.data),
     { wrapper },
   );
   return { hook, saveTimeline };
@@ -139,6 +142,44 @@ describe('useTimelineSave — recovered draft durability', () => {
   afterEach(() => {
     vi.clearAllTimers();
     vi.useRealTimers();
+  });
+
+  it.each(['original', 'head moved', 'edited during read'])('stages the original verified closure in the real mounted hook (%s)', async (kind) => {
+    const head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
+    const config = createDefaultTimelineConfig();
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+      { timelineId: 'timeline-1' }).data.canonical_document;
+    document.parent_revision.payload = { config, clips: [], registry: { assets: {} }, occurrences: [], opaque: { keep: null } };
+    document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+    const data = await buildTimelineData(config, { assets: {} }, undefined, 1, undefined, head);
+    const basis = { head: { revisionId: kind === 'head moved' ? 'newer-r' : 'r0', publicationId: kind === 'head moved' ? 'newer-p' : 'p0' }, canonicalDocument: document };
+    let finishRead!: (value: typeof basis) => void;
+    const loadBasis = vi.fn(() => kind === 'edited during read'
+      ? new Promise<typeof basis>((resolve) => { finishRead = resolve; }) : Promise.resolve(basis));
+    const harness = setup(async () => 2, undefined, { data, loadBasis });
+    await settleInitialRecoveryCheck();
+    if (kind === 'edited during read') {
+      const edited = await buildTimelineData({ ...config, clips: [{ id: 'new', track: 'V1', at: 0, hold: 1 }] },
+        { assets: {} }, undefined, 1, undefined, head);
+      act(() => harness.hook.result.current.commitData(edited));
+      await act(async () => { finishRead(basis); });
+      expect(harness.hook.result.current.originalLocalSaveBasis).toMatchObject({ status: 'unavailable', reason: expect.stringContaining('Local edits preceded completion') });
+      expect(harness.hook.result.current.dataRef.current?.config).toEqual(edited.config);
+    } else if (kind === 'head moved') {
+      expect(harness.hook.result.current.originalLocalSaveBasis).toMatchObject({ status: 'unavailable', reason: expect.stringContaining('original verified authoring head') });
+    } else {
+      expect(harness.hook.result.current.originalLocalSaveBasis).toMatchObject({ status: 'ready', value: {
+        initial: basis, source: { config: data.config, head },
+        authoringBundle: { source_mapping: { _runtime_document: document } },
+      } });
+    }
+    expect(loadBasis).toHaveBeenCalledExactlyOnceWith('timeline-1');
+    expect(harness.saveTimeline).not.toHaveBeenCalled();
+    if (kind === 'edited during read') {
+      // Finish this test's actual pending draft/save before the next mount.
+      await act(async () => { await harness.hook.result.current.flushPendingSave(); });
+    }
+    harness.hook.unmount();
   });
 
   it('passes the exact owned registration target through the existing durable save pipeline', async () => {

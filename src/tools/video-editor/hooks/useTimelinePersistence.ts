@@ -36,6 +36,7 @@ import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/i
 import type { CommitDataOptions, ScheduleSaveFn } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
 import { isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
+import type { TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
 
 export type SaveStatus = 'saved' | 'saving' | 'dirty' | 'retrying' | 'error';
 
@@ -102,6 +103,8 @@ interface UseTimelinePersistenceOptions {
   lastSavedSignatureRef: MutableRefObject<string>;
   interactionStateRef: InteractionStateRef;
   onCanonicalReloadStart?: () => void;
+  /** Original verified assembly + durable session; supplied only after the generated v2 join. */
+  localDocumentSave?: TimelineLocalSaveHandoff;
 }
 
 export type TimelineSaveTarget = Readonly<{ session: object; timelineId: string; targetSeq: number; generation: number }>;
@@ -120,6 +123,7 @@ export class TimelineSaveBarrierError extends Error {
 interface PersistenceSession {
   identity: object;
   provider: DataProvider;
+  localDocumentSave?: TimelineLocalSaveHandoff;
   timelineId: string;
   dataRef: MutableRefObject<TimelineData | null>;
   editSeqRef: MutableRefObject<number>;
@@ -150,6 +154,7 @@ interface ScheduledSave {
   wireBundle: TimelineBundleEnvelope | null | undefined;
   /** Waits for a queued descendant's draft base to advance before sending it. */
   baseHeadAdvance?: Promise<void>;
+  localCapture?: Promise<void>;
 }
 
 interface DeferredRecoverySave {
@@ -245,6 +250,7 @@ export function useTimelinePersistence({
   lastSavedSignatureRef,
   interactionStateRef,
   onCanonicalReloadStart,
+  localDocumentSave,
 }: UseTimelinePersistenceOptions): UseTimelinePersistenceResult {
   const fallbackHeadRevisionRef = useRef(dataRef.current?.head);
   const headRevisionRef = suppliedHeadRevisionRef ?? fallbackHeadRevisionRef;
@@ -276,9 +282,10 @@ export function useTimelinePersistence({
   const errorRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errorRetrySessionRef = useRef<PersistenceSession | null>(null);
   const isMountedRef = useRef(true);
-  const activeTargetRef = useRef<PersistenceSession>({ identity: {}, provider, timelineId, dataRef, editSeqRef, savedSeqRef, configVersionRef, acknowledgedSeq: savedSeqRef.current, generation: 0, uncertainThroughSeq: -1, activeAttempts: new Set(), cancelledRanges: [] });
+  const activeTargetRef = useRef<PersistenceSession>({ identity: {}, provider, localDocumentSave, timelineId, dataRef, editSeqRef, savedSeqRef, configVersionRef, acknowledgedSeq: savedSeqRef.current, generation: 0, uncertainThroughSeq: -1, activeAttempts: new Set(), cancelledRanges: [] });
   if (
     activeTargetRef.current.provider !== provider
+    || activeTargetRef.current.localDocumentSave !== localDocumentSave
     || activeTargetRef.current.timelineId !== timelineId
     || activeTargetRef.current.dataRef !== dataRef
     || activeTargetRef.current.editSeqRef !== editSeqRef
@@ -287,7 +294,7 @@ export function useTimelinePersistence({
   ) {
     // Object identity also protects an A -> B -> A replacement: an old
     // request's receipt must never acknowledge the new session's sequence.
-    activeTargetRef.current = { identity: {}, provider, timelineId, dataRef, editSeqRef, savedSeqRef, configVersionRef, acknowledgedSeq: -1, generation: 0, uncertainThroughSeq: -1, activeAttempts: new Set(), cancelledRanges: [] };
+    activeTargetRef.current = { identity: {}, provider, localDocumentSave, timelineId, dataRef, editSeqRef, savedSeqRef, configVersionRef, acknowledgedSeq: -1, generation: 0, uncertainThroughSeq: -1, activeAttempts: new Set(), cancelledRanges: [] };
   }
   const session = activeTargetRef.current;
   const issuedFailuresRef = useRef(new WeakSet<TimelineSaveBarrierError>());
@@ -384,6 +391,7 @@ export function useTimelinePersistence({
       attemptProvider,
       attemptTimelineId,
       traceId,
+      documentSave,
     }: {
       config: TimelineConfig;
       expectedVersion: number;
@@ -394,9 +402,10 @@ export function useTimelinePersistence({
       bundle?: TimelineBundleEnvelope | null;
       attemptProvider: DataProvider;
       attemptTimelineId: string;
+      documentSave?: TimelineLocalSaveHandoff;
     }) => {
       attemptProvider.setShotTimelineTraceId?.(traceId);
-      const saved: Promise<number | TimelineSaveReceipt> = attemptProvider.saveTimelineAtHead
+      const saved: Promise<number | TimelineSaveReceipt> = documentSave ? documentSave.flush() : attemptProvider.saveTimelineAtHead
         ? expectedHead
           ? attemptProvider.saveTimelineAtHead(attemptTimelineId, config, expectedHead, registry, bundle)
           : Promise.reject(new TimelineVersionConflictError('Timeline draft has unknown head provenance; resolve or discard it before saving.'))
@@ -663,6 +672,7 @@ export function useTimelinePersistence({
 
     attempt.session.activeAttempts.add(attempt);
     try {
+      await attempt.localCapture;
       await saveMutation.mutateAsync(
         {
           config: attempt.config,
@@ -673,6 +683,7 @@ export function useTimelinePersistence({
           attemptProvider: attempt.provider,
           attemptTimelineId: attempt.timelineId,
           traceId: attempt.traceId,
+          documentSave: attempt.session.localDocumentSave,
         },
         {
           onSuccess: (receipt) => {
@@ -989,6 +1000,12 @@ export function useTimelinePersistence({
       ));
     draftWriteChainRef.current = draftWrite;
     void draftWrite.catch(() => {});
+    // Capture every local document before debounce coalescing. Transport retries
+    // reuse this capture and the session's exact durable request, not newer data.
+    const localCapture = session.localDocumentSave?.capture({
+      ...draft, bundle: wireBundle, head: head ? cloneAttemptValue(head) : undefined,
+    });
+    void localCapture?.catch(() => {});
     const scheduledSave: ScheduledSave = {
       session,
       generation: session.generation,
@@ -1001,6 +1018,7 @@ export function useTimelinePersistence({
       baseHead: head ? cloneAttemptValue(head) : undefined,
       effectiveBundle,
       wireBundle,
+      localCapture,
     };
     latestScheduledSaveRef.current = scheduledSave;
     return scheduledSave;

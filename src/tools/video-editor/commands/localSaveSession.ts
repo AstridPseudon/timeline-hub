@@ -2,6 +2,7 @@ import type { CommitRequest } from '@/integrations/runtime/timeline-commit-types
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
+import { documentPatchIntent } from './documentPatchIntent.ts';
 import {
   createCommitOutbox,
   toOutboxJson,
@@ -19,7 +20,7 @@ export interface LocalSave {
   commands?: CommitRequest['commands'];
 }
 
-type StoredSave = LocalSave & { kind: 'local-save'; displayBasis: TimelineCommandBasis };
+type StoredSave = LocalSave & { kind: 'local-save'; displayBasis: TimelineCommandBasis; documentIntent?: OutboxJson };
 export interface LocalSaveState {
   status: 'saved' | 'dirty' | 'saving' | 'retry' | 'conflict' | 'blocked' | 'recovery' | 'error';
   ownerId?: string;
@@ -214,31 +215,49 @@ export async function createLocalSaveSession(options: Options) {
   if (owners.length) publish('recovery');
   else await claim();
 
+  function append(input: LocalSave, documentIntent?: OutboxJson): Promise<void> {
+    assertOpen();
+    if (writeError || ['conflict', 'error'].includes(state.status)) throw new Error('Resolve retained local saves before editing again');
+    const save = toOutboxJson({ ...input, kind: 'local-save', displayBasis,
+      ...(documentIntent ? { documentIntent } : {}) }) as unknown as StoredSave;
+    if (!save.label.trim() || (save.commands && !save.commands.length)) throw new Error('Local save requires a label and nonempty commands');
+    if (!same(save.before, document)) throw new Error('Local save must follow the actual authored local document');
+    document = clone(save.after);
+    generation++;
+    publish('dirty');
+    const write = writes.then(async () => {
+      if (writeError) throw writeError;
+      record = await box!.read();
+      const predecessor = record.intents[record.intents.length - 1]?.id ?? record.accepted?.intentId;
+      const authoredBasis = predecessor ? { after: predecessor } : { head: basis.head };
+      if (save.documentIntent) {
+        save.documentIntent = toOutboxJson({ ...save.documentIntent as Record<string, OutboxJson>, basis: authoredBasis });
+      }
+      await box!.append(toOutboxJson(save), authoredBasis);
+      record = await box!.read();
+    });
+    writes = write.catch((error) => {
+      writeError = error;
+      publish('error', { message: `Local edit could not be persisted: ${errorMessage(error)}` });
+    });
+    return write;
+  }
+
   return {
     getState: () => clone(state),
-    /** Capture synchronously before another local edit; persist every intent before submitting. */
-    append(input: LocalSave): Promise<void> {
+    getDocument: () => clone(document),
+    /** Verified physical images with locally authored payloads; still an unsent intent. */
+    appendDocument(input: Omit<Parameters<typeof documentPatchIntent>[0], 'basis'>): Promise<void> {
       assertOpen();
-      if (writeError || ['conflict', 'error'].includes(state.status)) throw new Error('Resolve retained local saves before editing again');
-      const save = toOutboxJson({ ...input, kind: 'local-save', displayBasis }) as unknown as StoredSave;
-      if (!save.label.trim() || (save.commands && !save.commands.length)) throw new Error('Local save requires a label and nonempty commands');
-      if (!same(save.before, document)) throw new Error('Local save must follow the actual authored local document');
-      document = clone(save.after);
-      generation++;
-      publish('dirty');
-      const write = writes.then(async () => {
-        if (writeError) throw writeError;
-        record = await box!.read();
-        const predecessor = record.intents[record.intents.length - 1]?.id ?? record.accepted?.intentId;
-        await box!.append(toOutboxJson(save), predecessor ? { after: predecessor } : { head: basis.head });
-        record = await box!.read();
-      });
-      writes = write.catch((error) => {
-        writeError = error;
-        publish('error', { message: `Local edit could not be persisted: ${errorMessage(error)}` });
-      });
-      return write;
+      // Validate before changing the local chain. The durable predecessor is
+      // filled by append's serialized write, never by a refreshed head read.
+      const intent = documentPatchIntent({ ...input, basis: { head: displayBasis.head } });
+      if (!same(toOutboxJson(input.before), document)) throw new Error('Local save must follow the actual authored local document');
+      if (!intent) return Promise.resolve();
+      return append({ before: toOutboxJson(input.before), after: toOutboxJson(input.after), label: input.label }, intent);
     },
+    /** Capture synchronously before another local edit; persist every intent before submitting. */
+    append: (input: LocalSave) => append(input),
     async flush() {
       assertOpen();
       await pump();
