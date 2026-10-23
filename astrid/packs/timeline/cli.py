@@ -2762,7 +2762,7 @@ def _checkout_change_units(checkout: Any) -> tuple[bool, list[list[str]]]:
 
     ``Checkout.edits()`` is a clip/cut/placement diff. Fresh checkout safety
     and status also need parent config, shot payload, tracks, and registries,
-    using the same whole-unit model as ``store.three_way(..., whole=True)``.
+    using the same complete unit model as the commit session's guarded request.
     An incomplete old draft base is unknown, so callers must not overwrite it.
     """
     from astrid.core.timeline.astrid_ns import normalized
@@ -3588,12 +3588,12 @@ def _cmd_apply(parsed: argparse.Namespace) -> int:
 
     text = Path(parsed.sheet_file).read_text(encoding="utf-8")
     sheet = parse_sheet(text)
-    if parsed.native or (parsed.client is not None and ("clips" in sheet or "tracks" in sheet)):
+    if parsed.client is not None and ("clips" in sheet or "tracks" in sheet):
         from astrid.packs.timeline.cli_native import commit_edit
 
         return commit_edit(parsed, sheet=True)
     if parsed.dry_run or parsed.idempotency_key or parsed.json:
-        raise _VerbError("--native is required with commit apply options", 2)
+        raise _VerbError("commit apply options require a connected timeline session", 2)
     tl = _edit_checkout(parsed)
     before = tl.document()
     changes = apply_sheet(tl, text, client=parsed.client)
@@ -3606,23 +3606,11 @@ def _cmd_apply(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_undo(parsed: argparse.Namespace) -> int:
-    if getattr(parsed, "publication", None):
-        from astrid.packs.timeline.cli_native import commit_edit
-
-        return commit_edit(parsed, undo=True)
-    if any(getattr(parsed, name, None) for name in ("dry_run", "idempotency_key", "json")):
-        raise _VerbError("--publication is required with commit undo options", 2)
     tl=_edit_checkout(parsed); labels=tl.undo(parsed.steps)
     print("undid "+"; ".join(labels)); return 0
 
 
 def _cmd_redo(parsed: argparse.Namespace) -> int:
-    if getattr(parsed, "publication", None):
-        from astrid.packs.timeline.cli_native import commit_edit
-
-        return commit_edit(parsed, undo=True)
-    if any(getattr(parsed, name, None) for name in ("dry_run", "idempotency_key", "json")):
-        raise _VerbError("--publication is required with commit redo options", 2)
     tl=_edit_checkout(parsed); labels=tl.redo(parsed.steps)
     print("redid "+"; ".join(labels)); return 0
 
@@ -3890,9 +3878,6 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
     subparser.add_argument("--draft", default=None, help="Working copy name (default: current working copy).")
     subparser.add_argument("steps", nargs="?", type=_positive_int, default=None, help="How many edits (default 1).")
     subparser.add_argument("--steps", dest="steps_option", type=_positive_int, default=None, help="The same, as an option.")
-    from astrid.packs.timeline.cli_native import configure_history_options
-
-    configure_history_options(subparser)
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _with_steps(handler))))
 
 
@@ -3906,7 +3891,6 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("redo", help="Reverse an accepted undo publication or redo unsent draft edits.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
     CommandSpec("check", help="Validate a working copy and optionally sweep every cut.", configure=_configure_check),
     CommandSpec("status", help="Show the canonical head and an existing working copy.", configure=_configure_status),
-    CommandSpec("publish", help="Publish an existing working copy through the SDK merge/CAS boundary.", configure=_configure_publish),
     CommandSpec("discard", help="Drop a working copy (its unpublished edits).", configure=_configure_working_verb("discard")),
     CommandSpec("duplicate", help="Copy a timeline's published head into a new timeline, for a trial.", configure=_configure_working_verb("duplicate")),
     CommandSpec("rename", help="Set a timeline's display name.", configure=_configure_working_verb("rename")),
@@ -4022,9 +4006,6 @@ def build_parser(client: Any) -> argparse.ArgumentParser:
             "(product family); nested shots beneath 'timelines shots'."
         ),
     )
-    from astrid.packs.timeline.cli_native import configure_native_edit_parsers
-
-    configure_native_edit_parsers(parser, client)
     subparsers = parser.add_subparsers(dest="command", required=True)
     register_product_commands(
         subparsers,

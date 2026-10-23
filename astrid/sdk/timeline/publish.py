@@ -86,6 +86,8 @@ class _PublishMixin:
 
     def publish(self, message: str = "", *, idempotency_key: str | None = None, client: Any = None,
                 force: bool = False, restructure: bool = False) -> dict[str, Any]:
+        raise TimelineEditError("detached publication is retired; use timeline.open().commit(label)")
+
         """Check, then publish one revision.
 
         If someone published since this checkout, the edit is merged onto their head clip by
@@ -101,7 +103,7 @@ class _PublishMixin:
         stored = self.stored_document(restructure=restructure)  # chapters as shots only for a film that opted in
         chapter_film = len(stored.get("placements") or []) > 1
         if restructure or self.edits().get("changes") or not (chapter_film or self.narration_changes()):
-            receipt = _store.publish_bundle(stored, key, client=client, force=force)
+            raise TimelineEditError("detached publication is retired; use timeline.open().commit(label)")
         else:  # only the narration binding is behind (a retry after it failed): pin it, nothing else to publish
             receipt = {"old_head": self.base_revision, "new_head": self.base_revision, "structure": "unchanged"}
         receipt["narration_pinned"] = []

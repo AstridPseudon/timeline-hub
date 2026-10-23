@@ -182,7 +182,9 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         if self._disk is not None and self.path and Path(self.path) == target and target.is_file():
             now = target.read_text(encoding="utf-8")
             if now != self._disk:
-                self._merge_writer(target, now, force=force)
+                raise TimelineEditError(
+                    "the working copy changed on disk; reopen it before saving through the timeline commit session"
+                )
         self.notes.extend(self._sync_film_length())  # the film's length follows its content, before it is written
         text = _serialize(self._annotated())
         staged: list[tuple[Path, Path]] = []  # undo steps: written under a temp name now, committed after the file
@@ -231,27 +233,6 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
             except Exception as exc:  # noqa: BLE001 - the save is committed; only its journal record is missing
                 _journal.note_failure(self, exc)
         return target
-
-    def _merge_writer(self, target: Path, now: str, *, force: bool) -> None:
-        """Another writer saved this file since we loaded it: put our edit on top of theirs."""
-        import datetime as _dt
-
-        mine = Checkout({}, path=target)
-        base = mine._absorb(json.loads(self._disk or "{}"))
-        theirs = mine._absorb(json.loads(now))
-        when = _dt.datetime.fromtimestamp(target.stat().st_mtime).strftime("%H:%M:%S")
-        merged, conflicts = _store.three_way(base, theirs, self.bundle, force=force, whole=True)
-        if conflicts and not force:
-            raise TimelineEditError(
-                f"not saved: this working copy was saved by another writer at {when}, after you opened it, and you "
-                f"both changed {len(conflicts)} of the same thing(s): " + "; ".join(conflicts[:6])
-                + (f"; … {len(conflicts) - 6} more" if len(conflicts) > 6 else "")
-                + ". Open it again (their edit is there) and redo yours, or save(force=True) to overwrite theirs.")
-        before = Checkout(copy.deepcopy(base))
-        theirs_said = describe_changes(before, Checkout(copy.deepcopy(theirs)))
-        self.bundle, self._mcache = merged, None
-        self.merged = [f"merged with another writer's save at {when}: kept their {len(theirs_said)} change(s)"
-                       + (" (yours won where you both changed something)" if conflicts else "")] + theirs_said[:8]
 
     def edit(self, label: str, *, dry_run: bool = False, check: bool = True, quiet: bool = False,
              reason: str | None = None):
