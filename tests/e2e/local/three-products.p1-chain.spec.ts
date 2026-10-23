@@ -87,7 +87,7 @@ async function seedOneClip(harness: DirectHarness): Promise<ChainSeed> {
   const published = await harness.runtimeJson('POST', `/v1/projects/${harness.seed.projectId}/timelines/${timelineId}/composition-revisions`, publication);
   expect(published.status, JSON.stringify(published.body)).toBe(200);
   const project = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}`);
-  return { projectSlug: project.body.data.slug, timelineId, sourceId: SOURCE_ID };
+  return { projectSlug: (project.body.data ?? project.body).slug, timelineId, sourceId: SOURCE_ID };
 }
 
 async function history(harness: DirectHarness, seed: ChainSeed) {
