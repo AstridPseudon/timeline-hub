@@ -59,6 +59,17 @@ def copy_child(ctx, owner, occurrence_id, shot_id, source_shot, payload, interna
         raise CommandError('duplicate item identity is occupied', kind='identity_collision', ref=owner)
     ctx.create_entity('shot:' + shot_id, kind='shot', owner=None,
                       value={'payload': copied, 'internal_timeline': copy.deepcopy(internal)})
+    document = bundle['source_mapping'].get('_runtime_document')
+    if document is not None:
+        from astrid.core.timeline.authoring_bundle import _CopiedShot
+
+        source = next((row for row in document['parent_revision']['payload']['occurrences']
+                       if row['occurrence_id'] == owner.removeprefix('occurrence:')), None)
+        if source is not None and source['shot_id'] == source_shot:
+            bundle['shots'][shot_id] = _CopiedShot(bundle['shots'][shot_id], {
+                'source_occurrence_id': source['occurrence_id'], 'source_shot_id': source_shot,
+                'source_revision_id': source['shot_revision_id'], 'occurrence_id': occurrence_id,
+                'shot_id': shot_id})
 
 
 def capture_occurrence_duplicate(bundle, owner, occurrence_id, shot_id):
