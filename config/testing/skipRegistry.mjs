@@ -51,7 +51,7 @@ export const SKIP_REGISTRY = {
   },
   'macos-release-process-containment': {
     skipWhen: "process.platform !== 'darwin' || !existsSync('/usr/bin/lockf')",
-    reason: 'the release tooling (scripts/release bounded-command broker, and the git calls of astrid-release-provenance that go through it) is built and pinned for macOS: it needs lockf and BSD ps eww; its Linux branches have never run',
+    reason: 'macOS-only by design: the release tooling (scripts/release bounded-command broker, and the git calls of astrid-release-provenance that go through it) is built and pinned for darwin/arm64 and needs lockf and BSD ps eww; it has no other-platform branch and refuses clearly elsewhere',
     applies: macosLockfMissing,
     ci: ['release-tooling-macos'],
   },
@@ -72,14 +72,12 @@ export const LANES = {
   'vitest-checkout': {
     what: 'src/tools/video-editor/{data/portableVisualSeamIntent,runtime/astridSceneAuthoring,dev/localExtensions.catalog}.test.ts (config/testing/lanes.ts)',
     command: 'npm run test:checkout',
-    ci: [],
-    manual: 'needs sibling Runtime and Astrid checkouts; not run by any job yet',
+    ci: ['checkout-lanes'],
   },
   'vitest-astrid-composition': {
     what: 'src/tools/video-editor/runtime/astridSceneComposition.test.tsx',
     command: 'npm run test:astrid-composition',
-    ci: [],
-    manual: 'needs ASTRID_CHECKOUT; not run by any job yet',
+    ci: ['checkout-lanes'],
   },
   'vitest-sdk-boundary': {
     what: 'src/sdk/__tests__/*.test.{ts,tsx} (vitest.boundary.config.ts)',
@@ -106,15 +104,13 @@ export const LANES = {
   },
   'playwright-quick-descriptor': {
     what: 'tests/e2e/local/three-products.spec.ts "quick: Astrid edit then App edit" (grepInvert unless ASTRID_QUICK_DESCRIPTOR)',
-    command: 'ASTRID_QUICK_DESCRIPTOR=... npm run test:e2e:three-products',
-    ci: [],
-    manual: 'needs an adopted Runtime realm descriptor from the owner; no job has one',
+    command: 'python -m astrid.core.dev.journey --tier quick --reference generated --app-checkout <App>  (Astrid writes the descriptor and runs the case)',
+    ci: ['quick-journey'],
   },
   'node-installer-bootstrap': {
-    what: 'scripts/installer/bootstrap.test.mjs (12 of 27 fail on macOS: the POSIX installer exits 1) and bootstrap-powershell.test.mjs (needs pwsh)',
+    what: 'scripts/installer/bootstrap.test.mjs (POSIX installer; ubuntu and macOS) and bootstrap-powershell.test.mjs (needs pwsh; ubuntu)',
     command: 'node --test scripts/installer/bootstrap.test.mjs scripts/installer/bootstrap-powershell.test.mjs',
-    ci: [],
-    manual: 'red when run (found 23 Oct, cause not yet diagnosed); in no job until fixed, so they are not hidden by a skip',
+    ci: ['installer-posix', 'installer-powershell'],
   },
   'playwright-direct': {
     what: 'tests/e2e/local/{direct-journey,settings-persist}.spec.ts',

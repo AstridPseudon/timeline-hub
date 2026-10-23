@@ -525,7 +525,7 @@ describe('runBoundedCommand', () => {
       "import { mkdirSync, rmSync, writeFileSync } from 'node:fs';",
       "import { join } from 'node:path';",
       `process.env.ASTRID_APP_BOUNDED_BROKER_SESSION = ${JSON.stringify(session)};`,
-      `const root = join(${JSON.stringify(process.platform === 'darwin' ? '/tmp' : tmpdir())}, \`rb-\${process.pid}-${session.slice(0, 12)}\`);`,
+      `const root = join(${JSON.stringify('/tmp')}, \`rb-\${process.pid}-${session.slice(0, 12)}\`);`,
       "mkdirSync(root, { mode: 0o700 });",
       "const socket = join(root, 'broker.sock');",
       "writeFileSync(`${socket}.lock`, 'corrupt-lock');",
@@ -557,14 +557,13 @@ describe('runBoundedCommand', () => {
       .map((line) => line.match(/^\s*(\d+)\s+(\d+)\s+(.*)$/))
       .find((match) => match
         && ownedBrokerPattern.test(match[3])
-        && !match[3].startsWith('/usr/bin/lockf ')
-        && !match[3].startsWith('/usr/bin/flock '));
+        && !match[3].startsWith('/usr/bin/lockf '));
     const before = brokerRow();
     assert.ok(before, 'kernel-elected broker was not found');
     const brokerPid = Number(before[1]);
     const guardianPid = Number(before[2]);
     const guardian = execFileSync('/bin/ps', ['-p', String(guardianPid), '-o', 'command='], { encoding: 'utf8' });
-    assert.match(guardian, process.platform === 'darwin' ? /\/usr\/bin\/lockf/ : /\/usr\/bin\/flock/);
+    assert.match(guardian, /\/usr\/bin\/lockf/);
 
     process.kill(guardianPid, 'SIGKILL');
     const guardianDeadline = Date.now() + 1_000;
@@ -594,7 +593,7 @@ describe('runBoundedCommand', () => {
       "import { join } from 'node:path';",
       "import { Worker } from 'node:worker_threads';",
       `process.env.ASTRID_APP_BOUNDED_BROKER_SESSION = ${JSON.stringify(session)};`,
-      `const root = join(${JSON.stringify(process.platform === 'darwin' ? '/tmp' : tmpdir())}, \`rb-\${process.pid}-${session.slice(0, 12)}\`);`,
+      `const root = join(${JSON.stringify('/tmp')}, \`rb-\${process.pid}-${session.slice(0, 12)}\`);`,
       "mkdirSync(root, { mode: 0o700 });",
       "const socket = join(root, 'broker.sock');",
       "writeFileSync(`${socket}.lock`, JSON.stringify({ pid: 999999, nonce: 'cccccccccccccccccccccccccccccccc' }));",
@@ -767,6 +766,17 @@ describe('runBoundedCommand', () => {
       assert.equal(existsSync(marker), false);
     } finally {
       rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses clearly off macOS, after validating its arguments', () => {
+    const real = Object.getOwnPropertyDescriptor(process, 'platform');
+    Object.defineProperty(process, 'platform', { ...real, value: 'linux' });
+    try {
+      assert.throws(() => run('process.exit(0)'), /macOS-only by design.*linux is unsupported/);
+      assert.throws(() => run('process.exit(0)', { timeoutMs: 0 }), /positive/);
+    } finally {
+      Object.defineProperty(process, 'platform', real);
     }
   });
 

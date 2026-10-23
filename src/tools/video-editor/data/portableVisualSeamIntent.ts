@@ -53,8 +53,9 @@ export function visualSeamOwners(config: ResolvedTimelineConfig, metadataOnly = 
       ...(Array.isArray(scope.timeline) ? {effects: local} : {})};
     const track = tracks.get(clip.track);
     const elementKind = record(clip.elementRef).kind;
+    // Runtime picture_clip (240d5bb): a custom clip type on a visual track is picture without a pictureTracks declaration.
     const isPicture = PICTURE.has(normalized.clipType)
-      || pictureTracks.has(clip.track) && !NON_PICTURE.has(normalized.clipType);
+      || (track?.kind === 'visual' || pictureTracks.has(clip.track)) && !NON_PICTURE.has(normalized.clipType);
     add(normalized, path, clip.id, occurrence ?? clip.id, start, end, start, binding, sourceType,
       track?.kind === 'visual' && track.role !== 'source' && isPicture
         && !['effect', 'animation', 'transition'].includes(String(elementKind)));

@@ -4,7 +4,7 @@ import { closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync } f
 import { performance } from 'node:perf_hooks';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { constants as osConstants, tmpdir } from 'node:os';
+import { constants as osConstants } from 'node:os';
 
 import { PROCESS_SCOPE_CLEANUP_ALLOWANCE_MS } from './bounded-command-scan-policy.mjs';
 
@@ -29,13 +29,15 @@ const BROKER_SESSION_ENV_KEY = 'ASTRID_APP_BOUNDED_BROKER_SESSION';
 if (!/^[0-9a-f]{32}$/.test(process.env[BROKER_SESSION_ENV_KEY] ?? '')) {
   process.env[BROKER_SESSION_ENV_KEY] = randomBytes(16).toString('hex');
 }
-const BROKER_TEMP_ROOT = process.platform === 'darwin' ? '/tmp' : tmpdir();
+// Release tooling is macOS-only by design (config/releases/extension-ship-quality.json pins darwin/arm64):
+// one path, with lockf and BSD ps. runBoundedCommand refuses to run anywhere else.
+const BROKER_TEMP_ROOT = '/tmp';
 const BROKER_DIR = join(BROKER_TEMP_ROOT, `rb-${process.pid}-${process.env[BROKER_SESSION_ENV_KEY].slice(0, 12)}`);
 const BROKER_SOCKET = join(BROKER_DIR, 'broker.sock');
 const BROKER_READY = `${BROKER_SOCKET}.ready`;
 const BROKER_ELECTION = `${BROKER_SOCKET}.election`;
-const BROKER_LOCK_TOOL = process.platform === 'darwin' ? '/usr/bin/lockf' : '/usr/bin/flock';
-const BROKER_PS_TOOL = process.platform === 'darwin' ? '/bin/ps' : '/usr/bin/ps';
+const BROKER_LOCK_TOOL = '/usr/bin/lockf';
+const BROKER_PS_TOOL = '/bin/ps';
 const BROKER_OWNER_START_SECONDS = Math.floor((Date.now() - process.uptime() * 1_000) / 1_000);
 const brokerCandidates = new Set();
 if (Buffer.byteLength(BROKER_SOCKET) > 100) {
@@ -188,7 +190,6 @@ function wrapperOutputCap(maxBuffer) {
 }
 
 function brokerReadinessIsLive() {
-  if (process.platform === 'win32') return false;
   try {
     const record = JSON.parse(readFileSync(BROKER_READY, 'utf8'));
     if (!Number.isSafeInteger(record?.pid) || record.pid <= 0 || !/^[0-9a-f]{32}$/.test(record?.nonce ?? '')) {
@@ -227,7 +228,7 @@ function launchScopeBroker() {
     } catch (error) {
       if (error?.code !== 'EEXIST') throw error;
       const stat = lstatSync(BROKER_DIR);
-      const ownedByCaller = typeof process.getuid !== 'function' || stat.uid === process.getuid();
+      const ownedByCaller = stat.uid === process.getuid();
       if (!stat.isDirectory() || stat.isSymbolicLink() || !ownedByCaller || (stat.mode & 0o777) !== 0o700) {
         throw new Error(`bounded-command broker directory is not a private caller-owned directory: ${BROKER_DIR}`);
       }
@@ -237,11 +238,9 @@ function launchScopeBroker() {
     // election path so stale-broker recovery remains available.
     if (brokerReadinessIsLive()) return;
     const candidateNonce = randomBytes(16).toString('hex');
-    // The kernel lock is held by lockf/flock for the complete broker
+    // The kernel lock is held by lockf for the complete broker
     // lifetime. It replaces the crash-prone application takeover mutex.
-    const lockArgs = process.platform === 'darwin'
-      ? ['-k', '-t', '0', BROKER_ELECTION, process.execPath, WRAPPER_PATH, '--broker', BROKER_SOCKET, candidateNonce, String(process.pid), String(BROKER_OWNER_START_SECONDS), BROKER_ELECTION]
-      : ['-n', BROKER_ELECTION, process.execPath, WRAPPER_PATH, '--broker', BROKER_SOCKET, candidateNonce, String(process.pid), String(BROKER_OWNER_START_SECONDS), BROKER_ELECTION];
+    const lockArgs = ['-k', '-t', '0', BROKER_ELECTION, process.execPath, WRAPPER_PATH, '--broker', BROKER_SOCKET, candidateNonce, String(process.pid), String(BROKER_OWNER_START_SECONDS), BROKER_ELECTION];
     const candidate = spawn(BROKER_LOCK_TOOL, lockArgs, {
       stdio: 'ignore',
       detached: true,
@@ -322,9 +321,6 @@ export function formatBoundedCommandFailure(result) {
  * default; pass allowFailure:true when a caller needs to inspect the result.
  */
 export function runBoundedCommand(command, args, options = {}) {
-  if (!['darwin', 'linux'].includes(process.platform)) {
-    throw new Error(`runBoundedCommand requires Darwin or Linux process containment; ${process.platform} is unsupported`);
-  }
   assertCommand(command);
   const immutableArgs = cloneArgs(args);
   const cwd = cloneCwd(options.cwd);
@@ -361,6 +357,9 @@ export function runBoundedCommand(command, args, options = {}) {
   }
   if (binaryOutput && redact !== undefined) {
     throw new TypeError('redact cannot be used with binary output');
+  }
+  if (process.platform !== 'darwin') {
+    throw new Error(`runBoundedCommand is macOS-only by design (the release tooling is built and pinned for darwin/arm64); ${process.platform} is unsupported`);
   }
   const startedAt = performance.now();
   // The scope token is deliberately generated outside the wrapper so the
@@ -406,7 +405,7 @@ export function runBoundedCommand(command, args, options = {}) {
       shell: false,
       stdio: ['pipe', 'pipe', 'pipe'],
       input: wrapperInput,
-      detached: process.platform !== 'win32',
+      detached: true,
       timeout: timeoutMs + WRAPPER_CLEANUP_ALLOWANCE_MS,
       killSignal: 'SIGKILL',
     });

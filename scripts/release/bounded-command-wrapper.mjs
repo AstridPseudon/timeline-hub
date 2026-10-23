@@ -31,7 +31,7 @@ const BROKER_CONNECT_DELAY_MS = 25;
 const TERM_SCAN_ATTEMPTS = 3;
 const moduleDir = dirname(fileURLToPath(import.meta.url));
 const TARGET_GATE_PATH = resolve(moduleDir, 'bounded-command-target-gate.mjs');
-const PS_PATH = process.platform === 'darwin' ? '/bin/ps' : '/usr/bin/ps';
+const PS_PATH = '/bin/ps';
 
 function emit(value) {
   process.stdout.write(`${JSON.stringify({ protocol: 1, ...value })}\n`);
@@ -46,8 +46,7 @@ async function readInvocation() {
 function signalGroup(pid, signal) {
   if (!pid || pid <= 0) return;
   try {
-    if (process.platform === 'win32') process.kill(pid, signal);
-    else process.kill(-pid, signal);
+    process.kill(-pid, signal);
   } catch (error) {
     if (error?.code !== 'ESRCH') throw error;
   }
@@ -75,7 +74,6 @@ function sameIdentity(left, right) {
 }
 
 function scanAllOnce() {
-  if (process.platform === 'win32') return Promise.resolve([]);
   return new Promise((resolve, reject) => {
     const probe = spawn(PS_PATH, ['eww', '-axo', 'pid=,pgid=,lstart=,command='], { shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
     const chunks = [];
@@ -346,7 +344,7 @@ async function runBroker(socketPath, candidateNonce, ownerPid, ownerStartSeconds
     try { unlinkSync(legacyTakeoverPath); } catch { /* no legacy mutex */ }
     // The guardian still holds the unlinked inode until this broker exits.
     // The server is closed before normal cleanup, so a successor can safely
-    // acquire a fresh election inode while lockf/flock reaps this process.
+    // acquire a fresh election inode while lockf reaps this process.
     try { unlinkSync(electionPath); } catch { /* guardian may remove it */ }
     try { rmdirSync(dirname(socketPath)); } catch { /* not empty or already gone */ }
   };
@@ -643,7 +641,7 @@ async function main() {
       cwd: invocation.cwd,
       env: gateEnv,
       shell: false,
-      detached: process.platform !== 'win32',
+      detached: true,
       stdio: ['pipe', 'pipe', 'pipe', 'pipe', 'pipe'],
     });
     gate.broker = broker;

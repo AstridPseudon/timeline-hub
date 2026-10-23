@@ -173,7 +173,8 @@ function isPrimaryVisualClip(
   if (track?.kind !== 'visual' || track.role === 'source' || AUXILIARY_CLIP_TYPES.has(clipType(clip))) return false;
   const elementKind = record(clip.elementRef)?.kind;
   if (['effect', 'animation', 'transition'].includes(String(elementKind))) return false;
-  return BUILTIN_PICTURE_CLIP_TYPES.has(clipType(clip)) || pictureTracks.has(track.id);
+  // Runtime picture_clip (240d5bb): any non-auxiliary clip on a picture-capable visual track is picture; pictureTracks stays an explicit declaration.
+  return BUILTIN_PICTURE_CLIP_TYPES.has(clipType(clip)) || track.kind === 'visual' || pictureTracks.has(track.id);
 }
 
 function declaredTrackPolicy(config: ResolvedTimelineConfig, key: 'pictureTracks' | 'continuityTracks'): Set<string> | undefined {

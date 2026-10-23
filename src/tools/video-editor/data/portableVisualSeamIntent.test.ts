@@ -52,10 +52,11 @@ describe('portable Astrid intent admitted by authoritative Runtime', () => {
       {id: 'plate', kind: 'visual', label: 'Plate'},
       {id: 'source', kind: 'visual', role: 'source', label: 'Source'},
       {id: 'audio', kind: 'audio', label: 'Audio'},
+      {id: 'extra', kind: 'visual', label: 'Extra'},
     );
     base.clips.push(
       {id: 'plate', clipType: 'am-footage', track: 'plate', at: 0.9, hold: 0.2},
-      {id: 'unlisted', clipType: 'am-sprite', track: 'v', at: 0.9, hold: 0.2},
+      {id: 'unlisted', clipType: 'am-sprite', track: 'extra', at: 0.9, hold: 0.2},
       {id: 'text', clipType: 'text', track: 'plate', at: 0.9, hold: 0.2},
       {id: 'effect', clipType: 'am-snap-plate', track: 'plate', at: 0.9, hold: 0.2,
         elementRef: {id: 'effect', revision: 'sha256:abc', kind: 'effect'}},
@@ -66,7 +67,8 @@ describe('portable Astrid intent admitted by authoritative Runtime', () => {
 
     const owners = visualSeamOwners(base);
     const primary = owners.filter((owner) => owner.primary).map((owner) => owner.clipId).sort();
-    expect(primary).toEqual(['a', 'b', 'plate']);
+    // A custom clip type on a visual track is picture without a declaration (Runtime 240d5bb); 'text' and 'effect' are not.
+    expect(primary).toEqual(['a', 'b', 'plate', 'unlisted']);
     expect(owners.some((owner) => owner.clipId === 'plate' && owner.disclosure.opaque.length > 0)).toBe(true);
     expect(owners.some((owner) => owner.clipId === 'plate' && owner.disclosure.cues.some((cue) => cue.kind === 'activation'))).toBe(false);
 
