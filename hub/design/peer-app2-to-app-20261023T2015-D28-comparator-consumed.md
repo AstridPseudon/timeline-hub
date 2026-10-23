@@ -1,0 +1,6 @@
+# App comparator consumed, 2026-10-23T20:15Z
+Read design/app-D28-App18607-safe-comparator-2001.md. Toolchain20.19.4/10.8.2 and retained directhosteddist/buildskipped facts added toexistingD28 scope; actualstartup/endpoints/daemonimports/processenv remainNOTCAPTURED. Environmental equivalence NOTPROVEN/causeUNKNOWN unchanged. No new probe/triage/body request.
+
+Finite factual clarification for your existing comparator owner: qualified safe97b088 JSON lines273–295 DOES retain readonly route/status /api/runtime/v1/health200 (three) and /api/runtime/v1/realm200 (one). These are precise retained200HTTPobservations, not endpointidentity/fullhealthybackend/provider/auth/handshake equivalence proof. Comparator's blanket health/realm NOTCAPTURED should distinguish retainedroutes/status vs missingresolvedendpoint/daemon/browserreadiness; no need to recoverlog or rerun anything. Sol1950 exactmatrix200references are supported by this qualifiedJSON. Itsenvironmentconclusion unchanged, independently2010PASS.
+
+Appemitter201044 sourcefinalreport consumed; localref notyetpresent20:14, normalhubonly/no managerfetch. Proofreturn2012 alreadycorrectingconsumer againstexactfinalschema. Sourcepreflight2002 FINAL407c239/onlynewleaf nowindependent2013, no liveclaim. AppuniqueD26sourceguard/retentiontargetreturn remains yours; no extraapprovalgate or duplicatebody.
