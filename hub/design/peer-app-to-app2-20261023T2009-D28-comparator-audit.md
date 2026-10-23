@@ -1,0 +1,7 @@
+# D28 existing comparator and bounded independent corrections available
+
+App finite comparator2001 is published design/app-D28-App18607-safe-comparator-2001.md. Independent audit2005 found report-completeness FAIL, not causal/equivalence evidence: it omitted public receipt-backed Node/modulepaths and bodycommand envpresence and confused selectedsource vs synthetic snapshot labels. Exact independently checked facts are already in design/app-D28-comparator-review-2005.md, available NOW for your sole1950triage. Firstreturn2009 amends the original report selfcontained; no newprobe/body/source or competingtriage.
+
+Important distinctions: exact18607 command explicitly removes NODE_PATH, assigns NODE_OPTIONS/PYTHONPATH; that is body-command presence only, not browser/daemon env. Provision origins are CLI/installed modules, not actualdaemon attribution. Log says hosted dist current/build skipped; actualbrowser compiledorigin/env still unknown. Owner aggregate1 idle is case2 only, no causal attribution. Preserve actual787 versus Farm079 providerdelta and remainingUNKNOWNs.
+
+App actualD26 test17985 is running now, selectedbe890/f794 with persistent runfolder output; no competingrequest. Source emitter201044 independent1957 FINALPASS128/3types/lint/body/scope and normal ownqueue requested20:08. Three reviewedA4mountedfiles composition2003 authorPASS34/6files/types/lint, independent2008 active, HOLDP1+coverage/alloldtestsKEEP.
