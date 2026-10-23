@@ -25,6 +25,22 @@ DOC_PATCH_SAMPLE = {
     }]},
 }
 
+PROVIDER_ONLY_ARGS = {
+    'timeline.duplicate': {
+        'source_ref': {
+            'project_id': 'source-project',
+            'timeline_id': 'source-timeline',
+            'revision_id': 'source-revision',
+            'publication_id': 'source-publication',
+            'content_digest': 'source-digest',
+        },
+        'shots': {'source-shot': 'copied-shot'},
+        'occurrences': {'source-occurrence': 'copied-occurrence'},
+    },
+    'occurrence.place-shared': {'occurrence_id': 'copied-occurrence', 'on': 0},
+    'occurrence.fork': {'shot_id': 'shot-fork'},
+}
+
 
 def fixture_commands(value):
     if isinstance(value, dict):
@@ -47,28 +63,29 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
     conditions = {condition['if']['properties']['op']['const']: condition['then']['properties']
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
     for op, operation in operations().items():
-        # D15's occurrence.fork is a Python-only semantic command.  The
-        # frozen wire schema deliberately does not gain a tuple for it; the
-        # provider still owns and validates its closed argument object.
-        if op == 'occurrence.fork':
+        assert operation.parameters['additionalProperties'] is False
+        # These approved semantic commands are registered in the provider but
+        # have no frozen wire-schema tuple. Validate their canonical closed
+        # argument objects directly so the schema gap remains visible.
+        if op in PROVIDER_ONLY_ARGS:
             assert op not in conditions
             command = {
                 'schema_version': 1,
                 'op': op,
                 'version': '1',
-                'select': 'occurrence:occ-0',
-                'args': {'shot_id': 'shot-fork'},
+                'select': ('parent' if op == 'timeline.duplicate' else
+                           'occurrence:occ-0'),
+                'args': copy.deepcopy(PROVIDER_ONLY_ARGS[op]),
             }
             arg_validator = validator.evolve(schema=operation.parameters)
             arg_validator.validate(command['args'])
-            unknown = copy.deepcopy(command)
-            unknown['args']['unsupported_argument'] = None
+            unknown = copy.deepcopy(command['args'])
+            unknown['unsupported_argument'] = None
             with pytest.raises(ValidationError):
-                arg_validator.validate(unknown['args'])
+                arg_validator.validate(unknown)
             continue
         ref = conditions[op]['args']['$ref'].removeprefix('#/$defs/')
         assert _SCHEMA['$defs'][ref] == operation.parameters
-        assert operation.parameters['additionalProperties'] is False
         validator.validate(commands[op])
         unknown = copy.deepcopy(commands[op])
         unknown['args']['unsupported_argument'] = None
