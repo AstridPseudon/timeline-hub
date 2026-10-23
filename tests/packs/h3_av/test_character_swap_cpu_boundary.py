@@ -67,7 +67,11 @@ import astrid
 from astrid.core.execution.generic_host import _install_host_vibecomfy_import_root, _host_product_import_origins, HostError
 from astrid.sdk.host_bootstrap import _host_render_environment
 keys=json.loads(sys.argv[1]);checkout=Path(sys.argv[2]);before=_host_product_import_origins();oldpath=sys.path[:]
-environment=_host_render_environment(Path(astrid.__file__).resolve().parent.parent)
+import astrid_runtime_client
+# The installed product tree is what holds astrid and its client: site-packages in a wheel install, the checkout
+# when the venv lives inside it, and their common ancestor when astrid is an editable install (CI).
+product=Path(os.path.commonpath([Path(astrid.__file__).resolve().parent,Path(astrid_runtime_client.__file__).resolve().parent]))
+environment=_host_render_environment(product)
 assert {key:environment.get(key) for key in keys} == {key:os.environ.get(key) for key in keys}
 os.environ.clear();os.environ.update(environment)
 try:

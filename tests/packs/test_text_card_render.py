@@ -9,6 +9,7 @@ from astrid.core import timeline
 
 
 @pytest.mark.remotion
+@pytest.mark.usefixtures("remotion_launch_validation")  # no host here to issue the launch proof a real render requires
 class TextCardRenderTest(unittest.TestCase):
     def test_text_card_render_smoke(self) -> None:
         with tempfile.TemporaryDirectory(prefix="text-card-render-") as tmp_text:
