@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T06:55:36Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 2m -->
-# agent board, 2026-10-23T06:50:00Z
+<!-- agent | 2026-10-23T06:57:09Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 0m -->
+# agent board, 2026-10-23T06:57:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -46,7 +46,7 @@
 | P4-single-test | final 66-assertion HTTP test import | Proof Luna review; Agent audit | Proof0612/source417 | merged | ap2-P4-single-artifact-return-0607; ownerroute0619 | Legacyhub-sync auto-queued417 and merged a914 beforeownercheck. Finaldelta1 reviewedtestblob033482; owncurrentimport0617 now proof-only, NEVERmerge. Proof owns actualintegratedoneHTTP. Opsrepair0619 disablesobsoleteautomaticroute | 417678285;a914497a4 |
 | V2-map-locality | dependency-local legacy map validation | Sol author; Luna independent/integrated | D12a/b42 | merged | agt-V2-map-integrated-0642 | FINAL actual9df PASS60+unchanged0616 realprobe/2149/1914/vendor/artifact/diff; independent60+12mounted retained. Currentfork/G234/reader/source preserved | fb3f1dc2f;9df06d16d |
 | U2-owner-merge-route | persist removal of ap2 auto-merge | Mainauthor/review; AgentreadonlyLuna | publishedkit784bf | merged | agt-U2-owner-route-remote-proof-0648 PASS | FINAL main+remote live/kit/hash/daemon/bash/stubsPASS; hubHEAD=origin/main0aa2ee and committedkit784bf. Owneroffer1/autoap2merge0. RuntimeACK0650 sent | script784bf45b |
-| V2-child-asset | preserve untouched dangling child media | Luna source/review/currentport | D12a/current9df | review | agt-V2-child-current-review-0650 | Currentport0643 exact2c89blobs + normalREDUCEDbaseline1914->1912, author78/probe/2149/1912/toolsPASS. Independentbounded3file/currentreview0650 active | currentport0643 |
+| V2-child-asset | preserve untouched dangling child media | Luna source/review/currentport | D12a/current9df | merging | agt-V2-child-current-review-0650 PASS; merge0643 queued | Independent42/2149/1912/toolsPASS, twoexactc89blobs + normalbaseline1914->1912 unionattr338->336. Oneowncommit387, no oldancestry. Integratedproof next | 387f874a5 |
 | V2-current-rebase | unsupported legacy retained-source positive | Viewing author/independent | D16 behavior-unavailable principle | gated:D16-deferred | disposition0637/review0641 PASS | ONEoriginalretainedTrue failure keptunchanged/unskipped/visible; lacks authenticatedexactcapture, earlierrefusal cannotprovepositive rebase/restart/secondmove. Reviewed deliveryparagraph; H9no sourcefix | originaltestunchanged |
 Resolved: runtime — Normal frozen strict34e adoption DONE; compatible execution85dafdf467 merged/proven156+original48d6 allactualorigins. No newtuple/re-adoption/native14 duplicate.
 Resolved: agent audit — ccc scope hold CLEARED at auditedbf40; currentG234 reviewed31a5 and currentfork900 merged ea302 with integrated131+2replay+2live PASS. Owncommit checks retained.
