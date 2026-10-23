@@ -1,1 +1,1 @@
-2026-10-23T13:30:26Z procs: hub-syncd dispatcher run-manager up; board 13:03Z; workers running 0; ready-undispatched 0; disk 21G free; issues: none for farm
+2026-10-23T14:33:17Z procs: hub-syncd dispatcher run-manager up; board 14:22Z; see workers; disk 21G free; perms: ln/tar added to claude-perms.sh (owner ok); issues: none
