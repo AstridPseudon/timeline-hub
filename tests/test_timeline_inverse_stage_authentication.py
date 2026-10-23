@@ -750,3 +750,123 @@ def test_source_copy_native_root_forgeries_refuse_without_durable_writes(source_
     assert real_tests.rows(runtime) == before
     assert tuple(runtime.store.conn.iterdump()) == stored
     assert runtime.list_timeline_commits(project, "destination", authorize=lambda: None) == history
+
+
+@pytest.fixture
+def retained_leaf_inverse():
+    import hashlib
+    import json
+    from pathlib import Path
+
+    raw = (Path(__file__).parent / "fixtures" / "timeline_leaf_inverse_1246.json").read_bytes()
+    # Byte-for-byte custody of the credential-scanned Agent 1246 package.
+    assert hashlib.sha256(raw).hexdigest() == "1123978b7b18c59d280f73c9ad9155b5ba18d0c64b24e45b8bdd02af30a887b0"
+    package = json.loads(raw)
+    for name in ("auth-input-35.json", "stage-comparison-01.json"):
+        artifact = package["artifacts"][name]
+        compact = json.dumps(artifact["data"], sort_keys=True, separators=(",", ":")).encode()
+        assert hashlib.sha256(compact).hexdigest() == artifact["compact_sha256"]
+    return package
+
+
+def test_actual_leaf_and_fork_inverse_stages_authenticate_losslessly(retained_leaf_inverse):
+    from runtime_protocol.timeline_commit_auth import (
+        _inverse_stage_boundaries,
+        images,
+        validate,
+    )
+
+    artifacts = retained_leaf_inverse["artifacts"]
+    captured = artifacts["stage-comparison-01.json"]["data"]
+    inputs = artifacts["auth-input-35.json"]["data"]
+    original = copy.deepcopy(inputs)
+    prepared = inputs["prepared"]
+    records = prepared["records"]
+    boundaries = _inverse_stage_boundaries(
+        images(inputs["source"]), images(prepared["canonical_document"]), records["steps"][0],
+        records, images(prepared["canonical_document"]), images(inputs["base"]), inputs["history"])
+    assert boundaries[0] == (captured["stage_before"], captured["stage_after"])
+    assert len(boundaries[0][0]) == len(boundaries[0][1]) == 5
+    assert boundaries[5][0] == captured["stage_after"]
+    assert boundaries[8][1] == images(prepared["canonical_document"])
+    stages = [binding["boundary"] for binding in records["commands"][0]["bindings"]
+              if binding["key"] == "inverse.stage"]
+    assert [(stage["native_write_range"], stage["effect_range"]) for stage in stages] == [
+        ([0, 1], [0, 5]), ([1, 3], [5, 9])]
+    validate(**inputs)
+    assert inputs == original
+
+
+@pytest.mark.parametrize("mutation", [
+    "owner", "mixed-owner", "edge", "digest", "history-step", "history-ordinal", "history-base",
+    "history-head", "aggregate-pin", "native-before", "native-after", "aggregate-payload",
+    "native-order", "range", "stage-order", "extra-effect", "unrelated-payload",
+    "effect-and-binding", "equal-payload-foreign-owner", "equal-payload-foreign-roots",
+])
+def test_actual_leaf_inverse_forgery_is_refused(retained_leaf_inverse, mutation):
+    from runtime_protocol.timeline_commit import CommitRejected
+    from runtime_protocol.timeline_commit_auth import validate
+
+    inputs = retained_leaf_inverse["artifacts"]["auth-input-35.json"]["data"]
+    prepared = inputs["prepared"]
+    record = prepared["records"]["commands"][0]
+    patch = prepared["records"]["steps"][0]["patch"]
+    history = next(iter(inputs["history"].values()))
+    bindings = [binding for binding in history["records"]["commands"][1]["bindings"]
+                if binding["key"] == "commit.materialization"]
+    stages = [binding for binding in record["bindings"] if binding["key"] == "inverse.stage"]
+    if mutation in {"owner", "mixed-owner"}:
+        for binding in bindings[:1 if mutation == "mixed-owner" else 2]:
+            binding.update(owner="occurrence:f2-sibling/shot", owners=["occurrence:f2-sibling/shot"])
+    elif mutation == "edge":
+        bindings[0]["edge_before"] = bindings[0]["edge_after"]
+    elif mutation == "digest":
+        bindings[0]["content_digest"] = "sha256:" + "0" * 64
+    elif mutation.startswith("history-"):
+        key, value = {"history-step": ("step_id", "fork-edit-0"), "history-ordinal": ("command_ordinal", 0),
+                      "history-base": ("base_revision_id", "foreign"),
+                      "history-head": ("evaluated_head", prepared["expected_head"])}[mutation]
+        bindings[0]["boundary"][key] = value
+    elif mutation == "aggregate-pin":
+        record["writes"][2]["before"]["value"]["payload"]["internal_timeline_revision_id"] = "foreign"
+    elif mutation in {"native-before", "native-after"}:
+        record["writes"][0][mutation.removeprefix("native-")] = {"state": "present", "value": "forged"}
+    elif mutation == "aggregate-payload":
+        record["writes"][2]["before"]["value"]["payload"]["opaque_shot"] = None
+    elif mutation == "native-order":
+        record["writes"][1:] = reversed(record["writes"][1:])
+    elif mutation == "range":
+        stages[0]["boundary"]["native_write_range"] = [0, 2]
+    elif mutation == "stage-order":
+        first, second = stages
+        first["boundary"], second["boundary"] = second["boundary"], first["boundary"]
+    elif mutation == "extra-effect":
+        patch.append({"op": "set", "ref": "parent", "path": ["forged"],
+                      "before": {"state": "absent"}, "value": True})
+        stages[1]["boundary"]["effect_range"][1] += 1
+    elif mutation == "unrelated-payload":
+        prepared["canonical_document"]["shot_revisions"][0]["payload"]["opaque_shot"] = None
+    elif mutation == "effect-and-binding":
+        patch[0]["value"]["opaque_timeline"] = {"future_schema": "forged"}
+        for binding in record["bindings"]:
+            if binding.get("effect_ordinal") == 0 and binding.get("boundary", {}).get("side") == "after":
+                binding["content_digest"] = digest(patch[0]["value"])
+    elif mutation == "equal-payload-foreign-owner":
+        shot = next(row for row in inputs["source"]["shot_revisions"] if row["shot_id"] == "selected-shot")
+        payload = copy.deepcopy(shot["payload"])
+        shot["shot_id"] = "foreign-owner"
+        assert shot["payload"] == payload
+    else:
+        # Keep the exact complete payloads while replacing both restored root
+        # identities and their pins; source history grants neither identity.
+        import json
+
+        for index in (0, 1):
+            identity = patch[index]["ref"].partition(":")[2]
+            prepared = json.loads(json.dumps(prepared).replace(identity, "foreign-" + identity))
+        inputs["prepared"] = prepared
+    before = copy.deepcopy(inputs)
+    with pytest.raises(CommitRejected) as error:
+        validate(**inputs)
+    assert error.value.failure["details"]["reason"] == "invalid_records"
+    assert inputs == before
