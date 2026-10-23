@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const fetchGenerationRecordByIdMock = vi.fn();
 
-vi.mock('@/integrations/supabase/repositories/generationRepository', () => ({
+vi.mock('@/integrations/astrid/repositories/generationRepository', () => ({
   fetchGenerationRecordById: (...args: unknown[]) => fetchGenerationRecordByIdMock(...args),
 }));
 

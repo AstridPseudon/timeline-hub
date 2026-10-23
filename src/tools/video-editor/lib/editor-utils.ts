@@ -1,3 +1,4 @@
+import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import { getClipTimelineDuration } from './config-utils.ts';
 import type {
   ResolvedTimelineClip,
@@ -168,7 +169,7 @@ export const updateClipInConfig = (
 };
 
 export const getClipVolume = (clip: ResolvedTimelineClip): number => {
-  return clip.volume ?? 1;
+  return getEffectiveClipVolume(clip);
 };
 
 export const isClipMuted = (clip: ResolvedTimelineClip): boolean => {

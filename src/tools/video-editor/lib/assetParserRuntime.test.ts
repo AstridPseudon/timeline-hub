@@ -381,17 +381,30 @@ describe('mergeParserMetadata', () => {
     expect(merged.diagnostics).toEqual([]);
   });
 
-  it('strips unknown registry entry fields not in the blessed allowlist', () => {
+  it('keeps unknown registry entry fields unchanged through parser merge', () => {
     const entry = {
       file: 'test.jpg',
-      unknownField: 'should-be-stripped',
+      handle: 'ref:hero-still',
+      source: { kind: 'generation', run_id: 'run-1' },
+      zz_future_astrid_field: { a: 1 },
     } as unknown as AssetRegistryEntry;
 
     const merged = mergeParserMetadata(entry, []);
 
-    expect(merged.entry.file).toBe('test.jpg');
-    // @ts-expect-error verify unknown field is stripped
-    expect(merged.entry.unknownField).toBeUndefined();
+    expect(merged.entry).toEqual(entry);
+    expect(merged.diagnostics).toEqual([]);
+  });
+
+  it('drops the App-only src locator in parser merge', () => {
+    const entry = {
+      file: 'test.jpg',
+      src: 'blob:http://localhost/abc',
+    } as unknown as AssetRegistryEntry;
+
+    const merged = mergeParserMetadata(entry, []);
+
+    expect(merged.entry).toEqual({ file: 'test.jpg' });
+    expect('src' in merged.entry).toBe(false);
   });
 
   it('merges host-owned metadata fields shallowly (later overwrites earlier)', () => {

@@ -5,13 +5,8 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useStarToggle } from './useStarToggle';
-import { useReferences } from './useReferences';
 import { useJoinClips } from './useJoinClips';
 import { useGenerationLineage } from './useGenerationLineage';
-import { useSourceGeneration } from './useSourceGeneration';
-import { useMakeMainVariant } from './useMakeMainVariant';
-import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
 import { useLightboxNavigation } from './useLightboxNavigation';
 import { useSwipeNavigation } from './useSwipeNavigation';
 import { useEffectiveMedia } from './useEffectiveMedia';
@@ -28,7 +23,6 @@ import type {
 export type { LightboxButtonGroupProps } from './types';
 
 export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseSharedLightboxStateReturn {
-  const { runtimeAuthority } = useRuntimeAuthority();
   const { core, navigation: navInput, shots: shotsInput, layout: layoutInput, actions, media: mediaInput } = input;
   const { media, isVideo, selectedProjectId, isMobile, isFormOnlyMode, onClose, readOnly } = core;
   const shotWorkflow = shotsInput.shotWorkflow;
@@ -40,19 +34,9 @@ export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseS
     variantFetchGenerationId: core.variantFetchGenerationId,
     initialVariantId: core.initialVariantId,
     isFormOnlyMode,
-    selectedProjectId,
   });
 
-  // --- Star, references, join clips ---
-
-  const star = useStarToggle({ media, starred: input.starred, shotId: shotsInput.shotId });
-
-  const referencesState = useReferences({
-    media,
-    selectedProjectId,
-    isVideo,
-    selectedShotId: shotWorkflow?.selectedShotId,
-  });
+  // --- Join clips ---
 
   const joinState = useJoinClips({ media, isVideo, selectedProjectId });
 
@@ -64,34 +48,7 @@ export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseS
 
   const shotState = useSharedLightboxShotState({
     media,
-    selectedProjectId,
     shotWorkflow,
-    onClose,
-  });
-
-  // --- Source generation & make-main-variant ---
-
-  const { sourceGenerationData, sourcePrimaryVariant } = useSourceGeneration({
-    media,
-    onOpenExternalGeneration: input.onOpenExternalGeneration,
-  });
-
-  const canMakeMainVariantFromChild = !runtimeAuthority && !!sourceGenerationData && !!media.location;
-  const canMakeMainVariantFromVariant = !runtimeAuthority
-    && variantState.isViewingNonPrimaryVariant
-    && !!variantState.activeVariant?.location;
-  const canMakeMainVariant = canMakeMainVariantFromChild || canMakeMainVariantFromVariant;
-
-  const { isMakingMainVariant, handleMakeMainVariant } = useMakeMainVariant({
-    media,
-    sourceGenerationData,
-    canMakeMainVariantFromChild,
-    canMakeMainVariantFromVariant,
-    activeVariant: variantState.activeVariant,
-    setPrimaryVariant: variantState.setPrimaryVariant,
-    refetchVariants: variantState.refetchVariants,
-    shotId: shotsInput.shotId,
-    selectedShotId: shotWorkflow?.selectedShotId,
     onClose,
   });
 
@@ -154,15 +111,7 @@ export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseS
         isDeleting,
         onClose,
       },
-      bottomLeft: {
-        localStarred: star.localStarred,
-        handleToggleStar: star.handleToggleStar,
-        toggleStarPending: star.toggleStarMutation.isPending,
-      },
       bottomRight: {
-        isAddingToReferences: referencesState.isAddingToReferences,
-        addToReferencesSuccess: referencesState.addToReferencesSuccess,
-        handleAddToReferences: referencesState.handleAddToReferences,
         handleAddToJoin: joinState.handleAddToJoin,
         isAddingToJoin: joinState.isAddingToJoin,
         addToJoinSuccess: joinState.addToJoinSuccess,
@@ -176,12 +125,6 @@ export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseS
       handleDelete,
       isDeleting,
       onClose,
-      star.localStarred,
-      star.handleToggleStar,
-      star.toggleStarMutation.isPending,
-      referencesState.isAddingToReferences,
-      referencesState.addToReferencesSuccess,
-      referencesState.handleAddToReferences,
       joinState.handleAddToJoin,
       joinState.isAddingToJoin,
       joinState.addToJoinSuccess,
@@ -201,11 +144,6 @@ export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseS
       refetch: variantState.refetchVariants,
       setPrimaryVariant: variantState.setPrimaryVariant,
       deleteVariant: variantState.deleteVariant,
-      isViewingNonPrimaryVariant: variantState.isViewingNonPrimaryVariant,
-      promoteSuccess: variantState.promoteSuccess,
-      isPromoting: variantState.isPromoting,
-      handlePromoteToGeneration: variantState.handlePromoteToGeneration,
-      handleAddVariantAsNewGenerationToShot: variantState.handleAddVariantAsNewGenerationToShot,
     },
     intendedActiveVariantIdRef: variantState.intendedActiveVariantIdRef,
     navigation: {
@@ -213,16 +151,7 @@ export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseS
       activateClickShield,
       swipeNavigation,
     },
-    star: {
-      localStarred: star.localStarred,
-      setLocalStarred: star.setLocalStarred,
-      toggleStarMutation: star.toggleStarMutation,
-      handleToggleStar: star.handleToggleStar,
-    },
     references: {
-      isAddingToReferences: referencesState.isAddingToReferences,
-      addToReferencesSuccess: referencesState.addToReferencesSuccess,
-      handleAddToReferences: referencesState.handleAddToReferences,
       isAddingToJoin: joinState.isAddingToJoin,
       addToJoinSuccess: joinState.addToJoinSuccess,
       handleAddToJoin: joinState.handleAddToJoin,
@@ -241,21 +170,6 @@ export function useSharedLightboxState(input: UseSharedLightboxStateInput): UseS
       isAlreadyAssociatedWithoutPosition: shotState.isAlreadyAssociatedWithoutPosition,
       handleAddToShot: shotState.handleAddToShot,
       handleAddToShotWithoutPosition: shotState.handleAddToShotWithoutPosition,
-      isCreatingShot: shotState.isCreatingShot,
-      quickCreateSuccess: shotState.quickCreateSuccess,
-      handleQuickCreateAndAdd: shotState.handleQuickCreateAndAdd,
-      handleVisitCreatedShot: shotState.handleVisitCreatedShot,
-    },
-    sourceGeneration: {
-      data: sourceGenerationData,
-      primaryVariant: sourcePrimaryVariant,
-    },
-    makeMainVariant: {
-      canMake: canMakeMainVariant,
-      canMakeFromChild: canMakeMainVariantFromChild,
-      canMakeFromVariant: canMakeMainVariantFromVariant,
-      isMaking: isMakingMainVariant,
-      handle: handleMakeMainVariant,
     },
     effectiveMedia: {
       videoUrl: effectiveVideoUrl,

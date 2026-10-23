@@ -1,6 +1,6 @@
 /**
  * Compiler Canary — extension-owned DSL compiler that exercises the full
- * M3 public extension contract.
+ * Public extension contract.
  *
  * The compiler canary:
  * 1. Reads the current timeline via ctx.creative.reader.snapshot()
@@ -30,7 +30,9 @@ import type {
   TimelineProposal,
   ProposalRuntime,
   TimelineClipSummary,
+  TimelineTrackSummary,
   GeneratedObjectMeta,
+  SourceMapEntry,
   DisposeHandle,
   ExtensionContext,
 } from '@astrid/editor-sdk';

@@ -1,9 +1,7 @@
 /**
- * RuntimeDataProvider assertions inherited from the retired bridge provider.
+ * RuntimeDataProvider contract assertions.
  *
- * Each test here is the Runtime form of an assertion that
- * the retired bridge provider's tests (and the Supabase wrapper tests) made about
- * the DataProvider contract: load defaults, registry resolution, single-publish
+ * Each test here asserts the DataProvider contract against the Runtime: load defaults, registry resolution, single-publish
  * saves, stale-head conflicts, bundle passthrough, identity validation and
  * load freshness. Bridge-only mechanisms (ULID aliases, PUT /registry, File
  * System Access drops, generation materialisation) have no Runtime
@@ -424,7 +422,8 @@ describe('uploads', () => {
     const posts = publications(fixture);
     expect(posts).toHaveLength(1);
     expect((posts[0].body as { parent_composition: { registry: AssetRegistry } }).parent_composition.registry.assets[result.assetId])
-      .toMatchObject({ media_id: MANAGED_OBJECT_ID, file: objectUrl(MANAGED_OBJECT_ID), type: 'video/mp4' });
+      // The wire carries the object's route, never the absolute URL it was first seen at: the Runtime refuses any other locator when it freezes a render.
+      .toMatchObject({ media_id: MANAGED_OBJECT_ID, file: `/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`, type: 'video/mp4' });
   });
 
   it('leaves the registry and the timeline untouched when the media import is refused', async () => {

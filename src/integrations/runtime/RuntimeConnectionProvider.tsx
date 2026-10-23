@@ -26,7 +26,8 @@
  * The panel and pill are render props with a placeholder default each, so the real ones are plugged in here and
  * `Layout.tsx` is not edited again.
  */
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { RuntimeGateOpenProvider } from './runtimeGateOpen';
 import { requireContextValue } from '@/shared/contexts/contextGuard';
 import { rememberAppEntryPreference } from '@/app/entryClassification';
 import {
@@ -43,6 +44,7 @@ import {
 import { autoConnectRequested, consumeAutoConnectQuery, takeAutoConnectRequest } from './autoConnectRequest.ts';
 import type { Realm } from './generated.ts';
 import { RUNTIME_ACCEPTED_SCHEMA_DIGESTS } from './contract-metadata.ts';
+import { getSettingsStore } from '@/shared/settings/instance';
 
 export const POLL_INTERVAL_MS = 3000;
 const PROBE_TIMEOUT_MS = 5000;
@@ -269,6 +271,12 @@ export function RuntimeConnectionProvider({
 
   const isConnected = outcome?.kind === 'connected';
 
+  // Saved settings are read from the Runtime only once it has answered (never before the permission prompt).
+  const settingsMayConnect = !gated || isConnected;
+  useEffect(() => {
+    if (settingsMayConnect) void getSettingsStore().connect();
+  }, [settingsMayConnect]);
+
   // Granted: probe at once, then on an interval and on focus, until connected.
   useEffect(() => {
     if (!gated || permission !== 'granted' || isConnected) return undefined;
@@ -349,7 +357,10 @@ export const useRuntimeConnection = (): RuntimeConnectionValue =>
   requireContextValue(useContext(RuntimeConnectionContext), 'useRuntimeConnection', 'RuntimeConnectionProvider');
 
 /** Placeholder until the real panel is plugged in (A2.P): the state name and nothing else. */
-function PlaceholderPanel({ state }: RuntimeConnectionValue) {
+function PlaceholderPanel({ state, exit }: RuntimeConnectionValue & { exit: RuntimeConnectionPanelExit | null }) {
+  // Nothing to show on the way out: the app opens at once.
+  useEffect(() => { exit?.left(); }, [exit]);
+  if (exit) return null;
   return (
     <div
       role="status"
@@ -362,10 +373,22 @@ function PlaceholderPanel({ state }: RuntimeConnectionValue) {
   );
 }
 
+/**
+ * The panel's way out once the Runtime connects: the app is mounted beneath it, the panel leaves in its own way (a
+ * screen that asked for something shows that it worked first), then calls `left`.
+ */
+export interface RuntimeConnectionPanelExit {
+  readonly left: () => void;
+}
+
 export interface RuntimeConnectionGateProps {
   children: React.ReactNode;
-  /** Rendered instead of `children` while the Runtime is not connected. */
-  panel?: (connection: RuntimeConnectionValue) => React.ReactNode;
+  /**
+   * Drawn over the app while the Runtime is not connected. When it connects, the same panel stays (with the last
+   * screen it showed) and `exit` is set: the app mounts beneath it, and the panel is removed when it calls `exit.left`.
+   * The panel decides how it leaves: a screen that asked the person to do something shows that it worked first.
+   */
+  panel?: (connection: RuntimeConnectionValue, exit: RuntimeConnectionPanelExit | null) => React.ReactNode;
   /** Rendered beside `children` once connected. Nothing until A2.P. */
   pill?: (connection: RuntimeConnectionValue) => React.ReactNode;
 }
@@ -376,10 +399,20 @@ export interface RuntimeConnectionGateProps {
  */
 export function RuntimeConnectionGate({
   children,
-  panel = (connection) => <PlaceholderPanel {...connection} />,
+  panel = (connection, exit) => <PlaceholderPanel {...connection} exit={exit} />,
   pill = () => null,
 }: RuntimeConnectionGateProps) {
   const connection = useRuntimeConnection();
+  // The last connection the panel was drawn with. While it is set and Astrid is connected, the panel is on its way
+  // out over the app; `left` clears it.
+  const shownRef = useRef<RuntimeConnectionValue | null>(null);
+  const [, panelLeft] = useReducer((count: number) => count + 1, 0);
+  const exit = useMemo<RuntimeConnectionPanelExit>(() => ({
+    left: () => {
+      shownRef.current = null;
+      panelLeft();
+    },
+  }), []);
   // The landing page's "use it right here" click asked to go in (`autoConnectRequest.ts`): the flag is read once, in the
   // first render, so the explainer is never painted for the frame before the effect below asks Chrome.
   const [autoConnect, setAutoConnect] = useState(() => {
@@ -400,15 +433,27 @@ export function RuntimeConnectionGate({
     }
   }, [gated, autoConnect, awaitingConnect, isBooting, isConnected, connect]);
   if (!gated) return <>{children}</>;
-  if (!connection.isConnected) {
+  let overlay: React.ReactNode = null;
+  if (!isConnected) {
     // While the flag is waiting for its effect, the panel shows Chrome's prompt screen, not the explainer.
     const shown = autoConnect && awaitingConnect ? { ...connection, isChecking: true } : connection;
-    return <>{panel(shown)}</>;
+    shownRef.current = shown;
+    overlay = panel(shown, null);
+  } else if (shownRef.current) {
+    overlay = panel(shownRef.current, exit);
   }
+  // Keyed, so the panel stays the same element while the app mounts beneath it; the app is inert until it has left.
   return (
     <>
-      {pill(connection)}
-      {children}
+      {isConnected ? (
+        <div key="app" className="contents" {...(overlay ? { inert: '' } : {})}>
+          <RuntimeGateOpenProvider open={!overlay}>
+            {pill(connection)}
+            {children}
+          </RuntimeGateOpenProvider>
+        </div>
+      ) : null}
+      {overlay ? <React.Fragment key="panel">{overlay}</React.Fragment> : null}
     </>
   );
 }

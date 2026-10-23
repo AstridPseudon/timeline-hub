@@ -114,8 +114,6 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
           fileInputKey: state.fileInputKey,
           isUploadingImage: state.isUploadingImage,
           uploadProgress: state.uploadProgress,
-          duplicatingImageId: state.duplicatingImageId,
-          duplicateSuccessImageId: state.duplicateSuccessImageId,
           defaultPrompt,
           onDefaultPromptChange,
           defaultNegativePrompt,
@@ -132,21 +130,12 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
         editActions={{
           onImageReorder: imageHandlers.onReorder,
           onFramePositionsChange: () => {},
-          onFileDrop: imageHandlers.onFileDrop,
           onGenerationDrop: imageHandlers.onGenerationDrop,
-          onBatchFileDrop: imageHandlers.onBatchFileDrop,
           onBatchGenerationDrop: imageHandlers.onBatchGenerationDrop,
-          onVariantDrop: imageHandlers.onVariantDrop,
           onPendingPositionApplied,
           onImageDelete: imageHandlers.onDelete,
           onBatchImageDelete: imageHandlers.onBatchDelete,
-          onImageDuplicate: imageHandlers.onDuplicate,
           onOpenUnpositionedPane: shotManagement.openUnpositionedGenerationsPane,
-          onImageUpload: async (files) => {
-            if (imageHandlers.onBatchFileDrop) {
-              await imageHandlers.onBatchFileDrop(files);
-            }
-          },
           onPrimaryStructureVideoInputChange: (input) => {
             structureVideoHandlers.handleStructureVideoInputChange(
               input.videoPath,
@@ -176,8 +165,6 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
           onShotChange: shotManagement.onShotChange,
           onAddToShot: shotManagement.onAddToShot,
           onAddToShotWithoutPosition: shotManagement.onAddToShotWithoutPosition,
-          onCreateShot: shotManagement.onCreateShot,
-          onNewShotFromSelection: shotManagement.onNewShotFromSelection,
         }}
       />
     </div>

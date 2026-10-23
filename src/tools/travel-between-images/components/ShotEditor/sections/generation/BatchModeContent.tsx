@@ -11,7 +11,6 @@ import {
   useModelSettings,
   usePhaseConfigSettings,
   useGenerationModeSettings,
-  useLoraSettings,
   useSettingsSave,
   useVideoTravelSettingsStatus,
 } from '@/tools/travel-between-images/providers';
@@ -58,7 +57,6 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
   const { simpleFilteredImages, structureVideo, structureVideoHandlers } = useShotSettingsMedia();
   const {
     loraManager,
-    availableLoras,
     generationMode,
     generationHandlers,
     joinState,
@@ -70,7 +68,6 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
   const modelSettings = useModelSettings();
   const phaseConfigSettings = usePhaseConfigSettings();
   const generationModeSettings = useGenerationModeSettings();
-  const loraSettingsFromContext = useLoraSettings();
   const { isLoading: settingsLoadingFromContext, canonicalPersistence } = useVideoTravelSettingsStatus();
   const { onBlurSave: blurSaveHandler } = useSettingsSave();
 
@@ -94,7 +91,6 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
   };
   const joinStitchFormProps = buildJoinClipsFormProps({
     joinState,
-    availableLoras,
     projectId,
     loraPersistenceKey: 'join-clips-shot-editor-stitch',
   });
@@ -122,7 +118,7 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
               modelSettings.setSelectedModel(nextModel);
             }}
             batchVideoPrompt={promptSettings.prompt}
-            onBatchVideoPromptChange={generationHandlers.handleBatchVideoPromptChangeWithClear}
+            onBatchVideoPromptChange={generationHandlers.handleBatchVideoPromptChange}
             batchVideoFrames={frameSettings.batchVideoFrames}
             onBatchVideoFramesChange={frameSettings.setFrames}
             batchVideoSteps={frameSettings.batchVideoSteps}
@@ -138,7 +134,6 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
             projects={projects}
             selectedProjectId={selectedProjectId}
             selectedLoras={loraManager.selectedLoras}
-            availableLoras={loraSettingsFromContext.availableLoras}
             isTimelineMode={effectiveGenerationMode === 'timeline'}
             accelerated={generationMode.accelerated}
             onAcceleratedChange={generationMode.onAcceleratedChange}
@@ -166,7 +161,6 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
             onPhasePresetSelect={phaseConfigSettings.selectPreset}
             onPhasePresetRemove={phaseConfigSettings.removePreset}
             onBlurSave={blurSaveHandler}
-            onClearEnhancedPrompts={generationHandlers.clearAllEnhancedPrompts}
             videoControlMode={generationModeSettings.videoControlMode}
             readOnly={readOnly}
             textBeforePrompts={promptSettings.textBeforePrompts}
@@ -211,8 +205,6 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
             }}
             lora={{
               selectedLoras: loraManager.selectedLoras,
-              availableLoras: loraSettingsFromContext.availableLoras,
-              onAddLoraClick: () => loraManager.setIsLoraModalOpen(true),
               onRemoveLora: loraManager.handleRemoveLora,
               onLoraStrengthChange: loraManager.handleLoraStrengthChange,
               onAddTriggerWord: loraManager.handleAddTriggerWord,
@@ -222,7 +214,6 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
               selectedPhasePresetId: phaseConfigSettings.selectedPhasePresetId,
               onPhasePresetSelect: phaseConfigSettings.selectPreset,
               onPhasePresetRemove: phaseConfigSettings.removePreset,
-              currentSettings: generationMode.currentMotionSettings,
             }}
             advanced={{
               phaseConfig: phaseConfigSettings.phaseConfig,
@@ -250,7 +241,6 @@ export const BatchModeContent: React.FC<BatchModeContentProps> = ({
           isGenerating={parentIsGeneratingVideo || generationMode.isSteerableMotionEnqueuing}
           justQueued={parentVideoJustQueued || generationMode.steerableMotionJustQueued}
             disabled={readOnly || generationMode.isGenerationDisabled}
-          enhancementProgress={generationMode.enhancementProgress}
           inputId="variant-name"
           videoCount={Math.max(0, simpleFilteredImages.length - 1)}
           stitchEnabled={stitchAfterGenerate}

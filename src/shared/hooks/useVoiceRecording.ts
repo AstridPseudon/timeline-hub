@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
+import { chatVoiceFunctionUrl, defaultChatVoiceTransport, type ChatVoiceTransport } from '@/tools/video-editor/hooks/chatVoice.ts';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { getErrorMessage, isError } from '@/shared/lib/errorHandling/errorUtils';
 
@@ -12,13 +12,15 @@ interface UseVoiceRecordingOptions {
   context?: string;
   example?: string;
   existingValue?: string;
+  /** Where the audio is posted; defaults to the chat voice config. Injected by tests. */
+  transport?: ChatVoiceTransport;
 }
 
 const MAX_RECORDING_SECONDS = 15;
 const MS_PER_SECOND = 1000;
 
 export function useVoiceRecording(options: UseVoiceRecordingOptions = {}) {
-  const { onResult, onError, task = "transcribe_and_write", context = "", example = "", existingValue = "" } = options;
+  const { onResult, onError, task = "transcribe_and_write", context = "", example = "", existingValue = "", transport = defaultChatVoiceTransport } = options;
   
   const [state, setState] = useState<VoiceRecordingState>("idle");
   const [audioLevel, setAudioLevel] = useState<number>(0);
@@ -137,26 +139,25 @@ export function useVoiceRecording(options: UseVoiceRecordingOptions = {}) {
             formData.append("existingValue", existingValue);
           }
 
-          const { data, error } = await supabase().functions.invoke("ai-voice-prompt", {
+          const url = chatVoiceFunctionUrl(transport.baseUrl);
+          const token = await transport.getToken();
+          const response = await fetch(url, {
+            method: "POST",
             body: formData,
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
           });
+          const data = await response.json().catch(() => null) as { transcription?: string; prompt?: string; error?: string } | null;
 
-          if (error) {
-            normalizeAndPresentError(error, { context: 'useVoiceRecording', showToast: false });
-            onError?.(error.message || "Failed to process voice");
-            setState("idle");
-            return;
-          }
-
-          if (data?.error) {
-            normalizeAndPresentError(new Error(data.error), { context: 'useVoiceRecording', showToast: false });
-            onError?.(data.error);
+          if (!response.ok || data?.error || !data) {
+            const message = data?.error || `Failed to process voice (${response.status})`;
+            normalizeAndPresentError(new Error(message), { context: 'useVoiceRecording', showToast: false });
+            onError?.(message);
             setState("idle");
             return;
           }
 
           onResult?.({
-            transcription: data.transcription,
+            transcription: data.transcription ?? "",
             prompt: data.prompt,
           });
           setState("idle");
@@ -204,7 +205,7 @@ export function useVoiceRecording(options: UseVoiceRecordingOptions = {}) {
       }
       setState("idle");
     }
-  }, [task, context, example, existingValue, onResult, onError, cleanupAudioAnalysis]);
+  }, [task, context, example, existingValue, transport, onResult, onError, cleanupAudioAnalysis]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {

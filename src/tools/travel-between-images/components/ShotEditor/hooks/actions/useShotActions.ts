@@ -4,7 +4,6 @@
  * Extracted to reduce ShotEditor size. Handles:
  * - Shot navigation (handleShotChange)
  * - Add to shot operations (handleAddToShot, handleAddToShotWithoutPosition)
- * - Shot creation (handleCreateShot, handleNewShotFromSelection)
  * - Generations pane integration (openUnpositionedGenerationsPane)
  */
 
@@ -34,7 +33,6 @@ interface UseShotActionsOptions {
   allShotImagesRef: React.MutableRefObject<GenerationRow[]>;
   addToShotMutationRef: React.MutableRefObject<(params: AddImageToShotVariables) => Promise<unknown>>;
   addToShotWithoutPositionMutationRef: React.MutableRefObject<(params: { shot_id: string; generation_id: string; project_id: string }) => Promise<unknown>>;
-  createShotRef: React.MutableRefObject<(params: { name: string }) => Promise<{ shotId: string } | null>>;
   setIsGenerationsPaneLockedRef: React.MutableRefObject<(locked: boolean) => void>;
 
   // Direct dependencies
@@ -52,7 +50,6 @@ export function useShotActions({
   allShotImagesRef,
   addToShotMutationRef,
   addToShotWithoutPositionMutationRef,
-  createShotRef,
   setIsGenerationsPaneLockedRef,
   shots,
   navigateToShot,
@@ -124,67 +121,10 @@ export function useShotActions({
     }
   }, [addToShotWithoutPositionMutationRef, projectIdRef]);
 
-  const handleCreateShot = useCallback(async (name: string) => {
-    const result = await createShotRef.current({ name });
-    if (!result) {
-      throw new Error('Failed to create shot');
-    }
-    return result.shotId;
-  }, [createShotRef]);
-
-  const handleNewShotFromSelection = useCallback(async (selectedIds: string[]): Promise<string | void> => {
-
-    const selectedImages = allShotImagesRef.current.filter(img =>
-      selectedIds.includes(img.id)
-    );
-
-    if (selectedImages.length === 0) {
-      toast.error('No images selected');
-      return;
-    }
-
-    const newShotName = `From ${selectedShot?.name || 'selection'} (${selectedImages.length})`;
-
-    try {
-      const result = await createShotRef.current({ name: newShotName });
-      if (!result || !result.shotId) {
-        throw new Error('Failed to create shot');
-      }
-
-      const sortedImages = [...selectedImages].sort((a, b) =>
-        (a.timeline_frame ?? 0) - (b.timeline_frame ?? 0)
-      );
-
-      const FRAME_GAP = 50;
-      await Promise.all(
-        sortedImages
-          .map((img, i) => {
-            const generationId = getGenerationId(img);
-            if (!generationId) return null;
-            const newFrame = i * FRAME_GAP;
-            return addToShotMutationRef.current({
-              shot_id: result.shotId,
-              generation_id: generationId,
-              timelineFrame: newFrame,
-              project_id: projectIdRef.current
-            });
-          })
-          .filter((promise): promise is Promise<unknown> => promise !== null)
-      );
-
-      await queryClient.refetchQueries({ queryKey: shotQueryKeys.all });
-      return result.shotId;
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'ShotEditor', toastTitle: 'Failed to create shot' });
-    }
-  }, [selectedShot?.name, queryClient, addToShotMutationRef, allShotImagesRef, createShotRef, projectIdRef]);
-
   return {
     openUnpositionedGenerationsPane,
     handleShotChange,
     handleAddToShot,
     handleAddToShotWithoutPosition,
-    handleCreateShot,
-    handleNewShotFromSelection,
   };
 }

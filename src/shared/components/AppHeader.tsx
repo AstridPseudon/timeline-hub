@@ -133,7 +133,7 @@ export function AppHeader({
 
       {timelineName && (
         <div className={cn('min-w-0 truncate text-foreground', !navigationControls && 'ml-1')}>
-          <span className="preserve-case">{timelineName}</span>
+          <span className="">{timelineName}</span>
         </div>
       )}
 

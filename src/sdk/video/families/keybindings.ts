@@ -2,8 +2,7 @@
  * Keybinding family contracts — manifest contribution declarations.
  *
  * Keybinding contributions bind keyboard shortcuts to commands with
- * platform-aware key notation. Fully bridged at M4 through the command
- * dispatch system.
+ * platform-aware key notation, dispatched through the command system.
  *
  * @module video/families/keybindings
  * @publicContract

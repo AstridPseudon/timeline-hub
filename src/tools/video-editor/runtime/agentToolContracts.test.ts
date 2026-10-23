@@ -1,5 +1,5 @@
 /**
- * M10 T4: Focused tests for agentToolContracts.
+ * Focused tests for agentToolContracts.
  *
  * Covers:
  *  - validateAgentToolInputSchema: supported/unsupported StandardSchema subsets
@@ -10,7 +10,6 @@
  *    conversion metadata preservation, base version, stale/version diagnostics
  *
  * @module agentToolContracts.test
- * @milestone M10
  */
 
 import { describe, expect, it } from 'vitest';

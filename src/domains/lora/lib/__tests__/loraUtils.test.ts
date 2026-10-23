@@ -7,32 +7,9 @@ describe('getDisplayNameFromUrl', () => {
     expect(getDisplayNameFromUrl(predefined.url)).toBe(predefined.displayName);
   });
 
-  it('returns availableLoras Name if URL matches', () => {
-    const availableLoras = [
-      { huggingface_url: 'https://example.com/my-lora.safetensors', Name: 'My Cool LoRA' },
-    ];
-    expect(getDisplayNameFromUrl(
-      'https://example.com/my-lora.safetensors',
-      availableLoras as unknown,
-    )).toBe('My Cool LoRA');
-  });
-
-  it('skips availableLoras with Name "N/A"', () => {
-    const availableLoras = [
-      { huggingface_url: 'https://example.com/lora.safetensors', Name: 'N/A' },
-    ];
-    const result = getDisplayNameFromUrl(
-      'https://example.com/lora.safetensors',
-      availableLoras as unknown,
-    );
-    // Should fall through to filename extraction
-    expect(result).toBe('lora');
-  });
-
   it('uses fallback name when provided', () => {
     expect(getDisplayNameFromUrl(
       'https://example.com/unknown.safetensors',
-      undefined,
       'Custom Name',
     )).toBe('Custom Name');
   });
@@ -61,7 +38,6 @@ describe('getDisplayNameFromUrl', () => {
   it('ignores blank fallback name', () => {
     expect(getDisplayNameFromUrl(
       'https://example.com/model.safetensors',
-      undefined,
       '   ',
     )).toBe('model');
   });

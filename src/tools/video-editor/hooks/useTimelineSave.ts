@@ -18,7 +18,7 @@ import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/i
 import { usePollSync, type UsePollSyncQueries } from '@/tools/video-editor/hooks/usePollSync.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import type { DataProvider, TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
+import { isDataProviderPersistenceEnabled, type DataProvider, type TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
 import type { TimelineDraftRecord } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { canonicalJsonStringify, parseTimelineBundle, type TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
@@ -186,6 +186,8 @@ export function useTimelineSave(
       retryAllowed: !provider.saveTimelineAtHead || Boolean(trustedRecoveryHead(record)) });
   }, [provider, trustedRecoveryHead]);
   useEffect(() => {
+    // No durable persistence (a read-only example, the editor tour) means no draft was ever written to offer.
+    if (!isDataProviderPersistenceEnabled(provider)) return;
     if (!hasTimelineData || recoveryCheckedScopeRef.current === recoveryScope) {
       return;
     }

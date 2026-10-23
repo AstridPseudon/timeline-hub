@@ -26,7 +26,7 @@ export type EffectResource = EffectMetadata & {
   diagnostics?: readonly ExtensionDiagnostic[];
   /** Extension that owns this effect (bundled-extension provenance). */
   ownerExtensionId?: string;
-  /** Whether this effect record is read-only (e.g. bundled-extension effects per SD3). */
+  /** Whether this effect record is read-only (e.g. bundled-extension effects). */
   readOnly?: boolean;
   /** Registry record status (active, inactive, error). */
   registryStatus?: EffectRegistryRecordStatus;
@@ -86,7 +86,7 @@ export const EMPTY_EFFECT_GROUPS: EffectResourcesByCategory = {
 
 /**
  * Determine if an EffectRegistryRecord should be treated as read-only.
- * Per SD3: bundled-extension component effects are read-only in M7.
+ * Bundled-extension component effects are read-only.
  */
 function isReadOnlyRecord(record: EffectRegistryRecord): boolean {
   return record.provenance === 'bundled-extension';

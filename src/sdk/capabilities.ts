@@ -1,7 +1,7 @@
 /**
  * Capability, sampling, and process-roundtrip contracts for the Astrid Editor SDK.
  *
- * M12 core contracts: capability requirements, source references, route-fit
+ * Core contracts: capability requirements, source references, route-fit
  * metadata, versioning, integration capabilities, sampling descriptors,
  * process-roundtrip vocabulary, and the provider-free getCapabilityRequirements()
  * derivation function.
@@ -49,12 +49,12 @@ export interface ProcessLogSummary {
 }
 
 // ---------------------------------------------------------------------------
-// M12: Planner requirement contracts — capability requirements, source refs,
+// Planner requirement contracts — capability requirements, source refs,
 // route-fit metadata, capability versioning, and integration capabilities
 // ---------------------------------------------------------------------------
 
 /**
- * M12: Version descriptor for a capability or contribution declaration.
+ * Version descriptor for a capability or contribution declaration.
  *
  * Carries a semver version and declaration provenance so planners can
  * detect version conflicts and stale registrations without importing
@@ -70,7 +70,7 @@ export interface CapabilityVersion {
 }
 
 /**
- * M12: Source reference for a capability requirement.
+ * Source reference for a capability requirement.
  *
  * Identifies where a capability requirement originates so planners
  * can attribute blockers and findings to the right extension,
@@ -88,7 +88,7 @@ export interface CapabilitySourceRef {
 }
 
 /**
- * M12: Route-fit metadata describing how well a capability maps to a route.
+ * Route-fit metadata describing how well a capability maps to a route.
  *
  * Planners use route-fit metadata to decide whether a contribution can
  * authoritatively execute on a given route, or whether it must fall back
@@ -106,7 +106,7 @@ export interface RouteFitMetadata {
 }
 
 /**
- * M12: A single capability requirement produced by the planner.
+ * A single capability requirement produced by the planner.
  *
  * Each CapabilityRequirement describes what a contribution needs for a
  * specific route, its determinism posture, version, source provenance,
@@ -136,7 +136,7 @@ export interface CapabilityRequirement {
 }
 
 /**
- * M12: Minimal integration capabilities consumed by TimelineReader and
+ * Minimal integration capabilities consumed by TimelineReader and
  * renderPlanner.
  *
  * Aggregates capability requirements, source references, and route
@@ -163,7 +163,7 @@ export interface IntegrationCapabilities {
 }
 
 // ---------------------------------------------------------------------------
-// M12: Artifact manifest, sidecar, sampling, and process roundtrip contracts
+// Artifact manifest, sidecar, sampling, and process roundtrip contracts
 // ---------------------------------------------------------------------------
 
 export type SamplingStrategy =
@@ -202,7 +202,7 @@ export interface SamplingAttachmentRule {
   readonly required?: boolean;
 }
 
-/** M12: Declarative sampling request consumed by planners and export shells. */
+/** Declarative sampling request consumed by planners and export shells. */
 export interface SamplingConfig {
   readonly id?: string;
   readonly strategy: SamplingStrategy;
@@ -230,7 +230,7 @@ export interface SamplingResultItem {
   readonly diagnostics?: readonly CapabilityFinding[];
 }
 
-/** M12: Result vocabulary for dry-runs and dataset/show-control exports. */
+/** Result vocabulary for dry-runs and dataset/show-control exports. */
 export interface SamplingResult {
   readonly configId?: string;
   readonly items: readonly SamplingResultItem[];
@@ -276,11 +276,11 @@ export interface ProcessRoundtripResult {
 }
 
 // ---------------------------------------------------------------------------
-// M12: getCapabilityRequirements — provider-free capability inspection
+// getCapabilityRequirements — provider-free capability inspection
 // ---------------------------------------------------------------------------
 
 /**
- * M12: Derive capability requirements from a TimelineSnapshot.
+ * Derive capability requirements from a TimelineSnapshot.
  *
  * Inspects clip types, effects, transitions, live bindings, and material
  * refs present in the snapshot and emits {@link CapabilityRequirement}

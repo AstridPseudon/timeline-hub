@@ -7,7 +7,7 @@
  * - Dedicated render sections for header, content, and overlays
  */
 
-import React, { useCallback, useRef } from 'react';
+import React from 'react';
 import { Card } from '@/shared/components/ui/card';
 import { ASPECT_RATIO_TO_RESOLUTION } from '@/shared/lib/media/aspectRatios';
 import { useShotImagesEditorModel } from './hooks/useShotImagesEditorModel';
@@ -37,22 +37,14 @@ const ShotImagesEditor: React.FC<ShotImagesEditorProps> = (props) => {
     ? ASPECT_RATIO_TO_RESOLUTION[projectAspectRatio]
     : undefined;
 
-  const trailingFrameUpdateRef = useRef<((endFrame: number) => void) | null>(null);
-  const registerTrailingUpdater = useCallback((fn: (endFrame: number) => void) => {
-    trailingFrameUpdateRef.current = fn;
-  }, []);
-
   const { data, mode, timelineMediaValue } = useShotImagesEditorModel(
     resolvedProps,
     effectiveGenerationMode,
     resolvedProjectResolution,
-    trailingFrameUpdateRef,
   );
 
   const callbacks = useShotImagesEditorCallbacks({
     selectedShotId: resolvedProps.selectedShotId,
-    projectId: resolvedProps.projectId,
-    preloadedImages: resolvedProps.preloadedImages,
     onImageDelete: resolvedProps.onImageDelete,
     onAddToShot: resolvedProps.onAddToShot,
     onAddToShotWithoutPosition: resolvedProps.onAddToShotWithoutPosition,
@@ -82,7 +74,6 @@ const ShotImagesEditor: React.FC<ShotImagesEditorProps> = (props) => {
         mode={mode}
         callbacks={callbacks}
         timelineMediaValue={timelineMediaValue}
-        registerTrailingUpdater={registerTrailingUpdater}
       />
 
       <EditorOverlays

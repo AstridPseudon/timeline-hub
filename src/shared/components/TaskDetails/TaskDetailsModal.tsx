@@ -3,9 +3,6 @@
  *
  * Modal dialog for viewing detailed task information for a generation.
  * Shows input images, settings, parameters, and allows applying settings.
- *
- * Moved from tools/travel-between-images/components/TaskDetailsModal.tsx
- * to shared/ because it's used by MediaGalleryLightbox and other shared components.
  */
 
 import React, { ReactNode, useState } from 'react';
@@ -18,14 +15,11 @@ import {
   DialogFooter
 } from '@/shared/components/ui/dialog';
 import { Button } from '@/shared/components/ui/button';
-import { Checkbox } from '@/shared/components/ui/checkbox';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { useLargeModal } from '@/shared/hooks/useModal';
-import { Label } from '@/shared/components/ui/primitives/label';
 import { normalizeTaskDetailsPayload } from '@/shared/components/TaskDetails/hooks/normalizeTaskDetailsPayload';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useGenerationTaskDetails } from '@/shared/components/TaskDetails/hooks/useGenerationTaskDetails';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
 import {
   TaskDetailsEmptyState,
   TaskDetailsErrorState,
@@ -41,7 +35,7 @@ import { useTaskDetailsModalState } from '@/shared/components/TaskDetails/hooks/
 interface TaskDetailsModalProps {
   generationId: string;
   children?: ReactNode;
-  onApplySettingsFromTask?: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
+  onApplySettingsFromTask?: (taskId: string) => void;
   onClose?: () => void;
   onShowVideo?: () => void;
   isVideoContext?: boolean;
@@ -73,7 +67,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     }
   };
   const { selectedProjectId } = useProjectSelectionContext();
-  const { data: availableLoras } = usePublicLoras();
 
   const {
     taskId,
@@ -89,8 +82,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
     resolveMappingOnDemand: true,
   });
   const {
-    replaceImages,
-    setReplaceImages,
     showDetailedParams,
     setShowDetailedParams,
     showAllImages,
@@ -129,8 +120,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
 
   const handleApplySettingsFromTask = () => {
     if (taskId && onApplySettingsFromTask && task) {
-      // Pass the correctly ordered inputImages array (derived from task JSON sources)
-      onApplySettingsFromTask(taskId, replaceImages, detailInputImages);
+      onApplySettingsFromTask(taskId);
     }
     setIsOpen(false);
     onClose?.();
@@ -189,7 +179,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
                 inputImages={detailInputImages}
                 detailsVariant="modal"
                 isMobile={isMobile}
-                availableLoras={availableLoras}
                 controls={summaryControls}
                 renderGenerationDetails={renderGenerationDetails}
               />
@@ -202,32 +191,18 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({
         <div className={modal.footerClass}>
           <DialogFooter className="pt-4 border-t">
            <div className="flex w-full items-center gap-3">
-              {detailInputImages.length > 0 && (
-                <>
-                  <div className="flex items-center gap-x-2">
-                    <Checkbox
-                      id="replaceImages"
-                      checked={replaceImages}
-                      onCheckedChange={(checked) => setReplaceImages(checked as boolean)}
-                    />
-                    <Label htmlFor="replaceImages" className={`text-sm font-light ${isMobile ? 'whitespace-pre-line leading-tight' : ''}`}>
-                      {isMobile ? 'Replace\nthese\nimages' : 'Replace these images'}
-                    </Label>
-                  </div>
-                  {onApplySettingsFromTask && task && taskId && (
-                    <Button
-                      variant="retro"
-                      size="retro-sm"
-                      onClick={handleApplySettingsFromTask}
-                      className={`text-sm ${isMobile ? 'whitespace-pre-line leading-tight py-3 px-4 min-h-[3rem]' : ''}`}
-                    >
-                      {isMobile ? 'Apply\nSettings' : 'Apply Settings'}
-                    </Button>
-                  )}
-                </>
+              {onApplySettingsFromTask && task && taskId && (
+                <Button
+                  variant="retro"
+                  size="retro-sm"
+                  onClick={handleApplySettingsFromTask}
+                  className={`text-sm ${isMobile ? 'whitespace-pre-line leading-tight py-3 px-4 min-h-[3rem]' : ''}`}
+                >
+                  {isMobile ? 'Apply\nSettings' : 'Apply Settings'}
+                </Button>
               )}
               <div className="flex items-center gap-x-3 ml-auto">
-              {/* Show Video button for mobile video context - now positioned directly to the left of close button */}
+              {/* Show Video button for mobile video context - positioned directly to the left of close button */}
               {isMobile && isVideoContext && onShowVideo && (
                 <Button
                   variant="secondary"

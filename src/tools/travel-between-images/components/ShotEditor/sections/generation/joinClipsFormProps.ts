@@ -1,5 +1,4 @@
 import type React from 'react';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { LoraManagerState } from '@/domains/lora/types/loraManager';
 import type { JoinSegmentsSettings } from '@/tools/travel-between-images/hooks/settings/useJoinSegmentsSettings';
 import {
@@ -24,7 +23,6 @@ interface JoinFormJoinState {
 
 interface BuildJoinClipsFormPropsInput {
   joinState: JoinFormJoinState;
-  availableLoras: LoraModel[];
   projectId: string;
   loraPersistenceKey: string;
 }
@@ -36,7 +34,6 @@ interface BuildJoinClipsFormPropsResult {
 
 export function buildJoinClipsFormProps({
   joinState,
-  availableLoras,
   projectId,
   loraPersistenceKey,
 }: BuildJoinClipsFormPropsInput): BuildJoinClipsFormPropsResult {
@@ -61,7 +58,6 @@ export function buildJoinClipsFormProps({
       shortestClipFrames: joinState.joinValidationData.shortestClipFrames,
     },
     motionConfig: {
-      availableLoras,
       projectId,
       loraPersistenceKey,
       loraManager: joinState.joinLoraManager,

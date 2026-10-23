@@ -7,7 +7,6 @@ import {
 } from '@/shared/lib/joinClips/pendingQueue';
 import { consumeJoinClipsIntents } from '@/shared/lib/joinClips/intentStore';
 import { generateUUID } from '@/shared/lib/taskCreation';
-import { readUserIdFromStorage } from '@/shared/lib/supabaseSession';
 import {
   operationFailure,
   operationSuccess,
@@ -63,9 +62,6 @@ function parsePendingJoinClips(raw: string): PendingJoinClipParseResult | null {
         : {}),
       ...(typeof candidate.projectId === 'string' && candidate.projectId.length > 0
         ? { projectId: candidate.projectId }
-        : {}),
-      ...(typeof candidate.userId === 'string' && candidate.userId.length > 0
-        ? { userId: candidate.userId }
         : {}),
     });
   }
@@ -135,27 +131,25 @@ export async function tryConsumePendingJoinClips(
   const readVideoDuration = options.readVideoDuration ?? getVideoDurationFromUrl;
 
   try {
-    const userId = readUserIdFromStorage();
-
-    const inMemoryPending = consumeJoinClipsIntents({ projectId, userId });
+    const inMemoryPending = consumeJoinClipsIntents({ projectId });
     if (inMemoryPending.length > 0) {
       const now = Date.now();
       const scopedRecentClips = inMemoryPending.filter(
         (clip) =>
           now - clip.timestamp < PENDING_CLIPS_TTL_MS
-          && isPendingJoinClipInScope(clip, { projectId, userId }),
+          && isPendingJoinClipInScope(clip, { projectId }),
       );
       if (scopedRecentClips.length === 0) {
-        localStorage.removeItem(getPendingJoinClipsStorageKey(projectId, userId));
+        localStorage.removeItem(getPendingJoinClipsStorageKey(projectId));
         return operationSuccess([]);
       }
 
       const actions = await toPendingClipActions(scopedRecentClips, readVideoDuration);
-      localStorage.removeItem(getPendingJoinClipsStorageKey(projectId, userId));
+      localStorage.removeItem(getPendingJoinClipsStorageKey(projectId));
       return operationSuccess(actions);
     }
 
-    const pendingKeys = getPendingJoinClipsCandidateKeys({ projectId, userId });
+    const pendingKeys = getPendingJoinClipsCandidateKeys({ projectId });
     const pendingSource = pendingKeys
       .map((key) => ({ key, raw: localStorage.getItem(key) }))
       .find((item) => typeof item.raw === 'string' && item.raw.length > 0);
@@ -198,7 +192,7 @@ export async function tryConsumePendingJoinClips(
       clip => now - clip.timestamp < PENDING_CLIPS_TTL_MS,
     );
     const scopedRecentClips = recentClips.filter((clip) =>
-      isPendingJoinClipInScope(clip, { projectId, userId }),
+      isPendingJoinClipInScope(clip, { projectId }),
     );
 
     if (scopedRecentClips.length === 0) {

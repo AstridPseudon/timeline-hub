@@ -1,16 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 
-// Mock Supabase client to avoid real DB calls
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        in: vi.fn(() => Promise.resolve({ data: [], error: null })),
-      })),
-    })),
-  }),
-}));
-
 import {
   LOCAL_GENERATION_MEDIA_SENTINEL_URL,
   transformGeneration,

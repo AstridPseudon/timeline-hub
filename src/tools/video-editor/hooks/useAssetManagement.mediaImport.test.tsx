@@ -131,4 +131,21 @@ describe('useAssetManagement Runtime media imports', () => {
       'This editor backend does not support Runtime image/video imports',
     );
   });
+
+  it('fails closed for a provider without a Runtime media import for both images and videos', async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal('fetch', fetchSpy);
+    const { result } = renderAssetManagement({ resolveAssetUrl: vi.fn() });
+    const image = new File(['image'], 'frame.png', { type: 'image/png' });
+    const video = new File(['video'], 'clip.mp4', { type: 'video/mp4' });
+
+    await expect(result.current.uploadImageGeneration(image)).rejects.toThrow(
+      'This editor backend does not support Runtime image/video imports',
+    );
+    await expect(result.current.uploadVideoGeneration(video)).rejects.toThrow(
+      'This editor backend does not support Runtime image/video imports',
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
 });

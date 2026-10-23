@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import type { SettingsScope } from '@/shared/settings';
+import type { SettingsScope } from '@/shared/hooks/settings/useToolSettings';
 import { useRenderLogger } from '@/shared/lib/debug/debugRendering';
 import { useAutoSaveSettings } from '@/shared/settings/hooks/useAutoSaveSettings';
 import { deepEqual, sanitizeSettings } from '@/shared/lib/utils/deepEqual';

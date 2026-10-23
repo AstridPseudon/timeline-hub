@@ -145,25 +145,25 @@ export interface VideoEditorExtensionRuntimeConfig {
     inspectorSections: readonly VideoEditorInspectorSectionDescriptor[];
   };
   overlays: readonly TimelineOverlayDescriptor[];
-  /** M6: Normalized asset parser descriptors, provider-scoped and deterministically ordered. */
+  /** Normalized asset parser descriptors, provider-scoped and deterministically ordered. */
   assetParsers: readonly VideoEditorAssetParserDescriptor[];
-  /** M6: Normalized output format descriptors (disabled diagnostics for render-dependent). */
+  /** Normalized output format descriptors (disabled diagnostics for render-dependent). */
   outputFormats: readonly VideoEditorOutputFormatDescriptor[];
-  /** M12: Normalized process descriptors, declaration-only until host runtime activation. */
+  /** Normalized process descriptors, declaration-only until host runtime activation. */
   processes: readonly VideoEditorProcessDescriptor[];
-  /** M6: Normalized search provider descriptors, declaration-only until execution is bridged. */
+  /** Normalized search provider descriptors, declaration-only until execution is bridged. */
   searchProviders: readonly VideoEditorSearchProviderDescriptor[];
-  /** M6: Normalized metadata facet descriptors for the asset panel. */
+  /** Normalized metadata facet descriptors for the asset panel. */
   metadataFacets: readonly VideoEditorMetadataFacetDescriptor[];
-  /** M6: Normalized asset detail section descriptors for the asset detail panel. */
+  /** Normalized asset detail section descriptors for the asset detail panel. */
   assetDetailSections: readonly VideoEditorAssetDetailSectionDescriptor[];
-  /** M7: Normalized component-backed effect descriptors, provider-scoped and deterministically ordered. */
+  /** Normalized component-backed effect descriptors, provider-scoped and deterministically ordered. */
   effects: readonly VideoEditorEffectDescriptor[];
-  /** M8: Normalized component-backed transition descriptors, provider-scoped and deterministically ordered. */
+  /** Normalized component-backed transition descriptors, provider-scoped and deterministically ordered. */
   transitions: readonly VideoEditorTransitionDescriptor[];
-  /** M13: Normalized WebGL shader descriptors, provider-scoped and deterministically ordered. */
+  /** Normalized WebGL shader descriptors, provider-scoped and deterministically ordered. */
   shaders: readonly VideoEditorShaderDescriptor[];
-  /** M10: Normalized agent tool descriptors, provider-scoped and deterministically ordered. */
+  /** Normalized agent tool descriptors, provider-scoped and deterministically ordered. */
   agentTools: readonly VideoEditorAgentToolDescriptor[];
 }
 
@@ -177,7 +177,7 @@ export interface ResolvedVideoEditorPanelRegistry {
 }
 
 // ---------------------------------------------------------------------------
-// M6: Asset parser / output format / search provider descriptors
+// Asset parser / output format / search provider descriptors
 // ---------------------------------------------------------------------------
 
 /** A normalized asset parser descriptor produced by runtime normalization. */
@@ -347,7 +347,7 @@ export interface VideoEditorAssetDetailSectionDescriptor {
 }
 
 // ---------------------------------------------------------------------------
-// M7: Trusted component effect descriptors
+// Trusted component effect descriptors
 // ---------------------------------------------------------------------------
 
 /** A normalized component-backed effect descriptor produced by runtime normalization. */
@@ -368,7 +368,7 @@ export interface VideoEditorEffectDescriptor {
 }
 
 // ---------------------------------------------------------------------------
-// M8: Trusted component transition descriptors
+// Trusted component transition descriptors
 // ---------------------------------------------------------------------------
 
 /**
@@ -402,7 +402,7 @@ export interface VideoEditorTransitionDescriptor {
   /** Whether the contribution has renderer metadata (always true for active descriptors). */
   hasRendererMetadata: boolean;
   /**
-   * M5-ready named material (mask) slot declarations normalized from the
+   * Named material (mask) slot declarations normalized from the
    * contribution manifest.  An empty array means the transition declares
    * no material inputs.
    */
@@ -410,7 +410,7 @@ export interface VideoEditorTransitionDescriptor {
 }
 
 // ---------------------------------------------------------------------------
-// M13: WebGL shader descriptors
+// WebGL shader descriptors
 // ---------------------------------------------------------------------------
 
 /** A normalized WebGL shader descriptor produced by runtime normalization. */
@@ -435,7 +435,7 @@ export interface VideoEditorShaderDescriptor {
 }
 
 // ---------------------------------------------------------------------------
-// M10: Agent tool descriptors
+// Agent tool descriptors
 // ---------------------------------------------------------------------------
 
 /** A normalized agent tool descriptor produced by runtime normalization. */
@@ -548,7 +548,7 @@ export interface ContributionIndexEntry {
  *
  * The index is frozen at assembly time and provides O(1) lookup of
  * contribution identity records by scoped key. Exact scoped-key duplicates
- * are preserved as frozen arrays in encounter order. Batch T8 populates
+ * are preserved as frozen arrays in encounter order. The batch populates
  * active bridged records plus preserved exact-duplicate records.
  */
 export type ContributionIndex = Readonly<Record<string, readonly ContributionIndexEntry[]>>;
@@ -597,32 +597,32 @@ export interface ExtensionRuntime {
   /**
    * Eager composition-graph projection built from the contribution index.
    *
-   * This is the M1b graph authority surface for shader/ref consumers.
+   * This is the graph authority surface for shader/ref consumers.
    * Legacy descriptor arrays and the contribution index remain attached for
    * compatibility callers that have not migrated yet.
    */
   readonly compositionGraph: CompositionGraph;
   /** Extension-scoped settings defaults keyed by extension ID. */
   readonly settingsDefaults: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
-  /** M6: Normalized parser descriptors, ordered by extension order then contribution order. */
+  /** Normalized parser descriptors, ordered by extension order then contribution order. */
   readonly assetParsers: readonly VideoEditorAssetParserDescriptor[];
-  /** M6: Output format descriptors with disabled diagnostics for render-dependent formats. */
+  /** Output format descriptors with disabled diagnostics for render-dependent formats. */
   readonly outputFormats: readonly VideoEditorOutputFormatDescriptor[];
-  /** M12: Process descriptors, declaration-only until host runtime activation. */
+  /** Process descriptors, declaration-only until host runtime activation. */
   readonly processes: readonly VideoEditorProcessDescriptor[];
-  /** M6: Search provider descriptors, declaration-only. */
+  /** Search provider descriptors, declaration-only. */
   readonly searchProviders: readonly VideoEditorSearchProviderDescriptor[];
-  /** M6: Metadata facet descriptors from all extensions. */
+  /** Metadata facet descriptors from all extensions. */
   readonly metadataFacets: readonly VideoEditorMetadataFacetDescriptor[];
-  /** M6: Asset detail section descriptors from all extensions. */
+  /** Asset detail section descriptors from all extensions. */
   readonly assetDetailSections: readonly VideoEditorAssetDetailSectionDescriptor[];
-  /** M7: Normalized component-backed effect descriptors. */
+  /** Normalized component-backed effect descriptors. */
   readonly effects: readonly VideoEditorEffectDescriptor[];
-  /** M8: Normalized component-backed transition descriptors. */
+  /** Normalized component-backed transition descriptors. */
   readonly transitions: readonly VideoEditorTransitionDescriptor[];
-  /** M13: Normalized WebGL shader descriptors. */
+  /** Normalized WebGL shader descriptors. */
   readonly shaders: readonly VideoEditorShaderDescriptor[];
-  /** M10: Normalized agent tool descriptors. */
+  /** Normalized agent tool descriptors. */
   readonly agentTools: readonly VideoEditorAgentToolDescriptor[];
   /** Project-level extension requirements referenced by the active extensions. */
   readonly requirements: readonly ProjectExtensionRequirement[];
@@ -638,7 +638,7 @@ export interface ExtensionRuntime {
 }
 
 // ---------------------------------------------------------------------------
-// Package state inventory (M5: propagated from ExtensionLoader load result)
+// Package state inventory (propagated from ExtensionLoader load result)
 // ---------------------------------------------------------------------------
 
 /**
@@ -744,7 +744,7 @@ const EMPTY_RUNTIME_COMPOSITION_GRAPH: CompositionGraph = Object.freeze({
  * - Detects duplicate extension IDs and exact scoped-key duplicate
  *   contribution declarations, emitting structured diagnostics without
  *   dropping preserved records.
- * - Separates bridged M1 contributions (slot, dialog, panel, inspectorSection)
+ * - Separates bridged contributions (slot, dialog, panel, inspectorSection)
  *   from reserved future kinds (effect, transition, clipType, parser, agentTool,
  *   agent) and collects the latter as inactive reserved metadata.
  * - Orders contributions deterministically: by `order` ascending, then by

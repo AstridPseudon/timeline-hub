@@ -53,7 +53,7 @@ export function useDerivedItems(
     : getProjectSelectionFallbackId();
   const queryProjectId = projectId ?? 'pending';
   const queryKey = [
-    authority.runtimeAuthority ? 'runtime' : 'supabase',
+    authority.runtimeAuthority ? 'runtime' : 'astrid',
     'derived-items',
     queryProjectId,
     sourceGenerationId ?? 'none',

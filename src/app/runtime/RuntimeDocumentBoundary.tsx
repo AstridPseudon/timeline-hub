@@ -19,7 +19,7 @@ export function RuntimeDocumentBoundary({ children }: { children: React.ReactNod
   if (!isWorkspaceRoute(pathname)) return content;
   return (
     <RuntimeConnectionGate
-      panel={(connection) => <RuntimeConnectionPanel connection={connection} />}
+      panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} />}
       pill={(connection) => <RuntimeConnectionPill connection={connection} />}
     >
       <RuntimeDocumentNormalizationGate>{content}</RuntimeDocumentNormalizationGate>

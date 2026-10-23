@@ -15,6 +15,10 @@ describe('uiLayers', () => {
     expect(UI_Z_LAYERS.TASKS_PANE_CONTENT).toBeGreaterThan(UI_Z_LAYERS.TASKS_PANE_TAB_ABOVE_LIGHTBOX);
     expect(UI_Z_LAYERS.TASKS_PANE_CONTENT).toBeLessThan(UI_Z_LAYERS.TOAST_VIEWPORT);
     expect(UI_Z_LAYERS.TOAST_VIEWPORT).toBeGreaterThan(UI_Z_LAYERS.TASKS_PANE_TAB_ABOVE_LIGHTBOX);
+    // The tour covers the panes (the tour chat lives in the Tasks pane) and still yields to toasts.
+    expect(UI_Z_LAYERS.EDITOR_TOUR_SHIELD).toBeGreaterThan(UI_Z_LAYERS.TASKS_PANE_CONTENT);
+    expect(UI_Z_LAYERS.EDITOR_TOUR_CARD).toBeGreaterThan(UI_Z_LAYERS.EDITOR_TOUR_SHIELD);
+    expect(UI_Z_LAYERS.EDITOR_TOUR_CARD).toBeLessThan(UI_Z_LAYERS.TOAST_VIEWPORT);
     expect(UI_Z_LAYERS.TASKS_PANE_TAB_BEHIND_LIGHTBOX).toBeLessThan(UI_Z_LAYERS.LIGHTBOX_MODAL);
   });
 });

@@ -1,5 +1,5 @@
 /**
- * M7: Tests for effect registration service — schema validation and
+ * Tests for effect registration service — schema validation and
  * trusteed component effect registration.
  *
  * Covers:
@@ -736,7 +736,7 @@ describe('createEffectRegistrationService', () => {
     const previewCap = capabilities.find((c) => c.route === 'preview');
     expect(previewCap?.status).toBe('supported');
 
-    // browser-export should be blocked by default (SD2)
+    // browser-export should be blocked by default
     const browserCap = capabilities.find((c) => c.route === 'browser-export');
     expect(browserCap?.status).toBe('blocked');
 

@@ -53,16 +53,12 @@ function renderSubject(overrides: Partial<React.ComponentProps<typeof TimelineIt
   const buttonClickedRef = { current: false };
   const props: React.ComponentProps<typeof TimelineItemActionButtons> = {
     image: createImage(),
-    imageKey: 'image-1',
     isDragging: false,
     readOnly: false,
     isSelected: false,
     isTouchDevice: false,
     onMobileTap: vi.fn(),
-    onDuplicateClick: vi.fn(),
     onDeleteClick: vi.fn(),
-    duplicatingImageId: undefined,
-    duplicateSuccessImageId: undefined,
     onMarkAllVariantsViewed: vi.fn(),
     buttonClickedRef,
     scheduleButtonClickReset: vi.fn(),
@@ -95,7 +91,6 @@ describe('TimelineItemActionButtons', () => {
       isTouchDevice: true,
     });
 
-    expect(screen.queryByTitle('Duplicate image')).not.toBeInTheDocument();
     expect(screen.queryByTitle('Remove from timeline')).not.toBeInTheDocument();
     expect(screen.queryByTestId('variant-badge')).not.toBeInTheDocument();
   });
@@ -103,18 +98,15 @@ describe('TimelineItemActionButtons', () => {
   it('marks button interactions and forwards action callbacks', () => {
     const { props, buttonClickedRef } = renderSubject();
 
-    fireEvent.mouseDown(screen.getByTitle('Duplicate image'));
+    fireEvent.mouseDown(screen.getByTitle('Remove from timeline'));
 
     expect(buttonClickedRef.current).toBe(true);
     expect(props.scheduleButtonClickReset).toHaveBeenCalledTimes(1);
 
-    fireEvent.click(screen.getByTitle('Duplicate image'));
     fireEvent.click(screen.getByTitle('Remove from timeline'));
     fireEvent.click(screen.getByTestId('variant-badge'));
 
-    expect(props.onDuplicateClick).toHaveBeenCalledTimes(1);
     expect(props.onDeleteClick).toHaveBeenCalledTimes(1);
     expect(props.onMarkAllVariantsViewed).toHaveBeenCalledTimes(1);
-    expect(screen.getByTitle('Duplicate image')).not.toBeDisabled();
   });
 });

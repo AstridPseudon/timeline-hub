@@ -25,12 +25,12 @@ describe('New chat thinking choices', () => {
   });
 
   it('bounds remembered choices and moves a renewed choice to the end', () => {
-    for (let index = 0; index < 200; index++) rememberModelThoughtSelection('codex', `model-${index}`, 'low');
+    for (let index = 0; index < 50; index++) rememberModelThoughtSelection('codex', `model-${index}`, 'low');
     rememberModelThoughtSelection('codex', 'model-0', 'high');
-    const next = rememberModelThoughtSelection('codex', 'model-200', 'high');
-    expect(Object.keys(next)).toHaveLength(200);
+    const next = rememberModelThoughtSelection('codex', 'model-50', 'high');
+    expect(Object.keys(next)).toHaveLength(50);
     expect(next['model-1']).toBeUndefined();
-    expect(Object.keys(next).slice(-2)).toEqual(['model-0', 'model-200']);
+    expect(Object.keys(next).slice(-2)).toEqual(['model-0', 'model-50']);
     expect(next['model-0']).toBe('high');
   });
 
@@ -39,5 +39,7 @@ describe('New chat thinking choices', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('Storage blocked'); });
     expect(readModelThoughtSelections('codex')).toEqual({});
     expect(rememberModelThoughtSelection('codex', 'model-a', 'high')).toEqual({ 'model-a': 'high' });
+    // The choice lives in memory: a blocked storage does not lose it.
+    expect(readModelThoughtSelections('codex')).toEqual({ 'model-a': 'high' });
   });
 });

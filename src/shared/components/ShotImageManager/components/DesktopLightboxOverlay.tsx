@@ -19,7 +19,6 @@ type DesktopLightboxManagerProps = Pick<
   | 'onShotChange'
   | 'onAddToShot'
   | 'onAddToShotWithoutPosition'
-  | 'onCreateShot'
 >;
 
 interface DesktopLightboxOverlayProps {
@@ -146,7 +145,6 @@ export function DesktopLightboxOverlay({
               managerProps.onImageDelete(activeImage.id);
             }
           : undefined,
-        starred: lightbox.currentImages[lightboxIndex]?.starred || false,
       }}
       readOnly={managerProps.readOnly}
       taskDetailsData={taskDetailsData}
@@ -176,7 +174,6 @@ export function DesktopLightboxOverlay({
         onAddToShotWithoutPosition: isExternalGen
           ? externalGens.handleExternalGenAddToShotWithoutPosition
           : managerProps.onAddToShotWithoutPosition,
-        onCreateShot: managerProps.onCreateShot,
         positionedInSelectedShot,
         associatedWithoutPositionInSelectedShot,
         onShowTick,

@@ -166,6 +166,16 @@ describe('current attachment set', () => {
     expect(warn).toHaveBeenCalledWith('[currentAttachmentSet] 1 placeholder(s) rendered');
   });
 
+  it('renders no placeholder or attachment for a selected non-media clip', () => {
+    editorReplaceTimelineSelection(['scene-clip']);
+    setTimelineClipData([{ ...makePlaceholderClip('scene-clip'), isPlaceholder: undefined, isNonMedia: true }]);
+
+    const { result } = renderHook(() => useCurrentAttachmentSet());
+
+    expect(result.current.clips).toEqual([]);
+    expect(result.current.summary).toBe('');
+  });
+
   it('keeps two unknown selected clip ids as two distinct placeholders', () => {
     editorReplaceTimelineSelection(['clip-a', 'clip-b']);
 

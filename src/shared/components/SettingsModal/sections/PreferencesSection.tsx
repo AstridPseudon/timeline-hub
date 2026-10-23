@@ -1,14 +1,11 @@
 import React from "react";
-import { Mic, Wand2 } from "lucide-react";
 import { TimeOfDayControl } from "@/shared/components/TimeOfDay/TimeOfDayControl";
+import { Button } from "@/shared/components/ui/button";
 import type { PreferencesSectionProps } from "../types";
 
 const PreferencesSection: React.FC<PreferencesSectionProps> = ({
   isMobile,
-  preserveUserText,
-  setPreserveUserText,
-  aiInputMode,
-  setAIInputMode,
+  onReplayTour,
 }) => {
   return (
     <div className="space-y-6">
@@ -19,78 +16,17 @@ const PreferencesSection: React.FC<PreferencesSectionProps> = ({
           <span className="font-medium">Brightness:</span>
           <TimeOfDayControl compact />
         </div>
-
-        {/* User Text Case Toggle */}
-        <div className={`${isMobile ? 'p-3' : 'p-4'} bg-muted/30 rounded-lg space-y-2 mt-3`}>
-          <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center justify-between'}`}>
-            <span className="font-medium">User Text:</span>
-            <div className="flex items-center gap-0">
-              <button
-                onClick={() => setPreserveUserText(false)}
-                className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} rounded-l-full transition-all ${
-                  !preserveUserText
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                all lowercase
-              </button>
-              <button
-                onClick={() => setPreserveUserText(true)}
-                className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} rounded-r-full transition-all verbatim-case ${
-                  preserveUserText
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                Original case
-              </button>
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            How project names, shot names, and prompts are displayed
-          </p>
-        </div>
-
       </div>
 
-      {/* Inputs Subsection */}
-      <div>
-        <h3 className="text-sm font-medium text-muted-foreground mb-3">Inputs</h3>
-        <div className={`${isMobile ? 'p-3' : 'p-4'} bg-muted/30 rounded-lg space-y-2`}>
-          <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center justify-between'}`}>
-            <span className="font-medium">Prompt creation:</span>
-            <div className="flex items-center gap-0">
-              <button
-                onClick={() => setAIInputMode("voice")}
-                className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} rounded-l-full transition-all ${
-                  aiInputMode === "voice"
-                    ? 'bg-red-500 text-white'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                <Mic className={`${isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} inline mr-1`} />
-                Voice
-              </button>
-              <button
-                onClick={() => setAIInputMode("text")}
-                className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} rounded-r-full transition-all ${
-                  aiInputMode === "text"
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
-                <Wand2 className={`${isMobile ? 'h-3 w-3' : 'h-3.5 w-3.5'} inline mr-1`} />
-                Text
-              </button>
-            </div>
+      {onReplayTour && (
+        <div>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3">Tour</h3>
+          <div className={`${isMobile ? 'p-3' : 'p-4'} bg-muted/30 rounded-lg flex items-center justify-between gap-3`}>
+            <span className="text-xs text-muted-foreground">Walk through what Astrid can do, step by step</span>
+            <Button variant="retro-secondary" size="retro-sm" onClick={onReplayTour}>Replay tour</Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Use voice or typed instructions to create prompts
-          </p>
         </div>
-      </div>
-
+      )}
     </div>
   );
 };

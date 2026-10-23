@@ -18,8 +18,6 @@ interface GenerateVideoCTAProps {
   bottomContent?: React.ReactNode;
   /** Whether stitch mode is enabled (changes button text) */
   stitchEnabled?: boolean;
-  /** Enhancement progress for batch prompt enhancement */
-  enhancementProgress?: { phase: 'enhancing'; completed: number; total: number } | null;
 }
 
 /**
@@ -35,7 +33,6 @@ export const GenerateVideoCTA: React.FC<GenerateVideoCTAProps> = ({
   middleContent,
   bottomContent,
   stitchEnabled = false,
-  enhancementProgress,
 }) => {
   const isPlural = videoCount >= 2;
 
@@ -57,7 +54,7 @@ export const GenerateVideoCTA: React.FC<GenerateVideoCTAProps> = ({
           value={variantName}
           onChange={(e) => onVariantNameChange(e.target.value)}
           placeholder="Variant name"
-          className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent preserve-case"
+          className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
         />
       </div> */}
 
@@ -70,7 +67,7 @@ export const GenerateVideoCTA: React.FC<GenerateVideoCTAProps> = ({
         onClick={onGenerate}
         disabled={disabled}
       >
-        {isGenerating || enhancementProgress ? (
+        {isGenerating ? (
           <Loader2 className="w-5 h-5 animate-spin" />
         ) : justQueued ? (
           <Check className="w-5 h-5" />
@@ -80,11 +77,9 @@ export const GenerateVideoCTA: React.FC<GenerateVideoCTAProps> = ({
         <span className="font-medium text-lg">
           {justQueued
             ? 'Added to queue!'
-            : enhancementProgress
-              ? `Enhancing prompts... (${enhancementProgress.completed}/${enhancementProgress.total})`
-              : isGenerating
-                ? 'Creating Tasks...'
-                : getButtonText()}
+            : isGenerating
+              ? 'Creating Tasks...'
+              : getButtonText()}
         </span>
       </Button>
 

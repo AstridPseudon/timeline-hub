@@ -38,7 +38,7 @@ export class AppError extends Error {
  * This is NOT a user-facing AppError — it is a transport-level marker that
  * travels as the abort reason (or as the `cause` of the resulting
  * `AbortError`) so classifiers can distinguish "we timed the request out"
- * from unrelated aborts (e.g. Supabase's lock-steal protection aborting a
+ * from unrelated aborts (e.g. lock-steal protection aborting a
  * session refresh). Use `NetworkError.fromError` / `categorizeError` to
  * present it to users.
  */
@@ -52,8 +52,8 @@ export class TimeoutError extends Error {
 /**
  * Returns true only for the explicit timeout marker: either the error IS a
  * `TimeoutError`, or it wraps one via `cause`, `context`, or `originalError`
- * (Supabase wraps fetch rejections in `AuthRetryableFetchError`/storage
- * errors that surface the underlying error through those fields; `fetch`
+ * (client libraries wrap fetch rejections in errors that surface the
+ * underlying error through those fields; `fetch`
  * itself surfaces `AbortController.abort(reason)` as an `AbortError` whose
  * `cause` is the reason).
  *

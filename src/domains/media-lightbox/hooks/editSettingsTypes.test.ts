@@ -5,6 +5,7 @@ import {
   DEFAULT_ENHANCE_SETTINGS,
   DEFAULT_LAST_USED,
   SYNCED_SETTING_KEYS,
+  parseVideoEditSubMode,
 } from '../model/editSettingsTypes';
 
 describe('editSettingsTypes', () => {
@@ -20,5 +21,14 @@ describe('editSettingsTypes', () => {
       expect(DEFAULT_EDIT_SETTINGS).toHaveProperty(key);
       expect(DEFAULT_LAST_USED).toHaveProperty(key);
     }
+  });
+
+  it('parses persisted video edit sub-modes and reads a removed or unknown one as unset', () => {
+    expect(parseVideoEditSubMode('replace')).toBe('replace');
+    expect(parseVideoEditSubMode('regenerate')).toBe('regenerate');
+    expect(parseVideoEditSubMode('enhance')).toBe('enhance');
+    expect(parseVideoEditSubMode('trim')).toBeNull();
+    expect(parseVideoEditSubMode(undefined)).toBeNull();
+    expect(parseVideoEditSubMode(3)).toBeNull();
   });
 });

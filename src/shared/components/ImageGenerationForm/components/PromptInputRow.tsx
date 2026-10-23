@@ -20,8 +20,6 @@ export const PromptInputRow: React.FC<PromptInputRowProps> = React.memo(({
   isGenerating,
   index,
   totalPrompts,
-  onEditWithAI,
-  aiEditButtonIcon,
   onSetActiveForFullView,
   isActiveForFullView,
   forceExpanded = false,
@@ -84,32 +82,10 @@ export const PromptInputRow: React.FC<PromptInputRowProps> = React.memo(({
         )}
 
         <div className={`flex items-center gap-x-1 ${controller.isMobile && mobileInlineEditing ? 'flex-1 justify-end' : ''}`}>
-          {rightHeaderAddon ? (
+          {rightHeaderAddon && (
             <div className={`flex items-center gap-2 ${controller.isMobile && mobileInlineEditing ? 'w-full' : ''}`}>
               {rightHeaderAddon}
             </div>
-          ) : (
-            onEditWithAI && aiEditButtonIcon && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={onEditWithAI}
-                      className="text-primary/80 hover:text-primary hover:bg-primary/10 h-7 w-7"
-                      disabled={isGenerating}
-                      aria-label="Edit with AI"
-                    >
-                      {aiEditButtonIcon}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p>{promptEntry.fullPrompt.trim() === '' ? 'Create with AI' : 'Edit with AI'}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )
           )}
         </div>
       </div>
@@ -131,9 +107,6 @@ export const PromptInputRow: React.FC<PromptInputRowProps> = React.memo(({
             rows={controller.isMobile ? 2 : 1}
             clearable
             onClear={controller.clearPrompt}
-            voiceInput
-            voiceContext="This is an individual image generation prompt. Describe a single image with visual details like subject, composition, lighting, colors, and atmosphere. Be specific and descriptive."
-            onVoiceResult={controller.handleVoiceResult}
           />
         ) : (
           <div

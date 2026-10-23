@@ -1,5 +1,5 @@
 /**
- * M3b: Deterministic Capture — host/editor-owned contracts and validators.
+ * Deterministic Capture — host/editor-owned contracts and validators.
  *
  * This module defines the frozen V1 deterministic capture profiles, their
  * table shapes, and validation helpers. Concrete table bodies are host/editor-
@@ -7,7 +7,6 @@
  * only gains the `deterministic-capture` bake-target discriminant.
  *
  * @module deterministicCapture
- * @milestone M3b
  */
 
 import type {
@@ -94,7 +93,7 @@ export const DETERMINISTIC_CAPTURE_REJECTION_RULES: readonly DeterministicCaptur
 Object.freeze(DETERMINISTIC_CAPTURE_REJECTION_RULES);
 
 // ---------------------------------------------------------------------------
-// Validation helpers (scaffold for T3)
+// Validation helpers
 // ---------------------------------------------------------------------------
 
 /**
@@ -140,8 +139,8 @@ export function createRejection(
  * Verify that a capture's content hash matches a SHA-256 hash of its
  * serialized body. Returns a rejection if the hash is missing or mismatched.
  *
- * NOTE: Full SHA-256 hashing is implemented in T3. This scaffold accepts
- * a pre-computed hash for callers that hash externally.
+ * NOTE: This function does not compute the digest. Callers pass the hash of the
+ * serialized body, computed externally or with the SHA-256 helper below.
  */
 export function validateContentHash(
   capture: DeterministicCapture,
@@ -223,7 +222,7 @@ export function validateRouteConstraints(
 
 /**
  * Validate that an event table's events have valid interpolation and no
- * unsupported event types. Full per-event schema validation lands in T3/T7.
+ * unsupported event types. Full per-event schema validation is not implemented here.
  */
 export function validateEventTable(
   table: CaptureEventTableV1,
@@ -449,7 +448,7 @@ export function validateBodyByProfile(
 }
 
 // ---------------------------------------------------------------------------
-// SHA-256 hashing (T3)
+// SHA-256 hashing
 // ---------------------------------------------------------------------------
 
 /**
@@ -502,7 +501,7 @@ export async function verifyCaptureContentHash(
 }
 
 // ---------------------------------------------------------------------------
-// Comprehensive validation (T3)
+// Comprehensive validation
 // ---------------------------------------------------------------------------
 
 /**

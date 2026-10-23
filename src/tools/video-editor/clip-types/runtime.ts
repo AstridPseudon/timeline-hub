@@ -553,7 +553,7 @@ export const getRegisteredClipTypeDescriptor = (
 };
 
 // ---------------------------------------------------------------------------
-// M9 T7: Extension clip type descriptor synthesis
+// Extension clip type descriptor synthesis
 // ---------------------------------------------------------------------------
 
 /**

@@ -214,7 +214,7 @@ export function ClipEffectsTab({
           </Suspense>
         </ChunkLoadErrorBoundary>
       )}
-      {/* M9: Keyframe Inspector — shown when clip type has editor params schema */}
+      {/* Keyframe Inspector — shown when clip type has editor params schema */}
       {clipDescriptor && isEditorParamsSchema(clipDescriptor.paramsSchema) && (
         <KeyframeInspector
           schema={clipDescriptor.paramsSchema.params}

@@ -4,8 +4,7 @@
     "src/app/main.tsx",
     "src/app/App.tsx",
     "src/app/routes.tsx",
-    "public/sw.js",
-    "public/ecosystem.js"
+    "public/sw.js"
   ],
   "project": ["src/**/*.{ts,tsx}"],
   "ignore": [

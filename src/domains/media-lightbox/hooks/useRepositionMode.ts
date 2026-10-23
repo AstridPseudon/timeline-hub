@@ -3,7 +3,6 @@ import { useImageTransform } from './reposition/useImageTransform';
 import { useCanvasTransform } from './reposition/useCanvasTransform';
 import { useRepositionDrag } from './reposition/useRepositionDrag';
 import { useRepositionTaskCreation } from './reposition/useRepositionTaskCreation';
-import { useRepositionVariantSave } from './reposition/useRepositionVariantSave';
 import type {
   ImageTransform,
   UseRepositionModeProps,
@@ -15,14 +14,13 @@ export type { ImageTransform, UseRepositionModeProps, UseRepositionModeReturn };
 
 /**
  * Hook for managing image reposition mode.
- * Orchestrates transform state, drag interaction, mask generation, and task/variant creation.
+ * Orchestrates transform state, drag interaction, mask generation, and task creation.
  *
  * This is a composition of focused hooks:
  * - useImageTransform: Transform state with per-variant caching
  * - useCanvasTransform: CSS transform preview and canvas manipulation
  * - useRepositionDrag: Drag-to-move pointer event handling
  * - useRepositionTaskCreation: Inpaint task creation with mask generation
- * - useRepositionVariantSave: Save as variant/generation with thumbnail
  */
 export const useRepositionMode = ({
   media,
@@ -34,8 +32,6 @@ export const useRepositionMode = ({
   loras,
   inpaintPrompt,
   inpaintNumGenerations,
-  onVariantCreated,
-  refetchVariants,
   createAsGeneration,
   advancedSettings,
   activeVariantLocation,
@@ -60,9 +56,6 @@ export const useRepositionMode = ({
     toggleFlipH,
     toggleFlipV,
     resetTransform,
-    getCacheKey,
-    clearCacheForKey,
-    markSkipNextCache,
   } = transformHook;
 
   // Canvas transform for preview and actual transformation
@@ -110,37 +103,11 @@ export const useRepositionMode = ({
     createTransformedCanvas,
   });
 
-  // Variant/generation save
-  const {
-    isSavingAsVariant,
-    saveAsVariantSuccess,
-    handleSaveAsVariant,
-  } = useRepositionVariantSave({
-    media,
-    selectedProjectId,
-    shotId,
-    toolTypeOverride,
-    imageDimensions,
-    transform,
-    hasTransformChanges,
-    createAsGeneration,
-    activeVariantId,
-    onVariantCreated,
-    refetchVariants,
-    resetTransform,
-    createTransformedCanvas,
-    getCacheKey,
-    clearCacheForKey,
-    markSkipNextCache,
-  });
-
   return {
     transform,
     hasTransformChanges,
     isGeneratingReposition,
     repositionGenerateSuccess,
-    isSavingAsVariant,
-    saveAsVariantSuccess,
     setTranslateX,
     setTranslateY,
     setScale,
@@ -149,7 +116,6 @@ export const useRepositionMode = ({
     toggleFlipV,
     resetTransform,
     handleGenerateReposition,
-    handleSaveAsVariant,
     getTransformStyle,
     isDragging,
     dragHandlers,

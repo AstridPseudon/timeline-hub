@@ -11,7 +11,7 @@ import type {
   ParserDiagnostic,
 } from '@astrid/editor-sdk';
 import type { VideoEditorAssetParserDescriptor } from '../runtime/extensionSurface';
-import { validateAssetMetadata } from './assetMetadata';
+import { isPassThroughRegistryField, validateAssetMetadata } from './assetMetadata';
 
 // ---------------------------------------------------------------------------
 // Parser diagnostic codes
@@ -251,11 +251,15 @@ export function orderParsers(
  *
  * Parsers return metadata only (via `ParserResult.metadata`); they cannot
  * directly set registry entry fields like `file`, `url`, `type`, etc.
- * The merge helper enforces this by only copying through fields that
- * appear in this allowlist.
+ * Blessed fields are copied from the existing entry as before; other fields
+ * are opaque and carried through unchanged (see `isPassThroughRegistryField`).
  */
 const BLESSED_REGISTRY_ENTRY_FIELDS = new Set([
   'file',
+  'media_id',
+  'handle',
+  'source',
+  'pixel_provenance',
   'url',
   'etag',
   'content_sha256',
@@ -487,13 +491,18 @@ export function mergeParserMetadata(
 ): { entry: AssetRegistryEntry; diagnostics: ParserDiagnostic[] } {
   const diagnostics: ParserDiagnostic[] = [];
 
-  // Start with a shallow copy of the existing entry, keeping only blessed fields.
+  // Start with a shallow copy of the existing entry. Parsers can only change
+  // `metadata`. Blessed fields are copied as before; fields the App does not
+  // model are opaque and carried through unchanged, except App-only runtime
+  // fields and values that cannot be saved.
   const mergedEntry: Record<string, unknown> = {};
-  const blessedKeys = Array.from(BLESSED_REGISTRY_ENTRY_FIELDS);
-  for (let i = 0; i < blessedKeys.length; i++) {
-    const field = blessedKeys[i];
-    if (field in existingEntry) {
-      mergedEntry[field] = (existingEntry as Record<string, unknown>)[field];
+  const existingRecord = existingEntry as Record<string, unknown>;
+  for (const field of Object.keys(existingRecord)) {
+    const value = existingRecord[field];
+    if (BLESSED_REGISTRY_ENTRY_FIELDS.has(field)) {
+      if (field in existingEntry) mergedEntry[field] = value;
+    } else if (isPassThroughRegistryField(field, value)) {
+      mergedEntry[field] = value;
     }
   }
 

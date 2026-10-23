@@ -42,7 +42,7 @@ import type {
 } from '@/tools/video-editor/runtime/extensionSurface.ts';
 
 /**
- * Centralized material planner matrix for M3a. Later planner/UI consumers
+ * Centralized material planner matrix. Later planner/UI consumers
  * should resolve status/detail semantics through this table rather than
  * branching independently on state/phase/quality.
  */
@@ -1498,7 +1498,7 @@ function buildMaterialRouteScopeDiagnostics(
 }
 
 // ---------------------------------------------------------------------------
-// Material diagnostic builders (M3a)
+// Material diagnostic builders
 // ---------------------------------------------------------------------------
 
 /** Map from material runtime diagnostic code to canonical composition code. */

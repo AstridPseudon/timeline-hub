@@ -1,5 +1,5 @@
 /**
- * Tests for the host-visible settings notification registry (T9).
+ * Tests for the host-visible settings notification registry.
  *
  * Validates:
  *  - Registry creation and disposal

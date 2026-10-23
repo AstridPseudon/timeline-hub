@@ -189,15 +189,12 @@ export const ImageEditProvider: React.FC<ImageEditProviderProps> = ({
     img2imgGenerateSuccess: value.img2imgGenerateSuccess,
     isGeneratingReposition: value.isGeneratingReposition,
     repositionGenerateSuccess: value.repositionGenerateSuccess,
-    isSavingAsVariant: value.isSavingAsVariant,
-    saveAsVariantSuccess: value.saveAsVariantSuccess,
     isCreatingMagicEditTasks: value.isCreatingMagicEditTasks,
     magicEditTasksCreated: value.magicEditTasksCreated,
   }), [
     value.isGeneratingInpaint, value.inpaintGenerateSuccess,
     value.isGeneratingImg2Img, value.img2imgGenerateSuccess,
     value.isGeneratingReposition, value.repositionGenerateSuccess,
-    value.isSavingAsVariant, value.saveAsVariantSuccess,
     value.isCreatingMagicEditTasks, value.magicEditTasksCreated,
   ]);
 

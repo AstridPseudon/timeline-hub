@@ -236,7 +236,7 @@ const buildSwappedClip = (
   nextClip.from = 0;
   nextClip.to = roundSeconds(estimateProvisionedAssetDuration(asset));
   nextClip.speed = 1;
-  nextClip.volume = 1;
+  delete nextClip.volume;
   delete nextClip.hold;
   return nextClip;
 };

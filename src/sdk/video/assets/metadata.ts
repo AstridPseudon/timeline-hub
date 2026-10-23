@@ -12,7 +12,7 @@
  */
 
 // ---------------------------------------------------------------------------
-// M6: Asset metadata types
+// Asset metadata types
 // ---------------------------------------------------------------------------
 
 /**
@@ -99,8 +99,8 @@ export type EnrichmentStatus =
  * Parsers that need ML inference may emit deferred enrichment records
  * instead of blocking ingestion.  The record carries an asset reference,
  * enrichment kind, input parameters, status, and owning extension.
- * M6 persists and displays the shape; M10/M12 activate claim/resolve
- * execution through agent/process contracts.
+ * The shape is persisted and displayed; claim/resolve execution goes through
+ * agent/process contracts.
  */
 export interface DeferredEnrichmentRecord {
   /** Unique record identifier. */
@@ -156,7 +156,7 @@ export interface AssetMetadata {
 }
 
 // ---------------------------------------------------------------------------
-// M6: Metadata facet descriptors
+// Metadata facet descriptors
 // ---------------------------------------------------------------------------
 
 /**
@@ -208,7 +208,7 @@ export interface MetadataFacetDescriptor {
 }
 
 // ---------------------------------------------------------------------------
-// M6: Asset detail section descriptors
+// Asset detail section descriptors
 // ---------------------------------------------------------------------------
 
 /**
@@ -246,10 +246,9 @@ export interface AssetDetailSectionDescriptor {
 
 // SearchMatch, SearchProviderResult, SearchProviderHandler, and SearchProviderContext
 // are now defined in src/sdk/video/assets/search.ts.
-// (M2b extraction)
 
 // ---------------------------------------------------------------------------
-// M6: Asset read surface
+// Asset read surface
 // ---------------------------------------------------------------------------
 
 /**

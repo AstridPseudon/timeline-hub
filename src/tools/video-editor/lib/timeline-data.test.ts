@@ -381,7 +381,7 @@ describe('timeline data sequence clip persistence', () => {
     expect(assetResolver.loadAssetProfile).toHaveBeenCalledWith('asset-2');
   });
 
-  // ── M9: Keyframe round-trip through configToRows / rowsToConfig ──────
+  // ── Keyframe round-trip through configToRows / rowsToConfig ──────
 
   it('round-trips keyframes through configToRows and rowsToConfig', () => {
     const config: TimelineConfig = {

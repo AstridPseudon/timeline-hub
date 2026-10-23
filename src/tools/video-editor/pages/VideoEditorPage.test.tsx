@@ -6,6 +6,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useNavigate } from "react-router-dom";
@@ -21,6 +22,7 @@ import {
 } from "vitest";
 import VideoEditorPage, {
   LAST_OPENED_PROJECT_STORAGE_KEY,
+  VIDEO_EDITOR_SWIPE_LOCK_CLASS,
 } from "@/tools/video-editor/pages/VideoEditorPage.tsx";
 import {
   AstridRuntimeClient,
@@ -55,6 +57,11 @@ import {
   useAgentChatBridge,
 } from "@/shared/contexts/AgentChatContext.tsx";
 import { setBuiltInExtensionEnabled } from "@/tools/video-editor/runtime/builtInExtensionEnablement.ts";
+import { STORAGE_KEYS } from "@/shared/lib/storage/storageKeys.ts";
+import { exitEditorTour, getEditorTourState, startEditorTour } from "@/shared/state/editorTourStore.ts";
+import {
+  registerEditorTourOverlay,
+} from "@/tools/video-editor/tour/timeline/editorTourSlot.tsx";
 
 const browserStorage = new Map<string, string>();
 const localStorageFixture: Storage = {
@@ -225,7 +232,7 @@ vi.mock("@/shared/contexts/ProjectContext.tsx", () => ({
 
 // Page routing is covered by useHomeNavigation.test.ts. Keeping that hook real
 // here would mount user-preference persistence, which is outside this page
-// contract and requires an initialized Supabase runtime.
+// contract.
 vi.mock("@/shared/hooks/useHomeNavigation.ts", () => ({
   useHomeNavigation: () => ({
     navigateHome: vi.fn(),
@@ -369,6 +376,14 @@ vi.mock("@/tools/video-editor/components/AstridVideoEditorShell.tsx", () => ({
   ),
 }));
 
+// The driver needs the real editor store; the page contract is only that it mounts inside the tour's editor.
+vi.mock("@/tools/video-editor/tour/runner/EditorTourRunner.tsx", () => ({
+  EditorTourRunner: () => <div data-testid="tour-overlay" />,
+}));
+vi.mock("@/tools/video-editor/tour/timeline/EditorTourTimelineDriver.tsx", () => ({
+  EditorTourTimelineDriver: () => <div data-testid="tour-driver" />,
+}));
+
 vi.mock("@/tools/video-editor/contexts/VideoEditorProvider.tsx", async () => {
   const ReactModule = await import("react");
   const { useOptionalAgentChatRegistry } =
@@ -478,6 +493,7 @@ vi.mock("@/tools/video-editor/contexts/VideoEditorProvider.tsx", async () => {
           data-testid="video-editor-provider"
           data-kind={dataProvider.kind ?? "unknown"}
           data-timeline-id={timelineId}
+          data-project-id={projectId ?? ""}
           data-timeline-name={timelineName ?? ""}
           data-timeline-overlays-enabled={String(
             timelineOverlaysEnabled ?? false,
@@ -837,6 +853,8 @@ describe("VideoEditorPage", () => {
   beforeEach(() => {
     (import.meta.env as Record<string, unknown>).DEV = true;
     window.localStorage.clear();
+    // The tour starts on the first editor mount; these tests are about the editor, so it has been seen.
+    window.localStorage.setItem(STORAGE_KEYS.EDITOR_TOUR_SEEN, "1");
     state.auth.userId = "user-1";
     state.project.selectedProjectId = "project-1";
     state.project.setSelectedProjectId.mockClear();
@@ -1207,6 +1225,19 @@ describe("VideoEditorPage", () => {
     );
   });
 
+  it("locks horizontal overscroll swipe-back on the root only while the editor is mounted", async () => {
+    state.discovery.projects = [
+      { slug: "fresh-project", name: "Fresh project", project_id: "runtime-p1" },
+    ];
+    const view = renderPage(
+      "/tools/video-editor?project=runtime-p1&timeline=11111111-1111-1111-1111-111111111111",
+    );
+    await screen.findByTestId("video-editor-provider");
+    expect(document.documentElement.classList.contains(VIDEO_EDITOR_SWIPE_LOCK_CLASS)).toBe(true);
+    view.unmount();
+    expect(document.documentElement.classList.contains(VIDEO_EDITOR_SWIPE_LOCK_CLASS)).toBe(false);
+  });
+
   it('automatically clears a mounted failure only after a fresh authenticated workspace probe, retaining the editor and draft scope', async () => {
     const ready=deferred();state.nativeProbe.mockImplementationOnce(()=>ready.promise);
     renderPage('/tools/video-editor?project=ados-talks&timeline=11111111-1111-1111-1111-111111111111');
@@ -1346,7 +1377,7 @@ describe("VideoEditorPage", () => {
     renderPage('/tools/video-editor?project=project-r&timeline=timeline-r');
 
     expect(await screen.findByTestId('runtime-connector-alert')).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: 'Timelines unavailable' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Timelines unavailable', hidden: true })).toBeInTheDocument();
     expect(state.runtimeCtor).not.toHaveBeenCalled();
   });
 
@@ -1528,8 +1559,14 @@ describe("VideoEditorPage", () => {
     await waitFor(() => expect(screen.getByTestId("video-editor-provider")).toHaveAttribute(
       "data-timeline-id", "22222222-2222-2222-2222-222222222222",
     ));
+    // The closed trigger now carries the primary star for the current timeline.
+    expect(
+      within(screen.getByRole("combobox", { name: "Select timeline" })).getByRole("img", { name: "Primary timeline" }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("combobox", { name: "Select timeline" }));
-    expect(screen.getByText("Primary")).toBeInTheDocument();
+    const row = await screen.findByRole("option", { name: /Alt Cut/ });
+    expect(within(row).getByRole("img", { name: "Primary timeline" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Make Alt Cut primary" })).toBeNull();
   });
 
   it("rejects a timeline id discovered under a different project", async () => {
@@ -1881,6 +1918,109 @@ describe("VideoEditorPage", () => {
   // ---------------------------------------------------------------------------
   // ?extensionSmoke=1 in the stock app path
   // ---------------------------------------------------------------------------
+
+  describe("editor tour selection", () => {
+    const USER_ENTRY = "/tools/video-editor?project=project-r&timeline=timeline-r";
+
+    afterEach(() => {
+      exitEditorTour();
+      registerEditorTourOverlay(null);
+    });
+
+    it("mounts an in-memory local-mode editor while the tour runs and restores the user's own selection on exit", async () => {
+      renderPage(USER_ENTRY);
+      const userEditor = await screen.findByTestId("video-editor-provider");
+      expect(userEditor).toHaveAttribute("data-kind", "runtime");
+      expect(userEditor).toHaveAttribute("data-project-id", "project-r");
+      const userProvider = state.selectedProvider!;
+      const runtimeConstructions = state.runtimeCtor.mock.calls.length;
+      const fetchCalls = vi.mocked(fetch).mock.calls.length;
+      expect(screen.queryByTestId("tour-driver")).toBeNull();
+
+      act(() => startEditorTour());
+
+      const tourEditor = await screen.findByTestId("tour-driver").then(() => screen.getByTestId("video-editor-provider"));
+      expect(tourEditor).toHaveAttribute("data-timeline-id", "tour-timeline");
+      expect(tourEditor).toHaveAttribute("data-project-id", "");
+      expect(tourEditor).toHaveAttribute("data-kind", "unknown");
+      const tourProvider = state.selectedProvider!;
+      expect(tourProvider).not.toBe(userProvider);
+      expect(tourProvider.persistenceEnabled).toBe(false);
+      expect(screen.getByRole("combobox", { name: "Select project" })).toHaveTextContent("Onboarding project");
+      expect(screen.getByRole("combobox", { name: "Select timeline" })).toHaveTextContent("Lantern Valley");
+      await expect(tourProvider.saveTimeline("tour-timeline", {} as never, 1)).rejects.toThrow(/in memory only/);
+      // The user's Runtime provider is neither rebuilt nor reached; the tour made no request.
+      expect(state.runtimeCtor.mock.calls.length).toBe(runtimeConstructions);
+      expect(vi.mocked(fetch).mock.calls.length).toBe(fetchCalls);
+      expect(state.providerMounts).toBe(2);
+      expect(state.providerUnmounts).toBe(1);
+
+      act(() => exitEditorTour());
+
+      await waitFor(() => expect(screen.queryByTestId("tour-driver")).toBeNull());
+      const restored = screen.getByTestId("video-editor-provider");
+      expect(restored).toHaveAttribute("data-kind", "runtime");
+      expect(restored).toHaveAttribute("data-project-id", "project-r");
+      expect(restored).toHaveAttribute("data-timeline-id", "timeline-r");
+      expect(state.selectedProvider).toBe(userProvider);
+      expect(state.runtimeCtor.mock.calls.length).toBe(runtimeConstructions);
+      expect(state.providerMounts).toBe(3);
+      expect(state.providerUnmounts).toBe(2);
+    });
+
+    it("gives every run its own editor and in-memory provider (Replay starts from an empty demo)", async () => {
+      renderPage(USER_ENTRY);
+      await screen.findByTestId("video-editor-provider");
+
+      act(() => startEditorTour());
+      await screen.findByTestId("tour-driver");
+      const firstRun = state.selectedProvider!;
+      act(() => exitEditorTour());
+      await waitFor(() => expect(screen.queryByTestId("tour-driver")).toBeNull());
+
+      act(() => startEditorTour());
+      await screen.findByTestId("tour-driver");
+      expect(state.selectedProvider).not.toBe(firstRun);
+      expect(state.selectedProvider!.persistenceEnabled).toBe(false);
+      expect(state.providerMounts).toBe(4);
+    });
+
+    it("renders the runner's overlay in the page's slot only while the tour runs", async () => {
+      renderPage(USER_ENTRY);
+      await screen.findByTestId("video-editor-provider");
+      expect(screen.queryByTestId("tour-overlay")).toBeNull();
+
+      act(() => startEditorTour());
+      expect(await screen.findByTestId("tour-overlay")).toBeInTheDocument();
+
+      act(() => exitEditorTour());
+      await waitFor(() => expect(screen.queryByTestId("tour-overlay")).toBeNull());
+    });
+  });
+
+  describe("editor tour trigger", () => {
+    const USER_ENTRY = "/tools/video-editor?project=project-r&timeline=timeline-r";
+
+    afterEach(() => {
+      exitEditorTour();
+    });
+
+    it("starts the tour on the first mount with the user's selection, and never again once seen", async () => {
+      window.localStorage.removeItem(STORAGE_KEYS.EDITOR_TOUR_SEEN);
+      const first = renderPage(USER_ENTRY);
+      expect(await screen.findByTestId("tour-driver")).toBeInTheDocument();
+      expect(getEditorTourState().status).toBe("running");
+      expect(window.localStorage.getItem(STORAGE_KEYS.EDITOR_TOUR_SEEN)).not.toBeNull();
+
+      act(() => exitEditorTour());
+      await waitFor(() => expect(screen.queryByTestId("tour-driver")).toBeNull());
+      first.unmount();
+
+      renderPage(USER_ENTRY);
+      await screen.findByTestId("video-editor-provider");
+      expect(getEditorTourState().status).toBe("idle");
+    });
+  });
 
   describe("?extensionSmoke=1 page integration", () => {
     it("does not change the native tool catalog for test-only URL flags", async () => {

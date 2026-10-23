@@ -1,4 +1,4 @@
-// [CONVERGE-WITH-M1] Transcript → canonical source-data adapter. Pure and
+// Transcript → canonical source-data adapter. Pure and
 // synchronous: callers provide already-associated transcript data; this file
 // performs identity normalization and never fetches or persists anything.
 

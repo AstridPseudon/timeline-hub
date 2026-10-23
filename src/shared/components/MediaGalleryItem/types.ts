@@ -38,7 +38,6 @@ export interface ItemShotWorkflow {
   currentViewingShotId?: string;
 
   /** Shot creation callback */
-  onCreateShot?: (shotName: string, files: File[]) => Promise<void>;
 
   /** Handlers for adding image to shot */
   onAddToLastShot?: AddToShotHandler;
@@ -60,7 +59,6 @@ export interface ItemMobileInteraction {
 
 /** Boolean feature flags controlling which UI elements are visible */
 export interface ItemFeatures {
-  showShare?: boolean;
   showDelete?: boolean;
   showDownload?: boolean;
   showStar?: boolean;
@@ -121,8 +119,6 @@ export interface MediaGalleryItemProps {
 
   /** Project aspect ratio for sizing */
   projectAspectRatio?: string;
-  /** Optional data-tour attribute for product tour targeting */
-  dataTour?: string;
 }
 
 // Re-export types that are used by sub-components

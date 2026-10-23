@@ -21,6 +21,7 @@ on:
       - "src/integrations/runtime/**"
       - "src/shared/lib/media/**"
       - "tests/e2e/local/**"
+      - "tests/e2e/support/**"
       - "playwright.direct.config.ts"
       - "playwright.three-products.config.ts"
   schedule:
@@ -175,11 +176,13 @@ jobs:
           .venv/bin/python -m pip install -e .
           .venv/bin/python -m astrid.core.dev.cross_client --help > /dev/null
 
-      - name: Install App dependencies, Chromium and ffmpeg
+      # Chrome, not Chromium: the render case plays an H.264 film (the bundled Chromium cannot decode it) and a missing Chrome
+      # fails at browser launch. ffmpeg makes the case's real VP8 and Opus media, and the host's ffmpeg renderer makes the render.
+      - name: Install App dependencies, Chrome and ffmpeg
         working-directory: astrid-app
         run: |
           npm ci --legacy-peer-deps
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chrome
           sudo apt-get install -y --no-install-recommends ffmpeg
 
       - name: Run the three-product journey

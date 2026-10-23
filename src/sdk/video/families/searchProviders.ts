@@ -15,15 +15,14 @@
 import type { ContributionId } from '../../ids';
 
 /**
- * M6: A search provider contribution declared in an extension manifest.
+ * A search provider contribution declared in an extension manifest.
  *
  * Search providers supply asset/material search results to the host search
  * surface.  The provider owns indexing, model choice, and refresh; the host
  * owns query dispatch, result merge, and source labeling.
  *
  * Search providers are bounded to host query/result integration — no local
- * model loading, inference, vector database, or ranking ownership is added
- * in M6.
+ * model loading, inference, vector database, or ranking ownership is added.
  */
 export interface SearchProviderContribution {
   /** Unique within the extension. */

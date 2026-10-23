@@ -3,7 +3,7 @@
 import { act, renderHook } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ActiveLora, LoraModel } from '@/domains/lora/types/lora';
+import type { ActiveLora } from '@/domains/lora/types/lora';
 import { useLoraPersistence } from './loraPersistence';
 
 const mocks = vi.hoisted(() => ({
@@ -28,8 +28,6 @@ function createManager(overrides: Partial<PersistenceArgs['manager']> = {}): Per
   return {
     selectedLoras,
     selectedLorasRef,
-    availableLoras: [],
-    handleAddLora: vi.fn(),
     handleRemoveLora: vi.fn(),
     handleLoraStrengthChange: vi.fn(),
     markAsUserSet: vi.fn(),
@@ -102,15 +100,11 @@ describe('useLoraPersistence', () => {
     expect(result.current.saveSuccess).toBe(false);
   });
 
-  it('loads saved LoRAs by removing stale, adding missing, and updating strengths', async () => {
-    const handleAddLora = vi.fn();
+  it('loads saved LoRAs by removing stale ones and updating strengths of kept ones', async () => {
     const handleRemoveLora = vi.fn();
     const handleLoraStrengthChange = vi.fn();
     const markAsUserSet = vi.fn();
 
-    const availableLoras = [
-      { 'Model ID': 'add-lora' } as unknown as LoraModel,
-    ];
     const selectedLorasRef = {
       current: [
         { id: 'remove-lora', strength: 1 },
@@ -119,9 +113,7 @@ describe('useLoraPersistence', () => {
     };
 
     const manager = createManager({
-      availableLoras,
       selectedLorasRef,
-      handleAddLora,
       handleRemoveLora,
       handleLoraStrengthChange,
       markAsUserSet,
@@ -148,16 +140,12 @@ describe('useLoraPersistence', () => {
     });
 
     expect(handleRemoveLora).toHaveBeenCalledWith('remove-lora', false);
-    expect(handleAddLora).toHaveBeenCalledWith(availableLoras[0], false, 0.4);
     expect(handleLoraStrengthChange).toHaveBeenCalledWith('keep-lora', 0.7, false);
     expect(markAsUserSet).toHaveBeenCalledTimes(1);
   });
 
   it('does not emit explicit-edit callbacks when loading saved LoRAs', async () => {
     const onExplicitLoraEdit = vi.fn();
-    const availableLoras = [
-      { 'Model ID': 'add-lora' } as unknown as LoraModel,
-    ];
     const selectedLorasRef = {
       current: [
         { id: 'remove-lora', strength: 1 },
@@ -166,13 +154,7 @@ describe('useLoraPersistence', () => {
     };
 
     const manager = createManager({
-      availableLoras,
       selectedLorasRef,
-      handleAddLora: vi.fn((_lora, isManualAction = true) => {
-        if (isManualAction) {
-          onExplicitLoraEdit({ kind: 'add' });
-        }
-      }),
       handleRemoveLora: vi.fn((_loraId, isManualAction = true) => {
         if (isManualAction) {
           onExplicitLoraEdit({ kind: 'remove' });

@@ -6,35 +6,39 @@
 ## Route nesting
 
 ```
-/ or /home          HomePage (no Layout, no auth)
-/share/:shareId     SharePage (no Layout, no auth)
-/payments/*         PaymentSuccess/Cancel (no Layout, no auth)
+/home               HomeDocumentHandoff (no Layout): location.replace to the public site document
+/pairing            PairingPage (no Layout)
+/blog, /blog/:slug  Blog pages (no Layout)
 
-<Layout>            Auth guard + header + panes + Outlet
+<Layout>            Runtime gate + header + panes + Outlet
+  /, /tools         DefaultToolRedirect (saved default tool, else /tools/video-editor)
   /tools/:toolName  Tool pages (main content area)
   /shots            ShotsPage
   /art              ArtPage
 ```
 
-Logged-in users hitting `/` redirect to `/tools/travel-between-images`. Unauthenticated users inside `Layout` redirect to `/home`.
+`*` renders `NotFoundPage`. There is no login, payments or share route (removed 2026-10-18, tag `pre-cloud-removal`). The four kept tools (`training-data-helper`, `edit-images`, `character-animate`, `edit-video`) keep their routes; they show "needs an online account" via `src/shared/lib/cloudBackend.ts` until a backend exists.
+
+`Layout` redirects a session the Runtime has not authenticated to `APP_ENTRY_PATH` (visitors who chose the app) or `/home`; `/home` is a public document served outside this gate, so there is no loop. `/home` and `/vision` classify as public in every `VITE_APP_ENV` (`entryClassification.ts`).
 
 ## Context provider hierarchy (App.tsx)
 
-All providers wrap the **entire** router. Order matters for dependency:
+All providers wrap the **entire** router (`AppProviders` in `src/app/providers/AppProviders.tsx`). Order matters for dependency:
 
 | Layer (outer -> inner) | What it provides |
 |---|---|
-| `QueryClientProvider` | React Query |
-| `AuthProvider` | Session / user |
-| `UserSettingsProvider` | Persisted UI settings |
+| `QueryClientProvider` / `TooltipProvider` | React Query, tooltips |
+| `AuthProvider` + `AuthGate` | Local user (`LOCAL_USER_ID`) and Runtime connection gate |
+| `TaskTypeConfigInitializer` | Task type config |
+| `UserSettingsProvider` | UI settings (session-held, see `settings_system.md`) |
 | `ProjectProvider` | `selectedProjectId`, `setSelectedProjectId` |
-| `RealtimeProvider` | Supabase realtime channels |
-| `ShotsProvider` | `useShots()` data, scoped to selected project |
+| `RealtimeProvider` | Poll-diff connection (see `realtime_system.md`) |
+| `AstridShotsProvider` | `useShots()` data, scoped to selected project |
 | `GenerationTaskProvider` | Active generation tasks |
 | `IncomingTasksProvider` | Incoming task notifications |
-| `PanesProvider` | Pane open/locked/width state |
-| `LastAffectedShotProvider` | Last-modified shot ID (for highlight) |
-| `CurrentShotProvider` | `currentShotId` / `setCurrentShotId` |
+| `PanesStoreBootstrapBoundary` | Pane open/locked/width state |
+| `AgentChatProvider` | Agent chat handlers (null until the TasksPane panel registers) |
+| `SelectionStoreBoundary` | Last-affected shot, reset on project change |
 | `ToolPageHeaderProvider` | Injected header content per tool page |
 
 Since all contexts are above the router, every route (including non-Layout routes) can access them. Layout adds the visual chrome (header, panes, footer) but not the data contexts.
@@ -47,29 +51,21 @@ Shot identity is encoded in the **hash fragment**, not a route param or query st
 /tools/travel-between-images#<shot-uuid>
 ```
 
-Three hooks coordinate this:
-
-| Hook | File | Responsibility |
-|---|---|---|
-| `useShotNavigation` | `src/shared/hooks/useShotNavigation.ts` | Imperative navigation API: `navigateToShot`, `navigateToNextShot`, etc. |
-| `useUrlSync` | `src/tools/travel-between-images/hooks/useUrlSync.ts` | Keeps hash in sync with `currentShotId`. Clears selection when hash is removed. |
-| `useHashDeepLink` | `src/tools/travel-between-images/hooks/useHashDeepLink.ts` | Handles cold-start deep links: validates UUID, resolves project from shot, grace period while loading. |
-
-**Flow**: `useShotNavigation.navigateToShot()` sets `currentShotId` in context **and** calls `navigate('/tools/travel-between-images#<id>')`. `useUrlSync` then keeps the two in sync on subsequent changes. `useHashDeepLink` handles the reverse: user lands on a URL with a hash and no project loaded yet.
+`useShotNavigation` (`src/shared/hooks/shots/useShotNavigation.ts`) is the imperative API: `navigateToShot`, `navigateToNextShot`, `navigateToPreviousShot`, `navigateToShotEditor`. URLs are built by `travelShotUrl(shotId)`, or by `shotUrl(...)` when local-mode query params (`hasLocalModeUrlParams`) must be preserved (`src/shared/lib/tooling/toolRoutes.ts`). `navigateToShot` deliberately does **not** call `setCurrentShotId`: `navigate()` and the context update are not batched, so the URL/deep-link selection path owns the transition.
 
 ## Navigation state (`location.state`)
 
 | State key | Type | Purpose |
 |---|---|---|
-| `fromShotClick` | `boolean` | Distinguishes intentional shot navigation from browser back. When `false` + no hash, `useUrlSync` clears selection (back-to-list). |
+| `fromShotClick` | `boolean` | Distinguishes intentional shot navigation from browser back. When `false` + no hash, the selection is cleared (back-to-list). |
 | `shotData` | `Shot` | Optimistic shot data for newly created shots (avoids "not found" flash before cache syncs). |
-| `isNewlyCreated` | `boolean` | Extends grace period in `useHashDeepLink` so new shots aren't redirected away. |
+| `isNewlyCreated` | `boolean` | Keeps a just-created shot from being treated as "not found" while caches sync. |
 | `openSettings` | `boolean` | Triggers settings modal open from any route (checked in `Layout`). |
 | `openSegmentSlot` | `string` | Deep-links to a specific segment slot in shot editor. |
 
 ## `useShotNavigation` behavior
 
-- **`navigateToShot`**: Sets context, navigates with hash, scrolls to top, closes mobile panes. Passes `{ fromShotClick: true, shotData }` in state.
+- **`navigateToShot`**: Navigates with hash (does not set the context), scrolls to top, closes mobile panes. Passes `{ fromShotClick: true, shotData, isNewlyCreated }` in state.
 - **`navigateToNextShot` / `navigateToPreviousShot`**: Always use `replace: true` (no history entry per shot when cycling).
 - **`navigateToShotEditor`**: Clears `currentShotId`, navigates without hash.
 - **Mobile**: Dispatches `mobilePaneOpen` event with `side: null` to close open panes.
@@ -77,13 +73,12 @@ Three hooks coordinate this:
 
 ## Layout shot cleanup
 
-`Layout.tsx` clears `currentShotId` when navigating **away from** `/tools/travel-between-images` (but not when navigating **to** it). This prevents stale shot state when switching tools.
+`useResetCurrentShotOnRouteChange` (called from `Layout.tsx`) clears `currentShotId` when navigating **away from** `/tools/travel-between-images` (but not when navigating **to** it). This prevents stale shot state when switching tools.
 
 ## Key invariants
 
-1. **Hash is truth for shot selection** -- `currentShotId` context and URL hash must agree. `useUrlSync` enforces this.
-2. **`fromShotClick` prevents accidental deselection** -- Without it, `useUrlSync` would clear the shot on any navigation that happens to lack a hash momentarily.
+1. **Hash is truth for shot selection** -- `currentShotId` context and URL hash must agree; `navigateToShot` leaves the context update to the URL selection path.
+2. **`fromShotClick` prevents accidental deselection** -- navigation without it and without a hash is treated as back-to-list.
 3. **`replace: true` for prev/next** -- Cycling shots must not pollute browser history.
-4. **Deep links resolve project** -- `useHashDeepLink` fetches `project_id` from the shot row when no project is selected, so direct URLs work.
-5. **All data contexts wrap the router** -- No context is Layout-only; even unauthenticated pages can read (empty) context.
-6. **One query-param exception** -- Onboarding uses `?shot=<id>` (not hash) for the Getting Started redirect. This is a one-off in `Layout.tsx`.
+4. **Local-mode query params survive shot navigation** -- `shotUrl` keeps `localProject` and friends; dropping them would lose the document scope.
+5. **All data contexts wrap the router** -- No context is Layout-only.

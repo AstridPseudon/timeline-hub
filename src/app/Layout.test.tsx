@@ -57,7 +57,6 @@ vi.mock('@/shared/components/SettingsModal/SettingsModal', () => ({
 vi.mock('@/shared/components/modals/OnboardingModal', () => ({
   OnboardingModal: () => null,
 }));
-vi.mock('@/shared/components/ProductTour', () => ({ ProductTour: () => null }));
 vi.mock('@/shared/components/AstridLoading', () => ({
   AstridLoading: () => <div data-testid="astrid-loading" />,
 }));
@@ -81,9 +80,11 @@ vi.mock('./hooks/useSettingsModal', () => ({
     isSettingsModalOpen: false,
     setIsSettingsModalOpen: vi.fn(),
     settingsInitialTab: undefined,
-    settingsCreditsTab: undefined,
     handleOpenSettings: vi.fn(),
   }),
+}));
+vi.mock('./hooks/useReplayEditorTour', () => ({
+  useReplayEditorTour: () => undefined,
 }));
 vi.mock('./hooks/useOnboardingFlow', () => ({
   useOnboardingFlow: () => ({ showOnboardingModal: false, handleOnboardingClose: vi.fn() }),

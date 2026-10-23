@@ -22,7 +22,19 @@ export type SelectedMediaClip = {
   at?: number;
   duration?: number;
   isPlaceholder?: boolean;
+  /**
+   * Catalog-only marker: a timeline clip that is known but is not attachable
+   * media (live scene, text, effect...). Never shown as a chat attachment.
+   */
+  isNonMedia?: boolean;
 };
+
+/** Clip types whose `asset` is real image/video media the chat can attach. */
+const ATTACHABLE_CLIP_TYPES = new Set(['media', 'hold']);
+
+export function isAttachableMediaClip(clip: { clipType?: string } | undefined): boolean {
+  return !clip?.clipType || ATTACHABLE_CLIP_TYPES.has(clip.clipType);
+}
 
 type SummaryMediaClip = Pick<SelectedMediaClip, 'mediaType' | 'shotId' | 'shotSelectionClipCount'>;
 
@@ -163,7 +175,7 @@ export function useSelectedMediaClips(): { clips: SelectedMediaClip[]; summary: 
         }
         : {};
 
-      if (!assetKey || !assetEntry?.src || !assetEntry.type) {
+      if (!isAttachableMediaClip(clip) || !assetKey || !assetEntry?.src || !assetEntry.type) {
         return acc;
       }
 

@@ -7,8 +7,6 @@ import {
   appendAcpAssistantDraft,
   appendAcpTextTurn,
   AstridAgentSessionStore,
-  extractAstridElementOperations,
-  isTimelineAgentSessionsAvailable,
   projectChatQueryKey,
   stripAstridEditorContext,
   useCancelSession,
@@ -28,7 +26,7 @@ import {
   agentSessionQueryKey,
 } from './useAgentSession.ts';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
-import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
+import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
 import { LOCAL_AGENT_TABLE } from '@/integrations/astrid/localAgents.ts';
 
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -707,10 +705,6 @@ describe('timeline agent ACP chat', () => {
     }
   });
 
-  it('advertises the local Astrid ACP implementation', () => {
-    expect(isTimelineAgentSessionsAvailable()).toBe(true);
-  });
-
   it('keeps missing identifiers as input errors before contacting ACP', async () => {
     const create = renderHook(() => useCreateSession(null), { wrapper });
     await expect(act(async () => create.result.current.mutateAsync(undefined))).rejects.toThrow('Select a project or timeline to start chatting.');
@@ -1114,29 +1108,6 @@ describe('timeline agent ACP chat', () => {
     expect(stripAstridEditorContext('hello\n<astrid_agent_context>private</astrid_agent_context>\n<astrid_editor_context>{}</astrid_editor_context>')).toBe('hello');
     expect(stripAstridEditorContext('make the first clip start later\n\nAstrid editor context:\nTimeline ID: timeline-1'))
       .toBe('make the first clip start later');
-  });
-
-  it('extracts host-executable element operations without leaking markers into chat', () => {
-    const result = extractAstridElementOperations([
-      'I will apply the effect.',
-      '<astrid_element_operation>{"name":"elements.list"}</astrid_element_operation>',
-      '<astrid_element_operation>{"name":"elements.validate","draft_id":"draft-glow"}</astrid_element_operation>',
-    ].join('\n'));
-    expect(result.visibleContent).toBe('I will apply the effect.');
-    expect(result.operations).toEqual([
-      { name: 'elements.list' },
-      { name: 'elements.validate', draft_id: 'draft-glow' },
-    ]);
-    expect(result.parseErrors).toEqual([]);
-  });
-
-  it('reports malformed operation markers while preserving surrounding narration', () => {
-    const result = extractAstridElementOperations(
-      'Done. <astrid_element_operation>{not json}</astrid_element_operation>',
-    );
-    expect(result.visibleContent).toBe('Done.');
-    expect(result.operations).toEqual([]);
-    expect(result.parseErrors).toHaveLength(1);
   });
 });
 

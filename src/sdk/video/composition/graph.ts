@@ -1,19 +1,17 @@
 /**
- * CompositionGraph — public SDK contracts for the M1b composition graph.
+ * CompositionGraph — public SDK contracts for the composition graph.
  *
  * These contracts define the graph shape, node kinds, edge kinds, resolver
  * states, and preview interface exposed through the public SDK barrel.
  * They are pure data contracts; host projection, resolution, and preview
  * logic live in runtime composition modules and are NOT re-exported here.
  *
- * M1b introduced shader/ref facts and `consumes` edges as the initial graph
- * authority surface. M2 expands the public edge vocabulary with `animates`
- * and `binds-live` while keeping node kinds and resolver states stable.
+ * Public edge kinds are `consumes`, `animates`, `binds-live` and `requires`;
+ * node kinds and resolver states are fixed.
  *
- * M7a adds `requires` edges for capability/precondition/process requirements
- * and `OutputFormatRef` as a constrained contribution reference for
- * output-format route planning without introducing deferred edge kinds
- * (`materializes`, `produces`, `fallbacks`).
+ * `requires` edges declare capability, precondition and process requirements.
+ * `OutputFormatRef` is the constrained contribution reference used for
+ * output-format route planning.
  *
  * @module video/composition/graph
  * @publicContract
@@ -27,19 +25,19 @@ import type { ContributionRef } from './references';
 // ---------------------------------------------------------------------------
 
 /**
- * M1b composition node kinds.
+ * Composition node kinds.
  *
  * - `clip`             — a timeline clip (shader-assignable scope).
  * - `timeline-postprocess` — the timeline-wide postprocess scope.
  * - `contribution`     — a contribution declared by an extension (shader,
  *                        effect, parser, etc.).
  *
- * These are the only node kinds for M1b graph authority.
+ * These are the only node kinds in the graph.
  */
 export type CompositionNodeKind = 'clip' | 'timeline-postprocess' | 'contribution';
 
 /**
- * The canonical set of M1b node kinds.
+ * The canonical set of node kinds.
  */
 export const COMPOSITION_NODE_KINDS: readonly CompositionNodeKind[] = [
   'clip',
@@ -52,13 +50,13 @@ export const COMPOSITION_NODE_KINDS: readonly CompositionNodeKind[] = [
 // ---------------------------------------------------------------------------
 
 /**
- * M1b public edge kinds extended with M7a `requires`.
+ * Public edge kinds.
  *
  * - `consumes` — a source node (clip or timeline-postprocess) consumes a
  *                shader contribution from a target contribution node.
  * - `animates` — an automation clip drives a contribution target path.
  * - `binds-live` — a clip carries a resolved live binding for a target path.
- * - `requires` — (M7a) a source contribution node declares a capability,
+ * - `requires` — a source contribution node declares a capability,
  *                precondition, or process requirement on a target node.
  *                Used for output-format route planning; distinct from
  *                `consumes` which denotes data-flow material dependencies.
@@ -66,7 +64,7 @@ export const COMPOSITION_NODE_KINDS: readonly CompositionNodeKind[] = [
 export type CompositionEdgeKind = 'consumes' | 'animates' | 'binds-live' | 'requires';
 
 /**
- * The canonical set of public edge kinds including M7a `requires`.
+ * The canonical set of public edge kinds.
  */
 export const COMPOSITION_EDGE_KINDS: readonly CompositionEdgeKind[] = [
   'consumes',
@@ -82,7 +80,7 @@ export const COMPOSITION_EDGE_KINDS: readonly CompositionEdgeKind[] = [
 /**
  * Reference resolver state produced by the host resolver.
  *
- * Locked M1b states (v8 resolver precedence):
+ * Resolver states in precedence order:
  *
  *  1. `resolved`            — a valid, active, package-healthy contribution ref.
  *  2. `missing`             — no scoped candidate exists in the index.
@@ -224,7 +222,7 @@ export interface CompositionGraphPreviewResult {
  *
  * Constructed eagerly during extension runtime assembly and attached to
  * `ExtensionRuntime`.  When present, the graph becomes the authoritative
- * source for M1b shader/ref facts and contribution-index lookups consumed
+ * source for shader/ref facts and contribution-index lookups consumed
  * by the planner, export guard, and shader validation.
  *
  * Fields:

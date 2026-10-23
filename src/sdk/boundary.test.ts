@@ -61,7 +61,7 @@ import type {
   ChromeRenderStatusPayload,
   ChromeEventPayload,
   DiagnosticSeverity,
-  // M6: Parser / output format / search provider
+  // Parser / output format / search provider
   ParserContribution,
   OutputFormatContribution,
   SearchProviderContribution,
@@ -74,7 +74,7 @@ import type {
   AssetReadSurface,
   MaterialReadSurface,
   MetadataFacetDescriptor,
-  // M10: Agent tool contribution types
+  // Agent tool contribution types
   AgentToolContribution,
   AgentToolInputSchema,
   AgentToolInputProperty,
@@ -105,7 +105,7 @@ import type {
   SteeringDecision,
   GenerationSessionLiveDelivery,
   LiveChannelDescriptor,
-  // M12 planner requirement types
+  // planner requirement types
   CapabilityVersion,
   CapabilitySourceRef,
   RouteFitMetadata,
@@ -392,7 +392,7 @@ describe('ExtensionContext — no internal members exposed', () => {
 
   it('has exactly the expected own property names', () => {
     // The declared ExtensionContext surface is exactly these 13 members.
-    // `ui` (T1.1) is part of the contract: a complete context literal must
+    // `ui` is part of the contract: a complete context literal must
     // include it, and ExtensionUiService exposes only registerRenderer.
     const declaredKeys = [
       'agentTools',
@@ -482,7 +482,7 @@ describe('ExtensionContext — no internal members exposed', () => {
     }
   });
 
-  // ---- ui exposes only registerRenderer (T1.1) ----------------------------
+  // ---- ui exposes only registerRenderer ----------------------------
 
   it('ctx.ui exposes only registerRenderer', () => {
     const ui: ExtensionUiService = {
@@ -562,7 +562,7 @@ describe('ExtensionContext — no internal members exposed', () => {
 
   it('services.settings has only the public API', () => {
     const settingKeys = Object.keys(ctx.services.settings).sort();
-    // get, set, delete, keys, subscribe — no internal props (T8 added subscribe)
+    // get, set, delete, keys, subscribe — no internal props
     expect(settingKeys).toEqual(['delete', 'get', 'keys', 'set', 'subscribe']);
   });
 
@@ -730,7 +730,7 @@ describe('ExtensionContext — type safety guard', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: Contribution kind bridging — parser active, output/search typed
+// Contribution kind bridging — parser active, output/search typed
 // ---------------------------------------------------------------------------
 
 describe('M6: contribution kind bridging (parser M6-delegated, output/search typed)', () => {
@@ -748,11 +748,11 @@ describe('M6: contribution kind bridging (parser M6-delegated, output/search typ
 
   it('render-dependent output declarations remain declarable but reserved for execution', () => {
     // outputFormat (both compile-only and render-dependent) is declarable
-    // in manifests but its runtime execution is reserved in M6.
+    // in manifests but its runtime execution is reserved.
     const bridged = contributionKindNotYetBridged('outputFormat');
     expect(bridged).toBe('M6');
 
-    // parser is delegated → M6 (runtime projection policy keeps it projectable)
+    // parser is delegated (runtime projection policy keeps it projectable)
     expect(contributionKindNotYetBridged('parser')).toBe('M6');
   });
 
@@ -761,9 +761,9 @@ describe('M6: contribution kind bridging (parser M6-delegated, output/search typ
     // get a clear diagnostic, not silent ignorance.
     // clipType is runtime-bridged → null
     expect(contributionKindNotYetBridged('clipType')).toBeNull();
-    // agentTool is delegated → M10
+    // agentTool is delegated
     expect(contributionKindNotYetBridged('agentTool')).toBe('M10');
-    // agent is delegated → returns M10
+    // agent is delegated
     expect(contributionKindNotYetBridged('agent')).toBe('M10');
   });
 
@@ -785,7 +785,7 @@ describe('M6: contribution kind bridging (parser M6-delegated, output/search typ
 });
 
 // ---------------------------------------------------------------------------
-// T2.1: Exact 22-kind count and no timelineMarker kind
+// Exact 22-kind count and no timelineMarker kind
 // ---------------------------------------------------------------------------
 
 describe('T2.1: exact contribution-kind count and no timelineMarker kind', () => {
@@ -828,7 +828,7 @@ describe('T2.1: exact contribution-kind count and no timelineMarker kind', () =>
 });
 
 // ---------------------------------------------------------------------------
-// M6: ExtensionManifest accepts M6 contributions in contributions array
+// ExtensionManifest accepts parser, output-format and search-provider contributions in contributions array
 // ---------------------------------------------------------------------------
 
 describe('M6: ExtensionManifest contributions accept parser/outputFormat/searchProvider', () => {
@@ -920,7 +920,7 @@ describe('M6: ExtensionManifest contributions accept parser/outputFormat/searchP
   });
 
   it('defineExtension allows cross-kind reuse of the same contribution ID (SD3)', () => {
-    // SD3: cross-kind reuse is valid; only same-kind+same-ID scoped-key duplicates are blocked
+    // cross-kind reuse is valid; only same-kind+same-ID scoped-key duplicates are blocked
     const ext = defineExtension({
       manifest: {
         id: 'com.m6.cross-kind' as any,
@@ -948,7 +948,7 @@ describe('M6: ExtensionManifest contributions accept parser/outputFormat/searchP
 });
 
 // ---------------------------------------------------------------------------
-// M10: Agent tool contributions — manifest typing, boundary, and governance
+// Agent tool contributions — manifest typing, boundary, and governance
 // ---------------------------------------------------------------------------
 
 describe('M10: AgentToolContribution manifest acceptance', () => {
@@ -1076,7 +1076,7 @@ describe('M10: AgentToolContribution manifest acceptance', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M10: ToolResult families and grouped union
+// ToolResult families and grouped union
 // ---------------------------------------------------------------------------
 
 describe('M10: ToolResult union — grouped families', () => {
@@ -1264,7 +1264,7 @@ describe('M10: ToolResult union — grouped families', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M10: AgentToolInvocationRequest, context, and export context
+// AgentToolInvocationRequest, context, and export context
 // ---------------------------------------------------------------------------
 
 describe('M10: AgentToolInvocationRequest and context contracts', () => {
@@ -1319,7 +1319,7 @@ describe('M10: AgentToolInvocationRequest and context contracts', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M10: GenerationSession contract
+// GenerationSession contract
 // ---------------------------------------------------------------------------
 
 describe('M10: GenerationSession contract', () => {
@@ -1386,7 +1386,7 @@ describe('M10: GenerationSession contract', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M10: ExtensionContext.agentTools registration boundary
+// ExtensionContext.agentTools registration boundary
 // ---------------------------------------------------------------------------
 
 describe('M10: ExtensionContext.agentTools registration boundary', () => {
@@ -1502,7 +1502,7 @@ describe('M10: ExtensionContext.agentTools registration boundary', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M10: Contribution kind milestone metadata for agent tools
+// Contribution kind milestone metadata for agent tools
 // ---------------------------------------------------------------------------
 
 describe('M10: Contribution kind bridging — agentTool bridged, agent delegated', () => {
@@ -1539,7 +1539,7 @@ describe('M10: Contribution kind bridging — agentTool bridged, agent delegated
 });
 
 // ---------------------------------------------------------------------------
-// M13: Dedicated shader contribution and registration boundary
+// Dedicated shader contribution and registration boundary
 // ---------------------------------------------------------------------------
 
 describe('M13: shader contributions stay separate from component effects', () => {
@@ -1658,7 +1658,7 @@ describe('M13: shader contributions stay separate from component effects', () =>
 });
 
 // ---------------------------------------------------------------------------
-// M10: Governance — no video-editor internal imports for agent tool types
+// Governance — no video-editor internal imports for agent tool types
 // ---------------------------------------------------------------------------
 
 describe('M10: Agent tool governance — no internal video-editor imports', () => {
@@ -1741,7 +1741,7 @@ describe('M10: Agent tool governance — no internal video-editor imports', () =
 });
 
 // ---------------------------------------------------------------------------
-// M11: Live Data Bridge — boundary tests
+// Live Data Bridge — boundary tests
 // ---------------------------------------------------------------------------
 
 describe('M11: live-data type interfaces are importable from @astrid/editor-sdk', () => {
@@ -2265,7 +2265,7 @@ describe('registry-derived family helpers', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T3: Family adapter contract types (boundary)
+// Family adapter contract types (boundary)
 // ---------------------------------------------------------------------------
 
 import {
@@ -2427,7 +2427,7 @@ describe('T3: family adapter contract types are importable', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T4: Passive adapter registry (boundary)
+// Passive adapter registry (boundary)
 // ---------------------------------------------------------------------------
 
 describe('T4: passive adapter registry (boundary)', () => {
@@ -2646,7 +2646,7 @@ describe('T4: passive adapter registry (boundary)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T5: Adapter coordinator & conformance aggregation (boundary)
+// Adapter coordinator & conformance aggregation (boundary)
 // ---------------------------------------------------------------------------
 
 import {
@@ -2660,7 +2660,7 @@ import {
   identifyDelegatedFamilies,
 } from '@/sdk/index';
 
-// ---- T5 shared helpers ---------------------------------------------------
+// ---- shared helpers ---------------------------------------------------
 
 function fakeAdapter(kind: string, maturity: ExecutionMaturity = 'runtime-bridged'): HostFamilyAdapter {
   return {
@@ -3038,7 +3038,7 @@ describe('T5: conformance aggregation (boundary)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T6: Family adapter manifest — cross-reference checklist (boundary)
+// Family adapter manifest — cross-reference checklist (boundary)
 // ---------------------------------------------------------------------------
 
 describe('T6: family adapter manifest (boundary)', () => {

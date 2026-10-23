@@ -1,7 +1,7 @@
 /**
  * agent-tools-copilot — Copilot proposal canary extension.
  *
- * Demonstrates M10 copilot-style agent tools that:
+ * Demonstrates copilot-style agent tools that:
  *   - Read TimelineSnapshot from request context
  *   - Return proposal rationale/explanation with affected objects
  *   - Include source-to-output refs for traceability
@@ -13,7 +13,6 @@
  * It imports exclusively from @astrid/editor-sdk, the public SDK entrypoint.
  *
  * @publicContract
- * @milestone M10
  */
 
 import { defineExtension } from '@astrid/editor-sdk';

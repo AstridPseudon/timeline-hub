@@ -47,7 +47,7 @@ const assetListParamsForClipType = (
 // `images` / `videos` so components can render via <Img src={params.images[0]} />
 // without needing per-clip-type metadata. Mirrors the trusted built-in
 // pattern (image-jump uses imageAssetKeys → images via componentParam) but
-// applies to any clipType emitted by ai-generate-sequence-component.
+// applies to any clipType whose params carry these keys.
 const CONVENTION_ASSET_PARAMS: ReadonlyArray<{ keysParam: string; urlsParam: string }> = [
   { keysParam: 'imageAssetKeys', urlsParam: 'images' },
   { keysParam: 'videoAssetKeys', urlsParam: 'videos' },

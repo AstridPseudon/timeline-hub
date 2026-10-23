@@ -2,12 +2,10 @@ import React from 'react';
 import { Check, Copy } from 'lucide-react';
 import { getDisplayNameFromUrl } from '@/domains/lora/lib/loraUtils';
 import type { getVariantConfig } from '@/shared/types/taskDetailsTypes';
-import type { LoraModel } from '@/domains/lora/types/lora';
 
 interface TaskLoraDetailsProps {
   config: ReturnType<typeof getVariantConfig>;
   additionalLoras: Record<string, unknown> | undefined;
-  availableLoras: LoraModel[] | undefined;
   copiedLoraUrl: string | null;
   onCopyLoraUrl: (url: string) => void;
 }
@@ -23,7 +21,6 @@ function formatStrength(strength: unknown): string {
 export const TaskLoraDetails: React.FC<TaskLoraDetailsProps> = ({
   config,
   additionalLoras,
-  availableLoras,
   copiedLoraUrl,
   onCopyLoraUrl,
 }) => {
@@ -45,7 +42,7 @@ export const TaskLoraDetails: React.FC<TaskLoraDetailsProps> = ({
           className={`group/lora flex items-center gap-2 p-1.5 bg-background/50 rounded border ${config.textSize} min-w-0`}
         >
           <span className={`${config.fontWeight} truncate min-w-0 flex-1`}>
-            {getDisplayNameFromUrl(url, availableLoras)}
+            {getDisplayNameFromUrl(url)}
           </span>
           <button
             onClick={() => onCopyLoraUrl(url)}

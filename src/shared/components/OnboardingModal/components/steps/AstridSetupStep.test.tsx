@@ -6,7 +6,7 @@ import type { ReactElement } from 'react';
 import type { RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { OnboardingModal } from '@/shared/components/modals/OnboardingModal';
 import { Dialog, DialogContent } from '@/shared/components/ui/dialog';
-import { ASTRID_COMMANDS, RUNTIME_CONNECTION_COPY as COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
+import { agentInstructions, ASTRID_COMMANDS, RUNTIME_CONNECTION_COPY as COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
 import { connectionFor, CONNECTED_REALM } from '@/shared/components/RuntimeConnection/connectionFixture.ts';
 
 const mocks = vi.hoisted(() => ({
@@ -64,7 +64,8 @@ describe('AstridSetupStep', () => {
     expect(screen.getByRole('heading', { name: COPY.setUp.title })).toBeInTheDocument();
     expect(screen.getByText(withCommandShell(COPY.setUp.sentence))).toBeInTheDocument();
     expect(screen.getByText(command, { selector: 'code' })).toBeInTheDocument();
-    expect(screen.getByText(COPY.agent.note)).toBeInTheDocument();
+    // No line repeats what the instructions are for, and none explains how to open a terminal.
+    expect(document.body.textContent).not.toMatch(/Paste these instructions|Open Terminal|Open Start/);
     expect(screen.getAllByRole('button', { name: COPY.agent.copy })).toHaveLength(1);
     expect(screen.queryByRole('radio')).toBeNull();
     expect(screen.queryByRole('link')).toBeNull();
@@ -74,13 +75,13 @@ describe('AstridSetupStep', () => {
 
     fireEvent.click(screen.getByRole('button', { name: COPY.agent.copy }));
     expect(await screen.findByRole('button', { name: COPY.agent.copied })).toBeInTheDocument();
-    expect(mocks.clipboard).toHaveBeenCalledWith(command);
+    expect(mocks.clipboard).toHaveBeenCalledWith(agentInstructions('install', window.location.origin));
   });
 
   it('keeps the command selectable when the shared copy action fails', async () => {
     mocks.clipboard.mockResolvedValue(false);
     renderInDialog(<AstridSetupStep onNext={vi.fn()} onClose={vi.fn()} />);
-    const command = screen.getByText(/https:\/\/astrid.haus\/install/, { selector: 'code' }).textContent;
+    const command = agentInstructions('install', window.location.origin);
     fireEvent.click(screen.getByRole('button', { name: COPY.agent.copy }));
 
     expect(await screen.findByRole('status')).toHaveTextContent(COPY.agent.copyFailed);
@@ -104,18 +105,31 @@ describe('AstridSetupStep', () => {
   it.each([
     { label: 'empty', projects: [] },
     { label: 'existing', projects: [{ project_id: 'existing-project' }] },
-  ])('continues once the connected workspace is readable: $label', async ({ projects }) => {
-    mocks.connection = connectionFor({ status: 'connected', realm: CONNECTED_REALM });
+  ])('shows Connected once the workspace is readable, then moves on by itself: $label', async ({ projects }) => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
     mocks.projects.mockResolvedValue(projects);
     const onNext = vi.fn();
-    renderInDialog(<AstridSetupStep onNext={onNext} onClose={vi.fn()} />);
+    const ui = () => <Dialog open><DialogContent><AstridSetupStep onNext={onNext} onClose={vi.fn()} /></DialogContent></Dialog>;
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    const wrap = (node: ReactElement) => <QueryClientProvider client={client}>{node}</QueryClientProvider>;
+    const view = render(wrap(ui()));
+    expect(screen.getByText(/choose Allow/)).toBeInTheDocument();
+    mocks.connection = connectionFor({ status: 'connected', realm: CONNECTED_REALM });
+    view.rerender(wrap(ui()));
 
     expect(await screen.findByRole('heading', { name: COPY.connected.sentence })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: COPY.agent.copy })).toBeNull();
-    expect(screen.queryByRole('link')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onNext).not.toHaveBeenCalled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1300); });
     expect(onNext).toHaveBeenCalledOnce();
     expect(mocks.projects).toHaveBeenCalledOnce();
+  });
+
+  it('skips the step when Astrid is already connected as onboarding opens', async () => {
+    mocks.connection = connectionFor({ status: 'connected', realm: CONNECTED_REALM });
+    const onNext = vi.fn();
+    renderInDialog(<AstridSetupStep onNext={onNext} onClose={vi.fn()} />);
+    await waitFor(() => expect(onNext).toHaveBeenCalled());
   });
 
   it('waits for a same-origin workspace to become readable and accepts an empty project list', async () => {
@@ -137,7 +151,7 @@ describe('AstridSetupStep', () => {
     expect(mocks.projects).toHaveBeenCalledTimes(2);
   });
 
-  it.each([false, true])('keeps waiting when a connected workspace cannot be read, reconnect=%s', async reconnect => {
+  it.each([true])('keeps waiting when a connected workspace cannot be read, reconnect=%s', async reconnect => {
     mocks.connection = connectionFor({ status: 'connected', realm: CONNECTED_REALM });
     mocks.projects.mockRejectedValue(new Error('project list unavailable'));
     const onNext = vi.fn();

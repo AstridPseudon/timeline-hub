@@ -41,7 +41,7 @@ import type { VideoContributionKind } from '@/sdk/video/families/contributionKin
  * Sorted by kind string ascending for deterministic iteration.
  */
 export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionKind>[] = [
-  // ---- Agent (M10) ----
+  // ---- Agent ----
   {
     kind: 'agent',
     declarationMaturity: 'typed',
@@ -75,7 +75,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'contract. Execution is host-mediated via proposal-backed tool invocation.',
   },
 
-  // ---- Agent Tool (M10) ----
+  // ---- Agent Tool ----
   {
     kind: 'agentTool',
     declarationMaturity: 'schema-backed',
@@ -113,7 +113,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'lifecycle. Registered imperatively via ctx.agentTools.',
   },
 
-  // ---- Asset Detail Section (M6) ----
+  // ---- Asset Detail Section ----
   {
     kind: 'assetDetailSection',
     declarationMaturity: 'schema-backed',
@@ -150,7 +150,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'Bridged at M6.',
   },
 
-  // ---- Automation (M9) ----
+  // ---- Automation ----
   {
     kind: 'automation',
     declarationMaturity: 'schema-backed',
@@ -189,7 +189,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'Bridged at M9 as a built-in clip type.',
   },
 
-  // ---- Clip Type (M9) ----
+  // ---- Clip Type ----
   {
     kind: 'clipType',
     declarationMaturity: 'schema-backed',
@@ -225,7 +225,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'export projection.',
   },
 
-  // ---- Command (M4) ----
+  // ---- Command ----
   {
     kind: 'command',
     declarationMaturity: 'documented',
@@ -261,7 +261,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'with host adapter, keybinding, and context-menu wiring.',
   },
 
-  // ---- Context Menu Item (M4) ----
+  // ---- Context Menu Item ----
   {
     kind: 'contextMenuItem',
     declarationMaturity: 'documented',
@@ -346,7 +346,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'unknown payloads round-trip opaquely with host fallback paint.',
   },
 
-  // ---- Dialog (M1) ----
+  // ---- Dialog ----
   {
     kind: 'dialog',
     declarationMaturity: 'documented',
@@ -382,7 +382,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'with order control and when-clause filtering. Bridged at M1.',
   },
 
-  // ---- Effect (M7) ----
+  // ---- Effect ----
   {
     kind: 'effect',
     declarationMaturity: 'schema-backed',
@@ -420,7 +420,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'allowBrowserExport or allowWorkerExport is declared. Bridged at M7.',
   },
 
-  // ---- Inspector Section (M1) ----
+  // ---- Inspector Section ----
   {
     kind: 'inspectorSection',
     declarationMaturity: 'documented',
@@ -456,7 +456,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'panel with placement control (before-default, after-default).',
   },
 
-  // ---- Keybinding (M4) ----
+  // ---- Keybinding ----
   {
     kind: 'keybinding',
     declarationMaturity: 'documented',
@@ -491,7 +491,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'with platform-aware key notation and when-clause filtering.',
   },
 
-  // ---- Metadata Facet (M6) ----
+  // ---- Metadata Facet ----
   {
     kind: 'metadataFacet',
     declarationMaturity: 'schema-backed',
@@ -528,7 +528,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'Bridged at M6.',
   },
 
-  // ---- Output Format (M6) ----
+  // ---- Output Format ----
   {
     kind: 'outputFormat',
     declarationMaturity: 'typed',
@@ -565,7 +565,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'output pipelines. Types exist but runtime execution is reserved.',
   },
 
-  // ---- Panel (M1) ----
+  // ---- Panel ----
   {
     kind: 'panel',
     declarationMaturity: 'documented',
@@ -601,7 +601,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'is limited to asset-panel. Bridged at M1.',
   },
 
-  // ---- Parser (M6) ----
+  // ---- Parser ----
   {
     kind: 'parser',
     declarationMaturity: 'schema-backed',
@@ -636,7 +636,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'Fully bridged at M6 with host adapter, diagnostics, and lifecycle.',
   },
 
-  // ---- Process (M12) ----
+  // ---- Process ----
   {
     kind: 'process',
     declarationMaturity: 'typed',
@@ -676,7 +676,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'declaration exist; runtime execution is reserved for M12.',
   },
 
-  // ---- Search Provider (M6) ----
+  // ---- Search Provider ----
   {
     kind: 'searchProvider',
     declarationMaturity: 'typed',
@@ -714,7 +714,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'runtime execution is reserved.',
   },
 
-  // ---- Shader (M13) ----
+  // ---- Shader ----
   {
     kind: 'shader',
     declarationMaturity: 'schema-backed',
@@ -749,7 +749,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'custom rendering passes. Types exist; runtime execution is delegated.',
   },
 
-  // ---- Slot (M1) — bridged surface ----
+  // ---- Slot — bridged surface ----
   {
     kind: 'slot',
     declarationMaturity: 'documented',
@@ -785,7 +785,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'diagnostics, and persistence.',
   },
 
-  // ---- Timeline Overlay (M2) ----
+  // ---- Timeline Overlay ----
   {
     kind: 'timelineOverlay',
     declarationMaturity: 'documented',
@@ -830,7 +830,7 @@ export const VIDEO_FAMILY_REGISTRY: readonly FamilyDefinition<VideoContributionK
       'arbitration. Bridged at M2; host-integrated, not yet public-supported.',
   },
 
-  // ---- Transition (M8) ----
+  // ---- Transition ----
   {
     kind: 'transition',
     declarationMaturity: 'schema-backed',

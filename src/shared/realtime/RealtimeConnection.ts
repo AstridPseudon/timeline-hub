@@ -7,8 +7,8 @@
  * `useRealtimeInvalidation` → `DataFreshnessManager`). It does NOT filter
  * events or make business decisions about what to invalidate.
  *
- * Transport: interval diff-poller over `AstridLocalClient` routes (doc-27 §4.1).
- * There is no WebSocket and no Supabase client anywhere in this file.
+ * Transport: interval diff-poller over `AstridLocalClient` routes.
+ * There is no WebSocket anywhere in this file.
  *
  * State machine: disconnected → connecting → connected ↔ reconnecting → failed.
  * The load-bearing rule: status flips to 'connected' ONLY after the first fully
@@ -40,7 +40,7 @@ type SnapshotRow = Record<string, unknown>;
 type TableSnapshot = Map<string, SnapshotRow>;
 
 /**
- * Declared poll cadences (plan §7 "honest latency"): no adaptive guessing.
+ * Declared poll cadences (honest latency): no adaptive guessing.
  * active tasks/generations move fastest (admit→poll journey); shot placement,
  * variant projections, and timelines change rarely; anything else is a
  * safety net at 30 s.
@@ -450,7 +450,7 @@ export class RealtimeConnection {
 
   /**
    * Bridge reads per table. `generation_variants` has NO dedicated route by
-   * design (R13): variants arrive embedded in generation detail, so they are
+   * design: variants arrive embedded in generation detail, so they are
    * PROJECTION rows derived from gallery detail reads — never a second source.
    */
   private async fetchRows(table: DatabaseTable): Promise<Array<Record<string, unknown>>> {
@@ -485,7 +485,7 @@ export class RealtimeConnection {
   }
 
   /**
-   * Variant projection source: generation detail reads (R13). Discover ids
+   * Variant projection source: generation detail reads. Discover ids
    * from the cheap generation snapshot, then fetch details only for new or
    * changed generations. The first poll seeds every variant; idle polls reuse
    * those rows without detail requests.
@@ -590,7 +590,7 @@ const IDENTITY_KEYS: Record<DatabaseTable, readonly string[]> = {
  * - id present in next only → INSERT (`new` = full row)
  * - present in both with changed content → UPDATE (`new` = full row, `old` = prior)
  * - present in prior only → DELETE; `old` PRESERVES the full removed record
- *   (matching Supabase DELETE payloads, whose consumers read `e.old || e.new`)
+ *   (consumers read `e.old || e.new`)
  */
 export function diffTableSnapshots(
   table: DatabaseTable,

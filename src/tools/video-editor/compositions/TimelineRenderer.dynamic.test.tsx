@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 //
-// Render-path integration test for FLAG-001/002 wiring (T11).
+// Render-path integration test for FLAG-001/002 wiring.
 //
 // Mounts SequenceComponentRegistryProvider seeded with one fake DB entry,
 // renders a single-clip timeline with `clipType: 'custom:my-seq'` through

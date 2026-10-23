@@ -10,6 +10,9 @@ export const UI_Z_LAYERS = {
   TASKS_PANE_TAB_ABOVE_LIGHTBOX: 100015,
   // Pane body sits above the tab so the pane visually covers the tab handle when open; above GenerationsPane so the bottom strip stays clickable.
   TASKS_PANE_CONTENT: 100016,
+  // The editor tour's input shield and card cover everything, panes included, so the Tasks pane chat is dimmed and blocked too.
+  EDITOR_TOUR_SHIELD: 100020,
+  EDITOR_TOUR_CARD: 100021,
   // Toasts must clear non-lightbox modals (110000+), so keep this above 110020
   // (the highest practical modal popup z at layer ~2).
   TOAST_VIEWPORT: 120000,

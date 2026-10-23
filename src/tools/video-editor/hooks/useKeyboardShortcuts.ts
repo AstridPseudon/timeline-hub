@@ -231,6 +231,8 @@ export function useKeyboardShortcuts({
 
       const isModifierPressed = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
+      // Single-key shortcuts are plain keys: Cmd/Ctrl/Alt+S, +M, +Backspace, +Space belong to the browser or OS.
+      const isPlainKey = !event.metaKey && !event.ctrlKey && !event.altKey;
 
       // ---- Built-in shortcuts (unchanged) -----------------------------------
 
@@ -266,7 +268,7 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      if (event.key === 'ArrowUp' && hasSelectedClip) {
+      if (event.key === 'ArrowUp' && hasSelectedClip && isPlainKey) {
         event.preventDefault();
         if (canMoveSelectedClipToTrack) {
           moveSelectedClipsToTrack('up', selectedClipIds);
@@ -274,7 +276,7 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      if (event.key === 'ArrowDown' && hasSelectedClip) {
+      if (event.key === 'ArrowDown' && hasSelectedClip && isPlainKey) {
         event.preventDefault();
         if (canMoveSelectedClipToTrack) {
           moveSelectedClipsToTrack('down', selectedClipIds);
@@ -288,25 +290,25 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      if (event.code === 'Space') {
+      if (event.code === 'Space' && isPlainKey) {
         event.preventDefault();
         togglePlayPause();
         return;
       }
 
-      if (key === 'm' && hasSelectedClip) {
+      if (key === 'm' && hasSelectedClip && isPlainKey) {
         event.preventDefault();
         toggleMute();
         return;
       }
 
-      if (key === 's' && hasSelectedClip) {
+      if (key === 's' && hasSelectedClip && isPlainKey) {
         event.preventDefault();
         splitSelectedClip();
         return;
       }
 
-      if ((event.key === 'Backspace' || event.key === 'Delete') && hasSelectedClip) {
+      if ((event.key === 'Backspace' || event.key === 'Delete') && hasSelectedClip && isPlainKey) {
         event.preventDefault();
         deleteSelectedClip();
         return;

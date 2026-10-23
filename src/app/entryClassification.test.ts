@@ -1,10 +1,9 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
   APP_ENTRY_PATH,
   classifyBrowserEntry,
-  isRecognizedOAuthCallbackUrl,
   prefersAppEntry,
   rememberAppEntryPreference,
   resolveInstallerConnectEntry,
@@ -25,20 +24,6 @@ describe('browser entry classification', () => {
   it('preserves app ownership for protected documents', () => {
     expect(classifyBrowserEntry(new URL('https://astrid.test/tools/video-editor'))).toBe('app');
     expect(classifyBrowserEntry(new URL('https://astrid.test/tools/image-generation'))).toBe('app');
-  });
-
-  it('latches existing complete hash-token callbacks to the app for this boot', () => {
-    const rootCallback = new URL('https://astrid.test/#access_token=access&refresh_token=refresh');
-    const homeCallback = new URL('https://astrid.test/home#access_token=access&refresh_token=refresh');
-    expect(isRecognizedOAuthCallbackUrl(rootCallback)).toBe(true);
-    expect(classifyBrowserEntry(rootCallback)).toBe('app');
-    expect(classifyBrowserEntry(homeCallback)).toBe('app');
-  });
-
-  it('does not let a stale oauthInProgress flag claim an ordinary public document', () => {
-    localStorage.setItem('oauthInProgress', 'true');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/'))).toBe('public');
-    expect(classifyBrowserEntry(new URL('https://astrid.test/home'))).toBe('public');
   });
 
   it('keeps app bootstrap and extension initialization behind dynamic app imports', () => {
@@ -72,7 +57,7 @@ describe('browser entry classification', () => {
     rememberAppEntryPreference();
     expect(prefersAppEntry()).toBe(true);
     expect(resolveReturningAppEntry(new URL('https://astrid.test/?ref=x'), true))
-      .toBe('/tools/video-editor?project=demo-project-id&timeline=demo-timeline');
+      .toBe('/tools/video-editor');
   });
 
   it('sends installer root links to the Runtime gate with their query intact', () => {
@@ -102,25 +87,13 @@ describe('browser entry classification', () => {
     expect(target.hash).toBe('#continue');
   });
 
-  it('keeps the landing page for first visits, /home and OAuth callbacks', () => {
+  it('keeps the landing page for first visits and /home', () => {
     expect(resolveReturningAppEntry(new URL('https://astrid.test/'), false)).toBeNull();
     expect(resolveReturningAppEntry(new URL('https://astrid.test/home'), true)).toBeNull();
-    expect(resolveReturningAppEntry(
-      new URL('https://astrid.test/#access_token=a&refresh_token=b'),
-      true,
-    )).toBeNull();
   });
 
-  it('opens the Runtime\'s own projects on the hosted build, where the demo project does not exist', async () => {
-    vi.stubEnv('VITE_RUNTIME_ORIGIN', 'http://127.0.0.1:17340');
-    try {
-      vi.resetModules();
-      const hosted = await import('./entryClassification.ts');
-      expect(hosted.APP_ENTRY_PATH).toBe('/tools/video-editor');
-      expect(hosted.resolveReturningAppEntry(new URL('https://astrid.test/'), true)).toBe('/tools/video-editor');
-    } finally {
-      vi.unstubAllEnvs();
-      vi.resetModules();
-    }
+  it('enters the editor on the bare route in every build, leaving project choice to the Runtime', () => {
+    expect(APP_ENTRY_PATH).toBe('/tools/video-editor');
+    expect(resolveReturningAppEntry(new URL('https://astrid.test/'), true)).toBe('/tools/video-editor');
   });
 });

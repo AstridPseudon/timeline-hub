@@ -2,10 +2,6 @@ import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({}),
-}));
-
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),
 }));
@@ -149,6 +145,39 @@ describe('useLastUsedEditSettings', () => {
       numGenerations: 3,
       customLoraUrl: 'db-lora',
     }));
+  });
+
+  it('reads a persisted Trim sub-mode as the default sub-mode, from local storage and from DB sync', async () => {
+    localStorage.setItem('lightbox-edit-last-used-project-trim', JSON.stringify({
+      panelMode: 'edit',
+      videoEditSubMode: 'trim',
+    }));
+
+    const { result, rerender } = renderHook(() =>
+      useLastUsedEditSettings({ projectId: 'project-trim', enabled: true }),
+    );
+    await act(async () => {});
+
+    expect(result.current.lastUsed.panelMode).toBe('edit');
+    expect(result.current.lastUsed.videoEditSubMode).toBe(DEFAULT_LAST_USED.videoEditSubMode);
+    expect(DEFAULT_LAST_USED.videoEditSubMode).toBe('replace');
+
+    toolSettingsState = {
+      ...toolSettingsState,
+      isLoading: false,
+      settings: { videoEditSubMode: 'trim' as never },
+    };
+    rerender();
+    await act(async () => {});
+    expect(result.current.lastUsed.videoEditSubMode).toBe('replace');
+
+    toolSettingsState = {
+      ...toolSettingsState,
+      settings: { videoEditSubMode: 'enhance' },
+    };
+    rerender();
+    await act(async () => {});
+    expect(result.current.lastUsed.videoEditSubMode).toBe('enhance');
   });
 });
 

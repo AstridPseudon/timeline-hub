@@ -1,7 +1,6 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { Shot, GenerationRow } from '@/domains/generation/types/index.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
-import type { ShotFinalVideo } from '@/tools/travel-between-images/hooks/video/useShotFinalVideos.ts';
 import type {
   CanonicalShotOccurrence,
   PreparedShotComposition,
@@ -30,7 +29,7 @@ export type CanonicalShotTimelinePublication = Readonly<{
 
 
 /**
- * Checklist-backed runtime inventory for the host surfaces Sprint 2 is
+ * Checklist-backed runtime inventory for the host surfaces this layer is
  * allowed to depend on directly.
  */
 export const VIDEO_EDITOR_HOST_PORT_NAMES = [
@@ -66,8 +65,6 @@ export interface VideoEditorShotsHost {
   refetchShots: () => void;
   allImagesCount?: number;
   noShotImagesCount?: number;
-  finalVideoMap: Map<string, ShotFinalVideo>;
-  dismissFinalVideo: (finalVideoId: string) => void;
   shotComposition?: ShotCompositionAdapter | null;
   canonicalOccurrences?: readonly CanonicalShotOccurrence[];
   /** Runtime-owned source-frame thumbnails keyed by canonical occurrence. */

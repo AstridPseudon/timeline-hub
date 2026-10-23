@@ -21,7 +21,7 @@ const POLL_INTERVAL_MS = 15_000;
 
 /**
  * Checks which asset registry entries reference a variant that is no longer
- * the primary variant of its generation. Uses direct Supabase queries + realtime
+ * the primary variant of its generation. Uses direct queries + realtime
  * subscription (no React Query) for predictable, immediate updates.
  */
 export function useStaleVariants({ registry, patchRegistry }: UseStaleVariantsArgs) {
@@ -64,7 +64,7 @@ export function useStaleVariants({ registry, patchRegistry }: UseStaleVariantsAr
     };
   }, [registry]);
 
-  // Fetch primary variant locations from Supabase
+  // Fetch primary variant locations
   const fetchPrimaryLocations = useCallback(async (generationIds: string[]) => {
     if (generationIds.length === 0) {
       setPrimaryLocationMap({});
@@ -87,9 +87,8 @@ export function useStaleVariants({ registry, patchRegistry }: UseStaleVariantsAr
   }, []);
 
   // Fetch on mount, when generationIds change, and on a polling interval.
-  // Local-mode editor has no session: stale-variant detection queries Supabase
-  // for primary variant locations, which cannot resolve there — and the demo
-  // clips' generation ids would otherwise trigger it on every load.
+  // Skipped while there is no user id: the demo clips' generation ids would
+  // otherwise trigger the lookup on every load.
   useEffect(() => {
     if (!runtime.auth.userId) return;
     const { generationIds } = generationAssetMap;

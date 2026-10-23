@@ -4,9 +4,8 @@
  * The collapsible "Advanced Settings" area containing:
  * - Before/After prompt text fields
  * - Negative prompt
- * - Motion controls (MotionPresetSelector + LoRA selector)
+ * - Motion controls (MotionPresetSelector + selected LoRAs)
  * - Structure video section (delegated to StructureVideoSection)
- * - LoRA selector modal
  */
 
 import React from 'react';
@@ -21,18 +20,14 @@ import {
   getModelSpec,
   resolveSelectedModelFromModelName,
 } from '@/tools/travel-between-images/settings';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
 import { MotionPresetSection } from './MotionPresetSection';
 import { StructureVideoSection } from './StructureVideoSection';
 import { PromptFieldsSection } from './PromptFieldsSection';
 import { NegativePromptField } from './NegativePromptField';
-import { AdvancedSettingsLoraModal } from './AdvancedSettingsLoraModal';
-import type { useStructureVideoUpload } from '../hooks/useStructureVideoUpload';
 import type {
   SegmentSettings,
   SegmentSettingsFormProps,
   SegmentTimelineStructureVideoProps,
-  StructureVideoDragHandlers,
 } from '../types';
 
 interface AdvancedSettingsSectionProps {
@@ -40,7 +35,6 @@ interface AdvancedSettingsSectionProps {
   settings: SegmentSettings;
   onChange: (updates: Partial<SegmentSettings>) => void;
   modelName?: string;
-  queryKeyPrefix: string;
   edgeExtendAmount: 4 | 6;
 
   defaults?: {
@@ -54,20 +48,15 @@ interface AdvancedSettingsSectionProps {
     frameRange?: SegmentSettingsFormProps['structureVideoFrameRange'];
     defaults?: SegmentSettingsFormProps['structureVideoDefaults'];
   } & SegmentTimelineStructureVideoProps;
-  videoInteraction: {
-    videoUpload: ReturnType<typeof useStructureVideoUpload>;
-  } & StructureVideoDragHandlers;
 }
 
 export const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = ({
   settings,
   onChange,
   modelName,
-  queryKeyPrefix,
   edgeExtendAmount,
   defaults,
   structureVideo,
-  videoInteraction,
 }) => {
   const shotDefaults = defaults?.shotDefaults;
   const hasOverride = defaults?.hasOverride;
@@ -78,26 +67,12 @@ export const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = (
     frameRange: structureVideoFrameRange,
     defaults: structureVideoDefaults,
     isTimelineMode,
-    onAddSegmentStructureVideo,
     onRemoveSegmentStructureVideo,
   } = structureVideo ?? {};
   const {
-    videoUpload,
-    isDraggingVideo,
-    onDragOver,
-    onDragEnter,
-    onDragLeave,
-    onDrop,
-  } = videoInteraction;
-  const {
     showAdvanced,
     setShowAdvanced,
-    isLoraModalOpen,
-    openLoraModal,
-    closeLoraModal,
-    generationMode,
     builtinPreset,
-    featuredPresetIds,
     effectiveLoras,
     isUsingMotionDefaults,
     isUsingLorasDefault,
@@ -116,15 +91,12 @@ export const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = (
     onSaveFieldAsDefault,
     onChange,
   });
-  const { data: availableLoras = [] } = usePublicLoras();
   const {
     handleMotionModeChange,
     handlePhaseConfigChange,
     handlePhasePresetSelect,
     handlePhasePresetRemove,
     handleRandomSeedChange,
-    handleAddLoraClick,
-    handleLoraSelect,
     handleRemoveLora,
     handleLoraStrengthChange,
     handleModelChange,
@@ -133,7 +105,6 @@ export const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = (
     settings,
     shotDefaults,
     effectiveLoras,
-    openLoraModal,
   });
 
   return (
@@ -176,20 +147,15 @@ export const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = (
           {spec.supportsPhaseConfig && (
             <MotionPresetSection
               builtinPreset={builtinPreset}
-              featuredPresetIds={featuredPresetIds}
-              generationMode={generationMode}
               settings={settings}
               onChange={onChange}
               shotDefaults={shotDefaults}
-              queryKeyPrefix={queryKeyPrefix}
-              availableLoras={availableLoras}
               effectiveLoras={effectiveLoras}
               onMotionModeChange={handleMotionModeChange}
               onPhaseConfigChange={handlePhaseConfigChange}
               onPhasePresetSelect={handlePhasePresetSelect}
               onPhasePresetRemove={handlePhasePresetRemove}
               onRandomSeedChange={handleRandomSeedChange}
-              onAddLoraClick={handleAddLoraClick}
               onRemoveLora={handleRemoveLora}
               onLoraStrengthChange={handleLoraStrengthChange}
               onSaveFieldAsDefault={onSaveFieldAsDefault}
@@ -211,30 +177,13 @@ export const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = (
             shotDefaults={shotDefaults}
             hasOverride={hasOverride}
             isTimelineMode={isTimelineMode}
-              onAddSegmentStructureVideo={onAddSegmentStructureVideo}
             onRemoveSegmentStructureVideo={onRemoveSegmentStructureVideo}
             onModelChange={handleModelChange}
-            videoUpload={videoUpload}
-            isDraggingVideo={isDraggingVideo}
-            onDragOver={onDragOver}
-            onDragEnter={onDragEnter}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
             onSaveFieldAsDefault={onSaveFieldAsDefault}
             handleSaveFieldAsDefault={handleSaveFieldAsDefault}
             savingField={savingField}
           />
         </div>
-
-        <AdvancedSettingsLoraModal
-          isOpen={isLoraModalOpen}
-          onClose={closeLoraModal}
-          availableLoras={availableLoras}
-          effectiveLoras={effectiveLoras}
-          onAddLora={handleLoraSelect}
-          onRemoveLora={handleRemoveLora}
-          onUpdateLoraStrength={handleLoraStrengthChange}
-        />
       </CollapsibleContent>
     </Collapsible>
   );

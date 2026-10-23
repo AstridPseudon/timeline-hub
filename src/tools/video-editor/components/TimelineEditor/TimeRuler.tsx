@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { formatTime, formatTimeCompact } from '@/tools/video-editor/lib/coordinate-utils.ts';
+import { CENTISECOND_TIME_OPTIONS, formatTime } from '@/shared/lib/timeFormatting';
 import { useTimelineScale } from '@/tools/video-editor/hooks/useTimelineScale.ts';
 import type { TimelineGestureOwner, TimelineInputModality } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 
@@ -18,7 +18,7 @@ export interface TimeRulerProps {
   onCursorDrag: (time: number) => void;
   setGestureOwner: (owner: TimelineGestureOwner) => void;
   setInputModalityFromPointerType: (pointerType: string | null | undefined) => TimelineInputModality;
-  /** Label major ticks as `m:ss` (phone) instead of `m:ss.cc`. */
+  /** Label major ticks as `m:ss` (touch) instead of `m:ss.cc`. */
   compactLabels?: boolean;
 }
 
@@ -107,7 +107,7 @@ export function TimeRuler({
       ticks.push({
         key: `major-${index}`,
         left,
-        label: (compactLabels ? formatTimeCompact : formatTime)(index * scale),
+        label: compactLabels ? formatTime(index * scale) : formatTime(index * scale, CENTISECOND_TIME_OPTIONS),
       });
     }
 
@@ -232,22 +232,41 @@ export function TimeRuler({
             }}
           />
         ))}
+      </div>
 
-        {majorTicks.map((tick) => (
-          tick.label === null ? null : (
-            <div
-              key={tick.key}
-              className="pointer-events-none absolute left-0 top-0"
-              style={{
-                transform: `translateX(${tick.left + 6}px)`,
-              }}
-            >
-              <span className="rounded-sm bg-card/85 px-1 py-0.5 font-mono text-[10px] tracking-[0.08em] text-muted-foreground">
-                {tick.label}
-              </span>
-            </div>
-          )
-        ))}
+      {/* The time labels get their own scrolled layer above the extension ruler overlay (`z-20` in
+          `TimelineCanvas`), so a marker diamond can never cover a label's text. That overlay's root also
+          holds the layer legend and pager in the label column (`z-40`), and both share the canvas's
+          stacking context: the wrapper clips the labels to the timeline area (x >= startLeft) so a
+          scrolled label never paints over the gutter. */}
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 z-30 overflow-hidden"
+        style={{ left: startLeft }}
+      >
+        <div
+          data-testid="timeline-ruler-labels"
+          className="absolute inset-y-0 left-0"
+          style={{
+            width: contentWidth,
+            transform: `translateX(${-(scrollLeft + startLeft)}px)`,
+          }}
+        >
+          {majorTicks.map((tick) => (
+            tick.label === null ? null : (
+              <div
+                key={tick.key}
+                className="absolute left-0 top-0"
+                style={{
+                  transform: `translateX(${tick.left + 6}px)`,
+                }}
+              >
+                <span className="rounded-sm bg-card/85 px-1 py-0.5 font-mono text-[10px] tracking-[0.08em] text-muted-foreground">
+                  {tick.label}
+                </span>
+              </div>
+            )
+          ))}
+        </div>
       </div>
 
       <div

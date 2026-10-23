@@ -1,8 +1,8 @@
 /**
  * Clip-type family module.
  *
- * Houses the clip-type family contracts extracted from the public barrel
- * (src/sdk/index.ts): ClipTypeContribution manifest interface plus the
+ * Houses the clip-type family contracts:
+ * ClipTypeContribution manifest interface plus the
  * associated service/component types (ClipRenderer, ClipInspector,
  * ClipParameterDefinition, ClipParameterSchema, ClipTypeRegistrationOptions,
  * ClipTypeRegistrationService).
@@ -17,11 +17,11 @@ import type { ContributionId } from '../../ids';
 import type { DisposeHandle } from '../../dispose';
 
 /**
- * M9: A clip-type contribution declared in an extension manifest.
+ * A clip-type contribution declared in an extension manifest.
  *
  * Contributed clip types are trusted local browser-preview components
- * analogous to M7 effects and M8 transitions. Worker execution of
- * contributed clip code stays out of scope for M9.
+ * analogous to effects and transitions. Worker execution of
+ * contributed clip code stays out of scope.
  */
 export interface ClipTypeContribution {
   /** Unique within the extension. */
@@ -46,7 +46,7 @@ export interface ClipTypeContribution {
 }
 
 /**
- * M9: A trusted local component registered by an extension as a clip renderer.
+ * A trusted local component registered by an extension as a clip renderer.
  *
  * Clip renderers execute in the browser preview and receive host-interpolated
  * params through ClipRendererProps.
@@ -54,7 +54,7 @@ export interface ClipTypeContribution {
 export type ClipRenderer = Record<string, unknown> | ((...args: unknown[]) => unknown);
 
 /**
- * M9: A trusted local component registered by an extension as a clip inspector.
+ * A trusted local component registered by an extension as a clip inspector.
  *
  * Clip inspectors render in the inspector panel when a clip of the
  * owning type is selected.
@@ -62,7 +62,7 @@ export type ClipRenderer = Record<string, unknown> | ((...args: unknown[]) => un
 export type ClipInspector = Record<string, unknown> | ((...args: unknown[]) => unknown);
 
 /**
- * M9: A parameter definition for clip-type parameter schemas.
+ * A parameter definition for clip-type parameter schemas.
  *
  * Mirrors the effect/transition parameter definition shape so extensions
  * can declare parameter contracts at registration time.
@@ -88,10 +88,10 @@ export interface ClipParameterDefinition {
   options?: readonly { label: string; value: string }[];
 }
 
-/** M9: Ordered array of clip parameter definitions. */
+/** Ordered array of clip parameter definitions. */
 export type ClipParameterSchema = readonly ClipParameterDefinition[];
 
-/** M9: Options for imperative clip-type registration via ctx.clipTypes.registerClipType(). */
+/** Options for imperative clip-type registration via ctx.clipTypes.registerClipType(). */
 export interface ClipTypeRegistrationOptions {
   /** Override label for picker / UI. */
   label?: string;
@@ -103,7 +103,7 @@ export interface ClipTypeRegistrationOptions {
 }
 
 /**
- * M9: Clip-type registration service available as `ctx.clipTypes` during activate().
+ * Clip-type registration service available as `ctx.clipTypes` during activate().
  */
 export interface ClipTypeRegistrationService {
   /**

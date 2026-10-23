@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { toast } from '@/shared/components/ui/runtime/sonner';
-import type { ActiveLora, LoraModel } from '@/domains/lora/types/lora';
+import type { ActiveLora } from '@/domains/lora/types/lora';
 import type { LoraManagerOptions, LoraManagerState } from '@/domains/lora/types/loraManager';
 import { dedupeActiveLoras, shouldApplyLoraDefaults } from './loraStateHelpers';
 import { useLoraPersistence } from './loraPersistence';
@@ -9,7 +8,6 @@ import { useLoraPersistence } from './loraPersistence';
 const EMPTY_ACTIVE_LORAS: ActiveLora[] = [];
 
 export const useLoraManager = (
-  availableLoras: LoraModel[] = [],
   options: LoraManagerOptions = {},
 ): LoraManagerState => {
   const {
@@ -37,7 +35,6 @@ export const useLoraManager = (
   );
 
   const [hasEverSetLoras, setHasEverSetLoras] = useState(false);
-  const [isLoraModalOpen, setIsLoraModalOpen] = useState(false);
 
   const setSelectedLoras = useCallback((loras: ActiveLora[]) => {
     if (isControlledSelection) {
@@ -70,54 +67,6 @@ export const useLoraManager = (
   useEffect(() => {
     latestPromptRef.current = currentPrompt;
   }, [currentPrompt]);
-
-  const handleAddLora = useCallback((loraToAdd: LoraModel, isManualAction = true, initialStrength?: number) => {
-    if (selectedLorasRef.current.find((selectedLora) => selectedLora.id === loraToAdd['Model ID'])) {
-      return;
-    }
-
-    if (!loraToAdd['Model Files'] || loraToAdd['Model Files'].length === 0) {
-      toast.error('Selected LoRA has no model file specified.');
-      return;
-    }
-
-    const loraName = loraToAdd.Name !== 'N/A' ? loraToAdd.Name : loraToAdd['Model ID'];
-    const hasHighNoise = !!loraToAdd.high_noise_url;
-    const hasLowNoise = !!loraToAdd.low_noise_url;
-    const isMultiStage = hasHighNoise || hasLowNoise;
-    const primaryPath = isMultiStage
-      ? (loraToAdd.high_noise_url || loraToAdd.low_noise_url)
-      : (loraToAdd['Model Files'][0].url || loraToAdd['Model Files'][0].path);
-
-    if (!primaryPath) {
-      toast.error('Selected LoRA has no valid model URL.');
-      return;
-    }
-
-    const newLora: ActiveLora = {
-      id: loraToAdd['Model ID'],
-      name: loraName,
-      path: (hasHighNoise ? loraToAdd.high_noise_url : primaryPath) ?? primaryPath,
-      strength: initialStrength || 1.0,
-      previewImageUrl: loraToAdd.Images && loraToAdd.Images.length > 0
-        ? loraToAdd.Images[0].url
-        : undefined,
-      trigger_word: loraToAdd.trigger_word,
-      lowNoisePath: hasLowNoise ? loraToAdd.low_noise_url : undefined,
-      isMultiStage,
-    };
-
-    const nextSelectedLoras = [...selectedLorasRef.current, newLora];
-    setSelectedLoras(nextSelectedLoras);
-    if (isManualAction) {
-      markAsUserSet();
-      onExplicitLoraEdit?.({
-        kind: 'add',
-        lora: newLora,
-        current: nextSelectedLoras,
-      });
-    }
-  }, [markAsUserSet, onExplicitLoraEdit, setSelectedLoras]);
 
   const handleRemoveLora = useCallback((loraIdToRemove: string, isManualAction = true) => {
     const loraToRemove = selectedLorasRef.current.find((lora) => lora.id === loraIdToRemove);
@@ -194,8 +143,6 @@ export const useLoraManager = (
     manager: {
       selectedLoras,
       selectedLorasRef,
-      availableLoras,
-      handleAddLora,
       handleRemoveLora,
       handleLoraStrengthChange,
       markAsUserSet,
@@ -214,9 +161,6 @@ export const useLoraManager = (
     () => ({
       selectedLoras,
       setSelectedLoras,
-      isLoraModalOpen,
-      setIsLoraModalOpen,
-      handleAddLora,
       handleRemoveLora,
       handleLoraStrengthChange,
       hasEverSetLoras,
@@ -227,9 +171,6 @@ export const useLoraManager = (
     [
       selectedLoras,
       setSelectedLoras,
-      isLoraModalOpen,
-      setIsLoraModalOpen,
-      handleAddLora,
       handleRemoveLora,
       handleLoraStrengthChange,
       hasEverSetLoras,

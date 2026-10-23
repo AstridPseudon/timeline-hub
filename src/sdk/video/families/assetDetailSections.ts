@@ -13,7 +13,7 @@
 import type { ContributionId } from '../../ids';
 
 /**
- * M6: An asset detail section contribution declared in an extension manifest.
+ * An asset detail section contribution declared in an extension manifest.
  *
  * Asset detail sections are named slots within the asset detail panel.
  * The host owns section placement, empty/error states, search result badges,

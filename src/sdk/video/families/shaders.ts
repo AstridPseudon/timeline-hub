@@ -1,8 +1,8 @@
 /**
  * Shader/WebGL family module.
  *
- * Houses the shader family contracts extracted from the public barrel
- * (src/sdk/index.ts): ShaderContribution manifest interface plus the
+ * Houses the shader family contracts:
+ * ShaderContribution manifest interface plus the
  * associated source/pass/uniform/texture/materializer descriptors,
  * ShaderRegistrationOptions, and ShaderRegistrationService.
  *
@@ -17,32 +17,32 @@ import type { DisposeHandle } from '../../dispose';
 import type { RenderRoute } from '../rendering/renderability.ts';
 
 // ---------------------------------------------------------------------------
-// M13: Shader/WebGL contributions
+// Shader/WebGL contributions
 // ---------------------------------------------------------------------------
 
-/** M13: Shader pass scopes supported by the V1 WebGL bridge. */
+/** Shader pass scopes supported by the V1 WebGL bridge. */
 export type ShaderPassKind = 'clip' | 'overlay' | 'postprocess';
 
-/** M13: Color-space posture declared by a shader pass or texture input. */
+/** Color-space posture declared by a shader pass or texture input. */
 export type ShaderColorSpace = 'srgb' | 'linear';
 
-/** M13: Host-owned fallback posture when a shader cannot compile or preview. */
+/** Host-owned fallback posture when a shader cannot compile or preview. */
 export type ShaderFallbackBehavior = 'bypass' | 'transparent' | 'solid-black';
 
-/** M13: Texture source categories supported by the V1 shader bridge. */
+/** Texture source categories supported by the V1 shader bridge. */
 export type ShaderTextureSourceKind =
   | 'clip-frame'
   | 'static-image-asset'
   | 'live-generated-frame';
 
-/** M13: Texture sampling filter used by the WebGL preview bridge. */
+/** Texture sampling filter used by the WebGL preview bridge. */
 export type ShaderTextureFilter = 'nearest' | 'linear';
 
-/** M13: Texture coordinate wrapping policy used by the WebGL preview bridge. */
+/** Texture coordinate wrapping policy used by the WebGL preview bridge. */
 export type ShaderTextureWrap = 'clamp-to-edge' | 'repeat' | 'mirrored-repeat';
 
 /**
- * M13: Shader source supplied inline by the manifest or during registration.
+ * Shader source supplied inline by the manifest or during registration.
  *
  * Fragment source is required for inline programs. Vertex source is optional
  * because the host can provide the default fullscreen-triangle vertex shader.
@@ -53,18 +53,18 @@ export interface ShaderInlineSource {
   readonly vertex?: string;
 }
 
-/** M13: Shader source resolved by the extension runtime from a module export. */
+/** Shader source resolved by the extension runtime from a module export. */
 export interface ShaderModuleSource {
   readonly kind: 'module';
   readonly specifier: string;
   readonly exportName?: string;
 }
 
-/** M13: Public shader source descriptor. */
+/** Public shader source descriptor. */
 export type ShaderSourceDescriptor = ShaderInlineSource | ShaderModuleSource;
 
 /**
- * M13: Shader pass descriptor.
+ * Shader pass descriptor.
  *
  * V1 supports a single shader per clip scope and one active postprocess shader.
  * Ordered stacks, multipass FBO chains, feedback buffers, and shader transitions
@@ -80,7 +80,7 @@ export interface ShaderPassDescriptor {
   readonly alpha?: 'preserve' | 'opaque';
 }
 
-/** M13: Supported shader uniform control/value kinds for V1. */
+/** Supported shader uniform control/value kinds for V1. */
 export type ShaderUniformType =
   | 'float'
   | 'int'
@@ -96,25 +96,25 @@ export type ShaderUniformType =
   | 'time';
 
 /**
- * M13: Sub-field value kinds for structured `object` uniforms. Mirrors the
+ * Sub-field value kinds for structured `object` uniforms. Mirrors the
  * manifest schema's `fields[].type` enum, which excludes `object` (no nesting).
  */
 export type ShaderUniformFieldType = Exclude<ShaderUniformType, 'object'>;
 
-/** M13: Enum option for shader uniform controls. */
+/** Enum option for shader uniform controls. */
 export interface ShaderUniformEnumOption {
   readonly label: string;
   readonly value: string;
 }
 
-/** M13: Texture reference value used by textureRef uniforms. */
+/** Texture reference value used by textureRef uniforms. */
 export interface ShaderTextureRef {
   readonly kind: ShaderTextureSourceKind;
   /** Asset key, live source ID, generated frame ID, or host-defined frame ref. */
   readonly ref?: string;
 }
 
-/** M13: Default values accepted by shader uniform definitions. */
+/** Default values accepted by shader uniform definitions. */
 export type ShaderUniformDefaultValue =
   | number
   | boolean
@@ -123,12 +123,12 @@ export type ShaderUniformDefaultValue =
   | ShaderTextureRef
   | ShaderUniformObjectValue;
 
-/** M13: Value of a structured `object` uniform, keyed by sub-field name. */
+/** Value of a structured `object` uniform, keyed by sub-field name. */
 export interface ShaderUniformObjectValue {
   readonly [fieldName: string]: ShaderUniformDefaultValue;
 }
 
-/** M13: A bounded sub-field of a structured `object` uniform. */
+/** A bounded sub-field of a structured `object` uniform. */
 export interface ShaderUniformFieldDefinition {
   readonly name: string;
   readonly label: string;
@@ -141,7 +141,7 @@ export interface ShaderUniformFieldDefinition {
   readonly options?: readonly ShaderUniformEnumOption[];
 }
 
-/** M13: A host-rendered shader uniform definition. */
+/** A host-rendered shader uniform definition. */
 export interface ShaderUniformDefinition {
   readonly name: string;
   readonly label: string;
@@ -156,10 +156,10 @@ export interface ShaderUniformDefinition {
   readonly fields?: readonly ShaderUniformFieldDefinition[];
 }
 
-/** M13: Ordered shader uniform schema. */
+/** Ordered shader uniform schema. */
 export type ShaderUniformSchema = readonly ShaderUniformDefinition[];
 
-/** M13: A host-provided texture input binding for a shader. */
+/** A host-provided texture input binding for a shader. */
 export interface ShaderTextureDefinition {
   readonly name: string;
   readonly label?: string;
@@ -173,11 +173,11 @@ export interface ShaderTextureDefinition {
   readonly wrap?: ShaderTextureWrap;
 }
 
-/** M13: Ordered shader texture binding schema. */
+/** Ordered shader texture binding schema. */
 export type ShaderTextureSchema = readonly ShaderTextureDefinition[];
 
 /**
- * M13: Optional materializer metadata.
+ * Optional materializer metadata.
  *
  * This descriptor advertises where a later planner may look for a route that
  * produces RenderMaterial. It does not make browser preview exportable.
@@ -190,7 +190,7 @@ export interface ShaderMaterializerDescriptor {
   readonly unavailableMessage?: string;
 }
 
-/** M13: A shader/WebGL contribution declared in an extension manifest. */
+/** A shader/WebGL contribution declared in an extension manifest. */
 export interface ShaderContribution {
   /** Unique within the extension. */
   id: ContributionId;
@@ -213,7 +213,7 @@ export interface ShaderContribution {
   readonly when?: string;
 }
 
-/** M13: Options for imperative shader registration via ctx.shaders.registerShader(). */
+/** Options for imperative shader registration via ctx.shaders.registerShader(). */
 export interface ShaderRegistrationOptions {
   readonly label?: string;
   readonly pass?: ShaderPassKind | ShaderPassDescriptor;
@@ -224,7 +224,7 @@ export interface ShaderRegistrationOptions {
 }
 
 /**
- * M13: Shader registration service available as `ctx.shaders` during activate().
+ * Shader registration service available as `ctx.shaders` during activate().
  *
  * Shaders are registered through a dedicated WebGL bridge surface, not through
  * `ctx.effects.registerComponent()`. The `shaderId` must match a

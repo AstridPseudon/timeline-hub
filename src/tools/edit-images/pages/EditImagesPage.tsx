@@ -12,19 +12,17 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 import { GenerationRow } from '@/domains/generation/types';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { useAsyncOperation } from '@/shared/hooks/async/useAsyncOperation';
-import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
+import { useCloudBackendNotice } from '@/shared/hooks/async/useCloudBackendNotice';
+import { requireCloudBackend } from '@/shared/lib/cloudBackend';
+import { CloudBackendNotice } from '@/shared/components/CloudBackendNotice';
 import { InlineEditView } from '../components/InlineEditView';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { useIsMobile } from '@/shared/hooks/mobile';
-import { uploadImageToStorage } from '@/shared/lib/media/imageUploader';
-import { generateClientThumbnail, uploadImageWithThumbnail } from '@/shared/media/clientThumbnailGenerator';
-import { VARIANT_TYPE } from '@/shared/constants/variantTypes';
 import { parseRatio } from '@/shared/lib/media/aspectRatios';
 import { MediaSelectionPanel } from '@/shared/components/MediaSelectionPanel';
 import { useEditToolMediaPersistence } from '@/shared/hooks/media/useEditToolMediaPersistence';
 import { EditMediaSelectionLayout } from '@/shared/editMedia/EditMediaSelectionLayout';
 import { navigateToGenerationById } from '@/domains/generation/navigation';
-import { requireProjectAndUserId } from '@/shared/editMedia/uploadGuards';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 // Preload image helper - warm up the browser cache
@@ -48,11 +46,11 @@ export default function EditImagesPage() {
   const aspectRatioValue = parseRatio(projectAspectRatio);
 
   // Upload operation with automatic loading state
-  const uploadOperation = useAsyncOperation<GenerationRow>();
+  const uploadOperation = useAsyncOperation<GenerationRow | undefined>();
   const { isDraggingOver, handleDragEnter, handleDragLeave, resetDrag: resetDragState } = useFileDragTracking();
   const isMobile = useIsMobile();
 
-  // Persisted media selection (load/save last-edited media ID to project settings)
+  // Selected media for the editor
   const {
     selectedMedia,
     setSelectedMedia,
@@ -61,59 +59,14 @@ export default function EditImagesPage() {
   } = useEditToolMediaPersistence({
     settingsToolId: 'edit-images-ui',
     projectId: selectedProjectId ?? undefined,
-    preloadMedia: preloadImage,
   });
   // Shared upload logic for both file input and drag-drop
-  const uploadImage = useCallback(async (file: File): Promise<GenerationRow> => {
-    const { projectId } = await requireProjectAndUserId(selectedProjectId);
-
-    let publicUrl = '';
-    let thumbnailUrl = '';
-
-    try {
-      const thumbnailResult = await generateClientThumbnail(file, 300, 0.8);
-      const uploadResult = await uploadImageWithThumbnail(file, thumbnailResult.thumbnailBlob);
-      publicUrl = uploadResult.imageUrl;
-      thumbnailUrl = uploadResult.thumbnailUrl;
-    } catch {
-      publicUrl = await uploadImageToStorage(file, 3);
-      thumbnailUrl = publicUrl;
-    }
-
-    const generationParams = {
-      prompt: 'Uploaded image',
-      status: 'completed',
-      is_uploaded: true,
-      width: 1024,
-      height: 1024,
-      model: 'upload'
-    };
-
-    const { data: generation, error: dbError } = await supabase().from('generations')
-      .insert({
-        project_id: projectId,
-        location: publicUrl,
-        thumbnail_url: thumbnailUrl,
-        type: 'image',
-        params: generationParams
-      })
-      .select()
-      .single();
-
-    if (dbError) throw dbError;
-
-    await supabase().from('generation_variants').insert({
-      generation_id: generation.id,
-      location: publicUrl,
-      thumbnail_url: thumbnailUrl,
-      is_primary: true,
-      variant_type: VARIANT_TYPE.ORIGINAL,
-      name: 'Original',
-      params: generationParams,
-    });
-
-    return generation as GenerationRow;
-  }, [selectedProjectId]);
+  const { unavailable: cloudBackendUnavailable, attempt: attemptCloudBackend } = useCloudBackendNotice();
+  const uploadImage = useCallback(
+    async (_file: File): Promise<GenerationRow | undefined> =>
+      attemptCloudBackend<GenerationRow>(() => requireCloudBackend('edit-images upload')),
+    [attemptCloudBackend],
+  );
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -144,7 +97,7 @@ export default function EditImagesPage() {
       resetDrag: resetDragState,
       getProjectId: () => selectedProjectId ?? undefined,
       upload: (file) => uploadImage(file),
-      onResult: (result) => setSelectedMedia(result),
+      onResult: (result) => result && setSelectedMedia(result),
       context: 'EditImagesPage',
       toastTitle: 'Failed to upload image',
       uploadOperation,
@@ -173,6 +126,7 @@ export default function EditImagesPage() {
       {/* Header */}
       <div className="px-4 pt-6 pb-6 max-w-7xl mx-auto w-full">
         <h1 className="text-3xl font-light tracking-tight text-foreground">Edit Images</h1>
+        {cloudBackendUnavailable && <CloudBackendNotice toolName="Edit Images" />}
       </div>
       
       {/* Show skeleton when loading settings, loading persisted media, OR we have a stored ID but no media yet (and user didn't just close it) */}

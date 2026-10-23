@@ -10,13 +10,13 @@ import { GenerationRow } from '@/domains/generation/types';
 import { isVideoAny } from '@/shared/lib/typeGuards';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
+import { useCloudBackendNotice } from '@/shared/hooks/async/useCloudBackendNotice';
+import { requireCloudBackend } from '@/shared/lib/cloudBackend';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { useUpscale } from '@/domains/media-lightbox/hooks/useUpscale';
 import { useInpainting } from '@/domains/media-lightbox/hooks/useInpainting';
 import { useSourceGeneration } from '@/domains/media-lightbox/hooks/useSourceGeneration';
 import { useMagicEditMode } from '@/domains/media-lightbox/hooks/useMagicEditMode';
-import { useStarToggle } from '@/domains/media-lightbox/hooks/useStarToggle';
 import { useRepositionMode } from '@/domains/media-lightbox/hooks/useRepositionMode';
 import { useImg2ImgMode } from '@/domains/media-lightbox/hooks/useImg2ImgMode';
 import { useEditSettingsPersistence } from '@/domains/media-lightbox/hooks/persistence/useEditSettingsPersistence';
@@ -30,9 +30,7 @@ type UpscaleHookResult = ReturnType<typeof useUpscale>;
 type MagicEditHookResult = ReturnType<typeof useMagicEditMode>;
 type RepositionHookResult = ReturnType<typeof useRepositionMode>;
 type Img2ImgHookResult = ReturnType<typeof useImg2ImgMode>;
-type StarToggleHookResult = ReturnType<typeof useStarToggle>;
 type SourceGenerationData = ReturnType<typeof useSourceGeneration>['sourceGenerationData'];
-type PublicLorasData = ReturnType<typeof usePublicLoras>['data'];
 type ImageEditValue = ImageEditState;
 
 function resolveActualGenerationId(media: GenerationRow): string | null {
@@ -89,14 +87,10 @@ export interface InlineEditStateResult {
     getTransformStyle: RepositionHookResult['getTransformStyle'];
   };
   generationState: {
-    localStarred: StarToggleHookResult['localStarred'];
-    toggleStarMutation: StarToggleHookResult['toggleStarMutation'];
-    handleToggleStar: StarToggleHookResult['handleToggleStar'];
     handleDownload: () => Promise<void>;
     handleUnifiedGenerate: MagicEditHookResult['handleUnifiedGenerate'];
     handleGenerateAnnotatedEdit: InpaintingHookResult['handleGenerateAnnotatedEdit'];
     handleGenerateReposition: RepositionHookResult['handleGenerateReposition'];
-    handleSaveAsVariant: RepositionHookResult['handleSaveAsVariant'];
     handleGenerateImg2Img: Img2ImgHookResult['handleGenerateImg2Img'];
     img2imgLoraManager: Img2ImgHookResult['loraManager'];
   };
@@ -109,7 +103,7 @@ export interface InlineEditStateResult {
     deleteVariant: ReturnType<typeof useVariants>['deleteVariant'];
   };
   sourceGenerationData: SourceGenerationData;
-  availableLoras: PublicLorasData;
+  cloudBackendUnavailable: boolean;
   imageEditValue: ImageEditValue;
 }
 
@@ -154,7 +148,11 @@ export function useInlineEditState(
     setAnnotationMode(null);
   }, [media.id]);
 
-  const { data: availableLoras } = usePublicLoras();
+  // The LoRA library has no backend yet: the page shows one plain line.
+  const { unavailable: cloudBackendUnavailable, attempt: attemptCloudBackend } = useCloudBackendNotice();
+  useEffect(() => {
+    void attemptCloudBackend(() => requireCloudBackend('edit-images LoRAs'));
+  }, [attemptCloudBackend]);
 
   // --- Inpainting & Magic Edit ---
   const handleExitInpaintModeRef = useRef<() => void>(() => {});
@@ -192,12 +190,8 @@ export function useInlineEditState(
     handleGenerateInpaint: inpainting.handleGenerateInpaint,
     brushStrokes: inpainting.brushStrokes,
     inpaintPrompt: inpainting.inpaintPrompt,
-    setInpaintPrompt: inpainting.setInpaintPrompt,
     inpaintNumGenerations: inpainting.inpaintNumGenerations,
-    setInpaintNumGenerations: inpainting.setInpaintNumGenerations,
     editModeLoras: editSettings.editModeLoras,
-    loraMode: editSettings.loraMode,
-    setLoraMode: editSettings.setLoraMode,
     sourceUrlForTasks: effectiveImageUrl,
     imageDimensions,
     toolTypeOverride: TOOL_IDS.EDIT_IMAGES,
@@ -223,8 +217,6 @@ export function useInlineEditState(
     inpaintPrompt: inpainting.inpaintPrompt,
     inpaintNumGenerations: inpainting.inpaintNumGenerations,
     toolTypeOverride: TOOL_IDS.EDIT_IMAGES,
-    onVariantCreated: variants.setActiveVariantId,
-    refetchVariants: variants.refetch,
     createAsGeneration,
     activeVariantLocation: activeVariant?.location,
     activeVariantId: activeVariant?.id,
@@ -236,7 +228,6 @@ export function useInlineEditState(
     media,
     selectedProjectId,
     isVideo,
-    availableLoras,
     state: {
       strength: editSettings.img2imgStrength,
       setStrength: editSettings.setImg2imgStrength,
@@ -262,7 +253,6 @@ export function useInlineEditState(
     media,
     onOpenExternalGeneration: onNavigateToGeneration,
   });
-  const starToggle = useStarToggle({ media });
 
   const handleDownload = async () => {
     await downloadMedia(effectiveImageUrl, media.id, isVideo, media.contentType);
@@ -340,14 +330,10 @@ export function useInlineEditState(
       getTransformStyle: reposition.getTransformStyle,
     },
     generationState: {
-      localStarred: starToggle.localStarred,
-      toggleStarMutation: starToggle.toggleStarMutation,
-      handleToggleStar: starToggle.handleToggleStar,
       handleDownload,
       handleUnifiedGenerate,
       handleGenerateAnnotatedEdit,
       handleGenerateReposition,
-      handleSaveAsVariant: reposition.handleSaveAsVariant,
       handleGenerateImg2Img,
       img2imgLoraManager: img2img.loraManager,
     },
@@ -360,7 +346,7 @@ export function useInlineEditState(
       deleteVariant: variants.deleteVariant,
     },
     sourceGenerationData,
-    availableLoras,
+    cloudBackendUnavailable,
     imageEditValue,
   } satisfies InlineEditStateResult;
 }

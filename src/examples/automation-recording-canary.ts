@@ -1,8 +1,8 @@
 /**
- * automation-recording-canary — M9 automation-recording canary example.
+ * automation-recording-canary — automation-recording canary example.
  *
  * Demonstrates the deterministic automation-recording flow using the
- * M9 SDK contracts:
+ * SDK contracts:
  *
  *   1. Define a parameter schema for a clip type (the target).
  *   2. Capture sample points (simulating live slider drags during playback).

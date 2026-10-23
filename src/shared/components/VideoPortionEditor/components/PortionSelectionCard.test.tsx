@@ -61,28 +61,17 @@ vi.mock('../../ui/textarea', () => ({
     onChange,
     placeholder,
     onClear,
-    onVoiceResult,
-    voiceContext,
   }: {
     value: string;
     onChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
     placeholder: string;
     onClear?: () => void;
-    onVoiceResult?: (result: { prompt?: string; transcription: string }) => void;
-    voiceContext?: string;
   }) => (
     <div>
       <textarea value={value} onChange={onChange} placeholder={placeholder} />
       <button type="button" onClick={onClear}>
         Clear prompt
       </button>
-      <button
-        type="button"
-        onClick={() => onVoiceResult?.({ prompt: 'Voice prompt', transcription: 'Voice text' })}
-      >
-        Apply voice result
-      </button>
-      <span>{voiceContext}</span>
     </div>
   ),
 }));
@@ -121,11 +110,6 @@ describe('PortionSelectionCard', () => {
 
     expect(screen.getAllByTestId('segment-thumbnail')).toHaveLength(2);
     expect(screen.getByText('= 1.1s @ 8fps')).toBeTruthy();
-    expect(
-      screen.getByText(
-        'This is a video segment regeneration prompt. Describe what should happen in this specific portion of the video - the motion, action, or visual content you want to generate.',
-      ),
-    ).toBeTruthy();
 
     fireEvent.change(screen.getByDisplayValue('Intro'), {
       target: { value: 'Renamed segment' },
@@ -151,11 +135,6 @@ describe('PortionSelectionCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear prompt' }));
     expect(onUpdateSelectionSettings).toHaveBeenCalledWith('segment-1', {
       prompt: '',
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Apply voice result' }));
-    expect(onUpdateSelectionSettings).toHaveBeenCalledWith('segment-1', {
-      prompt: 'Voice prompt',
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove selection' }));

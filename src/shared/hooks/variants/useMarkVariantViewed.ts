@@ -1,11 +1,11 @@
 /**
  * useMarkVariantViewed Hook
  *
- * Marks a variant as viewed in the database and invalidates all relevant queries.
+ * Marks a variant as viewed through the Runtime client and invalidates all relevant queries.
  * Used when user views a variant in the lightbox to remove the NEW badge.
  *
  * Now includes optimistic update support - the badge count is decremented immediately
- * before the database update completes.
+ * before the Runtime update completes.
  *
  * Usage:
  *   const { markViewed, markAllViewed } = useMarkVariantViewed();
@@ -14,12 +14,10 @@
  */
 
 import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import type { DerivedCountsResult } from './variantBadgeTypes';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { withGenerationBadgeCount } from './variantBadgeCacheUtils';
-import { useRuntimeAuthority } from '@/app/runtime/runtimeAuthority';
 import { AstridRuntimeClient } from '@/integrations/runtime/client';
 
 interface MarkViewedParams {
@@ -153,36 +151,20 @@ function clearBadgeCountOptimistically(
 
 export function useMarkVariantViewed() {
   const queryClient = useQueryClient();
-  const { runtimeAuthority } = useRuntimeAuthority();
 
   const mutation = useMutation({
     mutationFn: async ({ variantId, generationId }: MarkViewedParams) => {
-      if (runtimeAuthority) {
-        const result = await new AstridRuntimeClient().markVariantViewed(variantId);
-        return { variantId, generationId, viewedAt: result.viewed_at ?? new Date().toISOString() };
-      }
-      const { error } = await supabase().from('generation_variants')
-        .update({ viewed_at: new Date().toISOString() })
-        .eq('id', variantId)
-        .is('viewed_at', null);
-
-      if (error) {
-        console.error('[useMarkVariantViewed] Error:', error);
-        throw error;
-      }
-
-      return { variantId, generationId };
+      const result = await new AstridRuntimeClient().markVariantViewed(variantId);
+      return { variantId, generationId, viewedAt: result.viewed_at ?? new Date().toISOString() };
     },
     onMutate: async ({ variantId, generationId }) => {
       const viewedAt = new Date().toISOString();
       const didMarkVariantInCache = markVariantViewedInCache(queryClient, variantId, viewedAt);
-      if (runtimeAuthority) {
-        patchRuntimeVariantCache(queryClient, (variant) => (
-          variant.id === variantId && variant.viewed_at === null
-            ? { ...variant, viewed_at: viewedAt }
-            : variant
-        ));
-      }
+      patchRuntimeVariantCache(queryClient, (variant) => (
+        variant.id === variantId && variant.viewed_at === null
+          ? { ...variant, viewed_at: viewedAt }
+          : variant
+      ));
 
       // Optimistic badge decrement only when we actually transitioned null -> viewed in cache.
       // This avoids double-decrement races when markViewed is called twice for the same variant.
@@ -195,10 +177,8 @@ export function useMarkVariantViewed() {
       queryClient.invalidateQueries({ queryKey: queryKeys.generations.variantsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.generations.derivedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.generations.variantBadges });
-      if (runtimeAuthority) {
-        queryClient.invalidateQueries({ queryKey: ['runtime', 'generation-variants'] });
-        queryClient.invalidateQueries({ queryKey: ['runtime', 'variant-badges'] });
-      }
+      queryClient.invalidateQueries({ queryKey: ['runtime', 'generation-variants'] });
+      queryClient.invalidateQueries({ queryKey: ['runtime', 'variant-badges'] });
     },
     onError: (error) => {
       normalizeAndPresentError(error, { context: 'useMarkVariantViewed', showToast: false });
@@ -208,34 +188,19 @@ export function useMarkVariantViewed() {
   // Bulk mutation: mark ALL unviewed variants for a generation
   const bulkMutation = useMutation({
     mutationFn: async ({ generationId }: MarkAllViewedParams) => {
-      if (runtimeAuthority) {
-        const result = await new AstridRuntimeClient().markGenerationVariantsViewed(generationId);
-        return { generationId, viewedAt: result.viewed_at ?? new Date().toISOString() };
-      }
-      const { error } = await supabase().from('generation_variants')
-        .update({ viewed_at: new Date().toISOString() })
-        .eq('generation_id', generationId)
-        .is('viewed_at', null);
-
-      if (error) {
-        console.error('[useMarkVariantViewed] Bulk error:', error);
-        throw error;
-      }
-
-      return { generationId };
+      const result = await new AstridRuntimeClient().markGenerationVariantsViewed(generationId);
+      return { generationId, viewedAt: result.viewed_at ?? new Date().toISOString() };
     },
     onMutate: async ({ generationId }) => {
       const viewedAt = new Date().toISOString();
 
       // Optimistic update: mark all unviewed variants for this generation in loaded caches
       markGenerationViewedInCache(queryClient, generationId, viewedAt);
-      if (runtimeAuthority) {
-        patchRuntimeVariantCache(queryClient, (variant) => (
-          variant.generation_id === generationId && variant.viewed_at === null
-            ? { ...variant, viewed_at: viewedAt }
-            : variant
-        ));
-      }
+      patchRuntimeVariantCache(queryClient, (variant) => (
+        variant.generation_id === generationId && variant.viewed_at === null
+          ? { ...variant, viewed_at: viewedAt }
+          : variant
+      ));
 
       // Optimistic update: immediately set unviewed count to 0 for this generation
       clearBadgeCountOptimistically(queryClient, generationId);
@@ -245,10 +210,8 @@ export function useMarkVariantViewed() {
       queryClient.invalidateQueries({ queryKey: queryKeys.generations.variantsAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.generations.derivedAll });
       queryClient.invalidateQueries({ queryKey: queryKeys.generations.variantBadges });
-      if (runtimeAuthority) {
-        queryClient.invalidateQueries({ queryKey: ['runtime', 'generation-variants'] });
-        queryClient.invalidateQueries({ queryKey: ['runtime', 'variant-badges'] });
-      }
+      queryClient.invalidateQueries({ queryKey: ['runtime', 'generation-variants'] });
+      queryClient.invalidateQueries({ queryKey: ['runtime', 'variant-badges'] });
     },
     onError: (error) => {
       normalizeAndPresentError(error, { context: 'useMarkVariantViewed', showToast: false });

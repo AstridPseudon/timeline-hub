@@ -14,7 +14,6 @@ import {
 export function extractBasedOn(params: unknown): string | null {
   return extractBasedOnParam(params);
 }
-
 export function extractShotAndPosition(params: unknown): { shotId?: string, addInPosition: boolean } {
   const shotId = extractShotIdParam(params) || undefined;
   const addInPosition = extractAddInPositionParam(params);

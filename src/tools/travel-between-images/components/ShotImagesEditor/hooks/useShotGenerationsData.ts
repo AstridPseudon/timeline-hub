@@ -1,10 +1,9 @@
 /**
- * Hook for managing shot generations data from either preloaded images or database.
- * Handles the complex data selection logic between useTimelineCore and useTimelinePositionUtils.
+ * Hook for managing shot generations data from the preloaded shot images,
+ * enriched with position management by useTimelinePositionUtils.
  */
 
-import { useRef, useEffect, useMemo } from 'react';
-import { useTimelineCore } from '@/shared/hooks/timeline/useTimelineCore';
+import { useRef, useEffect, useMemo, useCallback } from 'react';
 import { useTimelinePositionUtils } from '../../../hooks/timeline/useTimelinePositionUtils';
 import { useVariantBadges } from '@/shared/hooks/variants/useVariantBadges';
 import { isPositioned, isVideoGeneration } from '@/shared/lib/typeGuards';
@@ -19,7 +18,7 @@ interface GenerationWithBadges extends GenerationRow {
 }
 
 interface UseShotGenerationsDataReturn {
-  /** Shot generations (images) - either from preloaded or database */
+  /** Shot generations (images) - the preloaded images */
   shotGenerations: GenerationRow[];
   /** Memoized shot generations to prevent reference changes */
   memoizedShotGenerations: GenerationRow[];
@@ -41,12 +40,8 @@ interface UseShotGenerationsDataReturn {
     newStartIndex: number,
     allItems: Array<{ id: string; timeline_frame: number | null }>
   ) => Promise<void>;
-  /** Delete an item */
-  deleteItem?: (shotGenerationId: string) => Promise<void>;
   /** Reload positions */
   loadPositions: (options?: { silent?: boolean }) => Promise<void>;
-  /** Clear enhanced prompt for a shot_generation */
-  clearEnhancedPrompt: (shotGenerationId: string) => Promise<void>;
   /** Get images filtered for a specific mode */
   getImagesForMode: (mode: 'batch' | 'timeline' | 'by-pair') => GenerationRow[];
   /** Whether we've ever had data (prevents unmounting during refetches) */
@@ -60,27 +55,11 @@ interface UseShotGenerationsDataProps {
   projectId?: string;
   /** Current generation mode */
   generationMode: 'batch' | 'timeline' | 'by-pair';
-  /** Optional preloaded images (bypasses database queries) */
+  /** Preloaded shot images; without them the editor shows no images */
   preloadedImages?: GenerationRow[];
 }
 
-interface TimelineDataSource {
-  shotGenerations: GenerationRow[];
-  pairPrompts: Record<string, { prompt: string; negativePrompt: string }>;
-  isLoading: boolean;
-  error: string;
-  updateTimelineFrame: (id: string, frame: number) => Promise<void>;
-  batchExchangePositions: (updates: Array<{ shotGenerationId: string; newFrame: number }>) => Promise<void>;
-  moveItemsToMidpoint?: (
-    draggedItemIds: string[],
-    newStartIndex: number,
-    allItems: Array<{ id: string; timeline_frame: number | null }>
-  ) => Promise<void>;
-  deleteItem?: (shotGenerationId: string) => Promise<void>;
-  loadPositions: (options?: { silent?: boolean }) => Promise<void>;
-  clearEnhancedPrompt: (shotGenerationId: string) => Promise<void>;
-  getImagesForMode: (mode: 'batch' | 'timeline' | 'by-pair') => GenerationRow[];
-}
+const NO_GENERATIONS: GenerationRow[] = [];
 
 export function useShotGenerationsData({
   selectedShotId,
@@ -88,57 +67,20 @@ export function useShotGenerationsData({
   generationMode,
   preloadedImages,
 }: UseShotGenerationsDataProps): UseShotGenerationsDataReturn {
-  // Core hook data (used when no preloaded images)
-  const coreHookData = useTimelineCore(preloadedImages ? null : selectedShotId);
+  const shotGenerations = preloadedImages ?? NO_GENERATIONS;
 
-  // Utility hook data (used when preloaded images provided)
   const utilsData = useTimelinePositionUtils({
-    shotId: preloadedImages ? selectedShotId : null,
-    generations: preloadedImages || [],
+    shotId: selectedShotId,
+    generations: shotGenerations,
     projectId: projectId,
   });
 
-  // Choose data source based on whether we have preloaded images
-  const hookData = useMemo<TimelineDataSource>(() => {
-    if (preloadedImages) {
-      return {
-        shotGenerations: preloadedImages,
-        pairPrompts: utilsData.pairPrompts as Record<string, { prompt: string; negativePrompt: string }>,
-        isLoading: utilsData.isLoading,
-        error: utilsData.error ? utilsData.error.message : '',
-        updateTimelineFrame: utilsData.updateTimelineFrame,
-        batchExchangePositions: utilsData.batchExchangePositions,
-        moveItemsToMidpoint: utilsData.moveItemsToMidpoint,
-        loadPositions: async (options) => {
-          await utilsData.loadPositions({ silent: options?.silent });
-        },
-        clearEnhancedPrompt: utilsData.clearEnhancedPrompt,
-        getImagesForMode: () => {
-          // BOTH modes show only positioned non-video images
-          return preloadedImages
-            .filter(img => isPositioned(img) && !isVideoGeneration(img))
-            .sort((a, b) => (a.timeline_frame ?? 0) - (b.timeline_frame ?? 0));
-        },
-      };
-    }
-
-    return {
-      shotGenerations: coreHookData.positionedItems,
-      pairPrompts: coreHookData.pairPrompts as Record<string, { prompt: string; negativePrompt: string }>,
-      isLoading: coreHookData.isLoading,
-      error: coreHookData.error?.message || '',
-      updateTimelineFrame: coreHookData.updatePosition,
-      batchExchangePositions: coreHookData.commitPositions,
-      loadPositions: async (options) => {
-        await Promise.resolve(coreHookData.refetch());
-      },
-      clearEnhancedPrompt: coreHookData.clearEnhancedPrompt,
-      getImagesForMode: () => coreHookData.positionedItems,
-      deleteItem: coreHookData.deleteItem,
-    };
-  }, [preloadedImages, utilsData, coreHookData]);
-
-  const shotGenerations = hookData.shotGenerations;
+  // BOTH modes show only positioned non-video images
+  const getImagesForMode = useCallback((_mode: 'batch' | 'timeline' | 'by-pair'): GenerationRow[] => (
+    shotGenerations
+      .filter(img => isPositioned(img) && !isVideoGeneration(img))
+      .sort((a, b) => (a.timeline_frame ?? 0) - (b.timeline_frame ?? 0))
+  ), [shotGenerations]);
 
   // Memoize shotGenerations to prevent reference changes
   const memoizedShotGenerations = useMemo(() => shotGenerations, [shotGenerations]);
@@ -153,8 +95,6 @@ export function useShotGenerationsData({
   useEffect(() => {
     hasEverHadDataRef.current = memoizedShotGenerations.length > 0;
   }, [selectedShotId, memoizedShotGenerations.length]);
-
-  const { getImagesForMode } = hookData;
 
   // Memoize images for the current mode
   const images = useMemo(() => {
@@ -193,16 +133,16 @@ export function useShotGenerationsData({
     shotGenerations,
     memoizedShotGenerations,
     imagesWithBadges,
-    pairPrompts: hookData.pairPrompts,
-    isLoading: hookData.isLoading,
-    error: hookData.error,
-    updateTimelineFrame: hookData.updateTimelineFrame,
-    batchExchangePositions: hookData.batchExchangePositions,
-    moveItemsToMidpoint: hookData.moveItemsToMidpoint,
-    deleteItem: hookData.deleteItem,
-    loadPositions: hookData.loadPositions,
-    clearEnhancedPrompt: hookData.clearEnhancedPrompt,
-    getImagesForMode: hookData.getImagesForMode,
+    pairPrompts: utilsData.pairPrompts as Record<string, { prompt: string; negativePrompt: string }>,
+    isLoading: utilsData.isLoading,
+    error: utilsData.error ? utilsData.error.message : '',
+    updateTimelineFrame: utilsData.updateTimelineFrame,
+    batchExchangePositions: utilsData.batchExchangePositions,
+    moveItemsToMidpoint: utilsData.moveItemsToMidpoint,
+    loadPositions: async (options?: { silent?: boolean }) => {
+      await utilsData.loadPositions({ silent: options?.silent });
+    },
+    getImagesForMode,
     hasEverHadData: hasEverHadDataRef.current,
   };
 }

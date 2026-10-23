@@ -11,8 +11,13 @@ import fixture from './shotComposition.fixture.json';
 import {createShotCompositionAdapter} from './shotCompositionAdapter.ts';
 import {projectCanonicalComposition} from './shotCompositionProjection.ts';
 
-const runtime = process.env.VISUAL_SEAM_RUNTIME_CHECKOUT ?? resolve(process.cwd(), '../../../../astrid-runtime/.otto/worktrees/visual-seam-contract-20261008');
+function runtimeCheckout(): string {
+  const checkout = process.env.ASTRID_RUNTIME_CHECKOUT;
+  expect(checkout, 'set ASTRID_RUNTIME_CHECKOUT to an Astrid Runtime checkout').toBeTruthy();
+  return resolve(checkout!);
+}
 function report(config: ResolvedTimelineConfig, closure?: Record<string, unknown>, admit = false) {
+  const runtime = runtimeCheckout();
   const python = spawnSync('python3', ['-c', `import json,sys
 from runtime_protocol.visual_seam import evaluate_closure, admit_closure
 c=json.load(sys.stdin)
@@ -274,7 +279,7 @@ describe('Astra round-two cross-consumer regressions', () => {
   });
 
   it('discloses historical EndSpanning phase 1259 and motion 1260 in normal registry-free preflight', () => {
-    const vectors = JSON.parse(readFileSync(resolve(runtime, 'conformance/fixtures/visual-boundary-v1.json'), 'utf8'));
+    const vectors = JSON.parse(readFileSync(resolve(runtimeCheckout(), 'conformance/fixtures/visual-boundary-v1.json'), 'utf8'));
     const vector = vectors.vectors.find((v: {name: string}) => v.name === 'old EndSpanning phase 1259 then geometry 1260');
     const base = config();
     const effect = {...vector.context.clip, assetEntry: {file: vector.context.source, type: 'video'}};

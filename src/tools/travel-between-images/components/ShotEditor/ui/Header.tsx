@@ -3,13 +3,6 @@ import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Shot } from "@/domains/generation/types";
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
-import { AspectRatioSelector } from '@/shared/components/GenerationControls/AspectRatioSelector';
-import { useUpdateShotAspectRatio } from '@/shared/hooks/shots';
-
-type AutoAdjustedAspectRatioInfo = {
-  previousAspectRatio: string | null;
-  adjustedTo: string;
-} | null;
 
 interface HeaderProps {
   selectedShot: Shot;
@@ -27,15 +20,9 @@ interface HeaderProps {
   onNameCancel: (e?: React.MouseEvent) => void;
   onNameKeyDown: (e: React.KeyboardEvent) => void;
   onEditingNameChange: (value: string) => void;
-  autoAdjustedInfo?: AutoAdjustedAspectRatioInfo;
-  onRevertAspectRatio?: () => void | Promise<void>;
-  onManualAspectRatioChange?: () => void;
-  projectAspectRatio?: string;
-  projectId?: string;
   centerSectionRef?: React.RefObject<HTMLDivElement>;
   /** Hide header when floating sticky header is visible */
   isSticky?: boolean;
-  readOnly?: boolean;
 }
 
 // Internal component - not memoized to allow hooks
@@ -55,33 +42,9 @@ const HeaderComponent: React.FC<HeaderProps> = ({
   onNameCancel,
   onNameKeyDown,
   onEditingNameChange,
-  autoAdjustedInfo = null,
-  onRevertAspectRatio,
-  onManualAspectRatioChange,
-  projectAspectRatio,
-  projectId,
   centerSectionRef,
   isSticky = false,
-  readOnly = false,
 }) => {
-  const { updateShotAspectRatio } = useUpdateShotAspectRatio();
-
-  const handleAspectRatioChange = async (newAspectRatio: string) => {
-    if (!selectedShot?.id || !projectId) return;
-    onManualAspectRatioChange?.();
-    await updateShotAspectRatio(selectedShot.id, projectId, newAspectRatio);
-  };
-
-  const autoAdjustNotice = autoAdjustedInfo ? (
-    <button
-      type="button"
-      onClick={onRevertAspectRatio}
-      className="text-xs text-muted-foreground hover:text-foreground underline cursor-pointer transition-colors whitespace-nowrap"
-    >
-      Revert to project dimensions
-    </button>
-  ) : null;
-
   return (
     <div
       className="flex-shrink-0 space-y-1 sm:space-y-1 pb-2 sm:pb-1 transition-opacity duration-200"
@@ -107,7 +70,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
         </div>
         
         {/* Desktop shot name with navigation buttons - centered */}
-        <div ref={centerSectionRef} className="flex items-center justify-center" data-tour="shot-selector">
+        <div ref={centerSectionRef} className="flex items-center justify-center">
           {isEditingName ? (
             // Hide navigation buttons when editing - only show name editing controls
             <div className="flex items-center gap-x-2">
@@ -148,7 +111,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               </Button>
               
               <span
-                className={`text-xl font-semibold text-primary truncate px-4 w-[200px] text-center border-2 border-transparent rounded-md py-2 preserve-case ${onUpdateShotName ? 'cursor-pointer hover:underline hover:border-border hover:bg-accent/50 transition-all duration-200' : ''}`}
+                className={`text-xl font-semibold text-primary truncate px-4 w-[200px] text-center border-2 border-transparent rounded-md py-2 ${onUpdateShotName ? 'cursor-pointer hover:underline hover:border-border hover:bg-accent/50 transition-all duration-200' : ''}`}
                 onClick={onNameClick}
                 title={onUpdateShotName ? "Click to edit shot name" : selectedShot?.name || 'Untitled Shot'}
               >
@@ -169,21 +132,8 @@ const HeaderComponent: React.FC<HeaderProps> = ({
           )}
         </div>
         
-        {/* Aspect Ratio Selector on the right - fixed width container */}
-        <div className="relative w-[100px]">
-          {autoAdjustNotice && (
-            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2">
-              {autoAdjustNotice}
-            </div>
-          )}
-          <AspectRatioSelector
-            value={selectedShot?.aspect_ratio || projectAspectRatio || '16:9'}
-            onValueChange={handleAspectRatioChange}
-            showVisualizer={false}
-            disabled={readOnly}
-            className="w-full"
-          />
-        </div>
+        {/* Spacer balancing the back button so the shot name stays centered */}
+        <div className="w-[100px]" aria-hidden="true" />
       </div>
 
       {/* Mobile layout - all on one row */}
@@ -231,7 +181,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
             </div>
             
             {/* Shot name with navigation buttons - tighter spacing */}
-            <div className="flex items-center gap-x-1" data-tour="shot-selector">
+            <div className="flex items-center gap-x-1">
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -244,7 +194,7 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               </Button>
               
               <span
-                className={`text-base font-semibold text-primary truncate text-center px-1 w-[70px] preserve-case ${onUpdateShotName ? 'cursor-pointer hover:underline' : ''}`}
+                className={`text-base font-semibold text-primary truncate text-center px-1 w-[70px] ${onUpdateShotName ? 'cursor-pointer hover:underline' : ''}`}
                 onClick={onNameClick}
                 title={onUpdateShotName ? "Click to edit shot name" : selectedShot?.name || 'Untitled Shot'}
               >
@@ -263,16 +213,8 @@ const HeaderComponent: React.FC<HeaderProps> = ({
               </Button>
             </div>
             
-            {/* Aspect Ratio Selector on the right - fixed width container */}
-            <div className="relative w-[75px]">
-              <AspectRatioSelector
-                value={selectedShot?.aspect_ratio || projectAspectRatio || '16:9'}
-                onValueChange={handleAspectRatioChange}
-                showVisualizer={false}
-                disabled={readOnly}
-                className="w-full text-[10px]"
-              />
-            </div>
+            {/* Spacer balancing the back button so the shot name stays centered */}
+            <div className="w-[75px]" aria-hidden="true" />
           </div>
         )}
       </div>

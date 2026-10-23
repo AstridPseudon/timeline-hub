@@ -1,8 +1,8 @@
 /**
- * Boot/auth seam tests — [XHARD] evidence (a) + (b).
+ * Boot/auth seam tests.
  *
  * (a) The covered journey's boot surface (AuthProvider → AuthGate → Layout
- *     gates) renders with ZERO Supabase environment configured: auth is
+ *     gates) renders with no cloud environment configured: auth is
  *     resolved by the `/api/astrid` bridge probe alone.
  * (b) A failing probe offers recovery at the requested URL, holding the
  *     workspace back until an explicit retry verifies the connection.
@@ -12,7 +12,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { probeBridgeSessionMock } = vi.hoisted(() => ({
   probeBridgeSessionMock: vi.fn(),
@@ -47,21 +47,11 @@ function BootSurface() {
 }
 
 describe('env-free boot over the bridge probe', () => {
-  let originalEnv: Record<string, unknown>;
-
   beforeEach(() => {
-    originalEnv = { ...import.meta.env };
-    // Simulate a boot with ZERO Supabase env vars set.
-    delete import.meta.env.VITE_SUPABASE_URL;
-    delete import.meta.env.VITE_SUPABASE_ANON_KEY;
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    Object.assign(import.meta.env, originalEnv);
-  });
-
-  it('[XHARD a] boots AuthGate/Layout children with no Supabase env and a healthy bridge', async () => {
+  it('[XHARD a] boots AuthGate/Layout children with a healthy bridge', async () => {
     probeMock.mockResolvedValue({ ok: true, userId: 'local-user' });
 
     render(<BootSurface />);

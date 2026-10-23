@@ -4,7 +4,6 @@ import type { LegacyMigrationsInput } from './types';
 type InvalidPointerCleanupInput = Pick<
   LegacyMigrationsInput,
   | 'selectedProjectId'
-  | 'isLoadingReferences'
   | 'projectImageSettings'
   | 'referencePointers'
   | 'hydratedReferences'
@@ -12,11 +11,10 @@ type InvalidPointerCleanupInput = Pick<
   | 'updateProjectImageSettings'
 >;
 
-// SUNSET: 2026-09-01 — remove after reference pointer integrity is guaranteed at write-time.
+// Remove after reference pointer integrity is guaranteed at write-time.
 export function useInvalidPointerCleanup(input: InvalidPointerCleanupInput): void {
   const {
     selectedProjectId,
-    isLoadingReferences,
     projectImageSettings,
     referencePointers,
     hydratedReferences,
@@ -29,7 +27,6 @@ export function useInvalidPointerCleanup(input: InvalidPointerCleanupInput): voi
   useEffect(() => {
     if (!selectedProjectId) return;
     if (hasCleanedInvalidPointersRef.current[selectedProjectId]) return;
-    if (isLoadingReferences) return;
     if (!projectImageSettings) return;
     if (!referencePointers || referencePointers.length === 0) return;
 
@@ -77,7 +74,6 @@ export function useInvalidPointerCleanup(input: InvalidPointerCleanupInput): voi
     });
   }, [
     selectedProjectId,
-    isLoadingReferences,
     projectImageSettings,
     referencePointers,
     hydratedReferences,

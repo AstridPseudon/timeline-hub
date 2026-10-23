@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import type { ShotGeneration } from '@/shared/hooks/timeline/useTimelineCore';
+import type { ShotGeneration } from '@/shared/hooks/timeline/useTimelineCore.types';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import {
   createTimelineWriteQueueLogger,

@@ -256,10 +256,6 @@ vi.mock('@/tools/video-editor/components/PropertiesPanel/VideoEditorAssetPanelSu
     activePanelKey ? <div data-testid="asset-panel-surface">Asset Panel</div> : null,
 }));
 
-vi.mock('@/tools/video-editor/components/SequenceCreator/SequenceCreatorPanel.tsx', () => ({
-  SequenceCreatorPanel: () => null,
-}));
-
 /** When true the mocked timeline throws during render, standing in for one
  *  malformed clip taking `ClipAction`/`TrackListRenderer` down. */
 let __timelineThrows = false;
@@ -443,6 +439,14 @@ describe('TimelineEditorShellCore surface slots', () => {
 
     expect(screen.getAllByTestId('preview-panel')).toHaveLength(1);
     expect(screen.getAllByTestId('preview-portal')).toHaveLength(1);
+  });
+
+  it('gives the condensed stage the tour preview anchor, on exactly one element', () => {
+    render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed />);
+
+    const anchored = document.querySelectorAll('[data-editor-tour="preview"]');
+    expect(anchored).toHaveLength(1);
+    expect(anchored[0]).toHaveAttribute('data-video-editor-shell-region', 'preview');
   });
 
   it('mounts the shared preview portal for the condensed layout, which has no PreviewPanel', () => {
@@ -662,6 +666,30 @@ describe('TimelineEditorShellCore surface slots', () => {
 
     const { container } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
     expect(container.querySelector('main')?.className).toContain('animate-in');
+  });
+
+  it('holds the boot screen over itself until its first load answers, and only for a while', () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      expect(container.querySelector('[data-boot-hold]')).not.toBeNull();
+      act(() => { vi.advanceTimersByTime(5999); });
+      expect(container.querySelector('[data-boot-hold]')).not.toBeNull();
+      act(() => { vi.advanceTimersByTime(1); });
+      expect(container.querySelector('[data-boot-hold]')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('lets the boot screen go at once when the first load fails', () => {
+    __chromeOverrides = { loadError: new Error('Timeline unavailable') };
+    try {
+      const { container } = render(<TimelineEditorShellCore timelineId="test-timeline" />);
+      expect(container.querySelector('[data-boot-hold]')).toBeNull();
+    } finally {
+      __chromeOverrides = {};
+    }
   });
 
   // ---- Reserved slots stay hidden until an extension contributes -------------
@@ -981,7 +1009,7 @@ describe('TimelineEditorShellCore with registered slot renderers', () => {
 
 
 // ---------------------------------------------------------------------------
-// M6: Export dropdown UI — compile-only formats enabled, render-dependent
+// Export dropdown UI — compile-only formats enabled, render-dependent
 // formats disabled with diagnostics, Render button behavior unchanged
 // ---------------------------------------------------------------------------
 
@@ -1197,7 +1225,7 @@ describe('TimelineEditorShellCore — M6 export dropdown', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M5: HostContributionErrorBoundary recovery-key regression tests
+// HostContributionErrorBoundary recovery-key regression tests
 // ---------------------------------------------------------------------------
 
 describe('TimelineEditorShellCore — HostContributionErrorBoundary recovery keys', () => {
@@ -1835,6 +1863,28 @@ describe('TimelineEditorShellCore — phone layout', () => {
     render(<TimelineEditorShellCore timelineId="test-timeline" />);
     expect(screen.queryByTestId('touch-agent-bar')).toBeNull();
     expect(paneControlsHosted()).toBe(false);
+  });
+
+  it.each([
+    ['the full desktop layout', false],
+    ['the condensed desktop layout', true],
+  ] as const)('reserves the right and bottom pane-tab bands on %s, where the tabs are drawn', (_name, forceCondensed) => {
+    __deviceClass = 'desktop';
+    render(<TimelineEditorShellCore timelineId="test-timeline" forceCondensed={forceCondensed} />);
+    const main = document.querySelector('main') as HTMLElement;
+    expect(main.style.paddingInlineEnd).toBe('52px');
+    expect(main.style.paddingInlineStart).toBe('');
+    // jsdom rewrites env(); the browser resolves it to the safe-area inset.
+    expect(main.style.paddingBottom).toMatch(/^calc\(56px \+ env\(/);
+  });
+
+  it.each(['phone', 'tablet'] as const)('reserves no pane-tab band on the %s touch shell: it hosts the entry points', (device) => {
+    __deviceClass = device;
+    render(<TimelineEditorShellCore timelineId="test-timeline" />);
+    const main = document.querySelector('main[data-shell-layout="touch"]') as HTMLElement;
+    expect(main.style.paddingInlineEnd).toBe('');
+    expect(main.style.paddingInlineStart).toBe('');
+    expect(main.style.paddingBottom).toBe('');
   });
 
   it.each(['Move', 'Trim'] as const)('keeps Inspector through %s and Done; clearing the pick returns to Video', (action) => {

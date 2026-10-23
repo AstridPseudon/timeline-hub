@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import { useUpdateShotImageOrder, useAddImageToShot, useRemoveImageFromShot } from "@/shared/hooks/shots";
-import { useShotCreation } from "@/shared/hooks/shotCreation/useShotCreation";
+import { useUpdateShotImageOrder, useAddImageToShot } from "@/shared/hooks/shots";
 import { useIsMobile } from "@/shared/hooks/mobile";
 import { Shot } from '@/domains/generation/types';
 import { useToolSettings } from '@/shared/hooks/settings/useToolSettings';
@@ -17,7 +16,6 @@ import { useModeReadiness } from './hooks/video/useModeReadiness';
 import { useShotActions } from './hooks/actions/useShotActions';
 import { useShotEditorSetup } from './hooks/editor-state/useShotEditorSetup';
 import { useShotEditorBridge } from './hooks/editor-state/useShotEditorBridge';
-import { useLastVideoGeneration } from './hooks/video/useLastVideoGeneration';
 import { useAspectAdjustedColumns } from './hooks/editor-state/useAspectAdjustedColumns';
 import {
   usePromptSettings,
@@ -80,17 +78,13 @@ interface ShotEditorBootstrapResult {
   queryClient: ReturnType<typeof useQueryClient>;
   setCurrentShotId: ReturnType<typeof useCurrentShot>['setCurrentShotId'];
   navigateToShot: ReturnType<typeof useShotNavigation>['navigateToShot'];
-  addImageToShotMutation: ReturnType<typeof useAddImageToShot>;
-  removeImageFromShotMutation: ReturnType<typeof useRemoveImageFromShot>;
   updateShotImageOrderMutation: ReturnType<typeof useUpdateShotImageOrder>;
-  createShotRef: React.MutableRefObject<ReturnType<typeof useShotCreation>['createShot']>;
   addToShotMutationRef: React.MutableRefObject<ReturnType<typeof useAddImageToShot>['mutateAsync']>;
   addToShotWithoutPositionMutationRef: React.MutableRefObject<ReturnType<typeof useAddImageToShot>['mutateAsyncWithoutPosition']>;
   isMobile: ReturnType<typeof useIsMobile>;
   isPhone: boolean;
   aspectAdjustedColumns: number;
   setIsGenerationsPaneLocked: PanesStoreState['setIsGenerationsPaneLocked'];
-  lastVideoGeneration: ReturnType<typeof useLastVideoGeneration>;
 }
 
 interface PersistedShotEditorSettingsResult {
@@ -128,15 +122,11 @@ function useShotEditorBootstrap({
   const queryClient = useQueryClient();
   const { setCurrentShotId } = useCurrentShot();
   const { navigateToShot } = useShotNavigation();
-  const { createShot } = useShotCreation();
   const addImageToShotMutation = useAddImageToShot();
-  const removeImageFromShotMutation = useRemoveImageFromShot();
   const updateShotImageOrderMutation = useUpdateShotImageOrder();
   const { mutateAsync: addToShotMutation, mutateAsyncWithoutPosition: addToShotWithoutPositionMutation } =
     addImageToShotMutation;
 
-  const createShotRef = useRef(createShot);
-  createShotRef.current = createShot;
   const addToShotMutationRef = useRef(addToShotMutation);
   addToShotMutationRef.current = addToShotMutation;
   const addToShotWithoutPositionMutationRef = useRef(addToShotWithoutPositionMutation);
@@ -145,7 +135,6 @@ function useShotEditorBootstrap({
   const isMobile = useIsMobile();
   const { isPhone, aspectAdjustedColumns } = useAspectAdjustedColumns(shotSetup.effectiveAspectRatio);
   const setIsGenerationsPaneLocked = usePanesStore((state) => state.setIsGenerationsPaneLocked);
-  const lastVideoGeneration = useLastVideoGeneration(selectedShotId);
 
   return {
     promptSettings,
@@ -173,17 +162,13 @@ function useShotEditorBootstrap({
     queryClient,
     setCurrentShotId,
     navigateToShot,
-    addImageToShotMutation,
-    removeImageFromShotMutation,
     updateShotImageOrderMutation,
-    createShotRef,
     addToShotMutationRef,
     addToShotWithoutPositionMutationRef,
     isMobile,
     isPhone,
     aspectAdjustedColumns,
     setIsGenerationsPaneLocked,
-    lastVideoGeneration,
   };
 }
 
@@ -317,17 +302,13 @@ export function useShotEditorController({
     queryClient,
     setCurrentShotId,
     navigateToShot,
-    addImageToShotMutation,
-    removeImageFromShotMutation,
     updateShotImageOrderMutation,
-    createShotRef,
     addToShotMutationRef,
     addToShotWithoutPositionMutationRef,
     isMobile,
     isPhone,
     aspectAdjustedColumns,
     setIsGenerationsPaneLocked,
-    lastVideoGeneration,
   } = useShotEditorBootstrap({
     selectedShotId,
     projectId,
@@ -364,7 +345,6 @@ export function useShotEditorController({
     selectedLoras: loraSettings.selectedLoras,
     onSelectedLorasChange: loraSettings.setSelectedLoras,
     projectId: selectedProjectId,
-    availableLoras: loraSettings.availableLoras,
     batchVideoPrompt: promptSettings.prompt,
     onBatchVideoPromptChange: promptSettings.setPrompt,
     selectedModel: modelSettings.selectedModel,
@@ -389,14 +369,10 @@ export function useShotEditorController({
   });
   const { mediaEditing, joinWorkflow } = editing;
   const selectedOutputId = output.selectedOutputId;
-  const demoteOrphanedVariants = output.demoteOrphanedVariants;
 
   const generationActions = useGenerationActions({
-    state,
-    actions,
     selectedShot: selectedShot || {} as Shot,
     projectId,
-    batchVideoFrames: frameSettings.batchVideoFrames,
     orderedShotImages: allShotImages,
   });
 
@@ -406,7 +382,6 @@ export function useShotEditorController({
     allShotImagesRef,
     addToShotMutationRef,
     addToShotWithoutPositionMutationRef,
-    createShotRef,
     setIsGenerationsPaneLockedRef,
     shots,
     navigateToShot,
@@ -478,10 +453,7 @@ export function useShotEditorController({
   });
 
   const {
-    clearAllEnhancedPrompts,
-    updatePairPromptsByIndex,
-    loadPositions,
-    handleBatchVideoPromptChangeWithClear,
+    handleBatchVideoPromptChange,
     handleRandomSeedChange,
     handleAcceleratedChange,
     handleStepsChange,
@@ -489,7 +461,6 @@ export function useShotEditorController({
     isSteerableMotionEnqueuing,
     steerableMotionJustQueued,
     isGenerationDisabled,
-    enhancementProgress,
   } = useGenerationController(generationControllerInput);
 
   const applySettingsFromTask = useApplySettingsHandler({
@@ -507,7 +478,6 @@ export function useShotEditorController({
       prompts: {
         onBatchVideoPromptChange: promptSettings.setPrompt,
         onSteerableMotionSettingsChange: steerableMotionSettings.setSteerableMotionSettings,
-        updatePairPromptsByIndex,
       },
       generation: {
         onBatchVideoFramesChange: frameSettings.setFrames,
@@ -536,40 +506,28 @@ export function useShotEditorController({
         onAmountOfMotionChange: motionSettings.setAmountOfMotion,
       },
       loras: {
-        availableLoras: loraSettings.availableLoras,
         loraManager,
       },
       structureVideo: {
         onStructureVideoInputChange: mediaEditing.handleStructureVideoInputChange,
       },
     },
-    mutations: {
-      addImageToShotMutation,
-      removeImageFromShotMutation,
-      loadPositions,
-    },
   });
 
   const {
-    isClearingFinalVideo,
-    handleDeleteFinalVideo,
     handleReorderImagesInShot,
     handlePendingPositionApplied,
-    handleImageUpload,
   } = useImageManagementController({
-    queryClient,
     selectedShotRef,
     projectIdRef,
     allShotImagesRef,
     batchVideoFramesRef,
     updateShotImageOrderMutation,
-    demoteOrphanedVariants,
     actionsRef,
     pendingFramePositions: state.pendingFramePositions,
-    generationActions,
   });
 
-  const { handleSelectionChangeLocal, currentMotionSettings } = useShotEditorBridge({
+  const { handleSelectionChangeLocal } = useShotEditorBridge({
     parentGetGenerationDataRef,
     parentGenerateVideoRef,
     parentNameClickRef,
@@ -580,16 +538,8 @@ export function useShotEditorController({
     structureVideoMotionStrength: mediaEditing.structureVideoMotionStrength,
     effectiveAspectRatio,
     selectedLoras: loraManager.selectedLoras,
-    clearAllEnhancedPrompts,
     handleGenerateBatch,
     handleNameClick: mediaEditing.handleNameClick,
-    textBeforePrompts: promptSettings.textBeforePrompts,
-    textAfterPrompts: promptSettings.textAfterPrompts,
-    prompt: promptSettings.prompt,
-    negativePrompt: promptSettings.negativePrompt,
-    enhancePrompt: promptSettings.enhancePrompt,
-    batchVideoFrames: frameSettings.batchVideoFrames,
-    lastVideoGeneration,
   });
 
   const { layoutProps } = useShotEditorScreenAssembly({
@@ -612,7 +562,6 @@ export function useShotEditorController({
         setSelectedOutputId: output.setSelectedOutputId,
         parentGenerations: output.parentGenerations,
         segmentProgress: output.segmentProgress,
-        isSegmentOutputsLoading: output.isSegmentOutputsLoading,
         joinSegmentSlots: output.joinSegmentSlots,
       },
       generationActions,
@@ -621,27 +570,20 @@ export function useShotEditorController({
         isGenerationDisabled,
         isSteerableMotionEnqueuing,
         steerableMotionJustQueued,
-        currentMotionSettings,
         handleAcceleratedChange,
         handleRandomSeedChange,
         handleGenerateBatch,
-        handleBatchVideoPromptChangeWithClear,
+        handleBatchVideoPromptChange,
         handleStepsChange,
-        clearAllEnhancedPrompts,
-        enhancementProgress,
       },
       imageManagement: {
         handleReorderImagesInShot,
-        handleImageUpload,
         handlePendingPositionApplied,
-        handleDeleteFinalVideo,
-        isClearingFinalVideo,
       },
       bridge: {
         handleSelectionChangeLocal,
       },
       loraManager,
-      availableLoras: loraSettings.availableLoras,
       shots,
     },
     settings: {

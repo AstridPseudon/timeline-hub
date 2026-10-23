@@ -699,7 +699,7 @@ describe('compile-only output execution isolation', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: T19 — Compile-only output determinism proof (byte-identical)
+// Compile-only output determinism proof (byte-identical)
 // ---------------------------------------------------------------------------
 
 describe('M6: compile-only output determinism (byte-identical)', () => {
@@ -861,7 +861,7 @@ describe('M6: compile-only output determinism (byte-identical)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: T19 — Render-dependent declarations never execute (defense-in-depth)
+// Render-dependent declarations never execute (defense-in-depth)
 // ---------------------------------------------------------------------------
 
 describe('M6: render-dependent declarations never execute', () => {
@@ -993,7 +993,7 @@ describe('M6: render-dependent declarations never execute', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: T19 — Multiple compile-only formats in one registry
+// Multiple compile-only formats in one registry
 // ---------------------------------------------------------------------------
 
 describe('M6: multiple compile-only formats in one registry', () => {
@@ -1112,7 +1112,7 @@ describe('M6: multiple compile-only formats in one registry', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: T19 — Context completeness (timeline/assets/options received by handler)
+// Context completeness (timeline/assets/options received by handler)
 // ---------------------------------------------------------------------------
 
 describe('M6: handler receives complete timeline/assets/options', () => {
@@ -1273,7 +1273,7 @@ describe('M6: handler receives complete timeline/assets/options', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: T19 — Async execution supplements
+// Async execution supplements
 // ---------------------------------------------------------------------------
 
 describe('M6: async execution supplements', () => {
@@ -1363,7 +1363,7 @@ describe('M6: async execution supplements', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: T19 — Artifact compatibility proof
+// Artifact compatibility proof
 // ---------------------------------------------------------------------------
 
 describe('M6: artifact compatibility proof', () => {
@@ -1500,7 +1500,7 @@ describe('M6: artifact compatibility proof', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T10: Cross-extension duplicate bare format IDs
+// Cross-extension duplicate bare format IDs
 // ---------------------------------------------------------------------------
 
 describe('cross-extension duplicate bare format IDs', () => {

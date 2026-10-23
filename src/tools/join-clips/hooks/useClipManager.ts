@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { toast } from '@/shared/components/ui/runtime/sonner';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { toOperationResultError } from '@/shared/lib/operationResult';
 import { DragEndEvent, KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -7,7 +6,6 @@ import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { subscribeJoinClipsIntents } from '@/shared/lib/joinClips/intentStore';
 import type { VideoClip, TransitionPrompt } from '../clipTypes';
 import type { useJoinClipsSettings } from './useJoinClipsSettings';
-import type { useCreateGeneration } from '@/domains/generation/hooks/useGenerationMutations';
 import {
   getCachedClipsCount,
   setCachedClipsCount,
@@ -22,9 +20,7 @@ import {
   getClipsNeedingDuration,
   tryLoadClipDuration,
   normalizeClipSlots,
-  uploadClipVideo,
   reorderClipsAndPrompts,
-  updateClipInArray,
   clearClipVideo,
 } from '../lib/clipManagerService';
 interface UseClipManagerParams {
@@ -32,21 +28,16 @@ interface UseClipManagerParams {
   joinSettings: ReturnType<typeof useJoinClipsSettings>;
   settingsLoaded: boolean;
   loopFirstClip: boolean;
-  createGenerationMutation: ReturnType<typeof useCreateGeneration>;
 }
 export function useClipManager({
   selectedProjectId,
   joinSettings,
   settingsLoaded,
   loopFirstClip,
-  createGenerationMutation,
 }: UseClipManagerParams) {
   const [clips, setClips] = useState<VideoClip[]>([]);
-  const [uploadingClipId, setUploadingClipId] = useState<string | null>(null);
   const [lightboxClip, setLightboxClip] = useState<VideoClip | null>(null);
   const [transitionPrompts, setTransitionPrompts] = useState<TransitionPrompt[]>([]);
-  const [draggingOverClipId, setDraggingOverClipId] = useState<string | null>(null);
-  const [isScrolling, setIsScrolling] = useState(false);
   const [isLoadingPersistedMedia, setIsLoadingPersistedMedia] = useState(false);
   const [initialHydrationComplete, setInitialHydrationComplete] = useState(false);
   const [pendingIntentVersion, setPendingIntentVersion] = useState(0);
@@ -60,7 +51,6 @@ export function useClipManager({
   const durationHydrationVersionRef = useRef(0);
   const pendingConsumeVersionRef = useRef(0);
   const preloadedPostersRef = useRef<Set<string>>(new Set());
-  const fileInputRefs = useRef<{ [clipId: string]: HTMLInputElement | null }>({});
   const videoRefs = useRef<{ [clipId: string]: HTMLVideoElement | null }>({});
   useEffect(() => {
     activeProjectIdRef.current = selectedProjectId;
@@ -265,64 +255,6 @@ export function useClipManager({
       cleanups.forEach(cleanup => cleanup());
     };
   }, [clips]);
-  useEffect(() => {
-    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
-    const handleScroll = () => {
-      setIsScrolling(true);
-      if (scrollTimer) {
-        clearTimeout(scrollTimer);
-      }
-      scrollTimer = setTimeout(() => {
-        setIsScrolling(false);
-        scrollTimer = null;
-      }, 200);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (scrollTimer) {
-        clearTimeout(scrollTimer);
-      }
-    };
-  }, []);
-  const uploadVideoFile = useCallback(async (
-    file: File,
-    clipId: string,
-  ): Promise<{ videoUrl: string; posterUrl: string; finalFrameUrl: string; durationSeconds: number } | null> => {
-    if (!file.type.startsWith('video/')) {
-      toast({
-        title: 'Invalid file type',
-        description: 'Please upload a video file',
-        variant: 'destructive',
-      });
-      return null;
-    }
-    setUploadingClipId(clipId);
-    try {
-      const result = await uploadClipVideo(file);
-      if (selectedProjectId) {
-        try {
-          await createGenerationMutation.mutateAsync({
-            imageUrl: result.videoUrl,
-            fileName: file.name,
-            fileType: 'video',
-            fileSize: file.size,
-            projectId: selectedProjectId,
-            prompt: 'Uploaded clip for Join',
-            thumbnailUrl: result.posterUrl,
-          });
-        } catch (genError) {
-          normalizeAndPresentError(genError, { context: 'JoinClipsPage', showToast: false });
-        }
-      }
-      return result;
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'JoinClipsPage', toastTitle: 'Upload failed' });
-      return null;
-    } finally {
-      setUploadingClipId(null);
-    }
-  }, [selectedProjectId, createGenerationMutation]);
   const handleRemoveClip = useCallback((clipId: string) => {
     setClips(prev => {
       if (prev.length <= 2) return prev;
@@ -339,8 +271,6 @@ export function useClipManager({
       setClips(prev =>
         prev.map(clip => (clip.id === clipId ? clearClipVideo(clip) : clip)),
       );
-      const fileInput = fileInputRefs.current[clipId];
-      if (fileInput) fileInput.value = '';
       const videoElement = videoRefs.current[clipId];
       if (videoElement) {
         videoElement.pause();
@@ -350,87 +280,6 @@ export function useClipManager({
       setTransitionPrompts(prev => prev.filter(p => p.id !== clipId));
     },
     [clips, loopFirstClip, joinSettings],
-  );
-  const handleVideoUpload = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>, clipId: string) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const result = await uploadVideoFile(file, clipId);
-      if (!result) return;
-      setClips(prev =>
-        updateClipInArray(prev, clipId, {
-          url: result.videoUrl,
-          posterUrl: result.posterUrl,
-          finalFrameUrl: result.finalFrameUrl,
-          durationSeconds: result.durationSeconds,
-          file,
-          loaded: false,
-          playing: false,
-        }),
-      );
-    },
-    [uploadVideoFile],
-  );
-  const handleDragOver = useCallback(
-    (e: React.DragEvent, _clipId: string) => {
-      if (isScrolling) return;
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    [isScrolling],
-  );
-  const handleDragEnter = useCallback(
-    (e: React.DragEvent, clipId: string) => {
-      if (isScrolling) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const items = Array.from(e.dataTransfer.items);
-      const hasValidVideo = items.some(
-        item => item.kind === 'file' && item.type.startsWith('video/'),
-      );
-      if (hasValidVideo) {
-        setDraggingOverClipId(clipId);
-      }
-    },
-    [isScrolling],
-  );
-  const handleDragLeave = useCallback(
-    (e: React.DragEvent, _clipId: string) => {
-      if (isScrolling) return;
-      e.preventDefault();
-      e.stopPropagation();
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX;
-      const y = e.clientY;
-      if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
-        setDraggingOverClipId(null);
-      }
-    },
-    [isScrolling],
-  );
-  const handleDrop = useCallback(
-    async (e: React.DragEvent, clipId: string) => {
-      if (isScrolling) return;
-      e.preventDefault();
-      e.stopPropagation();
-      setDraggingOverClipId(null);
-      const file = e.dataTransfer.files?.[0];
-      if (!file) return;
-      const result = await uploadVideoFile(file, clipId);
-      if (!result) return;
-      setClips(prev =>
-        updateClipInArray(prev, clipId, {
-          url: result.videoUrl,
-          posterUrl: result.posterUrl,
-          finalFrameUrl: result.finalFrameUrl,
-          durationSeconds: result.durationSeconds,
-          file,
-          loaded: false,
-          playing: false,
-        }),
-      );
-    },
-    [isScrolling, uploadVideoFile],
   );
   const handlePromptChange = useCallback((clipId: string, prompt: string) => {
     setTransitionPrompts(prev => {
@@ -472,22 +321,13 @@ export function useClipManager({
     clips,
     setClips,
     transitionPrompts,
-    uploadingClipId,
-    draggingOverClipId,
-    isScrolling,
     lightboxClip,
     setLightboxClip,
     isLoadingPersistedMedia,
     cachedClipsCount,
     videoRefs,
-    fileInputRefs,
     handleRemoveClip,
     handleClearVideo,
-    handleVideoUpload,
-    handleDragOver,
-    handleDragEnter,
-    handleDragLeave,
-    handleDrop,
     handlePromptChange,
     sensors,
     handleDragEnd,

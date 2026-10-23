@@ -10,9 +10,6 @@
  * SEGMENT OVERRIDES (shot_generations.metadata.segmentOverrides):
  * - prompt, negativePrompt, motionMode, amountOfMotion, phaseConfig,
  *   selectedPhasePresetId, loras, numFrames, randomSeed, seed
- *
- * NOTE: Old field names (batchVideoPrompt, selectedLoras, pair_* fields) were
- * migrated to new names via DB migration 20260125_migrate_settings_field_names.sql.
  */
 
 import type {

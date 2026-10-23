@@ -1,8 +1,7 @@
 /**
  * Transition family module.
  *
- * Houses the transition family contracts extracted from the public barrel
- * (src/sdk/index.ts): TransitionContribution manifest interface plus the
+ * Houses the transition family contracts: the TransitionContribution manifest interface plus the
  * associated service/component types (TransitionRenderer, TransitionParameterDefinition,
  * TransitionParameterSchema, TransitionRegistrationOptions, TransitionRegistrationService).
  *
@@ -36,7 +35,7 @@ export interface TransitionMaterialSlotDeclaration {
 }
 
 /**
- * M8: A transition contribution declared in an extension manifest.
+ * A transition contribution declared in an extension manifest.
  *
  * Trusted component transitions render in the browser preview and are blocked
  * from browser-export and worker-export unless the contribution declares
@@ -63,7 +62,7 @@ export interface TransitionContribution {
   /** Lower values sort first. Default 0. */
   order?: number;
   /**
-   * M5-ready named material (mask) slot declarations.
+   * Named material (mask) slot declarations.
    *
    * Each slot can receive a {@link MaterialRef} / {@link RenderMaterialRef}
    * binding at runtime via the internal {@code material.attach} graph

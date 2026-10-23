@@ -29,7 +29,7 @@ export function formatTime(
   const { showMilliseconds = false, millisecondsDigits = 1 } = options;
 
   if (!Number.isFinite(seconds) || seconds < 0) {
-    return showMilliseconds ? '0:00.0' : '0:00';
+    return showMilliseconds ? `0:00.${'0'.repeat(millisecondsDigits)}` : '0:00';
   }
 
   const mins = Math.floor(seconds / 60);
@@ -43,6 +43,23 @@ export function formatTime(
   const divisor = Math.pow(10, 3 - millisecondsDigits);
   const ms = Math.floor((seconds % 1) * 1000 / divisor);
   return `${base}.${ms.toString().padStart(millisecondsDigits, '0')}`;
+}
+
+/** `m:ss.cc` timecodes (timeline ruler and playback readout). */
+export const CENTISECOND_TIME_OPTIONS = { showMilliseconds: true, millisecondsDigits: 2 } as const;
+
+/** Clock time of an epoch timestamp ("10:48 PM"); "never" for 0 (unset). */
+export function formatClockTime(epochMs: number): string {
+  if (epochMs === 0) return 'never';
+  try {
+    return new Date(epochMs).toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  } catch {
+    return 'unknown';
+  }
 }
 
 // ── precise duration from a Date ─────────────────────────────────────────

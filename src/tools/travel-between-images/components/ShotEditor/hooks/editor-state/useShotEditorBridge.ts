@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, type MutableRefObject } from 'react';
+import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 
 interface SelectedLora {
   id: string;
@@ -18,16 +18,8 @@ interface UseShotEditorBridgeArgs {
   structureVideoMotionStrength: number | null;
   effectiveAspectRatio?: string;
   selectedLoras: SelectedLora[];
-  clearAllEnhancedPrompts: () => Promise<void>;
   handleGenerateBatch: (variantNameParam?: string) => void | Promise<void>;
   handleNameClick: () => void;
-  textBeforePrompts: string;
-  textAfterPrompts: string;
-  prompt: string;
-  negativePrompt: string;
-  enhancePrompt: boolean;
-  batchVideoFrames: number;
-  lastVideoGeneration?: string | null;
 }
 
 export function useShotEditorBridge(args: UseShotEditorBridgeArgs) {
@@ -42,16 +34,8 @@ export function useShotEditorBridge(args: UseShotEditorBridgeArgs) {
     structureVideoMotionStrength,
     effectiveAspectRatio,
     selectedLoras,
-    clearAllEnhancedPrompts,
     handleGenerateBatch,
     handleNameClick,
-    textBeforePrompts,
-    textAfterPrompts,
-    prompt,
-    negativePrompt,
-    enhancePrompt,
-    batchVideoFrames,
-    lastVideoGeneration,
   } = args;
 
   const parentOnSelectionChangeRef = useRef(parentOnSelectionChange);
@@ -76,7 +60,6 @@ export function useShotEditorBridge(args: UseShotEditorBridgeArgs) {
         strength: parseFloat(lora.strength?.toString() ?? '0') || 0,
         name: lora.name,
       })),
-      clearEnhancedPrompts: clearAllEnhancedPrompts,
     });
   }, [
     parentGetGenerationDataRef,
@@ -86,7 +69,6 @@ export function useShotEditorBridge(args: UseShotEditorBridgeArgs) {
     structureVideoMotionStrength,
     effectiveAspectRatio,
     selectedLoras,
-    clearAllEnhancedPrompts,
   ]);
 
   useEffect(() => {
@@ -105,37 +87,7 @@ export function useShotEditorBridge(args: UseShotEditorBridgeArgs) {
     parentOnSelectionChangeRef.current?.(hasSelection);
   }, []);
 
-  const currentMotionSettings = useMemo(() => {
-    const base = {
-      textBeforePrompts,
-      textAfterPrompts,
-      basePrompt: prompt,
-      negativePrompt,
-      enhancePrompt,
-      durationFrames: batchVideoFrames,
-      selectedLoras: selectedLoras.map((lora) => ({
-        id: lora.id,
-        name: lora.name,
-        strength: parseFloat(lora.strength?.toString() ?? '0') || 0,
-      })),
-    };
-
-    return lastVideoGeneration
-      ? { ...base, lastGeneratedVideoUrl: lastVideoGeneration }
-      : base;
-  }, [
-    textBeforePrompts,
-    textAfterPrompts,
-    prompt,
-    negativePrompt,
-    enhancePrompt,
-    batchVideoFrames,
-    lastVideoGeneration,
-    selectedLoras,
-  ]);
-
   return {
     handleSelectionChangeLocal,
-    currentMotionSettings,
   };
 }

@@ -18,49 +18,26 @@ vi.mock('@/shared/components/ui/tooltip', () => ({
 }));
 
 describe('PhaseConfigHeader', () => {
-  it('renders title and action tooltip labels', () => {
-    render(
-      <PhaseConfigHeader
-        onLoadPreset={vi.fn()}
-        onSaveAsPreset={vi.fn()}
-        onOverwritePreset={vi.fn()}
-        onRestoreDefaults={vi.fn()}
-      />, 
-    );
+  it('renders title and the restore-defaults tooltip label', () => {
+    render(<PhaseConfigHeader onRestoreDefaults={vi.fn()} />);
 
     expect(screen.getByText('Phase Configuration')).toBeInTheDocument();
-    expect(screen.getByText('Load Preset')).toBeInTheDocument();
-    expect(screen.getByText('Save As Preset')).toBeInTheDocument();
-    expect(screen.getByText('Overwrite Preset')).toBeInTheDocument();
     expect(screen.getByText('Restore Defaults')).toBeInTheDocument();
+    expect(screen.queryByText('Load Preset')).not.toBeInTheDocument();
+    expect(screen.queryByText('Save As Preset')).not.toBeInTheDocument();
+    expect(screen.queryByText('Overwrite Preset')).not.toBeInTheDocument();
   });
 
-  it('wires each icon button to the corresponding callback', () => {
-    const onLoadPreset = vi.fn();
-    const onSaveAsPreset = vi.fn();
-    const onOverwritePreset = vi.fn();
+  it('wires the only icon button to the restore callback', () => {
     const onRestoreDefaults = vi.fn();
 
-    render(
-      <PhaseConfigHeader
-        onLoadPreset={onLoadPreset}
-        onSaveAsPreset={onSaveAsPreset}
-        onOverwritePreset={onOverwritePreset}
-        onRestoreDefaults={onRestoreDefaults}
-      />,
-    );
+    render(<PhaseConfigHeader onRestoreDefaults={onRestoreDefaults} />);
 
     const buttons = screen.getAllByRole('button');
-    expect(buttons).toHaveLength(4);
+    expect(buttons).toHaveLength(1);
 
     fireEvent.click(buttons[0]);
-    fireEvent.click(buttons[1]);
-    fireEvent.click(buttons[2]);
-    fireEvent.click(buttons[3]);
 
-    expect(onLoadPreset).toHaveBeenCalledTimes(1);
-    expect(onSaveAsPreset).toHaveBeenCalledTimes(1);
-    expect(onOverwritePreset).toHaveBeenCalledTimes(1);
     expect(onRestoreDefaults).toHaveBeenCalledTimes(1);
   });
 });

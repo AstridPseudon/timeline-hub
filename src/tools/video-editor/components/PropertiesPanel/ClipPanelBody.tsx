@@ -1,3 +1,4 @@
+import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import { useMemo, useRef, useState, type ComponentType } from 'react';
 import { RefreshCw, Trash2, Volume2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -166,7 +167,7 @@ export function ClipPanelBody({
   const supportsInlineTextEdit = overlayBehavior.supportsInlineTextEdit;
   // Position fallbacks come from the clip-type descriptor — the same canonical
   // box the renderer draws and the gizmo shows for a position-less clip. The
-  // panel used to invent its own (0,0,compW,compH) fallback and disagreed with
+  // panel must not invent its own (0,0,compW,compH) fallback, which would disagree with
   // both other surfaces for text clips.
   const defaultBox = getDefaultBoxForClipType(clip?.clipType, compositionWidth, compositionHeight);
   const commandContext = useMemo(() => (
@@ -190,7 +191,7 @@ export function ClipPanelBody({
   // Touch keeps the header's delete and close at the 44px minimum.
   const headerButtonSize = deviceClass === 'desktop' ? 'h-8 w-8' : 'h-11 w-11';
 
-  // M9 T9: Extension-provided clip inspector section
+  // Extension-provided clip inspector section
   const clipTypeRegistryContext = useOptionalClipTypeRegistryContext();
   const clipTypeRegistryRecord: ClipTypeRegistryRecord | undefined = useMemo(() => {
     if (!clip?.clipType || !clipTypeRegistryContext) return undefined;
@@ -283,7 +284,7 @@ export function ClipPanelBody({
 
       {showInspectorActions && (
         <ClipInspectorActions
-          muted={(clip.volume ?? 1) <= 0}
+          muted={getEffectiveClipVolume(clip) <= 0}
           canMoveTrack={canMoveTrack}
           canSplit={canSplit}
           canToggleMute={canToggleMute}
@@ -453,7 +454,7 @@ export function ClipPanelBody({
                 Volume
               </div>
               <Slider
-                value={[clip.volume ?? 1]}
+                value={[getEffectiveClipVolume(clip)]}
                 min={0}
                 max={1}
                 step={0.05}
@@ -526,7 +527,7 @@ export function ClipPanelBody({
         </fieldset>
       </Tabs>
 
-      {/* M9 T9: Extension-provided clip inspector section after host controls */}
+      {/* Extension-provided clip inspector section after host controls */}
       {clipTypeRegistryRecord?.inspector && (
         <ClipExtensionInspectorSection
           clip={clip}

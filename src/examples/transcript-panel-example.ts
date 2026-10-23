@@ -5,6 +5,8 @@
  */
 import type {
   ImmutableProjectPackageDescriptor,
+  PanelClipDragProps,
+  PanelClipSpec,
   PanelFrameAnchor,
   PanelPreviewService,
   PanelRenderProps,
@@ -199,4 +201,13 @@ export async function ingestTranscriptPackage(
     entry,
     assets: [],
   };
+}
+
+/**
+ * Make an element a timeline drag source: spread the result on it. Dropping on the timeline inserts the
+ * clip at the drop time and track. Null means nothing can be dragged (invalid spec, a clip type this
+ * extension does not own, or a host without a timeline).
+ */
+export function clipDragProps(props: PanelRenderProps, spec: PanelClipSpec): PanelClipDragProps | null {
+  return props.video?.dragSource?.(spec) ?? null;
 }

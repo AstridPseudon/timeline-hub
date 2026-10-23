@@ -39,31 +39,27 @@ export type AgentChatContextValue = {
 export type AgentChatRegistryOwner = string | symbol;
 
 export type AgentChatRegistryValue = {
-  /** Scoped updates preserve the active editor; legacy calls activate their value. */
-  register: (value: AgentChatContextValue, owner?: AgentChatRegistryOwner) => () => void;
-  unregister: (owner?: AgentChatRegistryOwner) => void;
+  /** Updates from a background owner preserve the active editor; the first owner activates itself. */
+  register: (value: AgentChatContextValue, owner: AgentChatRegistryOwner) => () => void;
+  unregister: (owner: AgentChatRegistryOwner) => void;
   activate: (owner: AgentChatRegistryOwner) => void;
   /** Route-selected project scope exists before a timeline editor mounts. */
   registerProject: (value: AgentChatContextValue) => void;
   unregisterProject: () => void;
 };
 
-const legacyAgentChatOwner = Symbol('legacy-agent-chat');
-
 // AgentChatPanel-side handlers that live as long as the panel is mounted.
-// `markEngaged` is the v5 engagement-flag pivot: clicking the message split button
+// `markEngaged` is the v5 engagement-flag pivot: clicking the message composer button
 // calls this so the auto-create-session gate can fire without writing to
 // `panesStore.isTasksPaneOpen` (which would short-circuit useSlidingPane.setOpen(false)).
 export type AgentChatActionsHandlers = {
+  /** Chat voice: starts or stops a recording. A no-op while chat voice is switched off. */
   toggleRecording: () => void;
   focusComposer: () => void;
   markEngaged: () => void;
 };
 
-export type AgentChatActionsValue = {
-  toggleRecording: () => void;
-  focusComposer: () => void;
-  markEngaged: () => void;
+export type AgentChatActionsValue = AgentChatActionsHandlers & {
   isRecording: boolean;
   isProcessing: boolean;
   /** An agent turn is running (sent, answering, or queued behind one): the chat's "Thinking...". */
@@ -108,7 +104,7 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
   const registrationsRef = useRef(new Map<AgentChatRegistryOwner, { value: AgentChatContextValue }>());
   const activeOwnerRef = useRef<AgentChatRegistryOwner | null>(null);
 
-  const unregister = useCallback((owner: AgentChatRegistryOwner = legacyAgentChatOwner) => {
+  const unregister = useCallback((owner: AgentChatRegistryOwner) => {
     const registrations = registrationsRef.current;
     if (!registrations.delete(owner)) return;
     if (activeOwnerRef.current === owner) {
@@ -132,10 +128,10 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
     setOverride(registration.value);
   }, []);
 
-  const register = useCallback((value: AgentChatContextValue, owner: AgentChatRegistryOwner = legacyAgentChatOwner) => {
+  const register = useCallback((value: AgentChatContextValue, owner: AgentChatRegistryOwner) => {
     const registration = { value };
     registrationsRef.current.set(owner, registration);
-    if (owner === legacyAgentChatOwner || activeOwnerRef.current === null) {
+    if (activeOwnerRef.current === null) {
       activate(owner);
     } else if (activeOwnerRef.current === owner) {
       setOverride(value);
@@ -151,9 +147,9 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
   const unregisterProject = useCallback(() => setProjectScope(null), []);
   const registry = useMemo(() => ({ register, unregister, activate, registerProject, unregisterProject }), [register, unregister, activate, registerProject, unregisterProject]);
 
-  // Actions bridge — kept in refs so registered handlers always invoke the latest
+  // Actions bridge — kept in a ref so registered handlers always invoke the latest
   // panel-side closures even after the AgentChatPanel re-renders. Reactive state
-  // (isRecording/isProcessing) is the only thing that re-renders consumers.
+  // (isRecording/isProcessing/isAgentWorking) is the only thing that re-renders consumers.
   const handlersRef = useRef<AgentChatActionsHandlers | null>(null);
   const [reactiveState, setReactiveState] = useState<AgentChatActionsState | null>(null);
 
@@ -161,17 +157,14 @@ export function AgentChatProvider({ children }: { children: ReactNode }) {
     handlersRef.current = handlers;
   }, []);
   const publishState = useCallback((state: AgentChatActionsState) => {
-    setReactiveState((prev) => {
-      if (
-        prev
-        && prev.isRecording === state.isRecording
-        && prev.isProcessing === state.isProcessing
-        && prev.isAgentWorking === state.isAgentWorking
-      ) {
-        return prev;
-      }
-      return state;
-    });
+    setReactiveState((prev) => (
+      prev
+      && prev.isRecording === state.isRecording
+      && prev.isProcessing === state.isProcessing
+      && prev.isAgentWorking === state.isAgentWorking
+        ? prev
+        : state
+    ));
   }, []);
   const unregisterActions = useCallback(() => {
     handlersRef.current = null;
@@ -242,7 +235,7 @@ export function useAgentChatRegistry(): AgentChatRegistryValue {
 
 // Returns null until AgentChatPanel mounts and publishes initial state. The one
 // optional bridge surface — TasksPane reads this to decide whether to render the
-// split button. CLAUDE.md generally requires throwing on missing context, but the
+// composer button. CLAUDE.md generally requires throwing on missing context, but the
 // timing of panel mount vs. TasksPane mount makes a brief null window unavoidable.
 export function useAgentChatActions(): AgentChatActionsValue | null {
   return useContext(AgentChatActionsContext);

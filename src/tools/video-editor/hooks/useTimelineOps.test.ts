@@ -1121,7 +1121,7 @@ describe('useTimelineOps', () => {
   });
 
   // -----------------------------------------------------------------------
-  // Base-version staleness (T13)
+  // Base-version staleness
   // -----------------------------------------------------------------------
   describe('apply — base-version staleness rejection', () => {
     it('rejects a stale patch when patch.version !== dataRef.current.configVersion', () => {
@@ -1393,7 +1393,7 @@ describe('useTimelineOps', () => {
   });
 
   // -----------------------------------------------------------------------
-  // Preview — stale base-version warning (T13)
+  // Preview — stale base-version warning
   // -----------------------------------------------------------------------
   describe('preview — stale base-version warning', () => {
     it('attaches a warning diagnostic when baseVersion does not match configVersion', () => {

@@ -981,23 +981,25 @@ export function useTimelinePersistence({
       registry: cloneAttemptValue(nextData.registry),
       bundle: effectiveBundle,
     };
-    const draftWrite = draftWriteChainRef.current
-      .catch(() => {})
-      .then(() => saveTimelineDraft(
-        timelineId,
-        draft,
-        draftBaseVersion,
-        {
-          ...recoveryMetadata,
-          ...(provider.saveTimelineAtHead ? {
-            baseHeadRevisionId: head?.headRevisionId,
-            baseHeadProjectId: head?.projectId,
-            baseHeadTimelineId: head?.timelineId,
-          } : {}),
-          ownerId: draftOwnerId,
-          draftIdentity: recoveryMetadata.draftIdentity ?? draftOwnerId,
-        },
-      ));
+    const draftWrite = persistenceEnabled
+      ? draftWriteChainRef.current
+        .catch(() => {})
+        .then(() => saveTimelineDraft(
+          timelineId,
+          draft,
+          draftBaseVersion,
+          {
+            ...recoveryMetadata,
+            ...(provider.saveTimelineAtHead ? {
+              baseHeadRevisionId: head?.headRevisionId,
+              baseHeadProjectId: head?.projectId,
+              baseHeadTimelineId: head?.timelineId,
+            } : {}),
+            ownerId: draftOwnerId,
+            draftIdentity: recoveryMetadata.draftIdentity ?? draftOwnerId,
+          },
+        ))
+      : Promise.resolve();
     draftWriteChainRef.current = draftWrite;
     void draftWrite.catch(() => {});
     // Capture every local document before debounce coalescing. Transport retries

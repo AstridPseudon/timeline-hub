@@ -1,5 +1,5 @@
 /**
- * M11: Provider-scoped live data registry.
+ * Provider-scoped live data registry.
  *
  * Implements LiveSessionsService with:
  * - Source lifecycle (register, get, list, dispose)
@@ -14,7 +14,6 @@
  * Persisted binding metadata is the only timeline-resident live state.
  *
  * @module liveDataRegistry
- * @milestone M11
  */
 
 import type {
@@ -242,7 +241,7 @@ export interface LiveDataRegistry extends LiveSessionsService {
   /** Get the latest applied steering lineage for a generation session. */
   getSteeringLineage(sessionId: string): SteeringLineage | undefined;
 
-  /** Check whether Step 15 live sample delivery may activate for a session. */
+  /** Check whether live sample delivery may activate for a session. */
   canActivateGenerationSessionLiveDelivery(sessionId: string): boolean;
 
   /** Read the latest sample from a channel's ring buffer synchronously. */
@@ -1355,7 +1354,7 @@ export function createLiveDataRegistry(config: LiveDataRegistryConfig = {}): Liv
     };
   }
 
-  // ---- Internal binding management (for use by scanner in T5) --------------
+  // ---- Internal binding management --------------
 
   function _addBinding(binding: LiveBinding): void {
     bindings.set(binding.bindingId, {

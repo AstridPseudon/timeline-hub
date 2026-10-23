@@ -13,7 +13,6 @@ vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeOrigin: () => or
 vi.mock('@/shared/lib/taskCreation', () => ({
   createImageGenerationTasks: (...args: unknown[]) => mockCreateImageGenerationTasks(...args),
 }));
-vi.mock('@/features/settings/hooks/useApiKeys', () => ({ useApiKeys: () => ({ getApiKey: vi.fn() }) }));
 vi.mock('@/shared/lib/queryKeys', () => ({
   queryKeys: { unified: { projectPrefix: (id: string | null) => ['unified', id] } },
 }));

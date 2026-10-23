@@ -1880,7 +1880,7 @@ describe('planRender', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Route planner / route-fit compatibility (M1a T17)
+  // Route planner / route-fit compatibility
   // ---------------------------------------------------------------------------
 
   describe('route planner / route-fit compatibility', () => {

@@ -64,7 +64,6 @@ interface UseMediaGalleryLightboxSessionParams {
   taskError: MediaGalleryLightboxSession['taskError'];
   inputImages: NonNullable<MediaGalleryLightboxSession['inputImages']>;
   lightboxTaskMapping: MediaGalleryLightboxSession['lightboxTaskMapping'];
-  onCreateShot?: MediaGalleryLightboxSession['onCreateShot'];
   handleNavigateToShot: NonNullable<MediaGalleryLightboxSession['onNavigateToShot']>;
   showDelete: boolean;
 }
@@ -88,7 +87,6 @@ export function useMediaGalleryLightboxSession(params: UseMediaGalleryLightboxSe
     taskError,
     inputImages,
     lightboxTaskMapping,
-    onCreateShot,
     handleNavigateToShot,
     showDelete,
   } = params;
@@ -207,7 +205,6 @@ export function useMediaGalleryLightboxSession(params: UseMediaGalleryLightboxSe
     inputImages,
     lightboxTaskMapping,
     taskDetailsData,
-    onCreateShot,
     onNavigateToShot: handleNavigateToShot,
     setActiveLightboxIndex: handleSetActiveLightboxIndex,
   }), [
@@ -229,7 +226,6 @@ export function useMediaGalleryLightboxSession(params: UseMediaGalleryLightboxSe
     lightboxTaskMapping,
     onAddToLastShot,
     onAddToLastShotWithoutPosition,
-    onCreateShot,
     paginationHook.isServerPagination,
     paginationHook.totalPages,
     serverPage,

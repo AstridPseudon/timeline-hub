@@ -42,11 +42,8 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
   } = interaction;
   const {
     onDelete,
-    onDuplicate,
     onVariantDrop,
     onVariantDropTargetChange,
-    duplicatingImageId,
-    duplicateSuccessImageId,
   } = actions ?? {};
   const {
     isSelected = false,
@@ -166,13 +163,6 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
     onDelete?.(image.id);
   };
 
-  const handleDuplicateClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation();
-    onDuplicate?.(image.id, framePosition);
-  };
-
   const { leftPercent, displayFrame } = getTimelineItemPosition({
     timelineWidth,
     fullMinFrames,
@@ -289,16 +279,12 @@ const TimelineItem: React.FC<TimelineItemProps> = ({
 
           <TimelineItemActionButtons
             image={image}
-            imageKey={imageKey}
             isDragging={isDragging}
             readOnly={readOnly}
             isSelected={isSelected}
             isTouchDevice={isTouchDevice}
             onMobileTap={onMobileTap}
-            onDuplicateClick={handleDuplicateClick}
             onDeleteClick={handleDeleteClick}
-            duplicatingImageId={duplicatingImageId}
-            duplicateSuccessImageId={duplicateSuccessImageId}
             onMarkAllVariantsViewed={handleMarkAllVariantsViewed}
             buttonClickedRef={buttonClickedRef}
             scheduleButtonClickReset={scheduleButtonClickReset}

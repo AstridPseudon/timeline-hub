@@ -8,7 +8,7 @@ import type { ApplySettingsHandlerContexts } from './useApplySettingsHandler';
 const mocks = vi.hoisted(() => ({
   fetchTask: vi.fn(),
   extractSettings: vi.fn(),
-  replaceImagesIfRequested: vi.fn(),
+  applyFramePositionsToExistingImages: vi.fn(),
   applyModelSettings: vi.fn(),
   applyPromptSettings: vi.fn(),
   applyGenerationSettings: vi.fn(),
@@ -26,7 +26,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../../services/applySettingsService', () => ({
   fetchTask: (...args: unknown[]) => mocks.fetchTask(...args),
   extractSettings: (...args: unknown[]) => mocks.extractSettings(...args),
-  replaceImagesIfRequested: (...args: unknown[]) => mocks.replaceImagesIfRequested(...args),
+  applyFramePositionsToExistingImages: (...args: unknown[]) => mocks.applyFramePositionsToExistingImages(...args),
   applyModelSettings: (...args: unknown[]) => mocks.applyModelSettings(...args),
   applyPromptSettings: (...args: unknown[]) => mocks.applyPromptSettings(...args),
   applyGenerationSettings: (...args: unknown[]) => mocks.applyGenerationSettings(...args),
@@ -72,11 +72,6 @@ function createHandlerState(overrides: Record<string, unknown> = {}) {
       simpleFilteredImages: [{ id: 'img-1' }, { id: 'img-2' }],
     },
     contexts: createContexts(),
-    mutations: {
-      addImageToShotMutation: { mutateAsync: vi.fn() },
-      removeImageFromShotMutation: { mutateAsync: vi.fn() },
-      loadPositions: vi.fn(),
-    },
     ...overrides,
   } as never;
 }
@@ -102,7 +97,7 @@ describe('useApplySettingsHandler', () => {
       loras: {},
       structure: {},
     });
-    mocks.replaceImagesIfRequested.mockResolvedValue(undefined);
+    mocks.applyFramePositionsToExistingImages.mockResolvedValue(undefined);
     mocks.applyModelSettings.mockResolvedValue(undefined);
     mocks.applyPromptSettings.mockResolvedValue(undefined);
     mocks.applyGenerationSettings.mockResolvedValue(undefined);
@@ -138,7 +133,7 @@ describe('useApplySettingsHandler', () => {
     rerender({ state: updatedState });
 
     await act(async () => {
-      await result.current('task-42', false, ['img-a']);
+      await result.current('task-42');
     });
 
     // Should have fetched the task
@@ -151,54 +146,32 @@ describe('useApplySettingsHandler', () => {
     );
   });
 
-  it('shows an error toast when simpleFilteredImages has missing IDs and replaceImages is true', async () => {
-    const handlerState = createHandlerState({
-      core: {
-        projectId: 'project-1',
-        selectedShot: { id: 'shot-1' },
-        simpleFilteredImages: [{ id: 'img-1' }, { id: undefined }],
-      },
+  it('moves the shot images onto the task positions instead of replacing them', async () => {
+    const generationSettings = { segmentFramesExpanded: [30, 30] };
+    mocks.extractSettings.mockReturnValue({
+      generation: generationSettings,
+      images: [],
+      prompts: {},
+      modes: {},
+      advanced: {},
+      textAddons: {},
+      motion: {},
+      loras: {},
+      structure: {},
     });
+    const handlerState = createHandlerState();
 
     const { result } = renderHook(() => useApplySettingsHandler(handlerState));
 
     await act(async () => {
-      await result.current('task-99', true, ['img-x']);
+      await result.current('task-7');
     });
 
-    // Should show toast error (showToast: true) and NOT proceed with applySettingsFromTask
-    expect(mocks.normalizeAndPresentError).toHaveBeenCalledWith(
-      expect.any(Error),
-      expect.objectContaining({
-        showToast: true,
-        toastTitle: 'Loading shot data',
-      }),
+    expect(mocks.applyFramePositionsToExistingImages).toHaveBeenCalledWith(
+      generationSettings,
+      { id: 'shot-1' },
+      [{ id: 'img-1' }, { id: 'img-2' }],
     );
-    expect(mocks.fetchTask).not.toHaveBeenCalled();
-  });
-
-  it('does not show error toast when replaceImages is false even with missing IDs', async () => {
-    const handlerState = createHandlerState({
-      core: {
-        projectId: 'project-1',
-        selectedShot: { id: 'shot-1' },
-        simpleFilteredImages: [{ id: undefined }],
-      },
-    });
-
-    const { result } = renderHook(() => useApplySettingsHandler(handlerState));
-
-    await act(async () => {
-      await result.current('task-99', false, []);
-    });
-
-    // Should NOT show the loading toast - missing IDs only matter when replaceImages is true
-    expect(mocks.normalizeAndPresentError).not.toHaveBeenCalledWith(
-      expect.any(Error),
-      expect.objectContaining({ toastTitle: 'Loading shot data' }),
-    );
-    // Should proceed to fetch the task
-    expect(mocks.fetchTask).toHaveBeenCalledWith('project-1', 'task-99');
   });
 
   it('bails out with silent error when task is not found', async () => {
@@ -208,7 +181,7 @@ describe('useApplySettingsHandler', () => {
     const { result } = renderHook(() => useApplySettingsHandler(handlerState));
 
     await act(async () => {
-      await result.current('task-gone', false, []);
+      await result.current('task-gone');
     });
 
     expect(mocks.normalizeAndPresentError).toHaveBeenCalledWith(
@@ -230,7 +203,7 @@ describe('useApplySettingsHandler', () => {
     const { result } = renderHook(() => useApplySettingsHandler(handlerState));
 
     await act(async () => {
-      await result.current('task-fail', false, []);
+      await result.current('task-fail');
     });
 
     expect(mocks.normalizeAndPresentError).toHaveBeenCalledWith(

@@ -87,10 +87,8 @@ describe('usePromptInputRowController', () => {
 
     act(() => {
       result.current.clearPrompt();
-      result.current.handleVoiceResult({ transcription: 'Voice prompt' });
     });
     expect(props.onUpdate).toHaveBeenCalledWith('prompt-1', 'fullPrompt', '');
-    expect(props.onUpdate).toHaveBeenCalledWith('prompt-1', 'fullPrompt', 'Voice prompt');
     expect(result.current.handleTouchStart).toBe(mockState.handleTouchStart);
   });
 

@@ -1,6 +1,5 @@
-import React, { Suspense, useRef } from "react";
+import React, { Suspense } from "react";
 import { createPortal } from "react-dom";
-import { CreateShotModal } from "@/features/shots/components/CreateShotModal";
 import type { BatchImageGenerationTaskParams } from "@/shared/types/imageGeneration";
 
 import { PromptsSection } from "./components/PromptsSection";
@@ -13,12 +12,6 @@ import { ImageGenerationFormProvider } from "./ImageGenerationFormContext";
 import { useImageGenForm } from "./hooks/useImageGenForm";
 
 // Lazy load modals to improve initial bundle size and performance
-const LazyLoraSelectorModal = React.lazy(() =>
-  import("@/domains/lora/components").then(module => ({
-    default: module.LoraSelectorModal
-  }))
-);
-
 const LazyPromptEditorModal = React.lazy(() =>
   import("../PromptEditorModal").then(module => ({
     default: module.PromptEditorModal
@@ -27,7 +20,6 @@ const LazyPromptEditorModal = React.lazy(() =>
 
 interface ImageGenerationFormProps {
   onGenerate: (params: BatchImageGenerationTaskParams) => Promise<string[] | void> | string[] | void;
-  openaiApiKey?: string;
   /**
    * Called when the associated shot selection changes in the form
    */
@@ -51,17 +43,12 @@ interface ImageGenerationFormProps {
 
 export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
   onGenerate,
-  openaiApiKey,
   onShotChange,
   stickyFooter = false,
   footerPortalId,
   initialShotId,
 }) => {
-  const form = useImageGenForm({ onGenerate, openaiApiKey, onShotChange, initialShotId });
-
-  // Remember per-mode imagesPerPrompt so switching modes restores the user's previous value
-  const automatedImagesPerPromptRef = useRef(8);
-  const managedImagesPerPromptRef = useRef(1);
+  const form = useImageGenForm({ onGenerate, onShotChange, initialShotId });
 
   return (
     <ImageGenerationFormProvider value={form.contextValue}>
@@ -70,25 +57,7 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
         <div className="flex gap-6 flex-col md:flex-row pb-4">
           {/* Left Column - Prompts and Shot Selector */}
           <div className="flex-1 space-y-6">
-            <PromptsSection
-              onPromptModeChange={(mode) => {
-                form.markAsInteracted();
-                // Save current imagesPerPrompt to the outgoing mode's slot
-                const outgoingMode = form.effectivePromptMode;
-                if (outgoingMode === 'automated') {
-                  automatedImagesPerPromptRef.current = form.imagesPerPrompt;
-                } else if (outgoingMode === 'managed') {
-                  managedImagesPerPromptRef.current = form.imagesPerPrompt;
-                }
-                form.setEffectivePromptMode(mode);
-                // Restore imagesPerPrompt from the incoming mode's slot
-                if (mode === 'automated') {
-                  form.setImagesPerPrompt(automatedImagesPerPromptRef.current);
-                } else if (mode === 'managed') {
-                  form.setImagesPerPrompt(managedImagesPerPromptRef.current);
-                }
-              }}
-            />
+            <PromptsSection />
 
             <ShotSelector
               shots={form.shots}
@@ -99,7 +68,6 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
                 form.markAsInteracted();
                 form.setAssociatedShotId(null);
               }}
-              onOpenCreateShot={() => form.uiActions.setCreateShotModalOpen(true)}
               onJumpToShot={form.navigateToShot}
             />
           </div>
@@ -111,7 +79,6 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
             onGenerationSourceChange={form.handleGenerationSourceChange}
             selectedTextModel={form.selectedTextModel}
             onTextModelChange={form.handleTextModelChange}
-            onOpenLoraModal={() => form.loraManager.setIsLoraModalOpen(true)}
             isLoadingReferenceData={form.isReferenceDataLoading}
             referenceCount={form.referenceCount}
           />
@@ -148,11 +115,6 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
                 actionablePromptsCount={form.actionablePromptsCount}
                 isGenerating={form.automatedSubmitButton.isSubmitting}
                 justQueued={form.automatedSubmitButton.isSuccess}
-                promptMode={form.effectivePromptMode}
-                onUseExistingPrompts={form.handleUseExistingPrompts}
-                onNewPromptsLikeExisting={form.handleNewPromptsLikeExisting}
-                promptMultiplier={form.promptMultiplier}
-                onChangePromptMultiplier={form.setPromptMultiplier}
               />
             </div>
           );
@@ -168,40 +130,15 @@ export const ImageGenerationForm: React.FC<ImageGenerationFormProps> = ({
 
       <ChunkLoadErrorBoundary>
         <Suspense fallback={<div className="sr-only">Loading...</div>}>
-          <LazyLoraSelectorModal
-            isOpen={form.loraManager.isLoraModalOpen}
-            onClose={() => form.loraManager.setIsLoraModalOpen(false)}
-            loras={form.availableLoras}
-            onAddLora={form.handleAddLora}
-            onRemoveLora={form.handleRemoveLora}
-            onUpdateLoraStrength={form.handleLoraStrengthChange}
-            selectedLoras={form.mappedSelectedLoras}
-            loraType={form.loraType}
-          />
-        </Suspense>
-      </ChunkLoadErrorBoundary>
-
-      <ChunkLoadErrorBoundary>
-        <Suspense fallback={<div className="sr-only">Loading...</div>}>
           <LazyPromptEditorModal
             isOpen={form.uiState.isPromptModalOpen}
             onClose={() => form.uiActions.closePromptModal()}
             prompts={form.prompts}
             onSave={form.handleSavePromptsFromModal}
             generatePromptId={form.generatePromptId}
-            openWithAIExpanded={form.uiState.openPromptModalWithAIExpanded}
-            onGenerateAndQueue={form.handleGenerateAndQueue}
           />
         </Suspense>
       </ChunkLoadErrorBoundary>
-
-      <CreateShotModal
-        isOpen={form.uiState.isCreateShotModalOpen}
-        onClose={() => form.uiActions.setCreateShotModalOpen(false)}
-        onSubmit={form.handleCreateShot}
-        isLoading={form.isCreatingShot}
-        projectId={form.selectedProjectId ?? undefined}
-      />
     </ImageGenerationFormProvider>
   );
 };

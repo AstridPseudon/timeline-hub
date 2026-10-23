@@ -16,7 +16,6 @@ interface ResultsGalleryProps {
   fetching: boolean;
   videosViewJustEnabled: boolean;
   projectAspectRatio: string | undefined;
-  deletingId: string | null;
   isMobile: boolean;
   onDelete: (id: string) => void;
   onToggleStar: (id: string, starred: boolean) => void;
@@ -29,7 +28,6 @@ export function ResultsGallery(props: ResultsGalleryProps) {
     fetching,
     videosViewJustEnabled,
     projectAspectRatio,
-    deletingId,
     isMobile,
     onDelete,
     onToggleStar,
@@ -65,7 +63,6 @@ export function ResultsGallery(props: ResultsGalleryProps) {
           onAddToLastShotWithoutPosition={async () => false}
           onDelete={onDelete}
           onToggleStar={onToggleStar}
-          isDeleting={deletingId}
           currentToolType={TOOL_IDS.CHARACTER_ANIMATE}
           defaultFilters={VIDEO_ONLY_GALLERY_FILTERS}
           currentToolTypeName="Animate Characters"

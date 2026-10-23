@@ -10,10 +10,6 @@ import {
   hasDuplicatePositionValues,
   type PendingUpdate,
 } from './timelinePositionCalc';
-import {
-  clearTrailingEndpointFrame,
-  setTrailingEndpointFrame,
-} from '../segment/timelineTrailingEndpointPersistence';
 import type { PositionStatus, UpdateOptions } from './timelinePositionTypes';
 
 interface UseTimelinePositionOperationsParams {
@@ -131,9 +127,7 @@ export function useTimelinePositionOperations({
       optimisticAppliedExternally && snapshotRef.current ? snapshotRef.current : positionsRef.current;
     const changes = detectPositionChanges(basePositions, quantizedPositions);
 
-    const trailingRemoved = positionsRef.current.has(TRAILING_ENDPOINT_KEY) && !quantizedPositions.has(TRAILING_ENDPOINT_KEY);
-
-    if (changes.length === 0 && !trailingRemoved) {
+    if (changes.length === 0) {
       return;
     }
 
@@ -149,13 +143,6 @@ export function useTimelinePositionOperations({
         position: c.newPos,
         operation: (c.oldPos === null ? 'add' : 'move') as 'add' | 'move' | 'remove',
       }));
-      if (trailingRemoved) {
-        optimisticUpdates.push({
-          id: TRAILING_ENDPOINT_KEY,
-          position: 0,
-          operation: 'remove',
-        });
-      }
       rollback = applyOptimistic(optimisticUpdates);
     } else if (externalRollback !== undefined) {
       rollback = externalRollback;
@@ -178,7 +165,6 @@ export function useTimelinePositionOperations({
     isLockedRef.current = true;
 
     try {
-      const trailingChange = changes.find(c => c.id === TRAILING_ENDPOINT_KEY);
       const imageChanges = changes.filter(c => c.id !== TRAILING_ENDPOINT_KEY);
 
       const dbUpdates: Array<{ shot_generation_id: string; timeline_frame: number }> = [];
@@ -192,32 +178,7 @@ export function useTimelinePositionOperations({
         }
       }
 
-      if (trailingChange) {
-        await setTrailingEndpointFrame(
-          {
-            shotId,
-            operationId,
-            shotGenerations,
-            logPrefix: '',
-            log: () => {},
-            signal,
-          },
-          trailingChange.newPos,
-        );
-      }
-
-      if (trailingRemoved) {
-        await clearTrailingEndpointFrame({
-          shotId,
-          operationId,
-          shotGenerations,
-          logPrefix: '',
-          log: () => {},
-          signal,
-        });
-      }
-
-      if (dbUpdates.length === 0 && !trailingChange && !trailingRemoved) {
+      if (dbUpdates.length === 0) {
         clearPendingUpdates(changes.map(c => c.id));
         return;
       }

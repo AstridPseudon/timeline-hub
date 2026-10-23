@@ -5,7 +5,7 @@ import { getBridgeTaskClient } from '@/integrations/astrid/bridgeTaskReads';
 import { BridgeRouteError } from '@/integrations/astrid/transport';
 
 /**
- * Cancel one task through the frozen `POST …/tasks/:task_id/cancel` route.
+ * Cancel one task through the `POST …/tasks/:task_id/cancel` route.
  * A running task requires the live attempt fence: the first unfenced cancel
  * answers 409 with (or we recover it via) the current attempt read, and the
  * fenced retry commits. Cancelling an already-terminal task replays its
@@ -26,7 +26,7 @@ export async function cancelBridgeTask(projectSlug: string, taskId: string): Pro
   const liveAttempt = (detail.attempts ?? []).find((attempt) => attempt.status === 'running');
   if (!liveAttempt) {
     // Neutral Runtime cancellation fences the task aggregate by version; it
-    // does not expose the retired bridge lease projection on a task read.
+    // does not expose a lease projection on a task read.
     await client.tasks.cancel(taskId, { status_version: 1 });
     return;
   }

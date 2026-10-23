@@ -100,7 +100,7 @@ describe('clip-type registry', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M9 T6: Dynamic-aware clip descriptor resolution
+// Dynamic-aware clip descriptor resolution
 // ---------------------------------------------------------------------------
 
 const BUILTIN_SET = new Set(['media', 'hold', 'text', 'effect-layer']);

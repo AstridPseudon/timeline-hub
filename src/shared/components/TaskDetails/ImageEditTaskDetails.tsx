@@ -44,7 +44,7 @@ export const ImageEditTaskDetails: React.FC<TaskDetailsProps> = ({
           config={config}
           label="Prompt"
           value={prompt.length > config.promptLength ? prompt.slice(0, config.promptLength) + '...' : prompt}
-          valueClassName="break-words whitespace-pre-wrap leading-relaxed preserve-case"
+          valueClassName="break-words whitespace-pre-wrap leading-relaxed"
         />
       )}
 
@@ -73,7 +73,7 @@ export const ImageEditTaskDetails: React.FC<TaskDetailsProps> = ({
           <div className="space-y-1">
             {loras.slice(0, config.maxLoras).map((lora, idx) => (
               <div key={idx} className={`flex items-center justify-between p-1.5 bg-background/50 rounded border ${config.textSize}`}>
-                <span className={`${config.fontWeight} truncate preserve-case`} title={lora.displayName}>
+                <span className={`${config.fontWeight} truncate`} title={lora.displayName}>
                   {lora.displayName.length > config.loraNameLength
                     ? lora.displayName.slice(0, config.loraNameLength) + '...'
                     : lora.displayName}

@@ -1,3 +1,4 @@
+import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import { memo, useContext, useEffect, useMemo, useReducer, useRef, useState, type FC } from 'react';
 import { Audio as Html5Audio, Internals, Sequence, useBufferState, useRemotionEnvironment } from 'remotion';
 import { Audio as MediaAudio } from '@remotion/media';
@@ -244,7 +245,7 @@ const AudioTrackComponent: FC<{
           || assetType === 'video'
           || assetType.startsWith('audio/')
           || assetType.startsWith('video/');
-        const effectiveVolume = track.muted ? 0 : getSanitizedVolume(track.volume) * getSanitizedVolume(renderClip.volume);
+        const effectiveVolume = track.muted ? 0 : getSanitizedVolume(track.volume) * getEffectiveClipVolume(renderClip);
         const playbackRate = getSanitizedPlaybackRate(renderClip.speed);
         const trimProps = getSanitizedMediaTrimProps(renderClip, fps);
 

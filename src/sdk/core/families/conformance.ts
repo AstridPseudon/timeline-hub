@@ -98,7 +98,7 @@ export interface ConformanceGap {
   readonly reason?: string;
 
   /**
-   * Optional delegation expiration (`M4`, `M6`, an ISO-8601 date, or
+   * Optional delegation expiration (an ISO-8601 date, or
    * `permanent:<rationale>`).
    *
    * Required for host-aggregated delegated gaps; optional for generic
@@ -363,7 +363,7 @@ export function isFullyConformant<Kind extends string>(
 export interface LegacyMilestoneEntry {
   /** The contribution kind. */
   readonly kind: string;
-  /** The milestone string (e.g. 'M1', 'M6', 'M13'), or `undefined`. */
+  /** The milestone string or `undefined`. */
   readonly milestone: string | undefined;
 }
 

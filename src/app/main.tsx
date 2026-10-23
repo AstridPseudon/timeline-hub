@@ -8,32 +8,6 @@ import { setRuntimeOrigin } from '@/integrations/runtime/connection.ts';
 import { releaseBootLayerWhenReady } from '@/app/bootLayer.ts';
 import { migrateAstridBrowserStorage } from '@/migrations/astridRenameBrowserMigration.ts';
 
-function loadInstalledAppTypography(): void {
-  if (import.meta.env.VITE_DISABLE_REMOTE_FONTS === '1') return;
-  if (document.querySelector('[data-installed-app-fonts]')) return;
-  // Offline browser-test mode (see config/vite/remoteFonts.ts): no remote-font request may be
-  // initiated by the document or by this runtime injection.
-  if (import.meta.env.VITE_DISABLE_REMOTE_FONTS === '1') return;
-
-  const fonts = [
-    {rel: 'preconnect', href: 'https://fonts.googleapis.com'},
-    {rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous'},
-    {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap',
-    },
-  ];
-
-  for (const font of fonts) {
-    const link = document.createElement('link');
-    link.rel = font.rel;
-    link.href = font.href;
-    if ('crossOrigin' in font && font.crossOrigin) link.crossOrigin = font.crossOrigin;
-    link.dataset.installedAppFonts = '';
-    document.head.append(link);
-  }
-}
-
 async function main(): Promise<void> {
   // First, before any module that can build a Runtime client or media URL is imported: the hosted
   // build points every Runtime and Astrid base at the loopback gateway (`connection.ts`).
@@ -106,8 +80,6 @@ async function startApp(rootElement: HTMLElement): Promise<void> {
     releaseBootLayerWhenReady(rootElement);
     return;
   }
-
-  loadInstalledAppTypography();
 
   const [
     { renderApp },

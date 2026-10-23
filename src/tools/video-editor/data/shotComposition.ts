@@ -1,4 +1,4 @@
-/** Canonical T1 shot-composition wire contract.
+/** Canonical shot-composition wire contract.
  *
  * This validator is intentionally pure. workspace.v1 currently has no
  * operation that resolves an immutable revision by id or CAS-publishes a

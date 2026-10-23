@@ -3,19 +3,16 @@ import { Button } from "@/shared/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useFormCoreContext, useFormReferencesContext } from "../../ImageGenerationFormContext";
 import { ReferenceThumbnail, SkeletonThumbnail } from "./ReferenceThumbnail";
-import { AddReferenceButton } from "./AddReferenceButton";
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
-const REFS_PER_PAGE = 11; // 11 refs per page + 1 for add button = 12 items (3 rows of 4)
+const REFS_PER_PAGE = 12; // 3 rows of 4
 
 interface ReferenceGridProps {
-  onOpenDatasetBrowser: () => void;
   isLoadingReferenceData?: boolean;
   referenceCount?: number;
 }
 
 export const ReferenceGrid: React.FC<ReferenceGridProps> = ({
-  onOpenDatasetBrowser,
   isLoadingReferenceData = false,
   referenceCount = 0,
 }) => {
@@ -24,13 +21,9 @@ export const ReferenceGrid: React.FC<ReferenceGridProps> = ({
     references,
     selectedReferenceId,
     onSelectReference,
-    onStyleUpload: onAddReference,
     onDeleteReference,
-    onToggleVisibility,
-    isUploadingStyleReference,
   } = useFormReferencesContext();
   const [currentPage, setCurrentPage] = React.useState(0);
-  const isDisabled = isGenerating || isUploadingStyleReference;
 
   // Sort references by createdAt descending (newest first)
   const sortedRefs = React.useMemo(
@@ -110,13 +103,6 @@ export const ReferenceGrid: React.FC<ReferenceGridProps> = ({
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-4 gap-2">
-        {/* Add button always first */}
-        <AddReferenceButton
-          isDisabled={isDisabled}
-          onAddFiles={onAddReference}
-          onOpenBrowser={onOpenDatasetBrowser}
-        />
-
         {showOnlySkeletons ? (
           // Only skeletons - no refs hydrated yet
           Array.from({ length: skeletonCount }).map((_, idx) => (
@@ -132,17 +118,9 @@ export const ReferenceGrid: React.FC<ReferenceGridProps> = ({
                 name={ref.name}
                 imageUrl={ref.thumbnailUrl || ref.styleReferenceImageOriginal || ref.styleReferenceImage}
                 isSelected={selectedReferenceId === ref.id}
-                isOwner={ref.isOwner}
-                isPublic={ref.isPublic}
-                resourceId={ref.resourceId}
                 isGenerating={isGenerating}
                 onSelect={() => onSelectReference(ref.id)}
                 onDelete={() => onDeleteReference(ref.id)}
-                onToggleVisibility={
-                  ref.resourceId
-                    ? () => onToggleVisibility(ref.resourceId, ref.isPublic)
-                    : undefined
-                }
               />
             ))}
             {/* Remaining skeletons to fill page during loading */}

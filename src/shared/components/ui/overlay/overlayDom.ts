@@ -160,7 +160,7 @@ export function isElementWithinTopmostOverlay(element: Element | null): boolean 
   return topmostSurface === element || topmostSurface.contains(element);
 }
 
-/** Returns true for floating overlay elements used by current marker-based callers during M2. */
+/** Returns true for floating overlay elements used by current marker-based callers. */
 export function isFloatingOverlayElement(target: Element | null): boolean {
   return target instanceof HTMLElement && target.closest(OVERLAY_SURFACE_SELECTOR) !== null;
 }

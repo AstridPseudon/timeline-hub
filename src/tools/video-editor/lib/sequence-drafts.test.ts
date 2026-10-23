@@ -281,7 +281,7 @@ describe('sequence draft row mutations', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M9 T7: Extension clip type insertion
+// Extension clip type insertion
 // ---------------------------------------------------------------------------
 
 describe('sequence draft insertion — extension clip types', () => {

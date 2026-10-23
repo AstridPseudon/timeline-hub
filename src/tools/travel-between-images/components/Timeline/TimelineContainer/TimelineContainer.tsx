@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import {
   TRAILING_ENDPOINT_KEY,
@@ -7,7 +7,6 @@ import {
   getPairInfo,
   sortPositionEntries,
 } from '../utils/timeline-utils';
-import { ResourceBrowserModalBase } from '@/features/resources/components/ResourceBrowserModalBase';
 import { SelectionActionBar } from '@/shared/components/ShotImageManager/components/SelectionActionBar';
 
 import { TimelineControls } from './components/TimelineControls';
@@ -38,11 +37,8 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
   defaultNegativePrompt,
   onClearEnhancedPrompt,
   onImageDelete,
-  onImageDuplicate,
   onVariantDrop,
   readOnly = false,
-  duplicatingImageId,
-  duplicateSuccessImageId,
   projectAspectRatio,
   handleDesktopDoubleClick,
   handleMobileTap,
@@ -50,12 +46,10 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
   maxFrameLimit = 81,
   selectedOutputId,
   segmentSlots: parentSegmentSlots,
-  isSegmentsLoading,
   hasPendingTask: parentHasPendingTask,
   videoOutputs,
   onNewShotFromSelection,
   onShotChange,
-  onRegisterTrailingUpdater,
 }) => {
   const {
     primaryStructureVideo,
@@ -70,20 +64,6 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
   const { audioUrl, audioMetadata, onAudioChange } = useTimelineAudioMedia();
 
   const trailingEndFrame = framePositions.get(TRAILING_ENDPOINT_KEY);
-
-  const handleTrailingEndFrameChange = useCallback((endFrame: number | undefined) => {
-    const next = new Map(framePositions);
-    if (endFrame === undefined) {
-      next.delete(TRAILING_ENDPOINT_KEY);
-    } else {
-      next.set(TRAILING_ENDPOINT_KEY, endFrame);
-    }
-    setFramePositions(next);
-  }, [framePositions, setFramePositions]);
-
-  useLayoutEffect(() => {
-    onRegisterTrailingUpdater?.(handleTrailingEndFrameChange);
-  }, [onRegisterTrailingUpdater, handleTrailingEndFrameChange]);
 
   const { hasTrailing: hasExistingTrailingVideo, videoUrl: computedTrailingVideoUrl } = useMemo(() => {
     if (!videoOutputs || videoOutputs.length === 0 || images.length === 0) {
@@ -125,17 +105,9 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
     onFileDrop,
     onGenerationDrop,
     setIsDragInProgress,
-    onImageDuplicate,
     readOnly,
     isUploadingImage,
     maxFrameLimit,
-    structureVideo: {
-      structureVideos,
-      primaryStructureVideo,
-      onAddStructureVideo,
-      onUpdateStructureVideo,
-      onPrimaryStructureVideoInputChange,
-    },
     hasExistingTrailingVideo: hasCallbackTrailingVideo || anyImageHasVideo,
   });
 
@@ -163,7 +135,6 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
   const { selectedIds, showSelectionBar, isSelected, toggleSelection, clearSelection } = orchestrator.selection;
   const {
     pendingDropFrame,
-    pendingDuplicateFrame,
     pendingExternalAddFrame,
     activePendingFrame,
     isInternalDropProcessing,
@@ -183,21 +154,11 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
     localShotGenPositions,
     showPairLabels,
   } = orchestrator.computed;
-  const {
-    handleDuplicateInterceptor,
-    handleTimelineTapToMove,
-    handleVideoBrowserSelect,
-    handleEndpointMouseDown,
-  } = orchestrator.actions;
-  const { endpointDragFrame, isEndpointDragging: isEndpointDraggingState } = orchestrator.endpoint;
+  const { handleTimelineTapToMove } = orchestrator.actions;
   const {
     resetGap,
     setResetGap,
     maxGap,
-    showVideoBrowser,
-    setShowVideoBrowser,
-    isUploadingStructureVideo,
-    setIsUploadingStructureVideo,
   } = orchestrator.uiState;
   const { isMobile, isTablet, enableTapToMove, prefetchTaskData } = orchestrator.device;
 
@@ -303,22 +264,11 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
             readOnly,
             hasNoImages,
             zoomLevel,
-            fullMax,
             showDragHint: !!(dragState.isDragging && dragState.activeId && !isMobile),
-          }}
-          audio={{
-            audioUrl,
-            onAudioChange,
           }}
           guidance={{
             primaryStructureVideo,
-            structureVideos,
-            onAddStructureVideo,
-            onUpdateStructureVideo,
             onPrimaryStructureVideoInputChange,
-            onShowVideoBrowser: () => setShowVideoBrowser(true),
-            isUploadingStructureVideo,
-            setIsUploadingStructureVideo,
           }}
           zoom={{
             onZoomIn: handleZoomInToCenter,
@@ -369,12 +319,10 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
             pairInfoWithPending,
             localShotGenPositions,
             parentSegmentSlots,
-            isSegmentsLoading,
             parentHasPendingTask,
             selectedOutputId,
             onPairClick,
             handleOpenPairSettings,
-            handleTrailingEndFrameChange,
             setCallbackTrailingVideoUrl,
             onFileDrop,
             videoOutputs,
@@ -386,8 +334,6 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
             onRemoveStructureVideo,
             primaryStructureVideo,
             onPrimaryStructureVideoInputChange,
-            isUploadingStructureVideo,
-            setIsUploadingStructureVideo,
             audioUrl,
             audioMetadata,
             onAudioChange,
@@ -402,15 +348,11 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
             dragType,
             dropTargetFrame,
             pendingDropFrame,
-            pendingDuplicateFrame,
             pendingExternalAddFrame,
             isUploadingImage,
             isInternalDropProcessing,
             currentDragFrame,
             swapTargetId,
-            endpointDragFrame,
-            isEndpointDraggingState,
-            handleEndpointMouseDown,
             trailingVideoUrl,
             handleExtractFinalFrame,
             framePositions,
@@ -422,10 +364,7 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
             handleMobileTap,
             prefetchTaskData,
             onImageDelete,
-            handleDuplicateInterceptor,
             onVariantDrop,
-            duplicatingImageId,
-            duplicateSuccessImageId,
             isSelected,
             toggleSelection,
             pairPrompts,
@@ -437,14 +376,6 @@ const TimelineContainer: React.FC<TimelineContainerProps> = ({
           }}
         />
       </div>
-
-      <ResourceBrowserModalBase
-        isOpen={showVideoBrowser}
-        onOpenChange={setShowVideoBrowser}
-        resourceType="structure-video"
-        title="Browse Guidance Videos"
-        onResourceSelect={handleVideoBrowserSelect}
-      />
 
       {showSelectionBar && selectedIds.length > 0 && !readOnly && (
         <SelectionActionBar

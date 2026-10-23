@@ -10,7 +10,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as ApplySettingsService from '../../services/applySettingsService';
 import type { GenerationRow, Shot } from '@/domains/generation/types';
 import { enqueueGenerationsInvalidation } from '@/shared/hooks/invalidation/useGenerationInvalidation';
-import type { AddImageToShotVariables } from '@/shared/hooks/shots/addImageToShotHelpers';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 
 interface ApplySettingsHandlerCore {
@@ -31,25 +30,9 @@ export interface ApplySettingsHandlerContexts {
   structureVideo: ApplySettingsService.ApplyStructureVideoContext;
 }
 
-interface ApplySettingsHandlerMutations {
-  addImageToShotMutation: {
-    mutateAsync: (params: AddImageToShotVariables) => Promise<unknown>;
-  };
-  removeImageFromShotMutation: {
-    mutateAsync: (params: {
-      shotId: string;
-      shotGenerationId: string;
-      projectId: string;
-      shiftItems?: { id: string; newFrame: number }[];
-    }) => Promise<unknown>;
-  };
-  loadPositions: (opts?: { silent?: boolean; reason?: string }) => void | Promise<void>;
-}
-
 interface ApplySettingsHandlerInput {
   core: ApplySettingsHandlerCore;
   contexts: ApplySettingsHandlerContexts;
-  mutations: ApplySettingsHandlerMutations;
 }
 
 async function fetchTaskData(projectSlug: string, taskId: string) {
@@ -58,8 +41,6 @@ async function fetchTaskData(projectSlug: string, taskId: string) {
 
 async function applySettingsFromTask(
   taskId: string,
-  replaceImages: boolean,
-  inputImages: string[],
   handlerState: ApplySettingsHandlerInput,
   queryClient: ReturnType<typeof useQueryClient>,
 ) {
@@ -76,16 +57,10 @@ async function applySettingsFromTask(
 
   const settings = ApplySettingsService.extractSettings(taskLookup.taskData);
 
-  await ApplySettingsService.replaceImagesIfRequested(
+  await ApplySettingsService.applyFramePositionsToExistingImages(
     settings.generation,
-    settings.images,
-    replaceImages,
-    inputImages,
     handlerState.core.selectedShot ?? null,
-    handlerState.core.projectId,
     handlerState.core.simpleFilteredImages,
-    handlerState.mutations.addImageToShotMutation,
-    handlerState.mutations.removeImageFromShotMutation,
   );
 
   await ApplySettingsService.applyModelSettings(settings.generation, handlerState.contexts.model);
@@ -112,8 +87,6 @@ async function applySettingsFromTask(
     });
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 200));
-  await Promise.resolve(handlerState.mutations.loadPositions({ silent: true }));
 }
 
 export function useApplySettingsHandler(handlerState: ApplySettingsHandlerInput) {
@@ -124,20 +97,11 @@ export function useApplySettingsHandler(handlerState: ApplySettingsHandlerInput)
     handlerStateRef.current = handlerState;
   }, [handlerState]);
 
-  return useCallback(async (taskId: string, replaceImages: boolean, inputImages: string[]) => {
+  return useCallback(async (taskId: string) => {
     const latestHandlerState = handlerStateRef.current;
-    const hasMissingIds = latestHandlerState.core.simpleFilteredImages.some((img) => !img.id);
-    if (hasMissingIds && replaceImages) {
-      normalizeAndPresentError(new Error('Loading shot data... please try again in a moment.'), {
-        context: 'useApplySettingsHandler',
-        toastTitle: 'Loading shot data',
-        showToast: true,
-      });
-      return;
-    }
 
     try {
-      await applySettingsFromTask(taskId, replaceImages, inputImages, latestHandlerState, queryClient);
+      await applySettingsFromTask(taskId, latestHandlerState, queryClient);
     } catch (error) {
       normalizeAndPresentError(error, {
         context: 'useApplySettingsHandler',

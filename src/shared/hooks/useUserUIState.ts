@@ -19,19 +19,12 @@ interface UISettings {
   imageDeletion?: {
     skipConfirmation: boolean;
   };
-  aiInputMode: {
-    mode: 'voice' | 'text';
-  };
   privacyDefaults: {
     resourcesPublic: boolean;
     generationsPublic: boolean;
   };
   theme: {
     darkMode: boolean; // Defaults to true (dark mode) for new users
-  };
-  productTour?: {
-    completed: boolean;
-    skipped: boolean;
   };
 }
 
@@ -103,18 +96,6 @@ function decodeImageDeletion(
   };
 }
 
-function decodeAIInputMode(
-  value: unknown,
-  fallback: UISettings['aiInputMode'],
-): UISettings['aiInputMode'] {
-  const record = toRecord(value);
-  const mode = record?.mode === 'voice' || record?.mode === 'text'
-    ? record.mode
-    : fallback.mode;
-
-  return { mode };
-}
-
 function decodePrivacyDefaults(
   value: unknown,
   fallback: UISettings['privacyDefaults'],
@@ -133,17 +114,6 @@ function decodeTheme(
   const record = toRecord(value);
   return {
     darkMode: readBoolean(record?.darkMode, fallback.darkMode),
-  };
-}
-
-function decodeProductTour(
-  value: unknown,
-  fallback: NonNullable<UISettings['productTour']>,
-): NonNullable<UISettings['productTour']> {
-  const record = toRecord(value);
-  return {
-    completed: readBoolean(record?.completed, fallback.completed),
-    skipped: readBoolean(record?.skipped, fallback.skipped),
   };
 }
 
@@ -169,8 +139,6 @@ function normalizeUserUISetting<K extends keyof UISettings>(
         value,
         fallback as NonNullable<UISettings['imageDeletion']>,
       ) as UISettings[K];
-    case 'aiInputMode':
-      return decodeAIInputMode(value, fallback as UISettings['aiInputMode']) as UISettings[K];
     case 'privacyDefaults':
       return decodePrivacyDefaults(
         value,
@@ -178,11 +146,6 @@ function normalizeUserUISetting<K extends keyof UISettings>(
       ) as UISettings[K];
     case 'theme':
       return decodeTheme(value, fallback as UISettings['theme']) as UISettings[K];
-    case 'productTour':
-      return decodeProductTour(
-        value,
-        fallback as NonNullable<UISettings['productTour']>,
-      ) as UISettings[K];
     default:
       return fallback;
   }

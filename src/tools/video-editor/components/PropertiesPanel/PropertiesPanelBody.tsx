@@ -1,3 +1,4 @@
+import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import { TimelineItemSelectionSummary } from './TimelineItemSelectionSummary.tsx';
 import { EMPTY_TIMELINE_DATA_ITEMS } from '@/shared/state/selectionStore.ts';
 import { memo, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
@@ -237,7 +238,7 @@ function PropertiesPanelComponent({
   const bulkWidth = getSharedValue(bulkSelectedClips.map((clip) => clip.width ?? compositionSize.width));
   const bulkHeight = getSharedValue(bulkSelectedClips.map((clip) => clip.height ?? compositionSize.height));
   const bulkOpacity = getSharedValue(bulkSelectedClips.map((clip) => clip.opacity ?? 1));
-  const bulkVolume = getSharedValue(bulkSelectedClips.map((clip) => clip.volume ?? 1));
+  const bulkVolume = getSharedValue(bulkSelectedClips.map((clip) => getEffectiveClipVolume(clip)));
   const bulkFontSize = getSharedValue(bulkSelectedClips.map((clip) => clip.text?.fontSize ?? 64));
   const bulkTextColor = getSharedValue(bulkSelectedClips.map((clip) => clip.text?.color ?? '#ffffff'));
   const bulkTransition = getSharedNestedValue(bulkSelectedClips, (clip) => clip.transition);

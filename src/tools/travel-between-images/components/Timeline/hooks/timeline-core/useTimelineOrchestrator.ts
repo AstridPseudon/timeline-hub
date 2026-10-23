@@ -13,24 +13,14 @@ import { useTimelineSelection } from '../useTimelineSelection';
 import { usePendingFrames } from '../segment/usePendingFrames';
 import { useComputedTimelineData } from './useComputedTimelineData';
 import { useTimelineUiState } from './useTimelineUiState';
-import { useEndpointDrag } from '../drag/useEndpointDrag';
 import {
   useTimelineViewportController,
   type TimelineViewportControllerResult,
 } from './useTimelineViewportController';
 import { useUnifiedDrop } from '../drag/useUnifiedDrop';
 import type { GenerationRow } from '@/domains/generation/types';
-import type { Resource } from '@/features/resources/hooks/useResources';
-import type { PrimaryStructureVideo, StructureVideoConfigWithMetadata } from '@/shared/lib/tasks/travelBetweenImages';
 import type { DragType } from '@/shared/lib/dnd/dragDrop';
-import type { OnPrimaryStructureVideoInputChange } from '@/tools/travel-between-images/types/mediaHandlers';
-import {
-  handleTimelineStructureVideoSelect,
-  runDuplicateInterceptor,
-  runGenerationDropInterceptor,
-  runImageDropInterceptor,
-  useTimelineOrchestratorActions,
-} from './useTimelineOrchestratorActions';
+import { useTimelineOrchestratorActions } from './useTimelineOrchestratorActions';
 import { useModelSettings } from '@/tools/travel-between-images/providers';
 import { MODEL_DEFAULTS } from '@/tools/travel-between-images/settings';
 
@@ -54,29 +44,15 @@ interface TimelineOrchestratorDropHandlers {
 
 interface TimelineOrchestratorInteractionProps {
   setIsDragInProgress: (dragging: boolean) => void;
-  onImageDuplicate: (imageId: string, timelineFrame: number, nextTimelineFrame?: number) => void;
   readOnly?: boolean;
   isUploadingImage?: boolean;
   maxFrameLimit?: number;
   hasExistingTrailingVideo?: boolean;
 }
 
-interface TimelineOrchestratorStructureVideoConfig {
-  structureVideos?: StructureVideoConfigWithMetadata[];
-  primaryStructureVideo?: PrimaryStructureVideo;
-  onAddStructureVideo?: (video: StructureVideoConfigWithMetadata) => void;
-  onUpdateStructureVideo?: (index: number, updates: Partial<StructureVideoConfigWithMetadata>) => void;
-  onPrimaryStructureVideoInputChange?: OnPrimaryStructureVideoInputChange;
-}
-
-interface TimelineOrchestratorStructureVideoProps {
-  structureVideo?: TimelineOrchestratorStructureVideoConfig;
-}
-
 type UseTimelineOrchestratorProps = TimelineOrchestratorCoreProps &
   TimelineOrchestratorDropHandlers &
-  TimelineOrchestratorInteractionProps &
-  TimelineOrchestratorStructureVideoProps;
+  TimelineOrchestratorInteractionProps;
 
 interface UseTimelineOrchestratorReturn {
   refs: {
@@ -101,7 +77,6 @@ interface UseTimelineOrchestratorReturn {
   };
   pending: {
     pendingDropFrame: number | null;
-    pendingDuplicateFrame: number | null;
     pendingExternalAddFrame: number | null;
     activePendingFrame: number | null;
     isInternalDropProcessing: boolean;
@@ -129,25 +104,14 @@ interface UseTimelineOrchestratorReturn {
       thumbUrl: string | undefined,
       targetFrame?: number,
     ) => Promise<void>;
-    handleDuplicateInterceptor: (imageId: string, timelineFrame: number) => void;
     handleTapToMoveAction: (imageId: string, targetFrame: number) => Promise<void>;
     handleTapToMoveMultiAction: (imageIds: string[], targetFrame: number) => Promise<void>;
     handleTimelineTapToMove: (clientX: number) => void;
-    handleVideoBrowserSelect: (resource: Resource) => void;
-    handleEndpointMouseDown: (e: ReactMouseEvent, endpointId: string) => void;
-  };
-  endpoint: {
-    endpointDragFrame: number | null;
-    isEndpointDragging: boolean;
   };
   uiState: {
     resetGap: number;
     setResetGap: (value: number) => void;
     maxGap: number;
-    showVideoBrowser: boolean;
-    setShowVideoBrowser: (value: boolean) => void;
-    isUploadingStructureVideo: boolean;
-    setIsUploadingStructureVideo: (value: boolean) => void;
   };
   device: {
     isMobile: boolean;
@@ -166,26 +130,16 @@ export function useTimelineOrchestrator({
   onFileDrop,
   onGenerationDrop,
   setIsDragInProgress,
-  onImageDuplicate,
   readOnly = false,
   isUploadingImage = false,
   maxFrameLimit = 81,
-  structureVideo,
   hasExistingTrailingVideo = false,
 }: UseTimelineOrchestratorProps): UseTimelineOrchestratorReturn {
   const { selectedModel } = useModelSettings();
   const defaultFrameGap = MODEL_DEFAULTS[selectedModel]?.frames;
-  const {
-    structureVideos,
-    primaryStructureVideo,
-    onAddStructureVideo,
-    onUpdateStructureVideo,
-    onPrimaryStructureVideoInputChange,
-  } = structureVideo ?? {};
 
   const timelineRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const isEndpointDraggingRef = useRef(false);
 
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
@@ -196,8 +150,6 @@ export function useTimelineOrchestrator({
   const {
     pendingDropFrame,
     setPendingDropFrame,
-    pendingDuplicateFrame,
-    setPendingDuplicateFrame,
     pendingExternalAddFrame,
     isInternalDropProcessing,
     setIsInternalDropProcessing,
@@ -227,7 +179,7 @@ export function useTimelineOrchestrator({
   });
   const rawDimensions = getTimelineDimensions(
     framePositions,
-    [pendingDropFrame, pendingDuplicateFrame, pendingExternalAddFrame, trailingEffectiveEnd],
+    [pendingDropFrame, pendingExternalAddFrame, trailingEffectiveEnd],
   );
   const containerRect = containerRef.current?.getBoundingClientRect() || null;
 
@@ -260,13 +212,11 @@ export function useTimelineOrchestrator({
   const viewport = useTimelineViewportController({
     framePositions,
     pendingDropFrame,
-    pendingDuplicateFrame,
     pendingExternalAddFrame,
     imagesCount: images.length,
     hasExistingTrailingVideo,
     timelineRef,
     containerRef,
-    isEndpointDraggingRef,
     dragState,
     shotId,
     handleMouseMove,
@@ -282,11 +232,9 @@ export function useTimelineOrchestrator({
   const {
     handleImageDropInterceptor,
     handleGenerationDropInterceptor,
-    handleDuplicateInterceptor,
     handleTapToMoveAction,
     handleTapToMoveMultiAction,
     handleTimelineTapToMove,
-    handleVideoBrowserSelect,
   } = useTimelineOrchestratorActions({
     enableTapToMove,
     framePositions,
@@ -298,19 +246,10 @@ export function useTimelineOrchestrator({
     selectedIds,
     clearSelection,
     containerRef,
-    images,
-    onImageDuplicate,
-    setPendingDuplicateFrame,
     onFileDrop,
     setPendingDropFrame,
     onGenerationDrop,
     setIsInternalDropProcessing,
-    structureVideos,
-    primaryStructureVideo,
-    onAddStructureVideo,
-    onUpdateStructureVideo,
-    onPrimaryStructureVideoInputChange,
-    setShowVideoBrowser: uiState.setShowVideoBrowser,
     maxFrameLimit,
   });
 
@@ -319,25 +258,6 @@ export function useTimelineOrchestrator({
     onGenerationDrop: handleGenerationDropInterceptor,
     fullMin: viewport.fullMin,
     fullRange: viewport.fullRange,
-  });
-
-  const {
-    endpointDragFrame,
-    isEndpointDragging,
-    handleEndpointMouseDown,
-  } = useEndpointDrag({
-    readOnly,
-    fullMin: viewport.fullMin,
-    fullMax: viewport.fullMax,
-    fullRange: viewport.fullRange,
-    containerWidth: viewport.containerWidth,
-    maxFrameLimit,
-    dynamicPositions,
-    framePositions,
-    setFramePositions,
-    containerRef,
-    dragStartDimensionsRef: viewport.dragStartDimensionsRef,
-    isEndpointDraggingRef,
   });
 
   const currentPositions = dynamicPositions();
@@ -387,7 +307,6 @@ export function useTimelineOrchestrator({
     },
     pending: {
       pendingDropFrame,
-      pendingDuplicateFrame,
       pendingExternalAddFrame,
       activePendingFrame,
       isInternalDropProcessing,
@@ -402,16 +321,9 @@ export function useTimelineOrchestrator({
     actions: {
       handleImageDropInterceptor,
       handleGenerationDropInterceptor,
-      handleDuplicateInterceptor,
       handleTapToMoveAction,
       handleTapToMoveMultiAction,
       handleTimelineTapToMove,
-      handleVideoBrowserSelect,
-      handleEndpointMouseDown,
-    },
-    endpoint: {
-      endpointDragFrame,
-      isEndpointDragging,
     },
     uiState,
     device: {

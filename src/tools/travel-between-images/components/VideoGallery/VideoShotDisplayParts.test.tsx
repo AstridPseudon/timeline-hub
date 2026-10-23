@@ -25,19 +25,11 @@ vi.mock('@/shared/components/ui/button', () => ({
   ),
 }));
 
-vi.mock('@/shared/components/ui/input', () => ({
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
-}));
-
 vi.mock('@/shared/components/ui/tooltip', () => ({
   TooltipProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   Tooltip: ({ children }: { children: ReactNode }) => <div data-tooltip="true">{children}</div>,
   TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
   TooltipContent: ({ children }: { children: ReactNode }) => <>{children}</>,
-}));
-
-vi.mock('@/shared/components/media/HoverScrubVideo', () => ({
-  HoverScrubVideo: ({ src }: { src: string }) => <div data-testid="hover-scrub-video" data-src={src} />,
 }));
 
 vi.mock('@/shared/lib/media/mediaUrl', () => ({
@@ -66,77 +58,42 @@ function getTooltipButton(label: RegExp | string): HTMLButtonElement {
 }
 
 describe('VideoShotDisplayParts', () => {
-  it('renders editable shot metadata and forwards save/cancel interactions', () => {
-    const onEditableNameChange = vi.fn();
-    const onSaveName = vi.fn();
-    const onCancelEdit = vi.fn();
+  it('renders the shot name with its generation mode label', () => {
+    const { rerender } = render(<ShotMetadata displayName="Shot Alpha" generationMode="by-pair" />);
 
-    render(
-      <ShotMetadata
-        displayName="Shot Alpha"
-        isEditingName={true}
-        editableName="Shot Alpha"
-        onEditableNameChange={onEditableNameChange}
-        onSaveName={onSaveName}
-        onCancelEdit={onCancelEdit}
-      />,
-    );
+    expect(screen.getByRole('heading', { name: 'Shot Alpha' })).toBeInTheDocument();
+    expect(screen.getByText('pair')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
 
-    const input = screen.getByDisplayValue('Shot Alpha');
-    fireEvent.change(input, { target: { value: 'Shot Beta' } });
-    fireEvent.keyDown(input, { key: 'Enter' });
-    fireEvent.keyDown(input, { key: 'Escape' });
+    rerender(<ShotMetadata displayName="Shot Alpha" generationMode="timeline" />);
 
-    expect(onEditableNameChange).toHaveBeenCalledWith('Shot Beta');
-    expect(onSaveName).toHaveBeenCalledTimes(1);
-    expect(onCancelEdit).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('timeline')).toBeInTheDocument();
   });
 
-  it('forwards control-button callbacks when the shot is actionable and disables them while saving', () => {
+  it('forwards the generate-video callback when the shot is actionable and disables controls while saving', () => {
     const callbacks = {
       onVideoClick: vi.fn(),
-      onEditName: vi.fn(),
-      onDuplicate: vi.fn(),
-      onDuplicateWithVideos: vi.fn(),
-      onDelete: vi.fn(),
+      onToggleHidden: vi.fn(),
     };
 
     const { rerender } = render(
       <ShotControls
         isTempShot={false}
         displayImagesCount={2}
-        isEditingName={false}
-        dragHandleProps={{}}
-        dragDisabledReason={undefined}
-        duplicateIsPending={false}
-        duplicateWithVideosIsPending={false}
-        isHidden={true}
+        isHidden={false}
         {...callbacks}
       />,
     );
 
     fireEvent.click(getTooltipButton(/generate video/i));
-    fireEvent.click(getTooltipButton(/edit shot name/i));
-    fireEvent.click(getTooltipButton(/duplicate shot/i));
-    fireEvent.click(getTooltipButton(/duplicate with videos/i));
-    fireEvent.click(getTooltipButton(/delete shot/i));
 
     expect(callbacks.onVideoClick).toHaveBeenCalledTimes(1);
-    expect(callbacks.onEditName).toHaveBeenCalledTimes(1);
-    expect(callbacks.onDuplicate).toHaveBeenCalledTimes(1);
-    expect(callbacks.onDuplicateWithVideos).toHaveBeenCalledTimes(1);
-    expect(callbacks.onDelete).toHaveBeenCalledTimes(1);
 
     rerender(
       <ShotControls
         isTempShot={true}
         displayImagesCount={2}
-        isEditingName={false}
-        dragHandleProps={{}}
-        dragDisabledReason="Locked"
-        duplicateIsPending={false}
-        duplicateWithVideosIsPending={false}
-        isHidden={true}
+        isHidden={false}
         {...callbacks}
       />,
     );
@@ -147,14 +104,27 @@ describe('VideoShotDisplayParts', () => {
     });
   });
 
-  it('renders a hide toggle between duplicate and delete when hidden controls are provided', () => {
+  it('offers no rename, duplicate or delete controls on a shot card', () => {
+    render(
+      <ShotControls
+        isTempShot={false}
+        displayImagesCount={2}
+        isHidden={true}
+        onVideoClick={vi.fn()}
+        onToggleHidden={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByText(/edit shot name/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Duplicate shot' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Duplicate with videos' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/delete shot/i)).not.toBeInTheDocument();
+  });
+
+  it('renders a hide toggle that does not bubble to the card', () => {
     const callbacks = {
       onVideoClick: vi.fn(),
-      onEditName: vi.fn(),
-      onDuplicate: vi.fn(),
-      onDuplicateWithVideos: vi.fn(),
       onToggleHidden: vi.fn(),
-      onDelete: vi.fn(),
     };
     const parentClick = vi.fn();
 
@@ -163,23 +133,15 @@ describe('VideoShotDisplayParts', () => {
         <ShotControls
           isTempShot={false}
           displayImagesCount={2}
-          isEditingName={false}
-          dragHandleProps={{}}
-          dragDisabledReason={undefined}
-          duplicateIsPending={false}
-          duplicateWithVideosIsPending={false}
           isHidden={false}
           {...callbacks}
         />
       </div>,
     );
 
-    fireEvent.click(getTooltipButton(/duplicate shot/i));
     fireEvent.click(screen.getByRole('button', { name: /hide shot/i }));
 
-    expect(callbacks.onDuplicate).toHaveBeenCalledTimes(1);
     expect(callbacks.onToggleHidden).toHaveBeenCalledTimes(1);
-    expect(screen.queryByLabelText(/delete shot/i)).not.toBeInTheDocument();
     expect(parentClick).not.toHaveBeenCalled();
     expect(screen.getByText('Hide shot')).toBeInTheDocument();
 
@@ -188,11 +150,6 @@ describe('VideoShotDisplayParts', () => {
         <ShotControls
           isTempShot={false}
           displayImagesCount={2}
-          isEditingName={false}
-          dragHandleProps={{}}
-          dragDisabledReason={undefined}
-          duplicateIsPending={false}
-          duplicateWithVideosIsPending={false}
           isHidden={true}
           {...callbacks}
         />
@@ -201,108 +158,9 @@ describe('VideoShotDisplayParts', () => {
 
     expect(screen.getByLabelText('Unhide shot')).toBeInTheDocument();
     expect(screen.getByText('Unhide shot')).toBeInTheDocument();
-
-    fireEvent.click(getTooltipButton(/delete shot/i));
-    expect(callbacks.onDelete).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps normal duplicate and Duplicate with videos as distinct accessible controls', () => {
-    const callbacks = {
-      onVideoClick: vi.fn(),
-      onEditName: vi.fn(),
-      onDuplicate: vi.fn(),
-      onDuplicateWithVideos: vi.fn(),
-      onDelete: vi.fn(),
-    };
-
-    const { rerender } = render(
-      <ShotControls
-        isTempShot={false}
-        displayImagesCount={2}
-        isEditingName={false}
-        duplicateIsPending={false}
-        duplicateWithVideosIsPending={false}
-        isHidden={false}
-        {...callbacks}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: 'Duplicate shot' }));
-
-    expect(callbacks.onDuplicate).toHaveBeenCalledTimes(1);
-    expect(callbacks.onDuplicateWithVideos).not.toHaveBeenCalled();
-    expect(screen.getByText('Duplicate shot')).toBeInTheDocument();
-    expect(screen.getByText('Duplicate with videos')).toBeInTheDocument();
-
-    callbacks.onDuplicate.mockClear();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Duplicate with videos' }));
-
-    expect(callbacks.onDuplicate).not.toHaveBeenCalled();
-    expect(callbacks.onDuplicateWithVideos).toHaveBeenCalledTimes(1);
-
-    rerender(
-      <ShotControls
-        isTempShot={false}
-        displayImagesCount={2}
-        isEditingName={false}
-        duplicateIsPending={true}
-        duplicateWithVideosIsPending={false}
-        isHidden={false}
-        {...callbacks}
-      />,
-    );
-
-    expect(screen.getByRole('button', { name: 'Duplicate with videos' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Duplicate shot' })).toBeDisabled();
-
-    rerender(
-      <ShotControls
-        isTempShot={false}
-        displayImagesCount={2}
-        isEditingName={false}
-        duplicateIsPending={false}
-        duplicateWithVideosIsPending={true}
-        isHidden={false}
-        {...callbacks}
-      />,
-    );
-
-    expect(screen.getByRole('button', { name: 'Duplicate with videos' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Duplicate shot' })).not.toBeDisabled();
-  });
-
-  it('renders the final-video preview and toggles back to shot images', () => {
-    const onShowVideoChange = vi.fn();
-    const onFinalVideoLightboxOpen = vi.fn();
-
-    render(
-      <ShotPreview
-        displayImages={[createImage('img-1', '/one.png')]}
-        pendingUploads={0}
-        finalVideo={{ location: '/final.mp4', thumbnailUrl: '/thumb.jpg' } as never}
-        showVideo={true}
-        onShowVideoChange={onShowVideoChange}
-        projectAspectRatio="16:9"
-        dropLoadingState="idle"
-        onFinalVideoLightboxOpen={onFinalVideoLightboxOpen}
-        showMobileSelect={false}
-        isSelectedForAddition={false}
-        onSelectShotForAddition={vi.fn()}
-      />,
-    );
-
-    expect(screen.getByTestId('hover-scrub-video')).toHaveAttribute('data-src', '/final.mp4');
-
-    fireEvent.click(screen.getByTestId('hover-scrub-video').parentElement as HTMLElement);
-    fireEvent.click(screen.getByRole('button', { name: /shot images/i }));
-
-    expect(onFinalVideoLightboxOpen).toHaveBeenCalledTimes(1);
-    expect(onShowVideoChange).toHaveBeenCalledWith(false);
-  });
-
-  it('shows collapsed images, expands them, and surfaces final-video and select actions in image mode', () => {
-    const onShowVideoChange = vi.fn();
+  it('shows collapsed images, expands them, and surfaces the select action', () => {
     const onSelectShotForAddition = vi.fn();
 
     render(
@@ -314,12 +172,7 @@ describe('VideoShotDisplayParts', () => {
           createImage('img-4', '/four.png'),
         ]}
         pendingUploads={1}
-        finalVideo={{ location: '/final.mp4', thumbnailUrl: '/thumb.jpg' } as never}
-        showVideo={false}
-        onShowVideoChange={onShowVideoChange}
-        projectAspectRatio="1:1"
         dropLoadingState="loading"
-        onFinalVideoLightboxOpen={vi.fn()}
         showMobileSelect={true}
         isSelectedForAddition={false}
         onSelectShotForAddition={onSelectShotForAddition}
@@ -334,10 +187,8 @@ describe('VideoShotDisplayParts', () => {
     expect(screen.getAllByRole('img')).toHaveLength(4);
     expect(screen.getByRole('button', { name: /hide/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /final video/i }));
     fireEvent.click(screen.getByRole('button', { name: /select/i }));
 
-    expect(onShowVideoChange).toHaveBeenCalledWith(true);
     expect(onSelectShotForAddition).toHaveBeenCalledTimes(1);
   });
 });

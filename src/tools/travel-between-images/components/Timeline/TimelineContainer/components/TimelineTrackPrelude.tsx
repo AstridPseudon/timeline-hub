@@ -61,12 +61,10 @@ interface TimelineTrackPreludeProps {
     pairInfoWithPending: TimelinePairInfo[];
     localShotGenPositions: Map<string, number>;
     segmentSlots?: SegmentSlot[];
-    isSegmentsLoading?: boolean;
     hasPendingTask?: (pairShotGenerationId: string | null | undefined) => boolean;
     selectedOutputId?: string | null;
     onPairClick?: (pairIndex: number) => void;
     onOpenPairSettings?: (pairIndex: number) => void;
-    onTrailingEndFrameChange: (endFrame: number | undefined) => void;
     onTrailingVideoInfo: (videoUrl: string | null) => void;
     onFileDrop?: (files: File[], targetFrame?: number, handles?: Array<FileSystemFileHandle | null>) => Promise<void>;
     videoOutputs?: GenerationRow[];
@@ -81,10 +79,7 @@ interface TimelineTrackPreludeProps {
     | 'onRemoveStructureVideo'
     | 'primaryStructureVideo'
     | 'onPrimaryStructureVideoInputChange'
-  > & {
-    isUploadingStructureVideo: boolean;
-    setIsUploadingStructureVideo: (value: boolean) => void;
-  };
+  >;
   audio: {
     audioUrl?: string | null;
     audioMetadata?: { duration: number; name?: string } | null;
@@ -131,12 +126,10 @@ export const TimelineTrackPrelude: React.FC<TimelineTrackPreludeProps> = ({
     pairInfoWithPending,
     localShotGenPositions,
     segmentSlots,
-    isSegmentsLoading,
     hasPendingTask,
     selectedOutputId,
     onPairClick,
     onOpenPairSettings,
-    onTrailingEndFrameChange,
     onTrailingVideoInfo,
     videoOutputs,
   } = timeline;
@@ -153,7 +146,6 @@ export const TimelineTrackPrelude: React.FC<TimelineTrackPreludeProps> = ({
         const pendingIsLast = activePendingFrame !== null
           && realLastFrame !== undefined
           && activePendingFrame > realLastFrame;
-        const effectiveLastFrame = pendingIsLast ? activePendingFrame : realLastFrame;
         const resolvedSegmentSlots = segmentSlots ?? [];
         const hasTrailingSegment =
           Boolean(lastEntry)
@@ -179,7 +171,6 @@ export const TimelineTrackPrelude: React.FC<TimelineTrackPreludeProps> = ({
               containerWidth={layout.containerWidth}
               zoomLevel={layout.zoomLevel}
               segmentSlots={resolvedSegmentSlots}
-              isLoading={isSegmentsLoading}
               localShotGenPositions={localShotGenPositions}
               hasPendingTask={hasPendingTask}
               onOpenPairSettings={onPairClick ? onOpenPairSettings : undefined}
@@ -200,18 +191,6 @@ export const TimelineTrackPrelude: React.FC<TimelineTrackPreludeProps> = ({
                     endFrame: effectiveEndFrame,
                   };
                 })()
-                : undefined}
-              isMultiImage={isMultiImage}
-              lastImageFrame={effectiveLastFrame}
-              onAddTrailingSegment={realLastFrame !== undefined && lastEntry
-                ? () => {
-                  onTrailingEndFrameChange(realLastFrame + 17);
-                }
-                : undefined}
-              onRemoveTrailingSegment={isMultiImage && trailingEndFrame !== undefined
-                ? () => {
-                  onTrailingEndFrameChange(undefined);
-                }
                 : undefined}
               onTrailingVideoInfo={onTrailingVideoInfo}
             />
@@ -270,18 +249,6 @@ export const TimelineTrackPrelude: React.FC<TimelineTrackPreludeProps> = ({
               timelineFrameCount={images.length}
               readOnly={readOnly}
             />
-          ) : guidance.isUploadingStructureVideo ? (
-            <div
-              className="relative h-28 -mt-1 mb-3"
-              style={{
-                width: layout.zoomLevel > 1 ? `${layout.zoomLevel * 100}%` : '100%',
-                minWidth: '100%',
-              }}
-            >
-              <div className="absolute left-4 right-4 top-6 bottom-2 flex items-center justify-center bg-muted/50 dark:bg-muted-foreground/15 border border-border/30 rounded-sm">
-                <span className="text-xs text-muted-foreground font-medium">Uploading video...</span>
-              </div>
-            </div>
           ) : !readOnly ? (
             <GuidanceVideoUploader
               shotId={shotId}

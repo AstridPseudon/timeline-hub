@@ -149,7 +149,7 @@ export function GenerationsPaneControls({
                   placeholder="Search..."
                   value={filters.searchTerm}
                   onChange={(e) => filters.onSearchTermChange(e.target.value)}
-                  className="bg-transparent border-none outline-none text-base lg:text-xs w-20 sm:w-28 text-white placeholder-zinc-400 preserve-case"
+                  className="bg-transparent border-none outline-none text-base lg:text-xs w-20 sm:w-28 text-white placeholder-zinc-400"
                 />
                 <Button
                   variant="ghost"

@@ -9,20 +9,8 @@ const {
   normalizeAndPresentErrorMock: vi.fn(),
 }));
 
-vi.mock('@/pages/Home/HomePage', () => ({
-  default: () => <div data-testid="home-page" />,
-}));
 vi.mock('@/pages/ArtPage', () => ({
   default: () => <div data-testid="art-page" />,
-}));
-vi.mock('@/pages/PaymentSuccessPage', () => ({
-  default: () => <div data-testid="payment-success-page" />,
-}));
-vi.mock('@/pages/PaymentCancelPage', () => ({
-  default: () => <div data-testid="payment-cancel-page" />,
-}));
-vi.mock('@/pages/SharePage', () => ({
-  default: () => <div data-testid="share-page" />,
 }));
 vi.mock('@/tools/image-generation/pages/ImageGenerationToolPage', () => ({
   default: () => <div data-testid="image-generation-page" />,
@@ -116,16 +104,6 @@ describe('AppRoutes', () => {
     renderRoute(AppRoutes, '/home?source=guard#return', replaceDocument);
     await vi.waitFor(() => expect(replaceDocument).toHaveBeenCalledTimes(1));
     expect(replaceDocument).toHaveBeenCalledWith(window.location.origin + '/home?source=guard#return');
-    expect(screen.queryByTestId('home-page')).not.toBeInTheDocument();
-  });
-
-  it.each(['/', '/home'])('keeps a recognized %s callback in the legacy Home owner', async (path) => {
-    const AppRoutes = await loadRoutes();
-    const replaceDocument = vi.fn();
-    window.history.replaceState({}, '', `${path}#access_token=access&refresh_token=refresh`);
-    renderRoute(AppRoutes, path, replaceDocument);
-    expect(await screen.findByTestId('home-page')).toBeInTheDocument();
-    expect(replaceDocument).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -144,6 +122,17 @@ describe('AppRoutes', () => {
     expect(screen.getByTestId('default-tool-redirect')).toBeInTheDocument();
   });
 
+  it.each([
+    ['/tools/character-animate', 'character-animate-page'],
+    ['/tools/edit-video', 'edit-video-page'],
+    ['/tools/edit-images', 'edit-images-page'],
+    ['/tools/training-data-helper', 'training-data-helper-page'],
+  ])('keeps the %s tool route', async (path, testId) => {
+    const AppRoutes = await loadRoutes();
+    renderRoute(AppRoutes, path);
+    expect(await screen.findByTestId(testId)).toBeInTheDocument();
+  });
+
   it('renders the DEV extension harness through a Suspense boundary', async () => {
     const AppRoutes = await loadRoutes();
     renderRoute(AppRoutes, '/tools/video-editor/harness?scenario=populated&localTest=1');
@@ -152,8 +141,8 @@ describe('AppRoutes', () => {
 
   it('renders public routes outside the layout tree', async () => {
     const AppRoutes = await loadRoutes();
-    renderRoute(AppRoutes, '/payments/success');
-    expect(screen.getByTestId('payment-success-page')).toBeInTheDocument();
+    renderRoute(AppRoutes, '/blog');
+    expect(await screen.findByTestId('blog-list-page')).toBeInTheDocument();
   });
 
   it('renders unknown paths with the catch-all route', async () => {

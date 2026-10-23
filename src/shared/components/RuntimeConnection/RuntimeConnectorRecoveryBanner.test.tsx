@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RuntimeConnectorRecoveryBanner, buildWorkspaceRestartBrief } from './RuntimeConnectorRecoveryBanner';
 
@@ -7,12 +7,44 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('RuntimeConnectorRecoveryBanner overlay and quiet retry', () => {
+  it('renders in an overlay layer outside the editor, which stays mounted, and ignores Escape', () => {
+    const { container } = render(<div data-testid="editor"><RuntimeConnectorRecoveryBanner error={new Error('down')} onRetry={vi.fn()} /></div>);
+    expect(screen.getByTestId('editor')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="runtime-connector-alert"]')).toBeNull();
+    expect(screen.getByTestId('runtime-connector-alert')).toBeInTheDocument();
+    fireEvent.keyDown(document.body, { key: 'Escape' });
+    expect(screen.getByTestId('runtime-connector-alert')).toBeInTheDocument();
+  });
+
+  it('retries quietly every 3s with one in flight, and stops when the card goes away', async () => {
+    vi.useFakeTimers();
+    try {
+      let release: () => void = () => undefined;
+      const onRetry = vi.fn(() => new Promise<void>((resolve) => { release = resolve; }));
+      const view = render(<RuntimeConnectorRecoveryBanner error={new Error('down')} onRetry={onRetry} />);
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
+      expect(onRetry).toHaveBeenCalledTimes(1);
+      await act(async () => { await vi.advanceTimersByTimeAsync(6000); });
+      expect(onRetry).toHaveBeenCalledTimes(1);
+      await act(async () => { release(); await vi.advanceTimersByTimeAsync(3000); });
+      expect(onRetry).toHaveBeenCalledTimes(2);
+      view.unmount();
+      await act(async () => { await vi.advanceTimersByTimeAsync(9000); });
+      expect(onRetry).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
 describe('RuntimeConnectorRecoveryBanner', () => {
-  it('offers retry and both restart paths, with a truthful idle and retrying state', () => {
+  it('offers retry and both restart paths, with a truthful idle and retrying state', async () => {
     const onRetry = vi.fn();
     const view = render(<RuntimeConnectorRecoveryBanner retrying={false} error={new Error("Connection refused.")} onRetry={onRetry} />);
 
     expect(screen.getByRole('heading', { name: 'Workspace Runtime is unavailable' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Retry Runtime connection' })).toHaveFocus());
     expect(screen.getByTestId('workspace-connection-summary')).toHaveTextContent('The editor could not complete workspace discovery.');
     expect(screen.getByTestId('workspace-connection-diagnostic')).toHaveTextContent('Connection refused.');
     expect(screen.getByTestId('workspace-connection-diagnostic').closest('details')).not.toHaveAttribute('open');

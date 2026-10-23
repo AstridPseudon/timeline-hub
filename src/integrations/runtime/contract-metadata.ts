@@ -10,6 +10,8 @@ export const RUNTIME_PROTOCOL = PROTOCOL;
 export const RUNTIME_SCHEMA_DIGEST = SCHEMA_DIGEST;
 export const RUNTIME_ACCEPTED_SCHEMA_DIGESTS = [
   RUNTIME_SCHEMA_DIGEST,
+  // Before app-state: the Runtime without /v1/app-state stays compatible (the editor tour falls back to its local flag).
+  'sha256:53bc985a9ab3dba290c3d2a99c7837460f43c9bb0f0ef486d273eec3e2e44ed0',
   // Before the additive starting state: existing service health remains compatible.
   'sha256:d4b3e46ab6481694810561c7aac99e45356a24a04b08545e53a7257663f007c4',
   // Before service health was added: existing Runtime responses remain compatible.

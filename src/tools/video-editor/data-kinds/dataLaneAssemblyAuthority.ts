@@ -1,4 +1,4 @@
-// [CONVERGE-WITH-M1] Single assembly authority for the data-lane plane
+// Single assembly authority for the data-lane plane
 // (L6 #6). One module-level owner of segment fetches, keyed by
 // (loader identity source, timelineId): TimelineCanvas and PropertiesPanel
 // both consume `useDataLanes`, which delegates fetching here, so co-mounted

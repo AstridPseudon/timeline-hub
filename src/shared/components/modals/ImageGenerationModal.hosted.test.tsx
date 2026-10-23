@@ -25,7 +25,6 @@ vi.mock('@/shared/components/ImageGenerationForm', () => ({
 vi.mock('@/shared/lib/taskCreation', () => ({
   createImageGenerationTasks: (...args: unknown[]) => mockCreateImageGenerationTasks(...args),
 }));
-vi.mock('@/shared/hooks/settings/useApiKeys', () => ({ useApiKeys: () => ({ getApiKey: vi.fn() }) }));
 vi.mock('@/shared/contexts/ProjectContext', () => ({ useProjectSelectionContext: () => ({ selectedProjectId: 'proj-1' }) }));
 vi.mock('@/shared/hooks/tasks/useTaskPlaceholder', () => ({ useTaskPlaceholder: () => mockRun }));
 vi.mock('@/shared/components/ui/runtime/sonner', () => ({

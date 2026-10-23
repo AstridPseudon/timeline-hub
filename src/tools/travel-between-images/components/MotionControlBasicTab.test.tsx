@@ -76,42 +76,7 @@ vi.mock('@/domains/lora/components', () => ({
 }));
 
 vi.mock('@/shared/components/MotionPresetSelector/MotionPresetSectionHeader', () => ({
-  MotionPresetSectionHeader: ({
-    onBrowsePresets,
-  }: {
-    onBrowsePresets: () => void;
-  }) => (
-    <button type="button" onClick={onBrowsePresets}>
-      browse-presets
-    </button>
-  ),
-}));
-
-vi.mock('./SelectedPresetCard', () => ({
-  SelectedPresetCard: ({
-    presetId,
-    onSwitchToAdvanced,
-    onChangePreset,
-    onRemovePreset,
-  }: {
-    presetId: string;
-    onSwitchToAdvanced: () => void;
-    onChangePreset: () => void;
-    onRemovePreset: () => void;
-  }) => (
-    <div data-testid="selected-preset-card">
-      <span>{presetId}</span>
-      <button type="button" onClick={onSwitchToAdvanced}>
-        switch-to-advanced
-      </button>
-      <button type="button" onClick={onChangePreset}>
-        change-preset
-      </button>
-      <button type="button" onClick={onRemovePreset}>
-        remove-preset
-      </button>
-    </div>
-  ),
+  MotionPresetSectionHeader: () => <span>motion-preset-header</span>,
 }));
 
 describe('MotionControlBasicTab', () => {
@@ -128,7 +93,6 @@ describe('MotionControlBasicTab', () => {
       hasStructureVideo: false,
       smoothContinuations: true,
       onSmoothContinuationsChange: vi.fn(),
-      isSelectedPresetKnown: true,
       allPresets: [
         {
           id: '__builtin_default_vace__',
@@ -153,26 +117,18 @@ describe('MotionControlBasicTab', () => {
       builtinDefaultId: '__builtin_default_vace__',
       onPresetSelect: vi.fn(),
       onCustomClick: vi.fn(),
-      onOpenPresetModal: vi.fn(),
-      phaseConfig: { num_phases: 3 } as never,
-      onSwitchToAdvanced: vi.fn(),
-      onPhasePresetRemove: vi.fn(),
-      onAddLoraClick: vi.fn(),
       selectedLoras: [{ id: 'lora-1', path: '/lora', strength: 0.6 }] as never[],
       onRemoveLora: vi.fn(),
       onLoraStrengthChange: vi.fn(),
-      availableLoras: [] as never[],
       onAddTriggerWord: vi.fn(),
       renderLoraHeaderActions: () => <span>header-actions</span>,
       ...overrides,
     } satisfies React.ComponentProps<typeof MotionControlBasicTab>;
   }
 
-  it('renders presets, smooth continuations, and lora controls in the known-preset flow', () => {
+  it('renders presets, smooth continuations, and lora controls ', () => {
     const onPresetSelect = vi.fn();
     const onCustomClick = vi.fn();
-    const onOpenPresetModal = vi.fn();
-    const onAddLoraClick = vi.fn();
     const onSmoothContinuationsChange = vi.fn();
     const onAddTriggerWord = vi.fn();
 
@@ -181,15 +137,13 @@ describe('MotionControlBasicTab', () => {
         {...buildProps({
           onPresetSelect,
           onCustomClick,
-          onOpenPresetModal,
-          onAddLoraClick,
           onSmoothContinuationsChange,
           onAddTriggerWord,
         })}
       />,
     );
 
-    expect(screen.getByText('browse-presets')).toBeInTheDocument();
+    expect(screen.getByText('motion-preset-header')).toBeInTheDocument();
     expect(screen.getByText('Basic')).toBeInTheDocument();
     expect(screen.getByText('Orbit')).toBeInTheDocument();
     expect(screen.getByText('(default)')).toBeInTheDocument();
@@ -198,19 +152,15 @@ describe('MotionControlBasicTab', () => {
     expect(screen.getByTestId('active-loras-display')).toHaveTextContent('1');
     expect(screen.getByText('header-actions')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText('browse-presets'));
     fireEvent.click(screen.getByRole('button', { name: /Orbit/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Custom' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Add or manage LoRAs' }));
     fireEvent.click(screen.getByRole('button', { name: 'add-trigger-word' }));
     fireEvent.click(screen.getByLabelText('Smooth Continuations'));
 
-    expect(onOpenPresetModal).toHaveBeenCalledTimes(1);
     expect(onPresetSelect).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'preset-2' }),
     );
     expect(onCustomClick).toHaveBeenCalledTimes(1);
-    expect(onAddLoraClick).toHaveBeenCalledTimes(1);
     expect(onAddTriggerWord).toHaveBeenCalledWith('trigger-word');
     expect(onSmoothContinuationsChange).toHaveBeenCalledWith(false);
   });
@@ -236,35 +186,5 @@ describe('MotionControlBasicTab', () => {
         hasStructureVideo: true,
       }),
     );
-  });
-
-  it('renders the fallback selected-preset card when the preset is no longer known', () => {
-    const onSwitchToAdvanced = vi.fn();
-    const onOpenPresetModal = vi.fn();
-    const onPhasePresetRemove = vi.fn();
-
-    render(
-      <MotionControlBasicTab
-        {...buildProps({
-          generationTypeMode: 'i2v',
-          isSelectedPresetKnown: false,
-          selectedPhasePresetId: 'missing-preset',
-          onSwitchToAdvanced,
-          onOpenPresetModal,
-          onPhasePresetRemove,
-        })}
-      />,
-    );
-
-    expect(screen.getByTestId('selected-preset-card')).toHaveTextContent('missing-preset');
-    expect(screen.queryByLabelText('Smooth Continuations')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'switch-to-advanced' }));
-    fireEvent.click(screen.getByRole('button', { name: 'change-preset' }));
-    fireEvent.click(screen.getByRole('button', { name: 'remove-preset' }));
-
-    expect(onSwitchToAdvanced).toHaveBeenCalledTimes(1);
-    expect(onOpenPresetModal).toHaveBeenCalledTimes(1);
-    expect(onPhasePresetRemove).toHaveBeenCalledTimes(1);
   });
 });

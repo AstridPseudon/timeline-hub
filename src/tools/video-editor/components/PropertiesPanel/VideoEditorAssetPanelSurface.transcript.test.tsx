@@ -59,3 +59,15 @@ it('binds the rendering pack panel at the existing app host boundary with live i
   view.rerender(<TranscriptSurfaceHarness activePanelKey={null} />);
   expect(view.getByTestId('astrid-transcript-panel')).not.toBeVisible();
 });
+
+it('asks a rebuilt transcript host for the project transcripts again', async () => {
+  const host = await setupTranscriptHost();
+  state.store = host.store; state.view = host.view;
+  const view = render(<TranscriptSurfaceHarness />);
+  await waitFor(() => expect(view.getByText('No transcript for the media on this timeline yet.')).toBeTruthy());
+  // A new host starts empty; it can only fill its rows when the panel looks them up.
+  const rebuilt = { ...host.host, listProjectSources: vi.fn(async () => []) };
+  host.store.getState().syncOpsSlice({ ...host.store.getState().ops, transcriptHost: rebuilt });
+  view.rerender(<TranscriptSurfaceHarness />);
+  await waitFor(() => expect(rebuilt.listProjectSources).toHaveBeenCalled());
+});

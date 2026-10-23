@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs';
+import { extensionSettingsGroup } from '@/tools/video-editor/runtime/extensionSettingsBacking';
+import { getSettingsStore } from '@/shared/settings/instance';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -79,6 +81,13 @@ import type {
   ExtensionLifecycleEvent,
 } from '@/tools/video-editor/runtime/extensionStateRepository';
 
+/** What an extension's setting holds in the settings store, as JSON text (null when nothing is saved). */
+function savedExtensionSetting(extensionId: string, key: string): string | null {
+  const value = getSettingsStore().get({ group: extensionSettingsGroup(extensionId), field: key, default: undefined, validate: () => true });
+  return value === undefined ? null : JSON.stringify(value);
+}
+
+
 const fixtureAstridElementHost: import('@/tools/video-editor/runtime/astrid-element-host').AstridElementHost = { descriptors: [], sequenceRegistry: {}, resolveComponent: () => undefined, resolveSequenceClipEntry: () => undefined, describeClipCapability: () => undefined };
 
 const navigateMock = vi.fn();
@@ -158,13 +167,6 @@ vi.mock('@/shared/hooks/settings/useToolSettings', () => ({
     settings: {
       lastTimelineId: 'timeline-staged',
     },
-  }),
-}));
-
-vi.mock('@/tools/travel-between-images/hooks/video/useShotFinalVideos', () => ({
-  useShotFinalVideos: () => ({
-    finalVideoMap: new Map(),
-    isLoading: false,
   }),
 }));
 
@@ -797,7 +799,7 @@ describe('VideoEditorProvider', () => {
     const services: VideoEditorScopedServices = {
       contract: 'astrid.video-editor.scoped-services.v1',
       scope: { instanceId: 'editor-dialog', projectId: 'scoped-project', projectSlug: 'scoped-slug', timelineId: 'scoped-timeline' },
-      shots: { shots: [], isLoading: false, error: null, refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn(), canonicalThumbnailUrls: new Map([['occurrence-1', 'thumbnail.png']]) },
+      shots: { shots: [], isLoading: false, error: null, refetchShots: vi.fn(), canonicalThumbnailUrls: new Map([['occurrence-1', 'thumbnail.png']]) },
       mediaLightbox: { Lightbox: () => null, loadGenerationForLightbox: vi.fn(async () => null) },
       agentChat: { registerTimeline: vi.fn(), unregisterTimeline: vi.fn() },
       toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn(), info: vi.fn() },
@@ -921,7 +923,7 @@ describe('VideoEditorProvider', () => {
     const provider: DataProvider = { loadTimeline: vi.fn(), saveTimeline: vi.fn(), loadAssetRegistry: vi.fn(), resolveAssetUrl: vi.fn() };
     const services = (name: string, load: typeof fullLoad | typeof dialogLoad): VideoEditorScopedServices => ({
       contract: 'astrid.video-editor.scoped-services.v1', scope: { instanceId: name, projectId: 'same-project', timelineId: name },
-      shots: { shots: [], isLoading: false, error: null, refetchShots: vi.fn(), finalVideoMap: new Map(), dismissFinalVideo: vi.fn() },
+      shots: { shots: [], isLoading: false, error: null, refetchShots: vi.fn() },
       mediaLightbox: { Lightbox: () => null, loadGenerationForLightbox: load },
       agentChat: { registerTimeline: vi.fn(), unregisterTimeline: vi.fn() },
       toast: { error: toastError, success: vi.fn(), warning: vi.fn(), info: vi.fn() },
@@ -1525,7 +1527,7 @@ describe('VideoEditorProvider', () => {
     );
 
     expect(useEffectsMock).toHaveBeenCalledWith('user-1', { enabled: false });
-    expect(useResolvedEffectCatalogMock).toHaveBeenCalledWith('user-1', injectedCatalog);
+    expect(useResolvedEffectCatalogMock).toHaveBeenCalledWith(injectedCatalog);
   });
 
   it('cleans extension-owned effect records and command contributions on removal after HMR replacement', async () => {
@@ -1737,11 +1739,11 @@ describe('VideoEditorProvider', () => {
   });
 
   // -------------------------------------------------------------------------
-  // T1: Focused compatibility tests — extensions prop lifecycle
+  // Focused compatibility tests — extensions prop lifecycle
   // -------------------------------------------------------------------------
   // Prove the direct `extensions` prop activates, deactivates, and
   // unregisters provider-scoped command + media contributions when the
-  // extension list changes, and keep M1 example manifests loadable.
+  // extension list changes, and keep the example manifests loadable.
 
   it('activates, deactivates, and unregisters provider-scoped command + media (effect) contributions when the extensions prop changes', async () => {
     const provider: DataProvider = {
@@ -2385,7 +2387,7 @@ describe('VideoEditorProvider', () => {
   });
 
   // -------------------------------------------------------------------------
-  // T14: Host-owned provider/hook wiring — loader integration
+  // Host-owned provider/hook wiring — loader integration
   // -------------------------------------------------------------------------
   // Verify that repository state + direct local inputs resolve through the
   // ExtensionLoader into the existing `extensions` prop and diagnostics
@@ -2482,7 +2484,7 @@ describe('VideoEditorProvider', () => {
     expect(result.current.isResolving).toBe(false);
   });
 
-  // T9: No-repository fast path synthesizes truthful loaded package inventory entries
+  // No-repository fast path synthesizes truthful loaded package inventory entries
   it('synthesizes loaded packageStateEntries for direct host-supplied extensions', () => {
     const extensionId = 'com.t9.direct-inventory';
     const extension: AstridExtension = defineExtension({
@@ -2900,7 +2902,7 @@ describe('VideoEditorProvider', () => {
     expect(hookResult.current.diagnostics).toEqual([]);
     expect(hookResult.current.loaderResult).toBeNull();
 
-    // Use the hook result as the extensions prop — same pattern as T1 tests
+    // Use the hook result as the extensions prop — same pattern as the other tests
     let rendered = false;
 
     function CheckRender() {
@@ -2930,7 +2932,7 @@ describe('VideoEditorProvider', () => {
       expect(rendered).toBe(true);
     });
 
-    // The extension should be loadable (same pattern as M1 test)
+    // The extension should be loadable (same pattern as the earlier test)
     expect(extension.manifest.id).toBe(extensionId);
   });
 
@@ -3129,13 +3131,9 @@ describe('VideoEditorProvider', () => {
 
 
 
-  it('keeps the sprint 2 governance inventory markers in the checklist and allowlist', () => {
+  it('keeps the sprint 2 governance inventory markers in the checklist', () => {
     const checklist = readFileSync(
       join(process.cwd(), 'tasks/2026-05-03-video-editor-sprint2-ports-and-commands-checklist.md'),
-      'utf8',
-    );
-    const allowlist = readFileSync(
-      join(process.cwd(), 'eslint.supabase-facade-allowlist.js'),
       'utf8',
     );
 
@@ -3153,13 +3151,10 @@ describe('VideoEditorProvider', () => {
     for (const gestureOnlyHook of INTERNAL_GESTURE_TIMELINE_MUTATIONS) {
       expect(checklist).toContain(gestureOnlyHook);
     }
-    expect(allowlist).toContain('src/tools/video-editor/adapters/app/generationLookup.ts');
-    expect(allowlist).toContain('src/tools/video-editor/adapters/app/useAstridEffectsCatalog.ts');
-    expect(allowlist).toContain('src/tools/video-editor/adapters/app/variantPromotionLookup.ts');
   });
 
   // -------------------------------------------------------------------------
-  // M4: Diagnostic collection sync and cleanup parity with EditorRuntimeProvider
+  // Diagnostic collection sync and cleanup parity with EditorRuntimeProvider
   // -------------------------------------------------------------------------
   // Verify that VideoEditorProvider feeds diagnostics from lifecycle, command,
   // and effect registry sources into the diagnostic collection, and that
@@ -3320,7 +3315,7 @@ describe('VideoEditorProvider', () => {
   });
 
   // -------------------------------------------------------------------------
-  // M5/T2: Package state inventory propagation through VideoEditorProvider
+  // Package state inventory propagation through VideoEditorProvider
   // -------------------------------------------------------------------------
   // Prove that the provider carries packageStateInventory through
   // normalizeExtensionRuntime → extensionRuntime so consumers can read
@@ -3467,7 +3462,7 @@ describe('VideoEditorProvider', () => {
   });
 
   // -------------------------------------------------------------------------
-  // T15: Compatibility — direct extensions synchronize through the lifecycle host
+  // Compatibility — direct extensions synchronize through the lifecycle host
   // -------------------------------------------------------------------------
   // Prove that direct `extensions` prop inputs (no repository, no pack records,
   // no enablement state) still synchronize through the same provider-scoped
@@ -3584,7 +3579,7 @@ describe('VideoEditorProvider', () => {
   });
 
   // -------------------------------------------------------------------------
-  // M4: Extension settings surface via SchemaForm inside VideoEditorProvider
+  // Extension settings surface via SchemaForm inside VideoEditorProvider
   // -------------------------------------------------------------------------
 
   describe('VideoEditorProvider extension settings surface', () => {
@@ -3775,9 +3770,7 @@ describe('VideoEditorProvider', () => {
 
       // Verify the value was persisted to localStorage
       await waitFor(() => {
-        const raw = localStorage.getItem(
-          `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-        );
+        const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
         expect(raw).toBe('"my-secret-key"');
       });
 
@@ -3853,9 +3846,7 @@ describe('VideoEditorProvider', () => {
       // The save should have been blocked — SchemaForm validateAndFocus
       // returns false, so no localStorage write should have occurred
       await waitFor(() => {
-        const raw = localStorage.getItem(
-          `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-        );
+        const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
         // Should still be null (no save occurred)
         expect(raw).toBeNull();
       });
@@ -3924,9 +3915,7 @@ describe('VideoEditorProvider', () => {
       fireEvent.click(saveBtn);
 
       await waitFor(() => {
-        const raw = localStorage.getItem(
-          `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-        );
+        const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
         expect(raw).toBe('"some-key"');
       });
 
@@ -3938,9 +3927,7 @@ describe('VideoEditorProvider', () => {
 
       // Verify localStorage key was cleared and form reverted to default (empty)
       await waitFor(() => {
-        const raw = localStorage.getItem(
-          `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-        );
+        const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
         expect(raw).toBeNull();
       });
 
@@ -4007,9 +3994,7 @@ describe('VideoEditorProvider', () => {
       fireEvent.click(saveBtn);
 
       await waitFor(() => {
-        const raw = localStorage.getItem(
-          `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-        );
+        const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
         expect(raw).toBe('"saved-key"');
       });
 
@@ -4028,15 +4013,13 @@ describe('VideoEditorProvider', () => {
       });
 
       // localStorage should still have the saved value (not the unsaved change)
-      const raw = localStorage.getItem(
-        `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-      );
+      const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
       expect(raw).toBe('"saved-key"');
     });
 
-    // T17: Shared cleanup helper — diagnostics removal and settings UI state reset
+    // Shared cleanup helper — diagnostics removal and settings UI state reset
     // on disable/unload, preserving unrelated extension state.
-    it('disable clears targeted extension diagnostics and settings while preserving unrelated extension state', async () => {
+    it('disable clears the targeted extension diagnostics and keeps all saved extension settings (they live in the Runtime)', async () => {
       const OTHER_EXTENSION_ID = 'com.example.other.vp';
       const otherManifest = {
         id: OTHER_EXTENSION_ID as never,
@@ -4114,25 +4097,23 @@ describe('VideoEditorProvider', () => {
 
       // Both extensions' settings should be in localStorage
       expect(
-        localStorage.getItem(`astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`),
+        savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey'),
       ).toBe('"settings-key-vp"');
       expect(
-        localStorage.getItem(`astrid.ext.${OTHER_EXTENSION_ID}.otherKey`),
+        savedExtensionSetting(OTHER_EXTENSION_ID, 'otherKey'),
       ).toBe('"other-key-vp"');
 
       // Disable the settings extension (remove from props)
       rerender(<Host includeSettings={false} />);
 
-      await waitFor(() => {
-        // Targeted extension's settings localStorage must be cleared
-        expect(
-          localStorage.getItem(`astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`),
-        ).toBeNull();
-      });
+      // The targeted extension's saved settings are kept: only uninstall or reset erases them.
+      expect(
+        savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey'),
+      ).toBe('"settings-key-vp"');
 
       // Unrelated extension's settings localStorage must be preserved
       expect(
-        localStorage.getItem(`astrid.ext.${OTHER_EXTENSION_ID}.otherKey`),
+        savedExtensionSetting(OTHER_EXTENSION_ID, 'otherKey'),
       ).toBe('"other-key-vp"');
 
       // Targeted extension's diagnostics must be cleared
@@ -4313,7 +4294,7 @@ describe('VideoEditorProvider render-boundary recovery', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T22: Focused per-registry scoped cleanup tests
+// Focused per-registry scoped cleanup tests
 // ---------------------------------------------------------------------------
 // These tests verify that each lifecycle-owned contribution registry
 // (effects, transitions, clip-types) correctly scopes cleanup to only the

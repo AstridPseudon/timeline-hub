@@ -1,5 +1,5 @@
 import type { EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
-import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
+import type { TimelinePatch, TimelinePatchOperation } from '@/sdk/video/timeline/patch.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
 import { equal, freezeJson } from './clipMovePrimitives.ts';
 import type { JsonObject } from './types.ts';
@@ -25,10 +25,11 @@ export function clipScalarPreview(clipId: string, args: ClipScalarArgs): Timelin
     || Object.prototype.hasOwnProperty.call(args.values, 'elementRef');
   // `elementRef` is a local preview-only clear paired with a transition clear;
   // the public patch contract intentionally exposes only executable leaves.
-  const clear = [...args.clear] as unknown as TimelinePatch['operations'][number]['clear'];
   return { version: 1, operations: [{
     op: 'clip.update', target: clipId, payload: structuredClone(args.values),
-    ...(args.clear.length || !transitionSet ? { clear } : {}),
+    ...(args.clear.length || !transitionSet
+      ? { clear: [...args.clear] as unknown as TimelinePatchOperation['clear'] }
+      : {}),
   }] };
 }
 

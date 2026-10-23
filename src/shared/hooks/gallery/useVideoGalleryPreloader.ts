@@ -84,8 +84,7 @@ export const useVideoGalleryPreloader = (options?: {
 
     try {
       // Document-derived image rows for the shot (placement read model merged
-      // with bridge gallery rows). Gallery-recency ordering matches the sort
-      // the retired shot_generations junction query used.
+      // with bridge gallery rows). Newest first, the order the gallery shows.
       const rows = sortPlacementRowsNewestFirst(
         await fetchShotPlacementImages(selectedProjectId, shotId),
       );

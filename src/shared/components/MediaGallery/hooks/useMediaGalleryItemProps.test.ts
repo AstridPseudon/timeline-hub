@@ -6,12 +6,10 @@ function buildParams(overrides: Record<string, unknown> = {}) {
   return {
     simplifiedShotOptions: [{ id: 'shot-1', name: 'Shot 1' }],
     currentViewingShotId: 'shot-1',
-    onCreateShot: vi.fn(),
     onAddToLastShot: vi.fn(),
     onAddToLastShotWithoutPosition: vi.fn(),
     showDelete: true,
     showDownload: true,
-    showShare: false,
     showStar: true,
     showAddToShot: true,
     enableSingleClick: false,
@@ -63,7 +61,6 @@ describe('useMediaGalleryItemProps', () => {
       selectedShotIdLocal: 'shot-1',
       simplifiedShotOptions: [{ id: 'shot-1', name: 'Shot 1' }],
       setLastAffectedShotId: params.onShotChange,
-      onCreateShot: params.onCreateShot,
       onAddToLastShot: params.onAddToLastShot,
       onAddToLastShotWithoutPosition: params.onAddToLastShotWithoutPosition,
     }));

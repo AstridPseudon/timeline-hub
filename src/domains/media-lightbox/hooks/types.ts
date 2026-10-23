@@ -1,10 +1,8 @@
 import type { RefObject } from 'react';
-import type { UseMutationResult } from '@tanstack/react-query';
 import type { GenerationRow } from '@/domains/generation/types';
 import type { DerivedItem } from '@/domains/generation/hooks/useDerivedItems';
 import type { GenerationVariant } from '@/shared/hooks/variants/useVariants';
-import type { QuickCreateSuccess, LightboxDeleteHandler, LightboxShotWorkflowProps } from '../types';
-import type { SourceVariantData } from './useSourceGeneration';
+import type { LightboxDeleteHandler, LightboxShotWorkflowProps } from '../types';
 import type { useSwipeNavigation as UseSwipeNavigationType } from './useSwipeNavigation';
 
 /** Core media and project context */
@@ -65,7 +63,6 @@ export interface UseSharedLightboxStateInput {
   layout: SharedLightboxLayoutProps;
   actions: SharedLightboxButtonGroupProps;
   media: SharedLightboxMediaProps;
-  starred?: boolean;
   onOpenExternalGeneration?: (generationId: string, derivedContext?: string[]) => Promise<void>;
 }
 
@@ -79,15 +76,7 @@ export interface LightboxButtonGroupProps {
     isDeleting?: string | null;
     onClose: () => void;
   };
-  bottomLeft: {
-    localStarred: boolean;
-    handleToggleStar: () => void;
-    toggleStarPending: boolean;
-  };
   bottomRight: {
-    isAddingToReferences: boolean;
-    addToReferencesSuccess: boolean;
-    handleAddToReferences: () => Promise<void>;
     handleAddToJoin?: () => void;
     isAddingToJoin?: boolean;
     addToJoinSuccess?: boolean;
@@ -105,15 +94,6 @@ export interface UseSharedLightboxStateReturn {
     refetch: () => void;
     setPrimaryVariant: (id: string) => Promise<void>;
     deleteVariant: (id: string) => Promise<void>;
-    isViewingNonPrimaryVariant: boolean;
-    promoteSuccess: boolean;
-    isPromoting: boolean;
-    handlePromoteToGeneration: (variantId: string) => Promise<void>;
-    handleAddVariantAsNewGenerationToShot: (
-      shotId: string,
-      variantId: string,
-      currentTimelineFrame?: number,
-    ) => Promise<boolean>;
   };
   intendedActiveVariantIdRef: RefObject<string | null>;
   navigation: {
@@ -121,16 +101,7 @@ export interface UseSharedLightboxStateReturn {
     activateClickShield: () => void;
     swipeNavigation: ReturnType<typeof UseSwipeNavigationType>;
   };
-  star: {
-    localStarred: boolean;
-    setLocalStarred: (v: boolean) => void;
-    toggleStarMutation: UseMutationResult<void, Error, { id: string; starred: boolean; projectId: string; shotId?: string }>;
-    handleToggleStar: () => void;
-  };
   references: {
-    isAddingToReferences: boolean;
-    addToReferencesSuccess: boolean;
-    handleAddToReferences: () => Promise<void>;
     isAddingToJoin: boolean;
     addToJoinSuccess: boolean;
     handleAddToJoin: () => void;
@@ -149,21 +120,6 @@ export interface UseSharedLightboxStateReturn {
     isAlreadyAssociatedWithoutPosition: boolean;
     handleAddToShot: () => Promise<void>;
     handleAddToShotWithoutPosition: () => Promise<void>;
-    isCreatingShot: boolean;
-    quickCreateSuccess: QuickCreateSuccess;
-    handleQuickCreateAndAdd: () => Promise<void>;
-    handleVisitCreatedShot: () => void;
-  };
-  sourceGeneration: {
-    data: GenerationRow | null;
-    primaryVariant: SourceVariantData | null;
-  };
-  makeMainVariant: {
-    canMake: boolean;
-    canMakeFromChild: boolean;
-    canMakeFromVariant: boolean;
-    isMaking: boolean;
-    handle: () => Promise<void>;
   };
   effectiveMedia: {
     videoUrl: string | undefined;

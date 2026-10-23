@@ -89,6 +89,7 @@ describe('buildSubmissionTaskParams', () => {
       generationSource: 'by-reference' as const,
       styleReferenceImageGeneration: 'https://cdn.example.com/style.png',
       referenceMode: 'style' as const,
+      imagesPerPrompt: 3,
     };
 
     const prompts = [
@@ -96,7 +97,7 @@ describe('buildSubmissionTaskParams', () => {
       { id: 'p2', fullPrompt: '   ' },
     ];
 
-    const result = buildSubmissionTaskParams(ctx, prompts, { imagesPerPromptOverride: 3 });
+    const result = buildSubmissionTaskParams(ctx, prompts);
 
     expect(buildReferenceParamsSpy).toHaveBeenCalledWith('by-reference', expect.objectContaining({
       styleReferenceImageGeneration: 'https://cdn.example.com/style.png',

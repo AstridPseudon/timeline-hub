@@ -61,10 +61,19 @@ describe('AuthGate', () => {
   it('hosted build, still booting: shows the connecting state, not a blank page', () => {
     auth.isLoading = true;
     connectionRef.value = connectionFor({ status: 'connecting' }, { isBooting: true });
-    renderGate('/tools/video-editor');
+    renderGate('/share/abc');
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'connecting');
     expect(screen.queryByText('app')).not.toBeInTheDocument();
+  });
+
+  it('hosted build, still booting on a workspace route: hands over to the connection gate beneath, which draws the same screen', () => {
+    auth.isLoading = true;
+    connectionRef.value = connectionFor({ status: 'connecting' }, { isBooting: true });
+    renderGate('/tools/video-editor', <p>connection gate</p>);
+
+    expect(screen.getByText('connection gate')).toBeInTheDocument();
+    expect(screen.queryByTestId('runtime-not-connected')).not.toBeInTheDocument();
   });
 
   it('same-origin build, still loading: renders nothing', () => {

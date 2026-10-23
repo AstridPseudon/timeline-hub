@@ -98,7 +98,7 @@ function extractStructureSettings(taskData: TaskData): ExtractedStructureVideoSe
 }
 
 export const extractSettings = (taskData: TaskData): ExtractedSettings => {
-  // Cast to permissive record for dynamic property access from Supabase JSON
+  // Cast to permissive record for dynamic property access from stored JSON
   const params = taskData.params as Record<string, unknown>;
   const orchestrator = taskData.orchestrator as Record<string, unknown>;
   const structure = extractStructureSettings(taskData);

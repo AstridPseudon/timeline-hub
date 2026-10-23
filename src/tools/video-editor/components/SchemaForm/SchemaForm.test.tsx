@@ -485,7 +485,7 @@ describe('unsupported types', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Unsupported schema shapes (M4 T10)
+// Unsupported schema shapes
 // ---------------------------------------------------------------------------
 
 describe('unsupported schema shapes', () => {
@@ -1144,7 +1144,7 @@ describe('StandardSchema support', () => {
   });
 
   it('marks required fields correctly', () => {
-    // Required is tracked internally but doesn't change rendering (no visual indicator in M2)
+    // Required is tracked internally but doesn't change rendering (no visual indicator)
     const standardSchema = {
       type: 'object' as const,
       properties: {
@@ -1264,7 +1264,7 @@ describe('edge cases', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Primitive constraints (M4 hardening)
+// Primitive constraints
 // ---------------------------------------------------------------------------
 
 describe('primitive constraints', () => {
@@ -1612,7 +1612,7 @@ describe('primitive constraints', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Accessibility metadata (M4)
+// Accessibility metadata
 // ---------------------------------------------------------------------------
 
 describe('accessibility metadata', () => {
@@ -1891,7 +1891,7 @@ describe('accessibility metadata', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Save-with-errors focus behavior (M4)
+// Save-with-errors focus behavior
 // ---------------------------------------------------------------------------
 
 describe('save-with-errors focus behavior', () => {

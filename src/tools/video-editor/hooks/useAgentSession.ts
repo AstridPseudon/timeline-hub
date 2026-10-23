@@ -1,6 +1,6 @@
 import { refreshProjectElementContext } from '../runtime/admitted-elements';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { AcpModelCatalog, ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
+import { type AcpModelCatalog, type ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
@@ -166,34 +166,6 @@ function textFromContent(value: unknown): string {
   if (record.content !== undefined) return textFromContent(record.content);
   if (record.title && typeof record.title === 'string') return record.title;
   return '';
-}
-
-const ELEMENT_OPERATION_MARKER = /<astrid_element_operation>\s*([\s\S]*?)\s*<\/astrid_element_operation>/g;
-
-export type AstridElementOperationExtraction = {
-  visibleContent: string;
-  operations: readonly unknown[];
-  parseErrors: readonly string[];
-};
-
-/**
- * ACP remains the conversational surface, while the host-owned marker is the
- * narrow machine boundary for Elements edits. Keeping it in the assistant
- * turn means the model can still explain its work, but the host never has to
- * scrape shell commands or guess whether prose describes a completed edit.
- */
-export function extractAstridElementOperations(content: string): AstridElementOperationExtraction {
-  const operations: unknown[] = [];
-  const parseErrors: string[] = [];
-  const visibleContent = content.replace(ELEMENT_OPERATION_MARKER, (_match, payload: string) => {
-    try {
-      operations.push(JSON.parse(payload));
-    } catch (error) {
-      parseErrors.push(error instanceof Error ? error.message : String(error));
-    }
-    return '';
-  }).trim();
-  return { visibleContent, operations, parseErrors };
 }
 
 /** Keep the transport context model-visible but hide it from the chat UI. */
@@ -1067,7 +1039,7 @@ function hasActiveProjectAgentTurn(queryClient: QueryClient, projectId: string):
 export function useAgentSessions(timelineId: string | null | undefined, projectId?: string | null) {
   return useQuery({
     queryKey: agentSessionsQueryKey(timelineId, projectId),
-    enabled: Boolean(projectId),
+    enabled: Boolean(projectId) && isTimelineAgentSessionsAvailable(),
     queryFn: () => agentStore.list(projectId),
     refetchInterval: 5_000,
     retry: false,
@@ -1075,7 +1047,7 @@ export function useAgentSessions(timelineId: string | null | undefined, projectI
 }
 
 export const projectChatQueryKey = (projectId: string | null | undefined) => ['project-agent-chat', projectId ?? null] as const;
-export const unassignedProjectSessionsQueryKey = (projectId: string | null | undefined) => ['project-agent-chat-unassigned', projectId ?? null] as const;
+const unassignedProjectSessionsQueryKey = (projectId: string | null | undefined) => ['project-agent-chat-unassigned', projectId ?? null] as const;
 
 // Association/selection and draft revisions advance independently. A delayed
 // draft reply must not undo a newer selected session, or vice versa.
@@ -1236,7 +1208,7 @@ export function useProjectAgentTaskLinks(projectId: string | null | undefined) {
   const queryClient = useQueryClient();
   return useQuery<AgentTaskLink[]>({
     queryKey: ['project-agent-task-links', projectId ?? null],
-    enabled: Boolean(projectId) && isTimelineAgentSessionsAvailable(),
+    enabled: Boolean(projectId),
     queryFn: async () => {
       const sessions = await agentStore.list(projectId);
       const links: AgentTaskLink[] = [];

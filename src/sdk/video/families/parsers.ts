@@ -14,7 +14,7 @@
 import type { ContributionId } from '../../ids';
 
 /**
- * M6: A parser contribution declared in an extension manifest.
+ * A parser contribution declared in an extension manifest.
  *
  * Parsers enrich asset metadata during ingestion.  The contribution declares
  * accepted MIME types, file extensions, max size, and whether the parser is

@@ -640,7 +640,7 @@ export function isMetadataFieldPresent(
 }
 
 // ---------------------------------------------------------------------------
-// M6: Search provider result integration
+// Search provider result integration
 // ---------------------------------------------------------------------------
 
 // Re-export SDK types used by consumers

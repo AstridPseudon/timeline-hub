@@ -1,5 +1,5 @@
 /**
- * M10: Agent tool invocation service — bridges registry invocation with
+ * Agent tool invocation service — bridges registry invocation with
  * host-owned ProposalRuntime.create() for timeline-editing results.
  *
  * This service is the canonical frontend invocation path. It ensures that
@@ -9,7 +9,6 @@
  * and TimelineOps flows.
  *
  * @module agentToolInvocationService
- * @milestone M10
  */
 
 import type {
@@ -148,7 +147,7 @@ type PromotionOutcome = {
  * Returns the original ref unchanged (with diagnostics) when required
  * provenance is absent or when the ref is a placeholder.
  *
- * @public M3c — exported for session-hook promotion wiring.
+ * @public — exported for session-hook promotion wiring.
  */
 export function promoteArtifactRef(
   ref: ToolArtifactRef,
@@ -273,8 +272,8 @@ export function promoteArtifactRef(
 /**
  * Promote a batch of {@link ToolArtifactRef}s to durable records.
  *
- * This is the canonical entry point for session-hook promotion wiring
- * (M3c).  It delegates to {@link promoteArtifactRef} for each ref and
+ * This is the canonical entry point for session-hook promotion wiring.
+ * It delegates to {@link promoteArtifactRef} for each ref and
  * collects all diagnostics.
  *
  * @param refs - The refs to promote.
@@ -282,7 +281,7 @@ export function promoteArtifactRef(
  *   {@link ToolArtifactPromotionEvidence.producer} is absent.
  * @returns The promoted refs and any promotion diagnostics.
  *
- * @public M3c
+ * @public
  */
 export function promoteMaterialArtifactBatch(
   refs: readonly ToolArtifactRef[],

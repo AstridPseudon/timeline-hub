@@ -91,8 +91,8 @@ export function useVariantBadges(
         return { derivedCounts: {}, hasUnviewedVariants: {}, unviewedVariantCounts: {} };
       }
 
-      // R12 summary rows carry variant_count per generation. Per-variant
-      // viewed_at exists only on R13 detail, so the unviewed NEW-badge fields
+      // Gallery summary rows carry variant_count per generation. Per-variant
+      // viewed_at exists only on generation detail, so the unviewed NEW-badge fields
       // degrade to zero until a bulk read lands (deferred in the inventory).
       const derivedCounts: Record<string, number> = {};
       const pending = new Set<string>(generationIds);
@@ -127,8 +127,8 @@ export function useVariantBadges(
   // Only treat as loading when we have NO data yet (initial load or new page of IDs).
   // Deliberately exclude isFetching: background refetches (triggered by realtime
   // variants-changed invalidation, window focus, etc.) set isFetching=true while
-  // keeping the old cached data available. Including isFetching here was causing
-  // badges to be stripped on every task completion event.
+  // keeping the old cached data available. Including isFetching here would strip
+  // badges on every task completion event.
   const isEffectivelyLoading = isLoading || !data;
 
   const getBadgeData = useCallback((generationId: string): VariantBadgeData => {

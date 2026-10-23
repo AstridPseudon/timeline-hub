@@ -7,7 +7,6 @@ interface UseReferenceSelectionProps {
   selectedReferenceId: string | null;
   hydratedReferences: HydratedReferenceImage[];
   isLoadingProjectSettings: boolean;
-  isLoadingReferences: boolean;
 }
 
 interface UseReferenceSelectionReturn {
@@ -38,7 +37,6 @@ export function useReferenceSelection(props: UseReferenceSelectionProps): UseRef
     selectedReferenceId,
     hydratedReferences,
     isLoadingProjectSettings,
-    isLoadingReferences,
   } = props;
 
   const fallbackCache = useRef<FallbackCache>(null);
@@ -92,7 +90,7 @@ export function useReferenceSelection(props: UseReferenceSelectionProps): UseRef
 
   const isReferenceDataLoading =
     hydratedReferences.length === 0 &&
-    (((isLoadingProjectSettings || isLoadingReferences) && !hasEnoughReferences) ||
+    ((isLoadingProjectSettings && !hasEnoughReferences) ||
       selectionPendingValidation);
 
   return {

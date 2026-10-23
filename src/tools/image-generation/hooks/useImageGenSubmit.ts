@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { createImageGenerationTasks } from '@/shared/lib/taskCreation';
 import type { BatchImageGenerationTaskParams } from '@/shared/types/imageGeneration';
-import { useApiKeys } from '@/features/settings/hooks/useApiKeys';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { composeDisabledReason } from '@/shared/components/RuntimeConnection/copy.ts';
@@ -22,14 +21,13 @@ interface UseImageGenSubmitParams {
  * would cause double-counting in the TasksPane.
  *
  * On the hosted build (a gateway origin is configured) the composer route is not served: the form's
- * controls are disabled with CP3's line, and `handleNewGenerate` shows that line and sends nothing.
+ * controls are disabled with the same line, and `handleNewGenerate` shows that line and sends nothing.
  */
 export function useImageGenSubmit({
   projectId,
   effectiveProjectId,
 }: UseImageGenSubmitParams) {
   const queryClient = useQueryClient();
-  const { getApiKey } = useApiKeys();
 
   const handleNewGenerate = useCallback(async (taskParams: BatchImageGenerationTaskParams): Promise<string[]> => {
     const disabledReason = composeDisabledReason();
@@ -62,10 +60,7 @@ export function useImageGenSubmit({
     }
   }, [projectId, effectiveProjectId, queryClient]);
 
-  const openaiApiKey = getApiKey('openai_api_key');
-
   return {
     handleNewGenerate,
-    openaiApiKey,
   };
 }

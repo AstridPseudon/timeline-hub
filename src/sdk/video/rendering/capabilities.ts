@@ -1,7 +1,7 @@
 /**
  * Shader materializer capability contracts — portable public contracts.
  *
- * Representative render-relevant family boundary (M0 sanity check):
+ * Representative render-relevant family boundary (sanity check):
  * - Portable: scope identifiers, blocker messages, and requirement shapes.
  *   These are pure data / string helpers; they carry no WebGL context,
  *   no materializer runtime, and no host renderer state.

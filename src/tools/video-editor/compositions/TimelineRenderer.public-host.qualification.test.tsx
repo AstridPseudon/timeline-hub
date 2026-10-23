@@ -393,7 +393,6 @@ describe('V009 public host behavior qualification', () => {
     const root = process.cwd();
     const routes = readFileSync(path.join(root, 'src/app/routes.tsx'), 'utf8');
     const main = readFileSync(path.join(root, 'src/app/main.tsx'), 'utf8');
-    const home = readFileSync(path.join(root, 'src/pages/Home/HomePage.tsx'), 'utf8');
     const publicBootstrap = readFileSync(path.join(root, 'src/app/publicBootstrap.tsx'), 'utf8');
     const publicShell = readFileSync(path.join(root, 'src/pages/Home/PublicAstridShell.tsx'), 'utf8');
     const mountedEditor = readFileSync(path.join(root, 'src/pages/Home/PublicAstridMountedEditor.tsx'), 'utf8');
@@ -406,7 +405,7 @@ describe('V009 public host behavior qualification', () => {
     // The public document stays separate because main returns from this branch
     // before importing app bootstrap and its route graph.
     const publicBranchStart = main.indexOf("if (owner === 'public')");
-    const appBranchStart = main.indexOf('loadInstalledAppTypography();', publicBranchStart);
+    const appBranchStart = main.indexOf('await startApp(rootElement);', publicBranchStart);
     expect(publicBranchStart).toBeGreaterThanOrEqual(0);
     expect(appBranchStart).toBeGreaterThan(publicBranchStart);
     const publicBranch = main.slice(publicBranchStart, appBranchStart);
@@ -420,8 +419,7 @@ describe('V009 public host behavior qualification', () => {
     expect(publicBootstrap).not.toMatch(/['"]@\/(?:app\/(?:bootstrap|routes)|tools\/travel-between-images\/pages\/VideoTravelToolPage)(?:\.tsx?)?['"]/);
     expect(main).toContain("@/tools/video-editor/browser/initializeVideoEditorExtensionRuntime.ts");
     expect(main).not.toMatch(/from\s+['"]@\/tools\/video-editor\/browser(?:\/index(?:\.[cm]?[jt]sx?)?)?['"]/);
-    expect(routes).toContain('<HomeDocumentHandoff replaceDocument={replaceDocument} />');
-    expect(home).not.toContain('PublicAstridQualificationSurface');
+    expect(routes).toContain('<HomeDocumentHandoff replaceDocument={homeDocumentReplacement} />');
     expect(publicShell).not.toContain('PublicAstridQualificationSurface');
     expect(publicShell).toContain('./PublicAstridMountedEditor.tsx');
     expect(mountedEditor).toContain('<PublicAstridEditorProvider example={example}');

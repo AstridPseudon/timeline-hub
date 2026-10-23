@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
-import type { PromptEntry, PromptMode } from '../../types';
+import type { PromptEntry } from '../../types';
 import type { PromptManagementInput, PromptRoutingResult } from './types';
 import { usePromptTextRouting } from './usePromptTextRouting';
 
@@ -10,10 +9,6 @@ type PromptRoutingInput = Pick<
   | 'shotPromptSettings'
   | 'noShotPrompts'
   | 'setNoShotPrompts'
-  | 'noShotMasterPrompt'
-  | 'setNoShotMasterPrompt'
-  | 'promptMode'
-  | 'setPromptMode'
   | 'beforeEachPromptText'
   | 'setBeforeEachPromptText'
   | 'afterEachPromptText'
@@ -30,10 +25,6 @@ export function usePromptRouting(input: PromptRoutingInput): PromptRoutingResult
     shotPromptSettings,
     noShotPrompts,
     setNoShotPrompts,
-    noShotMasterPrompt,
-    setNoShotMasterPrompt,
-    promptMode,
-    setPromptMode,
     beforeEachPromptText,
     setBeforeEachPromptText,
     afterEachPromptText,
@@ -69,57 +60,6 @@ export function usePromptRouting(input: PromptRoutingInput): PromptRoutingResult
     [associatedShotId, shotPromptSettings, markAsInteracted, setNoShotPrompts]
   );
 
-  const masterPromptText = useMemo(() => {
-    if (!associatedShotId) {
-      return noShotMasterPrompt;
-    }
-
-    return isShotSettingsReady ? shotPromptSettings.settings.masterPrompt || '' : '';
-  }, [associatedShotId, isShotSettingsReady, shotPromptSettings.settings.masterPrompt, noShotMasterPrompt]);
-
-  const setMasterPromptText: Dispatch<SetStateAction<string>> = useCallback(
-    (newTextOrUpdater) => {
-      if (associatedShotId) {
-        const currentText = shotPromptSettings.settings.masterPrompt || '';
-        const newText =
-          typeof newTextOrUpdater === 'function'
-            ? newTextOrUpdater(currentText)
-            : newTextOrUpdater;
-
-        shotPromptSettings.updateField('masterPrompt', newText);
-        markAsInteracted();
-        return;
-      }
-
-      setNoShotMasterPrompt(newTextOrUpdater);
-      markAsInteracted();
-    },
-    [associatedShotId, shotPromptSettings, markAsInteracted, setNoShotMasterPrompt]
-  );
-
-  const effectivePromptMode = useMemo<PromptMode>(() => {
-    if (!associatedShotId) {
-      return promptMode;
-    }
-
-    return isShotSettingsReady
-      ? shotPromptSettings.settings.promptMode || 'automated'
-      : 'automated';
-  }, [associatedShotId, isShotSettingsReady, shotPromptSettings.settings.promptMode, promptMode]);
-
-  const setEffectivePromptMode = useCallback(
-    (mode: PromptMode) => {
-      if (associatedShotId) {
-        shotPromptSettings.updateField('promptMode', mode);
-        markAsInteracted();
-        return;
-      }
-
-      setPromptMode(mode);
-    },
-    [associatedShotId, shotPromptSettings, markAsInteracted, setPromptMode]
-  );
-
   const {
     currentBeforePromptText,
     setCurrentBeforePromptText,
@@ -139,10 +79,6 @@ export function usePromptRouting(input: PromptRoutingInput): PromptRoutingResult
   return {
     prompts,
     setPrompts,
-    masterPromptText,
-    setMasterPromptText,
-    effectivePromptMode,
-    setEffectivePromptMode,
     currentBeforePromptText,
     setCurrentBeforePromptText,
     currentAfterPromptText,

@@ -70,5 +70,7 @@ export function RuntimeDocumentNormalizationGate({ children }: { children: React
       />
     );
   }
-  return <AstridLoading />;
+  // Holds the boot screen (and the connection panel on its way out) until the document is known, as the editor does
+  // while its workspace answers (`bootLayer.ts`).
+  return <><AstridLoading /><span data-boot-hold="" hidden /></>;
 }

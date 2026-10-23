@@ -94,7 +94,7 @@ describe('NetworkError', () => {
       expect(err.isTimeout).toBe(false);
     });
 
-    it('flags a TimeoutError wrapped in context as timeout (Supabase wrapper shape)', () => {
+    it('flags a TimeoutError wrapped in context as timeout (wrapper shape)', () => {
       const wrapper = new Error('fetch failed');
       (wrapper as Error & { context?: unknown }).context = {
         cause: new TimeoutError('timed out'),
@@ -136,7 +136,7 @@ describe('TimeoutError', () => {
       expect(isTimeoutError(undefined)).toBe(false);
     });
 
-    it('detects a TimeoutError nested under context (Supabase wrapper shape)', () => {
+    it('detects a TimeoutError nested under context (wrapper shape)', () => {
       const wrapper = new Error('fetch failed');
       (wrapper as Error & { context?: unknown }).context = {
         url: 'https://example.com',

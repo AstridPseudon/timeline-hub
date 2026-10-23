@@ -4,8 +4,7 @@
  *
  * These types are pure contracts. No runtime implementation or host
  * runtime imports (editor internals, DataProvider, timeline ops, etc.).
- * Downstream tasks (T4 registry, T6 metadataFacet adapter, T10 slot-like
- * adapters) implement against these contracts.
+ * Downstream adapters (registry, metadataFacet, slot-like adapters) implement against these contracts.
  *
  * @module families/familyAdapter
  * @publicContract

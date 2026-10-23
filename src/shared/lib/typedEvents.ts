@@ -10,8 +10,6 @@ interface AppCustomEvents {
   openGenerationsPane: void;
   /** Open the Tasks pane on the agent chat with its composer focused. */
   openAgentComposer: void;
-  openGenerationModal: void;
-  closeGenerationModal: void;
 
   // --- Generation / gallery ---
   'generation-star-updated': { generationId: string; shotId: string; starred: boolean };
@@ -26,7 +24,6 @@ interface AppCustomEvents {
   'shot-pending-upload-failed': { shotId: string; operationId: string };
 
   // --- Timeline ---
-  'timeline:duplicate-complete': { shotId: string; newItemId: string };
   'timeline:pending-add': { frame: number; shotId?: string };
 
   // --- Editor ---

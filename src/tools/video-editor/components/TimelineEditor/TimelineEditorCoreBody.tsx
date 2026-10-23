@@ -1,3 +1,4 @@
+import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import { useOptionalVideoEditorRuntime as useMarqueeEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { DataLaneView } from '@/tools/video-editor/data/typed/envelope.ts';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
@@ -178,13 +179,13 @@ export function resolveWaveformAudioSrc(
   }
 
   if (track.kind === 'audio') {
-    return clip.volume === 0 ? undefined : clip.assetEntry.src;
+    return getEffectiveClipVolume(clip) > 0 ? clip.assetEntry.src : undefined;
   }
 
   if (
     track.kind === 'visual'
     && clip.assetEntry.type?.startsWith('video/')
-    && (clip.volume ?? 1) > 0
+    && getEffectiveClipVolume(clip) > 0
   ) {
     return clip.assetEntry.src;
   }
@@ -240,8 +241,6 @@ export interface TimelineEditorCoreProps {
   onNavigateToShot?: (shot: Shot) => void;
   onOpenGenerateVideo?: (shot: Shot) => void;
   isCreatingShot?: boolean;
-  /** Creates a new empty shot anchored at an empty timeline position. */
-  onCreateEmptyShotAt?: (anchor: { time: number; trackId?: string }) => void | Promise<void>;
   duplicatingClipId?: string | null;
   onDuplicateGenerationClip?: (clipId: string) => void | Promise<void>;
   onOpenShotVideoModal?: (shotId: string, reason: 'pinned-group' | 'final-video-file') => void;
@@ -286,7 +285,6 @@ function TimelineEditorCoreComponent({
   onNavigateToShot,
   onOpenGenerateVideo,
   isCreatingShot = false,
-  onCreateEmptyShotAt,
   duplicatingClipId = null,
   onDuplicateGenerationClip,
   onOpenShotVideoModal,
@@ -966,7 +964,6 @@ function TimelineEditorCoreComponent({
           newTrackDropLabel={newTrackDropLabel}
           postprocessShader={postprocessShader}
           onSelectPostprocessShader={handlePostprocessShaderSelect}
-          onCreateEmptyShotAt={readOnly ? undefined : onCreateEmptyShotAt}
           onCreateShotFromSelection={readOnly ? undefined : onCreateShotFromSelection}
           canCreateShotFromSelection={!readOnly && canCreateShotFromSelection}
           isCreatingShot={isCreatingShot}

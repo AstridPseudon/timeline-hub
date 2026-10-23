@@ -9,7 +9,7 @@
  * This module does NOT render UI.  It is consumed by the command interceptor
  * in useTimelineCommandsService and by the ManagedObjectConfirmationDialog.
  *
- * @publicContract — implements the managed-object metadata envelope from M3.
+ * @publicContract — implements the managed-object metadata envelope.
  */
 
 import type {

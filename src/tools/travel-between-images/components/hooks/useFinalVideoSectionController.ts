@@ -7,7 +7,6 @@ import { useIsMobile } from '@/shared/hooks/mobile';
 import { useSegmentOutputsForShot } from '@/shared/hooks/segments';
 import { useTaskDetails } from '@/shared/components/ShotImageManager/hooks/useTaskDetails';
 import { useVariantBadges } from '@/shared/hooks/variants/useVariantBadges';
-import { useShareGeneration } from '@/shared/hooks/useShareGeneration';
 import { useMarkVariantViewed } from '@/shared/hooks/variants/useMarkVariantViewed';
 import { taskQueryKeys } from '@/shared/lib/queryKeys/tasks';
 import type {
@@ -81,9 +80,7 @@ export function useFinalVideoSectionController({
   onSelectedParentChange,
   parentGenerations: parentGenerationsFromProps,
   segmentProgress: segmentProgressFromProps,
-  isParentLoading = false,
   getFinalVideoCount,
-  onDelete,
   readOnly = false,
   preloadedParent,
 }: FinalVideoSectionProps) {
@@ -98,7 +95,6 @@ export function useFinalVideoSectionController({
 
   const hookResult = useSegmentOutputsForShot(
     skipHook || hasParentData ? null : shotId,
-    skipHook || hasParentData ? '' : projectId,
     undefined,
     controlledSelectedParentId,
     onSelectedParentChange,
@@ -129,12 +125,6 @@ export function useFinalVideoSectionController({
     : segmentProgressFromProps && segmentProgressFromProps.total > 0
       ? segmentProgressFromProps
       : hookResult.segmentProgress;
-
-  const isLoading = skipHook
-    ? false
-    : hasParentData
-      ? isParentLoading
-      : hookResult.isLoading;
 
   const selectedParent = useMemo(() => {
     if (!selectedParentId) {
@@ -184,13 +174,6 @@ export function useFinalVideoSectionController({
     projectId,
     onApplySettingsFromTask,
   });
-
-  const {
-    handleShare,
-    isCreatingShare,
-    shareCopied,
-    shareSlug,
-  } = useShareGeneration(selectedParentId ?? undefined, taskMapping?.taskId, shotId, { projectId });
 
   const parentGenerationIdsForQuery = useMemo(
     () => parentGenerations.map((parent) => parent.id),
@@ -245,19 +228,11 @@ export function useFinalVideoSectionController({
     [setSelectedParentId],
   );
 
-  const handleDelete = useCallback(() => {
-    if (selectedParentId && onDelete) {
-      onDelete(selectedParentId);
-    }
-  }, [selectedParentId, onDelete]);
-
-  const isCurrentlyLoading = isLoading || isParentLoading;
-
   const cachedFinalVideoCount = getFinalVideoCount?.(shotId) ?? null;
   const willHaveFinalVideo = cachedFinalVideoCount !== null && cachedFinalVideoCount > 0;
   const hasCompletedParent = parentGenerations.some((parent) => Boolean(parent.location));
   const shouldShowSkeleton = !hasFinalOutput && (
-    (willHaveFinalVideo && (isCurrentlyLoading || parentGenerations.length > 0)) ||
+    (willHaveFinalVideo && parentGenerations.length > 0) ||
     (hasCompletedParent && !selectedParentId)
   );
 
@@ -278,14 +253,8 @@ export function useFinalVideoSectionController({
     task,
     taskError,
     inputImages,
-    handleShare,
-    isCreatingShare,
-    shareCopied,
-    shareSlug,
     handleOutputSelect,
     segmentProgress,
-    handleDelete,
-    isCurrentlyLoading,
     shouldShowSkeleton,
     hasActiveJoinTask,
   };

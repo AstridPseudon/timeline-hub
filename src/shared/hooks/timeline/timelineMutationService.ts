@@ -1,6 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
-import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
-import type { ShotGeneration } from '@/shared/hooks/timeline/useTimelineCore';
+import type { ShotGeneration } from '@/shared/hooks/timeline/useTimelineCore.types';
 import { queryKeys } from '@/shared/lib/queryKeys';
 import { persistTimelineFrameBatch } from '@/shared/lib/timelineFrameBatchPersist';
 import {
@@ -61,34 +60,15 @@ export async function persistSingleTimelineFrame({
   logPrefix,
   log,
 }: PersistSingleTimelineFrameInput): Promise<void> {
-  await runTimelineWriteWithTimeout(
-    'timeline-frame-single-update-write',
-    async (signal) => {
-      const query = supabase().from('shot_generations')
-        .update({ timeline_frame: frame })
-        .eq('id', shotGenerationId)
-        .eq('shot_id', shotId);
-      const request = 'abortSignal' in query
-        ? query.abortSignal(signal)
-        : query;
-      const { error } = await request;
-      if (error) {
-        throw error;
-      }
-    },
-    {
-      upstreamSignal: signal,
-      onTimeout: ({ pendingMs, timeoutMs }) => {
-        log(`${logPrefix} updateTimelineFrame timed out`, {
-          shotId: shortNullableId(shotId),
-          shotGenerationId: shortNullableId(shotGenerationId),
-          targetFrame: frame,
-          timeoutMs,
-          pendingMs,
-        });
-      },
-    },
-  );
+  await persistTimelineFrameBatch({
+    shotId,
+    updates: [{ shotGenerationId, timelineFrame: frame }],
+    operationLabel: 'single-frame update',
+    timeoutOperationName: 'timeline-frame-single-update-write',
+    signal,
+    logPrefix,
+    log,
+  });
 }
 
 interface CanonicalTimelineFrameUpdate {

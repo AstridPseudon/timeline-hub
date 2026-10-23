@@ -49,7 +49,7 @@ export const TaskPromptDetails: React.FC<TaskPromptDetailsProps> = ({
             </button>
           )}
         </div>
-        <p className={`${config.textSize} ${config.fontWeight} text-foreground break-words whitespace-pre-wrap preserve-case`}>
+        <p className={`${config.textSize} ${config.fontWeight} text-foreground break-words whitespace-pre-wrap`}>
           {prompt
             ? (showFullPrompt || prompt.length <= config.promptLength
               ? prompt
@@ -71,7 +71,7 @@ export const TaskPromptDetails: React.FC<TaskPromptDetailsProps> = ({
       {negativePrompt && negativePrompt !== 'N/A' && (
         <div className="space-y-1">
           <p className={`${config.textSize} font-medium text-muted-foreground`}>Negative Prompt</p>
-          <p className={`${config.textSize} ${config.fontWeight} text-foreground break-words whitespace-pre-wrap preserve-case`}>
+          <p className={`${config.textSize} ${config.fontWeight} text-foreground break-words whitespace-pre-wrap`}>
             {showFullNegativePrompt || negativePrompt.length <= config.negativePromptLength
               ? negativePrompt
               : `${negativePrompt.slice(0, config.negativePromptLength)}...`}

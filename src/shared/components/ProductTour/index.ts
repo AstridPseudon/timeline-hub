@@ -1,1 +1,0 @@
-export { ProductTour } from './ProductTour';

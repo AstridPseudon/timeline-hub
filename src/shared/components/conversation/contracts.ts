@@ -32,11 +32,6 @@ export type ConversationItem =
   | { kind: 'message'; key: string; turn: ConversationTurn }
   | { kind: 'tool_group'; key: string; pairs: ConversationToolCallPair[] };
 
-export type ConversationOptimisticMessage = {
-  text: string;
-  attachments: readonly ConversationAttachment[];
-};
-
 export function buildConversationItems(turns: readonly ConversationTurn[]): ConversationItem[] {
   const items: ConversationItem[] = [];
   let pendingToolPairs: ConversationToolCallPair[] = [];

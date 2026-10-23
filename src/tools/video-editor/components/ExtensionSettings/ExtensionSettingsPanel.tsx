@@ -1,12 +1,12 @@
 /**
- * ExtensionSettingsPanel — SchemaForm-backed extension settings UI (M4, T7).
+ * ExtensionSettingsPanel — SchemaForm-backed extension settings UI.
  *
  * Renders an editable settings form for a single extension, driven by the
  * extension manifest's `settingsSchema`.  Uses
  * {@link analyzeManifestSettingsSchema} to produce a SchemaForm-compatible
  * schema with supported/unsupported classification,
  * {@link reconcileSettingsSnapshot} for loading and classifying saved values,
- * {@link createExtensionSettingsService} for localStorage-backed persistence,
+ * {@link createExtensionSettingsService} for Runtime-backed persistence (the settings store),
  * and {@link SchemaForm} for rendering, validation, and focus management.
  *
  * Behaviours:
@@ -22,6 +22,7 @@
  *  - Cancel: revert the form state to the reconciled baseline values.
  */
 
+import { createRuntimeSettingsBacking } from '@/tools/video-editor/runtime/extensionSettingsBacking';
 import {
   useCallback,
   useEffect,
@@ -137,7 +138,7 @@ export function ExtensionSettingsPanel({
   className,
   onDiagnostics,
 }: ExtensionSettingsPanelProps) {
-  // ---- Analyse the manifest settings schema (T1/T7) -------------------------
+  // ---- Analyse the manifest settings schema -------------------------
   const schemaAnalysis = useMemo(
     () => analyzeManifestSettingsSchema(manifest),
     [manifest],
@@ -152,7 +153,7 @@ export function ExtensionSettingsPanel({
   // ---- Settings service (lazily created, idempotent per mount) -------------
   const serviceRef = useRef<ExtensionSettingsService | null>(null);
   if (!serviceRef.current) {
-    const result = createExtensionSettingsService(extensionId, manifest);
+    const result = createExtensionSettingsService(extensionId, manifest, { backing: createRuntimeSettingsBacking(extensionId) });
     serviceRef.current = result.service;
   }
   const settings = serviceRef.current;

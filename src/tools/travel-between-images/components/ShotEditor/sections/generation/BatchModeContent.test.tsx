@@ -66,14 +66,6 @@ vi.mock('@/shared/components/ImageGenerationForm/components', () => ({
   SectionHeader: ({ title }: { title: string }) => <div>{title}</div>,
 }));
 
-vi.mock('@/shared/contexts/AIInputModeContext', () => ({
-  useAIInputMode: () => ({
-    mode: 'text',
-    setMode: vi.fn(),
-    isLoading: false,
-  }),
-}));
-
 vi.mock('../../../BatchSettingsForm', () => ({
   BatchSettingsForm: (props: unknown) => {
     batchSettingsFormSpy(props);
@@ -158,7 +150,6 @@ vi.mock('../../ShotSettingsContext', () => ({
       onAcceleratedChange: vi.fn(),
       randomSeed: null,
       onRandomSeedChange: vi.fn(),
-      currentMotionSettings: {},
       isSteerableMotionEnqueuing: false,
       steerableMotionJustQueued: false,
       isGenerationDisabled: false,

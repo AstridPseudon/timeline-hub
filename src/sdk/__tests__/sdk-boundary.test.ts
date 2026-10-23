@@ -112,14 +112,14 @@ describe('Canonical generated timeline-schema boundary', () => {
   });
 });
 
-// ── M3: SDK boundary ──────────────────────────────────────────────────────────
-// Prove extensions can import M3 contracts from @astrid/editor-sdk but
+// ── SDK boundary ──────────────────────────────────────────────────────────
+// Prove extensions can import the timeline contracts from @astrid/editor-sdk but
 // cannot import raw TimelineData, TimelineEditMutation, provider, store,
 // or command internals.
 
 import * as sdkStar from '@astrid/editor-sdk';
 import {
-  // M3 value exports (const, function, class)
+  // value exports (const, function, class)
   EXTENSION_PROJECT_DATA_LIMITS,
   CREATIVE_MEMBER_MILESTONE,
   createCreativeContextStubs,
@@ -133,7 +133,7 @@ import {
   KNOWN_CONTRIBUTION_KINDS,
 } from '@astrid/editor-sdk';
 import type {
-  // M4 commands / keybindings / context menus
+  // commands / keybindings / context menus
   ContributionId,
   TargetContext,
   TargetContextPayload,
@@ -144,7 +144,7 @@ import type {
   KeybindingContribution,
   ContextMenuItemContribution,
   ExtensionCommandService,
-  // M3 TimelinePatch types
+  // TimelinePatch types
   TimelinePatchOpFamily,
   TimelinePatchReservedOpFamily,
   TimelinePatchAnyOpFamily,
@@ -152,48 +152,48 @@ import type {
   TimelinePatch,
   TimelinePatchDiagnostic,
   TimelinePatchValidationResult,
-  // M3 TimelineOps
+  // TimelineOps
   TimelineOps,
-  // M3 TimelineDiff
+  // TimelineDiff
   TimelineDiffGranularity,
   TimelineDiffKind,
   TimelineDiffEntry,
   TimelineDiff,
   TimelinePreviewResult,
-  // M3 TimelineSnapshot / Reader
+  // TimelineSnapshot / Reader
   TimelineSnapshot,
   TimelineClipSummary,
   TimelineTrackSummary,
   TimelineReader,
-  // M3 Proposals
+  // Proposals
   ProposalState,
   TimelineProposal,
   TimelineProposalInput,
   ProposalListener,
   ProposalRuntime,
-  // M3 Source Maps
+  // Source Maps
   SourceMapEntry,
-  // M3 Generated-object metadata
+  // Generated-object metadata
   GeneratedObjectMeta,
-  // M3 Project-data limits
+  // Project-data limits
   ProjectDataLimitCode,
   ProjectDataLimitDetail,
-  // M3 Host UI
+  // Host UI
   ProposalPanelState,
   ProposalPanelAction,
-  // M3 Expiry / conflict diagnostics
+  // Expiry / conflict diagnostics
   ProposalExpiryDetail,
   ProposalEnvelope,
-  // M1: Proposal import contracts
+  // Proposal import contracts
   ProposalImportDiagnostic,
   ProposalImportResult,
   ProposalImportStatus,
-  // CreativeContext (updated in M3)
+  // CreativeContext
   ImmutableProjectPackageDescriptor,
   ProjectObjectMetadata,
   ProjectObjectStorage,
   CreativeContext,
-  // M6: Parser / output format / search provider
+  // Parser / output format / search provider
   ParserContribution,
   OutputFormatContribution,
   SearchProviderContribution,
@@ -218,21 +218,21 @@ import type {
   MetadataFacetDescriptor,
   MetadataFacetValueKind,
   AssetDetailSectionDescriptor,
-  // M7: Trusted component effects
+  // Trusted component effects
   EffectContribution,
   EffectComponent,
   EffectParameterDefinition,
   EffectParameterSchema,
   EffectRegistrationOptions,
   EffectRegistrationService,
-  // M8: Trusted component transitions
+  // Trusted component transitions
   TransitionContribution,
   TransitionRenderer,
   TransitionParameterDefinition,
   TransitionParameterSchema,
   TransitionRegistrationOptions,
   TransitionRegistrationService,
-  // M9: Clip type dispatch, keyframes, automation
+  // Clip type dispatch, keyframes, automation
   ClipTypeContribution,
   ClipRenderer,
   ClipInspector,
@@ -245,7 +245,7 @@ import type {
   InterpolatedParam,
   AutomationClipTarget,
   AutomationClipParams,
-  // M12 planner requirement types
+  // planner requirement types
   CapabilityVersion,
   CapabilitySourceRef,
   RouteFitMetadata,
@@ -267,7 +267,7 @@ import type {
   ExtensionUiService,
   ExtensionDiagnostic,
   DisposeHandle,
-  // M1a: Composition reference identity
+  // Composition reference identity
   ContributionRef,
   LiveSourceRef,
   MaterialRef,
@@ -288,13 +288,13 @@ import type {
   ProcessOperationSpec,
 } from '@astrid/editor-sdk/video/families/processes';
 
-// M1a value exports
+// value exports
 import {
   contributionRefKey,
 } from '@astrid/editor-sdk';
 
 // ---------------------------------------------------------------------------
-// 1. M3 value exports are importable from @astrid/editor-sdk
+// 1. Timeline value exports are importable from @astrid/editor-sdk
 // ---------------------------------------------------------------------------
 
 describe('M3: value exports are importable from @astrid/editor-sdk', () => {
@@ -357,7 +357,7 @@ describe('M3: value exports are importable from @astrid/editor-sdk', () => {
 });
 
 // ---------------------------------------------------------------------------
-// 2. M3 type interfaces are importable and have expected shapes
+// 2. Timeline type interfaces are importable and have expected shapes
 // ---------------------------------------------------------------------------
 
 describe('M3: type interfaces are importable from @astrid/editor-sdk', () => {
@@ -757,7 +757,7 @@ describe('M3: type interfaces are importable from @astrid/editor-sdk', () => {
     expect(envelope.mutationApplied).toBe(true);
   });
 
-  // ── M1: Proposal import contracts ─────────────────────────────────────────
+  // ── Proposal import contracts ─────────────────────────────────────────
 
   it('ProposalImportDiagnostic shape is constructable', () => {
     const diag: ProposalImportDiagnostic = {
@@ -879,7 +879,7 @@ describe('M3: type interfaces are importable from @astrid/editor-sdk', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M4: Command / keybinding / context-menu type interfaces
+// Command / keybinding / context-menu type interfaces
 // ---------------------------------------------------------------------------
 
 describe('M4: command/keybinding/context-menu type interfaces are importable from @astrid/editor-sdk', () => {
@@ -1080,7 +1080,7 @@ describe('M3: internal types are NOT re-exported from @astrid/editor-sdk', () =>
     'useTimelineEditorData',
     'timelineState',
     'TimelineDataRef',
-    // M4 command / keybinding / context-menu internals
+    // command / keybinding / context-menu internals
     'commandRegistry',
     'keybindingRegistry',
     'contextMenuRegistry',
@@ -1142,7 +1142,7 @@ describe('M3: internal types are NOT re-exported from @astrid/editor-sdk', () =>
   it('total SDK value export count is within the expected public surface range', () => {
     // The public SDK surface should be a well-known, curated set.
     // Host-owned provenance and fingerprinting deliberately expanded the
-    // surface after the original M3 ceiling was set. Keep modest headroom over
+    // surface after the original ceiling was set. Keep modest headroom over
     // the governed 83-export surface so accidental barrel expansion still
     // fails here instead of silently inheriting the much looser final guard.
     const valueCount = Object.keys(sdkStar).length;
@@ -1152,7 +1152,7 @@ describe('M3: internal types are NOT re-exported from @astrid/editor-sdk', () =>
 });
 
 // ---------------------------------------------------------------------------
-// M6: Parser / output format / search provider contribution type interfaces
+// Parser / output format / search provider contribution type interfaces
 // ---------------------------------------------------------------------------
 
 describe('M6: parser/outputFormat/searchProvider type interfaces are importable from @astrid/editor-sdk', () => {
@@ -1283,7 +1283,7 @@ describe('M6: parser/outputFormat/searchProvider type interfaces are importable 
 });
 
 // ---------------------------------------------------------------------------
-// M6: Contribution kind bridging — parser is M6-active, output/search are typed
+// Contribution kind bridging — parser is active, output/search are typed
 // ---------------------------------------------------------------------------
 
 describe('M6: contribution kind bridging for parser/output/search', () => {
@@ -1301,20 +1301,20 @@ describe('M6: contribution kind bridging for parser/output/search', () => {
 
   it('render-dependent output declarations remain declarable but reserved for execution', () => {
     // outputFormat contributions (both compile-only and render-dependent)
-    // are declarable in manifests during M6 but their runtime execution
-    // is reserved. The bridging function reflects this by returning 'M6'
+    // are declarable in manifests but their runtime execution
+    // is reserved. The bridging function reflects this by returning a milestone string
     // (not yet bridged).
     const bridged = contributionKindNotYetBridged('outputFormat');
     expect(bridged).toBe('M6');
 
-    // parser is now delegated to a placeholder adapter, so it also reports M6.
+    // parser is now delegated to a placeholder adapter, so it also reports its milestone.
     expect(contributionKindNotYetBridged('parser')).toBe('M6');
   });
 
   it('unsupported contribution behavior remains explicit (registry-derived)', () => {
     // Each reserved/unsupported kind returns its owning milestone name,
     // so consumers get a clear diagnostic rather than silent ignorance.
-    // M9 clipType and automation are bridged (executionMaturity runtime-bridged).
+    // clipType and automation are bridged (executionMaturity runtime-bridged).
     expect(contributionKindNotYetBridged('clipType')).toBeNull();
     expect(contributionKindNotYetBridged('automation')).toBeNull();
     // agentTool is delegated to a placeholder adapter (executionMaturity delegated).
@@ -1342,7 +1342,7 @@ describe('M6: contribution kind bridging for parser/output/search', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6: Internal types are NOT leaked through @astrid/editor-sdk
+// Internal types are NOT leaked through @astrid/editor-sdk
 // ---------------------------------------------------------------------------
 
 describe('M6: internal types are NOT re-exported from @astrid/editor-sdk', () => {
@@ -1401,7 +1401,7 @@ describe('M6: internal types are NOT re-exported from @astrid/editor-sdk', () =>
 });
 
 // ---------------------------------------------------------------------------
-// M7: Trusted component effect contribution type interfaces
+// Trusted component effect contribution type interfaces
 // ---------------------------------------------------------------------------
 
 describe('M7: trusted component effect type interfaces are importable from @astrid/editor-sdk', () => {
@@ -1441,7 +1441,7 @@ describe('M7: trusted component effect type interfaces are importable from @astr
       kind: 'effect',
       effectId: 'fx.default',
     };
-    // SD2: defaults are false (preview-only)
+    // defaults are false (preview-only)
     expect(contrib.allowBrowserExport ?? false).toBe(false);
     expect(contrib.allowWorkerExport ?? false).toBe(false);
   });
@@ -1579,7 +1579,7 @@ describe('M7: trusted component effect type interfaces are importable from @astr
 });
 
 // ---------------------------------------------------------------------------
-// M7: ExtensionContext includes effects registration service
+// ExtensionContext includes effects registration service
 // ---------------------------------------------------------------------------
 
 describe('M7: ExtensionContext includes effects registration service', () => {
@@ -1633,7 +1633,7 @@ describe('M7: ExtensionContext includes effects registration service', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M7: Internal effect registration types are NOT exported
+// Internal effect registration types are NOT exported
 // ---------------------------------------------------------------------------
 
 describe('M7: internal effect registration types are NOT re-exported from @astrid/editor-sdk', () => {
@@ -1669,7 +1669,7 @@ describe('M7: internal effect registration types are NOT re-exported from @astri
 });
 
 // ---------------------------------------------------------------------------
-// M7 / M8: Contribution kind bridging — effect is M7-bridged, transition is M8-bridged
+// Contribution kind bridging — effect and transition are bridged
 // ---------------------------------------------------------------------------
 
 describe('M7/M8: contribution kind bridging for effect and transition', () => {
@@ -1696,7 +1696,7 @@ describe('M7/M8: contribution kind bridging for effect and transition', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M8: Trusted component transition contribution type interfaces
+// Trusted component transition contribution type interfaces
 // ---------------------------------------------------------------------------
 
 describe('M8: trusted component transition type interfaces are importable from @astrid/editor-sdk', () => {
@@ -1736,7 +1736,7 @@ describe('M8: trusted component transition type interfaces are importable from @
       kind: 'transition',
       transitionId: 'tx.default',
     };
-    // SD3: defaults are false (preview-only)
+    // defaults are false (preview-only)
     expect(contrib.allowBrowserExport ?? false).toBe(false);
     expect(contrib.allowWorkerExport ?? false).toBe(false);
   });
@@ -1873,7 +1873,7 @@ describe('M8: trusted component transition type interfaces are importable from @
 });
 
 // ---------------------------------------------------------------------------
-// M8: ExtensionContext includes transitions registration service
+// ExtensionContext includes transitions registration service
 // ---------------------------------------------------------------------------
 
 describe('M8: ExtensionContext includes transitions registration service', () => {
@@ -1929,7 +1929,7 @@ describe('M8: ExtensionContext includes transitions registration service', () =>
 });
 
 // ---------------------------------------------------------------------------
-// M8: Internal transition registration types are NOT exported
+// Internal transition registration types are NOT exported
 // ---------------------------------------------------------------------------
 
 describe('M8: internal transition registration types are NOT re-exported from @astrid/editor-sdk', () => {
@@ -1965,7 +1965,7 @@ describe('M8: internal transition registration types are NOT re-exported from @a
 });
 
 // ---------------------------------------------------------------------------
-// M9: Clip type contribution type interfaces
+// Clip type contribution type interfaces
 // ---------------------------------------------------------------------------
 
 describe('M9: trusted component clip type interfaces are importable from @astrid/editor-sdk', () => {
@@ -2157,7 +2157,7 @@ describe('M9: trusted component clip type interfaces are importable from @astrid
 });
 
 // ---------------------------------------------------------------------------
-// M9: ExtensionContext includes clipTypes registration service
+// ExtensionContext includes clipTypes registration service
 // ---------------------------------------------------------------------------
 
 describe('M9: ExtensionContext includes clipTypes registration service', () => {
@@ -2216,7 +2216,7 @@ describe('M9: ExtensionContext includes clipTypes registration service', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M9: Internal clip type registration types are NOT exported
+// Internal clip type registration types are NOT exported
 // ---------------------------------------------------------------------------
 
 describe('M9: internal clip type registration types are NOT re-exported from @astrid/editor-sdk', () => {
@@ -2253,7 +2253,7 @@ describe('M9: internal clip type registration types are NOT re-exported from @as
 });
 
 // ---------------------------------------------------------------------------
-// M9: Keyframe contracts
+// Keyframe contracts
 // ---------------------------------------------------------------------------
 
 describe('M9: keyframe contracts are importable from @astrid/editor-sdk', () => {
@@ -2305,7 +2305,7 @@ describe('M9: keyframe contracts are importable from @astrid/editor-sdk', () => 
 });
 
 // ---------------------------------------------------------------------------
-// M9: Automation clip contracts
+// Automation clip contracts
 // ---------------------------------------------------------------------------
 
 describe('M9: automation clip contracts are importable from @astrid/editor-sdk', () => {
@@ -2350,7 +2350,7 @@ describe('M9: automation clip contracts are importable from @astrid/editor-sdk',
 });
 
 // ---------------------------------------------------------------------------
-// M5: Renderability, blocker, material, and artifact type interfaces
+// Renderability, blocker, material, and artifact type interfaces
 // ---------------------------------------------------------------------------
 
 import type {
@@ -2585,7 +2585,7 @@ describe('M5: renderability type interfaces are importable from @astrid/editor-s
 });
 
 // ---------------------------------------------------------------------------
-// M10: Agent tool type interfaces
+// Agent tool type interfaces
 // ---------------------------------------------------------------------------
 
 import type {
@@ -3032,7 +3032,7 @@ describe('M10: agent tool type interfaces are importable from @astrid/editor-sdk
 });
 
 // ---------------------------------------------------------------------------
-// M12: Process spec, contribution, status, roundtrip type interfaces
+// Process spec, contribution, status, roundtrip type interfaces
 // ---------------------------------------------------------------------------
 
 describe('M12: process type interfaces are importable from public SDK modules', () => {
@@ -3268,7 +3268,7 @@ describe('M12: process type interfaces are importable from public SDK modules', 
 });
 
 // ---------------------------------------------------------------------------
-// M13: Shader type interfaces (SDK boundary proof)
+// Shader type interfaces (SDK boundary proof)
 // ---------------------------------------------------------------------------
 
 import type {
@@ -3758,7 +3758,7 @@ describe('SDK packaging types are importable from @astrid/editor-sdk', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M10: Internal agent tool types are NOT leaked through @astrid/editor-sdk
+// Internal agent tool types are NOT leaked through @astrid/editor-sdk
 // ---------------------------------------------------------------------------
 
 describe('M10: internal agent tool types are NOT re-exported from @astrid/editor-sdk', () => {
@@ -3789,7 +3789,7 @@ describe('M10: internal agent tool types are NOT re-exported from @astrid/editor
 });
 
 // ---------------------------------------------------------------------------
-// M5/M12: Internal renderability types are NOT leaked
+// Internal renderability types are NOT leaked
 // ---------------------------------------------------------------------------
 
 describe('M5/M12: internal renderability types are NOT re-exported from @astrid/editor-sdk', () => {
@@ -3822,7 +3822,7 @@ describe('M5/M12: internal renderability types are NOT re-exported from @astrid/
 });
 
 // ---------------------------------------------------------------------------
-// M1: Proposal import API name contract
+// Proposal import API name contract
 // ---------------------------------------------------------------------------
 
 describe('M1: proposal import API name contract', () => {
@@ -3928,7 +3928,7 @@ describe('semver-sensitive SDK export snapshot', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T2.1: Exact 22-kind count, no timelineMarker, governed overlay + ctx.ui
+// Exact 22-kind count, no timelineMarker, governed overlay + ctx.ui
 // ---------------------------------------------------------------------------
 
 describe('T2.1: exact contribution-kind count and no timelineMarker kind', () => {
@@ -4111,7 +4111,7 @@ describe('registry-derived family helpers', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T3: Family adapter contract types (sdk-boundary)
+// Family adapter contract types (sdk-boundary)
 // ---------------------------------------------------------------------------
 
 import {
@@ -4331,7 +4331,7 @@ describe('T3: family adapter contract types (sdk-boundary)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T4: Passive adapter registry (sdk-boundary)
+// Passive adapter registry (sdk-boundary)
 // ---------------------------------------------------------------------------
 
 describe('T4: passive adapter registry (sdk-boundary)', () => {
@@ -4497,7 +4497,7 @@ describe('T4: passive adapter registry (sdk-boundary)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T5: Adapter coordinator & conformance aggregation (sdk-boundary)
+// Adapter coordinator & conformance aggregation (sdk-boundary)
 // ---------------------------------------------------------------------------
 
 import {
@@ -4513,7 +4513,7 @@ import {
   crossReferenceManifest,
 } from '@astrid/editor-sdk';
 
-// ---- T5 shared helpers ------------------------------------------------------
+// ---- shared helpers ------------------------------------------------------
 
 function fakeAdapter(kind: string, maturity: ExecutionMaturity = 'runtime-bridged'): HostFamilyAdapter {
   return {
@@ -4726,7 +4726,7 @@ describe('T5: conformance aggregation (sdk-boundary)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T6: Family adapter manifest — cross-reference checklist (sdk-boundary)
+// Family adapter manifest — cross-reference checklist (sdk-boundary)
 // ---------------------------------------------------------------------------
 
 describe('T6: family adapter manifest (sdk-boundary)', () => {
@@ -4830,7 +4830,7 @@ describe('T6: family adapter manifest (sdk-boundary)', () => {
 });
 
 // ===========================================================================
-// M1a: Composition reference identity
+// Composition reference identity
 // ===========================================================================
 
 describe('M1a: Composition reference types are data-only and importable from @astrid/editor-sdk', () => {

@@ -7,8 +7,6 @@
  * deliberately kept OUT of `src/sdk/context.ts`, which remains a
  * host-wiring-free contract module.
  *
- * Moved from `src/sdk/contextFactory.ts` as part of M4 SDK boundary closure.
- *
  * @hostContract
  */
 
@@ -20,6 +18,7 @@ import type {
   ExtensionContext,
   CreativeContext,
 } from '@/sdk/context';
+import { createRuntimeSettingsBacking } from './extensionSettingsBacking';
 import { createCreativeContext, CONTEXT_DISPOSE_SYMBOL } from '@/sdk/context';
 import type { TimelineOps } from '@/sdk/video/timeline/timelineOps';
 import type {
@@ -49,7 +48,7 @@ import {
   type CreateExtensionSettingsServiceOptions,
 } from '@/sdk/extensionSettingsService';
 
-// M2b family module imports (type-only, compile-erased)
+// Family module imports (type-only, compile-erased)
 import type {
   EffectComponent,
   EffectRegistrationOptions,
@@ -225,7 +224,7 @@ function createExtensionTimelineOps(
 /**
  * Create a concrete ExtensionContext for a given extension.
  *
- * Exposes only the approved M1 members:
+ * Exposes only the approved members:
  * - `apiVersion: 1`
  * - Readonly extension metadata
  * - `chrome` (toast, progress, subscribe, focus, announce)
@@ -271,9 +270,12 @@ export function createExtensionContext(
     },
   };
 
-  // ---- settings service (injectable factory, localStorage-backed) -----------
+  // ---- settings service (injectable factory, Runtime-backed through the settings store) ----
   const { service: settingsService, dispose: disposeSettings } =
-    createExtensionSettingsService(extensionId, manifest, settingsServiceOptions);
+    createExtensionSettingsService(extensionId, manifest, {
+      ...settingsServiceOptions,
+      backing: settingsServiceOptions?.backing ?? createRuntimeSettingsBacking(extensionId),
+    });
 
   // ---- i18n service (with manifest message bundle fallback) ----------------
   const messages: Record<string, string> | undefined =

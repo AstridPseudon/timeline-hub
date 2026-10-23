@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { createEdgeVitestTestConfig } from './vitest.edge.shared';
 import { buildEdgeAliasMap } from './vitest.edge.aliases';
 import { resolveAstridSource } from '../vite/astridSource';
+import { createElementAdmissionsPlugin } from '../vite/astridElementAdmissions';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const astridSource = resolveAstridSource();
@@ -13,6 +14,7 @@ const EDGE_UNIT_INCLUDE = [
   'supabase/functions/ai-generate-effect/**/*.test.ts',
   'supabase/functions/ai-generate-sequence/**/*.test.ts',
   'supabase/functions/ai-prompt/**/*.test.ts',
+  'supabase/functions/ai-timeline-agent/**/*.test.ts',
   'supabase/functions/ai-voice-prompt/**/*.test.ts',
   'supabase/functions/broadcast-realtime/**/*.test.ts',
   'supabase/functions/calculate-task-cost/**/*.test.ts',
@@ -28,6 +30,7 @@ const EDGE_UNIT_INCLUDE = [
   'supabase/functions/get-task-output/**/*.test.ts',
   'supabase/functions/get-task-status/**/*.test.ts',
   'supabase/functions/task-status/**/*.test.ts',
+  'supabase/functions/timeline-import/**/*.test.ts',
   'supabase/functions/get-orchestrator-children/**/*.test.ts',
   'supabase/functions/get-predecessor-output/**/*.test.ts',
   'supabase/functions/huggingface-upload/**/*.test.ts',
@@ -60,10 +63,11 @@ const STRIPE_ESM_SPECIFIER = 'https:' + '//esm.sh/stripe@14.21.0';
 const GROQ_NPM_SPECIFIER = 'npm' + ':groq-sdk@0.26.0';
 
 export default defineConfig({
+  plugins: [createElementAdmissionsPlugin()],
   resolve: {
-    dedupe: ['three', '@remotion/three', 'react', 'react-dom', 'remotion', '@remotion/layout-utils', '@remotion/media', '@banodoco/timeline-composition'],
     alias: {
       '@': path.resolve(__dirname, '../../src'),
+      '@astrid/editor-sdk': path.resolve(__dirname, '../../src/sdk/index.ts'),
       ...(astridSource ? { '@astrid': astridSource.sourceRoot } : {}),
       ...buildEdgeAliasMap(MOCKS_DIR),
       [STRIPE_ESM_SPECIFIER]: path.resolve(

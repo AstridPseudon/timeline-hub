@@ -1,4 +1,5 @@
 import { memo, type ReactNode } from 'react';
+import { EDITOR_TOUR_ANCHORS, EDITOR_TOUR_ANCHOR_ATTRIBUTE } from '@/tools/video-editor/tour/anchors.ts';
 import { shallow } from 'zustand/shallow';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import OverlayEditor from '@/tools/video-editor/components/PreviewPanel/OverlayEditor.tsx';
@@ -87,6 +88,7 @@ function PreviewPanelComponent({
         )}
         role="region"
         aria-label="Preview panel"
+        {...{ [EDITOR_TOUR_ANCHOR_ATTRIBUTE]: EDITOR_TOUR_ANCHORS.preview }}
         aria-busy="true"
       />
     );
@@ -107,6 +109,7 @@ function PreviewPanelComponent({
         )}
         role="region"
         aria-label="Preview panel"
+        {...{ [EDITOR_TOUR_ANCHOR_ATTRIBUTE]: EDITOR_TOUR_ANCHORS.preview }}
       >
         <div className="relative flex min-h-0 flex-1">
           <div

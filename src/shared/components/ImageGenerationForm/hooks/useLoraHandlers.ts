@@ -2,13 +2,12 @@
  * useLoraHandlers - Wraps loraManager with persistence to project settings
  *
  * Handles:
- * - Adding/removing/updating LORAs
+ * - Removing/updating LORAs
  * - Persisting LORA selections to per-category project storage
  * - Marking form as interacted for save tracking
  */
 
 import { useCallback } from 'react';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { ActiveLora } from '@/domains/lora/types/lora';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import type { SettingsScope } from '@/shared/hooks/settings/useToolSettings';
@@ -28,7 +27,6 @@ interface UseLoraHandlersProps {
   // LORA manager from useLoraManager
   loraManager: {
     selectedLoras: ActiveLora[];
-    handleAddLora: (lora: LoraModel) => void;
     handleRemoveLora: (id: string) => void;
     handleLoraStrengthChange: (id: string, strength: number) => void;
     handleLoadProjectLoras?: () => Promise<void>;
@@ -47,7 +45,6 @@ interface UseLoraHandlersProps {
 }
 
 interface UseLoraHandlersReturn {
-  handleAddLora: (lora: LoraModel) => void;
   handleRemoveLora: (id: string) => void;
   handleLoraStrengthChange: (id: string, strength: number) => void;
   handleLoadProjectLoras: () => Promise<void>;
@@ -101,26 +98,6 @@ export function useLoraHandlers(props: UseLoraHandlersProps): UseLoraHandlersRet
   // Handlers
   // ============================================================================
 
-  const handleAddLora = useCallback((loraToAdd: LoraModel) => {
-    markAsInteracted();
-    loraManager.handleAddLora(loraToAdd);
-
-    // Build the new LORA object for persistence
-    const newLora: ActiveLora = {
-      id: loraToAdd["Model ID"],
-      name: loraToAdd.Name !== "N/A" ? loraToAdd.Name : loraToAdd["Model ID"],
-      path: loraToAdd.high_noise_url || loraToAdd["Model Files"]?.[0]?.url || loraToAdd["Model Files"]?.[0]?.path || '',
-      strength: 1.0,
-      previewImageUrl: loraToAdd.Images?.[0]?.url,
-      trigger_word: loraToAdd.trigger_word,
-      lowNoisePath: loraToAdd.low_noise_url,
-      isMultiStage: !!(loraToAdd.high_noise_url || loraToAdd.low_noise_url),
-    };
-
-    // Persist to per-category storage
-    persistLorasToCategory([...loraManager.selectedLoras, newLora]);
-  }, [markAsInteracted, loraManager, persistLorasToCategory]);
-
   const handleRemoveLora = useCallback((loraIdToRemove: string) => {
     markAsInteracted();
     loraManager.handleRemoveLora(loraIdToRemove);
@@ -149,7 +126,6 @@ export function useLoraHandlers(props: UseLoraHandlersProps): UseLoraHandlersRet
   // ============================================================================
 
   return {
-    handleAddLora,
     handleRemoveLora,
     handleLoraStrengthChange,
     handleLoadProjectLoras,

@@ -10,13 +10,13 @@ import { cn } from '@/shared/components/ui/contracts/cn';
 import { Button } from '@/shared/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { ListTodo, Loader2, Lock, MessageSquareText, Mic, Square, Unlock } from 'lucide-react';
+import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/chatVoice';
 import { PaneControlTab } from '@/shared/components/PaneControlTab';
 import { useAgentChatActions, useOptionalAgentChatBridge } from '@/shared/contexts/AgentChatContext';
 import { AgentChatPanel } from '@/tools/video-editor/components/AgentChat';
 import { useProjectAgentTaskLinks } from '@/tools/video-editor/hooks/useAgentSession';
 import { useProjectCrudContext, useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useIncomingTasks } from '@/shared/contexts/IncomingTasksContext';
-import { TasksPaneProcessingWarning } from '@/shared/components/ProcessingWarnings';
 import { useBottomOffset } from '@/shared/hooks/layout/useBottomOffset';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox';
 import { useShots } from '@/shared/contexts/ShotsContext';
@@ -39,28 +39,13 @@ import { UI_Z_LAYERS } from '@/shared/lib/uiLayers';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { usePaneControlsHosted } from '@/shared/state/paneControlsHost';
 import { isElementWithinKnownOverlay } from '@/shared/components/ui/overlay';
+import { tasksPaneExpandedHalf, tasksPaneRuntimeHistoryPinned } from '@/shared/settings/declarations';
+import { useSetting } from '@/shared/settings/useSetting';
 import { useAppEventListener } from '@/shared/lib/typedEvents';
 
-interface TasksPaneProps {
-  onOpenSettings: () => void;
-}
-
-const EXPANDED_HALF_STORAGE_KEY = 'tasksPane:expandedHalf';
-const RUNTIME_HISTORY_PINNED_STORAGE_KEY = 'tasksPane:runtimeHistoryPinned';
 type ExpandedHalf = 'chat' | null;
 
-function readPersistedExpandedHalf(): ExpandedHalf {
-  if (typeof window === 'undefined') return 'chat';
-  const stored = window.localStorage.getItem(EXPANDED_HALF_STORAGE_KEY);
-  return stored === 'split' || stored === 'tasks' ? null : 'chat';
-}
-
-function readPersistedRuntimeHistoryPinned(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.localStorage.getItem(RUNTIME_HISTORY_PINNED_STORAGE_KEY) === 'pinned';
-}
-
-const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
+const TasksPaneComponent: React.FC = () => {
   useRenderBudget('TasksPane', 5);
   const { pathname, search } = useLocation();
   const paneControlsHosted = usePaneControlsHosted();
@@ -96,9 +81,8 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
   const { projects } = useProjectCrudContext();
 
   // Shots data for lightbox
-  // Consume the authority-selected context. Astrid mode intentionally exposes
-  // an empty compatibility view under Astrid authority.
-  // a direct useListShots call here would leak a cloud request on every route.
+  // Read shots from the context. This pane is mounted in the global shell, so
+  // it must not call the relational shots query directly.
   const { shots } = useShots();
   const { currentShotId } = useCurrentShot();
   const { lastAffectedShotId } = useLastAffectedShot();
@@ -199,36 +183,26 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
     isOpen: Boolean(isOpen),
   });
 
-  // Sprint 3 adapter boundary: AgentChatPanel remains app-owned in TasksPane
+  // Adapter boundary: AgentChatPanel remains app-owned in TasksPane
   // instead of moving into the editor shell. The core talks to chat through
   // registration bridges; this pane still owns when chat is mounted and how the
-  // split-button affordance drives it on Astrid App routes.
+  // composer-button affordance drives it on Astrid App routes.
   // Agent chat lives inside the action pane only on tool routes (where a timeline
   // makes sense). On other routes the pane is task-only.
-  // null until AgentChatPanel mounts and registers; the split button stays hidden
+  // null until AgentChatPanel mounts and registers; the composer button stays hidden
   // until then so it can't be clicked before its handlers exist.
   const agentChatActions = useAgentChatActions();
   const readyAgentChatActions = isToolRoute ? agentChatActions : null;
 
   // Keep the established stored preference: chat = compact tasks; split =
   // tasks pinned at their normal half-height. Legacy tasks-full maps to split.
-  const [expandedHalf, setExpandedHalf] = useState<ExpandedHalf>(readPersistedExpandedHalf);
-  const [runtimeHistoryPinned, setRuntimeHistoryPinned] = useState(readPersistedRuntimeHistoryPinned);
-  const [runtimeHistoryOpen, setRuntimeHistoryOpen] = useState(readPersistedRuntimeHistoryPinned);
+  const [savedExpandedHalf, saveExpandedHalf] = useSetting(tasksPaneExpandedHalf);
+  const expandedHalf: ExpandedHalf = savedExpandedHalf === 'chat' ? 'chat' : null;
+  const setExpandedHalf = useCallback((next: ExpandedHalf) => saveExpandedHalf(next === 'chat' ? 'chat' : 'split'), [saveExpandedHalf]);
+  const [runtimeHistoryPinned, setRuntimeHistoryPinned] = useSetting(tasksPaneRuntimeHistoryPinned);
+  const [runtimeHistoryOpen, setRuntimeHistoryOpen] = useState(runtimeHistoryPinned);
   const [runtimeTaskInspectionRequest, setRuntimeTaskInspectionRequest] = useState<RuntimeTaskInspectionRequest | null>(null);
   const clearRuntimeTaskInspectionRequest = useCallback(() => setRuntimeTaskInspectionRequest(null), []);
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (expandedHalf) {
-      window.localStorage.setItem(EXPANDED_HALF_STORAGE_KEY, expandedHalf);
-    } else {
-      window.localStorage.setItem(EXPANDED_HALF_STORAGE_KEY, 'split');
-    }
-  }, [expandedHalf]);
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(RUNTIME_HISTORY_PINNED_STORAGE_KEY, runtimeHistoryPinned ? 'pinned' : 'unpinned');
-  }, [runtimeHistoryPinned]);
   const showChatHalf = isToolRoute;
   const [isTasksPeeking, setIsTasksPeeking] = useState(false);
   const compactTasks = isToolRoute;
@@ -274,23 +248,9 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
     setIsTasksPeeking(false);
   };
 
-  // Which agent action was used most recently. Drives which control sits as
-  // the primary in the pane-control split button — secondary appears on hover.
-  // Persisted to localStorage so the preference survives close/reopen.
-  const [lastAgentAction, setLastAgentAction] = useState<'message' | 'voice'>(() => {
-    if (typeof window === 'undefined') return 'message';
-    const stored = window.localStorage.getItem('agentChat:lastAction');
-    return stored === 'voice' || stored === 'message' ? stored : 'message';
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('agentChat:lastAction', lastAgentAction);
-  }, [lastAgentAction]);
-
   // Open the pane on the chat with the composer focused: the tab's message
   // button, and pages that host their own entry point (`openAgentComposer`).
   const openAgentComposer = useCallback(() => {
-    setLastAgentAction('message');
     // markEngaged signals the auto-create-session gate inside the panel
     // WITHOUT writing to panesStore.isTasksPaneOpen (which would
     // short-circuit useSlidingPane.setOpen(false)).
@@ -323,34 +283,26 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
             content: <span className="text-xs font-light">{cancellableTaskCount}</span>,
             tooltip: `${cancellableTaskCount} active task${cancellableTaskCount === 1 ? '' : 's'}`,
           },
-          splitButton: readyAgentChatActions
-            ? (() => {
-                const messageAction = {
-                  onClick: openAgentComposer,
-                  ariaLabel: 'Open message composer',
-                  tooltip: 'Open message',
-                  content: <MessageSquareText className="h-4 w-4" />,
-                };
-                const voiceAction = {
-                  onClick: () => {
-                    setLastAgentAction('voice');
-                    readyAgentChatActions.toggleRecording();
-                  },
-                  ariaLabel: readyAgentChatActions.isRecording ? 'Stop recording' : 'Start voice recording',
-                  tooltip: readyAgentChatActions.isRecording ? 'Stop' : 'Voice (⌘⇧R)',
-                  content: readyAgentChatActions.isRecording
-                    ? <Square className="h-4 w-4" />
-                    : <Mic className="h-4 w-4" />,
-                };
-                // Whichever the user invoked most recently is the primary
-                // (full-cell) button; the other appears as a hover bubble.
-                return lastAgentAction === 'voice'
-                  ? { primary: voiceAction, secondary: messageAction }
-                  : { primary: messageAction, secondary: voiceAction };
-              })()
+          composerButton: readyAgentChatActions
+            ? {
+                onClick: openAgentComposer,
+                ariaLabel: 'Open message composer',
+                tooltip: 'Open message',
+                content: <MessageSquareText className="h-4 w-4" />,
+                // Chat voice is switched off: the cell shows only Message.
+                secondary: CHAT_VOICE_ENABLED
+                  ? {
+                      onClick: () => readyAgentChatActions.toggleRecording(),
+                      ariaLabel: readyAgentChatActions.isRecording ? 'Stop recording' : 'Start voice recording',
+                      tooltip: readyAgentChatActions.isRecording ? 'Stop' : 'Voice (⌘⇧R)',
+                      content: readyAgentChatActions.isRecording
+                        ? <Square className="h-4 w-4" />
+                        : <Mic className="h-4 w-4" />,
+                    }
+                  : undefined,
+              }
             : undefined,
         }}
-        dataTour="tasks-pane-tab"
       />
       
       <div
@@ -593,7 +545,7 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                           return bDate - aDate;
                         })
                         .map((project) => (
-                          <SelectItem variant="default" key={project.id} value={project.id} className="!text-xs preserve-case">
+                          <SelectItem variant="default" key={project.id} value={project.id} className="!text-xs">
                             {project.name}
                           </SelectItem>
                         ))}
@@ -631,8 +583,6 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
                 undefined
               }
             />
-
-            <TasksPaneProcessingWarning onOpenSettings={onOpenSettings} />
 
             {/* Task list area — relative wrapper hosts the absolute-positioned
                 bottom fade so scrolled-out content visibly trails off rather
@@ -749,6 +699,4 @@ const TasksPaneComponent: React.FC<TasksPaneProps> = ({ onOpenSettings }) => {
 };
 
 // Memoize TasksPane with custom comparison
-export const TasksPane = React.memo(TasksPaneComponent, (prevProps, nextProps) => {
-  return prevProps.onOpenSettings === nextProps.onOpenSettings;
-});
+export const TasksPane = React.memo(TasksPaneComponent);

@@ -17,15 +17,14 @@ The sole allowed write surface is `docs/extensions/composition-spine/**`.
 ## Missing V8 Brief Source
 
 The original v8 architecture brief for the composition spine is absent from the
-repository. The expected path is:
+repository. The expected file is:
 
 ```
-.megaplan/briefs/astrid-extension-composition-spine-plan-elegant-v8.md
+astrid-extension-composition-spine-plan-elegant-v8.md
 ```
 
 The downstream `v8-architecture-baseline.md` artifact reconstructs the baseline
-from surviving sources: `prep.md` (at
-`.megaplan/initiatives/astrid-extension-composition-spine-epic/prep.md`), North
+from surviving sources: `prep.md` (not in this repository), North
 Star constraints, milestone briefs,
 `config/extensions/family-maturity.json`, SDK contract files, supported/deferred
 behavior matrices, and cited source paths. All claims in the reconstruction cite

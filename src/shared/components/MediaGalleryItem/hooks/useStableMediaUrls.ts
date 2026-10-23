@@ -44,7 +44,7 @@ export function useStableMediaUrls({ image, isPriority }: UseStableMediaUrlsPara
     : image.thumbUrl;
 
   // === Display URL (image thumbnail or progressive src) ===
-  // Stored refs become same-origin R9 content-route addresses here.
+  // Stored refs become same-origin content-route addresses here.
   const displayUrl = useMemo(() => {
     if (isAudioContent) return '';
     if (isVideoContent) {

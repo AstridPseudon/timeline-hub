@@ -1,13 +1,11 @@
 // ---------------------------------------------------------------------------
-// M2a — Core SDK boundary: chrome contracts
+// Core SDK boundary: chrome contracts
 // ---------------------------------------------------------------------------
 //
 // These contracts define the type surface for the extension chrome service
 // (toast, progress, save, render-status events) and the associated event
 // payload types.  The module is kept modality-neutral: it exports only the
 // interface contracts with no runtime dependency on any video-editor subsystem.
-//
-// Extracted from src/sdk/index.ts during M2a Step 9 (T12).
 //
 // @publicContract
 // ---------------------------------------------------------------------------

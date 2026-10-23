@@ -107,8 +107,6 @@ export function PublicAstridScriptedConversation({
     <section className="astrid-scripted-conversation" aria-label="Scripted example conversation" tabIndex={-1}>
       <ConversationPresentation
         items={items}
-        showHeaderProcessing={false}
-        hideEmptyState
         label="Astrid"
         avatarSrc="/astrid-mink-provisional.webp"
         scrollContainerTabIndex={0}

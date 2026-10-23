@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { VideoMetadata } from '@/shared/lib/media/videoUploader';
+import type { VideoMetadata } from '@/shared/lib/media/videoMetadata';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { extractFramesFromVideo } from './extractor';
 

@@ -5,17 +5,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const mocks = vi.hoisted(() => ({
   toastError: vi.fn(),
-  supabaseFrom: vi.fn(),
   runPlaceholder: vi.fn(),
   createTask: vi.fn(),
 }));
 
 vi.mock('@/shared/components/ui/runtime/sonner', () => ({
   toast: { error: mocks.toastError },
-}));
-
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({ from: mocks.supabaseFrom }),
 }));
 
 vi.mock('@/shared/hooks/tasks/useTaskPlaceholder', () => ({
@@ -95,7 +90,6 @@ describe('useJoinSegmentsHandler legacy boundary', () => {
     });
 
     expect(mocks.toastError).toHaveBeenCalledWith(expect.stringContaining('Legacy task family join_clips is unsupported'));
-    expect(mocks.supabaseFrom).not.toHaveBeenCalled();
     expect(mocks.runPlaceholder).not.toHaveBeenCalled();
     expect(mocks.createTask).not.toHaveBeenCalled();
     expect(result.current.isJoiningClips).toBe(false);

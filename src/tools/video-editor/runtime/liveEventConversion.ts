@@ -1,5 +1,5 @@
 /**
- * M3b live event-table conversion.
+ * Live event-table conversion.
  *
  * Converts validated deterministic event captures into graph-owned keyframe
  * operations. The converter is intentionally pure: it resolves timing and

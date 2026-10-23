@@ -2,9 +2,9 @@ import { astridObjectContentPath } from '@/integrations/astrid/workspaceV1.ts';
 import { astridBase } from '@/integrations/runtime/connection.ts';
 
 /**
- * Display-URL addressing for managed media (B3 Slice B).
+ * Display-URL addressing for managed media.
  *
- * Uses the `assetBaseUrl ?? astridBase()` posture: every managed-media reference becomes an R9
+ * Uses the `assetBaseUrl ?? astridBase()` posture: every managed-media reference becomes a
  * byte-route address (`GET /projects/:slug/media/:id/content`, Range/ETag)
  * under the Astrid base, read at call time: same-origin through the
  * per-boot-token-injecting dev proxy, or the loopback gateway on the hosted
@@ -29,7 +29,7 @@ export function bridgeMediaUrl(
   }
 
   // Absolute (legacy remote rows, blob:/data: locals) and already-rooted
-  // (previously resolved content-route) addresses are final — never re-prefixed.
+  // (content-route) addresses are final — never re-prefixed.
   if (ABSOLUTE_URL_PATTERN.test(mediaRef) || mediaRef.startsWith('/')) {
     return mediaRef;
   }

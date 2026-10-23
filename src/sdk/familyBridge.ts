@@ -5,8 +5,6 @@
  * contribution-kind bridging questions without exposing raw registry
  * internals to consuming extensions.
  *
- * M2b extraction: moved from inline in src/sdk/index.ts.
- *
  * @publicContract
  */
 
@@ -100,7 +98,7 @@ export function getVideoFamilyConformanceReport(
  *
  * Returns:
  * - `null` when the kind is bridged (execution maturity ≥ runtime-bridged).
- * - The milestone string (e.g. `'M6'`) when the kind is NOT bridged.
+ * - The milestone string when the kind is NOT bridged.
  * - `'unknown'` when the kind is not in the registry and has no milestone entry.
  */
 export function getVideoFamilyLegacyBridgeStatus(kind: ContributionKind): string | null {

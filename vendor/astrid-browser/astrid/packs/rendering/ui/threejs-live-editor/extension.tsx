@@ -7,6 +7,7 @@ import {
   type DisposeHandle,
   type ExtensionContext,
   type ExtensionId,
+  type PanelRenderProps,
 } from '@astrid/editor-sdk';
 import { LIVE_SCENE_CLIP_TYPE_ID, THREEJS_LIVE_EDITOR_EXTENSION_ID } from './identity';
 import type { CommandContribution } from '@astrid/editor-sdk';
@@ -39,6 +40,8 @@ export const LIVE_SCENE_IMPORT_COMMAND_ID = `${THREEJS_LIVE_EDITOR_EXTENSION_ID}
 export const LIVE_SCENE_EDIT_COMMAND_ID = `${THREEJS_LIVE_EDITOR_EXTENSION_ID}.applyMapleCameraEdit`;
 // Compatibility alias for existing command callers.
 export const LIVE_SCENE_AUTHORING_COMMAND_ID = LIVE_SCENE_IMPORT_COMMAND_ID;
+export const WORLD_EXPLORER_PANEL_CONTRIBUTION_ID = 'threejs-live-editor-world-explorer';
+export const WORLD_EXPLORER_PANEL_RENDER_ID = `${THREEJS_LIVE_EDITOR_EXTENSION_ID}.worldExplorer`;
 
 type LiveSceneClipProps = {
   readonly clipId: string;
@@ -74,8 +77,12 @@ const LiveSceneClip: FC<LiveSceneClipProps> = ({
         placeItems: 'center',
       },
     }, 'Loading live scene…'),
-  }, createElement(LazySceneSurface, { source: source?.liveScene, sourceTime, width, height }));
+  }, createElement(LazySceneSurface, { source: source?.liveScene, sourceTime, width, height, showStatus: false }));
 };
+
+const LazyWorldExplorerPanel = lazy(() =>
+  import('./explorer/WorldExplorerPanel').then(({ WorldExplorerPanel }) => ({ default: WorldExplorerPanel })),
+);
 
 const LIVE_SCENE_CONTRIBUTION = {
   id: LIVE_SCENE_CLIP_CONTRIBUTION_ID,
@@ -103,7 +110,12 @@ export const threejsLiveEditorExtension = defineExtension({
     label: 'Three.js Live Editor',
     description: 'Live Three.js scene clips and prepared-scene import for the Astrid App editor.',
     apiVersion: 1,
-    contributions: [LIVE_SCENE_CONTRIBUTION, LIVE_SCENE_AUTHORING_COMMAND],
+    contributions: [LIVE_SCENE_CONTRIBUTION, LIVE_SCENE_AUTHORING_COMMAND, {
+      id: WORLD_EXPLORER_PANEL_CONTRIBUTION_ID as unknown as ContributionId,
+      kind: 'panel',
+      label: 'World Explorer',
+      render: WORLD_EXPLORER_PANEL_RENDER_ID,
+    }],
     messages: {
       activated: 'Three.js Live Editor registered.',
       disposed: 'Three.js Live Editor disposed.',
@@ -124,6 +136,19 @@ export const threejsLiveEditorExtension = defineExtension({
       code: 'threejs-live-editor/registered',
       message: ctx.services.i18n.t('activated'),
     });
+
+    // Guarded: some host and test contexts omit the UI service entirely.
+    const worldExplorerRegistration = typeof ctx.ui?.registerRenderer === 'function'
+      ? ctx.ui.registerRenderer<PanelRenderProps>(
+        WORLD_EXPLORER_PANEL_RENDER_ID,
+        (props) => createElement(Suspense, {
+          fallback: createElement('div', {
+            'data-testid': 'astrid-world-explorer-loading',
+            style: { padding: 12, font: '12px sans-serif', opacity: 0.7 },
+          }, 'Opening World Explorer…'),
+        }, createElement(LazyWorldExplorerPanel, { ...props, context: ctx })),
+      )
+      : undefined;
 
     const pickerAbortController = new AbortController();
     const authoringRegistration = ctx.liveSceneAuthoring?.register((request, execution) =>
@@ -171,15 +196,19 @@ export const threejsLiveEditorExtension = defineExtension({
 
     return {
       dispose(): void {
-        pickerAbortController.abort();
-        authoringRegistration?.dispose();
-        registration.dispose();
-        importCommandRegistration?.dispose();
-        ctx.services.diagnostics.report({
-          severity: 'info',
-          code: 'threejs-live-editor/disposed',
-          message: ctx.services.i18n.t('disposed'),
-        });
+        try {
+          pickerAbortController.abort();
+          authoringRegistration?.dispose();
+          registration.dispose();
+          importCommandRegistration?.dispose();
+          ctx.services.diagnostics.report({
+            severity: 'info',
+            code: 'threejs-live-editor/disposed',
+            message: ctx.services.i18n.t('disposed'),
+          });
+        } finally {
+          worldExplorerRegistration?.dispose();
+        }
       },
     };
   },

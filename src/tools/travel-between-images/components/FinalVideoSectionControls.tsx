@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Copy, Film, Loader2, Share2 } from 'lucide-react';
+import { Check, Film } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import { VariantBadge } from '@/shared/components/VariantBadge';
 import type { GenerationRow } from '@/domains/generation/types';
 import type {
@@ -23,35 +22,11 @@ interface FinalVideoSectionControlsProps {
   badgeData: FinalVideoVariantBadgeData | null;
   onMarkAllVariantsViewed: () => void;
   selectedParentId: string | null;
-  onShare: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  isCreatingShare: boolean;
-  shareCopied: boolean;
-  shareSlug?: string | null;
   progress: FinalVideoSectionProgress;
   onJoinSegmentsClick?: () => void;
   parentGenerations: GenerationRow[];
   selectedIndex: number;
   onOutputSelect: (id: string) => void;
-}
-
-function renderShareIcon(isCreatingShare: boolean, shareCopied: boolean, shareSlug?: string | null) {
-  if (isCreatingShare) {
-    return <Loader2 className="h-4 w-4 animate-spin" />;
-  }
-  if (shareCopied) {
-    return <Check className="h-4 w-4 text-green-500" />;
-  }
-  if (shareSlug) {
-    return <Copy className="h-4 w-4" />;
-  }
-  return <Share2 className="h-4 w-4" />;
-}
-
-function getShareTooltipLabel(shareCopied: boolean, shareSlug?: string | null): string {
-  if (shareCopied) {
-    return 'Link copied!';
-  }
-  return shareSlug ? 'Copy share link' : 'Share this video';
 }
 
 export const FinalVideoSectionControls: React.FC<FinalVideoSectionControlsProps> = ({
@@ -60,10 +35,6 @@ export const FinalVideoSectionControls: React.FC<FinalVideoSectionControlsProps>
   badgeData,
   onMarkAllVariantsViewed,
   selectedParentId,
-  onShare,
-  isCreatingShare,
-  shareCopied,
-  shareSlug,
   progress,
   onJoinSegmentsClick,
   parentGenerations,
@@ -96,26 +67,6 @@ export const FinalVideoSectionControls: React.FC<FinalVideoSectionControlsProps>
 
         {!readOnly && (
           <div className="flex items-center gap-2">
-            {hasFinalOutput && selectedParentId && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={onShare}
-                    disabled={isCreatingShare}
-                    className={shareCopied ? 'bg-green-500/10 border-green-500/50' : ''}
-                  >
-                    {renderShareIcon(isCreatingShare, shareCopied, shareSlug)}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {getShareTooltipLabel(shareCopied, shareSlug)}
-                </TooltipContent>
-              </Tooltip>
-            )}
-
             {progress.total > 0 && progress.completed === progress.total && onJoinSegmentsClick && (
               <Button type="button" variant="outline" size="sm" onClick={onJoinSegmentsClick}>
                 Join clips

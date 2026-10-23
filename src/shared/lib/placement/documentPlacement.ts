@@ -1,5 +1,5 @@
 /**
- * Document-native placement primitives (B4 / C1-5, doc 24 Q1 RATIFIED).
+ * Document-native placement primitives.
  *
  * The timeline document is the ONLY placement authority: a placed generation
  * is a media clip in `config.clips` whose registry asset carries the
@@ -41,7 +41,7 @@ export interface ShotPlacement {
 /** Registry asset key for a generation's primary media. Stable domain concept shared with reads/tests. */
 export const placementAssetKey = (generationId: string): string => `gen:${generationId}`;
 
-/** Deterministic entry id — idempotent under retries/replays like the old unique pair constraint. */
+/** Deterministic entry id — idempotent under retries/replays like the unique pair constraint. */
 export const placementEntryId = (shotId: string, generationId: string): string =>
   `sg-${shotId}-${generationId}`;
 
@@ -146,13 +146,13 @@ export interface PlaceGenerationInput {
   generationId: string;
   /** Managed-media reference stored in the registry asset's `file`. */
   mediaRef: string;
-  /** Display URL for the media (R9 content route) — built by the service layer. */
+  /** Display URL for the media (content route) — built by the service layer. */
   displaySrc?: string;
   mimeType?: string;
   duration?: number;
   thumbnailRef?: string;
   /**
-   * Full registry entry base (from R13 resolution). When present it replaces
+   * Full registry entry base (from generation detail resolution). When present it replaces
    * any prior entry as merge base; the explicit media fields above still win
    * so the placement's own truth stays authoritative.
    */
@@ -218,7 +218,7 @@ function latestOccupiedFrame(config: TimelineConfig, shotId: string, fps: number
 /**
  * Place (or re-place) a generation into a shot. Idempotent on (shotId,
  * generationId): an existing expression of the pair is replaced, mirroring
- * the old unique-pair constraint instead of duplicating it.
+ * the unique-pair constraint instead of duplicating it.
  */
 export function placeGenerationInDocument(
   document: PlacementDocument,
@@ -298,8 +298,7 @@ function placementsOfShot(document: PlacementDocument, shotId: string): ShotPlac
 }
 
 /**
- * Batch frame update across ONE shot's placements (the document equivalent
- * of the retired `batch_update_timeline_frames` RPC). Pooled entries are
+ * Batch frame update across ONE shot's placements. Pooled entries are
  * promoted to clips. Applied sequentially so each update sees the frames its
  * predecessors took; collisions shift to the next free frame — never an
  * overwrite of a peer.

@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import { stripModeFromPhaseConfig } from '../segmentSettingsUtils';
 import type { PhaseConfig } from '@/shared/types/phaseConfig';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { SegmentSettings, SegmentSettingsFormProps } from '../types';
 import { useModelChange } from './useModelChange';
 
@@ -10,7 +9,6 @@ interface UseAdvancedSettingsHandlersParams {
   settings: SegmentSettings;
   shotDefaults?: SegmentSettingsFormProps['shotDefaults'];
   effectiveLoras: NonNullable<SegmentSettings['loras']>;
-  openLoraModal: () => void;
 }
 
 export function useAdvancedSettingsHandlers({
@@ -18,7 +16,6 @@ export function useAdvancedSettingsHandlers({
   settings,
   shotDefaults,
   effectiveLoras,
-  openLoraModal,
 }: UseAdvancedSettingsHandlersParams) {
   const handleMotionModeChange = useCallback(
     (mode: 'basic' | 'advanced') => {
@@ -66,38 +63,6 @@ export function useAdvancedSettingsHandlers({
     [onChange]
   );
 
-  const handleAddLoraClick = useCallback(() => {
-    openLoraModal();
-  }, [openLoraModal]);
-
-  const handleLoraSelect = useCallback(
-    (lora: LoraModel) => {
-      const loraId = lora['Model ID'] || (lora.id as string);
-      const loraPath =
-        lora['Model Files']?.[0]?.url ||
-        (lora['Model File'] as string | undefined);
-      const loraName = lora.Name || (lora.name as string | undefined) || loraId;
-
-      if (!loraPath) return;
-      if (effectiveLoras.some((existing) => existing.id === loraId || existing.path === loraPath)) {
-        return;
-      }
-
-      onChange({
-        loras: [
-          ...effectiveLoras,
-          {
-            id: loraId,
-            name: loraName,
-            path: loraPath,
-            strength: 1.0,
-          },
-        ],
-      });
-    },
-    [effectiveLoras, onChange]
-  );
-
   const handleRemoveLora = useCallback(
     (loraId: string) => {
       onChange({
@@ -130,8 +95,6 @@ export function useAdvancedSettingsHandlers({
     handlePhasePresetSelect,
     handlePhasePresetRemove,
     handleRandomSeedChange,
-    handleAddLoraClick,
-    handleLoraSelect,
     handleRemoveLora,
     handleLoraStrengthChange,
     handleModelChange,

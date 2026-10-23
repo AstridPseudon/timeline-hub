@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePendingSegmentTasks } from '@/shared/hooks/tasks/usePendingSegmentTasks';
 import { useSegmentOutputsForShot } from '@/shared/hooks/segments';
 import { useDownloadImages } from './useDownloadImages';
@@ -40,9 +40,7 @@ function useShotData(
     updateTimelineFrame,
     batchExchangePositions,
     moveItemsToMidpoint,
-    deleteItem,
     loadPositions,
-    clearEnhancedPrompt,
     getImagesForMode,
     hasEverHadData,
   } = shotData;
@@ -59,7 +57,6 @@ function useShotData(
 
   const segmentOutputData = useSegmentOutputsForShot(
     selectedShotId,
-    projectId || '',
     undefined,
     selectedOutputId,
     onSelectedOutputChange,
@@ -78,14 +75,11 @@ function useShotData(
     updateTimelineFrame,
     batchExchangePositions,
     moveItemsToMidpoint,
-    deleteItem,
     loadPositions,
-    clearEnhancedPrompt,
     getImagesForMode,
     hasEverHadData,
     segmentSlots: segmentOutputData.segmentSlots,
     selectedParentId: segmentOutputData.selectedParentId,
-    isSegmentsLoading: segmentOutputData.isLoading,
     addOptimisticPending: pendingSegmentData.addOptimisticPending,
     hasPendingTask: pendingSegmentData.hasPendingTask,
   };
@@ -142,7 +136,6 @@ function useModeOrchestration(
   data: ReturnType<typeof useShotData>,
   effectiveGenerationMode: 'batch' | 'timeline' | 'by-pair',
   resolvedProjectResolution: string | undefined,
-  trailingFrameUpdateRef: MutableRefObject<((endFrame: number) => void) | null>,
 ) {
   const {
     selectedShotId,
@@ -208,7 +201,6 @@ function useModeOrchestration(
     loadPositions,
     navigateWithTransition,
     addOptimisticPending,
-    trailingFrameUpdateRef,
     onOpenPreviewDialog: handleOpenPreviewFromLightbox,
   });
 
@@ -314,7 +306,6 @@ export function useShotImagesEditorModel(
   props: ShotImagesEditorResolvedProps,
   effectiveGenerationMode: 'batch' | 'timeline' | 'by-pair',
   resolvedProjectResolution: string | undefined,
-  trailingFrameUpdateRef: MutableRefObject<((endFrame: number) => void) | null>,
 ) {
   const data = useShotData(props, effectiveGenerationMode);
 
@@ -330,7 +321,6 @@ export function useShotImagesEditorModel(
     data,
     effectiveGenerationMode,
     resolvedProjectResolution,
-    trailingFrameUpdateRef,
   );
 
   const timelineMediaValue = useTimelineMediaValue(props);

@@ -12,13 +12,13 @@ export const DIAG_SEVERITY_ICON: Record<DiagnosticSeverity, typeof AlertCircle> 
 };
 
 export const DIAG_SEVERITY_COLOR: Record<DiagnosticSeverity, string> = {
-  error: 'text-red-400',
-  warning: 'text-yellow-400',
-  info: 'text-blue-400',
+  error: 'text-ink-danger',
+  warning: 'text-ink-warning',
+  info: 'text-ink-info',
 };
 
 export const DIAG_SEVERITY_BG: Record<DiagnosticSeverity, string> = {
-  error: 'bg-red-500/10 border-red-500/30',
-  warning: 'bg-yellow-500/10 border-yellow-500/30',
-  info: 'bg-blue-500/10 border-blue-500/30',
+  error: 'bg-ink-danger/10 border-ink-danger/30',
+  warning: 'bg-ink-warning/10 border-ink-warning/30',
+  info: 'bg-ink-info/10 border-ink-info/30',
 };
