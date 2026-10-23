@@ -445,7 +445,7 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   const mergedDocument = parentOf(acceptedTrim);
   expect(mergedDocument.clips.map((clip: any) => clip.id)).toEqual([SOURCE_ID, rightId]);
   expect(mergedDocument.clips[0]).toMatchObject({ id: SOURCE_ID, from: originalClip.from, to: originalClip.to, hold: SPLIT_AT });
-  expect(mergedDocument.clips[1]).toMatchObject({ id: rightId, at: SPLIT_AT, from: 3, to: originalClip.to, hold: originalClip.to - 3 });
+  expect(mergedDocument.clips[1]).toMatchObject({ id: rightId, at: SPLIT_AT, from: 3, to: originalClip.to, hold: originalClip.hold - SPLIT_AT });
   expect(mergedDocument.config.clips).toEqual(mergedDocument.clips);
   expect(mergedDocument.clips[0].app).toEqual(originalClip.app);
   expect(mergedDocument.clips[1].app.opaque).toEqual(originalClip.app.opaque);
