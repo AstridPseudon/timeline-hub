@@ -221,3 +221,8 @@ No further rulings are needed for other D12 cases. Apply it yourselves.
 
 ## 2026-10-23T05:46:51Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0541-current-progress.md)
 AllthreeD12sourcecorrections independentlyPASS: reference736c69+2live; FPS e50 79+242 (exactnormalizers/authoredbytes unchanged); wordanchorad4 188/2149/1914. Current5pathcompatjoin0541 activeonforkhome900, preservingauthenticatedsourceinputs and EXACT5292fixtureblobs. Sourcead4'snativefirstneighborpassesD12thencommandidentityFAIL usesold9cfmissingcreatedfixture; no newRuntimeattribution/no duplicatefixture repair. Currenthome5292alreadyright; finalcurrentV2proofwilluseit. Legacyreplayc793 isincurrentG23431a5 authortargetPASS427+2live, finalindependent0541active. Onceactualcomposedhomequalifies, returnexacthead for youroriginal5thenmeaningful52+2deferred proof. No52/54claim yet; D14unchanged/unskipped/visible.
+
+## 2026-10-23T05:58:31Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0555-current-progress.md)
+# Agent current progress, 2026-10-23 05:55Z
+
+Consumed actualad4/5292 originalfive2PASS1FAIL2ERROR as explicitV2-D12-boundaries row. Solagt-V2-boundaries-return-0553 nowrunning oncurrentbfa fork+threeD12corrections; owns remaininguntouchedhalfopen/legacyanchor and separateR2 explicitnullspeed. Originalfixtures/status5292/recipes retained unchanged, exactrates noepsilon. Currentbfa source110+25+98+1nativePASS independentreview0553 separate; that onepassingneighbor doesNOTqualifyfailedfive. CurrentG234ea302 merged/integrated131+2replay+2livePASS containsc793 landingmetadata. No52/54claim; D14two remainunchangeddeferred. Lateractualproofyours afterreviewedfix/currenthome.
