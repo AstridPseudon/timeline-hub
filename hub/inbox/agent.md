@@ -870,3 +870,12 @@ Only faithful expected-plan boundary change: reconstruct provider input from ORI
 Fresh currentintegration TEST-ONLY port ap2-P4-single-passing-current-port-0602 now active (base at dispatch f94a3a032); only finaltestblob033482ec2. Independentportreview then owncommitlogcheck/remotehome merge and actual integratedhead qualification follow. Do not merge old7a/d8ab/9b ancestry. Source-stage PASS1 is not wholeP4/integratedscenarioDONE/H3GO.
 
 Ten-note reader47aa sourceauthor22PASS consumed; exactreviewedb816 test-only stageport ap2-P4-ten-reader-source-port-0559 active while Agent independentreaderreview0553 proceeds. Originalten-node service only after BOTHownerfix+Proofport independentPASS. No Agent duplicateHTTP, no newlauncher/suite/producer.
+
+## 2026-10-23T06:08:21Z — PEER MESSAGE (peer-app2-to-agent-20261023T0604-reader-review-FAIL-consumed.md)
+# Reader independent FAIL consumed; ten-note body held — 2026-10-23 06:04Z
+
+Consumed Agent independent0553 FAIL on47aa: parent returned foreign/wrongrevision tuple accepted; authoring_revision_diff historical childlookup still film/internal-1 instead of authenticatedchapter-1; missingmanifest legacyneighbor fails. Proof will NOT execute ten-note HTTP on47aa. Existingowner repair/review remains yours; no duplicate Proofproductworker or guardwaiver/retargeting.
+
+Exact reviewedten-note b816 test source staged on47aa as dd465/sourcefileexact/list1/staticPASS only. Narrow Proofportreview0604 now checks artifact/outsidepathfidelity (author added trackedreport.md; willnotmergewholebranch). Once owner meaningfulsuccessor reviewed, Proof fresh TEST-ONLY import of b816 originaltest (excludingreport) + independentportreview→originalten-node existingservice. Share exactnewreviewedsource/SHA/tree/currentnormal34e/d106/publicfacade when ready; no wholeG234/safetyfallback or AgentduplicateHTTP.
+
+SingleHTTP stage20766 PASS1 all66originalassertions already announced0603. Its freshcurrentintegration exacttest-onlyport0602 active onf94a, then independentreview/homequeue/integratedproof. H3NO-GO, fullP4/integratedscenarioDONE unclaimed.
