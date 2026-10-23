@@ -174,7 +174,7 @@ def _clip_duration(clip: Mapping[str, Any], path: str) -> tuple[Fraction, Fracti
     start = _number(at, f"{path}.at")
     if start < 0:
         _fail(f"{path}.at", "must not be negative")
-    speed = _number(clip.get("speed", 1), f"{path}.speed", positive=True)
+    speed = _number(1 if clip.get("speed") is None else clip["speed"], f"{path}.speed", positive=True)
     source_start = _number(0 if clip.get("from") is None else clip["from"], f"{path}.from")
     if source_start < 0:
         _fail(f"{path}.from", "must not be negative")
@@ -207,6 +207,14 @@ def _asset_duration(asset: Mapping[str, Any]) -> Fraction | None:
     return None
 
 
+def _same_fields(current: Mapping[str, Any], previous: Mapping[str, Any] | None,
+                 fields: Sequence[str]) -> bool:
+    if previous is None:
+        return False
+    return json.dumps({key: current[key] for key in fields if key in current}, sort_keys=True) == json.dumps(
+        {key: previous[key] for key in fields if key in previous}, sort_keys=True)
+
+
 def _validate_clip_list(
     clips: Any,
     *,
@@ -214,6 +222,8 @@ def _validate_clip_list(
     tracks: Mapping[str, Mapping[str, Any]],
     registry: Mapping[str, Any],
     bound: Fraction | None = None,
+    baseline: Mapping[str, Any] | None = None,
+    baseline_bound: Fraction | None = None,
 ) -> dict[str, Mapping[str, Any]]:
     if not isinstance(registry, Mapping):
         _fail(f"{path.rsplit('.', 1)[0]}.registry", "must be an object")
@@ -221,24 +231,43 @@ def _validate_clip_list(
     assets = registry.get("assets", {})
     if not isinstance(assets, Mapping):
         _fail(f"{path.rsplit('.', 1)[0]}.registry.assets", "must be an object")
+    before = {row["id"]: row for row in baseline.get("clips", [])} if baseline else {}
+    before_tracks = {row["id"] for row in baseline.get("tracks", [])} if baseline else set()
+    before_assets = baseline.get("registry", {}).get("assets", {}) if baseline else {}
     for clip_id, clip in by_id.items():
         clip_path = f"{path}[{clip_id!r}]"
+        prior = before.get(clip_id)
         track = clip.get("track")
         if not isinstance(track, str) or track not in tracks:
-            _fail(f"{clip_path}.track", "must reference an existing track")
-        start, duration = _clip_duration(clip, clip_path)
-        if bound is not None and start + duration > bound:
-            _fail(clip_path, "timeline interval must fit the occurrence's half-open bounds")
+            if not (isinstance(track, str) and _same_fields(clip, prior, ("track",))
+                    and track not in before_tracks):
+                _fail(f"{clip_path}.track", "must reference an existing track")
+        timing_changed = not _same_fields(
+            clip, prior, ("at", "at_ms", "from", "to", "hold", "duration", "speed"))
+        # D12a checks the interval when its declaration or occurrence bound is
+        # written. An unrelated edit preserves an existing overrun verbatim.
+        if timing_changed or bound != baseline_bound:
+            start, duration = _clip_duration(clip, clip_path)
+            if bound is not None and start + duration > bound:
+                _fail(clip_path, "timeline interval must fit the occurrence's half-open bounds")
         asset_key = clip.get("asset", clip.get("asset_id"))
         if asset_key is not None:
             if asset_key not in assets or not isinstance(assets[asset_key], Mapping):
+                if (_same_fields(clip, prior, ("asset", "asset_id"))
+                        and asset_key not in before_assets):
+                    continue
                 _fail(f"{clip_path}.asset", f"unknown asset {asset_key!r}")
+            if (_same_fields(clip, prior, ("asset", "asset_id", "from", "to", "hold", "duration", "speed"))
+                    and _same_fields(assets[asset_key], before_assets.get(asset_key),
+                                     ("media_id", "object_id", "type", "duration", "duration_seconds", "duration_ms"))):
+                continue
+            _, duration = _clip_duration(clip, clip_path)
             source_start = _number(0 if clip.get("from") is None else clip["from"], f"{clip_path}.from")
             source_duration = _asset_duration(assets[asset_key])
             # The authored source window is independent of an image's hold.
             source_end = (_number(clip["to"], f"{clip_path}.to") if clip.get("to") is not None
                           else source_start + duration * _number(
-                              clip.get("speed", 1), f"{clip_path}.speed", positive=True))
+                              1 if clip.get("speed") is None else clip["speed"], f"{clip_path}.speed", positive=True))
             if source_duration is not None and source_end > source_duration:
                 _fail(clip_path, "source interval exceeds the retained asset bounds")
     return by_id
@@ -491,9 +520,15 @@ def validate_final_candidate(
         registry = effective_parent_registry(parent)
     except ParentRegistryError as exc:
         _fail("candidate.parent.registry", str(exc))
+    baseline_parent = (baseline or {}).get("parent", {})
+    if not _same_fields(candidate, baseline, ("project_id", "timeline_id", "base_parent")):
+        baseline_parent = {}
     clips = _validate_clip_list(
         parent.get("clips", config.get("clips")), path="candidate.parent.clips",
         tracks=tracks, registry=registry,
+        baseline={"clips": baseline_parent.get("clips", []),
+                  "tracks": baseline_parent.get("config", {}).get("tracks", []),
+                  "registry": effective_parent_registry(baseline_parent)} if baseline_parent else None,
     )
     mirror = config.get("clips")
     if isinstance(mirror, list) and isinstance(parent.get("clips"), list) and mirror and mirror != parent["clips"]:
@@ -523,12 +558,24 @@ def validate_final_candidate(
             _fail(f"candidate.shots[{shot_id!r}].internal_timeline", "must be an object")
         child_config = cast(Mapping[str, Any], internal_value)
         child_tracks = _identity_rows(child_config.get("tracks", []), f"candidate.shots[{shot_id!r}].internal_timeline.tracks", "id")
+        baseline_shot = ((baseline or {}).get("shots") or {}).get(shot_id, {})
+        baseline_internal = baseline_shot.get("internal_timeline", {}) if isinstance(baseline_shot, Mapping) else {}
+        source = candidate.get("source_mapping", {}).get("shots", {}).get(shot_id, {})
+        previous_source = (baseline or {}).get("source_mapping", {}).get("shots", {}).get(shot_id)
+        previous_placement = next((row for row in (baseline or {}).get("placements", [])
+                                   if row.get("occurrence_id") == occurrence_id), None)
+        if (not _same_fields(source, previous_source, (
+                "shot_id", "revision_id", "internal_timeline_id", "internal_timeline_revision_id"))
+                or not _same_fields(placement, previous_placement, ("shot_id",))
+                or not _same_fields(candidate, baseline, ("project_id", "timeline_id"))):
+            baseline_internal = {}
+        previous_bound = (bound if baseline_internal and _same_fields(
+            placement, previous_placement, ("duration_ms",)) else None)
         child_clips = _validate_clip_list(
             child_config.get("clips", []), path=f"candidate.shots[{shot_id!r}].internal_timeline.clips",
             tracks=child_tracks, registry=child_config.get("registry", {}), bound=bound,
+            baseline=baseline_internal, baseline_bound=previous_bound,
         )
-        baseline_shot = ((baseline or {}).get("shots") or {}).get(shot_id, {})
-        baseline_internal = baseline_shot.get("internal_timeline", {}) if isinstance(baseline_shot, Mapping) else {}
         before_child = _identity_rows(baseline_internal.get("clips", []), "baseline.clips", "id") if isinstance(baseline_internal, Mapping) and isinstance(baseline_internal.get("clips"), list) else {}
         for clip_id, clip in child_clips.items():
             clip_path = f"candidate.shots[{shot_id!r}].internal_timeline.clips[{clip_id!r}]"
