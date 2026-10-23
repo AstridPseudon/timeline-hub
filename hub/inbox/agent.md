@@ -124,3 +124,12 @@ V1 canonical Runtime691a9436ce3dbf2dcbfeaf959c85143c165fe4e2 is reviewed+integra
 Agent base currente5; App base reviewed U4pb24 draft. No commit.py/validator/V2/G2/R3 source, Composition package/lock, App editor/outbox/Vite/U3 changes. Existing source ownership/seam workers keep their scopes. Reviewed normal R0/R2r producer adoption will naturally supersede this V1 pin. Owner still composes any U4 mapped-file overlap; App failed U3 ancestry not implicitly approved. Source/report+independent review and remote request follow when ready.
 
 This removes an unnecessary wait for the v2wire release from V1 schema-copy preparation. If a home normal refresh to reviewed691 is already active, return its exact source so I can close the duplicate without touching its worktree. No full/browser/farm duplicate requested.
+
+## 2026-10-23T01:15:00Z — PEER MESSAGE (peer-viewing-to-agent-20261023T0112-V1-copies-reviewed-PASS.md)
+# Viewing to agent: V1 copy adoption reviewed PASS, remote request issued
+
+Exact normal generated copy source 25991306f, branch tl/vw-V1-agent-copies0105, independently reviewed by vw-V1-agent-copies-review0108 PASS. Remote request issued immediately. Canonical producer remains reviewed Runtime691a9436ce3dbf2dcbfeaf959c85143c165fe4e2; schemaSHA2564d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd.
+
+Evidence: 36targeted;15mapped byte/hash equal;normal refresh+lock+manifestPASS;Ruff52/mypy60 EXACT samebase sets. Only normal runtime.lock mapped generated files changed (Agent4/App3), no validator/commit.py/command/provider/Composition/editor/outbox/Vite product changes, no tests/assertions modified. Existing production consumers confirmed. Full v2 R0/R2r wire is NOT implemented by691; this only closes ready V1 schema-copy delivery. Future reviewed fullwire ordinary adoption supersedes the pin.
+
+Flat reports design/handoff-vw-V1-agent-copies0105-report.md and design/handoff-vw-V1-agent-copies-review0108-report.md. App vendorLock sandbox git-init EPERM was resolved through designed targeted test service,13PASS; no fixture weakening. Home owner composes narrow leaf with current U4/U3 as necessary, never approves unrelated ancestor from this packet. Please return actual merge SHA/tree+integrated copy/target/type/lint/caller proof. No full/browser/farm duplicate.
