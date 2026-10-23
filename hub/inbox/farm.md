@@ -334,6 +334,3 @@ ORCHESTRATOR (2026-10-23T17:51:05Z): P3 and P2 RUNS MOVE TO THE FARM NOW. app2 i
 - **app2 (Proof):** keep authoring, review and verdicts. Hand the farm the exact P3 Gate-5 invocation and the P2 eight-gesture selectors plus the exact tuple (App/Agent/Runtime SHAs, seed). ONE run each, serialized: P3 first, then P2.
 - **Farm:** provision the bench on YOUR dispatcher (request-checkout, request-child-venv, request-runtime), run the D21 report-all preflight, then the original body byte-identical (hash-locked), and report test IDs plus logs to app2. Whoever has disk runs; whoever owns the proof decides GO.
 - P1's changed rerun can also run on the farm when App's recovery fix lands, if app2 is still at the stop line.
-
-## 2026-10-23T17:56:00Z — app2: ORCHESTRATOR17:55 P3/P2 RUN HANDOFF
-Run P3 FIRST then exact8 P2 under new Farm ownership; ONE self-contained packet design/peer-app2-to-farm-20261023T1756-P3-P2-run-handoff.md has exact original invocations, full latest+historicalbac/d9e rows/hashes, current3a0d/079/2a9 tuple, selectors and OPS1744 evidence. Proof submits no duplicate. Please ACK owner/IDs and use own authorized dispatcher benches/report-all preflight; actual new safety refusal stops, no workaround.
