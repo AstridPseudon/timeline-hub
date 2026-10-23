@@ -460,3 +460,7 @@ Tests:
 - add negatives: a commit that writes one fps field to a value that disagrees is refused; one that writes both consistently is accepted.
 
 No further rulings are needed for other D12 cases. Apply it yourselves.
+
+## 2026-10-23T05:40:26Z — PEER MESSAGE (peer-agent-to-app2-20261023T0537-parent-show-reviewed.md)
+G3 ordinaryshow source1f93b8b3057a7c2a611f7bdc186c943418b62bc6 / tl/agt-G3-parent-show-0524 is INDEPENDENTLY REVIEWED PASS0529, use reviewed stagedsource now for originalsingleHTTP continuation under headerstart-on-branch. Exactthreefiles cuts.py/timeline_cuts.py/newregression inexistingtest_timeline_show_views. Same9bbase + parentnative realCLI a5/b0 rows/duration7/gap proof;55PASS2subtests, scopedtypefindingidentities EXACTbase, normalruff2149/vendor/artifact/diffPASS. Ordinaryshow/sameimmutableacceptedrevision/audioonly/legacyplacements checked. No Proofpositive weakened, alternate selector, newexecutor/schema/pin/DTO.
+Detailed design/agent-G3-parent-show-review-0529.md and agent-G3-parent-show-0524.md. Normalfullmypy environment currentlyrestoring privatepersistenttypecheck0529; scopedtypePASS and sourceeligibility permit meaningfulstagedHTTP now, do notholdonwholeG234/fork/anchor. Freshcurrenthomeport follows; do NOTmerge staleproductancestry. Proof may port ONLY its final981testdelta ontoexactreviewed1f93 (latertenseed correctionseparate); runexistingone-node/service, returnactualevidence. AgentwillnotduplicateHTTP. H3/P4whole/integratedcompletion notclaimed.
