@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { CommitRequest } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { APP_ENTRY_ROUTE, commandOutboxes, expectConnected, firstTrackName, test as appTest } from './support/app.ts';
 import { ASTRID_PYTHON, AstridCli } from './support/astrid.ts';
-import { compositionPublication, harnessUnavailableReason, type DirectHarness } from './support/harness.ts';
+import { harnessUnavailableReason, type DirectHarness } from './support/harness.ts';
 import { logDiagnostic, redactDiagnosticText, redactDiagnosticValue } from './p1-diagnostic-safety.ts';
 
 const CEILING = { timeout: 90_000 };
@@ -98,22 +98,169 @@ function assertAcceptedData(result: any, post: CommitPost, status: 'accepted' | 
   expect(result.receipt.result).toEqual(result.data);
 }
 
-async function seedOneClip(harness: DirectHarness): Promise<ChainSeed> {
+async function seedOneClip(harness: DirectHarness, astrid: AstridCli): Promise<ChainSeed> {
   const timelineId = randomUUID();
-  const publication = compositionPublication({ projectId: harness.seed.projectId, timelineId }, null, 'P1 chain', 30);
   const clip = {
     id: SOURCE_ID, at: 0, track: 'V1', clipType: 'media', asset: 'p1-video', from: 0, to: 8, speed: 1, hold: 8,
     app: { opaque: { keep: null, ordered: [false, 0, ''] }, astrid: { for: 8 }, 'org.example': { literal: SOURCE_ID, clear: null } },
   };
-  const parent = publication.parent_composition as Record<string, any>;
-  parent.config = { ...parent.config, clips: [clip], opaque: { root: null, order: [0, false] } };
-  parent.clips = [clip];
-  parent.registry = { assets: {
-    'p1-video': { file: harness.seed.video.mediaType === 'video/webm' ? 'p1-video.webm' : 'p1-video.mp4',
-      type: harness.seed.video.mediaType, duration: 8, media_id: harness.seed.video.objectId, content_sha256: harness.seed.video.digest },
-  } };
-  const published = await harness.runtimeJson('POST', `/v1/projects/${harness.seed.projectId}/timelines/${timelineId}/composition-revisions`, publication);
-  expect(published.status, JSON.stringify(published.body)).toBe(200);
+  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  const created = await harness.runtimeJson('POST', `/v1/projects/${harness.seed.projectId}/timelines`, { timeline_id: timelineId, name: 'P1 chain' });
+  expect(created.status, JSON.stringify(created.body)).toBe(201);
+  const bootstrap = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${timelineId}`);
+  expect(bootstrap.status, JSON.stringify(bootstrap.body)).toBe(200);
+  const baseRevisionId = bootstrap.body.head_revision_id;
+  const basePublicationId = bootstrap.body.head_publication_id;
+  expect(baseRevisionId).toEqual(expect.any(String));
+  expect(basePublicationId).toEqual(expect.any(String));
+
+  const source = await harness.runtimeFetch(`/v1/objects/${encodeURIComponent(harness.seed.video.objectId)}`);
+  expect(source.status).toBe(200);
+  const imported = await harness.runtimeFetch(`/v1/projects/${harness.seed.projectId}/media-imports`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': harness.seed.video.mediaType,
+      'Idempotency-Key': randomUUID(),
+      'X-Original-Name': harness.seed.video.mediaType === 'video/webm' ? 'p1-video.webm' : 'p1-video.mp4',
+      'X-Media-Duration-Seconds': '12',
+    },
+    body: new Uint8Array(await source.arrayBuffer()),
+  });
+  const importedBody = await imported.json() as any;
+  expect(imported.status, JSON.stringify(importedBody)).toBe(201);
+  const importedData = importedBody.data ?? importedBody;
+  const selection = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/media-selection?asset=${encodeURIComponent(importedData.variant_id)}&generation_id=${encodeURIComponent(importedData.generation_id)}&variant_id=${encodeURIComponent(importedData.variant_id)}`);
+  expect(selection.status, JSON.stringify(selection.body)).toBe(200);
+  const pin = selection.body.data ?? selection.body;
+  expect(pin).toMatchObject({ asset: importedData.variant_id, object_id: harness.seed.video.objectId });
+  const verified = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/media-selection/verified?asset=${encodeURIComponent(pin.asset)}&generation_id=${encodeURIComponent(pin.generation_id)}&variant_id=${encodeURIComponent(pin.variant_id)}&object_id=${encodeURIComponent(pin.object_id)}&catalog_digest=${encodeURIComponent(pin.catalog_digest)}`);
+  expect(verified.status, JSON.stringify(verified.body)).toBe(200);
+
+  const authoredPayload = {
+    slug: 'main', name: 'P1 chain',
+    config: {
+      output: { resolution: '1280x720', fps: 30, file: 'out.mp4' },
+      clips: [clip], tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+      opaque: { root: null, order: [0, false] },
+    },
+    registry: { assets: {
+      'p1-video': { file: harness.seed.video.mediaType === 'video/webm' ? 'p1-video.webm' : 'p1-video.mp4',
+        type: harness.seed.video.mediaType, duration: 8, media_id: harness.seed.video.objectId, content_sha256: harness.seed.video.digest },
+    } },
+    clips: [clip], occurrences: [],
+  };
+  const idempotencyKey = randomUUID();
+  const run = await astrid.python(['-c', String.raw`
+import copy, json, sys
+from astrid.sdk.client import AstridClient
+from astrid.sdk.timeline._command_state import CommandError
+from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.emitter import emit_document_commands
+from astrid.sdk.timeline.native_initialize import capture_initialize
+from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
+
+case = json.loads(sys.argv[1])
+with AstridClient.open_from_launcher(start_pack_host=False, client_name="p1-seed") as client:
+    opened = client.timelines.open_bundle(case["project_id"], case["timeline_id"], revision_id=case["base_revision_id"])
+    if not opened.ok:
+        raise RuntimeError(str(opened.error))
+    bundle = opened.data["bundle"]
+    verified = [case["verified"]]
+    commands = []
+
+    def add(command):
+        global bundle
+        bundle = execute(bundle, [command], verified_media=verified).bundle
+        commands.append(command)
+
+    add(capture_initialize(bundle, name="P1 chain", slug="main", output={
+        "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+        "background": None, "background_scale": None,
+    }))
+    add(capture_track_create(bundle, "parent", {"id": "V1", "kind": "visual", "label": "V1"}))
+    try:
+        capture_clip_add_media(bundle, case["clip"], case["pin"], verified_media=verified)
+    except CommandError as exc:
+        if exc.kind != "unsupported_timing":
+            raise RuntimeError(f"native relation guard changed kind: {exc.kind}") from exc
+    else:
+        raise RuntimeError("native relation guard unexpectedly accepted app.astrid.for")
+
+    supported_clip = copy.deepcopy(case["clip"])
+    supported_clip["app"]["astrid"].pop("for")
+    add(capture_clip_add_media(bundle, supported_clip, case["pin"], verified_media=verified))
+
+    before = copy.deepcopy(bundle)
+    after = copy.deepcopy(bundle)
+    after["parent"]["slug"] = case["payload"]["slug"]
+    after["parent"]["name"] = case["payload"]["name"]
+    after["parent"]["config"] = copy.deepcopy(case["payload"]["config"])
+    after["parent"]["registry"] = copy.deepcopy(case["payload"]["registry"])
+    after["parent"]["clips"] = copy.deepcopy(case["payload"]["clips"])
+    patches = emit_document_commands(before, after)
+    if patches:
+        bundle = execute(before, patches, verified_media=verified).bundle
+        commands.extend(patches)
+
+    expected_parent = copy.deepcopy(case["payload"])
+    expected_parent.pop("occurrences")
+    if bundle["parent"] != expected_parent:
+        raise RuntimeError("native seed changed the authored P1 payload")
+    steps = [{"id": f"seed-{index + 1}", "label": "Seed P1 chain", "intent": "Initialize P1 chain fixture",
+              "tags": ["bootstrap"], "command_ordinals": [index],
+              "patch": copy.deepcopy(command.get("args", {}).get("changes", [])) if command["op"] == "doc.patch" else []}
+             for index, command in enumerate(commands)]
+    body = {
+        "api_version": 1, "project_id": case["project_id"], "timeline_id": case["timeline_id"],
+        "base_revision_id": case["base_revision_id"], "base_publication_id": case["base_publication_id"],
+        "commands": commands, "label": "Seed P1 chain", "steps": steps, "merge": "atomic", "reads": [],
+        "dry_run": False, "source": {"via": "python"},
+    }
+    result = client.timelines.commit(case["project_id"], case["timeline_id"], body, idempotency_key=case["idempotency_key"])
+    if not result.ok:
+        raise RuntimeError(str(result.error))
+    data = result.data
+    receipt = result.receipt
+    document = data["canonical_document"]
+    parent = document["parent_revision"]
+    manifest = document["dependency_manifest"]
+    if data["status"] != "accepted":
+        raise RuntimeError(f"seed commit was not accepted: {data['status']}")
+    if (data["base_revision_id"], data["base_publication_id"]) != (case["base_revision_id"], case["base_publication_id"]):
+        raise RuntimeError("seed acknowledgement changed its requested base pair")
+    if (data["previous_revision_id"], data["previous_publication_id"]) != (case["base_revision_id"], case["base_publication_id"]):
+        raise RuntimeError("accepted seed does not immediately follow its Runtime bootstrap")
+    if data["rebased_onto"] is not None or data["accepted_revision_id"] != parent["revision_id"]:
+        raise RuntimeError("seed acknowledgement has an invalid accepted revision identity")
+    if (receipt["command_kind"], receipt["project_id"], receipt["idempotency_key"]) != (
+            "timeline.commit", case["project_id"], case["idempotency_key"]):
+        raise RuntimeError("seed acknowledgement has an invalid publication receipt identity")
+    if receipt["receipt_id"] == case["base_publication_id"] or receipt["result"] != data:
+        raise RuntimeError("seed publication receipt is not bound to its accepted result")
+    if (document["schema_version"], document["project_id"], document["timeline_id"]) != (
+            1, case["project_id"], case["timeline_id"]):
+        raise RuntimeError("seed canonical document has the wrong Runtime scope")
+    if set(document) != {"schema_version", "project_id", "timeline_id", "parent_revision",
+                         "shot_revisions", "internal_timeline_revisions", "dependency_manifest"}:
+        raise RuntimeError("seed canonical document is incomplete")
+    if set(parent) != {"revision_id", "content_digest", "payload"} or not isinstance(parent["content_digest"], str):
+        raise RuntimeError("seed canonical parent image is incomplete")
+    if document["shot_revisions"] != [] or document["internal_timeline_revisions"] != []:
+        raise RuntimeError("seed unexpectedly created child closure roots")
+    expected_media = {"media_id": case["pin"]["object_id"], "content_digest": case["pin"]["object_id"]}
+    if manifest != {"shots": [], "internal_timelines": [], "media": [expected_media], "documents": []}:
+        raise RuntimeError("seed dependency manifest is not the Runtime-derived media-only closure")
+    if parent["payload"] != case["payload"]:
+        raise RuntimeError("Runtime canonical document changed the authored P1 payload")
+    print(json.dumps({"head_revision_id": data["accepted_revision_id"], "publication_id": receipt["receipt_id"]}))
+`, JSON.stringify({
+    project_id: harness.seed.projectId, timeline_id: timelineId, base_revision_id: baseRevisionId, base_publication_id: basePublicationId,
+    clip, payload: authoredPayload, pin, verified: verified.body.data ?? verified.body, idempotency_key: idempotencyKey,
+  })]);
+  const seeded = JSON.parse(run.stdout.trim().split('\n').pop() ?? '{}') as { head_revision_id?: string; publication_id?: string };
+  expect(seeded.head_revision_id).toEqual(expect.any(String));
+  expect(seeded.publication_id).toEqual(expect.any(String));
   const project = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}`);
   return { projectSlug: (project.body.data ?? project.body).slug, timelineId, sourceId: SOURCE_ID };
 }
@@ -583,7 +730,7 @@ async function captureSecondCaseFailureDiagnostics({
 // read/intent seam. The strict merged reply assertions below remain required; do not infer
 // reads or reinterpret this boundary as a refusal.
 test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, lost ACK restart and exact retry', async ({ page, harness, astrid }) => {
-  const seed = await seedOneClip(harness);
+  const seed = await seedOneClip(harness, astrid);
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const traffic = observe(page);
   let heldSplit: Route | undefined;
@@ -710,7 +857,7 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
 });
 
 test('P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message', async ({ page, harness, astrid }) => {
-  const seed = await seedOneClip(harness);
+  const seed = await seedOneClip(harness, astrid);
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const traffic = observe(page, true);
   const signals: P1FailureSignals = { pageErrors: [], consoleErrors: [], requestFailures: [] };
