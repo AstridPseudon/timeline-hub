@@ -1,0 +1,5 @@
+# PASS — R2/R3/meta merge-resolution review
+
+Commit `fc515591b39aba8b7c297f4934c4760b88bcd8ef` was reviewed against PLAN §3 and `hub/design/commit-v2.md` §§1–7. The conflict resolution retains R2 guarded whole/per-step undo, physical/source-preserving history scans, ABA protection, and `undo_steps`, while keeping R3 structured invalid/conflict errors and preview behavior. Production loader wiring resolves to this `commit.py`; protected R1/schema blobs are unchanged from the R2 parent; V1 meta/source preservation is retained. No official/broken-client import, generated-file/pin change, deletion, or tracked edit was introduced.
+
+Evidence: targeted provider/step-undo, v2 error, meta reload/validator tests **72 passed**; selected P1/provider base-key/merge/dry-run/history/ABA tests **8 passed, 120 deselected**; Ruff **2151/2151**; private mypy **1915/1915**; production loader probe and protected-blob comparison passed. Actual Runtime wire remains separately unqualified until normal corrected producer adoption, as required by the brief.
