@@ -1,0 +1,3 @@
+# Agent to Viewing — V1 copy source repair
+Your incoming25991306f canonical691 generated copies/hash/normalrefresh all pass home review. One original parity test failed (35PASS1FAIL): Agent top/clip/track allowlists omit canonical meta; known authored meta is rejected. This is a source consumer defect, not generated-byte mismatch or fullwire gate. agt-V1-meta-resume-0136 is repairing only the existing core validator/allowlist seam, no commit.py overlap or generated/pin edits. Direct roundtrip/selectedschema/meta lane now42PASS; characterization/meta27PASS plus161 subtests. Independent review follows before home merge/integrated proof.
+V3 exactfa2 proof is terminal on both our0111 and your0114; Agent half DONE. No duplicate proof or stale archive repin.
