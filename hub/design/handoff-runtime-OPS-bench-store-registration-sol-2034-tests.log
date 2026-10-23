@@ -1,0 +1,26 @@
+test_changed_env_and_ambiguous_suite (__main__.RegistrationTests.test_changed_env_and_ambiguous_suite) ... ok
+test_concurrent_real_cli_calls_serialize_one_success_one_refusal (__main__.RegistrationTests.test_concurrent_real_cli_calls_serialize_one_success_one_refusal) ... ok
+test_crash_after_journal_removal_is_complete (__main__.RegistrationTests.test_crash_after_journal_removal_is_complete) ... ok
+test_crash_during_each_recovery_publication (__main__.RegistrationTests.test_crash_during_each_recovery_publication) ... ok
+test_crash_each_publication_then_forward_recover (__main__.RegistrationTests.test_crash_each_publication_then_forward_recover) ... ok
+test_exact_seven_shared_key_success_and_no_retry (__main__.RegistrationTests.test_exact_seven_shared_key_success_and_no_retry) ... ok
+test_existing_empty_directory_cannot_fabricate_custody (__main__.RegistrationTests.test_existing_empty_directory_cannot_fabricate_custody) ... ok
+test_existing_managed_shared_key_and_all_metadata_preserved (__main__.RegistrationTests.test_existing_managed_shared_key_and_all_metadata_preserved) ... ok
+test_held_lease_refuses_without_mutation (__main__.RegistrationTests.test_held_lease_refuses_without_mutation) ... ok
+test_inherited_child_keeps_prelease_after_parent_context_exits (__main__.RegistrationTests.test_inherited_child_keeps_prelease_after_parent_context_exits) ... ok
+test_outside_references_are_refused_kept_not_erased (__main__.RegistrationTests.test_outside_references_are_refused_kept_not_erased) ... ok
+test_pending_recovery_refuses_held_lease (__main__.RegistrationTests.test_pending_recovery_refuses_held_lease) ... ok
+test_race_after_index_leaves_pending_and_preserves_external_bytes (__main__.RegistrationTests.test_race_after_index_leaves_pending_and_preserves_external_bytes) ... ok
+test_races_refuse_and_preserve_changed_file (__main__.RegistrationTests.test_races_refuse_and_preserve_changed_file) ... ok
+test_real_caller_shape_normal_and_env_i (__main__.RegistrationTests.test_real_caller_shape_normal_and_env_i) ... ok
+test_recovery_rejects_journal_scope_and_identity_changes (__main__.RegistrationTests.test_recovery_rejects_journal_scope_and_identity_changes) ... ok
+test_replaced_or_symlink_lease_refuses (__main__.RegistrationTests.test_replaced_or_symlink_lease_refuses) ... ok
+test_stale_baseline_and_exact_names (__main__.RegistrationTests.test_stale_baseline_and_exact_names) ... ok
+test_symlink_hardlink_foreign_and_unsafe_directory (__main__.RegistrationTests.test_symlink_hardlink_foreign_and_unsafe_directory) ... ok
+test_symlink_race_after_validation_and_recovery (__main__.RegistrationTests.test_symlink_race_after_validation_and_recovery) ... ok
+test_unknown_legacy_cutover_cli_normal_and_empty_env (__main__.RegistrationTests.test_unknown_legacy_cutover_cli_normal_and_empty_env) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 2.071s
+
+OK
