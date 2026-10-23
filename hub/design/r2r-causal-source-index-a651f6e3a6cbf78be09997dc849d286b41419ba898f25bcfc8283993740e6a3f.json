@@ -1,0 +1,143 @@
+[
+  {
+    "parts_in_order": [
+      "source-00-part-00"
+    ],
+    "source_path": "/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/remote.py",
+    "utf8_bytes": 142639,
+    "whole_source_sha256": "d36ecb5aecf6576515c7c59b127c878638cd13b16f77b24381f7a3da63f1cea0"
+  },
+  {
+    "parts_in_order": [
+      "source-01-part-00"
+    ],
+    "source_path": "/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py",
+    "utf8_bytes": 58574,
+    "whole_source_sha256": "162e813a35513c831cd99af4b8ec1ce147d9be72e5f4cb036d97adf7109e74ed"
+  },
+  {
+    "parts_in_order": [
+      "source-02-part-00"
+    ],
+    "source_path": "/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_preview.py",
+    "utf8_bytes": 4742,
+    "whole_source_sha256": "70ad40a78248805bee83fe0261145b7e0c3b470ebb770f5f78526900a42dfce5"
+  },
+  {
+    "parts_in_order": [
+      "source-03-part-00"
+    ],
+    "source_path": "/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/commit.py",
+    "utf8_bytes": 72876,
+    "whole_source_sha256": "b73586b0254de7c0d7a84c5f10f4f1e0a662e92568adcfcce21967a045aa57fe"
+  },
+  {
+    "parts_in_order": [
+      "source-04-part-00"
+    ],
+    "source_path": "/home/user/work/wt/agt-pin-67ba416b/tests/editing_conformance/test_commit_runtime_source_copy.py",
+    "utf8_bytes": 31070,
+    "whole_source_sha256": "8a6e7a7c8f0b34e276259bcc8a7af7ffad394a0b76f850261300efb965b413a0"
+  },
+  {
+    "parts_in_order": [
+      "source-05-part-00"
+    ],
+    "source_path": "/home/user/work/wt/agt-pin-67ba416b/tests/editing_conformance/test_doc_patch_sequential_rebase.py",
+    "utf8_bytes": 9595,
+    "whole_source_sha256": "75ccd026898b241d2241f5c058342aeb728e3a70f039a8701343b55f6fc648f6"
+  },
+  {
+    "parts_in_order": [
+      "source-06-part-00"
+    ],
+    "source_path": "/home/user/work/wt/agt-pin-67ba416b/tests/editing_conformance/test_doc_patch_v2.py",
+    "utf8_bytes": 42857,
+    "whole_source_sha256": "32e2fd46443106221e424fda9aa432efab6bccd55773a59664d86a400ba15629"
+  },
+  {
+    "parts_in_order": [
+      "source-07-part-00",
+      "source-07-part-01"
+    ],
+    "source_path": "/home/user/work/wt/rt-R2r-sequential-causal-resume-1534/runtime_protocol/service.py",
+    "utf8_bytes": 512933,
+    "whole_source_sha256": "267bec1aee551e7ea1f92f987adb24268be11c6dd165ee56f24aa68ff2b6a692"
+  },
+  {
+    "parts_in_order": [
+      "source-08-part-00"
+    ],
+    "source_path": "/home/user/work/wt/rt-R2r-sequential-causal-resume-1534/runtime_protocol/timeline_catalog.py",
+    "utf8_bytes": 6929,
+    "whole_source_sha256": "4fcc2bd80f6e2bac13931dc2ddf14fb8251364ade8886283052177b8e5eeec56"
+  },
+  {
+    "parts_in_order": [
+      "source-09-part-00"
+    ],
+    "source_path": "/home/user/work/wt/rt-R2r-sequential-causal-resume-1534/runtime_protocol/timeline_commit_auth.py",
+    "utf8_bytes": 134174,
+    "whole_source_sha256": "4610f67e2d8212d05aa401b180f9dd9f570b0b4ebde971237f7c733cca51ff02"
+  },
+  {
+    "parts_in_order": [
+      "source-10-part-00"
+    ],
+    "source_path": "/home/user/work/wt/rt-R2r-sequential-causal-resume-1534/runtime_protocol/timeline_commit_store.py",
+    "utf8_bytes": 101467,
+    "whole_source_sha256": "538b314c3a295a12e1c192bb0caee57898268bef009ecba6ab6b318fb17aca1d"
+  },
+  {
+    "parts_in_order": [
+      "source-11-part-00"
+    ],
+    "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2r-sequential-causal-1520/log.txt",
+    "utf8_bytes": 138554,
+    "whole_source_sha256": "0c902ab58e7d429e0cf3f0698a9c46a84fe05f797d7da8223673cd25dd723274"
+  },
+  {
+    "parts_in_order": [
+      "source-12-part-00"
+    ],
+    "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2r-sequential-sol-review-1512/brief.md",
+    "utf8_bytes": 5351,
+    "whole_source_sha256": "cbe9e0a7435664f9edfe88ce766959e2b121acf104c6e5562abad0c4e5f921c4"
+  },
+  {
+    "parts_in_order": [
+      "source-13-part-00",
+      "source-13-part-01",
+      "source-13-part-02",
+      "source-13-part-03",
+      "source-13-part-04"
+    ],
+    "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2r-sequential-sol-review-1512/log.txt",
+    "utf8_bytes": 1971697,
+    "whole_source_sha256": "3affae8ac7073c24450d20d17ca283f4bc6909058131e11ea8ca1794b60de3da"
+  },
+  {
+    "parts_in_order": [
+      "source-14-part-00"
+    ],
+    "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2r-sequential-sol-review-1512/original9.log",
+    "utf8_bytes": 5,
+    "whole_source_sha256": "13454a3a81a8817d258ff0ea68e582b4aa2b60087e5bfca97f570ba61f1cfdec"
+  },
+  {
+    "parts_in_order": [
+      "source-15-part-00"
+    ],
+    "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2r-sequential-sol-review-1512/original9_observer.py",
+    "utf8_bytes": 5242,
+    "whole_source_sha256": "88e2bf8ac56b8af120df797bd2da4e7eab581f249183579adfe616ca4d41a57b"
+  },
+  {
+    "parts_in_order": [
+      "source-16-part-00"
+    ],
+    "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2r-sequential-sol-review-1512/report.md",
+    "utf8_bytes": 1264,
+    "whole_source_sha256": "496af5a2b566554e2506f5ce143336ef45151d059d746f9dd5b74bb5a9ee1ffc"
+  }
+]

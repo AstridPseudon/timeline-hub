@@ -1,0 +1,5 @@
+# R2r historical sequential verification (1543)
+
+Initial approach: retain the already validated private original/landing capture and exact prepared candidate in the existing history metadata JSON, inside the same acceptance transaction. Exclude that private field from public history. On history/retry/restart, authenticate context against receipt request hash, realm, publisher, key, invocation, project/timeline/base; compare retained prepared against accepted records/document/head/data; run the existing independent BASE+original and HEAD+landing projection verifier again. No invented unlanded edges, submitted-ref rewrite, public wire or new ledger/executor. Original original-side records and replay mapping are not recoverable from landing records alone: original physical IDs are content-derived from BASE while landed IDs include the intervening peer edits; originals are not persisted as accepted revisions. Retaining proof avoids trusting snapshots and preserves full normal verifier guards.
+
+Status: implementation and regression verification underway.
