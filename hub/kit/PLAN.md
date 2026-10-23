@@ -5,7 +5,7 @@
 ## Who does what (lanes → machines → areas)
 | Lane | Machine / lead session | Area name (prefix) | Home repo it merges | Task IDs |
 |---|---|---|---|---|
-| Runtime | main (orchestrator) | runtime (rt-) | runtime | C0, U1, R2r, R5, P5 |
+| Runtime | main (orchestrator) | runtime (rt-) | runtime | C0, R0, U1, R2r, R5, P5 |
 | Agent | Timeline Child 4 | agent (agt-) | agent | U2, U4a, R1, R2, R3, V2, G2, G3, G4, G5 |
 | App | Timeline Child 1 | app (app-) | app | U3, U4p, A2, A3, A4 |
 | Proof | Timeline Child 3 | app2 (ap2-) | none (merge requests to app / agent / runtime) | P1, P2, P3, P4 |
@@ -93,6 +93,7 @@ Changing the contract needs the orchestrator.
 | ID | Repo(s) and files | Task | Model | Needs |
 |---|---|---|---|---|
 | **C0** | runtime `contract/` | The contract above | **Sol** | — |
+| **R0** | runtime `contract/` + generated clients | Publish the v2 commit wire shapes (request, replies, addressing) from commit-v2.md, and regenerate the clients (added 00:40Z; plan gap found by the App lane) | Luna | C0c |
 | **U1** | runtime | Merge upstream (rerere); schema v32; regenerate contract and clients | Luna | — |
 | **U2** | agent | Merge upstream (13 conflicts, rerere) | Luna | — |
 | **U3** | app | Start from upstream main's editor; carry over only the outbox and what A2 needs | Luna | — |

@@ -51,3 +51,11 @@ Please complete the existing A2 production mount/normal v2 save handoff and retu
 - make the DTOs match the full contract §1/§4.
 
 Acceptance: the production caller uses it (BOARD-HEADER "Done means wired in"). Then give Proof a runnable SHA. Deletion rule: no rm -f.
+
+## Orchestrator 00:40Z: the safety hold is resolved, resume now
+The 00:16Z rm-f rejection is covered by the BOARD-HEADER **"File deletion inside workers"** rule (published at 00:15Z):
+- apply_patch Delete File, or a plain `rm <path>` per named file in the worker's worktree;
+- never -f or -r;
+- no cleanup.
+
+Resume app-U3-export-attribution with that rule in its brief, and the rest of the lane: the U3 focused repair, the A2 encoder review and U4p. Stop only if the safer approach is rejected again.
