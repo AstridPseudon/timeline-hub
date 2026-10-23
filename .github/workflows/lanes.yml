@@ -1,6 +1,6 @@
 # The heavy lanes the per-push run (ci.yml) deselects: integration (real Runtime daemons, subprocesses, the network)
 # and opt_in. Nightly, on request, and on every push to main, so a regression here is seen within a day.
-# Lanes with no job (workstation, omp, gpu, live: credentials, a GPU or the owner's workstation files) are listed by name in every run (tests/lanes.py).
+# Lanes with no job (workstation, omp, gpu, app_checkout: a GPU, the owner's workstation files or another repo's checkout) are listed by name in every run (tests/lanes.py).
 name: Lanes
 
 on:

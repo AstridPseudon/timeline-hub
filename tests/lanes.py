@@ -134,7 +134,6 @@ LANES: dict[str, Lane] = {
     "app_checkout": Lane("manual", "needs a banodoco/astrid-app checkout with npm ci done (ASTRID_APP_CHECKOUT), unpinned until the owner picks a commit; no CI job", _never, default_off=True),
     "omp": Lane("manual", "needs an OMP source checkout (ASTRID_OMP_TEST_PACKAGE_ROOT) and Bun; no CI job", _never, default_off=True),
     "gpu": Lane("manual", "needs ComfyUI with model weights on a GPU machine; no CI job", _never, default_off=True),
-    "live": Lane("manual", "needs real provider credentials; no CI job", _never, default_off=True),
 }
 DEFAULT_OFF = tuple(name for name, lane in LANES.items() if lane.default_off)
 DECLARED = re.compile(r"\[declared:([a-z_]+)\]")

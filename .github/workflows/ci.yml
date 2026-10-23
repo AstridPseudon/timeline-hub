@@ -1,6 +1,6 @@
 # Default run per push (testing plan UA.1). The heavy lanes run elsewhere: darwin_native, remotion, chrome and codex_cli
 # in the darwin-native job below; integration and opt_in nightly in .github/workflows/lanes.yml. The lanes with no job
-# (workstation, omp, gpu, live) are listed by name at the end of every run (tests/lanes.py).
+# (workstation, omp, gpu, app_checkout) are listed by name at the end of every run (tests/lanes.py).
 name: CI
 
 on:
