@@ -371,6 +371,27 @@ def test_preview_remains_unsent_and_acceptance_and_inverse_get_fresh_keys(connec
     assert generated.bundles["r2"]["parent"] == initial_bundle()["parent"]
 
 
+@pytest.mark.parametrize("steps", [
+    {},
+    {"pub1": []},
+    {"pub1": "step-1"},
+    {"pub1": [{}]},
+    {"pub1": [1]},
+    {"pub1": ["step-1", "step-1"]},
+    {"pub1": [""]},
+    {"other": ["step-1"]},
+])
+def test_undo_rejects_malformed_step_selector_before_staging(connected, steps):
+    session = open_session(connected)
+    _, generated, path = connected
+    before = path.read_bytes()
+
+    with pytest.raises(TimelineEditError, match="undo steps"):
+        session.undo(["pub1"], steps=steps)
+
+    assert path.read_bytes() == before and generated.calls == []
+
+
 def test_identity_change_cannot_send_existing_outbox(connected):
     session = open_session(connected)
     client, generated, path = connected

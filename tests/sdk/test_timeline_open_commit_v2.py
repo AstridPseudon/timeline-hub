@@ -83,6 +83,25 @@ def test_native_edits_commit_once_with_label_and_steps(connected):
     assert tl._journal == []
 
 
+@pytest.mark.parametrize("selected", [None, ["step-2"]])
+def test_public_session_undo_preserves_whole_shape_and_forwards_steps(connected, selected):  # noqa: F811
+    tl = opened(connected)
+    _, generated, _ = connected
+    tl.move("parent/clip:a", 3).move("parent/clip:b", 6)
+    accepted = tl.commit("Move both")
+    publication = accepted["receipt"]["receipt_id"]
+
+    selector = None if selected is None else {publication: selected}
+    tl.session.undo([publication], steps=selector)
+
+    inverse = json.loads(generated.calls[-1][0])["commands"][0]
+    assert inverse["args"]["publications"] == [publication]
+    if selector is None:
+        assert "steps" not in inverse["args"]
+    else:
+        assert inverse["args"]["steps"] == selector
+
+
 @pytest.mark.parametrize("status", ["merged", "rebased"])
 def test_adopts_complete_merged_head_including_other_writer(connected, monkeypatch, status):
     tl = opened(connected)
