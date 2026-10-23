@@ -14,6 +14,8 @@ from collections.abc import Mapping
 from astrid.core.timeline.authoring_bundle import (
     AuthoringBundleError,
     _collect_media,
+    _timeline_media_view,
+    _without_meta,
     compile_authoring_candidate,
     open_authoring_bundle,
     preview_authoring_candidate,
@@ -136,8 +138,11 @@ def _verify_document(document):
                  and isinstance(row["media_id"], str) and _DIGEST.fullmatch(row["media_id"])
                  and row["content_digest"] == row["media_id"], "invalid immutable media pin")
     _require(len({row["media_id"] for row in media}) == len(media), "duplicate media pin")
-    required_media = set().union(*(_collect_media(row["payload"])
-                                   for row in [parent, *shots, *internals]))
+    required_media = (
+        _collect_media(_timeline_media_view(parent["payload"], include_parent_locations=True))
+        | set().union(*(_collect_media(_without_meta(row["payload"])) for row in shots))
+        | set().union(*(_collect_media(_timeline_media_view(row["payload"])) for row in internals))
+    )
     _require(required_media <= {row["media_id"] for row in media}, "missing media dependency")
     _require(manifest == _manifest(shots, internals, media, documents),
              "dependency manifest does not match the immutable closure")
@@ -405,13 +410,13 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
     return copy.deepcopy(document)
 
 
-def _failure(reason, message, base, current=None, *, conflicts=None):
-    return {
-        "http_status": 409, "code": "conflict", "message": message,
-        "details": {"status": "conflict" if conflicts else "refused", "reason": reason,
-                    "base": copy.deepcopy(base), "current": copy.deepcopy(current),
-                    "conflicts": conflicts or []},
-    }
+def _failure(reason, message, base, current=None, *, conflicts=None, path=(),
+             hint=None, suggested_command=None, invalid=None, status=None):
+    from ._commit_errors import failure
+
+    return failure(reason, message, base, current, conflicts=conflicts, path=path,
+                   hint=hint, suggested_command=suggested_command, invalid=invalid,
+                   status=status)
 
 
 def _load(port, context, revision):
@@ -1111,19 +1116,29 @@ class RuntimeCommitService:
                 _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
                                                 inverse_records=inverse_records)
+                from ._commit_preview import prepared_records
+
+                records = prepared_records(plan, undo_of=undo_of,
+                                           restored_from=restored_from)
+                # R2's guarded whole/per-step inverse metadata remains part of
+                # the authenticated history record alongside the v2 preview
+                # projection assembled by R3.
+                records["undo_steps"] = copy.deepcopy(undo_steps)
                 prepared = {
                     "expected_head": copy.deepcopy(current), "canonical_document": document,
                     "document_digest": _digest(document),
-                    "records": {"schema_version": 1, "commands": copy.deepcopy(plan.records),
-                                "undo_of": undo_of, "undo_steps": undo_steps, "restored_from": restored_from,
-                                "label": plan.label, "steps": copy.deepcopy(plan.steps),
-                                "merge_mode": plan.merge_mode},
+                    "records": records,
                     "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
                     "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
                 }
                 try:
-                    return (port.preview(prepared) if request.get("dry_run", False)
-                            else port.accept(prepared))
+                    if request.get("dry_run", False):
+                        # Runtime authenticates and retains this exact outcome on
+                        # the port.  Any response projection after this call
+                        # would make the provider's result differ from the
+                        # authenticated candidate.
+                        return port.preview(prepared)
+                    return port.accept(prepared)
                 except StaleHead as exc:
                     current = copy.deepcopy(exc.current_head)
                     if restore:
@@ -1133,15 +1148,22 @@ class RuntimeCommitService:
             raise CommitRejected(_failure("head_busy", "timeline head changed on three attempts",
                                           base, current))
         except AuthoringBundleError as exc:
-            raise CommitRejected(_failure("invalid_document", str(exc), base, current)) from exc
+            raise CommitRejected(_failure("invalid_document", str(exc), base, current,
+                                          invalid=current == base or current is None)) from exc
         except CommandError as exc:
+            path = getattr(exc, "path", ())
+            if not path and exc.kind in {"invalid_commands", "invalid_edit_command",
+                                         "invalid_steps", "unsupported_operation",
+                                         "unsupported_version"}:
+                path = ["commands"]
             conflicts = ([exc.to_json()] if exc.kind in {
                 "value_conflict", "identity_conflict", "identity_collision", "inverse_conflict",
                 "dependency_changed", "inverse_dependency_changed",
                 "intervening_write", "selection_changed", "surviving_dependents",
                 "atomic_scope_changed", "binding_changed", "ambiguous_ref"} else None)
             raise CommitRejected(_failure(exc.kind, str(exc), base, current,
-                                          conflicts=conflicts)) from exc
+                                          conflicts=conflicts, path=path,
+                                          invalid=None)) from exc
 
 
 def create_runtime_commit_service():

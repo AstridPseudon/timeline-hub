@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol, runtime_checkable
 
 from .parent_registry import ParentRegistryError, effective_parent_registry
+from .validators.meta import validate_meta, validate_timeline_meta_locations
 
 AUTHORING_BUNDLE_SCHEMA_VERSION = 1
 _DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -174,6 +175,40 @@ def _mapping(value: Any, path: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise AuthoringBundleError(f"{path} must be an object")
     return value
+
+
+def _validate_meta_rows(rows: Any, *, path: str) -> None:
+    """Validate meta on an explicit authored row collection only."""
+    if not isinstance(rows, list):
+        return
+    for index, row in enumerate(rows):
+        if isinstance(row, Mapping) and "meta" in row:
+            validate_meta(row["meta"], path=f"{path}[{index}].meta")
+
+
+def _validate_registry_asset_meta(registry: Any, *, path: str) -> None:
+    if not isinstance(registry, Mapping):
+        return
+    assets = registry.get("assets")
+    if not isinstance(assets, Mapping):
+        return
+    for asset_id, entry in assets.items():
+        if isinstance(entry, Mapping) and "meta" in entry:
+            validate_meta(entry["meta"], path=f"{path}.assets[{asset_id!r}].meta")
+
+
+def _validate_timeline_payload_meta(
+    payload: Mapping[str, Any], *, path: str, include_parent_locations: bool = False
+) -> None:
+    """Validate known timeline meta seams without interpreting opaque descendants."""
+    validate_timeline_meta_locations(payload, path=path)
+    _validate_registry_asset_meta(payload.get("registry"), path=f"{path}.registry")
+    if include_parent_locations:
+        _validate_meta_rows(payload.get("occurrences"), path=f"{path}.occurrences")
+        config = payload.get("config")
+        if isinstance(config, Mapping):
+            validate_timeline_meta_locations(config, path=f"{path}.config")
+            _validate_registry_asset_meta(config.get("registry"), path=f"{path}.config.registry")
 
 
 def _sequence(value: Any, path: str) -> Sequence[Any]:
@@ -331,6 +366,9 @@ def open_authoring_bundle(
     timeline_id = _string(parent.get("timeline_id"), "parent_revision.timeline_id")
     revision_id = _string(parent.get("revision_id"), "parent_revision.revision_id")
     payload = _mapping(parent.get("payload"), "parent_revision.payload")
+    _validate_timeline_payload_meta(
+        payload, path="parent_revision.payload", include_parent_locations=True
+    )
     parent_digest = _verify_digest(
         payload, parent.get("content_digest"), "parent_revision.content_digest"
     )
@@ -382,6 +420,13 @@ def open_authoring_bundle(
         shot_payload = _mapping(
             shot.get("payload"), f"shot_revisions[{source_revision_id}].payload"
         )
+        if "meta" in shot:
+            validate_meta(shot["meta"], path=f"shot_revisions[{source_revision_id}].meta")
+        if "meta" in shot_payload:
+            validate_meta(
+                shot_payload["meta"],
+                path=f"shot_revisions[{source_revision_id}].payload.meta",
+            )
         shot_digest = _verify_digest(
             shot_payload,
             shot.get("content_digest"),
@@ -400,6 +445,10 @@ def open_authoring_bundle(
             )
         internal_payload = _mapping(
             internal.get("payload"), f"internal_timeline_revisions[{internal_revision_id}].payload"
+        )
+        _validate_timeline_payload_meta(
+            internal_payload,
+            path=f"internal_timeline_revisions[{internal_revision_id}].payload",
         )
         internal_digest = _verify_digest(
             internal_payload,
@@ -758,6 +807,35 @@ def _internal_media_set(
     return result
 
 
+def _without_meta(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {key: child for key, child in value.items() if key != "meta"}
+    return value
+
+
+def _timeline_media_view(value: Any, *, include_parent_locations: bool = False) -> Any:
+    """Hide only authored meta seams in a discovery copy, leaving params intact."""
+    if not isinstance(value, Mapping):
+        return value
+    result = _without_meta(value)
+    for collection in ("tracks", "clips"):
+        rows = value.get(collection)
+        if isinstance(rows, list):
+            result[collection] = [_without_meta(row) for row in rows]
+    registry = value.get("registry")
+    if isinstance(registry, Mapping) and isinstance(registry.get("assets"), Mapping):
+        result["registry"] = {
+            **registry,
+            "assets": {key: _without_meta(asset) for key, asset in registry["assets"].items()},
+        }
+    if include_parent_locations:
+        if isinstance(value.get("config"), Mapping):
+            result["config"] = _timeline_media_view(value["config"])
+        if isinstance(value.get("occurrences"), list):
+            result["occurrences"] = [_without_meta(row) for row in value["occurrences"]]
+    return result
+
+
 def _collect_media(value: Any) -> set[str]:
     result: set[str] = set()
     if isinstance(value, Mapping):
@@ -794,13 +872,22 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
     base_parent = _mapping(root.get("base_parent"), "candidate.base_parent")
     expected_head = _string(base_parent.get("revision_id"), "candidate.base_parent.revision_id")
     _string(base_parent.get("content_digest"), "candidate.base_parent.content_digest")
-    _mapping(root.get("base_parent_payload"), "candidate.base_parent_payload")
+    base_parent_payload = _mapping(root.get("base_parent_payload"), "candidate.base_parent_payload")
+    _validate_timeline_payload_meta(
+        base_parent_payload,
+        path="candidate.base_parent_payload",
+        include_parent_locations=True,
+    )
     parent_payload = _mapping(root.get("parent"), "candidate.parent")
+    _validate_timeline_payload_meta(
+        parent_payload, path="candidate.parent", include_parent_locations=True
+    )
     if "occurrences" in parent_payload:
         raise UnsupportedAuthoringEditError(
             "candidate.parent.occurrences is derived; edit candidate.placements instead"
         )
     placements = _sequence(root.get("placements"), "candidate.placements")
+    _validate_meta_rows(placements, path="candidate.placements")
     shots = _mapping(root.get("shots"), "candidate.shots")
     source_mapping = _mapping(root.get("source_mapping"), "candidate.source_mapping")
     source_placements = _mapping(
@@ -855,16 +942,34 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
             {} if created else shot.get("base_payload"),
             f"candidate.shots[{authoring_shot_id!r}].base_payload",
         )
+        if "meta" in base_shot:
+            validate_meta(
+                base_shot["meta"],
+                path=f"candidate.shots[{authoring_shot_id!r}].base_payload.meta",
+            )
         candidate_shot = _mapping(
             shot.get("payload"), f"candidate.shots[{authoring_shot_id!r}].payload"
         )
+        if "meta" in candidate_shot:
+            validate_meta(
+                candidate_shot["meta"],
+                path=f"candidate.shots[{authoring_shot_id!r}].payload.meta",
+            )
         base_internal = _mapping(
             {} if created else shot.get("base_internal_timeline"),
             f"candidate.shots[{authoring_shot_id!r}].base_internal_timeline",
         )
+        _validate_timeline_payload_meta(
+            base_internal,
+            path=f"candidate.shots[{authoring_shot_id!r}].base_internal_timeline",
+        )
         candidate_internal = _mapping(
             shot.get("internal_timeline"),
             f"candidate.shots[{authoring_shot_id!r}].internal_timeline",
+        )
+        _validate_timeline_payload_meta(
+            candidate_internal,
+            path=f"candidate.shots[{authoring_shot_id!r}].internal_timeline",
         )
         shot_media = _assert_shot_edit_supported(
             base_shot, candidate_shot, path=f"shots[{authoring_shot_id}].payload"
@@ -1061,18 +1166,18 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
         "authoring-parent-revision", project_id, timeline_id, expected_head, final_parent
     )
     media = sorted(
-        _collect_media(final_parent)
+        _collect_media(_timeline_media_view(final_parent, include_parent_locations=True))
         | {
             digest
             for shot_id, row in shots.items()
             if shot_id in referenced_shot_ids
-            for digest in _collect_media(row.get("payload"))
+            for digest in _collect_media(_without_meta(row.get("payload")))
         }
         | {
             digest
             for shot_id, row in shots.items()
             if shot_id in referenced_shot_ids
-            for digest in _collect_media(row.get("internal_timeline"))
+            for digest in _collect_media(_timeline_media_view(row.get("internal_timeline")))
         }
     )
     shot_manifest = [
@@ -1315,20 +1420,26 @@ def authoring_media_inventory(candidate: Mapping[str, Any]) -> dict[str, Any]:
                             unresolved.append({"path": child_path, "selector": child, "error": str(exc)})
                 else:
                     walk(child, child_path, registry)
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                walk(child, f"{path}[{index}]", registry)
 
     parent = root.get("parent", {})
     parent_registry = parent.get("registry", {}) if isinstance(parent, Mapping) else {}
-    walk(parent, "parent", parent_registry if isinstance(parent_registry, Mapping) else None)
+    walk(
+        _timeline_media_view(parent, include_parent_locations=True), "parent",
+        parent_registry if isinstance(parent_registry, Mapping) else None,
+    )
     for index, placement in enumerate(_sequence(root.get("placements", []), "candidate.placements")):
-        walk(placement, f"placements[{index}]")
+        walk(_without_meta(placement), f"placements[{index}]")
     for shot_id, shot in _mapping(root.get("shots"), "candidate.shots").items():
         if not isinstance(shot, Mapping):
             continue
         payload = shot.get("payload", {})
-        walk(payload, f"shots[{shot_id!r}].payload")
+        walk(_without_meta(payload), f"shots[{shot_id!r}].payload")
         internal = shot.get("internal_timeline", {})
         registry = internal.get("registry", {}) if isinstance(internal, Mapping) else {}
-        walk(internal, f"shots[{shot_id!r}].internal_timeline", registry if isinstance(registry, Mapping) else None)
+        walk(_timeline_media_view(internal), f"shots[{shot_id!r}].internal_timeline", registry if isinstance(registry, Mapping) else None)
         assets = registry.get("assets", {}) if isinstance(registry, Mapping) else {}
         if isinstance(assets, Mapping):
             for asset_key, metadata in assets.items():
