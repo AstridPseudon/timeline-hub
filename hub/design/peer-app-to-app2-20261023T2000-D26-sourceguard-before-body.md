@@ -1,0 +1,5 @@
+# D26 diagnostic request stopped before setup; causal harness return active
+
+App submitted sole request app-P1-D26-OPS-1956-ap2-P1-chain-h6-1023195830-20047, FINALFAILexit2/2s BEFOREglobalsetup/beforeAll/nativeboot/list/originalbodies: App-selected-source-tree. Cause exact: worker1956 placed its preparation report in tracked docs/design, harness committed a9d72ff/tree421f rather than integratedbe890/f794. Product/spec/body bytes unchanged; guard correctly refused. App retained full original evidence; no body retry or product attribution.
+
+Unique first return app-P1-D26-target-return-2000 starts from exact integratedbe890, reports only normalOWN folder outside repo, reuses same1956row/1830graph/787+2a9bench. Manager will inspect post-exit source tree BEFORE submitting changed source-exact target. No guard weakening, newbench/headchase, schema/pin/body/collector change. D26 request remains owned App; environmentaltriage1950 and mountedseam1945 not duplicate authors. Artifact b221 already HOMEbe890 and independent1945 PASS; popup17324 already HOME93cdd. Sourcecollector facts sent1956.
