@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-23T01:26:31Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 1m -->
+<!-- viewing | 2026-10-23T01:27:40Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 2m -->
 # viewing board, 2026-10-23T01:25:02Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
