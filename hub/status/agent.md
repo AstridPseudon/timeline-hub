@@ -1,21 +1,22 @@
-<!-- agent | 2026-10-23T00:01:08Z | dispatcher heartbeat 5s | live 5 (sol 0, luna 5, other 0) | busy30 25 | status age 7m -->
-# agent board, 2026-10-22T23:53:17Z
+<!-- agent | 2026-10-23T00:02:40Z | dispatcher heartbeat 4s | live 6 (sol 2, luna 4, other 0) | busy30 29 | status age 0m -->
+# agent board, 2026-10-23T00:02:15Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream merge and quality repairs | Luna→Sol; Luna review | — | merged | agt-U2-media-repair; agt-U2-fastgate-review | Integrated184tests+manifest/lockPASS on3f1ceaed1. Two merge-induced typing fixes8ed78 reviewed next; no done credit for pending quality repair | 3f1ceaed1; staged8ed78af51 |
 | U4a | normal U1 generated-client adoption | Luna | U1,U2 merged | review | agt-U4a-client-schema; agt-U4a-review | Author138provider+60transportPASS; normal27f lock/client/manifestPASS; independent review active | 2e0081158 |
 | R1 | doc.patch, guards, reads and inverse | Sol; Luna review/forward | C0 approved; U2 merged | review | agt-R1-restart; agt-R1-review; agt-R1-forward-U2 | Author326acceptance+27neighborsPASS; changedlint/typePASS. Runnable committed draft relayed toP1/Runtime; actual clean U2forward prepared | 8a66b1ac8 |
 | R2 | guarded whole/per-step undo | Sol; Luna core review | R1 provider integration | review | agt-R2-step-undo; agt-R2-core-review | IndependentPASS-core548tests+scopedlint/type. Provider dispatch/physical normalization/effect projection still missing; C0c approved+merged7c92c39fe | b5b811066 |
-| R3 | dry run and structured errors | Luna | R1 before landing | doing | agt-R3-dry-run-errors | Early start explicitly authorized; final R1 merge-forward/proof pending | — |
+| R3 | dry run and structured errors | Luna | R1 before landing | doing | agt-R3-preview-repair | IndependentFAIL: mutates preview after Runtimeauth; original2realprovider tests fail; Luna repairing before newreview | ab1f8aa2a draft |
 | V2 | timing/structure/element/parameter checks | Luna | R1 before landing | doing | agt-V2-validator | Early start explicitly authorized; existing compiler reuse, no scene/save dependency | — |
 | G2 | open/commit and bounded rerun | Sol; Luna forward/review | R1 before landing | review | agt-G2-forward-U2; agt-G2-forward-review | IndependentPASS94changed tests, sourceblobs preserved; author312targetedPASS; wholeRuff2150/mypy1922PASS on forward | 9d6c8ea12 |
 | G3 | document patch emitter and frontends | Luna | G2/R1 before landing | doing | agt-G3-emitter | Early start on reviewed G2forward authorized; no alternate executor | — |
-| G4 | remaining writers through commit | Luna | G2 before landing | doing | agt-G4-remote-writers; agt-G4-narration; agt-G4-elements | Three independent file-owned slices, original behavior tests retained | — |
+| G4 | remaining writers through commit | Luna | G2 before landing | doing | agt-G4-remote-writers; agt-G4-narration; agt-G4-elements | Remote fd629 reviewFAIL5originalpositives; Solrepairactive. Elements fc9cd and narration drafts in independentreview; no writerregressions landed | — |
 | G5 | delete superseded paths | Luna | G3,G4; real P1 H3 GO | todo | — | Explicitly held; collection/native unit tests are not H3 proof | — |
 Blockers: runtime/orchestrator — R2r was stopped by automatic safety review rejecting rm-f; Runtime-owned v2 request/schema/metadata adoption remains pending. No replacement worker or bypass dispatched by Agent. See Runtime board; current U4a intentionally adopts merged U1 only.
 Blockers: agent — R2 provider integration awaits R1 forward source and review; core proof alone does not qualify C0c undo/redo. C0c contract approval/merge hold is cleared.
 Next ready: request merges immediately on independentPASS for U2quality/U4a; R1 landing after review+U2forward; R2 integration and G2 landing next. R3/V2/G3/G4 already dispatched per inbox23:45. No ready authorized task waiting.
-External Agent merges: P1collection9abb6ade3/P4collection250db8c8d verified15tests+Ruff; inherited typing environment now resolved privately. No H3/P4 execution claim. Current integration3f1ceaed1.
+External Agent merges: P1collection9abb6ade3/P4collection250db8c8d verified15tests+Ruff; inherited typing environment now resolved privately. No H3/P4 execution claim. Current integration3cc21e71b.
 Handoff: design/peer-agent-to-app2-runtime-20261022T2350-r1-draft.md names exact8a66 and actual command/provider interfaces; design/handoff-agt-G2-restart-interface.md names G3 emitter seam.
 Environment: /tmp/astrid-u2-typecheck/bin/python is valid privatePython3.11+mypy1.17+locked NumPy2.4.6/PyYAML; all shared envs unchanged. Author G2forward whole Ruff/mypy pass with shrink-only baselines; U2typing repair is behavior-preserving and independently reviewed next.
 Disk:13 idle finished v1 worktrees recycled;2.37GB abandoned v1archives deleted after live-process checks; branches/reports retained. Exact95bd and27f producer checkouts retained for active work. Available15.3GB at23:52Z; keep floor15GB.
+U2fastgate verdict reconciliation: original FAIL was solely manager-imposed category budgets; actual existing ratchet only checks totalfinding_count, code_counts metadata is not allowances. agt-U2-ratchet-review verifies existingrule, no product/test relaxation.
