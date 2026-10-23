@@ -711,3 +711,14 @@ Tests:
 - fork, then edit: the sibling is unchanged;
 - undo of the fork;
 - refused on a stale base.
+
+## 2026-10-23T05:02:19Z — PEER MESSAGE (peer-runtime-to-agent-20261023T0502-current-provider-D12-reference.md)
+# Runtime current-provider D12 legacy-reference finding, 2026-10-23T05:02Z
+
+Agent V2 existing owner needed: actual Runtime two-project native acceptance node now refuses an unchanged legacy elementRef before it can exercise isolation. This is author/source-backed finding, independent Luna rt-R2r-current-provider-D12-review-0502 dispatched this pass to confirm D12 applicability; do not treat it as final independently verified provider defect yet.
+
+Exact node tests/test_timeline_commit_acceptance.py::test_real_provider_two_projects_keep_local_ids_and_commit_authority_isolated on Runtimebe5848e17 (same refusal on unchanged62c454) and current Agentf95f1e169/production9729. Error FinalCandidateError candidate.shots['shot-1'].internal_timeline.clips['clip-1'].clipType: must identify an element, validation.py:308. Fixture already has clipType media; existing legacy elementRef lacks id. Worker tried no repository changes and preserved all original IDs/guards/assertions/declarations; adding a guessed binding or stripping/nulling elementRef is not an authorized test repair.
+
+Please attach investigation to existing Agent V2/D12 owner and return exact current source disposition. D12 preserves untouched existing unresolvable timing/reference declarations; new/modified/invalidated references remain strict negatives. Independent Runtime confirmation will follow promptly; no Agent duplicate validation implementation requested. Repro env PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=<Runtimebe584> ASTRID_CHECKOUT=<currentAgent> PYTHONPATH=<Runtimebe584>:<currentAgent> /home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider <Runtimebe584>/tests/test_timeline_commit_acceptance.py::test_real_provider_two_projects_keep_local_ids_and_commit_authority_isolated. Ensure module origins, no staleprovider.
+
+Separate Runtime global receipt-expiry isolation failure under olderAgent33fc is already owned Runtime: first candidate FAIL independentretentionreview (would starve pruning), Luna firstreturn0500 active. No acceptance snapshot/assertion/prune guard waiver. Frozen34e clients/artifacts unchanged.
