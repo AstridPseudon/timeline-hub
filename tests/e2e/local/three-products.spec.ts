@@ -901,16 +901,22 @@ async function expectV2History(harness: DirectHarness, seed: ThreeProductsSeed, 
     || (!Object.hasOwn(requestObject, 'reads') && request.commands.some((command) => command.op === 'doc.patch'))
     ? 'atomic' : (request.merge ?? 'fields');
   expect(data.merge_mode).toBe(effectiveMerge);
+  expect(data.label).toBe(request.label);
   expect(data.document_digest).toBe(sha256Hex(Buffer.from(canonical(data.canonical_document))));
   expect(data.rebased_onto).toEqual(expectedStatus === 'accepted'
     ? null
     : { revision_id: data.previous_revision_id, publication_id: data.previous_publication_id });
+  if (expectedStatus === 'accepted') expect({ revision_id: data.previous_revision_id, publication_id: data.previous_publication_id })
+    .toEqual({ revision_id: request.base_revision_id, publication_id: request.base_publication_id });
+  else expect({ revision_id: data.previous_revision_id, publication_id: data.previous_publication_id })
+    .not.toEqual({ revision_id: request.base_revision_id, publication_id: request.base_publication_id });
   expect(result.receipt).toMatchObject({
     command_kind: 'timeline.commit',
     idempotency_key: post.key,
     project_id: request.project_id,
     result: data,
   });
+  expect(result.receipt.result).toEqual(data);
 
   const page = await history(harness, seed);
   const entry = page.items.find((candidate) => candidate.publication_id === result.receipt.receipt_id);
@@ -939,6 +945,8 @@ async function expectV2History(harness: DirectHarness, seed: ThreeProductsSeed, 
     },
   });
   const records = entry!.records!;
+  expect(data.commands).toEqual(records.commands.map((record) => record.command));
+  const inputDocument = await canonicalDocumentAt(harness, seed, data.previous_revision_id);
   if (Object.hasOwn(requestObject, 'reads')) expect(entry).toHaveProperty('reads', request.reads);
   else expect(entry).not.toHaveProperty('reads');
   expect(entry!.steps).toEqual(data.steps);
@@ -949,6 +957,7 @@ async function expectV2History(harness: DirectHarness, seed: ThreeProductsSeed, 
     const step = data.steps![index];
     const recordStep = records.steps![index];
     expect(step).toEqual(recordStep);
+    expect(step).toEqual({ ...submittedStep, patch: step.patch, dependencies: step.dependencies });
     expect(step.command_ordinals).toEqual(submittedStep.command_ordinals);
     if (Object.hasOwn(submittedStep, 'reads')) expect(step).toHaveProperty('reads', submittedStep.reads);
     else expect(step).not.toHaveProperty('reads');
@@ -957,7 +966,31 @@ async function expectV2History(harness: DirectHarness, seed: ThreeProductsSeed, 
       const command = request.commands[ordinal];
       return command.op === 'doc.patch' ? (command.args.changes as unknown[]) : [];
     });
-    if (submittedPatch.length) expect(step.patch).toEqual(expect.arrayContaining(submittedPatch));
+    if (submittedStep.command_ordinals.every((ordinal) => request.commands[ordinal].op === 'doc.patch')) {
+      expect(submittedStep.patch).toEqual(submittedPatch);
+    }
+    if (submittedPatch.length) {
+      expect(records.commands.filter((record) => submittedStep.command_ordinals.includes(record.ordinal))
+        .flatMap((record) => record.bindings.filter((binding) => binding.key.startsWith('doc.patch:'))
+          .map((binding) => ({ ...binding.change, ref: binding.ref })))).toEqual(submittedPatch);
+    }
+    for (const claim of submittedStep.patch) {
+      expect(step.patch.some((effect) => canonical({ ...effect, ...recordedSite(effect.ref, effect.path) })
+        === canonical({ ...claim, ...recordedSite(claim.ref, claim.path) })),
+      `step ${step.id} omits its submitted effect assertion`).toBe(true);
+    }
+
+    const dependencies = step.dependencies ?? [];
+    const covers = (read: NonNullable<typeof step.dependencies>[number]) => dependencies.some((dependency) => {
+      const site = recordedSite(read.ref, read.path);
+      const candidate = recordedSite(dependency.ref, dependency.path);
+      if (dependency.kind === 'scope') return dependency.path.length === 0
+        && (dependency.ref === 'timeline' || candidate.ref === site.ref);
+      return canonical({ ...dependency, ...candidate }) === canonical({ ...read, ...site });
+    });
+    for (const read of [...(request.reads ?? []), ...(submittedStep.reads ?? [])]) {
+      expect(covers(read), `step ${step.id} omits declared ${canonical(read)}`).toBe(true);
+    }
 
     for (const ordinal of step.command_ordinals) {
       const record = records.commands[ordinal];
@@ -972,17 +1005,144 @@ async function expectV2History(harness: DirectHarness, seed: ThreeProductsSeed, 
         dependencies: expect.any(Array),
         derived_writes: expect.any(Array),
       });
+      expect(record.command).toEqual(data.commands[ordinal]);
+      if (record.command.op === 'clip.move') {
+        for (const read of record.command.reads!) expect(record.reads).toContainEqual(read);
+        expect(record.selections).toEqual(record.command.selections);
+        for (const [key, ref] of Object.entries(record.command.bindings!)) {
+          expect(record.bindings.filter((binding) => binding.key === key && binding.ref === ref)).toHaveLength(1);
+        }
+        expect(record.dependencies.map((dependency) => dependency.key).sort()).toEqual([
+          'move.images', 'move.quantization',
+          ...(record.reads.some((read) => read.ref === `${record.command.select!.split('/')[0]}/registry`) ? ['move.source'] : []),
+        ].sort());
+      }
+      if (record.command.op === 'timeline.inverse') {
+        expect(record.selections).toEqual(page.items.filter((item) => expectedUndoOf.includes(item.publication_id))
+          .flatMap((item) => item.records!.commands.flatMap((command) => command.selections)));
+      }
       for (const read of record.reads) {
-        const refAndPath = recordedSite(read.ref, read.path);
-        expect(step.dependencies!.some((dependency) => dependency.ref === 'timeline'
-          || dependency.ref === refAndPath.ref && (dependency.kind === 'scope' && dependency.path.length === 0
-            || canonical(dependency.path) === canonical(refAndPath.path))),
-        `step ${step.id} dependencies omit captured ${read.ref}:${read.path.join('.')}`).toBe(true);
+        // Allocation absence is guarded by the authenticated created-ID record.
+        if (read.state.state === 'absent' && record.created.some((created) => created.ref === read.ref)) continue;
+        const site = recordedSite(read.ref, read.path);
+        expect(covers(site.path.length && site.ref !== 'timeline'
+          ? { kind: 'field', ...site, state: read.state }
+          : { kind: 'scope', ...site }), `step ${step.id} omits captured ${canonical(read)}`).toBe(true);
+      }
+      for (const selected of record.selections) {
+        if (selected.key === 'move.target') {
+          // This native query selects the named entity, not the whole clip collection.
+          expect(selected.members).toEqual(selected.order);
+          expect(selected.boundaries).toEqual(selected.order);
+          for (const ref of selected.members) {
+            const identity = record.reads.find((read) => read.ref === ref && canonical(read.path) === '["id"]');
+            expect(identity, `selection ${selected.key} needs its observed identity`).toBeTruthy();
+            expect(covers({ kind: 'field', ref, path: ['id'], state: identity!.state })).toBe(true);
+          }
+        } else {
+          // Other native selections must retain collection shape or a conservative scope.
+          const kind = selected.key === 'track.create' ? 'track'
+            : selected.key.match(/^collection\.(clips|tracks|occurrences)(?:\.after)?$/)?.[1].slice(0, -1);
+          if (kind) {
+            const collection = recordedSite(`${selected.owner}/collection:${kind}`, []);
+            const ids = (refs: string[]) => refs.map((ref) => ref.slice(ref.indexOf(`${kind}:`) + kind.length + 1));
+            expect(covers({ kind: 'collection', ...collection, members: ids(selected.order).sort(), order: ids(selected.order) }),
+              `step ${step.id} omits selection ${canonical(selected)}`).toBe(true);
+          } else expect(covers({ kind: 'scope', ...recordedSite(selected.owner, []) }),
+            `unbounded selection ${canonical(selected)} requires its owner scope`).toBe(true);
+        }
+      }
+      for (const binding of record.bindings) {
+        if (binding.key === 'inverse.stage') {
+          const target = page.items.find((item) => item.publication_id === binding.boundary?.publication_id);
+          const targetStep = target?.steps?.find((item) => item.id === binding.boundary?.step_id);
+          expect(targetStep, 'inverse segments name an authenticated target step').toBeTruthy();
+          expect(binding.boundary?.command_ordinals).toEqual(targetStep!.command_ordinals);
+        } else {
+          expect(binding.boundary).toMatchObject({
+            base_revision_id: request.base_revision_id, base_publication_id: request.base_publication_id,
+            evaluated_head: { revision_id: data.previous_revision_id, publication_id: data.previous_publication_id },
+            step_id: step.id, command_ordinal: ordinal,
+          });
+          expect(binding.physical_ref).toBeTruthy();
+          if (binding.key === 'commit.effect') {
+            expect(binding.boundary?.phase).toBe('effect');
+            expect(['before', 'after']).toContain(binding.boundary?.side);
+          } else if (binding.key === 'commit.read' && binding.boundary?.phase === 'batch-read') {
+            expect(ordinal).toBe(0);
+            expect(request.reads?.length).toBeGreaterThan(0);
+          } else expect(binding.boundary?.phase).toBe('input');
+          const document = binding.boundary?.side === 'after' ? data.canonical_document : inputDocument;
+          const image = binding.physical_ref === 'parent' ? document.parent_revision
+            : document.shot_revisions.find((candidate) => binding.physical_ref === `shot-revision:${candidate.revision_id}`)
+              ?? document.internal_timeline_revisions.find((candidate) => binding.physical_ref === `internal-revision:${candidate.revision_id}`);
+          expect(image, `binding ${binding.key} names a physical boundary image`).toBeTruthy();
+          expect(binding.revision_id).toBe(image!.revision_id);
+          expect(binding.content_digest).toBe(image!.content_digest);
+          if (binding.dependency) expect(covers(binding.dependency)).toBe(true);
+          if (binding.key === 'commit.atomic') expect(covers({ kind: 'scope', ref: binding.physical_ref!, path: [] })).toBe(true);
+          if (binding.key === 'commit.effect') {
+            expect(binding.step_id).toBe(step.id);
+            expect(binding.ref).toBe(step.patch[binding.effect_ordinal!].ref);
+            expect(binding.path).toEqual(step.patch[binding.effect_ordinal!].path);
+          }
+        }
+        for (const key of binding.dependencies) {
+          expect(record.dependencies.filter((dependency) => dependency.key === key),
+            `binding ${binding.key} must retain its complete dependency pin`).toHaveLength(1);
+        }
+      }
+      for (const dependency of record.dependencies) {
+        const consumers = record.bindings.filter((binding) => binding.dependencies.includes(dependency.key));
+        expect(consumers, `orphan recorder dependency ${canonical(dependency)}`).not.toHaveLength(0);
+        if (dependency.key === 'move.images') {
+          expect(dependency).toEqual({ key: dependency.key, kind: 'entity', policy: 'exact', pin: { parent: {
+            revision_id: inputDocument.parent_revision.revision_id,
+            content_digest: inputDocument.parent_revision.content_digest,
+          } } });
+        } else if (dependency.key === 'move.quantization') {
+          const fps = record.reads.find((read) => read.ref === 'parent' && canonical(read.path) === '["config","output","fps"]');
+          expect(fps?.state.state).toBe('present');
+          const value = fps!.state.state === 'present' ? fps!.state.value : undefined;
+          const rate = typeof value === 'number' ? { numerator: value, denominator: 1 }
+            : value && typeof value === 'object' && !Array.isArray(value) ? value : undefined;
+          expect(rate, 'quantization retains the observed numeric or rational frame rate').toBeTruthy();
+          expect(dependency).toEqual({ key: dependency.key, kind: 'time-map', policy: 'exact', pin: {
+            ...rate,
+            rounding: 'half-toward-positive-infinity',
+          } });
+        } else if (dependency.key === 'move.source') {
+          const { ref, asset } = dependency.pin;
+          expect(typeof ref).toBe('string');
+          expect(typeof asset).toBe('string');
+          expect(ref).toBe(`${record.command.select!.split('/')[0]}/registry`);
+          const selectedAsset = record.reads.find((read) => read.ref === record.command.select && canonical(read.path) === '["asset"]');
+          expect(selectedAsset?.state).toEqual({ state: 'present', value: asset });
+          const observed = Object.fromEntries(record.reads.filter((read) => read.ref === ref
+            && read.path[0] === 'assets' && read.path[1] === asset)
+            .map((read) => [read.path[2], read.state.state === 'present' ? read.state.value : null]));
+          expect(dependency).toEqual({ key: dependency.key, kind: 'entity', policy: 'exact', pin: { ref, asset, source: observed } });
+        } else {
+          for (const consumer of consumers) expect(covers({ kind: 'scope', ref: consumer.physical_ref!, path: [] }),
+            `opaque pin ${dependency.key} requires a conservative dependency scope`).toBe(true);
+        }
       }
       for (const write of [...record.writes, ...record.derived_writes]) {
         const refAndPath = recordedSite(write.ref, write.path);
-        const matchingEffects = step.patch.filter((effect) => effect.ref === refAndPath.ref
-          && canonical(effect.path) === canonical(refAndPath.path)
+        // Redundant native clears have no effect, but retain their exact guards.
+        if (canonical(write.before) === canonical(write.after)) {
+          expect(covers({ kind: 'field', ...refAndPath, state: write.before })).toBe(true);
+          continue;
+        }
+        if (write.ref === 'parent' && canonical(write.path) === '["config","clips"]'
+          && record.derived_writes.some((derived) => derived === write)) {
+          // The recorder's whole-array mirror accompanies the native leaf writes.
+          expect(write.before).toEqual({ state: 'present', value: inputDocument.parent_revision.payload.clips });
+          expect(write.after).toEqual({ state: 'present', value: data.canonical_document.parent_revision.payload.clips });
+          expect(record.writes.some((authored) => authored.ref.startsWith('parent/clip:'))).toBe(true);
+          continue;
+        }
+        const matchingEffects = step.patch.filter((effect) => canonical(recordedSite(effect.ref, effect.path)) === canonical(refAndPath)
           && canonical(effect.before) === canonical(write.before));
         expect(matchingEffects, `step ${step.id} omits captured ${write.ref}:${write.path.join('.')}`).not.toHaveLength(0);
         expect(matchingEffects.some((effect) => write.after.state === 'absent'
@@ -992,13 +1152,19 @@ async function expectV2History(harness: DirectHarness, seed: ThreeProductsSeed, 
     }
   }
   if (expectedUndoOf.length) expect(records.undo_steps).toBeNull();
+  return entry!;
 }
 
 /** Normalize native recorder aliases to the physical paths used by authoritative effects. */
 function recordedSite(ref: string, path: string[]): { ref: string; path: string[] } {
   const match = ref.match(/^parent\/(clip|track):(.+)$/);
-  if (match) return { ref: 'parent', path: ['config', `${match[1]}s`, `id:${match[2]}`, ...path] };
-  if (ref === 'parent/registry') return { ref: 'parent', path: ['config', 'registry', ...path] };
+  if (match) return recordedSite('parent', ['config', `${match[1]}s`, `id:${match[2]}`, ...path]);
+  if (ref === 'parent/source') return recordedSite('parent', ['config', ...path]);
+  if (ref === 'parent/registry') return recordedSite('parent', ['registry', ...path]);
+  if (ref.startsWith('parent/asset:')) return recordedSite('parent', ['registry', 'assets', ref.slice('parent/asset:'.length), ...path]);
+  const collection = ref.match(/^parent\/collection:(clip|track|occurrence)$/);
+  if (collection) return recordedSite('parent', collection[1] === 'occurrence' ? ['occurrences', ...path] : ['config', `${collection[1]}s`, ...path]);
+  if (ref === 'parent' && path[0] === 'config' && ['clips', 'registry'].includes(path[1])) return { ref, path: path.slice(1) };
   return { ref, path };
 }
 
@@ -1304,7 +1470,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId))
       .find((candidate) => candidate.ownerId === retryOwnerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
   });
-  await expectV2History(harness, seed3, wire.posts[0], 'accepted');
+  const recordedA = await expectV2History(harness, seed3, wire.posts[0], 'accepted');
   const seedState = await revisionState(harness, seed3, seed3.headRevisionId);
   const seededTransition = seedState.parentClips[seed3.transitionClipId].transition;
   expect(c.data.canonical_document.parent_revision.payload.clips)
@@ -1349,6 +1515,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   expect(wire.posts[1].body).toBe(originalARequest.body);
   expect(wire.posts[1].key).toBe(originalARequest.key);
   expect(wire.posts[1].response).toEqual(wire.posts[0].response);
+  expect(await expectV2History(harness, seed3, wire.posts[1], 'accepted')).toEqual(recordedA);
   const b = accepted(wire.posts[2]);
   const requestB = JSON.parse(wire.posts[2].body) as CommitRequest;
   expect(wire.posts[2].key).not.toBe(wire.posts[0].key);
@@ -1370,7 +1537,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   expect(recordedB?.commands[0].command).toEqual(requestB.commands[0]);
   expect(recordedB?.commands[0].reads.length).toBeGreaterThan(0);
   expect(recordedB?.commands[0].bindings.length).toBeGreaterThan(0);
-  await expectV2History(harness, seed3, wire.posts[2], 'merged');
+  const recordedMerged = await expectV2History(harness, seed3, wire.posts[2], 'merged');
   await expectImmutableClosure(harness, seed3, a);
   await expectImmutableClosure(harness, seed3, c);
   await expectImmutableClosure(harness, seed3, b);
@@ -1386,7 +1553,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     { schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [publication] } },
   ]);
   const inverse = accepted(inversePost);
-  await expectV2History(harness, seed3, inversePost, 'accepted', [publication]);
+  const recordedInverse = await expectV2History(harness, seed3, inversePost, 'accepted', [publication]);
   expect(position(inverse.data.canonical_document, seed3.appClipId)).toBe(5);
   expect(inverse.data.canonical_document.parent_revision.payload).toEqual(c.data.canonical_document.parent_revision.payload);
   expect(inverse.data.canonical_document.parent_revision.payload.clips)
@@ -1395,6 +1562,9 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   expect(inverse.data.canonical_document.internal_timeline_revisions).toEqual(c.data.canonical_document.internal_timeline_revisions);
   expect(inverse.data.canonical_document.dependency_manifest).toEqual(c.data.canonical_document.dependency_manifest);
   const finalHistory = await history(harness, seed3);
+  expect(finalHistory.items.find((entry) => entry.publication_id === recordedA.publication_id)).toEqual(recordedA);
+  expect(finalHistory.items.find((entry) => entry.publication_id === recordedMerged.publication_id)).toEqual(recordedMerged);
+  expect(finalHistory.items.find((entry) => entry.publication_id === recordedInverse.publication_id)).toEqual(recordedInverse);
   expect(finalHistory.items).toHaveLength(before.items.length + 4);
   expect(finalHistory.items.find((entry) => entry.publication_id === pinOf(inverse).publication_id)?.records?.undo_of)
     .toEqual([publication]);
