@@ -404,17 +404,7 @@ class CommitPatch:
     def finish(self, plan):
         if not self.active:
             return plan
-        touched = set()
-        for record in plan.records:
-            closure = self.closures[record['ordinal']]
-            for item in [*record['writes'], *record['reads'], *record['derived_writes']]:
-                touched.add(canonical_site(closure, item['ref'], item['path'])[0])
-            touched.update(binding['physical_ref'] for binding in record['bindings'] if 'physical_ref' in binding)
-            if any(binding.get('key', '').startswith('doc.patch:') and binding['physical_ref'] == 'parent'
-                   and not binding['path'] for binding in record['bindings']):
-                touched.add('timeline')
         for step in self.steps:
-            start = step['command_ordinals'][0]
             before = Closure(self.inputs[step['id']])
             after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(
                 step['command_ordinals'][-1], []))
@@ -454,19 +444,6 @@ class CommitPatch:
                         item = {'kind': 'field', 'ref': ref, 'path': path, 'state': copy.deepcopy(read['state'])}
                     if item not in dependencies:
                         dependencies.append(item)
-            if self.merge_mode == 'atomic':
-                scopes = touched if touched <= before.images.keys() else {'timeline'}
-                for ref in sorted(scopes):
-                    item = {'kind': 'scope', 'ref': ref, 'path': []}
-                    if item not in dependencies:
-                        dependencies.append(item)
-                # Persist scope observations at this step's input, never reconstruct from output.
-                record = plan.records[start]
-                for ref in sorted(scopes):
-                    for physical in before.images if ref == 'timeline' else [ref]:
-                        binding = before.binding(ref, physical, **self.boundaries[start])
-                        binding.update(key='commit.atomic', policy='fixed', dependencies=[], path=[])
-                        record['bindings'].append(binding)
             effects = effect_diff(before, after)
             segments = [(ordinal, first, second) for ordinal in step['command_ordinals']
                         for first, second in self.inverse_stages.get(ordinal, [])]
@@ -536,6 +513,35 @@ class CommitPatch:
             for first, second in segments or [(before, after)]:
                 self.materializations(record, first, second, self.boundaries[ordinal], step,
                     [write for index in step['command_ordinals'] for write in plan.records[index]['writes']])
+        if self.merge_mode == 'atomic':
+            # Effects and materializations can touch roots beyond the authored writes.
+            # Build the complete batch union only after their bindings are recorded.
+            touched = set()
+            for record in plan.records:
+                closure = self.closures[record['ordinal']]
+                for item in [*record['writes'], *record['reads'], *record['derived_writes']]:
+                    touched.add(canonical_site(closure, item['ref'], item['path'])[0])
+                touched.update(binding['physical_ref'] for binding in record['bindings'] if 'physical_ref' in binding)
+                if any(binding.get('key', '').startswith('doc.patch:') and binding['physical_ref'] == 'parent'
+                       and not binding['path'] for binding in record['bindings']):
+                    touched.add('timeline')
+            # A fallback captures every input root, expanding the batch union for
+            # all steps, including earlier inputs where removed roots still exist.
+            scopes = touched if all(touched <= self.closures[step['command_ordinals'][0]].images.keys()
+                                    for step in self.steps) else {'timeline'}
+            for step in self.steps:
+                start = step['command_ordinals'][0]
+                before = Closure(self.inputs[step['id']])
+                dependencies = step['dependencies']
+                for ref in sorted(scopes):
+                    item = {'kind': 'scope', 'ref': ref, 'path': []}
+                    if item not in dependencies:
+                        dependencies.append(item)
+                    # Capture each scope at this step's input, never from output.
+                    for physical in before.images if ref == 'timeline' else [ref]:
+                        binding = before.binding(ref, physical, **self.boundaries[start])
+                        binding.update(key='commit.atomic', policy='fixed', dependencies=[], path=[])
+                        plan.records[start]['bindings'].append(binding)
         plan.steps, plan.label, plan.merge_mode = self.steps, self.label, self.merge_mode
         return plan
 
