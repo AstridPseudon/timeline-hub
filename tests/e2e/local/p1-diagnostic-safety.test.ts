@@ -4,6 +4,8 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import {
@@ -16,6 +18,8 @@ import {
   formatDiagnosticArtifact,
   formatPriorityDiagnostic,
   MOUNTED_DIAGNOSTIC_EVENT,
+  MOUNTED_DIAGNOSTIC_ERROR_CLASSES,
+  MOUNTED_DIAGNOSTIC_ERROR_CODES,
   MOUNTED_DIAGNOSTIC_MAX_RECORDS,
   MOUNTED_DIAGNOSTIC_PHASES,
   mountedDiagnosticInitScript,
@@ -99,6 +103,51 @@ test('P1 mounted seam projection accepts the exact App record and nested observa
   assert.equal(JSON.stringify(artifact).includes('must-not-enter'), false);
 });
 
+test('P1 mounted seam consumes the exact finite source enum and preserves safe rejection classes', () => {
+  const serialized = `${JSON.stringify({ errorCode: MOUNTED_DIAGNOSTIC_ERROR_CODES, errorClass: MOUNTED_DIAGNOSTIC_ERROR_CLASSES })}\n`;
+  assert.equal(createHash('sha256').update(serialized).digest('hex'), '5f7d9e8f3da6f39c4b4b96a14908b9b9b5f36d33f5940275b6a511fa0ff6b897');
+  assert.equal(MOUNTED_DIAGNOSTIC_ERROR_CODES.length, 38);
+  assert.deepEqual(MOUNTED_DIAGNOSTIC_ERROR_CLASSES, ['TimelineVersionConflictError', 'Error']);
+
+  for (const errorClass of MOUNTED_DIAGNOSTIC_ERROR_CLASSES) {
+    const result = projectMountedDiagnosticDetail({ version: 1, phase: 'capture-rejected', errorCode: 'capture-input-head-unavailable', errorClass });
+    assert.equal(result.accepted, true);
+    if (result.accepted) {
+      assert.equal(result.record.errorCode, 'capture-input-head-unavailable');
+      assert.equal(result.record.errorClass, errorClass);
+    }
+  }
+  for (const errorCode of ['forged-code', 'capture-input-head-unavailable\0', 'Error: capture-input-head-unavailable']) {
+    const result = projectMountedDiagnosticDetail({ version: 1, phase: 'capture-rejected', errorCode, errorClass: 'Error: TimelineVersionConflictError' });
+    assert.equal(result.accepted, true);
+    if (result.accepted) {
+      assert.equal(result.record.errorCode, 'UNKNOWN');
+      assert.equal(result.record.errorClass, 'UNKNOWN');
+    }
+  }
+  const generic = projectMountedDiagnosticDetail({ version: 1, phase: 'capture-rejected', errorCode: 'operation-rejected', errorClass: 'UNKNOWN' });
+  assert.equal(generic.accepted, true);
+  if (generic.accepted) assert.deepEqual({ errorCode: generic.record.errorCode, errorClass: generic.record.errorClass }, { errorCode: 'operation-rejected', errorClass: 'UNKNOWN' });
+  const untagged = projectMountedDiagnosticDetail({ version: 1, phase: 'schedule', errorCode: 'capture-input-head-unavailable', errorClass: 'Error' });
+  assert.equal(untagged.accepted, true);
+  if (untagged.accepted) assert.deepEqual({ errorCode: untagged.record.errorCode, errorClass: untagged.record.errorClass }, { errorCode: 'UNKNOWN', errorClass: 'UNKNOWN' });
+
+  const listeners = new Map<string, (event: unknown) => void>();
+  const window = {
+    __timelineSaveDiagnosticsEnabled: false,
+    addEventListener: (name: string, listener: (event: unknown) => void) => { listeners.set(name, listener); },
+  } as Record<string, unknown>;
+  runInNewContext(mountedDiagnosticInitScript({ buffer: 'enum', maxRecords: 64 }), { window, Object, Set, Number, JSON });
+  const listener = listeners.get(MOUNTED_DIAGNOSTIC_EVENT);
+  assert.ok(listener);
+  MOUNTED_DIAGNOSTIC_ERROR_CODES.forEach((errorCode, sequence) => listener!({ detail: {
+    version: 1, sequence, phase: 'capture-rejected', errorCode, errorClass: 'Error',
+  } }));
+  const snapshot = (window.__timelineSaveDiagnosticsSnapshot as () => Record<string, any>)();
+  assert.deepEqual(Array.from(snapshot.records as any[], (record: any) => record.errorCode), [...MOUNTED_DIAGNOSTIC_ERROR_CODES]);
+  assert.ok((snapshot.records as any[]).every((record) => record.errorClass === 'Error'));
+});
+
 test('P1 mounted seam accepts every published phase and rejects unknown metadata', () => {
   for (const phase of MOUNTED_DIAGNOSTIC_PHASES) {
     assert.equal(projectMountedDiagnosticDetail({ version: 1, phase }).accepted, true, phase);
@@ -154,6 +203,143 @@ test('P1 mounted seam listener is bounded and disposable under hostile events', 
   assert.equal(snapshot.listenerErrors, 0);
   assert.equal(snapshot.records.length, 2);
   assert.equal(JSON.stringify(snapshot.records).includes('secret'), false);
+});
+
+test('P1 authentic producer reaches the registered failure artifact after later background events', { timeout: 20_000 }, async () => {
+  const producerPath = '/home/user/work/app/src/tools/video-editor/lib/timeline-diagnostics.ts';
+  const producerSource = readFileSync(producerPath, 'utf8');
+  assert.equal(createHash('sha256').update(producerSource).digest('hex'), '0793024b13484ea19313199d9c888f77d55bf5428841449dc158fb0f27e2c21f');
+  const producer = await import(pathToFileURL(producerPath).href) as typeof import('/home/user/work/app/src/tools/video-editor/lib/timeline-diagnostics.ts');
+  const errors = await import(pathToFileURL('/home/user/work/app/src/sdk/video/timeline/errors.ts').href);
+
+  class TestCustomEvent {
+    readonly type: string;
+    readonly detail: unknown;
+    constructor(type: string, init: { detail: unknown }) { this.type = type; this.detail = init.detail; }
+  }
+  const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  const previousCustomEvent = Object.getOwnPropertyDescriptor(globalThis, 'CustomEvent');
+  const restoreGlobal = () => {
+    if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow);
+    else Reflect.deleteProperty(globalThis, 'window');
+    if (previousCustomEvent) Object.defineProperty(globalThis, 'CustomEvent', previousCustomEvent);
+    else Reflect.deleteProperty(globalThis, 'CustomEvent');
+  };
+
+  const directory = mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), 'p1-authentic-producer-'));
+  const artifactPath = join(directory, 'p1-diagnostic.json');
+  const listeners = new Map<string, (event: unknown) => void>();
+  const window = {
+    __timelineSaveDiagnosticsEnabled: false,
+    addEventListener: (name: string, listener: (event: unknown) => void) => { listeners.set(name, listener); },
+    dispatchEvent: (event: TestCustomEvent) => { listeners.get(event.type)?.(event); return true; },
+  } as Record<string, unknown>;
+  Object.defineProperty(globalThis, 'window', { configurable: true, value: window });
+  Object.defineProperty(globalThis, 'CustomEvent', { configurable: true, value: TestCustomEvent });
+
+  try {
+    const requireBuiltin = createRequire(import.meta.url);
+    const transpile = (source: string) => ts.transpileModule(source, {
+      compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true },
+    }).outputText;
+    const source = readFileSync(new URL('./three-products.p1-chain.spec.ts', import.meta.url), 'utf8');
+    const safetySource = readFileSync(new URL('./p1-diagnostic-safety.ts', import.meta.url), 'utf8');
+    const sources = new Map([
+      ['./support/app.ts', transpile(readFileSync(new URL('./support/app.ts', import.meta.url), 'utf8'))],
+      ['./p1-diagnostic-safety.ts', transpile(safetySource)],
+      ['./three-products.p1-chain.spec.ts', transpile(source)],
+    ]);
+    const hooks = new Map<string, (...args: any[]) => Promise<void>>();
+    const titles: string[] = [];
+    const events = new Map<string, (...args: any[]) => unknown>();
+    const register = Object.assign((title: string) => { titles.push(title); }, {
+      extend: () => register,
+      beforeAll: () => {},
+      beforeEach: (hook: (...args: any[]) => Promise<void>) => { hooks.set('beforeEach', hook); },
+      afterEach: (hook: (...args: any[]) => Promise<void>) => { hooks.set('afterEach', hook); },
+    });
+    const modules = new Map<string, { exports: any }>();
+    const load = (name: string): any => {
+      if (name.startsWith('node:')) return requireBuiltin(name);
+      if (name === '@playwright/test') return { test: register };
+      if (['./support/astrid.ts', './support/harness.ts', './harness.ts'].includes(name)) return {};
+      const cached = modules.get(name);
+      if (cached) return cached.exports;
+      const moduleSource = sources.get(name);
+      assert.ok(moduleSource, `unexpected module: ${name}`);
+      const module = { exports: {} };
+      modules.set(name, module);
+      runInNewContext(moduleSource, {
+        exports: module.exports, module, require: load, process, URL, TextEncoder, TextDecoder,
+        setTimeout, clearTimeout, console: { log: () => {} }, indexedDB: { databases: () => [] },
+        window, CustomEvent: TestCustomEvent,
+      }, { filename: name });
+      return module.exports;
+    };
+    const page = {
+      addInitScript: async ({ content }: { content: string }) => {
+        runInNewContext(content, { window, Object, Set, Number, JSON, CustomEvent: TestCustomEvent });
+      },
+      on: (event: string, listener: (...args: any[]) => unknown) => { events.set(event, listener); },
+      getByTestId: () => ({ getAttribute: async () => 'UNKNOWN', isVisible: async () => false, innerText: async () => '', count: async () => 0 }),
+      locator: () => ({ getAttribute: async () => 'UNKNOWN', isVisible: async () => false, innerText: async () => '', count: async () => 0 }),
+      evaluate: async (operation: (id: string) => Promise<unknown>, id: string) => operation(id),
+    };
+    load('./three-products.p1-chain.spec.ts');
+    assert.equal(titles.length, 2);
+    assert.equal(hooks.size, 2);
+    await hooks.get('beforeEach')!({ page });
+    const listener = listeners.get(MOUNTED_DIAGNOSTIC_EVENT);
+    assert.ok(listener);
+    assert.equal(window.__timelineSaveDiagnosticsEnabled, true);
+
+    const owner = {};
+    const sourceDocument = {
+      head: { projectId: 'project-commit', headRevisionId: 'r0', headPublicationId: 'p0' },
+      config: { clips: [{ id: 'diagnostic-clip', from: 3, to: 8, at: 0, hold: 8, speed: 1 }] },
+    };
+    const rejection = new errors.TimelineVersionConflictError('capture refused');
+    producer.markTimelineSaveRejection(rejection, 'capture-input-head-unavailable');
+    producer.emitTimelineSaveDiagnostic('capture-rejected', () => ({ error: rejection, owner,
+      timelineId: 'timeline-1', clipId: 'diagnostic-clip', generation: 3, sessionPresent: true, closed: false,
+      current: true, identityPresent: true, scopeMatched: true, mounted: sourceDocument, source: sourceDocument,
+      gesture: { kind: 'trim', clipId: 'diagnostic-clip', patch: { from: 3, to: 8 } },
+      basis: { source: sourceDocument }, basisStatus: 'ready', state: { status: 'error', ownerId: 'owner-1', recoverableOwners: [owner] } }));
+    for (let index = 0; index < 40; index += 1) {
+      producer.emitTimelineSaveDiagnostic('schedule', () => ({ owner, timelineId: 'timeline-1', clipId: 'diagnostic-clip',
+        generation: 3, sessionPresent: true, closed: false, current: true, identityPresent: true, scopeMatched: true,
+        mounted: sourceDocument, source: sourceDocument, gesture: { kind: 'trim', patch: { from: 3 } }, state: { status: 'dirty' } }));
+    }
+    const snapshot = (window.__timelineSaveDiagnosticsSnapshot as () => Record<string, any>)();
+    assert.equal(snapshot.accepted, 41);
+    assert.equal(snapshot.rejected, 0);
+    assert.equal(snapshot.overflow, 9);
+    assert.equal(snapshot.records.length, MOUNTED_DIAGNOSTIC_MAX_RECORDS);
+    assert.equal(snapshot.records[0].errorCode, 'capture-input-head-unavailable');
+    assert.equal(snapshot.records[0].errorClass, 'TimelineVersionConflictError');
+
+    const original = new assert.AssertionError({ message: 'original P1 assertion' });
+    const testInfo = {
+      title: titles[0], status: 'failed', expectedStatus: 'passed', duration: 90_000,
+      error: original, errors: [original], outputPath: (name: string) => { assert.equal(name, 'p1-diagnostic.json'); return artifactPath; },
+      attach: async (name: string, options: { path: string; contentType: string }) => {
+        assert.equal(name, 'p1-diagnostic'); assert.equal(options.path, artifactPath); assert.equal(options.contentType, 'application/json');
+      },
+    };
+    await hooks.get('afterEach')!({ page }, testInfo);
+    const artifactContents = readFileSync(artifactPath, 'utf8');
+    const artifact = JSON.parse(artifactContents) as Record<string, any>;
+    const retained = artifact.mountedObservations.records[0];
+    assert.equal(retained.phase, 'capture-rejected');
+    assert.equal(retained.errorCode, 'capture-input-head-unavailable');
+    assert.equal(retained.errorClass, 'TimelineVersionConflictError');
+    assert.equal(retained.patch.from, 3);
+    assert.equal(retained.mountedHead.revisionId, 'r0');
+    assert.equal(artifact.mountedObservations.overflow, 9);
+    assert.equal(artifact.mountedObservations.records.length, MOUNTED_DIAGNOSTIC_MAX_RECORDS);
+  } finally {
+    restoreGlobal();
+  }
 });
 
 test('P1 diagnostics bound breadth, depth, arrays, strings, and bytes', () => {
