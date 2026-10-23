@@ -146,6 +146,38 @@ def test_cut_table_json_lists_every_layer_with_clip_id_and_every_word(capsys):
     assert {w["id"] for w in data["words"]} >= {"s1:2", "s2:1"}
 
 
+def test_real_show_handler_projects_canonical_parent_clips(capsys):
+    doc = {
+        "project_id": "p",
+        "timeline_id": "flat",
+        "base_parent": {"revision_id": "rev-0"},
+        "parent": {
+            "config": {
+                "theme_overrides": {"visual": {"canvas": {"fps": FPS}}},
+                "tracks": [{"id": "V1", "kind": "visual"}],
+            },
+            "clips": [
+                {"id": "a", "track": "V1", "clipType": "hold", "at": 5, "hold": 2},
+                {"id": "b", "track": "V1", "clipType": "hold", "at": 0, "hold": 2},
+            ],
+        },
+        "placements": [],
+        "shots": {},
+    }
+
+    code, out = run(capsys, doc, json=True)
+    data = json.loads(out)["data"]
+
+    assert code == 0
+    assert data["duration"] == 7.0
+    assert data["counts"]["clips"] == 2
+    assert [(row["clip_id"], row["start"], row["end"]) for row in data["rows"]] == [
+        ("b", 0.0, 2.0),
+        (None, 2.0, 5.0),
+        ("a", 5.0, 7.0),
+    ]
+
+
 def test_decimal_seconds_keeps_exact_rational_under_exact_key():
     converted = decimal_seconds({"start": [33276086721, 472037000], "text": "x"})
     assert converted["start"] == pytest.approx(70.494658, abs=1e-6)
