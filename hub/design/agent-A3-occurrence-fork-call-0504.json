@@ -1,0 +1,1798 @@
+{
+  "accepted_steps": [
+    {
+      "command_ordinals": [
+        0
+      ],
+      "dependencies": [
+        {
+          "kind": "field",
+          "path": [
+            "config",
+            "pinnedShotGroups"
+          ],
+          "ref": "parent",
+          "state": {
+            "state": "absent"
+          }
+        },
+        {
+          "kind": "field",
+          "path": [
+            "occurrences",
+            "occurrence_id:occ-0"
+          ],
+          "ref": "parent",
+          "state": {
+            "state": "present",
+            "value": {
+              "app": {
+                "org.example": {
+                  "occurrence_id": "occ-0",
+                  "ordered": [
+                    null,
+                    false,
+                    0,
+                    1.0,
+                    {},
+                    []
+                  ],
+                  "output_identity": "out:occ-0",
+                  "shot_id": "chapter-shot",
+                  "stable_deep_link": "deep:occ-0"
+                }
+              },
+              "associations": [
+                {
+                  "occurrence_id": "occ-0",
+                  "ordered": [
+                    null,
+                    false,
+                    0,
+                    1.0,
+                    {},
+                    []
+                  ],
+                  "output_identity": "out:occ-0",
+                  "shot_id": "chapter-shot",
+                  "stable_deep_link": "deep:occ-0"
+                }
+              ],
+              "duration_ms": 10000,
+              "metadata": null,
+              "occurrence_id": "occ-0",
+              "output_identity": "project/project-1/document/film/occurrence/occ-0/output/final-video",
+              "output_records": [
+                {
+                  "occurrence_id": "occ-0",
+                  "ordered": [
+                    null,
+                    false,
+                    0,
+                    1.0,
+                    {},
+                    []
+                  ],
+                  "output_identity": "out:occ-0",
+                  "shot_id": "chapter-shot",
+                  "stable_deep_link": "deep:occ-0"
+                }
+              ],
+              "placement": {
+                "start_ms": 0,
+                "track": "picture"
+              },
+              "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
+              "source_offset": 0,
+              "speed": 1,
+              "stable_deep_link": "project/project-1/document/film/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
+              "task": {
+                "occurrence_id": "occ-0",
+                "ordered": [
+                  null,
+                  false,
+                  0,
+                  1.0,
+                  {},
+                  []
+                ],
+                "output_identity": "out:occ-0",
+                "shot_id": "chapter-shot",
+                "stable_deep_link": "deep:occ-0"
+              },
+              "track": "picture",
+              "unknown": {
+                "occurrence_id": "occ-0",
+                "ordered": [
+                  null,
+                  false,
+                  0,
+                  1.0,
+                  {},
+                  []
+                ],
+                "output_identity": "out:occ-0",
+                "shot_id": "chapter-shot",
+                "stable_deep_link": "deep:occ-0"
+              }
+            }
+          }
+        },
+        {
+          "kind": "field",
+          "path": [
+            "occurrences",
+            "occurrence_id:occ-0",
+            "shot_id"
+          ],
+          "ref": "parent",
+          "state": {
+            "state": "present",
+            "value": "chapter-shot"
+          }
+        },
+        {
+          "kind": "collection",
+          "members": [
+            "clip-a",
+            "clip-b"
+          ],
+          "order": [
+            "clip-a",
+            "clip-b"
+          ],
+          "path": [
+            "clips"
+          ],
+          "ref": "internal-revision:internal-1"
+        },
+        {
+          "kind": "field",
+          "path": [
+            "occurrences",
+            "occurrence_id:occ-0",
+            "occurrence_id"
+          ],
+          "ref": "parent",
+          "state": {
+            "state": "present",
+            "value": "occ-0"
+          }
+        },
+        {
+          "kind": "collection",
+          "members": [
+            "picture"
+          ],
+          "order": [
+            "picture"
+          ],
+          "path": [
+            "tracks"
+          ],
+          "ref": "internal-revision:internal-1"
+        },
+        {
+          "kind": "scope",
+          "path": [],
+          "ref": "internal-revision:internal-1"
+        },
+        {
+          "kind": "scope",
+          "path": [],
+          "ref": "shot-revision:shot-1"
+        }
+      ],
+      "id": "fork",
+      "intent": "isolate selected child",
+      "label": "Fork selected occurrence",
+      "patch": [
+        {
+          "before": {
+            "state": "absent"
+          },
+          "op": "set",
+          "path": [],
+          "ref": "internal-revision:authoring-timeline-revision-1e38906a083cc3ed99c594fc6e300954108f74a21b931087e109d8e565d21018",
+          "value": {
+            "clips": [
+              {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 1,
+                "clipType": "media",
+                "hold": 2,
+                "id": "clip-a",
+                "track": "picture"
+              },
+              {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 5,
+                "clipType": "media",
+                "hold": 2,
+                "id": "clip-b",
+                "track": "picture"
+              }
+            ],
+            "opaque": {
+              "timestamp": "authored timestamp",
+              "v": [
+                null,
+                false,
+                0
+              ]
+            },
+            "output": {
+              "fps": {
+                "denominator": 1001,
+                "numerator": 30000
+              }
+            },
+            "registry": {
+              "assets": {
+                "picture": {
+                  "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                  "type": "image"
+                }
+              }
+            },
+            "source_window": {
+              "end": 9,
+              "start": 4
+            },
+            "tracks": [
+              {
+                "id": "picture",
+                "kind": "visual"
+              }
+            ],
+            "unknown": [
+              1,
+              2
+            ]
+          }
+        },
+        {
+          "before": {
+            "state": "absent"
+          },
+          "op": "set",
+          "path": [],
+          "ref": "shot-revision:authoring-shot-revision-0d1e142a19c633052c4da70611d57a9f2444ef8864ce5586fa6711c40ef78d4f",
+          "value": {
+            "internal_timeline_revision_id": "authoring-timeline-revision-1e38906a083cc3ed99c594fc6e300954108f74a21b931087e109d8e565d21018",
+            "items": [
+              {
+                "item_id": "shot-item-placement-ae430811a4ed007ccf32e269cf3a5c31307b64132dd2a2d874e985a2f35c00a0",
+                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "metadata": {
+                  "opaque_literal": "item-1"
+                }
+              }
+            ],
+            "metadata": {
+              "chapter": true
+            },
+            "name": "Chapter One",
+            "text_bindings": [
+              {
+                "slot": "narration",
+                "text": "A chapter"
+              }
+            ],
+            "unknown": {
+              "keep": null
+            }
+          }
+        },
+        {
+          "before": {
+            "state": "present",
+            "value": "chapter-shot"
+          },
+          "op": "set",
+          "path": [
+            "occurrences",
+            "occurrence_id:occ-0",
+            "shot_id"
+          ],
+          "ref": "parent",
+          "value": "shot-fork"
+        },
+        {
+          "before": {
+            "state": "present",
+            "value": "shot-1"
+          },
+          "op": "set",
+          "path": [
+            "occurrences",
+            "occurrence_id:occ-0",
+            "shot_revision_id"
+          ],
+          "ref": "parent",
+          "value": "authoring-shot-revision-0d1e142a19c633052c4da70611d57a9f2444ef8864ce5586fa6711c40ef78d4f"
+        }
+      ],
+      "reads": [],
+      "tags": []
+    }
+  ],
+  "authoritative_record": {
+    "bindings": [
+      {
+        "boundary": {
+          "base_publication_id": "publication-1",
+          "base_revision_id": "parent-1",
+          "command_ordinal": 0,
+          "evaluated_head": {
+            "publication_id": "publication-1",
+            "revision_id": "parent-1"
+          },
+          "phase": "input",
+          "step_id": "fork"
+        },
+        "content_digest": "sha256:2d767ce12078eea462d0d56ee3c51cef8b95d963dc9ecca43b2da462303a2600",
+        "dependencies": [],
+        "key": "collection.owner:collection.clips",
+        "path": [
+          "occurrences",
+          "occurrence_id:occ-0"
+        ],
+        "physical_ref": "parent",
+        "policy": "fixed",
+        "ref": "occurrence:occ-0",
+        "revision_id": "parent-1"
+      },
+      {
+        "boundary": {
+          "base_publication_id": "publication-1",
+          "base_revision_id": "parent-1",
+          "command_ordinal": 0,
+          "evaluated_head": {
+            "publication_id": "publication-1",
+            "revision_id": "parent-1"
+          },
+          "phase": "input",
+          "step_id": "fork"
+        },
+        "content_digest": "sha256:2d767ce12078eea462d0d56ee3c51cef8b95d963dc9ecca43b2da462303a2600",
+        "dependencies": [],
+        "key": "collection.owner:collection.tracks",
+        "path": [
+          "occurrences",
+          "occurrence_id:occ-0"
+        ],
+        "physical_ref": "parent",
+        "policy": "fixed",
+        "ref": "occurrence:occ-0",
+        "revision_id": "parent-1"
+      },
+      {
+        "boundary": {
+          "base_publication_id": "publication-1",
+          "base_revision_id": "parent-1",
+          "command_ordinal": 0,
+          "evaluated_head": {
+            "publication_id": "publication-1",
+            "revision_id": "parent-1"
+          },
+          "phase": "input",
+          "step_id": "fork"
+        },
+        "content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
+        "dependencies": [],
+        "key": "fork.source",
+        "owners": [
+          "occurrence:occ-0/shot",
+          "occurrence:occ-1/shot"
+        ],
+        "path": [],
+        "physical_ref": "internal-revision:internal-1",
+        "policy": "fixed",
+        "ref": "occurrence:occ-0/source",
+        "revision_id": "internal-1"
+      },
+      {
+        "boundary": {
+          "base_publication_id": "publication-1",
+          "base_revision_id": "parent-1",
+          "command_ordinal": 0,
+          "evaluated_head": {
+            "publication_id": "publication-1",
+            "revision_id": "parent-1"
+          },
+          "phase": "input",
+          "step_id": "fork"
+        },
+        "content_digest": "sha256:2d767ce12078eea462d0d56ee3c51cef8b95d963dc9ecca43b2da462303a2600",
+        "dependencies": [],
+        "key": "fork.owner",
+        "path": [
+          "occurrences",
+          "occurrence_id:occ-0"
+        ],
+        "physical_ref": "parent",
+        "policy": "fixed",
+        "ref": "occurrence:occ-0",
+        "revision_id": "parent-1"
+      },
+      {
+        "boundary": {
+          "base_publication_id": "publication-1",
+          "base_revision_id": "parent-1",
+          "command_ordinal": 0,
+          "evaluated_head": {
+            "publication_id": "publication-1",
+            "revision_id": "parent-1"
+          },
+          "phase": "effect",
+          "side": "after",
+          "step_id": "fork"
+        },
+        "content_digest": "sha256:40c17ebc38241cfc57e7104070b70d2d858c7cf3c731fbbe410459c99bf5aaa0",
+        "dependencies": [],
+        "effect_ordinal": 0,
+        "key": "commit.effect",
+        "owners": [
+          "occurrence:occ-0/shot"
+        ],
+        "path": [],
+        "physical_ref": "internal-revision:authoring-timeline-revision-1e38906a083cc3ed99c594fc6e300954108f74a21b931087e109d8e565d21018",
+        "policy": "fixed",
+        "ref": "internal-revision:authoring-timeline-revision-1e38906a083cc3ed99c594fc6e300954108f74a21b931087e109d8e565d21018",
+        "revision_id": "authoring-timeline-revision-1e38906a083cc3ed99c594fc6e300954108f74a21b931087e109d8e565d21018",
+        "step_id": "fork"
+      },
+      {
+        "boundary": {
+          "base_publication_id": "publication-1",
+          "base_revision_id": "parent-1",
+          "command_ordinal": 0,
+          "evaluated_head": {
+            "publication_id": "publication-1",
+            "revision_id": "parent-1"
+          },
+          "phase": "effect",
+          "side": "after",
+          "step_id": "fork"
+        },
+        "content_digest": "sha256:358e46d7a3ad31f439a6aee4cd531db463e959ca5909d6b080e22db61c181c87",
+        "dependencies": [],
+        "effect_ordinal": 1,
+        "key": "commit.effect",
+        "owners": [
+          "occurrence:occ-0/shot"
+        ],
+        "path": [],
+        "physical_ref": "shot-revision:authoring-shot-revision-0d1e142a19c633052c4da70611d57a9f2444ef8864ce5586fa6711c40ef78d4f",
+        "policy": "fixed",
+        "ref": "shot-revision:authoring-shot-revision-0d1e142a19c633052c4da70611d57a9f2444ef8864ce5586fa6711c40ef78d4f",
+        "revision_id": "authoring-shot-revision-0d1e142a19c633052c4da70611d57a9f2444ef8864ce5586fa6711c40ef78d4f",
+        "step_id": "fork"
+      },
+      {
+        "boundary": {
+          "base_publication_id": "publication-1",
+          "base_revision_id": "parent-1",
+          "command_ordinal": 0,
+          "evaluated_head": {
+            "publication_id": "publication-1",
+            "revision_id": "parent-1"
+          },
+          "phase": "effect",
+          "side": "before",
+          "step_id": "fork"
+        },
+        "content_digest": "sha256:2d767ce12078eea462d0d56ee3c51cef8b95d963dc9ecca43b2da462303a2600",
+        "dependencies": [],
+        "effect_ordinal": 2,
+        "key": "commit.effect",
+        "path": [
+          "occurrences",
+          "occurrence_id:occ-0",
+          "shot_id"
+        ],
+        "physical_ref": "parent",
+        "policy": "fixed",
+        "ref": "parent",
+        "revision_id": "parent-1",
+        "step_id": "fork"
+      },
+      {
+        "boundary": {
+          "base_publication_id": "publication-1",
+          "base_revision_id": "parent-1",
+          "command_ordinal": 0,
+          "evaluated_head": {
+            "publication_id": "publication-1",
+            "revision_id": "parent-1"
+          },
+          "phase": "effect",
+          "side": "after",
+          "step_id": "fork"
+        },
+        "content_digest": "sha256:2126b3769c92c29d9c9cb88a3554aa7f13baf3072e4c2ac89014ed8e64468d82",
+        "dependencies": [],
+        "effect_ordinal": 2,
+        "key": "commit.effect",
+        "path": [
+          "occurrences",
+          "occurrence_id:occ-0",
+          "shot_id"
+        ],
+        "physical_ref": "parent",
+        "policy": "fixed",
+        "ref": "parent",
+        "revision_id": "authoring-parent-revision-6fae30a21e3d63d2d633eadc36c359cd1f6467a84874c515f52177623c3fde7b",
+        "step_id": "fork"
+      },
+      {
+        "boundary": {
+          "base_publication_id": "publication-1",
+          "base_revision_id": "parent-1",
+          "command_ordinal": 0,
+          "evaluated_head": {
+            "publication_id": "publication-1",
+            "revision_id": "parent-1"
+          },
+          "phase": "effect",
+          "side": "before",
+          "step_id": "fork"
+        },
+        "content_digest": "sha256:2d767ce12078eea462d0d56ee3c51cef8b95d963dc9ecca43b2da462303a2600",
+        "dependencies": [],
+        "effect_ordinal": 3,
+        "key": "commit.effect",
+        "path": [
+          "occurrences",
+          "occurrence_id:occ-0",
+          "shot_revision_id"
+        ],
+        "physical_ref": "parent",
+        "policy": "fixed",
+        "ref": "parent",
+        "revision_id": "parent-1",
+        "step_id": "fork"
+      },
+      {
+        "boundary": {
+          "base_publication_id": "publication-1",
+          "base_revision_id": "parent-1",
+          "command_ordinal": 0,
+          "evaluated_head": {
+            "publication_id": "publication-1",
+            "revision_id": "parent-1"
+          },
+          "phase": "effect",
+          "side": "after",
+          "step_id": "fork"
+        },
+        "content_digest": "sha256:2126b3769c92c29d9c9cb88a3554aa7f13baf3072e4c2ac89014ed8e64468d82",
+        "dependencies": [],
+        "effect_ordinal": 3,
+        "key": "commit.effect",
+        "path": [
+          "occurrences",
+          "occurrence_id:occ-0",
+          "shot_revision_id"
+        ],
+        "physical_ref": "parent",
+        "policy": "fixed",
+        "ref": "parent",
+        "revision_id": "authoring-parent-revision-6fae30a21e3d63d2d633eadc36c359cd1f6467a84874c515f52177623c3fde7b",
+        "step_id": "fork"
+      }
+    ],
+    "command": {
+      "args": {
+        "shot_id": "shot-fork"
+      },
+      "authorship": {
+        "occurrence:occ-0::shot_id": "direct",
+        "shot:shot-fork::": "direct"
+      },
+      "bindings": {
+        "collection.owner:collection.clips": "occurrence:occ-0",
+        "collection.owner:collection.tracks": "occurrence:occ-0",
+        "fork.owner": "occurrence:occ-0"
+      },
+      "created": [
+        "shot:shot-fork"
+      ],
+      "expect": {
+        "occurrence:occ-0::shot_id": {
+          "state": "present",
+          "value": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846"
+        },
+        "shot:shot-fork::": {
+          "state": "absent"
+        }
+      },
+      "intent": {
+        "ownership": "occurrence"
+      },
+      "op": "occurrence.fork",
+      "reads": [
+        {
+          "path": [
+            "config",
+            "pinnedShotGroups"
+          ],
+          "ref": "parent",
+          "state": {
+            "state": "absent"
+          }
+        },
+        {
+          "path": [],
+          "ref": "occurrence:occ-0",
+          "state": {
+            "state": "present",
+            "value": {
+              "app": {
+                "org.example": {
+                  "occurrence_id": "occ-0",
+                  "ordered": [
+                    null,
+                    false,
+                    0,
+                    1.0,
+                    {},
+                    []
+                  ],
+                  "output_identity": "out:occ-0",
+                  "shot_id": "chapter-shot",
+                  "stable_deep_link": "deep:occ-0"
+                }
+              },
+              "associations": [
+                {
+                  "occurrence_id": "occ-0",
+                  "ordered": [
+                    null,
+                    false,
+                    0,
+                    1.0,
+                    {},
+                    []
+                  ],
+                  "output_identity": "out:occ-0",
+                  "shot_id": "chapter-shot",
+                  "stable_deep_link": "deep:occ-0"
+                }
+              ],
+              "duration_ms": 10000,
+              "metadata": null,
+              "occurrence_id": "occ-0",
+              "output_identity": "project/project-1/document/film/occurrence/occ-0/output/final-video",
+              "output_records": [
+                {
+                  "occurrence_id": "occ-0",
+                  "ordered": [
+                    null,
+                    false,
+                    0,
+                    1.0,
+                    {},
+                    []
+                  ],
+                  "output_identity": "out:occ-0",
+                  "shot_id": "chapter-shot",
+                  "stable_deep_link": "deep:occ-0"
+                }
+              ],
+              "placement": {
+                "start_ms": 0,
+                "track": "picture"
+              },
+              "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
+              "source_offset": 0,
+              "speed": 1,
+              "stable_deep_link": "project/project-1/document/film/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
+              "task": {
+                "occurrence_id": "occ-0",
+                "ordered": [
+                  null,
+                  false,
+                  0,
+                  1.0,
+                  {},
+                  []
+                ],
+                "output_identity": "out:occ-0",
+                "shot_id": "chapter-shot",
+                "stable_deep_link": "deep:occ-0"
+              },
+              "track": "picture",
+              "unknown": {
+                "occurrence_id": "occ-0",
+                "ordered": [
+                  null,
+                  false,
+                  0,
+                  1.0,
+                  {},
+                  []
+                ],
+                "output_identity": "out:occ-0",
+                "shot_id": "chapter-shot",
+                "stable_deep_link": "deep:occ-0"
+              }
+            }
+          }
+        },
+        {
+          "path": [
+            "shot_id"
+          ],
+          "ref": "occurrence:occ-0/shot",
+          "state": {
+            "state": "present",
+            "value": "chapter-shot"
+          }
+        },
+        {
+          "path": [],
+          "ref": "occurrence:occ-0/collection:clip",
+          "state": {
+            "state": "present",
+            "value": {
+              "members": {
+                "state": "present",
+                "value": []
+              }
+            }
+          }
+        },
+        {
+          "path": [
+            "occurrence_id"
+          ],
+          "ref": "occurrence:occ-0",
+          "state": {
+            "state": "present",
+            "value": "occ-0"
+          }
+        },
+        {
+          "path": [],
+          "ref": "occurrence:occ-0/collection:track",
+          "state": {
+            "state": "present",
+            "value": {
+              "members": {
+                "state": "present",
+                "value": []
+              }
+            }
+          }
+        },
+        {
+          "path": [],
+          "ref": "occurrence:occ-0/source",
+          "state": {
+            "state": "present",
+            "value": {
+              "clips": [
+                {
+                  "app": {
+                    "org.example": {
+                      "clear": null,
+                      "literal": "clip-a"
+                    }
+                  },
+                  "asset": "picture",
+                  "at": 1,
+                  "clipType": "media",
+                  "hold": 2,
+                  "id": "clip-a",
+                  "track": "picture"
+                },
+                {
+                  "app": {
+                    "org.example": {
+                      "clear": null,
+                      "literal": "clip-a"
+                    }
+                  },
+                  "asset": "picture",
+                  "at": 5,
+                  "clipType": "media",
+                  "hold": 2,
+                  "id": "clip-b",
+                  "track": "picture"
+                }
+              ],
+              "opaque": {
+                "timestamp": "authored timestamp",
+                "v": [
+                  null,
+                  false,
+                  0
+                ]
+              },
+              "output": {
+                "fps": {
+                  "denominator": 1001,
+                  "numerator": 30000
+                }
+              },
+              "registry": {
+                "assets": {
+                  "picture": {
+                    "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                    "type": "image"
+                  }
+                }
+              },
+              "source_window": {
+                "end": 9,
+                "start": 4
+              },
+              "tracks": [
+                {
+                  "id": "picture",
+                  "kind": "visual"
+                }
+              ],
+              "unknown": [
+                1,
+                2
+              ]
+            }
+          }
+        },
+        {
+          "path": [
+            "payload"
+          ],
+          "ref": "occurrence:occ-0/shot",
+          "state": {
+            "state": "present",
+            "value": {
+              "internal_timeline_revision_id": "internal-1",
+              "items": [
+                {
+                  "item_id": "item-1",
+                  "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                  "metadata": {
+                    "opaque_literal": "item-1"
+                  }
+                }
+              ],
+              "metadata": {
+                "chapter": true
+              },
+              "name": "Chapter One",
+              "text_bindings": [
+                {
+                  "slot": "narration",
+                  "text": "A chapter"
+                }
+              ],
+              "unknown": {
+                "keep": null
+              }
+            }
+          }
+        },
+        {
+          "path": [],
+          "ref": "shot:shot-fork",
+          "state": {
+            "state": "absent"
+          }
+        }
+      ],
+      "resolved": [
+        "occurrence:occ-0"
+      ],
+      "schema_version": 1,
+      "select": "occurrence:occ-0",
+      "selections": [
+        {
+          "boundaries": [
+            "occurrence:occ-0/clip:clip-a",
+            "occurrence:occ-0/clip:clip-b"
+          ],
+          "key": "collection.clips",
+          "members": [
+            "occurrence:occ-0/clip:clip-a",
+            "occurrence:occ-0/clip:clip-b"
+          ],
+          "order": [
+            "occurrence:occ-0/clip:clip-a",
+            "occurrence:occ-0/clip:clip-b"
+          ],
+          "owner": "occurrence:occ-0",
+          "policy": "guard-membership",
+          "query_version": 1
+        },
+        {
+          "boundaries": [
+            "occurrence:occ-0/track:picture"
+          ],
+          "key": "collection.tracks",
+          "members": [
+            "occurrence:occ-0/track:picture"
+          ],
+          "order": [
+            "occurrence:occ-0/track:picture"
+          ],
+          "owner": "occurrence:occ-0",
+          "policy": "guard-membership",
+          "query_version": 1
+        }
+      ],
+      "version": "1"
+    },
+    "created": [
+      {
+        "kind": "shot",
+        "owner": null,
+        "ref": "shot:shot-fork"
+      }
+    ],
+    "dependencies": [],
+    "derived_writes": [],
+    "ordinal": 0,
+    "reads": [
+      {
+        "path": [
+          "config",
+          "pinnedShotGroups"
+        ],
+        "ref": "parent",
+        "state": {
+          "state": "absent"
+        }
+      },
+      {
+        "path": [],
+        "ref": "occurrence:occ-0",
+        "state": {
+          "state": "present",
+          "value": {
+            "app": {
+              "org.example": {
+                "occurrence_id": "occ-0",
+                "ordered": [
+                  null,
+                  false,
+                  0,
+                  1.0,
+                  {},
+                  []
+                ],
+                "output_identity": "out:occ-0",
+                "shot_id": "chapter-shot",
+                "stable_deep_link": "deep:occ-0"
+              }
+            },
+            "associations": [
+              {
+                "occurrence_id": "occ-0",
+                "ordered": [
+                  null,
+                  false,
+                  0,
+                  1.0,
+                  {},
+                  []
+                ],
+                "output_identity": "out:occ-0",
+                "shot_id": "chapter-shot",
+                "stable_deep_link": "deep:occ-0"
+              }
+            ],
+            "duration_ms": 10000,
+            "metadata": null,
+            "occurrence_id": "occ-0",
+            "output_identity": "project/project-1/document/film/occurrence/occ-0/output/final-video",
+            "output_records": [
+              {
+                "occurrence_id": "occ-0",
+                "ordered": [
+                  null,
+                  false,
+                  0,
+                  1.0,
+                  {},
+                  []
+                ],
+                "output_identity": "out:occ-0",
+                "shot_id": "chapter-shot",
+                "stable_deep_link": "deep:occ-0"
+              }
+            ],
+            "placement": {
+              "start_ms": 0,
+              "track": "picture"
+            },
+            "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
+            "source_offset": 0,
+            "speed": 1,
+            "stable_deep_link": "project/project-1/document/film/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
+            "task": {
+              "occurrence_id": "occ-0",
+              "ordered": [
+                null,
+                false,
+                0,
+                1.0,
+                {},
+                []
+              ],
+              "output_identity": "out:occ-0",
+              "shot_id": "chapter-shot",
+              "stable_deep_link": "deep:occ-0"
+            },
+            "track": "picture",
+            "unknown": {
+              "occurrence_id": "occ-0",
+              "ordered": [
+                null,
+                false,
+                0,
+                1.0,
+                {},
+                []
+              ],
+              "output_identity": "out:occ-0",
+              "shot_id": "chapter-shot",
+              "stable_deep_link": "deep:occ-0"
+            }
+          }
+        }
+      },
+      {
+        "path": [
+          "shot_id"
+        ],
+        "ref": "occurrence:occ-0/shot",
+        "state": {
+          "state": "present",
+          "value": "chapter-shot"
+        }
+      },
+      {
+        "path": [],
+        "ref": "occurrence:occ-0/collection:clip",
+        "state": {
+          "state": "present",
+          "value": {
+            "members": {
+              "state": "present",
+              "value": []
+            }
+          }
+        }
+      },
+      {
+        "path": [
+          "occurrence_id"
+        ],
+        "ref": "occurrence:occ-0",
+        "state": {
+          "state": "present",
+          "value": "occ-0"
+        }
+      },
+      {
+        "path": [],
+        "ref": "occurrence:occ-0/collection:track",
+        "state": {
+          "state": "present",
+          "value": {
+            "members": {
+              "state": "present",
+              "value": []
+            }
+          }
+        }
+      },
+      {
+        "path": [],
+        "ref": "occurrence:occ-0/source",
+        "state": {
+          "state": "present",
+          "value": {
+            "clips": [
+              {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 1,
+                "clipType": "media",
+                "hold": 2,
+                "id": "clip-a",
+                "track": "picture"
+              },
+              {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 5,
+                "clipType": "media",
+                "hold": 2,
+                "id": "clip-b",
+                "track": "picture"
+              }
+            ],
+            "opaque": {
+              "timestamp": "authored timestamp",
+              "v": [
+                null,
+                false,
+                0
+              ]
+            },
+            "output": {
+              "fps": {
+                "denominator": 1001,
+                "numerator": 30000
+              }
+            },
+            "registry": {
+              "assets": {
+                "picture": {
+                  "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                  "type": "image"
+                }
+              }
+            },
+            "source_window": {
+              "end": 9,
+              "start": 4
+            },
+            "tracks": [
+              {
+                "id": "picture",
+                "kind": "visual"
+              }
+            ],
+            "unknown": [
+              1,
+              2
+            ]
+          }
+        }
+      },
+      {
+        "path": [
+          "payload"
+        ],
+        "ref": "occurrence:occ-0/shot",
+        "state": {
+          "state": "present",
+          "value": {
+            "internal_timeline_revision_id": "internal-1",
+            "items": [
+              {
+                "item_id": "item-1",
+                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "metadata": {
+                  "opaque_literal": "item-1"
+                }
+              }
+            ],
+            "metadata": {
+              "chapter": true
+            },
+            "name": "Chapter One",
+            "text_bindings": [
+              {
+                "slot": "narration",
+                "text": "A chapter"
+              }
+            ],
+            "unknown": {
+              "keep": null
+            }
+          }
+        }
+      },
+      {
+        "path": [],
+        "ref": "shot:shot-fork",
+        "state": {
+          "state": "absent"
+        }
+      }
+    ],
+    "selections": [
+      {
+        "boundaries": [
+          "occurrence:occ-0/clip:clip-a",
+          "occurrence:occ-0/clip:clip-b"
+        ],
+        "key": "collection.clips",
+        "members": [
+          "occurrence:occ-0/clip:clip-a",
+          "occurrence:occ-0/clip:clip-b"
+        ],
+        "order": [
+          "occurrence:occ-0/clip:clip-a",
+          "occurrence:occ-0/clip:clip-b"
+        ],
+        "owner": "occurrence:occ-0",
+        "policy": "guard-membership",
+        "query_version": 1
+      },
+      {
+        "boundaries": [
+          "occurrence:occ-0/track:picture"
+        ],
+        "key": "collection.tracks",
+        "members": [
+          "occurrence:occ-0/track:picture"
+        ],
+        "order": [
+          "occurrence:occ-0/track:picture"
+        ],
+        "owner": "occurrence:occ-0",
+        "policy": "guard-membership",
+        "query_version": 1
+      }
+    ],
+    "writes": [
+      {
+        "after": {
+          "state": "present",
+          "value": {
+            "internal_timeline": {
+              "clips": [
+                {
+                  "app": {
+                    "org.example": {
+                      "clear": null,
+                      "literal": "clip-a"
+                    }
+                  },
+                  "asset": "picture",
+                  "at": 1,
+                  "clipType": "media",
+                  "hold": 2,
+                  "id": "clip-a",
+                  "track": "picture"
+                },
+                {
+                  "app": {
+                    "org.example": {
+                      "clear": null,
+                      "literal": "clip-a"
+                    }
+                  },
+                  "asset": "picture",
+                  "at": 5,
+                  "clipType": "media",
+                  "hold": 2,
+                  "id": "clip-b",
+                  "track": "picture"
+                }
+              ],
+              "opaque": {
+                "timestamp": "authored timestamp",
+                "v": [
+                  null,
+                  false,
+                  0
+                ]
+              },
+              "output": {
+                "fps": {
+                  "denominator": 1001,
+                  "numerator": 30000
+                }
+              },
+              "registry": {
+                "assets": {
+                  "picture": {
+                    "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                    "type": "image"
+                  }
+                }
+              },
+              "source_window": {
+                "end": 9,
+                "start": 4
+              },
+              "tracks": [
+                {
+                  "id": "picture",
+                  "kind": "visual"
+                }
+              ],
+              "unknown": [
+                1,
+                2
+              ]
+            },
+            "payload": {
+              "internal_timeline_revision_id": "internal-1",
+              "items": [
+                {
+                  "item_id": "shot-item-placement-ae430811a4ed007ccf32e269cf3a5c31307b64132dd2a2d874e985a2f35c00a0",
+                  "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                  "metadata": {
+                    "opaque_literal": "item-1"
+                  }
+                }
+              ],
+              "metadata": {
+                "chapter": true
+              },
+              "name": "Chapter One",
+              "text_bindings": [
+                {
+                  "slot": "narration",
+                  "text": "A chapter"
+                }
+              ],
+              "unknown": {
+                "keep": null
+              }
+            }
+          }
+        },
+        "before": {
+          "state": "absent"
+        },
+        "path": [],
+        "ref": "shot:shot-fork"
+      },
+      {
+        "after": {
+          "state": "present",
+          "value": "shot-fork"
+        },
+        "before": {
+          "state": "present",
+          "value": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846"
+        },
+        "path": [
+          "shot_id"
+        ],
+        "ref": "occurrence:occ-0"
+      }
+    ]
+  },
+  "captured_command": {
+    "args": {
+      "shot_id": "shot-fork"
+    },
+    "authorship": {
+      "occurrence:occ-0::shot_id": "direct",
+      "shot:shot-fork::": "direct"
+    },
+    "bindings": {
+      "collection.owner:collection.clips": "occurrence:occ-0",
+      "collection.owner:collection.tracks": "occurrence:occ-0",
+      "fork.owner": "occurrence:occ-0"
+    },
+    "created": [
+      "shot:shot-fork"
+    ],
+    "expect": {
+      "occurrence:occ-0::shot_id": {
+        "state": "present",
+        "value": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846"
+      },
+      "shot:shot-fork::": {
+        "state": "absent"
+      }
+    },
+    "intent": {
+      "ownership": "occurrence"
+    },
+    "op": "occurrence.fork",
+    "reads": [
+      {
+        "path": [
+          "config",
+          "pinnedShotGroups"
+        ],
+        "ref": "parent",
+        "state": {
+          "state": "absent"
+        }
+      },
+      {
+        "path": [],
+        "ref": "occurrence:occ-0",
+        "state": {
+          "state": "present",
+          "value": {
+            "app": {
+              "org.example": {
+                "occurrence_id": "occ-0",
+                "ordered": [
+                  null,
+                  false,
+                  0,
+                  1.0,
+                  {},
+                  []
+                ],
+                "output_identity": "out:occ-0",
+                "shot_id": "chapter-shot",
+                "stable_deep_link": "deep:occ-0"
+              }
+            },
+            "associations": [
+              {
+                "occurrence_id": "occ-0",
+                "ordered": [
+                  null,
+                  false,
+                  0,
+                  1.0,
+                  {},
+                  []
+                ],
+                "output_identity": "out:occ-0",
+                "shot_id": "chapter-shot",
+                "stable_deep_link": "deep:occ-0"
+              }
+            ],
+            "duration_ms": 10000,
+            "metadata": null,
+            "occurrence_id": "occ-0",
+            "output_identity": "project/project-1/document/film/occurrence/occ-0/output/final-video",
+            "output_records": [
+              {
+                "occurrence_id": "occ-0",
+                "ordered": [
+                  null,
+                  false,
+                  0,
+                  1.0,
+                  {},
+                  []
+                ],
+                "output_identity": "out:occ-0",
+                "shot_id": "chapter-shot",
+                "stable_deep_link": "deep:occ-0"
+              }
+            ],
+            "placement": {
+              "start_ms": 0,
+              "track": "picture"
+            },
+            "shot_id": "shot-placement-8e8a0a3d15e47729e4aa7690672f080b84efe0919c8c72e687e87b5caba73846",
+            "source_offset": 0,
+            "speed": 1,
+            "stable_deep_link": "project/project-1/document/film/shot/chapter-shot/revision/shot-1/occurrence/occ-0",
+            "task": {
+              "occurrence_id": "occ-0",
+              "ordered": [
+                null,
+                false,
+                0,
+                1.0,
+                {},
+                []
+              ],
+              "output_identity": "out:occ-0",
+              "shot_id": "chapter-shot",
+              "stable_deep_link": "deep:occ-0"
+            },
+            "track": "picture",
+            "unknown": {
+              "occurrence_id": "occ-0",
+              "ordered": [
+                null,
+                false,
+                0,
+                1.0,
+                {},
+                []
+              ],
+              "output_identity": "out:occ-0",
+              "shot_id": "chapter-shot",
+              "stable_deep_link": "deep:occ-0"
+            }
+          }
+        }
+      },
+      {
+        "path": [
+          "shot_id"
+        ],
+        "ref": "occurrence:occ-0/shot",
+        "state": {
+          "state": "present",
+          "value": "chapter-shot"
+        }
+      },
+      {
+        "path": [],
+        "ref": "occurrence:occ-0/collection:clip",
+        "state": {
+          "state": "present",
+          "value": {
+            "members": {
+              "state": "present",
+              "value": []
+            }
+          }
+        }
+      },
+      {
+        "path": [
+          "occurrence_id"
+        ],
+        "ref": "occurrence:occ-0",
+        "state": {
+          "state": "present",
+          "value": "occ-0"
+        }
+      },
+      {
+        "path": [],
+        "ref": "occurrence:occ-0/collection:track",
+        "state": {
+          "state": "present",
+          "value": {
+            "members": {
+              "state": "present",
+              "value": []
+            }
+          }
+        }
+      },
+      {
+        "path": [],
+        "ref": "occurrence:occ-0/source",
+        "state": {
+          "state": "present",
+          "value": {
+            "clips": [
+              {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 1,
+                "clipType": "media",
+                "hold": 2,
+                "id": "clip-a",
+                "track": "picture"
+              },
+              {
+                "app": {
+                  "org.example": {
+                    "clear": null,
+                    "literal": "clip-a"
+                  }
+                },
+                "asset": "picture",
+                "at": 5,
+                "clipType": "media",
+                "hold": 2,
+                "id": "clip-b",
+                "track": "picture"
+              }
+            ],
+            "opaque": {
+              "timestamp": "authored timestamp",
+              "v": [
+                null,
+                false,
+                0
+              ]
+            },
+            "output": {
+              "fps": {
+                "denominator": 1001,
+                "numerator": 30000
+              }
+            },
+            "registry": {
+              "assets": {
+                "picture": {
+                  "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                  "type": "image"
+                }
+              }
+            },
+            "source_window": {
+              "end": 9,
+              "start": 4
+            },
+            "tracks": [
+              {
+                "id": "picture",
+                "kind": "visual"
+              }
+            ],
+            "unknown": [
+              1,
+              2
+            ]
+          }
+        }
+      },
+      {
+        "path": [
+          "payload"
+        ],
+        "ref": "occurrence:occ-0/shot",
+        "state": {
+          "state": "present",
+          "value": {
+            "internal_timeline_revision_id": "internal-1",
+            "items": [
+              {
+                "item_id": "item-1",
+                "media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+                "metadata": {
+                  "opaque_literal": "item-1"
+                }
+              }
+            ],
+            "metadata": {
+              "chapter": true
+            },
+            "name": "Chapter One",
+            "text_bindings": [
+              {
+                "slot": "narration",
+                "text": "A chapter"
+              }
+            ],
+            "unknown": {
+              "keep": null
+            }
+          }
+        }
+      },
+      {
+        "path": [],
+        "ref": "shot:shot-fork",
+        "state": {
+          "state": "absent"
+        }
+      }
+    ],
+    "resolved": [
+      "occurrence:occ-0"
+    ],
+    "schema_version": 1,
+    "select": "occurrence:occ-0",
+    "selections": [
+      {
+        "boundaries": [
+          "occurrence:occ-0/clip:clip-a",
+          "occurrence:occ-0/clip:clip-b"
+        ],
+        "key": "collection.clips",
+        "members": [
+          "occurrence:occ-0/clip:clip-a",
+          "occurrence:occ-0/clip:clip-b"
+        ],
+        "order": [
+          "occurrence:occ-0/clip:clip-a",
+          "occurrence:occ-0/clip:clip-b"
+        ],
+        "owner": "occurrence:occ-0",
+        "policy": "guard-membership",
+        "query_version": 1
+      },
+      {
+        "boundaries": [
+          "occurrence:occ-0/track:picture"
+        ],
+        "key": "collection.tracks",
+        "members": [
+          "occurrence:occ-0/track:picture"
+        ],
+        "order": [
+          "occurrence:occ-0/track:picture"
+        ],
+        "owner": "occurrence:occ-0",
+        "policy": "guard-membership",
+        "query_version": 1
+      }
+    ],
+    "version": "1"
+  },
+  "fixture_only": true,
+  "minimal_command": {
+    "args": {
+      "shot_id": "shot-fork"
+    },
+    "created": [
+      "shot:shot-fork"
+    ],
+    "intent": {
+      "ownership": "occurrence"
+    },
+    "op": "occurrence.fork",
+    "schema_version": 1,
+    "select": "occurrence:occ-0",
+    "version": "1"
+  },
+  "request_fragment_with_fixture_scope": {
+    "api_version": 1,
+    "base_publication_id": "publication-1",
+    "base_revision_id": "parent-1",
+    "commands": [
+      {
+        "args": {
+          "shot_id": "shot-fork"
+        },
+        "created": [
+          "shot:shot-fork"
+        ],
+        "intent": {
+          "ownership": "occurrence"
+        },
+        "op": "occurrence.fork",
+        "schema_version": 1,
+        "select": "occurrence:occ-0",
+        "version": "1"
+      }
+    ],
+    "dry_run": false,
+    "group_id": "gesture-1",
+    "label": "Fork selected occurrence",
+    "merge": "fields",
+    "project_id": "project-1",
+    "rationale": "isolate selected child",
+    "reads": [],
+    "source": {
+      "via": "app"
+    },
+    "steps": [
+      {
+        "command_ordinals": [
+          0
+        ],
+        "id": "fork",
+        "intent": "isolate selected child",
+        "label": "Fork selected occurrence",
+        "patch": [],
+        "reads": [],
+        "tags": []
+      }
+    ],
+    "timeline_id": "film"
+  },
+  "source_set_sha256": "e7c96edb911f6a1d89fb218cc951fea6094ee350f2ab62cbf039f951239e6830",
+  "source_sha256": {
+    "astrid/sdk/timeline/_commit_patch.py": "22204638d7317bab588b513e85d2b74da375b81bd47ff4e10dd47170de15228c",
+    "astrid/sdk/timeline/_commit_timing_validation.py": "5955f0c98cef07991d42b24206d81e4535f95afa1b70c1e32fdc94d14ab591da",
+    "astrid/sdk/timeline/_doc_patch.py": "9e6d6c4189735b2bc239c26ed036cfb84ecf2dacccadf1a7e0702a05006e669d",
+    "astrid/sdk/timeline/_root_inverse.py": "9711d1a6710d44c51bf8091783224f196aebae466f2c57fba03143d3597c4ced",
+    "astrid/sdk/timeline/commands.py": "9bae22056be03bdecdc9a83176b068b1883d71724aa3c83436461ca711eaf35c",
+    "astrid/sdk/timeline/commit.py": "065a0acdbb74d0458b13d26841e7e4081c6a6c19eecdd3f79639de3ea9159d7c",
+    "astrid/sdk/timeline/inverse.py": "6d2c0bed4c963889c313a94d35d4b7273ab34b3c5e17ba0274e657f71c6f3400",
+    "astrid/sdk/timeline/native_occurrence_duplicate.py": "d3bb8b88ef5f315ebba67e375b97f3da6f622112901ce35dc1f97bb584e83156",
+    "astrid/sdk/timeline/native_occurrence_fork.py": "bb129592203eb0e8bd6353c804d335ce13dca1441813ad266451016d7c7a0d7d",
+    "astrid/sdk/timeline/validation.py": "3c6134bc141b0e286e4e9309ce41a3235d5405ffea647c97ade436ee50b84195"
+  }
+}
