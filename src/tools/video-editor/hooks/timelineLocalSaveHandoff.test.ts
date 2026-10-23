@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
@@ -8,7 +8,17 @@ import { buildTimelineData } from '../lib/timeline-data.ts';
 import type { TimelineConfig } from '../types/index.ts';
 import { createTimelineLocalSaveHandoff, type TimelineSaveSource } from './timelineLocalSaveHandoff.ts';
 
-async function environment(children = false, raw = false, rawIds = ['authored']) {
+const contractFixture = vi.hoisted(() => ({ digest: 'sha256:unsupported-test-fixture' }));
+const CURRENT_V2_DIGEST = 'sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c';
+
+vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/integrations/runtime/generated-contract-metadata.ts')>(),
+  get SCHEMA_DIGEST() { return contractFixture.digest; },
+}));
+
+afterEach(() => { contractFixture.digest = 'sha256:unsupported-test-fixture'; });
+
+async function environment(children = false, raw = false, rawIds = ['authored'], rawApp?: Record<string, unknown>) {
   const head = { projectId: 'project-commit', timelineId: 'timeline-commit', headRevisionId: 'r0', headPublicationId: 'p0' };
   let source: TimelineSaveSource = { config: createDefaultTimelineConfig(), registry: { assets: {} }, head };
   const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { children }).data.canonical_document;
@@ -18,7 +28,7 @@ async function environment(children = false, raw = false, rawIds = ['authored'])
     const authored = { ...config, output: { resolution: null, file: null, opaque: { keep: null } }, pinnedShotGroups: null,
       ...Object.fromEntries([['__proto__', { keep: null }], ['constructor', null]]),
       opaque: { keep: [null, false] }, clips: rawIds.map((id, index) => ({ id, track: 'V1', at: index * 2, hold: 2, clipType: null,
-        opaque: { keep: null } })) };
+        opaque: { keep: null }, ...(rawApp ? { app: rawApp } : {}) })) };
     document.parent_revision.payload.config = authored;
     document.parent_revision.payload.clips = structuredClone(authored.clips);
     const data = await buildTimelineData({ ...authored,
@@ -39,6 +49,64 @@ async function environment(children = false, raw = false, rawIds = ['authored'])
 }
 
 describe('upstream local document handoff', () => {
+  it('chains exact trim intent removals without clearing omitted opaque fields or restoring them on a partial edit', async () => {
+    const env = await environment(false, true, ['authored'], {
+      astrid: { for: 19, until: null, opaque: [null, false] }, 'org.example': { clear: null },
+    });
+    const moved = structuredClone(env.source);
+    moved.config.clips[0].at = 1;
+    await env.handoff.capture(moved);
+    const trimmed = structuredClone(moved);
+    trimmed.config.clips[0].hold = 1;
+    trimmed.config.clips[0].app = { astrid: {} };
+    await env.handoff.capture(trimmed);
+    const expected = structuredClone(env.initial.canonicalDocument);
+    for (const clips of [expected.parent_revision.payload.clips,
+      (expected.parent_revision.payload.config as Record<string, unknown>).clips] as Record<string, unknown>[][]) {
+      clips[0].at = 1;
+      clips[0].hold = 1;
+      clips[0].app = { astrid: { opaque: [null, false] }, 'org.example': { clear: null } };
+    }
+    expect(env.session.getDocument()).toEqual(expected);
+    await env.handoff.capture(structuredClone(trimmed));
+    const partial = structuredClone(trimmed);
+    delete partial.config.clips[0].app;
+    partial.config.clips[0].at = 2;
+    await env.handoff.capture(partial);
+    const [owner] = await env.outboxes.list(env.scope);
+    expect(owner.intents).toHaveLength(3);
+    expect(owner.intents[1].basis).toEqual({ after: owner.intents[0].id });
+    expect(owner.intents[1].payload).toMatchObject({ documentIntent: { changes: [
+      { op: 'set', ref: 'parent', path: ['clips', 'id:authored', 'hold'], before: { state: 'present', value: 2 }, value: 1 },
+      { op: 'remove', ref: 'parent', path: ['clips', 'id:authored', 'app', 'astrid', 'for'], before: { state: 'present', value: 19 } },
+      { op: 'remove', ref: 'parent', path: ['clips', 'id:authored', 'app', 'astrid', 'until'], before: { state: 'present', value: null } },
+    ] } });
+    expect(owner.intents[2].basis).toEqual({ after: owner.intents[1].id });
+    expect(owner.intents[2].payload).toMatchObject({ documentIntent: { changes: [
+      { op: 'set', ref: 'parent', path: ['clips', 'id:authored', 'at'], before: { state: 'present', value: 1 }, value: 2 },
+    ] } });
+    expect(env.session.getDocument()).toMatchObject({ parent_revision: { payload: {
+      clips: [{ app: { astrid: { opaque: [null, false] }, 'org.example': { clear: null } } }],
+    } } });
+    await env.session.dispose();
+  });
+
+  it.each(['app', 'namespace'] as const)('preserves trim intent when a partial view omits the %s container', async (kind) => {
+    const app = { astrid: { for: 19, until: null, opaque: [null, false] }, 'org.example': { clear: null } };
+    const env = await environment(false, true, ['authored'], app);
+    const next = structuredClone(env.source);
+    if (kind === 'app') delete next.config.clips[0].app;
+    else next.config.clips[0].app = { 'org.example': { clear: null } };
+    next.config.clips[0].hold = 1;
+    await env.handoff.capture(next);
+    const [owner] = await env.outboxes.list(env.scope);
+    expect(owner.intents[0].payload).toMatchObject({ documentIntent: { changes: [
+      { op: 'set', ref: 'parent', path: ['clips', 'id:authored', 'hold'], before: { state: 'present', value: 2 }, value: 1 },
+    ] } });
+    expect(env.session.getDocument()).toMatchObject({ parent_revision: { payload: { clips: [{ app }] } } });
+    await env.session.dispose();
+  });
+
   it('keeps raw nulls, absence and opaque own keys through a real upstream projection and dependent edits', async () => {
     const env = await environment(false, true);
     const raw = structuredClone(env.initial.canonicalDocument);
@@ -116,6 +184,34 @@ describe('upstream local document handoff', () => {
     await expect(env.handoff.flush()).rejects.toThrow('draft retained');
     expect(env.receipt).not.toHaveBeenCalled();
     expect(env.send).not.toHaveBeenCalled();
+    await env.session.dispose();
+  });
+
+  it('dispatches the original guarded doc.patch through the session when current v2 is supported', async () => {
+    contractFixture.digest = CURRENT_V2_DIGEST;
+    const env = await environment(false, true);
+    const next = structuredClone(env.source);
+    next.config.clips[0].at = 1;
+    await env.handoff.capture(next);
+    env.send.mockRejectedValueOnce(new Error('stop after request inspection'));
+
+    await expect(env.handoff.flush()).rejects.toThrow('draft retained');
+    expect(env.send).toHaveBeenCalledTimes(1);
+    const [request] = env.send.mock.calls[0];
+    expect(request).toMatchObject({
+      base_revision_id: 'r0',
+      base_publication_id: 'p0',
+      label: 'Edit timeline',
+      merge: 'atomic',
+      dry_run: false,
+      commands: [{ op: 'doc.patch', args: { changes: [{
+        op: 'set', ref: 'parent', path: ['clips', 'id:authored', 'at'],
+        before: { state: 'present', value: 0 }, value: 1,
+      }] } }],
+      steps: [{ intent: 'Save local editor changes', command_ordinals: [0] }],
+    });
+    expect(request.steps?.[0].patch).toEqual(request.commands[0].args.changes);
+    expect(env.receipt).not.toHaveBeenCalled();
     await env.session.dispose();
   });
 

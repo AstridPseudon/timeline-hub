@@ -75,6 +75,8 @@ export async function createLocalSaveSession(options: Options) {
   let writes: Promise<unknown> = Promise.resolve();
   let sending: Promise<void> | undefined;
   let generation = 0;
+  let adoptedAcceptance: string | undefined;
+  let replaying = false;
   let writeError: unknown;
   let state: LocalSaveState = { status: 'saved', recoverableOwners: [] };
 
@@ -129,14 +131,22 @@ export async function createLocalSaveSession(options: Options) {
         record = await box.read();
         if (at !== generation) continue;
         if (await rollback()) return;
-        if (!record.intents.length) {
+        if (closed || writeError || at !== generation) return;
+        if ((record.accepted && record.accepted.intentId !== adoptedAcceptance) || (!record.intents.length && !record.accepted)) {
+          // Runtime owns suffix revalidation. Install its complete landed closure
+          // before sending the next ORIGINAL intent, never execute/recapture it here.
           const prepared = await options.prepareDisplay(clone(basis));
-          if (!closed && !writeError && at === generation) {
-            displayBasis = clone(basis);
-            document = toOutboxJson(prepared.document);
-            prepared.adopt();
-            publish('saved');
-          }
+          if (closed || writeError || at !== generation) return;
+          displayBasis = clone(basis);
+          document = toOutboxJson(prepared.document);
+          replaying = record.intents.length > 0;
+          prepared.adopt();
+          adoptedAcceptance = record.accepted?.intentId;
+        }
+        if (closed || writeError || at !== generation) return;
+        if (!record.intents.length) {
+          replaying = false;
+          publish('saved');
           return;
         }
         const save = saveOf(record.intents[0].payload);
@@ -208,7 +218,10 @@ export async function createLocalSaveSession(options: Options) {
         basis = { head: result.accepted, canonicalDocument: result.canonicalDocument, graph: result.graph };
         checkBasis(basis);
       }
-      if (record.intents.length) {
+      // A recovered accepted prefix must win over its old optimistic suffix,
+      // including when the next request already has uncertain durable bytes.
+      replaying = !!record.accepted && record.intents.length > 0;
+      if (record.intents.length && !record.accepted) {
         displayBasis = clone(saveOf(record.intents[0].payload).displayBasis);
         checkBasis(displayBasis);
         document = clone(saveOf(record.intents[record.intents.length - 1].payload).after);
@@ -233,6 +246,9 @@ export async function createLocalSaveSession(options: Options) {
   function append(input: LocalSave, documentIntent?: OutboxJson): Promise<void> {
     assertOpen();
     if (writeError || ['conflict', 'error'].includes(state.status)) throw new Error('Resolve retained local saves before editing again');
+    // The visible closure is now canonical, while the retained suffix still
+    // describes its original local chain. Do not author a new edit between them.
+    if (replaying) throw new Error('Wait for retained dependent saves to finish revalidation before editing again');
     const save = toOutboxJson({ ...input, kind: 'local-save', displayBasis,
       ...(documentIntent ? { documentIntent } : {}) }) as unknown as StoredSave;
     if (!save.label.trim() || (save.commands && !save.commands.length)) throw new Error('Local save requires a label and nonempty commands');

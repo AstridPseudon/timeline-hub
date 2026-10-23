@@ -151,8 +151,9 @@ describe('useTimelineSave — recovered draft durability', () => {
     vi.useRealTimers();
   });
 
-  it.each(['accepted', 'merged', 'conflict', 'invalid', 'restart', 'dependent', 'late reply', 'strict'] as const)(
+  it.each(['accepted', 'merged', 'conflict', 'invalid', 'restart', 'dependent', 'merged dependent', 'late reply', 'strict'] as const)(
     'the production caller uses it: mounted local document %s', async (outcome) => {
+      const dependent = outcome === 'dependent' || outcome === 'merged dependent';
       const locks = new Set<string>();
       const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
       Object.defineProperty(navigator, 'locks', { configurable: true, value: {
@@ -177,13 +178,13 @@ describe('useTimelineSave — recovered draft durability', () => {
       response.data.canonical_document = structuredClone(document);
       response.data.canonical_document.parent_revision.revision_id = 'r1';
       response.data.canonical_document.parent_revision.payload.config = JSON.parse(JSON.stringify(edited.config));
-      response.data.canonical_document.parent_revision.payload.opaque = { keep: null, agent: outcome === 'merged' };
-      if (outcome === 'merged') Object.assign(response.data, { status: 'merged' });
+      response.data.canonical_document.parent_revision.payload.opaque = { keep: null, agent: outcome === 'merged' || outcome === 'merged dependent' };
+      if (outcome === 'merged' || outcome === 'merged dependent') Object.assign(response.data, { status: 'merged' });
       const accepted = { response, accepted: { revisionId: 'r1', publicationId: 'p1' },
         canonicalDocument: response.data.canonical_document, graph: {}, receipt: response.receipt };
       const send = vi.fn<DataProvider['commitTimeline'] & object>().mockResolvedValue(accepted);
       let acknowledge!: () => void;
-      if (outcome === 'dependent' || outcome === 'late reply') {
+      if (dependent || outcome === 'late reply') {
         send.mockImplementationOnce(() => new Promise((resolve) => { acknowledge = () => resolve(accepted); }));
       }
       if (outcome === 'conflict' || outcome === 'invalid') send.mockRejectedValueOnce(new ApiError(
@@ -196,7 +197,7 @@ describe('useTimelineSave — recovered draft durability', () => {
       try {
         await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.ownerId).toBeTruthy());
         await act(async () => { harness.hook.result.current.commitData(edited, { save: true }); });
-        if (outcome === 'dependent') {
+        if (dependent) {
           const second = await buildTimelineData({ ...edited.config, output: { ...edited.config.output, file: 'dependent.mp4' } },
             data.registry, undefined, 1, undefined, head);
           await act(async () => { harness.hook.result.current.commitData(second, { save: true }); });
@@ -204,9 +205,16 @@ describe('useTimelineSave — recovered draft durability', () => {
           next.accepted = { revisionId: 'r2', publicationId: 'p2' };
           next.canonicalDocument.parent_revision.revision_id = 'r2';
           next.canonicalDocument.parent_revision.payload.config = JSON.parse(JSON.stringify(second.config));
-          send.mockResolvedValueOnce(next);
+          send.mockImplementationOnce(async (request) => {
+            // Observe the mounted assembly at transmission, before B can ACK.
+            expect(harness.hook.result.current.dataRef.current?.head?.headRevisionId).toBe('r1');
+            expect(harness.hook.result.current.dataRef.current?.config.output.file).toBe('authored.mp4');
+            expect(request).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1',
+              commands: [{ args: { changes: [{ before: { state: 'present', value: 'authored.mp4' }, value: 'dependent.mp4' }] } }] });
+            return next;
+          });
         }
-        if (outcome === 'dependent' || outcome === 'late reply') {
+        if (dependent || outcome === 'late reply') {
           await act(async () => { await vi.advanceTimersByTimeAsync(500); });
           await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(1));
           if (outcome === 'late reply') {
@@ -254,11 +262,11 @@ describe('useTimelineSave — recovered draft durability', () => {
           } finally { recovered.hook.unmount(); }
         } else {
           expect(stored.intents).toHaveLength(0);
-          expect(stored.accepted?.value).toMatchObject({ canonicalDocument: outcome === 'dependent'
+          expect(stored.accepted?.value).toMatchObject({ canonicalDocument: dependent
             ? { parent_revision: { revision_id: 'r2' } } : accepted.canonicalDocument });
-          expect(harness.hook.result.current.dataRef.current?.head?.headRevisionId).toBe(outcome === 'dependent' ? 'r2' : 'r1');
-          expect(harness.hook.result.current.dataRef.current?.config.output.file).toBe(outcome === 'dependent' ? 'dependent.mp4' : 'authored.mp4');
-          if (outcome === 'dependent') {
+          expect(harness.hook.result.current.dataRef.current?.head?.headRevisionId).toBe(dependent ? 'r2' : 'r1');
+          expect(harness.hook.result.current.dataRef.current?.config.output.file).toBe(dependent ? 'dependent.mp4' : 'authored.mp4');
+          if (dependent) {
             expect(send.mock.calls[1][0]).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1',
               commands: [{ args: { changes: [{ before: { state: 'present', value: 'authored.mp4' }, value: 'dependent.mp4' }] } }] });
           }
