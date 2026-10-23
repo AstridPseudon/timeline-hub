@@ -107,6 +107,9 @@ def _step_patches(source, document):
 
 
 def _validate_prepared_request(request):
+    # Legacy callers specialize the candidate's command records themselves.
+    if not _v2_request(request):
+        return
     if len(request.get("commands", [])) != 1:
         raise ValueError("PreparedProvider fixture supports one command only")
     if "steps" in request:
@@ -771,7 +774,7 @@ def test_existing_head_installs_only_verified_original_baseline_before_requests(
 ])
 @pytest.mark.parametrize("entry", ["prepared", "metadata"])
 def test_prepared_fixture_refuses_unsupported_request_shapes(shape, entry):
-    context = {"request": {"commands": [{"op": "first"}], **copy.deepcopy(shape)}}
+    context = {"request": {"label": "Fixture", "commands": [{"op": "first"}], **copy.deepcopy(shape)}}
     document = {"parent_revision": {"payload": {}}, "shot_revisions": [],
                 "internal_timeline_revisions": []}
     head = {"revision_id": "base"}
