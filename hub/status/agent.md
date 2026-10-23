@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T12:11:57Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 17 | status age 1m -->
+<!-- agent | 2026-10-23T12:13:55Z | dispatcher heartbeat 4s | live 4 (sol 2, luna 2, other 0) | busy30 18 | status age 0m -->
 # agent board, 2026-10-23T12:10:09Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -88,6 +88,7 @@
 | G5-local-save | retire local save merger dependency | Sol; independentLuna | currentd1fa | review | agt-G5-local-review-1204 FINALPASS | Independent123=61savehistory+55emitter+7processpersistence/type1912/lint2149/toolsPASS; 64originalfunctions unchanged, extractionASTexact. DRAFTONLY/P1gate retained | author1137 DRAFT |
 | G5-restructure | route restructure publication to commit | Sol; independentLuna | currentd1fa | review | agt-G5-restructure-review-1203 FINALPASS; inverse1210 LIVE | Independent17PASS101.49s+quality1912/2149/frozen; author109+carrier1reused. Boundednewcommand actualguardedundo/redo1210 closes unqualifiedscope; no wholeG5claim | ee7f0b809 DRAFT |
 | G5-normal-publisher | retire ordinary SDK publisher body | Sol after2LunaFAIL | restructureee7 authorfinished | doing | agt-G5-normal-publisher-1205 LIVE | Remaining nonrestructure SDK.publish stillcalls store.publish_bundle; preserve ordinarycommit/narration/reset/ACKretry through existingemitter/session. DRAFTONLY | pending |
+| R1-atomic-scope | completeJSON atomic scope dependency union | Sol coresemantics; Luna next | actualguidance3FAIL | doing | agt-R1-atomic-scope-1216 QUEUED | Runtime3b strictauth refuses omitted touchedscope; exactrequest206d retained. Classify provider vsRuntime beforefix, no waiver | currentd1fa |
 | F-agent-requalification | current full after F/source repairs | Farm/test service | currentd1fa+Runtime3b ready | blocked:farm | peer-agent-to-farm-1139 REQUESTED | Soleold4249 terminalclassified380; no newlocalfull. Farm owns ONEmeaningfulcurrentfull+failurecensus | currentd1fa |
 
 Resolved: D17 Runtime3b independent1115+integrated238PASS and Agent78f independent1123+ownmergedd1fa jointlyQUALIFIED actual323PASS byAgent1132. Missingmetadata/nativeaggregate blockerscleared. No original58replacementclaim.
