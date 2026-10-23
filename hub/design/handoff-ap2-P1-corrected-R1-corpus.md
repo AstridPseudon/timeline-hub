@@ -50,3 +50,44 @@ The review read contract `design/commit-v2.md` §§2–4, the current `design/BO
 The mandated pytest command reproduced `1 failed, 41 passed, 1 warning in 5.38s`, exit 1. The sole red is stale ordered-list membership removal returning `value_conflict` instead of required `selection_changed`; same-field `value_conflict` and order `selection_changed` remain passing. Ruff, mypy, and `git diff --check` passed. Logs are `/tmp/ap2-P1-corrected-R1-corpus-{pytest,ruff,mypy,diff-check}.log`.
 
 The existing report is truthful: the disjoint-service `rebased` result remains partial old-fixture evidence only, with no new v2 `merged`, Runtime HTTP, App, or H3 claim. No full/browser/heavy/socket suite was run. This review PASS is not mergeability or full P1 completion; re-run the unchanged d8e packet after the Agent R1 precedence repair.
+
+## Membership requalification (2026-10-23)
+
+Result: **PASS: 42 passed, 1 warning.** The unchanged corrected packet was
+re-run against the new committed Agent R1 membership repair at
+`e6f7167d6171638f0bfcd5b9f88ae04f05b7b64c` (parent
+`28b9b966206d7f19c8fc2212d662797e7024ea1c`), not old `8a66`.
+
+- providerSHA: `e6f7167d6171638f0bfcd5b9f88ae04f05b7b64c`
+- test-sourceSHA: `d8e1578bd9f717eb975addb50c2654de70815475`
+- All 15 permitted packet blobs match d8e tree hashes exactly. Only the three
+  absent packet paths were imported; no product/schema/generated/pin/lock/
+  launcher/skip/xfail file changed. Existing `runtime_abi` was used.
+- `trim-internal-clip-window`, `created-track-and-clip-list-inserts`,
+  `params-absent-to-explicit-values`, `params-null-to-object`, and
+  `params-remove-and-preserve-opaque`: accepted and all real output,
+  absent/null, opaque, alias, and inverse assertions pass.
+- `disjoint-field-merge`: direct service preservation passes, but the detached
+  Runtime fixture reports legacy `rebased`; this is not v2 `merged` or Runtime
+  HTTP/App H3 evidence.
+- `same-field-refusal`: `value_conflict`; pass.
+- `ordered-list-move-and-order-refusal`: base move accepted; stale order move
+  and stale membership removal both return `selection_changed`; pass.
+
+Acceptance command and logs:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/runtime ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-app2-native/bin/python -m pytest -q tests/sdk/test_p1_doc_patch_provider.py tests/sdk/test_p1_doc_patch_requests.py tests/sdk/test_p1_case_corpus.py
+```
+
+Result: `42 passed, 1 warning in 5.11s`, exit `0`.
+
+- `/tmp/ap2-P1-membership-requalification-pytest.log`
+- `/tmp/ap2-P1-membership-requalification-ruff.log`
+- `/tmp/ap2-P1-membership-requalification-mypy.log`
+- `/tmp/ap2-P1-membership-requalification-diff-check.log`
+
+Ruff, mypy, and `git diff --check` each passed with exit `0`. No full/browser/
+heavy/socket suite ran. Agent R1 product merge eligibility remains
+Agent-owned; Runtime HTTP publication, App/UI H3, and v2 `merged` acceptance
+remain unverified.
