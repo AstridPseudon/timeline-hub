@@ -1,2 +1,2 @@
 6e346ea55a5df4df6d772f86e99c7d2797555c2fde830d978bc5fad74adbbee9  handoff-ap2-P1-runtime-bench-sol-1310-make-runtime.sh
-263c467b740146c1fe00ef66c90142cfe120b7628f9e29ccf6117c68208c51b7  handoff-ap2-P1-runtime-bench-sol-1310-authoritative.patch
+13766a250e8d19d011c719c255b040934a143325fcc31dee9520ff83c656977d  handoff-ap2-P1-runtime-bench-sol-1310-authoritative.patch
