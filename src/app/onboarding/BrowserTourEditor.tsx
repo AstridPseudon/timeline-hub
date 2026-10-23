@@ -32,7 +32,7 @@ function Preview() {
   const { currentTime, previewRef, playerContainerRef, onPreviewTimeUpdate } = useTimelinePlaybackContext();
   return resolvedConfig ? <RemotionPreview ref={previewRef} config={resolvedConfig}
     initialTime={currentTime} currentTime={currentTime} onTimeUpdate={onPreviewTimeUpdate}
-    playerContainerRef={playerContainerRef} /> : null;
+    playerContainerRef={playerContainerRef} compact touchChrome /> : null;
 }
 
 function BrowserTourEditorSurface() {
@@ -47,7 +47,7 @@ function BrowserTourEditorSurface() {
     opsRef.current.setSelectedRightPanelId(HOST_EXTENSIONS_PANEL_KEY);
   }, []);
 
-  return <div className="grid min-h-0 min-w-0 grid-cols-1 grid-rows-[minmax(130px,1fr)_minmax(130px,.8fr)_minmax(160px,1fr)] md:grid-cols-[minmax(0,1fr)_minmax(220px,34%)] md:grid-rows-[minmax(0,1fr)_minmax(180px,35%)]">
+  return <div className="grid min-h-0 min-w-0 grid-cols-1 grid-rows-[minmax(0,1fr)_minmax(0,.8fr)_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_minmax(220px,min(calc(32vw_+_12px),432px))] md:grid-rows-[minmax(0,1fr)_minmax(180px,35%)]">
     <section className="relative min-h-0 min-w-0" data-editor-tour="preview"><Preview /></section>
     <section className="min-h-0 min-w-0" data-editor-tour="extensions">
       <VideoEditorRightPanelDock leftPanelPresent={false} />
