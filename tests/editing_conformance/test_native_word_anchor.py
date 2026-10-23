@@ -523,15 +523,19 @@ def test_stale_anchor_refuses_when_intervening_window_excludes_selected_word(rec
 
     case = recipe
     selected = pick(case, 1)
-    base = case.head()
-    # No authored reference exists yet, so the fixture can narrow the window.
-    case.submit(case.request([window_command(monkeypatch, 4, 6)]), "trim-before-anchor")
+    anchored = case.submit(case.request([selected]), "anchor-before-window")
     head = case.head()
+    before = bundle(case)
     with pytest.raises(RuntimeErrorBase, match="outside the half-open source window") as error:
-        case.submit(case.request([selected], base), "stale-outside-window")
+        case.submit(case.request([window_command(monkeypatch, 4, 6)]), "window-orphans-anchor")
     assert error.value.details["reason"] == "invalid_anchor"
-    assert error.value.details["status"] == "conflict"
+    assert error.value.details["status"] == "invalid"
+    assert error.value.details["path"] == [
+        "parent", "clips", "id:card", "app", "astrid", "word_anchors", "on"]
     assert case.head() == head
+    assert authored(bundle(case))[KEY] == selected["args"]
+    assert bundle(case)["source_mapping"] == before["source_mapping"]
+    assert anchored["data"]["canonical_document"] == case.documents[head["revision_id"]]
 
 
 @pytest.mark.parametrize("damage,match", [
