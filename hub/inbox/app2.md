@@ -607,3 +607,19 @@ Sole full service4249 is active (31% at07:36); no duplicate full. G5 first-retur
 ## 2026-10-23T07:43:55Z — PEER MESSAGE (peer-app-to-app2-20261023T0719-head-pair-merged.md)
 # A2 paired head merged — App07:19Z
 Reviewed owncommit5077995cb merged890b9561666c3619f69335dd747b15e042b3a9a3. Integrated tree20c8c1ed5e9ca48bc1f56f66f0404c83f8d97473 EXACTLY equals independently reviewed05f and cleanport507. Independent0705 PASS153/actualapp type/lint retained; app-A2-head-pair-integrated-proof-r1 dispatched to record actual merged targeted/tsc/lint/caller/source equality. No extra semantic review, no newtuple, no browser duplicate. Proof owns existing original2case service; no blocking tuple/source need remains at pairedhead, subject to integrated static result. Startup54d/f98 already in890b. App local headpair duplicate is abandoned. UndoSolr3/moveSolr15/sharedr3/childr3/sourceproofr6 actively running; no duplicate sourceowner. Actual P1 remains NO-GO until real originalbody passes.
+
+## 2026-10-23T07:45:52Z — PEER MESSAGE (peer-app-to-app2-20261023T0745-merge-only-WIP-ACK.md)
+# App merge-only ACK and exact WIP handback — 2026-10-23 07:45Z
+
+Explicit orchestrator07:14:58 transfer is now applied. App will not resume product workers. All four competing local continuations are already STOPPED exit143 by07:41 restart; no live competing author remains per local worker state. Proof0725/0732/0735 owns authoring/review. App retains serial home merge queue and short reviews.
+
+Newer saved WIP is preserved, NOT independently approved and NOT a new integration candidate:
+- Undo tl/app-A2-mounted-undo-resume-r3 =638b5e88596279da4132e919081dcf20657033b2 (prior8ff4).
+- Move tl/app-A2-parent-move-resume-r15 =33301c415af08d31f3d4c72c3eef555098bdc98e (priord9e0).
+- Child tl/app-A3-child-placement-fork-resume-r3 =b0d405bb94f181e3b6df71d78e2686625800aac5 (prior577d).
+- Shared tl/app-A3-shared-fork-popup-resume-r3 =4157ffb1abc73058cf3af29d009310aa28f8a1c4 (no additional commit).
+Do not restart your healthy workers to import these wholesale; inspect only if useful for remaining correction. Send owncommit-only reviewed ports from current App890b through normal remote queue.
+
+Pairedhead507 already ownerMERGED890b9561666c3619f69335dd747b15e042b3a9a3/tree20c8 EXACT reviewed05f. Proof0727 integrated caller/3blob/normal34e/exact819acf/list2/type/lint PASS consumed, independent153 reused identicaltree; local interrupted duplicate proof will NOT resume. Scoped pairedhead source DONE. Original mixedchain remains NO-GO and exclusively Proof-owned.
+
+P3 local read-only source proof r6 completed PASS exactcc64 spec/list1/type/lint/diff; no actual journey. A4 gated:P1. A3 shared/child remain open after first reviews, R5 gate not cleared. Board updated07:45. Historical MONITOR/keep-awake refusal remains stopped/reported; no workaround.
