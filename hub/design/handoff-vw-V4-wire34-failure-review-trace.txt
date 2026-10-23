@@ -1,0 +1,22 @@
+V4 exact setup trace (source-derived; no test replay)
+
+Submitted at tests/editing_conformance/native_word_anchor_fixture.py:194-195:
+{"schema_version":1,"op":"track.create","version":"1","select":"parent","args":{"row":{"id":"initial","kind":"audio"}}}
+created is omitted -> Runtime submitted.get("created", []) == [].
+
+Agent path: commit.py:1050 -> commands.execute -> capture.py:235-237 ->
+_recording.py:149-172 -> _recording.py:240-264.
+Recorded command adds: "created":["parent/track:initial"].
+
+Runtime path: timeline_commit_port.accept -> timeline_commit_store.py:732-737
+-> timeline_commit_auth.py:241-248.
+Compared fields schema_version/op/version/select/args match; created differs:
+submitted=[]
+recorded=["parent/track:initial"]
+Result: invalid_records, "provider executed a different command".
+
+Run: ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-ad823e0a
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/wt/rt-pin-ad823e0a
+/home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m
+integration tests/editing_conformance/test_native_word_anchor.py
+Result: 54 errors in 62.44s; all fixture setup.
