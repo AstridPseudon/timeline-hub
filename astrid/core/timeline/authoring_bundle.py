@@ -563,6 +563,52 @@ def _clip_selected_media(clip: Mapping[str, Any], internal: Mapping[str, Any], p
     )
 
 
+def _missing_registry_asset(clip: Mapping[str, Any], internal: Mapping[str, Any]) -> bool:
+    """Return whether a named selector has no authored registry target."""
+
+    selector_key = next((key for key in _MEDIA_SELECTOR_KEYS if key in clip), None)
+    if selector_key not in {"asset", "asset_id"} or not isinstance(clip.get(selector_key), str):
+        return False
+    registry = internal.get("registry", {})
+    assets = registry.get("assets", {}) if isinstance(registry, Mapping) else {}
+    return not isinstance(assets, Mapping) or clip[selector_key] not in assets
+
+
+def _same_media_declaration(base: Mapping[str, Any], candidate: Mapping[str, Any]) -> bool:
+    return all(
+        (key in base, base.get(key)) == (key in candidate, candidate.get(key))
+        for key in _MEDIA_SELECTOR_KEYS
+    )
+
+
+def _clip_selected_media_for_edit(
+    base_clip: Mapping[str, Any], candidate_clip: Mapping[str, Any],
+    base_internal: Mapping[str, Any], candidate_internal: Mapping[str, Any], path: str,
+    source_assets: Mapping[str, Mapping[str, Any]] | None,
+    preserve_legacy_missing: bool,
+) -> str | None:
+    """Resolve media while retaining one unchanged, legacy missing selector.
+
+    A missing selector is retained only when both the declaration and its
+    missing registry target are unchanged.  Any new, modified, or newly
+    resolvable declaration remains a hard authoring error.
+    """
+
+    base_for_media = _with_source_asset_authority(base_internal, source_assets)
+    candidate_for_media = _with_source_asset_authority(candidate_internal, source_assets)
+    base_missing = _missing_registry_asset(base_clip, base_for_media)
+    candidate_missing = _missing_registry_asset(candidate_clip, candidate_for_media)
+    if base_missing and preserve_legacy_missing:
+        if _same_media_declaration(base_clip, candidate_clip) and candidate_missing:
+            return None
+        raise AuthoringBundleError(
+            f"{path} changes a legacy missing registry asset declaration"
+        )
+    if base_missing:
+        return _clip_selected_media(candidate_clip, candidate_for_media, path)
+    return _clip_selected_media(candidate_clip, candidate_for_media, path)
+
+
 def _asset_authority(value: Any) -> dict[str, Mapping[str, Any]]:
     """Collect closed source asset entries without changing authored payloads."""
 
@@ -652,6 +698,7 @@ def _assert_shot_edit_supported(
 def _assert_internal_edit_supported(
     base: Mapping[str, Any], candidate: Mapping[str, Any], *, path: str,
     source_assets: Mapping[str, Mapping[str, Any]] | None = None,
+    preserve_legacy_missing: bool = False,
 ) -> set[str]:
     """Admit authored timeline edits while validating media selectors.
 
@@ -661,7 +708,14 @@ def _assert_internal_edit_supported(
     dangling identity/media references before the existing Runtime boundary.
     """
 
-    del base
+    base_clips = base.get("clips", [])
+    if not isinstance(base_clips, list):
+        raise AuthoringBundleError(f"{path}.base.clips must be a list")
+    base_by_id = {
+        _string(_mapping(raw, f"{path}.base.clips[{index}]").get("id"),
+                f"{path}.base.clips[{index}].id"): _mapping(raw, f"{path}.base.clips[{index}]")
+        for index, raw in enumerate(base_clips)
+    }
     candidate_for_media = _with_source_asset_authority(candidate, source_assets)
     candidate_clips = candidate.get("clips", [])
     if not isinstance(candidate_clips, list):
@@ -678,11 +732,21 @@ def _assert_internal_edit_supported(
         selector_key = next((key for key in _MEDIA_SELECTOR_KEYS if key in candidate_clip), None)
         if selector_key is None:
             continue  # Text/effect/placeholder clips may intentionally have no media.
-        if selector_key in {"asset", "asset_id"}:
-            selected_asset_keys.add(str(candidate_clip[selector_key]))
-        changed_media.add(
-            _clip_selected_media(candidate_clip, candidate_for_media, f"{path}.clips[{index}]")
-        )
+        base_clip = base_by_id.get(clip_id)
+        changed_media_id: str | None
+        if base_clip is None:
+            changed_media_id = _clip_selected_media(
+                candidate_clip, candidate_for_media, f"{path}.clips[{index}]"
+            )
+        else:
+            changed_media_id = _clip_selected_media_for_edit(
+                base_clip, candidate_clip, base, candidate, f"{path}.clips[{index}]", source_assets,
+                preserve_legacy_missing,
+            )
+        if changed_media_id is not None:
+            changed_media.add(changed_media_id)
+            if selector_key in {"asset", "asset_id"}:
+                selected_asset_keys.add(str(candidate_clip[selector_key]))
 
     registry = _mapping(candidate_for_media.get("registry", {}), f"{path}.registry")
     candidate_assets = _mapping(registry.get("assets", {}), f"{path}.registry.assets")
@@ -794,6 +858,7 @@ def _validate_placement_capabilities(
 def _internal_media_set(
     payload: Mapping[str, Any], path: str,
     source_assets: Mapping[str, Mapping[str, Any]] | None = None,
+    *, preserve_legacy_missing: bool = False,
 ) -> set[str]:
     result: set[str] = set()
     clips = payload.get("clips", [])
@@ -803,7 +868,11 @@ def _internal_media_set(
     for index, raw_clip in enumerate(clips):
         clip = _mapping(raw_clip, f"{path}.clips[{index}]")
         if any(key in clip for key in _MEDIA_SELECTOR_KEYS):
-            result.add(_clip_selected_media(clip, payload_for_media, f"{path}.clips[{index}]"))
+            try:
+                result.add(_clip_selected_media(clip, payload_for_media, f"{path}.clips[{index}]"))
+            except AuthoringBundleError:
+                if not (preserve_legacy_missing and _missing_registry_asset(clip, payload_for_media)):
+                    raise
     return result
 
 
@@ -895,6 +964,7 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
     )
     base_placements = _mapping(root.get("base_placements"), "candidate.base_placements")
     source_shots = _mapping(source_mapping.get("shots"), "candidate.source_mapping.shots")
+    preserve_legacy_missing = isinstance(source_mapping.get("_runtime_document"), Mapping)
     # Recorded root creates have no immutable source. Existing/copy materialization
     # still requires its exact mapping; opening a virtual slot is not a creation.
     created_shots = {
@@ -984,12 +1054,14 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
             candidate_internal,
             path=f"shots[{authoring_shot_id}].internal_timeline",
             source_assets=source_assets,
+            preserve_legacy_missing=preserve_legacy_missing,
         )
         base_shot_media = _shot_media_set(base_shot, f"shots[{authoring_shot_id}].base_payload")
         base_internal_media = _internal_media_set(
             base_internal,
             f"shots[{authoring_shot_id}].base_internal_timeline",
             source_assets=source_assets,
+            preserve_legacy_missing=preserve_legacy_missing,
         )
         shot_additions = shot_media - base_shot_media
         internal_additions = internal_media - base_internal_media
@@ -1321,7 +1393,7 @@ def diff_authoring_candidate(candidate: Mapping[str, Any]) -> dict[str, Any]:
             "placements", {}
         ), "candidate.source_mapping.placements"
     )
-    base = {
+    base: dict[str, Any] = {
         "parent": root.get("base_parent_payload"),
         "placements": list(source_placements.values()),
         "shots": {
@@ -1333,7 +1405,7 @@ def diff_authoring_candidate(candidate: Mapping[str, Any]) -> dict[str, Any]:
             if isinstance(value, Mapping)
         },
     }
-    current = {
+    current: dict[str, Any] = {
         "parent": root.get("parent"),
         "placements": root.get("placements"),
         "shots": {
