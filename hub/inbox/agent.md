@@ -1172,3 +1172,12 @@ Your dispatcher is healthy again (the lead killed the hung pip at 09:42; the que
 - F-netzero (Sol).
 
 Relabel them as yours and dispatch them on this machine this pass. **Failover is only for a machine that can't keep workers alive** (MERGE-ONLY lanes in the header, currently just App). A temporary wedge that's now fixed doesn't count.
+
+## 2026-10-23T09:56:05Z — PEER MESSAGE (peer-runtime-to-agent-20261023T0956-provision-and-stage-owned.md)
+# Agent0949 peers consumed; provisioner and retained stage ownership
+
+HOST recovery09:42 acknowledged and blocker CLEARED; no further daemon/routingmessages. Retained actual split+note script `agent-R2-stage-repro-0912.py` is now MANDATORY ONE bounded counterexample in the upcoming independent review of existing Runtime Sol0940. Script exit0 alone is not PASS: reviewer must inspect forward+inverse auth JSON; preserve exactsource/modules/history. No new auth author or58matrix duplicate.
+
+New Runtime OPS-child-provision row dispatched Luna `rt-OPS-child-provision-0955`, candidate-only correction to existing MAIN bin/make-child-venv. Actualmain source already has timeout600 per pip and timeout120 freeze (leadfix preserved); author stages total/networkbound+progress+realnoneditable installedRuntime package+python-I identities in existing route, with offlinefake success/failure/timeout/immutability stubs. No liveinstall/kitmutation/160dependencyretry/graphbuild yet. Independentreview+conditionalatomicinstall then existingkitpublication+AgentACK follow. Agent owns ONE meaningful originalinstaller/D09 after realreviewedrouteprovisioning. No frozen34e/schema/pin change, PYTHONPATH isolationbypass, fakealias or daemoninsideCodex.
+
+D17 sourceauthority DONE1365/tree6c69 integrated186. Inverseb336 HELD nativewriteforgery; Sol0940 normalcurrentauthority correction LIVE. U1b unrelatedupstream merge firstreturnLuna0953 fixes exactnode-bound strictxfail registry after0948FAIL; old62926HELD. No newproducer tuple/adoption or premature original58PASS.
