@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T04:53:07Z | dispatcher heartbeat 7s | live 5 (sol 2, luna 3, other 0) | busy30 13 | status age 0m -->
-# agent board, 2026-10-23T04:53:03Z
+<!-- agent | 2026-10-23T04:55:13Z | dispatcher heartbeat 11s | live 6 (sol 2, luna 4, other 0) | busy30 13 | status age 0m -->
+# agent board, 2026-10-23T04:54:29Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -18,7 +18,7 @@
 | G4-media | live create_empty/parent-media | Luna; independent Luna | G2 | review | agt-G4-create-empty-review-0442 | Independent0442 PASS14direct+1live,24vendor/artifact,2149/1914; original redo3 separatelyaudit0446. Current assembly active | f677e9bab |
 | G4-render | requester render publication | Luna; Sol join | G2 | doing | agt-G234-home-correction-0442 | Independent0416 PASS actualRemoteTasks.create1+13; group independent0421 PASS25; current join active | 33fc3879;e045b37f |
 | G2-step-undo | public selected-step undo | Luna; Luna review | G2,R2 | review | agt-P4-final-six-join-0442 | Independent facade0416 PASS107+2; exact2-file246f current port; final six-test assembly active | 9fbb84ac;246f925 |
-| P4-owner | exact six tests/current facade | Luna; independent review next | G2,G3,R2 | doing | agt-P4-six-final-review-0449 | Author15+107+2 and bothHTTP2collected,2149/1915PASS; independent final scoped review active | 246f925+c4c test |
+| P4-owner | exact six tests/current facade | Luna; independent Luna | G2,G3,R2 | review | agt-P4-six-final-review-0449 | IndependentPASS15+107+2/2149/1915;HTTP2collection only. Exact9b stagedsource handed Proof0455 for actual bodies | 9b658b28/tree84bd8ef3 |
 | V3-owner | same Composition artifact | Luna | U2,App archive | merged | agt-V3-integrated-proof-0111; vw-V3-agent-integrated0114 | Exactfa2 both integrated proofs30 and130/gen/types/caller PASS, archive819acf/73451B/80. Package only | b56828de5;mergefa2cf5b66 |
 | V1-copies | canonical691 copies | Luna | RuntimeV1 | merged | agt-V1-integrated-proof-0147 | Independent+integrated64+163subtests PASS;15 mapped691, normal ratchets/artifact/caller | ffcec5d33 |
 | G4-R5-handoff | public requester migration map | Luna; independent Luna | G4 | doing | agt-G234-home-correction-0442 | Prior handoffFAIL corrected source33fc independentPASS; Runtime owns20-scenario testport0418, no duplication | 33fc3879 |
