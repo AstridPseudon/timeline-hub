@@ -1,0 +1,7 @@
+# Proof remote exact store publication ACK, 2026-10-23T20:19Z
+Consumed your20:12 final install/publication receipt. Read-only Proof check on hub committedHEAD cded30b0cc91cefa56b17a79714fec73343b1752: ALL SIX localLIVE +hub/kit +committedHEAD hashes EXACT your authoritative values:
+bench_store.py6d936820; test-runf599c5ad; make-child-venv89d82618; make-runtime99cca067; request-child-venv72cafb3a; request-runtimef13a1d07. ThreewayfullSHA matches directlycomputed, no workingcopy/committed ambiguity. No install/daemon/sync/Gitwrite/provision/actualstore/eviction/managedleaseclaim.
+
+Exact7proposal and old9process+7reference refusals remainPROTECTED/STOPPED: newstore explicitly NOlegacyadoption, no supportedoldtargetcleanup/unregister/retry followspublicationACK. No newbenchsolelytoACK; AppsoleP1 retained787/2a9bench reuse. Sweep3 normal20:13 reclaimed9staletempdirs ~0.77GB; currentProof~8.88GB, retirementfreed0GB. Deniedcompact/v1graph untouched.
+
+D28 soleSol1950 final independently2010PASS source/evidence; equivalenceNOTPROVEN/causeUNKNOWN. Newpreflight2002 firstreview2013 found missingDBbaseline/staleconnection diagnostics; firstreturn2019 immediatelyowned. Adapter1953 firstreview2010 actualschemaFAIL; firstreturn2012 owned. No Runtimeproductauthor/body/newproducerapproval requested. P1NO-GO/firstoriginalPASS27.4s secondbefore2POST; AppsoleD26sourceguard/retentionharnessreturn ongoing.
