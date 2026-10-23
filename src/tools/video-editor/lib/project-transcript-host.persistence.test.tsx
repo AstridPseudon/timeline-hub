@@ -152,6 +152,7 @@ function makeTransport(config: TimelineConfig, registry: AssetRegistry) {
   canonical.parent_revision.content_digest = fixtureDigest(canonical.parent_revision.payload);
   canonical.document_digest = fixtureDigest(canonical);
   const requests: JsonObject[] = [];
+  const acceptedReplies: JsonObject[] = [];
   const wire: Array<{ body: string; key: string; path: string }> = [];
   let refuseNext = false;
   const history = () => ({ items: [], next_cursor: null, head: { revision_id: revision, publication_id: publication } });
@@ -176,8 +177,20 @@ function makeTransport(config: TimelineConfig, registry: AssetRegistry) {
       if (refuseNext) {
         refuseNext = false;
         return { status: 409, headers: {}, body: new TextEncoder().encode(JSON.stringify({
-          code: 'conflict', message: 'captured transcript association read changed', request_id: 'refusal-1',
-          details: { reason: 'dependency_changed', path: ['config', 'bundle'], hint: 'Reload the timeline' },
+          code: 'conflict', message: 'Captured transcript association changed after your base', request_id: 'refusal-1',
+          details: {
+            status: 'conflict', reason: 'dependency_changed', code: 'dependency_changed',
+            path: ['config', 'bundle'], hint: 'Read the current timeline and reapply the transcript association',
+            suggested_command: 'timeline show',
+            base: { revision_id: request.base_revision_id, publication_id: request.base_publication_id },
+            current: { revision_id: revision, publication_id: publication },
+            conflicts: [{
+              kind: 'dependency_changed', ref: 'parent', path: ['config', 'bundle'],
+              base: { state: 'absent' }, theirs: { state: 'absent' },
+              ours: { state: 'present', value: ((request.commands as JsonObject[])[0]!.args as JsonObject).changes },
+              choices: [],
+            }],
+          },
         })) };
       }
       const changes = ((request.commands as JsonObject[])[0]!.args as JsonObject).changes as CommitChange[];
@@ -197,12 +210,28 @@ function makeTransport(config: TimelineConfig, registry: AssetRegistry) {
       accepted.data.document_digest = fixtureDigest(canonical);
       accepted.data.commands = request.commands as never;
       accepted.data.status = 'accepted';
+      accepted.data.merge_mode = request.merge as 'fields' | 'atomic';
+      accepted.data.label = request.label;
+      accepted.data.source = request.source;
+      const submittedStep = (request.steps as JsonObject[])[0]!;
+      accepted.data.steps = [{
+        ...submittedStep,
+        patch: changes,
+        dependencies: [{ kind: 'scope', ref: 'parent', path: [] }],
+      }] as never;
       accepted.receipt.idempotency_key = headers['Idempotency-Key'] ?? '';
+      accepted.receipt.request_hash = fixtureDigest({
+        operation: 'commitTimeline',
+        path: `/v1/projects/${PROJECT}/timelines/${TIMELINE}/commit`,
+        publisher: accepted.data.publisher,
+        request,
+      }).slice(7);
+      acceptedReplies.push(clone(accepted as unknown as JsonObject));
       return { status: 200, headers: {}, body: new TextEncoder().encode(JSON.stringify(accepted)) };
     }
     return fixture.transport(method, path, headers, body);
   };
-  return { transport, requests, wire, refuse: () => { refuseNext = true; }, read: () => clone(canonical) };
+  return { transport, requests, acceptedReplies, wire, refuse: () => { refuseNext = true; }, read: () => clone(canonical) };
 }
 
 async function mount() {
@@ -288,6 +317,7 @@ describe('mounted project transcript persistence', () => {
         commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [] }],
         steps: [{ id: expect.any(String), label: 'Edit timeline', intent: 'Save local editor changes', tags: [], command_ordinals: [0] }],
       });
+      expect(request).not.toHaveProperty('reads');
       const command = (request.commands as JsonObject[])[0]!;
       const changes = (command.args as JsonObject).changes as JsonObject[];
       expect(changes).toEqual(expect.arrayContaining([
@@ -297,6 +327,38 @@ describe('mounted project transcript persistence', () => {
       expect(JSON.stringify(request)).toBe(JSON.stringify(mounted.transportState.requests[0]));
       expect(request).not.toHaveProperty('operation', 'transcript.associate');
       expect(request).not.toHaveProperty('metadata_authority');
+      const reply = mounted.transportState.acceptedReplies[0]!;
+      expect(reply).toMatchObject({
+        data: {
+          status: 'accepted', base_revision_id: 'r0', base_publication_id: 'p0',
+          previous_revision_id: 'r0', previous_publication_id: 'p0', accepted_revision_id: 'r1',
+          rebased_onto: null, document_digest: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+          commands: request.commands, id_map: {}, provider_version: expect.any(String),
+          compiler_version: expect.any(String), merge_mode: 'atomic', label: 'Edit timeline',
+          source: { via: 'app' }, publisher: expect.any(String),
+          canonical_document: {
+            schema_version: 1, project_id: PROJECT, timeline_id: TIMELINE,
+            parent_revision: {
+              revision_id: 'r1', content_digest: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+              payload: expect.any(Object),
+            },
+            shot_revisions: [], internal_timeline_revisions: [],
+            dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] },
+          },
+          steps: [{
+            id: (request.steps as JsonObject[])[0]!.id,
+            label: 'Edit timeline', intent: 'Save local editor changes', tags: [], command_ordinals: [0],
+            patch: changes, dependencies: [{ kind: 'scope', ref: 'parent', path: [] }],
+          }],
+        },
+        receipt: {
+          receipt_id: 'p1', command_kind: 'timeline.commit', idempotency_key: expect.any(String),
+          request_hash: expect.stringMatching(/^[0-9a-f]{64}$/), project_id: PROJECT,
+          project_seq: [1, 1], event_ids: ['event-p1'], result: expect.any(Object),
+          created_at: expect.any(String),
+        },
+      });
+      expect((reply.receipt as JsonObject).result).toEqual(reply.data);
       const bundle = ((mounted.transportState.read().parent_revision as JsonObject).payload as JsonObject).config as JsonObject;
       expect(bundle.bundle).toMatchObject({
         schema_version: 1,
@@ -334,9 +396,21 @@ describe('mounted project transcript persistence', () => {
         commands: [{ op: 'doc.patch', args: { changes: expect.any(Array) } }],
       });
       expect(request).not.toHaveProperty('op', 'transcript.associate');
-      expect(mounted.result.current.save.localSaveState?.status).toBe('retry');
+      expect(request).not.toHaveProperty('reads');
+      expect(mounted.result.current.save.localSaveState).toMatchObject({
+        status: 'conflict', error: {
+          kind: 'conflict', code: 'conflict', details: {
+            status: 'conflict', reason: 'dependency_changed', code: 'dependency_changed',
+            base: { revision_id: 'r0', publication_id: 'p0' },
+            current: { revision_id: 'r0', publication_id: 'p0' },
+            conflicts: [expect.objectContaining({ kind: 'dependency_changed', ref: 'parent', choices: [] })],
+            suggested_command: 'timeline show',
+          },
+        },
+      });
       expect(mounted.result.current.save.dataRef.current?.head).toMatchObject({ headRevisionId: 'r0', headPublicationId: 'p0' });
-      expect(mounted.result.current.save.dataRef.current?.transcriptReferences?.associations[0]?.assetId).toBe(ALIAS);
+      expect(mounted.result.current.save.dataRef.current?.transcriptReferences?.associations ?? []).toEqual([]);
+      expect(mounted.result.current.save.dataRef.current?.config).not.toHaveProperty('bundle');
       const identity = await mounted.provider.getRecoverableIdentity();
       const [owner] = await createCommitOutbox().list({ ...identity, projectId: PROJECT, timelineId: TIMELINE });
       expect(owner.pending?.request).toMatchObject({
@@ -344,6 +418,9 @@ describe('mounted project transcript persistence', () => {
         key: mounted.transportState.wire[0]!.key,
         body: mounted.transportState.wire[0]!.body,
       });
+      expect(owner.pending?.outcome).toMatchObject({ kind: 'rejected', error: { kind: 'conflict', code: 'conflict' } });
+      expect(owner.intents[0]?.conflict).toMatchObject({ kind: 'conflict', code: 'conflict' });
+      expect(result.message).toContain('Timeline association is still unsaved');
     } finally {
       mounted.unmount();
     }
