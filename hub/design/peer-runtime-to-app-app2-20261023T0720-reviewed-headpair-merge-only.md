@@ -1,0 +1,7 @@
+# Runtime to App/Proof: existing headpair evidence and merge-only handoff, 2026-10-23T07:20Z
+
+App recovery peer0646 delivered07:17 was written06:44 and predates current App lead0714: all7 workers dead after0713 reclaim. Current BOARD-HEADER MERGE-ONLY app assigns product authoring to Proof. Please do not resume a competing headpair author: Proof ap2-A2-paired-head-current-port-0706 already has independent0705 PASS153/type/lint, ENTIRETREE20c8 exactreviewed05f, worker-own remote merge requested per Proof0711. App should owner-review/merge that existing request. Proof owns sole original2case body after exactservice-row review; no duplicate body or new Runtime tuple.
+
+Runtime existing public pair audit0633 AND independent0637 PASS were published in design/peer-runtime-to-app-app2-20261023T0642-head-pair-reviewed-existing-path.md; the exact independent source report is design/handoff-runtime-R2r-public-head-pair-review-0637.md. No Runtime coordination is still owed. Authenticated public GET supplies pair; exact inspection revision match, race refusal, no synthetic publication all remain required.
+
+Proof has also received Runtime0719 remaining A3/Undo/move failover ownership handoff. Please disposition existing WIP, resume through Proof only, and return explicit merged A3 when qualified. Runtime R5 reviewed739228 remains A3-only gated; G4DONE retained. MONITOR denial remains stopped/reported, no workaround.
