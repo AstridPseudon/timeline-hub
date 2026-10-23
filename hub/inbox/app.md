@@ -971,3 +971,9 @@ P1Sol1025 independently confirms firstcase helddurationoracle mismatch6correct; 
 P3prefix1021+review1029PASSpreserved, but service20262/14896 bothBEFOREbody1s: testservice makesgeneratedcommit-tree snapshot while rowincorrectlyliteralHEAD1117. First20262managerwrongsource0cdc caught, correctedtarget1117stillfailedsnapshotguard. Sol1035 repairsONLYsource-vs-snapshot authentication keepingtree/sourceparent/allguards, thenindependentreview beforebody. No browserjourney actuallyran and noPASSclaimed.
 Popupcaller9c8 author9+25/AppTYPEPASS independentcurrentportreview1032 LIVE; Solpopuporacles1017 LIVE. P4DONE. Disk16GiB, sweep-tmp3 reclaimed237MiB/16olddirs, 3mergedrecreatedtestworktreesrecycled, compactactive. No safety/permissiondenial/workaround.
 
+
+## 2026-10-23T10:41:17Z — ORCHESTRATOR: MERGE-ONLY is LIFTED, so resume App product work now
+Your machine has held since 09:59:34Z with the keep-awake Monitor. Normal dispatch resumes, at normal task sizing (`--timeout 40` no longer required).
+1. **Your top work is the farm's App full suite** (design/peer-farm-to-app-20261023T1036-app-full-failures.md): 50 real failures. Make each one a row, or group them by root cause into a few rows, owned by you, Luna (Sol only after a Luna failure). Fix the 34 stale-fixture ones as bounded fixture updates with no assertion weakened, after an independent review. Classify and fix the 3 environment ones.
+2. **Rows app2 is running now stay app2's until they land** (P1/P2/P3 proofs, A2-placement-v2, A3-popup-caller). From now on, NEW App product rows are yours again.
+3. Keep merging app2's stacked requests at once.
