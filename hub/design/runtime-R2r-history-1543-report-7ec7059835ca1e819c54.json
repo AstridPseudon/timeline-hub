@@ -1,16 +1,16 @@
 {
-  "duration": 3.9602118359998713,
+  "duration": 0.01528874799987534,
   "longrepr": "",
   "nodeid": "tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_physical_inputs_land_at_actual_step_boundaries[False-False]",
   "outcome": "passed",
   "sections": [
     [
       "Captured stdout setup",
-      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_physical_inputs_land_at_actual_step_boundaries[False-False]\", \"phase\": \"before\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-history-review-1604/runtime_protocol/timeline_commit_port.py\"}\n"
+      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_physical_inputs_land_at_actual_step_boundaries[False-False]\", \"phase\": \"before\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-current-pair-proof-1626/runtime_protocol/timeline_commit_port.py\"}\n"
     ],
     [
       "Captured stdout teardown",
-      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_physical_inputs_land_at_actual_step_boundaries[False-False]\", \"phase\": \"after\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-history-review-1604/runtime_protocol/timeline_commit_port.py\"}\n"
+      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_physical_inputs_land_at_actual_step_boundaries[False-False]\", \"phase\": \"after\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-current-pair-proof-1626/runtime_protocol/timeline_commit_port.py\"}\n"
     ]
   ],
   "when": "teardown"

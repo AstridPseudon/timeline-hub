@@ -1,16 +1,16 @@
 {
-  "duration": 0.41828553899995313,
+  "duration": 0.3716524599999502,
   "longrepr": "",
   "nodeid": "tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[field]",
   "outcome": "passed",
   "sections": [
     [
       "Captured stdout setup",
-      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[field]\", \"phase\": \"before\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-history-review-1604/runtime_protocol/timeline_commit_port.py\"}\n"
+      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[field]\", \"phase\": \"before\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-current-pair-proof-1626/runtime_protocol/timeline_commit_port.py\"}\n"
     ],
     [
       "Captured stdout call",
-      "{\"damage\": \"field\", \"code\": \"conflict\", \"details\": {\"status\": \"conflict\", \"reason\": \"value_conflict\", \"code\": \"value_conflict\", \"path\": [\"clips\", \"id:cross\", \"at\"], \"hint\": \"Read the current timeline and retry the edit\", \"suggested_command\": \"timeline show\", \"base\": {\"revision_id\": \"saved-parent\", \"publication_id\": \"txn-548dbafc7005476e8428ff802400705a\"}, \"current\": {\"revision_id\": \"authoring-parent-revision-bc3427e617ef046a7162f5bedc72b795df8f29da1bdb7725d8f87dc487d8f134\", \"publication_id\": \"txn-bd0836a8649346c89db4bf1eb7934ce0\"}, \"conflicts\": [{\"kind\": \"value_conflict\", \"ref\": \"internal-revision:authoring-timeline-revision-c0043238c9bcdc124a69637bb5c4f771e0a4557163ee9df9b3c219ec9f245615\", \"path\": [\"clips\", \"id:cross\", \"at\"], \"base\": {\"state\": \"absent\"}, \"theirs\": {\"state\": \"absent\"}, \"ours\": {\"state\": \"absent\"}, \"choices\": []}]}}\n"
+      "{\"damage\": \"field\", \"code\": \"conflict\", \"details\": {\"status\": \"conflict\", \"reason\": \"value_conflict\", \"code\": \"value_conflict\", \"path\": [\"clips\", \"id:cross\", \"at\"], \"hint\": \"Read the current timeline and retry the edit\", \"suggested_command\": \"timeline show\", \"base\": {\"revision_id\": \"saved-parent\", \"publication_id\": \"txn-14357da11583466084efe1fbe3601887\"}, \"current\": {\"revision_id\": \"authoring-parent-revision-cb883ad69f6288065532b04fea019e5b391466db06a8f153a2108349ed945d01\", \"publication_id\": \"txn-06492c650e9a447680f0fe93a52ea3f8\"}, \"conflicts\": [{\"kind\": \"value_conflict\", \"ref\": \"internal-revision:authoring-timeline-revision-c807eafb6b9b62a3b67e52673cc5a2743ec6c79bbf330a4dba17405c695c0014\", \"path\": [\"clips\", \"id:cross\", \"at\"], \"base\": {\"state\": \"absent\"}, \"theirs\": {\"state\": \"absent\"}, \"ours\": {\"state\": \"absent\"}, \"choices\": []}]}}\n"
     ]
   ],
   "when": "call"
