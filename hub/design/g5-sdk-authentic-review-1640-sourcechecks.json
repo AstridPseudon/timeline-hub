@@ -1,0 +1,36 @@
+{
+  "adapter": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-adapter.py",
+  "archive_sha256": "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3",
+  "current_source_before_after": {
+    "commit": [
+      "d9e2a71e87c827290a3ff58a94f6fb8b4bc11e0b",
+      "d9e2a71e87c827290a3ff58a94f6fb8b4bc11e0b"
+    ],
+    "module": [
+      "/home/user/work/wt/rt-G5-authentic-review-1640/runtime_protocol/service.py",
+      "/home/user/work/wt/rt-G5-authentic-review-1640/runtime_protocol/service.py"
+    ],
+    "tree": [
+      "9b07545cac9a8bbafb16246aaa6f72050ef7cffe",
+      "9b07545cac9a8bbafb16246aaa6f72050ef7cffe"
+    ]
+  },
+  "key_material_written": false,
+  "old_source": {
+    "commit": "0ba9622a3e98a85577ef893be85988ba7f203b88",
+    "tree": "c0bbd76656ac21439d11bf928eb970d60fe6e690"
+  },
+  "sourcechecks": {
+    "current_commit": true,
+    "no_direct_cas_write": true,
+    "no_history_fabrication": true,
+    "no_literal_revision": true,
+    "no_sql_execute": true,
+    "normal_head_cas": true,
+    "old_commit": true,
+    "old_tree": true,
+    "public_publish": true,
+    "public_service": true,
+    "uuid_revision": true
+  }
+}

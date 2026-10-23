@@ -1,0 +1,1555 @@
+{
+  "archive": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/evidence/g5-sdk-authentic-capture-20261023-b6069d1d.tar.gz",
+  "archive_members": [
+    {
+      "name": "backup",
+      "size": 0,
+      "type": "dir"
+    },
+    {
+      "name": "backup/cas",
+      "size": 0,
+      "type": "dir"
+    },
+    {
+      "name": "backup/cas/sha256",
+      "size": 0,
+      "type": "dir"
+    },
+    {
+      "name": "backup/cas/sha256/be",
+      "size": 0,
+      "type": "dir"
+    },
+    {
+      "name": "backup/cas/sha256/be/ec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb",
+      "size": 19,
+      "type": "file"
+    },
+    {
+      "name": "backup/cas/sha256/bf",
+      "size": 0,
+      "type": "dir"
+    },
+    {
+      "name": "backup/cas/sha256/bf/a95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5",
+      "size": 19,
+      "type": "file"
+    },
+    {
+      "name": "backup/cas/sha256/e2",
+      "size": 0,
+      "type": "dir"
+    },
+    {
+      "name": "backup/cas/sha256/e2/9d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65",
+      "size": 19,
+      "type": "file"
+    },
+    {
+      "name": "backup/cas/sha256/f3",
+      "size": 0,
+      "type": "dir"
+    },
+    {
+      "name": "backup/cas/sha256/f3/9a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2",
+      "size": 19,
+      "type": "file"
+    },
+    {
+      "name": "backup/cas/sha256/fe",
+      "size": 0,
+      "type": "dir"
+    },
+    {
+      "name": "backup/cas/sha256/fe/f50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d",
+      "size": 17,
+      "type": "file"
+    },
+    {
+      "name": "backup/cas-manifest.json",
+      "size": 1495,
+      "type": "file"
+    },
+    {
+      "name": "backup/manifest.json",
+      "size": 918,
+      "type": "file"
+    },
+    {
+      "name": "backup/realm.sqlite3",
+      "size": 704512,
+      "type": "file"
+    }
+  ],
+  "archive_members_safe_before_extraction": true,
+  "archive_sha256": "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3",
+  "checks": {
+    "legacy_word_null_absence_opaque_music_other_registry": true,
+    "parent_digest": "sha256:b6069d1ddccc0279e871b142773b63b73b107ebf9d0adc11ab73832b69097afb",
+    "parent_equals_expectation": true,
+    "parent_equals_retained_after": true,
+    "physical_sharing_manifest": true,
+    "predecessor_head_publication_receipt_event_witness": true,
+    "required_media_and_cas_bytes": {
+      "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb": {
+        "bytes": 19,
+        "media_type": "video/mp4",
+        "sha256": "beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb"
+      },
+      "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5": {
+        "bytes": 19,
+        "media_type": "video/mp4",
+        "sha256": "bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5"
+      },
+      "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65": {
+        "bytes": 19,
+        "media_type": "audio/wav",
+        "sha256": "e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65"
+      },
+      "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2": {
+        "bytes": 19,
+        "media_type": "video/mp4",
+        "sha256": "f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2"
+      },
+      "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d": {
+        "bytes": 17,
+        "media_type": "text/plain",
+        "sha256": "fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d"
+      }
+    },
+    "three_internals_unchanged": true,
+    "three_shots_unchanged": true
+  },
+  "current_root": "/home/user/work/wt/rt-G5-authentic-review-1640",
+  "facts": {
+    "canonical_document": {
+      "dependency_manifest": {
+        "documents": [],
+        "internal_timelines": [
+          {
+            "content_digest": "sha256:1264224ee99eabe4b5ff1b4cb970047c389930403db8bdb32ad4e26ae9b3287c",
+            "revision_id": "film-internal-1",
+            "timeline_id": "film"
+          },
+          {
+            "content_digest": "sha256:848e75dfcb471007dfccf5b489ebe76e98b8efec11c5ecf9740a013946e6153a",
+            "revision_id": "film-internal-2",
+            "timeline_id": "film"
+          },
+          {
+            "content_digest": "sha256:9fb7e21a3b19633f5b6cd9e3a17795a25025fdf1e8b512c2bec2df4135806192",
+            "revision_id": "film-internal-3",
+            "timeline_id": "film"
+          }
+        ],
+        "media": [
+          {
+            "content_digest": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb",
+            "media_id": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb"
+          },
+          {
+            "content_digest": "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5",
+            "media_id": "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5"
+          },
+          {
+            "content_digest": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65",
+            "media_id": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65"
+          },
+          {
+            "content_digest": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2",
+            "media_id": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2"
+          },
+          {
+            "content_digest": "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d",
+            "media_id": "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d"
+          }
+        ],
+        "shots": [
+          {
+            "content_digest": "sha256:b97de3b8da2c0f0d66302fe690e82049ba3ef1d635bbea53cf8de64a8b894a2d",
+            "internal_timeline_revision_id": "film-internal-1",
+            "revision_id": "film-shot-revision-1",
+            "shot_id": "shot-1"
+          },
+          {
+            "content_digest": "sha256:a59a980cb7d9b78b605a946761fb801885340d05a1fc9ee7d2353106ec7e2c6a",
+            "internal_timeline_revision_id": "film-internal-2",
+            "revision_id": "film-shot-revision-2",
+            "shot_id": "shot-2"
+          },
+          {
+            "content_digest": "sha256:d621270cdb1ac3de14d109f0586cd26853d036eb88f106ad2b0f1ac3c18e3fb7",
+            "internal_timeline_revision_id": "film-internal-3",
+            "revision_id": "film-shot-revision-3",
+            "shot_id": "shot-3"
+          }
+        ]
+      },
+      "internal_timeline_revisions": [
+        {
+          "content_digest": "sha256:1264224ee99eabe4b5ff1b4cb970047c389930403db8bdb32ad4e26ae9b3287c",
+          "payload": {
+            "assets": [],
+            "audio": [],
+            "clips": [
+              {
+                "asset": "picture-1",
+                "at": 0,
+                "clipType": "media",
+                "elementRef": {
+                  "anchor": {
+                    "document_id": "transcript:c49d7d673dc883c363f95ea19d01d75b66c00ba849b09cb833966e39d392133d",
+                    "word_id": "word-1"
+                  },
+                  "binding_id": "fa141364-9d4d-57ca-b7dc-9a23d259312e",
+                  "kind": "text"
+                },
+                "hold": 1.8,
+                "id": "clip-1",
+                "track": "picture"
+              }
+            ],
+            "effects": [],
+            "layout": {},
+            "registry": {
+              "assets": {
+                "picture-1": {
+                  "object_id": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2",
+                  "type": "video"
+                }
+              }
+            },
+            "tracks": [
+              {
+                "id": "picture",
+                "kind": "visual"
+              }
+            ]
+          },
+          "revision_id": "film-internal-1",
+          "timeline_id": "film"
+        },
+        {
+          "content_digest": "sha256:848e75dfcb471007dfccf5b489ebe76e98b8efec11c5ecf9740a013946e6153a",
+          "payload": {
+            "assets": [],
+            "audio": [],
+            "clips": [
+              {
+                "asset": "picture-2",
+                "at": 0,
+                "clipType": "media",
+                "hold": 1.8,
+                "id": "clip-2",
+                "track": "picture",
+                "transition": {
+                  "duration": 0.2,
+                  "type": "crossfade"
+                }
+              }
+            ],
+            "effects": [],
+            "layout": {},
+            "registry": {
+              "assets": {
+                "picture-2": {
+                  "object_id": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb",
+                  "type": "video"
+                }
+              }
+            },
+            "tracks": [
+              {
+                "id": "picture",
+                "kind": "visual"
+              }
+            ]
+          },
+          "revision_id": "film-internal-2",
+          "timeline_id": "film"
+        },
+        {
+          "content_digest": "sha256:9fb7e21a3b19633f5b6cd9e3a17795a25025fdf1e8b512c2bec2df4135806192",
+          "payload": {
+            "assets": [],
+            "audio": [],
+            "clips": [
+              {
+                "asset": "picture-3",
+                "at": 0,
+                "clipType": "media",
+                "hold": 1.8,
+                "id": "clip-3",
+                "track": "picture"
+              }
+            ],
+            "effects": [],
+            "layout": {},
+            "registry": {
+              "assets": {
+                "picture-3": {
+                  "object_id": "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5",
+                  "type": "video"
+                }
+              }
+            },
+            "tracks": [
+              {
+                "id": "picture",
+                "kind": "visual"
+              }
+            ]
+          },
+          "revision_id": "film-internal-3",
+          "timeline_id": "film"
+        }
+      ],
+      "parent_revision": {
+        "content_digest": "sha256:b6069d1ddccc0279e871b142773b63b73b107ebf9d0adc11ab73832b69097afb",
+        "payload": {
+          "clips": [
+            {
+              "app": {
+                "astrid": {
+                  "fixed_start": false,
+                  "for": 5.5,
+                  "on": "word:word-1",
+                  "opaque": [
+                    null,
+                    {
+                      "keep": true
+                    }
+                  ],
+                  "until": null,
+                  "until_film_end": true
+                },
+                "on": "word:word-1",
+                "until": null,
+                "until_film_end": true
+              },
+              "asset": "music-bed",
+              "at": 0,
+              "clipType": "audio",
+              "effects": [
+                {
+                  "id": "music-fade",
+                  "params": {
+                    "direction": "in",
+                    "duration": 0.25
+                  },
+                  "type": "fade"
+                }
+              ],
+              "hold": 5.5,
+              "id": "music-bed",
+              "track": "music",
+              "volume": 0.65
+            },
+            {
+              "asset": "music-bed",
+              "at": 0,
+              "clipType": "audio",
+              "extension": {
+                "opaque": [
+                  null,
+                  {
+                    "keep": true
+                  }
+                ]
+              },
+              "hold": 5.5,
+              "id": "music-other",
+              "track": "music-other"
+            }
+          ],
+          "config": {
+            "clips": [
+              {
+                "app": {
+                  "astrid": {
+                    "fixed_start": false,
+                    "for": 5.5,
+                    "on": "word:word-1",
+                    "opaque": [
+                      null,
+                      {
+                        "keep": true
+                      }
+                    ],
+                    "until": null,
+                    "until_film_end": true
+                  },
+                  "on": "word:word-1",
+                  "until": null,
+                  "until_film_end": true
+                },
+                "asset": "music-bed",
+                "at": 0,
+                "clipType": "audio",
+                "effects": [
+                  {
+                    "id": "music-fade",
+                    "params": {
+                      "direction": "in",
+                      "duration": 0.25
+                    },
+                    "type": "fade"
+                  }
+                ],
+                "hold": 5.5,
+                "id": "music-bed",
+                "track": "music",
+                "volume": 0.65
+              },
+              {
+                "asset": "music-bed",
+                "at": 0,
+                "clipType": "audio",
+                "extension": {
+                  "opaque": [
+                    null,
+                    {
+                      "keep": true
+                    }
+                  ]
+                },
+                "hold": 5.5,
+                "id": "music-other",
+                "track": "music-other"
+              }
+            ],
+            "output": {
+              "fps": 24
+            },
+            "playback": {
+              "fade": {
+                "in": 0.25,
+                "out": 0.4
+              },
+              "music_bed": "music-bed"
+            },
+            "tracks": [
+              {
+                "id": "picture",
+                "kind": "visual",
+                "role": "output"
+              },
+              {
+                "id": "music",
+                "kind": "audio"
+              },
+              {
+                "id": "music-other",
+                "kind": "audio"
+              }
+            ]
+          },
+          "occurrences": [
+            {
+              "duration_ms": 1800,
+              "gain": 1,
+              "muted": false,
+              "occurrence_id": "occurrence-1",
+              "placement": {
+                "start_ms": 0,
+                "track": "picture"
+              },
+              "provenance": {
+                "editorial_role": "picture"
+              },
+              "shot_id": "shot-1",
+              "shot_revision_id": "film-shot-revision-1",
+              "source_offset": 0,
+              "speed": 1,
+              "track": "picture",
+              "transform": {}
+            },
+            {
+              "duration_ms": 1800,
+              "gain": 1,
+              "muted": false,
+              "occurrence_id": "occurrence-2",
+              "placement": {
+                "start_ms": 1650,
+                "track": "picture"
+              },
+              "provenance": {
+                "editorial_role": "picture"
+              },
+              "shot_id": "shot-2",
+              "shot_revision_id": "film-shot-revision-2",
+              "source_offset": 0,
+              "speed": 1,
+              "track": "picture",
+              "transform": {}
+            },
+            {
+              "duration_ms": 1800,
+              "gain": 1,
+              "muted": false,
+              "occurrence_id": "occurrence-3",
+              "placement": {
+                "start_ms": 3300,
+                "track": "picture"
+              },
+              "provenance": {
+                "editorial_role": "picture"
+              },
+              "shot_id": "shot-3",
+              "shot_revision_id": "film-shot-revision-3",
+              "source_offset": 0,
+              "speed": 1,
+              "track": "picture",
+              "transform": {}
+            }
+          ],
+          "registry": {
+            "assets": {
+              "music-bed": {
+                "object_id": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65",
+                "type": "audio"
+              }
+            }
+          }
+        },
+        "revision_id": "a3e671256f1c42b8837d3e118c97b21b"
+      },
+      "project_id": "7b6f2bae8ffe42bf925216c38249ed79",
+      "schema_version": 1,
+      "shot_revisions": [
+        {
+          "content_digest": "sha256:b97de3b8da2c0f0d66302fe690e82049ba3ef1d635bbea53cf8de64a8b894a2d",
+          "internal_timeline_revision_id": "film-internal-1",
+          "payload": {
+            "audio_bindings": [],
+            "generation_inputs": {},
+            "internal_timeline_revision_id": "film-internal-1",
+            "items": [],
+            "metadata": {
+              "title": "Shot 1",
+              "transcript_anchor": {
+                "document_id": "transcript:c49d7d673dc883c363f95ea19d01d75b66c00ba849b09cb833966e39d392133d",
+                "segment_id": "segment-1",
+                "word_id": "word-1"
+              }
+            },
+            "pools": [],
+            "provenance": {
+              "source_media": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2"
+            },
+            "selected_variants": {},
+            "text_bindings": [
+              {
+                "binding_id": "fa141364-9d4d-57ca-b7dc-9a23d259312e",
+                "byte_size": 17,
+                "content_hash": "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d",
+                "event_stream_id": "fa141364-9d4d-57ca-b7dc-9a23d259312e:shot.text_binding",
+                "head": 1,
+                "kind": "transcript",
+                "media_id": "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d",
+                "mime_type": "text/plain",
+                "project_id": "7b6f2bae8ffe42bf925216c38249ed79",
+                "shot_id": "shot-1",
+                "slot": null,
+                "text": "Open on the river"
+              }
+            ]
+          },
+          "revision_id": "film-shot-revision-1",
+          "shot_id": "shot-1"
+        },
+        {
+          "content_digest": "sha256:a59a980cb7d9b78b605a946761fb801885340d05a1fc9ee7d2353106ec7e2c6a",
+          "internal_timeline_revision_id": "film-internal-2",
+          "payload": {
+            "audio_bindings": [],
+            "generation_inputs": {},
+            "internal_timeline_revision_id": "film-internal-2",
+            "items": [],
+            "metadata": {
+              "title": "Shot 2"
+            },
+            "pools": [],
+            "provenance": {
+              "source_media": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb"
+            },
+            "selected_variants": {},
+            "text_bindings": []
+          },
+          "revision_id": "film-shot-revision-2",
+          "shot_id": "shot-2"
+        },
+        {
+          "content_digest": "sha256:d621270cdb1ac3de14d109f0586cd26853d036eb88f106ad2b0f1ac3c18e3fb7",
+          "internal_timeline_revision_id": "film-internal-3",
+          "payload": {
+            "audio_bindings": [],
+            "generation_inputs": {},
+            "internal_timeline_revision_id": "film-internal-3",
+            "items": [],
+            "metadata": {
+              "title": "Shot 3"
+            },
+            "pools": [],
+            "provenance": {
+              "source_media": "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5"
+            },
+            "selected_variants": {},
+            "text_bindings": []
+          },
+          "revision_id": "film-shot-revision-3",
+          "shot_id": "shot-3"
+        }
+      ],
+      "timeline_id": "film"
+    },
+    "document_digest": "sha256:9a11a19f18a514f380e6e3d19624d6d548561c035d1cb2bc1eed8ccb9d3605b8",
+    "entries": [
+      {
+        "compiler_version": null,
+        "intent": "legacy_unknown",
+        "previous": null,
+        "provider_version": null,
+        "publication_id": "txn-55c0651b2cd64255ae06e73f9708220a",
+        "publisher": null,
+        "receipt": {
+          "command_kind": "parent_composition.publish",
+          "created_at": "2026-10-19T22:58:41.731+00:00",
+          "event_ids": [
+            "2"
+          ],
+          "idempotency_key": "film-parent-publication",
+          "project_id": "7b6f2bae8ffe42bf925216c38249ed79",
+          "project_seq": [
+            12,
+            12
+          ],
+          "receipt_id": "txn-55c0651b2cd64255ae06e73f9708220a",
+          "request_hash": "88bca80eb83ee41efb8b947e59cf7b56e50d9043ee2567b117004adb9053d113",
+          "result": {
+            "__runtime_idempotency_result_expired_v1": "0f6775fbb8a533913019d12b6fbe48b8b876ccfcf16dba08575a1817008cbbe5",
+            "content_digest": "sha256:3df0dbb371b6add88b147b444f6ee01006b12655d9bde5f67f184f05be38f750",
+            "created_at": "2026-10-19T22:58:41.730+00:00",
+            "dependency_manifest_sha256": "93076e58438737830571c1b1ab81ed9e35d561917b588de4e9afb31d45bff389",
+            "event_id": "2",
+            "parent_revision_id": "film-parent-v1",
+            "project_id": "7b6f2bae8ffe42bf925216c38249ed79",
+            "timeline_id": "film"
+          }
+        },
+        "records": null,
+        "revision_id": "film-parent-v1"
+      },
+      {
+        "compiler_version": null,
+        "intent": "legacy_unknown",
+        "previous": {
+          "publication_id": "txn-55c0651b2cd64255ae06e73f9708220a",
+          "revision_id": "film-parent-v1"
+        },
+        "provider_version": null,
+        "publication_id": "txn-11c90075be6c4c8bb9e2627366f0fe4f",
+        "publisher": null,
+        "receipt": {
+          "command_kind": "parent_composition.publish",
+          "created_at": "2026-10-23T16:35:17.289+00:00",
+          "event_ids": [
+            "3"
+          ],
+          "idempotency_key": "a4b313c215984347846a85dff29815ec",
+          "project_id": "7b6f2bae8ffe42bf925216c38249ed79",
+          "project_seq": [
+            15,
+            15
+          ],
+          "receipt_id": "txn-11c90075be6c4c8bb9e2627366f0fe4f",
+          "request_hash": "f48547277bb1ea31b2cf6f4fd241b429a539ad0ac76137e1326959876b829192",
+          "result": {
+            "content_digest": "sha256:b6069d1ddccc0279e871b142773b63b73b107ebf9d0adc11ab73832b69097afb",
+            "content_digests": {
+              "film-internal-1": "sha256:1264224ee99eabe4b5ff1b4cb970047c389930403db8bdb32ad4e26ae9b3287c",
+              "film-internal-2": "sha256:848e75dfcb471007dfccf5b489ebe76e98b8efec11c5ecf9740a013946e6153a",
+              "film-internal-3": "sha256:9fb7e21a3b19633f5b6cd9e3a17795a25025fdf1e8b512c2bec2df4135806192",
+              "film-shot-revision-1": "sha256:b97de3b8da2c0f0d66302fe690e82049ba3ef1d635bbea53cf8de64a8b894a2d",
+              "film-shot-revision-2": "sha256:a59a980cb7d9b78b605a946761fb801885340d05a1fc9ee7d2353106ec7e2c6a",
+              "film-shot-revision-3": "sha256:d621270cdb1ac3de14d109f0586cd26853d036eb88f106ad2b0f1ac3c18e3fb7",
+              "parent": "sha256:b6069d1ddccc0279e871b142773b63b73b107ebf9d0adc11ab73832b69097afb",
+              "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb",
+              "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5": "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5",
+              "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65",
+              "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2",
+              "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d": "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d"
+            },
+            "created_at": "2026-10-23T16:35:17.288+00:00",
+            "dependency_manifest": {
+              "internal_timelines": [
+                {
+                  "content_digest": "sha256:1264224ee99eabe4b5ff1b4cb970047c389930403db8bdb32ad4e26ae9b3287c",
+                  "revision_id": "film-internal-1",
+                  "timeline_id": "film"
+                },
+                {
+                  "content_digest": "sha256:848e75dfcb471007dfccf5b489ebe76e98b8efec11c5ecf9740a013946e6153a",
+                  "revision_id": "film-internal-2",
+                  "timeline_id": "film"
+                },
+                {
+                  "content_digest": "sha256:9fb7e21a3b19633f5b6cd9e3a17795a25025fdf1e8b512c2bec2df4135806192",
+                  "revision_id": "film-internal-3",
+                  "timeline_id": "film"
+                }
+              ],
+              "media": [
+                {
+                  "content_digest": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb",
+                  "media_id": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb"
+                },
+                {
+                  "content_digest": "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5",
+                  "media_id": "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5"
+                },
+                {
+                  "content_digest": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65",
+                  "media_id": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65"
+                },
+                {
+                  "content_digest": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2",
+                  "media_id": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2"
+                },
+                {
+                  "content_digest": "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d",
+                  "media_id": "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d"
+                }
+              ],
+              "shots": [
+                {
+                  "content_digest": "sha256:b97de3b8da2c0f0d66302fe690e82049ba3ef1d635bbea53cf8de64a8b894a2d",
+                  "internal_timeline_revision_id": "film-internal-1",
+                  "revision_id": "film-shot-revision-1",
+                  "shot_id": "shot-1"
+                },
+                {
+                  "content_digest": "sha256:a59a980cb7d9b78b605a946761fb801885340d05a1fc9ee7d2353106ec7e2c6a",
+                  "internal_timeline_revision_id": "film-internal-2",
+                  "revision_id": "film-shot-revision-2",
+                  "shot_id": "shot-2"
+                },
+                {
+                  "content_digest": "sha256:d621270cdb1ac3de14d109f0586cd26853d036eb88f106ad2b0f1ac3c18e3fb7",
+                  "internal_timeline_revision_id": "film-internal-3",
+                  "revision_id": "film-shot-revision-3",
+                  "shot_id": "shot-3"
+                }
+              ]
+            },
+            "event_id": "3",
+            "new_head": "a3e671256f1c42b8837d3e118c97b21b",
+            "old_head": "film-parent-v1",
+            "parent_revision_id": "a3e671256f1c42b8837d3e118c97b21b",
+            "payload": {
+              "clips": [
+                {
+                  "app": {
+                    "astrid": {
+                      "fixed_start": false,
+                      "for": 5.5,
+                      "on": "word:word-1",
+                      "opaque": [
+                        null,
+                        {
+                          "keep": true
+                        }
+                      ],
+                      "until": null,
+                      "until_film_end": true
+                    },
+                    "on": "word:word-1",
+                    "until": null,
+                    "until_film_end": true
+                  },
+                  "asset": "music-bed",
+                  "at": 0,
+                  "clipType": "audio",
+                  "effects": [
+                    {
+                      "id": "music-fade",
+                      "params": {
+                        "direction": "in",
+                        "duration": 0.25
+                      },
+                      "type": "fade"
+                    }
+                  ],
+                  "hold": 5.5,
+                  "id": "music-bed",
+                  "track": "music",
+                  "volume": 0.65
+                },
+                {
+                  "asset": "music-bed",
+                  "at": 0,
+                  "clipType": "audio",
+                  "extension": {
+                    "opaque": [
+                      null,
+                      {
+                        "keep": true
+                      }
+                    ]
+                  },
+                  "hold": 5.5,
+                  "id": "music-other",
+                  "track": "music-other"
+                }
+              ],
+              "config": {
+                "clips": [
+                  {
+                    "app": {
+                      "astrid": {
+                        "fixed_start": false,
+                        "for": 5.5,
+                        "on": "word:word-1",
+                        "opaque": [
+                          null,
+                          {
+                            "keep": true
+                          }
+                        ],
+                        "until": null,
+                        "until_film_end": true
+                      },
+                      "on": "word:word-1",
+                      "until": null,
+                      "until_film_end": true
+                    },
+                    "asset": "music-bed",
+                    "at": 0,
+                    "clipType": "audio",
+                    "effects": [
+                      {
+                        "id": "music-fade",
+                        "params": {
+                          "direction": "in",
+                          "duration": 0.25
+                        },
+                        "type": "fade"
+                      }
+                    ],
+                    "hold": 5.5,
+                    "id": "music-bed",
+                    "track": "music",
+                    "volume": 0.65
+                  },
+                  {
+                    "asset": "music-bed",
+                    "at": 0,
+                    "clipType": "audio",
+                    "extension": {
+                      "opaque": [
+                        null,
+                        {
+                          "keep": true
+                        }
+                      ]
+                    },
+                    "hold": 5.5,
+                    "id": "music-other",
+                    "track": "music-other"
+                  }
+                ],
+                "output": {
+                  "fps": 24
+                },
+                "playback": {
+                  "fade": {
+                    "in": 0.25,
+                    "out": 0.4
+                  },
+                  "music_bed": "music-bed"
+                },
+                "tracks": [
+                  {
+                    "id": "picture",
+                    "kind": "visual",
+                    "role": "output"
+                  },
+                  {
+                    "id": "music",
+                    "kind": "audio"
+                  },
+                  {
+                    "id": "music-other",
+                    "kind": "audio"
+                  }
+                ]
+              },
+              "occurrences": [
+                {
+                  "duration_ms": 1800,
+                  "gain": 1,
+                  "muted": false,
+                  "occurrence_id": "occurrence-1",
+                  "placement": {
+                    "start_ms": 0,
+                    "track": "picture"
+                  },
+                  "provenance": {
+                    "editorial_role": "picture"
+                  },
+                  "shot_id": "shot-1",
+                  "shot_revision_id": "film-shot-revision-1",
+                  "source_offset": 0,
+                  "speed": 1,
+                  "track": "picture",
+                  "transform": {}
+                },
+                {
+                  "duration_ms": 1800,
+                  "gain": 1,
+                  "muted": false,
+                  "occurrence_id": "occurrence-2",
+                  "placement": {
+                    "start_ms": 1650,
+                    "track": "picture"
+                  },
+                  "provenance": {
+                    "editorial_role": "picture"
+                  },
+                  "shot_id": "shot-2",
+                  "shot_revision_id": "film-shot-revision-2",
+                  "source_offset": 0,
+                  "speed": 1,
+                  "track": "picture",
+                  "transform": {}
+                },
+                {
+                  "duration_ms": 1800,
+                  "gain": 1,
+                  "muted": false,
+                  "occurrence_id": "occurrence-3",
+                  "placement": {
+                    "start_ms": 3300,
+                    "track": "picture"
+                  },
+                  "provenance": {
+                    "editorial_role": "picture"
+                  },
+                  "shot_id": "shot-3",
+                  "shot_revision_id": "film-shot-revision-3",
+                  "source_offset": 0,
+                  "speed": 1,
+                  "track": "picture",
+                  "transform": {}
+                }
+              ],
+              "registry": {
+                "assets": {
+                  "music-bed": {
+                    "object_id": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65",
+                    "type": "audio"
+                  }
+                }
+              }
+            },
+            "project_id": "7b6f2bae8ffe42bf925216c38249ed79",
+            "revision_id": "a3e671256f1c42b8837d3e118c97b21b",
+            "timeline_id": "film",
+            "visual_seam_report": {
+              "blocked": true,
+              "boundaries": [
+                {
+                  "canonicalContext": {
+                    "fps": 24,
+                    "frame": 40,
+                    "owners": [
+                      {
+                        "clip": {
+                          "clipType": "media",
+                          "elementRef": {
+                            "anchor": {
+                              "document_id": "transcript:c49d7d673dc883c363f95ea19d01d75b66c00ba849b09cb833966e39d392133d",
+                              "word_id": "word-1"
+                            },
+                            "binding_id": "fa141364-9d4d-57ca-b7dc-9a23d259312e",
+                            "kind": "text"
+                          },
+                          "from": 0,
+                          "speed": 1,
+                          "track": "picture"
+                        },
+                        "path": [
+                          "occurrence",
+                          "occurrence-1",
+                          "clip",
+                          "clip-1"
+                        ],
+                        "source": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2",
+                        "span": [
+                          0,
+                          40,
+                          0
+                        ]
+                      },
+                      {
+                        "clip": {
+                          "clipType": "media",
+                          "from": 0,
+                          "speed": 1,
+                          "track": "picture",
+                          "transition": {
+                            "duration": 0.2,
+                            "type": "crossfade"
+                          }
+                        },
+                        "path": [
+                          "occurrence",
+                          "occurrence-2",
+                          "clip",
+                          "clip-2"
+                        ],
+                        "source": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb",
+                        "span": [
+                          40,
+                          79,
+                          40
+                        ]
+                      }
+                    ],
+                    "version": "visual-seam/v1"
+                  },
+                  "canonicalCueIds": [],
+                  "context": null,
+                  "cues": [],
+                  "frame": 40,
+                  "opaquePaths": [
+                    [
+                      "parent",
+                      "film",
+                      "clip",
+                      "music-bed"
+                    ],
+                    [
+                      "parent",
+                      "film",
+                      "clip",
+                      "music-bed",
+                      "effect",
+                      "music-fade"
+                    ],
+                    [
+                      "parent",
+                      "film",
+                      "clip",
+                      "music-other"
+                    ]
+                  ],
+                  "ownerPaths": [
+                    [
+                      "parent",
+                      "film",
+                      "occurrence",
+                      "occurrence-1"
+                    ],
+                    [
+                      "parent",
+                      "film",
+                      "occurrence",
+                      "occurrence-2"
+                    ]
+                  ],
+                  "requiresIntent": false,
+                  "unacknowledgedCues": []
+                },
+                {
+                  "canonicalContext": {
+                    "fps": 24,
+                    "frame": 79,
+                    "owners": [
+                      {
+                        "clip": {
+                          "clipType": "media",
+                          "from": 0,
+                          "speed": 1,
+                          "track": "picture",
+                          "transition": {
+                            "duration": 0.2,
+                            "type": "crossfade"
+                          }
+                        },
+                        "path": [
+                          "occurrence",
+                          "occurrence-2",
+                          "clip",
+                          "clip-2"
+                        ],
+                        "source": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb",
+                        "span": [
+                          40,
+                          79,
+                          40
+                        ]
+                      },
+                      {
+                        "clip": {
+                          "clipType": "media",
+                          "from": 0,
+                          "speed": 1,
+                          "track": "picture"
+                        },
+                        "path": [
+                          "occurrence",
+                          "occurrence-3",
+                          "clip",
+                          "clip-3"
+                        ],
+                        "source": "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5",
+                        "span": [
+                          79,
+                          122,
+                          79
+                        ]
+                      }
+                    ],
+                    "version": "visual-seam/v1"
+                  },
+                  "canonicalCueIds": [],
+                  "context": null,
+                  "cues": [],
+                  "frame": 79,
+                  "opaquePaths": [
+                    [
+                      "parent",
+                      "film",
+                      "clip",
+                      "music-bed"
+                    ],
+                    [
+                      "parent",
+                      "film",
+                      "clip",
+                      "music-bed",
+                      "effect",
+                      "music-fade"
+                    ],
+                    [
+                      "parent",
+                      "film",
+                      "clip",
+                      "music-other"
+                    ]
+                  ],
+                  "ownerPaths": [
+                    [
+                      "parent",
+                      "film",
+                      "occurrence",
+                      "occurrence-2"
+                    ],
+                    [
+                      "parent",
+                      "film",
+                      "occurrence",
+                      "occurrence-3"
+                    ]
+                  ],
+                  "requiresIntent": false,
+                  "unacknowledgedCues": []
+                }
+              ],
+              "cues": [],
+              "disclosureVersion": "visual-seam/v1",
+              "fps": 24,
+              "guardFrames": 2,
+              "opaqueElements": [
+                {
+                  "cues": [],
+                  "disclosureVersion": "visual-seam/v1",
+                  "effectVersion": 1,
+                  "opaque": [
+                    "unknown effect timing"
+                  ],
+                  "source": null,
+                  "span": {
+                    "endFrame": 132,
+                    "path": [
+                      "parent",
+                      "film",
+                      "clip",
+                      "music-bed"
+                    ],
+                    "startFrame": 0
+                  },
+                  "version": 1
+                },
+                {
+                  "cues": [],
+                  "disclosureVersion": "visual-seam/v1",
+                  "effectVersion": 1,
+                  "opaque": [
+                    "unknown effect timing"
+                  ],
+                  "source": null,
+                  "span": {
+                    "endFrame": 132,
+                    "path": [
+                      "parent",
+                      "film",
+                      "clip",
+                      "music-bed",
+                      "effect",
+                      "music-fade"
+                    ],
+                    "startFrame": 0
+                  },
+                  "version": 1
+                },
+                {
+                  "cues": [],
+                  "disclosureVersion": "visual-seam/v1",
+                  "effectVersion": 1,
+                  "opaque": [
+                    "unknown effect timing"
+                  ],
+                  "source": null,
+                  "span": {
+                    "endFrame": 132,
+                    "path": [
+                      "parent",
+                      "film",
+                      "clip",
+                      "music-other"
+                    ],
+                    "startFrame": 0
+                  },
+                  "version": 1
+                },
+                {
+                  "cues": [],
+                  "disclosureVersion": "visual-seam/v1",
+                  "effectVersion": 1,
+                  "opaque": [
+                    "unverified element reference timing"
+                  ],
+                  "source": {
+                    "binding": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2"
+                  },
+                  "span": {
+                    "endFrame": 40,
+                    "path": [
+                      "parent",
+                      "film",
+                      "occurrence",
+                      "occurrence-1",
+                      "clip",
+                      "clip-1"
+                    ],
+                    "startFrame": 0
+                  },
+                  "version": 1
+                }
+              ],
+              "spans": [
+                {
+                  "endFrame": 132,
+                  "path": [
+                    "parent",
+                    "film",
+                    "clip",
+                    "music-bed"
+                  ],
+                  "primary": false,
+                  "rawEndFrame": 132,
+                  "rawStartFrame": 0,
+                  "source": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65",
+                  "startFrame": 0,
+                  "track": "music"
+                },
+                {
+                  "endFrame": 132,
+                  "path": [
+                    "parent",
+                    "film",
+                    "clip",
+                    "music-bed",
+                    "effect",
+                    "music-fade"
+                  ],
+                  "primary": false,
+                  "rawEndFrame": 132,
+                  "rawStartFrame": 0,
+                  "source": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65",
+                  "startFrame": 0,
+                  "track": "music"
+                },
+                {
+                  "endFrame": 132,
+                  "path": [
+                    "parent",
+                    "film",
+                    "clip",
+                    "music-other"
+                  ],
+                  "primary": false,
+                  "rawEndFrame": 132,
+                  "rawStartFrame": 0,
+                  "source": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65",
+                  "startFrame": 0,
+                  "track": "music-other"
+                },
+                {
+                  "endFrame": 40,
+                  "path": [
+                    "parent",
+                    "film",
+                    "occurrence",
+                    "occurrence-1",
+                    "clip",
+                    "clip-1"
+                  ],
+                  "primary": true,
+                  "rawEndFrame": 43,
+                  "rawStartFrame": 0,
+                  "source": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2",
+                  "startFrame": 0,
+                  "track": "picture"
+                },
+                {
+                  "endFrame": 79,
+                  "path": [
+                    "parent",
+                    "film",
+                    "occurrence",
+                    "occurrence-2",
+                    "clip",
+                    "clip-2"
+                  ],
+                  "primary": true,
+                  "rawEndFrame": 83,
+                  "rawStartFrame": 40,
+                  "source": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb",
+                  "startFrame": 40,
+                  "track": "picture"
+                },
+                {
+                  "endFrame": 122,
+                  "path": [
+                    "parent",
+                    "film",
+                    "occurrence",
+                    "occurrence-3",
+                    "clip",
+                    "clip-3"
+                  ],
+                  "primary": true,
+                  "rawEndFrame": 122,
+                  "rawStartFrame": 79,
+                  "source": "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5",
+                  "startFrame": 79,
+                  "track": "picture"
+                }
+              ],
+              "structuralIssues": [
+                {
+                  "code": "boundary/owner-overhang",
+                  "endFrame": 43,
+                  "ownerEndFrame": 40,
+                  "path": [
+                    "parent",
+                    "film",
+                    "occurrence",
+                    "occurrence-1",
+                    "clip",
+                    "clip-1"
+                  ],
+                  "startFrame": 0
+                },
+                {
+                  "code": "boundary/owner-overhang",
+                  "endFrame": 83,
+                  "ownerEndFrame": 79,
+                  "path": [
+                    "parent",
+                    "film",
+                    "occurrence",
+                    "occurrence-2",
+                    "clip",
+                    "clip-2"
+                  ],
+                  "startFrame": 40
+                },
+                {
+                  "code": "boundary/overlap",
+                  "frame": 40,
+                  "frames": 3,
+                  "paths": [
+                    [
+                      "parent",
+                      "film",
+                      "occurrence",
+                      "occurrence-1"
+                    ],
+                    [
+                      "parent",
+                      "film",
+                      "occurrence",
+                      "occurrence-2"
+                    ]
+                  ]
+                },
+                {
+                  "code": "boundary/overlap",
+                  "frame": 79,
+                  "frames": 4,
+                  "paths": [
+                    [
+                      "parent",
+                      "film",
+                      "occurrence",
+                      "occurrence-2"
+                    ],
+                    [
+                      "parent",
+                      "film",
+                      "occurrence",
+                      "occurrence-3"
+                    ]
+                  ]
+                }
+              ],
+              "version": 1,
+              "warningCount": 2
+            }
+          }
+        },
+        "records": null,
+        "revision_id": "a3e671256f1c42b8837d3e118c97b21b"
+      }
+    ],
+    "head": {
+      "publication_id": "txn-11c90075be6c4c8bb9e2627366f0fe4f",
+      "revision_id": "a3e671256f1c42b8837d3e118c97b21b"
+    },
+    "witness": {
+      "event_hash": "bbddeb7466055e505d0cce776c5e4be42697b0f0d2bd9bafd907e10ad8f463a7",
+      "head_updated_at": "2026-10-23T16:35:17.288+00:00",
+      "last_event_id": "3",
+      "stream_seq": 3
+    }
+  },
+  "pins": {
+    "association_id": "9e01f8da4f0c43dfb62276caae8dae8c",
+    "association_media_id": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2",
+    "media_ids": [
+      "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb",
+      "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5",
+      "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65",
+      "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2",
+      "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d"
+    ],
+    "parent_revision_id": "a3e671256f1c42b8837d3e118c97b21b",
+    "project_id": "7b6f2bae8ffe42bf925216c38249ed79",
+    "publication_event_id": "3",
+    "publication_event_ids": [
+      "3"
+    ],
+    "publication_id": null,
+    "publication_payload": {
+      "content_digest": "sha256:b6069d1ddccc0279e871b142773b63b73b107ebf9d0adc11ab73832b69097afb",
+      "dependency_manifest": {
+        "internal_timelines": [
+          {
+            "content_digest": "sha256:1264224ee99eabe4b5ff1b4cb970047c389930403db8bdb32ad4e26ae9b3287c",
+            "revision_id": "film-internal-1",
+            "timeline_id": "film"
+          },
+          {
+            "content_digest": "sha256:848e75dfcb471007dfccf5b489ebe76e98b8efec11c5ecf9740a013946e6153a",
+            "revision_id": "film-internal-2",
+            "timeline_id": "film"
+          },
+          {
+            "content_digest": "sha256:9fb7e21a3b19633f5b6cd9e3a17795a25025fdf1e8b512c2bec2df4135806192",
+            "revision_id": "film-internal-3",
+            "timeline_id": "film"
+          }
+        ],
+        "media": [
+          {
+            "content_digest": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb",
+            "media_id": "sha256:beec97efbe7637ec4c5468a08f39fd3263dd3762483d66318d13093c22645beb"
+          },
+          {
+            "content_digest": "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5",
+            "media_id": "sha256:bfa95bbc854e387c08f73177c2a48719d9a928c3f2c94eca0e693f3f970014e5"
+          },
+          {
+            "content_digest": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65",
+            "media_id": "sha256:e29d6131553bfda749080174ccc5fb5f1be8eb27f2775323cb0293fcb6933a65"
+          },
+          {
+            "content_digest": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2",
+            "media_id": "sha256:f39a4fd033486fb1e77eed03a6787fa83a5860d280e4b5ee47f7f8372eed95a2"
+          },
+          {
+            "content_digest": "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d",
+            "media_id": "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d"
+          }
+        ],
+        "shots": [
+          {
+            "content_digest": "sha256:b97de3b8da2c0f0d66302fe690e82049ba3ef1d635bbea53cf8de64a8b894a2d",
+            "internal_timeline_revision_id": "film-internal-1",
+            "revision_id": "film-shot-revision-1",
+            "shot_id": "shot-1"
+          },
+          {
+            "content_digest": "sha256:a59a980cb7d9b78b605a946761fb801885340d05a1fc9ee7d2353106ec7e2c6a",
+            "internal_timeline_revision_id": "film-internal-2",
+            "revision_id": "film-shot-revision-2",
+            "shot_id": "shot-2"
+          },
+          {
+            "content_digest": "sha256:d621270cdb1ac3de14d109f0586cd26853d036eb88f106ad2b0f1ac3c18e3fb7",
+            "internal_timeline_revision_id": "film-internal-3",
+            "revision_id": "film-shot-revision-3",
+            "shot_id": "shot-3"
+          }
+        ]
+      },
+      "new_head": "a3e671256f1c42b8837d3e118c97b21b",
+      "old_head": "film-parent-v1",
+      "project_id": "7b6f2bae8ffe42bf925216c38249ed79",
+      "timeline_id": "film"
+    },
+    "publication_receipt_id": "txn-11c90075be6c4c8bb9e2627366f0fe4f",
+    "reference_id": "film-legacy-reference",
+    "text_binding_id": "fa141364-9d4d-57ca-b7dc-9a23d259312e",
+    "text_binding_media_id": "sha256:fef50eab9e9b23b75133cf7553faee605c3ff14d993599c8d2c551030f0bcb3d",
+    "timeline_id": "film",
+    "transcript_document_id": "transcript:c49d7d673dc883c363f95ea19d01d75b66c00ba849b09cb833966e39d392133d"
+  },
+  "restore_result": {
+    "activation_handoff": "/tmp/w-e507fccdcb/final2-hy9cwN/restored-duplicate/activation-handoff.json",
+    "destination": "/tmp/w-e507fccdcb/final2-hy9cwN/restored-duplicate",
+    "realm_id": "synthetic-film-realm",
+    "source_manifest_sha256": "5a74c10365b82a5a7d9a1dd41de851c977c60a5a6a9f8b9b716aa99a8b4cf5cc"
+  },
+  "restored_root": "/tmp/w-e507fccdcb/final2-hy9cwN/restored-duplicate",
+  "review": "rt-G5-authentic-review-1640",
+  "runtime_commit_before_after": {
+    "after": "d9e2a71e87c827290a3ff58a94f6fb8b4bc11e0b",
+    "before": "d9e2a71e87c827290a3ff58a94f6fb8b4bc11e0b"
+  },
+  "runtime_service_module_before_after": {
+    "after": "/home/user/work/wt/rt-G5-authentic-review-1640/runtime_protocol/service.py",
+    "before": "/home/user/work/wt/rt-G5-authentic-review-1640/runtime_protocol/service.py"
+  },
+  "runtime_tree_before_after": {
+    "after": "9b07545cac9a8bbafb16246aaa6f72050ef7cffe",
+    "before": "9b07545cac9a8bbafb16246aaa6f72050ef7cffe"
+  },
+  "verified_cas_manifest_sha256": "9964c3fb382ae717525039324e307b719627061156dce8a400663f2e365c80eb",
+  "verified_manifest_sha256": "c76824ce644868ee8878a25df1eae06754d79b1a83a6eeeb6fb8272344e9841f"
+}
