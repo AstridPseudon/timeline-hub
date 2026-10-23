@@ -148,7 +148,7 @@ function useLocalTimelineDocument(
     },
   });
 
-  return { queryKey, compositionAdapter, ...query };
+  return { queryKey, provider, compositionAdapter, ...query };
 }
 
 function isCompositionForDocument(
@@ -296,6 +296,7 @@ export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, 
           shotToEdit={selectedShotModel}
           canonicalOccurrence={selectedShotModel}
           canonicalShotComposition={documentQuery.compositionAdapter ?? documentQuery.data?.compositionAdapter ?? shotCompositionAdapter}
+          timelineDataProvider={documentQuery.provider ?? undefined}
           canonicalComposition={composition}
           selectedProjectId={projectSlug}
           isNewlyCreatedShot={false}

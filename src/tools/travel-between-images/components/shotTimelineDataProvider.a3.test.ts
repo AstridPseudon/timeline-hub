@@ -1,0 +1,462 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createFakeIndexedDB } from 'fake-indexeddb';
+import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
+import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { ApiError } from '@/integrations/runtime/generated.ts';
+import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
+import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
+import type { DataProvider, TimelineCommandBasis, TimelineCommitResult } from '@/tools/video-editor/data/DataProvider.ts';
+import type { CanonicalDocument, CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
+import { createCommitOutbox, type OutboxRecord } from '@/tools/video-editor/commands/commitOutbox.ts';
+import { createShotTimelineDataProvider } from './shotTimelineDataProvider.ts';
+
+function canonicalDocument(): CanonicalDocument {
+  const occurrence = fixture.occurrences.find((value) => value.occurrence_id === 'occ-3')!;
+  const shot = fixture.shot_revisions.find((value) => value.shot_id === 'shot-alpha' && value.revision_id === 'rev-b')!;
+  const internal = shot.internal_timeline_revision;
+  const timeline = structuredClone(internal.timeline);
+  const rawClip = timeline.clips.find((value) => value.id === 'alpha-video-b')!;
+  Object.assign(rawClip, {
+    params: null,
+    effects: null,
+    keyframes: null,
+    text: null,
+    elementRef: null,
+    app: {
+      ...rawClip.app,
+      opaqueFutureState: { preserve: null },
+    },
+  });
+  return {
+    schema_version: 1,
+    project_id: 'project-001',
+    timeline_id: 'document-primary',
+    parent_revision: {
+      revision_id: fixture.primary_timeline.head.revision_id,
+      content_digest: 'sha256:parent',
+      payload: {
+        config: { clips: [], tracks: [] },
+        occurrences: [{
+          occurrence_id: occurrence.occurrence_id,
+          shot_id: occurrence.shot_id,
+          shot_revision_id: occurrence.revision_id,
+        }],
+      },
+    },
+    shot_revisions: [{
+      shot_id: shot.shot_id,
+      revision_id: shot.revision_id,
+      internal_timeline_revision_id: internal.revision_id,
+      content_digest: 'sha256:shot',
+      payload: { name: 'raw-shot', internal_timeline_revision_id: internal.revision_id },
+    }],
+    internal_timeline_revisions: [{
+      timeline_id: 'timeline-alpha',
+      revision_id: internal.revision_id,
+      content_digest: internal.content_digest,
+      payload: timeline,
+    }],
+    dependency_manifest: {
+      shots: [{ shot_id: shot.shot_id, revision_id: shot.revision_id,
+        internal_timeline_revision_id: internal.revision_id, content_digest: 'sha256:shot' }],
+      internal_timelines: [{ timeline_id: 'timeline-alpha', revision_id: internal.revision_id, content_digest: internal.content_digest }],
+      media: [], documents: [],
+    },
+  } as CanonicalDocument;
+}
+
+const scope = { actorId: 'actor-a3', realmId: 'realm-a3', projectId: 'project-001', timelineId: 'document-primary' };
+const internalRef = 'internal-revision:timeline-alpha-b';
+
+beforeEach(() => {
+  Object.defineProperty(globalThis, 'indexedDB', { configurable: true, value: createFakeIndexedDB() });
+  Object.defineProperty(globalThis.navigator, 'locks', {
+    configurable: true,
+    value: { request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}) },
+  });
+});
+
+function harness(before = canonicalDocument()) {
+  const oldPublish = vi.fn();
+  const adapter = createShotCompositionAdapter({ load: vi.fn(), publish: oldPublish });
+  const composition = adapter.prepare(fixture);
+  const occurrence = composition.occurrences.find((value) => value.occurrenceId === 'occ-3')!;
+  const config = projectCanonicalComposition({ ...composition, occurrences: [occurrence] }).config;
+  const initial: TimelineCommandBasis = {
+    head: { revisionId: fixture.primary_timeline.head.revision_id, publicationId: 'pub-0' },
+    canonicalDocument: before, graph: fixture,
+  };
+  const outboxes = createCommitOutbox();
+  const send = vi.fn<(request: CommitRequest, key: string) => Promise<TimelineCommitResult>>();
+  const load = vi.fn(async () => initial);
+  const transport = { loadTimelineCommandBasis: load,
+    getRecoverableIdentity: vi.fn(async () => scope), commitTimeline: send } as unknown as DataProvider;
+  const published = vi.fn();
+  const mount = () => createShotTimelineDataProvider(config, composition, occurrence.occurrenceId,
+    adapter, published, undefined, 0, undefined, transport);
+  const records = () => outboxes.list(scope);
+  const add = () => {
+    const { app: _app, ...base } = config.clips[0];
+    return { ...config, clips: [...config.clips, { ...base, id: 'popup-added-a3', at: config.clips[0].at + 1 }] };
+  };
+  const reply = (request: CommitRequest, key: string, document: CanonicalDocument,
+    status: 'accepted' | 'merged' = 'accepted'): TimelineCommitResult => {
+    const response = acceptedCommit({ revision_id: 'rev-a3-accepted', publication_id: 'pub-a3-accepted' },
+      { revision_id: request.base_revision_id, publication_id: request.base_publication_id },
+      { projectId: scope.projectId, timelineId: scope.timelineId, commands: request.commands });
+    const canonical = structuredClone(document);
+    canonical.parent_revision.revision_id = 'rev-a3-accepted';
+    Object.assign(response.data, { status, canonical_document: canonical, document_digest: fixtureDigest(canonical),
+      merge_mode: 'atomic', steps: request.steps!.map((step) => ({ ...step, dependencies: request.reads })),
+      ...(status === 'merged' ? { previous_revision_id: 'rev-agent', previous_publication_id: 'pub-agent',
+        rebased_onto: { revision_id: 'rev-agent', publication_id: 'pub-agent' } } : {}) });
+    response.receipt.idempotency_key = key;
+    response.receipt.request_hash = fixtureDigest({ operation: 'commitTimeline',
+      path: `/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`, publisher: response.data.publisher, request }).slice(7);
+    response.receipt.result = response.data;
+    const graph = structuredClone(fixture);
+    graph.primary_timeline.head.revision_id = 'rev-a3-accepted';
+    // This fixture supplies the authoritative graph; the App never executes a patch.
+    if (status === 'merged') graph.shot_revisions.find((shot) => shot.revision_id === 'rev-b')!.provenance.source = 'agent-change';
+    return { response, accepted: { revisionId: 'rev-a3-accepted', publicationId: 'pub-a3-accepted' },
+      canonicalDocument: canonical, graph, receipt: response.receipt };
+  };
+  return { adapter, oldPublish, composition, config, initial, before, send, load, mount, published, records, reply, add };
+}
+
+function savedDocument(record: OutboxRecord): CanonicalDocument {
+  return (record.intents[0].payload as unknown as { after: CanonicalDocument }).after;
+}
+
+describe('shot popup A3 save ingress', () => {
+  it('uses the A2 session for a uniquely owned child root and publishes its accepted closure', async () => {
+    const h = harness();
+    let captured!: OutboxRecord;
+    h.send.mockImplementation(async (request, key) => {
+      [captured] = await h.records();
+      return h.reply(request, key, savedDocument(captured));
+    });
+    const provider = h.mount();
+    const nextConfig = { ...h.config, clips: h.config.clips.map((clip, index) => index === 0
+      ? { ...clip, hold: (clip.hold ?? 0) + 0.25 } : clip) };
+    await expect(provider.saveTimeline('popup-timeline', nextConfig, 1)).resolves.toBe(2);
+    const save = captured.intents[0].payload as unknown as Record<string, unknown>;
+    expect(save.documentIntent).toMatchObject({
+      label: 'Edit shot timeline',
+      roots: [{ ref: internalRef, revisionId: 'timeline-alpha-b', contentDigest: 'sha256:5555555555555555555555555555555555555555555555555555555555555555' }],
+      before: h.before,
+      after: expect.objectContaining({ internal_timeline_revisions: [expect.objectContaining({
+        revision_id: 'timeline-alpha-b', payload: expect.objectContaining({ clips: [expect.objectContaining({
+          id: 'alpha-video-b', app: expect.objectContaining({ visualBoundary: { intentionalPause: true },
+            opaqueFutureState: { preserve: null } }),
+          params: null, effects: null, keyframes: null, text: null, elementRef: null,
+        })] }),
+      })] }),
+    });
+    expect(h.published).toHaveBeenCalledWith(expect.objectContaining({ headRevisionId: 'rev-a3-accepted' }), 0, fixture.primary_timeline.head.revision_id);
+    expect(h.send).toHaveBeenCalledTimes(1);
+    expect(h.oldPublish).not.toHaveBeenCalled();
+    await provider.dispose();
+  });
+
+  it.each(['accepted', 'merged'] as const)('sends a guarded popup add through the real durable session and adopts %s', async (status) => {
+    const h = harness();
+    let captured!: OutboxRecord;
+    h.send.mockImplementation(async (request, key) => {
+      [captured] = await h.records();
+      expect(JSON.stringify(request)).toBe(captured.pending!.request.body);
+      expect(key).toBe(captured.pending!.request.key);
+      return h.reply(request, key, savedDocument(captured), status);
+    });
+    const provider = h.mount();
+    await expect(provider.saveTimeline('popup-timeline', h.add(), 1)).resolves.toBe(2);
+    expect(h.send).toHaveBeenCalledTimes(1);
+    const [request] = h.send.mock.calls[0];
+    expect(request).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+      base_revision_id: h.initial.head.revisionId, base_publication_id: 'pub-0', label: 'Edit shot timeline',
+      merge: 'atomic', dry_run: false,
+      commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null,
+        created: ['occurrence:occ-3/clip:popup-added-a3'] }] });
+    const changes = request.commands[0].args.changes;
+    expect(changes).toEqual(expect.arrayContaining([expect.objectContaining({
+      op: 'list.insert', ref: internalRef, path: ['clips'], id: 'popup-added-a3',
+      before: { state: 'absent' }, order_before: ['alpha-video-b'], after_id: 'alpha-video-b',
+    })]));
+    expect(request.steps![0]).toMatchObject({ id: expect.any(String), label: 'Edit shot timeline',
+      intent: 'Save shot-local timeline changes', tags: ['shot-popup'], command_ordinals: [0], patch: changes,
+      reads: request.reads });
+    expect(request.reads).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: 'field', ref: 'parent', path: ['occurrences'] }),
+      { kind: 'field', ref: 'shot-revision:rev-b', path: ['internal_timeline_revision_id'],
+        state: { state: 'present', value: 'timeline-alpha-b' } },
+      { kind: 'scope', ref: internalRef, path: [] },
+    ]));
+    expect(provider.getTimelineDraftRecoveryMetadata()).toMatchObject({ baseHeadRevisionId: 'rev-a3-accepted' });
+    const [stored] = await h.records();
+    expect(stored.accepted!.value).toMatchObject({ response: { data: { status, merge_mode: 'atomic',
+      steps: [{ patch: changes, dependencies: request.reads }] } } });
+    expect(stored.intents).toEqual([]);
+    // The canonical reply is authoritative even when it differs from the local preview.
+    expect((await provider.loadTimeline('popup-timeline')).config.clips).toHaveLength(h.config.clips.length);
+    if (status === 'merged') expect(h.published.mock.calls[0][0].contract.shot_revisions
+      .find((shot: { revision_id: string }) => shot.revision_id === 'rev-b').provenance.source).toBe('agent-change');
+    await provider.dispose();
+  });
+
+  it.each(['child', 'parent', 'config'] as const)('keeps deliberate registry removals and omitted raw values in the %s registry', async (location) => {
+    const before = canonicalDocument();
+    const h = harness(before);
+    const source = { assets: { ...JSON.parse(JSON.stringify(h.config.registry)), hidden: { foreign: null } },
+      future: { nullable: null, ordered: ['z', null, 'a'] } };
+    const visibleId = Object.keys(h.config.registry)[0];
+    Object.assign(source.assets[visibleId], { future: null });
+    const parent = before.parent_revision.payload;
+    const child = before.internal_timeline_revisions[0].payload;
+    if (location === 'child') child.registry = source;
+    else if (location === 'parent') {
+      parent.registry = source;
+      (parent.config as Record<string, unknown>).registry = structuredClone(source);
+    } else (parent.config as Record<string, unknown>).registry = source;
+    let captured!: OutboxRecord;
+    h.send.mockImplementation(async (request, key) => {
+      [captured] = await h.records();
+      return h.reply(request, key, savedDocument(captured));
+    });
+    const provider = h.mount();
+    const registry = await provider.loadAssetRegistry('popup-timeline');
+    const assets = { ...registry.assets };
+    delete assets[visibleId];
+    await provider.saveTimeline('popup-timeline', h.config, 1, { ...registry, assets });
+    const after = savedDocument(captured);
+    const result = location === 'child' ? after.internal_timeline_revisions[0].payload.registry
+      : location === 'parent' ? after.parent_revision.payload.registry
+        : (after.parent_revision.payload.config as Record<string, unknown>).registry;
+    const expected = structuredClone(source);
+    delete expected.assets[visibleId];
+    expect(result).toEqual(expected);
+    if (location === 'parent') expect((after.parent_revision.payload.config as Record<string, unknown>).registry).toEqual(expected);
+    const [request] = h.send.mock.calls[0];
+    expect(request.commands[0].args.changes).toContainEqual({ op: 'remove', ref: location === 'child' ? internalRef : 'parent',
+      path: [...(location === 'config' ? ['config'] : []), 'registry', 'assets', visibleId],
+      before: { state: 'present', value: source.assets[visibleId] } });
+    expect(Object.hasOwn(after.internal_timeline_revisions[0].payload, 'not-present')).toBe(false);
+    await provider.dispose();
+  });
+
+  it('sends media swap and track add/reorder without losing foreign rows or nullable fields', async () => {
+    const before = canonicalDocument();
+    const child = before.internal_timeline_revisions[0].payload;
+    (child.clips as unknown[]).push({ id: 'foreign-clip', foreign: null, order: [2, null, 1] });
+    const h = harness(before);
+    let captured!: OutboxRecord;
+    h.send.mockImplementation(async (request, key) => {
+      [captured] = await h.records();
+      return h.reply(request, key, savedDocument(captured));
+    });
+    const provider = h.mount();
+    await provider.saveTimeline('popup-timeline', { ...h.config,
+      tracks: [{ id: 'new-track', kind: 'visual' }, ...h.config.tracks.slice().reverse()],
+      clips: h.config.clips.map((clip) => ({ ...clip, asset: 'replacement-verified-asset' })),
+    }, 1);
+    const after = savedDocument(captured).internal_timeline_revisions[0].payload;
+    expect((after.clips as unknown[])[1]).toEqual({ id: 'foreign-clip', foreign: null, order: [2, null, 1] });
+    expect((after.clips as Array<Record<string, unknown>>)[0]).toMatchObject({ asset_id: 'replacement-verified-asset', params: null,
+      effects: null, keyframes: null, text: null, elementRef: null });
+    const changes = h.send.mock.calls[0][0].commands[0].args.changes;
+    expect(changes).toEqual(expect.arrayContaining([
+      expect.objectContaining({ op: 'list.insert', ref: internalRef, path: ['tracks'], id: 'new-track' }),
+      expect.objectContaining({ op: 'list.move', ref: internalRef, path: ['tracks'] }),
+    ]));
+    await provider.dispose();
+  });
+
+  it('removes only the authored clip and track while preserving rows omitted by projection', async () => {
+    const before = canonicalDocument();
+    const timeline = before.internal_timeline_revisions[0].payload;
+    const foreign = { id: 'foreign-clip', foreign: null, ordered: [null, 2, 1] };
+    (timeline.clips as unknown[]).push(foreign);
+    const h = harness(before);
+    let captured!: OutboxRecord;
+    h.send.mockImplementation(async (request, key) => {
+      [captured] = await h.records();
+      return h.reply(request, key, savedDocument(captured));
+    });
+    const provider = h.mount();
+    await provider.saveTimeline('popup-timeline', { ...h.config, clips: [], tracks: h.config.tracks.slice(0, 1) }, 1);
+    const after = savedDocument(captured).internal_timeline_revisions[0].payload;
+    expect(after.clips).toEqual([foreign]);
+    expect(after.tracks).toEqual((timeline.tracks as unknown[]).slice(0, 1));
+    expect(h.send.mock.calls[0][0].commands[0].args.changes).toEqual(expect.arrayContaining([
+      expect.objectContaining({ op: 'list.remove', ref: internalRef, path: ['clips'], id: 'alpha-video-b',
+        order_before: ['alpha-video-b', 'foreign-clip'] }),
+      expect.objectContaining({ op: 'list.remove', ref: internalRef, path: ['tracks'], id: 'audio',
+        order_before: ['video', 'audio'] }),
+    ]));
+    await provider.dispose();
+  });
+
+  it('binds the selected physical revision when another reachable image has the same timeline ID', async () => {
+    const before = canonicalDocument();
+    const otherInternal = { ...structuredClone(before.internal_timeline_revisions[0]), revision_id: 'other-internal' };
+    const otherShot = { ...structuredClone(before.shot_revisions[0]), shot_id: 'other-shot', revision_id: 'other-shot-rev',
+      internal_timeline_revision_id: otherInternal.revision_id,
+      payload: { internal_timeline_revision_id: otherInternal.revision_id, nullable: null } };
+    before.internal_timeline_revisions.unshift(otherInternal);
+    before.shot_revisions.unshift(otherShot);
+    before.dependency_manifest.internal_timelines.unshift({ timeline_id: otherInternal.timeline_id,
+      revision_id: otherInternal.revision_id, content_digest: otherInternal.content_digest });
+    before.dependency_manifest.shots.unshift({ shot_id: otherShot.shot_id, revision_id: otherShot.revision_id,
+      internal_timeline_revision_id: otherInternal.revision_id, content_digest: otherShot.content_digest });
+    (before.parent_revision.payload.occurrences as unknown[]).unshift({ occurrence_id: 'other-occurrence',
+      shot_id: otherShot.shot_id, shot_revision_id: otherShot.revision_id });
+    const h = harness(before);
+    let captured!: OutboxRecord;
+    h.send.mockImplementation(async (request, key) => {
+      [captured] = await h.records();
+      return h.reply(request, key, savedDocument(captured));
+    });
+    const provider = h.mount();
+    await provider.saveTimeline('popup-timeline', h.add(), 1);
+    const after = savedDocument(captured);
+    expect(after.internal_timeline_revisions[0]).toEqual(otherInternal);
+    expect(after.shot_revisions).toEqual(before.shot_revisions);
+    expect(after.parent_revision).toEqual(before.parent_revision);
+    expect(h.send.mock.calls[0][0].commands[0].args.changes).toEqual([
+      expect.objectContaining({ op: 'list.insert', ref: internalRef, path: ['clips'] }),
+    ]);
+    await provider.dispose();
+  });
+
+  it.each(['child', 'parent', 'config'] as const)('declares created asset ownership in an existing empty %s registry', async (location) => {
+    const before = canonicalDocument();
+    if (location === 'child') before.internal_timeline_revisions[0].payload.registry = {};
+    else if (location === 'parent') before.parent_revision.payload.registry = {};
+    else (before.parent_revision.payload.config as Record<string, unknown>).registry = {};
+    const h = harness(before);
+    h.send.mockImplementation(async (request, key) => h.reply(request, key, savedDocument((await h.records())[0])));
+    const provider = h.mount();
+    const registry = await provider.loadAssetRegistry('popup-timeline');
+    await provider.saveTimeline('popup-timeline', h.config, 1, { assets: { ...registry.assets,
+      registered: { file: 'existing-verified-object', type: 'image', future: null },
+    } });
+    const request = h.send.mock.calls[0][0];
+    expect(request.commands[0].created).toEqual([`${location === 'child' ? 'occurrence:occ-3' : 'parent'}/asset:registered`]);
+    expect(request.commands[0].args.changes).toEqual([
+      expect.objectContaining({ op: 'set', ref: location === 'child' ? internalRef : 'parent',
+        path: [...(location === 'config' ? ['config'] : []), 'registry', 'assets'], before: { state: 'absent' },
+        value: { registered: { file: 'existing-verified-object', type: 'image', future: null } } }),
+    ]);
+    await provider.dispose();
+  });
+
+  it('retries the same mounted popup save without appending a new intent or key', async () => {
+    const h = harness();
+    h.send.mockRejectedValueOnce(new Error('Lost acknowledgement'));
+    const provider = h.mount();
+    const next = h.add();
+    await expect(provider.saveTimeline('popup-timeline', next, 1)).rejects.toThrow('unacknowledged');
+    const [stored] = await h.records();
+    h.send.mockImplementationOnce(async (request, key) => {
+      expect(JSON.stringify(request)).toBe(stored.pending!.request.body);
+      expect(key).toBe(stored.pending!.request.key);
+      expect((await h.records())[0].intents).toEqual(stored.intents);
+      return h.reply(request, key, savedDocument(stored));
+    });
+    await expect(provider.saveTimeline('popup-timeline', next, 1)).resolves.toBe(2);
+    expect(h.send).toHaveBeenCalledTimes(2);
+    await provider.dispose();
+  });
+
+  it.each(['same-shot', 'different-shot', 'duplicate-root', 'bad-manifest'] as const)('refuses unsafe ownership: %s', async (kind) => {
+    const before = canonicalDocument();
+    const parent = before.parent_revision.payload;
+    const original = (parent.occurrences as Array<Record<string, unknown>>)[0];
+    if (kind === 'same-shot') (parent.occurrences as unknown[]).push({ ...original, occurrence_id: 'other' });
+    if (kind === 'different-shot') {
+      (parent.occurrences as unknown[]).push({ ...original, occurrence_id: 'other', shot_id: 'other-shot', shot_revision_id: 'other-rev' });
+      const shot = { ...structuredClone(before.shot_revisions[0]), shot_id: 'other-shot', revision_id: 'other-rev' };
+      before.shot_revisions.push(shot);
+      before.dependency_manifest.shots.push({ ...before.dependency_manifest.shots[0], shot_id: 'other-shot', revision_id: 'other-rev' });
+    }
+    if (kind === 'duplicate-root') before.internal_timeline_revisions.push(structuredClone(before.internal_timeline_revisions[0]));
+    if (kind === 'bad-manifest') before.dependency_manifest.internal_timelines[0].content_digest = 'sha256:wrong';
+    const h = harness(before);
+    const provider = h.mount();
+    await expect(provider.saveTimeline('popup-timeline', h.add(), 1)).rejects.toThrow(/isolation|unique|pin/);
+    expect(h.send).not.toHaveBeenCalled();
+    await provider.dispose();
+  });
+
+  it('chains a changed popup draft behind an unknown add outcome using the original durable request first', async () => {
+    const h = harness();
+    const provider = h.mount();
+    const next = h.add();
+    h.send.mockRejectedValueOnce(new Error('Lost acknowledgement'));
+    await expect(provider.saveTimeline('popup-timeline', next, 1)).rejects.toThrow('unacknowledged');
+    const [original] = await h.records();
+    h.send.mockImplementationOnce(async (request, key) => {
+      expect(JSON.stringify(request)).toBe(original.pending!.request.body);
+      expect(key).toBe(original.pending!.request.key);
+      expect((await h.records())[0].intents).toHaveLength(2);
+      return h.reply(request, key, savedDocument(original));
+    }).mockImplementationOnce(async (request, key) => {
+      expect(key).not.toBe(original.pending!.request.key);
+      expect(request).toMatchObject({ base_revision_id: 'rev-a3-accepted', base_publication_id: 'pub-a3-accepted' });
+      expect(request.commands[0].args.changes).toEqual([{ op: 'set', ref: internalRef,
+        path: ['clips', 'id:popup-added-a3', 'label'], before: { state: 'absent' }, value: 'Dependent' }]);
+      return h.reply(request, key, savedDocument((await h.records())[0]));
+    });
+    const dependent = { ...next, clips: next.clips.map((clip) => clip.id === 'popup-added-a3'
+      ? { ...clip, label: 'Dependent' } : clip) };
+    await expect(provider.saveTimeline('popup-timeline', dependent, 1)).resolves.toBe(2);
+    expect(h.send).toHaveBeenCalledTimes(3);
+    expect((await h.records())[0].intents).toEqual([]);
+    await provider.dispose();
+  });
+
+  it('reopens the explicitly selected real outbox owner and retries its exact persisted request and key', async () => {
+    const h = harness();
+    h.send.mockRejectedValueOnce(new Error('Lost acknowledgement'));
+    const first = h.mount();
+    await expect(first.saveTimeline('popup-timeline', h.add(), 1)).rejects.toThrow('unacknowledged');
+    const [stored] = await h.records();
+    const exact = structuredClone(stored.pending!.request);
+    expect(h.send.mock.calls[0]).toEqual([JSON.parse(exact.body), exact.key]);
+    await first.dispose();
+    const reopened = h.mount();
+    expect(await reopened.getLocalSaveState()).toMatchObject({ status: 'recovery', recoverableOwners: [stored.ownerId] });
+    await expect(reopened.recoverLocalSaves('unlisted-owner')).rejects.toThrow('explicitly listed');
+    h.send.mockImplementationOnce(async (request, key) => {
+      expect(JSON.stringify(request)).toBe(exact.body);
+      expect(key).toBe(exact.key);
+      return h.reply(request, key, savedDocument(stored), 'merged');
+    });
+    await reopened.recoverLocalSaves(stored.ownerId);
+    expect(h.send).toHaveBeenCalledTimes(2);
+    expect(await reopened.getLocalSaveState()).toMatchObject({ status: 'saved' });
+    expect((await h.records())[0].intents).toEqual([]);
+    await reopened.dispose();
+  });
+
+  it.each(['conflict', 'invalid'] as const)('rolls back a %s reply, retaining the exact rejected request through recovery', async (code) => {
+    const h = harness();
+    const details = code === 'conflict' ? { status: 'conflict', head: { revision_id: 'agent-head', publication_id: 'agent-pub' }, reason: 'dependency_changed' }
+      : { code: 'invalid_media', path: ['clips', 'id:popup-added-a3'], hint: 'Choose verified media' };
+    h.send.mockRejectedValueOnce(new ApiError(code === 'conflict' ? 409 : 422, code, code, '', details));
+    const first = h.mount();
+    await expect(first.saveTimeline('popup-timeline', h.add(), 1)).rejects.toThrow('unacknowledged');
+    expect((await first.loadTimeline('popup-timeline')).config.clips).toHaveLength(h.config.clips.length);
+    expect(h.load).toHaveBeenCalledTimes(2);
+    const [stored] = await h.records();
+    expect(stored.pending!.outcome).toMatchObject({ kind: 'rejected', error: { code, details } });
+    expect(stored.intents).toHaveLength(1);
+    await first.dispose();
+    const second = h.mount();
+    await expect(second.recoverLocalSaves(stored.ownerId)).rejects.toThrow('unacknowledged');
+    expect(h.send).toHaveBeenCalledTimes(1);
+    expect((await h.records())[0].pending!.request).toEqual(stored.pending!.request);
+    expect(h.published).not.toHaveBeenCalled();
+    await second.dispose();
+  });
+});
