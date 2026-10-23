@@ -4,6 +4,8 @@ from __future__ import annotations
 import copy
 import json
 
+import pytest
+
 from astrid.sdk import timeline
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.checkout import Checkout
@@ -12,8 +14,59 @@ from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.sdk.test_timeline_restructure import restructure_runtime  # noqa: F401
 
 
-def test_restructure_whole_inverse_redo_and_intervening_overlap_refusal(restructure_runtime, tmp_path, monkeypatch):  # noqa: F811
+@pytest.fixture
+def restructure_inverse_runtime(restructure_runtime, monkeypatch):  # noqa: F811
+    """Use the production authenticated revision/publication-pair reader for this test."""
+    from astrid.sdk.remote import RemoteTimelines
+
     env = restructure_runtime
+    monkeypatch.setattr(
+        env.generated,
+        "get_project_parent_composition_revision",
+        lambda project, timeline_id, revision: env.service.get_project_parent_composition_revision(
+            project, timeline_id, revision
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        env.generated,
+        "get_project_shot_revision",
+        lambda project, shot_id, revision: env.service.get_project_shot_revision(project, shot_id, revision),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        env.generated,
+        "get_project_timeline_revision",
+        lambda project, timeline_id, revision: env.service.get_project_timeline_revision(
+            project, timeline_id, revision
+        ),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        env.client.timelines,
+        "open_bundle",
+        RemoteTimelines.open_bundle.__get__(env.client.timelines),
+    )
+
+    def document():
+        head = env.service.get_project_timeline(env.project, "t")
+        opened = env.client.timelines.open_bundle(
+            env.project,
+            "t",
+            revision_id=head["head_revision_id"],
+            publication_id=head["head_publication_id"],
+        )
+        assert opened.ok, opened.as_dict()
+        return copy.deepcopy(opened.data["bundle"]["source_mapping"]["_runtime_document"])
+
+    env.document = document
+    return env
+
+
+def test_restructure_whole_inverse_redo_and_intervening_overlap_refusal(
+    restructure_inverse_runtime, tmp_path, monkeypatch
+):  # noqa: F811
+    env = restructure_inverse_runtime
 
     source = timeline.open(env.project, "t", client=env.client, outbox_path=tmp_path / "name.json")
     source.bundle["shots"][source._shot_ids()[0]]["payload"]["name"] = "02 TWO"
@@ -118,9 +171,15 @@ def test_restructure_whole_inverse_redo_and_intervening_overlap_refusal(restruct
     assert overlap["data"]["status"] == "accepted"
 
     refusing = timeline.open(env.project, "t", client=env.client, outbox_path=tmp_path / "refusing.json")
+    head_before_refusal = env.client.timelines.history(env.project, "t", limit=1).data["head"]
+    history_before_refusal = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
+    canonical_before_refusal = copy.deepcopy(env.document())
     try:
         refusing.session.undo([redone["receipt"]["receipt_id"]], idempotency_key="inverse-refuse")
     except CommitConflict as exc:
         assert "intervening" in str(exc)
     else:
         raise AssertionError("the overlapping authored write must refuse the guarded inverse")
+    assert env.client.timelines.history(env.project, "t", limit=1).data["head"] == head_before_refusal
+    assert env.client.timelines.history(env.project, "t", limit=200).data == history_before_refusal
+    assert env.document() == canonical_before_refusal
