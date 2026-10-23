@@ -1,0 +1,119 @@
+{
+  "kind": "D21-G5-c271-isolated-process",
+  "qualification_status": "FAIL; G5 remains DRAFT/P1-gated",
+  "identities": {
+    "agent": {
+      "commit": "f27d524798b14d11bcbe654ce7eee49d47e0b739",
+      "tree": "cf7395cc986fab4d9c6feb48b5a0be69ef7eac30",
+      "root": "/home/user/work/wt/agt-G5-c271-isolated-2010"
+    },
+    "runtime_execution": {
+      "commit": "2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d",
+      "tree": "f79a2355cfb39d9ada7721978bd20d5702105778",
+      "root": "/home/user/work/wt/rt-pin-2a9e347f"
+    },
+    "runtime_client_producer": {
+      "commit": "34eac0041b0891e9011966b39bcbd26053fde5bc",
+      "tree": "9853574865f25e08284e82ffb26c0bdecaa16a30",
+      "root": "/home/user/work/wt/rt-pin-34eac004"
+    }
+  },
+  "source_audit": {
+    "helper": "tests/helpers/runtime.py",
+    "cache_origin": "process-global _ARCHIVES maps pinned commits to temporary extracted trees; _exposed is set by the first use_runtime call, and ordinary use_runtime() returns it without re-locating",
+    "fresh_process_before": {"exposed": null, "archives": {}},
+    "fresh_process_after": {
+      "selected": "/home/user/work/wt/rt-pin-2a9e347f",
+      "exposed": "/home/user/work/wt/rt-pin-2a9e347f",
+      "archives": {},
+      "runtime_protocol": "/home/user/work/wt/rt-pin-2a9e347f/runtime_protocol/__init__.py",
+      "selected_matches_env": true,
+      "protocol_matches_selected": true
+    }
+  },
+  "preflight": {
+    "status": "PASS",
+    "archive_sha256": "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3",
+    "archive_verified_and_restored": true,
+    "schema_version": 31,
+    "head_pair": {
+      "revision_id": "a3e671256f1c42b8837d3e118c97b21b",
+      "publication_id": "txn-11c90075be6c4c8bb9e2627366f0fe4f"
+    },
+    "canonical_shape": {
+      "shots": 3,
+      "internal_timelines": 3,
+      "media_cas_objects": 5,
+      "documents": 0,
+      "registry_present": true,
+      "null_values": 9,
+      "legacy_word_values": ["word:word-1"],
+      "opaque_keys": []
+    },
+    "credential_findings": 0,
+    "body_lock": {
+      "file": "tests/sdk/test_timeline_restructure_guarded_runtime.py",
+      "function": "test_restructure_whole_inverse_redo_and_intervening_overlap_refusal",
+      "sha256": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d",
+      "matches": true
+    }
+  },
+  "collection": {
+    "status": "PASS",
+    "selected": 1,
+    "deselected": 0,
+    "selector": "sole explicit c271 node",
+    "duration": "0.70s"
+  },
+  "execution": {
+    "status": "FAIL",
+    "body_reached": true,
+    "teardown_completed": true,
+    "failing_operation": {
+      "label": "Undo timeline edit",
+      "op": "timeline.inverse",
+      "dry_run": false,
+      "runtime_status": 422,
+      "code": "validation_error",
+      "reason": "invalid_records",
+      "message": "inverse stage native writes do not cover its authenticated effect image",
+      "no_write": true,
+      "head_unchanged": true,
+      "history_unchanged": true
+    },
+    "failure_location": "tests/sdk/test_timeline_restructure_guarded_runtime.py:627-649",
+    "assertions_after_failure": "unreached because the original WorkspaceClientError was re-raised by the unchanged test body",
+    "retry": false
+  },
+  "observer": {
+    "child_events": {
+      "seam_entry": 73,
+      "seam_exit": 69,
+      "seam_exception": 4,
+      "wrapper_installed": 10,
+      "child_boot": 1
+    },
+    "observer_failures": 0,
+    "origin_mismatches": 0,
+    "credential_findings": 0
+  },
+  "packets": {
+    "archive": "g5-c271-isolated-2010-packets.tar.gz",
+    "archive_sha256": "a8dcf1d1fe6c2ce6905749ea11fe96057b421f7497c0e233c13ca1e0182bc3d4",
+    "archive_bytes": 14794303,
+    "archive_members": 85,
+    "raw_evidence_bytes": 142243149,
+    "lossless": true
+  },
+  "static_checks": {
+    "git_diff_check": "PASS",
+    "vendor_lock_against_producer_34eac": "PASS",
+    "artifact_manifest": "PASS",
+    "worktree_clean": true
+  },
+  "limits": [
+    "This is a harness-only qualification result; no product, test, helper, fixture, marker, generated, pin, Runtime, or source edits were made.",
+    "No SDK FOUR, guard rerun, full/browser/live suite, P1/P4, retry, bypass, monkeypatch of helper behavior, sys.modules swap, fake alias, or private authority synthesis was used.",
+    "The failing Runtime refusal is recorded without assigning source ownership or deviating from the settled plan."
+  ]
+}
