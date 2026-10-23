@@ -89,6 +89,7 @@ type CanonicalTimelineState = {
 
 const HEAD_CHECK_DEDUPE_MS = 1_000;
 const CANONICAL_HEAD_REFRESH_MS = 6_000;
+const PUBLIC_HEAD_PAIR_ATTEMPTS = 2;
 
 export interface RuntimeDataProviderOptions {
   projectId: string;
@@ -1394,21 +1395,37 @@ export class RuntimeDataProvider implements DataProvider {
 
   private async readTimelineInOrder(timelineId: string, poll = false): Promise<RuntimeRecord> {
     try {
-      const inspection = await (poll
-        ? this.pollCanonicalTimelineHead(this.projectId, timelineId)
-        : this.inspectCanonicalTimelineHead(this.projectId, timelineId));
-      if (!poll) this.rememberFreshHead(this.projectId, timelineId, inspection);
-      const headRevisionId = nullableString(
-        inspection.head_revision_id,
-        'canonical timeline inspection.head_revision_id',
-      );
-      const headPublicationId = optionalNullableString(
-        (inspection as unknown as RuntimeRecord).head_publication_id,
-        'canonical timeline inspection.head_publication_id',
-      );
+      let inspection: TimelineInspectionResult | undefined;
+      let headRevisionId: string | null = null;
+      let headPublicationId: string | null = null;
+      let mismatch: string | undefined;
+      for (let attempt = 0; attempt < PUBLIC_HEAD_PAIR_ATTEMPTS; attempt += 1) {
+        inspection = attempt === 0
+          ? await (poll
+            ? this.pollCanonicalTimelineHead(this.projectId, timelineId)
+            : this.inspectCanonicalTimelineHead(this.projectId, timelineId))
+          : await this.inspectCanonicalTimelineHead(this.projectId, timelineId);
+        const inspectedRevisionId = nullableString(
+          inspection.head_revision_id,
+          'canonical timeline inspection.head_revision_id',
+        );
+        const publicHead = await this.client.getProjectTimeline(this.projectId, timelineId);
+        assertRuntimeIdentity(publicHead, this.projectId, timelineId, 'timeline');
+        const publicRevisionId = nullableString(publicHead.head_revision_id, 'timeline.head_revision_id');
+        const publicPublicationId = nullableString(publicHead.head_publication_id, 'timeline.head_publication_id');
+        if (publicRevisionId === inspectedRevisionId) {
+          headRevisionId = inspectedRevisionId;
+          headPublicationId = publicPublicationId;
+          mismatch = undefined;
+          break;
+        }
+        mismatch = `Workspace Runtime timeline head moved while pairing inspected revision ${inspectedRevisionId ?? 'null'} with public revision ${publicRevisionId ?? 'null'}`;
+        this.invalidatePolledHead(this.projectId, timelineId);
+      }
+      if (mismatch || !inspection) throw new TimelineVersionConflictError(mismatch ?? 'Workspace Runtime timeline head pair is unavailable');
+      this.rememberFreshHead(this.projectId, timelineId, inspection);
       const previous = this.canonicalTimelineState.get(timelineId);
       const parentComposition = previous?.headRevisionId === headRevisionId
-        && previous.headPublicationId === headPublicationId
         ? previous.parentComposition
         : headRevisionId === null
           ? { config: {}, registry: { assets: {} }, clips: [], occurrences: [] }
@@ -1426,7 +1443,6 @@ export class RuntimeDataProvider implements DataProvider {
       }
       const clips = canonicalParentClips(parentComposition, config);
       const version = previous && previous.headRevisionId === headRevisionId
-        && previous.headPublicationId === headPublicationId
         ? previous.version
         : (previous?.version ?? 0) + 1;
       this.canonicalTimelineState.set(timelineId, {
