@@ -1,0 +1,20 @@
+# P1 D25 fresh independent triage
+
+**Evidence quality: FAIL for causal completeness; custody/no-weakening PASS.** Read-only App2107/treea3ff source analysis; no fixes, tests, services, browser/HTTP, environment or Git writes.
+
+| Historical failure | Causal verdict |
+| --- | --- |
+| Case1 missing recovery response894 | **INSUFFICIENT EVIDENCE**. Proven TEST EXPECTATION mismatch: old recovery button is fixture-only and production automatically claims/replays. This does not establish whether the actual owner replayed, remained pending or failed. Old count2 checkpoint890 passed, so do not claim a third POST occurred before890; the interval through observer894 remains unobserved. |
+| Case2 single POST943 | **INSUFFICIENT EVIDENCE**. No actual selected numeric callback/capture/basis/adoption state. Agent move/409/refusal/rollback UNREACHED. A ready delivered from0→3 trim requires its second POST; idle/4×503 does not justify accepting one. |
+
+An uncertain durable pending request has no head-equality/history-only drain in mounted localSaveSession/commitOutbox: it must obtain a later accepted outcome via the exact request. Recovery may complete before a late observer, requiring no *additional* POST. Existing1736 simulated replay witness has three total POSTs and no late fourth, not zero recovery transmissions. Separate one-slot draft cleanup is not owner acknowledgement. Runtime authenticates full request identity, original receipt/history/closure and returns exact accepted/merged/historical-rebased envelope without another history entry. Current2a9 sequential-proof validation differs from historical259; no relabeling.
+
+Actual retained22122: FAIL2/510s/App4c4+Agent98ef+Runtime259; log SHA256 `770847ebd767dbca94e8559ed7f4b1df11e4dd17438acdac10f1e75ce38baa1c`, 27606B/85lines. Priority5370B line is CASE2 only; full16384B line unparseable/truncated; traces lost. Case1 passed merged server response and pre-reload pending retry/body/key, but post-reload accepted/drain state is missing.8027 is selector-collection FAIL/bodyNOTRUN. Latest peer1854 reports corrected existing18607 on2107/787/2a9, no result artifact available here; no duplicate run.
+
+Independent hashes: current first slice1055–1222 = approved810a `4b04ad7ef74b8106244d87c23d12c7a18da251dd8f5a746f42d3221a72ea8b7f`; second1223–EOF = old4c4+810a `2f7501184477c8aec38d3cd289dd13c0d011fa8f69ecd43378f24f6c3100a2f7`. All lostACK/body/key/owner/scope/restart/history/drain/refusal and full ABI obligations retained. No production changes old4c4→2107. Actual checks: read-only git show/diff/identity, source/JSON/hash/PythonAST comparisons, git diff --check PASS; no fresh type/lint/test/full PASS claimed. Existing1635 NumberInput and1736 replay PASS remain controlled/mock scopes, not actual causes.
+
+**D25 FILE requirement still unmet by current source:** collector defaults to capped console, no retained diagnostic-file writer. Required per-case parseable retained files must carry exact case/phase/tuple/timestamps; case1 original scope/owner/intent/pending→accepted receipt+serverhistory/transmission/adoption chain; case2 selected numericfrom/at/hold/to/speed + callbackpatch + mounted/originalhead/basis + capture resolution/rejection + durable owner state. Complete body/key/reply equality remains required in protected artifacts; safe report projections exclude secrets. A wire head/aggregate/typed value cannot substitute for a missing mounted observation.
+
+After these verdicts, **consume existing App18607 files/result**; App owns execution/product facts, Proof owns verdict/GO. If those fields remain absent, return the precise evidence gap before any new product/test/oracle action. No new probe/control/run/author prescription. A pinned-tuple GO counts underD25. P1 remains NO-GO on retained22122 evidence.
+
+Full source lines, state table, no-weakening mapping, exact commands/results and limitations: [worker report](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-P1-D25-independent-triage-sol-1858/report.md).
