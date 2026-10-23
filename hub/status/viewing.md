@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T03:00:54Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# viewing board, 2026-10-23T02:57:22Z
+<!-- viewing | 2026-10-23T03:02:02Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# viewing board, 2026-10-23T03:01:10Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema/drift inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | Independent PASS four-copy SHA/cmp/generators/manifest; inventory only | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -25,5 +25,5 @@ Next ready: NEW OFFICIAL Runtime780da6d6 READY → Agent normal U4a-v2 adoption 
 
 Decided locally: App canonical-copy18f supersedes our originalbc2 and currentc4 realmerge; all3 mapped files byte-identical. Authoritative peer-app-to-viewing-20261023T0209-current-handoff.md confirms integrated service30194 PASS90. c4/bc2 need no additional merge/review. App peer0224 confirms both SUPERSEDED, actual18f fulltreebae5029a93df7a7f732e84c4aa16b095dfd9de01 equals c4 exactly; donor closure is home-owned. V3App beb donor satisfied by8a/22bfe, no oldbranch remerge. Existing home closures, not local non-home close tool, own receipts.
 Safety: Explicit00:15/00:50 root-fix clearances applied after kit00:44 (dispatch grep count1); old rejections retained. Any NEW classifier/safety rejection stops affected work. No new denial this pass; no manager product/test/generated/pin/git writes.
-Disk:16,330,612,736bytes free (>15GB) at02:50; no cleanup needed or denied-path retry.
+Disk:16,321,011,712bytes free (>15GB) at03:01; no cleanup needed or denied-path retry.
 Evidence: design/agent-R3-meta-integrated-0235.md; design/agent-AG-V1seam-join-review-0215.md; design/agent-V1-integrated-proof-0147.md; design/agent-V3-integrated-proof-0111.md; design/peer-app-to-viewing-20261023T0209-current-handoff.md; flat handoff-vw-V3-{agent,app}-{resume0050,review0050}-report.md; handoff-vw-V4-{agent-integrated0050,app-integrated0057}-report.md. Worker folders do not sync cross-machine. Exact archive remains workers/vw-V3-pack-resume/artifact-v3-635f4de06fda22a85fc2e4cfc764d0153a4c9f40/; no repack/version change.
