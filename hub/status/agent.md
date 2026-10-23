@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T07:15:58Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 0m -->
+<!-- agent | 2026-10-23T07:17:35Z | dispatcher heartbeat 1s | live 4 (sol 0, luna 4, other 0) | busy30 10 | status age 0m -->
 # agent board, 2026-10-23T07:11:48Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -51,7 +51,7 @@
 | G5-draft | retire superseded paths on draft only | Luna | orchestrator07:08; G3/G4 | doing | agt-G5-draft-0710 | Queued current4edc; original behaviour tests retained; no merge until P1GO | pending |
 | F-agent-full | integrated full suite and every failure classified | Luna/testservice | orchestrator07:08 farm failover | doing | agt-F-agent-full-0710; env0713 | Service24096 exit4 BEFOREcollection: runtime_protocol missing in suite environment; classifier active, narrowenvrepair dispatched. No behavior credit | pending |
 | DB-agent-dry | fresh-clone delivery squash verification | Luna | orchestrator07:08; upstream431 | doing | agt-DB-agent-dry-0710 | Current4edc/tree f17b against exact431; sanctioned delivery-build dry run, targeted freshclone proof, nothing pushed | pending |
-| F-agent-env | repair full service import environment | Luna | service24096 exact failure | doing | agt-F-env-full-0713 | Existing agent full ONErow only; collection/import preflight then independentreview before full retry | ops-only |
+| F-agent-env | repair full service import environment | Luna author/review | service24096 exact failure | review | agt-F-env-review-0716 | Author0713 one-row env/import/bashPASS; collection now16804/18327 with1 missing scopes error. No full retry until review+collectionfix | ops-only |
 | F-agent-collection | missing scopes import stops full collection | Luna | env0713 collection finding | doing | agt-F-collection-0715 | Actualdefault collection16804 nodes/1523deselected/1ERROR: test_dev_journey_quick imports removed core.extensions.scopes. Classify vs upstream431 and preserve behaviour | pending |
 Resolved: runtime — Normal frozen strict34e adoption DONE; compatible execution85dafdf467 merged/proven156+original48d6 allactualorigins. No newtuple/re-adoption/native14 duplicate.
 Resolved: agent audit — ccc scope hold CLEARED at auditedbf40; currentG234 reviewed31a5 and currentfork900 merged ea302 with integrated131+2replay+2live PASS. Owncommit checks retained.
