@@ -238,9 +238,12 @@ def test_closed_union_operation_inventory_is_exactly_the_supported_cohort():
     actual = [item['if']['properties']['op']['const']
               for item in _SCHEMA['$defs']['EditCommand']['allOf']]
     assert len(actual) == len(set(actual)) == 30
-    # D15 intentionally keeps occurrence.fork as a provider-only semantic
-    # operation; it is not a new frozen wire-schema tuple.
-    assert set(operations()) - set(actual) == {'occurrence.fork'}
-    assert set(actual) == expected == (
-        set(operations()) - {'occurrence.fork'} | {'timeline.inverse', 'timeline.restore'}
+    # These approved semantic commands are provider-registered but have no
+    # frozen wire-schema tuple; the closed union remains exactly the 30
+    # published tuples below.
+    provider_only = {'occurrence.fork', 'occurrence.place-shared', 'timeline.duplicate'}
+    assert set(operations()) - set(actual) == provider_only
+    assert set(actual) == expected
+    assert set(operations()) == (
+        expected - {'timeline.inverse', 'timeline.restore'} | provider_only
     )
