@@ -6,6 +6,7 @@ so only a candidate that can be published is checked here.
 """
 from __future__ import annotations
 
+import json
 import math
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
@@ -100,9 +101,49 @@ def _fps_values(bundle: Mapping[str, Any]) -> list[tuple[str, Fraction]]:
         if isinstance(child_output, Mapping) and "fps" in child_output:
             values.append((f"candidate.shots[{shot_id!r}].internal_timeline.output.fps",
                            _fps(child_output["fps"], f"candidate.shots[{shot_id!r}].internal_timeline.output.fps")))
-    if values and any(rate != values[0][1] for _, rate in values[1:]):
-        _fail("candidate", "all authored fps values must be the same rational rate")
     return values
+
+
+def _fps_basis(bundle: Mapping[str, Any]) -> str:
+    """Fingerprint authored rates and their physical clock owners, not timing edits."""
+    config = bundle["parent"]["config"]
+    canvas = ((config.get("theme_overrides") or {}).get("visual") or {}).get("canvas") or {}
+    source = bundle.get("source_mapping") or {}
+    source_shots = source.get("shots") or {}
+    shots = {}
+    for shot_id, shot in (bundle.get("shots") or {}).items():
+        owner = source_shots.get(shot_id) or {}
+        output = shot["internal_timeline"].get("output") or {}
+        shots[shot_id] = {
+            "shot_id": shot.get("shot_id"),
+            "owner": {key: owner.get(key) for key in (
+                "shot_id", "revision_id", "internal_timeline_id", "internal_timeline_revision_id")},
+            "fps": {key: output[key] for key in ("fps",) if key in output},
+        }
+    return json.dumps({
+        "project_id": bundle.get("project_id"), "timeline_id": bundle.get("timeline_id"),
+        "parent": bundle.get("base_parent"),
+        "output": {key: config.get("output", {})[key] for key in ("fps",)
+                   if key in (config.get("output") or {})},
+        "canvas": {key: canvas[key] for key in ("fps",) if key in canvas},
+        "shots": shots,
+        "owners": {row["occurrence_id"]: row.get("shot_id") for row in bundle.get("placements", [])},
+    }, sort_keys=True, allow_nan=False)
+
+
+def _validate_fps(candidate: Mapping[str, Any], baseline: Mapping[str, Any] | None) -> None:
+    values = _fps_values(candidate)
+    if not values or all(rate == values[0][1] for _, rate in values[1:]):
+        return
+    # D12 preserves an untouched legacy mismatch without equating its exact
+    # fractions. New/changed declarations or clock owners must satisfy parity.
+    if baseline is not None:
+        try:
+            if _fps_basis(candidate) == _fps_basis(baseline):
+                return
+        except (KeyError, TypeError, ValueError, AttributeError):
+            pass
+    _fail("candidate", "all authored fps values must be the same rational rate")
 
 
 def _identity_rows(rows: Any, path: str, key: str) -> dict[str, Mapping[str, Any]]:
@@ -357,20 +398,18 @@ def validate_final_candidate(
 ) -> None:
     """Validate one complete candidate without changing it.
 
-    ``baseline`` is used only to distinguish a newly authored parameter from
-    an older opaque parameter that must survive a round trip.  ``schema_inputs``
+    ``baseline`` distinguishes new declarations from untouched legacy values
+    that must survive a round trip.  ``schema_inputs``
     are the exact retained Runtime captures collected for this commit; this
     helper never resolves a mutable project-pack source.
     """
     if not isinstance(candidate, Mapping):
         _fail("candidate", "must be an object")
     try:
-        import json
-
         json.dumps(candidate, allow_nan=False)
     except (TypeError, ValueError) as exc:
         _fail("candidate", f"must be finite JSON: {exc}")
-    _fps_values(candidate)
+    _validate_fps(candidate, baseline)
     parent_value: Any = candidate.get("parent")
     if not isinstance(parent_value, Mapping):
         _fail("candidate.parent", "must be an object")
