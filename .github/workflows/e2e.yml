@@ -1,4 +1,4 @@
-# The three Playwright lanes that used to run nowhere (config/testing/skipRegistry.mjs LANES:
+# The three Playwright lanes (the third lane is three jobs, one per npm script) that used to run nowhere (config/testing/skipRegistry.mjs LANES:
 # playwright-default, playwright-timeline, playwright-extension-a11y-visual-cross-browser).
 # Every config attaches config/testing/playwrightSkipGuard.ts, so an undeclared skip fails the job.
 name: E2E
@@ -32,7 +32,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "20.19.0", cache: npm }
       - run: npm ci --legacy-peer-deps
-      - run: npx playwright install --with-deps chromium webkit
+      - run: npx playwright install --with-deps chromium
       - run: npx playwright test --config playwright.config.ts
       - uses: actions/upload-artifact@v4
         if: always()
@@ -53,7 +53,7 @@ jobs:
         if: always()
         with: { name: playwright-timeline-results, path: test-results, if-no-files-found: ignore }
 
-  playwright-extension-a11y-visual-cross-browser:
+  extension-accessibility:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -63,8 +63,34 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:e2e:extension-accessibility
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: extension-accessibility-results, path: artifacts, if-no-files-found: ignore }
+
+  extension-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.19.0", cache: npm }
+      - run: npm ci --legacy-peer-deps
+      - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e:extension-visual
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: extension-visual-results, path: artifacts, if-no-files-found: ignore }
+
+  extension-cross-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.19.0", cache: npm }
+      - run: npm ci --legacy-peer-deps
+      - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:e2e:extension-cross-browser
       - uses: actions/upload-artifact@v4
         if: always()
-        with: { name: playwright-extension-results, path: artifacts, if-no-files-found: ignore }
+        with: { name: extension-cross-browser-results, path: artifacts, if-no-files-found: ignore }

@@ -24,7 +24,12 @@ function collectIssues(page: Page): string[] {
     }
   });
   page.on('response', (response) => {
-    if (response.status() >= 400) {
+    // A project without a world library answers 404 to the Explorer's read of its library document; that is
+    // the Runtime's "absent" answer the panel handles (explorer/library.ts readDocument), not an error.
+    const absentWorldLibrary = response.status() === 404
+      && response.request().method() === 'GET'
+      && /\/documents\/world-library%3A[^/]*$/.test(new URL(response.url()).pathname);
+    if (response.status() >= 400 && !absentWorldLibrary) {
       issues.push(`[http ${response.status()}] ${response.url()}`);
     }
   });
@@ -67,7 +72,8 @@ async function openExtensionsPanel(page: Page): Promise<Locator> {
   await expect(inventory.locator('[data-video-editor-built-in-extension]')).toHaveCount(EXTENSION_COUNT);
   // The dialog zooms in on open, so a box measured mid-animation is scaled (23.99 px for a 24 px
   // control). Target sizes are measured only once every animation has finished.
-  await page.evaluate(() => Promise.all(document.getAnimations().map((animation) => animation.finished)));
+  // A cancelled animation (a transition replaced by the next one) rejects `finished` with AbortError; it is over.
+  await page.evaluate(() => Promise.all(document.getAnimations().map((animation) => animation.finished.catch(() => undefined))));
   return inventory;
 }
 

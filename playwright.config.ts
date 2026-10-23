@@ -163,13 +163,15 @@ export default defineConfig({
       name: 'chromium-condensed',
       testIgnore: defaultProjectIgnores,
       dependencies: extensionHarnessDependencies,
-      use: { ...devices['iPad Mini'] },
+      // The device profile defaults to WebKit; these projects are Chromium (the launch args below are
+      // Chromium-only and mobile WebKit is not a gate here).
+      use: { ...devices['iPad Mini'], defaultBrowserType: 'chromium' },
     },
     {
       name: 'chromium-mobile',
       testIgnore: defaultProjectIgnores,
       dependencies: extensionHarnessDependencies,
-      use: { ...devices['iPhone 13'] },
+      use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' },
     },
     ...(includeTimelineDevices
       ? [{
