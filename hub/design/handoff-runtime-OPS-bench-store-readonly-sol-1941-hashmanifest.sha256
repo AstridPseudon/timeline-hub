@@ -62,13 +62,16 @@ d5290b93acded851a308e38d8572550c413ee63c810ea05b88b45449f90a154f  handoff-runtim
 0e080554084926dd3b2b2e1ffd1a6c11256cc412e21b33516c108899d6b27768  handoff-runtime-OPS-bench-store-readonly-sol-1941-make-runtime.sh.patch
 832279ccee205b11c85e70df6bb3a6387e7041f54aae78b33bf5e79477d32fa2  handoff-runtime-OPS-bench-store-readonly-sol-1941-plan.md
 30cde10478b7b3447f3145d48263754e119e7974dd993bf08ca288efe68ee265  handoff-runtime-OPS-bench-store-readonly-sol-1941-projection.log
+15d40a33b4a3a91fa2bf88c6c26d1af78839b327dcbaef84d08344a9d6b0c9c3  handoff-runtime-OPS-bench-store-readonly-sol-1941-qualified-source-after.txt
+15d40a33b4a3a91fa2bf88c6c26d1af78839b327dcbaef84d08344a9d6b0c9c3  handoff-runtime-OPS-bench-store-readonly-sol-1941-qualified-source-before.txt
+ce53f1a4375a082e3c9feb3582af1333507aa820ab5d4e532f840cb3cedf25f0  handoff-runtime-OPS-bench-store-readonly-sol-1941-report.md
 72cafb3a5ec343f648a0e41d59a51e7c803ee51b4d04a394dc2010df828bd731  handoff-runtime-OPS-bench-store-readonly-sol-1941-request-child-venv.sh
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  handoff-runtime-OPS-bench-store-readonly-sol-1941-request-child-venv.sh.patch
 f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1  handoff-runtime-OPS-bench-store-readonly-sol-1941-request-runtime.sh
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  handoff-runtime-OPS-bench-store-readonly-sol-1941-request-runtime.sh.patch
 1f9a731b8106c8056b7dd7593eec43c08bde493d2f99af03cb1588ab7453fc45  handoff-runtime-OPS-bench-store-readonly-sol-1941-source-after.json
 1f9a731b8106c8056b7dd7593eec43c08bde493d2f99af03cb1588ab7453fc45  handoff-runtime-OPS-bench-store-readonly-sol-1941-source-before.json
-89847d28a8c12bc01d45cf539b13165f003ec5ef3967b170841836bc06b10f0c  handoff-runtime-OPS-bench-store-readonly-sol-1941-test-adapters.py
+5e8da2efeeeec1523a2a81cef2fcc2346c1a106f58a915646b575f4062d7b355  handoff-runtime-OPS-bench-store-readonly-sol-1941-test-adapters.py
 efd03c5469acbf51b58f2e9aa33ec04e923faf256f10185e9238fb3af866678f  handoff-runtime-OPS-bench-store-readonly-sol-1941-test-adapters.py.patch
 6dc45752c4082fc09f44750adb685253f9ed3514689efa954532d1c6fd67d8c0  handoff-runtime-OPS-bench-store-readonly-sol-1941-test-core.py
 c9f58ffe720dce88e7681a3e8be7bdd9b83fa0ebbf132d8b6a6b759d8115fe67  handoff-runtime-OPS-bench-store-readonly-sol-1941-test-leases.py
@@ -76,4 +79,5 @@ c9f58ffe720dce88e7681a3e8be7bdd9b83fa0ebbf132d8b6a6b759d8115fe67  handoff-runtim
 cfe370ffc224ed864829512e2dd947ed2659bc28690abce8cde108bc8632ff6b  handoff-runtime-OPS-bench-store-readonly-sol-1941-test-projection.py
 f599c5ad7bf3cd61aeb01791d903ce6edfa87d5d04a39b3ebb630b3517b17ff4  handoff-runtime-OPS-bench-store-readonly-sol-1941-test-run
 2d1240303c0c82bf908377eeff3323a899d8929454ac2c316b05bf076fc35d35  handoff-runtime-OPS-bench-store-readonly-sol-1941-test-run.original
-0d1ac4dbd44a121468af126c4a7813e48a5fefd5c8b4ddacfad73aaa34781d68  handoff-runtime-OPS-bench-store-readonly-sol-1941-validate.py
+58a746c2627c7be92c386ef8459d922c06ce96c1f1d1d3697514c1b9decd81e8  handoff-runtime-OPS-bench-store-readonly-sol-1941-validate.py
+8e079078f0927d790128271d8859557e8a32239079eaa0f33f2527971ff0b6cc  handoff-runtime-OPS-bench-store-readonly-sol-1941-validation.log

@@ -1,0 +1,6 @@
+PASS manifest 83 files
+PASS source before/after 148 immutable inputs; originals=True
+PASS minimal lifecycle hunks; identical child final custody; all original adapter assertions retained
+PASS bash syntax, all Python files, 14 embedded Python blocks
+PASS six incremental patch replay/cmp, zero fuzz
+PASS assigned/integration Runtime2a9 tracked product clean; diff --check; C0v2/frozen34e untouched
