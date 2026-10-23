@@ -251,6 +251,40 @@ def test_modern_labels_steps_effects_reads_and_actor_roundtrip_after_restart(rea
         restarted.close()
 
 
+def test_legacy_rebased_receipt_and_history_keep_v2_metadata_absent_after_restart(realm):
+    service, commits, project, head, root = realm
+    first_ctx = context(service, project, head, "legacy-first")
+    accept(commits, first_ctx, prepared(commits, first_ctx, revision="legacy-first"))
+    stale_ctx = context(service, project, head, "legacy-rebased")
+    rebased = accept(commits, stale_ctx, prepared(commits, stale_ctx, expected=commits.head(project, "main"),
+                                                   revision="legacy-rebased", on=4))
+
+    assert rebased["data"]["status"] == "rebased"
+    assert "label" not in rebased["data"]
+    assert "merge_mode" not in rebased["data"]
+    entry = commits.history_entry(project, "main", rebased["receipt"]["receipt_id"])
+    assert entry["publisher"] == "author"
+    assert "label" not in entry
+    assert "merge" not in entry
+    assert "merge_mode" not in entry
+    assert "steps" not in entry
+    assert json.loads(service.store.conn.execute(
+        "SELECT metadata_json FROM timeline_commit_history WHERE publication_id=?",
+        (rebased["receipt"]["receipt_id"],),
+    ).fetchone()[0]) == {"rationale": "Move clip"}
+
+    service.close()
+    restarted = RuntimeService(root)
+    try:
+        replay_store = TimelineCommitStore(restarted.store, validate_prepared=validate_prepared)
+        assert replay_store.lookup(stale_ctx, authorize=lambda: None) == rebased
+        replay_entry = replay_store.history_entry(project, "main", rebased["receipt"]["receipt_id"])
+        assert "label" not in replay_entry and "steps" not in replay_entry
+        assert replay_store.integrity_errors() == []
+    finally:
+        restarted.close()
+
+
 def test_recorder_digest_preserves_main_event_ids_and_stream_sequence(realm):
     service, commits, project, head, _ = realm
     ctx = context(service, project, head)

@@ -110,6 +110,6 @@ class CommitExecutionCoordinator:
                     raise ProtocolError("provider claimed acceptance without a durable receipt")
                 if outcome.get("data", {}).get("status") != "preview" or not context["request"].get("dry_run", False):
                     raise ProtocolError("provider returned an invalid preview")
-            elif outcome.get("details", {}).get("status") not in {"conflict", "refused"}:
+            elif outcome.get("details", {}).get("status") not in {"conflict", "refused", "invalid"}:
                 raise ProtocolError("provider returned an invalid commit failure")
             return outcome

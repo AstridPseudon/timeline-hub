@@ -185,6 +185,27 @@ def test_restore_is_sole_command_and_requires_both_head_guards():
     )
 
 
+def test_invalid_reply_preserves_structured_error_context():
+    validator("CommitFailure").validate(
+        {
+            "http_status": 422,
+            "code": "invalid_steps",
+            "message": "step patch does not match the command",
+            "details": {
+                "status": "invalid",
+                "reason": "invalid_steps",
+                "code": "invalid_steps",
+                "path": ["steps", "0", "patch"],
+                "hint": "Regenerate the step from the provider result",
+                "suggested_command": "timeline history",
+                "base": None,
+                "current": None,
+                "conflicts": [],
+            },
+        }
+    )
+
+
 def test_recorders_retain_execution_ordinal_and_all_leaf_families():
     record = dict(
         ordinal=0,

@@ -3887,6 +3887,9 @@
                 }
               ]
             },
+            "code": {
+              "$ref": "#/$defs/ID"
+            },
             "conflicts": {
               "items": {
                 "$ref": "#/$defs/Conflict"
@@ -3903,14 +3906,27 @@
                 }
               ]
             },
+            "hint": {
+              "type": "string"
+            },
+            "path": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "reason": {
               "$ref": "#/$defs/ID"
             },
             "status": {
               "enum": [
                 "conflict",
-                "refused"
+                "refused",
+                "invalid"
               ]
+            },
+            "suggested_command": {
+              "type": "string"
             }
           },
           "required": [

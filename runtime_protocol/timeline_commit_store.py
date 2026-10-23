@@ -60,6 +60,19 @@ def _effective_merge_mode(request):
     return requested
 
 
+def _is_v2_request(request, records=None):
+    """Return whether the caller opted into the v2 request annotations.
+
+    ABI-1 requests are intentionally left byte-for-byte compatible: their
+    result and legacy history metadata must not acquire synthetic v2 fields.
+    Once any v2 control is present, the provider's authoritative step records
+    and the effective merge mode are part of the durable result.
+    """
+    return any(key in request for key in ("label", "steps", "merge", "reads")) or (
+        records is not None and "steps" in records
+    )
+
+
 def _history_metadata(request, data):
     """Project request annotations and effective commit facts into one JSON value.
 
@@ -68,11 +81,12 @@ def _history_metadata(request, data):
     history edge from the authenticated execution context by the caller.
     """
     metadata = {key: request[key] for key in _METADATA if key in request}
-    metadata["label"] = data.get("label", request.get("label", "Timeline edit"))
-    metadata["merge"] = request.get("merge", "fields")
-    metadata["merge_mode"] = data["merge_mode"]
-    if "reads" in request:
-        metadata["reads"] = request["reads"]
+    if _is_v2_request(request) or "steps" in data:
+        metadata["label"] = data["label"]
+        metadata["merge"] = request.get("merge", "fields")
+        metadata["merge_mode"] = data["merge_mode"]
+        if "reads" in request:
+            metadata["reads"] = request["reads"]
     return metadata
 
 
@@ -660,7 +674,7 @@ class TimelineCommitStore:
             reject("invalid_records", status=422)
         recorded_steps = records.get("steps")
         requested_steps = request.get("steps")
-        if requested_steps is not None and recorded_steps is None:
+        if _is_v2_request(request) and recorded_steps is None:
             reject("invalid_records", "provider did not return authoritative step records", status=422)
         if recorded_steps is not None:
             ordinals = [ordinal for step in recorded_steps for ordinal in step["command_ordinals"]]
@@ -997,19 +1011,19 @@ class TimelineCommitStore:
                 except ReferenceProjectionError as exc:
                     reject(exc.reason, exc.message, status=exc.status)
                 base = {"revision_id": request["base_revision_id"], "publication_id": request["base_publication_id"]}
-                modern = any(key in request for key in ("label", "steps", "merge", "reads"))
+                modern = _is_v2_request(request, prepared["records"])
                 data = {"status": ("accepted" if previous == base else ("merged" if modern else "rebased")),
                         "base_revision_id": base["revision_id"],
                         "base_publication_id": base["publication_id"], "previous_revision_id": previous["revision_id"],
                         "previous_publication_id": previous["publication_id"],
                         "accepted_revision_id": candidate["canonical_document"]["parent_revision"]["revision_id"],
                         "rebased_onto": None if previous == base else previous, **candidate,
-                        "merge_mode": _effective_merge_mode(request),
                         "publisher": context["publisher"],
                         **{k: request[k] for k in _METADATA if k in request}}
-                if "label" not in data:
-                    data["label"] = "Timeline edit"
-                if "steps" in prepared["records"]:
+                if modern:
+                    data["merge_mode"] = _effective_merge_mode(request)
+                    data.setdefault("label", "Timeline edit")
+                if modern and "steps" in prepared["records"]:
                     data["steps"] = prepared["records"]["steps"]
                 self._persist_closure(candidate["canonical_document"])
                 result = self._publish(context, data, previous, prepared["records"], prepared["semantic_events"])

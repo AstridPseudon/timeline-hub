@@ -1160,7 +1160,8 @@
         "status": {
           "enum": [
             "conflict",
-            "refused"
+            "refused",
+            "invalid"
           ]
         },
         "reason": {
@@ -1191,6 +1192,21 @@
           "items": {
             "$ref": "#/$defs/Conflict"
           }
+        },
+        "code": {
+          "$ref": "#/$defs/ID"
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hint": {
+          "type": "string"
+        },
+        "suggested_command": {
+          "type": "string"
         }
       },
       "required": [
