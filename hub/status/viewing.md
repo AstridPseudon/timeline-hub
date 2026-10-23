@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T02:56:06Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# viewing board, 2026-10-23T02:52:46Z
+<!-- viewing | 2026-10-23T02:57:23Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# viewing board, 2026-10-23T02:57:22Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema/drift inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | Independent PASS four-copy SHA/cmp/generators/manifest; inventory only | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -18,7 +18,7 @@
 
 V3 DONE within artifact-adoption scope: both consumers use the exact same635f commit archive819acf/73451B/80members with integrated proof. This is not physical parity, unified evaluator, full-v2 wire or H3 GO. Original App exact-base duration-function identity failure stays preserved/disclosed. V1 metadata scope DONE: canonical schema, Composition, both copies and Agent providerreload merged with independent integrated proofs. This does not claim normal full-v2 generated-client adoption or actual-wire journey success. V4App DONE; V4Agent missing official-wire integrated proof. Optional recipe cut dropped, no lost assertions.
 
-Blockers: Agent — canonical merged-response guard defect FIXED. NEW OFFICIAL Runtime780da6d605033ca71dbe2ad48c10ec2870ea4865 announced home0249, integrated124+package62/build/gens/artifacts PASS exact treea285; immutable21482 retained. Exact sanctioned rt-pin-780da6d6 READY, V4-agent-official-wire-proof.md updated to780. Await normal Agent U4a-v2 successor merge, then immediately dispatch original failed54 only. Agent peer0241 explicitly reserves this54 to Viewing; no vendored edit/bypass or duplicate proof. Escalation0233 technical blocker now resolved by Runtime; remaining consumer handoff is owner-bound.
+Blockers: Agent — canonical merged-response guard defect FIXED. NEW OFFICIAL Runtime780da6d605033ca71dbe2ad48c10ec2870ea4865 announced home0249, integrated124+package62/build/gens/artifacts PASS exact treea285; immutable21482 retained. Exact sanctioned rt-pin-780da6d6 READY, V4-agent-official-wire-proof.md updated to780. Agent agt-U4a-v2-corrected-0253 is ACTIVE normal updater/checker on currentfc515 R2/R3/meta source (home0254). Await independent review/home merge, then immediately dispatch original failed54 only. Agent peer0241 explicitly reserves this54 to Viewing; no vendored edit/bypass or duplicate proof. Escalation0233 technical blocker now resolved by Runtime; remaining consumer handoff is owner-bound.
 Blockers: lead/orchestrator — recycle Permission denied for agt-pin-b70b9d56 and app-pin-d00a6613/app-pin-0d432391 stays PARKED. No retry/chmod/chown/alternate deletion. Escalation viewing-20261023T002713Z-recycle-b70-permission-refusal.md; disk above floor.
 
 Next ready: NEW OFFICIAL Runtime780da6d6 READY → Agent normal U4a-v2 adoption → V4 failed54 integrated checks. V1 scoped metadata proof is already DONEd6f; no repeat. All own workers terminal, no ready unowned task. Zero live is dependency-driven; v1 capacity rules void. Farm alone owns full/heavy/browser/journey H6/H9/final; no duplicate request.
