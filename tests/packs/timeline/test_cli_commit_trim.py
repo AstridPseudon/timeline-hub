@@ -64,7 +64,7 @@ def test_trim_lost_ack_keeps_original_flight_and_undo(trim, capsys):
     assert run(*args) == 0
     capsys.readouterr()
     assert generated.calls == [(flight['body'].encode(), 'first')] * 2
-    assert run('undo', 't', '--publication', 'pub1', '--json') == 0
+    assert run('undo', 't', '--commit', 'pub1', '--json') == 0
     capsys.readouterr()
     assert State(generated.bundles['r2']).entity(REF)['to'] == 6
 

@@ -11,6 +11,9 @@ from astrid.packs.timeline import cli
 from astrid.sdk import timeline_checkout as tc
 from astrid.sdk.timeline_checkout import Checkout, TimelineEditError
 from astrid.sdk.timeline_duplicate import copy_content, id_map
+from tests.sdk.test_timeline_normal_publish import (
+    restructure_runtime as _restructure_runtime_fixture,  # noqa: F401
+)
 
 FPS = 30
 
@@ -109,7 +112,7 @@ def test_each_verb_parses_to_its_handler(argv, name):
 def test_the_freeze_command_list_is_all_registered():
     names = {spec.name for spec in cli.COMMANDS}
     freeze = ("create list show replace-parent-media archive recover history log diff visualize lint inspect render "
-              "checkout edit apply lines find undo redo words status check publish discard duplicate").split()
+              "checkout edit apply lines find undo redo words status check discard duplicate").split()
     assert set(freeze) <= names
 
 
@@ -488,7 +491,7 @@ def test_fresh_checkout_after_discard_is_not_stale(tmp_path, monkeypatch, capsys
 @pytest.mark.parametrize("argv", [
     ["checkout", "t", "--project", "P"],
     ["status", "t", "--project", "P"],
-    ["publish", "t", "--project", "P", "-m", "x"],
+    ["edit", "t", "--project", "P", "--clip", "R", "--nudge-frames", "3"],
 ])
 def test_a_refusal_from_the_head_lookup_is_one_plain_line(tmp_path, monkeypatch, capsys, argv):
     from astrid.sdk.timeline import store
@@ -518,30 +521,26 @@ def test_short_revision_strips_every_known_prefix():
     assert short_revision(None) == ""
 
 
-@pytest.mark.parametrize("head, who", [
-    (EDITOR_HEAD, "the editor published 5fb2249e after your checkout (rev-0)"),
-    ("authoring-parent-revision-38cecaa5" + "f" * 24, "someone published 38cecaa5 after your checkout (rev-0)"),
-])
-def test_publish_conflict_names_the_writer_and_offers_discard_first(monkeypatch, head, who):
-    from astrid.sdk.timeline import store
+def test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite(_restructure_runtime_fixture):  # noqa: F811
+    """A reused working copy uses the normal guarded commit and never overwrites a peer head."""
+    from astrid.sdk.timeline import open as open_timeline
+    from astrid.sdk.workspace_client import WorkspaceClientError
 
-    class _Timelines:
-        def open_composition(self, *_args, **_kwargs):
-            return type("Shown", (), {"ok": True, "error": None,
-                                      "data": {"summary": {"head_revision_id": head}}})()
+    env = _restructure_runtime_fixture
+    checkout = Checkout.open(env.project, "t", client=env.client)
+    checkout.clip("p1").data["opaque"] = {"local": True}
+    peer = open_timeline(env.project, "t", client=env.client)
+    peer.clip("p2").data["opaque"] = {"peer": True}
+    peer.commit("Peer edit", idempotency_key="peer-edit")
+    before_document = copy.deepcopy(env.document())
+    before_history = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
 
-    class _Client:
-        timelines = _Timelines()
+    with pytest.raises((TimelineEditError, WorkspaceClientError)) as refused:
+        checkout.publish("Local edit", client=env.client, idempotency_key="local-edit")
+    assert "conflict" in str(refused.value).lower() or "changed" in str(refused.value).lower()
+    assert env.document() == before_document
+    assert env.client.timelines.history(env.project, "t", limit=200).data == before_history
 
-    monkeypatch.setattr(store, "fetch_bundle", lambda *_args, **_kwargs: copy.deepcopy(bundle()))
-    monkeypatch.setattr(store, "three_way", lambda _base, _head, candidate, force: (candidate, ["p/a-rocket (clip) moved 1.8s"]))
-
-    with pytest.raises(TimelineEditError) as refused:
-        store.publish_bundle(copy.deepcopy(bundle()), "key", client=_Client())
-    message = str(refused.value)
-
-    assert message.splitlines()[0].startswith(f"not published: {who}, and you both changed:")
-    assert "next: timelines discard t --project p, then timelines checkout t --project p --fresh, and re-apply your edit." in message
-    assert "  publish --force overwrites the newer published version." in message
-    assert "to overwrite theirs" not in message
-    assert "astrid.e\n" not in message and "astrid.e " not in message
+    with pytest.raises(TimelineEditError, match="force is unavailable"):
+        checkout.publish("Local edit", client=env.client, force=True)
+    assert env.document() == before_document

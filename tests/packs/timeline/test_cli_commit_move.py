@@ -1,6 +1,7 @@
 """The real product parser/dispatch emits the SDK's captured move and inverse."""
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 
@@ -14,9 +15,36 @@ from tests.sdk.test_timeline_sync import connected as sync_connection  # noqa: F
 from tests.sdk.test_timeline_sync import initial_bundle
 
 
+def _install_history(generated):
+    """Expose the existing fake's accepted responses through the public history shape."""
+    def list_timeline_commits(project, timeline, *, cursor=None, limit):
+        assert (project, timeline) == ("p", "t")
+        items = [{
+            "publication_id": "pub0", "revision_id": "r0", "previous": None,
+            "receipt": {"receipt_id": "pub0"}, "intent": "bootstrap", "records": None,
+            "provider_version": "astrid-v1", "compiler_version": "m1", "publisher": "actor",
+        }]
+        for _raw, response in generated.accepted.values():
+            data, receipt = response["data"], response["receipt"]
+            items.append({
+                "publication_id": receipt["receipt_id"], "revision_id": data["accepted_revision_id"],
+                "previous": {"revision_id": data["previous_revision_id"],
+                             "publication_id": data["previous_publication_id"]},
+                "receipt": receipt, "intent": "recorded",
+                "records": {"commands": copy.deepcopy(generated.records[receipt["receipt_id"]])},
+                "provider_version": data["provider_version"], "compiler_version": data["compiler_version"],
+                "publisher": data["publisher"], "source": data.get("source"),
+                "label": data.get("label"),
+            })
+        return {"head": copy.deepcopy(generated.head), "items": items, "next_cursor": None}
+
+    generated.list_timeline_commits = list_timeline_commits
+
+
 @pytest.fixture
 def command(sync_connection, monkeypatch):  # noqa: F811 - imported pytest fixture
     client, generated, path = sync_connection
+    _install_history(generated)
     monkeypatch.setattr(storage_root, "resolve_runtime_data_root", lambda: path.parent)
     scope = {"realm_id": "realm", "actor_id": "actor", "project_id": "p", "timeline_id": "t"}
     generated.path = path.parent / "timeline-outbox" / (hashlib.sha256(request_bytes(scope)).hexdigest() + ".json")
@@ -32,7 +60,7 @@ def command(sync_connection, monkeypatch):  # noqa: F811 - imported pytest fixtu
 
 def test_move_dispatch_matches_python_capture_and_reports_immutable_revision(command, capsys):
     run, generated = command
-    assert run("edit", "move", "timeline-slug", "--project", "project-slug", "--clip", "parent/clip:a", "--on", "5", "--json") == 0
+    assert run("edit", "timeline-slug", "--project", "project-slug", "--clip", "parent/clip:a", "--on", "5", "--json") == 0
     body = json.loads(generated.calls[0][0])
     assert body["commands"] == [capture_move(initial_bundle(), "parent/clip:a", 5)]
     assert body["source"] == {"via": "cli"}
@@ -43,7 +71,7 @@ def test_move_dispatch_matches_python_capture_and_reports_immutable_revision(com
     assert output["receipt"]["receipt_id"] == "pub1"
 
 
-def test_ordinary_edit_literal_move_uses_native_outbox(command, capsys):
+def test_ordinary_edit_literal_move_uses_commit_outbox(command, capsys):
     run, generated = command
     assert run("edit", "t", "--clip", "a", "--on", "5", "--json") == 0
     body = json.loads(generated.calls[0][0])
@@ -81,6 +109,7 @@ def test_ordinary_edit_occurrence_move_keeps_legacy_owner_resolution(command, mo
     from tests.editing_conformance.test_recipe_m2_clip_trim import bundle as trim_bundle
 
     generated.bundles['r0'] = trim_bundle()
+    generated.bundles['r0']['base_parent'].update(revision_id='r0', publication_id='pub0')
 
     def legacy(*args, **kwargs):
         raise RuntimeError("legacy occurrence resolution")
@@ -124,7 +153,7 @@ def test_ordinary_edit_move_with_unsupported_flags_keeps_legacy(command, monkeyp
 
 def test_move_preview_uses_current_project_and_does_not_claim_publication(command, capsys):
     run, generated = command
-    assert run("edit", "move", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run") == 0
+    assert run("edit", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run") == 0
     assert capsys.readouterr().out.strip() == "preview only; no publication accepted"
     assert generated.accepted == {}
     assert generated.head["revision_id"] == "r0"
@@ -132,14 +161,14 @@ def test_move_preview_uses_current_project_and_does_not_claim_publication(comman
 
 def test_cli_lost_ack_retry_and_accepted_undo(command, capsys):
     run, generated = command
-    args = ("edit", "move", "t", "--project", "p", "--clip", "parent/clip:a", "--on", "5", "--json")
+    args = ("edit", "t", "--project", "p", "--clip", "parent/clip:a", "--on", "5", "--json")
     generated.lose_ack = True
     assert run(*args) == 1
     assert not json.loads(capsys.readouterr().out)["ok"]
     assert run(*args) == 0
     capsys.readouterr()
     assert generated.calls[0] == generated.calls[1]
-    assert run("undo", "t", "--project", "p", "--publication", "pub1", "--json") == 0
+    assert run("undo", "t", "--project", "p", "--commit", "pub1", "--json") == 0
     output = json.loads(capsys.readouterr().out)
     assert output["data"]["accepted_publication_id"] == "pub2"
     inverse = json.loads(generated.calls[-1][0])["commands"][0]
@@ -147,17 +176,17 @@ def test_cli_lost_ack_retry_and_accepted_undo(command, capsys):
     assert generated.bundles["r2"]["parent"] == initial_bundle()["parent"]
 
 
-def test_commit_move_parser_refuses_legacy_edit_flags(command):
+def test_edit_parser_refuses_retired_native_flag(command):
     run, generated = command
     with pytest.raises(SystemExit) as exc:
-        run("edit", "move", "t", "--project", "p", "--clip", "parent/clip:a", "--on", "5", "--remove")
+        run("edit", "t", "--project", "p", "--clip", "parent/clip:a", "--on", "5", "--native")
     assert exc.value.code == 2
     assert generated.calls == []
 
 
 def test_preview_json_preserves_actual_bridge_request_key(command, capsys):
     run, generated = command
-    assert run("edit", "move", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run", "--json") == 0
+    assert run("edit", "t", "--clip", "parent/clip:a", "--on", "5", "--dry-run", "--json") == 0
     output = json.loads(capsys.readouterr().out)
     assert output["idempotency_key"] == generated.calls[0][1]
     assert output["idempotency_key"] and output["receipt"] is None
@@ -166,11 +195,11 @@ def test_preview_json_preserves_actual_bridge_request_key(command, capsys):
 def test_cli_accepted_redo_inverts_undo_publication_and_preserves_disjoint_edit(command, capsys):
     run, generated = command
     for clip, on in [('a', '5'), ('b', '7')]:
-        assert run('edit', 'move', 't', '--clip', 'parent/clip:' + clip, '--on', on, '--json') == 0
+        assert run('edit', 't', '--clip', 'parent/clip:' + clip, '--on', on, '--json') == 0
         capsys.readouterr()
-    assert run('undo', 't', '--publication', 'pub1', '--json') == 0
+    assert run('undo', 't', '--commit', 'pub1', '--json') == 0
     capsys.readouterr()
-    assert run('redo', 't', '--publication', 'pub3', '--json') == 0
+    assert run('redo', 't', '--commit', 'pub3', '--json') == 0
     output = json.loads(capsys.readouterr().out)
     assert output['data']['accepted_publication_id'] == 'pub4'
     assert generated.bundles['r4']['parent'] == generated.bundles['r2']['parent']
