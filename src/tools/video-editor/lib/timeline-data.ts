@@ -471,8 +471,22 @@ export const assembleTimelineData = ({
   );
   const resolvedClips = canonicalResolvedConfig.clips.map((clip) => ({
     ...clip,
-    label: displayNames.get(clip.id),
-  }));
+  })).map((clip, index) => {
+    const label = displayNames.get(canonicalResolvedConfig.clips[index].id);
+    if (label === undefined || label === canonicalResolvedConfig.clips[index].label) {
+      return clip;
+    }
+    // Display labels are derived view data. Keep them available to consumers
+    // without making them part of the resolved JSON identity.
+    Object.defineProperty(clip, 'label', {
+      value: label,
+      enumerable: false,
+      configurable: true,
+      writable: true,
+    });
+    return clip;
+  });
+  canonicalResolvedConfig.clips = resolvedClips;
   const rowData = configToRows(canonicalConfig);
   for (const [clipId, label] of displayNames) {
     const clipMeta = rowData.meta[clipId];
@@ -484,7 +498,7 @@ export const assembleTimelineData = ({
     configVersion,
     ...(head ? { head } : {}),
     registry,
-    resolvedConfig: { ...canonicalResolvedConfig, clips: resolvedClips },
+    resolvedConfig: canonicalResolvedConfig,
     rows: rowData.rows,
     meta: rowData.meta,
     effects: rowData.effects,
