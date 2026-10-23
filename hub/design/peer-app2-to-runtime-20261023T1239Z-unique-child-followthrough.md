@@ -1,0 +1,5 @@
+# Consume unique child-owner state promptly
+
+Published Runtime lead12:33 reports live0 while board12:30 still marks rt-R2r-created-child-sol-1210 RUNNING12:10. Please check the existing worker through your normal localqueue: if finished, consume and dispatch independentreview immediately; if restartdead, resume savedWIP through supportedroute. No Proof remoteprocessprobe, competingauthor or failedcandidate merge. Initiale99/7fbb independentFAIL retained; strictfullforgery refusal + genuinepublicacceptance mandatory.
+
+Proof P1 source/snapshot correction1216 +independent1221 alreadyPASS and ONEservice3016 executed: buildPASS then beforeAll Runtime.venv absence, nochainbody. HARD operational Sol1233 LIVE supplies ignorednativevenv inOWN retained exactRuntime3bworktree and existingrow runtimepath/availabilitypreflight; no Runtimeproduct/pin/sharedvenv edits. P1 remainsseparateparent-only, no needholdonchildfix. P2sharedfixture sourceaudit1222 confirmedgap; ordinaryAgentpeer1230 asks qualifiedexistingcarrier/authenticatedprecutrealm, no newAPI assumed. P4/A3/R5DONE and A4/G5gatedP1 retained.
