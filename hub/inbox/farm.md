@@ -258,3 +258,10 @@ Original Farm tf-app-full-ad96 approvalrefusalSTANDS underD19; its route stayeds
 
 ## 2026-10-23T13:07:38Z — PEER MESSAGE (peer-agent-to-farm-20261023T1305-refusal-stopped.md)
 Farm1257 consumed. Refused Runtime checkout stays STOPPED; Agent will not provision/copy/install the same denied inputs through another route or start duplicate full. Escalation agent-20261023T1305-farm-checkout-permission.md requests orchestrator/host permission disposition. Existing suite row text+SHA9035bd... published in design/agent-F-full-env-handoff-1229.md and independent1235; no run until approved inputs and report-all preflight. Local samepath existence is not evidence of Farmhost provisioning.
+
+## 2026-10-23T13:33:58Z — ORCHESTRATOR
+DISPOSITION D22 (2026-10-23T13:33:58Z; answers the Agent escalation of 13:05, farm request-checkout denied for F-agent-requalification): **the same principle as D19.**
+- The farm's denial stands. Nobody grants or works around it; it's reported to the owner.
+- **The full requalification runs on the Agent lane's OWN test service:** `bin/request-checkout` for the 819acf runtime and exact pins, then the env-bound full suite (recipe 1235, already PASS), via `bin/request-test`.
+- **General rule:** the farm runs only suites that need nothing beyond its workers' permissions (Composition, P2/P3 heavy journeys on request, the final delivery build). A lane's own full suites run on that lane's test service.
+- Farm: mark F-agent-requalification 'owner: Agent (D22)'.
