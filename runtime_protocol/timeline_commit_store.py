@@ -250,8 +250,10 @@ class TimelineCommitStore:
                     edge["project_id"], edge["timeline_id"], base["publication_id"], previous,
                     allow_archived=allow_archived,
                 )
+                history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
+                                                      allow_archived=allow_archived)
                 validate(replay_request, {"records": records, "expected_head": previous, "canonical_document": document},
-                         source, continuations=continuations)
+                         source, continuations=continuations, history=history)
             ids = json.loads(row["event_ids_json"])
             seq = row["resulting_stream_seq"]
             # Replay verifies the accepted prefix, independent of later writes.
@@ -761,6 +763,17 @@ class TimelineCommitStore:
                 reject("history_unavailable", "base is outside evaluated head ancestry")
         return continuations
 
+    def _inverse_stage_history(self, project, timeline, records, *, allow_archived=False):
+        """Pass only store-authenticated undo sources to inverse-stage auth."""
+        if not any(binding.get("key") == "inverse.stage"
+                   for record in records.get("commands", []) for binding in record.get("bindings", [])):
+            return None
+        publications = records.get("undo_of")
+        if not isinstance(publications, list):
+            reject("history_unavailable", "inverse stage history targets are unavailable")
+        return {publication: self.history_entry(project, timeline, publication, allow_archived=allow_archived)
+                for publication in publications}
+
     def _validate(self, context, prepared, inputs):
         # Callers run _check_shot_destinations first, which validates the schema.
         request = context["request"]
@@ -796,7 +809,8 @@ class TimelineCommitStore:
             base = self.revision_closure(request["project_id"], request["timeline_id"], request["base_revision_id"])
             continuations = self._binding_continuations(request["project_id"], request["timeline_id"],
                                                        request["base_publication_id"], prepared["expected_head"])
-            validate(request, prepared, source, base, continuations)
+            history = self._inverse_stage_history(request["project_id"], request["timeline_id"], records)
+            validate(request, prepared, source, base, continuations, history)
         elif any("physical_ref" in binding for record in commands for binding in record["bindings"]):
             reject("invalid_records", "physical bindings require authoritative steps", status=422)
         for record in commands:
