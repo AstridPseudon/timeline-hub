@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T07:50:56Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 2m -->
-# viewing board, 2026-10-23T07:48:09Z
+<!-- viewing | 2026-10-23T07:52:10Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 0m -->
+# viewing board, 2026-10-23T07:51:49Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | Independent PASS four copies, SHA/cmp/generators/manifest; inventory only | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -28,9 +28,9 @@
 | V4-undo | equal-text anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | ruling04:40 | EXACT two originals unchanged/unskipped/visibly failing known v2 regressions; guarded intervening_write. Never54PASS | originals retained |
 | V4-recipe | optional duplicate recipe deletion | Luna historical | H9 cut | cut:H9 | no worker | Original recipes and original clip.anchor assertions retained. Do not reopen | originals retained |
 
-| DB-composition-dry | fresh-clone squash/build/pin verification | Luna high | orchestrator07:40; source635f/live upstream | doing | vw-DB-composition-dry-0746 | RUNNING: core squash/bundle/freshapply tree5ab5191 PASS; tool exit1 missing required README template, separate narrow prerequisite worker active; build/pins pending | source635f / upstream snapshot67b8 |
+| DB-composition-dry | fresh-clone squash/build/pin verification | Luna high | orchestrator07:40; source635f/live upstream | review | vw-DB-composition-dry-0746; review0751 | Author terminal: live67b8; source/apply/bundle5ab5191 PASS; build/type/meta/export PASS; both pins819acf exact. Fresh build1b263 payload differs7JS+9chunk names; independent classification/review0751 dispatched. Original tool exit1 preserved, template retryexit0 | source635f / upstream snapshot67b8 |
 
-| DB-composition-template | required delivery input repair | Luna high | missing README template | doing | vw-DB-composition-template-0749 | Existing tool core trees PASS; initial command exit1 missing template. Bounded worker restores required v2 input then retries dry command; no product/script change | source635f |
+| DB-composition-template | required delivery input repair | Luna high | missing README template | review | vw-DB-composition-template-0749; review0751 | Author supplied v2 README template only; tool retryexit0, tree5ab5191 equality, noZIP; independent review0751. Initial missing-template exit1 retained | source635f |
 
 V1 metadata and V3 shared artifact scopes are DONE on their recorded integrated proofs. V3 is immutable archive819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234,73451 bytes,80 members, source635f; one artifact does not prove rendering parity or H3 GO. V4App DONE; all already-merged V4 work stays. Whole V4Agent NOT DONE and residual repairs CUT at H9.
 
@@ -53,3 +53,5 @@ Header MERGE-ONLY App07:20 remains: Proof owns all App product authoring failove
 NEW07:44 consumed orchestrator07:40 DB-composition-dry request. One Luna worker dispatched, no V4 reopening. Manager live ls-remote failed localproxy36363; worker --net route must qualify live upstream or report limitation.
 
 Next pass around07:54: re-read new INBOX/header/workers and owner boards, act on concrete final-integration requests, preserve H9 cut and proof limits. Farm/delegated final reports original V4 AS IS, unchanged/unskipped known failures included; no arithmetic51/52/54 PASS claim.
+
+DB update 2026-10-23T07:51:49Z: both authors terminal; one independent Luna review0751 covers required-template fix and dry-run/build/pin/mismatch evidence. No final PASS yet; fresh payload divergence reported without pin/source/archive change.
