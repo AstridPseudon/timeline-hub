@@ -55,6 +55,7 @@ describe('mounted split and inspector trim authoring reads', () => {
       const config: TimelineConfig = { ...createDefaultTimelineConfig(), clips: [
         { id: 'original', track: 'V1', at: 0, asset: 'media', from: 0, to: 8, speed: 1,
           app: { 'org.example': { keep: [null, false] } } },
+        { id: 'OTHERCLIP', track: 'V1', at: 10, asset: 'media', from: 0, to: 2, speed: 1, label: 'Other' },
       ] };
       const registry = { assets: { media: { file: 'media.mp4', type: 'video/mp4', duration: 8 } } };
       const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
@@ -98,7 +99,7 @@ describe('mounted split and inspector trim authoring reads', () => {
         const rightId = first.result.current.save.selectedClipId!;
         expect(rightId).not.toBe('original');
         expect(first.result.current.save.dataRef.current?.config.clips).toMatchObject([
-          { id: 'original', from: 0, to: 4 }, { id: rightId, at: 4, from: 4, to: 8 },
+          { id: 'original', from: 0, to: 4 }, { id: rightId, at: 4, from: 4, to: 8 }, { id: 'OTHERCLIP', label: 'Other' },
         ]);
         act(() => first.result.current.editing.handleSelectedClipChange({ from: 5 }));
         expect(first.result.current.save.dataRef.current?.config.clips[1].from).toBe(5);
@@ -109,12 +110,17 @@ describe('mounted split and inspector trim authoring reads', () => {
         expect(authored.intents[1].basis).toEqual({ after: authored.intents[0].id });
         expect(splitIntent.created).toEqual([`parent/clip:${rightId}`]);
         const reads = (trimIntent.documentIntent as Record<string, unknown>).reads as unknown[];
-        expect(reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'clips'], state: {
-          state: 'present', value: (authored.intents[0].payload.after as unknown as typeof document).parent_revision.payload.config!.clips,
-        } });
-        expect(reads).toContainEqual({ kind: 'collection', ref: 'parent', path: ['config', 'tracks'],
-          members: config.tracks!.map((track) => track.id).sort(), order: config.tracks!.map((track) => track.id) });
-        expect(reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'pinnedShotGroups'], state: { state: 'absent' } });
+        expect(reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'to'],
+          state: { state: 'present', value: 8 } });
+        expect(reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'registry', 'assets', 'media'],
+          state: { state: 'present', value: registry.assets.media } });
+        expect(reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'output', 'fps'],
+          state: { state: 'present', value: 30 } });
+        expect(reads.some((read) => (read as { kind: string }).kind === 'collection')).toBe(false);
+        expect(reads).not.toContainEqual(expect.objectContaining({ path: ['config', 'clips'] }));
+        expect(splitIntent.reads).toContainEqual({ kind: 'collection', ref: 'parent', path: ['config', 'clips'],
+          members: ['OTHERCLIP', 'original'], order: ['original', 'OTHERCLIP'] });
+        expect(splitIntent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'pinnedShotGroups'], state: { state: 'absent' } });
         expect(reads.some((read) => (read as { path: string[] }).path.at(-1) === 'label')).toBe(false);
         const splitDoc = (authored.intents[0].payload.after as unknown as typeof document);
         const finalDoc = (authored.intents[1].payload.after as unknown as typeof document);
@@ -128,7 +134,12 @@ describe('mounted split and inspector trim authoring reads', () => {
           return { response, accepted: { revisionId: revision, publicationId: `p-${revision}` },
             canonicalDocument: response.data.canonical_document, receipt: response.receipt, graph: {} };
         };
-        send.mockImplementationOnce(async (request) => reply(request, splitDoc, 'accepted', 'r1'))
+        send.mockImplementationOnce(async (request) => {
+          expect(request.commands[0].created).toEqual([`parent/clip:${rightId}`]);
+          expect(request.reads).toEqual(splitIntent.reads);
+          expect(request.steps![0].patch).toEqual(request.commands[0].args.changes);
+          return reply(request, splitDoc, 'accepted', 'r1');
+        })
           .mockImplementationOnce(async (request) => {
             expect(first.result.current.save.dataRef.current?.head?.headRevisionId).toBe('r1');
             expect(first.result.current.save.dataRef.current?.config.clips[1].from).toBe(4);
@@ -142,6 +153,7 @@ describe('mounted split and inspector trim authoring reads', () => {
         const agentDoc = structuredClone(splitDoc);
         const agentConfig = agentDoc.parent_revision.payload.config as unknown as TimelineConfig;
         agentConfig.tracks![0].label = 'Agent label';
+        agentConfig.clips.find((clip) => clip.id === 'OTHERCLIP')!.label = 'Agent other clip label';
         if (outcome === 'source conflict') agentConfig.clips[1].to = 7;
         if (outcome === 'membership conflict') agentConfig.tracks!.push({ id: 'V4', kind: 'visual' });
         agentDoc.parent_revision.payload.clips = structuredClone(agentConfig.clips);
@@ -160,6 +172,9 @@ describe('mounted split and inspector trim authoring reads', () => {
           });
           const merged = structuredClone(finalDoc);
           (merged.parent_revision.payload.config as unknown as TimelineConfig).tracks![0].label = 'Agent label';
+          const other = (merged.parent_revision.payload.config as unknown as TimelineConfig).clips.find((clip) => clip.id === 'OTHERCLIP')!;
+          other.label = 'Agent other clip label';
+          merged.parent_revision.payload.clips = structuredClone((merged.parent_revision.payload.config as unknown as TimelineConfig).clips);
           return reply(request, merged, 'merged', 'r3');
         });
         const recoveredData = await buildTimelineData(agentConfig, registry, undefined, 1, undefined, {
@@ -170,6 +185,7 @@ describe('mounted split and inspector trim authoring reads', () => {
         const [settled] = await createCommitOutbox().list(scope);
         const visible = recovered.result.current.save.dataRef.current!;
         expect(visible.config.tracks![0].label).toBe('Agent label');
+        expect(visible.config.clips.find((clip) => clip.id === 'OTHERCLIP')!.label).toBe('Agent other clip label');
         if (outcome === 'label merge') {
           expect(settled.intents).toHaveLength(0);
           expect(settled.accepted?.value).toMatchObject({ response: { data: { status: 'merged', merge_mode: 'fields',

@@ -160,7 +160,7 @@ export async function createLocalSaveSession(options: Options) {
           const original = saveOf(intent.payload);
           const patch = original.documentIntent as Record<string, OutboxJson> | undefined;
           const commands: CommitRequest['commands'] = original.commands ?? [{ schema_version: 1,
-            op: 'doc.patch', version: '1', select: null, args: { changes: patch!.changes } }];
+            op: 'doc.patch', version: '1', select: null, created: patch!.created as string[], args: { changes: patch!.changes } }];
           // Only the base pair advances. Original operands, reads, step IDs and
           // allocated entity IDs come directly from the persisted intent.
           const metadata = patch ? { steps: [{ ...patch.step as Record<string, OutboxJson>,

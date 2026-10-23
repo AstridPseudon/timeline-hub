@@ -44,6 +44,9 @@ describe('official full-v2 local document transport', () => {
     const request = JSON.parse(exact.body);
     expect(request).toMatchObject({ label: 'Split', merge: 'fields', reads, dry_run: false,
       steps: [{ ...step, command_ordinals: [0], patch: request.commands[0].args.changes }] });
+    expect(request.commands[0]).toEqual({ schema_version: 1, op: 'doc.patch', version: '1', select: null,
+      created: ['parent/clip:right'], args: { changes: request.steps[0].patch } });
+    expect(send.mock.calls[0][0]).toEqual(request);
     expect(stored.intents[0].payload).toMatchObject({ documentIntent: { created: ['parent/clip:right'] } });
     const suffix = structuredClone(stored.intents[1].payload);
     await first.dispose();
@@ -60,6 +63,7 @@ describe('official full-v2 local document transport', () => {
     };
     send.mockImplementationOnce(async (retry, key) => {
       expect(JSON.stringify(retry)).toBe(exact.body);
+      expect(retry.commands[0].created).toEqual(['parent/clip:right']);
       expect(key).toBe(exact.key);
       return reply(split, 'r1', 'p1');
     }).mockImplementationOnce(async (dependent) => {
@@ -67,6 +71,8 @@ describe('official full-v2 local document transport', () => {
         clips: split.parent_revision.payload.clips, opaque: { keep: null, agent: true },
       } } });
       expect(recovered.getDocument()).toMatchObject({ parent_revision: { revision_id: 'r1' } });
+      expect(dependent).not.toHaveProperty('reads');
+      expect(dependent.commands[0].created).toEqual([]);
       expect(dependent).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1', merge: 'atomic',
         commands: [{ args: { changes: [{ op: 'set', ref: 'parent', path: ['clips', 'id:right', 'hold'],
           before: { state: 'present', value: 2 }, value: 1 }] } }] });

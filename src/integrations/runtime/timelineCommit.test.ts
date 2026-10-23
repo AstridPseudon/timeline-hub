@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
-import { WorkspaceClient, type CanonicalDocument, type Transport } from './generated.ts';
+import { WorkspaceClient, type CanonicalDocument, type CommitPreviewResponse, type Transport } from './generated.ts';
 import { classifyRuntimeCommitFailure, AstridRuntimeClient } from './client.ts';
 import { decodeAcceptedTimelineCommit } from './dataProvider.ts';
 import { ApiError } from './generated.ts';
@@ -204,6 +204,177 @@ describe('Runtime timeline commit capability', () => {
       },
       body: mergedRequest,
     }]);
+  });
+
+  it('replays an authentic historical rebased receipt through the generated WorkspaceClient', async () => {
+    const historicalRequest = request();
+    const response = acceptedCommit(
+      { revision_id: 'r2', publication_id: 'p2' },
+      { revision_id: 'r0', publication_id: 'p0' },
+    );
+    response.data.status = 'rebased';
+    response.data.previous_revision_id = 'r1';
+    response.data.previous_publication_id = 'p1';
+    response.data.rebased_onto = { revision_id: 'r1', publication_id: 'p1' };
+    response.receipt.idempotency_key = 'historical-key';
+    response.receipt.request_hash = fixtureDigest({
+      operation: 'commitTimeline',
+      path: `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/commit`,
+      publisher: response.data.publisher,
+      request: historicalRequest,
+    }).slice(7);
+
+    const sent: { method: string; path: string; headers: Record<string, string>; body: unknown }[] = [];
+    const fakeHTTP: Transport = async (method, path, headers, body) => {
+      sent.push({
+        method,
+        path,
+        headers,
+        body: JSON.parse(new TextDecoder().decode(body as Uint8Array)),
+      });
+      return { status: 200, headers: {}, body: json(response) };
+    };
+    const client = new WorkspaceClient('http://runtime.test', 'token', fakeHTTP);
+
+    const result = await client.commitTimeline(PROJECT_ID, TIMELINE_ID, historicalRequest, 'historical-key');
+
+    expect(result).toEqual(response);
+    expect(result.data.status).toBe('rebased');
+    expect(result.data.rebased_onto).toEqual({ revision_id: 'r1', publication_id: 'p1' });
+    expect(result.receipt).toMatchObject({ result: response.data });
+    expect(Object.hasOwn(response.data, 'label')).toBe(false);
+    expect(Object.hasOwn(response.data, 'merge_mode')).toBe(false);
+    expect(Object.hasOwn(response.data, 'steps')).toBe(false);
+    expect(sent).toEqual([{
+      method: 'POST',
+      path: `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/commit`,
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Bearer token',
+        'Content-Type': 'application/json',
+        'Idempotency-Key': 'historical-key',
+      },
+      body: historicalRequest,
+    }]);
+  });
+
+  it('accepts an authentic merged preview with authoritative step dependencies through the generated WorkspaceClient', async () => {
+    const read = { kind: 'scope' as const, ref: 'timeline', path: [] };
+    const change = {
+      op: 'set' as const,
+      ref: 'parent',
+      path: ['meta', 'org.example.notes', 'note'],
+      before: { state: 'absent' as const },
+      value: 'B',
+    };
+    const command = {
+      schema_version: 1 as const,
+      op: 'doc.patch' as const,
+      version: '1',
+      select: null,
+      args: { changes: [change] },
+    };
+    const requestedStep = {
+      id: 'note-1',
+      label: 'Revise the first note',
+      intent: 'Clarify the opening',
+      tags: ['notes'],
+      command_ordinals: [0] as [number],
+      patch: [change],
+      reads: [read],
+    };
+    const authoritativeStep = { ...requestedStep, dependencies: [read] };
+    const previewRequest = {
+      ...request(),
+      commands: [command] as [typeof command],
+      label: 'Clarify opening note',
+      steps: [requestedStep] as [typeof requestedStep],
+      merge: 'fields' as const,
+      reads: [read],
+      dry_run: true,
+    };
+    const acceptedResponse = acceptedCommit(
+      { revision_id: 'r2', publication_id: 'p2' },
+      { revision_id: 'r0', publication_id: 'p0' },
+      { commands: previewRequest.commands },
+    );
+    const response: CommitPreviewResponse = {
+      data: {
+        status: 'preview',
+        would_status: 'merged',
+        base_revision_id: previewRequest.base_revision_id,
+        base_publication_id: previewRequest.base_publication_id,
+        evaluated_head: { revision_id: 'r1', publication_id: 'p1' },
+        canonical_document: acceptedResponse.data.canonical_document,
+        document_digest: acceptedResponse.data.document_digest,
+        commands: acceptedResponse.data.commands,
+        id_map: acceptedResponse.data.id_map,
+        provider_version: acceptedResponse.data.provider_version,
+        compiler_version: acceptedResponse.data.compiler_version,
+        merge_mode: 'fields',
+        steps: [authoritativeStep],
+      },
+      receipt: null,
+    };
+
+    const sent: { method: string; path: string; headers: Record<string, string>; body: unknown }[] = [];
+    const fakeHTTP: Transport = async (method, path, headers, body) => {
+      sent.push({
+        method,
+        path,
+        headers,
+        body: JSON.parse(new TextDecoder().decode(body as Uint8Array)),
+      });
+      return { status: 200, headers: {}, body: json(response) };
+    };
+    const client = new WorkspaceClient('http://runtime.test', 'token', fakeHTTP);
+
+    const result = await client.commitTimeline(PROJECT_ID, TIMELINE_ID, previewRequest, 'preview-merged-key');
+
+    expect(result).toEqual(response);
+    expect(result.data.would_status).toBe('merged');
+    expect(result.data.canonical_document).toEqual(acceptedResponse.data.canonical_document);
+    expect(result.data.merge_mode).toBe('fields');
+    expect(result.data.steps).toEqual([authoritativeStep]);
+    expect(result.receipt).toBeNull();
+    expect(sent).toEqual([{
+      method: 'POST',
+      path: `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}/commit`,
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Bearer token',
+        'Content-Type': 'application/json',
+        'Idempotency-Key': 'preview-merged-key',
+      },
+      body: previewRequest,
+    }]);
+  });
+
+  it('accepts a complete receipt and refuses a partial receipt through the generated WorkspaceClient', async () => {
+    const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' });
+    let currentResponse: unknown = response;
+    const client = new WorkspaceClient('http://runtime.test', 'token', async () => ({ status: 200, headers: {}, body: json(currentResponse) }));
+
+    await expect(client.commitTimeline(PROJECT_ID, TIMELINE_ID, request(), response.receipt.idempotency_key)).resolves.toEqual(response);
+    delete (response.receipt as unknown as Record<string, unknown>).result;
+    currentResponse = response;
+    await expect(client.commitTimeline(PROJECT_ID, TIMELINE_ID, request(), response.receipt.idempotency_key)).rejects.toThrow('invalid commit receipt');
+  });
+
+  it('accepts a complete preview and refuses a preview without would_status through the generated WorkspaceClient', async () => {
+    const acceptedResponse = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' });
+    const response = {
+      data: { ...acceptedResponse.data, status: 'preview' as const, would_status: 'accepted' as const, evaluated_head: { revision_id: 'r1', publication_id: 'p1' } },
+      receipt: null,
+    } as CommitPreviewResponse;
+    let currentResponse: unknown = response;
+    const client = new WorkspaceClient('http://runtime.test', 'token', async () => ({ status: 200, headers: {}, body: json(currentResponse) }));
+    const previewRequest = { ...request(), dry_run: true };
+
+    await expect(client.commitTimeline(PROJECT_ID, TIMELINE_ID, previewRequest, 'preview-key')).resolves.toEqual(response);
+    delete (response.data as unknown as Record<string, unknown>).would_status;
+    currentResponse = response;
+    await expect(client.commitTimeline(PROJECT_ID, TIMELINE_ID, previewRequest, 'preview-key')).rejects.toThrow('invalid commit preview');
   });
 
   it('preserves repeated occurrences, scoped child images, opaque fields and explicit nulls', async () => {

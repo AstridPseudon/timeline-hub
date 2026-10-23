@@ -245,7 +245,7 @@ export function useClipEditing({
 
     const gestureBasis = resolvedConfig && current.resolvedConfig === resolvedConfig
       && Object.keys(patch).length > 0 && Object.keys(patch).every((key) => ['from', 'to', 'hold', 'speed'].includes(key))
-      ? structuredClone({ kind: 'trim' as const, config: current.config, registry: current.registry }) : undefined;
+      ? structuredClone({ kind: 'trim' as const, clipId: selectedClipId, patch, config: current.config, registry: current.registry }) : undefined;
     const { at: _at, ...metaPatch } = patch;
     const affectsDuration = patchAffectsDuration(metaPatch);
     const nextRows = current.rows.map((row) => {

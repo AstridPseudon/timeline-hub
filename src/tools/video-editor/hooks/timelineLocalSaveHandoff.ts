@@ -5,7 +5,7 @@ import { canonicalJsonStringify, type TimelineBundleEnvelope } from '../data/typ
 import { authoringBundleFromDocument, type AuthoringBundle } from '../commands/authoringBundle.ts';
 import { TimelineVersionConflictError, type DataProvider, type TimelineCommandBasis, type TimelineHeadRevision, type TimelineSaveReceipt } from '../data/DataProvider.ts';
 import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
-import { TRACK_DEFINITION_FIELDS, canonicalizeTimelinePair } from '../lib/timeline-domain.ts';
+import { canonicalizeTimelinePair } from '../lib/timeline-domain.ts';
 import { withDefaultTimelineOutput } from '../lib/defaults.ts';
 
 export interface TimelineSaveSource {
@@ -16,11 +16,13 @@ export interface TimelineSaveSource {
 }
 
 /** The split/inspector caller snapshots its input before authoring the local transform. */
-export interface TimelineGestureReadBasis {
-  kind: 'split' | 'trim';
+export type TimelineGestureReadBasis = {
   config: TimelineConfig;
   registry: AssetRegistry;
-}
+  clipId: string;
+} & ({ kind: 'split'; timeSeconds: number } | {
+  kind: 'trim'; patch: Partial<Pick<TimelineConfig['clips'][number], 'from' | 'to' | 'hold' | 'speed'>>;
+});
 
 /** Assembly supplies the ORIGINAL verified read, not loadTimelineCommandBasis at save time. */
 export interface TimelineLocalSaveHandoff {
@@ -199,37 +201,59 @@ export function createTimelineLocalSaveHandoff(options: {
             || !same(authoredJson(gestureBasis.registry), authoredJson(authoringSource.registry))) {
             refuse('gesture read basis differs from the original local authoring input');
           }
-          // These two authoring paths serialize all clips and consult timing,
-          // assets, pinned membership and track structure. Guard that entire input,
-          // including absent optional fields. Track labels are only carried through;
-          // neither split, inspector timing nor their serializers use their values.
           const config = parent.config as Record<string, unknown>;
+          const clips = config.clips;
+          if (!Array.isArray(clips)) refuse('gesture clip read has no authored collection');
+          const selected = clips.filter((clip) => object(clip) && clip.id === gestureBasis.clipId);
+          if (selected.length !== 1) refuse('gesture selected clip has no unique authored binding');
+          const clip = selected[0] as Record<string, unknown>;
           const read = (value: Record<string, unknown>, key: string, path: string[]): OutboxJson => ({
             kind: 'field', ref: 'parent', path: [...path, key],
             state: Object.prototype.hasOwnProperty.call(value, key)
               ? { state: 'present', value: authoredJson(value[key]) } : { state: 'absent' },
           });
-          reads = [{ kind: 'scope', ref: 'parent', path: ['registry'] }];
-          const configKeys = new Set([...Object.keys(config), 'output', 'clips', 'pinnedShotGroups',
-            'theme', 'theme_overrides', 'generation_defaults', 'app']);
-          for (const key of configKeys) {
-            if (key !== 'tracks') reads.push(read(config, key, ['config']));
+          // Read the nearest missing/null ancestor as such, rather than inventing
+          // a leaf under it. Raw defaults stay absent, null and opaque verbatim.
+          const readPath = (value: Record<string, unknown>, keys: string[], path: string[]): OutboxJson => {
+            const [key, ...rest] = keys;
+            return rest.length && object(value[key]) ? readPath(value[key], rest, [...path, key]) : read(value, key, path);
+          };
+          // recalcActionEnd/getClipTimelineDuration consult these selected fields.
+          // Serializing copied rows/tracks is not a read of their entire contents.
+          reads = ['id', 'track', 'at', 'clipType', 'hold', 'from', 'to', 'speed', 'asset']
+            .map((key) => read(clip, key, ['config', 'clips', `id:${gestureBasis.clipId}`]));
+          reads.push(readPath(config, ['output', 'fps'], ['config']));
+          if (!object(config.output) || config.output.fps == null) {
+            // withDefaultTimelineOutput falls back to the selected theme canvas.
+            reads.push(read(config, 'theme', ['config']), readPath(config, ['theme_overrides', 'visual', 'canvas', 'fps'], ['config']));
           }
-          if (!Array.isArray(config.tracks)) refuse('gesture track read has no authored collection');
-          const tracks = config.tracks as Array<Record<string, unknown>>;
-          const order = tracks.map((track) => track.id as string);
-          reads.push({ kind: 'collection', ref: 'parent', path: ['config', 'tracks'], members: [...order].sort(), order });
-          for (const track of tracks) {
-            for (const key of new Set([...TRACK_DEFINITION_FIELDS, ...Object.keys(track)])) {
-              if (key !== 'label') reads.push(read(track, key, ['config', 'tracks', `id:${track.id}`]));
-            }
+          if (typeof clip.asset === 'string') {
+            if (!object(parent.registry) || !object(parent.registry.assets)) refuse('gesture registry read has no authored assets');
+            // Runtime/provider normalize parent/registry to config/registry and
+            // resolve that path to the top-level raw registry when no mirror exists.
+            if (Object.prototype.hasOwnProperty.call(config, 'registry')
+              && (!object(config.registry) || !same(config.registry, parent.registry))) refuse('contradictory parent registry mirror');
+            reads.push(read(parent.registry.assets, clip.asset, ['config', 'registry', 'assets']));
+          }
+          if (gestureBasis.kind === 'split') {
+            if (!Number.isFinite(gestureBasis.timeSeconds)) refuse('split time is unavailable');
+            // splitClipAtPlayhead uses order for insertion and every ID for allocation;
+            // its pinned-group check reads this id-less list, not neighbor contents.
+            const order = clips.map((item) => item.id as string);
+            reads.push({ kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: [...order].sort(), order },
+              read(config, 'pinnedShotGroups', ['config']));
+          } else if (!Object.keys(gestureBasis.patch).length
+            || Object.keys(gestureBasis.patch).some((key) => !['from', 'to', 'hold', 'speed'].includes(key))) {
+            refuse('trim operands are unavailable');
           }
         }
         // The encoder supplies guards and created IDs; these bytes are never a wire DTO.
         const pending = options.session.appendDocument({ before, after,
           roots: [{ ref: 'parent', revisionId: before.parent_revision.revision_id, contentDigest: before.parent_revision.content_digest }],
           ...(reads === undefined ? {} : { reads, merge: 'fields' as const }),
-          label: 'Edit timeline', step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: 'Save local editor changes', tags: [] } });
+          label: 'Edit timeline', step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: gestureBasis ? (gestureBasis.kind === 'split'
+            ? `Split ${gestureBasis.clipId} at ${gestureBasis.timeSeconds}`
+            : `Trim ${gestureBasis.clipId}: ${canonicalJsonStringify(gestureBasis.patch)}`) : 'Save local editor changes', tags: [] } });
         source = { ...next,
           config: changes(source.config, source.config, next.config, ['config']) as TimelineConfig,
           registry: changes(source.registry, source.registry, next.registry, ['registry']) as AssetRegistry,
