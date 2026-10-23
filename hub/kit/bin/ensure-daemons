@@ -13,9 +13,11 @@ has(){ ps -eo args | awk -v p="$1" -v a="$2" '$1=="/bin/bash" && $2 ~ ("bin/" p 
 started=""
 has hub-syncd "$M" || { nohup setsid $O/bin/hub-syncd $M >> $O/hub-sync.log 2>&1 < /dev/null 9>&- & started="$started hub-syncd"; }
 has dispatcher-daemon "" || { nohup setsid $O/bin/dispatcher-daemon >> $O/dispatcher.log 2>&1 < /dev/null 9>&- & started="$started dispatcher"; }
-if ! has run-manager "$A" && [ ! -f $O/managers/$A/STOP ]; then
+# a manager round (codex or claude) still running counts as alive even if its run-manager loop died: its -o/tee path names the area
+mgr_alive(){ has run-manager "$A" || ps -eo args | grep -F -- "managers/$A/rounds/" | grep -qv grep; }
+if ! mgr_alive && [ ! -f $O/managers/$A/STOP ]; then
   rm -f $O/managers/$A/running
-  if [ $A = farm ]; then $O/bin/run-manager farm claude-sonnet-5-5 >/dev/null 9>&-; else $O/bin/run-manager $A >/dev/null 9>&-; fi
+  if [ $A = farm ]; then nohup setsid $O/bin/run-manager farm claude-sonnet-5-5 >/dev/null 2>&1 </dev/null 9>&-; else nohup setsid $O/bin/run-manager $A >/dev/null 2>&1 </dev/null 9>&-; fi   # setsid: never in the caller's process group (a Monitor expiry killed the loop but not its codex child: duplicate managers, 05:04Z app2)
   started="$started run-manager"
 fi
 # a manager whose rounds keep failing at once (e.g. Codex input_too_large, 04:13Z agent) looks alive but does nothing
