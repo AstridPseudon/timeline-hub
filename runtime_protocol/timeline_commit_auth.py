@@ -958,9 +958,136 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                     for mirror in (("clips",) if write["ref"].startswith("parent/clip:") else ("registry",)):
                         if mirror in projected and mirror in projected.get("config", {}):
                             projected[mirror] = copy.deepcopy(projected["config"][mirror])
+        materializations = [binding for binding in stage["record"]["bindings"]
+                            if binding.get("key") == "commit.materialization"]
+        source_boundary = stage["binding"].get("boundary", {})
+        source_entry = (history or {}).get(source_boundary.get("publication_id"), {})
+        source_records = source_entry.get("records", {})
+        source_commands = source_records.get("commands", [])
+        source_steps = source_records.get("steps", [])
+        source_step = next((item for item in source_steps
+                            if item.get("id") == source_boundary.get("step_id")), None)
+        if source_step is not None:
+            source_bindings = [binding for ordinal in source_step.get("command_ordinals", [])
+                               if isinstance(ordinal, int) and ordinal < len(source_commands)
+                               for binding in source_commands[ordinal].get("bindings", [])
+                               if binding.get("key") == "commit.materialization"]
+            for binding in source_bindings:
+                owner = binding.get("owner")
+                occurrence = (owner.removeprefix("occurrence:").removesuffix("/shot")
+                              if isinstance(owner, str) else None)
+                before_rows = [row for row in stage_before["parent"]["payload"].get("occurrences", [])
+                               if row.get("occurrence_id") == occurrence]
+                after_rows = [row for row in stage_after["parent"]["payload"].get("occurrences", [])
+                              if row.get("occurrence_id") == occurrence]
+                if len(before_rows) != len(after_rows) or len(before_rows) != 1:
+                    continue
+                before_row, after_row = before_rows[0], after_rows[0]
+                before_shot = "shot-revision:" + str(before_row["shot_revision_id"])
+                after_shot = "shot-revision:" + str(after_row["shot_revision_id"])
+                before_internal = "internal-revision:" + str(stage_before[before_shot]["internal_timeline_revision_id"])
+                after_internal = "internal-revision:" + str(stage_after[after_shot]["internal_timeline_revision_id"])
+                if binding.get("physical_ref", "").startswith("shot-revision:"):
+                    old, new, edge_before, edge_after = before_shot, after_shot, before_internal, after_internal
+                elif binding.get("physical_ref", "").startswith("internal-revision:"):
+                    old, new, edge_before, edge_after = before_internal, after_internal, before_shot, after_shot
+                else:
+                    continue
+                paired = [item for item in source_bindings
+                          if item.get("physical_ref") == binding.get("edge_before")
+                          and item.get("successor") == binding.get("edge_after")]
+                require(len(paired) == 1,
+                        "inverse stage source materialization has no authenticated sibling edge")
+                require(binding.get("owners") == [owner]
+                        and binding.get("content_digest") == stage_after[new]["content_digest"],
+                        "inverse stage source materialization differs from its successor image")
+                if not any(item.get("physical_ref") == old and item.get("successor") == new
+                           for item in materializations):
+                    materializations.append({"key": "commit.materialization", "physical_ref": old,
+                                             "successor": new, "owner": owner, "owners": [owner],
+                                             "edge_before": edge_before, "edge_after": edge_after,
+                                             "revision_id": stage_before[old]["revision_id"],
+                                             "content_digest": stage_before[old]["content_digest"]})
+        transitions = []
+        for binding in materializations:
+            old, new = binding.get("physical_ref"), binding.get("successor")
+            if old not in stage_before or new not in stage_after:
+                continue
+            require(old != new and old not in stage_after and new not in stage_before,
+                    "inverse stage materialization is not a physical turnover")
+            owner = binding.get("owner")
+            require(isinstance(owner, str) and owner.startswith("occurrence:")
+                    and owner.endswith("/shot"),
+                    "inverse stage materialization owner is malformed")
+            occurrence = owner.removeprefix("occurrence:").removesuffix("/shot")
+            before_rows = [row for row in stage_before["parent"]["payload"].get("occurrences", [])
+                           if row.get("occurrence_id") == occurrence]
+            after_rows = [row for row in stage_after["parent"]["payload"].get("occurrences", [])
+                          if row.get("occurrence_id") == occurrence]
+            require(len(before_rows) == len(after_rows) == 1,
+                    "inverse stage materialization owner is absent or ambiguous")
+            before_row, after_row = before_rows[0], after_rows[0]
+            before_shot = "shot-revision:" + str(before_row["shot_revision_id"])
+            after_shot = "shot-revision:" + str(after_row["shot_revision_id"])
+            require(binding.get("owners") == [owner]
+                    and _physical_owner(stage_before, old) == (occurrence, before_row["shot_id"])
+                    and _physical_owner(stage_after, new) == (occurrence, after_row["shot_id"])
+                    and before_row["shot_id"] == after_row["shot_id"],
+                    "inverse stage materialization changes physical ownership")
+            before_internal = "internal-revision:" + str(stage_before[before_shot]["internal_timeline_revision_id"])
+            after_internal = "internal-revision:" + str(stage_after[after_shot]["internal_timeline_revision_id"])
+            if old == before_shot and new == after_shot:
+                expected_edges = (before_internal, after_internal)
+            elif old == before_internal and new == after_internal:
+                expected_edges = (before_shot, after_shot)
+            else:
+                require(False, "inverse stage materialization differs from its owner edges")
+                expected_edges = (None, None)
+            require(binding.get("edge_before") == expected_edges[0]
+                    and binding.get("edge_after") == expected_edges[1]
+                    and binding.get("revision_id") == stage_before[old]["revision_id"]
+                    and binding.get("content_digest") == stage_before[old]["content_digest"],
+                    "inverse stage materialization differs from its authenticated image")
+            require(old not in {item[0] for item in transitions}
+                    and new not in {item[1] for item in transitions},
+                    "inverse stage materialization has an ambiguous successor")
+            transitions.append((old, new, before_internal, after_internal,
+                                before_shot, after_shot))
+
+        shot_turnovers = {(old, new): (before_internal, after_internal)
+                          for old, new, before_internal, after_internal, _, _ in transitions
+                          if old.startswith("shot-revision:")}
+        for old, new, before_internal, after_internal, before_shot, after_shot in transitions:
+            image = native_image.pop(old)
+            expected = stage_after[new]
+            if old.startswith("internal-revision:"):
+                require(value_equal(image["payload"], expected["payload"]),
+                        "inverse stage materialization changes internal payload")
+            else:
+                payload = copy.deepcopy(image["payload"])
+                require(payload.get("internal_timeline_revision_id") == before_internal.partition(":")[2],
+                        "inverse stage materialization has a wrong shot pin")
+                payload["internal_timeline_revision_id"] = after_internal.partition(":")[2]
+                require(value_equal(payload, expected["payload"]),
+                        "inverse stage materialization changes shot payload")
+                image["payload"] = payload
+                image["internal_timeline_revision_id"] = after_internal.partition(":")[2]
+            require(image.get("shot_id") == expected.get("shot_id"),
+                    "inverse stage materialization changes shot ownership")
+            image["revision_id"] = new.partition(":")[2]
+            image["content_digest"] = digest(image["payload"])
+            native_image[new] = image
+        for row in native_image["parent"]["payload"].get("occurrences", []):
+            for (old, new) in shot_turnovers:
+                if row.get("shot_revision_id") == old.partition(":")[2]:
+                    row["shot_revision_id"] = new.partition(":")[2]
         require(value_equal({ref: image["payload"] for ref, image in native_image.items()},
                             {ref: image["payload"] for ref, image in stage_after.items()}),
                 "inverse stage native writes do not cover its authenticated effect image")
+        for ref in native_image:
+            if ref.startswith(("shot-revision:", "internal-revision:")):
+                require(_physical_owner(native_image, ref) == _physical_owner(stage_after, ref),
+                        "inverse stage materialization changes physical ownership")
         for write in writes:
             if not write["path"] and re.fullmatch(r"(?:shot|occurrence):[^/]+", write["ref"]):
                 require(value_equal(_inverse_stage_root(native_image, write["ref"])[0],
