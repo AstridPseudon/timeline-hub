@@ -205,26 +205,7 @@ def effect_diff(before, after):
 
 def inverse_closure(bundle, sources):
     """Compile inverse effects using the same authenticated immutable reuse as acceptance."""
-    from .commit import document_from_bundle
-
-    closure = Closure(bundle)
-    if not sources:
-        return closure
-    closure.document = document_from_bundle(bundle, source_bundles=sources)
-    closure.images = {'parent': closure.document['parent_revision']}
-    closure.images.update(('shot-revision:' + image['revision_id'], image)
-                         for image in closure.document['shot_revisions'])
-    closure.images.update(('internal-revision:' + image['revision_id'], image)
-                         for image in closure.document['internal_timeline_revisions'])
-    placements = {row['occurrence_id']: row for row in bundle['placements']}
-    closure.owners = {}
-    for row in closure.document['parent_revision']['payload']['occurrences']:
-        shot_ref = 'shot-revision:' + row['shot_revision_id']
-        child_ref = 'internal-revision:' + closure.images[shot_ref]['internal_timeline_revision_id']
-        for ref in (shot_ref, child_ref):
-            closure.owners.setdefault(ref, []).append(('occurrence:' + row['occurrence_id'],
-                placements[row['occurrence_id']]['shot_id']))
-    return closure
+    return Closure(bundle, source_bundles=sources)
 
 
 class CommitPatch:

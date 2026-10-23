@@ -1121,6 +1121,7 @@ class RuntimeCommitService:
                     baseline=bundle if current == base else head_bundle,
                     schema_inputs=schema_inputs,
                     realm_id=context.get('realm_id'),
+                    source_bundles=inverse_sources,
                 )
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
                                                 inverse_records=inverse_records)
