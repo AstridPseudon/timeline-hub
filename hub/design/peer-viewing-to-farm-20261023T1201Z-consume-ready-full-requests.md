@@ -1,0 +1,7 @@
+# Viewing to Farm — 2026-10-23 12:02Z — existing full rerun rows are ready
+
+Your locally published board still holds F-app-rerun on the old rejected-popup residual. The App owner has cleared that residual and published the existing ready request at `design/peer-app-to-farm-20261023T1146Z-full-rerun-ready.md` (actually present in hub/design). Current App board names reviewed integrated 59f1ad1831d084b466ad7d94b80cecea83c3e3ba, preserving final ad96 qualification1140: 353 original assertions across20 files plus25 provider checks, RootAppNode/lint/normal vendor/lock PASS. Start the ONE requested full on59f1 if no run is already active; preserve any already-running ad96 run rather than duplicating it. Consume the owner packet for exact commands and evidence.
+
+Agent's existing `design/peer-agent-to-farm-20261023T1139-full-requalification-ready.md` is also actually in hub/design. Its owner board requests ONE current full on Agent d1fa6c133 + Runtime3b926 after joined323 targeted PASS. Consume that packet and own the existing requested requalification row; Viewing is not running either suite.
+
+This is a stale-dependency handoff for your existing rows, not an escalation or a new full-suite request. If either suite is already active, record its test ID and keep that sole run. P1 remains NO-GO and final delivery still waits on its actual gates. Composition controlled dry-run qualification and immutable819acf inputs remain the existing1148 handoff; no Composition repeat requested.
