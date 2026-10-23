@@ -873,6 +873,106 @@ def test_actual_leaf_inverse_forgery_is_refused(retained_leaf_inverse, mutation)
 
 
 @pytest.fixture
+def retained_occurrence_order_inverse():
+    import hashlib
+    import json
+    from pathlib import Path
+
+    # Lossless projection of a8dcf1d1 packet run/cases/060-port-prepared.json:
+    # exact request/prepared, expected-head closure, and undo_of-only history.
+    raw = (Path(__file__).parent / "fixtures" / "timeline_occurrence_order_inverse_060.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == "50d9e08be8efa3e9f4d1d789ab99fd2c76d7e92bbeacfba543f65d2a331145c0"
+    return json.loads(raw)
+
+
+def test_retained_occurrence_order_inverse_preserves_authenticated_physical_pins(retained_occurrence_order_inverse):
+    from runtime_protocol.timeline_commit_auth import validate
+
+    inputs = retained_occurrence_order_inverse
+    before = copy.deepcopy(inputs)
+    assert set(inputs["history"]) == set(inputs["prepared"]["records"]["undo_of"])
+    write = inputs["prepared"]["records"]["commands"][0]["writes"][6]
+    assert write["ref"] == "parent" and write["path"] == ["occurrences"]
+    assert all("shot_revision_id" not in row for side in ("before", "after") for row in write[side]["value"])
+    validate(**inputs)
+    assert inputs == before
+
+
+@pytest.mark.parametrize("mutation", [
+    "duplicate", "missing", "foreign", "shot", "pin", "payload", "unknown", "malformed", "absent",
+    "before", "wrong-order", "physical-pin", "physical-pin-swap", "internal-pin", "owner",
+    "effect-before", "effect-after", "effect-coverage",
+    "native-range", "effect-range", "history-missing", "history-foreign", "history-source",
+])
+def test_retained_occurrence_order_forgeries_refuse_losslessly(retained_occurrence_order_inverse, mutation):
+    from runtime_protocol.timeline_commit import CommitRejected
+    from runtime_protocol.timeline_commit_auth import validate
+
+    inputs = retained_occurrence_order_inverse
+    prepared = inputs["prepared"]
+    record = prepared["records"]["commands"][0]
+    write = record["writes"][6]
+    rows = write["after"]["value"]
+    if mutation == "duplicate":
+        rows[1] = copy.deepcopy(rows[0])
+    elif mutation == "missing":
+        rows.pop()
+    elif mutation == "foreign":
+        rows[0]["occurrence_id"] = "foreign"
+    elif mutation == "shot":
+        rows[0]["shot_id"] = rows[1]["shot_id"]
+    elif mutation == "pin":
+        rows[0]["shot_revision_id"] = "forged-pin"
+    elif mutation == "payload":
+        rows[0]["placement"]["start_ms"] = 99
+    elif mutation == "unknown":
+        rows[0]["unknown"] = {"opaque": None}
+    elif mutation == "malformed":
+        rows[0] = None
+    elif mutation == "absent":
+        write["after"] = {"state": "absent"}
+    elif mutation == "before":
+        write["before"]["value"][0]["gain"] = 99
+    elif mutation == "wrong-order":
+        rows.reverse()
+    elif mutation == "physical-pin":
+        prepared["canonical_document"]["parent_revision"]["payload"]["occurrences"][0][
+            "shot_revision_id"] = "forged-pin"
+    elif mutation == "physical-pin-swap":
+        physical = prepared["canonical_document"]["parent_revision"]["payload"]["occurrences"]
+        physical[0]["shot_revision_id"] = physical[1]["shot_revision_id"]
+    elif mutation == "internal-pin":
+        prepared["canonical_document"]["shot_revisions"][0]["payload"][
+            "internal_timeline_revision_id"] = "forged-pin"
+    elif mutation == "owner":
+        prepared["canonical_document"]["shot_revisions"][0]["shot_id"] = "foreign"
+    elif mutation in {"effect-before", "effect-after", "effect-coverage"}:
+        effect = prepared["records"]["steps"][0]["patch"][0]
+        if mutation == "effect-before":
+            effect["before"] = {"state": "present", "value": None}
+        elif mutation == "effect-after":
+            effect["value"] = None
+        else:
+            prepared["records"]["steps"][0]["patch"].pop()
+    elif mutation in {"native-range", "effect-range"}:
+        binding = next(binding for binding in record["bindings"] if binding["key"] == "inverse.stage")
+        binding["boundary"]["native_write_range" if mutation == "native-range" else "effect_range"][0] = 1
+    elif mutation == "history-missing":
+        inputs["history"] = {}
+    elif mutation == "history-foreign":
+        inputs["history"]["foreign"] = copy.deepcopy(next(iter(inputs["history"].values())))
+    else:
+        next(iter(inputs["history"].values()))["records"]["commands"][0]["writes"].pop()
+    before = copy.deepcopy(inputs)
+    with pytest.raises(CommitRejected) as error:
+        validate(**inputs)
+    assert error.value.failure["details"]["reason"] == "invalid_records"
+    if mutation in {"duplicate", "missing", "foreign", "shot", "pin", "payload", "unknown", "malformed", "absent"}:
+        assert str(error.value) == "inverse stage occurrence order is not a row-preserving permutation"
+    assert inputs == before
+
+
+@pytest.fixture
 def retained_native_order_packet():
     import json
     from pathlib import Path
