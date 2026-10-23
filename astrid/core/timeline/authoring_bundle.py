@@ -930,6 +930,10 @@ class _CopiedShot(dict[str, Any]):
         self.source = source
 
 
+class _RestoredShot(_CopiedShot):
+    """Accepted inverse baseline, kept outside the authored JSON representation."""
+
+
 def _copied_shot_baseline(
     root: Mapping[str, Any], shot: _CopiedShot, identity: str,
 ) -> tuple[dict[str, Any], Mapping[str, Any]]:
@@ -943,6 +947,23 @@ def _copied_shot_baseline(
             or document["timeline_id"] != root["timeline_id"]
             or root["base_parent"] != {key: parent[key] for key in ("revision_id", "content_digest")}):
         raise AuthoringBundleError("copied shot source closure changed")
+    if isinstance(shot, _RestoredShot):
+        from astrid.sdk.timeline.commit import bundle_from_document
+
+        _verify_document(binding)
+        if (binding["project_id"], binding["timeline_id"]) != (
+            root["project_id"], root["timeline_id"]
+        ):
+            raise AuthoringBundleError("restored shot source scope changed")
+        historical = bundle_from_document(binding)
+        owners = {row["occurrence_id"] for row in root["placements"]
+                  if row.get("shot_id") == identity}
+        if (not owners or owners != {row["occurrence_id"] for row in historical["placements"]
+                                     if row["shot_id"] == identity}
+                or identity not in historical["shots"]):
+            raise AuthoringBundleError("restored shot source owners changed")
+        prior = historical["shots"][identity]
+        return prior["payload"], prior["internal_timeline"]
     occurrences = parent["payload"]["occurrences"]
     source = next((row for row in occurrences
                    if row["occurrence_id"] == binding.get("source_occurrence_id")), None)
