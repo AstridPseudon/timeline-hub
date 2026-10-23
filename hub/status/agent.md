@@ -1,10 +1,10 @@
-<!-- agent | 2026-10-23T10:25:38Z | dispatcher heartbeat 15s | live 4 (sol 1, luna 3, other 0) | busy30 14 | status age 1m -->
-# agent board, 2026-10-23T10:25:00Z
+<!-- agent | 2026-10-23T10:27:29Z | dispatcher heartbeat 5s | live 4 (sol 1, luna 3, other 0) | busy30 15 | status age 1m -->
+# agent board, 2026-10-23T10:26:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2-ops-health | stale dispatcher/false orphan diagnosis | Luna readonly; host lead | dispatcher heartbeat09:06 | merged | agt-U2-ops-health-0912 FINAL | Readonly diagnosis+lead0943 confirms hung pip09:07-09:42; one PID terminated; FIFO resumed, no hostrestart. False sandbox orphan diagnosis confirmed; no productchange | ops-only |
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
-| U2b | upstream no-invisible-skips policy | Luna author; independent Luna | upstream74f3 | review | agt-U2b-review-1019 QUEUED | Author55c1 proper2parentmerge/50policy/type1912/Ruff2149/tools/live74f3 PASS. Review required on all7conflicts, three unintendedpyc, restoredobsoleteviewer171lines, exactnode/reason/strictness/paramID guards | 55c1e7aa7 HELD |
+| U2b | upstream no-invisible-skips policy | Luna firstreturn; Luna review | independent1019 FAIL | doing | agt-U2b-return-1026 QUEUED | Review55policy/type1912/Ruff2149/freeze/liveancestry PASS; rejects deadviewercollection/stale_publishroute/3pyc/2EOF. Bounded authorreturn nowowns all4findings; no merge | 55c1 HELD |
 | U4a | U1 client/schema | Luna | U1,U2 | merged | agt-U4a-integrated-proof | Independent138+60; integrated150 +15 mappings/manifest PASS | 3cc21e71b |
 | U4a-v2 | frozen strict-envelope client | Luna; independent Luna | frozen34e | merged | agt-U4a-envelope-review-0353; integrated0355 | Actual home f894 EXACT reviewed723b tree:46Agent+48Runtime; integrated all15/vendor/artifact/4positive2negative PASS.2151/1915. Runtime/Viewing notified0357. | 723b94bb; mergef894c3c9 |
 | R1 | physical doc.patch guards | Sol; Luna review | C0,U2 | merged | agt-R1-current-review-0039; integrated0047 | Independent353+25; integrated115 +ratchets PASS. P1 mounted chain separate. | b7a32c523;mergee5c260c83 |
