@@ -1,0 +1,8 @@
+# Handoff — ap2-P1-reply-diagnostic-review-0734
+
+Independent verdicts:
+
+- **SOURCE PASS** — `tests/e2e/local/three-products.p1-chain.spec.ts` SHA-256 `d72798b2301973bfdabcf3b07c2746896e9ec5cd6188bebeda53733c070647a8`, candidate tree `45f4b3ca9e204d3cc0223bb9929301ab5e40cf25`. The 24-line addition is bounded status/structured-data diagnostics before success dereferences in both original cases. It exposes only status, public code/path/hint; it neither falls back nor converts errors to success. Original accepted/merged/refused, full-v2 request, reads/order/opaque/new-ID/guards, exact raw/key, lost-ACK/restart/retry, history/undo/90-second/no-old-route assertions remain.
+- **OPS FAIL** — current row 37 hash `4d9c9db6a04646bd25d9eaf828a62897209a2c92980cf0b6bff265643a41ea81`, file SHA `c4e4e6f03a3cf79258de2393ce0017009f702238d0a57a4688bbf5a0e5ca1cf8`, outside-row digest `228aa796658c29ac27d4071c7c2aef98f81e788d97fc614ffd6f41ab326af341`. The author’s local recorded diff proves the row changed its ancestry guard from `git rev-parse HEAD^` to `git merge-base 8770… HEAD` in addition to changing the source SHA, contrary to the authorized OPS scope. Row parsing, current literal counts, other hashes, pinned launch/environment/body selectors, private graph, and Agent/Runtime identities otherwise pass.
+
+Static checks passed: exact two-test discovery, App and Node TypeScript checks, scoped ESLint, and `git diff --check`. No original browser/service/body/socket/full run was performed. Missing-canonical remains unresolved. Restore the original ancestry guard, re-run the OPS hash/scope checks, and only after SOURCE+OPS both pass run the manager-owned single original two-case changed-evidence execution.
