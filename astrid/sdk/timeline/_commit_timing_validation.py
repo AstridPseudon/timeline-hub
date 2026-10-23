@@ -273,6 +273,70 @@ def _legacy_inputs(
                  for key, field in sorted(exemptions, key=lambda item: (item[0], item[1])))
 
 
+def _restored_legacy_exemptions(
+    candidate: Mapping[str, Any], sources: Sequence[Mapping[str, Any]],
+    records: Sequence[Mapping[str, Any]],
+) -> set[tuple[tuple[Any, ...], str]]:
+    """Recognize exact parent-word restorations from provider-owned boundaries.
+
+    Sources come from authenticated history, and records from guarded execution,
+    never from request JSON. Ordinary writes cannot borrow inverse authority.
+    The legacy lookup searches child audio, so independent parent clip values
+    are immaterial; their membership/order and all physical child inputs remain
+    part of the comparison. The parent revision itself necessarily turns over.
+    """
+    from ._command_state import State, overlaps
+
+    exemptions: set[tuple[tuple[Any, ...], str]] = set()
+    if not records:
+        return exemptions
+    current = State(candidate)
+    for source in sources:
+        if any(candidate.get(key) != source.get(key) for key in ("project_id", "timeline_id")):
+            continue
+        before = dict(_legacy_rows(source))
+        previous = State(source)
+        for key, clip in _legacy_rows(candidate):
+            if key[0] != "parent" or clip != before.get(key):
+                continue
+            for field, value in _legacy_declarations(clip).items():
+                if moments.parse(value).kind != "word":
+                    continue
+                target = ("parent/clip:" + str(key[2]), ("app", "astrid", field))
+                alias = (target[0], ("app", field))
+                restored = False
+                authored = False
+                for record in records:
+                    for write in record["writes"]:
+                        site = (write["ref"], write["path"])
+                        if record["command"]["op"] not in {"timeline.inverse", "timeline.restore"}:
+                            authored |= overlaps(site, (target[0], ()))
+                            continue
+                        if not (overlaps(site, target) or overlaps(site, alias)):
+                            continue
+                        if write["after"] == current.get(*site) == previous.get(*site):
+                            restored = True
+                if authored or not restored:
+                    continue
+                bases = []
+                for bundle in (candidate, source):
+                    basis = _reference_basis(bundle, key, clip, value)
+                    basis.pop("parent_owner", None)
+                    basis["siblings"] = [row.get("id") for row in bundle["parent"]["clips"]]
+                    basis["parent_inputs"] = {
+                        name: content for name, content in bundle["parent"].items()
+                        if name not in {"clips", "config"}
+                    }
+                    basis["parent_config"] = {
+                        name: content for name, content in bundle["parent"]["config"].items()
+                        if name != "clips"
+                    }
+                    bases.append(basis)
+                if bases[0] == bases[1] and not _legacy_declaration_is_resolvable(source, key, field, value):
+                    exemptions.add((key, field))
+    return exemptions
+
+
 def _timing_basis(bundle: Mapping[str, Any], owners: set[tuple[Any, ...]]) -> str:
     """Retain the physical owners and inputs of one timing dependency component."""
     parent = bundle["parent"]
@@ -419,6 +483,7 @@ def validate_candidate_timing(
     candidate: Mapping[str, Any], *, baseline: Mapping[str, Any] | None = None,
     _allow_physical_context_fallback: bool = True,
     source_bundles: Sequence[Mapping[str, Any]] = (),
+    restoration_records: Sequence[Mapping[str, Any]] = (),
 ) -> None:
     """Compile a detached validation view, leaving authored JSON and pins intact.
 
@@ -432,7 +497,22 @@ def validate_candidate_timing(
     publication = compile_authoring_candidate(candidate).publication
     projection = copy.deepcopy(dict(candidate))
     exemptions = _legacy_exemptions(candidate, baseline)
+    restored = _restored_legacy_exemptions(candidate, source_bundles, restoration_records)
+    exemptions.update(restored)
     legacy_declarations = _legacy_inputs(candidate, exemptions)
+    for restored_key, restored_field in restored:
+        if restored_field == "on":
+            # An exact historical unresolved start retains its cached interval,
+            # including its historical film-end flag. Adapt only the detached
+            # compiler view; the canonical declaration and aliases stay intact.
+            clip = dict(_legacy_rows(projection))[restored_key]
+            intent._set(clip, "until_film_end", None)
+            clip.get("app", {}).pop("until_film_end", None)
+            mirrors = projection["parent"]["config"].get("clips", [])
+            for mirror in mirrors:
+                if mirror.get("id") == restored_key[2]:
+                    intent._set(mirror, "until_film_end", None)
+                    mirror.get("app", {}).pop("until_film_end", None)
     config = projection["parent"]["config"]
     output = config.get("output") or {}
     if "fps" in output:

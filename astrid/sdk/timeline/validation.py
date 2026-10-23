@@ -490,6 +490,7 @@ def validate_final_candidate(
     schema_inputs: Sequence[Any] = (),
     realm_id: str | None = None,
     source_bundles: Sequence[Mapping[str, Any]] = (),
+    restoration_records: Sequence[Mapping[str, Any]] = (),
 ) -> None:
     """Validate one complete candidate without changing it.
 
@@ -497,8 +498,10 @@ def validate_final_candidate(
     legacy declarations that must survive a round trip.  ``schema_inputs``
     are the exact retained Runtime captures collected for this commit; this
     helper never resolves a mutable project-pack source.
-    ``source_bundles`` are authenticated inverse boundaries used for immutable
-    child reuse when the inverse restores a source absent from the current head.
+    ``source_bundles`` are authenticated history boundaries and restore closures,
+    also used for immutable child reuse when a source is absent from the head.
+    ``restoration_records`` are provider-executed guarded history writes; only
+    their exact restored declarations may use those authenticated boundaries.
     """
     if not isinstance(candidate, Mapping):
         _fail("candidate", "must be an object")
@@ -604,7 +607,8 @@ def validate_final_candidate(
 
     try:
         if source_bundles:
-            validate_candidate_timing(candidate, baseline=baseline, source_bundles=source_bundles)
+            validate_candidate_timing(candidate, baseline=baseline, source_bundles=source_bundles,
+                                      restoration_records=restoration_records)
         else:
             validate_candidate_timing(candidate, baseline=baseline)
     except (TimingCompileError, KeyError, TypeError, ValueError) as exc:
