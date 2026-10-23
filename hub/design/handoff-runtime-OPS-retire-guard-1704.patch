@@ -1,0 +1,11 @@
+--- orch/bin/retire-child-venv.installed
++++ orch/bin/retire-child-venv.staged
+@@ -168,7 +168,7 @@
+ check_builder_artifacts() {
+   local item
+   shopt -s nullglob
+-  for item in "$ROOT_CANON/$N.partial."* "$ROOT_CANON/.child-venv-source-$N-"*; do
++  for item in "$ROOT_CANON/$N.partial."*; do
+     [ -e "$item" ] || [ -L "$item" ] || continue
+     refuse "partial or active builder exists"
+   done
