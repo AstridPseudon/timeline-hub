@@ -10,6 +10,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Iterator, Mapping, Sequence, cast
 
+from runtime_protocol import platform
+
 from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
 from astrid.core.rendering.contracts import FrameWindow
 from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools
@@ -45,7 +47,7 @@ def _accounted_attempt_root(
             return None
         attempt = progress.parent.resolve(strict=True)
         facts = attempt.stat()
-        if (not attempt.is_dir() or facts.st_uid != os.getuid()
+        if (not attempt.is_dir() or facts.st_uid != platform.current_user()
                 or facts.st_mode & 0o077):
             return None
         staging = staging_parent.resolve(strict=True)

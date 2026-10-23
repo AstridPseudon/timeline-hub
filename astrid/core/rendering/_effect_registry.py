@@ -17,12 +17,13 @@ from typing import Any, Literal
 
 from astrid.core.element.registry import ElementRegistry, load_default_registry
 from astrid.core.element.schema import ELEMENT_MANIFEST_NAMES, ElementDefinition
+from astrid.core.env_vars import ASTRID_NODE_EXECUTABLE, ASTRID_REMOTION_PROJECT_DIR
 from astrid.core.foundation.paths import REPO_ROOT
 
 TOOLS_DIR = REPO_ROOT
 
 # Executable host maps live beside the host entry point, never in node_modules.
-HOST_SRC = (Path(os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or TOOLS_DIR / "remotion")
+HOST_SRC = (Path(os.environ.get(ASTRID_REMOTION_PROJECT_DIR) or TOOLS_DIR / "remotion")
             / "src")
 OUTPUTS = {
     kind: HOST_SRC / f"{kind}.generated.ts"
@@ -143,7 +144,7 @@ def _public_registry_ids() -> dict[str, frozenset[str]]:
     registry resolver rather than a copied list of bundled IDs.
     """
     project = Path(
-        os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or TOOLS_DIR / "remotion"
+        os.environ.get(ASTRID_REMOTION_PROJECT_DIR) or TOOLS_DIR / "remotion"
     ).resolve()
     package = (project / "node_modules" / "@banodoco" / "timeline-composition").resolve()
     manifest = package / "package.json"
@@ -152,7 +153,7 @@ def _public_registry_ids() -> dict[str, frozenset[str]]:
             "cannot verify missing rendering components: installed public "
             f"Composition package is missing at {manifest}"
         )
-    node = os.environ.get("ASTRID_NODE_EXECUTABLE") or shutil.which("node")
+    node = os.environ.get(ASTRID_NODE_EXECUTABLE) or shutil.which("node")
     if not node:
         raise ValueError(
             "cannot verify missing rendering components: no Node executable "
@@ -652,11 +653,9 @@ def _main_unlocked(argv: list[str] | None = None) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
+    from astrid.core.rendering.remotion_runtime import remotion_render_lock
 
-    if remotion_lock.remotion_render_lock_held():
-        return _main_unlocked(argv)
-    with remotion_lock.remotion_render_lock():
+    with remotion_render_lock():
         return _main_unlocked(argv)
 
 
