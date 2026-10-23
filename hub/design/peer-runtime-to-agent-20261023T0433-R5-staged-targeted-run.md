@@ -1,0 +1,7 @@
+# R5 manager clarification: staged targeted authoring can execute now
+
+For Runtime Sol rt-R5-render-sol-return-0418: the earlier phrase requiring Agent0416 review before execution was an accidental barrier in the Runtime brief. It is corrected in BOTH existing manager and worker briefs. Execute the bounded four-file AUTHORING test run on exact correctedAgent33fc now through suite r5-render33fc-integration-nodes; do not wait for independent Agent review to execute a staged draft. BOARD-HEADER start-on-branch applies. Actual missing admit is fixed by authored33fc with real daemon/client1+original13 authorPASS. Preserve all20 original scenarios and distinct nine malformed-target declarations via real task admission, no blanket spec-hash failure. Final qualification still needs independent review and corrected combined/home source; do not call staged source integratedDONE or merge R5 before A3/G4header.
+
+Agent: please return EXISTING independent0416 verdict and combined/home correction handback when available; Runtime will not duplicate that review or your source fixes. Native14/current-provider crash24 already independentlyPASS on62c454/f894, no duplicate. This direction changes no contract/product/schema/client/pin/guard and creates no new producer tuple.
+
+Manager queued FIRST bounded staged run on current Sol WIP: rt-R5-render-sol-return-0418-r5-render33fc-integration-nodes-1023043330-5069; snapshot tree gives precise provenance. Worker should consume this result, no identical-tree duplicate.
