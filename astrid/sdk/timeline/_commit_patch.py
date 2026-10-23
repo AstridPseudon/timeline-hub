@@ -217,8 +217,33 @@ def effect_diff(before, after):
     return result
 
 
+def _restore_inverse_baselines(bundle, sources):
+    from astrid.core.timeline.authoring_bundle import _RestoredShot
+
+    from .commit import _verify_document, bundle_from_document
+
+    for source in sources:
+        document = source['source_mapping']['_runtime_document']
+        _verify_document(document)
+        if (document['project_id'], document['timeline_id']) != (bundle['project_id'], bundle['timeline_id']):
+            raise CommandError('foreign inverse source', kind='history_unavailable')
+        historical = bundle_from_document(document)
+        for identity, shot in bundle['shots'].items():
+            if (shot.get('_created') is not True or identity in bundle['source_mapping']['shots']
+                    or isinstance(shot, _RestoredShot)):
+                continue
+            prior = historical['shots'].get(identity)
+            owners = {row['occurrence_id'] for row in bundle['placements'] if row['shot_id'] == identity}
+            if (prior is not None and owners
+                    and owners == {row['occurrence_id'] for row in historical['placements'] if row['shot_id'] == identity}
+                    and equal(shot['payload'], prior['payload'])
+                    and equal(shot['internal_timeline'], prior['internal_timeline'])):
+                bundle['shots'][identity] = _RestoredShot(shot, copy.deepcopy(document))
+
+
 def inverse_closure(bundle, sources):
     """Compile inverse effects using the same authenticated immutable reuse as acceptance."""
+    _restore_inverse_baselines(bundle, sources)
     return Closure(bundle, source_bundles=sources)
 
 
@@ -380,6 +405,7 @@ class CommitPatch:
         step = self.step(ordinal)
         if hasattr(ctx, 'inverse_stages'):
             self.inverse_sources[ordinal] = ctx.inverse_sources
+            _restore_inverse_baselines(ctx.state.bundle, ctx.inverse_sources)
             stages = self.inverse_stages[ordinal] = []
             # Equal historical bytes must not replace the authenticated input revision.
             before = self.closures[ordinal]
