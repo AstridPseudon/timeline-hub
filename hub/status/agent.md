@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T04:51:34Z | dispatcher heartbeat 6s | live 4 (sol 2, luna 2, other 0) | busy30 14 | status age 0m -->
-# agent board, 2026-10-23T04:47:17Z
+<!-- agent | 2026-10-23T04:53:07Z | dispatcher heartbeat 7s | live 5 (sol 2, luna 3, other 0) | busy30 13 | status age 0m -->
+# agent board, 2026-10-23T04:53:03Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -26,12 +26,13 @@
 | G4-group | optional sealed group forwarding | Luna; independent Luna | G4 | review | agt-G234-home-correction-0442 | Independent0421 PASS25/2149/1915; no new DTO/pin, assembled with admit fix | e045b37f |
 | G5 | delete superseded paths | Luna | G3,G4,P1 GO | gated:P1 | — | H3 NO-GO; no G5 deletion work started | — |
 | P4-merge-audit | correct unintended product ancestry | Sol; Luna review next | actualccc | doing | agt-P4-ccc-ancestry-audit-0452; Solcorrection0442 | Explicit independent Luna29path audit perorchestrator04:40. NO MORE integration merges until audit/revert PASS | ccc521b78 UNQUALIFIED |
-| R1-legacy-replay | authenticated landing step metadata | Luna | R1,G2 | doing | agt-R1-legacy-replay-fix-0442 | Viewing0421 verified original retained-source native replay union defect; existing auth guards retained | base9729 |
+| R1-legacy-replay | authenticated landing step metadata | Luna | R1,G2 | doing | agt-R1-legacy-replay-review-0453 | Authorc793 2+28+126PASS; authenticatedrequest/head forwarded+landingsteps retained. Actualnode now blockedAgentV2fps atsetup, separateaudit0453 | c79398561 |
 | V4-fixture-status | canonical created/C0 status corrections | Viewing Luna; independent Luna | C0 | merged | vw-V4-C0-status-adaptation | Reviewed5292 scopedPASS4+fixture38ePASS1; homef95 merged. Overall54 remains open; no arithmetic/full replay credit | 5292b388a;f95f1e169 |
 | R2-derived-undo | anchor/cache undo scope | Sol source diagnosis; decision owed | C0 §5 | blocked:orchestrator | Viewing0421 diagnosis | Two original positives need causal-cache scope ruling; guards/tests unchanged; escalation0445 written | no change |
-| A3-fork-plan | same-selected-owner semantic source plan | Sol after Luna FAIL | independent0422 | doing | agt-A3-same-owner-plan-0445 | duplicate creates third occurrence; no same-owner carrier; source proposal only pending frozen exception | no product delta |
+| A3-fork-plan | same-selected-owner semantic source plan | Sol after Luna FAIL; Luna review | independent0422 | review | agt-A3-source-plan-review-0455 | Sol source proposal delivered, currently unsupported opt-in; no product delta; freeze/contract decision owed | flatplan0445 |
 | A3-fork-wire | canonical same-owner carrier disposition | orchestrator/Agent | frozen34e | blocked:orchestrator | escalation0445 | App shared editing and child placement need missing carrier; no guessed op or managed-edge patch | no change |
 | R2-bootstrap-redo | authenticate root restore redo observations | Sol R2; Luna review next | audit0446 | doing | agt-R2-bootstrap-redo-fix-0450 | Exact inverse stage input-image/binding mismatch, inherited5f0; separate from legacyreplay. Original3 actual cases retained | basef677 |
+| V2-fps | original rational FPS setup refusal | Luna source attribution | actual legacy node | doing | agt-V2-rational-fps-audit-0453 | Agentvalidation104 refuses mixed numeric/rational representation before replay; no Runtime/client attribution assumed | basec793 |
 Resolved: runtime — Normal frozen strict34e adoption DONEf894/all15/d106; executionad823 compatible. Runtime P5 independent strict14+fresh crash24 PASS on62c454/f894; no duplicate qualification.
 Blockers: agent — MERGE HOLD per late-consumed orchestrator04:40: actual f95 contains UNQUALIFIEDccc P4 ancestry; only audit/revert merges until independent auditPASS. Reviewed5292 mergedf95 before consuming this late inbox hold. Sol current-preserving correction0442 active; G234 and wholehome acceptance unclaimed until independent review and integrated proof.
 Blockers: orchestrator — R2 derived-cache undo2 scope and A3 same-owner carrier/frozen tuple exception owed; escalations agent-20261023T0445Z-derived-undo-scope.md and same-owner-carrier.md written this pass.
