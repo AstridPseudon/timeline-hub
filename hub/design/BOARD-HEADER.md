@@ -6,7 +6,11 @@ Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan:
 
 ## Status
 - C0 contract: **C0 APPROVED** (22:15Z). **C0b APPROVED** (22:45Z), covering `steps[].reads` and the provider effect records; see design/astra-c0b-review.md. **C0c APPROVED** (23:55Z, Astra: no blocking issues; see design/astra-c0c-review.md). The contract is complete: merge C0c, then R2 may merge. The principle is adopted now: *every root address resolves to exactly one physical closure image at its evaluation boundary; entity IDs are aliases.* `parent` and the unambiguous addresses are unchanged. `internal:<timeline_id>` and `shot:<shot_id>` are allowed only when they resolve to exactly one root; multiple matches are refused with `ambiguous_ref`, never selected or broadcast. There is an explicit `internal-revision:<revision_id>` form. Resolved bindings are persisted and aliases normalized before overlap checks. Successors are followed only through authenticated provenance, and an alias is never silently retargeted. **R2 may start now** against C0b plus this principle; **R2 merges only after C0c is approved.**
-- H3 go/no-go (P1): pending.
+- **H3 go/no-go (P1, 00:40Z): NO-GO (partial).**
+  - **PASS:** the R1 real corpus (42 tests on e6f7167d), plus the App provenance and local-save module tests.
+  - **NOT proven:** the integrated App chain. Blockers: A2 is not wired into the mounted save path; the v2 DTOs are absent (R0); the rm-f holds (root cause fixed 00:50Z).
+  - **Rule:** deletions A4 and G5 stay gated until P1 GO.
+  - **Re-run:** the P1 chain runs as soon as App publishes a runnable SHA with the mounted caller.
 - H8 scope check: pending.
 
 ## Decisions in force
