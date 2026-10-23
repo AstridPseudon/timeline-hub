@@ -4,12 +4,15 @@ The immutable parent composition's `config.app.visualSeamContract` carries
 authored seam policy. Publish changes through `publish_parent_composition`
 with `expected_head`; never rewrite pinned child revisions in storage.
 
-`pictureTracks` declares visual output lanes whose custom clip types supply
-picture. Built-in picture types continue to work without a declaration.
-Unknown types on other lanes remain opaque auxiliary elements. Source/audio
-lanes, disabled clips, text, known overlay/effect types and effect element
-references cannot satisfy child picture coverage through this declaration.
-The metadata analyser does not execute custom renderers or verify their pixels.
+Picture is inferred from the track and clip type; no declaration is needed.
+Any clip type on a visual output lane counts as picture, including a custom
+renderer's opaque types, except known overlay/effect types and effect, animation
+or transition element references. Built-in picture types also count on a lane
+that `continuityTracks` or a canonical occurrence names. Source and audio
+lanes, disabled clips and text cannot satisfy child picture coverage. The
+metadata analyser does not execute custom renderers or verify their pixels. A
+legacy `pictureTracks` key in a stored policy is ignored; it is preserved
+byte-for-byte and never read.
 
 `continuityTracks` selects lanes requiring strict gap/overlap checks. Picture
 coverage is the union of a child's active picture spans, independent of this
@@ -17,7 +20,7 @@ selection. For a composition whose parent shot lane is `picture` and whose
 custom layered child picture is on `plate`, a policy can use:
 
 ```json
-{"continuityTracks": ["picture"], "pictureTracks": ["plate"]}
+{"continuityTracks": ["picture"]}
 ```
 
 Custom picture timing remains opaque in the report. Its cut represents its
