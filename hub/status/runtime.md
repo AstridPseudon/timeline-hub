@@ -1,5 +1,5 @@
-<!-- main | 2026-10-23T13:21:57Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 1m -->
-# runtime board, 2026-10-23T13:20:00Z
+<!-- main | 2026-10-23T13:23:54Z | dispatcher heartbeat 5s | live 2 (sol 1, luna 1, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-23T13:23:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | R2r-D17-stage | authenticated native aggregate inverse normalization | Sol after Luna failures / independent Luna | independent1115 PASS | merged | author1105/review1115; service28978+4445 | DONE5768 MERGED3b926/treeb794 EXACTreviewedtree. Integrated238PASS=204normal34.04s+34marked16.29s; independent137+101/REALSTORE/static0added. Originalfour2PASS2AgentmissingbindingsFAIL retained | 3b926efab /5768a3a63 |
@@ -98,3 +98,5 @@ Checkpoint13:16: childmakerMAIN+actualhubkit5d1ac4PUBLISHEDviaexistingnormalcycl
 Checkpoint13:18: ProofSol1310partialflatfinalmakerfileappeared; mainLunafirstreturnrt-OPS-D21-runtime-kit-return-1318QUEUEDstart-on-branchcomparison NOW, no installuntilSolfinalhash/sourcePASS. Child5d1ac4preserved; no competingbootstrapdesignorrealenvwork. Agent1312 hasuniqueactualleafJSONexportownerQUEUED; doNOTrepeatfailedpublicregressionpendingactualcapture. NewD20interface1310isAgentsemantic/currentclosureauthority, no concreteRuntimechange requested; no speculativepatch.
 
 Checkpoint13:20: Agent1314actualcompleteleafcapturepackage1123978 publishedthispass; blockedrowrelabelREADYandLunafirstreturn1320QUEUEDimmediatelyfresh859. Requires actualcapturefirst + compareearlierrootmismatch + meaningfulnewRED/PASSregression/adversarialcontrols beforepublicpositive. Held432/e99/9345NEVERmerge. OPSruntimefirstreturn1318LIVE sourcecomparison; no finalRemotionreadinessuntilSolfinalhash/sourceproofandnormalpublication.
+
+Checkpoint13:23: finalProofSol1310packet6e346+handoffNOWready. MainLuna1318 FINALBLOCKED actualretiredremotion0012nodes templateabsent (offlinepacketchecksPASS/noinstall); HARD mainSol1323dispatchedimmediately smallestmachine-templateadapter preservingcanonicalbootstrap+exactpins/bodyhash/child5d1. No fake0012row/oldRuntime7dcarrythrough/realbuild. Thisisordinaryharnessunblock, no escalation/permission. LeafLunafirstreturn1320 LIVE hasactualcapture andfoundheld432 orientationincorrect/missingbinding-skips; rewritesstrictreversepairmapping, noheldpatchmerge.
