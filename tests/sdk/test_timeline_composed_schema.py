@@ -11,6 +11,20 @@ from jsonschema import Draft202012Validator, ValidationError
 from astrid.sdk.timeline._command_state import CommandError
 from astrid.sdk.timeline.commands import _SCHEMA, operations, validate_command
 
+DOC_PATCH_SAMPLE = {
+    'schema_version': 1,
+    'op': 'doc.patch',
+    'version': '1',
+    'select': None,
+    'args': {'changes': [{
+        'ref': 'parent',
+        'path': ['opaque', 'schema-census'],
+        'before': {'state': 'absent'},
+        'op': 'set',
+        'value': True,
+    }]},
+}
+
 
 def fixture_commands(value):
     if isinstance(value, dict):
@@ -29,6 +43,7 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
     fixtures = Path(__file__).parents[1] / 'editing_conformance' / 'fixtures'
     commands = {command['op']: command for path in sorted(fixtures.glob('*.json'))
                 for command in fixture_commands(json.loads(path.read_text()))}
+    commands['doc.patch'] = DOC_PATCH_SAMPLE
     conditions = {condition['if']['properties']['op']['const']: condition['then']['properties']
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
     for op, operation in operations().items():
@@ -67,6 +82,7 @@ def test_inverse_schema_accepts_whole_and_selected_step_forms_and_rejects_bad_sh
         {**whole, 'args': {**whole['args'], 'steps': {}}},
         {**whole, 'args': {**whole['args'], 'steps': {'pub-notes': []}}},
         {**whole, 'args': {**whole['args'], 'steps': {'pub-notes': ['note-1', 'note-1']}}},
+        {**whole, 'args': {**whole['args'], 'steps': {'': ['note-1']}}},
         {**whole, 'args': {**whole['args'], 'steps': {'pub-notes': ['']}}},
         {**whole, 'args': {**whole['args'], 'extra': None}},
     ]
