@@ -50,7 +50,107 @@ def commit(service, body, *, key="edit-1", publisher="editor", authorize=lambda:
                                    authorize=authorize)
 
 
+def _v2_request(request):
+    return any(key in request for key in ("label", "steps", "merge", "reads")) or any(
+        command.get("op") == "doc.patch" for command in request.get("commands", [])
+    )
+
+
+def _effective_merge_mode(request):
+    if request.get("merge") == "atomic":
+        return "atomic"
+    if "reads" not in request and any(command.get("op") == "doc.patch"
+                                      for command in request.get("commands", [])):
+        return "atomic"
+    return request.get("merge", "fields")
+
+
+def _state(value, present):
+    return {"state": "present", "value": copy.deepcopy(value)} if present else {"state": "absent"}
+
+
+def _step_patches(source, document):
+    patches = []
+    source_parent = source["parent_revision"]["payload"]
+    candidate_parent = document["parent_revision"]["payload"]
+    for key in sorted(set(source_parent) | set(candidate_parent)):
+        before_present, after_present = key in source_parent, key in candidate_parent
+        before, after = source_parent.get(key), candidate_parent.get(key)
+        if before_present == after_present and before == after:
+            continue
+        change = {"op": "set" if after_present else "remove", "ref": "parent", "path": [key],
+                  "before": _state(before, before_present)}
+        if after_present:
+            change["value"] = copy.deepcopy(after)
+        patches.append(change)
+
+    def images(value):
+        return {**{
+            "shot-revision:" + row["revision_id"]: row for row in value["shot_revisions"]}, **{
+            "internal-revision:" + row["revision_id"]: row
+            for row in value["internal_timeline_revisions"]}}
+
+    source_images, candidate_images = images(source), images(document)
+    for ref in sorted(set(source_images) | set(candidate_images)):
+        before_image, after_image = source_images.get(ref), candidate_images.get(ref)
+        before_present, after_present = before_image is not None, after_image is not None
+        before_payload = before_image.get("payload") if before_image else None
+        after_payload = after_image.get("payload") if after_image else None
+        if before_present == after_present and before_payload == after_payload:
+            continue
+        change = {"op": "set" if after_present else "remove", "ref": ref, "path": [],
+                  "before": _state(before_payload, before_present)}
+        if after_present:
+            change["value"] = copy.deepcopy(after_payload)
+        patches.append(change)
+    return patches
+
+
+def _validate_prepared_request(request):
+    if len(request.get("commands", [])) != 1:
+        raise ValueError("PreparedProvider fixture supports one command only")
+    if "steps" in request:
+        steps = request["steps"]
+        if not isinstance(steps, list) or len(steps) != 1:
+            raise ValueError("PreparedProvider fixture supports one v2 step only")
+        if steps[0].get("command_ordinals") != [0]:
+            raise ValueError("PreparedProvider fixture requires sole-step command_ordinals [0]")
+
+
+def _complete_v2_metadata(context, port, document, expected_head, records):
+    request = context["request"]
+    _validate_prepared_request(request)
+    if not _v2_request(request):
+        return
+    source = port.revision_closure(expected_head["revision_id"])
+    patches = _step_patches(source, document)
+    requested_steps = request.get("steps")
+    if requested_steps:
+        steps = [copy.deepcopy(step) for step in requested_steps]
+        # This fixture has one provider execution boundary; retain the requested
+        # step identity while attaching its complete authenticated effects.
+        steps[0]["patch"] = patches
+    else:
+        steps = [{"id": "edit", "label": request.get("label", "Timeline edit"),
+                  "intent": request["commands"][0]["op"], "tags": [],
+                  "command_ordinals": list(range(len(request["commands"]))), "patch": patches}]
+    inherited = copy.deepcopy(request.get("reads", []))
+    if _effective_merge_mode(request) == "atomic":
+        inherited.append({"kind": "scope", "ref": "parent", "path": []})
+    for step in steps:
+        dependencies = copy.deepcopy(inherited)
+        dependencies.extend(copy.deepcopy(step.get("reads", [])))
+        unique = []
+        for dependency in dependencies:
+            if dependency not in unique:
+                unique.append(dependency)
+        step["dependencies"] = unique
+    records.update(label=request.get("label", "Timeline edit"),
+                   merge_mode=_effective_merge_mode(request), steps=steps)
+
+
 def prepared(context, port, *, same=False):
+    _validate_prepared_request(context["request"])
     head = port.head()
     document = port.revision_closure(head["revision_id"])
     source = None
@@ -70,9 +170,11 @@ def prepared(context, port, *, same=False):
                             "after": {"state": "present", "value": context["idempotency_key"]}}],
                 "reads": [], "selections": [], "bindings": [], "created": [], "dependencies": [],
                 "derived_writes": []}], "undo_of": [], "restored_from": source}
-    return {"expected_head": head, "canonical_document": document, "document_digest": digest(document),
-            "records": records, "id_map": {}, "semantic_events": [],
-            "provider_version": "prepared-fixture-1", "compiler_version": "fixture-1"}
+    candidate = {"expected_head": head, "canonical_document": document, "document_digest": digest(document),
+                 "records": records, "id_map": {}, "semantic_events": [],
+                 "provider_version": "prepared-fixture-1", "compiler_version": "fixture-1"}
+    _complete_v2_metadata(context, port, document, head, records)
+    return candidate
 
 
 class PreparedProvider:
@@ -648,3 +750,84 @@ def test_existing_head_installs_only_verified_original_baseline_before_requests(
         assert rows(service) == before
     finally:
         service.close()
+
+
+@pytest.mark.parametrize("shape", [
+    {"commands": []},
+    {"commands": [{"op": "first"}, {"op": "second"}]},
+    {"label": "Implicit", "commands": [{"op": "first"}, {"op": "second"}]},
+    {"commands": [{"op": "first"}, {"op": "second"}],
+     "steps": [{"command_ordinals": [0, 1]}]},
+    {"commands": [{"op": "first"}, {"op": "second"}],
+     "steps": [{"command_ordinals": [0]}, {"command_ordinals": [1]}]},
+    {"steps": [{"command_ordinals": [0]}, {"command_ordinals": [1]}]},
+    {"steps": []},
+    {"steps": None},
+    {"steps": [{}]},
+    {"steps": [{"command_ordinals": []}]},
+    {"steps": [{"command_ordinals": [1]}]},
+    {"steps": [{"command_ordinals": [0, 1]}]},
+    {"steps": [{"command_ordinals": [0, 0]}]},
+])
+@pytest.mark.parametrize("entry", ["prepared", "metadata"])
+def test_prepared_fixture_refuses_unsupported_request_shapes(shape, entry):
+    context = {"request": {"commands": [{"op": "first"}], **copy.deepcopy(shape)}}
+    document = {"parent_revision": {"payload": {}}, "shot_revisions": [],
+                "internal_timeline_revisions": []}
+    head = {"revision_id": "base"}
+    records = {"label": "Existing", "steps": [{"patch": [{"value": "keep"}]}]}
+    before = copy.deepcopy((context, document, head, records))
+
+    class ClosurePort:
+        def head(self):
+            pytest.fail("unsupported request must be refused before reading head facts")
+
+        def revision_closure(self, revision_id):
+            pytest.fail("unsupported request must be refused before reading closure facts")
+
+    with pytest.raises(ValueError, match="PreparedProvider fixture"):
+        if entry == "prepared":
+            prepared(context, ClosurePort())
+        else:
+            _complete_v2_metadata(context, ClosurePort(), document, head, records)
+    assert (context, document, head, records) == before
+
+
+@pytest.mark.parametrize("mutation", [None, "patch", "read"])
+@pytest.mark.parametrize("dry_run", [False, True])
+def test_prepared_fixture_authenticates_sole_step_claims(service, mutation, dry_run):
+    read = {"kind": "field", "ref": "parent", "path": ["fixture_label"],
+            "state": {"state": "absent"}}
+    change = {"op": "set", "ref": "parent", "path": ["fixture_label"],
+              "before": {"state": "absent"}, "value": "edit-1"}
+    step = {"id": "label", "label": "Label fixture", "intent": "Exercise claims",
+            "tags": ["history", "fixture"], "command_ordinals": [0],
+            "patch": [change], "reads": [read]}
+    submitted = request(service, label="Fixture", steps=[copy.deepcopy(step)],
+                        reads=[copy.deepcopy(read)], dry_run=dry_run)
+    if mutation == "patch":
+        submitted["steps"][0]["patch"][0]["value"] = "forged"
+    elif mutation == "read":
+        submitted["steps"][0]["reads"][0]["state"] = {"state": "present", "value": "forged"}
+    original = copy.deepcopy(submitted)
+    before = rows(service)
+    if mutation:
+        with pytest.raises(RuntimeErrorBase) as error:
+            commit(service, submitted)
+        assert error.value.details is not None and error.value.details["reason"] == "invalid_records"
+        assert rows(service) == before
+    else:
+        result = commit(service, submitted)
+        assert result["data"]["status"] == ("preview" if dry_run else "accepted")
+        accepted_step = result["data"]["steps"][0]
+        for key in ("id", "label", "intent", "tags", "command_ordinals", "reads"):
+            assert accepted_step[key] == step[key]
+        assert change in accepted_step["patch"]
+        assert accepted_step["dependencies"] == [read]
+        if dry_run:
+            assert result["receipt"] is None and rows(service) == before
+        else:
+            assert commit(service, submitted) == result
+            history = service.list_timeline_commits(service.test_project, "main", authorize=lambda: None)
+            assert history["items"][-1]["steps"] == result["data"]["steps"]
+    assert submitted == original
