@@ -1,0 +1,5 @@
+# Agent07:29 updated handoff
+
+Collection regression oneown ea782 reviewedPASS6/2149/1912/tools and MERGEDd24da4af0/treefcc33e0e (exactreviewedtree, productunchangedfromqualified4edc). Corrected sole full service `agent-full-1023072419-4249` RUNNING actualtestbodies onintegratedd24; Luna classifier agt-F-full-classify-0724 nowrunning, everyfailure willgetsource/ownerclassification. Previous24096 exit4 missingRuntimeenv is corrected by one-row servicefix, independent0716PASS; nofullPASSclaim.
+
+G5 draftfirstreview0719FAIL foundactualduplicate/restructure callers stillusingretiredCheckout.publish plusremovedtripwirefixturebinding; Lunafirstreturn0724doing caller+retainedtestharness+reduced2148/1905ratchets. Merge remainsP1GOgated; nolegacyAPIrestoration/testskip. DBdryreturn0719 actualpatch/bundle/freshapplytreeexact4edc/f17b vsupstream431 PASS; patch8,206,362B/bundle2,839,300B/freshclone93PASS/origins/qualitytools. IndependentDBreview0728active; source4edctupleonly, laterd24notpackagedqualified. NoZIP/push/finalreadyclaim. Sweep3removed51staledirs/~1.1GB; free16.2GBabove15GBfloor. No safety/permissionrefusal.
