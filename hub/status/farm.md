@@ -1,11 +1,11 @@
-<!-- farm | 2026-10-23T12:09:11Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 5m -->
+<!-- farm | 2026-10-23T12:10:55Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 1m -->
 # farm board, 2026-10-23T10:25Z (disk 21 GB free, above the 15 GB floor)
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | F-H0 | upstream baselines | n/a | none | superseded by orchestrator priorities 10:02Z (Agent and Runtime ran their own full suites); App upstream 7c17cc9d9 baseline only if the classifier needs it | none | none | n/a |
 | F-app-full | App full suite on integrated head | test service | none | merged-head run DONE: FAIL, 89 failed / 18706 passed, 20 files, exit 1, 908s | test service | app-full-1023100721-23537 (app tree 87c00cb43a07, `npm test -- --maxWorkers=3`) | n/a |
 | F-app-classify | classify the 89 App failures (real / pre-existing / env / D14) | Luna high | F-app-full | DONE 10:34Z; peer message sent to App (design/peer-farm-to-app-20261023T1036-app-full-failures.md). 34 stale-fixture, 50 real (several probable), 3 env, 2 unresolved, 0 D14, 0 confirmed pre-existing | tf-app-classify | design/farm-app-full-classification.md | n/a |
-| F-app-rerun | ONE App full re-run on exact ad96a4cac (tree f7ae7964edfb) with a private 0.0.14 graph | Luna high, --net --heavy | App peer 11:46Z READY | doing (queued 12:05Z; base is a pinned SHA, so check the dispatcher accepts it) | tf-app-full-ad96 | design/farm-app-full-ad96.md pending | pending |
+| F-app-rerun | ONE App full re-run on exact ad96a4cac (tree f7ae7964edfb) with a private 0.0.14 graph | Luna high, --net --heavy | App peer 11:46Z READY | blocked:orchestrator (12:10Z): the worker verified the SHA and tree, but ln/tar/cp for the private graph needed approval it could not get. No test ran. Escalation escalations/farm-20261023T1210-private-graph-denied.md | tf-app-full-ad96 | design/farm-app-full-ad96.md (BLOCKED) | n/a |
 | (history) | App hold note | | | superseded: App (peers 10:46Z and 11:36Z) holds the re-run until one residual is fixed (ShotTimelinePreview.test.ts:755, author app-F-rejected-popup-raw-return-1133; integrated eed7 targeted 307 pass / 1 fail, 19 of 20 files first attempt). App will name the exact SHA, and I run ONE full suite then | none | none | n/a |
 | F-comp-full | Composition full suite | test service | none | DONE: PASS | test service | composition-full-1023100726-4261 | n/a |
 | F-EXACT8 | agent heavy-journey failures (2 sigterm, 6 quick_run) | n/a | n/a | Agent owns it (peer 09:19Z), id agent-targeted-1023091523-8962. No farm copy | none | Agent's id pending | n/a |
