@@ -161,6 +161,12 @@ def build(stage, final):
                     'bash', '-u', '-o', 'pipefail', '-c', context + '\n' + setup + body,
                     'store-child', str(stage), str(final)], check=True)
 def verify(path):
+    retained = pathlib.Path(path)
+    if retained.is_symlink() or not retained.is_dir() or not os.access(retained / 'bin/python', os.X_OK):
+        raise RuntimeError('invalid retained child root/interpreter')
+    for marker, expected in (('.astrid-source-commit', agent), ('.astrid-runtime-source-commit', backend), ('.astrid-runtime-client-identity', client)):
+        if (retained / marker).read_text().rstrip('\n') != expected:
+            raise RuntimeError('retained child source/client marker mismatch: ' + marker)
     subprocess.run(['python3', '-I', '-', str(path), client, checkout, agent,
                     runtime_checkout, backend, work, python], input=verifier, text=True, check=True)
 managed_remotion = bool(remotion and store.registered(remotion))

@@ -43,17 +43,6 @@ for name in ('make-runtime', 'request-runtime', 'make-child-venv', 'request-chil
     source = source.replace(':-/home/user/work}', ':-' + str(W) + '}')
     source = source.replace(':-python3.13}', ':-' + str(ROOT / 'tools/fixture-python') + '}')
     write(O / 'bin' / name, source, True)
-helper = HERE / 'handoff-runtime-OPS-bench-store-core-resume-1854-bench_store.py'
-assert helper.is_file(), 'core source not published yet'
-shutil.copyfile(helper, O / 'bin/bench_store.py')
-spec = importlib.util.spec_from_file_location('bench_store', helper)
-core = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = core
-spec.loader.exec_module(core)
-store = core.Store.initialize(W / 'bench-store', O / 'tests')
-if store is None:
-    store = core.Store(W / 'bench-store', O / 'tests')
-
 # One synthetic source DB, consumed by an explicit git stand-in. No real repo.
 common = '[project]\nname="{name}"\nversion="0.1.0"\n[tool.setuptools.packages.find]\ninclude={include}\n'
 client = {'astrid_runtime_client/__init__.py': 'CLIENT=1\n'}
@@ -92,6 +81,8 @@ me=pathlib.Path(__file__).resolve(); args=sys.argv[1:]; root=me.parent.parent
 if args==['--version']: print('Python 3.13.0');sys.exit()
 if args[:2]==['-m','venv']:
  if '--help' in args: sys.exit()
+ if os.environ.get('FIXTURE_FAIL_VENV')=='1':sys.exit(71)
+ with open(os.environ['FIXTURE_EVENTS'],'a') as output:output.write('child-build\\n')
  target=pathlib.Path(args[-1]);(target/'bin').mkdir(parents=True,exist_ok=True)
  shutil.copyfile(me,target/'bin/python');(target/'bin/python').chmod(0o755)
  for name in ['astrid-runtime','astrid-runtime-protocol']:
@@ -125,9 +116,10 @@ raise SystemExit('unexpected fixture python '+repr(args))
 ''', True)
 node=W/'toolchain/node-v20.19.4-linux-x64/bin'
 write(node/'node', '''#!/usr/bin/python3
-import json,pathlib,sys
+import json,os,pathlib,sys
 if sys.argv[-1]=='--version':print('10.8.2' if len(sys.argv)>2 else 'v20.19.4');sys.exit()
 if 'ci' in sys.argv:
+ with open(os.environ['FIXTURE_EVENTS'],'a') as output:output.write('runtime-build\\n')
  root=pathlib.Path.cwd();lock=json.loads((root/'package-lock.json').read_text())
  for name,data in lock['packages'].items():
   dest=root/name/'package.json';dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text(json.dumps({'version':data['version']}))
@@ -144,7 +136,7 @@ raw=(ORCH/'bin/dispatcher-daemon').read_text()
 branches=[next(line.strip() for line in raw.splitlines() if "'^"+kind+" '" in line) for kind in ('CHILDVENV','RUNTIME')]
 context=next(line for line in raw.splitlines() if line.startswith('O=')).replace(str(ORCH),str(O))
 write(ROOT/'dispatch', '#!/bin/bash\n'+context+'\nf=$1\nif false; then :\n'+'\n'.join(branches)+'\nelse exit 42; fi\nprintf "%s\\n" "$out"\nexit "$rc"\n',True)
-base_env={'PATH':str(ROOT/'tools')+':/usr/bin:/bin','HOME':str(ROOT),'TMPDIR':str(ROOT)}
+base_env={'PATH':str(ROOT/'tools')+':/usr/bin:/bin','HOME':str(ROOT),'TMPDIR':str(ROOT),'FIXTURE_EVENTS':str(ROOT/'events.txt')}
 count=0
 
 def request(kind,args,success=True,minimal=False):
@@ -166,10 +158,51 @@ def request(kind,args,success=True,minimal=False):
 def runtime_args(name):
     return [name,db['agent'],hashlib.sha256(lock.encode()).hexdigest(),str(A),str(R),db['backend'],'remotion-env-nodes']
 
+def events():
+    return (ROOT/'events.txt').read_text().splitlines() if (ROOT/'events.txt').exists() else []
+
+if '--build-body-smoke' in sys.argv:
+    for component, args in [('runtime', runtime_args('agent-remotion-body')), ('child-venv', ['venv-agent-child-body',db['agent'],'child-base','agent-remotion-body'])]:
+        text=(O/'bin'/('make-'+component)).read_text()
+        pre=text.split('STORE_HELPER=',1)[0]
+        stage=W/('body-'+component)
+        stage.mkdir()
+        body=text.split('# STORE_BUILD_BEGIN\n',1)[1].split('# STORE_BUILD_END',1)[0]
+        if component=='runtime':
+            setup='T='+str(stage)+'; D=$T\n'
+        else:
+            setup='T='+str(stage)+'; D=$T; RUN_ID=smoke; SRC=$T/.child-venv-source-$N; REPORT_DIR=$T; REPORT_TMP=$T/.provision-report; F=$REPORT_TMP; mkdir -p "$SRC"\n'
+        result=subprocess.run(['bash','-u','-o','pipefail','-c',pre+'\n'+setup+body,'smoke',*args],env=base_env,capture_output=True,text=True)
+        (ROOT/('body-'+component+'.log')).write_text(result.stdout+result.stderr)
+        assert result.returncode==0,(component,result)
+        if component=='runtime':
+            verify=subprocess.run(['bash','-c',pre+'\ncandidate_matches '+str(stage),'smoke',*args],env=base_env,capture_output=True,text=True)
+        else:
+            verifier=text.split('# STORE_VERIFY_BEGIN\n',1)[1].split('# STORE_VERIFY_END',1)[0]
+            identity='\n'.join('packages/python/'+p+'='+hashlib.sha256(v.encode()).hexdigest() for p,v in client.items())
+            verify=subprocess.run(['python3','-I','-',str(stage),identity,str(A),db['agent'],str(R),db['backend'],str(W),str(ROOT/'tools/fixture-python')],input=verifier,env=base_env,capture_output=True,text=True)
+        assert verify.returncode==0,(component,verify)
+        print('PASS exact build body and full custody verifier',component,flush=True)
+    print('PASS builder smoke real_installers=0 network=0 fixture='+str(ROOT))
+    sys.exit(0)
+
+helper = HERE / 'handoff-runtime-OPS-bench-store-core-resume-1854-bench_store.py'
+assert helper.is_file(), 'core source not published yet'
+shutil.copyfile(helper, O / 'bin/bench_store.py')
+spec = importlib.util.spec_from_file_location('bench_store', helper)
+core = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = core
+spec.loader.exec_module(core)
+store = core.Store.initialize(W / 'bench-store', O / 'tests')
+if store is None:
+    store = core.Store(W / 'bench-store', O / 'tests')
+
 first=request('RUNTIME',runtime_args('agent-remotion-one'),minimal=True)
 assert 'status=created' in first.stdout
+assert events()==['runtime-build']
 second=request('RUNTIME',runtime_args('agent-remotion-two'))
 assert 'status=reused' in second.stdout
+assert events()==['runtime-build']
 assert re.search(r'^runtime=(.*)$',first.stdout,re.M).group(1)==re.search(r'^runtime=(.*)$',second.stdout,re.M).group(1)
 db['agent']='d'*40;db['backend']='e'*40;write(ROOT/'db.json',json.dumps(db))
 third=request('RUNTIME',runtime_args('agent-remotion-three'),minimal=True)
@@ -177,6 +210,38 @@ assert 'status=reused' in third.stdout and 'build_origin_agent_sha='+'a'*40 in t
 child=request('CHILDVENV',['venv-agent-child-one',db['agent'],'child-base','agent-remotion-three'],minimal=True)
 child2=request('CHILDVENV',['venv-agent-child-two',db['agent'],'child-base','agent-remotion-three'])
 assert 'reused child venv path=' in child2.stdout
+assert events()==['runtime-build','child-build']
+# Supported optional forms register metadata without fabricating a suite.
+request('CHILDVENV',['venv-agent-child-twoarg',db['agent']],minimal=True)
+request('CHILDVENV',['venv-agent-child-threearg',db['agent'],'child-base'])
+assert events()==['runtime-build','child-build']
+old_key=core.child_key(db['agent'],db['backend'],{'packages/python/astrid_runtime_client/__init__.py':hashlib.sha256(client['astrid_runtime_client/__init__.py'].encode()).hexdigest()})
+db['backend']='f'*40;write(ROOT/'db.json',json.dumps(db))
+request('CHILDVENV',['venv-agent-child-backend',db['agent'],'child-base','agent-remotion-three'])
+assert len(events())==3
+# First child stays leased while a third distinct tuple displaces the unleased one.
+with store.acquire(['venv-agent-child-one']):
+    db['backend']='1'*40
+    db['runtime_files']['packages/python/astrid_runtime_client/__init__.py']='CLIENT=2\n'
+    db['agent_files']['astrid_runtime_client/__init__.py']='CLIENT=2\n'
+    write(ROOT/'db.json',json.dumps(db))
+    request('CHILDVENV',['venv-agent-child-client',db['agent'],'child-base','agent-remotion-three'],minimal=True)
+    assert store.registered('venv-agent-child-one')
+request('CHILDVENV',['venv-agent-child-client',db['agent'],'child-base','agent-remotion-three'])
+assert not store.registered('venv-agent-child-one')
+assert store.registered('venv-agent-child-backend')
+print('PASS backend/client keys distinct; max2 keeps leased entry; eviction removes only owned projection')
+# A real build-stage failure and postbuild registration refusal roll back exact public rows.
+with store.acquire(['venv-agent-child-backend','venv-agent-child-client']):
+    before=(O/'tests/suites.conf').read_bytes()
+    db['backend']='2'*40;write(ROOT/'db.json',json.dumps(db))
+    base_env['FIXTURE_FAIL_VENV']='1'
+    request('CHILDVENV',['venv-agent-child-buildfail',db['agent'],'child-base','agent-remotion-three'],success=False)
+    base_env.pop('FIXTURE_FAIL_VENV')
+    assert (O/'tests/suites.conf').read_bytes()==before
+    request('CHILDVENV',['venv-agent-child-regfail',db['agent'],'missing-base','agent-remotion-three'],success=False)
+    assert (O/'tests/suites.conf').read_bytes()==before
+print('PASS build and registration failures preserve exact prior suites')
 print('PASS caller integration normal/env-i; tree-only runtime reuse; child exact-key reuse')
 size=sum(p.lstat().st_blocks*512 for p in ROOT.rglob('*'))
 assert size<20*1024*1024,size

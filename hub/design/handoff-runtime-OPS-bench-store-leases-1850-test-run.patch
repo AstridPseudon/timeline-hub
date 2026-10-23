@@ -5,7 +5,7 @@
  # changes) + suite + files + command. Result: tests/ID/{status,exit,summary,log.txt}; status = queued|running|pass|fail|timeout|error.
  O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 -[ "$1" = --run ] && { RUN=1; shift; }; ID=$1; D=$O/tests/$ID; C=$O/tests/cache
-+[ "$1" = --lease-body ] && { LEASED=1; RUN=1; shift; }; [ "$1" = --run ] && { RUN=1; shift; }; ID=$1; D=$O/tests/$ID; C=$O/tests/cache
++LEASED=; [ "$1" = --lease-body ] && { LEASED=1; RUN=1; shift; }; [ "$1" = --run ] && { RUN=1; shift; }; ID=$1; D=$O/tests/$ID; C=$O/tests/cache
  bad() { echo "$*" > $D/summary; echo 1 > $D/exit; echo error > $D/status; echo "$*"; exit 1; }
  alive() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 $(cat $r) 2>/dev/null && [ "$1" = $( [ -f ${r%running}heavy ] && echo heavy || echo light) ] && echo x; done | wc -l; }
  . $D/request 2>/dev/null && { [ -z "$RUN" ] || . $D/snap; } || { echo "no request for $ID"; exit 1; }
@@ -17,7 +17,7 @@
  OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
  HV=light; case $suite in full*) HV=heavy;; esac
  if [ -z "$RUN" ]; then
-@@ -34,13 +35,158 @@
+@@ -34,13 +35,169 @@
    [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
    setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
  fi
@@ -38,13 +38,24 @@
 +
 +
 +@contextmanager
-+def suite_lease(store, repo, suite, command):
++def suite_lease(store, repo, suite, command, tests_dir):
 +    names = store.names_for_suite(repo, suite, command)
++    if not names:
++        # Eviction may have removed a managed row after the shell read CMD.
++        # Such a stale command must never fall through as an unmanaged suite.
++        current = None
++        for row in (Path(tests_dir) / 'suites.conf').read_text().splitlines():
++            fields = row.split()
++            if fields[:2] == [repo, suite]:
++                current = ' '.join(fields[2:])
++                break
++        if current != command:
++            raise ValueError('suite registration disappeared or changed before lease')
 +    with store.acquire(names) as entries:
 +        yield entries, [entry['lease_fd'] for entry in entries]
 +
 +
-+def supervise(store, repo, suite, command, argv, cancelled, parent):
++def supervise(store, repo, suite, command, argv, cancelled, parent, tests_dir):
 +    # Subreaping keeps the lease until orphaned grandchildren finish as well.
 +    libc = ctypes.CDLL(None, use_errno=True)
 +    if libc.prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
@@ -62,7 +73,7 @@
 +    if os.getppid() != parent:
 +        return 130
 +
-+    with suite_lease(store, repo, suite, command) as (entries, fds):
++    with suite_lease(store, repo, suite, command, tests_dir) as (entries, fds):
 +        if stopping or cancelled.exists() or os.getppid() != parent:
 +            return 130
 +        if not entries:
@@ -141,7 +152,7 @@
 +    sys.modules[spec.name] = module
 +    spec.loader.exec_module(module)
 +    store = module.Store(root, Path(orch) / "tests")
-+    return supervise(store, repo, suite, command, argv, Path(cancelled), int(parent))
++    return supervise(store, repo, suite, command, argv, Path(cancelled), int(parent), Path(orch) / 'tests')
 +
 +
 +if __name__ == "__main__":

@@ -10,13 +10,24 @@ import time
 
 
 @contextmanager
-def suite_lease(store, repo, suite, command):
+def suite_lease(store, repo, suite, command, tests_dir):
     names = store.names_for_suite(repo, suite, command)
+    if not names:
+        # Eviction may have removed a managed row after the shell read CMD.
+        # Such a stale command must never fall through as an unmanaged suite.
+        current = None
+        for row in (Path(tests_dir) / 'suites.conf').read_text().splitlines():
+            fields = row.split()
+            if fields[:2] == [repo, suite]:
+                current = ' '.join(fields[2:])
+                break
+        if current != command:
+            raise ValueError('suite registration disappeared or changed before lease')
     with store.acquire(names) as entries:
         yield entries, [entry['lease_fd'] for entry in entries]
 
 
-def supervise(store, repo, suite, command, argv, cancelled, parent):
+def supervise(store, repo, suite, command, argv, cancelled, parent, tests_dir):
     # Subreaping keeps the lease until orphaned grandchildren finish as well.
     libc = ctypes.CDLL(None, use_errno=True)
     if libc.prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
@@ -34,7 +45,7 @@ def supervise(store, repo, suite, command, argv, cancelled, parent):
     if os.getppid() != parent:
         return 130
 
-    with suite_lease(store, repo, suite, command) as (entries, fds):
+    with suite_lease(store, repo, suite, command, tests_dir) as (entries, fds):
         if stopping or cancelled.exists() or os.getppid() != parent:
             return 130
         if not entries:
@@ -113,7 +124,7 @@ def main():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     store = module.Store(root, Path(orch) / "tests")
-    return supervise(store, repo, suite, command, argv, Path(cancelled), int(parent))
+    return supervise(store, repo, suite, command, argv, Path(cancelled), int(parent), Path(orch) / 'tests')
 
 
 if __name__ == "__main__":

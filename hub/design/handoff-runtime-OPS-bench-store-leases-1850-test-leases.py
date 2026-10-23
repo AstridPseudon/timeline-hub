@@ -65,6 +65,8 @@ class LeaseTests(unittest.TestCase):
         self.tests = self.folder / 'tests'
         self.tests.mkdir()
         (self.tests / 'suites.conf').write_text('# unrelated exact bytes\nagent legacy true\n')
+        (self.folder / 'bin').mkdir()
+        (self.folder / 'bin/bench_store.py').symlink_to(CORE)
         self.core = load(CORE, 'fixture_core')
         self.store = self.core.Store.initialize(self.folder / 'store', self.tests)
         if self.store is None:
@@ -116,6 +118,16 @@ class LeaseTests(unittest.TestCase):
     def test_normal_and_descendant_lifetime(self):
         self.retained_then_released('sleep .7 & echo ready > "$1"; exit 0', 0)
 
+    def test_fake_snapshot_setup_is_leased(self):
+        first = create(self.store, 1)
+        create(self.store, 2)
+        process, _ = self.holder('echo setup > "$1"; sleep .5; echo command; exit 0')
+        create(self.store, 3)
+        self.assertTrue(Path(first['path']).is_dir())
+        output, _ = process.communicate(timeout=8)
+        self.assertEqual(process.returncode, 0, output)
+        self.assertIn('command', output)
+
     def test_failure_release(self):
         self.retained_then_released('echo ready > "$1"; sleep .35; exit 7', 7)
 
@@ -164,7 +176,7 @@ class LeaseTests(unittest.TestCase):
         first = create(self.store, 1)
         (self.tests / 'bench1.env').write_text('FORGED=1\n')
         with self.assertRaises(Exception):
-            with seam()['suite_lease'](self.store, 'agent', 'bench1', 'true'):
+            with seam()['suite_lease'](self.store, 'agent', 'bench1', 'true', self.tests):
                 self.fail('forged registration acquired')
         with self.assertRaises(Exception):
             with self.store.acquire(['../../outside']):
@@ -180,10 +192,11 @@ class LeaseTests(unittest.TestCase):
             with self.store.acquire(names):
                 self.fail('evicted resolved registration acquired')
         with self.assertRaises(Exception):
-            self.store.names_for_suite('agent', 'bench1', 'true')
+            with seam()['suite_lease'](self.store, 'agent', 'bench1', 'true', self.tests):
+                self.fail('removed managed suite became legacy')
 
     def test_unregistered_existing_suite_has_no_lease(self):
-        with seam()['suite_lease'](self.store, 'agent', 'legacy', 'true') as (entries, fds):
+        with seam()['suite_lease'](self.store, 'agent', 'legacy', 'true', self.tests) as (entries, fds):
             self.assertEqual((entries, fds), ([], []))
 
     def check_cached_branch_and_original_guards(self):
@@ -270,10 +283,10 @@ if __name__ == '__main__':
         sys.exit(child.wait())
     if len(sys.argv) > 1 and sys.argv[1] == '--holder':
         root, tests, suite, cancelled, *argv = sys.argv[2:]
-        core = load(CORE, 'holder_core')
         try:
-            result = seam()['supervise'](core.Store(root, tests), 'agent', suite, 'true', argv,
-                                        Path(cancelled), os.getppid())
+            sys.argv = ['production-embedded', str(Path(tests).parent), root, 'agent', suite,
+                        'true', str(os.getppid()), cancelled, *argv]
+            result = seam()['main']()
             sys.exit(result)
         except Exception as exc:
             print('BENCH-LEASE REFUSED:', exc)
