@@ -247,13 +247,50 @@ def validate_read(boundary, read, continuations=None):
     return read
 
 
+def _omitted_inverse_created_is_authenticated(submitted, record, records):
+    """Allow the inverse provider to report restored allocation facts.
+
+    ``created`` is optional on the wire.  A raw inverse request therefore has
+    no caller allocation claim, while the provider must still return the
+    authenticated restoration facts in its record.  This helper only admits
+    that request/recorder shape; the physical bindings, materialization,
+    destination, history, and undo guards below and in the store remain the
+    authority for the restored identities.
+    """
+    if "created" in submitted or submitted.get("op") != "timeline.inverse":
+        return False
+    args = submitted.get("args")
+    command = record["command"]
+    created = command.get("created")
+    if not isinstance(args, dict) or not isinstance(created, list) or not created:
+        return False
+    if records.get("undo_of") != args.get("publications"):
+        return False
+    requested_steps = args.get("steps")
+    if records.get("undo_steps") != requested_steps:
+        return False
+    facts = record["created"]
+    if not isinstance(facts, list) or [item["ref"] for item in facts] != created:
+        return False
+    restoration_writes = {
+        write["ref"]
+        for write in [*record["writes"], *record["derived_writes"]]
+        if write["path"] == []
+        and write["before"] == {"state": "absent"}
+        and write["after"]["state"] == "present"
+    }
+    return set(created) <= restoration_writes
+
+
 def validate_claims(request, records):
     commands = records["commands"]
     require(len(commands) == len(request["commands"]), "provider command count differs from request")
     for submitted, record in zip(request["commands"], commands):
-        require(all(value_equal(submitted.get(key), record["command"].get(key))
-                    for key in ("schema_version", "op", "version", "select", "args"))
-                and value_equal(submitted.get("created", []), record["command"].get("created", [])),
+        core_matches = all(value_equal(submitted.get(key), record["command"].get(key))
+                           for key in ("schema_version", "op", "version", "select", "args"))
+        created_matches = value_equal(submitted.get("created", []), record["command"].get("created", []))
+        inverse_restoration = _omitted_inverse_created_is_authenticated(submitted, record, records)
+        require(core_matches and (created_matches or inverse_restoration),
                 "provider executed a different command")
 
 
