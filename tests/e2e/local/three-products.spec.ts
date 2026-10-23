@@ -846,6 +846,7 @@ async function history(harness: DirectHarness, seed: ThreeProductsSeed, scope: T
 async function expectV2History(harness: DirectHarness, seed: ThreeProductsSeed, post: CommitPost,
   expectedStatus: 'accepted' | 'merged', expectedUndoOf: string[] = []) {
   const request = JSON.parse(post.body) as CommitRequest;
+  const requestObject = request as unknown as Record<string, unknown>;
   const result = post.response as CommitAcceptedMutation;
   const data = result.data;
   expect(post.path).toBe(`${timelineBase(harness, seed)}/commit`);
@@ -896,6 +897,11 @@ async function expectV2History(harness: DirectHarness, seed: ThreeProductsSeed, 
     })],
     publisher: expect.any(String),
   });
+  const effectiveMerge = request.merge === 'atomic'
+    || (!Object.hasOwn(requestObject, 'reads') && request.commands.some((command) => command.op === 'doc.patch'))
+    ? 'atomic' : (request.merge ?? 'fields');
+  expect(data.merge_mode).toBe(effectiveMerge);
+  expect(data.document_digest).toBe(sha256Hex(Buffer.from(canonical(data.canonical_document))));
   expect(data.rebased_onto).toEqual(expectedStatus === 'accepted'
     ? null
     : { revision_id: data.previous_revision_id, publication_id: data.previous_publication_id });
@@ -933,19 +939,67 @@ async function expectV2History(harness: DirectHarness, seed: ThreeProductsSeed, 
     },
   });
   const records = entry!.records!;
+  if (Object.hasOwn(requestObject, 'reads')) expect(entry).toHaveProperty('reads', request.reads);
+  else expect(entry).not.toHaveProperty('reads');
+  expect(entry!.steps).toEqual(data.steps);
+  expect(records.steps).toEqual(data.steps);
   expect(records.commands).toHaveLength(request.commands.length);
-  expect(records.commands[0]).toMatchObject({
-    ordinal: 0,
-    command: request.commands[0],
-    writes: expect.any(Array),
-    reads: expect.any(Array),
-    selections: expect.any(Array),
-    bindings: expect.any(Array),
-    created: expect.any(Array),
-    dependencies: expect.any(Array),
-    derived_writes: expect.any(Array),
-  });
+  expect(data.steps).toHaveLength(request.steps!.length);
+  for (const [index, submittedStep] of request.steps!.entries()) {
+    const step = data.steps![index];
+    const recordStep = records.steps![index];
+    expect(step).toEqual(recordStep);
+    expect(step.command_ordinals).toEqual(submittedStep.command_ordinals);
+    if (Object.hasOwn(submittedStep, 'reads')) expect(step).toHaveProperty('reads', submittedStep.reads);
+    else expect(step).not.toHaveProperty('reads');
+
+    const submittedPatch = submittedStep.command_ordinals.flatMap((ordinal) => {
+      const command = request.commands[ordinal];
+      return command.op === 'doc.patch' ? (command.args.changes as unknown[]) : [];
+    });
+    if (submittedPatch.length) expect(step.patch).toEqual(expect.arrayContaining(submittedPatch));
+
+    for (const ordinal of step.command_ordinals) {
+      const record = records.commands[ordinal];
+      expect(record).toMatchObject({
+        ordinal,
+        command: request.commands[ordinal],
+        writes: expect.any(Array),
+        reads: expect.any(Array),
+        selections: expect.any(Array),
+        bindings: expect.any(Array),
+        created: expect.any(Array),
+        dependencies: expect.any(Array),
+        derived_writes: expect.any(Array),
+      });
+      for (const read of record.reads) {
+        const refAndPath = recordedSite(read.ref, read.path);
+        expect(step.dependencies!.some((dependency) => dependency.ref === 'timeline'
+          || dependency.ref === refAndPath.ref && (dependency.kind === 'scope' && dependency.path.length === 0
+            || canonical(dependency.path) === canonical(refAndPath.path))),
+        `step ${step.id} dependencies omit captured ${read.ref}:${read.path.join('.')}`).toBe(true);
+      }
+      for (const write of [...record.writes, ...record.derived_writes]) {
+        const refAndPath = recordedSite(write.ref, write.path);
+        const matchingEffects = step.patch.filter((effect) => effect.ref === refAndPath.ref
+          && canonical(effect.path) === canonical(refAndPath.path)
+          && canonical(effect.before) === canonical(write.before));
+        expect(matchingEffects, `step ${step.id} omits captured ${write.ref}:${write.path.join('.')}`).not.toHaveLength(0);
+        expect(matchingEffects.some((effect) => write.after.state === 'absent'
+          ? effect.op === 'remove'
+          : effect.op === 'set' && canonical(effect.value) === canonical(write.after.value))).toBe(true);
+      }
+    }
+  }
   if (expectedUndoOf.length) expect(records.undo_steps).toBeNull();
+}
+
+/** Normalize native recorder aliases to the physical paths used by authoritative effects. */
+function recordedSite(ref: string, path: string[]): { ref: string; path: string[] } {
+  const match = ref.match(/^parent\/(clip|track):(.+)$/);
+  if (match) return { ref: 'parent', path: ['config', `${match[1]}s`, `id:${match[2]}`, ...path] };
+  if (ref === 'parent/registry') return { ref: 'parent', path: ['config', 'registry', ...path] };
+  return { ref, path };
 }
 
 async function expectImmutableClosure(harness: DirectHarness, seed: ThreeProductsSeed, result: CommitAcceptedMutation) {
