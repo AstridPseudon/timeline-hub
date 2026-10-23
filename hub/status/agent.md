@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T05:10:47Z | dispatcher heartbeat 6s | live 4 (sol 3, luna 1, other 0) | busy30 19 | status age 3m -->
-# agent board, 2026-10-23T05:07:15Z
+<!-- agent | 2026-10-23T05:12:24Z | dispatcher heartbeat 12s | live 5 (sol 3, luna 2, other 0) | busy30 21 | status age 1m -->
+# agent board, 2026-10-23T05:11:15Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -25,7 +25,7 @@
 | G4-real-admit | actual supported task method | Luna; independent Luna | G2 | review | agt-G234-home-correction-0442 | Independent0416 PASS realdaemon1+original13/2149/1915/normalmanifest. Flat handback0445 sent | 33fc3879 |
 | G4-group | optional sealed group forwarding | Luna; independent Luna | G4 | review | agt-G234-home-correction-0442 | Independent0421 PASS25/2149/1915; no new DTO/pin, assembled with admit fix | e045b37f |
 | G5 | delete superseded paths | Luna | G3,G4,P1 GO | gated:P1 | — | H3 NO-GO; no G5 deletion work started | — |
-| P4-merge-audit | correct unintended product ancestry | Sol; Luna review next | actualccc | doing | agt-P4-audit-minimal-revert-0502 | Independent0452 FAIL29pathmap:unreviewedmeta/assertion removals/publicfacadegap/report. Minimalcurrentf95revert active, no broadG4merge | ccc521b78 UNQUALIFIED |
+| P4-merge-audit | correct unintended product ancestry | Sol; Luna review next | actualccc | doing | agt-P4-audit-target-repair-0511; independentreview0511 | Minimal4d restoresmeta/facade/report, targettests4invalidfixtures+missing076inverseFAIL; boundedexactreviewed2pathrepairactive | ccc521b78 UNQUALIFIED |
 | R1-legacy-replay | authenticated landing step metadata | Luna | R1,G2 | doing | agt-R1-legacy-replay-review-0453 | IndependentPASS2+28+127/ratchets/normalcopies; actualnode blockedV2FPSscope0458, sourceawaitscurrentport afteraudithold | c79398561 |
 | V4-fixture-status | canonical created/C0 status corrections | Viewing Luna; independent Luna | C0 | merged | vw-V4-C0-status-adaptation | Reviewed5292 scopedPASS4+fixture38ePASS1; homef95 merged. Overall54 remains open; no arithmetic/full replay credit | 5292b388a;f95f1e169 |
 | R2-derived-undo | two deferred anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | Viewing owns original failing evidence | D14 retain tests unchanged/unskipped/visibly failing; no C0 change/guard exception/54PASS claim | ruling04:40 |
