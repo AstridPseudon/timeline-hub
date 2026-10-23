@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { CommitRequest } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { APP_ENTRY_ROUTE, commandOutboxes, expectConnected, firstTrackName, test as appTest } from './support/app.ts';
 import { ASTRID_PYTHON, AstridCli } from './support/astrid.ts';
-import { harnessUnavailableReason, type DirectHarness } from './support/harness.ts';
+import { harnessUnavailableReason, PRODUCT_ACTOR, type DirectHarness } from './support/harness.ts';
 import { logDiagnostic, logPriorityDiagnostic, redactDiagnosticText, redactDiagnosticValue } from './p1-diagnostic-safety.ts';
 
 const CEILING = { timeout: 90_000 };
@@ -787,6 +787,8 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   const traffic = observe(page);
   let heldSplit: Route | undefined;
   let heldTrim: Route | undefined;
+  let heldRetry: Route | undefined;
+  let retryPost: CommitPost | undefined;
   await page.route(COMMITS, async (route) => {
     if (route.request().method() !== 'POST') return route.fallback();
     const post = traffic.posts.find((candidate) => candidate.key === route.request().headers()['idempotency-key']);
@@ -882,18 +884,57 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   await heldTrim!.abort('connectionreset');
   await page.unroute(COMMITS);
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => owner.pending?.outcome?.kind === 'retry'), CEILING).toBe(true);
-  const owner = (await commandOutboxes(page, seed.timelineId)).find((candidate) => candidate.pending?.request.key === originalTrim.key)!;
+  const ownersBeforeReload = await commandOutboxes(page, seed.timelineId);
+  expect(ownersBeforeReload).toHaveLength(1);
+  const owner = ownersBeforeReload[0];
+  expect(owner.scope).toEqual({ realmId: harness.realmId, actorId: PRODUCT_ACTOR,
+    projectId: harness.seed.projectId, timelineId: seed.timelineId });
   expect(owner.pending?.request).toMatchObject({ body: originalTrim.raw, key: originalTrim.key });
+
+  // The mounted local-save session claims the sole authenticated owner on reload and
+  // invokes recovery automatically. Arm the observer first, then hold that real request
+  // so the lost-ACK/restart boundary remains genuine and the retry reaches the restarted
+  // Runtime with its persisted body and key.
+  await page.unroute(COMMITS);
+  expect(traffic.posts).toHaveLength(2);
+  const retryResponsePromise = page.waitForResponse((response) => response.request().method() === 'POST'
+    && COMMITS.test(new URL(response.url()).pathname)
+    && response.request().headers()['idempotency-key'] === originalTrim.key, CEILING);
+  await page.route(COMMITS, async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    const key = route.request().headers()['idempotency-key'];
+    const post = [...traffic.posts].reverse().find((candidate) => candidate.key === key);
+    if (key === originalTrim.key && post) {
+      retryPost = post;
+      heldRetry = route;
+      return;
+    }
+    const response = await route.fetch({ maxRetries: 0 });
+    await forward(route, response, await response.json());
+  });
   await page.reload();
   await expectConnected(page);
   await expect(firstTrackName(page)).toBeVisible();
-  expect(traffic.posts).toHaveLength(2);
+  await expect.poll(() => !!heldRetry, CEILING).toBe(true);
+  expect(traffic.posts).toHaveLength(3);
+  expect(retryPost).toBe(traffic.posts[2]);
+  // Automatic recovery has reserved exactly one request, but the route has not forwarded
+  // it yet; this is the replacement for the obsolete fixture-button traffic-count guard.
+  expect(retryPost?.raw).toBe(originalTrim.raw);
+  expect(retryPost?.key).toBe(originalTrim.key);
+  expect(retryPost?.status).toBeUndefined();
+  const ownersAfterReload = await commandOutboxes(page, seed.timelineId);
+  expect(ownersAfterReload).toHaveLength(1);
+  expect(ownersAfterReload[0].ownerId).toBe(owner.ownerId);
+  expect(ownersAfterReload[0].scope).toEqual(owner.scope);
+  expect(ownersAfterReload[0].pending?.request).toMatchObject({ body: originalTrim.raw, key: originalTrim.key });
   const restarted = await harness.restartRuntime();
   expect(restarted.oldInstanceId).toBeTruthy();
   await expectConnected(page);
-  const recovered = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
-  await page.getByRole('button', { name: /^Recover saved edits/ }).and(page.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
-  const retryResponse = await recovered;
+  const retryWire = await heldRetry!.fetch({ maxRetries: 0 });
+  const retryBody = await retryWire.json();
+  await forward(heldRetry!, retryWire, retryBody);
+  const retryResponse = await retryResponsePromise;
   expect(retryResponse.status()).toBe(200);
   expect(retryResponse.request().postData()).toBe(originalTrim.raw);
   expect(retryResponse.request().headers()['idempotency-key']).toBe(originalTrim.key);
