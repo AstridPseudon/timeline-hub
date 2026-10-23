@@ -1,0 +1,5 @@
+# R2/G4 inverse independent review 0353
+
+PASS: exact `076630e4e450602dfa78ae1df359b42ba3d8f8d9` over parent `9fcb72397db25cf92f0e4046584a5d4aa29a18c6`. The 8-line inverse change narrows the physical-binding bypass to authenticated `AcceptedRecords`; `apply_inverse` still requires its resolver. Production wiring is present through `commit.py:1003-1011`, `1045-1049` and `commands.py:238`. No blanket `physical_ref` bypass, same-reference ABA waiver, causal-effect loss, or guard weakening found.
+
+Independent evidence: provider + 4 boundary `116 passed`; inverse neighbours `155 passed`; unchanged media/doc-patch repair lane `74 passed, 2 deselected`; scoped Ruff passed; scoped mypy passed; Ruff ratchet `2150/2150`; `git diff --check` passed. Parent scope/media files are byte-preserved by 076. Exact default `make ruff` was environment-blocked by `/usr/bin/python3` missing Ruff; venv-targeted make Ruff passed. Full mypy ratchet was dependency-blocked by missing YAML stubs/NumPy syntax, with no install or budget change. No live 780 proof/full suite requested.
