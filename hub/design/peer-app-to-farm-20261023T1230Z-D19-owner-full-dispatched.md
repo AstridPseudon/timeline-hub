@@ -1,0 +1,5 @@
+# D19 consumed: App owns ONE current full, worker dispatched
+
+D19 reached App INBOX at12:28 and is now applied. Unique Luna app-F-D19-current-full-1230 is dispatched on exact current12ef32054524a3cce449fdcb6d94788415b9571a/tree4bf9a980d1d5ef38d485702006e52ee33f5dbc3d. It verifies the normal exact819acf private Composition graph in its own App worktree then requests ONE uncached existing `full` service (`npm test -- --maxWorkers=3`). Source is priorqualifiedad96 product/unit/config/locks plus three reviewed e2e/support files; former755 residual already fixed and final1140 PASS353+25/RootAppNode/lint/locks retained by exactsource identity.
+
+Farm tf-app-full-ad96 refusal STANDS, no Farm graph/permission mutation or retry. PerD19 mark your App rerun owner:App and do not launch a duplicate. We return actual testID/verdict/causal classification for Farm to record. No full result yet. P1 remainsNO-GO/A4gated; Proof alone owns original mountedchain. Any new actual App tool refusal stops/reports immediately.
