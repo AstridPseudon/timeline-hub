@@ -423,4 +423,260 @@ describe('prepared media command', () => {
       payload: { ...command.payload, afterClipId: 'clip-missing' },
     })).toBeNull();
   });
+
+  it('replays selected-track and reserved-asset identity while the duplicate gets the editor allocation', async () => {
+    const current = await buildTimelineData(
+      {
+        ...createDefaultTimelineConfig(),
+        tracks: [
+          { id: 'V1', kind: 'visual' as const, label: 'V1' },
+          { id: 'V2', kind: 'visual' as const, label: 'V2' },
+        ],
+        clips: [
+          { id: 'anchor', at: 1, track: 'V2', clipType: 'hold' as const, hold: 1, asset: 'asset-source' },
+          { id: 'peer', at: 2, track: 'V2', clipType: 'hold' as const, hold: 1, asset: 'asset-peer' },
+        ],
+      },
+      {
+        assets: {
+          'asset-source': { file: 'source.png', type: 'image/png' },
+          'asset-peer': { file: 'peer.png', type: 'image/png' },
+        },
+      },
+    );
+    const command = {
+      type: 'place-prepared-media' as const,
+      payload: {
+        asset: {
+          assetKey: 'reserved-new',
+          mediaType: 'image' as const,
+          durationSeconds: 1,
+          entry: { file: 'reserved.png', type: 'image/png', generationId: 'generation-new' },
+          source: 'registered' as const,
+        },
+        selectedTrackId: 'V2',
+        at: 0,
+        afterClipId: 'anchor',
+        clipId: 'reserved-clip',
+      },
+    };
+    const before = structuredClone(current);
+    const result = applyPreparedMediaCommand(current, command);
+    const replay = applyPreparedMediaCommand(current, JSON.parse(JSON.stringify(command)));
+
+    expect(result).not.toBeNull();
+    expect(replay).toEqual(result);
+    expect(result?.nextData.registry.assets['reserved-new']).toEqual(command.payload.asset.entry);
+    expect(result?.commandResult?.detail).toMatchObject({ assetKey: 'reserved-new', trackId: 'V2' });
+    expect(result?.commandResult?.detail?.clipId).toBe('clip-0');
+    expect(result?.nextData.config.clips).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'clip-0', asset: 'reserved-new', track: 'V2', at: 2, hold: 1 }),
+      expect.objectContaining({ id: 'peer', at: 3 }),
+    ]));
+    expect(result?.nextData.config.clips.some((clip) => clip.id === 'reserved-clip')).toBe(false);
+    expect(current).toEqual(before);
+  });
+
+  it('refuses non-clip-owner and missing after anchors without mutating the input', async () => {
+    const current = await buildTimelineData(
+      {
+        ...createDefaultTimelineConfig(),
+        tracks: [{ id: 'V1', kind: 'visual' as const, label: 'V1' }],
+        clips: [{ id: 'anchor', at: 0, track: 'V1', clipType: 'hold' as const, hold: 1, asset: 'asset-source' }],
+      },
+      { assets: { 'asset-source': { file: 'source.png', type: 'image/png' } } },
+    );
+    const before = structuredClone(current);
+    const asset = {
+      assetKey: 'asset-copy',
+      mediaType: 'image' as const,
+      durationSeconds: 1,
+      entry: { file: 'copy.png', type: 'image/png' },
+      source: 'registered' as const,
+    };
+
+    for (const afterClipId of ['occurrence:anchor', 'missing-anchor']) {
+      expect(applyPreparedMediaCommand(current, {
+        type: 'place-prepared-media',
+        payload: { asset, at: 0, afterClipId },
+      })).toBeNull();
+      expect(current).toEqual(before);
+    }
+  });
+
+  it('normalizes an ambiguous raw anchor before prepared placement and keeps the edit executable', async () => {
+    const anchor = { id: 'anchor', at: 0, track: 'V1', clipType: 'hold' as const, hold: 1, asset: 'asset-source' };
+    const current = await buildTimelineData(
+      {
+        ...createDefaultTimelineConfig(),
+        tracks: [{ id: 'V1', kind: 'visual' as const, label: 'V1' }],
+        clips: [anchor, { ...anchor, at: 1 }],
+      },
+      { assets: { 'asset-source': { file: 'source.png', type: 'image/png' } } },
+    );
+    expect(current.config.clips.map((clip) => clip.id)).toEqual(['anchor']);
+    const before = structuredClone(current);
+    const result = applyPreparedMediaCommand(current, {
+      type: 'place-prepared-media',
+      payload: {
+        asset: {
+          assetKey: 'asset-copy',
+          mediaType: 'image',
+          durationSeconds: 1,
+          entry: { file: 'copy.png', type: 'image/png' },
+          source: 'registered',
+        },
+        at: 0,
+        afterClipId: 'anchor',
+      },
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.nextData.rows[0]?.actions).toEqual([
+      { id: 'anchor', start: 0, end: 1, effectId: 'effect-anchor' },
+      { id: 'clip-0', start: 1, end: 2, effectId: 'effect-clip-0' },
+    ]);
+    expect(current).toEqual(before);
+  });
+
+  it.each(['absent', 'null'] as const)('preserves %s transition/hold fields in the source-window clone', async (fieldState) => {
+    const source: Record<string, unknown> = {
+      id: 'anchor',
+      at: 1,
+      track: 'V1',
+      clipType: 'media',
+      from: 2,
+      to: 6,
+      speed: 2,
+      asset: 'asset-source',
+      params: { opaque: { keep: [null, false, {}] } },
+    };
+    if (fieldState === 'null') {
+      source.hold = null;
+      source.transition = null;
+    }
+    const current = await buildTimelineData(
+      {
+        ...createDefaultTimelineConfig(),
+        tracks: [{ id: 'V1', kind: 'visual' as const, label: 'V1' }],
+        clips: [source, { id: 'peer', at: 3, track: 'V1', clipType: 'hold' as const, hold: 1, asset: 'asset-peer' }],
+      },
+      {
+        assets: {
+          'asset-source': { file: 'source.mp4', type: 'video/mp4' },
+          'asset-peer': { file: 'peer.png', type: 'image/png' },
+        },
+      },
+    );
+    const before = structuredClone(current);
+    const result = applyPreparedMediaCommand(current, {
+      type: 'place-prepared-media',
+      payload: {
+        asset: {
+          assetKey: 'asset-copy',
+          mediaType: 'video',
+          durationSeconds: 2,
+          entry: { file: 'copy.mp4', type: 'video/mp4' },
+          source: 'registered',
+        },
+        at: 0,
+        afterClipId: 'anchor',
+      },
+    });
+    const clone = result?.nextData.config.clips.find((clip) => clip.asset === 'asset-copy');
+
+    expect(result).not.toBeNull();
+    expect(clone).toMatchObject({ at: 3, from: 2, to: 6, speed: 2, asset: 'asset-copy', params: { opaque: { keep: [null, false, {}] } } });
+    if (fieldState === 'null') {
+      expect(clone).toHaveProperty('hold', null);
+      expect(clone).toHaveProperty('transition', null);
+    } else {
+      expect(clone).not.toHaveProperty('hold');
+      expect(clone).not.toHaveProperty('transition');
+    }
+    expect(result?.nextData.config.clips.find((clip) => clip.id === 'peer')).toMatchObject({ at: 5 });
+    expect(current).toEqual(before);
+  });
+
+  it('canonicalizes matching at_ms timing to the mounted editor at field while preserving transition data', async () => {
+    const source = {
+      id: 'anchor', at: 1.003, at_ms: 1003, track: 'V1', clipType: 'media' as const,
+      from: 2, to: 6, speed: 2, asset: 'asset-source',
+      transition: { type: 'crossfade', duration: 0.5, params: { opaque: [null, false] } },
+    };
+    const current = await buildTimelineData(
+      {
+        ...createDefaultTimelineConfig(),
+        output: { ...createDefaultTimelineConfig().output, fps: 24 },
+        tracks: [{ id: 'V1', kind: 'visual' as const, label: 'V1' }],
+        clips: [source, { id: 'peer', at: 3.003, at_ms: 3003, track: 'V1', clipType: 'hold' as const, hold: 1, asset: 'asset-peer' }],
+      },
+      {
+        assets: {
+          'asset-source': { file: 'source.mp4', type: 'video/mp4' },
+          'asset-peer': { file: 'peer.png', type: 'image/png' },
+        },
+      },
+    );
+    const result = applyPreparedMediaCommand(current, {
+      type: 'place-prepared-media',
+      payload: {
+        asset: {
+          assetKey: 'asset-copy',
+          mediaType: 'video',
+          durationSeconds: 2,
+          entry: { file: 'copy.mp4', type: 'video/mp4' },
+          source: 'registered',
+        },
+        at: 0,
+        afterClipId: 'anchor',
+      },
+    });
+    const clone = result?.nextData.config.clips.find((clip) => clip.asset === 'asset-copy');
+
+    expect(result).not.toBeNull();
+    expect(clone).toMatchObject({ at: 3, from: 2, to: 6, speed: 2, asset: 'asset-copy', transition: source.transition });
+    expect(clone).not.toHaveProperty('at_ms');
+    expect(result?.nextData.config.clips.find((clip) => clip.id === 'peer')).toMatchObject({ at: 5 });
+  });
+
+  it.each([0.01, 0])('clamps a %s-second source hold to the editor minimum without mutating input', async (hold) => {
+    const current = await buildTimelineData(
+      {
+        ...createDefaultTimelineConfig(),
+        tracks: [{ id: 'V1', kind: 'visual' as const, label: 'V1' }],
+        clips: [
+          { id: 'anchor', at: 0, track: 'V1', clipType: 'hold' as const, hold, asset: 'asset-source' },
+          { id: 'peer', at: hold, track: 'V1', clipType: 'hold' as const, hold: 1, asset: 'asset-peer' },
+        ],
+      },
+      {
+        assets: {
+          'asset-source': { file: 'source.png', type: 'image/png' },
+          'asset-peer': { file: 'peer.png', type: 'image/png' },
+        },
+      },
+    );
+    const before = structuredClone(current);
+    const result = applyPreparedMediaCommand(current, {
+      type: 'place-prepared-media',
+      payload: {
+        asset: {
+          assetKey: 'asset-copy',
+          mediaType: 'image',
+          durationSeconds: 0.01,
+          entry: { file: 'copy.png', type: 'image/png' },
+          source: 'registered',
+        },
+        at: 0,
+        afterClipId: 'anchor',
+      },
+    });
+    const clone = result?.nextData.config.clips.find((clip) => clip.asset === 'asset-copy');
+
+    expect(result).not.toBeNull();
+    expect(clone).toMatchObject({ at: 0, hold: 0.0667, asset: 'asset-copy' });
+    expect(result?.nextData.config.clips.find((clip) => clip.id === 'peer')).toMatchObject({ at: 0.0667 });
+    expect(current).toEqual(before);
+  });
 });
