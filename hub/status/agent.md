@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T18:37:01Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 20 | status age 2m -->
+<!-- agent | 2026-10-23T18:38:55Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 20 | status age 1m -->
 # agent board, 2026-10-23T18:29:39Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -112,7 +112,7 @@
 | G5-SDK-authority | original four authentic history qualification | Luna fidelity; Sol inverse source | authentic2915/current2a9e | doing | unique inverseSol1818; readerintegrated1823 | OriginalFOUR2PASS2FAIL27.13s retained; reader75f independentlyPASS/merged787 as genuine separatecurrentbug; nativepartition1818 fiveGREEN sourcepending. No unchangedfour/c271 retry or lostfullpacket recovered claim | d32 DRAFT |
 | F-D22-installed-identity | installed unit source fixture scope | Sol; independent/integrated Luna | independent1711PASS | merged | agt-F-D22-installed-integrated-1716 FINALPASS | Actual4ff/treeba657 exactone4faadblob/all3417otherentriespreserved; originalunit1+9controlsPASS/1912/2149/vendor/artifact/diff. All31assertions/5prodguards exact. Fullinstalledrendererunqualified; historicalfull/108+1 unchanged | 4faad4bcb;4ff762fda |
 | R2-legacy-restore | authenticated legacy declaration baseline | Sol; independent/integrated Luna | reviewed d1d | merged | agt-R2-legacy-integrated-1738 FINAL PASS | Actual079/tree2deab: original27 +80 neighbors PASS43.31s; 27 per-case origin/outcome dirs; Ruff2149/type1912/vendor/artifact/diff PASS. Original SDK four separate 2PASS2FAIL, no whole-path claim | d1d41c405;079580ca4 |
-| A4-provider-map | precise provider/mounted witness map | Luna source+independent+return | App1747 correction | merged | agt-A4-map-mount-return-1758 FINAL | Correctedmap1758 sourcefacts: localSaveSessionA2 mounted, dormantcommitSession type/detachedonly. Oldcaseanalysis/14FAIL/KEEP preserved; newwitnessauthors separate1758. Reportonlynotproductmerge | evidence only |
+| A4-provider-map | exact raw-provider/capture property map | Luna readonly continuation | newApp1823 request | doing | agt-A4-raw-map-1837 QUEUED | Prior1758 correctedmountedA2map/track9+transcript7 scopedPASS retained; newraw/canonicalpin/null/collision/sameorder propertymap sourcecollectionNOW, no unchanged14 rerun/wholeparityclaim | evidence-only |
 
 | R1-transcript-input | immutable initial transcript input | Sol; Luna review/currentport PASS | final1808/f078 | merged | agt-R1-transcript-integrated-1818 FINALPASS | Ownf078 MERGED440; independent11+F1+copy4+Runtime3/1912/2149; mechanicalcurrentport31PASS. Actual440 integratedRuntime3 FINALPASS55.46s/9private10publicpackets/retry+tamperSQLno-write/origins | f078d0229;440cc1e70 |
 
@@ -138,3 +138,4 @@ Checkpoint 2026-10-23T18:23:14Z: consumed1815 twoPASS; reader75f normalmerge787,
 Checkpoint18:32: all three integrated proofs FINALPASS (Runtime3, reader22, transcript7); actualhead787 sourcehandedRuntime/Proof/App. Nativepartition0b independent+cumulativecurrentport1831 assigned; root1831 separatefileowner. Allreadytasks dispatched.
 Checkpoint18:29: dispatched G5currentrefresh1830 on787, existing47reviewedpaths only/storeunion preserves75f, P1mergegate intact. RootSol1831 sourceassessment and cumulativeLuna1831/currentport1831 allrunning. No unassignedready work.
 Checkpoint18:33: independent1831 genuineprovider legalrepeatedvaluechain acceptedforward+undo thenredoFAIL. No source merge queued. Immediate uniqueSolreturn1833 oncurrent65a, exactnative/effectzeroeffectranges/capturehandback. Root1831 disjoint _root_inverse patch16PASS, reviewnextafterterminal.
+Checkpoint18:37: App1823 newexactrawcoverage request became existingA4map continuation1837 inthispass. Sourcecollectionparalleltoinversefix; no App/pythonproductoverlap or droppedtests.
