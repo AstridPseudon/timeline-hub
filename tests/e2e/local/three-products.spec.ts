@@ -812,7 +812,7 @@ async function faultFirstCommit(page: Page) {
 
 function accepted(post: CommitPost): CommitAcceptedMutation {
   expect(post.status, JSON.stringify(post.response)).toBe(200);
-  expect(post.response.data.status).toMatch(/^(accepted|rebased)$/);
+  expect(post.response.data.status).toMatch(/^(accepted|rebased|merged)$/);
   expect(post.response.receipt.receipt_id).toBeTruthy();
   expect(post.response.receipt.result).toEqual(post.response.data);
   return post.response as CommitAcceptedMutation;
@@ -836,9 +836,116 @@ async function history(harness: DirectHarness, seed: ThreeProductsSeed, scope: T
     expect(response.status, JSON.stringify(response.body)).toBe(200);
     items.push(...response.body.items);
     cursor = response.body.next_cursor;
-    head = response.body.head;
+    if (head) expect(response.body.head).toEqual(head);
+    else head = response.body.head;
   } while (cursor);
   return { items, head, next_cursor: null };
+}
+
+/** The v2 commit envelope and the authenticated /commits projection must agree. */
+async function expectV2History(harness: DirectHarness, seed: ThreeProductsSeed, post: CommitPost,
+  expectedStatus: 'accepted' | 'merged', expectedUndoOf: string[] = []) {
+  const request = JSON.parse(post.body) as CommitRequest;
+  const result = post.response as CommitAcceptedMutation;
+  const data = result.data;
+  expect(post.path).toBe(`${timelineBase(harness, seed)}/commit`);
+  expect(post.key).toBeTruthy();
+  expect(request).toMatchObject({
+    api_version: 1,
+    project_id: harness.seed.projectId,
+    timeline_id: seed.timelineId,
+    base_revision_id: expect.any(String),
+    base_publication_id: expect.any(String),
+    commands: expect.any(Array),
+    label: expect.any(String),
+    steps: [expect.objectContaining({
+      id: expect.any(String), label: expect.any(String), intent: expect.any(String), tags: expect.any(Array),
+      command_ordinals: [0], patch: expect.any(Array),
+    })],
+    merge: expect.stringMatching(/^(fields|atomic)$/),
+    dry_run: false,
+  });
+  expect(request.steps).toHaveLength(request.commands.length);
+  expect(data).toMatchObject({
+    status: expectedStatus,
+    base_revision_id: request.base_revision_id,
+    base_publication_id: request.base_publication_id,
+    previous_revision_id: expect.any(String),
+    previous_publication_id: expect.any(String),
+    accepted_revision_id: expect.any(String),
+    canonical_document: {
+      schema_version: 1,
+      project_id: request.project_id,
+      timeline_id: request.timeline_id,
+      parent_revision: { revision_id: data.accepted_revision_id },
+    },
+    document_digest: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+    commands: request.commands,
+    id_map: expect.any(Object),
+    provider_version: expect.any(String),
+    compiler_version: expect.any(String),
+    merge_mode: expect.stringMatching(/^(fields|atomic)$/),
+    steps: [expect.objectContaining({
+      id: request.steps![0].id,
+      label: request.steps![0].label,
+      intent: request.steps![0].intent,
+      tags: request.steps![0].tags,
+      command_ordinals: [0],
+      patch: expect.any(Array),
+      dependencies: expect.any(Array),
+    })],
+    publisher: expect.any(String),
+  });
+  expect(data.rebased_onto).toEqual(expectedStatus === 'accepted'
+    ? null
+    : { revision_id: data.previous_revision_id, publication_id: data.previous_publication_id });
+  expect(result.receipt).toMatchObject({
+    command_kind: 'timeline.commit',
+    idempotency_key: post.key,
+    project_id: request.project_id,
+    result: data,
+  });
+
+  const page = await history(harness, seed);
+  const entry = page.items.find((candidate) => candidate.publication_id === result.receipt.receipt_id);
+  expect(entry, 'accepted publication must have an authoritative /commits entry').toBeTruthy();
+  expect(entry).toMatchObject({
+    publication_id: result.receipt.receipt_id,
+    revision_id: data.accepted_revision_id,
+    previous: { revision_id: data.previous_revision_id, publication_id: data.previous_publication_id },
+    receipt: result.receipt,
+    intent: 'recorded',
+    provider_version: data.provider_version,
+    compiler_version: data.compiler_version,
+    merge: request.merge,
+    merge_mode: data.merge_mode,
+    steps: data.steps,
+    publisher: data.publisher,
+    label: data.label,
+    records: {
+      schema_version: 1,
+      label: data.label,
+      merge_mode: data.merge_mode,
+      steps: data.steps,
+      commands: expect.any(Array),
+      undo_of: expectedUndoOf,
+      restored_from: null,
+    },
+  });
+  const records = entry!.records!;
+  expect(records.commands).toHaveLength(request.commands.length);
+  expect(records.commands[0]).toMatchObject({
+    ordinal: 0,
+    command: request.commands[0],
+    writes: expect.any(Array),
+    reads: expect.any(Array),
+    selections: expect.any(Array),
+    bindings: expect.any(Array),
+    created: expect.any(Array),
+    dependencies: expect.any(Array),
+    derived_writes: expect.any(Array),
+  });
+  if (expectedUndoOf.length) expect(records.undo_steps).toBeNull();
 }
 
 async function expectImmutableClosure(harness: DirectHarness, seed: ThreeProductsSeed, result: CommitAcceptedMutation) {
@@ -1143,6 +1250,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId))
       .find((candidate) => candidate.ownerId === retryOwnerId)?.pending?.outcome?.kind, CEILING).toBe('retry');
   });
+  await expectV2History(harness, seed3, wire.posts[0], 'accepted');
   const seedState = await revisionState(harness, seed3, seed3.headRevisionId);
   const seededTransition = seedState.parentClips[seed3.transitionClipId].transition;
   expect(c.data.canonical_document.parent_revision.payload.clips)
@@ -1193,7 +1301,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   expect(requestB).toMatchObject({ base_revision_id: pinOf(a).revision_id, base_publication_id: pinOf(a).publication_id });
   expect(requestB.commands).toEqual(commandsOf(owner.intents[1].payload));
   expect(b.data.publisher).toBe(a.data.publisher);
-  expect(b.data.status).toBe('rebased');
+  expect(b.data.status).toBe('merged');
   expect(b.data.previous_publication_id).toBe(pinOf(c).publication_id);
   expect(position(b.data.canonical_document, seed3.appClipId)).toBe(7);
   expect(b.data.canonical_document.parent_revision.payload.config).toMatchObject({
@@ -1208,6 +1316,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   expect(recordedB?.commands[0].command).toEqual(requestB.commands[0]);
   expect(recordedB?.commands[0].reads.length).toBeGreaterThan(0);
   expect(recordedB?.commands[0].bindings.length).toBeGreaterThan(0);
+  await expectV2History(harness, seed3, wire.posts[2], 'merged');
   await expectImmutableClosure(harness, seed3, a);
   await expectImmutableClosure(harness, seed3, c);
   await expectImmutableClosure(harness, seed3, b);
@@ -1223,6 +1332,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     { schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [publication] } },
   ]);
   const inverse = accepted(inversePost);
+  await expectV2History(harness, seed3, inversePost, 'accepted', [publication]);
   expect(position(inverse.data.canonical_document, seed3.appClipId)).toBe(5);
   expect(inverse.data.canonical_document.parent_revision.payload).toEqual(c.data.canonical_document.parent_revision.payload);
   expect(inverse.data.canonical_document.parent_revision.payload.clips)
