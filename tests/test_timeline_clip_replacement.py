@@ -46,11 +46,11 @@ def _native_session(monkeypatch, bundle, verified, *, fail=False, pending=None, 
         def _bundle(self, state):
             return bundle
 
-        def commit(self, command, *, idempotency_key=None, verified_media=()):
+        def commit(self, command, *, idempotency_key=None, verified_media=(), **options):
             self.state['pending'] = [copy.deepcopy(command)]
             return self.flush(idempotency_key=idempotency_key)
 
-        def flush(self, *, idempotency_key=None):
+        def flush(self, *, idempotency_key=None, dry_run=False):
             self.flush_calls.append((idempotency_key, copy.deepcopy(self.state['pending'])))
             if fail:
                 raise ConnectionError('response lost after acceptance')
@@ -165,60 +165,60 @@ def test_selected_media_commit_door_preserves_original_identity() -> None:
     assert len(transport.committed) == 2
 
 
-def test_remote_parent_media_replacement_publishes_exact_closure_once() -> None:
+def test_remote_parent_media_replacement_publishes_exact_closure_once(monkeypatch, tmp_path) -> None:
+    from astrid.sdk.timeline.commit import _manifest
     from tests.timeline.test_authoring_bundle import NEW, _closure, _digest
+    from tests.v10.test_timelines_create import _mount, _Writer
 
     parent, shots, internals = _closure(shared=False)
     internal = internals[0]
-    internal["payload"]["registry"]["assets"]["new-picture"] = {
-        "media_id": NEW,
-        "type": "image",
-    }
-    internal["content_digest"] = _digest(internal["payload"])
-    shot = shots[0]
-    parent["content_digest"] = _digest(parent["payload"])
-
-    class Transport:
-        def __init__(self):
-            self.published = []
-
-        def list_timelines(self, project, *, cursor=None, limit=50):
-            return ([{"project_id": project, "timeline_id": "main", "slug": "main"}], None)
-
-        def get_timeline(self, timeline_id, *, project_id=None):
-            raise AssertionError("canonical parent replacement must not read the legacy timeline document")
-
-        def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
-            assert (project_id, timeline_id, revision) == ("project-1", "main", "parent-1")
-            return parent
-
-        def get_project_shot_revision(self, project_id, shot_id, revision):
-            assert (project_id, shot_id, revision) == ("project-1", "shot-shared", "shot-rev-1")
-            return shot
-
-        def get_project_timeline_revision(self, project_id, timeline_id, revision):
-            assert (project_id, timeline_id, revision) == ("project-1", "main", "internal-1")
-            return internal
-
-        def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
-            self.published.append((project_id, timeline_id, publication, idempotency_key))
-            return {"data": {"new_head": publication["parent_revision_id"]}, "receipt": None}
-
-    transport = Transport()
+    internal['payload']['registry']['assets']['new-picture'] = {'media_id': NEW, 'type': 'image'}
+    internal['content_digest'] = _digest(internal['payload'])
+    document = {'schema_version': 1, 'project_id': 'project-1', 'timeline_id': 'main',
+                'parent_revision': {key: parent[key] for key in ('revision_id', 'content_digest', 'payload')},
+                'shot_revisions': [{key: shot[key] for key in ('shot_id', 'revision_id', 'content_digest',
+                    'payload', 'internal_timeline_revision_id')} for shot in shots],
+                'internal_timeline_revisions': [{key: row[key] for key in ('timeline_id', 'revision_id',
+                    'content_digest', 'payload')} for row in internals],
+                'dependency_manifest': _manifest(shots, internals, [
+                    {'media_id': media, 'content_digest': media} for media in sorted({
+                        binding['media_id'] for binding in internal['payload']['registry']['assets'].values()})], [])}
+    transport = _Writer()
+    transport.documents = {'parent-1': copy.deepcopy(document)}
+    transport.head = {'revision_id': 'parent-1', 'publication_id': 'publication-1'}
+    _mount(monkeypatch, tmp_path, transport)
+    preview = RemoteTimelines(transport).replace_parent_media(
+        'project-1', 'main', occurrence_id='occ-1', clip_id='picture-1', source_object_id=NEW,
+        expected_head='parent-1', idempotency_key='preview', dry_run=True)
+    assert preview.ok, preview.error
+    assert preview.data['status'] == 'preview' and preview.receipt is None
+    assert len(transport.documents) == 1 and transport.head['revision_id'] == 'parent-1'
+    assert transport.replays == {}
+    assert preview.data['steps'][0]['dependencies'] and preview.data['merge_mode'] == 'atomic'
+    transport.calls.clear()
     result = RemoteTimelines(transport).replace_parent_media(
-        "project-1", "main", occurrence_id="occ-1", clip_id="picture-1",
-        source_object_id=NEW, expected_head="parent-1", idempotency_key="parent-replace-1",
-    )
-
+        'project-1', 'main', occurrence_id='occ-1', clip_id='picture-1', source_object_id=NEW,
+        expected_head='parent-1', idempotency_key='parent-replace-1')
     assert result.ok, result.error
-    assert len(transport.published) == 1
-    _project, _timeline, publication, key = transport.published[0]
-    assert key == "parent-replace-1"
-    child = publication["internal_timeline_revisions"][0]["payload"]
-    selected = next(clip for clip in child["clips"] if clip["id"] == "picture-1")
-    assert selected["asset"] == "new-picture"
-    assert selected["at"] == 0 and selected["hold"] == 1
-    assert publication["expected_head"] == "parent-1"
+    assert len(transport.calls) == 1
+    operation, (_project, _timeline, body), kwargs = transport.calls[0]
+    assert operation == 'commit_timeline'
+    assert kwargs == {'idempotency_key': 'parent-replace-1'}
+    landed = result.data['canonical_document']
+    child = landed['internal_timeline_revisions'][0]['payload']
+    selected = next(clip for clip in child['clips'] if clip['id'] == 'picture-1')
+    assert selected['asset'] == 'new-picture'
+    assert selected['at'] == 0 and selected['hold'] == 1
+    assert body['base_revision_id'] == 'parent-1' and body['base_publication_id'] == 'publication-1'
+    expected = copy.deepcopy(internal['payload'])
+    expected['clips'][0]['asset'] = 'new-picture'
+    assert child == expected  # raw OLD binding, timing, identity and every opaque field
+    occurrence = landed['parent_revision']['payload']['occurrences'][0]
+    original = copy.deepcopy(parent['payload']['occurrences'][0])
+    original['shot_revision_id'] = occurrence['shot_revision_id']
+    assert occurrence == original
+    assert result.data['steps'][0]['dependencies'] and result.data['merge_mode'] == 'atomic'
+    assert result.receipt.result['canonical_document'] == landed
 
 
 def test_parent_media_cli_forwards_exact_locator_and_head(capsys) -> None:
