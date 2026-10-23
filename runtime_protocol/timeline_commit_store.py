@@ -18,6 +18,7 @@ from .timeline_materialization import has_materialization, item_identity, materi
 from .util import canonical_json, new_id, now
 
 _METADATA = ("source", "label", "rationale", "group_id")
+_PRIVATE_EXECUTION = "_sequential_execution"
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 _TEXT_BINDING_REF = re.compile(r"occurrence:([^/]+)/text-binding:(prompt|voiceover_script|transcript)(?::([a-z][a-z0-9-]{0,63}))?\Z")
 
@@ -252,8 +253,20 @@ class TimelineCommitStore:
                 )
                 history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
                                                       allow_archived=allow_archived)
-                validate(replay_request, {"records": records, "expected_head": previous, "canonical_document": document},
-                         source, continuations=continuations, history=history)
+                prepared = {"records": records, "expected_head": previous, "canonical_document": document}
+                original = self.revision_closure(edge["project_id"], edge["timeline_id"], base["revision_id"],
+                                                 allow_archived=allow_archived)
+                sequential = None
+                if _PRIVATE_EXECUTION in metadata:
+                    replay_request, prepared, sequential = self._historical_sequential(
+                        metadata[_PRIVATE_EXECUTION], row, edge, data, prepared, original, source,
+                        continuations, history,
+                    )
+                else:
+                    from .timeline_commit_auth import sequential_proof_required
+                    if sequential_proof_required(prepared, source, continuations):
+                        raise ValueError("historical sequential proof is missing")
+                validate(replay_request, prepared, source, original, continuations, history, sequential=sequential)
             ids = json.loads(row["event_ids_json"])
             seq = row["resulting_stream_seq"]
             # Replay verifies the accepted prefix, independent of later writes.
@@ -295,6 +308,51 @@ class TimelineCommitStore:
                                                    allow_archived=allow_archived)
         except (KeyError, TypeError, ValueError, IndexError, ValidationError, CommitRejected) as exc:
             raise ProtocolError("accepted commit record is corrupt") from exc
+
+    def _historical_sequential(self, execution, row, edge, data, accepted, base, source, continuations, history):
+        from .timeline_commit_auth import validate_sequential_capture
+        from .timeline_commit_port import route_path
+        from .timeline_commit_validation import validate_commit_value
+
+        if set(execution) != {"capture", "prepared"}:
+            raise ValueError("historical sequential execution is malformed")
+        capture, prepared = execution["capture"], execution["prepared"]
+        context = capture["context"]
+        validate_commit_value(context, "CommitContext")
+        validate_commit_value(prepared, "PreparedCommit")
+        request = context["request"]
+        realm = self.conn.execute("SELECT realm_id FROM projects WHERE id=?", (edge["project_id"],)).fetchone()
+        if (realm is None or context["realm_id"] != realm[0]
+                or context["publisher"] != edge["publisher"]
+                or context["idempotency_key"] != row["idempotency_key"]
+                or context["request_hash"] != row["request_hash"]
+                or request_identity(context) != row["request_hash"]
+                or request["project_id"] != edge["project_id"] or request["timeline_id"] != edge["timeline_id"]
+                or request["base_revision_id"] != data["base_revision_id"]
+                or request["base_publication_id"] != data["base_publication_id"]
+                or context["invocation"]["operation"] != "commitTimeline"
+                or context["invocation"]["path"] != route_path(edge["project_id"], edge["timeline_id"])
+                or context["invocation"]["body"] != request or request.get("dry_run", False)
+                or any(prepared[key] != value for key, value in accepted.items())
+                or any(prepared[key] != data[key] for key in
+                       ("document_digest", "id_map", "provider_version", "compiler_version"))
+                or any(data.get(key) != request.get(key) for key in _METADATA if key != "label")
+                or data["label"] != request.get("label", "Timeline edit")
+                or data["merge_mode"] != _effective_merge_mode(request)):
+            raise ValueError("historical sequential execution differs from acceptance")
+        event_ids = json.loads(row["event_ids_json"])
+        if len(event_ids) != len(prepared["semantic_events"]) + 1:
+            raise ValueError("historical sequential events differ from acceptance")
+        for event_id, semantic in zip(event_ids, prepared["semantic_events"]):
+            event = self.conn.execute("SELECT kind, payload_json FROM timeline_events WHERE id=? AND timeline_id=?",
+                                      (event_id, edge["timeline_id"])).fetchone()
+            if event is None or event["kind"] != semantic["kind"] or json.loads(event["payload_json"]) != {
+                    "project_id": edge["project_id"], "timeline_id": edge["timeline_id"],
+                    "publisher": edge["publisher"], **semantic}:
+                raise ValueError("historical sequential events differ from acceptance")
+        return request, prepared, validate_sequential_capture(
+            request, prepared, capture, source, base, continuations, history,
+        )
 
     def _check_inherited_allocations(self, project, timeline, records, allocations, before_seq=None,
                                      *, allow_archived=False):
@@ -396,6 +454,7 @@ class TimelineCommitStore:
                      "records": records, "provider_version": row["provider_version"],
                      "compiler_version": row["compiler_version"], "publisher": row["publisher"],
                      **json.loads(row["metadata_json"])}
+            entry.pop(_PRIVATE_EXECUTION, None)
             # Modern records carry the authenticated provider projection.  A
             # legacy edge has no recorder and must remain null/absent rather
             # than receiving invented step or undo authority.
@@ -789,6 +848,7 @@ class TimelineCommitStore:
             reject("invalid_records", status=422)
         recorded_steps = records.get("steps")
         requested_steps = request.get("steps")
+        execution = None
         _validate_record_metadata(request, records)
         if _is_v2_request(request) and recorded_steps is None:
             reject("invalid_records", "provider did not return authoritative step records", status=422)
@@ -819,6 +879,8 @@ class TimelineCommitStore:
             if sequential is None and sequential_proof_required(prepared, source, continuations):
                 reject("sequential_proof_unavailable", "moved-head staged physical input requires private sequential proof")
             validate(request, prepared, source, base, continuations, history, sequential=sequential)
+            if sequential is not None:
+                execution = {"capture": sequential["retained_capture"], "prepared": prepared}
         elif any("physical_ref" in binding for record in commands for binding in record["bindings"]):
             reject("invalid_records", "physical bindings require authoritative steps", status=422)
         for record in commands:
@@ -845,7 +907,7 @@ class TimelineCommitStore:
         self._check_inherited_allocations(request["project_id"], request["timeline_id"], records, allocations)
         return {"canonical_document": document, "document_digest": prepared["document_digest"],
                 "commands": [r["command"] for r in commands], "id_map": prepared["id_map"],
-                "provider_version": prepared["provider_version"], "compiler_version": prepared["compiler_version"]}
+                "provider_version": prepared["provider_version"], "compiler_version": prepared["compiler_version"]}, execution
 
     def _materializations(self, context, prepared, inputs):
         if has_materialization(prepared):
@@ -1078,7 +1140,7 @@ class TimelineCommitStore:
             self._check_context(context)
             self._check_head(context, prepared["expected_head"])
             self._check_shot_destinations(context, prepared, inputs)
-            candidate = self._validate(context, prepared, inputs)
+            candidate, _ = self._validate(context, prepared, inputs)
             request = context["request"]
             candidate["merge_mode"] = _effective_merge_mode(request)
             if "steps" in prepared["records"]:
@@ -1125,7 +1187,7 @@ class TimelineCommitStore:
                 self._check_context(context)
                 self._check_head(context, prepared["expected_head"])
                 self._check_shot_destinations(context, prepared, inputs)
-                candidate = self._validate(context, prepared, inputs)
+                candidate, execution = self._validate(context, prepared, inputs)
                 request, previous = context["request"], prepared["expected_head"]
                 from .timeline_commit_reference_projection import (
                     ReferenceProjectionError,
@@ -1161,7 +1223,8 @@ class TimelineCommitStore:
                 if modern and "steps" in prepared["records"]:
                     data["steps"] = prepared["records"]["steps"]
                 self._persist_closure(candidate["canonical_document"])
-                result = self._publish(context, data, previous, prepared["records"], prepared["semantic_events"])
+                result = self._publish(context, data, previous, prepared["records"], prepared["semantic_events"],
+                                       execution=execution)
                 from .timeline_commit_reference_projection import (
                     apply_reference_projection,
                 )
@@ -1313,7 +1376,7 @@ class TimelineCommitStore:
             self.conn.execute("UPDATE parent_composition_revisions SET commit_manifest_json=? WHERE id=? AND commit_manifest_json IS NULL",
                               (canonical_json(manifest), parent["revision_id"]))
 
-    def _publish(self, context, data, previous, records, semantic_events):
+    def _publish(self, context, data, previous, records, semantic_events, *, execution=None):
         request = context["request"]
         project_id, timeline_id = request["project_id"], request["timeline_id"]
         revision_id = data["canonical_document"]["parent_revision"]["revision_id"]
@@ -1329,6 +1392,8 @@ class TimelineCommitStore:
             data, project_id=project_id, event_ids=event_ids, primary_stream_id=timeline_id, resulting_stream_seq=seq)
         ledger = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (publication_id,)).fetchone()
         metadata = _history_metadata(request, data)
+        if execution is not None:
+            metadata[_PRIVATE_EXECUTION] = execution
         self.conn.execute("INSERT INTO timeline_commit_history VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (publication_id, project_id, timeline_id, revision_id, previous["publication_id"] if previous else None,
              previous["revision_id"], "recorded", canonical_json(records),

@@ -3,7 +3,9 @@ from __future__ import annotations
 
 import copy
 import json
+import sqlite3
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import test_timeline_commit_authentication as auth
@@ -68,6 +70,81 @@ def test_private_sequential_carrier_accepts_authenticated_candidate(service):
     _provider_with_capture(service)
     result = auth.commit(service, auth.body(service), key="sequential-private-positive")
     assert result["data"]["status"] == "accepted"
+
+
+def test_private_sequential_history_survives_restart_and_exact_retry(service):
+    from runtime_protocol.service import RuntimeService
+
+    _provider_with_capture(service)
+    submitted = auth.body(service)
+    result = auth.commit(service, submitted)
+    project, root = service.test_project, service.store.root
+    history = service.list_timeline_commits(project, "main", authorize=lambda: None)
+    assert all("_sequential_execution" not in entry for entry in history["items"])
+    metadata = json.loads(service.store.conn.execute(
+        "SELECT metadata_json FROM timeline_commit_history WHERE publication_id=?",
+        (result["receipt"]["receipt_id"],),
+    ).fetchone()[0])
+    assert metadata["_sequential_execution"]["capture"]["context"]["request"] == submitted
+    before = auth.rows(service)
+    service.close()
+    restarted = RuntimeService(root)
+    try:
+        restarted.test_project = project
+        assert auth.commit(restarted, submitted) == result
+        assert restarted._timeline_commit_provider is None
+        assert restarted.list_timeline_commits(project, "main", authorize=lambda: None) == history
+        assert auth.rows(restarted) == before
+    finally:
+        restarted.close()
+
+
+@pytest.mark.parametrize("damage", [
+    "realm_id", "publisher", "idempotency_key", "request_hash", "invocation", "request",
+    "prepared", "original_input", "original_effect", "landing", "replay_map",
+])
+def test_private_sequential_history_revalidates_retained_facts(service, damage):
+    from runtime_protocol.errors import ProtocolError
+    from runtime_protocol.util import canonical_json
+
+    _provider_with_capture(service)
+    submitted = auth.body(service)
+    result = auth.commit(service, submitted)
+    publication = result["receipt"]["receipt_id"]
+    metadata = json.loads(service.store.conn.execute(
+        "SELECT metadata_json FROM timeline_commit_history WHERE publication_id=?", (publication,),
+    ).fetchone()[0])
+    execution = metadata["_sequential_execution"]
+    capture = execution["capture"]
+    if damage in {"realm_id", "publisher", "idempotency_key", "request_hash"}:
+        capture["context"][damage] = "forged"
+    elif damage == "invocation":
+        capture["context"]["invocation"]["path"] += "/forged"
+    elif damage == "request":
+        capture["context"]["request"]["label"] = "forged"
+    elif damage == "prepared":
+        execution["prepared"]["id_map"] = {"forged": "forged"}
+        capture["prepared_digest"] = digest(execution["prepared"])
+    elif damage == "original_input":
+        image = capture["original"]["commands"][0]["input"]["parent_revision"]
+        image["payload"]["meta"] = {"forged": True}
+        image["content_digest"] = digest(image["payload"])
+    elif damage == "original_effect":
+        capture["original"]["records"]["commands"][0]["writes"][0]["after"]["value"] = {"forged": True}
+    elif damage == "landing":
+        capture["landing"]["records"]["commands"][0]["bindings"] = []
+    else:
+        capture["replay_bindings"].append({"kind": "forged"})
+    service.store.conn.execute("UPDATE timeline_commit_history SET metadata_json=? WHERE publication_id=?",
+                               (canonical_json(metadata), publication))
+    before = auth.rows(service)
+    with pytest.raises(RuntimeErrorBase) as error:
+        auth.commit(service, submitted)
+    assert isinstance(error.value.__cause__, ProtocolError)
+    assert str(error.value.__cause__) == "accepted commit record is corrupt"
+    with pytest.raises(ProtocolError, match="accepted commit record is corrupt"):
+        service.list_timeline_commits(service.test_project, "main", authorize=lambda: None)
+    assert auth.rows(service) == before
 
 
 def test_private_sequential_carrier_rejects_context_tampering_without_write(service):
@@ -178,6 +255,82 @@ def test_retained_real_capture_runs_both_verification_stages(captured_sequence):
     before = copy.deepcopy(captured_sequence)
     _verify_packet(captured_sequence)
     assert captured_sequence == before
+
+
+def test_moved_history_replays_authenticated_original_and_landing(captured_sequence, monkeypatch):
+    from runtime_protocol.errors import ProtocolError
+    from runtime_protocol.timeline_commit_store import (
+        TimelineCommitStore,
+        _history_metadata,
+    )
+    from runtime_protocol.util import canonical_json
+
+    packet = captured_sequence
+    prepared, request, capture = packet["prepared"], packet["request"], packet["capture"]
+    previous = prepared["expected_head"]
+    assert previous["publication_id"] != request["base_publication_id"]
+    document, records = prepared["canonical_document"], prepared["records"]
+    publisher = capture["context"]["publisher"]
+    data = {key: value for key, value in prepared.items() if key not in {"records", "semantic_events", "expected_head"}}
+    data.update(status="merged", base_revision_id=request["base_revision_id"],
+                base_publication_id=request["base_publication_id"], previous_revision_id=previous["revision_id"],
+                previous_publication_id=previous["publication_id"], rebased_onto=previous,
+                accepted_revision_id=document["parent_revision"]["revision_id"], publisher=publisher,
+                commands=[record["command"] for record in records["commands"]],
+                steps=records["steps"], label=records["label"], merge_mode=records["merge_mode"])
+    data.update({key: request[key] for key in ("source", "rationale", "group_id")})
+    metadata = _history_metadata(request, data)
+    metadata["_sequential_execution"] = {"capture": capture, "prepared": prepared}
+    event = {"timeline_id": request["timeline_id"], "kind": "timeline.commit.accepted",
+             "payload": {"project_id": request["project_id"], "timeline_id": request["timeline_id"],
+                         "previous": previous, "revision_id": data["accepted_revision_id"],
+                         "publisher": publisher, "intent": "recorded", "records_digest": digest(records)},
+             "previous_hash": "", "created_at": "2026-10-23T00:00:00Z"}
+    with sqlite3.connect(":memory:") as connection:
+        connection.row_factory = sqlite3.Row
+        connection.executescript("""
+            CREATE TABLE projects (id TEXT, realm_id TEXT);
+            CREATE TABLE project_sequences (project_id TEXT, next_seq INTEGER);
+            CREATE TABLE timeline_events (id INTEGER, timeline_id TEXT, kind TEXT, payload_json TEXT,
+                                          previous_hash TEXT, event_hash TEXT, created_at TEXT);
+        """)
+        connection.execute("INSERT INTO projects VALUES (?, ?)",
+                           (request["project_id"], capture["context"]["realm_id"]))
+        connection.execute("INSERT INTO project_sequences VALUES (?, 2)", (request["project_id"],))
+        connection.execute("INSERT INTO timeline_events VALUES (1, ?, ?, ?, '', ?, ?)",
+                           (event["timeline_id"], event["kind"], canonical_json(event["payload"]),
+                            digest(event)[7:], event["created_at"]))
+        store = TimelineCommitStore(SimpleNamespace(conn=connection), validate_prepared=lambda _: None)
+        closures = {value["parent_revision"]["revision_id"]: value for value in
+                    (packet["source"], packet["head_document"], document)}
+        monkeypatch.setattr(store, "revision_closure", lambda project, timeline, revision, **kw: closures[revision])
+        continuations = {}
+        for entry in packet["history"]["items"]:
+            for record in (entry["records"] or {}).get("commands", []):
+                for binding in record["bindings"]:
+                    if binding.get("key") == "commit.materialization":
+                        continuations.setdefault(binding["physical_ref"], set()).add(binding["successor"])
+        monkeypatch.setattr(store, "_binding_continuations", lambda *args, **kw: continuations)
+        monkeypatch.setattr(store, "_inverse_stage_history", lambda *args, **kw: {})
+        edge = {"project_id": request["project_id"], "timeline_id": request["timeline_id"],
+                "intent": "recorded", "publication_id": "accepted-sequence", "project_seq": 1,
+                "previous_revision_id": previous["revision_id"], "previous_publication_id": previous["publication_id"],
+                "revision_id": data["accepted_revision_id"], "publisher": publisher,
+                "provider_version": data["provider_version"], "compiler_version": data["compiler_version"],
+                "records_json": canonical_json(records), "metadata_json": canonical_json(metadata)}
+        row = {"command_kind": "timeline.commit", "txn_id": edge["publication_id"],
+               "aggregate_id": canonical_json([request["project_id"], request["timeline_id"]]),
+               "primary_stream_id": request["timeline_id"], "first_project_seq": 1, "last_project_seq": 1,
+               "resulting_stream_seq": 1, "event_ids_json": '["1"]', "result_json": canonical_json(data),
+               "request_hash": capture["context"]["request_hash"],
+               "idempotency_key": capture["context"]["idempotency_key"]}
+        # Only the enclosing accepted receipt/event is constructed here. The
+        # original, landing, BASE, HEAD and preceding edge are real captures.
+        store._verify_accepted(row, edge)
+        metadata.pop("_sequential_execution")
+        edge["metadata_json"] = canonical_json(metadata)
+        with pytest.raises(ProtocolError, match="accepted commit record is corrupt"):
+            store._verify_accepted(row, edge)
 
 
 @pytest.mark.parametrize("damage", ["omitted", "duplicate", "future", "owner", "terminal",

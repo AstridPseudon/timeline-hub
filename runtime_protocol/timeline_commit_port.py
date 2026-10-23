@@ -667,9 +667,11 @@ class RequestCommitPort:
         if capture is None:
             return None
         from .timeline_commit_auth import validate_sequential_capture
-        return validate_sequential_capture(
+        proof = validate_sequential_capture(
             self.__request, prepared, capture, source, base, continuations, history,
         )
+        proof["retained_capture"] = capture
+        return proof
 
     def verify_outcome(self, outcome):
         if isinstance(outcome, dict) and outcome.get("receipt", True) is None and outcome != self.__preview:
