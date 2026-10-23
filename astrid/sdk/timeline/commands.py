@@ -50,8 +50,12 @@ def operations():
     )
     from .native_occurrence_shared import PARAMETERS as SHARED_PARAMETERS
     from .native_occurrence_shared import occurrence_place_shared
+    from .native_parent_media_commands import (
+        DUPLICATE_MEDIA_PARAMETERS,
+        assembled_target,
+        duplicate_media,
+    )
     from .native_parent_media_commands import add_media as parent_add_media
-    from .native_parent_media_commands import assembled_target
     from .native_placement_commands import (
         PLACEMENT_INTENT,
         placement_create,
@@ -103,6 +107,8 @@ def operations():
             'clip.set-params': Operation(_SCHEMA['$defs']['ClipSetParamsArgs'], clip_set_params, {}, True),
             'timeline.assembled-target': Operation(_SCHEMA['$defs']['AssembledTargetArgs'], assembled_target, {}),
             'clip.add-media': Operation(_SCHEMA['$defs']['ClipAddMediaArgs'], parent_add_media, {}),
+            'clip.duplicate-media': Operation(DUPLICATE_MEDIA_PARAMETERS, duplicate_media,
+                                               {'ownership': 'parent'}, True),
             'producer.guard': Operation(_SCHEMA['$defs']['ProducerGuardArgs'], producer_guard, {})}
 
 

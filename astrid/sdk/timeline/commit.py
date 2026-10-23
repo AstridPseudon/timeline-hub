@@ -958,14 +958,34 @@ class RuntimeCommitService:
                     call['args'].pop('steps', None)
                 validate_command(call)
             verified_producer = capture_producer(port, request)
-            for call in calls:
+            for command_index, call in enumerate(calls):
                 if call['op'] == 'text-binding.set' and 'text' in call['args']:
                     verified_media.append(port.text_selection(copy.deepcopy(call['args']['text'])))
-                if call['op'] in ('clip.add-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
+                if call['op'] in ('clip.add-media', 'clip.duplicate-media', 'clip.swap-media', 'occurrence.add-media', 'occurrence.swap-media', 'placement.create',
                                 'shot.pool'):
                     for key in ('old_media', 'media'):
                         if key in call['args']:
-                            verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
+                            if call['op'] == 'clip.duplicate-media':
+                                from runtime_protocol.errors import (
+                                    ConflictError,
+                                    NotFoundError,
+                                    ValidationError,
+                                )
+
+                                try:
+                                    selected = port.selected_media(copy.deepcopy(call['args'][key]))
+                                except (ConflictError, NotFoundError, ValidationError) as exc:
+                                    invalid = not isinstance(exc, ConflictError)
+                                    raise CommitRejected(_failure(
+                                        'invalid_media_selection' if invalid else 'dependency_changed',
+                                        str(exc), base, port.head(),
+                                        path=['commands', str(command_index), 'args', key], invalid=invalid,
+                                        status='invalid' if invalid else 'conflict',
+                                        hint='Retrieve the exact current Runtime media selection',
+                                        suggested_command='media show')) from exc
+                                verified_media.append(selected)
+                            else:
+                                verified_media.append(port.selected_media(copy.deepcopy(call['args'][key])))
             restore = any(call["op"] == "timeline.restore" for call in calls)
             if restore:
                 current = port.head()
