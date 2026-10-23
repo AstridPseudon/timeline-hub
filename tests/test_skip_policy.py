@@ -1,75 +1,95 @@
-"""Keep test skips centralized in the shared lane helper."""
+"""No test leaves itself out by hand: a skip is a lane marker from the registry in tests/lanes.py.
+
+The runtime guard (tests/test_skip_guard.py) fails a run on any skip that no registry entry declares. This is its
+static half: it finds the skip and xfail calls that would only fire on some other machine, so they cannot wait there
+to hide a test. tests/lanes.py is the one place that may build a skip.
+"""
 
 from __future__ import annotations
 
 import ast
 from pathlib import Path
 
+import pytest
 
-TESTS = Path(__file__).parent
-SHARED_HELPER = TESTS / "lanes.py"
-SKIP_NAMES = {"skip", "skipif", "importorskip"}
+REPO = Path(__file__).resolve().parents[1]
+REGISTRY = "tests/lanes.py"
+HIDDEN = {
+    "pytest.skip", "pytest.importorskip", "pytest.xfail", "pytest.mark.skip", "pytest.mark.skipif", "pytest.mark.xfail",
+    "unittest.skip", "unittest.skipIf", "unittest.skipUnless", "unittest.SkipTest", "unittest.case.SkipTest",
+}
+HIDDEN_METHODS = {"skipTest"}
 
 
-def _skip_references(tree: ast.Module) -> list[tuple[int, str]]:
-    pytest_modules = {"pytest"}
-    imported_skip_names: set[str] = set()
-    pytest_mark_names = {"mark"}
-
+def hidden_gates(source: str) -> list[tuple[int, str]]:
+    """The (line, dotted name) of every skip or xfail the source calls, names resolved through its imports."""
+    tree = ast.parse(source)
+    imported: dict[str, str] = {}
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
-                if alias.name == "pytest":
-                    pytest_modules.add(alias.asname or "pytest")
-        elif isinstance(node, ast.ImportFrom) and node.module == "pytest":
+                imported[(alias.asname or alias.name).split(".")[0]] = alias.name if alias.asname else alias.name.split(".")[0]
+        elif isinstance(node, ast.ImportFrom) and node.module:
             for alias in node.names:
-                local = alias.asname or alias.name
-                if alias.name in SKIP_NAMES:
-                    imported_skip_names.add(local)
-                elif alias.name == "mark":
-                    pytest_mark_names.add(local)
-
+                imported[alias.asname or alias.name] = f"{node.module}.{alias.name}"
     found: list[tuple[int, str]] = []
     for node in ast.walk(tree):
-        if isinstance(node, ast.Call):
-            func = node.func
-            if isinstance(func, ast.Name) and func.id in imported_skip_names:
-                found.append((node.lineno, func.id))
-            elif isinstance(func, ast.Attribute) and func.attr in SKIP_NAMES:
-                owner = func.value
-                if isinstance(owner, ast.Name) and owner.id in pytest_modules:
-                    found.append((node.lineno, ast.unparse(func)))
-                elif (
-                    isinstance(owner, ast.Attribute)
-                    and owner.attr in pytest_mark_names
-                    and isinstance(owner.value, ast.Name)
-                    and owner.value.id in pytest_modules
-                ):
-                    found.append((node.lineno, ast.unparse(func)))
-                elif isinstance(owner, ast.Name) and owner.id in pytest_mark_names and func.attr in {"skip", "skipif"}:
-                    found.append((node.lineno, ast.unparse(func)))
-        elif isinstance(node, ast.Attribute) and node.attr in {"skip", "skipif"}:
-            owner = node.value
-            if (
-                isinstance(owner, ast.Attribute)
-                and owner.attr in pytest_mark_names
-                and isinstance(owner.value, ast.Name)
-                and owner.value.id in pytest_modules
-            ):
-                found.append((node.lineno, ast.unparse(node)))
-
-    return found
+        if isinstance(node, ast.Attribute):
+            parts = [node.attr]
+            value = node.value
+            while isinstance(value, ast.Attribute):
+                parts.append(value.attr)
+                value = value.value
+            if isinstance(value, ast.Name):
+                dotted = ".".join([imported.get(value.id, value.id), *reversed(parts)])
+                if dotted in HIDDEN or node.attr in HIDDEN_METHODS:
+                    found.append((node.lineno, dotted))
+        elif isinstance(node, ast.Name) and imported.get(node.id) in HIDDEN:
+            found.append((node.lineno, imported[node.id]))
+    return sorted(set(found))
 
 
-def test_skip_apis_are_confined_to_shared_lane_helper() -> None:
-    violations = []
-    for path in sorted(TESTS.rglob("*.py")):
-        if path == SHARED_HELPER:
+@pytest.mark.parametrize("source", [
+    "import pytest\npytest.skip('x')\n",
+    "import pytest\npytest.importorskip('x')\n",
+    "import pytest\n@pytest.mark.skipif(True, reason='x')\ndef test(): pass\n",
+    "import pytest\n@pytest.mark.skip(reason='x')\ndef test(): pass\n",
+    "import pytest\n@pytest.mark.xfail\ndef test(): pass\n",
+    "import pytest\npytest.xfail('x')\n",
+    "import unittest\n@unittest.skipUnless(False, 'x')\nclass T(unittest.TestCase): pass\n",
+    "import unittest\nclass T(unittest.TestCase):\n    def test(self):\n        self.skipTest('x')\n",
+    "import pytest as p\np.skip('x')\n",
+    "from pytest import skip as omit\nomit('x')\n",
+    "from unittest import SkipTest\nraise SkipTest('x')\n",
+], ids=["skip", "importorskip", "skipif", "skip-mark", "xfail-mark", "xfail", "unittest", "skipTest", "alias", "from-import", "SkipTest"])
+def test_the_scanner_finds_every_way_to_hide_a_test(source: str) -> None:
+    assert hidden_gates(source)
+
+
+def test_the_scanner_leaves_lane_markers_and_plain_strings_alone() -> None:
+    source = "import pytest\n\n@pytest.mark.ffmpeg\ndef test():\n    text = 'pytest.skip is not called'\n"
+    assert hidden_gates(source) == []
+
+
+def _test_python_files():
+    """Every Python file in this repo that holds tests: any tests directory, test_*.py and *_test.py."""
+    seen = set()
+    for path in REPO.rglob("*.py"):
+        parts = set(path.relative_to(REPO).parts)
+        if parts & {".venv", "node_modules", ".git", "build", "dist"} or any(p.startswith(".venv") for p in parts):
             continue
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        violations.extend(
-            f"{path.relative_to(TESTS)}:{line}: {reference}"
-            for line, reference in _skip_references(tree)
-        )
+        if "tests" in parts or path.name.startswith("test_") or path.name.endswith("_test.py") or path.name == "conftest.py":
+            seen.add(path)
+    return sorted(seen)
 
-    assert not violations, "test skip APIs must live in tests/lanes.py:\n" + "\n".join(violations)
+
+def test_no_test_file_skips_by_hand() -> None:
+    offenders = []
+    files = _test_python_files()
+    assert files, "the scan found no test files"
+    for path in files:
+        relative = path.relative_to(REPO).as_posix()
+        if relative == REGISTRY:
+            continue
+        offenders += [f"{relative}:{line} {name}" for line, name in hidden_gates(path.read_text(encoding="utf-8"))]
+    assert not offenders, "mark the test with an entry from tests/lanes.py instead of skipping by hand: " + ", ".join(offenders)
