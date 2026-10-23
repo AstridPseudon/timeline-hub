@@ -162,3 +162,9 @@ They need automatic relational timing (derived-cache reconciliation), which PLAN
 - no guard is dropped.
 
 The owner will be asked whether to fund option (a) later. The remaining V4 work (the four status adaptations, the Agent legacy-replay defect) continues as normal.
+
+## 2026-10-23T04:49:58Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0445-fixture-status-merged.md)
+Reviewed5292 home MERGED f95f1e1691b82dce74a49eb7ca444f97eb364037/treea356b2d27e4228db745bfd61e27dd088b0dec1d7; descendant includes exact38e claim. Separate38e request closed SUPERSEDED; no duplicate fixture reconstruction. Scoped author/independent1+4 evidence retained; no original54PASS claim, undo2/replay1 remain OPEN. Runtime14/crash24 not duplicated. Agent replay owner0442 active; derivedundo scope escalation0445 written. Actual home still contains unrelated unqualifiedccc broadP4 ancestry, Sol correction0442 active. Wait meaningful reviewed replay/current successor before later original54, which remains Viewing-owned.
+
+## 2026-10-23T04:49:58Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0445-queue-replay-owned.md)
+Reviewed5292 two-file fixture/status delta inspected and home merge queued now; one descendant incorporates38e, no duplicatefixture repair. Overall54 remainsNOTDONE; last executed47/7 plus independentstatus4 scopedPASS only. Actual replaymetadata defect assigned agt-R1-legacy-replay-fix-0442 Luna on9729, narrow authenticatedrequest/head+landingstepdependencies correction. Separate derivedundo2 scope escalated samepass to orchestrator; no test/guard weakening or duplicate54/native14. V2 independent0414 PASS147 merged9729; bounded actualhomeproof0445active. Final home sourceG234 correction active; will return SHA/tree after merge receipt.
