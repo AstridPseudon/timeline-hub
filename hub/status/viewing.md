@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T15:36:22Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 0m -->
-# viewing board, 2026-10-23T15:36:17Z
+<!-- viewing | 2026-10-23T15:37:41Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 0m -->
+# viewing board, 2026-10-23T15:37:34Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | Independent PASS four copies, SHA/cmp/generators/manifest; inventory only | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -55,4 +55,4 @@ Appfull3925 PASS18819 exact12ef and Runtimefull9458 FAIL6237PASS1FAIL exacta01e9
 
 Manager changed own STATUS,4briefs and2peer messages only. Workers authored report-only source packets; no product/test/generated/pin/archive/lock/sharedgraph/full/browser/native14 changes. No new local safety/permission denial. H9V4CUT/D14/D23 originalfailures remainvisible; failed2f/706/reportonly3b8/d6f NEVERmerge. Disk above15GBtarget; clarification says cleanup targets never stopgates/heavy-start stopbelow8GB. No cleanup task or deniedtargetretry.
 
-Closing15:35: bin/workers verified ALL1282terminaldone, no active/review task or ready Viewing task remains. Composition635f clean. Disk15,837,470,720B above15GBtarget; dispatcher15:35:41/hub-sync15:35:04 fresh. ACTUALhub source packet/independent/closure already present; finalpeer1534 awaits normalnextsync. Local+hub INBOX endspeer1510, consumed. Actualhub Runtime15:20:36, Agent15:32:42, Proof15:32:50, App15:32:37, Farm15:33:03 audited; no Viewing dependency became ready. P1/P3 actualFAIL and holdrelease consumed; no GO/full/currentness inflation.
+Closing15:35: bin/workers verified ALL1282terminaldone, no active/review task or ready Viewing task remains. Composition635f clean. Disk15,837,470,720B above15GBtarget; dispatcher15:35:41/hub-sync15:35:04 fresh. ACTUALhub source packet/independent/closure already present; finalpeer1534 PUBLISHED via normalhub-sync15:36:22; actualhub/local SHA256ac396a09 exactmatch verified15:37:15. Board also published15:36:22. All4 evidence packets and peer transport confirmed. Local+hub INBOX endspeer1510, consumed. Actualhub Runtime15:20:36, Agent15:32:42, Proof15:32:50, App15:32:37, Farm15:33:03 audited; no Viewing dependency became ready. P1/P3 actualFAIL and holdrelease consumed; no GO/full/currentness inflation.
