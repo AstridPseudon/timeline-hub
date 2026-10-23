@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import copy
+import inspect
 import json
+import sys
 
 import pytest
 
@@ -20,18 +22,25 @@ def restructure_inverse_runtime(restructure_runtime, monkeypatch):  # noqa: F811
     from astrid.sdk.remote import RemoteTimelines
 
     env = restructure_runtime
+    env.reader_calls = []
 
     # Bind the public inspection/history calls at the same boundary as the
     # generated client.  The inherited fixture's two-argument inspection
     # stand-in predates the revision-pinned route and cannot exercise it.
     def list_timelines(project_id, *, cursor=None, limit=50):
+        env.reader_calls.append({"method": "list_timelines", "project_id": project_id,
+                                 "cursor": cursor, "limit": limit})
         page = env.service.list_timelines(project_id, cursor=cursor, limit=limit)
         return page["items"], page.get("next_cursor")
 
     def inspect_timeline(project_id, timeline_id, options=None):
+        env.reader_calls.append({"method": "inspect_timeline", "project_id": project_id,
+                                 "timeline_id": timeline_id, "options": copy.deepcopy(options)})
         return env.service.inspect_timeline(project_id, timeline_id, options)
 
     def list_timeline_commits(project_id, timeline_id, *, cursor=None, limit=50):
+        env.reader_calls.append({"method": "list_timeline_commits", "project_id": project_id,
+                                 "timeline_id": timeline_id, "cursor": cursor, "limit": limit})
         return env.service.list_timeline_commits(
             project_id, timeline_id, cursor=cursor, limit=limit, authorize=lambda: None
         )
@@ -92,12 +101,119 @@ def restructure_inverse_runtime(restructure_runtime, monkeypatch):  # noqa: F811
     return env
 
 
+def test_fixture_restructure_public_call_hydrates_exact_current_closure(
+    restructure_inverse_runtime, tmp_path, monkeypatch
+):
+    from astrid.sdk.timeline import publish as publish_module
+
+    env = restructure_inverse_runtime
+    reads = []
+    public_open = env.client.timelines.open_bundle
+
+    def open_bundle(project, ref, *, revision_id=None, publication_id=None):
+        result = public_open(project, ref, revision_id=revision_id, publication_id=publication_id)
+        reads.append({"args": {"project": project, "ref": ref, "revision_id": revision_id,
+                               "publication_id": publication_id}, "result": result.as_dict()})
+        return result
+
+    monkeypatch.setattr(env.client.timelines, "open_bundle", open_bundle)
+    source = timeline.open(env.project, "t", client=env.client, outbox_path=tmp_path / "name.json")
+    source.bundle["shots"][source._shot_ids()[0]]["payload"]["name"] = "02 TWO"
+    named = source.commit("Name source chapter", idempotency_key="inverse-name")
+    checkout = Checkout.open(env.project, "t", client=env.client)
+    detached = copy.deepcopy(checkout.bundle)
+    history = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
+    capture = {}
+    lines, start = inspect.getsourcelines(publish_module._PublishMixin._commit_restructure)
+    guard_line = start + next(i for i, line in enumerate(lines)
+                             if 'if (local["base_parent"] != base["base_parent"]' in line)
+    passed_line = start + next(i for i, line in enumerate(lines)
+                              if 'candidate = copy.deepcopy(base)' in line)
+
+    class ClosureVerified(Exception):
+        """Stop this read-only smoke after the real closure guard has passed."""
+
+    def observe(frame, event, arg):
+        if (frame.f_code is publish_module._PublishMixin._commit_restructure.__code__
+                and event == "line" and frame.f_lineno == guard_line):
+            capture.update(local=copy.deepcopy(frame.f_locals["local"]),
+                           base=copy.deepcopy(frame.f_locals["base"]),
+                           state=copy.deepcopy(frame.f_locals["state"]))
+        if (frame.f_code is publish_module._PublishMixin._commit_restructure.__code__
+                and event == "line" and frame.f_lineno == passed_line):
+            raise ClosureVerified
+        return observe
+
+    previous_trace = sys.gettrace()
+    before_store = tuple(env.service.store.conn.iterdump())
+    before_calls = copy.deepcopy(env.calls)
+    try:
+        sys.settrace(observe)
+        with pytest.raises(ClosureVerified):
+            checkout.publish("Restructure", restructure=True, client=env.client,
+                             idempotency_key="inverse-cut")
+    finally:
+        sys.settrace(previous_trace)
+        report = {"detached": detached, "detached_document": checkout.document(),
+                  "guard": capture, "public_reads": reads, "history_before": history,
+                  "named_reply": named, "reader_calls": env.reader_calls}
+        (tmp_path / "closure-preflight.json").write_text(json.dumps(report, sort_keys=True))
+        print(f"Full closure preflight: {tmp_path / 'closure-preflight.json'}")
+    assert capture["local"] == capture["base"]
+    assert capture["local"]["source_mapping"]["_runtime_document"] == named["data"]["canonical_document"]
+    assert capture["local"]["base_parent"]["publication_id"] == named["receipt"]["receipt_id"]
+    assert env.calls == before_calls
+    assert env.client.timelines.history(env.project, "t", limit=200).data == history
+    assert env.document() == named["data"]["canonical_document"]
+    assert tuple(env.service.store.conn.iterdump()) == before_store
+
+
+@pytest.mark.parametrize("damage", ["digest", "pair", "historical", "scope"])
+def test_fixture_restructure_caller_refuses_mismatched_original_closure_without_writes(
+    restructure_inverse_runtime, damage, tmp_path
+):
+    env = restructure_inverse_runtime
+    checkout = Checkout.open(env.project, "t", client=env.client)
+    if damage == "historical":
+        current = timeline.open(env.project, "t", client=env.client,
+                                outbox_path=tmp_path / "advance.json")
+        current.bundle["shots"][current._shot_ids()[0]]["payload"]["name"] = "02 TWO"
+        current.commit("Advance head", idempotency_key="advance-head")
+    history = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
+    historical = next(item for item in history["items"]
+                      if item["revision_id"] != history["head"]["revision_id"])
+    if damage == "digest":
+        checkout.bundle["base_parent"]["content_digest"] = "sha256:" + "0" * 64
+    elif damage == "pair":
+        checkout.bundle["base_parent"]["publication_id"] = historical["publication_id"]
+    elif damage == "scope":
+        checkout.bundle["timeline_id"] = "missing-timeline"
+    document = copy.deepcopy(env.document())
+    stored = tuple(env.service.store.conn.iterdump())
+    calls = copy.deepcopy(env.calls)
+    with pytest.raises(TimelineEditError) as refused:
+        checkout.publish("Restructure", restructure=True, client=env.client,
+                         idempotency_key="bad-closure-" + damage)
+    if damage == "digest":
+        assert str(refused.value) == "restructure requires its exact current closure; reopen the timeline"
+    elif damage in {"pair", "historical"}:
+        assert "original revision/publication pair changed" in str(refused.value)
+    else:
+        assert "could not open timeline 'missing-timeline'" in str(refused.value)
+    assert env.calls == calls
+    assert env.client.timelines.history(env.project, "t", limit=200).data == history
+    assert env.document() == document
+    assert tuple(env.service.store.conn.iterdump()) == stored
+
+
 def test_fixture_reader_authorizes_exact_pair_and_refuses_wrong_scope_without_writes(
-    restructure_inverse_runtime, tmp_path
+    restructure_inverse_runtime, tmp_path, monkeypatch
 ):  # noqa: F811
     env = restructure_inverse_runtime
     head = env.service.get_project_timeline(env.project, "t")
     before_history = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
+    before_document = copy.deepcopy(env.document())
+    before_store = tuple(env.service.store.conn.iterdump())
     historical = next(
         item
         for item in before_history["items"]
@@ -150,8 +266,25 @@ def test_fixture_reader_authorizes_exact_pair_and_refuses_wrong_scope_without_wr
     assert not wrong_scope.ok
     assert wrong_scope.error.code == "not_found"
 
+    read_parent = env.generated.get_project_parent_composition_revision
+
+    def wrong_digest(project, timeline_id, revision):
+        parent = copy.deepcopy(read_parent(project, timeline_id, revision))
+        parent["content_digest"] = "sha256:" + "0" * 64
+        return parent
+
+    with monkeypatch.context() as damaged:
+        damaged.setattr(env.generated, "get_project_parent_composition_revision", wrong_digest)
+        refused = env.client.timelines.open_bundle(
+            env.project, "t", revision_id=base["revision_id"], publication_id=base["publication_id"]
+        )
+        assert not refused.ok
+        assert refused.error.code == "protocol_error"
+
     assert env.client.timelines.history(env.project, "t", limit=200).data == before_history
     assert env.service.get_project_timeline(env.project, "t")["head_revision_id"] == head["head_revision_id"]
+    assert env.document() == before_document
+    assert tuple(env.service.store.conn.iterdump()) == before_store
 
 
 def test_restructure_whole_inverse_redo_and_intervening_overlap_refusal(

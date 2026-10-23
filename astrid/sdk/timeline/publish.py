@@ -226,6 +226,16 @@ class _PublishMixin:
                 raise TimelineEditError("flush pending commands before restructuring")
             base = session._bundle(state)
             local = self.document()
+            # Detached checkouts may have been opened by revision alone. Bind
+            # that original revision through the verified public pair reader;
+            # retain local pins and provenance so mismatches still refuse.
+            original = _store.fetch_bundle(
+                project, timeline, revision_id=local["base_parent"]["revision_id"],
+                publication_id=local["base_parent"].get("publication_id", state["base"]["publication_id"]),
+                client=client,
+            )
+            local["base_parent"] = {**original["base_parent"], **local["base_parent"]}
+            local["source_mapping"] = {**original["source_mapping"], **local["source_mapping"]}
             if (local["base_parent"] != base["base_parent"]
                     or set(local["shots"]) != set(base["shots"])):
                 raise TimelineEditError("restructure requires its exact current closure; reopen the timeline")
