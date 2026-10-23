@@ -206,10 +206,18 @@ class DetachedPort:
     def preview(self, prepared):
         request = self.context["request"]
         assert request["dry_run"]
-        return {"data": {"status": "preview", "evaluated_head": self.head(),
-                         "base_revision_id": request["base_revision_id"],
-                         "base_publication_id": request["base_publication_id"],
-                         **self._candidate(prepared)}, "receipt": None}
+        data = {"status": "preview", "evaluated_head": self.head(),
+                "base_revision_id": request["base_revision_id"],
+                "base_publication_id": request["base_publication_id"],
+                **self._candidate(prepared)}
+        records = prepared["records"]
+        for key in ("steps", "merge_mode", "label"):
+            if key in records:
+                data[key] = detached(records[key])
+        base = {"revision_id": request["base_revision_id"],
+                "publication_id": request["base_publication_id"]}
+        data["would_status"] = "accepted" if self.head() == base else "merged"
+        return {"data": data, "receipt": None}
 
     def accept(self, prepared):
         realm, request = self.realm, self.context["request"]
