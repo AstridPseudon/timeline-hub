@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-23T10:20:05Z | dispatcher heartbeat 10s | live 4 (sol 2, luna 2, other 0) | busy30 24 | status age 0m -->
+<!-- app2 | 2026-10-23T10:22:20Z | dispatcher heartbeat 7s | live 3 (sol 2, luna 1, other 0) | busy30 23 | status age 2m -->
 # app2 board, 2026-10-23T10:19Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -33,3 +33,4 @@ Checkpoint10:10Z: JSONactual23b ownerreceipt consumed; explicitA3PASS sent exact
 Checkpoint10:12Z: exact1117 six-file source/spec/helper packet independently1004PASS89/RootAppNode/list2/list1 -> ONEremoteApp1011, gitlogONLYown1117. Apppeer1012 requests immediateconcreteserialmerge; finalindependentOPS1011LIVE. Popupfixture399e authored/list2 -> review1011; elementfirstreturn1008/autoplace1009/popupcaller1006LIVE. No activeHTTPbody, P1NO-GO; P4DONE.
 
 Checkpoint10:19Z: Appreceipt MERGED0cdc76782833d594776452e07706acb406c51553/tree654a66946da8a4da65248576a9eb5e32a9e8d382 EXACT1117 and ancestorverified. IndependentOPS1015PASS currentP1row234e7430dd785285ed4faa8ee5ff287555310aedda53b70c0ee5b4e33229418c/P3row67af3f758e24d5f4be996e3af1b3d0f6a168312c28c9d405b2cfabc88ff3aef2/helperGit1c9ff+SHA25602a42e/outsidea692019e. OriginalP1two and originalGate5 submittedONCEeach via worker1015; consumeactualresults, no duplicate. RuntimeR5 own739 mergedc6c69 afterA3, original20 qualification1011 LIVE perownerpeer.
+Active original services: P1 ap2-P1-P3-ops-identity-return-1015-ap2-P1-chain-h6-1023101921-28486; P3 ap2-P1-P3-ops-identity-return-1015-ap2-P3-gate5-h6-0348-1023101921-5212. Submitted10:19:21Z ONEeach, neverduplicate. Appactual0cdc/tree654a matchesexecuting1117. Agentexecutionb8/Runtimea5d previouslyintegratedqualifiedancestors; literalHEADERcurrent-head alignment mustbechecked beforeP1GO ifactualcomponentheads changed (no newclienttuple/adoption).
