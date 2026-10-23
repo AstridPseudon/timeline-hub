@@ -70,7 +70,7 @@ test('P1 diagnostics cannot mask the original assertion when the logger throws',
 test('P1 priority diagnostics preserve causal state ahead of oversized readonly traffic', () => {
   const readonlyTraffic = Array.from({ length: 40 }, () => ({ reply: 'x'.repeat(20_000) }));
   const output = formatPriorityDiagnostic('priority', {
-    basis: [{ baseRevisionId: 'basis-revision', basePublicationId: 'basis-publication', merge: 'fields' }],
+    basis: [{ baseRevisionId: 'basis-revision', basePublicationId: 'basis-publication', merge: 'fields', reads: readonlyTraffic }],
     displayedHead: { revisionId: 'displayed-revision', publicationId: 'displayed-publication' },
     outbox: { summary: { hasPending: true, hasConflict: true } },
     ui: { recoveryMessage: 'changes retained' },
@@ -81,6 +81,10 @@ test('P1 priority diagnostics preserve causal state ahead of oversized readonly 
   assert.ok(new TextEncoder().encode(output).length <= DIAGNOSTIC_MAX_BYTES);
   assert.doesNotThrow(() => JSON.parse(body));
   assert.equal(body.includes('basis-revision'), true);
+  assert.equal(body.includes('basis-publication'), true);
+  assert.equal(body.includes('"count":40'), true);
+  assert.equal(body.includes('"summarized":true'), true);
+  assert.equal(body.includes('"truncated":false'), true);
   assert.equal(body.includes('displayed-revision'), true);
   assert.equal(body.includes(readonlyTraffic[0].reply), false);
 });

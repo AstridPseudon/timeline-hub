@@ -679,6 +679,14 @@ async function captureSecondCaseFailureDiagnostics({
       merge: (post.body as any).merge ?? null,
       reads: redactDiagnosticValue((post.body as any).reads),
     }));
+    const priorityBasis = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
+      index,
+      key: post.key,
+      baseRevisionId: (post.body as any).base_revision_id ?? null,
+      basePublicationId: (post.body as any).base_publication_id ?? null,
+      merge: (post.body as any).merge ?? null,
+      reads: (post.body as any).reads,
+    }));
     const priorityDisplayedHead = {
       providerProjectId,
       providerTimelineId,
@@ -714,7 +722,7 @@ async function captureSecondCaseFailureDiagnostics({
         expectedPostCount: 2,
         observedPostCount: traffic.posts.length,
       },
-      basis,
+      basis: priorityBasis,
       displayedHead: priorityDisplayedHead,
       outbox: { readFailed: outboxReadFailed, summary: outboxRecords === null ? null : summarizeOutboxes(outboxRecords) },
       ui,
