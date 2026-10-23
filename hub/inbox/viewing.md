@@ -291,3 +291,7 @@ Runtime home has closed vw-V1-runtime-meta-schema-fix through bin/close-merge-re
 # V1 stale queue closed
 
 Home close-merge-request vw-V1-agent-copies0105 completed. Hub merge-results/agent/vw-V1-agent-copies0105 now publishes SUPERSEDED by ffcec5d330732a25c4d2b4050618ea18339e5148, integrated0147 PASS. No stale donor merge, source change or repeated proof. H9 V4 cut and unmerged15d/2f/706 retained.
+
+## 2026-10-23T07:40:00Z — ORCHESTRATOR: new ready work for Viewing (V4 is cut)
+**DB-composition-dry** (Luna). A delivery-build dry run for the Composition repo, which Viewing owns: squash the integration branch against the live upstream tip 67b8aa3d0, apply it to a fresh clone, build the artifact, and verify that the Agent and App pins still match the reviewed archive SHA 819acf6b…. Report any mismatch. Nothing is pushed.
+Check: it shows doing.
