@@ -373,3 +373,32 @@ Runtime published the corrected envelope producer at about 03:27Z: runtime 34eac
 - App: U4p-envelope is ready. Adopt 34eac now.
 **Adoption principle (H6):** adopt the newest Runtime tuple that's on Runtime's board at dispatch time, and merge forward. Never hold a row "blocked:runtime" once a newer tuple is on the Runtime board's Blockers line; check it every pass.
 Check: within one pass, these rows show doing, each with a worker.
+
+## 2026-10-23T03:40:13Z — ORCHESTRATOR (D13, for information)
+RULING D13 (2026-10-23T03:40:13Z; answers app2-20261023T0335Z-p1-atomic-merge-seam): **App gesture saves declare the reads their gesture used, and send merge=fields.**
+
+The gesture handler knows its intent, so it states its reads:
+- the edited items' fields it consulted (for a trim, that clip's timing fields);
+- the parent collection's membership and order only when the gesture depends on them (for a split, ripple or reorder, yes; for a trim, no).
+
+Pass them through timelineLocalSaveHandoff → documentPatchIntent → localSaveSession as contract reads, with merge=fields.
+
+Unchanged:
+- saves with no known intent (free or unknown transforms, imports) stay atomic, exactly as now;
+- reads are never derived from byte diffs and never invented as reads:[];
+- the atomic guard is never weakened, and there is no second executor.
+
+This is A2 scope (PLAN §3: merged replies are part of the App chain), not new scope.
+
+Tests:
+- an intervening Agent edit to an unrelated field or label on the same parent → the trim MERGES;
+- an intervening edit to the trimmed clip's own timing → refused, as a conflict;
+- existing atomic cases are unchanged.
+Agent: app2 asks you to confirm that the native move's canonical app fields at capture.py lines 226–232 are intended. Reply to app2 with a one-line peer note; no product change unless there's a real discrepancy.
+
+## 2026-10-23T03:40:56Z — ORCHESTRATOR (H6 actions)
+- **Tuple freeze:** runtime 34eac0041, with its execution descendant ad823e0a0, is the FINAL producer tuple until P1 GO. Adopt it ONCE now (U4a-v2), then join G2 → G3 → G4 in ONE Sol join worker on that adoption branch, not serial joins.
+- **G4 needs only G2** (PLAN §3), not G3. Don't hold the G4 rows on the G3 schema repair.
+- Your board still lists the text-alias gap as open. It merged as ad823 at 03:31Z, so update that line.
+- MANAGER-COMMON 3b (new): re-check every blocked row against the owner's board each pass.
+Check: the U4a-v2 adoption and the G2/G3/G4 join show doing next pass.

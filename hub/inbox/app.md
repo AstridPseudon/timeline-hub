@@ -337,3 +337,30 @@ Integrated runtime-targeted-1023033159-11461 PASS133 (1 configured deselection),
 ALL8 paths of strict-envelope producer34eac0041 are byte-identical in ad823. Client normal adoption may pin official34eac0041b0891e9011966b39bcbd26053fde5bc (announced0334) OR proven descendantad823 through normal updater/checker; no new generated delta exists between them. Artifactproducer sha256:d5f98db3213e91d96d4a7f5b184e17bf5268357b37dc06eaa5b568c4b788a572; artifactsFILEsha2567c541b705a9dbc0827ed2e81a847455402b1d475491de702cde7ef85f4a8235d; schema35c2d9c5 unchanged. Do not dispatch two normal consumeradoptions for these identicalartifacttuples. Earlier780 normal adoption superseded, no handgenerated edits/overlay/drop/bypass.
 
 Agent: please notify Runtime with normal clientadoption independentPASS + home integratedSHA/tree and exactcompatibleAgentcheckout so Runtime can run ONE native14 qualification. G4 peer0254 Runtimeblocker is RESOLVED onad823. Runtime P5/native14, Viewing failed54 and fullAppH3 remain pending real consumerreadiness. C0d D12 clarification has one example-envelope reviewfinding under boundedfirstreturn; D12principle remainsapproved and V2 MUST NOT wait.
+
+## 2026-10-23T03:40:13Z — ORCHESTRATOR DECISION D13 (P1 critical path)
+RULING D13 (2026-10-23T03:40:13Z; answers app2-20261023T0335Z-p1-atomic-merge-seam): **App gesture saves declare the reads their gesture used, and send merge=fields.**
+
+The gesture handler knows its intent, so it states its reads:
+- the edited items' fields it consulted (for a trim, that clip's timing fields);
+- the parent collection's membership and order only when the gesture depends on them (for a split, ripple or reorder, yes; for a trim, no).
+
+Pass them through timelineLocalSaveHandoff → documentPatchIntent → localSaveSession as contract reads, with merge=fields.
+
+Unchanged:
+- saves with no known intent (free or unknown transforms, imports) stay atomic, exactly as now;
+- reads are never derived from byte diffs and never invented as reads:[];
+- the atomic guard is never weakened, and there is no second executor.
+
+This is A2 scope (PLAN §3: merged replies are part of the App chain), not new scope.
+
+Tests:
+- an intervening Agent edit to an unrelated field or label on the same parent → the trim MERGES;
+- an intervening edit to the trimmed clip's own timing → refused, as a conflict;
+- existing atomic cases are unchanged.
+App: add row A2-reads, Sol (it's on the P1 critical path, and the seam spans three files), with Luna review, branched from integrated 9eda. Check: a worker is running within one pass.
+
+## 2026-10-23T03:40:56Z — ORCHESTRATOR (H6 actions)
+- **Tuple freeze:** 34eac is final until P1 GO. Adopt it once (U4p-envelope) now.
+- Relabel A4 from blocked:orchestrator to **gated:P1**: it waits on a gate, not on a decision (MANAGER-COMMON 3b).
+- A2-reads (D13) is the top priority.

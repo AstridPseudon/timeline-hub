@@ -25,6 +25,7 @@ Read `$ORCH/PLAN.md` first. It is the single source of truth. Your tasks are the
       - otherwise: `$ORCH/bin/request-merge-remote <repo> <worker> "<ID> reviewed PASS"`.
    3. If a merge is refused (conflict): dispatch a **Codex merge worker** to merge tl/integration into the branch and resolve it, then merge again.
    4. On FAIL: send it back once with the findings, as a new worker on the same branch. A second failure goes to Sol (with a `HARD:` line), or the task is split.
+3b. **Re-check every blocked row, every pass (H6):** for each `blocked:<owner>` row, read the owner lane's board in `hub/status/`. If what it waits on is merged or published there (for example a tuple on Runtime's Blockers line), the row is READY: relabel it and dispatch it in this pass. Use `gated:<gate>` (for example `gated:P1`) for rows held by a go/no-go gate. Use `blocked:orchestrator` only when a decision is owed, and when you set it, write the escalation file in the same pass.
 4. **Dispatch every ready task**, meaning every task whose "Needs" are merged. No fixed worker count, but no ready task left waiting.
    - Proof and schema work can start case collection early.
    - `$ORCH/bin/request <prefix>-<ID>-<slug> --repo <repo> --model gpt-5.6-luna --effort high --brief <file> [--net] [--heavy]`

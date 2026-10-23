@@ -1,5 +1,5 @@
-<!-- main | 2026-10-23T03:40:01Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 1m -->
-# runtime board, 2026-10-23T03:38:39Z
+<!-- main | 2026-10-23T03:41:31Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 1m -->
+# runtime board, 2026-10-23T03:40:22Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0 | commit-v2 contract | Sol author / Luna review | — | merged | rt-C0-contract; rt-C0-review | PASS: 34 targeted tests + JSON/digests/copy equality on tree identical to integrated 0d4c71a3c; C0 APPROVED | 0d4c71a3c |
@@ -24,5 +24,6 @@ Blockers: Agent/App normal adoption — OFFICIAL34eac0041b0891e9011966b39bcbd260
 Blockers: Agent G4 — peer0254 RESOLVED. Official compatibleexecutionad823e0a0f5be4a7acf1d3006df6f794709da63d/tree33904550800ee3e2fa34fe0b13c26754b46c7fdc, independent133+all21originalnative and integrated133PASS runtime-targeted-1023033159-11461; finalproof0333PASS. ALL8client34eacpaths unchanged; normaladoption may use34eac or exactdescendantad823 once, no duplicatepins. Peer0336 published. P5native14 remains gated normalAgenthomeadoption.
 Blockers: Agent P5 prerequisite — Agent R1 inherited-read + R3/meta integrated/proven per peer0241; current R2 integratedcedc07280 per peer0304. ONE normal corrected producer adoption/review/home merge required before Runtime native14 on exact compatiblecheckout. Exact strict native testblob8994 unchanged; crash24 already integratedPASS. Notify Runtime after home merge. P5 not DONE.
 Blockers: farm — H6 at03:40Z full Runtime suite on current reviewed successor of780, paired with normally adopted Agent/App heads. Runtime will not duplicate full/heavy/tour/gate5 runs. Targeted225/crash24 alreadyPASS; native14 bounded and Runtime-owned after consumer readiness.
+Blockers: orchestrator — H6 03:39 instruction acknowledged: C0d is actually active in rt-C0d-final-review-0339 (started03:38:26 after firstreturnPASS45); no ready task idle. Future corrective producer tuples will batch every known open consumer finding and require one Luna consumer dry-adoption/check PASS before publication. Official34eac was published03:34 before this instruction; Agent normal adoption is ordered. Textrepairad823 retains exact34eac artifacts, so no extra consumer repin is needed; C0d is prose-only.
 Blockers: orchestrator/consumers — R5 remains gated until BOARD-HEADER explicitly says A3 and G4 are merged. H3 NO-GO remains; A4/G5 remain held. C0d firstreview0330FAIL only example invalid envelope; firstreturn0336dispatched. D12 already authorized and V2 not blocked.
 Next ready: C0d independent rereview0339→merge→proof. Official client34eac/compatibleexecutionad823 published0334/0336: Agent/App normal adoption READY now. Normal Agent adoption then bounded native14. R5 gated actual A3/G4 header. No ready Runtime task waiting.
