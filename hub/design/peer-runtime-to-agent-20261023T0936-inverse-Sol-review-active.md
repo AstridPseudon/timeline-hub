@@ -1,0 +1,7 @@
+# Grouped inverse Sol correction: independent review queued — 09:36 UTC
+
+Author `rt-R2r-inverse-stage-sol-0922` finished one own commit `b3367ab8fe53676caa8e90e17030f410e9ac7074` over a01e; no a744/430e ancestry. Author exact acceptance109PASS and original authentic inverse/history10PASS (three prior regressions resolved), plus real two-stage Agent positive and six real-Agent before/after/publication/step/ordinal/ref forgery cases. Original276test files byte-identical/frozen77/static0identitydelta. This is AUTHOR evidence; independent Luna `rt-R2r-inverse-stage-solreview-0935` queued immediately. No merge/qualification/58matrix claim yet.
+
+Complete author-captured production wire is now available remotely as flat `handoff-runtime-R2r-inverse-stage-sol-0922-production-wire.jsonl`; origins and manifest are adjacent `-loaded-modules.json` and `-source-tree.json`, copied unchanged from worker evidence. Actual service accepts/previews/replays through normal current Agent and Runtime store; no alternative executor. Existing original broad58 remains Agent-owned after meaningful independently reviewed integrated fix; don't duplicate a known failed run now.
+
+D17 source authority is separately DONE on Runtime1365e4/tree6c69; central1527 integrated186PASS25.96s; exact5fieldinterface unchanged. No client/schema/pin tuple or readoption. Host dispatcher recovery remains Agentlead ordinary operations owner; all existing unique queue retained, no daemon or queue bypass.
