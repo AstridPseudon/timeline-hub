@@ -1,0 +1,359 @@
+{
+  "case": {
+    "title": "P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message",
+    "expectedPostCount": 2,
+    "observedPostCount": 1
+  },
+  "tuple": {
+    "projectId": "87b24d09e49e46e7bd26ccd81694dc5f",
+    "timelineId": "403a9818-f706-421a-b7e5-0eb8425c8da1",
+    "sourceId": "UNKNOWN",
+    "rightId": "p1-chain-source-1792786245853"
+  },
+  "available": {
+    "outbox": {
+      "summary": {
+        "ownerCount": 1,
+        "intentLengths": [
+          0
+        ],
+        "pendingIntentLengths": [
+          0
+        ],
+        "outcomeKinds": [],
+        "hasIdleOwner": true,
+        "hasPending": false,
+        "hasIntents": false,
+        "hasConflict": false
+      },
+      "owners": [
+        {
+          "acceptedHead": {
+            "revisionId": "authoring-parent-revision-7fb9c6800da6dcfc0c48f57990c29b65e94eb77706bfef376c0ac1697ed8cb93",
+            "publicationId": "txn-f1d4434840ab48a08b9564158d872e02"
+          },
+          "pending": null,
+          "ownerId": "f56013a8-fd77-4b18-8207-769f562d5cd2",
+          "generation": 1,
+          "intentCount": 0,
+          "rejected": false
+        }
+      ],
+      "readFailed": false
+    },
+    "sourceWindow": {
+      "before": {
+        "sourceIn": {
+          "value": "0",
+          "numericValue": 0,
+          "visible": true
+        },
+        "selectedClip": {
+          "identity": {
+            "tagName": "DIV",
+            "id": null,
+            "clipId": "p1-chain-source-1792786245853",
+            "testId": null,
+            "ariaSelected": null,
+            "className": "clip-action group relative flex h-full w-full select-none overflow-hidden rounded-md border bg-card text-left outline-none border-sky-400 text-foreground"
+          },
+          "status": "UNKNOWN",
+          "visible": true,
+          "text": "p1-video.webm"
+        },
+        "rightId": "p1-chain-source-1792786245853"
+      },
+      "after": {
+        "sourceIn": {
+          "value": "3",
+          "numericValue": 3,
+          "visible": true
+        },
+        "selectedClip": {
+          "identity": {
+            "tagName": "DIV",
+            "id": null,
+            "clipId": "p1-chain-source-1792786245853",
+            "testId": null,
+            "ariaSelected": null,
+            "className": "clip-action group relative flex h-full w-full select-none overflow-hidden rounded-md border bg-card text-left outline-none border-sky-400 text-foreground"
+          },
+          "status": "UNKNOWN",
+          "visible": true,
+          "text": "p1-video.webm"
+        },
+        "rightId": "p1-chain-source-1792786245853"
+      }
+    },
+    "failureContext": "UNKNOWN",
+    "wireHeads": [
+      {
+        "head": {
+          "revisionId": "authoring-parent-revision-7fb9c6800da6dcfc0c48f57990c29b65e94eb77706bfef376c0ac1697ed8cb93",
+          "publicationId": "txn-f1d4434840ab48a08b9564158d872e02"
+        },
+        "keyProjection": {
+          "present": true,
+          "bytes": 36
+        },
+        "method": "POST",
+        "route": "/api/runtime/v1/projects/:project/timelines/:timeline/commit",
+        "status": 200,
+        "replyReadFailed": false
+      }
+    ],
+    "requestProjections": [
+      {
+        "keyProjection": {
+          "present": true,
+          "bytes": 36,
+          "sameAsPrevious": null
+        },
+        "bodyProjection": {
+          "present": true,
+          "bytes": 3669,
+          "sameAsPrevious": null
+        },
+        "index": 0,
+        "method": "POST",
+        "route": "/api/runtime/v1/projects/:project/timelines/:timeline/commit",
+        "status": 200
+      }
+    ],
+    "recovery": {
+      "connectionState": "connected",
+      "runtimePanelVisible": false,
+      "recoveryVisible": false,
+      "recoveryMessage": "UNKNOWN",
+      "timelineErrorVisible": false,
+      "timelineErrorMessage": "UNKNOWN",
+      "alertCount": 1
+    },
+    "errors": {
+      "page": [],
+      "console": [
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        }
+      ],
+      "requestFailures": []
+    }
+  },
+  "unknowns": {
+    "mountedDataRef": "UNKNOWN",
+    "callbackPatch": "UNKNOWN",
+    "captureResolution": "UNKNOWN"
+  },
+  "losses": {
+    "mountedObservations": "UNKNOWN",
+    "callbackPatch": "UNKNOWN",
+    "cappedConsole": true,
+    "captureResolution": "UNKNOWN"
+  },
+  "captureData": "UNKNOWN",
+  "title": "P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message",
+  "phase": "afterEach_failure_continuation",
+  "status": "timedOut",
+  "mountedObservations": "UNKNOWN",
+  "schemaVersion": 1,
+  "expectedStatus": "passed",
+  "capturedAt": "2026-10-23T20:15:34.390Z",
+  "durationMs": 300001
+}
