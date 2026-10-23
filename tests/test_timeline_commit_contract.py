@@ -6,7 +6,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import get_type_hints
+from typing import Any, get_type_hints
 
 import pytest
 import yaml
@@ -193,7 +193,7 @@ def test_inverse_step_selection_and_v2_request_carriers_are_closed():
         "op": "set",
         "value": "new title",
     }
-    value = request()
+    value: dict[str, Any] = request()
     value.update(
         label="Rename",
         merge="fields",
@@ -285,7 +285,9 @@ def test_recorders_retain_execution_ordinal_and_all_leaf_families():
         dependencies=[],
         derived_writes=[],
     )
-    recorder = dict(schema_version=1, commands=[record], undo_of=[], restored_from=None)
+    recorder: dict[str, Any] = dict(
+        schema_version=1, commands=[record], undo_of=[], restored_from=None
+    )
     validator("Recorder").validate(recorder)
     step = {
         "id": "step-1",
