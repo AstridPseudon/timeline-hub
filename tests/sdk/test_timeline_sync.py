@@ -161,7 +161,7 @@ def connected(tmp_path, monkeypatch):
     generated = Generated(path)
     client = Client(generated)
     for module, name in ((store, "publish_bundle"),):
-        monkeypatch.setattr(module, name, lambda *a, **kw: pytest.fail("legacy writer called"))
+        monkeypatch.setattr(module, name, lambda *a, **kw: pytest.fail("legacy writer called"), raising=False)
     return client, generated, path
 
 

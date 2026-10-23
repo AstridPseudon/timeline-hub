@@ -8,7 +8,7 @@ from typing import Any
 
 # Verbs whose --project is optional: omitted, it is the workspace runtime's current project.
 CURRENT_PROJECT_VERBS = frozenset(
-    {"checkout", "apply", "assets", "check", "commands-file", "discard", "find", "lines", "move", "track-label", "publish", "redo", "status", "undo"}
+    {"checkout", "apply", "assets", "check", "commit", "discard", "find", "lines", "redo", "status", "undo"}
 )
 
 
@@ -36,13 +36,8 @@ class TimelinesParser(argparse.ArgumentParser):
     """``show TL --project P c41.mink``: a positional after the flags fills the verb's open positional
     (address, word, query, sheet file, asset key) instead of failing with "unrecognized arguments"."""
 
-    native_edit_parsers: dict[str, TimelinesParser]
-
     def parse_args(self, args: Any = None, namespace: Any = None) -> argparse.Namespace:
         args = list(sys.argv[1:] if args is None else args)
-        native = getattr(self, "native_edit_parsers", {})
-        if len(args) >= 2 and args[0] == "edit" and args[1] in native:
-            return native[args[1]].parse_args(args[2:], namespace)
         parsed, extras = self.parse_known_args(args, namespace)
         loose = [e for e in extras if not e.startswith("-")]
         if extras and len(loose) == len(extras):
@@ -58,7 +53,9 @@ class TimelinesParser(argparse.ArgumentParser):
                 parsed.more_addresses, loose = list(loose), []  # show TL a b c: one record each
         if loose or len(extras) != len([e for e in extras if not e.startswith("-")]):
             self.error(f"unrecognized arguments: {' '.join(extras)}")
-        if getattr(parsed, "command", None) in CURRENT_PROJECT_VERBS and not getattr(parsed, "project", None) and not getattr(parsed, "file", None):
+        if (getattr(parsed, "command", None) in CURRENT_PROJECT_VERBS
+                and not getattr(parsed, "project", None)
+                and (getattr(parsed, "command", None) == "commit" or not getattr(parsed, "file", None))):
             project = resolve_current_project(parsed)  # an explicit --project always wins
             if project is None:
                 self.error(

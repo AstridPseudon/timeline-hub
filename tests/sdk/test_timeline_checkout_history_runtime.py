@@ -2,20 +2,127 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import sys
+import tarfile
+from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 
-from tests.helpers.runtime import use_runtime
 from tests.editing_conformance.test_commit_runtime_m1 import (
-    assert_readback, cli, film, open_client, parent_of, renderer_off,
+    assert_readback,
+    cli,
+    open_client,
+    parent_of,
+    renderer_off,
 )
+from tests.helpers.runtime import use_runtime
 
 pytestmark = pytest.mark.integration
-# Keep this bounded real-HTTP qualification on the exact catalog-visibility
-# candidate; do not switch either side of the public handshake to a fake route.
-CATALOG_RUNTIME = "3b900c377e7126e14eeb92dc2ce73114cbda5a0e"
+# Keep this bounded real-HTTP qualification on the reviewed current Runtime
+# reader; do not switch either side of the public handshake to a fake route.
+CATALOG_RUNTIME = "d9e2a71e87c827290a3ff58a94f6fb8b4bc11e0b"
 RUNTIME = use_runtime(CATALOG_RUNTIME)
-import runtime_protocol  # noqa: F401  # lock the daemon fixture to CATALOG_RUNTIME
+import runtime_protocol  # noqa: E402, F401, I001  # lock the daemon fixture to CATALOG_RUNTIME
+
+
+AUTHENTIC_ARCHIVE = Path(
+    "/home/user/timeline-hub/hub/design/"
+    "g5-sdk-authentic-capture-20261023-b6069d1d.tar.gz"
+)
+AUTHENTIC_ARCHIVE_SHA256 = "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3"
+AUTHENTIC_BACKUP_KEY = bytes.fromhex(
+    "00112233445566778899aabbccddeeff"
+    "ffeeddccbbaa99887766554433221100"
+)
+AUTHENTIC_PARENT_REVISION = "a3e671256f1c42b8837d3e118c97b21b"
+AUTHENTIC_PARENT_PUBLICATION = "txn-11c90075be6c4c8bb9e2627366f0fe4f"
+AUTHENTIC_PARENT_DIGEST = "sha256:b6069d1ddccc0279e871b142773b63b73b107ebf9d0adc11ab73832b69097afb"
+
+
+@dataclass(frozen=True)
+class AuthenticFilmFixture:
+    duplicate_root: Path
+    project_id: str
+    timeline_id: str
+    parent_revision_id: str
+
+
+def _extract_authentic_archive(destination: Path) -> Path:
+    destination.mkdir()
+    with tarfile.open(AUTHENTIC_ARCHIVE, "r:gz") as archive:
+        members = archive.getmembers()
+        names = {member.name.rstrip("/") for member in members}
+        expected = {"backup/manifest.json", "backup/cas-manifest.json", "backup/realm.sqlite3"}
+        if not expected.issubset(names) or any(
+            member.name != member.name.lstrip("/")
+            or ".." in Path(member.name).parts
+            or member.issym()
+            or member.islnk()
+            or not (member.isdir() or member.isfile())
+            for member in members
+        ):
+            raise AssertionError("authentic G5 archive has an unsafe or incomplete layout")
+        for member in members:
+            if sys.version_info >= (3, 12):
+                archive.extract(member, destination, filter="data")
+            else:
+                archive.extract(member, destination)
+    return destination / "backup"
+
+
+@pytest.fixture
+def film(tmp_path):
+    from runtime_protocol.backup import restore_backup, verify_backup
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_baseline import verify_baseline
+
+    if not AUTHENTIC_ARCHIVE.is_file():
+        raise AssertionError(f"missing qualified authentic G5 archive: {AUTHENTIC_ARCHIVE}")
+    if hashlib.sha256(AUTHENTIC_ARCHIVE.read_bytes()).hexdigest() != AUTHENTIC_ARCHIVE_SHA256:
+        raise AssertionError("qualified authentic G5 archive bytes changed")
+
+    backup = _extract_authentic_archive(tmp_path / "authentic-archive")
+    verified = verify_backup(backup, key=AUTHENTIC_BACKUP_KEY)
+    restored_root = tmp_path / "authentic-realm"
+    restore_backup(backup, restored_root, key=AUTHENTIC_BACKUP_KEY)
+
+    service = RuntimeService(restored_root)
+    try:
+        projects = service.list_projects()["items"]
+        assert len(projects) == 1
+        project_id = projects[0]["project_id"]
+        timelines = service.list_timelines(project_id)["items"]
+        assert len(timelines) == 1
+        timeline = timelines[0]
+        timeline_id = timeline["timeline_id"]
+        revision_id = timeline["head_revision_id"]
+        parent = service.get_project_parent_composition_revision(project_id, timeline_id, revision_id)
+        baseline = verify_baseline(
+            service.store.conn,
+            project_id,
+            timeline_id,
+            read_object=service.cas.read,
+        )
+    finally:
+        service.close()
+
+    assert verified["manifest"]["schema"]["version"] == 31
+    assert revision_id == AUTHENTIC_PARENT_REVISION
+    assert baseline["head"] == {
+        "revision_id": AUTHENTIC_PARENT_REVISION,
+        "publication_id": AUTHENTIC_PARENT_PUBLICATION,
+    }
+    assert parent["content_digest"] == AUTHENTIC_PARENT_DIGEST
+    return (
+        AuthenticFilmFixture(restored_root, project_id, timeline_id, revision_id),
+        copy.deepcopy(parent["payload"]),
+        {
+            "data": {"accepted_revision_id": baseline["head"]["revision_id"]},
+            "receipt": {"receipt_id": baseline["head"]["publication_id"]},
+        },
+    )
 
 
 def test_checkout_reload_undo_cli_redo_uses_retained_history(
@@ -47,7 +154,7 @@ def test_checkout_reload_undo_cli_redo_uses_retained_history(
         assert parent_of(undone) == expected
         assert_readback(client, fixture, undone)
         redone = cli(client, fixture, capsys, 'redo', fixture.timeline_id,
-                     '--publication', undone['receipt']['receipt_id'])
+                     '--commit', undone['receipt']['receipt_id'])
         assert parent_of(redone) == parent_of(disjoint)
         assert_readback(client, fixture, redone)
         assert Checkout.open(fixture.project_id, fixture.timeline_id, client=client).base_revision == redone['data']['accepted_revision_id']
