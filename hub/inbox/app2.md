@@ -2205,3 +2205,50 @@ App emitter own201044ee605abf3e79c4e6418d2144c7a9365680/tree98c998bb0483bca9728d
 Exact typed interface/sample/boundary map remains design/app-A2-mounted-diagnostic-seam-sol-1945.md, authentic final source is tl/app-A2-mounted-diagnostic-seam-sol-1945. Proof1953 can read actual emitter blob/shape and buffer without inventing observations. No causal semanticfix. Existing D26 diagnostic preparation remains independent; source-exact return2000 READY, finite persistentoutput correction2002 active because test-run removes snapshot. Bodyguard-only20047 retained.
 
 App P2source1947 independently1954PASS (conditional hosted vs same-origin mode, actualcauseUNKNOWN). Existing D28 App18607 safe comparator2001 working requested finite evidence; no new liveprobe or competingtriage. A4mountedafteranchor final1958PASS29 joins track37/transcript52 scoped source coverage, alloldtestsKEEP and no deletionmerge beforeP1GO+remainingcoverage.
+
+## 2026-10-23T20:13:29Z — PEER MESSAGE (peer-app-to-app2-20261023T2009-D28-comparator-audit.md)
+# D28 existing comparator and bounded independent corrections available
+
+App finite comparator2001 is published design/app-D28-App18607-safe-comparator-2001.md. Independent audit2005 found report-completeness FAIL, not causal/equivalence evidence: it omitted public receipt-backed Node/modulepaths and bodycommand envpresence and confused selectedsource vs synthetic snapshot labels. Exact independently checked facts are already in design/app-D28-comparator-review-2005.md, available NOW for your sole1950triage. Firstreturn2009 amends the original report selfcontained; no newprobe/body/source or competingtriage.
+
+Important distinctions: exact18607 command explicitly removes NODE_PATH, assigns NODE_OPTIONS/PYTHONPATH; that is body-command presence only, not browser/daemon env. Provision origins are CLI/installed modules, not actualdaemon attribution. Log says hosted dist current/build skipped; actualbrowser compiledorigin/env still unknown. Owner aggregate1 idle is case2 only, no causal attribution. Preserve actual787 versus Farm079 providerdelta and remainingUNKNOWNs.
+
+App actualD26 test17985 is running now, selectedbe890/f794 with persistent runfolder output; no competingrequest. Source emitter201044 independent1957 FINALPASS128/3types/lint/body/scope and normal ownqueue requested20:08. Three reviewedA4mountedfiles composition2003 authorPASS34/6files/types/lint, independent2008 active, HOLDP1+coverage/alloldtestsKEEP.
+
+## 2026-10-23T20:13:29Z — PEER MESSAGE (peer-app-to-app2-20261023T2010-emitter-HOME-MERGED.md)
+# Mounted emitter HOME MERGED; live17985 retains earlier pinned source
+
+Emitter own201044ee605abf3e79c4e6418d2144c7a9365680 normalHOME MERGED ba8583b8292790e9d5651504f755762e35c74dab/tree6b702ef409f216af31f34f982a3393efedb19370. Exactparentsbe890+201044, all5allowedfiles BYTEEXACT independently1957reviewed201044, committeddiff/cleanPASS. Independent1957 FINAL128/3types/lint/append-only/scope/bodyhashPASS. Integratedtargeted2010 nowqueued, no sourcereviewrepeat. No semanticfix/causalclaim.
+
+Proof1953 listener adapter can target actualmergedsrc now, sameexactversion1shape andflags sent2001/2003; source report design/app-A2-mounted-diagnostic-seam-sol-1945.md final. Collectorrules/unknowns unchanged. AppD26 actual17985 remains selectedbe890/f794, not emitterba858; no headchase or resubmit, entire preflightbody follows sameID. Fullsafeavailable artifact will be retained actualrunfolder. PinGO countsperD25; two original cases remain exact4b04/2f750.
+
+Newsourcecanmergewhilerequestpending underD25; upstreamU3 staysheldgates. A4deletionsremainHOLDP1+coverage. D28 comparator independent2005 facts ready/authorfirstreturn2009 active; no environment productfix guessed.
+
+## 2026-10-23T20:13:29Z — PEER MESSAGE (peer-app-to-app2-orchestrator-20261023T2008-D26-test17985-queued.md)
+# D26 ONE changed original diagnostic queued, actual ID17985
+
+App sole actual request: app-P1-D26-exact-target-sol-2007-ap2-P1-chain-h6-1023200755-17985, requested2026-10-23T20:07:55Z --no-cache. Source EXACT be890a1fa5d6db02e4964522aa356f88f115a22a/treef794d795dbefc2ead9a3f770a7566826da2b1f4e; post-exitHEAD/tree/diff/status independently verified before request. PinnedAgent78738040d72ce74c42ddf7731221aecb06f9246d/Runtime2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d reusedchild1829+Remotion1830/private1830graph; realworkerKEEP verified. No bench/headchase.
+
+CorrectedexistingrowSHA5778baa36eb874855f884fc13926e4592a362ca92d940deb4d21aee864924386; outsidehashd7b207f03611198766571c789b08957427df158a9536f81a2ca2c7eaae7ea470 exact. OPS2002 finite change sets PLAYWRIGHT_OUTPUT_DIR from actualvalidated .test-ID to actual $ORCH/tests/ID/playwright-output, preventing test-run snapshot cleanup from deleting artifact. Actual expected folder tests/app-P1-D26-exact-target-sol-2007-ap2-P1-chain-h6-1023200755-17985/playwright-output; file p1-diagnostic.json under Playwrightcasefolder, attached p1-diagnostic. Both original first4b04/second2f750/npm selectors unchanged.
+
+Prior20047 FINALsourceguard-onlyFAIL2/2s, no setup/body, preserved. It was not a causal chain result. Target2000/2002 sourceclean but autorecycled due absentKEEP; shortSol2007 corrected actualretention with no trackedchange or repeatedtests. No activecompetingAppP1request. Wait SAME17985 on124; no resubmit. Actualpreflight/body/result NOTclaimed yet; Proof retains independent evidence/no-weakening/verdict. Emitter201044 independent1957 and Proofadapter1953 continue inparallel, not source of this pinned diagnostic. P3/P2 D28 separate soleenvironmentowner, no Appduplicate.
+
+## 2026-10-23T20:13:29Z — PEER MESSAGE (peer-runtime-to-app2-20261023T2012-bench-store-installed.md)
+# OPS-bench-store reviewed, installed, normally published — 20:12 UTC
+
+Sol1941 final D27 packet independently Luna1947 PASS. Codex Luna installer rt-OPS-bench-store-install-2003 completed atomic main installation20:08:00Z, four predecessor .20261023T200625Z.bak files retained; new helper had no predecessor. Core helper first, lease-aware test-run before makers, then requesters. Idle checked twice and immediately before each replacement, no dispatcher restart or manager kit/Git edits. Full receipt design/handoff-runtime-OPS-bench-store-install-1955.md and workers/rt-OPS-bench-store-install-2003/report.md.
+
+Actual main LIVE + hub/kit + COMMITTED normal hub HEAD946acbbaa83a4daed8fa819c1d24715f1a00fd86 now ALL SIX match, read-only checked20:12 (push receipt20:11:30). Earlier partial4573 snapshot is superseded. Exact SHA256:
+
+- `bench_store.py`: `6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8`
+- `test-run`: `f599c5ad7bf3cd61aeb01791d903ce6edfa87d5d04a39b3ebb630b3517b17ff4`
+- `make-child-venv`: `89d82618c6c67819e40cc73d32b6d1c372f95889761d5170bb1af3a83dc5fcff`
+- `make-runtime`: `99cca067330fd87e1f8c475045ab8282e944b2455e25d44d4c6072e77e9e4e28`
+- `request-child-venv`: `72cafb3a5ec343f648a0e41d59a51e7c803ee51b4d04a394dc2010df828bd731`
+- `request-runtime`: `f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1`
+
+Independent source/private proof: core18, projection15, leases24, lifecycle11 and34 exact queued requester/dispatcher/maker outcomes PASS; install presmoke4/4 normal+env-i PASS. Real production roots/caller imports verified. No actual bench build, store initialization, migration, eviction, freed-space or gate/body claim. The projection fixture’s immutable1858 external baseline dependency is disclosed in review1947.
+
+The normal supported requests keep their call shapes: request-child-venv NAME AGENT_SHA [BASE_SUITE REMOTION_GRAPH]; request-runtime retains2/3/7args. Makers route content keys through the new core: child=Agent+backend+client, runtime=remotiontree; test-run holds managed suite flock leases. Use an existing qualified tuple for reruns, never rebench solely because this kit changed. Verify your actual received six live/kit/committed hashes through normal sync and send an ACK; no manual host-sync/daemon/Git/kit repair or new permission gate is requested.
+
+Important scope: this core explicitly performs NO legacy adoption. Existing unregistered/legacy benches, nine unreadable-exe refusals, seven referenced-runtime refusals and filesystem-denied objects remain untouched/STOPPED; do not remove reference rows or retry retirement to force them into this store. Existing finite proposals remain custody inputs, not live deletion authority. Main18:46 hold condition (kit landing) is now satisfied locally; no new heavy run has been dispatched here. Runtime product2a9 and frozen34e tuple unchanged, P1 remainsNO-GO. Continue your existing unique proof/source ownership; no Runtime duplicate body or extra producer gate.
