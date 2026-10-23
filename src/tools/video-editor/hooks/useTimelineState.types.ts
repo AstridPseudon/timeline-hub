@@ -5,7 +5,6 @@ import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts'
 import type { useDragCoordinator } from '@/tools/video-editor/hooks/useDragCoordinator.ts';
 import type { useExternalDrop } from '@/tools/video-editor/hooks/useExternalDrop.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
-import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
 import type { useTimelinePlayback } from '@/tools/video-editor/hooks/useTimelinePlayback.ts';
 import type { useTimelineTrackManagement } from '@/tools/video-editor/hooks/useTimelineTrackManagement.ts';
 import type {
@@ -195,8 +194,6 @@ export interface TimelineEditorOpsContextValue {
   registerAsset: TimelineRegisterAsset;
   onDoubleClickAsset?: (assetKey: string, clipId?: string) => void;
   setLightboxAssetKey?: (assetKey: string | null) => void;
-  /** Temporary host seam for occurrence-owned media adds until A3 owns the flow. */
-  occurrenceAddMedia?: OccurrenceAddMediaCapturePort;
 }
 
 /**

@@ -38,8 +38,6 @@ import type {
   ShotCompositionAdapter,
 } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
-import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
-import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type {
   CanonicalShotTimelineDraft,
   CanonicalShotTimelinePublication,
@@ -73,10 +71,6 @@ interface ShotEditorViewProps {
   canonicalShotComposition?: ShotCompositionAdapter;
   /** Parent Runtime provider reused by the nested popup's A2 save funnel. */
   timelineDataProvider?: DataProvider;
-  /** Reuse the mounted parent command-session authority for occurrence media adds. */
-  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
-  /** Read the mounted parent timeline at occurrence-add capture time. */
-  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
   /** Prepared canonical graph shared by the overview and the shot-local preview. */
   canonicalComposition?: PreparedShotComposition;
   /** Optional embedded-mode close action; avoids navigating the parent route. */
@@ -107,8 +101,6 @@ export function ShotEditorView({
   canonicalOccurrence,
   canonicalShotComposition,
   timelineDataProvider,
-  occurrenceAddMediaPort,
-  getOccurrenceAddMediaCurrent,
   canonicalComposition,
   onClose,
   onCanonicalCompositionPublished,
@@ -365,8 +357,6 @@ export function ShotEditorView({
             occurrenceId={canonicalOccurrence.occurrenceId}
             shotCompositionAdapter={canonicalShotComposition}
             timelineDataProvider={timelineDataProvider}
-            occurrenceAddMediaPort={occurrenceAddMediaPort}
-            getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}
             onCanonicalCompositionPublished={onCanonicalCompositionPublished}
             onCanonicalDraftSessionChange={onCanonicalDraftSessionChange}
             onCanonicalDraftProjectionChange={onCanonicalDraftProjectionChange}

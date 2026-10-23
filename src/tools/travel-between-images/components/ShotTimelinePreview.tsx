@@ -2,8 +2,6 @@ import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-uti
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
-import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
-import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { AlertCircle, Film } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorProvider.tsx';
@@ -44,10 +42,6 @@ type ShotTimelinePreviewProps = {
   shotCompositionAdapter?: ShotCompositionAdapter;
   /** Parent Runtime provider; popup saves reuse its A2 document outbox. */
   timelineDataProvider?: DataProvider;
-  /** Reuse the mounted parent command-session authority for occurrence media adds. */
-  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
-  /** Read the mounted parent timeline at occurrence-add capture time. */
-  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
   onCanonicalCompositionPublished?: (
     composition: PreparedShotComposition,
     publication?: CanonicalShotTimelinePublication,
@@ -401,8 +395,6 @@ export function ShotTimelinePreview({
   occurrenceId,
   shotCompositionAdapter,
   timelineDataProvider,
-  occurrenceAddMediaPort,
-  getOccurrenceAddMediaCurrent,
   onCanonicalCompositionPublished,
   onCanonicalDraftStateChange,
   onCanonicalDraftSessionChange,
@@ -656,8 +648,6 @@ export function ShotTimelinePreview({
         extensionHostEnabled={false}
         onSaveStatusChange={handleSaveStatusChange}
         initialTimelineData={initialTimelineData}
-        occurrenceAddMediaPort={occurrenceAddMediaPort}
-        getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}
       >
         <ShotTimelineEditorSurface
           config={projection.config}

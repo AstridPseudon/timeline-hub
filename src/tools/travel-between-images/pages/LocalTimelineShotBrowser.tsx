@@ -26,8 +26,6 @@ import type {
   CanonicalShotTimelinePublication,
   CanonicalShotTimelineScope,
 } from '@/tools/video-editor/runtime/ports.ts';
-import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
-import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 
 type LocalTimelineShotBrowserProps = {
   projectSlug: string;
@@ -51,8 +49,6 @@ type LocalTimelineShotBrowserProps = {
   onCanonicalDraftProjectionClear?: (scope: CanonicalShotTimelineScope, generation: number) => void;
   /** Retained parent-editor ports until the A2/A3 save funnel replaces the popup surface. */
   shotSetPort?: unknown;
-  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
-  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
   mediaProvider?: unknown;
 };
 
@@ -163,7 +159,7 @@ function isCompositionForDocument(
     && composition.occurrences.length > 0;
 }
 
-export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, shotCompositionPort, shotCompositionAdapter, shotRef, initialComposition, onClose, occurrenceAddMediaPort, getOccurrenceAddMediaCurrent, onCanonicalCompositionPublished, onCanonicalDraftSessionChange, onCanonicalDraftProjectionChange, onCanonicalDraftProjectionClear }: LocalTimelineShotBrowserProps) {
+export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, shotCompositionPort, shotCompositionAdapter, shotRef, initialComposition, onClose, onCanonicalCompositionPublished, onCanonicalDraftSessionChange, onCanonicalDraftProjectionChange, onCanonicalDraftProjectionClear }: LocalTimelineShotBrowserProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -306,8 +302,6 @@ export function LocalTimelineShotBrowser({ projectSlug, projectId, timelineRef, 
           shots={shotModels}
           shotSortMode="ordered"
           onClose={onClose}
-          occurrenceAddMediaPort={occurrenceAddMediaPort}
-          getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}
           onCanonicalCompositionPublished={handleCanonicalCompositionPublished}
           onCanonicalDraftSessionChange={onCanonicalDraftSessionChange}
           onCanonicalDraftProjectionChange={onCanonicalDraftProjectionChange}
