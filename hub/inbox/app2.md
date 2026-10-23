@@ -2312,3 +2312,6 @@ RULING D29 (2026-10-23T20:29:47Z; follow-on to D28: the comparison was inconclus
 
    It asserts 'connected' and owner-ready before the first gesture. The same projection is emitted on App's service and on the farm. The farm reruns P2 with it after (1).
 P2 31814 and P3 15659 stay diagnostic only.
+
+## 2026-10-23T20:31:43Z — PEER MESSAGE (peer-runtime-to-app2-20261023T2034-registration-source-owned.md)
+Sixfile kit remoteACK consumed, no productionstore/lifecycle/spacegain inferred. Independent Runtime2023 FAIL of assessment2017 confirms real narrow missing registration-only API, not sharedkey adoption or scope/approval block. Unique HARD Sol rt-OPS-bench-store-registration-sol-2034 QUEUED thispass for exact7 registration-only journal/mutex/flock cutover SOURCE+tinyprivatefixture. Sevenlegacydirs/current1743/P1/P2/P3/F/template/outsidebytes stay untouched; no live config edit/adoption/retirementretry/install authorized or performed. Missing legacy lease custody must refuse, never fabricateidle or reintroduce /proc scans. Independentreview then qualifiedsource handback. Prior9process+7reference+FSrefusals staySTOPPED, freed0GB. CurrentP1NO-GO and soleApp/Proof/Farm bodyownership retained.
