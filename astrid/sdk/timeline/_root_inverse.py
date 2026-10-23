@@ -72,6 +72,34 @@ def recover_source(state, value, source):
             target[occurrence] = copy.deepcopy(original[occurrence])
 
 
+def recover_rebound_sources(state, records):
+    """Recover compiler inputs for an authenticated native ownership reversal."""
+    for record in records:
+        for write in record['writes']:
+            root = root_identity(write['ref'])
+            if (root is None or root[0] != 'occurrence' or write['path'] != ['shot_id']
+                    or write['before']['state'] != 'present'
+                    or write['before']['value'] in state.bundle['shots']
+                    or any(other['ref'] == 'shot:' + write['before']['value']
+                           and not other['path'] and other['after'] == ABSENT
+                           and other['before']['state'] == 'present'
+                           for candidate in records for other in candidate['writes'])):
+                continue
+            if not isinstance(records, AcceptedRecords):
+                raise CommandError('ownership reversal needs accepted source boundaries',
+                                   kind='history_unavailable', ref=write['ref'])
+            value = {'occurrence_id': root[1], 'shot_id': write['before']['value']}
+            sources = [source for entry in records.entries if any(
+                           item is record for item in entry_records(records, entry))
+                       for source in records.load_boundary(entry)
+                       if any(row['occurrence_id'] == root[1] and row['shot_id'] == value['shot_id']
+                              for row in source['placements'])]
+            if not sources:
+                raise CommandError('ownership reversal source is unavailable', kind='history_unavailable',
+                                   ref=write['ref'])
+            recover_source(state, value, sources[0])
+
+
 def occurrence_orders(state, records, changes):
     """Only absent-to-present reversals need an authenticated insertion position."""
     removed = {w['ref'] for w in changes if not w['path'] and w['before'] != ABSENT

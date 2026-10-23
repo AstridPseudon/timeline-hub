@@ -26,21 +26,11 @@ def occurrence_duplicate(ctx, command):
     if occurrence_id == row['occurrence_id'] or shot_id == source_shot:
         raise CommandError('duplicate requires reserved identities distinct from the source',
                            kind='identity_collision', ref=owner)
-    from astrid.core.timeline.authoring_bundle import (
-        _copy_shot_for_placement,
-        compile_authoring_candidate,
-    )
+    copy_child(ctx, owner, occurrence_id, shot_id, source_shot, payload, internal)
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+
     bundle = ctx.state.bundle
-    copied, remap = _copy_shot_for_placement(
-        payload, project_id=bundle['project_id'], timeline_id=bundle['timeline_id'],
-        occurrence_id=occurrence_id, authoring_shot_id=shot_id, source_shot_id=source_shot)
-    occupied = {item.get('item_id', item.get('id')) for shot in bundle['shots'].values()
-                for item in shot['payload'].get('items', [])}
-    if occupied & set(remap.values()):
-        raise CommandError('duplicate item identity is occupied', kind='identity_collision', ref=owner)
     ctx.bind('duplicate.owner', owner)
-    ctx.create_entity('shot:' + shot_id, kind='shot', owner=None,
-                      value={'payload': copied, 'internal_timeline': copy.deepcopy(internal)})
     created = copy.deepcopy(row)
     created.pop('shot_revision_id', None)
     created.pop('revision_id', None)
@@ -53,6 +43,22 @@ def occurrence_duplicate(ctx, command):
         compiled = compile_authoring_candidate(candidate).publication['parent_composition']['occurrences'][-1]
         created.update({key: compiled[key] for key in fields})
     ctx.create_entity('occurrence:' + occurrence_id, kind='occurrence', owner='parent', value=created)
+
+
+def copy_child(ctx, owner, occurrence_id, shot_id, source_shot, payload, internal):
+    """Allocate a native child copy without creating or replacing an occurrence."""
+    from astrid.core.timeline.authoring_bundle import _copy_shot_for_placement
+
+    bundle = ctx.state.bundle
+    copied, remap = _copy_shot_for_placement(
+        payload, project_id=bundle['project_id'], timeline_id=bundle['timeline_id'],
+        occurrence_id=occurrence_id, authoring_shot_id=shot_id, source_shot_id=source_shot)
+    occupied = {item.get('item_id', item.get('id')) for shot in bundle['shots'].values()
+                for item in shot['payload'].get('items', [])}
+    if occupied & set(remap.values()):
+        raise CommandError('duplicate item identity is occupied', kind='identity_collision', ref=owner)
+    ctx.create_entity('shot:' + shot_id, kind='shot', owner=None,
+                      value={'payload': copied, 'internal_timeline': copy.deepcopy(internal)})
 
 
 def capture_occurrence_duplicate(bundle, owner, occurrence_id, shot_id):

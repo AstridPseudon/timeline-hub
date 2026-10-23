@@ -110,11 +110,11 @@ def normalized_path(ref, path):
 
 class Closure:
     """Resolve one verified boundary and retain its physical-to-authoring projection."""
-    def __init__(self, bundle):
+    def __init__(self, bundle, *, source_bundles=()):
         from .commit import document_from_bundle
 
         self.bundle = bundle
-        self.document = document_from_bundle(bundle)
+        self.document = document_from_bundle(bundle, source_bundles=source_bundles)
         self.images = {'parent': self.document['parent_revision']}
         self.images.update(('shot-revision:' + image['revision_id'], image)
                            for image in self.document['shot_revisions'])

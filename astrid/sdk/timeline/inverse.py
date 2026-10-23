@@ -633,6 +633,9 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                                kind='selection_changed', ref=owner)
     for write in guarded_changes:
         guard(ctx.state, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+    from ._root_inverse import recover_rebound_sources
+
+    recover_rebound_sources(ctx.state, records)
     scratch = State(copy.deepcopy(ctx.state.bundle), closures=ctx.state.closures)
     for record in reversed(records):
         staged = Recording(scratch.bundle, record['command'], record['ordinal'], closures=scratch.closures)
