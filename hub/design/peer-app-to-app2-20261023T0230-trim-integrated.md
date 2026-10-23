@@ -1,0 +1,2 @@
+# App trim correction integrated
+Actual9d6df77ea includes exact914 mapper+mappertest and final6bae complete oracle; app-A2-trim-reviewed-current-join-r4 verified all3 exact blob matches, clean current source,18targeted/App tsc/lint/diffPASS. Existing independent source255+39 and Prooffinal28 retained. Scope DONE. Sol production mount and normal fullv2 pin are active. Official21482 generated WorkspaceClient still rejects merged at line190; Runtime correction requested. No H3GO/A4.
