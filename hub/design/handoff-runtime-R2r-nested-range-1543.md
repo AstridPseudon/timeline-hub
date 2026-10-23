@@ -13,3 +13,9 @@ Compiler competing-media refusal occurs earlier and remains separately unresolve
 One outward command/step remains required. For retained immediate txn-75285c95600949c8b1267a71f8e71a9d / undo-0 / ordinals [0], emit TWO inverse.stage bindings with that SAME immediate publication/step/command identity, in order: native [0,2], effects [0,4]; native [2,3], effects [4,9]. Native captures reverse each accepted source slice and exchange before/after exactly. Canonical effects reverse each accepted source slice and exchange observed before/after exactly; no regenerated identity guesses. Commit.effect bindings use the current request's attribution and authenticate each intermediate boundary. The current Agent inverse_stages still yields one flattened group; Agent representation work is required. No Agent edits made here.
 
 Runtime candidate now passes complete auth.validate on a projection of actual retained SQL/history-native/effect facts. This is an auth-only counterexample, not production provider PreparedCommit or a public redo call. Source compiled competing-media refusal remains unchanged. No extra store/port/plumbing needed: history_entry -> _verify_accepted already authenticates source ancestry, receipt, native/effect records and inherited targets recursively. Current changes are confined to inverse-stage helpers; atomic scope and accepted-historical sequential verifier are untouched.
+
+## Final source qualification
+
+Complete report: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-R2r-nested-range-1543-report.md
+
+241 tests pass; explicit integration 56 pass/185 deselected. Ruff 0/0; scoped Pyright 6/6 original test diagnostics, 0 added/removed. Retained auth-only oldRED/newGREEN, frozen77 and original AST checks pass. One source-only candidate, independent review pending; Agent representation and compiler cause remain separate.

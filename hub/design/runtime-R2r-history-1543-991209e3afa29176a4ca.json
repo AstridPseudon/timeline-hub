@@ -1,0 +1,5401 @@
+{
+  "context": {
+    "idempotency_key": "peer",
+    "invocation": {
+      "body": {
+        "api_version": 1,
+        "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+        "base_revision_id": "saved-parent",
+        "commands": [
+          {
+            "args": {
+              "changes": [
+                {
+                  "before": {
+                    "state": "present",
+                    "value": "second line"
+                  },
+                  "op": "set",
+                  "path": [
+                    "clips",
+                    "id:vo2",
+                    "app",
+                    "astrid",
+                    "text"
+                  ],
+                  "ref": "internal-revision:internal-film",
+                  "value": "changed"
+                }
+              ]
+            },
+            "op": "doc.patch",
+            "schema_version": 1,
+            "select": null,
+            "version": "1"
+          }
+        ],
+        "label": "Peer",
+        "merge": "fields",
+        "project_id": "c6212e6152ae4ef2af6c947816fd3bb4",
+        "reads": [],
+        "timeline_id": "t"
+      },
+      "operation": "commitTimeline",
+      "path": "/v1/projects/c6212e6152ae4ef2af6c947816fd3bb4/timelines/t/commit"
+    },
+    "publisher": "editor",
+    "realm_id": "8f611f95387f4ccaadd2da4353427ad6",
+    "request": {
+      "api_version": 1,
+      "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+      "base_revision_id": "saved-parent",
+      "commands": [
+        {
+          "args": {
+            "changes": [
+              {
+                "before": {
+                  "state": "present",
+                  "value": "second line"
+                },
+                "op": "set",
+                "path": [
+                  "clips",
+                  "id:vo2",
+                  "app",
+                  "astrid",
+                  "text"
+                ],
+                "ref": "internal-revision:internal-film",
+                "value": "changed"
+              }
+            ]
+          },
+          "op": "doc.patch",
+          "schema_version": 1,
+          "select": null,
+          "version": "1"
+        }
+      ],
+      "label": "Peer",
+      "merge": "fields",
+      "project_id": "c6212e6152ae4ef2af6c947816fd3bb4",
+      "reads": [],
+      "timeline_id": "t"
+    },
+    "request_hash": "acc511b5f4b4a2004f09b7ee471dc8c75a67a8a954d228c90828ffaba7a1615c"
+  },
+  "database_after_attempt": "59b343de4fa25da471851deb377baabe6ed00ee769adba5c2c00dacebbabcc31",
+  "database_before_validation": "1e5867ed30337acf34661faea8385980e90ea1f881a065604d0a335074e2efe0",
+  "exception": null,
+  "kind": "original9",
+  "no_write": false,
+  "outcome": {
+    "method": "accept",
+    "result": {
+      "data": {
+        "accepted_revision_id": "authoring-parent-revision-1280bc40d6c0e2eb56fc500c3f951e1fbb2b18346292beca8e0a69b119e1555f",
+        "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+        "base_revision_id": "saved-parent",
+        "canonical_document": {
+          "dependency_manifest": {
+            "documents": [],
+            "internal_timelines": [
+              {
+                "content_digest": "sha256:46f777aa4e5625edabcf1bf3a331e5d07a962a6b19b0992017a285994607a6d0",
+                "revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                "timeline_id": "t"
+              }
+            ],
+            "media": [
+              {
+                "content_digest": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04",
+                "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+              },
+              {
+                "content_digest": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1",
+                "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+              },
+              {
+                "content_digest": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7",
+                "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+              },
+              {
+                "content_digest": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9",
+                "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+              }
+            ],
+            "shots": [
+              {
+                "content_digest": "sha256:b13b1486a376a1ea7d51bd7dceace47e5f07de633d5d139402afe655d2b0314c",
+                "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                "revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+                "shot_id": "film"
+              }
+            ]
+          },
+          "internal_timeline_revisions": [
+            {
+              "content_digest": "sha256:46f777aa4e5625edabcf1bf3a331e5d07a962a6b19b0992017a285994607a6d0",
+              "payload": {
+                "assets": [],
+                "audio": [],
+                "clips": [
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c1"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 0.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p1",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c2"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 4.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p2",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c3"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 8.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p3",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "asset": "R",
+                    "at": 3.5,
+                    "clipType": "am-sprite",
+                    "hold": 1.0,
+                    "id": "cross",
+                    "params": {},
+                    "track": "sprite"
+                  },
+                  {
+                    "asset": "R",
+                    "at": 5.0,
+                    "clipType": "am-sprite",
+                    "hold": 1.0,
+                    "id": "inside",
+                    "params": {},
+                    "track": "sprite"
+                  },
+                  {
+                    "at": 9.0,
+                    "clipType": "am-type",
+                    "hold": 1.0,
+                    "id": "late",
+                    "params": {
+                      "text": "hi"
+                    },
+                    "track": "type"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "segment": "s2",
+                        "text": "changed",
+                        "words": [
+                          [
+                            0.1,
+                            0.4,
+                            "second"
+                          ]
+                        ]
+                      }
+                    },
+                    "asset": "U",
+                    "at": 4.5,
+                    "clipType": "media",
+                    "from": 0.0,
+                    "id": "vo2",
+                    "to": 2.0,
+                    "track": "vo"
+                  },
+                  {
+                    "asset": "Q",
+                    "at": 0.0,
+                    "clipType": "media",
+                    "from": 0.0,
+                    "id": "bed",
+                    "to": 12.0,
+                    "track": "music",
+                    "volume": 0.5
+                  }
+                ],
+                "effects": [],
+                "layout": {},
+                "registry": {
+                  "assets": {
+                    "P": {
+                      "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                    },
+                    "Q": {
+                      "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                    },
+                    "R": {
+                      "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                    },
+                    "U": {
+                      "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                    }
+                  }
+                },
+                "tracks": [
+                  {
+                    "id": "type",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "sprite",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "plate",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "vo",
+                    "kind": "audio"
+                  },
+                  {
+                    "id": "music",
+                    "kind": "audio"
+                  }
+                ]
+              },
+              "revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+              "timeline_id": "t"
+            }
+          ],
+          "parent_revision": {
+            "content_digest": "sha256:6c4ef455f45290f387bce58e9603cd44091796ec618c27218e3519a30c8f60a8",
+            "payload": {
+              "clips": [],
+              "config": {
+                "app": {
+                  "astrid": {
+                    "chapters": [
+                      {
+                        "from": "c1",
+                        "name": "01 ONE"
+                      },
+                      {
+                        "from": "c2",
+                        "name": "02 TWO"
+                      },
+                      {
+                        "from": "c3",
+                        "name": "03 THREE"
+                      }
+                    ]
+                  }
+                },
+                "theme_overrides": {
+                  "visual": {
+                    "canvas": {
+                      "fps": 30,
+                      "height": 180,
+                      "width": 320
+                    }
+                  }
+                },
+                "tracks": [
+                  {
+                    "id": "picture",
+                    "kind": "visual"
+                  }
+                ]
+              },
+              "occurrences": [
+                {
+                  "duration_ms": 12000,
+                  "gain": 1,
+                  "muted": false,
+                  "occurrence_id": "occ-film",
+                  "placement": {
+                    "start_ms": 0
+                  },
+                  "provenance": {},
+                  "shot_id": "film",
+                  "shot_revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+                  "source_offset": {
+                    "end": 0,
+                    "start": 0
+                  },
+                  "speed": {
+                    "denominator": 1,
+                    "numerator": 1
+                  },
+                  "track": "picture",
+                  "transform": {}
+                }
+              ],
+              "registry": {}
+            },
+            "revision_id": "authoring-parent-revision-1280bc40d6c0e2eb56fc500c3f951e1fbb2b18346292beca8e0a69b119e1555f"
+          },
+          "project_id": "c6212e6152ae4ef2af6c947816fd3bb4",
+          "schema_version": 1,
+          "shot_revisions": [
+            {
+              "content_digest": "sha256:b13b1486a376a1ea7d51bd7dceace47e5f07de633d5d139402afe655d2b0314c",
+              "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+              "payload": {
+                "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                "items": [],
+                "metadata": {},
+                "name": "FILM",
+                "pools": [],
+                "text_bindings": []
+              },
+              "revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+              "shot_id": "film"
+            }
+          ],
+          "timeline_id": "t"
+        },
+        "commands": [
+          {
+            "args": {
+              "changes": [
+                {
+                  "before": {
+                    "state": "present",
+                    "value": "second line"
+                  },
+                  "op": "set",
+                  "path": [
+                    "clips",
+                    "id:vo2",
+                    "app",
+                    "astrid",
+                    "text"
+                  ],
+                  "ref": "internal-revision:internal-film",
+                  "value": "changed"
+                }
+              ]
+            },
+            "authorship": {
+              "occurrence:occ-film/clip:vo2::app.astrid.text": "direct"
+            },
+            "bindings": {},
+            "created": [],
+            "expect": {
+              "occurrence:occ-film/clip:vo2::app.astrid.text": {
+                "state": "present",
+                "value": "second line"
+              }
+            },
+            "intent": {},
+            "op": "doc.patch",
+            "reads": [
+              {
+                "path": [
+                  "app",
+                  "astrid",
+                  "text"
+                ],
+                "ref": "occurrence:occ-film/clip:vo2",
+                "state": {
+                  "state": "present",
+                  "value": "second line"
+                }
+              }
+            ],
+            "resolved": [],
+            "schema_version": 1,
+            "select": null,
+            "selections": [],
+            "version": "1"
+          }
+        ],
+        "compiler_version": "authoring-bundle-1",
+        "document_digest": "sha256:75c169e4e3161c30ca8d9d958274849be2e9d217875f0d6ba1f47ec3bba69ecf",
+        "id_map": {},
+        "label": "Peer",
+        "merge_mode": "fields",
+        "previous_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+        "previous_revision_id": "saved-parent",
+        "provider_version": "astrid-v1",
+        "publisher": "editor",
+        "rebased_onto": null,
+        "status": "accepted",
+        "steps": [
+          {
+            "command_ordinals": [
+              0
+            ],
+            "dependencies": [
+              {
+                "kind": "field",
+                "path": [
+                  "clips",
+                  "id:vo2",
+                  "app",
+                  "astrid",
+                  "text"
+                ],
+                "ref": "internal-revision:internal-film",
+                "state": {
+                  "state": "present",
+                  "value": "second line"
+                }
+              }
+            ],
+            "id": "edit",
+            "intent": "",
+            "label": "Peer",
+            "patch": [
+              {
+                "before": {
+                  "state": "absent"
+                },
+                "op": "set",
+                "path": [],
+                "ref": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                "value": {
+                  "assets": [],
+                  "audio": [],
+                  "clips": [
+                    {
+                      "app": {
+                        "astrid": {
+                          "cut": "c1"
+                        }
+                      },
+                      "asset": "P",
+                      "at": 0.0,
+                      "clipType": "am-snap-plate",
+                      "hold": 4.0,
+                      "id": "p1",
+                      "params": {},
+                      "track": "plate"
+                    },
+                    {
+                      "app": {
+                        "astrid": {
+                          "cut": "c2"
+                        }
+                      },
+                      "asset": "P",
+                      "at": 4.0,
+                      "clipType": "am-snap-plate",
+                      "hold": 4.0,
+                      "id": "p2",
+                      "params": {},
+                      "track": "plate"
+                    },
+                    {
+                      "app": {
+                        "astrid": {
+                          "cut": "c3"
+                        }
+                      },
+                      "asset": "P",
+                      "at": 8.0,
+                      "clipType": "am-snap-plate",
+                      "hold": 4.0,
+                      "id": "p3",
+                      "params": {},
+                      "track": "plate"
+                    },
+                    {
+                      "asset": "R",
+                      "at": 3.5,
+                      "clipType": "am-sprite",
+                      "hold": 1.0,
+                      "id": "cross",
+                      "params": {},
+                      "track": "sprite"
+                    },
+                    {
+                      "asset": "R",
+                      "at": 5.0,
+                      "clipType": "am-sprite",
+                      "hold": 1.0,
+                      "id": "inside",
+                      "params": {},
+                      "track": "sprite"
+                    },
+                    {
+                      "at": 9.0,
+                      "clipType": "am-type",
+                      "hold": 1.0,
+                      "id": "late",
+                      "params": {
+                        "text": "hi"
+                      },
+                      "track": "type"
+                    },
+                    {
+                      "app": {
+                        "astrid": {
+                          "segment": "s2",
+                          "text": "changed",
+                          "words": [
+                            [
+                              0.1,
+                              0.4,
+                              "second"
+                            ]
+                          ]
+                        }
+                      },
+                      "asset": "U",
+                      "at": 4.5,
+                      "clipType": "media",
+                      "from": 0.0,
+                      "id": "vo2",
+                      "to": 2.0,
+                      "track": "vo"
+                    },
+                    {
+                      "asset": "Q",
+                      "at": 0.0,
+                      "clipType": "media",
+                      "from": 0.0,
+                      "id": "bed",
+                      "to": 12.0,
+                      "track": "music",
+                      "volume": 0.5
+                    }
+                  ],
+                  "effects": [],
+                  "layout": {},
+                  "registry": {
+                    "assets": {
+                      "P": {
+                        "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                      },
+                      "Q": {
+                        "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                      },
+                      "R": {
+                        "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                      },
+                      "U": {
+                        "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                      }
+                    }
+                  },
+                  "tracks": [
+                    {
+                      "id": "type",
+                      "kind": "visual"
+                    },
+                    {
+                      "id": "sprite",
+                      "kind": "visual"
+                    },
+                    {
+                      "id": "plate",
+                      "kind": "visual"
+                    },
+                    {
+                      "id": "vo",
+                      "kind": "audio"
+                    },
+                    {
+                      "id": "music",
+                      "kind": "audio"
+                    }
+                  ]
+                }
+              },
+              {
+                "before": {
+                  "state": "absent"
+                },
+                "op": "set",
+                "path": [],
+                "ref": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+                "value": {
+                  "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                  "items": [],
+                  "metadata": {},
+                  "name": "FILM",
+                  "pools": [],
+                  "text_bindings": []
+                }
+              },
+              {
+                "before": {
+                  "state": "present",
+                  "value": "shot-film"
+                },
+                "op": "set",
+                "path": [
+                  "occurrences",
+                  "occurrence_id:occ-film",
+                  "shot_revision_id"
+                ],
+                "ref": "parent",
+                "value": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c"
+              },
+              {
+                "before": {
+                  "state": "present",
+                  "value": {
+                    "internal_timeline_revision_id": "internal-film",
+                    "items": [],
+                    "metadata": {},
+                    "name": "FILM",
+                    "pools": [],
+                    "text_bindings": []
+                  }
+                },
+                "op": "remove",
+                "path": [],
+                "ref": "shot-revision:shot-film"
+              },
+              {
+                "before": {
+                  "state": "present",
+                  "value": {
+                    "assets": [],
+                    "audio": [],
+                    "clips": [
+                      {
+                        "app": {
+                          "astrid": {
+                            "cut": "c1"
+                          }
+                        },
+                        "asset": "P",
+                        "at": 0.0,
+                        "clipType": "am-snap-plate",
+                        "hold": 4.0,
+                        "id": "p1",
+                        "params": {},
+                        "track": "plate"
+                      },
+                      {
+                        "app": {
+                          "astrid": {
+                            "cut": "c2"
+                          }
+                        },
+                        "asset": "P",
+                        "at": 4.0,
+                        "clipType": "am-snap-plate",
+                        "hold": 4.0,
+                        "id": "p2",
+                        "params": {},
+                        "track": "plate"
+                      },
+                      {
+                        "app": {
+                          "astrid": {
+                            "cut": "c3"
+                          }
+                        },
+                        "asset": "P",
+                        "at": 8.0,
+                        "clipType": "am-snap-plate",
+                        "hold": 4.0,
+                        "id": "p3",
+                        "params": {},
+                        "track": "plate"
+                      },
+                      {
+                        "asset": "R",
+                        "at": 3.5,
+                        "clipType": "am-sprite",
+                        "hold": 1.0,
+                        "id": "cross",
+                        "params": {},
+                        "track": "sprite"
+                      },
+                      {
+                        "asset": "R",
+                        "at": 5.0,
+                        "clipType": "am-sprite",
+                        "hold": 1.0,
+                        "id": "inside",
+                        "params": {},
+                        "track": "sprite"
+                      },
+                      {
+                        "at": 9.0,
+                        "clipType": "am-type",
+                        "hold": 1.0,
+                        "id": "late",
+                        "params": {
+                          "text": "hi"
+                        },
+                        "track": "type"
+                      },
+                      {
+                        "app": {
+                          "astrid": {
+                            "segment": "s2",
+                            "text": "second line",
+                            "words": [
+                              [
+                                0.1,
+                                0.4,
+                                "second"
+                              ]
+                            ]
+                          }
+                        },
+                        "asset": "U",
+                        "at": 4.5,
+                        "clipType": "media",
+                        "from": 0.0,
+                        "id": "vo2",
+                        "to": 2.0,
+                        "track": "vo"
+                      },
+                      {
+                        "asset": "Q",
+                        "at": 0.0,
+                        "clipType": "media",
+                        "from": 0.0,
+                        "id": "bed",
+                        "to": 12.0,
+                        "track": "music",
+                        "volume": 0.5
+                      }
+                    ],
+                    "effects": [],
+                    "layout": {},
+                    "registry": {
+                      "assets": {
+                        "P": {
+                          "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                        },
+                        "Q": {
+                          "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                        },
+                        "R": {
+                          "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                        },
+                        "U": {
+                          "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                        }
+                      }
+                    },
+                    "tracks": [
+                      {
+                        "id": "type",
+                        "kind": "visual"
+                      },
+                      {
+                        "id": "sprite",
+                        "kind": "visual"
+                      },
+                      {
+                        "id": "plate",
+                        "kind": "visual"
+                      },
+                      {
+                        "id": "vo",
+                        "kind": "audio"
+                      },
+                      {
+                        "id": "music",
+                        "kind": "audio"
+                      }
+                    ]
+                  }
+                },
+                "op": "remove",
+                "path": [],
+                "ref": "internal-revision:internal-film"
+              }
+            ],
+            "tags": []
+          }
+        ]
+      },
+      "receipt": {
+        "command_kind": "timeline.commit",
+        "created_at": "2026-10-23T16:09:26.362+00:00",
+        "event_ids": [
+          "4"
+        ],
+        "idempotency_key": "peer",
+        "project_id": "c6212e6152ae4ef2af6c947816fd3bb4",
+        "project_seq": [
+          8,
+          8
+        ],
+        "receipt_id": "txn-6951a274c20f44bc9e057f2cd6ba5ae6",
+        "request_hash": "acc511b5f4b4a2004f09b7ee471dc8c75a67a8a954d228c90828ffaba7a1615c",
+        "result": {
+          "accepted_revision_id": "authoring-parent-revision-1280bc40d6c0e2eb56fc500c3f951e1fbb2b18346292beca8e0a69b119e1555f",
+          "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+          "base_revision_id": "saved-parent",
+          "canonical_document": {
+            "dependency_manifest": {
+              "documents": [],
+              "internal_timelines": [
+                {
+                  "content_digest": "sha256:46f777aa4e5625edabcf1bf3a331e5d07a962a6b19b0992017a285994607a6d0",
+                  "revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                  "timeline_id": "t"
+                }
+              ],
+              "media": [
+                {
+                  "content_digest": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04",
+                  "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                },
+                {
+                  "content_digest": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1",
+                  "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                },
+                {
+                  "content_digest": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7",
+                  "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                },
+                {
+                  "content_digest": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9",
+                  "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                }
+              ],
+              "shots": [
+                {
+                  "content_digest": "sha256:b13b1486a376a1ea7d51bd7dceace47e5f07de633d5d139402afe655d2b0314c",
+                  "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                  "revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+                  "shot_id": "film"
+                }
+              ]
+            },
+            "internal_timeline_revisions": [
+              {
+                "content_digest": "sha256:46f777aa4e5625edabcf1bf3a331e5d07a962a6b19b0992017a285994607a6d0",
+                "payload": {
+                  "assets": [],
+                  "audio": [],
+                  "clips": [
+                    {
+                      "app": {
+                        "astrid": {
+                          "cut": "c1"
+                        }
+                      },
+                      "asset": "P",
+                      "at": 0.0,
+                      "clipType": "am-snap-plate",
+                      "hold": 4.0,
+                      "id": "p1",
+                      "params": {},
+                      "track": "plate"
+                    },
+                    {
+                      "app": {
+                        "astrid": {
+                          "cut": "c2"
+                        }
+                      },
+                      "asset": "P",
+                      "at": 4.0,
+                      "clipType": "am-snap-plate",
+                      "hold": 4.0,
+                      "id": "p2",
+                      "params": {},
+                      "track": "plate"
+                    },
+                    {
+                      "app": {
+                        "astrid": {
+                          "cut": "c3"
+                        }
+                      },
+                      "asset": "P",
+                      "at": 8.0,
+                      "clipType": "am-snap-plate",
+                      "hold": 4.0,
+                      "id": "p3",
+                      "params": {},
+                      "track": "plate"
+                    },
+                    {
+                      "asset": "R",
+                      "at": 3.5,
+                      "clipType": "am-sprite",
+                      "hold": 1.0,
+                      "id": "cross",
+                      "params": {},
+                      "track": "sprite"
+                    },
+                    {
+                      "asset": "R",
+                      "at": 5.0,
+                      "clipType": "am-sprite",
+                      "hold": 1.0,
+                      "id": "inside",
+                      "params": {},
+                      "track": "sprite"
+                    },
+                    {
+                      "at": 9.0,
+                      "clipType": "am-type",
+                      "hold": 1.0,
+                      "id": "late",
+                      "params": {
+                        "text": "hi"
+                      },
+                      "track": "type"
+                    },
+                    {
+                      "app": {
+                        "astrid": {
+                          "segment": "s2",
+                          "text": "changed",
+                          "words": [
+                            [
+                              0.1,
+                              0.4,
+                              "second"
+                            ]
+                          ]
+                        }
+                      },
+                      "asset": "U",
+                      "at": 4.5,
+                      "clipType": "media",
+                      "from": 0.0,
+                      "id": "vo2",
+                      "to": 2.0,
+                      "track": "vo"
+                    },
+                    {
+                      "asset": "Q",
+                      "at": 0.0,
+                      "clipType": "media",
+                      "from": 0.0,
+                      "id": "bed",
+                      "to": 12.0,
+                      "track": "music",
+                      "volume": 0.5
+                    }
+                  ],
+                  "effects": [],
+                  "layout": {},
+                  "registry": {
+                    "assets": {
+                      "P": {
+                        "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                      },
+                      "Q": {
+                        "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                      },
+                      "R": {
+                        "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                      },
+                      "U": {
+                        "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                      }
+                    }
+                  },
+                  "tracks": [
+                    {
+                      "id": "type",
+                      "kind": "visual"
+                    },
+                    {
+                      "id": "sprite",
+                      "kind": "visual"
+                    },
+                    {
+                      "id": "plate",
+                      "kind": "visual"
+                    },
+                    {
+                      "id": "vo",
+                      "kind": "audio"
+                    },
+                    {
+                      "id": "music",
+                      "kind": "audio"
+                    }
+                  ]
+                },
+                "revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                "timeline_id": "t"
+              }
+            ],
+            "parent_revision": {
+              "content_digest": "sha256:6c4ef455f45290f387bce58e9603cd44091796ec618c27218e3519a30c8f60a8",
+              "payload": {
+                "clips": [],
+                "config": {
+                  "app": {
+                    "astrid": {
+                      "chapters": [
+                        {
+                          "from": "c1",
+                          "name": "01 ONE"
+                        },
+                        {
+                          "from": "c2",
+                          "name": "02 TWO"
+                        },
+                        {
+                          "from": "c3",
+                          "name": "03 THREE"
+                        }
+                      ]
+                    }
+                  },
+                  "theme_overrides": {
+                    "visual": {
+                      "canvas": {
+                        "fps": 30,
+                        "height": 180,
+                        "width": 320
+                      }
+                    }
+                  },
+                  "tracks": [
+                    {
+                      "id": "picture",
+                      "kind": "visual"
+                    }
+                  ]
+                },
+                "occurrences": [
+                  {
+                    "duration_ms": 12000,
+                    "gain": 1,
+                    "muted": false,
+                    "occurrence_id": "occ-film",
+                    "placement": {
+                      "start_ms": 0
+                    },
+                    "provenance": {},
+                    "shot_id": "film",
+                    "shot_revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+                    "source_offset": {
+                      "end": 0,
+                      "start": 0
+                    },
+                    "speed": {
+                      "denominator": 1,
+                      "numerator": 1
+                    },
+                    "track": "picture",
+                    "transform": {}
+                  }
+                ],
+                "registry": {}
+              },
+              "revision_id": "authoring-parent-revision-1280bc40d6c0e2eb56fc500c3f951e1fbb2b18346292beca8e0a69b119e1555f"
+            },
+            "project_id": "c6212e6152ae4ef2af6c947816fd3bb4",
+            "schema_version": 1,
+            "shot_revisions": [
+              {
+                "content_digest": "sha256:b13b1486a376a1ea7d51bd7dceace47e5f07de633d5d139402afe655d2b0314c",
+                "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                "payload": {
+                  "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                  "items": [],
+                  "metadata": {},
+                  "name": "FILM",
+                  "pools": [],
+                  "text_bindings": []
+                },
+                "revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+                "shot_id": "film"
+              }
+            ],
+            "timeline_id": "t"
+          },
+          "commands": [
+            {
+              "args": {
+                "changes": [
+                  {
+                    "before": {
+                      "state": "present",
+                      "value": "second line"
+                    },
+                    "op": "set",
+                    "path": [
+                      "clips",
+                      "id:vo2",
+                      "app",
+                      "astrid",
+                      "text"
+                    ],
+                    "ref": "internal-revision:internal-film",
+                    "value": "changed"
+                  }
+                ]
+              },
+              "authorship": {
+                "occurrence:occ-film/clip:vo2::app.astrid.text": "direct"
+              },
+              "bindings": {},
+              "created": [],
+              "expect": {
+                "occurrence:occ-film/clip:vo2::app.astrid.text": {
+                  "state": "present",
+                  "value": "second line"
+                }
+              },
+              "intent": {},
+              "op": "doc.patch",
+              "reads": [
+                {
+                  "path": [
+                    "app",
+                    "astrid",
+                    "text"
+                  ],
+                  "ref": "occurrence:occ-film/clip:vo2",
+                  "state": {
+                    "state": "present",
+                    "value": "second line"
+                  }
+                }
+              ],
+              "resolved": [],
+              "schema_version": 1,
+              "select": null,
+              "selections": [],
+              "version": "1"
+            }
+          ],
+          "compiler_version": "authoring-bundle-1",
+          "document_digest": "sha256:75c169e4e3161c30ca8d9d958274849be2e9d217875f0d6ba1f47ec3bba69ecf",
+          "id_map": {},
+          "label": "Peer",
+          "merge_mode": "fields",
+          "previous_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+          "previous_revision_id": "saved-parent",
+          "provider_version": "astrid-v1",
+          "publisher": "editor",
+          "rebased_onto": null,
+          "status": "accepted",
+          "steps": [
+            {
+              "command_ordinals": [
+                0
+              ],
+              "dependencies": [
+                {
+                  "kind": "field",
+                  "path": [
+                    "clips",
+                    "id:vo2",
+                    "app",
+                    "astrid",
+                    "text"
+                  ],
+                  "ref": "internal-revision:internal-film",
+                  "state": {
+                    "state": "present",
+                    "value": "second line"
+                  }
+                }
+              ],
+              "id": "edit",
+              "intent": "",
+              "label": "Peer",
+              "patch": [
+                {
+                  "before": {
+                    "state": "absent"
+                  },
+                  "op": "set",
+                  "path": [],
+                  "ref": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                  "value": {
+                    "assets": [],
+                    "audio": [],
+                    "clips": [
+                      {
+                        "app": {
+                          "astrid": {
+                            "cut": "c1"
+                          }
+                        },
+                        "asset": "P",
+                        "at": 0.0,
+                        "clipType": "am-snap-plate",
+                        "hold": 4.0,
+                        "id": "p1",
+                        "params": {},
+                        "track": "plate"
+                      },
+                      {
+                        "app": {
+                          "astrid": {
+                            "cut": "c2"
+                          }
+                        },
+                        "asset": "P",
+                        "at": 4.0,
+                        "clipType": "am-snap-plate",
+                        "hold": 4.0,
+                        "id": "p2",
+                        "params": {},
+                        "track": "plate"
+                      },
+                      {
+                        "app": {
+                          "astrid": {
+                            "cut": "c3"
+                          }
+                        },
+                        "asset": "P",
+                        "at": 8.0,
+                        "clipType": "am-snap-plate",
+                        "hold": 4.0,
+                        "id": "p3",
+                        "params": {},
+                        "track": "plate"
+                      },
+                      {
+                        "asset": "R",
+                        "at": 3.5,
+                        "clipType": "am-sprite",
+                        "hold": 1.0,
+                        "id": "cross",
+                        "params": {},
+                        "track": "sprite"
+                      },
+                      {
+                        "asset": "R",
+                        "at": 5.0,
+                        "clipType": "am-sprite",
+                        "hold": 1.0,
+                        "id": "inside",
+                        "params": {},
+                        "track": "sprite"
+                      },
+                      {
+                        "at": 9.0,
+                        "clipType": "am-type",
+                        "hold": 1.0,
+                        "id": "late",
+                        "params": {
+                          "text": "hi"
+                        },
+                        "track": "type"
+                      },
+                      {
+                        "app": {
+                          "astrid": {
+                            "segment": "s2",
+                            "text": "changed",
+                            "words": [
+                              [
+                                0.1,
+                                0.4,
+                                "second"
+                              ]
+                            ]
+                          }
+                        },
+                        "asset": "U",
+                        "at": 4.5,
+                        "clipType": "media",
+                        "from": 0.0,
+                        "id": "vo2",
+                        "to": 2.0,
+                        "track": "vo"
+                      },
+                      {
+                        "asset": "Q",
+                        "at": 0.0,
+                        "clipType": "media",
+                        "from": 0.0,
+                        "id": "bed",
+                        "to": 12.0,
+                        "track": "music",
+                        "volume": 0.5
+                      }
+                    ],
+                    "effects": [],
+                    "layout": {},
+                    "registry": {
+                      "assets": {
+                        "P": {
+                          "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                        },
+                        "Q": {
+                          "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                        },
+                        "R": {
+                          "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                        },
+                        "U": {
+                          "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                        }
+                      }
+                    },
+                    "tracks": [
+                      {
+                        "id": "type",
+                        "kind": "visual"
+                      },
+                      {
+                        "id": "sprite",
+                        "kind": "visual"
+                      },
+                      {
+                        "id": "plate",
+                        "kind": "visual"
+                      },
+                      {
+                        "id": "vo",
+                        "kind": "audio"
+                      },
+                      {
+                        "id": "music",
+                        "kind": "audio"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "before": {
+                    "state": "absent"
+                  },
+                  "op": "set",
+                  "path": [],
+                  "ref": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+                  "value": {
+                    "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                    "items": [],
+                    "metadata": {},
+                    "name": "FILM",
+                    "pools": [],
+                    "text_bindings": []
+                  }
+                },
+                {
+                  "before": {
+                    "state": "present",
+                    "value": "shot-film"
+                  },
+                  "op": "set",
+                  "path": [
+                    "occurrences",
+                    "occurrence_id:occ-film",
+                    "shot_revision_id"
+                  ],
+                  "ref": "parent",
+                  "value": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c"
+                },
+                {
+                  "before": {
+                    "state": "present",
+                    "value": {
+                      "internal_timeline_revision_id": "internal-film",
+                      "items": [],
+                      "metadata": {},
+                      "name": "FILM",
+                      "pools": [],
+                      "text_bindings": []
+                    }
+                  },
+                  "op": "remove",
+                  "path": [],
+                  "ref": "shot-revision:shot-film"
+                },
+                {
+                  "before": {
+                    "state": "present",
+                    "value": {
+                      "assets": [],
+                      "audio": [],
+                      "clips": [
+                        {
+                          "app": {
+                            "astrid": {
+                              "cut": "c1"
+                            }
+                          },
+                          "asset": "P",
+                          "at": 0.0,
+                          "clipType": "am-snap-plate",
+                          "hold": 4.0,
+                          "id": "p1",
+                          "params": {},
+                          "track": "plate"
+                        },
+                        {
+                          "app": {
+                            "astrid": {
+                              "cut": "c2"
+                            }
+                          },
+                          "asset": "P",
+                          "at": 4.0,
+                          "clipType": "am-snap-plate",
+                          "hold": 4.0,
+                          "id": "p2",
+                          "params": {},
+                          "track": "plate"
+                        },
+                        {
+                          "app": {
+                            "astrid": {
+                              "cut": "c3"
+                            }
+                          },
+                          "asset": "P",
+                          "at": 8.0,
+                          "clipType": "am-snap-plate",
+                          "hold": 4.0,
+                          "id": "p3",
+                          "params": {},
+                          "track": "plate"
+                        },
+                        {
+                          "asset": "R",
+                          "at": 3.5,
+                          "clipType": "am-sprite",
+                          "hold": 1.0,
+                          "id": "cross",
+                          "params": {},
+                          "track": "sprite"
+                        },
+                        {
+                          "asset": "R",
+                          "at": 5.0,
+                          "clipType": "am-sprite",
+                          "hold": 1.0,
+                          "id": "inside",
+                          "params": {},
+                          "track": "sprite"
+                        },
+                        {
+                          "at": 9.0,
+                          "clipType": "am-type",
+                          "hold": 1.0,
+                          "id": "late",
+                          "params": {
+                            "text": "hi"
+                          },
+                          "track": "type"
+                        },
+                        {
+                          "app": {
+                            "astrid": {
+                              "segment": "s2",
+                              "text": "second line",
+                              "words": [
+                                [
+                                  0.1,
+                                  0.4,
+                                  "second"
+                                ]
+                              ]
+                            }
+                          },
+                          "asset": "U",
+                          "at": 4.5,
+                          "clipType": "media",
+                          "from": 0.0,
+                          "id": "vo2",
+                          "to": 2.0,
+                          "track": "vo"
+                        },
+                        {
+                          "asset": "Q",
+                          "at": 0.0,
+                          "clipType": "media",
+                          "from": 0.0,
+                          "id": "bed",
+                          "to": 12.0,
+                          "track": "music",
+                          "volume": 0.5
+                        }
+                      ],
+                      "effects": [],
+                      "layout": {},
+                      "registry": {
+                        "assets": {
+                          "P": {
+                            "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                          },
+                          "Q": {
+                            "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                          },
+                          "R": {
+                            "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                          },
+                          "U": {
+                            "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                          }
+                        }
+                      },
+                      "tracks": [
+                        {
+                          "id": "type",
+                          "kind": "visual"
+                        },
+                        {
+                          "id": "sprite",
+                          "kind": "visual"
+                        },
+                        {
+                          "id": "plate",
+                          "kind": "visual"
+                        },
+                        {
+                          "id": "vo",
+                          "kind": "audio"
+                        },
+                        {
+                          "id": "music",
+                          "kind": "audio"
+                        }
+                      ]
+                    }
+                  },
+                  "op": "remove",
+                  "path": [],
+                  "ref": "internal-revision:internal-film"
+                }
+              ],
+              "tags": []
+            }
+          ]
+        }
+      }
+    },
+    "status": "returned"
+  },
+  "prepared": {
+    "canonical_document": {
+      "dependency_manifest": {
+        "documents": [],
+        "internal_timelines": [
+          {
+            "content_digest": "sha256:46f777aa4e5625edabcf1bf3a331e5d07a962a6b19b0992017a285994607a6d0",
+            "revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+            "timeline_id": "t"
+          }
+        ],
+        "media": [
+          {
+            "content_digest": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04",
+            "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+          },
+          {
+            "content_digest": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1",
+            "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+          },
+          {
+            "content_digest": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7",
+            "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+          },
+          {
+            "content_digest": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9",
+            "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+          }
+        ],
+        "shots": [
+          {
+            "content_digest": "sha256:b13b1486a376a1ea7d51bd7dceace47e5f07de633d5d139402afe655d2b0314c",
+            "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+            "revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+            "shot_id": "film"
+          }
+        ]
+      },
+      "internal_timeline_revisions": [
+        {
+          "content_digest": "sha256:46f777aa4e5625edabcf1bf3a331e5d07a962a6b19b0992017a285994607a6d0",
+          "payload": {
+            "assets": [],
+            "audio": [],
+            "clips": [
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c1"
+                  }
+                },
+                "asset": "P",
+                "at": 0.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p1",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c2"
+                  }
+                },
+                "asset": "P",
+                "at": 4.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p2",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c3"
+                  }
+                },
+                "asset": "P",
+                "at": 8.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p3",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "asset": "R",
+                "at": 3.5,
+                "clipType": "am-sprite",
+                "hold": 1.0,
+                "id": "cross",
+                "params": {},
+                "track": "sprite"
+              },
+              {
+                "asset": "R",
+                "at": 5.0,
+                "clipType": "am-sprite",
+                "hold": 1.0,
+                "id": "inside",
+                "params": {},
+                "track": "sprite"
+              },
+              {
+                "at": 9.0,
+                "clipType": "am-type",
+                "hold": 1.0,
+                "id": "late",
+                "params": {
+                  "text": "hi"
+                },
+                "track": "type"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "segment": "s2",
+                    "text": "changed",
+                    "words": [
+                      [
+                        0.1,
+                        0.4,
+                        "second"
+                      ]
+                    ]
+                  }
+                },
+                "asset": "U",
+                "at": 4.5,
+                "clipType": "media",
+                "from": 0.0,
+                "id": "vo2",
+                "to": 2.0,
+                "track": "vo"
+              },
+              {
+                "asset": "Q",
+                "at": 0.0,
+                "clipType": "media",
+                "from": 0.0,
+                "id": "bed",
+                "to": 12.0,
+                "track": "music",
+                "volume": 0.5
+              }
+            ],
+            "effects": [],
+            "layout": {},
+            "registry": {
+              "assets": {
+                "P": {
+                  "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                },
+                "Q": {
+                  "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                },
+                "R": {
+                  "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                },
+                "U": {
+                  "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                }
+              }
+            },
+            "tracks": [
+              {
+                "id": "type",
+                "kind": "visual"
+              },
+              {
+                "id": "sprite",
+                "kind": "visual"
+              },
+              {
+                "id": "plate",
+                "kind": "visual"
+              },
+              {
+                "id": "vo",
+                "kind": "audio"
+              },
+              {
+                "id": "music",
+                "kind": "audio"
+              }
+            ]
+          },
+          "revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+          "timeline_id": "t"
+        }
+      ],
+      "parent_revision": {
+        "content_digest": "sha256:6c4ef455f45290f387bce58e9603cd44091796ec618c27218e3519a30c8f60a8",
+        "payload": {
+          "clips": [],
+          "config": {
+            "app": {
+              "astrid": {
+                "chapters": [
+                  {
+                    "from": "c1",
+                    "name": "01 ONE"
+                  },
+                  {
+                    "from": "c2",
+                    "name": "02 TWO"
+                  },
+                  {
+                    "from": "c3",
+                    "name": "03 THREE"
+                  }
+                ]
+              }
+            },
+            "theme_overrides": {
+              "visual": {
+                "canvas": {
+                  "fps": 30,
+                  "height": 180,
+                  "width": 320
+                }
+              }
+            },
+            "tracks": [
+              {
+                "id": "picture",
+                "kind": "visual"
+              }
+            ]
+          },
+          "occurrences": [
+            {
+              "duration_ms": 12000,
+              "gain": 1,
+              "muted": false,
+              "occurrence_id": "occ-film",
+              "placement": {
+                "start_ms": 0
+              },
+              "provenance": {},
+              "shot_id": "film",
+              "shot_revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+              "source_offset": {
+                "end": 0,
+                "start": 0
+              },
+              "speed": {
+                "denominator": 1,
+                "numerator": 1
+              },
+              "track": "picture",
+              "transform": {}
+            }
+          ],
+          "registry": {}
+        },
+        "revision_id": "authoring-parent-revision-1280bc40d6c0e2eb56fc500c3f951e1fbb2b18346292beca8e0a69b119e1555f"
+      },
+      "project_id": "c6212e6152ae4ef2af6c947816fd3bb4",
+      "schema_version": 1,
+      "shot_revisions": [
+        {
+          "content_digest": "sha256:b13b1486a376a1ea7d51bd7dceace47e5f07de633d5d139402afe655d2b0314c",
+          "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+          "payload": {
+            "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+            "items": [],
+            "metadata": {},
+            "name": "FILM",
+            "pools": [],
+            "text_bindings": []
+          },
+          "revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+          "shot_id": "film"
+        }
+      ],
+      "timeline_id": "t"
+    },
+    "compiler_version": "authoring-bundle-1",
+    "document_digest": "sha256:75c169e4e3161c30ca8d9d958274849be2e9d217875f0d6ba1f47ec3bba69ecf",
+    "expected_head": {
+      "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+      "revision_id": "saved-parent"
+    },
+    "id_map": {},
+    "provider_version": "astrid-v1",
+    "records": {
+      "commands": [
+        {
+          "bindings": [
+            {
+              "boundary": {
+                "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "base_revision_id": "saved-parent",
+                "change_ordinal": 0,
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                  "revision_id": "saved-parent"
+                },
+                "phase": "input",
+                "step_id": "edit"
+              },
+              "change": {
+                "before": {
+                  "state": "present",
+                  "value": "second line"
+                },
+                "op": "set",
+                "path": [
+                  "clips",
+                  "id:vo2",
+                  "app",
+                  "astrid",
+                  "text"
+                ],
+                "ref": "internal-revision:internal-film",
+                "value": "changed"
+              },
+              "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+              "dependencies": [],
+              "key": "doc.patch:0",
+              "owners": [
+                "occurrence:occ-film/shot"
+              ],
+              "path": [
+                "clips",
+                "id:vo2",
+                "app",
+                "astrid",
+                "text"
+              ],
+              "physical_ref": "internal-revision:internal-film",
+              "policy": "fixed",
+              "ref": "internal-revision:internal-film",
+              "revision_id": "internal-film",
+              "write_range": [
+                0,
+                1
+              ]
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "base_revision_id": "saved-parent",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                  "revision_id": "saved-parent"
+                },
+                "phase": "effect",
+                "side": "after",
+                "step_id": "edit"
+              },
+              "content_digest": "sha256:46f777aa4e5625edabcf1bf3a331e5d07a962a6b19b0992017a285994607a6d0",
+              "dependencies": [],
+              "effect_ordinal": 0,
+              "key": "commit.effect",
+              "owners": [
+                "occurrence:occ-film/shot"
+              ],
+              "path": [],
+              "physical_ref": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+              "policy": "fixed",
+              "ref": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+              "revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+              "step_id": "edit"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "base_revision_id": "saved-parent",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                  "revision_id": "saved-parent"
+                },
+                "phase": "effect",
+                "side": "after",
+                "step_id": "edit"
+              },
+              "content_digest": "sha256:b13b1486a376a1ea7d51bd7dceace47e5f07de633d5d139402afe655d2b0314c",
+              "dependencies": [],
+              "effect_ordinal": 1,
+              "key": "commit.effect",
+              "owners": [
+                "occurrence:occ-film/shot"
+              ],
+              "path": [],
+              "physical_ref": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+              "policy": "fixed",
+              "ref": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+              "revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+              "step_id": "edit"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "base_revision_id": "saved-parent",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                  "revision_id": "saved-parent"
+                },
+                "phase": "effect",
+                "side": "before",
+                "step_id": "edit"
+              },
+              "content_digest": "sha256:f0d3cf169ce9d4e701201b32c4087c8577977d44839bca11cc30685a60432716",
+              "dependencies": [],
+              "effect_ordinal": 2,
+              "key": "commit.effect",
+              "path": [
+                "occurrences",
+                "occurrence_id:occ-film",
+                "shot_revision_id"
+              ],
+              "physical_ref": "parent",
+              "policy": "fixed",
+              "ref": "parent",
+              "revision_id": "saved-parent",
+              "step_id": "edit"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "base_revision_id": "saved-parent",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                  "revision_id": "saved-parent"
+                },
+                "phase": "effect",
+                "side": "after",
+                "step_id": "edit"
+              },
+              "content_digest": "sha256:6c4ef455f45290f387bce58e9603cd44091796ec618c27218e3519a30c8f60a8",
+              "dependencies": [],
+              "effect_ordinal": 2,
+              "key": "commit.effect",
+              "path": [
+                "occurrences",
+                "occurrence_id:occ-film",
+                "shot_revision_id"
+              ],
+              "physical_ref": "parent",
+              "policy": "fixed",
+              "ref": "parent",
+              "revision_id": "authoring-parent-revision-1280bc40d6c0e2eb56fc500c3f951e1fbb2b18346292beca8e0a69b119e1555f",
+              "step_id": "edit"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "base_revision_id": "saved-parent",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                  "revision_id": "saved-parent"
+                },
+                "phase": "effect",
+                "side": "before",
+                "step_id": "edit"
+              },
+              "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+              "dependencies": [],
+              "effect_ordinal": 3,
+              "key": "commit.effect",
+              "owners": [
+                "occurrence:occ-film/shot"
+              ],
+              "path": [],
+              "physical_ref": "shot-revision:shot-film",
+              "policy": "fixed",
+              "ref": "shot-revision:shot-film",
+              "revision_id": "shot-film",
+              "step_id": "edit"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "base_revision_id": "saved-parent",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                  "revision_id": "saved-parent"
+                },
+                "phase": "effect",
+                "side": "before",
+                "step_id": "edit"
+              },
+              "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+              "dependencies": [],
+              "effect_ordinal": 4,
+              "key": "commit.effect",
+              "owners": [
+                "occurrence:occ-film/shot"
+              ],
+              "path": [],
+              "physical_ref": "internal-revision:internal-film",
+              "policy": "fixed",
+              "ref": "internal-revision:internal-film",
+              "revision_id": "internal-film",
+              "step_id": "edit"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "base_revision_id": "saved-parent",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                  "revision_id": "saved-parent"
+                },
+                "phase": "input",
+                "step_id": "edit"
+              },
+              "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+              "dependencies": [],
+              "edge_after": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+              "edge_before": "internal-revision:internal-film",
+              "key": "commit.materialization",
+              "owner": "occurrence:occ-film/shot",
+              "owners": [
+                "occurrence:occ-film/shot"
+              ],
+              "physical_ref": "shot-revision:shot-film",
+              "policy": "fixed",
+              "ref": "shot-revision:shot-film",
+              "revision_id": "shot-film",
+              "step_id": "edit",
+              "successor": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "base_revision_id": "saved-parent",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                  "revision_id": "saved-parent"
+                },
+                "phase": "input",
+                "step_id": "edit"
+              },
+              "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+              "dependencies": [],
+              "edge_after": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+              "edge_before": "shot-revision:shot-film",
+              "key": "commit.materialization",
+              "owner": "occurrence:occ-film/shot",
+              "owners": [
+                "occurrence:occ-film/shot"
+              ],
+              "physical_ref": "internal-revision:internal-film",
+              "policy": "fixed",
+              "ref": "internal-revision:internal-film",
+              "revision_id": "internal-film",
+              "step_id": "edit",
+              "successor": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85"
+            }
+          ],
+          "command": {
+            "args": {
+              "changes": [
+                {
+                  "before": {
+                    "state": "present",
+                    "value": "second line"
+                  },
+                  "op": "set",
+                  "path": [
+                    "clips",
+                    "id:vo2",
+                    "app",
+                    "astrid",
+                    "text"
+                  ],
+                  "ref": "internal-revision:internal-film",
+                  "value": "changed"
+                }
+              ]
+            },
+            "authorship": {
+              "occurrence:occ-film/clip:vo2::app.astrid.text": "direct"
+            },
+            "bindings": {},
+            "created": [],
+            "expect": {
+              "occurrence:occ-film/clip:vo2::app.astrid.text": {
+                "state": "present",
+                "value": "second line"
+              }
+            },
+            "intent": {},
+            "op": "doc.patch",
+            "reads": [
+              {
+                "path": [
+                  "app",
+                  "astrid",
+                  "text"
+                ],
+                "ref": "occurrence:occ-film/clip:vo2",
+                "state": {
+                  "state": "present",
+                  "value": "second line"
+                }
+              }
+            ],
+            "resolved": [],
+            "schema_version": 1,
+            "select": null,
+            "selections": [],
+            "version": "1"
+          },
+          "created": [],
+          "dependencies": [],
+          "derived_writes": [],
+          "ordinal": 0,
+          "reads": [
+            {
+              "path": [
+                "app",
+                "astrid",
+                "text"
+              ],
+              "ref": "occurrence:occ-film/clip:vo2",
+              "state": {
+                "state": "present",
+                "value": "second line"
+              }
+            }
+          ],
+          "selections": [],
+          "writes": [
+            {
+              "after": {
+                "state": "present",
+                "value": "changed"
+              },
+              "before": {
+                "state": "present",
+                "value": "second line"
+              },
+              "path": [
+                "app",
+                "astrid",
+                "text"
+              ],
+              "ref": "occurrence:occ-film/clip:vo2"
+            }
+          ]
+        }
+      ],
+      "label": "Peer",
+      "merge_mode": "fields",
+      "restored_from": null,
+      "schema_version": 1,
+      "steps": [
+        {
+          "command_ordinals": [
+            0
+          ],
+          "dependencies": [
+            {
+              "kind": "field",
+              "path": [
+                "clips",
+                "id:vo2",
+                "app",
+                "astrid",
+                "text"
+              ],
+              "ref": "internal-revision:internal-film",
+              "state": {
+                "state": "present",
+                "value": "second line"
+              }
+            }
+          ],
+          "id": "edit",
+          "intent": "",
+          "label": "Peer",
+          "patch": [
+            {
+              "before": {
+                "state": "absent"
+              },
+              "op": "set",
+              "path": [],
+              "ref": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+              "value": {
+                "assets": [],
+                "audio": [],
+                "clips": [
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c1"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 0.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p1",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c2"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 4.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p2",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c3"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 8.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p3",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "asset": "R",
+                    "at": 3.5,
+                    "clipType": "am-sprite",
+                    "hold": 1.0,
+                    "id": "cross",
+                    "params": {},
+                    "track": "sprite"
+                  },
+                  {
+                    "asset": "R",
+                    "at": 5.0,
+                    "clipType": "am-sprite",
+                    "hold": 1.0,
+                    "id": "inside",
+                    "params": {},
+                    "track": "sprite"
+                  },
+                  {
+                    "at": 9.0,
+                    "clipType": "am-type",
+                    "hold": 1.0,
+                    "id": "late",
+                    "params": {
+                      "text": "hi"
+                    },
+                    "track": "type"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "segment": "s2",
+                        "text": "changed",
+                        "words": [
+                          [
+                            0.1,
+                            0.4,
+                            "second"
+                          ]
+                        ]
+                      }
+                    },
+                    "asset": "U",
+                    "at": 4.5,
+                    "clipType": "media",
+                    "from": 0.0,
+                    "id": "vo2",
+                    "to": 2.0,
+                    "track": "vo"
+                  },
+                  {
+                    "asset": "Q",
+                    "at": 0.0,
+                    "clipType": "media",
+                    "from": 0.0,
+                    "id": "bed",
+                    "to": 12.0,
+                    "track": "music",
+                    "volume": 0.5
+                  }
+                ],
+                "effects": [],
+                "layout": {},
+                "registry": {
+                  "assets": {
+                    "P": {
+                      "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                    },
+                    "Q": {
+                      "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                    },
+                    "R": {
+                      "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                    },
+                    "U": {
+                      "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                    }
+                  }
+                },
+                "tracks": [
+                  {
+                    "id": "type",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "sprite",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "plate",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "vo",
+                    "kind": "audio"
+                  },
+                  {
+                    "id": "music",
+                    "kind": "audio"
+                  }
+                ]
+              }
+            },
+            {
+              "before": {
+                "state": "absent"
+              },
+              "op": "set",
+              "path": [],
+              "ref": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+              "value": {
+                "internal_timeline_revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+                "items": [],
+                "metadata": {},
+                "name": "FILM",
+                "pools": [],
+                "text_bindings": []
+              }
+            },
+            {
+              "before": {
+                "state": "present",
+                "value": "shot-film"
+              },
+              "op": "set",
+              "path": [
+                "occurrences",
+                "occurrence_id:occ-film",
+                "shot_revision_id"
+              ],
+              "ref": "parent",
+              "value": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c"
+            },
+            {
+              "before": {
+                "state": "present",
+                "value": {
+                  "internal_timeline_revision_id": "internal-film",
+                  "items": [],
+                  "metadata": {},
+                  "name": "FILM",
+                  "pools": [],
+                  "text_bindings": []
+                }
+              },
+              "op": "remove",
+              "path": [],
+              "ref": "shot-revision:shot-film"
+            },
+            {
+              "before": {
+                "state": "present",
+                "value": {
+                  "assets": [],
+                  "audio": [],
+                  "clips": [
+                    {
+                      "app": {
+                        "astrid": {
+                          "cut": "c1"
+                        }
+                      },
+                      "asset": "P",
+                      "at": 0.0,
+                      "clipType": "am-snap-plate",
+                      "hold": 4.0,
+                      "id": "p1",
+                      "params": {},
+                      "track": "plate"
+                    },
+                    {
+                      "app": {
+                        "astrid": {
+                          "cut": "c2"
+                        }
+                      },
+                      "asset": "P",
+                      "at": 4.0,
+                      "clipType": "am-snap-plate",
+                      "hold": 4.0,
+                      "id": "p2",
+                      "params": {},
+                      "track": "plate"
+                    },
+                    {
+                      "app": {
+                        "astrid": {
+                          "cut": "c3"
+                        }
+                      },
+                      "asset": "P",
+                      "at": 8.0,
+                      "clipType": "am-snap-plate",
+                      "hold": 4.0,
+                      "id": "p3",
+                      "params": {},
+                      "track": "plate"
+                    },
+                    {
+                      "asset": "R",
+                      "at": 3.5,
+                      "clipType": "am-sprite",
+                      "hold": 1.0,
+                      "id": "cross",
+                      "params": {},
+                      "track": "sprite"
+                    },
+                    {
+                      "asset": "R",
+                      "at": 5.0,
+                      "clipType": "am-sprite",
+                      "hold": 1.0,
+                      "id": "inside",
+                      "params": {},
+                      "track": "sprite"
+                    },
+                    {
+                      "at": 9.0,
+                      "clipType": "am-type",
+                      "hold": 1.0,
+                      "id": "late",
+                      "params": {
+                        "text": "hi"
+                      },
+                      "track": "type"
+                    },
+                    {
+                      "app": {
+                        "astrid": {
+                          "segment": "s2",
+                          "text": "second line",
+                          "words": [
+                            [
+                              0.1,
+                              0.4,
+                              "second"
+                            ]
+                          ]
+                        }
+                      },
+                      "asset": "U",
+                      "at": 4.5,
+                      "clipType": "media",
+                      "from": 0.0,
+                      "id": "vo2",
+                      "to": 2.0,
+                      "track": "vo"
+                    },
+                    {
+                      "asset": "Q",
+                      "at": 0.0,
+                      "clipType": "media",
+                      "from": 0.0,
+                      "id": "bed",
+                      "to": 12.0,
+                      "track": "music",
+                      "volume": 0.5
+                    }
+                  ],
+                  "effects": [],
+                  "layout": {},
+                  "registry": {
+                    "assets": {
+                      "P": {
+                        "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                      },
+                      "Q": {
+                        "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                      },
+                      "R": {
+                        "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                      },
+                      "U": {
+                        "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                      }
+                    }
+                  },
+                  "tracks": [
+                    {
+                      "id": "type",
+                      "kind": "visual"
+                    },
+                    {
+                      "id": "sprite",
+                      "kind": "visual"
+                    },
+                    {
+                      "id": "plate",
+                      "kind": "visual"
+                    },
+                    {
+                      "id": "vo",
+                      "kind": "audio"
+                    },
+                    {
+                      "id": "music",
+                      "kind": "audio"
+                    }
+                  ]
+                }
+              },
+              "op": "remove",
+              "path": [],
+              "ref": "internal-revision:internal-film"
+            }
+          ],
+          "tags": []
+        }
+      ],
+      "undo_of": [],
+      "undo_steps": null
+    },
+    "semantic_events": []
+  },
+  "provider_original": {
+    "bundle": {
+      "base_parent": {
+        "content_digest": "sha256:f0d3cf169ce9d4e701201b32c4087c8577977d44839bca11cc30685a60432716",
+        "revision_id": "saved-parent"
+      },
+      "base_parent_payload": {
+        "clips": [],
+        "config": {
+          "app": {
+            "astrid": {
+              "chapters": [
+                {
+                  "from": "c1",
+                  "name": "01 ONE"
+                },
+                {
+                  "from": "c2",
+                  "name": "02 TWO"
+                },
+                {
+                  "from": "c3",
+                  "name": "03 THREE"
+                }
+              ]
+            }
+          },
+          "theme_overrides": {
+            "visual": {
+              "canvas": {
+                "fps": 30,
+                "height": 180,
+                "width": 320
+              }
+            }
+          },
+          "tracks": [
+            {
+              "id": "picture",
+              "kind": "visual"
+            }
+          ]
+        },
+        "registry": {}
+      },
+      "base_placements": {
+        "occ-film": {
+          "duration_ms": 12000,
+          "gain": 1,
+          "muted": false,
+          "occurrence_id": "occ-film",
+          "placement": {
+            "start_ms": 0
+          },
+          "provenance": {},
+          "shot_id": "film",
+          "source_offset": {
+            "end": 0,
+            "start": 0
+          },
+          "speed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "track": "picture",
+          "transform": {}
+        }
+      },
+      "parent": {
+        "clips": [],
+        "config": {
+          "app": {
+            "astrid": {
+              "chapters": [
+                {
+                  "from": "c1",
+                  "name": "01 ONE"
+                },
+                {
+                  "from": "c2",
+                  "name": "02 TWO"
+                },
+                {
+                  "from": "c3",
+                  "name": "03 THREE"
+                }
+              ]
+            }
+          },
+          "theme_overrides": {
+            "visual": {
+              "canvas": {
+                "fps": 30,
+                "height": 180,
+                "width": 320
+              }
+            }
+          },
+          "tracks": [
+            {
+              "id": "picture",
+              "kind": "visual"
+            }
+          ]
+        },
+        "registry": {}
+      },
+      "placements": [
+        {
+          "duration_ms": 12000,
+          "gain": 1,
+          "muted": false,
+          "occurrence_id": "occ-film",
+          "placement": {
+            "start_ms": 0
+          },
+          "provenance": {},
+          "shot_id": "film",
+          "source_offset": {
+            "end": 0,
+            "start": 0
+          },
+          "speed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "track": "picture",
+          "transform": {}
+        }
+      ],
+      "project_id": "c6212e6152ae4ef2af6c947816fd3bb4",
+      "schema_version": 1,
+      "shots": {
+        "film": {
+          "base_internal_timeline": {
+            "assets": [],
+            "audio": [],
+            "clips": [
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c1"
+                  }
+                },
+                "asset": "P",
+                "at": 0.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p1",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c2"
+                  }
+                },
+                "asset": "P",
+                "at": 4.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p2",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c3"
+                  }
+                },
+                "asset": "P",
+                "at": 8.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p3",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "asset": "R",
+                "at": 3.5,
+                "clipType": "am-sprite",
+                "hold": 1.0,
+                "id": "cross",
+                "params": {},
+                "track": "sprite"
+              },
+              {
+                "asset": "R",
+                "at": 5.0,
+                "clipType": "am-sprite",
+                "hold": 1.0,
+                "id": "inside",
+                "params": {},
+                "track": "sprite"
+              },
+              {
+                "at": 9.0,
+                "clipType": "am-type",
+                "hold": 1.0,
+                "id": "late",
+                "params": {
+                  "text": "hi"
+                },
+                "track": "type"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "segment": "s2",
+                    "text": "second line",
+                    "words": [
+                      [
+                        0.1,
+                        0.4,
+                        "second"
+                      ]
+                    ]
+                  }
+                },
+                "asset": "U",
+                "at": 4.5,
+                "clipType": "media",
+                "from": 0.0,
+                "id": "vo2",
+                "to": 2.0,
+                "track": "vo"
+              },
+              {
+                "asset": "Q",
+                "at": 0.0,
+                "clipType": "media",
+                "from": 0.0,
+                "id": "bed",
+                "to": 12.0,
+                "track": "music",
+                "volume": 0.5
+              }
+            ],
+            "effects": [],
+            "layout": {},
+            "registry": {
+              "assets": {
+                "P": {
+                  "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                },
+                "Q": {
+                  "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                },
+                "R": {
+                  "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                },
+                "U": {
+                  "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                }
+              }
+            },
+            "tracks": [
+              {
+                "id": "type",
+                "kind": "visual"
+              },
+              {
+                "id": "sprite",
+                "kind": "visual"
+              },
+              {
+                "id": "plate",
+                "kind": "visual"
+              },
+              {
+                "id": "vo",
+                "kind": "audio"
+              },
+              {
+                "id": "music",
+                "kind": "audio"
+              }
+            ]
+          },
+          "base_payload": {
+            "internal_timeline_revision_id": "internal-film",
+            "items": [],
+            "metadata": {},
+            "name": "FILM",
+            "pools": [],
+            "text_bindings": []
+          },
+          "internal_timeline": {
+            "assets": [],
+            "audio": [],
+            "clips": [
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c1"
+                  }
+                },
+                "asset": "P",
+                "at": 0.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p1",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c2"
+                  }
+                },
+                "asset": "P",
+                "at": 4.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p2",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c3"
+                  }
+                },
+                "asset": "P",
+                "at": 8.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p3",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "asset": "R",
+                "at": 3.5,
+                "clipType": "am-sprite",
+                "hold": 1.0,
+                "id": "cross",
+                "params": {},
+                "track": "sprite"
+              },
+              {
+                "asset": "R",
+                "at": 5.0,
+                "clipType": "am-sprite",
+                "hold": 1.0,
+                "id": "inside",
+                "params": {},
+                "track": "sprite"
+              },
+              {
+                "at": 9.0,
+                "clipType": "am-type",
+                "hold": 1.0,
+                "id": "late",
+                "params": {
+                  "text": "hi"
+                },
+                "track": "type"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "segment": "s2",
+                    "text": "changed",
+                    "words": [
+                      [
+                        0.1,
+                        0.4,
+                        "second"
+                      ]
+                    ]
+                  }
+                },
+                "asset": "U",
+                "at": 4.5,
+                "clipType": "media",
+                "from": 0.0,
+                "id": "vo2",
+                "to": 2.0,
+                "track": "vo"
+              },
+              {
+                "asset": "Q",
+                "at": 0.0,
+                "clipType": "media",
+                "from": 0.0,
+                "id": "bed",
+                "to": 12.0,
+                "track": "music",
+                "volume": 0.5
+              }
+            ],
+            "effects": [],
+            "layout": {},
+            "registry": {
+              "assets": {
+                "P": {
+                  "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                },
+                "Q": {
+                  "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                },
+                "R": {
+                  "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                },
+                "U": {
+                  "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                }
+              }
+            },
+            "tracks": [
+              {
+                "id": "type",
+                "kind": "visual"
+              },
+              {
+                "id": "sprite",
+                "kind": "visual"
+              },
+              {
+                "id": "plate",
+                "kind": "visual"
+              },
+              {
+                "id": "vo",
+                "kind": "audio"
+              },
+              {
+                "id": "music",
+                "kind": "audio"
+              }
+            ]
+          },
+          "payload": {
+            "internal_timeline_revision_id": "internal-film",
+            "items": [],
+            "metadata": {},
+            "name": "FILM",
+            "pools": [],
+            "text_bindings": []
+          },
+          "shot_id": "film"
+        }
+      },
+      "source_mapping": {
+        "_doc_patch_images": {
+          "occurrence:occ-film": {
+            "internal_timeline": {
+              "assets": [],
+              "audio": [],
+              "clips": [
+                {
+                  "app": {
+                    "astrid": {
+                      "cut": "c1"
+                    }
+                  },
+                  "asset": "P",
+                  "at": 0.0,
+                  "clipType": "am-snap-plate",
+                  "hold": 4.0,
+                  "id": "p1",
+                  "params": {},
+                  "track": "plate"
+                },
+                {
+                  "app": {
+                    "astrid": {
+                      "cut": "c2"
+                    }
+                  },
+                  "asset": "P",
+                  "at": 4.0,
+                  "clipType": "am-snap-plate",
+                  "hold": 4.0,
+                  "id": "p2",
+                  "params": {},
+                  "track": "plate"
+                },
+                {
+                  "app": {
+                    "astrid": {
+                      "cut": "c3"
+                    }
+                  },
+                  "asset": "P",
+                  "at": 8.0,
+                  "clipType": "am-snap-plate",
+                  "hold": 4.0,
+                  "id": "p3",
+                  "params": {},
+                  "track": "plate"
+                },
+                {
+                  "asset": "R",
+                  "at": 3.5,
+                  "clipType": "am-sprite",
+                  "hold": 1.0,
+                  "id": "cross",
+                  "params": {},
+                  "track": "sprite"
+                },
+                {
+                  "asset": "R",
+                  "at": 5.0,
+                  "clipType": "am-sprite",
+                  "hold": 1.0,
+                  "id": "inside",
+                  "params": {},
+                  "track": "sprite"
+                },
+                {
+                  "at": 9.0,
+                  "clipType": "am-type",
+                  "hold": 1.0,
+                  "id": "late",
+                  "params": {
+                    "text": "hi"
+                  },
+                  "track": "type"
+                },
+                {
+                  "app": {
+                    "astrid": {
+                      "segment": "s2",
+                      "text": "changed",
+                      "words": [
+                        [
+                          0.1,
+                          0.4,
+                          "second"
+                        ]
+                      ]
+                    }
+                  },
+                  "asset": "U",
+                  "at": 4.5,
+                  "clipType": "media",
+                  "from": 0.0,
+                  "id": "vo2",
+                  "to": 2.0,
+                  "track": "vo"
+                },
+                {
+                  "asset": "Q",
+                  "at": 0.0,
+                  "clipType": "media",
+                  "from": 0.0,
+                  "id": "bed",
+                  "to": 12.0,
+                  "track": "music",
+                  "volume": 0.5
+                }
+              ],
+              "effects": [],
+              "layout": {},
+              "registry": {
+                "assets": {
+                  "P": {
+                    "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                  },
+                  "Q": {
+                    "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                  },
+                  "R": {
+                    "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                  },
+                  "U": {
+                    "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                  }
+                }
+              },
+              "tracks": [
+                {
+                  "id": "type",
+                  "kind": "visual"
+                },
+                {
+                  "id": "sprite",
+                  "kind": "visual"
+                },
+                {
+                  "id": "plate",
+                  "kind": "visual"
+                },
+                {
+                  "id": "vo",
+                  "kind": "audio"
+                },
+                {
+                  "id": "music",
+                  "kind": "audio"
+                }
+              ]
+            },
+            "internal_timeline_id": "t",
+            "payload": {
+              "internal_timeline_revision_id": "internal-film",
+              "items": [],
+              "metadata": {},
+              "name": "FILM",
+              "pools": [],
+              "text_bindings": []
+            },
+            "shot_id": "film",
+            "source_internal_revision": "internal-film",
+            "source_shot_revision": "shot-film"
+          }
+        },
+        "_runtime_document": {
+          "dependency_manifest": {
+            "documents": [],
+            "internal_timelines": [
+              {
+                "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+                "revision_id": "internal-film",
+                "timeline_id": "t"
+              }
+            ],
+            "media": [
+              {
+                "content_digest": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04",
+                "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+              },
+              {
+                "content_digest": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1",
+                "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+              },
+              {
+                "content_digest": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7",
+                "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+              },
+              {
+                "content_digest": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9",
+                "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+              }
+            ],
+            "shots": [
+              {
+                "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+                "internal_timeline_revision_id": "internal-film",
+                "revision_id": "shot-film",
+                "shot_id": "film"
+              }
+            ]
+          },
+          "internal_timeline_revisions": [
+            {
+              "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+              "payload": {
+                "assets": [],
+                "audio": [],
+                "clips": [
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c1"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 0.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p1",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c2"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 4.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p2",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c3"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 8.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p3",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "asset": "R",
+                    "at": 3.5,
+                    "clipType": "am-sprite",
+                    "hold": 1.0,
+                    "id": "cross",
+                    "params": {},
+                    "track": "sprite"
+                  },
+                  {
+                    "asset": "R",
+                    "at": 5.0,
+                    "clipType": "am-sprite",
+                    "hold": 1.0,
+                    "id": "inside",
+                    "params": {},
+                    "track": "sprite"
+                  },
+                  {
+                    "at": 9.0,
+                    "clipType": "am-type",
+                    "hold": 1.0,
+                    "id": "late",
+                    "params": {
+                      "text": "hi"
+                    },
+                    "track": "type"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "segment": "s2",
+                        "text": "second line",
+                        "words": [
+                          [
+                            0.1,
+                            0.4,
+                            "second"
+                          ]
+                        ]
+                      }
+                    },
+                    "asset": "U",
+                    "at": 4.5,
+                    "clipType": "media",
+                    "from": 0.0,
+                    "id": "vo2",
+                    "to": 2.0,
+                    "track": "vo"
+                  },
+                  {
+                    "asset": "Q",
+                    "at": 0.0,
+                    "clipType": "media",
+                    "from": 0.0,
+                    "id": "bed",
+                    "to": 12.0,
+                    "track": "music",
+                    "volume": 0.5
+                  }
+                ],
+                "effects": [],
+                "layout": {},
+                "registry": {
+                  "assets": {
+                    "P": {
+                      "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                    },
+                    "Q": {
+                      "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                    },
+                    "R": {
+                      "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                    },
+                    "U": {
+                      "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                    }
+                  }
+                },
+                "tracks": [
+                  {
+                    "id": "type",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "sprite",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "plate",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "vo",
+                    "kind": "audio"
+                  },
+                  {
+                    "id": "music",
+                    "kind": "audio"
+                  }
+                ]
+              },
+              "revision_id": "internal-film",
+              "timeline_id": "t"
+            }
+          ],
+          "parent_revision": {
+            "content_digest": "sha256:f0d3cf169ce9d4e701201b32c4087c8577977d44839bca11cc30685a60432716",
+            "payload": {
+              "clips": [],
+              "config": {
+                "app": {
+                  "astrid": {
+                    "chapters": [
+                      {
+                        "from": "c1",
+                        "name": "01 ONE"
+                      },
+                      {
+                        "from": "c2",
+                        "name": "02 TWO"
+                      },
+                      {
+                        "from": "c3",
+                        "name": "03 THREE"
+                      }
+                    ]
+                  }
+                },
+                "theme_overrides": {
+                  "visual": {
+                    "canvas": {
+                      "fps": 30,
+                      "height": 180,
+                      "width": 320
+                    }
+                  }
+                },
+                "tracks": [
+                  {
+                    "id": "picture",
+                    "kind": "visual"
+                  }
+                ]
+              },
+              "occurrences": [
+                {
+                  "duration_ms": 12000,
+                  "gain": 1,
+                  "muted": false,
+                  "occurrence_id": "occ-film",
+                  "placement": {
+                    "start_ms": 0
+                  },
+                  "provenance": {},
+                  "shot_id": "film",
+                  "shot_revision_id": "shot-film",
+                  "source_offset": {
+                    "end": 0,
+                    "start": 0
+                  },
+                  "speed": {
+                    "denominator": 1,
+                    "numerator": 1
+                  },
+                  "track": "picture",
+                  "transform": {}
+                }
+              ],
+              "registry": {}
+            },
+            "revision_id": "saved-parent"
+          },
+          "project_id": "c6212e6152ae4ef2af6c947816fd3bb4",
+          "schema_version": 1,
+          "shot_revisions": [
+            {
+              "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+              "internal_timeline_revision_id": "internal-film",
+              "payload": {
+                "internal_timeline_revision_id": "internal-film",
+                "items": [],
+                "metadata": {},
+                "name": "FILM",
+                "pools": [],
+                "text_bindings": []
+              },
+              "revision_id": "shot-film",
+              "shot_id": "film"
+            }
+          ],
+          "timeline_id": "t"
+        },
+        "pinned_documents": [],
+        "placements": {
+          "occ-film": {
+            "duration_ms": 12000,
+            "gain": 1,
+            "muted": false,
+            "occurrence_id": "occ-film",
+            "placement": {
+              "start_ms": 0
+            },
+            "provenance": {},
+            "shot_id": "film",
+            "source_offset": {
+              "end": 0,
+              "start": 0
+            },
+            "speed": {
+              "denominator": 1,
+              "numerator": 1
+            },
+            "track": "picture",
+            "transform": {}
+          }
+        },
+        "shots": {
+          "film": {
+            "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+            "internal_timeline_content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+            "internal_timeline_id": "t",
+            "internal_timeline_revision_id": "internal-film",
+            "item_id_map": {},
+            "revision_id": "shot-film",
+            "shot_id": "film"
+          }
+        }
+      },
+      "timeline_id": "t"
+    },
+    "commands": [
+      {
+        "args": {
+          "changes": [
+            {
+              "before": {
+                "state": "present",
+                "value": "second line"
+              },
+              "op": "set",
+              "path": [
+                "clips",
+                "id:vo2",
+                "app",
+                "astrid",
+                "text"
+              ],
+              "ref": "internal-revision:internal-film",
+              "value": "changed"
+            }
+          ]
+        },
+        "authorship": {
+          "occurrence:occ-film/clip:vo2::app.astrid.text": "direct"
+        },
+        "bindings": {},
+        "created": [],
+        "expect": {
+          "occurrence:occ-film/clip:vo2::app.astrid.text": {
+            "state": "present",
+            "value": "second line"
+          }
+        },
+        "intent": {},
+        "op": "doc.patch",
+        "reads": [
+          {
+            "path": [
+              "app",
+              "astrid",
+              "text"
+            ],
+            "ref": "occurrence:occ-film/clip:vo2",
+            "state": {
+              "state": "present",
+              "value": "second line"
+            }
+          }
+        ],
+        "resolved": [],
+        "schema_version": 1,
+        "select": null,
+        "selections": [],
+        "version": "1"
+      }
+    ],
+    "records": [
+      {
+        "bindings": [
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "change_ordinal": 0,
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "input",
+              "step_id": "edit"
+            },
+            "change": {
+              "before": {
+                "state": "present",
+                "value": "second line"
+              },
+              "op": "set",
+              "path": [
+                "clips",
+                "id:vo2",
+                "app",
+                "astrid",
+                "text"
+              ],
+              "ref": "internal-revision:internal-film",
+              "value": "changed"
+            },
+            "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+            "dependencies": [],
+            "key": "doc.patch:0",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "path": [
+              "clips",
+              "id:vo2",
+              "app",
+              "astrid",
+              "text"
+            ],
+            "physical_ref": "internal-revision:internal-film",
+            "policy": "fixed",
+            "ref": "internal-revision:internal-film",
+            "revision_id": "internal-film",
+            "write_range": [
+              0,
+              1
+            ]
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "after",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:46f777aa4e5625edabcf1bf3a331e5d07a962a6b19b0992017a285994607a6d0",
+            "dependencies": [],
+            "effect_ordinal": 0,
+            "key": "commit.effect",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "path": [],
+            "physical_ref": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+            "policy": "fixed",
+            "ref": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+            "revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "after",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:b13b1486a376a1ea7d51bd7dceace47e5f07de633d5d139402afe655d2b0314c",
+            "dependencies": [],
+            "effect_ordinal": 1,
+            "key": "commit.effect",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "path": [],
+            "physical_ref": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+            "policy": "fixed",
+            "ref": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+            "revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "before",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:f0d3cf169ce9d4e701201b32c4087c8577977d44839bca11cc30685a60432716",
+            "dependencies": [],
+            "effect_ordinal": 2,
+            "key": "commit.effect",
+            "path": [
+              "occurrences",
+              "occurrence_id:occ-film",
+              "shot_revision_id"
+            ],
+            "physical_ref": "parent",
+            "policy": "fixed",
+            "ref": "parent",
+            "revision_id": "saved-parent",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "after",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:6c4ef455f45290f387bce58e9603cd44091796ec618c27218e3519a30c8f60a8",
+            "dependencies": [],
+            "effect_ordinal": 2,
+            "key": "commit.effect",
+            "path": [
+              "occurrences",
+              "occurrence_id:occ-film",
+              "shot_revision_id"
+            ],
+            "physical_ref": "parent",
+            "policy": "fixed",
+            "ref": "parent",
+            "revision_id": "authoring-parent-revision-1280bc40d6c0e2eb56fc500c3f951e1fbb2b18346292beca8e0a69b119e1555f",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "before",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+            "dependencies": [],
+            "effect_ordinal": 3,
+            "key": "commit.effect",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "path": [],
+            "physical_ref": "shot-revision:shot-film",
+            "policy": "fixed",
+            "ref": "shot-revision:shot-film",
+            "revision_id": "shot-film",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "before",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+            "dependencies": [],
+            "effect_ordinal": 4,
+            "key": "commit.effect",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "path": [],
+            "physical_ref": "internal-revision:internal-film",
+            "policy": "fixed",
+            "ref": "internal-revision:internal-film",
+            "revision_id": "internal-film",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "input",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+            "dependencies": [],
+            "edge_after": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+            "edge_before": "internal-revision:internal-film",
+            "key": "commit.materialization",
+            "owner": "occurrence:occ-film/shot",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "physical_ref": "shot-revision:shot-film",
+            "policy": "fixed",
+            "ref": "shot-revision:shot-film",
+            "revision_id": "shot-film",
+            "step_id": "edit",
+            "successor": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "input",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+            "dependencies": [],
+            "edge_after": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+            "edge_before": "shot-revision:shot-film",
+            "key": "commit.materialization",
+            "owner": "occurrence:occ-film/shot",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "physical_ref": "internal-revision:internal-film",
+            "policy": "fixed",
+            "ref": "internal-revision:internal-film",
+            "revision_id": "internal-film",
+            "step_id": "edit",
+            "successor": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85"
+          }
+        ],
+        "command": {
+          "args": {
+            "changes": [
+              {
+                "before": {
+                  "state": "present",
+                  "value": "second line"
+                },
+                "op": "set",
+                "path": [
+                  "clips",
+                  "id:vo2",
+                  "app",
+                  "astrid",
+                  "text"
+                ],
+                "ref": "internal-revision:internal-film",
+                "value": "changed"
+              }
+            ]
+          },
+          "authorship": {
+            "occurrence:occ-film/clip:vo2::app.astrid.text": "direct"
+          },
+          "bindings": {},
+          "created": [],
+          "expect": {
+            "occurrence:occ-film/clip:vo2::app.astrid.text": {
+              "state": "present",
+              "value": "second line"
+            }
+          },
+          "intent": {},
+          "op": "doc.patch",
+          "reads": [
+            {
+              "path": [
+                "app",
+                "astrid",
+                "text"
+              ],
+              "ref": "occurrence:occ-film/clip:vo2",
+              "state": {
+                "state": "present",
+                "value": "second line"
+              }
+            }
+          ],
+          "resolved": [],
+          "schema_version": 1,
+          "select": null,
+          "selections": [],
+          "version": "1"
+        },
+        "created": [],
+        "dependencies": [],
+        "derived_writes": [],
+        "ordinal": 0,
+        "reads": [
+          {
+            "path": [
+              "app",
+              "astrid",
+              "text"
+            ],
+            "ref": "occurrence:occ-film/clip:vo2",
+            "state": {
+              "state": "present",
+              "value": "second line"
+            }
+          }
+        ],
+        "selections": [],
+        "writes": [
+          {
+            "after": {
+              "state": "present",
+              "value": "changed"
+            },
+            "before": {
+              "state": "present",
+              "value": "second line"
+            },
+            "path": [
+              "app",
+              "astrid",
+              "text"
+            ],
+            "ref": "occurrence:occ-film/clip:vo2"
+          }
+        ]
+      }
+    ],
+    "sequential_execution": [],
+    "type": "Plan"
+  },
+  "provider_plan": {
+    "bundle": {
+      "base_parent": {
+        "content_digest": "sha256:f0d3cf169ce9d4e701201b32c4087c8577977d44839bca11cc30685a60432716",
+        "revision_id": "saved-parent"
+      },
+      "base_parent_payload": {
+        "clips": [],
+        "config": {
+          "app": {
+            "astrid": {
+              "chapters": [
+                {
+                  "from": "c1",
+                  "name": "01 ONE"
+                },
+                {
+                  "from": "c2",
+                  "name": "02 TWO"
+                },
+                {
+                  "from": "c3",
+                  "name": "03 THREE"
+                }
+              ]
+            }
+          },
+          "theme_overrides": {
+            "visual": {
+              "canvas": {
+                "fps": 30,
+                "height": 180,
+                "width": 320
+              }
+            }
+          },
+          "tracks": [
+            {
+              "id": "picture",
+              "kind": "visual"
+            }
+          ]
+        },
+        "registry": {}
+      },
+      "base_placements": {
+        "occ-film": {
+          "duration_ms": 12000,
+          "gain": 1,
+          "muted": false,
+          "occurrence_id": "occ-film",
+          "placement": {
+            "start_ms": 0
+          },
+          "provenance": {},
+          "shot_id": "film",
+          "source_offset": {
+            "end": 0,
+            "start": 0
+          },
+          "speed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "track": "picture",
+          "transform": {}
+        }
+      },
+      "parent": {
+        "clips": [],
+        "config": {
+          "app": {
+            "astrid": {
+              "chapters": [
+                {
+                  "from": "c1",
+                  "name": "01 ONE"
+                },
+                {
+                  "from": "c2",
+                  "name": "02 TWO"
+                },
+                {
+                  "from": "c3",
+                  "name": "03 THREE"
+                }
+              ]
+            }
+          },
+          "theme_overrides": {
+            "visual": {
+              "canvas": {
+                "fps": 30,
+                "height": 180,
+                "width": 320
+              }
+            }
+          },
+          "tracks": [
+            {
+              "id": "picture",
+              "kind": "visual"
+            }
+          ]
+        },
+        "registry": {}
+      },
+      "placements": [
+        {
+          "duration_ms": 12000,
+          "gain": 1,
+          "muted": false,
+          "occurrence_id": "occ-film",
+          "placement": {
+            "start_ms": 0
+          },
+          "provenance": {},
+          "shot_id": "film",
+          "source_offset": {
+            "end": 0,
+            "start": 0
+          },
+          "speed": {
+            "denominator": 1,
+            "numerator": 1
+          },
+          "track": "picture",
+          "transform": {}
+        }
+      ],
+      "project_id": "c6212e6152ae4ef2af6c947816fd3bb4",
+      "schema_version": 1,
+      "shots": {
+        "film": {
+          "base_internal_timeline": {
+            "assets": [],
+            "audio": [],
+            "clips": [
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c1"
+                  }
+                },
+                "asset": "P",
+                "at": 0.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p1",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c2"
+                  }
+                },
+                "asset": "P",
+                "at": 4.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p2",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c3"
+                  }
+                },
+                "asset": "P",
+                "at": 8.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p3",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "asset": "R",
+                "at": 3.5,
+                "clipType": "am-sprite",
+                "hold": 1.0,
+                "id": "cross",
+                "params": {},
+                "track": "sprite"
+              },
+              {
+                "asset": "R",
+                "at": 5.0,
+                "clipType": "am-sprite",
+                "hold": 1.0,
+                "id": "inside",
+                "params": {},
+                "track": "sprite"
+              },
+              {
+                "at": 9.0,
+                "clipType": "am-type",
+                "hold": 1.0,
+                "id": "late",
+                "params": {
+                  "text": "hi"
+                },
+                "track": "type"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "segment": "s2",
+                    "text": "second line",
+                    "words": [
+                      [
+                        0.1,
+                        0.4,
+                        "second"
+                      ]
+                    ]
+                  }
+                },
+                "asset": "U",
+                "at": 4.5,
+                "clipType": "media",
+                "from": 0.0,
+                "id": "vo2",
+                "to": 2.0,
+                "track": "vo"
+              },
+              {
+                "asset": "Q",
+                "at": 0.0,
+                "clipType": "media",
+                "from": 0.0,
+                "id": "bed",
+                "to": 12.0,
+                "track": "music",
+                "volume": 0.5
+              }
+            ],
+            "effects": [],
+            "layout": {},
+            "registry": {
+              "assets": {
+                "P": {
+                  "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                },
+                "Q": {
+                  "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                },
+                "R": {
+                  "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                },
+                "U": {
+                  "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                }
+              }
+            },
+            "tracks": [
+              {
+                "id": "type",
+                "kind": "visual"
+              },
+              {
+                "id": "sprite",
+                "kind": "visual"
+              },
+              {
+                "id": "plate",
+                "kind": "visual"
+              },
+              {
+                "id": "vo",
+                "kind": "audio"
+              },
+              {
+                "id": "music",
+                "kind": "audio"
+              }
+            ]
+          },
+          "base_payload": {
+            "internal_timeline_revision_id": "internal-film",
+            "items": [],
+            "metadata": {},
+            "name": "FILM",
+            "pools": [],
+            "text_bindings": []
+          },
+          "internal_timeline": {
+            "assets": [],
+            "audio": [],
+            "clips": [
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c1"
+                  }
+                },
+                "asset": "P",
+                "at": 0.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p1",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c2"
+                  }
+                },
+                "asset": "P",
+                "at": 4.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p2",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "cut": "c3"
+                  }
+                },
+                "asset": "P",
+                "at": 8.0,
+                "clipType": "am-snap-plate",
+                "hold": 4.0,
+                "id": "p3",
+                "params": {},
+                "track": "plate"
+              },
+              {
+                "asset": "R",
+                "at": 3.5,
+                "clipType": "am-sprite",
+                "hold": 1.0,
+                "id": "cross",
+                "params": {},
+                "track": "sprite"
+              },
+              {
+                "asset": "R",
+                "at": 5.0,
+                "clipType": "am-sprite",
+                "hold": 1.0,
+                "id": "inside",
+                "params": {},
+                "track": "sprite"
+              },
+              {
+                "at": 9.0,
+                "clipType": "am-type",
+                "hold": 1.0,
+                "id": "late",
+                "params": {
+                  "text": "hi"
+                },
+                "track": "type"
+              },
+              {
+                "app": {
+                  "astrid": {
+                    "segment": "s2",
+                    "text": "changed",
+                    "words": [
+                      [
+                        0.1,
+                        0.4,
+                        "second"
+                      ]
+                    ]
+                  }
+                },
+                "asset": "U",
+                "at": 4.5,
+                "clipType": "media",
+                "from": 0.0,
+                "id": "vo2",
+                "to": 2.0,
+                "track": "vo"
+              },
+              {
+                "asset": "Q",
+                "at": 0.0,
+                "clipType": "media",
+                "from": 0.0,
+                "id": "bed",
+                "to": 12.0,
+                "track": "music",
+                "volume": 0.5
+              }
+            ],
+            "effects": [],
+            "layout": {},
+            "registry": {
+              "assets": {
+                "P": {
+                  "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                },
+                "Q": {
+                  "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                },
+                "R": {
+                  "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                },
+                "U": {
+                  "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                }
+              }
+            },
+            "tracks": [
+              {
+                "id": "type",
+                "kind": "visual"
+              },
+              {
+                "id": "sprite",
+                "kind": "visual"
+              },
+              {
+                "id": "plate",
+                "kind": "visual"
+              },
+              {
+                "id": "vo",
+                "kind": "audio"
+              },
+              {
+                "id": "music",
+                "kind": "audio"
+              }
+            ]
+          },
+          "payload": {
+            "internal_timeline_revision_id": "internal-film",
+            "items": [],
+            "metadata": {},
+            "name": "FILM",
+            "pools": [],
+            "text_bindings": []
+          },
+          "shot_id": "film"
+        }
+      },
+      "source_mapping": {
+        "_doc_patch_images": {
+          "occurrence:occ-film": {
+            "internal_timeline": {
+              "assets": [],
+              "audio": [],
+              "clips": [
+                {
+                  "app": {
+                    "astrid": {
+                      "cut": "c1"
+                    }
+                  },
+                  "asset": "P",
+                  "at": 0.0,
+                  "clipType": "am-snap-plate",
+                  "hold": 4.0,
+                  "id": "p1",
+                  "params": {},
+                  "track": "plate"
+                },
+                {
+                  "app": {
+                    "astrid": {
+                      "cut": "c2"
+                    }
+                  },
+                  "asset": "P",
+                  "at": 4.0,
+                  "clipType": "am-snap-plate",
+                  "hold": 4.0,
+                  "id": "p2",
+                  "params": {},
+                  "track": "plate"
+                },
+                {
+                  "app": {
+                    "astrid": {
+                      "cut": "c3"
+                    }
+                  },
+                  "asset": "P",
+                  "at": 8.0,
+                  "clipType": "am-snap-plate",
+                  "hold": 4.0,
+                  "id": "p3",
+                  "params": {},
+                  "track": "plate"
+                },
+                {
+                  "asset": "R",
+                  "at": 3.5,
+                  "clipType": "am-sprite",
+                  "hold": 1.0,
+                  "id": "cross",
+                  "params": {},
+                  "track": "sprite"
+                },
+                {
+                  "asset": "R",
+                  "at": 5.0,
+                  "clipType": "am-sprite",
+                  "hold": 1.0,
+                  "id": "inside",
+                  "params": {},
+                  "track": "sprite"
+                },
+                {
+                  "at": 9.0,
+                  "clipType": "am-type",
+                  "hold": 1.0,
+                  "id": "late",
+                  "params": {
+                    "text": "hi"
+                  },
+                  "track": "type"
+                },
+                {
+                  "app": {
+                    "astrid": {
+                      "segment": "s2",
+                      "text": "changed",
+                      "words": [
+                        [
+                          0.1,
+                          0.4,
+                          "second"
+                        ]
+                      ]
+                    }
+                  },
+                  "asset": "U",
+                  "at": 4.5,
+                  "clipType": "media",
+                  "from": 0.0,
+                  "id": "vo2",
+                  "to": 2.0,
+                  "track": "vo"
+                },
+                {
+                  "asset": "Q",
+                  "at": 0.0,
+                  "clipType": "media",
+                  "from": 0.0,
+                  "id": "bed",
+                  "to": 12.0,
+                  "track": "music",
+                  "volume": 0.5
+                }
+              ],
+              "effects": [],
+              "layout": {},
+              "registry": {
+                "assets": {
+                  "P": {
+                    "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                  },
+                  "Q": {
+                    "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                  },
+                  "R": {
+                    "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                  },
+                  "U": {
+                    "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                  }
+                }
+              },
+              "tracks": [
+                {
+                  "id": "type",
+                  "kind": "visual"
+                },
+                {
+                  "id": "sprite",
+                  "kind": "visual"
+                },
+                {
+                  "id": "plate",
+                  "kind": "visual"
+                },
+                {
+                  "id": "vo",
+                  "kind": "audio"
+                },
+                {
+                  "id": "music",
+                  "kind": "audio"
+                }
+              ]
+            },
+            "internal_timeline_id": "t",
+            "payload": {
+              "internal_timeline_revision_id": "internal-film",
+              "items": [],
+              "metadata": {},
+              "name": "FILM",
+              "pools": [],
+              "text_bindings": []
+            },
+            "shot_id": "film",
+            "source_internal_revision": "internal-film",
+            "source_shot_revision": "shot-film"
+          }
+        },
+        "_runtime_document": {
+          "dependency_manifest": {
+            "documents": [],
+            "internal_timelines": [
+              {
+                "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+                "revision_id": "internal-film",
+                "timeline_id": "t"
+              }
+            ],
+            "media": [
+              {
+                "content_digest": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04",
+                "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+              },
+              {
+                "content_digest": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1",
+                "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+              },
+              {
+                "content_digest": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7",
+                "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+              },
+              {
+                "content_digest": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9",
+                "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+              }
+            ],
+            "shots": [
+              {
+                "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+                "internal_timeline_revision_id": "internal-film",
+                "revision_id": "shot-film",
+                "shot_id": "film"
+              }
+            ]
+          },
+          "internal_timeline_revisions": [
+            {
+              "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+              "payload": {
+                "assets": [],
+                "audio": [],
+                "clips": [
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c1"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 0.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p1",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c2"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 4.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p2",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "cut": "c3"
+                      }
+                    },
+                    "asset": "P",
+                    "at": 8.0,
+                    "clipType": "am-snap-plate",
+                    "hold": 4.0,
+                    "id": "p3",
+                    "params": {},
+                    "track": "plate"
+                  },
+                  {
+                    "asset": "R",
+                    "at": 3.5,
+                    "clipType": "am-sprite",
+                    "hold": 1.0,
+                    "id": "cross",
+                    "params": {},
+                    "track": "sprite"
+                  },
+                  {
+                    "asset": "R",
+                    "at": 5.0,
+                    "clipType": "am-sprite",
+                    "hold": 1.0,
+                    "id": "inside",
+                    "params": {},
+                    "track": "sprite"
+                  },
+                  {
+                    "at": 9.0,
+                    "clipType": "am-type",
+                    "hold": 1.0,
+                    "id": "late",
+                    "params": {
+                      "text": "hi"
+                    },
+                    "track": "type"
+                  },
+                  {
+                    "app": {
+                      "astrid": {
+                        "segment": "s2",
+                        "text": "second line",
+                        "words": [
+                          [
+                            0.1,
+                            0.4,
+                            "second"
+                          ]
+                        ]
+                      }
+                    },
+                    "asset": "U",
+                    "at": 4.5,
+                    "clipType": "media",
+                    "from": 0.0,
+                    "id": "vo2",
+                    "to": 2.0,
+                    "track": "vo"
+                  },
+                  {
+                    "asset": "Q",
+                    "at": 0.0,
+                    "clipType": "media",
+                    "from": 0.0,
+                    "id": "bed",
+                    "to": 12.0,
+                    "track": "music",
+                    "volume": 0.5
+                  }
+                ],
+                "effects": [],
+                "layout": {},
+                "registry": {
+                  "assets": {
+                    "P": {
+                      "media_id": "sha256:dc52f28a8ab516d9274f4f512da7126a970d363c456e9f921daf216cd7ee7ba9"
+                    },
+                    "Q": {
+                      "media_id": "sha256:5eecd4cd387893ed0a82011eba636b879c6ca8d2210c001089277f89d5d339d7"
+                    },
+                    "R": {
+                      "media_id": "sha256:3d74d61e78ed206c3e0774ff2877031b58c8c6bbd0e35ece3f161ccb0e858e04"
+                    },
+                    "U": {
+                      "media_id": "sha256:501d4d5b3838572a8d46aeac5588591c5a5ca982fa7fa35987aef8afa2dbf8e1"
+                    }
+                  }
+                },
+                "tracks": [
+                  {
+                    "id": "type",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "sprite",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "plate",
+                    "kind": "visual"
+                  },
+                  {
+                    "id": "vo",
+                    "kind": "audio"
+                  },
+                  {
+                    "id": "music",
+                    "kind": "audio"
+                  }
+                ]
+              },
+              "revision_id": "internal-film",
+              "timeline_id": "t"
+            }
+          ],
+          "parent_revision": {
+            "content_digest": "sha256:f0d3cf169ce9d4e701201b32c4087c8577977d44839bca11cc30685a60432716",
+            "payload": {
+              "clips": [],
+              "config": {
+                "app": {
+                  "astrid": {
+                    "chapters": [
+                      {
+                        "from": "c1",
+                        "name": "01 ONE"
+                      },
+                      {
+                        "from": "c2",
+                        "name": "02 TWO"
+                      },
+                      {
+                        "from": "c3",
+                        "name": "03 THREE"
+                      }
+                    ]
+                  }
+                },
+                "theme_overrides": {
+                  "visual": {
+                    "canvas": {
+                      "fps": 30,
+                      "height": 180,
+                      "width": 320
+                    }
+                  }
+                },
+                "tracks": [
+                  {
+                    "id": "picture",
+                    "kind": "visual"
+                  }
+                ]
+              },
+              "occurrences": [
+                {
+                  "duration_ms": 12000,
+                  "gain": 1,
+                  "muted": false,
+                  "occurrence_id": "occ-film",
+                  "placement": {
+                    "start_ms": 0
+                  },
+                  "provenance": {},
+                  "shot_id": "film",
+                  "shot_revision_id": "shot-film",
+                  "source_offset": {
+                    "end": 0,
+                    "start": 0
+                  },
+                  "speed": {
+                    "denominator": 1,
+                    "numerator": 1
+                  },
+                  "track": "picture",
+                  "transform": {}
+                }
+              ],
+              "registry": {}
+            },
+            "revision_id": "saved-parent"
+          },
+          "project_id": "c6212e6152ae4ef2af6c947816fd3bb4",
+          "schema_version": 1,
+          "shot_revisions": [
+            {
+              "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+              "internal_timeline_revision_id": "internal-film",
+              "payload": {
+                "internal_timeline_revision_id": "internal-film",
+                "items": [],
+                "metadata": {},
+                "name": "FILM",
+                "pools": [],
+                "text_bindings": []
+              },
+              "revision_id": "shot-film",
+              "shot_id": "film"
+            }
+          ],
+          "timeline_id": "t"
+        },
+        "pinned_documents": [],
+        "placements": {
+          "occ-film": {
+            "duration_ms": 12000,
+            "gain": 1,
+            "muted": false,
+            "occurrence_id": "occ-film",
+            "placement": {
+              "start_ms": 0
+            },
+            "provenance": {},
+            "shot_id": "film",
+            "source_offset": {
+              "end": 0,
+              "start": 0
+            },
+            "speed": {
+              "denominator": 1,
+              "numerator": 1
+            },
+            "track": "picture",
+            "transform": {}
+          }
+        },
+        "shots": {
+          "film": {
+            "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+            "internal_timeline_content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+            "internal_timeline_id": "t",
+            "internal_timeline_revision_id": "internal-film",
+            "item_id_map": {},
+            "revision_id": "shot-film",
+            "shot_id": "film"
+          }
+        }
+      },
+      "timeline_id": "t"
+    },
+    "commands": [
+      {
+        "args": {
+          "changes": [
+            {
+              "before": {
+                "state": "present",
+                "value": "second line"
+              },
+              "op": "set",
+              "path": [
+                "clips",
+                "id:vo2",
+                "app",
+                "astrid",
+                "text"
+              ],
+              "ref": "internal-revision:internal-film",
+              "value": "changed"
+            }
+          ]
+        },
+        "authorship": {
+          "occurrence:occ-film/clip:vo2::app.astrid.text": "direct"
+        },
+        "bindings": {},
+        "created": [],
+        "expect": {
+          "occurrence:occ-film/clip:vo2::app.astrid.text": {
+            "state": "present",
+            "value": "second line"
+          }
+        },
+        "intent": {},
+        "op": "doc.patch",
+        "reads": [
+          {
+            "path": [
+              "app",
+              "astrid",
+              "text"
+            ],
+            "ref": "occurrence:occ-film/clip:vo2",
+            "state": {
+              "state": "present",
+              "value": "second line"
+            }
+          }
+        ],
+        "resolved": [],
+        "schema_version": 1,
+        "select": null,
+        "selections": [],
+        "version": "1"
+      }
+    ],
+    "records": [
+      {
+        "bindings": [
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "change_ordinal": 0,
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "input",
+              "step_id": "edit"
+            },
+            "change": {
+              "before": {
+                "state": "present",
+                "value": "second line"
+              },
+              "op": "set",
+              "path": [
+                "clips",
+                "id:vo2",
+                "app",
+                "astrid",
+                "text"
+              ],
+              "ref": "internal-revision:internal-film",
+              "value": "changed"
+            },
+            "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+            "dependencies": [],
+            "key": "doc.patch:0",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "path": [
+              "clips",
+              "id:vo2",
+              "app",
+              "astrid",
+              "text"
+            ],
+            "physical_ref": "internal-revision:internal-film",
+            "policy": "fixed",
+            "ref": "internal-revision:internal-film",
+            "revision_id": "internal-film",
+            "write_range": [
+              0,
+              1
+            ]
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "after",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:46f777aa4e5625edabcf1bf3a331e5d07a962a6b19b0992017a285994607a6d0",
+            "dependencies": [],
+            "effect_ordinal": 0,
+            "key": "commit.effect",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "path": [],
+            "physical_ref": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+            "policy": "fixed",
+            "ref": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+            "revision_id": "authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "after",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:b13b1486a376a1ea7d51bd7dceace47e5f07de633d5d139402afe655d2b0314c",
+            "dependencies": [],
+            "effect_ordinal": 1,
+            "key": "commit.effect",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "path": [],
+            "physical_ref": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+            "policy": "fixed",
+            "ref": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+            "revision_id": "authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "before",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:f0d3cf169ce9d4e701201b32c4087c8577977d44839bca11cc30685a60432716",
+            "dependencies": [],
+            "effect_ordinal": 2,
+            "key": "commit.effect",
+            "path": [
+              "occurrences",
+              "occurrence_id:occ-film",
+              "shot_revision_id"
+            ],
+            "physical_ref": "parent",
+            "policy": "fixed",
+            "ref": "parent",
+            "revision_id": "saved-parent",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "after",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:6c4ef455f45290f387bce58e9603cd44091796ec618c27218e3519a30c8f60a8",
+            "dependencies": [],
+            "effect_ordinal": 2,
+            "key": "commit.effect",
+            "path": [
+              "occurrences",
+              "occurrence_id:occ-film",
+              "shot_revision_id"
+            ],
+            "physical_ref": "parent",
+            "policy": "fixed",
+            "ref": "parent",
+            "revision_id": "authoring-parent-revision-1280bc40d6c0e2eb56fc500c3f951e1fbb2b18346292beca8e0a69b119e1555f",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "before",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+            "dependencies": [],
+            "effect_ordinal": 3,
+            "key": "commit.effect",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "path": [],
+            "physical_ref": "shot-revision:shot-film",
+            "policy": "fixed",
+            "ref": "shot-revision:shot-film",
+            "revision_id": "shot-film",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "effect",
+              "side": "before",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+            "dependencies": [],
+            "effect_ordinal": 4,
+            "key": "commit.effect",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "path": [],
+            "physical_ref": "internal-revision:internal-film",
+            "policy": "fixed",
+            "ref": "internal-revision:internal-film",
+            "revision_id": "internal-film",
+            "step_id": "edit"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "input",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:74225edfc7bb0bd7addecf79b0979206eca65bc761aeb0abeb0d7fc0d513336a",
+            "dependencies": [],
+            "edge_after": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85",
+            "edge_before": "internal-revision:internal-film",
+            "key": "commit.materialization",
+            "owner": "occurrence:occ-film/shot",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "physical_ref": "shot-revision:shot-film",
+            "policy": "fixed",
+            "ref": "shot-revision:shot-film",
+            "revision_id": "shot-film",
+            "step_id": "edit",
+            "successor": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c"
+          },
+          {
+            "boundary": {
+              "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+              "base_revision_id": "saved-parent",
+              "command_ordinal": 0,
+              "evaluated_head": {
+                "publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+                "revision_id": "saved-parent"
+              },
+              "phase": "input",
+              "step_id": "edit"
+            },
+            "content_digest": "sha256:69293b4720ccf38e793b261d5c2dd3cd58bbdb4d86bf927e98dde361310db116",
+            "dependencies": [],
+            "edge_after": "shot-revision:authoring-shot-revision-0e4047163aff26d13738ce062522e5d808db8ddc6d2fef41034b01506356235c",
+            "edge_before": "shot-revision:shot-film",
+            "key": "commit.materialization",
+            "owner": "occurrence:occ-film/shot",
+            "owners": [
+              "occurrence:occ-film/shot"
+            ],
+            "physical_ref": "internal-revision:internal-film",
+            "policy": "fixed",
+            "ref": "internal-revision:internal-film",
+            "revision_id": "internal-film",
+            "step_id": "edit",
+            "successor": "internal-revision:authoring-timeline-revision-bc4d7bb1f30bf78c09946a40fd39d4f7158166252bab7524cf0e931ea9e1eb85"
+          }
+        ],
+        "command": {
+          "args": {
+            "changes": [
+              {
+                "before": {
+                  "state": "present",
+                  "value": "second line"
+                },
+                "op": "set",
+                "path": [
+                  "clips",
+                  "id:vo2",
+                  "app",
+                  "astrid",
+                  "text"
+                ],
+                "ref": "internal-revision:internal-film",
+                "value": "changed"
+              }
+            ]
+          },
+          "authorship": {
+            "occurrence:occ-film/clip:vo2::app.astrid.text": "direct"
+          },
+          "bindings": {},
+          "created": [],
+          "expect": {
+            "occurrence:occ-film/clip:vo2::app.astrid.text": {
+              "state": "present",
+              "value": "second line"
+            }
+          },
+          "intent": {},
+          "op": "doc.patch",
+          "reads": [
+            {
+              "path": [
+                "app",
+                "astrid",
+                "text"
+              ],
+              "ref": "occurrence:occ-film/clip:vo2",
+              "state": {
+                "state": "present",
+                "value": "second line"
+              }
+            }
+          ],
+          "resolved": [],
+          "schema_version": 1,
+          "select": null,
+          "selections": [],
+          "version": "1"
+        },
+        "created": [],
+        "dependencies": [],
+        "derived_writes": [],
+        "ordinal": 0,
+        "reads": [
+          {
+            "path": [
+              "app",
+              "astrid",
+              "text"
+            ],
+            "ref": "occurrence:occ-film/clip:vo2",
+            "state": {
+              "state": "present",
+              "value": "second line"
+            }
+          }
+        ],
+        "selections": [],
+        "writes": [
+          {
+            "after": {
+              "state": "present",
+              "value": "changed"
+            },
+            "before": {
+              "state": "present",
+              "value": "second line"
+            },
+            "path": [
+              "app",
+              "astrid",
+              "text"
+            ],
+            "ref": "occurrence:occ-film/clip:vo2"
+          }
+        ]
+      }
+    ],
+    "sequential_execution": [],
+    "type": "Plan"
+  },
+  "provider_replay_bindings": {},
+  "request": {
+    "api_version": 1,
+    "base_publication_id": "txn-494e19e96a654cdb8498d575cd37e946",
+    "base_revision_id": "saved-parent",
+    "commands": [
+      {
+        "args": {
+          "changes": [
+            {
+              "before": {
+                "state": "present",
+                "value": "second line"
+              },
+              "op": "set",
+              "path": [
+                "clips",
+                "id:vo2",
+                "app",
+                "astrid",
+                "text"
+              ],
+              "ref": "internal-revision:internal-film",
+              "value": "changed"
+            }
+          ]
+        },
+        "op": "doc.patch",
+        "schema_version": 1,
+        "select": null,
+        "version": "1"
+      }
+    ],
+    "label": "Peer",
+    "merge": "fields",
+    "project_id": "c6212e6152ae4ef2af6c947816fd3bb4",
+    "reads": [],
+    "timeline_id": "t"
+  }
+}
