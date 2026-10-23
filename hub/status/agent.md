@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T05:55:11Z | dispatcher heartbeat 6s | live 5 (sol 1, luna 4, other 0) | busy30 25 | status age 0m -->
-# agent board, 2026-10-23T05:54:55Z
+<!-- agent | 2026-10-23T05:57:34Z | dispatcher heartbeat 14s | live 4 (sol 1, luna 3, other 0) | busy30 23 | status age 0m -->
+# agent board, 2026-10-23T05:56:07Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -31,7 +31,7 @@
 | R2-derived-undo | two deferred anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | Viewing owns original failing evidence | D14 retain tests unchanged/unskipped/visibly failing; no C0 change/guard exception/54PASS claim | ruling04:40 |
 | A3-fork-plan | same-selected-owner plan | Sol; Luna review | D15 | merged | agt-A3-source-plan-review-0455 | Design readinessPASS; decision D15 RESOLVED. Implementation separate active row, no production success claim | plan0445 |
 | A3-fork-wire | D15 occurrence.fork provider | Sol author; Luna current/integrated review | D15 | merged | agt-A3-fork-integrated-0541;G234integrated0549 | Actual900 exactreview1f418 PASS25+quality; ea302 joinedfork25+live2PASS. MountedApp/sharedHTTP still App/Proof owned | 1f418aea4;900ba8f09 |
-| R2-bootstrap-redo | authenticated stage inputs and redo | Sol; Luna review next | Runtime495 merged | review | agt-R2-stage-review-0553 | Fresh9e6 port48d source100+Runtimeforgery5PASS; actualRuntime495 5PASS1FAIL nullable speed beforeinitialclipadd. V2owner0553 repair active; no all3redoPASS | 9e6e9cbb5 |
+| R2-bootstrap-redo | authenticated stage inputs and redo | Sol; Luna review | Runtime495 merged | merging | agt-R2-stage-review-0553 | Independent0553 source100+Runtimeforgery5/qualityPASS; owncommit9e6 mergequeued; actualRuntime495 5PASS1FAIL nullable speed beforeinitialclipadd. V2owner0553 repair active; no all3redoPASS | 9e6e9cbb5 |
 | V2-fps | untouched legacy FPS parity D12 | Sol author; Luna review | D12 | review | agt-V2-current-review-0553 | Composedbfa source110+25+98+1nativePASS, exactnormalizers retained. Independentreviewactive; externalfive failures separate0553 boundariesreturn | bfa799284 |
 | G4-assembly-auth | native assembly alias authentication | Runtime Luna author/review | Runtime source | merged | rt-R2r-assembly-alias-0441; review0445 | Published be584/tree d6f20 EXACT reviewed0ed; independent68+integrated80 PASS. No generated tuple/pin change. Live G4 review uses compatiblebe584 | be5848e17 |
 | V2-elementref | preserve legacy text reference under D12 | Sol author; Luna review | actual G234 finding | review | agt-V2-current-review-0553 | Composedbfa 110+25+98+1nativePASS with fork auth; independent currentreview active | bfa799284 |
@@ -44,7 +44,7 @@
 Resolved: runtime — Normal frozen strict34e adoption DONE; compatible execution85dafdf467 merged/proven156+original48d6 allactualorigins. No newtuple/re-adoption/native14 duplicate.
 Resolved: agent audit — ccc scope hold CLEARED at auditedbf40; currentG234 reviewed31a5 and currentfork900 merged ea302 with integrated131+2replay+2live PASS. Owncommit checks retained.
 Resolved: orchestrator — D12a applies everyV2 check, no inventednormalization; D15fork900/currentea302 integratedPASS; D14two undo positives deferred unchanged/unskipped/visiblyfailing, no54PASS.
-Blockers: agent/V2 — Current originalfive has genuine untouchedlegacy half-open/anchor failures; R2stage integration5PASS1FAIL nullable speed. ExistingSol0553 owns boundedD12a firstreturn; no test/fixture weakening. Viewing lateroriginal52 evidence remains open.
+Blockers: agent/V2 — IndependentViewing0545 confirms two untouchedlegacy setup failures; stale-window sourcebasis trulychanges and invalidation guards MUST stay while Viewing obtains scope disposition; R2stage integration5PASS1FAIL nullable speed. ExistingSol0553 owns boundedD12a firstreturn; no test/fixture weakening. Viewing lateroriginal52 evidence remains open.
 Blockers: proof/app — H3 NO-GO actualmountedchain unproved; G5gated:P1. Proof owns P4 HTTP on boundedreviewedstagedsource, readerfix47aa review0553 active.
 Blockers: farm — H6/H9/full/tour/journey farm/test-service owned; no Agent heavyduplicates.
 Next ready: reader47aa review -> owncurrentport/merge; V2bfa review -> currentport/merge whileboundaries0553 proceeds; R2stage9e6 sourcereview -> currentjoin afterV2speedfix -> actualall3redo; show12b40 integratedproof. G5gated:P1.
