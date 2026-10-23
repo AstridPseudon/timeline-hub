@@ -13,9 +13,21 @@ from .native_occurrence_duplicate import OCCURRENCE_INTENT
 
 
 def occurrence_create(ctx, command):
+    args = command['args']
+    row, output = occurrence_row(ctx, args)
+    shot_id = args['shot_id']
+    ctx.create_entity('shot:' + shot_id, kind='shot', owner=None, value={
+        'payload': {'name': args['name'], 'items': []},
+        'internal_timeline': {'output': copy.deepcopy(output), 'tracks': [], 'clips': [],
+                              'registry': {'assets': {}}},
+    })
+    ctx.create_entity('occurrence:' + args['occurrence_id'], kind='occurrence', owner='parent', value=row)
+
+
+def occurrence_row(ctx, args):
+    """Validate the destination lane and quantize a new occurrence's geometry."""
     if ctx.read('parent', ['config', 'pinnedShotGroups']) not in (None, []):
         raise CommandError('legacy groups require recorded migration', kind='migration_needed')
-    args = command['args']
     ctx.select('collection.occurrences', 'parent')
     ctx.select('collection.tracks', 'parent')
     track = 'parent/track:' + args['track']
@@ -37,17 +49,11 @@ def occurrence_create(ctx, command):
     except (ValueError, OverflowError) as exc:
         raise CommandError(str(exc), kind='unsupported_timing') from exc
     start_ms = float(Fraction(frame, 1) / fps) * 1000
-    shot_id, occurrence_id = args['shot_id'], args['occurrence_id']
-    ctx.create_entity('shot:' + shot_id, kind='shot', owner=None, value={
-        'payload': {'name': args['name'], 'items': []},
-        'internal_timeline': {'output': copy.deepcopy(output), 'tracks': [], 'clips': [],
-                              'registry': {'assets': {}}},
-    })
-    ctx.create_entity('occurrence:' + occurrence_id, kind='occurrence', owner='parent', value={
-        'occurrence_id': occurrence_id, 'shot_id': shot_id, 'track': args['track'],
+    return {
+        'occurrence_id': args['occurrence_id'], 'shot_id': args['shot_id'], 'track': args['track'],
         'placement': {'start_ms': start_ms, 'track': args['track']},
         'duration_ms': duration * 1000, 'source_offset': 0, 'speed': 1, 'gain': 1,
-    })
+    }, output
 
 
 def capture_occurrence_create(bundle, occurrence_id, shot_id, *, name, track, on, duration):

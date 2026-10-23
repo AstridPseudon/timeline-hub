@@ -38,6 +38,7 @@ def operations():
     from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
     from .native_initialize import initialize
+    from .native_occurrence_attach import occurrence_attach
     from .native_occurrence_create import occurrence_create
     from .native_occurrence_delete import occurrence_delete
     from .native_occurrence_duplicate import OCCURRENCE_INTENT, occurrence_duplicate
@@ -66,6 +67,8 @@ def operations():
             'clip.anchor': Operation(_SCHEMA['$defs']['ClipAnchorArgs'], declare, {'anchor': 'follow'}, True),
             'occurrence.create': Operation(_SCHEMA['$defs']['OccurrenceCreateArgs'], occurrence_create,
                                           OCCURRENCE_INTENT),
+            'occurrence.attach': Operation(_SCHEMA['$defs']['OccurrenceAttachArgs'], occurrence_attach,
+                                          OCCURRENCE_INTENT, True),
             'clip.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], move, MOVE_INTENT, True),
             'placement.move': Operation(_SCHEMA['$defs']['ClipMoveArgs'], placement_move, MOVE_INTENT, True),
             'occurrence.delete': Operation(_SCHEMA['$defs']['OccurrenceDeleteArgs'], occurrence_delete, OCCURRENCE_INTENT, True),

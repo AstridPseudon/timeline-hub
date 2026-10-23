@@ -1822,6 +1822,41 @@
           "if": {
             "properties": {
               "op": {
+                "const": "occurrence.attach"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "version": {
+                "const": "1"
+              },
+              "select": {
+                "type": "string",
+                "pattern": "^occurrence:(?!.*::)(?=.*\\S)[^/]+$"
+              },
+              "args": {
+                "$ref": "#/$defs/OccurrenceAttachArgs"
+              },
+              "intent": {
+                "type": "object",
+                "properties": {
+                  "ownership": {
+                    "const": "occurrence"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
                 "const": "clip.swap-media"
               }
             },
@@ -3051,6 +3086,36 @@
           "additionalProperties": false
         }
       ]
+    },
+    "OccurrenceAttachArgs": {
+      "type": "object",
+      "required": [
+        "occurrence_id",
+        "track",
+        "on",
+        "duration"
+      ],
+      "properties": {
+        "occurrence_id": {
+          "type": "string",
+          "pattern": "^(?!.*::)(?=.*\\S)[^/]+$"
+        },
+        "track": {
+          "type": "string",
+          "pattern": "^(?!.*::)(?=.*\\S)[^/]+$"
+        },
+        "on": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Absolute start in seconds; quantized to parent frames."
+        },
+        "duration": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Occurrence duration in seconds."
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

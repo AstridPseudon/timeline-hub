@@ -110,6 +110,7 @@ def _copy_acceptance(client: Any, project: str, timeline: str, publication: str,
 def _stage_bundle(session: Any, desired: Mapping[str, Any]) -> None:
     """Capture one structural copy using existing commands and payload patches."""
     from astrid.sdk.timeline._doc_patch import Closure
+    from astrid.sdk.timeline.native_occurrence_attach import capture_occurrence_attach
     from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
     from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
 
@@ -146,15 +147,18 @@ def _stage_bundle(session: Any, desired: Mapping[str, Any]) -> None:
         duration_ms = row.get("duration_ms")
         if not isinstance(start_ms, (int, float)) or not isinstance(duration_ms, (int, float)):
             raise TimelineEditError(f"copy of shot {shot_id!r} has invalid placement timing")
-        command = capture_occurrence_create(
-            session._command_bundle,
-            str(row["occurrence_id"]),
-            shot_id,
-            name=str(payload.get("name") or ""),
-            track=track,
-            on=float(start_ms) / 1000.0,
-            duration=float(duration_ms) / 1000.0,
-        )
+        existing = next((item for item in session._command_bundle.get("placements") or []
+                         if item["shot_id"] == shot_id), None)
+        geometry = {"track": track, "on": float(start_ms) / 1000.0,
+                    "duration": float(duration_ms) / 1000.0}
+        if existing is None:
+            command = capture_occurrence_create(
+                session._command_bundle, str(row["occurrence_id"]), shot_id,
+                name=str(payload.get("name") or ""), **geometry)
+        else:
+            command = capture_occurrence_attach(
+                session._command_bundle, "occurrence:" + existing["occurrence_id"],
+                str(row["occurrence_id"]), **geometry)
         session._append([command], label=f"Create shot {shot_id}")
 
     # Placement geometry is authored data; only closure links belong to Runtime.
