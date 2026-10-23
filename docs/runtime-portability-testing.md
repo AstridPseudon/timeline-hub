@@ -109,8 +109,10 @@ qualification belong to the subsequent installer and agent workstreams.
 Port-binding and process-signaling integration tests are written and collected
 but require an unrestricted runner. Exploratory server tests were rejected by
 the sandbox before binding; the full macOS suite could not be completed here.
-Windows-native APIs cannot be executed on this host. The three-host CI job is
-the remaining native validation gate, not a claim that it has already passed.
+Windows-native APIs cannot be executed on this host. The portability CI job on
+Ubuntu and macOS is the remaining native validation gate for those hosts, not
+a claim that it has already passed. Windows is not supported yet and has no CI
+job; Windows-native validation remains outstanding.
 The safe test selection and final result are recorded below.
 
 Final safe selection: **453 passed, 13 skipped, 9 deselected** on macOS.
