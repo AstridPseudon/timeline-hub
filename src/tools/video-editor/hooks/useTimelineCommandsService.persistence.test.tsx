@@ -4,8 +4,11 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
+import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
+import { RUNTIME_SCHEMA_DIGEST } from '@/integrations/runtime/contract-metadata.ts';
+import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
-import { ApiError } from '@/integrations/runtime/generated.ts';
+import type { Transport } from '@/integrations/runtime/generated.ts';
 import type { CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { DataProvider, TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
@@ -108,6 +111,8 @@ function acceptedReply(request: CommitRequest, document: ReturnType<typeof autho
     status: 'accepted',
     merge_mode: request.merge,
     steps: request.steps,
+    label: request.label,
+    source: request.source,
   });
   response.receipt.idempotency_key = key;
   response.receipt.result = response.data;
@@ -117,6 +122,38 @@ function acceptedReply(request: CommitRequest, document: ReturnType<typeof autho
     canonicalDocument: document,
     graph: {},
     receipt: response.receipt,
+  };
+}
+
+function json(value: unknown): Uint8Array {
+  return new TextEncoder().encode(JSON.stringify(value));
+}
+
+function runtimeDiscoveryTransport(
+  transportCalls: Array<{ method: string; path: string; headers: Record<string, string>; rawBody?: string; body?: unknown }>,
+  commit: (request: CommitRequest, key: string, path: string) => { status: number; headers: Record<string, string>; body: Uint8Array },
+): Transport {
+  return async (method, path, headers, body) => {
+    const rawBody = body ? new TextDecoder().decode(body as Uint8Array) : undefined;
+    transportCalls.push({ method, path, headers, ...(rawBody === undefined ? {} : { rawBody, body: JSON.parse(rawBody) }) });
+    if (path === '/v1/health') {
+      return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST,
+        runtime_epoch: 1, runtime_session_id: 'session-commit', runtime_instance_id: 'instance-commit' }) };
+    }
+    if (path === '/v1/handshake') {
+      return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST,
+        session_id: 'session-commit', actor_id: scope.actorId, realm_id: scope.realmId,
+        scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write'],
+        capabilities: ['execution_binding.targeted.v1'] }) };
+    }
+    if (path === '/v1/realm') {
+      return { status: 200, headers: {}, body: json({ realm_id: scope.realmId, display_name: 'commit fixture', version: 1,
+        created_at: '2026-10-23T00:00:00Z' }) };
+    }
+    if (method === 'POST' && path === `/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`) {
+      return commit(JSON.parse(rawBody!) as CommitRequest, headers['Idempotency-Key']!, path);
+    }
+    throw new Error(`Unexpected Runtime request: ${method} ${path}`);
   };
 }
 
@@ -146,7 +183,7 @@ function useMountedCommands(
 function wrapperFor(store: ReturnType<typeof createTimelineStore>, provider: DataProvider) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const runtime = { provider, timelineId: scope.timelineId, shots: { canonicalDraft: null },
-    assetResolver: { resolveAssetUrl: provider.resolveAssetUrl } } as unknown as VideoEditorRuntimeContextValue;
+    assetResolver: { resolveAssetUrl: async (file: string) => file } } as unknown as VideoEditorRuntimeContextValue;
   return ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={queryClient}>
     <VideoEditorRuntimeProvider value={runtime}>
       <TimelineStoreProvider store={store}>{children}</TimelineStoreProvider>
@@ -171,22 +208,24 @@ describe('mounted prepared-media command persistence', () => {
       },
     } satisfies PlacePreparedMediaCommand);
     expect(preparedData).not.toBeNull();
-    const calls: Array<{ request: CommitRequest; key: string }> = [];
-    const send = vi.fn(async (request: CommitRequest, key: string) => {
-      calls.push({ request: structuredClone(request), key });
-      return acceptedReply(request, adoptedDocument(document, preparedData!.nextData, 'r1'), 'r1', key);
-    });
     let latest = initial;
-    const provider = {
-      persistenceEnabled: true,
-      loadTimelineCommandBasis: vi.fn(async () => latest),
-      getRecoverableIdentity: vi.fn(async () => ({ actorId: scope.actorId, realmId: scope.realmId })),
-      commitTimeline: send,
-      saveTimeline: vi.fn(async () => { throw new Error('Legacy save must not run'); }),
-      resolveAssetUrl: vi.fn(async (file: string) => file),
-      loadTimeline: vi.fn(async () => ({ config, configVersion: 1 })),
-      loadAssetRegistry: vi.fn(async () => document.parent_revision.payload.registry),
-    } as unknown as DataProvider;
+    const transportCalls: Array<{ method: string; path: string; headers: Record<string, string>; rawBody?: string; body?: unknown }> = [];
+    const transport = runtimeDiscoveryTransport(transportCalls, (request, key, path) => {
+      const accepted = acceptedReply(request, adoptedDocument(document, preparedData!.nextData, 'r1'), 'r1', key);
+      accepted.receipt.request_hash = fixtureDigest({ operation: 'commitTimeline', path,
+        publisher: accepted.response.data.publisher, request }).slice(7);
+      accepted.receipt.result = accepted.response.data;
+      latest = { head: accepted.accepted, canonicalDocument: accepted.canonicalDocument };
+      return { status: 200, headers: {}, body: json(accepted.response) };
+    });
+    const runtimeClient = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', token: 'runtime-token', transport });
+    const provider = new RuntimeDataProvider({ projectId: scope.projectId, runtimeClient });
+    vi.spyOn(provider, 'loadTimelineCommandBasis').mockImplementation(async () => structuredClone(latest));
+    const actualCommit = provider.commitTimeline.bind(provider);
+    const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>().mockImplementation(
+      (request, key) => actualCommit(request, key),
+    );
+    provider.commitTimeline = send;
     const store = createTimelineStore();
     const mounted = renderHook(() => useMountedCommands(store, provider, initialData), { wrapper: wrapperFor(store, provider) });
     try {
@@ -213,7 +252,7 @@ describe('mounted prepared-media command persistence', () => {
         .not.toHaveProperty('hold');
       await act(async () => { await mounted.result.current.save.flushPendingSave(); });
       expect(send).toHaveBeenCalledOnce();
-      const { request, key } = calls[0];
+      const [request, key] = send.mock.calls[0]!;
       expect(request).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
         base_revision_id: 'r0', base_publication_id: 'p0', label: 'Edit timeline', merge: 'atomic', dry_run: false,
         source: { via: 'app' }, commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null, created: ['parent/clip:clip-0'] }],
@@ -233,11 +272,39 @@ describe('mounted prepared-media command persistence', () => {
         { op: 'set', ref: 'parent', path: ['registry', 'assets', 'asset-copy'], before: { state: 'absent' },
           value: { file: 'copy.mp4', type: 'video/mp4', media_id: 'media-copy', generationId: 'generation-copy' } },
       ]));
+      const commitCalls = transportCalls.filter((call) => call.path.endsWith('/commit'));
+      expect(commitCalls).toHaveLength(1);
+      const [wire] = commitCalls;
+      expect(wire.method).toBe('POST');
+      expect(wire.path).toBe(`/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`);
+      expect(wire.headers).toMatchObject({
+        Accept: 'application/json', Authorization: 'Bearer runtime-token', 'Content-Type': 'application/json',
+        'Idempotency-Key': key,
+      });
+      expect(wire.rawBody).toBe(JSON.stringify(request));
+      expect(wire.body).toEqual(request);
+      const accepted = await send.mock.results[0]!.value as TimelineCommitResult;
+      expect(accepted.response.data).toMatchObject({
+        status: 'accepted', base_revision_id: 'r0', base_publication_id: 'p0',
+        previous_revision_id: 'r0', previous_publication_id: 'p0', accepted_revision_id: 'r1', rebased_onto: null,
+        document_digest: fixtureDigest(accepted.canonicalDocument), commands: request.commands,
+        merge_mode: 'atomic', steps: request.steps, label: 'Edit timeline', source: { via: 'app' },
+      });
+      expect(accepted.response.data.canonical_document).toEqual(accepted.canonicalDocument);
+      expect(accepted.response.data.canonical_document.parent_revision).toMatchObject({
+        revision_id: 'r1', content_digest: fixtureDigest(accepted.canonicalDocument.parent_revision.payload),
+      });
+      expect(accepted.receipt).toMatchObject({
+        receipt_id: 'p-r1', command_kind: 'timeline.commit', idempotency_key: key,
+        project_id: scope.projectId, project_seq: [1, 1], event_ids: ['event-p-r1'],
+        request_hash: fixtureDigest({ operation: 'commitTimeline', path: wire.path,
+          publisher: accepted.response.data.publisher, request }).slice(7),
+      });
+      expect(accepted.receipt.result).toEqual(accepted.response.data);
       const [stored] = await createCommitOutbox().list(scope);
       expect(stored.intents).toEqual([]);
       expect(stored.accepted?.value).toMatchObject({ response: { data: { status: 'accepted', merge_mode: 'atomic' } } });
       expect(key).toBe(stored.accepted?.value && stored.accepted?.value !== null ? stored.accepted?.value.response?.receipt?.idempotency_key : undefined);
-      latest = { head: { revisionId: 'r1', publicationId: 'p-r1' }, canonicalDocument: adoptedDocument(document, preparedData!.nextData, 'r1') };
       expect(mounted.result.current.save.dataRef.current?.config.clips).toEqual(preparedData!.nextData.config.clips);
       expect(mounted.result.current.save.dataRef.current?.config.clips.find((clip) => clip.id === 'later')?.at).toBe(7);
       expect(mounted.result.current.save.dataRef.current?.config.clips.find((clip) => clip.id === 'sibling')?.at).toBe(5);
@@ -260,21 +327,28 @@ describe('mounted prepared-media command persistence', () => {
       registry: document.parent_revision.payload.registry,
     } as Awaited<ReturnType<typeof buildTimelineData>>, 'agent-r');
     let latest = initial;
-    const send = vi.fn(async () => {
-      throw new ApiError(409, 'dependency_changed', 'The prepared after-anchor source changed', '', {
-        status: 'conflict', reason: 'dependency_changed', head: { revisionId: 'agent-r', publicationId: 'agent-p' },
-      });
+    const transportCalls: Array<{ method: string; path: string; headers: Record<string, string>; rawBody?: string; body?: unknown }> = [];
+    const transport = runtimeDiscoveryTransport(transportCalls, (request) => {
+      latest = { head: { revisionId: 'agent-r', publicationId: 'agent-p' }, canonicalDocument: latestDocument };
+      return { status: 409, headers: {}, body: json({
+        code: 'dependency_changed', message: 'The prepared after-anchor source changed', request_id: 'request-prepared',
+        details: {
+          status: 'conflict', reason: 'dependency_changed',
+          base: { revision_id: request.base_revision_id, publication_id: request.base_publication_id },
+          current: { revision_id: 'agent-r', publication_id: 'agent-p' }, conflicts: [],
+          code: 'dependency_changed', path: ['parent', 'clips', 'id:anchor', 'at'],
+          hint: 'Reload the timeline and retry the prepared placement.', suggested_command: 'show timeline',
+        },
+      }) };
     });
-    const provider = {
-      persistenceEnabled: true,
-      loadTimelineCommandBasis: vi.fn(async () => latest),
-      getRecoverableIdentity: vi.fn(async () => ({ actorId: scope.actorId, realmId: scope.realmId })),
-      commitTimeline: send,
-      saveTimeline: vi.fn(async () => { throw new Error('Legacy save must not run'); }),
-      resolveAssetUrl: vi.fn(async (file: string) => file),
-      loadTimeline: vi.fn(async () => ({ config: latestConfig, configVersion: 2 })),
-      loadAssetRegistry: vi.fn(async () => document.parent_revision.payload.registry),
-    } as unknown as DataProvider;
+    const runtimeClient = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', token: 'runtime-token', transport });
+    const provider = new RuntimeDataProvider({ projectId: scope.projectId, runtimeClient });
+    vi.spyOn(provider, 'loadTimelineCommandBasis').mockImplementation(async () => structuredClone(latest));
+    const actualCommit = provider.commitTimeline.bind(provider);
+    const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>().mockImplementation(
+      (request, key) => actualCommit(request, key),
+    );
+    provider.commitTimeline = send;
     const store = createTimelineStore();
     const mounted = renderHook(() => useMountedCommands(store, provider, initialData), { wrapper: wrapperFor(store, provider) });
     try {
@@ -296,8 +370,26 @@ describe('mounted prepared-media command persistence', () => {
       expect(mounted.result.current.save.dataRef.current?.config.clips.some((clip) => clip.id === 'clip-0')).toBe(false);
       expect(mounted.result.current.save.dataRef.current?.config.clips.find((clip) => clip.id === 'later')?.at).toBe(6);
       expect(send).toHaveBeenCalledOnce();
+      const refusal = await send.mock.results[0]!.value.catch((error: unknown) => error);
+      expect(refusal).toMatchObject({ status: 409, code: 'dependency_changed', details: {
+        status: 'conflict', reason: 'dependency_changed',
+        base: { revision_id: 'r0', publication_id: 'p0' }, current: { revision_id: 'agent-r', publication_id: 'agent-p' },
+        conflicts: [], code: 'dependency_changed', path: ['parent', 'clips', 'id:anchor', 'at'],
+        hint: 'Reload the timeline and retry the prepared placement.', suggested_command: 'show timeline',
+      } });
+      expect(refusal.details).not.toHaveProperty('head');
+      const commitCalls = transportCalls.filter((call) => call.path.endsWith('/commit'));
+      expect(commitCalls).toHaveLength(1);
+      const [wire] = commitCalls;
+      expect(wire).toMatchObject({ method: 'POST', path: `/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`,
+        headers: { Accept: 'application/json', Authorization: 'Bearer runtime-token', 'Content-Type': 'application/json',
+          'Idempotency-Key': expect.any(String) } });
+      expect(wire.body).toMatchObject({ base_revision_id: 'r0', base_publication_id: 'p0', merge: 'atomic' });
       expect((await createCommitOutbox().list(scope)).find((record) => record.ownerId === ownerId)?.pending?.outcome).toMatchObject({
-        kind: 'rejected', error: { kind: 'conflict', message: 'dependency_changed: The prepared after-anchor source changed' },
+        kind: 'rejected', error: { kind: 'conflict', code: 'dependency_changed',
+          message: 'dependency_changed: The prepared after-anchor source changed', details: {
+            status: 'conflict', reason: 'dependency_changed', current: { revision_id: 'agent-r', publication_id: 'agent-p' },
+          } },
       });
     } finally {
       mounted.unmount();
