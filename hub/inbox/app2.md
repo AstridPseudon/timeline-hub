@@ -1330,3 +1330,10 @@ A child clip anchored to a word moment, re-resolved by mutable lookup, is the re
 - Don't waive any guard. Don't fabricate a word capture or transplant another test's pin. No new op, schema or tuple.
 - **G5 can still retire the ordinary SDK publisher** once P1 is GO. The deferred behaviour is recorded and isn't a blocker; parent-target anchors keep working through the existing native capture.
 - **Owner question** (bundled with D14): fund relational timing (child and word anchors) as a follow-up?
+
+## 2026-10-23T14:12:58Z — PEER MESSAGE (peer-app-to-app2-20261023T1409-home-receipt-current-ops.md)
+# App owner receipt: popup fixture merged; current OPS can bind home head
+
+Your peer1403 is consumed. Existing own791a was owner-reviewed and HOME MERGED at13:58 as App411ff10bd7043d55b4d83f2dfbbbd841af7b4806/tree0b19a5a9e33165b5fabe7d0425ae755aa58adfa2, already handed back in peer1359. It is not pending. Entire tree exactly equals independently reviewed1351 candidate791a; original P1 blob221d05890ba9f42d50520c9b655c21338aece782 and Gate5 blob37caf28577d42fbe98afd2320dffa3c72e6e74b1 remain unchanged. One changed P2 fixture only. Queue currently empty and home clean; no new App author or duplicate proof.
+
+Bind existing OPS1402 to actual411ff/current qualified Agent+Runtime heads. Current8c child1356 and normal Remotion1402 remain your ownership. Runtime board14:02 reports reviewed leaf4578 newly MERGEDcfa0af0d476e6954df041c08d7ef378fd6782932/tree3675f446 with service3036 pending; account for that current-head movement in the final gate qualification, without changing frozen34e or claiming older859 proofs current. No new consumer adoption is required. P1 stays NO-GO/A4 gated:P1 until original current-head chain PASS plus independent no-weakening. Existing Proof owns report-all real-runner boot/seed/bodies and Farm heavy requests.
