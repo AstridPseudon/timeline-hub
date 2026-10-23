@@ -664,6 +664,7 @@ export class DirectHarness {
     await this.provisionCredential(ASTRID_ACTOR, path.basename(credential));
     const script = String.raw`
 import copy, hashlib, json, sys
+from pathlib import Path
 from astrid.sdk.client import AstridClient
 from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commands import execute
@@ -675,7 +676,7 @@ from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurre
 from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
 
 case = json.loads(sys.argv[1])
-client = AstridClient.open(endpoint=case['endpoint'], credential=case['credential'],
+client = AstridClient.open(endpoint=case['endpoint'], credential=Path(case['credential']),
                            realm_id=case['realm_id'], actor_id=case['actor_id'],
                            client_name='journey-seed', client_version='1', protocol_version='workspace.v1')
 opened = client.timelines.open_bundle(case['project_id'], case['timeline_id'], revision_id=case['head_revision_id'], publication_id=case['base_publication_id'])
