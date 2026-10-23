@@ -10,6 +10,7 @@ from astrid.core.timeline import moments
 from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.core.timeline.shot_composition_projection import _placement_speed
 from astrid.sdk import timeline_intent as intent
+from astrid.sdk.timeline._timing_evaluators import _fps, _maps, _ReadLookup
 from astrid.sdk.timeline.compiler import TimingCompileError, TimingInputs, compile_timing
 from astrid.sdk.timeline.native_word_anchor import binding, legacy_binding
 from astrid.sdk.timeline.units import _time_fraction
@@ -272,20 +273,24 @@ def _legacy_inputs(
                  for key, field in sorted(exemptions, key=lambda item: (item[0], item[1])))
 
 
-def _timing_basis(bundle: Mapping[str, Any]) -> str:
-    """Retain every timing input, excluding unused tracks and opaque params."""
+def _timing_basis(bundle: Mapping[str, Any], owners: set[tuple[Any, ...]]) -> str:
+    """Retain the physical owners and inputs of one timing dependency component."""
     parent = bundle["parent"]
     timelines = {"parent": {**parent["config"], **parent}}
     timelines.update({"shot:" + key: shot["internal_timeline"] for key, shot in bundle["shots"].items()})
     inputs = {}
     for owner, timeline in timelines.items():
-        clips = timeline.get("clips", [])
+        key = ("parent", "") if owner == "parent" else ("shot", owner.removeprefix("shot:"))
+        clips = [clip for clip in timeline.get("clips", []) if (*key, clip["id"]) in owners]
         tracks = {clip.get("track") for clip in clips}
+        assets = {clip.get("asset", clip.get("asset_id")) for clip in clips}
         inputs[owner] = {
             "clips": [{"clip": _reference_shape(clip), "declarations": intent._app(clip)} for clip in clips],
             "tracks": [row for row in timeline.get("tracks", []) if row.get("id") in tracks],
+            "assets": {key: value for key, value in timeline.get("registry", {}).get("assets", {}).items()
+                       if key in assets},
             "config": {key: value for key, value in timeline.items()
-                       if key not in {"clips", "tracks", "config", "name", "unknown", "meta"}},
+                       if key not in {"clips", "tracks", "registry", "config", "name", "unknown", "meta"}},
         }
     source = bundle.get("source_mapping", {})
     return json.dumps({
@@ -298,6 +303,118 @@ def _timing_basis(bundle: Mapping[str, Any]) -> str:
     }, sort_keys=True, allow_nan=False)
 
 
+def _map_components(bundle: Mapping[str, Any]) -> list[set[tuple[Any, ...]]]:
+    """Bound unsupported nodes using the kernel's cut lookup and Moment grammar.
+
+    Edges are undirected: retaining an unsupported node also retains its unchanged
+    consumers. The compiler still evaluates every component that was written.
+    """
+    rows = dict(_legacy_rows(bundle))
+    graph = {key: {key} for key in rows}
+    lookup = _ReadLookup(copy.deepcopy(dict(bundle)), _fps(bundle))
+
+    def connect(keys):
+        keys = set(keys) & rows.keys()
+        for key in keys:
+            graph[key].update(keys)
+
+    groups = lookup._cut_groups()
+    cuts = {group["id"]: {
+        ("shot", clip.shot_id, clip.id) if clip.shot_id else ("parent", "", clip.id)
+        for clip in group["clips"]
+    } for group in groups}
+    for index, group in enumerate(groups):
+        # A cut's end consumes the next cut's start (including implicit fits).
+        connect(cuts[group["id"]] | (cuts[groups[index + 1]["id"]] if index + 1 < len(groups) else set()))
+    audio = {key for key, clip in rows.items()
+             if key[0] == "shot" and lookup._is_audio(key[1], clip)}
+    sources = bundle.get("source_mapping", {}).get("pinned_documents", [])
+    for key, clip in rows.items():
+        declarations = intent._app(clip)
+        if any(declarations.get(field) is not None for field in (
+                "sequence", "sequence_fit", "formulas", "orphan", "gap_after_s", "until_film_end")):
+            # The kernel cannot bound these inputs. Keep their dependency
+            # selection conservative instead of interpreting another grammar.
+            connect(rows)
+        for field in ("on", "until"):
+            text = declarations.get(field)
+            refs = declarations.get("word_anchors") or {}
+            if field in refs:
+                selected = binding(bundle, "parent/clip:" + str(key[2]), field, refs[field], sources)
+                connect({key, ("shot", selected.source[1], selected.source[2])})
+            if not isinstance(text, str) or not text:
+                continue
+            try:
+                moment: moments.Moment | None = moments.parse(text)
+            except (TypeError, ValueError, moments.MomentError):
+                # Malformed legacy text has no target in the existing grammar.
+                # A written declaration still remains in compiler validation.
+                continue
+            while moment is not None:
+                if moment.kind == "word":
+                    # Legacy text lookup searches the captured audio pool.
+                    connect({key} | audio)
+                elif moment.kind in {"beat", "downbeat"}:
+                    connect({key} | audio | set().union(*cuts.values()))
+                else:
+                    cut = lookup._cut_id(moment.cut or intent.cut_of(clip))
+                    connect({key} | cuts.get(cut, set()))
+                moment = moment.base
+    components = []
+    remaining = set(rows)
+    while remaining:
+        pending = [next(iter(remaining))]
+        component = set()
+        while pending:
+            key = pending.pop()
+            if key not in component:
+                component.add(key)
+                pending.extend(graph[key] - component)
+        remaining -= component
+        if any(_has_explicit_map(rows[key]) for key in component):
+            components.append(component)
+    return components
+
+
+def _has_explicit_map(clip: Mapping[str, Any]) -> bool:
+    try:
+        _maps(clip, "candidate")
+    except TimingCompileError:
+        return True
+    return False
+
+
+def _retain_legacy_map_components(
+    projection: dict[str, Any], candidate: Mapping[str, Any], baseline: Mapping[str, Any] | None,
+) -> set[tuple[Any, ...]]:
+    if baseline is None:
+        return set()
+    if not any(_has_explicit_map(clip) for _, clip in _legacy_rows(candidate)):
+        return set()
+    components = _map_components(candidate)
+    for previous in _map_components(baseline):
+        overlapping = [component for component in components if component & previous]
+        if overlapping:
+            combined = previous.union(*overlapping)
+            components = [component for component in components if component not in overlapping]
+            components.append(combined)
+    retained = set().union(*(component for component in components
+                            if _timing_basis(candidate, component) == _timing_basis(baseline, component)))
+    if not retained:
+        return set()
+    # This is a detached compiler selection, never a rewritten map or authored
+    # declaration. Every written/involved node remains in the real evaluator.
+    parent = projection["parent"]
+    parent["clips"] = [clip for clip in parent["clips"] if ("parent", "", clip["id"]) not in retained]
+    if "clips" in parent["config"]:
+        parent["config"]["clips"] = copy.deepcopy(parent["clips"])
+    for shot_id, shot in projection["shots"].items():
+        internal = shot["internal_timeline"]
+        internal["clips"] = [clip for clip in internal["clips"]
+                             if ("shot", shot_id, clip["id"]) not in retained]
+    return retained
+
+
 def validate_candidate_timing(
     candidate: Mapping[str, Any], *, baseline: Mapping[str, Any] | None = None,
     _allow_physical_context_fallback: bool = True,
@@ -308,8 +425,9 @@ def validate_candidate_timing(
     The canonical compiler guards changes to occurrence source maps. As in
     shot_composition_projection._project_clip, retained occurrence speed and
     source_offset are provenance, while child windows supply timing. Only that
-    placement representation and physical child identities are adapted; no clip
-    or declaration is discarded.
+    placement representation and physical child identities are adapted. Untouched
+    unsupported components are retained outside the compiler selection; authored
+    clips, maps and declarations remain byte-identical.
     """
     publication = compile_authoring_candidate(candidate).publication
     projection = copy.deepcopy(dict(candidate))
@@ -397,20 +515,16 @@ def validate_candidate_timing(
                     mirror_app = mirror.setdefault("app", {})
                     mirror_astrid = mirror_app.setdefault("astrid", {})
                     mirror_astrid[field] = selected.declaration
+    retained = _retain_legacy_map_components(projection, candidate, baseline)
     inputs = TimingInputs(
         projection,
         sources=[row for row in sources if row["document"]["kind"] == "media.transcript"],
-        bindings=bindings,
+        bindings=[selected for selected in bindings if selected.target not in retained],
         legacy_declarations=legacy_declarations,
     )
     try:
         compile_timing(inputs)
     except TimingCompileError as exc:
-        # An unsupported legacy map is not interpreted or removed. Only an
-        # edit that leaves the complete timing basis untouched can retain it.
-        if ("unsupported explicit map" in str(exc) and baseline is not None
-                and _timing_basis(candidate) == _timing_basis(baseline)):
-            return
         if (not _allow_physical_context_fallback
                 or not any(marker in str(exc) for marker in (
                     "ambiguous cut identity", "clip starts before its occurrence"))
