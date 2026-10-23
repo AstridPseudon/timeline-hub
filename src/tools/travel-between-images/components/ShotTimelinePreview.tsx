@@ -25,6 +25,7 @@ import type {
 } from '@/tools/video-editor/runtime/ports.ts';
 import { hardDurationMs } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
+import { ShotTimelineMediaControls } from './ShotTimelineMediaControls.tsx';
 import {
   createShotTimelineDataProvider,
   createShotTimelineInitialData,
@@ -144,11 +145,15 @@ function getConfigHeadRevisionId(config: { app?: unknown } | null | undefined): 
 function ShotTimelineEditorSurface({
   config,
   hardDurationSeconds,
+  occurrenceId,
+  parentDocumentId,
   editorHeadState,
   onActiveConfigChange,
 }: {
   config: ResolvedTimelineConfig;
   hardDurationSeconds?: number;
+  occurrenceId: string;
+  parentDocumentId: string;
   editorHeadState: { current: ShotTimelineEditorHeadState };
   onActiveConfigChange?: (config: ResolvedTimelineConfig) => void;
 }) {
@@ -260,6 +265,7 @@ function ShotTimelineEditorSurface({
       data-shot-timeline-current-time={currentTime}
     >
       <ShotTimelineRecoveryControls />
+      <ShotTimelineMediaControls occurrenceId={occurrenceId} parentDocumentId={parentDocumentId} />
       {isAdoptingCanonicalHead ? (
         <div role="status" data-shot-timeline-head-adoption="pending" className="text-xs text-muted-foreground">
           Updating canonical shot; editing is paused.
@@ -333,7 +339,7 @@ function ShotTimelineEditorSurface({
     </div>
   );
 }
-function ShotTimelineRecoveryControls() {
+export function ShotTimelineRecoveryControls() {
   const chrome = useTimelineChromeContext();
   const recovery = chrome.recoveryDraft;
   if (!recovery && !chrome.isConflictExhausted) {
@@ -525,7 +531,7 @@ export function ShotTimelinePreview({
           handleCanonicalCompositionPublished,
           editorHeadStateRef,
           0,
-          undefined,
+          timelineDataProvider,
           timelineDataProvider,
         )
       : null,
@@ -646,6 +652,8 @@ export function ShotTimelinePreview({
         <ShotTimelineEditorSurface
           config={projection.config}
           hardDurationSeconds={hardDurationSeconds}
+          occurrenceId={occurrenceId}
+          parentDocumentId={currentComposition.parentDocumentId}
           editorHeadState={editorHeadStateRef}
           onActiveConfigChange={handleActiveConfigChange}
         />
