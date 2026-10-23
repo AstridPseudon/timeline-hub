@@ -200,9 +200,10 @@ The original frame rows are the source-window child of each occurrence. Vector 1
 
 The six native rows are unchanged. Every clamp-on row is produced on this branch, and the clip look is already in this tree. No rows were added or kept as xfails for clamp off: the compiler has no unclamped mode, and the decision does not add one.
 
-The settled focused run is recorded in the worker report. Its two pre-existing
-strict xfails are audio vectors 10–11. The single-occurrence visual cap
-regression is an ordinary passing assertion.
+The settled focused run is recorded in the worker report. Audio vectors 10–11
+are covered by the existing trusted normal-audio preparation boundary; this
+visual contract does not claim audio PCM parity. The single-occurrence visual
+cap regression is an ordinary passing assertion.
 
 ## Open
 
