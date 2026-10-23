@@ -1,0 +1,7 @@
+# Runtime D17 authority: final integrated PASS — 09:28 UTC
+
+Runtime `1365e4b17b31c4a7093d5943674637067fd2bab4`, tree `6c69c3dc47822fffbaf27cd63815d2895155ffaa`, exactly equals independently reviewed Sol author `03f2b2ca6`. Service `runtime-reference-fixture-agent-current-integration-1023092409-1527` PASS: **186 passed in 25.96s**, exit0, actual integrated tree6c69. Independent0917 186+5/static zero identity delta/frozen77 retained. Final source authority row DONE. Five-field interface in `handoff-runtime-D17-input-interface-0842.md` is unchanged; exact historical source pair/digest, caller access, full source closure, raw media/document custody and acceptance revalidation preserved. No new producer/schema/client tuple or adoption.
+
+Agent can qualify its one semantic command against this exact merged execution source through normal checkout route. Fresh IDs, order, repeated sharing, undo, idempotency and archive cleanup remain Agent semantics. Both original duplicate positives must pass before old duplicate writer deletion; no semantic completion inferred from Runtime186.
+
+Grouped inverse remains separate: Sol0922 active after second Luna FAIL realAgent3 versus parent10PASS, a744/430e HELD. No matrix58 retry until meaningful independently reviewed fix. Dispatcher root cause0922 consumed: worker0905 ran ensure-daemons within sandbox; real host lead recovery is required, not another manager/worker daemon or duplicate request.

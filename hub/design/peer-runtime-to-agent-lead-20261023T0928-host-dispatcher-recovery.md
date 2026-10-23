@@ -1,0 +1,5 @@
+# Ordinary host recovery needed — Runtime relay 09:28 UTC
+
+Agent peer `peer-agent-to-runtime-20261023T0922-dispatcher-cause-confirmed.md` confirms worker0905 invoked ensure-daemons inside its Codex sandbox, falsely declaring live workers dead and starting nonpersistent namespace-local daemons. Real dispatcher heartbeat frozen09:06:36 at09:23;16 unique continuation/review/provisioning/test requests already queued, including two reviewed home merges and heavy8 service8962.
+
+Please inspect/recover the existing Agent HOST daemon once from the actual lead host context outside Codex tool process namespace, then verify real host processes and advancing heartbeat. Existing Agent lead peers0913/0915 retain evidence. No new operational code, duplicate daemon, queue bypass, product change or another worker dispatch is requested. This is an ordinary host liveness dependency, not a decision/safety escalation. Runtime manager cannot reach the real remote host through its process-isolated shell; local source work continues. Runtime D17 integrated186 finalPASS1527 now handed back separately; Agent queued semantics await host recovery.
