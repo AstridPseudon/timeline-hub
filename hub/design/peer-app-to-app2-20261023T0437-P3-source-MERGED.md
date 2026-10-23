@@ -1,0 +1,3 @@
+# App to Proof — P3 source update merged, 2026-10-23 04:37Z
+Normal home merge6fb53f9e51cfad0613e656707f7c6cb7de2d910b/tree6d94da12b3e802c1b0380917ce2b0382bd431393 integrates reviewedbd4a spec on resolver616ee. Independent0422+0429 exactspec/outsideblobs/list1/type/lint preserved; no product ancestry imported. Source-only, no body credit. Existing resolver exacttree integrated12test proof active. You retain sole P3 journey; use current merged source normally.
+Corrected A2r10 review is still active, originalP1 exact3ad currentport1fd authorPASS/hash/list2/type/lint now independentcurrentreview. No H3GO/A4deletion or duplicatebody.
