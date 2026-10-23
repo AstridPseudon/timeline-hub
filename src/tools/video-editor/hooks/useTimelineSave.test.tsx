@@ -507,6 +507,121 @@ describe('useTimelineSave — recovered draft durability', () => {
       }
     });
 
+  it.each([
+    ['accepted', 'absent'], ['merged', 'absent'], ['accepted', 'null'], ['merged', 'null'],
+  ] as const)('chains Source In after a mounted %s split with %s background fields', async (outcome, fields) => {
+    // Synthetic canonical replies exercise App transport/adoption, not Runtime execution.
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+      request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}),
+    } });
+    const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' };
+    const head = { projectId: scope.projectId, timelineId: scope.timelineId, headRevisionId: 'r0', headPublicationId: 'p0' };
+    const config = { ...createDefaultTimelineConfig(), opaque: { keep: [null, false, 0, ''] } };
+    config.clips = [{ id: 'source', at: 0, track: 'V1', clipType: 'media', asset: 'video', from: 0, to: 8, speed: 1, hold: 8,
+      app: { 'org.example': { clear: null } } }];
+    const registry = { assets: { video: { file: 'video.mp4', type: 'video/mp4', duration: 8 } } };
+    const bootstrap = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+      { timelineId: scope.timelineId });
+    bootstrap.data.canonical_document.parent_revision.payload = { config, clips: config.clips, registry, occurrences: [], opaque: { keep: null } };
+    bootstrap.data.canonical_document.parent_revision.content_digest = fixtureDigest(bootstrap.data.canonical_document.parent_revision.payload);
+    const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: bootstrap.data.canonical_document };
+    const data = await buildTimelineData(config, registry, undefined, 1, undefined, head);
+    const instance = runtimeFixture();
+    const posts: Array<{ body: string; key: string }> = [];
+    const replies: Array<typeof bootstrap> = [];
+    const runtime = new RuntimeDataProvider({ projectId: scope.projectId, transport: async (method, path, headers, body) => {
+      if (method !== 'POST' || !path.endsWith('/commit')) return instance.transport(method, path, headers, body);
+      posts.push({ body: new TextDecoder().decode(body), key: headers['Idempotency-Key'] });
+      const request = JSON.parse(posts.at(-1)!.body) as CommitRequest;
+      const [durable] = await createCommitOutbox().list(scope);
+      expect(durable.pending?.request).toMatchObject(posts.at(-1)!);
+      if (posts.length === 2) {
+        expect(durable.accepted?.head).toEqual({ revisionId: 'r1', publicationId: 'p1' });
+        expect(durable.intents[0].basis).toEqual({ after: durable.accepted!.intentId });
+      }
+      const local = JSON.parse(JSON.stringify(harness!.hook.result.current.dataRef.current!.config)) as typeof config;
+      const raw = { ...local, output: { resolution: config.output.resolution, fps: config.output.fps, file: config.output.file,
+        ...(fields === 'null' ? { background: null, background_scale: null } : {}) } };
+      if (outcome === 'merged') raw.tracks[0].label = 'Merged track';
+      const reply = acceptedCommit({ revision_id: `r${posts.length}`, publication_id: `p${posts.length}` },
+        { revision_id: request.base_revision_id, publication_id: request.base_publication_id },
+        { timelineId: scope.timelineId, commands: request.commands });
+      const document = reply.data.canonical_document;
+      document.parent_revision.payload = { ...structuredClone(initial.canonicalDocument.parent_revision.payload),
+        config: raw, clips: raw.clips };
+      document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+      reply.data.document_digest = fixtureDigest(document);
+      Object.assign(reply.data, { label: request.label, steps: request.steps, merge_mode: request.merge });
+      if (outcome === 'merged') Object.assign(reply.data, { status: 'merged', previous_revision_id: 'agent-r',
+        previous_publication_id: 'agent-p', rebased_onto: { revision_id: 'agent-r', publication_id: 'agent-p' } });
+      reply.receipt.idempotency_key = posts.at(-1)!.key;
+      replies.push(reply);
+      return { status: 200, headers: {}, body: json(reply) };
+    } });
+    const harness = setup(async () => { throw new Error('No legacy save'); }, undefined, { data, loadBasis: async () => initial,
+      capabilities: { getRecoverableIdentity: async () => ({ realmId: scope.realmId, actorId: scope.actorId }),
+        commitTimeline: (request, key) => runtime.commitTimeline(request, key) } });
+    const editing = renderHook(() => useClipEditing({ dataRef: harness!.hook.result.current.dataRef,
+      resolvedConfig: harness!.hook.result.current.dataRef.current?.resolvedConfig ?? null,
+      selectedClipId: harness!.hook.result.current.selectedClipId, selectedTrack: null, currentTime: 2,
+      selectClip: vi.fn(), setSelectedTrackId: vi.fn(), applyEdit: harness!.hook.result.current.applyEdit }));
+    try {
+      await vi.waitFor(() => expect(harness!.hook.result.current.localSaveState?.ownerId).toBeTruthy());
+      await settleInitialRecoveryCheck();
+      await act(async () => { editing.result.current.handleSplitClipAtTime('source', 2); });
+      const rightId = harness.hook.result.current.selectedClipId!;
+      expect(rightId).not.toBe('source');
+      await act(async () => { await harness!.hook.result.current.flushPendingSave(); });
+      expect(posts).toHaveLength(1);
+      const splitBytes = JSON.stringify(replies[0].data.canonical_document);
+      expect(harness.hook.result.current.dataRef.current?.head).toEqual({ ...head, headRevisionId: 'r1', headPublicationId: 'p1' });
+      if (outcome === 'merged') expect(harness.hook.result.current.dataRef.current?.config.tracks[0].label).toBe('Merged track');
+      editing.rerender();
+      await act(async () => { editing.result.current.handleSelectedClipChange({ from: 3 }); });
+      await act(async () => { await harness!.hook.result.current.flushPendingSave(); });
+      expect(posts).toHaveLength(2);
+      expect(posts[1].key).not.toBe(posts[0].key);
+      const request = JSON.parse(posts[1].body) as CommitRequest;
+      expect(request).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+        base_revision_id: 'r1', base_publication_id: 'p1', label: 'Edit timeline', merge: 'fields', dry_run: false,
+        source: { via: 'app' }, commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [] }],
+        reads: expect.arrayContaining([{ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'from'],
+          state: { state: 'present', value: 0 } }]),
+        steps: [{ id: expect.any(String), label: expect.any(String), intent: expect.any(String), tags: [], command_ordinals: [0] }],
+      });
+      expect(request.steps![0].patch).toEqual(request.commands[0].args.changes);
+      expect(request.commands[0].args.changes).toEqual([
+        { op: 'set', ref: 'parent', path: ['clips', `id:${rightId}`, 'from'], before: { state: 'present', value: 0 }, value: 3 },
+      ]);
+      expect(JSON.stringify(replies[0].data.canonical_document)).toBe(splitBytes);
+      const [saved] = await createCommitOutbox().list(scope);
+      expect(saved.intents).toEqual([]);
+      expect(saved.pending).toBeUndefined();
+      expect(saved.accepted?.head).toEqual({ revisionId: 'r2', publicationId: 'p2' });
+      const accepted = saved.accepted!.value as unknown as { canonicalDocument: typeof initial.canonicalDocument };
+      expect(JSON.stringify(accepted.canonicalDocument)).toBe(JSON.stringify(replies[1].data.canonical_document));
+      const payload = accepted.canonicalDocument.parent_revision.payload;
+      const raw = payload.config as unknown as typeof config;
+      expect(raw.output).toEqual({ resolution: config.output.resolution, fps: config.output.fps, file: config.output.file,
+        ...(fields === 'null' ? { background: null, background_scale: null } : {}) });
+      expect(Object.hasOwn(raw.output, 'background')).toBe(fields === 'null');
+      expect(Object.hasOwn(raw.output, 'background_scale')).toBe(fields === 'null');
+      expect(raw.opaque).toEqual(config.opaque);
+      expect(payload.opaque).toEqual({ keep: null });
+      expect(harness.hook.result.current.dataRef.current?.head).toEqual({ ...head, headRevisionId: 'r2', headPublicationId: 'p2' });
+      expect(harness.hook.result.current.dataRef.current?.config.clips.find(clip => clip.id === rightId)).toMatchObject({ from: 3, to: 8, at: 2, hold: 6 });
+      expect(harness.hook.result.current.localSaveState?.status).toBe('saved');
+      expect(harness.toast.error).not.toHaveBeenCalled();
+      expect(harness.saveTimeline).not.toHaveBeenCalled();
+    } finally {
+      editing.unmount();
+      harness.hook.unmount();
+      if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+      else Reflect.deleteProperty(navigator, 'locks');
+    }
+  });
+
   it('persists an inspector trim of the locally split new ID while its split is awaiting acceptance', async () => {
     const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
     Object.defineProperty(navigator, 'locks', { configurable: true, value: {
