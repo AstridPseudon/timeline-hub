@@ -1,0 +1,44 @@
+{
+  "task": "agt-G5-redo-capture-return-1552",
+  "classification": "harness-only lossless observer repair; no diagnostic invocation",
+  "script": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-capture-1552-lossless.py",
+    "sha256": "2188e04aeafd32e088f59438bac8efd56ff4a7cd67d80c8b8635a6c7010fb3d3",
+    "product_changes": false,
+    "loads_original_source_unchanged": true
+  },
+  "preserved_original": {
+    "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-reproducer-1534-7e4b.py",
+    "source_sha256": "153be3ff0db9e473bde9289e9964ea7900e8666713073677a8d4251c42c91740",
+    "failure_artifact_sha256": "88662e8547e37d0c16d8e6c302aa2bdb358b9dc3463d5b3f52184b20c4b554be",
+    "failure_manifest_sha256": "f0973bfa4463b8d151d00384133b264a30836fcfc61e908170838905d7fcd814"
+  },
+  "locked_preflight": {
+    "agent_head": "91ac58a9fc6f1f752be16c0e4b8a1bf17095acee",
+    "runtime_head": "9ce4242bc01f100bab9efc51032a73985cefb2b2",
+    "target_body_sha256": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d",
+    "target_body_bytes": 6798,
+    "target_file_sha256": "d7dc8942c49b4c464535280b8849520adfba4b67d4dc0560a5b68203abf7983b",
+    "body_execution": false,
+    "service_execution": false
+  },
+  "capture_contract": {
+    "callable": ["module", "qualname", "sourcefile_sha256"],
+    "cycles": "stable active-path tags",
+    "dataclasses": "type metadata plus named fields",
+    "types": "module, qualname, sourcefile_sha256",
+    "critical_payloads": ["request", "history", "prepared", "native", "effects"],
+    "durability": "JSONL precall record is fsync'd before wrapped guard/preview/accept/transport/provider calls",
+    "dedup": "sha256 of canonical finite JSON payload; first occurrence contains the complete payload",
+    "storage": "bounded flat JSONL at the invocation output directory"
+  },
+  "offline_smoke": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-capture-1552-lossless.py --offline-smoke",
+    "result": "PASS; checks=5"
+  },
+  "authorization": {
+    "fresh_live_invocation": "manager-owned and not run by this worker",
+    "on_new_failure": "stop, retain partial capture, do not retry or alter guard",
+    "implementation_owner_if_behavior_fails": "manager routes the actual redo/authentication cause to its precise owner; this worker owns only observer capture"
+  }
+}
