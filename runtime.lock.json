@@ -42,7 +42,7 @@
     },
     "src/integrations/runtime/generated.ts": {
       "from": "packages/typescript/src/generated.ts",
-      "sha256": "sha256:b9efd1b4364b388a35689901ba6da897a11332a436dbb2c9ef3ba34a548646d3"
+      "sha256": "sha256:607ece1c559cc3465b9cc560bf2a9bada0e10047caa7bd66269c73a0a58df1ef"
     },
     "src/integrations/runtime/timeline-commit-types.ts": {
       "from": "packages/typescript/src/timeline-commit-types.ts",
@@ -55,6 +55,6 @@
   },
   "manifest": "contract/artifacts.json",
   "producer": "astrid-runtime",
-  "producer_version": "sha256:604f56a434f72d717180d1cd0e988d47800caf21907e9f3eaf697493f038552f",
-  "source_commit": "21482a416d1f0f976ec563b9e1bf96a765f80e56"
+  "producer_version": "sha256:b0a15d84defb5528f75d846413df8e575a0f4e18cd89855d486ee0ce54a83085",
+  "source_commit": "780da6d605033ca71dbe2ad48c10ec2870ea4865"
 }

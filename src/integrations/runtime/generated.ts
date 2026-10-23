@@ -187,7 +187,7 @@ export class WorkspaceClient {
   private commitResponse(body: Uint8Array, preview: boolean): CommitAcceptedMutation | CommitPreviewResponse {
     const value = this.json<CommitAcceptedMutation | CommitPreviewResponse>(body);
     if (!value || !value.data || typeof value.data !== "object" || !("receipt" in value)) throw new Error("invalid commit response");
-    if (preview ? value.data.status !== "preview" || value.receipt !== null : !["accepted", "rebased"].includes(value.data.status) || !value.receipt || typeof value.receipt !== "object" || Array.isArray(value.receipt)) throw new Error("invalid commit status or receipt");
+    if (preview ? value.data.status !== "preview" || value.receipt !== null : !["accepted", "rebased", "merged"].includes(value.data.status) || !value.receipt || typeof value.receipt !== "object" || Array.isArray(value.receipt)) throw new Error("invalid commit status or receipt");
     return value;
   }
   async commitTimeline(projectId: string, timelineId: string, request: CommitRequest, idempotencyKey: string): Promise<CommitAcceptedMutation | CommitPreviewResponse> {
