@@ -763,13 +763,18 @@ def _inverse_stage_root(boundary, ref):
             "internal_timeline": copy.deepcopy(boundary[internal]["payload"])}}, [physical, internal]
 
 
-def _inverse_stage_root_equal(observed, claimed, ref):
+def _inverse_stage_root_equal(observed, claimed, ref, *, materialized=False):
     if value_equal(observed, claimed):
         return True
     if ref.startswith("shot:") and observed["state"] == "present":
         authored = copy.deepcopy(observed)
         authored["value"]["payload"].pop("internal_timeline_revision_id", None)
-        return value_equal(authored, claimed)
+        if value_equal(authored, claimed):
+            return True
+        if materialized and claimed["state"] == "present":
+            claimed_authored = copy.deepcopy(claimed)
+            claimed_authored["value"]["payload"].pop("internal_timeline_revision_id", None)
+            return value_equal(authored, claimed_authored)
     return False
 
 
@@ -916,6 +921,7 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
         return None
     current = boundary
     effect_boundaries = {}
+    authenticated_turnovers = []
     effect_bindings = [binding for ordinal in step["command_ordinals"]
                        for binding in records["commands"][ordinal]["bindings"]
                        if binding.get("key") == "commit.effect"]
@@ -927,17 +933,16 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
         native_start, native_end = stage["native_range"]
         writes = stage["record"]["writes"][native_start:native_end]
         native_image = copy.deepcopy(stage_before)
+        root_checks = []
         # Native captures observe each preceding write (including empty ancestor
         # removals); canonical effects describe the complete stage transition.
         for write in writes:
             if not write["path"] and re.fullmatch(r"(?:shot|occurrence):[^/]+", write["ref"]):
                 root = write["ref"]
                 observed, physical = _inverse_stage_root(native_image, root)
-                require(_inverse_stage_root_equal(observed, write["before"], root),
-                        "inverse stage root differs from its sequential input")
                 after, successors = _inverse_stage_root(stage_after, root)
-                require(_inverse_stage_root_equal(after, write["after"], root),
-                        "inverse stage root differs from its authenticated effect image")
+                root_checks.append((observed, write["before"], root, physical,
+                                    after, write["after"], successors))
                 if root.startswith("occurrence:"):
                     path = ["occurrences", "occurrence_id:" + root.partition(":")[2]]
                     state = location(stage_after["parent"]["payload"], path, absent_items=True)
@@ -973,6 +978,125 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                     for mirror in (("clips",) if write["ref"].startswith("parent/clip:") else ("registry",)):
                         if mirror in projected and mirror in projected.get("config", {}):
                             projected[mirror] = copy.deepcopy(projected["config"][mirror])
+        # A leaf native write can restore authored bytes while the accepted
+        # source records an authenticated physical turnover.  In that case,
+        # reverse the source materialization edges; never infer a new root or
+        # copy an arbitrary stage image.
+        source_boundary = stage["binding"].get("boundary", {})
+        source_entry = (history or {}).get(source_boundary.get("publication_id"), {})
+        source_records = source_entry.get("records", {})
+        source_commands = source_records.get("commands", [])
+        source_steps = source_records.get("steps", [])
+        source_step = next((item for item in source_steps
+                            if item.get("id") == source_boundary.get("step_id")), None)
+        source_bindings = []
+        if source_step is not None:
+            source_bindings = [binding for ordinal in source_step.get("command_ordinals", [])
+                               if isinstance(ordinal, int) and ordinal < len(source_commands)
+                               for binding in source_commands[ordinal].get("bindings", [])
+                               if binding.get("key") == "commit.materialization"]
+        transitions = []
+        for binding in source_bindings:
+            source_new = binding.get("physical_ref")
+            source_old = binding.get("successor")
+            owner = binding.get("owner")
+            require(binding.get("policy") == "fixed"
+                    and binding.get("dependencies") == []
+                    and isinstance(source_new, str) and isinstance(source_old, str)
+                    and source_new.startswith(("shot-revision:", "internal-revision:"))
+                    and source_old.startswith(("shot-revision:", "internal-revision:")),
+                    "inverse stage source materialization is malformed")
+            old, new = source_old, source_new
+            require(old != new and old in stage_before and new in stage_after
+                    and old not in stage_after and new not in stage_before,
+                    "inverse stage source materialization is outside its physical turnover")
+            require(isinstance(owner, str) and owner.startswith("occurrence:")
+                    and owner.endswith("/shot") and binding.get("owners") == [owner],
+                    "inverse stage source materialization owner is malformed")
+            occurrence = owner.removeprefix("occurrence:").removesuffix("/shot")
+            before_rows = [row for row in stage_before["parent"]["payload"].get("occurrences", [])
+                           if row.get("occurrence_id") == occurrence]
+            after_rows = [row for row in stage_after["parent"]["payload"].get("occurrences", [])
+                          if row.get("occurrence_id") == occurrence]
+            require(len(before_rows) == len(after_rows) == 1,
+                    "inverse stage materialization owner is absent or ambiguous")
+            before_row, after_row = before_rows[0], after_rows[0]
+            require(before_row["shot_id"] == after_row["shot_id"]
+                    and _physical_owner(stage_before, old) == (occurrence, before_row["shot_id"])
+                    and _physical_owner(stage_after, new) == (occurrence, after_row["shot_id"]),
+                    "inverse stage materialization changes physical ownership")
+            before_shot = "shot-revision:" + str(before_row["shot_revision_id"])
+            after_shot = "shot-revision:" + str(after_row["shot_revision_id"])
+            before_internal = "internal-revision:" + str(stage_before[before_shot]["internal_timeline_revision_id"])
+            after_internal = "internal-revision:" + str(stage_after[after_shot]["internal_timeline_revision_id"])
+            if old == before_shot and new == after_shot:
+                expected_edges = (before_internal, after_internal)
+            elif old == before_internal and new == after_internal:
+                expected_edges = (before_shot, after_shot)
+            else:
+                require(False, "inverse stage materialization differs from its owner edges")
+                expected_edges = (None, None)
+            require(binding.get("edge_before") == expected_edges[1]
+                    and binding.get("edge_after") == expected_edges[0]
+                    and binding.get("revision_id") == stage_after[new]["revision_id"]
+                    and binding.get("content_digest") == stage_after[new]["content_digest"],
+                    "inverse stage source materialization differs from its successor image")
+            sibling = [item for item in source_bindings
+                       if item.get("physical_ref") == binding.get("edge_before")
+                       and item.get("successor") == binding.get("edge_after")]
+            require(len(sibling) == 1 and sibling[0].get("owner") == owner
+                    and sibling[0].get("owners") == [owner]
+                    and sibling[0].get("edge_before") == source_new
+                    and sibling[0].get("edge_after") == source_old,
+                    "inverse stage source materialization has no authenticated sibling edge")
+            require((old, new) not in [(item[0], item[1]) for item in transitions],
+                    "inverse stage materialization has an ambiguous successor")
+            transitions.append((old, new, before_internal, after_internal,
+                                before_shot, after_shot))
+
+        shot_turnovers = {(old, new): (before_internal, after_internal)
+                          for old, new, before_internal, after_internal, _, _ in transitions
+                          if old.startswith("shot-revision:")}
+        for old, new, before_internal, after_internal, before_shot, after_shot in transitions:
+            image = native_image.pop(old)
+            expected = stage_after[new]
+            if old.startswith("internal-revision:"):
+                require(value_equal(image["payload"], expected["payload"]),
+                        "inverse stage materialization changes internal payload")
+            else:
+                payload = copy.deepcopy(image["payload"])
+                require(payload.get("internal_timeline_revision_id") == before_internal.partition(":")[2],
+                        "inverse stage materialization has a wrong shot pin")
+                payload["internal_timeline_revision_id"] = after_internal.partition(":")[2]
+                require(value_equal(payload, expected["payload"]),
+                        "inverse stage materialization changes shot payload")
+                image["payload"] = payload
+                image["internal_timeline_revision_id"] = after_internal.partition(":")[2]
+            require(image.get("shot_id") == expected.get("shot_id"),
+                    "inverse stage materialization changes physical ownership")
+            image["revision_id"] = expected["revision_id"]
+            image["content_digest"] = expected["content_digest"]
+            require(image["content_digest"] == digest(image["payload"]),
+                    "inverse stage materialization has an unauthenticated payload digest")
+            native_image[new] = image
+        for row in native_image["parent"]["payload"].get("occurrences", []):
+            for old, new in shot_turnovers:
+                if row.get("shot_revision_id") == old.partition(":")[2]:
+                    row["shot_revision_id"] = new.partition(":")[2]
+        allowed_turnovers = [*authenticated_turnovers, *transitions]
+        for observed, before_claim, root, physical, after, after_claim, successors in root_checks:
+            materialized_before = any(new in physical for _, new, _, _, _, _ in allowed_turnovers
+                                      if new.startswith("shot-revision:"))
+            require(_inverse_stage_root_equal(observed, before_claim, root,
+                                              materialized=materialized_before),
+                    "inverse stage root differs from its sequential input")
+            materialized_after = any(new in successors for _, new, _, _, _, _ in allowed_turnovers
+                                     if new.startswith("shot-revision:"))
+            require(_inverse_stage_root_equal(after, after_claim, root,
+                                              materialized=materialized_after),
+                    "inverse stage root differs from its authenticated effect image")
+        authenticated_turnovers.extend(transitions)
+
         require(value_equal({ref: image["payload"] for ref, image in native_image.items()},
                             {ref: image["payload"] for ref, image in stage_after.items()}),
                 "inverse stage native writes do not cover its authenticated effect image")

@@ -8,6 +8,7 @@ import test_timeline_commit_integration as real_tests
 import test_timeline_commit_port as port_tests
 
 from runtime_protocol.errors import RuntimeErrorBase
+from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_port import digest, route_path
 from runtime_protocol.timeline_commit_validation import validate_commit_value
 
@@ -254,6 +255,152 @@ def test_grouped_inverse_effects_use_authenticated_stage_images(service, mutatio
         assert error.value.details is not None
         assert error.value.details["reason"] == ("history_unavailable" if mutation == "missing-history"
                                                    else "invalid_records")
+
+
+_CAPTURED_LEAF_PUBLICATION = "txn-1c5db05293e34736a5207e6f07c3818f"
+_CAPTURED_LEAF_OLD_INTERNAL = (
+    "internal-revision:authoring-timeline-revision-97f6376e203abe566b798f0f31b66b475379eba8ff3bb6ec962c5150e13a9c70"
+)
+_CAPTURED_LEAF_NEW_INTERNAL = (
+    "internal-revision:authoring-timeline-revision-156c0be110b161f16329bdcc57ca4a7eba21bbbd564a7fbed2d207f44fa2d52f"
+)
+_CAPTURED_LEAF_OLD_SHOT = (
+    "shot-revision:authoring-shot-revision-9a042d5ce13b3518476c70b806bc54c62dbe1874c6d8ca913e3072088183ff54"
+)
+_CAPTURED_LEAF_NEW_SHOT = (
+    "shot-revision:authoring-shot-revision-13a1eb4efdb8712c5c5f7a636be6e2c5a51df481105f562915e0ee95226d6c02"
+)
+
+
+def _captured_leaf_stage():
+    """Compact first-stage image from the retained Agent 1246 capture."""
+    from runtime_protocol.timeline_commit_auth import _inverse_stage_boundaries
+
+    old_internal_payload = {"clips": [{"id": "f2-agent-clip", "params": {}}], "opaque": {"keep": True}}
+    new_internal_payload = copy.deepcopy(old_internal_payload)
+    new_internal_payload["clips"][0]["params"]["text"] = "hello"
+    old_shot_payload = {"internal_timeline_revision_id": _CAPTURED_LEAF_OLD_INTERNAL.split(":", 1)[1],
+                        "name": "Opening", "opaque": {"keep": True}}
+    new_shot_payload = copy.deepcopy(old_shot_payload)
+    new_shot_payload["internal_timeline_revision_id"] = _CAPTURED_LEAF_NEW_INTERNAL.split(":", 1)[1]
+    old_parent_payload = {"occurrences": [{"occurrence_id": "f2-occurrence", "shot_id": "selected-shot",
+                                            "shot_revision_id": _CAPTURED_LEAF_OLD_SHOT.split(":", 1)[1]}],
+                          "opaque": {"keep": True}}
+    new_parent_payload = copy.deepcopy(old_parent_payload)
+    new_parent_payload["occurrences"][0]["shot_revision_id"] = _CAPTURED_LEAF_NEW_SHOT.split(":", 1)[1]
+
+    def image(ref, payload):
+        image = {"revision_id": ref.split(":", 1)[1], "content_digest": digest(payload),
+                 "payload": copy.deepcopy(payload)}
+        if ref.startswith("shot-revision:"):
+            image.update(shot_id="selected-shot",
+                         internal_timeline_revision_id=payload["internal_timeline_revision_id"])
+        elif ref.startswith("internal-revision:"):
+            image["timeline_id"] = "film"
+        return image
+
+    before = {"parent": image("parent:captured-parent-before", old_parent_payload),
+              _CAPTURED_LEAF_OLD_SHOT: image(_CAPTURED_LEAF_OLD_SHOT, old_shot_payload),
+              _CAPTURED_LEAF_OLD_INTERNAL: image(_CAPTURED_LEAF_OLD_INTERNAL, old_internal_payload)}
+    after = {"parent": image("parent:captured-parent-after", new_parent_payload),
+             _CAPTURED_LEAF_NEW_SHOT: image(_CAPTURED_LEAF_NEW_SHOT, new_shot_payload),
+             _CAPTURED_LEAF_NEW_INTERNAL: image(_CAPTURED_LEAF_NEW_INTERNAL, new_internal_payload)}
+    unrelated_ref = "internal-revision:captured-unrelated"
+    unrelated = image(unrelated_ref, {"clips": [{"id": "other", "params": {}}]})
+    before[unrelated_ref] = copy.deepcopy(unrelated)
+    after[unrelated_ref] = copy.deepcopy(unrelated)
+
+    effects = [
+        {"op": "set", "ref": _CAPTURED_LEAF_NEW_INTERNAL, "path": [], "before": {"state": "absent"},
+         "value": new_internal_payload},
+        {"op": "set", "ref": _CAPTURED_LEAF_NEW_SHOT, "path": [], "before": {"state": "absent"},
+         "value": new_shot_payload},
+        {"op": "set", "ref": "parent", "path": ["occurrences", "occurrence_id:f2-occurrence",
+                                                        "shot_revision_id"],
+         "before": {"state": "present", "value": _CAPTURED_LEAF_OLD_SHOT.split(":", 1)[1]},
+         "value": _CAPTURED_LEAF_NEW_SHOT.split(":", 1)[1]},
+        {"op": "remove", "ref": _CAPTURED_LEAF_OLD_SHOT, "path": [],
+         "before": {"state": "present", "value": old_shot_payload}},
+        {"op": "remove", "ref": _CAPTURED_LEAF_OLD_INTERNAL, "path": [],
+         "before": {"state": "present", "value": old_internal_payload}},
+    ]
+    source_bindings = [
+        {"key": "commit.materialization", "physical_ref": _CAPTURED_LEAF_NEW_SHOT,
+         "successor": _CAPTURED_LEAF_OLD_SHOT, "owner": "occurrence:f2-occurrence/shot",
+         "owners": ["occurrence:f2-occurrence/shot"], "edge_before": _CAPTURED_LEAF_NEW_INTERNAL,
+         "edge_after": _CAPTURED_LEAF_OLD_INTERNAL, "revision_id": after[_CAPTURED_LEAF_NEW_SHOT]["revision_id"],
+         "content_digest": after[_CAPTURED_LEAF_NEW_SHOT]["content_digest"], "policy": "fixed",
+         "dependencies": []},
+        {"key": "commit.materialization", "physical_ref": _CAPTURED_LEAF_NEW_INTERNAL,
+         "successor": _CAPTURED_LEAF_OLD_INTERNAL, "owner": "occurrence:f2-occurrence/shot",
+         "owners": ["occurrence:f2-occurrence/shot"], "edge_before": _CAPTURED_LEAF_NEW_SHOT,
+         "edge_after": _CAPTURED_LEAF_OLD_SHOT, "revision_id": after[_CAPTURED_LEAF_NEW_INTERNAL]["revision_id"],
+         "content_digest": after[_CAPTURED_LEAF_NEW_INTERNAL]["content_digest"], "policy": "fixed",
+         "dependencies": []},
+    ]
+    source_command = {"ordinal": 0, "command": {"op": "doc.patch"},
+                      "writes": [{"ref": "occurrence:f2-occurrence/clip:f2-agent-clip",
+                                  "path": ["params", "text"]}], "bindings": source_bindings}
+    history = {_CAPTURED_LEAF_PUBLICATION: {
+        "publication_id": _CAPTURED_LEAF_PUBLICATION, "intent": "recorded",
+        "receipt": {"receipt_id": _CAPTURED_LEAF_PUBLICATION},
+        "records": {"commands": [source_command],
+                     "steps": [{"id": "fork-edit-1", "command_ordinals": [0]}]}}}
+    boundary = {"publication_id": _CAPTURED_LEAF_PUBLICATION, "step_id": "fork-edit-1",
+                "command_ordinals": [0], "native_write_range": [0, 1], "effect_range": [0, 5]}
+    inverse_record = {"ordinal": 0, "command": {"op": "timeline.inverse"},
+                     "writes": [{"ref": "occurrence:f2-occurrence/clip:f2-agent-clip",
+                                 "path": ["params", "text"], "before": {"state": "absent"},
+                                 "after": {"state": "present", "value": "hello"}}],
+                     "bindings": [{"key": "inverse.stage", "ref": "parent", "policy": "fixed",
+                                   "dependencies": [], "boundary": boundary},
+                                  *[{"key": "commit.effect", "physical_ref": effect["ref"],
+                                     "effect_ordinal": index, "boundary": {"side": side}}
+                                    for index, effect in enumerate(effects)
+                                    for side in ("before", "after")]],
+                     "created": [], "reads": [], "derived_writes": []}
+    step = {"id": "undo", "command_ordinals": [0], "patch": effects, "dependencies": []}
+    records = {"commands": [inverse_record], "steps": [step],
+               "undo_of": [_CAPTURED_LEAF_PUBLICATION],
+               "undo_steps": {_CAPTURED_LEAF_PUBLICATION: ["fork-edit-1"]}}
+    return _inverse_stage_boundaries, before, after, step, records, after, before, history
+
+
+def test_captured_leaf_inverse_materialization_turnover_is_authenticated():
+    helper, boundary, output, step, records, accepted, original, history = _captured_leaf_stage()
+    effect_boundaries = helper(boundary, output, step, records, accepted, original, history)
+    assert sorted(effect_boundaries) == [0, 1, 2, 3, 4]
+
+
+@pytest.mark.parametrize("mutation", ["physical", "owner", "pin", "missing-binding", "extra-effect",
+                                       "wrong-range", "native-write", "unrelated-payload"])
+def test_captured_leaf_inverse_materialization_rejects_forged_controls(mutation):
+    helper, boundary, output, step, records, accepted, original, history = _captured_leaf_stage()
+    if mutation == "physical":
+        history[_CAPTURED_LEAF_PUBLICATION]["records"]["commands"][0]["bindings"][0]["physical_ref"] = (
+            "shot-revision:foreign")
+    elif mutation == "owner":
+        history[_CAPTURED_LEAF_PUBLICATION]["records"]["commands"][0]["bindings"][0]["owner"] = (
+            "occurrence:foreign/shot")
+    elif mutation == "pin":
+        history[_CAPTURED_LEAF_PUBLICATION]["records"]["commands"][0]["bindings"][0]["edge_before"] = (
+            _CAPTURED_LEAF_OLD_INTERNAL)
+    elif mutation == "missing-binding":
+        history[_CAPTURED_LEAF_PUBLICATION]["records"]["commands"][0]["bindings"].pop()
+    elif mutation == "extra-effect":
+        step["patch"].append({"op": "set", "ref": "parent", "path": ["forged"],
+                               "before": {"state": "absent"}, "value": True})
+        records["commands"][0]["bindings"][0]["boundary"]["effect_range"] = [0, 6]
+    elif mutation == "wrong-range":
+        records["commands"][0]["bindings"][0]["boundary"]["native_write_range"] = [0, 0]
+    elif mutation == "native-write":
+        records["commands"][0]["writes"][0]["after"]["value"] = "forged"
+    else:
+        output["internal-revision:captured-unrelated"]["payload"]["clips"][0]["params"]["forged"] = True
+
+    with pytest.raises(CommitRejected) as error:
+        helper(boundary, output, step, records, accepted, original, history)
+    assert error.value.failure["details"]["reason"] == "invalid_records"
 
 
 # Use the captured film and installed production provider, including its native
