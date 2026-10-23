@@ -74,7 +74,8 @@ def _assert_request(
     )} == {
         "project_id": runtime.project,
         "timeline_id": "film",
-        **base,
+        "base_revision_id": base["revision_id"],
+        "base_publication_id": base["publication_id"],
     }
     assert body["commands"] == [{
         "schema_version": 1,
