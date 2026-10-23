@@ -166,13 +166,14 @@ def _inverse_media_removals(records, bundle):
     from ._collections import AcceptedRecords, arrange, restoration_orders
     from ._command_state import ABSENT, CommandError, State, equal, root_identity
     from ._recording import Recording
+    from ._step_undo import entry_records
 
     if not records:
         return set()
     if not isinstance(records, AcceptedRecords):
         raise CommandError('media inverse needs accepted boundaries', kind='history_unavailable')
     if not equal(list(records), [record for entry in records.entries
-                                for record in entry['records']['commands']]):
+                                for record in entry_records(records, entry)]):
         raise CommandError('media inverse records differ from accepted history', kind='history_unavailable')
     removed = set()
     for entry in reversed(records.entries):
@@ -234,7 +235,17 @@ def _inverse_media_removals(records, bundle):
                     write['after'] for record in commands for write in record['writes']
                 ])):
             raise CommandError('unproven media boundary scope', kind='history_unavailable')
-        removed.update(introduced)
+        selected = entry_records(records, entry)
+        selected_media = _collect_media([
+            {write['path'][-1]: write['after'].get('value')} if write['path'] else write['after']
+            for record in selected for write in record['writes']
+        ])
+        surviving_media = _collect_media([
+            {write['path'][-1]: write['after'].get('value')} if write['path'] else write['after']
+            for record in commands if record['ordinal'] not in {item['ordinal'] for item in selected}
+            for write in record['writes']
+        ])
+        removed.update(introduced & selected_media - surviving_media)
     return removed
 
 
@@ -242,6 +253,7 @@ def _inverse_clip_transcripts(records, bundle, *, pending=False):
     """Release first-use pins owned by a created clip removed by this inverse."""
     from ._collections import AcceptedRecords
     from ._command_state import ABSENT, State, equal
+    from ._step_undo import entry_records
     from .inverse import coalesce
 
     if not isinstance(records, AcceptedRecords):
@@ -264,7 +276,7 @@ def _inverse_clip_transcripts(records, bundle, *, pending=False):
 
     result = []
     for entry in records.entries:
-        choices = [write['after'].get('value') for record in entry['records']['commands']
+        choices = [write['after'].get('value') for record in entry_records(records, entry)
                    for write in record['writes'] if write['ref'] in removed
                    and write['path'][:3] == ['app', 'astrid', 'word_anchors']]
         before, after = records.load_boundary(entry)
@@ -889,9 +901,9 @@ class RuntimeCommitService:
 
         from astrid.sdk.timeline._collections import AcceptedRecords
         from astrid.sdk.timeline._command_state import State
-        from astrid.sdk.timeline._commit_patch import rebase_patch
+        from astrid.sdk.timeline._commit_patch import inverse_address_resolver, rebase_patch
+        from astrid.sdk.timeline._step_undo import check_later_steps, select_inverse_records
         from astrid.sdk.timeline.commands import CommandError, execute
-        from astrid.sdk.timeline.inverse import check_intervening
         from astrid.sdk.timeline.producer import capture_producer
         from astrid.sdk.timeline.rebase import replay
 
@@ -904,7 +916,12 @@ class RuntimeCommitService:
             calls = request["commands"]
             from astrid.sdk.timeline.commands import validate_command
             verified_media = []
-            for call in calls:
+            # Step selection is provider control over authenticated history. The
+            # native ABI still executes the existing whole-record inverse form.
+            execution_calls = copy.deepcopy(calls)
+            for call in execution_calls:
+                if call.get('op') == 'timeline.inverse' and isinstance(call.get('args'), dict):
+                    call['args'].pop('steps', None)
                 validate_command(call)
             verified_producer = capture_producer(port, request)
             for call in calls:
@@ -935,13 +952,16 @@ class RuntimeCommitService:
                                or base_entry['previous'] is not None or current != base):
                 raise CommandError('initialization requires the original bootstrap publication',
                                    kind='not_pristine')
-            undo_of = []
+            undo_of, undo_steps = [], None
             if sum(call["op"] == "timeline.inverse" for call in calls) > 1:
                 raise CommitRejected(_failure("unsupported_operation",
                                               "use one inverse command listing all target publications",
                                               base, current))
             for call in calls:
                 if call["op"] == "timeline.inverse":
+                    if 'steps' in call['args'] and not isinstance(call['args']['steps'], dict):
+                        raise CommandError('inverse steps must be a publication map', kind='invalid_steps')
+                    undo_steps = copy.deepcopy(call["args"].get("steps"))
                     for publication in call["args"]["publications"]:
                         if publication not in undo_of:
                             undo_of.append(publication)
@@ -979,18 +999,20 @@ class RuntimeCommitService:
                             _load(port, context, entry['revision_id']))
 
                 inverse_sources = [source for entry in accepted for source in load_boundary(entry)]
-                inverse_records = AcceptedRecords(accepted, _records(
-                    accepted, CommitRejected, base, current), load_boundary)
-                # A gap before a later target is that target's input, not an
-                # intervening write after it. Check every target's own suffix
-                # before any reversal can mask a non-target overlapping edge.
-                for index, entry in enumerate(ordered):
-                    if entry['publication_id'] in undo_of:
-                        check_intervening(_records([entry], CommitRejected, base, current),
-                                          _records([later for later in ordered[index + 1:]
-                                                    if later['publication_id'] not in undo_of],
-                                                   CommitRejected, base, current),
-                                          state=State(_load(port, context, entry['revision_id'])))
+                _records(ordered, CommitRejected, base, current)
+                accepted_records = AcceptedRecords(accepted, [record for entry in accepted
+                    for record in entry['records']['commands']], load_boundary)
+                inverse_history = ordered
+
+                def select_at(head_bundle, history):
+                    resolver = (inverse_address_resolver(history, head_bundle, load_boundary=load_boundary)
+                        if any('physical_ref' in binding for record in accepted_records
+                               for binding in record['bindings']) else None)
+                    selected = select_inverse_records(accepted_records, undo_steps, address_resolver=resolver)
+                    check_later_steps(selected, history, state=State(head_bundle))
+                    return selected
+
+                inverse_records = select_at(bundle, inverse_history)
             closures, restored_from = {}, None
             if restore:
                 restored_from = copy.deepcopy(calls[0]['args'])
@@ -1020,7 +1042,7 @@ class RuntimeCommitService:
                                          inverse_sources=inverse_sources)
             resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                               context=context, through=base)
-            original = execute(bundle, calls, inverse_records=inverse_records,
+            original = execute(bundle, execution_calls, inverse_records=inverse_records,
                                intervening_records=inverse_intervening, closures=closures,
                                verified_media=verified_media, realm_id=context['realm_id'],
                                resolve_inputs=resolve_inputs, verified_producer=verified_producer,
@@ -1041,12 +1063,14 @@ class RuntimeCommitService:
                                                       base, current))
                     entries = _history(port, current, base, CommitRejected, base)
                     head_bundle = _load(port, context, current["revision_id"])
+                    if undo_of:
+                        inverse_records = select_at(head_bundle, [*inverse_history, *entries])
                     if not closures:
                         schema_inputs = _hydrate(port, head_bundle, calls, inverse_records=inverse_records,
                                              inverse_sources=inverse_sources)
                     resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                                       context=context, through=current)
-                    if any(call['op'] == 'doc.patch' for call in calls) or any(
+                    if undo_of or any(call['op'] == 'doc.patch' for call in calls) or any(
                             key in request for key in ('merge', 'reads', 'steps')):
                         _records(entries, CommitRejected, base, current)
                         def patch_boundary(entry):
@@ -1055,13 +1079,15 @@ class RuntimeCommitService:
                                 raise CommandError('missing history boundary', kind='history_unavailable')
                             return (_load(port, context, previous['revision_id']),
                                     _load(port, context, entry['revision_id']))
-                        bindings = rebase_patch(original, entries, head_bundle, load_boundary=patch_boundary)
+                        bindings = ({} if undo_of else rebase_patch(
+                            original, entries, head_bundle, load_boundary=patch_boundary))
                         try:
-                            replay_calls = [call if call['op'] == 'doc.patch' else original.commands[index]
-                                            for index, call in enumerate(calls)]
+                            replay_calls = (execution_calls if undo_of else [
+                                call if call['op'] == 'doc.patch' else original.commands[index]
+                                for index, call in enumerate(calls)])
                             plan = execute(head_bundle, replay_calls, inverse_records=inverse_records,
-                                           intervening_records=[*inverse_intervening, *_records(
-                                               entries, CommitRejected, base, current)], closures=closures,
+                                           intervening_records=[] if undo_of else _records(
+                                               entries, CommitRejected, base, current), closures=closures,
                                            verified_media=verified_media, realm_id=context['realm_id'],
                                            resolve_inputs=resolve_inputs, verified_producer=verified_producer,
                                            commit_request=request, evaluated_head=current,
@@ -1073,22 +1099,30 @@ class RuntimeCommitService:
                             raise
                     else:
                         plan = replay(original, head_bundle, inverse_records=inverse_records,
-                                  intervening_records=[*inverse_intervening, *_records(
-                                      entries, CommitRejected, base, current)], closures=closures,
+                                  intervening_records=[] if undo_of else _records(
+                                      entries, CommitRejected, base, current), closures=closures,
                                   verified_media=verified_media, realm_id=context['realm_id'],
                                   resolve_inputs=resolve_inputs, verified_producer=verified_producer)
                         plan.steps = copy.deepcopy(original.steps)
                         plan.label, plan.merge_mode = original.label, original.merge_mode
+                for record in plan.records:
+                    if record['command']['op'] == 'timeline.inverse' and undo_steps is not None:
+                        record['command']['args']['steps'] = copy.deepcopy(undo_steps)
                 _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
                                                 inverse_records=inverse_records)
                 from ._commit_preview import prepared_records
 
+                records = prepared_records(plan, undo_of=undo_of,
+                                           restored_from=restored_from)
+                # R2's guarded per-step inverse selection is part of the
+                # authenticated recorder, including when the official v2
+                # preview helper builds the common record fields.
+                records["undo_steps"] = copy.deepcopy(undo_steps)
                 prepared = {
                     "expected_head": copy.deepcopy(current), "canonical_document": document,
                     "document_digest": _digest(document),
-                    "records": prepared_records(plan, undo_of=undo_of,
-                                                 restored_from=restored_from),
+                    "records": records,
                     "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
                     "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
                 }

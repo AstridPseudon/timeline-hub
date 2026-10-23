@@ -874,7 +874,11 @@ class NativeSheet:
             return plan
         if not prefix and not equal(authored(session._bundle(state)), authored(self._bundle)):
             raise SheetError("sheet bundle differs from its pinned session basis")
-        return session.commit_many(plan.commands, idempotency_key=idempotency_key, via="sheet", base=self._basis)
+        steps = [{"id": f"sheet-{index + 1}", "label": "Apply sheet", "intent": "",
+                  "tags": ["sheet"], "command_ordinals": [index], "patch": []}
+                 for index, _command in enumerate(plan.commands)]
+        return session.commit_many(plan.commands, idempotency_key=idempotency_key, via="sheet",
+                                   base=self._basis, label="Apply sheet", steps=steps)
 
 
 def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:
