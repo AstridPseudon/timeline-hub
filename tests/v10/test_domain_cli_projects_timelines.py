@@ -1180,9 +1180,116 @@ def test_visualization_human_navigation_footer_is_compact(capsys) -> None:
     assert "exact frame:" not in output
 
 
+@pytest.fixture
+def guidance_source(saved_source, tmp_path, monkeypatch):  # noqa: F811
+    """Reuse trusted setup, then read through the production public closure reader."""
+    from runtime_protocol.service import RuntimeService
+
+    from tests.sdk.test_timeline_restructure import flat_film
+
+    client, project, _, bodies = saved_source(flat_film())
+    # A separate connection exposes only public reads of the seeded realm;
+    # the imported fixture's private revision_closure reader is never used.
+    service = RuntimeService(tmp_path / "saved-source")
+    transport = client._remote._transport
+    generated = transport._generated
+    for name in ("get_project_parent_composition_revision", "get_project_shot_revision",
+                 "get_project_timeline_revision"):
+        monkeypatch.setattr(generated, name, getattr(service, name), raising=False)
+
+    def inspection(p, t, **kwargs):
+        head = service.get_project_timeline(project, "t")["head_revision_id"]
+        return DomainResult.success({
+            "native_inspection": {"project_id": project, "timeline_id": "t", "head_revision_id": head},
+            "summary": {"head_revision_id": head},
+        })
+
+    monkeypatch.setattr(client.timelines, "open_composition", inspection)
+    monkeypatch.setattr(client.timelines, "open_bundle",
+                        RemoteTimelines.open_bundle.__get__(client.timelines))
+
+    def document(timeline):
+        history = client.timelines.history(project, timeline, limit=100)
+        assert history.ok, history.error
+        opened = client.timelines.open_bundle(project, timeline, **history.data["head"])
+        assert opened.ok, opened.error
+        return opened.data["bundle"]["source_mapping"]["_runtime_document"]
+
+    try:
+        yield client, project, document, bodies, service
+    finally:
+        service.close()
+
+
+@pytest.mark.parametrize("damage", [
+    "wrong_publication", "wrong_pair", "receipt_pair", "parent_digest", "shot_digest",
+    "internal_digest", "canonical_document", "media_manifest", "dependency_manifest",
+])
+def test_timeline_guidance_reader_rejects_wrong_authority_without_writes(
+    guidance_source, damage,
+) -> None:
+    import copy
+
+    from astrid.sdk.timeline.commit import _digest
+
+    client, project, document, bodies, service = guidance_source
+    before = document("t")
+    history = client.timelines.history(project, "t", limit=100).data
+    rows = tuple(service.store.conn.iterdump())
+    pin = dict(history["head"])
+    generated = client._remote._transport._generated
+    with pytest.MonkeyPatch.context() as patcher:
+        if damage == "wrong_publication":
+            pin["publication_id"] = "unavailable-publication"
+        elif damage == "wrong_pair":
+            pin["publication_id"] = next(row["publication_id"] for row in history["items"]
+                                         if row["revision_id"] != pin["revision_id"])
+        elif damage in {"receipt_pair", "canonical_document", "media_manifest", "dependency_manifest"}:
+            read_history = generated.list_timeline_commits
+
+            def damaged_history(*args, **kwargs):
+                page = copy.deepcopy(read_history(*args, **kwargs))
+                entry = next(row for row in page["items"] if row["publication_id"] == pin["publication_id"])
+                if damage == "receipt_pair":
+                    entry["receipt"]["receipt_id"] = "wrong-receipt"
+                else:
+                    canonical = entry["receipt"]["result"]["canonical_document"]
+                    if damage == "canonical_document":
+                        canonical["parent_revision"]["payload"]["config"]["wrong"] = True
+                        canonical["parent_revision"]["content_digest"] = _digest(canonical["parent_revision"]["payload"])
+                    elif damage == "media_manifest":
+                        assert canonical["dependency_manifest"]["media"]
+                        canonical["dependency_manifest"]["media"] = []
+                    else:
+                        canonical["dependency_manifest"]["internal_timelines"] = []
+                return page
+
+            patcher.setattr(generated, "list_timeline_commits", damaged_history)
+        else:
+            name = {"parent_digest": "get_project_parent_composition_revision",
+                    "shot_digest": "get_project_shot_revision",
+                    "internal_digest": "get_project_timeline_revision"}[damage]
+            read_revision = getattr(generated, name)
+
+            def damaged_revision(*args, **kwargs):
+                row = copy.deepcopy(read_revision(*args, **kwargs))
+                row["content_digest"] = "sha256:" + "0" * 64
+                return row
+
+            patcher.setattr(generated, name, damaged_revision)
+
+        refused = client.timelines.open_bundle(project, "t", **pin)
+        assert not refused.ok
+        assert refused.error.code == "protocol_error"
+        assert bodies == []
+        assert tuple(service.store.conn.iterdump()) == rows
+    assert client.timelines.history(project, "t", limit=100).data == history
+    assert document("t") == before
+
+
 @pytest.mark.parametrize("mode", ["checkout", "file", "draft"])
 def test_timeline_editing_guidance_consumes_its_json(
-    saved_source, tmp_path, monkeypatch, capsys, mode,  # noqa: F811
+    guidance_source, tmp_path, monkeypatch, capsys, mode,
 ) -> None:
     from contextlib import nullcontext
 
@@ -1190,40 +1297,13 @@ def test_timeline_editing_guidance_consumes_its_json(
     from astrid.packs.timeline import cli
     from astrid.sdk.timeline.commit import bundle_from_document
     from astrid.sdk.timeline_checkout import Checkout
-    from tests.sdk.test_timeline_restructure import flat_film
-
-    client, project, document, bodies = saved_source(flat_film())
+    client, project, document, bodies, _ = guidance_source
     original = document("t")
     original_head = client.timelines.history(project, "t", limit=100).data["head"]
     path = tmp_path / "draft 'with spaces'.json"
     project_ref, timeline_ref = "project 'with spaces'", "timeline with spaces"
     client.projects = SimpleNamespace(show=lambda ref: DomainResult.success({"project_id": project}))
-    inspect = client.timelines.open_composition
-
-    def inspection(p, t):
-        result = inspect(p, "t")
-        result.data["native_inspection"]["head_revision_id"] = result.data["summary"]["head_revision_id"]
-        return result
-
-    client.timelines.open_composition = inspection
-    open_bundle = client.timelines.open_bundle
-
-    def pinned_bundle(p, t, *, revision_id=None, publication_id=None):
-        opened = open_bundle(p, t, revision_id=revision_id)
-        if publication_id is not None:
-            assert (revision_id, publication_id) == (original_head["revision_id"], original_head["publication_id"])
-            opened.data["bundle"]["base_parent"]["publication_id"] = publication_id
-        return opened
-
-    client.timelines.open_bundle = pinned_bundle
-    transport = SimpleNamespace(
-        get_project_parent_composition_revision=lambda *a: {"data": {
-            **original["parent_revision"], "project_id": project, "timeline_id": "t"}},
-        get_project_shot_revision=lambda p, s, r: {"data": {**next(
-            row for row in original["shot_revisions"] if row["revision_id"] == r), "project_id": project}},
-        get_project_timeline_revision=lambda p, t, r: {"data": {**next(
-            row for row in original["internal_timeline_revisions"] if row["revision_id"] == r), "project_id": project}},
-    )
+    transport = client._remote._transport
     monkeypatch.setattr(helper.AstridClient, "open_from_launcher", lambda **kw: nullcontext(client))
     monkeypatch.setattr(helper, "workspace", lambda: transport)
 
