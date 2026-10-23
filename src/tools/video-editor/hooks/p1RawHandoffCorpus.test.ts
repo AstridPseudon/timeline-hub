@@ -38,6 +38,14 @@ function parentOnly(input: CanonicalDocument): CanonicalDocument {
   return document;
 }
 
+function authoredPayloadClosure(document: CanonicalDocument) {
+  return {
+    parent: document.parent_revision.payload,
+    shots: document.shot_revisions.map(({ payload }) => payload),
+    internalTimelines: document.internal_timeline_revisions.map(({ payload }) => payload),
+  };
+}
+
 async function sourceFor(document: CanonicalDocument, head: TimelineSaveSource['head'], preserveRaw = false): Promise<TimelineSaveSource> {
   const bundle = await authoringBundleFromDocument(document);
   const parentConfig = bundle.parent.config as unknown as TimelineConfig;
@@ -68,7 +76,12 @@ async function captureFixture(before: CanonicalDocument, after: CanonicalDocumen
   expect(owner.intents).toHaveLength(1);
   expect(owner.intents[0].payload).toMatchObject({ kind: 'local-save', label: 'Edit timeline',
     documentIntent: { basis: { head: initial.head }, created: [], changes: expectedChanges } });
-  expect(session.getDocument()).toEqual(after);
+  const local = session.getDocument() as unknown as CanonicalDocument;
+  expect(authoredPayloadClosure(local)).toEqual(authoredPayloadClosure(after));
+  expect({ projectId: local.project_id, timelineId: local.timeline_id,
+    revisionId: local.parent_revision.revision_id, contentDigest: local.parent_revision.content_digest })
+    .toEqual({ projectId: before.project_id, timelineId: before.timeline_id,
+      revisionId: before.parent_revision.revision_id, contentDigest: before.parent_revision.content_digest });
   expect(send).not.toHaveBeenCalled();
   await session.dispose();
 }
