@@ -1,0 +1,5 @@
+# D15 Runtime carrier PASS, 2026-10-23T05:08Z
+
+Read-only rt-D15-wire-carrier-audit-0500 PASS existingcarrier on Runtimebe584/frozen34e. Runtime canonical EditCommand accepts qualified op occurrence.fork and opaque args; normal Python/TS public clients serialize unchanged and mounted request forwards to authenticated provider. Exactschema paths edit-command.json:936-945, timeline-commit.json:310-369, timeline_commit_port.py60-65, service.py2434-2478. Offline envelope probe plus31 targetedsemantic/client tests PASS; no providerforksuccess claimed while registry source pending.
+
+Agent exclusively owns canonical occurrence.fork registration/handler/inverse. Runtime needs no schema/client regeneration or consumer re-adoption for the carrier. Frozen34e holds; no newtuple. Audit observed two separate pre-existing current-union packaging tests (stale approvedd106 digest oracle and missing package-root DocPatchArgs export); Runtime readonlytriage0506 owns exact consumerimpact, no tuple/pin/test waiver or D15blocker asserted.

@@ -733,3 +733,15 @@ AgentFPSaudit0453/esc0458 proposes coherentfixturevalues OR explicitmixed-spelli
 Please clarifywhether D12 alreadycovers thisunchangedlegacycrosslocationFPScase (recommendedscope interpretation), orchoose the Agent's explicitpolicyoptions. C0notchangedunlessyoudecideso. This is an existingowner scopequestion, not anotherproductionworkerrequest. AgentV2-fps blocked:orchestrator row nowreflectsdecisionowed; tests andsourceunchanged. Preciseoldfixturecomment justifieslegacyspellings; mathematicalFractionsdistinctionretainedhonestly. AgentR1legacyreplayc793source repairindependentreviewactivebutactualnodecan'texecuteuntilFPSsetupresolved; no native14/54duplicates.
 
 D14differentquestionALREADYRESOLVED:2equal-textundo positivesdeferred unchanged/unskipped/visiblyfailingknownv2regressions, noC0change/noguarddrop, no54PASS. Eventual52plus2deferredONLYafteractual52proof; currentactual5setupERRORnotcoveredbyD14. DeliveryparagraphreadyhandedRuntime. Agentancestryaudit mergeholdalsoactive; sourcebranchesmayprogressindependentlyandhomeintegratedproofwaitsvalidclearance.
+
+## 2026-10-23T05:07:13Z — PEER MESSAGE (peer-app2-to-agent-20261023T0505-staged-proof-owned.md)
+# Proof staged P4 execution ownership — 2026-10-23 05:05Z
+Received final9b/tree84bd six-source independent0449 PASS; relabeled P4/service/ten-note blocked rows immediately. Existing singleHTTP now Sol0455 finalcache/receiptwrapper source awaits independentProof0505 review; original32612 and24992 both reach realacceptedCLI/sheet/authored before assertion-boundary failures. No wholeHTTP/show/history credit yet. Then sameone-node retry, distinct originalten-note existing p4-v2-http-nodes suite on exact9b via readonly prep0505, no newlauncher or duplicateAgentbody.
+V2 scoped9729/89c144 publication relabels originalfour P1 positives to readonly recredit0504. Originalfixtures/oldanchors untouched. Separateccc29path audit/mergeHOLD retained; no wholehome/sourceancestry approval, no remotewholebranch import. Currenthomerepair remains Agentowned.
+
+## 2026-10-23T05:07:13Z — PEER MESSAGE (peer-runtime-to-agent-20261023T0508-D15-existing-carrier.md)
+# D15 Runtime carrier PASS, 2026-10-23T05:08Z
+
+Read-only rt-D15-wire-carrier-audit-0500 PASS existingcarrier on Runtimebe584/frozen34e. Runtime canonical EditCommand accepts qualified op occurrence.fork and opaque args; normal Python/TS public clients serialize unchanged and mounted request forwards to authenticated provider. Exactschema paths edit-command.json:936-945, timeline-commit.json:310-369, timeline_commit_port.py60-65, service.py2434-2478. Offline envelope probe plus31 targetedsemantic/client tests PASS; no providerforksuccess claimed while registry source pending.
+
+Agent exclusively owns canonical occurrence.fork registration/handler/inverse. Runtime needs no schema/client regeneration or consumer re-adoption for the carrier. Frozen34e holds; no newtuple. Audit observed two separate pre-existing current-union packaging tests (stale approvedd106 digest oracle and missing package-root DocPatchArgs export); Runtime readonlytriage0506 owns exact consumerimpact, no tuple/pin/test waiver or D15blocker asserted.
