@@ -1,0 +1,13 @@
+# R2r atomic native birth — early causal handoff (15:51 UTC)
+
+Owner: rt-R2r-atomic-birth-sol-1546, continuing saved b11f390a22404a8d330a800501c32b88aa78bf17 WIP from tl/rt-R2r-atomic-birth-1543 on integration base 9ce4242bc01f100bab9efc51032a73985cefb2b2. Review/merge and integrated proof remain manager-owned. No P2/P3 bodies run.
+
+Exact portable Proof1536 reproduction, preserved byte-for-byte in evidence/test_native_birth_boundary.py: old source 2 passed/2 failed (atomic grouped/separate fail at provider occurrence alias outside its boundary); corrected source 4 passed. Both use unchanged created_child_public fixture in tests/test_timeline_commit_authentication.py; there is no separate test_timeline_created_child_public.py. Public native occurrence.create -> track.create -> occurrence.add-media, no source occurrences, unchanged managed-media payload.
+
+Production delta only runtime_protocol/timeline_commit_auth.py::validate: accumulate touched physical scopes at each command's reconstructed sequential input; after authenticating all step boundaries, require the complete batch union in EVERY step. This corrects the saved WIP's earlier-step subset check while preserving the original full union guard. No broad birth exception, no changes to initial contradiction, owner, source, alias, inverse, history, port or store verification.
+
+Local regression: 18 passed (four faithful expected acceptances plus seven atomic tamper controls in grouped/separate forms). Foreign source, ambiguous birth, forged foreign/future/wrong-owner allocation, outside read, missing scope all refuse with unchanged DB/history/source. Ruff exit 0. Pyright old/current both exit 0, zero diagnostics, zero added identities. Central named v2-auth-current-integration requested once: rt-R2r-atomic-birth-sol-1546-v2-auth-current-integration-1023155001-1211, pending.
+
+Required 44 sequential security tests are absent from 9ce/b11; preserved exact 85b2feeb58bc54174ac7b89fda4805883865d3b2 test source against this branch fails collection (exit 2), missing validate_sequential_capture. No private verifier/store changes imported. A private scratch 85b2 compatibility snapshot with only this correction transplanted is running the exact all44 suite; it is supplementary evidence, not current-branch integrated qualification. This dependency must be reconciled by the serial review/merge owners.
+
+Durable exact commands/logs/source/patch: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2r-atomic-birth-sol-1546/evidence/. Full final packet follows here before exit. Current Agent integration head during qualification: d682c5977e0d5a7627ca04852980a2d65ca899d4 (not the earlier Proof1536 Agent pin 58316fd6).
