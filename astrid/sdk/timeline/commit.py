@@ -359,6 +359,7 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
     internal_ids = {row["internal_timeline_revision_id"] for row in shots}
     internals = sorted((internal_index[key] for key in internal_ids),
                        key=lambda row: (row["timeline_id"], row["revision_id"]))
+    copy_manifest = bundle["source_mapping"].get("_copy_manifest", {})
     documents = (source["dependency_manifest"]["documents"]
                  if document_pins is None else document_pins)
     if document_pins is None:
@@ -366,12 +367,16 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
         for capture in bundle['source_mapping'].get('pinned_documents', []):
             if capture['pin'] not in documents:
                 documents.append(copy.deepcopy(capture['pin']))
+        for pin in copy_manifest.get("documents", []):
+            if pin not in documents:
+                documents.append(copy.deepcopy(pin))
         removals = _inverse_clip_transcripts(inverse_records, bundle)
         documents = [pin for pin in documents if pin not in removals]
     # Retained inputs may include media consumed through a transcript or other
     # immutable binding rather than a selected clip. Keep those existing pins.
     media = {row["media_id"]: row for row in source["dependency_manifest"]["media"]}
     media.update({row["media_id"]: row for row in publication["dependency_manifest"]["media"]})
+    media.update({row["media_id"]: row for row in copy_manifest.get("media", [])})
     removals = _inverse_media_removals(inverse_records, bundle)
     if removals:
         from ._command_state import CommandError
@@ -1047,6 +1052,8 @@ class RuntimeCommitService:
                                          inverse_sources=inverse_sources)
             resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                               context=context, through=base)
+            from .native_timeline_duplicate import resolve_source
+            resolve_inputs = resolve_source(port, resolve_inputs)
             original = execute(bundle, execution_calls, inverse_records=inverse_records,
                                intervening_records=inverse_intervening, closures=closures,
                                verified_media=verified_media, realm_id=context['realm_id'],
@@ -1075,6 +1082,7 @@ class RuntimeCommitService:
                                              inverse_sources=inverse_sources)
                     resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                                       context=context, through=current)
+                    resolve_inputs = resolve_source(port, resolve_inputs)
                     if undo_of or any(call['op'] == 'doc.patch' for call in calls) or any(
                             key in request for key in ('merge', 'reads', 'steps')):
                         _records(entries, CommitRejected, base, current)
@@ -1115,8 +1123,15 @@ class RuntimeCommitService:
                 _check_reservations(port, plan, current, CommitRejected, base)
                 from astrid.sdk.timeline.validation import validate_final_candidate
 
+                validation_bundle = plan.bundle
+                if '_copy_manifest' in plan.bundle['source_mapping']:
+                    # Validate shared physical roots through main's canonical
+                    # per-occurrence adapter; the accepted closure stays shared.
+                    validation_bundle = bundle_from_document(document_from_bundle(plan.bundle))
+                    validation_bundle['source_mapping']['pinned_documents'] = copy.deepcopy(
+                        plan.bundle['source_mapping'].get('pinned_documents', []))
                 validate_final_candidate(
-                    plan.bundle,
+                    validation_bundle,
                     baseline=bundle if current == base else head_bundle,
                     schema_inputs=schema_inputs,
                     realm_id=context.get('realm_id'),
