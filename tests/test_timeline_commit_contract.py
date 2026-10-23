@@ -387,10 +387,8 @@ def test_generated_python_commit_preserves_exact_envelope_and_retry(preview):
     value = request()
     if preview:
         value["dry_run"] = True
-    response = {
-        "data": {"status": "preview" if preview else "accepted", "opaque": None},
-        "receipt": None if preview else {"receipt_id": "txn"},
-    }
+    response = _preview_commit_response("accepted") if preview else _authoritative_commit_response("accepted")
+    response["data"]["opaque"] = None
     calls = []
 
     def transport(method, path, headers, body):
@@ -446,8 +444,34 @@ def _authoritative_commit_response(status: str = "merged") -> dict[str, Any]:
     return response
 
 
+def _preview_commit_response(status):
+    response = _authoritative_commit_response(status)
+    data = {
+        key: value for key, value in response["data"].items()
+        if key not in {"status", "publisher", "previous_revision_id", "previous_publication_id", "accepted_revision_id", "rebased_onto"}
+    }
+    data.update(status="preview", would_status=status, evaluated_head={"revision_id": "head-r", "publication_id": "head-txn"})
+    return {"data": data, "receipt": None}
+
+
+def _v2_commit_request():
+    value: dict[str, Any] = request()
+    change = {"op": "set", "ref": "parent", "path": ["config", "title"], "before": {"state": "absent"}, "value": "Title"}
+    value["commands"].insert(0, {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None, "args": {"changes": [change]}})
+    value.update(
+        label="Mixed edit", merge="fields", reads=[{"kind": "scope", "ref": "timeline", "path": []}], dry_run=False,
+        steps=[
+            {"id": "patch", "label": "Title", "intent": "title", "tags": [], "command_ordinals": [0], "patch": [change], "reads": [{"kind": "scope", "ref": "timeline", "path": []}]},
+            {"id": "semantic", "label": "Move", "intent": "move", "tags": [], "command_ordinals": [1], "patch": [], "reads": [{"kind": "scope", "ref": "timeline", "path": []}]},
+        ],
+    )
+    validator("CommitRequest").validate(value)
+    return value
+
+
 @pytest.mark.parametrize("status", ["accepted", "merged"])
-def test_generated_python_commit_preserves_authoritative_status_receipt_and_preview(status):
+@pytest.mark.parametrize("merge", ["fields", "atomic"])
+def test_generated_python_commit_preserves_authoritative_status_receipt_and_preview(status, merge):
     response = _authoritative_commit_response(status)
     calls = []
 
@@ -456,33 +480,73 @@ def test_generated_python_commit_preserves_authoritative_status_receipt_and_prev
         return 200, {}, json.dumps(response).encode()
 
     client = WorkspaceClient("http://runtime", transport=transport)
-    assert client.commit_timeline("p", "t", request(), idempotency_key="key") == response
-    preview = {
-        "data": {
-            "status": "preview",
-            "would_status": status,
-            "base_revision_id": "r",
-            "base_publication_id": "txn",
-            "evaluated_head": {"revision_id": "head-r", "publication_id": "head-txn"},
-            **{key: value for key, value in response["data"].items() if key not in {"status", "publisher", "previous_revision_id", "previous_publication_id", "accepted_revision_id", "rebased_onto"}},
-        },
-        "receipt": None,
-    }
+    value = {**_v2_commit_request(), "merge": merge}
+    assert client.commit_timeline("p", "t", value, idempotency_key="key") == response
+    assert json.loads(calls[0][3]) == value
+    assert calls[0][2]["Idempotency-Key"] == "key"
+    preview = _preview_commit_response(status)
     validator("CommitPreviewResponse").validate(preview)
     preview_response = {"data": preview["data"], "receipt": None}
     preview_transport = lambda *args: (200, {}, json.dumps(preview_response).encode())
     assert WorkspaceClient("http://runtime", transport=preview_transport).commit_timeline(
-        "p", "t", {**request(), "dry_run": True}, idempotency_key="preview"
+        "p", "t", {**value, "dry_run": True}, idempotency_key="preview"
     ) == preview_response
     assert calls[0][0:2] == ("POST", "/v1/projects/p/timelines/t/commit")
+
+
+def test_generated_python_commit_preserves_historical_rebased_receipt():
+    response = _authoritative_commit_response()
+    response["data"]["status"] = "rebased"
+    client = WorkspaceClient("http://runtime", transport=lambda *args: (200, {}, json.dumps(response).encode()))
+    assert client.commit_timeline("p", "t", request(), idempotency_key="key") == response
+
+
+@pytest.mark.parametrize("field", list(_authoritative_commit_response()["receipt"]))
+def test_generated_python_commit_refuses_missing_receipt_fields(field):
+    response = _authoritative_commit_response()
+    del response["receipt"][field]
+    client = WorkspaceClient("http://runtime", transport=lambda *args: (200, {}, json.dumps(response).encode()))
+    with pytest.raises(ApiError, match="invalid_response"):
+        client.commit_timeline("p", "t", request(), idempotency_key="key")
+
+
+@pytest.mark.parametrize("field,value", [
+    ("receipt_id", None), ("command_kind", 1), ("idempotency_key", []),
+    ("request_hash", {}), ("project_id", False), ("created_at", 1),
+    ("project_seq", None), ("project_seq", [1]), ("project_seq", [1, 2, 3]),
+    ("project_seq", [True, 1]), ("project_seq", [0, 1]), ("project_seq", [1, 1.5]),
+    ("project_seq", ["1", 1]), ("event_ids", None), ("event_ids", [1]),
+])
+def test_generated_python_commit_refuses_invalid_receipt_fields(field, value):
+    response = _authoritative_commit_response()
+    response["receipt"][field] = value
+    assert not validator("CommitAcceptedMutation").is_valid(response)
+    client = WorkspaceClient("http://runtime", transport=lambda *args: (200, {}, json.dumps(response).encode()))
+    with pytest.raises(ApiError, match="invalid_response"):
+        client.commit_timeline("p", "t", request(), idempotency_key="key")
+
+
+@pytest.mark.parametrize("would_status", [None, "rebased", "invalid", "preview", 1, [], {}])
+def test_generated_python_commit_refuses_invalid_or_missing_preview_would_status(would_status):
+    response = _preview_commit_response("merged")
+    if would_status is None:
+        del response["data"]["would_status"]
+    else:
+        response["data"]["would_status"] = would_status
+    client = WorkspaceClient("http://runtime", transport=lambda *args: (200, {}, json.dumps(response).encode()))
+    with pytest.raises(ApiError, match="invalid_response"):
+        client.commit_timeline("p", "t", {**request(), "dry_run": True}, idempotency_key="key")
 
 
 @pytest.mark.parametrize(
     "response",
     [
         {"data": {**_authoritative_commit_response()["data"], "status": "conflict"}, "receipt": _authoritative_commit_response()["receipt"]},
+        {"data": {**_authoritative_commit_response()["data"], "status": "invalid"}, "receipt": _authoritative_commit_response()["receipt"]},
         {"data": _authoritative_commit_response()["data"], "receipt": None},
         {"data": _authoritative_commit_response()["data"], "receipt": []},
+        {"data": _authoritative_commit_response()["data"], "receipt": {"receipt_id": "partial"}},
+        {"data": {key: value for key, value in _authoritative_commit_response()["data"].items() if key != "status"}, "receipt": _authoritative_commit_response()["receipt"]},
     ],
 )
 def test_generated_python_commit_refuses_malformed_status_or_receipt(response):
@@ -649,10 +713,8 @@ def test_generated_python_history_media_and_restore_adapters():
                 "catalog_digest": DIGEST,
             }
         else:
-            value = {
-                "data": {"status": "accepted"},
-                "receipt": {"receipt_id": "restore"},
-            }
+            value = _authoritative_commit_response("accepted")
+            value["receipt"]["receipt_id"] = "restore"
         return 200, {}, json.dumps(value).encode()
 
     client = WorkspaceClient("http://runtime", transport=transport)
@@ -761,7 +823,8 @@ assert.deepEqual(await client.listTimelineCommits("p", "t", "a/b"), response);
 assert.match(calls.at(-1).path, /cursor=a%2Fb/);
 response = { asset: "a", generation_id: "g", variant_id: "v", object_id: "object", catalog_digest: "digest" };
 assert.deepEqual(await client.getProjectMediaSelection("p", { asset: "a", generation_id: "g", variant_id: "v" }), response);
-response = { data: { status: "rebased" }, receipt: { receipt_id: "restore" } };
+response = authoritative("rebased");
+response.receipt.receipt_id = "restore";
 assert.deepEqual(await client.restoreProjectParentCompositionRevision("p", "t", "old", "r", "txn", "restore"), response);
 assert.deepEqual(calls.at(-1).body, { expected_head: "r", expected_publication_id: "txn" });
 """

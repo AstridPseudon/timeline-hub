@@ -4,7 +4,8 @@ import { ApiError, OperationHandle, OperationHost, OperationRetiredError, PROTOC
 
 const identity = { actorId: "product", realmId: "realm" };
 const connection = { baseUrl: "http://runtime.invalid/", token: "credential-one" };
-const receipt = { data: { status: "accepted", accepted_revision_id: "revision-A" }, receipt: { receipt_id: "receipt-A" } };
+const accepted = { status: "accepted", accepted_revision_id: "revision-A" };
+const receipt = { data: accepted, receipt: { receipt_id: "receipt-A", command_kind: "timeline.commit", idempotency_key: "original-key", request_hash: `sha256:${"a".repeat(64)}`, project_id: "project", project_seq: [1, 1], event_ids: [], result: accepted, created_at: "2026-10-23T00:00:00Z" } };
 const request = {
   api_version: 1, project_id: "project", timeline_id: "timeline",
   base_revision_id: "original-head", base_publication_id: "original-publication",
