@@ -196,6 +196,7 @@ export const useClipDrag = (): UseClipDragResult => {
     };
 
     const updateDragState = (session: InternalDragSession, clientX: number, clientY: number) => {
+      session.plannedData = dataRef.current ?? undefined;
       const adjustedClientY = clientY + session.pointerCoordinateYOffset;
       const nextPosition = latestRef.current.coordinator.update({
         clientX,
