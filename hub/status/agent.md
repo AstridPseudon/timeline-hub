@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T22:36:55Z | dispatcher heartbeat 5s | live 2 (sol 1, luna 1, other 0) | busy30 11 | status age 1m -->
-# agent board, 2026-10-23T22:35:41Z
+<!-- agent | 2026-10-23T22:38:53Z | dispatcher heartbeat 0s | live 3 (sol 1, luna 2, other 0) | busy30 11 | status age 1m -->
+# agent board, 2026-10-23T22:37:04Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2-ops-health | stale dispatcher/false orphan diagnosis | Luna readonly; host lead | dispatcher heartbeat09:06 | merged | agt-U2-ops-health-0912 FINAL | Readonly diagnosis+lead0943 confirms hung pip09:07-09:42; one PID terminated; FIFO resumed, no hostrestart. False sandbox orphan diagnosis confirmed; no productchange | ops-only |
@@ -91,6 +91,7 @@
 | R1-atomic-scope | completeJSON atomic scope dependency union | Sol; independentLuna | author1216PASS | merged | agt-R1-atomic-integrated-1243 FINALPASS | AuthrealREDGREEN3new+211impacted+33RuntimeguardPASS/2149/1912/tools, sameprocessorigins; sourcefix independentofG5gate. Independent3+211/2149/1912/toolsPASS; logONLYowndcb4 verified, MERGED5b1/tree f641 EXACTrevieweddcb4; integrated3proof1243PASS8.22s/currentRuntime3b/origins/tools | dcb4cee322;5b1b4db82 |
 | R1-sequential-rebase | source-bound private captures/history | Sol source; Luna integrated PASS | Runtime counterpart merged/proven | merged | agt-R1-private-integrated-1629 FINALPASS | Actualbac/tree3c9296 16PASS14.34s/0deselect+quality/vendor/artifact, exact67ba6blobs. Runtime actuald9e2+67ba original9 FINALPASS15.69s/27phase/23durablecaptures; Runtime solely owns9, no Agentduplicate | 67ba416bc;bac094180 |
 | F-agent-requalification | post-G5 own-service full | HARD Sol2225 classifier | c36 G5 integrated355PASS | doing | agt-F-qualified-full-sol-2225; SAME service25691 RUNNING | Actualpreflight20917 PASS17s/exactcurrent4registryhashes/sourcebinding/allotherimmutable/6boot/pins/origins. ONEactualfull agent-full-post-g5-2225-1023222822-25691 STARTED22:28 onactualc36/tree50689; waitSAME/classifyALL/no fullPASSyet | actualc36 |
+| F-postG5-child-env | full sanitized-child imports and D09 cause | Luna source/env owner | SAME25691 actualpartialfailures | doing | agt-F-child-import-audit-2238 QUEUED | Earlydedup65failednode/phases:60generic_host+host/startup RuntimeModuleNotFound;3D09registryexit1. Exactsource/installedvsPYTHONPATH/retainedstderr diagnosis+ONEcurrentdispatcherchildonlyifneeded; no full/bodyretry | currentc36/8ea |
 
 | A3-fork-source-baseline | verified copied media baseline | Sol; independent1246 PASS | — | merged | agt-A3-G4-integrated-1305 FINALPASS | Actualf611 exactreviewedbfcf/8eb/dcb; current3b ALL83PASS (82normal+1marked), scopedtype/lint/tools and pins/resolver verified. Combinedfork+patch wholeundo separately Runtime-owned | bfcf78db99;1045d1f6f |
 
