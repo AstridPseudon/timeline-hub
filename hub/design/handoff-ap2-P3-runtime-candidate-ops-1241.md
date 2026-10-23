@@ -1,0 +1,9 @@
+# P3 Runtime candidate OPS handoff
+
+SOURCE_READY=PASS for the exact tracked source identities and reviewed byte guards. OPS_READY=PASS for the existing Gate-5 row's staged prebuild/runtime checks. BLOCKED_ON_PRODUCER: Runtime `9345cb58fe8c54f114d666929e167bbeb5899c6c` remains under independent review and is not merged or producer-qualified.
+
+Updated only the existing `ap2-P3-gate5-h6-0348` row in `scratchpad/orch/tests/suites.conf`. It points at App `12ef32054524a3cce449fdcb6d94788415b9571a`/tree `4bf9a980d1d5ef38d485702006e52ee33f5dbc3d`, Agent `d1fa6c1332011e4c6f6e075ca458c7dff6bf130c`/tree `ff6c46d0b5ba420e3fb9e912e5a30c7a9a41e27b`, and this worker's Runtime `9345cb58fe8c54f114d666929e167bbeb5899c6c`/tree `1675bb7084786f55a4343b366782bc209ad9a1c4`. App common ancestors `577f7e7572c9296a79f22ca974dab6c7bf7ebead` and `772146c4694f1d66ba21568cff2bf4b8d6018f42`, harness blob `4d7d21e8ca762c72e6e2bc5061c7f76d7a6d6ea9`, and original Gate-5 spec blob `37caf28577d42fbe98afd2320dffa3c72e6e74b1` are guarded.
+
+The Runtime checkout has an ignored `.venv/bin/python` wrapper to the existing app2-native venv; runtime interpreter/module origins and the actual harness exports were verified. Before the build, the harness reports only the expected missing production build. The exact private Composition graph is the untouched 80-file `0.0.14` graph with archive SHA-256 `819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234`; public generated subpaths resolve under `dist/` and no synthetic root modules are present.
+
+Evidence: row `c4aa42bae2b4afec25060d548a03da36b0686f7ef507237c56580210f26afa7c`; outside-row digest before=after `babe7e93583598e29514e7389dbb61c13191a1f97d223e72895f7193ae62139d`; exact selector collection was 1 test in 1 file. No service/body/build/browser/full suite was run.
