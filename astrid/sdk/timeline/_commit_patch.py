@@ -249,6 +249,7 @@ class CommitPatch:
         self.compiler_effects = []
         self.inverse_stages = {}
         self.inverse_sources = {}
+        self.execution_boundaries = []
 
     def step(self, ordinal):
         return next(step for step in self.steps if ordinal in step['command_ordinals'])
@@ -427,6 +428,12 @@ class CommitPatch:
                 binding['boundary'] = {**self.boundaries[ordinal], **binding['boundary']}
         if ordinal == step['command_ordinals'][-1]:
             self.outputs[step['id']] = copy.deepcopy(ctx.state.bundle)
+        if self.v2 and len(self.calls) > 1:
+            self.execution_boundaries.append({
+                'boundary': copy.deepcopy(self.boundaries[ordinal]),
+                'input': copy.deepcopy(self.closures[ordinal].document),
+                'output': inverse_closure(ctx.state.bundle, self.inverse_sources.get(ordinal, [])).document,
+            })
 
     def finish(self, plan):
         if not self.active:
@@ -570,6 +577,8 @@ class CommitPatch:
                         binding.update(key='commit.atomic', policy='fixed', dependencies=[], path=[])
                         plan.records[start]['bindings'].append(binding)
         plan.steps, plan.label, plan.merge_mode = self.steps, self.label, self.merge_mode
+        # Private execution custody stays outside the public prepared recorder.
+        setattr(plan, '_sequential_execution', self.execution_boundaries)
         return plan
 
     @staticmethod
