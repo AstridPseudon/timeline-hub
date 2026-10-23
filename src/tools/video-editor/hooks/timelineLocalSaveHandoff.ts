@@ -128,6 +128,16 @@ export function createTimelineLocalSaveHandoff(options: {
     if (object(previous) && object(next)) {
       if (!object(raw)) refuse(`changed display container has no authored binding: ${path.join('/')}`);
       const result = structuredClone(raw);
+      // The app extension is projected verbatim. Trim removes these authored
+      // leaves from an explicitly supplied namespace; other omissions stay partial.
+      if (path.length === 5 && path[0] === 'config' && path[1] === 'clips'
+        && path[3] === 'app' && path[4] === 'astrid') {
+        for (const key of ['for', 'until']) {
+          if (!Object.prototype.hasOwnProperty.call(previous, key) || Object.prototype.hasOwnProperty.call(next, key)) continue;
+          if (!same(field(raw, key), field(previous, key))) refuse(`trim intent has no exact authored binding: ${[...path, key].join('/')}`);
+          delete result[key];
+        }
+      }
       // Omission is a partial editor view, not an explicit clear. An unchanged
       // default/undefined never overwrites the raw own key (including null).
       for (const [key, value] of Object.entries(next)) {
