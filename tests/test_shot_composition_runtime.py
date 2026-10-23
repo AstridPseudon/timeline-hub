@@ -1343,7 +1343,9 @@ def test_stale_head_conflict_carries_machine_readable_reason_over_http(tmp_path,
             assert (stale.value.status, stale.value.code) == (409, "conflict")
             assert stale.value.message == "restore requires the exact head pair"
             assert stale.value.details == {
-                "status": "refused", "reason": "stale_head", "base": base,
+                "status": "refused", "reason": "stale_head", "code": "stale_head",
+                "path": [], "hint": "Read the current timeline head before retrying",
+                "suggested_command": "timeline show", "base": base,
                 "current": current, "conflicts": [],
             }
             assert tuple(service.store.conn.iterdump()) == before
