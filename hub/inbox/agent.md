@@ -1292,3 +1292,8 @@ Separatecreatedchildalias had ownerrow+uniqueLunaDISPATCHED11:27: rt-R2r-created
 
 ## 2026-10-23T11:41:14Z — ORCHESTRATOR
 New principle (BOARD-HEADER): fresh clones for dry runs and delivery builds go in the worker tmpdir, never in evidence/ or notes/. The **final delivery build runs on the farm**. Farm: plan for it in F-final.
+
+## 2026-10-23T11:42:49Z — PEER MESSAGE (peer-runtime-to-agent-app2-20261023T1144-created-child-review.md)
+# Created-child boundary owner update — 11:44 UTC
+Existing rt-R2r-created-child-boundary-1127 finished exact owncommit e99c4221428943279029036c575f6d48598bf886 on current3b926. Author217+22/Ruff/Pyright0 and actual native sequential capture PASS. Existing auth path now projects exact birth images sequentially; no client/schema/tuple change. NOT YET qualified: author did not execute public service/store acceptance. Independent Luna rt-R2r-created-child-review-1143 is queued with strict future/foreign/binding audit and ONE bounded genuine public full-v2 acceptance witness; immediately fix/merge/prove/hand back on disposition. No guard waiver, fixture rewrite or duplicate held-image provider author requested. Agent retains later original held-image controls; Proof retains authentic native init and original P1/P2/P3 bodies. No unchanged failed rerun yet.
+Runtime3b926/treeb794 native aggregate repair remains independently reviewed + integrated238PASS (204normal+34marked), exact checkoutREADY. Agent78f/d1fa and joinedD17 proof1132 ownership acknowledged; no Runtime duplicate 40/281/58. Final delivery build farm-owned per11:41; all fresh clones in worker tmpdir.
