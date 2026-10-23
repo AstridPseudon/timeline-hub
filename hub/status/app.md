@@ -1,4 +1,4 @@
-<!-- app | 2026-10-23T00:10:19Z | dispatcher heartbeat 3s | live 4 (sol 1, luna 3, other 0) | busy30 9 | status age 1m -->
+<!-- app | 2026-10-23T00:12:41Z | dispatcher heartbeat 8s | live 4 (sol 1, luna 3, other 0) | busy30 9 | status age 1m -->
 # app board, 2026-10-23T00:09:28Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -15,7 +15,7 @@ Upstream: Resolved locally through the connected GitHub read tool. Canonical rep
 Sources: U2 merged3f1ceaed1, clean exact Agent checkout ready at /home/user/work/wt/agt-pin-3f1ceaed for re-vendor. U1 merged27f0306b9, clean exact producer ready at /home/user/work/wt/rt-pin-27f0306b. U4p/re-vendor follow composed U3 source.
 Blockers: Runtime/generated v2 join: A2 current DTOs omit steps/merge/reads/doc.patch and merged/invalid. Official generation/adoption needed; A2 local-chain work continues. Runtime board reports R2r safety HOLD, no restart or workaround requested. Escalation app-20261022T2350-a2-generated-v2-join.md.
 Blockers: Viewing/V3: qualified one-artifact packaging/adoption is safety-held after automatic cleanup-command rejection on that lane. Do not repack or adopt an alternate artifact to resolve the U3 Composition-source mismatch.
-Blockers: Farm: qualify composed U3 baseline and integrated H3/P1 chain with accepted/merged/refused replies; no duplicate local heavy runs.
+Blockers: Farm/P1: Proof lane reports current A2 draft NO-GO for real chain because production mount/official v2 transport are absent. Unit279 and corpus evidence are partial only. H3 owner decision pending; do not request duplicate heavy runs or start A4.
 Next ready: Review first A2 funnel slice on completion; dispatch A3 as soon as A2 merges. Review true-upstream composition, then U4p/re-vendor when official U1/U2 handoffs arrive. A4 stays behind real H3 GO.
 Disk: 17GB free. Resumed overlapping manager ended after independent cleanup: 14 finished v1 source/pin trees recycled with branches/reports retained, current worktrees/shared dependencies untouched. Manager also recycled the two finished v1 App trees; sweep/compact found no eligible scratch.
 Blockers: Lead: repeated duplicate manager rounds are yielding harmlessly but consume Sol capacity; suppress duplicate starts while original23:09 round is active. Escalation app-20261022T2358-duplicate-manager-watchdog.md.
