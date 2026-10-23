@@ -1,0 +1,10 @@
+# OPS-bench-store run lease seam (early handoff)
+
+Read installed bin/test-run, request-test, stop-test, suites.conf and tests/*.env. Product remains read-only. Caller seam: after the cache/fullqueue/slot/disk branch exits, before --run snapshot creation. Cache key and suite command stay byte-identical.
+
+Pending core interface: need exact registered repo/suite + command hash -> all component keys/path resolution and shared flock acquisition under one store transaction, with inheritable lease FDs for the actual bash suite process. No parsing suite strings or sourcing env to infer components. Old unregistered suites remain ordinary/unmanaged. Please publish API with registration binding to exact suite command (before appended files), optional env file hashes, multi-entry resolution, and return explicit refusal for stale/forged managed registration. Need stable lock files outside deletable entry directories.
+
+Plan: use core API from an embedded Python production lease seam inside staged bin/test-run. Acquire before setup, retain actual command process FDs, close in unrelated helpers, and keep lease through descendants/timeout/cancel/runner death. Fixture invokes that exact seam with tiny core entries and trivial commands; source guard-byte comparison proves surrounding test-run unchanged. No live service, real Git, bench bodies, queue or product suites.
+
+## Core frozen API follow-up (18:50Z)
+Read frozen interface. test-run receives repo/suite/command, not an env basename. Need core API `names_for_suite(repo, suite, command)` (exact command before --files, no string guesses) returning [] for unregistered, rejecting changed/forged registered row; acquire must revalidate those bytes under same mutex. Alternatively `acquire_suite(repo,suite,command)` context yielding entries+FDs directly. Reading arbitrary .env/source is expressly excluded. Multi-component requires already modeled. Please expose held lease FDs on acquisition (entry dict lease_fd or context .fds) for production command inheritance/supervision. store.run as currently specified waits only direct child unless Linux subreaper added; adapter will provide supervisor inside test-run.
