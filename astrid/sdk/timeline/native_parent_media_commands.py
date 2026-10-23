@@ -26,8 +26,8 @@ def _start(row):
     return start
 
 
-def _after_row(source, requested, media, *, start):
-    """Clone the raw source row, changing only reserved destination identities."""
+def _after_row(source, requested, media, *, start, duration):
+    """Clone the producer's normalized video action for an after-anchor birth."""
     if not isinstance(requested, dict) or not isinstance(requested.get('id'), str):
         raise CommandError('after-clip birth requires a reserved destination id')
     if requested.get('track', source.get('track')) != source.get('track'):
@@ -37,9 +37,15 @@ def _after_row(source, requested, media, *, start):
     row = copy.deepcopy(source)
     row['id'] = requested['id']
     row['asset'] = media['asset']
-    if 'at' in source:
-        row['at'] = start
-    if 'at_ms' in source:
+    row['at'] = start
+    if source.get('clipType') == 'video' or requested.get('clipType') == 'video':
+        # TimelineData duplicates start/end and materializes a positive hold
+        # when it returns to the authored config. The source-window fields and
+        # at_ms are raw-config codecs, not fields of the duplicated action.
+        row['hold'] = duration
+        for key in ('from', 'to', 'speed', 'at_ms'):
+            row.pop(key, None)
+    elif 'at_ms' in source:
         row['at_ms'] = start * 1000
     for key in ('effectId', 'effect_id'):
         if key in source or key in requested:
@@ -62,7 +68,7 @@ def _after_capture_row(bundle, after, row, media):
         raise CommandError('after-clip anchor is missing', kind='selection_changed', ref=after)
     start = _start(source)
     duration = max(0.05, _source_duration(source))
-    return _after_row(source, row, media, start=start + duration)
+    return _after_row(source, row, media, start=start + duration, duration=duration)
 
 
 def assembled_target(ctx, command):
@@ -114,7 +120,7 @@ def add_media(ctx, command):
         ctx.bind('parent.after-track', 'parent/track:' + str(source['track']))
         start = _start(source)
         duration = max(0.05, _source_duration(source))
-        expected = _after_row(source, row, pin, start=start + duration)
+        expected = _after_row(source, row, pin, start=start + duration, duration=duration)
         if expected != row:
             raise CommandError('after-clip birth row is not the captured source clone',
                                kind='capture_mismatch', ref=after)
