@@ -38,22 +38,26 @@ def test_provider_refuses_old_param_basis_after_admitted_element_update(
     realm = DetachedRealm(empty_document())
     realm.call([track_create('picture')])
     old, new = admitted_param_revisions
+    options = scalar_recipes.schema_options(configured_project_pack, old)
+    source, realm.snapshot_objects = options['schema_inputs'][0]
+    realm.live_sources[_digest(source['pin'])] = source
     row = {'id': 'effect', 'clipType': old['id'], 'elementRef': old,
            'at': 0, 'hold': 2, 'track': 'picture'}
     realm.call([capture_clip_add(current(realm), 'parent', row)])
     original = current(realm)
-    options = scalar_recipes.schema_options(configured_project_pack, old)
-    source, realm.snapshot_objects = options['schema_inputs'][0]
-    realm.live_sources[_digest(source['pin'])] = source
     command = capture_clip_set_params(original, 'parent/clip:effect', values={'seed': 16}, **options)
     # Seed the supported replacement revision as an immutable accepted head.
     # No new element-update command or renderer is needed for this provider probe.
     replacement = copy.deepcopy(original)
     State(replacement).entity('parent/clip:effect')['elementRef'] = new
     replacement['parent']['config']['clips'] = copy.deepcopy(replacement['parent']['clips'])
-    document = document_from_bundle(replacement)
+    replacement_options = scalar_recipes.schema_options(configured_project_pack, new)
+    document = document_from_bundle(
+        replacement, document_pins=[replacement_options['schema_source']])
     revision = document['parent_revision']['revision_id']
     realm.documents[revision] = document
+    source, realm.snapshot_objects = replacement_options['schema_inputs'][0]
+    realm.retained_sources[_digest(source['pin'])] = source
     realm.call([restore(document)])
     before = copy.deepcopy((realm.head, realm.entries, realm.documents))
     with pytest.raises(CommitRejected) as error:
