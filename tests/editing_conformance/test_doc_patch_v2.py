@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import copy
+import json
+from pathlib import Path
 
 import pytest
 
@@ -333,6 +335,44 @@ def test_list_move_merges_unread_sibling_item_field():
     parent = realm.documents[realm.head['revision_id']]['parent_revision']['payload']
     assert [row['id'] for row in parent['clips']] == ['clip-b', 'clip-a']
     assert parent['clips'][1]['hold'] == 3
+
+
+@pytest.mark.parametrize('merge', ['fields', 'atomic'])
+@pytest.mark.parametrize('declared_read', [False, True])
+@pytest.mark.parametrize(('operation', 'reason'), [
+    ('list.remove', 'selection_changed'),
+    ('list.move', 'selection_changed'),
+    ('set', 'value_conflict'),
+])
+def test_list_move_conflict_precedence(operation, reason, declared_read, merge):
+    # P1 edcd1b2b uses the byte-identical canonical_clip_trim.json fixture.
+    fixture = Path(__file__).parent / 'fixtures' / 'recipe_m2_clip_trim.json'
+    realm = DetachedRealm(json.loads(fixture.read_text(encoding='utf-8'))['input'])
+    original_head = copy.deepcopy(realm.head)
+    row = realm.documents['parent-1']['parent_revision']['payload']['clips'][1]
+    move = change(['clips'], present(row), op='list.move', id='clip-b',
+                  order_before=['clip-a', 'clip-b'], after_id=None)
+    intervening = copy.deepcopy(move)
+    intervening['op'] = operation
+    if operation == 'list.remove':
+        del intervening['after_id']
+    elif operation == 'set':
+        intervening = change(['clips', 'id:clip-b', 'hold'], present(2), 3)
+    submit(realm, patch(intervening), merge='fields', reads=[])
+    head_after_intervening = copy.deepcopy(realm.head)
+    entries_after_intervening = copy.deepcopy(realm.entries)
+    documents_after_intervening = copy.deepcopy(realm.documents)
+    reads = [{'kind': 'collection', 'ref': 'parent', 'path': ['clips'],
+              'members': ['clip-a', 'clip-b'], 'order': ['clip-a', 'clip-b']}] if declared_read else []
+
+    with pytest.raises(CommitRejected) as error:
+        submit(realm, patch(move), merge=merge, reads=reads, base=original_head)
+
+    assert error.value.failure['details']['reason'] == (
+        'atomic_scope_changed' if merge == 'atomic' else reason)
+    assert realm.head == head_after_intervening
+    assert realm.entries == entries_after_intervening
+    assert realm.documents == documents_after_intervening
 
 
 def test_field_edit_merges_intervening_sibling_order_change():

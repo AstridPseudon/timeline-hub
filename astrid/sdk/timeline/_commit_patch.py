@@ -764,7 +764,8 @@ def rebase_patch(plan, entries, head_bundle, *, load_boundary):
                           for site in record_sites(record, base_closure)
                           if not (site.get('write', {}).get('before') == ABSENT
                                   and site.get('write', {}).get('ref') in {item['ref'] for item in record['created']}))
-    for guard in guards:
+    # Collection selection changes take precedence over removed members' field guards.
+    for guard in sorted(guards, key=lambda guard: guard['kind'] != 'collection'):
         guard['ref'] = guarded_ref(guard['ref'])
         for site in sites:
             their_ref = continuation(site['ref'])
