@@ -386,6 +386,8 @@ class _PidfdExitProof:
     def __init__(self, descriptor: int):
         self._descriptor = descriptor
         self._watch: Any = None
+        if sys.platform == "darwin":
+            return
         try:
             self._watch = select.epoll()
             self._watch.register(descriptor, select.EPOLLIN)
@@ -393,7 +395,7 @@ class _PidfdExitProof:
             self.close()  # Custody still retains the pidfd, without exit proof.
 
     def exited(self, descriptor: int) -> bool:
-        if self._watch is None or descriptor != self._descriptor:
+        if sys.platform == "darwin" or self._watch is None or descriptor != self._descriptor:
             return False
         try:
             self._watch.modify(descriptor, select.EPOLLIN)

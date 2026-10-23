@@ -74,7 +74,9 @@ class Timeline(Checkout):
                 "patch": patch}
         if reads is not None:
             step["reads"] = copy.deepcopy(reads)
-        self._commands.extend(copy.deepcopy(plan.commands))
+        # Preserve caller guards; preview-generated captures omit the final
+        # request/step reads. The provider captures against the pinned base.
+        self._commands.extend(copy.deepcopy(commands))
         self._steps.append(step)
         self.bundle = copy.deepcopy(plan.bundle)
         self._command_bundle = copy.deepcopy(plan.bundle)

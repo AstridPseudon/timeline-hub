@@ -286,6 +286,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
     # Immutable reuse follows exact encoded content, independently of value guards.
     source = bundle["source_mapping"]["_runtime_document"]
     publication = compile_authoring_candidate(bundle).publication
+    from ._doc_patch_materialize import project
+    publication = project(bundle, publication)
     shot_index = {row["revision_id"]: copy.deepcopy(row) for row in source["shot_revisions"]}
     internal_index = {row["revision_id"]: copy.deepcopy(row)
                       for row in source["internal_timeline_revisions"]}
@@ -308,7 +310,8 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
     # Opening shared occurrences gives them independent editing identities. A
     # parent-only edit must still reuse their ORIGINAL immutable shot images.
     for occurrence in parent["occurrences"]:
-        identity = occurrence["shot_id"]
+        identity = next(row["shot_id"] for row in bundle["placements"]
+                        if row["occurrence_id"] == occurrence["occurrence_id"])
         shot = bundle["shots"][identity]
         origin = bundle["source_mapping"]["shots"].get(identity)
         if (origin is not None and _json(shot["payload"]) == _json(shot["base_payload"])
@@ -886,6 +889,7 @@ class RuntimeCommitService:
 
         from astrid.sdk.timeline._collections import AcceptedRecords
         from astrid.sdk.timeline._command_state import State
+        from astrid.sdk.timeline._commit_patch import rebase_patch
         from astrid.sdk.timeline.commands import CommandError, execute
         from astrid.sdk.timeline.inverse import check_intervening
         from astrid.sdk.timeline.producer import capture_producer
@@ -1019,7 +1023,8 @@ class RuntimeCommitService:
             original = execute(bundle, calls, inverse_records=inverse_records,
                                intervening_records=inverse_intervening, closures=closures,
                                verified_media=verified_media, realm_id=context['realm_id'],
-                               resolve_inputs=resolve_inputs, verified_producer=verified_producer)
+                               resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                               commit_request=request, evaluated_head=base)
             for attempt in range(3):
                 if attempt:
                     current = port.head()
@@ -1041,11 +1046,39 @@ class RuntimeCommitService:
                                              inverse_sources=inverse_sources)
                     resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                                       context=context, through=current)
-                    plan = replay(original, head_bundle, inverse_records=inverse_records,
+                    if any(call['op'] == 'doc.patch' for call in calls) or any(
+                            key in request for key in ('merge', 'reads', 'steps')):
+                        _records(entries, CommitRejected, base, current)
+                        def patch_boundary(entry):
+                            previous = entry.get('previous')
+                            if previous is None:
+                                raise CommandError('missing history boundary', kind='history_unavailable')
+                            return (_load(port, context, previous['revision_id']),
+                                    _load(port, context, entry['revision_id']))
+                        bindings = rebase_patch(original, entries, head_bundle, load_boundary=patch_boundary)
+                        try:
+                            replay_calls = [call if call['op'] == 'doc.patch' else original.commands[index]
+                                            for index, call in enumerate(calls)]
+                            plan = execute(head_bundle, replay_calls, inverse_records=inverse_records,
+                                           intervening_records=[*inverse_intervening, *_records(
+                                               entries, CommitRejected, base, current)], closures=closures,
+                                           verified_media=verified_media, realm_id=context['realm_id'],
+                                           resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                                           commit_request=request, evaluated_head=current,
+                                           replay_bindings=bindings)
+                        except CommandError as exc:
+                            if exc.kind == 'previous_value_mismatch':
+                                exc.kind = ('selection_changed' if getattr(exc, 'dependency_kind', None) == 'collection'
+                                            else 'dependency_changed')
+                            raise
+                    else:
+                        plan = replay(original, head_bundle, inverse_records=inverse_records,
                                   intervening_records=[*inverse_intervening, *_records(
                                       entries, CommitRejected, base, current)], closures=closures,
                                   verified_media=verified_media, realm_id=context['realm_id'],
                                   resolve_inputs=resolve_inputs, verified_producer=verified_producer)
+                        plan.steps = copy.deepcopy(original.steps)
+                        plan.label, plan.merge_mode = original.label, original.merge_mode
                 _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
                                                 inverse_records=inverse_records)
@@ -1053,7 +1086,9 @@ class RuntimeCommitService:
                     "expected_head": copy.deepcopy(current), "canonical_document": document,
                     "document_digest": _digest(document),
                     "records": {"schema_version": 1, "commands": copy.deepcopy(plan.records),
-                                "undo_of": undo_of, "restored_from": restored_from},
+                                "undo_of": undo_of, "restored_from": restored_from,
+                                "label": plan.label, "steps": copy.deepcopy(plan.steps),
+                                "merge_mode": plan.merge_mode},
                     "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
                     "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
                 }
@@ -1074,7 +1109,8 @@ class RuntimeCommitService:
             conflicts = ([exc.to_json()] if exc.kind in {
                 "value_conflict", "identity_conflict", "identity_collision", "inverse_conflict",
                 "dependency_changed", "inverse_dependency_changed",
-                "intervening_write", "selection_changed", "surviving_dependents"} else None)
+                "intervening_write", "selection_changed", "surviving_dependents",
+                "atomic_scope_changed", "binding_changed", "ambiguous_ref"} else None)
             raise CommitRejected(_failure(exc.kind, str(exc), base, current,
                                           conflicts=conflicts)) from exc
 
