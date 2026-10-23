@@ -1,0 +1,5 @@
+# Handoff: P1 D25 artifact review
+
+**FAIL overall.** Isolated 14-test artifact safety, root/App/Node no-emit, scoped ESLint, exact two-test list, scope, protected-slice hashes, and no-weakening checks pass. Actual-failure retention fails: the writer at `three-products.p1-chain.spec.ts:1218` follows an unbounded `commandOutboxes` IndexedDB `page.evaluate`, additional DOM reads, and (in the second-case collector) an earlier outbox/runtime read. The recorded 18607 second case hit 300s test plus 300s afterEach timeouts, so this path can still emit no artifact. A write/attach catch does not address a writer that is never reached.
+
+Source identity: reviewed `53b5733c3cc930bab55b3216b9f72f1bee112888` / tree `fa29351edba95c07eaa07188e1c81f9d896eb469`, based on App `2107e187` / tree `a3ff358`. Only the three allowed files changed; protected hashes are `4b04ad7e…ea8b7f` and `2f750118…00a2f7`. No code was changed by this review. Preserve actual 18607 as 1 PASS / 1 FAIL and both causal verdicts as INSUFFICIENT EVIDENCE.
