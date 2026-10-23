@@ -1,1 +1,1 @@
-2026-10-23T20:40:58Z procs: hub-syncd dispatcher run-manager up; board 20:35Z; workers running 0; disk 18G free; issues: none (idle, awaiting orchestrator/app2)
+2026-10-23T21:40:48Z procs: hub-syncd dispatcher run-manager up; board 21:24Z; workers running 0; disk 18G free; issues: none (idle, awaiting App P3 / Node 20 decision)
