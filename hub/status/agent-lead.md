@@ -1,1 +1,1 @@
-2026-10-23T05:41:19Z alive; live workers 1; board fresh; disk 15G
+2026-10-23T06:00:18Z alive; live workers 3 vs board active rows 6; inbox 161759B; disk 16G
