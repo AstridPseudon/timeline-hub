@@ -4,7 +4,7 @@ import { ApiError } from '@/integrations/runtime/generated.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import type { CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
-import { createCommitOutbox, type OutboxJson } from './commitOutbox.ts';
+import { createCommitOutbox, toOutboxJson, type OutboxJson } from './commitOutbox.ts';
 import { createLocalSaveSession, type LocalSave, type LocalSaveSession, type LocalSaveState } from './localSaveSession.ts';
 
 const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-commit' };
@@ -62,14 +62,64 @@ function environment() {
   });
   const mount = () => createLocalSaveSession({ scope, initial, document: original, outboxes,
     send, loadLatest, prepareDisplay, changed: (state) => states.push(state) });
+  const mountCanonical = () => createLocalSaveSession({ scope, initial, document: toOutboxJson(initial.canonicalDocument), outboxes,
+    send, loadLatest, prepareDisplay, changed: (state) => states.push(state) });
   const append = async (session: LocalSaveSession, save: LocalSave) => {
     visible = structuredClone(save.after);
     await session.append(save);
   };
-  return { outboxes, initial, send, loadLatest, states, prepareDisplay, mount, append, adopted, visible: () => visible };
+  return { outboxes, initial, send, loadLatest, states, prepareDisplay, mount, mountCanonical, append, adopted, visible: () => visible };
 }
 
 describe('local editor saves through the durable outbox', () => {
+  it('retains encoded physical-root guards, step identity and dependent created IDs through recovery without inventing a request', async () => {
+    const env = environment();
+    const first = await env.mountCanonical();
+    const before = structuredClone(env.initial.canonicalDocument);
+    const after = structuredClone(before);
+    after.parent_revision.payload = split;
+    const final = structuredClone(after);
+    final.parent_revision.payload = trimmed;
+    const roots = [{ ref: 'parent' as const, revisionId: 'r0', contentDigest: before.parent_revision.content_digest }];
+    const step = { id: 'split-step', label: 'Split', intent: 'Split local clip', tags: ['editing'] };
+    const a = first.appendDocument({ before, after, roots, label: 'Split', step });
+    const b = first.appendDocument({ before: after, after: final, roots, label: 'Trim', step: { ...step, id: 'trim-step' } });
+    await Promise.all([a, b]);
+    const [stored] = await env.outboxes.list(scope);
+    expect(stored.intents[0].payload).toMatchObject({ documentIntent: { basis: { head: h0 },
+      roots, created: ['parent/clip:right'], step, changes: expect.arrayContaining([
+        expect.objectContaining({ op: 'list.insert', id: 'right', before: { state: 'absent' } }),
+      ]) } });
+    expect(stored.intents[1].payload).toMatchObject({ documentIntent: { basis: { after: stored.intents[0].id },
+      before: after, after: final, changes: expect.arrayContaining([
+        { op: 'set', ref: 'parent', path: ['clips', 'id:right', 'to'], before: { state: 'present', value: 4 }, value: 3 },
+      ]) } });
+    await expect(first.flush()).rejects.toThrow('draft retained');
+    expect(env.send).not.toHaveBeenCalled();
+    await first.dispose();
+    const recovered = await env.mountCanonical();
+    await recovered.recover(stored.ownerId);
+    expect(recovered.getDocument()).toEqual(final);
+    expect((await env.outboxes.list(scope))[0].intents).toEqual(stored.intents);
+    expect((await env.outboxes.list(scope))[0].pending).toBeUndefined();
+    await recovered.dispose();
+  });
+
+  it('validates document mappings before advancing the local chain and ignores exact no-ops', async () => {
+    const env = environment();
+    const session = await env.mountCanonical();
+    const before = env.initial.canonicalDocument;
+    const after = structuredClone(before);
+    after.parent_revision.payload = split;
+    const input = { before, after, roots: [], label: 'Split', step: { id: 's', label: 'Split', intent: '', tags: [] } };
+    expect(() => session.appendDocument(input)).toThrow('explicit physical binding');
+    expect(session.getDocument()).toEqual(before);
+    await session.appendDocument({ ...input, after: before });
+    expect((await env.outboxes.list(scope))[0].intents).toHaveLength(0);
+    expect(session.getState().status).toBe('saved');
+    await session.dispose();
+  });
+
   it('persists split → trim before submit and preserves IDs, before-values and reads at the landed pair', async () => {
     const env = environment();
     const session = await env.mount();

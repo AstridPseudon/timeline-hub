@@ -31,6 +31,10 @@ import { BRIDGE_REQUEST_TIMEOUT_MS } from '../data/bridgeContract';
 import { loadTimelineDraft, saveTimelineDraft, type TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { AssetRegistry } from '../types';
 import type { TimelineBundleEnvelope } from '../data/typed/timelineBundle';
+import { acceptedCommit } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
+import { createLocalSaveSession } from '../commands/localSaveSession.ts';
+import { createTimelineLocalSaveHandoff, type TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
 
 // Keep these inputs aligned with useTimelinePersistence's private save timing
 // contract; the bridge request window itself comes from the shared contract.
@@ -118,6 +122,7 @@ interface TestHarness {
 }
 
 interface SetupOptions {
+  localDocumentSave?: TimelineLocalSaveHandoff;
   store?: TimelineStoreApi;
   initialData?: TimelineData;
   persistenceEnabled?: boolean;
@@ -183,6 +188,7 @@ function setup(options?: SetupOptions): TestHarness {
     (target: { provider: DataProvider; timelineId: string }) => useTimelinePersistence({
       store: options?.store,
       provider: target.provider,
+      localDocumentSave: options?.localDocumentSave,
       assetResolver,
       timelineId: target.timelineId,
       eventBus,
@@ -245,6 +251,86 @@ function makeBundle(text: string): TimelineBundleEnvelope {
 }
 
 describe('useTimelinePersistence — interaction gating', () => {
+  it('keeps an unsupported child ownership edit visible and recoverable without entering either writer', async () => {
+    const original = makeTimelineData('flattened-child');
+    original.head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+      { timelineId: 'timeline-1', children: true }).data.canonical_document;
+    const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+    const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_key, work) => work() });
+    const send = vi.fn();
+    const local = await createLocalSaveSession({ initial, document: toOutboxJson(document), outboxes, send,
+      scope: { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' },
+      loadLatest: vi.fn(async () => initial), changed: vi.fn(),
+      prepareDisplay: vi.fn(async () => { throw new Error('No canonical acceptance expected'); }) });
+    const handoff = createTimelineLocalSaveHandoff({ initial, source: { config: original.config, registry: original.registry, head: original.head },
+      session: local, adopted: vi.fn() });
+    const harness = setup({ initialData: original, localDocumentSave: handoff });
+    const oldHeadWriter = vi.fn();
+    harness.provider.saveTimelineAtHead = oldHeadWriter;
+    const edited = buildDataFromCurrentRegistry({ ...original.config,
+      clips: original.config.clips.map((clip) => ({ ...clip, hold: 2 })) }, original);
+    harness.scheduleSave(edited);
+    await act(async () => { await expect(harness.result.current.flushPendingSave()).rejects.toThrow('child ownership/fork mapping'); });
+    expect(harness.result.current.isConflictExhausted).toBe(true);
+    expect(harness.dataRef.current?.config).toEqual(edited.config);
+    expect((await loadTimelineDraft('timeline-1'))?.draft.config).toEqual(edited.config);
+    expect(local.getDocument()).toEqual(document);
+    expect(oldHeadWriter).not.toHaveBeenCalled();
+    expect(harness.saveTimeline).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
+    harness.unmount();
+    await local.dispose();
+  });
+
+  it('captures dependent authored documents before debounce and retains them without using the old writer when v2 is unavailable', async () => {
+    const original = makeTimelineData('local-chain');
+    original.head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { timelineId: 'timeline-1' }).data.canonical_document;
+    document.parent_revision.payload = { config: structuredClone(original.config), clips: structuredClone(original.config.clips),
+      registry: structuredClone(original.registry), occurrences: [], opaque: { keep: null } };
+    const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+    const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' };
+    const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_key, work) => work() });
+    const send = vi.fn();
+    const local = await createLocalSaveSession({ scope, initial, document: toOutboxJson(document), outboxes, send,
+      loadLatest: vi.fn(async () => initial), changed: vi.fn(),
+      prepareDisplay: vi.fn(async () => { throw new Error('No canonical acceptance expected'); }) });
+    const receipt = vi.fn();
+    const handoff = createTimelineLocalSaveHandoff({ initial, source: { config: original.config, registry: original.registry, head: original.head }, session: local, adopted: receipt });
+    const harness = setup({ initialData: original, localDocumentSave: handoff });
+    const oldHeadWriter = vi.fn();
+    harness.provider.saveTimelineAtHead = oldHeadWriter;
+    const added = buildDataFromCurrentRegistry({ ...original.config, clips: [...original.config.clips,
+      { id: 'new-right', track: 'V1', clipType: 'hold', at: 1, hold: 2 }] }, original);
+    const trimmed = buildDataFromCurrentRegistry({ ...added.config,
+      clips: added.config.clips.map((clip) => clip.id === 'new-right' ? { ...clip, hold: 1 } : clip) }, added);
+    harness.scheduleSave(added);
+    harness.editSeqRef.current++;
+    harness.scheduleSave(trimmed);
+    await act(async () => { await expect(harness.result.current.flushPendingSave()).rejects.toThrow('draft retained'); });
+    const [stored] = await outboxes.list(scope);
+    expect(stored.intents).toHaveLength(2);
+    expect(stored.intents[1].basis).toEqual({ after: stored.intents[0].id });
+    expect(stored.intents[0].payload).toMatchObject({ documentIntent: {
+      basis: { head: initial.head }, created: ['parent/clip:new-right'], roots: [{ ref: 'parent', revisionId: 'r0' }],
+    } });
+    expect(stored.intents[1].payload).toMatchObject({ documentIntent: {
+      basis: { after: stored.intents[0].id }, changes: [{ op: 'set', ref: 'parent', path: ['clips', 'id:new-right', 'hold'], before: { state: 'present', value: 2 }, value: 1 }],
+    } });
+    expect(local.getState().status).toBe('blocked');
+    expect(harness.result.current.isConflictExhausted).toBe(true);
+    expect(harness.dataRef.current?.config).toEqual(trimmed.config);
+    expect((await loadTimelineDraft('timeline-1'))?.draft.config).toEqual(trimmed.config);
+    expect(send).not.toHaveBeenCalled();
+    expect(receipt).not.toHaveBeenCalled();
+    expect(oldHeadWriter).not.toHaveBeenCalled();
+    expect(harness.saveTimeline).not.toHaveBeenCalled();
+    expect(harness.loadTimeline).not.toHaveBeenCalled();
+    harness.unmount();
+    await local.dispose();
+  });
+
   it('sends the edited source bundle at its captured Runtime head and keeps it recoverable on CAS conflict', async () => {
     const original = makeTimelineData('source-only');
     const head = { projectId: 'project-1', timelineId: 'timeline-1', headRevisionId: 'revision-1' };
