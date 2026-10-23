@@ -1,6 +1,5 @@
 import {
   projectedClipCounterparts,
-  serializeProjectedTimelineConfig,
   verifiedRetainedRawClipIds,
 } from '@/tools/video-editor/lib/serialize.ts';
 import { TimelineVersionConflictError, type DataProvider, type TimelineCommandBasis } from '@/tools/video-editor/data/DataProvider.ts';
@@ -1264,8 +1263,11 @@ export function createShotTimelineDataProvider(
             const publicationDraft = {
               ...(recoveryAtStart?.draft ?? {}),
               // Existing recovery bytes keep their owner and retry meaning.
-              config: recoveryMatchesThisSave ? recoveryAtStart!.draft.config
-                : serializeProjectedTimelineConfig(nextConfig, rawComposition),
+              // Recovery owns the exact editor draft, including the verified
+              // stored occurrence duration used to replay its preview. The
+              // publication candidate above remains the sanitized canonical
+              // graph; do not strip replay metadata from the stale draft.
+              config: recoveryMatchesThisSave ? recoveryAtStart!.draft.config : nextConfig,
               registry: draftRegistry,
               canonicalPublication: candidate,
             };
