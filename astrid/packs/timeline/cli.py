@@ -1206,32 +1206,33 @@ def _timeline_editing_resources() -> dict[str, Any]:
     return {
         "guide": str(guide),
         "script": str(script),
-        "workflow": ["checkout", "edit", "check", "apply"],
+        "workflow": ["checkout", "edit", "check", "commit"],
         "scope": "complete parent/shot/internal-timeline composition",
         "checkout_revision": "current Runtime head at checkout; historical revisions remain read-only",
     }
 
 
+def _document_edit_commands(file_path: str) -> dict[str, str]:
+    argv = ["python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document"]
+    return {
+        "check": shlex.join([*argv, "check", "--file", file_path]),
+        "commit": shlex.join([*argv, "commit", "--file", file_path,
+                              "--idempotency-key", "timeline-edit-1"]),
+    }
+
+
 def _editing_navigation(
-    *, project: str | None, timeline: str | None,
+    *, project: str | None, timeline: str | None, file_path: str = "/tmp/timeline-edit.json",
 ) -> dict[str, Any]:
     """Return one small, copyable entry point for detached JSON editing."""
     resources = _timeline_editing_resources()
-    file_path = "/tmp/timeline-edit.json"
     checkout = shlex.join([
         "python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document",
         "checkout", "--project", project or "<project>", "--timeline", timeline or "<timeline>",
         "--file", file_path,
     ])
-    check = shlex.join([
-        "python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document",
-        "check", "--file", file_path,
-    ])
-    apply = shlex.join([
-        "python3", "-m", "astrid", "timelines", "apply", timeline or "<timeline>",
-        "--project", project or "<project>", file_path,
-    ])
-    resources["commands"] = {"checkout": checkout, "check": check, "apply": apply}
+    resources["commands"] = {"checkout": checkout, **_document_edit_commands(file_path)}
+    resources["retry"] = "Use a fresh idempotency key for new intent; reuse the same file and key for a retry. The file pins the project, timeline and exact base."
     return resources
 
 
@@ -2308,7 +2309,7 @@ def _configure_show(subparser: argparse.ArgumentParser) -> None:
                                 "and built-in literal params in canvas units; replaces the previous export.")
     subparser.epilog = (
         "Next: use `timelines visualize` for composed pixels. For edits, use the "
-        "timeline_editing document-checkout recipe (checkout → edit → check → publish). "
+        "timeline_editing document-checkout recipe (checkout → edit → check → commit). "
         "Use `timelines visualize --help` for the visual controls."
     )
     _add_project_arg(subparser, required=False)
@@ -2487,7 +2488,7 @@ def _configure_diff(subparser: argparse.ArgumentParser) -> None:
 def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
     subparser.epilog = (
         "Next: use `timelines show` for authored rows and timing. For edits, use the "
-        "timeline_editing document-checkout recipe (checkout → edit → check → publish). "
+        "timeline_editing document-checkout recipe (checkout → edit → check → commit). "
         "Use this help page for component, sampling, frame, and resolution controls."
     )
     _add_project_arg(subparser, required=False)
@@ -3232,12 +3233,22 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
                         or film_end_requested(parsed)),
             touched_cuts=len(touched_cuts(before, tl)),
         )
-        print(f"next: timelines show {parsed.ref} --project {parsed.project or '<project>'} --range "
-              f"{_edit_range(before, tl.document())} (your change)   ·   "
-              f'timelines apply {parsed.ref} --project {parsed.project or "<project>"} <sheet-file>')
-    else:
-        print(f'next: timelines check {target}   ·   timelines apply {target} --project '
-              f'{parsed.project or "<project>"} <sheet-file>')
+        show = shlex.join(["python3", "-m", "astrid", "timelines", "show", parsed.ref,
+                           "--project", parsed.project or "<project>", "--range",
+                           _edit_range(before, tl.document())])
+        print(f"next: {show} (your change)")
+    source = str(target or tl.path)
+    candidate = source + ".commit.json"
+    prepare = shlex.join([
+        "python3", "-c",
+        'import json, sys; from pathlib import Path; from astrid.sdk.timeline_checkout import Checkout; '
+        'Path(sys.argv[2]).write_text(json.dumps(Checkout.load(sys.argv[1]).document()) + "\\n", encoding="utf-8")',
+        source, candidate,
+    ])
+    print("next: export the complete JSON candidate (project, timeline and base stay pinned): " + prepare)
+    for command in _document_edit_commands(candidate).values():
+        print("next: " + command)
+    print("Use a fresh idempotency key for new intent; reuse the same candidate and key for a retry.")
     return sweep_status or verify_status
 
 

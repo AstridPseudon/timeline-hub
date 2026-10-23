@@ -27,12 +27,15 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from tests.editing_conformance.test_commit_runtime_source_copy import saved_source  # noqa: F401
 from tests.lanes import unavailable
 
 from astrid.core.cli.domain_product import run_product_family
@@ -1129,7 +1132,7 @@ def test_timeline_navigation_preserves_resolved_scope_and_editing_resources() ->
     assert "--project astrid-intro" in shown["commands"]["visualize"]
     assert "--timeline-slug main-final" in shown["commands"]["visualize"]
     assert "--revision-id rev-42" in shown["commands"]["visualize"]
-    assert shown["editing"]["workflow"] == ["checkout", "edit", "check", "publish"]
+    assert shown["editing"]["workflow"] == ["checkout", "edit", "check", "commit"]
     assert shown["editing"]["checkout_revision"].startswith("current Runtime head")
     assert Path(shown["editing"]["guide"]).is_file()
     assert Path(shown["editing"]["script"]).is_file()
@@ -1175,6 +1178,117 @@ def test_visualization_human_navigation_footer_is_compact(capsys) -> None:
     assert "edit JSON (current head):" in output
     assert "visualize: python3 -m astrid timelines visualize" not in output
     assert "exact frame:" not in output
+
+
+@pytest.mark.parametrize("mode", ["checkout", "file", "draft"])
+def test_timeline_editing_guidance_consumes_its_json(
+    saved_source, tmp_path, monkeypatch, capsys, mode,  # noqa: F811
+) -> None:
+    from contextlib import nullcontext
+
+    from astrid.packs.rendering.docs.scripts import timeline_document as helper
+    from astrid.packs.timeline import cli
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline_checkout import Checkout
+    from tests.sdk.test_timeline_restructure import flat_film
+
+    client, project, document, bodies = saved_source(flat_film())
+    original = document("t")
+    original_head = client.timelines.history(project, "t", limit=100).data["head"]
+    path = tmp_path / "draft 'with spaces'.json"
+    project_ref, timeline_ref = "project 'with spaces'", "timeline with spaces"
+    client.projects = SimpleNamespace(show=lambda ref: DomainResult.success({"project_id": project}))
+    inspect = client.timelines.open_composition
+
+    def inspection(p, t):
+        result = inspect(p, "t")
+        result.data["native_inspection"]["head_revision_id"] = result.data["summary"]["head_revision_id"]
+        return result
+
+    client.timelines.open_composition = inspection
+    open_bundle = client.timelines.open_bundle
+
+    def pinned_bundle(p, t, *, revision_id=None, publication_id=None):
+        opened = open_bundle(p, t, revision_id=revision_id)
+        if publication_id is not None:
+            assert (revision_id, publication_id) == (original_head["revision_id"], original_head["publication_id"])
+            opened.data["bundle"]["base_parent"]["publication_id"] = publication_id
+        return opened
+
+    client.timelines.open_bundle = pinned_bundle
+    transport = SimpleNamespace(
+        get_project_parent_composition_revision=lambda *a: {"data": {
+            **original["parent_revision"], "project_id": project, "timeline_id": "t"}},
+        get_project_shot_revision=lambda p, s, r: {"data": {**next(
+            row for row in original["shot_revisions"] if row["revision_id"] == r), "project_id": project}},
+        get_project_timeline_revision=lambda p, t, r: {"data": {**next(
+            row for row in original["internal_timeline_revisions"] if row["revision_id"] == r), "project_id": project}},
+    )
+    monkeypatch.setattr(helper.AstridClient, "open_from_launcher", lambda **kw: nullcontext(client))
+    monkeypatch.setattr(helper, "workspace", lambda: transport)
+
+    def run(command):
+        argv = shlex.split(command)
+        assert argv[:2] == ["python3", "-m"]
+        assert argv[2] == "astrid.packs.rendering.docs.scripts.timeline_document"
+        monkeypatch.setattr(sys, "argv", argv[2:])
+        helper.main()
+        return json.loads(capsys.readouterr().out)
+
+    if mode == "checkout":
+        navigation = cli._editing_navigation(project=project_ref, timeline=timeline_ref, file_path=str(path))
+        argv = shlex.split(navigation["commands"]["checkout"])
+        assert argv[argv.index("--project") + 1] == project_ref
+        assert argv[argv.index("--timeline") + 1] == timeline_ref
+        run(navigation["commands"]["checkout"])
+        candidate = json.loads(path.read_text())
+        candidate["parent"]["config"]["opaque_guidance"] = [None, False, "kept"]
+        shot = next(iter(candidate["shots"].values()))
+        shot["payload"]["name"] = "Edited shot"
+        next(row for row in shot["internal_timeline"]["clips"] if row["id"] == "inside")["params"]["x"] = 90
+        path.write_text(json.dumps(candidate))
+        commands = navigation["commands"]
+    else:
+        checkout = Checkout(bundle_from_document(original))
+        checkout.save(path, quiet=True)
+        monkeypatch.setattr(cli, "_edit_checkout", lambda parsed: Checkout.load(path))
+        monkeypatch.setattr("astrid.packs.timeline.cli_sweep.auto_sweep_after_edit", lambda *a, **kw: 0)
+        args = (["--file", str(path)] if mode == "file" else [timeline_ref, "--project", project_ref])
+        parsed = cli.build_parser(None).parse_args(["edit", *args, "--clip", "inside", "--set", "x=90"])
+        assert parsed.handler(parsed) == 0
+        output = capsys.readouterr().out
+        lines = output.splitlines()
+        prepare = next(line.split(": ", 2)[2] for line in lines if line.startswith("next: export"))
+        prepared = shlex.split(prepare)
+        assert prepared[-2:] == [str(path), str(path) + ".commit.json"]
+        subprocess.run([sys.executable, *prepared[1:]], check=True)
+        commands = dict(zip(("check", "commit"), [line[6:] for line in lines if line.startswith("next: python3 -m astrid.packs.rendering")]))
+        if mode == "draft":
+            shown = shlex.split(next(line[6:].removesuffix(" (your change)") for line in lines if line.startswith("next: python3 -m astrid timelines show")))
+            assert shown[5] == timeline_ref and shown[7] == project_ref
+
+    checked = run(commands["check"])
+    assert checked["validation"]["valid"]
+    committed = run(commands["commit"])
+    result = committed["publication"]
+    assert result["data"]["status"] == "accepted" and result["receipt"]
+    body = bodies[-1]
+    head = client.timelines.history(project, "t", limit=100).data
+    assert body["base_revision_id"] == original["parent_revision"]["revision_id"]
+    assert body["base_publication_id"] == original_head["publication_id"]
+    assert body["merge"] == "atomic" and body["label"] == "Publish document"
+    assert body["steps"][0]["command_ordinals"] == [0]
+    assert body["steps"][0]["patch"] == body["commands"][0]["args"]["changes"]
+    assert body["commands"][0]["op"] == "doc.patch"
+    landed = document("t")
+    inside = next(row for row in landed["internal_timeline_revisions"][0]["payload"]["clips"] if row["id"] == "inside")
+    assert inside["params"]["x"] == 90
+    if mode == "checkout":
+        assert landed["parent_revision"]["payload"]["config"]["opaque_guidance"] == [None, False, "kept"]
+        assert landed["shot_revisions"][0]["payload"]["name"] == "Edited shot"
+    assert run(commands["commit"])["publication"] == result
+    assert client.timelines.history(project, "t", limit=100).data == head
+    assert document("t") == landed
 
 
 @pytest.mark.integration

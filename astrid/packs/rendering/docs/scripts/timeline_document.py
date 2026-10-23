@@ -1,4 +1,4 @@
-"""Check out, validate, or publish a detached timeline JSON document."""
+"""Check out, validate, or commit a detached timeline JSON document."""
 
 import argparse
 import copy
@@ -201,10 +201,10 @@ def main():
     bind.add_argument("--text-file", type=Path, required=True)
     bind.add_argument("--expected-head", type=int, required=True)
     bind.add_argument("--idempotency-key", required=True)
-    for name in ("check", "publish"):
-        command = commands.add_parser(name)
+    for name in ("check", "commit"):
+        command = commands.add_parser(name, **({"aliases": ["publish"]} if name == "commit" else {}))
         command.add_argument("--file", type=Path, required=True)
-        if name == "publish":
+        if name == "commit":
             command.add_argument("--idempotency-key", required=True)
     args = parser.parse_args()
     if args.command == "checkout":
