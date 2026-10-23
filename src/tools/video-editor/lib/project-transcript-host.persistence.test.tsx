@@ -16,7 +16,10 @@ import { useProjectTranscriptHost } from '../hooks/useProjectTranscriptHost.ts';
 import { createCommitOutbox } from '../commands/commitOutbox.ts';
 import { buildTimelineData } from './timeline-data.ts';
 import { createDefaultTimelineConfig } from './defaults.ts';
-import { transcriptDocumentId, type ProjectTranscriptDocument, type ProjectTranscriptRepository } from '../data/typed/projectTranscript.ts';
+import { persistedTranscriptItems, transcriptDocumentId, type ProjectTranscriptDocument, type ProjectTranscriptRepository } from '../data/typed/projectTranscript.ts';
+import { normalizeTranscriptSource, TRANSCRIPT_SCHEMA_REF } from '../data/typed/adaptTranscript.ts';
+import { computeHostFingerprint, HOST_GENERATION_PROVENANCE_VERSION } from '@/sdk/video/timeline/sourceMap.ts';
+import type { SourceFrozenDataItem } from '../data/typed/envelope.ts';
 import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
 
 const PROJECT = 'project-transcript-mounted';
@@ -24,9 +27,20 @@ const TIMELINE = 'timeline-transcript-mounted';
 const MEDIA = `sha256:${'a'.repeat(64)}`;
 const ALIAS = 'source-media';
 const HEAD = { projectId: PROJECT, timelineId: TIMELINE, headRevisionId: 'r0', headPublicationId: 'p0' };
+const TRANSCRIPT_EXTENSION_ID = 'haus.astrid.transcript-lane';
+const TRANSCRIPT_CONTRIBUTION_ID = 'transcript-caption-foundry';
+const TRANSCRIPT_CAPTION_TRACK = 'transcript-caption-foundry-track';
+const SOURCE_ID = 'reviewed';
+const LEGACY_TRANSCRIPT_ID = `transcript-source:${SOURCE_ID}:segment:segment-one`;
+const CANONICAL_TRANSCRIPT_ID = `transcript-source:${ALIAS}:source:${SOURCE_ID}:segment:segment-one`;
+const reviewKey = (id: string) => `transcript-source-review:${encodeURIComponent(id)}`;
+const captionId = (id: string) => `transcript-caption-${computeHostFingerprint(id).split(':')[1]}`;
 
 type JsonObject = Record<string, unknown>;
-type CommitChange = { op: 'set' | 'remove'; ref: string; path: string[]; value?: unknown };
+type CommitChange =
+  | { op: 'set' | 'remove'; ref: string; path: string[]; value?: unknown }
+  | { op: 'list.remove'; ref: string; path: string[]; id: string }
+  | { op: 'list.insert'; ref: string; path: string[]; id: string; value: unknown; after_id?: string };
 
 function bodyJson(body: RequestBody | undefined): JsonObject | undefined {
   if (!body) return undefined;
@@ -66,6 +80,23 @@ function applyChanges(document: JsonObject, changes: readonly CommitChange[]): J
   const next = clone(document);
   for (const change of changes) {
     if (change.ref !== 'parent') throw new Error(`unexpected patch ref ${change.ref}`);
+    if (change.op === 'list.remove' || change.op === 'list.insert') {
+      const list = change.path.reduce<unknown>((value, segment) => (
+        value && typeof value === 'object' ? (value as JsonObject)[segment] : undefined
+      ), next.parent_revision.payload) as unknown;
+      if (!Array.isArray(list)) throw new Error(`missing patch list ${change.path.join('.')}`);
+      if (change.op === 'list.remove') {
+        const index = list.findIndex((row) => !!row && typeof row === 'object' && (row as JsonObject).id === change.id);
+        if (index < 0) throw new Error(`missing patch row ${change.id}`);
+        list.splice(index, 1);
+      } else {
+        const after = change.after_id === undefined
+          ? list.length - 1
+          : list.findIndex((row) => !!row && typeof row === 'object' && (row as JsonObject).id === change.after_id);
+        list.splice(after + 1, 0, clone(change.value));
+      }
+      continue;
+    }
     const { parent, key } = parentForPath(next.parent_revision.payload as JsonObject, change.path);
     if (change.op === 'remove') {
       if (Array.isArray(parent)) parent.splice(Number(key), 1);
@@ -134,12 +165,115 @@ function makeRegistry(): AssetRegistry {
   return { assets: { [ALIAS]: { file: 'source.mp4', type: 'video/mp4', media_id: MEDIA } } };
 }
 
-function makeTransport(config: TimelineConfig, registry: AssetRegistry) {
+function makeLegacyTranscriptItem(assetId = ALIAS): SourceFrozenDataItem {
+  const canonical = normalizeTranscriptSource({
+    assetId,
+    sourceId: SOURCE_ID,
+    segments: [{
+      id: 'segment-one', start: 1, end: 4, text: 'hello world', speaker: null,
+      words: [{ id: 'word-one', start: 1, end: 2, text: 'hello' }],
+    }],
+  })[0]!;
+  const oldId = `transcript-source:${SOURCE_ID}:segment:segment-one`;
+  return {
+    ...clone(canonical),
+    id: oldId,
+    payload: {
+      ...(canonical.payload as JsonObject),
+      segmentId: oldId,
+      words: [{ id: `${oldId}:word:word-one`, start: 1, end: 2, text: 'hello' }],
+    },
+  };
+}
+
+function transcriptReconciliationConfig(
+  config: TimelineConfig,
+  options: { collision?: boolean } = {},
+): TimelineConfig {
+  const oldCaptionId = captionId(`${LEGACY_TRANSCRIPT_ID}@media-clip`);
+  const canonicalCaptionId = captionId(`${CANONICAL_TRANSCRIPT_ID}@media-clip`);
+  const extension = {
+    ...(config.app?.[TRANSCRIPT_EXTENSION_ID] as JsonObject | undefined),
+    [reviewKey(LEGACY_TRANSCRIPT_ID)]: {
+      schemaVersion: 1,
+      sourceSchemaRef: TRANSCRIPT_SCHEMA_REF,
+      sourceItemId: LEGACY_TRANSCRIPT_ID,
+      status: 'accepted-for-source-update',
+      proposedText: 'Human correction',
+      opaque: { keep: [null, false] },
+    },
+  };
+  return {
+    ...config,
+    tracks: [
+      ...config.tracks,
+      ...(config.tracks.some((track) => track.id === TRANSCRIPT_CAPTION_TRACK)
+        ? []
+        : [{ id: TRANSCRIPT_CAPTION_TRACK, kind: 'visual', label: 'Captions', muted: false }]),
+    ],
+    clips: [
+      ...config.clips,
+      {
+        id: oldCaptionId,
+        track: TRANSCRIPT_CAPTION_TRACK,
+        clipType: 'text',
+        at: 0.1,
+        hold: 2.3,
+        text: { content: 'Human correction', color: '#cc3377', fontSize: 51 },
+        app: {
+          retained: { future: [null, false] },
+          __generated__: {
+            extensionId: TRANSCRIPT_EXTENSION_ID,
+            contributionId: TRANSCRIPT_CONTRIBUTION_ID,
+            provenance: {
+              contractVersion: HOST_GENERATION_PROVENANCE_VERSION,
+              sourceSchemaRef: TRANSCRIPT_SCHEMA_REF,
+              sourceItemId: LEGACY_TRANSCRIPT_ID,
+              sourceFingerprint: 'keep-source-fingerprint',
+              generatorVersion: '1.3.0',
+              outputFingerprint: 'keep-output-fingerprint',
+              conflictPolicy: 'preserve-output',
+            },
+          },
+        },
+      },
+      ...(options.collision
+        ? [{ id: canonicalCaptionId, track: 'other', clipType: 'text' as const }]
+        : []),
+    ],
+    app: {
+      ...config.app,
+      [TRANSCRIPT_EXTENSION_ID]: extension,
+    },
+  };
+}
+
+type MountOptions = {
+  config?: TimelineConfig;
+  sourceItems?: readonly SourceFrozenDataItem[];
+  parentClips?: TimelineConfig['clips'];
+};
+
+function makeTransport(
+  config: TimelineConfig,
+  registry: AssetRegistry,
+  parentClips: TimelineConfig['clips'] = config.clips,
+  sourceItems?: readonly SourceFrozenDataItem[],
+) {
+  const authoredConfig = sourceItems
+    ? {
+        ...config,
+        bundle: {
+          schema_version: 1,
+          itemsBySchemaRef: persistedTranscriptItems({ [TRANSCRIPT_SCHEMA_REF]: sourceItems }),
+        },
+      }
+    : config;
   const fixture = runtimeFixture({
     projectId: PROJECT,
     timelineId: TIMELINE,
     headRevisionId: 'r0',
-    parentComposition: { config, registry, clips: clone(config.clips), occurrences: [] },
+    parentComposition: { config: authoredConfig, registry, clips: clone(parentClips), occurrences: [] },
   });
   let revision = 'r0';
   let publication = 'p0';
@@ -148,7 +282,7 @@ function makeTransport(config: TimelineConfig, registry: AssetRegistry) {
     { revision_id: revision, publication_id: publication },
     { projectId: PROJECT, timelineId: TIMELINE },
   ).data.canonical_document as unknown as JsonObject;
-  canonical.parent_revision.payload = { config: clone(config), registry: clone(registry), clips: clone(config.clips), occurrences: [] };
+  canonical.parent_revision.payload = { config: clone(authoredConfig), registry: clone(registry), clips: clone(parentClips), occurrences: [] };
   canonical.parent_revision.content_digest = fixtureDigest(canonical.parent_revision.payload);
   canonical.document_digest = fixtureDigest(canonical);
   const requests: JsonObject[] = [];
@@ -234,14 +368,21 @@ function makeTransport(config: TimelineConfig, registry: AssetRegistry) {
   return { transport, requests, acceptedReplies, wire, refuse: () => { refuseNext = true; }, read: () => clone(canonical) };
 }
 
-async function mount() {
-  const config = makeTimelineConfig();
+async function mount(options: MountOptions = {}) {
+  const config = options.config ?? makeTimelineConfig();
   const registry = makeRegistry();
-  const transportState = makeTransport(config, registry);
+  const transportState = makeTransport(config, registry, options.parentClips, options.sourceItems);
   const provider = new RuntimeDataProvider({ projectId: PROJECT, transport: transportState.transport });
   await provider.reconnect();
   const basis = await provider.loadTimelineCommandBasis(TIMELINE);
-  const data = await buildTimelineData(config, registry, (file) => file, 1, undefined, HEAD);
+  const data = await buildTimelineData(
+    config,
+    registry,
+    (file) => file,
+    1,
+    options.sourceItems ? { [TRANSCRIPT_SCHEMA_REF]: options.sourceItems } : undefined,
+    HEAD,
+  );
   const repositorySurface = repository();
   const interactionStateRef: InteractionStateRef = { current: createInteractionState() };
   const store = createTimelineStore();
@@ -421,6 +562,139 @@ describe('mounted project transcript persistence', () => {
       expect(owner.pending?.outcome).toMatchObject({ kind: 'rejected', error: { kind: 'conflict', code: 'conflict' } });
       expect(owner.intents[0]?.conflict).toMatchObject({ kind: 'conflict', code: 'conflict' });
       expect(result.message).toContain('Timeline association is still unsaved');
+    } finally {
+      mounted.unmount();
+    }
+  });
+
+  it('reconciles the legacy config clip mirror through the mounted save when the primary parent clip collection is empty', async () => {
+    const config = transcriptReconciliationConfig(makeTimelineConfig());
+    const mounted = await mount({
+      config,
+      sourceItems: [makeLegacyTranscriptItem()],
+      parentClips: [],
+    });
+    try {
+      const receipt = await act(async () => mounted.result.current.host.importTranscript({
+        associationAssetId: ALIAS,
+        document: {
+          sourceId: SOURCE_ID,
+          segments: [{
+            id: CANONICAL_TRANSCRIPT_ID, start: 1, end: 4, text: 'hello world', speaker: null,
+            words: [{ id: `${CANONICAL_TRANSCRIPT_ID}:word:word-one`, start: 1, end: 2, text: 'hello' }],
+          }],
+        },
+      }));
+      expect(receipt).toMatchObject({
+        associationSaved: false,
+        sourceId: SOURCE_ID,
+        message: expect.stringContaining('contradictory parent clips mirror'),
+      });
+      // The real A2 handoff refuses this legacy shape before transport: the
+      // authored parent clips mirror is empty while config.clips is populated.
+      expect(mounted.transportState.requests).toHaveLength(0);
+      expect(mounted.transportState.wire).toHaveLength(0);
+      expect(mounted.result.current.save.dataRef.current?.config.clips.map((clip) => clip.id)).toEqual(
+        expect.arrayContaining([captionId(`${CANONICAL_TRANSCRIPT_ID}@media-clip`)]),
+      );
+    } finally {
+      mounted.unmount();
+    }
+  });
+
+  it('persists mounted caption and review reconciliation with the legacy source identity', async () => {
+    const config = transcriptReconciliationConfig(makeTimelineConfig());
+    const mounted = await mount({ config, sourceItems: [makeLegacyTranscriptItem()] });
+    try {
+      const receipt = await act(async () => mounted.result.current.host.importTranscript({
+        associationAssetId: ALIAS,
+        document: {
+          sourceId: SOURCE_ID,
+          segments: [{
+            id: CANONICAL_TRANSCRIPT_ID, start: 1, end: 4, text: 'hello world', speaker: null,
+            words: [{ id: `${CANONICAL_TRANSCRIPT_ID}:word:word-one`, start: 1, end: 2, text: 'hello' }],
+          }],
+        },
+      }));
+      expect(receipt).toMatchObject({ associationSaved: true, sourceId: SOURCE_ID });
+      const request = mounted.transportState.requests[0]!;
+      const changes = ((request.commands as JsonObject[])[0]!.args as JsonObject).changes as JsonObject[];
+      expect(changes).toEqual(expect.arrayContaining([
+        expect.objectContaining({ op: 'list.remove', ref: 'parent', path: ['clips'], id: captionId(`${LEGACY_TRANSCRIPT_ID}@media-clip`) }),
+        expect.objectContaining({ op: 'list.insert', ref: 'parent', path: ['clips'], id: captionId(`${CANONICAL_TRANSCRIPT_ID}@media-clip`) }),
+        expect.objectContaining({ op: 'set', ref: 'parent', path: ['config', 'app', TRANSCRIPT_EXTENSION_ID, reviewKey(CANONICAL_TRANSCRIPT_ID)] }),
+      ]));
+      expect(mounted.transportState.wire[0]!.body).toBe(JSON.stringify(request));
+      const payload = (mounted.transportState.read().parent_revision as JsonObject).payload as JsonObject;
+      const nextConfig = payload.config as JsonObject;
+      const clips = payload.clips as JsonObject[];
+      expect(clips.map((clip) => clip.id)).toContain(captionId(`${CANONICAL_TRANSCRIPT_ID}@media-clip`));
+      expect(clips.map((clip) => clip.id)).not.toContain(captionId(`${LEGACY_TRANSCRIPT_ID}@media-clip`));
+      const extension = (nextConfig.app as JsonObject)[TRANSCRIPT_EXTENSION_ID] as JsonObject;
+      expect(extension).toHaveProperty(reviewKey(CANONICAL_TRANSCRIPT_ID));
+      // The mounted generic patch persists the canonical review but currently
+      // retains the legacy key; the old capture's atomic review move is not a
+      // production-mounted operation.
+      expect(extension).toHaveProperty(reviewKey(LEGACY_TRANSCRIPT_ID));
+    } finally {
+      mounted.unmount();
+    }
+  });
+
+  it.each([
+    {
+      label: 'caption destination collision',
+      config: () => transcriptReconciliationConfig(makeTimelineConfig(), { collision: true }),
+      sourceItems: () => [makeLegacyTranscriptItem()],
+      assertCurrentOutcome: (payload: JsonObject) => {
+        const config = payload.config as JsonObject;
+        const clips = config.clips as JsonObject[];
+        expect(clips.map((clip) => clip.id)).toEqual(expect.arrayContaining([
+          captionId(`${LEGACY_TRANSCRIPT_ID}@media-clip`),
+          captionId(`${CANONICAL_TRANSCRIPT_ID}@media-clip`),
+        ]));
+        const extension = (config.app as JsonObject)[TRANSCRIPT_EXTENSION_ID] as JsonObject;
+        expect(extension).toHaveProperty(reviewKey(LEGACY_TRANSCRIPT_ID));
+        expect(extension).toHaveProperty(reviewKey(CANONICAL_TRANSCRIPT_ID));
+      },
+    },
+    {
+      label: 'shared review ownership',
+      config: () => transcriptReconciliationConfig(makeTimelineConfig()),
+      sourceItems: () => [makeLegacyTranscriptItem('other-media'), makeLegacyTranscriptItem()],
+      assertCurrentOutcome: (payload: JsonObject) => {
+        const config = payload.config as JsonObject;
+        const clips = config.clips as JsonObject[];
+        expect(clips.map((clip) => clip.id)).toContain(captionId(`${LEGACY_TRANSCRIPT_ID}@media-clip`));
+        expect(clips.map((clip) => clip.id)).not.toContain(captionId(`${CANONICAL_TRANSCRIPT_ID}@media-clip`));
+        const extension = (config.app as JsonObject)[TRANSCRIPT_EXTENSION_ID] as JsonObject;
+        expect(extension).toHaveProperty(reviewKey(LEGACY_TRANSCRIPT_ID));
+        expect(extension).not.toHaveProperty(reviewKey(CANONICAL_TRANSCRIPT_ID));
+      },
+    },
+  ])('records the mounted current outcome for legacy collision and shared-row cases', async ({ config, sourceItems, assertCurrentOutcome }) => {
+    const mounted = await mount({ config: config(), sourceItems: sourceItems() });
+    try {
+      const result = await act(async () => mounted.result.current.host.importTranscript({
+        associationAssetId: ALIAS,
+        document: {
+          sourceId: SOURCE_ID,
+          segments: [{ id: CANONICAL_TRANSCRIPT_ID, start: 1, end: 4, text: 'hello world', speaker: null }],
+        },
+      }));
+      expect(result).toMatchObject({ associationSaved: true, sourceId: SOURCE_ID });
+      expect(mounted.transportState.requests).toHaveLength(1);
+      const request = mounted.transportState.requests[0]!;
+      expect(request).toMatchObject({
+        api_version: 1, project_id: PROJECT, timeline_id: TIMELINE,
+        base_revision_id: 'r0', base_publication_id: 'p0',
+        commands: [{ op: 'doc.patch', args: { changes: expect.any(Array) } }],
+        steps: [{ command_ordinals: [0], patch: expect.any(Array) }],
+        merge: 'atomic', dry_run: false, source: { via: 'app' },
+      });
+      expect(request).not.toHaveProperty('operation', 'transcript.associate');
+      expect(mounted.transportState.wire[0]!.body).toBe(JSON.stringify(request));
+      assertCurrentOutcome((mounted.transportState.read().parent_revision as JsonObject).payload as JsonObject);
     } finally {
       mounted.unmount();
     }
