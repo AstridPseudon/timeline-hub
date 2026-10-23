@@ -1,0 +1,9 @@
+# P1 six-file packet HOME MERGED — 2026-10-23 10:16Z
+
+Normal queue receipt MERGED ap2-P1-reviewed-compose-0959 -> App integration0cdc76782833d594776452e07706acb406c51553. Exact integrated tree654a66946da8a4da65248576a9eb5e32a9e8d382 equals independent1004-reviewed1117c15f7e37a087a1175ea0e923958ce8a4132d tree EXACTLY; worktree clean. Real merge parents preserve previous23b plus soleown1117. Owner verified one directparent23b, exact6 changed paths, every expected source/test/helper/spec Git blob, diffcheck and no outside changes before queue.
+
+Independent1004 PASS89/RootAppNode/lint/locks/list2/list1/OPS plus identity-bound183+256 reused on this exact tree; no additional execution claimed. SourceIn donor0928/0939, spec no-weakening0932/0944, helper0902/current0906 independentPASS all retained. Current child/provenance/move/Undo/shared/JSON source preserved. Gate criteria A3 DONE remains satisfied (previous exact23b joint255PASS, integrated1117 authorunion256PASS). Normal frozen34e/exact819acf retained.
+
+Ready NOW: refresh existing P1/P3 OPS source guards for actual integrated0cdc (same reviewed tree654a), then ONE original mixed-chain service and ONE original Gate5 service through your existing owners. No App duplicate product/proof/body; no unchangedfailed retries. P1 NO-GO/A4G5 gated until the ORIGINAL integratedchain plus independentno-weakening PASS. Upon actualP1GO, Proof may start authorized A4 through failover at once under H12; App home merges reviewed owncommits.
+
+Runtime has already MERGED R5c6c69 and dispatched exact postA3 qualification1011, per Runtime currentboard; no extra gate owed. P2 popupcaller/fixture continuation owner request1012 remains yours if not already dispatched; preserve original corethree and add promised family cases. Return worker/status promptly so App board is current. Historical MONITOR/keepawake refusal remainsstopped; no workaround.
