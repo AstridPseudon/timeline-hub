@@ -11,6 +11,67 @@ from tests.helpers.runtime import use_runtime, vendored_runtime_commit
 pytestmark = pytest.mark.integration
 
 
+@pytest.mark.parametrize('explicit_metadata', [False, True])
+def test_initialize_batch_authenticates_sequential_command_inputs(tmp_path, explicit_metadata):
+    use_runtime()
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_port import route_path
+
+    from astrid.sdk.timeline.commit import create_runtime_commit_service
+
+    root = tmp_path / 'realm'
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    service.register_timeline_commit_provider(create_runtime_commit_service())
+    try:
+        project = service.create_project({'slug': 'staged-init', 'name': 'Staged init'})['id']
+        service.create_timeline(project, 'film', idempotency_key='create-film')
+        head = service.get_project_timeline(project, 'film')
+        request = {'api_version': 1, 'project_id': project, 'timeline_id': 'film',
+                   'base_revision_id': head['head_revision_id'],
+                   'base_publication_id': head['head_publication_id'],
+                   'commands': copy.deepcopy(GOLDEN['commands']), 'dry_run': False}
+        if explicit_metadata:
+            request.update(label='Initialize', merge='fields', reads=[],
+                           source={'via': 'python', 'detail': 'stage-input-test'},
+                           rationale='Authenticate each sequential input', group_id='initialize',
+                           steps=[{'id': 'initialize', 'label': 'Initialize', 'intent': 'Create film',
+                                   'tags': ['bootstrap'], 'command_ordinals': [0, 1, 2], 'patch': [],
+                                   'reads': []}])
+        original = copy.deepcopy(request)
+
+        def submit():
+            return service.commit_timeline(project, 'film', request, idempotency_key='initialize',
+                publisher='author', invocation_path=route_path(project, 'film'), authorize=lambda: None)
+
+        result = submit()
+        assert result['data']['status'] == 'accepted'
+        assert result['data']['canonical_document']['parent_revision']['payload'] == GOLDEN['app_parent']
+        assert result['receipt']['result'] == result['data']
+        history = service.list_timeline_commits(project, 'film', authorize=lambda: None)['items']
+        records = history[-1]['records']
+        if explicit_metadata:
+            for key in ('label', 'source', 'rationale', 'group_id'):
+                assert result['data'][key] == request[key]
+            assert result['data']['steps'] == records['steps']
+            assert records['merge_mode'] == request['merge']
+            for key in ('id', 'label', 'intent', 'tags', 'command_ordinals'):
+                assert records['steps'][0][key] == request['steps'][0][key]
+        assert records['commands'][0]['command']['op'] == 'timeline.init'
+        for record in records['commands'][1:]:
+            pins = [binding for binding in record['bindings'] if binding['key'] == 'commit.input']
+            assert len(pins) == 1
+            assert pins[0]['physical_ref'] == 'parent'
+            assert pins[0]['boundary']['phase'] == 'input'
+            assert pins[0]['boundary']['command_ordinal'] == record['ordinal']
+        assert request == original
+        assert submit() == result
+        assert service.list_timeline_commits(project, 'film', authorize=lambda: None)['items'] == history
+    finally:
+        service.close()
+
+
 def test_pristine_init_crash_resume_reload_undo_retry_and_redo(tmp_path, monkeypatch):
     use_runtime(commit=vendored_runtime_commit())
     from runtime_protocol.errors import RuntimeErrorBase
