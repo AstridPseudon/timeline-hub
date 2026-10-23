@@ -1,0 +1,5 @@
+name=vw-V1-runtime-meta-schema-fix
+repo=runtime
+base=tl/integration
+base_sha=27f0306b94d136d25f237edf4b8225b5d8487be0
+remote_request=timeline/runtime/tl/vw-V1-runtime-meta-schema-fix\ 3a403e9db\ viewing\ V1\ independent\ PASS\ vw-V1-runtime-review-resume:88\ tests+standalone\ schema/generation/manifest/TS/Ruff\;\ 00:15\ safer-action\ resolution\ applied\;\ please\ merge\ current\ preserving\ C0c/R2r\ and\ regenerate\ normally
