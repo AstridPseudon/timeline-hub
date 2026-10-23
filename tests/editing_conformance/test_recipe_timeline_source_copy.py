@@ -13,13 +13,21 @@ from tests.editing_conformance.test_recipe_occurrence_create import empty_bundle
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
 
-def inputs(*, shared=True):
+def inputs(*, shared=True, retained=False):
     document = document_fixture(shared=shared)
     for row in document['parent_revision']['payload']['occurrences']:
         row['source_offset'] = 0
     # Opaque identity-looking strings must remain opaque in all payloads.
     document['parent_revision']['payload']['meta'] = {'org.example': {'literal': 'chapter-shot'}}
     document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+    configuration = {'document_id': 'copy-config', 'project_id': document['project_id'],
+                     'kind': 'copy.config', 'version': 1, 'content': {'opaque': [None, False, 2]}}
+    pin = {'document_id': configuration['document_id'], 'version': 1,
+           'content_digest': _digest(configuration['content'])}
+    if retained:
+        document['dependency_manifest']['documents'] = [pin]
+        unused = 'sha256:' + '2' * 64
+        document['dependency_manifest']['media'].append({'media_id': unused, 'content_digest': unused})
     target = empty_bundle()
     target['project_id'] = document['project_id']
     target['timeline_id'] = 'destination'
@@ -36,6 +44,9 @@ def inputs(*, shared=True):
         def revision_closure(self, pin):
             assert pin == ref
             return copy.deepcopy(document)
+        def config_source(self, requested):
+            assert requested == pin and retained
+            return {'pin': copy.deepcopy(pin), 'document': copy.deepcopy(configuration)}
         def raw_media_info(self, pin):
             assert pin in document['dependency_manifest']['media']
             captured.append(copy.deepcopy(pin))
@@ -103,3 +114,16 @@ def test_source_copy_rejects_forged_claims_and_incomplete_maps_atomically(claim)
     with pytest.raises(CommandError):
         execute(target, [command], resolve_inputs=resolver)
     assert target == before
+
+
+def test_source_copy_preserves_retained_media_and_documents_and_records_inputs():
+    target, source, command, resolver, captured = inputs(retained=True)
+    plan = execute(target, [command], resolve_inputs=resolver)
+    document = document_from_bundle(plan.bundle)
+    manifest = source['dependency_manifest']
+    assert document['dependency_manifest']['media'] == manifest['media'] == captured
+    assert document['dependency_manifest']['documents'] == manifest['documents']
+    dependencies = plan.records[0]['dependencies']
+    assert all(any(row['kind'] == 'media' and row['pin'] == pin for row in dependencies)
+               for pin in manifest['media'])
+    assert any(row['kind'] == 'source' and row['pin'] == manifest['documents'][0] for row in dependencies)

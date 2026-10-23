@@ -96,6 +96,27 @@ def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, l
     return receipt
 
 
+def _source_reference(client: Any, project: str, source: str, content: Mapping[str, Any]) -> dict[str, Any]:
+    """Select an exact accepted publication; the private port verifies authority."""
+    source_revision = content["base_parent"]["revision_id"]
+    cursor, seen = None, set()
+    while True:
+        history = client.timelines.history(project, source, cursor=cursor, limit=200)
+        if not history.ok:
+            raise TimelineEditError(f"could not authenticate duplicate source publication: {history.error}")
+        entry = next((item for item in history.data["items"] if item["revision_id"] == source_revision), None)
+        if entry is not None:
+            source_publication = entry["publication_id"]
+            break
+        cursor = history.data.get("next_cursor")
+        if cursor is None or cursor in seen:
+            raise TimelineEditError("the exact source publication is unavailable")
+        seen.add(cursor)
+    return {"project_id": content["project_id"], "timeline_id": content["timeline_id"],
+            "revision_id": source_revision, "publication_id": source_publication,
+            "content_digest": content["base_parent"]["content_digest"]}
+
+
 def _copy_acceptance(client: Any, project: str, timeline: str, publication: str, key: str) -> dict[str, Any]:
     """Read the cut's receipt from the existing history, without a local ledger."""
     cursor = None
@@ -370,24 +391,6 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
     if not report.valid:
         raise TimelineEditError(f"not duplicating {source}: its head is not valid ("
                                 + "; ".join((report.blocking or report.problems or ["invalid"])[:3]) + "); nothing was created")
-    content = src.bundle.get(STRUCTURE_KEY) or src.bundle
-    source_revision = content["base_parent"]["revision_id"]
-    cursor, seen = None, set()
-    while True:
-        history = client.timelines.history(project, source, cursor=cursor, limit=200)
-        if not history.ok:
-            raise TimelineEditError(f"could not authenticate duplicate source publication: {history.error}")
-        entry = next((item for item in history.data["items"] if item["revision_id"] == source_revision), None)
-        if entry is not None:
-            source_publication = entry["publication_id"]
-            break
-        cursor = history.data.get("next_cursor")
-        if cursor is None or cursor in seen:
-            raise TimelineEditError("the exact source publication is unavailable; nothing was created")
-        seen.add(cursor)
-    source_ref = {"project_id": content["project_id"], "timeline_id": content["timeline_id"],
-                  "revision_id": source_revision, "publication_id": source_publication,
-                  "content_digest": content["base_parent"]["content_digest"]}
     created = client.timelines.create_empty(
         project=project,
         timeline_id=slug or None,
@@ -408,12 +411,6 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
         # form: copying the flat shot would store the duplicate as a single shot whose chapters all share one id.
         content = src.bundle.get(STRUCTURE_KEY) or src.bundle
         bundle, notes = copy_content(content, dst.bundle, new_slug=slug or new_id)
-        from astrid.sdk.timeline.native_timeline_duplicate import copy_command
-
-        bundle["_duplicate_command"] = copy_command(
-            source_ref,
-            id_map(list(dict.fromkeys(str(row["shot_id"]) for row in content["placements"])), slug or new_id),
-            id_map([str(row["occurrence_id"]) for row in content["placements"]], f"occ-{slug or new_id}"))
         dst.bundle = flatten(bundle)  # a chapter film is edited and published flat; publish splits it back into its stored form
         dst.notes.extend(notes)
         # What publish will store for the copy must have as many distinct shots as what the SOURCE stores. The source
@@ -425,6 +422,12 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
         report = dst._check_core()
         if not report.valid:
             raise TimelineEditError("the copy is invalid: " + "; ".join(report.problems or [str(report)]))
+        from astrid.sdk.timeline.native_timeline_duplicate import copy_command
+
+        bundle["_duplicate_command"] = copy_command(
+            _source_reference(client, project, source, content),
+            id_map(list(dict.fromkeys(str(row["shot_id"]) for row in content["placements"])), slug or new_id),
+            id_map([str(row["occurrence_id"]) for row in content["placements"]], f"occ-{slug or new_id}"))
         receipt = _commit_bundle(
             project,
             new_id,
