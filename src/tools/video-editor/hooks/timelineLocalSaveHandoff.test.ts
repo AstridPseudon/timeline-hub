@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { WorkspaceClient, type Transport } from '@/integrations/runtime/generated.ts';
 import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
 import { createLocalSaveSession } from '../commands/localSaveSession.ts';
 import { createDefaultTimelineConfig, withDefaultTimelineOutput } from '../lib/defaults.ts';
@@ -45,15 +46,93 @@ async function environment(children = false, raw = false, rawIds = ['authored'],
   const scope = { realmId: 'realm', actorId: 'actor', projectId: head.projectId, timelineId: head.timelineId };
   const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_key, work) => work() });
   const send = vi.fn();
+  const prepareDisplay = vi.fn<Parameters<typeof createLocalSaveSession>[0]['prepareDisplay']>(async () => { throw new Error('No canonical acceptance expected'); });
   const session = await createLocalSaveSession({ scope, initial, document: toOutboxJson(document), outboxes, send,
     loadLatest: vi.fn(async () => initial), changed: vi.fn(),
-    prepareDisplay: vi.fn(async () => { throw new Error('No canonical acceptance expected'); }) });
+    prepareDisplay });
   const receipt = vi.fn();
   const handoff = createTimelineLocalSaveHandoff({ initial, source, session, adopted: receipt });
-  return { source, initial, scope, outboxes, send, session, receipt, handoff };
+  return { source, initial, scope, outboxes, send, session, receipt, handoff, prepareDisplay };
 }
 
 describe('upstream local document handoff', () => {
+  it('persists original parent move reads and sends the exact dependent request after lost ACK and restart', async () => {
+    contractFixture.digest = CURRENT_V2_DIGEST;
+    const env = await environment(false, true, ['authored', 'sibling']);
+    const move = (source: TimelineSaveSource) => structuredClone({ kind: 'move' as const, clipId: 'authored', trackId: 'V1',
+      config: source.config, registry: source.registry });
+    const a = structuredClone(env.source);
+    a.config.clips[0].at = 5;
+    await env.handoff.capture(a, move(env.source));
+    const b = structuredClone(a);
+    b.config.clips[0].at = 7;
+    await env.handoff.capture(b, move(a));
+    const [authored] = await env.outboxes.list(env.scope);
+    const originalB = structuredClone(authored.intents[1].payload);
+    const intent = originalB.documentIntent as { reads: { kind: string; path: string[] }[] };
+    expect(intent.merge).toBe('fields');
+    expect(authored.intents[1].basis).toEqual({ after: authored.intents[0].id });
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:authored', 'at'],
+      state: { state: 'present', value: 5 } });
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:sibling', 'hold'],
+      state: { state: 'present', value: 2 } });
+    expect(intent.reads).toContainEqual({ kind: 'collection', ref: 'parent', path: ['config', 'clips'],
+      members: ['authored', 'sibling'], order: ['authored', 'sibling'] });
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'tracks', 'id:V1', 'kind'],
+      state: { state: 'present', value: 'visual' } });
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'pinnedShotGroups'],
+      state: { state: 'present', value: null } });
+    expect(intent.reads.some((read) => read.kind === 'scope' || read.path.at(-1) === 'label'
+      || read.path.join('/') === 'config/tracks')).toBe(false);
+    env.prepareDisplay.mockImplementation(async (basis) => ({ document: toOutboxJson(basis.canonicalDocument), adopt() {} }));
+    const sent: Parameters<Transport>[] = [];
+    const client = new WorkspaceClient('http://runtime.test', 'token', async (...args) => {
+      sent.push(args);
+      throw new Error('Lost acknowledgement');
+    });
+    env.send.mockImplementationOnce(async () => {
+      const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' });
+      response.data.canonical_document = structuredClone(authored.intents[0].payload.after) as unknown as typeof env.initial.canonicalDocument;
+      response.data.canonical_document.parent_revision.revision_id = 'r1';
+      return { response, accepted: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: response.data.canonical_document,
+        receipt: response.receipt, graph: {} };
+    }).mockImplementationOnce((request, key) => client.commitTimeline(env.scope.projectId, env.scope.timelineId, request, key));
+    await expect(env.session.flush()).rejects.toThrow('unacknowledged');
+    const [uncertain] = await env.outboxes.list(env.scope);
+    const exact = uncertain.pending!.request;
+    const request = JSON.parse(exact.body);
+    expect(sent[0].slice(0, 2)).toEqual(['POST', exact.path]);
+    expect(sent[0][2]['Idempotency-Key']).toBe(exact.key);
+    expect(new TextDecoder().decode(sent[0][3])).toBe(exact.body);
+    expect(request).toMatchObject({ api_version: 1, project_id: env.scope.projectId, timeline_id: env.scope.timelineId,
+      base_revision_id: 'r1', base_publication_id: 'p1', label: 'Edit timeline', merge: 'fields', reads: intent.reads, dry_run: false,
+      commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [], args: { changes: [
+        { op: 'set', ref: 'parent', path: ['clips', 'id:authored', 'at'], before: { state: 'present', value: 5 }, value: 7 },
+      ] } }], steps: [{ intent: 'Move authored on V1', command_ordinals: [0] }] });
+    expect(request.steps[0].patch).toEqual(request.commands[0].args.changes);
+    expect(uncertain.intents[0].payload).toEqual(originalB);
+    await env.session.dispose();
+    const latest = structuredClone(env.initial);
+    latest.head = { revisionId: 'agent-r', publicationId: 'agent-p' };
+    latest.canonicalDocument.parent_revision.revision_id = 'agent-r';
+    const config = latest.canonicalDocument.parent_revision.payload.config as unknown as TimelineConfig;
+    config.tracks!.push({ id: 'independent-C', kind: 'visual' });
+    config.tracks![0].label = 'Agent label';
+    env.send.mockImplementationOnce(async (retry, key) => {
+      expect(JSON.stringify(retry)).toBe(exact.body);
+      expect(key).toBe(exact.key);
+      return client.commitTimeline(env.scope.projectId, env.scope.timelineId, retry, key);
+    });
+    const recovered = await createLocalSaveSession({ scope: env.scope, initial: latest, document: toOutboxJson(latest.canonicalDocument),
+      outboxes: env.outboxes, send: env.send, loadLatest: async () => latest, changed() {}, prepareDisplay: env.prepareDisplay });
+    await recovered.recover(uncertain.ownerId);
+    expect(recovered.getState().status).toBe('retry');
+    expect(sent[1]).toEqual(sent[0]);
+    expect((await env.outboxes.list(env.scope))[0].intents[0].payload).toEqual(originalB);
+    expect(env.send).toHaveBeenCalledTimes(3);
+    await recovered.dispose();
+  });
+
   it('binds declared timing reads to the original input, preserves raw nulls, and refuses a stale gesture basis', async () => {
     const env = await environment(false, true);
     const original = structuredClone({ kind: 'trim' as const, clipId: 'authored', patch: { hold: 3 }, config: env.source.config, registry: env.source.registry });
