@@ -176,6 +176,9 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install -e .
+          # Astrid imports runtime_protocol but does not declare it: the installer puts the Runtime beside it with --no-deps
+          # (astrid/installer/backend.py, scripts/ci_install_runtime.py). Here the Runtime under test is the sibling checkout.
+          .venv/bin/python -m pip install --no-deps -e ../astrid-runtime
           .venv/bin/python -m astrid.core.dev.cross_client --help > /dev/null
 
       # Chrome, not Chromium: the render case plays an H.264 film (the bundled Chromium cannot decode it) and a missing Chrome
