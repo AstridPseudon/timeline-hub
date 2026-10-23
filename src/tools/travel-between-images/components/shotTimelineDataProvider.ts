@@ -710,6 +710,7 @@ async function sharedPopupMediaCommands(
   before: CanonicalDocument,
   nextConfig: TimelineConfig,
   nextRegistry: unknown,
+  baselineRegistry: unknown,
   composition: PreparedShotComposition,
   occurrenceId: string,
   mediaProvider: PopupLocalSaveProvider,
@@ -744,6 +745,7 @@ async function sharedPopupMediaCommands(
   }
   const rawTimeline = object(internal[0].payload);
   if (!rawTimeline || !Array.isArray(rawTimeline.clips)) throw new Error('Popup save has no verified raw child timeline');
+  const beforeRegistry = registryValue(before, rawTimeline) ?? baselineRegistry;
   const authored = createCanonicalTimeline(nextConfig, composition);
   const oldRows = collectionRows(rawTimeline.clips, ['clips']);
   const nextRows = collectionRows(authored.clips, ['clips']);
@@ -777,7 +779,7 @@ async function sharedPopupMediaCommands(
   const newAsset = mediaAssetId(row);
   if (!oldAsset || !newAsset) throw new Error('Shared popup media SWAP has no stable asset identity');
   const [oldMedia, media] = await Promise.all([
-    projectMediaSelection(mediaProvider, composition.projectId, oldAsset, nextRegistry),
+    projectMediaSelection(mediaProvider, composition.projectId, oldAsset, beforeRegistry),
     projectMediaSelection(mediaProvider, composition.projectId, newAsset, nextRegistry),
   ]);
   return { commands: [fork, {
@@ -1123,6 +1125,7 @@ export function createShotTimelineDataProvider(
             before,
             nextConfig,
             draftRegistry,
+            localSaveSource?.registry ?? registry,
             rawComposition,
             occurrenceId,
             timelineDataProvider!,

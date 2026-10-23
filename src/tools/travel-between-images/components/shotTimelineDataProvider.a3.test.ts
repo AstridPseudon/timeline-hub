@@ -148,7 +148,7 @@ describe('shot popup A3 save ingress', () => {
     let captured!: OutboxRecord;
     h.send.mockImplementation(async (request, key) => {
       [captured] = await h.records();
-      return h.reply(request, key, savedDocument(captured));
+      return JSON.parse(JSON.stringify(h.reply(request, key, savedDocument(captured))));
     });
     const provider = h.mount();
     const next = kind === 'add'
