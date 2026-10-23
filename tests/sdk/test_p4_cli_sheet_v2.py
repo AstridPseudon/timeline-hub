@@ -70,6 +70,23 @@ def test_cli_sheet_v2_front_door_preserves_provenance_and_unrelated_fields(
         "astrid": {"fixed_start": True, "for": 1.0}
     }
 
+    # Independent of execute: preserve every original clip field and sibling,
+    # allowing only the authored start and the native move's derived markers.
+    assert accepted["parent"]["clips"][1] == original["parent"]["clips"][1]
+    expected_clips = [
+        {**original["parent"]["clips"][0], "at": 5,
+         "app": {"astrid": {"fixed_start": True, "for": 1.0}}},
+        *original["parent"]["clips"][1:],
+    ]
+    assert accepted["parent"]["clips"] == expected_clips
+    assert accepted["parent"]["config"] == original["parent"]["config"]
+    # Whole-bundle equality also guards raw base payloads, closure, ordering,
+    # and absent fields (including occurrences), without projecting a subset.
+    assert accepted == {
+        **original,
+        "parent": {**original["parent"], "clips": expected_clips},
+    }
+
     expected_step = {
         "id": "sheet-1",
         "label": "Apply sheet",
