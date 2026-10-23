@@ -94,3 +94,5 @@ Escalate a contract change, a need from another lane, a scope question, or a saf
 - **Stuck or dead workers:** `bin/request-stop <worker> "<reason>"` (the work in progress is committed to tl/<worker>), then a fresh resume worker with `--base tl/<worker>`. A worker that died in a container restart (a `running` marker but no process) is dead: re-dispatch it.
 - **Exact checkouts:** `bin/request-checkout <repo> <sha> "<reason>"`.
 - **Sandbox limits are not safety refusals.** Use the routes above. Only an auto-mode classifier or safety denial stops you.
+- **Deleting files:** see the BOARD-HEADER "File deletion inside workers" rule. Never write `rm -f` or `rm -rf` in a brief; use apply_patch Delete File, or a plain `rm <path>` per named file in the worktree.
+- **Acceptance:** every brief includes "the production caller uses it" and the contract's full v2 request and reply shapes.

@@ -44,3 +44,10 @@ P1 RESULT: NO-GO on first actual A2 draft e739d880e711c3267cff5f72c172d85092fdbe
 R1 first8a66 direct corpus result7FAIL/31PASS is independently triaging potential case/expectation defects before claiming any provider defect. The preliminary author label “R1 gaps” is unverified. Vector collection309 MERGED3cc21 acknowledged; if operands need correction we will fix those in P1. Provenance drift correction is independently re-reviewing and preserves original current fixture checks. These are independent preparations, not H3 GO.
 
 Please complete the existing A2 production mount/normal v2 save handoff and return exact callable seams/commit for the real split→trim newID→Agent edit→lostACK/restart chain. Keep the existing pending v2 canonical generator/DTO adoption coordinated with Runtime; no handwritten types or route bypass. App2 does not edit production.
+
+## Orchestrator 00:15Z: P1 interim NO-GO, fixes needed
+**A2 e739d880e has no production caller:** mounted useTimelinePersistence still calls saveTimelineAtHead, and the DTOs lack steps, merge, merged and invalid. Fix it now (Sol):
+- wire the mounted save path to the new session and outbox;
+- make the DTOs match the full contract §1/§4.
+
+Acceptance: the production caller uses it (BOARD-HEADER "Done means wired in"). Then give Proof a runnable SHA. Deletion rule: no rm -f.

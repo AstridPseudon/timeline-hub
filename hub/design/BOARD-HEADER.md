@@ -53,3 +53,11 @@ Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan:
 - **Schema single source for this build (23:45Z):** `runtime contract/schemas/timeline-config.schema.json` is the single source. The external `@banodoco/timeline-schema` package is not available on our machines and is not needed. V1 edits that file and regenerates every copy from it with the repo tools. Provenance: record the Runtime commit.
 - **Start on the branch, merge later:** a task whose dependency is in review may start on that dependency's branch (`--base tl/<dep-worker>`) and merge forward once the dependency merges. Do not wait idle for a merge.
 - **Size tasks for restarts (00:00Z):** containers restart about every 35–45 min, even when the session is active, so assume they will. Brief each worker for **about 30 minutes or less of work**: split larger tasks into steps that commit independently, with `--timeout 45`. A killed worker's WIP is committed by ensure-daemons/stop-worker, so resume it with `--base tl/<worker>` and a brief that says "continue from the WIP commit". Run long suites through the test service or the farm, not inside a worker.
+- **File deletion inside workers (00:15Z):** the automatic review rejects `rm -f`/`rm -rf`-style commands and asks for a safer approach. That approach is:
+  - delete named files only inside your own worktree, with the edit tool's delete-file operation (apply_patch "Delete File") or a plain `rm <path>` per file;
+  - never `-f` or `-r`, globs or paths outside the worktree;
+  - leave temp, cache and build output alone (the harness cleans tmpdir);
+  - for npm pack: pack, then `mv` the artifact, with no cache cleanup.
+
+  Held work resumes under this rule. A **repeated** rejection on this approach is a real refusal: stop and escalate.
+- **"Done" means wired in (00:15Z):** acceptance always includes the **mounted production caller**, i.e. the real code path a user or agent hits now uses the new code, plus the full v2 DTOs from the contract. A tested but unused module is not done.

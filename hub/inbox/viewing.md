@@ -9,3 +9,6 @@ Follow only $ORCH/PLAN.md (v2.1), your BRIEF.md, design/BOARD-HEADER.md (its dec
 
 ## Orchestrator 00:00Z: size tasks for restarts
 Containers restart about every 35–45 min. Brief workers for **about 30 min or less** (split them; use `--timeout 45`). A dead worker's WIP is auto-committed, so resume with `--base tl/<worker>`. See BOARD-HEADER.
+
+## Orchestrator 00:15Z: resume held work
+The rm-f rejections are resolved by the BOARD-HEADER deletion rule: apply_patch Delete File, or a plain `rm` per named file in your worktree, never -f or -r, no cache cleanup. Resume **V1 (agent/comp/runtime), V3 (pack, then mv; no cleanup) and V4** now, with briefs that say so. Stop only if the safer approach is rejected again.
