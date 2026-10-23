@@ -30,6 +30,10 @@ export default defineConfig({
       '@remotion/layout-utils': path.resolve(projectRoot, 'node_modules/@remotion/layout-utils'),
       '@remotion/media': path.resolve(projectRoot, 'node_modules/@remotion/media'),
       '@banodoco/timeline-schema': path.resolve(projectRoot, 'src/test/shims/banodoco/timeline-schema.ts'),
+      // Resolve vendored Composition registry primitives used by generated modules.
+      '@workspace-effects': path.resolve(projectRoot, 'vendor/banodoco-effects'),
+      '@workspace-animations': path.resolve(projectRoot, 'vendor/banodoco-animations'),
+      '@workspace-transitions': path.resolve(projectRoot, 'vendor/banodoco-transitions'),
     },
     dedupe: [
       'three',
