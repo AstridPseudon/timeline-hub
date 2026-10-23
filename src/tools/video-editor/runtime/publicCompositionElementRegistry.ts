@@ -5,19 +5,15 @@ import {
 import { EFFECT_REGISTRY } from '@banodoco/timeline-composition/effects.generated';
 import { TRANSITION_REGISTRY } from '@banodoco/timeline-composition/transitions.generated';
 import type { AstridElementComponentProps } from './astrid-element-host.ts';
-
 type PublicCompositionElementKind = 'effect' | 'animation' | 'transition';
-
 const REGISTRY_SOURCES = [
   ['effect', EFFECT_REGISTRY],
   ['animation', ANIMATION_REGISTRY],
   ['transition', TRANSITION_REGISTRY],
 ] as const satisfies readonly [PublicCompositionElementKind, Readonly<Record<string, unknown>>][];
-
 const asAstridElementComponent = (component: unknown): ComponentType<AstridElementComponentProps> => (
   component as ComponentType<AstridElementComponentProps>
 );
-
 /**
  * The public host consumes the same Composition registries as the evaluator.
  * Keep the map keyed by the host's existing kind/id identity so callers retain
@@ -33,7 +29,6 @@ export const PUBLIC_COMPOSITION_ELEMENT_COMPONENTS = Object.freeze(
     )),
   ),
 ) as Readonly<Record<string, ComponentType<AstridElementComponentProps>>>;
-
 export function resolvePublicCompositionElementComponent(
   elementId: string,
   kind: PublicCompositionElementKind,

@@ -67,4 +67,3 @@ describe('complete_task/storage getStoragePublicUrl', () => {
     });
   });
 });
-

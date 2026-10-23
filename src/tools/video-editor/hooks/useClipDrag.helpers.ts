@@ -1,6 +1,6 @@
 import { isInvalidTimelineRowTarget } from '@/tools/video-editor/lib/drop-position.ts';
-import { captureClipMove, submitClipMove, type CapturedClipMove, type ClipMoveCapturePort } from '../commands/semanticGestures.ts';
-import { userSelectTimelineClip } from '@/shared/state/selectionStore.ts';
+import type { TimelineApplyEdit } from '@/tools/video-editor/hooks/timeline-state-types.ts';
+import { userSelectTimelineClip, userSelectTimelineClips } from '@/shared/state/selectionStore.ts';
 import type { DropPosition } from '@/tools/video-editor/lib/drop-position.ts';
 import type { ClipDragPlan } from '@/tools/video-editor/lib/clip-drag-planner.ts';
 import type { TimelineInputModality } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
@@ -9,14 +9,21 @@ import {
   CLIP_ID_DATASET_KEY,
   ROW_ID_DATASET_KEY,
 } from '@/tools/video-editor/lib/timeline-dom.ts';
-import type { ClipOffset } from '@/tools/video-editor/lib/multi-drag-utils.ts';
+import {
+  type ClipOffset,
+  applyMultiDragMoves,
+  buildAugmentedData,
+  buildConfigFromDragResult,
+  planMultiDragMoves,
+} from '@/tools/video-editor/lib/multi-drag-utils.ts';
 import {
   findEnclosingPinnedGroup,
+  orderClipIdsByAt,
   resolveGroupTrackId,
 } from '@/tools/video-editor/lib/pinned-group-projection.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
-import type { TrackKind } from '@/tools/video-editor/types/index.ts';
-import type { TimelineAction } from '@/tools/video-editor/types/timeline-canvas.ts';
+import type { PinnedShotGroup, TrackKind } from '@/tools/video-editor/types/index.ts';
+import type { TimelineAction, TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
 
 export interface ActionDragState {
   rowId: string;
@@ -60,8 +67,6 @@ export interface InternalDragSession extends DragSession {
   hasMoved: boolean;
   claimedGestureOwner: boolean;
   transactionId: string;
-  moveCapture?: CapturedClipMove;
-  moveCaptureError?: string;
 }
 
 export interface DragIntent {
@@ -105,7 +110,6 @@ interface BuildPendingDragSessionArgs {
   dragAllowed: boolean;
   inputModality: TimelineInputModality;
   pixelsPerSecond: number;
-  clipMove?: ClipMoveCapturePort;
 }
 
 interface BuildPendingDragSessionResult {
@@ -114,12 +118,23 @@ interface BuildPendingDragSessionResult {
   session: InternalDragSession;
 }
 
+interface DragCommitCallbacks {
+  moveClipToRow: (clipId: string, targetRowId: string, newStartTime?: number, transactionId?: string) => void;
+  createTrackAndMoveClip: (clipId: string, kind: TrackKind, newStartTime?: number, insertAtTop?: boolean) => void;
+  selectClip: (clipId: string) => void;
+  selectClips: (clipIds: Iterable<string>) => void;
+  applyEdit: TimelineApplyEdit;
+  applyResolvedClipMove?: (clipId: string, targetRowId: string, targetTrackId: string | null, start: number, needsNewTrack: boolean, transactionId?: string) => void;
+}
+
 interface CommitDraggingSessionArgs {
   session: InternalDragSession;
   nextStart: number;
   dropPosition: DropPosition | null;
   crossTrackActive: boolean;
+  liveData: TimelineData | null;
   lastPlan?: ClipDragPlan | null;
+  callbacks: DragCommitCallbacks;
 }
 
 export function findClipElement(
@@ -192,6 +207,35 @@ export function buildClipOffsets(
   });
 }
 
+export function getAnchorTimeDelta(session: InternalDragSession, snappedStart: number): number {
+  if (session.groupDragEntry) {
+    return snappedStart - session.groupDragEntry.originStart;
+  }
+
+  const anchorClip = session.clipOffsets.find((clip) => clip.clipId === session.clipId);
+  return anchorClip ? snappedStart - anchorClip.initialStart : 0;
+}
+
+export function rebuildGroupAfterDrag(
+  currentGroups: PinnedShotGroup[] | undefined,
+  draggedGroupKey: { shotId: string; trackId: string },
+  newTrackId: string,
+  nextRows: TimelineRow[],
+): PinnedShotGroup[] | undefined {
+  if (!currentGroups || currentGroups.length === 0) return undefined;
+  return currentGroups.map((group) => {
+    if (group.shotId !== draggedGroupKey.shotId || group.trackId !== draggedGroupKey.trackId) {
+      return group;
+    }
+    const orderedClipIds = orderClipIdsByAt(group.clipIds, { rows: nextRows });
+    return {
+      ...group,
+      trackId: newTrackId,
+      clipIds: orderedClipIds,
+    };
+  });
+}
+
 export function buildPendingDragSession({
   clipId,
   rowId,
@@ -206,7 +250,6 @@ export function buildPendingDragSession({
   dragAllowed,
   inputModality,
   pixelsPerSecond,
-  clipMove,
 }: BuildPendingDragSessionArgs): BuildPendingDragSessionResult {
   const enclosingGroup = findEnclosingPinnedGroup(current.config, clipId);
   const clipRect = clipTarget.getBoundingClientRect();
@@ -257,16 +300,6 @@ export function buildPendingDragSession({
       }
     : null;
   const transactionId = crypto.randomUUID();
-  let moveCapture: CapturedClipMove | undefined;
-  let moveCaptureError: string | undefined;
-  try {
-    if (groupDragEntry || validDraggedClipIds.length !== 1) {
-      throw new Error('clip.move v1 does not support group or multi-clip moves.');
-    }
-    moveCapture = captureClipMove(clipMove, current, clipId);
-  } catch (error) {
-    moveCaptureError = error instanceof Error ? error.message : 'Clip move capture failed.';
-  }
 
   const intent: DragIntent = {
     pointerId: event.pointerId,
@@ -303,8 +336,6 @@ export function buildPendingDragSession({
     intent,
     session: {
       ...intent,
-      moveCapture,
-      moveCaptureError,
       draggedClipIds: [...intent.draggedClipIds],
       clipOffsets: [...clipOffsets],
       clipEl: clipTarget,
@@ -321,35 +352,151 @@ export function commitDraggingSession({
   nextStart,
   dropPosition,
   crossTrackActive,
+  liveData,
+  callbacks,
   lastPlan,
-}: CommitDraggingSessionArgs): { deferDeactivate: boolean; refusal?: string } {
-  const refuse = (refusal: string) => ({ deferDeactivate: false, refusal });
-  const plan = lastPlan ?? dropPosition?.plan;
-  if (isInvalidTimelineRowTarget(plan?.rejectReason) || dropPosition?.isReject
-    || plan?.rejectReason || plan?.valid === false) {
-    return refuse('The clip drop target is unavailable.');
-  }
-  if (session.groupDragEntry || session.draggedClipIds.length !== 1) {
-    return refuse('clip.move v1 does not support group or multi-clip moves.');
-  }
-  if (dropPosition?.isNewTrack || plan?.needsNewTrack) {
-    return refuse('clip.move v1 does not create tracks.');
-  }
-  // The published built-in capture has no sibling/hard-wall snap query yet.
-  // Do not turn a consumed live query into unguarded absolute positioning.
-  if (plan?.snapped && plan.snapEdgeType !== 'none' && plan.snapEdgeType !== 'timeline-start') {
-    return refuse('clip.move v1 cannot capture this snap query.');
-  }
-  if (!session.moveCapture) return refuse(session.moveCaptureError ?? 'clip.move capture is unavailable.');
-  const targetTrackId = plan?.targetTrackId ?? dropPosition?.trackId ?? session.sourceRowId;
-  try {
-    submitClipMove(session.moveCapture, plan?.resolvedStart ?? nextStart, {
-      trackId: targetTrackId,
-      transactionId: session.transactionId,
-    });
+}: CommitDraggingSessionArgs): { deferDeactivate: boolean } {
+  if (isInvalidTimelineRowTarget(dropPosition?.plan?.rejectReason)) return { deferDeactivate: false };
+  const isGroupDrag = session.groupDragEntry !== null;
+  const resolvedPlan = lastPlan?.valid && !lastPlan.rejectReason ? lastPlan : null;
+
+  if (!isGroupDrag && crossTrackActive && session.draggedClipIds.length === 1) {
+    if (resolvedPlan && callbacks.applyResolvedClipMove) {
+      callbacks.applyResolvedClipMove(
+        session.clipId,
+        resolvedPlan.targetTrackId ?? session.sourceRowId,
+        resolvedPlan.targetTrackId,
+        resolvedPlan.resolvedStart,
+        resolvedPlan.needsNewTrack,
+        session.transactionId,
+      );
+      userSelectTimelineClip(session.clipId, { additive: false });
+      return { deferDeactivate: true };
+    }
+    if (dropPosition?.isNewTrack) {
+      callbacks.createTrackAndMoveClip(
+        session.clipId,
+        session.sourceKind,
+        nextStart,
+        dropPosition.isNewTrackTop,
+      );
+    } else if (dropPosition?.trackId && !dropPosition.isReject) {
+      callbacks.moveClipToRow(session.clipId, dropPosition.trackId, nextStart, session.transactionId);
+    } else {
+      callbacks.moveClipToRow(session.clipId, session.sourceRowId, nextStart, session.transactionId);
+    }
     userSelectTimelineClip(session.clipId, { additive: false });
-    return { deferDeactivate: crossTrackActive };
-  } catch (error) {
-    return refuse(error instanceof Error ? error.message : 'Clip move failed.');
+    return { deferDeactivate: true };
   }
+
+  if (session.draggedClipIds.length > 1 || isGroupDrag) {
+    if (liveData) {
+      const timeDelta = getAnchorTimeDelta(session, nextStart);
+      let handledNewTrackMove = false;
+
+      if (crossTrackActive && dropPosition?.isNewTrack) {
+        const augmentedData = buildAugmentedData(
+          liveData,
+          session.sourceKind,
+          dropPosition.isNewTrackTop ?? false,
+        );
+        if (augmentedData) {
+          const { augmented, newTrackId } = augmentedData;
+          const { canMove, moves } = planMultiDragMoves(
+            augmented,
+            session.clipOffsets,
+            session.clipId,
+            newTrackId,
+            session.sourceRowId,
+            timeDelta,
+            session.groupDragEntry ?? undefined,
+            lastPlan?.snapThresholdS,
+          );
+
+          if (canMove && moves.length > 0) {
+            const { nextRows, metaUpdates } = applyMultiDragMoves(augmented, moves);
+            const finalConfig = buildConfigFromDragResult(
+              augmented.resolvedConfig,
+              augmented.meta,
+              nextRows,
+              metaUpdates,
+            );
+            const pinnedShotGroupsOverride = session.groupDragEntry
+              ? rebuildGroupAfterDrag(
+                  liveData.config.pinnedShotGroups,
+                  session.groupDragEntry.groupKey,
+                  newTrackId,
+                  nextRows,
+                )
+              : undefined;
+            callbacks.applyEdit({
+              type: 'config',
+              resolvedConfig: finalConfig,
+              pinnedShotGroupsOverride,
+            }, {
+              transactionId: session.transactionId,
+            });
+            handledNewTrackMove = true;
+          }
+        }
+      }
+
+      if (!handledNewTrackMove) {
+        const anchorTargetRowId = crossTrackActive
+          ? (dropPosition?.trackId && !dropPosition.isReject && !dropPosition.isNewTrack
+              ? dropPosition.trackId
+              : session.sourceRowId)
+          : session.sourceRowId;
+        const { canMove, moves } = planMultiDragMoves(
+          liveData,
+          session.clipOffsets,
+          session.clipId,
+          anchorTargetRowId,
+          session.sourceRowId,
+          timeDelta,
+          session.groupDragEntry ?? undefined,
+          lastPlan?.snapThresholdS,
+        );
+
+        if (canMove && moves.length > 0) {
+          const { nextRows, metaUpdates, nextClipOrder } = applyMultiDragMoves(liveData, moves);
+          const pinnedShotGroupsOverride = session.groupDragEntry
+            ? rebuildGroupAfterDrag(
+                liveData.config.pinnedShotGroups,
+                session.groupDragEntry.groupKey,
+                anchorTargetRowId,
+                nextRows,
+              )
+            : undefined;
+          callbacks.applyEdit({
+            type: 'rows',
+            rows: nextRows,
+            metaUpdates,
+            clipOrderOverride: nextClipOrder,
+            pinnedShotGroupsOverride,
+          }, {
+            transactionId: session.transactionId,
+          });
+        }
+      }
+    }
+
+    userSelectTimelineClips(session.draggedClipIds, { additive: false });
+    return { deferDeactivate: crossTrackActive };
+  }
+
+  if (resolvedPlan && callbacks.applyResolvedClipMove) {
+    callbacks.applyResolvedClipMove(
+      session.clipId,
+      resolvedPlan.targetTrackId ?? session.sourceRowId,
+      resolvedPlan.targetTrackId,
+      resolvedPlan.resolvedStart,
+      resolvedPlan.needsNewTrack,
+      session.transactionId,
+    );
+  } else {
+    callbacks.moveClipToRow(session.clipId, session.sourceRowId, nextStart, session.transactionId);
+  }
+  userSelectTimelineClip(session.clipId, { additive: false });
+  return { deferDeactivate: false };
 }

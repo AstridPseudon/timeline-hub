@@ -42,4 +42,3 @@ export function parseNonNegativeIntCandidate(value: unknown): NonNegativeIntPars
   }
   return { value: null, invalid: true };
 }
-

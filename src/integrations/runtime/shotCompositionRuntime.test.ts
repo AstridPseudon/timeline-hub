@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
 import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
-import { RuntimeDataProvider, toRuntimePublication } from './dataProvider.ts';
+import { RuntimeDataProvider } from './dataProvider.ts';
 import type { RequestBody } from './generated.ts';
 import {
   RUNTIME_SCHEMA_DIGEST,
@@ -16,17 +16,6 @@ import { clearTimelineDraft, loadTimelineDraft } from '@/tools/video-editor/data
 
 const PROJECT_ID = 'project-001';
 const TIMELINE_ID = 'document-primary';
-
-function expectedPersistedPopupConfig<T extends { clips?: Array<{ app?: { canonicalTiming?: unknown } }> }>(config: T): T {
-  const persisted = structuredClone(config);
-  for (const clip of persisted.clips ?? []) {
-    const timing = clip.app?.canonicalTiming;
-    if (timing && typeof timing === 'object' && !Array.isArray(timing)) {
-      Reflect.deleteProperty(timing, 'storedOccurrenceDurationMs');
-    }
-  }
-  return persisted;
-}
 
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
 
@@ -267,102 +256,6 @@ function fixtureTransport(options: {
 }
 
 describe('Runtime shot-composition port', () => {
-  describe('opaque child roots', () => {
-    beforeEach(() => vi.stubGlobal('indexedDB', createFakeIndexedDB()));
-    afterEach(() => vi.stubGlobal('indexedDB', createFakeIndexedDB()));
-    it.each(['add', 'swap'] as const)('popup %s keeps raw child roots through live wire serialization, lost ACK, reopen and exact retry', async (edit) => {
-      resetFakeIndexedDB();
-      const roots = JSON.parse('{"opaque":{"nested":{"__proto__":[null,false,[]]}},"nullable":null,"ordered":[3,1,2],"__proto__":{"literal":true},"constructor":{"prototype":0},"prototype":false}');
-      const parentRoots = { ...roots, opaque: { scope: 'parent' } };
-      const fixtureRuntime = fixtureTransport({ commitThenLoseFirstResponse: true });
-      const transport: typeof fixtureRuntime.transport = async (...args) => {
-        const response = await fixtureRuntime.transport(...args);
-        if (args[0] === 'GET' && args[1].endsWith('/composition-revisions/timeline-rev-2')) {
-          const body = JSON.parse(new TextDecoder().decode(response.body));
-          body.payload.config = { ...body.payload.config, ...parentRoots };
-          return { ...response, body: json(body) };
-        }
-        if (args[0] === 'GET' && args[1].endsWith('/revisions/timeline-alpha-a')) {
-          const body = JSON.parse(new TextDecoder().decode(response.body));
-          body.payload = { ...body.payload, ...roots };
-          return { ...response, body: json(body) };
-        }
-        return response;
-      };
-      const runtime = new RuntimeDataProvider({ projectId: PROJECT_ID, transport });
-      const adapter = createShotCompositionAdapter(runtime.shotComposition);
-      const composition = adapter.prepare(await runtime.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }));
-      const source = composition.occurrences.find((item) => item.occurrenceId === 'occ-1')!;
-      const original = structuredClone(source.revision.internal_timeline_revision);
-      const config = projectCanonicalComposition({ ...composition, occurrences: [source] }).config;
-      const next = { ...config, clips: edit === 'add'
-        ? [...config.clips, { id: 'new-title', track: config.tracks[0].id, at: 2, hold: 1, text: 'Added' }]
-        : config.clips.map((clip, index) => index === 0 ? { ...clip, asset: 'alpha-audio' } : clip) };
-      const recoveryId = `${TIMELINE_ID}:shot:occ-1`;
-      const first = createShotTimelineDataProvider(config, composition, 'occ-1', adapter);
-      await expect(first.saveTimeline(recoveryId, next, 1)).rejects.toThrow('connection dropped after durable commit');
-      const kept = await loadTimelineDraft(recoveryId);
-      expect(kept?.draft.config).toEqual(expectedPersistedPopupConfig(next));
-      const reopened = createShotTimelineDataProvider(config, composition, 'occ-1', adapter);
-      expect((await reopened.loadTimeline(recoveryId)).config).toEqual(next);
-      await reopened.saveTimeline(recoveryId, next, 1);
-      const publications = fixtureRuntime.requests.filter(({ method, path }) => method === 'POST' && path.endsWith('/composition-revisions'));
-      expect(publications).toHaveLength(2);
-      expect(publications[1]).toEqual(publications[0]);
-      const body = publications[0].body!;
-      const expectedParentConfig = structuredClone(composition.contract.parent_composition!.config) as {
-        app: { visualSeamContract: { gaps: Array<{ startFrame: number }> } };
-      };
-      // Adding one second of content moves this existing authored pause edge.
-      if (edit === 'add') expectedParentConfig.app.visualSeamContract.gaps[0].startFrame = 90;
-      expect((body.parent_composition as { config: unknown }).config).toEqual(expectedParentConfig);
-      const internal = (body.internal_timeline_revisions as Array<{ payload: Record<string, unknown> }>)[0].payload;
-      for (const [key, value] of Object.entries(roots)) {
-        expect(Object.hasOwn(internal, key), key).toBe(true);
-        expect(internal[key], key).toEqual(value);
-      }
-      expect(Object.hasOwn(internal, 'absent')).toBe(false);
-      const rawTimeline = (original as { timeline: Record<string, unknown> }).timeline;
-      const { clips: _oldClips, tracks: _oldTracks, ...rawRoots } = rawTimeline;
-      const { clips: _newClips, tracks: _newTracks, app: _projectionApp, ...outgoingRoots } = internal;
-      expect(outgoingRoots).toEqual(rawRoots);
-      expect(internal.tracks).toEqual(next.tracks);
-      const clips = internal.clips as Array<Record<string, unknown>>;
-      if (edit === 'add') expect(clips).toHaveLength(config.clips.length + 1);
-      else expect(clips[0].asset).toBe('alpha-audio');
-      const accepted = adapter.prepare(await runtime.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }));
-      const acceptedInternal = accepted.occurrences.find((item) => item.occurrenceId === 'occ-1')!.revision.internal_timeline_revision as { timeline: unknown };
-      expect(acceptedInternal.timeline).toEqual(internal);
-      expect(source.revision.internal_timeline_revision).toEqual(original);
-    });
-
-    it('refuses a retained raw child ID alias before publication and keeps the popup draft', async () => {
-      resetFakeIndexedDB();
-      const fixtureRuntime = fixtureTransport();
-      const runtime = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: fixtureRuntime.transport });
-      const adapter = createShotCompositionAdapter(runtime.shotComposition);
-      const composition = adapter.prepare(await runtime.shotComposition.load({ projectId: PROJECT_ID, parentDocumentId: TIMELINE_ID }));
-      const source = composition.occurrences.find((item) => item.occurrenceId === 'occ-1')!;
-      const config = projectCanonicalComposition({ ...composition, occurrences: [source] }).config;
-      const draft = {
-        ...config,
-        clips: config.clips.map((clip) => clip.id === 'occ-1:alpha-video'
-          ? { ...clip, id: 'alpha-video' }
-          : clip),
-      };
-      const before = JSON.stringify(draft);
-      const popup = createShotTimelineDataProvider(config, composition, 'occ-1', adapter);
-
-      await expect(popup.saveTimeline(`${TIMELINE_ID}:shot:occ-1`, draft, 1))
-        .rejects.toThrow('collides with a retained raw clip ID');
-      expect(JSON.stringify(draft)).toBe(before);
-      expect(fixtureRuntime.requests.filter(({ method, path }) => (
-        method === 'POST' && path.endsWith('/composition-revisions')
-      ))).toHaveLength(0);
-    });
-
-  });
-
   it('replays a lost popup publication through Runtime with the same candidate and preserves stale-head drafts', async () => {
     resetFakeIndexedDB();
     const fixtureRuntime = fixtureTransport({ commitThenLoseFirstResponse: true });
@@ -393,10 +286,9 @@ describe('Runtime shot-composition port', () => {
     await expect(stalePopup.saveTimeline(recoveryId, newerDraft, 1)).rejects.toMatchObject({ code: 'stale_write' });
     const recovery = await loadTimelineDraft(recoveryId);
     expect(recovery?.draft).toMatchObject({
-      config: expectedPersistedPopupConfig(newerDraft),
+      config: newerDraft,
       canonicalPublication: { expectedHeadRevisionId: composition.headRevisionId },
     });
-    expect((await stalePopup.loadTimeline(recoveryId)).config).toEqual(newerDraft);
     await clearTimelineDraft(recoveryId);
   });
 

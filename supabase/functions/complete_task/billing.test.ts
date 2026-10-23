@@ -32,4 +32,3 @@ describe('complete_task/billing', () => {
     fetchSpy.mockRestore();
   });
 });
-

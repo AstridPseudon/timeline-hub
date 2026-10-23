@@ -109,7 +109,7 @@ export function VideoEditorRightPanelDock({
   const layout = preferences.rightPanelLayoutSlotsByPanelId[HOST_PROPERTIES_PANEL_KEY]
     ?? preferences.rightPanelLayoutSlotsByPanelId[currentKey]
     ?? 'dock';
-  // Only "Closed" (null) closes the dock: disabling the selected extension falls back to "tool".
+  // Only "Closed" (null) closes the dock: disabling the selected extension falls back to `tool`.
   const open = Boolean(video) || selected !== null;
   const dock = Boolean(video) || layout === 'dock';
   const compactInGrid = !video && open && layout === 'compact' && compactDock && !responsive;

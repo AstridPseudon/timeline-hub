@@ -644,3 +644,28 @@ describe('useTimelineCommit owned registry receipts', () => {
     expect(result.current.dataRef.current?.registry.assets['asset-own'].file).toBe('new.png');
   });
 });
+
+describe('useTimelineCommit local save boundary', () => {
+  it('exposes each upstream local predecessor before debounce while leaving save scheduling intact', () => {
+    const eventBus = new TimelineEventBus();
+    const local = vi.fn();
+    const scheduled = vi.fn();
+    eventBus.on('localCommit', local);
+    eventBus.on('scheduleSave', scheduled);
+    const initial = makeVideoModeGroupData();
+    const { result } = renderHook(() => useTimelineCommit({ eventBus, lastSavedSignatureRef: { current: '' }, initialData: initial }));
+    const first = { ...initial, config: { ...initial.config, theme: 'first' } };
+    const second = { ...first, config: { ...first.config, theme: 'second' } };
+    act(() => {
+      result.current.commitData(first);
+      result.current.commitData(second);
+    });
+    expect(local.mock.calls).toEqual([[initial, first], [first, second]]);
+    expect(scheduled.mock.calls).toEqual([[first], [second]]);
+    expect(result.current.dataRef.current).toBe(second);
+    expect(result.current.editSeqRef.current).toBe(2);
+    act(() => result.current.commitData(initial, { save: false, skipHistory: true, updateLastSavedSignature: true }));
+    expect(local).toHaveBeenCalledTimes(2);
+    expect(scheduled).toHaveBeenCalledTimes(2);
+  });
+});

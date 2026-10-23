@@ -9,4 +9,3 @@ if ((import.meta as unknown as { main?: boolean }).main) {
     return completeTaskHandler(req);
   });
 }
-

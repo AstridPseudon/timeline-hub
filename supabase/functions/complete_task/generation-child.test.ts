@@ -302,4 +302,3 @@ describe('complete_task/generation-child findExistingGenerationAtPosition', () =
     expect(result).toBeNull();
   });
 });
-

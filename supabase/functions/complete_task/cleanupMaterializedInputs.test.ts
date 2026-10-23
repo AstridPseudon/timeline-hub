@@ -134,4 +134,3 @@ describe('cleanupMaterializedInputs', () => {
     expect(mocks.cleanupFile).toHaveBeenCalledWith(supabaseAdmin, 'objects/gen-y.png');
   });
 });
-

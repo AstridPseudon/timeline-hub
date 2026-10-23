@@ -1,5 +1,3 @@
-import type { JSON } from '@/integrations/runtime/timeline-commit-types.ts';
-import { remapItems } from '../commands/authoringBundle.ts';
 import {
   stableOccurrenceDeepLink,
   stableOutputIdentity,
@@ -111,7 +109,6 @@ function withOccurrenceIdentity(
 }
 
 function revisionPayload(revision: JsonObject): JsonObject {
-  if (record(revision.rawJson)) return revision.rawJson as JsonObject;
   return Object.fromEntries(Object.entries(revision).filter(([key]) => ![
     'shot_id',
     'revision_id',
@@ -127,6 +124,25 @@ function internalTimelinePayload(internal: JsonObject): JsonObject {
     'content_digest',
     'publish',
   ].includes(key)));
+}
+
+function remapOwnedItemReferences(value: unknown, itemIds: Map<string, string>): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => remapOwnedItemReferences(item, itemIds));
+  }
+  if (value === null || typeof value !== 'object') return value;
+  const row = value as JsonObject;
+  const next: JsonObject = {};
+  for (const [childKey, child] of Object.entries(row)) {
+    if ((childKey === 'item_id' || childKey.endsWith('_item_id')) && typeof child === 'string') {
+      next[childKey] = itemIds.get(child) ?? child;
+    } else if ((childKey === 'item_ids' || childKey.endsWith('_item_ids')) && Array.isArray(child)) {
+      next[childKey] = child.map((item) => typeof item === 'string' ? (itemIds.get(item) ?? item) : item);
+    } else {
+      next[childKey] = remapOwnedItemReferences(child, itemIds);
+    }
+  }
+  return next;
 }
 
 function remapIndependentInternalTimeline(value: unknown, prefix: string): JsonObject {
@@ -266,12 +282,10 @@ export async function updateCanonicalShotRevision(
         ...sourceInternal,
         revision_id: newIdentity(`timeline-${String(sourceOccurrence.shot_id)}`, patch.identitySeed ? `${patch.identitySeed}-timeline` : undefined),
         publish: true,
-        // The popup edits a projection. Keep roots owned by the raw child
-        // timeline rather than replacing them with the projected field set.
-        timeline: { ...record(sourceInternal.timeline), ...clone(patch.timeline) },
+        timeline: clone(patch.timeline),
       }
     : undefined;
-  let updatedRevision: JsonObject = {
+  const updatedRevision: JsonObject = {
     ...sourceRevision,
     shot_id: targetShotId,
     revision_id: revisionId,
@@ -284,26 +298,12 @@ export async function updateCanonicalShotRevision(
       ? { timing: { ...(record(sourceRevision.timing) ?? {}), duration_ms: occurrenceDurationMs } }
       : {}),
   };
-  const rawJson = record(sourceRevision.rawJson);
-  if (rawJson) {
-    updatedRevision.rawJson = {
-      ...rawJson,
-      ...(patch.settings ? { settings: clone(patch.settings) } : {}),
-      ...(patch.provenance ? { provenance: clone(patch.provenance) } : {}),
-      ...(patch.assets ? { assets: clone(patch.assets) } : {}),
-      ...(occurrenceDurationMs !== undefined && (patch.timeline || patch.occurrenceDurationMs !== undefined)
-        ? { timing: { ...record(rawJson.timing), duration_ms: occurrenceDurationMs } }
-        : {}),
-    };
-  }
   if (sharedSource) {
     const sourceItems = Array.isArray(updatedRevision.items) ? updatedRevision.items : [];
     const itemIds = new Map<string, string>();
     for (const item of sourceItems) {
       const row = record(item);
-      if (!row) continue;
-      const identity = 'item_id' in row ? row.item_id : row.id;
-      if (typeof identity === 'string') itemIds.set(identity, `${targetShotId}:${identity}`);
+      if (row && typeof row.item_id === 'string') itemIds.set(row.item_id, `${targetShotId}:${row.item_id}`);
     }
     if (updatedRevision.internal_timeline_revision) {
       updatedRevision.internal_timeline_revision = remapIndependentInternalTimeline(
@@ -311,8 +311,10 @@ export async function updateCanonicalShotRevision(
         targetShotId,
       );
     }
-    updatedRevision = remapItems(updatedRevision as Record<string, JSON>, itemIds);
-    if (rawJson) updatedRevision.rawJson = remapItems(updatedRevision.rawJson as Record<string, JSON>, itemIds);
+    const remapped = remapOwnedItemReferences(updatedRevision, itemIds);
+    if (remapped && typeof remapped === 'object') {
+      Object.assign(updatedRevision, remapped as JsonObject);
+    }
   }
   const finalInternal = record(updatedRevision.internal_timeline_revision);
   if (finalInternal && (updatedInternal || sharedSource)) {
@@ -321,9 +323,6 @@ export async function updateCanonicalShotRevision(
       finalInternal.publish = true;
     }
     finalInternal.content_digest = await digestJson(internalTimelinePayload(finalInternal));
-  }
-  if (rawJson && finalInternal) {
-    (updatedRevision.rawJson as JsonObject).internal_timeline_revision_id = finalInternal.revision_id;
   }
   updatedRevision.content_digest = await digestJson(revisionPayload(updatedRevision));
   // Keep the source revision in the graph. Runtime revisions are immutable;
@@ -626,6 +625,38 @@ export function duplicateLinkedOccurrence(
   const source = graph.occurrences[occurrenceIndex(graph, sourceOccurrenceId)];
   const next = clone(graph);
   next.occurrences.push(withOccurrenceIdentity(next, source, destinationOccurrenceId));
+  return reorderOccurrences(next);
+}
+
+export function duplicateIndependentShot(
+  graph: ShotCompositionContract,
+  sourceOccurrenceId: string,
+  ids: Readonly<{ shotId: string; revisionId: string; internalTimelineRevisionId: string; occurrenceId: string }>,
+): ShotCompositionContract {
+  const next = clone(graph);
+  const sourceOccurrence = next.occurrences[occurrenceIndex(next, sourceOccurrenceId)];
+  if (next.occurrences.some((occurrence) => occurrence.occurrence_id === ids.occurrenceId)) {
+    throw new Error(`canonical occurrence ${ids.occurrenceId} already exists`);
+  }
+  if (next.shot_revisions.some((revision) => revision.shot_id === ids.shotId && revision.revision_id === ids.revisionId)) {
+    throw new Error(`canonical revision ${ids.shotId}/${ids.revisionId} already exists`);
+  }
+  const sourceRevision = next.shot_revisions.find((revision) => (
+    revision.shot_id === sourceOccurrence.shot_id && revision.revision_id === sourceOccurrence.revision_id
+  ));
+  if (!sourceRevision) throw new Error('source shot revision is missing');
+  const independentRevision = clone(sourceRevision);
+  independentRevision.shot_id = ids.shotId;
+  independentRevision.revision_id = ids.revisionId;
+  independentRevision.publish = true;
+  const internal = independentRevision.internal_timeline_revision as JsonObject;
+  independentRevision.internal_timeline_revision = { ...internal, revision_id: ids.internalTimelineRevisionId, publish: true };
+  next.shot_revisions.push(independentRevision);
+  next.occurrences.push(withOccurrenceIdentity(next, {
+    ...sourceOccurrence,
+    shot_id: ids.shotId,
+    revision_id: ids.revisionId,
+  }, ids.occurrenceId));
   return reorderOccurrences(next);
 }
 

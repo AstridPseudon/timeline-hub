@@ -1,5 +1,4 @@
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
-import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 import { fetchGenerationById } from '@/integrations/astrid/repositories/generationRepository.ts';
 import { bridgeCapabilityUnavailable } from '@/integrations/astrid/capability.ts';
 
@@ -9,8 +8,6 @@ export interface DuplicatedGenerationAsset {
   variantType: 'image' | 'video';
   imageUrl: string;
   thumbUrl: string;
-  /** The immutable Runtime selection captured for the newly duplicated media. */
-  mediaSelection?: MediaSelection;
 }
 
 /** The frozen bridge has no generation-create or duplicate command. */

@@ -140,4 +140,3 @@ export function createEditorImagePlacementHost(operation: RuntimeOperation, proj
 export async function bindEditorImagePlacementHost(host: RuntimeOperationHost, projectId: string): Promise<EditorImagePlacementHost> {
   return createEditorImagePlacementHost(await host.bind(), projectId);
 }
-

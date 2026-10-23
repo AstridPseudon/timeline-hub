@@ -1,4 +1,3 @@
-import type { CompiledCanonicalTransitions } from '@banodoco/timeline-composition';
 import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import type { ComponentProps, ReactNode, RefObject } from 'react';
 import { createPortal } from 'react-dom';
@@ -18,7 +17,6 @@ import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts
 import { getAdmittedElementReadiness, refreshAdmittedElements, subscribeAdmittedElementReadiness } from '@/tools/video-editor/runtime/admitted-elements.ts';
 import { PreviewLoadingPlaceholder } from './PreviewLoadingPlaceholder.tsx';
 import { areShotsSettling } from '@/tools/video-editor/lib/shots-settling.ts';
-import { previewRevisionLabel, previewUnavailableLabel, type PreviewRevision } from './previewRevision.ts';
 
 export interface PreviewHandle {
   seek: (time: number) => void;
@@ -36,7 +34,6 @@ const TRANSPORT_BUTTON_CLASS = 'pointer-events-auto rounded-full border-[color:v
 // own its media element instead; this keeps source identity and timing local
 // to the clip and avoids a lifetime-fixed shared-pool prop during config swaps.
 const PREVIEW_SHARED_AUDIO_TAGS = 0;
-const UNKNOWN_PREVIEW_REVISION: PreviewRevision = Object.freeze({ kind: 'unknown' });
 
 /**
  * Keeps the loading surface over a mounted composition until its first frame has pictures:
@@ -88,7 +85,7 @@ function FirstFrameCover({ settling, children }: { settling: boolean; children: 
 
 // Both branches use Remotion's composition viewport, so loading occupies the
 // exact video bounds at every resolution and stage size without a second fit.
-function PreviewComposition({ preparing, settling, previewRevision: _previewRevision, ...props }: ComponentProps<typeof TimelineRenderer> & { preparing: boolean; settling: boolean; previewRevision: PreviewRevision }) {
+function PreviewComposition({ preparing, settling, ...props }: ComponentProps<typeof TimelineRenderer> & { preparing: boolean; settling: boolean }) {
   if (preparing) return <PreviewLoadingPlaceholder />;
   return (
     <FirstFrameCover settling={settling}>
@@ -104,11 +101,8 @@ interface PendingSeek {
 }
 
 interface RemotionPreviewProps {
-  compiledTransitions?: CompiledCanonicalTransitions;
   config: ResolvedTimelineConfig;
-  // True only after the latest mailbox seek's frame feedback is consumed,
-  // or that request completes without a frame change. RAF dispatch is not completion.
-  onTimeUpdate: (time: number, seekComplete?: boolean) => void;
+  onTimeUpdate: (time: number) => void;
   playerContainerRef: RefObject<HTMLDivElement>;
   compact?: boolean;
   /** Phone/tablet chrome: transport controls grow to touch-sized hit targets. */
@@ -118,19 +112,10 @@ interface RemotionPreviewProps {
   currentTime?: number;
   /** Optional host-owned outlet for transport controls (e.g. public shells). */
   transportOutlet?: HTMLElement | null;
-  /** Provenance of the config that is allowed to reach the Player. */
-  previewRevision?: PreviewRevision;
-}
-
-interface PreviewDelivery {
-  compiledTransitions?: CompiledCanonicalTransitions;
-  config: ResolvedTimelineConfig;
-  revision: PreviewRevision;
-  generation: number;
 }
 
 const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>(function RemotionPreview(
-  { config, compiledTransitions, previewRevision = UNKNOWN_PREVIEW_REVISION, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0 },
+  { config, onTimeUpdate, playerContainerRef, transportOutlet, compact = false, touchChrome = false, initialTime = 0 },
   ref,
 ) {
   const runtime = useOptionalVideoEditorRuntime();
@@ -138,61 +123,33 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   const [isPlaying, setIsPlaying] = useState(false);
   const playbackIntentRef = useRef<'playing' | 'paused'>('paused');
   const activeSeekFrameRef = useRef<number | null>(null);
-  // A same-frame seek can complete before Remotion delivers the prior frame's
-  // already-scheduled React effect. Consume that one stale matching effect.
-  const completedSameFrameRef = useRef<number | null>(null);
   const pendingSeekRef = useRef<PendingSeek | null>(null);
   const seekFlushRafRef = useRef<number | null>(null);
-  const onTimeUpdateRef = useRef(onTimeUpdate);
-  onTimeUpdateRef.current = onTimeUpdate;
   const appliedConfigGenerationRef = useRef(0);
-  const configIdentityRef = useRef({ config, compiledTransitions });
+  const configIdentityRef = useRef(config);
   const configGenerationRef = useRef(0);
-  if (configIdentityRef.current.config !== config || configIdentityRef.current.compiledTransitions !== compiledTransitions) {
-    configIdentityRef.current = { config, compiledTransitions };
+  if (configIdentityRef.current !== config) {
+    configIdentityRef.current = config;
     configGenerationRef.current += 1;
-    // A config replacement invalidates a seek against the old delivered
-    // composition. A replacement seek will be held in the existing mailbox
-    // until this generation reaches the Player.
-    activeSeekFrameRef.current = null;
   }
   useRenderDiagnostic('RemotionPreview');
   const markEventsEffect = useEffectDiagnostic('remotionPreview:events');
   // Throttle config updates to the Player to avoid stutter during drag operations.
   // The timeline canvas shows immediate visual feedback; the Player catches up after 150ms idle.
-  const [delivery, setDelivery] = useState<PreviewDelivery>({config, compiledTransitions, revision: previewRevision, generation: 0});
+  const [delivery, setDelivery] = useState({config, generation: 0});
   const deferredConfig = delivery.config;
-  const previewRevisionRef = useRef(previewRevision);
-  previewRevisionRef.current = previewRevision;
-
-  // A host read can fail or recover without changing the config identity. In
-  // that case update only the delivered metadata; never let a metadata-only
-  // update jump ahead of a deferred config update.
-  useEffect(() => {
-    setDelivery((current) => current.config === config
-      && current.compiledTransitions === compiledTransitions
-      && current.revision.kind === previewRevision.kind
-      && current.revision.revisionId === previewRevision.revisionId
-      && current.revision.baseRevisionId === previewRevision.baseRevisionId
-      ? { ...current, revision: previewRevision }
-      : current);
-  }, [config, compiledTransitions, previewRevision]);
-
   // Stable identity: reads only the state setter and refs, so effects can depend on it.
   const setDeferredConfig = useCallback(
-    (nextDelivery: PreviewDelivery) => {
-      if (nextDelivery.generation !== configGenerationRef.current) return;
-      setDelivery(nextDelivery);
-    },
+    (nextConfig: ResolvedTimelineConfig) => setDelivery({config: nextConfig, generation: configGenerationRef.current}),
     [],
   );
   const deferTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Live-edit mailbox: while playing, timeline edits must reach the Player on
   // the next animation frame (live media updates, no pause+restart), but no
   // more than once per frame so rapid commits can't cause renderer jank.
-  const latestDeliveryRef = useRef<PreviewDelivery | null>(null);
+  const latestConfigRef = useRef<ResolvedTimelineConfig | null>(null);
   const rafRef = useRef<number | null>(null);
-  const flushDeferredConfig = useCallback((nextDelivery: PreviewDelivery, delayMs: number) => {
+  const flushDeferredConfig = useCallback((nextConfig: ResolvedTimelineConfig, delayMs: number) => {
     // Guard is load-bearing: it narrows `Timeout | null` away (this lib mix
     // rejects null) and resets the ref so a stale timer can't double-fire.
     if (deferTimerRef.current) {
@@ -200,30 +157,24 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       deferTimerRef.current = null;
     }
     if (delayMs <= 0) {
-      setDeferredConfig(nextDelivery);
+      setDeferredConfig(nextConfig);
       return;
     }
     deferTimerRef.current = setTimeout(() => {
-      deferTimerRef.current = null;
-      setDeferredConfig(nextDelivery);
+      setDeferredConfig(nextConfig);
     }, delayMs);
   }, [setDeferredConfig]);
 
   useEffect(() => {
     if (isPlaying) {
-      latestDeliveryRef.current = {
-        config,
-        compiledTransitions,
-        revision: previewRevisionRef.current,
-        generation: configGenerationRef.current,
-      };
+      latestConfigRef.current = config;
       if (rafRef.current === null) {
         rafRef.current = requestAnimationFrame(() => {
           rafRef.current = null;
-          const nextDelivery = latestDeliveryRef.current;
-          latestDeliveryRef.current = null;
-          if (nextDelivery) {
-            setDeferredConfig(nextDelivery);
+          const nextConfig = latestConfigRef.current;
+          latestConfigRef.current = null;
+          if (nextConfig) {
+            setDeferredConfig(nextConfig);
           }
         });
       }
@@ -235,15 +186,9 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       }
       // The mailbox only selects flush timing; current props own the newest config.
       const nextConfig = config;
-      const nextDelivery = {
-        config: nextConfig,
-        compiledTransitions,
-        revision: previewRevisionRef.current,
-        generation: configGenerationRef.current,
-      } satisfies PreviewDelivery;
-      const delayMs = latestDeliveryRef.current ? 0 : 150;
-      latestDeliveryRef.current = null;
-      flushDeferredConfig(nextDelivery, delayMs);
+      const delayMs = latestConfigRef.current ? 0 : 150;
+      latestConfigRef.current = null;
+      flushDeferredConfig(nextConfig, delayMs);
     }
     return () => {
       if (rafRef.current !== null) {
@@ -255,7 +200,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
         deferTimerRef.current = null;
       }
     };
-  }, [config, compiledTransitions, isPlaying, flushDeferredConfig, setDeferredConfig]);
+  }, [config, isPlaying, flushDeferredConfig, setDeferredConfig]);
 
   const outputProjection = useMemo(() => projectOutputTimelineConfig(deferredConfig), [deferredConfig]);
   // Preserve the ordinary preview identity/mailbox when nothing is excluded.
@@ -274,17 +219,10 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   const shotsSettling = areShotsSettling(runtime?.shots);
   const inputProps = useMemo(() => ({
     config: outputConfig,
-    compiledTransitions: delivery.compiledTransitions,
     preparing,
     settling: shotsSettling,
-    previewRevision: delivery.revision,
     ...(runtime?.astridElementHost ? { astridElementHost: runtime.astridElementHost } : {}),
-  }), [delivery.revision, delivery.compiledTransitions, outputConfig, preparing, shotsSettling, runtime?.astridElementHost]);
-  const displayedRevisionLabel = previewRevisionLabel(delivery.revision);
-  // This is request status, not pixel provenance. It intentionally follows
-  // the current host read so recovery clears the notice even when the Player
-  // is still displaying an older delivered config.
-  const unavailableTarget = previewRevision.unavailableTarget;
+  }), [outputConfig, preparing, shotsSettling, runtime?.astridElementHost]);
   const metadata = useMemo(() => {
     const fps = outputConfig.output.fps;
     const { width, height } = parseResolution(outputConfig.output.resolution);
@@ -311,21 +249,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
     }
 
     const onFrameUpdate = (event: { detail: { frame: number } }) => {
-      const frame = event.detail.frame;
-      if (completedSameFrameRef.current === frame) {
-        completedSameFrameRef.current = null;
-        return;
-      }
-      const seekComplete = activeSeekFrameRef.current === frame && pendingSeekRef.current === null;
-      if (seekComplete) {
-        activeSeekFrameRef.current = null;
-      }
-      const time = frame / metadata.fps;
-      if (seekComplete) {
-        onTimeUpdateRef.current(time, true);
-      } else {
-        onTimeUpdateRef.current(time);
-      }
+      onTimeUpdate(event.detail.frame / metadata.fps);
     };
     const onPlay = () => setIsPlaying(true);
     const onPause = () => setIsPlaying(false);
@@ -346,6 +270,22 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
     // command window keeps one active command plus one replaceable latest
     // target; it does not attempt to predict browser decode completion.
     const configGeneration = configGenerationRef.current;
+    // A prop update is debounced before it reaches Remotion. Keep imperative
+    // seeks queued until the Player is rendering that same config generation;
+    // otherwise a seek expressed in the new fps/extent is sent to stale media.
+    if (configGeneration !== appliedConfigGenerationRef.current) {
+      pendingSeekRef.current = { frame: targetFrame, configGeneration };
+      return;
+    }
+    if (activeSeekFrameRef.current !== null) {
+      if (activeSeekFrameRef.current === targetFrame) {
+        pendingSeekRef.current = null;
+      } else {
+        pendingSeekRef.current = { frame: targetFrame, configGeneration };
+      }
+      return;
+    }
+
     const dispatchSeek = ({ frame: requestedFrame, configGeneration: requestedGeneration }: PendingSeek) => {
       if (requestedGeneration !== configGenerationRef.current) {
         return;
@@ -363,7 +303,6 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       const frame = Math.min(Math.max(0, requestedFrame), Math.max(0, currentMetadata.durationInFrames - 1));
       activeSeekFrameRef.current = frame;
       const lastFrame = currentMetadata.durationInFrames - 1;
-      const frameBeforeSeek = player.getCurrentFrame();
       const wasPlaying = player.isPlaying() && playbackIntentRef.current !== 'paused';
       if (wasPlaying) {
         player.pause();
@@ -373,18 +312,10 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
         player.play();
       }
 
-      // Remotion may keep the same frame state for a same-frame or clamped
-      // seek, so no frameupdate effect is guaranteed. Complete that request
-      // explicitly while preserving the ordinary frame-time value.
-      if (activeSeekFrameRef.current === frame && frameBeforeSeek === frame) {
-        activeSeekFrameRef.current = null;
-        completedSameFrameRef.current = frame;
-        onTimeUpdateRef.current(frame / currentMetadata.fps, true);
-      }
-
       if (seekFlushRafRef.current === null) {
         seekFlushRafRef.current = requestAnimationFrame(() => {
           seekFlushRafRef.current = null;
+          activeSeekFrameRef.current = null;
           const pendingSeek = pendingSeekRef.current;
           pendingSeekRef.current = null;
           if (pendingSeek !== null) {
@@ -393,31 +324,6 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
         });
       }
     };
-    // A prop update is debounced before it reaches Remotion. Keep imperative
-    // seeks queued until the Player is rendering that same config generation;
-    // otherwise a seek expressed in the new fps/extent is sent to stale media.
-    if (configGeneration !== appliedConfigGenerationRef.current) {
-      pendingSeekRef.current = { frame: targetFrame, configGeneration };
-      return;
-    }
-    if (activeSeekFrameRef.current !== null) {
-      if (activeSeekFrameRef.current === targetFrame) {
-        pendingSeekRef.current = null;
-      } else {
-        pendingSeekRef.current = { frame: targetFrame, configGeneration };
-      }
-      if (seekFlushRafRef.current === null) {
-        seekFlushRafRef.current = requestAnimationFrame(() => {
-          seekFlushRafRef.current = null;
-          const pendingSeek = pendingSeekRef.current;
-          pendingSeekRef.current = null;
-          if (pendingSeek !== null) {
-            dispatchSeek(pendingSeek);
-          }
-        });
-      }
-      return;
-    }
 
     dispatchSeek({ frame: targetFrame, configGeneration });
   }, []);
@@ -425,10 +331,8 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
   useEffect(() => {
     appliedConfigGenerationRef.current = delivery.generation;
     const pendingSeek = pendingSeekRef.current;
-    if (pendingSeek !== null) {
-      pendingSeekRef.current = null;
-    }
     if (pendingSeek?.configGeneration === appliedConfigGenerationRef.current) {
+      pendingSeekRef.current = null;
       const frame = pendingSeek.time === undefined
         ? pendingSeek.frame
         : Math.max(0, Math.round(pendingSeek.time * metadataRef.current.fps));
@@ -482,9 +386,6 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       cancelAnimationFrame(seekFlushRafRef.current);
       seekFlushRafRef.current = null;
     }
-    activeSeekFrameRef.current = null;
-    completedSameFrameRef.current = null;
-    pendingSeekRef.current = null;
   }, []);
 
   useEffect(() => {
@@ -570,24 +471,6 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       {hasSourceTracks && (
         <div className="pointer-events-none absolute left-3 top-3 z-10 rounded bg-background/90 px-2 py-1 text-xs text-foreground">
           Output · source tracks excluded
-        </div>
-      )}
-      <div
-        data-testid="preview-revision-label"
-        aria-label={displayedRevisionLabel}
-        title={delivery.revision.reason}
-        className="pointer-events-none absolute right-3 top-3 z-10 rounded bg-background/90 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
-      >
-        {displayedRevisionLabel}
-      </div>
-      {unavailableTarget && (
-        <div
-          data-testid="preview-revision-unavailable"
-          aria-label={previewUnavailableLabel(unavailableTarget)}
-          title={unavailableTarget.reason}
-          className="pointer-events-none absolute right-3 top-10 z-10 max-w-[min(75%,24rem)] rounded bg-destructive/90 px-2 py-1 text-[10px] uppercase tracking-[0.08em] text-destructive-foreground"
-        >
-          {previewUnavailableLabel(unavailableTarget)}
         </div>
       )}
       <div className="h-full w-full">

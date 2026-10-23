@@ -19,4 +19,3 @@ describe('complete_task/constants', () => {
     });
   });
 });
-
