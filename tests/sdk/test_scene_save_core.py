@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import builtins
 import copy
-import hashlib
 import os
 import subprocess
 import sys
@@ -14,6 +13,7 @@ import pytest
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline_checkout import Checkout, TimelineEditError
 from tests.sdk import test_timeline_transaction as transactions
+from tests.sdk.test_timeline_sync import bundle_connection
 
 draft = transactions.draft
 tiny = transactions.tiny
@@ -42,21 +42,35 @@ def no_renderer(monkeypatch):
         monkeypatch.setattr(Checkout, method, forbidden)
 
 
-def client_for(checkout, writes):
-    def publish(project, timeline, publication, *, idempotency_key):
-        writes.append(copy.deepcopy(publication))
-        return {"data": {"new_head": "accepted"}}
+@pytest.fixture
+def client_for(tmp_path, monkeypatch):
+    from astrid.sdk.timeline_cuts import base_bundle
 
-    return SimpleNamespace(
-        timelines=SimpleNamespace(open_composition=lambda *a: SimpleNamespace(
-            ok=True, data={"summary": {"head_revision_id": checkout.base_revision}}),
-            open_bundle=lambda *a, **kw: SimpleNamespace(ok=True, data={"bundle": checkout.document()})),
-        _remote=SimpleNamespace(_transport=SimpleNamespace(publish_parent_composition=publish)),
-    )
+    def connect(checkout, writes):
+        client, generated = bundle_connection(tmp_path, monkeypatch, base_bundle(checkout.document()))
+        send = generated.commit_timeline
+
+        def commit(*args, **kwargs):
+            result = send(*args, **kwargs)
+            writes.append(copy.deepcopy(result["data"]["canonical_document"]))
+            return result
+
+        generated.commit_timeline = commit
+        return client
+
+    return connect
+
+
+def commit_checkout(checkout, client):
+    from astrid.sdk.timeline_duplicate import _commit_bundle
+
+    return _commit_bundle(checkout.bundle["project_id"], checkout.bundle["timeline_id"],
+                          checkout.stored_document(), label="Save fixture", client=client,
+                          idempotency_key="save-fixture")
 
 
 @pytest.mark.parametrize("operation", ["core", "publish", "transaction", "dry-run"])
-def test_real_save_paths_need_neither_scene_imports_nor_node(draft, no_renderer, operation):
+def test_real_save_paths_need_neither_scene_imports_nor_node(draft, no_renderer, operation, client_for):
     checkout = draft
     before = checkout.document()
     writes = []
@@ -77,12 +91,12 @@ def test_real_save_paths_need_neither_scene_imports_nor_node(draft, no_renderer,
         if operation == "publish":
             # An in-memory candidate avoids a follow-up head read; the publisher/compiler are real.
             checkout.path = None
-            receipt = checkout.publish(client=client_for(checkout, writes))
-            assert receipt["new_head"] == "accepted" and len(writes) == 1
+            receipt = commit_checkout(checkout, client_for(checkout, writes))
+            assert receipt["new_head"] == "r1" and len(writes) == 1
 
 
 @pytest.mark.parametrize("damage", ["schema", "reference", "type", "length", "outside", "shot-length", "orphan"])
-def test_publish_still_refuses_core_invalidity_before_writing(no_renderer, damage):
+def test_publish_still_refuses_core_invalidity_before_writing(no_renderer, damage, client_for):
     checkout = Checkout(tiny())
     if damage == "schema":
         checkout.bundle["schema_version"] = 999
@@ -105,21 +119,21 @@ def test_publish_still_refuses_core_invalidity_before_writing(no_renderer, damag
     writes = []
     report = checkout._check_core()
     assert not report.valid and report.problems
-    with pytest.raises(TimelineEditError, match="not publishing"):
-        checkout.publish(client=client_for(checkout, writes))
+    with pytest.raises(TimelineEditError, match="not committing"):
+        commit_checkout(checkout, client_for(checkout, writes))
     assert writes == []
 
 
-def test_private_check_override_still_fences_publication(monkeypatch):
+def test_private_check_override_still_fences_publication(monkeypatch, client_for):
     checkout = Checkout(tiny())
     writes = []
-    monkeypatch.setattr(checkout, "_check_core", lambda: SimpleNamespace(valid=False, problems=["guard refused"]))
-    with pytest.raises(TimelineEditError, match="not publishing: guard refused"):
-        checkout.publish(client=client_for(checkout, writes))
+    monkeypatch.setattr(Checkout, "_check_core", lambda self: SimpleNamespace(valid=False, problems=["guard refused"]))
+    with pytest.raises(TimelineEditError, match="not committing: guard refused"):
+        commit_checkout(checkout, client_for(checkout, writes))
     assert writes == []
 
 
-def test_offcanvas_stays_explicitly_invalid_but_saves_and_publishes_exactly(tmp_path, request):
+def test_offcanvas_stays_explicitly_invalid_but_saves_and_publishes_exactly(tmp_path, request, client_for):
     # PLAN §§2.5/4.2: visual checks advise; only core validity blocks publication.
     draft = Checkout(tiny())
     draft.clip("c1.rocket").data["params"]["x"] = 10000
@@ -132,15 +146,15 @@ def test_offcanvas_stays_explicitly_invalid_but_saves_and_publishes_exactly(tmp_
     draft.save(tmp_path / "draft.json", quiet=True)
     assert Checkout.load(draft.path).clip("c1.rocket").data["params"]["x"] == 10000
     writes = []
-    receipt = draft.publish(client=client_for(draft, writes))
-    assert receipt["new_head"] == "accepted" and len(writes) == 1
+    receipt = commit_checkout(draft, client_for(draft, writes))
+    assert receipt["new_head"] == "r1" and len(writes) == 1
     rocket = next(clip for row in writes[0]["internal_timeline_revisions"]
                   for clip in row["payload"]["clips"] if clip["id"] == "a-rocket")
     assert rocket["params"]["x"] == 10000
     assert draft.clip("c1.rocket").data["params"]["x"] == 10000
 
 
-def test_duplicate_preflights_and_publication_are_core_only(monkeypatch, no_renderer):
+def test_duplicate_preflights_and_publication_are_core_only(monkeypatch, no_renderer, client_for):
     from astrid.sdk import timeline_duplicate as duplicate
 
     source, target = Checkout(tiny()), Checkout(tiny())
@@ -152,12 +166,8 @@ def test_duplicate_preflights_and_publication_are_core_only(monkeypatch, no_rend
     client = client_for(target, writes)
     client.timelines.create_empty = lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "copy"})
     client.timelines.archive = lambda *a: pytest.fail("core-valid duplicate was archived")
-    client.shots = SimpleNamespace(set_text_binding=lambda project, **kw: SimpleNamespace(ok=True, data={
-        "kind": kw["kind"], "shot_id": kw["shot_id"], "head": kw["expected_head"] + 1,
-        "content_hash": "sha256:" + hashlib.sha256(kw["text"].encode()).hexdigest(),
-    }))
     result = duplicate.duplicate_timeline("p", "t", client=client)
-    assert result["timeline_id"] == "copy" and result["new_head"] == "accepted" and len(writes) == 2
+    assert result["timeline_id"] == "copy" and result["new_head"] == "r2" and len(writes) == 2
 
 
 def test_implicit_cli_edit_report_and_save_are_core_only(tmp_path, request):

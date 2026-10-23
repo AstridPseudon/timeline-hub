@@ -7,7 +7,9 @@ import pytest
 
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline._common import TimelineEditError
-from astrid.sdk.timeline.store import three_way
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.emitter import emit_document_commands
+from astrid.sdk.timeline.rebase import replay
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_restructure import STRUCTURE_KEY, _stable_id, assert_equivalent, differences, flatten, is_split, plan, split, walls_of
 
@@ -227,22 +229,33 @@ def test_reflow_that_moves_a_wall_rehomes_a_clip_between_film_and_chapter():
 
 
 def test_three_way_merge_works_on_the_stored_form():
-    base = published(split(flat_film()))
-    mine = Checkout(copy.deepcopy(base))
-    mine.clip("late").data["hold"] = 1.5
-    mine.clip("bed").data["volume"] = 0.9
-    candidate = mine.stored_document()
+    from tests.sdk.test_timeline_sync import canonical_bundle
+
+    base = canonical_bundle(published(split(flat_film())))
+    candidate = copy.deepcopy(base)
+    next(c for shot in candidate["shots"].values() for c in shot["internal_timeline"]["clips"]
+         if c["id"] == "late")["hold"] = 1.5
+    next(c for c in candidate["parent"]["clips"] if c["id"] == "bed")["volume"] = 0.9
     head = copy.deepcopy(base)
     first = head["shots"][head["placements"][0]["shot_id"]]
     first["internal_timeline"]["clips"][0]["hold"] = 3.9  # someone else touched a different clip in another chapter
-    merged, conflicts = three_way(base, head, candidate)
+    # The retired store merger's witness now exercises the commit engine's
+    # guarded emitter/replay: disjoint changes survive, overlapping ones refuse.
+    pending = execute(base, emit_document_commands(base, candidate))
+    conflicts = []
+    try:
+        merged = replay(pending, head).bundle
+    except TimelineEditError as exc:
+        conflicts.append(str(exc))
     assert conflicts == []
     by_id = {c["id"]: c for s in merged["shots"].values() for c in s["internal_timeline"]["clips"]}
     assert by_id["late"]["hold"] == 1.5 and by_id["p1"]["hold"] == 3.9
     assert next(c for c in merged["parent"]["clips"] if c["id"] == "bed")["volume"] == 0.9
     theirs = copy.deepcopy(base)
     next(c for c in theirs["parent"]["clips"] if c["id"] == "bed")["volume"] = 0.1
-    _, conflicts = three_way(base, theirs, candidate)
+    with pytest.raises(TimelineEditError) as conflict:
+        replay(pending, theirs)
+    conflicts = [str(conflict.value.to_json())]
     assert any("bed" in line for line in conflicts)  # the same film-level clip changed on both sides refuses
 
 
@@ -386,36 +399,137 @@ def test_flatten_then_split_leaves_every_copy_of_an_asset_equal_to_the_union():
     assert copies and all(copy_ == union for copy_ in copies)
 
 
-def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter(monkeypatch):
+def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter(monkeypatch, tmp_path):
     """A chapter film is read flat; duplicating must copy its stored form (a shot per chapter), not the one flat
     shot, or the copy is stored as a single shot and every chapter reads back with the same shot id."""
     from types import SimpleNamespace
 
     from astrid.sdk import timeline_duplicate as td
+    from tests.sdk.test_timeline_sync import bundle_connection, canonical_bundle
 
-    stored = published(split(flat_film()))
+    stored = canonical_bundle(published(split(flat_film())))
     assert len(stored["placements"]) == 3
     src = Checkout(flatten(copy.deepcopy(stored)))
     assert len(src.bundle["shots"]) == 1 and STRUCTURE_KEY in src.bundle
-    empty = flat_film()
-    empty["timeline_id"] = "dup"
-    dst = Checkout(empty)
+    empty = copy.deepcopy(stored)
+    empty.update(timeline_id="dup", placements=[], shots={})
+    empty["parent"]["clips"] = []
+    empty["parent"]["registry"] = {}
+    client, generated = bundle_connection(tmp_path, monkeypatch, empty)
+    dst = Checkout(copy.deepcopy(generated.bundles[generated.head["revision_id"]]))
     for tl in (src, dst):  # the toy film has no real media identities; validity is not what this test is about
         tl._check_core = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
     opened = {"t": src, "dup": dst}
     monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None, revision_id=None: opened[t]))
-    stored_docs = []
-    monkeypatch.setattr(td.Checkout, "publish", lambda self, *a, **k: stored_docs.append(self.stored_document()) or {})
-    client = SimpleNamespace(timelines=SimpleNamespace(
-        create_empty=lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "dup"}),
-        archive=lambda *a: SimpleNamespace(ok=True)))
+    client.timelines.create_empty = lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "dup"})
+    client.timelines.archive = lambda *a: SimpleNamespace(ok=True)
     out = td._duplicate(client, "p", "t", slug="dup", name=None, revision_id=None)
-    doc = stored_docs[0]
+    doc = generated.bundles[generated.head["revision_id"]]
     shot_ids = [r["shot_id"] for r in doc["placements"]]
     assert out["shots"] == 3 and len(set(shot_ids)) == 3 and set(shot_ids) == set(doc["shots"])
     assert all(s.startswith("dup-") for s in shot_ids)
     assert [doc["shots"][s]["payload"]["name"] for s in shot_ids] == ["01 ONE", "02 TWO", "03 THREE"]
     assert len({r["occurrence_id"] for r in doc["placements"]}) == 3
+
+
+def test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups(tmp_path, monkeypatch):
+    import json
+
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+    from astrid.packs.timeline import cli
+    from tests.sdk.test_timeline_sync import bundle_connection
+
+    client, generated = bundle_connection(tmp_path, monkeypatch, flat_film())
+    original = copy.deepcopy(generated.bundles[generated.head["revision_id"]])
+    desired = Checkout(copy.deepcopy(original)).stored_document(restructure=True)
+    expected = compile_authoring_candidate(desired).publication
+    parsed = cli.build_parser(client).parse_args(["restructure", "t", "--project", "p"])
+
+    assert parsed.handler(parsed) == 0
+    assert len(generated.calls) == len(generated.accepted) == 2
+    first = next(iter(generated.accepted.values()))[1]
+    document = first["data"]["canonical_document"]
+    assert document["parent_revision"]["payload"] == expected["parent_composition"]
+    assert document["shot_revisions"] == expected["shot_revisions"]
+    assert document["internal_timeline_revisions"] == expected["internal_timeline_revisions"]
+    assert document["dependency_manifest"] == {**expected["dependency_manifest"], "documents": []}
+    assert len(document["parent_revision"]["payload"]["occurrences"]) == 3
+    assert all(row["occurrence_id"] != "occ-film" for row in document["parent_revision"]["payload"]["occurrences"])
+    body = json.loads(generated.calls[0][0])
+    assert body["api_version"] == 1 and body["merge"] == "atomic"
+    assert body["base_revision_id"] == original["base_parent"]["revision_id"]
+    assert body["base_publication_id"] == "pub0"
+    assert any(command["op"] == "doc.patch" for command in body["commands"])
+    assert any(command["op"] == "occurrence.create" for command in body["commands"])
+    assert body["commands"][-1]["op"] == "occurrence.delete"
+    assert json.loads(generated.calls[1][0])["commands"][0]["op"] == "text-binding.set"
+    assert [call[0] for call in client.documents.calls] == ["show", "create"]
+
+
+def test_duplicate_commit_keeps_a_repeated_shot_shared(tmp_path, monkeypatch):
+    from astrid.sdk.timeline_duplicate import _commit_bundle, copy_content
+    from tests.sdk.test_timeline_sync import bundle_connection
+
+    source = flat_film()
+    intent.set_chapters(source, [])
+    internal = source["shots"]["film"]["internal_timeline"]
+    internal["clips"] = [next(clip for clip in internal["clips"] if clip["id"] == "late")]
+    internal["registry"] = {"assets": {}}
+    again = copy.deepcopy(source["placements"][0])
+    again.update(occurrence_id="occ-again", placement={"start_ms": 12000})
+    source["placements"].append(again)
+    empty = copy.deepcopy(source)
+    empty.update(timeline_id="copy", shots={}, placements=[])
+    client, generated = bundle_connection(tmp_path, monkeypatch, empty)
+    target = generated.bundles[generated.head["revision_id"]]
+    desired, _ = copy_content(source, target, new_slug="copy")
+
+    _commit_bundle("p", "copy", desired, label="Duplicate", client=client, idempotency_key="duplicate-shared")
+
+    rows = generated.bundles[generated.head["revision_id"]]["placements"]
+    assert len(rows) == 2 and rows[0]["shot_id"] == rows[1]["shot_id"]
+    assert len({row["occurrence_id"] for row in rows}) == 2
+
+
+def test_restructure_retries_the_original_commit_after_lost_ack(tmp_path, monkeypatch):
+    from astrid.sdk.timeline_duplicate import _commit_bundle
+    from astrid.sdk.workspace_client import WorkspaceClientError
+    from tests.sdk.test_timeline_sync import bundle_connection
+
+    client, generated = bundle_connection(tmp_path, monkeypatch, flat_film())
+    desired = Checkout.open("p", "t", client=client).stored_document(restructure=True)
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        _commit_bundle("p", "t", desired, label="Restructure", client=client, idempotency_key="retry-structure")
+    result = _commit_bundle("p", "t", desired, label="Restructure", client=client, idempotency_key="retry-structure")
+    assert generated.calls[0] == generated.calls[1]
+    assert len(generated.accepted) == 2  # structure plus its narration, each once
+    assert result["new_head"] == "r2" and result["narration_pinned"]
+    assert result["transcripts"][0]["status"] == "created"
+
+
+def test_restructure_reconciles_narration_without_republishing_the_cut(tmp_path, monkeypatch):
+    from astrid.sdk.timeline_duplicate import _commit_bundle
+    from tests.sdk.test_timeline_sync import bundle_connection
+
+    client, generated = bundle_connection(tmp_path, monkeypatch, flat_film())
+    desired = Checkout.open("p", "t", client=client).stored_document(restructure=True)
+    send = generated.commit_timeline
+
+    def lose_narration_ack(*args, **kwargs):
+        if len(generated.calls) == 1:
+            generated.lose_ack = True
+        return send(*args, **kwargs)
+
+    generated.commit_timeline = lose_narration_ack
+    first = _commit_bundle("p", "t", desired, label="Restructure", client=client, idempotency_key="narration-retry")
+    assert first["new_head"] == "r1" and first["narration_error"]
+    result = _commit_bundle("p", "t", desired, label="Restructure", client=client, idempotency_key="narration-retry")
+    assert generated.calls[1] == generated.calls[2]
+    assert len(generated.accepted) == 2 and len(generated.calls) == 3
+    assert result["receipt"] == first["receipt"] and result["new_head"] == "r2"
+    assert result["narration_pinned"] and result["transcripts"][0]["status"] == "unchanged"
+    assert sum(call[0] == "create" for call in client.documents.calls) == 1
 
 
 def test_duplicate_guard_refuses_a_copy_that_collapses_shots_and_keeps_a_repeated_shot_repeated():
@@ -505,7 +619,7 @@ def test_duplicate_refuses_when_the_wrong_form_of_the_source_is_copied(monkeypat
     real = td.copy_content
     monkeypatch.setattr(td, "copy_content", lambda content, target, **kw: real(src.bundle, target, **kw))  # the original bug
     published_docs = []
-    monkeypatch.setattr(td.Checkout, "publish", lambda self, *a, **k: published_docs.append(1) or {})
+    monkeypatch.setattr(td, "_commit_bundle", lambda *a, **k: published_docs.append(1) or {})
     archived = []
     client = SimpleNamespace(timelines=SimpleNamespace(
         create_empty=lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "dup"}),

@@ -35,51 +35,28 @@ def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, l
     identities in this caller.
     """
     from astrid.sdk.timeline import open as open_timeline
-    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+    from astrid.sdk.workspace_client import WorkspaceClientError
 
+    checked = Checkout({})
+    checked.bundle = copy.deepcopy(dict(desired))
+    checked._refresh()
+    report = checked._check_core()
+    if not report.valid:
+        raise TimelineEditError("not committing: " + "; ".join(report.problems or ["the candidate is invalid"]))
     session = open_timeline(project, timeline, client=client)
-    for row in desired.get("placements") or []:
-        shot_id = str(row["shot_id"])
-        if shot_id in session._command_bundle.get("shots", {}):
-            continue
-        shot = (desired.get("shots") or {}).get(shot_id) or {}
-        payload = shot.get("payload") or {}
-        placement = row.get("placement") or {}
-        track = placement.get("track", row.get("track"))
-        if not isinstance(track, str):
-            raise TimelineEditError(f"copy of shot {shot_id!r} has no parent output track")
-        start_ms = placement.get("start_ms", row.get("at_ms", 0))
-        duration_ms = row.get("duration_ms")
-        if not isinstance(start_ms, (int, float)) or not isinstance(duration_ms, (int, float)):
-            raise TimelineEditError(f"copy of shot {shot_id!r} has invalid placement timing")
-        command = capture_occurrence_create(
-            session._command_bundle,
-            str(row["occurrence_id"]),
-            shot_id,
-            name=str(payload.get("name") or ""),
-            track=track,
-            on=float(start_ms) / 1000.0,
-            duration=float(duration_ms) / 1000.0,
-        )
-        session._append([command], label=f"Create shot {shot_id}")
-
-    current = copy.deepcopy(session._command_bundle)
-    current_rows = {str(row["occurrence_id"]): row for row in current.get("placements") or []}
-    for row in desired.get("placements") or []:
-        actual = current_rows.get(str(row["occurrence_id"]))
-        if actual != row:
-            raise TimelineEditError(
-                f"semantic occurrence creation changed placement {row['occurrence_id']!r}; "
-                "the duplicate cannot be committed without changing its stored identity"
-            )
-    current["parent"] = copy.deepcopy(desired["parent"])
-    for shot_id, shot in (desired.get("shots") or {}).items():
-        if shot_id not in current.get("shots", {}):
-            raise TimelineEditError(f"semantic occurrence creation omitted shot {shot_id!r}")
-        current["shots"][shot_id]["payload"] = copy.deepcopy(shot["payload"])
-        current["shots"][shot_id]["internal_timeline"] = copy.deepcopy(shot["internal_timeline"])
-    session.bundle = current
-    result = session.commit(label, merge="atomic", idempotency_key=idempotency_key)
+    with session.session.outbox.locked():
+        state = session.session._state()
+    flight = state["flight"]
+    if flight is not None and flight["key"] == f"{idempotency_key}-narration"[:120]:
+        # The cut already landed; recover its original receipt from Runtime
+        # before reconciling the separate durable narration flight below.
+        result = _copy_acceptance(client, project, timeline, state["base"]["publication_id"], idempotency_key)
+    else:
+        if not state["pending"] and flight is None:
+            _stage_bundle(session, desired)
+        # An unknown outcome owns its original body/key. Reconcile it before
+        # capturing any new births or patches, including after a restart.
+        result = session.commit(label, merge="atomic", idempotency_key=idempotency_key)
     data = result["data"]
     receipt = {
         "old_head": data.get("previous_revision_id"),
@@ -94,7 +71,7 @@ def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, l
     try:
         narration = session._publish_narration(idempotency_key, client=client)
         receipt.update(narration)
-    except TimelineEditError as exc:
+    except (TimelineEditError, WorkspaceClientError) as exc:
         receipt["narration_error"] = (
             f"{exc}. The cut is published (head {receipt.get('new_head')}); only the narration binding is behind: "
             "retry the original commit to reconcile the durable narration commit"
@@ -110,6 +87,109 @@ def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, l
         if item["status"] == "skipped":
             print(f"note: narration transcript {item['label']}: {item.get('reason', 'skipped')}", file=sys.stderr)
     return receipt
+
+
+def _copy_acceptance(client: Any, project: str, timeline: str, publication: str, key: str) -> dict[str, Any]:
+    """Read the cut's receipt from the existing history, without a local ledger."""
+    cursor = None
+    seen = set()
+    while True:
+        page = client.timelines.history(project, timeline, cursor=cursor, limit=200)
+        if not page.ok:
+            raise TimelineEditError(f"could not read the accepted copy before narration retry: {page.error}")
+        for entry in page.data["items"]:
+            receipt = entry.get("receipt") or {}
+            if receipt.get("receipt_id") == publication and receipt.get("idempotency_key") == key:
+                return {"data": copy.deepcopy(receipt["result"]), "receipt": copy.deepcopy(receipt)}
+        cursor = page.data.get("next_cursor")
+        if cursor is None or cursor in seen:
+            raise TimelineEditError("the original copy receipt is unavailable; reconcile the narration session directly")
+        seen.add(cursor)
+
+
+def _stage_bundle(session: Any, desired: Mapping[str, Any]) -> None:
+    """Capture one structural copy using existing commands and payload patches."""
+    from astrid.sdk.timeline._doc_patch import Closure
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+    from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
+
+    if desired.get("base_parent", {}).get("revision_id") != session.head["revision_id"]:
+        raise TimelineEditError("timeline head changed while preparing the copy; reopen before committing")
+    desired_rows = {str(row["occurrence_id"]): row for row in desired.get("placements") or []}
+    retired_rows = [row for row in session._command_bundle.get("placements") or []
+                    if str(row["occurrence_id"]) not in desired_rows]
+
+    # Births read their output track. Stage authored tracks before capturing
+    # them, while leaving media/clip content for the final payload patch.
+    tracks = copy.deepcopy(desired["parent"].get("config", {}).get("tracks", []))
+    fallback_track = "timeline-copy-output"
+    while any(track["id"] == fallback_track for track in tracks):
+        fallback_track += "-copy"
+    if any(not isinstance((row.get("placement") or {}).get("track", row.get("track")), str)
+           for row in desired_rows.values()):
+        # Legacy placements can have an implicit lane. Birth still requires an
+        # explicit lane at its sequential boundary; the final patch restores
+        # the original absent field and removes this temporary track.
+        tracks.append({"id": fallback_track, "kind": "visual"})
+    session.bundle["parent"].setdefault("config", {})["tracks"] = tracks
+    session._capture_free_edits()
+    for row in desired.get("placements") or []:
+        shot_id = str(row["shot_id"])
+        if any(item["occurrence_id"] == row["occurrence_id"]
+               for item in session._command_bundle.get("placements") or []):
+            continue
+        shot = (desired.get("shots") or {}).get(shot_id) or {}
+        payload = shot.get("payload") or {}
+        placement = row.get("placement") or {}
+        track = placement.get("track", row.get("track", fallback_track))
+        start_ms = placement.get("start_ms", row.get("at_ms", 0))
+        duration_ms = row.get("duration_ms")
+        if not isinstance(start_ms, (int, float)) or not isinstance(duration_ms, (int, float)):
+            raise TimelineEditError(f"copy of shot {shot_id!r} has invalid placement timing")
+        command = capture_occurrence_create(
+            session._command_bundle,
+            str(row["occurrence_id"]),
+            shot_id,
+            name=str(payload.get("name") or ""),
+            track=track,
+            on=float(start_ms) / 1000.0,
+            duration=float(duration_ms) / 1000.0,
+        )
+        session._append([command], label=f"Create shot {shot_id}")
+
+    # Placement geometry is authored data; only closure links belong to Runtime.
+    # Patch each complete canonical row without inventing or replacing its edges.
+    for row in desired.get("placements") or []:
+        rows = Closure(session._command_bundle).payload("parent")["occurrences"]
+        actual = next(item for item in rows if item["occurrence_id"] == row["occurrence_id"])
+        replacement = copy.deepcopy(dict(row))
+        for key in ("occurrence_id", "shot_id", "shot_revision_id", "revision_id"):
+            replacement.pop(key, None)
+            if key in actual:
+                replacement[key] = actual[key]
+        if replacement != actual:
+            change = {"op": "set", "ref": "parent", "path": ["occurrences", "occurrence_id:" + row["occurrence_id"]],
+                      "before": {"state": "present", "value": actual}, "value": replacement}
+            session._append([{"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+                              "args": {"changes": [change]}}], label=f"Copy placement {row['occurrence_id']}")
+    current = copy.deepcopy(session._command_bundle)
+    current["parent"] = copy.deepcopy(desired["parent"])
+    for shot_id, shot in (desired.get("shots") or {}).items():
+        if shot_id not in current.get("shots", {}):
+            raise TimelineEditError(f"semantic occurrence creation omitted shot {shot_id!r}")
+        payload = copy.deepcopy(shot["payload"])
+        # The source's child revision pin is never a destination identity.
+        payload.pop("internal_timeline_revision_id", None)
+        if "internal_timeline_revision_id" in current["shots"][shot_id]["payload"]:
+            payload["internal_timeline_revision_id"] = current["shots"][shot_id]["payload"]["internal_timeline_revision_id"]
+        current["shots"][shot_id]["payload"] = payload
+        current["shots"][shot_id]["internal_timeline"] = copy.deepcopy(shot["internal_timeline"])
+    session.bundle = current
+    session._capture_free_edits()
+    # Keep old roots addressable until all payload patches have been captured.
+    for row in retired_rows:
+        command = capture_occurrence_delete(session._command_bundle, "occurrence:" + str(row["occurrence_id"]))
+        session._append([command], label=f"Remove placement {row['occurrence_id']}")
 
 # Payload fields that point at the source's own runtime records. They are not
 # copied: the new shot gets its own records on the next publish.

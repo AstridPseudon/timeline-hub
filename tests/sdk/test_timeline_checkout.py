@@ -8,7 +8,7 @@ import json
 import pytest
 
 from astrid.sdk import timeline_intent as intent
-from astrid.sdk.timeline_checkout import Checkout, TimelineEditError, describe_changes, three_way
+from astrid.sdk.timeline_checkout import Checkout, TimelineEditError, describe_changes
 
 FPS = 30
 
@@ -283,16 +283,28 @@ def test_save_load_round_trip_shows_both_clocks_and_honours_timeline_edits(tmp_p
 
 
 def test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones():
-    base = bundle()
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.emitter import emit_document_commands
+    from astrid.sdk.timeline.rebase import replay
+    from tests.sdk.test_timeline_sync import canonical_bundle
+
+    base = canonical_bundle(Checkout(bundle()).document())
     ours, theirs = copy.deepcopy(base), copy.deepcopy(base)
     Checkout(ours).clip("R").nudge(0.5)
     Checkout(theirs).clip("b-type").set(text="LIVE!")
-    merged, conflicts = three_way(base, theirs, ours)
+    pending = execute(base, emit_document_commands(base, ours))
+    conflicts = []
+    try:
+        merged = replay(pending, theirs).bundle
+    except TimelineEditError as exc:
+        conflicts.append(str(exc))
     assert not conflicts
     m = Checkout(merged)
     assert m.clip("R").start == pytest.approx(1.5) and m.clip("b-type").params["text"] == "LIVE!"
     Checkout(theirs).clip("R").nudge(-0.5)
-    _merged, conflicts = three_way(base, theirs, ours)
+    with pytest.raises(TimelineEditError) as conflict:
+        replay(pending, theirs)
+    conflicts = [str(conflict.value.to_json())]
     assert conflicts and "a-rocket" in conflicts[0]
 
 
@@ -817,28 +829,43 @@ def test_check_reports_new_lint_only_and_an_edit_reports_its_own_cuts():
     assert len(report.brief(full=True)) > len(lines) - 1 and any("SMALL" in line for line in report.brief(full=True))
 
 
-def test_two_writers_on_one_working_copy_merge_and_never_drop_each_others_edits(tmp_path):
-    """Concurrency: two handles open the same working copy; each saves; nothing is lost silently."""
-    path = tmp_path / "main.json"
-    Checkout(bundle()).save(path)
-    a, b = Checkout.load(path), Checkout.load(path)
+def test_two_writers_on_one_working_copy_merge_and_never_drop_each_others_edits(tmp_path, monkeypatch):
+    """The retired disk merger's disjoint, conflict and deliberate reapply cases use Runtime commits."""
+    from astrid.sdk import timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+    from tests.sdk.test_timeline_sync import bundle_connection
+
+    client, generated = bundle_connection(tmp_path, monkeypatch, Checkout(bundle()).document())
+
+    def writer(name):
+        return timeline.open("p", "t", client=client, outbox_path=tmp_path / f"{name}.json")
+
+    def save(checkout):
+        generated.path = checkout.session.outbox.path
+        return checkout.commit("Save edit", merge="fields", reads=[])
+
+    a, b = writer("a"), writer("b")
     a.clip("a-rocket").nudge(0.5)
-    a.save()
+    save(a)
     b.clip("b-type").set(text="Now live.")
-    b.save()  # b loaded before a saved: a three-way merge, a's nudge is kept
-    assert any("merged with another writer's save" in line for line in b.merged)
-    both = Checkout.load(path)
+    result = save(b)
+    assert result["data"]["status"] in {"merged", "rebased"}
+    both = writer("both")
     assert both.clip("a-rocket").start == pytest.approx(1.5) and both.clip("b-type").params["text"] == "Now live."
-    # the same clip changed by both: refused, with what to do
-    c, d = Checkout.load(path), Checkout.load(path)
+    # The same clip changed by both: refused, with the successful writer intact.
+    c, d = writer("c"), writer("d")
     c.clip("a-rocket").nudge(0.1)
-    c.save()
+    save(c)
     d.clip("a-rocket").nudge(-0.1)
-    with pytest.raises(TimelineEditError, match="another writer"):
-        d.save()
-    assert Checkout.load(path).clip("a-rocket").start == pytest.approx(1.6)  # c's edit is there, d's was refused
-    d.save(force=True)
-    assert Checkout.load(path).clip("a-rocket").start == pytest.approx(1.4)
+    with pytest.raises(CommitConflict) as conflict:
+        save(d)
+    assert conflict.value.failure["details"]["status"] == "conflict"
+    assert writer("after-conflict").clip("a-rocket").start == pytest.approx(1.6)
+    # Explicitly reapply the chosen position on a fresh head; no stale overwrite.
+    replacement = writer("reapply")
+    replacement.clip("a-rocket").on(d.clip("a-rocket").start)
+    save(replacement)
+    assert writer("after-reapply").clip("a-rocket").start == pytest.approx(1.4)
 
 
 def test_position_units_come_from_the_element_declaration_so_am_pixel_shape_takes_marks_and_canvas_px():

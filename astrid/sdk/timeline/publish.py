@@ -4,9 +4,6 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-import re
-import sys
-import uuid
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -15,12 +12,10 @@ from astrid.core.timeline.cuts import (
     clip_duration,
 )
 
-from astrid.sdk.timeline import journal as _journal
 from astrid.sdk.timeline import store as _store
 from astrid.sdk.timeline._common import (EDITABLE_NOTE, TimelineEditError, _num, _r)
 from astrid.sdk.timeline.doc import (_row_start, _set_length, _strip_derived)
 from astrid.sdk.timeline.model import Voice
-from astrid.sdk import timeline_transcripts as _transcripts  # module access: its functions resolve at call time
 
 
 _NARRATION_MEDIA_TYPE = "text/plain; charset=utf-8"
@@ -87,63 +82,6 @@ class _PublishMixin:
     def publish(self, message: str = "", *, idempotency_key: str | None = None, client: Any = None,
                 force: bool = False, restructure: bool = False) -> dict[str, Any]:
         raise TimelineEditError("detached publication is retired; use timeline.open().commit(label)")
-
-        """Check, then publish one revision.
-
-        If someone published since this checkout, the edit is merged onto their head clip by
-        clip (three-way: your base, their head, your candidate). Changes to different clips
-        merge; a clip both sides changed refuses with a conflict list. ``force=True``
-        overwrites their change, explicitly. Nothing is ever overwritten silently.
-        """
-        self.notes.extend(self._sync_film_length())  # the film's length follows its content, before the check
-        report = self.check()
-        if not report.valid:
-            raise TimelineEditError("not publishing: " + "; ".join(report.problems or ["the candidate is invalid"]))
-        key = idempotency_key or f"edit-{re.sub(r'[^a-z0-9]+', '-', message.lower())[:40].strip('-') or 'timeline'}-{uuid.uuid4().hex[:8]}"
-        stored = self.stored_document(restructure=restructure)  # chapters as shots only for a film that opted in
-        chapter_film = len(stored.get("placements") or []) > 1
-        if restructure or self.edits().get("changes") or not (chapter_film or self.narration_changes()):
-            raise TimelineEditError("detached publication is retired; use timeline.open().commit(label)")
-        else:  # only the narration binding is behind (a retry after it failed): pin it, nothing else to publish
-            receipt = {"old_head": self.base_revision, "new_head": self.base_revision, "structure": "unchanged"}
-        receipt["narration_pinned"] = []
-        if chapter_film or self.narration_changes():
-            # A line's text changed (or the shots are new): bind each such shot's narration now that
-            # the shots exist, then publish the pins as a second, small revision.
-            try:
-                receipt.update(self._publish_narration(key, client=client))
-            except TimelineEditError as exc:  # the structure IS published: say so, and how to finish
-                receipt["narration_error"] = (f"{exc}. The cut is published (head {receipt.get('new_head')}); only the "
-                                              "narration binding is behind: retry the original publish to reconcile "
-                                              "the durable narration commit")
-        # Media is ingested by _register_asset before this point; its registry
-        # entry now carries the stable object id. One document covers each take.
-        receipt["transcripts"] = []
-        project_id = str(stored["project_id"])  # the published document names its project
-        try:
-            transcript_plan = _transcripts.plan_narration_transcripts(self)
-            if any(item["status"] == "planned" for item in transcript_plan):
-                if client is None:
-                    from astrid.sdk import AstridClient
-
-                    with AstridClient.open_from_launcher(start_pack_host=False) as transcript_client:
-                        receipt["transcripts"] = _transcripts.sync_narration_transcripts(self, transcript_client, project_id)
-                else:
-                    receipt["transcripts"] = _transcripts.sync_narration_transcripts(self, client, project_id)
-        except Exception as exc:  # noqa: BLE001 - containment: publication already succeeded
-            print(f"note: narration transcript registration failed: {exc}", file=sys.stderr)
-        for item in receipt["transcripts"]:
-            if item["status"] == "skipped":
-                print(f"note: narration transcript {item['label']}: {item.get('reason', 'skipped')}", file=sys.stderr)
-        if self.path:  # publish resets the base: this working copy is the new head, with no changes (AUDIT bug 6)
-            before = _journal.document_digest(self.document())
-            self._reset_base(client=client)
-            _journal.record_or_note(self, Path(self.path), kind="publish", outcome="changed", label="publish",
-                                    reason=message or None, before=before,
-                                    after=_journal.document_digest(self.document()),
-                                    evidence=({"kind": "revision", "id": receipt.get("new_head")},))
-        receipt["message"] = message
-        return receipt
 
     def _reset_base(self, *, client: Any = None) -> None:
         """Re-read the new head as this working copy's bundle and save it with no undo step. Never fails the publish."""

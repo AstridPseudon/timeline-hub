@@ -16,6 +16,7 @@ from astrid.core.timeline.authoring_bundle import compile_authoring_candidate, o
 from astrid.sdk.contracts import DomainResult
 from astrid.sdk.remote import RemoteTimelines
 from astrid.sdk.timeline import store
+from astrid.sdk.timeline.store import fetch_bundle as runtime_fetch_bundle
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
@@ -37,6 +38,53 @@ def initial_bundle():
                                  shot_revisions=[], internal_timeline_revisions=[])
 
 
+def canonical_bundle(bundle):
+    """Give a legacy authoring fixture the same immutable envelope as a read."""
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    bundle = copy.deepcopy(bundle)
+
+    def media_ids(value):
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key == "media_id" and isinstance(item, str) and not item.startswith("sha256:"):
+                    value[key] = "sha256:" + hashlib.sha256(item.encode()).hexdigest()
+                else:
+                    media_ids(item)
+        elif isinstance(value, list):
+            for item in value:
+                media_ids(item)
+
+    media_ids(bundle)
+    from astrid.sdk.timeline.commit import _digest, _manifest, _collect_media
+
+    shots, internals = [], []
+    used = {row["shot_id"] for row in bundle["placements"]}
+    for sid in sorted(used):
+        shot = bundle["shots"][sid]
+        internal_id = "internal-" + sid
+        payload = copy.deepcopy(shot["payload"])
+        payload["internal_timeline_revision_id"] = internal_id
+        shots.append({"shot_id": sid, "revision_id": "shot-" + sid,
+                      "internal_timeline_revision_id": internal_id,
+                      "payload": payload, "content_digest": _digest(payload)})
+        internal = copy.deepcopy(shot["internal_timeline"])
+        internals.append({"timeline_id": "internal-" + sid, "revision_id": internal_id,
+                          "payload": internal, "content_digest": _digest(internal)})
+    parent = copy.deepcopy(bundle["parent"])
+    parent["occurrences"] = [{**copy.deepcopy(row), "shot_revision_id": "shot-" + row["shot_id"]}
+                             for row in bundle["placements"]]
+    media = _collect_media([parent, *[row["payload"] for row in shots + internals]])
+    document = {"schema_version": 1, "project_id": bundle["project_id"],
+                "timeline_id": bundle["timeline_id"],
+                "parent_revision": {"revision_id": bundle["base_parent"]["revision_id"],
+                                    "content_digest": _digest(parent), "payload": parent},
+                "shot_revisions": shots, "internal_timeline_revisions": internals,
+                "dependency_manifest": _manifest(shots, internals,
+                    [{"media_id": mid, "content_digest": mid} for mid in sorted(media)], [])}
+    return bundle_from_document(document)
+
+
 class Generated:
     """Only the generated method boundary is fake; command meaning stays core-owned."""
     def __init__(self, path):
@@ -46,10 +94,16 @@ class Generated:
         self.calls, self.accepted, self.records = [], {}, {}
         self.lose_ack = False
         self.refusal = None
+        self.project, self.timeline = "p", "t"
+        self.verified_media = []
+        self.reload_canonical = False
 
     def list_timeline_commits(self, project, timeline, *, cursor=None, limit):
-        assert (project, timeline, limit) == ("p", "t", 1)
-        return {"head": copy.deepcopy(self.head), "items": [], "next_cursor": None}
+        assert (project, timeline) == (self.project, self.timeline)
+        assert limit in (1, 200)
+        items = [] if limit == 1 else [{"receipt": copy.deepcopy(result["receipt"])}
+                                     for _, result in self.accepted.values()]
+        return {"head": copy.deepcopy(self.head), "items": items, "next_cursor": None}
 
     def commit_timeline(self, project, timeline, body, *, idempotency_key):
         raw = request_bytes(body)
@@ -57,7 +111,7 @@ class Generated:
         flight = durable["flight"]
         assert flight["body"].encode() == raw
         assert flight["key"] == idempotency_key
-        assert flight["path"] == "/v1/projects/p/timelines/t/commit"
+        assert flight["path"] == f"/v1/projects/{self.project}/timelines/{self.timeline}/commit"
         self.calls.append((raw, idempotency_key))
         if self.refusal:
             raise self.refusal
@@ -79,7 +133,8 @@ class Generated:
                     records=[],
                 )
             else:
-                plan = execute(self.bundles[body["base_revision_id"]], body["commands"], inverse_records=inverse_records)
+                plan = execute(self.bundles[body["base_revision_id"]], body["commands"],
+                               inverse_records=inverse_records, verified_media=self.verified_media)
                 if self.head["revision_id"] != body["base_revision_id"]:
                     plan = replay(plan, self.bundles[self.head["revision_id"]])
         except TimelineEditError as exc:
@@ -93,6 +148,12 @@ class Generated:
                     "shot_revisions": compiled["shot_revisions"],
                     "internal_timeline_revisions": compiled["internal_timeline_revisions"],
                     "dependency_manifest": {**compiled["dependency_manifest"], "documents": []}}
+        canonical = "_runtime_document" in plan.bundle.get("source_mapping", {})
+        if canonical:
+            from astrid.sdk.timeline.commit import document_from_bundle
+
+            document = document_from_bundle(plan.bundle)
+            document["parent_revision"]["revision_id"] = revision
         candidate = {"canonical_document": document, "document_digest": "sha256:" + hashlib.sha256(
             json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest(),
             "commands": plan.commands, "id_map": {}, "provider_version": "astrid-v1", "compiler_version": "m1"}
@@ -112,7 +173,12 @@ class Generated:
                        "publisher": "actor", "request": body}).encode()).hexdigest(), "project_id": project, "project_seq": [ordinal, ordinal],
                    "event_ids": [f"e{ordinal}"], "result": copy.deepcopy(data), "created_at": "2026-10-19T00:00:00Z"}
         response = {"data": data, "receipt": receipt}
-        self.bundles[revision] = plan.bundle
+        if canonical and self.reload_canonical:
+            from astrid.sdk.timeline.commit import bundle_from_document
+
+            self.bundles[revision] = bundle_from_document(document)
+        else:
+            self.bundles[revision] = plan.bundle
         self.records[publication] = plan.records
         self.head = {"revision_id": revision, "publication_id": publication}
         self.accepted[idempotency_key] = (raw, copy.deepcopy(response))
@@ -131,18 +197,49 @@ class Client:
         self.timelines = RemoteTimelines(transport)
         self.timelines.open_composition = self.open_composition
         self.timelines.open_bundle = self.open_bundle
-        self.timelines._resolve_timeline = lambda *a, **kw: DomainResult.success({"project_id": "p", "timeline_id": "t"})
+        self.timelines._resolve_timeline = lambda *a, **kw: DomainResult.success({"project_id": generated.project, "timeline_id": generated.timeline})
         self.projects = SimpleNamespace(current=lambda: DomainResult.success({"project": {"id": "p"}}))
         self.generated = generated
         self.reads = []
 
     def open_composition(self, project, timeline):
-        return DomainResult.success({"native_inspection": {"project_id": "p", "timeline_id": "t"},
+        return DomainResult.success({"native_inspection": {"project_id": self.generated.project, "timeline_id": self.generated.timeline},
                                      "summary": {"head_revision_id": self.generated.head["revision_id"]}})
 
     def open_bundle(self, project, timeline, *, revision_id):
+        revision_id = revision_id or self.generated.head["revision_id"]
         self.reads.append(revision_id)
         return DomainResult.success({"bundle": copy.deepcopy(self.generated.bundles[revision_id])})
+
+
+def bundle_connection(tmp_path, monkeypatch, bundle):
+    """Existing generated transport with a real fixture and isolated outbox."""
+    from astrid.sdk.timeline.outbox import request_bytes
+    from tests.sdk.test_media_transcript import FakeDocuments
+
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path))
+    monkeypatch.setattr(store, "fetch_bundle", runtime_fetch_bundle)
+    scope = {"realm_id": "realm", "actor_id": "actor", "project_id": bundle["project_id"],
+             "timeline_id": bundle["timeline_id"]}
+    path = tmp_path / "timeline-outbox" / (hashlib.sha256(request_bytes(scope)).hexdigest() + ".json")
+    generated = Generated(path)
+    generated.reload_canonical = True
+    generated.project, generated.timeline = bundle["project_id"], bundle["timeline_id"]
+    revision = bundle["base_parent"]["revision_id"]
+    generated.bundles = {revision: canonical_bundle(bundle)}
+    generated.head["revision_id"] = revision
+    client = Client(generated)
+    client.projects.show = lambda project: DomainResult.success({"id": generated.project})
+    client.documents = FakeDocuments()
+
+    def import_bytes(*, data, **kwargs):
+        digest = "sha256:" + hashlib.sha256(data).hexdigest()
+        generated.verified_media.append({"object_id": digest, "digest": digest, "size": len(data),
+                                         "media_type": kwargs["media_type"], "utf8": True})
+        return DomainResult.success({"object_id": digest})
+
+    client.media = SimpleNamespace(import_bytes=import_bytes)
+    return client, generated
 
 
 @pytest.fixture
