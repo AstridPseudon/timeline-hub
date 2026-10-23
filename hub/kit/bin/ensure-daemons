@@ -18,6 +18,9 @@ if ! has run-manager "$A" && [ ! -f $O/managers/$A/STOP ]; then
   if [ $A = farm ]; then $O/bin/run-manager farm claude-sonnet-5-5 >/dev/null 9>&-; else $O/bin/run-manager $A >/dev/null 9>&-; fi
   started="$started run-manager"
 fi
+# a manager whose rounds keep failing at once (e.g. Codex input_too_large, 04:13Z agent) looks alive but does nothing
+mgr=""; fails=$(find $O/managers/$A/rounds -name "*.exit" -mmin -10 2>/dev/null | xargs -r grep -LxF 0 2>/dev/null | wc -l)
+if [ "$fails" -ge 3 ]; then last=$(ls -t $O/managers/$A/rounds/*.log 2>/dev/null | head -1); mgr=" MANAGER FAILING: $fails failed rounds in 10 min; last: $(grep -iE "error|too_large|denied|limit" "$last" 2>/dev/null | tail -1 | cut -c1-160)"; fi
 dead=""
 for d in $O/workers/*/; do
   [ -f $d/running ] && [ -f $d/meta ] || continue
@@ -31,4 +34,4 @@ done
 if [ -n "$dead" ]; then
   printf '\n## ensure-daemons %s: workers died (container restart)\nRe-dispatch fresh (on the same branch with `--base tl/<worker>` if it has commits):%s\n' "$(date -u +%FT%TZ)" "$dead" >> $O/managers/$A/INBOX.md
 fi
-echo "$(date -u +%FT%TZ) ensure-daemons $A: uptime $(awk '{printf "%d", $1/60}' /proc/uptime)m; started:${started:- none}; dead workers:${dead:- none}; disk $(df -BG --output=avail /home/user | tail -1 | tr -d ' ')"
+echo "$(date -u +%FT%TZ) ensure-daemons $A: uptime $(awk '{printf "%d", $1/60}' /proc/uptime)m; started:${started:- none}; dead workers:${dead:- none}; disk $(df -BG --output=avail /home/user | tail -1 | tr -d ' ')$mgr"

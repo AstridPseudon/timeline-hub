@@ -20,7 +20,7 @@ The plan is `$ORCH/PLAN.md` (v2.1); your lane, task IDs and home repo are in its
 
 **Keep a Monitor armed at all times.** Its timeout is at most 30 min; re-arm it on every expiry notice. Its command is:
 
-`while true; do out=$($ORCH/bin/ensure-daemons <area> 2>&1); echo "$out" | grep -qE 'started: none; dead workers: none' || echo "$out"; sleep 120; done`
+`while true; do out=$($ORCH/bin/ensure-daemons <area> 2>&1); echo "$out" | grep -qE 'started: none; dead workers: none; disk [0-9]+G$' || echo "$out"; sleep 120; done`
 
 Never end a turn without an armed Monitor.
 
