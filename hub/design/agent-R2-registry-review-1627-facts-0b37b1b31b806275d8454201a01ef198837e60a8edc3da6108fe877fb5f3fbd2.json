@@ -1,0 +1,53 @@
+{
+  "task": "agt-R2-registry-review-1627",
+  "candidate": {
+    "base": "6aec04e8bdbdcbcca7e6ee7d979c105618357f87",
+    "head": "acc7ce17a5339de5b64306922eae5f6f09e8baa0",
+    "diff": ["astrid/sdk/timeline/inverse.py (+4)", "tests/editing_conformance/test_captured_registry_redo.py (+141)"],
+    "inverse_sha256": "fb0cb16bab8a4fbd72a24c9dffadd6992e397925b383ce9ec79f6cc6bbb00d5a",
+    "captured_test_sha256": "ad96279d8cee5bbf1fcf6e0a91f053bb26019ae4096e1c3e2c737fc290882606"
+  },
+  "packet": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-redo-budget-sol-1605/evidence/agent-G5-redo-budget-1605-7ab92b619cbe6466b782852afd63c46309722d6d65d88f8fbb8c1e93111a6c15.packet.jsonl",
+    "sha256": "7ab92b619cbe6466b782852afd63c46309722d6d65d88f8fbb8c1e93111a6c15",
+    "events": 320
+  },
+  "captured_subset": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-presence-sol-1617/captured-input.json",
+    "sha256": "b55cca41df4ee9490c537e01e77742310fc198729f9c4c7acb595da8d833a266",
+    "events": [154, 264, 266]
+  },
+  "registry": {
+    "physical_guard": "parent.registry remains separate from parent.config.registry in coalesce.value_address",
+    "captured_before": {"parent_registry": "present", "config_registry": "absent"},
+    "captured_after": {"parent_registry": "present", "config_registry": "absent"},
+    "mirror_variants": ["absent", "empty", "null", "existing"],
+    "logical_overlap": "unchanged: logical_address(parent.registry) aliases parent.config.registry for conflict/history only",
+    "input_mutation": false
+  },
+  "next_occurrence": {
+    "guard_ref": "parent",
+    "guard_path": ["occurrences"],
+    "guard_kind": "inverse_conflict",
+    "guard_expected_rows": 3,
+    "guard_actual_rows": 1,
+    "guard_expected_ids": ["occ-film", "chapter-shot-837324ae5797370162ac-occ", "chapter-shot-3f756cd1547d015ebd4b-occ"],
+    "guard_actual_ids": ["occ-film"],
+    "source_command_ordinal": 0,
+    "accepted_undo_step": "inverse",
+    "historical_native_step": "restructure-0",
+    "native_write_range": [0, 10],
+    "effect_range": [0, 9],
+    "same_command_later_alias_removals": ["occurrence:chapter-shot-837324ae5797370162ac-occ", "occurrence:chapter-shot-3f756cd1547d015ebd4b-occ"],
+    "root_allocation": "film occurrence/shot retained; two chapter occurrence/shot roots removed",
+    "pins": "accepted canonical after keeps one internal timeline, one shot, and four media pins",
+    "folding_seam": "inverse.py coalesce value-address/ancestor folding at lines 150-195 does not fold occurrence-root removals into a parent occurrences aggregate",
+    "minimal_fix": "only when the authenticated batch contains parent.occurrences aggregate plus matching occurrence-root writes, fold those writes by occurrence_id into the aggregate with recorded historical order; leave logical overlap, membership/order checks, intervening ABA checks, and physical identity bindings unchanged"
+  },
+  "verdict": {
+    "isolated_registry_source": "PASS",
+    "complete_redo": "FAIL at later parent.occurrences guard; separate cause",
+    "public_execution": false,
+    "owner": "return occurrence continuation to existing Sol1626 inverse owner; no competing author"
+  }
+}
