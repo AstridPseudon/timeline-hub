@@ -28,6 +28,10 @@ DEFAULT_CONFIG = {
         "visual": {"canvas": {"width": 1920, "height": 1080, "fps": 30}}
     },
 }
+DEFAULT_OUTPUT = {
+    'resolution': '1280x720', 'fps': 30, 'file': 'output.mp4',
+    'background': None, 'background_scale': None,
+}
 
 
 def _receipt(key: str) -> CommandReceipt:
@@ -185,7 +189,7 @@ def test_timelines_create_help_is_executable(argv: list[str]) -> None:
 
 
 class _Writer:
-    """Runtime transport seam: real v2 execution, bootstrap and immutable reads."""
+    """Synthetic transport fixture; not evidence of Runtime authority or wire acceptance."""
 
     _last_handshake = {"realm_id": "realm", "actor_id": "actor"}
 
@@ -198,7 +202,7 @@ class _Writer:
         self.lose_ack = False
         self.failure = None
 
-    def create_timeline(self, project_id, timeline_id, *, idempotency_key):
+    def create_timeline(self, project_id, timeline_id, *, idempotency_key, name=None):
         from astrid.sdk.timeline.commit import _digest
 
         self.calls.append(("create_timeline", (project_id, timeline_id), {"idempotency_key": idempotency_key}))
@@ -314,13 +318,24 @@ def test_remote_create_empty_creates_shell_then_empty_head(monkeypatch, tmp_path
     document = result.data['canonical_document']
     # U1's canonical bootstrap has a redundant clips mirror; it remains empty.
     assert document['parent_revision']['payload'] == {
-        'config': {**DEFAULT_CONFIG, 'clips': []}, 'registry': {}, 'clips': [], 'occurrences': []}
+        'name': 'Main', 'slug': 'main',
+        'config': {**DEFAULT_CONFIG, 'clips': [],
+                   'output': {**DEFAULT_OUTPUT, 'resolution': '1920x1080'}},
+        'registry': {'assets': {}}, 'clips': [], 'occurrences': []}
     assert document['shot_revisions'] == [] and document['internal_timeline_revisions'] == []
     assert body['label'] and body['merge'] == 'atomic' and 'reads' not in body
-    step = body['steps'][0]
+    step = body['steps'][-1]
     assert set(step) == {'id', 'label', 'intent', 'tags', 'command_ordinals', 'patch', 'reads'}
-    assert step['patch'] == [change for command in body['commands'] for change in command['args']['changes']]
+    assert step['patch'] == [change for command in body['commands'] for change in command['args'].get('changes', [])]
+    assert body['commands'][0]['op'] == 'timeline.init'
+    assert body['commands'][0]['args'] == {'name': 'Main', 'slug': 'main', 'output': DEFAULT_OUTPUT}
+    assert any(read['ref'] == 'parent' and read['path'] == [] for read in body['commands'][0]['reads'])
+    assert body['commands'][0]['expect']['parent::name'] == {'state': 'absent'}
     assert result.data['steps'][0]['dependencies'] and result.data['merge_mode'] == 'atomic'
+    effects = result.data['steps'][0]['patch']
+    assert any(change['path'] == ['name'] and change['value'] == 'Main' for change in effects)
+    assert any(change['path'] == ['slug'] and change['value'] == 'main' for change in effects)
+    assert any(change['path'] == ['config', 'output'] and change['value'] == DEFAULT_OUTPUT for change in effects)
     assert result.receipt.result['canonical_document'] == document
 
 
@@ -332,8 +347,12 @@ def test_remote_create_empty_generates_ulid_when_no_id_given(monkeypatch, tmp_pa
     timeline_id = result.data['timeline_id']
     assert is_ulid(timeline_id)
     assert writer.calls[0][1] == ('render-smoke', timeline_id)
-    # Runtime already bootstraps the default empty head; no second write is needed.
-    assert result.data['canonical_document']['parent_revision']['payload']['config'] == {'tracks': [], 'clips': []}
+    assert writer.calls[1][1][1] == timeline_id
+    assert writer.calls[1][2]['idempotency_key'] == f'{result.idempotency_key}-head'
+    assert result.data['canonical_document']['parent_revision']['payload']['config'] == {
+        'tracks': [], 'clips': [], 'output': DEFAULT_OUTPUT}
+    assert result.data['canonical_document']['parent_revision']['payload']['name'] == 'Main'
+    assert result.data['canonical_document']['parent_revision']['payload']['slug'] == 'main'
 
 
 def test_remote_create_empty_stops_when_shell_is_rejected() -> None:
@@ -357,7 +376,8 @@ def test_remote_create_empty_retries_original_defaults_after_lost_ack(monkeypatc
     assert result.ok, result.error
     assert writer.calls[-1] == first
     assert len(writer.replays) == 1
-    assert result.data['canonical_document']['parent_revision']['payload']['config'] == {**config, 'clips': []}
+    assert result.data['canonical_document']['parent_revision']['payload']['config'] == {
+        **config, 'clips': [], 'output': {**DEFAULT_OUTPUT, 'resolution': '1920x1080'}}
     assert result.receipt.idempotency_key == 'retry-head'
 
 
@@ -376,3 +396,239 @@ def test_remote_create_empty_retains_structured_commit_failures(monkeypatch, tmp
         assert not result.ok
         assert result.error.details == details
         assert len(writer.documents) == 1 and writer.head['revision_id'] == 'bootstrap'
+        draft = next((tmp_path / status / 'timeline-outbox').glob('*.json'))
+        state = json.loads(draft.read_text())
+        assert state['pending'] and state['flight'] and state['conflict']['details'] == details
+
+
+@pytest.mark.parametrize('name,slug', [('Main', 'main'), ('Second Cut', 'second-cut')])
+def test_remote_create_empty_authors_canonical_name_and_custom_canvas(monkeypatch, tmp_path, name, slug):
+    writer = _Writer()
+    _mount(monkeypatch, tmp_path, writer)
+    config = {'tracks': [], 'theme_overrides': {'visual': {'canvas': {
+        'width': 640, 'height': 360, 'fps': 24}}}, 'meta': {'org.example': {'raw': [None, False, 0]}}}
+    original = copy.deepcopy(config)
+    result = RemoteTimelines(writer).create_empty(
+        project='render-smoke', timeline_id='film', name=name, config=config, idempotency_key='custom')
+    assert result.ok, result.error
+    payload = result.data['canonical_document']['parent_revision']['payload']
+    assert payload['name'] == name and payload['slug'] == slug
+    assert payload['config'] == {**config, 'clips': [], 'output': {
+        **DEFAULT_OUTPUT, 'resolution': '640x360', 'fps': 24}}
+    assert payload['config']['output']['background'] is None
+    assert payload['config']['output']['background_scale'] is None
+    assert config == original
+    assert writer.documents['H-1']['parent_revision']['payload'] == payload
+    assert result.receipt.result['canonical_document']['parent_revision']['payload'] == payload
+
+
+def test_remote_create_empty_preserves_explicit_output_and_nulls(monkeypatch, tmp_path):
+    writer = _Writer()
+    _mount(monkeypatch, tmp_path, writer)
+    output = {**DEFAULT_OUTPUT, 'resolution': '640x360', 'fps': 24, 'file': 'custom.mp4',
+              'background': '#123456', 'background_scale': None}
+    config = {'tracks': [], 'output': output, 'opaque': [None, False, 0]}
+    result = RemoteTimelines(writer).create_empty(project='render-smoke', config=config)
+    assert result.ok, result.error
+    assert result.data['canonical_document']['parent_revision']['payload']['config'] == {**config, 'clips': []}
+
+
+@pytest.mark.parametrize('config', [
+    {'tracks': [], 'theme_overrides': None},
+    {'tracks': [], 'theme_overrides': {'visual': None}},
+])
+def test_remote_create_empty_preserves_null_theme_config(monkeypatch, tmp_path, config):
+    writer = _Writer()
+    _mount(monkeypatch, tmp_path, writer)
+    result = RemoteTimelines(writer).create_empty(project='render-smoke', config=config)
+    assert result.ok, result.error
+    assert result.data['canonical_document']['parent_revision']['payload']['config'] == {
+        **config, 'clips': [], 'output': DEFAULT_OUTPUT}
+
+
+def test_remote_create_empty_requires_runtime_bootstrap_pair(monkeypatch, tmp_path):
+    class Headless(_Writer):
+        def create_timeline(self, *args, **kwargs):
+            shell = super().create_timeline(*args, **kwargs)
+            shell['data']['head_publication_id'] = None
+            return shell
+
+    writer = Headless()
+    _mount(monkeypatch, tmp_path, writer)
+    result = RemoteTimelines(writer).create_empty(project='render-smoke')
+    assert not result.ok and result.error.code == 'protocol_error'
+    assert [call[0] for call in writer.calls] == ['create_timeline']
+    assert writer.replays == {}
+
+
+@pytest.mark.parametrize('field,value', [('name', None), ('opaque', {'raw': [None, False]})])
+def test_remote_create_empty_never_initializes_nonpristine_payload(monkeypatch, tmp_path, field, value):
+    class Nonpristine(_Writer):
+        def create_timeline(self, *args, **kwargs):
+            from astrid.sdk.timeline.commit import _digest
+
+            shell = super().create_timeline(*args, **kwargs)
+            parent = self.documents['bootstrap']['parent_revision']
+            parent['payload'][field] = value
+            parent['content_digest'] = _digest(parent['payload'])
+            return shell
+
+    writer = Nonpristine()
+    _mount(monkeypatch, tmp_path, writer)
+    result = RemoteTimelines(writer).create_empty(project='render-smoke')
+    assert not result.ok and 'pristine' in result.error.message
+    assert writer.documents['bootstrap']['parent_revision']['payload'][field] == value
+    assert [call[0] for call in writer.calls] == ['create_timeline']
+    assert writer.replays == {}
+
+
+@pytest.mark.parametrize('lost_ack', [False, True])
+@pytest.mark.parametrize('later', ['edit', 'undo'])
+def test_remote_create_empty_exact_retry_never_overwrites_later_head(monkeypatch, tmp_path, lost_ack, later):
+    writer = _Writer()
+    _mount(monkeypatch, tmp_path, writer)
+    writer.lose_ack = lost_ack
+    first = RemoteTimelines(writer).create_empty(
+        project='render-smoke', timeline_id='film', config=DEFAULT_CONFIG, idempotency_key='retry')
+    assert first.ok is not lost_ack
+    original_call = copy.deepcopy(writer.calls[-1])
+    original_reply = copy.deepcopy(writer.replays['retry-head'][1])
+    # Simulated later state is only a transport control; provider/history
+    # authority is exercised separately by the real Runtime positive below.
+    document = copy.deepcopy(writer.documents['bootstrap' if later == 'undo' else 'H-1'])
+    if later == 'edit':
+        document['parent_revision']['payload']['name'] = 'Later edit'
+    writer.documents['later'] = document
+    writer.head = {'revision_id': 'later', 'publication_id': 'later-publication'}
+    before = copy.deepcopy((writer.documents, writer.head))
+    result = RemoteTimelines(writer).create_empty(
+        project='render-smoke', timeline_id='film', config=DEFAULT_CONFIG, idempotency_key='retry')
+    assert result.ok, result.error
+    assert writer.calls[-1] == original_call
+    assert result.receipt.as_dict() == original_reply['receipt']
+    assert result.data['canonical_document'] == original_reply['data']['canonical_document']
+    assert (writer.documents, writer.head) == before
+
+
+def test_remote_create_empty_changed_retry_preserves_original_flight(monkeypatch, tmp_path):
+    writer = _Writer()
+    _mount(monkeypatch, tmp_path, writer)
+    writer.lose_ack = True
+    assert not RemoteTimelines(writer).create_empty(
+        project='render-smoke', timeline_id='film', config=DEFAULT_CONFIG, idempotency_key='retry').ok
+    path = next((tmp_path / 'timeline-outbox').glob('*.json'))
+    draft, calls = path.read_bytes(), len(writer.calls)
+    result = RemoteTimelines(writer).create_empty(
+        project='render-smoke', timeline_id='film', config={'tracks': []}, idempotency_key='retry')
+    assert not result.ok and 'pending intent differs' in result.error.message
+    assert path.read_bytes() == draft and len(writer.calls) == calls + 1
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('config', [None, DEFAULT_CONFIG, {
+    'tracks': [], 'theme_overrides': {'visual': {'canvas': {'width': 640, 'height': 360, 'fps': 24}}},
+    'meta': {'org.example': {'raw': [None, False, 0]}},
+}])
+def test_remote_create_empty_real_runtime_bootstrap_acceptance(monkeypatch, tmp_path, config):
+    """Expected positive at the actual provider/document boundary; no fake authority."""
+    from astrid.sdk import storage_root
+    from astrid.sdk.timeline import commit, store
+    from tests.helpers.runtime import use_runtime
+
+    use_runtime()
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_baseline import empty_bootstrap_document
+    from runtime_protocol.timeline_commit_port import route_path
+
+    RealmStore.initialize(tmp_path / 'realm').close()
+    service = RuntimeService(tmp_path / 'realm')
+    service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    project = service.create_project({'slug': 'bootstrap', 'name': 'Bootstrap'})['id']
+
+    class ServiceTransport:
+        _last_handshake = {'realm_id': service.realm['id'], 'actor_id': 'author'}
+
+        def __init__(self):
+            self.calls = []
+
+        def __getattr__(self, operation):
+            return getattr(service, operation)
+
+        def create_timeline(self, *args, **kwargs):
+            return service.create_timeline(*args, **kwargs)
+
+        def list_timelines(self, *args, **kwargs):
+            page = service.list_timelines(*args, **kwargs)
+            return page['items'], page['next_cursor']
+
+        def get_project_parent_composition_revision(self, *args):
+            return service.get_project_parent_composition_revision(*args)
+
+        def commit_timeline(self, project, timeline, body, *, idempotency_key):
+            self.calls.append((copy.deepcopy(body), idempotency_key))
+            try:
+                return service.commit_timeline(
+                    project, timeline, body, idempotency_key=idempotency_key,
+                    publisher='author', invocation_path=route_path(project, timeline), authorize=lambda: None)
+            except RuntimeErrorBase as exc:
+                raise WorkspaceClientError(exc.status, exc.code, exc.message, exc.details or {}) from exc
+
+    def resolve(project, timeline, **kwargs):
+        row = service.get_project_timeline(project, timeline)
+        return row['project_id'], row['timeline_id'], row['head_revision_id']
+
+    monkeypatch.setattr(storage_root, 'resolve_runtime_data_root', lambda: tmp_path / 'outbox')
+    monkeypatch.setattr(store, 'resolve_ids', resolve)
+    transport = ServiceTransport()
+    try:
+        result = RemoteTimelines(transport).create_empty(
+            project=project, timeline_id='film', name='Main', config=config, idempotency_key='create')
+        assert transport.calls, result.error
+        shell = service.create_timeline(project, 'film', name='Main', idempotency_key='create-shell')
+        body, key = transport.calls[0]
+        revision = shell['data']['head_revision_id']
+        assert (body['base_revision_id'], body['base_publication_id']) == (
+            revision, shell['data']['head_publication_id'])
+        bootstrap = service.get_project_parent_composition_revision(project, 'film', revision)
+        assert bootstrap['payload'] == empty_bootstrap_document(project, 'film', revision)['parent_revision']['payload']
+        assert key == 'create-head' and body['commands'][0]['op'] == 'timeline.init'
+        assert body['label'] == 'Create empty timeline' and body['merge'] == 'atomic'
+        assert body['steps'][0]['reads'] == [{'kind': 'scope', 'ref': 'timeline', 'path': []}]
+        assert result.ok, result.error
+        payload = result.data['canonical_document']['parent_revision']['payload']
+        assert payload['name'] == 'Main' and payload['slug'] == 'main'
+        canvas = (config or {}).get('theme_overrides', {}).get('visual', {}).get('canvas', {})
+        assert payload['config'] == {**(config or {'tracks': []}), 'clips': [], 'output': {
+            **DEFAULT_OUTPUT, 'resolution': f"{canvas.get('width', 1280)}x{canvas.get('height', 720)}",
+            'fps': canvas.get('fps', 30)}}
+        assert result.receipt.result['canonical_document']['parent_revision']['payload'] == payload
+        assert service.get_project_parent_composition_revision(
+            project, 'film', result.data['head_revision_id'])['payload'] == payload
+        assert result.data['steps'][0]['patch'] and result.data['steps'][0]['dependencies']
+        assert RemoteTimelines(transport).create_empty(
+            project=project, timeline_id='film', name='Main', config=config,
+            idempotency_key='create').receipt == result.receipt
+        assert transport.calls[-1] == transport.calls[0]
+        # A retained initialization receipt must also replay after undo has
+        # returned to equal bootstrap bytes under a later publication.
+        accepted_head = service.get_project_timeline(project, 'film')
+        undone = service.commit_timeline(project, 'film', {
+            'api_version': 1, 'project_id': project, 'timeline_id': 'film',
+            'base_revision_id': accepted_head['head_revision_id'],
+            'base_publication_id': accepted_head['head_publication_id'],
+            'commands': [{'schema_version': 1, 'op': 'timeline.inverse', 'version': '1',
+                          'select': None, 'args': {'publications': [result.receipt.receipt_id]}}],
+            'dry_run': False,
+        }, idempotency_key='undo', publisher='author', invocation_path=route_path(project, 'film'),
+            authorize=lambda: None)
+        assert undone['data']['canonical_document']['parent_revision']['payload'] == bootstrap['payload']
+        retired = service.get_project_timeline(project, 'film')
+        replayed = RemoteTimelines(transport).create_empty(
+            project=project, timeline_id='film', name='Main', config=config, idempotency_key='create')
+        assert replayed.ok and replayed.receipt == result.receipt
+        assert transport.calls[-1] == transport.calls[0]
+        assert service.get_project_timeline(project, 'film') == retired
+    finally:
+        service.close()

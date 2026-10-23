@@ -490,11 +490,14 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
     ):
         """Create Runtime's bootstrap head, then commit the requested defaults."""
         import copy
+        import re
 
         from astrid.core.ids import generate_ulid
 
+        from .timeline.commands import execute
+        from .timeline.emitter import emit_document_commands
+        from .timeline.native_initialize import capture_initialize
         from .timeline_media_replacement import (
-            commit_document_bundle,
             open_document_session,
             read_document_bundle,
         )
@@ -524,35 +527,73 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
                 self, row['project_id'], timeline_key, row['head_revision_id'],
                 row['head_publication_id'],
             )
+            base = {'revision_id': row['head_revision_id'],
+                    'publication_id': row['head_publication_id']}
+            with session.outbox.locked():
+                state = session._state()
+            if state['base'] != base:
+                raise ValueError('initialization requires the original bootstrap publication')
             before = read_document_bundle(session)
-            after = copy.deepcopy(before)
-            after['parent']['config'] = copy.deepcopy(dict(config)) if config is not None else {'tracks': []}
-            if 'clips' in before['parent']['config']:
-                after['parent']['config'].setdefault('clips', copy.deepcopy(before['parent']['clips']))
-            if before == after:
-                return DomainResult.success(
-                    {'project_id': row['project_id'], 'timeline_id': timeline_key,
-                     **({'name': row.get('name')} if name is not None else {}),
-                     'head_revision_id': row['head_revision_id'], 'created': True,
-                     'canonical_document': before['source_mapping']['_runtime_document']},
-                    receipt=shell.receipt, idempotency_key=key,
-                )
-            head = commit_document_bundle(session, before, after, label="Create empty timeline",
-                                          key=f"{key}-head")
-            if not head.ok:
-                return head
+            canonical_name = name if name is not None else 'Main'
+            slug = re.sub(r'[^a-z0-9]+', '-', canonical_name.lower()).strip('-') or 'timeline'
+            output = {'resolution': '1280x720', 'fps': 30, 'file': 'output.mp4',
+                      'background': None, 'background_scale': None}
+            # Keep the native initializer first: the provider checks original
+            # bootstrap history as well as pristine bytes, including after undo.
+            commands = [capture_initialize(before, name=canonical_name, slug=slug, output=output)]
+            initialized = execute(before, commands).bundle
+            after = copy.deepcopy(initialized)
+            authored_config = copy.deepcopy(dict(config)) if config is not None else {'tracks': []}
+            canvas = authored_config.get('theme_overrides')
+            for field in ('visual', 'canvas'):
+                canvas = canvas.get(field) if isinstance(canvas, Mapping) else None
+            if canvas:
+                output = {**output,
+                          'resolution': f"{canvas.get('width', 1280)}x{canvas.get('height', 720)}",
+                          'fps': canvas.get('fps', 30)}
+            authored_config.setdefault('output', output)
+            authored_config.setdefault('clips', [])
+            after['parent']['config'] = authored_config
+            commands.extend(emit_document_commands(initialized, after))
+            label = 'Create empty timeline'
+            steps = [{'id': 'initialize', 'label': label, 'intent': label, 'tags': [],
+                      'command_ordinals': [0], 'patch': [],
+                      'reads': [{'kind': 'scope', 'ref': 'timeline', 'path': []}]}]
+            if len(commands) > 1:
+                steps.append({'id': 'edit', 'label': label, 'intent': label, 'tags': [],
+                              'command_ordinals': list(range(1, len(commands))),
+                              'patch': [copy.deepcopy(change) for command in commands
+                                        for change in command['args'].get('changes', [])],
+                              'reads': [{'kind': 'scope', 'ref': 'timeline', 'path': []}]})
+            # Capture the complete batch with its step reads, which differ
+            # from the standalone initializer's reads.
+            commands[0] = {field: commands[0][field]
+                           for field in ('schema_version', 'op', 'version', 'select', 'args')}
+            commands = execute(before, commands, commit_request={
+                'label': label, 'steps': steps, 'merge': 'atomic'}).commands
+            if state['pending'] or state['flight'] is not None:
+                if (state['pending'] != commands or state.get('commit_options') != {
+                        'label': label, 'steps': steps, 'merge': 'atomic'}):
+                    raise ValueError('pending intent differs; retry the original request')
+                result = session.flush(idempotency_key=f'{key}-head')
+            else:
+                result = session.submit(commands, label=label, steps=steps, merge='atomic',
+                                        idempotency_key=f'{key}-head', expected_state=state, base=base)
+            data = result['data']
             return DomainResult.success(
-                {**head.data, 'project_id': row['project_id'], 'timeline_id': timeline_key,
-                 **({'name': row.get('name')} if name is not None else {}),
-                 'head_revision_id': head.data['accepted_revision_id'], 'created': True},
-                receipt=head.receipt, idempotency_key=key,
+                {**data, 'project_id': row['project_id'], 'timeline_id': timeline_key,
+                 **({'name': data['canonical_document']['parent_revision']['payload']['name']}
+                    if name is not None else {}),
+                 'head_revision_id': data['accepted_revision_id'], 'created': True},
+                receipt=CommandReceipt.from_dict(result['receipt']), idempotency_key=key,
             )
         except Exception as exc:  # noqa: BLE001 - preserve the SDK result boundary
             failure = getattr(exc, 'failure', {})
+            details = failure.get('details', getattr(exc, 'details', {}))
             return DomainResult.failure(
                 ErrorObject(failure.get('code', getattr(exc, 'code', 'validation_error')),
                             failure.get('message', str(getattr(exc, 'message', exc))),
-                            failure.get('details', dict(getattr(exc, 'details', {})))),
+                            dict(details) if isinstance(details, Mapping) else {}),
                 idempotency_key=key,
             )
 
