@@ -79,9 +79,27 @@ vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
     __shotTimelineTestContext: context,
     useTimelinePlaybackContext: () => ReactModule.useContext(context),
     useTimelineEditorData: () => ReactModule.useContext(context),
+    useTimelineEditorOps: () => ({
+      selectClip: vi.fn(),
+      setSelectedTrackId: vi.fn(),
+      applyEdit: vi.fn(),
+      patchRegistry: vi.fn(),
+    }),
     useTimelineChromeContext: () => popupChrome,
   };
 });
+
+vi.mock('@/tools/video-editor/hooks/useAssetManagement.ts', () => ({
+  useAssetManagement: () => ({
+    prepareGenerationAsset: vi.fn(),
+    uploadImageGeneration: vi.fn(),
+    uploadVideoGeneration: vi.fn(),
+  }),
+}));
+
+vi.mock('@/tools/video-editor/hooks/useTimelineCommandsService.ts', () => ({
+  useTimelineCommandsService: () => ({ addClip: vi.fn() }),
+}));
 
 vi.mock('@/tools/video-editor/contexts/VideoEditorProvider.tsx', async () => {
   const ReactModule = await import('react');
@@ -122,6 +140,9 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorProvider.tsx', async () => {
       currentTime: 0,
       onPreviewTimeUpdate: () => undefined,
       resolvedConfig: loaded?.config ?? null,
+      dataRef: { current: null },
+      selectedTrackId: null,
+      selectedClipIds: new Set<string>(),
       undo: () => setUndoCount((count) => count + 1),
     }), [loaded, undoCount]);
     return ReactModule.createElement(store.__shotTimelineTestContext.Provider, { value },
@@ -161,6 +182,21 @@ vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx',
       const context = ReactModule.useContext(store.__shotTimelineTestContext);
       return ReactModule.createElement('button', { onClick: context.undo as () => void }, 'Undo');
     },
+  };
+});
+
+vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx')>();
+  return {
+    ...actual,
+    useVideoEditorRuntime: () => ({
+      provider: { resolveAssetUrl: async (file: string) => file },
+      assetResolver: { resolveAssetUrl: async (file: string) => file },
+      project: { projectId: 'popup-test-project', projectSlug: 'popup-test-project' },
+      timelineId: 'popup-test-timeline',
+      timelineEditability: undefined,
+    }),
+    useOptionalVideoEditorRuntime: () => null,
   };
 });
 
