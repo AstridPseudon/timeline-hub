@@ -1351,15 +1351,15 @@ fixture = json.loads(r'''
     },
     "create_unresolved": {
       "change": {"op": "set", "ref": "parent", "path": ["clips", "id:clip-3", "app", "astrid"], "before": {"state": "absent"}, "value": {"on": "new-anchor", "until": "end"}},
-      "expected": {"http_status": 422, "code": "invalid_document", "details": {"status": "invalid", "code": "invalid_document", "path": ["clips", "id:clip-3", "app", "astrid"], "hint": "Bind the timing declaration to an existing target", "suggested_command": "timeline edit"}}
+      "expected": {"http_status": 422, "code": "validation_error", "details": {"status": "invalid", "code": "invalid_document", "path": ["clips", "id:clip-3", "app", "astrid"], "hint": "Bind the timing declaration to an existing target", "suggested_command": "timeline edit"}}
     },
     "modify_unresolved": {
       "change": {"op": "set", "ref": "parent", "path": ["clips", "id:clip-2", "app", "astrid", "on"], "before": {"state": "present", "value": "clip-1"}, "value": "missing-anchor"},
-      "expected": {"http_status": 422, "code": "invalid_document", "details": {"status": "invalid", "code": "invalid_document", "path": ["clips", "id:clip-2", "app", "astrid", "on"], "hint": "Bind the timing declaration to an existing target", "suggested_command": "timeline edit"}}
+      "expected": {"http_status": 422, "code": "validation_error", "details": {"status": "invalid", "code": "invalid_document", "path": ["clips", "id:clip-2", "app", "astrid", "on"], "hint": "Bind the timing declaration to an existing target", "suggested_command": "timeline edit"}}
     },
     "remove_referenced_target": {
       "change": {"op": "list.remove", "ref": "parent", "path": ["clips"], "id": "clip-1", "before": {"state": "present", "value": {"id": "clip-1", "clipType": "video", "track": "track-1", "at": 0, "hold": 2, "app": {"astrid": {"on": "old-anchor", "until": "end"}}, "params": {"note": "A"}}}, "order_before": ["clip-1", "clip-2", "clip-3"]},
-      "expected": {"http_status": 422, "code": "invalid_document", "details": {"status": "invalid", "code": "invalid_document", "path": ["clips", "id:clip-2", "app", "astrid", "on"], "hint": "Keep the referenced target or update the declaration", "suggested_command": "timeline edit"}}
+      "expected": {"http_status": 422, "code": "validation_error", "details": {"status": "invalid", "code": "invalid_document", "path": ["clips", "id:clip-2", "app", "astrid", "on"], "hint": "Keep the referenced target or update the declaration", "suggested_command": "timeline edit"}}
     }
   }
 }
@@ -1382,7 +1382,8 @@ assert fixture["cases"]["unrelated_edit"]["expected_status"] == "accepted"
 for case in ("create_unresolved", "modify_unresolved", "remove_referenced_target"):
     expected = fixture["cases"][case]["expected"]
     assert expected["http_status"] == 422
-    assert expected["code"] == expected["details"]["code"]
+    assert expected["code"] == "validation_error"
+    assert expected["details"]["code"] == "invalid_document"
     assert expected["details"]["status"] == "invalid"
     assert expected["details"]["path"]
     assert expected["details"]["hint"] and expected["details"]["suggested_command"]
