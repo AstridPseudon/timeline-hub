@@ -145,9 +145,18 @@ def _native_mirror_partition(record, step, nested):
                              'config': {'clips': copy.deepcopy(initial['value'])}}})
     config = next((write for write in record['writes'] if write['ref'] == 'parent'
                    and write['path'] == ['config']), None)
-    if config is not None and record['writes'].index(config) < record['writes'].index(first):
+    if config is not None and (record['writes'].index(config) < record['writes'].index(first)
+            or (record['writes'].index(config) < nested[0]['boundary']['native_write_range'][1]
+                and config['before'].get('state') == 'present'
+                and isinstance(config['before'].get('value'), dict)
+                and equal(config['before']['value'].get('clips'), initial['value'])
+                and not any(write['ref'].startswith('parent/clip:')
+                            or (write['ref'] == 'parent' and write['path'][:1] == ['config'])
+                            for write in record['writes'][:record['writes'].index(config)]))):
         # A whole config replacement can enable or disable compiler mirrors.
-        # Its input is usable only before any earlier clip/config observation.
+        # Aggregate clips writes leave config untouched until the stage compiles;
+        # its full native input remains valid before that first compiler boundary.
+        # A later config input must still contain the initial mirrored clips.
         state.set('parent', ['config'], config['before'])
     mirrored = equal(state.get('parent', ['config', 'clips']), state.get('parent', ['clips']))
     cursor, result = 0, []
