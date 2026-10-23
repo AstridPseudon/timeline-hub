@@ -13,7 +13,6 @@ interface MockPendingJoinClipEntry {
   generationId: string;
   timestamp: number;
   projectId?: string;
-  userId?: string;
 }
 
 const joinClipsQueueMock = vi.hoisted(() => {
@@ -27,37 +26,28 @@ const joinClipsQueueMock = vi.hoisted(() => {
     return trimmed.length > 0 ? trimmed : null;
   };
 
-  const getKey = (projectId: string | null | undefined, userId?: string | null): string => {
+  const getKey = (projectId: string | null | undefined): string => {
     const normalizedProjectId = normalize(projectId);
     if (!normalizedProjectId) {
       return LEGACY_KEY;
     }
-    const normalizedUserId = normalize(userId) ?? 'anonymous';
-    return `${PREFIX}:${normalizedProjectId}:${normalizedUserId}`;
+    return `${PREFIX}:${normalizedProjectId}`;
   };
 
   return {
     getPendingJoinClipsStorageKey: getKey,
-    getPendingJoinClipsCandidateKeys: ({ projectId, userId }: { projectId?: string | null; userId?: string | null }) => {
-      const scoped = getKey(projectId, userId);
+    getPendingJoinClipsCandidateKeys: ({ projectId }: { projectId?: string | null }) => {
+      const scoped = getKey(projectId);
       return scoped === LEGACY_KEY ? [LEGACY_KEY] : [scoped, LEGACY_KEY];
     },
     isPendingJoinClipInScope: (
       entry: MockPendingJoinClipEntry,
-      scope: { projectId?: string | null; userId?: string | null },
+      scope: { projectId?: string | null },
     ) => {
       const scopeProjectId = normalize(scope.projectId);
       if (scopeProjectId) {
         const entryProjectId = normalize(entry.projectId);
         if (entryProjectId && entryProjectId !== scopeProjectId) {
-          return false;
-        }
-      }
-
-      const scopeUserId = normalize(scope.userId);
-      if (scopeUserId) {
-        const entryUserId = normalize(entry.userId);
-        if (entryUserId && entryUserId !== scopeUserId) {
           return false;
         }
       }
@@ -70,19 +60,19 @@ const joinClipsQueueMock = vi.hoisted(() => {
 const joinClipsIntentStoreMock = vi.hoisted(() => {
   const intentsByScopeKey = new Map<string, MockPendingJoinClipEntry[]>();
 
-  const getScopeKey = (scope: { projectId?: string | null; userId?: string | null }) =>
-    joinClipsQueueMock.getPendingJoinClipsStorageKey(scope.projectId, scope.userId);
+  const getScopeKey = (scope: { projectId?: string | null }) =>
+    joinClipsQueueMock.getPendingJoinClipsStorageKey(scope.projectId);
 
   return {
     enqueueJoinClipsIntent: (
       entry: MockPendingJoinClipEntry,
-      scope: { projectId?: string | null; userId?: string | null },
+      scope: { projectId?: string | null },
     ) => {
       const key = getScopeKey(scope);
       const existing = intentsByScopeKey.get(key) ?? [];
       intentsByScopeKey.set(key, [...existing, entry]);
     },
-    consumeJoinClipsIntents: (scope: { projectId?: string | null; userId?: string | null }) => {
+    consumeJoinClipsIntents: (scope: { projectId?: string | null }) => {
       const candidateKeys = joinClipsQueueMock.getPendingJoinClipsCandidateKeys(scope);
       for (const key of candidateKeys) {
         const pending = intentsByScopeKey.get(key);
@@ -110,10 +100,6 @@ vi.mock('@/shared/lib/joinClips/intentStore', () => joinClipsIntentStoreMock);
 
 vi.mock('@/shared/lib/taskCreation', () => ({
   generateUUID: (...args: unknown[]) => generateUUIDMock(...args),
-}));
-
-vi.mock('@/shared/lib/supabaseSession', () => ({
-  readUserIdFromStorage: () => 'user-1',
 }));
 
 vi.mock('@/shared/lib/operationResult', () => ({
@@ -177,7 +163,7 @@ describe('clipPendingActions', () => {
   });
 
   it('returns failure and removes storage key for malformed pending payload', async () => {
-    const key = getPendingJoinClipsStorageKey('project-1', 'user-1');
+    const key = getPendingJoinClipsStorageKey('project-1');
     localStorage.setItem(key, '{not-json');
 
     const result = await tryConsumePendingJoinClips({ projectId: 'project-1' });
@@ -192,7 +178,7 @@ describe('clipPendingActions', () => {
   });
 
   it('drops invalid entries, returns degraded success, and builds clip actions from valid entries', async () => {
-    const key = getPendingJoinClipsStorageKey('project-1', 'user-1');
+    const key = getPendingJoinClipsStorageKey('project-1');
     const now = Date.now();
     localStorage.setItem(
       key,
@@ -203,7 +189,6 @@ describe('clipPendingActions', () => {
           generationId: 'gen-a',
           timestamp: now,
           projectId: 'project-1',
-          userId: 'user-1',
         },
         {
           videoUrl: 123,
@@ -241,7 +226,7 @@ describe('clipPendingActions', () => {
   });
 
   it('prefers in-memory intents and clears scoped storage key after consumption', async () => {
-    const key = getPendingJoinClipsStorageKey('project-1', 'user-1');
+    const key = getPendingJoinClipsStorageKey('project-1');
     localStorage.setItem(
       key,
       JSON.stringify([
@@ -259,9 +244,8 @@ describe('clipPendingActions', () => {
         generationId: 'gen-memory',
         timestamp: Date.now(),
         projectId: 'project-1',
-        userId: 'user-1',
       },
-      { projectId: 'project-1', userId: 'user-1' },
+      { projectId: 'project-1' },
     );
 
     const result = await tryConsumePendingJoinClips({
@@ -279,7 +263,7 @@ describe('clipPendingActions', () => {
   });
 
   it('returns empty success when only expired/scoped-out entries remain', async () => {
-    const key = getPendingJoinClipsStorageKey('project-1', 'user-1');
+    const key = getPendingJoinClipsStorageKey('project-1');
     localStorage.setItem(
       key,
       JSON.stringify([
@@ -288,14 +272,12 @@ describe('clipPendingActions', () => {
           generationId: 'gen-expired',
           timestamp: Date.now() - 6 * 60 * 1000,
           projectId: 'project-1',
-          userId: 'user-1',
         },
         {
           videoUrl: 'https://cdn.example.com/other-project.mp4',
           generationId: 'gen-other-project',
           timestamp: Date.now(),
           projectId: 'project-2',
-          userId: 'user-1',
         },
       ]),
     );

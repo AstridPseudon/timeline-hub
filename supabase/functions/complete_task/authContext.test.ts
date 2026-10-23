@@ -41,3 +41,4 @@ describe('assertCompletionAuthContext', () => {
     }).toThrow('Missing validated completion auth context');
   });
 });
+

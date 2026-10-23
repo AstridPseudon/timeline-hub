@@ -28,6 +28,5 @@ describe('useGenerateBatch legacy boundary', () => {
     expect(toastError).toHaveBeenCalledWith(expect.stringContaining('Legacy task family travel_between_images is unsupported'));
     expect(result.current.isSteerableMotionEnqueuing).toBe(false);
     expect(result.current.steerableMotionJustQueued).toBe(false);
-    expect(result.current.enhancementProgress).toBeNull();
   });
 });

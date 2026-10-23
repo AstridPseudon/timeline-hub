@@ -69,3 +69,4 @@ export function toCompletionError(
     cause: error,
   });
 }
+

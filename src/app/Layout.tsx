@@ -7,16 +7,8 @@ import { ToolsPane } from '@/shared/components/ToolsPane/ToolsPane';
 import { AstridLoading } from '@/shared/components/AstridLoading';
 import { SettingsModal } from '@/shared/components/SettingsModal/SettingsModal';
 import { OnboardingModal } from '@/shared/components/modals/OnboardingModal';
-import { ChunkLoadErrorBoundary } from '@/shared/runtime/ChunkLoadErrorBoundary';
 import { dispatchAppEvent } from '@/shared/lib/typedEvents';
 
-// Lazy load ProductTour since it only shows during onboarding
-const LazyProductTour = React.lazy(() =>
-  import('@/shared/components/ProductTour').then(module => ({
-    default: module.ProductTour
-  }))
-);
-import { AIInputModeProvider } from '@/shared/contexts/AIInputModeContext';
 import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { useVideoEditorRouteState } from '@/app/hooks/useVideoEditorRouteState';
@@ -27,9 +19,9 @@ import { APP_ENTRY_PATH, prefersAppEntry } from './entryClassification.ts';
 import { useSplitViewScroll } from './hooks/useSplitViewScroll';
 import { useGlobalPaneShortcuts } from './hooks/useGlobalPaneShortcuts';
 import { useSettingsModal } from './hooks/useSettingsModal';
+import { useReplayEditorTour } from './hooks/useReplayEditorTour';
 import { useOnboardingFlow } from './hooks/useOnboardingFlow';
 import { useResetCurrentShotOnRouteChange } from './hooks/useResetCurrentShotOnRouteChange';
-import { useTextCase } from '@/shared/hooks/useTextCase';
 import { LayoutMainContent } from './components/LayoutMainContent';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { AppSkyBackground } from '@/shared/components/TimeOfDay/TimeOfDayControl';
@@ -70,8 +62,8 @@ const LayoutShell: React.FC = () => {
   // Extracted hooks
   const { splitViewWrapperRef } = useSplitViewScroll(isMobileSplitView);
   const { isAuthenticated, isLoading } = useAuth();
-  const { preserveUserText, setPreserveUserText } = useTextCase();
-  const { isSettingsModalOpen, setIsSettingsModalOpen, settingsInitialTab, settingsCreditsTab, handleOpenSettings } = useSettingsModal();
+  const { isSettingsModalOpen, setIsSettingsModalOpen, settingsInitialTab } = useSettingsModal();
+  const replayEditorTour = useReplayEditorTour();
   const { showOnboardingModal, onboardingMode, handleOnboardingClose } = useOnboardingFlow();
   useResetCurrentShotOnRouteChange();
   useGlobalPaneShortcuts();
@@ -113,54 +105,49 @@ const LayoutShell: React.FC = () => {
   } : {};
 
   const mainContent = (
-    <LayoutMainContent
-      isMobileSplitView={isMobileSplitView}
-    />
+    <LayoutMainContent isMobileSplitView={isMobileSplitView} />
   );
 
   return (
-    <AIInputModeProvider>
-      <div className={cn('relative flex min-h-screen flex-col', isVideoEditorShellActive && 'h-dvh min-h-0 overflow-hidden')}>
-        <ScrollToTop />
-        <AppSkyBackground />
+    <div className={cn('relative flex min-h-screen flex-col', isVideoEditorShellActive && 'h-dvh min-h-0 overflow-hidden')}>
+      <ScrollToTop />
+      <AppSkyBackground />
 
-        {/* When in mobile split view, wrap header + content in a scroll container */}
-        {isMobileSplitView ? (
-          <div ref={splitViewWrapperRef} style={splitViewWrapperStyle}>
-            {mainContent}
-          </div>
-        ) : (
-          mainContent
-        )}
+      {/* When in mobile split view, wrap header + content in a scroll container */}
+      {isMobileSplitView ? (
+        <div ref={splitViewWrapperRef} style={splitViewWrapperStyle}>
+          {mainContent}
+        </div>
+      ) : (
+        mainContent
+      )}
 
-        {/* The local Astrid App hides the legacy tool-navigation sidebar. The
-            task/status and editor panes remain available to the user. */}
-        <>
-          <EditorPane />
-          <TasksPane onOpenSettings={handleOpenSettings} />
-          <ToolsPane />
-          <GenerationsPane />
-        </>
+      {/* The local Astrid App hides the legacy tool-navigation sidebar. The
+          task/status and editor panes remain available to the user. */}
+      <>
+        <EditorPane />
+        <TasksPane />
+        <ToolsPane />
+        <GenerationsPane />
+      </>
 
-        {/* Social Icons Footer */}
-        {!isVideoEditorShellActive && (
-          <div
-            className="relative transition-[margin] duration-300 ease-smooth"
-            style={footerStyle}
-          >
-            <SocialIcons />
-          </div>
-        )}
+      {/* Social Icons Footer */}
+      {!isVideoEditorShellActive && (
+        <div
+          className="relative transition-[margin] duration-300 ease-smooth"
+          style={footerStyle}
+        >
+          <SocialIcons />
+        </div>
+      )}
 
         {/* App-shell modals. Local mode renders them too; their content
             degrades to empty/disabled states without account data. */}
         <SettingsModal
           isOpen={isSettingsModalOpen}
           onOpenChange={setIsSettingsModalOpen}
+          onReplayTour={replayEditorTour}
           initialTab={settingsInitialTab}
-          creditsTab={settingsCreditsTab}
-          preserveUserText={preserveUserText}
-          setPreserveUserText={setPreserveUserText}
         />
 
         {/* Onboarding Modal */}
@@ -169,14 +156,6 @@ const LayoutShell: React.FC = () => {
           mode={onboardingMode}
           onClose={handleOnboardingClose}
         />
-
-        {/* Product Tour - lazy loaded since only needed during onboarding */}
-        <ChunkLoadErrorBoundary>
-          <React.Suspense fallback={null}>
-            <LazyProductTour />
-          </React.Suspense>
-        </ChunkLoadErrorBoundary>
-      </div>
-    </AIInputModeProvider>
+    </div>
   );
 };

@@ -13,3 +13,4 @@ export function __setCreateClientImpl(nextImpl: CreateClientImpl): void {
 export function __resetCreateClientImpl(): void {
   createClientImpl = () => ({});
 }
+

@@ -1,17 +1,15 @@
 /**
  * useSegmentOutputStrip - Orchestrator hook for SegmentOutputStrip.
  *
- * Composes sub-hooks for deletion, scrubbing, and lightbox concerns.
+ * Composes sub-hooks for scrubbing and lightbox concerns.
  * Pure functions handle display slot computation and source info extraction.
  */
 
 import { useCallback, useMemo, useEffect } from 'react';
-import { useSourceImageChanges } from '@/shared/hooks/sourceImageChanges/useSourceImageChanges';
 import { useMarkVariantViewed } from '@/shared/hooks/variants/useMarkVariantViewed';
 import { TIMELINE_PADDING_OFFSET } from '../../constants';
 import type { SegmentSlot } from '@/shared/hooks/segments';
 
-import { useSegmentDeletion } from './useSegmentDeletion';
 import { useSegmentScrubbing } from './useSegmentScrubbing';
 import { useSegmentLightbox } from './useSegmentLightbox';
 
@@ -52,11 +50,8 @@ interface UseSegmentOutputStripProps {
   rawSegmentSlots: SegmentSlot[];
   trailingSegmentMode?: TrailingSegmentMode;
   hasPendingTaskProp?: (pairShotGenerationId: string | null | undefined) => boolean;
-  readOnly: boolean;
   onTrailingVideoInfo?: (videoUrl: string | null) => void;
   selectedParentId?: string | null;
-  isMultiImage?: boolean;
-  lastImageFrame?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -117,32 +112,6 @@ function buildDisplaySlots(
   return slots;
 }
 
-/**
- * Extract source image info from child segment slots for mismatch detection.
- * Parses task params to find which generation IDs were used as inputs.
- */
-function buildSegmentSourceInfo(rawSegmentSlots: SegmentSlot[]) {
-  return rawSegmentSlots
-    .filter((slot): slot is SegmentSlot & { type: 'child' } => slot.type === 'child')
-    .map(slot => {
-      const child = slot.child;
-      const params = child.params as Record<string, unknown> | null;
-      const individualParams = (params?.individual_segment_params || {}) as Record<string, unknown>;
-      const orchDetails = (params?.orchestrator_details || {}) as Record<string, unknown>;
-      const childOrder = child.child_order ?? slot.index;
-      const orchGenIds = (orchDetails.input_image_generation_ids || []) as string[];
-      const startGenId = (individualParams.start_image_generation_id as string)
-        || (params?.start_image_generation_id as string)
-        || orchGenIds[childOrder]
-        || null;
-      const endGenId = (individualParams.end_image_generation_id as string)
-        || (params?.end_image_generation_id as string)
-        || orchGenIds[childOrder + 1]
-        || null;
-      return { segmentId: child.id, childOrder, params: params || {}, startGenId, endGenId };
-    });
-}
-
 // ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
@@ -157,11 +126,8 @@ export function useSegmentOutputStrip({
   rawSegmentSlots,
   trailingSegmentMode,
   hasPendingTaskProp,
-  readOnly,
   onTrailingVideoInfo,
   selectedParentId,
-  isMultiImage,
-  lastImageFrame,
 }: UseSegmentOutputStripProps) {
   // ===== DISPLAY SLOTS =====
   const displaySlots = useMemo(
@@ -170,7 +136,6 @@ export function useSegmentOutputStrip({
   );
 
   // ===== SUB-HOOKS =====
-  const deletion = useSegmentDeletion();
   const scrubbingHook = useSegmentScrubbing({ projectAspectRatio, displaySlots });
   const lightbox = useSegmentLightbox({ displaySlots, selectedParentId });
   const { clearScrubbing } = scrubbingHook;
@@ -179,10 +144,6 @@ export function useSegmentOutputStrip({
 
   // ===== PENDING TASK CHECKER =====
   const hasPendingTask = hasPendingTaskProp ?? (() => false);
-
-  // ===== SOURCE IMAGE CHANGE DETECTION =====
-  const segmentSourceInfo = useMemo(() => buildSegmentSourceInfo(rawSegmentSlots), [rawSegmentSlots]);
-  const { hasRecentMismatch } = useSourceImageChanges(segmentSourceInfo, !readOnly);
 
   // ===== SEGMENT CLICK =====
   const handleSegmentClick = useCallback((
@@ -260,16 +221,6 @@ export function useSegmentOutputStrip({
     return result;
   }, [displaySlots, pairInfo, fullMin, fullRange, containerWidth, trailingSegmentMode]);
 
-  // ===== ADD TRAILING BUTTON POSITION =====
-  const addTrailingButtonLeftPercent = useMemo((): number | null => {
-    if (!isMultiImage || lastImageFrame === undefined || fullRange <= 0 || containerWidth <= 0) return null;
-    // Trailing slot exists when displaySlots has more items than pairInfo
-    if (displaySlots.length > pairInfo.length) return null;
-    const effectiveWidth = containerWidth - (TIMELINE_PADDING_OFFSET * 2);
-    const lastImagePixel = TIMELINE_PADDING_OFFSET + ((lastImageFrame - fullMin) / fullRange) * effectiveWidth;
-    return (lastImagePixel / containerWidth) * 100;
-  }, [isMultiImage, lastImageFrame, pairInfo.length, displaySlots.length, fullRange, containerWidth, fullMin]);
-
   return {
     // Refs
     previewVideoRef: scrubbingHook.previewVideoRef,
@@ -280,9 +231,7 @@ export function useSegmentOutputStrip({
 
     // Display data
     positionedSlots,
-    addTrailingButtonLeftPercent,
     hasPendingTask,
-    hasRecentMismatch,
 
     // Scrubbing
     activeScrubbingIndex: scrubbingHook.activeScrubbingIndex,
@@ -303,10 +252,6 @@ export function useSegmentOutputStrip({
     handleLightboxNext: lightbox.handleLightboxNext,
     handleLightboxPrev: lightbox.handleLightboxPrev,
     handleLightboxClose: lightbox.handleLightboxClose,
-
-    // Deletion
-    deletingSegmentId: deletion.deletingSegmentId,
-    handleDeleteSegment: deletion.handleDeleteSegment,
 
     shotId,
   };

@@ -18,12 +18,12 @@ import type { ProjectExtensionRequirement } from '@/sdk/projectRequirements';
 import type { SourceMapEntry, GeneratedObjectMeta } from './sourceMap';
 
 // ---------------------------------------------------------------------------
-// M12: Planner inspection contracts — effect, transition, live-binding,
+// Planner inspection contracts — effect, transition, live-binding,
 // material-ref, source-ref, render-group, and output-metadata summaries
 // ---------------------------------------------------------------------------
 
 /**
- * M12: Lightweight effect summary extracted from a clip for planner inspection.
+ * Lightweight effect summary extracted from a clip for planner inspection.
  *
  * Describes an effect applied to a clip without importing provider
  * stores or raw timeline rows.
@@ -44,7 +44,7 @@ export interface TimelineEffectSummary {
 }
 
 /**
- * M12: Lightweight transition summary extracted from a clip for planner inspection.
+ * Lightweight transition summary extracted from a clip for planner inspection.
  *
  * Describes a transition applied to a clip without importing provider
  * stores or raw timeline rows.
@@ -67,7 +67,7 @@ export interface TimelineTransitionSummary {
 }
 
 /**
- * M12: Lightweight live-binding summary extracted from clip metadata
+ * Lightweight live-binding summary extracted from clip metadata
  * for planner inspection.
  *
  * Live bindings connect a clip parameter to a live data source.
@@ -100,7 +100,7 @@ export interface TimelineLiveBindingSummary {
 }
 
 /**
- * M2: Lightweight automation summary extracted from automation clips for
+ * Lightweight automation summary extracted from automation clips for
  * planner and graph inspection.
  */
 export interface TimelineAutomationSummary {
@@ -116,14 +116,14 @@ export interface TimelineAutomationSummary {
   enabled: boolean;
 }
 
-/** M4: JSON-serializable shader-uniform keyframe values carried in summaries. */
+/** JSON-serializable shader-uniform keyframe values carried in summaries. */
 export type TimelineShaderKeyframeValue =
   | number
   | string
   | boolean
   | readonly number[];
 
-/** M4: A single shader-uniform keyframe using the existing M3b fields. */
+/** A single shader-uniform keyframe using the existing fields. */
 export interface TimelineShaderKeyframe {
   /** Time in seconds. */
   time: number;
@@ -134,7 +134,7 @@ export interface TimelineShaderKeyframe {
 }
 
 /**
- * M12: Lightweight material-ref summary extracted from clip data
+ * Lightweight material-ref summary extracted from clip data
  * for planner inspection.
  *
  * Material refs point at assets or generated materials consumed by a clip.
@@ -158,7 +158,7 @@ export interface TimelineMaterialRefSummary {
   composable?: boolean;
 }
 
-/** M12: Render pass descriptor used by multi-pass render groups. */
+/** Render pass descriptor used by multi-pass render groups. */
 export interface TimelineRenderPassSummary {
   /** Stable pass identifier within a render group. */
   id: string;
@@ -175,7 +175,7 @@ export interface TimelineRenderPassSummary {
 }
 
 /**
- * M12: Lightweight source-ref summary extracted from clip provenance
+ * Lightweight source-ref summary extracted from clip provenance
  * for planner inspection.
  *
  * Source refs identify timeline inputs without exposing provider rows,
@@ -205,7 +205,7 @@ export interface TimelineSourceRefSummary {
 }
 
 /**
- * M12: Lightweight render-group summary extracted from timeline data
+ * Lightweight render-group summary extracted from timeline data
  * for planner inspection.
  *
  * Render groups collect clips that should be rendered together
@@ -239,7 +239,7 @@ export interface TimelineRenderGroupSummary {
 }
 
 /**
- * M12: Output metadata extracted from the timeline config.
+ * Output metadata extracted from the timeline config.
  *
  * Describes the target output resolution, FPS, and file settings
  * so the planner can validate format compatibility.
@@ -258,7 +258,7 @@ export interface TimelineOutputMetadata {
 }
 
 // ---------------------------------------------------------------------------
-// M3: TimelineSnapshot / TimelineReader
+// TimelineSnapshot / TimelineReader
 // ---------------------------------------------------------------------------
 
 /**
@@ -297,21 +297,21 @@ export interface TimelineSnapshot {
    * Each entry maps a timeline object to a source location.
    */
   sourceMapEntries?: readonly SourceMapEntry[];
-  /** M12: Ordered list of effect summaries extracted from clips. */
+  /** Ordered list of effect summaries extracted from clips. */
   effects?: readonly TimelineEffectSummary[];
-  /** M12: Ordered list of transition summaries extracted from clips. */
+  /** Ordered list of transition summaries extracted from clips. */
   transitions?: readonly TimelineTransitionSummary[];
-  /** M12: Live-binding summaries extracted from clip metadata. */
+  /** Live-binding summaries extracted from clip metadata. */
   liveBindings?: readonly TimelineLiveBindingSummary[];
-  /** M2: Automation summaries extracted from automation clips. */
+  /** Automation summaries extracted from automation clips. */
   automations?: readonly TimelineAutomationSummary[];
-  /** M12: Material-ref summaries extracted from clip data. */
+  /** Material-ref summaries extracted from clip data. */
   materialRefs?: readonly TimelineMaterialRefSummary[];
-  /** M12: Source-ref summaries extracted from clip provenance. */
+  /** Source-ref summaries extracted from clip provenance. */
   sourceRefs?: readonly TimelineSourceRefSummary[];
-  /** M13: Shader metadata persisted on clips or timeline postprocess app data. */
+  /** Shader metadata persisted on clips or timeline postprocess app data. */
   shaders?: readonly TimelineShaderSummary[];
-  /** M12: Render-group summaries extracted from timeline data. */
+  /** Render-group summaries extracted from timeline data. */
   renderGroups?: readonly TimelineRenderGroupSummary[];
   /**
    * Shot placements, in timeline order, with what each one plays. Present
@@ -320,7 +320,7 @@ export interface TimelineSnapshot {
    * `configVersion` stays the same.
    */
   shots?: readonly TimelineShotSummary[];
-  /** M12: Output metadata extracted from the timeline config. */
+  /** Output metadata extracted from the timeline config. */
   outputMetadata?: TimelineOutputMetadata;
 }
 
@@ -363,17 +363,17 @@ export interface TimelineClipSummary {
    * receiving raw provider rows.
    */
   contentFingerprint?: string;
-  /** M12: Effects applied to the clip. */
+  /** Effects applied to the clip. */
   effects?: readonly TimelineEffectSummary[];
-  /** M12: Transition applied to the clip, if any. */
+  /** Transition applied to the clip, if any. */
   transition?: TimelineTransitionSummary;
-  /** M12: Live bindings attached to the clip. */
+  /** Live bindings attached to the clip. */
   liveBindings?: readonly TimelineLiveBindingSummary[];
-  /** M2: Automation summaries attached to this automation clip. */
+  /** Automation summaries attached to this automation clip. */
   automation?: readonly TimelineAutomationSummary[];
-  /** M12: Material refs consumed by the clip. */
+  /** Material refs consumed by the clip. */
   materialRefs?: readonly TimelineMaterialRefSummary[];
-  /** M12: Source refs carried by this clip. */
+  /** Source refs carried by this clip. */
   sourceRefs?: readonly TimelineSourceRefSummary[];
 }
 
@@ -426,7 +426,7 @@ export interface TimelineShaderSummary {
   extensionId: string;
   contributionId: string;
   enabled: boolean;
-  /** M4: Canonical shader-uniform keyframes keyed by `uniforms.<name>`. */
+  /** Canonical shader-uniform keyframes keyed by `uniforms.<name>`. */
   keyframes?: Readonly<Record<string, readonly TimelineShaderKeyframe[]>>;
 }
 

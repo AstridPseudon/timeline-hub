@@ -17,17 +17,20 @@ const mocks = vi.hoisted(() => ({
   SkeletonGallery: vi.fn(() => <div data-testid="skeleton-gallery" />),
   SelectionContextMenu: vi.fn(({
     position,
-    onCreateShot,
-    onGenerateVideo,
+    onOpenGenerateVideo,
+    existingShots,
   }: {
     position: { x: number; y: number } | null;
-    onCreateShot: () => void;
-    onGenerateVideo: () => void;
+    onOpenGenerateVideo: (shot: { id: string; name: string }) => void;
+    existingShots?: Array<{ id: string; name: string }>;
   }) => (
     position ? (
       <div data-testid="selection-context-menu">
-        <button type="button" onClick={onCreateShot}>Create Shot</button>
-        <button type="button" onClick={onGenerateVideo}>Generate Video</button>
+        {(existingShots ?? []).map((shot) => (
+          <button key={shot.id} type="button" onClick={() => onOpenGenerateVideo(shot)}>
+            Generate Video
+          </button>
+        ))}
       </div>
     ) : null
   )),
@@ -38,7 +41,6 @@ const mocks = vi.hoisted(() => ({
   userSelectGalleryItem: vi.fn(),
   userSelectGalleryItems: vi.fn(),
   useShots: vi.fn(),
-  useShotCreation: vi.fn(),
   useShotNavigation: vi.fn(),
   useLassoSelection: vi.fn(),
 }));
@@ -60,7 +62,7 @@ vi.mock('@/integrations/astrid/client', async (importOriginal) => {
   };
 });
 
-vi.mock('@/integrations/supabase/repositories/taskRepository', () => ({
+vi.mock('@/integrations/astrid/repositories/taskRepository', () => ({
   fetchTaskInProject: mocks.legacyFetchTask,
 }));
 
@@ -112,10 +114,6 @@ vi.mock('@/shared/contexts/ShotsContext', () => ({
   useShots: () => mocks.useShots(),
 }));
 
-vi.mock('@/shared/hooks/shotCreation/useShotCreation', () => ({
-  useShotCreation: () => mocks.useShotCreation(),
-}));
-
 vi.mock('@/shared/hooks/shots/useShotNavigation', () => ({
   useShotNavigation: () => mocks.useShotNavigation(),
 }));
@@ -140,9 +138,6 @@ function buildProps(overrides: Partial<ComponentProps<typeof GenerationsPaneGall
       runtimeProjectId: null,
       runtimeAuthority: false,
       items: [],
-      onDelete: vi.fn(),
-      onToggleStar: vi.fn(),
-      isDeleting: false,
       allShots: [],
       lastShotId: undefined,
       filters: { sortBy: 'newest' } as never,
@@ -152,7 +147,6 @@ function buildProps(overrides: Partial<ComponentProps<typeof GenerationsPaneGall
       onServerPageChange: vi.fn(),
       generationFilters: undefined,
       currentViewingShotId: undefined,
-      onCreateShot: vi.fn(async () => undefined),
       emptyStateMessage: 'No generations yet.',
     },
     ...overrides,
@@ -171,10 +165,6 @@ describe('GenerationsPaneGallery', () => {
       ]),
     });
     mocks.useShots.mockReturnValue({ shots: [{ id: 'shot-9', name: 'Shot 9' }] });
-    mocks.useShotCreation.mockReturnValue({
-      createShot: vi.fn(),
-      isCreating: false,
-    });
     mocks.useShotNavigation.mockReturnValue({
       navigateToShot: vi.fn(),
     });
@@ -418,56 +408,14 @@ describe('GenerationsPaneGallery', () => {
     expect(screen.getByTestId('selection-context-menu')).toBeInTheDocument();
   });
 
-  it('creates a shot from gallery selection order without clearing the selection', async () => {
-    const createShot = vi.fn().mockResolvedValue({
-      shotId: 'shot-9',
-      shot: { id: 'shot-9', name: 'Shot 9' },
+  it('opens the video generation modal for an existing shot that holds the selection', async () => {
+    mocks.useShots.mockReturnValue({
+      shots: [{
+        id: 'shot-9',
+        name: 'Shot 9',
+        images: [{ generation_id: 'gen-1' }],
+      }],
     });
-    mocks.useShotCreation.mockReturnValue({ createShot, isCreating: false });
-    mocks.useGallerySelection.mockReturnValue({
-      selectedGalleryIds: new Set(['g2', 'g1']),
-      gallerySelectionMap: new Map([
-        ['g2', { url: 'https://example.com/2.mp4', mediaType: 'video', generationId: 'gen-2' }],
-        ['g1', { url: 'https://example.com/1.png', mediaType: 'image', generationId: 'gen-1' }],
-      ]),
-    });
-
-    const image = {
-      id: 'g2',
-      url: 'https://example.com/2.mp4',
-      type: 'video/mp4',
-      generation_id: 'gen-2',
-    };
-
-    render(
-      <GenerationsPaneGallery
-        {...buildProps({
-          gallery: { ...buildProps().gallery, items: [image] } as never,
-        })}
-      />,
-    );
-
-    const mediaGalleryProps = mocks.MediaGallery.mock.calls[0]?.[0];
-    act(() => {
-      mediaGalleryProps.onContextMenu({
-        preventDefault: vi.fn(),
-        clientX: 20,
-        clientY: 30,
-      }, image);
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Create Shot' }));
-
-    await waitFor(() => {
-      expect(createShot).toHaveBeenCalledWith({ generationIds: ['gen-2', 'gen-1'] });
-    });
-  });
-
-  it('opens the video generation modal with the newly created shot', async () => {
-    const createShot = vi.fn().mockResolvedValue({
-      shotId: 'shot-9',
-      shot: { id: 'shot-9', name: 'Shot 9' },
-    });
-    mocks.useShotCreation.mockReturnValue({ createShot, isCreating: false });
     mocks.useGallerySelection.mockReturnValue({
       selectedGalleryIds: new Set(['g1']),
       gallerySelectionMap: new Map([

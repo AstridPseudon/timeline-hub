@@ -1,9 +1,8 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, renderHook, screen, waitFor } from '@testing-library/react';
+import { render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TooltipProvider } from '@/shared/components/ui/tooltip.tsx';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let origin = '';
 vi.mock('@/integrations/runtime/connection.ts', async (importOriginal) => ({
@@ -16,12 +15,15 @@ vi.mock('@/shared/contexts/AgentChatContext', () => ({
   useAgentChatBridge: () => ({ timelineId: null, editorContext: { projectId: 'project-1' } }),
   useAgentChatActionsRegistry: () => ({ registerHandlers: () => {}, publishState: () => {}, unregister: () => {} }),
 }));
-vi.mock('@/tools/video-editor/hooks/useAgentVoice', () => ({
-  useAgentVoice: () => ({ isRecording: false, isProcessing: false, cancelRecording: () => {} }),
-}));
 
-import { AgentChatPanel } from './AgentChat.tsx';
-import { isTimelineAgentSessionsAvailable, useProjectAgentTaskLinks } from '@/tools/video-editor/hooks/useAgentSession.ts';
+import { AgentChatPanel as AgentChatPanelWithoutProvider } from './AgentChat.tsx';
+import { RuntimeConnectionProvider } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
+import { useProjectAgentTaskLinks } from '@/tools/video-editor/hooks/useAgentSession.ts';
+
+// The chat reads the runtime connection context; mount the real provider (ungated) around the real panel.
+function AgentChatPanel(props: React.ComponentProps<typeof AgentChatPanelWithoutProvider>) {
+  return <RuntimeConnectionProvider gated={false}><AgentChatPanelWithoutProvider {...props} /></RuntimeConnectionProvider>;
+}
 
 const GATEWAY = 'http://127.0.0.1:17340';
 const chat = {
@@ -33,7 +35,7 @@ const agents = { defaultAgent: 'astrid', agents: [{ id: 'astrid', name: 'Astrid'
 
 function withQueryClient({ children }: { children: React.ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  return <QueryClientProvider client={client}><TooltipProvider>{children}</TooltipProvider></QueryClientProvider>;
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
 describe('agent chat on the hosted build', () => {
@@ -52,14 +54,17 @@ describe('agent chat on the hosted build', () => {
     vi.stubGlobal('fetch', fetchSpy);
   });
 
-  afterEach(() => {
+  beforeAll(() => {
+  Element.prototype.scrollIntoView ??= vi.fn();
+});
+
+afterEach(() => {
     origin = '';
     vi.unstubAllGlobals();
   });
 
   it('mounts the composer and reads project chat and signed-in models through the local gateway', async () => {
     origin = GATEWAY;
-    expect(isTimelineAgentSessionsAvailable()).toBe(true);
     render(<AgentChatPanel />, { wrapper: withQueryClient });
 
     expect(screen.getByRole('textbox')).toBeInTheDocument();
@@ -67,8 +72,8 @@ describe('agent chat on the hosted build', () => {
     expect(screen.queryByRole('link', { name: 'Open the full editor' })).toBeNull();
     await waitFor(() => expect(screen.getByTestId('agent-chat-identity')).toHaveTextContent('Astrid · GPT 5.6 Sol'));
     const user = userEvent.setup();
-    await user.hover(screen.getByRole('button', { name: 'Chat model information' }));
-    expect(await screen.findByText('GPT 5.6 Sol', { exact: true })).toBeInTheDocument();
+    await user.click(screen.getByTestId('agent-chat-identity'));
+    expect(within(await screen.findByRole('dialog', { name: 'Model and thinking level' })).getByText('Astrid · GPT 5.6 Sol')).toBeInTheDocument();
     const urls = fetchSpy.mock.calls.map(([url]) => String(url));
     await waitFor(() => expect(fetchSpy.mock.calls.map(([url]) => String(url))).toContain(`${GATEWAY}/api/astrid/acp/connection-1/models?sessionId=saved-chat`));
     expect(urls).toContain(`${GATEWAY}/api/astrid/acp/agents`);
@@ -106,7 +111,6 @@ describe('agent chat on the hosted build', () => {
   });
 
   it('keeps same-origin chat available', async () => {
-    expect(isTimelineAgentSessionsAvailable()).toBe(true);
     const { result } = renderHook(() => useProjectAgentTaskLinks('project-1'), { wrapper: withQueryClient });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(fetchSpy).toHaveBeenCalledWith('/api/astrid/acp/projects/project-1/chat', expect.anything());

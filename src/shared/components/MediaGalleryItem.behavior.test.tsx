@@ -6,9 +6,6 @@ const mocks = vi.hoisted(() => ({
   prefetchTaskData: vi.fn(),
   navigateToShot: vi.fn(),
   setLastAffectedShotId: vi.fn(),
-  handleQuickCreateAndAdd: vi.fn(),
-  handleVisitCreatedShot: vi.fn(),
-  handleShare: vi.fn(),
   markAllViewed: vi.fn(),
   hasLoadedImage: vi.fn(() => false),
   setImageLoadStatus: vi.fn(),
@@ -57,14 +54,6 @@ vi.mock('@/shared/hooks/shots/useLastAffectedShot', () => ({
   useLastAffectedShot: () => ({ setLastAffectedShotId: mocks.setLastAffectedShotId }),
 }));
 
-vi.mock('@/shared/hooks/useQuickShotCreate', () => ({
-  useQuickShotCreate: () => ({
-    quickCreateSuccess: false,
-    handleQuickCreateAndAdd: mocks.handleQuickCreateAndAdd,
-    handleVisitCreatedShot: mocks.handleVisitCreatedShot,
-  }),
-}));
-
 vi.mock('@/domains/generation/hooks/tasks/useGenerationTaskMapping', () => ({
   useGenerationTaskMapping: () => ({ data: null }),
 }));
@@ -75,15 +64,6 @@ vi.mock('@/shared/hooks/tasks/useTasks', () => ({
 
 vi.mock('@/shared/hooks/tasks/useTaskType', () => ({
   useTaskType: () => ({ data: null }),
-}));
-
-vi.mock('@/shared/hooks/useShareGeneration', () => ({
-  useShareGeneration: () => ({
-    handleShare: mocks.handleShare,
-    isCreatingShare: false,
-    shareCopied: false,
-    shareSlug: null,
-  }),
 }));
 
 vi.mock('@/shared/hooks/variants/useMarkVariantViewed', () => ({
@@ -119,7 +99,6 @@ vi.mock('lucide-react', async () => {
   const actual = await vi.importActual<typeof import('lucide-react')>('lucide-react');
   return {
     ...actual,
-    Share2: () => <svg data-testid="share-icon" />,
     Copy: () => <svg data-testid="copy-icon" />,
     Check: () => <svg data-testid="check-icon" />,
     PlusCircle: () => <svg data-testid="plus-circle-icon" />,
@@ -158,7 +137,6 @@ function buildProps(overrides: Record<string, unknown> = {}) {
       addingToShotWithoutPositionImageId: null,
       setAddingToShotWithoutPositionImageId: vi.fn(),
       currentViewingShotId: 'other-shot',
-      onCreateShot: vi.fn(),
       onAddToLastShot: vi.fn(async () => true),
       onAddToLastShotWithoutPosition: vi.fn(async () => true),
       ...((overrides.shotWorkflow as object | undefined) ?? {}),
@@ -172,7 +150,6 @@ function buildProps(overrides: Record<string, unknown> = {}) {
       ...((overrides.mobileInteraction as object | undefined) ?? {}),
     },
     features: {
-      showShare: true,
       showDelete: true,
       showDownload: true,
       showStar: true,

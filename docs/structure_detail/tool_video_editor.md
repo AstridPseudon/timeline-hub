@@ -4,7 +4,7 @@
 
 **Purpose**: orient a developer in the *timeline surface* — layers, state ownership, gesture systems, and the unwritten contracts that hold them together. The extension platform has its own doc suite (`docs/video-editor/`, start at `extensions-quickstart.md`); this doc covers the host.
 
-**Source of Truth**: `hooks/useTimelineState.ts` (state composition) · `hooks/useTimelineCommandSession.ts` + `commands/commitSession.ts` (native edit session) · `commands/commitOutbox.ts` (durable recovery) · `hooks/timelineStore.ts` (slice store) · `lib/mobile-interaction-model.ts` (interaction policy) · `lib/timeline-scale.ts` + `lib/coordinate-utils.ts` (geometry).
+**Source of Truth**: `hooks/useTimelineState.ts` (state composition) · `hooks/timelineStore.ts` (slice store) · `lib/mobile-interaction-model.ts` (interaction policy) · `lib/timeline-scale.ts` + `lib/coordinate-utils.ts` (geometry).
 
 ---
 
@@ -16,10 +16,7 @@
 | Run one test file | `npx vitest run <path>` — the root `vitest.config.ts` delegates to `config/testing/`, so the `--config` flag in the package scripts is **not** needed interactively |
 | Watch one test file | `npx vitest <path>` |
 | Everything in the tool | `npx vitest run src/tools/video-editor` (or a subdir, e.g. `.../lib`) |
-| Real-browser device gestures | `npm run test:e2e:timeline` — one command; it boots the dev server *and* the fake Runtime. Chromium must already be available; do not install shared browser dependencies from a worker |
-| Native bootstrap proof | `npx playwright test --config playwright.main95-native-bootstrap.config.ts` — focused create/init, lost-ACK, restart, outbox-drain, and raw-history journey |
-| Focused native unit proof | `npx vitest run --config config/testing/vitest.config.ts src/integrations/runtime/bootstrapInitialization.test.ts src/integrations/runtime/createDefaultTimeline.test.ts src/tools/video-editor/commands/ordinaryStructuralMember.test.ts src/tools/video-editor/commands/shotSetCapture.test.ts src/tools/video-editor/commands/shotSetSession.test.ts src/tools/video-editor/hooks/useTimelineCommandSession.test.tsx src/tools/travel-between-images/pages/ShotEditorView.test.tsx` |
-| Docs quality audit | `npm run check:docs-maturity-sync` and `git diff --check` |
+| Real-browser device gestures | `npm run test:e2e:timeline` — one command; it boots the dev server *and* the fake Runtime. One-time setup: `npx playwright install chromium` |
 | Is the extension host wired? | open the editor with `?extensionSmoke=1`; the smoke extension's status contribution should appear |
 
 The conformance suite is the slow one (~45s for the 3-file run) — for the edit
@@ -30,75 +27,9 @@ loop, watch the single file you are changing.
 See [the repository README](../../README.md) for the local app and deterministic
 editor preview launch commands. This guide focuses on the editor surface.
 
-## 1. Editing path and current delivery boundary
+---
 
-This page is the App-owned editing architecture guide. Keep new editing
-architecture notes here and keep the runnable commands above current; do not
-create a parallel timeline architecture page.
-
-For migrated edits, there is one App session and one durable path:
-
-```text
-gesture or authoring producer
-  -> command capture in src/tools/video-editor/commands/
-  -> createTimelineCommandSession()
-  -> IndexedDB command outbox (original commands, guards, request, retry key)
-  -> RuntimeDataProvider.commitTimeline()
-  -> POST /v1/projects/{project}/timelines/{timeline}/commit
-  -> Runtime accepted revision and listTimelineCommits() history
-  -> verified projection/readback
-```
-
-`useTimelineCommandSession.ts` owns the mounted session and recovery handoff;
-`commitSession.ts` owns command capture, ordered submission, conflict handling,
-and inverse-command undo; `commitOutbox.ts` owns the crash-safe IndexedDB
-record. Accepted history belongs to Runtime. Local previews and unsent drafts
-are session state, not a second accepted-history authority. The current
-native bootstrap follows the same boundary: `createDefaultTimeline.ts`
-delegates to `RuntimeDataProvider.initializeNativeBootstrapTimeline()`, which
-durably creates the timeline, verifies the single empty parent baseline, then
-submits `timeline.init` plus the two `track.create` commands through the same
-outbox and `/v1` commit route. A late create or commit acknowledgement is
-recovered by the original owner and request identity; it is never replaced by
-a fresh request.
-
-The current App native-bootstrap reference is 1557c312. Its bounded proof is
-the qualified `tests/e2e/local/main95-native-bootstrap.integration.spec.ts`
-journey (create/init, lost acknowledgement, Runtime restart, reload, exact
-retry, outbox drain, two raw history entries, and canonical readback), with
-the unit contract in `src/integrations/runtime/bootstrapInitialization.test.ts`.
-The current proof tuple is Runtime 0.2.14, published from source 95bd3c5f
-(`all76`), and Composition 0.0.13 (`all77`). These are bounded current
-qualification facts; remaining product gates are separate and unverified.
-
-Two other bounded native slices are qualified on this path: one eligible
-parent `clip.delete` through the existing command session/outbox, and the
-mounted occurrence-owned shot name through `shot.set`. The former is not a
-claim for grouped, multi-clip, occurrence, or prepared-media deletion; the
-latter is not a claim for standalone, gallery, or shot-settings writers.
-
-The one-path target is not yet complete for every producer. Keep these gaps
-visible until each has an accepted native replacement and the old call is
-removed:
-
-| Still-open writer or boundary | Current path | Status |
-|---|---|---|
-| Ordinary snapshot batches and extension/producer edits | `src/tools/video-editor/hooks/useTimelineOps.ts:277-321` and its `commitData` callers | **HELD**: snapshot ingress remains live; no zero-writer claim. |
-| Parent-composition publication | `src/integrations/runtime/dataProvider.ts:295`, reached through the shot-composition/placement seams | **HELD**: still live for unmigrated shot-composition and placement producers. |
-| Generic timeline compatibility save | `src/integrations/runtime/dataProvider.ts:1000-1131` (`saveTimeline` / `saveTimelineAtHead`) and `src/shared/lib/placement/placementService.ts:106` | **HELD**: retained compatibility writer; not the native command path. |
-| Popup occurrence add/swap | `src/tools/travel-between-images/components/shotTimelineDataProvider.ts` | **HELD**: existing `saveTimeline` writer remains; native ADD and SWAP acceptance are separate gaps. |
-| Remaining SET families (clip/element/selected-parameter and shot settings) | `src/tools/video-editor/commands/elementCapture.ts`, `src/tools/video-editor/commands/selectedParamAuthority.ts`, and `src/tools/travel-between-images/pages/ShotEditorView.tsx` | **HELD**: bounded captures exist, but the remaining writers have no zero-legacy qualification. |
-| Extension project-data writers | `src/tools/video-editor/lib/source-map-runtime.ts` and `src/tools/video-editor/commands/projectDataMember.ts` | **HELD**: the native replacement needs the matched ordered carrier and accepted remove/inverse proof. |
-| Local checkpoints and snapshot restore | `src/tools/video-editor/hooks/useTimelineHistory.ts:248-279,302-320,493-556` and `src/tools/video-editor/components/TimelineEditorShellToolbar.tsx:213-245` | Runtime history is authoritative for accepted commands, but these unmigrated local paths remain. |
-| Wider gesture coverage | grouped/occurrence delete, ordinary batch, split, parent-media, and remaining shot-settings routes | Native captures are staged or partial; do not describe them as all migrated. |
-
-The parent-publication boundary is therefore a remaining migration seam, not a
-second recommended editing recipe. The former Supabase append/import and
-retired edge writer routes stay unsupported. This document also does not claim
-physical frame/audio parity, a full-suite green result, private-source
-operations, or ZIP delivery; those remain separate gates and reports.
-
-## 2. Layer map
+## 1. Layer map
 
 Paths below are relative to `src/tools/video-editor/`.
 
@@ -116,7 +47,7 @@ Paths below are relative to `src/tools/video-editor/`.
 
 ---
 
-## 3. State ownership
+## 2. State ownership
 
 `useTimelineState()` composes ~15 sub-hooks (queries, save, history, selection, clip editing, resize, external drop, drag coordinator, playback, render state, track management, ops) into **four slice objects**, then *pushes* them into a vanilla zustand store via `syncSlices()` each render. The store is a distribution mechanism, not the source of truth — the hook composition is.
 
@@ -134,7 +65,7 @@ Paths below are relative to `src/tools/video-editor/`.
 
 ---
 
-## 4. Three drag-and-drop systems
+## 3. Three drag-and-drop systems
 
 They coexist and do not share a mechanism. Match the gesture to its owner before touching anything.
 
@@ -154,7 +85,7 @@ HTML5 DnD never fires on touch — any drag-only affordance needs a tap path, or
 
 ---
 
-## 5. Stringly DOM contract
+## 4. Stringly DOM contract
 
 The gesture layer's real API is class names and data attributes resolved with `closest()` / `querySelector()`. `lib/timeline-dom.ts` (`TIMELINE_DOM`) names every token below and is the **only** place they may be spelled: it exports the class/attribute constants, the selectors the gesture layer issues, the `dataset` keys it reads back, and one attribute builder per markup site. Import from there on both sides — a rename then breaks the build instead of the gesture.
 
@@ -175,7 +106,7 @@ CSS cannot import TypeScript, so `timeline-overrides.css` repeats the tokens as 
 
 ---
 
-## 6. Mobile interaction: policy vs mechanism
+## 5. Mobile interaction: policy vs mechanism
 
 `lib/mobile-interaction-model.ts` is a **pure policy module**: device class (`desktop|tablet|phone`), input modality, interaction mode (`browse|select|move|trim`), gesture owner, plus predicates (`shouldAllowTouchClipDrag`, `resolveArmedTouchGesture`, `shouldExpandTouchTrimHandles`, `shouldEnableTimelinePinchZoom`, …). `phone` and `tablet` get the same touch editor; the shell lays it out by the screen's shape, so the editor branches on `deviceClass !== 'desktop'`, never on phone vs tablet. Device class is resolved once in `useTimelineState.ts`, which supplies the values `resolveTimelineDeviceClass` decides from.
 
@@ -202,7 +133,7 @@ Policy answers *may this gesture happen*. It cannot make it happen. The **mechan
 
 ---
 
-## 7. App mode vs dev Local mode
+## 6. App mode vs dev Local mode
 
 | | App mode | Local mode (dev only) |
 |---|---|---|
@@ -215,7 +146,7 @@ Only the `dataProvider`, ids, and `remountKey` differ — the provider component
 
 ---
 
-## 8. Zoom and coordinate semantics
+## 7. Zoom and coordinate semantics
 
 The names mislead. Read this before touching anything width-shaped.
 
@@ -235,7 +166,7 @@ Both zoom paths route through the constants: toolbar +/- in `TimelineEditorShell
 
 ---
 
-## 9. Extensions
+## 8. Extensions
 
 Full platform docs: **`docs/video-editor/`** (`extensions-quickstart.md`, `extension-author-contract.md`, `extensions-trust-envelope.md`, `extensions-debugging.md`, migration + release checklist). Extensions import only `@astrid/editor-sdk`, an alias to `src/sdk/index.ts` (`tsconfig.json`, `config/vite/vite.config.ts`), enforced by `src/sdk/boundary.test.ts`.
 
@@ -249,7 +180,7 @@ The V1 host-owned primitive is `primitives.markerLayer(...)`, **ruler-only** (`p
 
 ---
 
-## 10. Failure containment
+## 9. Failure containment
 
 | Boundary | Wraps | Recovery |
 |---|---|---|

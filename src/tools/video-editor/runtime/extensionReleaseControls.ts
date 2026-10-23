@@ -4,18 +4,7 @@ import type { VideoEditorTelemetryHost } from './ports';
 /** Frozen production admission allowlist; unreviewed extension IDs fail closed. */
 export const REVIEWED_PRODUCTION_EXTENSION_IDS = Object.freeze([
   'haus.astrid.threejs-live-editor',
-  'haus.astrid.scene-phase-markers',
   'haus.astrid.transcript-lane',
-  'haus.astrid.creative-lab.pulse-map',
-  'haus.astrid.creative-lab.soundtrack-cartographer',
-  'haus.astrid.creative-lab.caption-safe-zone-orchestra',
-  'haus.astrid.creative-lab.emotional-weather-map',
-  'haus.astrid.creative-lab.timeline-faultline',
-  'haus.astrid.creative-lab.foley-constellation',
-  'haus.astrid.creative-lab.branching-cut',
-  'haus.astrid.creative-lab.chromatic-constellation',
-  'haus.astrid.creative-lab.recall-pulse',
-  'haus.astrid.creative-lab.lockline-inspector',
 ] as const);
 const REVIEWED_PRODUCTION_EXTENSION_ID_SET = new Set<string>(REVIEWED_PRODUCTION_EXTENSION_IDS);
 
@@ -271,6 +260,9 @@ export function buildExtensionLifecycleOperationalEvents(
  * Browser boundary for the app's analytics adapter. The payload has already
  * passed the fixed privacy schema before it reaches this event, so listeners
  * cannot accidentally receive timeline content, prompts, paths, or URLs.
+ * The App itself registers no listener: the event is kept deliberately as the
+ * documented release-observability boundary (docs/extensions/extension-release-runbook.md,
+ * "Observability and privacy boundary") for an embedding page or adapter to subscribe to.
  */
 export function dispatchExtensionOperationalEvent(event: ExtensionOperationalEvent): void {
   if (typeof window === 'undefined') return;

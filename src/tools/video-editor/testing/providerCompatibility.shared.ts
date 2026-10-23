@@ -2,7 +2,7 @@
  * Provider Compatibility Shared Test Helper
  *
  * Runs a standard battery of DataProvider contract tests against any
- * feasible provider implementation (InMemory, Supabase, AstridBridge).
+ * feasible provider implementation (InMemory, AstridBridge).
  *
  * Covers:
  *  - Versioned load/save semantics with atomic expected-version CAS

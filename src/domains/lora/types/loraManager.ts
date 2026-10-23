@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import type { ActiveLora, LoraModel } from './lora';
+import type { ActiveLora } from './lora';
 
 export interface ExplicitLoraEditEvent {
-  kind: 'add' | 'remove' | 'strength';
+  kind: 'remove' | 'strength';
   lora: ActiveLora | null;
   current: ActiveLora[];
 }
@@ -25,9 +25,6 @@ export interface LoraManagerOptions {
 export interface LoraManagerState {
   selectedLoras: ActiveLora[];
   setSelectedLoras: (loras: ActiveLora[]) => void;
-  isLoraModalOpen: boolean;
-  setIsLoraModalOpen: (open: boolean) => void;
-  handleAddLora: (lora: LoraModel, isManualAction?: boolean, initialStrength?: number) => void;
   handleRemoveLora: (loraId: string, isManualAction?: boolean) => void;
   handleLoraStrengthChange: (loraId: string, strength: number, isManualAction?: boolean) => void;
   hasEverSetLoras: boolean;

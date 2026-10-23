@@ -16,3 +16,4 @@ export interface CompletionLogger {
   warn: (msg: string, ctx?: Record<string, unknown>) => void;
   error: (msg: string, ctx?: Record<string, unknown>) => void;
 }
+

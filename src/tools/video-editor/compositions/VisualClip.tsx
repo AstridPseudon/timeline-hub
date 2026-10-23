@@ -1,12 +1,13 @@
+import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import { useMemo, useState, type CSSProperties, type FC, type ReactNode } from 'react';
-import { AbsoluteFill, Freeze, Sequence, interpolate, useCurrentFrame, useRemotionEnvironment, useVideoConfig } from 'remotion';
-import { getSanitizedPlaybackRate, queryDrawFrame, type DrawPlan } from '@banodoco/timeline-composition/evaluation';
+import { AbsoluteFill, Sequence, interpolate, useCurrentFrame, useRemotionEnvironment, useVideoConfig } from 'remotion';
 import { ReadinessImage } from '@astrid/packs/rendering/shared/readiness-image';
 import { ReadinessVideo } from './ReadinessVideo.tsx';
 import {
   getClipDurationInFrames,
   getSanitizedMediaSrc,
   getSanitizedMediaTrimProps,
+  getSanitizedPlaybackRate,
   getSanitizedVolume,
   parseResolution,
   secondsToFrames,
@@ -36,9 +37,8 @@ import {
   type ShaderEffectRegistrySnapshot,
 } from '@/tools/video-editor/shaders/registry/index.ts';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
-import { preparePlayerClipOpacity, preparePlayerTrack } from './playerEvaluation.ts';
 
-// SD-025 (Sprint 3): inline missing-asset placeholder body. Mirrors the
+// inline missing-asset placeholder body. Mirrors the
 // styling of UnknownClipPlaceholder so the two loud cases look like a pair.
 // Lives inline (not a shared component) because VisualClip already wraps
 // content in a Sequence/AbsoluteFill upstream — we only need the visible
@@ -78,7 +78,7 @@ const MissingAssetBody: FC<{ clipId: string; clipType: string }> = ({ clipId, cl
   </AbsoluteFill>
 );
 
-// SD-032 (Sprint 5): inline missing-transition placeholder body. Renders when
+// inline missing-transition placeholder body. Renders when
 // a clip has a transition type that cannot be resolved through the unified
 // catalog (built-ins + provider registry). The clip content still renders, but
 // without transition styling — the placeholder is rendered as a diagnostic
@@ -193,7 +193,6 @@ type VisualClipProps = {
   track: TrackDefinition;
   fps: number;
   predecessor?: ResolvedTimelineClip | null;
-  drawPlan?: DrawPlan | null;
   effectRegistrySnapshot?: EffectRegistrySnapshot;
   shaderRegistrySnapshot?: ShaderEffectRegistrySnapshot;
   materialRefs?: readonly RenderMaterialRef[];
@@ -206,7 +205,6 @@ const getClipBoxStyle = (
   track: TrackDefinition,
   compositionWidth: number,
   compositionHeight: number,
-  opacity: number,
 ): CSSProperties => {
   const hasPositionOverride = (
     clip.x !== undefined
@@ -227,13 +225,13 @@ const getClipBoxStyle = (
         width: clip.width ?? compositionWidth,
         height: clip.height ?? compositionHeight,
         objectFit: 'cover',
-        opacity,
+        opacity: clip.opacity ?? 1,
       }
     : {
         width: '100%',
         height: '100%',
         objectFit: fit,
-        opacity,
+        opacity: clip.opacity ?? 1,
       };
   const cropTop = clip.cropTop ?? 0;
   const cropRight = clip.cropRight ?? 0;
@@ -296,10 +294,7 @@ function shouldRenderMaterialPlaceholder(status: RenderPlannerMaterialStatus): b
 const VisualAsset: FC<VisualClipProps> = ({ clip, track, fps }) => {
   const { width: compositionWidth, height: compositionHeight } = useVideoConfig();
   const previewMediaFailure = useOptionalPreviewMediaFailure();
-  const frame = useCurrentFrame();
-  const opacityAt = useMemo(() => clip.effects ? preparePlayerClipOpacity(clip, fps) : null, [clip, fps]);
-  const opacity = opacityAt ? opacityAt(frame) : clip.opacity ?? 1;
-  // SD-025: never silent-null when a built-in clip is missing its asset.
+  // Never silent-null when a built-in clip is missing its asset.
   // Render a labeled red band so the gap is obvious in preview/export.
   if (!clip.assetEntry) {
     return <MissingAssetBody clipId={clip.id} clipType={clip.clipType ?? 'media'} />;
@@ -310,7 +305,7 @@ const VisualAsset: FC<VisualClipProps> = ({ clip, track, fps }) => {
     return <MissingAssetBody clipId={clip.id} clipType={clip.clipType ?? 'media'} />;
   }
 
-  const clipVolume = getSanitizedVolume(clip.volume);
+  const clipVolume = getEffectiveClipVolume(clip);
   const effectiveVolume = track.muted ? 0 : getSanitizedVolume(track.volume) * clipVolume;
   const playbackRate = getSanitizedPlaybackRate(clip.speed);
   const trimProps = getSanitizedMediaTrimProps(clip, fps);
@@ -360,7 +355,7 @@ const VisualAsset: FC<VisualClipProps> = ({ clip, track, fps }) => {
   const useViewportLayout = fit === 'manual' || hasPositionOverride;
 
   if (!useViewportLayout) {
-    const style = getClipBoxStyle(clip, track, compositionWidth, compositionHeight, opacity);
+    const style = getClipBoxStyle(clip, track, compositionWidth, compositionHeight);
     const sharedStyle: CSSProperties = {
       ...style,
       mixBlendMode: track.blendMode && track.blendMode !== 'normal' ? track.blendMode : undefined,
@@ -422,7 +417,7 @@ const VisualAsset: FC<VisualClipProps> = ({ clip, track, fps }) => {
     width: viewportLayout.renderBounds.width,
     height: viewportLayout.renderBounds.height,
     overflow: 'hidden',
-    opacity,
+    opacity: clip.opacity ?? 1,
   };
   const mediaStyle: CSSProperties = {
     position: 'absolute',
@@ -504,7 +499,6 @@ export const VisualClip: FC<VisualClipProps> = ({
   materialRefs,
   materialStatuses,
   materialDiagnostics,
-  drawPlan,
 }) => {
   const environment = useRemotionEnvironment();
   const providerRegistryContext = useOptionalEffectRegistryContext();
@@ -562,7 +556,7 @@ export const VisualClip: FC<VisualClipProps> = ({
   );
 
   let transitionStyle: CSSProperties | undefined;
-  if (clip.transition && !drawPlan) {
+  if (clip.transition) {
     const record = resolveTransition(clip.transition.type, mergedTransitionSnapshot);
     if (record) {
       const transitionProgress = interpolate(
@@ -633,19 +627,6 @@ const LazyGuard: FC<{ durationInFrames: number; children: ReactNode }> = ({ dura
   return <>{children}</>;
 };
 
-const EvaluatedVisualContent: FC<{ plan: DrawPlan; children: ReactNode }> = ({ plan, children }) => {
-  const frame = useCurrentFrame();
-  const evaluated = queryDrawFrame(plan, frame);
-  // Canonical incoming plans advance content directly from the Sequence origin.
-  // Older outgoing plans freeze only silent images on their own clock.
-  const extended = !plan.incomingPolicy && (plan.ownOffset !== 0 || plan.drawDuration > plan.ownDuration);
-  return (
-    <AbsoluteFill style={{ opacity: evaluated.opacity }}>
-      {extended ? <Freeze frame={evaluated.ownFrame}>{children}</Freeze> : children}
-    </AbsoluteFill>
-  );
-};
-
 export const VisualClipSequence: FC<VisualClipProps> = ({
   clip,
   track,
@@ -656,39 +637,7 @@ export const VisualClipSequence: FC<VisualClipProps> = ({
   materialRefs,
   materialStatuses,
   materialDiagnostics,
-  drawPlan,
 }) => {
-  const { width, height } = useVideoConfig();
-  const plan = useMemo(() => drawPlan !== undefined ? drawPlan
-    : preparePlayerTrack(track, predecessor ? [predecessor, clip] : [clip], fps, width, height)
-      .plans.get(clip.id) ?? null, [drawPlan, track, predecessor, clip, fps, width, height]);
-  const content = (
-    <VisualClip
-      clip={clip}
-      track={track}
-      fps={fps}
-      predecessor={predecessor}
-      drawPlan={plan}
-      effectRegistrySnapshot={effectRegistrySnapshot}
-      shaderRegistrySnapshot={shaderRegistrySnapshot}
-      materialRefs={materialRefs}
-      materialStatuses={materialStatuses}
-      materialDiagnostics={materialDiagnostics}
-    />
-  );
-  if (plan) {
-    if (plan.drawDuration <= 0) return null;
-    return (
-      <Sequence key={clip.id} from={plan.drawStart} durationInFrames={plan.drawDuration} premountFor={fps}>
-        <LazyGuard durationInFrames={plan.drawDuration}>
-          <EvaluatedVisualContent plan={plan}>{content}</EvaluatedVisualContent>
-        </LazyGuard>
-      </Sequence>
-    );
-  }
-
-  // Host-only transitions keep their original timing until their picture and
-  // audible subtree clocks can be declared to the shared evaluator.
   const durationInFrames = getClipDurationInFrames(clip, fps);
   const transitionFrames = predecessor && clip.transition
     ? secondsToFrames(clip.transition.duration, fps)
@@ -723,7 +672,17 @@ export const VisualClipSequence: FC<VisualClipProps> = ({
       premountFor={fps}
     >
       <LazyGuard durationInFrames={effectiveDuration}>
-        {content}
+        <VisualClip
+          clip={clip}
+          track={track}
+          fps={fps}
+          predecessor={predecessor}
+          effectRegistrySnapshot={effectRegistrySnapshot}
+          shaderRegistrySnapshot={shaderRegistrySnapshot}
+          materialRefs={materialRefs}
+          materialStatuses={materialStatuses}
+          materialDiagnostics={materialDiagnostics}
+        />
       </LazyGuard>
     </Sequence>
   );

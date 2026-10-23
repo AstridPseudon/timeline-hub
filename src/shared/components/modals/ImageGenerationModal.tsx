@@ -8,7 +8,6 @@ import {
 import { useExtraLargeModal } from '@/shared/hooks/useModal';
 import { ImageGenerationForm } from '@/shared/components/ImageGenerationForm';
 import { createImageGenerationTasks } from '@/shared/lib/taskCreation';
-import { useApiKeys } from '@/shared/hooks/settings/useApiKeys';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/shared/lib/queryKeys';
@@ -45,11 +44,8 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
   const footerPortalId = useId();
   const { selectedProjectId } = useProjectSelectionContext();
   const queryClient = useQueryClient();
-  const { getApiKey } = useApiKeys();
   const navigate = useNavigate();
   const run = useTaskPlaceholder();
-
-  const openaiApiKey = getApiKey('openai_api_key');
 
   const handleGenerate = useCallback(async (taskParams: BatchImageGenerationTaskParams): Promise<string[]> => {
     const disabledReason = composeDisabledReason();
@@ -104,24 +100,10 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
     navigate(TOOL_ROUTES.IMAGE_GENERATION);
   }, [onClose, navigate]);
 
-  // Check if product tour is active (Joyride elements exist in DOM)
-  const isTourActive = useCallback(() => {
-    return !!document.querySelector('.react-joyride__overlay');
-  }, []);
-
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        // Check tour status fresh (not stale render-time value)
-        const tourActiveNow = isTourActive();
-
-        // During tour, the modal is controlled entirely by the isOpen prop
-        // (which is set by the closeGenerationModal event from ProductTour)
-        // So we ignore onOpenChange during the tour
-        if (!open && tourActiveNow) {
-          return;
-        }
         if (!open) onClose();
       }}
     >
@@ -218,7 +200,6 @@ export const ImageGenerationModal: React.FC<ImageGenerationModalProps> = ({
           }>
             <ImageGenerationForm
               onGenerate={handleGenerate}
-              openaiApiKey={openaiApiKey}
               stickyFooter={true}
               footerPortalId={footerPortalId}
               initialShotId={initialShotId}

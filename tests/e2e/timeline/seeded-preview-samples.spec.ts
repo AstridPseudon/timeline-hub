@@ -1,61 +1,19 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { getTimelineLabelWidth } from '../../../src/tools/video-editor/lib/coordinate-utils.ts';
+import { PREVIEW_SURFACE, RULER, calibrateRuler, seekRulerToFrame } from '../support/previewRuler';
 import { BASELINE_CLIPS, PROJECT_SLUG, TIMELINE_SLUG, browserEvidencePath, openEditor } from './support';
 
 const FPS = 30;
-const PREVIEW_SURFACE = '[data-testid="video-editor-preview-surface"]';
-const RULER = '[data-testid="timeline-ruler"]';
+/** This spec runs on a desktop viewport, where the track-name column (the timeline's `startLeft`) is 144px. */
+const TIMELINE_START_LEFT = getTimelineLabelWidth('desktop');
 const HERO_CLIP = '[data-clip-id="clip-hero"][role="button"]';
+/** Ends the composition (at 6.5s, held 4s): its right edge is where the preview stops being seekable. */
+const LAST_CLIP = '[data-clip-id="clip-detail"][role="button"]';
 
-type RulerCalibration = {
-  x1: number;
-  time1: number;
-  x2: number;
-  time2: number;
-  pixelsPerSecond: number;
-};
-
-async function currentPreviewTime(page: Page): Promise<number> {
-  const raw = await page.locator(PREVIEW_SURFACE).getAttribute('data-current-time');
-  const value = Number(raw);
-  if (!Number.isFinite(value)) throw new Error(`preview has no finite data-current-time: ${String(raw)}`);
-  return value;
-}
-
-async function clickRulerAndReadTime(
-  page: Page,
-  x: number,
-  requireChange = true,
-): Promise<number> {
-  const ruler = await page.locator(RULER).boundingBox();
-  if (!ruler) throw new Error('timeline ruler has no browser box');
-  const before = await currentPreviewTime(page);
-  await page.mouse.click(x, ruler.y + ruler.height / 2);
-  if (requireChange) {
-    await expect.poll(() => currentPreviewTime(page), { timeout: 5_000 }).not.toBe(before);
-  } else {
-    await page.waitForTimeout(100);
-  }
-  return currentPreviewTime(page);
-}
-
-async function calibrateRuler(page: Page): Promise<RulerCalibration> {
-  const ruler = await page.locator(RULER).boundingBox();
-  if (!ruler) throw new Error('timeline ruler has no browser box');
-  // Two real pointer clicks establish the screen-x to rendered-time mapping
-  // for the current zoom. Anchoring from observed frame times accounts for
-  // Remotion's frame snapping and avoids relying on stale pixel geometry.
-  const x1 = ruler.x + ruler.width * 0.12;
-  const x2 = ruler.x + ruler.width * 0.42;
-  const time1 = await clickRulerAndReadTime(page, x1, false);
-  const time2 = await clickRulerAndReadTime(page, x2, false);
-  const pixelsPerSecond = (x2 - x1) / (time2 - time1);
-  if (!Number.isFinite(pixelsPerSecond) || pixelsPerSecond <= 0) {
-    throw new Error(`ruler calibration did not advance: ${JSON.stringify({ x1, time1, x2, time2 })}`);
-  }
-  return { x1, time1, x2, time2, pixelsPerSecond };
-}
+/** The seeded fixture's geometry for the shared ruler seek (tests/e2e/support/previewRuler.ts). */
+const TIMELINE = { fps: FPS, startLeft: TIMELINE_START_LEFT, lastClipSelector: LAST_CLIP };
 
 test.describe('seeded browser preview samples', () => {
   test.use({ viewport: { width: 1600, height: 1000 } });
@@ -100,7 +58,7 @@ test.describe('seeded browser preview samples', () => {
     expect(new Set(seededFrames).size).toBe(8);
 
     const records: Array<Record<string, unknown>> = [];
-    let calibration = await calibrateRuler(page);
+    let calibration = await calibrateRuler(page, TIMELINE);
     let zoomBefore = await page.locator(HERO_CLIP).evaluate((el) => el.getBoundingClientRect().width);
 
     for (let index = 0; index < seededFrames.length; index += 1) {
@@ -111,29 +69,12 @@ test.describe('seeded browser preview samples', () => {
           { timeout: 5_000 },
         ).toBeGreaterThan(zoomBefore);
         zoomBefore = await page.locator(HERO_CLIP).evaluate((el) => el.getBoundingClientRect().width);
-        calibration = await calibrateRuler(page);
+        calibration = await calibrateRuler(page, TIMELINE);
       }
 
       const requestedFrame = seededFrames[index]!;
-      const requestedTime = requestedFrame / FPS;
       const label = labels[index]!;
-      let x = calibration.x1 + ((requestedTime - calibration.time1) * calibration.pixelsPerSecond);
-      const rulerBox = await page.locator(RULER).boundingBox();
-      if (!rulerBox) throw new Error(`no ruler box for ${label}`);
-      expect(x, `${label}: requested frame ${requestedFrame} must be reachable on the visible ruler`).toBeGreaterThan(rulerBox.x + 2);
-      expect(x, `${label}: requested frame ${requestedFrame} must be reachable on the visible ruler`).toBeLessThan(rulerBox.x + rulerBox.width - 2);
-
-      let observedTime = -1;
-      let observedFrame = -1;
-      let adjustments = 0;
-      for (; adjustments < 4; adjustments += 1) {
-        observedTime = await clickRulerAndReadTime(page, x, adjustments === 0);
-        observedFrame = Math.round(observedTime * FPS);
-        if (observedFrame === requestedFrame) break;
-        x += (requestedTime - observedTime) * calibration.pixelsPerSecond;
-        expect(x, `${label}: calibrated correction must stay on the visible ruler`).toBeGreaterThan(rulerBox.x + 2);
-        expect(x, `${label}: calibrated correction must stay on the visible ruler`).toBeLessThan(rulerBox.x + rulerBox.width - 2);
-      }
+      const { requestedTime, observedTime, observedFrame, adjustments } = await seekRulerToFrame(page, calibration, requestedFrame, FPS, label);
 
       expect(
         Math.abs(observedTime - requestedTime),

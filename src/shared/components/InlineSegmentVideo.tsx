@@ -29,7 +29,6 @@ export const InlineSegmentVideo: React.FC<InlineSegmentVideoProps> = ({
   onDelete,
   isDeleting = false,
   isPending = false,
-  hasSourceChanged = false,
   isScrubbingActive = false,
   onScrubbingStart,
   scrubbingContainerRef,
@@ -83,7 +82,6 @@ export const InlineSegmentVideo: React.FC<InlineSegmentVideoProps> = ({
       onDelete={onDelete}
       isDeleting={isDeleting}
       isPending={isPending}
-      hasSourceChanged={hasSourceChanged}
       scrubbing={{
         isActive: isScrubbingActive,
         onStart: onScrubbingStart,

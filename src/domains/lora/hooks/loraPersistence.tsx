@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useToolSettings } from '@/shared/hooks/settings/useToolSettings';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
 import { LoraHeaderActions } from '@/shared/components/LoraHeaderActions';
-import type { ActiveLora, LoraModel } from '@/domains/lora/types/lora';
+import type { ActiveLora } from '@/domains/lora/types/lora';
 import { buildLoraAutoLoadStateKey } from './loraStateHelpers';
 
 interface LoraPersistenceSettings extends Record<string, unknown> {
@@ -13,8 +13,6 @@ interface LoraPersistenceSettings extends Record<string, unknown> {
 interface LoraPersistenceManagerHandle {
   selectedLoras: ActiveLora[];
   selectedLorasRef: React.MutableRefObject<ActiveLora[]>;
-  availableLoras: LoraModel[];
-  handleAddLora: (lora: LoraModel, isManualAction?: boolean, initialStrength?: number) => void;
   handleRemoveLora: (loraId: string, isManualAction?: boolean) => void;
   handleLoraStrengthChange: (loraId: string, strength: number, isManualAction?: boolean) => void;
   markAsUserSet: () => void;
@@ -54,8 +52,6 @@ export function useLoraPersistence({
   const {
     selectedLoras,
     selectedLorasRef,
-    availableLoras,
-    handleAddLora,
     handleRemoveLora,
     handleLoraStrengthChange,
     markAsUserSet,
@@ -128,16 +124,6 @@ export function useLoraPersistence({
       const lorasToRemove = currentLoras.filter((lora) => !savedLoraIds.has(lora.id));
       lorasToRemove.forEach((lora) => handleRemoveLora(lora.id, false));
 
-      const lorasToAdd = savedLoras.filter((savedLora) => !currentLoraIds.has(savedLora.id));
-      for (const savedLora of lorasToAdd) {
-        const availableLora = availableLoras.find((lora) => lora['Model ID'] === savedLora.id);
-        if (availableLora) {
-          handleAddLora(availableLora, false, savedLora.strength);
-        } else {
-          console.warn(`LoRA ${savedLora.id} not found in available LoRAs`);
-        }
-      }
-
       savedLoras.forEach((savedLora) => {
         if (currentLoraIds.has(savedLora.id)) {
           handleLoraStrengthChange(savedLora.id, savedLora.strength, false);
@@ -149,9 +135,7 @@ export function useLoraPersistence({
       normalizeAndPresentError(error, { context: 'useLoraManager', showToast: false });
     }
   }, [
-    availableLoras,
     enableProjectPersistence,
-    handleAddLora,
     handleLoraStrengthChange,
     handleRemoveLora,
     markAsUserSet,

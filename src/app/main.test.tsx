@@ -15,7 +15,6 @@ vi.mock('@/shared/lib/logger', () => ({
 
 const initializeProjectSelectionStoreMock = vi.fn();
 const initializePreloadingServiceMock = vi.fn();
-const initializeToolSettingsWriteRuntimeMock = vi.fn();
 const initializeNetworkStatusManagerMock = vi.fn();
 
 vi.mock('@/shared/contexts/projectSelectionStore', () => ({
@@ -24,10 +23,6 @@ vi.mock('@/shared/contexts/projectSelectionStore', () => ({
 
 vi.mock('@/shared/lib/preloading', () => ({
   initializePreloadingService: initializePreloadingServiceMock,
-}));
-
-vi.mock('@/shared/settings', () => ({
-  initializeToolSettingsWriteRuntime: initializeToolSettingsWriteRuntimeMock,
 }));
 
 vi.mock('@/shared/services/network/networkStatusManager', () => ({
@@ -49,7 +44,6 @@ describe('bootstrap.renderApp', () => {
     mockRender.mockClear();
     initializeProjectSelectionStoreMock.mockClear();
     initializePreloadingServiceMock.mockClear();
-    initializeToolSettingsWriteRuntimeMock.mockClear();
     initializeNetworkStatusManagerMock.mockClear();
     window.history.replaceState({}, '', '/');
     delete window.__ASTRID_APP_LOCAL_TEST__;
@@ -80,7 +74,6 @@ describe('bootstrap.renderApp', () => {
     }
     expect(initializeProjectSelectionStoreMock.mock.calls.length).toBeGreaterThanOrEqual(1);
     expect(initializePreloadingServiceMock.mock.calls.length).toBeGreaterThanOrEqual(1);
-    expect(initializeToolSettingsWriteRuntimeMock.mock.calls.length).toBeGreaterThanOrEqual(1);
     expect(initializeNetworkStatusManagerMock.mock.calls.length).toBeGreaterThanOrEqual(1);
   }, 15_000);
 

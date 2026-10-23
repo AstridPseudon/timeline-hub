@@ -1,11 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { toast } from '@/shared/components/ui/runtime/sonner';
-import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
-import { uploadVideoToStorage, extractVideoMetadata, type AuthoredVideoMetadata, type VideoMetadata } from '@/shared/lib/media/videoUploader';
-import { useCreateResource, type Resource, type StructureVideoMetadata } from '@/features/resources/hooks/useResources';
-import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
-import { useUserUIState } from '@/shared/hooks/useUserUIState';
-import { isCompleteVideoMetadata } from '../../hooks/video/useVideoMetadata';
+import type { AuthoredVideoMetadata, VideoMetadata } from '@/shared/lib/media/videoMetadata';
 
 interface UseBatchGuidanceVideoControllerParams {
   shotId: string;
@@ -14,7 +8,6 @@ interface UseBatchGuidanceVideoControllerParams {
   treatment: 'adjust' | 'clip';
   timelineFramePositions: number[];
   onVideoUploaded: (videoUrl: string | null, metadata: VideoMetadata | null, resourceId?: string) => void;
-  readOnly: boolean;
 }
 
 function formatAdjustModeDescription(totalVideoFrames: number, timelineFrames: number): string {
@@ -56,21 +49,11 @@ export function useBatchGuidanceVideoController({
   treatment,
   timelineFramePositions,
   onVideoUploaded,
-  readOnly,
 }: UseBatchGuidanceVideoControllerParams) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [showBrowser, setShowBrowser] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
   const [currentTimelineFrame, setCurrentTimelineFrame] = useState(0);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const dropZoneRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const createResource = useCreateResource();
-  const { value: privacyDefaults } = useUserUIState('privacyDefaults', { resourcesPublic: true, generationsPublic: false });
 
   const minFrame = timelineFramePositions.length > 0 ? Math.min(...timelineFramePositions) : 0;
   const maxFrame = timelineFramePositions.length > 0 ? Math.max(...timelineFramePositions) : 0;
@@ -149,129 +132,13 @@ export function useBatchGuidanceVideoController({
     return () => video.removeEventListener('loadedmetadata', handleLoadedMetadata);
   }, [videoUrl, minFrame, drawTimelineFrame]);
 
-  const processFile = useCallback(async (file: File) => {
-    const validTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
-    if (!validTypes.includes(file.type)) {
-      toast.error('Invalid file type. Please upload an MP4, WebM, or MOV file.');
-      return;
-    }
-
-    const maxSizeMB = 200;
-    const fileSizeMB = file.size / (1024 * 1024);
-    if (fileSizeMB > maxSizeMB) {
-      toast.error(`File too large. Maximum size is ${maxSizeMB}MB (file is ${fileSizeMB.toFixed(1)}MB)`);
-      return;
-    }
-
-    try {
-      setIsUploading(true);
-      setUploadProgress(0);
-
-      const metadata = await extractVideoMetadata(file);
-      setUploadProgress(25);
-
-      const uploadedVideoUrl = await uploadVideoToStorage(
-        file,
-        { onProgress: (progress) => setUploadProgress(25 + (progress * 0.65)) },
-      );
-      setUploadProgress(90);
-
-      const { data: { user } } = await supabase().auth.getUser();
-      const now = new Date().toISOString();
-      const resourceMetadata: StructureVideoMetadata = {
-        name: `Guidance Video ${new Date().toLocaleString()}`,
-        videoUrl: uploadedVideoUrl,
-        thumbnailUrl: null,
-        videoMetadata: metadata,
-        created_by: {
-          is_you: true,
-          username: user?.email || 'user',
-        },
-        is_public: privacyDefaults.resourcesPublic,
-        createdAt: now,
-      };
-
-      const resource = await createResource.mutateAsync({
-        type: 'structure-video',
-        metadata: resourceMetadata,
-      });
-      setUploadProgress(100);
-
-      onVideoUploaded(uploadedVideoUrl, metadata, resource.id);
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'BatchGuidanceVideo', toastTitle: 'Failed to upload video' });
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  }, [privacyDefaults.resourcesPublic, createResource, onVideoUploaded]);
-
-  const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    await processFile(file);
-  }, [processFile]);
-
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isUploading && !readOnly) {
-      setIsDragging(true);
-    }
-  }, [isUploading, readOnly]);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
-      setIsDragging(false);
-    }
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    if (isUploading || readOnly) return;
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      await processFile(files[0]);
-    }
-  }, [isUploading, processFile, readOnly]);
-
   const handleRemoveVideo = useCallback(() => {
     onVideoUploaded(null, null, undefined);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  }, [onVideoUploaded]);
-
-  const handleResourceSelect = useCallback((resource: Resource) => {
-    const metadata = resource.metadata as StructureVideoMetadata;
-    onVideoUploaded(metadata.videoUrl, metadata.videoMetadata, resource.id);
-    setShowBrowser(false);
   }, [onVideoUploaded]);
 
   return {
-    fileInputRef,
-    dropZoneRef,
     videoRef,
     canvasRef,
-    isUploading,
-    uploadProgress,
-    showBrowser,
-    setShowBrowser,
-    isDragging,
     minFrame,
     maxFrame,
     timelineFrames,
@@ -283,12 +150,6 @@ export function useBatchGuidanceVideoController({
     adjustModeDescription,
     clipModeDescription,
     handleFrameChange,
-    handleFileSelect,
-    handleDragEnter,
-    handleDragLeave,
-    handleDragOver,
-    handleDrop,
     handleRemoveVideo,
-    handleResourceSelect,
   };
 }

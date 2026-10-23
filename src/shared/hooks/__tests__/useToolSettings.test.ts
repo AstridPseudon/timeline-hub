@@ -1,14 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import {
   extractSettingsFromCache,
-  updateToolSettingsSupabase,
   updateSettingsCache,
 } from '@/shared/hooks/settings/useToolSettings';
-import { enqueueSettingsWrite } from '@/shared/lib/settingsWriteQueue';
-import { fetchToolSettingsSupabase } from '@/shared/settings';
 import { queryKeys } from '@/shared/lib/queryKeys';
 
 const { normalizeAndPresentErrorMock } = vi.hoisted(() => ({
@@ -113,61 +110,6 @@ describe('updateSettingsCache', () => {
   });
 });
 
-describe('updateToolSettingsSupabase', () => {
-  beforeEach(() => {
-    vi.mocked(enqueueSettingsWrite).mockClear();
-  });
-
-  it('accepts mode via an explicit options object', async () => {
-    await updateToolSettingsSupabase(
-      {
-        scope: 'user',
-        id: 'user-1',
-        toolId: 'tool-1',
-        patch: { foo: 'bar' },
-      },
-      { mode: 'immediate' },
-    );
-
-    expect(enqueueSettingsWrite).toHaveBeenCalledWith(
-      expect.objectContaining({
-        scope: 'user',
-        entityId: 'user-1',
-        toolId: 'tool-1',
-        patch: { foo: 'bar' },
-      }),
-      'immediate',
-      expect.any(Function),
-    );
-  });
-
-  it('accepts signal + mode via an explicit options object and forwards the signal', async () => {
-    const controller = new AbortController();
-
-    await updateToolSettingsSupabase(
-      {
-        scope: 'project',
-        id: 'project-1',
-        toolId: 'tool-1',
-        patch: { foo: 'bar' },
-      },
-      { signal: controller.signal, mode: 'immediate' },
-    );
-
-    expect(enqueueSettingsWrite).toHaveBeenCalledWith(
-      expect.objectContaining({
-        scope: 'project',
-        entityId: 'project-1',
-        toolId: 'tool-1',
-        patch: { foo: 'bar' },
-        signal: controller.signal,
-      }),
-      'immediate',
-      expect.any(Function),
-    );
-  });
-});
-
 // ============================================================================
 // Tests for the useToolSettings hook
 // ============================================================================
@@ -188,39 +130,6 @@ vi.mock('@/shared/contexts/ProjectContext', () => ({
     isDeletingProject: false,
   }),
   useProjectIdentityContext: () => ({ userId: 'user-1' }),
-}));
-
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => ({
-    from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),
-    }),
-    rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
-    auth: {
-      getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null }),
-    },
-  }),
-}));
-
-vi.mock('@/shared/settings', async () => {
-  const actual = await vi.importActual<typeof import('@/shared/settings')>(
-    '@/shared/settings',
-  );
-  return {
-    ...actual,
-    ensureToolSettingsAuthCacheInitialized: vi.fn().mockResolvedValue(undefined),
-    fetchToolSettingsSupabase: vi.fn().mockResolvedValue({
-      settings: { prompt: 'default', seed: 1 },
-      hasShotSettings: false,
-    }),
-    resolveAndCacheUserId: vi.fn().mockResolvedValue({ data: { user: { id: 'user-1' } } }),
-  };
-});
-
-vi.mock('@/shared/lib/settingsWriteQueue', () => ({
-  enqueueSettingsWrite: vi.fn().mockResolvedValue({ prompt: 'saved' }),
 }));
 
 vi.mock('@/shared/lib/errorHandling/errorUtils', () => ({
@@ -254,8 +163,6 @@ describe('useToolSettings hook', () => {
   let useToolSettings: typeof import('@/shared/hooks/settings/useToolSettings').useToolSettings;
 
   beforeEach(async () => {
-    vi.mocked(enqueueSettingsWrite).mockClear();
-    vi.mocked(fetchToolSettingsSupabase).mockClear();
     normalizeAndPresentErrorMock.mockClear();
     const mod = await import('@/shared/hooks/settings/useToolSettings');
     useToolSettings = mod.useToolSettings;
@@ -324,7 +231,7 @@ describe('useToolSettings hook', () => {
       const { result } = renderHook(() => useToolSettings('test-tool'), { wrapper });
 
       expect(result.current.error).toBeNull();
-      expect(fetchToolSettingsSupabase).not.toHaveBeenCalled();
+      expect(queryClient.isFetching()).toBe(0);
       expect(normalizeAndPresentErrorMock).not.toHaveBeenCalled();
     } finally {
       window.history.replaceState({}, '', previousUrl);
@@ -337,7 +244,6 @@ describe('useToolSettings hook', () => {
 
     expect(result.current.settings).toBeUndefined();
     expect(result.current.error).toBeNull();
-    expect(fetchToolSettingsSupabase).not.toHaveBeenCalled();
     expect(normalizeAndPresentErrorMock).not.toHaveBeenCalled();
   });
 
@@ -351,6 +257,109 @@ describe('useToolSettings hook', () => {
     await waitFor(() => {
       // Just verify it doesn't crash with custom projectId
       expect(result.current).toHaveProperty('settings');
+    });
+  });
+
+  describe('settings cache observation', () => {
+    function createSeededWrapper() {
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false, gcTime: 0 } },
+      });
+      const wrapper = ({ children }: { children: React.ReactNode }) =>
+        React.createElement(QueryClientProvider, { client: queryClient }, children);
+      return { queryClient, wrapper };
+    }
+
+    it('returns settings and hasShotSettings from a seeded wrapper-format cache entry without fetching', () => {
+      const { queryClient, wrapper } = createSeededWrapper();
+      queryClient.setQueryData(
+        queryKeys.settings.tool('test-tool', 'project-1', 'shot-1'),
+        { settings: { a: 1 }, hasShotSettings: true },
+      );
+
+      const { result } = renderHook(
+        () => useToolSettings<{ a: number }>('test-tool', { projectId: 'project-1', shotId: 'shot-1' }),
+        { wrapper },
+      );
+
+      expect(result.current.settings).toEqual({ a: 1 });
+      expect(result.current.hasShotSettings).toBe(true);
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.error).toBeNull();
+      expect(queryClient.isFetching()).toBe(0);
+    });
+
+    it('returns a flat-format cache entry as settings with hasShotSettings false', () => {
+      const { queryClient, wrapper } = createSeededWrapper();
+      queryClient.setQueryData(queryKeys.settings.tool('test-tool', 'project-1', undefined), { a: 2 });
+
+      const { result } = renderHook(
+        () => useToolSettings<{ a: number }>('test-tool', { projectId: 'project-1' }),
+        { wrapper },
+      );
+
+      expect(result.current.settings).toEqual({ a: 2 });
+      expect(result.current.hasShotSettings).toBe(false);
+    });
+
+    it('re-renders when a cache writer updates the entry after mount', async () => {
+      const { queryClient, wrapper } = createSeededWrapper();
+      const { result } = renderHook(
+        () => useToolSettings<{ a: number }>('test-tool', { projectId: 'project-1' }),
+        { wrapper },
+      );
+      expect(result.current.settings).toBeUndefined();
+
+      act(() => {
+        queryClient.setQueryData(
+          queryKeys.settings.tool('test-tool', 'project-1', undefined),
+          (prev: unknown) => updateSettingsCache<{ a: number }>(prev, { a: 3 }),
+        );
+      });
+
+      await waitFor(() => expect(result.current.settings).toEqual({ a: 3 }));
+      expect(queryClient.isFetching()).toBe(0);
+    });
+
+    it('returns a cached error from the settings entry', () => {
+      const { queryClient, wrapper } = createSeededWrapper();
+      const queryKey = queryKeys.settings.tool('test-tool', 'project-1', undefined);
+      const cachedError = new Error('cached failure');
+      queryClient.getQueryCache().build(queryClient, { queryKey }).setState({
+        error: cachedError,
+        errorUpdateCount: 1,
+        errorUpdatedAt: Date.now(),
+        fetchFailureCount: 1,
+        fetchFailureReason: cachedError,
+        fetchStatus: 'idle',
+        status: 'error',
+      });
+
+      const { result } = renderHook(
+        () => useToolSettings('test-tool', { projectId: 'project-1' }),
+        { wrapper },
+      );
+
+      expect(result.current.error).toBe(cachedError);
+      expect(normalizeAndPresentErrorMock).not.toHaveBeenCalled();
+    });
+
+    it('keeps update a no-op that writes nothing to the cache', async () => {
+      const { queryClient, wrapper } = createSeededWrapper();
+      const queryKey = queryKeys.settings.tool('test-tool', 'project-1', undefined);
+      queryClient.setQueryData(queryKey, { settings: { a: 1 }, hasShotSettings: false });
+      const { result } = renderHook(
+        () => useToolSettings<{ a: number }>('test-tool', { projectId: 'project-1' }),
+        { wrapper },
+      );
+
+      await act(async () => {
+        await result.current.update('project', { a: 9 });
+      });
+
+      expect(queryClient.getQueryData(queryKey)).toEqual({ settings: { a: 1 }, hasShotSettings: false });
+      expect(result.current.settings).toEqual({ a: 1 });
+      expect(result.current.isUpdating).toBe(false);
     });
   });
 });

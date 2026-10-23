@@ -122,7 +122,7 @@ function computeClipDuration(meta: ClipMeta): number {
 /**
  * Determine whether a clip is managed by a registered extension.
  *
- * In M3 a clip is "managed" when its `app` record carries an
+ * A clip is "managed" when its `app` record carries an
  * extension namespace (e.g. `app?.managedBy`), or when a
  * `source_uuid` / `generation` provenance link exists.
  */
@@ -592,7 +592,7 @@ export function createTimelineReader(
   // are replaced (never mutated) on every commit/undo/poll adoption, and the
   // live `configVersion` source can advance between data objects, so both
   // form the cache key. Callers treat snapshots as immutable reads — none
-  // mutate the returned object (verified across creative-lab + dev lanes).
+  // mutate the returned object (verified across the dev extensions).
   let cachedData: TimelineData | null = null;
   let cachedConfigVersion: number | null = null;
   let cachedComposition: PreparedShotComposition | null = null;

@@ -1,2 +1,0 @@
--- This migration was originally applied as empty. 
--- The logic has been moved to 20251120134059_add_child_generation_support_v2.sql to ensure proper execution.

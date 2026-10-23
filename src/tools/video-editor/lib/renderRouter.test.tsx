@@ -1,4 +1,4 @@
-// Sprint 8: render-button router tests.
+// render-button router tests.
 // Mirrors the sprint brief's three cases (pure media, themed, mixed) +
 // the orchestrator dispatch shape.
 
@@ -9,6 +9,7 @@ import {
   decideRenderRoute,
   enqueueAstridRuntimeRenderTimeline,
 } from '@/tools/video-editor/lib/renderRouter';
+import { executeRenderPipeline } from '@/tools/video-editor/render/renderPipeline';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
 import { createFakeRuntimeRouter } from '@/test/fakeRuntimeRouter.ts';
@@ -318,7 +319,7 @@ describe('Sprint 8 render-button router (decideRenderRoute)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M7b T2: Sidecar-export planner / router selection
+// Sidecar-export planner / router selection
 // ---------------------------------------------------------------------------
 
 describe('M7b T2 sidecar-export route selection', () => {
@@ -641,7 +642,7 @@ describe('planner route selection never rides a vacuously unblocked route', () =
 });
 
 // ---------------------------------------------------------------------------
-// M9 T11: Contributed clip routing via dynamic capability records
+// Contributed clip routing via dynamic capability records
 // ---------------------------------------------------------------------------
 
 function makeContributedRecord(
@@ -1430,7 +1431,6 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
         family: RENDER_CAPABILITY_ID,
         params: {
           timeline_ref: 't',
-          selector: 'rendering.remotion',
           output_name: 'render.mp4',
         },
         output_policy: {
@@ -1447,6 +1447,8 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     });
     expect(body).not.toHaveProperty('family');
     expect(body).not.toHaveProperty('input');
+    // An ordinary timeline names no renderer: the host that claims the task chooses the one it can run.
+    expect(body.spec.params).not.toHaveProperty('selector');
     vi.unstubAllGlobals();
   });
 
@@ -1499,7 +1501,7 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
 });
 
 // ---------------------------------------------------------------------------
-// B6 T6.1/T6.2: cancel rides the common fenced task route
+// cancel rides the common fenced task route
 // ---------------------------------------------------------------------------
 
 function stubFakeBridge() {
@@ -1687,7 +1689,6 @@ describe('Sprint 8 router → enqueue integration', () => {
         family: RENDER_CAPABILITY_ID,
         params: {
           timeline_ref: 't',
-          selector: 'rendering.remotion',
           output_name: 'timeline-t.mp4',
         },
       },
@@ -1703,5 +1704,277 @@ describe('Sprint 8 router → enqueue integration', () => {
     // Caller should branch on `decision.route` and call useClientRender;
     // we don't test that wiring here (it lives in useClientRender), but
     // make the router contract explicit so future regressions are loud.
+  });
+});
+
+describe('Sprint 8 render pipeline middleware', () => {
+  const runtime = {
+    projectId: 'project-1',
+  };
+
+
+  it('renders supported local fixture timelines in the browser path with the local runtime type', async () => {
+    const events: Array<{ type: string; request?: unknown; assetCount?: number; providerId?: string }> = [];
+    const request = {
+      timelineId: 'fixture-browser',
+      assetRegistry: {
+        assets: {
+          'asset-1': {
+            src: 'file:///tmp/fixture-browser.mp4',
+            file: 'fixture-browser.mp4',
+            type: 'video/mp4',
+          },
+        },
+      },
+      resolvedConfig: {
+        output: { resolution: '1920x1080', fps: 30, file: 'fixture-browser.mp4' },
+        tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+        clips: [{ id: 'clip-1', track: 'V1', at: 0, from: 0, to: 2, clipType: 'media', asset: 'asset-1' }],
+        registry: {
+          'asset-1': {
+            src: 'file:///tmp/fixture-browser.mp4',
+            file: 'fixture-browser.mp4',
+            type: 'video/mp4',
+          },
+        },
+      },
+      renderMetadata: null,
+      renderRuntime: {
+        projectId: 'project-1',
+      },
+    };
+    const startBrowserRender = vi.fn(async () => ({
+      status: 'done' as const,
+      message: 'Saved fixture-browser.mp4',
+    }));
+
+    const result = await executeRenderPipeline({
+      decision: decideRenderRoute(request.resolvedConfig),
+      request,
+      startBrowserRender,
+      middlewares: [async (event) => {
+        events.push(event);
+      }],
+    });
+
+    expect(result).toMatchObject({
+      status: 'done',
+      providerId: 'browser-remotion',
+    });
+    expect(startBrowserRender).toHaveBeenCalledTimes(1);
+    expect(events).toMatchObject([
+      { type: 'beforeRender', request },
+      { type: 'assetMaterialized', request, assetCount: 1 },
+      { type: 'afterRender', request, providerId: 'browser-remotion' },
+    ]);
+  });
+
+  it('does not block browser export on an enforced seam with an active opaque effect', async () => {
+    const startBrowserRender = vi.fn(async () => ({ status: 'done' as const, message: 'unexpected' }));
+    const request = {
+      timelineId: 'timeline-opaque-seam',
+      assetRegistry: null,
+      resolvedConfig: {
+        output: { resolution: '1920x1080', fps: 30, file: 'seam.mp4' },
+        tracks: [
+          { id: 'video', kind: 'visual' as const, label: 'Picture' },
+          { id: 'fx', kind: 'visual' as const, label: 'FX' },
+        ],
+        clips: [
+          { id: 'a', track: 'video', at: 0, hold: 2, clipType: 'media', asset: 'a' },
+          { id: 'b', track: 'video', at: 2, hold: 2, clipType: 'media', asset: 'b' },
+          {
+            id: 'fx-wipe', track: 'fx', at: 2, hold: 1,
+            clipType: 'custom-effect',
+            elementRef: { id: 'wipe', kind: 'effect' as const, revision: 'rev-1' },
+          },
+        ],
+        registry: {},
+        app: { visualSeamContract: { version: 1, mode: 'enforced' } },
+      },
+      renderMetadata: null,
+      renderRuntime: runtime,
+    };
+
+    const result = await executeRenderPipeline({
+      decision: decideRenderRoute({ clips: [{ clipType: 'media' }] }),
+      request,
+      startBrowserRender,
+    });
+
+    expect(result).toMatchObject({ status: 'done', providerId: 'browser-remotion' });
+    expect(startBrowserRender).toHaveBeenCalledOnce();
+  });
+
+  it('emits beforeRender, assetMaterialized, and afterRender through one shared middleware path', async () => {
+    const events: string[] = [];
+    const middleware = vi.fn(async (event: { type: string }) => {
+      events.push(event.type);
+    });
+    const startBrowserRender = vi.fn(async () => ({
+      status: 'done' as const,
+      message: 'Saved output.mp4',
+    }));
+
+    const result = await executeRenderPipeline({
+      decision: decideRenderRoute({ clips: [{ clipType: 'media' }] }),
+      request: {
+        timelineId: 'timeline-1',
+        assetRegistry: { assets: { 'asset-1': { src: 'https://cdn.example.com/asset-1.mp4', file: 'asset-1.mp4', type: 'video/mp4' } } },
+        resolvedConfig: {
+          output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+          tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+          clips: [{ id: 'clip-1', track: 'V1', at: 0, hold: 1, clipType: 'media' }],
+          registry: { 'asset-1': { src: 'https://cdn.example.com/asset-1.mp4', file: 'asset-1.mp4', type: 'video/mp4' } },
+        },
+        renderMetadata: null,
+        renderRuntime: runtime,
+      },
+      startBrowserRender,
+      middlewares: [middleware],
+    });
+
+    expect(result).toMatchObject({
+      status: 'done',
+      providerId: 'browser-remotion',
+    });
+    expect(startBrowserRender).toHaveBeenCalledTimes(1);
+    expect(events).toEqual(['beforeRender', 'assetMaterialized', 'afterRender']);
+  });
+
+  it('emits renderFailed for preview-only routes without falling back to the browser renderer', async () => {
+    const previewEvents: string[] = [];
+    const previewResult = await executeRenderPipeline({
+      decision: decideRenderRoute({
+        clips: [{ clipType: 'media', generation: { sequence_lane: 'remotion_module' } }],
+      }),
+      request: {
+        timelineId: 'timeline-1',
+        assetRegistry: null,
+        resolvedConfig: null,
+        renderMetadata: null,
+        renderRuntime: runtime,
+      },
+      startBrowserRender: vi.fn(async () => ({ status: 'done' as const, message: 'unexpected' })),
+      middlewares: [async (event) => {
+        previewEvents.push(event.type);
+      }],
+    });
+
+    expect(previewResult).toMatchObject({
+      status: 'error',
+      providerId: 'preview-only',
+    });
+    expect(previewEvents).toEqual(['beforeRender', 'assetMaterialized', 'renderFailed']);
+  });
+
+  it('queues worker-capable routes through Astrid R1 without falling back to the browser renderer', async () => {
+    const workerEvents: string[] = [];
+    const startBrowserRender = vi.fn(async () => ({ status: 'done' as const, message: 'unexpected' }));
+    const fetchImpl = canonicalRenderFetch('task-1');
+    const originalFetch = globalThis.fetch;
+    vi.stubGlobal('fetch', fetchImpl);
+    const workerRuntime = runtime;
+    const request = {
+      timelineId: 'timeline-fixture-worker',
+      assetRegistry: {
+        assets: {
+          'asset-1': {
+            file: 'asset-1.png',
+            src: 'file:///tmp/asset-1.png',
+            type: 'image/png',
+            media_id: `sha256:${'1'.repeat(64)}`,
+          },
+        },
+      },
+      resolvedConfig: {
+        theme: '2rp',
+        output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+        tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+        clips: [{ id: 'clip-1', track: 'V1', at: 0, hold: 1, clipType: 'image-jump', asset: 'asset-1' }],
+        registry: {
+          'asset-1': {
+            file: 'asset-1.png',
+            src: 'file:///tmp/asset-1.png',
+            type: 'image/png',
+            media_id: `sha256:${'1'.repeat(64)}`,
+          },
+        },
+      },
+      renderMetadata: null,
+      renderRuntime: workerRuntime,
+    };
+
+    const workerResult = await executeRenderPipeline({
+      decision: decideRenderRoute({ clips: [{ clipType: 'image-jump' }] }),
+      request,
+      startBrowserRender,
+      middlewares: [async (event) => {
+        workerEvents.push(event.type);
+      }],
+    });
+
+    expect(workerResult).toMatchObject({
+      status: 'queued',
+      providerId: 'worker-astrid-runtime',
+      taskId: 'task-1',
+      correlationId: expect.any(String),
+    });
+    expect(startBrowserRender).not.toHaveBeenCalled();
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    const body = JSON.parse(fetchImpl.mock.calls[1][1].body as string);
+    expect(body).toMatchObject({
+      capability_id: RENDER_CAPABILITY_ID,
+      capability_digest: RENDER_CAPABILITY_DIGEST,
+      input_object_ids: [],
+      spec: {
+        family: RENDER_CAPABILITY_ID,
+        params: {
+          timeline_ref: 'timeline-fixture-worker',
+          output_name: 'timeline-timeline-fixture-worker.mp4',
+        },
+      },
+    });
+    expect(workerEvents).toEqual(['beforeRender', 'assetMaterialized', 'afterRender']);
+
+    vi.stubGlobal('fetch', originalFetch);
+  });
+
+  it('emits renderFailed when Astrid rejects render admission', async () => {
+    const workerEvents: string[] = [];
+    const startBrowserRender = vi.fn(async () => ({ status: 'done' as const, message: 'unexpected' }));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      error: 'capability_unavailable',
+      detail: 'Remotion is not installed',
+    }), { status: 422 })));
+    const workerResult = await executeRenderPipeline({
+      decision: decideRenderRoute({ clips: [{ clipType: 'image-jump' }] }),
+      request: {
+        timelineId: 'timeline-1',
+        assetRegistry: null,
+        resolvedConfig: {
+          theme: '2rp',
+          output: { resolution: '1920x1080', fps: 30, file: 'out.mp4' },
+          tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+          clips: [{ id: 'clip-1', track: 'V1', at: 0, hold: 1, clipType: 'image-jump' }],
+          registry: {},
+        },
+        renderMetadata: null,
+        renderRuntime: runtime,
+      },
+      startBrowserRender,
+      middlewares: [async (event) => {
+        workerEvents.push(event.type);
+      }],
+    });
+
+    expect(workerResult).toMatchObject({
+      status: 'error',
+      providerId: 'worker-astrid-runtime',
+    });
+    expect(workerResult.message).toContain('Remotion is not installed');
+    expect(startBrowserRender).not.toHaveBeenCalled();
+    expect(workerEvents).toEqual(['beforeRender', 'assetMaterialized', 'renderFailed']);
+    vi.unstubAllGlobals();
   });
 });

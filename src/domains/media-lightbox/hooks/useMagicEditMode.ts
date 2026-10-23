@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GenerationRow } from '@/domains/generation/types';
 import { toast } from '@/shared/components/ui/runtime/sonner';
-import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError';
-import { useCurrentShot } from '@/shared/state/selectionStore';
-import { useShotGenerationMetadata } from '@/shared/hooks/shots/useShotGenerationMetadata';
 import type { EditAdvancedSettings, QwenEditModel } from './useGenerationEditSettings';
-import type { LoraMode } from '../model/editSettingsTypes';
 import { DEFAULT_ADVANCED_SETTINGS } from '../model/editSettingsTypes';
 import { isKleinModel } from '../model/editSettingsTypes';
 import { getGenerationId } from '@/shared/lib/media/mediaTypeHelpers';
@@ -22,12 +18,8 @@ interface UseMagicEditModeParams {
   handleGenerateInpaint: () => Promise<void>;
   brushStrokes: BrushStroke[];
   inpaintPrompt: string;
-  setInpaintPrompt: (value: string) => void;
   inpaintNumGenerations: number;
-  setInpaintNumGenerations: (value: number) => void;
   editModeLoras: Array<{ url: string; strength: number }> | undefined;
-  loraMode: LoraMode;
-  setLoraMode: (mode: LoraMode) => void;
   sourceUrlForTasks: string;
   imageDimensions: { width: number; height: number } | null;
   toolTypeOverride?: string;
@@ -40,8 +32,6 @@ interface UseMagicEditModeParams {
   advancedSettings?: EditAdvancedSettings;
   // Model selection for cloud mode
   qwenEditModel?: QwenEditModel;
-  // Disable DB queries (for form-only mode with placeholder media)
-  enabled?: boolean;
   /** Start with isMagicEditMode=true (skips the "select an option" step) */
   initialActive?: boolean;
 }
@@ -76,12 +66,8 @@ export const useMagicEditMode = ({
   handleGenerateInpaint,
   brushStrokes,
   inpaintPrompt,
-  setInpaintPrompt,
   inpaintNumGenerations,
-  setInpaintNumGenerations,
   editModeLoras,
-  loraMode,
-  setLoraMode,
   sourceUrlForTasks,
   imageDimensions,
   toolTypeOverride,
@@ -90,7 +76,6 @@ export const useMagicEditMode = ({
   createAsGeneration,
   advancedSettings,
   qwenEditModel,
-  enabled = true,
   initialActive = false,
 }: UseMagicEditModeParams): UseMagicEditModeReturn => {
   // Magic Edit mode state
@@ -101,31 +86,14 @@ export const useMagicEditMode = ({
   const [magicEditTasksCreated, setMagicEditTasksCreated] = useState(false);
   const [toolPanelPosition, setToolPanelPosition] = useState<'top' | 'bottom'>('bottom');
 
-  const { currentShotId } = useCurrentShot();
   const run = useTaskPlaceholder();
-
-  // Prompt persistence for magic edit mode
-  const {
-    addMagicEditPrompt,
-    getLastMagicEditPrompt,
-    getLastSettings,
-    isLoading: isLoadingMetadata
-  } = useShotGenerationMetadata({
-    shotId: currentShotId || '',
-    shotGenerationId: media.id,
-    enabled: !!(currentShotId && media.id) && enabled !== false
-  });
 
   // Guard against double-entry during async state updates
   const isEnteringEditModeRef = useRef(false);
-  // Track if we've already restored the prompt for this mode entry (prevents re-restore on clear)
-  const hasRestoredPromptRef = useRef(false);
-  const isInSceneLoraMode = loraMode === 'in-scene';
 
   // Reset flags when media changes
   useEffect(() => {
     isEnteringEditModeRef.current = false;
-    hasRestoredPromptRef.current = false;
   }, [media.id]);
 
   const handleEnterMagicEditMode = useCallback(() => {
@@ -140,29 +108,9 @@ export const useMagicEditMode = ({
   }, [handleEnterInpaintMode]);
 
   const handleExitMagicEditMode = useCallback(() => {
-    hasRestoredPromptRef.current = false; // Reset so re-entering can restore again
     setIsMagicEditMode(false);
     setIsInpaintMode(false);
   }, [setIsInpaintMode]);
-
-  // Load saved prompt and settings when entering magic edit mode (without brush strokes)
-  // Only restore once per mode entry to prevent re-restoring when user clears the prompt
-  useEffect(() => {
-    if (isMagicEditMode && !isLoadingMetadata && currentShotId && brushStrokes.length === 0 && !hasRestoredPromptRef.current) {
-      // Mark as initialized FIRST - we only get one chance to restore per mode entry
-      // This prevents clearing the prompt from triggering restoration
-      hasRestoredPromptRef.current = true;
-
-      const lastPrompt = getLastMagicEditPrompt();
-      const lastSettings = getLastSettings();
-
-      if (lastPrompt && !inpaintPrompt) {
-        setInpaintPrompt(lastPrompt);
-        setInpaintNumGenerations(lastSettings.numImages);
-        setLoraMode(lastSettings.isInSceneBoostEnabled ? 'in-scene' : 'none');
-      }
-    }
-  }, [isMagicEditMode, isLoadingMetadata, currentShotId, brushStrokes.length, getLastMagicEditPrompt, getLastSettings, inpaintPrompt, setInpaintPrompt, setInpaintNumGenerations, setLoraMode]);
 
   // Unified edit mode - merging inpaint and magic edit
   const isSpecialEditMode = isInpaintMode || isMagicEditMode;
@@ -235,21 +183,6 @@ export const useMagicEditMode = ({
             });
           },
           onSuccess: async () => {
-            // Save the prompt to shot generation metadata
-            if (currentShotId && media.id) {
-              try {
-                await addMagicEditPrompt(
-                  prompt,
-                  inpaintNumGenerations,
-                  false, // Legacy parameter
-                  isInSceneLoraMode
-                );
-              } catch (error) {
-                normalizeAndPresentError(error, { context: 'useMagicEditMode', showToast: false });
-                // Don't fail the entire operation if metadata save fails
-              }
-            }
-
             setMagicEditTasksCreated(true);
             setTimeout(() => setMagicEditTasksCreated(false), 1500);
           },
@@ -263,7 +196,6 @@ export const useMagicEditMode = ({
     inpaintPrompt,
     brushStrokes.length,
     handleGenerateInpaint,
-    isInSceneLoraMode,
     sourceUrlForTasks,
     editModeLoras,
     imageDimensions,
@@ -271,9 +203,7 @@ export const useMagicEditMode = ({
     createAsGeneration,
     advancedSettings,
     inpaintNumGenerations,
-    currentShotId,
     media,
-    addMagicEditPrompt,
     qwenEditModel,
     activeVariantId,
     activeVariantLocation,

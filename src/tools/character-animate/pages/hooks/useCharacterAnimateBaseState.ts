@@ -5,8 +5,8 @@ import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { useProjectCrudContext, useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { useAsyncOperation } from '@/shared/hooks/async/useAsyncOperation';
-import { useDeleteGenerationWithConfirm } from '@/domains/generation/hooks/useDeleteGenerationWithConfirm';
-import { useToggleGenerationStar } from '@/domains/generation/hooks/useGenerationMutations';
+import { useCloudBackendNotice } from '@/shared/hooks/async/useCloudBackendNotice';
+import { requireCloudBackend } from '@/shared/lib/cloudBackend';
 import { useProjectGenerations, type GenerationsPaginatedResponse } from '@/shared/hooks/projects/useProjectGenerations';
 import { useIsMobile } from '@/shared/hooks/mobile';
 
@@ -73,23 +73,15 @@ export function useCharacterAnimateBaseState() {
   const videosLoading = generationsQuery.isLoading;
   const videosFetching = generationsQuery.isFetching;
 
-  const {
-    requestDelete: requestDeleteGeneration,
-    confirmDialogProps,
-    deletingId,
-  } = useDeleteGenerationWithConfirm({ projectId: selectedProjectId });
-  const toggleStarMutation = useToggleGenerationStar();
+  const { unavailable: cloudBackendUnavailable, attempt: attemptCloudBackend } = useCloudBackendNotice();
 
-  const handleDeleteGeneration = useCallback((id: string) => {
-    requestDeleteGeneration(id);
-  }, [requestDeleteGeneration]);
+  const handleDeleteGeneration = useCallback((_id: string) => {
+    void attemptCloudBackend(() => requireCloudBackend('character-animate'));
+  }, [attemptCloudBackend]);
 
-  const handleToggleStar = useCallback((id: string, starred: boolean) => {
-    if (!selectedProjectId) {
-      return;
-    }
-    toggleStarMutation.mutate({ id, starred, projectId: selectedProjectId });
-  }, [selectedProjectId, toggleStarMutation]);
+  const handleToggleStar = useCallback((_id: string, _starred: boolean) => {
+    void attemptCloudBackend(() => requireCloudBackend('character-animate'));
+  }, [attemptCloudBackend]);
 
   return {
     toast,
@@ -130,8 +122,8 @@ export function useCharacterAnimateBaseState() {
     videosData,
     videosLoading,
     videosFetching,
-    confirmDialogProps,
-    deletingId,
+    cloudBackendUnavailable,
+    attemptCloudBackend,
     handleDeleteGeneration,
     handleToggleStar,
   };

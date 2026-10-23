@@ -1,10 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
-const LegacyHomePage = lazy(() => import('@/pages/Home/HomePage'));
 import ArtPage from '@/pages/ArtPage';
-import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
-import PaymentCancelPage from '@/pages/PaymentCancelPage';
-import SharePage from '@/pages/SharePage';
 import PairingPage from '@/pages/PairingPage';
 
 // Main tools: eagerly loaded because lazy() caused blank screens on Safari mobile
@@ -33,31 +29,11 @@ import { ToolErrorBoundary } from '@/shared/components/ToolErrorBoundary';
 import { ToolLaunchBoundary } from '@/shared/components/ToolLaunchBoundary';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { HomeDocumentHandoff } from './HomeDocumentHandoff.tsx';
-import { isRecognizedOAuthCallbackUrl } from './entryClassification.ts';
 
 // Loading fallback component for lazy loaded pages
 const LazyLoadingFallback = () => (
   <AstridLoading />
 );
-
-function HomeWithAuthRedirect() {
-  return (
-    <Suspense fallback={<LazyLoadingFallback />}>
-      <LegacyHomePage />
-    </Suspense>
-  );
-}
-
-function PublicHomeAppEntry({
-  replaceDocument,
-}: {
-  replaceDocument?: (url: string) => void;
-}) {
-  if (isRecognizedOAuthCallbackUrl(new URL(window.location.href))) {
-    return <HomeWithAuthRedirect />;
-  }
-  return <HomeDocumentHandoff replaceDocument={replaceDocument} />;
-}
 
 export function AppRoutes({
   homeDocumentReplacement,
@@ -66,18 +42,11 @@ export function AppRoutes({
 } = {}) {
   return (
     <Routes>
-      {isRecognizedOAuthCallbackUrl(new URL(window.location.href)) && (
-        <Route path="/" element={<HomeWithAuthRedirect />} />
-      )}
-
       <Route
         path="/home"
-        element={<PublicHomeAppEntry replaceDocument={homeDocumentReplacement} />}
+        element={<HomeDocumentHandoff replaceDocument={homeDocumentReplacement} />}
       />
 
-      <Route path="/payments/success" element={<PaymentSuccessPage />} />
-      <Route path="/payments/cancel" element={<PaymentCancelPage />} />
-      <Route path="/share/:shareId" element={<SharePage />} />
       <Route path="/pairing" element={<PairingPage />} />
       <Route
         path="/blog"

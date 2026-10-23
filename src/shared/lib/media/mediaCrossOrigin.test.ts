@@ -35,7 +35,7 @@ describe('mediaCrossOrigin', () => {
     });
 
     it.each([
-      ['Supabase storage', 'https://abc.supabase.co/storage/v1/object/public/image_uploads/a.png'],
+      ['CDN storage', 'https://cdn.example.com/storage/v1/object/public/image_uploads/a.png'],
       ['CDN', 'https://cdn.example.com/a.png'],
       ['another loopback port', 'http://127.0.0.1:17341/a.png'],
       ['data URL', 'data:image/png;base64,AAAA'],

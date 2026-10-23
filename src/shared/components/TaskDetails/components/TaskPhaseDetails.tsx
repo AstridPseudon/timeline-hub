@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { getDisplayNameFromUrl } from '@/domains/lora/lib/loraUtils';
 import { asNumber, asRecord, asString } from '@/shared/lib/tasks/taskParamParsers';
-import { getVariantConfig, type TaskDetailsProps } from '@/shared/types/taskDetailsTypes';
+import { getVariantConfig } from '@/shared/types/taskDetailsTypes';
 import type { PhaseLoraConfig, PhaseSettings } from '@/shared/types/phaseConfig';
 
 interface TaskPhaseDetailsProps {
@@ -11,7 +11,6 @@ interface TaskPhaseDetailsProps {
   phaseStepsDisplay: string | null;
   showSummary: boolean;
   borderTopClassName?: string;
-  availableLoras: TaskDetailsProps['availableLoras'];
   copiedLoraUrl: string | null;
   onCopyLoraUrl: (url: string) => void;
 }
@@ -22,7 +21,6 @@ export function TaskPhaseDetails({
   phaseStepsDisplay,
   showSummary,
   borderTopClassName,
-  availableLoras,
   copiedLoraUrl,
   onCopyLoraUrl,
 }: TaskPhaseDetailsProps) {
@@ -127,7 +125,6 @@ export function TaskPhaseDetails({
                     <span className={`${config.fontWeight} truncate min-w-0 flex-1`}>
                       {getDisplayNameFromUrl(
                         asString(asRecord(lora)?.url) ?? '',
-                        availableLoras,
                         asString(asRecord(lora)?.name)
                       )}
                     </span>

@@ -327,7 +327,7 @@ describe('fillMissingContentSHA256', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T9: Chunk-boundary correctness
+// Chunk-boundary correctness
 // ---------------------------------------------------------------------------
 
 describe('computeSHA256 chunk-boundary correctness', () => {
@@ -421,7 +421,7 @@ describe('computeSHA256 chunk-boundary correctness', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T9: Preparation workflow — filling missing hashes
+// Preparation workflow — filling missing hashes
 // ---------------------------------------------------------------------------
 
 describe('fillMissingContentSHA256 preparation workflow', () => {
@@ -527,7 +527,7 @@ describe('fillMissingContentSHA256 preparation workflow', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T9: Sync boundary — import/materialization/load must not hash synchronously
+// Sync boundary — import/materialization/load must not hash synchronously
 // ---------------------------------------------------------------------------
 
 describe('sync boundary — no synchronous hashing in import/materialization/load', () => {

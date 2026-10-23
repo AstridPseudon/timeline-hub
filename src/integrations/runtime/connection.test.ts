@@ -88,7 +88,7 @@ describe('gateway origin', () => {
       'http://localhost:17340/api/runtime/x',
       'https://127.0.0.1:17340/api/runtime/x',
       'https://astrid.example/api/runtime/x',
-      'https://abc.supabase.co/storage/v1/object/public/a.png',
+      'https://cdn.example.com/storage/v1/object/public/a.png',
       'data:image/png;base64,AAAA',
       'blob:https://astrid.example/0f1e',
       'not a url',

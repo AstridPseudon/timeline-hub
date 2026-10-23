@@ -46,6 +46,12 @@ import { createAutoScroller } from '@/tools/video-editor/lib/auto-scroll.ts';
 import type { Shot } from '@/domains/generation/types/index.ts';
 import type { ShotFinalVideo } from '@/tools/video-editor/hooks/useFinalVideoAvailable.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
+import {
+  applyPanelClipPlacement,
+  isPanelClipDrag,
+  planPanelClipPlacement,
+  readPanelClipDrag,
+} from '@/tools/video-editor/lib/panel-clip-drag.ts';
 
 async function resolveFinalVideoDurationSecondsWithRetry(
   finalVideo: Parameters<typeof resolveFinalVideoDurationSeconds>[0],
@@ -80,6 +86,7 @@ async function dispatchTimelineDrop({
   handleAddTextAt,
   shots,
   finalVideoMap,
+  onPanelClipDrop,
 }: {
   event: React.DragEvent<HTMLDivElement>;
   dataRef: React.MutableRefObject<TimelineData | null>;
@@ -101,8 +108,14 @@ async function dispatchTimelineDrop({
   handleAddTextAt?: (trackId: string, time: number) => void;
   shots: Shot[] | undefined;
   finalVideoMap: Map<string, { id: string; location: string; thumbnailUrl: string | null; durationSeconds?: number | null }>;
+  onPanelClipDrop?: (dropPosition: TimelineDropPosition) => Promise<void>;
 }) {
   const insertAtTop = Boolean(dropPosition.isNewTrackTop);
+
+  if (isPanelClipDrag(event.dataTransfer.types)) {
+    await onPanelClipDrop?.(dropPosition);
+    return;
+  }
 
   if (event.dataTransfer.types.includes('text-tool')) {
     return handleTextToolDrop({ dataRef, dropPosition, insertAtTop, handleAddTextAt });
@@ -525,6 +538,38 @@ export function useExternalDrop({
   const getApplyEdit = useCallback(() => {
     return store?.getState().ops.applyEdit ?? applyEdit;
   }, [applyEdit, store]);
+  const placePanelClip = useCallback(async (
+    dropPosition: TimelineDropPosition,
+    drag: NonNullable<ReturnType<typeof readPanelClipDrag>>,
+  ) => {
+    const state = store?.getState();
+    const ops = state?.timelineOps;
+    const reader = state?.timelineReader;
+    const current = getDataRef().current;
+    if (!state || !ops || !reader || !current) return;
+    try {
+      const snapshot = reader.snapshot();
+      const placement = planPanelClipPlacement({
+        drag,
+        tracks: current.tracks,
+        clipIds: new Set(snapshot.clips.map((clip) => clip.id)),
+        trackId: dropPosition.isNewTrack ? undefined : dropPosition.trackId,
+        isNewTrack: Boolean(dropPosition.isNewTrack),
+        selectedTrackId: getSelectedTrackId(),
+        time: dropPosition.time,
+        version: snapshot.baseVersion,
+      });
+      if (!placement) return;
+      const clipId = await applyPanelClipPlacement(ops, placement);
+      // Same selection as "Add to video" / an asset drop: the new clip, on its track.
+      state.ops.selectClips([clipId]);
+      state.ops.setSelectedTrackId?.(placement.trackId);
+    } catch (error) {
+      runtime.toast.error('Could not add the clip', {
+        ...(error instanceof Error && error.message ? { description: error.message } : {}),
+      });
+    }
+  }, [getDataRef, getSelectedTrackId, runtime.toast, store]);
   const clearExternalDragState = useCallback(() => {
     if (externalDragFrameRef.current !== null) {
       window.cancelAnimationFrame(externalDragFrameRef.current);
@@ -547,6 +592,7 @@ export function useExternalDrop({
     const dragType = getDragType(event);
     const types = Array.from(event.dataTransfer.types);
     if (!types.includes('asset-key')
+      && !isPanelClipDrag(types)
       && !types.includes('text-tool')
       && !types.includes('effect-layer')
       && dragType !== 'file'
@@ -618,6 +664,8 @@ export function useExternalDrop({
       clearExternalDragState();
       return;
     }
+    // Read before anything awaits: a DataTransfer is only readable during the event.
+    const panelClip = isPanelClipDrag(event.dataTransfer.types) ? readPanelClipDrag(event.dataTransfer) : null;
     const dropPosition = finalizeExternalDrop({
       event,
       coordinator,
@@ -652,6 +700,7 @@ export function useExternalDrop({
       handleAddTextAt,
       shots,
       finalVideoMap,
+      onPanelClipDrop: panelClip ? (position) => placePanelClip(position, panelClip) : undefined,
     });
     if (accepted) {
       onSeekToTime?.(dropPosition.time);
@@ -664,6 +713,7 @@ export function useExternalDrop({
     getDataRef,
     getPendingOpsRef,
     getSelectedTrackId,
+    placePanelClip,
     invalidateAssetRegistry,
     registerGenerationAsset,
     prepareAssetUpload,

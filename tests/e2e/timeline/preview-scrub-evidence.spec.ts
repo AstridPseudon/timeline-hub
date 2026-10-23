@@ -19,8 +19,6 @@ type EvidenceRecord = {
   label: string;
   requestedTime: number;
   observedTime: number;
-  dispatchCount: number;
-  inputToDispatchMs: number;
   inputToPixelMatchMs: number;
   screenshot: string;
   expected: string;
@@ -28,19 +26,19 @@ type EvidenceRecord = {
   oldRmse?: number;
 };
 
-type PlayerSeekDispatch = { at: number; time: number; frame: number; configGeneration: number };
+// The proof that a seek showed the right frame is the pixel match against an
+// independently decoded reference (plus the wrong-time negative control), never
+// the editor's own `data-current-time`: that attribute is the editor's playback
+// state, set straight from the timeline input, so it cannot say what the Player drew.
 type EvidenceState = {
   currentTimeSets: number;
   playCalls: number;
-  autoResumeCalls: number;
-  inputStartedAt: number | null;
-  dispatches: PlayerSeekDispatch[];
 };
 type FixtureClip = { id: string; asset?: string; from?: number; to?: number; [key: string]: unknown };
 type FixtureConfig = { clips: FixtureClip[]; [key: string]: unknown };
 type EvidenceWindow = Window & { __SCRUB_EVIDENCE__: EvidenceState };
 type RulerMap = { x1: number; time1: number; pixelsPerSecond: number };
-type SeekEvidence = { observedTime: number; inputStartedAt: number; dispatchCount: number; inputToDispatchMs: number };
+type SeekEvidence = { observedTime: number; inputStartedAt: number };
 type SourceProbe = { previewSources: string[]; resourceEntries: string[] };
 
 async function run(command: string, args: string[]): Promise<string> {
@@ -94,13 +92,9 @@ async function rulerMap(page: Page): Promise<RulerMap> {
   return { x1: first.x, time1: first.time, pixelsPerSecond };
 }
 
+/** Start of the input, on the page's own clock, for the input-to-pixel-match record. */
 async function beginInput(page: Page): Promise<number> {
-  return page.evaluate(() => {
-    const state = (window as EvidenceWindow).__SCRUB_EVIDENCE__;
-    state.inputStartedAt = performance.now();
-    state.dispatches = [];
-    return state.inputStartedAt;
-  });
+  return page.evaluate(() => performance.now());
 }
 
 async function seekByRuler(page: Page, map: RulerMap, targetTime: number): Promise<SeekEvidence> {
@@ -116,23 +110,13 @@ async function seekByRuler(page: Page, map: RulerMap, targetTime: number): Promi
     await page.waitForTimeout(350);
     const observed = await currentTime(page);
     if (Math.round(observed * FPS) === Math.round(targetTime * FPS)) {
-      const evidence = await page.evaluate(() => {
-        const state = (window as EvidenceWindow).__SCRUB_EVIDENCE__;
-        return { dispatch: state.dispatches.at(-1), dispatchCount: state.dispatches.length };
-      });
-      if (!evidence.dispatch) throw new Error(`no Player.seekTo dispatch observed for ${targetTime}s`);
-      return { observedTime: observed, inputStartedAt, dispatchCount: evidence.dispatchCount, inputToDispatchMs: evidence.dispatch.at - inputStartedAt };
+      return { observedTime: observed, inputStartedAt };
     }
     x += (targetTime - observed) * map.pixelsPerSecond;
   }
   const observed = await currentTime(page);
   expect(Math.abs(observed - targetTime)).toBeLessThan(0.5 / FPS);
-  const evidence = await page.evaluate(() => {
-    const state = (window as EvidenceWindow).__SCRUB_EVIDENCE__;
-    return { dispatch: state.dispatches.at(-1), dispatchCount: state.dispatches.length };
-  });
-  if (!evidence.dispatch) throw new Error(`no Player.seekTo dispatch observed for ${targetTime}s`);
-  return { observedTime: observed, inputStartedAt, dispatchCount: evidence.dispatchCount, inputToDispatchMs: evidence.dispatch.at - inputStartedAt };
+  return { observedTime: observed, inputStartedAt };
 }
 
 async function hideTransport(page: Page): Promise<void> {
@@ -231,18 +215,24 @@ async function refreshLiveQueries(page: Page): Promise<void> {
 test.describe('preview scrubbing pixel evidence', () => {
   test.use({ viewport: { width: 1600, height: 1000 } });
 
-  test('correlates cold/repeat, drag, pause, and replacement seeks with real pixels', async ({ page }, testInfo) => {
+  // Declared prerequisites: the pixel proof decodes references with ffmpeg and compares with the
+  // ImageMagick 7 `magick` driver (the one the release gates attest, scripts/release/native-tool-attestation.mjs).
+  // Fail here, by name, instead of as a `spawn magick ENOENT` in the middle of the run.
+  test.beforeAll(async () => {
+    for (const [command, args] of [['magick', ['-version']], ['ffmpeg', ['-version']]] as const) {
+      await run(command, [...args]).catch((error: unknown) => {
+        throw new Error(`preview-scrub-evidence needs \`${command}\` on PATH (ImageMagick 7 and ffmpeg): ${String(error)}`);
+      });
+    }
+  });
+
+  // The preview must play example-video.mp4 (H.264), which the bundled Chromium cannot decode: the video
+  // surface shows "Video failed to load" there. Runs in the `timeline-chrome-export` project only.
+  test('correlates cold/repeat, drag, pause, and replacement seeks with real pixels', { tag: '@chrome-h264' }, async ({ page }, testInfo) => {
     test.setTimeout(240_000);
     await page.addInitScript(() => {
-      const state: EvidenceState = { currentTimeSets: 0, playCalls: 0, autoResumeCalls: 0, inputStartedAt: null, dispatches: [] };
+      const state: EvidenceState = { currentTimeSets: 0, playCalls: 0 };
       Object.defineProperty(window, '__SCRUB_EVIDENCE__', { value: state, configurable: true });
-      Object.defineProperty(window, '__ASTRID_APP_TEST_PLAYER_SEEK__', {
-        value: {
-          onDispatch: (event: Omit<PlayerSeekDispatch, 'at'>) => state.dispatches.push({ ...event, at: performance.now() }),
-          onAutoResume: () => { state.autoResumeCalls += 1; },
-        },
-        configurable: true,
-      });
       const currentTime = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'currentTime');
       if (currentTime?.set && currentTime.get) {
         Object.defineProperty(HTMLMediaElement.prototype, 'currentTime', {
@@ -289,10 +279,10 @@ test.describe('preview scrubbing pixel evidence', () => {
     expect(imageColdProbe.resourceEntries, 'image2 must not already be fetched').toHaveLength(0);
     const imageColdSeek = await seekByRuler(page, map, imageColdTime);
     const imageCold = await matchPixels(page, testInfo, 'image-cold', image2, 'image', imageColdSeek.inputStartedAt, imageThreshold);
-    records.push({ label: 'image-cold', requestedTime: imageColdTime, observedTime: imageColdSeek.observedTime, dispatchCount: imageColdSeek.dispatchCount, inputToDispatchMs: imageColdSeek.inputToDispatchMs, ...imageCold, expected: image2 });
+    records.push({ label: 'image-cold', requestedTime: imageColdTime, observedTime: imageColdSeek.observedTime, ...imageCold, expected: image2 });
     const imageRepeatSeek = await seekByRuler(page, map, imageColdTime);
     const imageRepeat = await matchPixels(page, testInfo, 'image-repeat', image2, 'image', imageRepeatSeek.inputStartedAt, imageThreshold);
-    records.push({ label: 'image-repeat', requestedTime: imageColdTime, observedTime: imageRepeatSeek.observedTime, dispatchCount: imageRepeatSeek.dispatchCount, inputToDispatchMs: imageRepeatSeek.inputToDispatchMs, ...imageRepeat, expected: image2 });
+    records.push({ label: 'image-repeat', requestedTime: imageColdTime, observedTime: imageRepeatSeek.observedTime, ...imageRepeat, expected: image2 });
 
     // The first video seek exercises decoder cold behavior; the second repeats
     // the same long-GOP target without warming the ruler or calibrating by seek.
@@ -305,10 +295,10 @@ test.describe('preview scrubbing pixel evidence', () => {
     const videoColdReference = await makeReference(testInfo, video, 'video', videoColdTime - 1.5);
     const videoColdSeek = await seekByRuler(page, map, videoColdTime);
     const videoCold = await matchPixels(page, testInfo, 'video-cold', videoColdReference, 'video', videoColdSeek.inputStartedAt, videoThreshold);
-    records.push({ label: 'video-cold', requestedTime: videoColdTime, observedTime: videoColdSeek.observedTime, dispatchCount: videoColdSeek.dispatchCount, inputToDispatchMs: videoColdSeek.inputToDispatchMs, ...videoCold, expected: videoColdReference });
+    records.push({ label: 'video-cold', requestedTime: videoColdTime, observedTime: videoColdSeek.observedTime, ...videoCold, expected: videoColdReference });
     const videoRepeatSeek = await seekByRuler(page, map, videoColdTime);
     const videoRepeat = await matchPixels(page, testInfo, 'video-repeat', videoColdReference, 'video', videoRepeatSeek.inputStartedAt, videoThreshold);
-    records.push({ label: 'video-repeat', requestedTime: videoColdTime, observedTime: videoRepeatSeek.observedTime, dispatchCount: videoRepeatSeek.dispatchCount, inputToDispatchMs: videoRepeatSeek.inputToDispatchMs, ...videoRepeat, expected: videoColdReference });
+    records.push({ label: 'video-repeat', requestedTime: videoColdTime, observedTime: videoRepeatSeek.observedTime, ...videoRepeat, expected: videoColdReference });
 
     const dragTarget = 5.2;
     const dragInputStartedAt = await beginInput(page);
@@ -324,14 +314,9 @@ test.describe('preview scrubbing pixel evidence', () => {
     await page.mouse.up();
     await expect.poll(async () => Math.abs((await currentTime(page)) - dragTarget), { timeout: 5_000 }).toBeLessThan(0.5 / FPS);
     const dragObserved = await currentTime(page);
-    const dragEvidence = await page.evaluate(() => {
-      const state = (window as EvidenceWindow).__SCRUB_EVIDENCE__;
-      return { dispatch: state.dispatches.at(-1), dispatchCount: state.dispatches.length };
-    });
-    if (!dragEvidence.dispatch) throw new Error('no Player.seekTo dispatch observed for rapid drag');
     const dragReference = await makeReference(testInfo, video, 'video', dragTarget - 1.5);
     const dragPixels = await matchPixels(page, testInfo, 'rapid-drag-final', dragReference, 'video', dragInputStartedAt, videoThreshold);
-    records.push({ label: 'rapid-drag-final', requestedTime: dragTarget, observedTime: dragObserved, dispatchCount: dragEvidence.dispatchCount, inputToDispatchMs: dragEvidence.dispatch.at - dragInputStartedAt, ...dragPixels, expected: dragReference });
+    records.push({ label: 'rapid-drag-final', requestedTime: dragTarget, observedTime: dragObserved, ...dragPixels, expected: dragReference });
     const wrongTimeReference = await makeReference(testInfo, video, 'video', 0.7);
     const wrongTimePixels = await compareScreenshot(page, testInfo, 'rapid-drag-wrong-time-negative-control', wrongTimeReference, 'video');
     expect(wrongTimePixels.rmse, 'wrong-time video reference must be rejected').toBeGreaterThan(videoThreshold);
@@ -339,9 +324,9 @@ test.describe('preview scrubbing pixel evidence', () => {
     negativeControls.push({ label: 'rapid-drag-final', targetRmse: dragPixels.rmse, wrongTimeRmse: wrongTimePixels.rmse, threshold: videoThreshold });
 
     await showTransport(page);
-    const playButton = page.getByRole('button', { name: 'Play' });
+    const playButton = page.getByRole('button', { name: 'Play', exact: true });
     await playButton.click();
-    await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible();
     const beforePause = await page.evaluate(() => (window as EvidenceWindow).__SCRUB_EVIDENCE__.playCalls);
     const pauseRuler = await page.locator(RULER).boundingBox();
     if (!pauseRuler) throw new Error('ruler missing for pause');
@@ -355,11 +340,14 @@ test.describe('preview scrubbing pixel evidence', () => {
     // pointer. This keeps a real active/pending seek alive across the explicit
     // pause instead of testing only a pause that precedes input.
     await page.mouse.move(pauseStart + (pauseEnd - pauseStart) * 0.4, pauseRuler.y + pauseRuler.height / 2);
-    const autoResumeBeforePause = await page.evaluate(() => (window as EvidenceWindow).__SCRUB_EVIDENCE__.autoResumeCalls);
-    await page.getByRole('button', { name: 'Pause' }).evaluate((button) => (button as HTMLButtonElement).click());
-    await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+    await page.getByRole('button', { name: 'Pause', exact: true }).evaluate((button) => (button as HTMLButtonElement).click());
+    await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
     await page.mouse.move(pauseEnd, pauseRuler.y + pauseRuler.height / 2);
     await page.mouse.up();
+    // The seek the release dispatches must not restart playback: the Player
+    // stays paused, so the transport still offers Play and never Pause.
+    await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toHaveCount(0);
     const afterPause = await page.evaluate(() => (window as EvidenceWindow).__SCRUB_EVIDENCE__.playCalls);
     await page.waitForTimeout(500);
     const settledPause = await page.evaluate(() => (window as EvidenceWindow).__SCRUB_EVIDENCE__.playCalls);
@@ -367,15 +355,10 @@ test.describe('preview scrubbing pixel evidence', () => {
     expect(afterPause).toBeGreaterThanOrEqual(beforePause);
     await expect.poll(async () => Math.abs((await currentTime(page)) - pauseTarget), { timeout: 5_000 }).toBeLessThan(0.5 / FPS);
     const pauseObserved = await currentTime(page);
-    const pauseEvidence = await page.evaluate(() => {
-      const state = (window as EvidenceWindow).__SCRUB_EVIDENCE__;
-      return { dispatch: state.dispatches.at(-1), dispatchCount: state.dispatches.length, autoResumeCalls: state.autoResumeCalls };
-    });
-    if (!pauseEvidence.dispatch) throw new Error('no Player.seekTo dispatch observed for paused drag');
-    expect(pauseEvidence.autoResumeCalls).toBe(autoResumeBeforePause);
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toHaveCount(0);
     const pauseReference = await makeReference(testInfo, video, 'video', pauseTarget - 1.5);
     const pausePixels = await matchPixels(page, testInfo, 'paused-drag', pauseReference, 'video', pauseInputStartedAt, videoThreshold);
-    records.push({ label: 'paused-drag', requestedTime: pauseTarget, observedTime: pauseObserved, dispatchCount: pauseEvidence.dispatchCount, inputToDispatchMs: pauseEvidence.dispatch.at - pauseInputStartedAt, ...pausePixels, expected: pauseReference });
+    records.push({ label: 'paused-drag', requestedTime: pauseTarget, observedTime: pauseObserved, ...pausePixels, expected: pauseReference });
 
     await replaceConfig((config) => {
       const hero = config.clips.find((clip) => clip.id === 'clip-hero');
@@ -388,7 +371,7 @@ test.describe('preview scrubbing pixel evidence', () => {
     const replacementPixels = await matchPixels(page, testInfo, 'image-source-replacement', image2, 'image', replacementSeek.inputStartedAt, imageThreshold);
     const oldImagePixels = await compareScreenshot(page, testInfo, 'image-source-replacement-old-reference', image1, 'image');
     expect(oldImagePixels.rmse).toBeGreaterThan(replacementPixels.rmse);
-    records.push({ label: 'image-source-replacement', requestedTime: replacementTime, observedTime: replacementSeek.observedTime, dispatchCount: replacementSeek.dispatchCount, inputToDispatchMs: replacementSeek.inputToDispatchMs, ...replacementPixels, expected: image2, oldRmse: oldImagePixels.rmse });
+    records.push({ label: 'image-source-replacement', requestedTime: replacementTime, observedTime: replacementSeek.observedTime, ...replacementPixels, expected: image2, oldRmse: oldImagePixels.rmse });
 
     await replaceConfig((config) => {
       const videoClip = config.clips.find((clip) => clip.id === 'clip-video');
@@ -404,7 +387,7 @@ test.describe('preview scrubbing pixel evidence', () => {
     const trimSeek = await seekByRuler(page, map, trimTime);
     const trimReference = await makeReference(testInfo, video, 'video', 2 + (trimTime - 1.5));
     const trimPixels = await matchPixels(page, testInfo, 'video-trim-replacement', trimReference, 'video', trimSeek.inputStartedAt, videoThreshold);
-    records.push({ label: 'video-trim-replacement', requestedTime: trimTime, observedTime: trimSeek.observedTime, dispatchCount: trimSeek.dispatchCount, inputToDispatchMs: trimSeek.inputToDispatchMs, ...trimPixels, expected: trimReference });
+    records.push({ label: 'video-trim-replacement', requestedTime: trimTime, observedTime: trimSeek.observedTime, ...trimPixels, expected: trimReference });
 
     const artifactName = (path: string) => path.split('/').at(-1) ?? path;
     const durableRecords = records.map(({ screenshot, expected, ...record }) => ({
@@ -417,7 +400,7 @@ test.describe('preview scrubbing pixel evidence', () => {
       media: { image1: artifactName(image1), image2: artifactName(image2), video: 'public/example-video.mp4', videoLongGop: true },
       records: durableRecords,
       negativeControls,
-      pause: { beforePlayCalls: beforePause, afterPausePlayCalls: afterPause, settledPlayCalls: settledPause, autoResumeBeforePause, autoResumeCalls: pauseEvidence.autoResumeCalls },
+      pause: { beforePlayCalls: beforePause, afterPausePlayCalls: afterPause, settledPlayCalls: settledPause, stayedPausedAfterRelease: true },
       limitations: [
         'input timestamps begin immediately before Playwright pointer input; pixel-match latency is bounded by 100ms polling and includes screenshot/ImageMagick work',
         'negative control rejects a distinctly wrong video time after actual scaling; this does not claim frame-exact neighboring-time discrimination',

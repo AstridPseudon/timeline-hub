@@ -71,6 +71,12 @@ import { publishLocalTestExtensionDiagnostics } from "@/app/localTestRuntime.ts"
 import {
   selectReviewedExtensions,
 } from "@/tools/video-editor/runtime/extensionReleaseControls.ts";
+import { useEditorTour, useEditorTourRunning } from "@/shared/state/editorTourStore.ts";
+import { useEditorTourHost } from "@/tools/video-editor/tour/runner/useEditorTourHost.ts";
+import { EditorTourSlot } from "@/tools/video-editor/tour/timeline/editorTourSlot.tsx";
+import { EditorTourTimelineDriver } from "@/tools/video-editor/tour/timeline/EditorTourTimelineDriver.tsx";
+import { createEditorTourDataProvider } from "@/tools/video-editor/tour/timeline/tourDataProvider.ts";
+import { EDITOR_TOUR_PROJECT_NAME, EDITOR_TOUR_TIMELINE_ID, EDITOR_TOUR_TIMELINE_NAME } from "@/tools/video-editor/tour/timeline/tourStages.ts";
 
 type ProviderSelection = {
   dataProvider: DataProvider;
@@ -86,6 +92,9 @@ type ProviderSelection = {
 /** Keep existing browser resume preferences; values are now canonical IDs. */
 export const LAST_OPENED_PROJECT_STORAGE_KEY =
   "astrid:lastOpenedLocalProjectSlug";
+
+/** Root class that turns off Chrome's horizontal overscroll swipe-back while the editor is mounted (see index.css). */
+export const VIDEO_EDITOR_SWIPE_LOCK_CLASS = "video-editor-swipe-lock";
 
 type EditorProject = {
   slug: string;
@@ -138,6 +147,24 @@ function useVideoEditorProviderSelection({
   } : null, [connection, projectId, projectSlug, timelineId, timelineName]);
 }
 
+/**
+ * The editor tour's selection: an in-memory demo timeline in local mode (`projectId: null`), so
+ * nothing queries, saves or registers against the user's project. Each run gets its own key.
+ */
+function useEditorTourSelection(): ProviderSelection | null {
+  const running = useEditorTourRunning();
+  const runId = useEditorTour((state) => state.runId);
+  return useMemo(() => running ? {
+    dataProvider: createEditorTourDataProvider(),
+    projectId: null,
+    projectSlug: null,
+    timelineId: EDITOR_TOUR_TIMELINE_ID,
+    timelineName: EDITOR_TOUR_TIMELINE_NAME,
+    userId: null,
+    remountKey: `tour:${runId}`,
+  } : null, [running, runId]);
+}
+
 export default function VideoEditorPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   // ---- Reviewed extension bundle + smoke wiring ----------------------------
@@ -181,7 +208,7 @@ export default function VideoEditorPage() {
       ),
     );
 
-  // ---- M14: extension loader wiring (host-owned) --------------------------
+  // ---- extension loader wiring (host-owned) --------------------------
   // Resolves direct-local extensions + optional repository state through the
   // ExtensionLoader pipeline.  When no repository is provided, direct-local
   // extensions pass through unchanged (backward compatible).
@@ -200,6 +227,11 @@ export default function VideoEditorPage() {
   const { targetPath } = useHomeNavigation();
   const globalHeaderSlot = useOptionalGlobalHeaderSlot();
   const hasGlobalHeader = globalHeaderSlot.hasProvider;
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add(VIDEO_EDITOR_SWIPE_LOCK_CLASS);
+    return () => root.classList.remove(VIDEO_EDITOR_SWIPE_LOCK_CLASS);
+  }, []);
 
   const projectId = searchParams.get("project")?.trim() || null;
   const timelineId = searchParams.get("timeline")?.trim() || null;
@@ -302,7 +334,7 @@ export default function VideoEditorPage() {
     setRuntimeRetrying(false);
     reportNativeFailure.current();
   }, [connectorScope]);
-  const providerSelection = useVideoEditorProviderSelection({
+  const userProviderSelection = useVideoEditorProviderSelection({
     projectId: selectionVerified ? projectId : null,
     projectSlug: selectedProject?.slug ?? projectId,
     timelineId: selectionVerified ? timelineId : null,
@@ -310,12 +342,17 @@ export default function VideoEditorPage() {
     onRuntimeError,
   });
 
+  const tourSelection = useEditorTourSelection();
+  // The trigger sees the USER's selection, which the tour's own selection never replaces.
+  useEditorTourHost(!!userProviderSelection);
+  const providerSelection = tourSelection ?? userProviderSelection;
+
   // dataKind V1 golden path (groken round 4): DEV-only fixture provider so the
   // transcript-lane example paints on any project with a media clip. Opt-in
   // via `?transcriptLaneFixture=1`; production builds drop the branch.
   const pageDataProvider = useMemo(() => {
     if (!providerSelection) return null;
-    if (!import.meta.env.DEV) return providerSelection.dataProvider;
+    if (tourSelection || !import.meta.env.DEV) return providerSelection.dataProvider;
     const fixtureMode =
       import.meta.env.MODE === "test"
         ? new URLSearchParams(window.location.search).get(
@@ -328,10 +365,10 @@ export default function VideoEditorPage() {
           renderMatrix: fixtureMode === "render-matrix",
         })
       : providerSelection.dataProvider;
-  }, [providerSelection]);
+  }, [providerSelection, tourSelection]);
 
   const nativeRecovery = useNativeEditorRecovery({
-    enabled: !!providerSelection,
+    enabled: !!userProviderSelection,
     scope: connectorScope,
     onRecovered: () => {
       setRuntimeConnectorError(null);
@@ -683,9 +720,11 @@ export default function VideoEditorPage() {
       .map(({ editTime: _editTime, ...row }) => row),
     projectId: projectId,
     timelineId: timelineId,
-    projectName: selectedProject?.name,
-    timelineName:
-      selectedTimeline?.name?.trim() || selectedTimeline?.slug,
+    // The tour is not a project of the user's: its header names win and the pickers stay shut.
+    projectName: tourSelection ? EDITOR_TOUR_PROJECT_NAME : selectedProject?.name,
+    timelineName: tourSelection
+      ? tourSelection.timelineName
+      : selectedTimeline?.name?.trim() || selectedTimeline?.slug,
     projectsLoading:
       runtimeDiscovery.projectsQuery.isLoading,
     // The timeline list waits on the project list; a timeline named by the URL
@@ -709,7 +748,7 @@ export default function VideoEditorPage() {
     onSetPrimaryTimeline: handleSetPrimaryTimeline,
     settingPrimaryTimelineId,
     onRetry: () => void handleRuntimeRetry(),
-    disabled: isSwitchBlockedBySave,
+    disabled: isSwitchBlockedBySave || !!tourSelection,
     onOpenChange: setSelectorsOpen,
   };
   const runtimeProjectControls = (
@@ -814,6 +853,7 @@ export default function VideoEditorPage() {
             extensionHostEnabled
             extensionReleaseRevision="shipped"
           >
+            {tourSelection && <EditorTourTimelineDriver />}
             <AstridVideoEditorShell
               mode="full"
               timelineId={providerSelection.timelineId}
@@ -863,6 +903,7 @@ export default function VideoEditorPage() {
           )}
         </>
       )}
+      <EditorTourSlot />
     </div>
   );
 }

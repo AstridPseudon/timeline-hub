@@ -98,7 +98,7 @@ type RuntimeSession = { health: Health; handshake: Handshake; realm: Realm };
 /** A negotiated session, held by reference so every client that shares it also shares its invalidation. */
 type SessionSlot = { current: Promise<RuntimeSession> | null; inflight: Map<string, Promise<unknown>> };
 // The App constructs clients ad hoc (a dozen hooks each call `new AstridRuntimeClient()`),
-// and every instance used to run its own health + handshake + realm round trips: four
+// and without sharing, every instance runs its own health + handshake + realm round trips: four
 // handshakes on a cold load. Clients on the default browser transport with no private
 // credentials share one slot per base URL and launch binding, so a page negotiates once.
 // Slots are scoped to the `fetch` they were negotiated through, so replacing the
@@ -621,6 +621,12 @@ export class AstridRuntimeClient {
       name,
       idempotencyKey(),
     ));
+  }
+
+  /** One actor-owned app-state record (absent reads as version 0 with null content). */
+  async getUserAppState(key: string) { return this.withSession(() => this.client.getUserAppState(key)); }
+  async updateUserAppState(key: string, content: Record<string, unknown>, expectedVersion: number) {
+    return this.withMutation(() => this.client.updateUserAppState(key, content, expectedVersion, idempotencyKey()));
   }
 
   async listDocuments(projectId: string, cursor?: string, limit = 50, kind?: string) { return this.withSession(() => this.client.listDocuments(projectId, cursor, limit, kind)); }

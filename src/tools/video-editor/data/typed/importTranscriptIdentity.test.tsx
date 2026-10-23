@@ -1,12 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import type { DataLaneRenderItem } from '@/sdk/index.ts';
-import { createHostGeneratedObjectMeta } from '@/sdk/video/timeline/sourceMap.ts';
 import {
-  buildTranscriptCaptionPatch,
-  transcriptCaptionClipId,
-  TRANSCRIPT_LANE_EXTENSION_ID,
-  TRANSCRIPT_CAPTION_TRACK_ID,
-} from '../../dev/transcript-lane/extension.ts';
+  computeHostFingerprint,
+  createHostGeneratedObjectMeta,
+} from '@/sdk/video/timeline/sourceMap.ts';
 import {
   buildTimelineData,
   type TimelineData,
@@ -22,6 +18,12 @@ import {
   mapReplacedTranscriptIdentities,
   reconcileTranscriptReferences,
 } from './reconcileTranscriptReferences.ts';
+// Persisted-format constants of the transcript extension's saved projects
+// (the format `reconcileTranscriptReferences` keeps compatible).
+const TRANSCRIPT_LANE_EXTENSION_ID = 'haus.astrid.transcript-lane';
+const TRANSCRIPT_CAPTION_TRACK_ID = 'transcript-caption-foundry-track';
+const transcriptCaptionClipId = (occurrenceId: string) =>
+  `transcript-caption-${computeHostFingerprint(occurrenceId).split(':')[1]}`;
 const reviewKey = (id: string) =>
   `transcript-source-review:${encodeURIComponent(id)}`;
 const documentFor = (assetId = 'audio-a') => ({
@@ -240,7 +242,7 @@ describe('transcript legacy reference reconciliation', () => {
     expect(data.config).toEqual(original);
   });
 
-  it('repeated import and preserve-mode caption materialization keep one edited caption and one review', async () => {
+  it('repeated import keeps one edited caption under the canonical occurrence id and one review', async () => {
     const host = importer(await dataFor());
     host.importTranscript({ document: documentFor() });
     const first = structuredClone(host.dataRef.current.config);
@@ -248,24 +250,9 @@ describe('transcript legacy reference reconciliation', () => {
     expect(host.dataRef.current.config).toEqual(first);
     const source = canonicalSource();
     const caption = host.dataRef.current.config.clips[1];
-    const patch = buildTranscriptCaptionPatch(
-      {
-        baseVersion: 2,
-        outputMetadata: { resolution: '1920x1080', fps: 30 },
-        tracks: [{ id: TRANSCRIPT_CAPTION_TRACK_ID, kind: 'visual' }],
-        clips: [{ id: caption.id, track: caption.track }],
-      } as Parameters<typeof buildTranscriptCaptionPatch>[0],
-      [
-        {
-          id: `${source.id}@media-a`,
-          sourceItemId: source.id,
-          payload: source.payload,
-          timelineStart: 0,
-          timelineEnd: 2,
-        } as DataLaneRenderItem,
-      ],
-    );
-    expect(patch.operations).toEqual([]);
+    // The reconciled caption keeps the id a preserve-mode materialization of
+    // the canonical occurrence derives, so no second caption is ever created.
+    expect(caption.id).toBe(transcriptCaptionClipId(`${source.id}@media-a`));
     expect(
       host.dataRef.current.config.clips.filter(
         (clip) => clip.track === TRANSCRIPT_CAPTION_TRACK_ID,

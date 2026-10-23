@@ -12,11 +12,11 @@ describe('typedEvents', () => {
     const listener = vi.fn();
     window.addEventListener('openSettings', listener);
 
-    dispatchAppEvent('openSettings', { tab: 'credits' });
+    dispatchAppEvent('openSettings', { tab: 'extensions' });
 
     expect(listener).toHaveBeenCalledTimes(1);
     const event = listener.mock.calls[0][0] as CustomEvent<{ tab?: string }>;
-    expect(event.detail).toEqual({ tab: 'credits' });
+    expect(event.detail).toEqual({ tab: 'extensions' });
 
     window.removeEventListener('openSettings', listener);
   });

@@ -15,7 +15,6 @@ export const generationQueryKeys = {
   derivedGenerationsAll: ['derived-generations'] as const,
   byProject: (projectId: string) => ['project-generations', projectId] as const,
   byProjectAll: ['project-generations'] as const,
-  lineageChain: (generationId: string) => ['lineage-chain', generationId] as const,
   lastVideo: (shotId: string) => ['last-video-generation', shotId] as const,
   forTask: (taskId: string) => ['image-generation-for-task', taskId] as const,
   videoForTask: (taskId: string) => ['video-generations-for-task', taskId] as const,

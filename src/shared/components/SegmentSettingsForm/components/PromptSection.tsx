@@ -3,7 +3,7 @@
  *
  * The prompt input area with:
  * - Label with enhanced/default badges and field controls
- * - Textarea with clearable and voice input
+ * - Textarea with clearable input
  * - Enhance prompt toggle and make-primary variant switch
  */
 
@@ -92,9 +92,6 @@ export const PromptSection: React.FC<PromptSectionProps> = ({
           placeholder="Describe this segment..."
           clearable
           onClear={promptField.handleClearAll}
-          voiceInput
-          voiceContext="This is a prompt for a video segment. Describe the motion, action, or visual content you want in this part of the video."
-          onVoiceResult={promptField.handleVoiceResult}
         />
       </div>
 

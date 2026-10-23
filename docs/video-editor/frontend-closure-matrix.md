@@ -479,7 +479,6 @@ These primitives have SDK vocabulary defined but frontend implementation, test c
 | **RoundtripResultsPanel** | Host-owned panel for process roundtrip results, sidecar previews, and download actions | □ States not tested in standalone frontend tests | □ Role/label expectations documented but not verified | DEFER:D-025; `src/examples/process-example.ts` | `gap` | `deferred` | CR:M12-005, CR:M12-006 (D-025) |
 | **SidecarPreview** | Host-owned preview for sidecar/manifest artifacts | □ States not tested in standalone frontend tests | □ Role/label expectations documented but not verified | DEFER:D-025; `src/examples/process-example.ts` | `gap` | `deferred` | CR:M12-006 (D-025) |
 | **SidecarEditingWidgets** | Host-owned widgets for editing sidecar metadata (captions, labels, cue lists) | □ States not tested in standalone frontend tests | □ Role/label expectations documented but not verified | DEFER:D-023; `src/examples/process-example.ts` | `gap` | `deferred` | CR:M12-011 (part of D-023) |
-| **SequenceCreatorPanel** | Host-owned panel for sequence creation with controls manifest layout | □ States not tested in standalone frontend tests | □ Role/label expectations documented but not verified | DEFER:D-023; `src/examples/process-example.ts` | `gap` | `deferred` | CR:M12-011 (part of D-023) |
 | **Extension Manager UI** | Host-owned extension manager (install, enable/disable, settings edit) | □ Full UI not confirmed as complete in current `main` | □ Role/label expectations documented but not verified | BLOCKER:B-001; `src/examples/hello-world-extension.ts` | `gap` | `deferred` | CR:M14-001, BLOCKER:B-001 (D-001–D-010) |
 
 ---
@@ -549,7 +548,7 @@ Supported primitives map to rows S-020–S-027, S-050–S-051, S-060–S-065 in 
 |---|---|
 | [extension-platform-contract-recheck.md](./extension-platform-contract-recheck.md) | Complete M0–M14 Done Criteria evidence matrix |
 | [extension-platform-supported-deferred.md](./extension-platform-supported-deferred.md) | Canonical supported/deferred V1 behavior classification |
-| [extensions-trust-envelope.md](./extensions-trust-envelope.md) | V1 trusted-local execution model |
+| [trust-and-security.md](../extensions/trust-and-security.md) | V1 trusted-local execution model |
 | [provider-compatibility-matrix.md](./provider-compatibility-matrix.md) | DataProvider compatibility matrix |
 | [docs/video-editor/frontend-closure-checklist.md](./frontend-closure-checklist.md) | Transitional checklist (superseded by this matrix) |
 

@@ -1,10 +1,10 @@
 /**
- * Provider-backed implementation of ExtensionStateRepository (T7).
+ * Provider-backed implementation of ExtensionStateRepository.
  *
  * Stores extension metadata (enablement, dev overrides, settings snapshots,
  * lifecycle events, lock entries) in a provider-backed store using reserved
  * tool-settings keys. Bundle content bytes are NOT stored in provider-backed
- * state per SD2 — they remain in browser-local IndexedDB.
+ * state — they remain in browser-local IndexedDB.
  *
  * Reserved keys:
  *   astrid.ext.state.enablement  — Record<string, ExtensionEnablementState>
@@ -16,7 +16,7 @@
  *
  * This adapter uses a simple provider interface that supports get/set/delete
  * for string-keyed JSON state. It is designed to work with any provider that
- * exposes a key-value storage API (localStorage, Supabase tool-settings, etc.).
+ * exposes a key-value storage API (localStorage, a settings service, etc.).
  */
 
 import type {
@@ -39,8 +39,8 @@ import type {
 /**
  * Minimal provider-backed storage interface.
  *
- * Concrete implementations may wrap localStorage (for testing) or the
- * Supabase tool-settings service (for production).
+ * Concrete implementations may wrap localStorage or any other
+ * key-value settings service.
  */
 export interface ProviderBackedStore {
   /** Retrieve a value by key. Returns null when not found. */
@@ -93,7 +93,7 @@ export class InMemoryProviderStore implements ProviderBackedStore {
 // ---------------------------------------------------------------------------
 // localStorage-backed store (for direct local extensions)
 //
-// M1-LOCKED: Settings source of truth remains provider/localStorage with no
+// Settings source of truth remains provider/localStorage with no
 // migration to an alternative backend (IndexedDB, settings sync API, etc.).
 // The ProviderBackedStore interface (get/set/delete) and reserved keys are
 // stable.

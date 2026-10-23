@@ -6,7 +6,7 @@ interface UseTaskDetailsProps {
   generationId: string | null;
   projectId?: string | null;
   /** Optional callback for applying task settings */
-  onApplySettingsFromTask?: (taskId: string, replaceImages: boolean, inputImages: string[]) => void;
+  onApplySettingsFromTask?: (taskId: string) => void;
   /** Optional callback when closing task details */
   onClose?: () => void;
 }

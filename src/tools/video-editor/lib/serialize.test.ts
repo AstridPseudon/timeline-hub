@@ -12,7 +12,7 @@ import {
   serializeTimelinePair,
   validateTimelineConfigSnapshot,
 } from '@/tools/video-editor/lib/timeline-domain';
-import type { ResolvedTimelineConfig, TimelineConfig, TimelineClip } from '@/tools/video-editor/types';
+import type { AssetRegistryEntry, ResolvedTimelineConfig, TimelineConfig, TimelineClip } from '@/tools/video-editor/types';
 
 describe('video-editor serialization', () => {
   it('preserves exact source fields and strips resolved-only data', () => {
@@ -121,7 +121,7 @@ describe('video-editor serialization', () => {
     expect(serialized.pinnedShotGroups).toEqual(pinnedShotGroups);
   });
 
-  // Sprint 2 schema-lift backward-compatibility guarantee: a pre-Sprint-2
+  // Schema-lift backward-compatibility guarantee: a pre-schema-lift
   // timeline (with only the four built-in clipTypes and no theme / overrides)
   // round-trips through validateSerializedConfig untouched, and through
   // serializeForDisk preserving every field. New optional fields stay absent
@@ -168,7 +168,7 @@ describe('video-editor serialization', () => {
       output: { resolution: '1280x720', fps: 30, file: 'output.mp4' },
       tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
       clips: [
-        // Unknown clipType — Sprint 5 ships strict registry validation; for
+        // Unknown clipType — strict registry validation is not implemented; for
         // now the validator must NOT reject this.
         { id: 'clip-themed', at: 0, track: 'V1', clipType: 'theme:karaoke-bouncing-ball', hold: 2 } as TimelineClip,
       ],
@@ -189,7 +189,7 @@ describe('video-editor serialization', () => {
           asset: 'a1',
           from: 0,
           to: 5,
-          // Sprint 2 clip-level lift fields:
+          // Clip-level lift fields:
           params: { intensity: 0.4 },
           pool_id: 'pool-visual-a',
           clip_order: 1,
@@ -329,6 +329,35 @@ describe('video-editor serialization', () => {
     } as TimelineConfig)).toThrow(TimelineDomainError);
   });
 
+  it('save payload keeps unknown registry fields and drops App-only src', () => {
+    // Edit path: an unknown Astrid field on a registry entry must survive the
+    // save; the App-only resolved locator must not.
+    const config: TimelineConfig = {
+      output: { resolution: '1280x720', fps: 30, file: 'output.mp4' },
+      clips: [{ id: 'clip-1', at: 0, track: 'video', asset: 'asset-1' }],
+    };
+    const pair = serializeTimelinePair(config, {
+      assets: {
+        'asset-1': {
+          file: 'video.mp4',
+          duration: 3.5,
+          handle: 'ref:hero-still',
+          source: { kind: 'generation', run_id: 'run-1' },
+          zz_future_astrid_field: { a: 1 },
+          src: 'blob:http://localhost/abc',
+        } as AssetRegistryEntry,
+      },
+    });
+    const saved = JSON.parse(JSON.stringify(pair.registry.assets['asset-1']));
+    expect(saved).toEqual({
+      file: 'video.mp4',
+      duration: 3.5,
+      handle: 'ref:hero-still',
+      source: { kind: 'generation', run_id: 'run-1' },
+      zz_future_astrid_field: { a: 1 },
+    });
+  });
+
   it('serializes config-only and pair-aware contracts through the shared domain serializer', () => {
     const config: TimelineConfig = {
       output: { resolution: '1280x720', fps: 30, file: 'output.mp4' },
@@ -458,7 +487,7 @@ describe('video-editor serialization', () => {
     expect(serialized.app?.['x-astrid']).not.toBe(config.app?.['x-astrid']);
   });
 
-  // ── M8: Transition params snapshot and round-trip ─────────────────────
+  // ── Transition params snapshot and round-trip ─────────────────────
 
   it('preserves transition.params through serializeForDisk round-trip', () => {
     const resolved = {
@@ -606,7 +635,7 @@ describe('video-editor serialization', () => {
     expect(() => validateSerializedConfig(serialized)).not.toThrow();
   });
 
-  // ── M13: Shader metadata persistence ─────────────────────────────────
+  // ── Shader metadata persistence ─────────────────────────────────
 
   it('round-trips clip-local and postprocess shader metadata through disk serialization', () => {
     const clipShader = {
@@ -652,7 +681,7 @@ describe('video-editor serialization', () => {
     expect(() => validateSerializedConfig(serialized)).not.toThrow();
   });
 
-  // ── M9: Keyframe serialization round-trip tests ──────────────────────
+  // ── Keyframe serialization round-trip tests ──────────────────────
 
   it('round-trips clip keyframes through serializeForDisk and validation', () => {
     const resolved = {
@@ -782,7 +811,7 @@ describe('video-editor serialization', () => {
     expect(() => validateSerializedConfig(serialized)).not.toThrow();
   });
 
-  // ── M9: Automation clip payload round-trip tests ─────────────────────
+  // ── Automation clip payload round-trip tests ─────────────────────
 
   it('round-trips automation clip params through serializeForDisk and validation', () => {
     const automationParams = {

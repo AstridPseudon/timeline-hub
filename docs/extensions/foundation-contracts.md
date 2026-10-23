@@ -27,7 +27,7 @@ Every extension manifest (`astrid-extension.json`) must include:
 
 Optional fields: `description`, `contributions`, `settingsDefaults`, `settingsSchema`, `messages`, `permissions`, `processes`, `dependsOn`, `migrations`.
 
-**Manifest format is frozen for V1.** There are 18 checked-in extension manifests under `src/tools/video-editor/examples/extensions/` (8 core example manifests plus 10 Creative Lab manifests).
+**Manifest format is frozen for V1.** There are 8 checked-in extension manifests under `src/tools/video-editor/examples/extensions/`.
 
 ### 1.3 Immutability
 
@@ -309,7 +309,7 @@ This summary survives without active runtime descriptors — disabled/error pack
 
 ### 9.1 Storage backend
 
-Extension settings are backed by the provider (`SupabaseProviderStore` in production, `LocalStorageProviderStore` for local/direct extensions) with localStorage as the fallback.
+Extension settings are backed by `LocalStorageProviderStore` (`InMemoryProviderStore` in tests), with localStorage as the fallback. The cloud-backed production store was removed 2026-10-18 (tag `pre-cloud-removal`).
 
 ### 9.2 Key scoping
 

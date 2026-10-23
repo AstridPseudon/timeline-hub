@@ -16,7 +16,6 @@ vi.mock('@/shared/components/ui/primitives/label', () => ({
 
 vi.mock('@/shared/components/PhaseConfigSelectorModal', () => ({
   PhaseConfigVertical: () => <div data-testid="phase-config-vertical">advanced-config</div>,
-  PhaseConfigSelectorModal: () => <div data-testid="phase-config-selector-modal">preset-modal</div>,
 }));
 
 vi.mock('./MotionControlBasicTab', () => ({
@@ -27,14 +26,9 @@ vi.mock('./MotionControlBasicTab', () => ({
 
 vi.mock('./hooks/useMotionControlPresetState', () => ({
   useMotionControlPresetState: () => ({
-    isPresetModalOpen: true,
-    openPresetModal: vi.fn(),
-    closePresetModal: vi.fn(),
     allPresets: [],
     builtinDefaultId: '__builtin_default_vace__',
     isCustomConfig: false,
-    isSelectedPresetKnown: true,
-    handleSwitchToAdvanced: vi.fn(),
     handleCustomClick: vi.fn(),
     handlePresetSelect: vi.fn(),
   }),
@@ -55,8 +49,6 @@ function buildProps(
     },
     lora: {
       selectedLoras: [],
-      availableLoras: [],
-      onAddLoraClick: vi.fn(),
       onRemoveLora: vi.fn(),
       onLoraStrengthChange: vi.fn(),
       onAddTriggerWord: vi.fn(),
@@ -66,13 +58,6 @@ function buildProps(
       selectedPhasePresetId: null,
       onPhasePresetSelect: vi.fn(),
       onPhasePresetRemove: vi.fn(),
-      currentSettings: {
-        prompt: '',
-        negative_prompt: '',
-        model: '',
-        num_frames: 61,
-        amount_of_motion: 50,
-      },
     },
     advanced: {
       phaseConfig: undefined,
@@ -92,19 +77,17 @@ function buildProps(
 }
 
 describe('MotionControl', () => {
-  it('hides tabs and preset modal for LTX models', () => {
+  it('hides tabs for LTX models', () => {
     render(<MotionControl {...buildProps('ltx-2.3')} />);
 
     expect(screen.getByTestId('motion-control-basic-tab')).toHaveTextContent('ltx-2.3');
     expect(screen.queryByText('Mode:')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('phase-config-selector-modal')).not.toBeInTheDocument();
   });
 
-  it('renders tabs and preset modal for WAN models', () => {
+  it('renders tabs for WAN models', () => {
     render(<MotionControl {...buildProps('wan-2.2')} />);
 
     expect(screen.getByText('Mode:')).toBeInTheDocument();
     expect(screen.getByTestId('tabs')).toBeInTheDocument();
-    expect(screen.getByTestId('phase-config-selector-modal')).toBeInTheDocument();
   });
 });

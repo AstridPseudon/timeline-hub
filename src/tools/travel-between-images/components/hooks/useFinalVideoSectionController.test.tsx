@@ -8,7 +8,6 @@ const mocks = vi.hoisted(() => ({
   useSegmentOutputsForShot: vi.fn(),
   useTaskDetails: vi.fn(),
   useVariantBadges: vi.fn(),
-  useShareGeneration: vi.fn(),
   useMarkVariantViewed: vi.fn(),
   useQuery: vi.fn(),
 }));
@@ -27,10 +26,6 @@ vi.mock('@/shared/components/ShotImageManager/hooks/useTaskDetails', () => ({
 
 vi.mock('@/shared/hooks/variants/useVariantBadges', () => ({
   useVariantBadges: (...args: unknown[]) => mocks.useVariantBadges(...args),
-}));
-
-vi.mock('@/shared/hooks/useShareGeneration', () => ({
-  useShareGeneration: (...args: unknown[]) => mocks.useShareGeneration(...args),
 }));
 
 vi.mock('@/shared/hooks/variants/useMarkVariantViewed', () => ({
@@ -67,12 +62,6 @@ describe('useFinalVideoSectionController', () => {
         hasUnviewedVariants: true,
       })),
     });
-    mocks.useShareGeneration.mockReturnValue({
-      handleShare: vi.fn(),
-      isCreatingShare: false,
-      shareCopied: false,
-      shareSlug: 'share-1',
-    });
     mocks.useMarkVariantViewed.mockReturnValue({
       markAllViewed: vi.fn(),
     });
@@ -80,13 +69,11 @@ describe('useFinalVideoSectionController', () => {
   });
 
   it('uses the preloaded read-only parent path and exposes derived actions/data', () => {
-    const onDelete = vi.fn();
     const { result } = renderHook(() => useFinalVideoSectionController({
       shotId: 'shot-1',
       projectId: 'project-1',
       onApplySettingsFromTask: vi.fn(),
       getFinalVideoCount: () => 0,
-      onDelete,
       readOnly: true,
       preloadedParent: {
         id: 'parent-1',
@@ -113,14 +100,12 @@ describe('useFinalVideoSectionController', () => {
 
     act(() => {
       result.current.handleMarkAllVariantsViewed();
-      result.current.handleDelete();
       result.current.handleLightboxOpen();
       result.current.handleLightboxClose();
     });
 
     expect(mocks.useVariantBadges).toHaveBeenCalledWith(['child-variant-source-1'], true);
     expect(mocks.useMarkVariantViewed.mock.results[0]?.value.markAllViewed).toHaveBeenCalledWith('child-variant-source-1');
-    expect(onDelete).toHaveBeenCalledWith('parent-1');
     expect(result.current.isLightboxOpen).toBe(false);
     expect(result.current.shouldShowSkeleton).toBe(false);
   });

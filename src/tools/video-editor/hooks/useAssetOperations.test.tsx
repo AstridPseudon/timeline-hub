@@ -389,7 +389,7 @@ describe('useAssetOperations', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // M6: Parser-enriched metadata and diagnostics in useAssetOperations (T11)
+  // Parser-enriched metadata and diagnostics in useAssetOperations
   // ---------------------------------------------------------------------------
   describe('M6: parser enrichment in useAssetOperations', () => {
     beforeEach(() => {

@@ -57,7 +57,7 @@ import {
   type VideoEditorSequenceComponentCatalog,
 } from '@/tools/video-editor/hooks/useSequenceResources.ts';
 import { SequenceComponentRegistryProvider } from '@/tools/video-editor/sequences/SequenceComponentRegistryContext.tsx';
-import { TimelineStoreProvider } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { TimelineStoreProvider, usePublishTimelineReader } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useTimelineState } from '@/tools/video-editor/hooks/useTimelineState.ts';
 import { PUBLIC_TIMELINE_SERVICE_HOOKS, type TimelineHostServiceHooks } from '@/tools/video-editor/runtime/timelineHostServiceHooks.ts';
 import type { UseTimelineStateResult } from '@/tools/video-editor/hooks/useTimelineState.types.ts';
@@ -132,7 +132,6 @@ import {
 } from '@/tools/video-editor/runtime/agentToolInvocationService.ts';
 import type { ProcessStatus } from '@/sdk/video/families/processes';
 import {
-  clearExtensionSettingsFromLocalStorage,
   removeExtensionDiagnosticsFromCollection,
   syncExtensionDiagnosticsToCollection,
   syncLiveDiagnosticsToCollection,
@@ -250,9 +249,9 @@ export interface UseEditorRuntimeAssemblyOptions {
   extensions?: readonly AstridExtension[];
   documents?: import('@/sdk/context.ts').ProjectDocumentSurface;
   loadAssetProfile?: (assetKey: string) => Promise<import('@/tools/video-editor/data/AssetResolver.ts').AssetProfile | null>;
-  /** Package-state inventory entries propagated from the loader (M5). */
+  /** Package-state inventory entries propagated from the loader. */
   packageStateEntries?: readonly PackageStateInventoryEntry[];
-  /** M6b: Host-provided process manager override. When absent, a default
+  /** Host-provided process manager override. When absent, a default
    *  ProcessManager is created from the extension runtime's declared process
    *  specs. */
   hostProcessManager?: ProcessManager;
@@ -261,11 +260,11 @@ export interface UseEditorRuntimeAssemblyOptions {
   /** Host feedback channel for command-registry violations (app shell:
    *  toasts; embed host: console). Applied once on mount. */
   commandRegistryCallbacks: CommandRegistryCallbacks;
-  /** M11: Create a per-mount live data registry, thread it into the
+  /** Create a per-mount live data registry, thread it into the
    *  lifecycle host + agent tool registry, and dispose it on unmount
    *  (embed host only). Read on first render. */
   enableLiveData?: boolean;
-  /** M13: Render the shader registry provider + lifecycle bridge in the
+  /** Render the shader registry provider + lifecycle bridge in the
    *  scaffold (embed host only). */
   enableShaderRegistry?: boolean;
   /** Extra host-owned disposal run on unmount, after the lifecycle host and
@@ -297,12 +296,12 @@ export interface EditorRuntimeAssembly {
   /** Provider-owned TimelineViewStore (one per mount) for `ctx.creative.timelineView`. */
   timelineViewStoreRef: MutableRefObject<TimelineViewStoreApi | null>;
   processManagerRef: MutableRefObject<ProcessManager | null>;
-  /** M6b: Read-only snapshot of process statuses (reactive on attach records). */
+  /** Read-only snapshot of process statuses (reactive on attach records). */
   processStatuses: readonly ProcessStatus[] | undefined;
-  /** M6b: Host-session scoped process result attach records (memory only). */
+  /** Host-session scoped process result attach records (memory only). */
   processResultAttachRecords: readonly ProcessResultAttachRecord[];
   recordProcessResultAttach: (record: ProcessResultAttachRecord) => void;
-  /** M5: Recovery key facade backed by ExtensionLifecycleHost. */
+  /** Recovery key facade backed by ExtensionLifecycleHost. */
   getRecoveryKey: (extensionId: string) => string;
   incrementRecoveryKey: (extensionId: string) => string;
   /** Whether the scaffold renders the shader registry layer. */
@@ -333,7 +332,7 @@ export function useEditorRuntimeAssembly({
     [enableMutationServices, extensions, packageStateEntries],
   );
 
-  // ---- M11: live data registry (one per provider mount; embed host only) ----
+  // ---- live data registry (one per provider mount; embed host only) ----
   const liveDataRegistryRef = useRef<LiveDataRegistry | null>(null);
   if (enableLiveData && !liveDataRegistryRef.current) {
     liveDataRegistryRef.current = createLiveDataRegistry();
@@ -347,7 +346,7 @@ export function useEditorRuntimeAssembly({
     );
   }
 
-  // ---- M4: command registry (one per provider mount) -----------------------
+  // ---- command registry (one per provider mount) -----------------------
   const commandRegistryRef = useRef<CommandRegistry | null>(null);
   if (enableMutationServices && !commandRegistryRef.current) {
     commandRegistryRef.current = createCommandRegistry();
@@ -361,7 +360,7 @@ export function useEditorRuntimeAssembly({
     dataKindRegistryRef.current = createDataKindRegistry();
   }
 
-  // ---- M7/M8/M9/M13: registry refs (registries are created by their
+  // ---- registry refs (registries are created by their
   //      providers in the scaffold, exposed via context, and stored here for
   //      the synchronize effect) ---------------------------------------------
   const effectRegistryRef = useRef<EffectRegistry | null>(null);
@@ -374,7 +373,7 @@ export function useEditorRuntimeAssembly({
     () => rendererRegistryRef.current.getSnapshot(),
   );
 
-  // ---- M10: agent tool registry (one per provider mount) -------------------
+  // ---- agent tool registry (one per provider mount) -------------------
   const agentToolRegistryRef = useRef<AgentToolRegistry | null>(null);
   const [liveSceneOperationPort] = useState(() => new LiveSceneOperationPort());
   useEffect(() => {
@@ -413,7 +412,7 @@ export function useEditorRuntimeAssembly({
     return () => handle.dispose();
   }, []);
 
-  // ---- M6b: Process manager (host override or default from declared specs) --
+  // ---- Process manager (host override or default from declared specs) --
   const processManagerRef = useRef<ProcessManager | null>(null);
   if (!enableMutationServices) {
     processManagerRef.current = null;
@@ -426,7 +425,7 @@ export function useEditorRuntimeAssembly({
       : null;
   }
 
-  // ---- M6b: Host-session scoped process result attach records (memory only) -
+  // ---- Host-session scoped process result attach records (memory only) -
   const [processResultAttachRecords, setProcessResultAttachRecords] = useState<
     readonly ProcessResultAttachRecord[]
   >([]);
@@ -437,7 +436,7 @@ export function useEditorRuntimeAssembly({
     [],
   );
 
-  // ---- M6b: Derived process statuses snapshot (reactive) ----
+  // ---- Derived process statuses snapshot (reactive) ----
   const processManager = processManagerRef.current;
   const processStatuses = useMemo<readonly ProcessStatus[] | undefined>(() => {
     if (!processManager) return undefined;
@@ -556,7 +555,6 @@ export interface UseEditorRuntimeSyncOptions {
   projectObjects?: ProjectObjectStorage;
   /** User the effect/sequence catalogs and legacy effects query resolve
    *  against. */
-  catalogUserId: string | null;
   /** Host-specific gating for the legacy effects query (the embed host also
    *  requires a user id). */
   effectsQueryEnabled: boolean;
@@ -579,10 +577,14 @@ export interface UseEditorRuntimeSyncOptions {
    * creates them from renders only). Must be constant for a mount.
    */
   eagerProposalRetry?: boolean;
-  /** T9: repository-backed extension settings persistence (embed host only). */
+  /** repository-backed extension settings persistence (embed host only). */
   settings?: {
     repository: ExtensionStateRepository | null | undefined;
     snapshotsRef: MutableRefObject<Record<string, ExtensionSettingsSnapshot> | null>;
+    /** False while stored snapshots are still loading; extensions wait so their first write cannot replace them. */
+    snapshotsReady?: boolean;
+    /** True when the read failed or timed out: no repository is bound, so the unread snapshot is never overwritten. */
+    snapshotsUnavailable?: boolean;
     notificationRegistryRef: MutableRefObject<ExtensionSettingsNotificationRegistry | null>;
   };
   /** Synchronously seed a host-owned timeline projection before provider I/O. */
@@ -608,7 +610,6 @@ export function useEditorRuntimeSync({
   projectId,
   timelineId,
   projectObjects,
-  catalogUserId,
   effectsQueryData,
   timelineServices = PUBLIC_TIMELINE_SERVICE_HOOKS,
   effectCatalog,
@@ -638,15 +639,14 @@ export function useEditorRuntimeSync({
   } = assembly;
   const settingsRepository = enableMutationServices ? settings?.repository ?? null : null;
   const settingsSnapshotsRef = enableMutationServices ? settings?.snapshotsRef : undefined;
+  const settingsSnapshotsReady = settings?.snapshotsReady ?? true;
+  const settingsSnapshotsUnavailable = settings?.snapshotsUnavailable ?? false;
   const settingsNotificationRegistryRef = enableMutationServices
     ? settings?.notificationRegistryRef
     : undefined;
 
-  const effectResources = useResolvedEffectCatalog(catalogUserId, effectCatalog);
-  const sequenceComponentResources = useResolvedSequenceComponentCatalog(
-    catalogUserId,
-    sequenceComponentCatalog,
-  );
+  const effectResources = useResolvedEffectCatalog(effectCatalog);
+  const sequenceComponentResources = useResolvedSequenceComponentCatalog(sequenceComponentCatalog);
 
   const { store, editor, chrome, editorOps } = useTimelineState(timelineServices, initialTimelineData);
   const diagnosticCollection = useVideoEditorRuntime().diagnosticCollection;
@@ -673,7 +673,7 @@ export function useEditorRuntimeSync({
     return () => { projectionHandle.dispose(); pendingWorkHandle.dispose(); };
   }, [extensionRuntime.extensions, lifecycleHostRef, store]);
 
-  // ---- M3: live creative context for extensions ----------------------------
+  // ---- live creative context for extensions ----------------------------
   // Create stable TimelineReader from the data ref (always reads latest data).
   // The canonical version comes from the store's ack-tracked field (outside
   // the data object), so snapshot().baseVersion reflects receipt-only acks
@@ -706,7 +706,7 @@ export function useEditorRuntimeSync({
       }),
     [store, projectId, timelineId, extensionRuntime.requirements, shotComposition],
   );
-  if (store.getState().timelineReader !== timelineReader) store.setState?.({ timelineReader });
+  usePublishTimelineReader(store, timelineReader);
   assembly.liveSceneOperationPort.setReader(timelineReader);
 
   // One ProposalRuntime per provider mount, stable for the provider lifetime.
@@ -758,7 +758,7 @@ export function useEditorRuntimeSync({
     }
   }, [enableMutationServices, store, timelineReader]);
 
-  // ---- M10: Agent tool invocation service (registry + ProposalRuntime) -----
+  // ---- Agent tool invocation service (registry + ProposalRuntime) -----
   const agentToolInvocationServiceRef = useRef<AgentToolInvocationService | null>(null);
   if (!enableMutationServices) {
     agentToolInvocationServiceRef.current = null;
@@ -814,6 +814,7 @@ export function useEditorRuntimeSync({
     const host = lifecycleHostRef.current;
     const registry = commandRegistryRef.current;
     if (!host) return;
+    if (settingsRepository && !settingsSnapshotsReady) return;
 
     host.synchronize(
       extensionRuntime.extensions,
@@ -932,9 +933,9 @@ export function useEditorRuntimeSync({
               store.getState().pendingWorkRegistry?.report(extId, state),
           },
         };
-        // T9: Build settings service options when repository is available
+        // Build settings service options when repository is available
         const settingsOptions: CreateExtensionSettingsServiceOptions | undefined =
-          settingsRepository && !settingsRepository.isDisposed
+          settingsRepository && !settingsRepository.isDisposed && !settingsSnapshotsUnavailable
             ? {
                 repository: settingsRepository,
                 initialSnapshot:
@@ -1008,6 +1009,8 @@ export function useEditorRuntimeSync({
     settingsRepository,
     store,
     settingsSnapshotsRef,
+    settingsSnapshotsReady,
+    settingsSnapshotsUnavailable,
     shaderRegistryRef,
     transitionRegistryRef,
     enableMutationServices,
@@ -1090,7 +1093,6 @@ function RuntimeEffectRegistryLifecycle({
       effectRegistry.unregisterOwner(extensionId);
       agentToolRegistry?.unregisterAll(extensionId);
       removeExtensionDiagnosticsFromCollection(diagnosticCollection, extensionId);
-      clearExtensionSettingsFromLocalStorage(extensionId);
     });
     return () => handle.dispose();
   }, [commandRegistryRef, diagnosticCollection, effectRegistry, lifecycleHostRef, agentToolRegistryRef, rendererRegistryRef]);
@@ -1147,7 +1149,6 @@ function RuntimeTransitionRegistryLifecycle({
       commandRegistry?.unregisterAll(extensionId);
       transitionRegistry.unregisterOwner(extensionId);
       removeExtensionDiagnosticsFromCollection(diagnosticCollection, extensionId);
-      clearExtensionSettingsFromLocalStorage(extensionId);
     });
     return () => handle.dispose();
   }, [commandRegistryRef, diagnosticCollection, transitionRegistry, lifecycleHostRef]);
@@ -1183,7 +1184,6 @@ function RuntimeShaderRegistryLifecycle({
     const handle = host.onLifecycleDisposed((extensionId: string) => {
       shaderRegistry.unregisterOwner(extensionId);
       removeExtensionDiagnosticsFromCollection(diagnosticCollection, extensionId);
-      clearExtensionSettingsFromLocalStorage(extensionId);
     });
     return () => handle.dispose();
   }, [diagnosticCollection, shaderRegistry, lifecycleHostRef]);
@@ -1239,7 +1239,6 @@ function RuntimeClipTypeRegistryLifecycle({
       commandRegistry?.unregisterAll(extensionId);
       clipTypeRegistry.unregisterOwner(extensionId);
       removeExtensionDiagnosticsFromCollection(diagnosticCollection, extensionId);
-      clearExtensionSettingsFromLocalStorage(extensionId);
     });
     return () => handle.dispose();
   }, [commandRegistryRef, diagnosticCollection, clipTypeRegistry, lifecycleHostRef]);

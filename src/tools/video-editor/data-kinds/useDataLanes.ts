@@ -1,4 +1,4 @@
-// [CONVERGE-WITH-M1] Host-side lane pipeline hook (dataKind V2).
+// Host-side lane pipeline hook (dataKind V2).
 // Thin glue only: takes a base TimelineData and the registered-kind snapshot
 // records; delegates segment fetching to the single assembly authority
 // (`dataLaneAssemblyAuthority.ts` — one shared cache for every co-mounted

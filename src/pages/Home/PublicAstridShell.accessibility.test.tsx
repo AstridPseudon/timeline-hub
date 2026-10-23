@@ -109,14 +109,14 @@ describe('PublicAstridShell route announcements', () => {
   vi.useFakeTimers();
   __resetSelectionStoreForTests();
   configureMotionPreference(false);
-  // App is explicit now; an unqualified home URL intentionally lands in Agent.
+  // The App view is explicit; an unqualified home URL intentionally lands in Agent.
   setRoute('?experience=app');
   });
 
   it.each([
     ['/home', 'Agent.'],
     ['/home?experience=agent', 'Agent.'],
-    // The retired flat preview link now lands on the default Agent view.
+    // The flat preview link lands on the default Agent view.
     ['/home?view=preview', 'Agent.'],
   ])('announces the direct-link state once after shell commit: %s', async (path, expected) => {
     setRoute(path.replace('/home', ''));

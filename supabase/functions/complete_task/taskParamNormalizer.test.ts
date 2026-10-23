@@ -63,3 +63,4 @@ describe('normalizeSegmentTaskParams', () => {
     expect(normalized.pairShotGenerationId).toBeNull();
   });
 });
+

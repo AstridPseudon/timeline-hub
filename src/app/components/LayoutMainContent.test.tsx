@@ -21,7 +21,6 @@ const useHeaderStateMock = vi.fn();
 const useViewportResponsiveMock = vi.fn();
 const useVideoEditorRouteStateMock = vi.fn();
 const appHeaderMock = vi.fn();
-const globalProcessingWarningMock = vi.fn();
 
 const defaultPanesState = {
   isTasksPaneLocked: true,
@@ -51,13 +50,6 @@ vi.mock('@/shared/hooks/useHomeNavigation', () => ({
     navigateHome: vi.fn(),
     targetPath: '/tools/travel-between-images',
   }),
-}));
-
-vi.mock('@/shared/components/ProcessingWarnings', () => ({
-  GlobalProcessingWarning: (props: unknown) => {
-    globalProcessingWarningMock(props);
-    return <div data-testid="processing-warning" />;
-  },
 }));
 
 vi.mock('@/shared/state/panesStore', () => ({
@@ -113,7 +105,6 @@ describe('LayoutMainContent', () => {
     );
 
     expect(screen.getByTestId('global-header')).toBeInTheDocument();
-    expect(screen.queryByTestId('processing-warning')).not.toBeInTheDocument();
     expect(screen.getByTestId('tool-header')).toBeInTheDocument();
     expect(screen.getByTestId('layout-outlet')).toBeInTheDocument();
     expect(appHeaderMock).toHaveBeenCalledWith(
@@ -121,7 +112,6 @@ describe('LayoutMainContent', () => {
         navigationMode: 'home',
       })
     );
-    expect(globalProcessingWarningMock).not.toHaveBeenCalled();
 
     const contentContainer = container.querySelector('.content-container');
     expect(contentContainer).not.toBeNull();
@@ -134,14 +124,25 @@ describe('LayoutMainContent', () => {
     });
   });
 
-  it('does not mount the Supabase-backed warning in default Astrid authority', () => {
-
-    render(
+  it('reserves the locked Tasks pane width for the header so its Settings control is not covered', () => {
+    const { container } = render(
       <LayoutMainContent isMobileSplitView={false} />
     );
 
-    expect(screen.queryByTestId('processing-warning')).not.toBeInTheDocument();
-    expect(globalProcessingWarningMock).not.toHaveBeenCalled();
+    const headerSlot = screen.getByTestId('global-header-slot');
+    expect(headerSlot).toHaveStyle({ marginRight: '320px' });
+    expect(container.querySelector('.content-container')).toHaveStyle({ marginRight: '320px' });
+  });
+
+  it('does not reserve header space when the Tasks pane is not locked', () => {
+    panesState.state = {
+      ...defaultPanesState,
+      isTasksPaneLocked: false,
+    };
+
+    render(<LayoutMainContent isMobileSplitView={false} />);
+
+    expect(screen.getByTestId('global-header-slot')).toHaveStyle({ marginRight: '0px' });
   });
 
   it('keeps the canonical app header on the editor fallback route', () => {

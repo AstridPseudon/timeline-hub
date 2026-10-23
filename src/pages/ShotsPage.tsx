@@ -1,8 +1,6 @@
 import React from 'react';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
-import {
-  useListShots,
-} from '@/shared/hooks/shots';
+import { useShots } from '@/shared/contexts/ShotsContext';
 import { ShotListDisplay } from '@/tools/travel-between-images/components/VideoGallery/ShotListDisplay';
 import { ShotImageManagerContainer as ShotImageManager } from '@/shared/components/ShotImageManager/ShotImageManagerContainer';
 import { Button } from '@/shared/components/ui/button';
@@ -12,7 +10,7 @@ import { useShotImageMutations } from '@/pages/shots/hooks/useShotImageMutations
 
 const ShotsPage: React.FC = () => {
   const { selectedProjectId } = useProjectSelectionContext();
-  const { data: shots, isLoading: isLoadingShots, error: shotsError } = useListShots(selectedProjectId);
+  const { shots, isLoading: isLoadingShots, error: shotsError } = useShots();
   const { currentShotId, setCurrentShotId } = useCurrentShot();
 
   const {
@@ -64,14 +62,13 @@ const ShotsPage: React.FC = () => {
           <h1 className="text-3xl font-light mb-6">All Shots</h1>
           <ShotListDisplay
             shots={shots}
-            projectId={selectedProjectId ?? ''}
             onSelectShot={handleSelectShot}
           />
         </>
       ) : (
         <>
           <Button onPointerUp={handleBackToList} className="mb-4">Back to All Shots</Button>
-          <h2 className="text-2xl font-normal mb-4">Images in: <span className="preserve-case">{selectedShot.name}</span></h2>
+          <h2 className="text-2xl font-normal mb-4">Images in: <span className="">{selectedShot.name}</span></h2>
           <ShotImageManager
             images={managedImages}
             onImageDelete={handleDeleteImage}

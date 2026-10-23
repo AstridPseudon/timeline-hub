@@ -60,12 +60,6 @@ vi.mock('@/shared/components/ui/select', async () => {
   };
 });
 
-vi.mock('@/shared/components/ui/tooltip', () => ({
-  Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TooltipTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  TooltipContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock('@/shared/components/VariantBadge', () => ({
   VariantBadge: ({
     derivedCount,
@@ -107,10 +101,6 @@ describe('FinalVideoSectionControls', () => {
       },
       onMarkAllVariantsViewed: vi.fn(),
       selectedParentId: 'parent-1',
-      onShare: vi.fn(),
-      isCreatingShare: false,
-      shareCopied: false,
-      shareSlug: 'share-123',
       progress: { completed: 2, total: 2 },
       onJoinSegmentsClick: vi.fn(),
       parentGenerations,
@@ -120,8 +110,7 @@ describe('FinalVideoSectionControls', () => {
     } satisfies React.ComponentProps<typeof FinalVideoSectionControls>;
   }
 
-  it('renders badge, share and join actions, and switches selected output', () => {
-    const onShare = vi.fn();
+  it('renders badge and join actions, and switches selected output', () => {
     const onJoinSegmentsClick = vi.fn();
     const onMarkAllVariantsViewed = vi.fn();
     const onOutputSelect = vi.fn();
@@ -129,7 +118,6 @@ describe('FinalVideoSectionControls', () => {
     render(
       <FinalVideoSectionControls
         {...buildProps({
-          onShare,
           onJoinSegmentsClick,
           onMarkAllVariantsViewed,
           onOutputSelect,
@@ -139,7 +127,6 @@ describe('FinalVideoSectionControls', () => {
 
     expect(screen.getByText('Final Video')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Badge 3/1/true' })).toBeInTheDocument();
-    expect(screen.getByText('Copy share link')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Join clips' })).toBeInTheDocument();
     expect(screen.getByText('Output 1 of 2')).toBeInTheDocument();
     expect(screen.getAllByText('2 hours ago')).toHaveLength(2);
@@ -148,29 +135,21 @@ describe('FinalVideoSectionControls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Join clips' }));
     fireEvent.click(screen.getByTestId('select-item-parent-2'));
 
-    const shareButtons = screen
-      .getAllByRole('button')
-      .filter((button) => button.textContent === '');
-    fireEvent.click(shareButtons[0]);
-
     expect(onMarkAllVariantsViewed).toHaveBeenCalledTimes(1);
     expect(onJoinSegmentsClick).toHaveBeenCalledTimes(1);
     expect(onOutputSelect).toHaveBeenCalledWith('parent-2');
-    expect(onShare).toHaveBeenCalledTimes(1);
   });
 
-  it('shows the copied tooltip state and hides write controls in read-only mode', () => {
+  it('hides output selection and write controls in read-only mode', () => {
     const { rerender } = render(
       <FinalVideoSectionControls
         {...buildProps({
-          shareCopied: true,
           parentGenerations: [{ id: 'parent-1' }] as never[],
         })}
       />,
     );
 
     expect(screen.getByText('Final Video')).toBeInTheDocument();
-    expect(screen.getByText('Link copied!')).toBeInTheDocument();
     expect(screen.queryByText(/Output 1 of/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Join clips' })).toBeInTheDocument();
 

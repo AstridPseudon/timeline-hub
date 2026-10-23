@@ -1,10 +1,18 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, configure, fireEvent, getConfig, render, screen, waitFor, within } from '@testing-library/react';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AgentChatEditorContext } from '@/shared/contexts/AgentChatContext';
 import type { ProjectChatState } from '@/integrations/astrid/acpRoutes';
+
+// Waits here are hang ceilings, not timing assertions: on an oversubscribed
+// machine the default 1000 ms asyncUtilTimeout expires while real transport
+// work is still progressing. Scoped to this file and restored afterwards.
+const HANG_CEILING_MS = 10_000;
+const defaultAsyncUtilTimeout = getConfig().asyncUtilTimeout;
+beforeAll(() => { configure({ asyncUtilTimeout: HANG_CEILING_MS }); });
+afterAll(() => { configure({ asyncUtilTimeout: defaultAsyncUtilTimeout }); });
 
 // The editor is the host boundary. Chat, its hooks, ACP routes, transport,
 // presentation, attachment selection and query cache are all real.
@@ -141,10 +149,16 @@ class HostTransport {
 }
 let fixture: HostTransport;
 let clients: QueryClient[] = [];
-let Panel: typeof import('./AgentChat')['AgentChatPanel'];
+let RealPanel: typeof import('./AgentChat')['AgentChatPanel'];
+let RuntimeProvider: typeof import('@/integrations/runtime/RuntimeConnectionProvider.tsx')['RuntimeConnectionProvider'];
+// The chat reads the runtime connection context: mount the real provider (ungated) around the real panel.
+function Panel() {
+  return <RuntimeProvider gated={false}><RealPanel /></RuntimeProvider>;
+}
 async function freshModules() {
   vi.resetModules();
-  Panel = (await import('./AgentChat')).AgentChatPanel;
+  RealPanel = (await import('./AgentChat')).AgentChatPanel;
+  RuntimeProvider = (await import('@/integrations/runtime/RuntimeConnectionProvider.tsx')).RuntimeConnectionProvider;
   const { usePanesStoreApi } = await import('@/shared/state/panesStore');
   usePanesStoreApi().setState({ isTasksPaneLocked: true });
 }
@@ -184,20 +198,22 @@ describe('real panel → real hooks → owned ACP transport', () => {
     const firstId = fixture.seed('p1');
     fixture.chat('p1').main_session_id = firstId;
     const view = mount();
-    const selector = await screen.findByRole('combobox', { name: 'Project chat session' });
+    const selector = await screen.findByRole('button', { name: /^Chat: / });
     await waitFor(() => expect(selector).toHaveTextContent('Chat 1'));
     if (choice === 'main') {
-      fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
+      fireEvent.click(await screen.findByRole('button', { name: /^New chat · Astrid/ }));
     } else {
-      fireEvent.click(screen.getByRole('button', { name: 'New chat with…' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
       if (choice === 'agent') {
-        fireEvent.click(await screen.findByRole('option', { name: /^Codex/ }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Choose a Codex model' }));
         fireEvent.click(await screen.findByRole('option', { name: /Model A/ }));
       }
       else {
         fireEvent.click(await screen.findByRole('button', { name: 'Choose a Astrid model' }));
         fireEvent.click(await screen.findByRole('option', { name: /Model B/ }));
       }
+      expect(fixture.calls.filter(call => call.route.endsWith('/sessions') && call.body.mode === 'new')).toEqual([]);
+      fireEvent.click(await screen.findByRole('button', { name: /^New chat ·/ }));
     }
     await waitFor(() => expect(fixture.chat('p1').selected_session_id).not.toBe(firstId));
     const newId = fixture.chat('p1').selected_session_id;
@@ -212,9 +228,9 @@ describe('real panel → real hooks → owned ACP transport', () => {
     view.unmount();
     await freshModules();
     mount();
-    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Chat 2'));
-    fireEvent.click(screen.getByRole('combobox', { name: 'Project chat session' }));
-    expect(await screen.findByRole('option', { name: /^Chat 2/ })).toHaveTextContent('Main');
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Chat: / })).toHaveTextContent('Chat 2'));
+    fireEvent.click(screen.getByRole('button', { name: /^Chat: / }));
+    expect(within(await screen.findByRole('option', { name: /^Chat 2/ })).getByRole('img', { name: 'Main chat' })).toBeInTheDocument();
     expect(fixture.calls.filter(c => c.route.endsWith('/sessions'))).toHaveLength(1);
   });
 
@@ -222,16 +238,16 @@ describe('real panel → real hooks → owned ACP transport', () => {
     const id = fixture.seed('p1');
     fixture.chat('p1').main_session_id = id;
     const view = mount();
-    fireEvent.click(await screen.findByRole('combobox', { name: 'Project chat session' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Chat: / }));
     fireEvent.click(await screen.findByRole('button', { name: 'Rename Chat 1' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Chat name' }), { target: { value: '  Launch plan  ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Launch plan'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Chat: / })).toHaveTextContent('Launch plan'));
     expect(fixture.calls).toContainEqual({ route: '/acp/projects/p1/chat', body: { expected_revision: 0, session_id: id, title: 'Launch plan' } });
     view.unmount();
     await freshModules();
     mount();
-    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Project chat session' })).toHaveTextContent('Launch plan'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Chat: / })).toHaveTextContent('Launch plan'));
   });
 
   it('recovers a restarted bridge while keeping restored messages paused and the draft intact', async () => {
@@ -280,7 +296,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     fixture.onPrompt = async () => { fixture.loadFailure = new Error('Replay unavailable until reload'); };
     const first = mount();
     await send('Accepted before connection failed');
-    await screen.findByRole('button', { name: 'Retry saved message' });
+    await screen.findByRole('button', { name: 'Send now' });
     await waitFor(() => expect(fixture.chat('p1').draft.queued_messages).toHaveLength(1));
     const savedId = fixture.chat('p1').draft.queued_messages[0].id;
     const prompt = fixture.calls.find(call => call.route.endsWith('/prompt'))!;
@@ -294,7 +310,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     mount();
     await waitFor(() => expect(fixture.chat('p1').draft.queued_messages).toEqual([]));
     expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(1);
-    expect(screen.queryByRole('button', { name: 'Retry saved message' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Send now' })).not.toBeInTheDocument();
   });
   it('checks fresh saved replay before a manual retry and never redispatches an acknowledged ID', async () => {
     const id = fixture.seed('p1');
@@ -302,12 +318,65 @@ describe('real panel → real hooks → owned ACP transport', () => {
       { id: 'accepted-later', text: 'Already sent', session_id: id, attachments: [] },
     ] };
     mount();
-    const retry = await screen.findByRole('button', { name: 'Retry saved message' });
+    const retry = await screen.findByRole('button', { name: 'Send now' });
+    await waitFor(() => expect(retry).toBeEnabled());
     fixture.transcripts.set(id, [{ role: 'user', text: 'Already sent' + receipt('accepted-later') }, { role: 'assistant', text: 'Durable answer' }]);
     fireEvent.click(retry);
     await waitFor(() => expect(fixture.chat('p1').draft.queued_messages).toEqual([]));
     expect(screen.getByRole('textbox')).toHaveValue('Retained');
     expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(0);
+  });
+  describe('saved queue rows that were not sent', () => {
+    function seedRestoredRow() {
+      const id = fixture.seed('p1');
+      fixture.chat('p1').draft = { text: '', revision: 4, queued_messages: [
+        { id: 'restored-row', text: 'Restored instruction', session_id: id, attachments: [] },
+      ] };
+      return id;
+    }
+    it('reads as Not sent with a Send now action and never sends by itself', async () => {
+      seedRestoredRow();
+      mount();
+      expect(await screen.findByText('Restored instruction')).toBeInTheDocument();
+      expect(screen.getByText(/Not sent/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Send now' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
+      expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(0);
+    });
+    it('Send now sends the row and clears it', async () => {
+      seedRestoredRow();
+      mount();
+      const button = await screen.findByRole('button', { name: 'Send now' });
+      await waitFor(() => expect(button).toBeEnabled());
+      fireEvent.click(button);
+      await screen.findByText('Done.');
+      await waitFor(() => expect(fixture.chat('p1').draft.queued_messages).toEqual([]));
+      expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(1);
+      expect(screen.queryByRole('button', { name: 'Send now' })).not.toBeInTheDocument();
+    });
+    it('does not call the composer a queue, and a new message sends instead of queueing behind the row', async () => {
+      seedRestoredRow();
+      mount();
+      await screen.findByRole('button', { name: 'Send now' });
+      const box = await screen.findByRole('textbox');
+      await waitFor(() => expect(box).not.toBeDisabled());
+      expect(box.getAttribute('placeholder')).not.toMatch(/queue/i);
+      await send('Fresh message');
+      await screen.findByText('Done.');
+      expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(1);
+      expect(screen.getByText('Restored instruction')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Send now' })).toBeInTheDocument();
+    });
+    it('says so inline when the queue could not be saved', async () => {
+      seedRestoredRow();
+      mount();
+      await screen.findByRole('button', { name: 'Send now' });
+      await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
+      fixture.chat('p1').draft = { ...fixture.chat('p1').draft, revision: 9 };
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'edit that cannot save' } });
+      expect(await screen.findByText(/Couldn't save the queue/)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    });
   });
   it('does not bless newer draft CAS when accepted delivery is recovered over a divergent local draft', async () => {
     const id = fixture.seed('p1');
@@ -323,7 +392,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     await act(async () => gate.resolve());
     await screen.findByText(/Draft or queued messages could not be saved/);
     expect(screen.getByRole('textbox')).toHaveValue('My local draft');
-    expect(screen.queryByRole('button', { name: 'Retry saved message' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Send now' })).not.toBeInTheDocument();
     expect(fixture.chat('p1').draft.text).toBe('Other client draft');
     expect(fixture.chat('p1').draft.queued_messages).toHaveLength(1);
     expect(fixture.calls.filter(call => call.route.endsWith('/prompt'))).toHaveLength(0);
@@ -389,7 +458,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
     const ensure = fixture.calls.find(c => c.route.endsWith('/sessions'))!;
     expect(ensure).toMatchObject({ route: '/acp/projects/p1/chat/sessions', body: { mode: 'ensure', connection_id: 'connection-1' } });
-    fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
+    fireEvent.click(await screen.findByRole('button', { name: /^New chat · Astrid/ }));
     await waitFor(() => expect(fixture.calls.filter(c => c.route.endsWith('/sessions'))).toHaveLength(2));
     await waitFor(() => expect(fixture.calls.some(c => c.body.params?.sessionId === fixture.chat('p1').selected_session_id)).toBe(true));
     expect(fixture.calls.filter(c => c.route.endsWith('/sessions'))[1].body).toMatchObject({ mode: 'new', operation_id: expect.any(String) });
@@ -418,9 +487,9 @@ describe('real panel → real hooks → owned ACP transport', () => {
     mount();
     await screen.findByText('Change only the cube color to teal.');
     await screen.findByText('Done.');
-    // Omitted creation choices have no reported connection agent. Release those temporary hosts;
-    // explicitly connect to the saved chat's original agent for loading/prompting and after reload.
-    expect(fixture.calls.filter(c => c.route === '/acp/connect').map(c => c.body)).toEqual([{}, { agent: 'astrid' }, {}, { agent: 'astrid' }]);
+    // The first (ensure) chat has no agent choice; the two New chats start Astrid, the second from the + button, which carries the open chat's model.
+    // Each temporary host is released, and the saved chat reconnects to its original agent after reload.
+    expect(fixture.calls.filter(c => c.route === '/acp/connect').map(c => c.body)).toEqual([{}, { agent: 'astrid' }, { agent: 'astrid', defaultModelId: 'openai/model-a' }, { agent: 'astrid' }]);
     expect(fixture.calls.filter(c => c.route.endsWith('/prompt'))).toHaveLength(1);
     expect(fixture.chat('p1').sessions).toHaveLength(2);
   });
@@ -444,7 +513,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     await screen.findByRole('alert');
     await waitFor(() => expect(screen.queryByText('Thinking...')).not.toBeInTheDocument());
     expect(fixture.chat('p1').draft.queued_messages).toEqual([expect.objectContaining({ text: `Retain ${failure} text` })]);
-    expect(screen.getByRole('button', { name: 'Retry saved message' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send now' })).toBeInTheDocument();
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 550)); });
     expect(fixture.calls.filter(c => c.route.endsWith('/prompt'))).toHaveLength(1);
   });
@@ -463,7 +532,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     await waitFor(() => expect(screen.queryByText('Thinking...')).not.toBeInTheDocument());
     await screen.findByText('Retain disconnect text');
     await waitFor(() => expect(fixture.chat('p1').draft.queued_messages).toEqual([]));
-    expect(screen.queryByRole('button', { name: 'Retry saved message' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Send now' })).not.toBeInTheDocument();
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 550)); });
     const prompts = fixture.calls.filter(c => c.route.endsWith('/prompt'));
     expect(prompts).toHaveLength(1);
@@ -502,12 +571,19 @@ describe('real panel → real hooks → owned ACP transport', () => {
     fixture.seed('p1'); fixture.seed('p2');
     const view = mount();
     await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
-    // Delay ownership lookup at the submission boundary, after normal hydration.
+    // Delay the submission's own ownership lookup. Background reads of the same
+    // chat route (polls, model/session queries) are indistinguishable on the
+    // wire, so identify the preflight by cause: it is the first project read
+    // issued while the send mutation is pending. The mutation runs from
+    // onMutate to that fetch in one microtask chain, so no timer-driven read
+    // can be mistaken for it.
     const originalFetch = fixture.fetch;
     const gate = deferred();
     let blocked = false;
+    const sendPending = () => clients[0].getMutationCache()
+      .findAll({ predicate: m => m.state.status === 'pending' && (m.state.variables as { kind?: string } | undefined)?.kind === 'send' }).length > 0;
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
-      if (!blocked && url.endsWith('/projects/p1/chat') && (!init?.method || init.method === 'GET')) {
+      if (!blocked && url.endsWith('/projects/p1/chat') && (!init?.method || init.method === 'GET') && sendPending()) {
         blocked = true; await gate.promise;
       }
       return originalFetch(url, init);
@@ -559,7 +635,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     });
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Draft for the new conversation' } });
     await waitFor(() => expect(delayed).toBe(true));
-    fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
+    fireEvent.click(await screen.findByRole('button', { name: /^New chat · Astrid/ }));
     await waitFor(() => expect(fixture.chat('p1').selected_session_id).not.toBe('session-p1'));
     const newId = fixture.chat('p1').selected_session_id;
     await waitFor(() => expect(fixture.calls.some(c => c.body.params?.sessionId === newId)).toBe(true));
@@ -581,7 +657,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     mount();
     await send('Old session operation');
     await waitFor(() => expect(fixture.calls.some(c => c.route.endsWith('/prompt'))).toBe(true));
-    fireEvent.click(screen.getByRole('button', { name: 'New chat', exact: true }));
+    fireEvent.click(await screen.findByRole('button', { name: /^New chat · Astrid/ }));
     await waitFor(() => expect(fixture.chat('p1').selected_session_id).not.toBe('session-p1'));
     const newId = fixture.chat('p1').selected_session_id;
     await waitFor(() => expect(fixture.calls.some(c => c.body.params?.sessionId === newId)).toBe(true));
@@ -605,11 +681,11 @@ describe('real panel → real hooks → owned ACP transport', () => {
     fixture.promptFailure = null;
     await freshModules();
     mount();
-    await screen.findByRole('button', { name: 'Retry saved message' });
+    await screen.findByRole('button', { name: 'Send now' });
     await waitFor(() => expect(screen.getByRole('textbox')).not.toBeDisabled());
     expect(screen.getByText('Recover this unsent instruction')).toBeInTheDocument();
     expect(fixture.calls.filter(c => c.route.endsWith('/prompt'))).toHaveLength(1);
-    fireEvent.click(screen.getByRole('button', { name: 'Retry saved message' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send now' }));
     await screen.findByText('Done.');
     expect(fixture.calls.filter(c => c.route.endsWith('/prompt'))).toHaveLength(2);
   });
@@ -630,7 +706,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     host.context = { ...context('p1'), timelineId: 'timeline-p1-new', timelineName: 'New timeline' };
     view.rerender(<QueryClientProvider client={clients[0]}><Panel /></QueryClientProvider>);
     fixture.promptFailure = null;
-    fireEvent.click(await screen.findByRole('button', { name: 'Retry saved message' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Send now' }));
     await screen.findByText('Done.');
     const prompts = fixture.calls.filter(call => call.route.endsWith('/prompt'));
     expect(prompts).toHaveLength(2);

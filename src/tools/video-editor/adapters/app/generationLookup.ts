@@ -1,6 +1,6 @@
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
-import { fetchGenerationById } from '@/integrations/supabase/repositories/generationRepository.ts';
+import { fetchGenerationById } from '@/integrations/astrid/repositories/generationRepository.ts';
 import { bridgeCapabilityUnavailable } from '@/integrations/astrid/capability.ts';
 
 export interface DuplicatedGenerationAsset {

@@ -1,7 +1,7 @@
 /**
  * agent-tools-canary — Fake long-running generation canary extension.
  *
- * Demonstrates the full M10 agent tool SDK surface:
+ * Demonstrates the full agent tool SDK surface:
  *   - Contributed tool metadata (AgentToolContribution)
  *   - Progress reporting via GenerationSession callbacks
  *   - Cancellation support
@@ -14,7 +14,6 @@
  * It imports exclusively from @astrid/editor-sdk, the public SDK entrypoint.
  *
  * @publicContract
- * @milestone M10
  */
 
 import { defineExtension } from '@astrid/editor-sdk';

@@ -9,3 +9,4 @@ export function createRepo(): Promise<void> {
 export function uploadFile(): Promise<{ commit?: { oid: string } }> {
   return Promise.resolve({ commit: { oid: 'mock-commit' } });
 }
+

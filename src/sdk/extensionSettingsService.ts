@@ -1,16 +1,15 @@
 /**
- * Injectable extension settings service factory (T8, extended in T9, T10).
+ * Injectable extension settings service factory.
  *
- * Extracted from `createExtensionContext` so the settings service can be
- * created independently for testing, provider-backed storage integration,
- * and settings snapshot persistence through ExtensionStateRepository.
+ * The settings service can be created independently for testing, provider-backed
+ * storage integration, and settings snapshot persistence through ExtensionStateRepository.
  *
- * T9 extends the factory to accept an optional ExtensionStateRepository
+ * The factory accepts an optional ExtensionStateRepository
  * and/or an initial ExtensionSettingsSnapshot. When a repository is
  * provided, the service writes its current settings as a snapshot to the
  * repository on dispose, enabling reload-equivalent reinitialization.
  *
- * T10 adds settings schema-version migration support: when an
+ * Settings schema-version migration support: when an
  * initialSnapshot carries a different schema version than the manifest,
  * the factory runs migration handlers and resets to defaults on failure.
  *
@@ -27,7 +26,7 @@
  *     sessions; only when an initial snapshot is provided)
  *  3. Manifest defaults (from manifest.settingsDefaults)
  *
- * ## Settings migration (T10)
+ * ## Settings migration
  *
  * When `initialSnapshot.schemaVersion` differs from the manifest's
  * declared settings schema version, the factory optionally runs
@@ -63,11 +62,82 @@ export function getSettingsPrefix(extensionId: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Factory options (T9, T10)
+// Backing store
 // ---------------------------------------------------------------------------
 
 /**
- * Settings migration configuration (T10).
+ * The synchronous store behind an extension's settings (the highest-priority value layer). The app injects a
+ * Runtime-backed one; the default keeps them in this browser's localStorage.
+ */
+export interface ExtensionSettingsBacking {
+  /** The saved value, or `undefined` when none is saved. */
+  get(key: string): unknown;
+  /** Returns false when the value could not be stored. */
+  set(key: string, value: unknown): boolean;
+  /** Returns false when the removal could not be applied. */
+  remove(key: string): boolean;
+  keys(): string[];
+  /** Called when values change somewhere other than through this service (another tab, a re-read). */
+  subscribe?(listener: () => void): () => void;
+  /** Scratch backings drop what the service wrote when it is disposed without a repository. */
+  discard?(keys: Iterable<string>): void;
+}
+
+/** The default backing: one localStorage key per setting, `astrid.ext.<id>.<key>`. */
+export function createLocalStorageBacking(prefix: string): ExtensionSettingsBacking {
+  return {
+    get(key) {
+      try {
+        const raw = localStorage.getItem(prefix + key);
+        return raw === null ? undefined : JSON.parse(raw);
+      } catch {
+        return undefined;
+      }
+    },
+    set(key, value) {
+      try {
+        localStorage.setItem(prefix + key, JSON.stringify(value));
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    remove(key) {
+      try {
+        localStorage.removeItem(prefix + key);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    keys() {
+      const result: string[] = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const lsKey = localStorage.key(i);
+          if (lsKey && lsKey.startsWith(prefix)) result.push(lsKey.slice(prefix.length));
+        }
+      } catch {
+        // localStorage enumeration failed — report what we have
+      }
+      return result;
+    },
+    discard(keys) {
+      try {
+        for (const key of keys) localStorage.removeItem(prefix + key);
+      } catch {
+        // localStorage unavailable — silently no-op
+      }
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Factory options
+// ---------------------------------------------------------------------------
+
+/**
+ * Settings migration configuration.
  *
  * When provided, the factory checks whether the persisted snapshot's
  * schema version matches the manifest.  If they differ, it invokes the
@@ -105,11 +175,13 @@ export interface SettingsPersistenceError extends SettingsPersistenceSuccess {
  *   serve as a fallback layer between localStorage and manifest defaults.
  *   When absent but a repository is present, the caller should load the
  *   snapshot from the repository before constructing the service.
- * - `migration` — Settings migration configuration (T10). When an
+ * - `migration` — Settings migration configuration. When an
  *   initialSnapshot's schema version differs from the manifest, migration
  *   handlers are invoked and lifecycle events are emitted.
  */
 export interface CreateExtensionSettingsServiceOptions {
+  /** Where the synchronous settings live; defaults to this browser's localStorage (see `createLocalStorageBacking`). */
+  readonly backing?: ExtensionSettingsBacking;
   readonly repository?: StateRepository;
   readonly initialSnapshot?: SettingsSnapshot;
   readonly migration?: SettingsMigrationConfig;
@@ -128,13 +200,13 @@ export interface CreateExtensionSettingsServiceOptions {
  * - `dispose` — cleans up localStorage keys and (when a repository was
  *   provided) writes the final settings snapshot to the repository.
  *   Safe to call multiple times; idempotent.
- * - `migrationResult` — The result of settings migration (T10), or null
+ * - `migrationResult` — The result of settings migration, or null
  *   when no migration was attempted.
  */
 export interface ExtensionSettingsServiceFactoryResult {
   readonly service: ExtensionSettingsService;
   dispose(): void;
-  /** Migration outcome when schema versions differed (T10). Null otherwise. */
+  /** Migration outcome when schema versions differed. Null otherwise. */
   readonly migrationResult: import('./extensionSettingsMigration').SettingsMigrationResult | null;
 }
 
@@ -150,7 +222,7 @@ export interface ExtensionSettingsServiceFactoryResult {
  * current settings (the merged view of localStorage + snapshot +
  * defaults) as an ExtensionSettingsSnapshot to the repository.
  *
- * ## Settings migration (T10)
+ * ## Settings migration
  *
  * When `initialSnapshot.schemaVersion` differs from
  * `manifest.settingsSchemaVersion` (or `manifest.settingsSchema.version`),
@@ -168,7 +240,7 @@ export interface ExtensionSettingsServiceFactoryResult {
  *
  * @param extensionId  The extension's unique identifier.
  * @param manifest     The extension manifest (for settingsDefaults and migration declarations).
- * @param options      Optional repository, initial snapshot, and/or migration config (T9, T10).
+ * @param options      Optional repository, initial snapshot, and/or migration config.
  * @returns A disposable settings service with optional migration result.
  */
 export function createExtensionSettingsService(
@@ -176,12 +248,12 @@ export function createExtensionSettingsService(
   manifest: ExtensionManifest,
   options?: CreateExtensionSettingsServiceOptions,
 ): ExtensionSettingsServiceFactoryResult {
-  const settingsPrefix = getSettingsPrefix(extensionId);
+  const backing = options?.backing ?? createLocalStorageBacking(getSettingsPrefix(extensionId));
   const settingsDefaults: Record<string, unknown> =
     (manifest.settingsDefaults as Record<string, unknown> | undefined) ?? {};
 
   // -----------------------------------------------------------------------
-  // Settings migration (T10)
+  // Settings migration
   // -----------------------------------------------------------------------
 
   let migrationResult: import('./extensionSettingsMigration').SettingsMigrationResult | null = null;
@@ -362,6 +434,10 @@ export function createExtensionSettingsService(
   /** Subscribers notified after every successful set() / delete(). */
   const listeners = new Set<() => void>();
 
+  /** True while this service writes to its backing, so the backing's change callback does not notify twice. */
+  let selfWriting = false;
+  const unsubscribeBacking = backing.subscribe?.(() => { if (!selfWriting) notifyListeners(); });
+
   /** Notify all subscribers. Safe — catches and ignores listener errors. */
   function notifyListeners(): void {
     for (const listener of listeners) {
@@ -441,14 +517,8 @@ export function createExtensionSettingsService(
   }
 
   function cleanupWrittenLocalStorageKeys(): void {
-    try {
-      writtenKeys.forEach((key) => {
-        localStorage.removeItem(settingsPrefix + key);
-      });
-      writtenKeys.clear();
-    } catch {
-      // localStorage unavailable — silently no-op
-    }
+    backing.discard?.(writtenKeys);
+    writtenKeys.clear();
   }
 
   function cleanupFallbackAfterLatestPersistence(): void {
@@ -515,12 +585,8 @@ export function createExtensionSettingsService(
 
   function getEffectiveValue<T = unknown>(key: string): T | undefined {
     // Priority 1: localStorage (legacy, most-recent synchronous write)
-    try {
-      const raw = localStorage.getItem(settingsPrefix + key);
-      if (raw !== null) return JSON.parse(raw) as T;
-    } catch {
-      // localStorage read error — fall through to next layers
-    }
+    const saved = backing.get(key);
+    if (saved !== undefined) return saved as T;
 
     // Priority 2: snapshot value (from repository, persisted across sessions)
     if (key in snapshotValues && !deletedKeys.has(key)) {
@@ -548,23 +614,9 @@ export function createExtensionSettingsService(
     }
 
     // Apply localStorage overrides
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const lsKey = localStorage.key(i);
-        if (lsKey && lsKey.startsWith(settingsPrefix)) {
-          const shortKey = lsKey.slice(settingsPrefix.length);
-          try {
-            const raw = localStorage.getItem(lsKey);
-            if (raw !== null) {
-              merged[shortKey] = JSON.parse(raw);
-            }
-          } catch {
-            // parse error on a key — skip it
-          }
-        }
-      }
-    } catch {
-      // localStorage enumeration failed — use what we have
+    for (const savedKey of backing.keys()) {
+      const saved = backing.get(savedKey);
+      if (saved !== undefined) merged[savedKey] = saved;
     }
 
     // Remove deleted keys
@@ -576,7 +628,7 @@ export function createExtensionSettingsService(
   }
 
   // -----------------------------------------------------------------------
-  // Ajv-backed atomic save validation (T12)
+  // Ajv-backed atomic save validation
   // -----------------------------------------------------------------------
 
   /**
@@ -616,23 +668,9 @@ export function createExtensionSettingsService(
     }
 
     // Apply localStorage overrides (wins over snapshot + defaults)
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const lsKey = localStorage.key(i);
-        if (lsKey && lsKey.startsWith(settingsPrefix)) {
-          const shortKey = lsKey.slice(settingsPrefix.length);
-          try {
-            const raw = localStorage.getItem(lsKey);
-            if (raw !== null) {
-              candidate[shortKey] = JSON.parse(raw);
-            }
-          } catch {
-            // parse error on a key — skip it
-          }
-        }
-      }
-    } catch {
-      // localStorage enumeration failed — use what we have
+    for (const savedKey of backing.keys()) {
+      const saved = backing.get(savedKey);
+      if (saved !== undefined) candidate[savedKey] = saved;
     }
 
     // Remove deleted keys
@@ -655,7 +693,7 @@ export function createExtensionSettingsService(
       return getEffectiveValue<T>(key);
     },
     set<T = unknown>(key: string, value: T): void {
-      // T12: Ajv-backed atomic save — validate the full candidate before
+      // Ajv-backed atomic save — validate the full candidate before
       // writing to localStorage. Blocks invalid saves to prevent partial
       // corruption of the existing valid override state.
       if (settingsSchemaValidator) {
@@ -667,41 +705,38 @@ export function createExtensionSettingsService(
         }
       }
 
+      selfWriting = true;
+      let stored = false;
       try {
-        localStorage.setItem(settingsPrefix + key, JSON.stringify(value));
-        writtenKeys.add(key);
-        deletedKeys.delete(key);
-        notifyListeners();
-        enqueuePersistence('set', key);
-      } catch {
-        // localStorage quota exceeded or unavailable — silently no-op
+        stored = backing.set(key, value);
+      } finally {
+        selfWriting = false;
       }
+      if (!stored) return; // quota exceeded or storage unavailable — silently no-op
+      writtenKeys.add(key);
+      deletedKeys.delete(key);
+      notifyListeners();
+      enqueuePersistence('set', key);
     },
     delete(key: string): void {
+      selfWriting = true;
+      let removed = false;
       try {
-        localStorage.removeItem(settingsPrefix + key);
-        writtenKeys.delete(key);
-        deletedKeys.add(key);
-        notifyListeners();
-        enqueuePersistence('delete', key);
-      } catch {
-        // localStorage unavailable — silently no-op
+        removed = backing.remove(key);
+      } finally {
+        selfWriting = false;
       }
+      if (!removed) return;
+      writtenKeys.delete(key);
+      deletedKeys.add(key);
+      notifyListeners();
+      enqueuePersistence('delete', key);
     },
     keys(): readonly string[] {
       const result = new Set<string>();
 
-      // Collect keys from localStorage
-      try {
-        for (let i = 0; i < localStorage.length; i++) {
-          const lsKey = localStorage.key(i);
-          if (lsKey && lsKey.startsWith(settingsPrefix)) {
-            result.add(lsKey.slice(settingsPrefix.length));
-          }
-        }
-      } catch {
-        // localStorage enumeration failed
-      }
+      // Collect the saved keys
+      for (const savedKey of backing.keys()) result.add(savedKey);
 
       // Add snapshot keys not already present
       for (const sk of Object.keys(snapshotValues)) {
@@ -742,6 +777,7 @@ export function createExtensionSettingsService(
     if (disposed) return;
 
     disposed = true;
+    unsubscribeBacking?.();
 
     if (repository && !repository.isDisposed) {
       enqueuePersistence('dispose');

@@ -55,8 +55,8 @@ AlertDialogOverlay.displayName = 'AlertDialogOverlay';
 
 const AlertDialogContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Popup>
->(({ className, style, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Popup> & { backdropClassName?: string }
+>(({ className, style, backdropClassName, ...props }, ref) => {
   const bridge = useOverlayBridge({ type: 'alert-dialog', modal: true });
   const layer = useOverlayLayer(bridge.handle.id);
   const popupRef = React.useMemo(
@@ -71,7 +71,7 @@ const AlertDialogContent = React.forwardRef<
   return (
     <AlertDialogPortal>
       <OverlayInstanceProvider value={bridge}>
-        <AlertDialogOverlay ref={backdropRef} layer={layer} />
+        <AlertDialogOverlay ref={backdropRef} layer={layer} className={backdropClassName} />
         <AlertDialogPrimitive.Popup
           ref={popupRef}
           className={cn(

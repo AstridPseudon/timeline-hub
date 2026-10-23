@@ -5,12 +5,8 @@
  */
 
 import React from 'react';
-import { LoraSelectorModal } from '@/domains/lora/components';
-import { PhaseConfigSelectorModal } from './PhaseConfigSelectorModal';
 import { DEFAULT_PHASE_CONFIG } from '@/shared/types/phaseConfig';
-import type { PresetMetadata } from '@/shared/types/presetMetadata';
 import { PHASE_LABELS_2, PHASE_LABELS_3 } from './PhaseConfigVertical.helpers';
-import { usePhaseConfigModals } from './hooks/usePhaseConfigModals';
 import { PhaseConfigHeader } from './components/PhaseConfigHeader';
 import { PhaseGlobalSettingsCard } from './components/PhaseGlobalSettingsCard';
 import { PerPhaseCard } from './components/PerPhaseCard';
@@ -22,15 +18,9 @@ export const PhaseConfigVertical: React.FC<PhaseConfigVerticalProps> = ({
   onBlurSave,
   randomSeed,
   onRandomSeedChange,
-  availableLoras = [],
-  selectedPhasePresetId,
-  onPhasePresetSelect,
-  onPhasePresetRemove,
-  currentSettings,
-  generationTypeMode = 'i2v',
   onRestoreDefaults,
 }) => {
-  const modals = usePhaseConfigModals();
+  const [focusedLoraInput, setFocusedLoraInput] = React.useState<string | null>(null);
   const phaseLabels = phaseConfig.num_phases === 2 ? PHASE_LABELS_2 : PHASE_LABELS_3;
 
   if (!phaseConfig) {
@@ -44,9 +34,6 @@ export const PhaseConfigVertical: React.FC<PhaseConfigVerticalProps> = ({
   return (
     <div className="space-y-3">
       <PhaseConfigHeader
-        onLoadPreset={() => modals.openPresetModal('load', 'browse')}
-        onSaveAsPreset={() => modals.openPresetModal('load', 'add-new')}
-        onOverwritePreset={() => modals.openPresetModal('overwrite', 'browse')}
         onRestoreDefaults={() => {
           if (onRestoreDefaults) {
             onRestoreDefaults();
@@ -71,74 +58,11 @@ export const PhaseConfigVertical: React.FC<PhaseConfigVerticalProps> = ({
           phaseIdx={phaseIdx}
           phase={phase}
           label={phaseLabels[phaseIdx] || `Phase ${phase.phase}`}
-          availableLoras={availableLoras}
-          focusedLoraInput={modals.focusedLoraInput}
-          onFocusLoraInput={modals.setFocusedLoraInput}
-          onOpenLoraModal={modals.openLoraModal}
+          focusedLoraInput={focusedLoraInput}
+          onFocusLoraInput={setFocusedLoraInput}
           onBlurSave={onBlurSave}
         />
       ))}
-
-      <LoraSelectorModal
-        isOpen={modals.isLoraModalOpen}
-        onClose={modals.closeLoraModal}
-        selectedLoras={[]}
-        loras={availableLoras || []}
-        onAddLora={(lora) => {
-          if (modals.activePhaseForLoraSelection === null) {
-            return;
-          }
-
-          const loraUrl = lora.huggingface_url || '';
-          const updatedPhases = phaseConfig.phases.map((phase, phaseIndex) =>
-            phaseIndex === modals.activePhaseForLoraSelection
-              ? {
-                  ...phase,
-                  loras: [
-                    ...phase.loras.filter((phaseLora) => phaseLora.url && phaseLora.url.trim() !== ''),
-                    { url: loraUrl, multiplier: '1.0' },
-                  ],
-                }
-              : phase,
-          );
-
-          onPhaseConfigChange({
-            ...phaseConfig,
-            phases: updatedPhases,
-          });
-          modals.closeLoraModal();
-        }}
-        onRemoveLora={() => {}}
-        onUpdateLoraStrength={() => {}}
-        loraType="Wan 2.1 14b"
-      />
-
-      <PhaseConfigSelectorModal
-        isOpen={modals.isPresetModalOpen}
-        onClose={modals.closePresetModal}
-        onSelectPreset={(preset) => {
-          if (preset.metadata.phaseConfig && onPhasePresetSelect) {
-            onPhasePresetSelect(
-              preset.id,
-              preset.metadata.phaseConfig,
-              preset.metadata as PresetMetadata,
-            );
-          }
-          modals.closePresetModal();
-        }}
-        onRemovePreset={() => {
-          if (onPhasePresetRemove) {
-            onPhasePresetRemove();
-          }
-        }}
-        selectedPresetId={selectedPhasePresetId || null}
-        currentPhaseConfig={phaseConfig}
-        initialTab={modals.presetModalTab}
-        currentSettings={currentSettings}
-        intent={modals.modalIntent}
-        availableLoras={availableLoras}
-        generationTypeMode={generationTypeMode}
-      />
     </div>
   );
 };

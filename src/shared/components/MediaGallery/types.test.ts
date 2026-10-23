@@ -19,7 +19,6 @@ describe('MediaGallery defaults', () => {
   it('enables the expected baseline gallery controls', () => {
     expect(DEFAULT_GALLERY_CONFIG.showDelete).toBe(true);
     expect(DEFAULT_GALLERY_CONFIG.showDownload).toBe(true);
-    expect(DEFAULT_GALLERY_CONFIG.showShare).toBe(true);
     expect(DEFAULT_GALLERY_CONFIG.showStar).toBe(true);
     expect(DEFAULT_GALLERY_CONFIG.showAddToShot).toBe(true);
   });

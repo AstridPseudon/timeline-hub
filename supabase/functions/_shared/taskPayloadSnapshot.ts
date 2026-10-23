@@ -117,3 +117,4 @@ export function resolveSnapshotIsSingleItem(snapshot: TaskPayloadSnapshot): bool
     && snapshot.rawParams.is_last_segment === true
   );
 }
+

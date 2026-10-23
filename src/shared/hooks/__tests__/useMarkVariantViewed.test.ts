@@ -4,20 +4,13 @@ import { QueryClient } from '@tanstack/react-query';
 import { renderHookWithProviders } from '@/test/test-utils';
 import { generationQueryKeys } from '@/shared/lib/queryKeys/generations';
 
-const mockIs = vi.fn();
-const mockEq = vi.fn(() => ({
-  is: mockIs,
-}));
-const mockUpdate = vi.fn(() => ({
-  eq: mockEq,
-}));
-const mockFrom = vi.fn(() => ({
-  update: mockUpdate,
-}));
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: vi.fn(() => ({
-    from: mockFrom,
-  })),
+const mockMarkVariantViewed = vi.fn();
+const mockMarkGenerationVariantsViewed = vi.fn();
+vi.mock('@/integrations/runtime/client', () => ({
+  AstridRuntimeClient: class {
+    markVariantViewed = mockMarkVariantViewed;
+    markGenerationVariantsViewed = mockMarkGenerationVariantsViewed;
+  },
 }));
 
 import { useMarkVariantViewed } from '@/shared/hooks/variants/useMarkVariantViewed';
@@ -34,8 +27,8 @@ function createQueryClient() {
 describe('useMarkVariantViewed', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockIs.mockResolvedValue({ error: null });
-    window.history.replaceState({}, '', '/');
+    mockMarkVariantViewed.mockResolvedValue({ viewed_at: '2026-01-01T00:00:00.000Z' });
+    mockMarkGenerationVariantsViewed.mockResolvedValue({ viewed_at: '2026-01-01T00:00:00.000Z' });
   });
 
   it('returns markViewed and markAllViewed functions', () => {
@@ -76,10 +69,7 @@ describe('useMarkVariantViewed', () => {
     };
     expect(badges.unviewedVariantCounts['gen-1']).toBe(1);
 
-    expect(mockFrom).toHaveBeenCalledWith('generation_variants');
-    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ viewed_at: expect.any(String) }));
-    expect(mockEq).toHaveBeenCalledWith('id', 'v-1');
-    expect(mockIs).toHaveBeenCalledWith('viewed_at', null);
+    expect(mockMarkVariantViewed).toHaveBeenCalledWith('v-1');
   });
 
   it('does not double-decrement badges when markViewed is called twice for the same variant', async () => {
@@ -144,42 +134,50 @@ describe('useMarkVariantViewed', () => {
     };
     expect(badges.hasUnviewedVariants['gen-1']).toBe(false);
     expect(badges.unviewedVariantCounts['gen-1']).toBe(0);
-    expect(mockEq).toHaveBeenCalledWith('generation_id', 'gen-1');
-    expect(mockIs).toHaveBeenCalledWith('viewed_at', null);
+    expect(mockMarkGenerationVariantsViewed).toHaveBeenCalledWith('gen-1');
   });
 
-  it('suppresses viewed mutations for local Runtime documents before network work', async () => {
-    window.history.replaceState(
-      {},
-      '',
-      '/tools/video-editor?project=local-project&timeline=local-timeline',
-    );
+  it('patches the Runtime variant cache when a single variant is viewed', async () => {
     const queryClient = createQueryClient();
+    queryClient.setQueryData(['runtime', 'generation-variants', 'project-1', 'gen-1'], [
+      { id: 'v-1', generation_id: 'gen-1', viewed_at: null },
+      { id: 'v-2', generation_id: 'gen-1', viewed_at: null },
+    ]);
+
     const { result } = renderHookWithProviders(() => useMarkVariantViewed(), { queryClient });
 
     act(() => {
-      result.current.markViewed({ variantId: 'variant-local', generationId: 'gen-local' });
-      result.current.markAllViewed('gen-local');
+      result.current.markViewed({ variantId: 'v-1', generationId: 'gen-1' });
     });
 
-    await waitFor(() => expect(result.current.isMarking).toBe(false));
-    expect(mockFrom).not.toHaveBeenCalled();
+    await waitFor(() => {
+      const variants = queryClient.getQueryData(['runtime', 'generation-variants', 'project-1', 'gen-1']) as Array<{
+        id: string;
+        viewed_at: string | null;
+      }>;
+      expect(variants.find((v) => v.id === 'v-1')?.viewed_at).not.toBeNull();
+      expect(variants.find((v) => v.id === 'v-2')?.viewed_at).toBeNull();
+    });
   });
 
-  it('suppresses viewed mutations for explicit Runtime documents before network work', async () => {
-    window.history.replaceState(
-      {},
-      '',
-      '/tools/image-generation?project=runtime-project&timeline=timeline-1',
-    );
-    const { result } = renderHookWithProviders(() => useMarkVariantViewed());
+  it('patches the Runtime variant cache when a whole generation is viewed', async () => {
+    const queryClient = createQueryClient();
+    queryClient.setQueryData(['runtime', 'generation-variants', 'project-1', 'gen-1'], [
+      { id: 'v-1', generation_id: 'gen-1', viewed_at: null },
+      { id: 'v-2', generation_id: 'gen-1', viewed_at: null },
+    ]);
+
+    const { result } = renderHookWithProviders(() => useMarkVariantViewed(), { queryClient });
 
     act(() => {
-      result.current.markViewed({ variantId: 'variant-runtime', generationId: 'gen-runtime' });
-      result.current.markAllViewed('gen-runtime');
+      result.current.markAllViewed('gen-1');
     });
 
-    await waitFor(() => expect(result.current.isMarkingAll).toBe(false));
-    expect(mockFrom).not.toHaveBeenCalled();
+    await waitFor(() => {
+      const variants = queryClient.getQueryData(['runtime', 'generation-variants', 'project-1', 'gen-1']) as Array<{
+        viewed_at: string | null;
+      }>;
+      expect(variants.every((v) => v.viewed_at !== null)).toBe(true);
+    });
   });
 });

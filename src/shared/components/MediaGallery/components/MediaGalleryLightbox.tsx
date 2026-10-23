@@ -52,7 +52,6 @@ export interface MediaGalleryLightboxSession {
   inputImages?: string[];
   lightboxTaskMapping?: { taskId: string | null };
   taskDetailsData: TaskDetailsData | null;
-  onCreateShot?: (shotName: string, files: File[]) => Promise<void>;
   onNavigateToShot?: (shot: Shot) => void;
   setActiveLightboxIndex?: (index: number) => void;
 }
@@ -96,7 +95,6 @@ export const MediaGalleryLightbox: React.FC<MediaGalleryLightboxProps> = ({
     selectedImageForDetails,
     setSelectedImageForDetails,
     taskDetailsData,
-    onCreateShot,
     onNavigateToShot,
   } = session;
 
@@ -171,7 +169,6 @@ export const MediaGalleryLightbox: React.FC<MediaGalleryLightboxProps> = ({
             onShotChange,
             onAddToShot,
             onAddToShotWithoutPosition,
-            onCreateShot,
             onNavigateToShot,
             positionedInSelectedShot,
             associatedWithoutPositionInSelectedShot,
@@ -185,7 +182,6 @@ export const MediaGalleryLightbox: React.FC<MediaGalleryLightboxProps> = ({
           actions={{
             onDelete,
             isDeleting,
-            starred: effectiveLightboxMedia.starred ?? false,
           }}
           customOverlay={localMediaOverlay}
           features={{

@@ -285,3 +285,4 @@ export async function getChildVariantViewedAt(
 
   return null;
 }
+

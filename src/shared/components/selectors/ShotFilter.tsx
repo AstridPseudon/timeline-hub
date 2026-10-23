@@ -98,7 +98,7 @@ const ShotFilterComponent: React.FC<ShotFilterProps> = ({
             )}
             {/* User shots */}
             {shots?.map(shot => (
-              <SelectItem variant={variant} key={shot.id} value={shot.id} className="text-xs whitespace-nowrap preserve-case">
+              <SelectItem variant={variant} key={shot.id} value={shot.id} className="text-xs whitespace-nowrap">
                 {shot.name}
               </SelectItem>
             ))}

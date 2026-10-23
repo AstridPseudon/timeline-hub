@@ -14,6 +14,11 @@ vi.stubGlobal('indexedDB', createFakeIndexedDB());
 vi.mock('@/tools/video-editor/compositions/TimelineRenderer.tsx', () => ({
   invalidateReferencedTimelineCache: vi.fn(),
 }));
+// Call-through spy: behaviour is unchanged, but the draft writer's calls are observable.
+vi.mock('@/tools/video-editor/data/timelineDraftIndexedDb.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/tools/video-editor/data/timelineDraftIndexedDb.ts')>();
+  return { ...actual, saveTimelineDraft: vi.fn(actual.saveTimelineDraft) };
+});
 import { useTimelinePersistence, TimelineSaveBarrierError, type UseTimelinePersistenceResult } from './useTimelinePersistence';
 import { useTimelineOps } from './useTimelineOps';
 import { environment } from '../commands/__tests__/commitSessionEnvironment.ts';
@@ -33,7 +38,7 @@ import type { AssetResolver } from '../data/AssetResolver';
 import { OwnUnacknowledgedSaveError, TimelineSchemaIncompatibleError, TimelineVersionConflictError, type DataProvider } from '../data/DataProvider';
 import { StaleWriteError } from '../data/shotComposition';
 import { BRIDGE_REQUEST_TIMEOUT_MS } from '../data/bridgeContract';
-import { loadTimelineDraft, saveTimelineDraft, type TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
+import { clearTimelineDraft, loadTimelineDraft, saveTimelineDraft, type TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { AssetRegistry } from '../types';
 import type { TimelineBundleEnvelope } from '../data/typed/timelineBundle';
 
@@ -2447,5 +2452,66 @@ describe('useTimelinePersistence — write-ack watchdog', () => {
     await advance(0);
     expect(harness.result?.current.watchdogTripped).toBe(false);
     expect(harness.saveTimeline).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('useTimelinePersistence — recovery draft gated by persistence', () => {
+  const flushMicrotasks = async () => {
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+  };
+
+  beforeEach(async () => {
+    resetFakeIndexedDB();
+    // Earlier suites leave drafts under this id in the shared fake database.
+    await clearTimelineDraft('timeline-1');
+    vi.useFakeTimers();
+    vi.mocked(saveTimelineDraft).mockClear();
+  });
+
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+  });
+
+  it('writes no recovery draft and no save when persistence is disabled (scheduleSave and retry-after-conflict)', async () => {
+    const harness = setup({ persistenceEnabled: false });
+    const saveAtHead = vi.fn(async () => 2);
+    harness.provider.saveTimelineAtHead = saveAtHead;
+
+    harness.scheduleSave(makeTimelineData('read-only-draft'));
+    await act(async () => {
+      vi.advanceTimersByTime(600);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(saveTimelineDraft).not.toHaveBeenCalled();
+    expect(harness.saveTimeline).not.toHaveBeenCalled();
+    expect(saveAtHead).not.toHaveBeenCalled();
+    expect(harness.result.current.saveStatus).toBe('saved');
+    expect(await loadTimelineDraft('timeline-1')).toBeNull();
+
+    // The explicit draft path: retrySaveAfterConflict awaits createScheduledSave(...).draftWrite.
+    await act(async () => {
+      await harness.result.current.retrySaveAfterConflict();
+    });
+    expect(saveTimelineDraft).not.toHaveBeenCalled();
+    expect(harness.saveTimeline).not.toHaveBeenCalled();
+    expect(saveAtHead).not.toHaveBeenCalled();
+    expect(await loadTimelineDraft('timeline-1')).toBeNull();
+    expect(harness.result.current.saveStatus).toBe('saved');
+  });
+
+  it('still writes exactly one recovery draft per scheduleSave when persistence is enabled', async () => {
+    const harness = setup({ persistenceEnabled: true });
+
+    harness.scheduleSave(makeTimelineData('durable-draft'));
+    await flushMicrotasks();
+
+    expect(saveTimelineDraft).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(saveTimelineDraft).mock.calls[0][0]).toBe('timeline-1');
+    expect(await loadTimelineDraft('timeline-1')).not.toBeNull();
   });
 });

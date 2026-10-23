@@ -2,7 +2,7 @@
  * SDK-local in-memory state repository for extension settings tests.
  *
  * Replaces host `ProviderBackedExtensionStateRepository` + `InMemoryProviderStore`
- * so that SDK tests no longer import from `@/tools/video-editor/...`.
+ * so that SDK tests do not import from `@/tools/video-editor/...`.
  *
  * Implements the subset of `StateRepository` needed by settings service and
  * migration tests: initialize/dispose lifecycle, settings snapshot CRUD, and

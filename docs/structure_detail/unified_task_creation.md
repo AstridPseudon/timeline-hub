@@ -17,15 +17,7 @@ UI producer
 
 This path is the authority for supported image, video, character-animation, and related producers. Input identity, ordered inputs, output validation, idempotency, and publication are carried by the admitted Runtime task and its settlement fence.
 
-The former edge editing endpoint is retired. Migrated timeline authoring uses
-App command capture and the Runtime `/v1` commit door. Empty-timeline
-bootstrap/repair now uses the native `timeline.init` outbox path: the App
-retains the create request, verifies the sole empty parent baseline, and
-commits `timeline.init` plus two `track.create` commands through the same
-Runtime door. Open shot-composition and popup producers still use the Runtime's
-head-checked parent-publication boundary until their native captures land. No
-Supabase append/import route is supported. Immutable CAS media returned by
-Runtime can still be referenced by a normal guarded timeline command.
+The `supabase/functions/ai-timeline-agent` surface remains a timeline editing and read-context surface. Its timeline commands and existing canonical producer integrations may consume returned CAS media, but the agent does not create tasks, inspect legacy task rows, poll legacy workers, or perform generation settlement.
 
 ## Retired legacy boundary
 

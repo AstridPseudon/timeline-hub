@@ -40,7 +40,7 @@ export function useEffectiveMedia({
   projectAspectRatio,
 }: UseEffectiveMediaProps): UseEffectiveMediaReturn {
   // Variant locations are managed-media references; resolve them to the
-  // same-origin R9 content route at this display boundary.
+  // same-origin content route at this display boundary.
   const projectSlug = getProjectSelectionFallbackId();
 
   // Get the effective video URL (active variant or current media)

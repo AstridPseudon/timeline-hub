@@ -1,5 +1,5 @@
 /**
- * surface-coverage — Comprehensive M2 SDK surface coverage example.
+ * surface-coverage — Comprehensive SDK surface coverage example.
  *
  * Imports and exercises every public SDK export that isn't already
  * covered by the focused examples (toolbar, inspector, overlay,
@@ -347,7 +347,7 @@ export function activateCoverageExtension(
   void _placements;
 
 
-  // ---- M4 additional surface coverage (compile-time only) ------------------
+  // ---- additional surface coverage (compile-time only) ------------------
   const _v0 = BUILTIN_CLIP_TYPES;
   void _v0;
   const _v1 = DETERMINISM_STATUSES;

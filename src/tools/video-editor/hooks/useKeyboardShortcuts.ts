@@ -182,6 +182,13 @@ export function isEditorKeyboardEvent(event: KeyboardEvent, root: HTMLElement | 
   return target instanceof Node && root.contains(target);
 }
 
+/** Controls whose native Space/Enter activation the editor's shortcuts must not take. */
+const ACTIVATABLE_TARGET = 'button, [role=button], a[href], summary, [role=checkbox], [role=switch], [role=radio], [role=tab], [role=slider]';
+
+export function isActivatableTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(ACTIVATABLE_TARGET) !== null;
+}
+
 export function useKeyboardShortcuts({
   hasSelectedClip,
   canMoveSelectedClipToTrack,
@@ -211,9 +218,21 @@ export function useKeyboardShortcuts({
       if (isEditableTarget(event.target)) {
         return;
       }
+      // A panel handled this key before it bubbled to window (this listener
+      // is bubble-phase, not capture), so leave it to that panel.
+      if (event.defaultPrevented) return;
+      // Space and Enter belong to a focused button, link, tab or slider (panels and
+      // Transcript included); only an unfocused timeline plays on Space.
+      if ((event.key === ' ' || event.key === 'Enter') && isActivatableTarget(event.target)) return;
+
+      // A full-screen panel is modal: no editor shortcut acts while it is open, and its Esc
+      // (the frame listens after this hook) must not also clear the timeline selection.
+      if (document.querySelector('[data-panel-fullscreen-frame]')) return;
 
       const isModifierPressed = event.metaKey || event.ctrlKey;
       const key = event.key.toLowerCase();
+      // Single-key shortcuts are plain keys: Cmd/Ctrl/Alt+S, +M, +Backspace, +Space belong to the browser or OS.
+      const isPlainKey = !event.metaKey && !event.ctrlKey && !event.altKey;
 
       // ---- Built-in shortcuts (unchanged) -----------------------------------
 
@@ -249,7 +268,7 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      if (event.key === 'ArrowUp' && hasSelectedClip) {
+      if (event.key === 'ArrowUp' && hasSelectedClip && isPlainKey) {
         event.preventDefault();
         if (canMoveSelectedClipToTrack) {
           moveSelectedClipsToTrack('up', selectedClipIds);
@@ -257,7 +276,7 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      if (event.key === 'ArrowDown' && hasSelectedClip) {
+      if (event.key === 'ArrowDown' && hasSelectedClip && isPlainKey) {
         event.preventDefault();
         if (canMoveSelectedClipToTrack) {
           moveSelectedClipsToTrack('down', selectedClipIds);
@@ -271,25 +290,25 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      if (event.code === 'Space') {
+      if (event.code === 'Space' && isPlainKey) {
         event.preventDefault();
         togglePlayPause();
         return;
       }
 
-      if (key === 'm' && hasSelectedClip) {
+      if (key === 'm' && hasSelectedClip && isPlainKey) {
         event.preventDefault();
         toggleMute();
         return;
       }
 
-      if (key === 's' && hasSelectedClip) {
+      if (key === 's' && hasSelectedClip && isPlainKey) {
         event.preventDefault();
         splitSelectedClip();
         return;
       }
 
-      if ((event.key === 'Backspace' || event.key === 'Delete') && hasSelectedClip) {
+      if ((event.key === 'Backspace' || event.key === 'Delete') && hasSelectedClip && isPlainKey) {
         event.preventDefault();
         deleteSelectedClip();
         return;

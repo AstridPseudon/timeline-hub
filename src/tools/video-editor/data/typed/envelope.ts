@@ -1,8 +1,6 @@
-// [CONVERGE-WITH-M1] Provisional envelope for the Astrid App data-lane plane.
-// These types mirror the typed-timeline-data epic's M1 kernel envelope
-// (design: Astrid/.megaplan/initiatives/typed-timeline-data-automation/
-// decisions/astrid-editor-data-lanes.md §Envelope types); when the M1 kernel
-// lands, these definitions converge onto it. Pure data + one freeze helper:
+// Provisional envelope for the Astrid App data-lane plane.
+// These types mirror the typed-timeline-data kernel envelope and are provisional
+// until it lands; they converge onto it then. Pure data + one freeze helper:
 // no IO, no async.
 
 /** Structural shape of a data item along its primary axis. */
@@ -64,7 +62,7 @@ export interface FrozenDataItem {
  * content hashes and retained across payload edits (occurrences are re-derived
  * at assembly), and `sourceArtifactRef.assetId` is required so every
  * persisted item names its origin artifact.
- * [CONVERGE-WITH-M1] Serialized by TimelineBundle (./timelineBundle.ts).
+ * Serialized by TimelineBundle (./timelineBundle.ts).
  */
 export interface SourceFrozenDataItem {
   id: string;
@@ -82,7 +80,7 @@ export interface SourceFrozenDataItem {
  * (`DataLaneRendererProps` / `DataItemInspectorProps` on
  * src/sdk/video/families/dataKind.ts — outside this batch). A function whose
  * parameter is `never` accepts every concrete renderer by contravariance, so
- * registry records stay assignable until M1 owns the shared type.
+ * registry records stay assignable until the kernel owns the shared type.
  */
 export type DataLaneRendererRef = (props: never) => unknown;
 export type DataItemInspectorRef = (props: never) => unknown;

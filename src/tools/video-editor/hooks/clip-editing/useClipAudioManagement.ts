@@ -1,3 +1,4 @@
+import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import { useCallback } from 'react';
 import { detachAudioFromVideo } from '@/tools/video-editor/lib/editor-utils.ts';
 import type { ClipMeta } from '@/tools/video-editor/lib/timeline-data.ts';
@@ -26,7 +27,7 @@ export function useClipAudioManagement(ctx: ClipEditingContext) {
 
     const metaUpdates = Object.fromEntries(
       validClipIds.map((clipId) => {
-        const volume = current.meta[clipId]?.volume ?? 1;
+        const volume = getEffectiveClipVolume(current.meta[clipId] ?? {});
         return [clipId, { volume: volume <= 0 ? 1 : 0 }];
       }),
     ) as Record<string, Partial<ClipMeta>>;

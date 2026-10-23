@@ -1,15 +1,11 @@
-import React, { useEffect, useMemo, useCallback } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { TOOL_IDS } from '@/shared/lib/tooling/toolIds';
 import { useProjectCrudContext, useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProjectGenerations, type GenerationsPaginatedResponse } from '@/shared/hooks/projects/useProjectGenerations';
-import { useCreateGeneration, useToggleGenerationStar } from '@/domains/generation/hooks/useGenerationMutations';
-import { useDeleteGenerationWithConfirm } from '@/domains/generation/hooks/useDeleteGenerationWithConfirm';
-import { DeleteGenerationConfirmDialog } from '@/shared/components/dialogs/DeleteGenerationConfirmDialog';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { useLoraManager } from '@/domains/lora/hooks/useLoraManager';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
 import { Card } from '@/shared/components/ui/card';
 import { PageFadeIn } from '@/shared/components/transitions/PageFadeIn';
 import {
@@ -44,7 +40,6 @@ interface JoinClipsPageLayoutProps {
   isMobile: boolean;
   joinSettings: JoinSettingsState;
   settingsLoaded: boolean;
-  availableLoras: ReturnType<typeof usePublicLoras>['data'];
   loraManager: LoraManagerState;
   clipManager: ClipManagerState;
   validationResult: ValidationResult | null;
@@ -53,10 +48,6 @@ interface JoinClipsPageLayoutProps {
   videosData: GenerationsPaginatedResponse | undefined;
   videosLoading: boolean;
   videosFetching: boolean;
-  deletingId: string | null;
-  handleDeleteGeneration: (id: string) => void;
-  onToggleStar: (id: string, starred: boolean) => void;
-  confirmDialogProps: ReturnType<typeof useDeleteGenerationWithConfirm>['confirmDialogProps'];
 }
 
 interface JoinClipsSettingsFormAdapterInput {
@@ -65,7 +56,6 @@ interface JoinClipsSettingsFormAdapterInput {
   clipManager: ClipManagerState;
   validationResult: ValidationResult | null;
   clipPairs: ClipPairInfo[];
-  availableLoras: ReturnType<typeof usePublicLoras>['data'];
   selectedProjectId: string;
   loraManager: LoraManagerState;
   generateState: JoinGenerateState;
@@ -77,7 +67,6 @@ function buildJoinClipsSettingsFormProps({
   clipManager,
   validationResult,
   clipPairs,
-  availableLoras,
   selectedProjectId,
   loraManager,
   generateState,
@@ -113,7 +102,6 @@ function buildJoinClipsSettingsFormProps({
       clipPairs,
     },
     motionConfig: {
-      availableLoras,
       projectId: selectedProjectId,
       loraPersistenceKey: TOOL_IDS.JOIN_CLIPS,
       loraManager,
@@ -151,7 +139,6 @@ function JoinClipsPageLayout({
   isMobile,
   joinSettings,
   settingsLoaded,
-  availableLoras,
   loraManager,
   clipManager,
   validationResult,
@@ -160,10 +147,6 @@ function JoinClipsPageLayout({
   videosData,
   videosLoading,
   videosFetching,
-  deletingId,
-  handleDeleteGeneration,
-  onToggleStar,
-  confirmDialogProps,
 }: JoinClipsPageLayoutProps) {
   const settings = joinSettings.settings;
   const settingsFormProps = useMemo(() => buildJoinClipsSettingsFormProps({
@@ -172,7 +155,6 @@ function JoinClipsPageLayout({
     clipManager,
     validationResult,
     clipPairs,
-    availableLoras,
     selectedProjectId,
     loraManager,
     generateState,
@@ -182,7 +164,6 @@ function JoinClipsPageLayout({
     clipManager,
     validationResult,
     clipPairs,
-    availableLoras,
     selectedProjectId,
     loraManager,
     generateState,
@@ -211,9 +192,6 @@ function JoinClipsPageLayout({
           videosFetching={videosFetching}
           projectAspectRatio={projectAspectRatio}
           isMobile={isMobile}
-          deletingId={deletingId}
-          handleDeleteGeneration={handleDeleteGeneration}
-          onToggleStar={onToggleStar}
         />
       </div>
 
@@ -231,8 +209,6 @@ function JoinClipsPageLayout({
           features={{ showDownload: true }}
         />
       )}
-
-      <DeleteGenerationConfirmDialog {...confirmDialogProps} />
     </PageFadeIn>
   );
 }
@@ -250,8 +226,7 @@ const JoinClipsPage: React.FC = () => {
   const settings = joinSettings.settings;
   const settingsLoaded = joinSettings.status !== 'idle' && joinSettings.status !== 'loading';
 
-  const { data: availableLoras } = usePublicLoras();
-  const loraManager = useLoraManager(availableLoras, {
+  const loraManager = useLoraManager({
     projectId: selectedProjectId || undefined,
     persistenceScope: 'project',
     enableProjectPersistence: true,
@@ -261,13 +236,11 @@ const JoinClipsPage: React.FC = () => {
   useSyncJoinClipsLoras(settingsLoaded, loraManager.selectedLoras, joinSettings);
   useEnsureKeepBridgingImages(settings.keepBridgingImages, settingsLoaded, joinSettings);
 
-  const createGenerationMutation = useCreateGeneration();
   const clipManager = useClipManager({
     selectedProjectId,
     joinSettings,
     settingsLoaded,
     loopFirstClip: settings.loopFirstClip,
-    createGenerationMutation,
   });
 
   const validationResult = useJoinValidationResult(
@@ -308,18 +281,6 @@ const JoinClipsPage: React.FC = () => {
   const videosLoading = generationsQuery.isLoading;
   const videosFetching = generationsQuery.isFetching;
 
-  const { requestDelete: requestDeleteGeneration, confirmDialogProps, deletingId } = useDeleteGenerationWithConfirm({ projectId: selectedProjectId });
-  const toggleStarMutation = useToggleGenerationStar();
-  const handleDeleteGeneration = useCallback((id: string) => {
-    requestDeleteGeneration(id);
-  }, [requestDeleteGeneration]);
-  const handleToggleStar = useCallback((id: string, starred: boolean) => {
-    if (!selectedProjectId) {
-      return;
-    }
-    toggleStarMutation.mutate({ id, starred, projectId: selectedProjectId });
-  }, [selectedProjectId, toggleStarMutation]);
-
   useEffect(() => {
     if (generateState.videosViewJustEnabled && videosData?.items) {
       generateState.setVideosViewJustEnabled(false);
@@ -343,7 +304,6 @@ const JoinClipsPage: React.FC = () => {
       isMobile={isMobile}
       joinSettings={joinSettings}
       settingsLoaded={settingsLoaded}
-      availableLoras={availableLoras}
       loraManager={loraManager}
       clipManager={clipManager}
       validationResult={validationResult}
@@ -352,10 +312,6 @@ const JoinClipsPage: React.FC = () => {
       videosData={videosData}
       videosLoading={videosLoading}
       videosFetching={videosFetching}
-      deletingId={deletingId}
-      handleDeleteGeneration={handleDeleteGeneration}
-      onToggleStar={handleToggleStar}
-      confirmDialogProps={confirmDialogProps}
     />
   );
 };

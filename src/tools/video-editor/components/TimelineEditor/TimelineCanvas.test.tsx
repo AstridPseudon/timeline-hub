@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TimelineCanvas } from '@/tools/video-editor/components/TimelineEditor/TimelineCanvas';
+import { CREATE_ANIMATION_PROMPT, CREATE_EFFECT_PROMPT } from '@/tools/video-editor/components/TimelineEditor/TimelineCreateTools';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
 import { createInteractionState, onInteractionEnd } from '@/tools/video-editor/lib/interaction-state';
 import { requestCenterTimelineClip } from '@/tools/video-editor/lib/timeline-viewport-events';
@@ -363,6 +364,7 @@ function renderCanvas(params?: {
   inputModality?: React.ComponentProps<typeof TimelineCanvas>['inputModality'];
   interactionMode?: React.ComponentProps<typeof TimelineCanvas>['interactionMode'];
   gestureOwner?: React.ComponentProps<typeof TimelineCanvas>['gestureOwner'];
+  rowHeight?: number;
   startLeft?: number;
   scale?: number;
   scaleWidth?: number;
@@ -371,6 +373,7 @@ function renderCanvas(params?: {
   onAddTextAt?: React.ComponentProps<typeof TimelineCanvas>['onAddTextAt'];
   onAddEffectLayerAt?: React.ComponentProps<typeof TimelineCanvas>['onAddEffectLayerAt'];
   onOpenSequenceCreator?: React.ComponentProps<typeof TimelineCanvas>['onOpenSequenceCreator'];
+  onOpenElementCreationPrompt?: React.ComponentProps<typeof TimelineCanvas>['onOpenElementCreationPrompt'];
   onAddTrack?: React.ComponentProps<typeof TimelineCanvas>['onAddTrack'];
   onClearUnusedTracks?: React.ComponentProps<typeof TimelineCanvas>['onClearUnusedTracks'];
   unusedTrackCount?: number;
@@ -390,11 +393,11 @@ function renderCanvas(params?: {
   onEditAreaPointerDown?: React.ComponentProps<typeof TimelineCanvas>['onEditAreaPointerDown'];
   postprocessShader?: TimelinePostprocessShaderMetadata;
   onSelectPostprocessShader?: React.ComponentProps<typeof TimelineCanvas>['onSelectPostprocessShader'];
-  onCreateEmptyShotAt?: React.ComponentProps<typeof TimelineCanvas>['onCreateEmptyShotAt'];
   onCreateShotFromSelection?: React.ComponentProps<typeof TimelineCanvas>['onCreateShotFromSelection'];
   canCreateShotFromSelection?: boolean;
   isCreatingShot?: boolean;
   selectedClipCount?: number;
+  onScaleWidthChange?: React.ComponentProps<typeof TimelineCanvas>['onScaleWidthChange'];
 }) {
   const dataRef = params?.dataRef ?? { current: null };
   const trackDefinitions = params?.tracks ?? [params?.track ?? track];
@@ -428,7 +431,7 @@ function renderCanvas(params?: {
       scaleWidth={params?.scaleWidth ?? 100}
       scaleSplitCount={1}
       startLeft={params?.startLeft ?? 0}
-      rowHeight={48}
+      rowHeight={params?.rowHeight ?? 48}
       minScaleCount={1}
       maxScaleCount={10}
       selectedTrackId={null}
@@ -462,14 +465,15 @@ function renderCanvas(params?: {
       onAddTextAt={params?.onAddTextAt}
       onAddEffectLayerAt={params?.onAddEffectLayerAt}
       onOpenSequenceCreator={params?.onOpenSequenceCreator}
+      onOpenElementCreationPrompt={params?.onOpenElementCreationPrompt}
       postprocessShader={params?.postprocessShader}
       onSelectPostprocessShader={params?.onSelectPostprocessShader}
       onEditAreaPointerDown={params?.onEditAreaPointerDown}
-      onCreateEmptyShotAt={params?.onCreateEmptyShotAt}
       onCreateShotFromSelection={params?.onCreateShotFromSelection}
       canCreateShotFromSelection={params?.canCreateShotFromSelection}
       isCreatingShot={params?.isCreatingShot}
       selectedClipCount={params?.selectedClipCount}
+      onScaleWidthChange={params?.onScaleWidthChange}
       dragSessionRef={{ current: null }}
     />
   );
@@ -548,6 +552,87 @@ describe('TimelineCanvas DOM contract', () => {
     expect(editArea.getAttribute(TOUCH_GESTURE_MODE_ATTR)).toBe(
       resolveArmedTouchGesture('phone', 'move'),
     );
+  });
+
+  it('holds the desktop tool cluster in the footer row under the tracks, so no button floats over a track', () => {
+    const desktop = renderCanvas({ deviceClass: 'desktop', onAddTextAt: vi.fn(), rowHeight: 36 });
+    const cluster = desktop.container.querySelector('[data-testid="timeline-tool-buttons"]');
+    expect(cluster).toBeInstanceOf(HTMLElement);
+    // Inside the scroll container, in the footer row that ends its content, and in the layout flow.
+    expect(desktop.container.querySelector(EDIT_AREA_SELECTOR)?.contains(cluster)).toBe(true);
+    const footer = (cluster as HTMLElement).parentElement as HTMLElement;
+    expect(footer.nextElementSibling?.getAttribute('data-testid')).toBe('timeline-playhead');
+    expect(footer.className).not.toContain('absolute');
+    expect(cluster?.className).not.toContain('absolute');
+    // The 24px pointer buttons need 32px (one button plus 4px above and below): a 36px track row holds them.
+    expect(footer.style.height).toBe('36px');
+    expect(screen.getByTitle('Drag onto timeline to add text')).toBeInTheDocument();
+    desktop.unmount();
+
+    // A short row grows to hold the buttons rather than letting them overlap a track.
+    const short = renderCanvas({ deviceClass: 'desktop', onAddTextAt: vi.fn(), rowHeight: 24 });
+    const shortFooter = (short.container.querySelector('[data-testid="timeline-tool-buttons"]') as HTMLElement).parentElement as HTMLElement;
+    expect(shortFooter.style.height).toBe('32px');
+    short.unmount();
+
+    const noCluster = renderCanvas({ deviceClass: 'desktop', rowHeight: 36 });
+    expect(noCluster.container.querySelector('[data-testid="timeline-tool-buttons"]')).toBeNull();
+    expect((noCluster.container.querySelector(`${EDIT_AREA_SELECTOR} .border-t.bg-background`) as HTMLElement).style.height).toBe('36px');
+  });
+
+  it('draws no create tools on touch: the footer is a plain track row', () => {
+    ['phone', 'tablet'].forEach((deviceClass) => {
+      const touch = renderCanvas({
+        deviceClass: deviceClass as 'phone' | 'tablet',
+        inputModality: 'touch',
+        onAddTextAt: vi.fn(),
+        onOpenSequenceCreator: vi.fn(),
+        onOpenElementCreationPrompt: vi.fn(),
+        rowHeight: 36,
+      });
+      expect(touch.container.querySelector('[data-testid="timeline-tool-buttons"]')).toBeNull();
+      const footer = touch.container.querySelector(`${EDIT_AREA_SELECTOR} [data-testid="timeline-playhead"]`)?.previousElementSibling as HTMLElement;
+      expect(footer.style.height).toBe('36px');
+      touch.unmount();
+    });
+  });
+
+  it('stacks the ruler time labels above the extension ruler overlay that carries marker diamonds', () => {
+    const { container } = renderCanvas();
+    const zIndexOf = (element: Element | null): number => {
+      const match = /(?:^|\s)z-(\d+)(?:\s|$)/.exec(element?.getAttribute('class') ?? '');
+      if (!match) throw new Error('expected a z-index class');
+      return Number(match[1]);
+    };
+    const labels = container.querySelector('[data-testid="timeline-ruler-labels"]');
+    const clip = labels?.parentElement ?? null;
+    const overlay = container.querySelector('[data-testid="timeline-extension-ruler-overlay-root"]');
+    expect(labels?.textContent).toContain('0:00.00');
+    expect(zIndexOf(clip)).toBeGreaterThan(zIndexOf(overlay));
+    // No ancestor between the label layer and the canvas root may open a stacking context of its own, or the
+    // label layer's z-index would only order it inside that ancestor.
+    expect(clip?.parentElement?.getAttribute('data-testid')).toBe('timeline-ruler');
+    expect(overlay?.parentElement).toBe(clip?.parentElement?.parentElement);
+  });
+
+  it('clips the ruler labels to the timeline area, so a scrolled label never paints over the gutter legend or pager', () => {
+    const { container } = renderCanvas({ startLeft: 144 });
+    const labels = container.querySelector('[data-testid="timeline-ruler-labels"]') as HTMLElement;
+    const clip = labels.parentElement as HTMLElement;
+    expect(clip.className).toContain('overflow-hidden');
+    expect(clip.style.left).toBe('144px');
+    // The layer is offset by the gutter too, so a label still lands on its tick: left of the clip edge it is cut off.
+    expect(labels.style.transform).toBe('translateX(-144px)');
+  });
+
+  it('labels the ruler ticks as m:ss on touch and m:ss.cc on desktop', () => {
+    const desktop = renderCanvas({ deviceClass: 'desktop' });
+    expect(desktop.container.querySelector('[data-testid="timeline-ruler-labels"]')?.textContent).toContain('0:00.00');
+    desktop.unmount();
+    const phone = renderCanvas({ deviceClass: 'phone', inputModality: 'touch' });
+    const text = phone.container.querySelector('[data-testid="timeline-ruler-labels"]')?.textContent ?? '';
+    expect(text).toContain('0:00');
+    expect(text).not.toContain('0:00.00');
   });
 
   it('writes row, track and trim-handle attributes the gesture layer reads back', () => {
@@ -737,6 +822,22 @@ describe('TimelineCanvas floating tools', () => {
   });
 });
 
+describe('TimelineCanvas floating tools with an agent prompt host', () => {
+  it('hands the effect and animation prompts to the host in the footer, labelled for the prompt flow', () => {
+    const onOpenElementCreationPrompt = vi.fn();
+    renderCanvas({
+      deviceClass: 'desktop',
+      onAddTextAt: vi.fn(),
+      onOpenSequenceCreator: vi.fn(),
+      onOpenElementCreationPrompt,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create new effect' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create animation' }));
+    expect(onOpenElementCreationPrompt.mock.calls).toEqual([[CREATE_EFFECT_PROMPT], [CREATE_ANIMATION_PROMPT]]);
+  });
+});
+
 describe('TimelineCanvas postprocess shader badge', () => {
   const postprocessShader: TimelinePostprocessShaderMetadata = {
     scope: 'postprocess',
@@ -792,7 +893,30 @@ describe('TimelineCanvas extension context menus', () => {
     }));
   });
 
-  it('leaves native background context-menu behavior alone when no extension items are eligible', () => {
+  it('zooms the timeline on Ctrl/Cmd+wheel and blocks page zoom, but leaves plain wheel alone', () => {
+    const onScaleWidthChange = vi.fn();
+    const { container } = renderCanvas({ onScaleWidthChange, scaleWidth: 100 });
+    const scroller = container.querySelector('.timeline-scroll');
+    if (!(scroller instanceof HTMLElement)) throw new Error('expected timeline scroller');
+
+    const plain = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: -30 });
+    scroller.dispatchEvent(plain);
+    expect(plain.defaultPrevented).toBe(false);
+    expect(onScaleWidthChange).not.toHaveBeenCalled();
+
+    const zoomIn = new WheelEvent('wheel', { bubbles: true, cancelable: true, ctrlKey: true, deltaY: -30, clientX: 50 });
+    scroller.dispatchEvent(zoomIn);
+    expect(zoomIn.defaultPrevented).toBe(true);
+    expect(onScaleWidthChange).toHaveBeenCalledTimes(1);
+    expect(onScaleWidthChange.mock.calls[0][0]).toBeGreaterThan(100);
+
+    const zoomOut = new WheelEvent('wheel', { bubbles: true, cancelable: true, metaKey: true, deltaY: 30, clientX: 50 });
+    scroller.dispatchEvent(zoomOut);
+    expect(zoomOut.defaultPrevented).toBe(true);
+    expect(onScaleWidthChange.mock.calls[1][0]).toBeLessThan(100);
+  });
+
+  it('swallows the native context menu on the empty timeline when no actions are eligible', () => {
     const { container } = renderCanvas();
     const background = container.querySelector('.timeline-canvas-edit-area > .relative');
     if (!(background instanceof HTMLElement)) {
@@ -807,7 +931,7 @@ describe('TimelineCanvas extension context menus', () => {
     });
     background.dispatchEvent(event);
 
-    expect(event.defaultPrevented).toBe(false);
+    expect(event.defaultPrevented).toBe(true);
     expect(document.body.querySelector('div.fixed.z-50')).toBeNull();
   });
 
@@ -855,10 +979,8 @@ describe('TimelineCanvas extension context menus', () => {
     expect(screen.queryByText('Open timeline command')).not.toBeInTheDocument();
   });
 
-  it('opens the built-in Create Shot menu on empty-area right-click with the timeline time', () => {
-    const onCreateEmptyShotAt = vi.fn();
+  it('does not open an area menu on empty-area right-click when nothing is eligible', () => {
     const { container } = renderCanvas({
-      onCreateEmptyShotAt,
       scale: 1,
       scaleWidth: 100,
       startLeft: 0,
@@ -870,10 +992,8 @@ describe('TimelineCanvas extension context menus', () => {
 
     fireEvent.contextMenu(background, { clientX: 160, clientY: 120 });
 
-    expect(screen.getByText('Create Shot')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Create Shot'));
-    expect(onCreateEmptyShotAt).toHaveBeenCalledTimes(1);
-    expect(onCreateEmptyShotAt).toHaveBeenCalledWith(expect.objectContaining({ time: 1.6 }));
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(screen.queryByText('Create Shot')).not.toBeInTheDocument();
   });
 
   it('shows Create Shot from selection in the area menu for an eligible multi-selection', () => {

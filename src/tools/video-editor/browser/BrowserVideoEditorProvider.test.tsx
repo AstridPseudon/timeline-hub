@@ -95,7 +95,7 @@ describe('BrowserVideoEditorProvider', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // T15: Compatibility tests — direct extensions prop for SDK/browser embeds
+  // Compatibility tests — direct extensions prop for SDK/browser embeds
   // ---------------------------------------------------------------------------
   // Prove the direct `extensions` prop works for SDK/browser embeds WITHOUT
   // installed pack records, repository enablement, or any repository state,
@@ -470,7 +470,7 @@ describe('BrowserVideoEditorProvider', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // T22: Provider-owned timeline-overlay flag threading
+  // Provider-owned timeline-overlay flag threading
   // ---------------------------------------------------------------------------
 
   describe('timelineOverlaysEnabled flag', () => {

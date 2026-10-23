@@ -64,7 +64,6 @@ function TimelineModeContent(props: {
   mode: ShotImagesEditorModeModel;
   callbacks: ShotImagesEditorCallbacks;
   timelineMediaValue: TimelineMediaContextValue;
-  registerTrailingUpdater: (fn: (endFrame: number) => void) => void;
 }) {
   const {
     componentProps,
@@ -72,7 +71,6 @@ function TimelineModeContent(props: {
     mode,
     callbacks,
     timelineMediaValue,
-    registerTrailingUpdater,
   } = props;
 
   const {
@@ -85,9 +83,6 @@ function TimelineModeContent(props: {
     onGenerationDrop,
     onVariantDrop,
     onImageDelete,
-    onImageDuplicate,
-    duplicatingImageId,
-    duplicateSuccessImageId,
     projectAspectRatio,
     readOnly = false,
     preloadedImages,
@@ -139,14 +134,9 @@ function TimelineModeContent(props: {
             onGenerationDrop,
             onVariantDrop,
             onImageDelete,
-            onImageDuplicate,
-            duplicatingImageId,
-            duplicateSuccessImageId,
             onDragStateChange: callbacks.handleDragStateChange,
             onPairClick: mode.segmentSlot.handlePairClick,
-            onClearEnhancedPrompt: callbacks.handleClearEnhancedPromptByIndex,
             onNewShotFromSelection,
-            onRegisterTrailingUpdater: registerTrailingUpdater,
           }}
           display={{
             defaultPrompt,
@@ -170,7 +160,6 @@ function TimelineModeContent(props: {
           }}
           segmentNavigation={{
             segmentSlots: data.segmentSlots,
-            isSegmentsLoading: data.isSegmentsLoading,
             hasPendingTask: data.hasPendingTask,
             onOpenSegmentSlot: (pairIndex) => mode.segmentSlot.handlePairClick(pairIndex),
             pendingImageToOpen: mode.segmentSlot.pendingImageToOpen,
@@ -208,9 +197,6 @@ function BatchModeEditorContent(props: {
     columns,
     batchVideoFrames,
     onBatchImageDelete,
-    onImageDuplicate,
-    duplicatingImageId,
-    duplicateSuccessImageId,
     onBatchFileDrop,
     onBatchGenerationDrop,
     onVariantDrop,
@@ -266,7 +252,6 @@ function BatchModeEditorContent(props: {
         defaultPrompt,
         defaultNegativePrompt,
         segmentSlots: data.segmentSlots,
-        deletingSegmentId: callbacks.deletingSegmentId,
         pendingImageToOpen: mode.segmentSlot.pendingImageToOpen,
         pendingImageVariantId: mode.segmentSlot.pendingImageVariantId,
         primaryStructureVideo,
@@ -276,13 +261,9 @@ function BatchModeEditorContent(props: {
         onImageReorder: callbacks.handleReorder,
         onImageDelete: callbacks.handleDelete,
         onBatchImageDelete,
-        onImageDuplicate,
-        duplicatingImageId,
-        duplicateSuccessImageId,
         onFileDrop: onBatchFileDrop,
         onGenerationDrop: onBatchGenerationDrop,
         onVariantDrop,
-        onClearEnhancedPrompt: callbacks.handleClearEnhancedPromptByIndex,
         onDragStateChange: callbacks.handleDragStateChange,
         onPairClick: mode.segmentSlot.handlePairClick,
         onSelectionChange,
@@ -294,7 +275,6 @@ function BatchModeEditorContent(props: {
         onAddToShotWithoutPosition: onAddToShotWithoutPositionLegacy,
         onCreateShot: onCreateShotLegacy,
         onNewShotFromSelection,
-        onSegmentDelete: callbacks.runDeleteSegmentOperation,
         onClearPendingImageToOpen: mode.handleClearPendingImageToOpen,
         navigateWithTransition: mode.navigateWithTransition,
         onPrimaryStructureVideoInputChange,
@@ -311,9 +291,8 @@ export function EditorContent(props: {
   mode: ShotImagesEditorModeModel;
   callbacks: ShotImagesEditorCallbacks;
   timelineMediaValue: TimelineMediaContextValue;
-  registerTrailingUpdater: (fn: (endFrame: number) => void) => void;
 }) {
-  const { componentProps, data, mode, callbacks, timelineMediaValue, registerTrailingUpdater } = props;
+  const { componentProps, data, mode, callbacks, timelineMediaValue } = props;
 
   const {
     isModeReady,
@@ -352,7 +331,6 @@ export function EditorContent(props: {
             mode={mode}
             callbacks={callbacks}
             timelineMediaValue={timelineMediaValue}
-            registerTrailingUpdater={registerTrailingUpdater}
           />
         ) : (
           <BatchModeEditorContent

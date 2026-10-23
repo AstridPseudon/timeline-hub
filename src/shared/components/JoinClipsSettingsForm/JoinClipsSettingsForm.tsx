@@ -1,7 +1,6 @@
 import React from 'react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { type JoinClipsSettingsFormProps, type BoundaryCrossfadeStatus } from './types';
-import { JOIN_CLIPS_FEATURED_PRESET_IDS } from './constants';
 import { useJoinClipsSettingsController } from './hooks/useJoinClipsSettingsController';
 import { JoinClipsGenerateButton } from './components/JoinClipsGenerateButton';
 import { JoinClipsMotionSettings } from './components/JoinClipsMotionSettings';
@@ -80,7 +79,6 @@ export const JoinClipsSettingsForm: React.FC<JoinClipsSettingsFormProps> = ({
     clipPairs,
   } = clipSettings;
   const {
-    availableLoras,
     projectId,
     loraPersistenceKey,
     loraManager,
@@ -93,7 +91,6 @@ export const JoinClipsSettingsForm: React.FC<JoinClipsSettingsFormProps> = ({
     selectedPhasePresetId,
     onPhasePresetSelect,
     onPhasePresetRemove,
-    featuredPresetIds = JOIN_CLIPS_FEATURED_PRESET_IDS,
   } = motionConfig;
   const {
     onGenerate,
@@ -155,7 +152,6 @@ export const JoinClipsSettingsForm: React.FC<JoinClipsSettingsFormProps> = ({
               setEnhancePrompt={setEnhancePrompt}
             />
             <JoinClipsMotionSettings
-              availableLoras={availableLoras}
               projectId={projectId}
               loraPersistenceKey={loraPersistenceKey}
               loraManager={loraManager}
@@ -168,7 +164,6 @@ export const JoinClipsSettingsForm: React.FC<JoinClipsSettingsFormProps> = ({
               selectedPhasePresetId={selectedPhasePresetId}
               onPhasePresetSelect={onPhasePresetSelect}
               onPhasePresetRemove={onPhasePresetRemove}
-              featuredPresetIds={featuredPresetIds}
             />
           </div>
 

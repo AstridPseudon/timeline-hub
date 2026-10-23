@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { installCommand, terminalOpeningHint } from './copy.ts';
+import { agentInstructions, installCommand } from './copy.ts';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -18,15 +18,14 @@ describe('install commands', () => {
   });
 });
 
-describe('terminal opening hints', () => {
-  it.each([
-    ['MacIntel', 'Macintosh', 'Open Terminal from Applications → Utilities.'],
-    ['Win32', 'Windows', 'Open Start and type PowerShell.'],
-    ['Linux x86_64', 'Linux', 'Open Terminal from your applications menu.'],
-    ['Other', 'Other', 'Open a terminal on your computer.'],
-  ] as const)('%s %s hint', (platform, os, expected) => {
-    vi.spyOn(navigator, 'platform', 'get').mockReturnValue(platform);
-    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(os);
-    expect(terminalOpeningHint()).toBe(expected);
+describe('update handoff', () => {
+  it('offers the installer and the source-checkout route, and tells the agent to check first', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Macintosh');
+    const text = agentInstructions('update', 'https://astrid.haus');
+    expect(text).toContain('If you installed Astrid with the installer');
+    expect(text).toContain("If you run Astrid from source checkouts: update those checkouts to their main branches and restart Astrid. Don't run the installer over them.");
+    expect(text).toContain('running runtime_protocol from a git checkout');
+    expect(agentInstructions('install', 'https://astrid.haus')).not.toContain('source checkouts');
   });
 });

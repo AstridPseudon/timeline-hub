@@ -6,3 +6,4 @@ describe('complete_task/generation exports', () => {
     expect(createGenerationFromTask).toBeTypeOf('function');
   });
 });
+

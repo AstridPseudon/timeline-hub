@@ -264,7 +264,7 @@ export const getTrustedSequenceParamDefinitions = (
 };
 
 // ---------------------------------------------------------------------------
-// Dynamic-aware resolution (M9 T6)
+// Dynamic-aware resolution
 // ---------------------------------------------------------------------------
 
 /**

@@ -7,6 +7,7 @@
  * `OfflineAudioContext.startRendering()` stay on the window; every
  * per-sample/per-frame JS loop runs in the worker.
  */
+import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import type { ResolvedTimelineClip } from '@/tools/video-editor/types/index.ts';
 import {
   AUDIO_ANALYSIS_VERSION,
@@ -92,7 +93,7 @@ export function buildAudioMixRequest(
         from: clip.from ?? 0,
         to: typeof clip.to === 'number' ? clip.to : -1,
         speed: clip.speed && clip.speed > 0 ? clip.speed : 1,
-        volume: clip.volume ?? 1,
+        volume: getEffectiveClipVolume(clip),
       },
       source: assetEntry.src,
     });

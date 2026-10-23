@@ -17,3 +17,4 @@ export const createRemoteFontModePlugin = (disableRemoteFonts: boolean) => ({
     return disableRemoteFonts ? stripRemoteFontLinks(html) : html;
   },
 });
+

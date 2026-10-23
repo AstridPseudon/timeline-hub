@@ -1,5 +1,5 @@
 /**
- * status-surface-example — M2 statusBar slot contribution example.
+ * status-surface-example — statusBar slot contribution example.
  *
  * Demonstrates registering a status-bar slot contribution using only
  * the public @astrid/editor-sdk entrypoint.  Includes chrome event

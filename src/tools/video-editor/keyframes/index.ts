@@ -1,5 +1,5 @@
 /**
- * M9: Deterministic keyframe utilities.
+ * Deterministic keyframe utilities.
  *
  * Provides linear/hold interpolation, ParameterDefinition validation
  * diagnostics for keyframe values, resolveAnimatedParams() which

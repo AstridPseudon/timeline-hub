@@ -1,21 +1,4 @@
-export {
-  ToolSettingsError,
-  classifyToolSettingsError,
-  clearCachedUserId,
-  ensureToolSettingsAuthCacheInitialized,
-  fetchToolSettingsResult,
-  fetchToolSettingsSupabase,
-  getToolSettingsRuntimeClient,
-  initializeToolSettingsAuthCache,
-  readCachedUserId,
-  resolveAndCacheUserId,
-  setCachedUserId,
-  type SettingsFetchResult,
-  type ToolSettingsContext,
-  type ToolSettingsSupabaseClient,
-} from './runtime/toolSettingsService';
-export {
-  initializeToolSettingsWriteRuntime,
-  updateToolSettingsSupabase,
-  type SettingsScope,
-} from './runtime/toolSettingsWriteService';
+export { defineSetting, type SettingDeclaration, type SettingDefinition, type SettingScope } from './defineSetting';
+export { SettingsStore, type AppStateApi, type SettingRef } from './settingsStore';
+export { getSettingsStore, setSettingsStoreForTests } from './instance';
+export { useSetting, useSettingRef } from './useSetting';

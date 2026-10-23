@@ -44,7 +44,6 @@ import { PromptSection } from './components/PromptSection';
 
 // Extracted hooks
 import { useSaveFieldAsDefault } from './hooks/useSaveFieldAsDefault';
-import { useStructureVideoUpload } from './hooks/useStructureVideoUpload';
 import { useModelChange } from './hooks/useModelChange';
 
 // Types
@@ -69,7 +68,6 @@ export const SegmentSettingsForm: React.FC<SegmentSettingsFormProps> = ({
   headerTitle = 'Regenerate Segment',
   maxFrames = 81,
   segmentIndex,
-  queryKeyPrefix = 'segment-settings',
   onFrameCountChange,
   onRestoreDefaults,
   onSaveAsShotDefaults,
@@ -88,7 +86,6 @@ export const SegmentSettingsForm: React.FC<SegmentSettingsFormProps> = ({
   edgeExtendAmount = 4,
   // Per-segment structure video management
   isTimelineMode,
-  onAddSegmentStructureVideo,
   onRemoveSegmentStructureVideo,
   // Navigation to constituent images
   startImageGenerationId,
@@ -121,7 +118,6 @@ export const SegmentSettingsForm: React.FC<SegmentSettingsFormProps> = ({
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isSavingDefaults, setIsSavingDefaults] = useState(false);
   const [saveDefaultsSuccess, setSaveDefaultsSuccess] = useState(false);
-  const [isDraggingVideo, setIsDraggingVideo] = useState(false);
   const [startImageUrlOverride, setStartImageUrlOverride] = useState<string | null>(null);
   const [endImageUrlOverride, setEndImageUrlOverride] = useState<string | null>(null);
   const displayedStartImageUrl = startImageUrlOverride ?? startImageUrl;
@@ -134,14 +130,6 @@ export const SegmentSettingsForm: React.FC<SegmentSettingsFormProps> = ({
   const { savingField, handleSaveFieldAsDefault } = useSaveFieldAsDefault({
     onSaveFieldAsDefault,
     onChange,
-  });
-
-  // Structure video upload hook
-  const videoUpload = useStructureVideoUpload({
-    structureVideoFrameRange,
-    settings,
-    structureVideoDefaults,
-    onAddSegmentStructureVideo,
   });
 
   // Prompt field state
@@ -197,42 +185,6 @@ export const SegmentSettingsForm: React.FC<SegmentSettingsFormProps> = ({
       setIsSavingDefaults(false);
     }
   }, [onSaveAsShotDefaults]);
-
-  // Drag and drop handlers for video upload
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, []);
-
-  const handleDragEnter = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.dataTransfer.types.includes('Files')) {
-      setIsDraggingVideo(true);
-    }
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.currentTarget === e.target || !e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDraggingVideo(false);
-    }
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingVideo(false);
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      if (file.type.startsWith('video/')) {
-        videoUpload.handleFileSelect({ target: { files } } as unknown as React.ChangeEvent<HTMLInputElement>);
-      }
-    }
-  }, [videoUpload]);
 
   // ==========================================================================
   // RENDER
@@ -364,7 +316,6 @@ export const SegmentSettingsForm: React.FC<SegmentSettingsFormProps> = ({
         settings={settings}
         onChange={onChange}
         modelName={modelName}
-        queryKeyPrefix={queryKeyPrefix}
         edgeExtendAmount={edgeExtendAmount}
         defaults={{
           shotDefaults,
@@ -377,16 +328,7 @@ export const SegmentSettingsForm: React.FC<SegmentSettingsFormProps> = ({
           frameRange: structureVideoFrameRange,
           defaults: structureVideoDefaults,
           isTimelineMode,
-          onAddSegmentStructureVideo,
           onRemoveSegmentStructureVideo,
-        }}
-        videoInteraction={{
-          videoUpload,
-          isDraggingVideo,
-          onDragOver: handleDragOver,
-          onDragEnter: handleDragEnter,
-          onDragLeave: handleDragLeave,
-          onDrop: handleDrop,
         }}
       />
 

@@ -1,5 +1,5 @@
 /**
- * Settings schema-version migration utilities (T10).
+ * Settings schema-version migration utilities.
  *
  * Provides schema-version change detection, migration handler invocation,
  * and reset-to-defaults fallback for extension-owned settings during

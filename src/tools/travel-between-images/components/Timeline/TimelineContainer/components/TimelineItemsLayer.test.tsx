@@ -59,9 +59,6 @@ describe('TimelineItemsLayer', () => {
       },
       actions: {
         onImageDelete: vi.fn(),
-        onImageDuplicate: vi.fn(),
-        duplicatingImageId: 'img-1',
-        duplicateSuccessImageId: null,
       },
       selection: {
         isSelected: vi.fn().mockReturnValue(true),

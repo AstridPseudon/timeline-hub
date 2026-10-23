@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { inspectAstridCapabilitiesMock } = vi.hoisted(() => ({
+const { inspectAstridCapabilitiesMock, probeBridgeSessionMock } = vi.hoisted(() => ({
   inspectAstridCapabilitiesMock: vi.fn(),
+  probeBridgeSessionMock: vi.fn(),
+}));
+
+vi.mock('@/shared/auth/bridgeSession.ts', () => ({
+  probeBridgeSession: probeBridgeSessionMock,
 }));
 
 vi.mock('./capabilityCensus.ts', () => ({
@@ -11,6 +16,7 @@ vi.mock('./capabilityCensus.ts', () => ({
 import {
   ASTRID_DOCTOR_COMMAND,
   checkAstridDoctorAvailability,
+  checkAstridRuntimeReachable,
 } from './doctorAvailability.ts';
 
 describe('checkAstridDoctorAvailability', () => {
@@ -58,6 +64,29 @@ describe('checkAstridDoctorAvailability', () => {
       unavailable: ['tasks', 'generations'],
       unknown: ['media'],
       reason: 'unknown route: tasks',
+    });
+  });
+});
+
+describe('checkAstridRuntimeReachable', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('reads bridge health only, so a launch never probes the sentinel media object', async () => {
+    probeBridgeSessionMock.mockResolvedValue({ ok: true, userId: 'local-user' });
+
+    await expect(checkAstridRuntimeReachable()).resolves.toEqual({ status: 'available' });
+    expect(probeBridgeSessionMock).toHaveBeenCalledWith('/api/astrid');
+    expect(inspectAstridCapabilitiesMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the health failure reason for the reconnect step', async () => {
+    probeBridgeSessionMock.mockResolvedValue({ ok: false, reason: 'connection refused' });
+
+    await expect(checkAstridRuntimeReachable()).resolves.toEqual({
+      status: 'unavailable',
+      reason: 'connection refused',
     });
   });
 });

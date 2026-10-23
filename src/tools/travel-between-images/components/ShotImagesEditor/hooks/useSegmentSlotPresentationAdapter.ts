@@ -73,30 +73,6 @@ function buildAdjacentVideoThumbnails(
   };
 }
 
-function resolveOverlappingStructureVideos(
-  structureVideos: NonNullable<UseSegmentSlotModeResolvedProps['structureVideos']>,
-  newVideo: NonNullable<UseSegmentSlotModeResolvedProps['structureVideos']>[number],
-) {
-  const newStart = newVideo.start_frame ?? 0;
-  const newEnd = newVideo.end_frame ?? Infinity;
-
-  return structureVideos
-    .flatMap((existing) => {
-      const existingStart = existing.start_frame ?? 0;
-      const existingEnd = existing.end_frame ?? Infinity;
-
-      if (newEnd <= existingStart || newStart >= existingEnd) return [existing];
-      if (existingStart >= newStart && existingEnd <= newEnd) return [];
-      if (existingStart < newStart && existingEnd > newEnd) {
-        return [{ ...existing, end_frame: newStart }, { ...existing, start_frame: newEnd }];
-      }
-      if (existingStart < newStart) return [{ ...existing, end_frame: newStart }];
-      if (existingEnd > newEnd) return [{ ...existing, start_frame: newEnd }];
-      return [existing];
-    })
-    .filter((video) => (video.end_frame ?? Infinity) > (video.start_frame ?? 0));
-}
-
 function getEnhancedPrompt(metadata: unknown): string {
   const record = asRecord(metadata);
   return asString(record?.enhanced_prompt) ?? '';
@@ -275,15 +251,6 @@ export function useSegmentSlotPresentationAdapter({
       maxFrameLimit: props.maxFrameLimit,
       isTimelineMode: props.effectiveGenerationMode === 'timeline',
       existingStructureVideos: props.structureVideos ?? [],
-      onAddSegmentStructureVideo: (video) => {
-        if (props.effectiveGenerationMode !== 'timeline' || !props.onSetStructureVideos) {
-          props.onAddStructureVideo?.(video);
-          return;
-        }
-
-        const updatedVideos = resolveOverlappingStructureVideos(props.structureVideos || [], video);
-        props.onSetStructureVideos([...updatedVideos, video]);
-      },
       onUpdateSegmentStructureVideo: (updates) => {
         if (!props.onUpdateStructureVideo || !coveringVideo || !props.structureVideos) return;
         const index = props.structureVideos.findIndex((video) => video.path === coveringVideo.path);

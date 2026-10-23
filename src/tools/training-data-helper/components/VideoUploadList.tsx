@@ -47,7 +47,7 @@ interface VideoUploadListProps {
 }
 
 export function VideoUploadList({ videos, selectedVideo, onVideoSelect, segments }: VideoUploadListProps) {
-  const { deleteVideo, getVideoUrl, markVideoAsInvalid } = useTrainingData();
+  const { deleteVideo, getVideoUrl } = useTrainingData();
   const [deletingVideo, setDeletingVideo] = useState<string | null>(null);
   const [videoErrors, setVideoErrors] = useState<Set<string>>(new Set());
 
@@ -72,12 +72,8 @@ export function VideoUploadList({ videos, selectedVideo, onVideoSelect, segments
     }
   };
 
-  const handleVideoError = (videoId: string, video: TrainingDataVideo) => {
-    // Mark the video as having an error
+  const handleVideoError = (videoId: string) => {
     setVideoErrors(prev => new Set([...prev, videoId]));
-    
-    // Try to mark the video as invalid
-    markVideoAsInvalid(video.id);
   };
 
   const formatDuration = (seconds: number | null) => (
@@ -123,7 +119,7 @@ export function VideoUploadList({ videos, selectedVideo, onVideoSelect, segments
                     className="w-full h-full object-cover"
                     preload="metadata"
                     onError={() => {
-                      handleVideoError(video.id, video);
+                      handleVideoError(video.id);
                     }}
 
                   />
@@ -150,7 +146,7 @@ export function VideoUploadList({ videos, selectedVideo, onVideoSelect, segments
 
               {/* Video info */}
               <div className="space-y-2">
-                <h3 className="font-light text-sm truncate preserve-case" title={video.originalFilename}>
+                <h3 className="font-light text-sm truncate" title={video.originalFilename}>
                   {cropFilename(video.originalFilename)}
                 </h3>
                 
@@ -200,7 +196,7 @@ export function VideoUploadList({ videos, selectedVideo, onVideoSelect, segments
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete Video</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to delete "<span className="preserve-case">{cropFilename(video.originalFilename)}</span>"?
+                        Are you sure you want to delete "<span className="">{cropFilename(video.originalFilename)}</span>"?
                         This will also delete all associated segments and cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>

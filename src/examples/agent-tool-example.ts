@@ -1,5 +1,5 @@
 /**
- * agent-tool-example — M10 agent tool contribution example.
+ * agent-tool-example — agent tool contribution example.
  *
  * Demonstrates:
  *   1. An `AgentToolContribution` declared in the extension manifest with

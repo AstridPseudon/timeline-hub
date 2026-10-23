@@ -1,5 +1,5 @@
 /**
- * M10 T6: Unit tests for agentToolRegistry.
+ * Unit tests for agentToolRegistry.
  *
  * Covers:
  *  - Duplicate ID rejection (cross-extension first-registered-wins, same-extension overwrite)
@@ -16,7 +16,6 @@
  *  - Dispose cleanup
  *
  * @module agentToolRegistry.test
- * @milestone M10
  */
 
 import { describe, expect, it, vi, beforeEach } from 'vitest';

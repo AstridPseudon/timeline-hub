@@ -71,17 +71,17 @@ export interface EditorRuntimeProviderProps {
   sequenceComponentCatalog?: VideoEditorSequenceComponentCatalog | null;
   runtime?: Pick<VideoEditorRuntimeContextValue, 'assetResolver' | 'exporter' | 'hostContext'>;
   extensions?: readonly AstridExtension[];
-  /** Package-state inventory entries propagated from the loader (M5). */
+  /** Package-state inventory entries propagated from the loader. */
   packageStateEntries?: readonly PackageStateInventoryEntry[];
-  /** M5: Extension state repository for enable/disable persistence. */
+  /** Extension state repository for enable/disable persistence. */
   extensionStateRepository?: ExtensionStateRepository | null;
-  /** M5: Trigger extension re-resolution after persistence writes. */
+  /** Trigger extension re-resolution after persistence writes. */
   triggerExtensionRefresh?: () => void;
-  /** M6b: Host-provided process manager override. When absent, a default
+  /** Host-provided process manager override. When absent, a default
    *  ProcessManager is created from the extension runtime's declared process
    *  specs. */
   processManager?: ProcessManager;
-  /** T22: Provider-owned timeline-overlay feature flag. Explicitly defaults
+  /** Provider-owned timeline-overlay feature flag. Explicitly defaults
    *  to false; hosts opt in by supplying `true`. */
   timelineOverlaysEnabled?: boolean;
   /** Explicit ports for an admitted, independently scoped editor instance. */
@@ -100,6 +100,8 @@ function EditorRuntimeProviderInner({
   enableMutationServices,
   proposalPersistenceProvider,
   settingsSnapshotsRef,
+  settingsSnapshotsReady,
+  settingsSnapshotsUnavailable,
   settingsNotificationRegistryRef,
   extensionStateRepository,
   projectObjects,
@@ -117,6 +119,10 @@ function EditorRuntimeProviderInner({
   enableMutationServices: boolean;
   proposalPersistenceProvider: ProposalPersistenceProvider | null | undefined;
   settingsSnapshotsRef: React.MutableRefObject<Record<string, ExtensionSettingsSnapshot> | null>;
+  /** False until the stored settings snapshots have been read, so an extension never starts on empty settings. */
+  settingsSnapshotsReady: boolean;
+  /** True when the read failed or timed out: extensions then run on local settings only and never write the durable snapshot. */
+  settingsSnapshotsUnavailable: boolean;
   settingsNotificationRegistryRef: React.MutableRefObject<ExtensionSettingsNotificationRegistry | null>;
   extensionStateRepository: ExtensionStateRepository | null | undefined;
   projectObjects?: DataProvider['projectObjects'];
@@ -132,7 +138,6 @@ function EditorRuntimeProviderInner({
     projectId: hostServices?.scope.projectId ?? null,
     timelineId,
     projectObjects,
-    catalogUserId: userId,
     effectsQueryEnabled: !effectCatalog && Boolean(userId),
     effectCatalog,
     sequenceComponentCatalog,
@@ -142,6 +147,8 @@ function EditorRuntimeProviderInner({
     settings: {
       repository: extensionStateRepository,
       snapshotsRef: settingsSnapshotsRef,
+      snapshotsReady: settingsSnapshotsReady,
+      snapshotsUnavailable: settingsSnapshotsUnavailable,
       notificationRegistryRef: settingsNotificationRegistryRef,
     },
   });
@@ -179,6 +186,9 @@ function EditorRuntimeProviderInner({
     </EditorRuntimeScaffold>
   );
 }
+
+/** Longest an extension waits for its stored settings before starting without them. */
+const SETTINGS_SNAPSHOT_WAIT_MS = 3000;
 
 export function EditorRuntimeProvider(props: EditorRuntimeProviderProps) {
   const authority = useRef({ provider: props.dataProvider, elementHost: props.astridElementHost,
@@ -241,7 +251,7 @@ function EditorRuntimeProviderInstance({
     service?.getDisposeHandle().dispose();
   });
 
-  // ---- T9: Host-visible settings notification registry (one per provider) -----
+  // ---- Host-visible settings notification registry (one per provider) -----
   const settingsNotificationRegistry = useMemo(
     () => enableMutationServices ? createExtensionSettingsNotificationRegistry() : null,
     [enableMutationServices],
@@ -289,50 +299,72 @@ function EditorRuntimeProviderInstance({
     },
   });
 
-  // ---- T9: Pre-load settings snapshots from repository for context factory ----
+  // ---- Pre-load settings snapshots from repository for context factory ----
   const [settingsSnapshots, setSettingsSnapshots] = useState<
     Record<string, ExtensionSettingsSnapshot> | null
   >(null);
   const settingsSnapshotsRef = useRef<Record<string, ExtensionSettingsSnapshot> | null>(null);
+
+  const [settingsSnapshotsReady, setSettingsSnapshotsReady] = useState(false);
+  const [settingsSnapshotsUnavailable, setSettingsSnapshotsUnavailable] = useState(false);
 
   useEffect(() => {
     const repo = activeExtensionStateRepository;
     if (!repo || repo.isDisposed) {
       setSettingsSnapshots(null);
       settingsSnapshotsRef.current = null;
+      setSettingsSnapshotsReady(true);
+      setSettingsSnapshotsUnavailable(false);
       return;
     }
 
     let cancelled = false;
+    let settled = false;
+    setSettingsSnapshotsReady(false);
+    setSettingsSnapshotsUnavailable(false);
+    // Extensions wait for the stored settings, but never for long: after the bound they start without
+    // durable settings, so a later write cannot replace a snapshot that was never read.
+    const giveUp = (reason: string) => {
+      if (cancelled || settled) return;
+      settled = true;
+      console.warn(`[ExtensionSettings] Stored settings unavailable (${reason}); extensions start without durable settings.`);
+      setSettingsSnapshots(null);
+      settingsSnapshotsRef.current = null;
+      setSettingsSnapshotsUnavailable(true);
+      setSettingsSnapshotsReady(true);
+    };
+    const timeout = setTimeout(() => giveUp('timed out'), SETTINGS_SNAPSHOT_WAIT_MS);
 
     repo.getAllSettingsSnapshots().then((snapshots) => {
-      if (cancelled) return;
+      if (cancelled || settled) return;
+      settled = true;
+      clearTimeout(timeout);
       const byId: Record<string, ExtensionSettingsSnapshot> = {};
       for (const snap of snapshots) {
         byId[snap.extensionId] = snap;
       }
       setSettingsSnapshots(byId);
       settingsSnapshotsRef.current = byId;
-    }).catch(() => {
-      if (!cancelled) {
-        setSettingsSnapshots(null);
-        settingsSnapshotsRef.current = null;
-      }
+      setSettingsSnapshotsReady(true);
+    }).catch((error) => {
+      clearTimeout(timeout);
+      giveUp(error instanceof Error ? error.message : 'read failed');
     });
 
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
     };
   }, [activeExtensionStateRepository]);
 
-  // ---- M1: Proposal persistence service lifecycle (provider-owned) ----------
+  // ---- Proposal persistence service lifecycle (provider-owned) ----------
   const proposalPersistenceBridgeRef = useRef<ProposalPersistenceProvider | null | undefined>(undefined);
   const [, setPersistenceInitVersion] = useState(0);
 
   // Track the current scope so we can detect userId / timelineId / provider
   // changes and tear down the old persistence service before creating a new
   // one.  Without this the lazy-init guard never resets and a disposed service
-  // is re-used for the new scope (rework item T5-scope).
+  // is re-used for the new scope.
   const persistedServiceRef = useRef<ExtensionPersistenceService | null>(null);
   const scopeKeyRef = useRef<string | undefined>(undefined);
   const currentScopeKey = `${userId ?? 'unknown'}::${timelineId}::${enableMutationServices}::${!!dataProvider.createExtensionPersistenceService}`;
@@ -411,8 +443,6 @@ function EditorRuntimeProviderInstance({
     isLoading: false,
     error: null,
     refetchShots: () => {},
-    finalVideoMap: new Map(),
-    dismissFinalVideo: () => {},
   }), []);
 
   const stubMediaLightboxHost = useMemo<VideoEditorMediaLightboxHost>(() => ({
@@ -541,6 +571,8 @@ function EditorRuntimeProviderInstance({
         enableMutationServices={enableMutationServices}
         proposalPersistenceProvider={proposalPersistenceBridgeRef.current}
         settingsSnapshotsRef={settingsSnapshotsRef}
+        settingsSnapshotsReady={settingsSnapshotsReady}
+        settingsSnapshotsUnavailable={settingsSnapshotsUnavailable}
         settingsNotificationRegistryRef={settingsNotificationRegistryRef}
         extensionStateRepository={activeExtensionStateRepository}
         projectObjects={dataProvider.projectObjects}

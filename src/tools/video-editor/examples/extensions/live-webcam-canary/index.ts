@@ -1,5 +1,5 @@
 /**
- * live-webcam-canary — M11 browser webcam live-data canary extension.
+ * live-webcam-canary — browser webcam live-data canary extension.
  *
  * Demonstrates the webcam path from browser permission to provider-scoped
  * frame channel, live-frame-preview metadata, and deterministic bake refs.

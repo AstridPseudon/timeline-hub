@@ -13,7 +13,6 @@ import { Button } from '@/shared/components/ui/button';
 import { useCurrentShot } from '@/shared/state/selectionStore';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { useShotNavigation } from '@/shared/hooks/shots/useShotNavigation';
-import { useUpdateShotName } from '@/shared/hooks/shots';
 import { usePrimeShotImagesCache } from '@/shared/hooks/shots/useShotImages';
 import { shotListLocation } from '@/shared/lib/tooling/toolRoutes.ts';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
@@ -21,7 +20,6 @@ import { useEnqueueGenerationsInvalidation } from '@/shared/hooks/invalidation/u
 import { useProjectVideoCountsCache } from '@/shared/hooks/projects/useProjectVideoCountsCache';
 import { useProjectGenerationModesCache } from '@/shared/hooks/projects/useProjectGenerationModesCache';
 import { useVideoGalleryPreloader } from '@/shared/hooks/gallery/useVideoGalleryPreloader';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import { ShotSettingsEditor } from '../components/ShotEditor';
 import {
   VideoTravelSettingsProvider,
@@ -44,29 +42,13 @@ import type {
   CanonicalShotTimelinePublication,
   CanonicalShotTimelineScope,
 } from '@/tools/video-editor/runtime/ports.ts';
-import type {
-  ShotSetCapturePort,
-  CapturedShotSetEdit,
-  ShotSetSettingsValues,
-} from '@/tools/video-editor/commands/shotSetGesture.ts';
-import {
-  captureShotNameEdit,
-  captureShotSettingsEdit,
-  submitShotNameEdit,
-  submitShotSettingsEdit,
-} from '@/tools/video-editor/commands/shotSetGesture.ts';
 import {
   enqueueCanonicalShotPublish,
+  updateCanonicalShotName,
   updateCanonicalShotSettings,
 } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import { ShotTimelinePreview } from '../components/ShotTimelinePreview.tsx';
 import { normalizeVideoTravelSettings } from '../settings';
-import { equal } from '@/tools/video-editor/commands/clipMovePrimitives.ts';
-import type { ShotTimelineMediaProvider } from '../components/shotTimelineDataProvider.ts';
-import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
-import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
-
-const NATIVE_SETTINGS_SCALARS = new Set(['motionMode', 'advancedMode', 'turboMode', 'prompt']);
 
 interface ShotEditorViewProps {
   /** The shot to edit */
@@ -80,21 +62,12 @@ interface ShotEditorViewProps {
   /** Array of all shots (for navigation) */
   shots: Shot[] | undefined;
   /** Available LoRAs */
-  availableLoras: LoraModel[];
   /** Sort mode for shot navigation */
   shotSortMode?: 'ordered' | 'newest' | 'oldest';
   /** Canonical occurrence identity used by local/read-only composition views. */
   canonicalOccurrence?: Pick<LocalTimelineShotModel, 'occurrenceId' | 'shotId' | 'revisionId' | 'parentDocumentId' | 'stableDeepLink' | 'outputIdentity'> & { projectId?: string | null };
   /** The same adapter used by the overview; embedded canonical mode can publish shot revisions. */
   canonicalShotComposition?: ShotCompositionAdapter;
-  /** Mounted parent command-session authority for canonical shot name edits. */
-  shotSetPort?: ShotSetCapturePort;
-  /** Reuse the mounted parent command-session authority for occurrence media adds. */
-  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
-  /** Read the mounted parent timeline at occurrence-add capture time. */
-  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
-  /** Reuse the mounted parent Runtime media-import and selection seam. */
-  mediaProvider?: ShotTimelineMediaProvider;
   /** Prepared canonical graph shared by the overview and the shot-local preview. */
   canonicalComposition?: PreparedShotComposition;
   /** Optional embedded-mode close action; avoids navigating the parent route. */
@@ -121,14 +94,9 @@ export function ShotEditorView({
   isNewlyCreatedShot,
   shotFromState,
   shots,
-  availableLoras,
   shotSortMode = 'ordered',
   canonicalOccurrence,
   canonicalShotComposition,
-  shotSetPort,
-  occurrenceAddMediaPort,
-  getOccurrenceAddMediaCurrent,
-  mediaProvider,
   canonicalComposition,
   onClose,
   onCanonicalCompositionPublished,
@@ -147,11 +115,6 @@ export function ShotEditorView({
   const editorReadOnly = isLocalMode && !canEditCanonicalShot;
 
   const canonicalSettingsBase = useRef<{ scope: string; composition: PreparedShotComposition } | null>(null);
-  const capturedSettingsEditRef = useRef<{
-    edit: CapturedShotSetEdit;
-    settings: ShotSetSettingsValues;
-  } | null>(null);
-  const nativePromptCaptureRefusedRef = useRef(false);
   const canonicalSettingsScope = canonicalComposition && canonicalOccurrence
     ? JSON.stringify([canonicalComposition.projectId, canonicalComposition.parentDocumentId, canonicalOccurrence.occurrenceId])
     : null;
@@ -191,63 +154,7 @@ export function ShotEditorView({
         }
         await enqueueCanonicalShotPublish(projectId, parentDocumentId, async () => {
           const current = editingBase.composition;
-          const occurrence = current.occurrences.find((candidate) => candidate.occurrenceId === occurrenceId);
-          const raw = occurrence?.revision.settings;
-          const rawSettings = raw && typeof raw === 'object' && !Array.isArray(raw)
-            ? raw as Record<string, unknown>
-            : {};
-          const normalized = JSON.parse(JSON.stringify(normalizeVideoTravelSettings(rawSettings))) as Record<string, unknown>;
-          const submitted = JSON.parse(JSON.stringify(settings)) as Record<string, unknown>;
-          // The form is a projection: unchanged defaults must not overwrite raw
-          // nulls, absent fields, or opaque settings that normalization omitted.
-          const changes = Object.entries(settings as Record<string, unknown>).filter(([key]) => (
-            !equal(submitted[key], normalized[key])
-          ));
-          const nativePromptCaptureRefused = nativePromptCaptureRefusedRef.current;
-          if (changes.length === 0 && !nativePromptCaptureRefused) return;
-          const capturedSettingsEdit = capturedSettingsEditRef.current;
-          if (capturedSettingsEdit || nativePromptCaptureRefused || changes.some(([key]) => (
-            NATIVE_SETTINGS_SCALARS.has(key) && key !== 'prompt'
-          ))) {
-            if (!capturedSettingsEdit) {
-              const error = new Error('Mounted shot.set settings authority is unavailable; draft kept.');
-              normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
-              throw error;
-            }
-            const changedSettings = Object.fromEntries(changes);
-            if (!equal(changedSettings, capturedSettingsEdit.settings)) {
-              const error = new Error('The captured native shot settings edit changed before save. Your draft is kept.');
-              normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
-              throw error;
-            }
-            try {
-              await submitShotSettingsEdit(capturedSettingsEdit.edit, capturedSettingsEdit.settings);
-              capturedSettingsEditRef.current = null;
-              return;
-            } catch (error) {
-              normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
-              throw error;
-            }
-          }
-          if (raw !== undefined && raw !== null && (typeof raw !== 'object' || Array.isArray(raw))) {
-            const error = new Error('Cannot safely replace shot settings: the form does not contain its complete authored root value. Your draft is kept.');
-            normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
-            throw error;
-          }
-          for (const [key] of changes) {
-            const original = rawSettings[key];
-            if (original !== null && typeof original === 'object'
-              && !equal(original, normalized[key])
-              && !equal(original, submitted[key])) {
-              const error = new Error(`Cannot safely replace shot setting ${key}: the form does not contain its complete authored value. Your draft is kept.`);
-              normalizeAndPresentError(error, { context: 'canonical-shot:settings', toastTitle: 'Shot settings draft kept' });
-              throw error;
-            }
-          }
-          const graph = await updateCanonicalShotSettings(current.contract, occurrenceId, {
-            ...rawSettings,
-            ...Object.fromEntries(changes),
-          });
+          const graph = await updateCanonicalShotSettings(current.contract, occurrenceId, settings as Record<string, unknown>);
           const published = await publish({
             projectId,
             parentDocumentId,
@@ -265,12 +172,7 @@ export function ShotEditorView({
 
   const { setCurrentShotId } = useCurrentShot();
   const { navigateToPreviousShot, navigateToNextShot } = useShotNavigation();
-  const updateShotNameMutation = useUpdateShotName();
-  const updateShotNameMutateRef = useRef(updateShotNameMutation.mutate);
-  updateShotNameMutateRef.current = updateShotNameMutation.mutate;
   const invalidateGenerations = useEnqueueGenerationsInvalidation();
-
-  const isCloudGenerationEnabled = true;
 
   // Project caches
   const { getFinalVideoCount, getHasStructureVideo } = useProjectVideoCountsCache(selectedProjectId);
@@ -328,84 +230,6 @@ export function ShotEditorView({
   }, []);
 
   const nameClickRef = useRef<(() => void) | null>(null);
-  const capturedNameEditRef = useRef<CapturedShotSetEdit | null>(null);
-  const nameScopeRef = useRef(shotToEdit.id);
-  nameScopeRef.current = shotToEdit.id;
-  const mountedRef = useRef(true);
-  const [pendingCanonicalName, setPendingCanonicalName] = useState<string | null>(null);
-  const displayedShot = pendingCanonicalName !== null && shotToEdit.name !== pendingCanonicalName
-    ? { ...shotToEdit, name: pendingCanonicalName }
-    : shotToEdit;
-  useEffect(() => {
-    if (pendingCanonicalName !== null && shotToEdit.name === pendingCanonicalName) setPendingCanonicalName(null);
-  }, [pendingCanonicalName, shotToEdit.name]);
-  useEffect(() => {
-    capturedNameEditRef.current = null;
-    setPendingCanonicalName(null);
-    return () => {
-      capturedSettingsEditRef.current = null;
-      nativePromptCaptureRefusedRef.current = false;
-    };
-  }, [shotToEdit.id]);
-  useEffect(() => () => { mountedRef.current = false; }, []);
-
-  const handleBeforeNameEdit = useCallback(() => {
-    if (!canonicalComposition || !canonicalOccurrence) return;
-    if (!shotSetPort) {
-      const error = new Error('Mounted shot.set name authority is unavailable; draft kept.');
-      normalizeAndPresentError(error, {
-        context: 'canonical-shot:capture-name',
-        toastTitle: 'Shot name draft kept',
-      });
-      throw error;
-    }
-    try {
-      capturedNameEditRef.current = captureShotNameEdit(
-        shotSetPort,
-        canonicalComposition,
-        canonicalOccurrence.occurrenceId,
-      );
-    } catch (error) {
-      normalizeAndPresentError(error, {
-        context: 'canonical-shot:capture-name',
-        toastTitle: 'Shot name draft kept',
-      });
-      throw error;
-    }
-  }, [canonicalComposition, canonicalOccurrence, shotSetPort]);
-
-  const handleSettingsIntent = useCallback((settings: ShotSetSettingsValues) => {
-    if (!canonicalComposition || !canonicalOccurrence) return;
-    if (!shotSetPort) {
-      if (Object.prototype.hasOwnProperty.call(settings, 'prompt')) nativePromptCaptureRefusedRef.current = true;
-      const error = new Error('Mounted shot.set settings authority is unavailable; draft kept.');
-      normalizeAndPresentError(error, {
-        context: 'canonical-shot:capture-settings',
-        toastTitle: 'Shot settings draft kept',
-      });
-      throw error;
-    }
-    if (capturedSettingsEditRef.current) return;
-    try {
-      capturedSettingsEditRef.current = {
-        edit: captureShotSettingsEdit(
-          shotSetPort,
-          canonicalComposition,
-          canonicalOccurrence.occurrenceId,
-          settings,
-        ),
-        settings: structuredClone(settings),
-      };
-      if (Object.prototype.hasOwnProperty.call(settings, 'prompt')) nativePromptCaptureRefusedRef.current = false;
-    } catch (error) {
-      if (Object.prototype.hasOwnProperty.call(settings, 'prompt')) nativePromptCaptureRefusedRef.current = true;
-      normalizeAndPresentError(error, {
-        context: 'canonical-shot:capture-settings',
-        toastTitle: 'Shot settings draft kept',
-      });
-      throw error;
-    }
-  }, [canonicalComposition, canonicalOccurrence, shotSetPort]);
 
   const stickyHeader = useStickyHeader({
     headerRef: headerContainerRef,
@@ -459,51 +283,36 @@ export function ShotEditorView({
     }
   }, [sortedShots, shotToEdit, navigateToNextShot]);
 
+  const canRenameCanonicalShot = Boolean(
+    canonicalSettingsPersistence && canonicalShotComposition && canonicalComposition && canonicalOccurrence,
+  );
+
   const handleUpdateShotName = useCallback((newName: string) => {
-    if (capturedNameEditRef.current) {
-      if (!shotSetPort) throw new Error('Mounted shot.set name authority is unavailable; draft kept.');
-      const captured = capturedNameEditRef.current;
-      const scopeId = shotToEdit.id;
-      try {
-        const completion = submitShotNameEdit(captured, newName);
-        return Promise.resolve(completion).then(
-          () => {
-            if (!mountedRef.current || nameScopeRef.current !== scopeId) return;
-            capturedNameEditRef.current = null;
-            setPendingCanonicalName(newName);
-          },
-          (error: unknown) => {
-            if (mountedRef.current && nameScopeRef.current === scopeId) {
-              normalizeAndPresentError(error, {
-                context: 'canonical-shot:update-name',
-                toastTitle: 'Shot name draft kept',
-              });
-            }
-            throw error;
-          },
-        );
-      } catch (error) {
-        normalizeAndPresentError(error, {
-          context: 'canonical-shot:update-name',
-          toastTitle: 'Shot name draft kept',
-        });
-        throw error;
-      }
+    if (!canonicalSettingsPersistence || !canonicalShotComposition || !canonicalComposition || !canonicalOccurrence) {
+      return;
     }
-    if (canonicalComposition && canonicalOccurrence) {
-      const error = new Error('Mounted shot.set name authority is unavailable; draft kept.');
+    const editingBase = canonicalComposition;
+    void enqueueCanonicalShotPublish(
+      editingBase.projectId,
+      canonicalComposition.parentDocumentId,
+      async () => {
+        const current = editingBase;
+        const graph = await updateCanonicalShotName(current.contract, canonicalOccurrence.occurrenceId, newName);
+        const published = await canonicalShotComposition.publish?.({
+          projectId: current.projectId,
+          parentDocumentId: current.parentDocumentId,
+          expectedHeadRevisionId: current.headRevisionId,
+          graph,
+        });
+        if (published) onCanonicalCompositionPublished?.(published);
+      },
+    ).catch((error: unknown) => {
       normalizeAndPresentError(error, {
         context: 'canonical-shot:update-name',
-        toastTitle: 'Shot name draft kept',
+        toastTitle: 'Failed to save shot name',
       });
-      throw error;
-    }
-    updateShotNameMutateRef.current({
-      shotId: shotToEdit.id,
-      newName: newName,
-      projectId: selectedProjectId,
     });
-  }, [canonicalComposition, canonicalOccurrence, selectedProjectId, shotSetPort, shotToEdit.id]);
+  }, [canonicalComposition, canonicalOccurrence, canonicalSettingsPersistence, canonicalShotComposition, onCanonicalCompositionPublished]);
 
   const handleShotImagesUpdate = useCallback(async () => {
     invalidateGenerations(shotToEdit.id, {
@@ -543,9 +352,6 @@ export function ShotEditorView({
             composition={canonicalComposition}
             occurrenceId={canonicalOccurrence.occurrenceId}
             shotCompositionAdapter={canonicalShotComposition}
-            mediaProvider={mediaProvider}
-            occurrenceAddMediaPort={occurrenceAddMediaPort}
-            getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}
             onCanonicalCompositionPublished={onCanonicalCompositionPublished}
             onCanonicalDraftSessionChange={onCanonicalDraftSessionChange}
             onCanonicalDraftProjectionChange={onCanonicalDraftProjectionChange}
@@ -557,21 +363,14 @@ export function ShotEditorView({
           <VideoTravelSettingsProvider
             projectId={selectedProjectId}
             shotId={shotToEdit.id}
-            selectedShot={displayedShot}
-            availableLoras={availableLoras}
+            selectedShot={shotToEdit}
             updateShotMode={updateShotMode}
             shotSettingsPersistence={canonicalSettingsPersistence}
-            onSettingsIntent={editorReadOnly ? undefined : handleSettingsIntent}
           >
-            <SettingsAutoDisable
-              shotId={shotToEdit.id}
-              isCloudGenerationEnabled={isCloudGenerationEnabled}
-              readOnly={editorReadOnly}
-              onSettingsIntent={editorReadOnly ? undefined : handleSettingsIntent}
-            />
+            <SettingsAutoDisable shotId={shotToEdit.id} readOnly={editorReadOnly} />
             <ShotSettingsEditor
               // Core identifiers
-              selectedShotId={displayedShot.id}
+              selectedShotId={shotToEdit.id}
               projectId={selectedProjectId}
               canonicalOnly={Boolean(canonicalComposition && canonicalOccurrence)}
               optimisticShotData={isNewlyCreatedShot ? shotFromState : undefined}
@@ -590,8 +389,7 @@ export function ShotEditorView({
               onNextShot={handleNextShot}
               hasPrevious={hasPrevious}
               hasNext={hasNext}
-              onUpdateShotName={editorReadOnly ? undefined : handleUpdateShotName}
-              onBeforeNameEdit={editorReadOnly ? undefined : handleBeforeNameEdit}
+              onUpdateShotName={editorReadOnly || !canRenameCanonicalShot ? undefined : handleUpdateShotName}
               readOnly={editorReadOnly}
               // Loading and cache
               getFinalVideoCount={getFinalVideoCount}
@@ -612,7 +410,7 @@ export function ShotEditorView({
           shouldShowShotEditor: true,
           readOnly: editorReadOnly,
           stickyHeader,
-          shotToEdit: displayedShot,
+          shotToEdit,
           isMobile,
           isShotsPaneLocked,
           shotsPaneWidth,
@@ -634,33 +432,19 @@ export function ShotEditorView({
  * Renderless component that auto-disables conflicting settings.
  * Lives inside VideoTravelSettingsProvider to access settings context.
  */
-function SettingsAutoDisable({ shotId, isCloudGenerationEnabled, readOnly, onSettingsIntent }: {
+function SettingsAutoDisable({ shotId, readOnly }: {
   shotId: string;
-  isCloudGenerationEnabled: boolean;
   readOnly?: boolean;
-  onSettingsIntent?: (settings: ShotSetSettingsValues) => void;
 }) {
-  const { settings, status, shotId: loadedShotId, updateField, updateFields } =
+  const { settings, status, shotId: loadedShotId, updateFields } =
     useVideoTravelSettingsMutations();
   const { turboMode = false, advancedMode = false } = settings;
-
-  // Auto-disable turbo mode when cloud generation is disabled
-  useEffect(() => {
-    if (readOnly || status !== 'ready' || loadedShotId !== shotId) return;
-    if (!isCloudGenerationEnabled && turboMode) {
-      onSettingsIntent?.({ turboMode: false });
-      updateField('turboMode', false);
-    }
-  }, [isCloudGenerationEnabled, onSettingsIntent, turboMode, status, loadedShotId, shotId, updateField, readOnly]);
 
   // Auto-disable advanced mode when turbo mode is on
   useEffect(() => {
     if (readOnly || status !== 'ready' || loadedShotId !== shotId) return;
-    if (turboMode && advancedMode) {
-      onSettingsIntent?.({ advancedMode: false, motionMode: 'basic' });
-      updateFields({ advancedMode: false, motionMode: 'basic' });
-    }
-  }, [advancedMode, onSettingsIntent, turboMode, status, loadedShotId, shotId, updateFields, readOnly]);
+    if (turboMode && advancedMode) updateFields({ advancedMode: false, motionMode: 'basic' });
+  }, [turboMode, advancedMode, status, loadedShotId, shotId, updateFields, readOnly]);
 
   return null;
 }

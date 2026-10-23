@@ -69,6 +69,8 @@ export type FakeRuntimeState = ReturnType<typeof createJourneyState> & {
   runtimeCapabilities: RuntimeCapability[];
   /** task_id → committed output rows surfaced on the detail read. */
   taskOutputs: Map<string, Array<{ ordinal: number; role: string; media_id: string; is_primary?: boolean }>>;
+  /** `/v1/app-state/user/{key}`: the one fake actor's records, as the daemon keeps them (key → content and version). */
+  appState: Map<string, { content: Record<string, unknown>; version: number; created_at: string; updated_at: string }>;
   /** The `GET /v1/events` feed: one `task.*` event per admission, cancel and completion, oldest first. */
   events: FakeRuntimeEvent[];
 };
@@ -78,7 +80,7 @@ export type FakeRuntimeRouter = {
   handle(request: Request): Promise<Response>;
   /** Mutate directly to drive poll/cancel scenarios. */
   state: FakeRuntimeState;
-  /** Executor hook: mark a task succeeded and commit one output row (R9 media). */
+  /** Executor hook: mark a task succeeded and commit one output row (managed media). */
   completeTask(taskId: string, output: { role: string; media_id: string; is_primary?: boolean }): void;
 };
 
@@ -162,6 +164,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
   const objectStore = options.objectStore;
   const state = createJourneyState() as FakeRuntimeState;
   state.events = [];
+  state.appState = new Map();
   state.admittedByTaskId = new Map();
   state.receiptTasks = new Map();
   state.runtimeObjects = new Map();
@@ -284,7 +287,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
     };
   }
 
-  // -- R1 admission ---------------------------------------------------------
+  // -- Admission ---------------------------------------------------------
 
   async function admitTask(request: Request, body: Record<string, unknown>): Promise<Response> {
     const rawKey = request.headers.get('Idempotency-Key');
@@ -292,7 +295,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
       return errorEnvelope(400, 'invalid_body', 'the Idempotency-Key header is required for this route');
     }
     let parsed = bridgeTaskAdmissionRequestSchema.safeParse(body);
-    // Some legacy route-contract tests exercise the retired bridge address
+    // Some route-contract tests exercise the bridge address
     // directly. Keep that fixture-only path available so those tests do not
     // masquerade as neutral Runtime evidence; production client calls use the
     // /v1 handler below and never send this envelope.
@@ -341,7 +344,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
     emitTaskEvent(readModel.id, 'task.admitted', { capability: parsed.data.capability_id });
 
     const payload = { task: readModel };
-    // Round-trip through the schema: a fixture that stops matching the frozen
+    // Round-trip through the schema: a fixture that stops matching the
     // admission contract must fail here, in CI, not in a browser.
     bridgeTaskAdmissionResponseSchema.parse(payload);
     return json(201, payload);
@@ -631,7 +634,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
     return json(200, { items, next_cursor: next });
   }
 
-  // -- R9 managed-media bytes ----------------------------------------------
+  // -- Managed-media bytes ----------------------------------------------
 
   function serveMedia(request: Request, mediaId: string): Response {
     const media = state.media.get(mediaId);
@@ -724,9 +727,61 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
     });
   }
 
+  /** `GET|PUT /v1/app-state/user/{key}`: absent reads as version 0; a PUT is compare-and-swap on `expected_version`. */
+  async function appStateRoute(request: Request, key: string): Promise<Response> {
+    if (!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(key)) return runtimeError(422, 'validation_error', 'app-state key is invalid');
+    const resource = () => {
+      const row = state.appState.get(key);
+      return {
+        scope: 'user',
+        actor_id: 'fake-actor',
+        key,
+        content: row?.content ?? null,
+        version: row?.version ?? 0,
+        created_at: row?.created_at ?? null,
+        updated_at: row?.updated_at ?? null,
+      };
+    };
+    if (request.method === 'GET') return json(200, resource());
+    let body: Record<string, unknown> | null = null;
+    try {
+      const parsed: unknown = JSON.parse(await request.text());
+      body = parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : null;
+    } catch {
+      body = null;
+    }
+    const content = body?.content;
+    const expected = body?.expected_version;
+    if (!content || typeof content !== 'object' || Array.isArray(content) || !Number.isInteger(expected)) {
+      return runtimeError(422, 'validation_error', 'app-state requires an object content and expected_version');
+    }
+    const current = state.appState.get(key);
+    if ((current?.version ?? 0) !== expected) {
+      return json(409, { code: 'conflict', message: 'app-state version conflict', request_id: 'fake-request', details: { expected, actual: current?.version ?? 0 } });
+    }
+    const now = new Date().toISOString();
+    state.appState.set(key, {
+      content: content as Record<string, unknown>,
+      version: (current?.version ?? 0) + 1,
+      created_at: current?.created_at ?? now,
+      updated_at: now,
+    });
+    return json(200, { data: resource(), receipt: null });
+  }
+
   async function handle(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const parts = normalizePath(url);
+
+    if (
+      parts[0] === 'v1'
+      && parts[1] === 'app-state'
+      && parts[2] === 'user'
+      && parts.length === 4
+      && (request.method === 'GET' || request.method === 'PUT')
+    ) {
+      return appStateRoute(request, decodeURIComponent(parts[3]));
+    }
 
     if (
       parts[0] === 'v1'
@@ -846,7 +901,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
       return json(200, page);
     }
 
-    // R1 admission.
+    // Admission.
     if (parts[0] === 'projects' && parts[2] === 'tasks' && parts.length === 3 && request.method === 'POST') {
       const body = await readJsonObject(request);
       if (body === null) {
@@ -857,7 +912,7 @@ export function createFakeRuntimeRouter(options: FakeRuntimeRouterOptions = {}):
       return await admitTask(request, body);
     }
 
-    // Managed-media bytes (R9).
+    // Managed-media bytes.
     if (
       parts[0] === 'projects'
       && parts[2] === 'media'

@@ -2,11 +2,11 @@
  * TimelineErrorBoundary — host-owned React error boundary for the timeline
  * editor region itself.
  *
- * Extension contributions have had containment since M1 (`HostContributionErrorBoundary`
- * in `runtime/ContributionErrorBoundary.tsx`); the *host* timeline had none. A render
+ * Extension contributions are contained by `HostContributionErrorBoundary`
+ * in `runtime/ContributionErrorBoundary.tsx`; this boundary covers the *host* timeline. A render
  * throw anywhere under `TimelineEditor` — one malformed clip in `ClipAction`, a bad row
  * in `TrackListRenderer` — unmounted the whole editor, including the toolbar you would
- * have used to undo the edit that produced it.
+ * could use to undo the edit that produced it.
  *
  * This boundary is deliberately scoped to the timeline region only. The shell mounts it
  * around `<TimelineEditor>` inside each layout branch, so the toolbar, history controls,

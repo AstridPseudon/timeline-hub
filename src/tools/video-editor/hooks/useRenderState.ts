@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState, type SetStateAction } from 'react';
-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
+import { getTimelineDurationInFrames, type TimelineConfig as CompositionTimelineConfig } from '@banodoco/timeline-composition';
 import { compilePlayerTransitions } from '@/tools/video-editor/compositions/playerEvaluation.ts';
 import type { AstridLocalClient } from '@/integrations/astrid/client.ts';
 import { isLocalTestMode } from '@/app/localTestRuntime.ts';
@@ -593,7 +593,10 @@ export function useRenderState(
     const { width, height } = parseResolution(renderConfig.output.resolution);
     return {
       fps,
-      durationInFrames: getTimelineDurationInFrames(projectOutputTimelineConfig(renderConfig).config, fps),
+      durationInFrames: getTimelineDurationInFrames(
+        projectOutputTimelineConfig(renderConfig).config as unknown as CompositionTimelineConfig,
+        fps,
+      ),
       compositionWidth: Math.max(1, width),
       compositionHeight: Math.max(1, height),
     };

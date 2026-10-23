@@ -273,6 +273,12 @@ export const useClipResizeGesture = ({
       };
       const controller = new AbortController();
       const signal = controller.signal;
+      // Dragging a trim handle must not select text on the page; restored when the session ends.
+      const previousBodyUserSelect = document.body.style.userSelect;
+      document.body.style.userSelect = 'none';
+      signal.addEventListener('abort', () => {
+        document.body.style.userSelect = previousBodyUserSelect;
+      }, { once: true });
 
       const handlePointerMove = (moveEvent: PointerEvent) => {
         const currentState = getActiveState();

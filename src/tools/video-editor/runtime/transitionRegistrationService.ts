@@ -312,7 +312,7 @@ function toInternalSchema(
  * Build a {@link ContributionRenderability} from a `TransitionContribution`'s
  * declared capabilities.
  *
- * Per SD3: trusted component transitions default to preview-only. Browser-export
+ * Trusted component transitions default to preview-only. Browser-export
  * and worker-export are blocked unless the contribution declares them.
  */
 function buildRenderability(

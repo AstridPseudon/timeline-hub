@@ -43,3 +43,4 @@ export const SEGMENT_TYPE_CONFIG: Record<string, SegmentTypeConfig> = {
     billingSegmentType: TASK_TYPES.JOIN_CLIPS_SEGMENT,
   },
 };
+

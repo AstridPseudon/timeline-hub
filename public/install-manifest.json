@@ -4,7 +4,8 @@
     "sha": "a6ddfd1b464ac1dcba8db1095ae9908cbffb47db"
   },
   "runtime": {
-    "sha": "b535646faaad2f8ae7968dfe0f4fa3057f960264"
+    "sha": "b535646faaad2f8ae7968dfe0f4fa3057f960264",
+    "schema_digest": "sha256:53bc985a9ab3dba290c3d2a99c7837460f43c9bb0f0ef486d273eec3e2e44ed0"
   },
   "tools": {
     "uv": {

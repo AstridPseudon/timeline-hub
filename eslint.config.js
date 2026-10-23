@@ -5,8 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 import { dialogEarlyReturnRestrictedSyntax } from "./eslint-rules/dialogEarlyReturnRule.js";
 import { strictLintDebtFiles } from "./eslint.strict-debt.js";
-import { supabaseFacadeAllowlist } from "./eslint.supabase-facade-allowlist.js";
-import { sharedLayerAllowlist } from "./eslint.shared-layer-allowlist.js";
+import { sharedLayerAllowlist, sharedLayerEnforcedFiles } from "./eslint.shared-layer-allowlist.js";
 
 // Plan A (F1): the Runtime's path prefixes come from src/integrations/runtime/connection.ts, which
 // picks the same-origin base or the loopback gateway's. A literal elsewhere would bypass that choice
@@ -17,9 +16,34 @@ const runtimePathRestrictedSyntax = {
   message: "Build Runtime and Astrid paths from connection.ts (runtimeApiBase(), astridBase()) instead of a literal '/api/runtime' or '/api/astrid' path. A literal bypasses the hosted origin.",
 };
 
+// The cloud product is removed; nothing may bring the Supabase SDK back. This pattern lives on
+// @typescript-eslint/no-restricted-imports, a different rule key from the shared-layer and URL-helper
+// rules below, so it never replaces their options (flat config replaces a rule's options per file).
+const supabaseSdkRestrictedPattern = {
+  group: ["@supabase/*"],
+  message: "The Supabase client was removed from the App. Use the Runtime or Astrid clients under src/integrations/.",
+};
+
+const urlHelperRestrictedPaths = [
+  {
+    name: "@/shared/lib/utils",
+    importNames: ["getDisplayUrl", "stripQueryParameters"],
+    message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
+  },
+  {
+    name: "./utils",
+    importNames: ["getDisplayUrl", "stripQueryParameters"],
+    message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
+  },
+  {
+    name: "../utils",
+    importNames: ["getDisplayUrl", "stripQueryParameters"],
+    message: "Import URL helpers from '@/shared/lib/mediaUrl'.",
+  },
+];
+
 const strictRefreshFiles = [
   "src/app/**/*.{ts,tsx}",
-  "src/integrations/supabase/bootstrap/**/*.{ts,tsx}",
   "src/shared/lib/debugPolling.ts",
   "src/shared/lib/mobileProjectDebug.ts",
   "src/shared/components/MediaGallery/hooks/useMediaGalleryDebugTools.ts",
@@ -93,7 +117,7 @@ export default tseslint.config(
       "src/**/*.test.tsx",
       "src/**/__tests__/**/*.{ts,tsx}",
       "src/examples/**/*.{ts,tsx}",
-      "supabase/functions/**/*.test.ts",
+      "supabase/functions/ai-voice-prompt/index.test.ts",
       "tests/e2e/local/**/*.ts",
     ],
     rules: {
@@ -119,29 +143,13 @@ export default tseslint.config(
       },
     }]
     : []),
-  // Utility boundary rule: keep URL + file-conversion helpers in their dedicated modules.
+  // Utility boundary rule: keep URL helpers in their dedicated module.
   // Avoid importing these from shared/lib/utils (which now only hosts generic helpers).
   {
     files: ["**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": ["error", {
-        paths: [
-          {
-            name: "@/shared/lib/utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-          {
-            name: "./utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-          {
-            name: "../utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-        ],
+        paths: urlHelperRestrictedPaths,
       }],
     },
   },
@@ -158,23 +166,7 @@ export default tseslint.config(
     ],
     rules: {
       "no-restricted-imports": ["error", {
-        paths: [
-          {
-            name: "@/shared/lib/utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-          {
-            name: "./utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-          {
-            name: "../utils",
-            importNames: ["dataURLtoFile", "getDisplayUrl", "stripQueryParameters"],
-            message: "Import dataURLtoFile from '@/shared/lib/fileConversion' and URL helpers from '@/shared/lib/mediaUrl'.",
-          },
-        ],
+        paths: urlHelperRestrictedPaths,
         patterns: [{
           group: ["@/tools/*", "**/tools/*"],
           message: "shared/ cannot import from tools/. Move the type/utility to shared/, or move the component to tools/. See tasks/2026-02-02-shared-tools-cleanup.md for documented exceptions."
@@ -202,61 +194,24 @@ export default tseslint.config(
       }],
     },
   },
-  // Supabase facade boundary: block direct facade imports globally.
-  // Existing legacy callsites are temporarily tracked in a dedicated allowlist file.
+  // Where the shared-layer rule is live. Before the cloud removal the Supabase facade block
+  // replaced that rule's options for every `src` file outside its allowlist, so the rule only ever
+  // fired on the files in `sharedLayerEnforcedFiles`; the other `src/shared` files have never been
+  // checked (56 known `shared/ -> domains|features` violations in 51 files, owned debt; the
+  // `shared/ -> tools/` pattern above is likewise replaced by this block's options and never fires).
+  // This block restores exactly that coverage: outside the enforced files only the URL-helper paths
+  // apply. Lift the mask by deleting this block once the 51 files are moved or allowlisted.
   {
-    files: ["src/**/*.{ts,tsx}"],
+    files: ["src/shared/**/*.{ts,tsx}"],
     ignores: [
-      "src/integrations/supabase/**/*.{ts,tsx}",
-      "src/**/__tests__/**/*.{ts,tsx}",
-      "src/**/*.test.ts",
-      "src/**/*.test.tsx",
-      ...supabaseFacadeAllowlist,
+      "src/shared/**/__tests__/**/*.{ts,tsx}",
+      "src/shared/**/*.test.ts",
+      "src/shared/**/*.test.tsx",
+      ...sharedLayerEnforcedFiles,
     ],
     rules: {
       "no-restricted-imports": ["error", {
-        paths: [{
-          name: "@/integrations/supabase/client",
-          message: "Use integration repositories/gateways under '@/integrations/supabase/repositories/*'. If migration is temporarily blocked, add the file path to eslint.supabase-facade-allowlist.js with a cleanup task.",
-        }],
-      }],
-    },
-  },
-  // Supabase runtime boundary for high-churn modules.
-  // These callsites should consume integration repositories/gateways, not the global client facade.
-  {
-    files: [
-      "src/shared/realtime/RealtimeConnection.ts",
-      "src/shared/hooks/useToolSettings.ts",
-      "src/domains/generation/hooks/useGenerationMutations.ts",
-    ],
-    ignores: [
-      ...supabaseFacadeAllowlist,
-    ],
-    rules: {
-      "no-restricted-imports": ["error", {
-        paths: [{
-          name: "@/integrations/supabase/client",
-          message: "Use an integration repository/gateway under '@/integrations/supabase/repositories/*' instead of importing the global Supabase client facade directly.",
-        }],
-      }],
-    },
-  },
-  // Domain boundary: domain modules should consume integration repositories,
-  // not the global Supabase client facade directly.
-  {
-    files: ["src/domains/**/*.{ts,tsx}"],
-    ignores: [
-      "src/domains/**/*.test.ts",
-      "src/domains/**/*.test.tsx",
-      ...supabaseFacadeAllowlist,
-    ],
-    rules: {
-      "no-restricted-imports": ["error", {
-        paths: [{
-          name: "@/integrations/supabase/client",
-          message: "Use an integration repository under '@/integrations/supabase/repositories/*' instead of importing the global Supabase client facade directly.",
-        }],
+        paths: urlHelperRestrictedPaths,
       }],
     },
   },
@@ -286,7 +241,7 @@ export default tseslint.config(
         patterns: [{
           group: ["node:*"],
           message: "Node builtins are not available in the browser bundle: Vite externalizes them into stubs that throw at import time. Node-adjacent runtime code belongs under 'src/tools/video-editor/runtime/processes/**' and must resolve the module lazily via `process.getBuiltinModule`, not a static import.",
-        }],
+        }, supabaseSdkRestrictedPattern],
         paths: [
           "child_process", "util", "fs", "path", "os", "net", "stream", "buffer", "worker_threads",
         ].map((name) => ({
@@ -321,7 +276,7 @@ export default tseslint.config(
           group: ["node:*"],
           allowTypeImports: true,
           message: "Resolve node:* modules lazily via `process.getBuiltinModule` (see ProcessManager.ts's loadNodeChildProcess) instead of a static value import -- a static import externalizes into a browser stub that throws at load time. Type-only imports are fine.",
-        }],
+        }, supabaseSdkRestrictedPattern],
         paths: [
           "child_process", "util", "fs", "path", "os", "net", "stream", "buffer", "worker_threads",
         ].map((name) => ({
@@ -329,6 +284,20 @@ export default tseslint.config(
           allowTypeImports: true,
           message: "Resolve Node builtins lazily via `process.getBuiltinModule` instead of a static value import -- a static import externalizes into a browser stub that throws at load time. Type-only imports are fine.",
         })),
+      }],
+    },
+  },
+  // Supabase SDK ban for the src files the Node builtin blocks above ignore (src/test, spec files).
+  {
+    files: ["src/test/**/*.{ts,tsx}", "src/**/*.spec.{ts,tsx}"],
+    ignores: [
+      "src/**/__tests__/**/*.{ts,tsx}",
+      "src/**/*.test.ts",
+      "src/**/*.test.tsx",
+    ],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": ["error", {
+        patterns: [supabaseSdkRestrictedPattern],
       }],
     },
   }

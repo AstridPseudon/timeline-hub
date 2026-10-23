@@ -39,10 +39,6 @@ export function manualVendorChunk(id: string): string | undefined {
     return "vendor-dnd";
   }
 
-  if (id.includes("@supabase")) {
-    return "vendor-supabase";
-  }
-
   if (id.includes("date-fns")) {
     return "vendor-date";
   }

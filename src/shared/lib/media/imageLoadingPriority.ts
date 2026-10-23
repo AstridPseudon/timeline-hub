@@ -2,7 +2,7 @@
  * Unified Image Loading Priority System
  *
  * Single source of truth for all image loading behavior.
- * Progressive loading is the primary mechanism - individual items no longer have separate delays.
+ * Progressive loading is the primary mechanism - individual items have no separate delays.
  */
 
 import type { NavigatorWithDeviceInfo } from '@/types/browser-extensions';

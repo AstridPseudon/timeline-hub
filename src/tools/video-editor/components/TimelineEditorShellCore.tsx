@@ -1,8 +1,8 @@
 import { useDataLanes } from '@/tools/video-editor/data-kinds/useDataLanes.ts';
+import { EDITOR_TOUR_ANCHOR_ATTRIBUTE, EDITOR_TOUR_ANCHORS } from '@/tools/video-editor/tour/anchors';
 import { useDataKindRegistrySnapshot } from '@/tools/video-editor/data-kinds/DataKindRegistryContext.tsx';
 // Layer map & invariants: docs/structure_detail/tool_video_editor.md
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
 import { CommandPalette } from '@/tools/video-editor/components/CommandPalette/CommandPalette.tsx';
 import { Images, Loader2, Maximize2, Sparkles } from 'lucide-react';
 import { VIDEO_EDITOR_THEME_VARS } from '@/tools/video-editor/lib/themeTokens.ts';
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/compo
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { COARSE_TOUCH_TARGET } from '@/shared/components/ui/contracts/touchTarget.ts';
+import { safeAreaCalc } from '@/shared/lib/safeArea.ts';
 import { dispatchAppEvent } from '@/shared/lib/typedEvents.ts';
 import { acquirePaneControlsHost } from '@/shared/state/paneControlsHost.ts';
 import { Slider } from '@/shared/components/ui/slider.tsx';
@@ -28,6 +29,7 @@ import {
 } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorRightPanelDock.tsx';
 import { ElementsLibraryPanel } from '@/tools/video-editor/components/ElementsLibraryPanel.tsx';
 import { TimelineEditor } from '@/tools/video-editor/components/TimelineEditor/TimelineEditor.tsx';
+import { CREATE_ANIMATION_PROMPT } from '@/tools/video-editor/components/TimelineEditor/TimelineCreateTools.tsx';
 import { TimelineErrorBoundary } from '@/tools/video-editor/components/TimelineEditor/TimelineErrorBoundary.tsx';
 import {
   useTimelineChromeContext,
@@ -39,8 +41,9 @@ import {
   useProposalImportDiagnosticsFromStoreSafe,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { isEditorKeyboardEvent, useKeyboardShortcuts } from '@/tools/video-editor/hooks/useKeyboardShortcuts.ts';
+import { useEditorBrowserDefaults } from '@/tools/video-editor/hooks/useEditorBrowserDefaults.ts';
 import { useTimelineRealtime } from '@/tools/video-editor/hooks/useTimelineRealtime.ts';
-import { parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
+import { getTimelineDurationInFrames, parseResolution } from '@/tools/video-editor/lib/config-utils.ts';
 import { buildKeyboardDeleteMutation } from '@/tools/video-editor/lib/keyboard-delete.ts';
 import { buildKeyboardTimeNudgeMutation } from '@/tools/video-editor/lib/keyboard-nudge.ts';
 import {
@@ -56,8 +59,6 @@ import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineO
 import { ExtensionActivityRegion, type ExtensionStatusEvent } from '@/tools/video-editor/components/ExtensionActivityRegion';
 import { ProposalPanel } from '@/tools/video-editor/components/ProposalPanel/ProposalPanel.tsx';
 import { TimelineEditorShellToolbar, TimelineUndoRedo } from './TimelineEditorShellToolbar.tsx';
-import { TimelineCommandRecovery } from './TimelineCommandRecovery.tsx';
-import { EditorImageGeneration } from './EditorImageGeneration.tsx';
 import { TimelineExportMenu } from './TimelineExportMenu.tsx';
 import { TimelineLoadErrorCard } from './TimelineLoadErrorCard.tsx';
 import { useOnRecoveryCardCleared, useRecoveryCardShowing } from '@/integrations/runtime/recoveryCard.ts';
@@ -141,6 +142,18 @@ export interface TimelineEditorShellCoreProps {
   showHeader?: boolean;
 }
 
+/**
+ * Desktop layouts reserve the bands the host app's fixed pane-control tabs occupy (`shared/components/PaneControlTab.tsx`),
+ * because the editor is the app's only full-bleed page and would otherwise put interactive chrome under them. The right
+ * tab (TasksPane, vertically centred, 46px plus breathing room) sat on the Inspector dock's right edge; the bottom pill
+ * (the GenerationsPane lock/gallery pill, horizontally centred, 46px plus breathing room) sat on the timeline panel's
+ * bottom border. The pill is centred, so its band is only a pill wide, but the editor reserves it across the whole
+ * width. The left tab is not mounted in the editor shell. The touch shell reserves nothing: it holds
+ * `acquirePaneControlsHost()` and hosts the gallery and chat entry points in its own thumb bar.
+ */
+const PANE_TAB_BAND_END_PX = 52;
+const PANE_TAB_BAND_BOTTOM_PX = 56;
+
 /** The save conflict dialog and its inline banner say the same thing with the same two buttons. */
 const TIMELINE_CONFLICT_SENTENCE = 'Keep your changes, or switch to the latest version.';
 const TIMELINE_CONFLICT_KEEP_MINE = 'Keep my changes';
@@ -170,6 +183,20 @@ const INSPECTOR_HOST_OWNED_KINDS: ReadonlySet<string> = new Set([
  * the timeline, panels and preferences arrive, lands at its final size. Ends at the first pointer
  * or key input anywhere in the page.
  */
+/** The longest the boot screen (or the connection panel on its way out) waits for the first timeline load; past it the
+ *  editor shows its own loading panes rather than keeping the page covered. */
+const FIRST_LOAD_HOLD_MAX_MS = 6000;
+
+/** Whether the editor still holds the boot screen over itself: until its first load answers, at most for a while. */
+function useFirstLoadHold(answered: boolean): boolean {
+  const [expired, setExpired] = useState(false);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setExpired(true), FIRST_LOAD_HOLD_MAX_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+  return !answered && !expired;
+}
+
 function useLayoutSettlingUntilInput(): boolean {
   const [settling, setSettling] = useState(true);
   useEffect(() => {
@@ -244,9 +271,9 @@ function TimelineEditorShellCoreComponent({
   const timelineStore = useTimelineStoreApi();
   /** Phones and tablets share one touch editor; only desktop differs. */
   const touchChrome = editorData.deviceClass !== 'desktop';
-  /** M1: Extension activity region status events (placeholder state). */
+  /** Extension activity region status events (placeholder state). */
   const [activityEvents, setActivityEvents] = useState<readonly ExtensionStatusEvent[]>([]);
-  /** M2: Proposal runtime and import diagnostics from timelineStore. */
+  /** Proposal runtime and import diagnostics from timelineStore. */
   const proposalRuntime = useProposalRuntimeFromStoreSafe();
   const proposalImportDiagnostics = useProposalImportDiagnosticsFromStoreSafe();
   const hasProposals = proposalRuntime !== null && proposalRuntime.list().length > 0;
@@ -292,6 +319,7 @@ function TimelineEditorShellCoreComponent({
   // A refetch that fails keeps the last loaded timeline (and the local draft on top of it). While the Astrid stopped /
   // restarted card is up, that timeline stays mounted behind it: the card says the changes are kept, so they stay in view.
   const hasLoadedTimeline = Boolean(editorData.resolvedConfig);
+  const holdsBoot = useFirstLoadHold(hasLoadedTimeline || Boolean(chrome.loadError));
   const recoveryCardShowing = useRecoveryCardShowing();
   // Astrid answering again clears the card. What failed while it was stopped is retried here, so the page carries on as
   // the card promised ("Your changes are kept"): a timeline read that failed is read again, and an edit that was never
@@ -302,7 +330,7 @@ function TimelineEditorShellCoreComponent({
   });
   const conflict = useTimelineRealtime({
     timelineId,
-    conflictExhausted: chrome.isConflictExhausted && chrome.commandSession?.state.status !== 'conflict',
+    conflictExhausted: chrome.isConflictExhausted,
     onKeepLocalChanges: chrome.retrySaveAfterConflict,
     onDiscardRemoteChanges: chrome.reloadFromServer,
   });
@@ -313,7 +341,7 @@ function TimelineEditorShellCoreComponent({
     return MemoryPressureDetector.stop;
   }, []);
 
-  // M4: Host-reserved command palette keyboard shortcut (CtrlOrCmd+Shift+P).
+  // Host-reserved command palette keyboard shortcut (CtrlOrCmd+Shift+P).
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       // Don't trigger when the palette is already open — the cmdk dialog
@@ -392,12 +420,15 @@ function TimelineEditorShellCoreComponent({
   }, [outputResolution]);
   const [tooSmall, setTooSmall] = useState(false);
   const outerRef = useRef<HTMLDivElement | null>(null);
+  const [shellRootNode, setShellRootNode] = useState<HTMLDivElement | null>(null);
   const setShellRoot = useCallback((node: HTMLDivElement | null) => {
     if (runtime.shellRootRef && (node || runtime.shellRootRef.current === outerRef.current)) {
       runtime.shellRootRef.current = node;
     }
     outerRef.current = node;
+    setShellRootNode(node);
   }, [runtime.shellRootRef]);
+  useEditorBrowserDefaults({ shellRoot: shellRootNode, saveStatus: chrome.saveStatus, flushPendingSave: chrome.flushPendingSave });
   const activateInstance = useCallback(() => {
     runtime.agentChat?.activateTimeline?.();
     if (runtime.agentSelectionOwner) activateTimelineClipData(runtime.agentSelectionOwner);
@@ -562,7 +593,7 @@ function TimelineEditorShellCoreComponent({
     const measure = () => {
       const style = getComputedStyle(container);
       const compact = preview.getBoundingClientRect().height;
-      const full = Math.max(0, container.clientHeight - parseFloat(style.paddingTop || '0') - parseFloat(style.paddingBottom || '0'));
+      const full = Math.max(0, container.clientHeight - (parseFloat(style.paddingTop) || 0) - (parseFloat(style.paddingBottom) || 0));
       setPanelHeights((previous) => Math.abs(previous.compact - compact) < 0.5 && Math.abs(previous.full - full) < 0.5
         ? previous : { compact, full });
     };
@@ -619,6 +650,15 @@ function TimelineEditorShellCoreComponent({
     setCondensedRightPanel('inspector');
   }, [armedGesture, releaseArmedGesture]);
 
+  /** Desktop only: keeps editor chrome out of the bands the host app's fixed pane-control tabs occupy at the right
+   *  and bottom viewport edges (see `PANE_TAB_BAND_END_PX`). The touch main keeps its own padding. */
+  const mainPadding: CSSProperties | undefined = touchChrome
+    ? undefined
+    : {
+      paddingInlineEnd: PANE_TAB_BAND_END_PX,
+      paddingBottom: safeAreaCalc.paddingBottom(`${PANE_TAB_BAND_BOTTOM_PX}px`),
+    };
+
   const renderControls = (
     <>
       {hasAnyExportFormat && (
@@ -668,7 +708,7 @@ function TimelineEditorShellCoreComponent({
     />
   );
 
-  /** M1/M2: Mount extension activity only when it has visible content. */
+  /** Mount extension activity only when it has visible content. */
   const activityRegion = hasActivityRegion ? (
     <ExtensionActivityRegion
       statusEvents={activityEvents}
@@ -701,9 +741,9 @@ function TimelineEditorShellCoreComponent({
     <div
       className={cn(
         'pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 px-3 py-3',
-        // In the sidebar the app's right-hand pane tab floats over the dock's
-        // right edge. Keep Render clear of it.
-        sidebarVideo && 'pr-10',
+        // Desktop reserves the end gutter (`mainPadding`); a touch layout does not, so in the
+        // sidebar the app's right-hand pane tab floats over the dock's right edge. Keep Render clear of it.
+        sidebarVideo && touchChrome && 'pr-10',
       )}
       data-shell-interaction="true"
     >
@@ -769,7 +809,7 @@ function TimelineEditorShellCoreComponent({
   // A save conflict is a choice between two versions, not an error: neutral, not destructive red.
   // The dialog and this bar offer the same two buttons: the dialog is the one place while it is open, and this bar is
   // the way back to the choice once it was dismissed.
-  const conflictBanner = chrome.isConflictExhausted && chrome.commandSession?.state.status !== 'conflict' && !conflict.isOpen ? (
+  const conflictBanner = chrome.isConflictExhausted && !conflict.isOpen ? (
     <div
       role="alert"
       className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-3 py-2 text-sm text-foreground"
@@ -848,15 +888,13 @@ function TimelineEditorShellCoreComponent({
       {incompatibleBanner}
       {watchdogBanner}
       {recoveryBanner}
-      <TimelineCommandRecovery commandSession={chrome.commandSession} />
-      {chrome.commandSession?.imageGeneration && <EditorImageGeneration placement={chrome.commandSession.imageGeneration} />}
       {chrome.loadError && !(recoveryCardShowing && hasLoadedTimeline) ? (
         // The hosted build's "Astrid stopped" / "restarted" card already says what to do about the same failure.
         recoveryCardShowing ? null : <TimelineLoadErrorCard message={chrome.loadError.message} onRetry={chrome.retryLoad} />
       ) : (
         <TimelineErrorBoundary>
           <TimelineEditor
-            onOpenSequenceCreator={() => openElementCreationPrompt("I'd like to create an animation.")}
+            onOpenSequenceCreator={() => openElementCreationPrompt(CREATE_ANIMATION_PROMPT)}
             onOpenElementCreationPrompt={openElementCreationPrompt}
             onOpenExtensionManager={openExtensionManager}
           />
@@ -869,17 +907,20 @@ function TimelineEditorShellCoreComponent({
 
   return (
     <>
-      <div ref={setShellRoot} data-video-editor-instance={runtime.instanceScope?.instanceId ?? ''} data-command-session-ready={chrome.commandSession?.state.status === 'saved' ? 'true' : 'false'} tabIndex={-1} onFocusCapture={activateInstance} onPointerDownCapture={() => {
+      <div ref={setShellRoot} data-video-editor-instance={runtime.instanceScope?.instanceId ?? ''} tabIndex={-1} onFocusCapture={activateInstance} onPointerDownCapture={() => {
         activateInstance();
         if (!outerRef.current?.contains(document.activeElement)) outerRef.current?.focus({ preventScroll: true });
       }} className={cn(
-        'flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-transparent text-foreground',
+        'relative flex h-full w-full min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-transparent text-foreground',
         // The page draws edge to edge (viewport-fit=cover): keep touch chrome clear of the notch and rounded corners.
         mobileSinglePane && 'pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]',
       )}>
         <div className="sr-only" aria-live="polite" aria-atomic="true">
           {interactionStatusLabel}
         </div>
+        {/* Until the first load answers, the boot screen (or the connection panel on its way out) stays over the
+            editor, so it opens on the timeline rather than on empty panes (`bootLayer.ts`). */}
+        {holdsBoot && <span data-boot-hold="" hidden />}
         {headerSlot ?? (showHeader ? (
           <AppHeader
             navigationMode={navigationMode}
@@ -989,6 +1030,7 @@ function TimelineEditorShellCoreComponent({
               hasActivityRegion ? 'grid-rows-[auto_auto_minmax(0,1fr)]' : 'grid-rows-[auto_minmax(0,1fr)]',
             )}
             style={{
+              ...mainPadding,
               gridTemplateColumns: 'minmax(0,1fr) minmax(0, calc(min(420px, 32vw, calc(100vw - 24px)) + 12px))',
             }}
           >
@@ -1013,7 +1055,7 @@ function TimelineEditorShellCoreComponent({
                 content: <>
                   {/* One continuous stage: letterbox bars share the frame's
                       black instead of showing slivers of panel. */}
-                  <div className="relative min-h-0 flex-1 bg-[var(--video-editor-stage-bg)]" style={VIDEO_EDITOR_THEME_VARS} {...shellRegionAttrs('preview')}>
+                  <div className="relative min-h-0 flex-1 bg-[var(--video-editor-stage-bg)]" style={VIDEO_EDITOR_THEME_VARS} {...shellRegionAttrs('preview')} {...{ [EDITOR_TOUR_ANCHOR_ATTRIBUTE]: EDITOR_TOUR_ANCHORS.preview }}>
                     {previewOverlay}
                     <div ref={previewSurface.slotRef} data-testid="video-editor-preview-surface" className="flex h-full w-full min-h-0 items-center justify-center" />
                   </div>
@@ -1045,6 +1087,7 @@ function TimelineEditorShellCoreComponent({
               // its width. Its 12px gutter is inside the track, not a phantom
               // column gap left behind when the track reaches zero.
               columnGap: hasCustomRightPanelSlot ? undefined : 0,
+              ...mainPadding,
             }}
           >
             {/* Left panel surface slot — host-owned placement */}
@@ -1073,7 +1116,7 @@ function TimelineEditorShellCoreComponent({
               {toolbarSlot ?? toolbar}
             </div>
 
-            {/* M1: Extension activity region — between toolbar and timeline */}
+            {/* Extension activity region — between toolbar and timeline */}
               {hasActivityRegion && (
               <div className="video-editor-panel-work-area min-w-0" style={{ gridRow: 3, gridColumn: workAreaGridColumn, marginInlineEnd: hasCustomRightPanelSlot ? undefined : hostPanelInset }}>
                 {activityRegion}
@@ -1119,7 +1162,7 @@ function TimelineEditorShellCoreComponent({
         />
       )}
 
-      {/* M4: Host command palette overlay — only mount when open to avoid
+      {/* Host command palette overlay — only mount when open to avoid
           unnecessary context lookups that break in tests without providers. */}
       {isCommandPaletteOpen && (
         <CommandPalette

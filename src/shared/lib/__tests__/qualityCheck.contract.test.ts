@@ -30,7 +30,7 @@ describe('quality:check governance contract', () => {
       'npm run check:error-runtime-alias-usage',
       'npm run check:contracts',
       'npm run lint',
-      'npm run typecheck:strict-probe',
+      'npm run typecheck:strict-islands',
     ];
 
     for (const command of requiredSubcommands) {

@@ -30,10 +30,9 @@ interface UseTrailingEndpointReturn {
  * useTrailingEndpoint - Manages trailing endpoint runtime state:
  * video URL tracking, frame extraction, and image-only positions.
  *
- * Pre-orchestrator values (trailingEndFrame, hasExistingTrailingVideo,
- * handleTrailingEndFrameChange) are computed inline in TimelineContainer
- * since they only depend on framePositions and must be available before
- * the orchestrator hook runs.
+ * Pre-orchestrator values (trailingEndFrame, hasExistingTrailingVideo) are
+ * computed inline in TimelineContainer since they only depend on framePositions
+ * and must be available before the orchestrator hook runs.
  *
  * callbackTrailingVideoUrl is also owned by the caller (before the orchestrator)
  * so it can influence fullMax via hasCallbackTrailingVideo. This hook receives it as

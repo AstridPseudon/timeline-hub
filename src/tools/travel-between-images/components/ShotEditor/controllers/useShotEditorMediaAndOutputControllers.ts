@@ -42,7 +42,6 @@ export function useShotEditorMediaAndOutputControllers({
     selectedProjectId,
     selectedShotId,
     selectedShot,
-    projectId,
     timelineImages,
   });
 

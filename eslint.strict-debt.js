@@ -106,6 +106,7 @@ export const strictLintDebtFiles = [
   "src/tools/video-editor/lib/assetMetadataUIHelpers.ts",
   "src/tools/video-editor/lib/assetParserRuntime.ts",
   "src/tools/video-editor/compositions/VisualClip.tsx",
+  "src/tools/video-editor/lib/compiler-canary.ts",
   "src/tools/video-editor/lib/managed-object-guard.ts",
   "src/tools/video-editor/lib/proposal-runtime.ts",
   "src/tools/video-editor/lib/renderRouter.ts",
@@ -131,4 +132,5 @@ export const strictLintDebtFiles = [
   "src/tools/video-editor/transitions/validation.ts",
   "src/tools/video-editor/types/timeline-canvas.ts",
   "src/types/ai.ts",
+  "supabase/functions/ai-timeline-agent/tools/registry.ts",
 ];

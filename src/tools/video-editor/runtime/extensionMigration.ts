@@ -1,5 +1,5 @@
 /**
- * Extension local-to-installed migration flow (M14, T24).
+ * Extension local-to-installed migration flow.
  *
  * Provides a structured migration path for converting a workspace-source
  * (local) extension into an installed-bundle extension while preserving:
@@ -38,7 +38,7 @@ import {
   createSettingsSnapshot,
 } from '@/tools/video-editor/runtime/extensionStateRepository';
 import { extractContributionRefs } from '@/tools/video-editor/runtime/extensionLockMetadata';
-import { getSettingsPrefix } from '@/sdk/extensionSettingsService';
+import { createRuntimeSettingsBacking } from './extensionSettingsBacking';
 import { getManifestSettingsSchemaVersion } from '@/sdk/extensionSettingsMigration';
 import {
   operationalCountBucket,
@@ -500,31 +500,17 @@ function buildMetadataGapResult(
 // ---------------------------------------------------------------------------
 
 /**
- * Read local extension settings from localStorage using the standard
- * astrid.ext.* prefix.
+ * Read an extension's saved settings from the settings store (the Runtime-backed `ext.<id>` record, including old
+ * `astrid.ext.*` browser keys not yet imported).
  *
  * Returns all key-value pairs currently stored for the extension.
  */
 export function readLocalSettings(extensionId: string): Record<string, unknown> {
-  const prefix = getSettingsPrefix(extensionId);
+  const backing = createRuntimeSettingsBacking(extensionId);
   const settings: Record<string, unknown> = {};
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(prefix)) {
-        const settingKey = key.slice(prefix.length);
-        try {
-          const raw = localStorage.getItem(key);
-          if (raw !== null) {
-            settings[settingKey] = JSON.parse(raw);
-          }
-        } catch {
-          // Unparseable value — skip
-        }
-      }
-    }
-  } catch {
-    // localStorage may throw in restricted environments — return empty
+  for (const key of backing.keys()) {
+    const value = backing.get(key);
+    if (value !== undefined) settings[key] = value;
   }
   return settings;
 }

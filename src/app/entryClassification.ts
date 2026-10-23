@@ -1,29 +1,11 @@
-import { DEMO_PROJECT_ID, DEMO_TIMELINE_ID } from '@/shared/dev/devSession.ts';
-
 export type BrowserEntryOwner = 'public' | 'app';
 
-const PUBLIC_WEB_PATHS = new Set(['/', '/home']);
 /** Public pages served by the dedicated public entry in every build. */
 const PUBLIC_PAGE_PATHS = new Set(['/', '/home', '/vision']);
-
-export function isRecognizedOAuthCallbackUrl(url: URL): boolean {
-  if (!PUBLIC_WEB_PATHS.has(url.pathname)) {
-    return false;
-  }
-  const hash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash;
-  if (!hash) {
-    return false;
-  }
-  const parameters = new URLSearchParams(hash);
-  return Boolean(parameters.get('access_token') && parameters.get('refresh_token'));
-}
 
 export function classifyBrowserEntry(
   url: URL,
 ): BrowserEntryOwner {
-  if (isRecognizedOAuthCallbackUrl(url)) {
-    return 'app';
-  }
   if (PUBLIC_PAGE_PATHS.has(url.pathname)) {
     return 'public';
   }
@@ -31,23 +13,13 @@ export function classifyBrowserEntry(
 }
 
 /**
- * The hosted build is the one compiled with a Runtime origin (`VITE_RUNTIME_ORIGIN`, `connection.ts`). It talks to the
- * visitor's own Runtime, which has no `demo-project`: the demo slug there is a stale explicit URL and shows "Project
- * not found". The bare editor route lets the editor pick the last-opened (or newest) project by itself.
+ * Where a returning visitor lands once they have chosen the app over the landing page: the editor.
+ * Other app routes send anyone without a signed-in session back to /home, so they would bounce
+ * straight back here. The bare route lets the editor pick the last-opened (or newest) project from
+ * the Runtime it is connected to. Every build talks to a real Runtime; only the fake-Runtime dev and
+ * test harness has no real projects, and its one project is the demo, so the editor picks that too.
  */
-function isHostedBuild(): boolean {
-  const origin = (import.meta.env as { VITE_RUNTIME_ORIGIN?: unknown }).VITE_RUNTIME_ORIGIN;
-  return typeof origin === 'string' && origin.trim() !== '';
-}
-
-/**
- * Where a returning visitor lands once they have chosen the app over the landing page: the local
- * editor. Other app routes send anyone without a signed-in session back to /home, so they would
- * bounce straight back here.
- */
-export const APP_ENTRY_PATH = isHostedBuild()
-  ? '/tools/video-editor'
-  : `/tools/video-editor?project=${DEMO_PROJECT_ID}&timeline=${DEMO_TIMELINE_ID}`;
+export const APP_ENTRY_PATH = '/tools/video-editor';
 
 /** Installer links arrive on the public root, but `?connect=1` must reach the app's Runtime gate. */
 export function resolveInstallerConnectEntry(url: URL): string | null {
@@ -69,7 +41,7 @@ export function rememberAppEntryPreference(): void {
   }
 }
 
-function isRunningInstalled(): boolean {
+export function isRunningInstalled(): boolean {
   try {
     return window.matchMedia('(display-mode: standalone)').matches
       || window.matchMedia('(display-mode: fullscreen)').matches
@@ -112,6 +84,6 @@ export function followIntoInstalledApp(): void {
  * instead of the landing page. /home always shows the landing page.
  */
 export function resolveReturningAppEntry(url: URL, prefersApp: boolean): string | null {
-  if (!prefersApp || url.pathname !== '/' || isRecognizedOAuthCallbackUrl(url)) return null;
+  if (!prefersApp || url.pathname !== '/') return null;
   return APP_ENTRY_PATH;
 }

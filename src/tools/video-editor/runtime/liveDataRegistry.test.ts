@@ -1,5 +1,5 @@
 /**
- * M11 T2: Unit tests for liveDataRegistry.
+ * Unit tests for liveDataRegistry.
  *
  * Covers:
  *  - Source lifecycle: register, get, list, dispose
@@ -18,7 +18,6 @@
  *  - Snapshot consistency
  *
  * @module liveDataRegistry.test
- * @milestone M11
  */
 
 import { describe, expect, it, vi, beforeEach } from 'vitest';
@@ -1320,7 +1319,7 @@ describe('LiveDataRegistry: edge cases and error handling', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M6a T13: Process-backed live-source reference resolution
+// Process-backed live-source reference resolution
 // ---------------------------------------------------------------------------
 
 describe('LiveDataRegistry: process-backed LiveSourceRef resolution', () => {

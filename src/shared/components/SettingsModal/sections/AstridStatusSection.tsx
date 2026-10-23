@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle2, CircleAlert, Loader2 } from 'lucide-react';
+import { CheckCircle2, ChevronRight, CircleAlert, Loader2 } from 'lucide-react';
 import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import type { Health, Realm, ServiceStatus } from '@/integrations/runtime/generated.ts';
 import { Button } from '@/shared/components/ui/button';
 import { SetupStatusLine } from '@/shared/components/OnboardingModal/components/SetupStatusLine.tsx';
-import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
+import { RUNTIME_CONNECTION_COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
 import { connectionStatus } from './ConnectionSection.tsx';
 import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/components/ui/collapsible';
 import { Card } from '@/shared/components/ui/card';
 import { CopyInstallCommand } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
 import { ASTRID_STATUS_COPY as COPY, connectionStatusCopy } from './astridStatusCopy.ts';
@@ -32,11 +33,17 @@ function statusIcon(status: string) {
   return <CircleAlert className="h-4 w-4 text-muted-foreground" aria-hidden />;
 }
 
-function StatusRow({ label, value }: { label: string; value: string | number }) {
+/** `sha256:ec06fbc6…94f6b9`: enough to compare by eye; the full value is the tooltip and is selectable. */
+function shortDigest(digest: string): string {
+  const colon = digest.indexOf(':') + 1;
+  return digest.length - colon > 16 ? `${digest.slice(0, colon + 8)}…${digest.slice(-6)}` : digest;
+}
+
+function StatusRow({ label, value, title }: { label: string; value: string | number; title?: string }) {
   return (
     <div className="flex items-center justify-between gap-4 text-sm">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 break-all text-right font-medium">{value}</dd>
+      <dd className="min-w-0 break-all text-right font-medium" title={title}>{value}</dd>
     </div>
   );
 }
@@ -95,7 +102,11 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
   const hasServiceDetails = Array.isArray(rawServices) && rawServices.every(isRuntimeService);
   const services = Array.isArray(rawServices) ? rawServices.filter(isRuntimeService) : [];
   const needsRepair = details?.health.status === 'degraded' || services.some((service) => service.state === 'failed');
-  const statusText = connected
+  const statusText = summary.outOfDate === 'chat'
+    ? COPY.chatUpdateNeeded
+    : summary.outOfDate
+    ? COPY.updateNeeded
+    : connected
     ? loadFailed ? COPY.unavailable : needsRepair ? COPY.degraded : details ? COPY.connected : COPY.checking
     : connectionStatusCopy(status);
 
@@ -103,7 +114,7 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
     <section className="mb-6" aria-labelledby="astrid-status-title">
       <Card className="p-4">
         <div className="flex items-start gap-3">
-          {statusIcon(connected ? needsRepair ? 'degraded' : 'connected' : status)}
+          {statusIcon(summary.outOfDate ? 'update_needed' : connected ? needsRepair ? 'degraded' : 'connected' : status)}
           <div className="min-w-0 flex-1 space-y-3">
             <div>
               <h2 id="astrid-status-title" className="text-base font-semibold">{COPY.title}</h2>
@@ -112,11 +123,12 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
             </div>
 
             {summary.checks && <SetupStatusLine checks={summary.checks} mink={false} announce={false} />}
-            {!connected && summary.detail && <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{summary.detail}</p>}
+            {(!connected || summary.outOfDate) && summary.detail && <p className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{summary.outOfDate ? withCommandShell(summary.detail) : summary.detail}</p>}
+            {summary.outOfDate && <CopyInstallCommand mode="update" />}
             {summary.connect && <Button type="button" variant="retro-secondary" size="retro-sm" onClick={() => connection.connect()}>{RUNTIME_CONNECTION_COPY.permission.connect}</Button>}
             {connected && details && needsRepair && (
               <>
-                <CopyInstallCommand label={RUNTIME_CONNECTION_COPY.agent.copy} mode="install" />
+                <CopyInstallCommand mode="install" />
                 <a className="text-sm text-muted-foreground underline underline-offset-4" href={ASTRID_HELP_URL} target="_blank" rel="noreferrer">Get help</a>
               </>
             )}
@@ -126,7 +138,12 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
             )}
 
             {connected && details && (
-              <div className="space-y-4 border-t pt-3">
+              <Collapsible className="border-t pt-2">
+                <CollapsibleTrigger className="group flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                  <ChevronRight className="h-3 w-3 transition-transform group-data-[panel-open]:rotate-90" aria-hidden />
+                  {COPY.detailsToggle}
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 pt-3">
                 <div>
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{COPY.workspace}</h3>
                   <dl className="space-y-1.5">
@@ -137,7 +154,7 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{COPY.connectionDetails}</h3>
                   <dl className="space-y-1.5">
                     <StatusRow label={COPY.protocol} value={details.health.protocol} />
-                    <StatusRow label={COPY.schema} value={details.health.schema_digest} />
+                    <StatusRow label={COPY.schema} value={shortDigest(details.health.schema_digest)} title={details.health.schema_digest} />
                   </dl>
                 </div>
                 <div>
@@ -165,7 +182,8 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
                     </ul>
                   )}
                 </div>
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
             )}
           </div>
         </div>

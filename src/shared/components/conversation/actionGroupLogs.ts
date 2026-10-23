@@ -1,7 +1,7 @@
 import type { ConversationToolCallPair } from './contracts';
 
 /** OMP TaskToolDetails, received as ACP rawOutput.details, never parsed from prose. */
-export function nativeTaskResults(details: Record<string, unknown> | undefined): Array<Record<string, unknown> & { id: string; agent: string; exitCode: number }> | null {
+function nativeTaskResults(details: Record<string, unknown> | undefined): Array<Record<string, unknown> & { id: string; agent: string; exitCode: number }> | null {
   if (!details || !(details.projectAgentsDir === null || typeof details.projectAgentsDir === 'string')
     || typeof details.totalDurationMs !== 'number' || !Number.isFinite(details.totalDurationMs) || details.totalDurationMs < 0
     || !Array.isArray(details.results)) return null;

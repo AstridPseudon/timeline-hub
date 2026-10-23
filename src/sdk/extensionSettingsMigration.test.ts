@@ -1,5 +1,5 @@
 /**
- * Tests for settings schema-version migration (T10).
+ * Tests for settings schema-version migration.
  *
  * Validates:
  *  - Schema version detection from manifest (settingsSchema.version + legacy settingsSchemaVersion)

@@ -2,78 +2,86 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
-import { installCommand, RUNTIME_CONNECTION_COPY, terminalOpeningHint, type CommandMode } from './copy.ts';
+import { agentInstructions, installCommand, RUNTIME_CONNECTION_COPY, UPDATE_ROUTES, withCommandShell, type CommandMode } from './copy.ts';
 
 export interface CopyInstallCommandProps {
-  /** `install` for setup/repair and `update` for an incompatible Runtime. */
+  /** `install` for setup/repair and `update` for an incompatible Astrid. */
   readonly mode?: CommandMode;
-  readonly label: string;
 }
 
 type CopyStatus = 'idle' | 'copied' | 'failed';
-
-/** How long the button reads "Copied" before it goes back to its label. */
 const COPIED_MS = 2000;
 
-/**
- * The state's command is visible and can be copied or pasted into a coding agent. On clipboard failure it appears in
- * a selectable box. It does not use `useCopyToClipboard`:
- * that hook never learns whether the write worked, and a failed copy must show the text to select by hand, not a false
- * "Copied".
- */
-export function CopyInstallCommand({ mode = 'install', label }: CopyInstallCommandProps) {
-  const copy = RUNTIME_CONNECTION_COPY.agent;
-  const instructions = installCommand(mode);
+/** Each action owns its feedback so copying a command cannot claim the agent brief was copied. */
+function useCopyAction(text: string) {
   const [status, setStatus] = useState<CopyStatus>('idle');
-  const fieldRef = useRef<HTMLTextAreaElement>(null);
   const resetRef = useRef<number | null>(null);
-
   useEffect(() => () => {
     if (resetRef.current !== null) window.clearTimeout(resetRef.current);
   }, []);
-
-  // A failed copy leaves the text to copy by hand, so it is selected for the person.
-  useEffect(() => {
-    if (status === 'failed') fieldRef.current?.select();
-  }, [status]);
-
-  const handleCopy = async () => {
-    const copied = await writeClipboardTextSafe(instructions);
+  const copy = async () => {
+    const copied = await writeClipboardTextSafe(text);
     if (resetRef.current !== null) window.clearTimeout(resetRef.current);
     setStatus(copied ? 'copied' : 'failed');
-    resetRef.current = copied
-      ? window.setTimeout(() => {
-        resetRef.current = null;
-        setStatus('idle');
-      }, COPIED_MS)
-      : null;
+    resetRef.current = copied ? window.setTimeout(() => {
+      resetRef.current = null;
+      setStatus('idle');
+    }, COPIED_MS) : null;
   };
+  return { status, copy };
+}
+
+function CopyFallback({ text, label }: { text: string; label: string }) {
+  const fieldRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => { fieldRef.current?.select(); }, [text]);
+  return (
+    <div className="space-y-2">
+      <p role="status" className="text-sm text-muted-foreground">{RUNTIME_CONNECTION_COPY.agent.copyFailed}</p>
+      <textarea
+        ref={fieldRef}
+        readOnly
+        rows={6}
+        value={text}
+        aria-label={label}
+        onFocus={(event) => event.currentTarget.select()}
+        className="w-full resize-y rounded-md border border-border bg-background p-2 text-left text-xs leading-5 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
+    </div>
+  );
+}
+
+/**
+ * Agent handoff first, as the one primary action; the manual command is the quiet alternative under it, with its own
+ * copy action. Nothing else: the card around it says what the instructions are for.
+ */
+export function CopyInstallCommand({ mode = 'install' }: CopyInstallCommandProps) {
+  const copy = RUNTIME_CONNECTION_COPY.agent;
+  const instructions = agentInstructions(mode, window.location.origin);
+  const command = installCommand(mode);
+  const agentCopy = useCopyAction(instructions);
+  const commandCopy = useCopyAction(command);
+  const agentCopied = agentCopy.status === 'copied';
 
   return (
-    <div className="w-full space-y-3">
-      <pre className="overflow-x-auto rounded-md border border-border bg-background p-3 text-left text-xs leading-5 text-foreground"><code>{instructions}</code></pre>
-      <Button type="button" className="w-full sm:w-auto" onClick={() => void handleCopy()}>
-        {status === 'copied'
-          ? <Check aria-hidden="true" className="mr-2 h-4 w-4" />
-          : <Copy aria-hidden="true" className="mr-2 h-4 w-4" />}
-        {status === 'copied' ? copy.copied : label}
-      </Button>
-      <p className="text-xs text-muted-foreground">{terminalOpeningHint()}</p>
-      <p className="text-xs text-muted-foreground">{copy.note}</p>
-      {status === 'failed' && (
-        <div className="space-y-2">
-          <p role="status" className="text-sm text-muted-foreground">{copy.copyFailed}</p>
-          <textarea
-            ref={fieldRef}
-            readOnly
-            rows={6}
-            value={instructions}
-            aria-label={copy.copyFailed}
-            onFocus={(event) => event.currentTarget.select()}
-            className="w-full resize-y rounded-md border border-border bg-background p-2 text-left text-xs leading-5 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          />
+    <div className="w-full space-y-4">
+      <div className="space-y-2">
+        <Button type="button" className="h-11 w-full justify-between rounded-xl px-4 text-sm" onClick={() => void agentCopy.copy()}>
+          <span aria-live="polite">{agentCopied ? copy.copied : copy.copy}</span>
+          {agentCopied ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}
+        </Button>
+        {agentCopy.status === 'failed' && <CopyFallback text={instructions} label={copy.copyFailed} />}
+      </div>
+      <div className="space-y-1.5 text-left">
+        <p className="text-xs text-muted-foreground">{withCommandShell(mode === 'update' ? copy.terminalAlternativeUpdate : copy.terminalAlternative)}</p>
+        <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-background/70 py-1 pl-3 pr-1">
+          <pre className="min-w-0 flex-1 whitespace-pre-wrap [overflow-wrap:normal] overflow-x-auto font-mono text-xs leading-5 text-foreground"><code>{command}</code></pre>
+          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" aria-label={commandCopy.status === 'copied' ? copy.commandCopied : copy.commandCopy} title={copy.commandCopy} onClick={() => void commandCopy.copy()}>
+            {commandCopy.status === 'copied' ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}
+          </Button>
         </div>
-      )}
+        {commandCopy.status === 'failed' && <CopyFallback text={command} label={copy.commandCopy} />}
+        {mode === 'update' && <p className="pt-1 text-xs text-muted-foreground">{UPDATE_ROUTES.source}</p>}
+      </div>
     </div>
   );
 }

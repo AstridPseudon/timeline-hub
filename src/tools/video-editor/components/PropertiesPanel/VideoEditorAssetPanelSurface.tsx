@@ -1,5 +1,4 @@
-import { memo, useMemo, useRef } from 'react';
-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
+import { memo, useCallback, useMemo, useRef } from 'react';
 import AssetPanel from '@/tools/video-editor/components/PropertiesPanel/AssetPanel.tsx';
 import {
   useTimelineEditorData,
@@ -16,8 +15,9 @@ import { findContributionOwnerId } from '@/tools/video-editor/runtime/extensionS
 import { ExtensionPanelHost, getPanelKey } from '@/tools/video-editor/runtime/ExtensionPanelHost';
 import { bindTranscriptPanelVideo } from '@/tools/video-editor/lib/transcript-panel-binding.ts';
 import { playedAssetRegistry, playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
-import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import type { PanelRenderProps, PanelVideoAdapter } from '@astrid/editor-sdk';
+import { useOptionalClipTypeRegistryContext } from '@/tools/video-editor/clip-types/ClipTypeRegistryContext.tsx';
+import { createPanelClipDragSource } from '@/tools/video-editor/lib/panel-clip-drag.ts';
 import { TimelineFramePreview, usePanelFramePreview } from '../PreviewPanel/TimelineFramePreview.tsx';
 import { useVideoEditorPreviewComposition } from '../PreviewPanel/useVideoEditorPreviewComposition.ts';
 
@@ -27,6 +27,10 @@ export interface VideoEditorAssetPanelSurfaceProps {
   activePanelKey?: string | null;
   video?: PanelVideoAdapter;
   settingsByPanelKey?: Readonly<Record<string, PanelRenderProps['settings']>>;
+  /** Controlled full-screen seam: the one panel shown full screen. */
+  fullscreenPanelKey?: string | null;
+  /** Supplying this offers `fullscreen` to panels. */
+  onFullscreenPanelKeyChange?: (key: string | null) => void;
 }
 
 function VideoEditorAssetPanelSurfaceComponent({
@@ -34,32 +38,41 @@ function VideoEditorAssetPanelSurfaceComponent({
   activePanelKey,
   video,
   settingsByPanelKey,
+  fullscreenPanelKey,
+  onFullscreenPanelKeyChange,
 }: VideoEditorAssetPanelSurfaceProps) {
   const runtime = useOptionalVideoEditorRuntime();
   const store = useTimelineStoreApiSafe();
   const view = runtime?.timelineViewStore;
   const { data, preferences, resolvedConfig } = useTimelineEditorData();
-  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig, data);
-  const compiledTransitions = previewComposition.compiledTransitions;
-  const boundedDurationInFrames = useMemo(() => {
-    if (!previewComposition.config) return undefined;
-    const output = projectOutputTimelineConfig(previewComposition.config).config;
-    return getTimelineDurationInFrames(output, output.output.fps);
-  }, [previewComposition.config]);
+  const previewComposition = useVideoEditorPreviewComposition(resolvedConfig);
   const framePreview = usePanelFramePreview();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const latestRuntime = useRef(runtime);
   latestRuntime.current = runtime;
+  const { setAssetPanelState, uploadFiles } = useTimelineEditorOps();
   const panelVideo = useMemo(() => {
     const base = video ?? (store && view ? {
       view,
       seek: (seconds: number) => { store.getState().ops.onClickTimeArea(seconds); },
     } : undefined);
-    return base && store ? bindTranscriptPanelVideo(store, { ...base, preview: base.preview ?? framePreview.preview }, () => playedAssetRegistry(
+    return base && store ? bindTranscriptPanelVideo(store, {
+      ...base,
+      preview: base.preview ?? framePreview.preview,
+      select: base.select ?? ((clipIds: readonly string[]) => { store.getState().ops.selectClips([...clipIds]); }),
+    }, () => playedAssetRegistry(
       playedShotComposition(latestRuntime.current?.userId, latestRuntime.current?.shots),
       store.getState().data.data?.resolvedConfig,
     )) : base;
   }, [video, store, view, framePreview.preview]);
+  const clipTypeRegistry = useOptionalClipTypeRegistryContext()?.registry;
+  // Each extension's panels get a drag source bound to that extension: it can only offer clip types
+  // the extension owns, and only where the editor has a timeline to drop on.
+  const bindVideo = useCallback((adapter: PanelVideoAdapter, extensionId: string): PanelVideoAdapter => (
+    clipTypeRegistry && store
+      ? { ...adapter, dragSource: createPanelClipDragSource(extensionId, { ownerOf: (clipType) => clipTypeRegistry.resolve(clipType)?.ownerExtensionId }) }
+      : adapter
+  ), [clipTypeRegistry, store]);
   const contributionIndex = runtime?.extensionRuntime?.contributionIndex;
   const assetPanels = useVideoEditorAssetPanels();
   const panelRegistry = useVideoEditorPanelRegistry();
@@ -75,7 +88,6 @@ function VideoEditorAssetPanelSurfaceComponent({
       extensionId: panel.extensionId ?? findContributionOwnerId(contributionIndex, 'panel', panel.id),
     }))
     .filter((key) => activePanelKey === undefined || key === activePanelKey));
-  const { setAssetPanelState, uploadFiles } = useTimelineEditorOps();
 
   const builtInPanel = includeBuiltIn && data ? (
     <div className="rounded-xl border border-border bg-card/80 p-3">
@@ -110,16 +122,8 @@ function VideoEditorAssetPanelSurfaceComponent({
   return (
     <div ref={surfaceRef} className="flex h-full min-h-0 flex-col">
       {builtInPanel}
-      <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} settingsByPanelKey={settingsByPanelKey} onError={handleContributionError} />
-      <TimelineFramePreview
-        config={previewComposition.config}
-        request={framePreview.request}
-        bounds={surfaceRef}
-        compiledTransitions={compiledTransitions}
-        boundedDurationInFrames={boundedDurationInFrames}
-        pairedConfig={previewComposition.pairedConfig}
-        projectionFact={data?.editProjection}
-      />
+      <ExtensionPanelHost panels={panels} visiblePanelKeys={visiblePanelKeys} video={panelVideo} bindVideo={bindVideo} settingsByPanelKey={settingsByPanelKey} fullscreenPanelKey={fullscreenPanelKey} onFullscreenPanelKeyChange={onFullscreenPanelKeyChange} onError={handleContributionError} />
+      <TimelineFramePreview config={previewComposition.config} request={framePreview.request} bounds={surfaceRef} />
     </div>
   );
 }

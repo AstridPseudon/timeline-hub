@@ -1,5 +1,5 @@
 /**
- * settings-migration-example — T10 settings schema-version migration example.
+ * settings-migration-example — settings schema-version migration example.
  *
  * Demonstrates:
  *   1. A `MigrationDeclaration` of kind 'settings' in the extension manifest.
@@ -107,7 +107,7 @@ export const settingsMigrationManifest: ExtensionManifest = {
 
 /**
  * A minimal in-memory StateRepository stub that satisfies the SDK contract.
- * Real implementations would persist to IndexedDB, Supabase, or Astrid bridge.
+ * Real implementations would persist to IndexedDB or the Astrid bridge.
  */
 export function createExampleRepository(): StateRepository {
   const disposed = false;

@@ -112,7 +112,7 @@ describe('InMemoryDataProvider', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Strict expectedVersion conflict handling (T14)
+  // Strict expectedVersion conflict handling
   // -------------------------------------------------------------------------
   describe('strict expectedVersion conflict handling', () => {
     it('rejects save when expectedVersion is behind the current version by 1', async () => {
@@ -226,7 +226,7 @@ describe('InMemoryDataProvider', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Local monotonic stale invalidation behavior (T14)
+  // Local monotonic stale invalidation behavior
   // -------------------------------------------------------------------------
   describe('local monotonic stale invalidation behavior', () => {
     it('provider-level CAS catches stale writes before any data mutation occurs', async () => {

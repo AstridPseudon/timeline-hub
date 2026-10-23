@@ -1,6 +1,5 @@
-import { assertValidTimelineEditSnapshot } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { buildTrackClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
-import { serializeResolvedTimelineEdit } from '@/tools/video-editor/lib/serialize.ts';
+import { serializeForDisk, validateSerializedConfig } from '@/tools/video-editor/lib/serialize.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 import {
   preserveUploadingClips,
@@ -231,21 +230,20 @@ export const applyTimelineCommandEffect = (
 ): TimelineData => {
   switch (effect.mutation.type) {
     case 'data': {
-      assertValidTimelineEditSnapshot(effect.mutation.data.config);
+      validateSerializedConfig(effect.mutation.data.config);
       return effect.mutation.data;
     }
     case 'config': {
-      assertValidTimelineEditSnapshot(effect.mutation.config);
+      validateSerializedConfig(effect.mutation.config);
       return preserveUploadingClips(
         current,
         buildDataFromCurrentRegistry(effect.mutation.config, current),
       );
     }
     case 'resolved-config': {
-      const config = serializeResolvedTimelineEdit(
+      const config = serializeForDisk(
         effect.mutation.resolvedConfig,
         effect.mutation.pinnedShotGroupsOverride ?? current.config.pinnedShotGroups,
-        current.config,
       );
 
       return preserveUploadingClips(

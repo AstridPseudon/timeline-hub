@@ -44,12 +44,10 @@ export const TimelineTrackContent: React.FC<TimelineTrackContentProps> = ({ data
     pairInfoWithPending,
     localShotGenPositions,
     parentSegmentSlots,
-    isSegmentsLoading,
     parentHasPendingTask,
     selectedOutputId,
     onPairClick,
     handleOpenPairSettings,
-    handleTrailingEndFrameChange,
     setCallbackTrailingVideoUrl,
     onFileDrop,
     videoOutputs,
@@ -61,8 +59,6 @@ export const TimelineTrackContent: React.FC<TimelineTrackContentProps> = ({ data
     onRemoveStructureVideo,
     primaryStructureVideo,
     onPrimaryStructureVideoInputChange,
-    isUploadingStructureVideo,
-    setIsUploadingStructureVideo,
     audioUrl,
     audioMetadata,
     onAudioChange,
@@ -77,15 +73,11 @@ export const TimelineTrackContent: React.FC<TimelineTrackContentProps> = ({ data
     dragType,
     dropTargetFrame,
     pendingDropFrame,
-    pendingDuplicateFrame,
     pendingExternalAddFrame,
     isUploadingImage,
     isInternalDropProcessing,
     currentDragFrame,
     swapTargetId,
-    endpointDragFrame,
-    isEndpointDraggingState,
-    handleEndpointMouseDown,
     trailingVideoUrl,
     handleExtractFinalFrame,
     framePositions,
@@ -97,10 +89,7 @@ export const TimelineTrackContent: React.FC<TimelineTrackContentProps> = ({ data
     handleMobileTap,
     prefetchTaskData,
     onImageDelete,
-    handleDuplicateInterceptor,
     onVariantDrop,
-    duplicatingImageId,
-    duplicateSuccessImageId,
     isSelected,
     toggleSelection,
   } = timelineData;
@@ -155,12 +144,10 @@ export const TimelineTrackContent: React.FC<TimelineTrackContentProps> = ({ data
             pairInfoWithPending,
             localShotGenPositions,
             segmentSlots: parentSegmentSlots,
-            isSegmentsLoading,
             hasPendingTask: parentHasPendingTask,
             selectedOutputId,
             onPairClick,
             onOpenPairSettings: handleOpenPairSettings,
-            onTrailingEndFrameChange: handleTrailingEndFrameChange,
             onTrailingVideoInfo: setCallbackTrailingVideoUrl,
             onFileDrop,
             videoOutputs,
@@ -174,8 +161,6 @@ export const TimelineTrackContent: React.FC<TimelineTrackContentProps> = ({ data
             onRemoveStructureVideo,
             primaryStructureVideo,
             onPrimaryStructureVideoInputChange,
-            isUploadingStructureVideo,
-            setIsUploadingStructureVideo,
           }}
           audio={{
             audioUrl,
@@ -208,7 +193,6 @@ export const TimelineTrackContent: React.FC<TimelineTrackContentProps> = ({ data
         dragType={dragType}
         activePendingFrame={activePendingFrame}
         pendingDropFrame={pendingDropFrame}
-        pendingDuplicateFrame={pendingDuplicateFrame}
         pendingExternalAddFrame={pendingExternalAddFrame}
         isUploadingImage={isUploadingImage}
         isInternalDropProcessing={isInternalDropProcessing}
@@ -253,14 +237,10 @@ export const TimelineTrackContent: React.FC<TimelineTrackContentProps> = ({ data
         trailingEndFrame={trailingEndFrame}
         hasCallbackTrailingVideo={hasCallbackTrailingVideo}
         hasLiveTrailingVideo={hasLiveTrailingVideo}
-        isEndpointDragging={isEndpointDraggingState}
-        endpointDragFrame={endpointDragFrame}
         containerWidth={containerWidth}
         fullMin={fullMin}
         fullRange={fullRange}
-        maxAllowedGap={81}
         readOnly={readOnly}
-        onEndpointMouseDown={handleEndpointMouseDown}
         onPairClick={onPairClick}
         trailingVideoUrl={trailingVideoUrl}
         onExtractFinalFrame={onFileDrop ? handleExtractFinalFrame : undefined}
@@ -293,11 +273,8 @@ export const TimelineTrackContent: React.FC<TimelineTrackContentProps> = ({ data
         }}
         actions={{
           onImageDelete,
-          onImageDuplicate: handleDuplicateInterceptor,
           onVariantDrop,
           onVariantDropTargetChange: setActiveVariantDropTargetId,
-          duplicatingImageId,
-          duplicateSuccessImageId,
         }}
         selection={{
           isSelected,

@@ -9,18 +9,16 @@ const sourceFiles = readdirSync(root)
   .filter((file) => statSync(file).isFile());
 
 describe('shared conversation import boundary', () => {
-  it('does not import app-only session, transport, voice, auth, pane or submission modules', () => {
+  it('does not import app-only session, transport, auth, pane or submission modules', () => {
     const source = sourceFiles.map((file) => readFileSync(file, 'utf8')).join('\n');
-    expect(source).not.toMatch(/tools\/video-editor|useAgentSession|useAgentVoice|AgentChatContext/);
-    expect(source).not.toMatch(/AuthContext|supabase|bridgeSession|panesStore|selectionStore/);
+    expect(source).not.toMatch(/tools\/video-editor|useAgentSession|AgentChatContext/);
+    expect(source).not.toMatch(/AuthContext|bridgeSession|panesStore|selectionStore/);
     expect(source).not.toMatch(/fetch\s*\(|WebSocket|EventSource|useMutation|useQuery/);
   });
 
   it('keeps view data and callbacks explicit at the shared component boundary', () => {
     const source = readFileSync(path.join(root, 'ConversationPresentation.tsx'), 'utf8');
     expect(source).toContain('items: readonly ConversationItem[]');
-    expect(source).toContain('headerActions?: ReactNode');
     expect(source).toContain('footer?: ReactNode');
-    expect(source).toContain('onAttachmentClick?:');
   });
 });

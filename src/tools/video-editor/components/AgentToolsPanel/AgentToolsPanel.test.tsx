@@ -1,5 +1,5 @@
 /**
- * M10 T21: Tests for AgentToolsPanel component.
+ * Tests for AgentToolsPanel component.
  *
  * Covers:
  *  - Schema rendering via SchemaForm
@@ -12,7 +12,6 @@
  *  - Accessible structure
  *
  * @module AgentToolsPanel.test
- * @milestone M10
  */
 
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';

@@ -25,11 +25,6 @@ vi.mock('@/shared/hooks/settings/useToolSettings', () => ({
 
 vi.mock('@/shared/lib/lastEditedLora', () => ({
   readLastEditedLoraFromLocalStorage: () => lastEditedLora,
-  readLastEditedLoraFromProject: vi.fn(async () => null),
-}));
-
-vi.mock('@/app/runtime/runtimeDocument', () => ({
-  hasRuntimeDocumentIdentity: () => true,
 }));
 
 vi.mock('./inheritedDefaults', () => ({

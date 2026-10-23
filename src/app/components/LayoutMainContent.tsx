@@ -39,8 +39,12 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
   const containerSpacing = 'py-1';
   const isImageGenerationPage = pathname === TOOL_ROUTES.IMAGE_GENERATION;
 
+  // A locked Tasks pane is a fixed column at the right edge. The page and the header both reserve its width so
+  // the header's right-side controls (Settings) stay clickable beside the pane rather than under it.
+  const tasksPaneReserve = isTasksPaneLocked ? `${tasksPaneWidth}px` : '0px';
+
   const contentStyle = {
-    marginRight: isTasksPaneLocked ? `${tasksPaneWidth}px` : '0px',
+    marginRight: tasksPaneReserve,
     marginLeft: isShotsPaneLocked ? `${shotsPaneWidth}px` : '0px',
     paddingTop: isEditorPaneLocked && isVideoEditorShellActive ? `${effectiveEditorPaneHeight}px` : '0px',
     paddingBottom: isMobileSplitView || isImageGenerationPage || paneControlsHosted
@@ -58,12 +62,18 @@ export function LayoutMainContent(props: LayoutMainContentProps) {
 
   return (
     <>
-      <AppHeader
-        navigationMode={isHomeToolPathActive(pathname, targetPath) ? 'tools' : 'home'}
-        onNavigate={isEditorRoute ? undefined : navigateHome}
-        navigationControls={globalHeaderContent}
-        showProjectControls={!isEditorRoute}
-      />
+      <div
+        className="transition-[margin] duration-300 ease-smooth"
+        style={{ marginRight: tasksPaneReserve, willChange: 'margin' }}
+        data-testid="global-header-slot"
+      >
+        <AppHeader
+          navigationMode={isHomeToolPathActive(pathname, targetPath) ? 'tools' : 'home'}
+          onNavigate={isEditorRoute ? undefined : navigateHome}
+          navigationControls={globalHeaderContent}
+          showProjectControls={!isEditorRoute}
+        />
+      </div>
 
       <div
         className={cn(

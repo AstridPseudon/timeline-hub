@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   RuntimeConnectionGate,
   RuntimeConnectionProvider,
   useRuntimeConnection,
+  type RuntimeConnectionPanelExit,
   type RuntimeConnectionValue,
 } from './RuntimeConnectionProvider.tsx';
 import type { PermissionsLike } from './localNetworkPermission.ts';
@@ -247,7 +248,7 @@ describe('granted', () => {
     const permissions = fakePermissions('granted');
     const view = render(
       <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions.permissions} pollIntervalMs={10}>
-        <RuntimeConnectionGate panel={(connection) => <RuntimeConnectionPanel connection={connection} />}>
+        <RuntimeConnectionGate panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} />}>
           <div data-testid="app" />
         </RuntimeConnectionGate>
       </RuntimeConnectionProvider>,
@@ -598,7 +599,7 @@ describe('gate', () => {
     render(
       <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
         <RuntimeConnectionGate
-          panel={({ state }) => <p data-testid="custom-panel">{state.status}</p>}
+          panel={({ state }, exit) => (exit ? <LeaveAtOnce exit={exit} /> : <p data-testid="custom-panel">{state.status}</p>)}
           pill={({ realmName }) => <p data-testid="custom-pill">{realmName}</p>}
         >
           <div data-testid="app" />
@@ -615,6 +616,84 @@ describe('gate', () => {
   });
 });
 
+/** A panel with no leaving motion: it hands over to the app as soon as it is asked to leave. */
+function LeaveAtOnce({ exit }: { exit: RuntimeConnectionPanelExit }) {
+  React.useEffect(() => { exit.left(); }, [exit]);
+  return null;
+}
+
+/** A test panel that draws `screen` while not connected and leaves at once when Astrid answers. */
+const leavesAtOnce = (screen: (connection: RuntimeConnectionValue) => React.ReactNode) => (
+  (connection: RuntimeConnectionValue, exit: RuntimeConnectionPanelExit | null) => (exit ? <LeaveAtOnce exit={exit} /> : screen(connection))
+);
+
+describe('gate: the panel on its way out', () => {
+  /** Shows the screen it is given; on its way out, a button stands for the panel's leaving motion. */
+  const gate = (gateway: ReturnType<typeof fakeGateway>) => render(
+    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+      <RuntimeConnectionGate
+        panel={({ state }, exit) => (
+          <div data-testid="panel" data-exit={exit ? '' : undefined}>
+            {state.status}
+            {exit && <button type="button" onClick={exit.left}>left</button>}
+          </div>
+        )}
+      >
+        <div data-testid="app" />
+      </RuntimeConnectionGate>
+    </RuntimeConnectionProvider>,
+  );
+
+  it('after a setup screen, mounts the app beneath the same panel, which keeps its screen until it has left', async () => {
+    const gateway = fakeGateway();
+    gateway.down();
+    gate(gateway);
+    await waitFor(() => expect(screen.getByTestId('panel')).toHaveTextContent('set_up'));
+    const panel = screen.getByTestId('panel');
+
+    gateway.up();
+    await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
+    // The same element, still on the screen it was showing, now on its way out.
+    expect(screen.getByTestId('panel')).toBe(panel);
+    expect(panel).toHaveTextContent('set_up');
+    expect(panel).toHaveAttribute('data-exit');
+
+    fireEvent.click(screen.getByRole('button', { name: 'left' }));
+    expect(screen.queryByTestId('panel')).toBeNull();
+    expect(screen.getByTestId('app')).toBeInTheDocument();
+  });
+
+  it('removes a visible panel that leaves from its own effect, before the gate has re-rendered', async () => {
+    function LeavesOnMount({ exit }: { exit: RuntimeConnectionPanelExit }) {
+      React.useEffect(() => { exit.left(); }, [exit]);
+      return <div data-testid="panel">leaving</div>;
+    }
+    const gateway = fakeGateway();
+    gateway.down();
+    render(
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+        <RuntimeConnectionGate panel={({ state }, exit) => (exit ? <LeavesOnMount exit={exit} /> : <div data-testid="panel">{state.status}</div>)}>
+          <div data-testid="app" />
+        </RuntimeConnectionGate>
+      </RuntimeConnectionProvider>,
+    );
+    await waitFor(() => expect(screen.getByTestId('panel')).toHaveTextContent('set_up'));
+    gateway.up();
+    await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByTestId('panel')).toBeNull());
+  });
+
+  it('a Runtime that answers at once: the connecting screen leaves into the app the same way', async () => {
+    const gateway = fakeGateway();
+    gate(gateway);
+    await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
+    expect(screen.getByTestId('panel')).toHaveTextContent('connecting');
+    expect(screen.getByTestId('panel')).toHaveAttribute('data-exit');
+    fireEvent.click(screen.getByRole('button', { name: 'left' }));
+    expect(screen.queryByTestId('panel')).toBeNull();
+  });
+});
+
 describe('gate: the landing page already asked to go in', () => {
   /** A panel that shows the state the gate hands it, so the test sees explainer versus Chrome's prompt. */
   const panel = ({ state, awaitingConnect, isChecking, connect }: RuntimeConnectionValue) => (
@@ -626,7 +705,7 @@ describe('gate: the landing page already asked to go in', () => {
   );
   const renderGate = (gateway: ReturnType<typeof fakeGateway>, permission: string) => render(
     <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions(permission).permissions} pollIntervalMs={10}>
-      <RuntimeConnectionGate panel={panel}>
+      <RuntimeConnectionGate panel={leavesAtOnce(panel)}>
         <div data-testid="app" />
       </RuntimeConnectionGate>
     </RuntimeConnectionProvider>,
@@ -692,7 +771,7 @@ describe('gate: the landing page already asked to go in', () => {
     const permissions = fakePermissions('prompt');
     render(
       <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions.permissions} pollIntervalMs={10}>
-        <RuntimeConnectionGate panel={panel}><div data-testid="app" /></RuntimeConnectionGate>
+        <RuntimeConnectionGate panel={leavesAtOnce(panel)}><div data-testid="app" /></RuntimeConnectionGate>
       </RuntimeConnectionProvider>,
     );
     await waitFor(() => expect(autoConnectRequested()).toBe(false));
@@ -749,6 +828,50 @@ describe('same-origin build', () => {
     await waitFor(() => expect(status()).toBe('connected'));
     expect(latest.gated).toBe(true);
     expect(gateway.calls[0]).toBe('http://127.0.0.1:17340/api/runtime/v1/health');
+  });
+});
+
+describe('gate: incompatible Runtime and local-service update flag', () => {
+  const marker = ({ state }: RuntimeConnectionValue) => <p data-testid="custom-panel">{state.status}</p>;
+
+  it('an incompatible health digest still shows the gate panel, not the app', async () => {
+    const gateway = fakeGateway();
+    gateway.routes['/v1/health'] = () => json({ status: 'ok', schema_digest: 'sha256:old-runtime' });
+    render(
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+        <RuntimeConnectionGate panel={leavesAtOnce(marker)}>
+          <div data-testid="app" />
+        </RuntimeConnectionGate>
+      </RuntimeConnectionProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('custom-panel')).toHaveTextContent('update_needed'));
+    expect(screen.queryByTestId('app')).toBeNull();
+  });
+
+  it('a local-service update flag keeps the connected state and the app, and clears again', async () => {
+    const gateway = fakeGateway();
+    render(
+      <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={10}>
+        <Probe />
+        <RuntimeConnectionGate panel={leavesAtOnce(marker)}>
+          <div data-testid="app" />
+        </RuntimeConnectionGate>
+      </RuntimeConnectionProvider>,
+    );
+
+    await waitFor(() => expect(status()).toBe('connected'));
+    expect(latest.localServiceOutOfDate).toBe(false);
+
+    act(() => latest.setLocalServiceOutOfDate(true));
+    expect(latest.localServiceOutOfDate).toBe(true);
+    expect(status()).toBe('connected');
+    expect(screen.getByTestId('app')).toBeInTheDocument();
+    expect(screen.queryByTestId('custom-panel')).toBeNull();
+
+    act(() => latest.setLocalServiceOutOfDate(false));
+    expect(latest.localServiceOutOfDate).toBe(false);
+    expect(status()).toBe('connected');
   });
 });
 

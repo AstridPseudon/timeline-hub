@@ -209,3 +209,4 @@ describe('complete_task/generation-core', () => {
     expect(supabase.from).not.toHaveBeenCalled();
   });
 });
+

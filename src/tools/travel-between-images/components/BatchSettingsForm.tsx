@@ -1,10 +1,9 @@
 import React from 'react';
-import { Button } from "@/shared/components/ui/button";
 import { Slider } from "@/shared/components/ui/slider";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/primitives/label";
 import { Switch } from "@/shared/components/ui/switch";
-import { Info, Eraser, Check } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { CollapsibleSection } from "@/shared/components/ui/composed/collapsible-section";
@@ -13,7 +12,6 @@ import { ModelToggle } from '@/shared/components/ui/composed/model-toggle';
 import { useIsMobile } from '@/shared/hooks/mobile';
 import { Project } from '@/types/project';
 import type { ActiveLora } from '@/domains/lora/types/lora';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import {
   PhaseConfig,
   DEFAULT_PHASE_CONFIG,
@@ -62,7 +60,6 @@ interface BatchContextControls {
   selectedProjectId: string | null;
   isTimelineMode?: boolean;
   selectedLoras?: ActiveLora[];
-  availableLoras?: LoraModel[];
   imageCount?: number;
 }
 
@@ -94,7 +91,6 @@ interface BatchPhaseControls {
 
 interface BatchBehaviorControls {
   onBlurSave?: () => void;
-  onClearEnhancedPrompts?: () => Promise<void>;
   videoControlMode?: 'individual' | 'batch';
   readOnly?: boolean;
   selectedModel: SelectedModel;
@@ -134,7 +130,6 @@ export const BatchSettingsForm: React.FC<BatchSettingsFormProps> = ({
   generationTypeMode = 'i2v',
   phaseConfig = DEFAULT_PHASE_CONFIG,
   onBlurSave,
-  onClearEnhancedPrompts,
   textBeforePrompts = '',
   onTextBeforePromptsChange,
   textAfterPrompts = '',
@@ -157,9 +152,6 @@ export const BatchSettingsForm: React.FC<BatchSettingsFormProps> = ({
     const resolvedFrameCount = clampFrameCountToPolicy(batchVideoFrames, spec, generationIntent);
     const [stepMin, stepMax] = spec.stepRange;
     const canShowSmoothContinuations = Boolean(spec.continuationByExecutionMode[policy.travelMode]);
-
-    // State for clear enhanced prompts success feedback
-    const [clearSuccess, setClearSuccess] = React.useState(false);
 
     // Dev-only: warn when the model spec says a field should render but the
     // required handler prop wasn't passed. Without this, the field silently
@@ -254,11 +246,6 @@ export const BatchSettingsForm: React.FC<BatchSettingsFormProps> = ({
                       readOnly={readOnly}
                       clearable={!readOnly}
                       onClear={() => onBatchVideoPromptChange('')}
-                      voiceInput={!readOnly}
-                      voiceContext="This is a video generation prompt for AI video transitions between images. Describe the motion, transition style, or visual transformation you want. Focus on movement, camera motion, or how elements should animate."
-                      onVoiceResult={(result) => {
-                        onBatchVideoPromptChange(result.prompt || result.transcription);
-                      }}
                     />
                   </div>
                   
@@ -307,11 +294,6 @@ export const BatchSettingsForm: React.FC<BatchSettingsFormProps> = ({
                     readOnly={readOnly}
                     clearable={!readOnly}
                     onClear={() => onNegativePromptChange('')}
-                    voiceInput={!readOnly}
-                    voiceContext="This is a negative prompt - things to AVOID in the video generation. List unwanted qualities like 'blurry, distorted, low quality, shaky'. Keep it as a comma-separated list of terms to avoid."
-                    onVoiceResult={(result) => {
-                      onNegativePromptChange(result.prompt || result.transcription);
-                    }}
                   />
                 </div>
             </div>
@@ -334,11 +316,6 @@ export const BatchSettingsForm: React.FC<BatchSettingsFormProps> = ({
                     readOnly={readOnly}
                     clearable={!readOnly}
                     onClear={() => onTextBeforePromptsChange?.('')}
-                    voiceInput={!readOnly}
-                    voiceContext="This is text that will be prepended to every video generation prompt. Keep it short - things like style prefixes or descriptions that apply to all video segments."
-                    onVoiceResult={(result) => {
-                      onTextBeforePromptsChange?.(result.prompt || result.transcription);
-                    }}
                   />
                 </div>
 
@@ -357,11 +334,6 @@ export const BatchSettingsForm: React.FC<BatchSettingsFormProps> = ({
                     readOnly={readOnly}
                     clearable={!readOnly}
                     onClear={() => onTextAfterPromptsChange?.('')}
-                    voiceInput={!readOnly}
-                    voiceContext="This is text that will be appended to every video generation prompt. Keep it short - things like quality suffixes or parameters that apply to all video segments."
-                    onVoiceResult={(result) => {
-                      onTextAfterPromptsChange?.(result.prompt || result.transcription);
-                    }}
                   />
                 </div>
               </div>
@@ -389,28 +361,6 @@ export const BatchSettingsForm: React.FC<BatchSettingsFormProps> = ({
                       <Label htmlFor="enhance-prompt" className="text-xs cursor-pointer">
                         Enhance Prompts
                       </Label>
-                      {onClearEnhancedPrompts && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={`absolute right-1 h-6 w-6 p-0 ${clearSuccess
-                            ? "text-green-500 hover:text-green-500"
-                            : "text-muted-foreground hover:text-foreground"
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setClearSuccess(true);
-                            setTimeout(() => setClearSuccess(false), 2000);
-                            onClearEnhancedPrompts();
-                          }}
-                        >
-                          {clearSuccess ? (
-                            <Check className="h-3.5 w-3.5" />
-                          ) : (
-                            <Eraser className="h-3.5 w-3.5" />
-                          )}
-                        </Button>
-                      )}
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -528,32 +478,6 @@ export const BatchSettingsForm: React.FC<BatchSettingsFormProps> = ({
                 />
               </div>
             )}
-            
-            {/* Turbo Mode Toggle - DISABLED - keeping code for potential future use
-            {isCloudGenerationEnabled && !isTurboModeDisabled && (
-              <div className="flex items-center gap-x-2 p-3 bg-muted/30 rounded-lg border">
-                <Switch
-                  id="turbo-mode"
-                  checked={turboMode}
-                  onCheckedChange={(checked) => {
-                    onTurboModeChange(checked);
-                    // Auto-set frames to 81 when turbo mode is enabled
-                    if (checked && batchVideoFrames !== 81) {
-                      onBatchVideoFramesChange(81);
-                    }
-                  }}
-                />
-                <div className="flex-1">
-                  <Label htmlFor="turbo-mode" className="font-medium">
-                    Turbo Mode
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Using fast WAN 2.2 model for quick results ({framesToSeconds(81)})
-                  </p>
-                </div>
-              </div>
-            )}
-            */}
             
             {/* Frames per pair - hidden in Timeline mode since users set duration individually */}
             {!isTimelineMode && (

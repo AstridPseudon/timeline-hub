@@ -2,7 +2,7 @@
  * Context menu item family contracts — manifest contribution declarations.
  *
  * Context menu item contributions add items to clip, track, and timeline-area
- * context menus. Fully bridged at M4 through the command dispatch system.
+ * context menus. Dispatched through the command system.
  *
  * @module video/families/contextMenuItems
  * @publicContract

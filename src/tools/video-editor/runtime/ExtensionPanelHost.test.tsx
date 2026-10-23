@@ -165,3 +165,21 @@ describe('registered panel lifecycle', () => {
     expect(observe.mock.calls).toHaveLength(dispose.mock.calls.length);
   });
 });
+
+describe('per-extension video binding', () => {
+  it('gives each extension its own adapter and leaves the host adapter untouched', () => {
+    const seen: Record<string, unknown> = {};
+    const panel = (extensionId: string): VideoEditorPanelDescriptor => ({
+      id: `${extensionId}-panel`, extensionId, placement: 'asset-panel',
+      render: ({ video }: PanelRenderProps) => { seen[extensionId] = video; return null; },
+    });
+    const video = { view: {}, seek: vi.fn() } as never;
+    const bindVideo = vi.fn((adapter: object, extensionId: string) => ({ ...adapter, bound: extensionId }) as never);
+    const panels = [panel('ext.a'), panel('ext.b')];
+    render(<ExtensionPanelHost panels={panels} visiblePanelKeys={new Set(panels.map(getPanelKey))} video={video} bindVideo={bindVideo} />);
+    expect(seen['ext.a']).toMatchObject({ bound: 'ext.a' });
+    expect(seen['ext.b']).toMatchObject({ bound: 'ext.b' });
+    expect(video).not.toHaveProperty('bound');
+    expect(bindVideo).toHaveBeenCalledTimes(2);
+  });
+});

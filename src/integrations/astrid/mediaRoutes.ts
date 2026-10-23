@@ -1,6 +1,6 @@
 /**
- * Managed-media content addressing (`GET|HEAD /projects/:slug/media/:id/content`,
- * doc-27 §4.1). The route serves verified managed bytes with Range/ETag
+ * Managed-media content addressing (`GET|HEAD /projects/:slug/media/:id/content`).
+ * The route serves verified managed bytes with Range/ETag
  * semantics, so consumers build URLs for `<video>`/`<img>`/`<audio>` elements
  * instead of fetching JSON — this module only fixes the address form.
  */
@@ -19,7 +19,7 @@ export class AstridLocalMediaRoutes {
 
   /**
    * Same-origin URL for one managed media object's bytes. Absolute URLs pass
-   * through untouched is the CALLER'S job (see the B3 `bridgeMediaUrl`
+   * through untouched is the CALLER'S job (see `bridgeMediaUrl`
    * helper); here every id becomes a content-route address.
    */
   contentUrl(mediaId: string): string {

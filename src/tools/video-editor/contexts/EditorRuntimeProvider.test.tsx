@@ -1,4 +1,6 @@
 import type { AstridElementHost } from '@/tools/video-editor/runtime/astrid-element-host.ts';
+import { extensionSettingsGroup } from '@/tools/video-editor/runtime/extensionSettingsBacking';
+import { getSettingsStore } from '@/shared/settings/instance';
 import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import { StrictMode, useEffect } from 'react';
 import type { FC, ReactNode } from 'react';
@@ -35,6 +37,13 @@ import { PUBLIC_ASTRID_READ_ONLY_EDITABILITY } from '@/pages/Home/PublicAstridEd
 import { PUBLIC_ASTRID_ELEMENT_HOST } from '@/pages/Home/astrid-public-host.tsx';
 import type { ProcessManager } from '@/tools/video-editor/runtime/processes/ProcessManager.ts';
 import { useDataKindRegistryContext } from '@/tools/video-editor/data-kinds/DataKindRegistryContext';
+
+/** What an extension's setting holds in the settings store, as JSON text (null when nothing is saved). */
+function savedExtensionSetting(extensionId: string, key: string): string | null {
+  const value = getSettingsStore().get({ group: extensionSettingsGroup(extensionId), field: key, default: undefined, validate: () => true });
+  return value === undefined ? null : JSON.stringify(value);
+}
+
 
 const fixtureAstridElementHost: AstridElementHost = {
   descriptors: [],
@@ -1111,7 +1120,7 @@ describe('EditorRuntimeProvider live data registry lifecycle', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M3: Repository-backed runtime settings write-through
+// Repository-backed runtime settings write-through
 // ---------------------------------------------------------------------------
 
 describe('EditorRuntimeProvider project-object capability', () => {
@@ -1386,7 +1395,7 @@ describe('EditorRuntimeProvider repository-backed runtime settings', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M4: Extension settings surface via SchemaForm inside EditorRuntimeProvider
+// Extension settings surface via SchemaForm inside EditorRuntimeProvider
 // ---------------------------------------------------------------------------
 
 describe('EditorRuntimeProvider extension settings surface', () => {
@@ -1543,9 +1552,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
 
     // Verify the value was persisted to localStorage
     await waitFor(() => {
-      const raw = localStorage.getItem(
-        `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-      );
+      const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
       expect(raw).toBe('"my-secret-key"');
     });
 
@@ -1620,9 +1627,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     // The save should have been blocked — SchemaForm validateAndFocus
     // returns false, so no localStorage write should have occurred
     await waitFor(() => {
-      const raw = localStorage.getItem(
-        `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-      );
+      const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
       // Should still be null (no save occurred)
       expect(raw).toBeNull();
     });
@@ -1679,9 +1684,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     fireEvent.click(saveBtn);
 
     await waitFor(() => {
-      const raw = localStorage.getItem(
-        `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-      );
+      const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
       expect(raw).toBe('"some-key"');
     });
 
@@ -1693,9 +1696,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
 
     // Verify localStorage key was cleared and form reverted to default (empty)
     await waitFor(() => {
-      const raw = localStorage.getItem(
-        `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-      );
+      const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
       expect(raw).toBeNull();
     });
 
@@ -1750,9 +1751,7 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     fireEvent.click(saveBtn);
 
     await waitFor(() => {
-      const raw = localStorage.getItem(
-        `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-      );
+      const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
       expect(raw).toBe('"saved-key"');
     });
 
@@ -1771,15 +1770,13 @@ describe('EditorRuntimeProvider extension settings surface', () => {
     });
 
     // localStorage should still have the saved value (not the unsaved change)
-    const raw = localStorage.getItem(
-      `astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`,
-    );
+    const raw = savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey');
     expect(raw).toBe('"saved-key"');
   });
 
-  // T17: Shared cleanup helper — diagnostics removal and settings UI state reset
+  // Shared cleanup helper — diagnostics removal and settings UI state reset
   // on disable/unload, preserving unrelated extension state.
-  it('disable clears targeted extension diagnostics and settings while preserving unrelated extension state', async () => {
+  it('disable clears the targeted extension diagnostics and keeps all saved extension settings (they live in the Runtime)', async () => {
     const OTHER_EXTENSION_ID = 'com.example.other';
     const otherManifest = {
       id: OTHER_EXTENSION_ID as never,
@@ -1848,25 +1845,23 @@ describe('EditorRuntimeProvider extension settings surface', () => {
 
     // Both extensions' settings should be in localStorage
     expect(
-      localStorage.getItem(`astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`),
+      savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey'),
     ).toBe('"settings-key"');
     expect(
-      localStorage.getItem(`astrid.ext.${OTHER_EXTENSION_ID}.otherKey`),
+      savedExtensionSetting(OTHER_EXTENSION_ID, 'otherKey'),
     ).toBe('"other-key"');
 
     // Disable the settings extension (remove from props)
     rerender(<Host includeSettings={false} />);
 
-    await waitFor(() => {
-      // Targeted extension's settings localStorage must be cleared
-      expect(
-        localStorage.getItem(`astrid.ext.${SETTINGS_EXTENSION_ID}.apiKey`),
-      ).toBeNull();
-    });
+    // The targeted extension's saved settings are kept: only uninstall or reset erases them.
+    expect(
+      savedExtensionSetting(SETTINGS_EXTENSION_ID, 'apiKey'),
+    ).toBe('"settings-key"');
 
     // Unrelated extension's settings localStorage must be preserved
     expect(
-      localStorage.getItem(`astrid.ext.${OTHER_EXTENSION_ID}.otherKey`),
+      savedExtensionSetting(OTHER_EXTENSION_ID, 'otherKey'),
     ).toBe('"other-key"');
 
     // Targeted extension's diagnostics must be cleared
@@ -2024,7 +2019,7 @@ describe('EditorRuntimeProvider render-boundary recovery', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T22: Focused per-registry scoped cleanup tests
+// Focused per-registry scoped cleanup tests
 // ---------------------------------------------------------------------------
 // These tests verify that each lifecycle-owned contribution registry
 // (effects, transitions, shaders, clip-types) correctly scopes cleanup to
@@ -2286,7 +2281,7 @@ describe('EditorRuntimeProvider clip-type registry scoped cleanup', () => {
 });
 
 // ---------------------------------------------------------------------------
-// M1: Proposal persistence provider lifecycle (fail-to-pass — T5 will satisfy)
+// Proposal persistence provider lifecycle (fail-to-pass)
 // ---------------------------------------------------------------------------
 
 describe('M1: proposal persistence provider lifecycle', () => {
@@ -2373,7 +2368,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     expect(dataProvider.createExtensionPersistenceService).toHaveBeenCalled();
 
     // initialize() must have been called on the service.
-    // (FAIL-TO-PASS: currently initialize is never called. T5 will fix this.)
+    // (FAIL-TO-PASS: currently initialize is never called. This is the fix target.)
     expect(persistenceService.initialize).toHaveBeenCalled();
 
     // Wait for initialization to settle, then verify proposalRuntime was
@@ -2431,7 +2426,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     // When initialization fails, syncSlices MUST NOT carry a non-null
     // proposalRuntime.  (FAIL-TO-PASS: currently the runtime is exposed
     // unconditionally in the render body, without waiting for initialize.)
-    // After T5, this should hold.
+    // This should hold.
     await waitFor(() => {
       expect(persistenceService.initialize).toHaveBeenCalled();
     });
@@ -2439,7 +2434,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
     const runtimeSyncs = mocks.syncSlices.mock.calls.filter(
       (call: any[]) => call[0] && 'proposalRuntime' in call[0] && call[0].proposalRuntime != null,
     );
-    // In the corrected implementation (T5), a failed initialize must not
+    // In the corrected implementation, a failed initialize must not
     // expose a persistence-backed proposalRuntime.
     expect(runtimeSyncs.length).toBe(0);
   });
@@ -2533,7 +2528,7 @@ describe('M1: proposal persistence provider lifecycle', () => {
   });
 
   it('scopes persistence to userId/timelineId/provider changes, disposing old service and creating fresh', async () => {
-    // This test verifies the T5 rework: when scope (userId, timelineId, or
+    // This test verifies the scope rework: when scope (userId, timelineId, or
     // dataProvider) changes, the old persistence service is disposed, the
     // bridge is cleared, and a new service is created + initialized for the
     // new scope.
@@ -2713,7 +2708,7 @@ describe('EditorRuntimeProvider browse-only assembly', () => {
 
     // Keep this diagnostic serializable: a failing spy assertion formats its
     // captured ExtensionContext, whose creative.assets getter intentionally
-    // throws until M6 and can hide the actual activation regression.
+    // throws until its adapter is implemented and can hide the actual activation regression.
     expect(activate.mock.calls.length).toBe(0);
     expect(runtime!.extensionRuntime?.extensions ?? []).toHaveLength(0);
     expect(runtime!.commandRegistry).toBeUndefined();
@@ -3044,5 +3039,252 @@ describe('EditorRuntimeProvider effect replay and Fast Refresh', () => {
     expect(before.resolve(sceneId)).toBeUndefined();
     expect(live?.isDisposed).toBe(true);
     expect(persistence.dispose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('EditorRuntimeProvider settings snapshot gate', () => {
+  const TRANSCRIPT_ID = 'transcript';
+  const THREEJS_ID = 'haus.astrid.threejs-live-editor';
+  const GATE_IDS = [TRANSCRIPT_ID, THREEJS_ID];
+
+  function cleanGateLocalStorage(): void {
+    for (const id of GATE_IDS) {
+      const prefix = `astrid.ext.${id}.`;
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith(prefix)) keysToRemove.push(key);
+      }
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+    }
+  }
+
+  function gateSnapshot(extensionId: string): ExtensionSettingsSnapshot {
+    return {
+      extensionId,
+      schemaVersion: 2,
+      values: { channels: ['left', 'right'], enableDebug: true },
+      lastWrittenAt: '2026-10-20T00:00:00.000Z',
+    };
+  }
+
+  function makeGateRepository(read: () => Promise<ExtensionSettingsSnapshot[]>) {
+    return {
+      initialize: vi.fn().mockResolvedValue(undefined),
+      dispose: vi.fn().mockResolvedValue(undefined),
+      isDisposed: false,
+      putSettingsSnapshot: vi.fn(async () => undefined),
+      getSettingsSnapshot: vi.fn(async () => null),
+      getAllSettingsSnapshots: vi.fn(read),
+      deleteSettingsSnapshot: vi.fn(async () => undefined),
+    } as Partial<ExtensionStateRepository> as ExtensionStateRepository;
+  }
+
+  function makeGateExtension(
+    extensionId: string,
+    activations: string[],
+    captured: Record<string, ExtensionSettingsService>,
+  ) {
+    return defineExtension({
+      manifest: {
+        id: extensionId as never,
+        version: '1.0.0',
+        label: extensionId,
+        settingsSchemaVersion: 2,
+        settingsDefaults: { theme: 'system' },
+      },
+      activate(ctx) {
+        activations.push(extensionId);
+        captured[extensionId] = ctx.services.settings;
+        return { dispose() {} };
+      },
+    });
+  }
+
+  const sorted = (ids: string[]) => [...ids].sort();
+
+  beforeEach(() => {
+    cleanGateLocalStorage();
+  });
+
+  afterEach(() => {
+    cleanGateLocalStorage();
+  });
+
+  it('activates extensions only after stored snapshots load, and honours them as initial settings', async () => {
+    let resolveRead!: (snapshots: ExtensionSettingsSnapshot[]) => void;
+    const repository = makeGateRepository(() => new Promise((resolve) => { resolveRead = resolve; }));
+    const activations: string[] = [];
+    const captured: Record<string, ExtensionSettingsService> = {};
+    const extensions = [
+      makeGateExtension(TRANSCRIPT_ID, activations, captured),
+      makeGateExtension(THREEJS_ID, activations, captured),
+    ];
+
+    render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={{} as DataProvider}
+        timelineId="gate-normal"
+        userId="user-1"
+        extensions={extensions}
+        extensionStateRepository={repository}
+      >
+        <div>gate child</div>
+      </EditorRuntimeProvider>,
+    );
+
+    await act(async () => { await Promise.resolve(); });
+    expect(repository.getAllSettingsSnapshots).toHaveBeenCalledTimes(1);
+    expect(activations).toEqual([]);
+
+    await act(async () => {
+      resolveRead([gateSnapshot(TRANSCRIPT_ID), gateSnapshot(THREEJS_ID)]);
+    });
+
+    await waitFor(() => {
+      expect(sorted(activations)).toEqual(sorted([TRANSCRIPT_ID, THREEJS_ID]));
+    });
+    expect(captured[TRANSCRIPT_ID].get('channels')).toEqual(['left', 'right']);
+    expect(captured[TRANSCRIPT_ID].get('enableDebug')).toBe(true);
+    expect(captured[THREEJS_ID].get('channels')).toEqual(['left', 'right']);
+    expect(captured[THREEJS_ID].get('enableDebug')).toBe(true);
+    expect(captured[TRANSCRIPT_ID].get('theme')).toBe('system');
+    expect(repository.putSettingsSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('keeps the editor children rendered and activates nothing while the read is pending', async () => {
+    const repository = makeGateRepository(() => new Promise(() => {}));
+    const activations: string[] = [];
+    const captured: Record<string, ExtensionSettingsService> = {};
+    const extensions = [makeGateExtension(TRANSCRIPT_ID, activations, captured)];
+
+    const view = render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={{} as DataProvider}
+        timelineId="gate-pending"
+        userId="user-1"
+        extensions={extensions}
+        extensionStateRepository={repository}
+      >
+        <div>gate child</div>
+      </EditorRuntimeProvider>,
+    );
+
+    await act(async () => { await Promise.resolve(); });
+    expect(screen.getByText('gate child')).toBeTruthy();
+    expect(repository.getAllSettingsSnapshots).toHaveBeenCalledTimes(1);
+    expect(activations).toEqual([]);
+    view.unmount();
+  });
+
+  it('activates without clobbering when the snapshot read rejects, and settings still work locally', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const repository = makeGateRepository(() => Promise.reject(new Error('read failed')));
+    const activations: string[] = [];
+    const captured: Record<string, ExtensionSettingsService> = {};
+    const extensions = [
+      makeGateExtension(TRANSCRIPT_ID, activations, captured),
+      makeGateExtension(THREEJS_ID, activations, captured),
+    ];
+
+    render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={{} as DataProvider}
+        timelineId="gate-reject"
+        userId="user-1"
+        extensions={extensions}
+        extensionStateRepository={repository}
+      >
+        <div>gate child</div>
+      </EditorRuntimeProvider>,
+    );
+
+    await waitFor(() => {
+      expect(sorted(activations)).toEqual(sorted([TRANSCRIPT_ID, THREEJS_ID]));
+    });
+    expect(captured[TRANSCRIPT_ID].get('channels')).toBeUndefined();
+    expect(captured[TRANSCRIPT_ID].get('theme')).toBe('system');
+
+    act(() => {
+      captured[TRANSCRIPT_ID].set('theme', 'dark');
+    });
+    expect(captured[TRANSCRIPT_ID].get('theme')).toBe('dark');
+
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
+    expect(repository.putSettingsSnapshot).not.toHaveBeenCalled();
+    expect(warn.mock.calls.some((args) => String(args[0]).includes('Stored settings unavailable'))).toBe(true);
+    warn.mockRestore();
+  });
+
+  it('stops waiting after the bound, activates without a repository write, and ignores a late read', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.useFakeTimers();
+    try {
+      let resolveRead!: (snapshots: ExtensionSettingsSnapshot[]) => void;
+      const repository = makeGateRepository(() => new Promise((resolve) => { resolveRead = resolve; }));
+      const activations: string[] = [];
+      const captured: Record<string, ExtensionSettingsService> = {};
+      const extensions = [makeGateExtension(TRANSCRIPT_ID, activations, captured)];
+
+      const view = render(
+        <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+          dataProvider={{} as DataProvider}
+          timelineId="gate-timeout"
+          userId="user-1"
+          extensions={extensions}
+          extensionStateRepository={repository}
+        >
+          <div>gate child</div>
+        </EditorRuntimeProvider>,
+      );
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(2999); });
+      expect(activations).toEqual([]);
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(activations).toEqual([TRANSCRIPT_ID]);
+      expect(repository.putSettingsSnapshot).not.toHaveBeenCalled();
+
+      await act(async () => {
+        resolveRead([gateSnapshot(TRANSCRIPT_ID)]);
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(activations).toEqual([TRANSCRIPT_ID]);
+      expect(captured[TRANSCRIPT_ID].get('channels')).toBeUndefined();
+      expect(repository.putSettingsSnapshot).not.toHaveBeenCalled();
+
+      view.unmount();
+    } finally {
+      vi.useRealTimers();
+      warn.mockRestore();
+    }
+  });
+
+  it('activates immediately when no repository is bound', async () => {
+    const activations: string[] = [];
+    const captured: Record<string, ExtensionSettingsService> = {};
+    const extensions = [
+      makeGateExtension(TRANSCRIPT_ID, activations, captured),
+      makeGateExtension(THREEJS_ID, activations, captured),
+    ];
+
+    render(
+      <EditorRuntimeProvider astridElementHost={fixtureAstridElementHost}
+        dataProvider={{} as DataProvider}
+        timelineId="gate-no-repo"
+        userId="user-1"
+        extensions={extensions}
+      >
+        <div>gate child</div>
+      </EditorRuntimeProvider>,
+    );
+
+    await act(async () => {});
+    expect(sorted(activations)).toEqual(sorted([TRANSCRIPT_ID, THREEJS_ID]));
+    expect(captured[TRANSCRIPT_ID].get('theme')).toBe('system');
+    act(() => {
+      captured[TRANSCRIPT_ID].set('theme', 'light');
+    });
+    expect(captured[TRANSCRIPT_ID].get('theme')).toBe('light');
   });
 });

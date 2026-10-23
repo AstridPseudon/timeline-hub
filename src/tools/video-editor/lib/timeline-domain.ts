@@ -20,7 +20,7 @@ import type {
   TimelineShaderScope,
   TrackDefinition,
 } from '../types/index.ts';
-import { validateAssetMetadata } from './assetMetadata';
+import { isPassThroughRegistryField, validateAssetMetadata } from './assetMetadata';
 import { getAssetResolutionToken } from './asset-registry.ts';
 import {
   sameCompositionShaderIdentity,
@@ -192,7 +192,7 @@ export const TIMELINE_CLIP_FIELDS = [
   'generation',
   'app',
   'label',
-  // M9: Host-owned keyframes keyed by parameter name
+  // Host-owned keyframes keyed by parameter name
   'keyframes',
 ] as const;
 
@@ -236,6 +236,9 @@ const ASSET_REGISTRY_ENTRY_FIELDS = [
   'title',
   'prompt',
   'media_id',
+  'handle',
+  'source',
+  'pixel_provenance',
   'url',
   'etag',
   'content_sha256',
@@ -1134,20 +1137,16 @@ const canonicalizeNonHoldTrim = (
 /**
  * Track-scale semantics marker (one-time migration).
  *
- * The composition used to apply `track.scale` only to plain, un-positioned
- * media clips; the owner-approved semantics is that scale composes onto EVERY
- * clip on the track, multiplying with position overrides (positioned clips'
- * x/y/width/height are track-local, scaled about the composition center).
- * Under the new semantics, positioned clips saved by the old code would
- * visibly move the first time they render — so this load-time migration bakes
- * their current on-screen appearance into stored values: inverse-scale about
- * the composition center, exactly cancelling the scale the renderer now
- * applies.
+ * `track.scale` applies to EVERY clip on the track, multiplying with position overrides
+ * (positioned clips' x/y/width/height are track-local, scaled about the composition center).
+ * The load-time migration bakes the on-screen appearance of positioned clips saved before
+ * this rule into stored values: inverse-scale about the composition center, exactly
+ * cancelling the scale the renderer applies.
  *
  * `track.app[TRACK_SCALE_BAKE_MARKER] === true` records that a track's
  * positioned-clip coordinates already use the new semantics. Every track is
- * stamped on first canonicalization after the change (tracks at scale 1 need
- * no bake — old and new semantics coincide there), so the transform can never
+ * stamped on first canonicalization (tracks at scale 1 need
+ * no bake: both semantics coincide there), so the transform can never
  * run twice and never touches clips positioned under the new semantics. The
  * marker lives on `track.app` because that field survives both
  * `sanitizeTrackDefinitionSnapshot` and `rowsToConfig`'s track cloning —
@@ -1323,7 +1322,7 @@ export const canonicalizeTimelinePair = (
 };
 
 // ---------------------------------------------------------------------------
-// M11 live binding metadata scan / resolution
+// Live binding metadata scan / resolution
 // ---------------------------------------------------------------------------
 
 export type TimelineLiveBindingDiagnosticSeverity = 'info' | 'warning' | 'error';
@@ -2308,7 +2307,7 @@ export const scanTimelineLiveUniformBindings = (
 };
 
 // ---------------------------------------------------------------------------
-// Transition validation / repair (T14: timeline-domain integration)
+// Transition validation / repair
 // ---------------------------------------------------------------------------
 
 const TRANSITION_CODE_TO_ISSUE_CODE: Partial<Record<string, TimelineDomainIssueCode>> = {
@@ -2525,6 +2524,17 @@ export const sanitizeAssetRegistryEntry = (entry: AssetRegistryEntry): AssetRegi
         sanitizedEntries.push([field, validated]);
       }
     } else {
+      sanitizedEntries.push([field, value]);
+    }
+  }
+  // Fields the App does not model are opaque (owned by Astrid or a later
+  // schema): keep them byte-equal, except App-only runtime fields and values
+  // that cannot be saved.
+  const modelled = new Set<string>(ASSET_REGISTRY_ENTRY_FIELDS);
+  for (const field of Object.keys(entry)) {
+    if (modelled.has(field)) continue;
+    const value = (entry as Record<string, unknown>)[field];
+    if (isPassThroughRegistryField(field, value)) {
       sanitizedEntries.push([field, value]);
     }
   }

@@ -147,3 +147,4 @@ describe('complete_task/request validateStoragePathSecurity', () => {
     expect(result.error).toContain('storage_path does not match task_id');
   });
 });
+

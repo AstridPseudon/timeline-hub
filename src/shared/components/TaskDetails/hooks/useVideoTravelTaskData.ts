@@ -54,14 +54,11 @@ export function formatTravelModelName(name: string): string {
     .replace(/_/g, ' ');
 }
 
-export function resolveTravelPresetName(
-  presetId: string | undefined,
-  dbPresetName: string | null | undefined,
-): string | null {
+export function resolveTravelPresetName(presetId: string | undefined): string | null {
   if (!presetId) {
     return null;
   }
-  return BUILTIN_PRESET_NAMES[presetId] || dbPresetName || null;
+  return BUILTIN_PRESET_NAMES[presetId] || null;
 }
 
 interface UseVideoTravelTaskDataArgs {

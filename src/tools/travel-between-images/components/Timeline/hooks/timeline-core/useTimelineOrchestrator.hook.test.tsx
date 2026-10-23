@@ -6,16 +6,13 @@ const mocks = vi.hoisted(() => ({
   setResetGap: vi.fn(),
   handleImageDropInterceptor: vi.fn(),
   handleGenerationDropInterceptor: vi.fn(),
-  handleDuplicateInterceptor: vi.fn(),
   handleTapToMoveAction: vi.fn(),
   handleTapToMoveMultiAction: vi.fn(),
   handleTimelineTapToMove: vi.fn(),
-  handleVideoBrowserSelect: vi.fn(),
   handleMouseDown: vi.fn(),
   handleMouseMove: vi.fn(),
   handleMouseUp: vi.fn(),
   dynamicPositions: vi.fn(() => new Map([['img-1', 0], ['img-2', 50]])),
-  handleEndpointMouseDown: vi.fn(),
   isSelected: vi.fn(() => false),
   toggleSelection: vi.fn(),
   clearSelection: vi.fn(),
@@ -66,8 +63,6 @@ vi.mock('../segment/usePendingFrames', () => ({
   usePendingFrames: () => ({
     pendingDropFrame: 12,
     setPendingDropFrame: vi.fn(),
-    pendingDuplicateFrame: 18,
-    setPendingDuplicateFrame: vi.fn(),
     pendingExternalAddFrame: null,
     isInternalDropProcessing: true,
     setIsInternalDropProcessing: vi.fn(),
@@ -88,18 +83,6 @@ vi.mock('./useTimelineUiState', () => ({
     resetGap: 12,
     setResetGap: mocks.setResetGap,
     maxGap: 6,
-    showVideoBrowser: false,
-    setShowVideoBrowser: vi.fn(),
-    isUploadingStructureVideo: false,
-    setIsUploadingStructureVideo: vi.fn(),
-  }),
-}));
-
-vi.mock('../drag/useEndpointDrag', () => ({
-  useEndpointDrag: () => ({
-    endpointDragFrame: 77,
-    isEndpointDragging: false,
-    handleEndpointMouseDown: mocks.handleEndpointMouseDown,
   }),
 }));
 
@@ -152,15 +135,11 @@ vi.mock('./useTimelineOrchestratorActions', () => ({
     return {
       handleImageDropInterceptor: mocks.handleImageDropInterceptor,
       handleGenerationDropInterceptor: mocks.handleGenerationDropInterceptor,
-      handleDuplicateInterceptor: mocks.handleDuplicateInterceptor,
       handleTapToMoveAction: mocks.handleTapToMoveAction,
       handleTapToMoveMultiAction: mocks.handleTapToMoveMultiAction,
       handleTimelineTapToMove: mocks.handleTimelineTapToMove,
-      handleVideoBrowserSelect: mocks.handleVideoBrowserSelect,
     };
   }),
-  handleTimelineStructureVideoSelect: vi.fn(),
-  runDuplicateInterceptor: vi.fn(),
   runGenerationDropInterceptor: vi.fn(),
   runImageDropInterceptor: vi.fn(),
 }));
@@ -184,27 +163,12 @@ describe('useTimelineOrchestrator', () => {
       setFramePositions: vi.fn().mockResolvedValue(undefined),
       onImageReorder: vi.fn(),
       setIsDragInProgress: vi.fn(),
-      onImageDuplicate: vi.fn(),
-      structureVideo: {
-        structureVideos: [{ path: 'guide.mp4', start_frame: 0, end_frame: 40, treatment: 'adjust' }],
-        primaryStructureVideo: {
-          path: 'guide.mp4',
-          metadata: null,
-          treatment: 'adjust',
-          motionStrength: 1,
-          structureType: 'flow',
-          uni3cEndPercent: 0.1,
-        },
-      },
     }));
 
     expect(mocks.setResetGap).toHaveBeenCalledWith(6);
     expect(result.current.selection.selectedIds).toEqual(['img-1']);
     expect(result.current.pending.pendingDropFrame).toBe(12);
-    expect(result.current.endpoint.endpointDragFrame).toBe(77);
     expect(result.current.device.enableTapToMove).toBe(true);
-    expect(result.current.actions.handleVideoBrowserSelect).toBe(mocks.handleVideoBrowserSelect);
-    expect(result.current.actions.handleEndpointMouseDown).toBe(mocks.handleEndpointMouseDown);
     expect(result.current.computed.currentPositions).toEqual(new Map([['img-1', 0], ['img-2', 50]]));
 
     expect((globalThis as { __timelineActionArgs__?: Record<string, unknown> }).__timelineActionArgs__).toEqual(

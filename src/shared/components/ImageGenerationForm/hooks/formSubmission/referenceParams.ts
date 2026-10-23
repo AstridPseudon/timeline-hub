@@ -1,8 +1,8 @@
 import type { GenerationSource, ReferenceApiParams } from '../../types';
-import type { FormStateSnapshot } from './types';
+import type { FormSubmissionPromptConfig } from './types';
 
 type ReferenceStateSnapshot = Pick<
-  FormStateSnapshot,
+  FormSubmissionPromptConfig,
   | 'styleReferenceImageGeneration'
   | 'styleReferenceStrength'
   | 'subjectStrength'

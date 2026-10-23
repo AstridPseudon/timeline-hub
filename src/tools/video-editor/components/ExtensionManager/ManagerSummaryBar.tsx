@@ -44,19 +44,19 @@ export function ManagerSummaryBar({
         {entries.length} package{entries.length !== 1 ? 's' : ''}
       </span>
       {counts.loaded > 0 && (
-        <span className="flex items-center gap-1 text-emerald-400">
+        <span className="flex items-center gap-1 text-wes-forest">
           <CheckCircle className="h-3 w-3" />
           {counts.loaded} loaded
         </span>
       )}
       {counts['disabled-by-user'] > 0 && (
-        <span className="flex items-center gap-1 text-zinc-400">
+        <span className="flex items-center gap-1 text-muted-foreground">
           <Ban className="h-3 w-3" />
           {counts['disabled-by-user']} disabled
         </span>
       )}
       {hasIssues && (
-        <span className="flex items-center gap-1 text-red-400">
+        <span className="flex items-center gap-1 text-ink-danger">
           <AlertCircle className="h-3 w-3" />
           {counts.invalid + counts.incompatible + counts['runtime-error'] +
             counts['settings-error']}{' '}

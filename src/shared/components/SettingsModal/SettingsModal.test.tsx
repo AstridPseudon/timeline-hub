@@ -25,8 +25,6 @@ vi.mock('@/shared/hooks/useModal', () => ({
   }),
 }));
 vi.mock('@/shared/hooks/useScrollFade', () => ({ useScrollFade: () => ({ showFade: false, scrollRef: { current: null } }) }));
-vi.mock('@/shared/contexts/AIInputModeContext', () => ({ useAIInputMode: () => ({ mode: 'text', setMode: vi.fn() }) }));
-vi.mock('@/integrations/supabase/client', () => ({ getSupabaseClient: () => ({ auth: { signOut: vi.fn() } }) }));
 vi.mock('./sections/PreferencesSection', () => ({ PreferencesSection: () => <div>Preferences</div> }));
 
 import { SettingsModal } from './SettingsModal';
@@ -57,8 +55,6 @@ function renderSettings() {
     <SettingsModal
       isOpen
       onOpenChange={vi.fn()}
-      preserveUserText={false}
-      setPreserveUserText={vi.fn()}
     />,
   );
   const section = screen.getByRole('region', { name: STATUS_COPY.title });
@@ -78,6 +74,7 @@ describe('SettingsModal Astrid status', () => {
   it('says it is connected, names the workspace and shows the Runtime and Workspace marks only', async () => {
     const section = renderSettings();
 
+    fireEvent.click(await within(section).findByRole('button', { name: 'Details' }));
     expect(await within(section).findByText('My Studio')).toBeInTheDocument();
     expect(within(section).getByRole('status')).toHaveTextContent(STATUS_COPY.connected);
     expect(within(section).getByText(STATUS_COPY.workspaceName).closest('div')).toHaveTextContent('My Studio');

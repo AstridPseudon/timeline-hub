@@ -9,6 +9,7 @@ import {
   type ShotDropData,
 } from '@/shared/lib/dnd/dragDrop';
 import { useExternalDrop } from './useExternalDrop';
+import { PANEL_CLIP_DRAG_TYPE, createPanelClipDragSource } from '@/tools/video-editor/lib/panel-clip-drag';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data';
 import {
@@ -1880,5 +1881,99 @@ describe('useExternalDrop', () => {
     });
 
     expect(handleAddTextAt).toHaveBeenCalledWith('V1', 12);
+  });
+
+  describe('panel clip drops', () => {
+    const OWNER = 'acme.worlds';
+    function harness() {
+      const dataRef = { current: makeDropTestData() } as React.MutableRefObject<DropTestData>;
+      const coordinator = {
+        update: vi.fn(),
+        showSecondaryGhosts: vi.fn(),
+        end: vi.fn(),
+        lastPosition: {
+          time: 9, rowIndex: 0, trackId: 'V1', trackKind: 'visual', trackName: 'V1', isNewTrack: false,
+          isNewTrackTop: false, isReject: false, newTrackKind: null,
+          screenCoords: { rowTop: 0, rowLeft: 0, rowWidth: 0, rowHeight: 0, clipLeft: 0, clipWidth: 0, ghostCenter: 0 },
+        },
+        editAreaRef: { current: null },
+      };
+      const timelineOps = {
+        validate: vi.fn(() => ({ valid: true, diagnostics: [] })),
+        apply: vi.fn(() => ({})),
+        flush: vi.fn(async () => ({ version: 5 })),
+      };
+      const selectClips = vi.fn();
+      const setSelectedTrackId = vi.fn();
+      const store = {
+        getState: () => ({
+          timelineOps,
+          timelineReader: { snapshot: () => ({ baseVersion: 4, clips: [{ id: 'clip-1' }] }) },
+          ops: { selectClips, setSelectedTrackId },
+          data: { dataRef: null, pendingOpsRef: null, selectedTrackId: null },
+        }),
+      };
+      const hook = renderHook(() => useExternalDrop({
+        store: store as never,
+        dataRef,
+        pendingOpsRef: { current: 0 },
+        scale: 1,
+        scaleWidth: 1,
+        selectedTrackId: null,
+        applyEdit: vi.fn(),
+        invalidateAssetRegistry: vi.fn(),
+        resolveAssetUrl: vi.fn(),
+        coordinator,
+        registerGenerationAsset: vi.fn(),
+        uploadImageGeneration: vi.fn(),
+        uploadVideoGeneration: vi.fn(),
+        handleAssetDrop: vi.fn(),
+        finalVideoMap: new Map(),
+      }));
+      return { hook, timelineOps, selectClips, setSelectedTrackId };
+    }
+    function startDrag(extensionId = OWNER) {
+      const data: Record<string, string> = {};
+      createPanelClipDragSource(extensionId, { ownerOf: () => extensionId })({ clipType: 'acme.scene', from: 1, to: 4 })!
+        .onDragStart({ dataTransfer: { effectAllowed: 'none', setData: (t: string, v: string) => { data[t] = v; } } as unknown as DataTransfer });
+      return data;
+    }
+
+    it('accepts the drag during drag over so the shared drop indicator shows', () => {
+      const { hook } = harness();
+      const data = startDrag();
+      const event = createDropEvent(data, [PANEL_CLIP_DRAG_TYPE, 'asset-kind:visual']);
+      hook.result.current.onTimelineDragOver(event);
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(event.currentTarget.dataset.dragOver).toBe('true');
+    });
+
+    it('inserts the clip at the drop time and track, selects it and seeks there', async () => {
+      const { hook, timelineOps, selectClips, setSelectedTrackId } = harness();
+      const data = startDrag();
+      await act(async () => {
+        await hook.result.current.onTimelineDrop(createDropEvent(data, [PANEL_CLIP_DRAG_TYPE]));
+      });
+      expect(timelineOps.apply).toHaveBeenCalledTimes(1);
+      const patch = (timelineOps.apply.mock.calls[0] as unknown[])[0] as { source: string; operations: Array<{ op: string; payload: Record<string, unknown> }> };
+      expect(patch.source).toBe(OWNER);
+      expect(patch.operations[0]).toMatchObject({ op: 'clip.add', payload: { track: 'V1', at: 9, clipType: 'acme.scene' } });
+      expect(timelineOps.flush).toHaveBeenCalled();
+      expect(selectClips).toHaveBeenCalledWith(['clip-2']);
+      expect(setSelectedTrackId).toHaveBeenCalledWith('V1');
+    });
+
+    it('ignores a forged token and a read-only timeline', async () => {
+      const { hook, timelineOps } = harness();
+      await act(async () => {
+        await hook.result.current.onTimelineDrop(createDropEvent({ [PANEL_CLIP_DRAG_TYPE]: 'panel-clip-424242' }, [PANEL_CLIP_DRAG_TYPE]));
+      });
+      expect(timelineOps.apply).not.toHaveBeenCalled();
+      mockRuntime.timelineEditability = { checkTimeline: () => ({ allowed: false, reason: 'timeline_read_only' }) };
+      await act(async () => {
+        await hook.result.current.onTimelineDrop(createDropEvent(startDrag(), [PANEL_CLIP_DRAG_TYPE]));
+      });
+      expect(timelineOps.apply).not.toHaveBeenCalled();
+    });
   });
 });

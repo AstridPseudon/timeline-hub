@@ -32,7 +32,6 @@ export const SETTINGS_IDS = {
   SHOTS_PANE_UI_STATE: 'shots-pane-ui-state',
   IMAGE_GEN_PROMPTS: 'image-gen-prompts',
   IMAGE_GEN_PAGE_PREFS: 'image-gen-page-prefs',
-  UPLOAD: 'upload',
   TRAVEL_STRUCTURE_VIDEO: 'travel-structure-video',
   GENERATIONS_PANE: 'generations-pane',
   LAST_AFFECTED_SHOT: 'last-affected-shot',

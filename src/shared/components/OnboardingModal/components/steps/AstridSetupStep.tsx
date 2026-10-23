@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2 } from 'lucide-react';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import { CopyInstallCommand } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
+import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
 import { DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { Button } from '@/shared/components/ui/button';
 import type { OnboardingStepProps } from '@/shared/components/OnboardingModal/types';
@@ -25,14 +25,32 @@ function useSetupReady(): boolean {
   return canRead && isSuccess;
 }
 
+/** How long "Connected to Astrid" stays up before onboarding moves on by itself. */
+const CONNECTED_PAUSE_MS = 1200;
+
 /** Setup and reconnect use the same install line as the connection screen. */
 export function AstridSetupStep({ onNext, reconnect = false }: OnboardingStepProps & { reconnect?: boolean }) {
   const ready = useSetupReady();
   const copy = reconnect ? COPY.notRunning : COPY.setUp;
+  const connection = useRuntimeConnection();
+  // Already connected when onboarding opened: there is nothing to set up, so the step is skipped.
+  const connectedAtOpen = useRef(!reconnect && connection.gated && connection.isConnected);
+  const onNextRef = useRef(onNext);
+  onNextRef.current = onNext;
 
   useEffect(() => {
-    if (reconnect && ready) onNext();
-  }, [ready, onNext, reconnect]);
+    if (connectedAtOpen.current) onNextRef.current();
+  }, []);
+
+  useEffect(() => {
+    if (!ready || connectedAtOpen.current) return undefined;
+    if (reconnect) {
+      onNextRef.current();
+      return undefined;
+    }
+    const timer = setTimeout(() => onNextRef.current(), CONNECTED_PAUSE_MS);
+    return () => clearTimeout(timer);
+  }, [ready, reconnect]);
 
   return (
     <div className="space-y-5 text-center">
@@ -53,7 +71,10 @@ export function AstridSetupStep({ onNext, reconnect = false }: OnboardingStepPro
       ) : (
         <>
           <p className="text-muted-foreground">{withCommandShell(copy.sentence)}</p>
-          <CopyInstallCommand label={COPY.agent.copy} mode="install" />
+          <CopyInstallCommand mode="install" />
+          {reconnect ? null : (
+            <p className="text-sm text-muted-foreground">{withBrowser('If {browser} asks about devices on your network, choose Allow. This step moves on by itself once Astrid is connected.')}</p>
+          )}
         </>
       )}
     </div>

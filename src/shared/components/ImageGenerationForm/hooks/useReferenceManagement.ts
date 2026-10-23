@@ -3,7 +3,6 @@
  */
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useReferenceUpload } from './useReferenceUpload';
 import { useReferenceActionHandlers } from './referenceManagement/useReferenceActionHandlers';
 import { useReferenceDisplayState } from './referenceManagement/useReferenceDisplayState';
 import type {
@@ -23,13 +22,10 @@ export function useReferenceManagement(
     selectedReferenceId,
     selectedReferenceIdByShot,
     referencePointers,
-    hydratedReferences,
     selectedReference,
-    isLoadingProjectSettings,
     isLocalGenerationEnabled,
     updateProjectImageSettings,
     markAsInteracted,
-    privacyDefaults,
     associatedShotId,
     shotPromptSettings,
     setHiresFixConfig,
@@ -38,29 +34,9 @@ export function useReferenceManagement(
   const queryClient = useQueryClient();
   const state = useReferenceUiState();
 
-  const upload = useReferenceUpload({
-    selectedProjectId,
-    effectiveShotId,
-    selectedReferenceIdByShot,
-    referencePointers,
-    hydratedReferences,
-    isLoadingProjectSettings,
-    isLocalGenerationEnabled,
-    updateProjectImageSettings,
-    markAsInteracted,
-    privacyDefaults,
-    referenceMode: state.referenceMode,
-    styleReferenceStrength: state.styleReferenceStrength,
-    subjectStrength: state.subjectStrength,
-    inThisScene: state.inThisScene,
-    inThisSceneStrength: state.inThisSceneStrength,
-  });
-
   const displayState = useReferenceDisplayState({
     selectedReference,
     selectedReferenceId,
-    styleReferenceOverride: upload.styleReferenceOverride,
-    setStyleReferenceOverride: upload.setStyleReferenceOverride,
     setReferenceMode: state.setReferenceMode,
     setStyleReferenceStrength: state.setStyleReferenceStrength,
     setSubjectStrength: state.setSubjectStrength,
@@ -101,7 +77,6 @@ export function useReferenceManagement(
       markAsInteracted,
       pendingReferenceModeUpdate: displayState.pendingReferenceModeUpdate,
       queryClient,
-      handleDeleteReference: upload.handleDeleteReference,
     },
   });
 
@@ -114,19 +89,12 @@ export function useReferenceManagement(
     inThisSceneStrength: state.inThisSceneStrength,
     referenceMode: state.referenceMode,
     styleBoostTerms: state.styleBoostTerms,
-    isUploadingStyleReference: upload.isUploadingStyleReference,
-    styleReferenceOverride: upload.styleReferenceOverride,
-
     styleReferenceImageDisplay: displayState.styleReferenceImageDisplay,
     styleReferenceImageGeneration: displayState.styleReferenceImageGeneration,
 
-    handleStyleReferenceUpload: upload.handleStyleReferenceUpload,
-    handleResourceSelect: upload.handleResourceSelect,
     handleSelectReference: handlers.handleSelectReference,
-    handleDeleteReference: upload.handleDeleteReference,
+    handleDeleteReference: handlers.handleDeleteReference,
     handleUpdateReference: handlers.handleUpdateReference,
-    handleUpdateReferenceName: upload.handleUpdateReferenceName,
-    handleToggleVisibility: upload.handleToggleVisibility,
     handleRemoveStyleReference: handlers.handleRemoveStyleReference,
     handleStyleStrengthChange: handlers.handleStyleStrengthChange,
     handleSubjectStrengthChange: handlers.handleSubjectStrengthChange,

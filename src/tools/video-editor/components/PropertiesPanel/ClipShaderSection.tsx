@@ -59,7 +59,7 @@ function removeClipShaderAppMetadata(app: ResolvedTimelineClip['app'] | undefine
 }
 
 /**
- * M13: Clip-local shader picker. Postprocess shaders are timeline-scoped and
+ * Clip-local shader picker. Postprocess shaders are timeline-scoped and
  * intentionally excluded from ClipPanel until a render graph exists.
  */
 export function ClipShaderSection({

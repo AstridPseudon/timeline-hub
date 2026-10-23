@@ -2,13 +2,11 @@ import { LoraManager } from '@/domains/lora/components';
 import { MotionPresetSelector } from '@/shared/components/MotionPresetSelector';
 import type { PresetMetadata } from '@/shared/components/MotionPresetSelector/types';
 import { SectionHeader } from '@/shared/components/ImageGenerationForm/components/SectionHeader';
-import type { LoraModel } from '@/domains/lora/types/lora';
 import type { LoraManagerState } from '@/domains/lora/types/loraManager';
 import type { PhaseConfig } from '@/shared/types/phaseConfig';
 import { BUILTIN_JOIN_CLIPS_PRESET } from '../constants';
 
 interface JoinClipsMotionSettingsProps {
-  availableLoras: LoraModel[];
   projectId: string | null;
   loraPersistenceKey: string;
   loraManager?: LoraManagerState;
@@ -25,11 +23,9 @@ interface JoinClipsMotionSettingsProps {
     presetMetadata?: PresetMetadata,
   ) => void;
   onPhasePresetRemove?: () => void;
-  featuredPresetIds: string[];
 }
 
 export function JoinClipsMotionSettings({
-  availableLoras,
   projectId,
   loraPersistenceKey,
   loraManager,
@@ -42,15 +38,12 @@ export function JoinClipsMotionSettings({
   selectedPhasePresetId,
   onPhasePresetSelect,
   onPhasePresetRemove,
-  featuredPresetIds,
 }: JoinClipsMotionSettingsProps) {
   return (
     <div className="space-y-4">
       <SectionHeader title="Motion" theme="orange" />
       <MotionPresetSelector
         builtinPreset={BUILTIN_JOIN_CLIPS_PRESET}
-        featuredPresetIds={featuredPresetIds}
-        generationTypeMode="vace"
         selectedPhasePresetId={selectedPhasePresetId ?? null}
         phaseConfig={phaseConfig}
         motionMode={motionMode}
@@ -58,20 +51,16 @@ export function JoinClipsMotionSettings({
         onPresetRemove={onPhasePresetRemove || (() => {})}
         onModeChange={onMotionModeChange || (() => {})}
         onPhaseConfigChange={onPhaseConfigChange || (() => {})}
-        availableLoras={availableLoras}
         randomSeed={randomSeed}
         onRandomSeedChange={onRandomSeedChange}
-        queryKeyPrefix="join-clips-presets"
         renderBasicModeContent={() => (
           <LoraManager
-            availableLoras={availableLoras}
             projectId={projectId || undefined}
             persistenceScope="project"
             enableProjectPersistence={true}
             persistenceKey={loraPersistenceKey}
             externalLoraManager={loraManager}
             title="Additional LoRA Models (Optional)"
-            addButtonText="Add or manage LoRAs"
           />
         )}
       />

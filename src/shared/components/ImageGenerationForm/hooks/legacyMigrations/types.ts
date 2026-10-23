@@ -10,9 +10,6 @@ export interface LegacyMigrationsInput {
 
   referencePointers: ReferenceImage[];
   hydratedReferences: HydratedReferenceImage[];
-  hasLegacyReferences: boolean;
-  rawStyleReferenceImage: string | null;
-  isLoadingReferences: boolean;
   selectedReferenceIdByShot: Record<string, string | null>;
 
   projectImageSettings: ProjectImageSettingsInput | null;
@@ -20,6 +17,4 @@ export interface LegacyMigrationsInput {
     scope: 'project' | 'shot',
     updates: Partial<ProjectImageSettingsInput>
   ) => Promise<void>;
-
-  privacyDefaults: { resourcesPublic: boolean };
 }

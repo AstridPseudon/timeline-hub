@@ -1059,7 +1059,7 @@ describe('AssetPanel — M6: extension-declared asset detail sections', () => {
 
 
 // ---------------------------------------------------------------------------
-// T17: Search provider result integration — stub SearchProviderContribution
+// Search provider result integration — stub SearchProviderContribution
 // ---------------------------------------------------------------------------
 
 describe('AssetPanel — M6: search provider result integration', () => {

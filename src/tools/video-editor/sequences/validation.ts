@@ -27,7 +27,7 @@ export type ValidateSequenceDraftOptions = {
   allowedClipTypes?: readonly string[];
   allowedAssetKeys?: readonly string[];
   metadata?: readonly TrustedSequenceMetadata[];
-  /** T7: extension clip type IDs considered valid even without trusted metadata. */
+  /** extension clip type IDs considered valid even without trusted metadata. */
   extensionClipTypeIds?: ReadonlySet<string>;
 };
 

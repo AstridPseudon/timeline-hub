@@ -54,7 +54,6 @@ interface ShotEditorRefsProps {
     };
     aspectRatio: string | null;
     loras: Array<{ id: string; path: string; strength: number; name: string }>;
-    clearEnhancedPrompts: () => Promise<void>;
   }) | null>;
   generateVideoRef?: React.MutableRefObject<((variantName?: string) => void | Promise<void>) | null>;
   nameClickRef?: React.MutableRefObject<(() => void) | null>;
@@ -88,8 +87,6 @@ export interface ShotEditorState {
   uploadProgress: number;
   fileInputKey: number;
   deletingVideoId: string | null;
-  duplicatingImageId: string | null;
-  duplicateSuccessImageId: string | null;
   pendingFramePositions: Map<string, number>;
   creatingTaskId: string | null;
   isSettingsModalOpen: boolean;
@@ -112,8 +109,6 @@ export type ShotEditorAction =
   | { type: 'SET_UPLOAD_PROGRESS'; payload: number }
   | { type: 'SET_FILE_INPUT_KEY'; payload: number }
   | { type: 'SET_DELETING_VIDEO_ID'; payload: string | null }
-  | { type: 'SET_DUPLICATING_IMAGE_ID'; payload: string | null }
-  | { type: 'SET_DUPLICATE_SUCCESS_IMAGE_ID'; payload: string | null }
   | { type: 'SET_PENDING_FRAME_POSITIONS'; payload: Map<string, number> }
   | { type: 'SET_CREATING_TASK_ID'; payload: string | null }
   | { type: 'SET_SETTINGS_MODAL_OPEN'; payload: boolean }

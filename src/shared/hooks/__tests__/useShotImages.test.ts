@@ -1,118 +1,91 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
+import type { GenerationRow } from '@/domains/generation/types';
+import { generationQueryKeys } from '@/shared/lib/queryKeys/generations';
+import { useShotImages, usePrimeShotImagesCache } from '@/shared/hooks/shots/useShotImages';
 
-// Mock supabase
-vi.mock('@/integrations/supabase/client', () => {
-  const createSupabaseMockChain = () => {
-    const chain: Record<string, ReturnType<typeof vi.fn>> = {};
-    chain.select = vi.fn().mockReturnValue(chain);
-    chain.eq = vi.fn().mockReturnValue(chain);
-    chain.order = vi.fn().mockReturnValue(chain);
-    chain.abortSignal = vi.fn().mockResolvedValue({ data: [], error: null });
-    return chain;
-  };
-
-  return {
-    getSupabaseClient: () => ({
-      from: vi.fn(() => createSupabaseMockChain()),
-    }),
-  };
-});
-
-vi.mock('@/shared/lib/query/queryDefaults', () => ({
-  QUERY_PRESETS: {
-    realtimeBacked: { staleTime: 0 },
-  },
-  STANDARD_RETRY: 3,
-  STANDARD_RETRY_DELAY: vi.fn(() => 1000),
-}));
-
-vi.mock('@/shared/lib/queryKeys', () => ({
-  queryKeys: {
-    generations: {
-      byShot: (shotId: string) => ['generations', 'shot', shotId],
-    },
-    shots: {
-      list: (projectId: string, limit: number) => ['shots', projectId, limit],
-    },
-  },
-}));
-
-vi.mock('@/shared/hooks/shots', () => ({
-  mapShotGenerationToRow: vi.fn((sg: Record<string, unknown>) => ({
-    id: sg.id,
-    generation_id: sg.generation_id,
-    timeline_frame: sg.timeline_frame,
-  })),
-}));
-
-import { useShotImages, useTimelineImages, useUnpositionedImages, useVideoOutputs } from '@/shared/hooks/shots/useShotImages';
-
-function createWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+function createClient() {
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
   });
+}
+
+function createWrapper(queryClient: QueryClient) {
   return ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: queryClient }, children);
 }
 
-describe('useShotImages', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+const images = [
+  { id: 'sg-1', generation_id: 'gen-1', timeline_frame: 0 },
+  { id: 'sg-2', generation_id: 'gen-2', timeline_frame: 50 },
+] as unknown as GenerationRow[];
 
-  it('is disabled when shotId is null', () => {
+describe('useShotImages', () => {
+  it('is idle when shotId is null', () => {
     const { result } = renderHook(() => useShotImages(null), {
-      wrapper: createWrapper(),
+      wrapper: createWrapper(createClient()),
     });
 
     expect(result.current.data).toBeUndefined();
     expect(result.current.isFetching).toBe(false);
   });
 
-  it('does not fetch relational shot images in Astrid authority', () => {
+  it('never fetches: an unprimed shot has no data and no error', () => {
     const { result } = renderHook(() => useShotImages('shot-1'), {
-      wrapper: createWrapper(),
+      wrapper: createWrapper(createClient()),
     });
 
+    expect(result.current.data).toBeUndefined();
     expect(result.current.isFetching).toBe(false);
     expect(result.current.error).toBeNull();
   });
 
-});
+  it('observes images already in the shot cache', () => {
+    const queryClient = createClient();
+    queryClient.setQueryData(generationQueryKeys.byShot('shot-1'), images);
 
-describe('useTimelineImages', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('is disabled when shotId is null', () => {
-    const { result } = renderHook(() => useTimelineImages(null), {
-      wrapper: createWrapper(),
+    const { result } = renderHook(() => useShotImages('shot-1'), {
+      wrapper: createWrapper(queryClient),
     });
 
-    expect(result.current.data).toBeUndefined();
+    expect(result.current.data).toEqual(images);
+    expect(result.current.isFetching).toBe(false);
   });
 });
 
-describe('useUnpositionedImages', () => {
-  it('is disabled when shotId is null', () => {
-    const { result } = renderHook(() => useUnpositionedImages(null), {
-      wrapper: createWrapper(),
+describe('usePrimeShotImagesCache', () => {
+  it('seeds an empty shot cache from context images', async () => {
+    const queryClient = createClient();
+
+    renderHook(() => usePrimeShotImagesCache('shot-1', images), {
+      wrapper: createWrapper(queryClient),
     });
 
-    expect(result.current.data).toBeUndefined();
+    await waitFor(() => {
+      expect(queryClient.getQueryData(generationQueryKeys.byShot('shot-1'))).toEqual(images);
+    });
   });
-});
 
-describe('useVideoOutputs', () => {
-  it('is disabled when shotId is null', () => {
-    const { result } = renderHook(() => useVideoOutputs(null), {
-      wrapper: createWrapper(),
+  it('keeps existing cached images', () => {
+    const queryClient = createClient();
+    const cached = [images[0]];
+    queryClient.setQueryData(generationQueryKeys.byShot('shot-1'), cached);
+
+    renderHook(() => usePrimeShotImagesCache('shot-1', images), {
+      wrapper: createWrapper(queryClient),
     });
 
-    expect(result.current.data).toBeUndefined();
+    expect(queryClient.getQueryData(generationQueryKeys.byShot('shot-1'))).toEqual(cached);
+  });
+
+  it('does nothing without a shot or without context images', () => {
+    const queryClient = createClient();
+
+    renderHook(() => usePrimeShotImagesCache(null, images), { wrapper: createWrapper(queryClient) });
+    renderHook(() => usePrimeShotImagesCache('shot-1', []), { wrapper: createWrapper(queryClient) });
+
+    expect(queryClient.getQueryData(generationQueryKeys.byShot('shot-1'))).toBeUndefined();
   });
 });

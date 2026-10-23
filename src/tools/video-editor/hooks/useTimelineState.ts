@@ -9,6 +9,7 @@ import { useProjectTranscriptHost } from './useProjectTranscriptHost.ts';
 import { createDataKindItemsHost } from '@/tools/video-editor/data-kinds/dataKindItems.ts';
 import { createPendingWorkRegistry } from '@/tools/video-editor/runtime/pendingWorkRegistry.ts';
 import { transcriptRepositoryFromDocuments } from '@/tools/video-editor/data/typed/projectTranscript.ts';
+import { isDataProviderPersistenceEnabled } from '@/tools/video-editor/data/DataProvider.ts';
 import { createEditorAssetSurface, loadEditorAssetProfile } from '@/tools/video-editor/runtime/editorAssetSurface.ts';
 import { playedAssetRegistry, playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import { useQueryClient } from '@tanstack/react-query';
@@ -480,6 +481,7 @@ function useTimelineChromeContextValue({
   watchdogReason,
   retryWatchdog,
   retryPendingSave,
+  flushPendingSave,
   recoveryDraft,
   retryRecoveredDraft,
   discardRecoveredDraft,
@@ -504,6 +506,7 @@ function useTimelineChromeContextValue({
   watchdogReason: 'timeout' | 'lost-edit' | null;
   retryWatchdog: () => void;
   retryPendingSave: () => void;
+  flushPendingSave: () => Promise<number>;
   recoveryDraft: ReturnType<typeof useTimelineSave>['recoveryDraft'];
   retryRecoveredDraft: ReturnType<typeof useTimelineSave>['retryRecoveredDraft'];
   discardRecoveredDraft: ReturnType<typeof useTimelineSave>['discardRecoveredDraft'];
@@ -557,6 +560,7 @@ function useTimelineChromeContextValue({
     watchdogReason,
     retryWatchdog,
     retryPendingSave,
+    flushPendingSave,
     recoveryDraft,
     retryRecoveredDraft,
     discardRecoveredDraft,
@@ -606,6 +610,7 @@ function useTimelineChromeContextValue({
     retrySaveAfterConflict,
     retryWatchdog,
     retryPendingSave,
+    flushPendingSave,
     saveStatus,
     setScaleWidth,
     startRender,
@@ -660,7 +665,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
   // that the lazy-init guard above establishes on `storeRef.current`.
   const store = storeRef.current;
   const playback = useTimelinePlayback();
-  const preferences = useEditorPreferences(runtime.timelineId);
+  const preferences = useEditorPreferences(runtime.timelineId, viewportWidth, { persist: isDataProviderPersistenceEnabled(runtime.provider) });
   const resolveAssetUrl = useCallback(async (file: string) => {
     if (runtime.assetResolver) {
       return await runtime.assetResolver.resolveAssetUrl(file);
@@ -821,7 +826,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     onRemoteData,
   } = history;
 
-  // Wire TimelineOps (M3 atomic mutation adapter) into the host runtime context.
+  // Wire TimelineOps (atomic mutation adapter) into the host runtime context.
   // The adapter is stable (memoized on its callback deps) and delegates to
   // the existing commitData/history path without replacing the command facade.
   // The canonical version getter reads the store's ack-tracked field (outside
@@ -1398,6 +1403,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
     watchdogReason: save.watchdogReason,
     retryWatchdog: save.retryWatchdog,
     retryPendingSave: save.retryPendingSave,
+    flushPendingSave: save.flushPendingSave,
     recoveryDraft: save.recoveryDraft,
     retryRecoveredDraft: save.retryRecoveredDraft,
     discardRecoveredDraft: save.discardRecoveredDraft,

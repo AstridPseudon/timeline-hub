@@ -54,10 +54,6 @@ export const BUILTIN_VACE_PRESET: BuiltinPreset = {
   }
 };
 
-/** Featured preset IDs for VACE mode tools (from database). */
-export const VACE_FEATURED_PRESET_IDS: string[] = [
-  'd72377eb-6d57-4af1-80a3-9b629da28a47',
-];
 
 /** Shared engine defaults; tool-specific fields remain in each tool's settings module. */
 export const VACE_GENERATION_DEFAULTS = {

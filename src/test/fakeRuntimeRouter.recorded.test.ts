@@ -1,4 +1,4 @@
-// Testing plan C2.2 / R-4: the fake is trusted only for operations whose REAL-daemon responses it reproduces.
+// The fake is trusted only for operations whose REAL-daemon responses it reproduces.
 // For each recorded case the fake implements, it must answer with the recorded status and the same JSON shape
 // (same keys recursively, same value types). Operations the fake implements with no recorded case are listed
 // at the bottom so they stay visibly untrusted.

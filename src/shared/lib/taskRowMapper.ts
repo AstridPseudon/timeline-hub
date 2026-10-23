@@ -1,4 +1,4 @@
-import type { Json } from '@/integrations/supabase/jsonTypes';
+import type { Json } from '@/shared/types/json';
 import type { Task } from '@/types/tasks';
 
 export interface TaskDbRow {

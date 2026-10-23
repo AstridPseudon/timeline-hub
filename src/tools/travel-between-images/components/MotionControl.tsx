@@ -2,8 +2,6 @@ import React, { useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Label } from '@/shared/components/ui/primitives/label';
 import { PhaseConfigVertical } from '@/shared/components/PhaseConfigSelectorModal';
-import { PhaseConfigSelectorModal } from '@/shared/components/PhaseConfigSelectorModal';
-import { FEATURED_PRESET_IDS } from './MotionControl.constants';
 import { MotionControlBasicTab } from './MotionControlBasicTab';
 import { useMotionControlPresetState } from './hooks/useMotionControlPresetState';
 import type { MotionControlProps } from './MotionControl.types';
@@ -27,8 +25,6 @@ export const MotionControl: React.FC<MotionControlProps> = ({
   const spec = getModelSpec(selectedModel);
   const {
     selectedLoras,
-    availableLoras,
-    onAddLoraClick,
     onRemoveLora,
     onLoraStrengthChange,
     onAddTriggerWord,
@@ -38,8 +34,6 @@ export const MotionControl: React.FC<MotionControlProps> = ({
     selectedPhasePresetId,
     onPhasePresetSelect,
     onPhasePresetRemove,
-    currentSettings,
-    featuredPresetIds = FEATURED_PRESET_IDS,
   } = presets;
   const {
     phaseConfig,
@@ -58,20 +52,14 @@ export const MotionControl: React.FC<MotionControlProps> = ({
   } = stateOverrides ?? {};
 
   const {
-    isPresetModalOpen,
-    openPresetModal,
-    closePresetModal,
     allPresets,
     builtinDefaultId,
     isCustomConfig,
     displaySelectedPhasePresetId,
-    isSelectedPresetKnown,
-    handleSwitchToAdvanced,
     handleCustomClick,
     handlePresetSelect,
   } = useMotionControlPresetState({
     generationTypeMode,
-    featuredPresetIds,
     selectedPhasePresetId,
     onPhasePresetSelect,
     onPhasePresetRemove,
@@ -118,22 +106,15 @@ export const MotionControl: React.FC<MotionControlProps> = ({
               hasStructureVideo={hasStructureVideo}
               smoothContinuations={smoothContinuations}
               onSmoothContinuationsChange={onSmoothContinuationsChange}
-              isSelectedPresetKnown={isSelectedPresetKnown}
               allPresets={allPresets}
               isCustomConfig={isCustomConfig}
               selectedPhasePresetId={displaySelectedPhasePresetId}
               builtinDefaultId={builtinDefaultId}
               onPresetSelect={handlePresetSelect}
               onCustomClick={handleCustomClick}
-              onOpenPresetModal={openPresetModal}
-              phaseConfig={phaseConfig}
-              onSwitchToAdvanced={handleSwitchToAdvanced}
-              onPhasePresetRemove={onPhasePresetRemove}
-              onAddLoraClick={onAddLoraClick}
               selectedLoras={selectedLoras}
               onRemoveLora={onRemoveLora}
               onLoraStrengthChange={onLoraStrengthChange}
-              availableLoras={availableLoras}
               onAddTriggerWord={onAddTriggerWord}
               renderLoraHeaderActions={renderLoraHeaderActions}
             />
@@ -147,12 +128,6 @@ export const MotionControl: React.FC<MotionControlProps> = ({
                 onBlurSave={onBlurSave}
                 randomSeed={randomSeed}
                 onRandomSeedChange={onRandomSeedChange}
-                availableLoras={availableLoras}
-                selectedPhasePresetId={selectedPhasePresetId}
-                onPhasePresetSelect={onPhasePresetSelect}
-                onPhasePresetRemove={onPhasePresetRemove}
-                currentSettings={currentSettings}
-                generationTypeMode={generationTypeMode}
                 onRestoreDefaults={onRestoreDefaults}
               />
             ) : (
@@ -170,45 +145,17 @@ export const MotionControl: React.FC<MotionControlProps> = ({
           hasStructureVideo={hasStructureVideo}
           smoothContinuations={smoothContinuations}
           onSmoothContinuationsChange={onSmoothContinuationsChange}
-          isSelectedPresetKnown={isSelectedPresetKnown}
           allPresets={allPresets}
           isCustomConfig={isCustomConfig}
           selectedPhasePresetId={selectedPhasePresetId}
           builtinDefaultId={builtinDefaultId}
           onPresetSelect={handlePresetSelect}
           onCustomClick={handleCustomClick}
-          onOpenPresetModal={openPresetModal}
-          phaseConfig={phaseConfig}
-          onSwitchToAdvanced={handleSwitchToAdvanced}
-          onPhasePresetRemove={onPhasePresetRemove}
-          onAddLoraClick={onAddLoraClick}
           selectedLoras={selectedLoras}
           onRemoveLora={onRemoveLora}
           onLoraStrengthChange={onLoraStrengthChange}
-          availableLoras={availableLoras}
           onAddTriggerWord={onAddTriggerWord}
           renderLoraHeaderActions={renderLoraHeaderActions}
-        />
-      )}
-
-      {spec.ui.motionPresets && (
-        <PhaseConfigSelectorModal
-          isOpen={isPresetModalOpen}
-          onClose={closePresetModal}
-          onSelectPreset={(preset) => {
-            handlePresetSelect({
-              id: preset.id,
-              metadata: {
-                description: preset.metadata.description,
-                phaseConfig: preset.metadata.phaseConfig,
-                phase_config: preset.metadata.phaseConfig,
-              },
-            });
-          }}
-          onRemovePreset={onPhasePresetRemove}
-          selectedPresetId={selectedPhasePresetId || null}
-          currentPhaseConfig={phaseConfig}
-          currentSettings={currentSettings}
         />
       )}
     </div>

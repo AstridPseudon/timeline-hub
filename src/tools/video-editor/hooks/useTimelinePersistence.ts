@@ -977,23 +977,25 @@ export function useTimelinePersistence({
       registry: cloneAttemptValue(nextData.registry),
       bundle: effectiveBundle,
     };
-    const draftWrite = draftWriteChainRef.current
-      .catch(() => {})
-      .then(() => saveTimelineDraft(
-        timelineId,
-        draft,
-        draftBaseVersion,
-        {
-          ...recoveryMetadata,
-          ...(provider.saveTimelineAtHead ? {
-            baseHeadRevisionId: head?.headRevisionId,
-            baseHeadProjectId: head?.projectId,
-            baseHeadTimelineId: head?.timelineId,
-          } : {}),
-          ownerId: draftOwnerId,
-          draftIdentity: recoveryMetadata.draftIdentity ?? draftOwnerId,
-        },
-      ));
+    const draftWrite = persistenceEnabled
+      ? draftWriteChainRef.current
+        .catch(() => {})
+        .then(() => saveTimelineDraft(
+          timelineId,
+          draft,
+          draftBaseVersion,
+          {
+            ...recoveryMetadata,
+            ...(provider.saveTimelineAtHead ? {
+              baseHeadRevisionId: head?.headRevisionId,
+              baseHeadProjectId: head?.projectId,
+              baseHeadTimelineId: head?.timelineId,
+            } : {}),
+            ownerId: draftOwnerId,
+            draftIdentity: recoveryMetadata.draftIdentity ?? draftOwnerId,
+          },
+        ))
+      : Promise.resolve();
     draftWriteChainRef.current = draftWrite;
     void draftWrite.catch(() => {});
     const scheduledSave: ScheduledSave = {
@@ -1012,7 +1014,7 @@ export function useTimelinePersistence({
     };
     latestScheduledSaveRef.current = scheduledSave;
     return scheduledSave;
-  }, [configVersionRef, headRevisionRef, provider, session, timelineId, recoveryConfig]);
+  }, [configVersionRef, headRevisionRef, persistenceEnabled, provider, session, timelineId, recoveryConfig]);
 
   const scheduleSave = useCallback<ScheduleSaveFn>((nextData, options) => {
     // Recovery is an explicit CAS decision. Do not replace the recovered

@@ -1,17 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { AstridSetupStep } from '@/shared/components/OnboardingModal/components/steps/AstridSetupStep';
 import { CommunityStep } from '@/shared/components/OnboardingModal/components/steps/CommunityStep';
-import { TextCaseStep } from '@/shared/components/OnboardingModal/components/steps/TextCaseStep';
 import { TimeOfDayStep } from '@/shared/components/OnboardingModal/components/steps/TimeOfDayStep';
 import type { OnboardingStepDefinition } from '@/shared/components/OnboardingModal/types';
 
-/** First run: get Astrid going (blocking until it is), two quick appearance choices, then an
+/** First run: get Astrid going (blocking until it is), a quick appearance choice, then an
  *  optional invitation to the community that finishes on its own. */
 const ONBOARDING_STEPS: OnboardingStepDefinition[] = [
   { id: 1, title: 'Set up', component: AstridSetupStep },
   { id: 2, title: 'Brightness', component: TimeOfDayStep },
-  { id: 3, title: 'Text', component: TextCaseStep },
-  { id: 4, title: 'Community', component: CommunityStep },
+  { id: 3, title: 'Community', component: CommunityStep },
 ];
 
 export function useOnboardingSteps(isOpen: boolean) {

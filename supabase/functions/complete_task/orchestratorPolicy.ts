@@ -233,3 +233,4 @@ export function evaluateSegmentCompletionGate(
 
   return { kind: 'ready' };
 }
+

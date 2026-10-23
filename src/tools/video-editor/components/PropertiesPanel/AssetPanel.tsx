@@ -55,7 +55,7 @@ interface AssetPanelProps {
   setPanelState: (patch: { showAll?: boolean; showHidden?: boolean; hidden?: string[] }) => void;
   onUploadFiles: (files: File[]) => Promise<void>;
   registry?: Record<string, AssetRegistryEntry>;
-  /** M6: Pre-computed search provider results for merging with built-in metadata filtering. */
+  /** Pre-computed search provider results for merging with built-in metadata filtering. */
   searchResults?: readonly SearchProviderResultEnvelope[] | null;
 }
 
@@ -100,7 +100,7 @@ export default function AssetPanel({
   const { mediaLightbox } = useVideoEditorRuntime();
   const { registerGenerationAsset } = useTimelineEditorOps();
 
-  // M6: Access extension runtime config for metadata facets, search providers,
+  // Access extension runtime config for metadata facets, search providers,
   // and asset detail sections.
   const runtime = useVideoEditorRuntime();
   const extensionConfig = runtime.extensions;
@@ -126,13 +126,13 @@ export default function AssetPanel({
     return used;
   }, [backgroundAsset, meta, rows]);
 
-  // M6: Determine whether to show metadata search
+  // Determine whether to show metadata search
   const showMetadataSearch = useMemo(
     () => shouldShowMetadataSearch(registry, searchProviders),
     [registry, searchProviders],
   );
 
-  // M6: Metadata-text-filtered registry subset, merged with search provider results
+  // Metadata-text-filtered registry subset, merged with search provider results
   const metadataFilteredKeys = useMemo(() => {
     if (!metadataSearchText || metadataSearchText.trim().length === 0) return null;
 
@@ -167,7 +167,7 @@ export default function AssetPanel({
     return matchingKeys;
   }, [metadataSearchText, registry, searchResults]);
 
-  // M6: Merged search results for source labeling (recomputed for display)
+  // Merged search results for source labeling (recomputed for display)
   const mergedSearchResults: MergedSearchResults | null = useMemo(() => {
     const effectiveSearchResults = searchResults ?? [];
     if (!metadataSearchText || metadataSearchText.trim().length === 0 || effectiveSearchResults.length === 0) {
@@ -176,7 +176,7 @@ export default function AssetPanel({
     return mergeSearchProviderResults(registry, metadataSearchText, effectiveSearchResults);
   }, [metadataSearchText, registry, searchResults]);
 
-  // M6: Search provider source labels for the active query
+  // Search provider source labels for the active query
   const searchProviderSourceLabels = useMemo(() => {
     if (!mergedSearchResults) return [];
     return getSearchProviderSourceLabels(mergedSearchResults);
@@ -192,7 +192,7 @@ export default function AssetPanel({
         return false;
       }
 
-      // M6: Apply metadata text filter when active
+      // Apply metadata text filter when active
       if (metadataFilteredKeys && !metadataFilteredKeys.has(assetKey)) {
         return false;
       }
@@ -313,7 +313,7 @@ export default function AssetPanel({
           />
         </div>
 
-        {/* M6: Metadata search input (conditional) */}
+        {/* Metadata search input (conditional) */}
         {showMetadataSearch && (
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -326,7 +326,7 @@ export default function AssetPanel({
             />
           </div>
         )}
-        {/* M6: Search provider source summary */}
+        {/* Search provider source summary */}
         {metadataSearchText && searchProviderSourceLabels.length > 0 && (
           <div className="text-[10px] text-muted-foreground flex items-center gap-1">
             <span>Results from:</span>
@@ -366,9 +366,9 @@ export default function AssetPanel({
                   ? <ImageIcon className="h-3.5 w-3.5" />
                   : <Film className="h-3.5 w-3.5" />;
 
-              // M6: Source badge, enrichment status, and metadata details
+              // Source badge, enrichment status, and metadata details
               const sourceBadge = getSourceBadge(entry);
-              // M6: Search provider match info for this asset (if any)
+              // Search provider match info for this asset (if any)
               const searchProviderMatch = mergedSearchResults?.matches.find(
                 (m) => m.kind === 'asset' && m.ref === assetKey && m.matchSource === 'search-provider',
               ) ?? null;
@@ -407,7 +407,7 @@ export default function AssetPanel({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 truncate">
                         <span className="truncate">{file.split('/').pop() ?? file}</span>
-                        {/* M6: Source/provider badge */}
+                        {/* Source/provider badge */}
                         {sourceBadge.kind !== 'unknown' && (
                           <span
                             className={cn(
@@ -419,7 +419,7 @@ export default function AssetPanel({
                             {sourceBadge.label}
                           </span>
                         )}
-                        {/* M6: Search provider match indicator */}
+                        {/* Search provider match indicator */}
                         {searchProviderMatch && (
                           <span
                             className="inline-flex items-center rounded px-1 py-0 text-[9px] font-medium leading-tight bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
@@ -433,7 +433,7 @@ export default function AssetPanel({
                       </div>
                       <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
                         <span>{isUsed ? 'In timeline' : 'Not used'}{isHidden ? ' · Hidden' : ''}</span>
-                        {/* M6: Enrichment status indicators */}
+                        {/* Enrichment status indicators */}
                         {enrichmentStatus.hasEnrichment && (
                           <>
                             {enrichmentStatus.pending > 0 && (
@@ -458,7 +458,7 @@ export default function AssetPanel({
                         )}
                       </div>
                     </div>
-                    {/* M6: Expand/collapse metadata details button */}
+                    {/* Expand/collapse metadata details button */}
                     {hasMetadataDetails && (
                       <Button
                         type="button"
@@ -500,7 +500,7 @@ export default function AssetPanel({
                     </Button>
                   </div>
 
-                  {/* M6: Expanded metadata details */}
+                  {/* Expanded metadata details */}
                   {isExpanded && hasMetadataDetails && (
                     <div className="ml-4 mt-1 rounded-md border border-border bg-card/50 p-2 text-[10px]">
                       {/* Host-owned provenance details */}

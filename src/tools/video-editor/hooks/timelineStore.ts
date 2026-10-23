@@ -7,6 +7,7 @@ import {
   createContext,
   createElement,
   useContext,
+  useLayoutEffect,
   useMemo,
   type MutableRefObject,
   type PropsWithChildren,
@@ -415,6 +416,7 @@ function createInitialChromeSlice(): TimelineChromeContextValue {
     watchdogReason: null,
     retryWatchdog: noop,
     retryPendingSave: noop,
+    flushPendingSave: () => Promise.resolve(0),
     recoveryDraft: null,
     retryRecoveredDraft: noop,
     discardRecoveredDraft: noop,
@@ -585,6 +587,17 @@ export function seedTimelineStoreBeforeRender(
   }
 
   store.getState().syncSlices(bootstrap);
+}
+
+/**
+ * Publish the live `TimelineReader` on the store from a layout effect. A store write made while the
+ * provider renders notifies every mounted subscriber (the preview panel among them) mid-render, which
+ * React reports as "Cannot update a component while rendering a different component".
+ */
+export function usePublishTimelineReader(store: TimelineStoreApi, timelineReader: TimelineReader) {
+  useLayoutEffect(() => {
+    if (store.getState().timelineReader !== timelineReader) store.setState?.({ timelineReader });
+  }, [store, timelineReader]);
 }
 
 const TimelineStoreContext = createContext<TimelineStoreApi | null>(null);

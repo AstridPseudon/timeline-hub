@@ -12,7 +12,7 @@ vi.mock('@/domains/lora/lib/loraUtils', () => ({
   getDisplayNameFromUrl: (url: string) => `display:${url}`,
 }));
 
-vi.mock('@/domains/lora/components/LoraSelectorModal/utils/validation-utils', () => ({
+vi.mock('@/domains/lora/lib/validation-utils', () => ({
   validateHuggingFaceUrl: (url: string) =>
     url.includes('invalid')
       ? { isValid: false, message: 'Invalid Hugging Face URL' }
@@ -138,11 +138,9 @@ function buildProps(overrides: Partial<PerPhaseCardProps> = {}): PerPhaseCardPro
     phaseIdx: 0,
     phase: phaseConfig.phases[0],
     label: 'High Noise Sampler',
-    availableLoras: [],
     focusedLoraInput: null,
     onPhaseConfigChange: vi.fn(),
     onFocusLoraInput: vi.fn(),
-    onOpenLoraModal: vi.fn(),
     onBlurSave: vi.fn(),
     ...overrides,
   };
@@ -170,12 +168,11 @@ describe('PerPhaseCard', () => {
     );
   });
 
-  it('calls lora modal opener and adds predefined utility lora', () => {
+  it('adds predefined utility lora and offers no LoRA search', () => {
     const props = buildProps();
     render(<PerPhaseCard {...props} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Search/i }));
-    expect(props.onOpenLoraModal).toHaveBeenCalledWith(0);
+    expect(screen.queryByRole('button', { name: /Search/i })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Utility Lora' }));
     expect(props.onPhaseConfigChange).toHaveBeenLastCalledWith(

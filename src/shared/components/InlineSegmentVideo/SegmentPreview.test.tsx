@@ -22,7 +22,6 @@ const baseProps: SegmentPreviewProps = {
   onClick: vi.fn(),
   isDeleting: false,
   isPending: false,
-  hasSourceChanged: false,
   scrubbing: {
     isActive: false,
   },

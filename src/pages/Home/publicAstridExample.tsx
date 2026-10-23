@@ -207,7 +207,7 @@ export function createPublicAstridExampleBundle({
     if (selectedProviderBinding.state !== 'verified' || !selectedResultTarget) {
       throw new Error('A verified result requires a verified provider binding and exact existing clip/asset target.');
     }
-    // F06 must source these tuples from the same verification receipt and verify the packaged bytes.
+    // These tuples must come from the same verification receipt and verify the packaged bytes.
     // This constructor checks consistency only; copying matching values is not provider/export proof.
     if (!isNonEmptyIdentity(selectedVerifiedResult.exportSource.projectId)
       || !isNonEmptyIdentity(selectedVerifiedResult.exportSource.timelineId)

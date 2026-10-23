@@ -24,11 +24,6 @@ vi.mock('@/integrations/runtime/generationAccess', () => ({
     variants: snapshot.variants,
   }),
 }));
-vi.mock('@/integrations/supabase/client', () => ({
-  getSupabaseClient: () => {
-    throw new Error('Runtime variant reads must not initialize Supabase');
-  },
-}));
 vi.mock('@/shared/contexts/AuthContext', () => ({
   useAuthSafe: () => ({ isAuthenticated: false }),
 }));
@@ -44,7 +39,7 @@ function wrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('useVariants Runtime authority', () => {
-  it('reads Runtime variants without auth or bridge/Supabase access', async () => {
+  it('reads Runtime variants without auth or bridge access', async () => {
     runtimeSnapshotMock.mockResolvedValue({
       generation: { project_id: 'runtime-project' },
       variants: [{

@@ -1,5 +1,5 @@
 import { UseQueryOptions } from '@tanstack/react-query';
-import { isErrorWithCode, isErrorWithStatus, SUPABASE_ERROR } from '@/shared/lib/errorHandling/errorUtils';
+import { isErrorWithStatus } from '@/shared/lib/errorHandling/errorUtils';
 
 // Realtime-backed queries should avoid mount/focus refetch loops.
 const REALTIME_BACKED_PRESET = {
@@ -55,8 +55,7 @@ const classifyNetworkError = (error: Error): {
   }
 
   // Client errors (4xx except auth) - don't retry
-  if ((isErrorWithCode(error) && error.code === SUPABASE_ERROR.NOT_FOUND) ||
-      message.includes('invalid') ||
+  if (message.includes('invalid') ||
       message.includes('not found') ||
       (isErrorWithStatus(error) && error.status !== undefined && error.status >= 400 && error.status < 500)) {
     return { type: 'client', shouldRetry: false, maxRetries: 0 };

@@ -13,9 +13,7 @@ import {
   DragOverlay,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { useHandleExternalImageDrop, useAddImageToShot } from '@/shared/hooks/shots';
-import { useShotCreation } from '@/shared/hooks/shotCreation/useShotCreation';
-import { useShots } from '@/shared/contexts/ShotsContext';
+import { useAddImageToShot } from '@/shared/hooks/shots';
 import { AppRoutes } from '@/app/routes';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { AppProviders } from '@/app/providers/AppProviders';
@@ -33,20 +31,14 @@ const LazyRenderTelemetryOverlay = React.lazy(async () => {
 const AppInternalContent: React.FC = () => {
   const { selectedProjectId } = useProjectSelectionContext();
   const { setLastAffectedShotId } = useLastAffectedShot();
-  const { shots: shotsFromHook } = useShots();
-  const { createShot } = useShotCreation();
   const addImageToShotMutation = useAddImageToShot();
-  const handleExternalImageDropMutation = useHandleExternalImageDrop();
   const { handleDragStart, handleDragCancel, finalizeDropAnimation, overlayContent } = useAppDndOverlay();
   useGlobalFileDragDetection();
 
   const handleDragEnd = useAppExternalDrop({
     selectedProjectId,
-    currentShotsCount: shotsFromHook?.length || 0,
     setLastAffectedShotId,
-    createShot,
     addImageToShotMutation,
-    handleExternalImageDropMutation,
     onDropHandled: finalizeDropAnimation,
   });
 

@@ -8,23 +8,14 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Check, Loader2, ArrowDown, ArrowUp, X, ImagePlus, Star } from 'lucide-react';
+import { ArrowDown, ArrowUp, X, Star } from 'lucide-react';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { Button } from '@/shared/components/ui/button';
 import { Skeleton } from '@/shared/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/shared/components/ui/tooltip';
 import { useIsMobile } from '@/shared/hooks/mobile';
-import { usePublicLoras } from '@/features/resources/hooks/useResources';
-import { ChunkLoadErrorBoundary } from '@/shared/runtime/ChunkLoadErrorBoundary';
-// Lazy load LineageGifModal since it's only opened on demand
-const LazyLineageGifModal = React.lazy(() =>
-  import('@/shared/components/modals/LineageGifModal').then(module => ({
-    default: module.LineageGifModal
-  }))
-);
 import type { GenerationVariant } from '@/shared/hooks/variants/useVariants';
 import type { RelationshipFilter } from './variantPresentation';
-import type { CurrentSegmentImagesData } from './variantSourceImages';
 import { VariantGrid } from './components/VariantGrid';
 import { MobileInfoModal } from './components/MobileInfoModal';
 import { useVariantActions } from './hooks/useVariantActions';
@@ -43,20 +34,12 @@ interface VariantSelectorProps {
   onMakePrimary?: (variantId: string) => Promise<void>;
   /** Whether component is loading */
   isLoading?: boolean;
-  /** Handler to promote variant to a standalone generation */
-  onPromoteToGeneration?: (variantId: string) => Promise<void>;
-  /** Whether a promotion is currently in progress */
-  isPromoting?: boolean;
   /** Handler to load a variant's settings into the regenerate form */
   onLoadVariantSettings?: (variantParams: Record<string, unknown>) => void;
   /** Handler to delete a variant (not available for primary variant) */
   onDeleteVariant?: (variantId: string) => Promise<void>;
-  /** Read-only mode - hides action buttons (Make Primary, Promote, Delete) */
+  /** Read-only mode - hides action buttons (Make Primary, Delete) */
   readOnly?: boolean;
-  /** Handler to load a variant's source images onto the timeline */
-  onLoadVariantImages?: (variant: GenerationVariant) => void;
-  /** Current segment images data for comparison */
-  currentSegmentImages?: CurrentSegmentImagesData;
 }
 
 export const VariantSelector: React.FC<VariantSelectorProps> = ({
@@ -65,13 +48,9 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
   onVariantSelect,
   onMakePrimary,
   isLoading = false,
-  onPromoteToGeneration,
-  isPromoting = false,
   onLoadVariantSettings,
   onDeleteVariant,
   readOnly = false,
-  onLoadVariantImages,
-  currentSegmentImages,
 }) => {
   const [relationshipFilter, setRelationshipFilter] = useState<RelationshipFilter>('all');
   const [currentPage, setCurrentPage] = useState(0);
@@ -82,16 +61,11 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
     if (currentPage !== 0) setCurrentPage(0);
   }
   const isMobile = useIsMobile();
-  const { data: availableLoras } = usePublicLoras();
 
   const actions = useVariantActions({
-    variants,
-    activeVariantId,
     isMobile,
-    onPromoteToGeneration,
     onDeleteVariant,
     onLoadVariantSettings,
-    onLoadVariantImages,
   });
 
   const starredCount = useMemo(() => variants.filter(v => v.starred).length, [variants]);
@@ -271,54 +245,24 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
           )}
 
           {/* Action buttons - pushed to the right */}
-          {!readOnly && (onPromoteToGeneration || (onMakePrimary && activeVariantId && !variants.find(v => v.id === activeVariantId)?.is_primary)) && (
+          {!readOnly && onMakePrimary && activeVariantId && !variants.find(v => v.id === activeVariantId)?.is_primary && (
             <div className="flex items-center gap-1 ml-auto">
-              {onMakePrimary && activeVariantId && !variants.find(v => v.id === activeVariantId)?.is_primary && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onMakePrimary(activeVariantId)}
-                      className="h-auto min-h-6 text-xs px-2 py-1 gap-1 bg-orange-500/90 hover:bg-orange-600 text-white border-none"
-                    >
-                      <Star className="w-3 h-3 shrink-0" />
-                      Make main
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p>Set this variant as the main variant</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              {onPromoteToGeneration && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={actions.handlePromoteToGeneration}
-                      disabled={actions.localIsPromoting || isPromoting}
-                      className={cn(
-                        "h-auto min-h-6 text-xs px-2 py-1 gap-1 whitespace-normal text-left",
-                        actions.promoteSuccess && "bg-green-500/20 border-green-500/50 text-green-400"
-                      )}
-                    >
-                      {actions.localIsPromoting || isPromoting ? (
-                        <Loader2 className="w-3 h-3 animate-spin shrink-0" />
-                      ) : actions.promoteSuccess ? (
-                        <Check className="w-3 h-3 shrink-0" />
-                      ) : (
-                        <ImagePlus className="w-3 h-3 shrink-0" />
-                      )}
-                      {actions.promoteSuccess ? 'Created!' : 'New image'}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">
-                    <p>Create a standalone image from this variant</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onMakePrimary(activeVariantId)}
+                    className="h-auto min-h-6 text-xs px-2 py-1 gap-1 bg-orange-500/90 hover:bg-orange-600 text-white border-none"
+                  >
+                    <Star className="w-3 h-3 shrink-0" />
+                    Make main
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                  <p>Set this variant as the main variant</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           )}
         </div>
@@ -331,53 +275,31 @@ export const VariantSelector: React.FC<VariantSelectorProps> = ({
           onPageChange={setCurrentPage}
           isMobile={isMobile}
           readOnly={readOnly}
-          availableLoras={availableLoras}
           relationshipMap={relationshipMap}
-          variantLineageDepth={actions.variantLineageDepth}
           copiedVariantId={actions.copiedVariantId}
           loadedSettingsVariantId={actions.loadedSettingsVariantId}
           onVariantSelect={onVariantSelect}
           onMakePrimary={onMakePrimary}
           onDeleteVariant={onDeleteVariant ? actions.handleDeleteVariant : undefined}
           onLoadVariantSettings={onLoadVariantSettings}
-          onToggleStar={actions.handleToggleStar}
           onMouseEnter={actions.handleVariantMouseEnter}
           onShowMobileInfo={actions.setMobileInfoVariantId}
-          onShowLineageGif={actions.setLineageGifVariantId}
           onCopyId={actions.handleCopyId}
           onLoadSettings={actions.handleLoadSettings}
-          onLoadImages={onLoadVariantImages ? actions.handleLoadImages : undefined}
-          currentSegmentImages={currentSegmentImages}
-          loadedImagesVariantId={actions.loadedImagesVariantId}
           isDeleteLoading={actions.isDeleteLoading}
         />
       </div>
     </TooltipProvider>
-
-    {/* Lineage GIF Modal - lazy loaded since only opened on demand */}
-    <ChunkLoadErrorBoundary>
-      <React.Suspense fallback={null}>
-        <LazyLineageGifModal
-          open={!!actions.lineageGifVariantId}
-          onClose={() => actions.setLineageGifVariantId(null)}
-          variantId={actions.lineageGifVariantId}
-        />
-      </React.Suspense>
-    </ChunkLoadErrorBoundary>
 
     {/* Mobile variant info modal */}
     {isMobile && mobileInfoVariant && (
       <MobileInfoModal
         variant={mobileInfoVariant}
         activeVariantId={activeVariantId}
-        availableLoras={availableLoras}
         readOnly={readOnly}
         onClose={() => actions.setMobileInfoVariantId(null)}
         onMakePrimary={onMakePrimary}
         onLoadVariantSettings={onLoadVariantSettings}
-        onLoadImages={onLoadVariantImages ? actions.handleLoadImages : undefined}
-        currentSegmentImages={currentSegmentImages}
-        loadedImagesVariantId={actions.loadedImagesVariantId}
       />
     )}
     </>

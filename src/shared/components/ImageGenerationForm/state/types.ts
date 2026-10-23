@@ -1,18 +1,13 @@
 export interface ImageGenerationFormUIState {
   isPromptModalOpen: boolean;
-  openPromptModalWithAIExpanded: boolean;
-  isCreateShotModalOpen: boolean;
   directFormActivePromptId: string | null;
   hasVisitedImageGeneration: boolean;
 }
 
 export type ImageGenerationFormUIAction =
   | { type: 'SET_PROMPT_MODAL_OPEN'; payload: boolean }
-  | { type: 'SET_PROMPT_MODAL_WITH_AI_EXPANDED'; payload: boolean }
-  | { type: 'SET_CREATE_SHOT_MODAL_OPEN'; payload: boolean }
   | { type: 'SET_ACTIVE_PROMPT_ID'; payload: string | null }
   | { type: 'SET_HAS_VISITED'; payload: boolean }
-  | { type: 'OPEN_PROMPT_MODAL'; payload: { withAI?: boolean } }
   | { type: 'CLOSE_PROMPT_MODAL' };
 
 export const createInitialUIState = (): ImageGenerationFormUIState => {
@@ -26,8 +21,6 @@ export const createInitialUIState = (): ImageGenerationFormUIState => {
 
   return {
     isPromptModalOpen: false,
-    openPromptModalWithAIExpanded: false,
-    isCreateShotModalOpen: false,
     directFormActivePromptId: null,
     hasVisitedImageGeneration: hasVisited,
   };

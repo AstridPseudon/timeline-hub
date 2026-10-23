@@ -39,8 +39,6 @@ interface UseVariantSelectionProps {
 interface UseVariantSelectionReturn {
   /** Wrapped setter that logs and marks viewed */
   setActiveVariantId: (variantId: string) => void;
-  /** Whether viewing a non-primary variant */
-  isViewingNonPrimaryVariant: boolean;
 }
 
 export function useVariantSelection({
@@ -107,11 +105,7 @@ export function useVariantSelection({
     markedViewedVariantRef.current = null;
   }, [media?.id]);
 
-  // Compute isViewingNonPrimaryVariant early for edit hooks
-  const isViewingNonPrimaryVariant = !!(activeVariant && !activeVariant.is_primary);
-
   return {
     setActiveVariantId,
-    isViewingNonPrimaryVariant,
   };
 }

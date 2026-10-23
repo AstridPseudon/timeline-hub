@@ -41,7 +41,7 @@ function toRecord(value: unknown): Record<string, unknown> {
 }
 
 /**
- * Maps a raw Supabase response from shot_generations (with joined generations)
+ * Maps a raw shot_generations row (with joined generations)
  * to the standardized GenerationRow format used throughout the app.
  *
  * IMPORTANT: This must be used by ALL hooks (useListShots, useShotImages, etc.)

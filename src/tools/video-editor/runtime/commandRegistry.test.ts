@@ -1322,7 +1322,7 @@ describe('CommandRegistry — multiple extensions coexistence', () => {
 });
 
 // ---------------------------------------------------------------------------
-// T19: Run-status preservation across unregisterAll
+// Run-status preservation across unregisterAll
 // ---------------------------------------------------------------------------
 
 describe('CommandRegistry — run-status preservation across unregisterAll (T19)', () => {

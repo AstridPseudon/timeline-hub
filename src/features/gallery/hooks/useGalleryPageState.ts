@@ -3,8 +3,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
 import { useProjectGenerations, type GenerationsPaginatedResponse } from '@/shared/hooks/projects/useProjectGenerations';
-import { useToggleGenerationStar } from '@/domains/generation/hooks/useGenerationMutations';
-import { useDeleteGenerationWithConfirm } from '@/domains/generation/hooks/useDeleteGenerationWithConfirm';
 import { useAddImageToShot, usePositionExistingGenerationInShot } from '@/shared/hooks/shots';
 import { useShots } from '@/shared/contexts/ShotsContext';
 import { toast } from '@/shared/components/ui/runtime/sonner';
@@ -97,9 +95,6 @@ function useGenerationsPageLogic({
 
   const addImageToShotMutation = useAddImageToShot();
   const positionExistingGenerationMutation = usePositionExistingGenerationInShot();
-  const { requestDelete, confirmDialogProps, deletingId } = useDeleteGenerationWithConfirm({ projectId: selectedProjectId });
-  const toggleStarMutation = useToggleGenerationStar();
-
 
   const paginatedData = useMemo(() => {
     const items = generationsResponse?.items ?? [];
@@ -124,17 +119,6 @@ function useGenerationsPageLogic({
 
   const handleServerPageChange = (newPage: number) => {
     setPage(newPage);
-  };
-
-  const handleDeleteGeneration = (id: string) => {
-    requestDelete(id);
-  };
-
-  const handleToggleStar = (id: string, starred: boolean) => {
-    if (!selectedProjectId) {
-      return;
-    }
-    toggleStarMutation.mutate({ id, starred, projectId: selectedProjectId });
   };
 
   const handleAddToShot = async (targetShotId: string, generationId: string, imageUrl?: string, thumbUrl?: string): Promise<boolean> => {
@@ -229,16 +213,12 @@ function useGenerationsPageLogic({
     isFetching,
     isError,
     error,
-    isDeleting: deletingId,
 
-    confirmDialogProps,
     expectedItemCount,
 
     handleServerPageChange,
-    handleDeleteGeneration,
     handleAddToShot,
     handleAddToShotWithoutPosition,
-    handleToggleStar,
   };
 }
 

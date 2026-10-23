@@ -169,34 +169,12 @@ vi.mock('@/shared/components/ui/dropdown-menu', () => ({
   DropdownMenuSeparator: () => <hr />,
 }));
 
-vi.mock('@/domains/lora/components', () => ({
-  LoraSelectorModal: ({
-    isOpen,
-    onAddLora,
-  }: {
-    isOpen: boolean;
-    onAddLora: (lora: { huggingface_url?: string }) => void;
-  }) => (
-    <div data-testid="lora-selector-modal">
-      {isOpen ? (
-        <button type="button" onClick={() => onAddLora({ huggingface_url: 'https://huggingface.co/new-lora' })}>
-          add-lora-from-modal
-        </button>
-      ) : null}
-    </div>
-  ),
-}));
-
-vi.mock('./PhaseConfigSelectorModal', () => ({
-  PhaseConfigSelectorModal: () => <div data-testid="phase-config-selector-modal" />,
-}));
-
 vi.mock('@/domains/lora/lib/loraUtils', () => ({
   PREDEFINED_LORAS: [],
   getDisplayNameFromUrl: (url: string) => url,
 }));
 
-vi.mock('@/domains/lora/components/LoraSelectorModal/utils/validation-utils', () => ({
+vi.mock('@/domains/lora/lib/validation-utils', () => ({
   validateHuggingFaceUrl: () => ({ isValid: true, message: '' }),
 }));
 
@@ -257,7 +235,7 @@ describe('PhaseConfigVertical', () => {
     expect(onPhaseConfigChange).toHaveBeenCalledTimes(1);
   });
 
-  it('adds loras via text action and selector modal', () => {
+  it('adds a blank lora row via the text action', () => {
     const onPhaseConfigChange = vi.fn();
     const onRandomSeedChange = vi.fn();
 
@@ -267,7 +245,6 @@ describe('PhaseConfigVertical', () => {
         onPhaseConfigChange={onPhaseConfigChange}
         randomSeed={false}
         onRandomSeedChange={onRandomSeedChange}
-        availableLoras={[]}
       />,
     );
 
@@ -287,20 +264,8 @@ describe('PhaseConfigVertical', () => {
       }),
     );
 
-    fireEvent.click(screen.getAllByText('Search')[0]);
-    fireEvent.click(screen.getByText('add-lora-from-modal'));
-    expect(onPhaseConfigChange).toHaveBeenCalledWith(
-      expect.objectContaining({
-        phases: expect.arrayContaining([
-          expect.objectContaining({
-            loras: expect.arrayContaining([
-              expect.objectContaining({ url: 'https://huggingface.co/new-lora', multiplier: '1.0' }),
-            ]),
-          }),
-        ]),
-      }),
-    );
-    expect(onPhaseConfigChange).toHaveBeenCalledTimes(2);
+    expect(onPhaseConfigChange).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Search')).not.toBeInTheDocument();
   });
 
   it('restores defaults using callback override or default config fallback', () => {
@@ -318,9 +283,9 @@ describe('PhaseConfigVertical', () => {
       />,
     );
 
-    expect(screen.getAllByTestId('phase-header-button')).toHaveLength(4);
+    expect(screen.getAllByTestId('phase-header-button')).toHaveLength(1);
 
-    fireEvent.click(screen.getAllByTestId('phase-header-button')[3]);
+    fireEvent.click(screen.getAllByTestId('phase-header-button')[0]);
     expect(onRestoreDefaults).toHaveBeenCalledTimes(1);
     expect(onPhaseConfigChangeWithOverride).not.toHaveBeenCalledWith(DEFAULT_PHASE_CONFIG);
     expect(onRandomSeedChange).not.toHaveBeenCalled();
@@ -337,7 +302,7 @@ describe('PhaseConfigVertical', () => {
       />,
     );
 
-    fireEvent.click(screen.getAllByTestId('phase-header-button')[3]);
+    fireEvent.click(screen.getAllByTestId('phase-header-button')[0]);
     expect(onPhaseConfigChangeFallback).toHaveBeenCalledWith(DEFAULT_PHASE_CONFIG);
   });
 });

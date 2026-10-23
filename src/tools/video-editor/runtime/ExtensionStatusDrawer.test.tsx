@@ -40,8 +40,6 @@ function buildRuntimeContext(
       isLoading: false,
       error: null,
       refetchShots: () => {},
-      finalVideoMap: new Map(),
-      dismissFinalVideo: () => {},
     },
     mediaLightbox: {
       Lightbox: (() => null) as unknown as VideoEditorRuntimeContextValue['mediaLightbox']['Lightbox'],
@@ -489,7 +487,7 @@ describe('useExtensionStatusInventory', () => {
     expect(Object.isFrozen(inventory!.extensions[0].diagnostics)).toBe(true);
   });
 
-  // ---- Package state inventory propagation (M5/T2) --------------------
+  // ---- Package state inventory propagation --------------------
 
   it('packageStateInventory is empty when no entries are supplied', () => {
     const ext = makeSlotExtension('com.example.psi', 'PSI Extension', 'psi.slot');

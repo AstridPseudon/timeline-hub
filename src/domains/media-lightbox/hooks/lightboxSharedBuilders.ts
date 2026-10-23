@@ -76,7 +76,6 @@ export function buildImageSharedLightboxInput({
       imageDimensions: env.imageDimensions || { width: 1024, height: 1024 },
       projectAspectRatio: env.projectAspectRatio,
     },
-    starred: props.actions?.starred,
     onOpenExternalGeneration: props.onOpenExternalGeneration,
   };
 }
@@ -133,7 +132,6 @@ export function buildVideoSharedLightboxInput(params: {
       imageDimensions: env.imageDimensions || { width: 1024, height: 576 },
       projectAspectRatio: env.projectAspectRatio,
     },
-    starred: act?.starred,
     onOpenExternalGeneration: props.onOpenExternalGeneration,
   };
 }

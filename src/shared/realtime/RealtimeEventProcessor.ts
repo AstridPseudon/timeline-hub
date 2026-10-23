@@ -313,7 +313,7 @@ export class RealtimeEventProcessor {
     processedAt: number
   ): GenerationsDeletedEvent {
     const generations = events.map((e) => {
-      // For DELETE events, the data is in 'old' (or sometimes 'new' depending on Supabase config)
+      // For DELETE events, the data is in 'old' (or 'new' as a fallback)
       const record = (e.old || e.new) as Partial<GenerationRecord>;
       return {
         id: record.id || '',

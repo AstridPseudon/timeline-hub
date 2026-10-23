@@ -3,13 +3,8 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import type { GenerationDropData } from '@/shared/lib/dnd/dragDrop.ts';
 import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
 import { getMediaUrl, getThumbnailUrl } from '@/shared/lib/media/mediaTypeHelpers.ts';
-import { uploadBlobToStorage, uploadImageToStorage } from '@/shared/lib/media/imageUploader.ts';
 import { extractVideoMetadata } from '@/shared/lib/media/videoMetadata.ts';
-import { extractVideoPosterFrame } from '@/shared/lib/media/videoPosterExtractor.ts';
-import { generateClientThumbnail, uploadImageWithThumbnail } from '@/shared/media/clientThumbnailGenerator.ts';
 import type { SelectClipOptions } from '@/shared/state/selectionStore.ts';
-import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
-import { createExternalUploadGeneration } from '@/integrations/supabase/repositories/generationMutationsRepository.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import {
   previewPreparedMediaCommand,
@@ -23,7 +18,6 @@ import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/pro
 import {
   type TimelineData,
 } from '@/tools/video-editor/lib/timeline-data.ts';
-import { isTransientUploadPlaceholder } from '@/tools/video-editor/lib/external-drop-utils.ts';
 import {
   buildAssetDropEdit,
   estimateAssetDuration,
@@ -37,14 +31,11 @@ import type {
   TimelinePatchRegistry,
 } from '@/tools/video-editor/hooks/timeline-state-types.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
-import type { TimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 
 type UploadedGenerationData = GenerationDropData & {
   assetId?: string;
   durationSeconds?: number;
   mediaImport?: PreparedMediaImport;
-  /** Original Runtime selection returned with an already-catalogued generation. */
-  mediaSelection?: MediaSelection;
 };
 
 type UploadedGenerationResult = {
@@ -62,8 +53,6 @@ type UploadedGenerationResult = {
   mediaImport?: PreparedMediaImport;
 };
 
-const NATIVE_REFUSAL_MESSAGE_LIMIT = 240;
-
 export interface UseAssetManagementArgs {
   store?: TimelineStoreApi;
   dataRef: MutableRefObject<TimelineData | null>;
@@ -75,7 +64,8 @@ export interface UseAssetManagementArgs {
   patchRegistry: TimelinePatchRegistry;
   invalidateAssetRegistry: TimelineInvalidateAssetRegistry;
   resolveAssetUrl: (file: string) => Promise<string>;
-  commands?: Pick<TimelineCommands, 'addClip'>;
+  /** Retained for the pre-A2 caller shape; Runtime-backed asset commands own placement. */
+  commands?: unknown;
 }
 
 export interface UseAssetManagementResult {
@@ -91,7 +81,7 @@ export interface UseAssetManagementResult {
     insertAtTop?: boolean,
     preparedAsset?: TimelineProvisionedAsset,
     removeClipId?: string,
-  ) => boolean | Promise<boolean>;
+  ) => boolean;
 }
 
 export interface AssetDropTargetResolution {
@@ -184,7 +174,6 @@ export function useAssetManagement({
   setSelectedTrackId,
   applyEdit,
   patchRegistry,
-  commands,
 }: UseAssetManagementArgs): UseAssetManagementResult {
   const runtime = useVideoEditorRuntime();
   const getDataRef = useCallback(() => {
@@ -254,9 +243,6 @@ export function useAssetManagement({
       durationSeconds: assetEntry.duration ?? null,
       entry: assetEntry,
       source: 'registered',
-      ...(generationData.mediaSelection ?? generationData.mediaImport?.mediaSelection
-        ? { mediaSelection: generationData.mediaSelection ?? generationData.mediaImport?.mediaSelection }
-        : {}),
     };
   }, []);
 
@@ -282,41 +268,7 @@ export function useAssetManagement({
     forceNewTrack: boolean,
     insertAtTop: boolean,
     removeClipId?: string,
-  ): boolean | Promise<boolean> => {
-    if (prepared.mediaType === 'video') {
-      if (!prepared.mediaSelection) {
-        runtime.toast.error('Failed to save asset', {
-          description: 'Runtime prepared video is missing its original media selection.',
-        });
-        return false;
-      }
-      if (!commands) {
-        runtime.toast.error('Failed to save asset', {
-          description: 'Runtime prepared video placement is unavailable.',
-        });
-        return false;
-      }
-      const current = getDataRef().current;
-      const nativeRemoveClipId = removeClipId && (!current || !isTransientUploadPlaceholder(current, removeClipId))
-        ? removeClipId
-        : undefined;
-      return Promise.resolve(commands.addClip({
-        preparedAsset: prepared,
-        ...(trackId !== undefined ? { trackId } : {}),
-        time,
-        forceNewTrack,
-        insertAtTop,
-        ...(nativeRemoveClipId !== undefined ? { removeClipId: nativeRemoveClipId } : {}),
-      })).then((result) => {
-        if (!result.ok) {
-          const description = result.error.message.trim().slice(0, NATIVE_REFUSAL_MESSAGE_LIMIT)
-            || 'Native prepared video placement was refused.';
-          runtime.toast.error('Failed to save asset', { description });
-        }
-        return result.ok;
-      });
-    }
-
+  ) => {
     const latestDataRef = getDataRef();
     const current = latestDataRef.current;
     if (!current) {
@@ -352,7 +304,7 @@ export function useAssetManagement({
       semantic: true,
     });
     return true;
-  }, [commands, getApplyEdit, getDataRef, getSelectedTrackId, runtime.toast]);
+  }, [getApplyEdit, getDataRef, getSelectedTrackId]);
 
   const handleAssetDrop = useCallback((assetKey: string, trackId: string | undefined, time: number, forceNewTrack = false, insertAtTop = false, preparedAsset?: TimelineProvisionedAsset, removeClipId?: string) => {
     if (preparedAsset) {
@@ -441,50 +393,7 @@ export function useAssetManagement({
       };
     }
 
-    if (runtime.provider.supportsDirectAssetUpload === true) {
-      throw new Error('This editor backend does not support Runtime image/video imports');
-    }
-
-    let imageUrl = '';
-    let thumbnailUrl = '';
-
-    try {
-      const thumbnailResult = await generateClientThumbnail(file, 300, 0.8);
-      const uploadResult = await uploadImageWithThumbnail(file, thumbnailResult.thumbnailBlob);
-      imageUrl = uploadResult.imageUrl;
-      thumbnailUrl = uploadResult.thumbnailUrl;
-    } catch (error) {
-      normalizeAndPresentError(error, { context: `video-editor:external-drop:${file.name}`, showToast: false });
-      imageUrl = await uploadImageToStorage(file, 3);
-      thumbnailUrl = imageUrl;
-    }
-
-    const generation = await createExternalUploadGeneration({
-      imageUrl,
-      thumbnailUrl,
-      fileType: 'image',
-      projectId: selectedProjectId,
-      generationParams: {
-        prompt: `Uploaded ${file.name}`,
-        extra: {
-          source: 'external_upload',
-          original_filename: file.name,
-          file_type: file.type || 'image',
-          file_size: file.size,
-        },
-      },
-    });
-
-    return {
-      generationId: generation.id,
-      variantType: 'image' as const,
-      imageUrl,
-      thumbUrl: thumbnailUrl,
-      metadata: {
-        content_type: file.type || 'image',
-        original_filename: file.name,
-      },
-    };
+    throw new Error('This editor backend does not support Runtime image/video imports');
   }, [runtime.provider, selectedProjectId]);
 
   const uploadVideoGeneration = useCallback(async (file: File) => {
@@ -530,47 +439,7 @@ export function useAssetManagement({
       };
     }
 
-    if (runtime.provider.supportsDirectAssetUpload === true) {
-      throw new Error('This editor backend does not support Runtime image/video imports');
-    }
-
-    const videoUrl = await uploadImageToStorage(file);
-
-    let thumbnailUrl = videoUrl;
-    try {
-      const thumbnailBlob = await extractVideoPosterFrame(file);
-      thumbnailUrl = await uploadBlobToStorage(thumbnailBlob, 'thumbnail.jpg', 'image/jpeg');
-    } catch (error) {
-      normalizeAndPresentError(error, { context: `video-editor:external-video-thumbnail:${file.name}`, showToast: false });
-    }
-
-    const generation = await createExternalUploadGeneration({
-      imageUrl: videoUrl,
-      thumbnailUrl,
-      fileType: 'video',
-      projectId: selectedProjectId,
-      generationParams: {
-        prompt: file.name.replace(/\.[^.]+$/, ''),
-        extra: {
-          source: 'external_upload',
-          original_filename: file.name,
-          file_type: file.type || 'video/mp4',
-          file_size: file.size,
-        },
-      },
-    });
-
-    return {
-      generationId: generation.id,
-      variantType: 'video' as const,
-      imageUrl: videoUrl,
-      thumbUrl: thumbnailUrl,
-      durationSeconds,
-      metadata: {
-        content_type: file.type || 'video/mp4',
-        original_filename: file.name,
-      },
-    };
+    throw new Error('This editor backend does not support Runtime image/video imports');
   }, [runtime.provider, selectedProjectId]);
 
   return {

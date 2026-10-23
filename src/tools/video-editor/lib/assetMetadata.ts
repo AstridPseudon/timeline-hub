@@ -354,3 +354,23 @@ export const validateAssetMetadata = (input: unknown): AssetMetadata | undefined
 
   return hasFields ? result : undefined;
 };
+
+// ---------------------------------------------------------------------------
+// Registry entry pass-through (fields the App does not model)
+// ---------------------------------------------------------------------------
+
+/**
+ * Registry entry fields that are App-only runtime state and must never be
+ * saved. `src` is the App's resolved playback locator (a blob:, a signed or
+ * short-lived URL) that `useTimelineCommit` attaches to `resolvedConfig`
+ * entries; persisting it would freeze a per-session URL into the timeline.
+ * Keep this list small: any other unknown field is opaque and is kept.
+ */
+export const ASSET_REGISTRY_ENTRY_DENIED_FIELDS: ReadonlySet<string> = new Set(['src']);
+
+/**
+ * Whether an unmodelled registry field is carried through a save or a parser
+ * merge: any defined value except App-only denied fields.
+ */
+export const isPassThroughRegistryField = (field: string, value: unknown): boolean =>
+  value !== undefined && !ASSET_REGISTRY_ENTRY_DENIED_FIELDS.has(field);

@@ -10,6 +10,8 @@ interface ConnectionStatus {
   readonly checks?: SetupChecks;
   /** The one step this page can take itself: asking the browser for permission. */
   readonly connect?: boolean;
+  /** Which part of Astrid on this computer is older than this page; the update routes belong under the status. */
+  readonly outOfDate?: 'runtime' | 'chat';
 }
 
 const REACHED: SetupChecks = { runtime: 'pass', workspace: 'pass', ready: true };
@@ -27,7 +29,11 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection
   switch (state.status) {
     case 'connected':
       if (needsUpdate(connection.schemaDigest)) {
-        return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: REACHED };
+        return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: REACHED, outOfDate: 'runtime' };
+      }
+      // The Runtime itself is fine; only the chat service is older than this page.
+      if (connection.localServiceOutOfDate) {
+        return { title: COPY.connected.sentence, detail: COPY.chatNeedsUpdate, checks: REACHED, outOfDate: 'chat' };
       }
       return {
         title: COPY.connected.sentence,
@@ -46,7 +52,7 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection
     case 'set_up':
       return { title: COPY.setUp.title, detail: COPY.setUp.sentence, checks: LOOKING };
     case 'update_needed':
-      return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: LOOKING };
+      return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: LOOKING, outOfDate: 'runtime' };
     case 'not_running':
       return { title: COPY.notRunning.title, detail: COPY.notRunning.sentence, checks: LOOKING };
   }

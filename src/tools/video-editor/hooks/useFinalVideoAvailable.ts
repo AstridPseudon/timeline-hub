@@ -14,7 +14,6 @@ import { asRecord } from '@/shared/lib/typeCoercion';
 import { mapWithConcurrency } from '@/shared/lib/async/mapWithConcurrency';
 import { useRuntimeTasks } from '@/features/tasks/components/TasksPane/hooks/useRuntimeTasks';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import type { ShotFinalVideo } from '@/tools/travel-between-images/hooks/video/useShotFinalVideos.ts';
 import { useBridgeTaskSnapshot } from '@/shared/hooks/tasks/useBridgeTaskSnapshot.ts';
 import {
   managedOutputIdentityForOccurrence,
@@ -22,7 +21,13 @@ import {
 } from '@/tools/video-editor/data/shotCompositionProjection.ts';
 import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 
-export type { ShotFinalVideo };
+export interface ShotFinalVideo {
+  id: string;
+  location: string;
+  thumbnailUrl: string | null;
+  variantFetchGenerationId: string | null;
+  durationSeconds?: number | null;
+}
 
 export type RuntimeShotFinalVideo = ShotFinalVideo & {
   /** Runtime-owned association retained for the selected-output export action. */
@@ -434,21 +439,14 @@ export function useFinalVideoAvailable() {
     for (const [owner, video] of taskVideos) {
       if (!dismissedTaskOutputs.has(video.id)) merged.set(owner, video);
     }
-    if (!canonicalComposition) {
-      for (const [owner, video] of shots.finalVideoMap) {
-        merged.set(owner, video);
-      }
-    }
     return merged;
-  }, [canonicalComposition, dismissedTaskOutputs, shots.finalVideoMap, taskVideos]);
+  }, [dismissedTaskOutputs, taskVideos]);
 
   const dismissFinalVideo = useCallback((finalVideoId: string) => {
     if (Array.from(taskVideos.values()).some((video) => video.id === finalVideoId)) {
       setDismissedTaskOutputs((current) => new Set(current).add(finalVideoId));
-      return;
     }
-    shots.dismissFinalVideo(finalVideoId);
-  }, [shots, taskVideos]);
+  }, [taskVideos]);
 
   return {
     finalVideoMap,

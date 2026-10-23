@@ -288,7 +288,6 @@ const MediaGalleryGridInner: React.FC<MediaGalleryGridProps> = ({
                 <div
                   className={`grid ${gridColumnClasses} ${reducedSpacing ? 'gap-2 sm:gap-4' : 'gap-4'} ${(reducedSpacing || hideBottomPagination) ? 'mb-0' : 'mb-12'}`}
                   style={{ gridTemplateColumns: `repeat(${columnsPerRow}, minmax(0, 1fr))` }}
-                  data-tour="gallery-grid"
                 >
                   {paginatedImages.map((image, index) => {
                     const shouldShow = showImageIndices.has(index);

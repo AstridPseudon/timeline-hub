@@ -32,3 +32,4 @@ describe('buildSegmentMasterStateSnapshot', () => {
     expect(snapshot.segmentFrameWindow).toEqual({ start: 24, end: 54 });
   });
 });
+

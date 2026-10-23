@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 /**
- * Focused component tests for single-clip transition controls in ClipPanel (T11).
+ * Focused component tests for single-clip transition controls in ClipPanel.
  *
  * Covers: selector with None/built-ins/contributed transitions, provenance/renderability
  * badges, duration editing, parameter controls, remove, reset-to-defaults, and

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useFileDragTracking } from '@/shared/hooks/useFileDragTracking';
 import { preventDefaultDragOver, createSingleFileDropHandler } from '@/shared/lib/dnd/dragDropUpload';
 import { useProjectCrudContext, useProjectSelectionContext } from '@/shared/contexts/ProjectContext';
@@ -9,20 +9,18 @@ import { Skeleton } from '@/shared/components/ui/skeleton';
 import { GenerationRow } from '@/domains/generation/types';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { useAsyncOperation } from '@/shared/hooks/async/useAsyncOperation';
-import { getSupabaseClient as supabase } from '@/integrations/supabase/client';
-import { storagePaths, getFileExtension, MEDIA_BUCKET } from '@/shared/lib/storagePaths';
+import { useCloudBackendNotice } from '@/shared/hooks/async/useCloudBackendNotice';
+import { requireCloudBackend } from '@/shared/lib/cloudBackend';
+import { CloudBackendNotice } from '@/shared/components/CloudBackendNotice';
 import { InlineEditVideoView } from '../components/InlineEditVideoView';
 import { cn } from '@/shared/components/ui/contracts/cn';
 import { useIsMobile } from '@/shared/hooks/mobile';
-import { extractVideoPosterFrame } from '@/shared/lib/media/videoPosterExtractor';
-import { VARIANT_TYPE } from '@/shared/constants/variantTypes';
 import type { PortionSelection } from '@/shared/components/VideoPortionTimeline';
 import { parseRatio } from '@/shared/lib/media/aspectRatios';
 import { MediaSelectionPanel } from '@/shared/components/MediaSelectionPanel';
 import { useEditToolMediaPersistence } from '@/shared/hooks/media/useEditToolMediaPersistence';
 import { EditMediaSelectionLayout } from '@/shared/editMedia/EditMediaSelectionLayout';
 import { navigateToGenerationById } from '@/domains/generation/navigation';
-import { requireProjectAndUserId } from '@/shared/editMedia/uploadGuards';
 import { mediaCrossOrigin } from '@/shared/lib/media/mediaCrossOrigin';
 
 // Preload video poster helper - warm up the browser cache
@@ -36,8 +34,6 @@ const preloadVideoPoster = (gen: GenerationRow) => {
   preloadedVideoRef.current = urlToPreload;
 };
 
-const VIDEO_EXTRA_CLEAR_DATA = { lastEditedMediaSegments: null };
-
 export default function EditVideoPage() {
   const { selectedProjectId } = useProjectSelectionContext();
   const { projects } = useProjectCrudContext();
@@ -46,45 +42,24 @@ export default function EditVideoPage() {
   const selectedProject = projects.find(p => p.id === selectedProjectId);
   const projectAspectRatio = selectedProject?.aspectRatio || '16:9';
   const aspectRatioValue = parseRatio(projectAspectRatio);
-  const [savedSegments, setSavedSegments] = useState<PortionSelection[] | undefined>(undefined);
 
   // Upload operation with automatic loading state
-  const uploadOperation = useAsyncOperation<GenerationRow>();
+  const uploadOperation = useAsyncOperation<GenerationRow | undefined>();
   const { isDraggingOver, handleDragEnter, handleDragLeave, resetDrag: resetDragState } = useFileDragTracking();
   const isMobile = useIsMobile();
 
-  // Restore saved segments when settings are loaded from DB
-  const handleSettingsLoaded = useCallback((settings: Record<string, unknown>) => {
-    const storedSegments = settings.lastEditedMediaSegments as PortionSelection[] | undefined;
-    if (storedSegments && storedSegments.length > 0) {
-      setSavedSegments(storedSegments);
-    }
-  }, []);
-
-  // Persisted media selection (load/save last-edited media ID to project settings)
+  // Selected media for the editor
   const {
     selectedMedia,
     setSelectedMedia,
-    handleEditorClose: handleEditorCloseBase,
+    handleEditorClose,
     showSkeleton,
     updateUISettings,
     isUISettingsLoading,
-    isLoading: isLoadingPersistedMedia,
-    uiSettings,
-    userClosedEditor,
   } = useEditToolMediaPersistence({
     settingsToolId: 'edit-video-ui',
     projectId: selectedProjectId ?? undefined,
-    preloadMedia: preloadVideoPoster,
-    onSettingsLoaded: handleSettingsLoaded,
-    extraClearData: VIDEO_EXTRA_CLEAR_DATA,
   });
-
-  // Wrap editor close to also clear saved segments
-  const handleEditorClose = useCallback(() => {
-    handleEditorCloseBase();
-    setSavedSegments(undefined);
-  }, [handleEditorCloseBase]);
 
   // Callback to save segments when they change in InlineEditVideoView
   const handleSegmentsChange = useCallback((segments: PortionSelection[]) => {
@@ -93,75 +68,12 @@ export default function EditVideoPage() {
   }, [selectedProjectId, isUISettingsLoading, updateUISettings]);
 
   // Shared upload logic for both file input and drag-drop
-  const uploadVideo = useCallback(async (file: File): Promise<GenerationRow> => {
-    const { projectId, userId } = await requireProjectAndUserId(selectedProjectId);
-    const timestamp = Date.now();
-
-    // Extract poster frame from video
-    let posterUrl = '';
-    try {
-      const posterBlob = await extractVideoPosterFrame(file);
-      const posterFileName = storagePaths.thumbnail(userId, `${timestamp}-poster.jpg`);
-      const { error: posterError } = await supabase().storage
-        .from(MEDIA_BUCKET)
-        .upload(posterFileName, posterBlob, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: 'image/jpeg'
-        });
-
-      if (!posterError) {
-        const { data: { publicUrl } } = supabase().storage
-          .from(MEDIA_BUCKET)
-          .getPublicUrl(posterFileName);
-        posterUrl = publicUrl;
-      }
-    } catch { /* intentionally ignored */ }
-
-    const fileExt = getFileExtension(file.name, file.type, 'mp4');
-    const fileName = storagePaths.upload(userId, `${timestamp}.${fileExt}`);
-
-    const { error: uploadError } = await supabase().storage
-      .from(MEDIA_BUCKET)
-      .upload(fileName, file, { cacheControl: '3600', upsert: false });
-    if (uploadError) throw uploadError;
-
-    const { data: { publicUrl: videoUrl } } = supabase().storage
-      .from(MEDIA_BUCKET)
-      .getPublicUrl(fileName);
-
-    const generationParams = {
-      prompt: 'Uploaded video',
-      status: 'completed',
-      is_uploaded: true,
-      model: 'upload'
-    };
-
-    const { data: generation, error: dbError } = await supabase().from('generations')
-      .insert({
-        project_id: projectId,
-        location: videoUrl,
-        thumbnail_url: posterUrl || videoUrl,
-        type: 'video',
-        params: generationParams
-      })
-      .select()
-      .single();
-
-    if (dbError) throw dbError;
-
-    await supabase().from('generation_variants').insert({
-      generation_id: generation.id,
-      location: videoUrl,
-      thumbnail_url: posterUrl || videoUrl,
-      is_primary: true,
-      variant_type: VARIANT_TYPE.ORIGINAL,
-      name: 'Original',
-      params: generationParams,
-    });
-
-    return generation as unknown as GenerationRow;
-  }, [selectedProjectId]);
+  const { unavailable: cloudBackendUnavailable, attempt: attemptCloudBackend } = useCloudBackendNotice();
+  const uploadVideo = useCallback(
+    async (_file: File): Promise<GenerationRow | undefined> =>
+      attemptCloudBackend<GenerationRow>(() => requireCloudBackend('edit-video upload')),
+    [attemptCloudBackend],
+  );
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -198,7 +110,7 @@ export default function EditVideoPage() {
       resetDrag: resetDragState,
       getProjectId: () => selectedProjectId ?? undefined,
       upload: (file) => uploadVideo(file),
-      onResult: (result) => setSelectedMedia(result),
+      onResult: (result) => result && setSelectedMedia(result),
       context: 'EditVideoPage',
       toastTitle: 'Failed to upload video',
       uploadOperation,
@@ -210,9 +122,8 @@ export default function EditVideoPage() {
     await navigateToGenerationById(generationId, {
       context: 'EditVideoPage',
       onResolved: (generation) => setSelectedMedia(generation),
-      onAfterResolved: () => setSavedSegments(undefined),
     });
-  }, [setSavedSegments, setSelectedMedia]);
+  }, [setSelectedMedia]);
 
   return (
     <div 
@@ -228,6 +139,7 @@ export default function EditVideoPage() {
       {/* Header */}
       <div className="px-4 pt-6 pb-6 max-w-7xl mx-auto w-full">
         <h1 className="text-3xl font-light tracking-tight text-foreground">Edit Videos</h1>
+        {cloudBackendUnavailable && <CloudBackendNotice toolName="Edit Videos" />}
       </div>
       
       {/* Show skeleton when loading settings, loading persisted media, OR we have a stored ID but no media yet (and user didn't just close it) */}
@@ -305,7 +217,7 @@ export default function EditVideoPage() {
         </div>
       )}
       
-      {!selectedMedia && !isUISettingsLoading && !isLoadingPersistedMedia && (!uiSettings?.lastEditedMediaId || userClosedEditor.current) && (
+      {!selectedMedia && !isUISettingsLoading && (
         <EditMediaSelectionLayout
           isMobile={Boolean(isMobile)}
           isDraggingOver={isDraggingOver}
@@ -343,7 +255,6 @@ export default function EditVideoPage() {
                 onVideoSaved={async (_newUrl) => {
                 }}
                 onNavigateToGeneration={handleNavigateToGeneration}
-                initialSegments={savedSegments}
                 onSegmentsChange={handleSegmentsChange}
               />
             </div>

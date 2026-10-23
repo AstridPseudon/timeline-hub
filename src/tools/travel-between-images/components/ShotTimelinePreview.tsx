@@ -1,5 +1,3 @@
-import { normalizeAndPresentError } from '@/shared/lib/errorHandling/runtimeError.ts';
-import { getTimelineDurationInFrames } from '@banodoco/timeline-composition';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 import { AlertCircle, Film } from 'lucide-react';
@@ -8,6 +6,7 @@ import { VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorPr
 import { TimelineEditorCore } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx';
 import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
+import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { useTimelinePlaybackContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useTimelineEditorData } from '@/tools/video-editor/hooks/timelineStore.ts';
@@ -25,9 +24,6 @@ import type {
 } from '@/tools/video-editor/runtime/ports.ts';
 import { hardDurationMs } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types/index.ts';
-import type { ShotTimelineMediaProvider } from './shotTimelineDataProvider.ts';
-import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
-import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import {
   createShotTimelineDataProvider,
   createShotTimelineInitialData,
@@ -42,12 +38,6 @@ type ShotTimelinePreviewProps = {
   composition: PreparedShotComposition;
   occurrenceId: string;
   shotCompositionAdapter?: ShotCompositionAdapter;
-  /** Reuse the parent Runtime media-import and managed-selection seam. */
-  mediaProvider?: ShotTimelineMediaProvider;
-  /** Reuse the mounted parent command-session authority for occurrence media adds. */
-  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
-  /** Read the mounted parent timeline at occurrence-add capture time. */
-  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
   onCanonicalCompositionPublished?: (
     composition: PreparedShotComposition,
     publication?: CanonicalShotTimelinePublication,
@@ -340,7 +330,7 @@ function ShotTimelineEditorSurface({
     </div>
   );
 }
-export function ShotTimelineRecoveryControls() {
+function ShotTimelineRecoveryControls() {
   const chrome = useTimelineChromeContext();
   const recovery = chrome.recoveryDraft;
   if (!recovery && !chrome.isConflictExhausted) {
@@ -395,9 +385,6 @@ export function ShotTimelinePreview({
   composition,
   occurrenceId,
   shotCompositionAdapter,
-  mediaProvider,
-  occurrenceAddMediaPort,
-  getOccurrenceAddMediaCurrent,
   onCanonicalCompositionPublished,
   onCanonicalDraftStateChange,
   onCanonicalDraftSessionChange,
@@ -533,18 +520,16 @@ export function ShotTimelinePreview({
           shotCompositionAdapter,
           handleCanonicalCompositionPublished,
           editorHeadStateRef,
-          0,
-          mediaProvider,
         )
       : null,
     // Keep one provider/editor session. Its query identity advances with the
-    // clean canonical head, so the H0 cache cannot be reused for H1.
+    // clean canonical head, so the previous head's cache cannot be reused for the new one.
     // Its initial composition is refreshed by adoptCleanBaseline below, and
     // its publish callback is refreshed by setPublishCallback on every render;
     // recreating it for either would reset query/editor/recovery identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [hasProjectionConfig, currentComposition.parentDocumentId,
-      currentComposition.projectId, occurrenceId, shotCompositionAdapter, mediaProvider],
+      currentComposition.projectId, occurrenceId, shotCompositionAdapter],
   );
   const initialTimelineData = useMemo(
     () => projectionConfig ? createShotTimelineInitialData(projectionConfig) : undefined,
@@ -555,21 +540,16 @@ export function ShotTimelinePreview({
     draftDirtyRef.current = true;
     const generation = draftGenerationRef.current + 1;
     draftGenerationRef.current = generation;
-    const rawComposition = dataProvider.setDraftGeneration(generation);
-    try {
-      onCanonicalDraftProjectionChange?.({
-        scope: draftScope,
-        generation,
-        composition: projectShotTimelineDraftComposition(
-          currentComposition,
-          occurrenceId,
-          nextConfig,
-          rawComposition,
-        ),
-      });
-    } catch (error) {
-      normalizeAndPresentError(error, { context: 'shot-timeline-preview:draft' });
-    }
+    dataProvider.setDraftGeneration(generation);
+    onCanonicalDraftProjectionChange?.({
+      scope: draftScope,
+      generation,
+      composition: projectShotTimelineDraftComposition(
+        currentComposition,
+        occurrenceId,
+        nextConfig,
+      ),
+    });
   }, [currentComposition, dataProvider, draftScope, occurrenceId, onCanonicalDraftProjectionChange]);
   const handleSaveStatusChange = useCallback((status: SaveStatus) => {
     const dirty = status !== 'saved';
@@ -654,8 +634,6 @@ export function ShotTimelinePreview({
         extensionHostEnabled={false}
         onSaveStatusChange={handleSaveStatusChange}
         initialTimelineData={initialTimelineData}
-        occurrenceAddMediaPort={occurrenceAddMediaPort}
-        getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}
       >
         <ShotTimelineEditorSurface
           config={projection.config}

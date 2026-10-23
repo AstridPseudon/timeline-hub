@@ -4,8 +4,7 @@
  * Types for advanced video generation configuration.
  * Used across multiple tools: travel-between-images, join-clips, edit-video.
  *
- * Moved from tools/travel-between-images/settings.ts to shared/ because
- * these types are used by multiple tools and should not create circular dependencies.
+ * These types are used by multiple tools and should not create circular dependencies.
  */
 
 // =============================================================================

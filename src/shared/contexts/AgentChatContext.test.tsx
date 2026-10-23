@@ -57,6 +57,8 @@ describe('AgentChatActions registry', () => {
 
     const last = seen[seen.length - 1];
     expect(last).not.toBeNull();
+    expect(last).toHaveProperty('focusComposer');
+    expect(last).toHaveProperty('markEngaged');
     expect(last?.isRecording).toBe(true);
     expect(last?.isProcessing).toBe(false);
     expect(last?.isAgentWorking).toBe(true);
@@ -155,15 +157,16 @@ describe('AgentChat project scope', () => {
     expect(result.current.scope.editorContext?.projectId).toBe('runtime-p1');
     expect(result.current.scope.timelineId).toBeNull();
     const editor = { timelineId: 't1', editorContext: { ...project.editorContext, timelineId: 't1', timelineName: 'Main', timelineSummary: { configVersion: 7, trackCount: 1, clipCount: 2, assetCount: 1, duration: 4 } } };
-    act(() => result.current.registry.register(editor));
+    const owner = Symbol('editor');
+    act(() => result.current.registry.register(editor, owner));
     expect(result.current.scope.editorContext).toEqual(editor.editorContext);
-    act(() => result.current.registry.unregister());
+    act(() => result.current.registry.unregister(owner));
     expect(result.current.scope.editorContext).toEqual(project.editorContext);
-    act(() => result.current.registry.register(editor));
+    act(() => result.current.registry.register(editor, owner));
     act(() => result.current.registry.registerProject({ timelineId: null, editorContext: { ...project.editorContext, projectId: 'runtime-p2', projectSlug: 'other-project' } }));
     expect(result.current.scope.editorContext?.projectId).toBe('runtime-p2');
     expect(result.current.scope.timelineId).toBeNull();
-    act(() => { result.current.registry.unregister(); result.current.registry.unregisterProject(); });
+    act(() => { result.current.registry.unregister(owner); result.current.registry.unregisterProject(); });
     expect(result.current.scope.editorContext).toBeNull();
   });
 });
@@ -233,17 +236,9 @@ describe('AgentChat editor ownership', () => {
       staleCleanup = result.current.registry.register(value('old-timeline'), owner);
       result.current.registry.register(value('new-timeline'), owner);
       staleCleanup();
-      result.current.registry.unregister();
+      result.current.registry.unregister(Symbol('other-editor'));
       result.current.registry.activate(Symbol('missing'));
     });
     expect(result.current.bridge.timelineId).toBe('new-timeline');
-  });
-
-  it('retains the legacy register/unregister behavior for a single caller', () => {
-    const { result } = renderHook(useBridgeAndRegistry, { wrapper });
-    act(() => { result.current.registry.register(value('legacy')); });
-    expect(result.current.bridge.timelineId).toBe('legacy');
-    act(() => { result.current.registry.unregister(); });
-    expect(result.current.bridge.editorContext).toBeNull();
   });
 });

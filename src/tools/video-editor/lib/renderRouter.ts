@@ -1,4 +1,4 @@
-// Sprint 8 (SD-027 + SD-034): render-button routing.
+// Render-button routing.
 //
 // Decides whether the user's "Render" click should:
 //   * stay in the existing client-side WebCodecs path (`useClientRender`),
@@ -88,9 +88,9 @@ export interface ContributedClipRecord {
 }
 
 /**
- * Sprint 8 (final): provider-id taxonomy used by the render router. Each
- * route maps 1:1 onto a provider id so callers can dispatch on the route
- * without a separate lookup table.
+ * Provider-id taxonomy used by the render pipeline +
+ * `renderPipeline.ts`. Each route maps 1:1 onto a provider id so middleware
+ * can dispatch on the route without a separate lookup table.
  *
  *   * `browser-remotion`  — client-side WebCodecs / Remotion path
  *                          (`useClientRender`, native + media clips).
@@ -104,10 +104,10 @@ export interface ContributedClipRecord {
  *                          planner selects `sidecar-export`, which requires
  *                          the plan to actually demand that route (see
  *                          `plannerRouteHasDemand`). No provider implements
- *                          it yet, so the router reports "no external render
- *                          provider is registered" — a route the plan asked
- *                          for and the host cannot serve, never a silent
- *                          fallback for a blocked browser/worker plan.
+ *                          it yet, so `renderPipeline` reports "no external
+ *                          render provider is registered" — a route the plan
+ *                          asked for and the host cannot serve, never a
+ *                          silent fallback for a blocked browser/worker plan.
  */
 export type RenderRoute =
   | 'browser-remotion'
@@ -455,10 +455,10 @@ export function decideRenderRoute(
 
     hasOtherClip = true;
 
-    // M9 T11: Check contributed clip records first. Contributed clip
+    // Check contributed clip records first. Contributed clip
     // code is only allowed in browser-remotion when it explicitly
     // declares browser-export capability. Worker routes are always
-    // blocked for contributed code (SD1).
+    // blocked for contributed code.
     const clipType = clip?.clipType;
 
     // Managed authoring clips must take the Runtime worker route. Sending a
@@ -671,12 +671,16 @@ export function decideRenderRoute(
 const MANAGED_RENDER_CAPABILITY_ID = 'rendering.render';
 const LIVE_SCENE_CLIP_TYPE = 'haus.astrid.liveScene';
 
-/** Choose the existing scene composition only for its supported clip subset. */
-function managedRenderSelector(timeline: unknown): string {
-  if (!timeline || typeof timeline !== 'object') return 'rendering.remotion';
+/**
+ * The renderer the App names, or none. An ordinary timeline names no renderer: the host that claims the task chooses one it
+ * can run (Remotion where it is provisioned, else ffmpeg for what ffmpeg supports). Only the live-scene composition is the
+ * App's own choice, and only for its supported clip subset.
+ */
+function managedRenderSelector(timeline: unknown): string | undefined {
+  if (!timeline || typeof timeline !== 'object') return undefined;
   const config = timeline as { clips?: unknown; tracks?: unknown };
   if (!Array.isArray(config.clips)
-    || !config.clips.some((clip) => clip?.clipType === LIVE_SCENE_CLIP_TYPE)) return 'rendering.remotion';
+    || !config.clips.some((clip) => clip?.clipType === LIVE_SCENE_CLIP_TYPE)) return undefined;
   const tracks = Array.isArray(config.tracks) ? config.tracks : [];
   const audioTracks = new Set(tracks.filter((track) => track?.kind === 'audio').map((track) => track.id));
   for (const clip of config.clips) {
@@ -945,6 +949,7 @@ export async function enqueueAstridRuntimeRenderTimeline(
     const client = options.client ?? new AstridLocalClient({ projectSlug: payload.project_id });
     const capability = await client.catalog.get(MANAGED_RENDER_CAPABILITY_ID);
     const destination = options.destination ?? 'download';
+    const selector = managedRenderSelector(payload.timeline);
     const request: BridgeTaskAdmissionRequest = {
       project: payload.project_id,
       capability_id: capability.capability_id,
@@ -959,7 +964,7 @@ export async function enqueueAstridRuntimeRenderTimeline(
         family: MANAGED_RENDER_CAPABILITY_ID,
         params: {
           timeline_ref: payload.timeline_id,
-          selector: managedRenderSelector(payload.timeline),
+          ...(selector === undefined ? {} : { selector }),
           output_name: payload.output_filename,
           ...canonicalAdmissionMetadata(payload.timeline),
         },

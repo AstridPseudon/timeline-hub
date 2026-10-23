@@ -334,7 +334,6 @@ const ToolsPaneComponent: React.FC = () => {
               tooltip: `Current tool: ${currentTool.name}`,
             } : undefined,
           }}
-          dataTour="tools-pane-tab"
         />
       )}
       <ToolsPaneDrawer

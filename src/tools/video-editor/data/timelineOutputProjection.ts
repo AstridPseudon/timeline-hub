@@ -95,13 +95,6 @@ export function projectOutputTimelineConfig(
   for (const track of tracks) {
     if (trackRole(track) === 'source') sourceTrackIds.add(track.id);
   }
-  if (sourceTrackIds.size === 0) {
-    return Object.freeze({
-      config,
-      excludedClipIds: Object.freeze([]),
-      hasOutputContent: config.clips.length > 0,
-    });
-  }
   const excludedClipIds: string[] = [];
   const clips: ResolvedTimelineClip[] = [];
   const sourceAssetIds = new Set<string>();

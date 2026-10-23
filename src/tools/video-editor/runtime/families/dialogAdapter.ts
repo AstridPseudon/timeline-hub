@@ -1,7 +1,7 @@
 /**
  * Dialog real compatibility adapter.
  *
- * Preserves M1 host-integrated dialog behavior.
+ * Preserves host-integrated dialog behavior.
  *
  * @module families/dialogAdapter
  */

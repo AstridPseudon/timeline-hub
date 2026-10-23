@@ -8,7 +8,6 @@
  */
 
 import React from 'react';
-import { Loader2, X } from 'lucide-react';
 import { MediaLightbox } from '@/domains/media-lightbox/MediaLightbox';
 import { DesktopScrubbingPreview } from '@/shared/components/ShotImageManager/components/DesktopScrubbingPreview';
 import { InlineSegmentVideo } from '@/shared/components/InlineSegmentVideo';
@@ -37,7 +36,6 @@ interface SegmentOutputStripProps {
   containerWidth: number;
   zoomLevel: number;
   segmentSlots: SegmentSlot[];
-  isLoading?: boolean;
   localShotGenPositions?: Map<string, number>;
   hasPendingTask?: (pairShotGenerationId: string | null | undefined) => boolean;
   onOpenPairSettings?: (pairIndex: number) => void;
@@ -48,10 +46,6 @@ interface SegmentOutputStripProps {
     endFrame: number;
   };
   readOnly?: boolean;
-  onAddTrailingSegment?: () => void;
-  onRemoveTrailingSegment?: () => void;
-  isMultiImage?: boolean;
-  lastImageFrame?: number;
   onTrailingVideoInfo?: (videoUrl: string | null) => void;
 }
 
@@ -64,16 +58,11 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
   containerWidth,
   zoomLevel,
   segmentSlots: rawSegmentSlots,
-  isLoading = false,
   hasPendingTask: hasPendingTaskProp,
   onOpenPairSettings,
   selectedParentId,
   trailingSegmentMode,
   readOnly = false,
-  onAddTrailingSegment,
-  onRemoveTrailingSegment,
-  isMultiImage = false,
-  lastImageFrame,
   onTrailingVideoInfo,
 }) => {
   const {
@@ -84,9 +73,7 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
     isMobile,
     // Display data
     positionedSlots,
-    addTrailingButtonLeftPercent,
     hasPendingTask,
-    hasRecentMismatch,
     // Scrubbing
     activeScrubbingIndex,
     activeSegmentSlot,
@@ -98,15 +85,11 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
     handleScrubbingStart,
     // Lightbox
     lightboxMedia,
-    currentLightboxMedia,
     childSlotIndices,
     handleSegmentClick,
     handleLightboxNext,
     handleLightboxPrev,
     handleLightboxClose,
-    // Deletion
-    deletingSegmentId,
-    handleDeleteSegment,
   } = useSegmentOutputStrip({
     shotId,
     projectAspectRatio,
@@ -117,11 +100,8 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
     rawSegmentSlots,
     trailingSegmentMode,
     hasPendingTaskProp,
-    readOnly,
     onTrailingVideoInfo,
     selectedParentId,
-    isMultiImage,
-    lastImageFrame,
   });
 
   // Don't render if no pairs AND not in single-image mode
@@ -161,10 +141,6 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
                 const { slot } = positioned;
                 const isActiveScrubbing = activeScrubbingIndex === index;
 
-                // Check if source images have recent changes (for warning indicator)
-                const segmentId = slot.type === 'child' ? slot.child.id : null;
-                const hasSourceChanged = segmentId ? hasRecentMismatch(segmentId) : false;
-
                 return (
                   <React.Fragment key={slot.type === 'child' ? slot.child.id : `placeholder-${index}`}>
                     <InlineSegmentVideo
@@ -178,10 +154,7 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
                       leftPercent={positioned.leftPercent}
                       widthPercent={positioned.widthPercent}
                       onOpenPairSettings={onOpenPairSettings}
-                      onDelete={handleDeleteSegment}
-                      isDeleting={slot.type === 'child' && slot.child.id === deletingSegmentId}
                       isPending={hasPendingTask(slot.pairShotGenerationId)}
-                      hasSourceChanged={hasSourceChanged}
                       // Scrubbing props
                       isScrubbingActive={isActiveScrubbing}
                       onScrubbingStart={(rect: DOMRect) => handleScrubbingStart(index, rect)}
@@ -190,50 +163,13 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
                       scrubbingProgress={isActiveScrubbing ? scrubbing.progress : undefined}
                       readOnly={readOnly}
                     />
-                    {/* X button to remove trailing segment */}
-                    {positioned.isTrailing && onRemoveTrailingSegment && !readOnly &&
-                      slot.type !== 'child' && !hasPendingTask(slot.pairShotGenerationId) && (
-                      <button
-                        className="absolute z-20 w-5 h-5 rounded-full bg-muted/90 hover:bg-destructive border border-border/50 hover:border-destructive flex items-center justify-center text-muted-foreground hover:text-destructive-foreground transition-all duration-150"
-                        style={{
-                          left: `calc(${positioned.leftPercent + positioned.widthPercent}% - 8px)`,
-                          top: '-4px',
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemoveTrailingSegment();
-                        }}
-                        title="Remove trailing segment"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
                   </React.Fragment>
                 );
               })}
-
-              {/* Add trailing segment button */}
-              {addTrailingButtonLeftPercent !== null && onAddTrailingSegment && !readOnly && (
-                <button
-                  className="absolute top-0 bottom-0 w-7 rounded-md bg-muted/30 border-2 border-dashed border-border/40 hover:bg-muted/50 hover:border-primary/40 flex items-center justify-center cursor-pointer transition-all duration-150 group"
-                  style={{ left: `calc(${addTrailingButtonLeftPercent}% + 2px)` }}
-                  onClick={onAddTrailingSegment}
-                  title="Add trailing video segment"
-                >
-                  <span className="text-xl font-light leading-none text-muted-foreground group-hover:text-foreground transition-colors">+</span>
-                </button>
-              )}
             </div>
           ) : (
             <div className="flex-1 h-full flex items-center justify-center text-xs text-muted-foreground">
-              {isLoading ? (
-                <div className="flex items-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  <span>Loading segments...</span>
-                </div>
-              ) : (
-                <span>No segments generated yet</span>
-              )}
+              <span>No segments generated yet</span>
             </div>
           )}
         </div>
@@ -254,9 +190,6 @@ export const SegmentOutputStrip: React.FC<SegmentOutputStripProps> = ({
           features={{
             showDownload: true,
             showTaskDetails: true,
-          }}
-          actions={{
-            starred: currentLightboxMedia?.starred ?? false,
           }}
           shotId={shotId}
           videoProps={{
