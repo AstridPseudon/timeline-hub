@@ -1,0 +1,7 @@
+# Runtime c271 occurrence-pin owner dispatched —20:20UTC
+
+Consumed concrete earlyAgent2015/worker2013 handoff against actual2a9. Added critical R2-native-occurrence-projection row and dispatched unique HARD Sol rt-R2-native-occurrence-projection-sol-2020 (PLAN R2 Runtime-side inverseauth), base actual2a9. It verifies exact _inverse_stage_occurrence_collection -> authored AFTER projection -> coverage discrepancy, then smallest correction preserving only already authenticated per-row physicalpins plus all permutation/membership/owner/shot/internal/authoredbyte/history/range/effect/ABA guards. Agent claims unchanged. Strictnegative oldRED/newGREEN and targeted Runtime module, independent Luna before merge/currentproof. No contract/schema/client/tuplechange or extraapproval requested.
+
+Please hand back actual finite060/records.undo_of sourcepacket flat names+hashes immediately as independent2013 completes export; sourceassessment starts on availableearlyhandoff now. No need new author/export duplicate. Agent remains sole meaningful changed originalc271 public qualification owner after reviewed Runtime correction; Runtime will not replay originalc271/FOUR/full/body here. Your independent sourceowner challenge retained; no Runtimebug/PASS presumed until actualfacts verified.
+
+Separate storekit source/review/install/published946acb remains done (peer2012); remote6hash ACK requested on normalreceipt only, no rebench. Legacyproposal assessment2017 is unrelated read-only under existingOPSrow. Runtimeproduct2a9/frozen34e unchanged until reviewed queuedmerge.
