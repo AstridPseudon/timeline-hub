@@ -1,0 +1,61 @@
+{
+  "base_commit": "2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d",
+  "base_tree": "f79a2355cfb39d9ada7721978bd20d5702105778",
+  "archive": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-c271-cause-review-2013-packets-a8dcf1d1.tar.gz",
+    "sha256": "a8dcf1d1fe6c2ce6905749ea11fe96057b421f7497c0e233c13ca1e0182bc3d4",
+    "bytes": 14794303,
+    "members": 85
+  },
+  "archive_manifest_sha256": "e44a72454b1f641c385dcc0ba0177bd40bc58ae009b2301b69ba6a6fcac361d5",
+  "packet_member": {
+    "name": "./run/cases/060-port-prepared.json",
+    "sha256": "58051ef4e6e23f717c07fdce2d12e8d2b74caa106eb8422fe6e1c604c34f9d4d",
+    "bytes": 5268985
+  },
+  "source_packet_origins": {
+    "astrid.sdk.timeline._command_state": {
+      "path": "/home/user/work/wt/agt-G5-c271-isolated-2010/astrid/sdk/timeline/_command_state.py",
+      "sha256": "5584a8d08edecf480aa223c3dcf73a5e3064cee14758ebbeef19836043db0384"
+    },
+    "astrid.sdk.timeline._commit_patch": {
+      "path": "/home/user/work/wt/agt-G5-c271-isolated-2010/astrid/sdk/timeline/_commit_patch.py",
+      "sha256": "baf524346b6b0d408a2d91683eb02dc600430145c5a18cb56e13d946ccfcbae1"
+    },
+    "runtime_protocol.timeline_commit_auth": {
+      "path": "/home/user/work/wt/rt-pin-2a9e347f/runtime_protocol/timeline_commit_auth.py",
+      "sha256": "3b812936efaa35a165c056fbacee6d8e699d485ca912f12e11cc4cd4bbe8f2ef"
+    }
+  },
+  "source_history_publications": [
+    "txn-0e37f757d72c4226b04fcf6315980651"
+  ],
+  "packet_no_write": {
+    "no_write": true,
+    "head_unchanged": true,
+    "history_unchanged": true
+  },
+  "captured_durable_before_equals_after": true,
+  "files": {
+    "runtime_protocol/timeline_commit_auth.py": {
+      "sha256": "ecc0149ed0c9e93bac5365ca7ab97f5a85a80b2fe3acb6a962b7ecc635c08872",
+      "bytes": 146977
+    },
+    "tests/test_timeline_inverse_stage_authentication.py": {
+      "sha256": "c5b44e6d11209385cbf85af4cfa7114802d2ab5e8e7b8712f9ec0a8d14fc155b",
+      "bytes": 67382
+    },
+    "tests/fixtures/timeline_occurrence_order_inverse_060.json": {
+      "sha256": "50d9e08be8efa3e9f4d1d789ab99fd2c76d7e92bbeacfba543f65d2a331145c0",
+      "bytes": 145292
+    }
+  },
+  "projected_values_sha256": {
+    "history": "1e3920da4c03ae247ed68cc8be36ed71af482d026b220dddcd941ab3e64707ab",
+    "prepared": "d9d4284103aa15025772c0977f587a4a5b06b04ac83b9cffcc73f77a0d7ee5b5",
+    "request": "eab1ce7f1407decdf43508c3970fbb6a2d0f87098429251a0135ded80ac93485",
+    "source": "6adfeaeffa937f82b381ccc8cfc9b7f9e5c71ab1dfec66c5ca129f7909706c34"
+  },
+  "limits": "Offline authentication validation only; no public undo/redo, full suite, browser, contract, schema, generated client, store or Agent change.",
+  "source_patch_sha256": "0f521b1eec89179887253bbf13225d36c8264301a85b6e56e404f6b947a4f9ed"
+}
