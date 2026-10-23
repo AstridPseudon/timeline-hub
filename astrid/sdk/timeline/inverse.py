@@ -148,6 +148,10 @@ def coalesce(records, state=None, *, cache_stages=None):
     root_address = _root_addresses(records, state)
 
     def value_address(write):
+        # A direct registry write targets physical storage. Folding it into a
+        # config aggregate would invent a mirror absent from that capture.
+        if write['ref'] == 'parent' and write['path'][:1] == ['registry']:
+            return 'parent', tuple(write['path'])
         ref, path = root_address(write['ref'], write['path'])
         # Source rows are owned by an occurrence, but aren't JSON children of
         # its placement row. Ownership overlap must not fold them into that row.
