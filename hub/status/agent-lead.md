@@ -1,1 +1,1 @@
-2026-10-23T22:49:37Z alive; dispatcher hb fresh; live workers 3 vs board active rows 3; disk 11G
+2026-10-23T23:22:18Z alive; dispatcher hb fresh; live workers 5 vs board active rows 5; disk 13G
