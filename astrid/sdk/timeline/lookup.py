@@ -6,20 +6,30 @@ import re
 from typing import Any, Iterable, Mapping, Sequence
 
 from astrid.core.timeline import moments as mo
-from astrid.sdk import timeline_intent as intent
 from astrid.core.timeline.cuts import (
     occurrences_from_bundle,
     picture_cuts,
 )
-
-from astrid.sdk.timeline._common import (AUDIO_KINDS, TIME_RE, TimelineEditError, WORD_ID_RE, _norm, _num, _r)
-from astrid.sdk.timeline.doc import (_read_words, _row_start)
-from astrid.sdk.timeline.model import (Clip, Cut, StepSequence, Voice, Word)
+from astrid.sdk import timeline_intent as intent
+from astrid.sdk.timeline._common import (
+    AUDIO_KINDS,
+    PARENT_SHOT,
+    TIME_RE,
+    WORD_ID_RE,
+    TimelineEditError,
+    _norm,
+    _num,
+    _r,
+)
+from astrid.sdk.timeline.doc import _read_words, _row_start
+from astrid.sdk.timeline.model import Clip, Cut, StepSequence, Voice, Word
 from astrid.sdk.timeline.selection import Selection
 
 
 class _LookupMixin:
     """Checkout: clocks, looking things up (cuts, clips, words), and reading the document's shots and cut groups."""
+
+    bundle: dict[str, Any]  # set by Checkout.__init__; declared so this mixin's readers are typed
 
     # ---- clocks -----------------------------------------------------------
     def quantize(self, seconds: float) -> float:
@@ -110,6 +120,7 @@ class _LookupMixin:
         """Every clip, in timeline order (a Selection). Call it to filter: ``tl.clips(role="label")``,
         ``tl.clips(chapter="02", element="am-type")``, ``tl.clips("cut=c1 track=sprite")``. ``tl.clips()`` is all."""
         pool = [Clip(self, sid, c) for sid in self._shot_ids() for c in self._internal(sid)["clips"]]
+        pool += [Clip(self, PARENT_SHOT, c) for c in self._parent_clips()]
         return Selection(sorted(pool, key=lambda c: (c.start, c.id)), kind="clip", tl=self)
 
     def clip(self, query: str, *, cut: Any = None, near: Any = None) -> Clip:
@@ -329,10 +340,39 @@ class _LookupMixin:
                 return row
         raise TimelineEditError(f"no shot {shot_id!r} is placed in this timeline")
 
+    def _parent_clip_list(self) -> list[dict[str, Any]] | None:
+        """The parent composition's clip list, or None when the parent has none. The parent may mirror its
+        clips in ``config.clips`` (the App writes both). The two keys are made ONE list here, so an edit or a
+        shift can never reach one and miss the other; two lists that differ are refused, as ``flatten`` does."""
+        parent = self.bundle.get("parent")
+        if not isinstance(parent, dict):
+            return None
+        config = parent.get("config")
+        mirror = config.get("clips") if isinstance(config, dict) else None
+        own = parent.get("clips")
+        if own and mirror and own is not mirror and own != mirror:
+            raise TimelineEditError("the parent holds two different clip lists (clips and config.clips)")
+        chosen = own or mirror
+        if not isinstance(chosen, list):
+            return None
+        parent["clips"] = chosen
+        if isinstance(mirror, list) and isinstance(config, dict):  # a list mirror exists only under a dict config
+            config["clips"] = chosen
+        return chosen
+
+    def _parent_clips(self) -> list[dict[str, Any]]:
+        """The parent composition's own clips (what media dropped on an empty timeline becomes): they sit
+        directly on the parent, timeline-absolute, with no shot."""
+        return [c for c in self._parent_clip_list() or [] if isinstance(c, dict)]
+
     def _shot_start(self, shot_id: str) -> float:
+        if shot_id == PARENT_SHOT:
+            return 0.0
         return _row_start(self._row(shot_id)) / 1000.0
 
     def _shot_length(self, shot_id: str) -> float:
+        if shot_id == PARENT_SHOT:
+            return float("inf")  # the parent has no shot edge to cut a clip off at
         return _num(self._row(shot_id).get("duration_ms")) / 1000.0
 
     def _shot_id(self, shot: Any) -> str:
@@ -350,13 +390,20 @@ class _LookupMixin:
         raise TimelineEditError(f"no shot matches {shot!r}; shots: " + ", ".join(ids))
 
     def _internal(self, shot_id: str) -> dict[str, Any]:
+        if shot_id == PARENT_SHOT:  # the parent composition plays the part of a shot that starts at 0
+            self._parent_clip_list()
+            parent = self.bundle.setdefault("parent", {})
+            parent.setdefault("clips", [])
+            return parent
         shot = self.bundle["shots"][shot_id]
         internal = shot.setdefault("internal_timeline", {})
         internal.setdefault("clips", [])
         return internal
 
     def _track_kind(self, shot_id: str, track: str) -> str:
-        for t in self._internal(shot_id).get("tracks") or []:
+        internal = self._internal(shot_id)
+        tracks = internal.get("tracks") or (internal.get("config") or {}).get("tracks") if shot_id == PARENT_SHOT else internal.get("tracks")
+        for t in tracks or []:
             if str(t.get("id")) == track:
                 return str(t.get("kind") or "").lower()
         return ""

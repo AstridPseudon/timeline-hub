@@ -157,7 +157,14 @@ function TranscriptSegmentControl({
       : item.id === props.selectedItemId;
   const playing = props.playingItemIds?.includes(item.id) === true;
   const left = item.timelineStart * props.pixelsPerSecond;
-  const width = Math.max(1, (item.timelineEnd - item.timelineStart) * props.pixelsPerSecond);
+  // The 1px border is inside the border-box width, so 2px is the narrowest box
+  // that still has a content edge. The 6px horizontal inset is a margin on the
+  // inner text span, not padding on the button (every chip would be at least
+  // 14px wide and overlap its neighbour on screen) and not padding on the span
+  // (its overflow clip sits at the padding edge, so a narrow chip would show a
+  // sliced fragment of a letter). With a margin the span shrinks to nothing
+  // inside a narrow chip instead.
+  const width = Math.max(2, (item.timelineEnd - item.timelineStart) * props.pixelsPerSecond);
   const style: CSSProperties = {
     position: 'absolute',
     top: `${(row * 100) / rowCount}%`,
@@ -167,7 +174,7 @@ function TranscriptSegmentControl({
     boxSizing: 'border-box',
     overflow: 'hidden',
     zIndex: selected ? 25 : playing ? 15 : 1,
-    padding: '0 6px',
+    padding: 0,
     borderRadius: 4,
     border: selected
       ? '1px solid var(--video-editor-accent-ring)'
@@ -218,10 +225,16 @@ function TranscriptSegmentControl({
       const width = Math.min(viewportWidth - 16, tooltip.width || tooltipRef.current?.scrollWidth || 1);
       const height = Math.min(viewportHeight - 16, tooltip.height || tooltipRef.current?.scrollHeight || 32);
       const left = Math.max(8, Math.min(target.left + target.width / 2 - width / 2, viewportWidth - width - 8));
-      const roomAbove = target.top - height - 8;
+      // Clear the whole lane, not just this chip: in a multi-row lane a tooltip
+      // placed over the row above is hoverable, so a pointer heading for a chip
+      // in that row would land on the tooltip and could never reach the chip.
+      const lane = controlRef.current?.closest('[data-testid="transcript-lane-renderer"]')?.getBoundingClientRect();
+      const laneTop = lane ? Math.min(target.top, lane.top) : target.top;
+      const laneBottom = lane ? Math.max(target.bottom, lane.bottom) : target.bottom;
+      const roomAbove = laneTop - height - 8;
       const top = roomAbove >= 8
         ? roomAbove
-        : Math.max(8, Math.min(target.bottom + 8, viewportHeight - height - 8));
+        : Math.max(8, Math.min(laneBottom + 8, viewportHeight - height - 8));
       setTooltipPosition((current) => current && current.left === left && current.top === top && current.maxWidth === Math.min(480, viewportWidth - 16)
         ? current
         : { left, top, maxWidth: Math.max(1, Math.min(480, viewportWidth - 16)) });
@@ -290,7 +303,11 @@ function TranscriptSegmentControl({
         props.onNavigateItem?.(item.id, direction);
       }}
     >
-      <span aria-hidden="true" className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+      <span
+        aria-hidden="true"
+        className="block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+        style={{ margin: '0 6px' }}
+      >
         {text}
       </span>
     </button>

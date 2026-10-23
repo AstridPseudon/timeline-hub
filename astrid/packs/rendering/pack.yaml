@@ -35,7 +35,8 @@ capabilities:
 agent:
   purpose: Choose this pack for runtime-owned timeline authoring and inspection, candidate
     preview/publication, finished video rendering, deterministic visual evidence,
-    GPT Image sprite sheets, or canvas/WebGL post-processing effects.
+    GPT Image sprite sheets, canvas/WebGL post-processing effects, or explorable
+    Three.js worlds (live scenes) and their shots.
   do_not_use_for: Publishing rendered output to external services.
   normal_entrypoints:
   - rendering.render
@@ -908,7 +909,8 @@ actions:
       required: false
       type: file
     - description: 'Qualified renderer id: rendering.remotion, rendering.ffmpeg, or
-        rendering.threejs.'
+        rendering.threejs. When omitted, the host chooses rendering.remotion if this
+        host can run it, else rendering.ffmpeg.'
       name: selector
       required: false
       type: string
@@ -1013,7 +1015,7 @@ actions:
       - correction_version
       - timing_method
       - speech_coverage
-      requires_remotion: true
+      requires_remotion: selected
       requires_timeline: false
       command_builder: astrid.packs.video_editing.actions.hype.run.build_pool_steps
       pipeline_step: render
@@ -1356,5 +1358,7 @@ resources:
   path: docs/references/document-checkout.md
 - kind: documentation
   path: docs/references/placeholder-voiceover.md
+- kind: documentation
+  path: docs/references/worlds-authoring.md
 - kind: support
   path: shared/readiness-image.tsx

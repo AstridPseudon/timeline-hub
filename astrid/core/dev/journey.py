@@ -4,7 +4,8 @@ Run only on a machine allowed to start Runtime, Remotion and process groups.
 No Runtime or renderer layer is mocked here.  The reference is never opened for
 writing; workspace adoption receives a private filesystem clone.
 
-``--tier smoke`` renders a short excerpt and proves the host-lifecycle fixes keep
+``--tier quick`` runs the shared App browser exchange on a generated one-second realm and
+renders its exact saved revision. ``--tier smoke`` renders a short excerpt and proves the host-lifecycle fixes keep
 holding: an outdated idle host replaces itself, a host started inside a capacity job
 outlives it, duplicate PATH entries reuse the host, a kill -9 of the idle host recovers
 by itself, and a kill -9 mid-render leaves no orphaned render group.  ``--tier full``
@@ -19,8 +20,10 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import logging
 import os
 import shutil
+import socket
 import signal
 import subprocess
 import sys
@@ -144,18 +147,20 @@ def _processes(root: Path) -> list[dict[str, Any]]:
     return [row for row in rows if row["pid"] in owned]
 
 
-def _reap_owned_groups(root: Path) -> list[dict[str, Any]]:
+def _reap_owned_groups(root: Path, tracked_groups: set[int] | None = None) -> list[dict[str, Any]]:
     """Signal only groups whose every listed member is rooted in our temp realm."""
+    tracked_groups = tracked_groups or set()
     for signum in (platform.TERM, platform.KILL):
-        rows = _processes(root)
+        rooted = _processes(root)
+        all_ps = _ps_rows() if tracked_groups or rooted else []
+        rows = rooted + [row for row in all_ps if row["pgid"] in tracked_groups]
         if not rows:
             return []
-        all_ps = _ps_rows()
-        groups = {row["pgid"] for row in rows}
+        groups = {row["pgid"] for row in rows} | {row["pgid"] for row in all_ps if row["pgid"] in tracked_groups}
         safe = set(groups)
         owned_pids = {row["pid"] for row in rows}
         for row in all_ps:
-            if row["pgid"] in groups and row["pid"] not in owned_pids:
+            if row["pgid"] in groups and row["pid"] not in owned_pids and row["pgid"] not in tracked_groups:
                 safe.discard(row["pgid"])
         for group in safe:
             if group != platform.process_group(os.getpid()):
@@ -165,9 +170,12 @@ def _reap_owned_groups(root: Path) -> list[dict[str, Any]]:
                     signal_observed_group(group, signum, leader_birth=process_birth_identity(group) or "absent-leader")
                 except ProcessLookupError:
                     pass
-        if wait_for(lambda: not _processes(root), 5):
+        def clear():
+            return not _processes(root) and (not tracked_groups or not any(
+                row["pgid"] in tracked_groups for row in _ps_rows()))
+        if wait_for(clear, 5):
             return []
-    return _processes(root)
+    return _processes(root) + [row for row in _ps_rows() if row["pgid"] in tracked_groups]
 
 
 def _files(root: Path):
@@ -209,6 +217,10 @@ def machine_load() -> dict[str, Any]:
 # interpreter overrides Remotion validation refuses (remotion_runtime.probe_context lists them inline;
 # the Python-startup set and the interactive-Git allowlist are imported from there).
 _STRIPPED_ENV = frozenset({"ASTRID_NODE_EXECUTABLE", "ASTRID_TIMELINE_SCHEMA_PYTHONPATH", "OTTO_HEAVY_LEASE"})
+_PRIVATE_REALM_ONLY_ENV = frozenset({"BANODOCO_LOCAL_DATA_ROOT", "BANODOCO_LOCAL_SOURCE_MANIFEST",
+                                    "ASTRID_LOCAL_DATA_ROOT",
+                                    "ASTRID_LOCAL_SOURCE_MANIFEST", "BANODOCO_RUNTIME_DATA_ROOT",
+                                    "BANODOCO_RUNTIME_SOURCE_MANIFEST", "ASTRID_RUNTIME_SOURCE_MANIFEST"})
 _OVERRIDE_ENV = frozenset({"NODE_OPTIONS", "NODE_PATH", "NODE_ICU_DATA", "OPENSSL_CONF", "PYTHONHOME",
                            "PYTHONEXECUTABLE", "__PYVENV_LAUNCHER__"}) | _UNSUPPORTED_PYTHON_STARTUP
 _STRIPPED_PREFIXES = ("ASTRID_REMOTION_", "ASTRID_RENDER_", "LD_", "DYLD_")
@@ -217,10 +229,28 @@ _STRIPPED_PREFIXES = ("ASTRID_REMOTION_", "ASTRID_RENDER_", "LD_", "DYLD_")
 def scrub_child_env(environ: Mapping[str, str]) -> dict[str, str]:
     """``environ`` without anything Remotion validation would fail closed on (used for every child)."""
     def keep(key: str) -> bool:
-        if key in _STRIPPED_ENV or key in _OVERRIDE_ENV or key.startswith(_STRIPPED_PREFIXES):
+        if key in _STRIPPED_ENV or key in _PRIVATE_REALM_ONLY_ENV or key in _OVERRIDE_ENV or key.startswith(_STRIPPED_PREFIXES):
             return False
         return not (key.startswith("GIT_") and key not in _INTERACTIVE_GIT_ENV)
     return {key: value for key, value in environ.items() if keep(key)}
+
+
+def _isolate_quick_pack_home(env: dict[str, str], root: Path) -> None:
+    """Keep QUICK's mutable pack source/config roots inside its disposable data tree."""
+    packhome = root / "data" / "packhome"
+    data_home, state_home, config_home = packhome / "data", packhome / "state", packhome / "config"
+    for key in ("ASTRID_ENV_FILE", "ASTRID_PACKS_PATH", "ASTRID_SOURCE_DECLARATIONS",
+                "ASTRID_HIVEMIND_REPOSITORY", "ASTRID_HIVEMIND_REVISION"):
+        env.pop(key, None)
+    env["HOME"] = str(packhome)
+    env["ASTRID_HOME"] = str(packhome / ".astrid")
+    env["XDG_DATA_HOME"] = str(data_home)
+    env["XDG_STATE_HOME"] = str(state_home)
+    env["XDG_CONFIG_HOME"] = str(config_home)
+    # These explicit selectors take precedence over XDG defaults in pack setup/discovery.
+    env["ASTRID_SOURCE_DATA"] = str(data_home / "astrid" / "packs")
+    env["ASTRID_SOURCE_STATE"] = str(state_home / "astrid" / "pack-sources.json")
+    env["ASTRID_USER_PACKS"] = str(config_home / "astrid" / "packs")
 
 
 # -- render backend -------------------------------------------------------------------------
@@ -229,12 +259,25 @@ def review_supported(backend: str) -> bool:
     return backend == REMOTION_BACKEND
 
 
+def _admitted_task_inputs(shown: Mapping[str, Any]) -> Mapping[str, Any]:
+    """The admitted inputs of a task, from ``tasks show --json``: the Runtime's task spec
+    (``data.spec``) wraps the admitted executor spec, whose ``inputs`` carry the pinned timeline."""
+    admitted = ((shown.get("data") or {}).get("spec") or {}).get("spec") or {}
+    inputs = admitted.get("inputs")
+    return inputs if isinstance(inputs, Mapping) else {}
+
+
 def render_argv(astrid: Sequence[str], timeline: str, project: str, name: str, *, backend: str,
                 window: tuple[float, float] | None = None, review: bool = False, detach: bool = False,
-                timeout: float | None = None) -> list[str]:
+                timeout: float | None = None, expected_version: int | None = None,
+                profile: Mapping[str, Any] | None = None) -> list[str]:
     argv = [*astrid, "timelines", "render", timeline, "--project", project]
     if window is not None:
         argv += ["--range", str(window[0]), str(window[1])]
+    if expected_version is not None:
+        argv += ["--expected-version", str(expected_version)]
+    if profile is not None:
+        argv += ["--profile", json.dumps(dict(profile), separators=(",", ":"))]
     argv += ["--backend", backend, "--output-name", name]
     if review and review_supported(backend):
         argv.append("--review")
@@ -329,6 +372,104 @@ def read_runtime_access(data_root: Path) -> tuple[str, str]:
     return str(endpoint).rstrip("/"), str(token)
 
 
+def _sha(value: Any) -> bool:
+    return isinstance(value, str) and len(value) == 40 and all(ch in "0123456789abcdef" for ch in value)
+
+
+def _validate_quick_result(path: Path, descriptor: Mapping[str, Any]) -> dict[str, Any]:
+    try:
+        value = json.loads(path.read_text())
+    except (OSError, ValueError) as exc:
+        raise JourneyFailure("quick_browser", f"App browser exchange produced no valid result: {exc}") from exc
+    fields = ("realmId", "runtimeInstanceId", "baseRevisionId", "astridRevisionId", "savedRevisionId",
+              "astridParentRevisionId", "appParentRevisionId",
+              "astridLabel", "appLabel", "revisions")
+    if not isinstance(value, dict) or any(not value.get(key) for key in fields):
+        raise JourneyFailure("quick_browser", "App browser result omitted required identity, edit, or revision fields")
+    if value["realmId"] != descriptor["realmId"] or value["runtimeInstanceId"] != descriptor["runtimeInstanceId"]:
+        raise JourneyFailure("quick_browser", "App attached to a different realm or Runtime instance")
+    if value["baseRevisionId"] != descriptor["headRevisionId"]:
+        raise JourneyFailure("quick_browser", "App base revision is not the adopted reference head")
+    if value["astridParentRevisionId"] != value["baseRevisionId"] or value["appParentRevisionId"] != value["astridRevisionId"]:
+        raise JourneyFailure("quick_browser", "publish receipts do not establish base → Astrid → App revision ancestry")
+    if value["astridRevisionId"] == value["baseRevisionId"] or value["savedRevisionId"] == value["astridRevisionId"]:
+        raise JourneyFailure("quick_browser", "Astrid and App edits must each create a descendant revision")
+    if value["revisions"] != descriptor["revisions"]:
+        raise JourneyFailure("quick_browser", f"App checkout tuple differs from F1 descriptor: {value['revisions']}")
+    if not all(isinstance(value[key], str) and value[key].strip() for key in ("astridLabel", "appLabel")):
+        raise JourneyFailure("quick_browser", "browser exchange omitted an edited label")
+    return value
+
+
+def _assert_quick_ancestry(endpoint: str, token: str, descriptor: Mapping[str, Any], result: Mapping[str, Any]) -> None:
+    path = f"/v1/projects/{descriptor['projectId']}/timelines/{descriptor['timelineId']}/composition-revisions?limit=100"
+    page = runtime_request(endpoint, "GET", path, token=token)
+    rows = page.get("items") or []
+    positions = {row.get("revision_id"): index for index, row in enumerate(rows)}
+    chain = [descriptor["headRevisionId"], result["astridRevisionId"], result["savedRevisionId"]]
+    if [row.get("revision_id") for row in rows[:3]] != list(reversed(chain)):
+        raise JourneyFailure("quick_browser", f"published revision history does not establish base → Astrid → App ancestry: {positions}")
+
+
+QUICK_HOSTED_HOST = "astrid.test"  # the App harness serves its page here and maps it to loopback
+
+
+def _free_port() -> int:
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        return probe.getsockname()[1]
+
+
+def _quick_browser_exchange(runner: Runner, *, root: Path, env: dict[str, str], app_checkout: Path,
+                            source_manifest: Path, revisions: Mapping[str, Any], realm_id: str,
+                            runtime_checkout: Path, source_checkout: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    data_root = root / "data"
+    discovery_file = data_root / "runtime" / "discovery.json"
+    astrid_credential = data_root / "credentials" / "astrid.json"
+    try:
+        discovery = json.loads(discovery_file.read_text())
+        instance_id = discovery["runtime_instance_id"]
+        endpoint, token = read_runtime_access(data_root)
+        projects = runtime_request(endpoint, "GET", "/v1/projects?limit=100", token=token)["items"]
+        project = next(row for row in projects if row["slug"] == reference_realm.PROJECT_SLUG)
+        timelines = runtime_request(endpoint, "GET", f"/v1/projects/{project['project_id']}/timelines?limit=100", token=token)["items"]
+        timeline = next(row for row in timelines if row["timeline_id"] == reference_realm.TIMELINE_ID)
+    except (OSError, ValueError, KeyError, StopIteration, JourneyFailure) as exc:
+        raise JourneyFailure("quick_browser", f"cannot describe the adopted QUICK workspace: {exc}") from exc
+    if discovery.get("active_realm") != realm_id or not instance_id:
+        raise JourneyFailure("quick_browser", "running Runtime identity does not match the adopted realm")
+    app_credentials = data_root / "credentials" / "product.json"
+    if not app_credentials.is_file():
+        app_credentials = astrid_credential
+    descriptor = {
+        "version": 1, "dataRoot": str(data_root.resolve()), "sourceManifest": str(source_manifest.resolve()),
+        "discoveryFile": str(discovery_file.resolve()), "productCredentialFile": str(app_credentials.resolve()),
+        "astridCredentialFile": str(astrid_credential.resolve()), "projectId": project["project_id"],
+        "hostedOrigin": discovery.get("door_origin"), "doorEndpoint": discovery.get("door_endpoint"),
+        "projectSlug": project["slug"], "timelineId": reference_realm.TIMELINE_ID,
+        "headRevisionId": timeline["head_revision_id"], "realmId": realm_id, "runtimeInstanceId": instance_id,
+        "revisions": {key: revisions[key]["head"] for key in ("astrid", "runtime", "app")},
+        "resultFile": str((root / "quick-result.json").resolve()),
+    }
+    if not (descriptor["hostedOrigin"] and descriptor["doorEndpoint"]):
+        raise JourneyFailure("quick_browser", "the adopted Runtime published no browser door; QUICK needs the door the App talks through")
+    if any(not _sha(value) for value in descriptor["revisions"].values()):
+        raise JourneyFailure("quick_browser", "all three tested checkouts need committed Git SHAs")
+    descriptor_file = root / "quick-descriptor.json"
+    descriptor_file.write_text(json.dumps(descriptor, separators=(",", ":")) + "\n")
+    descriptor_file.chmod(0o600)
+    browser_env = dict(env)
+    browser_env["ASTRID_QUICK_DESCRIPTOR"] = str(descriptor_file.resolve())
+    browser_env["ASTRID_RUNTIME_CHECKOUT"] = str(runtime_checkout)
+    browser_env["ASTRID_CHECKOUT"] = str(source_checkout)
+    browser_env["ASTRID_PYTHON"] = sys.executable
+    runner.command("quick_browser", ["npx", "playwright", "test", "--config=playwright.three-products.config.ts"],
+                   browser_env, cwd=app_checkout, json_result=False, unbounded=True)
+    result = _validate_quick_result(Path(descriptor["resultFile"]), descriptor)
+    _assert_quick_ancestry(endpoint, token, descriptor, result)
+    return descriptor, result
+
+
 def runtime_request(endpoint: str, method: str, path: str, *, token: str | None = None, body: Any = None,
                     headers: Mapping[str, str] | None = None, timeout: float = 30.0) -> Any:
     """One JSON request to the Runtime; any non-2xx answer is a failure that carries its body."""
@@ -352,16 +493,19 @@ def find_ready_capability(items: Iterable[Mapping[str, Any]], capability_id: str
 
 
 def build_app_render_admission(*, project: str, timeline_id: str, output_name: str, capability: Mapping[str, Any],
-                               token: str, backend: str = REMOTION_BACKEND, expected_version: int | None = None,
+                               token: str, backend: str | None = None, expected_version: int | None = None,
                                destination: str = "download") -> dict[str, Any]:
     """The request the App sends to render a timeline (astrid-app ``enqueueAstridRuntimeRenderTimeline``).
+
+    An ordinary timeline names no renderer: the host chooses one (``backend=None``).  ``backend`` is the
+    live-scene or explicit choice and is sent as the ``selector``.
 
     ``capability`` is the ``rendering.render`` row from ``GET /v1/capabilities``: the App takes both the
     digest and the storage estimate from it and invents neither.
     """
     version = "head" if expected_version is None else expected_version
     params = {"timeline_ref": timeline_id, **({} if expected_version is None else {"expected_version": expected_version}),
-              "selector": backend, "output_name": output_name}
+              **({} if backend is None else {"selector": backend}), "output_name": output_name}
     return {
         "method": "POST", "path": "/v1/tasks",
         "headers": {"Content-Type": "application/json",
@@ -439,6 +583,7 @@ class Runner:
         self.disk_high_water = 0
         self.phases: dict[str, float] = {}
         self.details: dict[str, Any] = {}
+        self.owned_groups: set[int] = set()
 
     def sample(self) -> None:
         # The journey's own footprint, not the volume's free-space delta: that also counts every other
@@ -463,25 +608,30 @@ class Runner:
             self.loads[name] = machine_load()
         return result
 
-    def command(self, phase: str, argv: list[str], env: dict[str, str], *, json_result: bool = True):
-        process = platform.spawn_tree(argv, cwd=Path(__file__).resolve().parents[3], env=scrub_child_env(env),
+    def command(self, phase: str, argv: list[str], env: dict[str, str], *, json_result: bool = True,
+                hang_limit: float | None = None, cwd: Path | None = None, unbounded: bool = False):
+        process = platform.spawn_tree(argv, cwd=cwd or Path(__file__).resolve().parents[3], env=scrub_child_env(env),
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                                    )
-        hang_limit = HANG_SECONDS[phase]
-        deadline = time.monotonic() + hang_limit
+        if self.tier == "quick":
+            self.owned_groups.add(process.pid)
+        limit = None if unbounded or self.tier == "quick" else HANG_SECONDS.get(phase) if hang_limit is None else hang_limit
+        deadline = time.monotonic() + limit if limit is not None else None
         try:
             while True:
                 try:
-                    out, err = process.communicate(timeout=min(1, max(0.1, deadline - time.monotonic())))
+                    wait = 1 if deadline is None else min(1, max(0.1, deadline - time.monotonic()))
+                    out, err = process.communicate(timeout=wait)
                     break
                 except subprocess.TimeoutExpired:
                     self.sample()
-                    if time.monotonic() >= deadline:
-                        raise JourneyFailure(phase, f"command hung (no exit after {hang_limit}s): {argv!r}", kind="hung")
+                    if deadline is not None and time.monotonic() >= deadline:
+                        raise JourneyFailure(phase, f"command hung (no exit after {limit}s): {argv!r}", kind="hung")
         finally:
             if process.poll() is None:
                 platform.stop_tree(process, grace=3)
-
+        if self.tier == "quick" and phase == "first_open" and process.returncode:
+            self._save_command_output(phase, out, err)
         if process.returncode:
             # Both streams: stderr may hold only progress diagnostics while the refusal is on stdout.
             told = [f"{label}: {text.strip()[-1500:]}" for label, text in (("stderr", err), ("stdout", out)) if text and text.strip()]
@@ -495,6 +645,15 @@ class Runner:
         if isinstance(value, dict) and value.get("ok") is False:
             raise JourneyFailure(phase, str(value.get("error") or value))
         return value
+
+    def _save_command_output(self, phase: str, stdout: str, stderr: str) -> None:
+        """Retain bounded failing-command output inside the private root for failure evidence."""
+        directory = self.root / "command-logs"
+        directory.mkdir(parents=True, exist_ok=True)
+        for stream, value in (("stdout", stdout), ("stderr", stderr)):
+            if value:
+                encoded = value.encode("utf-8", errors="replace")[-EVIDENCE_TAIL_BYTES:]
+                (directory / f"{phase}.{stream}.log").write_bytes(encoded)
 
     def write_summary(self, *, error: str | None = None, outcome: str | None = None) -> None:
         elapsed = round(time.monotonic() - self.started, 3)
@@ -669,10 +828,11 @@ class Journey:
 
     def __init__(self, *, runner: Runner, root: Path, env: dict[str, str], project: str, timeline: str,
                  start: float, end: float, kill_start: float, checkout: Path, backend: str = REMOTION_BACKEND,
-                 restart_argv: list[str] | None = None, app_render: bool = True) -> None:
+                 restart_argv: list[str] | None = None, app_render: bool = True, app_selector: str | None = None) -> None:
         self.r, self.root, self.env, self.project, self.timeline = runner, root, env, project, timeline
         self.start, self.end, self.kill_start, self.checkout = start, end, kill_start, checkout
         self.backend, self.restart_argv, self.app_render = backend, restart_argv or [], app_render
+        self.app_selector = app_selector  # None: the App's request leaves the renderer to the host
         self.astrid = [sys.executable, "-m", "astrid"]
 
     # -- helpers --------------------------------------------------------------------------
@@ -705,30 +865,83 @@ class Journey:
         return pid
 
     def render(self, phase: str, tag: str, start: float, end: float, *, detach: bool = False,
-               review: bool = False) -> tuple[Any, str]:
+               review: bool = False, expected_version: int | None = None,
+               profile: Mapping[str, Any] | None = None) -> tuple[Any, str]:
         name = f"v6-{tag}-{uuid.uuid4().hex[:8]}.mp4"
         argv = render_argv(self.astrid, self.timeline, self.project, name, backend=self.backend, window=(start, end),
-                           review=review, detach=detach, timeout=None if detach else HANG_SECONDS[phase])
-        return self.r.command(phase, argv, self.env), name
+                           review=review, detach=detach, timeout=None if detach else HANG_SECONDS.get(phase),
+                           expected_version=expected_version, profile=profile)
+        return self.r.command(phase, argv, self.env, unbounded=phase.startswith("quick_")), name
 
-    def excerpt(self, phase: str, tag: str, ids: list[str]) -> None:
-        result, name = self.render(phase, tag, self.start, self.end)
+    def excerpt(self, phase: str, tag: str, ids: list[str], *, revision_id: str | None = None,
+                project_id: str | None = None, profile: Mapping[str, Any] | None = None,
+                expected_dimensions: tuple[int, int] | None = None,
+                expected_version: int | None = None, duration_tolerance: float = 0.5) -> None:
+        result, name = self.render(phase, tag, self.start, self.end, profile=profile,
+                                   expected_version=expected_version)
         data = result.get("data") or {}
         task_id = data.get("kernel_task_id")
         if not task_id or task_id in ids or data.get("state") not in ("completed", "succeeded"):
             raise JourneyFailure(phase, f"no distinct completed task: {data}")
         ids.append(task_id)
         output = _find_output(self.root / "data", name)
+        if output.stat().st_size <= 0:
+            raise JourneyFailure(phase, "render output is empty")
+        if revision_id is not None:
+            admitted = self.r.command(phase, self.astrid + ["tasks", "show", str(task_id), "--project",
+                                               self.project, "--json"], self.env,
+                                     unbounded=phase.startswith("quick_"))
+            inputs = _admitted_task_inputs(admitted)
+            authority = inputs.get("timeline_authority") or {}
+            snapshot_ref = inputs.get("timeline_snapshot_ref") or {}
+            exact_project_id = project_id or self.project
+            identity = {"revision_id": revision_id, "project_id": exact_project_id, "timeline_id": self.timeline}
+            if any(authority.get(field) != value for field, value in
+                   (("parent_revision_id", revision_id), ("project_id", exact_project_id), ("timeline_id", self.timeline))):
+                raise JourneyFailure(phase, f"task timeline_authority did not pin the saved revision: {authority}")
+            if any(snapshot_ref.get(field) != value for field, value in identity.items()):
+                raise JourneyFailure(phase, f"task timeline_snapshot_ref did not pin the saved revision: {snapshot_ref}")
         seconds = _duration(output, self.r, self.env, phase)
         want = self.end - self.start
-        if abs(seconds - want) > 0.5:
-            raise JourneyFailure(phase, f"{output} duration {seconds}s, expected {want}s +-0.5")
+        if abs(seconds - want) > duration_tolerance:
+            raise JourneyFailure(phase, f"{output} duration {seconds}s, expected {want}s +-{duration_tolerance:g}")
+        if expected_dimensions is not None:
+            probe = self.r.command(phase, ["ffprobe", "-v", "error", "-select_streams", "v:0",
+                                           "-show_entries", "stream=width,height", "-of", "json", str(output)], self.env,
+                                  unbounded=phase.startswith("quick_"))
+            streams = probe.get("streams") or []
+            if not streams or (streams[0].get("width"), streams[0].get("height")) != expected_dimensions:
+                raise JourneyFailure(phase, f"render dimensions are not {expected_dimensions}: {streams}")
+        self.r.command(phase, ["ffmpeg", "-v", "error", "-xerror", "-err_detect", "explode", "-i",
+                              str(output), "-f", "null", "-"],
+                       self.env, json_result=False, unbounded=phase.startswith("quick_"))
         # The task scope removes its attempt scratch just after the task settles, so allow it a moment.
         def frames() -> list[Path]:
             return [p for p in _files(self.root / "tmp") if p.suffix in (".png", ".jpg")]
         if not wait_for(lambda: not frames(), 10):
             raise JourneyFailure(phase, f"frame-sequence files remain in TMPDIR: {[str(p) for p in frames()[:3]]}")
-        self.r.details[phase] = {"task_id": task_id, "output_bytes": output.stat().st_size, "duration_seconds": seconds}
+        self.r.details[phase] = {"task_id": task_id, "output_bytes": output.stat().st_size, "duration_seconds": seconds,
+                                 "full_decode": True}
+
+    def saved_revision_render(self, descriptor: Mapping[str, Any], result: Mapping[str, Any]) -> None:
+        """Render the exact App-published head, pinning its kernel version at admission."""
+        revision = result["savedRevisionId"]
+        endpoint, token = read_runtime_access(self.root / "data")
+        current = runtime_request(endpoint, "GET", f"/v1/projects/{descriptor['projectId']}/timelines/{descriptor['timelineId']}", token=token)
+        if current.get("head_revision_id") != revision:
+            raise JourneyFailure("quick_render", f"saved revision {revision!r} is not the current published head")
+        version = current.get("version")
+        if not isinstance(version, int) or version < 1:
+            raise JourneyFailure("quick_render", f"timeline has no valid render version: {version!r}")
+        profile = {"width": 320, "height": 180, "fps_rational": [24, 1], "time_base": [1, 90000],
+                   "container": "mp4", "video_codec": "h264", "video_profile": None, "video_level": None,
+                   "pixel_format": "yuv420p", "audio_codec": "aac", "audio_sample_rate": 48000,
+                   "audio_channel_layout": "stereo", "duration_tolerance": 1}
+        ids: list[str] = []
+        self.excerpt("quick_render", "saved", ids, revision_id=revision, project_id=descriptor["projectId"],
+                     profile=profile, expected_dimensions=(320, 180), expected_version=version,
+                     duration_tolerance=1 / 24)
+        self.r.details["quick_render"]["revision_id"] = revision
 
     # -- recovery phases ------------------------------------------------------------------
     def replace_host(self, old: int) -> int:
@@ -844,7 +1057,7 @@ class Journey:
             raise JourneyFailure("runtime_restart", "rendering.render is not ready 120s after the Runtime restart")
         name = f"v6-app-{uuid.uuid4().hex[:8]}.mp4"
         admission = build_app_render_admission(project=self.project, timeline_id=self.timeline, output_name=name,
-                                               capability=capability, token=token, backend=self.backend)
+                                               capability=capability, token=token, backend=self.app_selector)
         admitted = runtime_request(endpoint, admission["method"], admission["path"], headers=admission["headers"], body=admission["body"])
         task_id = (admitted.get("data") or {}).get("task_id")
         if not task_id:
@@ -907,11 +1120,21 @@ class Journey:
 
 @_journey_signals()
 def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "smoke", start: float = 144.0, end: float = 152.0,
-        replace_slot: str = "BUGNET", expect_duration: float | None = None, backend: str = REMOTION_BACKEND,
+        replace_slot: str = "BUGNET", expect_duration: float | None = None, backend: str | None = None,
         app_checkout: Path | None = None, app_render: bool = True) -> int:
-    """Run the journey; ``reference=None`` generates a small reference (``--reference generated``)."""
-    if backend not in BACKENDS:
+    """Run the journey; ``reference=None`` generates a small reference (``--reference generated``).
+
+    ``backend=None`` renders the CLI renders with Remotion and sends the App-shaped render without a
+    selector, so the host chooses; an explicit ``backend`` is used for both.
+    """
+    if backend is not None and backend not in BACKENDS:
         raise JourneyFailure("preflight", f"backend must be one of {', '.join(BACKENDS)}")
+    app_selector = backend
+    backend = backend or REMOTION_BACKEND
+    if tier == "quick" and (reference is not None or timeline != f"{reference_realm.PROJECT_SLUG}/{reference_realm.TIMELINE_ID}"):
+        raise JourneyFailure("preflight", "QUICK requires the generated tiny reference and its default timeline")
+    if tier == "quick" and (backend != REMOTION_BACKEND or app_checkout is None):
+        raise JourneyFailure("preflight", "QUICK requires Remotion and --app-checkout")
     if reference is not None:
         reference = reference.resolve(strict=True)
     summary = summary.resolve()
@@ -948,9 +1171,13 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
     # macOS temp dirs live under /var -> /private/var; the Runtime refuses symlinked support paths.
     root = Path(tempfile.mkdtemp(prefix="astrid-v6-")).resolve()
     runner = Runner(root, summary, tier)
-    runner.details.update({"backend": backend, "disk_preflight": disk})
+    runner.details.update({"backend": backend, "app_selector": app_selector, "disk_preflight": disk})
     env = scrub_child_env(os.environ)
     env["ASTRID_RUNTIME_DATA_ROOT"] = str(root / "data")
+    if tier == "quick":
+        _isolate_quick_pack_home(env, root)
+        # Adoption starts the daemon with its default door; never let that be the well-known live port.
+        env["ASTRID_RUNTIME_DOOR_PORT"] = "0"
     env["TMPDIR"] = str(root / "tmp")
     (root / "tmp").mkdir()
     changed = False
@@ -959,13 +1186,16 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
     hung = False
     try:
         runtime_checkout = runtime_checkout_path()
+        declared_runtime = os.environ.get("ASTRID_RUNTIME_CHECKOUT")
+        if declared_runtime and Path(declared_runtime).resolve() != runtime_checkout:
+            raise JourneyFailure("preflight", f"ASTRID_RUNTIME_CHECKOUT {declared_runtime} does not match imported Runtime {runtime_checkout}")
         runner.details["revisions"] = collect_revisions(checkout, runtime_checkout, app_checkout)
         if reference is None:
             from astrid.core.dev.reference_realm import build_reference
             reference = runner.phase("generate_reference", lambda: build_reference(
                 root / "generated", env=env, source_checkout=checkout, runtime_checkout=runtime_checkout,
-                runtime_environment=sys.prefix).resolve())
-        realm_id, reference_realm = runner.phase("reference", lambda: select_reference_realm(reference))
+                runtime_environment=sys.prefix, tiny=(tier == "quick")).resolve())
+        realm_id, source_realm = runner.phase("reference", lambda: select_reference_realm(reference))
         manifest = json.loads((reference / "runtime" / "source-profiles" / "astrid.json").read_text())
         manifest["source_checkout"] = str(checkout)
         # Test the Runtime this interpreter imports, not the one the reference was adopted with.
@@ -973,44 +1203,82 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
         manifest["runtime_environment"] = sys.prefix
         manifest_path = root / "source-profile.json"
         manifest_path.write_text(json.dumps(manifest))
-        env["ASTRID_RUNTIME_SOURCE_MANIFEST"] = str(manifest_path)
         local = [sys.executable, "-m", "astrid_runtime"]
         common = ["--profile", "astrid", "--data-root", str(root / "data"), "--json"]
+        env["ASTRID_RUNTIME_DATA_ROOT"] = str(root / "data")
         adopt_attempted = True
-        runner.phase("adopt", lambda: runner.command("adopt", local + ["workspace", "adopt", "--from", str(reference_realm), "--realm-id", realm_id, "--source-manifest", str(manifest_path)] + common, env))
-        runner.phase("up", lambda: runner.command("up", local + ["up", "--source-manifest", str(manifest_path)] + common, env))
-        j = Journey(runner=runner, root=root, env=env, project=project, timeline=source_timeline,
-                    start=start, end=end, kill_start=max(0.0, end - 32), checkout=checkout, backend=backend,
-                    restart_argv=local + ["restart", "--source-manifest", str(manifest_path)] + common, app_render=app_render)
-        # The render killed mid-way is a 32 s window ending where the excerpt ends: long enough to be
-        # caught running, and inside the film (a window past the end is refused, as it should be).
-        # The first client open starts the pack host, which resolves the renderer (no separate setup step).
-        runner.phase("first_open", lambda: j.open_client("first_open"))
-        doctor = runner.phase("doctor", lambda: runner.command("doctor", j.astrid + ["doctor", "--json"], env))
-        if not _doctor_ready(doctor):
-            raise JourneyFailure("doctor", f"not healthy: healthy={doctor.get('healthy')} issues={doctor.get('issues')} renderer_node={doctor.get('renderer_node')}")
-        ids: list[str] = []
-        runner.phase("render_1", lambda: j.excerpt("render_1", "1", ids))
-        old_host = j.host_pid("source_change")
-        def touch():
-            nonlocal changed
-            if source_probe.read_bytes() != original:
-                raise JourneyFailure("source_change", "journey source changed concurrently; refusing to overwrite it")
-            changed = True
-            source_probe.write_bytes(probe_bytes)
-        runner.phase("source_change", touch)
-        host = runner.phase("replace_host", lambda: j.replace_host(old_host))
-        runner.phase("heavy_survival", lambda: j.survives_job(host))
-        runner.phase("render_2", lambda: j.excerpt("render_2", "2", ids))
-        runner.phase("path_reuse", lambda: j.path_reuse(host))
-        runner.phase("kill_idle", j.kill_idle)
-        runner.phase("kill_render", j.kill_render)
-        runner.phase("runtime_restart", j.runtime_restart)
-        runner.phase("render_after", lambda: j.excerpt("render_after", "after", ids))
-        runner.details["task_ids"] = ids
-        if tier == "full":
-            j.full(replace_slot, expect_duration)
+        runner.phase("adopt", lambda: runner.command("adopt", local + ["workspace", "adopt", "--from", str(source_realm), "--realm-id", realm_id, "--source-manifest", str(manifest_path)] + common, env, unbounded=(tier == "quick")))
+        if tier == "quick":
+            # Adoption creates data/; create the isolated home afterward so it
+            # cannot alter the source realm or interfere with adoption.
+            packhome = root / "data" / "packhome"
+            if packhome.is_symlink():
+                raise JourneyFailure("adopt", "QUICK pack home is an alias")
+            packhome.mkdir(parents=True, exist_ok=True)
+        # QUICK's Runtime door serves the App's test origin on an ephemeral loopback port, never the product
+        # origin or the well-known port that a live Runtime on this machine may already hold.
+        door_args: list[str] = []
+        if tier == "quick":
+            # The App build embeds the door's port, so it is chosen now and handed to both sides.
+            door_port = _free_port()
+            env["ASTRID_APP_DIRECT_DOOR_PORT"] = str(door_port)
+            door_args = ["--hosted-origin", f"https://{QUICK_HOSTED_HOST}:{_free_port()}", "--door-port", str(door_port)]
+        if tier == "quick" and (root / "data" / "runtime" / "discovery.json").exists():
+            # Adoption leaves its own daemon (default hosted origin) running; `up` would reuse it and keep
+            # that door, so stop it first and let `up` start the daemon with the App's origin.
+            runner.phase("adopt_down", lambda: runner.command("adopt_down", [sys.executable, "-m", "astrid_runtime", "down", "--source-manifest", str(manifest_path)] + common, env, unbounded=True))
+        runner.phase("up", lambda: runner.command("up", local + ["up", "--source-manifest", str(manifest_path)] + door_args + common, env, unbounded=(tier == "quick")))
+        if tier == "quick":
+            assert app_checkout is not None  # preflight refuses QUICK without --app-checkout
+            quick_journey = Journey(runner=runner, root=root, env=env, project=project, timeline=source_timeline,
+                                    start=0, end=1, kill_start=0, checkout=checkout, backend=REMOTION_BACKEND)
+            runner.phase("first_open", lambda: runner.command("first_open", [sys.executable, "-c", OPEN_CLIENT], env, json_result=False, unbounded=True))
+            doctor = runner.phase("doctor", lambda: runner.command("doctor", quick_journey.astrid + ["doctor", "--json"], env, unbounded=True))
+            if not _doctor_ready(doctor):
+                raise JourneyFailure("doctor", f"not healthy: healthy={doctor.get('healthy')} issues={doctor.get('issues')} renderer_node={doctor.get('renderer_node')}")
+            descriptor, quick_result = runner.phase("quick_browser", lambda: _quick_browser_exchange(
+                runner, root=root, env=env, app_checkout=app_checkout, source_manifest=manifest_path,
+                revisions=runner.details["revisions"], realm_id=realm_id, runtime_checkout=runtime_checkout,
+                source_checkout=checkout))
+            runner.details["quick_identity"] = {key: quick_result[key] for key in
+                ("realmId", "runtimeInstanceId", "baseRevisionId", "astridRevisionId", "savedRevisionId", "astridLabel", "appLabel")}
+            runner.phase("quick_render", lambda: quick_journey.saved_revision_render(descriptor, quick_result))
+            runner.details["task_ids"] = [runner.details["quick_render"]["task_id"]]
+        else:
+            j = Journey(runner=runner, root=root, env=env, project=project, timeline=source_timeline,
+                        start=start, end=end, kill_start=max(0.0, end - 32), checkout=checkout, backend=backend,
+                        restart_argv=local + ["restart", "--source-manifest", str(manifest_path)] + common, app_render=app_render,
+                        app_selector=app_selector)
+            # The render killed mid-way is a 32 s window ending where the excerpt ends: long enough to be
+            # caught running, and inside the film (a window past the end is refused, as it should be).
+            # The first client open starts the pack host, which resolves the renderer (no separate setup step).
+            runner.phase("first_open", lambda: j.open_client("first_open"))
+            doctor = runner.phase("doctor", lambda: runner.command("doctor", j.astrid + ["doctor", "--json"], env))
+            if not _doctor_ready(doctor):
+                raise JourneyFailure("doctor", f"not healthy: healthy={doctor.get('healthy')} issues={doctor.get('issues')} renderer_node={doctor.get('renderer_node')}")
+            ids: list[str] = []
+            runner.phase("render_1", lambda: j.excerpt("render_1", "1", ids))
+            old_host = j.host_pid("source_change")
+            def touch():
+                nonlocal changed
+                if source_probe.read_bytes() != original:
+                    raise JourneyFailure("source_change", "journey source changed concurrently; refusing to overwrite it")
+                changed = True
+                source_probe.write_bytes(probe_bytes)
+            runner.phase("source_change", touch)
+            host = runner.phase("replace_host", lambda: j.replace_host(old_host))
+            runner.phase("heavy_survival", lambda: j.survives_job(host))
+            runner.phase("render_2", lambda: j.excerpt("render_2", "2", ids))
+            runner.phase("path_reuse", lambda: j.path_reuse(host))
+            runner.phase("kill_idle", j.kill_idle)
+            runner.phase("kill_render", j.kill_render)
+            runner.phase("runtime_restart", j.runtime_restart)
+            runner.phase("render_after", lambda: j.excerpt("render_after", "after", ids))
+            runner.details["task_ids"] = ids
+            if tier == "full":
+                j.full(replace_slot, expect_duration)
     except Exception as exc:
+        logging.exception("Journey failed before teardown")
         failure = str(exc)
         hung = getattr(exc, "kind", None) == "hung"
     finally:
@@ -1025,15 +1293,34 @@ def run(reference: Path | None, timeline: str, summary: Path, *, tier: str = "sm
             except OSError as exc:
                 failure = (failure + "; " if failure else "") + f"source_change: {exc}"
         if adopt_attempted:
+            if tier == "quick":
+                try:
+                    from astrid.sdk.upgrade import stop_pack_host
+
+                    stopped = runner.phase("quick_host_down", lambda: stop_pack_host(root / "data"))
+                    runner.details["quick_host_shutdown"] = stopped
+                    if stopped.get("forced") is True:
+                        failure = (failure + "; " if failure else "") + "quick_host_down: host required forced SIGKILL cleanup"
+                except Exception as exc:
+                    logging.exception("Journey Astrid host shutdown failed")
+                    failure = (failure + "; " if failure else "") + str(exc)
             try:
-                runner.phase("down", lambda: runner.command("down", [sys.executable, "-m", "astrid_runtime", "down", "--source-manifest", str(manifest_path)] + common, env))
+                runner.phase("down", lambda: runner.command("down", [sys.executable, "-m", "astrid_runtime", "down", "--source-manifest", str(manifest_path)] + common, env, unbounded=(tier == "quick")))
             except Exception as exc:
+                logging.exception("Journey Runtime shutdown failed")
                 failure = (failure + "; " if failure else "") + str(exc)
         try:
-            leftovers = runner.phase("cleanup", lambda: _reap_owned_groups(root))
+            if tier == "quick":
+                owned_before_cleanup = _processes(root)
+                tracked_before_cleanup = [row for row in _ps_rows() if row["pgid"] in runner.owned_groups]
+                if owned_before_cleanup or tracked_before_cleanup:
+                    failure = (failure + "; " if failure else "") + f"cleanup: QUICK required forced process cleanup: {owned_before_cleanup + tracked_before_cleanup}"
+            leftovers = runner.phase("cleanup", lambda: _reap_owned_groups(root, runner.owned_groups)
+                                      if tier == "quick" else _reap_owned_groups(root))
             if leftovers:
                 failure = (failure + "; " if failure else "") + f"cleanup: rooted processes remain: {leftovers}"
         except Exception as exc:
+            logging.exception("Journey process cleanup failed")
             failure = (failure + "; " if failure else "") + str(exc)
         runner.details["receipts_bytes"] = _tree_bytes(root, lambda p: "receipt" in p.name.lower())
         runner.details["logs_bytes"] = _tree_bytes(root, lambda p: ".log" in p.name)
@@ -1050,36 +1337,40 @@ EVIDENCE_TAIL_BYTES = 256 * 1024
 
 
 def _keep_failure_logs(root: Path, summary: Path) -> str | None:
-    """Before the disposable root goes, keep the tail of each runtime/host log beside the summary.
+    """Before the disposable root goes, keep runtime logs and failing command output beside the summary.
 
-    Only ``*.log`` files under the data root's ``runtime`` directory are kept (never credentials or
-    the realm), each cut to its last 256 KiB, so a failed run can still be diagnosed.
+    Runtime logs are cut to their last 256 KiB; failing QUICK first_open output is
+    already bounded to that size. Credential files and realm files are never copied.
     """
     logs = sorted((root / "data" / "runtime").glob("*.log"))
-    if not logs:
+    command_logs = sorted((root / "command-logs").glob("*.log"))
+    if not logs and not command_logs:
         return None
-    target = summary.with_name(summary.stem + "-evidence")
-    target.mkdir(parents=True, exist_ok=True)
+    target = Path(tempfile.mkdtemp(prefix=summary.stem + "-evidence-", dir=summary.parent))
     for log in logs:
         with log.open("rb") as stream:
             stream.seek(max(0, log.stat().st_size - EVIDENCE_TAIL_BYTES))
             (target / log.name).write_bytes(stream.read())
+    for log in command_logs:
+        (target / log.name).write_bytes(log.read_bytes())
     return str(target)
 
 
 def main(args: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="astrid dev journey", description="Real-film journey in a disposable realm")
-    parser.add_argument("--tier", choices=["smoke", "full"], required=True,
-                        help="smoke: excerpt + host-lifecycle recovery (~4 min); full: smoke + Codex image, sprites, edit/publish, full render (~20 min)")
+    parser = argparse.ArgumentParser(prog="astrid dev journey", description="Real-process journey in a disposable realm")
+    parser.add_argument("--tier", choices=["quick", "smoke", "full"], required=True,
+                        help="quick: App browser edit exchange + saved-revision Remotion render; smoke: excerpt + host-lifecycle recovery; full: smoke + Codex image, sprites, edit/publish, full render")
     parser.add_argument("--reference", required=True,
                         help=f"a stopped data root holding the film realm, or '{GENERATED}' to build a small one "
-                             "(one project, 3 test clips, a media-only timeline; needs ffmpeg)")
+                             "(smoke/full: 3 test clips; QUICK: one 1-second 320x180 clip; needs ffmpeg)")
     parser.add_argument("--timeline", default=None, help=f"PROJECT/TIMELINE (default for '{GENERATED}': journey/main)")
     parser.add_argument("--summary", type=Path, required=True, help="JSON summary path; adjacent .txt is also written")
     parser.add_argument("--range", nargs=2, type=float, metavar=("START", "END"), default=None,
                         help=f"excerpt window in seconds (default 144 152; {GENERATED_RANGE[0]:g} {GENERATED_RANGE[1]:g} for '{GENERATED}')")
-    parser.add_argument("--backend", choices=BACKENDS, default=REMOTION_BACKEND,
-                        help="renderer for every render; rendering.ffmpeg handles media-only timelines and skips the Node pin check and --review")
+    parser.add_argument("--backend", choices=BACKENDS, default=None,
+                        help="renderer for every render, including the App-shaped one (default: rendering.remotion for the CLI "
+                             "renders, no selector for the App-shaped render, so the host chooses); rendering.ffmpeg handles "
+                             "media-only timelines and skips the Node pin check and --review")
     parser.add_argument("--app-checkout", type=Path, default=None, help="astrid-app checkout whose HEAD is recorded in the summary")
     parser.add_argument("--skip-app-render", action="store_true",
                         help="runtime_restart restarts the Runtime but does not admit the App-shaped render (a full-film render on a real film)")
@@ -1090,12 +1381,14 @@ def main(args: list[str] | None = None) -> int:
     timeline = parsed.timeline or (f"{reference_realm.PROJECT_SLUG}/{reference_realm.TIMELINE_ID}" if generated else None)
     if timeline is None:
         parser.error("--timeline is required unless --reference generated")
-    start, end = parsed.range or (GENERATED_RANGE if generated else (144.0, 152.0))
+    default_range = (0.0, 1.0) if parsed.tier == "quick" else (GENERATED_RANGE if generated else (144.0, 152.0))
+    start, end = parsed.range or default_range
     try:
         status = run(None if generated else Path(parsed.reference), timeline, parsed.summary, tier=parsed.tier, start=start,
                      end=end, replace_slot=parsed.replace_slot, expect_duration=parsed.expect_duration,
                      backend=parsed.backend, app_checkout=parsed.app_checkout, app_render=not parsed.skip_app_render)
     except Exception as exc:
+        logging.exception("Journey preflight failed")
         summary = parsed.summary.resolve()
         summary.parent.mkdir(parents=True, exist_ok=True)
         summary.write_text(json.dumps({"ok": False, "outcome": "failure", "error": str(exc), "phase_seconds": {}}, indent=2) + "\n")

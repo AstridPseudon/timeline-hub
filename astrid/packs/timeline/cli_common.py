@@ -75,8 +75,9 @@ def working_copy(parsed: argparse.Namespace, *, create: bool) -> tuple[Any, bool
 
 
 def short_rev(revision: Any) -> str:
-    text = str(revision or "")
-    return text.removeprefix("authoring-parent-revision-")[:8] or text
+    from astrid.sdk.timeline.revisions import short_revision
+
+    return short_revision(revision)
 
 
 def clips_changed(n: int) -> str:
@@ -130,6 +131,25 @@ def working_banner(working: Mapping[str, Any]) -> str:
             "--published for the live version")
 
 
+def stale_copy_lines(parsed: argparse.Namespace, tl: Any, name: str, head: str) -> list[str]:
+    """A reused working copy whose base is behind the head: what it holds, what the head is, and how to start over."""
+    from astrid.sdk.timeline.revisions import revision_source
+
+    written = {"app": " (written by the App editor)", "astrid": " (written by Astrid)"}.get(revision_source(head), "")
+    try:
+        edits = len(tl.edits().get("changes") or [])
+    except Exception:  # noqa: BLE001 - the count is a courtesy here
+        edits = None
+    holds = f"it holds {clips_changed(edits)} vs {short_rev(tl.base_revision)}" if edits is not None else "its edits are not counted"
+    where = f"{parsed.ref} --project {parsed.project}"
+    return [
+        f'STALE: working copy "{name}" was made from {short_rev(tl.base_revision)}, but the head is now {short_rev(head)}{written}.',
+        f"  checkout reused the copy and did not pick up the head; {holds}.",
+        "  publish merges your edits onto the head, or stops with a conflict and changes nothing.",
+        f"  to start from the head: timelines discard {where}, then timelines checkout {where} --fresh",
+    ]
+
+
 def checkout_summary(parsed: argparse.Namespace, tl: Any, *, existed: bool) -> list[str]:
     """What ``timelines checkout`` says: which working copy, from which published revision, and the next steps."""
     from astrid.sdk.timeline_checkout import current_draft, resolve_ids
@@ -145,9 +165,12 @@ def checkout_summary(parsed: argparse.Namespace, tl: Any, *, existed: bool) -> l
     summary = (f"{tl.cut_count()} · {len(tl.clips())} clips · {len(tl.words())} words" if named else cuts_summary(tl))
     where = f"{parsed.ref} --project {parsed.project}"
     fresh = bool(getattr(parsed, "fresh", False))
+    head = getattr(tl, "head_moved_to", None)
+    stale = stale_copy_lines(parsed, tl, name, head) if head else []
     return [
         f'working copy "{name}" of {parsed.ref} · from published {short_rev(tl.base_revision)} · {summary}'
         + ("" if existed and not fresh else " · a new working copy, made from the published head"),
+        *stale,
         "show, visualize, lint and diff now read this working copy (--published for the live version)",
         "next:",
         f"  read     timelines show {where} --as sheet --range c30..c31     (cut ids, \"words\" or seconds)",
