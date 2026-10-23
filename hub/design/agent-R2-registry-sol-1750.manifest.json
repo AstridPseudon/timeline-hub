@@ -1,0 +1,187 @@
+{
+  "worker": "agt-R2-registry-sol-1750",
+  "base": "079580ca46af77e0292d49dc34386b25c8391f99",
+  "runtime_test_checkout": "d9e2a71e87c827290a3ff58a94f6fb8b4bc11e0b",
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/alias-order-candidate-red.log",
+      "bytes": 2509,
+      "sha256": "50278cdb3f32f16c62bf6459cda492cb6da6df2128b958b8c8c24331333dd871"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/baseline-inverse.py",
+      "bytes": 48638,
+      "sha256": "626f26805c406081ad034af73459c85e350cbaeeba3bddc2021f1eb5f97a72ab"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/baseline-neighbor-comparison.log",
+      "bytes": 11686,
+      "sha256": "60d5b941608740d194bde7e4bd383adc277df1e070e191abada144135ecc062b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/baseline_neighbors.py",
+      "bytes": 830,
+      "sha256": "90c0645b26cbec8d16f0eb5bbaa9cceac6cf4ce3ad5f535c0c283e2844f0ef96"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/bounded-neighbors.log",
+      "bytes": 211151,
+      "sha256": "2b8ba78e48a60562f08a7b18f9e5bbac814e67c3dd9679e1e649443a319eecff"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/causal-old-red.log",
+      "bytes": 4679,
+      "sha256": "579cfdde486ba415e31f38491573fa3c6e43836214885f4f7613663e7947d671"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/collect-original-six.log",
+      "bytes": 1368,
+      "sha256": "230c9995cf0b697d981c2fb60f9c01875325c66e9bf58c1fb14ff019e29f3820"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/final-integrity.log",
+      "bytes": 948,
+      "sha256": "de1486b126aab4bd2acdc5e6f47eec04838081e511557d4fcfa6ac779daa7cde"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/final-new-tests.log",
+      "bytes": 341,
+      "sha256": "c06f57d9e2b8f735b0e0e21739765abc4cbad51b36a7ccf25b9594d5ba051292"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/final-source-audit.log",
+      "bytes": 1610,
+      "sha256": "b2fb606b5b5b44866d973db82b9b8866a38fb29823f57454f05cfdf76e966901"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/focused-lint.log",
+      "bytes": 293,
+      "sha256": "44f8a630f05cd7fbe9c8b5ba73eb0fb75c1e6a83b0bde9031504a24de942c4e6"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/initial-reads.txt",
+      "bytes": 268760,
+      "sha256": "febd19cd289eee8d7ced6a456a7a4a542c17272c31d41cf8c6bf72599c2872fa"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/inverse.patch",
+      "bytes": 1962,
+      "sha256": "456da92f85be5b98c234f45c9bc3dc7aaa050b99a60d4132de096eb30f24e2f9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/inverse.py",
+      "bytes": 49652,
+      "sha256": "00c19d53ecc7d5b3940906ad16cabf9cb1d07335feda0012d5faf038dd87b01f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/locks-artifacts.log",
+      "bytes": 292,
+      "sha256": "df5013ab1a40e721036967b7c1d23a6566b0373a219f2079fa2b5e3e9af22ec2"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/mypy-baseline.log",
+      "bytes": 287,
+      "sha256": "e22066ecf92ffc69cf60237bae30f77a06b08f5f245127b3637994ad2ca41750"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/mypy-final-source.log",
+      "bytes": 287,
+      "sha256": "e22066ecf92ffc69cf60237bae30f77a06b08f5f245127b3637994ad2ca41750"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/neighbor-inventory.log",
+      "bytes": 11493,
+      "sha256": "b965a99ff08c600c60028085bc16bae4b1c90f102ab849e2b3918c91eb0e741e"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/new-controls-final-source.log",
+      "bytes": 341,
+      "sha256": "a98157236596c6300df8376c5d436bd6de360f88cc77dd50041e87371a99a7cc"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/new-controls-final.log",
+      "bytes": 341,
+      "sha256": "73859e858d41697cdd694372a638aa41d220502075e01c034575f0da5fab32b6"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/new-controls.log",
+      "bytes": 2899,
+      "sha256": "380aa0255976466620cb997b5981e0e94574a767c39c07fe715e30c74a130315"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/original-six-candidate.log",
+      "bytes": 527,
+      "sha256": "7b50a417306f2d9c2283f8f02077fc279fc1c6a4aa2dbf961c3107ecd2d1a864"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/pin-and-scope-audit.log",
+      "bytes": 653,
+      "sha256": "43229482289b281b36c9975e757538a7722632c6415349b1a08b0fa324f1c4fe"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/ruff-baseline.log",
+      "bytes": 274,
+      "sha256": "397d9f47b1e03b5856dc3ef50a98ed697549098711fdc5a5222f071ebe6673bf"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/ruff-final-source.log",
+      "bytes": 476,
+      "sha256": "3aa179fd781326e63caad48da707ee9cfc87aad61387e201a16d10532278cd00"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/run.py",
+      "bytes": 356,
+      "sha256": "f276400259c953a501437ae869806f6e100a94f306e00b52e29a07037cc907d6"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/session-capture.log",
+      "bytes": 838006,
+      "sha256": "76d07b73e98f6cc4a4723396160b36be94cd9d908ebf398ebf26c7d47cd28ce9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/source-1.log",
+      "bytes": 37111,
+      "sha256": "c08eadff70d401cfbe8572d3e94a66895e9d3c160f78f615c4d89a5ed491b117"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/source-2.log",
+      "bytes": 21302,
+      "sha256": "30781a0b5850d3dab0e260ae08a8bfb0584011901f81234169de738824844b09"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/source-3.log",
+      "bytes": 26687,
+      "sha256": "a0c3f886e8addc4f329a863ceb2e42ccf198acff4e14f80efd59aca409d2d46b"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/source-4.log",
+      "bytes": 35784,
+      "sha256": "ac2874e7d54037275f5214a5aa399aa00630e07ab30aaba1d9243a7180d3d382"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/source-5.log",
+      "bytes": 19306,
+      "sha256": "cc7e9f1477ba32b0ab222a4460e096e1cf60dff04c70e0fd4e2b066302aaf301"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/evidence/test_inverse_registry_containers.py",
+      "bytes": 5800,
+      "sha256": "353f59f08e63c00ae4a9e8e6aa55ed1234e0c751a16b8ca99c17832b755d5d78"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/report.md",
+      "bytes": 18447,
+      "sha256": "85963db749d7592732491dba5488891ea85a48c1fad4358819f86edbe131edb2"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-registry-sol-1750/commit-msg",
+      "bytes": 411,
+      "sha256": "8db83279860d65e102d4bb1aa24f331f1157b27a770a1107063cf605a126810f"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-R2-registry-sol-1750.md",
+      "bytes": 18447,
+      "sha256": "85963db749d7592732491dba5488891ea85a48c1fad4358819f86edbe131edb2"
+    }
+  ]
+}
