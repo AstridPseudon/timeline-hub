@@ -1,1 +1,1 @@
-2026-10-23T11:28:38Z procs: hub-syncd dispatcher run-manager up; board 11:05Z; workers 0 running (tf-app-classify done); ready-undispatched 0 (gated on App fixes SHA, P1 NO-GO); disk 21G free; issues: none for farm
+2026-10-23T12:29:49Z procs: hub-syncd dispatcher run-manager up; board 12:26Z; workers running 0; ready-undispatched 0 (F-app-rerun stopped, owner App D19); disk 21G free; issues: none for farm
