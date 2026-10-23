@@ -144,7 +144,9 @@ def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
 
 
 def _clip(ctx, owner, row, limit, kind, verified, *, raw_window=False):
-    if row.get('clipType') not in ('media', kind) or not isinstance(row.get('asset'), str):
+    clip_type = row.get('clipType')
+    if ((clip_type not in ('media', kind) and not (kind == 'image' and clip_type == 'hold'))
+            or not isinstance(row.get('asset'), str)):
         raise CommandError('media edit requires one matching media clip')
     if any(key in row for key in ('asset_id', 'media_id', 'object_id', 'clip_type')):
         raise CommandError('media edit requires one asset selector')

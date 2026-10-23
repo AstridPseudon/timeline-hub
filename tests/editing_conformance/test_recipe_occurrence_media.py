@@ -60,16 +60,19 @@ def inputs(kind='image'):
     return document, old, new, verified
 
 
-def captured(operation, kind='image'):
+def captured(operation, kind='image', *, clip_type=None):
     document, old, new, verified = inputs(kind)
     bundle = bundle_from_document(document)
     if operation == 'add':
-        row = {'id': 'reserved-child', 'clipType': kind, 'asset': new['asset'], 'track': 'picture',
+        row = {'id': 'reserved-child', 'clipType': kind if clip_type is None else clip_type,
+               'asset': new['asset'], 'track': 'picture',
                'at': .125, 'hold': 4 if kind == 'video' else 1.25,
                'params': None, 'opaque': [None, False, {}],
                **({'from': 2, 'to': 6, 'speed': 2} if kind == 'video' else {})}
         command = capture_occurrence_add_media(bundle, OWNER, row, new, verified_media=verified)
     else:
+        if clip_type is not None:
+            State(bundle).entity(TARGET)['clipType'] = clip_type
         command = capture_occurrence_swap_media(bundle, TARGET, old, new, verified_media=verified)
     return document, bundle, command, verified
 
@@ -137,6 +140,18 @@ def test_exact_capture_replay_scoped_birth_and_inverse(operation, kind):
 
 
 @pytest.mark.parametrize('operation', ['add', 'swap'])
+def test_image_hold_clip_type_preserves_literal_hold_semantics(operation):
+    _, bundle, command, verified = captured(operation, 'image', clip_type='hold')
+    before = copy.deepcopy(bundle)
+    plan = execute(bundle, [command], verified_media=verified)
+    row = State(plan.bundle).entity(OWNER + '/clip:reserved-child' if operation == 'add' else TARGET)
+    assert row['clipType'] == 'hold'
+    assert row['hold'] == (1.25 if operation == 'add' else 2)
+    assert all(key not in row for key in ('from', 'to', 'speed'))
+    assert inverse(plan.bundle, plan.records).bundle == before
+
+
+@pytest.mark.parametrize('operation', ['add', 'swap'])
 def test_portable_goldens(operation):
     golden = load_fixture(FIXTURE)[operation]
     document, bundle, command, verified = captured(operation, 'video')
@@ -164,7 +179,7 @@ def test_existing_binding_is_required_exactly_without_birth(operation):
 @pytest.mark.parametrize('operation', ['add', 'swap'])
 @pytest.mark.parametrize('damage', ['missing-input', 'wrong-object', 'wrong-catalog', 'shared', 'parent',
     'display-child', 'track', 'source-map', 'window', 'zero-speed', 'negative-speed', 'boolean-speed',
-    'outside', 'membership', 'order', 'birth', 'binding'])
+    'outside', 'hold-clip-type', 'membership', 'order', 'birth', 'binding'])
 def test_refusals_preserve_input(operation, damage):
     _, bundle, command, verified = captured(operation, 'video')
     if damage == 'missing-input':
@@ -189,6 +204,9 @@ def test_refusals_preserve_input(operation, damage):
             row['at'] = 9
         else:
             row['speed'] = {'zero-speed': 0, 'negative-speed': -1, 'boolean-speed': True}[damage]
+    elif damage == 'hold-clip-type':
+        row = command['args']['row'] if operation == 'add' else State(bundle).entity(TARGET)
+        row['clipType'] = 'hold'
     elif damage in ('membership', 'order'):
         rows = State(bundle).config(OWNER)['tracks' if operation == 'add' else 'clips']
         if damage == 'membership':
