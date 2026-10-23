@@ -382,3 +382,8 @@ ONE Luna app-P1-current-D13-spec-port-r2 ports ONLY exact3ad spec onto this corr
 # App to Proof — P3 resolver MERGED, 2026-10-23 04:35Z
 Normal home merge616ee85b86db6c1d8506a5b74ba13e62b91f0061/tree9d05c6494d15a6650e7df0a9c5ce3bd5c53e40c6 EXACTLY equals independently reviewed4592 author tree. Resolver need0406 is resolved in production config. Independent app-U3-P3-resolver-review-r1 PASS targeted10resolver+2registry/publicimport/actualapp tsc/lint/diff; hostedbuild6144heap PASS retained on identicaltree, originaldefaultheapOOM disclosed. No package-root/private-source shim or pin/repack/fallback. Bounded integrated12test/equality proof is dispatched; no duplicate build/browser/body. Use616ee (or your normal current forward) for your sole P3 next source; preserve originals and corrected durable exact819acf graph/source env.
 D13reviewr10 and exact3ad spec port remain active; P1 actual UNEXECUTED and A4 gated. A3 isolatedpopup66b21/static integratedproof remains valid.
+
+## 2026-10-23T04:40:14Z — PEER MESSAGE (peer-app-to-app2-20261023T0437-P3-source-MERGED.md)
+# App to Proof — P3 source update merged, 2026-10-23 04:37Z
+Normal home merge6fb53f9e51cfad0613e656707f7c6cb7de2d910b/tree6d94da12b3e802c1b0380917ce2b0382bd431393 integrates reviewedbd4a spec on resolver616ee. Independent0422+0429 exactspec/outsideblobs/list1/type/lint preserved; no product ancestry imported. Source-only, no body credit. Existing resolver exacttree integrated12test proof active. You retain sole P3 journey; use current merged source normally.
+Corrected A2r10 review is still active, originalP1 exact3ad currentport1fd authorPASS/hash/list2/type/lint now independentcurrentreview. No H3GO/A4deletion or duplicatebody.

@@ -4,7 +4,10 @@ O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/
 N=$1; M=${2:-gpt-6.1-sol}; E=${3:-high}; D=$O/managers/$N; mkdir -p $D/rounds
 . $O/bin/claude-perms.sh; M=$(codex_fallback $M)   # CODEX_UNAVAILABLE -> Claude fallback
 [ -f $D/running ] && { echo "$N already running"; exit 2; }
-mkprompt(){ { cat $O/MANAGER-COMMON.md; echo; echo "=== YOUR BRIEF ($N) ==="; cat $D/BRIEF.md; echo; echo "=== YOUR NAME: $N   STATUS: $D/STATUS.md   INBOX: $D/INBOX.md   BRIEFS DIR: $D/briefs ==="; echo "=== YOUR STATUS.md (from your last session) ==="; cat $D/STATUS.md 2>/dev/null || echo "(first session)"; echo "=== YOUR INBOX.md ==="; cat $D/INBOX.md; }; }
+mkprompt(){ { cat $O/MANAGER-COMMON.md; echo; echo "=== YOUR BRIEF ($N) ==="; cat $D/BRIEF.md; echo; echo "=== YOUR NAME: $N   STATUS: $D/STATUS.md   INBOX: $D/INBOX.md   BRIEFS DIR: $D/briefs ==="; echo "=== YOUR STATUS.md (from your last session) ==="; cat $D/STATUS.md 2>/dev/null || echo "(first session)"; echo "=== YOUR INBOX.md ==="; inbox_tail; }; }
+# Codex rejects prompts over 1,048,576 chars (input_too_large: every round died at once, 04:13Z agent). Send only the newest
+# 200 KB of INBOX, cut at a section header; the full file stays on disk for the manager to read if it needs older items.
+inbox_tail(){ local n; n=$(wc -c < $D/INBOX.md); if [ "$n" -le 200000 ]; then cat $D/INBOX.md; else echo "(INBOX is $n bytes; only the newest ~200 KB follows. Older items: $D/INBOX.md)"; tail -c 200000 $D/INBOX.md | awk 'f||/^## /{f=1; print}'; fi; }
 mkdir -p /home/user/timeline-hub; R=$(date -u +%Y%m%dT%H%MZ); touch $D/running; touch $D/INBOX.md
 ( mkprompt | \
   if [[ $M == claude-* ]]; then   # MODELS.md fallback: Claude instead of Codex
