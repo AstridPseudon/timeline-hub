@@ -1,0 +1,53 @@
+{
+  "base_head": "85b2feeb58bc54174ac7b89fda4805883865d3b2",
+  "source_tree_computed_without_git_write": "5a8594a623dc07c0cb61c45000523eac427d3a7a",
+  "changed": {
+    "runtime_protocol/timeline_commit_port.py": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859",
+    "runtime_protocol/timeline_commit_store.py": "b1cfdceefc533220ea9a5478f61a971109d1cc2d70fa2c7a76341ffa977f2246",
+    "tests/test_timeline_commit_sequential_verifier.py": "35451bda9486c042fa907454b41e7b90439fa1964ec9a68ad3936acc25a22800"
+  },
+  "original_agent_test": {
+    "head": "67ba416bca813f4931b557f6f2ca2abf935d7d35",
+    "file_sha256": "75ccd026898b241d2241f5c058342aeb728e3a70f039a8701343b55f6fc648f6",
+    "ast_sha256": "be9a7dce79a3fbe8be453a0dcb8f4c0a8d33eb35cbe8fd6e34d0194bfe5206ea"
+  },
+  "preservation": {
+    "all_auth_including_atomic_and_inverse_helpers_byte_identical": true,
+    "all_78_manifest_artifacts_match_and_unchanged": true,
+    "schemas_contracts_clients_locks_pins_unchanged": true,
+    "submitted_agent_tests_ast_and_bytes_unchanged": true
+  },
+  "tests": {
+    "runtime_nine_files": {
+      "passed": 366,
+      "exit": 0
+    },
+    "original_agent_nine": {
+      "passed": 9,
+      "strict_negatives": 5,
+      "reports": 27,
+      "exit": 0
+    },
+    "moved_history_old_source": {
+      "failed": 1,
+      "exit": 1,
+      "reason": "provider alias is outside its authenticated boundary -> accepted commit record is corrupt"
+    },
+    "sequential_final": {
+      "passed": 57,
+      "exit": 0
+    },
+    "ruff": {
+      "exit": 1,
+      "baseline": 22,
+      "added": 0,
+      "removed": 0
+    },
+    "pyright": {
+      "exit": 1,
+      "baseline": 80,
+      "added": 0,
+      "removed": 0
+    }
+  }
+}

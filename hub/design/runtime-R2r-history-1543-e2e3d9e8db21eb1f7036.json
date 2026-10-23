@@ -1,0 +1,1294 @@
+{
+    "version": "1.1.414",
+    "time": "1792770814507",
+    "generalDiagnostics": [
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit.py",
+            "severity": "error",
+            "message": "Variable not allowed in type expression",
+            "range": {
+                "start": {
+                    "line": 48,
+                    "character": 36
+                },
+                "end": {
+                    "line": 48,
+                    "character": 54
+                }
+            },
+            "rule": "reportInvalidTypeForm"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1118,
+                    "character": 8
+                },
+                "end": {
+                    "line": 1118,
+                    "character": 14
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"x\" of type \"_SupportsFloatOrIndex\" in function \"isfinite\"\n  Type \"Unknown | None\" is not assignable to type \"_SupportsFloatOrIndex\"\n    Type \"None\" is not assignable to type \"_SupportsFloatOrIndex\"\n      \"None\" is incompatible with protocol \"SupportsFloat\"\n        \"__float__\" is not present\n      \"None\" is incompatible with protocol \"SupportsIndex\"\n        \"__index__\" is not present",
+            "range": {
+                "start": {
+                    "line": 1133,
+                    "character": 64
+                },
+                "end": {
+                    "line": 1133,
+                    "character": 72
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+            "severity": "error",
+            "message": "Operator \"<=\" not supported for \"None\"",
+            "range": {
+                "start": {
+                    "line": 1133,
+                    "character": 77
+                },
+                "end": {
+                    "line": 1133,
+                    "character": 85
+                }
+            },
+            "rule": "reportOptionalOperand"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 168,
+                    "character": 15
+                },
+                "end": {
+                    "line": 168,
+                    "character": 18
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 277,
+                    "character": 37
+                },
+                "end": {
+                    "line": 277,
+                    "character": 42
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 343,
+                    "character": 64
+                },
+                "end": {
+                    "line": 343,
+                    "character": 67
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 344,
+                    "character": 39
+                },
+                "end": {
+                    "line": 344,
+                    "character": 42
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 349,
+                    "character": 40
+                },
+                "end": {
+                    "line": 349,
+                    "character": 43
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 356,
+                    "character": 78
+                },
+                "end": {
+                    "line": 356,
+                    "character": 81
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 359,
+                    "character": 32
+                },
+                "end": {
+                    "line": 359,
+                    "character": 40
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Argument of type \"dict[str, int | str | dict[str | Unknown, list[Conflict] | Unknown | None]]\" cannot be assigned to parameter \"failure\" of type \"CommitFailure\" in function \"__init__\"\n  Type \"dict[str | Unknown, list[Conflict] | Unknown | None]\" is not assignable to item \"details\"\n    \"dict[str | Unknown, list[Conflict] | Unknown | None]\" is not assignable to \"CommitFailureDetails\"",
+            "range": {
+                "start": {
+                    "line": 366,
+                    "character": 38
+                },
+                "end": {
+                    "line": 366,
+                    "character": 47
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Expected mapping for dictionary unpack operator",
+            "range": {
+                "start": {
+                    "line": 366,
+                    "character": 98
+                },
+                "end": {
+                    "line": 366,
+                    "character": 111
+                }
+            },
+            "rule": "reportGeneralTypeIssues"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "No overloads for \"__init__\" match the provided arguments",
+            "range": {
+                "start": {
+                    "line": 369,
+                    "character": 19
+                },
+                "end": {
+                    "line": 369,
+                    "character": 28
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"iterable\" of type \"Iterable[list[bytes]]\" in function \"__init__\"\n  Type \"Unknown | None\" is not assignable to type \"Iterable[list[bytes]]\"\n    \"None\" is incompatible with protocol \"Iterable[list[bytes]]\"\n      \"__iter__\" is not present",
+            "range": {
+                "start": {
+                    "line": 369,
+                    "character": 24
+                },
+                "end": {
+                    "line": 369,
+                    "character": 27
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 386,
+                    "character": 64
+                },
+                "end": {
+                    "line": 386,
+                    "character": 67
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 388,
+                    "character": 15
+                },
+                "end": {
+                    "line": 388,
+                    "character": 18
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 388,
+                    "character": 46
+                },
+                "end": {
+                    "line": 388,
+                    "character": 52
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 390,
+                    "character": 31
+                },
+                "end": {
+                    "line": 390,
+                    "character": 34
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 391,
+                    "character": 31
+                },
+                "end": {
+                    "line": 391,
+                    "character": 34
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 391,
+                    "character": 78
+                },
+                "end": {
+                    "line": 391,
+                    "character": 81
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 392,
+                    "character": 33
+                },
+                "end": {
+                    "line": 392,
+                    "character": 36
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 392,
+                    "character": 57
+                },
+                "end": {
+                    "line": 392,
+                    "character": 60
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 393,
+                    "character": 70
+                },
+                "end": {
+                    "line": 393,
+                    "character": 73
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 394,
+                    "character": 89
+                },
+                "end": {
+                    "line": 394,
+                    "character": 92
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 395,
+                    "character": 61
+                },
+                "end": {
+                    "line": 395,
+                    "character": 64
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 396,
+                    "character": 41
+                },
+                "end": {
+                    "line": 396,
+                    "character": 44
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 396,
+                    "character": 79
+                },
+                "end": {
+                    "line": 396,
+                    "character": 82
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 397,
+                    "character": 34
+                },
+                "end": {
+                    "line": 397,
+                    "character": 37
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 462,
+                    "character": 15
+                },
+                "end": {
+                    "line": 462,
+                    "character": 21
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 469,
+                    "character": 34
+                },
+                "end": {
+                    "line": 469,
+                    "character": 40
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 480,
+                    "character": 39
+                },
+                "end": {
+                    "line": 480,
+                    "character": 42
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"keys\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 480,
+                    "character": 118
+                },
+                "end": {
+                    "line": 480,
+                    "character": 122
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 482,
+                    "character": 47
+                },
+                "end": {
+                    "line": 482,
+                    "character": 50
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 522,
+                    "character": 15
+                },
+                "end": {
+                    "line": 522,
+                    "character": 18
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 523,
+                    "character": 93
+                },
+                "end": {
+                    "line": 523,
+                    "character": 96
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 570,
+                    "character": 42
+                },
+                "end": {
+                    "line": 570,
+                    "character": 45
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 573,
+                    "character": 93
+                },
+                "end": {
+                    "line": 573,
+                    "character": 101
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 574,
+                    "character": 61
+                },
+                "end": {
+                    "line": 574,
+                    "character": 69
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 577,
+                    "character": 71
+                },
+                "end": {
+                    "line": 577,
+                    "character": 79
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 592,
+                    "character": 57
+                },
+                "end": {
+                    "line": 592,
+                    "character": 63
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 592,
+                    "character": 80
+                },
+                "end": {
+                    "line": 592,
+                    "character": 86
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 594,
+                    "character": 29
+                },
+                "end": {
+                    "line": 594,
+                    "character": 37
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 594,
+                    "character": 84
+                },
+                "end": {
+                    "line": 594,
+                    "character": 92
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 726,
+                    "character": 28
+                },
+                "end": {
+                    "line": 726,
+                    "character": 31
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 753,
+                    "character": 14
+                },
+                "end": {
+                    "line": 753,
+                    "character": 20
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 754,
+                    "character": 58
+                },
+                "end": {
+                    "line": 754,
+                    "character": 64
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 833,
+                    "character": 15
+                },
+                "end": {
+                    "line": 833,
+                    "character": 21
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 838,
+                    "character": 12
+                },
+                "end": {
+                    "line": 838,
+                    "character": 38
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 914,
+                    "character": 39
+                },
+                "end": {
+                    "line": 914,
+                    "character": 46
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 928,
+                    "character": 21
+                },
+                "end": {
+                    "line": 928,
+                    "character": 28
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 959,
+                    "character": 63
+                },
+                "end": {
+                    "line": 959,
+                    "character": 69
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 969,
+                    "character": 45
+                },
+                "end": {
+                    "line": 969,
+                    "character": 51
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 998,
+                    "character": 30
+                },
+                "end": {
+                    "line": 998,
+                    "character": 37
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1051,
+                    "character": 19
+                },
+                "end": {
+                    "line": 1051,
+                    "character": 25
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1052,
+                    "character": 61
+                },
+                "end": {
+                    "line": 1052,
+                    "character": 79
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1061,
+                    "character": 23
+                },
+                "end": {
+                    "line": 1061,
+                    "character": 41
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"reference_projection\" is possibly unbound",
+            "range": {
+                "start": {
+                    "line": 1167,
+                    "character": 19
+                },
+                "end": {
+                    "line": 1167,
+                    "character": 39
+                }
+            },
+            "rule": "reportPossiblyUnboundVariable"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"reference_projection\" is possibly unbound",
+            "range": {
+                "start": {
+                    "line": 1168,
+                    "character": 58
+                },
+                "end": {
+                    "line": 1168,
+                    "character": 78
+                }
+            },
+            "rule": "reportPossiblyUnboundVariable"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"groups\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1189,
+                    "character": 47
+                },
+                "end": {
+                    "line": 1189,
+                    "character": 53
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1214,
+                    "character": 94
+                },
+                "end": {
+                    "line": 1214,
+                    "character": 97
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1217,
+                    "character": 31
+                },
+                "end": {
+                    "line": 1217,
+                    "character": 34
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1217,
+                    "character": 52
+                },
+                "end": {
+                    "line": 1217,
+                    "character": 55
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1217,
+                    "character": 89
+                },
+                "end": {
+                    "line": 1217,
+                    "character": 92
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1218,
+                    "character": 51
+                },
+                "end": {
+                    "line": 1218,
+                    "character": 54
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1218,
+                    "character": 85
+                },
+                "end": {
+                    "line": 1218,
+                    "character": 90
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1218,
+                    "character": 113
+                },
+                "end": {
+                    "line": 1218,
+                    "character": 118
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1221,
+                    "character": 46
+                },
+                "end": {
+                    "line": 1221,
+                    "character": 53
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1228,
+                    "character": 49
+                },
+                "end": {
+                    "line": 1228,
+                    "character": 52
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1228,
+                    "character": 87
+                },
+                "end": {
+                    "line": 1228,
+                    "character": 90
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1229,
+                    "character": 44
+                },
+                "end": {
+                    "line": 1229,
+                    "character": 47
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1229,
+                    "character": 87
+                },
+                "end": {
+                    "line": 1229,
+                    "character": 90
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1230,
+                    "character": 27
+                },
+                "end": {
+                    "line": 1230,
+                    "character": 30
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1230,
+                    "character": 51
+                },
+                "end": {
+                    "line": 1230,
+                    "character": 54
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1237,
+                    "character": 24
+                },
+                "end": {
+                    "line": 1237,
+                    "character": 29
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1253,
+                    "character": 31
+                },
+                "end": {
+                    "line": 1253,
+                    "character": 36
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1253,
+                    "character": 66
+                },
+                "end": {
+                    "line": 1253,
+                    "character": 71
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1253,
+                    "character": 102
+                },
+                "end": {
+                    "line": 1253,
+                    "character": 107
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1254,
+                    "character": 32
+                },
+                "end": {
+                    "line": 1254,
+                    "character": 37
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1372,
+                    "character": 23
+                },
+                "end": {
+                    "line": 1372,
+                    "character": 28
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        }
+    ],
+    "summary": {
+        "filesAnalyzed": 4,
+        "errorCount": 80,
+        "warningCount": 0,
+        "informationCount": 0,
+        "timeInSec": 5.555
+    }
+}
+

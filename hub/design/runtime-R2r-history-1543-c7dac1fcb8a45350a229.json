@@ -1,0 +1,21 @@
+{
+  "duration": 0.008453546000055212,
+  "longrepr": "",
+  "nodeid": "tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[field]",
+  "outcome": "passed",
+  "sections": [
+    [
+      "Captured stdout setup",
+      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[field]\", \"phase\": \"before\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_port.py\"}\n"
+    ],
+    [
+      "Captured stdout call",
+      "{\"damage\": \"field\", \"code\": \"conflict\", \"details\": {\"status\": \"conflict\", \"reason\": \"value_conflict\", \"code\": \"value_conflict\", \"path\": [\"clips\", \"id:cross\", \"at\"], \"hint\": \"Read the current timeline and retry the edit\", \"suggested_command\": \"timeline show\", \"base\": {\"revision_id\": \"saved-parent\", \"publication_id\": \"txn-15d4eac738814a8dbd777b3e7ac6cbf4\"}, \"current\": {\"revision_id\": \"authoring-parent-revision-8ab286ecbf021c6c0c0253e7d212a3bf66a6ee1cedbbead62aa3f4df17c91f04\", \"publication_id\": \"txn-d8374b04fc4b4f9a9adf8d0d40f4223e\"}, \"conflicts\": [{\"kind\": \"value_conflict\", \"ref\": \"internal-revision:authoring-timeline-revision-d433ebd741f7db275fb21dc7fbff0f5207ff4af00caae02cb591f65bc1694a18\", \"path\": [\"clips\", \"id:cross\", \"at\"], \"base\": {\"state\": \"absent\"}, \"theirs\": {\"state\": \"absent\"}, \"ours\": {\"state\": \"absent\"}, \"choices\": []}]}}\n"
+    ],
+    [
+      "Captured stdout teardown",
+      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[field]\", \"phase\": \"after\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_port.py\"}\n"
+    ]
+  ],
+  "when": "teardown"
+}

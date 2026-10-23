@@ -1,0 +1,660 @@
+[
+  {
+    "cell": null,
+    "code": "RUF100",
+    "end_location": {
+      "column": 51,
+      "row": 10
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 51,
+            "row": 10
+          },
+          "location": {
+            "column": 37,
+            "row": 10
+          }
+        }
+      ],
+      "message": "Remove unused `noqa` directive"
+    },
+    "location": {
+      "column": 39,
+      "row": 10
+    },
+    "message": "Unused `noqa` directive (non-enabled: `F403`)",
+    "name": "unused-noqa",
+    "noqa_row": 10,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unused-noqa"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 33,
+      "row": 18
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from __future__ import annotations\n\nimport base64\nimport copy\nimport hashlib\nimport json\nimport math\nimport re\nfrom urllib.parse import quote\n\nfrom .errors import (\n    AuthorizationError,\n    ConflictError,\n    NotFoundError,\n    RuntimeErrorBase,\n    ValidationError,\n)\nfrom .timeline_commit_validation import detached, digest\nfrom .util import canonical_json\n\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 21
+          },
+          "location": {
+            "column": 1,
+            "row": 6
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 6
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 6,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 105,
+      "row": 494
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "        from .timeline_commit_inputs import (\n            read_pack_snapshot_object,\n            validate_captured_document_inputs,\n        )\n",
+          "end_location": {
+            "column": 1,
+            "row": 495
+          },
+          "location": {
+            "column": 1,
+            "row": 494
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 9,
+      "row": 494
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 494,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 92,
+      "row": 610
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "        from .timeline_commit_inputs import (\n            DocumentInputLink,\n            persist_document_input_links,\n        )\n",
+          "end_location": {
+            "column": 1,
+            "row": 611
+          },
+          "location": {
+            "column": 1,
+            "row": 610
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 9,
+      "row": 610
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 610,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 66,
+      "row": 726
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "    from .timeline_commit_inputs import (\n        PROJECT_PACK_KIND,\n        PROJECT_PACK_SCHEMA,\n        capture_document_input,\n    )\n    from .timeline_commit_validation import validate_commit_value\n",
+          "end_location": {
+            "column": 1,
+            "row": 727
+          },
+          "location": {
+            "column": 1,
+            "row": 725
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 5,
+      "row": 725
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 725,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 108,
+      "row": 737
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "    from .timeline_commit_inputs import (\n        PROJECT_PACK_KIND,\n        pack_snapshot_objects,\n        read_pack_snapshot_object,\n    )\n",
+          "end_location": {
+            "column": 1,
+            "row": 738
+          },
+          "location": {
+            "column": 1,
+            "row": 737
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 5,
+      "row": 737
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 737,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 66,
+      "row": 758
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "    from .timeline_commit_inputs import (\n        PROJECT_PACK_KIND,\n        PROJECT_PACK_SCHEMA,\n        capture_document_input,\n    )\n    from .timeline_commit_validation import validate_commit_value\n",
+          "end_location": {
+            "column": 1,
+            "row": 759
+          },
+          "location": {
+            "column": 1,
+            "row": 757
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 5,
+      "row": 757
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 757,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "C408",
+    "end_location": {
+      "column": 80,
+      "row": 845
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "{\"asset\": variant[\"id\"], \"generation_id\": variant[\"generation_id\"],\n                                 \"variant_id\": variant[\"id\"], \"object_id\": object_id}",
+          "end_location": {
+            "column": 80,
+            "row": 845
+          },
+          "location": {
+            "column": 29,
+            "row": 844
+          }
+        }
+      ],
+      "message": "Rewrite as a literal"
+    },
+    "location": {
+      "column": 29,
+      "row": 844
+    },
+    "message": "Unnecessary `dict()` call (rewrite as a literal)",
+    "name": "unnecessary-collection-call",
+    "noqa_row": 844,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unnecessary-collection-call"
+  },
+  {
+    "cell": null,
+    "code": "C408",
+    "end_location": {
+      "column": 98,
+      "row": 847
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "{\"asset\": asset, \"generation_id\": generation_id, \"variant_id\": variant_id}",
+          "end_location": {
+            "column": 98,
+            "row": 847
+          },
+          "location": {
+            "column": 29,
+            "row": 847
+          }
+        }
+      ],
+      "message": "Rewrite as a literal"
+    },
+    "location": {
+      "column": 29,
+      "row": 847
+    },
+    "message": "Unnecessary `dict()` call (rewrite as a literal)",
+    "name": "unnecessary-collection-call",
+    "noqa_row": 847,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unnecessary-collection-call"
+  },
+  {
+    "cell": null,
+    "code": "TRY004",
+    "end_location": {
+      "column": 61,
+      "row": 947
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 947
+    },
+    "message": "Prefer `TypeError` exception for invalid type",
+    "name": "type-check-without-type-error",
+    "noqa_row": 947,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/type-check-without-type-error"
+  },
+  {
+    "cell": null,
+    "code": "TRY004",
+    "end_location": {
+      "column": 72,
+      "row": 950
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_port.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 950
+    },
+    "message": "Prefer `TypeError` exception for invalid type",
+    "name": "type-check-without-type-error",
+    "noqa_row": 950,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/type-check-without-type-error"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 46,
+      "row": 18
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "from __future__ import annotations\n\nimport base64\nimport hashlib\nimport json\nimport re\n\nfrom .errors import ConflictError, ProtocolError, ValidationError\nfrom .idempotency import command_result\nfrom .timeline_commit_validation import detached, digest\nfrom .timeline_materialization import (\n    has_materialization,\n    item_identity,\n    materialization_join,\n    root_identity,\n)\nfrom .util import canonical_json, new_id, now\n\n",
+          "end_location": {
+            "column": 1,
+            "row": 20
+          },
+          "location": {
+            "column": 1,
+            "row": 7
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 1,
+      "row": 7
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 7,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 62,
+      "row": 348
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "            from .timeline_catalog import verify_catalog_tail\n            from .timeline_commit_baseline import (\n                _publication_events,\n                _shot_projection,\n                _text_bindings,\n            )\n",
+          "end_location": {
+            "column": 1,
+            "row": 349
+          },
+          "location": {
+            "column": 1,
+            "row": 347
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 13,
+      "row": 347
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 347,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "SIM118",
+    "end_location": {
+      "column": 125,
+      "row": 481
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "",
+          "end_location": {
+            "column": 125,
+            "row": 481
+          },
+          "location": {
+            "column": 118,
+            "row": 481
+          }
+        }
+      ],
+      "message": "Remove `.keys()`"
+    },
+    "location": {
+      "column": 108,
+      "row": 481
+    },
+    "message": "Use `key in dict` instead of `key in dict.keys()`",
+    "name": "in-dict-keys",
+    "noqa_row": 481,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/in-dict-keys"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 98,
+      "row": 522
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "            from .timeline_commit_inputs import (\n                PROJECT_PACK_KIND,\n                validate_pack_snapshot_objects,\n            )\n",
+          "end_location": {
+            "column": 1,
+            "row": 523
+          },
+          "location": {
+            "column": 1,
+            "row": 522
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 13,
+      "row": 522
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 522,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 545
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 545
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 545,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 29,
+      "row": 556
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+    "fix": null,
+    "location": {
+      "column": 20,
+      "row": 556
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 556,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "SIM102",
+    "end_location": {
+      "column": 85,
+      "row": 662
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+    "fix": null,
+    "location": {
+      "column": 17,
+      "row": 661
+    },
+    "message": "Use a single `if` statement instead of nested `if` statements",
+    "name": "collapsible-if",
+    "noqa_row": 661,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/collapsible-if"
+  },
+  {
+    "cell": null,
+    "code": "BLE001",
+    "end_location": {
+      "column": 25,
+      "row": 887
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+    "fix": null,
+    "location": {
+      "column": 16,
+      "row": 887
+    },
+    "message": "Do not catch blind exception: `Exception`",
+    "name": "blind-except",
+    "noqa_row": 887,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/blind-except"
+  },
+  {
+    "cell": null,
+    "code": "SIM102",
+    "end_location": {
+      "column": 93,
+      "row": 983
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+    "fix": null,
+    "location": {
+      "column": 25,
+      "row": 981
+    },
+    "message": "Use a single `if` statement instead of nested `if` statements",
+    "name": "collapsible-if",
+    "noqa_row": 981,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/collapsible-if"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 47,
+      "row": 1201
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "        from .cas import ContentAddressedStore\n        from .service import RuntimeService\n        from .timeline_commit_port import (\n            verify_retained_text_object,\n            verify_text_object,\n        )\n",
+          "end_location": {
+            "column": 1,
+            "row": 1202
+          },
+          "location": {
+            "column": 1,
+            "row": 1199
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 9,
+      "row": 1199
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 1199,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  },
+  {
+    "cell": null,
+    "code": "I001",
+    "end_location": {
+      "column": 95,
+      "row": 1424
+    },
+    "filename": "/tmp/w-070f2ea023/baseline/runtime_protocol/timeline_commit_store.py",
+    "fix": {
+      "applicability": "safe",
+      "edits": [
+        {
+          "content": "        from .cas import ContentAddressedStore\n        from .timeline_commit_baseline import (\n            bootstrap_install_plan,\n            empty_bootstrap_document,\n        )\n",
+          "end_location": {
+            "column": 1,
+            "row": 1425
+          },
+          "location": {
+            "column": 1,
+            "row": 1423
+          }
+        }
+      ],
+      "message": "Organize imports"
+    },
+    "location": {
+      "column": 9,
+      "row": 1423
+    },
+    "message": "Import block is un-sorted or un-formatted",
+    "name": "unsorted-imports",
+    "noqa_row": 1423,
+    "severity": "error",
+    "url": "https://docs.astral.sh/ruff/rules/unsorted-imports"
+  }
+]

@@ -1,0 +1,1278 @@
+{
+    "version": "1.1.414",
+    "time": "1792770647818",
+    "generalDiagnostics": [
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_port.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1120,
+                    "character": 8
+                },
+                "end": {
+                    "line": 1120,
+                    "character": 14
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_port.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"x\" of type \"_SupportsFloatOrIndex\" in function \"isfinite\"\n  Type \"Unknown | None\" is not assignable to type \"_SupportsFloatOrIndex\"\n    Type \"None\" is not assignable to type \"_SupportsFloatOrIndex\"\n      \"None\" is incompatible with protocol \"SupportsFloat\"\n        \"__float__\" is not present\n      \"None\" is incompatible with protocol \"SupportsIndex\"\n        \"__index__\" is not present",
+            "range": {
+                "start": {
+                    "line": 1135,
+                    "character": 64
+                },
+                "end": {
+                    "line": 1135,
+                    "character": 72
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_port.py",
+            "severity": "error",
+            "message": "Operator \"<=\" not supported for \"None\"",
+            "range": {
+                "start": {
+                    "line": 1135,
+                    "character": 77
+                },
+                "end": {
+                    "line": 1135,
+                    "character": 85
+                }
+            },
+            "rule": "reportOptionalOperand"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 169,
+                    "character": 15
+                },
+                "end": {
+                    "line": 169,
+                    "character": 18
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 290,
+                    "character": 37
+                },
+                "end": {
+                    "line": 290,
+                    "character": 42
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 401,
+                    "character": 64
+                },
+                "end": {
+                    "line": 401,
+                    "character": 67
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 402,
+                    "character": 39
+                },
+                "end": {
+                    "line": 402,
+                    "character": 42
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 407,
+                    "character": 40
+                },
+                "end": {
+                    "line": 407,
+                    "character": 43
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 414,
+                    "character": 78
+                },
+                "end": {
+                    "line": 414,
+                    "character": 81
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 417,
+                    "character": 32
+                },
+                "end": {
+                    "line": 417,
+                    "character": 40
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Argument of type \"dict[str, int | str | dict[str | Unknown, list[Conflict] | Unknown | None]]\" cannot be assigned to parameter \"failure\" of type \"CommitFailure\" in function \"__init__\"\n  Type \"dict[str | Unknown, list[Conflict] | Unknown | None]\" is not assignable to item \"details\"\n    \"dict[str | Unknown, list[Conflict] | Unknown | None]\" is not assignable to \"CommitFailureDetails\"",
+            "range": {
+                "start": {
+                    "line": 424,
+                    "character": 38
+                },
+                "end": {
+                    "line": 424,
+                    "character": 47
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Expected mapping for dictionary unpack operator",
+            "range": {
+                "start": {
+                    "line": 424,
+                    "character": 98
+                },
+                "end": {
+                    "line": 424,
+                    "character": 111
+                }
+            },
+            "rule": "reportGeneralTypeIssues"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "No overloads for \"__init__\" match the provided arguments",
+            "range": {
+                "start": {
+                    "line": 427,
+                    "character": 19
+                },
+                "end": {
+                    "line": 427,
+                    "character": 28
+                }
+            },
+            "rule": "reportCallIssue"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Argument of type \"Unknown | None\" cannot be assigned to parameter \"iterable\" of type \"Iterable[list[bytes]]\" in function \"__init__\"\n  Type \"Unknown | None\" is not assignable to type \"Iterable[list[bytes]]\"\n    \"None\" is incompatible with protocol \"Iterable[list[bytes]]\"\n      \"__iter__\" is not present",
+            "range": {
+                "start": {
+                    "line": 427,
+                    "character": 24
+                },
+                "end": {
+                    "line": 427,
+                    "character": 27
+                }
+            },
+            "rule": "reportArgumentType"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 444,
+                    "character": 64
+                },
+                "end": {
+                    "line": 444,
+                    "character": 67
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 446,
+                    "character": 15
+                },
+                "end": {
+                    "line": 446,
+                    "character": 18
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 446,
+                    "character": 46
+                },
+                "end": {
+                    "line": 446,
+                    "character": 52
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 448,
+                    "character": 31
+                },
+                "end": {
+                    "line": 448,
+                    "character": 34
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 449,
+                    "character": 31
+                },
+                "end": {
+                    "line": 449,
+                    "character": 34
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 449,
+                    "character": 78
+                },
+                "end": {
+                    "line": 449,
+                    "character": 81
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 450,
+                    "character": 33
+                },
+                "end": {
+                    "line": 450,
+                    "character": 36
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 450,
+                    "character": 57
+                },
+                "end": {
+                    "line": 450,
+                    "character": 60
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 451,
+                    "character": 70
+                },
+                "end": {
+                    "line": 451,
+                    "character": 73
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 452,
+                    "character": 89
+                },
+                "end": {
+                    "line": 452,
+                    "character": 92
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 453,
+                    "character": 61
+                },
+                "end": {
+                    "line": 453,
+                    "character": 64
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 454,
+                    "character": 41
+                },
+                "end": {
+                    "line": 454,
+                    "character": 44
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 454,
+                    "character": 79
+                },
+                "end": {
+                    "line": 454,
+                    "character": 82
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 455,
+                    "character": 64
+                },
+                "end": {
+                    "line": 455,
+                    "character": 67
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 521,
+                    "character": 15
+                },
+                "end": {
+                    "line": 521,
+                    "character": 21
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 528,
+                    "character": 34
+                },
+                "end": {
+                    "line": 528,
+                    "character": 40
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 539,
+                    "character": 39
+                },
+                "end": {
+                    "line": 539,
+                    "character": 42
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"keys\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 539,
+                    "character": 118
+                },
+                "end": {
+                    "line": 539,
+                    "character": 122
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 541,
+                    "character": 47
+                },
+                "end": {
+                    "line": 541,
+                    "character": 50
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 581,
+                    "character": 15
+                },
+                "end": {
+                    "line": 581,
+                    "character": 18
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 582,
+                    "character": 93
+                },
+                "end": {
+                    "line": 582,
+                    "character": 96
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 629,
+                    "character": 42
+                },
+                "end": {
+                    "line": 629,
+                    "character": 45
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 632,
+                    "character": 93
+                },
+                "end": {
+                    "line": 632,
+                    "character": 101
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 633,
+                    "character": 61
+                },
+                "end": {
+                    "line": 633,
+                    "character": 69
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 636,
+                    "character": 71
+                },
+                "end": {
+                    "line": 636,
+                    "character": 79
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 651,
+                    "character": 57
+                },
+                "end": {
+                    "line": 651,
+                    "character": 63
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 651,
+                    "character": 80
+                },
+                "end": {
+                    "line": 651,
+                    "character": 86
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 653,
+                    "character": 29
+                },
+                "end": {
+                    "line": 653,
+                    "character": 37
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 653,
+                    "character": 84
+                },
+                "end": {
+                    "line": 653,
+                    "character": 92
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 785,
+                    "character": 28
+                },
+                "end": {
+                    "line": 785,
+                    "character": 31
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 812,
+                    "character": 14
+                },
+                "end": {
+                    "line": 812,
+                    "character": 20
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 813,
+                    "character": 58
+                },
+                "end": {
+                    "line": 813,
+                    "character": 64
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 895,
+                    "character": 15
+                },
+                "end": {
+                    "line": 895,
+                    "character": 21
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" cannot be called",
+            "range": {
+                "start": {
+                    "line": 900,
+                    "character": 12
+                },
+                "end": {
+                    "line": 900,
+                    "character": 38
+                }
+            },
+            "rule": "reportOptionalCall"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 976,
+                    "character": 39
+                },
+                "end": {
+                    "line": 976,
+                    "character": 46
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 990,
+                    "character": 21
+                },
+                "end": {
+                    "line": 990,
+                    "character": 28
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1021,
+                    "character": 63
+                },
+                "end": {
+                    "line": 1021,
+                    "character": 69
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1031,
+                    "character": 45
+                },
+                "end": {
+                    "line": 1031,
+                    "character": 51
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1060,
+                    "character": 30
+                },
+                "end": {
+                    "line": 1060,
+                    "character": 37
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1113,
+                    "character": 19
+                },
+                "end": {
+                    "line": 1113,
+                    "character": 25
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1114,
+                    "character": 61
+                },
+                "end": {
+                    "line": 1114,
+                    "character": 79
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1123,
+                    "character": 23
+                },
+                "end": {
+                    "line": 1123,
+                    "character": 41
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"reference_projection\" is possibly unbound",
+            "range": {
+                "start": {
+                    "line": 1230,
+                    "character": 19
+                },
+                "end": {
+                    "line": 1230,
+                    "character": 39
+                }
+            },
+            "rule": "reportPossiblyUnboundVariable"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"reference_projection\" is possibly unbound",
+            "range": {
+                "start": {
+                    "line": 1231,
+                    "character": 58
+                },
+                "end": {
+                    "line": 1231,
+                    "character": 78
+                }
+            },
+            "rule": "reportPossiblyUnboundVariable"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"groups\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1252,
+                    "character": 47
+                },
+                "end": {
+                    "line": 1252,
+                    "character": 53
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1277,
+                    "character": 94
+                },
+                "end": {
+                    "line": 1277,
+                    "character": 97
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1280,
+                    "character": 31
+                },
+                "end": {
+                    "line": 1280,
+                    "character": 34
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1280,
+                    "character": 52
+                },
+                "end": {
+                    "line": 1280,
+                    "character": 55
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1280,
+                    "character": 89
+                },
+                "end": {
+                    "line": 1280,
+                    "character": 92
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1281,
+                    "character": 51
+                },
+                "end": {
+                    "line": 1281,
+                    "character": 54
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1281,
+                    "character": 85
+                },
+                "end": {
+                    "line": 1281,
+                    "character": 90
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1281,
+                    "character": 113
+                },
+                "end": {
+                    "line": 1281,
+                    "character": 118
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1284,
+                    "character": 46
+                },
+                "end": {
+                    "line": 1284,
+                    "character": 53
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1291,
+                    "character": 49
+                },
+                "end": {
+                    "line": 1291,
+                    "character": 52
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1291,
+                    "character": 87
+                },
+                "end": {
+                    "line": 1291,
+                    "character": 90
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1292,
+                    "character": 44
+                },
+                "end": {
+                    "line": 1292,
+                    "character": 47
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1292,
+                    "character": 87
+                },
+                "end": {
+                    "line": 1292,
+                    "character": 90
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1293,
+                    "character": 27
+                },
+                "end": {
+                    "line": 1293,
+                    "character": 30
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "\"get\" is not a known attribute of \"None\"",
+            "range": {
+                "start": {
+                    "line": 1293,
+                    "character": 51
+                },
+                "end": {
+                    "line": 1293,
+                    "character": 54
+                }
+            },
+            "rule": "reportOptionalMemberAccess"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1300,
+                    "character": 24
+                },
+                "end": {
+                    "line": 1300,
+                    "character": 29
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1316,
+                    "character": 31
+                },
+                "end": {
+                    "line": 1316,
+                    "character": 36
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1316,
+                    "character": 66
+                },
+                "end": {
+                    "line": 1316,
+                    "character": 71
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1316,
+                    "character": 102
+                },
+                "end": {
+                    "line": 1316,
+                    "character": 107
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1317,
+                    "character": 32
+                },
+                "end": {
+                    "line": 1317,
+                    "character": 37
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        },
+        {
+            "file": "/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_store.py",
+            "severity": "error",
+            "message": "Object of type \"None\" is not subscriptable",
+            "range": {
+                "start": {
+                    "line": 1437,
+                    "character": 23
+                },
+                "end": {
+                    "line": 1437,
+                    "character": 28
+                }
+            },
+            "rule": "reportOptionalSubscript"
+        }
+    ],
+    "summary": {
+        "filesAnalyzed": 2,
+        "errorCount": 79,
+        "warningCount": 0,
+        "informationCount": 0,
+        "timeInSec": 6.181
+    }
+}
+

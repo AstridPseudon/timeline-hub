@@ -1,0 +1,363 @@
+diff --git a/runtime_protocol/timeline_commit_port.py b/runtime_protocol/timeline_commit_port.py
+index c7d378a22..f53099bbb 100644
+--- a/runtime_protocol/timeline_commit_port.py
++++ b/runtime_protocol/timeline_commit_port.py
+@@ -667,9 +667,11 @@ class RequestCommitPort:
+         if capture is None:
+             return None
+         from .timeline_commit_auth import validate_sequential_capture
+-        return validate_sequential_capture(
++        proof = validate_sequential_capture(
+             self.__request, prepared, capture, source, base, continuations, history,
+         )
++        proof["retained_capture"] = capture
++        return proof
+ 
+     def verify_outcome(self, outcome):
+         if isinstance(outcome, dict) and outcome.get("receipt", True) is None and outcome != self.__preview:
+diff --git a/runtime_protocol/timeline_commit_store.py b/runtime_protocol/timeline_commit_store.py
+index a0a1d54bd..bbf48d125 100644
+--- a/runtime_protocol/timeline_commit_store.py
++++ b/runtime_protocol/timeline_commit_store.py
+@@ -18,6 +18,7 @@ from .timeline_materialization import has_materialization, item_identity, materi
+ from .util import canonical_json, new_id, now
+ 
+ _METADATA = ("source", "label", "rationale", "group_id")
++_PRIVATE_EXECUTION = "_sequential_execution"
+ _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
+ _TEXT_BINDING_REF = re.compile(r"occurrence:([^/]+)/text-binding:(prompt|voiceover_script|transcript)(?::([a-z][a-z0-9-]{0,63}))?\Z")
+ 
+@@ -252,8 +253,20 @@ class TimelineCommitStore:
+                 )
+                 history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
+                                                       allow_archived=allow_archived)
+-                validate(replay_request, {"records": records, "expected_head": previous, "canonical_document": document},
+-                         source, continuations=continuations, history=history)
++                prepared = {"records": records, "expected_head": previous, "canonical_document": document}
++                original = self.revision_closure(edge["project_id"], edge["timeline_id"], base["revision_id"],
++                                                 allow_archived=allow_archived)
++                sequential = None
++                if _PRIVATE_EXECUTION in metadata:
++                    replay_request, prepared, sequential = self._historical_sequential(
++                        metadata[_PRIVATE_EXECUTION], row, edge, data, prepared, original, source,
++                        continuations, history,
++                    )
++                else:
++                    from .timeline_commit_auth import sequential_proof_required
++                    if sequential_proof_required(prepared, source, continuations):
++                        raise ValueError("historical sequential proof is missing")
++                validate(replay_request, prepared, source, original, continuations, history, sequential=sequential)
+             ids = json.loads(row["event_ids_json"])
+             seq = row["resulting_stream_seq"]
+             # Replay verifies the accepted prefix, independent of later writes.
+@@ -296,6 +309,51 @@ class TimelineCommitStore:
+         except (KeyError, TypeError, ValueError, IndexError, ValidationError, CommitRejected) as exc:
+             raise ProtocolError("accepted commit record is corrupt") from exc
+ 
++    def _historical_sequential(self, execution, row, edge, data, accepted, base, source, continuations, history):
++        from .timeline_commit_auth import validate_sequential_capture
++        from .timeline_commit_port import route_path
++        from .timeline_commit_validation import validate_commit_value
++
++        if set(execution) != {"capture", "prepared"}:
++            raise ValueError("historical sequential execution is malformed")
++        capture, prepared = execution["capture"], execution["prepared"]
++        context = capture["context"]
++        validate_commit_value(context, "CommitContext")
++        validate_commit_value(prepared, "PreparedCommit")
++        request = context["request"]
++        realm = self.conn.execute("SELECT realm_id FROM projects WHERE id=?", (edge["project_id"],)).fetchone()
++        if (realm is None or context["realm_id"] != realm[0]
++                or context["publisher"] != edge["publisher"]
++                or context["idempotency_key"] != row["idempotency_key"]
++                or context["request_hash"] != row["request_hash"]
++                or request_identity(context) != row["request_hash"]
++                or request["project_id"] != edge["project_id"] or request["timeline_id"] != edge["timeline_id"]
++                or request["base_revision_id"] != data["base_revision_id"]
++                or request["base_publication_id"] != data["base_publication_id"]
++                or context["invocation"]["operation"] != "commitTimeline"
++                or context["invocation"]["path"] != route_path(edge["project_id"], edge["timeline_id"])
++                or context["invocation"]["body"] != request or request.get("dry_run", False)
++                or any(prepared[key] != value for key, value in accepted.items())
++                or any(prepared[key] != data[key] for key in
++                       ("document_digest", "id_map", "provider_version", "compiler_version"))
++                or any(data.get(key) != request.get(key) for key in _METADATA if key != "label")
++                or data["label"] != request.get("label", "Timeline edit")
++                or data["merge_mode"] != _effective_merge_mode(request)):
++            raise ValueError("historical sequential execution differs from acceptance")
++        event_ids = json.loads(row["event_ids_json"])
++        if len(event_ids) != len(prepared["semantic_events"]) + 1:
++            raise ValueError("historical sequential events differ from acceptance")
++        for event_id, semantic in zip(event_ids, prepared["semantic_events"]):
++            event = self.conn.execute("SELECT kind, payload_json FROM timeline_events WHERE id=? AND timeline_id=?",
++                                      (event_id, edge["timeline_id"])).fetchone()
++            if event is None or event["kind"] != semantic["kind"] or json.loads(event["payload_json"]) != {
++                    "project_id": edge["project_id"], "timeline_id": edge["timeline_id"],
++                    "publisher": edge["publisher"], **semantic}:
++                raise ValueError("historical sequential events differ from acceptance")
++        return request, prepared, validate_sequential_capture(
++            request, prepared, capture, source, base, continuations, history,
++        )
++
+     def _check_inherited_allocations(self, project, timeline, records, allocations, before_seq=None,
+                                      *, allow_archived=False):
+         inverse_refs = {d["key"].removeprefix("materialization.source:")
+@@ -396,6 +454,7 @@ class TimelineCommitStore:
+                      "records": records, "provider_version": row["provider_version"],
+                      "compiler_version": row["compiler_version"], "publisher": row["publisher"],
+                      **json.loads(row["metadata_json"])}
++            entry.pop(_PRIVATE_EXECUTION, None)
+             # Modern records carry the authenticated provider projection.  A
+             # legacy edge has no recorder and must remain null/absent rather
+             # than receiving invented step or undo authority.
+@@ -789,6 +848,7 @@ class TimelineCommitStore:
+             reject("invalid_records", status=422)
+         recorded_steps = records.get("steps")
+         requested_steps = request.get("steps")
++        execution = None
+         _validate_record_metadata(request, records)
+         if _is_v2_request(request) and recorded_steps is None:
+             reject("invalid_records", "provider did not return authoritative step records", status=422)
+@@ -819,6 +879,8 @@ class TimelineCommitStore:
+             if sequential is None and sequential_proof_required(prepared, source, continuations):
+                 reject("sequential_proof_unavailable", "moved-head staged physical input requires private sequential proof")
+             validate(request, prepared, source, base, continuations, history, sequential=sequential)
++            if sequential is not None:
++                execution = {"capture": sequential["retained_capture"], "prepared": prepared}
+         elif any("physical_ref" in binding for record in commands for binding in record["bindings"]):
+             reject("invalid_records", "physical bindings require authoritative steps", status=422)
+         for record in commands:
+@@ -845,7 +907,7 @@ class TimelineCommitStore:
+         self._check_inherited_allocations(request["project_id"], request["timeline_id"], records, allocations)
+         return {"canonical_document": document, "document_digest": prepared["document_digest"],
+                 "commands": [r["command"] for r in commands], "id_map": prepared["id_map"],
+-                "provider_version": prepared["provider_version"], "compiler_version": prepared["compiler_version"]}
++                "provider_version": prepared["provider_version"], "compiler_version": prepared["compiler_version"]}, execution
+ 
+     def _materializations(self, context, prepared, inputs):
+         if has_materialization(prepared):
+@@ -1078,7 +1140,7 @@ class TimelineCommitStore:
+             self._check_context(context)
+             self._check_head(context, prepared["expected_head"])
+             self._check_shot_destinations(context, prepared, inputs)
+-            candidate = self._validate(context, prepared, inputs)
++            candidate, _ = self._validate(context, prepared, inputs)
+             request = context["request"]
+             candidate["merge_mode"] = _effective_merge_mode(request)
+             if "steps" in prepared["records"]:
+@@ -1125,7 +1187,7 @@ class TimelineCommitStore:
+                 self._check_context(context)
+                 self._check_head(context, prepared["expected_head"])
+                 self._check_shot_destinations(context, prepared, inputs)
+-                candidate = self._validate(context, prepared, inputs)
++                candidate, execution = self._validate(context, prepared, inputs)
+                 request, previous = context["request"], prepared["expected_head"]
+                 from .timeline_commit_reference_projection import (
+                     ReferenceProjectionError,
+@@ -1161,7 +1223,8 @@ class TimelineCommitStore:
+                 if modern and "steps" in prepared["records"]:
+                     data["steps"] = prepared["records"]["steps"]
+                 self._persist_closure(candidate["canonical_document"])
+-                result = self._publish(context, data, previous, prepared["records"], prepared["semantic_events"])
++                result = self._publish(context, data, previous, prepared["records"], prepared["semantic_events"],
++                                       execution=execution)
+                 from .timeline_commit_reference_projection import (
+                     apply_reference_projection,
+                 )
+@@ -1313,7 +1376,7 @@ class TimelineCommitStore:
+             self.conn.execute("UPDATE parent_composition_revisions SET commit_manifest_json=? WHERE id=? AND commit_manifest_json IS NULL",
+                               (canonical_json(manifest), parent["revision_id"]))
+ 
+-    def _publish(self, context, data, previous, records, semantic_events):
++    def _publish(self, context, data, previous, records, semantic_events, *, execution=None):
+         request = context["request"]
+         project_id, timeline_id = request["project_id"], request["timeline_id"]
+         revision_id = data["canonical_document"]["parent_revision"]["revision_id"]
+@@ -1329,6 +1392,8 @@ class TimelineCommitStore:
+             data, project_id=project_id, event_ids=event_ids, primary_stream_id=timeline_id, resulting_stream_seq=seq)
+         ledger = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (publication_id,)).fetchone()
+         metadata = _history_metadata(request, data)
++        if execution is not None:
++            metadata[_PRIVATE_EXECUTION] = execution
+         self.conn.execute("INSERT INTO timeline_commit_history VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+             (publication_id, project_id, timeline_id, revision_id, previous["publication_id"] if previous else None,
+              previous["revision_id"], "recorded", canonical_json(records),
+diff --git a/tests/test_timeline_commit_sequential_verifier.py b/tests/test_timeline_commit_sequential_verifier.py
+index 649ad2f98..62a631220 100644
+--- a/tests/test_timeline_commit_sequential_verifier.py
++++ b/tests/test_timeline_commit_sequential_verifier.py
+@@ -3,7 +3,9 @@ from __future__ import annotations
+ 
+ import copy
+ import json
++import sqlite3
+ from pathlib import Path
++from types import SimpleNamespace
+ 
+ import pytest
+ import test_timeline_commit_authentication as auth
+@@ -70,6 +72,81 @@ def test_private_sequential_carrier_accepts_authenticated_candidate(service):
+     assert result["data"]["status"] == "accepted"
+ 
+ 
++def test_private_sequential_history_survives_restart_and_exact_retry(service):
++    from runtime_protocol.service import RuntimeService
++
++    _provider_with_capture(service)
++    submitted = auth.body(service)
++    result = auth.commit(service, submitted)
++    project, root = service.test_project, service.store.root
++    history = service.list_timeline_commits(project, "main", authorize=lambda: None)
++    assert all("_sequential_execution" not in entry for entry in history["items"])
++    metadata = json.loads(service.store.conn.execute(
++        "SELECT metadata_json FROM timeline_commit_history WHERE publication_id=?",
++        (result["receipt"]["receipt_id"],),
++    ).fetchone()[0])
++    assert metadata["_sequential_execution"]["capture"]["context"]["request"] == submitted
++    before = auth.rows(service)
++    service.close()
++    restarted = RuntimeService(root)
++    try:
++        restarted.test_project = project
++        assert auth.commit(restarted, submitted) == result
++        assert restarted._timeline_commit_provider is None
++        assert restarted.list_timeline_commits(project, "main", authorize=lambda: None) == history
++        assert auth.rows(restarted) == before
++    finally:
++        restarted.close()
++
++
++@pytest.mark.parametrize("damage", [
++    "realm_id", "publisher", "idempotency_key", "request_hash", "invocation", "request",
++    "prepared", "original_input", "original_effect", "landing", "replay_map",
++])
++def test_private_sequential_history_revalidates_retained_facts(service, damage):
++    from runtime_protocol.errors import ProtocolError
++    from runtime_protocol.util import canonical_json
++
++    _provider_with_capture(service)
++    submitted = auth.body(service)
++    result = auth.commit(service, submitted)
++    publication = result["receipt"]["receipt_id"]
++    metadata = json.loads(service.store.conn.execute(
++        "SELECT metadata_json FROM timeline_commit_history WHERE publication_id=?", (publication,),
++    ).fetchone()[0])
++    execution = metadata["_sequential_execution"]
++    capture = execution["capture"]
++    if damage in {"realm_id", "publisher", "idempotency_key", "request_hash"}:
++        capture["context"][damage] = "forged"
++    elif damage == "invocation":
++        capture["context"]["invocation"]["path"] += "/forged"
++    elif damage == "request":
++        capture["context"]["request"]["label"] = "forged"
++    elif damage == "prepared":
++        execution["prepared"]["id_map"] = {"forged": "forged"}
++        capture["prepared_digest"] = digest(execution["prepared"])
++    elif damage == "original_input":
++        image = capture["original"]["commands"][0]["input"]["parent_revision"]
++        image["payload"]["meta"] = {"forged": True}
++        image["content_digest"] = digest(image["payload"])
++    elif damage == "original_effect":
++        capture["original"]["records"]["commands"][0]["writes"][0]["after"]["value"] = {"forged": True}
++    elif damage == "landing":
++        capture["landing"]["records"]["commands"][0]["bindings"] = []
++    else:
++        capture["replay_bindings"].append({"kind": "forged"})
++    service.store.conn.execute("UPDATE timeline_commit_history SET metadata_json=? WHERE publication_id=?",
++                               (canonical_json(metadata), publication))
++    before = auth.rows(service)
++    with pytest.raises(RuntimeErrorBase) as error:
++        auth.commit(service, submitted)
++    assert isinstance(error.value.__cause__, ProtocolError)
++    assert str(error.value.__cause__) == "accepted commit record is corrupt"
++    with pytest.raises(ProtocolError, match="accepted commit record is corrupt"):
++        service.list_timeline_commits(service.test_project, "main", authorize=lambda: None)
++    assert auth.rows(service) == before
++
++
+ def test_private_sequential_carrier_rejects_context_tampering_without_write(service):
+     def mutate(capture, _prepared):
+         capture["context"]["idempotency_key"] = "other-request"
+@@ -180,6 +257,82 @@ def test_retained_real_capture_runs_both_verification_stages(captured_sequence):
+     assert captured_sequence == before
+ 
+ 
++def test_moved_history_replays_authenticated_original_and_landing(captured_sequence, monkeypatch):
++    from runtime_protocol.errors import ProtocolError
++    from runtime_protocol.timeline_commit_store import (
++        TimelineCommitStore,
++        _history_metadata,
++    )
++    from runtime_protocol.util import canonical_json
++
++    packet = captured_sequence
++    prepared, request, capture = packet["prepared"], packet["request"], packet["capture"]
++    previous = prepared["expected_head"]
++    assert previous["publication_id"] != request["base_publication_id"]
++    document, records = prepared["canonical_document"], prepared["records"]
++    publisher = capture["context"]["publisher"]
++    data = {key: value for key, value in prepared.items() if key not in {"records", "semantic_events", "expected_head"}}
++    data.update(status="merged", base_revision_id=request["base_revision_id"],
++                base_publication_id=request["base_publication_id"], previous_revision_id=previous["revision_id"],
++                previous_publication_id=previous["publication_id"], rebased_onto=previous,
++                accepted_revision_id=document["parent_revision"]["revision_id"], publisher=publisher,
++                commands=[record["command"] for record in records["commands"]],
++                steps=records["steps"], label=records["label"], merge_mode=records["merge_mode"])
++    data.update({key: request[key] for key in ("source", "rationale", "group_id")})
++    metadata = _history_metadata(request, data)
++    metadata["_sequential_execution"] = {"capture": capture, "prepared": prepared}
++    event = {"timeline_id": request["timeline_id"], "kind": "timeline.commit.accepted",
++             "payload": {"project_id": request["project_id"], "timeline_id": request["timeline_id"],
++                         "previous": previous, "revision_id": data["accepted_revision_id"],
++                         "publisher": publisher, "intent": "recorded", "records_digest": digest(records)},
++             "previous_hash": "", "created_at": "2026-10-23T00:00:00Z"}
++    with sqlite3.connect(":memory:") as connection:
++        connection.row_factory = sqlite3.Row
++        connection.executescript("""
++            CREATE TABLE projects (id TEXT, realm_id TEXT);
++            CREATE TABLE project_sequences (project_id TEXT, next_seq INTEGER);
++            CREATE TABLE timeline_events (id INTEGER, timeline_id TEXT, kind TEXT, payload_json TEXT,
++                                          previous_hash TEXT, event_hash TEXT, created_at TEXT);
++        """)
++        connection.execute("INSERT INTO projects VALUES (?, ?)",
++                           (request["project_id"], capture["context"]["realm_id"]))
++        connection.execute("INSERT INTO project_sequences VALUES (?, 2)", (request["project_id"],))
++        connection.execute("INSERT INTO timeline_events VALUES (1, ?, ?, ?, '', ?, ?)",
++                           (event["timeline_id"], event["kind"], canonical_json(event["payload"]),
++                            digest(event)[7:], event["created_at"]))
++        store = TimelineCommitStore(SimpleNamespace(conn=connection), validate_prepared=lambda _: None)
++        closures = {value["parent_revision"]["revision_id"]: value for value in
++                    (packet["source"], packet["head_document"], document)}
++        monkeypatch.setattr(store, "revision_closure", lambda project, timeline, revision, **kw: closures[revision])
++        continuations = {}
++        for entry in packet["history"]["items"]:
++            for record in (entry["records"] or {}).get("commands", []):
++                for binding in record["bindings"]:
++                    if binding.get("key") == "commit.materialization":
++                        continuations.setdefault(binding["physical_ref"], set()).add(binding["successor"])
++        monkeypatch.setattr(store, "_binding_continuations", lambda *args, **kw: continuations)
++        monkeypatch.setattr(store, "_inverse_stage_history", lambda *args, **kw: {})
++        edge = {"project_id": request["project_id"], "timeline_id": request["timeline_id"],
++                "intent": "recorded", "publication_id": "accepted-sequence", "project_seq": 1,
++                "previous_revision_id": previous["revision_id"], "previous_publication_id": previous["publication_id"],
++                "revision_id": data["accepted_revision_id"], "publisher": publisher,
++                "provider_version": data["provider_version"], "compiler_version": data["compiler_version"],
++                "records_json": canonical_json(records), "metadata_json": canonical_json(metadata)}
++        row = {"command_kind": "timeline.commit", "txn_id": edge["publication_id"],
++               "aggregate_id": canonical_json([request["project_id"], request["timeline_id"]]),
++               "primary_stream_id": request["timeline_id"], "first_project_seq": 1, "last_project_seq": 1,
++               "resulting_stream_seq": 1, "event_ids_json": '["1"]', "result_json": canonical_json(data),
++               "request_hash": capture["context"]["request_hash"],
++               "idempotency_key": capture["context"]["idempotency_key"]}
++        # Only the enclosing accepted receipt/event is constructed here. The
++        # original, landing, BASE, HEAD and preceding edge are real captures.
++        store._verify_accepted(row, edge)
++        metadata.pop("_sequential_execution")
++        edge["metadata_json"] = canonical_json(metadata)
++        with pytest.raises(ProtocolError, match="accepted commit record is corrupt"):
++            store._verify_accepted(row, edge)
++
++
+ @pytest.mark.parametrize("damage", ["omitted", "duplicate", "future", "owner", "terminal",
+                                    "bool", "negative", "past_end", "malformed"])
+ def test_retained_real_capture_rejects_replay_forgery(captured_sequence, damage):
