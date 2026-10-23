@@ -25,6 +25,7 @@ import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { createTimelineLocalSaveHandoff, readTimelineOriginalSaveBasis, type TimelineLocalSaveHandoff, type TimelineOriginalSaveBasis, type TimelineSaveSource } from './timelineLocalSaveHandoff.ts';
 import { createLocalSaveSession, type LocalSaveSession, type LocalSaveState } from '../commands/localSaveSession.ts';
 import { toOutboxJson } from '../commands/commitOutbox.ts';
+import { emitTimelineSaveDiagnostic } from '../lib/timeline-diagnostics.ts';
 export { shouldAcceptPolledData } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 export type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 
@@ -85,12 +86,26 @@ export function useTimelineSave(
   // to the old snapshot writer while the verified original is being loaded.
   const localDocumentSave = useMemo<TimelineLocalSaveHandoff | undefined>(() => usesLocalDocumentSave ? {
     async capture(source, gestureBasis) {
-      const original = structuredClone(source);
-      const originalReads = gestureBasis ? structuredClone(gestureBasis) : undefined;
-      if (localOwner.closed || !localOwner.ready) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
-      const handoff = await localOwner.ready;
-      if (localOwner.closed) throw new TimelineVersionConflictError('Local save session was replaced; draft retained');
-      await handoff.capture(original, originalReads);
+      emitTimelineSaveDiagnostic('capture-called', () => ({ owner: localOwner, timelineId: localOwner.timelineId,
+        source, gesture: gestureBasis,
+        clipId: gestureBasis?.clipId,
+        generation: localOwner.generation, closed: localOwner.closed, sessionPresent: Boolean(localOwner.session) }));
+      try {
+        const original = structuredClone(source);
+        const originalReads = gestureBasis ? structuredClone(gestureBasis) : undefined;
+        if (localOwner.closed || !localOwner.ready) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
+        const handoff = await localOwner.ready;
+        if (localOwner.closed) throw new TimelineVersionConflictError('Local save session was replaced; draft retained');
+        await handoff.capture(original, originalReads);
+        emitTimelineSaveDiagnostic('capture-resolved', () => ({ owner: localOwner, timelineId: localOwner.timelineId,
+          source: original, gesture: originalReads,
+          generation: localOwner.generation, closed: localOwner.closed, sessionPresent: Boolean(localOwner.session) }));
+      } catch (error) {
+        emitTimelineSaveDiagnostic('capture-rejected', () => ({ owner: localOwner, timelineId: localOwner.timelineId,
+          gesture: gestureBasis,
+          generation: localOwner.generation, closed: localOwner.closed, sessionPresent: Boolean(localOwner.session) }));
+        throw error;
+      }
     },
     async flush() {
       if (localOwner.closed || !localOwner.ready) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
@@ -116,6 +131,8 @@ export function useTimelineSave(
   } : undefined, [localOwner, usesLocalDocumentSave]);
   useEffect(() => {
     localOwner.closed = false;
+    emitTimelineSaveDiagnostic('owner-init', () => ({ owner: localOwner, timelineId: localOwner.timelineId, closed: localOwner.closed,
+      generation: localOwner.generation, sessionPresent: Boolean(localOwner.session) }));
     setLocalSaveState(null);
     return () => {
       localOwner.closed = true;
@@ -123,6 +140,8 @@ export function useTimelineSave(
       localOwner.started = false;
       localOwner.ready = undefined;
       localOwner.handoff = undefined;
+      emitTimelineSaveDiagnostic('owner-closed', () => ({ owner: localOwner, timelineId: localOwner.timelineId, closed: localOwner.closed,
+        generation: localOwner.generation, sessionPresent: Boolean(localOwner.session) }));
       void localOwner.session?.dispose().catch(() => {});
     };
   }, [localOwner]);
@@ -140,19 +159,27 @@ export function useTimelineSave(
       localOwner.session = undefined;
       localOwner.handoff = undefined;
       localOwner.started = false;
+      emitTimelineSaveDiagnostic('owner-retired', () => ({ owner: localOwner, timelineId,
+        generation: localOwner.generation, sessionPresent: Boolean(localOwner.session) }));
     }
     const original = localDataRef.current;
     if (!provider.loadTimelineCommandBasis || !original?.head) {
+      emitTimelineSaveDiagnostic('basis-unavailable', () => ({ owner: localOwner, timelineId,
+        mounted: original, basisStatus: 'unavailable' }));
       setOriginalLocalSaveBasis(null);
       return;
     }
     let cancelled = false;
     const editSeq = localEditSeqRef.current;
     if (editSeq !== savedSeqRef.current || original.editProjection?.kind === 'local') {
+      emitTimelineSaveDiagnostic('basis-unavailable', () => ({ owner: localOwner, timelineId,
+        mounted: original, basisStatus: 'unavailable' }));
       setOriginalLocalSaveBasis({ status: 'unavailable', reason: 'Original verified read must precede local edits' });
       return;
     }
     setOriginalLocalSaveBasis({ status: 'loading' });
+    emitTimelineSaveDiagnostic('basis-read', () => ({ owner: localOwner, timelineId,
+      mounted: original, basisStatus: 'loading', generation: localOwner.generation }));
     const originalRead = readTimelineOriginalSaveBasis(provider, timelineId, {
       config: original.config, registry: original.registry, head: original.head,
       ...(original.sourceItemsBySchemaRef !== undefined ? { bundle: {
@@ -162,10 +189,15 @@ export function useTimelineSave(
     });
     void originalRead.then((value) => {
       if (cancelled) return;
+      emitTimelineSaveDiagnostic(() => localEditSeqRef.current === editSeq ? 'basis-ready' : 'basis-unavailable', () => ({
+        owner: localOwner, timelineId, mounted: localDataRef.current, basis: value,
+        basisStatus: localEditSeqRef.current === editSeq ? 'ready' : 'unavailable', generation: localOwner.generation }));
       setOriginalLocalSaveBasis(localEditSeqRef.current === editSeq
         ? { status: 'ready', value }
         : { status: 'unavailable', reason: 'Local edits preceded completion of the original verified read' });
     }).catch((error: unknown) => {
+      emitTimelineSaveDiagnostic('basis-error', () => ({ owner: localOwner, timelineId,
+        mounted: localDataRef.current, basisStatus: 'error', closed: localOwner.closed, current: !cancelled }));
       if (!cancelled) setOriginalLocalSaveBasis({ status: 'unavailable', reason: error instanceof Error ? error.message : String(error) });
     });
     if (usesLocalDocumentSave) {
@@ -179,6 +211,8 @@ export function useTimelineSave(
           throw new TimelineVersionConflictError('Local edits preceded the original verified read; draft retained');
         }
         const identity = await provider.getRecoverableIdentity!();
+        emitTimelineSaveDiagnostic('identity-read', () => ({ owner: localOwner, timelineId,
+          identityPresent: identity != null, closed: localOwner.closed, current: isCurrent(), generation }));
         if (cancelled || localOwner.closed) throw new Error('Local save session replaced during identity read');
         await previousDisposal;
         if (!isCurrent()) throw new Error('Local save session replaced during owner retirement');
@@ -188,7 +222,12 @@ export function useTimelineSave(
           initial: verified.initial, document: toOutboxJson(verified.initial.canonicalDocument),
           send: (request, key) => provider.commitTimeline!(request, key),
           loadLatest: () => provider.loadTimelineCommandBasis!(timelineId),
-          changed: (state) => { if (isCurrent()) setLocalSaveState(state); },
+          changed: (state) => {
+            emitTimelineSaveDiagnostic('session-changed', () => ({ owner: localOwner, timelineId,
+              state, current: isCurrent(), closed: localOwner.closed, generation,
+              sessionPresent: Boolean(localOwner.session) }));
+            if (isCurrent()) setLocalSaveState(state);
+          },
           prepareDisplay: async (basis, draft) => {
             const document = (draft ?? basis.canonicalDocument) as unknown as typeof basis.canonicalDocument;
             const parent = document.parent_revision.payload;
@@ -203,18 +242,28 @@ export function useTimelineSave(
             const source: TimelineSaveSource = { config: next.config, registry: next.registry, head,
               ...(bundle === undefined ? {} : { bundle }) };
             return { document: toOutboxJson(document), adopt() {
+              emitTimelineSaveDiagnostic('adoption-start', () => ({ owner: localOwner, timelineId,
+                mounted: localDataRef.current, source, current: isCurrent(), generation,
+                scopeMatched: head.timelineId === timelineId && head.projectId === verified.initial.canonicalDocument.project_id }));
               if (!isCurrent()) return;
               adoptedSource = source;
               localOwner.headKey = canonicalJsonStringify(head);
               headRevisionRef.current = head;
               adoptCanonicalData(next, { save: false, skipHistory: true, updateLastSavedSignature: true });
+              emitTimelineSaveDiagnostic('adoption-complete', () => ({ owner: localOwner, timelineId,
+                mounted: localDataRef.current, source, current: isCurrent(), generation }));
             } };
           },
         });
         if (!isCurrent()) { await session.dispose(); throw new Error('Local save session replaced during outbox claim'); }
         localOwner.session = session;
+        emitTimelineSaveDiagnostic('session-created', () => ({ owner: localOwner, timelineId,
+          sessionPresent: true, current: isCurrent(), generation, basis: verified, mounted: localDataRef.current }));
         const owners = session.getState().recoverableOwners;
-        if (owners.length === 1) { localOwner.recovered = true; await session.recover(owners[0]); }
+        if (owners.length === 1) { localOwner.recovered = true; await session.recover(owners[0]);
+          emitTimelineSaveDiagnostic('session-recovered', () => ({ owner: localOwner, timelineId,
+            current: isCurrent(), generation, sessionPresent: true }));
+        }
         else if (owners.length) throw new TimelineVersionConflictError('Multiple local save owners require recovery; drafts retained');
         let initial = verified.initial;
         if (owners.length && session.getState().status === 'saved') {
@@ -227,18 +276,31 @@ export function useTimelineSave(
         if (!isCurrent()) throw new Error('Local save session replaced during history read');
         const handoff = createTimelineLocalSaveHandoff({ initial, source: adoptedSource, session,
           loadHistory: () => provider.loadTimelineCommandBasis!(timelineId),
-          adopted: () => ({ source: adoptedSource,
-            receipt: { configVersion: configVersionRef.current, head: adoptedSource.head! } }) });
+          adopted: () => {
+            emitTimelineSaveDiagnostic('adopted-read', () => ({ owner: localOwner, timelineId,
+              mounted: localDataRef.current, source: adoptedSource, basis: verified,
+              current: isCurrent(), generation, sessionPresent: Boolean(localOwner.session) }));
+            return { source: adoptedSource,
+              receipt: { configVersion: configVersionRef.current, head: adoptedSource.head! } };
+          } });
         localOwner.handoff = handoff;
+        emitTimelineSaveDiagnostic('handoff-ready', () => ({ owner: localOwner, timelineId,
+          basis: verified, basisStatus: 'ready', current: isCurrent(), generation, sessionPresent: Boolean(localOwner.session),
+          mounted: localDataRef.current }));
         setLocalSaveState((current) => current ? { ...current } : current);
         return handoff;
       })();
       void localOwner.ready.catch((error: unknown) => {
+        emitTimelineSaveDiagnostic('owner-error', () => ({ owner: localOwner, timelineId,
+          closed: localOwner.closed, current: isCurrent(), generation, sessionPresent: Boolean(localOwner.session) }));
         if (isCurrent()) setLocalSaveState({ status: 'error', recoverableOwners: [],
           error: { message: error instanceof Error ? error.message : String(error) } });
       });
     }
-    return () => { cancelled = true; };
+    return () => { cancelled = true;
+      emitTimelineSaveDiagnostic('lifecycle-cancel', () => ({ owner: localOwner, timelineId,
+        closed: localOwner.closed, generation: localOwner.generation, sessionPresent: Boolean(localOwner.session) }));
+    };
   }, [provider, timelineId, originalHeadKey, localDataRef, localEditSeqRef, adoptCanonicalData, localOwner, resolveAssetUrl, usesLocalDocumentSave]);
   const persistence = useTimelinePersistence({
     store,
@@ -261,6 +323,7 @@ export function useTimelineSave(
     interactionStateRef,
     onCanonicalReloadStart: invalidateRecoveryAction,
     localDocumentSave,
+    diagnosticOwner: localOwner,
   });
   const { clearDeferredRecoverySave, resumeDeferredRecoverySave } = persistence;
   const resumeDeferredRecoverySaveRef = useRef(resumeDeferredRecoverySave);

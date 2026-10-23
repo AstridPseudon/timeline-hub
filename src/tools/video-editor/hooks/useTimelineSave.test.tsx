@@ -1197,3 +1197,109 @@ describe('useTimelineSave — recovered draft durability', () => {
     harness.hook.unmount();
   });
 });
+
+describe('useTimelineSave mounted save diagnostics', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    resetFakeIndexedDB();
+    vi.stubGlobal('indexedDB', createFakeIndexedDB());
+    vi.stubGlobal('__timelineSaveDiagnosticsEnabled', true);
+  });
+  afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+  it.each(['resolved', 'rejected'] as const)('observes real mounted capture %s and preserves basis/adoption order', async (outcome) => {
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+      request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}),
+    } });
+    const records: Array<{ phase: string; sequence: number; ownerAlias: number; [key: string]: unknown }> = [];
+    const listener = (event: Event) => records.push((event as CustomEvent).detail);
+    window.addEventListener('timeline:save-diagnostic', listener);
+    const head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
+    const config = createDefaultTimelineConfig();
+    config.clips = [{ id: 'diagnostic-clip', at: 0, track: 'V1', clipType: 'media', asset: 'diagnostic-video',
+      from: 0, to: 8, hold: 8, speed: 1, app: { astrid: { for: 8 } } }];
+    const registry = { assets: { 'diagnostic-video': { file: 'diagnostic.mp4', type: 'video/mp4', duration: 8 } } };
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+      { timelineId: 'timeline-1' }).data.canonical_document;
+    document.parent_revision.payload = { config, clips: config.clips, registry, occurrences: [] };
+    document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+    const data = await buildTimelineData(config, registry, undefined, 1, undefined, head);
+    const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+    const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>();
+    let completeRead!: (value: typeof initial) => void;
+    const loadBasis = outcome === 'rejected'
+      ? vi.fn(() => new Promise<typeof initial>((resolve) => { completeRead = resolve; }))
+      : vi.fn(async () => initial);
+    const harness = setup(async () => { throw new Error('Legacy save must not be called'); }, undefined, {
+      data, loadBasis, capabilities: { commitTimeline: send,
+        getRecoverableIdentity: vi.fn(async () => ({ actorId: 'private-actor', realmId: 'private-realm' })) },
+    });
+    const editing = renderHook(() => useClipEditing({
+      dataRef: harness.hook.result.current.dataRef,
+      resolvedConfig: harness.hook.result.current.dataRef.current?.resolvedConfig ?? null,
+      selectedClipId: 'diagnostic-clip', selectedTrack: null, currentTime: 0,
+      selectClip: vi.fn(), setSelectedTrackId: vi.fn(), applyEdit: harness.hook.result.current.applyEdit,
+    }));
+    try {
+      if (outcome === 'resolved') await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.ownerId).toBeTruthy());
+      await settleInitialRecoveryCheck();
+      const capture = vi.spyOn(harness.hook.result.current.localDocumentSave!, 'capture');
+      await act(async () => { editing.result.current.handleSelectedClipChange({ from: 3 }); });
+      const edited = harness.hook.result.current.dataRef.current!;
+      expect(capture).toHaveBeenCalledTimes(1);
+      expect(capture.mock.calls[0][1]).toMatchObject({ kind: 'trim', clipId: 'diagnostic-clip', patch: { from: 3 } });
+      expect(edited.config.clips[0].app).toEqual({ astrid: { for: 8 } });
+      const captured = capture.mock.results[0].value as Promise<void>;
+      if (outcome === 'rejected') {
+        await act(async () => { completeRead(initial); });
+        await expect(captured).rejects.toThrow('Local edits preceded the original verified read');
+        expect(send).not.toHaveBeenCalled();
+        expect(records.find((record) => record.phase === 'capture-rejected')).toMatchObject({
+          errorCode: 'operation-rejected', errorStage: 'capture' });
+        expect(harness.hook.result.current.originalLocalSaveBasis?.status).toBe('unavailable');
+      } else {
+        await act(async () => { await captured; });
+        const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' },
+          { timelineId: 'timeline-1' });
+        response.data.canonical_document = structuredClone(document);
+        response.data.canonical_document.parent_revision.revision_id = 'r1';
+        response.data.canonical_document.parent_revision.payload.config = JSON.parse(JSON.stringify(edited.config));
+        response.data.canonical_document.parent_revision.payload.clips = JSON.parse(JSON.stringify(edited.config.clips));
+        response.data.canonical_document.parent_revision.content_digest = fixtureDigest(response.data.canonical_document.parent_revision.payload);
+        send.mockResolvedValue({ response, accepted: { revisionId: 'r1', publicationId: 'p1' },
+          canonicalDocument: response.data.canonical_document, graph: {}, receipt: response.receipt });
+        await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+        await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.status).toBe('saved'));
+        expect(send).toHaveBeenCalledTimes(1);
+        expect(harness.hook.result.current.dataRef.current?.head?.headRevisionId).toBe('r1');
+        const phases = records.map((record) => record.phase);
+        expect(phases.indexOf('basis-read')).toBeLessThan(phases.indexOf('basis-ready'));
+        expect(phases.indexOf('basis-ready')).toBeLessThan(phases.indexOf('handoff-ready'));
+        expect(phases.indexOf('capture-resolved')).toBeLessThan(phases.indexOf('adoption-start'));
+        expect(phases.indexOf('adoption-start')).toBeLessThan(phases.indexOf('adoption-complete'));
+        expect(phases.indexOf('adoption-complete')).toBeLessThan(phases.indexOf('adopted-read'));
+        expect(records.find((record) => record.phase === 'basis-ready')).toMatchObject({
+          originalHead: { revisionId: 'r0', publicationId: 'p0' } });
+      }
+      const start = records.find((record) => record.phase === 'capture-called')!;
+      const finish = records.find((record) => record.phase === `capture-${outcome}`)!;
+      expect(start.sequence).toBeLessThan(finish.sequence);
+      expect(start.ownerAlias).toBe(finish.ownerAlias);
+      expect(records.find((record) => record.phase === 'schedule')).toMatchObject({ ownerAlias: start.ownerAlias,
+        generation: start.generation, closed: start.closed, sessionPresent: start.sessionPresent });
+      expect(records.find((record) => record.phase === 'schedule')).toMatchObject({
+        clipId: 'diagnostic-clip', patch: { from: 3 }, mountedHead: { revisionId: 'r0', publicationId: 'p0' },
+        mountedClip: { from: 3, hold: 8 }, gestureClip: { from: 0, hold: 8 } });
+      expect(JSON.stringify(records)).not.toMatch(/private-actor|private-realm|ownerId|output\.mp4/);
+      expect(harness.saveTimeline).not.toHaveBeenCalled();
+    } finally {
+      editing.unmount();
+      harness.hook.unmount();
+      expect(records.some((record) => record.phase === 'owner-closed')).toBe(true);
+      window.removeEventListener('timeline:save-diagnostic', listener);
+      if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+      else Reflect.deleteProperty(navigator, 'locks');
+    }
+  });
+});
