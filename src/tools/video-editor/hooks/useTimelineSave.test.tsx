@@ -190,6 +190,7 @@ describe('useTimelineSave — recovered draft durability', () => {
       await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(1));
       const rightId = harness.hook.result.current.selectedClipId!;
       expect(rightId).not.toBe('p1-chain-source');
+      const splitConfig = structuredClone(harness.hook.result.current.dataRef.current!.config);
       editing.rerender();
       await act(async () => { editing.result.current.handleSelectedClipChange({ from: 3 }); });
       const [owner] = await createCommitOutbox().list({ realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' });
@@ -201,6 +202,47 @@ describe('useTimelineSave — recovered draft durability', () => {
         reads: expect.arrayContaining([{ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'from'],
           state: { state: 'present', value: 0 } }]),
       } });
+      const trimmedConfig = structuredClone(harness.hook.result.current.dataRef.current!.config);
+      const reply = (config: typeof splitConfig, revision: string, publication: string) => {
+        const response = acceptedCommit({ revision_id: revision, publication_id: publication },
+          { revision_id: 'r0', publication_id: 'p0' }, { timelineId: 'timeline-1' });
+        response.data.canonical_document = structuredClone(document);
+        response.data.canonical_document.parent_revision.revision_id = revision;
+        response.data.canonical_document.parent_revision.payload.config = JSON.parse(JSON.stringify(config));
+        response.data.canonical_document.parent_revision.payload.clips = JSON.parse(JSON.stringify(config.clips));
+        response.data.canonical_document.parent_revision.content_digest = fixtureDigest(response.data.canonical_document.parent_revision.payload);
+        return { response, accepted: { revisionId: revision, publicationId: publication },
+          canonicalDocument: response.data.canonical_document, graph: {}, receipt: response.receipt };
+      };
+      let adopted: TimelineData | null = null;
+      send.mockImplementationOnce(async () => {
+        adopted = harness.hook.result.current.dataRef.current;
+        return reply(trimmedConfig, 'r2', 'p2');
+      });
+      await act(async () => { acknowledge(reply(splitConfig, 'r1', 'p1')); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+      await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.status).toBe('saved'));
+      expect(send).toHaveBeenCalledTimes(2);
+      expect(adopted!.head?.headRevisionId).toBe('r1');
+      expect(adopted!.config.clips).toEqual(splitConfig.clips);
+      const request = send.mock.calls[1][0];
+      expect(request).toMatchObject({ api_version: 1, project_id: head.projectId, timeline_id: head.timelineId,
+        base_revision_id: 'r1', base_publication_id: 'p1', merge: 'fields', dry_run: false,
+        commands: [{ op: 'doc.patch', args: { changes: expect.arrayContaining([
+          { op: 'set', ref: 'parent', path: ['clips', `id:${rightId}`, 'from'],
+            before: { state: 'present', value: 0 }, value: 3 },
+        ]) } }],
+        reads: expect.arrayContaining([{ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'from'],
+          state: { state: 'present', value: 0 } }]),
+      });
+      expect(request.steps?.[0].patch).toEqual(request.commands[0].args.changes);
+      expect(harness.saveTimeline).not.toHaveBeenCalled();
+      expect(harness.hook.result.current.dataRef.current?.head?.headRevisionId).toBe('r2');
+      expect(harness.hook.result.current.dataRef.current?.config.clips.find((clip) => clip.id === rightId)).toEqual({
+        ...config.clips[0], id: rightId, at: 2, hold: 6, from: 3,
+      });
+      const [saved] = await createCommitOutbox().list({ realmId: 'realm', actorId: 'actor', projectId: head.projectId, timelineId: head.timelineId });
+      expect(saved.intents).toHaveLength(0);
     } finally {
       // Settle the held transport before releasing this mounted durable owner.
       if (acknowledge) {
