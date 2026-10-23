@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T04:55:13Z | dispatcher heartbeat 11s | live 6 (sol 2, luna 4, other 0) | busy30 13 | status age 0m -->
-# agent board, 2026-10-23T04:54:29Z
+<!-- agent | 2026-10-23T04:57:13Z | dispatcher heartbeat 11s | live 3 (sol 2, luna 1, other 0) | busy30 13 | status age 1m -->
+# agent board, 2026-10-23T04:55:42Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -28,14 +28,15 @@
 | P4-merge-audit | correct unintended product ancestry | Sol; Luna review next | actualccc | doing | agt-P4-ccc-ancestry-audit-0452; Solcorrection0442 | Explicit independent Luna29path audit perorchestrator04:40. NO MORE integration merges until audit/revert PASS | ccc521b78 UNQUALIFIED |
 | R1-legacy-replay | authenticated landing step metadata | Luna | R1,G2 | doing | agt-R1-legacy-replay-review-0453 | Authorc793 2+28+126PASS; authenticatedrequest/head forwarded+landingsteps retained. Actualnode now blockedAgentV2fps atsetup, separateaudit0453 | c79398561 |
 | V4-fixture-status | canonical created/C0 status corrections | Viewing Luna; independent Luna | C0 | merged | vw-V4-C0-status-adaptation | Reviewed5292 scopedPASS4+fixture38ePASS1; homef95 merged. Overall54 remains open; no arithmetic/full replay credit | 5292b388a;f95f1e169 |
-| R2-derived-undo | anchor/cache undo scope | Sol source diagnosis; decision owed | C0 §5 | blocked:orchestrator | Viewing0421 diagnosis | Two original positives need causal-cache scope ruling; guards/tests unchanged; escalation0445 written | no change |
+| R2-derived-undo | two deferred anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | Viewing owns original failing evidence | D14 retain tests unchanged/unskipped/visibly failing; no C0 change/guard exception/54PASS claim | ruling04:40 |
 | A3-fork-plan | same-selected-owner semantic source plan | Sol after Luna FAIL; Luna review | independent0422 | review | agt-A3-source-plan-review-0455 | Sol source proposal delivered, currently unsupported opt-in; no product delta; freeze/contract decision owed | flatplan0445 |
 | A3-fork-wire | canonical same-owner carrier disposition | orchestrator/Agent | frozen34e | blocked:orchestrator | escalation0445 | App shared editing and child placement need missing carrier; no guessed op or managed-edge patch | no change |
 | R2-bootstrap-redo | authenticate root restore redo observations | Sol R2; Luna review next | audit0446 | doing | agt-R2-bootstrap-redo-fix-0450 | Exact inverse stage input-image/binding mismatch, inherited5f0; separate from legacyreplay. Original3 actual cases retained | basef677 |
 | V2-fps | original rational FPS setup refusal | Luna source attribution | actual legacy node | doing | agt-V2-rational-fps-audit-0453 | Agentvalidation104 refuses mixed numeric/rational representation before replay; no Runtime/client attribution assumed | basec793 |
+| G4-assembly-auth | Runtime native assembly alias authentication | Runtime Luna author/review | actual parent/source and asset aliases | blocked:runtime | rt-R2r-assembly-alias-review-0445 | Runtimeboardchecked:0ed draft/auth68PASS, reviewactive; no new clienttuple; Runtime owns changed-source116 testport | 0ed3e846 draft |
 Resolved: runtime — Normal frozen strict34e adoption DONEf894/all15/d106; executionad823 compatible. Runtime P5 independent strict14+fresh crash24 PASS on62c454/f894; no duplicate qualification.
 Blockers: agent — MERGE HOLD per late-consumed orchestrator04:40: actual f95 contains UNQUALIFIEDccc P4 ancestry; only audit/revert merges until independent auditPASS. Reviewed5292 mergedf95 before consuming this late inbox hold. Sol current-preserving correction0442 active; G234 and wholehome acceptance unclaimed until independent review and integrated proof.
-Blockers: orchestrator — R2 derived-cache undo2 scope and A3 same-owner carrier/frozen tuple exception owed; escalations agent-20261023T0445Z-derived-undo-scope.md and same-owner-carrier.md written this pass.
+Blockers: orchestrator — A3 same-owner carrier/frozen tuple exception owed; sourceproposal0445 delivered, escalation agent-20261023T0445Z-same-owner-carrier.md. R2 undo2 scope RESOLVED byD14 deferred (no guards/tests changed).
 Blockers: proof/app — H3 NO-GO; P1 actual mounted split→trim-new-ID→Agent edit→lostACK→restart chain unproved. G5 stays gated:P1. Proof owns P4 HTTP after reviewed staged callable source.
 Blockers: farm — H6/H9/full/tour/journey farm/test-service owned; no Agent heavy duplicates; header farm down, Proof owns P1/P3 service bodies.
 Next ready: six-file P4 staged assembly→independent review→Proof exact callable handback; G4create review→currentG234 correction review→home merge/proof; replaymetadata repair→review→narrow current forward; V2 scoped integrated proof; A3 Sol sourceplan→orchestrator decision.
