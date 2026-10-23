@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, Loader2, Square, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, Mic, Send, Square, X } from 'lucide-react';
 import type { GenerationRow } from '@/domains/generation/types/index.ts';
 import { sessionAgentId, type LocalAgentId } from '@/integrations/astrid/localAgents.ts';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
@@ -12,6 +12,7 @@ import { composerClearAttachments, composerRemoveAttachment } from '@/shared/sta
 import { useCurrentAttachmentSet } from '@/shared/state/currentAttachmentSet.ts';
 import { usePanesStore } from '@/shared/state/panesStore.ts';
 import {
+  isTimelineAgentSessionsAvailable,
   useAgentSession,
   useAgentSessions,
   useProjectChat,
@@ -29,6 +30,7 @@ import {
   useConfigureAgentSession,
   useLocalAgents,
 } from '@/tools/video-editor/hooks/useAgentSession.ts';
+import { useAgentVoice } from '@/tools/video-editor/hooks/useAgentVoice.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 import { loadGenerationForLightbox } from '@/tools/video-editor/lib/generation-utils.ts';
 import type {
@@ -39,21 +41,20 @@ import type {
 import { AgentChatAttachmentStrip, AgentChatMessage, AgentChatToolGroup, type AgentChatAttachmentPreviewItem } from './AgentChatMessage.tsx';
 import { useChatScroll } from './useChatScroll';
 import { AgentTaskResults } from './AgentTaskResults';
-import { AgentChatMenu } from './AgentChatMenu';
-import { NewChatMenu, type NewChatAgentModels, type NewChatMenuHandle } from './NewChatMenu';
+import { AgentChatMenu, type AgentChatMenuHandle, type NewChatAgentModels } from './AgentChatMenu';
 import { AgentChatModelLine } from './AgentChatModelLine';
 import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded';
 import { AgentIcon, agentNames } from './agentIdentity';
 import { ProjectChatDraftPersistence, sameProjectDraft } from './projectChatDraftPersistence';
-import { AgentChatComposer } from './AgentChatComposer';
-import { useAgentVoice } from '@/tools/video-editor/hooks/useAgentVoice.ts';
-import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/chatVoice.ts';
-import { buildRenderedTurns } from './buildRenderedTurns';
-import { TourChatPanel } from './TourChatPanel';
-import { useEditorTourRunning } from '@/shared/state/editorTourStore.ts';
-import { EDITOR_TOUR_ANCHOR_ATTRIBUTE, EDITOR_TOUR_ANCHORS } from '@/tools/video-editor/tour/anchors.ts';
 
-export { buildRenderedTurns, type RenderedTurn, type ToolCallPair } from './buildRenderedTurns';
+export type ToolCallPair = {
+  call: AgentTurn;
+  result: AgentTurn | null;
+};
+
+export type RenderedTurn =
+  | { kind: 'message'; key: string; turn: AgentTurn }
+  | { kind: 'tool_group'; key: string; pairs: ToolCallPair[] };
 
 type QueuedMessage = {
   id: string;
@@ -145,6 +146,63 @@ function readSessionId(value: unknown): string | undefined {
   return undefined;
 }
 
+export function buildRenderedTurns(turns: AgentTurn[]): RenderedTurn[] {
+  const items: RenderedTurn[] = [];
+  let pendingToolPairs: ToolCallPair[] = [];
+  let toolGroupStartIndex = 0;
+
+  const flushToolGroup = () => {
+    if (pendingToolPairs.length === 0) return;
+    items.push({
+      kind: 'tool_group',
+      key: `tool-group:${toolGroupStartIndex}`,
+      pairs: pendingToolPairs,
+    });
+    pendingToolPairs = [];
+  };
+
+  for (let index = 0; index < turns.length; index += 1) {
+    const turn = turns[index];
+
+    if (turn.role === 'tool_result') {
+      continue;
+    }
+
+    if (turn.role === 'tool_call') {
+      const nextTurn = turns[index + 1];
+      const pairedResult = turn.tool_call_id
+        ? turns.find(candidate => candidate.role === 'tool_result' && candidate.tool_call_id === turn.tool_call_id) ?? null
+        : nextTurn?.role === 'tool_result' && !nextTurn.tool_call_id ? nextTurn : null;
+
+      if (pendingToolPairs.length === 0) {
+        toolGroupStartIndex = index;
+      }
+      pendingToolPairs.push({ call: turn, result: pairedResult });
+      if (pairedResult === nextTurn) index += 1;
+      continue;
+    }
+
+    flushToolGroup();
+
+    // Skip assistant messages that duplicate a preceding message_user result
+    if (turn.role === 'assistant' && items.length > 0) {
+      const prev = items[items.length - 1];
+      if (prev.kind === 'message' && prev.turn.content === turn.content) {
+        continue;
+      }
+    }
+
+    items.push({
+      kind: 'message',
+      key: `${turn.timestamp}:${turn.role}:${index}`,
+      turn,
+    });
+  }
+
+  flushToolGroup();
+  return items;
+}
+
 function createMessageId() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 }
@@ -162,10 +220,23 @@ const CHAT_UNAVAILABLE = "Chat isn't running on this computer right now.";
 export function AgentChatPanel({ isExpanded = false, onSessionSelectorOpenChange }: AgentChatPanelProps) {
   useRenderDiagnostic('AgentChatPanel');
   const scope = useAgentChatBridge();
-  const tourRunning = useEditorTourRunning();
 
-  // The first-run tour shows a scripted conversation in place of the real chat: no session hooks, no agent.
-  if (tourRunning) return <TourChatPanel isExpanded={isExpanded} />;
+  if (!isTimelineAgentSessionsAvailable()) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
+        <img
+          src="/astrid-avatar.png"
+          alt=""
+          aria-hidden="true"
+          className="h-8 w-8 rounded-full object-cover"
+        />
+        <p className="text-sm font-medium text-foreground">Timeline agent chat is managed in Astrid</p>
+        <p className="max-w-sm text-xs text-muted-foreground">
+          Run the agent workflow in Astrid, then refresh this editor to load the updated timeline.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <AvailableAgentChatPanel
@@ -219,14 +290,13 @@ function AvailableAgentChatPanel({
     const agent = localAgents.data?.agents.find(choice => choice.id === sessionAgentId(sessionId));
     return agent?.models.find(model => model.modelId === modelId)?.name ?? modelId;
   }, [localAgents.data]);
-  const chatModelId = useMemo(() => {
-    if (!activeSessionId) return null;
-    return modelCatalog.data?.localModels?.currentModelId ?? projectChat.data?.sessions.find(session => session.id === activeSessionId)?.model_id ?? null;
-  }, [activeSessionId, modelCatalog.data, projectChat.data]);
   const chatModelName = useMemo(() => {
-    if (!activeSessionId || !chatModelId) return null;
-    return modelCatalog.data?.localModels?.availableModels.find(model => model.modelId === chatModelId)?.name ?? modelName(activeSessionId, chatModelId);
-  }, [activeSessionId, chatModelId, modelCatalog.data, modelName]);
+    if (!activeSessionId) return null;
+    const models = modelCatalog.data?.localModels;
+    const modelId = models?.currentModelId ?? projectChat.data?.sessions.find(session => session.id === activeSessionId)?.model_id;
+    if (!modelId) return null;
+    return models?.availableModels.find(model => model.modelId === modelId)?.name ?? modelName(activeSessionId, modelId);
+  }, [activeSessionId, modelCatalog.data, modelName, projectChat.data]);
   const chatThoughtLevel = modelCatalog.data?.localModels?.thoughtLevel ?? null;
   // Some agents carry thinking inside the model option; that level is fixed with the model.
   const chatThoughtLevelFixed = Boolean(chatThoughtLevel && (chatThoughtLevel.configId === 'model' || chatThoughtLevel.configId === modelCatalog.data?.localModels?.modelConfigId));
@@ -295,13 +365,12 @@ function AvailableAgentChatPanel({
     }]);
   }, [sessions.data, projectChat.data?.sessions]);
   const [browseAgent, setBrowseAgent] = useState<LocalAgentId | null>(null);
-  const chatMenuRef = useRef<NewChatMenuHandle>(null);
-  // The action pane stays shown while any header popover is open.
-  const headerOverlaysRef = useRef({ menu: false, model: false, newChat: false });
-  const setHeaderOverlayOpen = useCallback((overlay: 'menu' | 'model' | 'newChat', open: boolean) => {
+  const chatMenuRef = useRef<AgentChatMenuHandle>(null);
+  // The action pane stays shown while either header popover is open.
+  const headerOverlaysRef = useRef({ menu: false, model: false });
+  const setHeaderOverlayOpen = useCallback((overlay: 'menu' | 'model', open: boolean) => {
     headerOverlaysRef.current[overlay] = open;
-    const overlays = headerOverlaysRef.current;
-    onSessionSelectorOpenChange?.(overlays.menu || overlays.model || overlays.newChat);
+    onSessionSelectorOpenChange?.(headerOverlaysRef.current.menu || headerOverlaysRef.current.model);
   }, [onSessionSelectorOpenChange]);
   const agentCanBrowse = useMemo(() => ({ hermes: Boolean(localAgents.data?.agents.find(agent => agent.id === 'hermes')?.models.length) }), [localAgents.data]);
   const newChatModels = useMemo<NewChatAgentModels | null>(() => {
@@ -464,18 +533,15 @@ function AvailableAgentChatPanel({
   const activeQueue = startingAgent ? [] : queue.filter((item) => item.sessionId === activeSessionId);
   // A phone or tablet has no shortcut keys to press: its way to talk is the mic.
   const [coarsePointer] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true);
-  const idlePlaceholder = !CHAT_VOICE_ENABLED
-    ? 'Type a message...'
-    : coarsePointer ? 'Type, or tap the mic to talk...' : 'Type or press Cmd+Shift+R to talk...';
   const inputPlaceholder = startingAgent
     ? `Starting ${agentNames[startingAgent]}…`
     : showNoProjectState
-      ? 'Select a project to start chatting...'
-      : voice.isRecording
-        ? 'Recording...'
-        : (isProcessing || sendMessage.isPending || hasQueuedMessages)
-          ? 'Type to queue next message...'
-          : idlePlaceholder;
+    ? 'Select a project to start chatting...'
+    : voice.isRecording
+      ? 'Recording...'
+      : (isProcessing || sendMessage.isPending || hasQueuedMessages)
+        ? 'Type to queue next message...'
+        : coarsePointer ? 'Type, or tap the mic to talk...' : 'Type or press Cmd+Shift+R to talk...';
   const optimisticTurnAlreadyMaterialized = optimisticMessage !== null
     && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.request_id === optimisticMessage.id));
   const chatFailures = [activeSession.error, sendMessage.localError, createSession.error, sessions.error, projectChat.error];
@@ -616,6 +682,26 @@ function AvailableAgentChatPanel({
       },
     });
   }, [createSession, hasProject, hasAvailableProjectSession, projectChat.data, projectChat.isLoading, projectChat.isError, isEngaged]);
+
+  // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
+        event.preventDefault();
+        if (!hasProject || isFollower || startingAgent) {
+          return;
+        }
+        if (voice.isRecording) {
+          voice.stopRecording();
+        } else if (!voice.isProcessing) {
+          voice.startRecording();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [hasProject, isFollower, startingAgent, voice]);
 
   useEffect(() => {
     sendingRef.current = false;
@@ -861,37 +947,16 @@ function AvailableAgentChatPanel({
     }
   }, [defaultAgent, handleNewSession, configureSession]);
 
-  // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
-  useEffect(() => {
-    // Chat voice is switched off: the shortcut is not registered.
-    if (!CHAT_VOICE_ENABLED) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
-        event.preventDefault();
-        if (!hasProject || isFollower || startingAgent) {
-          return;
-        }
-        if (voice.isRecording) {
-          voice.stopRecording();
-        } else if (!voice.isProcessing) {
-          voice.startRecording();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [hasProject, isFollower, startingAgent, voice]);
-
   // ==========================================================================
-  // Actions registry — exposes stable handlers the parent (TasksPane message
+  // Actions registry — exposes stable handlers the parent (TasksPane split
   // button) can invoke. Stable identity means the registration effect runs
-  // exactly once per mount.
+  // exactly once per mount, even though `voice` re-renders. Reactive state is
+  // published separately so the split button mic icon flips with recording.
   // ==========================================================================
   const actionsRegistry = useAgentChatActionsRegistry();
   const stableHandlers = useMemo<AgentChatActionsHandlers>(() => ({
     toggleRecording: () => {
-      if (!CHAT_VOICE_ENABLED || composerLockedRef.current) return;
+      if (composerLockedRef.current) return;
       const v = voiceRef.current;
       if (v.isRecording) {
         v.stopRecording();
@@ -937,10 +1002,11 @@ function AvailableAgentChatPanel({
     // No background of its own — sits on the parent pane's bg so the only
     // visible color change between halves is the divider line itself.
     <div className="flex h-full w-full flex-col overflow-hidden">
-      {/* Header: the chat menu names the chat (switch, rename, Main, attach); the small line under it is the chat's agent and model; the split button starts a new chat (+ like this one, ▾ with any agent and model). */}
+      {/* Header: one menu names the chat (switch, start, rename); the small line under it is the chat's agent and model. */}
       <div data-testid="agent-chat-header" className="relative flex min-w-0 items-center justify-between gap-2 border-b border-border/70 px-3 py-1.5">
         <div className="-ml-1.5 flex min-w-0 flex-col items-start">
           <AgentChatMenu
+            ref={chatMenuRef}
             sessions={sessionOptions}
             activeSessionId={activeSessionId}
             mainSessionId={projectChat.data?.main_session_id ?? null}
@@ -958,8 +1024,21 @@ function AvailableAgentChatPanel({
               : undefined}
             starting={startingAgent !== null}
             disabled={startingAgent !== null || !hasProject}
+            defaultAgent={defaultAgent}
+            agents={localAgents.data?.agents}
+            agentModelNames={agentModelNames}
+            agentCanBrowse={agentCanBrowse}
+            agentsLoading={localAgents.isLoading}
+            agentsError={localAgents.error instanceof Error ? localAgents.error : null}
+            newChatDisabled={createNewSession.isPending}
+            onBrowseAgent={setBrowseAgent}
+            agentModels={newChatModels}
+            onNewChat={(agent, model, thoughtLevel) => void startChatWith(agent, model, thoughtLevel)}
             attachExisting={projectId ? { open: showAttachSessions, toggle: () => setShowAttachSessions((open) => !open) } : undefined}
-            onOpenChange={(open) => setHeaderOverlayOpen('menu', open)}
+            onOpenChange={(open) => {
+              if (open) void localAgents.refetch();
+              setHeaderOverlayOpen('menu', open);
+            }}
           />
           <AgentChatModelLine
             agent={startingAgent ?? chatAgent}
@@ -975,31 +1054,7 @@ function AvailableAgentChatPanel({
             onOpenChange={(open) => setHeaderOverlayOpen('model', open)}
           />
         </div>
-        <div className="flex shrink-0 items-center gap-1 self-start">
-          <NewChatMenu
-            ref={chatMenuRef}
-            current={activeSessionId && !startingAgent ? {
-              agent: chatAgent,
-              model: chatModelId ?? undefined,
-              modelName: chatModelName,
-              thoughtLevel: chatThoughtLevel?.options.length && !chatThoughtLevelFixed ? chatThoughtLevel.currentValue : undefined,
-            } : null}
-            defaultAgent={defaultAgent}
-            agents={localAgents.data?.agents}
-            agentModelNames={agentModelNames}
-            agentCanBrowse={agentCanBrowse}
-            agentsLoading={localAgents.isLoading}
-            agentsError={localAgents.error instanceof Error ? localAgents.error : null}
-            disabled={startingAgent !== null || !hasProject}
-            newChatDisabled={createNewSession.isPending}
-            onBrowseAgent={setBrowseAgent}
-            agentModels={newChatModels}
-            onNewChat={(agent, model, thoughtLevel) => void startChatWith(agent, model, thoughtLevel)}
-            onOpenChange={(open) => {
-              if (open) void localAgents.refetch();
-              setHeaderOverlayOpen('newChat', open);
-            }}
-          />
+        <div className="flex shrink-0 items-center gap-1">
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-hidden="true" />}
           {showKillSwitch && (
             <Button
@@ -1056,7 +1111,7 @@ function AvailableAgentChatPanel({
         </div>
       )}
       {/* Messages */}
-      <div ref={scrollContainerRef} onScroll={onScroll} {...{ [EDITOR_TOUR_ANCHOR_ATTRIBUTE]: EDITOR_TOUR_ANCHORS.chatTranscript }} className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+      <div ref={scrollContainerRef} onScroll={onScroll} className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
         {isFollower && (
           // Stays in view while scrolling, just under the header that names the chat's agent.
           <div role="status" className="sticky top-0 z-10 mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-border/70 bg-card px-3 py-2 text-xs text-muted-foreground shadow-sm">
@@ -1114,12 +1169,10 @@ function AvailableAgentChatPanel({
             ) : (
               <>
                 <p>✨ I can do almost anything</p>
-                {CHAT_VOICE_ENABLED
-                  ? (coarsePointer
-                    ? <p className="mt-1 text-xs">Tap the mic to talk</p>
-                    : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>)
-                  : <p className="mt-1 text-xs">Type a message to get started.</p>}
-                <p data-testid="agent-chat-runs-with" className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px] normal-case">
+                {coarsePointer
+                  ? <p className="mt-1 text-xs">Tap the mic to talk</p>
+                  : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>}
+                <p data-testid="agent-chat-runs-with" className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px]">
                   <AgentIcon agent={startingAgent ?? chatAgent} className="h-3 w-3 shrink-0" />
                   {agentNames[chatAgent]} · {chatModelName ?? 'default model'}
                 </p>
@@ -1340,28 +1393,71 @@ function AvailableAgentChatPanel({
           </div>
         )}
 
-        <AgentChatComposer
-          inputRef={inputRef}
-          value={startingAgent ? '' : draft}
-          onChange={setDraft}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-              event.preventDefault();
-              void handleSend();
-            }
-          }}
-          rows={isExpanded ? 8 : 4}
-          placeholder={inputPlaceholder}
-          inputDisabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
-          voice={CHAT_VOICE_ENABLED ? {
-            isRecording: voice.isRecording,
-            onToggle: () => voice.isRecording ? voice.stopRecording() : voice.startRecording(),
-            onCancel: () => voice.cancelRecording(),
-            micDisabled: startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending,
-          } : undefined}
-          onSend={() => void handleSend()}
-          sendDisabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
-        />
+        <div className="flex items-end gap-2">
+          <div className="relative flex-1">
+            {/* 16px text on touch (iOS zooms the page into a smaller field); about two lines on a
+                short screen (a phone on its side), so the conversation keeps the height. */}
+            <textarea
+              ref={inputRef}
+              value={startingAgent ? '' : draft}
+              onChange={(event) => setDraft(event.target.value)}
+              rows={isExpanded ? 8 : 4}
+              placeholder={inputPlaceholder}
+              className="min-h-10 w-full resize-none rounded-xl border border-border/70 bg-card px-3 py-2 pr-12 text-sm leading-5 [@media(pointer:coarse)]:text-base [@media(max-height:500px)]:max-h-[4.75rem] outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/50"
+              disabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isRecording || voice.isProcessing}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault();
+                  void handleSend();
+                }
+              }}
+            />
+
+            <div className="absolute inset-y-4 right-2 z-10 flex w-8 flex-col gap-2">
+              <div className="relative flex min-h-0 flex-1 items-center justify-center">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className={voice.isRecording
+                    ? 'relative h-full w-full rounded-xl bg-red-500 text-white transition-colors hover:bg-red-600'
+                    : 'relative h-full w-full rounded-xl bg-muted/80 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'}
+                  onClick={() => voice.isRecording ? voice.stopRecording() : voice.startRecording()}
+                  disabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !activeSessionId || isCancelled || voice.isProcessing || sendMessage.isPending}
+                  title={voice.isRecording ? 'Stop recording' : 'Voice input (Cmd+Shift+R)'}
+                >
+                  {voice.isRecording ? <Square className="h-3 w-3" /> : <Mic className="h-3.5 w-3.5" />}
+                </Button>
+                {voice.isRecording && (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-muted hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() => voice.cancelRecording()}
+                    title="Cancel recording"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="default"
+                  className="h-full w-full rounded-xl"
+                  onClick={() => void handleSend()}
+                  disabled={startingAgent !== null || configurationFailed || isFollower || !hasProject || !draft.trim() || !activeSessionId || isCancelled}
+                  title="Send"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {attachmentLightboxMedia && (

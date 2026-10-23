@@ -6,4 +6,3 @@ describe('complete_task/shotValidation exports', () => {
     expect(validateAndCleanupShotId).toBeTypeOf('function');
   });
 });
-

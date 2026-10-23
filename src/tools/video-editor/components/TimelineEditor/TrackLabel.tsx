@@ -21,7 +21,6 @@ import { isTrackMuted } from '@/tools/video-editor/lib/editor-utils.ts';
 import { trackLabelAttrs } from '@/tools/video-editor/lib/timeline-dom.ts';
 import type { TimelineDeviceClass } from '@/tools/video-editor/lib/mobile-interaction-model.ts';
 import type { TrackBlendMode, TrackDefinition, TrackFit } from '@/tools/video-editor/types/index.ts';
-import type { TrackLabelDraft, TrackLabelEditStart } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 import type { TargetContextPayload } from '@astrid/editor-sdk';
 
 interface TrackLabelProps {
@@ -32,7 +31,6 @@ interface TrackLabelProps {
   deviceClass?: TimelineDeviceClass;
   onSelect: (trackId: string) => void;
   onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
-  onLabelEditStart?: TrackLabelEditStart;
   onRemove: (trackId: string) => void;
 }
 
@@ -45,7 +43,6 @@ interface TrackLabelContentProps {
   deviceClass?: TimelineDeviceClass;
   onSelect: (trackId: string) => void;
   onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
-  onLabelEditStart?: TrackLabelEditStart;
   onRemove: (trackId: string) => void;
   readOnly?: boolean;
   rowDragging?: boolean;
@@ -326,111 +323,17 @@ export function TrackLabelContent({
   deviceClass = 'desktop',
   onSelect,
   onChange,
-  onLabelEditStart,
   onRemove,
   readOnly = false,
   rowDragging = false,
   dragListeners,
   dragAttributes,
 }: TrackLabelContentProps) {
-  const runtime = useContext(VideoEditorRuntimeContext);
-  const localNameDrafts = useRef(new Map<string, TrackLabelDraft>());
-  const nameDrafts = onLabelEditStart?.drafts ?? localNameDrafts.current;
-  const [, updateNameDraft] = useState(0);
-  const refreshNameDraft = () => updateNameDraft((version) => version + 1);
-  const nameEdit = nameDrafts.get(track.id);
-  const nameError = nameEdit?.error ?? null;
-  const [submittedName, setSubmittedName] = useState<{
-    owner: typeof nameDrafts; trackId: string; value: string;
-  } | null>(null);
-  useEffect(() => setSubmittedName(null), [track.label, track.id, nameDrafts]);
-  const nameValue = nameEdit?.value ?? (submittedName?.owner === nameDrafts && submittedName.trackId === track.id
-    ? submittedName.value : track.label);
-
-  const beginNameEdit = () => {
-    if (nameDrafts.has(track.id) || rowDragging) return;
-    const edit: TrackLabelDraft = { value: nameValue, dirty: false };
-    nameDrafts.set(track.id, edit);
-    try {
-      if (!onLabelEditStart && runtime) throw new Error('Track label command capture is unavailable.');
-      edit.finish = onLabelEditStart?.(track.id);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Track rename is unavailable.';
-      edit.captureError = message;
-      edit.error = message;
-    }
-    refreshNameDraft();
-  };
-
-  const finishNameEdit = () => {
-    const edit = nameDrafts.get(track.id);
-    if (!edit) return;
-    if (edit.captureError) return;
-    if (edit.dirty) {
-      try {
-        edit.finish?.(edit.value);
-      } catch (error) {
-        edit.error = error instanceof Error ? error.message : 'Track rename was refused.';
-        refreshNameDraft();
-        return;
-      }
-      setSubmittedName({ owner: nameDrafts, trackId: track.id, value: edit.value });
-    } else {
-      setSubmittedName(null);
-    }
-    nameDrafts.delete(track.id);
-    refreshNameDraft();
-  };
-
-  // Detachment finishes the focused owner's edit, even if callback props change.
-  const nameInputFocusedRef = useRef<(() => void) | null>(null);
-  const nameInputRef = useCallback((node: HTMLInputElement | null) => {
-    if (!node && nameInputFocusedRef.current) {
-      const finish = nameInputFocusedRef.current;
-      nameInputFocusedRef.current = null;
-      finish();
-    }
-  }, []);
-
-  const nameInputProps = {
-    ref: nameInputRef,
-    value: nameValue,
-    'aria-label': 'Track name',
-    'aria-invalid': nameError ? true : undefined,
-    onFocus: () => {
-      nameInputFocusedRef.current = finishNameEdit;
-      beginNameEdit();
-    },
-    onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (rowDragging) return;
-      beginNameEdit();
-      // Typing away and back still expresses an explicit choice of name.
-      const edit = nameDrafts.get(track.id);
-      if (edit) {
-        edit.dirty = true;
-        edit.value = event.target.value;
-      }
-      refreshNameDraft();
-      // Detached controlled presentations keep their existing callback contract.
-      if (!onLabelEditStart && !runtime) onChange(track.id, { label: event.target.value });
-    },
-    onBlur: () => {
-      nameInputFocusedRef.current = null;
-      finishNameEdit();
-    },
-    onKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
-        event.preventDefault();
-        event.stopPropagation();
-        finishNameEdit();
-      }
-    },
-  };
-
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [contextMenu, setContextMenu] = useState<TrackContextMenuState | null>(null);
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const runtime = useContext(VideoEditorRuntimeContext);
   const commandRegistry = runtime?.commandRegistry;
   const extensions = runtime?.extensionRuntime?.extensions ?? [];
 
@@ -529,9 +432,10 @@ export function TrackLabelContent({
             <span className={cn('shrink-0', isSource ? 'w-10' : 'w-[18px]')} />
             <input
               className="min-w-0 flex-1 bg-transparent text-xs outline-none"
-              {...nameInputProps}
-              value={rowDragging ? displayLabel ?? track.label : nameInputProps.value}
+              value={rowDragging ? displayLabel ?? track.label : track.label}
+              aria-label="Track name"
               readOnly={rowDragging}
+              onChange={(event) => onChange(track.id, { label: event.target.value })}
               onClick={(event) => event.stopPropagation()}
             />
             <div className="flex shrink-0 items-center">
@@ -568,7 +472,6 @@ export function TrackLabelContent({
           </div>
         ) : null}
       </div>
-      {nameError && <p role="alert" className="text-xs text-destructive">{nameError}</p>}
       {contextMenu && (
         <TrackExtensionContextMenu
           menu={contextMenu}
@@ -589,7 +492,6 @@ export function TrackLabel({
   deviceClass,
   onSelect,
   onChange,
-  onLabelEditStart,
   onRemove,
 }: TrackLabelProps) {
   const {
@@ -615,7 +517,6 @@ export function TrackLabel({
         deviceClass={deviceClass}
         onSelect={onSelect}
         onChange={onChange}
-        onLabelEditStart={onLabelEditStart}
         onRemove={onRemove}
         rowDragging={isDragging}
         dragListeners={listeners}

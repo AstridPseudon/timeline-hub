@@ -53,4 +53,3 @@ describe('complete_task/errors', () => {
     expect(wrapped.cause).toBe(inner);
   });
 });
-

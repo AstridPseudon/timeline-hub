@@ -1,7 +1,6 @@
 import type { TimelinePatch, TimelineDiffEntry } from '@/sdk/video/timeline/patch.ts';
 import { assembleTimelineData, type TimelineData } from './timeline-data.ts';
 import type { TimelinePatchCompileResult } from './timeline-patch.ts';
-
 /** Local scalar previews bypass the lossy row serializer; the durable command owns the write. */
 export function compileClipScalarPreview(patch: TimelinePatch, data: TimelineData): TimelinePatchCompileResult {
   const entries: TimelineDiffEntry[] = [];

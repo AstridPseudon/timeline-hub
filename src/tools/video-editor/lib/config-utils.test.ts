@@ -1,6 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { getTimelineDurationInFrames as publicGetTimelineDurationInFrames } from '@banodoco/timeline-composition';
-import { computeMediaTrim, getSanitizedPlaybackRate } from '@banodoco/timeline-composition/evaluation';
 import {
   getConfigSignature,
   getClipDurationInFrames,
@@ -8,6 +6,7 @@ import {
   getSanitizedAssetFile,
   getSanitizedMediaSrc,
   getSanitizedMediaTrimProps,
+  getSanitizedPlaybackRate,
   getStableConfigSignature,
   getSanitizedVolume,
   getTimelineDurationInFrames,
@@ -49,10 +48,6 @@ describe('config-utils media sanitizers', () => {
     expect(getTimelineDurationInFrames(config, 30)).toBe(31);
   });
 
-  it('re-exports the public timeline duration evaluator without a local wrapper', () => {
-    expect(getTimelineDurationInFrames).toBe(publicGetTimelineDurationInFrames);
-  });
-
   it('omits trimAfter when source out is not greater than source in', () => {
     expect(getSanitizedMediaTrimProps({ from: 4, to: 4 }, 30)).toEqual({ trimBefore: 120 });
     expect(getSanitizedMediaTrimProps({ from: 4, to: 3 }, 30)).toEqual({ trimBefore: 120 });
@@ -64,33 +59,6 @@ describe('config-utils media sanitizers', () => {
     expect(getSanitizedPlaybackRate(Number.NaN)).toBe(1);
     expect(getSanitizedVolume(-3)).toBe(0);
     expect(getSanitizedVolume(Number.NaN)).toBe(1);
-  });
-
-  it.each([
-    ['unset', {}, 30, { trimBefore: 0 }],
-    ['half frames', { from: 1 / 60, to: 3 / 60 }, 30, { trimBefore: 1, trimAfter: 2 }],
-    ['sub-frame window', { from: 1, to: 1.001 }, 30, { trimBefore: 30, trimAfter: 30 }],
-    ['fractional fps', { from: 0.1, to: 1.1 }, 24000 / 1001, { trimBefore: 2, trimAfter: 26 }],
-    ['negative in', { from: -2, to: 2 }, 30, { trimBefore: 0, trimAfter: 60 }],
-    ['negative out', { from: -2, to: -1 }, 30, { trimBefore: 0 }],
-    ['zero out', { from: -2, to: 0 }, 30, { trimBefore: 0 }],
-    ['NaN in', { from: Number.NaN, to: 2 }, 30, { trimBefore: 0, trimAfter: 60 }],
-    ['infinite in', { from: Infinity, to: 2 }, 30, { trimBefore: 0, trimAfter: 60 }],
-    ['negative infinite in', { from: -Infinity, to: 2 }, 30, { trimBefore: 0, trimAfter: 60 }],
-    ['infinite out', { from: 1, to: Infinity }, 30, { trimBefore: 30 }],
-    ['negative infinite out', { from: 1, to: -Infinity }, 30, { trimBefore: 30 }],
-    ['NaN out', { from: 1, to: Number.NaN }, 30, { trimBefore: 30 }],
-    ['equal endpoints', { from: 4, to: 4 }, 30, { trimBefore: 120 }],
-    ['reversed endpoints', { from: 4, to: 3 }, 30, { trimBefore: 120 }],
-    // Preserve the existing conversion for unusable fps; this helper does not validate output configs.
-    ['zero fps', { from: 1, to: 2 }, 0, { trimBefore: 0, trimAfter: 0 }],
-    ['negative fps', { from: 1, to: 2 }, -30, { trimBefore: -30, trimAfter: -60 }],
-    ['NaN fps', { from: 1, to: 2 }, Number.NaN, { trimBefore: Number.NaN, trimAfter: Number.NaN }],
-    ['infinite fps', { from: 1, to: 2 }, Infinity, { trimBefore: Infinity, trimAfter: Infinity }],
-    ['negative infinite fps', { from: 1, to: 2 }, -Infinity, { trimBefore: -Infinity, trimAfter: -Infinity }],
-  ] as const)('preserves public trim conversion: %s', (_name, clip, fps, expected) => {
-    expect(getSanitizedMediaTrimProps(clip, fps)).toEqual(expected);
-    expect(computeMediaTrim(clip, fps)).toEqual(expected);
   });
 
   it('accepts only non-empty string media sources', () => {

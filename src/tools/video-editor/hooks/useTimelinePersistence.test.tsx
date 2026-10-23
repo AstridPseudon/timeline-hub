@@ -1,7 +1,3 @@
-import fixture from '../data/shotComposition.fixture.json';
-import { createShotCompositionAdapter } from '../data/shotCompositionAdapter.ts';
-import { projectCanonicalComposition } from '../data/shotCompositionProjection.ts';
-import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 // @vitest-environment jsdom
 import React from 'react';
 import { act, render, renderHook } from '@testing-library/react';
@@ -21,7 +17,6 @@ vi.mock('@/tools/video-editor/data/timelineDraftIndexedDb.ts', async (importOrig
 });
 import { useTimelinePersistence, TimelineSaveBarrierError, type UseTimelinePersistenceResult } from './useTimelinePersistence';
 import { useTimelineOps } from './useTimelineOps';
-import { environment } from '../commands/__tests__/commitSessionEnvironment.ts';
 import { TimelineEventBus } from './useTimelineEventBus';
 import {
   TimelineStoreProvider,
@@ -41,6 +36,10 @@ import { BRIDGE_REQUEST_TIMEOUT_MS } from '../data/bridgeContract';
 import { clearTimelineDraft, loadTimelineDraft, saveTimelineDraft, type TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { AssetRegistry } from '../types';
 import type { TimelineBundleEnvelope } from '../data/typed/timelineBundle';
+import { acceptedCommit } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
+import { createLocalSaveSession } from '../commands/localSaveSession.ts';
+import { createTimelineLocalSaveHandoff, type TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
 
 // Keep these inputs aligned with useTimelinePersistence's private save timing
 // contract; the bridge request window itself comes from the shared contract.
@@ -128,6 +127,7 @@ interface TestHarness {
 }
 
 interface SetupOptions {
+  localDocumentSave?: TimelineLocalSaveHandoff;
   store?: TimelineStoreApi;
   initialData?: TimelineData;
   persistenceEnabled?: boolean;
@@ -137,7 +137,6 @@ interface SetupOptions {
   loadAssetRegistryImpl?: DataProvider['loadAssetRegistry'];
   loadReferencedTimelineImpl?: NonNullable<DataProvider['loadReferencedTimeline']>;
   recoveryMetadata?: TimelineDraftRecoveryMetadata;
-  recoveryConfig?: ReturnType<typeof createRecoveryConfig>;
 }
 
 function setup(options?: SetupOptions): TestHarness {
@@ -194,6 +193,7 @@ function setup(options?: SetupOptions): TestHarness {
     (target: { provider: DataProvider; timelineId: string }) => useTimelinePersistence({
       store: options?.store,
       provider: target.provider,
+      localDocumentSave: options?.localDocumentSave,
       assetResolver,
       timelineId: target.timelineId,
       eventBus,
@@ -204,7 +204,6 @@ function setup(options?: SetupOptions): TestHarness {
       editSeqRef,
       savedSeqRef,
       configVersionRef,
-      recoveryConfig: options?.recoveryConfig,
       lastSavedSignatureRef,
       interactionStateRef,
     }),
@@ -257,41 +256,84 @@ function makeBundle(text: string): TimelineBundleEnvelope {
 }
 
 describe('useTimelinePersistence — interaction gating', () => {
-  it('writes one clean projected config to the real draft store and save boundary from the retained raw basis', async () => {
-    const composition = createShotCompositionAdapter({ load: async () => fixture }).prepare(fixture);
-    const config = projectCanonicalComposition(composition).config;
-    const data = await buildTimelineData(config, { assets: config.registry });
-    data.editProjection = { kind: 'accepted', head: { revisionId: 'R', publicationId: 'P' } };
-    const recoveryConfig = createRecoveryConfig();
-    recoveryConfig.remember(data.head, {}, composition);
-    const harness = setup({ initialData: data, recoveryConfig,
-      saveTimelineImpl: async () => { throw new TimelineVersionConflictError('keep draft'); } });
-    harness.scheduleSave(data);
-    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    const record = await loadTimelineDraft('timeline-1');
-    expect(record).not.toBeNull();
-    expect(JSON.stringify(record!.draft.config)).not.toContain('storedOccurrenceDurationMs');
-    await act(async () => { await expect(harness.result.current.flushPendingSave()).rejects.toThrow('keep draft'); });
-    expect(harness.saveTimeline.mock.calls[0][1]).toStrictEqual(record!.draft.config);
-    expect(data.config.clips.find((clip) => clip.id === 'occ-1:alpha-video')!.app?.canonicalTiming)
-      .toHaveProperty('storedOccurrenceDurationMs', 2000);
-    expect(harness.dataRef.current).toBe(data);
+  it('keeps an unsupported child ownership edit visible and recoverable without entering either writer', async () => {
+    const original = makeTimelineData('flattened-child');
+    original.head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+      { timelineId: 'timeline-1', children: true }).data.canonical_document;
+    const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+    const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_key, work) => work() });
+    const send = vi.fn();
+    const local = await createLocalSaveSession({ initial, document: toOutboxJson(document), outboxes, send,
+      scope: { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' },
+      loadLatest: vi.fn(async () => initial), changed: vi.fn(),
+      prepareDisplay: vi.fn(async () => { throw new Error('No canonical acceptance expected'); }) });
+    const handoff = createTimelineLocalSaveHandoff({ initial, source: { config: original.config, registry: original.registry, head: original.head },
+      session: local, adopted: vi.fn() });
+    const harness = setup({ initialData: original, localDocumentSave: handoff });
+    const oldHeadWriter = vi.fn();
+    harness.provider.saveTimelineAtHead = oldHeadWriter;
+    const edited = buildDataFromCurrentRegistry({ ...original.config,
+      clips: original.config.clips.map((clip) => ({ ...clip, hold: 2 })) }, original);
+    harness.scheduleSave(edited);
+    await act(async () => { await expect(harness.result.current.flushPendingSave()).rejects.toThrow('child ownership/fork mapping'); });
+    expect(harness.result.current.isConflictExhausted).toBe(true);
+    expect(harness.dataRef.current?.config).toEqual(edited.config);
+    expect((await loadTimelineDraft('timeline-1'))?.draft.config).toEqual(edited.config);
+    expect(local.getDocument()).toEqual(document);
+    expect(oldHeadWriter).not.toHaveBeenCalled();
+    expect(harness.saveTimeline).not.toHaveBeenCalled();
+    expect(send).not.toHaveBeenCalled();
     harness.unmount();
+    await local.dispose();
   });
 
-  it('visibly refuses a declared projection with no raw basis, retaining editor data and existing durable bytes', async () => {
-    const harness = setup();
-    const previous = makeTimelineData('previous');
-    await saveTimelineDraft('timeline-1', { config: previous.config, registry: previous.registry }, 1);
-    const before = await loadTimelineDraft('timeline-1');
-    const data = makeTimelineData('derived');
-    data.editProjection = { kind: 'accepted', head: { revisionId: 'R', publicationId: 'P' } };
-    harness.scheduleSave(data);
-    expect(harness.result.current.saveStatus).toBe('error');
-    expect(harness.dataRef.current).toBe(data);
-    expect(await loadTimelineDraft('timeline-1')).toStrictEqual(before);
+  it('captures dependent authored documents before debounce and retains them without using the old writer when v2 is unavailable', async () => {
+    const original = makeTimelineData('local-chain');
+    original.head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { timelineId: 'timeline-1' }).data.canonical_document;
+    document.parent_revision.payload = { config: structuredClone(original.config), clips: structuredClone(original.config.clips),
+      registry: structuredClone(original.registry), occurrences: [], opaque: { keep: null } };
+    const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+    const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' };
+    const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_key, work) => work() });
+    const send = vi.fn();
+    const local = await createLocalSaveSession({ scope, initial, document: toOutboxJson(document), outboxes, send,
+      loadLatest: vi.fn(async () => initial), changed: vi.fn(),
+      prepareDisplay: vi.fn(async () => { throw new Error('No canonical acceptance expected'); }) });
+    const receipt = vi.fn();
+    const handoff = createTimelineLocalSaveHandoff({ initial, source: { config: original.config, registry: original.registry, head: original.head }, session: local, adopted: receipt });
+    const harness = setup({ initialData: original, localDocumentSave: handoff });
+    const oldHeadWriter = vi.fn();
+    harness.provider.saveTimelineAtHead = oldHeadWriter;
+    const added = buildDataFromCurrentRegistry({ ...original.config, clips: [...original.config.clips,
+      { id: 'new-right', track: 'V1', clipType: 'hold', at: 1, hold: 2 }] }, original);
+    const trimmed = buildDataFromCurrentRegistry({ ...added.config,
+      clips: added.config.clips.map((clip) => clip.id === 'new-right' ? { ...clip, hold: 1 } : clip) }, added);
+    harness.scheduleSave(added);
+    harness.editSeqRef.current++;
+    harness.scheduleSave(trimmed);
+    await act(async () => { await expect(harness.result.current.flushPendingSave()).rejects.toThrow('draft retained'); });
+    const [stored] = await outboxes.list(scope);
+    expect(stored.intents).toHaveLength(2);
+    expect(stored.intents[1].basis).toEqual({ after: stored.intents[0].id });
+    expect(stored.intents[0].payload).toMatchObject({ documentIntent: {
+      basis: { head: initial.head }, created: ['parent/clip:new-right'], roots: [{ ref: 'parent', revisionId: 'r0' }],
+    } });
+    expect(stored.intents[1].payload).toMatchObject({ documentIntent: {
+      basis: { after: stored.intents[0].id }, changes: [{ op: 'set', ref: 'parent', path: ['clips', 'id:new-right', 'hold'], before: { state: 'present', value: 2 }, value: 1 }],
+    } });
+    expect(local.getState().status).toBe('blocked');
+    expect(harness.result.current.isConflictExhausted).toBe(true);
+    expect(harness.dataRef.current?.config).toEqual(trimmed.config);
+    expect((await loadTimelineDraft('timeline-1'))?.draft.config).toEqual(trimmed.config);
+    expect(send).not.toHaveBeenCalled();
+    expect(receipt).not.toHaveBeenCalled();
+    expect(oldHeadWriter).not.toHaveBeenCalled();
     expect(harness.saveTimeline).not.toHaveBeenCalled();
+    expect(harness.loadTimeline).not.toHaveBeenCalled();
     harness.unmount();
+    await local.dispose();
   });
 
   it('sends the edited source bundle at its captured Runtime head and keeps it recoverable on CAS conflict', async () => {
@@ -645,23 +687,17 @@ describe('useTimelinePersistence — interaction gating', () => {
     harness.unmount();
   });
 
-  it('public apply schedules the label command synchronously and public flush awaits that writer', async () => {
-    vi.useRealTimers();
-    const env = await environment();
-    const session = await env.mount();
-    const dataRef = { current: env.current() };
-    const commitData = vi.fn();
-    const saveTimeline = vi.spyOn(env.provider, 'saveTimeline');
-    const gate = env.pause();
+  it('public apply schedules the normal host save synchronously and public flush awaits that writer', async () => {
+    let acknowledge!: (version: number) => void;
+    const harness = setup({ saveTimelineImpl: () => new Promise<number>((resolve) => { acknowledge = resolve; }) });
+    const commitData = vi.fn((nextData: TimelineData) => {
+      harness.editSeqRef.current += 1;
+      harness.scheduleSave(nextData);
+    });
     const ops = renderHook(() => useTimelineOps({
-      dataRef,
+      dataRef: harness.dataRef,
       commitData,
-      trackLabelPort: session.trackLabelPort,
-      flushPendingSave: async () => {
-        await session.flush();
-        dataRef.current = env.current();
-        return dataRef.current.configVersion;
-      },
+      flushPendingSave: harness.result.current.flushPendingSave,
       createManualCheckpoint: vi.fn(),
       jumpToCheckpoint: vi.fn(),
       checkpoints: [],
@@ -674,32 +710,21 @@ describe('useTimelinePersistence — interaction gating', () => {
       });
     });
     expect(applied).not.toBeInstanceOf(Promise);
-    expect(env.previews).toHaveBeenCalledExactlyOnceWith({ version: 1,
-      operations: [{ op: 'track.update', target: 'V1', payload: { label: 'Acknowledged track' } }],
-    });
-    expect(commitData).not.toHaveBeenCalled();
-    expect(env.commits()).toHaveLength(0);
+    expect(commitData).toHaveBeenCalledWith(expect.anything(), { save: true, semantic: true });
+    expect(harness.saveTimeline).not.toHaveBeenCalled();
     let settled = false;
     let flushed!: ReturnType<typeof ops.result.current.flush>;
     await act(async () => {
       flushed = ops.result.current.flush().then((receipt) => { settled = true; return receipt; });
     });
-    await vi.waitFor(() => expect(env.commits()).toHaveLength(1));
-    expect(env.commits()[0].body!.commands).toEqual([expect.objectContaining({
-      op: 'track.set', select: 'parent/track:V1', args: { values: { label: 'Acknowledged track' }, clear: [] },
-    })]);
-    expect(settled).toBe(false);
-    await act(async () => { gate.resolve(); await flushed; });
-    await expect(flushed).resolves.toEqual({ version: dataRef.current.configVersion });
-    expect(dataRef.current.config.tracks).toEqual(expect.arrayContaining([
+    expect(harness.saveTimeline).toHaveBeenCalledTimes(1);
+    expect(harness.saveTimeline.mock.calls[0]?.[1].tracks).toEqual(expect.arrayContaining([
       expect.objectContaining({ id: 'V1', label: 'Acknowledged track' }),
     ]));
-    expect(session.getState().status).toBe('saved');
-    expect(commitData).not.toHaveBeenCalled();
-    expect(saveTimeline).not.toHaveBeenCalled();
-    expect(env.calls.some((call) => call.method === 'POST' && call.path.endsWith('/composition-revisions'))).toBe(false);
-    ops.unmount();
-    await session.dispose();
+    expect(settled).toBe(false);
+    await act(async () => { acknowledge(8); });
+    await expect(flushed).resolves.toEqual({ version: 8 });
+    expect(harness.savedSeqRef.current).toBe(harness.editSeqRef.current);
   });
 
   it('refuses the save-for-render barrier while an interaction is active', async () => {

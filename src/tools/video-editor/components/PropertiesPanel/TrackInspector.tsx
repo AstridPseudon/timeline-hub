@@ -1,17 +1,15 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { Check, Trash2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { FieldLabel, TrackSettingsFields } from '../TimelineEditor/TrackLabel.tsx';
 import type { TrackDefinition } from '@/tools/video-editor/types/index.ts';
-import type { TrackLabelDraft, TrackLabelEditStart } from '@/tools/video-editor/commands/trackLabelGesture.ts';
 
 /** Touch track editing shares the Inspector with clip actions and properties. */
-export function TrackInspector({ track, hasClips, readOnly = false, onChange, onLabelEditStart, onAddTrack, onRemove }: {
+export function TrackInspector({ track, hasClips, readOnly = false, onChange, onAddTrack, onRemove }: {
   track: TrackDefinition;
   hasClips: boolean;
   readOnly?: boolean;
   onChange: (trackId: string, patch: Partial<TrackDefinition>) => void;
-  onLabelEditStart?: TrackLabelEditStart;
   onAddTrack: (kind: 'visual' | 'audio') => void;
   onRemove: (trackId: string) => void;
 }) {
@@ -22,97 +20,6 @@ export function TrackInspector({ track, hasClips, readOnly = false, onChange, on
     return () => clearTimeout(timer);
   }, [confirmingDelete]);
 
-  const localNameDrafts = useRef(new Map<string, TrackLabelDraft>());
-  const nameDrafts = onLabelEditStart?.drafts ?? localNameDrafts.current;
-  const [, updateNameDraft] = useState(0);
-  const refreshNameDraft = () => updateNameDraft((version) => version + 1);
-  const nameEdit = nameDrafts.get(track.id);
-  const nameError = nameEdit?.error ?? null;
-  const [submittedName, setSubmittedName] = useState<{
-    owner: typeof nameDrafts; trackId: string; value: string;
-  } | null>(null);
-  useEffect(() => setSubmittedName(null), [track.label, track.id, nameDrafts]);
-  const nameValue = nameEdit?.value ?? (submittedName?.owner === nameDrafts && submittedName.trackId === track.id
-    ? submittedName.value : track.label);
-
-  const beginNameEdit = () => {
-    if (nameDrafts.has(track.id)) return;
-    const edit: TrackLabelDraft = { value: nameValue, dirty: false };
-    nameDrafts.set(track.id, edit);
-    try {
-      if (!onLabelEditStart) throw new Error('Track label command capture is unavailable.');
-      edit.finish = onLabelEditStart(track.id);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Track rename is unavailable.';
-      edit.captureError = message;
-      edit.error = message;
-    }
-    refreshNameDraft();
-  };
-
-  const finishNameEdit = () => {
-    const edit = nameDrafts.get(track.id);
-    if (!edit) return;
-    if (edit.captureError) return;
-    if (edit.dirty) {
-      try {
-        edit.finish?.(edit.value);
-      } catch (error) {
-        edit.error = error instanceof Error ? error.message : 'Track rename was refused.';
-        refreshNameDraft();
-        return;
-      }
-      setSubmittedName({ owner: nameDrafts, trackId: track.id, value: edit.value });
-    } else {
-      setSubmittedName(null);
-    }
-    nameDrafts.delete(track.id);
-    refreshNameDraft();
-  };
-
-  const nameInputFocusedRef = useRef<(() => void) | null>(null);
-  const nameInputRef = useCallback((node: HTMLInputElement | null) => {
-    if (!node && nameInputFocusedRef.current) {
-      const finish = nameInputFocusedRef.current;
-      nameInputFocusedRef.current = null;
-      finish();
-    }
-  }, []);
-  const nameInputProps = {
-    ref: nameInputRef,
-    value: nameValue,
-    'aria-label': 'Track name',
-    'aria-invalid': nameError ? true : undefined,
-    onFocus: () => {
-      nameInputFocusedRef.current = finishNameEdit;
-      beginNameEdit();
-    },
-    onChange: (event: ChangeEvent<HTMLInputElement>) => {
-      if (!onLabelEditStart) {
-        onChange(track.id, { label: event.target.value });
-        return;
-      }
-      beginNameEdit();
-      const edit = nameDrafts.get(track.id);
-      if (edit) {
-        edit.dirty = true;
-        edit.value = event.target.value;
-      }
-      refreshNameDraft();
-    },
-    onBlur: () => {
-      nameInputFocusedRef.current = null;
-      finishNameEdit();
-    },
-    onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
-        event.preventDefault();
-        event.stopPropagation();
-        finishNameEdit();
-      }
-    },
-  };
-
   // Where the Inspector is wide (iPad) the fields and actions take two columns, so the whole
   // track fits without scrolling; a phone stacks them.
   return <div className="@container">
@@ -121,10 +28,11 @@ export function TrackInspector({ track, hasClips, readOnly = false, onChange, on
         <FieldLabel>Name</FieldLabel>
         <input
           className="h-11 w-full rounded-md border border-border bg-background px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          {...nameInputProps}
+          value={track.label}
+          aria-label="Track name"
+          onChange={(event) => onChange(track.id, { label: event.target.value })}
         />
       </div>
-      {nameError && <p role="alert" className="text-xs text-destructive">{nameError}</p>}
       <TrackSettingsFields
         track={track}
         onChange={onChange}

@@ -29,37 +29,4 @@ describe('useTimelineSync', () => {
     expect(setCurrentTime).toHaveBeenNthCalledWith(1, 1.25);
     expect(setCurrentTime).toHaveBeenNthCalledWith(2, 2.5);
   });
-
-  it('suppresses duplicate marked completion while accepting the later ordinary frame', () => {
-    const fps = 30000 / 1001;
-    const seek = vi.fn();
-    const setCurrentTime = vi.fn();
-    const setTime = vi.fn();
-    const isSyncingFromPreview = { current: false };
-    const isSyncingFromTimeline = { current: false };
-    const { result } = renderHook(() => useTimelineSync({
-      timelineRef: { current: { setTime } },
-      previewRef: { current: { seek } },
-      setCurrentTime,
-      isSyncingFromPreview,
-      isSyncingFromTimeline,
-    }));
-
-    act(() => {
-      result.current.onClickTimeArea(0.5);
-      result.current.onClickTimeArea(1);
-      result.current.onPreviewTimeUpdate(15 / fps);
-      result.current.onPreviewTimeUpdate(30 / fps, true);
-      result.current.onPreviewTimeUpdate(30 / fps, true);
-      result.current.onPreviewTimeUpdate(45 / fps);
-    });
-
-    expect(seek).toHaveBeenNthCalledWith(1, 0.5);
-    expect(seek).toHaveBeenNthCalledWith(2, 1);
-    expect(setCurrentTime).toHaveBeenNthCalledWith(1, 0.5);
-    expect(setCurrentTime).toHaveBeenNthCalledWith(2, 1);
-    expect(setCurrentTime).not.toHaveBeenCalledWith(30 / fps);
-    expect(setTime.mock.calls).toEqual([[45 / fps]]);
-    expect(isSyncingFromTimeline.current).toBe(false);
-  });
 });

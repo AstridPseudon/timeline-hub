@@ -1,4 +1,3 @@
-import { useTimelineCommandSession } from './useTimelineCommandSession.ts';
 import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import type { RegistrationSaveOwner } from './timeline-state-types.ts';
 import {
@@ -23,7 +22,7 @@ import { isDataProviderPersistenceEnabled, type DataProvider, type TimelineHeadR
 import type { TimelineDraftRecord } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { canonicalJsonStringify, parseTimelineBundle, type TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
-import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
+import { readTimelineOriginalSaveBasis, type TimelineOriginalSaveBasis } from './timelineLocalSaveHandoff.ts';
 export { shouldAcceptPolledData } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 export type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 
@@ -38,7 +37,7 @@ export function useTimelineSave(
   store: TimelineStoreApi,
   initialData?: TimelineData,
 ) {
-  const { timelineId, assetResolver, timelineEditability, shots, imagePlacementHost } = useVideoEditorRuntime();
+  const { timelineId, assetResolver, timelineEditability, shots } = useVideoEditorRuntime();
   const resolveAssetUrl = useCallback(async (file: string) => {
     if (assetResolver) {
       return await assetResolver.resolveAssetUrl(file);
@@ -53,33 +52,56 @@ export function useTimelineSave(
   // equality, so the first save POSTs expected_version 0 and succeeds.
   const configVersionRef = useRef(initialData?.configVersion ?? 0);
   const headRevisionRef = useRef(initialData?.head);
-  const recoveryConfigScope = useMemo(() => ({ provider, timelineId, config: createRecoveryConfig() }), [provider, timelineId]);
-  const recoveryConfig = recoveryConfigScope.config;
   const recoveryPendingRef = useRef(false);
   // Includes the asynchronous initial draft check and Retry awaiting an ACK.
   const recoveryActiveRef = useRef(true);
-  const [initialRecoveryChecked, setInitialRecoveryChecked] = useState(false);
   const eventBusRef = useRef(new TimelineEventBus());
   // Recovery Retry performs async read/build work before entering persistence.
   // Canonical reloads must invalidate that work at their shared boundary.
   const recoveryActionGenerationRef = useRef(0);
-  const recoveryCheckedScopeRef = useRef<string | null>(null);
   const invalidateRecoveryAction = useCallback(() => {
     recoveryActionGenerationRef.current += 1;
   }, []);
-  const invalidateInitialRecoveryCheck = useCallback(() => {
-    invalidateRecoveryAction();
-    recoveryCheckedScopeRef.current = null;
-  }, [invalidateRecoveryAction]);
-  const snapshotWriteBlockedRef = useRef(false);
   const commit = useTimelineCommit({
     eventBus: eventBusRef.current,
     lastSavedSignatureRef,
     editability: timelineEditability,
     initialData,
     resolveAssetUrl,
-    snapshotWriteBlockedRef,
   });
+  const [originalLocalSaveBasis, setOriginalLocalSaveBasis] = useState<
+    { status: 'ready'; value: TimelineOriginalSaveBasis } | { status: 'unavailable'; reason: string } | { status: 'loading' } | null
+  >(null);
+  const originalHeadKey = canonicalJsonStringify(commit.data?.head ?? null);
+  useEffect(() => {
+    const original = commit.dataRef.current;
+    if (!provider.loadTimelineCommandBasis || !original?.head) {
+      setOriginalLocalSaveBasis(null);
+      return;
+    }
+    let cancelled = false;
+    const editSeq = commit.editSeqRef.current;
+    if (editSeq !== savedSeqRef.current || original.editProjection?.kind === 'local') {
+      setOriginalLocalSaveBasis({ status: 'unavailable', reason: 'Original verified read must precede local edits' });
+      return;
+    }
+    setOriginalLocalSaveBasis({ status: 'loading' });
+    void readTimelineOriginalSaveBasis(provider, timelineId, {
+      config: original.config, registry: original.registry, head: original.head,
+      ...(original.sourceItemsBySchemaRef !== undefined ? { bundle: {
+        schema_version: 1, itemsBySchemaRef: persistedTranscriptItems(original.sourceItemsBySchemaRef),
+        ...(original.transcriptReferences ? { transcriptReferences: original.transcriptReferences } : {}),
+      } } : {}),
+    }).then((value) => {
+      if (cancelled) return;
+      setOriginalLocalSaveBasis(commit.editSeqRef.current === editSeq
+        ? { status: 'ready', value }
+        : { status: 'unavailable', reason: 'Local edits preceded completion of the original verified read' });
+    }).catch((error: unknown) => {
+      if (!cancelled) setOriginalLocalSaveBasis({ status: 'unavailable', reason: error instanceof Error ? error.message : String(error) });
+    });
+    return () => { cancelled = true; };
+  }, [provider, timelineId, originalHeadKey, commit.dataRef, commit.editSeqRef]);
   const persistence = useTimelinePersistence({
     store,
     provider,
@@ -95,32 +117,19 @@ export function useTimelineSave(
     savedSeqRef,
     configVersionRef,
     headRevisionRef,
-    recoveryConfig,
     recoveryPendingRef,
     recoveryActiveRef,
     lastSavedSignatureRef,
     interactionStateRef,
-    onCanonicalReloadStart: invalidateInitialRecoveryCheck,
+    onCanonicalReloadStart: invalidateRecoveryAction,
   });
-  const commands = useTimelineCommandSession({ provider, timelineId, commit, resolveAssetUrl, imagePlacementHost,
-    paramReadClient: provider.paramReadClient,
-    // Capture bootstrap only after the first display adoption and its draft check.
-    initialReadReady: commit.data !== null && initialRecoveryChecked,
-    legacyClean: () => commit.editSeqRef.current <= savedSeqRef.current && !persistence.isSavingRef.current
-      && !recoveryActiveRef.current,
-    snapshotWriteBlockedRef, loaded: queries.timelineQuery.data, configVersionRef, headRevisionRef, lastSavedSignatureRef, store, shots, recoveryConfig });
-  snapshotWriteBlockedRef.current = commands.activeRef.current;
   const { clearDeferredRecoverySave, resumeDeferredRecoverySave } = persistence;
   const resumeDeferredRecoverySaveRef = useRef(resumeDeferredRecoverySave);
   resumeDeferredRecoverySaveRef.current = resumeDeferredRecoverySave;
 
-  const scheduleSnapshotSave = persistence.scheduleSave;
   useEffect(() => {
-    return eventBusRef.current.on('scheduleSave', (data, options) => {
-      if (commands.activeRef.current) throw new Error('Resolve pending timeline commands before snapshot edits');
-      scheduleSnapshotSave(data, options);
-    });
-  }, [scheduleSnapshotSave, commands.activeRef]);
+    return eventBusRef.current.on('scheduleSave', persistence.scheduleSave);
+  }, [persistence.scheduleSave]);
 
   usePollSync({
     store,
@@ -143,7 +152,6 @@ export function useTimelineSave(
     isConflictExhaustedRef: persistence.isConflictExhaustedRef,
     interactionStateRef,
     canonicalShotDraftActive: Boolean(shots.canonicalDraft),
-    commandSessionActiveRef: commands.activeRef,
   });
 
   // One-slot recovery draft (plan-v5 B9): after the timeline data loads, offer
@@ -155,6 +163,7 @@ export function useTimelineSave(
     retryAllowed: boolean;
   } | null>(null);
   const [recoveredAsDirty, setRecoveredAsDirty] = useState(false);
+  const recoveryCheckedScopeRef = useRef<string | null>(null);
   const recoveryKey = provider.getTimelineDraftRecoveryMetadata?.().recoveryKey ?? timelineId;
   const recoveryScope = `${timelineId}\u0000${recoveryKey}`;
   const fallbackCanonicalReloadInProgressRef = useRef(false);
@@ -249,14 +258,13 @@ export function useTimelineSave(
       }).finally(() => {
         if (!cancelled && recoveryActionGenerationRef.current === actionGenerationAtCheck) {
           recoveryActiveRef.current = recoveryPendingRef.current;
-          setInitialRecoveryChecked(true);
           if (!recoveryActiveRef.current) resumeDeferredRecoverySaveRef.current();
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [commit.data, commit.dataRef, commit.editSeqRef, hasTimelineData, recoveryKey, recoveryScope, timelineId, offerRecovery, provider, trustedRecoveryHead]);
+  }, [commit.dataRef, commit.editSeqRef, hasTimelineData, recoveryKey, recoveryScope, timelineId, offerRecovery, provider, trustedRecoveryHead]);
   useEffect(() => {
     return eventBusRef.current.on('saveSuccess', () => {
       invalidateRecoveryAction();
@@ -323,7 +331,6 @@ export function useTimelineSave(
     // overwrite instead of an honest CAS conflict.
     configVersionRef.current = record.baseVersion;
     headRevisionRef.current = recoveredHead;
-    recoveryConfig.remember(recoveredHead, draft.config);
     if (draft.bundle !== undefined) persistence.loadedBundleRef.current = draft.bundle;
     // The recovered record is the previous session's payload. A new-session
     // edit made while recovery was pending is held separately by persistence
@@ -334,11 +341,10 @@ export function useTimelineSave(
     // or transport failure must leave the recovered work retryable.
     setRecoveredAsDirty(true);
     commit.commitData(recovered, { save: true });
-  }, [canonicalReloadInProgressRef, commit, configVersionRef, persistence, provider, recoveryKey, resolveAssetUrl, timelineEditability, trustedRecoveryHead, offerRecovery, recoveryActiveRef, recoveryConfig]);
+  }, [canonicalReloadInProgressRef, commit, configVersionRef, persistence, provider, recoveryKey, resolveAssetUrl, timelineEditability, trustedRecoveryHead, offerRecovery, recoveryActiveRef]);
 
   const reloadCanonicalFromServer = persistence.reloadFromServer;
   const reloadFromServer = useCallback(async (options?: { clearDraft?: boolean; preserveDraft?: boolean }) => {
-    if (commands.activeRef.current) throw new Error('Resolve pending timeline commands before reload');
     await reloadCanonicalFromServer(options);
     const shouldClearRecovery = options?.clearDraft ?? !options?.preserveDraft;
     if (shouldClearRecovery) {
@@ -349,7 +355,7 @@ export function useTimelineSave(
       clearDeferredRecoverySave();
       resumeDeferredRecoverySave();
     }
-  }, [clearDeferredRecoverySave, reloadCanonicalFromServer, resumeDeferredRecoverySave, commands.activeRef]);
+  }, [clearDeferredRecoverySave, reloadCanonicalFromServer, resumeDeferredRecoverySave]);
   const discardRecoveredDraft = useCallback(async () => {
     try {
       // Reload first. The persistence path clears the slot only after it has
@@ -405,26 +411,17 @@ export function useTimelineSave(
   }), [captureSaveTarget, flushSaveTarget, discardUncommittedSaveTarget, patchRegistryOwned,
     ownsRegistryMutation, canRollbackRegistryMutation, rollbackRegistryMutation]);
 
-  const { ownsHistoryRef: commandHistoryRef, activeRef: commandActiveRef, flush: flushCommands } = commands;
-  const flushSnapshotSave = persistence.flushPendingSave;
-  const flushPendingSave = useCallback(async () => {
-    if (commandHistoryRef.current || commandActiveRef.current) await flushCommands();
-    return flushSnapshotSave();
-  }, [commandHistoryRef, commandActiveRef, flushCommands, flushSnapshotSave]);
-
   return {
-    commands,
+    // Staged original-read assembly; session/outbox activation awaits the official v2 transport.
+    originalLocalSaveBasis,
     data: commit.data,
     dataRef: commit.dataRef,
-    isConflictExhausted: persistence.isConflictExhausted || commands.state.status === 'conflict',
+    isConflictExhausted: persistence.isConflictExhausted,
     selectedClipId: commit.selectedClipId,
     selectedTrackId: commit.selectedTrackId,
-    saveStatus: commands.enabled && commands.state.status !== 'saved'
-      ? (commands.state.status === 'saving' ? 'saving' : commands.state.status === 'retry' ? 'retrying'
-        : commands.state.status === 'error' || commands.state.status === 'conflict' ? 'error' : 'dirty') as import('./useTimelinePersistence.ts').SaveStatus
-      : recoveredAsDirty && persistence.saveStatus === 'saved' ? 'dirty' : persistence.saveStatus,
+    saveStatus: recoveredAsDirty && persistence.saveStatus === 'saved' ? 'dirty' : persistence.saveStatus,
     schemaIncompatible: persistence.schemaIncompatible,
-    flushPendingSave,
+    flushPendingSave: persistence.flushPendingSave,
     registrationOwner,
     setSelectedTrackId: commit.setSelectedTrackId,
     applyEdit: commit.applyEdit,
@@ -439,8 +436,7 @@ export function useTimelineSave(
     savedSeqRef,
     selectedClipIdRef: commit.selectedClipIdRef,
     selectedTrackIdRef: commit.selectedTrackIdRef,
-    isLoading: (queries.timelineQuery.isLoading && !commit.data)
-      || (commands.enabled && !!commit.data && !commands.port && commands.state.status !== 'error'),
+    isLoading: queries.timelineQuery.isLoading && !commit.data,
     watchdogTripped: persistence.watchdogTripped,
     watchdogReason: persistence.watchdogReason,
     retryWatchdog: persistence.retryWatchdog,

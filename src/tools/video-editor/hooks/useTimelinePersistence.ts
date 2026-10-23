@@ -1,4 +1,3 @@
-import { createRecoveryConfig } from './useTimelineSave.draftConfig.ts';
 import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useMutation } from '@tanstack/react-query';
@@ -37,6 +36,7 @@ import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/i
 import type { CommitDataOptions, ScheduleSaveFn } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
 import { isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
+import type { TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
 
 export type SaveStatus = 'saved' | 'saving' | 'dirty' | 'retrying' | 'error';
 
@@ -96,7 +96,6 @@ interface UseTimelinePersistenceOptions {
   savedSeqRef: MutableRefObject<number>;
   configVersionRef: MutableRefObject<number>;
   headRevisionRef?: MutableRefObject<TimelineHeadRevision | undefined>;
-  recoveryConfig?: ReturnType<typeof import('./useTimelineSave.draftConfig.ts').createRecoveryConfig>;
   /** Freeze writes until a recovery draft has been explicitly retried/discarded. */
   recoveryPendingRef?: MutableRefObject<boolean>;
   /** Freeze writes while the initial recovery slot is still being discovered. */
@@ -104,6 +103,8 @@ interface UseTimelinePersistenceOptions {
   lastSavedSignatureRef: MutableRefObject<string>;
   interactionStateRef: InteractionStateRef;
   onCanonicalReloadStart?: () => void;
+  /** Original verified assembly + durable session; supplied only after the generated v2 join. */
+  localDocumentSave?: TimelineLocalSaveHandoff;
 }
 
 export type TimelineSaveTarget = Readonly<{ session: object; timelineId: string; targetSeq: number; generation: number }>;
@@ -122,6 +123,7 @@ export class TimelineSaveBarrierError extends Error {
 interface PersistenceSession {
   identity: object;
   provider: DataProvider;
+  localDocumentSave?: TimelineLocalSaveHandoff;
   timelineId: string;
   dataRef: MutableRefObject<TimelineData | null>;
   editSeqRef: MutableRefObject<number>;
@@ -139,7 +141,6 @@ interface ScheduledSave {
   session: PersistenceSession;
   generation: number;
   data: TimelineData;
-  authoredConfig: TimelineConfig;
   seq: number;
   draftOwnerId: string;
   draftRecoveryKey: string;
@@ -153,6 +154,7 @@ interface ScheduledSave {
   wireBundle: TimelineBundleEnvelope | null | undefined;
   /** Waits for a queued descendant's draft base to advance before sending it. */
   baseHeadAdvance?: Promise<void>;
+  localCapture?: Promise<void>;
 }
 
 interface DeferredRecoverySave {
@@ -243,12 +245,12 @@ export function useTimelinePersistence({
   savedSeqRef,
   configVersionRef,
   headRevisionRef: suppliedHeadRevisionRef,
-  recoveryConfig,
   recoveryPendingRef,
   recoveryActiveRef,
   lastSavedSignatureRef,
   interactionStateRef,
   onCanonicalReloadStart,
+  localDocumentSave,
 }: UseTimelinePersistenceOptions): UseTimelinePersistenceResult {
   const fallbackHeadRevisionRef = useRef(dataRef.current?.head);
   const headRevisionRef = suppliedHeadRevisionRef ?? fallbackHeadRevisionRef;
@@ -280,9 +282,10 @@ export function useTimelinePersistence({
   const errorRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errorRetrySessionRef = useRef<PersistenceSession | null>(null);
   const isMountedRef = useRef(true);
-  const activeTargetRef = useRef<PersistenceSession>({ identity: {}, provider, timelineId, dataRef, editSeqRef, savedSeqRef, configVersionRef, acknowledgedSeq: savedSeqRef.current, generation: 0, uncertainThroughSeq: -1, activeAttempts: new Set(), cancelledRanges: [] });
+  const activeTargetRef = useRef<PersistenceSession>({ identity: {}, provider, localDocumentSave, timelineId, dataRef, editSeqRef, savedSeqRef, configVersionRef, acknowledgedSeq: savedSeqRef.current, generation: 0, uncertainThroughSeq: -1, activeAttempts: new Set(), cancelledRanges: [] });
   if (
     activeTargetRef.current.provider !== provider
+    || activeTargetRef.current.localDocumentSave !== localDocumentSave
     || activeTargetRef.current.timelineId !== timelineId
     || activeTargetRef.current.dataRef !== dataRef
     || activeTargetRef.current.editSeqRef !== editSeqRef
@@ -291,7 +294,7 @@ export function useTimelinePersistence({
   ) {
     // Object identity also protects an A -> B -> A replacement: an old
     // request's receipt must never acknowledge the new session's sequence.
-    activeTargetRef.current = { identity: {}, provider, timelineId, dataRef, editSeqRef, savedSeqRef, configVersionRef, acknowledgedSeq: -1, generation: 0, uncertainThroughSeq: -1, activeAttempts: new Set(), cancelledRanges: [] };
+    activeTargetRef.current = { identity: {}, provider, localDocumentSave, timelineId, dataRef, editSeqRef, savedSeqRef, configVersionRef, acknowledgedSeq: -1, generation: 0, uncertainThroughSeq: -1, activeAttempts: new Set(), cancelledRanges: [] };
   }
   const session = activeTargetRef.current;
   const issuedFailuresRef = useRef(new WeakSet<TimelineSaveBarrierError>());
@@ -388,6 +391,7 @@ export function useTimelinePersistence({
       attemptProvider,
       attemptTimelineId,
       traceId,
+      documentSave,
     }: {
       config: TimelineConfig;
       expectedVersion: number;
@@ -398,9 +402,10 @@ export function useTimelinePersistence({
       bundle?: TimelineBundleEnvelope | null;
       attemptProvider: DataProvider;
       attemptTimelineId: string;
+      documentSave?: TimelineLocalSaveHandoff;
     }) => {
       attemptProvider.setShotTimelineTraceId?.(traceId);
-      const saved: Promise<number | TimelineSaveReceipt> = attemptProvider.saveTimelineAtHead
+      const saved: Promise<number | TimelineSaveReceipt> = documentSave ? documentSave.flush() : attemptProvider.saveTimelineAtHead
         ? expectedHead
           ? attemptProvider.saveTimelineAtHead(attemptTimelineId, config, expectedHead, registry, bundle)
           : Promise.reject(new TimelineVersionConflictError('Timeline draft has unknown head provenance; resolve or discard it before saving.'))
@@ -654,7 +659,7 @@ export function useTimelinePersistence({
             : headRevisionRef.current
               ? cloneAttemptValue(headRevisionRef.current)
               : undefined,
-          config: cloneAttemptValue(scheduledOrAttempt.authoredConfig),
+          config: cloneAttemptValue(scheduledOrAttempt.data.config),
           registry: cloneAttemptValue(scheduledOrAttempt.data.registry),
           stableSignature: scheduledOrAttempt.data.stableSignature,
         };
@@ -667,6 +672,7 @@ export function useTimelinePersistence({
 
     attempt.session.activeAttempts.add(attempt);
     try {
+      await attempt.localCapture;
       await saveMutation.mutateAsync(
         {
           config: attempt.config,
@@ -677,6 +683,7 @@ export function useTimelinePersistence({
           attemptProvider: attempt.provider,
           attemptTimelineId: attempt.timelineId,
           traceId: attempt.traceId,
+          documentSave: attempt.session.localDocumentSave,
         },
         {
           onSuccess: (receipt) => {
@@ -950,8 +957,7 @@ export function useTimelinePersistence({
 
   const createScheduledSave = useCallback((nextData: TimelineData, seq: number): ScheduledSave => {
     const draftOwnerId = generateUUID();
-    let rawComposition: import('../data/shotCompositionAdapter.ts').PreparedShotComposition | undefined;
-    const recoveryMetadata = provider.getTimelineDraftRecoveryMetadata?.((composition) => { rawComposition = composition; }) ?? {};
+    const recoveryMetadata = provider.getTimelineDraftRecoveryMetadata?.() ?? {};
     // Provider caches may contain a polled head. Only the editor's adopted
     // base (or its own acknowledged successor) belongs to this draft.
     const head = headRevisionRef.current;
@@ -970,10 +976,8 @@ export function useTimelinePersistence({
         }
       : cloneAttemptValue(loadedBundleRef.current);
     const wireBundle = effectiveBundle ?? undefined;
-    const authoredConfig = (recoveryConfig ?? createRecoveryConfig()).snapshot(
-      head, nextData.config, Boolean(nextData.editProjection), rawComposition);
     const draft = {
-      config: authoredConfig,
+      config: cloneAttemptValue(nextData.config),
       registry: cloneAttemptValue(nextData.registry),
       bundle: effectiveBundle,
     };
@@ -998,11 +1002,16 @@ export function useTimelinePersistence({
       : Promise.resolve();
     draftWriteChainRef.current = draftWrite;
     void draftWrite.catch(() => {});
+    // Capture every local document before debounce coalescing. Transport retries
+    // reuse this capture and the session's exact durable request, not newer data.
+    const localCapture = session.localDocumentSave?.capture({
+      ...draft, bundle: wireBundle, head: head ? cloneAttemptValue(head) : undefined,
+    });
+    void localCapture?.catch(() => {});
     const scheduledSave: ScheduledSave = {
       session,
       generation: session.generation,
       data: nextData,
-      authoredConfig,
       seq,
       draftOwnerId,
       draftRecoveryKey,
@@ -1011,10 +1020,11 @@ export function useTimelinePersistence({
       baseHead: head ? cloneAttemptValue(head) : undefined,
       effectiveBundle,
       wireBundle,
+      localCapture,
     };
     latestScheduledSaveRef.current = scheduledSave;
     return scheduledSave;
-  }, [configVersionRef, headRevisionRef, persistenceEnabled, provider, session, timelineId, recoveryConfig]);
+  }, [configVersionRef, headRevisionRef, provider, session, timelineId]);
 
   const scheduleSave = useCallback<ScheduleSaveFn>((nextData, options) => {
     // Recovery is an explicit CAS decision. Do not replace the recovered
@@ -1035,14 +1045,7 @@ export function useTimelinePersistence({
     // debounce, interaction gate, or network attempt. Draft writes are
     // serialized so an older IndexedDB transaction cannot land after a newer
     // mutation, and each receipt can compare-and-delete only its own slot.
-    let scheduledSave: ScheduledSave;
-    try { scheduledSave = createScheduledSave(nextData, editSeqRef.current); }
-    catch (error) {
-      setSaveStatus('error');
-      rejectFlushWaiters(error);
-      console.error('[TimelineSync] Draft retained in the editor: serialization refused', error);
-      return;
-    }
+    const scheduledSave = createScheduledSave(nextData, editSeqRef.current);
 
     if (reloadInProgressRef.current) {
       // A user edit made while canonical Reload is pending supersedes that
@@ -1135,7 +1138,7 @@ export function useTimelinePersistence({
       recordShotTimelinePhase(scheduledSave.traceId, 'debounce-fired');
       void doSave(scheduledSave);
     }, SAVE_DEBOUNCE_MS);
-  }, [armWatchdog, createScheduledSave, disarmWatchdog, doSave, rejectFlushWaiters, editSeqRef, getInteractionStateRef, isConflictExhausted, persistenceEnabled, schemaIncompatible, recoveryPendingRef, recoveryActiveRef]);
+  }, [armWatchdog, createScheduledSave, disarmWatchdog, doSave, editSeqRef, getInteractionStateRef, isConflictExhausted, persistenceEnabled, schemaIncompatible, recoveryPendingRef, recoveryActiveRef]);
 
   const resumeDeferredRecoverySave = useCallback(() => {
     if (recoveryPendingRef?.current || recoveryActiveRef?.current) return;

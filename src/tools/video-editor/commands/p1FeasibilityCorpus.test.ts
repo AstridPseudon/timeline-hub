@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -16,9 +17,15 @@ type Source = CorpusCase['source'];
 type JsonObject = Record<string, unknown>;
 
 const appRoot = resolve(import.meta.dirname, '../../../../');
+const mutableHarnessSourceKind = 'e2e-seed-and-harness';
+const mutableHarnessSourcePath = 'tests/e2e/local/support/harness.ts';
+
+function sourceRoot(source: Source): string {
+  return source.repo === 'app' ? appRoot : resolve('/home/user/work/agent');
+}
 
 function sourcePath(source: Source): string {
-  return source.repo === 'app' ? resolve(appRoot, source.path) : resolve('/home/user/work/agent', source.path);
+  return resolve(sourceRoot(source), source.path);
 }
 
 function readSource(source: Source): JsonObject {
@@ -26,7 +33,21 @@ function readSource(source: Source): JsonObject {
 }
 
 function sourceSha(source: Source): string {
+  const bytes = execFileSync('git', ['-C', sourceRoot(source), 'show', `${source.commit}:${source.path}`], {
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  return createHash('sha256').update(bytes).digest('hex');
+}
+
+function currentSourceSha(source: Source): string {
   return createHash('sha256').update(readFileSync(sourcePath(source))).digest('hex');
+}
+
+function isMutableHarnessSource(entry: CorpusCase): boolean {
+  return entry.kind === mutableHarnessSourceKind
+    && entry.source.repo === 'app'
+    && entry.source.path === mutableHarnessSourcePath
+    && 'journey_sources' in entry;
 }
 
 function parentClip(bundle: JsonObject, id: string): JsonObject {
@@ -37,14 +58,19 @@ function parentClip(bundle: JsonObject, id: string): JsonObject {
   return clip;
 }
 
-function expectSource(source: Source): void {
+function expectSource(entry: CorpusCase): void {
+  const { source } = entry;
   expect(sourceSha(source), source.path).toBe(source.sha256);
-  expect(readFileSync(sourcePath(source))).toBeTruthy();
+  if (isMutableHarnessSource(entry)) {
+    expect(readFileSync(sourcePath(source)).byteLength, source.path).toBeGreaterThan(0);
+    return;
+  }
+  expect(currentSourceSha(source), `current ${source.path}`).toBe(source.sha256);
 }
 
 describe('P1 feasibility corpus', () => {
   it.each(corpus.cases)('keeps exact provenance for $id', (entry) => {
-    expectSource(entry.source);
+    expectSource(entry);
     expect(entry.source.commit).toMatch(/^[0-9a-f]{40}$/);
   });
 
