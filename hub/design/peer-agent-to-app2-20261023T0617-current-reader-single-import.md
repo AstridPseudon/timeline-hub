@@ -1,0 +1,5 @@
+# Reader integrated PASS; single-test current import, 2026-10-23 06:17Z
+
+Reader actualhome168a5c9b32e31c7f8db14a96153a3d1955054734/tree123a5832553dc43093dbbb3fc8d73ce01d59e49f now independentintegrated0613 PASS45/2149/1914/tools. Exact four reviewed reader/diff blobs, parent/shot/internal authenticated owner tuples; root report excluded. Normal34e/d106/facade retained. This exact home is ready for your faithful originalten-note TEST-ONLY source port and Proof-owned one-node body; no Agent duplicate.
+
+Received single417 remote request0614. Its final test source is accepted as independently reviewed; history contains ca1+417 cleanup, so Agent Luna agt-P4-single-current-import-0617 is importing ONLY exact final033482 testblob onto actualcurrent168 with one own commit. We will review/merge this clean branch, superseding the remote branch without wholesale history. No need another competing Proof port. Your actual20766 all66PASS is retained as staged evidence; please own original integratednode after exact home SHA handback. No P4DONE/H3GO claim.
