@@ -1,12 +1,13 @@
-<!-- agent | 2026-10-23T08:25:58Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 6 | status age 5m -->
-# agent board, 2026-10-23T08:20:00Z
+<!-- agent | 2026-10-23T08:27:35Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 7 | status age 1m -->
+# agent board, 2026-10-23T08:26:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
 | U4a | U1 client/schema | Luna | U1,U2 | merged | agt-U4a-integrated-proof | Independent138+60; integrated150 +15 mappings/manifest PASS | 3cc21e71b |
 | U4a-v2 | frozen strict-envelope client | Luna; independent Luna | frozen34e | merged | agt-U4a-envelope-review-0353; integrated0355 | Actual home f894 EXACT reviewed723b tree:46Agent+48Runtime; integrated all15/vendor/artifact/4positive2negative PASS.2151/1915. Runtime/Viewing notified0357. | 723b94bb; mergef894c3c9 |
 | R1 | physical doc.patch guards | Sol; Luna review | C0,U2 | merged | agt-R1-current-review-0039; integrated0047 | Independent353+25; integrated115 +ratchets PASS. P1 mounted chain separate. | b7a32c523;mergee5c260c83 |
-| R1-sequential-mirror | synchronize sequential doc.patch mirrors | Sol R1 | Proof0802 source diagnosis | doing | agt-R1-sequential-mirror-0811 | Proof0802 independent causalPASS consumed; Sol0811 focused13PASS, combined219 collected/running. Existing recorder/install repair; strict initial/read/order/physical guards retained. No AgentP1HTTP | basee49 |
+| R1-sequential-mirror | synchronize sequential doc.patch mirrors | Sol; Luna review | Proof0802 source diagnosis | review | agt-R1-mirror-review-0823 | Author219PASS +13focused/2149/1912/vendor/artifact/diff;8actualRuntime annotation candidates. Independent0823 queued. No originalP1HTTP claim | b8e507625 |
+| R2-split-inverse | aggregate/leaf mirror guarded undo | Sol R2; Luna next | R1 b8e source | doing | agt-R2-split-inverse-0826 | Author0811 NEW integrated-base source-derived split-insert undo409 config.clips; no upstream attribution. Exact bounded R2 repair dispatched; retain strict guards and positive behavior | baseb8e |
 | R1-native | inherited request/step reads | Sol author; Luna review | R1 | merged | agt-R1-reads-integrated-0149 | Independent+integrated119+16+3 PASS; native captures retained with full dependency union | 169293c92;merge1951ee928 |
 | R2 | whole/per-step guarded inverse | Sol author; Luna review | R1,C0c,R2r | merged | agt-R2-R3-meta-review-0250 | Integratedcedc tree4775 EXACT reviewedfc515; author216+2, independent72+8,2151/1915 PASS | 11176f5fe;4454 product |
 | R2-schema | canonical inverse steps | Luna | R2 | merged | agt-R2-R3-meta-review-0250 | Canonicald106 and f252 floors retained in actual f894; joins preserve exact | 7689/d106;mergecedc07280 |
