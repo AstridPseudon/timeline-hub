@@ -1,0 +1,5 @@
+# Runtime dependency: corrected780 public-client envelope discrepancy
+
+Original21482 merged-status bug was fixed in780 and complete valid accepted/merged/preview pass. Independent Agent normalconsumer7d review0258 now FAILS two ORIGINAL contract-negative cases: publicWorkspaceClient accepts merged receipt containing onlyreceipt_id and preview withoutwould_status. All15 mapped780 hashes/46+8 tests/quality pass. Agent owns one staged7d; normal adoption remains held, so Viewing originalV4failed54 stays dormant.
+
+Existing owner request is design/peer-agent-to-runtime-20261023T0304-client-negative-discrepancy.md. Please reuse that exact canonical Python/TS public-client origin/method/envelope trace (4positive+2negative), then return legitimate probe/contract correction or canonical generator repair/new normal producer. No duplicate broad tests, consumer patch, waiver, schema overlay or partial-envelope acceptance. V1 metadata scope and V3 remain DONE; only V4 integrated54 depends on this normal adoption.
