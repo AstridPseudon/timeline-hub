@@ -3,11 +3,13 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
+from astrid.core.rendering.remotion_runtime import RemotionValidationError
 from astrid.sdk import host_bootstrap
 from astrid.core.execution.generic_host import (
     source_checkout_closure_digest,
@@ -885,3 +887,35 @@ def test_bootstrap_refuses_worker_credential_outside_the_pack_host_contract(
 
     with pytest.raises(host_bootstrap.PackHostBootstrapError, match="least-privilege pack-host contract"):
         host_bootstrap.ensure_pack_host(value, reconfigure_action="reconfigure")
+
+
+def _validating_launch(monkeypatch, tmp_path):
+    """Run the host launch transaction with the validator's real environment refusal and no spawned probes."""
+    from astrid.core.rendering import remotion_runtime
+
+    def validate_contexts(*, host_environment, python_executable, contexts, **_kwargs):
+        for value in contexts.values():
+            for environment in ([value] if isinstance(value, dict) else value):
+                remotion_runtime.probe_context(environment=environment, python_executable=python_executable)
+        return {}
+
+    monkeypatch.setattr(remotion_runtime, "prepare_remotion_validation", validate_contexts)
+
+    def prepare(extra: dict[str, str]):
+        home = tmp_path / "home"
+        home.mkdir(exist_ok=True)
+        env = {"HOME": str(home), "PATH": os.defpath, "ASTRID_REMOTION_PROJECT_DIR": str(tmp_path / "remotion"), **extra}
+        launch = host_bootstrap._prepare_render_validation(tmp_path, env, tmp_path / "support", sys.executable)
+        return launch, env
+
+    return prepare
+
+
+def test_host_launch_drops_shell_loader_keys_but_still_refuses_interpreter_overrides(monkeypatch, tmp_path):
+    prepare = _validating_launch(monkeypatch, tmp_path)
+    launch, env = prepare({"LD_LIBRARY_PATH": "/opt/hostedtoolcache/lib", "DYLD_LIBRARY_PATH": "/x", "LD_PRELOAD": "/y"})
+    assert launch is not None
+    assert not [key for key in env if key.startswith(("LD_", "DYLD_"))]
+    for name in ("NODE_OPTIONS", "PYTHONHOME"):
+        with pytest.raises(RemotionValidationError, match="unsupported loader/interpreter overrides"):
+            prepare({"LD_LIBRARY_PATH": "/opt/lib", name: "x"})

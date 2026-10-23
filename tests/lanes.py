@@ -55,6 +55,7 @@ WINDOWS = "unit-shard-windows-latest"
 DARWIN = "darwin-native"
 INTEGRATION = "lanes-integration"  # .github/workflows/lanes.yml
 OPT_IN = "lanes-opt-in"  # .github/workflows/lanes.yml
+INSTALLED = "lanes-installed"  # .github/workflows/lanes.yml
 
 
 def has_media_tools() -> bool:
@@ -84,6 +85,25 @@ def has_chrome() -> bool:
 
 def has_remotion() -> bool:
     return bool(shutil.which("node")) and (REPO / "remotion" / "node_modules").is_dir() and has_media_tools()
+
+
+def has_installed_astrid() -> bool:
+    """A non-editable Astrid in this interpreter's site-packages, the installed host profile, and a provisioned Remotion project.
+
+    This is what tests/helpers/h3_cpu_runtime.py binds to: ``_INSTALLED_EXECUTION_ROOT`` is the interpreter's purelib, and
+    ``ASTRID_HOST_EXECUTION_PROFILE=installed`` puts it first on sys.path so ``astrid`` resolves there, not to the checkout.
+    """
+    import sysconfig
+
+    installed = Path(sysconfig.get_path("purelib")) / "astrid" / "__init__.py"
+    project = os.environ.get("ASTRID_REMOTION_PROJECT_DIR", "")
+    return (
+        installed.is_file()
+        and os.environ.get("ASTRID_HOST_EXECUTION_PROFILE") == "installed"
+        and bool(project)
+        and (Path(project) / "node_modules").is_dir()
+        and has_media_tools()
+    )
 
 
 @dataclass(frozen=True)
@@ -125,7 +145,15 @@ LANES: dict[str, Lane] = {
         "dependency", "needs a real Runtime checkout (ASTRID_RUNTIME_CHECKOUT) and, per test, VibeComfy at its pin, the Remotion install, ffmpeg or the network",
         has_runtime, (INTEGRATION,), default_off=True, provision="astrid-runtime",
     ),
-    "opt_in": Lane("scheduled", "slow tests the per-push run leaves to the nightly lanes workflow", lambda: True, (OPT_IN,), default_off=True),
+    "installed": Lane(
+        "dependency",
+        "needs a non-editable Astrid wheel in the interpreter's site-packages (ASTRID_HOST_EXECUTION_PROFILE=installed) and a provisioned Remotion project (ASTRID_REMOTION_PROJECT_DIR)",
+        has_installed_astrid, (INSTALLED,), default_off=True, provision="installed-venv",
+    ),
+    "opt_in": Lane(
+        "scheduled", "slow tests the per-push run leaves to the nightly lanes workflow (the Runtime checkout, VibeComfy, ffmpeg and the Remotion install)",
+        lambda: True, (OPT_IN,), default_off=True, provision="npx remotion browser ensure",
+    ),
     "codex_cli": Lane(
         "dependency", "needs the macOS Codex CLI on PATH (npm install -g @openai/codex)", has_codex,
         (DARWIN,), default_off=True, provision="@openai/codex",

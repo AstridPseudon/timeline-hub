@@ -1298,3 +1298,6 @@
 - test: tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_character_swap_public_managed_cpu_boundary
   reason: "Deleted at the owner's call: it could only run on one Mac because it needs a file that was never in git (.otto/runs/h3-transform-pack-20260923/fixtures/t9-public-h3-20260925-9/support/runtime/t9-vibecomfy-readiness.json)."
   removed_by: "lanes work: owner decision 23 Oct 2026 (unrunnable outside one workstation)"
+- test: tests/integrations/test_c06_public_timeline_visualizer.py::test_saved_actual_filmstrip_v2_composed_capture_readback (6 parametrized cases)
+  reason: "Deleted at the owner's call: it could only run on one Mac because it needs a file that was never in git (the saved public C06 frame-index artifact named by ASTRID_C06_SAVED_FRAME_INDEX, with its render-snapshot.json sidecar)."
+  removed_by: "lanes work: owner decision 23 Oct 2026 (unrunnable outside one workstation)"

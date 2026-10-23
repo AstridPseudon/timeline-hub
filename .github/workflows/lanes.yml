@@ -8,7 +8,7 @@ on:
     - cron: "17 3 * * *"
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, feat/integration-lanes-in-ci]
 
 jobs:
   integration:
@@ -173,3 +173,65 @@ jobs:
 
       - name: Opt-in tests
         run: python -m pytest -q -m opt_in
+
+  # The tests that need Astrid installed as a wheel (not editable, not the checkout): the wheel the release job builds,
+  # installed into its own venv, with the Runtime and the Remotion project provisioned. pytest runs from that venv with
+  # --import-mode=importlib so the checkout is not put on sys.path ahead of site-packages.
+  installed:
+    name: installed wheel
+    runs-on: ubuntu-latest
+    env:
+      ASTRID_CI_JOB: lanes-installed
+      ASTRID_RUNTIME_CHECKOUT: ${{ github.workspace }}/astrid-runtime
+      ASTRID_HOST_EXECUTION_PROFILE: installed
+      ASTRID_REMOTION_PROJECT_DIR: ${{ github.workspace }}/remotion
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Read the pinned Runtime commit
+        id: runtime-pin
+        run: echo "commit=$(python3 -c 'import json; print(json.load(open("runtime.lock.json"))["source_commit"])')" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the Runtime (astrid-runtime)
+        uses: actions/checkout@v4
+        with:
+          repository: banodoco/astrid-runtime
+          ref: ${{ steps.runtime-pin.outputs.commit }}
+          path: astrid-runtime
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Node.js from .node-version
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
+      - name: Install system media tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Build exactly one wheel
+        run: |
+          python -m pip install --disable-pip-version-check --no-input --require-hashes -r requirements/build.lock
+          python -m build --wheel --no-isolation --outdir dist
+          test "$(ls dist/*.whl | wc -l)" -eq 1
+
+      # Not editable: astrid, the Runtime and its client are copied into the venv's site-packages.
+      - name: Install the wheel and the Runtime into a venv
+        run: |
+          python -m venv "$RUNNER_TEMP/installed-venv"
+          "$RUNNER_TEMP/installed-venv/bin/python" -m pip install "$(ls dist/*.whl)[dev]"
+          "$RUNNER_TEMP/installed-venv/bin/python" -m pip install --no-deps ./astrid-runtime ./astrid-runtime/packages/python
+
+      - name: Install the Remotion dependencies
+        run: npm ci --prefix remotion
+
+      - name: Installed tests
+        run: >-
+          "$RUNNER_TEMP/installed-venv/bin/python" -m pytest -q -m installed --import-mode=importlib
+          tests/packs/h3_av/test_character_swap_cpu_boundary.py

@@ -258,7 +258,7 @@ def test_host_derived_registry_reaches_canonical_remotion_executor_process(tmp_p
     source = tmp_path / "bounded.mp4"
     ffmpeg = shutil.which("ffmpeg")
     assert ffmpeg, "the Remotion proof needs ffmpeg to emit a valid artifact"
-    subprocess.run([ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "color=c=red:s=1280x720:r=24:d=1", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-shortest", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-video_track_timescale", "90000", str(source)], check=True)
+    subprocess.run([ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "color=c=red:s=1280x720:r=24:d=1", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-shortest", "-vf", "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-video_track_timescale", "90000", str(source)], check=True)
     payload = source.read_bytes()
     digest = hashlib.sha256(payload).hexdigest()
     theme_payload = json.dumps(builtin_theme(), sort_keys=True).encode("utf-8")
@@ -329,4 +329,4 @@ def test_host_derived_registry_reaches_canonical_remotion_executor_process(tmp_p
     for channel in range(3):
         source_mean = sum(source_frame[channel::3]) / len(source_frame[channel::3])
         output_mean = sum(output_frame[channel::3]) / len(output_frame[channel::3])
-        assert abs(source_mean - output_mean) <= 32, (channel, source_mean, output_mean)
+        assert abs(source_mean - output_mean) <= 4, (channel, source_mean, output_mean)

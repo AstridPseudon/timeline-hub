@@ -147,7 +147,7 @@ def test_source_cpu_profile_roots_remain_source_bound(monkeypatch):
     assert helper._selected_execution_roots(selected) == (helper.RUNTIME_ROOT, helper.ASTRID_ROOT)
 
 
-@pytest.mark.workstation  # needs a non-editable installed Astrid product tree in the interpreter's site-packages
+@pytest.mark.installed
 def test_installed_cpu_origins_are_real_and_reject_mixed_source():
     import sys
     from astrid.sdk.host_bootstrap import _installed_execution_origins, PackHostBootstrapError
@@ -160,13 +160,29 @@ def test_installed_cpu_origins_are_real_and_reject_mixed_source():
         _installed_execution_origins(helper.ASTRID_ROOT, sys.executable)
 
 
-@pytest.mark.workstation  # needs an owner-written H3 candidate source manifest (ASTRID_H3_CANDIDATE_MANIFEST) and a non-editable installed Astrid product tree
+@pytest.mark.installed
 def test_installed_cpu_actions_retain_candidate_content_pins(tmp_path):
     from tests.helpers import h3_cpu_runtime as helper
 
-    candidate = helper.candidate_manifest_path_from_environment()
+    # The candidate manifest pins each executable action by the SHA-256 of the checkout's bytes; the installed copy
+    # must carry the same bytes (a wheel built from this checkout does). The manifest is written here from the checkout.
+    pinned = (
+        "astrid/packs/h3_av/pack.yaml",
+        "astrid/packs/h3_av/actions/transform/run.py",
+        "astrid/packs/h3_av/actions/transform/operation.py",
+        "astrid/packs/vibecomfy/pack.yaml",
+        "astrid/packs/vibecomfy/actions/run/run.py",
+    )
+    manifest = {
+        "schema": helper.CANDIDATE_SOURCE_MANIFEST_SCHEMA,
+        "synthetic_inference": True,
+        "synthetic_inference_classification": "synthetic-inference-only",
+        "source_files": {name: hashlib.sha256((helper.ASTRID_ROOT / name).read_bytes()).hexdigest() for name in pinned},
+    }
+    candidate = tmp_path / "candidate.json"
+    candidate.write_text(json.dumps(manifest))
+    assert helper.candidate_manifest_path_from_environment({"ASTRID_H3_CANDIDATE_MANIFEST": str(candidate)}) == candidate.resolve()
     helper._verify_installed_candidate_actions(candidate)
-    manifest = json.loads(candidate.read_text())
     manifest["source_files"]["astrid/packs/h3_av/actions/transform/run.py"] = "0" * 64
     drift = tmp_path / "candidate-drift.json"
     drift.write_text(json.dumps(manifest))
@@ -174,7 +190,7 @@ def test_installed_cpu_actions_retain_candidate_content_pins(tmp_path):
         helper._verify_installed_candidate_actions(drift)
 
 
-@pytest.mark.workstation  # needs a non-editable installed Astrid in site-packages and the host-provisioned ASTRID_REMOTION_PROJECT_DIR
+@pytest.mark.installed
 def test_installed_cpu_renderer_uses_real_provisioned_outputs():
     from astrid.packs.rendering.rendering.renderers.remotion import run
     from tests.helpers import h3_cpu_runtime as helper

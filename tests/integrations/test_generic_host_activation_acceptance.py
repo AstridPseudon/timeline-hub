@@ -35,7 +35,7 @@ OWNER = {"actor": "owner", "scopes": ["admin"]}
 
 
 @pytest.fixture
-def resident_host(tmp_path, real_runtime):
+def resident_host(tmp_path, real_runtime, monkeypatch):
     """CPU fixture: actual host/OS/artifacts and one resident authority store."""
     source = Path(__file__).resolve().parents[2]
     data = tmp_path / "data"
@@ -47,6 +47,10 @@ def resident_host(tmp_path, real_runtime):
     imports.mkdir()
     # The canonical, non-symlink interpreter consumes these measured packages.
     # Avoid changing/installing anything in the shared venv or Runtime checkout.
+    # This host runs a CPU pack and never renders. A source checkout with a Remotion install would make the
+    # launch validate Remotion with the canonical interpreter, which has none of the venv's packages; leave
+    # the host without a provisioned Remotion (its documented "unavailable capability" launch).
+    monkeypatch.setattr(host_bootstrap, "_provision_render_runtime_env", lambda *_args: None)
     owners = importlib.metadata.packages_distributions()
     for name in ("PIL", "yaml", "dotenv", "jsonschema", "attrs", "attr", "referencing", "rpds",
                  "jsonschema_specifications", "typing_extensions"):
@@ -442,6 +446,7 @@ def test_uncertain_commit_preserves_exact_host_and_credential(resident_host, mon
     assert witness.service._latest_remote_activation(witness.task_id) is not None
     assert witness.daemon.credentials.actor_metadata(witness.reference.executor_id) is not None
     assert not parked.handle.aborted and parked.handle.cleanup_error is None
+    assert host_bootstrap._parked_host_identity_matches(parked.handle.state)
 
 
 def test_real_disabled_bearer_fails_handshake_and_enabled_bearer_becomes_ready(real_runtime):

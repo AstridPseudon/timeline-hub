@@ -778,6 +778,11 @@ def _prepare_render_validation(source_path: Path, env: dict[str, str],
         env.pop(name, None)  # A new launch never imports another host's readiness.
     if not env.get(ASTRID_REMOTION_PROJECT_DIR):
         return None  # No provisioned Remotion: existing unavailable capability.
+    # The launched host needs no dynamic-loader overrides of the launching shell (setup-python and CUDA images
+    # export LD_*), and the validator refuses them: drop them from the host env. Interpreter overrides such as
+    # NODE_OPTIONS and PYTHONHOME stay, so the validator keeps refusing those.
+    for name in [key for key in env if key.startswith(('LD_', 'DYLD_'))]:
+        del env[name]
     launch_id = secrets.token_hex(16)
     # This is the canonical worker filter. Invocation metadata added later is
     # outside the explicitly adopted clean probe environment contract.

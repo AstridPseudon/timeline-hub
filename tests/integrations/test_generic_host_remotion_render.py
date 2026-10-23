@@ -25,7 +25,7 @@ from astrid.core.env_vars import (
     ASTRID_REMOTION_VALIDATION_SHA256,
 )
 from astrid.sdk.host_bootstrap import _prepare_render_validation
-from tests.helpers.remotion_validation import _LOADER_INTERPRETER_OVERRIDES, remotion_install_problems
+from tests.helpers.remotion_validation import remotion_install_problems
 from tests.packs.rendering._helpers import _execution_env
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -162,11 +162,6 @@ def remotion_launch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             "a real render needs the provisioned Remotion install (`npm ci --prefix remotion`): " + "; ".join(problems),
             pytrace=False,
         )
-    # The validator refuses loader/interpreter overrides; a CI runner legitimately carries some
-    # (actions/setup-python exports LD_LIBRARY_PATH), so give it the clean environment a production host has.
-    for name in list(os.environ):
-        if name.startswith(("DYLD_", "LD_")) or name in _LOADER_INTERPRETER_OVERRIDES:
-            monkeypatch.delenv(name)
     node = shutil.which("node")
     monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(Path(node).resolve()))
     monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA_ROOT))

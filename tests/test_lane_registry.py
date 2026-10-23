@@ -67,7 +67,7 @@ def test_the_jobs_of_a_lane_provision_and_select_it(name: str) -> None:
     for job_name in lane.jobs:
         assert job_name in jobs, f"{name}: no CI job sets ASTRID_CI_JOB={job_name}"
         job = jobs[job_name]
-        assert lane.provision in yaml.safe_dump(job) or lane.kind == "platform", f"{name}: {job_name} does not provision {lane.provision!r}"
+        assert lane.provision in yaml.safe_dump(job), f"{name}: {job_name} does not provision {lane.provision!r}"
         commands = _pytest_commands(job)
         assert commands, f"{job_name} runs no pytest"
         if lane.default_off:

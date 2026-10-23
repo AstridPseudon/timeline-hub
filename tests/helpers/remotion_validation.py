@@ -65,9 +65,10 @@ def issue_remotion_launch_validation(tmp_path: Path, monkeypatch: pytest.MonkeyP
     ):
         monkeypatch.delenv(name, raising=False)
 
-    # The runtime refuses loader/interpreter overrides (probe_context). A CI runner legitimately carries some
-    # (actions/setup-python exports LD_LIBRARY_PATH on Linux), so the test gives the validator the clean
-    # environment a production worker has; the validator stays strict.
+    # This qualifies the test process's own environment directly, not a launched host's: the product drops
+    # LD_*/DYLD_* only on the host-launch path (_prepare_render_validation), so the loader keys must still go
+    # here, as must the interpreter overrides that probe_context refuses. A CI runner legitimately carries some
+    # (actions/setup-python exports LD_LIBRARY_PATH on Linux); the validator stays strict.
     for name in list(os.environ):
         if name.startswith(("DYLD_", "LD_")) or name in _LOADER_INTERPRETER_OVERRIDES:
             monkeypatch.delenv(name)
