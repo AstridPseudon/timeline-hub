@@ -132,14 +132,14 @@ def test_presence_clear_reserved_spellings_and_id_shaped_opaque_arrays(scope):
     local = next(iter(before['shots']))
     root = {'parent': before['parent'], 'shot': before['shots'][local]['payload'],
             'internal': before['shots'][local]['internal_timeline']}[scope]
-    root['meta'] = {'org.example:literal.key': {'content_digest': 'literal', 'shot_id': 'opaque',
+    root['meta'] = {'org.example': {'literal:key.name': {'content_digest': 'literal', 'shot_id': 'opaque',
                     'revision_id': None, 'occurrences': [{'occurrence_id': 'x', 'id': 'a'}],
-                    'clear': None, 'rows': [{'id': 'a', 'v': 1}, {'id': 'a', 'v': None}]}}
+                    'clear': None, 'rows': [{'id': 'a', 'v': 1}, {'id': 'a', 'v': None}]}}}
     before = bundle_from_document(document_from_bundle(before))
     local = next(iter(before['shots']))
     after = copy.deepcopy(before)
     target = {'parent': after['parent'], 'shot': after['shots'][local]['payload'],
-              'internal': after['shots'][local]['internal_timeline']}[scope]['meta']['org.example:literal.key']
+              'internal': after['shots'][local]['internal_timeline']}[scope]['meta']['org.example']['literal:key.name']
     target['content_digest'] = 'authored:exact'
     target['shot_id'] = False
     target['revision_id'] = 0
@@ -149,10 +149,11 @@ def test_presence_clear_reserved_spellings_and_id_shaped_opaque_arrays(scope):
     commands, _ = roundtrip(before, after)
     rows = commands[0]['args']['changes']
     assert all(not row['op'].startswith('list.') for row in rows)
+    assert all(row['path'][:3] == ['meta', 'org.example', 'literal:key.name'] for row in rows)
     assert next(row for row in rows if row['path'][-1] == 'added')['before'] == {'state': 'absent'}
     clear = next(row for row in rows if row['path'][-1] == 'clear')
     assert clear['op'] == 'remove' and clear['before'] == {'state': 'present', 'value': None}
-    assert next(row for row in rows if row['path'][-1] == 'rows')['before']['value'] == root['meta']['org.example:literal.key']['rows']
+    assert next(row for row in rows if row['path'][-1] == 'rows')['before']['value'] == root['meta']['org.example']['literal:key.name']['rows']
     assert 'created' not in commands[0]
 
 
@@ -185,7 +186,7 @@ def test_valid_mirrors_emit_one_logical_change_and_roundtrip_exactly():
     for clips in (after['parent']['clips'], after['parent']['config']['clips']):
         clips[0]['hold'] = 3
     for registry in (after['parent']['registry'], after['parent']['config']['registry']):
-        registry['assets']['picture']['meta'] = {'content_digest': None}
+        registry['assets']['picture']['meta'] = {'org.example': {'content_digest': None}}
     commands, _ = roundtrip(before, after)
     assert len(commands) == 2
     assert sum(len(call['args']['changes']) for call in commands) == 2
