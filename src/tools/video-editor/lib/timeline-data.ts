@@ -38,7 +38,7 @@ import {
 } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { buildAssetReferenceMap } from '@/tools/video-editor/lib/asset-registry.ts';
 import { snapToFrameGrid } from '@/tools/video-editor/lib/time-grid.ts';
-import { deriveTimelineClipDisplayNames } from '@/tools/video-editor/lib/clipDisplayNames.ts';
+import { deriveClipNameBasis, isExplicitClipLabel } from '@/tools/video-editor/lib/clipDisplayNames.ts';
 
 export interface ClipMeta {
   asset?: string;
@@ -462,11 +462,12 @@ export const assembleTimelineData = ({
   const canonicalResolvedConfig = outputMissingResolution
     ? { ...resolvedConfig, output: canonicalOutput }
     : resolvedConfig;
-  const displayNames = deriveTimelineClipDisplayNames(
+  const nameBasis = deriveClipNameBasis(
     canonicalResolvedConfig.clips,
     canonicalResolvedConfig.registry,
     canonicalResolvedConfig.tracks,
   );
+  const displayNames = nameBasis.shown;
   const resolvedClips = canonicalResolvedConfig.clips.map((clip) => ({
     ...clip,
     label: displayNames.get(clip.id),
@@ -477,17 +478,11 @@ export const assembleTimelineData = ({
   // label the derivation actually used and that is not just the name the clip would get anyway; this also
   // heals timelines saved before this rule (a label equal to the current derived name is treated as unset,
   // as are junk labels such as the asset id).
-  const naturalNames = deriveTimelineClipDisplayNames(
-    canonicalResolvedConfig.clips.map(({ label: _label, ...clip }) => clip),
-    canonicalResolvedConfig.registry,
-    canonicalResolvedConfig.tracks,
-  );
   for (const [clipId, displayName] of displayNames) {
     const clipMeta = rowData.meta[clipId];
     if (!clipMeta) continue;
-    const stored = clipMeta.label?.trim();
-    const isExplicit = stored !== undefined && stored === displayName && stored !== naturalNames.get(clipId);
-    rowData.meta[clipId] = { ...clipMeta, label: isExplicit ? clipMeta.label : undefined, displayName };
+    const label = isExplicitClipLabel(clipMeta.label, clipId, nameBasis) ? clipMeta.label : undefined;
+    rowData.meta[clipId] = { ...clipMeta, label, displayName };
   }
 
   return {

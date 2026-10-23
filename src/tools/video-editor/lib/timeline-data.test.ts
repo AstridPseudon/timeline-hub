@@ -8,6 +8,7 @@ import {
   rowsToConfig,
 } from '@/tools/video-editor/lib/timeline-data';
 import { previewTimelineMutation } from '@/tools/video-editor/lib/timeline-mutation-engine';
+import { splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils';
 import { decideRenderRoute } from '@/tools/video-editor/lib/renderRouter';
 import { serializeForDisk, validateSerializedConfig } from '@/tools/video-editor/lib/serialize';
 import type { AssetResolver } from '@/tools/video-editor/data/AssetResolver';
@@ -612,6 +613,20 @@ describe('clip label is persisted only when a user or agent set it', () => {
     expect(edit({ volume: 0.5 })).toMatchObject({ volume: 0.5 });
     expect(edit({ volume: 0.5 })).not.toHaveProperty('label');
     expect(edit({ label: 'Hero shot' })).toMatchObject({ label: 'Hero shot' });
+  });
+
+  it('splitting a clip saves no derived label on either half, and keeps one that was set', async () => {
+    const split = async (clip: Record<string, unknown>) => {
+      const data = await buildTimelineData(baseConfig({ to: 4, ...clip }), assetsNamed('first take.mp4'));
+      const { config } = splitClipAtPlayhead(data.resolvedConfig, 'clip-1', 2);
+      const result = previewTimelineMutation(data, { type: 'config', resolvedConfig: config });
+      if (!result.ok) throw new Error('mutation failed');
+      expect(result.nextData.config.clips).toHaveLength(2);
+      return result.nextData.config.clips;
+    };
+
+    for (const half of await split({})) expect(half).not.toHaveProperty('label');
+    for (const half of await split({ label: 'Hero shot' })) expect(half.label).toBe('Hero shot');
   });
 
   it('treats a label saved before this rule (equal to the current derived name) as unset', async () => {

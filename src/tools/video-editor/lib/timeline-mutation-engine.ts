@@ -1,6 +1,7 @@
 import { buildTrackClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { buildAssetReferenceMap } from '@/tools/video-editor/lib/asset-registry.ts';
 import { serializeForDisk } from '@/tools/video-editor/lib/serialize.ts';
+import { deriveClipNameBasis, isExplicitClipLabel } from '@/tools/video-editor/lib/clipDisplayNames.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 import {
   assembleTimelineData,
@@ -145,15 +146,24 @@ const buildDataFromSerializedConfig = (
 const withoutDerivedLabels = (
   current: TimelineData,
   resolvedConfig: TimelineData['resolvedConfig'],
-): TimelineData['resolvedConfig'] => ({
-  ...resolvedConfig,
-  clips: resolvedConfig.clips.map((clip) => {
-    const meta = current.meta[clip.id];
-    if (!meta || meta.label !== undefined || clip.label === undefined || clip.label !== meta.displayName) return clip;
-    const { label: _derived, ...rest } = clip;
-    return rest;
-  }),
-});
+): TimelineData['resolvedConfig'] => {
+  // A clip the edit created (a split's right half) has no meta; judge it by the rule the load uses.
+  const needsBasis = resolvedConfig.clips.some((clip) => clip.label !== undefined && !current.meta[clip.id]);
+  const basis = needsBasis ? deriveClipNameBasis(resolvedConfig.clips, resolvedConfig.registry, resolvedConfig.tracks) : null;
+  return {
+    ...resolvedConfig,
+    clips: resolvedConfig.clips.map((clip) => {
+      if (clip.label === undefined) return clip;
+      const meta = current.meta[clip.id];
+      const derived = meta
+        ? meta.label === undefined && clip.label === meta.displayName
+        : basis !== null && !isExplicitClipLabel(clip.label, clip.id, basis);
+      if (!derived) return clip;
+      const { label: _derived, ...rest } = clip;
+      return rest;
+    }),
+  };
+};
 
 /** The one way an edited `resolvedConfig` becomes the config that is saved. */
 export const serializeResolvedConfigForSave = (
