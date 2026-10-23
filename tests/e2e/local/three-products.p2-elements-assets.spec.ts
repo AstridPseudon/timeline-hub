@@ -577,4 +577,3 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
     await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toHaveCount(0);
   });
 });
-
