@@ -38,7 +38,7 @@ _EXTENT_KEY = "astrid_composition_duration_frames"
 _ROOT = Path(__file__).resolve().parents[3]
 _REMOTION_ROOT = _ROOT / "remotion"
 _ROOT_TSX = _REMOTION_ROOT / "src" / "Root.tsx"
-_DURATION_CHUNK = "chunk-SE4TPVLW.js"
+_DURATION_CHUNK = "chunk-A6LVBEHN.js"
 _COMPOSITION_PACKAGE = "@banodoco/timeline-composition"
 
 _ROOT_PROBE = r"""

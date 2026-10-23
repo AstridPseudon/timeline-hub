@@ -56,7 +56,7 @@ def _selected_composition_package() -> Path:
     )
     manifest = package / "package.json"
     assert manifest.is_file(), manifest
-    assert json.loads(manifest.read_text(encoding="utf-8"))["version"] == "0.0.13"
+    assert json.loads(manifest.read_text(encoding="utf-8"))["version"] == "0.0.14"
     return package
 
 
