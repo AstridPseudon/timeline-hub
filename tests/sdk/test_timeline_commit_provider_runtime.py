@@ -2,12 +2,124 @@
 from __future__ import annotations
 
 import copy
+from types import SimpleNamespace
 
 import pytest
 
 from tests.helpers.runtime import use_runtime
 
 pytestmark = pytest.mark.integration
+
+
+@pytest.mark.parametrize("selected", [False, True])
+def test_public_undo_redo_persists_v2_effect_bindings(tmp_path, selected):
+    use_runtime()
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    from astrid.sdk import timeline
+    from astrid.sdk.contracts import DomainResult
+    from astrid.sdk.remote import RemoteTimelines
+    from astrid.sdk.timeline.capture import capture_track_create
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.workspace_client import WorkspaceClient
+
+    root = tmp_path / "public-undo-realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+    project = service.create_project({"slug": "public-undo", "name": "Public undo"})["id"]
+    service.create_timeline(project, "film", idempotency_key="birth")
+    generated = SimpleNamespace()
+    transport = WorkspaceClient.__new__(WorkspaceClient)
+    transport._generated = generated
+    transport._last_handshake = {"realm_id": service.realm["id"], "actor_id": "editor"}
+    client = SimpleNamespace(_remote=SimpleNamespace(_transport=transport), timelines=RemoteTimelines(transport))
+    client.timelines._resolve_timeline = lambda p, t: DomainResult.success({"project_id": p, "timeline_id": t})
+    client.timelines.open_composition = lambda p, t: DomainResult.success({
+        "native_inspection": {"project_id": p, "timeline_id": t},
+        "summary": {"head_revision_id": service.get_project_timeline(p, t)["head_revision_id"]}})
+    client.timelines.open_bundle = lambda p, t, revision_id=None, **kw: DomainResult.success({
+        "bundle": bundle_from_document(service._timeline_commits()[0].revision_closure(p, t, revision_id))})
+    generated.list_timeline_commits = lambda p, t, cursor=None, limit=200: service.list_timeline_commits(
+        p, t, cursor=cursor, limit=limit, authorize=lambda: None)
+    wires = []
+
+    def send(p, t, body, *, idempotency_key):
+        result = service.commit_timeline(p, t, body, idempotency_key=idempotency_key, publisher="editor",
+            invocation_path=f"/v1/projects/{p}/timelines/{t}/commit", authorize=lambda: None)
+        wires.append({"body": copy.deepcopy(body), "key": idempotency_key, "response": copy.deepcopy(result)})
+        return result
+
+    generated.commit_timeline = send
+    outbox = tmp_path / "public-outbox.json"
+
+    def opened():
+        return timeline.open(project, "film", client=client, outbox_path=outbox)
+
+    try:
+        tl = opened()
+        for track in ("one", "two"):
+            tl.command(capture_track_create(tl.bundle, "parent", {"id": track, "kind": "visual"}),
+                       label=f"Create {track}")
+        born = tl.commit("Create tracks")
+        tl = opened()
+        for track in ("one", "two"):
+            tl.command({"schema_version": 1, "op": "track.set", "version": "1",
+                        "select": f"parent/track:{track}",
+                        "args": {"values": {"label": track.title()}, "clear": []}}, label=f"Label {track}")
+        forward = tl.commit("Label tracks")
+        publication = forward["receipt"]["receipt_id"]
+        selector = {publication: ["step-1"]} if selected else None
+        tl = opened()
+        preview = tl.undo(publications=[publication], steps=selector, dry_run=True, idempotency_key="preview")
+        assert preview["data"]["would_status"] == "accepted" and preview["receipt"] is None
+        assert service.get_project_timeline(project, "film")["head_publication_id"] == publication
+        undone = tl.undo(publications=[publication], steps=selector, idempotency_key="undo")
+        tracks = undone["data"]["canonical_document"]["parent_revision"]["payload"]["config"]["tracks"]
+        assert "label" not in tracks[0]
+        if selected:
+            assert tracks[1]["label"] == "Two"
+        else:
+            assert undone["data"]["canonical_document"] == born["data"]["canonical_document"]
+        original_wire = copy.deepcopy(wires[-1])
+        assert generated.commit_timeline(project, "film", original_wire["body"], idempotency_key="undo") == original_wire["response"]
+        redone = opened().undo(publications=[undone["receipt"]["receipt_id"]], idempotency_key="redo")
+        assert redone["data"]["canonical_document"] == forward["data"]["canonical_document"]
+        history = service.list_timeline_commits(project, "film", authorize=lambda: None)["items"]
+        assert len(history) == 5  # Public birth, tracks, labels, undo, redo; preview/retry do not append.
+        inverse_entry = history[-2]
+        if selected:
+            assert inverse_entry["records"]["undo_steps"] == selector
+        source_records = history[-3]["records"]["commands"][:1 if selected else 2]
+        source_reads = {(read["ref"], tuple(read["path"])) for record in source_records for read in record["reads"]}
+        inverse_reads = {(read["ref"], tuple(read["path"])) for read in inverse_entry["records"]["commands"][0]["reads"]}
+        assert source_reads and source_reads <= inverse_reads
+        for entry in history[-2:]:
+            records = entry["records"]
+            step = records["steps"][0]
+            assert step["id"] == "inverse" and step["command_ordinals"] == [0]
+            assert step["patch"] and step["dependencies"]
+            command = records["commands"][0]
+            assert command["reads"]
+            bindings = [binding for binding in command["bindings"] if binding["key"] == "commit.effect"]
+            assert {(binding["effect_ordinal"], binding["boundary"]["side"]) for binding in bindings} == {
+                (ordinal, side) for ordinal in range(len(step["patch"])) for side in ("before", "after")}
+            assert all(binding["step_id"] == "inverse" for binding in bindings)
+        for wire in wires[2:]:
+            body = wire["body"]
+            assert body["label"] == "Undo timeline edit" and body["merge"] == "fields"
+            assert body["steps"][0]["id"] == "inverse" and body["steps"][0]["patch"] == []
+            assert "reads" not in body and "reads" not in body["steps"][0]
+            assert body["source"] == {"via": "python"}
+            assert "rationale" not in body and "group_id" not in body
+            response = wire["response"]
+            assert response["data"]["status"] in {"accepted", "preview"}
+            if response["receipt"] is not None:
+                assert response["receipt"]["result"] == response["data"]
+    finally:
+        service.close()
 
 
 def test_structural_reservations_and_receipt_retry_survive_runtime_restart(tmp_path, monkeypatch):

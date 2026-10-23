@@ -225,6 +225,94 @@ def test_native_one_shot_retry_never_reads_or_recaptures(connected):
     assert client.reads == ['r0']
 
 
+@pytest.mark.parametrize('selected', [None, ['step-1']])
+def test_public_undo_freezes_v2_metadata_and_retries_lost_ack(connected, selected):
+    client, generated, path = connected
+    session = open_session(connected)
+    accepted = session.commit(label('Original'))
+    publication = accepted['receipt']['receipt_id']
+    steps = None if selected is None else {publication: selected}
+    generated.lose_ack = True
+    with pytest.raises(WorkspaceClientError):
+        session.undo([publication], steps=steps, idempotency_key='undo', via='cli')
+    persisted = path.read_bytes()
+    state = json.loads(persisted)
+    body = json.loads(state['flight']['body'])
+    assert body['base_revision_id'] == 'r1' and body['base_publication_id'] == publication
+    assert body['label'] == 'Undo timeline edit' and body['merge'] == 'fields'
+    assert body['steps'] == [{'id': 'inverse', 'label': body['label'], 'intent': '',
+                              'tags': [], 'command_ordinals': [0], 'patch': []}]
+    assert 'reads' not in body and 'reads' not in body['steps'][0]
+    assert body['source'] == {'via': 'cli'} and body['dry_run'] is False
+    assert body['commands'][0]['args'] == ({'publications': [publication]} if steps is None else
+                                          {'publications': [publication], 'steps': steps})
+    session = open_session(connected)
+    for options in ({'idempotency_key': 'changed'}, {'dry_run': True}):
+        with pytest.raises(TimelineEditError, match='immutable'):
+            session.undo([publication], steps=steps, **options)
+        assert path.read_bytes() == persisted
+    with pytest.raises(TimelineEditError, match='pending intent'):
+        session.undo(['another-publication'])
+    assert path.read_bytes() == persisted
+    retried = session.undo([publication], steps=steps)
+    assert retried['receipt'] == generated.accepted['undo'][1]['receipt']
+    assert generated.calls[-2:] == [(state['flight']['body'].encode(), 'undo')] * 2
+    assert client.reads == ['r0']
+    assert json.loads(path.read_bytes())['pending'] == []
+
+
+def test_undo_preserves_pending_intent_and_metadata(connected):
+    _, generated, path = connected
+    session = open_session(connected)
+    session.queue(label('Pending'))
+    with session.outbox.locked():
+        state = session._state()
+        state['commit_options'] = {'label': 'Pending label', 'merge': 'atomic', 'steps': []}
+        session.outbox.write(state)
+    persisted = path.read_bytes()
+    with pytest.raises(TimelineEditError, match='flush pending intent'):
+        session.undo(['pub0'])
+    assert path.read_bytes() == persisted and generated.calls == []
+
+
+def test_undo_preview_keeps_base_and_requires_fresh_key(connected):
+    _, generated, path = connected
+    session = open_session(connected)
+    publication = session.commit(label('Original'))['receipt']['receipt_id']
+    preview = session.undo([publication], dry_run=True, idempotency_key='preview')
+    assert preview['data']['status'] == 'preview' and preview['receipt'] is None
+    state = json.loads(path.read_bytes())
+    assert state['base'] == {'revision_id': 'r1', 'publication_id': publication}
+    assert state['pending'] == [] and state['flight'] is None
+    assert 'commit_options' not in state
+    with pytest.raises(TimelineEditError, match='fresh key'):
+        session.undo([publication], idempotency_key='preview')
+    assert json.loads(path.read_bytes()) == state
+    session.undo([publication], idempotency_key='accepted-undo')
+    assert generated.calls[-1][1] == 'accepted-undo'
+
+
+def test_undo_retry_preserves_legacy_flight_without_adding_metadata(connected):
+    _, generated, path = connected
+    session = open_session(connected)
+    publication = session.commit(label('Original'))['receipt']['receipt_id']
+    generated.refusal = ConnectionError('unknown outcome')
+    with pytest.raises(WorkspaceClientError):
+        session.undo([publication], idempotency_key='legacy')
+    with session.outbox.locked():
+        state = session._state()
+        body = json.loads(state['flight']['body'])
+        for key in ('label', 'steps', 'merge'):
+            body.pop(key)
+        state.pop('commit_options')
+        state['flight']['body'] = test_timeline_sync.request_bytes(body).decode()
+        session.outbox.write(state)
+    original = copy.deepcopy(state['flight'])
+    generated.refusal = None
+    open_session(connected).undo([publication])
+    assert generated.calls[-1] == (original['body'].encode(), 'legacy')
+
+
 def test_stale_captured_claims_are_refused_without_refresh_or_persistence(connected):
     _, generated, path = connected
     session = open_session(connected)
