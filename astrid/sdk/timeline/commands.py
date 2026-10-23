@@ -209,6 +209,9 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
                         verified_producer=verified_producer)
         ctx.patch_replay_bindings = replay_bindings or {}
         metadata.before(ctx)
+        # Declarations are dependency observations, not native authored claims.
+        # Restore them after exact command capture validation for history/undo.
+        inherited_reads, ctx.record['reads'] = ctx.record['reads'], []
         _verify_claims(ctx, command)
         if resolve_inputs is not None:
             ctx.prior_records = records
@@ -264,6 +267,8 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
                               for key, expected in command[field].items())
             if not matches:
                 raise CommandError(f"submitted {field} does not match authoritative capture", kind='capture_mismatch')
+        record['reads'] = [*inherited_reads, *(read for read in record['reads']
+                           if not any(equal(read, inherited) for inherited in inherited_reads))]
         # Keep original claims and metadata after they have been verified.
         record['command'].update({k: v for k, v in command.items() if k != 'intent'})
         records.append(record)
