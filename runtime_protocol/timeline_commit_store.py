@@ -172,7 +172,16 @@ class TimelineCommitStore:
         with self.store._mutex:
             authorize()
             request = context["request"]
-            if self._membership(request["project_id"], request["timeline_id"]) != context["realm_id"]:
+            # Lookup is the only path allowed to inspect an archived scope:
+            # it must first authenticate the current actor, then prove the
+            # project/timeline row exists, and only then read the exact key.
+            # New writes continue through _membership's active-row guard.
+            row = self.conn.execute(
+                "SELECT p.realm_id FROM timelines t JOIN projects p ON p.id=t.project_id "
+                "WHERE t.id=? AND t.project_id=?",
+                (request["timeline_id"], request["project_id"]),
+            ).fetchone()
+            if row is None or row["realm_id"] != context["realm_id"]:
                 reject("authority_changed")
             return self._lookup(context)
 
@@ -186,10 +195,10 @@ class TimelineCommitStore:
         edge = self.conn.execute("SELECT * FROM timeline_commit_history WHERE publication_id=?", (row["txn_id"],)).fetchone()
         if edge is None or edge["project_id"] != context["request"]["project_id"] or edge["timeline_id"] != context["request"]["timeline_id"]:
             raise ProtocolError("accepted commit history is missing or corrupt")
-        self._verify_accepted(row, edge)
+        self._verify_accepted(row, edge, allow_archived=True)
         return self._envelope(row, edge["project_id"])
 
-    def _verify_accepted(self, row, edge):
+    def _verify_accepted(self, row, edge, *, allow_archived=False):
         from .timeline_commit import CommitRejected
         try:
             data, records = json.loads(row["result_json"]), json.loads(edge["records_json"])
@@ -235,8 +244,12 @@ class TimelineCommitStore:
                 from .timeline_commit_auth import validate
                 replay_request = {**metadata, "commands": data["commands"],
                                   "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"]}
-                source = self.revision_closure(edge["project_id"], edge["timeline_id"], previous["revision_id"])
-                continuations = self._binding_continuations(edge["project_id"], edge["timeline_id"], base["publication_id"], previous)
+                source = self.revision_closure(edge["project_id"], edge["timeline_id"], previous["revision_id"],
+                                               allow_archived=allow_archived)
+                continuations = self._binding_continuations(
+                    edge["project_id"], edge["timeline_id"], base["publication_id"], previous,
+                    allow_archived=allow_archived,
+                )
                 validate(replay_request, {"records": records, "expected_head": previous, "canonical_document": document},
                          source, continuations=continuations)
             ids = json.loads(row["event_ids_json"])
@@ -271,14 +284,18 @@ class TimelineCommitStore:
             if has_materialization(prepared):
                 project, timeline = edge["project_id"], edge["timeline_id"]
                 allocations = materialization_join(prepared, project, timeline,
-                    lambda revision: self.revision_closure(project, timeline, revision))
-                if canonical_json(document) != canonical_json(self.revision_closure(project, timeline, edge["revision_id"])):
+                    lambda revision: self.revision_closure(project, timeline, revision,
+                                                           allow_archived=allow_archived))
+                if canonical_json(document) != canonical_json(self.revision_closure(
+                        project, timeline, edge["revision_id"], allow_archived=allow_archived)):
                     raise ValueError()
-                self._check_inherited_allocations(project, timeline, records, allocations, edge["project_seq"])
+                self._check_inherited_allocations(project, timeline, records, allocations, edge["project_seq"],
+                                                   allow_archived=allow_archived)
         except (KeyError, TypeError, ValueError, IndexError, ValidationError, CommitRejected) as exc:
             raise ProtocolError("accepted commit record is corrupt") from exc
 
-    def _check_inherited_allocations(self, project, timeline, records, allocations, before_seq=None):
+    def _check_inherited_allocations(self, project, timeline, records, allocations, before_seq=None,
+                                     *, allow_archived=False):
         inverse_refs = {d["key"].removeprefix("materialization.source:")
                         for r in records["commands"] if r["command"]["op"] == "timeline.inverse"
                         for d in r["dependencies"] if d["key"].startswith("materialization.source:")}
@@ -291,12 +308,13 @@ class TimelineCommitStore:
                                         (publication,)).fetchone()
                 if row is None or row[0] >= before_seq:
                     reject("invalid_records")
-            entry = self.history_entry(project, timeline, publication)
+            entry = self.history_entry(project, timeline, publication, allow_archived=allow_archived)
             data = entry["receipt"]["result"]
             target = {**data, "records": entry["records"], "expected_head": entry["previous"]}
             if has_materialization(target):
                 for shot, allocation in materialization_join(target, project, timeline,
-                        lambda revision: self.revision_closure(project, timeline, revision)).items():
+                        lambda revision: self.revision_closure(project, timeline, revision,
+                                                               allow_archived=allow_archived)).items():
                     if shot in inherited and canonical_json(inherited[shot]) != canonical_json(allocation):
                         reject("invalid_records")
                     inherited[shot] = allocation
@@ -349,9 +367,16 @@ class TimelineCommitStore:
                 reject("history_unavailable", "timeline catalog facts are corrupt")
             return dict(row)
 
-    def history_entry(self, project_id, timeline_id, publication_id):
+    def history_entry(self, project_id, timeline_id, publication_id, *, allow_archived=False):
         with self.store._mutex:
-            self._membership(project_id, timeline_id)
+            if allow_archived:
+                row = self.conn.execute(
+                    "SELECT p.realm_id FROM timelines t JOIN projects p ON p.id=t.project_id "
+                    "WHERE t.id=? AND t.project_id=?", (timeline_id, project_id)).fetchone()
+                if row is None:
+                    reject("history_unavailable")
+            else:
+                self._membership(project_id, timeline_id)
             row = self.conn.execute("SELECT * FROM timeline_commit_history WHERE publication_id=? "
                                     "AND project_id=? AND timeline_id=?", (publication_id, project_id, timeline_id)).fetchone()
             if row is None:
@@ -360,7 +385,7 @@ class TimelineCommitStore:
             if ledger is None or ledger["first_project_seq"] != row["project_seq"]:
                 reject("history_unavailable")
             if row["intent"] == "recorded" or ledger["command_kind"] == "timeline.commit":
-                self._verify_accepted(ledger, row)
+                self._verify_accepted(ledger, row, allow_archived=allow_archived)
             previous = None if row["previous_publication_id"] is None else {
                 "revision_id": row["previous_revision_id"], "publication_id": row["previous_publication_id"]}
             records = json.loads(row["records_json"]) if row["records_json"] is not None else None
@@ -418,9 +443,17 @@ class TimelineCommitStore:
                     "seq": items[-1]["receipt"]["project_seq"][0]}).encode()).decode()
             return {"items": items, "next_cursor": next_cursor, "head": detached(through)}
 
-    def revision_closure(self, project_id, timeline_id, revision_id):
+    def revision_closure(self, project_id, timeline_id, revision_id, *, allow_archived=False):
         with self.store._mutex:
-            self._membership(project_id, timeline_id)
+            if allow_archived:
+                row = self.conn.execute(
+                    "SELECT 1 FROM timelines WHERE id=? AND project_id=?",
+                    (timeline_id, project_id),
+                ).fetchone()
+                if row is None:
+                    reject("history_unavailable")
+            else:
+                self._membership(project_id, timeline_id)
             parent = self.conn.execute("SELECT * FROM parent_composition_revisions WHERE id=? AND project_id=? AND timeline_id=?",
                                        (revision_id, project_id, timeline_id)).fetchone()
             if parent is None:
@@ -430,7 +463,7 @@ class TimelineCommitStore:
                 from .timeline_commit_baseline import verify_revision_source
                 document = verify_revision_source(self.conn, project_id, timeline_id, revision_id,
                                                    read_object=ContentAddressedStore(self.store.cas_root).read)
-                self._validate_closure(document)
+                self._validate_closure(document, allow_archived=allow_archived)
                 return document
             manifest = json.loads(parent["commit_manifest_json"])
             document = {"schema_version": 1, "project_id": project_id, "timeline_id": timeline_id,
@@ -447,7 +480,7 @@ class TimelineCommitStore:
                     if family == "internal_timeline_revisions":
                         image["timeline_id"] = row["timeline_id"]
                     document[family].append(image)
-            self._validate_closure(document)
+            self._validate_closure(document, allow_archived=allow_archived)
             self._verify_inputs(document)
             return document
 
@@ -567,11 +600,19 @@ class TimelineCommitStore:
     def _image(row):
         return {"revision_id": row["id"], "content_digest": row["content_digest"], "payload": json.loads(row["payload_json"])}
 
-    def _validate_closure(self, document):
+    def _validate_closure(self, document, *, allow_archived=False):
         from .visual_seam import parent_clips
 
         project_id, timeline_id = document["project_id"], document["timeline_id"]
-        self._membership(project_id, timeline_id)
+        if allow_archived:
+            row = self.conn.execute(
+                "SELECT 1 FROM timelines WHERE id=? AND project_id=?",
+                (timeline_id, project_id),
+            ).fetchone()
+            if row is None:
+                reject("history_unavailable")
+        else:
+            self._membership(project_id, timeline_id)
         parent = document["parent_revision"]
         try:
             parent_clips(parent["payload"])
@@ -685,10 +726,10 @@ class TimelineCommitStore:
         if existing is not None:
             self._verify_parent_rows(document)
 
-    def _binding_continuations(self, project, timeline, base_publication, expected):
+    def _binding_continuations(self, project, timeline, base_publication, expected, *, allow_archived=False):
         continuations, cursor = {}, expected
         while cursor["publication_id"] != base_publication:
-            entry = self.history_entry(project, timeline, cursor["publication_id"])
+            entry = self.history_entry(project, timeline, cursor["publication_id"], allow_archived=allow_archived)
             if entry["records"]:
                 for record in entry["records"]["commands"]:
                     for binding in record["bindings"]:
