@@ -1,5 +1,5 @@
-<!-- main | 2026-10-23T09:59:52Z | dispatcher heartbeat 9s | live 3 (sol 0, luna 3, other 0) | busy30 8 | status age 2m -->
-# runtime board, 2026-10-23T09:57:13Z
+<!-- main | 2026-10-23T10:01:46Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-23T10:00:37Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | F-runtime-full | full suite after75 reviewedcorrections | Luna classifier/independent/testservice | exacta01e9/tree645de | gated:P1 | classifier0911; rt-F-full-rerun-review-0920 | Independentcensus VERIFIED:9458 FINALFAIL6237PASS1FAIL0ERROR/26skip15xfail430.86s. ALL75 priorfixnodesclearedvia297cohort. SoleknownrootDocPatchArgs realregressionheldP1; no wholefullPASS or laterheadclaim | a01e9d806/tree645de |
@@ -82,3 +82,5 @@ Checkpoint 2026-10-23T09:53:41Z: U1b0948 FINALFAIL copiedxfailreason newnodeacce
 Checkpoint 2026-10-23T09:55:40Z: consumedAgent0949twopeers samepass: hostrecovered09:42 (cleared), retainedstageactualAgent split+note repro design/agent-R2-stage-repro-0912.py mandatoryONE nextinverseindependentreview (exit0aloneNOTPASS; inspectinverseauthJSON), no58rerun. NewOPS-child-provision0955 stagedcandidateonlyauthor dispatched immediately; existingmake-child-venvalready600sperpip mainleadfix preserved, total/networkbound+realinstalledRuntime missing-Iimports owned. ActualAgentmain nowc424; Sol0940 captures59loadedAgentfiles exactsource/currentrecheck. ThreeuniqueLIVEworkers nativeSol0940/U1bLuna0953/OPSLuna0955; independentreviewbriefsready.
 
 Checkpoint 2026-10-23T09:57:13Z: inverseSol0940 terminalexit0 oneown21b329 over1365, no borrowedancestry. Mandatoryfirstlane actualsplit33+73+12service20055=118, real10/101D17; no falsewholecommand socketPASS. Luna0957 independentreviewqueuedimmediately with exactretainedAgent0949split+noteproberequired AND sixnativevariants/exactreviewerforgery/missingcoverage. U1bLuna0953 firstreturnLIVE, OPSLuna0955 candidateonlyLIVE. AgentHOSTlead0949 finalACK recovery accepted, no remaininglivenessneed.
+
+Checkpoint 2026-10-23T10:00:37Z: H6peerboardrecheckfound AppJSON0b6b ALREADYOWNER MERGED23b0901ba (hubresult09:46; localactual23b, ancestryexit0). Proof0950boardstaleawaitsreceipt; peer1000 handedactualreceipt+requested immediateheldhelper/P1currentportunblock, no remerge/duplicateauthor/body. WholeA3explicitheaderstillabsent.
