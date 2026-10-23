@@ -50,8 +50,11 @@ function VideoEditorAssetPanelSurfaceComponent({
   const surfaceRef = useRef<HTMLDivElement>(null);
   const latestRuntime = useRef(runtime);
   latestRuntime.current = runtime;
-  const { setAssetPanelState, uploadFiles } = useTimelineEditorOps();
+  const { setAssetPanelState, uploadFiles, transcriptHost } = useTimelineEditorOps();
   const panelVideo = useMemo(() => {
+    // Rebuild the adapter when the host instance is replaced; TranscriptPanel
+    // reruns project-source lookups when its adapter identity changes.
+    void transcriptHost;
     const base = video ?? (store && view ? {
       view,
       seek: (seconds: number) => { store.getState().ops.onClickTimeArea(seconds); },
@@ -64,7 +67,7 @@ function VideoEditorAssetPanelSurfaceComponent({
       playedShotComposition(latestRuntime.current?.userId, latestRuntime.current?.shots),
       store.getState().data.data?.resolvedConfig,
     )) : base;
-  }, [video, store, view, framePreview.preview]);
+  }, [video, store, view, framePreview.preview, transcriptHost]);
   const clipTypeRegistry = useOptionalClipTypeRegistryContext()?.registry;
   // Each extension's panels get a drag source bound to that extension: it can only offer clip types
   // the extension owns, and only where the editor has a timeline to drop on.
