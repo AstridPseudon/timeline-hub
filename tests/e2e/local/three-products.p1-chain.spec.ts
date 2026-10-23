@@ -116,10 +116,29 @@ function observe(page: Page) {
 }
 
 async function openChain(page: Page, harness: DirectHarness, seed: ChainSeed) {
-  await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?localProject=${encodeURIComponent(seed.projectSlug)}&localTimeline=${encodeURIComponent(seed.timelineId)}`);
-  await expectConnected(page);
-  await expect(firstTrackName(page)).toBeVisible();
-  await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+  const runtimeResponses: RuntimeDiagnosticResponse[] = [];
+  const pageErrors: DiagnosticErrorSignal[] = [];
+  const consoleErrors: DiagnosticErrorSignal[] = [];
+  page.on('response', (response) => {
+    const method = diagnosticMethod(response.request().method());
+    const status = diagnosticStatus(response.status());
+    let route: DiagnosticRoute | undefined;
+    try { route = diagnosticRoute(new URL(response.url()).pathname); } catch { return; }
+    if (method && status !== undefined && route) boundedPush(runtimeResponses, { method, route, status });
+  });
+  page.on('pageerror', (error) => boundedPush(pageErrors, classifyDiagnosticError(error.message)));
+  page.on('console', (message) => {
+    if (message.type() === 'error') boundedPush(consoleErrors, classifyDiagnosticError(message.text()));
+  });
+  try {
+    await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?localProject=${encodeURIComponent(seed.projectSlug)}&localTimeline=${encodeURIComponent(seed.timelineId)}`);
+    await expectConnected(page);
+    await expect(firstTrackName(page)).toBeVisible();
+    await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+  } catch (error) {
+    await openChainDiagnostics(page, seed.timelineId, runtimeResponses, pageErrors, consoleErrors);
+    throw error;
+  }
 }
 
 async function setPlayhead(page: Page, seconds: number) {
@@ -160,6 +179,161 @@ async function trimSourceWindow(page: Page, clipId: string, value: string) {
 
 async function forward(route: Route, response: any, body: any) {
   await route.fulfill({ status: response.status(), headers: response.headers(), body: JSON.stringify(body) });
+}
+
+const DIAGNOSTIC_LIMIT = 40;
+const DIAGNOSTIC_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'] as const;
+type DiagnosticMethod = typeof DIAGNOSTIC_METHODS[number];
+type DiagnosticRoute =
+  | '/api/runtime/v1/health' | '/api/runtime/v1/realm' | '/api/runtime/v1/handshake'
+  | '/api/runtime/v1/projects' | '/api/runtime/v1/projects/:project'
+  | '/api/runtime/v1/projects/:project/timelines'
+  | '/api/runtime/v1/projects/:project/timelines/:timeline'
+  | '/api/runtime/v1/projects/:project/timelines/:timeline/commits'
+  | '/api/runtime/v1/projects/:project/timelines/:timeline/inspect'
+  | '/api/runtime/v1/projects/:project/timelines/:timeline/commit'
+  | '/api/astrid/v1/health' | '/api/astrid/v1/realm' | '/api/astrid/v1/handshake'
+  | '/api/astrid/v1/projects' | '/api/astrid/v1/projects/:project'
+  | '/api/astrid/v1/projects/:project/timelines'
+  | '/api/astrid/v1/projects/:project/timelines/:timeline'
+  | '/api/astrid/v1/projects/:project/timelines/:timeline/commits'
+  | '/api/astrid/v1/projects/:project/timelines/:timeline/inspect'
+  | '/api/astrid/v1/projects/:project/timelines/:timeline/commit'
+  | '/runtime-config/v1/workspace.json' | '/runtime-config/v1/operation/:handle';
+type DiagnosticErrorSignal =
+  | 'failed_to_fetch' | 'network_error' | 'connection_refused' | 'runtime_unavailable'
+  | 'operation_unavailable' | 'paired_connector_error' | 'no_proxy_on_hosted_origin' | 'unknown';
+type DiagnosticConnectionState =
+  | 'connected' | 'stopped' | 'restarted' | 'connecting' | 'phone' | 'permission'
+  | 'pending' | 'blocked' | 'set_up' | 'update_needed' | 'unknown';
+
+type DiagnosticRuntimeResponse = { method: DiagnosticMethod; route: DiagnosticRoute; status: number };
+
+const DIAGNOSTIC_ERROR_LABELS: ReadonlyArray<[DiagnosticErrorSignal, string]> = [
+  ['failed_to_fetch', 'failed to fetch'],
+  ['network_error', 'network error'],
+  ['connection_refused', 'connection refused'],
+  ['runtime_unavailable', 'runtime unavailable'],
+  ['operation_unavailable', 'operation_unavailable'],
+  ['paired_connector_error', 'paired_connector_error'],
+  ['no_proxy_on_hosted_origin', 'no_proxy_on_hosted_origin'],
+];
+
+const DIAGNOSTIC_CONNECTION_STATES: readonly DiagnosticConnectionState[] = [
+  'connected', 'stopped', 'restarted', 'connecting', 'phone', 'permission', 'pending', 'blocked', 'set_up', 'update_needed', 'unknown',
+];
+
+const DIAGNOSTIC_ROUTE_TEMPLATES: ReadonlyArray<[RegExp, string]> = [
+  [/^\/v1\/health$/, '/v1/health'],
+  [/^\/v1\/realm$/, '/v1/realm'],
+  [/^\/v1\/handshake$/, '/v1/handshake'],
+  [/^\/v1\/projects$/, '/v1/projects'],
+  [/^\/v1\/projects\/[^/]+$/, '/v1/projects/:project'],
+  [/^\/v1\/projects\/[^/]+\/timelines$/, '/v1/projects/:project/timelines'],
+  [/^\/v1\/projects\/[^/]+\/timelines\/[^/]+$/, '/v1/projects/:project/timelines/:timeline'],
+  [/^\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commits$/, '/v1/projects/:project/timelines/:timeline/commits'],
+  [/^\/v1\/projects\/[^/]+\/timelines\/[^/]+\/inspect$/, '/v1/projects/:project/timelines/:timeline/inspect'],
+  [/^\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/, '/v1/projects/:project/timelines/:timeline/commit'],
+];
+
+function boundedPush<T>(items: T[], item: T) {
+  if (items.length < DIAGNOSTIC_LIMIT) items.push(item);
+}
+
+function diagnosticMethod(value: string): DiagnosticMethod | undefined {
+  return (DIAGNOSTIC_METHODS as readonly string[]).includes(value) ? value as DiagnosticMethod : undefined;
+}
+
+function diagnosticStatus(value: number): number | undefined {
+  return Number.isInteger(value) && value >= 100 && value <= 599 ? value : undefined;
+}
+
+function diagnosticRoute(pathname: string): DiagnosticRoute | undefined {
+  if (pathname === '/runtime-config/v1/workspace.json') return pathname;
+  if (pathname.startsWith('/runtime-config/v1/operation/')) return '/runtime-config/v1/operation/:handle';
+  const prefix = pathname.startsWith('/api/runtime/') ? '/api/runtime' : pathname.startsWith('/api/astrid/') ? '/api/astrid' : undefined;
+  if (!prefix) return undefined;
+  const suffix = pathname.slice(prefix.length);
+  const template = DIAGNOSTIC_ROUTE_TEMPLATES.find(([pattern]) => pattern.test(suffix))?.[1];
+  return template ? `${prefix}${template}` as DiagnosticRoute : undefined;
+}
+
+function classifyDiagnosticError(value: string): DiagnosticErrorSignal {
+  const normalized = value.toLowerCase();
+  return DIAGNOSTIC_ERROR_LABELS.find(([, phrase]) => normalized.includes(phrase))?.[0] ?? 'unknown';
+}
+
+function diagnosticConnectionState(value: string | null): DiagnosticConnectionState {
+  return (DIAGNOSTIC_CONNECTION_STATES as readonly string[]).includes(value ?? '') ? value as DiagnosticConnectionState : 'unknown';
+}
+
+function summarizeOutboxes(records: any[]) {
+  const observed = records.slice(0, DIAGNOSTIC_LIMIT);
+  const intentLengths = observed.map((record) => Array.isArray(record.intents) ? record.intents.length : 0);
+  const pendingIntentLengths = observed.map((record) => record.pending ? 1 : 0);
+  const outcomeKinds = observed
+    .map((record) => record.pending?.outcome?.kind)
+    .filter((kind): kind is 'accepted' | 'rejected' | 'retry' => kind === 'accepted' || kind === 'rejected' || kind === 'retry');
+  return {
+    ownerCount: records.length,
+    intentLengths,
+    pendingIntentLengths,
+    outcomeKinds,
+    hasIdleOwner: records.some((record) => !record.pending && Array.isArray(record.intents) && record.intents.length === 0),
+    hasPending: records.some((record) => !!record.pending),
+    hasIntents: intentLengths.some((length) => length > 0),
+    hasConflict: records.some((record) => record.intents?.some((intent: any) => intent.conflict !== undefined)),
+  };
+}
+
+async function visibleDiagnostic(locator: { isVisible(): Promise<boolean> }) {
+  try {
+    return await locator.isVisible();
+  } catch {
+    return false;
+  }
+}
+
+async function openChainDiagnostics(
+  page: Page,
+  timelineId: string,
+  runtimeResponses: DiagnosticRuntimeResponse[],
+  pageErrors: DiagnosticErrorSignal[],
+  consoleErrors: DiagnosticErrorSignal[],
+) {
+  let outboxSummary: ReturnType<typeof summarizeOutboxes> | null = null;
+  let outboxReadFailed = false;
+  try {
+    outboxSummary = summarizeOutboxes(await commandOutboxes(page, timelineId));
+  } catch {
+    outboxReadFailed = true;
+  }
+  const connection = page.getByTestId('runtime-connection-status');
+  const runtimePanel = page.getByTestId('runtime-not-connected');
+  const recovery = page.getByTestId('timeline-command-recovery');
+  const timelineError = page.locator('[data-video-editor-timeline-error="true"]');
+  const provider = page.getByTestId('video-editor-provider');
+  const connectionState = await connection.getAttribute('data-state').catch(() => null);
+  const panelState = await runtimePanel.getAttribute('data-state').catch(() => null);
+  const selectedTimelineId = await provider.getAttribute('data-timeline-id').catch(() => null);
+  const alertCount = await page.locator('[role="alert"]:visible').count().catch(() => 0);
+  console.log(`[P1 openChain diagnostics] ${JSON.stringify({
+    outboxReadFailed,
+    outboxes: outboxSummary,
+    ui: {
+      selectedTimelineMatchesExpectedId: selectedTimelineId === timelineId,
+      connectionState: diagnosticConnectionState(connectionState ?? panelState),
+      runtimePanelVisible: await visibleDiagnostic(runtimePanel),
+      recoveryVisible: await visibleDiagnostic(recovery),
+      timelineErrorVisible: await visibleDiagnostic(timelineError),
+      alertCount,
+    },
+    runtimeResponses,
+    errorSignals: {
+      page: { count: pageErrors.length, known: pageErrors.filter((signal) => signal !== 'unknown') },
+      console: { count: consoleErrors.length, known: consoleErrors.filter((signal) => signal !== 'unknown') },
+    },
+  })}`);
 }
 
 // Source proof only: execution is NOT READY until A2 supplies its existing authoritative
