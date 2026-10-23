@@ -1,5 +1,5 @@
-<!-- app | 2026-10-23T00:02:45Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 1m -->
-# app board, 2026-10-23T00:01:49Z
+<!-- app | 2026-10-23T00:04:23Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 8 | status age 0m -->
+# app board, 2026-10-23T00:04:13Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3a | Upstream deletions, docs/config/supabase | Luna high | — | doing | app-U3-live-compose | Sol verified vendor is exact live upstream; composition with U3b must qualify Supabase imports. Other four fixes independently PASS | a66702d9b donor |
@@ -7,7 +7,7 @@
 | U3c | QUICK harness plus retained journeys | Luna high | — | merged | app-U3c-quick-adapter-fix | Independent PASS retained; source merged, integrated browser/QUICK proof pending farm (not done) | 1c62edf19 merge / 0ba5378cc source |
 | U3 | True live upstream merge and Agent re-vendor | Luna high | U3a/U3b/U3c; merged U2 | doing | app-U3-live-compose | Live GitHub ref verified equal to origin/main; sanctioned merge-forward started, Codex resolves full conflicts and reviewed slice joins | upstream 7c17cc9d9 |
 | U4p | Adopt regenerated U1 client/schema | Luna high | U1, U3 | todo | — | U1 merged27f0306b9; exact producer checkout requested. Await composed U3 | — |
-| A2 | Save funnel and dependent local-document chain | Sol high | C0 APPROVED, U3b merged | merging | app-A2-save-funnel | Independent scoped PASS: inactive session279 tests/tsc/lint. Production funnel/emitter/replies still blocked on official v2 join; not A2 done | e739d880e |
+| A2 | Save funnel and dependent local-document chain | Sol high | C0 APPROVED, U3b merged | doing | app-A2-document-patch-intent | Inactive session slice independently PASS279/tsc/lint and merged05dabd460. Pure local guarded-proposal encoder dispatched; production funnel/replies await official v2 join, A2 not done | 05dabd460 session merge / e739d880e source |
 | A3 | Popup/placement/element/registerAsset via A2 | Luna high | A2 | todo | — | — | — |
 | A4 | Delete executor/capture ports/adapter/goldens | Luna high | A2, A3, H3 go | todo | — | No deletion before H3 go/no-go | — |
 | P1 | Proof lane App chain case collection | Luna high | C0 | merged | ap2-P1-app-chain-cases | Peer PASS: 12 Vitest, tsc/lint; integrated H3 execution awaits farm | 8b979bd21 merge / 898476b0e source |
