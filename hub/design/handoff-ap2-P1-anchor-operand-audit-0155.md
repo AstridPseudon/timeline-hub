@@ -29,11 +29,14 @@ transcript/word source object or binding to carry into a test setup.
   real-provider execution were added in `edcd1b2b`. The P1 request tests verify
   the canonical and source SHA-256 values match, so conversion did not alter
   this declaration.
-- The scalar child baseline is byte-for-byte the same authored clip as the
-  baseline clip in `tests/editing_conformance/fixtures/recipe_m1_move.json`.
-  The M1 fixture treats the old timing fields as authored values to retain,
-  not as a transcript-backed timing case. `84db8bde` also states that capture
-  commands and output bundles retain Bundle1 byte parity.
+- The scalar child baseline matches the baseline clip in
+  `tests/editing_conformance/fixtures/recipe_m1_move.json` in its
+  non-parameter fields and timing declarations, but it is not byte-for-byte
+  identical: M1 has no `params` key, while M2 additionally contains `old`,
+  `opaque`, `x`, and `y` params. The M1 fixture treats the old timing fields as
+  authored values to retain, not as a transcript-backed timing case.
+  `84db8bde` also states that capture commands and output bundles retain
+  Bundle1 byte parity.
 - The source recipe is
   `tests/editing_conformance/test_recipe_scalar_commands.py::test_portable_scalar_capture_goldens[...]`.
   `capture_clip_set_params` reads identity/occurrence/source and parameter
