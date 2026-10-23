@@ -43,12 +43,28 @@ class Timeline(Checkout):
 
     def _adopt(self, bundle):
         self.bundle = copy.deepcopy(bundle)
-        self._command_bundle = copy.deepcopy(bundle)
+        self._runtime_document = self.bundle.get("source_mapping", {}).pop("_runtime_document", None)
+        self._command_bundle = copy.deepcopy(self.bundle)
         self._commands: list[dict[str, Any]] = []
         self._steps: list[dict[str, Any]] = []
         self._free_edits = False
         self._journal.clear()
         self._refresh()
+
+    def _execution_bundle(self, bundle):
+        """Supply private canonical input from this evaluation's exact base pair."""
+        if self._runtime_document is None:
+            from .store import fetch_bundle
+
+            source = fetch_bundle(
+                self.session.project_id, self.session.timeline_id,
+                revision_id=self._basis["revision_id"], publication_id=self._basis["publication_id"],
+                client=self.session.client,
+            )
+            self._runtime_document = source["source_mapping"]["_runtime_document"]
+        result = copy.deepcopy(bundle)
+        result["source_mapping"]["_runtime_document"] = copy.deepcopy(self._runtime_document)
+        return result
 
     @property
     def head(self):
@@ -70,7 +86,10 @@ class Timeline(Checkout):
 
     def _capture_free_edits(self):
         if self.bundle != self._command_bundle:
-            commands = emit_document_commands(copy.deepcopy(self._command_bundle), copy.deepcopy(self.bundle))
+            before, after = copy.deepcopy(self._command_bundle), copy.deepcopy(self.bundle)
+            if self._runtime_document is not None or before.get("shots") != after.get("shots"):
+                before, after = self._execution_bundle(before), self._execution_bundle(after)
+            commands = emit_document_commands(before, after)
             if not commands:
                 raise TimelineEditError("document emitter omitted local edits")
             self._append(commands, label="Edit document")
@@ -80,7 +99,10 @@ class Timeline(Checkout):
         from .commands import CommandError, execute
 
         try:
-            plan = execute(self._command_bundle, commands)
+            bundle = (self._execution_bundle(self._command_bundle)
+                      if self._runtime_document is not None or any(command.get("op") == "doc.patch" for command in commands)
+                      else self._command_bundle)
+            plan = execute(bundle, commands)
         except CommandError as exc:
             if exc.kind == "unsupported_operation" and any(command.get("op") == "doc.patch" for command in commands):
                 raise TimelineEditError(
@@ -100,7 +122,8 @@ class Timeline(Checkout):
         self._commands.extend(copy.deepcopy(commands))
         self._steps.append(step)
         self.bundle = copy.deepcopy(plan.bundle)
-        self._command_bundle = copy.deepcopy(plan.bundle)
+        self._runtime_document = self.bundle.get("source_mapping", {}).pop("_runtime_document", self._runtime_document)
+        self._command_bundle = copy.deepcopy(self.bundle)
         self._refresh()
 
     def command(self, command, *, label="Timeline edit", intent="", tags=(), reads=None):
