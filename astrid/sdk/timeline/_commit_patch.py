@@ -434,6 +434,15 @@ class CommitPatch:
         if not self.active:
             return
         ordinal = ctx.record['ordinal']
+        mapping = ctx.state.bundle['source_mapping']
+        if '_copy_manifest' in mapping and ctx.record['command']['op'] not in ('timeline.inverse', 'timeline.restore'):
+            documents = mapping['_copy_manifest']['documents']
+            for dependency in ctx.record['dependencies']:
+                if dependency['kind'] in ('source', 'transcript'):
+                    pin = dependency['pin']
+                    if pin not in documents and any(
+                            capture['pin'] == pin for capture in mapping.get('pinned_documents', [])):
+                        documents.append(copy.deepcopy(pin))
         self.records[ordinal] = ctx.record
         step = self.step(ordinal)
         if hasattr(ctx, 'inverse_stages'):

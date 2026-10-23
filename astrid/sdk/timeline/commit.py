@@ -517,6 +517,11 @@ def _hydrate(port, bundle, calls=(), *, inverse_records=(), inverse_sources=()):
                      "unregistered config source kind")
         captures.append(copy.deepcopy(verified))
     bundle["source_mapping"]["pinned_documents"] = captures
+    if not inverse_records and ('_copy_manifest' in bundle['source_mapping'] or calls and any(
+            capture['pin'] not in document['dependency_manifest']['documents'] for capture in captures)):
+        # Hydration trusts only Runtime's closure, never a caller's copy manifest.
+        # Verified request inputs become closure dependencies only when consumed.
+        bundle['source_mapping']['_copy_manifest'] = copy.deepcopy(document['dependency_manifest'])
     return schema_inputs
 
 
