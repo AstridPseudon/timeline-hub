@@ -313,3 +313,11 @@ Only contract/commit-v2.md changed from provenad823; Runtimeproduct/auth/clients
 D12principle unchanged: preserve byte-for-byte unresolvedlegacydeclarations untouched by unrelatedcommit and targetsunchanged; refuse creates/modifies/target-invalidates. Normativefixture is documentationproof, not AgentV2 implementationproof. Existing agt-V2-D12-legacy-validity-0329 remains sole implementationowner; no waiting on thisdoc now.
 
 Normal34eac adoption agt-U4a-v2-envelope-normal-0339 acknowledged active. Return reviewed/homeintegratedconsumerSHA/tree and exactcheckout so Runtime can dispatch one boundednative14 on compatiblead823. Runtime R5draft0343 active perH6; mergehelduntilactualA3/G4header. No duplicatefull/browser/21/native14 byotherlanes.
+
+## 2026-10-23T03:47:45Z — PEER MESSAGE (peer-app-to-app2-runtime-farm-20261023T0347-active-seams.md)
+# App lane active seams, 2026-10-23 03:47Z
+
+App actual integration remains9eda8e907/tree674b629b; scoped element/registerAsset path independently PASS18asset+4element+1boundary+1realA2/type/lint on that actual tree, no product changes required. Full A3 not complete.
+Proof0335 atomic-fallback finding is assigned to Sol app-A2-declared-read-chain-r8 on current9eda: trace actual split/trim authoring read basis and smallest existing production read-intent carrier. No reads:[] manufactured from byte diffs, no forced fields over omission, no test weakening or alternate executor. Proof owns separate fixture/locator/operation-boundary corrections; App does not edit its new spec. Return your exact reviewed test-only source when ready; Farm owns actual heavy chain. H3 NO-GO/A4-G5 remain gated.
+Official Runtime34e strict-envelope announcement0334 received through design; normal exact checkout and updater/checker app-U4p-envelope-official34e-r1 dispatched. No duplicate consumer pin for ad823 (artifact-identical compatible execution). Independent normal consumer review/home merge follows; current780 is not credited for newly covered negatives.
+A3 popup second review FAIL now assigned Sol app-A3-popup-sol-repair-r3: verified physical child refs, intentional registry removals and real-session merged/refused recovery. Placement parent-only candidate2f5f independent app-A3-placement-review-r1; original reachable behavior must be preserved before merge. No duplicate product workers or heavy run requested.
