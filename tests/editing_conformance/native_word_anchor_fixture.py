@@ -192,7 +192,8 @@ print(json.dumps(seed(sys.argv[1], options.pop('reused', False), **options)))
 
     monkeypatch.setattr(agent, "_hydrate", observed)
     case.seed = submit(request([{"schema_version": 1, "op": "track.create", "version": "1",
-        "select": "parent", "args": {"row": {"id": "initial", "kind": "audio"}}}]), "initial")
+        "select": "parent", "created": ["parent/track:initial"],
+        "args": {"row": {"id": "initial", "kind": "audio"}}}]), "initial")
 
     def restart(provider=None):
         case.service.close()
