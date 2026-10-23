@@ -125,3 +125,11 @@ def test_a_run_in_which_every_test_is_skipped_or_deselected_fails(run) -> None:
     skipped.stdout.fnmatch_lines(["*no test passed in this run*"])
     deselected = run("def test_x():\n    pass\n", "-k", "nothing_matches")
     assert deselected.ret != 0  # pytest's own "no tests collected"
+
+
+def test_a_module_of_a_deselected_lane_is_not_imported_unless_a_test_in_it_names_a_selected_lane(run, pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(test_other="import pytest\n\npytestmark = pytest.mark.integration\nimport astrid_no_such_second_checkout\n\ndef test_z():\n    pass\n")
+    pytester.makepyfile(test_both="import pytest\n\npytestmark = pytest.mark.integration\n\n@pytest.mark.opt_in\ndef test_w():\n    pass\n")
+    result = run("def test_x():\n    pass\n", "-m", "opt_in or not integration")
+    assert result.ret == 0, result.stdout.str()  # test_other.py (integration only) was never imported; test_both.py was, and its opt_in test ran
+    result.stdout.fnmatch_lines(["*2 passed*"])

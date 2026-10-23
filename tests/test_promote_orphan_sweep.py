@@ -9,6 +9,8 @@ from __future__ import annotations
 import os
 import signal
 
+import pytest
+
 from astrid.core.gateway.dev_operator import (
     find_orphan_render_processes,
     reap_orphan_render_processes,
@@ -51,6 +53,7 @@ def test_finder_reports_only_orphaned_astrid_chromium_and_bundles() -> None:
     assert [pid for pid, _ in found] == [100, 104, 108, 109]
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_reaper_signals_exact_pids_with_sigkill_and_nothing_else() -> None:
     killed: list[tuple[int, int]] = []
     reaped = reap_orphan_render_processes(

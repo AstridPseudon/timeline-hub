@@ -995,6 +995,7 @@ def test_cancellation_reaps_descendant_spawned_by_sigterm_handler(tmp_path):
         pytest.fail("SIGTERM-handler child survived cancellation")
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_cleanup_does_not_signal_a_reused_group_after_leader_exit(monkeypatch, owned_process_groups):
     """An exited leader PID must never be reused as a killpg target."""
     process = owned_process_groups.popen([sys.executable, "-c", "pass"], start_new_session=True)
@@ -1011,6 +1012,7 @@ def test_cleanup_does_not_signal_a_reused_group_after_leader_exit(monkeypatch, o
         _terminate_process_group(process)
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_signal_revalidates_group_identity_immediately_before_killpg(monkeypatch):
     """A changed incarnation in the final signal window fails before custody signal."""
     signal_calls = []
@@ -1032,6 +1034,7 @@ def test_signal_revalidates_group_identity_immediately_before_killpg(monkeypatch
     assert signal_calls == []
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_tree_cleanup_rejects_reused_child_before_adopting_descendants(monkeypatch):
     """A reused child PID cannot pull an unrelated descendant into cleanup."""
     process = SimpleNamespace(pid=100, _astrid_process_birth="root")
@@ -3275,6 +3278,7 @@ def _native_abort_graph(tmp_path, monkeypatch, *, engine_exited=False, engine_ti
 
 
 @pytest.mark.parametrize("state", ["sealed", "ready-bound"])
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_native_graph_abort_prepared_engine_uses_ordinary_signal(tmp_path, monkeypatch, state):
     graph, calls, delivered, _ = _native_abort_graph(tmp_path, monkeypatch)
     graph.engine.state = state
@@ -4020,6 +4024,7 @@ def test_launch_worker_projects_fixed_registry_selectors_and_transport_filter(tm
 
 
 @pytest.mark.parametrize('configured_pythonpath', [None, 'configured'])
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_launch_command_projection_matches_actual_final_context(tmp_path, monkeypatch, configured_pythonpath):
     from astrid.core.rendering import remotion_runtime
     from astrid.core.subprocess_env import build_child_subprocess_env

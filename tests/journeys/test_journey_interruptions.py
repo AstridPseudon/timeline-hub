@@ -98,6 +98,7 @@ def test_sigterm_during_replace_restores_source_and_runs_private_cleanup(
     assert all(signal.getsignal(signum) == handler for signum, handler in previous_handlers.items())
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_reaper_escalates_only_after_fresh_group_ownership_scan(tmp_path: Path, monkeypatch) -> None:
     root = tmp_path / "private-journey"
     own_group = 300

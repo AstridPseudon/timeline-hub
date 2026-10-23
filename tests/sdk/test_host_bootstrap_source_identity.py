@@ -798,6 +798,7 @@ def test_parked_inspector_rejects_capacity_drift_after_full_native_identity(nati
 
 
 @pytest.mark.parametrize("outcome", ["live", "absent", "zombie", "unavailable"])
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_launch_precise_native_identity_is_real_bounded_observation(monkeypatch, outcome):
     from astrid.core.execution import custody_broker
     monkeypatch.setattr(host_bootstrap.sys, "platform", "darwin")
@@ -815,6 +816,7 @@ def test_launch_precise_native_identity_is_real_bounded_observation(monkeypatch,
             host_bootstrap._capture_native_host_launch_identity(4242)
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_non_darwin_host_identity_keeps_existing_command_contract(monkeypatch):
     monkeypatch.setattr(host_bootstrap.sys, "platform", "linux")
     state = {"pid": 4242, "process_birth_id": "birth", "ready_file": "/ready", "source_checkout": "/source",

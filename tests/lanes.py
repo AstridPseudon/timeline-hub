@@ -251,24 +251,38 @@ def _module_lanes(path: Path) -> set[str]:
     return names
 
 
-def _marker_expression_holds(expression: str, present: set[str], others: bool) -> bool:
+def _marker_expression_holds(expression: str, present: set[str]) -> bool:
     if not re.fullmatch(r"[\w\s()]*", expression):
         return True  # an expression this reader does not handle never hides a module
     def value(match: re.Match) -> str:
         word = match.group(0)
         if word in ("and", "or", "not"):
             return word
-        return str(word in present or others)
+        return str(word in present)
     return bool(eval(re.sub(r"\w+", value, expression), {"__builtins__": {}}))  # noqa: S307  (only words, spaces and parentheses reach here)
 
 
+def _marked_lanes(path: Path) -> set[str]:
+    """Every lane a test in the module names anywhere (a decorator, ``marks=``, a class mark)."""
+    try:
+        return set(re.findall(r"\bmark\.(\w+)", path.read_text(encoding="utf-8"))) & set(LANES)
+    except (OSError, UnicodeDecodeError):
+        return set()
+
+
 def pytest_ignore_collect(collection_path, config):
-    """Do not import a module whose every test belongs to a lane this run deselects."""
+    """Do not import a module whose every test belongs to a lane this run deselects.
+
+    A module under ``pytestmark = pytest.mark.<lane>`` is also kept when a test in it names another lane the run
+    selects (``-m "darwin_native or remotion"``): the module is then wanted, so it is imported.
+    """
     expression = (config.getoption("markexpr", default="") or "").strip()
     if not expression or collection_path.suffix != ".py":
         return None
     lanes = _module_lanes(collection_path)
-    if lanes and not _marker_expression_holds(expression, lanes, False) and not _marker_expression_holds(expression, lanes, True):
+    if not lanes or not set(re.findall(r"\w+", expression)) - {"and", "or", "not"} <= set(LANES):
+        return None  # not wholly in a lane, or an expression with a marker the registry does not know: never hide a module
+    if not _marker_expression_holds(expression, lanes | _marked_lanes(collection_path)):
         return True
     return None
 

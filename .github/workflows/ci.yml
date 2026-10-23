@@ -75,10 +75,12 @@ jobs:
             pyproject.toml
             requirements/*.lock
 
-      - name: Set up Node.js 20
+      # Node 24 runs the TypeScript element sources the tests import directly (type stripping, Node 22.18+); the pinned
+      # Node 20.19.4 is the Remotion renderer's, which the darwin job installs.
+      - name: Set up Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: "20.19.4"
+          node-version: "24"
 
       - name: Install system media tools and a system font
         if: runner.os == 'Linux'
