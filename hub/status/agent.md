@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T01:58:22Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 3m -->
+<!-- agent | 2026-10-23T01:59:40Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 0m -->
 # agent board, 2026-10-23T01:51:48Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -19,6 +19,7 @@
 | G4 | requester render publication | Sol after Luna FAIL; Luna review | G3,R2r | blocked:runtime | agt-G4-render-ratchet-review-0117 | Source independent234+13+19 PASS; baseline-only6ae13PASS/Ruff2149/mypy1915. Original3 setup/wire/digest failures retained | 6ae94db34 |
 | V3-owner | common Composition artifact | Luna | U2; App samearchive | merged | agt-V3-integrated-proof-0111; vw-V3-agent-integrated0114 | Exactfa2 both terminal PASS: own30+gen/types/caller and Viewing130+gen/types/caller; archive819acf/73451B/80. Package only, not parity | b56828de5;mergefa2cf5b66 |
 | V1-copies | normal691 copies + meta allowlists | Luna | RuntimeV1 merged | merged | agt-V1-integrated-proof-0147 | Independent64PASS+163subtests, boundary probes,15mapped exact691,2151Ruff/1915mypy. Integratedffcec PASS64+163subtests, exact15mapped691/normal lock/artifacts/caller | ffcec5d33;source838/b23 |
+| P4-owner | reviewed facade/ten-note test imports | Luna | G3/R2 source5a | doing | agt-P4-test-import-0159 | Peer0149e738 exact new206line test13PASS + earlier2d21 facade4PASS; importing ONLY2 test files, no Proof product ancestry | 2d21a989;e7385882 donors |
 | G5 | delete superseded paths | Luna | G3,G4,actual P1 GO | todo | — | Hard held by H3 NO-GO; no deletion work started | — |
 Blockers: runtime — full-v2 wire/auth tuple not yet reviewed/merged/announced. Runtime final623c4ad187 author224PASS + component auth207/schema53/admission45; final reviews0143 active. No drop/overlay/alternate executor. Normal U4a-v2 immediately on official tuple.
 Blockers: proof/orchestrator — four original P1 child fixtures retain app.astrid.on=old-anchor without transcript binding, exposed after V2 null/identity repair. Need authentic fixture or explicit inherited-declaration policy; guard/assertions unchanged. escalations/agent-20261023T0151-P1-unbound-anchor.md.
