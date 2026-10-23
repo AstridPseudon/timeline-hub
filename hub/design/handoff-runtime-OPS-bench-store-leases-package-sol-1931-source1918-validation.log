@@ -1,0 +1,20 @@
++ bash -n /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run
+embedded/exported Python compilation and byte comparison OK
++ patch --dry-run -p1 -d /tmp/w-05c5d81085/lease1918-patch-p11b58ni
+checking file bin/test-run
++ patch -p1 -d /tmp/w-05c5d81085/lease1918-patch-p11b58ni
+patching file bin/test-run
++ cmp /tmp/w-05c5d81085/lease1918-patch-p11b58ni/bin/test-run /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run
++ cmp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run.original
+manifest OK: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-1850-hashmanifest.sha256
+manifest OK: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/immutable-inputs.sha256
+manifest OK: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/live-inputs.sha256
++ git -C /home/user/work/wt/rt-OPS-bench-store-leases-return-1918 status --porcelain
++ git -C /home/user/work/wt/rt-OPS-bench-store-leases-return-1918 diff --check
++ git -C /home/user/work/wt/rt-OPS-bench-store-leases-return-1918 rev-parse HEAD
+2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d
++ git -C /home/user/work/runtime status --porcelain
++ git -C /home/user/work/runtime diff --check
++ git -C /home/user/work/runtime rev-parse HEAD
+2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d
+all source-only validation passed; no installation or service run

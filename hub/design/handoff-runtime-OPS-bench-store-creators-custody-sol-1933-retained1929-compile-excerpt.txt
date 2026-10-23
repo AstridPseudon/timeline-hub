@@ -1,0 +1,40 @@
+exec
+/bin/bash -lc 'design=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design; python3 -I - "$design" <<'"'PY'
+import re, sys
+from pathlib import Path
+root=Path(sys.argv[1])
+for name in ('make-child-venv','request-child-venv','make-runtime','request-runtime'):
+ p=root/f'handoff-runtime-OPS-bench-store-creators-package-sol-1924-{name}.sh'
+ text=p.read_text()
+ heredocs=list(re.finditer(r\"<<'(STORE_PY|PY|REGISTRATION|RELOCATE)'\\n(.*?)"'^'"\\1"'$", text, re.M|re.S))
+ for i,m in enumerate(heredocs):
+  compile(m.group(2), f'"'{name}:{m.group(1)}:{i}', 'exec')
+  print('PASS independent embedded Python compile', name, m.group(1), i)
+ if name=='make-runtime':
+  inline=re.findall(r\"python3 -c '(["'^'"']*)'\", text)
+  for i,code in enumerate(inline):
+   compile(code, f'{name}:inline:{i}', 'exec')
+   print('PASS independent inline Python compile', name, i)
+child=(root/'handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.sh').read_text()
+for n in ('PROVENANCE_SCRIPT','DIST_METADATA_SCRIPT','IDENTITY_SCRIPT'):
+ matches=re.findall(r'"'^'"'+n+r\"='(.*?)'\\nrun_stage\",child,re.M|re.S)
+ assert len(matches)==1, (n,len(matches))
+ compile(matches[0],n,'exec')
+ print('PASS independent anchored',n)
+PY
+printf '\\n--- recorded-vs-current exact hashes/sizes ---\\n'; sha256sum \""'$design"/handoff-runtime-OPS-bench-store-creators-package-sol-1924-{hashmanifest.txt,validate-packet.py,validate-packet-log.txt,source-hashes-log.txt,report.md}; stat -c '"'%s %n' \""'$design"/handoff-runtime-OPS-bench-store-creators-package-sol-1924-{hashmanifest.txt,validate-packet.py,validate-packet-log.txt,source-hashes-log.txt,report.md}; printf '"'\\n--- correct manifest self-check from design cwd ---\\n'; (cd \""'$design" && sha256sum -c handoff-runtime-OPS-bench-store-creators-package-sol-1924-hashmanifest.txt) | tail -16' in /home/user/work/wt/rt-OPS-bench-store-creators-review-1929
+ succeeded in 0ms:
+PASS independent embedded Python compile make-child-venv STORE_PY 0
+PASS independent embedded Python compile make-child-venv RELOCATE 1
+PASS independent embedded Python compile request-child-venv PY 0
+PASS independent embedded Python compile make-runtime REGISTRATION 0
+PASS independent embedded Python compile make-runtime PY 1
+PASS independent embedded Python compile make-runtime PY 2
+PASS independent embedded Python compile make-runtime PY 3
+PASS independent embedded Python compile make-runtime STORE_PY 4
+PASS independent inline Python compile make-runtime 0
+PASS independent inline Python compile make-runtime 1
+PASS independent anchored PROVENANCE_SCRIPT
+PASS independent anchored DIST_METADATA_SCRIPT
+PASS independent anchored IDENTITY_SCRIPT
+
