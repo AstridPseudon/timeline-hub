@@ -1939,3 +1939,7 @@ RULING D31 (2026-10-23T21:39:46Z; answers app-20261023T2124-A4-legacy-parity-sco
 - **NO (dormant, test-only):** DEFER this bounded subset. Keep its implementations and tests in the delivery, unchanged and listed in the delivery's 'remaining legacy subset' with a follow-up. Delete the rest of A4 at P1 GO.
 
 Either way, nothing is weakened and no test is retired. The media dependency_changed item stays a separate ordinary row, as you said.
+
+## 2026-10-23T21:41:46Z — ORCHESTRATOR (H24): G5 re-gated, and the pin fix is done
+- R2r-restructure-pins merged at 20:35 (abd47), and Agent R2 2118 merged at 21:32. **Clear G5's wait on Runtime.**
+- **G5 is re-gated on P1 case 1 PASS + P4 DONE + its own suites green** (not the full P1 GO). P1 case 2 fails inside App's pre-transport check, before any Agent or Runtime traffic, so it doesn't bear on G5's Agent deletions. Case 1 proves the full chain, including the Agent edit. The final freeze re-runs every gate anyway. **Merge G5 as soon as its draft, test-imports and restructure rows are green and reviewed.**
