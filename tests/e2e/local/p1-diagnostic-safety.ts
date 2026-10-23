@@ -110,6 +110,25 @@ export function formatDiagnostic(label: string, value: unknown): string {
 
 export type DiagnosticLogger = (message: string) => void;
 
+export function formatPriorityDiagnostic(label: string, value: unknown): string {
+  const prefix = `[${redactDiagnosticText(label)}] `;
+  let safeValue: unknown = { diagnostic: 'priority_unavailable' };
+  try {
+    safeValue = redactDiagnosticValue(value);
+  } catch {
+    // Priority state is best effort and must never affect the assertion.
+  }
+  let body = '{"diagnostic":"priority_unavailable"}';
+  try {
+    body = JSON.stringify(safeValue) ?? 'null';
+  } catch {
+    // Keep the fallback free of the original value.
+  }
+  const candidate = prefix + body;
+  if (new TextEncoder().encode(candidate).length <= DIAGNOSTIC_MAX_BYTES) return candidate;
+  return `${prefix}{"diagnostic":"priority_over_budget"}`;
+}
+
 export function logDiagnostic(label: string, value: unknown, logger?: DiagnosticLogger): void {
   let message = '[P1 diagnostic unavailable]';
   try {
@@ -122,6 +141,24 @@ export function logDiagnostic(label: string, value: unknown, logger?: Diagnostic
   } catch {
     try {
       if (!logger) console.log('[P1 diagnostic unavailable]');
+    } catch {
+      // The final stdout fallback is also best effort.
+    }
+  }
+}
+
+export function logPriorityDiagnostic(label: string, value: unknown, logger?: DiagnosticLogger): void {
+  let message = '[P1 priority diagnostic unavailable]';
+  try {
+    message = formatPriorityDiagnostic(label, value);
+  } catch {
+    // Formatting is best effort and must never affect the assertion under test.
+  }
+  try {
+    (logger ?? ((line: string) => console.log(line)))(message);
+  } catch {
+    try {
+      if (!logger) console.log('[P1 priority diagnostic unavailable]');
     } catch {
       // The final stdout fallback is also best effort.
     }
