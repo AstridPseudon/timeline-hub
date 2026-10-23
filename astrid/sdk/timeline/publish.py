@@ -8,7 +8,7 @@ import re
 import sys
 import uuid
 from pathlib import Path
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 
 from astrid.sdk import timeline_intent as intent
 from astrid.core.timeline.cuts import (
@@ -84,6 +84,9 @@ class _PublishMixin:
     bundle: dict[str, Any]  # set by Checkout.__init__; declared so this mixin's readers are typed
     _journal: list[tuple[str, str | None]]
 
+    if TYPE_CHECKING:
+        def _retire_draft_history(self) -> None: ...
+
     def publish(self, message: str = "", *, idempotency_key: str | None = None, client: Any = None,
                 force: bool = False, restructure: bool = False) -> dict[str, Any]:
         """Check, then publish one revision.
@@ -105,7 +108,7 @@ class _PublishMixin:
         else:  # only the narration binding is behind (a retry after it failed): pin it, nothing else to publish
             receipt = {"old_head": self.base_revision, "new_head": self.base_revision, "structure": "unchanged"}
         receipt["narration_pinned"] = []
-        if chapter_film or self.narration_changes():
+        if self.narration_changes():
             # A line's text changed (or the shots are new): bind each such shot's narration now that
             # the shots exist, then publish the pins as a second, small revision.
             try:
@@ -148,6 +151,7 @@ class _PublishMixin:
         try:
             head = _store.fetch_bundle(str(self.bundle["project_id"]), str(self.bundle["timeline_id"]), client=client)
         except Exception as exc:  # noqa: BLE001 - the publish stands; the working copy keeps its old base
+            self._retire_draft_history()
             self.notes.append(f"published, but this working copy could not re-read the new head ({exc}); "
                               "its base is still the old one: timelines checkout TL --fresh")
             return
@@ -162,8 +166,11 @@ class _PublishMixin:
                 self._save_locked(target, force=True, record=False)
         except Exception as exc:  # noqa: BLE001
             self.bundle, self._journal = old, old_journal
+            self._retire_draft_history()
             self.notes.append(f"published, but this working copy could not be reset to the new head ({exc}); "
                               "its base is still the old one")
+            return
+        self._retire_draft_history()
 
     def _publish_narration(self, key: str, *, client: Any = None) -> dict[str, Any]:
         def run(c: Any) -> dict[str, Any]:

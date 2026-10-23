@@ -22,7 +22,7 @@ def _canonical_digest(value: Any) -> str:
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
-def _number(value: Any, label: str) -> float:
+def _transcript_number(value: Any, label: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
         raise TimelineEditError(f"verified transcript {label} must be a finite number")
     if value < 0:
@@ -56,7 +56,8 @@ def _validate_transcript_v1(project: str, pin: Mapping[str, Any], document: Mapp
         if not isinstance(segment_id, str) or not segment_id or segment_id in segment_ids:
             raise TimelineEditError("verified transcript segment identity is invalid or duplicated")
         segment_ids.add(segment_id)
-        start, end = _number(segment["start"], "segment start"), _number(segment["end"], "segment end")
+        start, end = (_transcript_number(segment["start"], "segment start"),
+                      _transcript_number(segment["end"], "segment end"))
         if end < start or not isinstance(segment["text"], str):
             raise TimelineEditError("verified transcript segment interval or text is invalid")
         if "speaker" in segment and segment["speaker"] is not None and not isinstance(segment["speaker"], str):
@@ -71,7 +72,8 @@ def _validate_transcript_v1(project: str, pin: Mapping[str, Any], document: Mapp
             if not isinstance(word_id, str) or not word_id or word_id in word_ids:
                 raise TimelineEditError("verified transcript word identity is invalid or duplicated")
             word_ids.add(word_id)
-            word_start, word_end = _number(word["start"], "word start"), _number(word["end"], "word end")
+            word_start, word_end = (_transcript_number(word["start"], "word start"),
+                                    _transcript_number(word["end"], "word end"))
             if (word_end < word_start or word_start < start or word_end > end
                     or not isinstance(word["text"], str)):
                 raise TimelineEditError("verified transcript word interval or text is invalid")
