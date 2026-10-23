@@ -1,0 +1,1933 @@
+{
+  "cases": [
+    {
+      "source_case": "old video with missing hold",
+      "actual_production_call_binding": "useMountedCommands(...).commands.addClip({ preparedAsset, trackId: V1, afterClipId: anchor, time: 0 }) -> useTimelineSave.applyEdit -> localSaveSession/outbox -> RuntimeDataProvider.commitTimeline -> AstridRuntimeClient/generated transport",
+      "request_json": {
+        "api_version": 1,
+        "project_id": "project-commit",
+        "timeline_id": "timeline-1",
+        "base_revision_id": "r0",
+        "base_publication_id": "p0",
+        "commands": [
+          {
+            "schema_version": 1,
+            "op": "doc.patch",
+            "version": "1",
+            "select": null,
+            "created": [
+              "parent/clip:clip-0"
+            ],
+            "args": {
+              "changes": [
+                {
+                  "op": "list.insert",
+                  "ref": "parent",
+                  "path": [
+                    "clips"
+                  ],
+                  "id": "clip-0",
+                  "before": {
+                    "state": "absent"
+                  },
+                  "value": {
+                    "id": "clip-0",
+                    "at": 3,
+                    "track": "V1",
+                    "asset": "asset-old-video-with-missing-hold",
+                    "clipType": "video",
+                    "from": 2,
+                    "to": 6,
+                    "speed": 2,
+                    "opacity": 0.5,
+                    "transition": {
+                      "type": "crossfade",
+                      "duration": 0.5,
+                      "params": {
+                        "opaque": [
+                          null,
+                          false
+                        ]
+                      }
+                    },
+                    "effects": {
+                      "glow": 1
+                    },
+                    "params": {
+                      "opaque": {
+                        "ordered": [
+                          null,
+                          false,
+                          0
+                        ]
+                      }
+                    },
+                    "app": {
+                      "opaque": {
+                        "keep": null,
+                        "ordered": [
+                          false,
+                          0,
+                          ""
+                        ]
+                      }
+                    },
+                    "label": "source.mp4"
+                  },
+                  "order_before": [
+                    "anchor",
+                    "later",
+                    "sibling"
+                  ],
+                  "after_id": "anchor"
+                },
+                {
+                  "op": "set",
+                  "ref": "parent",
+                  "path": [
+                    "clips",
+                    "id:later",
+                    "at"
+                  ],
+                  "before": {
+                    "state": "present",
+                    "value": 5
+                  },
+                  "value": 7
+                },
+                {
+                  "op": "set",
+                  "ref": "parent",
+                  "path": [
+                    "registry",
+                    "assets",
+                    "asset-old-video-with-missing-hold"
+                  ],
+                  "before": {
+                    "state": "absent"
+                  },
+                  "value": {
+                    "file": "old-video-with-missing-hold.mp4",
+                    "type": "video/mp4",
+                    "media_id": "media-old-video-with-missing-hold",
+                    "generationId": "generation-old-video-with-missing-hold"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "source": {
+          "via": "app"
+        },
+        "label": "Edit timeline",
+        "dry_run": false,
+        "steps": [
+          {
+            "id": "92a759c1-7e28-4788-acbc-367bc40ee4b7",
+            "label": "Edit timeline",
+            "intent": "Save local editor changes",
+            "tags": [],
+            "command_ordinals": [
+              0
+            ],
+            "patch": [
+              {
+                "op": "list.insert",
+                "ref": "parent",
+                "path": [
+                  "clips"
+                ],
+                "id": "clip-0",
+                "before": {
+                  "state": "absent"
+                },
+                "value": {
+                  "id": "clip-0",
+                  "at": 3,
+                  "track": "V1",
+                  "asset": "asset-old-video-with-missing-hold",
+                  "clipType": "video",
+                  "from": 2,
+                  "to": 6,
+                  "speed": 2,
+                  "opacity": 0.5,
+                  "transition": {
+                    "type": "crossfade",
+                    "duration": 0.5,
+                    "params": {
+                      "opaque": [
+                        null,
+                        false
+                      ]
+                    }
+                  },
+                  "effects": {
+                    "glow": 1
+                  },
+                  "params": {
+                    "opaque": {
+                      "ordered": [
+                        null,
+                        false,
+                        0
+                      ]
+                    }
+                  },
+                  "app": {
+                    "opaque": {
+                      "keep": null,
+                      "ordered": [
+                        false,
+                        0,
+                        ""
+                      ]
+                    }
+                  },
+                  "label": "source.mp4"
+                },
+                "order_before": [
+                  "anchor",
+                  "later",
+                  "sibling"
+                ],
+                "after_id": "anchor"
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": [
+                  "clips",
+                  "id:later",
+                  "at"
+                ],
+                "before": {
+                  "state": "present",
+                  "value": 5
+                },
+                "value": 7
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": [
+                  "registry",
+                  "assets",
+                  "asset-old-video-with-missing-hold"
+                ],
+                "before": {
+                  "state": "absent"
+                },
+                "value": {
+                  "file": "old-video-with-missing-hold.mp4",
+                  "type": "video/mp4",
+                  "media_id": "media-old-video-with-missing-hold",
+                  "generationId": "generation-old-video-with-missing-hold"
+                }
+              }
+            ]
+          }
+        ],
+        "merge": "atomic"
+      },
+      "request_bytes": "{\"api_version\":1,\"project_id\":\"project-commit\",\"timeline_id\":\"timeline-1\",\"base_revision_id\":\"r0\",\"base_publication_id\":\"p0\",\"commands\":[{\"schema_version\":1,\"op\":\"doc.patch\",\"version\":\"1\",\"select\":null,\"created\":[\"parent/clip:clip-0\"],\"args\":{\"changes\":[{\"op\":\"list.insert\",\"ref\":\"parent\",\"path\":[\"clips\"],\"id\":\"clip-0\",\"before\":{\"state\":\"absent\"},\"value\":{\"id\":\"clip-0\",\"at\":3,\"track\":\"V1\",\"asset\":\"asset-old-video-with-missing-hold\",\"clipType\":\"video\",\"from\":2,\"to\":6,\"speed\":2,\"opacity\":0.5,\"transition\":{\"type\":\"crossfade\",\"duration\":0.5,\"params\":{\"opaque\":[null,false]}},\"effects\":{\"glow\":1},\"params\":{\"opaque\":{\"ordered\":[null,false,0]}},\"app\":{\"opaque\":{\"keep\":null,\"ordered\":[false,0,\"\"]}},\"label\":\"source.mp4\"},\"order_before\":[\"anchor\",\"later\",\"sibling\"],\"after_id\":\"anchor\"},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"clips\",\"id:later\",\"at\"],\"before\":{\"state\":\"present\",\"value\":5},\"value\":7},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"registry\",\"assets\",\"asset-old-video-with-missing-hold\"],\"before\":{\"state\":\"absent\"},\"value\":{\"file\":\"old-video-with-missing-hold.mp4\",\"type\":\"video/mp4\",\"media_id\":\"media-old-video-with-missing-hold\",\"generationId\":\"generation-old-video-with-missing-hold\"}}]}}],\"source\":{\"via\":\"app\"},\"label\":\"Edit timeline\",\"dry_run\":false,\"steps\":[{\"id\":\"92a759c1-7e28-4788-acbc-367bc40ee4b7\",\"label\":\"Edit timeline\",\"intent\":\"Save local editor changes\",\"tags\":[],\"command_ordinals\":[0],\"patch\":[{\"op\":\"list.insert\",\"ref\":\"parent\",\"path\":[\"clips\"],\"id\":\"clip-0\",\"before\":{\"state\":\"absent\"},\"value\":{\"id\":\"clip-0\",\"at\":3,\"track\":\"V1\",\"asset\":\"asset-old-video-with-missing-hold\",\"clipType\":\"video\",\"from\":2,\"to\":6,\"speed\":2,\"opacity\":0.5,\"transition\":{\"type\":\"crossfade\",\"duration\":0.5,\"params\":{\"opaque\":[null,false]}},\"effects\":{\"glow\":1},\"params\":{\"opaque\":{\"ordered\":[null,false,0]}},\"app\":{\"opaque\":{\"keep\":null,\"ordered\":[false,0,\"\"]}},\"label\":\"source.mp4\"},\"order_before\":[\"anchor\",\"later\",\"sibling\"],\"after_id\":\"anchor\"},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"clips\",\"id:later\",\"at\"],\"before\":{\"state\":\"present\",\"value\":5},\"value\":7},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"registry\",\"assets\",\"asset-old-video-with-missing-hold\"],\"before\":{\"state\":\"absent\"},\"value\":{\"file\":\"old-video-with-missing-hold.mp4\",\"type\":\"video/mp4\",\"media_id\":\"media-old-video-with-missing-hold\",\"generationId\":\"generation-old-video-with-missing-hold\"}}]}],\"merge\":\"atomic\"}",
+      "request_byte_length": 2368,
+      "request_sha256": "38afc0473df1616da071f35c3362fcfb7a01dc3fe904a0a7b49b2a0c66c738a1",
+      "canonical_base_closure": {
+        "schema_version": 1,
+        "project_id": "project-commit",
+        "timeline_id": "timeline-1",
+        "parent_revision": {
+          "revision_id": "r0",
+          "content_digest": "sha256:445b8013f7a0db22f5c961f041598012a265d025aa4557b2294df237da8e3431",
+          "payload": {
+            "config": {
+              "output": {
+                "resolution": "1280x720",
+                "fps": 30,
+                "file": "output.mp4",
+                "background": null,
+                "background_scale": null
+              },
+              "clips": [
+                {
+                  "id": "anchor",
+                  "at": 1,
+                  "track": "V1",
+                  "clipType": "video",
+                  "asset": "asset-source",
+                  "from": 2,
+                  "to": 6,
+                  "speed": 2,
+                  "opacity": 0.5,
+                  "effects": {
+                    "glow": 1
+                  },
+                  "transition": {
+                    "type": "crossfade",
+                    "duration": 0.5,
+                    "params": {
+                      "opaque": [
+                        null,
+                        false
+                      ]
+                    }
+                  },
+                  "params": {
+                    "opaque": {
+                      "ordered": [
+                        null,
+                        false,
+                        0
+                      ]
+                    }
+                  },
+                  "app": {
+                    "opaque": {
+                      "keep": null,
+                      "ordered": [
+                        false,
+                        0,
+                        ""
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "later",
+                  "at": 5,
+                  "track": "V1",
+                  "clipType": "hold",
+                  "hold": 1,
+                  "asset": "asset-peer"
+                },
+                {
+                  "id": "sibling",
+                  "at": 5,
+                  "track": "V2",
+                  "clipType": "hold",
+                  "hold": 1,
+                  "asset": "asset-peer"
+                }
+              ],
+              "tracks": [
+                {
+                  "id": "V1",
+                  "kind": "visual",
+                  "label": "V1"
+                },
+                {
+                  "id": "V2",
+                  "kind": "visual",
+                  "label": "V2"
+                }
+              ]
+            },
+            "clips": [
+              {
+                "id": "anchor",
+                "at": 1,
+                "track": "V1",
+                "clipType": "video",
+                "asset": "asset-source",
+                "from": 2,
+                "to": 6,
+                "speed": 2,
+                "opacity": 0.5,
+                "effects": {
+                  "glow": 1
+                },
+                "transition": {
+                  "type": "crossfade",
+                  "duration": 0.5,
+                  "params": {
+                    "opaque": [
+                      null,
+                      false
+                    ]
+                  }
+                },
+                "params": {
+                  "opaque": {
+                    "ordered": [
+                      null,
+                      false,
+                      0
+                    ]
+                  }
+                },
+                "app": {
+                  "opaque": {
+                    "keep": null,
+                    "ordered": [
+                      false,
+                      0,
+                      ""
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "later",
+                "at": 5,
+                "track": "V1",
+                "clipType": "hold",
+                "hold": 1,
+                "asset": "asset-peer"
+              },
+              {
+                "id": "sibling",
+                "at": 5,
+                "track": "V2",
+                "clipType": "hold",
+                "hold": 1,
+                "asset": "asset-peer"
+              }
+            ],
+            "registry": {
+              "assets": {
+                "asset-source": {
+                  "file": "source.mp4",
+                  "type": "video/mp4",
+                  "media_id": "media-source"
+                },
+                "asset-peer": {
+                  "file": "peer.png",
+                  "type": "image/png"
+                }
+              }
+            },
+            "occurrences": [],
+            "opaque": {
+              "keep": null
+            }
+          }
+        },
+        "shot_revisions": [],
+        "internal_timeline_revisions": [],
+        "dependency_manifest": {
+          "shots": [],
+          "internal_timelines": [],
+          "media": [],
+          "documents": []
+        }
+      },
+      "source_pins": {
+        "anchor": {
+          "id": "anchor",
+          "at": 1,
+          "track": "V1",
+          "clipType": "video",
+          "asset": "asset-source",
+          "from": 2,
+          "to": 6,
+          "speed": 2,
+          "opacity": 0.5,
+          "effects": {
+            "glow": 1
+          },
+          "transition": {
+            "type": "crossfade",
+            "duration": 0.5,
+            "params": {
+              "opaque": [
+                null,
+                false
+              ]
+            }
+          },
+          "params": {
+            "opaque": {
+              "ordered": [
+                null,
+                false,
+                0
+              ]
+            }
+          },
+          "app": {
+            "opaque": {
+              "keep": null,
+              "ordered": [
+                false,
+                0,
+                ""
+              ]
+            }
+          }
+        },
+        "later": {
+          "id": "later",
+          "at": 5,
+          "track": "V1",
+          "clipType": "hold",
+          "hold": 1,
+          "asset": "asset-peer"
+        },
+        "sibling": {
+          "id": "sibling",
+          "at": 5,
+          "track": "V2",
+          "clipType": "hold",
+          "hold": 1,
+          "asset": "asset-peer"
+        },
+        "source_asset": {
+          "file": "source.mp4",
+          "type": "video/mp4",
+          "media_id": "media-source"
+        }
+      }
+    },
+    {
+      "source_case": "old video with explicit null hold",
+      "actual_production_call_binding": "useMountedCommands(...).commands.addClip({ preparedAsset, trackId: V1, afterClipId: anchor, time: 0 }) -> useTimelineSave.applyEdit -> localSaveSession/outbox -> RuntimeDataProvider.commitTimeline -> AstridRuntimeClient/generated transport",
+      "request_json": {
+        "api_version": 1,
+        "project_id": "project-commit",
+        "timeline_id": "timeline-1",
+        "base_revision_id": "r0",
+        "base_publication_id": "p0",
+        "commands": [
+          {
+            "schema_version": 1,
+            "op": "doc.patch",
+            "version": "1",
+            "select": null,
+            "created": [
+              "parent/clip:clip-0"
+            ],
+            "args": {
+              "changes": [
+                {
+                  "op": "list.insert",
+                  "ref": "parent",
+                  "path": [
+                    "clips"
+                  ],
+                  "id": "clip-0",
+                  "before": {
+                    "state": "absent"
+                  },
+                  "value": {
+                    "id": "clip-0",
+                    "at": 3,
+                    "track": "V1",
+                    "asset": "asset-old-video-with-explicit-null-hold",
+                    "clipType": "video",
+                    "from": 2,
+                    "to": 6,
+                    "speed": 2,
+                    "hold": null,
+                    "opacity": 0.5,
+                    "transition": {
+                      "type": "crossfade",
+                      "duration": 0.5,
+                      "params": {
+                        "opaque": [
+                          null,
+                          false
+                        ]
+                      }
+                    },
+                    "effects": {
+                      "glow": 1
+                    },
+                    "params": {
+                      "opaque": {
+                        "ordered": [
+                          null,
+                          false,
+                          0
+                        ]
+                      }
+                    },
+                    "app": {
+                      "opaque": {
+                        "keep": null,
+                        "ordered": [
+                          false,
+                          0,
+                          ""
+                        ]
+                      }
+                    },
+                    "label": "source.mp4"
+                  },
+                  "order_before": [
+                    "anchor",
+                    "later",
+                    "sibling"
+                  ],
+                  "after_id": "anchor"
+                },
+                {
+                  "op": "set",
+                  "ref": "parent",
+                  "path": [
+                    "clips",
+                    "id:later",
+                    "at"
+                  ],
+                  "before": {
+                    "state": "present",
+                    "value": 5
+                  },
+                  "value": 7
+                },
+                {
+                  "op": "set",
+                  "ref": "parent",
+                  "path": [
+                    "registry",
+                    "assets",
+                    "asset-old-video-with-explicit-null-hold"
+                  ],
+                  "before": {
+                    "state": "absent"
+                  },
+                  "value": {
+                    "file": "old-video-with-explicit-null-hold.mp4",
+                    "type": "video/mp4",
+                    "media_id": "media-old-video-with-explicit-null-hold",
+                    "generationId": "generation-old-video-with-explicit-null-hold"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "source": {
+          "via": "app"
+        },
+        "label": "Edit timeline",
+        "dry_run": false,
+        "steps": [
+          {
+            "id": "7514a8e6-9b71-456f-8044-d5e12b45935f",
+            "label": "Edit timeline",
+            "intent": "Save local editor changes",
+            "tags": [],
+            "command_ordinals": [
+              0
+            ],
+            "patch": [
+              {
+                "op": "list.insert",
+                "ref": "parent",
+                "path": [
+                  "clips"
+                ],
+                "id": "clip-0",
+                "before": {
+                  "state": "absent"
+                },
+                "value": {
+                  "id": "clip-0",
+                  "at": 3,
+                  "track": "V1",
+                  "asset": "asset-old-video-with-explicit-null-hold",
+                  "clipType": "video",
+                  "from": 2,
+                  "to": 6,
+                  "speed": 2,
+                  "hold": null,
+                  "opacity": 0.5,
+                  "transition": {
+                    "type": "crossfade",
+                    "duration": 0.5,
+                    "params": {
+                      "opaque": [
+                        null,
+                        false
+                      ]
+                    }
+                  },
+                  "effects": {
+                    "glow": 1
+                  },
+                  "params": {
+                    "opaque": {
+                      "ordered": [
+                        null,
+                        false,
+                        0
+                      ]
+                    }
+                  },
+                  "app": {
+                    "opaque": {
+                      "keep": null,
+                      "ordered": [
+                        false,
+                        0,
+                        ""
+                      ]
+                    }
+                  },
+                  "label": "source.mp4"
+                },
+                "order_before": [
+                  "anchor",
+                  "later",
+                  "sibling"
+                ],
+                "after_id": "anchor"
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": [
+                  "clips",
+                  "id:later",
+                  "at"
+                ],
+                "before": {
+                  "state": "present",
+                  "value": 5
+                },
+                "value": 7
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": [
+                  "registry",
+                  "assets",
+                  "asset-old-video-with-explicit-null-hold"
+                ],
+                "before": {
+                  "state": "absent"
+                },
+                "value": {
+                  "file": "old-video-with-explicit-null-hold.mp4",
+                  "type": "video/mp4",
+                  "media_id": "media-old-video-with-explicit-null-hold",
+                  "generationId": "generation-old-video-with-explicit-null-hold"
+                }
+              }
+            ]
+          }
+        ],
+        "merge": "atomic"
+      },
+      "request_bytes": "{\"api_version\":1,\"project_id\":\"project-commit\",\"timeline_id\":\"timeline-1\",\"base_revision_id\":\"r0\",\"base_publication_id\":\"p0\",\"commands\":[{\"schema_version\":1,\"op\":\"doc.patch\",\"version\":\"1\",\"select\":null,\"created\":[\"parent/clip:clip-0\"],\"args\":{\"changes\":[{\"op\":\"list.insert\",\"ref\":\"parent\",\"path\":[\"clips\"],\"id\":\"clip-0\",\"before\":{\"state\":\"absent\"},\"value\":{\"id\":\"clip-0\",\"at\":3,\"track\":\"V1\",\"asset\":\"asset-old-video-with-explicit-null-hold\",\"clipType\":\"video\",\"from\":2,\"to\":6,\"speed\":2,\"hold\":null,\"opacity\":0.5,\"transition\":{\"type\":\"crossfade\",\"duration\":0.5,\"params\":{\"opaque\":[null,false]}},\"effects\":{\"glow\":1},\"params\":{\"opaque\":{\"ordered\":[null,false,0]}},\"app\":{\"opaque\":{\"keep\":null,\"ordered\":[false,0,\"\"]}},\"label\":\"source.mp4\"},\"order_before\":[\"anchor\",\"later\",\"sibling\"],\"after_id\":\"anchor\"},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"clips\",\"id:later\",\"at\"],\"before\":{\"state\":\"present\",\"value\":5},\"value\":7},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"registry\",\"assets\",\"asset-old-video-with-explicit-null-hold\"],\"before\":{\"state\":\"absent\"},\"value\":{\"file\":\"old-video-with-explicit-null-hold.mp4\",\"type\":\"video/mp4\",\"media_id\":\"media-old-video-with-explicit-null-hold\",\"generationId\":\"generation-old-video-with-explicit-null-hold\"}}]}}],\"source\":{\"via\":\"app\"},\"label\":\"Edit timeline\",\"dry_run\":false,\"steps\":[{\"id\":\"7514a8e6-9b71-456f-8044-d5e12b45935f\",\"label\":\"Edit timeline\",\"intent\":\"Save local editor changes\",\"tags\":[],\"command_ordinals\":[0],\"patch\":[{\"op\":\"list.insert\",\"ref\":\"parent\",\"path\":[\"clips\"],\"id\":\"clip-0\",\"before\":{\"state\":\"absent\"},\"value\":{\"id\":\"clip-0\",\"at\":3,\"track\":\"V1\",\"asset\":\"asset-old-video-with-explicit-null-hold\",\"clipType\":\"video\",\"from\":2,\"to\":6,\"speed\":2,\"hold\":null,\"opacity\":0.5,\"transition\":{\"type\":\"crossfade\",\"duration\":0.5,\"params\":{\"opaque\":[null,false]}},\"effects\":{\"glow\":1},\"params\":{\"opaque\":{\"ordered\":[null,false,0]}},\"app\":{\"opaque\":{\"keep\":null,\"ordered\":[false,0,\"\"]}},\"label\":\"source.mp4\"},\"order_before\":[\"anchor\",\"later\",\"sibling\"],\"after_id\":\"anchor\"},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"clips\",\"id:later\",\"at\"],\"before\":{\"state\":\"present\",\"value\":5},\"value\":7},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"registry\",\"assets\",\"asset-old-video-with-explicit-null-hold\"],\"before\":{\"state\":\"absent\"},\"value\":{\"file\":\"old-video-with-explicit-null-hold.mp4\",\"type\":\"video/mp4\",\"media_id\":\"media-old-video-with-explicit-null-hold\",\"generationId\":\"generation-old-video-with-explicit-null-hold\"}}]}],\"merge\":\"atomic\"}",
+      "request_byte_length": 2452,
+      "request_sha256": "a422aaf915d72edb848029e74a394a8ba43897bc3551882a7982b00e268269f1",
+      "canonical_base_closure": {
+        "schema_version": 1,
+        "project_id": "project-commit",
+        "timeline_id": "timeline-1",
+        "parent_revision": {
+          "revision_id": "r0",
+          "content_digest": "sha256:6c97876532b4ac508b20824295a6ce2f4feed2387c922ec17ac9442083eda313",
+          "payload": {
+            "config": {
+              "output": {
+                "resolution": "1280x720",
+                "fps": 30,
+                "file": "output.mp4",
+                "background": null,
+                "background_scale": null
+              },
+              "clips": [
+                {
+                  "id": "anchor",
+                  "at": 1,
+                  "track": "V1",
+                  "clipType": "video",
+                  "asset": "asset-source",
+                  "from": 2,
+                  "to": 6,
+                  "speed": 2,
+                  "opacity": 0.5,
+                  "effects": {
+                    "glow": 1
+                  },
+                  "transition": {
+                    "type": "crossfade",
+                    "duration": 0.5,
+                    "params": {
+                      "opaque": [
+                        null,
+                        false
+                      ]
+                    }
+                  },
+                  "params": {
+                    "opaque": {
+                      "ordered": [
+                        null,
+                        false,
+                        0
+                      ]
+                    }
+                  },
+                  "app": {
+                    "opaque": {
+                      "keep": null,
+                      "ordered": [
+                        false,
+                        0,
+                        ""
+                      ]
+                    }
+                  },
+                  "hold": null
+                },
+                {
+                  "id": "later",
+                  "at": 5,
+                  "track": "V1",
+                  "clipType": "hold",
+                  "hold": 1,
+                  "asset": "asset-peer"
+                },
+                {
+                  "id": "sibling",
+                  "at": 5,
+                  "track": "V2",
+                  "clipType": "hold",
+                  "hold": 1,
+                  "asset": "asset-peer"
+                }
+              ],
+              "tracks": [
+                {
+                  "id": "V1",
+                  "kind": "visual",
+                  "label": "V1"
+                },
+                {
+                  "id": "V2",
+                  "kind": "visual",
+                  "label": "V2"
+                }
+              ]
+            },
+            "clips": [
+              {
+                "id": "anchor",
+                "at": 1,
+                "track": "V1",
+                "clipType": "video",
+                "asset": "asset-source",
+                "from": 2,
+                "to": 6,
+                "speed": 2,
+                "opacity": 0.5,
+                "effects": {
+                  "glow": 1
+                },
+                "transition": {
+                  "type": "crossfade",
+                  "duration": 0.5,
+                  "params": {
+                    "opaque": [
+                      null,
+                      false
+                    ]
+                  }
+                },
+                "params": {
+                  "opaque": {
+                    "ordered": [
+                      null,
+                      false,
+                      0
+                    ]
+                  }
+                },
+                "app": {
+                  "opaque": {
+                    "keep": null,
+                    "ordered": [
+                      false,
+                      0,
+                      ""
+                    ]
+                  }
+                },
+                "hold": null
+              },
+              {
+                "id": "later",
+                "at": 5,
+                "track": "V1",
+                "clipType": "hold",
+                "hold": 1,
+                "asset": "asset-peer"
+              },
+              {
+                "id": "sibling",
+                "at": 5,
+                "track": "V2",
+                "clipType": "hold",
+                "hold": 1,
+                "asset": "asset-peer"
+              }
+            ],
+            "registry": {
+              "assets": {
+                "asset-source": {
+                  "file": "source.mp4",
+                  "type": "video/mp4",
+                  "media_id": "media-source"
+                },
+                "asset-peer": {
+                  "file": "peer.png",
+                  "type": "image/png"
+                }
+              }
+            },
+            "occurrences": [],
+            "opaque": {
+              "keep": null
+            }
+          }
+        },
+        "shot_revisions": [],
+        "internal_timeline_revisions": [],
+        "dependency_manifest": {
+          "shots": [],
+          "internal_timelines": [],
+          "media": [],
+          "documents": []
+        }
+      },
+      "source_pins": {
+        "anchor": {
+          "id": "anchor",
+          "at": 1,
+          "track": "V1",
+          "clipType": "video",
+          "asset": "asset-source",
+          "from": 2,
+          "to": 6,
+          "speed": 2,
+          "opacity": 0.5,
+          "effects": {
+            "glow": 1
+          },
+          "transition": {
+            "type": "crossfade",
+            "duration": 0.5,
+            "params": {
+              "opaque": [
+                null,
+                false
+              ]
+            }
+          },
+          "params": {
+            "opaque": {
+              "ordered": [
+                null,
+                false,
+                0
+              ]
+            }
+          },
+          "app": {
+            "opaque": {
+              "keep": null,
+              "ordered": [
+                false,
+                0,
+                ""
+              ]
+            }
+          },
+          "hold": null
+        },
+        "later": {
+          "id": "later",
+          "at": 5,
+          "track": "V1",
+          "clipType": "hold",
+          "hold": 1,
+          "asset": "asset-peer"
+        },
+        "sibling": {
+          "id": "sibling",
+          "at": 5,
+          "track": "V2",
+          "clipType": "hold",
+          "hold": 1,
+          "asset": "asset-peer"
+        },
+        "source_asset": {
+          "file": "source.mp4",
+          "type": "video/mp4",
+          "media_id": "media-source"
+        }
+      }
+    },
+    {
+      "source_case": "old video with subminimum duration",
+      "actual_production_call_binding": "useMountedCommands(...).commands.addClip({ preparedAsset, trackId: V1, afterClipId: anchor, time: 0 }) -> useTimelineSave.applyEdit -> localSaveSession/outbox -> RuntimeDataProvider.commitTimeline -> AstridRuntimeClient/generated transport",
+      "request_json": {
+        "api_version": 1,
+        "project_id": "project-commit",
+        "timeline_id": "timeline-1",
+        "base_revision_id": "r0",
+        "base_publication_id": "p0",
+        "commands": [
+          {
+            "schema_version": 1,
+            "op": "doc.patch",
+            "version": "1",
+            "select": null,
+            "created": [
+              "parent/clip:clip-0"
+            ],
+            "args": {
+              "changes": [
+                {
+                  "op": "list.insert",
+                  "ref": "parent",
+                  "path": [
+                    "clips"
+                  ],
+                  "id": "clip-0",
+                  "before": {
+                    "state": "absent"
+                  },
+                  "value": {
+                    "id": "clip-0",
+                    "at": 1,
+                    "track": "V1",
+                    "asset": "asset-old-video-with-subminimum-duration",
+                    "clipType": "video",
+                    "hold": 0.0667,
+                    "opacity": 0.5,
+                    "transition": {
+                      "type": "crossfade",
+                      "duration": 0.5,
+                      "params": {
+                        "opaque": [
+                          null,
+                          false
+                        ]
+                      }
+                    },
+                    "effects": {
+                      "glow": 1
+                    },
+                    "params": {
+                      "opaque": {
+                        "ordered": [
+                          null,
+                          false,
+                          0
+                        ]
+                      }
+                    },
+                    "app": {
+                      "opaque": {
+                        "keep": null,
+                        "ordered": [
+                          false,
+                          0,
+                          ""
+                        ]
+                      }
+                    },
+                    "label": "source.mp4"
+                  },
+                  "order_before": [
+                    "anchor",
+                    "later",
+                    "sibling"
+                  ],
+                  "after_id": "anchor"
+                },
+                {
+                  "op": "set",
+                  "ref": "parent",
+                  "path": [
+                    "clips",
+                    "id:anchor",
+                    "hold"
+                  ],
+                  "before": {
+                    "state": "present",
+                    "value": 0.01
+                  },
+                  "value": 0
+                },
+                {
+                  "op": "set",
+                  "ref": "parent",
+                  "path": [
+                    "clips",
+                    "id:later",
+                    "at"
+                  ],
+                  "before": {
+                    "state": "present",
+                    "value": 5
+                  },
+                  "value": 5.0667
+                },
+                {
+                  "op": "set",
+                  "ref": "parent",
+                  "path": [
+                    "registry",
+                    "assets",
+                    "asset-old-video-with-subminimum-duration"
+                  ],
+                  "before": {
+                    "state": "absent"
+                  },
+                  "value": {
+                    "file": "old-video-with-subminimum-duration.mp4",
+                    "type": "video/mp4",
+                    "media_id": "media-old-video-with-subminimum-duration",
+                    "generationId": "generation-old-video-with-subminimum-duration"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "source": {
+          "via": "app"
+        },
+        "label": "Edit timeline",
+        "dry_run": false,
+        "steps": [
+          {
+            "id": "77649057-4a0c-46e4-83b7-1e45ffec4af9",
+            "label": "Edit timeline",
+            "intent": "Save local editor changes",
+            "tags": [],
+            "command_ordinals": [
+              0
+            ],
+            "patch": [
+              {
+                "op": "list.insert",
+                "ref": "parent",
+                "path": [
+                  "clips"
+                ],
+                "id": "clip-0",
+                "before": {
+                  "state": "absent"
+                },
+                "value": {
+                  "id": "clip-0",
+                  "at": 1,
+                  "track": "V1",
+                  "asset": "asset-old-video-with-subminimum-duration",
+                  "clipType": "video",
+                  "hold": 0.0667,
+                  "opacity": 0.5,
+                  "transition": {
+                    "type": "crossfade",
+                    "duration": 0.5,
+                    "params": {
+                      "opaque": [
+                        null,
+                        false
+                      ]
+                    }
+                  },
+                  "effects": {
+                    "glow": 1
+                  },
+                  "params": {
+                    "opaque": {
+                      "ordered": [
+                        null,
+                        false,
+                        0
+                      ]
+                    }
+                  },
+                  "app": {
+                    "opaque": {
+                      "keep": null,
+                      "ordered": [
+                        false,
+                        0,
+                        ""
+                      ]
+                    }
+                  },
+                  "label": "source.mp4"
+                },
+                "order_before": [
+                  "anchor",
+                  "later",
+                  "sibling"
+                ],
+                "after_id": "anchor"
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": [
+                  "clips",
+                  "id:anchor",
+                  "hold"
+                ],
+                "before": {
+                  "state": "present",
+                  "value": 0.01
+                },
+                "value": 0
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": [
+                  "clips",
+                  "id:later",
+                  "at"
+                ],
+                "before": {
+                  "state": "present",
+                  "value": 5
+                },
+                "value": 5.0667
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": [
+                  "registry",
+                  "assets",
+                  "asset-old-video-with-subminimum-duration"
+                ],
+                "before": {
+                  "state": "absent"
+                },
+                "value": {
+                  "file": "old-video-with-subminimum-duration.mp4",
+                  "type": "video/mp4",
+                  "media_id": "media-old-video-with-subminimum-duration",
+                  "generationId": "generation-old-video-with-subminimum-duration"
+                }
+              }
+            ]
+          }
+        ],
+        "merge": "atomic"
+      },
+      "request_bytes": "{\"api_version\":1,\"project_id\":\"project-commit\",\"timeline_id\":\"timeline-1\",\"base_revision_id\":\"r0\",\"base_publication_id\":\"p0\",\"commands\":[{\"schema_version\":1,\"op\":\"doc.patch\",\"version\":\"1\",\"select\":null,\"created\":[\"parent/clip:clip-0\"],\"args\":{\"changes\":[{\"op\":\"list.insert\",\"ref\":\"parent\",\"path\":[\"clips\"],\"id\":\"clip-0\",\"before\":{\"state\":\"absent\"},\"value\":{\"id\":\"clip-0\",\"at\":1,\"track\":\"V1\",\"asset\":\"asset-old-video-with-subminimum-duration\",\"clipType\":\"video\",\"hold\":0.0667,\"opacity\":0.5,\"transition\":{\"type\":\"crossfade\",\"duration\":0.5,\"params\":{\"opaque\":[null,false]}},\"effects\":{\"glow\":1},\"params\":{\"opaque\":{\"ordered\":[null,false,0]}},\"app\":{\"opaque\":{\"keep\":null,\"ordered\":[false,0,\"\"]}},\"label\":\"source.mp4\"},\"order_before\":[\"anchor\",\"later\",\"sibling\"],\"after_id\":\"anchor\"},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"clips\",\"id:anchor\",\"hold\"],\"before\":{\"state\":\"present\",\"value\":0.01},\"value\":0},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"clips\",\"id:later\",\"at\"],\"before\":{\"state\":\"present\",\"value\":5},\"value\":5.0667},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"registry\",\"assets\",\"asset-old-video-with-subminimum-duration\"],\"before\":{\"state\":\"absent\"},\"value\":{\"file\":\"old-video-with-subminimum-duration.mp4\",\"type\":\"video/mp4\",\"media_id\":\"media-old-video-with-subminimum-duration\",\"generationId\":\"generation-old-video-with-subminimum-duration\"}}]}}],\"source\":{\"via\":\"app\"},\"label\":\"Edit timeline\",\"dry_run\":false,\"steps\":[{\"id\":\"77649057-4a0c-46e4-83b7-1e45ffec4af9\",\"label\":\"Edit timeline\",\"intent\":\"Save local editor changes\",\"tags\":[],\"command_ordinals\":[0],\"patch\":[{\"op\":\"list.insert\",\"ref\":\"parent\",\"path\":[\"clips\"],\"id\":\"clip-0\",\"before\":{\"state\":\"absent\"},\"value\":{\"id\":\"clip-0\",\"at\":1,\"track\":\"V1\",\"asset\":\"asset-old-video-with-subminimum-duration\",\"clipType\":\"video\",\"hold\":0.0667,\"opacity\":0.5,\"transition\":{\"type\":\"crossfade\",\"duration\":0.5,\"params\":{\"opaque\":[null,false]}},\"effects\":{\"glow\":1},\"params\":{\"opaque\":{\"ordered\":[null,false,0]}},\"app\":{\"opaque\":{\"keep\":null,\"ordered\":[false,0,\"\"]}},\"label\":\"source.mp4\"},\"order_before\":[\"anchor\",\"later\",\"sibling\"],\"after_id\":\"anchor\"},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"clips\",\"id:anchor\",\"hold\"],\"before\":{\"state\":\"present\",\"value\":0.01},\"value\":0},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"clips\",\"id:later\",\"at\"],\"before\":{\"state\":\"present\",\"value\":5},\"value\":5.0667},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"registry\",\"assets\",\"asset-old-video-with-subminimum-duration\"],\"before\":{\"state\":\"absent\"},\"value\":{\"file\":\"old-video-with-subminimum-duration.mp4\",\"type\":\"video/mp4\",\"media_id\":\"media-old-video-with-subminimum-duration\",\"generationId\":\"generation-old-video-with-subminimum-duration\"}}]}],\"merge\":\"atomic\"}",
+      "request_byte_length": 2656,
+      "request_sha256": "99cf8093817631e9df49a4093c3086522419009f58e855fc287bcb62603f17f5",
+      "canonical_base_closure": {
+        "schema_version": 1,
+        "project_id": "project-commit",
+        "timeline_id": "timeline-1",
+        "parent_revision": {
+          "revision_id": "r0",
+          "content_digest": "sha256:e0f6d16e3d8891e0d338222a52af2c7990bc1bda5ee9dc16b81c193f1b08526f",
+          "payload": {
+            "config": {
+              "output": {
+                "resolution": "1280x720",
+                "fps": 30,
+                "file": "output.mp4",
+                "background": null,
+                "background_scale": null
+              },
+              "clips": [
+                {
+                  "id": "anchor",
+                  "at": 1,
+                  "track": "V1",
+                  "clipType": "video",
+                  "asset": "asset-source",
+                  "opacity": 0.5,
+                  "effects": {
+                    "glow": 1
+                  },
+                  "transition": {
+                    "type": "crossfade",
+                    "duration": 0.5,
+                    "params": {
+                      "opaque": [
+                        null,
+                        false
+                      ]
+                    }
+                  },
+                  "params": {
+                    "opaque": {
+                      "ordered": [
+                        null,
+                        false,
+                        0
+                      ]
+                    }
+                  },
+                  "app": {
+                    "opaque": {
+                      "keep": null,
+                      "ordered": [
+                        false,
+                        0,
+                        ""
+                      ]
+                    }
+                  },
+                  "hold": 0.01
+                },
+                {
+                  "id": "later",
+                  "at": 5,
+                  "track": "V1",
+                  "clipType": "hold",
+                  "hold": 1,
+                  "asset": "asset-peer"
+                },
+                {
+                  "id": "sibling",
+                  "at": 5,
+                  "track": "V2",
+                  "clipType": "hold",
+                  "hold": 1,
+                  "asset": "asset-peer"
+                }
+              ],
+              "tracks": [
+                {
+                  "id": "V1",
+                  "kind": "visual",
+                  "label": "V1"
+                },
+                {
+                  "id": "V2",
+                  "kind": "visual",
+                  "label": "V2"
+                }
+              ]
+            },
+            "clips": [
+              {
+                "id": "anchor",
+                "at": 1,
+                "track": "V1",
+                "clipType": "video",
+                "asset": "asset-source",
+                "opacity": 0.5,
+                "effects": {
+                  "glow": 1
+                },
+                "transition": {
+                  "type": "crossfade",
+                  "duration": 0.5,
+                  "params": {
+                    "opaque": [
+                      null,
+                      false
+                    ]
+                  }
+                },
+                "params": {
+                  "opaque": {
+                    "ordered": [
+                      null,
+                      false,
+                      0
+                    ]
+                  }
+                },
+                "app": {
+                  "opaque": {
+                    "keep": null,
+                    "ordered": [
+                      false,
+                      0,
+                      ""
+                    ]
+                  }
+                },
+                "hold": 0.01
+              },
+              {
+                "id": "later",
+                "at": 5,
+                "track": "V1",
+                "clipType": "hold",
+                "hold": 1,
+                "asset": "asset-peer"
+              },
+              {
+                "id": "sibling",
+                "at": 5,
+                "track": "V2",
+                "clipType": "hold",
+                "hold": 1,
+                "asset": "asset-peer"
+              }
+            ],
+            "registry": {
+              "assets": {
+                "asset-source": {
+                  "file": "source.mp4",
+                  "type": "video/mp4",
+                  "media_id": "media-source"
+                },
+                "asset-peer": {
+                  "file": "peer.png",
+                  "type": "image/png"
+                }
+              }
+            },
+            "occurrences": [],
+            "opaque": {
+              "keep": null
+            }
+          }
+        },
+        "shot_revisions": [],
+        "internal_timeline_revisions": [],
+        "dependency_manifest": {
+          "shots": [],
+          "internal_timelines": [],
+          "media": [],
+          "documents": []
+        }
+      },
+      "source_pins": {
+        "anchor": {
+          "id": "anchor",
+          "at": 1,
+          "track": "V1",
+          "clipType": "video",
+          "asset": "asset-source",
+          "opacity": 0.5,
+          "effects": {
+            "glow": 1
+          },
+          "transition": {
+            "type": "crossfade",
+            "duration": 0.5,
+            "params": {
+              "opaque": [
+                null,
+                false
+              ]
+            }
+          },
+          "params": {
+            "opaque": {
+              "ordered": [
+                null,
+                false,
+                0
+              ]
+            }
+          },
+          "app": {
+            "opaque": {
+              "keep": null,
+              "ordered": [
+                false,
+                0,
+                ""
+              ]
+            }
+          },
+          "hold": 0.01
+        },
+        "later": {
+          "id": "later",
+          "at": 5,
+          "track": "V1",
+          "clipType": "hold",
+          "hold": 1,
+          "asset": "asset-peer"
+        },
+        "sibling": {
+          "id": "sibling",
+          "at": 5,
+          "track": "V2",
+          "clipType": "hold",
+          "hold": 1,
+          "asset": "asset-peer"
+        },
+        "source_asset": {
+          "file": "source.mp4",
+          "type": "video/mp4",
+          "media_id": "media-source"
+        }
+      }
+    },
+    {
+      "source_case": "old video with incoming transition",
+      "actual_production_call_binding": "useMountedCommands(...).commands.addClip({ preparedAsset, trackId: V1, afterClipId: anchor, time: 0 }) -> useTimelineSave.applyEdit -> localSaveSession/outbox -> RuntimeDataProvider.commitTimeline -> AstridRuntimeClient/generated transport",
+      "request_json": {
+        "api_version": 1,
+        "project_id": "project-commit",
+        "timeline_id": "timeline-1",
+        "base_revision_id": "r0",
+        "base_publication_id": "p0",
+        "commands": [
+          {
+            "schema_version": 1,
+            "op": "doc.patch",
+            "version": "1",
+            "select": null,
+            "created": [
+              "parent/clip:clip-0"
+            ],
+            "args": {
+              "changes": [
+                {
+                  "op": "list.insert",
+                  "ref": "parent",
+                  "path": [
+                    "clips"
+                  ],
+                  "id": "clip-0",
+                  "before": {
+                    "state": "absent"
+                  },
+                  "value": {
+                    "id": "clip-0",
+                    "at": 3,
+                    "track": "V1",
+                    "asset": "asset-old-video-with-incoming-transition",
+                    "clipType": "video",
+                    "from": 2,
+                    "to": 6,
+                    "speed": 2,
+                    "opacity": 0.5,
+                    "transition": {
+                      "type": "crossfade",
+                      "duration": 0.5,
+                      "opaque": [
+                        false,
+                        null
+                      ]
+                    },
+                    "effects": {
+                      "glow": 1
+                    },
+                    "params": {
+                      "opaque": {
+                        "ordered": [
+                          null,
+                          false,
+                          0
+                        ]
+                      }
+                    },
+                    "app": {
+                      "opaque": {
+                        "keep": null,
+                        "ordered": [
+                          false,
+                          0,
+                          ""
+                        ]
+                      }
+                    },
+                    "label": "source.mp4"
+                  },
+                  "order_before": [
+                    "anchor",
+                    "later",
+                    "sibling"
+                  ],
+                  "after_id": "anchor"
+                },
+                {
+                  "op": "set",
+                  "ref": "parent",
+                  "path": [
+                    "clips",
+                    "id:later",
+                    "at"
+                  ],
+                  "before": {
+                    "state": "present",
+                    "value": 5
+                  },
+                  "value": 7
+                },
+                {
+                  "op": "set",
+                  "ref": "parent",
+                  "path": [
+                    "registry",
+                    "assets",
+                    "asset-old-video-with-incoming-transition"
+                  ],
+                  "before": {
+                    "state": "absent"
+                  },
+                  "value": {
+                    "file": "old-video-with-incoming-transition.mp4",
+                    "type": "video/mp4",
+                    "media_id": "media-old-video-with-incoming-transition",
+                    "generationId": "generation-old-video-with-incoming-transition"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "source": {
+          "via": "app"
+        },
+        "label": "Edit timeline",
+        "dry_run": false,
+        "steps": [
+          {
+            "id": "3af2e725-c52f-43d9-aaaa-f74a6b45a2a3",
+            "label": "Edit timeline",
+            "intent": "Save local editor changes",
+            "tags": [],
+            "command_ordinals": [
+              0
+            ],
+            "patch": [
+              {
+                "op": "list.insert",
+                "ref": "parent",
+                "path": [
+                  "clips"
+                ],
+                "id": "clip-0",
+                "before": {
+                  "state": "absent"
+                },
+                "value": {
+                  "id": "clip-0",
+                  "at": 3,
+                  "track": "V1",
+                  "asset": "asset-old-video-with-incoming-transition",
+                  "clipType": "video",
+                  "from": 2,
+                  "to": 6,
+                  "speed": 2,
+                  "opacity": 0.5,
+                  "transition": {
+                    "type": "crossfade",
+                    "duration": 0.5,
+                    "opaque": [
+                      false,
+                      null
+                    ]
+                  },
+                  "effects": {
+                    "glow": 1
+                  },
+                  "params": {
+                    "opaque": {
+                      "ordered": [
+                        null,
+                        false,
+                        0
+                      ]
+                    }
+                  },
+                  "app": {
+                    "opaque": {
+                      "keep": null,
+                      "ordered": [
+                        false,
+                        0,
+                        ""
+                      ]
+                    }
+                  },
+                  "label": "source.mp4"
+                },
+                "order_before": [
+                  "anchor",
+                  "later",
+                  "sibling"
+                ],
+                "after_id": "anchor"
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": [
+                  "clips",
+                  "id:later",
+                  "at"
+                ],
+                "before": {
+                  "state": "present",
+                  "value": 5
+                },
+                "value": 7
+              },
+              {
+                "op": "set",
+                "ref": "parent",
+                "path": [
+                  "registry",
+                  "assets",
+                  "asset-old-video-with-incoming-transition"
+                ],
+                "before": {
+                  "state": "absent"
+                },
+                "value": {
+                  "file": "old-video-with-incoming-transition.mp4",
+                  "type": "video/mp4",
+                  "media_id": "media-old-video-with-incoming-transition",
+                  "generationId": "generation-old-video-with-incoming-transition"
+                }
+              }
+            ]
+          }
+        ],
+        "merge": "atomic"
+      },
+      "request_bytes": "{\"api_version\":1,\"project_id\":\"project-commit\",\"timeline_id\":\"timeline-1\",\"base_revision_id\":\"r0\",\"base_publication_id\":\"p0\",\"commands\":[{\"schema_version\":1,\"op\":\"doc.patch\",\"version\":\"1\",\"select\":null,\"created\":[\"parent/clip:clip-0\"],\"args\":{\"changes\":[{\"op\":\"list.insert\",\"ref\":\"parent\",\"path\":[\"clips\"],\"id\":\"clip-0\",\"before\":{\"state\":\"absent\"},\"value\":{\"id\":\"clip-0\",\"at\":3,\"track\":\"V1\",\"asset\":\"asset-old-video-with-incoming-transition\",\"clipType\":\"video\",\"from\":2,\"to\":6,\"speed\":2,\"opacity\":0.5,\"transition\":{\"type\":\"crossfade\",\"duration\":0.5,\"opaque\":[false,null]},\"effects\":{\"glow\":1},\"params\":{\"opaque\":{\"ordered\":[null,false,0]}},\"app\":{\"opaque\":{\"keep\":null,\"ordered\":[false,0,\"\"]}},\"label\":\"source.mp4\"},\"order_before\":[\"anchor\",\"later\",\"sibling\"],\"after_id\":\"anchor\"},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"clips\",\"id:later\",\"at\"],\"before\":{\"state\":\"present\",\"value\":5},\"value\":7},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"registry\",\"assets\",\"asset-old-video-with-incoming-transition\"],\"before\":{\"state\":\"absent\"},\"value\":{\"file\":\"old-video-with-incoming-transition.mp4\",\"type\":\"video/mp4\",\"media_id\":\"media-old-video-with-incoming-transition\",\"generationId\":\"generation-old-video-with-incoming-transition\"}}]}}],\"source\":{\"via\":\"app\"},\"label\":\"Edit timeline\",\"dry_run\":false,\"steps\":[{\"id\":\"3af2e725-c52f-43d9-aaaa-f74a6b45a2a3\",\"label\":\"Edit timeline\",\"intent\":\"Save local editor changes\",\"tags\":[],\"command_ordinals\":[0],\"patch\":[{\"op\":\"list.insert\",\"ref\":\"parent\",\"path\":[\"clips\"],\"id\":\"clip-0\",\"before\":{\"state\":\"absent\"},\"value\":{\"id\":\"clip-0\",\"at\":3,\"track\":\"V1\",\"asset\":\"asset-old-video-with-incoming-transition\",\"clipType\":\"video\",\"from\":2,\"to\":6,\"speed\":2,\"opacity\":0.5,\"transition\":{\"type\":\"crossfade\",\"duration\":0.5,\"opaque\":[false,null]},\"effects\":{\"glow\":1},\"params\":{\"opaque\":{\"ordered\":[null,false,0]}},\"app\":{\"opaque\":{\"keep\":null,\"ordered\":[false,0,\"\"]}},\"label\":\"source.mp4\"},\"order_before\":[\"anchor\",\"later\",\"sibling\"],\"after_id\":\"anchor\"},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"clips\",\"id:later\",\"at\"],\"before\":{\"state\":\"present\",\"value\":5},\"value\":7},{\"op\":\"set\",\"ref\":\"parent\",\"path\":[\"registry\",\"assets\",\"asset-old-video-with-incoming-transition\"],\"before\":{\"state\":\"absent\"},\"value\":{\"file\":\"old-video-with-incoming-transition.mp4\",\"type\":\"video/mp4\",\"media_id\":\"media-old-video-with-incoming-transition\",\"generationId\":\"generation-old-video-with-incoming-transition\"}}]}],\"merge\":\"atomic\"}",
+      "request_byte_length": 2416,
+      "request_sha256": "e1f05b38f044d4557f0e28c12c644d077f85e617590a1b2b9050fb4c93527ae5",
+      "canonical_base_closure": {
+        "schema_version": 1,
+        "project_id": "project-commit",
+        "timeline_id": "timeline-1",
+        "parent_revision": {
+          "revision_id": "r0",
+          "content_digest": "sha256:94cf0261c216274f2559d9ac0b31b8d5a4782a0db8d53124ebf052d13f602825",
+          "payload": {
+            "config": {
+              "output": {
+                "resolution": "1280x720",
+                "fps": 30,
+                "file": "output.mp4",
+                "background": null,
+                "background_scale": null
+              },
+              "clips": [
+                {
+                  "id": "anchor",
+                  "at": 1,
+                  "track": "V1",
+                  "clipType": "video",
+                  "asset": "asset-source",
+                  "from": 2,
+                  "to": 6,
+                  "speed": 2,
+                  "opacity": 0.5,
+                  "effects": {
+                    "glow": 1
+                  },
+                  "transition": {
+                    "type": "crossfade",
+                    "duration": 0.5,
+                    "opaque": [
+                      false,
+                      null
+                    ]
+                  },
+                  "params": {
+                    "opaque": {
+                      "ordered": [
+                        null,
+                        false,
+                        0
+                      ]
+                    }
+                  },
+                  "app": {
+                    "opaque": {
+                      "keep": null,
+                      "ordered": [
+                        false,
+                        0,
+                        ""
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "later",
+                  "at": 5,
+                  "track": "V1",
+                  "clipType": "hold",
+                  "hold": 1,
+                  "asset": "asset-peer"
+                },
+                {
+                  "id": "sibling",
+                  "at": 5,
+                  "track": "V2",
+                  "clipType": "hold",
+                  "hold": 1,
+                  "asset": "asset-peer"
+                }
+              ],
+              "tracks": [
+                {
+                  "id": "V1",
+                  "kind": "visual",
+                  "label": "V1"
+                },
+                {
+                  "id": "V2",
+                  "kind": "visual",
+                  "label": "V2"
+                }
+              ]
+            },
+            "clips": [
+              {
+                "id": "anchor",
+                "at": 1,
+                "track": "V1",
+                "clipType": "video",
+                "asset": "asset-source",
+                "from": 2,
+                "to": 6,
+                "speed": 2,
+                "opacity": 0.5,
+                "effects": {
+                  "glow": 1
+                },
+                "transition": {
+                  "type": "crossfade",
+                  "duration": 0.5,
+                  "opaque": [
+                    false,
+                    null
+                  ]
+                },
+                "params": {
+                  "opaque": {
+                    "ordered": [
+                      null,
+                      false,
+                      0
+                    ]
+                  }
+                },
+                "app": {
+                  "opaque": {
+                    "keep": null,
+                    "ordered": [
+                      false,
+                      0,
+                      ""
+                    ]
+                  }
+                }
+              },
+              {
+                "id": "later",
+                "at": 5,
+                "track": "V1",
+                "clipType": "hold",
+                "hold": 1,
+                "asset": "asset-peer"
+              },
+              {
+                "id": "sibling",
+                "at": 5,
+                "track": "V2",
+                "clipType": "hold",
+                "hold": 1,
+                "asset": "asset-peer"
+              }
+            ],
+            "registry": {
+              "assets": {
+                "asset-source": {
+                  "file": "source.mp4",
+                  "type": "video/mp4",
+                  "media_id": "media-source"
+                },
+                "asset-peer": {
+                  "file": "peer.png",
+                  "type": "image/png"
+                }
+              }
+            },
+            "occurrences": [],
+            "opaque": {
+              "keep": null
+            }
+          }
+        },
+        "shot_revisions": [],
+        "internal_timeline_revisions": [],
+        "dependency_manifest": {
+          "shots": [],
+          "internal_timelines": [],
+          "media": [],
+          "documents": []
+        }
+      },
+      "source_pins": {
+        "anchor": {
+          "id": "anchor",
+          "at": 1,
+          "track": "V1",
+          "clipType": "video",
+          "asset": "asset-source",
+          "from": 2,
+          "to": 6,
+          "speed": 2,
+          "opacity": 0.5,
+          "effects": {
+            "glow": 1
+          },
+          "transition": {
+            "type": "crossfade",
+            "duration": 0.5,
+            "opaque": [
+              false,
+              null
+            ]
+          },
+          "params": {
+            "opaque": {
+              "ordered": [
+                null,
+                false,
+                0
+              ]
+            }
+          },
+          "app": {
+            "opaque": {
+              "keep": null,
+              "ordered": [
+                false,
+                0,
+                ""
+              ]
+            }
+          }
+        },
+        "later": {
+          "id": "later",
+          "at": 5,
+          "track": "V1",
+          "clipType": "hold",
+          "hold": 1,
+          "asset": "asset-peer"
+        },
+        "sibling": {
+          "id": "sibling",
+          "at": 5,
+          "track": "V2",
+          "clipType": "hold",
+          "hold": 1,
+          "asset": "asset-peer"
+        },
+        "source_asset": {
+          "file": "source.mp4",
+          "type": "video/mp4",
+          "media_id": "media-source"
+        }
+      }
+    }
+  ]
+}
