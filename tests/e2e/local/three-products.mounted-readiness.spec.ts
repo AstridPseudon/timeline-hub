@@ -5,9 +5,10 @@
  */
 import { expect, type Page, type TestInfo } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
-import { harnessUnavailableReason, startDirectHarness, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
+import { harnessUnavailableReason, runtimePython, startDirectHarness, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { commandOutboxes, expectConnected, openApp, openSeededTimeline, test as appTest, UI } from './support/app.ts';
 import { hasFreshSettledOwner, isFreshlyConnected, readExistingReadonly, type ReadonlyOutboxRead } from './mounted-readiness-safety.ts';
+import { createD21Environment, observeD21Harness, observeD21Page, persistD21Environment, recordD21Error, recordD21Readiness, recordD21Stage } from './d21-environment.ts';
 
 const CEILING = { timeout: 90_000 };
 const UNKNOWN = 'UNKNOWN' as const;
@@ -56,6 +57,12 @@ const test = appTest.extend<object, { seed3: ThreeProductsSeed }>({
   seed3: [async ({ harness }, use) => {
     await use(await harness.seedThreeProducts());
   }, { scope: 'worker', timeout: 240_000 }],
+});
+
+// eslint-disable-next-line no-empty-pattern
+test.beforeAll(async ({}, testInfo) => {
+  // The carrier is valid before any leaf operation. It intentionally contains no process, browser, or service facts.
+  await persistD21Environment(testInfo, createD21Environment());
 });
 
 test.beforeAll(() => {
@@ -207,13 +214,33 @@ async function snapshot(
 
 test('D28 mounted readiness: connected editor claims a fresh scoped owner before any gesture', async ({ page, harness, seed3 }, testInfo) => {
   const diagnostics = createDiagnostics(harness);
+  const environment = createD21Environment();
+  observeD21Harness(environment, {
+    runtimeUrl: harness.runtimeUrl,
+    doorBase: harness.doorBase,
+    doorPrefix: harness.doorPrefix,
+    editorOrigin: harness.origin,
+    productCredentialPresent: Boolean(harness.productToken),
+    authoringProfile: 'astrid',
+    distPath: process.env.ASTRID_APP_DIRECT_DIST ?? 'dist',
+    agentCommit: process.env.TIMELINE_BUNDLE_AGENT_HEAD,
+    runtimeCommit: process.env.TIMELINE_BUNDLE_RUNTIME_HEAD,
+    backendInterpreterPath: runtimePython() ?? undefined,
+  });
+  recordD21Stage(environment, 'before-load', 'NOTRUN');
+  await persistD21Environment(testInfo, environment);
   let currentStage = 'before-load';
   attachRouteStatusErrors(page, diagnostics, () => currentStage);
+  const websocketUrls: string[] = [];
+  page.on('websocket', (socket) => { websocketUrls.push(socket.url()); });
   stageSnapshot(diagnostics, { stage: 'before-load', status: blankConnection(), actualConnected: UNKNOWN, readonlyOutbox: blankOutboxSummary(), selectionEquality: UNKNOWN });
   persistDiagnostics(testInfo, diagnostics);
   let initialOutboxRead: ReadonlyOutboxRead<Awaited<ReturnType<typeof commandOutboxes>>> = { status: 'unknown', reason: 'unavailable' };
   try {
     await page.goto(`${harness.origin}/__blank.html`);
+    observeD21Page(environment, { url: page.url() });
+    recordD21Stage(environment, 'before-load', 'OBSERVED');
+    await persistD21Environment(testInfo, environment);
     initialOutboxRead = await readExistingCommandOutboxes(page, seed3.timelineId);
   } catch {
     // The setup read is intentionally readonly; the diagnostics retain UNKNOWN rather than exposing an error.
@@ -230,13 +257,16 @@ test('D28 mounted readiness: connected editor claims a fresh scoped owner before
     expect(initialOutboxRead.status, 'the mounted preflight must verify the scoped outbox before loading the editor').toBe('verified');
   } catch (error) {
     diagnostics.failure = failureProjection(error, currentStage);
+    recordD21Error(environment, diagnostics.failure);
     persistDiagnostics(testInfo, diagnostics);
+    await persistD21Environment(testInfo, environment).catch(() => {});
     throw error;
   }
 
   try {
     currentStage = 'connected-selection';
     await openApp(page, harness);
+    observeD21Page(environment, { url: page.url() });
     const connected = await connectionSummary(page);
     await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo, {
       status: connected,
@@ -254,6 +284,9 @@ test('D28 mounted readiness: connected editor claims a fresh scoped owner before
     });
     expect(isFreshlyConnected(selected), 'the mounted editor must remain connected after selection').toBe(true);
     expect(selectedEquality, 'the mounted editor must show the selected seeded timeline').toBe(true);
+    recordD21Readiness(environment, true, 'UNKNOWN');
+    recordD21Stage(environment, 'connected-selection', 'OBSERVED');
+    await persistD21Environment(testInfo, environment);
 
     currentStage = 'fresh-owner-reconnected';
     await snapshot(page, seed3, previousOwnerIds, currentStage, diagnostics, testInfo);
@@ -279,10 +312,19 @@ test('D28 mounted readiness: connected editor claims a fresh scoped owner before
       actualConnected: reconnected.attached === true && reconnected.state === 'connected',
     });
     await expectConnected(page);
+    observeD21Page(environment, { url: page.url(), websocket: websocketUrls[0] });
+    recordD21Readiness(environment, true, true);
+    recordD21Stage(environment, 'fresh-owner-reconnected', 'OBSERVED');
+    await persistD21Environment(testInfo, environment);
   } catch (error) {
     diagnostics.failure = failureProjection(error, currentStage);
+    recordD21Stage(environment, currentStage, 'FAILED');
+    environment.status = 'failed';
+    if (websocketUrls.length > 0) observeD21Page(environment, { url: page.url(), websocket: websocketUrls[0] });
+    await persistD21Environment(testInfo, environment).catch(() => {});
     throw error;
   } finally {
     persistDiagnostics(testInfo, diagnostics);
+    await persistD21Environment(testInfo, environment).catch(() => {});
   }
 });
