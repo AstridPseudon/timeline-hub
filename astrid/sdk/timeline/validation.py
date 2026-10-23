@@ -9,7 +9,7 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 from fractions import Fraction
-from typing import Any, cast
+from typing import Any, NoReturn, cast
 
 from jsonschema import Draft202012Validator
 from referencing import Registry
@@ -26,7 +26,7 @@ class FinalCandidateError(AuthoringBundleError):
     """The complete candidate cannot be safely published."""
 
 
-def _fail(path: str, message: str) -> None:
+def _fail(path: str, message: str) -> NoReturn:
     raise FinalCandidateError(f"{path}: {message}")
 
 
