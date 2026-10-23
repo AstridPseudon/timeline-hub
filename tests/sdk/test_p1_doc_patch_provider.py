@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+from fractions import Fraction
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,7 @@ from tests.sdk.test_timeline_commit_provider import (
 from tests.sdk.test_timeline_commit_provider import (
     runtime_abi as runtime_abi,
 )
+from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
 CORPUS = Path(__file__).resolve().parent / "fixtures" / "p1_feasibility"
 REQUESTS = json.loads((CORPUS / "doc_patch_requests.json").read_text(encoding="utf-8"))
@@ -391,6 +393,45 @@ def test_unchanged_unresolved_legacy_timing_is_retained_for_unrelated_edit() -> 
         and clip["app"]["astrid"]["until"] == "end"
         for clip in clips
     )
+
+
+def test_unchanged_valid_legacy_child_timing_uses_rational_compiler_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from astrid.sdk.timeline import _commit_timing_validation as timing_validation
+
+    bundle = bundle_from_document(document_fixture(shared=False))
+    clips = bundle["shots"]["chapter-shot"]["internal_timeline"]["clips"]
+    clips[0]["app"]["astrid"] = {"cut": "c1"}
+    clips[1]["app"]["astrid"] = {"cut": "c1", "on": "c1"}
+    document = document_from_bundle(bundle)
+    internal_revision = document["internal_timeline_revisions"][0]["revision_id"]
+    realm = DetachedRealm(document)
+    original_compile = timing_validation.compile_timing
+    compiled = []
+
+    def capture(inputs):
+        result = original_compile(inputs)
+        compiled.append((inputs, result))
+        return result
+
+    monkeypatch.setattr(timing_validation, "compile_timing", capture)
+    result = _service_call(
+        realm,
+        [_doc_patch({
+            "op": "set",
+            "ref": f"internal-revision:{internal_revision}",
+            "path": ["clips", "id:clip-b", "params"],
+            "before": {"state": "absent"},
+            "value": {"note": "unrelated"},
+        })],
+        controls={"merge": "fields", "reads": []},
+    )
+
+    assert result["data"]["status"] == "accepted"
+    inputs, timing = compiled[-1]
+    assert inputs.legacy_declarations == ()
+    assert timing.timings[("occ-a", "chapter-shot", "clip-b")]["start"] == Fraction(29029, 30000)
 
 
 def _doc_patch(change: dict[str, Any]) -> dict[str, Any]:

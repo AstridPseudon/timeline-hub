@@ -9,6 +9,7 @@ from astrid.core.timeline import moments
 from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.core.timeline.shot_composition_projection import _placement_speed
 from astrid.sdk import timeline_intent as intent
+from astrid.sdk.timeline._timing_evaluators import _fps, _ReadLookup
 from astrid.sdk.timeline.compiler import TimingCompileError, TimingInputs, compile_timing
 from astrid.sdk.timeline.native_word_anchor import binding, legacy_binding
 from astrid.sdk.timeline.units import _time_fraction
@@ -97,10 +98,66 @@ def _reference_basis(bundle: Mapping[str, Any], key: tuple[Any, ...], clip: Mapp
     return basis
 
 
+def _clear_legacy_declarations(bundle: dict[str, Any], keep: tuple[tuple[Any, ...], str]) -> None:
+    """Leave one declaration in a detached probe of the original bundle."""
+    rows = dict(_legacy_rows(bundle))
+    for key, clip in rows.items():
+        for field in ("on", "until"):
+            if (key, field) != keep:
+                intent._set(clip, field, None)
+
+
+def _legacy_declaration_is_resolvable(
+    bundle: Mapping[str, Any], key: tuple[Any, ...], field: str, declaration: str,
+) -> bool:
+    """Prove a retained declaration resolves before allowing an exemption."""
+    try:
+        moment = moments.parse(declaration)
+    except (TypeError, ValueError, moments.MomentError):
+        return False
+
+    if moment.kind == "word":
+        # Child legacy word anchors have never had an authorized source binding;
+        # the production evaluator therefore treats them as unresolved.
+        if key[0] != "parent":
+            return False
+        sources = bundle.get("source_mapping", {}).get("pinned_documents", [])
+        try:
+            legacy_binding(bundle, "parent/clip:" + str(key[2]), field, declaration, sources)
+        except (TimingCompileError, KeyError, TypeError, ValueError):
+            return False
+        return True
+
+    probe = copy.deepcopy(dict(bundle))
+    _clear_legacy_declarations(probe, (key, field))
+    target = dict(_legacy_rows(probe)).get(key)
+    if target is None:
+        return False
+    intent._set(target, field, declaration)
+    try:
+        validate_candidate_timing(probe)
+    except (TimingCompileError, KeyError, TypeError, ValueError) as exc:
+        # A detached shared-child probe can fail on its duplicate physical
+        # images before reaching this declaration. Structural cut resolution is
+        # still enough to distinguish a valid legacy cut/end from a missing one.
+        if "ambiguous cut identity" not in str(exc):
+            return False
+        if moment.kind not in {"cut", "cut_end", "end", "cut_start"}:
+            return False
+        try:
+            lookup = _ReadLookup(probe, _fps(probe))
+            cut = moment.cut or intent.cut_of(target)
+            if not cut or lookup._cut_id(cut) not in {group["id"] for group in lookup._cut_groups()}:
+                return False
+        except (KeyError, TypeError, ValueError, AttributeError, TimingCompileError):
+            return False
+    return True
+
+
 def _legacy_exemptions(
     candidate: Mapping[str, Any], baseline: Mapping[str, Any] | None,
 ) -> set[tuple[tuple[Any, ...], str]]:
-    """Return only unchanged, base-existing legacy declarations."""
+    """Return unchanged declarations proven unresolvable in the base."""
     if baseline is None:
         return set()
     before = dict(_legacy_rows(baseline))
@@ -114,7 +171,8 @@ def _legacy_exemptions(
         for field, value in current_values.items():
             if (prior_values.get(field) == value
                     and _reference_basis(candidate, key, clip)
-                    == _reference_basis(baseline, key, prior)):
+                    == _reference_basis(baseline, key, prior)
+                    and not _legacy_declaration_is_resolvable(baseline, key, field, value)):
                 exemptions.add((key, field))
     return exemptions
 
