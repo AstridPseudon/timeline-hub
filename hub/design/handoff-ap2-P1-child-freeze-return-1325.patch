@@ -1,0 +1,130 @@
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv	2026-10-23 13:15:49.968537040 +0000
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-ap2-P1-child-freeze-return-1325-make-child-venv.sh	2026-10-23 13:27:32.364578793 +0000
+@@ -177,11 +177,117 @@
+   'test "$(cat "$1")" = "$2" && test "$(cat "$3")" = "$4"' \
+   _ "$T/.astrid-source-commit" "$S" "$T/.astrid-runtime-source-commit" "$RUNTIME_SHA"
+ 
++# PEP 610 direct_url.json is the installed distribution provenance. Local
++# source installs have directory metadata; wheel installs have archive hashes.
++# Record the actual names, versions, source URLs and provenance kind in the
++# retained report, then validate those values against the live child venv below.
++DIST_METADATA_SCRIPT='import importlib.metadata as metadata, json, pathlib, sys, tomllib
++from urllib.parse import unquote, urlparse
++roots = {"astrid": pathlib.Path(sys.argv[1]).resolve(), "astrid-runtime": pathlib.Path(sys.argv[2]).resolve()}
++for name, root in roots.items():
++    project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
++    dist = metadata.distribution(name)
++    assert dist.metadata["Name"] == project["name"] == name, (name, dist.metadata["Name"], project["name"])
++    assert dist.version == project["version"], (name, dist.version, project["version"])
++    direct = json.loads((pathlib.Path(dist._path) / "direct_url.json").read_text())
++    url = direct.get("url")
++    parsed = urlparse(url or "")
++    assert parsed.scheme == "file" and parsed.netloc in ("", "localhost"), (name, url)
++    assert pathlib.Path(unquote(parsed.path)).resolve() == root, (name, url, root)
++    if "dir_info" in direct or "directory_info" in direct:
++        info = direct.get("dir_info", direct.get("directory_info"))
++        assert not info.get("editable", False), (name, info)
++        kind = "directory"
++    else:
++        archive = direct.get("archive_info") or {}
++        assert archive.get("hash", "").startswith("sha256:"), (name, direct)
++        kind = "wheel"
++    print(f"{name}_name={dist.metadata[\"Name\"]}")
++    print(f"{name}_version={dist.version}")
++    print(f"{name}_direct_url={url}")
++    print(f"{name}_provenance={kind}")'
++run_stage distribution-provenance "$LOCAL_TIMEOUT_SECONDS" bash -c \
++  'set -e; "$1" -I -c "$2" "$3" "$4" > "$5"' _ \
++  "$P" "$DIST_METADATA_SCRIPT" "$AGENT_SRC" "$RUNTIME_SRC" "$T/.astrid-distribution-metadata"
++
+ run_stage freeze "$FREEZE_TIMEOUT_SECONDS" bash -c \
+-  'set -e; { printf "status=passed\\nagent_sha=%s\\nruntime_sha=%s\\nrequirements_path=%s\\nrequirements_lock_sha256=%s\\n" "$4" "$5" "$6" "$7"; printf "installed_import_origins:\\n"; cat "$3"; printf "pip_freeze:\\n"; "$1" -I -m pip freeze --all; } > "$2"' \
+-  _ "$P" "$REPORT_TMP" "$T/.astrid-import-origins" "$S" "$RUNTIME_SHA" "$REQUIREMENTS_PATH" "$LOCK_SHA"
++  'set -e; { printf "status=passed\nagent_sha=%s\nruntime_sha=%s\nrequirements_path=%s\nrequirements_lock_sha256=%s\n" "$4" "$5" "$6" "$7"; printf "installed_import_origins:\n"; cat "$3"; printf "installed_distribution_metadata:\n"; cat "$8"; printf "pip_freeze:\n"; "$1" -I -m pip freeze --all; } > "$2"' \
++  _ "$P" "$REPORT_TMP" "$T/.astrid-import-origins" "$S" "$RUNTIME_SHA" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$T/.astrid-distribution-metadata"
++
++IDENTITY_SCRIPT='import importlib.metadata as metadata, json, pathlib, sys, tomllib
++from urllib.parse import unquote, urlparse
++report = pathlib.Path(sys.argv[1])
++child = pathlib.Path(sys.argv[2]).resolve()
++roots = {"astrid": pathlib.Path(sys.argv[3]).resolve(), "astrid-runtime": pathlib.Path(sys.argv[4]).resolve()}
++expected = {"astrid": sys.argv[5], "astrid-runtime": sys.argv[6]}
++lines = report.read_text().splitlines()
++def fail(message):
++    raise SystemExit("freeze identity mismatch: " + message)
++def value(key):
++    matches = [line[len(key) + 1:] for line in lines if line.startswith(key + "=")]
++    if len(matches) != 1:
++        fail(f"{key} missing or duplicated")
++    return matches[0]
++if value("status") != "passed":
++    fail("status")
++if value("agent_sha") != expected["astrid"] or value("runtime_sha") != expected["astrid-runtime"]:
++    fail("source commit tuple")
++origins = {}
++try:
++    start = lines.index("installed_import_origins:") + 1
++except ValueError:
++    fail("import provenance section")
++for line in lines[start:]:
++    if line == "installed_distribution_metadata:":
++        break
++    if "=" in line:
++        name, origin = line.split("=", 1)
++        origins[name] = pathlib.Path(origin).resolve()
++for name in ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client"):
++    origin = origins.get(name)
++    if origin is None or child not in origin.parents or "site-packages" not in origin.parts:
++        fail(f"isolated import origin {name}")
++metadata_start = lines.index("installed_distribution_metadata:") if "installed_distribution_metadata:" in lines else None
++reported = {}
++if metadata_start is not None:
++    for line in lines[metadata_start + 1:]:
++        if line == "pip_freeze:":
++            break
++        if "=" in line:
++            key, item = line.split("=", 1)
++            reported[key] = item
++for name, root in roots.items():
++    project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
++    dist = metadata.distribution(name)
++    if dist.metadata["Name"] != project["name"] or dist.metadata["Name"] != name:
++        fail(f"distribution name {name}")
++    if dist.version != project["version"]:
++        fail(f"distribution version {name}")
++    direct = json.loads((pathlib.Path(dist._path) / "direct_url.json").read_text())
++    url = direct.get("url") or ""
++    parsed = urlparse(url)
++    if parsed.scheme != "file" or parsed.netloc not in ("", "localhost") or pathlib.Path(unquote(parsed.path)).resolve() != root:
++        fail(f"distribution source {name}")
++    if "dir_info" in direct or "directory_info" in direct:
++        info = direct.get("dir_info", direct.get("directory_info"))
++        if info.get("editable", False):
++            fail(f"editable source {name}")
++        kind = "directory"
++    else:
++        archive = direct.get("archive_info") or {}
++        if not archive.get("hash", "").startswith("sha256:"):
++            fail(f"wheel provenance {name}")
++        kind = "wheel"
++    freeze = [line for line in lines if line.startswith(name + " @ ")]
++    if len(freeze) != 1 or freeze[0].split(" @ ", 1)[1] != url:
++        fail(f"pip freeze source {name}")
++    if reported:
++        for key, wanted in ((f"{name}_name", name), (f"{name}_version", dist.version), (f"{name}_direct_url", url), (f"{name}_provenance", kind)):
++            if reported.get(key) != wanted:
++                fail(f"reported {key}")'
+ run_stage freeze-identity "$LOCAL_TIMEOUT_SECONDS" bash -c \
+-  'grep -q "^status=passed$" "$1" && grep -q "^astrid==" "$1" && grep -q "^astrid-runtime==" "$1"' _ "$REPORT_TMP"
++  'set -e; "$1" -I -c "$2" "$3" "$4" "$5" "$6" "$7" "$8"' _ \
++  "$P" "$IDENTITY_SCRIPT" "$REPORT_TMP" "$T" "$AGENT_SRC" "$RUNTIME_SRC" "$S" "$RUNTIME_SHA"
+ 
+ # Venv launchers contain the partial path. Fix them before the atomic publish;
+ # no complete destination exists until all validation above has passed.
+@@ -207,4 +313,4 @@
+ fi
+ 
+ echo "created $D (astrid from ${S:0:12}, runtime from ${RUNTIME_SHA:0:12}, $(wc -l < "$F") pins, read-only)$( [ -n "$BS" ] && echo "; suite $N-full")"
+-echo "imports validated: astrid astrid_runtime runtime_protocol astrid_runtime_client; CLI validated"
++echo "imports validated: astrid astrid_runtime runtime_protocol astrid_runtime_client; distribution identity and CLI validated"
+
