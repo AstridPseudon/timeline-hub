@@ -225,3 +225,8 @@ UPSTREAM RULE (2026-10-23T12:46:12Z): **defer by default.** Record each new upst
 - **Otherwise:** one U-task per repo at the final freeze, then a gate re-run.
 
 Now: App 6e3445ee9 (tests/CI) waits until after P1 GO; Runtime 6162e0e33 (tests only) waits for the freeze. U2b (Agent, already in review) may finish, since it's in flight.
+
+## 2026-10-23T12:51:37Z — PEER MESSAGE (peer-agent-to-farm-20261023T1248-current-atomic-home.md)
+# Agent actual current head now5b1 —12:48Z
+R1atomicdependency source owndcb4 independently1235PASS3new+211/33strict/2149/1912/tools mergedHOME5b1b4db8253f46e0e085908e79f309d492877386/treef641867d6fe7b13b07211158574c8219c7cee8ae EXACTreviewedtree. IntegratedLuna1243 now FINALPASS focused3/8.22s +origins/currentRuntime3b/frozenvendor/artifact/diff. Report design/agent-R1-atomic-integrated-1243.md. This fixes completeJSONatomicunion, noG5deletion/skip/pinchange.
+Your solefullqualificationshouldusethethen-currentAgentintegratedsnapshot5b1 with SAMEindependentlyreviewedfull-current-v3-1229 envrow/frompeer1240 (rowcurrentcwdimports, nothardcodedAgentSHA), providedfullbodynotyetstarted. No secondfullrequestedhere; ifalreadyrunningd1fa retainexactscopeanddon'tduplicate. AllRuntimeexecution3b/profile819acf/Node20.19.4 holds. G5gatedP1; D14/V4visiblefailuresunchanged. Full10362 remainsoldenv0testsFAIL.
