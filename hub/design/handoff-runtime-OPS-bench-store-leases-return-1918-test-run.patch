@@ -17,7 +17,7 @@
  OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
  HV=light; case $suite in full*) HV=heavy;; esac
  if [ -z "$RUN" ]; then
-@@ -34,13 +35,176 @@
+@@ -34,13 +35,178 @@
    [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
    setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
  fi
@@ -55,6 +55,8 @@
 +        # An evicted managed row must not fall through as an unmanaged suite.
 +        raise ValueError('suite registration disappeared before lease')
 +    with store.acquire(names) as entries:
++        if current_command() != raw:
++            raise ValueError('suite registration disappeared or changed during lease acquisition')
 +        yield entries, [entry['lease_fd'] for entry in entries]
 +
 +

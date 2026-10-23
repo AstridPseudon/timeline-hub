@@ -27,6 +27,8 @@ def suite_lease(store, repo, suite, command, tests_dir):
         # An evicted managed row must not fall through as an unmanaged suite.
         raise ValueError('suite registration disappeared before lease')
     with store.acquire(names) as entries:
+        if current_command() != raw:
+            raise ValueError('suite registration disappeared or changed during lease acquisition')
         yield entries, [entry['lease_fd'] for entry in entries]
 
 
