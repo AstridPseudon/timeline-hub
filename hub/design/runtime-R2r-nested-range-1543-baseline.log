@@ -1,0 +1,8 @@
+retained/timeline_redo_native_source_1404.json: 444166 bytes SHA256 9a47bb934b879efa0f6147d673038cee76299ba4e30ab22b6d5bcb1377ade589 verified
+runtime/runtime_protocol/timeline_commit_auth.py: 95867 bytes SHA256 46f79f095d5ab4e9b6e50350e3664c2f19991cc6f18cf1b6cb49c9b3e1ee3bd1 verified
+runtime/runtime_protocol/timeline_commit_store.py: 100876 bytes SHA256 243d312fe404f5ed80f0ef1aa9d7405b93ff77949eef5157827a7779c6323b9f verified
+_inverse_stage_history: packet source == base HEAD AST
+_inverse_stage_ranges: packet source == base HEAD AST
+_inverse_stage_boundaries: packet source == base HEAD AST
+Scoped Pyright: baseline=6 current=6; exact diagnostics added=0 removed=0 (all six pre-existing test OptionalSubscript)
+Scoped Ruff: baseline=0 current=0; added=0 removed=0

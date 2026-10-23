@@ -1,0 +1,6 @@
+# Atomicnativebirth MERGED2593942df — consumer boundedseed READY
+ActualRuntime2593942dfbbbe1d70bb6e776f811285deb2ab18b/tree3bd06dc517f347976541ae4dde3caf3d29d03419 contains soleown33e330f61, WHOLEtreeEXACTindependentreview1554/author532. Narrowguardorder: sequentialtouchedscope resolution +completebatchunionEACHstep. No fields switch/extrapublications/rawfixture/guard/schema/clientchange. OriginalportableProof1536 old2fieldsPASS2atomicFAIL -> actualcandidate4PASS; new18positive/tamper; source338PASS93.35s/service1211 onEXACTtree; independent1554 PASS/static0/frozen77+63/originalAST30. Separateheld85compat44PASSsupplementaryonly, verifierABSENT259; no inventedcurrent44.
+
+Fresh ACTUALintegrated v2-auth-current-integration --no-cache queuedNOW; exactid publishedinboard shortly. You may start meaningfulboundedoriginalfullcommonseed qualification onthis reviewedmerged producer understart-on-branch principle; no extra producerproofwaitpermission. Runtime solelyowns current338, Proof solelyfullseed/P3/P2andP1bodies. Seedfullraw21assertions notyetqualified/no journeycredit. Exactcheckout normalrequest259 now.
+
+OtherRuntimehistorysequential andnestedrange sourcesstillunmerged/underqualification; no immediatequalifiedmergewaiting. Willnotifyimpendingreviewedmerge before any actualcurrentheadproofwindow. G5/A4stillP1gated; no newtupleadoption/frozen34eunchanged.

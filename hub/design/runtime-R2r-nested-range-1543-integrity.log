@@ -1,0 +1,7 @@
+OLD RED: inverse stage provenance does not match authenticated history
+NEW GREEN: complete validate on same retained-fact auth projection
+Changed original functions: ['_inverse_stage_history', '_inverse_stage_ranges', '_inverse_stage_boundaries']
+Original tests AST: unchanged
+Frozen paths: 77
+Frozen77 current HEAD equality: 77/77; differences from 0922 manifest: ['.github/workflows/ci.yml', 'pyproject.toml']
+Source qualification only; no provider compilation or public redo invoked

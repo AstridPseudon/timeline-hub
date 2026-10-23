@@ -1,0 +1,401 @@
+diff --git a/runtime_protocol/timeline_commit_auth.py b/runtime_protocol/timeline_commit_auth.py
+index e7d1555c5..7aaa2689f 100644
+--- a/runtime_protocol/timeline_commit_auth.py
++++ b/runtime_protocol/timeline_commit_auth.py
+@@ -816,6 +816,58 @@ def _inverse_stage_root_equal(observed, claimed, ref):
+     return False
+ 
+ 
++def _inverse_stage_inherited(source_step, source_commands, source_records, publication):
++    """Project partitions of a sealed inverse, retaining its immediate identity.
++
++    History entries come from history_entry, which verifies their acceptance
++    and ancestry before exposing these bindings. They are not provider claims.
++    """
++    bindings = [binding for command in source_commands for binding in command.get("bindings", [])
++                if binding.get("key") == "inverse.stage"]
++    if len(bindings) <= 1:
++        return None
++    require(len(source_commands) == 1 and source_commands[0]["command"]["op"] == "timeline.inverse",
++            "inherited inverse stages require one authenticated source command")
++    command = source_commands[0]
++    targets = source_records.get("undo_of")
++    require(isinstance(targets, list) and targets and publication not in targets
++            and len(set(targets)) == len(targets)
++            and command["command"]["args"].get("publications") == targets,
++            "inherited inverse stage targets differ from authenticated history")
++    native_end = effect_end = 0
++    partitions = []
++    for binding in bindings:
++        boundary = binding.get("boundary", {})
++        require(binding.get("ref") == "parent" and binding.get("policy") == "fixed"
++                and binding.get("dependencies") == []
++                and boundary.get("publication_id") in targets
++                and isinstance(boundary.get("step_id"), str) and boundary["step_id"]
++                and isinstance(boundary.get("command_ordinals"), list)
++                and boundary["command_ordinals"]
++                and all(type(ordinal) is int and ordinal >= 0 for ordinal in boundary["command_ordinals"]),
++                "inherited inverse stage identity differs from authenticated history")
++        native = boundary.get("native_write_range")
++        effect = boundary.get("effect_range")
++        require(isinstance(native, list) and len(native) == 2
++                and all(type(item) is int for item in native)
++                and native[0] == native_end < native[1] <= len(command["writes"])
++                and isinstance(effect, list) and len(effect) == 2
++                and all(type(item) is int for item in effect)
++                and effect[0] == effect_end < effect[1] <= len(source_step["patch"]),
++                "inherited inverse ranges are missing, reordered, or overlapping")
++        writes = [{**write, "before": write["after"], "after": write["before"]}
++                  for write in reversed(command["writes"][native[0]:native[1]])]
++        partitions.append({"native_sites": [(write["ref"], write["path"]) for write in writes],
++                           "source_writes": writes,
++                           "source_effects": source_step["patch"][effect[0]:effect[1]],
++                           "effect_sites": [(effect["ref"], effect["path"])
++                                            for effect in reversed(source_step["patch"][effect[0]:effect[1]])]})
++        native_end, effect_end = native[1], effect[1]
++    require(native_end == len(command["writes"]) and effect_end == len(source_step["patch"]),
++            "inherited inverse ranges do not cover authenticated history")
++    return list(reversed(partitions))
++
++
+ def _inverse_stage_history(records, history):
+     """Return the authenticated source stages named by an inverse record."""
+     publications = records.get("undo_of")
+@@ -868,6 +920,11 @@ def _inverse_stage_history(records, history):
+                     and all(type(ordinal) is int and 0 <= ordinal < len(commands) for ordinal in ordinals),
+                     "inverse stage source step command boundary is malformed")
+             source_commands = [commands[ordinal] for ordinal in ordinals]
++            inherited = _inverse_stage_inherited(source_step, source_commands, source_records, publication)
++            if inherited is not None:
++                expected.extend({"publication_id": publication, "step_id": source_step["id"],
++                                 "command_ordinals": ordinals, **partition} for partition in inherited)
++                continue
+             native_sites = [(write["ref"], write["path"]) for command in reversed(source_commands)
+                             for write in reversed([*command.get("writes", []),
+                                 *(write for write in command.get("derived_writes", [])
+@@ -889,6 +946,9 @@ def _inverse_stage_ranges(step, records, history=None):
+                 stages.append(binding)
+                 stage_records.append(record)
+     if not stages:
++        require(not any(records["commands"][ordinal]["command"]["op"] == "timeline.inverse"
++                        for ordinal in step["command_ordinals"]),
++                "inverse stage provenance is absent")
+         return None
+ 
+     expected = _inverse_stage_history(records, history)
+@@ -939,6 +999,21 @@ def _inverse_stage_ranges(step, records, history=None):
+                 "inverse stage effect ranges are missing, reordered, or overlapping")
+         native_sites = [(write["ref"], write["path"]) for write in record["writes"][native_start:native_end]]
+         effect_sites = [(effect["ref"], effect["path"]) for effect in step["patch"][effect_start:effect_end]]
++        if "source_writes" in source_stage:
++            require(value_equal(record["writes"][native_start:native_end], source_stage["source_writes"])
++                    and effect_sites == source_stage["effect_sites"],
++                    "inherited inverse native captures or effects differ from authenticated history")
++            for effect, source_effect in zip(step["patch"][effect_start:effect_end],
++                                             reversed(source_stage["source_effects"])):
++                require(source_effect["op"] in {"set", "remove"} and effect["op"] in {"set", "remove"},
++                        "inherited inverse effects are not authenticated observations")
++                source_after = ({"state": "present", "value": source_effect["value"]}
++                                if source_effect["op"] == "set" else {"state": "absent"})
++                after = ({"state": "present", "value": effect["value"]}
++                         if effect["op"] == "set" else {"state": "absent"})
++                require(value_equal(effect["before"], source_after)
++                        and value_equal(after, source_effect["before"]),
++                        "inherited inverse effects differ from authenticated source images")
+         # A recorder may observe the exact canonical stage effects directly or
+         # retain the source's finer native captures in reverse execution order.
+         # Neither representation permits extra sites or mere ancestor overlap.
+@@ -946,7 +1021,7 @@ def _inverse_stage_ranges(step, records, history=None):
+                 "inverse stage native write membership differs from its authenticated stage")
+         previous_native_end, previous_effect_end = native_end, effect_end
+         result.append({"binding": binding, "record": record, "native_range": native_range,
+-                       "effect_range": effect_range})
++                       "effect_range": effect_range, "source_stage": source_stage})
+     require(previous_native_end == len(record["writes"])
+             and previous_effect_end == len(step["patch"]),
+             "inverse stage ranges do not cover the authenticated inverse")
+@@ -984,6 +1059,7 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
+                                for binding in source_commands[ordinal].get("bindings", [])
+                                if binding.get("key") == "commit.materialization"]
+         native_image = copy.deepcopy(stage_before)
++        inherited_effects = stage["source_stage"].get("source_effects")
+         root_checks = []
+         # Native captures observe each preceding write (including empty ancestor
+         # removals); canonical effects describe the complete stage transition.
+@@ -1011,6 +1087,21 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
+                         native_image[ref] = copy.deepcopy(stage_after[ref])
+                 continue
+             ref, path = _inverse_stage_write_site(native_image, write)
++            if (inherited_effects is not None and write["ref"].startswith("occurrence:")
++                    and "/" not in write["ref"] and write["path"] == ["shot_id"]):
++                occurrence_path = ["occurrences", "occurrence_id:" + write["ref"].partition(":")[2]]
++                for field in ("shot_id", "shot_revision_id"):
++                    captures = [effect for effect in inherited_effects
++                                if effect["ref"] == "parent" and effect["path"] == [*occurrence_path, field]]
++                    require(len(captures) == 1 and captures[0]["op"] == "set"
++                            and value_equal(location(stage_before["parent"]["payload"], [*occurrence_path, field]),
++                                            {"state": "present", "value": captures[0]["value"]})
++                            and value_equal(location(stage_after["parent"]["payload"], [*occurrence_path, field]),
++                                            captures[0]["before"]),
++                            "inherited inverse occurrence differs from authenticated source edges")
++                    native_image["parent"]["payload"] = project_observation(
++                        native_image["parent"]["payload"], [*occurrence_path, field], captures[0]["before"])
++                continue
+             require(value_equal(_inverse_stage_state(native_image, ref, path), write["before"]),
+                     "inverse stage write differs from its sequential input")
+             if not path and ref not in native_image:
+@@ -1167,6 +1258,14 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
+         for observed, before_claim, root, physical, after, after_claim, successors in root_checks:
+             before_claim = copy.deepcopy(before_claim)
+             after_claim = copy.deepcopy(after_claim)
++            if inherited_effects is not None and root.startswith("shot:"):
++                # These exact captures were authenticated at source acceptance.
++                # Their native pin may precede a canonical physical turnover;
++                # both endpoint images are fixed by the exact source effects.
++                for claim, image in ((before_claim, observed), (after_claim, after)):
++                    if claim["state"] == image["state"] == "present":
++                        claim["value"]["payload"]["internal_timeline_revision_id"] = (
++                            image["value"]["payload"]["internal_timeline_revision_id"])
+             # A later aggregate capture retains the pin from the native source
+             # execution. Translate only the exact edge already proved in an
+             # earlier inverse stage, preserving every other aggregate byte.
+@@ -1183,6 +1282,11 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
+                     "inverse stage root differs from its authenticated effect image")
+         authenticated_turnovers.extend(transitions)
+ 
++        if inherited_effects is not None:
++            # Exact inverse source effects already authenticate both physical
++            # endpoints. Align only complete equal payloads with the same owner.
++            _align_materialized_images(native_image, stage_after)
++
+         require(value_equal({ref: image["payload"] for ref, image in native_image.items()},
+                             {ref: image["payload"] for ref, image in stage_after.items()}),
+                 "inverse stage native writes do not cover its authenticated effect image")
+diff --git a/tests/test_timeline_inverse_stage_authentication.py b/tests/test_timeline_inverse_stage_authentication.py
+index e4e6a372d..311f49222 100644
+--- a/tests/test_timeline_inverse_stage_authentication.py
++++ b/tests/test_timeline_inverse_stage_authentication.py
+@@ -928,3 +928,223 @@ def test_retained_native_order_packet_rejects_coordinated_forgery(retained_nativ
+         validate(request=inputs["context"]["request"], prepared=prepared,
+                  source=inputs["source"], base=inputs["previous"], history=inputs["history"])
+     assert error.value.failure["details"]["reason"] == "invalid_records"
++
++
++@pytest.fixture
++def retained_nested_inverse():
++    import hashlib
++    import json
++    from pathlib import Path
++
++    raw = (Path(__file__).parent / "fixtures" / "timeline_nested_inverse_1543.json").read_bytes()
++    inputs = json.loads(raw)
++    # Immediate accepted entry and auth-only inverse projection extracted from the credential-scanned
++    # 1404 packet (SHA-256 9a47bb934b879efa0f6147d673038cee76299ba4e30ab22b6d5bcb1377ade589).
++    assert hashlib.sha256(raw).hexdigest() == "8798a4b3a66b6922367add8cae44183a112dea54e4ec15b4e67a47ae7e8b6a13"
++    return next(iter(inputs["history"].values()))
++
++
++def _nested_projection(entry):
++    source = entry["records"]["commands"][0]
++    source_step = entry["records"]["steps"][0]
++    writes = [{**copy.deepcopy(write), "before": copy.deepcopy(write["after"]),
++               "after": copy.deepcopy(write["before"])} for write in reversed(source["writes"])]
++    patch = []
++    for effect in reversed(source_step["patch"]):
++        inverse = {"op": "set" if effect["before"]["state"] == "present" else "remove",
++                   "ref": effect["ref"], "path": effect["path"],
++                   "before": {"state": "present", "value": effect["value"]}
++                   if effect["op"] == "set" else {"state": "absent"}}
++        if inverse["op"] == "set":
++            inverse["value"] = effect["before"]["value"]
++        patch.append(inverse)
++    bindings = []
++    for binding in reversed(source["bindings"]):
++        if binding["key"] != "inverse.stage":
++            continue
++        boundary = binding["boundary"]
++        start, end = boundary["native_write_range"]
++        first, last = boundary["effect_range"]
++        bindings.append({**copy.deepcopy(binding), "boundary": {
++            "publication_id": entry["publication_id"], "step_id": source_step["id"],
++            "command_ordinals": source_step["command_ordinals"],
++            "native_write_range": [len(writes) - end, len(writes) - start],
++            "effect_range": [len(patch) - last, len(patch) - first]}})
++    command = {"schema_version": 1, "op": "timeline.inverse", "version": "1", "select": None,
++               "args": {"publications": [entry["publication_id"]]}}
++    record = {"ordinal": 0, "command": command, "writes": writes, "bindings": bindings,
++              "reads": [], "selections": [], "created": [], "dependencies": [], "derived_writes": []}
++    return {"id": "undo", "command_ordinals": [0], "patch": patch}, {
++        "commands": [record], "undo_of": [entry["publication_id"]], "undo_steps": None}
++
++
++def test_retained_nested_ranges_bind_immediate_identity_and_exact_captures(retained_nested_inverse):
++    from runtime_protocol.timeline_commit_auth import _inverse_stage_ranges
++
++    entry = retained_nested_inverse
++    step, records = _nested_projection(entry)
++    original = copy.deepcopy((entry, step, records))
++    stages = _inverse_stage_ranges(step, records, {entry["publication_id"]: entry})
++    assert [(stage["native_range"], stage["effect_range"]) for stage in stages] == [
++        ([0, 2], [0, 4]), ([2, 3], [4, 9])]
++    assert [(write["ref"], write["path"]) for write in records["commands"][0]["writes"]] == [
++        ("shot:selected-shot", []), ("occurrence:f2-occurrence", ["shot_id"]),
++        ("occurrence:f2-occurrence/clip:f2-agent-clip", ["params", "text"])]
++    assert (entry, step, records) == original
++
++
++@pytest.mark.parametrize("mutation", [None, "publication", "step", "ordinal", "order", "omitted",
++                                      "overlap", "effect", "native-before", "native-after", "digest"])
++def test_nested_inverse_authenticates_boundaries_without_durable_forgery(service, mutation):
++    service.test_provider.action = _seed
++    port_tests.commit(service, _seed_request(service), key="nested-seed")
++    store = service._timeline_commits()[0]
++    publication = store.head(service.test_project, "main")["publication_id"]
++    service.test_provider.action = lambda context, port: port.accept(_prepared(context, port))
++    port_tests.commit(service, _request(service, publication), key="nested-source")
++    publication = store.head(service.test_project, "main")["publication_id"]
++    entry = store.history_entry(service.test_project, "main", publication)
++    before = tuple(service.store.conn.iterdump())
++
++    def execute(context, port):
++        request = context["request"]
++        source = port.revision_closure(port.head()["revision_id"])
++        step, records = _nested_projection(entry)
++        step = {**request["steps"][0], "patch": step["patch"], "dependencies": []}
++        records.update(schema_version=1, restored_from=None, label=request["label"], merge_mode="fields",
++                       steps=[step])
++        first = copy.deepcopy(source["parent_revision"])
++        first["payload"]["meta"]["org.example.stage"].pop("two")
++        first.update(revision_id="nested-intermediate", content_digest=digest(first["payload"]))
++        final = copy.deepcopy(first)
++        final["payload"].pop("meta")
++        final.update(revision_id="nested-final", content_digest=digest(final["payload"]))
++        record = records["commands"][0]
++        for index, pair in enumerate(((source["parent_revision"], first), (first, final))):
++            for side, image in zip(("before", "after"), pair):
++                record["bindings"].append({
++                    "key": "commit.effect", "ref": "parent", "physical_ref": "parent", "policy": "fixed",
++                    "dependencies": [], "path": step["patch"][index]["path"],
++                    "revision_id": image["revision_id"], "content_digest": image["content_digest"],
++                    "step_id": "undo", "effect_ordinal": index,
++                    "boundary": {"base_revision_id": request["base_revision_id"],
++                                 "base_publication_id": request["base_publication_id"],
++                                 "evaluated_head": port.head(), "command_ordinal": 0,
++                                 "step_id": "undo", "phase": "effect", "side": side}})
++        stages = record["bindings"][:2]
++        if mutation in {"publication", "step", "ordinal"}:
++            key, value = {"publication": ("publication_id", "foreign"), "step": ("step_id", "foreign"),
++                          "ordinal": ("command_ordinals", [1])}[mutation]
++            stages[0]["boundary"][key] = value
++        elif mutation == "order":
++            record["bindings"][:2] = reversed(stages)
++        elif mutation == "omitted":
++            record["bindings"].pop(0)
++        elif mutation == "overlap":
++            stages[1]["boundary"]["native_write_range"] = [0, 2]
++        elif mutation == "effect":
++            step["patch"][0]["path"] = ["forged"]
++        elif mutation in {"native-before", "native-after"}:
++            record["writes"][0][mutation.removeprefix("native-")] = {"state": "present", "value": "forged"}
++        elif mutation == "digest":
++            record["bindings"][-1]["content_digest"] = "sha256:" + "0" * 64
++        document = {**copy.deepcopy(source), "parent_revision": final}
++        value = {"expected_head": port.head(), "canonical_document": document, "document_digest": digest(document),
++                 "records": records, "id_map": {}, "semantic_events": [], "provider_version": "nested-test",
++                 "compiler_version": "fixture-1"}
++        return port.accept(value)
++
++    service.test_provider.action = execute
++    request = _request(service, publication)
++    if mutation is None:
++        result = port_tests.commit(service, request, key="nested-valid")
++        assert result["data"]["status"] == "accepted"
++        assert "meta" not in result["data"]["canonical_document"]["parent_revision"]["payload"]
++        assert store.history_entry(service.test_project, "main", result["receipt"]["receipt_id"])[
++            "records"]["undo_of"] == [publication]
++    else:
++        with pytest.raises(RuntimeErrorBase) as error:
++            port_tests.commit(service, request, key="nested-forged")
++        assert error.value.details is not None
++        assert error.value.details["reason"] == "invalid_records"
++        assert tuple(service.store.conn.iterdump()) == before
++
++
++@pytest.fixture
++def retained_nested_auth_input(retained_nested_inverse):
++    import json
++    from pathlib import Path
++
++    return json.loads((Path(__file__).parent / "fixtures" / "timeline_nested_inverse_1543.json").read_bytes())
++
++
++def test_actual_nested_inverse_authenticates_complete_retained_boundaries(retained_nested_auth_input):
++    from runtime_protocol.timeline_commit_auth import validate
++
++    inputs = retained_nested_auth_input
++    before = copy.deepcopy(inputs)
++    validate(**inputs)
++    assert inputs == before
++
++
++@pytest.mark.parametrize("mutation", [
++    "owner", "pin", "digest", "read", "foreign", "future", "self", "omitted", "flattened", "overlap",
++    "order", "native-before", "native-after", "effect-before", "effect-after", "effect-binding",
++    "history-overlap", "history-gap", "history-self", "history-foreign",
++])
++def test_actual_nested_inverse_forgeries_refuse_losslessly(retained_nested_auth_input, mutation):
++    from runtime_protocol.timeline_commit import CommitRejected
++    from runtime_protocol.timeline_commit_auth import validate
++
++    inputs = retained_nested_auth_input
++    prepared = inputs["prepared"]
++    record = prepared["records"]["commands"][0]
++    stages = [binding for binding in record["bindings"] if binding["key"] == "inverse.stage"]
++    source = next(iter(inputs["history"].values()))
++    if mutation == "owner":
++        prepared["canonical_document"]["shot_revisions"][0]["shot_id"] = "foreign-owner"
++    elif mutation == "pin":
++        prepared["canonical_document"]["shot_revisions"][0]["payload"]["internal_timeline_revision_id"] = "foreign-pin"
++    elif mutation == "digest":
++        next(binding for binding in record["bindings"] if binding["key"] == "commit.effect")[
++            "content_digest"] = "sha256:" + "0" * 64
++    elif mutation == "read":
++        record["reads"].append({"ref": "parent", "path": ["forged"], "state": {"state": "present", "value": True}})
++    elif mutation in {"foreign", "future", "self"}:
++        stages[0]["boundary"]["publication_id"] = (
++            prepared["canonical_document"]["parent_revision"]["revision_id"] if mutation == "future"
++            else "foreign-publication" if mutation == "foreign" else "self")
++    elif mutation == "omitted":
++        record["bindings"].remove(stages[0])
++    elif mutation == "flattened":
++        record["bindings"] = [binding for binding in record["bindings"] if binding["key"] != "inverse.stage"]
++    elif mutation == "overlap":
++        stages[1]["boundary"]["effect_range"] = [0, 9]
++    elif mutation == "order":
++        stages[0]["boundary"], stages[1]["boundary"] = stages[1]["boundary"], stages[0]["boundary"]
++    elif mutation in {"native-before", "native-after"}:
++        record["writes"][0][mutation.removeprefix("native-")] = {"state": "present", "value": "forged"}
++    elif mutation in {"effect-before", "effect-after"}:
++        effect = prepared["records"]["steps"][0]["patch"][0]
++        if mutation == "effect-before":
++            effect["before"] = {"state": "present", "value": None}
++        else:
++            effect["op"] = "remove"
++            effect.pop("value", None)
++    elif mutation == "effect-binding":
++        record["bindings"] = [binding for binding in record["bindings"] if binding["key"] != "commit.effect"]
++    else:
++        binding = next(binding for binding in source["records"]["commands"][0]["bindings"]
++                       if binding["key"] == "inverse.stage")
++        if mutation == "history-overlap":
++            binding["boundary"]["native_write_range"] = [0, 3]
++        elif mutation == "history-gap":
++            binding["boundary"]["effect_range"] = [1, 5]
++        else:
++            binding["boundary"]["publication_id"] = (source["publication_id"] if mutation == "history-self"
++                                                       else "foreign")
++    before = copy.deepcopy(inputs)
++    with pytest.raises(CommitRejected) as error:
++        validate(**inputs)
++    assert error.value.failure["details"]["reason"] == "invalid_records"
++    assert inputs == before
