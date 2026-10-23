@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T04:04:06Z | dispatcher heartbeat 9s | live 4 (sol 0, luna 4, other 0) | busy30 23 | status age 0m -->
+<!-- agent | 2026-10-23T04:05:35Z | dispatcher heartbeat 8s | live 4 (sol 0, luna 4, other 0) | busy30 22 | status age 0m -->
 # agent board, 2026-10-23T04:03:20Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -21,6 +21,7 @@
 | P4-owner | five reviewed tests/API join | Luna | combinedG234,publicsteps | doing | agt-P4-step-join-0401 | Imports ONLY exact5 donor files0018 (independent0337 PASS15,1collected) plus narrowa568 selector. Rejectedb4f not imported. Proof owns later HTTP bodies | base5f0;donor001802c7a |
 | V3-owner | same Composition artifact | Luna | U2,App archive | merged | agt-V3-integrated-proof-0111; vw-V3-agent-integrated0114 | Exactfa2 both integrated proofs30 and130/gen/types/caller PASS, archive819acf/73451B/80. Package only | b56828de5;mergefa2cf5b66 |
 | V1-copies | canonical691 copies | Luna | RuntimeV1 | merged | agt-V1-integrated-proof-0147 | Independent+integrated64+163subtests PASS;15 mapped691, normal ratchets/artifact/caller | ffcec5d33 |
+| G4-R5-handoff | public requester test migration map | Luna | G4 staged5f0 | doing | agt-G4-R5-requester-handoff-0405 | PeerRuntime0354 precise public entrypoint/fence/target/retry/renderpin map dispatched; no source change/duplicate actual | base5f0 |
 | G5 | delete superseded paths | Luna | G3,G4,P1 GO | gated:P1 | — | H3 NO-GO; no G5 deletion work started | — |
 Resolved: runtime — Frozen strict-envelope producer34eac0041/tree98535748 plus compatible executionad823e0a/tree33904550 adopted ONCE. Textalias133+all21 original independently PASS; all8 client paths exact34e. Old21482/780 immutable historical evidence. No blocked:runtime rows remain.
 Resolved: orchestrator — D12 no-new-invalidity ruling03:23:52 applies now. C0d doc merged62c454ac0 perpeer0346; no new generated tuple. D13 native move canonical app clears/fixed_start/for confirmed intentional to Proof.
