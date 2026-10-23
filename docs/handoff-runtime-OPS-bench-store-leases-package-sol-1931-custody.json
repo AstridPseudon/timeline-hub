@@ -1,0 +1,140 @@
+[
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-caller-only.patch",
+    "sha256": "321abc86fbac8c8fe4aa533ecaf439ebc8b6db0cd7c3bc23cb123435f88cc949",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-caller-only.patch",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-interface-needs.md",
+    "sha256": "98eff3f78d174f0f242e5ecf9cb1f215b76d9c7a3bcfcc9d7f2d2c63d70fad94",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-interface-needs.md",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-lease-seam.py",
+    "sha256": "c20bcba62165c3498899e731c3dfcaaff8316bffbeb48008cbe0307beb9a2bc9",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-lease-seam.py",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-leases.py",
+    "sha256": "0081fff4a924346674686399570234fae4c64a054575709fee7e18fcbb3c3577",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-leases.py",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run",
+    "sha256": "f599c5ad7bf3cd61aeb01791d903ce6edfa87d5d04a39b3ebb630b3517b17ff4",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-run",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run.original",
+    "sha256": "2d1240303c0c82bf908377eeff3323a899d8929454ac2c316b05bf076fc35d35",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-run.original",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run.patch",
+    "sha256": "e6bd990d4d3a49cc64709aabe94a73beb958bd9e1bf591e69212ad5a7762e044",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-run.patch",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-validate.py",
+    "sha256": "ce33c87d7b4ebda91330f513e76fd91d465db2679e4db596ceb4d276be2292ca",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-oldvalidate.py",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-report.md",
+    "sha256": "a90a816b56c51e568129b77491888776ba3267a0aaa6fb4b79d583cdfd209286",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-old-flat-report.md",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-hashmanifest.sha256",
+    "sha256": "da5ebfef28bcdf72232a2b619bb6948309d81af95b2dbf2bc81fd6fc16678ac7",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-oldmanifest.sha256",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/report.md",
+    "sha256": "d66d207226ea20a4d8414a5b8702af98d33b7c337533dfa45f1069fc0192d143",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-oldreport.md",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-core-projection-1915-bench_store.py",
+    "sha256": "88ae9e5af3425639b7eba0b79aa6b84e78a319fe810c0c6a2d3ceece1be8b5f3",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-bench_store.py",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/tests.log",
+    "sha256": "005052fc619be2dc81096208810071b242e1560d71d490b933d7c6efd0d4e2e4",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-tests.log",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/validation.log",
+    "sha256": "f8cdf81e808a04c111cb40f9ad85b74a507ebf9a339d1626301405a7b63f0b75",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-validation.log",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/caller-race-core1915-before.log",
+    "sha256": "5ac9c49a51398fcde80b3fd6c30d3bec3aa493dd01c0e5bbaa530753b4f38cc9",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-caller-race-core1915-before.log",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/immutable-inputs.sha256",
+    "sha256": "b07bffa29bb90331d9f3ca595f199c24f4fb3307dc79f2ea27214670ad3de901",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-immutable-inputs.sha256",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/live-inputs.sha256",
+    "sha256": "9570f72e1ef0bcdc4d03c50776c1aa07597c172e72f84c7ec5c6b7795f16aba9",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-live-inputs.sha256",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/dependency-manifest.log",
+    "sha256": "dbb1706c01677b8bf472432372611b9e6fc4e9a8b054f74f10fa51c7060c2160",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-dependency-manifest.log",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/manifest-check.log",
+    "sha256": "2a2facedebc9958b6eb2f231d102b695edb16f56c5532f34ab5e947e2ec8afbe",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-manifest-check.log",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-1850-test-run",
+    "sha256": "e1cf7390207f2f48a18ceca21d3f762ddb4bdfa455584e93615ab3da0836f448",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-predecessor1850-test-run",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-review-1923/report.md",
+    "sha256": "86be52b8be185a050dd7b2dc98011357619b835888524da66c51655cd51b37fc",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-independent1923-report.md",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-review-1923/handoff-runtime-OPS-bench-store-leases-review-1923.md",
+    "sha256": "967f51155f74fb9ffa6466de81d50f80d492e28a1ed5517770ec99e942ec02e0",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-independent1923-handoff.md",
+    "gzip": false
+  },
+  {
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-review-1923/log.txt",
+    "sha256": "8270363f759051e4b1fd2ead11b1d628ea40e3cd061c480cf876665f0d99d669",
+    "file": "handoff-runtime-OPS-bench-store-leases-package-sol-1931-independent1923-source.log.gz",
+    "gzip": true
+  }
+]

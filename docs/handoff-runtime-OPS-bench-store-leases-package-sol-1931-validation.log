@@ -1,0 +1,43 @@
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-caller-only.patch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-caller-only.patch
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-interface-needs.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-interface-needs.md
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-lease-seam.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-lease-seam.py
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-leases.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-leases.py
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-run /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-run.original /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run.original
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-run.patch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run.patch
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-oldvalidate.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-validate.py
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-old-flat-report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-report.md
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-oldmanifest.sha256 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-hashmanifest.sha256
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-oldreport.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/report.md
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-bench_store.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-core-projection-1915-bench_store.py
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-tests.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/tests.log
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-validation.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/validation.log
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-caller-race-core1915-before.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/caller-race-core1915-before.log
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-immutable-inputs.sha256 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/immutable-inputs.sha256
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-live-inputs.sha256 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/live-inputs.sha256
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-dependency-manifest.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/dependency-manifest.log
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-source1918-manifest-check.log /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-return-1918/manifest-check.log
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-predecessor1850-test-run /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-1850-test-run
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-independent1923-report.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-review-1923/report.md
++ cmp /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-independent1923-handoff.md /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-leases-review-1923/handoff-runtime-OPS-bench-store-leases-review-1923.md
+custody SHA/cmp PASS: 23 artifacts
+prior stable manifest: 15/15 PASS; preserved mutable worker report mismatch: 1/1 confirmed
++ bash -n /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-run
+shell syntax, 5 Python compiles, embedded seam byte equality PASS
++ patch --dry-run -p1 -d /tmp/w-9daf365999/package1931-yiuqal_v
+checking file bin/test-run
++ patch -p1 -d /tmp/w-9daf365999/package1931-yiuqal_v
+patching file bin/test-run
++ cmp /tmp/w-9daf365999/package1931-yiuqal_v/bin/test-run /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-run
++ patch --dry-run -p1 -d /tmp/w-9daf365999/package1931-yiuqal_v
+checking file bin/test-run
++ patch -p1 -d /tmp/w-9daf365999/package1931-yiuqal_v
+patching file bin/test-run
++ cmp /tmp/w-9daf365999/package1931-yiuqal_v/bin/test-run /home/user/work/wt/rt-OPS-bench-store-leases-package-sol-1931/docs/handoff-runtime-OPS-bench-store-leases-package-sol-1931-test-run
+both patch replays/cmp and outside-seam preservation PASS
+independent1923 original log preserved losslessly; 24/24 PASS 8.631s retained, NOT rerun
++ git -C /home/user/work/runtime status --porcelain
++ git -C /home/user/work/runtime diff --check
++ git -C /home/user/work/runtime rev-parse HEAD
+Runtime2a9 clean PASS
+PACKAGE SOURCE PASS; combined FAIL/UNQUALIFIED; permission1905 STOPPED

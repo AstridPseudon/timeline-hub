@@ -1,0 +1,29 @@
+bound_sha256_before={'/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-core-projection-1915-bench_store.py': '88ae9e5af3425639b7eba0b79aa6b84e78a319fe810c0c6a2d3ceece1be8b5f3', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run': 'e1cf7390207f2f48a18ceca21d3f762ddb4bdfa455584e93615ab3da0836f448', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run.original': '2d1240303c0c82bf908377eeff3323a899d8929454ac2c316b05bf076fc35d35', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-lease-seam.py': 'be6ab1ef7c7b41baf9d026bd8e2e857d900bc83245d9cd8372fb72a5b05da4cd', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run.patch': 'a4a7adbef4ed89ae4155d30f8897bd18760696ed5d40f234332096364bf8df62', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-leases.py': '8495008c91af15934e0ab179c08ae4d38bf58ce5c5a9b8746d750fd355e8173b'}
+test_row_removed_or_tampered_between_resolution_and_acquire_refuses (__main__.LeaseTests.test_row_removed_or_tampered_between_resolution_and_acquire_refuses) ... 
+  test_row_removed_or_tampered_between_resolution_and_acquire_refuses (__main__.LeaseTests.test_row_removed_or_tampered_between_resolution_and_acquire_refuses) (replacement='# removed custom row\n') ... FAIL
+  test_row_removed_or_tampered_between_resolution_and_acquire_refuses (__main__.LeaseTests.test_row_removed_or_tampered_between_resolution_and_acquire_refuses) (replacement='agent legacy false\n') ... FAIL
+
+======================================================================
+FAIL: test_row_removed_or_tampered_between_resolution_and_acquire_refuses (__main__.LeaseTests.test_row_removed_or_tampered_between_resolution_and_acquire_refuses) (replacement='# removed custom row\n')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-leases.py", line 340, in test_row_removed_or_tampered_between_resolution_and_acquire_refuses
+    with self.assertRaises(Exception):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: Exception not raised
+
+======================================================================
+FAIL: test_row_removed_or_tampered_between_resolution_and_acquire_refuses (__main__.LeaseTests.test_row_removed_or_tampered_between_resolution_and_acquire_refuses) (replacement='agent legacy false\n')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-leases.py", line 340, in test_row_removed_or_tampered_between_resolution_and_acquire_refuses
+    with self.assertRaises(Exception):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: Exception not raised
+
+----------------------------------------------------------------------
+Ran 1 test in 0.064s
+
+FAILED (failures=2)
+bound_sha256_after={'/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-core-projection-1915-bench_store.py': '88ae9e5af3425639b7eba0b79aa6b84e78a319fe810c0c6a2d3ceece1be8b5f3', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run': 'e1cf7390207f2f48a18ceca21d3f762ddb4bdfa455584e93615ab3da0836f448', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run.original': '2d1240303c0c82bf908377eeff3323a899d8929454ac2c316b05bf076fc35d35', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-lease-seam.py': 'be6ab1ef7c7b41baf9d026bd8e2e857d900bc83245d9cd8372fb72a5b05da4cd', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-run.patch': 'a4a7adbef4ed89ae4155d30f8897bd18760696ed5d40f234332096364bf8df62', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-leases-return-1918-test-leases.py': '8495008c91af15934e0ab179c08ae4d38bf58ce5c5a9b8746d750fd355e8173b'}
+core_sha256=88ae9e5af3425639b7eba0b79aa6b84e78a319fe810c0c6a2d3ceece1be8b5f3

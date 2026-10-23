@@ -1,0 +1,9 @@
+handoff-runtime-OPS-bench-store-core-projection-1915-bench_store.py: OK
+handoff-runtime-OPS-bench-store-core-projection-1915-core.patch: OK
+handoff-runtime-OPS-bench-store-core-projection-1915-input-hashes.json: OK
+handoff-runtime-OPS-bench-store-core-projection-1915-interface.md: OK
+handoff-runtime-OPS-bench-store-core-projection-1915-lease-seam.py: OK
+handoff-runtime-OPS-bench-store-core-projection-1915-report.md: OK
+handoff-runtime-OPS-bench-store-core-projection-1915-test-core.py: OK
+handoff-runtime-OPS-bench-store-core-projection-1915-test-projection.py: OK
+handoff-runtime-OPS-bench-store-core-projection-1915-validate.py: OK
