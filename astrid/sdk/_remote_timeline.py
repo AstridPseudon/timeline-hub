@@ -68,6 +68,26 @@ class _RemoteTimelineRevisionMixin:
         if not parent.ok or not isinstance(parent.data, Mapping):
             return parent
         payload = parent.data.get("payload") if isinstance(parent.data.get("payload"), Mapping) else {}
+        owner_by_revision: dict[str, str] = {}
+        manifest = parent.data.get("dependency_manifest")
+        manifest_rows = manifest.get("internal_timelines") if isinstance(manifest, Mapping) else None
+        if isinstance(manifest_rows, list):
+            for row in manifest_rows:
+                if not isinstance(row, Mapping):
+                    return DomainResult.failure(ErrorObject(
+                        "integrity_error", "canonical internal timeline pin is invalid", {}
+                    ))
+                child_revision, owner = row.get("revision_id"), row.get("timeline_id")
+                if not isinstance(child_revision, str) or not isinstance(owner, str) or not owner:
+                    return DomainResult.failure(ErrorObject(
+                        "integrity_error", "canonical internal timeline pin has no exact owner", {}
+                    ))
+                previous = owner_by_revision.setdefault(child_revision, owner)
+                if previous != owner:
+                    return DomainResult.failure(ErrorObject(
+                        "integrity_error", "canonical internal revision has conflicting owners",
+                        {"revision_id": child_revision},
+                    ))
         shots: dict[str, Any] = {}
         internals: dict[str, Any] = {}
         for occurrence in payload.get("occurrences") or []:
@@ -83,9 +103,23 @@ class _RemoteTimelineRevisionMixin:
             shot_payload = shot_data.get("payload") if isinstance(shot_data.get("payload"), Mapping) else {}
             internal_revision = shot_data.get("internal_timeline_revision_id") or shot_payload.get("internal_timeline_revision_id")
             if internal_revision not in internals:
-                internal = self._typed("get_project_timeline_revision", project_id, timeline_id, internal_revision)
+                internal_owner = owner_by_revision.get(internal_revision)
+                if not isinstance(internal_owner, str) or not internal_owner:
+                    return DomainResult.failure(ErrorObject(
+                        "integrity_error",
+                        "pinned internal revision has no exact owner timeline",
+                        {"revision_id": internal_revision},
+                    ))
+                internal = self._typed("get_project_timeline_revision", project_id, internal_owner, internal_revision)
                 if not internal.ok or not isinstance(internal.data, Mapping):
                     return internal
+                if (internal.data.get("project_id"), internal.data.get("timeline_id"),
+                        internal.data.get("revision_id")) != (project_id, internal_owner, internal_revision):
+                    return DomainResult.failure(ErrorObject(
+                        "integrity_error",
+                        "internal revision response does not match its exact owner or pin",
+                        {"project_id": project_id, "timeline_id": internal_owner, "revision_id": internal_revision},
+                    ))
                 internals[internal_revision] = internal.data
         try:
             # Runtime revision reads carry outer storage/read-envelope fields
