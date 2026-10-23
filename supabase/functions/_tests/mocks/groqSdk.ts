@@ -23,4 +23,3 @@ class Groq {
 }
 
 export default Groq;
-

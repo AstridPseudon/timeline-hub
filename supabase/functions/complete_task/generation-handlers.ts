@@ -434,4 +434,3 @@ export async function handleStandaloneGeneration(ctx: HandlerContext): Promise<u
     },
   };
 }
-

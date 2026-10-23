@@ -17,4 +17,3 @@ describe('stripe test mock', () => {
     __resetCreateSessionImpl();
   });
 });
-

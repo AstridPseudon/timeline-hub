@@ -319,4 +319,3 @@ describe('complete_task/generation-handlers exports', () => {
     expect(taskUpdateEq).toHaveBeenCalledWith('id', 'task-child-variant');
   });
 });
-

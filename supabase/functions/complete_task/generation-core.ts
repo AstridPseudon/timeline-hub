@@ -269,4 +269,3 @@ export async function linkGenerationToShot(
     return;
   }
 }
-

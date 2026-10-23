@@ -27,4 +27,3 @@ export function __resetCreateSessionImpl(): void {
       url: 'https://checkout.test/session',
     });
 }
-

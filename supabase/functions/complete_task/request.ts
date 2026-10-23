@@ -262,4 +262,3 @@ export async function validateStoragePathSecurity(
   console.warn('Non-orchestrator task attempted to reference different task output');
   return { allowed: false, error: "storage_path does not match task_id. Files must be uploaded for the correct task." };
 }
-
