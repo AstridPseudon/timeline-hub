@@ -13,6 +13,7 @@ from typing import Any
 
 import pytest
 
+from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.sdk import timeline
 from astrid.sdk.timeline.commit import _digest, bundle_from_document
 from astrid.sdk.timeline.emitter import emit_document_commands
@@ -38,7 +39,7 @@ def _notes() -> list[dict[str, Any]]:
 
 
 def _seed_original(runtime: Any) -> dict[str, Any]:
-    """Install the original shared fixture before acceptance observation.
+    """Install the compiled original shared fixture before acceptance observation.
 
     The note namespace is an isolated empty-container genesis setup: the
     original fixture has no note keys, while doc.patch requires the parent
@@ -53,14 +54,18 @@ def _seed_original(runtime: Any) -> dict[str, Any]:
         clip = next(row for row in clips if row["id"] == "clip-a")
         clip["app"]["org.example"]["p4_note"] = {}
     source["parent_revision"]["content_digest"] = _digest(payload)
+    candidate = bundle_from_document(source)
+    compiled = compile_authoring_candidate(candidate).publication
+    parent = copy.deepcopy(compiled["parent_composition"])
+    parent.setdefault("registry", {})
     publication = {
         "project_id": runtime.project,
         "timeline_id": "film",
         "expected_head": None,
-        "parent_revision_id": source["parent_revision"]["revision_id"],
-        "parent_composition": payload,
-        "shot_revisions": source["shot_revisions"],
-        "internal_timeline_revisions": source["internal_timeline_revisions"],
+        "parent_revision_id": "p4-ten-note-baseline",
+        "parent_composition": parent,
+        "shot_revisions": compiled["shot_revisions"],
+        "internal_timeline_revisions": compiled["internal_timeline_revisions"],
     }
     seeded = seed_trusted_parent(
         runtime.service(), publication, idempotency_key="p4-ten-note-baseline"
