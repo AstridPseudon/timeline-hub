@@ -246,14 +246,27 @@ function assertReplyShape(post: CommitPost, before: HeadPin, modern = true): Com
   expect(data.canonical_document).toBeTruthy();
   expect(data.document_digest).toEqual(expect.any(String));
   expect(data.commands).toEqual(post.body.commands);
+  expect(data.label).toBe(modern ? post.body.label : 'Timeline edit');
   expect(data.id_map).toEqual(expect.any(Object));
   expect(data.provider_version).toEqual(expect.any(String));
   expect(data.compiler_version).toEqual(expect.any(String));
   expect(data.publisher).toEqual(expect.any(String));
-  if (modern) {
-    expect(data.merge_mode).toBe(post.body.merge ?? 'fields');
-    expect(data.steps).toEqual(expect.any(Array));
+  expect(data.merge_mode).toBe(post.body.merge ?? 'fields');
+  expect(data.steps).toEqual(expect.any(Array));
+  expect(data.steps).not.toHaveLength(0);
+  for (const step of data.steps as Array<JsonObject>) {
+    expect(step.id).toEqual(expect.any(String));
+    expect(step.label).toEqual(expect.any(String));
+    expect(step.intent).toEqual(expect.any(String));
+    expect(step.tags).toEqual(expect.any(Array));
+    expect(step.command_ordinals).toEqual(expect.any(Array));
+    expect((step.command_ordinals as unknown[]).length).toBeGreaterThan(0);
+    expect(step.patch).toEqual(expect.any(Array));
+    expect((step.patch as unknown[]).length).toBeGreaterThan(0);
+    expect(step.dependencies).toEqual(expect.any(Array));
+    expect((step.dependencies as unknown[]).length).toBeGreaterThan(0);
   }
+  expect(data.source).toEqual(post.body.source);
   const receipt = object(envelope.receipt, 'accepted receipt');
   expect(receipt.receipt_id).toBe(post.key);
   expect(receipt.idempotency_key).toBe(post.key);
@@ -286,7 +299,7 @@ function assertRequestV2(post: CommitPost, before: HeadPin, modern = true): void
   }
   expect(post.body.merge).toBe('atomic');
   expect(Object.hasOwn(post.body, 'reads'), 'the mounted document-patch fallback omits request reads').toBe(false);
-  expect(post.body.dry_run ?? false).toBe(false);
+  expect(post.body.dry_run).toBe(false);
   for (const step of post.body.steps!) {
     expect(Object.hasOwn(step, 'reads'), 'the mounted document-patch fallback omits step reads').toBe(false);
   }
@@ -312,37 +325,33 @@ function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[]): vo
 }
 
 function assertHistoryMetadata(entry: HistoryEntry, post: CommitPost, result: CommitAcceptedMutation): void {
-  const modern = Object.hasOwn(post.body, 'steps');
   expect(entry.intent).toBe('recorded');
   expect(entry.records).not.toBeNull();
   expect(entry.publication_id).toBe(post.key);
   expect(entry.receipt).toEqual(result.receipt);
   expect(entry.publisher).toBe(result.data.publisher);
-  if (modern) {
-    expect(entry.label).toBe(post.body.label);
-    expect(entry.merge).toBe(post.body.merge ?? 'fields');
-    expect(entry.merge_mode).toBe(result.data.merge_mode);
-  }
+  expect(entry.label).toBe(Object.hasOwn(post.body, 'label') ? post.body.label : 'Timeline edit');
+  expect(entry.merge).toBe(post.body.merge ?? 'fields');
+  expect(entry.merge_mode).toBe(result.data.merge_mode);
+  expect(entry.source).toEqual(post.body.source);
   expect(entry.previous).toEqual({ revision_id: result.data.previous_revision_id, publication_id: result.data.previous_publication_id });
-  if (modern) {
-    expect(entry.steps).toEqual(result.data.steps);
-    expect(entry.records!.steps).toEqual(result.data.steps);
-  }
+  expect(entry.steps).toEqual(result.data.steps);
+  expect(entry.records!.steps).toEqual(result.data.steps);
   expect(entry.records!.commands.map((record) => record.command)).toEqual(post.body.commands);
   for (const step of entry.records!.steps ?? []) {
     expect(step.patch).toEqual(expect.any(Array));
     expect(step.command_ordinals.length).toBeGreaterThan(0);
     expect(step.dependencies).toEqual(expect.any(Array));
-    if (modern) expect(step.dependencies!.length).toBeGreaterThan(0);
+    expect(step.dependencies!.length).toBeGreaterThan(0);
   }
   for (const record of entry.records!.commands) {
     expect(record.writes.length).toBeGreaterThan(0);
     expect(record.reads.length).toBeGreaterThan(0);
     expect(record.bindings.length).toBeGreaterThan(0);
     expect(record.dependencies).toEqual(expect.any(Array));
-    if (modern) expect(record.dependencies.length).toBeGreaterThan(0);
+    expect(record.dependencies.length).toBeGreaterThan(0);
   }
-  if (modern) expect(Object.hasOwn(entry, 'reads'), 'history preserves omitted request reads').toBe(false);
+  expect(Object.hasOwn(entry, 'reads'), 'history preserves omitted request reads').toBe(false);
 }
 
 function assertHistoryProof(
