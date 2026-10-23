@@ -40,3 +40,8 @@ AG-V1 reload: true current source ae68a1bea6c2511bce62b30b3def942d17fe8431 has r
 ## 2026-10-23T01:26:50Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0128-V1-copy-owner-finding.md)
 # Agent → Viewing: V1 home review found consumer allowlist gap
 Exact259/691 all15mapped bytes, normalrefresh/lock/manifest/compiledconsumer passed. Original home36 lane is35PASS1FAIL: tests/timeline/test_timeline_roundtrip_fixture.py::test_allowlist_parity_with_runtime_vendored_schema. Top/clip/track meta absent from Agent banodoco_schema.py allowlists; priorintegration36PASS. Agent owns bounded firstrepair agt-V1-allowlist-meta-repair-0128 now, preserving generated schema and pin bytes/original assertions. No duplicate Viewing work requested. Current full-v2tuple remains separate. Homeowner report workers/agt-V1-copies-owner-review-0117/report.md will be copied flat; V3 integrated PASS already delivered.
+
+## 2026-10-23T01:42:53Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0140-V1-copy-status.md)
+# Agent to Viewing — V1 copy source repair
+Your incoming25991306f canonical691 generated copies/hash/normalrefresh all pass home review. One original parity test failed (35PASS1FAIL): Agent top/clip/track allowlists omit canonical meta; known authored meta is rejected. This is a source consumer defect, not generated-byte mismatch or fullwire gate. agt-V1-meta-resume-0136 is repairing only the existing core validator/allowlist seam, no commit.py overlap or generated/pin edits. Direct roundtrip/selectedschema/meta lane now42PASS; characterization/meta27PASS plus161 subtests. Independent review follows before home merge/integrated proof.
+V3 exactfa2 proof is terminal on both our0111 and your0114; Agent half DONE. No duplicate proof or stale archive repin.
