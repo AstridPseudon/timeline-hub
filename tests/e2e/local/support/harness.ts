@@ -11,7 +11,7 @@
  */
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
 import { createHash, randomBytes, randomUUID, X509Certificate } from 'node:crypto';
-import { createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { accessSync, constants as fsConstants, createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer as createHttpsServer, type Server as HttpsServer } from 'node:https';
 import { request as httpRequest, type IncomingHttpHeaders } from 'node:http';
 import { createServer as createNetServer } from 'node:net';
@@ -69,12 +69,22 @@ export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT
 const DIST_DIR = path.resolve(process.env.ASTRID_APP_DIRECT_DIST ?? path.join(REPO_ROOT, 'dist'));
 
 export function runtimePython(): string | null {
+  const explicit = process.env.ASTRID_RUNTIME_PYTHON;
+  if (explicit) {
+    const candidate = path.resolve(explicit);
+    try {
+      accessSync(candidate, fsConstants.X_OK);
+      if (statSync(candidate).isFile()) return candidate;
+    } catch { /* the caller receives the normal unavailable reason below */ }
+    return null;
+  }
   const python = path.join(RUNTIME_CHECKOUT, '.venv', 'bin', 'python');
   return existsSync(python) ? python : null;
 }
 
 /** Why the harness cannot run here, or null when it can. */
 export function harnessUnavailableReason(): string | null {
+  if (process.env.ASTRID_RUNTIME_PYTHON && !runtimePython()) return `ASTRID_RUNTIME_PYTHON is not an executable file: ${path.resolve(process.env.ASTRID_RUNTIME_PYTHON)}`;
   if (!runtimePython()) return `Runtime venv not found at ${RUNTIME_CHECKOUT}/.venv (set ASTRID_RUNTIME_CHECKOUT)`;
   if (!existsSync(path.join(DIST_DIR, 'index.html'))) return `no production build at ${DIST_DIR} (run npm run build, or use npm run test:e2e:direct)`;
   try { execFileSync('openssl', ['version'], { stdio: 'ignore' }); } catch { return 'openssl is required to make the test certificate'; }
