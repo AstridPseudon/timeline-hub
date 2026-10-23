@@ -1,4 +1,4 @@
-<!-- main | 2026-10-23T19:09:05Z | dispatcher heartbeat 8s | live 3 (sol 2, luna 1, other 0) | busy30 20 | status age 4m -->
+<!-- main | 2026-10-23T19:11:09Z | dispatcher heartbeat 13s | live 1 (sol 1, luna 0, other 0) | busy30 20 | status age 6m -->
 # runtime board, 2026-10-23T19:05Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|

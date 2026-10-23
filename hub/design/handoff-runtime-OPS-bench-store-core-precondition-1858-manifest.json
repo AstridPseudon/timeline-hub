@@ -1,0 +1,21 @@
+{
+  "owned_source": {
+    "handoff-runtime-OPS-bench-store-core-precondition-1858-bench_store.py": "53d90fb3108b24253a29416214ec5fa8f69402f50a515f0399b7464ec39a2e14",
+    "handoff-runtime-OPS-bench-store-core-precondition-1858-test-core.py": "c836462cb61bd57360d4f060637e1c76b6f2e746e2970ef7a94f0babe4f230c0",
+    "handoff-runtime-OPS-bench-store-core-precondition-1858-validate.py": "e95c054c55aab902bfb5b4e5cd3ad72b1abd791be7c6b244fb028cc3f4a18387",
+    "handoff-runtime-OPS-bench-store-core-precondition-1858-interface.md": "c6a3fe9b3badfda4b4718ec013db69c79cff95eafb2a9306739e69f95fa25b19",
+    "handoff-runtime-OPS-bench-store-core-resume-1854-bench_store.py": "53d90fb3108b24253a29416214ec5fa8f69402f50a515f0399b7464ec39a2e14",
+    "handoff-runtime-OPS-bench-store-core-resume-1854-interface.md": "c6a3fe9b3badfda4b4718ec013db69c79cff95eafb2a9306739e69f95fa25b19",
+    "handoff-runtime-OPS-bench-store-interface-1850.md": "c6a3fe9b3badfda4b4718ec013db69c79cff95eafb2a9306739e69f95fa25b19"
+  },
+  "adapter_inputs_at_report": {
+    "handoff-runtime-OPS-bench-store-creators-1850-make-child-venv.sh": "78659d8ac79605514f71959a5b9b4adccce2664edac36575bf0bde691b48d6ba",
+    "handoff-runtime-OPS-bench-store-creators-1850-make-runtime.sh": "9f897619de6872ae399fd42154937d17804178793ed67326835c784d35fd45ca",
+    "handoff-runtime-OPS-bench-store-creators-1850-request-child-venv.sh": "b617298df82c8293cf5a073f9fdc4a9ac92f16283b41c9e5b58cf98ad640f383",
+    "handoff-runtime-OPS-bench-store-creators-1850-request-runtime.sh": "f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1",
+    "handoff-runtime-OPS-bench-store-creators-1850-test-adapters.py": "fbb6b22e4e39ca678daa1f455d71a5ce5d778536cc2528447b6c08249548af2e",
+    "handoff-runtime-OPS-bench-store-leases-1850-test-run": "e1cf7390207f2f48a18ceca21d3f762ddb4bdfa455584e93615ab3da0836f448",
+    "handoff-runtime-OPS-bench-store-leases-1850-test-run.original": "2d1240303c0c82bf908377eeff3323a899d8929454ac2c316b05bf076fc35d35",
+    "handoff-runtime-OPS-bench-store-leases-1850-test-leases.py": "21ec2011410fe3b4a7c24b00c2eca6da0635592e86ac6db8435321f078eb63e3"
+  }
+}
