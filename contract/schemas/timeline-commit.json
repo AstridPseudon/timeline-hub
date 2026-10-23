@@ -119,6 +119,194 @@
       "required": [],
       "additionalProperties": false
     },
+    "MergeMode": {
+      "enum": [
+        "fields",
+        "atomic"
+      ]
+    },
+    "CommitRead": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "field" },
+            "ref": { "$ref": "#/$defs/ID" },
+            "path": { "$ref": "edit-command.json#/$defs/TokenPath" },
+            "state": { "$ref": "#/$defs/AgentState" }
+          },
+          "required": ["kind", "ref", "path", "state"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "collection" },
+            "ref": { "$ref": "#/$defs/ID" },
+            "path": { "$ref": "edit-command.json#/$defs/TokenPath" },
+            "members": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/ID" },
+              "uniqueItems": true
+            },
+            "order": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/ID" },
+                  "uniqueItems": true
+                },
+                { "type": "null" }
+              ]
+            }
+          },
+          "required": ["kind", "ref", "path", "members", "order"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "scope" },
+            "ref": { "$ref": "#/$defs/ID" },
+            "path": { "$ref": "edit-command.json#/$defs/TokenPath" }
+          },
+          "required": ["kind", "ref", "path"],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "PatchChange": {
+      "type": "object",
+      "properties": {
+        "op": { "enum": ["set", "remove", "list.insert", "list.remove", "list.move"] },
+        "ref": { "$ref": "#/$defs/ID" },
+        "path": { "$ref": "edit-command.json#/$defs/TokenPath" },
+        "before": { "$ref": "#/$defs/AgentState" },
+        "value": { "$ref": "#/$defs/JSON" },
+        "id": { "$ref": "#/$defs/ID" },
+        "order_before": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ID" },
+          "uniqueItems": true
+        },
+        "after_id": {
+          "oneOf": [
+            { "$ref": "#/$defs/ID" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "required": ["op", "ref", "path", "before"],
+      "additionalProperties": false
+    },
+    "RequestedStep": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/ID" },
+        "label": { "type": "string", "minLength": 1 },
+        "intent": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "command_ordinals": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "patch": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PatchChange" }
+        },
+        "reads": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CommitRead" }
+        }
+      },
+      "required": ["id", "label", "intent", "tags", "command_ordinals", "patch"],
+      "additionalProperties": false
+    },
+    "AcceptedStep": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/ID" },
+        "label": { "type": "string", "minLength": 1 },
+        "intent": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "command_ordinals": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "patch": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/PatchChange" }
+        },
+        "reads": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CommitRead" }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CommitRead" }
+        }
+      },
+      "required": ["id", "label", "intent", "tags", "command_ordinals", "patch"],
+      "additionalProperties": false
+    },
+    "PhysicalBinding": {
+      "type": "object",
+      "properties": {
+        "key": { "$ref": "#/$defs/ID" },
+        "ref": { "$ref": "#/$defs/ID" },
+        "physical_ref": { "$ref": "#/$defs/ID" },
+        "revision_id": { "$ref": "#/$defs/ID" },
+        "content_digest": { "$ref": "#/$defs/Digest" },
+        "boundary": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/JSON" }
+        },
+        "policy": { "enum": ["follow", "fixed"] },
+        "dependencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ID" },
+          "uniqueItems": true
+        },
+        "path": { "$ref": "edit-command.json#/$defs/TokenPath" },
+        "change": { "$ref": "#/$defs/PatchChange" },
+        "dependency": { "$ref": "#/$defs/CommitRead" },
+        "write_range": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "command_ordinal": { "type": "integer", "minimum": 0 },
+        "change_ordinal": { "type": "integer", "minimum": 0 },
+        "phase": { "$ref": "#/$defs/ID" },
+        "side": { "enum": ["before", "after"] },
+        "owners": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ID" },
+          "uniqueItems": true
+        },
+        "step_id": { "$ref": "#/$defs/ID" },
+        "effect_ordinal": { "type": "integer", "minimum": 0 },
+        "successor": { "$ref": "#/$defs/ID" },
+        "owner": { "$ref": "#/$defs/ID" },
+        "edge_before": { "$ref": "#/$defs/ID" },
+        "edge_after": { "$ref": "#/$defs/ID" }
+      },
+      "required": ["key", "ref", "policy", "dependencies"],
+      "additionalProperties": false
+    },
     "CommitRequest": {
       "type": "object",
       "properties": {
@@ -141,14 +329,27 @@
         "commands": {
           "$ref": "#/$defs/AgentCommandBatch"
         },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/RequestedStep" },
+          "minItems": 1
+        },
+        "merge": {
+          "$ref": "#/$defs/MergeMode"
+        },
+        "reads": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CommitRead" }
+        },
         "dry_run": {
           "type": "boolean"
         },
         "source": {
           "$ref": "#/$defs/Source"
-        },
-        "label": {
-          "type": "string"
         },
         "rationale": {
           "type": "string"
@@ -518,7 +719,7 @@
         "bindings": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/AgentBinding"
+            "$ref": "#/$defs/PhysicalBinding"
           }
         },
         "created": {
@@ -582,6 +783,17 @@
             "$ref": "#/$defs/CommandRecord"
           }
         },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AcceptedStep" }
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "merge_mode": {
+          "$ref": "#/$defs/MergeMode"
+        },
         "undo_of": {
           "type": "array",
           "items": {
@@ -597,6 +809,21 @@
             {
               "type": "null"
             }
+          ]
+        },
+        "undo_steps": {
+          "oneOf": [
+            {
+              "type": "object",
+              "propertyNames": { "$ref": "#/$defs/ID" },
+              "additionalProperties": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/ID" },
+                "minItems": 1,
+                "uniqueItems": true
+              }
+            },
+            { "type": "null" }
           ]
         }
       },
@@ -741,7 +968,8 @@
         "status": {
           "enum": [
             "accepted",
-            "rebased"
+            "rebased",
+            "merged"
           ]
         },
         "base_revision_id": {
@@ -796,6 +1024,13 @@
         },
         "compiler_version": {
           "$ref": "#/$defs/ID"
+        },
+        "merge_mode": {
+          "$ref": "#/$defs/MergeMode"
+        },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AcceptedStep" }
         },
         "publisher": {
           "$ref": "#/$defs/ID"
@@ -875,6 +1110,13 @@
         },
         "compiler_version": {
           "$ref": "#/$defs/ID"
+        },
+        "merge_mode": {
+          "$ref": "#/$defs/MergeMode"
+        },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AcceptedStep" }
         }
       },
       "required": [
@@ -971,7 +1213,8 @@
         "status": {
           "enum": [
             "conflict",
-            "refused"
+            "refused",
+            "invalid"
           ]
         },
         "reason": {
@@ -1002,6 +1245,21 @@
           "items": {
             "$ref": "#/$defs/Conflict"
           }
+        },
+        "code": {
+          "$ref": "#/$defs/ID"
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hint": {
+          "type": "string"
+        },
+        "suggested_command": {
+          "type": "string"
         }
       },
       "required": [
@@ -1097,6 +1355,20 @@
               "type": "null"
             }
           ]
+        },
+        "merge": {
+          "$ref": "#/$defs/MergeMode"
+        },
+        "merge_mode": {
+          "$ref": "#/$defs/MergeMode"
+        },
+        "reads": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/CommitRead" }
+        },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AcceptedStep" }
         },
         "publisher": {
           "oneOf": [

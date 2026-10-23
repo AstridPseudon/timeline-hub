@@ -41,6 +41,106 @@ def scope(context):
     return canonical_json([request["project_id"], request["timeline_id"]])
 
 
+def _effective_merge_mode(request):
+    """Return the contract's requested mode after the conservative patch rule."""
+    requested = request.get("merge", "fields")
+    if requested == "atomic":
+        return "atomic"
+
+    def contains_document_patch(commands):
+        for command in commands:
+            if command.get("op") == "doc.patch":
+                return True
+            if command.get("op") == "timeline.batch" and contains_document_patch(command.get("args", {}).get("commands", [])):
+                return True
+        return False
+
+    if "reads" not in request and contains_document_patch(request.get("commands", [])):
+        return "atomic"
+    return requested
+
+
+def _is_v2_request(request, records=None):
+    """Return whether the caller opted into the v2 request annotations.
+
+    ABI-1 requests are intentionally left byte-for-byte compatible: their
+    result and legacy history metadata must not acquire synthetic v2 fields.
+    Once any v2 control is present, the provider's authoritative step records
+    and the effective merge mode are part of the durable result.
+    """
+    return any(key in request for key in ("label", "steps", "merge", "reads")) or (
+        records is not None and "steps" in records
+    )
+
+
+def _history_metadata(request, data):
+    """Project request annotations and effective commit facts into one JSON value.
+
+    The value is stored in the existing history row.  In particular, no actor
+    value is accepted from the request: ``publisher`` is added to the result and
+    history edge from the authenticated execution context by the caller.
+    """
+    metadata = {key: request[key] for key in _METADATA if key in request}
+    if _is_v2_request(request) or "steps" in data:
+        metadata["label"] = data["label"]
+        metadata["merge"] = request.get("merge", "fields")
+        metadata["merge_mode"] = data["merge_mode"]
+        if "reads" in request:
+            metadata["reads"] = request["reads"]
+    return metadata
+
+
+def _provider_images(document):
+    images = {"parent": document["parent_revision"]}
+    images.update(("shot-revision:" + image["revision_id"], image)
+                  for image in document["shot_revisions"])
+    images.update(("internal-revision:" + image["revision_id"], image)
+                  for image in document["internal_timeline_revisions"])
+    return images
+
+
+def _validate_physical_bindings(document, records):
+    """Authenticate R1's physical closure bindings before they become history facts."""
+    images = _provider_images(document)
+    for record in records["commands"]:
+        for binding in record["bindings"]:
+            physical = binding.get("physical_ref")
+            if physical is None:
+                continue  # ABI-1 bindings have no physical provenance.
+            image = images.get(physical)
+            boundary = binding.get("boundary")
+            if image is None or not isinstance(boundary, dict):
+                reject("invalid_records", "provider binding is outside the accepted closure", status=422)
+            if binding.get("revision_id") != image["revision_id"] or binding.get("content_digest") != image["content_digest"]:
+                reject("invalid_records", "provider binding revision provenance differs from the accepted closure", status=422)
+            required_boundary = {"base_revision_id", "base_publication_id", "evaluated_head", "step_id",
+                                 "command_ordinal", "phase"}
+            if not required_boundary <= boundary.keys() or boundary["command_ordinal"] != record["ordinal"]:
+                reject("invalid_records", "provider binding boundary is incomplete or misattributed", status=422)
+            if "change" in binding:
+                change = binding["change"]
+                if not isinstance(change, dict) or change.get("ref") != physical:
+                    reject("invalid_records", "provider patch binding is not tied to its physical root", status=422)
+                path = binding.get("path")
+                write_range = binding.get("write_range")
+                if not isinstance(path, list) or not isinstance(write_range, list) or len(write_range) != 2:
+                    reject("invalid_records", "provider patch binding lacks its write range", status=422)
+
+
+def _validate_record_metadata(request, records):
+    """Require the provider's authoritative v2 metadata, while leaving ABI-1 untouched."""
+    if not _is_v2_request(request, records):
+        return
+    if records.get("label") != request.get("label", "Timeline edit"):
+        reject("invalid_records", "provider label differs from the request", status=422)
+    if records.get("merge_mode") != _effective_merge_mode(request):
+        reject("invalid_records", "provider merge mode differs from the effective request mode", status=422)
+    if "steps" not in records:
+        reject("invalid_records", "provider did not return authoritative step records", status=422)
+    if any("dependencies" not in step for step in records["steps"]):
+        reject("invalid_records", "provider step dependencies are missing", status=422)
+
+
 _SHELL_SCOPE_TABLES = ("timeline_shots", "timeline_references", "timeline_render_publications",
                        "timeline_document_input_links", "timeline_commit_history")
 
@@ -145,10 +245,30 @@ class TimelineCommitStore:
                      and data["previous_publication_id"] == previous["publication_id"]
                      and data["publisher"] == edge["publisher"]
                      and all(data[k] == edge[k] for k in ("provider_version", "compiler_version"))
-                     and {k: data[k] for k in _METADATA if k in data} == json.loads(edge["metadata_json"]))
+                     and {k: data[k] for k in json.loads(edge["metadata_json"])
+                          if k in data and k in _METADATA} == {
+                         k: json.loads(edge["metadata_json"])[k] for k in json.loads(edge["metadata_json"])
+                         if k in _METADATA
+                     })
             base = {"revision_id": data["base_revision_id"], "publication_id": data["base_publication_id"]}
-            valid = valid and data["status"] == ("accepted" if previous == base else "rebased")
+            historical_status = "accepted" if previous == base else "rebased"
+            modern_status = "accepted" if previous == base else "merged"
+            valid = valid and data["status"] in {historical_status, modern_status}
             valid = valid and data["rebased_onto"] == (None if previous == base else previous)
+            metadata = json.loads(edge["metadata_json"])
+            if "merge_mode" in metadata:
+                valid = valid and data.get("merge_mode") == metadata["merge_mode"]
+            if "merge" in metadata:
+                valid = valid and metadata["merge"] in {"fields", "atomic"}
+            if "reads" in metadata:
+                valid = valid and data.get("reads", metadata["reads"]) == metadata["reads"]
+            if "steps" in records:
+                valid = valid and data.get("steps") == records["steps"]
+            if "label" in records:
+                valid = valid and data.get("label") == records["label"]
+            if "merge_mode" in records:
+                valid = valid and data.get("merge_mode") == records["merge_mode"]
+            _validate_physical_bindings(document, records)
             ids = json.loads(row["event_ids_json"])
             seq = row["resulting_stream_seq"]
             # Replay verifies the accepted prefix, independent of later writes.
@@ -273,11 +393,18 @@ class TimelineCommitStore:
                 self._verify_accepted(ledger, row)
             previous = None if row["previous_publication_id"] is None else {
                 "revision_id": row["previous_revision_id"], "publication_id": row["previous_publication_id"]}
-            return {"publication_id": publication_id, "revision_id": row["revision_id"], "previous": previous,
-                    "receipt": self._envelope(ledger, project_id)["receipt"], "intent": row["intent"],
-                    "records": json.loads(row["records_json"]) if row["records_json"] is not None else None,
-                    "provider_version": row["provider_version"], "compiler_version": row["compiler_version"],
-                    "publisher": row["publisher"], **json.loads(row["metadata_json"])}
+            records = json.loads(row["records_json"]) if row["records_json"] is not None else None
+            entry = {"publication_id": publication_id, "revision_id": row["revision_id"], "previous": previous,
+                     "receipt": self._envelope(ledger, project_id)["receipt"], "intent": row["intent"],
+                     "records": records, "provider_version": row["provider_version"],
+                     "compiler_version": row["compiler_version"], "publisher": row["publisher"],
+                     **json.loads(row["metadata_json"])}
+            # Modern records carry the authenticated provider projection.  A
+            # legacy edge has no recorder and must remain null/absent rather
+            # than receiving invented step or undo authority.
+            if records is not None and "steps" in records:
+                entry["steps"] = records["steps"]
+            return entry
 
     def history(self, project_id, timeline_id, through, after_publication_id=None, cursor=None, limit=100):
         if type(limit) is not int or not 1 <= limit <= 200:
@@ -601,6 +728,24 @@ class TimelineCommitStore:
         commands = records["commands"]
         if not commands or [r["ordinal"] for r in commands] != list(range(len(commands))):
             reject("invalid_records", status=422)
+        recorded_steps = records.get("steps")
+        requested_steps = request.get("steps")
+        _validate_record_metadata(request, records)
+        _validate_physical_bindings(document, records)
+        if _is_v2_request(request) and recorded_steps is None:
+            reject("invalid_records", "provider did not return authoritative step records", status=422)
+        if recorded_steps is not None:
+            ordinals = [ordinal for step in recorded_steps for ordinal in step["command_ordinals"]]
+            if ordinals != list(range(len(commands))) or len({step["id"] for step in recorded_steps}) != len(recorded_steps):
+                reject("invalid_records", "step records do not partition commands", status=422)
+            if requested_steps is not None and [
+                    {key: step[key] for key in ("id", "label", "intent", "tags", "command_ordinals")}
+                    for step in recorded_steps
+                ] != [
+                    {key: step[key] for key in ("id", "label", "intent", "tags", "command_ordinals")}
+                    for step in requested_steps
+                ]:
+                reject("invalid_records", "provider step boundaries disagree with the request", status=422)
         for record in commands:
             if any(write["cause"] >= len(commands) for write in record["derived_writes"]):
                 reject("invalid_records", status=422)
@@ -860,6 +1005,9 @@ class TimelineCommitStore:
             self._check_shot_destinations(context, prepared, inputs)
             candidate = self._validate(context, prepared, inputs)
             request = context["request"]
+            candidate["merge_mode"] = _effective_merge_mode(request)
+            if "steps" in prepared["records"]:
+                candidate["steps"] = prepared["records"]["steps"]
             return {"data": {"status": "preview", "base_revision_id": request["base_revision_id"],
                             "base_publication_id": request["base_publication_id"],
                             "evaluated_head": prepared["expected_head"], **candidate}, "receipt": None}
@@ -921,12 +1069,20 @@ class TimelineCommitStore:
                 except ReferenceProjectionError as exc:
                     reject(exc.reason, exc.message, status=exc.status)
                 base = {"revision_id": request["base_revision_id"], "publication_id": request["base_publication_id"]}
-                data = {"status": "accepted" if previous == base else "rebased", "base_revision_id": base["revision_id"],
+                modern = _is_v2_request(request, prepared["records"])
+                data = {"status": ("accepted" if previous == base else ("merged" if modern else "rebased")),
+                        "base_revision_id": base["revision_id"],
                         "base_publication_id": base["publication_id"], "previous_revision_id": previous["revision_id"],
                         "previous_publication_id": previous["publication_id"],
                         "accepted_revision_id": candidate["canonical_document"]["parent_revision"]["revision_id"],
-                        "rebased_onto": None if previous == base else previous, **candidate, "publisher": context["publisher"],
+                        "rebased_onto": None if previous == base else previous, **candidate,
+                        "publisher": context["publisher"],
                         **{k: request[k] for k in _METADATA if k in request}}
+                if modern:
+                    data["merge_mode"] = _effective_merge_mode(request)
+                    data.setdefault("label", "Timeline edit")
+                if modern and "steps" in prepared["records"]:
+                    data["steps"] = prepared["records"]["steps"]
                 self._persist_closure(candidate["canonical_document"])
                 result = self._publish(context, data, previous, prepared["records"], prepared["semantic_events"])
                 from .timeline_commit_reference_projection import (
@@ -1095,10 +1251,11 @@ class TimelineCommitStore:
         publication_id = self.store._record_command_receipt("timeline.commit", scope(context), context["idempotency_key"], context["request_hash"],
             data, project_id=project_id, event_ids=event_ids, primary_stream_id=timeline_id, resulting_stream_seq=seq)
         ledger = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (publication_id,)).fetchone()
+        metadata = _history_metadata(request, data)
         self.conn.execute("INSERT INTO timeline_commit_history VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (publication_id, project_id, timeline_id, revision_id, previous["publication_id"] if previous else None,
              previous["revision_id"], "recorded", canonical_json(records),
-             canonical_json({k: request[k] for k in _METADATA if k in request}), data.get("provider_version"), data.get("compiler_version"),
+             canonical_json(metadata), data.get("provider_version"), data.get("compiler_version"),
              context["publisher"], ledger["first_project_seq"]))
         changed = self.conn.execute("UPDATE parent_composition_heads SET revision_id=?, publication_id=?, updated_at=? "
             "WHERE project_id=? AND timeline_id=? AND revision_id=? AND publication_id=?", (revision_id, publication_id, now(), project_id, timeline_id,

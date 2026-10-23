@@ -146,6 +146,8 @@ def test_command_opaque_values_null_and_absence_round_trip():
         lambda v: v.update(base_publication_id=None),
         lambda v: v.update(commands=[]),
         lambda v: v.update(source={"via": "gateway"}),
+        lambda v: v.update(actor="spoofed-principal"),
+        lambda v: v.update(publisher="spoofed-principal"),
         lambda v: v["commands"][0].update(unknown=True),
         lambda v: v["commands"][0].pop("version"),
         lambda v: v["commands"][0].update(
@@ -180,6 +182,27 @@ def test_restore_is_sole_command_and_requires_both_head_guards():
         assert not validator("RestoreParentCompositionRevision").is_valid(invalid)
     validator("RestoreParentCompositionRevision").validate(
         {"expected_head": "r", "expected_publication_id": "txn"}
+    )
+
+
+def test_invalid_reply_preserves_structured_error_context():
+    validator("CommitFailure").validate(
+        {
+            "http_status": 422,
+            "code": "invalid_steps",
+            "message": "step patch does not match the command",
+            "details": {
+                "status": "invalid",
+                "reason": "invalid_steps",
+                "code": "invalid_steps",
+                "path": ["steps", "0", "patch"],
+                "hint": "Regenerate the step from the provider result",
+                "suggested_command": "timeline history",
+                "base": None,
+                "current": None,
+                "conflicts": [],
+            },
+        }
     )
 
 

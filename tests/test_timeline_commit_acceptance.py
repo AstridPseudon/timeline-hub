@@ -204,6 +204,106 @@ def test_identical_retry_after_restart_and_head_advance(realm):
         restarted.close()
 
 
+def test_modern_labels_steps_effects_reads_and_actor_roundtrip_after_restart(realm):
+    service, commits, project, head, root = realm
+    ctx = context(service, project, head, "modern")
+    request = ctx["request"]
+    effect = {"op": "set", "ref": "parent", "path": ["clips", "id:clip", "at"],
+              "before": {"state": "present", "value": 2}, "value": 3}
+    reads = [{"kind": "field", "ref": "parent", "path": ["clips", "id:clip", "at"],
+              "state": {"state": "present", "value": 2}}]
+    request.update({
+        "label": "Move opening clip",
+        "merge": "fields",
+        "reads": reads,
+        "steps": [{"id": "opening", "label": "Move opening", "intent": "Set opening position",
+                    "tags": ["opening"], "command_ordinals": [0], "patch": [effect],
+                    "reads": reads}],
+    })
+    ctx["invocation"]["body"] = copy.deepcopy(request)
+    ctx["request_hash"] = request_identity(ctx)
+    value = prepared(commits, ctx, revision="modern-parent", on=3)
+    value["records"]["commands"][0]["command"]["args"]["on"] = 3
+    value["records"]["commands"][0]["writes"] = [{"ref": "parent/clip:clip", "path": ["at"],
+        "before": {"state": "present", "value": 2}, "after": {"state": "present", "value": 3}}]
+    value["records"]["commands"][0]["bindings"] = [{
+        "key": "doc.patch:0", "ref": "parent", "physical_ref": "parent",
+        "revision_id": value["canonical_document"]["parent_revision"]["revision_id"],
+        "content_digest": value["canonical_document"]["parent_revision"]["content_digest"],
+        "boundary": {"base_revision_id": request["base_revision_id"],
+                     "base_publication_id": request["base_publication_id"],
+                     "evaluated_head": head, "step_id": "opening",
+                     "command_ordinal": 0, "phase": "input"},
+        "policy": "fixed", "dependencies": [], "path": ["config", "clips", "id:clip", "at"],
+        "change": effect, "write_range": [0, 1], "command_ordinal": 0,
+        "change_ordinal": 0, "phase": "input",
+    }]
+    value["records"].update(label=request["label"], merge_mode="fields")
+    value["records"]["steps"] = [{**request["steps"][0], "patch": [effect], "dependencies": reads}]
+
+    spoofed = copy.deepcopy(value)
+    spoofed["records"]["commands"][0]["bindings"][0]["content_digest"] = "sha256:" + "0" * 64
+    with pytest.raises(CommitRejected) as error:
+        accept(commits, ctx, spoofed)
+    assert error.value.failure["details"]["reason"] == "invalid_records"
+
+    result = accept(commits, ctx, value)
+    assert result["data"]["status"] == "accepted"
+    assert result["data"]["label"] == request["label"]
+    assert result["data"]["merge_mode"] == "fields"
+    assert result["data"]["steps"] == value["records"]["steps"]
+    assert result["data"]["publisher"] == "author"
+    entry = commits.history_entry(project, "main", result["receipt"]["receipt_id"])
+    assert entry["label"] == request["label"]
+    assert entry["merge"] == entry["merge_mode"] == "fields"
+    assert entry["reads"] == request["reads"]
+    assert entry["steps"] == entry["records"]["steps"] == value["records"]["steps"]
+    assert entry["publisher"] == result["data"]["publisher"] == "author"
+
+    service.close()
+    restarted = RuntimeService(root)
+    try:
+        replay_store = TimelineCommitStore(restarted.store, validate_prepared=validate_prepared)
+        assert replay_store.lookup(ctx, authorize=lambda: None) == result
+        assert replay_store.history_entry(project, "main", result["receipt"]["receipt_id"])["steps"] == value["records"]["steps"]
+    finally:
+        restarted.close()
+
+
+def test_legacy_rebased_receipt_and_history_keep_v2_metadata_absent_after_restart(realm):
+    service, commits, project, head, root = realm
+    first_ctx = context(service, project, head, "legacy-first")
+    accept(commits, first_ctx, prepared(commits, first_ctx, revision="legacy-first"))
+    stale_ctx = context(service, project, head, "legacy-rebased")
+    rebased = accept(commits, stale_ctx, prepared(commits, stale_ctx, expected=commits.head(project, "main"),
+                                                   revision="legacy-rebased", on=4))
+
+    assert rebased["data"]["status"] == "rebased"
+    assert "label" not in rebased["data"]
+    assert "merge_mode" not in rebased["data"]
+    entry = commits.history_entry(project, "main", rebased["receipt"]["receipt_id"])
+    assert entry["publisher"] == "author"
+    assert "label" not in entry
+    assert "merge" not in entry
+    assert "merge_mode" not in entry
+    assert "steps" not in entry
+    assert json.loads(service.store.conn.execute(
+        "SELECT metadata_json FROM timeline_commit_history WHERE publication_id=?",
+        (rebased["receipt"]["receipt_id"],),
+    ).fetchone()[0]) == {"rationale": "Move clip"}
+
+    service.close()
+    restarted = RuntimeService(root)
+    try:
+        replay_store = TimelineCommitStore(restarted.store, validate_prepared=validate_prepared)
+        assert replay_store.lookup(stale_ctx, authorize=lambda: None) == rebased
+        replay_entry = replay_store.history_entry(project, "main", rebased["receipt"]["receipt_id"])
+        assert "label" not in replay_entry and "steps" not in replay_entry
+        assert replay_store.integrity_errors() == []
+    finally:
+        restarted.close()
+
+
 def test_recorder_digest_preserves_main_event_ids_and_stream_sequence(realm):
     service, commits, project, head, _ = realm
     ctx = context(service, project, head)
