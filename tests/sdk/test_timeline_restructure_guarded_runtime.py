@@ -20,6 +20,35 @@ def restructure_inverse_runtime(restructure_runtime, monkeypatch):  # noqa: F811
     from astrid.sdk.remote import RemoteTimelines
 
     env = restructure_runtime
+
+    # Bind the public inspection/history calls at the same boundary as the
+    # generated client.  The inherited fixture's two-argument inspection
+    # stand-in predates the revision-pinned route and cannot exercise it.
+    def list_timelines(project_id, *, cursor=None, limit=50):
+        page = env.service.list_timelines(project_id, cursor=cursor, limit=limit)
+        return page["items"], page.get("next_cursor")
+
+    def inspect_timeline(project_id, timeline_id, options=None):
+        return env.service.inspect_timeline(project_id, timeline_id, options)
+
+    def list_timeline_commits(project_id, timeline_id, *, cursor=None, limit=50):
+        return env.service.list_timeline_commits(
+            project_id, timeline_id, cursor=cursor, limit=limit, authorize=lambda: None
+        )
+
+    monkeypatch.setattr(env.generated, "list_timelines", list_timelines, raising=False)
+    monkeypatch.setattr(env.generated, "inspect_timeline", inspect_timeline, raising=False)
+    monkeypatch.setattr(env.generated, "list_timeline_commits", list_timeline_commits, raising=False)
+    monkeypatch.setattr(
+        env.client.timelines,
+        "_resolve_timeline",
+        RemoteTimelines._resolve_timeline.__get__(env.client.timelines),
+    )
+    monkeypatch.setattr(
+        env.client.timelines,
+        "open_composition",
+        RemoteTimelines.open_composition.__get__(env.client.timelines),
+    )
     monkeypatch.setattr(
         env.generated,
         "get_project_parent_composition_revision",
@@ -61,6 +90,68 @@ def restructure_inverse_runtime(restructure_runtime, monkeypatch):  # noqa: F811
 
     env.document = document
     return env
+
+
+def test_fixture_reader_authorizes_exact_pair_and_refuses_wrong_scope_without_writes(
+    restructure_inverse_runtime, tmp_path
+):  # noqa: F811
+    env = restructure_inverse_runtime
+    head = env.service.get_project_timeline(env.project, "t")
+    before_history = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
+    historical = next(
+        item
+        for item in before_history["items"]
+        if item["revision_id"] != head["head_revision_id"]
+        and isinstance(item.get("receipt", {}).get("result", {}).get("canonical_document"), dict)
+    )
+
+    opened = timeline.open(
+        env.project, "t", client=env.client, outbox_path=tmp_path / "fixture-reader.json"
+    )
+    assert opened.head["revision_id"] == head["head_revision_id"]
+    opened_bundle = opened.session._bundle(opened.session._state())
+    assert opened_bundle["base_parent"]["publication_id"] == opened.head["publication_id"]
+    base = {"revision_id": historical["revision_id"], "publication_id": historical["publication_id"]}
+    exact = env.client.timelines.open_bundle(
+        env.project,
+        "t",
+        revision_id=base["revision_id"],
+        publication_id=base["publication_id"],
+    )
+    assert exact.ok, exact.as_dict()
+    assert exact.data["project_id"] == env.project
+    assert exact.data["timeline_id"] == "t"
+    assert exact.data["revision_id"] == base["revision_id"] != head["head_revision_id"]
+    assert exact.data["head_revision_id"] == head["head_revision_id"]
+    assert exact.data["is_current_head"] is False
+    assert exact.data["bundle"]["base_parent"]["revision_id"] == base["revision_id"]
+    assert exact.data["bundle"]["base_parent"]["publication_id"] == base["publication_id"]
+    runtime_document = exact.data["bundle"]["source_mapping"]["_runtime_document"]
+    assert runtime_document["parent_revision"]["revision_id"] == base["revision_id"]
+    assert runtime_document["parent_revision"]["content_digest"]
+    assert historical["receipt"]["receipt_id"] == base["publication_id"]
+    assert runtime_document == historical["receipt"]["result"]["canonical_document"]
+
+    wrong_pair = env.client.timelines.open_bundle(
+        env.project,
+        "t",
+        revision_id=base["revision_id"],
+        publication_id=head["head_publication_id"],
+    )
+    assert not wrong_pair.ok
+    assert wrong_pair.error.code == "protocol_error"
+
+    wrong_scope = env.client.timelines.open_bundle(
+        env.project,
+        "missing-timeline",
+        revision_id=base["revision_id"],
+        publication_id=base["publication_id"],
+    )
+    assert not wrong_scope.ok
+    assert wrong_scope.error.code == "not_found"
+
+    assert env.client.timelines.history(env.project, "t", limit=200).data == before_history
+    assert env.service.get_project_timeline(env.project, "t")["head_revision_id"] == head["head_revision_id"]
 
 
 def test_restructure_whole_inverse_redo_and_intervening_overlap_refusal(
