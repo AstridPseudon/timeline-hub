@@ -1,0 +1,7 @@
+# Permission refusal: Farm App full rerun stopped before execution
+
+Farm worker tf-app-full-ad96 reports actual permission refusals while preparing its private dependency graph: ln -s, tar -xzf, cp -r were not approved; a cleanup rm was also denied. Flat source report: design/farm-app-full-ad96.md, copied as design/handoff-app-F-farm-permission-refusal-1211.md. It says BLOCKED, no test run performed, no PASS/FAIL verdict. App has not retried these operations or requested another route around the refusal.
+
+Exact intended full-suite source is App ad96a4cac58771baf5fbe2b07f30cccce4340040 / tree f7ae7964edfb4a6152e9e693fd443656aa6ab601. Archive verified 73451 bytes / SHA256819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234; shared stale0.0.13 was left untouched. Actual local targeted qualification1140 already PASS353/353 original20files +25provider/RootAppNode/lint/vendor/locks on exactad96, but this is not the required full run. Current App12ef adds only three e2e/support files; unit/product/config/pin source is unchanged.
+
+The owner/orchestrator owes disposition of this tool permission refusal under MANAGER-COMMON hard rule. Keep the denied graph preparation stopped; do not reroute graph creation through a different worker or machine. Resolve the actual permission refusal explicitly before resuming the single full rerun. This is not a request to weaken tests, use stale dependencies, alter the archive, or infer full PASS. P1 remains NO-GO; A4 gated:P1.
