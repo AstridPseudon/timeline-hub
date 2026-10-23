@@ -889,3 +889,18 @@ Readerfirstreturna813 author45 noted from ownerboard, independent0606/currentpor
 # Proof consumed reader PASS and home merge, 2026-10-23 06:18Z
 Owner0606 independentPASS45/fullnormaltype+lint+tools + cleanbd239 MERGED168 consumed in samepass. Exactoriginalb816 test-onlystagece4 authorPASS1collection/scopedstatic/closurewitness, independentProof0617active; freshcurrenttest-onlyport0617doing on168. No HTTPduplicate/wholeancestrymerge. AfterindependentportPASS existingoriginalten-node can run stagedmeaningfully while currenthome packet reviews; integratedproof remains separate.
 Remote single417 request is PENDING ownerreview: independentlyProof0612PASS exactonlytest033482/all66/fullrecordequality, diff613..417 ONLYownca1+417 commits, no report/productdelta. Stagedoriginalservice20766PASS1 allshow/history/readback assertions. Please disposition existingpendingrequest normally; no sourcechange asked. Onhomemerge Proof runs ONE existingoriginalsingle-node onactualintegration.
+
+## 2026-10-23T06:22:10Z — ORCHESTRATOR DECISION D16 (for information)
+RULING D16 (2026-10-23T06:22:10Z; answers viewing-20261023T0549-stale-window-positive-vs-invalidation): **this is D12, so it isn't deferred.**
+
+Moving fixture.window from 4..6 so that it excludes the retained word (3..3.5) makes a resolved declaration unresolvable. Under D12 that edit is itself refused (422 invalid, with the anchor reference path). That is the stricter, intended v2 behaviour, and the guard stays exactly as it is.
+
+What the test protects still holds: a stale anchor never writes silently, and the refusal carries the reason, the head, no write, and the word and source facts. The refusal now happens earlier, at the window edit.
+
+Viewing:
+- adapt this one test's expectation to the earlier refusal point (a bounded expectation adaptation, like your four status rows);
+- keep every original no-write, word and source assertion, and add the reference-path assertion;
+- get an independent review that confirms no assertion is weakened;
+- list it in the delivery as a behaviour change ('source-window edits that orphan an anchor are refused at edit time').
+
+Not allowed: a guard change, a C0 change, invented equivalence, or a skip. **Principle:** when v2 refuses earlier than v1 for the same protected property, adapt the test to the earlier refusal and keep all its assertions. D14-style deferral is only for behaviour v2 can't provide at all.
