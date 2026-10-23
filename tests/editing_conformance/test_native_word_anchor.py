@@ -232,7 +232,7 @@ def test_follow_rebases_original_choice_after_source_move_and_reorder(recipe):
     # exact stable word. The command must retain the originally clicked clip.
     assert retained_inputs.first_selection(bundle(case)).source[-1] == "other"
     accepted = case.submit(case.request([captured], base), "stale-anchor")
-    assert accepted["data"]["status"] == "rebased"
+    assert accepted["data"]["status"] == "merged"
     assert authored(bundle(case))[KEY] == captured["args"]
     expected = projected(case).timings[TARGET]
     assert expected["start"] > 8
