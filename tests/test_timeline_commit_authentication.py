@@ -9,6 +9,8 @@ from baseline_fixture import load_baseline_fixture
 from test_timeline_commit_port import commit, request, rows
 
 from runtime_protocol.errors import RuntimeErrorBase
+from runtime_protocol.timeline_commit import CommitRejected
+from runtime_protocol.timeline_commit_auth import site
 from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.timeline_commit_validation import digest, validate_commit_value
 
@@ -175,6 +177,39 @@ def test_forged_provider_records_are_rejected_without_writes(service, mutation, 
         commit(service, submitted)
     assert error.value.details is not None and error.value.details["reason"] == "invalid_records"
     assert rows(service) == before
+
+
+@pytest.mark.parametrize("alias", [
+    "occurrence:missing/text-binding:voiceover_script",
+    "occurrence:occurrence-1/text-binding:voiceover_script:forged",
+    "occurrence:occurrence-1/collection:forged",
+])
+def test_native_text_alias_refusals_are_atomic(service, alias):
+    def mutate(value):
+        value["records"]["commands"][0]["bindings"][0].update(
+            ref=alias, physical_ref="parent")
+
+    provider(service, mutate)
+    before = rows(service)
+    with pytest.raises(RuntimeErrorBase) as error:
+        commit(service, body(service), key="native-alias-refusal-" + alias.split(":", 1)[0])
+    assert error.value.details is not None and error.value.details["reason"] == "invalid_records"
+    assert rows(service) == before
+
+
+def test_native_text_alias_duplicate_slot_is_ambiguous():
+    boundary = {
+        "parent": {"payload": {"occurrences": [{
+            "occurrence_id": "occ-1", "shot_revision_id": "shot-r1",
+        }]}},
+        "shot-revision:shot-r1": {"revision_id": "shot-r1", "content_digest": "digest",
+                                   "payload": {"text_bindings": [
+                                       {"kind": "prompt", "slot": "hero"},
+                                       {"kind": "prompt", "slot": "hero"},
+                                   ]}},
+    }
+    with pytest.raises(CommitRejected):
+        site(boundary, "occurrence:occ-1/text-binding:prompt:hero", [])
 
 
 @pytest.mark.parametrize("step_read", [False, True])

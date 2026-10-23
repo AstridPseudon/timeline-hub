@@ -6,6 +6,7 @@ Command execution, conflict detection and inverse construction belong to Agent.
 from __future__ import annotations
 
 import copy
+import re
 
 from .timeline_commit_producer import value_equal
 from .timeline_commit_validation import digest
@@ -29,6 +30,70 @@ def normalized_path(ref, path):
     return list(path)
 
 
+_TEXT_BINDING_REF = re.compile(
+    r"occurrence:([^/]+)/text-binding:(prompt|voiceover_script|transcript)"
+    r"(?::([a-z][a-z0-9-]{0,63}))?\Z"
+)
+
+
+def _text_binding_key(kind, slot):
+    return kind + (":" + slot if slot is not None else "")
+
+
+def _text_binding_members(owner, rows):
+    require(isinstance(rows, list), "provider text-binding collection is absent or malformed")
+    members = []
+    for row in rows:
+        require(isinstance(row, dict) and isinstance(row.get("kind"), str)
+                and (row.get("slot") is None or isinstance(row.get("slot"), str)),
+                "provider text-binding collection has an invalid identity")
+        member = owner + "/text-binding:" + _text_binding_key(row["kind"], row.get("slot"))
+        require(member not in members, "provider text-binding collection has an ambiguous identity")
+        members.append(member)
+    return members
+
+
+def _text_binding_site(boundary, ref):
+    collection = ref.endswith("/collection:text-binding")
+    if collection:
+        owner = ref.removesuffix("/collection:text-binding")
+        owner_match = re.fullmatch(r"occurrence:([^/]+)", owner)
+        require(owner_match is not None, "provider text-binding collection is outside its authenticated boundary")
+        if owner_match is None:
+            raise AssertionError("unreachable text-binding collection alias")
+        occurrence, kind, slot = owner_match.group(1), None, None
+    else:
+        match = _TEXT_BINDING_REF.fullmatch(ref)
+        require(match is not None, "provider text-binding alias is outside its authenticated boundary")
+        if match is None:
+            raise AssertionError("unreachable text-binding alias")
+        occurrence, kind, slot = match.groups()
+        require(kind == "prompt" or slot is None,
+                "provider text-binding alias has an invalid slot")
+    owner = "occurrence:" + occurrence
+    rows = boundary.get("parent", {}).get("payload", {}).get("occurrences", [])
+    matches = [row for row in rows if isinstance(row, dict) and row.get("occurrence_id") == occurrence]
+    require(len(matches) == 1, "provider text-binding occurrence is outside or ambiguous in its boundary")
+    shot_ref = "shot-revision:" + str(matches[0].get("shot_revision_id"))
+    require(shot_ref in boundary, "provider text-binding occurrence has no authenticated shot")
+
+    bindings = boundary[shot_ref]["payload"].get("text_bindings", [])
+    require(isinstance(bindings, list),
+            "provider text-binding collection is malformed")
+    for row in bindings:
+        require(isinstance(row, dict) and row.get("kind") in {"prompt", "voiceover_script", "transcript"}
+                and (row.get("slot") is None or isinstance(row.get("slot"), str)),
+                "provider text-binding collection has an invalid identity")
+    if collection:
+        _text_binding_members(owner, bindings)
+        return shot_ref, ["text_bindings"]
+    identity = _text_binding_key(kind, slot)
+    matching = [row for row in bindings
+                if _text_binding_key(row["kind"], row.get("slot")) == identity]
+    require(len(matching) <= 1, "provider text-binding alias is ambiguous in its boundary")
+    return shot_ref, ["text_bindings", "kind:" + identity]
+
+
 def site(boundary, ref, path, continuations=None):
     """Resolve root and native aliases in one authenticated closure image."""
     path = list(path)
@@ -45,12 +110,17 @@ def site(boundary, ref, path, continuations=None):
             ref = next(iter(successors))
         if ref in boundary:
             return ref, path
+    if "/text-binding:" in ref:
+        binding_ref, binding_path = _text_binding_site(boundary, ref)
+        return binding_ref, [*binding_path, *path]
     if "/collection:" in ref:
         owner, family = ref.rsplit("/collection:", 1)
+        if family == "text-binding":
+            return _text_binding_site(boundary, owner + "/collection:text-binding")
         if family in {"clip", "track", "occurrence"}:
             prefix = ["config", family + "s"] if owner == "parent" and family != "occurrence" else [family + "s"]
             return site(boundary, owner if owner == "parent" else owner + "/source", prefix)
-        return "timeline", []
+        require(False, "provider collection alias is outside its authenticated boundary")
     kind, _, identity = ref.partition(":")
     field = {"shot": "shot_id", "internal": "timeline_id"}.get(kind)
     if field and "/" not in identity:
@@ -93,8 +163,17 @@ def site(boundary, ref, path, continuations=None):
 
 def location(payload, path):
     node = payload
-    for token in path:
+    for index, token in enumerate(path):
         if isinstance(node, list):
+            if index and path[index - 1] == "text_bindings" and token.startswith("kind:"):
+                identity = token.removeprefix("kind:")
+                matches = [row for row in node if isinstance(row, dict)
+                           and _text_binding_key(row.get("kind"), row.get("slot")) == identity]
+                require(len(matches) <= 1, "provider observation has an ambiguous text-binding path")
+                if not matches:
+                    return {"state": "absent"}
+                node = matches[0]
+                continue
             key, separator, identity = token.partition(":")
             matches = [row for row in node if isinstance(row, dict) and row.get(key) == identity]
             require(separator and len(matches) == 1, "provider observation has an ambiguous item path")
@@ -186,8 +265,12 @@ def validate_step(request, records, step, boundary, batch_reads, continuations):
                 if "/collection:" in read["ref"] and ref != "timeline":
                     observed = location(boundary[ref]["payload"], path).get("value")
                     if isinstance(observed, list):
-                        key = "occurrence_id" if path[-1:] == ["occurrences"] else "id"
-                        members = [row[key] for row in observed]
+                        if read["ref"].endswith("/collection:text-binding"):
+                            owner = read["ref"].rsplit("/collection:", 1)[0]
+                            members = _text_binding_members(owner, observed)
+                        else:
+                            key = "occurrence_id" if path[-1:] == ["occurrences"] else "id"
+                            members = [row[key] for row in observed]
                         capture = {"kind": "collection", "ref": ref, "path": path,
                                    "members": sorted(members), "order": members}
             else:
