@@ -1,0 +1,11 @@
+{
+  "packet": "agent-R1-private-sequential-packet-9e3d0d52d1b3fb77.json",
+  "sha256": "9e3d0d52d1b3fb77d6e89199e873daf4840b33cab96d8c8793134ffc19dadb34",
+  "size": 775846,
+  "inputs": {
+    "capture-0-0.json": "d0e055af0a8095da74ed4600170eb9f5d7f1e5f81f8fd2bb2fb7b1a720ef94b5",
+    "capture-0-1.json": "65ec874242ae84b2d13704056a05656eccae7add28248c1bb094e008146c5261",
+    "capture-1-0.json": "7bc374e5588e919c0c40a6d46044ea7a9b575701c46df289c87f5239f5bf352d",
+    "capture-1-1.json": "3db5edb03685453821f033b341ca840322984faf051e3cffb73fa8b6b361c387"
+  }
+}
