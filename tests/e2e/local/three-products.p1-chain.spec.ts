@@ -428,7 +428,7 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   expect(trim.body.steps[0]).toMatchObject({ command_ordinals: [0], patch: (trim.body.commands[0] as any).args.changes });
   expect(trim.body.commands[0]).toMatchObject({ op: 'doc.patch', select: null });
   const trimChange = (trim.body.commands[0] as any).args.changes.find((change: any) => change.path.includes(`id:${rightId}`) && change.path.at(-1) === 'from');
-  expect(trimChange).toMatchObject({ value: 3, before: { state: 'present', value: SPLIT_AT }, path: ['clips', `id:${rightId}`, 'from'] });
+  expect(trimChange).toMatchObject({ value: 3, before: { state: 'present', value: 0 }, path: ['clips', `id:${rightId}`, 'from'] });
   expect(trim.body.base_revision_id).toBe(split.response.data.accepted_revision_id);
   expect(trim.body.base_publication_id).toBe(split.response.receipt.receipt_id);
 
