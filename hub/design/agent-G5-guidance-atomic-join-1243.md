@@ -45,3 +45,13 @@ Therefore the failure occurs before Runtime acceptance: the file/draft edit path
 - No full suite, browser/socket/HTTP, native14/58, D17, P1/P4, or shared-install operation was run.
 - No plan decision was changed. G5 remains **DRAFT ONLY / P1 NO-GO** pending investigation by the guidance-path owner.
 
+
+Static/metadata checks after the stopped workflow run:
+
+- `RUFF_CACHE_DIR=/tmp/w-798f505fbc/ruff-cache make ruff PY=/home/user/work/venv-agent/bin/python`: pass, current=2149, baseline=2149.
+- `MYPY_CACHE_DIR=/tmp/w-798f505fbc/mypy-v2-cache make mypy PY=/home/user/work/venv-agent-typecheck-v2/bin/python`: pass, current=1911, baseline=1911; no new diagnostic identities.
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check`: pass.
+- `PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-pin-34eac004`: pass; the initially attempted `rt-pin-3b926efa` was correctly rejected as a producer commit mismatch and was not modified.
+- `git diff --check`: pass.
+
+No plan decision was changed. G5 remains **DRAFT ONLY / P1 NO-GO** pending investigation by the guidance-path owner.
