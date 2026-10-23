@@ -1,0 +1,1 @@
+timeline/agent/tl/ap2-P1-membership-requalification 52e9c0ea app2 P1 independently reviewed PASS42 + Ruff/mypy, exact corpus on R1e6f; merge test imports after Agent approves/lands its R1 base/current join; retain original tests; direct-service only, no H3 GO
