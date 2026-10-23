@@ -193,7 +193,84 @@ def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsy
     original = copy.deepcopy(opened.bundle)
     assert _note_values(original) == {}
     assert len(original["placements"]) == 2
-    assert original["placements"][0]["shot_id"] == original["placements"][1]["shot_id"]
+    canonical = original["source_mapping"]["_runtime_document"]
+    assert set(canonical) == {
+        "schema_version", "project_id", "timeline_id", "parent_revision",
+        "shot_revisions", "internal_timeline_revisions", "dependency_manifest",
+    }
+    assert canonical["schema_version"] == 1
+    assert canonical["project_id"] == runtime.project
+    assert canonical["timeline_id"] == "film"
+    canonical_parent = canonical["parent_revision"]
+    physical_occurrences = canonical_parent["payload"]["occurrences"]
+    assert [(row["occurrence_id"], row["shot_id"], row["shot_revision_id"])
+            for row in physical_occurrences] == [
+        ("occ-a", "chapter-shot", "shot-1"),
+        ("occ-b", "chapter-shot", "shot-1"),
+    ]
+    source_fixture = document_fixture(shared=True)
+    source_parent = source_fixture["parent_revision"]["payload"]
+    source_shot = source_fixture["shot_revisions"][0]["payload"]
+    source_internal = source_fixture["internal_timeline_revisions"][0]["payload"]
+    assert physical_occurrences == source_parent["occurrences"]
+    assert canonical_parent["payload"]["unknown"] == source_parent["unknown"]
+    assert canonical_parent["payload"]["config"]["opaque"] == source_parent["config"]["opaque"]
+
+    physical_shots = canonical["shot_revisions"]
+    physical_internals = canonical["internal_timeline_revisions"]
+    assert [(row["shot_id"], row["revision_id"])
+            for row in physical_shots] == [("chapter-shot", "shot-1")]
+    assert [(row["timeline_id"], row["revision_id"])
+            for row in physical_internals] == [("chapter-1", "internal-1")]
+    physical_shot = physical_shots[0]
+    physical_internal = physical_internals[0]
+    assert physical_shot["internal_timeline_revision_id"] == "internal-1"
+    assert physical_shot["payload"]["internal_timeline_revision_id"] == "internal-1"
+    assert physical_shot["payload"]["items"][0]["item_id"] == "item-1"
+    assert physical_shot["payload"]["unknown"] == source_shot["unknown"]
+    assert physical_internal["payload"]["unknown"] == source_internal["unknown"]
+    assert physical_internal["payload"]["source_window"] == source_internal["source_window"]
+    media_refs = [
+        canonical_parent["payload"]["registry"]["assets"]["picture"]["media_id"],
+        physical_shot["payload"]["items"][0]["media_id"],
+        physical_internal["payload"]["registry"]["assets"]["picture"]["media_id"],
+    ]
+    assert len(set(media_refs)) == 1
+    media_id = media_refs[0]
+    assert canonical["dependency_manifest"]["media"] == [
+        {"media_id": media_id, "content_digest": media_id}
+    ]
+    assert canonical_parent["content_digest"] == _digest(canonical_parent["payload"])
+    assert physical_shot["content_digest"] == _digest(physical_shot["payload"])
+    assert physical_internal["content_digest"] == _digest(physical_internal["payload"])
+    assert canonical["dependency_manifest"]["shots"] == [{
+        "shot_id": "chapter-shot", "revision_id": "shot-1",
+        "internal_timeline_revision_id": "internal-1",
+        "content_digest": physical_shot["content_digest"],
+    }]
+    assert canonical["dependency_manifest"]["internal_timelines"] == [{
+        "timeline_id": "chapter-1", "revision_id": "internal-1",
+        "content_digest": physical_internal["content_digest"],
+    }]
+
+    source_mapping = original["source_mapping"]
+    working_aliases = [placement["shot_id"] for placement in original["placements"]]
+    assert len(working_aliases) == len(set(working_aliases)) == 2
+    assert set(source_mapping["placements"]) == {
+        row["occurrence_id"] for row in physical_occurrences
+    }
+    assert set(source_mapping["shots"]) == set(working_aliases)
+    for physical_occurrence, placement in zip(physical_occurrences, original["placements"]):
+        assert source_mapping["placements"][physical_occurrence["occurrence_id"]] == placement
+        source = source_mapping["shots"][placement["shot_id"]]
+        assert (source["shot_id"], source["revision_id"]) == (
+            physical_occurrence["shot_id"], physical_occurrence["shot_revision_id"]
+        )
+        assert (source["internal_timeline_id"], source["internal_timeline_revision_id"]) == (
+            physical_internal["timeline_id"], physical_shot["internal_timeline_revision_id"]
+        )
+        assert source["content_digest"] == physical_shot["content_digest"]
+        assert source["internal_timeline_content_digest"] == physical_internal["content_digest"]
     assert next(row for row in original["parent"]["clips"] if row["id"] == "clip-b")["at"] == 5
 
     for note in _notes():
