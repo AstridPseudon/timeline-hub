@@ -57,8 +57,9 @@ class _FakeTimelines:
 
     def open_composition(self, project, timeline, **_kw):
         head = self._head()
+        bundle = head["bundle"]
         return SimpleNamespace(ok=True, error="", data={
-            "native_inspection": {"project_id": "p", "timeline_id": "t"},
+            "native_inspection": {"project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"]},
             "summary": {"head_revision_id": head["revision_id"]}})
 
     def open_bundle(self, project, timeline, revision_id=None):
@@ -139,7 +140,7 @@ def worker_main() -> None:
             h.discard()
             return None
         if op == "candidate":
-            return json.loads(json.dumps(h.bundle))
+            return {"bundle": json.loads(json.dumps(h.bundle)), "path": str(h.path) if h.path else None}
         if op == "publish":
             receipt = h.publish("persistence test", client=client, force=bool(req.get("force")))
             return {"merged": receipt.get("merged"), "new_head": receipt.get("new_head"),
@@ -238,7 +239,9 @@ def world(tmp_path, monkeypatch):
     head.write_text(json.dumps({"revision_id": "rev-0", "bundle": timeline()}), encoding="utf-8")
     w = SimpleNamespace(tmp=tmp_path, root=root, head=head, writers=[])
     w.writer = lambda name: Writer(w, name)
-    w.working_copy = lambda: draft_path("p", "t", "main")
+    w.working_copy = lambda: draft_path(
+        json.loads(head.read_text(encoding="utf-8"))["bundle"]["project_id"],
+        json.loads(head.read_text(encoding="utf-8"))["bundle"]["timeline_id"], "main")
     w.move_head = lambda rev, edit: _move_head(head, rev, edit)
     w.read_state = lambda: _read_state(w)
     yield w
@@ -370,7 +373,10 @@ def genuine_runtime(world, tmp_path):
     def publish_candidate(candidate):
         from astrid.sdk.timeline.sync import CommitConflict
 
-        checkout = Checkout(candidate)
+        bundle = candidate["bundle"]
+        saved_path = candidate.get("path")
+        checkout = Checkout.load(saved_path) if saved_path else Checkout(bundle)
+        assert checkout.bundle == bundle
         try:
             result = checkout.publish("persistence test", client=client, idempotency_key="persistence-test")
         except CommitConflict as exc:
@@ -661,7 +667,7 @@ def test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_
 
 # ---------------------------------------------------------------- 5. stale base after restart
 
-def test_publish_after_a_restart_merges_other_clips_onto_the_moved_head(world):
+def test_publish_after_a_restart_merges_other_clips_onto_the_moved_head(world, genuine_runtime):
     with world.writer("A") as a:
         a.do("draft")
         a.do("nudge", clip="a-rocket", seconds=0.5)
