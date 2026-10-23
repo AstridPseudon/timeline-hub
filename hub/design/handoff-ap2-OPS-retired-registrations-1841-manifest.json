@@ -1,0 +1,355 @@
+{
+  "packet": "P1/P3 disk OPS proposed exact-seven registration de-registration",
+  "decision": "PROPOSE_ONLY_NO_LIVE_MUTATION",
+  "scope": {
+    "targets": [
+      "agent-remotion-ap2-p1-f611-1346",
+      "agent-remotion-ap2-current-8c355-1402",
+      "agent-remotion-ap2-current-8c-cfa-1415",
+      "agent-remotion-ap2-current-583-cfa-1451",
+      "agent-remotion-ap2-current-583-9ce-1513",
+      "agent-remotion-ap2-current-98ef-259-1608",
+      "agent-remotion-ap2-current-bac-d9e-1643"
+    ],
+    "protected_current": "agent-remotion-ap2-current-079-2a9-1743",
+    "source_file": "tests/suites.conf",
+    "target_suite_lines": "162-168",
+    "protected_suite_line": 169,
+    "target_envs": [
+      "agent-remotion-ap2-p1-f611-1346.env",
+      "agent-remotion-ap2-current-8c355-1402.env",
+      "agent-remotion-ap2-current-8c-cfa-1415.env",
+      "agent-remotion-ap2-current-583-cfa-1451.env",
+      "agent-remotion-ap2-current-583-9ce-1513.env",
+      "agent-remotion-ap2-current-98ef-259-1608.env",
+      "agent-remotion-ap2-current-bac-d9e-1643.env"
+    ],
+    "protected_env": "agent-remotion-ap2-current-079-2a9-1743.env",
+    "general_protected_inputs": [
+      "agent-remotion.env",
+      "agent-remotion-current.env",
+      "agent-remotion-0010.env",
+      "agent-remotion-0012.env",
+      "agent-remotion-ap2-current-079-2a9-1743.env"
+    ]
+  },
+  "source_evidence": {
+    "original_suites_conf": {
+      "path": "handoff-ap2-OPS-retired-registrations-1841-evidence/suites.conf.original",
+      "sha256": "07dfac86a0a63b3449a5d3393327ea95cc5688c342413fe1d9e323f3cfd9a330",
+      "bytes": 140559
+    },
+    "target_env_exports": [
+      {
+        "path": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-p1-f611-1346.env.original",
+        "sha256": "551fa8ffae56d106fe1d01f10742ddac1942cdf75968c10fd2742f7eb8d83c8b",
+        "bytes": 927
+      },
+      {
+        "path": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-8c355-1402.env.original",
+        "sha256": "bbb1400511a1a33f14d40b55aee3debcad73101dfd7e0dfe819fc1f43861f904",
+        "bytes": 945
+      },
+      {
+        "path": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-8c-cfa-1415.env.original",
+        "sha256": "c9c463cf9bb9427b33db24a5eb54e6bd78b567a423876acf8bc152621c7c8dcc",
+        "bytes": 948
+      },
+      {
+        "path": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-583-cfa-1451.env.original",
+        "sha256": "e28d3585802f86aca412390329d2624e019e80dc26f3511ad8d07a80cd1bc8ce",
+        "bytes": 951
+      },
+      {
+        "path": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-583-9ce-1513.env.original",
+        "sha256": "fe77f26fe4455ae95a3d8567736d98bef8138dbe693608c66e0c6a554ded4f84",
+        "bytes": 951
+      },
+      {
+        "path": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-98ef-259-1608.env.original",
+        "sha256": "cbf4f2e2667ccbecc31eaf04965dac11535045bb2eed5660ecf17d03bc0c6e65",
+        "bytes": 954
+      },
+      {
+        "path": "handoff-ap2-OPS-retired-registrations-1841-evidence/agent-remotion-ap2-current-bac-d9e-1643.env.original",
+        "sha256": "8aa4514c482ff410d6174b8dfc93c067003a1e3f626deb35ed83e33adc2c988d",
+        "bytes": 951
+      }
+    ]
+  },
+  "target_records": [
+    {
+      "suite_line": 162,
+      "suite_name": "agent-remotion-ap2-p1-f611-1346-nodes",
+      "suite_row_sha256": "069cd64dc4847f7a7d7bf610b14006b8ec96279c2ea225ab988297acef258419",
+      "suite_row_bytes": 1466,
+      "env": "agent-remotion-ap2-p1-f611-1346.env",
+      "env_sha256": "551fa8ffae56d106fe1d01f10742ddac1942cdf75968c10fd2742f7eb8d83c8b",
+      "env_bytes": 927,
+      "project_dir_name": "agent-remotion-ap2-p1-f611-1346",
+      "agent_source_commit": "f6116e1b658514021cbbf08d5a6f16a240523f1a",
+      "runtime_source_commit": "8592822fd11275540f596562f43c715676f2bc0f",
+      "historical_classification": "generated remotion-env-nodes registration; superseded by protected current tuple; no active reference found in audited metadata"
+    },
+    {
+      "suite_line": 163,
+      "suite_name": "agent-remotion-ap2-current-8c355-1402-nodes",
+      "suite_row_sha256": "63c5b4cac8328159e5d1fa5ba77d6a1ac91464daa2554e9305036d142c36f8f4",
+      "suite_row_bytes": 1490,
+      "env": "agent-remotion-ap2-current-8c355-1402.env",
+      "env_sha256": "bbb1400511a1a33f14d40b55aee3debcad73101dfd7e0dfe819fc1f43861f904",
+      "env_bytes": 945,
+      "project_dir_name": "agent-remotion-ap2-current-8c355-1402",
+      "agent_source_commit": "8c355a48e4cc2a8ec9d5ed6873a585d2540a2dbe",
+      "runtime_source_commit": "8592822fd11275540f596562f43c715676f2bc0f",
+      "historical_classification": "generated remotion-env-nodes registration; superseded by protected current tuple; no active reference found in audited metadata"
+    },
+    {
+      "suite_line": 164,
+      "suite_name": "agent-remotion-ap2-current-8c-cfa-1415-nodes",
+      "suite_row_sha256": "7eba6079da5112131adff3d555e016ce3c973382b02c9c5edb03cd9ff2b2d54b",
+      "suite_row_bytes": 1494,
+      "env": "agent-remotion-ap2-current-8c-cfa-1415.env",
+      "env_sha256": "c9c463cf9bb9427b33db24a5eb54e6bd78b567a423876acf8bc152621c7c8dcc",
+      "env_bytes": 948,
+      "project_dir_name": "agent-remotion-ap2-current-8c-cfa-1415",
+      "agent_source_commit": "8c355a48e4cc2a8ec9d5ed6873a585d2540a2dbe",
+      "runtime_source_commit": "cfa0af0d476e6954df041c08d7ef378fd6782932",
+      "historical_classification": "generated remotion-env-nodes registration; superseded by protected current tuple; no active reference found in audited metadata"
+    },
+    {
+      "suite_line": 165,
+      "suite_name": "agent-remotion-ap2-current-583-cfa-1451-nodes",
+      "suite_row_sha256": "77059b54efacc2cc1d1f1554e5a04435a53b7d25190cce01196e07b63d74699f",
+      "suite_row_bytes": 1498,
+      "env": "agent-remotion-ap2-current-583-cfa-1451.env",
+      "env_sha256": "e28d3585802f86aca412390329d2624e019e80dc26f3511ad8d07a80cd1bc8ce",
+      "env_bytes": 951,
+      "project_dir_name": "agent-remotion-ap2-current-583-cfa-1451",
+      "agent_source_commit": "58316fd6e0ce8a1fb3b2b3826ec71906d29080de",
+      "runtime_source_commit": "cfa0af0d476e6954df041c08d7ef378fd6782932",
+      "historical_classification": "generated remotion-env-nodes registration; superseded by protected current tuple; no active reference found in audited metadata"
+    },
+    {
+      "suite_line": 166,
+      "suite_name": "agent-remotion-ap2-current-583-9ce-1513-nodes",
+      "suite_row_sha256": "b1da04d14309c99811b8ad390f03582ec695e52a1c93ece72b63473898d89057",
+      "suite_row_bytes": 1498,
+      "env": "agent-remotion-ap2-current-583-9ce-1513.env",
+      "env_sha256": "fe77f26fe4455ae95a3d8567736d98bef8138dbe693608c66e0c6a554ded4f84",
+      "env_bytes": 951,
+      "project_dir_name": "agent-remotion-ap2-current-583-9ce-1513",
+      "agent_source_commit": "58316fd6e0ce8a1fb3b2b3826ec71906d29080de",
+      "runtime_source_commit": "9ce4242bc01f100bab9efc51032a73985cefb2b2",
+      "historical_classification": "generated remotion-env-nodes registration; superseded by protected current tuple; no active reference found in audited metadata"
+    },
+    {
+      "suite_line": 167,
+      "suite_name": "agent-remotion-ap2-current-98ef-259-1608-nodes",
+      "suite_row_sha256": "97cfb270715064560f53389cc8ab0275cc93adf5162db144e10ec699d5a0a606",
+      "suite_row_bytes": 1502,
+      "env": "agent-remotion-ap2-current-98ef-259-1608.env",
+      "env_sha256": "cbf4f2e2667ccbecc31eaf04965dac11535045bb2eed5660ecf17d03bc0c6e65",
+      "env_bytes": 954,
+      "project_dir_name": "agent-remotion-ap2-current-98ef-259-1608",
+      "agent_source_commit": "98ef2f9c95fd43d88cca2909d8d1518302e3050c",
+      "runtime_source_commit": "2593942dfbbbe1d70bb6e776f811285deb2ab18b",
+      "historical_classification": "generated remotion-env-nodes registration; superseded by protected current tuple; no active reference found in audited metadata"
+    },
+    {
+      "suite_line": 168,
+      "suite_name": "agent-remotion-ap2-current-bac-d9e-1643-nodes",
+      "suite_row_sha256": "699b9c9685ff792a2597c7e8c82e04a426249c7998c8f819bc45514a3bd9c6ba",
+      "suite_row_bytes": 1498,
+      "env": "agent-remotion-ap2-current-bac-d9e-1643.env",
+      "env_sha256": "8aa4514c482ff410d6174b8dfc93c067003a1e3f626deb35ed83e33adc2c988d",
+      "env_bytes": 951,
+      "project_dir_name": "agent-remotion-ap2-current-bac-d9e-1643",
+      "agent_source_commit": "bac094180aef38a77b86ab165962e6159f873c60",
+      "runtime_source_commit": "d9e2a71e87c827290a3ff58a94f6fb8b4bc11e0b",
+      "historical_classification": "generated remotion-env-nodes registration; superseded by protected current tuple; no active reference found in audited metadata"
+    }
+  ],
+  "protected_rows_before_after": [
+    {
+      "before_line": 78,
+      "after_line": 78,
+      "name": "full-remotion-integration",
+      "before_sha256": "3903c795948d105533689a5de6c62d067a7c105cbb4478610297a52da22d349f",
+      "after_sha256": "3903c795948d105533689a5de6c62d067a7c105cbb4478610297a52da22d349f",
+      "invariant": true
+    },
+    {
+      "before_line": 83,
+      "after_line": 83,
+      "name": "remotion-env-nodes",
+      "before_sha256": "e14e5ac850ba94ddadadd55b8b48ea3999fb06bc9ebc101c859d4413890ab944",
+      "after_sha256": "e14e5ac850ba94ddadadd55b8b48ea3999fb06bc9ebc101c859d4413890ab944",
+      "invariant": true
+    },
+    {
+      "before_line": 84,
+      "after_line": 84,
+      "name": "remotion-0010-nodes",
+      "before_sha256": "0535b42710c99bc58da4f23234cce819b2163948aba3cefa26c35b60ab20433c",
+      "after_sha256": "0535b42710c99bc58da4f23234cce819b2163948aba3cefa26c35b60ab20433c",
+      "invariant": true
+    },
+    {
+      "before_line": 85,
+      "after_line": 85,
+      "name": "remotion-0012-nodes",
+      "before_sha256": "81ab60e72ce092fe1384ebc51139804d26b0d3d20c36f4987f64e2f36119b0bb",
+      "after_sha256": "81ab60e72ce092fe1384ebc51139804d26b0d3d20c36f4987f64e2f36119b0bb",
+      "invariant": true
+    },
+    {
+      "before_line": 93,
+      "after_line": 93,
+      "name": "full-remotion12-integration",
+      "before_sha256": "894c311f072d25bad33b262a3f8e4ce08b148d10720710c8de48691ca486d16a",
+      "after_sha256": "894c311f072d25bad33b262a3f8e4ce08b148d10720710c8de48691ca486d16a",
+      "invariant": true
+    },
+    {
+      "before_line": 112,
+      "after_line": 112,
+      "name": "full-remotion12-s2-integration",
+      "before_sha256": "c48b6dba124dfd33fafe63fbd71792cf0fab6cec11fedc26677d04c6d105dca1",
+      "after_sha256": "c48b6dba124dfd33fafe63fbd71792cf0fab6cec11fedc26677d04c6d105dca1",
+      "invariant": true
+    },
+    {
+      "before_line": 169,
+      "after_line": 162,
+      "name": "agent-remotion-ap2-current-079-2a9-1743-nodes",
+      "before_sha256": "82b47b9b8d60f805a7e696d304e35357024079be946ec9230ed0f8dc6531e5ca",
+      "after_sha256": "82b47b9b8d60f805a7e696d304e35357024079be946ec9230ed0f8dc6531e5ca",
+      "invariant": true
+    }
+  ],
+  "protected_envs_before_after": [
+    {
+      "name": "agent-remotion.env",
+      "before_sha256": "e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02",
+      "after_sha256": "e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02",
+      "bytes": 523,
+      "invariant": true
+    },
+    {
+      "name": "agent-remotion-current.env",
+      "before_sha256": "7faf606e9780385d7a32c053367b2a63e1b58246c52f14d14c226dbf9b20fa6c",
+      "after_sha256": "7faf606e9780385d7a32c053367b2a63e1b58246c52f14d14c226dbf9b20fa6c",
+      "bytes": 531,
+      "invariant": true
+    },
+    {
+      "name": "agent-remotion-0010.env",
+      "before_sha256": "943c0f49bc896097af0589b84c4dd4df06058fbe22e0c6fd999bcbf40f9a38a0",
+      "after_sha256": "943c0f49bc896097af0589b84c4dd4df06058fbe22e0c6fd999bcbf40f9a38a0",
+      "bytes": 528,
+      "invariant": true
+    },
+    {
+      "name": "agent-remotion-0012.env",
+      "before_sha256": "be340c6b77684d2438d1c46a674746188b851cbb23abec0c6dcf21a0742fd03a",
+      "after_sha256": "be340c6b77684d2438d1c46a674746188b851cbb23abec0c6dcf21a0742fd03a",
+      "bytes": 528,
+      "invariant": true
+    },
+    {
+      "name": "agent-remotion-ap2-current-079-2a9-1743.env",
+      "before_sha256": "bb6088820f2d0b35101d14f8963008c9e68864ab31bfb735bc904ec68dbea306",
+      "after_sha256": "bb6088820f2d0b35101d14f8963008c9e68864ab31bfb735bc904ec68dbea306",
+      "bytes": 951,
+      "invariant": true
+    }
+  ],
+  "invariants": {
+    "original_suite_sha256": "07dfac86a0a63b3449a5d3393327ea95cc5688c342413fe1d9e323f3cfd9a330",
+    "proposed_suite_sha256": "178c9e0fdfe377ddd27e229d33268e6f6994d9449ef035b0543caad3395fc2b2",
+    "outside_target_rows_sha256_before": "178c9e0fdfe377ddd27e229d33268e6f6994d9449ef035b0543caad3395fc2b2",
+    "outside_target_rows_sha256_after": "178c9e0fdfe377ddd27e229d33268e6f6994d9449ef035b0543caad3395fc2b2",
+    "outside_target_rows_invariant": true,
+    "protected_rows_invariant": true,
+    "protected_envs_invariant": true,
+    "proposed_target_rows_present": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "proposal": {
+    "patch_path": "handoff-ap2-OPS-retired-registrations-1841.patch",
+    "patch_sha256": "5984d485a2840c780c00a6461e3d6cb98462cef21428e8a9bbc233d18bf18b6a",
+    "patch_bytes": 23163,
+    "hunks": "one exact seven-row suite deletion hunk plus seven exact known env-file Delete File hunks",
+    "private_baseline_patch_dry_run": "PASS",
+    "private_baseline_patch_apply": "PASS",
+    "actual_inputs_modified": false
+  },
+  "metadata": {
+    "active_metadata_search": {
+      "queue_pending_exact_target_matches": 0,
+      "manager_running_exact_target_matches": 0,
+      "test_request_exact_target_matches": 0,
+      "worker_record_exact_target_matches": 0,
+      "pending_queue_entries_total": 3,
+      "manager_running_files": 0
+    },
+    "historical_refs": {
+      "completed_runtime_receipts_exact_target_count": 7,
+      "refused_retirement_records_exact_target_count": 7,
+      "protected_current_completed_receipt_count": 1,
+      "protected_current_worker_record_count": 2
+    },
+    "runtime_paths": {
+      "agent-remotion-ap2-p1-f611-1346": {
+        "exists": true,
+        "keep_marker": false,
+        "lease_named_marker": false
+      },
+      "agent-remotion-ap2-current-8c355-1402": {
+        "exists": true,
+        "keep_marker": false,
+        "lease_named_marker": false
+      },
+      "agent-remotion-ap2-current-8c-cfa-1415": {
+        "exists": true,
+        "keep_marker": false,
+        "lease_named_marker": false
+      },
+      "agent-remotion-ap2-current-583-cfa-1451": {
+        "exists": true,
+        "keep_marker": false,
+        "lease_named_marker": false
+      },
+      "agent-remotion-ap2-current-583-9ce-1513": {
+        "exists": true,
+        "keep_marker": false,
+        "lease_named_marker": false
+      },
+      "agent-remotion-ap2-current-98ef-259-1608": {
+        "exists": true,
+        "keep_marker": false,
+        "lease_named_marker": false
+      },
+      "agent-remotion-ap2-current-bac-d9e-1643": {
+        "exists": true,
+        "keep_marker": false,
+        "lease_named_marker": false
+      },
+      "agent-remotion-ap2-current-079-2a9-1743": {
+        "exists": true,
+        "keep_marker": false,
+        "lease_named_marker": false
+      }
+    },
+    "host_process_visibility": "sandbox-limited; no host/process operations performed; whole-host idle is not certified; final normal-guard recheck required before any lifecycle action."
+  },
+  "review_gate": "Runtime must assess this reviewed packet against D21a before any supported request-retire-venv lifecycle operation; refused targets remain stopped; no retry authorized."
+}
