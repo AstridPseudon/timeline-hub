@@ -22,6 +22,19 @@ SOURCES = {
     'runtime-0.2.10-6023cfb': '472622c45fa6b5c7a425c949516a64a52d83192d3749e78a0f000decd088aee9',
 }
 
+INVERSE_STEPS = {
+    'type': 'object',
+    'description': 'When present, select nonempty unique step IDs for every target publication; omitted selects the whole target commits.',
+    'propertyNames': {'$ref': '#/$defs/ID'},
+    'additionalProperties': {
+        'type': 'array',
+        'items': {'$ref': '#/$defs/ID'},
+        'minItems': 1,
+        'uniqueItems': True,
+    },
+    'minProperties': 1,
+}
+
 
 def baseline(name):
     raw = (FIXTURES / (name + '.json')).read_bytes()
@@ -125,8 +138,14 @@ def without_doc_patch(schema):
     return candidate
 
 
+def without_inverse_steps(schema):
+    candidate = copy.deepcopy(schema)
+    assert candidate['$defs']['InverseArgs']['properties'].pop('steps') == INVERSE_STEPS
+    return candidate
+
+
 def s2_slice():
-    candidate = without_text(without_doc_patch(_SCHEMA))
+    candidate = without_text(without_doc_patch(without_inverse_steps(_SCHEMA)))
     for definition in ('WordAnchor', 'ClipAnchorArgs', 'TimelineInitArgs',
                        'AssembledTargetArgs', 'ClipAddMediaArgs', 'OccurrenceCreateArgs'):
         del candidate['$defs'][definition]
@@ -139,6 +158,24 @@ def s2_slice():
     assert candidate['$defs']['Intent']['properties']['ownership']['enum'].pop() == 'parent'
     candidate['$defs']['ClipSetArgs']['description'] = previous['$defs']['ClipSetArgs']['description']
     return candidate
+
+
+def test_inverse_steps_is_exactly_the_new_optional_shape():
+    inverse = _SCHEMA['$defs']['InverseArgs']
+    assert inverse == {
+        'type': 'object',
+        'properties': {
+            'publications': {
+                'type': 'array',
+                'items': {'$ref': '#/$defs/ID'},
+                'minItems': 1,
+                'uniqueItems': True,
+            },
+            'steps': INVERSE_STEPS,
+        },
+        'required': ['publications'],
+        'additionalProperties': False,
+    }
 
 
 def test_next_successor_is_exactly_complete_frozen_s2_plus_reviewed_additions():
