@@ -309,6 +309,7 @@ export function useTimelineCommit({
     meta: Record<string, ClipMeta>,
     clipOrder: ClipOrderMap,
     registryOverride?: TimelineData['registry'],
+    metaUpdates?: Record<string, Partial<ClipMeta>>,
   ) => {
     // Soft-tag model: cohesion is a property of edit operations, not data shape.
     // rowsToConfig receives the untouched pinnedShotGroups from the current config;
@@ -322,6 +323,7 @@ export function useTimelineCommit({
       current.tracks,
       current.config.pinnedShotGroups,
       current.config,
+      { meta: current.meta, updates: metaUpdates },
     ), meta);
 
     const registry = registryOverride ?? current.registry;
@@ -496,6 +498,7 @@ export function useTimelineCommit({
         nextMeta,
         mutation.clipOrderOverride ?? buildTrackClipOrder(current.tracks, current.clipOrder, mutation.metaDeletes),
         mutation.registryOverride,
+        mutation.metaUpdates,
       );
       const nextData = mutation.pinnedShotGroupsOverride === undefined
         ? baseNextData

@@ -280,6 +280,10 @@ export const rowsToConfig = (
   tracks: TrackDefinition[],
   pinnedShotGroups?: TimelineConfig['pinnedShotGroups'],
   extras?: Pick<TimelineConfig, 'clips' | 'theme' | 'theme_overrides' | 'generation_defaults' | 'app'>,
+  editBasis?: {
+    meta: Readonly<Record<string, ClipMeta>>;
+    updates?: Readonly<Record<string, Partial<ClipMeta>>>;
+  },
 ): TimelineConfig => {
   const actionMap = new Map<string, TimelineAction>();
   const trackActionIds: Record<string, string[]> = Object.fromEntries(tracks.map((track) => [track.id, []]));
@@ -357,13 +361,12 @@ export const rowsToConfig = (
         keyframes: clipMeta.keyframes,
       };
 
-      // `meta.label` is the display projection and may be derived from asset
-      // provenance. Keep the authored label from the raw config when this clip
-      // already exists, including an absent or opaque value. Newly materialized
-      // clips have no raw carrier yet, so their supplied metadata is authored.
-      if (authoredClip && Object.prototype.hasOwnProperty.call(authoredClip, 'label')) {
-        nextClip.label = authoredClip.label;
-      } else if (!authoredClip && clipMeta.label !== undefined) {
+      // Pure row projection normalizes legacy labels. Actual edits supply the
+      // previous metadata so unchanged display values retain their raw basis.
+      const labelEdited = Object.prototype.hasOwnProperty.call(editBasis?.updates?.[clipId] ?? {}, 'label');
+      if (authoredClip && editBasis && !labelEdited && clipMeta.label === editBasis.meta[clipId]?.label) {
+        if (Object.prototype.hasOwnProperty.call(authoredClip, 'label')) nextClip.label = authoredClip.label;
+      } else if (clipMeta.label !== undefined) {
         nextClip.label = clipMeta.label;
       }
 

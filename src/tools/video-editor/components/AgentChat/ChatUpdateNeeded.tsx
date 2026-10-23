@@ -11,13 +11,15 @@ export function isChatUpdateError(error: unknown): error is BridgeContractError 
  * The shared "Update Astrid" screen content, shown in place of a raw bridge error in chat. The raw message stays one click away under Details
  * for anyone debugging.
  */
-export function ChatUpdateNeeded({ detail }: { readonly detail: string }) {
+export function ChatUpdateNeeded({ detail, showIntroduction = false }: { readonly detail: string; readonly showIntroduction?: boolean }) {
   const copy = RUNTIME_CONNECTION_COPY.updateNeeded;
   return (
     <div className="space-y-2 text-left text-foreground">
       <p>{RUNTIME_CONNECTION_COPY.chatNeedsUpdate}</p>
-      <p className="font-medium">{copy.title}</p>
-      <p>{withCommandShell(copy.sentence)}</p>
+      {showIntroduction && <>
+        <p className="font-medium">{copy.title}</p>
+        <p>{withCommandShell(copy.sentence)}</p>
+      </>}
       <CopyInstallCommand mode="update" />
       <details className="text-[11px] text-muted-foreground">
         <summary className="cursor-pointer">Details</summary>

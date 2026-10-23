@@ -1,7 +1,6 @@
 import { buildTrackClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { buildAssetReferenceMap } from '@/tools/video-editor/lib/asset-registry.ts';
 import { serializeResolvedTimelineEdit } from '@/tools/video-editor/lib/serialize.ts';
-import { deriveClipNameBasis, isExplicitClipLabel } from '@/tools/video-editor/lib/clipDisplayNames.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 import {
   assembleTimelineData,
@@ -89,6 +88,7 @@ export const materializeTimelineRows = (
   rows: TimelineRow[],
   meta: Record<string, ClipMeta>,
   clipOrder: ClipOrderMap,
+  metaUpdates?: Record<string, Partial<ClipMeta>>,
 ): TimelineData => {
   const config = rowsToConfig(
     rows,
@@ -98,6 +98,7 @@ export const materializeTimelineRows = (
     current.tracks,
     current.config.pinnedShotGroups,
     current.config,
+    { meta: current.meta, updates: metaUpdates },
   );
 
   return preserveUploadingClips(
@@ -138,40 +139,13 @@ const buildDataFromSerializedConfig = (
   );
 };
 
-/**
- * Config mutations are edits of `current.resolvedConfig`, whose clip `label`s are the derived display names.
- * A clip whose label is still exactly that derived name, with no stored label behind it, was not named by the
- * edit: drop it so it is not saved as if a user set it. A label the edit changed, or one already stored, stays.
- */
-const withoutDerivedLabels = (
-  current: TimelineData,
-  resolvedConfig: TimelineData['resolvedConfig'],
-): TimelineData['resolvedConfig'] => {
-  // A clip the edit created (a split's right half) has no meta; judge it by the rule the load uses.
-  const needsBasis = resolvedConfig.clips.some((clip) => clip.label !== undefined && !current.meta[clip.id]);
-  const basis = needsBasis ? deriveClipNameBasis(resolvedConfig.clips, resolvedConfig.registry, resolvedConfig.tracks) : null;
-  return {
-    ...resolvedConfig,
-    clips: resolvedConfig.clips.map((clip) => {
-      if (clip.label === undefined) return clip;
-      const meta = current.meta[clip.id];
-      const derived = meta
-        ? meta.label === undefined && clip.label === meta.displayName
-        : basis !== null && !isExplicitClipLabel(clip.label, clip.id, basis);
-      if (!derived) return clip;
-      const { label: _derived, ...rest } = clip;
-      return rest;
-    }),
-  };
-};
-
 /** The one way an edited `resolvedConfig` becomes the config that is saved. */
 export const serializeResolvedConfigForSave = (
   current: TimelineData,
   resolvedConfig: TimelineData['resolvedConfig'],
   pinnedShotGroups: TimelineData['config']['pinnedShotGroups'],
 ): TimelineData['config'] => serializeResolvedTimelineEdit(
-  withoutDerivedLabels(current, resolvedConfig),
+  resolvedConfig,
   pinnedShotGroups,
   current.config,
   undefined,
@@ -225,6 +199,7 @@ export const previewTimelineMutation = (
         mutation.rows,
         nextMeta,
         nextClipOrder,
+        mutation.metaUpdates,
       );
       const nextData = mutation.pinnedShotGroupsOverride === undefined
         ? baseNextData

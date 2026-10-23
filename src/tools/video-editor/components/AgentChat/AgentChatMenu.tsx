@@ -38,7 +38,7 @@ interface AgentChatMenuProps {
   /** A new chat is starting; the trigger names it until it opens. */
   starting?: boolean;
   disabled?: boolean;
-  defaultAgent: LocalAgentId;
+  defaultAgent?: LocalAgentId;
   agents?: LocalAgentChoice[];
   /** Each agent's default model, which a click on its row starts with. */
   agentModelNames?: Partial<Record<LocalAgentId, string | null>>;
@@ -48,7 +48,7 @@ interface AgentChatMenuProps {
   agentsError?: Error | null;
   newChatDisabled?: boolean;
   /** Start a chat: no model uses that agent's default. */
-  onNewChat: (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => void;
+  onNewChat?: (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => void;
   /** Tells the host which agent's service catalog to show (null when the model list closes). */
   onBrowseAgent?: (agent: LocalAgentId | null) => void;
   agentModels?: NewChatAgentModels | null;
@@ -84,8 +84,8 @@ function AgentLine({ agent, line, copiedCommands, onCopy }: { agent: LocalAgentI
  */
 export const AgentChatMenu = forwardRef<AgentChatMenuHandle, AgentChatMenuProps>(function AgentChatMenu({
   sessions, activeSessionId, mainSessionId = null, settingMainSessionId = null, describeSession, onSelectSession, onSetMainSession, onRenameSession,
-  starting = false, disabled = false, defaultAgent, agents, agentModelNames, agentCanBrowse, agentsLoading = false, agentsError = null, newChatDisabled = false,
-  onNewChat, onBrowseAgent, agentModels = null, attachExisting, onOpenChange,
+  starting = false, disabled = false, defaultAgent = 'astrid', agents, agentModelNames, agentCanBrowse, agentsLoading = false, agentsError = null, newChatDisabled = false,
+  onNewChat = () => undefined, onBrowseAgent, agentModels = null, attachExisting, onOpenChange,
 }, ref) {
   const [open, setOpen] = useState(false);
   const [browsing, setBrowsing] = useState<LocalAgentId | null>(null);
@@ -313,7 +313,7 @@ export const AgentChatMenu = forwardRef<AgentChatMenuHandle, AgentChatMenuProps>
             shouldFilter={!browsing} filter={(_value, text, keywords) => matches(text, (keywords ?? []).join(' ')) ? 1 : 0}>
             {/* An out-of-date Astrid is the one thing to act on, so its update stays at the top, outside the scrolling list. */}
             {!browsing && updateNeeded && (
-              <div role="alert" className="border-b border-border px-3 py-2 text-xs"><ChatUpdateNeeded detail={updateNeeded.message} /></div>
+              <div role="alert" className="border-b border-border px-3 py-2 text-xs"><ChatUpdateNeeded showIntroduction detail={updateNeeded.message} /></div>
             )}
             {browsing
               ? <CommandInput ref={search} autoFocus placeholder={`Search ${agentNames[browsing]} models…`} className="h-8" value={query} onValueChange={setQuery} />

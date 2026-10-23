@@ -747,3 +747,80 @@ describe('useTimelineCommit local save boundary', () => {
     expect(scheduled).toHaveBeenCalledTimes(2);
   });
 });
+
+
+describe('mounted authored labels and display normalization', () => {
+  it.each([undefined, 'p1-video.mp4', 'p1-video'])('preserves raw label %s in row/config edits until an explicit label write', async (label) => {
+    const clip = { id: 'source', at: 0, track: 'V1', clipType: 'media', asset: 'p1-video', from: 0, to: 8,
+      ...(label === undefined ? {} : { label }) };
+    const config: TimelineConfig = {
+      output: { resolution: '1280x720', fps: 30, file: 'out.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }], clips: [clip],
+    };
+    const registry = { assets: { 'p1-video': { file: 'p1-video.mp4', type: 'video/mp4', duration: 8 } } };
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }).data.canonical_document;
+    document.parent_revision.payload = { config, clips: structuredClone(config.clips), registry };
+    document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+    const head = { projectId: document.project_id, timelineId: document.timeline_id, headRevisionId: 'r0', headPublicationId: 'p0' };
+    const initial = { ...await buildTimelineData({ ...config, ...withDefaultTimelineOutput(config) }, registry), head };
+    const basis = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+    const scope = { realmId: 'realm', actorId: 'actor', projectId: head.projectId, timelineId: head.timelineId };
+    const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_key, work) => work() });
+    const session = await createLocalSaveSession({ scope, initial: basis, document: toOutboxJson(document), outboxes,
+      send: vi.fn(), loadLatest: vi.fn(), prepareDisplay: vi.fn(), changed: vi.fn() });
+    const handoff = createTimelineLocalSaveHandoff({ initial: basis, source: { config: initial.config, registry, head }, session, adopted: vi.fn() });
+    const eventBus = new TimelineEventBus();
+    const saves: Promise<void>[] = [];
+    eventBus.on('scheduleSave', (next, options) => { saves.push(handoff.capture({ config: next.config, registry, head }, options?.gestureBasis)); });
+    const { result, unmount } = renderHook(() => useTimelineCommit({ eventBus, lastSavedSignatureRef: { current: '' }, initialData: initial }));
+    const checkStored = async (expected: Record<string, unknown>) => {
+      await Promise.all(saves);
+      const payload = session.getDocument().parent_revision.payload as unknown as { clips: Record<string, unknown>[] };
+      expect(payload.clips).toEqual([expected]);
+    };
+    try {
+      const rows = initial.rows.map((row) => ({ ...row, actions: row.actions.map((action) => ({ ...action, start: 1, end: 9 })) }));
+      const preview = previewTimelineMutation(initial, { type: 'rows', rows });
+      if (!preview.ok) throw new Error('row preview failed');
+      expect(preview.nextData.config.clips).toEqual([{ ...clip, at: 1 }]);
+      act(() => result.current.applyEdit({ type: 'rows', rows }));
+      await checkStored({ ...clip, at: 1 });
+      const current = result.current.dataRef.current!;
+      act(() => result.current.applyEdit({ type: 'config', resolvedConfig: {
+        ...current.resolvedConfig, clips: current.resolvedConfig.clips.map((row) => ({ ...row, volume: 0.5 })),
+      } }));
+      await checkStored({ ...clip, at: 1, volume: 0.5 });
+      const [stored] = await outboxes.list(scope);
+      for (const intent of stored.intents) {
+        const changes = (intent.payload.documentIntent as { changes: { path: string[] }[] }).changes;
+        expect(changes.every((change) => change.path.at(-1) !== 'label')).toBe(true);
+      }
+      const named = result.current.dataRef.current!;
+      act(() => result.current.applyEdit({ type: 'config', resolvedConfig: {
+        ...named.resolvedConfig, clips: named.resolvedConfig.clips.map((row) => ({ ...row, label: 'p1-video.mp4' })),
+      } }));
+      await checkStored({ ...clip, at: 1, volume: 0.5, label: 'p1-video.mp4' });
+      act(() => result.current.applyEdit({ type: 'rows', rows: result.current.dataRef.current!.rows,
+        metaUpdates: { source: { label: undefined } } }));
+      const { label: _label, ...unnamed } = clip;
+      expect(result.current.dataRef.current!.config.clips[0]).not.toHaveProperty('label');
+      await Promise.all(saves);
+      act(() => result.current.applyEdit({ type: 'rows', rows: result.current.dataRef.current!.rows,
+        metaUpdates: { source: { label: 'p1-video.mp4' } } }));
+      await checkStored({ ...unnamed, at: 1, volume: 0.5, label: 'p1-video.mp4' });
+      act(() => result.current.applyEdit({ type: 'prepared-media', command: {
+        type: 'place-prepared-media', payload: {
+          asset: { assetKey: 'new-image', mediaType: 'image', durationSeconds: 2,
+            entry: { file: 'new.png', type: 'image/png' }, source: 'registered' },
+          trackId: 'V1', at: 10,
+        },
+      } }));
+      await Promise.all(saves);
+      const payload = session.getDocument().parent_revision.payload as unknown as { clips: Record<string, unknown>[] };
+      expect(payload.clips.find((row) => row.id === clip.id)).toEqual({ ...unnamed, at: 1, volume: 0.5, label: 'p1-video.mp4' });
+      const [mediaOutbox] = await outboxes.list(scope);
+      const mediaIntent = mediaOutbox.intents.at(-1)!.payload.documentIntent as { changes: { path: string[] }[] };
+      expect(mediaIntent.changes.every((change) => change.path.at(-1) !== 'label')).toBe(true);
+    } finally { unmount(); await session.dispose(); }
+  });
+});

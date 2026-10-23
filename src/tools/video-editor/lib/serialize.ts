@@ -217,7 +217,15 @@ export function withAuthoredClipLabels(
   return { ...resolved, clips: resolved.clips.map((clip) => {
     const raw = rawClips.get(clip.id);
     const displayed = displayedClips.get(clip.id);
-    if (!raw || !displayed || clip.label !== displayed.label) return clip;
+    if (!raw || !displayed) return clip;
+    // Derived names are non-enumerable. Spreading a display clip omits that
+    // view; an enumerable label supplied by the edit is an explicit write,
+    // including a value equal to the current filename or an explicit clear.
+    const derivedDisplay = !Object.prototype.propertyIsEnumerable.call(displayed, 'label');
+    const labelEdited = derivedDisplay
+      ? Object.prototype.propertyIsEnumerable.call(clip, 'label')
+      : clip.label !== displayed.label;
+    if (labelEdited) return clip;
     const { label: _displayLabel, ...rest } = clip;
     return Object.prototype.hasOwnProperty.call(raw, 'label') ? { ...rest, label: raw.label } : rest;
   }) };
