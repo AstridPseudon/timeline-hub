@@ -138,10 +138,10 @@ jobs:
             pyproject.toml
             requirements/*.lock
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js from .node-version
         uses: actions/setup-node@v4
         with:
-          node-version: "20.19.4"
+          node-version-file: .node-version
           cache: npm
           cache-dependency-path: remotion/package-lock.json
 

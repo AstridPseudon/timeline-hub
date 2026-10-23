@@ -176,3 +176,28 @@ def test_a_module_is_hidden_only_when_no_combination_of_its_lanes_satisfies_the_
     assert not hidden("not remotion", {"posix_native"}, {"posix_native", "remotion"})
     assert hidden("remotion", {"posix_native"}, {"posix_native"})  # nothing in it can be a remotion test
     assert not hidden("remotion", {"posix_native"}, {"posix_native", "remotion"})
+
+
+def test_a_test_removed_by_name_is_counted_and_not_attributed_to_its_lane(run) -> None:
+    # -m selects the node test; --deselect (as pytest-split does) removes it. The lane did not leave it out.
+    result = run("import pytest\n\n@pytest.mark.node\ndef test_node():\n    pass\n\ndef test_x():\n    pass\n", "-m", "not opt_in", "--deselect", "test_case.py::test_node")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["1 tests left out by --splits/-k/--deselect (run by other shards or excluded by name)"])
+    assert "[node]" not in result.stdout.str()
+    assert "DESELECTED" not in result.stdout.str()
+
+
+def test_a_test_in_two_lanes_is_attributed_only_to_the_lane_that_makes_the_expression_false(run) -> None:
+    result = run("import pytest\n\n@pytest.mark.opt_in\n@pytest.mark.node\ndef test_both():\n    pass\n\ndef test_x():\n    pass\n", "-m", "not opt_in")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*left out of this run by lane (1 entries)*", "[[]opt_in] NO CI job runs this lane*", "  DESELECTED test_case.py::test_both"])
+    assert "[node]" not in result.stdout.str()
+
+
+def test_a_module_the_run_never_asked_for_is_not_reported_as_not_imported(run, pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(test_hidden="import pytest\n\npytestmark = pytest.mark.integration\n\ndef test_z():\n    pass\n")
+    asked = run("def test_x():\n    pass\n", "-m", "not integration", "test_case.py")
+    assert asked.ret == 0
+    assert "NOT IMPORTED" not in asked.stdout.str()
+    named = run("def test_x():\n    pass\n", "-m", "not integration", ".")
+    assert "NOT IMPORTED test_hidden.py" in named.stdout.str()

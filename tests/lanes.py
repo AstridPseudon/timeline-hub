@@ -175,13 +175,21 @@ class _SkipGuard:
 
     def __init__(self) -> None:
         self.declared: list[tuple[str, str, str]] = []
-        self.deselected: list[tuple[str, str]] = []  # (lane or "", test id)
+        self.deselected: list[tuple[tuple[str, ...], str]] = []  # (lanes that made -m false, test id)
+        self.unmarked = 0  # tests with no lane mark that -m is false for
+        self.elsewhere = 0  # tests -m would select, removed by pytest-split, -k or --deselect
         self.ignored: dict[str, str] = {}  # module path -> lane that hid it
         self.expression = ""
 
     def pytest_deselected(self, items):
         for item in items:
-            self.deselected.append((_deselecting_lane(item, self.expression), item.nodeid))
+            held = _deselecting_lanes(item, self.expression)
+            if held is None:
+                self.elsewhere += 1
+            elif held:
+                self.deselected.append((tuple(held), item.nodeid))
+            else:
+                self.unmarked += 1
 
     def _judge(self, report, where: str) -> None:
         if hasattr(report, "wasxfail"):
@@ -243,18 +251,16 @@ class _SkipGuard:
     def _report_left_out(self, terminalreporter) -> None:
         """Name every test the run's ``-m`` expression deselected and every module it did not import, by lane."""
         by_lane: dict[str, tuple[list[str], list[str]]] = {}
-        other = 0
-        for lane, nodeid in self.deselected:
-            if lane:
+        for lane_names, nodeid in self.deselected:
+            for lane in lane_names:
                 by_lane.setdefault(lane, ([], []))[0].append(nodeid)
-            else:
-                other += 1
         for path, lane in self.ignored.items():
             by_lane.setdefault(lane, ([], []))[1].append(path)
-        if not by_lane and not other:
+        if not by_lane and not self.unmarked and not self.elsewhere:
             return
         total = sum(len(t) + len(m) for t, m in by_lane.values())
-        terminalreporter.write_sep("-", f"left out of this run by lane ({total} entries)")
+        if by_lane:
+            terminalreporter.write_sep("-", f"left out of this run by lane ({total} entries)")
         for lane in sorted(by_lane):
             tests, modules = by_lane[lane]
             terminalreporter.write_line(f"[{lane}] {lane_runner(lane)}")
@@ -262,8 +268,10 @@ class _SkipGuard:
                 terminalreporter.write_line(f"  DESELECTED {nodeid}")
             for path in sorted(modules):
                 terminalreporter.write_line(f"  NOT IMPORTED {path} (tests not listed; the whole module is in this lane)")
-        if other:
-            terminalreporter.write_line(f"{other} test(s) with no lane marker are not in this run's -m selection (counted, not listed; a run without that -m selection runs them)")
+        if self.unmarked:
+            terminalreporter.write_line(f"{self.unmarked} test(s) with no lane marker are not in this run's -m selection (counted, not listed; a run without that -m selection runs them)")
+        if self.elsewhere:
+            terminalreporter.write_line(f"{self.elsewhere} tests left out by --splits/-k/--deselect (run by other shards or excluded by name)")
 
 
 def _module_lanes(path: Path) -> set[str]:
@@ -334,15 +342,27 @@ def lane_runner(lane: str) -> str:
     return f"NO CI job runs this lane ({LANES[lane].kind}: run it by hand with -m {lane})"
 
 
-def _deselecting_lane(item, expression: str) -> str:
-    """The lane of ``item`` that made the expression leave it out, or "" when no lane did (-k, a plain marker)."""
+def _deselecting_lanes(item, expression: str) -> list[str] | None:
+    """The lanes that made the ``-m`` expression false for ``item``; ``[]`` when it is false but no lane mark is on the test;
+    ``None`` when the expression would select the test (or cannot be judged), so something else (pytest-split, -k) removed it.
+    """
     names = _lane_names(item)
-    if not names or not expression or not _expression_lanes_known(expression):
-        return names[0] if names and not expression else ""
-    for name in names:
-        if not _marker_expression_holds(expression, {name}):
-            return name
-    return names[0]
+    if not expression or not _expression_lanes_known(expression):
+        return None
+    if _marker_expression_holds(expression, set(names)):
+        return None
+    single = [name for name in names if not _marker_expression_holds(expression, {name})]
+    return single or names
+
+
+def _asked_for(path: Path, config) -> bool:
+    """True when the run was asked to collect ``path``: under ``config.args``, or ``testpaths`` when there are none."""
+    base = Path(config.invocation_params.dir)
+    roots = [(base / arg.split("::", 1)[0]).resolve() for arg in config.args]
+    if not roots:
+        roots = [(config.rootpath / entry).resolve() for entry in config.getini("testpaths")] or [base.resolve()]
+    resolved = path.resolve()
+    return any(resolved == root or root in resolved.parents for root in roots)
 
 
 def pytest_ignore_collect(collection_path, config):
@@ -361,7 +381,7 @@ def pytest_ignore_collect(collection_path, config):
     if not _module_is_hidden(expression, lanes, _marked_lanes(collection_path)):
         return None
     guard = config.pluginmanager.get_plugin("skip-guard")
-    if guard is not None:
+    if guard is not None and _asked_for(collection_path, config):
         guard.expression = expression
         try:
             shown = str(collection_path.relative_to(config.rootpath))
