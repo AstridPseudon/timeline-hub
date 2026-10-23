@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T19:00:47Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 2m -->
-# agent board, 2026-10-23T18:58:31Z
+<!-- agent | 2026-10-23T19:02:46Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 1m -->
+# agent board, 2026-10-23T19:01:27Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2-ops-health | stale dispatcher/false orphan diagnosis | Luna readonly; host lead | dispatcher heartbeat09:06 | merged | agt-U2-ops-health-0912 FINAL | Readonly diagnosis+lead0943 confirms hung pip09:07-09:42; one PID terminated; FIFO resumed, no hostrestart. False sandbox orphan diagnosis confirmed; no productchange | ops-only |
@@ -118,7 +118,7 @@
 
 | R2-parent-media | parent-media 14-failure diagnosis | Luna readonly | retained A4 log | merged | agt-R2-parent-media-diagnosis-1740 FINAL | Source/log supports six registry guards and eight nested-derived-range Agent seams; detached MediaRealm, no live Runtime attribution/per-case original imports. Actual requests lost; source reconstruction labeled. No failing body rerun | evidence only |
 | R2-registry-reload | sequential registry landing guards | Sol; Luna independent/integrated PASS | own22f mergedacd | merged | agt-R2-registry-integrated-1805 FINAL PASS | Actualacd EXACTreviewed22ftree738a:6original+41newPASS/Runtime2a9e/exactorigins/vendor/artifact/diff; 1912/2149 exacttreereuse. Pure/detachedscope, no broadernested/publicclaim | 22f1cb169;acd93e711 |
-| R2-nested-derived | nested/native partition + legal ABA | HARD Sol; independent Luna | final255 source | review | agt-R2-ABA-final-review-1852 LIVE; agt-R2-core-join-1852 LIVE | Author129 retained +19 new +3 public negatives PASS; old first-attempt15+7 failures disclosed. Independent final full22/current core union pending; source-only/no public Runtime claim | 255751f40 HELD |
+| R2-nested-derived | nested/native partition + legal ABA | HARD Sol; independent Luna | final255 source | review | agt-R2-ABA-final-review-1852 FINALPASS; agt-R2-core-join-1852 LIVE | Author129 retained +19 new +3 public negatives PASS; old first-attempt15+7 failures disclosed. Independent final22+129PASS/2149Ruff1912type/tools; coreunion pending; source-only/no public Runtime claim | 255751f40 HELD |
 
 | G5-restore-draft | exact current-pair reader after restore | Sol; independent/integrated Luna PASS | independent1815 | merged | agt-G2-reader-integrated-1823 FINALPASS | Actual787 exactreviewed75f:16new+6controls PASS/exact2a9e/authentic2915/origins/guard+sourcepreservation/tools. OriginallostG5dynamicfailure UNQUALIFIED, no fourbodyrerun | 75fde1b96;78738040d |
 
@@ -129,9 +129,9 @@
 
 
 Resolved: R1immutable440 actualRuntime3 proof1818 PASS; currentreader787 integrated22PASS; A4track9/transcript7 integratedPASS; registryacd original6+41PASS; R1privatebac16PASS and Runtime original67ba9PASS. D17joined323/P4threeHTTPlegs/G4/R5 scopedDONE. D14/D23/H9 original tests unchanged/unskipped/visible; sole full10679 FAIL retained.
-Blockers: Agent — independent ABA final1852 and current8-path core join1852 LIVE. Rootnarrowd146 independentPASS needs cumulative inverse metadata; core source170 expected targets to verify actualcollection. G5docs003013 independent1852 FINALPASS; exactdraftjoin1902 +ONE originalSDKFOUR QUEUED on meaningful8-path source. No unchanged failed body rerun.
+Blockers: Agent — independent ABA final1852 FINALPASS22+129/scopedquality+ratchets/tools; current8-path core join1852 LIVE. Rootnarrowd146 independentPASS needs cumulative inverse metadata; core source170 expected targets to verify actualcollection. G5docs003013 independent1852 FINALPASS; exactdraftjoin1902 +ONE originalSDKFOUR QUEUED on meaningful8-path source. No unchanged failed body rerun.
 Blockers: Proof/App/Farm — P1 NO-GO; A4/G5 remain gated:P1. Runtime board2a9e unchanged and ready. Proof current18:54 board supersedes stale Farmrefusal dependency: corrected sanctioned Farm route authorized18:27, new P3bench SUCCESS but snapshot/privategraph guardsRED; Proof1845 owns harness correction, no Agent duplicate or permission workaround. App exclusively owns changed originalP1 run on selected787/2a9 and2107 source; testID pending. Historical refusal paths remainSTOPPED.
 Blockers: App — all old dormant behaviour tests/implementations KEEP. Correctedrawmap1837/independent1842 sentApp1850; Python track9/transcript7 are genericdoc.patch witnesses, no wholeA4 mountedparity/retirement claim.
 Integration: actual78738040d; reviewedf078/440 immutableinitialinput, 26f/14fc transcript witness, 75f/787 exactpairreader. Normal34e/d106/819acf unchanged. Core source255/rootd146 held outside integration pending independent+targetedPASS. G5draft c59+003013 mergegatedP1.
-Environment: ~11GB free below15GB cleanup target/above8GB heavy-start floor. Authorized sweep3 andcompact inprogress18:58; inspect actual result. Deniedimmutablebenches/dirtyG2 protected, no retry/chmod/manualprovision/daemon.
+Environment: ~11GB free below15GB cleanup target/above8GB heavy-start floor. Authorized sweep3 COMPLETE24staledirs; compact COMPLETE1pack+6gzlogs; ~0.8GB relief (11,161MiB ->11,968MiB), no permission refusal. No eligiblecleanunreferencedfinishedv1worktree remains. Deniedimmutablebenches/dirtyG2 protected, no retry/chmod/manualprovision/daemon.
 Next ready: final1852 review +core target -> normal coremerge only on bothPASS/owncommitlog; G5join1902 -> joined23 +reportall +ONE originalFOUR with durable1848 observer. Every ready author/review already dispatched; pending dependencies explicitly owned.
