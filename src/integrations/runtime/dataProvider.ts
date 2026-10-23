@@ -804,7 +804,7 @@ export class RuntimeDataProvider implements DataProvider {
   private acceptedCommitResult(response: CommitAcceptedMutation, timelineId: string): TimelineCommitResult {
     const data = response.data;
     const receipt = response.receipt;
-    if ((data.status !== 'accepted' && data.status !== 'rebased')
+    if (!['accepted', 'rebased', 'merged'].includes(data.status)
       || receipt.project_id !== this.projectId || receipt.command_kind !== 'timeline.commit') {
       throw new TimelineSchemaIncompatibleError('Workspace Runtime returned an invalid timeline acceptance envelope');
     }

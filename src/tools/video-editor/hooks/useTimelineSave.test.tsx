@@ -16,6 +16,13 @@ import { TimelineVersionConflictError, type DataProvider } from '../data/DataPro
 import { loadTimelineDraft, saveTimelineDraft } from '../data/timelineDraftIndexedDb';
 import type { VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext';
 import type { TimelineEditability } from '../lib/timeline-editability';
+import { createCommitOutbox } from '../commands/commitOutbox.ts';
+import { ApiError } from '@/integrations/runtime/generated.ts';
+
+vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/integrations/runtime/generated-contract-metadata.ts')>(),
+  SCHEMA_DIGEST: 'sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c',
+}));
 
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
 vi.mock('@/tools/video-editor/compositions/TimelineRenderer.tsx', () => ({
@@ -71,7 +78,7 @@ interface SetupResult {
 function setup(
   saveTimelineImpl: DataProvider['saveTimeline'],
   timelineEditability?: TimelineEditability,
-  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis'] },
+  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis']; capabilities?: Partial<DataProvider>; strict?: boolean },
 ): SetupResult {
   const saveTimeline = vi.fn(saveTimelineImpl);
   const provider: DataProvider = {
@@ -81,6 +88,7 @@ function setup(
     saveTimeline,
     resolveAssetUrl: vi.fn(async (file: string) => file),
     ...(original ? { loadTimelineCommandBasis: original.loadBasis } : {}),
+    ...original?.capabilities,
   };
   const queries = {
     timelineQuery: { data: undefined, isLoading: false },
@@ -104,7 +112,7 @@ function setup(
   } as unknown as VideoEditorRuntimeContextValue;
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>
-      <VideoEditorRuntimeProvider value={runtime}>{children}</VideoEditorRuntimeProvider>
+      <VideoEditorRuntimeProvider value={runtime}>{original?.strict ? <React.StrictMode>{children}</React.StrictMode> : children}</VideoEditorRuntimeProvider>
     </QueryClientProvider>
   );
   const hook = renderHook(
@@ -135,12 +143,133 @@ describe('useTimelineSave — recovered draft durability', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     resetFakeIndexedDB();
+    vi.stubGlobal('indexedDB', createFakeIndexedDB());
   });
 
   afterEach(() => {
     vi.clearAllTimers();
     vi.useRealTimers();
   });
+
+  it.each(['accepted', 'merged', 'conflict', 'invalid', 'restart', 'dependent', 'late reply', 'strict'] as const)(
+    'the production caller uses it: mounted local document %s', async (outcome) => {
+      const locks = new Set<string>();
+      const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+      Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+        request: async (name: string, _options: unknown, work: (lock: object | null) => Promise<unknown>) => {
+          if (locks.has(name)) return work(null);
+          locks.add(name);
+          try { return await work({}); } finally { locks.delete(name); }
+        },
+      } });
+      const head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
+      const config = createDefaultTimelineConfig();
+      const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+        { timelineId: 'timeline-1' }).data.canonical_document;
+      document.parent_revision.payload = { config, clips: [], registry: { assets: {} }, occurrences: [], opaque: { keep: null } };
+      document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+      const data = await buildTimelineData(config, { assets: {} }, undefined, 1, undefined, head);
+      const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+      const edited = await buildTimelineData({ ...config, output: { ...config.output, file: 'authored.mp4' } }, data.registry,
+        undefined, 1, undefined, head);
+      const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' },
+        { timelineId: 'timeline-1' });
+      response.data.canonical_document = structuredClone(document);
+      response.data.canonical_document.parent_revision.revision_id = 'r1';
+      response.data.canonical_document.parent_revision.payload.config = JSON.parse(JSON.stringify(edited.config));
+      response.data.canonical_document.parent_revision.payload.opaque = { keep: null, agent: outcome === 'merged' };
+      if (outcome === 'merged') Object.assign(response.data, { status: 'merged' });
+      const accepted = { response, accepted: { revisionId: 'r1', publicationId: 'p1' },
+        canonicalDocument: response.data.canonical_document, graph: {}, receipt: response.receipt };
+      const send = vi.fn<DataProvider['commitTimeline'] & object>().mockResolvedValue(accepted);
+      let acknowledge!: () => void;
+      if (outcome === 'dependent' || outcome === 'late reply') {
+        send.mockImplementationOnce(() => new Promise((resolve) => { acknowledge = () => resolve(accepted); }));
+      }
+      if (outcome === 'conflict' || outcome === 'invalid') send.mockRejectedValueOnce(new ApiError(
+        outcome === 'conflict' ? 409 : 422, outcome, 'Retain original intent', '', { status: outcome, path: ['output'], hint: 'Read latest' }));
+      if (outcome === 'restart') send.mockRejectedValueOnce(new Error('Lost acknowledgement'));
+      const original = { data, loadBasis: vi.fn(async () => initial), strict: outcome === 'strict', capabilities: {
+        commitTimeline: send, getRecoverableIdentity: vi.fn(async () => ({ actorId: 'actor', realmId: 'realm' })),
+      } };
+      const harness = setup(async () => { throw new Error('Legacy save must not be called'); }, undefined, original);
+      try {
+        await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.ownerId).toBeTruthy());
+        await act(async () => { harness.hook.result.current.commitData(edited, { save: true }); });
+        if (outcome === 'dependent') {
+          const second = await buildTimelineData({ ...edited.config, output: { ...edited.config.output, file: 'dependent.mp4' } },
+            data.registry, undefined, 1, undefined, head);
+          await act(async () => { harness.hook.result.current.commitData(second, { save: true }); });
+          const next = structuredClone(accepted);
+          next.accepted = { revisionId: 'r2', publicationId: 'p2' };
+          next.canonicalDocument.parent_revision.revision_id = 'r2';
+          next.canonicalDocument.parent_revision.payload.config = JSON.parse(JSON.stringify(second.config));
+          send.mockResolvedValueOnce(next);
+        }
+        if (outcome === 'dependent' || outcome === 'late reply') {
+          await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+          await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+          if (outcome === 'late reply') {
+            const visible = harness.hook.result.current.dataRef.current;
+            harness.hook.unmount();
+            await vi.waitFor(() => expect(locks.size).toBe(0));
+            await act(async () => { acknowledge(); await Promise.resolve(); });
+            expect(harness.hook.result.current.dataRef.current).toBe(visible);
+            const [durable] = await createCommitOutbox().list({ realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' });
+            expect(durable.pending?.request.key).toBe(send.mock.calls[0][1]);
+            expect(durable.accepted).toBeUndefined();
+            return;
+          }
+          await act(async () => { acknowledge(); await Promise.resolve(); });
+        }
+        const flushing = act(async () => {
+          if (outcome === 'conflict' || outcome === 'invalid' || outcome === 'restart') {
+            await expect(harness.hook.result.current.flushPendingSave()).rejects.toThrow();
+          } else await harness.hook.result.current.flushPendingSave();
+        });
+        await flushing;
+        const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' };
+        const [stored] = await createCommitOutbox().list(scope);
+        expect(harness.saveTimeline).not.toHaveBeenCalled();
+        expect(send.mock.calls[0][0]).toMatchObject({ base_revision_id: 'r0', base_publication_id: 'p0',
+          label: 'Edit timeline', merge: 'atomic', dry_run: false,
+          commands: [{ op: 'doc.patch', args: { changes: [{ op: 'set', ref: 'parent', path: ['config', 'output', 'file'],
+            before: { state: 'present', value: config.output.file }, value: 'authored.mp4' }] } }],
+          steps: [{ command_ordinals: [0], intent: 'Save local editor changes' }] });
+        if (outcome === 'conflict' || outcome === 'invalid') {
+          expect(stored.intents).toHaveLength(1);
+          expect(harness.hook.result.current.dataRef.current?.config.output.file).toBe(config.output.file);
+          expect(harness.hook.result.current.localSaveState?.status).toBe('conflict');
+        } else if (outcome === 'restart') {
+          const exact = structuredClone(send.mock.calls[0]);
+          const pending = structuredClone(stored.pending?.request);
+          harness.hook.unmount();
+          await vi.waitFor(() => expect(locks.size).toBe(0));
+          const recovered = setup(async () => { throw new Error('Legacy save must not be called'); }, undefined, original);
+          try {
+            await vi.waitFor(() => expect(recovered.hook.result.current.localSaveState?.status).toBe('saved'));
+            expect(send.mock.calls[1]).toEqual(exact);
+            expect(JSON.stringify(send.mock.calls[1][0])).toBe(pending?.body);
+            expect(recovered.hook.result.current.dataRef.current?.head?.headRevisionId).toBe('r1');
+          } finally { recovered.hook.unmount(); }
+        } else {
+          expect(stored.intents).toHaveLength(0);
+          expect(stored.accepted?.value).toMatchObject({ canonicalDocument: outcome === 'dependent'
+            ? { parent_revision: { revision_id: 'r2' } } : accepted.canonicalDocument });
+          expect(harness.hook.result.current.dataRef.current?.head?.headRevisionId).toBe(outcome === 'dependent' ? 'r2' : 'r1');
+          expect(harness.hook.result.current.dataRef.current?.config.output.file).toBe(outcome === 'dependent' ? 'dependent.mp4' : 'authored.mp4');
+          if (outcome === 'dependent') {
+            expect(send.mock.calls[1][0]).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1',
+              commands: [{ args: { changes: [{ before: { state: 'present', value: 'authored.mp4' }, value: 'dependent.mp4' }] } }] });
+          }
+        }
+      } finally {
+        harness.hook.unmount();
+        await vi.waitFor(() => expect(locks.size).toBe(0));
+        if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+        else Reflect.deleteProperty(navigator, 'locks');
+      }
+    });
 
   it.each(['original', 'head moved', 'edited during read'])('stages the original verified closure in the real mounted hook (%s)', async (kind) => {
     const head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };

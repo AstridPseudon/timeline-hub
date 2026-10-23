@@ -18,11 +18,13 @@ import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/i
 import { usePollSync, type UsePollSyncQueries } from '@/tools/video-editor/hooks/usePollSync.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
-import { isDataProviderPersistenceEnabled, type DataProvider, type TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
+import { isDataProviderPersistenceEnabled, TimelineVersionConflictError, type DataProvider, type TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
 import type { TimelineDraftRecord } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { canonicalJsonStringify, parseTimelineBundle, type TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
-import { readTimelineOriginalSaveBasis, type TimelineOriginalSaveBasis } from './timelineLocalSaveHandoff.ts';
+import { createTimelineLocalSaveHandoff, readTimelineOriginalSaveBasis, type TimelineLocalSaveHandoff, type TimelineOriginalSaveBasis, type TimelineSaveSource } from './timelineLocalSaveHandoff.ts';
+import { createLocalSaveSession, type LocalSaveSession, type LocalSaveState } from '../commands/localSaveSession.ts';
+import { toOutboxJson } from '../commands/commitOutbox.ts';
 export { shouldAcceptPolledData } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 export type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 
@@ -72,36 +74,141 @@ export function useTimelineSave(
   const [originalLocalSaveBasis, setOriginalLocalSaveBasis] = useState<
     { status: 'ready'; value: TimelineOriginalSaveBasis } | { status: 'unavailable'; reason: string } | { status: 'loading' } | null
   >(null);
+  const [localSaveState, setLocalSaveState] = useState<LocalSaveState | null>(null);
+  const localOwner = useMemo(() => ({ provider, timelineId, closed: false, started: false, generation: 0,
+    headKey: '', recovered: false,
+    ready: undefined as Promise<TimelineLocalSaveHandoff> | undefined,
+    session: undefined as LocalSaveSession | undefined }), [provider, timelineId]);
+  const usesLocalDocumentSave = Boolean(provider.loadTimelineCommandBasis && provider.commitTimeline && provider.getRecoverableIdentity);
+  // Stable from the first render: a gesture during assembly cannot fall through
+  // to the old snapshot writer while the verified original is being loaded.
+  const localDocumentSave = useMemo<TimelineLocalSaveHandoff | undefined>(() => usesLocalDocumentSave ? {
+    async capture(source) {
+      const original = structuredClone(source);
+      if (localOwner.closed || !localOwner.ready) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
+      const handoff = await localOwner.ready;
+      if (localOwner.closed) throw new TimelineVersionConflictError('Local save session was replaced; draft retained');
+      await handoff.capture(original);
+    },
+    async flush() {
+      if (localOwner.closed || !localOwner.ready) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
+      const handoff = await localOwner.ready;
+      if (localOwner.closed) throw new TimelineVersionConflictError('Local save session was replaced; draft retained');
+      return handoff.flush();
+    },
+  } : undefined, [localOwner, usesLocalDocumentSave]);
+  useEffect(() => {
+    localOwner.closed = false;
+    setLocalSaveState(null);
+    return () => {
+      localOwner.closed = true;
+      localOwner.generation++;
+      localOwner.started = false;
+      localOwner.ready = undefined;
+      void localOwner.session?.dispose().catch(() => {});
+    };
+  }, [localOwner]);
+  const { dataRef: localDataRef, editSeqRef: localEditSeqRef, commitData: adoptCanonicalData } = commit;
   const originalHeadKey = canonicalJsonStringify(commit.data?.head ?? null);
   useEffect(() => {
-    const original = commit.dataRef.current;
+    let previousDisposal: Promise<void> | undefined;
+    if (localOwner.started) {
+      if (localOwner.headKey === originalHeadKey || localOwner.session?.getState().status !== 'saved'
+        || localEditSeqRef.current !== savedSeqRef.current) return;
+      // A clean poll/reload establishes a new original, after retiring the old
+      // display owner. Dirty chains retain their original physical bindings.
+      localOwner.generation++;
+      previousDisposal = localOwner.session.dispose();
+      localOwner.session = undefined;
+      localOwner.started = false;
+    }
+    const original = localDataRef.current;
     if (!provider.loadTimelineCommandBasis || !original?.head) {
       setOriginalLocalSaveBasis(null);
       return;
     }
     let cancelled = false;
-    const editSeq = commit.editSeqRef.current;
+    const editSeq = localEditSeqRef.current;
     if (editSeq !== savedSeqRef.current || original.editProjection?.kind === 'local') {
       setOriginalLocalSaveBasis({ status: 'unavailable', reason: 'Original verified read must precede local edits' });
       return;
     }
     setOriginalLocalSaveBasis({ status: 'loading' });
-    void readTimelineOriginalSaveBasis(provider, timelineId, {
+    const originalRead = readTimelineOriginalSaveBasis(provider, timelineId, {
       config: original.config, registry: original.registry, head: original.head,
       ...(original.sourceItemsBySchemaRef !== undefined ? { bundle: {
         schema_version: 1, itemsBySchemaRef: persistedTranscriptItems(original.sourceItemsBySchemaRef),
         ...(original.transcriptReferences ? { transcriptReferences: original.transcriptReferences } : {}),
       } } : {}),
-    }).then((value) => {
+    });
+    void originalRead.then((value) => {
       if (cancelled) return;
-      setOriginalLocalSaveBasis(commit.editSeqRef.current === editSeq
+      setOriginalLocalSaveBasis(localEditSeqRef.current === editSeq
         ? { status: 'ready', value }
         : { status: 'unavailable', reason: 'Local edits preceded completion of the original verified read' });
     }).catch((error: unknown) => {
       if (!cancelled) setOriginalLocalSaveBasis({ status: 'unavailable', reason: error instanceof Error ? error.message : String(error) });
     });
+    if (usesLocalDocumentSave) {
+      localOwner.started = true;
+      localOwner.headKey = originalHeadKey;
+      const generation = localOwner.generation;
+      const isCurrent = () => !localOwner.closed && generation === localOwner.generation;
+      localOwner.ready = (async () => {
+        const verified = await originalRead;
+        if (cancelled || localOwner.closed || localEditSeqRef.current !== editSeq) {
+          throw new TimelineVersionConflictError('Local edits preceded the original verified read; draft retained');
+        }
+        const identity = await provider.getRecoverableIdentity!();
+        if (cancelled || localOwner.closed) throw new Error('Local save session replaced during identity read');
+        await previousDisposal;
+        if (!isCurrent()) throw new Error('Local save session replaced during owner retirement');
+        let adoptedSource = structuredClone(verified.source);
+        const session = await createLocalSaveSession({
+          scope: { ...identity, projectId: verified.initial.canonicalDocument.project_id, timelineId },
+          initial: verified.initial, document: toOutboxJson(verified.initial.canonicalDocument),
+          send: (request, key) => provider.commitTimeline!(request, key),
+          loadLatest: () => provider.loadTimelineCommandBasis!(timelineId),
+          changed: (state) => { if (isCurrent()) setLocalSaveState(state); },
+          prepareDisplay: async (basis, draft) => {
+            const document = (draft ?? basis.canonicalDocument) as unknown as typeof basis.canonicalDocument;
+            const parent = document.parent_revision.payload;
+            const { bundle, ...config } = parent.config as unknown as TimelineConfig & { bundle?: TimelineBundleEnvelope };
+            const registry = parent.registry as unknown as AssetRegistry;
+            if (bundle) parseTimelineBundle(bundle);
+            const head: TimelineHeadRevision = { projectId: document.project_id, timelineId: document.timeline_id,
+              headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId };
+            // The numeric UI counter is local; it is never used as a physical pin.
+            const next = await buildTimelineData(config as TimelineConfig, registry, resolveAssetUrl,
+              configVersionRef.current, bundle?.itemsBySchemaRef, head, bundle?.transcriptReferences);
+            const source: TimelineSaveSource = { config: next.config, registry: next.registry, head,
+              ...(bundle === undefined ? {} : { bundle }) };
+            return { document: toOutboxJson(document), adopt() {
+              if (!isCurrent()) return;
+              adoptedSource = source;
+              localOwner.headKey = canonicalJsonStringify(head);
+              headRevisionRef.current = head;
+              adoptCanonicalData(next, { save: false, skipHistory: true, updateLastSavedSignature: true });
+            } };
+          },
+        });
+        if (!isCurrent()) { await session.dispose(); throw new Error('Local save session replaced during outbox claim'); }
+        localOwner.session = session;
+        const owners = session.getState().recoverableOwners;
+        if (owners.length === 1) { localOwner.recovered = true; await session.recover(owners[0]); }
+        else if (owners.length) throw new TimelineVersionConflictError('Multiple local save owners require recovery; drafts retained');
+        const initial = owners.length && session.getState().status === 'saved' ? await session.flush() : verified.initial;
+        return createTimelineLocalSaveHandoff({ initial, source: adoptedSource, session,
+          adopted: () => ({ source: adoptedSource,
+            receipt: { configVersion: configVersionRef.current, head: adoptedSource.head! } }) });
+      })();
+      void localOwner.ready.catch((error: unknown) => {
+        if (isCurrent()) setLocalSaveState({ status: 'error', recoverableOwners: [],
+          error: { message: error instanceof Error ? error.message : String(error) } });
+      });
+    }
     return () => { cancelled = true; };
-  }, [provider, timelineId, originalHeadKey, commit.dataRef, commit.editSeqRef]);
+  }, [provider, timelineId, originalHeadKey, localDataRef, localEditSeqRef, adoptCanonicalData, localOwner, resolveAssetUrl, usesLocalDocumentSave]);
   const persistence = useTimelinePersistence({
     store,
     provider,
@@ -122,6 +229,7 @@ export function useTimelineSave(
     lastSavedSignatureRef,
     interactionStateRef,
     onCanonicalReloadStart: invalidateRecoveryAction,
+    localDocumentSave,
   });
   const { clearDeferredRecoverySave, resumeDeferredRecoverySave } = persistence;
   const resumeDeferredRecoverySaveRef = useRef(resumeDeferredRecoverySave);
@@ -171,6 +279,17 @@ export function useTimelineSave(
     ?? fallbackCanonicalReloadInProgressRef;
 
   const hasTimelineData = commit.data !== null;
+  useEffect(() => {
+    if (!localOwner.recovered || localSaveState?.status !== 'saved') return;
+    // The outbox has replayed the durable request; the older recovery slot
+    // cannot become a second submission of the same gesture.
+    invalidateRecoveryAction();
+    setRecoveryDraft(null);
+    setRecoveredAsDirty(false);
+    recoveryPendingRef.current = false;
+    recoveryActiveRef.current = false;
+    resumeDeferredRecoverySave();
+  }, [invalidateRecoveryAction, localOwner, localSaveState?.status, resumeDeferredRecoverySave]);
   const trustedRecoveryHead = useCallback((record: TimelineDraftRecord): TimelineHeadRevision | undefined => {
     const scope = headRevisionRef.current ?? commit.dataRef.current?.head;
     if (!scope || record.timelineId !== timelineId
@@ -198,6 +317,7 @@ export function useTimelineSave(
     const editSeqAtCheck = commit.editSeqRef.current;
     const actionGenerationAtCheck = recoveryActionGenerationRef.current;
     let cancelled = false;
+    let completed = false;
     // Best-effort: IndexedDB unavailable (private mode) or a corrupt store
     // simply means no recovery offer; never an unhandled rejection.
     void loadTimelineDraft(recoveryKey)
@@ -256,6 +376,7 @@ export function useTimelineSave(
       .catch(() => {
         // no recovery offer
       }).finally(() => {
+        completed = true;
         if (!cancelled && recoveryActionGenerationRef.current === actionGenerationAtCheck) {
           recoveryActiveRef.current = recoveryPendingRef.current;
           if (!recoveryActiveRef.current) resumeDeferredRecoverySaveRef.current();
@@ -263,6 +384,9 @@ export function useTimelineSave(
       });
     return () => {
       cancelled = true;
+      // StrictMode can retire the first check before it resolves. Its
+      // replacement must perform the read that releases the recovery gate.
+      if (!completed && recoveryCheckedScopeRef.current === recoveryScope) recoveryCheckedScopeRef.current = null;
     };
   }, [commit.dataRef, commit.editSeqRef, hasTimelineData, recoveryKey, recoveryScope, timelineId, offerRecovery, provider, trustedRecoveryHead]);
   useEffect(() => {
@@ -412,14 +536,15 @@ export function useTimelineSave(
     ownsRegistryMutation, canRollbackRegistryMutation, rollbackRegistryMutation]);
 
   return {
-    // Staged original-read assembly; session/outbox activation awaits the official v2 transport.
+    localSaveState,
     originalLocalSaveBasis,
     data: commit.data,
     dataRef: commit.dataRef,
     isConflictExhausted: persistence.isConflictExhausted,
     selectedClipId: commit.selectedClipId,
     selectedTrackId: commit.selectedTrackId,
-    saveStatus: recoveredAsDirty && persistence.saveStatus === 'saved' ? 'dirty' : persistence.saveStatus,
+    saveStatus: localSaveState && ['blocked', 'conflict', 'error', 'recovery'].includes(localSaveState.status)
+      ? 'error' : recoveredAsDirty && persistence.saveStatus === 'saved' ? 'dirty' : persistence.saveStatus,
     schemaIncompatible: persistence.schemaIncompatible,
     flushPendingSave: persistence.flushPendingSave,
     registrationOwner,

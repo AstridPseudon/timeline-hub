@@ -1,6 +1,7 @@
 import type { CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
+import { SCHEMA_DIGEST } from '@/integrations/runtime/generated-contract-metadata.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import { documentPatchIntent } from './documentPatchIntent.ts';
 import {
@@ -139,18 +140,32 @@ export async function createLocalSaveSession(options: Options) {
           return;
         }
         const save = saveOf(record.intents[0].payload);
-        // No invented DTOs or snapshot fallback while U4p's generated join is pending.
-        if (!save.commands || save.commands.some((command) => command.op === 'doc.patch')) { publish('blocked', dtoGap); return; }
+        // Activate only with the normal official full-v2 generated contract.
+        const fullV2 = String(SCHEMA_DIGEST) === 'sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c';
+        if ((!save.commands && !(fullV2 && save.documentIntent))
+          || (!fullV2 && save.commands?.some((command) => command.op === 'doc.patch'))) { publish('blocked', dtoGap); return; }
         publish('saving');
         const acceptedId = record.accepted?.intentId;
         record = await box.dispatch((intent, head) => {
           const original = saveOf(intent.payload);
-          const commands = original.commands!;
+          const patch = original.documentIntent as Record<string, OutboxJson> | undefined;
+          const commands: CommitRequest['commands'] = original.commands ?? [{ schema_version: 1,
+            op: 'doc.patch', version: '1', select: null, args: { changes: patch!.changes } }];
+          // Only the base pair advances. Original operands, reads, step IDs and
+          // allocated entity IDs come directly from the persisted intent.
+          const metadata = patch ? { steps: [{ ...patch.step as Record<string, OutboxJson>,
+            command_ordinals: [0], patch: patch.changes }],
+            merge: patch.merge ?? (patch.reads === undefined ? 'atomic' : 'fields'),
+            ...(patch.reads === undefined ? {} : { reads: patch.reads }) }
+            : { steps: [{ id: intent.id, label: original.label, intent: original.label, tags: [],
+              command_ordinals: commands.map((_, index) => index), patch: [] }], merge: 'fields' };
+          const request: CommitRequest = { api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
+            base_revision_id: head.revisionId, base_publication_id: head.publicationId,
+            commands, label: original.label, dry_run: false, source: { via: 'app' } };
+          if (fullV2) Object.assign(request, metadata);
           return { method: 'POST',
             path: `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`,
-            body: toOutboxJson({ api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
-              base_revision_id: head.revisionId, base_publication_id: head.publicationId,
-              commands, label: original.label, source: { via: 'app' } } satisfies CommitRequest) };
+            body: toOutboxJson(request) };
         }, async (request) => {
           if (closed) return { kind: 'retry', error: { message: 'Editor closed; exact request retained' } };
           try {
