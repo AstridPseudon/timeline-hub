@@ -33,7 +33,7 @@ import {
   hardDurationMs,
   updateCanonicalShotTimeline,
 } from '@/tools/video-editor/data/shotCompositionEditor.ts';
-import { createLocalSaveSession, type LocalSaveSession } from '@/tools/video-editor/commands/localSaveSession.ts';
+import { createLocalSaveSession, type LocalSave, type LocalSaveSession } from '@/tools/video-editor/commands/localSaveSession.ts';
 import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
 import { toOutboxJson, type OutboxJson } from '@/tools/video-editor/commands/commitOutbox.ts';
 import type {
@@ -268,20 +268,6 @@ type ShotTimelineDataProvider = DataProvider & {
 type PopupLocalSaveProvider = Pick<DataProvider,
   'loadTimelineCommandBasis' | 'getRecoverableIdentity' | 'commitTimeline'>;
 
-const POPUP_TIMELINE_FIELDS = new Set([
-  'id', 'at', 'track', 'clipType', 'asset', 'from', 'to', 'speed', 'hold', 'volume',
-  'x', 'y', 'width', 'height', 'cropTop', 'cropBottom', 'cropLeft', 'cropRight',
-  'opacity', 'text', 'entrance', 'exit', 'continuous', 'transition', 'elementRef',
-  'effects', 'params', 'pool_id', 'clip_order', 'source_uuid', 'generation', 'app',
-  'label', 'keyframes',
-  // Runtime's older child transport spelling is replaced by the editor form.
-  'at_ms', 'duration_ms', 'asset_id', 'clip_type', 'active', 'disabled', 'hidden', 'deleted',
-  'mute', 'muted',
-]);
-const POPUP_TRACK_FIELDS = new Set([
-  'id', 'kind', 'label', 'role', 'scale', 'fit', 'opacity', 'volume', 'muted', 'blendMode', 'app',
-]);
-
 function object(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -290,6 +276,24 @@ function object(value: unknown): Record<string, unknown> | null {
 
 function sameJson(left: unknown, right: unknown): boolean {
   return stableStringify(left) === stableStringify(right);
+}
+
+function mergeAuthoredValue(raw: unknown, authored: unknown): unknown {
+  if (authored === null || authored === undefined || Array.isArray(authored)
+    || typeof authored !== 'object') return authored;
+  const rawObject = object(raw);
+  const result: Record<string, unknown> = rawObject ? structuredClone(rawObject) : {};
+  for (const [key, value] of Object.entries(authored)) {
+    result[key] = mergeAuthoredValue(rawObject?.[key], value);
+  }
+  return result;
+}
+
+function registryValue(document: CanonicalDocument, timeline: Record<string, unknown>): unknown {
+  if (Object.prototype.hasOwnProperty.call(timeline, 'registry')) return timeline.registry;
+  const parent = object(document.parent_revision.payload);
+  if (parent && Object.prototype.hasOwnProperty.call(parent, 'registry')) return parent.registry;
+  return object(parent?.config)?.registry;
 }
 
 function mergeAuthoredRows(
@@ -302,35 +306,27 @@ function mergeAuthoredRows(
   }
   const rawRows = new Map(raw.map((value) => [object(value)?.id, object(value)]));
   const authoredRows = authored.map((value) => object(value));
-  if (authoredRows.some((value) => !value || typeof value.id !== 'string')
-    || rawRows.size !== raw.length
-    || authoredRows.length !== raw.length
-    || authoredRows.some((value, index) => value?.id !== object(raw[index])?.id)) {
-    throw new Error(`Popup ${key} add, remove, or reorder requires the later A3 writer seam`);
+  if (authoredRows.some((value) => !value || typeof value.id !== 'string')) {
+    throw new Error(`Popup ${key} rows require stable authored IDs`);
   }
-  const fields = key === 'clips' ? POPUP_TIMELINE_FIELDS : POPUP_TRACK_FIELDS;
   return authoredRows.map((value) => {
     const authoredRow = value!;
     const rawRow = rawRows.get(authoredRow.id);
-    if (!rawRow) throw new Error(`Popup save lost the verified child ${key} identity`);
-    const opaque = Object.fromEntries(Object.entries(rawRow).filter(([field]) => !fields.has(field)));
-    const row = { ...opaque, ...authoredRow } as Record<string, unknown>;
-    const rawApp = object(rawRow.app);
-    const authoredHasApp = Object.prototype.hasOwnProperty.call(authoredRow, 'app');
-    if (rawApp && !authoredHasApp) row.app = rawRow.app;
-    else if (rawApp && object(authoredRow.app)) row.app = { ...rawApp, ...object(authoredRow.app) };
-    return toOutboxJson(row) as OutboxJson;
+    return toOutboxJson(rawRow
+      ? mergeAuthoredValue(rawRow, authoredRow)
+      : authoredRow) as OutboxJson;
   });
 }
 
 type PopupDocumentEdit = {
   document: CanonicalDocument;
-  root: { ref: `internal-revision:${string}`; revisionId: string; contentDigest: string };
+  roots: Array<{ ref: `parent` | `internal-revision:${string}`; revisionId: string; contentDigest: string }>;
 };
 
 function popupDocumentAfter(
   before: CanonicalDocument,
   nextConfig: TimelineConfig,
+  nextRegistry: unknown,
   composition: PreparedShotComposition,
   occurrenceId: string,
 ): PopupDocumentEdit {
@@ -361,14 +357,218 @@ function popupDocumentAfter(
     tracks: mergeAuthoredRows(rawTimeline.tracks, authoredTimeline.tracks, 'tracks'),
   };
   internal.payload = nextTimeline as typeof internal.payload;
+  const roots: PopupDocumentEdit['roots'] = [{
+    ref: `internal-revision:${internal.revision_id}`,
+    revisionId: internal.revision_id,
+    contentDigest: internal.content_digest,
+  }];
+  if (nextRegistry !== undefined && !sameJson(nextRegistry, registryValue(before, rawTimeline))) {
+    const parentPayload = object(document.parent_revision.payload);
+    const childRegistry = object(rawTimeline.registry);
+    if (childRegistry) {
+      nextTimeline.registry = mergeAuthoredValue(childRegistry, nextRegistry);
+    } else if (parentPayload && Object.prototype.hasOwnProperty.call(parentPayload, 'registry')) {
+      parentPayload.registry = mergeAuthoredValue(parentPayload.registry, nextRegistry);
+      const config = object(parentPayload.config);
+      if (config && Object.prototype.hasOwnProperty.call(config, 'registry')) {
+        config.registry = structuredClone(parentPayload.registry);
+      }
+      roots.push({ ref: 'parent', revisionId: document.parent_revision.revision_id,
+        contentDigest: document.parent_revision.content_digest });
+    } else {
+      const config = object(parentPayload?.config);
+      if (!config || !Object.prototype.hasOwnProperty.call(config, 'registry')) {
+        throw new Error('Popup asset registry changes lack a verified registry root');
+      }
+      config.registry = mergeAuthoredValue(config.registry, nextRegistry);
+      roots.push({ ref: 'parent', revisionId: document.parent_revision.revision_id,
+        contentDigest: document.parent_revision.content_digest });
+    }
+  }
   return {
     document,
-    root: {
-      ref: `internal-revision:${internal.revision_id}`,
-      revisionId: internal.revision_id,
-      contentDigest: internal.content_digest,
-    },
+    roots,
   };
+}
+
+type PopupPatchChange = Record<string, unknown>;
+
+function tagged(value: unknown, present: boolean): PopupPatchChange {
+  return present ? { state: 'present', value: toOutboxJson(value) } : { state: 'absent' };
+}
+
+function own(value: Record<string, unknown> | null, key: string): boolean {
+  return value !== null && Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function collectionRows(value: unknown, path: string[]): Map<string, Record<string, unknown>> {
+  if (!Array.isArray(value)) throw new Error(`Popup patch requires an identified collection at ${path.join('/')}`);
+  const rows = new Map<string, Record<string, unknown>>();
+  for (const item of value) {
+    const row = object(item);
+    if (!row || typeof row.id !== 'string' || rows.has(row.id)) {
+      throw new Error(`Popup patch requires unique row IDs at ${path.join('/')}`);
+    }
+    rows.set(row.id, row);
+  }
+  return rows;
+}
+
+function appendPopupDiff(
+  ref: string,
+  oldValue: unknown,
+  nextValue: unknown,
+  oldPresent: boolean,
+  nextPresent: boolean,
+  path: string[],
+  changes: PopupPatchChange[],
+  created: string[],
+  owner: string,
+  skipRegistryMirror = false,
+): void {
+  if (oldPresent && nextPresent && sameJson(oldValue, nextValue)) return;
+  if (skipRegistryMirror && path[0] === 'config' && path[1] === 'registry') return;
+  const identityCollection = (path.length === 1 && (path[0] === 'clips' || path[0] === 'tracks'));
+  if (identityCollection) {
+    const oldRows = collectionRows(oldValue, path);
+    const nextRows = collectionRows(nextValue, path);
+    let order = [...oldRows.keys()];
+    for (const [id, value] of oldRows) {
+      if (nextRows.has(id)) continue;
+      changes.push({ op: 'list.remove', ref, path, id, before: tagged(value, true), order_before: [...order] });
+      order = order.filter((candidate) => candidate !== id);
+    }
+    let anchor: string | null = null;
+    for (const [id, value] of nextRows) {
+      if (!oldRows.has(id)) {
+        changes.push({ op: 'list.insert', ref, path, id, before: tagged(undefined, false),
+          order_before: [...order], after_id: anchor, value: toOutboxJson(value) });
+        order.splice(anchor === null ? 0 : order.indexOf(anchor) + 1, 0, id);
+        created.push(`${owner}/${path[0] === 'clips' ? 'clip' : 'track'}:${id}`);
+      } else if (order[anchor === null ? 0 : order.indexOf(anchor) + 1] !== id) {
+        changes.push({ op: 'list.move', ref, path, id, before: tagged(oldRows.get(id), true),
+          order_before: [...order], after_id: anchor });
+        order = order.filter((candidate) => candidate !== id);
+        order.splice(anchor === null ? 0 : order.indexOf(anchor) + 1, 0, id);
+      }
+      anchor = id;
+    }
+    for (const [id, value] of nextRows) {
+      if (oldRows.has(id)) appendPopupDiff(ref, oldRows.get(id), value, true, true,
+        [...path, `id:${id}`], changes, created, owner, skipRegistryMirror);
+    }
+    return;
+  }
+  const oldObject = oldPresent ? object(oldValue) : null;
+  const nextObject = nextPresent ? object(nextValue) : null;
+  if (oldObject && nextObject) {
+    if (path.at(-2) === 'registry' && path.at(-1) === 'assets') {
+      for (const key of Object.keys(nextObject)) {
+        if (!Object.prototype.hasOwnProperty.call(oldObject, key)) {
+          created.push(`${owner}/asset:${key}`);
+        }
+      }
+    }
+    for (const key of new Set([...Object.keys(oldObject), ...Object.keys(nextObject)])) {
+      appendPopupDiff(ref, oldObject[key], nextObject[key], own(oldObject, key), own(nextObject, key),
+        [...path, key], changes, created, owner, skipRegistryMirror);
+    }
+    return;
+  }
+  if (path.length === 0) throw new Error(`Popup patch cannot replace the ${ref} payload root`);
+  changes.push(nextPresent
+    ? { op: 'set', ref, path, before: tagged(oldValue, oldPresent), value: toOutboxJson(nextValue) }
+    : { op: 'remove', ref, path, before: tagged(oldValue, oldPresent) });
+}
+
+function popupDocumentPatchIntent(
+  before: CanonicalDocument,
+  edit: PopupDocumentEdit,
+  occurrenceId: string,
+  label: string,
+  step: { id: string; label: string; intent: string; tags: string[] },
+): OutboxJson {
+  const beforeJson = toOutboxJson(before);
+  const afterJson = toOutboxJson(edit.document);
+  const beforeShell = structuredClone(before);
+  const afterShell = structuredClone(edit.document);
+  for (const image of [beforeShell.parent_revision, ...beforeShell.shot_revisions, ...beforeShell.internal_timeline_revisions]) image.payload = {};
+  for (const image of [afterShell.parent_revision, ...afterShell.shot_revisions, ...afterShell.internal_timeline_revisions]) image.payload = {};
+  if (!sameJson(beforeShell, afterShell)) throw new Error('Popup save changed a canonical wrapper or closure pin');
+  const beforeParent = object(before.parent_revision.payload);
+  const afterParent = object(edit.document.parent_revision.payload);
+  if (!beforeParent || !afterParent || !sameJson(beforeParent.occurrences, afterParent.occurrences)) {
+    throw new Error('Popup save changed provider-managed occurrence membership');
+  }
+  const changes: PopupPatchChange[] = [];
+  const created: string[] = [];
+  for (const root of edit.roots) {
+    const beforeImage = root.ref === 'parent'
+      ? before.parent_revision
+      : before.internal_timeline_revisions.find((candidate) => candidate.revision_id === root.revisionId);
+    const afterImage = root.ref === 'parent'
+      ? edit.document.parent_revision
+      : edit.document.internal_timeline_revisions.find((candidate) => candidate.revision_id === root.revisionId);
+    if (!beforeImage || !afterImage || beforeImage.content_digest !== root.contentDigest
+      || afterImage.content_digest !== root.contentDigest) {
+      throw new Error('Popup save lost its original physical root binding');
+    }
+    const logicalRef = root.ref === 'parent' ? 'parent' : `occurrence:${occurrenceId}`;
+    const parentPayload = root.ref === 'parent' ? object(beforeImage.payload) : null;
+    const skipRegistryMirror = Boolean(parentPayload
+      && own(parentPayload, 'registry')
+      && own(object(parentPayload.config), 'registry'));
+    appendPopupDiff(logicalRef, beforeImage.payload, afterImage.payload, true, true, [], changes, created,
+      logicalRef, skipRegistryMirror);
+  }
+  if (!changes.length) throw new Error('Popup save has no authored changes');
+  return toOutboxJson({ kind: 'document-patch-intent', basis: { head: {
+    revisionId: before.parent_revision.revision_id, publicationId: 'popup-session-basis',
+  } }, before: beforeJson, after: afterJson, roots: edit.roots, label, step, changes, created, merge: 'atomic' });
+}
+
+function hasPopupStructuralChange(before: CanonicalDocument, after: CanonicalDocument): boolean {
+  const mediaIdentity = (row: Record<string, unknown>): unknown => {
+    for (const key of ['asset', 'asset_id', 'source_uuid', 'media_id', 'object_id', 'file']) {
+      if (own(row, key)) return row[key];
+    }
+    return undefined;
+  };
+  const arraysChanged = (key: 'clips' | 'tracks') => before.internal_timeline_revisions.some((beforeInternal) => {
+    const afterInternal = after.internal_timeline_revisions.find((candidate) => (
+      candidate.revision_id === beforeInternal.revision_id));
+    const oldRows = Array.isArray(object(beforeInternal.payload)?.[key])
+      ? (object(beforeInternal.payload)![key] as Array<Record<string, unknown>>).map((row) => row.id)
+      : [];
+    const nextRows = Array.isArray(object(afterInternal?.payload)?.[key])
+      ? (object(afterInternal?.payload)![key] as Array<Record<string, unknown>>).map((row) => row.id)
+      : [];
+    return !sameJson(oldRows, nextRows);
+  });
+  const mediaChanged = before.internal_timeline_revisions.some((beforeInternal) => {
+    const afterInternal = after.internal_timeline_revisions.find((candidate) => (
+      candidate.revision_id === beforeInternal.revision_id));
+    const oldRows = object(beforeInternal.payload)?.clips;
+    const nextRows = object(afterInternal?.payload)?.clips;
+    if (!Array.isArray(oldRows) || !Array.isArray(nextRows)) return false;
+    const nextById = new Map(nextRows.map((row) => [object(row)?.id, object(row)]));
+    return oldRows.some((row) => {
+      const oldRow = object(row);
+      const nextRow = oldRow?.id === undefined ? undefined : nextById.get(oldRow.id);
+      return oldRow && nextRow && !sameJson(mediaIdentity(oldRow), mediaIdentity(nextRow));
+    });
+  });
+  const beforeParent = object(before.parent_revision.payload);
+  const afterParent = object(after.parent_revision.payload);
+  const registryChanged = before.internal_timeline_revisions.some((beforeInternal) => {
+    const afterInternal = after.internal_timeline_revisions.find((candidate) => (
+      candidate.revision_id === beforeInternal.revision_id));
+    return !sameJson(object(beforeInternal.payload)?.registry, object(afterInternal?.payload)?.registry);
+  });
+  return arraysChanged('clips') || arraysChanged('tracks')
+    || mediaChanged
+    || !sameJson(beforeParent?.registry, afterParent?.registry)
+    || registryChanged;
 }
 
 /** Ephemeral shot-local geometry projection; it never changes the CAS graph. */
@@ -658,24 +858,48 @@ export function createShotTimelineDataProvider(
       assertEditorHeadIsCurrent();
       if (localSaveEnabled) {
         if (!shotCompositionAdapter) throw new Error('Popup A2 save requires the validated canonical composition adapter');
-        if (nextRegistry && !sameJson(nextRegistry, registry)) {
-          throw new Error('Popup asset registry changes require the later A3 registerAsset seam');
-        }
         const session = await localSaveSessionPromise!;
         const before = session.getDocument() as unknown as CanonicalDocument;
-        const edit = popupDocumentAfter(before, nextConfig, rawComposition, occurrenceId);
-        await session.appendDocument({
+        const edit = popupDocumentAfter(
           before,
-          after: edit.document,
-          roots: [edit.root],
+          nextConfig,
+          nextRegistry && !sameJson(nextRegistry, registry) ? draftRegistry : undefined,
+          rawComposition,
+          occurrenceId,
+        );
+        const step = {
+          id: globalThis.crypto?.randomUUID?.() ?? `popup-edit-${Date.now()}`,
           label: 'Edit shot timeline',
-          step: {
-            id: globalThis.crypto?.randomUUID?.() ?? `popup-edit-${Date.now()}`,
+          intent: 'Save shot-local timeline changes',
+          tags: ['shot-popup'],
+        };
+        if (hasPopupStructuralChange(before, edit.document)) {
+          const intent = popupDocumentPatchIntent(before, edit, occurrenceId, 'Edit shot timeline', step);
+          const intentObject = intent as unknown as Record<string, unknown>;
+          const command = {
+            schema_version: 1 as const,
+            op: 'doc.patch',
+            version: '1',
+            select: null,
+            created: intentObject.created,
+            args: { changes: intentObject.changes },
+          };
+          await session.append({
+            before: toOutboxJson(before),
+            after: toOutboxJson(edit.document),
             label: 'Edit shot timeline',
-            intent: 'Save shot-local timeline changes',
-            tags: ['shot-popup'],
-          },
-        });
+            commands: [command] as never,
+            documentIntent: intent,
+          } as LocalSave & { documentIntent: OutboxJson });
+        } else {
+          await session.appendDocument({
+            before,
+            after: edit.document,
+            roots: edit.roots,
+            label: 'Edit shot timeline',
+            step,
+          });
+        }
         const basis = await session.flush();
         if (!basis.graph) throw new Error('Popup A2 save received no accepted canonical closure');
         const published = shotCompositionAdapter.prepare(basis.graph);
@@ -686,6 +910,18 @@ export function createShotTimelineDataProvider(
         composition = published;
         canonicalTimelineConfig = nextConfig;
         timelineConfig = nextConfig;
+        registry = {
+          assets: Object.fromEntries(Object.entries(draftRegistry.assets).map(([assetId, entry]) => {
+            const previous = registry.assets[assetId];
+            return [assetId, {
+              ...previous,
+              ...entry,
+              file: entry.file ?? entry.media_id ?? entry.url,
+              src: (entry as typeof entry & { src?: string }).src
+                ?? previous?.src ?? entry.url ?? entry.file ?? entry.media_id ?? '',
+            }];
+          })),
+        };
         pendingPublication = null;
         publishCallback?.(published, publicationGeneration, before.parent_revision.revision_id);
         configVersion += 1;
