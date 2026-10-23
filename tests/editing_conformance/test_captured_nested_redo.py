@@ -106,6 +106,7 @@ def test_captured_groups_keep_exact_native_source_slices(captured):
 
 @pytest.mark.parametrize('mutation', [
     'native-gap', 'native-overlap', 'effect-gap', 'effect-overlap', 'foreign-publication',
+    'missing-effect-range', 'missing-all-effect-ranges',
 ])
 def test_captured_nested_ranges_refuse_tampering_without_mutation(captured, mutation):
     entry = captured['before']['history']['items'][-1]
@@ -119,6 +120,11 @@ def test_captured_nested_ranges_refuse_tampering_without_mutation(captured, muta
         stages[1]['effect_range'][0] = 6
     elif mutation == 'effect-overlap':
         stages[1]['effect_range'][0] = 4
+    elif mutation == 'missing-effect-range':
+        del stages[1]['effect_range']
+    elif mutation == 'missing-all-effect-ranges':
+        for stage in stages:
+            del stage['effect_range']
     else:
         stages[1]['publication_id'] = 'foreign-publication'
     original = copy.deepcopy(captured)
@@ -159,3 +165,97 @@ def test_captured_nested_execution_refuses_tampering_without_mutation(captured, 
         execute(bundle, request['commands'], inverse_records=records,
                 commit_request=request, evaluated_head=captured['before']['history']['head'])
     assert (bundle, captured) == original
+
+
+@pytest.mark.parametrize('creation', [False, True], ids=['one-of-ten-notes', 'semantic-creation'])
+def test_native_only_accepted_inverse_redoes_without_effect_facts(creation):
+    from tests.editing_conformance.test_recipe_m1_commands import clip, inverse
+    from tests.editing_conformance.test_step_undo_v2 import (
+        accepted,
+        entry,
+        note,
+        original,
+        selected,
+    )
+
+    before = original()
+    calls = ([{'schema_version': 1, 'op': 'occurrence.create', 'version': '1', 'select': 'parent',
+               'args': {'occurrence_id': f'new-{i}', 'shot_id': f'shot-{i}', 'name': f'Shot {i}',
+                        'track': 'picture', 'on': 30 + i * 3, 'duration': 2}} for i in range(2)]
+             if creation else [note(f'n{i}', 'B') for i in range(10)])
+    plan = execute(before, calls)
+    target = entry(before, plan)
+    undone = inverse(plan.bundle, selected([target], {'p1': ['s1' if creation else 's3']}))
+    if creation:
+        assert 'shot-0' in undone.bundle['shots']
+        assert 'shot-1' not in undone.bundle['shots']
+    else:
+        assert clip(undone.bundle)['params'] == {f'n{i}': 'A' if i == 3 else 'B' for i in range(10)}
+    stages = [binding for binding in undone.records[0]['bindings'] if binding['key'] == 'inverse.stage']
+    assert stages and all('effect_range' not in binding['boundary'] for binding in stages)
+    records = accepted([entry(plan.bundle, undone, 'p2', 'p1')])
+    snapshot = copy.deepcopy((records.entries, undone.bundle))
+    groups = list(inverse_stages(records))
+    assert len(groups) == 1
+    assert all('_inverse_effects' not in command for command in groups[0][2])
+    assert inverse(undone.bundle, records).bundle == plan.bundle
+    assert (records.entries, undone.bundle) == snapshot
+
+
+@pytest.mark.parametrize('mutation', [
+    'wrong-step', 'wrong-ordinal', 'negative-ordinal', 'out-of-bounds-ordinal',
+    'reordered-ordinals', 'extra-ordinal',
+])
+def test_captured_nested_identity_must_match_original_accepted_source(captured, mutation):
+    history = captured['before']['history']['items']
+    entry = history[-1]
+    record = entry['records']['commands'][0]
+    stages = [binding['boundary'] for binding in record['bindings'] if binding['key'] == 'inverse.stage']
+    source = next(item for item in history if item['publication_id'] == stages[0]['publication_id'])
+    original_step = next(step for step in source['records']['steps'] if step['id'] == stages[0]['step_id'])
+    other_step = next(step for step in source['records']['steps'] if step['id'] != original_step['id'])
+    assert stages[0]['command_ordinals'] == original_step['command_ordinals']
+    if mutation == 'wrong-step':
+        stages[0]['step_id'] = other_step['id']
+    elif mutation == 'wrong-ordinal':
+        stages[0]['command_ordinals'] = other_step['command_ordinals'][:]
+    elif mutation == 'negative-ordinal':
+        stages[0]['command_ordinals'] = [-1]
+    elif mutation == 'out-of-bounds-ordinal':
+        stages[0]['command_ordinals'] = [len(source['records']['commands'])]
+    elif mutation == 'reordered-ordinals':
+        stages[0]['command_ordinals'] = list(reversed(range(len(source['records']['commands']))))
+    else:
+        stages[0]['command_ordinals'].append(len(source['records']['commands']))
+    snapshot = copy.deepcopy(captured)
+    try:
+        with pytest.raises(CommandError):
+            bundle, records = replay(captured)
+            original_bundle = copy.deepcopy(bundle)
+            list(inverse_stages(records))
+            assert bundle == original_bundle
+    finally:
+        assert captured == snapshot
+
+
+@pytest.mark.parametrize('mutation', ['missing-stage', 'extra-effect', 'extra-history'])
+def test_captured_nested_requires_complete_source_history(captured, mutation):
+    entry = captured['before']['history']['items'][-1]
+    record = entry['records']['commands'][0]
+    stages = [binding for binding in record['bindings'] if binding['key'] == 'inverse.stage']
+    if mutation == 'missing-stage':
+        record['bindings'].remove(stages[-1])
+    elif mutation == 'extra-effect':
+        entry['records']['steps'][0]['patch'].append(copy.deepcopy(entry['records']['steps'][0]['patch'][-1]))
+        stages[-1]['boundary']['effect_range'][1] += 1
+    else:
+        extra = copy.deepcopy(record)
+        extra['ordinal'] = 1
+        entry['records']['commands'].append(extra)
+    snapshot = copy.deepcopy(captured)
+    try:
+        with pytest.raises(CommandError):
+            _, records = replay(captured)
+            list(inverse_stages(records))
+    finally:
+        assert captured == snapshot

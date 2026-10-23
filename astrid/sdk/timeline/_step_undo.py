@@ -140,7 +140,12 @@ def inverse_stages(records):
                 nested = ([binding for binding in chosen[0].get('bindings', [])
                            if binding['key'] == 'inverse.stage'] if len(chosen) == 1
                           and chosen[0]['command']['op'] == 'timeline.inverse' else [])
-                if not nested:
+                native_only = (nested and all('effect_range' not in binding['boundary'] for binding in nested)
+                               and not any(binding['key'] == 'commit.effect'
+                                           for binding in chosen[0].get('bindings', [])))
+                if not nested or native_only:
+                    # Native-only history predates canonical effect partitions.
+                    # Keep its whole native reversal without inventing v2 facts.
                     yield entry.get('publication_id'), step['id'] if step is not None else None, chosen
                     continue
                 record = chosen[0]
@@ -148,6 +153,11 @@ def inverse_stages(records):
                 effect_cursor = 0
                 for binding in nested:
                     boundary = binding['boundary']
+                    if (step is None or any(not isinstance(boundary.get(key), list)
+                            or len(boundary[key]) != 2 or any(type(index) is not int for index in boundary[key])
+                            for key in ('native_write_range', 'effect_range'))):
+                        raise CommandError('nested inverse ranges differ from accepted history',
+                                           kind='history_unavailable')
                     start, end = boundary['native_write_range']
                     first, last = boundary['effect_range']
                     if (binding['ref'] != 'parent' or binding['policy'] != 'fixed'
