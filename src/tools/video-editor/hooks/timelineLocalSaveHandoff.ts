@@ -263,7 +263,6 @@ export function createTimelineLocalSaveHandoff(options: {
         document = structuredClone(after);
         return pending;
       } catch (error) {
-        console.warn('DEPENDENT DIAGNOSTIC', error);
         return Promise.reject(error instanceof TimelineVersionConflictError ? error
           : new TimelineVersionConflictError(`Local document save retained: ${error instanceof Error ? error.message : String(error)}`));
       }
