@@ -58,6 +58,26 @@ function assertV2Request(post: CommitPost, harness: DirectHarness, seed: ChainSe
   expect(post.key).toBeTruthy();
 }
 
+function assertSuccessfulReply(post: Pick<CommitPost, 'status' | 'response'>, label: string) {
+  const body = post.response && typeof post.response === 'object' ? post.response as Record<string, any> : {};
+  const details = body.details && typeof body.details === 'object' ? body.details as Record<string, any> : {};
+  const nestedError = body.error && typeof body.error === 'object' ? body.error as Record<string, any> : {};
+  const code = [body.code, details.code, nestedError.code].find((value) => typeof value === 'string');
+  const path = [details.path, body.path, nestedError.path].find((value) => Array.isArray(value));
+  const hint = [details.hint, body.hint, nestedError.hint].find((value) => typeof value === 'string');
+  const hasStructuredData = body.data !== null && typeof body.data === 'object' && !Array.isArray(body.data);
+  if (post.status !== 200 || !hasStructuredData) {
+    console.log(`[P1 ${label} structural reply diagnostic] ${JSON.stringify({
+      status: post.status ?? null,
+      ...(code === undefined ? {} : { code }),
+      ...(path === undefined ? {} : { path }),
+      ...(hint === undefined ? {} : { hint }),
+    })}`);
+  }
+  expect(post.status, `${label} expected HTTP 200`).toBe(200);
+  expect(hasStructuredData, `${label} expected structured success data`).toBe(true);
+}
+
 function assertAcceptedData(result: any, post: CommitPost, status: 'accepted' | 'merged') {
   expect(result).toMatchObject({ data: { status, canonical_document: expect.any(Object), document_digest: expect.any(String),
     commands: expect.any(Array), id_map: expect.any(Object), provider_version: expect.any(String),
@@ -374,7 +394,7 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   const rightId = inserted.id;
   expect(split.body).toMatchObject({ api_version: 1, project_id: harness.seed.projectId, timeline_id: seed.timelineId,
     base_revision_id: before.head.revision_id, base_publication_id: before.head.publication_id,
-    source: { via: 'app' }, merge: 'atomic', dry_run: false, label: expect.any(String), commands: [splitCommand] });
+    source: { via: 'app' }, merge: 'fields', dry_run: false, label: expect.any(String), commands: [splitCommand] });
   expect(split.body.steps[0]).toMatchObject({ command_ordinals: [0], patch: splitCommand.args.changes });
 
   // Release only after the dependent has been authored locally. The outbox must persist it
@@ -385,6 +405,7 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   const splitWire = await heldSplit!.fetch({ maxRetries: 0 });
   split.response = await splitWire.json(); split.status = splitWire.status();
   await forward(heldSplit!, splitWire, split.response);
+  assertSuccessfulReply(split, 'split');
   assertAcceptedData(split.response, split, 'accepted');
   expect(split.response.data.rebased_onto).toBeNull();
   const splitDocument = parentOf(split.response);
@@ -417,6 +438,7 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   const originalTrim = { raw: trim.raw, key: trim.key };
   const acceptedTrimResponse = await heldTrim!.fetch({ maxRetries: 0 });
   const acceptedTrim = await acceptedTrimResponse.json();
+  assertSuccessfulReply({ status: acceptedTrimResponse.status(), response: acceptedTrim }, 'merged trim');
   expect(acceptedTrimResponse.status()).toBe(200);
   assertAcceptedData(acceptedTrim, trim, 'merged');
   expect(acceptedTrim.data.rebased_onto).toEqual(pin(agent));
@@ -454,6 +476,7 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   expect(retryResponse.request().postData()).toBe(originalTrim.raw);
   expect(retryResponse.request().headers()['idempotency-key']).toBe(originalTrim.key);
   const retry = await retryResponse.json();
+  assertSuccessfulReply({ status: retryResponse.status(), response: retry }, 'trim retry');
   expect(retry).toEqual(acceptedTrim);
   expect(retry.data.status).toBe('merged');
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
@@ -476,6 +499,7 @@ test('P1 split -> trim new clip: a real Agent move refuses the stale trim and th
   await expect.poll(() => traffic.posts[0].response, CEILING).not.toBeUndefined();
   const split = traffic.posts[0];
   assertV2Request(split, harness, seed);
+  assertSuccessfulReply(split, 'split');
   const splitDocument = parentOf(split.response);
   const inserted = (split.body.commands[0] as any).args.changes.find((change: any) => change.op === 'list.insert');
   expect(inserted.value.id).toBe(inserted.id);
