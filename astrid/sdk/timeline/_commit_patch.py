@@ -292,6 +292,15 @@ class CommitPatch:
                     'command_ordinal': ordinal, 'phase': 'input'}
         self.boundaries[ordinal] = boundary
         self.closures[ordinal] = Closure(copy.deepcopy(ctx.state.bundle))
+        # Runtime authenticates the next input against the preceding command's observations.
+        if ordinal > step['command_ordinals'][0]:
+            previous = self.closures[ordinal - 1]
+            current = self.closures[ordinal]
+            for ref in sorted(previous.images.keys() & current.images.keys()):
+                if previous.images[ref]['content_digest'] != current.images[ref]['content_digest']:
+                    binding = current.binding(ref, ref, **boundary)
+                    binding.update(key='commit.input', policy='fixed', dependencies=[], path=[])
+                    ctx.record['bindings'].append(binding)
         if ordinal == 0:
             self.batch_dependencies = [self.capture(self.closures[ordinal], read, ctx,
                                        {**boundary, 'phase': 'batch-read'})
@@ -357,8 +366,13 @@ class CommitPatch:
         step = self.step(ordinal)
         if hasattr(ctx, 'inverse_stages'):
             self.inverse_sources[ordinal] = ctx.inverse_sources
-            self.inverse_stages[ordinal] = [(inverse_closure(before, ctx.inverse_sources),
-                inverse_closure(after, ctx.inverse_sources)) for before, after in ctx.inverse_stages]
+            stages = self.inverse_stages[ordinal] = []
+            # Equal historical bytes must not replace the authenticated input revision.
+            before = self.closures[ordinal]
+            for _, bundle in ctx.inverse_stages:
+                after = inverse_closure(bundle, ctx.inverse_sources)
+                stages.append((before, after))
+                before = after
         for binding in ctx.record['bindings']:
             if binding['key'] == 'inverse.stage':
                 continue
