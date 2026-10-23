@@ -14,9 +14,8 @@ import {
   boundedDiagnosticRead,
   DIAGNOSTIC_ARTIFACT_TIMEOUT_MS,
   DIAGNOSTIC_COLLECTION_TIMEOUT_MS,
+  DIAGNOSTIC_READ_TIMEOUT_MS,
   MOUNTED_DIAGNOSTIC_MAX_RECORDS,
-  MOUNTED_DIAGNOSTIC_SCOPE,
-  MOUNTED_DIAGNOSTIC_TYPE,
   mountedDiagnosticInitScript,
   withDiagnosticDeadline,
   writeDiagnosticArtifact,
@@ -97,8 +96,6 @@ test.beforeEach(async ({ page }, testInfo) => {
   const addInitScript = (page as Page & { addInitScript?: (script: { content: string }) => Promise<void> }).addInitScript;
   if (typeof addInitScript === 'function') {
     await addInitScript.call(page, { content: mountedDiagnosticInitScript({
-      scope: MOUNTED_DIAGNOSTIC_SCOPE,
-      type: MOUNTED_DIAGNOSTIC_TYPE,
       buffer,
       maxRecords: MOUNTED_DIAGNOSTIC_MAX_RECORDS,
     }) });
@@ -1201,7 +1198,9 @@ async function captureFailureContinuation(page: Page, testInfo: any) {
   const earlyTimelineId = trace?.timelineId ?? 'UNKNOWN';
   const earlyRightId = trace?.sourceWindow?.after.rightId ?? 'UNKNOWN';
 
-  // Persist the in-memory failure identity before touching IndexedDB or the DOM.
+  // Persist the in-memory failure identity and the already-bounded mounted seam
+  // before touching IndexedDB, the DOM, or any browser evaluation. Later reads
+  // remain strictly best effort.
   // The later collector is strictly best effort; this file is the durable minimum
   // when a page has closed or one of its reads never settles.
   await withDiagnosticDeadline(() => writeDiagnosticArtifact(testInfo, {
@@ -1224,6 +1223,38 @@ async function captureFailureContinuation(page: Page, testInfo: any) {
     unknowns: { mountedDataRef: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
     losses: { cappedConsole: true, mountedObservations: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
   }), false, DIAGNOSTIC_ARTIFACT_TIMEOUT_MS);
+
+  const earlyMountedObservations = await withDiagnosticDeadline(() => page.evaluate((_timelineId) => {
+    try {
+      const snapshot = (window as Window & { __timelineSaveDiagnosticsSnapshot?: () => unknown }).__timelineSaveDiagnosticsSnapshot;
+      return typeof snapshot === 'function' ? snapshot() : 'UNKNOWN';
+    } catch {
+      return 'UNKNOWN';
+    }
+  }, earlyTimelineId), 'UNKNOWN', DIAGNOSTIC_READ_TIMEOUT_MS);
+  if (earlyMountedObservations !== 'UNKNOWN') {
+    await withDiagnosticDeadline(() => writeDiagnosticArtifact(testInfo, {
+      schemaVersion: 1,
+      title: caseTitle,
+      status: testInfo.status,
+      expectedStatus: testInfo.expectedStatus,
+      capturedAt: new Date().toISOString(),
+      durationMs: testInfo.duration,
+      phase: 'afterEach_failure_early_return',
+      case: { title: caseTitle, expectedPostCount: 2, observedPostCount: trace?.wireHeads.length ?? 'UNKNOWN' },
+      tuple: { projectId: earlyProjectId, timelineId: earlyTimelineId, sourceId: 'UNKNOWN', rightId: earlyRightId },
+      available: {
+        wireHeads: trace ? artifactWireHeads(trace.wireHeads) : 'UNKNOWN',
+        requestProjections: trace?.requestProjections ?? 'UNKNOWN',
+        sourceWindow: trace?.sourceWindow ?? 'UNKNOWN',
+        mountedObservations: earlyMountedObservations,
+      },
+      mountedObservations: earlyMountedObservations,
+      captureData: 'UNKNOWN',
+      unknowns: { mountedDataRef: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+      losses: { cappedConsole: true, mountedObservations: false, callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+    }), false, DIAGNOSTIC_ARTIFACT_TIMEOUT_MS);
+  }
 
   const collectionDeadline = Date.now() + DIAGNOSTIC_COLLECTION_TIMEOUT_MS;
   const read = <T>(operation: () => T | PromiseLike<T>, fallback: T) => (

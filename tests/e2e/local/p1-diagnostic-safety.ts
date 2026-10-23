@@ -15,35 +15,29 @@ export const DIAGNOSTIC_ARTIFACT_TIMEOUT_MS = 500;
 export const DIAGNOSTIC_COLLECTION_TIMEOUT_MS = 1_000;
 
 export const MOUNTED_DIAGNOSTIC_EVENT = 'timeline:save-diagnostic';
-// The producer's final typed handoff has not published these literals yet. Keep
-// them in one place so the adapter can be aligned without changing the journey.
-export const MOUNTED_DIAGNOSTIC_SCOPE = 'timeline';
-export const MOUNTED_DIAGNOSTIC_TYPE = 'save-diagnostic';
 export const MOUNTED_DIAGNOSTIC_MAX_RECORDS = 32;
 
-const MOUNTED_DIAGNOSTIC_NUMERIC_KEYS = new Set([
-  'sequence', 'time', 'generation', 'from', 'to', 'at', 'hold', 'speed', 'intents', 'pendingCounts',
-]);
-const MOUNTED_DIAGNOSTIC_BOOLEAN_KEYS = new Set(['present']);
-const MOUNTED_DIAGNOSTIC_SCALAR_KEYS = new Set([
-  'version', 'scope', 'type', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'sessionState',
-  'status', 'start', 'resolve', 'reject', 'code', 'class', 'stage',
-]);
-const MOUNTED_DIAGNOSTIC_CONTAINER_KEYS = new Set([
-  'mounted', 'originalBasis', 'basis', 'mountedHead', 'originalHead', 'headPair', 'capture', 'scopedOwner',
-  'adoption', 'error', 'records', 'unknown',
-]);
-const MOUNTED_DIAGNOSTIC_ALLOWED_KEYS = new Set([
-  ...MOUNTED_DIAGNOSTIC_NUMERIC_KEYS,
-  ...MOUNTED_DIAGNOSTIC_BOOLEAN_KEYS,
-  ...MOUNTED_DIAGNOSTIC_SCALAR_KEYS,
-  ...MOUNTED_DIAGNOSTIC_CONTAINER_KEYS,
-]);
+export const MOUNTED_DIAGNOSTIC_PHASES = [
+  'schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed',
+  'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error',
+  'identity-read', 'session-created', 'session-recovered', 'session-changed', 'adoption-start',
+  'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error',
+] as const;
+
+const MOUNTED_DIAGNOSTIC_PHASE_SET = new Set<string>(MOUNTED_DIAGNOSTIC_PHASES);
+const MOUNTED_DIAGNOSTIC_FIELDS = [
+  'version', 'sequence', 'time', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'generation',
+  'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'mountedHead', 'originalHead',
+  'basisStatus', 'gestureKind', 'patch', 'mountedClip', 'sourceClip', 'gestureClip', 'originalClip', 'status',
+  'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass',
+] as const;
+const MOUNTED_DIAGNOSTIC_NUMERIC_FIELDS = ['from', 'to', 'at', 'hold', 'speed'] as const;
+const MOUNTED_DIAGNOSTIC_STATES = ['present', 'absent', 'null', 'UNKNOWN'] as const;
+const UNKNOWN = 'UNKNOWN' as const;
 
 export type MountedDiagnosticSnapshot = {
   status: 'observed' | 'UNKNOWN';
-  scope: string | 'UNKNOWN';
-  type: string | 'UNKNOWN';
+  buffer: string;
   records: unknown[];
   accepted: number;
   rejected: number;
@@ -63,50 +57,117 @@ function mountedOwnData(value: object, key: string): { present: boolean; value?:
   }
 }
 
-function mountedSafeText(value: unknown): string | null | 'UNKNOWN' {
-  return value === null ? null : typeof value === 'string' && value.length <= 200 ? redactDiagnosticText(value) : 'UNKNOWN';
+function mountedSafeId(value: unknown): string | null | 'UNKNOWN' {
+  if (value === null) return null;
+  if (typeof value !== 'string' || value.length < 1 || value.length > 160) return UNKNOWN;
+  if (!/^[a-zA-Z0-9_.:-]+$/.test(value) || /^[a-z][a-z\d+.-]*:\/\//i.test(value)) return UNKNOWN;
+  return value;
 }
 
-function mountedSafeField(key: string, value: unknown, depth: number): unknown {
-  if (depth > 4) return 'UNKNOWN';
-  if (MOUNTED_DIAGNOSTIC_NUMERIC_KEYS.has(key)) return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1_000_000_000 ? value : value === null ? null : 'UNKNOWN';
-  if (MOUNTED_DIAGNOSTIC_BOOLEAN_KEYS.has(key)) return typeof value === 'boolean' || value === null ? value : 'UNKNOWN';
-  if (MOUNTED_DIAGNOSTIC_SCALAR_KEYS.has(key)) return mountedSafeText(value);
-  if (!MOUNTED_DIAGNOSTIC_CONTAINER_KEYS.has(key) || !value || typeof value !== 'object') return 'UNKNOWN';
-  if (Array.isArray(value)) return value.slice(0, 8).map((item) => mountedSafeField(key, item, depth + 1));
+function mountedSafeScalar(value: unknown): string | null | 'UNKNOWN' {
+  return value === null ? null : typeof value === 'string' && value.length <= 200 ? redactDiagnosticText(value) : UNKNOWN;
+}
+
+function mountedSafeNumber(value: unknown, integer = false): number | 'UNKNOWN' {
+  return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1_000_000_000
+    && (!integer || Number.isInteger(value)) ? value : UNKNOWN;
+}
+
+function mountedSafeNonNegativeInteger(value: unknown, maximum = 1_000_000_000): number | 'UNKNOWN' {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= maximum ? value : UNKNOWN;
+}
+
+function mountedSafeBoolean(value: unknown): boolean | 'UNKNOWN' {
+  return typeof value === 'boolean' ? value : UNKNOWN;
+}
+
+function mountedErrorStage(value: unknown): string {
+  return value === 'capture' || value === 'basis-read' || value === 'owner-init' ? value : UNKNOWN;
+}
+
+function mountedErrorCode(value: unknown): string {
+  return value === 'operation-rejected' ? value : UNKNOWN;
+}
+
+function mountedHead(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return { revisionId: UNKNOWN, publicationId: UNKNOWN };
+  const source = value as object;
+  const revisionId = mountedOwnData(source, 'revisionId');
+  const publicationId = mountedOwnData(source, 'publicationId');
+  return {
+    revisionId: revisionId.present ? mountedSafeId(revisionId.value) : UNKNOWN,
+    publicationId: publicationId.present ? mountedSafeId(publicationId.value) : UNKNOWN,
+  };
+}
+
+function mountedNumberField(value: object, field: typeof MOUNTED_DIAGNOSTIC_NUMERIC_FIELDS[number]): { value: unknown; state: typeof MOUNTED_DIAGNOSTIC_STATES[number] } {
+  const raw = mountedOwnData(value, field);
+  const state = mountedOwnData(value, `${field}State`);
+  const explicitState = typeof state.value === 'string' && (MOUNTED_DIAGNOSTIC_STATES as readonly string[]).includes(state.value)
+    ? state.value as typeof MOUNTED_DIAGNOSTIC_STATES[number] : undefined;
+  if (explicitState === 'null') return { value: null, state: 'null' };
+  if (explicitState === 'absent') return { value: UNKNOWN, state: 'absent' };
+  if (explicitState === 'UNKNOWN') return { value: UNKNOWN, state: 'UNKNOWN' };
+  if (explicitState === 'present') {
+    const number = mountedSafeNumber(raw.value);
+    return number === UNKNOWN ? { value: UNKNOWN, state: 'UNKNOWN' } : { value: number, state: 'present' };
+  }
+  if (!raw.present) return { value: UNKNOWN, state: 'absent' };
+  if (raw.value === null) return { value: null, state: 'null' };
+  const number = mountedSafeNumber(raw.value);
+  return number === UNKNOWN ? { value: UNKNOWN, state: 'UNKNOWN' } : { value: number, state: 'present' };
+}
+
+function mountedNumericRecord(value: unknown): Record<string, unknown> {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value as object : null;
   const result: Record<string, unknown> = {};
-  for (const childKey of MOUNTED_DIAGNOSTIC_ALLOWED_KEYS) {
-    const child = mountedOwnData(value, childKey);
-    if (child.present) result[childKey] = mountedSafeField(childKey, child.value, depth + 1);
+  for (const field of MOUNTED_DIAGNOSTIC_NUMERIC_FIELDS) {
+    const projected = source ? mountedNumberField(source, field) : { value: UNKNOWN, state: 'UNKNOWN' as const };
+    result[field] = projected.value;
+    result[`${field}State`] = projected.state;
   }
   return result;
 }
 
-export function projectMountedDiagnosticDetail(
-  detail: unknown,
-  expectedScope = MOUNTED_DIAGNOSTIC_SCOPE,
-  expectedType = MOUNTED_DIAGNOSTIC_TYPE,
-): MountedDiagnosticProjection {
+function mountedRecordField(detail: object, key: typeof MOUNTED_DIAGNOSTIC_FIELDS[number]): unknown {
+  const field = mountedOwnData(detail, key);
+  if (key === 'version') return 1;
+  if (key === 'phase') return field.present && typeof field.value === 'string' && MOUNTED_DIAGNOSTIC_PHASE_SET.has(field.value) ? field.value : UNKNOWN;
+  if (key === 'projectId' || key === 'timelineId' || key === 'clipId') return field.present ? mountedSafeId(field.value) : UNKNOWN;
+  if (key === 'mountedHead' || key === 'originalHead') return mountedHead(field.present ? field.value : undefined);
+  if (key === 'patch' || key === 'mountedClip' || key === 'sourceClip' || key === 'gestureClip' || key === 'originalClip') {
+    return mountedNumericRecord(field.present ? field.value : undefined);
+  }
+  if (key === 'intentsPendingCount' || key === 'errorClass') return UNKNOWN;
+  if (key === 'sequence' || key === 'time' || key === 'generation' || key === 'ownerAlias' || key === 'recoverableOwnerCount' || key === 'intentsPendingCount') {
+    if (key === 'time') return mountedSafeNumber(field.present ? field.value : undefined);
+    if (key === 'recoverableOwnerCount') return mountedSafeNonNegativeInteger(field.present ? field.value : undefined, 10_000);
+    return mountedSafeNonNegativeInteger(field.present ? field.value : undefined);
+  }
+  if (key === 'sessionPresent' || key === 'closed' || key === 'current' || key === 'identityPresent' || key === 'scopeMatched' || key === 'ownerPresent') {
+    return mountedSafeBoolean(field.present ? field.value : undefined);
+  }
+  if (key === 'errorStage') return field.present ? mountedErrorStage(field.value) : UNKNOWN;
+  if (key === 'errorCode') return field.present ? mountedErrorCode(field.value) : UNKNOWN;
+  return field.present ? mountedSafeScalar(field.value) : UNKNOWN;
+}
+
+export function projectMountedDiagnosticDetail(detail: unknown): MountedDiagnosticProjection {
   if (!detail || typeof detail !== 'object' || Array.isArray(detail)) return { accepted: false };
   const version = mountedOwnData(detail, 'version');
-  const scope = mountedOwnData(detail, 'scope');
-  const type = mountedOwnData(detail, 'type');
-  if (version.value !== 1 || scope.value !== expectedScope || type.value !== expectedType) return { accepted: false };
-  const record: Record<string, unknown> = {};
-  for (const key of MOUNTED_DIAGNOSTIC_ALLOWED_KEYS) {
-    const field = mountedOwnData(detail, key);
-    if (field.present) record[key] = mountedSafeField(key, field.value, 0);
+  const phase = mountedOwnData(detail, 'phase');
+  if (version.value !== 1 || !phase.present || typeof phase.value !== 'string' || !MOUNTED_DIAGNOSTIC_PHASE_SET.has(phase.value)) {
+    return { accepted: false };
   }
-  record.version = 1;
-  record.scope = expectedScope;
-  record.type = expectedType;
+  const record: Record<string, unknown> = {};
+  for (const key of MOUNTED_DIAGNOSTIC_FIELDS) record[key] = mountedRecordField(detail, key);
   return { accepted: true, record };
 }
 
 /** Source for page.addInitScript; it intentionally has no imports or closures. */
-export function mountedDiagnosticInitScript(options: { scope: string; type: string; buffer: string; maxRecords: number }) {
-  const source = (config: { scope: string; type: string; buffer: string; maxRecords: number }) => {
-    const win = window as Window & Record<string, unknown>;
+export function mountedDiagnosticInitScript(options: { buffer: string; maxRecords: number }) {
+  const source = (config: { buffer: string; maxRecords: number }) => {
+    const win = window as unknown as Window & Record<string, unknown>;
     if (win.__timelineSaveDiagnosticsEnabled !== true) win.__timelineSaveDiagnosticsEnabled = true;
     const own = (value: object, key: string) => {
       try {
@@ -114,28 +175,65 @@ export function mountedDiagnosticInitScript(options: { scope: string; type: stri
         return descriptor && 'value' in descriptor ? { present: true, value: descriptor.value } : { present: false };
       } catch { return { present: false }; }
     };
-    const numeric = new Set(['sequence', 'time', 'generation', 'from', 'to', 'at', 'hold', 'speed', 'intents', 'pendingCounts']);
-    const booleans = new Set(['present']);
-    const scalars = new Set(['version', 'scope', 'type', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'sessionState', 'status', 'start', 'resolve', 'reject', 'code', 'class', 'stage']);
-    const containers = new Set(['mounted', 'originalBasis', 'basis', 'mountedHead', 'originalHead', 'headPair', 'capture', 'scopedOwner', 'adoption', 'adoption', 'error', 'records', 'unknown']);
-    const allowed = new Set([...numeric, ...booleans, ...scalars, ...containers]);
-    const safeText = (value: unknown) => value === null ? null : typeof value === 'string' && value.length <= 200 ? value : 'UNKNOWN';
-    const project = (key: string, value: unknown, depth: number): unknown => {
-      if (depth > 4) return 'UNKNOWN';
-      if (numeric.has(key)) return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1_000_000_000 ? value : value === null ? null : 'UNKNOWN';
-      if (booleans.has(key)) return typeof value === 'boolean' || value === null ? value : 'UNKNOWN';
-      if (scalars.has(key)) return safeText(value);
-      if (!containers.has(key) || !value || typeof value !== 'object') return 'UNKNOWN';
-      if (Array.isArray(value)) return value.slice(0, 8).map((item) => project(key, item, depth + 1));
+    const phases = new Set(['schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed', 'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error', 'identity-read', 'session-created', 'session-recovered', 'session-changed', 'adoption-start', 'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error']);
+    const numericFields = ['from', 'to', 'at', 'hold', 'speed'];
+    const states = new Set(['present', 'absent', 'null', 'UNKNOWN']);
+    const fields = ['version', 'sequence', 'time', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'generation', 'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'mountedHead', 'originalHead', 'basisStatus', 'gestureKind', 'patch', 'mountedClip', 'sourceClip', 'gestureClip', 'originalClip', 'status', 'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass'];
+    const unknown = 'UNKNOWN';
+    const id = (value: unknown) => value === null ? null : typeof value === 'string' && value.length > 0 && value.length <= 160 && /^[a-zA-Z0-9_.:-]+$/.test(value) && !/^[a-z][a-z\d+.-]*:\/\//i.test(value) ? value : unknown;
+    const number = (value: unknown, integer = false) => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1_000_000_000 && (!integer || Number.isInteger(value)) ? value : unknown;
+    const nonNegative = (value: unknown, maximum = 1_000_000_000) => typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= maximum ? value : unknown;
+    const boolean = (value: unknown) => typeof value === 'boolean' ? value : unknown;
+    const scalar = (value: unknown) => value === null ? null : typeof value === 'string' && value.length <= 200 ? value : unknown;
+    const head = (value: unknown) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return { revisionId: unknown, publicationId: unknown };
+      const source = value as object;
+      const revision = own(source, 'revisionId'); const publication = own(source, 'publicationId');
+      return { revisionId: revision.present ? id(revision.value) : unknown, publicationId: publication.present ? id(publication.value) : unknown };
+    };
+    const numericRecord = (value: unknown) => {
+      const source = value && typeof value === 'object' && !Array.isArray(value) ? value as object : null;
       const result: Record<string, unknown> = {};
-      for (const childKey of allowed) {
-        const child = own(value, childKey);
-        if (child.present) result[childKey] = project(childKey, child.value, depth + 1);
+      for (const field of numericFields) {
+        const raw = source ? own(source, field) : { present: false, value: undefined };
+        const explicit = source ? own(source, `${field}State`) : { present: false, value: undefined };
+        const explicitState = typeof explicit.value === 'string' && states.has(explicit.value) ? explicit.value : undefined;
+        let state = 'UNKNOWN'; let resultValue: unknown = unknown;
+        if (explicitState === 'null') { state = 'null'; resultValue = null; }
+        else if (explicitState === 'absent') state = 'absent';
+        else if (explicitState === 'present') { resultValue = number(raw.value); state = resultValue === unknown ? 'UNKNOWN' : 'present'; }
+        else if (explicitState === 'UNKNOWN') state = 'UNKNOWN';
+        else if (!raw.present) state = 'absent';
+        else if (raw.value === null) { state = 'null'; resultValue = null; }
+        else { resultValue = number(raw.value); state = resultValue === unknown ? 'UNKNOWN' : 'present'; }
+        result[field] = resultValue; result[`${field}State`] = state;
+      }
+      return result;
+    };
+    const project = (detail: object) => {
+      const version = own(detail, 'version'); const phase = own(detail, 'phase');
+      if (version.value !== 1 || !phase.present || typeof phase.value !== 'string' || !phases.has(phase.value)) return null;
+      const result: Record<string, unknown> = {};
+      for (const key of fields) {
+        const field = own(detail, key); const value = field.value;
+        if (key === 'version') result[key] = 1;
+        else if (key === 'phase') result[key] = phase.value;
+        else if (key === 'projectId' || key === 'timelineId' || key === 'clipId') result[key] = field.present ? id(value) : unknown;
+        else if (key === 'mountedHead' || key === 'originalHead') result[key] = head(field.present ? value : undefined);
+        else if (key === 'patch' || key === 'mountedClip' || key === 'sourceClip' || key === 'gestureClip' || key === 'originalClip') result[key] = numericRecord(field.present ? value : undefined);
+        else if (key === 'intentsPendingCount' || key === 'errorClass') result[key] = unknown;
+        else if (key === 'sequence' || key === 'generation' || key === 'ownerAlias') result[key] = nonNegative(field.present ? value : undefined);
+        else if (key === 'recoverableOwnerCount') result[key] = nonNegative(field.present ? value : undefined, 10000);
+        else if (key === 'time') result[key] = number(field.present ? value : undefined);
+        else if (key === 'sessionPresent' || key === 'closed' || key === 'current' || key === 'identityPresent' || key === 'scopeMatched' || key === 'ownerPresent') result[key] = boolean(field.present ? value : undefined);
+        else if (key === 'errorStage') result[key] = field.present && (value === 'capture' || value === 'basis-read' || value === 'owner-init') ? value : unknown;
+        else if (key === 'errorCode') result[key] = field.present && value === 'operation-rejected' ? value : unknown;
+        else result[key] = field.present ? scalar(value) : unknown;
       }
       return result;
     };
     const state = { records: [] as unknown[], accepted: 0, rejected: 0, overflow: 0, listenerErrors: 0 };
-    const snapshot = () => ({ status: state.records.length > 0 ? 'observed' : 'UNKNOWN', scope: config.scope, type: config.type, buffer: config.buffer, records: state.records.slice(), accepted: state.accepted, rejected: state.rejected, overflow: state.overflow, listenerErrors: state.listenerErrors });
+    const snapshot = () => ({ status: state.records.length > 0 ? 'observed' : 'UNKNOWN', buffer: config.buffer, records: state.records.slice(), accepted: state.accepted, rejected: state.rejected, overflow: state.overflow, listenerErrors: state.listenerErrors });
     const snapshotName = '__timelineSaveDiagnosticsSnapshot';
     win[snapshotName] = snapshot;
     try {
@@ -147,17 +245,8 @@ export function mountedDiagnosticInitScript(options: { scope: string; type: stri
             try { detailValue = event.detail; } catch { detailValue = undefined; }
           }
           if (detailValue === undefined || !detailValue || typeof detailValue !== 'object' || Array.isArray(detailValue)) { state.rejected += 1; return; }
-          const source = detailValue as object;
-          const version = own(source, 'version');
-          const scope = own(source, 'scope');
-          const type = own(source, 'type');
-          if (version.value !== 1 || scope.value !== config.scope || type.value !== config.type) { state.rejected += 1; return; }
-          const record: Record<string, unknown> = {};
-          for (const key of allowed) {
-            const field = own(source, key);
-            if (field.present) record[key] = project(key, field.value, 0);
-          }
-          record.version = 1; record.scope = config.scope; record.type = config.type;
+          const record = project(detailValue as object);
+          if (!record) { state.rejected += 1; return; }
           if (state.records.length >= config.maxRecords) { state.records.shift(); state.overflow += 1; }
           state.records.push(record); state.accepted += 1;
         } catch { state.listenerErrors += 1; }
@@ -169,7 +258,14 @@ export function mountedDiagnosticInitScript(options: { scope: string; type: stri
     .replaceAll(',"own")', '')
     .replaceAll(',"safeText")', '')
     .replaceAll(',"project")', '')
-    .replaceAll(',"snapshot")', '');
+    .replaceAll(',"snapshot")', '')
+    .replaceAll(',"id")', '')
+    .replaceAll(',"number")', '')
+    .replaceAll(',"boolean")', '')
+    .replaceAll(',"scalar")', '')
+    .replaceAll(',"head")', '')
+    .replaceAll(',"numericRecord")', '')
+    .replaceAll(',"nonNegative")', '');
   return `(${serialized})(${JSON.stringify(options)});`;
 }
 
@@ -226,7 +322,8 @@ const DIAGNOSTIC_CONTAINERS = new Set([
   'unknowns', 'losses', 'failureContext', 'wireHeads', 'requestProjections', 'keyProjection', 'bodyProjection', 'recovery', 'transport', 'captureData',
   'ui', 'errors', 'errorSignals', 'page', 'console', 'requestFailures', 'runtimeResponses',
   'mountedObservations', 'mounted', 'originalBasis', 'basis', 'mountedHead', 'originalHead', 'headPair',
-  'scopedOwner', 'adoption', 'error', 'capture', 'records', 'unknown',
+  'scopedOwner', 'adoption', 'error', 'capture', 'records', 'unknown', 'patch', 'mountedClip', 'sourceClip',
+  'gestureClip', 'originalClip',
 ]);
 const DIAGNOSTIC_PRIMITIVES = new Set([
   'title', 'phase', 'projectId', 'projectSlug', 'timelineId', 'sourceId', 'originalClipId', 'rightId',
@@ -243,7 +340,9 @@ const DIAGNOSTIC_PRIMITIVES = new Set([
   'error', 'count', 'summarized', 'truncated', 'outboxReadFailed', 'selectedTimelineMatchesExpectedId',
   'known', 'capture', 'captureData', 'mountedDataRef', 'callbackPatch', 'diagnostic', 'buffer', 'accepted', 'overflow', 'listenerErrors',
   'version', 'scope', 'sequence', 'time', 'ownerAlias', 'sessionState', 'start', 'resolve', 'reject', 'code', 'class', 'stage',
-  'from', 'to', 'at', 'hold', 'speed', 'intents', 'pendingCounts',
+  'from', 'to', 'at', 'hold', 'speed', 'fromState', 'toState', 'atState', 'holdState', 'speedState',
+  'generation', 'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'basisStatus', 'gestureKind',
+  'status', 'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass',
   'schemaVersion', 'expectedStatus', 'capturedAt', 'durationMs', 'cappedConsole', 'captureResolution', 'sourceAsset', 'present', 'bytes', 'sameAsPrevious', 'sameAsIndex',
 ]);
 
