@@ -11,6 +11,7 @@ import json
 
 import pytest
 
+from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
 from astrid.packs.timeline.cli import build_parser
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
@@ -38,10 +39,13 @@ def _run(world, capsys, *args):
 def _seed_initial_bundle(world):
     """Install the original SDK fixture as Runtime's saved parent closure."""
     source = initial_bundle()
-    parent = copy.deepcopy(source["parent"])
-    # Runtime stores the empty placement collection in the canonical parent
-    # payload; open_authoring_bundle omits it from this original SDK fixture.
-    parent["occurrences"] = []
+    # The authoring bundle omits derived occurrences.  Compile it first so the
+    # seed uses the normal publication constructor, then add only Runtime's
+    # required managed registry envelope; no media is registered here.
+    parent = copy.deepcopy(
+        compile_authoring_candidate(source).publication["parent_composition"]
+    )
+    parent.setdefault("registry", {})
     publication = {
         "project_id": world.project,
         "timeline_id": "film",
@@ -65,7 +69,11 @@ def test_cli_sheet_v2_runtime_preserves_document_and_reads_back(
     client = runtime.client()
     session = TimelineSession.open(runtime.project, "film", client=client)
     original = copy.deepcopy(session._bundle(session.outbox.read()))
-    assert original["parent"] == source["parent"]
+    # `registry` is a Runtime-managed canonical envelope field; all authored
+    # source fields remain the exact SDK fixture payload.
+    expected_parent = copy.deepcopy(source["parent"])
+    expected_parent.setdefault("registry", {})
+    assert original["parent"] == expected_parent
 
     sheet = NativeSheet.export(session)
     sheet_path = tmp_path / "edited.sheet"
