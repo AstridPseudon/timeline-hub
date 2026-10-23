@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+from contextlib import contextmanager
 
 from ._collections import (
     KINDS,
@@ -24,6 +25,61 @@ from ._command_state import (
 )
 from ._recording import Recording, guard, selection
 from ._root_inverse import arrange_restored, clip_cache_stages, occurrence_orders, recover_source
+
+
+def _physical_state(state, ref, path, records):
+    if (ref != 'parent' or list(path) != ['occurrences']
+            or not isinstance(records, AcceptedRecords)
+            or getattr(records, 'address_resolver', None) is None):
+        return state
+    if 'occurrences' in state.bundle['parent']:
+        raise CommandError('occurrence aggregate has contradictory storage', kind='inverse_conflict',
+                           ref=ref, path=path)
+    # A view of the existing canonical root rows, never a stored parent mirror.
+    from ._collections import order
+
+    order(state, 'parent', 'occurrence')
+    return State({**state.bundle, 'parent': {
+        **state.bundle['parent'], 'occurrences': state.bundle['placements']}}, closures=state.closures)
+
+
+def _set_physical(state, ref, path, value, records):
+    projected = _physical_state(state, ref, path, records)
+    if projected is not state:
+        _validate_occurrences(state, value)
+    projected.set(ref, path, value)
+    if projected is not state:
+        state.bundle['placements'] = projected.bundle['parent']['occurrences']
+
+
+def _validate_occurrences(state, value):
+    rows = value.get('value')
+    if value['state'] != 'present' or not isinstance(rows, list):
+        raise CommandError('occurrence aggregate requires canonical rows', kind='history_unavailable')
+    identities = []
+    for row in rows:
+        if not isinstance(row, dict) or not isinstance(row.get('occurrence_id'), str):
+            raise CommandError('occurrence aggregate identity is unavailable', kind='history_unavailable')
+        state.validate_root('occurrence:' + row['occurrence_id'], row)
+        identities.append(row['occurrence_id'])
+    if len(set(identities)) != len(identities):
+        raise CommandError('occurrence aggregate identity is ambiguous', kind='history_unavailable')
+
+
+@contextmanager
+def _recording_storage(ctx, ref, path, records):
+    original, captured = ctx.state, ctx.input_state
+    projected = _physical_state(original, ref, path, records)
+    captured_view = _physical_state(captured, ref, path, records) if captured is not None else None
+    ctx.state, ctx.input_state = projected, captured_view
+    try:
+        yield
+        if ctx.state is not original:
+            value = ctx.state.get(ref, path)
+            _validate_occurrences(original, value)
+            original.bundle['placements'] = copy.deepcopy(value['value'])
+    finally:
+        ctx.state, ctx.input_state = original, captured
 
 
 def _row_identity(row, token):
@@ -469,11 +525,14 @@ def _legacy_inverse_sites(records, record):
     from ._root_inverse import normalize_root_inputs
 
     normalize_root_inputs(state.bundle, [record])
-    reads = [read for read in record['reads'] if state.matches(read['ref'], read['path'], read['state'])]
+    reads = [read for read in record['reads']
+             if _physical_state(state, read['ref'], read['path'], records).matches(
+                 read['ref'], read['path'], read['state'])]
     selections = [selected for selected in record['selections']
                   if equal(selection(state, selected['key'], selected['owner'], selected['members']), selected)]
     for write in record['writes']:
-        guard(state, write['ref'], write['path'], write['before'], kind='history_unavailable')
+        guard(_physical_state(state, write['ref'], write['path'], records),
+              write['ref'], write['path'], write['before'], kind='history_unavailable')
         # The old inverse read immediately before each authored reversal.
         reads.append({'ref': write['ref'], 'path': write['path'], 'state': write['before']})
         entity = member(write['ref'])
@@ -484,7 +543,7 @@ def _legacy_inverse_sites(records, record):
         if (root_identity(write['ref']) is not None and write['ref'].startswith('occurrence:')
                 and not write['path'] and write['after'] != ABSENT):
             recover_source(state, write['after']['value'], after.bundle)
-        state.set(write['ref'], write['path'], write['after'])
+        _set_physical(state, write['ref'], write['path'], write['after'], records)
     return reads, selections
 
 
@@ -562,7 +621,8 @@ def _validate_inputs(state, record, records):
         reads, selections, bindings = [], [], set()
         for write in [None, *record['writes']]:
             if write is not None:
-                guard(stage, write['ref'], write['path'], write['before'], kind='history_unavailable')
+                guard(_physical_state(stage, write['ref'], write['path'], records),
+                      write['ref'], write['path'], write['before'], kind='history_unavailable')
                 root = root_identity(write['ref'])
                 if root is not None and not write['path'] and write['before'] == ABSENT and write['after'] != ABSENT:
                     created = {'ref': write['ref'], 'kind': root[0],
@@ -572,9 +632,10 @@ def _validate_inputs(state, record, records):
                                            ref=write['ref'])
                     staged.create_entity(**created, value=write['after']['value'], restoring=True)
                 else:
-                    stage.set(write['ref'], write['path'], write['after'])
+                    _set_physical(stage, write['ref'], write['path'], write['after'], records)
             reads.extend(read for read in record['reads']
-                         if stage.matches(read['ref'], read['path'], read['state']))
+                         if _physical_state(stage, read['ref'], read['path'], records).matches(
+                             read['ref'], read['path'], read['state']))
             selections.extend(selected for selected in record['selections']
                               if equal(selection(stage, selected['key'], selected['owner'],
                                                  selected['members']), selected))
@@ -586,7 +647,8 @@ def _validate_inputs(state, record, records):
 
     for read in record['reads']:
         if (_authenticated_timeline_scope_read(record, read)
-                or state.matches(read['ref'], read['path'], read['state'])):
+                or _physical_state(state, read['ref'], read['path'], records).matches(
+                    read['ref'], read['path'], read['state'])):
             continue
         if sites is None:
             sites = proven_sites()
@@ -671,17 +733,8 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
             raise CommandError('inverse collection membership/order changed',
                                kind='selection_changed', ref=owner)
     for write in guarded_changes:
-        landing = ctx.state
-        if (isinstance(records, AcceptedRecords) and address_resolver is not None
-                and write['ref'] == 'parent' and write['path'] == ['occurrences']):
-            # Authoring bundles store the physical parent occurrence rows in
-            # placements, outside the editable parent payload.
-            if 'occurrences' in ctx.state.bundle['parent']:
-                raise CommandError('occurrence aggregate has contradictory storage', kind='inverse_conflict',
-                                   ref='parent', path=['occurrences'])
-            landing = State({**ctx.state.bundle, 'parent': {
-                **ctx.state.bundle['parent'], 'occurrences': ctx.state.bundle['placements']}})
-        guard(landing, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+        guard(_physical_state(ctx.state, write['ref'], write['path'], records),
+              write['ref'], write['path'], write['after'], kind='inverse_conflict')
     from ._root_inverse import recover_rebound_sources
 
     recover_rebound_sources(ctx.state, records)
@@ -691,10 +744,12 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
         scratch = staged.state
         staged_orders = restoration_orders(records, only=record)
         for write in reversed(caches.get(id(record), [])):
-            guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
-            scratch.set(write['ref'], write['path'], write['before'])
+            guard(_physical_state(scratch, write['ref'], write['path'], records),
+                  write['ref'], write['path'], write['after'], kind='inverse_conflict')
+            _set_physical(scratch, write['ref'], write['path'], write['before'], records)
         for write in reversed(record['writes']):
-            guard(scratch, write['ref'], write['path'], write['after'], kind='inverse_conflict')
+            guard(_physical_state(scratch, write['ref'], write['path'], records),
+                  write['ref'], write['path'], write['after'], kind='inverse_conflict')
             if not write['path'] and write['before'] == ABSENT:
                 if '/asset:' in write['ref'] and _asset_dependents(scratch, write['ref']):
                     raise CommandError('created asset has surviving dependents', kind='surviving_dependents',
@@ -710,7 +765,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                                      owner=None if root[0] == 'shot' else 'parent',
                                      value=write['before']['value'], restoring=True)
             else:
-                scratch.set(write['ref'], write['path'], write['before'])
+                _set_physical(scratch, write['ref'], write['path'], write['before'], records)
             if write['ref'].startswith('parent/clip:'):
                 # The next authored aggregate guard observes this restored leaf.
                 staged.compile_mirrors()
@@ -725,7 +780,8 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     deferred_selections = []
     for record in records:
         for read in record['reads']:
-            ctx.read(read['ref'], read['path'])
+            with _recording_storage(ctx, read['ref'], read['path'], records):
+                ctx.read(read['ref'], read['path'])
         for selected in record['selections']:
             # A grouped inverse can restore a track after its create selection
             # is replayed. Keep the original membership claim, but defer only
@@ -759,7 +815,8 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
         start = len(ctx.record['writes'])
         for record in reversed(commands):
             for write in reversed([*record['writes'], *caches.get(id(record), [])]):
-                _restore_write(ctx, write)
+                with _recording_storage(ctx, write['ref'], write['path'], records):
+                    _restore_write(ctx, write)
             for (owner, kind), (original, _) in restoration_orders(records, only=record).items():
                 if ctx.state.entity(owner, optional=True) is not None:
                     arrange(ctx.state, owner, kind, original)

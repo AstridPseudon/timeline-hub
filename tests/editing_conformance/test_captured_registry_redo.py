@@ -275,3 +275,108 @@ def test_physical_registry_folding_keeps_authored_mirror_presence(captured, mirr
     original = copy.deepcopy(records)
     assert coalesce(records) == writes
     assert records == original
+
+
+def test_captured_redo_restores_exact_canonical_document_and_records(captured, monkeypatch):
+    from astrid.sdk.timeline import inverse
+    from astrid.sdk.timeline._doc_patch import inverse_changes
+    from astrid.sdk.timeline.commit import document_from_bundle
+
+    bundle, records = replay(captured)
+    original = copy.deepcopy((bundle, captured, list(records)))
+    aggregates = []
+
+    def observe(state, ref, path, expected, **kwargs):
+        guard(state, ref, path, expected, **kwargs)
+        if ref == 'parent' and path == ['occurrences']:
+            assert state.get(ref, path) == present(state.bundle['placements'])
+            aggregates.append(copy.deepcopy(expected))
+
+    monkeypatch.setattr(inverse, 'guard', observe)
+    plan = run(captured, bundle, records)
+    assert aggregates[0] == present(bundle['placements'])
+    assert aggregates[1] == records[0]['writes'][3]['after']
+    assert len(aggregates[1]['value']) == 3
+    assert 'occurrences' not in plan.bundle['parent']
+    assert document_from_bundle(plan.bundle, inverse_records=records) == captured['before']
+    assert plan.records[0]['writes'] == [
+        {**write, 'before': write['after'], 'after': write['before']}
+        for write in reversed(records[0]['writes'])]
+    aggregate_read = {'ref': 'parent', 'path': ['occurrences'], 'state': present(bundle['placements'])}
+    assert aggregate_read in plan.records[0]['reads']
+    assert plan.steps[0]['patch'] == inverse_changes(captured['entry']['records']['steps'][0]['patch'])
+    stages = [binding['boundary'] for binding in plan.records[0]['bindings']
+              if binding['key'] == 'inverse.stage']
+    assert stages == [{'publication_id': captured['entry']['publication_id'], 'step_id': 'inverse',
+                       'command_ordinals': [0], 'native_write_range': [0, 10], 'effect_range': [0, 9]}]
+    assert (bundle, captured, list(records)) == original
+
+
+@pytest.mark.parametrize('mutation', ['row', 'missing', 'duplicate', 'foreign-id', 'foreign-owner',
+                                     'order', 'absent', 'null', 'object', 'pin'])
+def test_captured_redo_refuses_changed_historical_aggregate(captured, mutation):
+    aggregate = captured['entry']['records']['commands'][0]['writes'][3]
+    rows = aggregate['before']['value']
+    if mutation == 'row':
+        rows[0]['gain'] = 0.5
+    elif mutation == 'missing':
+        rows.pop()
+    elif mutation == 'duplicate':
+        rows.append(copy.deepcopy(rows[0]))
+    elif mutation == 'foreign-id':
+        rows[0]['occurrence_id'] = 'foreign-occurrence'
+    elif mutation == 'foreign-owner':
+        rows[0]['shot_id'] = 'foreign-shot'
+    elif mutation == 'order':
+        rows.reverse()
+    elif mutation == 'absent':
+        aggregate['before'] = {'state': 'absent'}
+    elif mutation in ('null', 'object'):
+        aggregate['before'] = present(None if mutation == 'null' else {})
+    else:
+        rows[0]['shot_revision_id'] = 'forged-revision'
+    original = copy.deepcopy(captured)
+    with pytest.raises((CommandError, ValueError)):
+        bundle, records = replay(captured)
+        saved = copy.deepcopy(bundle)
+        try:
+            run(captured, bundle, records)
+        finally:
+            assert bundle == saved
+    assert captured == original
+
+
+@pytest.mark.parametrize('mutation', ['row', 'missing', 'duplicate', 'foreign-id', 'foreign-owner', 'order'])
+def test_captured_historical_guard_checks_physical_rows(captured, mutation, monkeypatch):
+    from astrid.sdk.timeline import inverse
+
+    bundle, records = replay(captured)
+    original = copy.deepcopy((bundle, captured, list(records)))
+    reached = []
+
+    def tamper(state, ref, path, expected, **kwargs):
+        if ref == 'parent' and path == ['occurrences'] and len(expected['value']) == 3:
+            reached.append(True)
+            rows = state.bundle['placements']
+            assert present(rows) == expected
+            if mutation == 'row':
+                rows[0]['gain'] = 0.5
+            elif mutation == 'missing':
+                rows.pop()
+            elif mutation == 'duplicate':
+                rows.append(copy.deepcopy(rows[0]))
+            elif mutation == 'foreign-id':
+                rows[0]['occurrence_id'] = 'foreign-occurrence'
+            elif mutation == 'foreign-owner':
+                rows[0]['shot_id'] = 'foreign-shot'
+            else:
+                rows.reverse()
+        guard(state, ref, path, expected, **kwargs)
+
+    monkeypatch.setattr(inverse, 'guard', tamper)
+    with pytest.raises(CommandError, match='original authored guard changed') as failure:
+        run(captured, bundle, records)
+    assert reached == [True]
+    assert failure.value.ref == 'parent'
+    assert failure.value.path == ['occurrences']
+    assert (bundle, captured, list(records)) == original
