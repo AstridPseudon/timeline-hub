@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-23T11:05:47Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 10m -->
+<!-- farm | 2026-10-23T11:07:28Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
 # farm board, 2026-10-23T10:25Z (disk 21 GB free, above the 15 GB floor)
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -8,7 +8,7 @@
 | F-app-rerun | App full re-run after fixes | test service | App names a SHA with fixes | gated:app-fixes: App (peer 10:46Z) owns 5 regression groups via app2, will name a final SHA after regression packets; no second full suite requested yet | none | none | n/a |
 | F-comp-full | Composition full suite | test service | none | DONE: PASS | test service | composition-full-1023100726-4261 | n/a |
 | F-EXACT8 | agent heavy-journey failures (2 sigterm, 6 quick_run) | n/a | n/a | Agent owns it (peer 09:19Z), id agent-targeted-1023091523-8962. No farm copy | none | Agent's id pending | n/a |
-| F-H6/H9 | integrated suites + P2 tour + P3 journey | test service | P1 GO, A2-undo, A2-move-reads | P2/P3 owned by Proof's service (App peer 10:46Z; no farm duplicate). The P1-NO-GO blocker is stale: A2-undo and A2-move are merged. Farm takes only a named request | none | none | n/a |
+| F-H6/H9 | integrated suites + P2 tour + P3 journey | test service | P1 GO, A2-undo, A2-move-reads | P3 and P1 bodies are owned by Proof's service (no farm duplicate). The full P2 tour is NOT ready (Proof peer 10:54Z: popup caller, authentic Agent image and a Sol repair are pending). Proof will request the heavy tour from the farm with exact selectors once the reviewed integrated source is ready. No competing P1/P3/tour body now | none | none | n/a |
 | F-final | final run + delivery-build dry run | test service | all lanes | todo | none | none | n/a |
 
 Blockers:
