@@ -40,7 +40,14 @@ def _commit_envelope(raw: Mapping[str, object], key: str) -> DomainResult:
     if isinstance(receipt, Mapping):
         committed = CommandReceipt.from_dict(dict(receipt))
         if isinstance(committed.result, Mapping):
-            data = dict(committed.result)
+            enriched = dict(committed.result)
+            if isinstance(data, Mapping):
+                # ``TimelineSession.flush`` adds these presentation fields
+                # after Runtime's canonical result is sealed in the receipt.
+                for key in ("accepted_publication_id", "show_command"):
+                    if key in data:
+                        enriched[key] = data[key]
+            data = enriched
         return DomainResult.success(data, receipt=committed, idempotency_key=key)
     return DomainResult.success(data, idempotency_key=key)
 
@@ -78,10 +85,29 @@ def _detached_document(parsed):
     return checkout, bundle, {key: base[key] for key in ("revision_id", "publication_id")}
 
 
+def _normalized_document_diff(bundle):
+    """Normalize only the supported document/diff boundary.
+
+    ``Checkout`` creates an empty parent ``config.app`` while opening a
+    detached file.  Runtime's canonical bundle omits that empty container.
+    Treating those two representations as different would turn a clean
+    checkout into an authored ``config.app = {}`` patch.  The existing
+    timeline intent normalizer preserves all non-empty and unknown data; the
+    tidy step removes only an empty film app namespace for comparison.
+    """
+    from astrid.core.timeline import astrid_ns
+
+    normalized = astrid_ns.normalized(bundle)
+    for root in ("parent", "base_parent_payload"):
+        payload = normalized.get(root)
+        config = payload.get("config") if isinstance(payload, Mapping) else None
+        if isinstance(config, dict):
+            astrid_ns.tidy_film(config)
+    return normalized
+
+
 def _preview_detached_document(checkout, bundle, base, parsed, *, dry_run: bool):
     """Use the public G2 session commit with the G3 emitter."""
-    import copy
-
     from astrid.sdk.timeline.commit_session import Timeline
     from astrid.sdk.timeline.sync import TimelineSession
 
@@ -92,15 +118,16 @@ def _preview_detached_document(checkout, bundle, base, parsed, *, dry_run: bool)
     )
     with session.outbox.locked():
         state = session._state()
-    authenticated_base = session._bundle(state)
-    if checkout.bundle == authenticated_base:
+    authenticated_base = _normalized_document_diff(session._bundle(state))
+    candidate = _normalized_document_diff(checkout.bundle)
+    if candidate == authenticated_base:
         return {"data": {"status": "preview" if dry_run else "unchanged",
                           **({"would_status": "unchanged"} if dry_run else {}),
                           "project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"],
                           "label": parsed.message, "commands": [], "steps": [],
                           "merge_mode": "atomic"}, "receipt": None}
     working = Timeline(session, authenticated_base, base)
-    working.bundle = copy.deepcopy(checkout.bundle)
+    working.bundle = candidate
     working._refresh()
     return working.commit(
         parsed.message, merge="atomic", dry_run=dry_run,
@@ -108,90 +135,41 @@ def _preview_detached_document(checkout, bundle, base, parsed, *, dry_run: bool)
     )
 
 
-def _replay_document_commit(bundle, base, parsed):
-    """Return an exact accepted receipt for a retry, without recapturing or writing."""
-    import copy
-
-    from astrid.sdk.timeline.commit import _json
-    from astrid.sdk.timeline.emitter import emit_document_commands
-    from astrid.sdk.timeline.store import fetch_bundle
-
-    history = parsed.client.timelines.history(bundle["project_id"], bundle["timeline_id"], limit=200)
-    if not history.ok or not isinstance(history.data, Mapping):
-        return None
-    entry = next(
-        (row for row in history.data.get("items", [])
-         if isinstance(row, Mapping)
-         and isinstance(row.get("receipt"), Mapping)
-         and row["receipt"].get("idempotency_key") == parsed.idempotency_key),
-        None,
-    )
-    if entry is None:
-        return None
-    receipt = entry["receipt"]
-    result = receipt.get("result")
-    records = entry.get("records") if isinstance(entry.get("records"), Mapping) else {}
-    label = records.get("label") or (result or {}).get("label") if isinstance(result, Mapping) else None
-    canonical = result.get("canonical_document") if isinstance(result, Mapping) else None
-    if (not isinstance(result, Mapping) or label != parsed.message
-            or not isinstance(canonical, Mapping)
-            or canonical.get("project_id") != bundle["project_id"]
-            or canonical.get("timeline_id") != bundle["timeline_id"]
-            or {"revision_id": result.get("previous_revision_id"),
-                "publication_id": result.get("previous_publication_id")} != base):
-        raise ValueError("the idempotency key belongs to a different timeline commit")
-    authenticated_base = fetch_bundle(
-        bundle["project_id"], bundle["timeline_id"],
-        revision_id=base["revision_id"], publication_id=base["publication_id"], client=parsed.client,
-    )
-    candidate = copy.deepcopy(bundle)
-    source = authenticated_base.get("source_mapping", {}).get("_runtime_document")
-    if source is not None:
-        candidate.setdefault("source_mapping", {})["_runtime_document"] = copy.deepcopy(source)
-    commands = emit_document_commands(authenticated_base, candidate)
-    recorded = records.get("commands") if isinstance(records.get("commands"), list) else result.get("commands")
-    if isinstance(recorded, list):
-        recorded = [row.get("command", row) if isinstance(row, Mapping) else row for row in recorded]
-
-    def signature(command):
-        return {key: copy.deepcopy(command.get(key)) for key in ("op", "args")}
-
-    if not isinstance(recorded, list) or [_json(signature(row)) for row in recorded] != [_json(signature(row)) for row in commands]:
-        raise ValueError("the idempotency key belongs to a different timeline commit")
-    return {"data": dict(result), "receipt": dict(receipt)}
-
-
 def commit_document(parsed) -> int:
-    """Commit a detached document without making local sidecar or cache writes."""
+    """Commit a detached document through the durable G2 outbox route."""
     from astrid.sdk.timeline._common import TimelineEditError
     from astrid.sdk.workspace_client import WorkspaceClientError
 
     if not isinstance(parsed.message, str) or not parsed.message.strip():
         result = _document_error(parsed, TimelineEditError("commit message must be nonempty"), code="validation_error")
         return print_result(result, as_json=parsed.json)
+    if not isinstance(parsed.idempotency_key, str) or not parsed.idempotency_key.strip():
+        result = _document_error(parsed, TimelineEditError("idempotency key must be nonempty"), code="validation_error")
+        return print_result(result, as_json=parsed.json)
     try:
         checkout, bundle, base = _detached_document(parsed)
-        replay = _replay_document_commit(bundle, base, parsed)
-        if replay is not None and not parsed.dry_run:
-            result = _commit_envelope(replay, parsed.idempotency_key)
-        elif parsed.dry_run:
-            raw = _preview_detached_document(checkout, bundle, base, parsed, dry_run=parsed.dry_run)
-            result = _commit_envelope(raw, parsed.idempotency_key)
-        else:
-            raw = _preview_detached_document(checkout, bundle, base, parsed, dry_run=parsed.dry_run)
-            result = _commit_envelope(raw, parsed.idempotency_key)
+        raw = _preview_detached_document(checkout, bundle, base, parsed, dry_run=parsed.dry_run)
+        result = _commit_envelope(raw, parsed.idempotency_key)
     except (TimelineEditError, WorkspaceClientError, OSError, ValueError, TypeError, KeyError) as exc:
         result = _document_error(parsed, exc)
-    return print_result(result, as_json=parsed.json)
+    return print_result(
+        result,
+        as_json=parsed.json,
+        human_renderer=lambda value: _render_commit_result(
+            value, dry_run=parsed.dry_run, label=parsed.message
+        ),
+    )
 
 
-def _render_commit_result(value: object, *, dry_run: bool) -> str:
+def _render_commit_result(value: object, *, dry_run: bool, label: str | None = None) -> str:
     if dry_run:
-        return "preview only; no publication accepted"
+        return f"preview only; no publication accepted{f' · {label}' if label else ''}"
     if not isinstance(value, DomainResult) or not isinstance(value.data, Mapping):
         raise TypeError("native commit renderer received an invalid result envelope")
     data = value.data
-    return (f"accepted revision {data['accepted_revision_id']} · publication {data['accepted_publication_id']}\n"
+    suffix = f" · {label}" if label else ""
+    return (f"accepted revision {data['accepted_revision_id']} · publication {data['accepted_publication_id']}"
+            f"{suffix}\n"
             f"{data['show_command']}")
 
 
