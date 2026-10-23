@@ -1,0 +1,85 @@
+COMMAND ['python3', '-I', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-validate-packet.py']
+PASS actual installed baseline hash make-child-venv 39450feacd8ff7d566e19fd6ce0aadc5c02366db1bccd9c88f9cd3a3ceef614f
+PASS actual installed baseline hash request-child-venv f9e5ea6f2ff577ebd25218a1eba751e17fafd474b1e1a3a3adbb8524a80c440e
+PASS actual installed baseline hash make-runtime f63adc876ee489cc1bb3a9e038b31b2a432bb17557f566c84d93305c35dbccec
+PASS actual installed baseline hash request-runtime f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1
+COMMAND ['bash', '-n', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.sh'] rc=0
+COMMAND ['patch', '--dry-run', '--batch', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/make-child-venv', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.patch'] rc=0
+checking file /tmp/w-fe279df0c7/creator-patch-7p6nymuf/make-child-venv
+COMMAND ['patch', '--batch', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/make-child-venv', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.patch'] rc=0
+patching file /tmp/w-fe279df0c7/creator-patch-7p6nymuf/make-child-venv
+COMMAND ['cmp', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/make-child-venv', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.sh'] rc=0
+PASS installed patch replay cmp make-child-venv
+COMMAND ['bash', '-n', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-child-venv.sh'] rc=0
+COMMAND ['patch', '--dry-run', '--batch', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/request-child-venv', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-child-venv.patch'] rc=0
+checking file /tmp/w-fe279df0c7/creator-patch-7p6nymuf/request-child-venv
+COMMAND ['patch', '--batch', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/request-child-venv', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-child-venv.patch'] rc=0
+patching file /tmp/w-fe279df0c7/creator-patch-7p6nymuf/request-child-venv
+COMMAND ['cmp', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/request-child-venv', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-child-venv.sh'] rc=0
+PASS installed patch replay cmp request-child-venv
+COMMAND ['bash', '-n', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-runtime.sh'] rc=0
+COMMAND ['patch', '--dry-run', '--batch', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/make-runtime', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-runtime.patch'] rc=0
+checking file /tmp/w-fe279df0c7/creator-patch-7p6nymuf/make-runtime
+COMMAND ['patch', '--batch', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/make-runtime', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-runtime.patch'] rc=0
+patching file /tmp/w-fe279df0c7/creator-patch-7p6nymuf/make-runtime
+COMMAND ['cmp', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/make-runtime', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-runtime.sh'] rc=0
+PASS installed patch replay cmp make-runtime
+COMMAND ['bash', '-n', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-runtime.sh'] rc=0
+COMMAND ['patch', '--dry-run', '--batch', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/request-runtime', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-runtime.patch'] rc=0
+COMMAND ['patch', '--batch', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/request-runtime', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-runtime.patch'] rc=0
+COMMAND ['cmp', '/tmp/w-fe279df0c7/creator-patch-7p6nymuf/request-runtime', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-runtime.sh'] rc=0
+PASS installed patch replay cmp request-runtime
+PASS byte-exact terminal1839 full child custody verifier
+PASS byte-exact Remotion registration/artifact/source guards and pins
+PASS byte-exact runtime request writer
+PASS scoped Python compile handoff-runtime-OPS-bench-store-creators-package-sol-1924-test-adapters.py
+PASS scoped Python compile handoff-runtime-OPS-bench-store-creators-package-sol-1924-test-receipts.py
+PASS scoped Python compile handoff-runtime-OPS-bench-store-creators-package-sol-1924-validate-packet.py
+COMMAND ['git', 'diff', '--check'] rc=0
+COMMAND ['git', 'status', '--porcelain'] rc=0
+COMMAND ['git', '-C', '/home/user/work/runtime', 'diff', '--check'] rc=0
+COMMAND ['git', '-C', '/home/user/work/runtime', 'status', '--porcelain'] rc=0
+COMMAND ['sha256sum', '-c', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-hashmanifest.txt'] rc=0
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-baselines.json: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-interface-needs.md: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.patch: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.sh: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-runtime.patch: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-runtime.sh: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-child-venv.patch: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-child-venv.sh: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-runtime.patch: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-runtime.sh: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-test-adapters.py: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-test-receipts.py: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-validate-packet.py: OK
+PASS packet syntax/compile/hash/cmp/patch replay; integration Runtime unchanged
+COMMAND ['sha256sum', '-c', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-1850-hashmanifest.txt'] rc=0
+handoff-runtime-OPS-bench-store-creators-1850-make-child-venv.patch: OK
+handoff-runtime-OPS-bench-store-creators-1850-make-child-venv.sh: OK
+handoff-runtime-OPS-bench-store-creators-1850-make-runtime.patch: OK
+handoff-runtime-OPS-bench-store-creators-1850-make-runtime.sh: OK
+handoff-runtime-OPS-bench-store-creators-1850-request-child-venv.patch: OK
+handoff-runtime-OPS-bench-store-creators-1850-request-child-venv.sh: OK
+handoff-runtime-OPS-bench-store-creators-1850-request-runtime.patch: OK
+handoff-runtime-OPS-bench-store-creators-1850-request-runtime.sh: OK
+handoff-runtime-OPS-bench-store-creators-1850-test-adapters.py: OK
+handoff-runtime-OPS-bench-store-creators-1850-validate-packet.py: OK
+PASS immutable1850; exact build/verifier/runtime/requester guards retained
+COMMAND ['sha256sum', '-c', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-package-sol-1924-hashmanifest.txt'] rc=0
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-baselines.json: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-interface-needs.md: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.patch: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.sh: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-runtime.patch: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-runtime.sh: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-child-venv.patch: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-child-venv.sh: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-runtime.patch: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-request-runtime.sh: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-test-adapters.py: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-test-receipts.py: OK
+handoff-runtime-OPS-bench-store-creators-package-sol-1924-validate-packet.py: OK
+SOURCE PASS; combined FAIL / UNQUALIFIED / STOPPED; STOP1905 pending
+
+EXIT 0
