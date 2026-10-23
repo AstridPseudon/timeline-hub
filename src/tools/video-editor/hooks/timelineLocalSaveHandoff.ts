@@ -1,4 +1,4 @@
-import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { CanonicalDocument, EditCommand, HistoryPage } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { LocalSaveSession } from '../commands/localSaveSession.ts';
 import { toOutboxJson, type OutboxJson } from '../commands/commitOutbox.ts';
 import { canonicalJsonStringify, type TimelineBundleEnvelope } from '../data/typed/timelineBundle.ts';
@@ -28,6 +28,12 @@ export type TimelineGestureReadBasis = {
 export interface TimelineLocalSaveHandoff {
   capture(source: TimelineSaveSource, gestureBasis?: TimelineGestureReadBasis): Promise<void>;
   flush(): Promise<TimelineSaveReceipt>;
+  /** True only when the durable owner is settled and has an accepted target. */
+  remoteHistoryAvailable(): boolean;
+  canUndo(): boolean;
+  canRedo(): boolean;
+  undo(): Promise<void>;
+  redo(): Promise<void>;
 }
 
 const same = (a: unknown, b: unknown) => a === undefined || b === undefined
@@ -119,6 +125,63 @@ export function createTimelineLocalSaveHandoff(options: {
   let authoringSource = structuredClone(options.source);
   let document = structuredClone(options.initial.canonicalDocument);
   let sourceChecked = false;
+  let undoTargets = historyTargets(options.initial.history).undo;
+  let redoTargets = historyTargets(options.initial.history).redo;
+  let pendingNormalCommits = 0;
+  let pendingInverse: { kind: 'undo' | 'redo'; target: string } | undefined;
+
+  function acceptedHistoryPublication(basis: TimelineCommandBasis): string {
+    const publicationId = basis.head.publicationId;
+    if (!publicationId) refuse('accepted history publication is unavailable');
+    return publicationId;
+  }
+
+  function settleHistory(basis: TimelineCommandBasis) {
+    const publicationId = acceptedHistoryPublication(basis);
+    if (pendingInverse?.kind === 'undo') {
+      redoTargets = [...redoTargets, publicationId];
+    } else if (pendingInverse?.kind === 'redo') {
+      undoTargets = [...undoTargets, publicationId];
+      redoTargets = redoTargets.slice(0, -1);
+    } else if (pendingNormalCommits > 0) {
+      undoTargets = [...undoTargets, publicationId];
+      redoTargets = [];
+    }
+    pendingInverse = undefined;
+    pendingNormalCommits = 0;
+  }
+
+  function appendInverse(kind: 'undo' | 'redo'): Promise<void> {
+    if (!remoteHistoryAvailable()) return Promise.reject(new TimelineVersionConflictError('Durable timeline history is not settled; draft retained'));
+    const targets = kind === 'undo' ? undoTargets : redoTargets;
+    const target = targets.at(-1);
+    if (!target) return Promise.reject(new TimelineVersionConflictError(`No persisted ${kind} target is available`));
+    if (kind === 'undo') undoTargets = undoTargets.slice(0, -1);
+    else redoTargets = redoTargets.slice(0, -1);
+    pendingInverse = { kind, target };
+    const before = session.getDocument() as unknown as CanonicalDocument;
+    const command: EditCommand = {
+      schema_version: 1,
+      op: 'timeline.inverse',
+      version: '1',
+      select: null,
+      args: { publications: [target] },
+    };
+    return session.append({ before, after: before, label: `${kind === 'undo' ? 'Undo' : 'Redo'} timeline`, commands: [command] })
+      .then(() => flush())
+      .catch((error) => {
+        if (pendingInverse?.target === target) {
+          if (kind === 'undo') undoTargets = [...undoTargets, target];
+          else redoTargets = [...redoTargets, target];
+          pendingInverse = undefined;
+        }
+        throw error;
+      });
+  }
+
+  function remoteHistoryAvailable(): boolean {
+    return session.getState().status === 'saved';
+  }
   function changes(raw: unknown, previous: unknown, next: unknown, path: string[]): unknown {
     if (same(previous, next)) return structuredClone(raw);
     if (Array.isArray(previous) && Array.isArray(next) && path.length === 2
@@ -254,6 +317,7 @@ export function createTimelineLocalSaveHandoff(options: {
           label: 'Edit timeline', step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: gestureBasis ? (gestureBasis.kind === 'split'
             ? `Split ${gestureBasis.clipId} at ${gestureBasis.timeSeconds}`
             : `Trim ${gestureBasis.clipId}: ${canonicalJsonStringify(gestureBasis.patch)}`) : 'Save local editor changes', tags: [] } });
+        pendingNormalCommits += 1;
         source = { ...next,
           config: changes(source.config, source.config, next.config, ['config']) as TimelineConfig,
           registry: changes(source.registry, source.registry, next.registry, ['registry']) as AssetRegistry,
@@ -280,6 +344,7 @@ export function createTimelineLocalSaveHandoff(options: {
         authoringSource = structuredClone(adopted.source);
         document = structuredClone(basis.canonicalDocument);
         sourceChecked = false;
+        settleHistory(basis);
         return adopted.receipt;
       }
       catch (error) {
@@ -289,5 +354,44 @@ export function createTimelineLocalSaveHandoff(options: {
         throw error;
       }
     },
+    remoteHistoryAvailable,
+    canUndo: () => remoteHistoryAvailable() && undoTargets.length > 0,
+    canRedo: () => remoteHistoryAvailable() && redoTargets.length > 0,
+    undo: () => appendInverse('undo'),
+    redo: () => appendInverse('redo'),
   };
+}
+
+function historyTargets(history: HistoryPage | undefined): { undo: string[]; redo: string[] } {
+  if (!history?.items?.length) return { undo: [], redo: [] };
+  // Runtime history is returned newest-first. Replaying it oldest-first lets
+  // the persisted undo_of relation reconstruct the same accepted undo/redo
+  // targets after a fresh mount without consulting display snapshots.
+  const undo: string[] = [];
+  const redo: string[] = [];
+  for (const entry of [...history.items].reverse()) {
+    const publication = entry.publication_id;
+    if (entry.intent !== 'recorded' || !publication) continue;
+    const targets = entry.records?.undo_of ?? [];
+    if (!targets.length) {
+      undo.push(publication);
+      redo.length = 0;
+      continue;
+    }
+    const undone = targets.every((target) => undo.includes(target));
+    if (undone) {
+      for (const target of targets) {
+        const index = undo.lastIndexOf(target);
+        if (index >= 0) undo.splice(index, 1);
+      }
+      redo.push(publication);
+    } else if (redo.includes(publication) || targets.some((target) => redo.includes(target))) {
+      for (const target of targets) {
+        const index = redo.lastIndexOf(target);
+        if (index >= 0) redo.splice(index, 1);
+      }
+      undo.push(publication);
+    }
+  }
+  return { undo, redo };
 }

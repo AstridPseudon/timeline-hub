@@ -161,6 +161,7 @@ export async function createLocalSaveSession(options: Options) {
           const patch = original.documentIntent as Record<string, OutboxJson> | undefined;
           const commands: CommitRequest['commands'] = original.commands ?? [{ schema_version: 1,
             op: 'doc.patch', version: '1', select: null, created: patch!.created as string[], args: { changes: patch!.changes } }];
+          const inverse = commands.length === 1 && commands[0].op === 'timeline.inverse';
           // Only the base pair advances. Original operands, reads, step IDs and
           // allocated entity IDs come directly from the persisted intent.
           const metadata = patch ? { steps: [{ ...patch.step as Record<string, OutboxJson>,
@@ -171,8 +172,13 @@ export async function createLocalSaveSession(options: Options) {
               command_ordinals: commands.map((_, index) => index), patch: [] }], merge: 'fields' };
           const request: CommitRequest = { api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
             base_revision_id: head.revisionId, base_publication_id: head.publicationId,
-            commands, label: original.label, dry_run: false, source: { via: 'app' } };
-          if (fullV2) Object.assign(request, metadata);
+            commands, source: { via: 'app' } };
+          // ABI-1 inverse requests intentionally retain the existing provider
+          // shape. Runtime supplies authoritative inverse metadata from the
+          // targeted publication; the durable outbox still owns this exact
+          // request and its idempotency key.
+          if (!inverse) Object.assign(request, { label: original.label, dry_run: false });
+          if (fullV2 && !inverse) Object.assign(request, metadata);
           return { method: 'POST',
             path: `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`,
             body: toOutboxJson(request) };
