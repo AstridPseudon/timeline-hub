@@ -70,7 +70,7 @@ def _is_v2_request(request, records=None):
     """
     return any(key in request for key in ("label", "steps", "merge", "reads")) or (
         records is not None and "steps" in records
-    )
+    ) or any(command.get("op") == "doc.patch" for command in request.get("commands", []))
 
 
 def _history_metadata(request, data):
@@ -88,43 +88,6 @@ def _history_metadata(request, data):
         if "reads" in request:
             metadata["reads"] = request["reads"]
     return metadata
-
-
-def _provider_images(document):
-    images = {"parent": document["parent_revision"]}
-    images.update(("shot-revision:" + image["revision_id"], image)
-                  for image in document["shot_revisions"])
-    images.update(("internal-revision:" + image["revision_id"], image)
-                  for image in document["internal_timeline_revisions"])
-    return images
-
-
-def _validate_physical_bindings(document, records):
-    """Authenticate R1's physical closure bindings before they become history facts."""
-    images = _provider_images(document)
-    for record in records["commands"]:
-        for binding in record["bindings"]:
-            physical = binding.get("physical_ref")
-            if physical is None:
-                continue  # ABI-1 bindings have no physical provenance.
-            image = images.get(physical)
-            boundary = binding.get("boundary")
-            if image is None or not isinstance(boundary, dict):
-                reject("invalid_records", "provider binding is outside the accepted closure", status=422)
-            if binding.get("revision_id") != image["revision_id"] or binding.get("content_digest") != image["content_digest"]:
-                reject("invalid_records", "provider binding revision provenance differs from the accepted closure", status=422)
-            required_boundary = {"base_revision_id", "base_publication_id", "evaluated_head", "step_id",
-                                 "command_ordinal", "phase"}
-            if not required_boundary <= boundary.keys() or boundary["command_ordinal"] != record["ordinal"]:
-                reject("invalid_records", "provider binding boundary is incomplete or misattributed", status=422)
-            if "change" in binding:
-                change = binding["change"]
-                if not isinstance(change, dict) or change.get("ref") != physical:
-                    reject("invalid_records", "provider patch binding is not tied to its physical root", status=422)
-                path = binding.get("path")
-                write_range = binding.get("write_range")
-                if not isinstance(path, list) or not isinstance(write_range, list) or len(write_range) != 2:
-                    reject("invalid_records", "provider patch binding lacks its write range", status=422)
 
 
 def _validate_record_metadata(request, records):
@@ -268,7 +231,14 @@ class TimelineCommitStore:
                 valid = valid and data.get("label") == records["label"]
             if "merge_mode" in records:
                 valid = valid and data.get("merge_mode") == records["merge_mode"]
-            _validate_physical_bindings(document, records)
+            if "steps" in records:
+                from .timeline_commit_auth import validate
+                replay_request = {**metadata, "commands": data["commands"],
+                                  "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"]}
+                source = self.revision_closure(edge["project_id"], edge["timeline_id"], previous["revision_id"])
+                continuations = self._binding_continuations(edge["project_id"], edge["timeline_id"], base["publication_id"], previous)
+                validate(replay_request, {"records": records, "expected_head": previous, "canonical_document": document},
+                         source, continuations=continuations)
             ids = json.loads(row["event_ids_json"])
             seq = row["resulting_stream_seq"]
             # Replay verifies the accepted prefix, independent of later writes.
@@ -715,6 +685,20 @@ class TimelineCommitStore:
         if existing is not None:
             self._verify_parent_rows(document)
 
+    def _binding_continuations(self, project, timeline, base_publication, expected):
+        continuations, cursor = {}, expected
+        while cursor["publication_id"] != base_publication:
+            entry = self.history_entry(project, timeline, cursor["publication_id"])
+            if entry["records"]:
+                for record in entry["records"]["commands"]:
+                    for binding in record["bindings"]:
+                        if binding.get("key") == "commit.materialization":
+                            continuations.setdefault(binding["physical_ref"], set()).add(binding["successor"])
+            cursor = entry["previous"]
+            if cursor is None:
+                reject("history_unavailable", "base is outside evaluated head ancestry")
+        return continuations
+
     def _validate(self, context, prepared, inputs):
         # Callers run _check_shot_destinations first, which validates the schema.
         request = context["request"]
@@ -731,7 +715,6 @@ class TimelineCommitStore:
         recorded_steps = records.get("steps")
         requested_steps = request.get("steps")
         _validate_record_metadata(request, records)
-        _validate_physical_bindings(document, records)
         if _is_v2_request(request) and recorded_steps is None:
             reject("invalid_records", "provider did not return authoritative step records", status=422)
         if recorded_steps is not None:
@@ -746,6 +729,14 @@ class TimelineCommitStore:
                     for step in requested_steps
                 ]:
                 reject("invalid_records", "provider step boundaries disagree with the request", status=422)
+            from .timeline_commit_auth import validate
+            source = self.revision_closure(request["project_id"], request["timeline_id"], prepared["expected_head"]["revision_id"])
+            base = self.revision_closure(request["project_id"], request["timeline_id"], request["base_revision_id"])
+            continuations = self._binding_continuations(request["project_id"], request["timeline_id"],
+                                                       request["base_publication_id"], prepared["expected_head"])
+            validate(request, prepared, source, base, continuations)
+        elif any("physical_ref" in binding for record in commands for binding in record["bindings"]):
+            reject("invalid_records", "physical bindings require authoritative steps", status=422)
         for record in commands:
             if any(write["cause"] >= len(commands) for write in record["derived_writes"]):
                 reject("invalid_records", status=422)
