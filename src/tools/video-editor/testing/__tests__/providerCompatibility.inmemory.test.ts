@@ -30,5 +30,6 @@ describe('InMemoryDataProvider compatibility (testing version)', () => {
   runProviderCompatibilitySuite(inMemoryFactory, {
     versionConflictIsSoft: false,
     timelineId: 'compat-test-timeline',
+    checkpoints: false,
   });
 });

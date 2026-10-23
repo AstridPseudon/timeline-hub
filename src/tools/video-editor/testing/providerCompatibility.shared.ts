@@ -93,12 +93,19 @@ export function runProviderCompatibilitySuite(
      * persisted source lane, then re-materializes defaults on load.
      */
     derivedOutputOnSave?: boolean;
-  } = {},
+    /**
+     * Whether the provider under test implements the optional checkpoint pair
+     * (saveCheckpoint + loadCheckpoints). Declared by each caller, never read
+     * from the provider, so a provider that loses the pair fails the suite.
+     */
+    checkpoints: boolean;
+  },
 ): void {
   const {
     versionConflictIsSoft = false,
     timelineId: defaultTimelineId = 'compat-test-timeline',
     derivedOutputOnSave = false,
+    checkpoints: expectsCheckpoints,
   } = options;
 
   const tid = defaultTimelineId;
@@ -661,49 +668,43 @@ export function runProviderCompatibilitySuite(
   // ── Checkpoints (optional) ─────────────────────────────────────────────────
 
   describe('checkpoints (optional contract)', () => {
-    // saveCheckpoint / loadCheckpoints are optional on DataProvider. The capability is read from the provider
-    // under test: a provider without them must lack both (asserted), a provider with them must pass the cases.
+    // The caller declares the capability. The first case asserts the provider matches the declaration; the
+    // save/load cases are registered only for providers declared to have checkpoints.
     const seeded = () => factory({ timelineId: tid, config: config1, configVersion: 1 });
 
-    it('has both checkpoint methods or neither', async () => {
+    it(`matches the declared checkpoint capability (${expectsCheckpoints ? 'present' : 'absent'})`, async () => {
       const provider = await seeded();
-      const hasSave = typeof provider.saveCheckpoint === 'function';
-      const hasLoad = typeof provider.loadCheckpoints === 'function';
-      expect(hasLoad).toBe(hasSave);
-      if (!hasSave) {
+      if (expectsCheckpoints) {
+        expect(typeof provider.saveCheckpoint).toBe('function');
+        expect(typeof provider.loadCheckpoints).toBe('function');
+      } else {
         expect(provider.saveCheckpoint).toBeUndefined();
         expect(provider.loadCheckpoints).toBeUndefined();
       }
     });
 
-    it('saveCheckpoint returns a truthy checkpoint ID', async () => {
-      const provider = await seeded();
-      if (typeof provider.saveCheckpoint !== 'function') {
-        expect(provider.loadCheckpoints).toBeUndefined();
-        return;
-      }
-      const checkpointId = await provider.saveCheckpoint(tid, {
-        timelineId: tid,
-        config: config1,
-        createdAt: new Date('2026-06-20T00:00:00.000Z').toISOString(),
-        triggerType: 'manual',
-        label: 'Manual checkpoint',
-        editsSinceLastCheckpoint: 1,
+    if (expectsCheckpoints) {
+      it('saveCheckpoint returns a truthy checkpoint ID', async () => {
+        const provider = await seeded();
+        const checkpointId = await provider.saveCheckpoint!(tid, {
+          timelineId: tid,
+          config: config1,
+          createdAt: new Date('2026-06-20T00:00:00.000Z').toISOString(),
+          triggerType: 'manual',
+          label: 'Manual checkpoint',
+          editsSinceLastCheckpoint: 1,
+        });
+
+        expect(checkpointId).toBeTruthy();
+        expect(typeof checkpointId).toBe('string');
       });
 
-      expect(checkpointId).toBeTruthy();
-      expect(typeof checkpointId).toBe('string');
-    });
-
-    it('loadCheckpoints returns an array', async () => {
-      const provider = await seeded();
-      if (typeof provider.loadCheckpoints !== 'function') {
-        expect(provider.saveCheckpoint).toBeUndefined();
-        return;
-      }
-      const checkpoints = await provider.loadCheckpoints(tid);
-      expect(Array.isArray(checkpoints)).toBe(true);
-    });
+      it('loadCheckpoints returns an array', async () => {
+        const provider = await seeded();
+        const checkpoints = await provider.loadCheckpoints!(tid);
+        expect(Array.isArray(checkpoints)).toBe(true);
+      });
+    }
   });
 
   // ── registerAsset (optional) ──────────────────────────────────────────────

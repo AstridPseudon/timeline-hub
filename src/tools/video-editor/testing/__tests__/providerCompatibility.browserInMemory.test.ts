@@ -37,5 +37,6 @@ describe('InMemoryDataProvider compatibility (browser-runtime)', () => {
   runProviderCompatibilitySuite(inMemoryFactory, {
     versionConflictIsSoft: false,
     timelineId: 'compat-test-timeline',
+    checkpoints: true,
   });
 });

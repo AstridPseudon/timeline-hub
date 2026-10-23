@@ -265,7 +265,13 @@ function isAncestor(repoRoot, ancestor, descendant) {
     ['merge-base', '--is-ancestor', ancestor, descendant],
     { allowFailure: true },
   );
-  return !result.error && result.status === 0;
+  // `git merge-base --is-ancestor` exits 0 (ancestor) or 1 (not); anything else, or a spawn/timeout error, is a
+  // failure to answer and must not be reported as "not descended".
+  if (result.error || (result.status !== 0 && result.status !== 1)) {
+    const detail = result.error?.message || result.stderr.trim() || `exit ${result.status}`;
+    fail(`git merge-base --is-ancestor failed in ${repoRoot}: ${detail}`);
+  }
+  return result.status === 0;
 }
 
 function changedPathsOnEdge(repoRoot, parent, commit) {

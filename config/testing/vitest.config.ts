@@ -110,7 +110,8 @@ export default defineConfig({
     //    (timeline-ops, timeline-schema, timeline-composition, astrid-browser); their suites belong to, and run in,
     //    the producing repos, and the vendor-lock checks in .github/workflows/test.yml pin the copies to them.
     //  - tests/e2e/local/support/quick-descriptor.test.ts and scripts/**/*.test.mjs are node:test files, run by
-    //    `npm run test:node` (the vitest job) or by their own npm scripts (test:extension-*, test:no-remote-hosts).
+    //    `npm run test:node`, which `npm test` runs in CI (test.yml); the per-area scripts (test:extension-*,
+    //    test:no-remote-hosts, test:remotion-audio-resume-patch) run subsets of the same files.
     //    scripts/installer/bootstrap*.test.mjs fail on a machine without pwsh / with this POSIX installer: see LANES
     //    'node-installer-bootstrap' in skipRegistry.mjs.
     exclude: [

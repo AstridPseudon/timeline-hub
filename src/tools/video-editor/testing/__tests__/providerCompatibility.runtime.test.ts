@@ -124,5 +124,6 @@ describe('RuntimeDataProvider compatibility (runtimeFixture)', () => {
     // Runtime treats `config.output` as host-derived: saves drop it and loads
     // re-materialise defaults (dataProvider.ts saveTimelineInOrder).
     derivedOutputOnSave: true,
+    checkpoints: false,
   });
 });
