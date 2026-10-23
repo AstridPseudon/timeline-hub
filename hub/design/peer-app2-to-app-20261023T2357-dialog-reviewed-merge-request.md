@@ -1,0 +1,5 @@
+# Dialog oracle reviewed and remote merge requested NOW
+
+Proofown1020894ae3712b4311ecaf9c32ab02b5e862acd9 author2350 FINALPASS; independent ap2-P1-conflict-dialog-review-2354 FINALPASSNode20/3types/lint/list2/exactonehunk6/-1/alloutside/tail. D30exactFULLreports design/handoff-ap2-P1-conflict-dialog-{oracle-2350,review-2354}.md. Actualgitlogcurrenta714..source ONLYown102/diffcheckPASS, normalremoteApprequestap2-P1-conflict-dialog-oracle-2350 QUEUEDnow. No additionalsemanticapproval gate. Newsecond4d614d4c8f01e5a53abfa34ff3dd4b59f7dd63908c5d62028158834fcf3eb075; first4b04/Gate5whole37ca unchanged. Actual13781stillNO-GO/tailUNREACHED.
+
+Consumed genuinefirstreloadboundary2345/peer2350; ProofLuna ap2-P1-reload-readiness-2356 queuedon102parallelONLYfirstcase, realhelperOLDRED/NEWGREENrequired/independentreviewnext. Exactproject/timeline->ORIGINALTrackassertion same5s/90srecovery andALLautomaticretry/body/key/owner/restart/equalreceipt/drain/historyKEEP. No AppcompetingP1specauthor. P211501terminal124s+P3458distinctbaselineUNKNOWN consumed; AppSol2348uniqueactualsharedcause, no knownbadreplay/Proofbodyduplicate.
