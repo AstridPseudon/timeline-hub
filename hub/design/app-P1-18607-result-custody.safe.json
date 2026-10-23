@@ -1,0 +1,543 @@
+{
+  "packet_version": "app-p1-result-custody-v1",
+  "run_id": "app-P1-local-OPS-1830-ap2-P1-chain-h6-1023185313-18607",
+  "status": "fail",
+  "exit": 1,
+  "elapsed_seconds": 744,
+  "requested_at": "2026-10-23T18:53:13Z",
+  "log_observed_end": "2026-10-23T19:05:41.146658791Z",
+  "raw_log": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-P1-local-OPS-1830-ap2-P1-chain-h6-1023185313-18607/log.txt",
+    "bytes": 26440,
+    "lines": 62,
+    "sha256": "a83cc89c1909877b7f01dfe4c83e994a31b8450afae80767a01e87781bf3728b",
+    "custody": "restored from exact retained deletion hunk; read-only; no rerun"
+  },
+  "snapshot": {
+    "target": "/home/user/work/wt/app-P1-local-OPS-1830",
+    "clean": true,
+    "app_head": "2107e1870e51c650d59315f4cc1ab6af338f198c",
+    "app_tree": "a3ff3584e9b559bbb3c3a82b77be7516ed8e761c",
+    "agent_head": "78738040d72ce74c42ddf7731221aecb06f9246d",
+    "agent_tree": "e77ea239789dd8ae9103c68fef79b49329cf2c6e",
+    "runtime_head": "2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d",
+    "runtime_tree": "f79a2355cfb39d9ada7721978bd20d5702105778",
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "source_mode": "actual direct service snapshot; not synthetic/control"
+  },
+  "source": {
+    "p1_spec": {
+      "path": "tests/e2e/local/three-products.p1-chain.spec.ts",
+      "git_blob": "feb26946d62db9a4a02dab8dca1c0dc7320f2681",
+      "sha256": "074ecd9e6408218633bc6a997e509459f2034321a655d1555de38dc8f37cdca3"
+    },
+    "diagnostic_source": {
+      "path": "tests/e2e/local/p1-diagnostic-safety.ts",
+      "git_blob": "a49f6bfb20c21b01bc709db79d3fa3cd47b216c3",
+      "sha256": "658ef86462baa18b11a3b4a89631c199f3eb914606d3d6969d4bee12535e4260"
+    },
+    "diagnostic_tests": {
+      "path": "tests/e2e/local/p1-diagnostic-safety.test.ts",
+      "git_blob": "3b72ee8fff59b6d7e9919aa936f0ac3e6d9a4ff5",
+      "sha256": "92c6bd515e9a5fefa422a8856b3acc749c3c31e9eefea4ba4c9d1dc694e272f5"
+    },
+    "first_case_slice_sha256": "4b04ad7ef74b8106244d87c23d12c7a18da251dd8f5a746f42d3221a72ea8b7f",
+    "second_case_suffix_sha256": "2f7501184477c8aec38d3cd289dd13c0d011fa8f69ecd43378f24f6c3100a2f7",
+    "gate5_body_git_blob": "37caf28577d42fbe98afd2320dffa3c72e6e74b1"
+  },
+  "preflight": {
+    "boundary": "D21 passed; actual body executed",
+    "evidence": "summary reports body counts and the log contains both original test bodies",
+    "child_venv_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/childvenv-venv-agent-child-app-p1-787-2a9-1829",
+    "remotion_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/runtime-agent-remotion-app-p1-787-2a9-1830",
+    "provision_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/provision/venv-agent-child-app-p1-787-2a9-1829.txt",
+    "remotion_env": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-app-p1-787-2a9-1830.env",
+    "installed": {
+      "requirements_path": "requirements/proof.lock",
+      "requirements_lock_sha256": "236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778",
+      "package_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+      "node": "v20.19.4",
+      "npm": "10.8.2",
+      "import_origins": [
+        "astrid",
+        "astrid_runtime",
+        "runtime_protocol",
+        "astrid_runtime_client"
+      ],
+      "runtime_project": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830"
+    },
+    "preflight_stage_detail": "No separate per-stage stdout artifact was retained; exact source/clean/pin/receipt checks are preserved above."
+  },
+  "collector_policy": {
+    "max_bytes": 16384,
+    "max_depth": 8,
+    "max_keys": 40,
+    "max_array_items": 40,
+    "max_string": 500,
+    "priority_max_items": 4,
+    "allowlist_source": "tests/e2e/local/p1-diagnostic-safety.ts"
+  },
+  "collector_records": [
+    {
+      "line": 10,
+      "start_byte": 433,
+      "end_byte_exclusive": 4251,
+      "bytes": 3818,
+      "label": "[P1 second-case priority diagnostics]",
+      "body": {
+        "case": {
+          "projectId": "f7dac44e898046a3bc2e803518845a2d",
+          "projectSlug": "direct-journey-c913a0",
+          "timelineId": "026cddd9-d9a1-4d0c-a477-4182d3d91ace",
+          "sourceId": "p1-chain-source",
+          "originalClipId": "p1-chain-source",
+          "rightId": "p1-chain-source-1792781747736",
+          "expectedPostCount": 2,
+          "observedPostCount": 1
+        },
+        "basis": {
+          "count": 1,
+          "items": [
+            {
+              "index": 0,
+              "key": "793b6bb7-de65-4743-9d03-d823cd55f7bc",
+              "baseRevisionId": "authoring-parent-revision-2cf95e535eeef59f5b6322c8d136fd44f9cfb7036ccc30d0d01e799e55055ff9",
+              "basePublicationId": "txn-fd509025d90c4c938cc3dcded294d804",
+              "merge": "fields",
+              "reads": {
+                "count": 13,
+                "items": [
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "clips",
+                      "id:p1-chain-source",
+                      "id"
+                    ],
+                    "state": "UNKNOWN"
+                  },
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "clips",
+                      "id:p1-chain-source",
+                      "track"
+                    ],
+                    "state": "UNKNOWN"
+                  },
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "clips",
+                      "id:p1-chain-source",
+                      "at"
+                    ],
+                    "state": "UNKNOWN"
+                  },
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "clips",
+                      "id:p1-chain-source",
+                      "clipType"
+                    ],
+                    "state": "UNKNOWN"
+                  },
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "clips",
+                      "id:p1-chain-source",
+                      "hold"
+                    ],
+                    "state": "UNKNOWN"
+                  },
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "clips",
+                      "id:p1-chain-source",
+                      "from"
+                    ],
+                    "state": "UNKNOWN"
+                  },
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "clips",
+                      "id:p1-chain-source",
+                      "to"
+                    ],
+                    "state": "UNKNOWN"
+                  },
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "clips",
+                      "id:p1-chain-source",
+                      "speed"
+                    ],
+                    "state": "UNKNOWN"
+                  },
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "clips",
+                      "id:p1-chain-source",
+                      "asset"
+                    ],
+                    "state": "UNKNOWN"
+                  },
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "output",
+                      "fps"
+                    ],
+                    "state": "UNKNOWN"
+                  },
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "registry",
+                      "assets",
+                      "p1-video"
+                    ],
+                    "state": "UNKNOWN"
+                  },
+                  {
+                    "kind": "collection",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "clips"
+                    ]
+                  },
+                  {
+                    "kind": "field",
+                    "ref": "parent",
+                    "path": [
+                      "config",
+                      "pinnedShotGroups"
+                    ],
+                    "state": "UNKNOWN"
+                  }
+                ],
+                "summarized": true,
+                "truncated": false
+              }
+            }
+          ],
+          "summarized": true,
+          "truncated": false
+        },
+        "displayedHead": {
+          "providerProjectId": null,
+          "providerTimelineId": null,
+          "commitReplies": {
+            "count": 1,
+            "items": [
+              {
+                "index": 0,
+                "head": {
+                  "revisionId": "authoring-parent-revision-161fc0b638b6c212c7f47395297ecee7992976befb7182a1e8887c6ac3861325",
+                  "publicationId": "txn-7f0ec37b663a422788c8fd85f133af82"
+                }
+              }
+            ],
+            "summarized": true,
+            "truncated": false
+          },
+          "readonlyReplies": {
+            "count": 40,
+            "items": [
+              {
+                "route": "/api/runtime/v1/health",
+                "status": 200,
+                "head": "UNKNOWN"
+              },
+              {
+                "route": "/api/runtime/v1/realm",
+                "status": 200,
+                "head": "UNKNOWN"
+              },
+              {
+                "route": "/api/runtime/v1/health",
+                "status": 200,
+                "head": "UNKNOWN"
+              },
+              {
+                "route": "/api/runtime/v1/health",
+                "status": 200,
+                "head": "UNKNOWN"
+              }
+            ],
+            "summarized": true,
+            "truncated": true
+          },
+          "runtimeHistoryHead": {
+            "revisionId": "authoring-parent-revision-161fc0b638b6c212c7f47395297ecee7992976befb7182a1e8887c6ac3861325",
+            "publicationId": "txn-7f0ec37b663a422788c8fd85f133af82"
+          },
+          "historyReadFailed": false
+        },
+        "outbox": {
+          "readFailed": false,
+          "summary": {
+            "ownerCount": 1,
+            "intentLengths": [
+              0
+            ],
+            "pendingIntentLengths": [
+              0
+            ],
+            "outcomeKinds": [],
+            "hasIdleOwner": true,
+            "hasPending": false,
+            "hasIntents": false,
+            "hasConflict": false
+          }
+        },
+        "ui": {
+          "connectionState": "unknown",
+          "runtimePanelVisible": false,
+          "recoveryVisible": false,
+          "recoveryMessage": null,
+          "timelineErrorVisible": false,
+          "timelineErrorMessage": null,
+          "alertCount": 0
+        },
+        "errors": {
+          "page": {
+            "count": 0,
+            "items": [],
+            "summarized": true,
+            "truncated": false
+          },
+          "console": {
+            "count": 4,
+            "items": [
+              "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+              "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+              "Failed to load resource: the server responded with a status of 503 (Service Unavailable)",
+              "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+            ],
+            "summarized": true,
+            "truncated": false
+          },
+          "requestFailures": {
+            "count": 0,
+            "items": [],
+            "summarized": true,
+            "truncated": false
+          }
+        }
+      },
+      "line_bytes": 3819,
+      "line_sha256": "623197e4bdc045754664412d01c9953c2ac12563dd378c1bdab14634dd02e079",
+      "source_range_sha256": "6400ec8183c629b1d83b9e578b62357cfd3b951f51f46574ec6ad59e73c1405d"
+    },
+    {
+      "line": 11,
+      "start_byte": 4252,
+      "end_byte_exclusive": 7052,
+      "bytes": 2800,
+      "label": "[P1 failure continuation P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message]",
+      "body": {
+        "case": {
+          "projectId": "f7dac44e898046a3bc2e803518845a2d",
+          "timelineId": "026cddd9-d9a1-4d0c-a477-4182d3d91ace",
+          "rightId": "p1-chain-source-1792781747736",
+          "observedPostCount": 1
+        },
+        "displayedHead": {
+          "providerProjectId": "UNKNOWN",
+          "providerTimelineId": "UNKNOWN",
+          "currentWireHeads": {
+            "count": 1,
+            "items": [
+              {
+                "method": "POST",
+                "route": "/api/runtime/v1/projects/:project/timelines/:timeline/commit",
+                "key": "793b6bb7-de65-4743-9d03-d823cd55f7bc",
+                "status": 200,
+                "head": {
+                  "revisionId": "authoring-parent-revision-161fc0b638b6c212c7f47395297ecee7992976befb7182a1e8887c6ac3861325",
+                  "publicationId": "txn-7f0ec37b663a422788c8fd85f133af82"
+                },
+                "replyReadFailed": false
+              }
+            ],
+            "summarized": true,
+            "truncated": false
+          }
+        },
+        "outbox": {
+          "readFailed": true,
+          "summary": "UNKNOWN",
+          "owners": "UNKNOWN"
+        },
+        "sourceWindow": {
+          "before": {
+            "sourceIn": {
+              "value": "0",
+              "numericValue": 0,
+              "visible": true
+            },
+            "selectedClip": {
+              "identity": {
+                "tagName": "DIV",
+                "id": null,
+                "clipId": "p1-chain-source-1792781747736",
+                "testId": null,
+                "ariaSelected": null,
+                "className": "clip-action group relative flex h-full w-full select-none overflow-hidden rounded-md border bg-card text-left outline-none border-sky-400 text-foreground"
+              },
+              "status": "UNKNOWN",
+              "visible": true,
+              "text": "p1-video.webm"
+            },
+            "rightId": "p1-chain-source-1792781747736"
+          },
+          "after": {
+            "sourceIn": {
+              "value": "3",
+              "numericValue": 3,
+              "visible": true
+            },
+            "selectedClip": {
+              "identity": {
+                "tagName": "DIV",
+                "id": null,
+                "clipId": "p1-chain-source-1792781747736",
+                "testId": null,
+                "ariaSelected": null,
+                "className": "clip-action group relative flex h-full w-full select-none overflow-hidden rounded-md border bg-card text-left outline-none border-sky-400 text-foreground"
+              },
+              "status": "UNKNOWN",
+              "visible": true,
+              "text": "p1-video.webm"
+            },
+            "rightId": "p1-chain-source-1792781747736"
+          }
+        },
+        "ui": {
+          "connectionState": "unknown",
+          "runtimePanelVisible": "UNKNOWN",
+          "recoveryVisible": "UNKNOWN",
+          "recoveryMessage": "UNKNOWN",
+          "timelineErrorVisible": "UNKNOWN",
+          "timelineErrorMessage": "UNKNOWN",
+          "alertCount": "UNKNOWN"
+        },
+        "errors": {
+          "page": {
+            "count": 0,
+            "items": [],
+            "summarized": true,
+            "truncated": false
+          },
+          "console": {
+            "count": 40,
+            "items": [
+              {
+                "type": "error",
+                "signal": "unknown",
+                "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+              },
+              {
+                "type": "error",
+                "signal": "unknown",
+                "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+              },
+              {
+                "type": "error",
+                "signal": "unknown",
+                "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+              },
+              {
+                "type": "error",
+                "signal": "unknown",
+                "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+              }
+            ],
+            "summarized": true,
+            "truncated": true
+          },
+          "requestFailures": {
+            "count": 0,
+            "items": [],
+            "summarized": true,
+            "truncated": false
+          }
+        }
+      },
+      "line_bytes": 2801,
+      "line_sha256": "d9988f19348c0b7eeeb153b77bced2ee33457abdac6ffacf654e329c33c2192c",
+      "source_range_sha256": "ce8095346127435092a1a91279ee788513734695f34179fdd14cfa905ab0c59e"
+    }
+  ],
+  "capped_record": {
+    "line": 12,
+    "start_byte": 7053,
+    "end_byte_exclusive": 23437,
+    "bytes": 16384,
+    "parseable": false,
+    "truncation_marker": "…[TRUNCATED]",
+    "loss": "formatter capped the detailed second-case record; the suffix and any state after the cap are unavailable. No recovery from this FILE/log is possible.",
+    "line_bytes": 16385,
+    "line_sha256": "03cb1c85edfac0fc19b0a0477bdca6130f77beb8478bdc6f7b9efcd515c1cf88",
+    "source_range_sha256": "a2a41a9e12fadc0895e8d274e0ac88147f3a5ae401a4ee17c57cdce150814bd0"
+  },
+  "boundaries": {
+    "first_case": "PASS; log line 9 reports 27.4s",
+    "second_case": "FAIL before second commit; expected traffic.posts.length 2, received 1; original assertion timed out after 90000ms, then afterEach timed out at 300000ms",
+    "second_case_unreached": [
+      "Agent move",
+      "HTTP 409 refusal",
+      "App rollback/message assertions"
+    ],
+    "cause": "UNKNOWN; no direct evidence proves App, Agent, Runtime, mounted save, outbox, or recovery ownership"
+  },
+  "safe_export_limits": {
+    "full_request_bodies": "not emitted by the allowlisted collector and not copied",
+    "full_success_data_receipts": "not emitted by the allowlisted collector and not copied",
+    "credentials_tokens_raw_packets": "not copied"
+  },
+  "custody_verification": {
+    "restored_original": {
+      "bytes": 26440,
+      "lines": 62,
+      "sha256": "a83cc89c1909877b7f01dfe4c83e994a31b8450afae80767a01e87781bf3728b",
+      "verified_before_safe_export": true,
+      "verified_after_safe_export": true
+    },
+    "overwritten_replacement": {
+      "bytes": 18661,
+      "sha256": "28f8c39b6587228a5cba3056e56a5a83ace6a7382a7269821da13c209ee372ec",
+      "designation": "preserved privately as overwritten replacement; never treated as raw log"
+    }
+  }
+}
