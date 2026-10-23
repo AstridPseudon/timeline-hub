@@ -1,6 +1,7 @@
 # U2 owner-review merge route repair
 
-Status: **PASS**. Production caller `$ORCH/bin/hub-syncd` invokes the exact
+Author status: **PASS** (historical snapshot). Independent current-live review:
+**FAIL**. Production caller `$ORCH/bin/hub-syncd` invokes the exact
 `$ORCH/bin/hub-sync` repaired below. No hub-sync execution, network, push,
 commit, product-repo edit, or Git-internal edit was performed.
 
@@ -37,3 +38,47 @@ Checks: targeted non-structure pytest 7 passed/4 deselected; full targeted
 baseline file 9 passed/2 pre-existing structure-baseline failures; scoped Ruff
 PASS; normal Ruff 2149/2149 PASS; persistent mypy 1914/1914 PASS; vendor lock,
 artifact manifest, and `git diff --check` PASS. No full/browser/live suite.
+
+## Independent operations review (2026-10-23)
+
+**FAIL — the claimed repair is not persistent in the actual live route.**
+
+The current `ORCH/bin/hub-sync` and the current publication source
+`/home/user/timeline-hub/hub/kit/bin/hub-sync` are byte-identical at SHA-256
+`ae1708bfc5c8edfe2a27cbd3ce4b05b9acb8728a1e2126f6bd8ad5722c4000e6`. Both
+still contain obsolete lines 208–210, the `ap2-*` automatic `MERGE` enqueue.
+The author log’s repaired hash
+`784bf45b40b3a08dcd61fed0cb5065b19a0d6c4eecf7ae6c30a37eedd03df04f` is not
+present now. The exact intended after-state is the three-line deletion in
+the report above, not the current live state.
+
+`bash -n` passed. The isolated route check against the current live source
+found `owner_offer=1 ap2_auto_merge=1 pending_write_token=1` and consequently
+failed the requested no-auto-MERGE assertion. A scratch copy with only lines
+208–210 removed passed with `owner_offer=1 ap2_auto_merge=0
+pending_write_token=0`; fetch, INBOX owner review/explicit `request-merge`,
+seen, and result routing remained present, and ordinary requests had no
+automatic selector. No hub-sync execution or source publication was
+performed.
+
+`hub-syncd` line 8 invokes the exact `$ORCH/bin/hub-sync "$1"` path, while
+line 7 validates and swaps `hub-sync.next`. The existing authorized
+persistence mechanism is the main `hub-sync main` cycle: lines 109–113 copy
+the main `$ORCH/bin` kit into `hub/kit/bin`, and lines 220–225 commit/push the
+hub files; remote cycles stage a changed kit script as `hub-sync.next` for the
+daemon swap. The kit is still old and no `hub-sync.next` exists, so the
+author’s repair is not production-persistent.
+
+Read-only Agent verification independently passed:
+`git diff --name-status 168a5c9b3..a914497a4` is exactly
+`tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py`; raw blobs are
+`05f7aa2bd -> 033482ec2`, with final blob
+`033482ec2b94c5ae4a6b5c456e2d9fab3f454022`. The independent 0612 handoff
+records PASS, matching donor/candidate blob, no tracked report, and no
+dropped v2 fields. No product or Git-internal changes were made. Product
+quality and full v2 HTTP checks were reused, not rerun, per the
+operations-only brief.
+
+The route repair should be re-published through that existing controlled kit
+mechanism, followed by live/kit hash and daemon-swap verification, before
+this task can PASS.
