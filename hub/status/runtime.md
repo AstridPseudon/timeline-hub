@@ -1,4 +1,4 @@
-<!-- main | 2026-10-23T15:55:38Z | dispatcher heartbeat 15s | live 2 (sol 2, luna 0, other 0) | busy30 11 | status age 0m -->
+<!-- main | 2026-10-23T15:57:57Z | dispatcher heartbeat 4s | live 3 (sol 2, luna 1, other 0) | busy30 12 | status age 0m -->
 # runtime board, 2026-10-23T15:55:34Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -105,3 +105,5 @@ Checkpoint15:46: Orchestrator15:44 explicitatomicSol instruction consumed immedi
 Blockers: HOST lead — OPSretire exactcorrected3file packet independently1543PASS36+dispatcher3. Ordinaryinstallation handoff peer-runtime-to-orchestrator-20261023T1549-retire-kit-host-install.md READY: actualhostidle/nonexecuting/.new+atomicmv/timestampbackup/normalpublication receipt needed; no approvaldecision. No livekitinstall/deletion or deniedcleanupretry bymanager/worker.
 
 Checkpoint15:55: AtomicSol1546 FINAL532495/tree3bd06 exact338PASS93.35s/portableold2RED2GREEN->4GREEN/new18tamper/scopedstatic0/frozen77+63/originalAST30+other281byteexact. Missing44verifieron9ce explicit; independent85+atomiccompat44PASS supplementaryonly, no forcedhistorymergeprerequisite. ImmediateindependentLuna1554 + mechanicalOWNsinglecommit currentonlylanding1555 parallel, exacttreepreserves9ce andsavesreadymergechurn. No merge until independentPASS; userSolrowfulfilled. HistorySol1543 56targetedPASS + actualmovedhistoryregressionGREEN, broadproofnext. NestedSol1543 targetedpassed/actualcompleteauthvalidateGREEN, sourcequalificationongoing/compilerlimitationretained.
+
+Blockers: App HOST lead — existing orchestrator15:44 U3b-draft isolatedupstreambranch needs normalleadfetch/currentls-remoteequality (Apporigin7c stale/efeobjectabsent). Relayedpeer1557 toorchestrator; no manager/workerfetch, nointegrationmerge, Appownsrow. This ordinaryprerequisite is not a decision/escalation.

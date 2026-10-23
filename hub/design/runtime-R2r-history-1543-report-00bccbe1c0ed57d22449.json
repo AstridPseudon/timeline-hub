@@ -1,0 +1,17 @@
+{
+  "duration": 0.33946666099996037,
+  "longrepr": "",
+  "nodeid": "tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[continuation]",
+  "outcome": "passed",
+  "sections": [
+    [
+      "Captured stdout setup",
+      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[continuation]\", \"phase\": \"before\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_port.py\"}\n"
+    ],
+    [
+      "Captured stdout call",
+      "{\"damage\": \"continuation\", \"code\": \"conflict\", \"details\": {\"status\": \"refused\", \"reason\": \"history_unavailable\", \"code\": \"history_unavailable\", \"path\": [], \"hint\": \"Refresh the timeline history before retrying\", \"suggested_command\": \"timeline history\", \"base\": {\"revision_id\": \"saved-parent\", \"publication_id\": \"txn-02ff4e3858e54733a1e06704db701610\"}, \"current\": {\"revision_id\": \"authoring-parent-revision-0e122d7a3823b21acd46fd3a01bd08f579783e62834ed0eade236865e2f10164\", \"publication_id\": \"txn-9a625f7c921d4d72a15db04ff4daf2d6\"}, \"conflicts\": []}}\n"
+    ]
+  ],
+  "when": "call"
+}

@@ -1,0 +1,21 @@
+{
+  "duration": 0.01397186999997757,
+  "longrepr": "",
+  "nodeid": "tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[consulted]",
+  "outcome": "passed",
+  "sections": [
+    [
+      "Captured stdout setup",
+      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[consulted]\", \"phase\": \"before\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_port.py\"}\n"
+    ],
+    [
+      "Captured stdout call",
+      "{\"damage\": \"consulted\", \"code\": \"conflict\", \"details\": {\"status\": \"conflict\", \"reason\": \"value_conflict\", \"code\": \"value_conflict\", \"path\": [\"clips\", \"id:vo2\", \"app\"], \"hint\": \"Read the current timeline and retry the edit\", \"suggested_command\": \"timeline show\", \"base\": {\"revision_id\": \"saved-parent\", \"publication_id\": \"txn-0cac1991d5bd48aaba1e4db34b06c093\"}, \"current\": {\"revision_id\": \"authoring-parent-revision-8f22d8be7f124b7a12ca3f1bc774d49a18b7a40d971a7f5374bd7cfb5165edc3\", \"publication_id\": \"txn-1723bf9420ed45bbba34d3122f790c02\"}, \"conflicts\": [{\"kind\": \"value_conflict\", \"ref\": \"internal-revision:authoring-timeline-revision-a5b6b6b83062a9592ac7ed403e407ede0be5a080deb7cd3fbac773ff839720b5\", \"path\": [\"clips\", \"id:vo2\", \"app\"], \"base\": {\"state\": \"absent\"}, \"theirs\": {\"state\": \"absent\"}, \"ours\": {\"state\": \"absent\"}, \"choices\": []}]}}\n"
+    ],
+    [
+      "Captured stdout teardown",
+      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[consulted]\", \"phase\": \"after\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-history-sequential-1543/runtime_protocol/timeline_commit_port.py\"}\n"
+    ]
+  ],
+  "when": "teardown"
+}
