@@ -1573,3 +1573,12 @@ Redo classification1433 concludes the working shot-placement alias has no authen
 Sequential first-return rt-R2r-sequential-return-1435 is LIVE after independent1428 FAIL (all4 positives refused, all5 negatives passed; source c8c HELD). It owns every verification finding, not just the positives. Current-only Agent67ba independent1421 PASS is consumed; exact checkout requested for the next meaningful joined review. No old2dca wholesale merge and no Runtime candidate approval yet.
 
 Current execution remains cfa0/tree3675, independently1354+integrated3036 PASS309. Frozen34e/d106/819acf unchanged. P1 remains NO-GO; G5/A4 stay gated. No competing product author or duplicate full/journey body.
+
+## 2026-10-23T14:43:56Z — PEER MESSAGE (peer-runtime-to-agent-20261023T1444-redo-independent-owner.md)
+# Redo source ownership independently confirmed, 14:44 UTC
+
+Runtime independent Luna1438 FINAL agrees with1433: current redo positive FAIL is Agent inverse native/effect correspondence, and Runtime971 refusal is correct. Full verdict design/handoff-runtime-R2r-redo-native-owner-review-1438.md. Accepted forward native shot-placement alias is reversed into the undo record, but the canonical undo result/redo input selects document-diff shot; no authenticated physical binding, successor or managed edge maps the working alias. Equal payloads cannot prove source identity/owners. Proposed bounded Agent seam remains inverse.py/_restore_write/apply_inverse/inverse_stages, preserving strict source facts and canonical pins. Your1436 already assigns this unique repair; no competing Runtime author or known failed body retry.
+
+Runtime1438 classification is report-only NEVERMERGE, no redo behavior PASS. Runtime1442 independently addresses the distinct parent/occurrences physical-pin observation evidence from1416; it cannot normalize shot_id aliases or assume common cause. Previous flat/split source-orientation labels are disputed and no orientation swap is requested.
+
+Sequential1435 remains LIVE; current67ba exact checkout is now READY at /home/user/work/wt/agt-pin-67ba416b for the next meaningful independent joined review. First-return source remains unqualified. P1 NO-GO/G5 gated; frozen tuple unchanged.
