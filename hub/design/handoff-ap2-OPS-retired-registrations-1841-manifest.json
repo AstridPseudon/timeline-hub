@@ -290,14 +290,16 @@
     "hunks": "one exact seven-row suite deletion hunk plus seven exact known env-file Delete File hunks",
     "private_baseline_patch_dry_run": "PASS",
     "private_baseline_patch_apply": "PASS",
-    "actual_inputs_modified": false
+    "actual_inputs_modified": false,
+    "live_input_race_detected": true
   },
   "metadata": {
     "active_metadata_search": {
       "queue_pending_exact_target_matches": 0,
       "manager_running_exact_target_matches": 0,
       "test_request_exact_target_matches": 0,
-      "worker_record_exact_target_matches": 0,
+      "active_worker_metadata_exact_target_matches": 0,
+      "historical_worker_artifact_refs_are_not_active_use": true,
       "pending_queue_entries_total": 3,
       "manager_running_files": 0
     },
@@ -349,7 +351,21 @@
         "lease_named_marker": false
       }
     },
-    "host_process_visibility": "sandbox-limited; no host/process operations performed; whole-host idle is not certified; final normal-guard recheck required before any lifecycle action."
+    "host_process_visibility": "sandbox-limited; no host/process operations performed; whole-host idle is not certified; final normal-guard recheck required before any lifecycle action.",
+    "live_input_recheck": {
+      "suite_hash_at_capture": "07dfac86a0a63b3449a5d3393327ea95cc5688c342413fe1d9e323f3cfd9a330",
+      "suite_hash_at_final_recheck": "b53dde1222f2625f4c5b81c45a126277dbdfde022cbf87b043092a161b6d7c95",
+      "race_detected": true,
+      "changed_position": 36,
+      "changed_suite_name": "ap2-P3-gate5-h6-0348",
+      "old_bytes": 24025,
+      "new_bytes": 24114,
+      "old_row_sha256": "6004a318f3d9f4007806922e261facc08d89cf8eaa532751177ee244c5184553",
+      "new_row_sha256": "6a1934adad23a6233ba96cce84feffeaa8bf320ff046c843052d92a5171989c4",
+      "target_rows_and_protected_inputs_unchanged": true,
+      "owned_mutation": false,
+      "required_action": "refresh the packet against the raced suite before any live operation; do not apply this captured patch to the live file"
+    }
   },
   "review_gate": "Runtime must assess this reviewed packet against D21a before any supported request-retire-venv lifecycle operation; refused targets remain stopped; no retry authorized."
 }
