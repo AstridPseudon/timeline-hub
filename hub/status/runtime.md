@@ -1,5 +1,5 @@
-<!-- main | 2026-10-23T11:20:28Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 0m -->
-# runtime board, 2026-10-23T11:23:00Z
+<!-- main | 2026-10-23T11:22:19Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 0m -->
+# runtime board, 2026-10-23T11:21:50Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | R2r-D17-stage | normalize authenticated native aggregate inverse roots | Sol after Luna failures / independent Luna | Agent1058 actual49ce FAIL4 | review | rt-R2r-D17-current-stage-sol-1105; review1115 LIVE | Author137+101/REALSTORE/static0added/frozen96/originalprefixPASS. Originalfour2PASS2FAIL; repeatedcopy missingcommit.effect Agentowned/peer1119. No D17PASS claim | 5768a3a63/treeb794170 |
