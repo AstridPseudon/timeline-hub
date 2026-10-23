@@ -1,22 +1,175 @@
 """Thin native-command CLI adapters; schemas and capture stay in the SDK."""
 from __future__ import annotations
 
-import argparse
 import copy
 import json
+import sys
 from collections.abc import Mapping
 from pathlib import Path
 
 from astrid.core.cli.domain_output import DomainResult, print_result
 
 
-def _render_commit_result(value: object, *, dry_run: bool) -> str:
+def _document_error(parsed, exc: Exception, *, code: str | None = None) -> DomainResult:
+    """Turn a detached-document refusal into the normal structured CLI error."""
+    from astrid.sdk.contracts import ErrorObject
+
+    details = dict(getattr(exc, "details", {}) or {})
+    failure = getattr(exc, "failure", None)
+    if isinstance(failure, Mapping):
+        details = dict(failure.get("details") or details)
+        code = code or str(failure.get("code") or "timeline_commit_error")
+    details.setdefault("path", "/file")
+    details.setdefault("hint", "re-check out the detached document and retry with its exact base pair")
+    details.setdefault(
+        "suggested_command",
+        f"astrid timelines checkout {parsed.ref} --project {parsed.project}",
+    )
+    return DomainResult.failure(
+        ErrorObject(code or str(getattr(exc, "code", "timeline_commit_error")), str(exc), details),
+        idempotency_key=parsed.idempotency_key or "",
+    )
+
+
+def _commit_envelope(raw: Mapping[str, object], key: str) -> DomainResult:
+    """Preserve the complete Runtime v2 result returned by TimelineSession."""
+    from astrid.core.receipts.contract import CommandReceipt
+
+    receipt = raw.get("receipt")
+    data = raw.get("data")
+    if isinstance(receipt, Mapping):
+        committed = CommandReceipt.from_dict(dict(receipt))
+        if isinstance(committed.result, Mapping):
+            enriched = dict(committed.result)
+            if isinstance(data, Mapping):
+                # ``TimelineSession.flush`` adds these presentation fields
+                # after Runtime's canonical result is sealed in the receipt.
+                for key in ("accepted_publication_id", "show_command"):
+                    if key in data:
+                        enriched[key] = data[key]
+            data = enriched
+        return DomainResult.success(data, receipt=committed, idempotency_key=key)
+    return DomainResult.success(data, idempotency_key=key)
+
+
+def _detached_document(parsed):
+    """Load the existing editable bundle format and verify its exact public scope."""
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.timeline.store import resolve_ids
+    from astrid.sdk.timeline_checkout import Checkout
+
+    checkout = Checkout.load(parsed.file)
+    bundle = checkout.stored_document()
+    project = bundle.get("project_id")
+    timeline = bundle.get("timeline_id")
+    base = bundle.get("base_parent")
+    if not isinstance(project, str) or not project or not isinstance(timeline, str) or not timeline:
+        raise TimelineEditError("unsupported detached document: project_id and timeline_id are required")
+    if not isinstance(base, Mapping) or not all(
+        isinstance(base.get(key), str) and base[key] for key in ("revision_id", "publication_id")
+    ):
+        raise TimelineEditError("detached document has no exact base revision/publication pair")
+    if not isinstance(bundle.get("parent"), Mapping) or not isinstance(bundle.get("placements"), list):
+        raise TimelineEditError("unsupported detached document: expected parent and placements")
+    if not isinstance(bundle.get("shots"), Mapping):
+        raise TimelineEditError("unsupported detached document: expected a shot map")
+
+    resolved_project, resolved_timeline, _head = resolve_ids(
+        parsed.project, parsed.ref, client=parsed.client
+    )
+    if (resolved_project, resolved_timeline) != (project, timeline):
+        raise TimelineEditError(
+            "commit scope does not match the detached document "
+            f"(file {project}/{timeline}, command {resolved_project}/{resolved_timeline})"
+        )
+    return checkout, bundle, {key: base[key] for key in ("revision_id", "publication_id")}
+
+
+def _normalized_document_diff(bundle):
+    """Normalize only the supported document/diff boundary.
+
+    ``Checkout`` creates an empty parent ``config.app`` while opening a
+    detached file.  Runtime's canonical bundle omits that empty container.
+    Treating those two representations as different would turn a clean
+    checkout into an authored ``config.app = {}`` patch.  The existing
+    timeline intent normalizer preserves all non-empty and unknown data; the
+    tidy step removes only an empty film app namespace for comparison.
+    """
+    from astrid.core.timeline import astrid_ns
+
+    normalized = astrid_ns.normalized(bundle)
+    for root in ("parent", "base_parent_payload"):
+        payload = normalized.get(root)
+        config = payload.get("config") if isinstance(payload, Mapping) else None
+        if isinstance(config, dict):
+            astrid_ns.tidy_film(config)
+    return normalized
+
+
+def _preview_detached_document(checkout, bundle, base, parsed, *, dry_run: bool):
+    """Use the public G2 session commit with the G3 emitter."""
+    from astrid.sdk.timeline.commit_session import Timeline
+    from astrid.sdk.timeline.sync import TimelineSession
+
+    session = TimelineSession.open(
+        bundle["project_id"], bundle["timeline_id"], client=parsed.client,
+        outbox_path=parsed.file.with_suffix(".outbox.json"),
+        base_revision_id=base["revision_id"], base_publication_id=base["publication_id"],
+    )
+    with session.outbox.locked():
+        state = session._state()
+    authenticated_base = _normalized_document_diff(session._bundle(state))
+    candidate = _normalized_document_diff(checkout.bundle)
+    if candidate == authenticated_base:
+        return {"data": {"status": "preview" if dry_run else "unchanged",
+                          **({"would_status": "unchanged"} if dry_run else {}),
+                          "project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"],
+                          "label": parsed.message, "commands": [], "steps": [],
+                          "merge_mode": "atomic"}, "receipt": None}
+    working = Timeline(session, authenticated_base, base)
+    working.bundle = candidate
+    working._refresh()
+    return working.commit(
+        parsed.message, merge="atomic", dry_run=dry_run,
+        idempotency_key=parsed.idempotency_key,
+    )
+
+
+def commit_document(parsed) -> int:
+    """Commit a detached document through the durable G2 outbox route."""
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    if not isinstance(parsed.message, str) or not parsed.message.strip():
+        result = _document_error(parsed, TimelineEditError("commit message must be nonempty"), code="validation_error")
+        return print_result(result, as_json=parsed.json)
+    if not isinstance(parsed.idempotency_key, str) or not parsed.idempotency_key.strip():
+        result = _document_error(parsed, TimelineEditError("idempotency key must be nonempty"), code="validation_error")
+        return print_result(result, as_json=parsed.json)
+    try:
+        checkout, bundle, base = _detached_document(parsed)
+        raw = _preview_detached_document(checkout, bundle, base, parsed, dry_run=parsed.dry_run)
+        result = _commit_envelope(raw, parsed.idempotency_key)
+    except (TimelineEditError, WorkspaceClientError, OSError, ValueError, TypeError, KeyError) as exc:
+        result = _document_error(parsed, exc)
+    return print_result(
+        result,
+        as_json=parsed.json,
+        human_renderer=lambda value: _render_commit_result(
+            value, dry_run=parsed.dry_run, label=parsed.message
+        ),
+    )
+
+
+def _render_commit_result(value: object, *, dry_run: bool, label: str | None = None) -> str:
     if dry_run:
-        return "preview only; no publication accepted"
+        return f"preview only; no publication accepted{f' · {label}' if label else ''}"
     if not isinstance(value, DomainResult) or not isinstance(value.data, Mapping):
         raise TypeError("native commit renderer received an invalid result envelope")
     data = value.data
-    return (f"accepted revision {data['accepted_revision_id']} · publication {data['accepted_publication_id']}\n"
+    suffix = f" · {label}" if label else ""
+    return (f"accepted revision {data['accepted_revision_id']} · publication {data['accepted_publication_id']}"
+            f"{suffix}\n"
             f"{data['show_command']}")
 
 
@@ -170,27 +323,87 @@ def commit_move(session, parsed, options):
         raise
 
 
-def commit_edit(parsed, *, undo: bool = False, command=None, sheet=False, edit=None):
+def _verify_commit_selection(session, parsed):
+    from types import SimpleNamespace
+
+    from astrid.core.receipts.contract import CommandReceipt
+    from astrid.sdk.timeline.revisions import RuntimeRevisions
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    entries = {}
+
+    def read(project, timeline, **options):
+        result = session.client.timelines.history(project, timeline, **options)
+        if result.ok and isinstance(result.data, dict):
+            entries.update((row["publication_id"], row) for row in result.data["items"])
+        return result
+
+    # Reuse the public reader's pinned pagination and complete ancestry checks.
+    history = RuntimeRevisions(SimpleNamespace(history=read)).list(
+        session.project_id, session.timeline_id, limit=sys.maxsize)
+    head = ({"revision_id": history[0].id, "publication_id": history[0].publication_id}
+            if history else None)
+
+    def require(condition, message):
+        if not condition:
+            raise WorkspaceClientError(0, "history_unavailable", message, {
+                "path": "/commands/0/args/publications", "head": head,
+            })
+
+    ordered = [revision.publication_id for revision in reversed(history or [])
+               if revision.publication_id in parsed.commit]
+    require(ordered == parsed.commit, "select exact accepted commit receipts, oldest first")
+    for publication in parsed.commit:
+        entry = entries[publication]
+        receipt = CommandReceipt.from_dict(entry["receipt"])
+        data, records = receipt.result, entry["records"]
+        require(entry["intent"] == "recorded" and isinstance(records, dict)
+                and isinstance(data, dict), "selected commit has no guarded accepted history")
+        require(receipt.receipt_id == publication and receipt.project_id == session.project_id
+                and receipt.command_kind == "timeline.commit"
+                and data.get("accepted_revision_id") == entry["revision_id"]
+                and data.get("publisher") == entry["publisher"]
+                and all(data.get(key) == entry[key] for key in ("provider_version", "compiler_version"))
+                and {"revision_id": data.get("previous_revision_id"),
+                     "publication_id": data.get("previous_publication_id")} == entry["previous"],
+                "selected history does not match its exact accepted receipt")
+        document = data.get("canonical_document", {})
+        require(document.get("project_id") == session.project_id
+                and document.get("timeline_id") == session.timeline_id
+                and document.get("parent_revision", {}).get("revision_id") == entry["revision_id"],
+                "selected receipt belongs to a different canonical timeline closure")
+        require(all(key in data and data[key] == records.get(key) == entry.get(key)
+                    for key in ("label", "steps", "merge_mode")),
+                "selected label and steps do not match accepted receipt history")
+        if parsed.command == "redo":
+            require(bool(records.get("undo_of")), "redo requires an accepted undo commit receipt")
+
+
+def commit_edit(parsed, *, sheet=False, edit=None, inverse=False):
     from astrid.core.receipts.contract import CommandReceipt
     from astrid.sdk.contracts import ErrorObject
     from astrid.sdk.timeline._common import TimelineEditError
     from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 
     try:
-        if undo and (parsed.steps_option is not None or parsed.steps != 1 or parsed.draft):
-            raise TimelineEditError("--publication cannot be combined with local draft/step undo")
+        if inverse:
+            if not parsed.commit:
+                raise TimelineEditError("commit options require --commit RECEIPT_ID")
+            if parsed.draft or parsed.steps is not None or isinstance(parsed.steps_option, int):
+                raise TimelineEditError("--commit cannot be combined with a local draft or edit count")
+            if (any(not value.strip() for value in parsed.commit)
+                    or len(set(parsed.commit)) != len(parsed.commit)):
+                raise TimelineEditError("--commit requires unique exact receipt IDs, oldest first")
+            if parsed.steps_option is not None and set(parsed.steps_option) != set(parsed.commit):
+                raise TimelineEditError("--steps must map every selected commit to its step IDs")
         if sheet and parsed.draft:
-            raise TimelineEditError("--native cannot be combined with a local draft")
-        batch = None
-        base = {}
-        if getattr(parsed, "commands_file", None) is not None:
-            batch = json.loads(Path(parsed.commands_file).read_text(encoding="utf-8"))
-            if not isinstance(batch, list) or not batch:
-                raise TimelineEditError("commands file must contain a nonempty JSON array of EditCommands")
-            base = {"base_revision_id": parsed.base_revision_id, "base_publication_id": parsed.base_publication_id}
-        session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client, **base)
+            raise TimelineEditError("a sheet commit cannot be combined with a local draft")
+        session = TimelineSession.open(parsed.project, parsed.ref, client=parsed.client)
         options = {"idempotency_key": parsed.idempotency_key, "dry_run": parsed.dry_run, "via": "cli"}
-        if edit is not None:
+        if inverse:
+            _verify_commit_selection(session, parsed)
+            result = session.undo(parsed.commit, steps=parsed.steps_option, **options)
+        elif edit is not None:
             result = edit(session, parsed, options)
             if result is NotImplemented:
                 return NotImplemented
@@ -205,12 +418,8 @@ def commit_edit(parsed, *, undo: bool = False, command=None, sheet=False, edit=N
                     "status": "preview" if parsed.dry_run else "unchanged", "commands": result.commands,
                 }), as_json=parsed.json, human_renderer=lambda _: (
                     "preview only; no publication accepted" if parsed.dry_run else "no change (the sheet matches its original export)"))
-        elif batch is not None:
-            result = session.commit_many(batch, label="CLI commands-file", **options)
-        elif command is not None:
-            result = session.commit(command, label=f"CLI {command}", **options)
         else:
-            result = session.undo(parsed.publication, **options) if undo else session.move(parsed.clip, parsed.on, **options)
+            result = session.move(parsed.clip, parsed.on, **options)
         receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
         shown = DomainResult.success(result["data"], receipt=receipt,
                                      idempotency_key=result["idempotency_key"])
@@ -220,65 +429,25 @@ def commit_edit(parsed, *, undo: bool = False, command=None, sheet=False, edit=N
             error = ErrorObject(exc.failure["code"], message, exc.failure["details"])
         else:
             error = ErrorObject(getattr(exc, "code", "timeline_edit_error"), message, getattr(exc, "details", {}))
-        shown = DomainResult.failure(error)
+        if inverse:
+            import shlex
+
+            details = dict(error.details)
+            details.setdefault("path", "/commands/0/args/publications")
+            details.setdefault("head", details.get("current"))
+            details.setdefault("hint", "Read accepted history and select exact receipt IDs, oldest first; retry ambiguous outcomes with the original key.")
+            details.setdefault("suggested_command", shlex.join([
+                "astrid", "timelines", "history", parsed.ref, "--project", parsed.project, "--json",
+            ]))
+            error = ErrorObject(error.code, error.message, details)
+        shown = DomainResult.failure(error, idempotency_key=(parsed.idempotency_key or "") if inverse else "")
     return print_result(shown, as_json=parsed.json,
                         human_renderer=lambda value: _render_commit_result(value, dry_run=parsed.dry_run))
-
-
-def configure_track_label(parser):
-    from astrid.packs.timeline.cli import (
-        _add_idempotency_key,
-        _add_json_flag,
-        _add_project_arg,
-    )
-    from astrid.sdk.timeline.commands import operations
-
-    parameters = operations()['track.set'].parameters
-    field, schema = next(iter(parameters['properties']['values']['properties'].items()))
-    parser.description = 'Commit a guarded parent-track label through the native command registry.'
-    _add_project_arg(parser, required=False)
-    parser.add_argument('ref', help='Timeline id or slug.')
-    parser.add_argument('--track', required=True, help='Stable parent/track:ID selector.')
-    choice = parser.add_mutually_exclusive_group(required=True)
-    choice.add_argument('--set', dest='label', metavar=schema['type'].upper(),
-                        help=f'Set {field}; an empty string is a real value.')
-    choice.add_argument('--clear', action='store_true', help=f'Remove {field}.')
-    parser.add_argument('--dry-run', action='store_true', help='Validate without accepting a publication.')
-    _add_idempotency_key(parser)
-    _add_json_flag(parser, default=False)
-
-    def run(parsed):
-        command = {'schema_version': 1, 'op': 'track.set', 'version': '1',
-                   'select': parsed.track,
-                   'args': {'values': {} if parsed.clear else {field: parsed.label},
-                            'clear': [field] if parsed.clear else []}}
-        return commit_edit(parsed, command=command)
-
-    parser.set_defaults(command='track-label', handler=run)
-
-
-def configure_commit_move(subparser):
-    from astrid.packs.timeline.cli import _add_idempotency_key, _add_json_flag, _add_project_arg
-
-    _add_project_arg(subparser, required=False)
-    subparser.add_argument("ref", help="Timeline id or slug.")
-    subparser.add_argument("--clip", required=True, help="Stable parent/clip:ID or occurrence:ID/clip:ID selector.")
-    subparser.add_argument("--on", required=True, type=float, metavar="SECONDS")
-    subparser.add_argument("--dry-run", action="store_true", help="Validate without accepting a publication.")
-    _add_idempotency_key(subparser)
-    _add_json_flag(subparser, default=False)
-    subparser.set_defaults(command="move", handler=commit_edit)
-
-
 def configure_edit_options(subparser):
     from astrid.packs.timeline.cli import _add_idempotency_key, _add_json_flag
 
-    subparser.description = ("Use edit move TL --clip SCOPED_ID --on SECONDS or edit track-label TL "
-                             "--track parent/track:ID --set LABEL (or --clear) for native commits. "
-                             "Use edit commands-file TL FILE --base-revision-id REV "
-                             "--base-publication-id PUB for a native batch. "
-                             "Ordinary --trim-in/--trim-out on literal parent media also commit directly "
-                             "when no detached working copy exists. Other flags edit a legacy detached working copy.")
+    subparser.description = ("Literal clip moves and trims commit through the durable timeline session. "
+                             "Other flags edit a legacy detached working copy.")
     subparser.add_argument("--dry-run", action="store_true", help="Preview a native trim without accepting a publication.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser, default=False)
@@ -288,54 +457,35 @@ def configure_edit_options(subparser):
 def configure_apply_options(subparser):
     from astrid.packs.timeline.cli import _add_idempotency_key, _add_json_flag
 
-    subparser.add_argument("--native", action="store_true",
-                           help="Commit using the original sheet export retained in the scoped outbox.")
-    subparser.add_argument("--dry-run", action="store_true", help="Preview native commands locally without publishing.")
+    subparser.add_argument("--dry-run", action="store_true", help="Preview the sheet commit without publishing.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser, default=False)
+
+
+def history_steps(value):
+    import argparse
+
+    from astrid.packs.timeline.cli import _positive_int
+
+    if not value.lstrip().startswith("{"):
+        return _positive_int(value)
+    try:
+        steps = json.loads(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("steps must be a JSON map of receipt IDs to step-ID lists") from exc
+    if (not steps or not all(isinstance(key, str) and key.strip()
+                             and isinstance(ids, list) and ids
+                             and all(isinstance(step, str) and step.strip() for step in ids)
+                             and len(set(ids)) == len(ids) for key, ids in steps.items())):
+        raise argparse.ArgumentTypeError("steps must map each receipt ID to nonempty unique step IDs")
+    return steps
 
 
 def configure_history_options(subparser):
     from astrid.packs.timeline.cli import _add_idempotency_key, _add_json_flag
 
-    subparser.add_argument("--publication", action="append",
-                           help="Reverse an accepted publication (for redo, name the undo publication); repeat oldest first.")
-    subparser.add_argument("--dry-run", action="store_true")
+    subparser.add_argument("--commit", action="append", metavar="RECEIPT_ID",
+                           help="Reverse an accepted Runtime commit; for redo select the accepted undo. Repeat oldest first.")
+    subparser.add_argument("--dry-run", action="store_true", help="Preview the inverse without accepting a commit.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser, default=False)
-
-
-def configure_commands_file(parser):
-    from astrid.packs.timeline.cli import (
-        _add_idempotency_key,
-        _add_json_flag,
-        _add_project_arg,
-    )
-    from astrid.sdk.timeline.commands import operations
-
-    parser.description = ('Commit a JSON array of registered EditCommands atomically on an explicit '
-                          'original revision/publication. Supplied capture claims are verified, never '
-                          'refreshed. Missing capture inputs refuse the batch; the file is kept.')
-    parser.formatter_class = argparse.RawDescriptionHelpFormatter
-    parser.epilog = 'Installed operations:\n  ' + '\n  '.join(operations())
-    _add_project_arg(parser, required=False)
-    parser.add_argument('ref', help='Timeline id or slug.')
-    parser.add_argument('commands_file', metavar='FILE', help='JSON array of existing EditCommands.')
-    parser.add_argument('--base-revision-id', required=True, help='Original immutable revision id.')
-    parser.add_argument('--base-publication-id', required=True, help='Original publication id.')
-    parser.add_argument('--dry-run', action='store_true', help='Validate without accepting a publication.')
-    _add_idempotency_key(parser)
-    _add_json_flag(parser, default=False)
-    parser.set_defaults(command='commands-file', handler=commit_edit)
-
-
-def configure_native_edit_parsers(parser, client):
-    from astrid.packs.timeline.cli_parser import TimelinesParser
-
-    parser.native_edit_parsers = {}
-    for name, configure in (("move", configure_commit_move), ("track-label", configure_track_label),
-                            ("commands-file", configure_commands_file)):
-        native = TimelinesParser(prog=f"astrid timelines edit {name}")
-        configure(native)
-        native.set_defaults(client=client)
-        parser.native_edit_parsers[name] = native
