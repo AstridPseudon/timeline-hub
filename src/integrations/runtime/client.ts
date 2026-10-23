@@ -534,6 +534,15 @@ export class AstridRuntimeClient {
     return this.withSession(() => this.client.getProject(projectId));
   }
 
+  async createProject(
+    name: string,
+    idempotencyKey: string,
+    slug?: string,
+    metadata?: Record<string, unknown>,
+  ): Promise<MutationResult<Project>> {
+    return this.withMutation(() => this.client.createProject(name, idempotencyKey, slug, metadata));
+  }
+
   async updateProject(
     projectId: string,
     idempotencyKey: string,

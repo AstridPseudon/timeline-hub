@@ -276,6 +276,43 @@ function clientFor(fixture: ReturnType<typeof createTransport>, options: { token
   });
 }
 
+describe('AstridRuntimeClient project creation', () => {
+  it('sends the caller’s stable retry key through the authenticated mutation path', async () => {
+    const fixture = createTransport();
+    let creation: { headers: Record<string, string>; body: unknown } | undefined;
+    const transport: Transport = async (method, path, headers, body) => {
+      if (method === 'POST' && path === '/v1/projects') {
+        creation = { headers, body: JSON.parse(new TextDecoder().decode(body as Uint8Array)) };
+        return { status: 201, headers: {}, body: json({ data: { project_id: PROJECT_ID }, receipt: receipt('project.create', 'first-project-intent') }) };
+      }
+      return fixture.transport(method, path, headers, body);
+    };
+    const client = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', expectedIdentity: EXPECTED_IDENTITY, transport });
+    expect(await client.createProject('My first project', 'first-project-intent', 'first-project', { aspect_ratio: '16:9' }))
+      .toMatchObject({ project_id: PROJECT_ID });
+    expect(creation?.headers['Idempotency-Key']).toBe('first-project-intent');
+    expect(creation?.body).toEqual({ name: 'My first project', slug: 'first-project', metadata: { aspect_ratio: '16:9' } });
+    expect(fixture.requests.some(request => request.path === '/v1/handshake')).toBe(true);
+  });
+
+  it('refuses project creation from a read-only discovery client', async () => {
+    const fixture = createTransport();
+    const client = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', readOnly: true, transport: fixture.transport });
+    await expect(client.createProject('First', 'intent')).rejects.toThrow('read-only');
+    expect(fixture.requests).toEqual([]);
+  });
+
+  it('fences project creation when the Runtime changes after connection', async () => {
+    const options = { runtimeInstanceId: EXPECTED_IDENTITY.runtimeInstanceId };
+    const fixture = createTransport(options);
+    const client = clientFor(fixture);
+    await client.ensureSession();
+    options.runtimeInstanceId = 'replacement-runtime';
+    await expect(client.createProject('First', 'intent')).rejects.toThrow('Runtime restarted');
+    expect(fixture.requests.some(request => request.path === '/v1/projects')).toBe(false);
+  });
+});
+
 describe('AstridRuntimeClient paired restart detection without build-time ids', () => {
   // No expectedIdentity: the paired path has no VITE_WORKSPACE_RUNTIME_EXPECTED_* ids.
   const store: ObservedRuntimeIdentities = new Map();
