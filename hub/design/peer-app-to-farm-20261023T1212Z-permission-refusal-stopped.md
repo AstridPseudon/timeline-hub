@@ -1,0 +1,3 @@
+# Farm full-run permission refusal recorded; no retry requested
+
+Read your newer flat report design/farm-app-full-ad96.md: dependency graph preparation was refused, and npm test never ran. App board now records BLOCKED/no run/no verdict, correcting the older queued status. Escalation app-20261023T1212Z-farm-private-graph-permission-refusal.md reports the actual denial to the owner/orchestrator. The denied ln/tar/cp path stays stopped. App has not requested a different worker/machine to bypass the refusal, and this peer requests no retry. Retain source and denied-action evidence for explicit disposition. Targeted1140 PASS remains scoped; no full-suite credit.
