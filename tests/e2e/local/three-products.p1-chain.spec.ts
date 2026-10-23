@@ -11,6 +11,10 @@ import {
   logDiagnostic,
   logPriorityDiagnostic,
   redactDiagnosticText,
+  boundedDiagnosticRead,
+  DIAGNOSTIC_ARTIFACT_TIMEOUT_MS,
+  DIAGNOSTIC_COLLECTION_TIMEOUT_MS,
+  withDiagnosticDeadline,
   writeDiagnosticArtifact,
 } from './p1-diagnostic-safety.ts';
 
@@ -1178,44 +1182,80 @@ async function diagnosticAttribute(locator: any, name: string): Promise<string> 
 
 async function captureFailureContinuation(page: Page, testInfo: any) {
   const trace = diagnosticTraces.get(page);
-  const provider = page.getByTestId('video-editor-provider');
-  const connection = page.getByTestId('runtime-connection-status');
-  const runtimePanel = page.getByTestId('runtime-not-connected');
-  const recovery = page.getByTestId('timeline-command-recovery');
-  const timelineError = page.locator('[data-video-editor-timeline-error="true"]');
-  const providerTimelineId = await diagnosticAttribute(provider, 'data-timeline-id');
-  const providerProjectId = await diagnosticAttribute(provider, 'data-project-id');
+  const caseTitle = testInfo.title;
+  const earlyProjectId = trace?.projectId ?? 'UNKNOWN';
+  const earlyTimelineId = trace?.timelineId ?? 'UNKNOWN';
+  const earlyRightId = trace?.sourceWindow?.after.rightId ?? 'UNKNOWN';
+
+  // Persist the in-memory failure identity before touching IndexedDB or the DOM.
+  // The later collector is strictly best effort; this file is the durable minimum
+  // when a page has closed or one of its reads never settles.
+  await withDiagnosticDeadline(() => writeDiagnosticArtifact(testInfo, {
+    schemaVersion: 1,
+    title: caseTitle,
+    status: testInfo.status,
+    expectedStatus: testInfo.expectedStatus,
+    capturedAt: new Date().toISOString(),
+    durationMs: testInfo.duration,
+    phase: 'afterEach_failure_early_return',
+    case: { title: caseTitle, expectedPostCount: 2, observedPostCount: trace?.wireHeads.length ?? 'UNKNOWN' },
+    tuple: { projectId: earlyProjectId, timelineId: earlyTimelineId, sourceId: 'UNKNOWN', rightId: earlyRightId },
+    available: {
+      wireHeads: trace ? artifactWireHeads(trace.wireHeads) : 'UNKNOWN',
+      requestProjections: trace?.requestProjections ?? 'UNKNOWN',
+      sourceWindow: trace?.sourceWindow ?? 'UNKNOWN',
+    },
+    mountedObservations: 'UNKNOWN',
+    captureData: 'UNKNOWN',
+    unknowns: { mountedDataRef: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+    losses: { cappedConsole: true, mountedObservations: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+  }), false, DIAGNOSTIC_ARTIFACT_TIMEOUT_MS);
+
+  const collectionDeadline = Date.now() + DIAGNOSTIC_COLLECTION_TIMEOUT_MS;
+  const read = <T>(operation: () => T | PromiseLike<T>, fallback: T) => (
+    boundedDiagnosticRead(operation, fallback, collectionDeadline)
+  );
+  const getLocator = <T>(factory: () => T): T | null => {
+    try { return factory(); } catch { return null; }
+  };
+  const provider = getLocator(() => page.getByTestId('video-editor-provider'));
+  const connection = getLocator(() => page.getByTestId('runtime-connection-status'));
+  const runtimePanel = getLocator(() => page.getByTestId('runtime-not-connected'));
+  const recovery = getLocator(() => page.getByTestId('timeline-command-recovery'));
+  const timelineError = getLocator(() => page.locator('[data-video-editor-timeline-error="true"]'));
+  const providerTimelineId = await read(() => diagnosticAttribute(provider, 'data-timeline-id'), 'UNKNOWN');
+  const providerProjectId = await read(() => diagnosticAttribute(provider, 'data-project-id'), 'UNKNOWN');
   const timelineId = providerTimelineId !== 'UNKNOWN' ? providerTimelineId : trace?.timelineId ?? 'UNKNOWN';
   let outboxRecords: any[] | null = null;
   let outboxReadFailed = false;
   try {
     if (timelineId === 'UNKNOWN') throw new Error('timeline id unavailable');
-    outboxRecords = await commandOutboxes(page, timelineId);
+    outboxRecords = await read(() => commandOutboxes(page, timelineId), null);
+    if (outboxRecords === null) throw new Error('outbox read unavailable');
   } catch {
     outboxReadFailed = true;
   }
-  const connectionState = await diagnosticAttribute(connection, 'data-state');
-  const panelState = await diagnosticAttribute(runtimePanel, 'data-state');
+  const connectionState = await read(() => diagnosticAttribute(connection, 'data-state'), 'UNKNOWN');
+  const panelState = await read(() => diagnosticAttribute(runtimePanel, 'data-state'), 'UNKNOWN');
   const wireHeads = trace?.wireHeads ?? [];
   const safeWireHeads = artifactWireHeads(wireHeads);
-  const caseTitle = testInfo.title;
   const projectId = providerProjectId !== 'UNKNOWN' ? providerProjectId : trace?.projectId ?? 'UNKNOWN';
   const timelineTupleId = timelineId;
   const ui = {
     connectionState: diagnosticConnectionState(connectionState !== 'UNKNOWN' ? connectionState : panelState),
-    runtimePanelVisible: await diagnosticVisibleState(runtimePanel),
-    recoveryVisible: await diagnosticVisibleState(recovery),
-    recoveryMessage: await diagnosticVisibleTextState(recovery),
-    timelineErrorVisible: await diagnosticVisibleState(timelineError),
-    timelineErrorMessage: await diagnosticVisibleTextState(timelineError),
-    alertCount: await page.locator('[role="alert"]:visible').count().catch(() => 'UNKNOWN'),
+    runtimePanelVisible: await read(() => diagnosticVisibleState(runtimePanel), 'UNKNOWN'),
+    recoveryVisible: await read(() => diagnosticVisibleState(recovery), 'UNKNOWN'),
+    recoveryMessage: await read(() => diagnosticVisibleTextState(recovery), 'UNKNOWN'),
+    timelineErrorVisible: await read(() => diagnosticVisibleState(timelineError), 'UNKNOWN'),
+    timelineErrorMessage: await read(() => diagnosticVisibleTextState(timelineError), 'UNKNOWN'),
+    alertCount: await read(() => page.locator('[role="alert"]:visible').count(), 'UNKNOWN'),
   };
   const errors = {
     page: trace?.pageErrors ?? 'UNKNOWN',
     console: trace?.consoleErrors ?? 'UNKNOWN',
     requestFailures: trace?.requestFailures ?? 'UNKNOWN',
   };
-  await writeDiagnosticArtifact(testInfo, {
+  await boundedDiagnosticRead(() => writeDiagnosticArtifact(testInfo, {
     schemaVersion: 1,
     title: caseTitle,
     status: testInfo.status,
@@ -1260,7 +1300,7 @@ async function captureFailureContinuation(page: Page, testInfo: any) {
       callbackPatch: 'UNKNOWN',
       captureResolution: 'UNKNOWN',
     },
-  });
+  }), false, Date.now() + DIAGNOSTIC_ARTIFACT_TIMEOUT_MS, DIAGNOSTIC_ARTIFACT_TIMEOUT_MS);
   logPriorityDiagnostic(`P1 failure continuation ${testInfo.title}`, {
     case: {
       projectId,

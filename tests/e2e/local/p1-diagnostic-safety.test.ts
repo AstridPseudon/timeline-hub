@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import {
+  boundedDiagnosticRead,
+  DIAGNOSTIC_COLLECTION_TIMEOUT_MS,
   DIAGNOSTIC_MAX_BYTES,
   diagnosticListener,
   diagnosticObservedVisibility,
@@ -187,6 +189,39 @@ test('P1 diagnostic artifact write failure is disposable and cannot replace a te
   assert.equal(await writeDiagnosticArtifact(testInfo, { title: 'safe', status: 'failed' }), false);
   const original = new Error('original test failure');
   assert.throws(() => { throw original; }, (error) => error === original);
+});
+
+test('P1 failure artifacts return before unresolved collection and retain the early file', async () => {
+  const source = readFileSync(new URL('./three-products.p1-chain.spec.ts', import.meta.url), 'utf8');
+  const captureStart = source.indexOf('async function captureFailureContinuation');
+  const earlyWrite = source.indexOf('writeDiagnosticArtifact(testInfo', captureStart);
+  const outboxRead = source.indexOf('commandOutboxes(page, timelineId)', captureStart);
+  assert.ok(captureStart >= 0 && earlyWrite >= 0 && earlyWrite < outboxRead);
+  assert.ok(source.includes('boundedDiagnosticRead(operation, fallback, collectionDeadline)'));
+
+  const directory = mkdtempSync(join(tmpdir(), 'p1-diagnostic-early-'));
+  const artifactPath = join(directory, 'p1-diagnostic.json');
+  const testInfo = {
+    outputPath: () => artifactPath,
+    attach: async () => {},
+  };
+  const title = 'P1 never-resolving collection';
+  assert.equal(await writeDiagnosticArtifact(testInfo, {
+    schemaVersion: 1, title, status: 'failed', expectedStatus: 'passed',
+    phase: 'afterEach_failure_early_return',
+    tuple: { projectId: 'project-safe', timelineId: 'timeline-safe', sourceId: 'UNKNOWN', rightId: 'UNKNOWN' },
+    sourceWindow: 'UNKNOWN', mountedObservations: 'UNKNOWN',
+  }), true);
+
+  const started = Date.now();
+  const outbox = await boundedDiagnosticRead(() => new Promise<never>(() => {}), 'UNKNOWN', Date.now() + 25, 25);
+  const dom = await boundedDiagnosticRead(() => { throw new Error('page closed'); }, 'UNKNOWN', Date.now() + 25, 25);
+  assert.equal(outbox, 'UNKNOWN');
+  assert.equal(dom, 'UNKNOWN');
+  assert.ok(Date.now() - started < DIAGNOSTIC_COLLECTION_TIMEOUT_MS);
+  const parsed = JSON.parse(readFileSync(artifactPath, 'utf8')) as Record<string, unknown>;
+  assert.equal(parsed.title, title);
+  assert.equal(parsed.phase, 'afterEach_failure_early_return');
 });
 
 test('P1 failure continuation keeps the realistic causal core under the byte budget', () => {

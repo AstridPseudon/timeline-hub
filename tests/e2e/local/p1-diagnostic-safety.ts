@@ -10,6 +10,10 @@ export const DIAGNOSTIC_MAX_STRING = 500;
 const DIAGNOSTIC_MAX_INPUT_STRING = 4 * 1024;
 const DIAGNOSTIC_PRIORITY_MAX_ITEMS = 4;
 
+export const DIAGNOSTIC_READ_TIMEOUT_MS = 150;
+export const DIAGNOSTIC_ARTIFACT_TIMEOUT_MS = 500;
+export const DIAGNOSTIC_COLLECTION_TIMEOUT_MS = 1_000;
+
 const SENSITIVE_KEY = /^(?:body|principal|authorization|cookie|set-cookie|x-api-key|api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|client[_-]?secret|private[_-]?key|session)$/i;
 const SENSITIVE_ASSIGNMENT = /(["']?)([A-Za-z0-9_-]*(?:body|principal|authorization|cookie|set-cookie|x-api-key|api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|client[_-]?secret|private[_-]?key|session)[A-Za-z0-9_-]*)\1(\s*[:=]\s*)(?:"(?:\\.|[^"\\])*"?|'(?:\\.|[^'\\])*'?|\{[\s\S]*|\[[\s\S]*|[^\s,;}\]]+)/gi;
 
@@ -418,6 +422,35 @@ export type DiagnosticArtifactTestInfo = {
   outputPath(...pathSegments: string[]): string;
   attach(name: string, options: { path: string; contentType: string }): Promise<void>;
 };
+
+export async function withDiagnosticDeadline<T>(
+  operation: () => T | PromiseLike<T>,
+  fallback: T,
+  timeoutMs: number,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      Promise.resolve().then(operation).catch(() => fallback),
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), Math.max(0, timeoutMs));
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+export function boundedDiagnosticRead<T>(
+  operation: () => T | PromiseLike<T>,
+  fallback: T,
+  deadline: number,
+  timeoutMs = DIAGNOSTIC_READ_TIMEOUT_MS,
+): Promise<T> {
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) return Promise.resolve(fallback);
+  return withDiagnosticDeadline(operation, fallback, Math.min(timeoutMs, remaining));
+}
 
 export async function writeDiagnosticArtifact(testInfo: DiagnosticArtifactTestInfo, value: unknown): Promise<boolean> {
   try {
