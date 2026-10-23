@@ -2,6 +2,7 @@
 All source/tool/installer stand-ins are explicit, tiny TMPDIR files. No Git
 repository, copied venv, network, real installer, test service or daemon runs.
 """
+import contextlib
 import hashlib
 import importlib.util
 import json
@@ -15,7 +16,7 @@ import tempfile
 
 HERE = Path(__file__).resolve().parent
 PREFIX = Path(__file__).name.removesuffix('test-adapters.py')
-ORCH = HERE.parent
+ORCH = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
 ROOT = Path(tempfile.mkdtemp(prefix='creator-fixture-', dir=os.environ['TMPDIR']))
 assert ROOT.resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve())
 O, W, A, R = [ROOT / name for name in ('orch', 'work', 'agent', 'runtime')]
@@ -29,9 +30,9 @@ def write(path, content, executable=False):
         path.chmod(0o755)
 
 # Exactly approved legacy bytes, copied read-only into this private fixture.
-rows = (ORCH / 'tests/suites.conf').read_text().splitlines()
+rows = (HERE / (PREFIX + 'input-suites.conf')).read_text().splitlines()
 row = next(line for line in rows if line.split()[:2] == ['agent', 'remotion-env-nodes'])
-envtext = (ORCH / 'tests/agent-remotion.env').read_text()
+envtext = (HERE / (PREFIX + 'input-agent-remotion.env')).read_text()
 assert hashlib.sha256(row.encode()).hexdigest() == 'ffdb0b13c65f106d7b818208343feb3f438dfc943f4af57c5f612ddcf73dc036'
 assert hashlib.sha256(envtext.encode()).hexdigest() == 'e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02'
 write(O / 'tests/suites.conf', row + '\nagent child-base env PATH=/usr/bin:/bin /home/user/work/venv-agent-child-old/bin/python -c pass\n')
@@ -132,7 +133,7 @@ write(node.parent/'lib/node_modules/npm/bin/npm-cli.js','// explicit nonexecutin
 for tool in ('curl','npm','pip'):
     write(ROOT/'tools'/tool,'#!/bin/bash\necho UNEXPECTED-NETWORK-OR-INSTALLER >&2\nexit 99\n',True)
 
-raw=(ORCH/'bin/dispatcher-daemon').read_text()
+raw=(HERE / (PREFIX + 'input-dispatcher-daemon')).read_text()
 branches=[next(line.strip() for line in raw.splitlines() if "'^"+kind+" '" in line) for kind in ('CHILDVENV','RUNTIME')]
 context=next(line for line in raw.splitlines() if line.startswith('O=')).replace(str(ORCH),str(O))
 write(ROOT/'dispatch', '#!/bin/bash\n'+context+'\nf=$1\nif false; then :\n'+'\n'.join(branches)+'\nelse exit 42; fi\nprintf "%s\\n" "$out"\nexit "$rc"\n',True)
