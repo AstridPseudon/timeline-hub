@@ -55,8 +55,23 @@ def client_for(checkout, writes):
     )
 
 
+def stub_checkout_commit(monkeypatch, checkout, writes):
+    """Keep this compiler/renderer fence unit test at the commit facade seam.
+
+    test_timeline_normal_publish exercises the actual Runtime provider under
+    the same renderer fence with authenticated media and a real base pair.
+    """
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+
+    def commit(document, message, **kwargs):
+        writes.append(compile_authoring_candidate(document).publication)
+        return {"old_head": checkout.base_revision, "new_head": "accepted"}
+
+    monkeypatch.setattr(checkout, "_commit_document", commit)
+
+
 @pytest.mark.parametrize("operation", ["core", "publish", "transaction", "dry-run"])
-def test_real_save_paths_need_neither_scene_imports_nor_node(draft, no_renderer, operation):
+def test_real_save_paths_need_neither_scene_imports_nor_node(draft, no_renderer, operation, monkeypatch):
     checkout = draft
     before = checkout.document()
     writes = []
@@ -75,8 +90,9 @@ def test_real_save_paths_need_neither_scene_imports_nor_node(draft, no_renderer,
         report = checkout._check_core()
         assert report.valid and not report.blocking and report.lint == []
         if operation == "publish":
-            # An in-memory candidate avoids a follow-up head read; the publisher/compiler are real.
+            # An in-memory candidate avoids a follow-up head read; the compiler is real.
             checkout.path = None
+            stub_checkout_commit(monkeypatch, checkout, writes)
             receipt = checkout.publish(client=client_for(checkout, writes))
             assert receipt["new_head"] == "accepted" and len(writes) == 1
 
@@ -119,7 +135,7 @@ def test_private_check_override_still_fences_publication(monkeypatch):
     assert writes == []
 
 
-def test_offcanvas_stays_explicitly_invalid_but_saves_and_publishes_exactly(tmp_path, request):
+def test_offcanvas_stays_explicitly_invalid_but_saves_and_publishes_exactly(tmp_path, request, monkeypatch):
     # PLAN §§2.5/4.2: visual checks advise; only core validity blocks publication.
     draft = Checkout(tiny())
     draft.clip("c1.rocket").data["params"]["x"] = 10000
@@ -132,6 +148,7 @@ def test_offcanvas_stays_explicitly_invalid_but_saves_and_publishes_exactly(tmp_
     draft.save(tmp_path / "draft.json", quiet=True)
     assert Checkout.load(draft.path).clip("c1.rocket").data["params"]["x"] == 10000
     writes = []
+    stub_checkout_commit(monkeypatch, draft, writes)
     receipt = draft.publish(client=client_for(draft, writes))
     assert receipt["new_head"] == "accepted" and len(writes) == 1
     rocket = next(clip for row in writes[0]["internal_timeline_revisions"]
