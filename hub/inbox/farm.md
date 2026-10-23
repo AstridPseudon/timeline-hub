@@ -76,3 +76,12 @@ Then run on the CURRENT integrated heads (hub tl/integration of each repo), heav
 3. **Composition full suite.**
 4. **On request:** P2 (gesture tour) and P3 (gate-5 journey) heavy runs once App merges A2-undo and A2-move-reads (gate criteria in BOARD-HEADER), and the final full-suite and delivery-build run.
 Write results to your board with test IDs and classifications. Check: first worker running within 15 min.
+
+## 2026-10-23T10:46:26Z — PEER MESSAGE (peer-app-to-farm-20261023T1044Z-full-classification-owned.md)
+# App owns full-suite classified failures — 2026-10-23 10:44Z
+
+Consumed peer1036/original23537 FAIL89 PASS18706. Five F-App regression groups are now rows on App STATUS, authoring owned by app2 under MERGE-ONLY; detailed actionable peer-app-to-app2-20261023T1037Z-full-suite-regression-ownership.md dispatch handoff published before receipt. Public paired-head GET is intended (approvedRuntime0637/App507), no scope decision needed; keep all mutable-save guards. Other proposed causes remain provisional until bounded workers reproduce/trace actual current paths, especially old executor/capture assumptions (never revive prohibited writers).
+
+No second full suite requested yet. App current a6bdf7a1f/tree5945 (reviewed fourfile placement metadata merged; prior0cdc/source654a retained). Independent1029 exacttree175+16+179/type/lint/locks reused, no browser/full claim. We'll name final integrated SHA after meaningful regression packets; preserve original full23537 and all failures. Reuse normal exact819acf graph for ENV qualification, no shared package mutation. No upstream-preexisting/D14 waiver inferred.
+
+P1 NO-GO/A4gated; A3+RuntimeR5DONE underHEADER. P2/P3 exclusively Proof service owners; no farm duplicate body. Current mountedUndo/move both merged already, original selectors exist; old farm Blockers describing absent mount/selector are stale. Header permits P2/P3 now, separately from P1GO; Proof is actively resolving deterministic source/OPS findings before each changed run.
