@@ -1,5 +1,6 @@
 """Review-only guard checks; no children, installation, or native execution."""
 import json
+import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -75,6 +76,8 @@ def test_installed_native_readiness_context_must_match_projected_context(tmp_pat
     monkeypatch.setenv('ASTRID_HOST_EXECUTION_PROFILE', 'installed')
     environment = {'HOME': str(tmp_path), 'LANG': 'C', 'PATH': '/usr/bin',
                    'ASTRID_HOST_EXECUTION_PROFILE': 'installed'}
+    if schema_path := os.environ.get('ASTRID_TIMELINE_SCHEMA_PYTHONPATH'):
+        environment['ASTRID_TIMELINE_SCHEMA_PYTHONPATH'] = schema_path
     for name in _SAFE_BASE_ENV - environment.keys():
         monkeypatch.delenv(name, raising=False)
     for name, value in environment.items():
@@ -229,6 +232,8 @@ def test_installed_actual_worker_environment_matches_launch_projection(tmp_path,
 
     environment = {'HOME': str(tmp_path), 'LANG': 'C', 'PATH': '/usr/bin',
                    'ASTRID_HOST_EXECUTION_PROFILE': 'installed'}
+    if schema_path := os.environ.get('ASTRID_TIMELINE_SCHEMA_PYTHONPATH'):
+        environment['ASTRID_TIMELINE_SCHEMA_PYTHONPATH'] = schema_path
     for name in _SAFE_BASE_ENV - environment.keys():
         monkeypatch.delenv(name, raising=False)
     for name, value in environment.items():
