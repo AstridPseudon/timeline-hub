@@ -638,12 +638,14 @@ def set_current_draft(project_id: str, timeline_id: str, name: str) -> None:
     pointer.write_text(name, encoding="utf-8")
 
 
-def fetch_bundle(project: str, timeline: str, *, revision_id: str | None = None, client: Any = None) -> dict[str, Any]:
+def fetch_bundle(project: str, timeline: str, *, revision_id: str | None = None,
+                 publication_id: str | None = None, client: Any = None) -> dict[str, Any]:
     """The complete pinned closure (parent → shots → internal timelines) of a head or revision."""
     from astrid.sdk import AstridClient
 
     def read(c: Any) -> dict[str, Any]:
-        opened = c.timelines.open_bundle(project, timeline, revision_id=revision_id)
+        options = {"publication_id": publication_id} if publication_id is not None else {}
+        opened = c.timelines.open_bundle(project, timeline, revision_id=revision_id, **options)
         if not opened.ok or not isinstance(opened.data, Mapping):
             raise TimelineEditError(f"could not open {timeline!r} in {project!r}: {opened.error}")
         return copy.deepcopy(dict(opened.data["bundle"]))

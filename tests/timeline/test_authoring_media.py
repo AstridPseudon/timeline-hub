@@ -298,6 +298,11 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
         helper, "workspace", lambda: stale_workspace
     )
     monkeypatch.setattr(helper.TimelineSession, "open", lambda *args, **kwargs: Session())
+    def fetch_original(project, timeline, *, revision_id, publication_id, client):
+        assert (revision_id, publication_id) == ("parent-1", "publication-1")
+        return Session()._bundle(None)
+
+    monkeypatch.setattr(helper, "fetch_bundle", fetch_original)
     monkeypatch.setattr(
         sys,
         "argv",
@@ -357,6 +362,153 @@ def test_document_publish_captures_verified_media_before_document_patches():
     assert commands[0]["args"]["media"] == new
     assert commands[0]["bindings"]["media.target"] == owner + "/clip:" + clip["id"]
     assert commands[0]["reads"]
+
+
+def _public_document_compound(recorded):
+    from types import SimpleNamespace
+
+    from astrid.sdk.contracts import DomainResult
+    from astrid.sdk.remote import RemoteTimelines
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
+    from astrid.sdk.timeline.emitter import DocumentPatchError
+    from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_swap_media
+    from astrid.sdk.timeline.store import fetch_bundle
+    from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
+
+    document, old, new, verified = inputs()
+    document["parent_revision"]["payload"]["occurrences"] = document["parent_revision"]["payload"]["occurrences"][:1]
+    document["parent_revision"]["content_digest"] = _digest(document["parent_revision"]["payload"])
+    retained = "sha256:" + "3" * 64
+    document["dependency_manifest"]["media"].append({"media_id": retained, "content_digest": retained})
+    new["asset"] = old["asset"]
+    verified[1]["selection"] = copy.deepcopy(new)
+    pin = {"revision_id": "parent-1", "publication_id": "original-publication"}
+
+    class Reader(RemoteTimelines):
+        def __init__(self):
+            self.calls = []
+            self.history_revision = pin["revision_id"]
+            self.canonical = document
+
+        def open_composition(self, project, timeline, **kwargs):
+            return DomainResult.success({
+                "native_inspection": {"project_id": "project-1", "timeline_id": "film"},
+                "summary": {"head_revision_id": "later-head"},
+            })
+
+        def history(self, project, timeline, *, cursor=None, limit=100):
+            self.calls.append(("history", cursor))
+            return DomainResult.success({"head": {"revision_id": "later-head", "publication_id": "later"},
+                "items": [] if cursor is None else [{**pin, "revision_id": self.history_revision, "receipt": {
+                    "receipt_id": pin["publication_id"], "result": {
+                            "canonical_document": self.canonical} if recorded else {}}}],
+                "next_cursor": "page-2" if cursor is None else None})
+
+        def _typed(self, operation, project, *args, **kwargs):
+            self.calls.append((operation, args))
+            images = [document["parent_revision"], *document["shot_revisions"],
+                      *document["internal_timeline_revisions"]]
+            image = next(row for row in images if row["revision_id"] == args[-1])
+            return DomainResult.success({**copy.deepcopy(image), "project_id": project,
+                **({"timeline_id": "film", "dependency_manifest": document["dependency_manifest"]}
+                   if operation == "get_project_parent_composition_revision" else {})})
+
+    reader = Reader()
+    client = SimpleNamespace(timelines=reader)
+    detached = fetch_bundle("project-1", "film", revision_id=pin["revision_id"], client=client)
+    assert "_runtime_document" not in detached["source_mapping"]
+    base = fetch_bundle("project-1", "film", **pin, client=client)
+    assert base["source_mapping"]["_runtime_document"] == document
+    assert base["base_parent"]["publication_id"] == pin["publication_id"]
+    target = "occurrence:occ-a/clip:clip-a"
+    swap = capture_occurrence_swap_media(detached, target, old, new, verified_media=verified)
+    candidate = execute(detached, [swap], verified_media=verified).bundle
+    child = next(iter(candidate["shots"].values()))
+    child["internal_timeline"]["clips"].reverse()
+    child["internal_timeline"]["clips"][1]["at"] = 1.25
+    del child["internal_timeline"]["clips"][1]["app"]["org.example"]["clear"]
+    child["internal_timeline"]["opaque"]["v"] = [None, {"id": "literal"}, False]
+    child["payload"]["unknown"]["added"] = None
+    del child["payload"]["unknown"]["keep"]
+    script = Path(__file__).parents[2] / "astrid/packs/rendering/docs/scripts/timeline_document.py"
+    spec = importlib.util.spec_from_file_location("timeline_document_compound_test", script)
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    selections = {("occurrence:occ-a", old["asset"]): {"old": old, "new": new}}
+    commands = helper.emit_document_publish_commands(base, candidate, selections, verified)
+    assert commands[0] == swap
+    assert all(command["op"] == "doc.patch" for command in commands[1:])
+    assert len(commands) > 1
+    # Session staging must read this same original source, too, before posting.
+    from astrid.sdk.timeline.sync import TimelineSession
+
+    reader._client = object()
+    session = SimpleNamespace(project_id="project-1", timeline_id="film", client=client)
+    staged_base = TimelineSession._bundle(session, {"base": pin, "pending": []}, commands)
+    assert staged_base == base
+    assert execute(staged_base, commands, verified_media=verified).bundle["shots"] == candidate["shots"]
+    steps = [{"id": f"step-{index}", "label": "Publish document", "intent": "", "tags": [],
+              "command_ordinals": [index],
+              "patch": command["args"]["changes"] if command["op"] == "doc.patch" else []}
+             for index, command in enumerate(commands)]
+    plan = execute(base, commands, verified_media=verified,
+                   commit_request={"label": "Publish document", "merge": "atomic", "steps": steps})
+    assert plan.bundle["parent"] == candidate["parent"]
+    assert plan.bundle["placements"] == candidate["placements"]
+    assert plan.bundle["shots"] == candidate["shots"]
+    assert plan.merge_mode == "atomic"
+    landed = document_from_bundle(plan.bundle)
+    assert document_from_bundle(bundle_from_document(landed)) == landed
+    realm = MediaRealm(document, verified)
+    context = realm.context
+
+    def labelled_context(calls, **kwargs):
+        value = context(calls, **kwargs)
+        value["request"].update(label="Publish document", merge="atomic")
+        if calls[0]["op"] != "timeline.inverse":
+            value["request"]["steps"] = steps
+        value["invocation"]["body"] = copy.deepcopy(value["request"])
+        value["request_hash"] = _digest(value["invocation"])
+        return value
+
+    realm.context = labelled_context
+    accepted = realm.call(commands)
+    assert accepted["data"]["canonical_document"] == landed
+    assert document["dependency_manifest"]["media"][0] in landed["dependency_manifest"]["media"]
+    assert {row["media_id"] for row in landed["dependency_manifest"]["media"]} == {old["object_id"], new["object_id"], retained}
+    assert ("history", "page-2") in reader.calls
+    # Neither a file's source object nor a changed original pair can authorize a post.
+    corrupt = copy.deepcopy(candidate)
+    corrupt["source_mapping"]["_runtime_document"] = {"fabricated": True}
+    with pytest.raises(DocumentPatchError, match="canonical source"):
+        helper.emit_document_publish_commands(base, corrupt, selections, verified)
+    reader.history_revision = "changed-original"
+    with pytest.raises(ValueError, match="original revision/publication pair"):
+        fetch_bundle("project-1", "film", revision_id=pin["revision_id"],
+                     publication_id=pin["publication_id"], client=client)
+    if recorded:
+        reader.history_revision = pin["revision_id"]
+        reader.canonical = copy.deepcopy(document)
+        reader.canonical["parent_revision"]["revision_id"] = "foreign-source"
+        with pytest.raises(ValueError, match="canonical document differs"):
+            fetch_bundle("project-1", "film", **pin, client=client)
+    return realm, accepted, document
+
+
+@pytest.mark.parametrize("recorded", [True, False])
+def test_public_document_swap_and_residual_patch_use_original_sequential_closure(recorded):
+    _public_document_compound(recorded)
+
+
+def test_public_document_compound_inverse_restores_exact_original():
+    from tests.sdk.test_timeline_commit_provider import inverse
+
+    realm, accepted, document = _public_document_compound(True)
+    # Required R2 acceptance: keep exact restoration expected. Physical child
+    # bindings currently fail in inverse._validate_inputs (outside G3 ownership).
+    restored = realm.call([inverse([accepted["receipt"]["receipt_id"]])])
+    assert restored["data"]["canonical_document"] == document
 
 
 @pytest.mark.integration  # a real Runtime from a second checkout

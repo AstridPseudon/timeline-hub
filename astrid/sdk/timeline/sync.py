@@ -195,8 +195,11 @@ class TimelineSession:
         from astrid.sdk.timeline.native_source_inputs import materialize_transcript_inputs
         from astrid.sdk.timeline.store import fetch_bundle
 
+        commands = [*state["pending"], *extra_commands]
+        source = ({"publication_id": state["base"]["publication_id"]}
+                  if any(command["op"] == "doc.patch" for command in commands) else {})
         bundle = fetch_bundle(self.project_id, self.timeline_id,
-                              revision_id=state["base"]["revision_id"], client=self.client)
+                              revision_id=state["base"]["revision_id"], client=self.client, **source)
         materialize_transcript_inputs(
             bundle, [*state["pending"], *extra_commands],
             client=self.client.timelines._client, project=self.project_id)
