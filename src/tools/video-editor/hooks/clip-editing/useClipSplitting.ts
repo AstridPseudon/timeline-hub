@@ -25,13 +25,17 @@ export function useClipSplitting(ctx: ClipEditingContext) {
       return;
     }
 
+    const current = dataRef.current;
+    const gestureBasis = current?.resolvedConfig === resolvedConfig ? structuredClone({
+      kind: 'split' as const, config: current.config, registry: current.registry,
+    }) : undefined;
     const splitResult = splitClipAtPlayhead(resolvedConfig, selectedClipId, currentTimeRef.current);
     if (!splitResult.nextSelectedClipId) {
       return;
     }
 
-    applyConfigEdit(splitResult.config, { selectedClipId: splitResult.nextSelectedClipId });
-  }, [applyConfigEdit, isPinnedGroupMember, notifyPinnedGroupEditBlocked, resolvedConfig, selectedClipId]);
+    applyConfigEdit(splitResult.config, { selectedClipId: splitResult.nextSelectedClipId, gestureBasis });
+  }, [applyConfigEdit, dataRef, isPinnedGroupMember, notifyPinnedGroupEditBlocked, resolvedConfig, selectedClipId]);
 
   const handleSplitClipAtTime = useCallback((clipId: string, timeSeconds: number) => {
     if (!resolvedConfig) {
@@ -43,13 +47,17 @@ export function useClipSplitting(ctx: ClipEditingContext) {
       return;
     }
 
+    const current = dataRef.current;
+    const gestureBasis = current?.resolvedConfig === resolvedConfig ? structuredClone({
+      kind: 'split' as const, config: current.config, registry: current.registry,
+    }) : undefined;
     const splitResult = splitClipAtPlayhead(resolvedConfig, clipId, timeSeconds);
     if (!splitResult.nextSelectedClipId) {
       return;
     }
 
-    applyConfigEdit(splitResult.config, { selectedClipId: splitResult.nextSelectedClipId });
-  }, [applyConfigEdit, isPinnedGroupMember, notifyPinnedGroupEditBlocked, resolvedConfig]);
+    applyConfigEdit(splitResult.config, { selectedClipId: splitResult.nextSelectedClipId, gestureBasis });
+  }, [applyConfigEdit, dataRef, isPinnedGroupMember, notifyPinnedGroupEditBlocked, resolvedConfig]);
 
   const handleSplitClipsAtPlayhead = useCallback((clipIds: string[]) => {
     const current = dataRef.current;

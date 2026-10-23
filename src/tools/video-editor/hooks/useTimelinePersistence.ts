@@ -36,7 +36,7 @@ import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/i
 import type { CommitDataOptions, ScheduleSaveFn } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
 import { isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
-import type { TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
+import type { TimelineGestureReadBasis, TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
 
 export type SaveStatus = 'saved' | 'saving' | 'dirty' | 'retrying' | 'error';
 
@@ -159,6 +159,7 @@ interface ScheduledSave {
 
 interface DeferredRecoverySave {
   data: TimelineData;
+  gestureBasis?: TimelineGestureReadBasis;
   preserveStatus?: boolean;
 }
 
@@ -956,7 +957,7 @@ export function useTimelinePersistence({
   // retry — the indirection keeps that cycle out of the dependency arrays.
   doSaveRef.current = (save, options) => { void doSave(save, options); };
 
-  const createScheduledSave = useCallback((nextData: TimelineData, seq: number): ScheduledSave => {
+  const createScheduledSave = useCallback((nextData: TimelineData, seq: number, gestureBasis?: TimelineGestureReadBasis): ScheduledSave => {
     const draftOwnerId = generateUUID();
     const recoveryMetadata = provider.getTimelineDraftRecoveryMetadata?.() ?? {};
     // Provider caches may contain a polled head. Only the editor's adopted
@@ -1007,7 +1008,7 @@ export function useTimelinePersistence({
     // reuse this capture and the session's exact durable request, not newer data.
     const localCapture = session.localDocumentSave?.capture({
       ...draft, bundle: wireBundle, head: head ? cloneAttemptValue(head) : undefined,
-    });
+    }, gestureBasis);
     void localCapture?.catch(() => {});
     const scheduledSave: ScheduledSave = {
       session,
@@ -1036,6 +1037,7 @@ export function useTimelinePersistence({
     if (recoveryPendingRef?.current || recoveryActiveRef?.current) {
       deferredDuringRecoveryRef.current = {
         data: nextData,
+        gestureBasis: options?.gestureBasis,
         preserveStatus: options?.preserveStatus,
       };
       if (!options?.preserveStatus) setSaveStatus('dirty');
@@ -1046,7 +1048,7 @@ export function useTimelinePersistence({
     // debounce, interaction gate, or network attempt. Draft writes are
     // serialized so an older IndexedDB transaction cannot land after a newer
     // mutation, and each receipt can compare-and-delete only its own slot.
-    const scheduledSave = createScheduledSave(nextData, editSeqRef.current);
+    const scheduledSave = createScheduledSave(nextData, editSeqRef.current, options?.gestureBasis);
 
     if (reloadInProgressRef.current) {
       // A user edit made while canonical Reload is pending supersedes that
@@ -1146,7 +1148,7 @@ export function useTimelinePersistence({
     const deferred = deferredDuringRecoveryRef.current;
     if (!deferred) return;
     deferredDuringRecoveryRef.current = null;
-    scheduleSave(deferred.data, { preserveStatus: deferred.preserveStatus });
+    scheduleSave(deferred.data, { preserveStatus: deferred.preserveStatus, gestureBasis: deferred.gestureBasis });
   }, [recoveryActiveRef, recoveryPendingRef, scheduleSave]);
 
   const clearDeferredRecoverySave = useCallback(() => {

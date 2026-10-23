@@ -49,6 +49,30 @@ async function environment(children = false, raw = false, rawIds = ['authored'],
 }
 
 describe('upstream local document handoff', () => {
+  it('binds declared timing reads to the original input, preserves raw nulls, and refuses a stale gesture basis', async () => {
+    const env = await environment(false, true);
+    const original = structuredClone({ kind: 'trim' as const, config: env.source.config, registry: env.source.registry });
+    const next = structuredClone(env.source);
+    next.config.clips[0].hold = 3;
+    await env.handoff.capture(next, original);
+    const [stored] = await env.outboxes.list(env.scope);
+    const intent = stored.intents[0].payload.documentIntent as Record<string, unknown>;
+    expect(intent.merge).toBe('fields');
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'output'], state: {
+      state: 'present', value: { resolution: null, file: null, opaque: { keep: null } },
+    } });
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'pinnedShotGroups'],
+      state: { state: 'present', value: null } });
+    expect(intent.reads).toContainEqual({ kind: 'scope', ref: 'parent', path: ['registry'] });
+    const stale = structuredClone(next);
+    stale.config.clips[0].hold = 4;
+    const document = env.session.getDocument();
+    await expect(env.handoff.capture(stale, original)).rejects.toThrow('gesture read basis differs');
+    expect(env.session.getDocument()).toEqual(document);
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(1);
+    await env.session.dispose();
+  });
+
   it('chains exact trim intent removals without clearing omitted opaque fields or restoring them on a partial edit', async () => {
     const env = await environment(false, true, ['authored'], {
       astrid: { for: 19, until: null, opaque: [null, false] }, 'org.example': { clear: null },

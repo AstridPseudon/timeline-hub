@@ -243,6 +243,9 @@ export function useClipEditing({
       return;
     }
 
+    const gestureBasis = resolvedConfig && current.resolvedConfig === resolvedConfig
+      && Object.keys(patch).length > 0 && Object.keys(patch).every((key) => ['from', 'to', 'hold', 'speed'].includes(key))
+      ? structuredClone({ kind: 'trim' as const, config: current.config, registry: current.registry }) : undefined;
     const { at: _at, ...metaPatch } = patch;
     const affectsDuration = patchAffectsDuration(metaPatch);
     const nextRows = current.rows.map((row) => {
@@ -279,8 +282,9 @@ export function useClipEditing({
       };
     });
 
-    applyRowsEdit(nextRows, { [selectedClipId]: metaPatch });
-  }, [applyRowsEdit, dataRef, selectedClipId]);
+    if (gestureBasis) applyRowsEdit(nextRows, { [selectedClipId]: metaPatch }, undefined, undefined, { gestureBasis });
+    else applyRowsEdit(nextRows, { [selectedClipId]: metaPatch });
+  }, [applyRowsEdit, dataRef, resolvedConfig, selectedClipId]);
 
   const clipEditingContext: ClipEditingContext = {
     dataRef,

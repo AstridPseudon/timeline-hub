@@ -5,7 +5,7 @@ import { canonicalJsonStringify, type TimelineBundleEnvelope } from '../data/typ
 import { authoringBundleFromDocument, type AuthoringBundle } from '../commands/authoringBundle.ts';
 import { TimelineVersionConflictError, type DataProvider, type TimelineCommandBasis, type TimelineHeadRevision, type TimelineSaveReceipt } from '../data/DataProvider.ts';
 import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
-import { canonicalizeTimelinePair } from '../lib/timeline-domain.ts';
+import { TRACK_DEFINITION_FIELDS, canonicalizeTimelinePair } from '../lib/timeline-domain.ts';
 import { withDefaultTimelineOutput } from '../lib/defaults.ts';
 
 export interface TimelineSaveSource {
@@ -15,9 +15,16 @@ export interface TimelineSaveSource {
   head?: TimelineHeadRevision;
 }
 
+/** The split/inspector caller snapshots its input before authoring the local transform. */
+export interface TimelineGestureReadBasis {
+  kind: 'split' | 'trim';
+  config: TimelineConfig;
+  registry: AssetRegistry;
+}
+
 /** Assembly supplies the ORIGINAL verified read, not loadTimelineCommandBasis at save time. */
 export interface TimelineLocalSaveHandoff {
-  capture(source: TimelineSaveSource): Promise<void>;
+  capture(source: TimelineSaveSource, gestureBasis?: TimelineGestureReadBasis): Promise<void>;
   flush(): Promise<TimelineSaveReceipt>;
 }
 
@@ -107,6 +114,7 @@ export function createTimelineLocalSaveHandoff(options: {
 }): TimelineLocalSaveHandoff {
   let initial = structuredClone(options.initial);
   let source = structuredClone(options.source);
+  let authoringSource = structuredClone(options.source);
   let document = structuredClone(options.initial.canonicalDocument);
   let sourceChecked = false;
   function changes(raw: unknown, previous: unknown, next: unknown, path: string[]): unknown {
@@ -160,7 +168,7 @@ export function createTimelineLocalSaveHandoff(options: {
     return authoredJson(next);
   }
   return {
-    capture(input) {
+    capture(input, gestureBasis) {
       try {
         const next = structuredClone(input);
         checkHead(initial, source);
@@ -184,15 +192,50 @@ export function createTimelineLocalSaveHandoff(options: {
           if (!same(parent[key], (parent.config as Record<string, unknown>)[key])) refuse(`contradictory parent ${key} mirror`);
           payload[key] = (payload.config as Record<string, OutboxJson>)[key];
         }
+        let reads: OutboxJson[] | undefined;
+        if (gestureBasis) {
+          if (!['split', 'trim'].includes(gestureBasis.kind)
+            || !same(authoredJson(gestureBasis.config), authoredJson(authoringSource.config))
+            || !same(authoredJson(gestureBasis.registry), authoredJson(authoringSource.registry))) {
+            refuse('gesture read basis differs from the original local authoring input');
+          }
+          // These two authoring paths serialize all clips and consult timing,
+          // assets, pinned membership and track structure. Guard that entire input,
+          // including absent optional fields. Track labels are only carried through;
+          // neither split, inspector timing nor their serializers use their values.
+          const config = parent.config as Record<string, unknown>;
+          const read = (value: Record<string, unknown>, key: string, path: string[]): OutboxJson => ({
+            kind: 'field', ref: 'parent', path: [...path, key],
+            state: Object.prototype.hasOwnProperty.call(value, key)
+              ? { state: 'present', value: authoredJson(value[key]) } : { state: 'absent' },
+          });
+          reads = [{ kind: 'scope', ref: 'parent', path: ['registry'] }];
+          const configKeys = new Set([...Object.keys(config), 'output', 'clips', 'pinnedShotGroups',
+            'theme', 'theme_overrides', 'generation_defaults', 'app']);
+          for (const key of configKeys) {
+            if (key !== 'tracks') reads.push(read(config, key, ['config']));
+          }
+          if (!Array.isArray(config.tracks)) refuse('gesture track read has no authored collection');
+          const tracks = config.tracks as Array<Record<string, unknown>>;
+          const order = tracks.map((track) => track.id as string);
+          reads.push({ kind: 'collection', ref: 'parent', path: ['config', 'tracks'], members: [...order].sort(), order });
+          for (const track of tracks) {
+            for (const key of new Set([...TRACK_DEFINITION_FIELDS, ...Object.keys(track)])) {
+              if (key !== 'label') reads.push(read(track, key, ['config', 'tracks', `id:${track.id}`]));
+            }
+          }
+        }
         // The encoder supplies guards and created IDs; these bytes are never a wire DTO.
         const pending = options.session.appendDocument({ before, after,
           roots: [{ ref: 'parent', revisionId: before.parent_revision.revision_id, contentDigest: before.parent_revision.content_digest }],
+          ...(reads === undefined ? {} : { reads, merge: 'fields' as const }),
           label: 'Edit timeline', step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: 'Save local editor changes', tags: [] } });
         source = { ...next,
           config: changes(source.config, source.config, next.config, ['config']) as TimelineConfig,
           registry: changes(source.registry, source.registry, next.registry, ['registry']) as AssetRegistry,
           ...(next.bundle === undefined && source.bundle !== undefined ? { bundle: source.bundle } : {}),
         };
+        authoringSource = structuredClone(next);
         document = structuredClone(after);
         return pending;
       } catch (error) {
@@ -210,6 +253,7 @@ export function createTimelineLocalSaveHandoff(options: {
           || !same(adopted.source.head, head)) refuse('canonical assembly did not adopt the accepted head');
         initial = structuredClone(basis);
         source = structuredClone(adopted.source);
+        authoringSource = structuredClone(adopted.source);
         document = structuredClone(basis.canonicalDocument);
         sourceChecked = false;
         return adopted.receipt;

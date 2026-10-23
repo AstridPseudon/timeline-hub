@@ -9,6 +9,7 @@ import {
   type MutableRefObject,
   type SetStateAction,
 } from 'react';
+import type { TimelineGestureReadBasis } from './timelineLocalSaveHandoff.ts';
 import { VideoEditorRuntimeContext } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import {
   editorClearTimelineSelection,
@@ -55,6 +56,7 @@ export type CommitHistoryOptions = {
 };
 
 export type CommitDataOptions = {
+  gestureBasis?: TimelineGestureReadBasis;
   save?: boolean;
   selectedClipId?: string | null;
   selectedTrackId?: string | null;
@@ -67,7 +69,7 @@ export type CommitDataOptions = {
 
 export type ScheduleSaveFn = (
   nextData: TimelineData,
-  options?: { preserveStatus?: boolean },
+  options?: { preserveStatus?: boolean; gestureBasis?: TimelineGestureReadBasis },
 ) => void;
 
 /**
@@ -128,6 +130,7 @@ export type TimelineEditMutation =
     };
 
 export type ApplyEditOptions = {
+  gestureBasis?: TimelineGestureReadBasis;
   /**
    * Persist this edit (default: the commit layer's own scheduling). Set `false`
    * for intermediate states you do not want written back — e.g. a step inside a
@@ -398,7 +401,8 @@ export function useTimelineCommit({
     if (shouldSave) {
       editSeqRef.current += 1;
       eventBus.emit('localCommit', currentData, nextData);
-      eventBus.emit('scheduleSave', nextData);
+      if (options?.gestureBasis) eventBus.emit('scheduleSave', nextData, { gestureBasis: options.gestureBasis });
+      else eventBus.emit('scheduleSave', nextData);
     }
   }, [eventBus, lastSavedSignatureRef, selectionOwner]);
 
@@ -462,6 +466,7 @@ export function useTimelineCommit({
           semantic: options?.semantic,
           skipHistory: options?.skipHistory,
           commandHistory: options?.commandHistory,
+          gestureBasis: options?.gestureBasis,
         },
       );
       return;
@@ -515,6 +520,7 @@ export function useTimelineCommit({
           semantic: options?.semantic,
           skipHistory: options?.skipHistory,
           commandHistory: options?.commandHistory,
+          gestureBasis: options?.gestureBasis,
         },
       );
       return;
@@ -539,6 +545,7 @@ export function useTimelineCommit({
         semantic: options?.semantic,
         skipHistory: options?.skipHistory,
         commandHistory: options?.commandHistory,
+        gestureBasis: options?.gestureBasis,
       },
     );
   }, [commitData, materializeData, withPinnedShotGroups, eventBus, editability]);
