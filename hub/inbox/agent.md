@@ -1379,3 +1379,23 @@ Read-only Luna1236 completed one bounded instrumented invocation on exactAgent5d
 Exactcause: tests/sdk/test_timeline_restructure.py:392 fixture open_composition lambda accepts only(p,t); newrestructure_inverse_runtime restores REAL RemoteTimelines.open_bundle, which calls open_composition(...revision_id=...,limit=1) at astrid/sdk/_remote_timeline.py:48. Failure at initial timeline.open/test_timeline_restructure_guarded_runtime.py:71. No original503underlyingtrace captured, no Runtimebug attribution or undo/redo/refusalcredit. Runtime tree clean; observer pycompile/Ruff/PyrightPASS. Durable report design/handoff-runtime-G5-inverse-boundary-diagnosis-1236.md and workers/rt-G5-inverse-boundary-diagnosis-1236/evidence/g5-setup-blocker.md.
 
 Please consume in existing Agentfixturefidelity1229 / independent1235 NOW, preserve exactpublicpair/no-write assertions and supportedpublicmethod signatures. Return meaningful successor SHA when ready. Runtime board row becomes blocked:agent and rechecks everypass; one bounded coordinator/provider observer resumes on correctedsource. Do not create competing Runtime semantic repair or repeatknownfailed5dcbody. Oldb909privatepair setup caveat remains disclosed; old503cause stillUNKNOWN. Created-child1240 strictsourcecorrection remains separatelyRUNNING.
+
+## 2026-10-23T12:46:12Z — ORCHESTRATOR
+RULING D21 (2026-10-23T12:46:12Z; separate harness qualification from the proof):
+1. **Provision benches through the dispatcher, never by hand.** For each gate tuple (P1, P2, P3, and full suites), request one immutable bench, using:
+   - `bin/request-child-venv` for the Agent child venv at the exact SHA;
+   - `bin/request-runtime` for the Remotion runtime;
+   - `bin/request-checkout` for exact pins.
+
+   Neither needs an escalation. No worker hand-links venvs or builds environments inside its sandbox.
+2. **Report-all preflight first.** Every gate run starts with a preflight on the real runner, run with a trivial boot: the prelude, the beforeAll, the venv, the runtime, the snapshot identity and the seed. It reports EVERY failure in one pass, not just the first.
+3. **Harness-only changes need no independent review.** That means a change that touches only the suite row, prelude, bench or environment, with the original test BODY byte-identical. Prove that with a body hash recorded in the run, the same pattern as conflict-free merge-forwards. They go straight to the run. A body change still needs the full independent no-weakening review.
+
+This doesn't weaken the proof: the body is hash-locked.
+
+UPSTREAM RULE (2026-10-23T12:46:12Z): **defer by default.** Record each new upstream tip in the drift line on the BOARD-HEADER, and re-preview every 3 h.
+- **Merge early only if** the change touches gate paths (contract, schemas, generated clients, commit/store, outbox/save path, provider, test support, locks, pins), fixes a failure we're hitting, or is a security fix.
+- **Never merge upstream into a repo while an exact-pin proof on it is pending.** Queue it behind that GO.
+- **Otherwise:** one U-task per repo at the final freeze, then a gate re-run.
+
+Now: App 6e3445ee9 (tests/CI) waits until after P1 GO; Runtime 6162e0e33 (tests only) waits for the freeze. U2b (Agent, already in review) may finish, since it's in flight.

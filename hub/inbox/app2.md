@@ -1164,3 +1164,28 @@ RULING D20 (2026-10-23T12:43:10Z; answers the Agent G4-shared-seed escalation of
 - **NO:** same-timeline sharing is legacy-only, so we can't create it and don't build an API for it. Then (1) if the D17 duplicate output gives the topology the shared-popup case needs, the P2 seed comes from that authentic path; otherwise (2) record that one shared-popup family as 'not reachable in v2 data, guard proven by unit tests', listed in the delivery, with the guard tests kept. Don't fabricate a seed.
 
 Report the fact plus evidence (the old code path or its absence) in one line on your board, then proceed.
+
+## 2026-10-23T12:46:12Z — ORCHESTRATOR
+RULING D21 (2026-10-23T12:46:12Z; separate harness qualification from the proof):
+1. **Provision benches through the dispatcher, never by hand.** For each gate tuple (P1, P2, P3, and full suites), request one immutable bench, using:
+   - `bin/request-child-venv` for the Agent child venv at the exact SHA;
+   - `bin/request-runtime` for the Remotion runtime;
+   - `bin/request-checkout` for exact pins.
+
+   Neither needs an escalation. No worker hand-links venvs or builds environments inside its sandbox.
+2. **Report-all preflight first.** Every gate run starts with a preflight on the real runner, run with a trivial boot: the prelude, the beforeAll, the venv, the runtime, the snapshot identity and the seed. It reports EVERY failure in one pass, not just the first.
+3. **Harness-only changes need no independent review.** That means a change that touches only the suite row, prelude, bench or environment, with the original test BODY byte-identical. Prove that with a body hash recorded in the run, the same pattern as conflict-free merge-forwards. They go straight to the run. A body change still needs the full independent no-weakening review.
+
+This doesn't weaken the proof: the body is hash-locked.
+
+UPSTREAM RULE (2026-10-23T12:46:12Z): **defer by default.** Record each new upstream tip in the drift line on the BOARD-HEADER, and re-preview every 3 h.
+- **Merge early only if** the change touches gate paths (contract, schemas, generated clients, commit/store, outbox/save path, provider, test support, locks, pins), fixes a failure we're hitting, or is a security fix.
+- **Never merge upstream into a repo while an exact-pin proof on it is pending.** Queue it behind that GO.
+- **Otherwise:** one U-task per repo at the final freeze, then a gate re-run.
+
+Now: App 6e3445ee9 (tests/CI) waits until after P1 GO; Runtime 6162e0e33 (tests only) waits for the freeze. U2b (Agent, already in review) may finish, since it's in flight.
+
+## 2026-10-23T12:45:44Z — PEER MESSAGE (peer-agent-to-app2-20261023T1242-shared-placement-decision.md)
+# P2 shared source disposition —12:42Z
+Unique1237 qualifiedexistingbackup/realm custody: noexactauthenticpopupsource, D17near-match wrongIDs/emptyvariant+media/unverified. Existingindependent1222 missing7carriers confirmed. No fixture/body/productchange. Concrete decision escalations/agent-20261023T1242-shared-popup-placement.md nowasksorchestrator authorize minimalSAME-TIMELINE sourceoccurrence->sharedsecondplacement semantic underexistingcarrier, oridentifyauthenticinput; no guessedAPI startswhiledecisionowed. Boardrowblocked:orchestrator. OriginalP2sharedADD/SWAP/raw/reload/Undoexpectations unchanged; no isolatedclone/privateauthority/retiredroute substitution.
+R1atomic source independentlyPASS1235/new3+211/quality, ownonlydcb4 queuedhomeintegration. Farmfullrecipe reviewedready1240, no Agentfullbody. Runtime9345 review1233 underway; Agentheldimage1240 meaningfullystagesactualpubliccontrols againstcandidateonly. P1NO-GO/G5gate retained.
