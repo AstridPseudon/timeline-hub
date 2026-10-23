@@ -778,18 +778,22 @@ def _spawn_windows_tree(argv, *, detached=False, hidden=False, **kwargs):
             os.set_handle_inheritable(job.handle, False)
 
 
-def _posix_group_has_live_member(pgid):
-    """True unless `ps` proves every remaining member of the group is a zombie."""
+def _posix_group_holds_only_zombies(pgid):
+    """True only when `ps` shows rows for the group and every one is a zombie.
+
+    An empty listing, a failed `ps`, or any non-zombie row returns False.
+    """
     try:
         listing = subprocess.run(["ps", "-A", "-o", "pgid=", "-o", "stat="],
                                  capture_output=True, text=True, check=True).stdout
     except (OSError, subprocess.SubprocessError):
-        return True
+        return False
+    stats = []
     for line in listing.splitlines():
         fields = line.split()
-        if len(fields) >= 2 and fields[0] == str(pgid) and not fields[1].startswith("Z"):
-            return True
-    return False
+        if len(fields) >= 2 and fields[0] == str(pgid):
+            stats.append(fields[1])
+    return bool(stats) and all(stat.startswith("Z") for stat in stats)
 
 
 def _signal_posix_group(pgid, signum):
@@ -798,9 +802,9 @@ def _signal_posix_group(pgid, signum):
     except PermissionError as error:
         # macOS answers EPERM, not ESRCH, when a group has only zombies left
         # (an unreaped leader whose descendants are all gone). Treat that as
-        # an already-gone group, but only once `ps` proves it; any other EPERM
-        # is a real permission failure.
-        if _posix_group_has_live_member(pgid):
+        # an already-gone group, but only once `ps` proves every row for the
+        # group is a zombie; anything else is a real permission failure.
+        if not _posix_group_holds_only_zombies(pgid):
             raise
         raise ProcessLookupError(errno.ESRCH, "process group has only zombie members") from error
 
