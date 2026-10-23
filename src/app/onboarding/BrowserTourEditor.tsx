@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, type CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { TasksPaneSurface, TasksPaneChatSlot } from '@/features/tasks/components/TasksPane/components/TasksPaneSurface';
 import { usePanesStore } from '@/shared/state/panesStore';
 import { ASTRID_EDITOR_EXTENSIONS } from '@astrid/packs/rendering/editor/catalog';
@@ -18,6 +18,9 @@ import { TourChatPanel } from '@/tools/video-editor/components/AgentChat/TourCha
 import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
 import { TimelineEditorCoreBody } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx';
 import { useTimelineEditorData, useTimelinePlaybackContext } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { useTimelineEditorOps } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { VideoEditorRightPanelDock } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorRightPanelDock.tsx';
+import { HOST_EXTENSIONS_PANEL_KEY, HOST_PROPERTIES_PANEL_KEY } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorPanelDisplayControl.tsx';
 
 export const BROWSER_TOUR_EXTENSIONS = Object.freeze(ASTRID_EDITOR_EXTENSIONS.filter(extension => extension.manifest.id === 'haus.astrid.threejs-live-editor'));
 if (BROWSER_TOUR_EXTENSIONS.length !== 1) throw new Error('The bundled Lantern Valley world renderer is missing.');
@@ -30,6 +33,29 @@ function Preview() {
   return resolvedConfig ? <RemotionPreview ref={previewRef} config={resolvedConfig}
     initialTime={currentTime} currentTime={currentTime} onTimeUpdate={onPreviewTimeUpdate}
     playerContainerRef={playerContainerRef} /> : null;
+}
+
+function BrowserTourEditorSurface() {
+  const ops = useTimelineEditorOps();
+  const opsRef = useRef(ops);
+  opsRef.current = ops;
+
+  useLayoutEffect(() => {
+    // The tour runs on an in-memory timeline, so this only opens the bundled
+    // extension panel in the tour host; no user preference or workspace state is saved.
+    opsRef.current.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, 'dock');
+    opsRef.current.setSelectedRightPanelId(HOST_EXTENSIONS_PANEL_KEY);
+  }, []);
+
+  return <div className="grid min-h-0 min-w-0 grid-cols-1 grid-rows-[minmax(130px,1fr)_minmax(130px,.8fr)_minmax(160px,1fr)] md:grid-cols-[minmax(0,1fr)_minmax(220px,34%)] md:grid-rows-[minmax(0,1fr)_minmax(180px,35%)]">
+    <section className="relative min-h-0 min-w-0" data-editor-tour="preview"><Preview /></section>
+    <section className="min-h-0 min-w-0" data-editor-tour="extensions">
+      <VideoEditorRightPanelDock leftPanelPresent={false} />
+    </section>
+    <section className="min-h-0 min-w-0 md:col-span-2 md:row-start-2" data-editor-tour="timeline">
+      <TimelineEditorCoreBody hostObservations={PUBLIC_TIMELINE_OBSERVATIONS} />
+    </section>
+  </div>;
 }
 
 /** Bundled media, in-memory operations and the bundled world renderer; no workspace services. */
@@ -49,10 +75,7 @@ export function BrowserTourEditor({ onFinish }: { onFinish: () => void }) {
     enableMutationServices enableLiveServices={false} enableRenderExport={false}>
     <main className="grid h-dvh grid-rows-[minmax(0,1fr)_45%] md:grid-rows-1 md:grid-cols-[minmax(0,1fr)_var(--tasks-pane-width)] overflow-hidden bg-background text-foreground"
       style={{ '--tasks-pane-width': `${tasksPaneWidth}px` } as CSSProperties} aria-label="Lantern Valley guided demo">
-      <div className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_minmax(180px,35%)]">
-        <section className="relative min-h-0 min-w-0" data-editor-tour="preview"><Preview /></section>
-        <section className="min-h-0 min-w-0" data-editor-tour="timeline"><TimelineEditorCoreBody hostObservations={PUBLIC_TIMELINE_OBSERVATIONS} /></section>
-      </div>
+      <BrowserTourEditorSurface />
       <TasksPaneSurface role="complementary" aria-label="Task and chat pane" className="relative min-h-0 min-w-0">
         <TasksPaneChatSlot><TourChatPanel /></TasksPaneChatSlot>
       </TasksPaneSurface>
