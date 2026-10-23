@@ -1,4 +1,6 @@
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState, type CSSProperties } from 'react';
+import { TasksPaneSurface, TasksPaneChatSlot } from '@/features/tasks/components/TasksPane/components/TasksPaneSurface';
+import { usePanesStore } from '@/shared/state/panesStore';
 import { ASTRID_EDITOR_EXTENSIONS } from '@astrid/packs/rendering/editor/catalog';
 import { EditorRuntimeProvider } from '@/tools/video-editor/contexts/EditorRuntimeProvider.tsx';
 import { PUBLIC_ASTRID_ELEMENT_HOST } from '@/pages/Home/astrid-public-host.tsx';
@@ -33,6 +35,7 @@ function Preview() {
 /** Bundled media, in-memory operations and the bundled world renderer; no workspace services. */
 export function BrowserTourEditor({ onFinish }: { onFinish: () => void }) {
   const [dataProvider] = useState(createEditorTourDataProvider);
+  const tasksPaneWidth = usePanesStore(state => state.tasksPaneWidth);
   useLayoutEffect(() => {
     const unregister = registerBrowserTourFinish(onFinish);
     startEditorTour();
@@ -44,12 +47,15 @@ export function BrowserTourEditor({ onFinish }: { onFinish: () => void }) {
     extensions={BROWSER_TOUR_EXTENSIONS} extensionStateRepository={null}
     runtime={{ assetResolver: dataProvider, exporter: null, hostContext: null }}
     enableMutationServices enableLiveServices={false} enableRenderExport={false}>
-    <main className="grid h-dvh grid-rows-[40%_60%] md:grid-rows-1 md:grid-cols-[minmax(280px,32%)_1fr] overflow-hidden bg-background text-foreground" aria-label="Lantern Valley guided demo">
-      <aside className="min-h-0 border-r"><TourChatPanel /></aside>
+    <main className="grid h-dvh grid-rows-[minmax(0,1fr)_45%] md:grid-rows-1 md:grid-cols-[minmax(0,1fr)_var(--tasks-pane-width)] overflow-hidden bg-background text-foreground"
+      style={{ '--tasks-pane-width': `${tasksPaneWidth}px` } as CSSProperties} aria-label="Lantern Valley guided demo">
       <div className="grid min-h-0 min-w-0 grid-rows-[minmax(0,1fr)_minmax(180px,35%)]">
         <section className="relative min-h-0 min-w-0" data-editor-tour="preview"><Preview /></section>
         <section className="min-h-0 min-w-0" data-editor-tour="timeline"><TimelineEditorCoreBody hostObservations={PUBLIC_TIMELINE_OBSERVATIONS} /></section>
       </div>
+      <TasksPaneSurface role="complementary" aria-label="Task and chat pane" className="relative min-h-0 min-w-0">
+        <TasksPaneChatSlot><TourChatPanel /></TasksPaneChatSlot>
+      </TasksPaneSurface>
     </main>
     <EditorTourTimelineDriver />
     <EditorTourRunner />
