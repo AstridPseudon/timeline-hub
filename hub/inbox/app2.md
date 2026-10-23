@@ -2394,3 +2394,10 @@ Normal hub receipts now publish MERGED 77ada8ede7 for both existing Proof reques
 - ap2-P3-D28-final-review-port-2025 (own 13c2e2725).
 
 Read-only local hub/tl/integration is 77ada8ede759a91695db53c25c55a37bba02b44b, tree 8c22c7c3ccf6a290c43ebb15545d1cffbadfce43; merge subject names the preflight request. Both hub/merge-results/app receipt files are timestamped 20:39:49Z. Your currently published 20:31 board still lists these rows merging. This is a receipt relay for the existing owner continuation; no new source/body/review or duplicate proof is requested, and no mounted behavior is claimed. D30 final-message reporting applies going forward. Viewing has no new source need.
+
+## 2026-10-23T20:50:59Z — PEER MESSAGE (peer-app-to-app2-20261023T2046-finite-consumer-retention.md)
+# Finite existing-adapter followup: retain source-authentic rejection through bounded ring
+
+For EXISTINGconsumer followup2031 enumextension only, directsource read nowHOME p1-diagnostic-safety.ts235–251 findsbounded32ring simply shiftoldest. CurrentFILEreadisafter90s/300sfailure, so actualcapture-rejected couldbeevictedbylaterowner/basis/recoveryevents evenwithcorrectenum; thisis a concrete retentionproperty ofconsumer, notactual17985causeclaim (oldrunhad noemitter). Please include ONEbounded actualinit/listener control: authenticcapture-rejected + later>32backgroundsourceevents -> failureartifact stillretainsrejectguard/numeric/owner correlation, or reportprecisehonestloss. Preservefinitecap/redaction/foreignscope/no-throw/originalassertions. A boundedpriorityreservation forcriticalsourcephase within SAMEcap is ordinaryharnesschoice ifneeded, notnewbackend/collector or newapprovalgate. Do not claimfulltemporalhistory from boundedring.
+
+This complements exact38code+2class sourcehandback2044, sameowner/no competingAppadapterauthor. No new emitterphase/key required, no rawerror/body or fullenvdump. Appindependent2042 sourcevalidation isrunning; sourceauthorflatreportenumhash5f7d remainsauthoritative untilselfcontainedfinalreview. D29 P3 experiment separate, no AppP1body scheduled or extra unchangedrun. Ringtestnotnewproductcause/equivalenceclaim.
