@@ -111,7 +111,7 @@ def inode(path):
 
 class Store:
     # Fixed reserve; adapters cannot bypass retention or reserve via caller flags.
-    RESERVE_BYTES = 8 * 1024 * 1024
+    RESERVE_BYTES = 8 * 1024 * 1024 * 1024
 
     @classmethod
     def initialize(cls, root, tests_dir):
@@ -123,7 +123,8 @@ class Store:
         fd = os.open(root / 'mutex', os.O_CREAT | os.O_EXCL | os.O_RDWR, 0o600)
         os.close(fd)
         owner = {'version': 1, 'uid': os.getuid(), 'id': uuid.uuid4().hex,
-                 'root': str(root), 'tests': str(tests_dir), 'mutex': inode(root / 'mutex')}
+                 'root': str(root), 'tests': str(tests_dir), 'mutex': inode(root / 'mutex'),
+                 'directories': {str(p): inode(p) for p in (root, tests_dir, root / 'entries', root / 'locks', root / 'staging')}}
         atomic(root / 'owner.json', canonical(owner))
         atomic(root / 'index.json', canonical({'version': 1, 'seq': 0, 'entries': {}, 'registrations': {}, 'retired': [], 'retired_suites': []}))
         return cls(root, tests_dir)
@@ -131,7 +132,7 @@ class Store:
     def __init__(self, root, tests_dir):
         self.root, self.tests = physical(root), physical(tests_dir)
         self.owner = json.loads(read(self.root / 'owner.json'))
-        check(set(self.owner) == {'version', 'uid', 'id', 'root', 'tests', 'mutex'}, 'store owner schema')
+        check(set(self.owner) == {'version', 'uid', 'id', 'root', 'tests', 'mutex', 'directories'}, 'store owner schema')
         check(self.owner['version'] == 1 and self.owner['uid'] == os.getuid()
               and self.owner['root'] == str(self.root) and self.owner['tests'] == str(self.tests), 'store ownership mismatch')
         for name in ('entries', 'locks', 'staging'):
@@ -140,6 +141,10 @@ class Store:
 
     @contextlib.contextmanager
     def mutex(self, recovery=False):
+        expected_dirs = {str(p) for p in (self.root, self.tests, self.root / 'entries', self.root / 'locks', self.root / 'staging')}
+        check(set(self.owner['directories']) == expected_dirs, 'directory schema')
+        for path, node in self.owner['directories'].items():
+            check(inode(physical(path)) == node, 'store directory replaced')
         fd = os.open(self.root / 'mutex', os.O_RDWR | os.O_NOFOLLOW)
         try:
             check(inode(self.root / 'mutex') == self.owner['mutex'] and list((os.fstat(fd).st_dev, os.fstat(fd).st_ino)) == self.owner['mutex'], 'mutex inode changed')
@@ -187,6 +192,7 @@ class Store:
             self._suite(reg['suite'])
         for name in index['retired']:
             self._name(name)
+        check(isinstance(index['retired_suites'], list) and all(isinstance(pair, list) and len(pair) == 2 and all(isinstance(v, str) and v and not any(c.isspace() for c in v) for v in pair) for pair in index['retired_suites']), 'retired suite schema')
 
     def _name(self, name):
         check(isinstance(name, str) and re.fullmatch('[A-Za-z0-9][A-Za-z0-9_-]*', name), 'registration name required')
@@ -199,6 +205,9 @@ class Store:
         for name, reg in index['registrations'].items():
             check(optional(self.tests / (name + '.env')) == (reg['env'] or None), 'registration env changed: ' + name)
             check(not reg['suite'] or suites.splitlines(keepends=True).count(reg['suite']) == 1, 'registration suite changed: ' + name)
+            if reg['suite']:
+                pair = reg['suite'].split(None, 2)[:2]
+                check(sum(row.split(None, 2)[:2] == pair for row in suites.splitlines()) == 1, 'managed suite ambiguity')
         return suites
 
     def _lock(self, eid, entry, exclusive=False):
@@ -243,7 +252,7 @@ class Store:
     def _apply_projection(self, projections, forward):
         # Validate every target before the first write (including recovery).
         for name, values in projections.items():
-            check(name == 'suites.conf' or re.fullmatch('[A-Za-z0-9][A-Za-z0-9_-]*\.env', name), 'journal projection path')
+            check(name == 'suites.conf' or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]*\.env', name), 'journal projection path')
             check(isinstance(values, list) and len(values) == 2 and all(v is None or isinstance(v, str) for v in values), 'journal projection schema')
             check(optional(self.tests / name) in values, 'projection changed while pending')
         for name, values in projections.items():
@@ -259,6 +268,25 @@ class Store:
     def _checkpoint(self, point):
         """No-op fault-injection seam for private fixtures."""
 
+    def _sync_payload(self, path):
+        fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            for name in os.listdir(fd):
+                info = os.stat(name, dir_fd=fd, follow_symlinks=False)
+                if stat.S_ISDIR(info.st_mode):
+                    self._sync_payload(path / name)
+                elif stat.S_ISREG(info.st_mode):
+                    leaf = os.open(name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=fd)
+                    try:
+                        os.fsync(leaf)
+                    finally:
+                        os.close(leaf)
+                else:
+                    check(stat.S_ISLNK(info.st_mode), 'unsupported payload inode')
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+
     def _delete_owned(self, path, entry):
         if not path.exists() and not path.is_symlink():
             return
@@ -269,27 +297,39 @@ class Store:
             self._owned_dir(path, entry)
         else:
             check(not list(path.iterdir()), 'missing deletion marker')
-        device = path.lstat().st_dev
-        def delete_children(directory):
-            for item in directory.iterdir():
-                if item == marker:
-                    continue
-                info = item.lstat()
-                check(info.st_dev == device and info.st_uid == os.getuid(), 'foreign mounted/owned content')
-                if stat.S_ISDIR(info.st_mode):
-                    delete_children(item)
-                    item.rmdir()
-                else:
-                    item.unlink()  # Leaf symlinks are unlinked, never followed.
-                sync_dir(directory)
-                self._checkpoint('eviction:file')
-        delete_children(path)
-        if marker.exists():
-            marker.unlink()
-            sync_dir(path)
-        path.rmdir()
-        sync_dir(path.parent)
-        self._checkpoint('eviction:directory')
+        root_fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            root_info = os.fstat(root_fd)
+            check([root_info.st_dev, root_info.st_ino] == entry['node'], 'deletion directory replaced')
+            def delete_children(directory_fd, top=False):
+                for name in os.listdir(directory_fd):
+                    if top and name == '.bench-owner.json':
+                        continue
+                    info = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+                    check(info.st_dev == root_info.st_dev and info.st_uid == os.getuid(), 'foreign mounted/owned content')
+                    if stat.S_ISDIR(info.st_mode):
+                        child_fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory_fd)
+                        try:
+                            opened = os.fstat(child_fd)
+                            check((opened.st_dev, opened.st_ino) == (info.st_dev, info.st_ino), 'child directory replaced')
+                            delete_children(child_fd)
+                        finally:
+                            os.close(child_fd)
+                        os.rmdir(name, dir_fd=directory_fd)
+                    else:
+                        os.unlink(name, dir_fd=directory_fd)  # Never follow leaf symlinks.
+                    os.fsync(directory_fd)
+                    self._checkpoint('eviction:file')
+            delete_children(root_fd, True)
+            if marker.exists():
+                os.unlink('.bench-owner.json', dir_fd=root_fd)
+                os.fsync(root_fd)
+            check(inode(path) == entry['node'], 'deletion root replaced')
+            path.rmdir()
+            sync_dir(path.parent)
+            self._checkpoint('eviction:directory')
+        finally:
+            os.close(root_fd)
 
     def _evict(self, before, component, incoming, current):
         candidates = sorted(((eid, e) for eid, e in before['entries'].items() if e['component'] == component), key=lambda pair: pair[1]['seq'], reverse=True)
@@ -342,6 +382,44 @@ class Store:
                 self._delete_owned(path, entry)
         self._finish_journal()
 
+    def _validate_transition(self, journal):
+        before, after = journal['before'], journal['after']
+        for eid in set(before['entries']) & set(after['entries']):
+            check(before['entries'][eid] == after['entries'][eid], 'journal rewrites owned entry')
+        for name in set(before['registrations']) & set(after['registrations']):
+            check(before['registrations'][name] == after['registrations'][name], 'journal rewrites registration')
+        if journal['kind'] == 'eviction':
+            check(set(after['entries']) <= set(before['entries']), 'eviction cannot create')
+            expected = {name: reg for name, reg in before['registrations'].items()
+                        if not set(reg['requires']) & set(journal['victims'])}
+            check(after['registrations'] == expected, 'eviction registration authority')
+        else:
+            check(set(before['entries']) <= set(after['entries']) and set(before['registrations']) <= set(after['registrations']), 'creation cannot evict')
+        projections = journal['projections']
+        if not projections:
+            check(before == after, 'missing journal projections')
+            return
+        check('suites.conf' in projections, 'missing suite baseline')
+        old_suites, new_suites = projections['suites.conf']
+        check(isinstance(old_suites, str) and isinstance(new_suites, str), 'suite baseline schema')
+        rows = old_suites.splitlines(keepends=True)
+        expected_projections = {'suites.conf': [old_suites, None]}
+        for name, reg in before['registrations'].items():
+            if reg['suite']:
+                check(rows.count(reg['suite']) == 1, 'journal registration baseline')
+            if name not in after['registrations'] and reg['suite']:
+                rows.remove(reg['suite'])
+        for name, reg in after['registrations'].items():
+            if name not in before['registrations'] and reg['suite']:
+                rows.append(reg['suite'])
+        expected_projections['suites.conf'][1] = ''.join(rows)
+        for name in set(before['registrations']) | set(after['registrations']):
+            old = before['registrations'].get(name, {}).get('env') or None
+            new = after['registrations'].get(name, {}).get('env') or None
+            if old != new:
+                expected_projections[name + '.env'] = [old, new]
+        check(projections == expected_projections, 'journal projection authority/hash mismatch')
+
     def recover(self):
         with self.mutex(recovery=True):
             if not self.journal.exists():
@@ -351,6 +429,7 @@ class Store:
             check(journal['kind'] in ('eviction', 'creation'), 'journal kind')
             self._validate_index(journal['before'], False)
             self._validate_index(journal['after'], False)
+            self._validate_transition(journal)
             current = json.loads(read(self.root / 'index.json'))
             check(current in (journal['before'], journal['after']), 'pending index changed')
             if journal['kind'] == 'eviction':
@@ -359,8 +438,18 @@ class Store:
                 check(not journal['victims'], 'creation cannot evict')
                 if journal['new']:
                     e = journal['new']
-                    self._validate_entry(self._entry_id(e['component'], e['key']), e, False)
-            self._roll(journal, journal['kind'] == 'eviction')
+                    new_id = self._entry_id(e['component'], e['key'])
+                    self._validate_entry(new_id, e, False)
+                    check(new_id not in journal['before']['entries'] and journal['after']['entries'].get(new_id, e) == e, 'creation deletion authority')
+            held = []
+            try:
+                if journal['kind'] == 'eviction':
+                    for eid in journal['victims']:
+                        held.append(self._lock(eid, journal['before']['entries'][eid], True))
+                self._roll(journal, journal['kind'] == 'eviction')
+            finally:
+                for fd in held:
+                    os.close(fd)
 
     def _registration(self, value, entry, index):
         check(isinstance(value, dict) and set(value) <= {'name', 'env', 'suite', 'requires', 'require_names'} and {'name', 'env', 'suite'} <= set(value), 'registration input schema')
@@ -388,7 +477,8 @@ class Store:
         with self.mutex():
             before = self._load()
             self._verify_projection(before)
-            before = self._evict(before, component, eid not in before['entries'], eid)
+            for policy_component in ('child', 'runtime'):
+                before = self._evict(before, policy_component, policy_component == component and eid not in before['entries'], eid)
             self._checkpoint('before-build')
             check(shutil.disk_usage(self.root).free >= self.RESERVE_BYTES, 'free-space reserve unavailable')
             reused = eid in before['entries']
@@ -407,14 +497,17 @@ class Store:
                         fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_NOFOLLOW, 0o600)
                         os.close(fd)
                         sync_dir(lock.parent)
-                    stage.mkdir(mode=0o700)
                     entry = {'component': component, 'key': key, 'identity': identity, 'path': str(final), 'seq': before['seq'] + 1,
-                             'lock': inode(lock), 'node': inode(stage), 'owner': self.owner['id']}
-                    atomic(stage / '.bench-owner.json', canonical({'owner': self.owner['id'], 'component': component, 'key': key, 'identity': identity}))
+                             'lock': inode(lock), 'node': None, 'owner': self.owner['id']}
                     journal['new'] = entry
+                    self._save_journal(journal)
+                    stage.mkdir(mode=0o700)
+                    entry['node'] = inode(stage)
+                    atomic(stage / '.bench-owner.json', canonical({'owner': self.owner['id'], 'component': component, 'key': key, 'identity': identity}))
                     self._save_journal(journal)
                     build(stage, final)
                     self._owned_dir(stage, entry)
+                    self._sync_payload(stage)
                     os.rename(stage, final)
                     sync_dir(stage.parent)
                     sync_dir(final.parent)
@@ -436,10 +529,13 @@ class Store:
                 self._checkpoint('creation:index')
                 self._finish_journal()
                 return dict(entry, reused=reused)
-            except Exception:
+            except Exception as error:
                 # Eviction was already committed; rollback only this creation.
                 if self.journal.exists():
-                    self._roll(journal, False)
+                    try:
+                        self._roll(journal, False)
+                    except Exception as rollback_error:
+                        raise Refused(f'creation failed: {error}; recovery remains pending: {rollback_error}') from error
                 raise
 
     def registered(self, name):

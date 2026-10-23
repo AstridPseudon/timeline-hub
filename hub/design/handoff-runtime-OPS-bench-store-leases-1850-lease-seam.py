@@ -53,7 +53,8 @@ def supervise(store, repo, suite, command, argv, cancelled, parent, tests_dir):
             return 130
         if not entries:
             # Existing unregistered suites retain their direct-child semantics.
-            os.execvpe(argv[0], argv, os.environ)
+            result = subprocess.call(argv)
+            return result if result >= 0 else 128 - result
         read_fd, write_fd = os.pipe2(os.O_CLOEXEC | os.O_NONBLOCK)
         env = dict(os.environ, BENCH_CONTROL_FD=str(write_fd))
         child = subprocess.Popen(argv, env=env, pass_fds=tuple(fds) + (write_fd,), process_group=0)
@@ -132,7 +133,10 @@ def main():
 
 if __name__ == "__main__":
     try:
-        sys.exit(main())
+        result = main()
+        Path(sys.argv[7]).with_name('BENCH-LEASE-RESULT').write_text('complete\n')
+        sys.exit(result)
     except Exception as exc:
         print(f"BENCH-LEASE REFUSED: {exc}", file=sys.stderr)
+        Path(sys.argv[7]).with_name('BENCH-LEASE-RESULT').write_text('error\n')
         sys.exit(125)

@@ -4,12 +4,14 @@ import importlib.util
 import os
 from pathlib import Path
 import signal
+import shlex
 import subprocess
 import sys
 import tempfile
 import time
 import unittest
 
+sys.dont_write_bytecode = True
 PREFIX = Path(__file__).with_name('handoff-runtime-OPS-bench-store-leases-1850-')
 CORE = Path(__file__).with_name('handoff-runtime-OPS-bench-store-core-resume-1854-bench_store.py')
 STAGED = Path(str(PREFIX) + 'test-run')
@@ -128,8 +130,70 @@ class LeaseTests(unittest.TestCase):
         self.assertEqual(process.returncode, 0, output)
         self.assertIn('command', output)
 
+    def test_exact_shell_suite_branch_uses_inherited_lease(self):
+        first = create(self.store, 1)
+        create(self.store, 2)
+        source = STAGED.read_text()
+        start = source.index('if [ -n "$BENCH_CONTROL_FD" ]; then')
+        end = source.index('[ -n "$LEASED" ] && exit "$RC"', start)
+        branch = source[start:end]
+        command = f'echo ready > {self.folder}/ready0; sleep .5; exit 7'
+        script = f'SNAP={self.folder}; D={self.folder}; CMD={shlex.quote(command)};\n' + branch + '\nexit "$RC"'
+        process, _ = self.holder(script)
+        create(self.store, 3)
+        self.assertTrue(Path(first['path']).is_dir())
+        output, _ = process.communicate(timeout=8)
+        self.assertEqual(process.returncode, 7, output)
+
+    def test_exact_shell_suite_branch_cancel_releases_timeout_group(self):
+        first = create(self.store, 1)
+        create(self.store, 2)
+        source = STAGED.read_text()
+        start = source.index('if [ -n "$BENCH_CONTROL_FD" ]; then')
+        end = source.index('[ -n "$LEASED" ] && exit "$RC"', start)
+        command = f'echo ready > {self.folder}/ready0; sleep 30'
+        script = f'SNAP={self.folder}; D={self.folder}; CMD={shlex.quote(command)};\n' + source[start:end] + '\nexit "$RC"'
+        process, marker = self.holder(script)
+        create(self.store, 3)
+        self.assertTrue(Path(first['path']).is_dir())
+        marker.touch()
+        output, _ = process.communicate(timeout=8)
+        self.assertEqual(process.returncode, 130, output)
+        create(self.store, 4)
+        self.assertFalse(Path(first['path']).exists())
+
+    def test_symlink_store_root_refuses_before_command(self):
+        create(self.store, 1)
+        alias = self.folder / 'alias'
+        alias.symlink_to(self.folder / 'store', target_is_directory=True)
+        ready = self.folder / 'must-not-run'
+        result = subprocess.run([sys.executable, '-I', str(Path(str(PREFIX) + 'lease-seam.py')),
+                                 str(self.folder), str(alias), 'agent', 'bench1', 'true',
+                                 str(os.getpid()), str(self.folder / 'CANCELLED'),
+                                 'bash', '-c', f'echo unsafe > {ready}'], capture_output=True, text=True, timeout=8)
+        self.assertEqual(result.returncode, 125, result.stdout + result.stderr)
+        self.assertFalse(ready.exists())
+
     def test_failure_release(self):
         self.retained_then_released('echo ready > "$1"; sleep .35; exit 7', 7)
+
+    def test_suite_exit_125_is_preserved(self):
+        self.retained_then_released('echo ready > "$1"; sleep .35; exit 125', 125)
+        self.assertIn('BENCH-LEASE-RESULT', STAGED.read_text())
+
+    def test_exact_python_entry_distinguishes_refusal_from_suite_125(self):
+        create(self.store, 1)
+        exported = Path(str(PREFIX) + 'lease-seam.py')
+        args = [sys.executable, '-I', str(exported), str(self.folder), str(self.folder / 'store'),
+                'agent', 'bench1', 'true', str(os.getpid()), str(self.folder / 'CANCELLED'),
+                'bash', '-c', 'exit 125']
+        result = subprocess.run(args, capture_output=True, text=True, timeout=8)
+        self.assertEqual(result.returncode, 125, result.stdout + result.stderr)
+        self.assertEqual((self.folder / 'BENCH-LEASE-RESULT').read_text(), 'complete\n')
+        (self.tests / 'bench1.env').write_text('FORGED=1\n')
+        result = subprocess.run(args, capture_output=True, text=True, timeout=8)
+        self.assertEqual(result.returncode, 125, result.stdout + result.stderr)
+        self.assertEqual((self.folder / 'BENCH-LEASE-RESULT').read_text(), 'error\n')
 
     def test_timeout_release(self):
         self.retained_then_released('echo ready > "$1"; timeout -k 1 .35 sleep 10', 124)
