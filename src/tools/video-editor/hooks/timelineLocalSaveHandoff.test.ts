@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
@@ -7,6 +7,16 @@ import { createDefaultTimelineConfig, withDefaultTimelineOutput } from '../lib/d
 import { buildTimelineData } from '../lib/timeline-data.ts';
 import type { TimelineConfig } from '../types/index.ts';
 import { createTimelineLocalSaveHandoff, type TimelineSaveSource } from './timelineLocalSaveHandoff.ts';
+
+const contractFixture = vi.hoisted(() => ({ digest: 'sha256:unsupported-test-fixture' }));
+const CURRENT_V2_DIGEST = 'sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c';
+
+vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/integrations/runtime/generated-contract-metadata.ts')>(),
+  get SCHEMA_DIGEST() { return contractFixture.digest; },
+}));
+
+afterEach(() => { contractFixture.digest = 'sha256:unsupported-test-fixture'; });
 
 async function environment(children = false, raw = false, rawIds = ['authored'], rawApp?: Record<string, unknown>) {
   const head = { projectId: 'project-commit', timelineId: 'timeline-commit', headRevisionId: 'r0', headPublicationId: 'p0' };
@@ -174,6 +184,34 @@ describe('upstream local document handoff', () => {
     await expect(env.handoff.flush()).rejects.toThrow('draft retained');
     expect(env.receipt).not.toHaveBeenCalled();
     expect(env.send).not.toHaveBeenCalled();
+    await env.session.dispose();
+  });
+
+  it('dispatches the original guarded doc.patch through the session when current v2 is supported', async () => {
+    contractFixture.digest = CURRENT_V2_DIGEST;
+    const env = await environment(false, true);
+    const next = structuredClone(env.source);
+    next.config.clips[0].at = 1;
+    await env.handoff.capture(next);
+    env.send.mockRejectedValueOnce(new Error('stop after request inspection'));
+
+    await expect(env.handoff.flush()).rejects.toThrow('draft retained');
+    expect(env.send).toHaveBeenCalledTimes(1);
+    const [request] = env.send.mock.calls[0];
+    expect(request).toMatchObject({
+      base_revision_id: 'r0',
+      base_publication_id: 'p0',
+      label: 'Edit timeline',
+      merge: 'atomic',
+      dry_run: false,
+      commands: [{ op: 'doc.patch', args: { changes: [{
+        op: 'set', ref: 'parent', path: ['clips', 'id:authored', 'at'],
+        before: { state: 'present', value: 0 }, value: 1,
+      }] } }],
+      steps: [{ intent: 'Save local editor changes', command_ordinals: [0] }],
+    });
+    expect(request.steps?.[0].patch).toEqual(request.commands[0].args.changes);
+    expect(env.receipt).not.toHaveBeenCalled();
     await env.session.dispose();
   });
 

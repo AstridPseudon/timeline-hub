@@ -41,6 +41,14 @@ import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
 import { createLocalSaveSession } from '../commands/localSaveSession.ts';
 import { createTimelineLocalSaveHandoff, type TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
 
+// This case asserts the retained-draft path when the generated v2 contract is
+// unavailable. Keep that condition explicit instead of inheriting the current
+// full-v2 digest from the joined generated metadata.
+vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/integrations/runtime/generated-contract-metadata.ts')>(),
+  SCHEMA_DIGEST: 'sha256:unsupported-test-fixture',
+}));
+
 // Keep these inputs aligned with useTimelinePersistence's private save timing
 // contract; the bridge request window itself comes from the shared contract.
 const SAVE_DEBOUNCE_MS = 500;

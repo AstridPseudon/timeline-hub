@@ -1,6 +1,7 @@
 import type { CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
+import { SCHEMA_DIGEST } from '@/integrations/runtime/generated-contract-metadata.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import { documentPatchIntent } from './documentPatchIntent.ts';
 import {
@@ -74,6 +75,8 @@ export async function createLocalSaveSession(options: Options) {
   let writes: Promise<unknown> = Promise.resolve();
   let sending: Promise<void> | undefined;
   let generation = 0;
+  let adoptedAcceptance: string | undefined;
+  let replaying = false;
   let writeError: unknown;
   let state: LocalSaveState = { status: 'saved', recoverableOwners: [] };
 
@@ -128,29 +131,51 @@ export async function createLocalSaveSession(options: Options) {
         record = await box.read();
         if (at !== generation) continue;
         if (await rollback()) return;
-        if (!record.intents.length) {
+        if (closed || writeError || at !== generation) return;
+        if ((record.accepted && record.accepted.intentId !== adoptedAcceptance) || (!record.intents.length && !record.accepted)) {
+          // Runtime owns suffix revalidation. Install its complete landed closure
+          // before sending the next ORIGINAL intent, never execute/recapture it here.
           const prepared = await options.prepareDisplay(clone(basis));
-          if (!closed && !writeError && at === generation) {
-            displayBasis = clone(basis);
-            document = toOutboxJson(prepared.document);
-            prepared.adopt();
-            publish('saved');
-          }
+          if (closed || writeError || at !== generation) return;
+          displayBasis = clone(basis);
+          document = toOutboxJson(prepared.document);
+          replaying = record.intents.length > 0;
+          prepared.adopt();
+          adoptedAcceptance = record.accepted?.intentId;
+        }
+        if (closed || writeError || at !== generation) return;
+        if (!record.intents.length) {
+          replaying = false;
+          publish('saved');
           return;
         }
         const save = saveOf(record.intents[0].payload);
-        // No invented DTOs or snapshot fallback while U4p's generated join is pending.
-        if (!save.commands || save.commands.some((command) => command.op === 'doc.patch')) { publish('blocked', dtoGap); return; }
+        // Activate only with the normal official full-v2 generated contract.
+        const fullV2 = String(SCHEMA_DIGEST) === 'sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c';
+        if ((!save.commands && !(fullV2 && save.documentIntent))
+          || (!fullV2 && save.commands?.some((command) => command.op === 'doc.patch'))) { publish('blocked', dtoGap); return; }
         publish('saving');
         const acceptedId = record.accepted?.intentId;
         record = await box.dispatch((intent, head) => {
           const original = saveOf(intent.payload);
-          const commands = original.commands!;
+          const patch = original.documentIntent as Record<string, OutboxJson> | undefined;
+          const commands: CommitRequest['commands'] = original.commands ?? [{ schema_version: 1,
+            op: 'doc.patch', version: '1', select: null, args: { changes: patch!.changes } }];
+          // Only the base pair advances. Original operands, reads, step IDs and
+          // allocated entity IDs come directly from the persisted intent.
+          const metadata = patch ? { steps: [{ ...patch.step as Record<string, OutboxJson>,
+            command_ordinals: [0], patch: patch.changes }],
+            merge: patch.merge ?? (patch.reads === undefined ? 'atomic' : 'fields'),
+            ...(patch.reads === undefined ? {} : { reads: patch.reads }) }
+            : { steps: [{ id: intent.id, label: original.label, intent: original.label, tags: [],
+              command_ordinals: commands.map((_, index) => index), patch: [] }], merge: 'fields' };
+          const request: CommitRequest = { api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
+            base_revision_id: head.revisionId, base_publication_id: head.publicationId,
+            commands, label: original.label, dry_run: false, source: { via: 'app' } };
+          if (fullV2) Object.assign(request, metadata);
           return { method: 'POST',
             path: `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`,
-            body: toOutboxJson({ api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
-              base_revision_id: head.revisionId, base_publication_id: head.publicationId,
-              commands, label: original.label, source: { via: 'app' } } satisfies CommitRequest) };
+            body: toOutboxJson(request) };
         }, async (request) => {
           if (closed) return { kind: 'retry', error: { message: 'Editor closed; exact request retained' } };
           try {
@@ -193,7 +218,10 @@ export async function createLocalSaveSession(options: Options) {
         basis = { head: result.accepted, canonicalDocument: result.canonicalDocument, graph: result.graph };
         checkBasis(basis);
       }
-      if (record.intents.length) {
+      // A recovered accepted prefix must win over its old optimistic suffix,
+      // including when the next request already has uncertain durable bytes.
+      replaying = !!record.accepted && record.intents.length > 0;
+      if (record.intents.length && !record.accepted) {
         displayBasis = clone(saveOf(record.intents[0].payload).displayBasis);
         checkBasis(displayBasis);
         document = clone(saveOf(record.intents[record.intents.length - 1].payload).after);
@@ -218,6 +246,9 @@ export async function createLocalSaveSession(options: Options) {
   function append(input: LocalSave, documentIntent?: OutboxJson): Promise<void> {
     assertOpen();
     if (writeError || ['conflict', 'error'].includes(state.status)) throw new Error('Resolve retained local saves before editing again');
+    // The visible closure is now canonical, while the retained suffix still
+    // describes its original local chain. Do not author a new edit between them.
+    if (replaying) throw new Error('Wait for retained dependent saves to finish revalidation before editing again');
     const save = toOutboxJson({ ...input, kind: 'local-save', displayBasis,
       ...(documentIntent ? { documentIntent } : {}) }) as unknown as StoredSave;
     if (!save.label.trim() || (save.commands && !save.commands.length)) throw new Error('Local save requires a label and nonempty commands');

@@ -7,6 +7,14 @@ import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataPro
 import { createCommitOutbox, toOutboxJson, type OutboxJson } from './commitOutbox.ts';
 import { createLocalSaveSession, type LocalSave, type LocalSaveSession, type LocalSaveState } from './localSaveSession.ts';
 
+// These document-intent cases exercise the pre-v2 fallback explicitly. The
+// joined generated client is full-v2, so the unavailable-contract condition
+// must not depend on the production metadata.
+vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/integrations/runtime/generated-contract-metadata.ts')>(),
+  SCHEMA_DIGEST: 'sha256:unsupported-test-fixture',
+}));
+
 const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-commit' };
 const h0 = { revisionId: 'r0', publicationId: 'p0' };
 const h1 = { revisionId: 'r1', publicationId: 'p1' };
@@ -149,7 +157,7 @@ describe('local editor saves through the durable outbox', () => {
     await expect(flushing).resolves.toMatchObject({ head: h2 });
     expect(env.send).toHaveBeenCalledTimes(2);
     expect(env.send.mock.calls[0][1]).not.toBe(env.send.mock.calls[1][1]);
-    expect(env.adopted).toEqual([trimmed]);
+    expect(env.adopted).toEqual([split, trimmed]);
     await session.dispose();
   });
 
@@ -179,15 +187,17 @@ describe('local editor saves through the durable outbox', () => {
     await session.dispose();
   });
 
-  it('applies the Runtime canonical disjoint edit only after the local suffix lands', async () => {
+  it('applies the Runtime canonical disjoint edit before replaying the original local suffix', async () => {
     const env = environment();
     const session = await env.mount();
     await env.append(session, splitSave());
     await env.append(session, trimSave());
     const mergedSplit = { ...split, meta: { opaque: null, agent: 'preserved' } };
     const mergedTrim = { ...trimmed, meta: mergedSplit.meta };
-    env.send.mockResolvedValueOnce(result(mergedSplit, h1, h0, true)).mockImplementationOnce(async () => {
-      expect(env.visible()).toEqual(trimmed);
+    env.send.mockResolvedValueOnce(result(mergedSplit, h1, h0, true)).mockImplementationOnce(async (request) => {
+      expect(env.visible()).toEqual(mergedSplit);
+      expect(session.getDocument()).toEqual(mergedSplit);
+      expect(request).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1', commands: trimCommands });
       return result(mergedTrim, h2, h1);
     });
     await session.flush();
@@ -230,7 +240,7 @@ describe('local editor saves through the durable outbox', () => {
     await recovered.dispose();
   });
 
-  it('recovers an acknowledged split plus an uncertain trim without repinning the original local preview', async () => {
+  it('recovers an acknowledged split before retrying the exact uncertain trim without repinning its guards', async () => {
     const env = environment();
     const first = await env.mount();
     await env.append(first, splitSave());
@@ -247,8 +257,8 @@ describe('local editor saves through the durable outbox', () => {
     env.send.mockImplementationOnce(async (request, key) => {
       expect([request, key]).toEqual(exactTrim);
       expect(request.commands).toEqual(trimCommands);
-      expect(env.prepareDisplay.mock.lastCall?.[0].head).toEqual(h0);
-      expect(env.visible()).toEqual(trimmed);
+      expect(env.prepareDisplay.mock.lastCall?.[0].head).toEqual(h1);
+      expect(env.visible()).toEqual(mergedSplit);
       return result({ ...trimmed, agent: mergedSplit.agent }, h2, h1);
     });
     await recovered.recover(stored.ownerId);
@@ -328,7 +338,11 @@ describe('local editor saves through the durable outbox', () => {
     const env = environment();
     const session = await env.mount();
     await env.append(session, splitSave());
-    env.send.mockResolvedValueOnce(result(split)).mockResolvedValueOnce(result(trimmed, h2, h1));
+    env.send.mockResolvedValueOnce(result(split)).mockImplementationOnce(async (request) => {
+      expect(env.visible()).toEqual(split);
+      expect(request).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1', commands: trimCommands });
+      return result(trimmed, h2, h1);
+    });
     const building = deferred<void>();
     const ready = deferred<void>();
     const prepare = env.prepareDisplay.getMockImplementation()!;
@@ -340,6 +354,8 @@ describe('local editor saves through the durable outbox', () => {
     const flush = session.flush();
     await ready.promise;
     await env.append(session, trimSave());
+    const [stored] = await env.outboxes.list(scope);
+    expect(stored.intents[0].payload).toMatchObject({ before: split, after: trimmed, commands: trimCommands });
     building.resolve();
     await expect(flush).rejects.toThrow('unacknowledged');
     expect(env.visible()).toEqual(trimmed);
@@ -363,6 +379,99 @@ describe('local editor saves through the durable outbox', () => {
     expect(env.visible()).toEqual(split);
     expect(session.getState().status).toBe('saved');
     await session.dispose();
+  });
+
+  it('holds the original suffix through a failed canonical projection before dispatching it', async () => {
+    const env = environment();
+    const session = await env.mount();
+    await env.append(session, splitSave());
+    await env.append(session, trimSave());
+    const [originalRecord] = await env.outboxes.list(scope);
+    const mergedSplit = { ...split, agent: true };
+    env.send.mockResolvedValueOnce(result(mergedSplit)).mockImplementationOnce(async (request) => {
+      expect(env.visible()).toEqual(mergedSplit);
+      expect(request.commands).toEqual(trimCommands);
+      return result({ ...trimmed, agent: true }, h2, h1);
+    });
+    env.prepareDisplay.mockRejectedValueOnce(new Error('Canonical projection failed'));
+    await expect(session.flush()).rejects.toThrow('Canonical projection failed');
+    expect(env.send).toHaveBeenCalledTimes(1);
+    const [stored] = await env.outboxes.list(scope);
+    expect(stored.intents[0].payload).toEqual(originalRecord.intents[1].payload);
+    expect(stored.pending).toBeUndefined();
+    await session.flush();
+    expect(env.send).toHaveBeenCalledTimes(2);
+    expect(env.visible()).toEqual({ ...trimmed, agent: true });
+    await session.dispose();
+  });
+
+  it.each([409, 422])('retains a suffix refused at the canonical base (%s) across restart', async (status) => {
+    const env = environment();
+    const session = await env.mount();
+    await env.append(session, splitSave());
+    await env.append(session, trimSave());
+    const [originalRecord] = await env.outboxes.list(scope);
+    const canonical = result({ ...split, clips: [split.clips[0]], agent: true });
+    env.loadLatest.mockResolvedValue({ head: h1, canonicalDocument: canonical.canonicalDocument });
+    const details = { status: status === 409 ? 'conflict' : 'invalid',
+      path: ['clips', 'id:right'], hint: 'Read the current canonical head' };
+    env.send.mockResolvedValueOnce(canonical).mockImplementationOnce(async (request) => {
+      expect(env.visible()).toEqual(canonical.canonicalDocument.parent_revision.payload);
+      expect(request).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1', commands: trimCommands });
+      throw new ApiError(status, 'binding_changed', 'Original dependent clip no longer exists', '', details);
+    });
+    await expect(session.flush()).rejects.toThrow('draft retained');
+    expect(session.getState()).toMatchObject({ status: 'conflict', error: { code: 'binding_changed', details } });
+    expect(env.visible()).toEqual(canonical.canonicalDocument.parent_revision.payload);
+    const [stored] = await env.outboxes.list(scope);
+    expect(stored.intents).toHaveLength(1);
+    expect(stored.intents[0].payload).toEqual(originalRecord.intents[1].payload);
+    const exact = stored.pending?.request;
+    await session.dispose();
+    const recovered = await env.mount();
+    await recovered.recover(stored.ownerId);
+    expect(recovered.getState().status).toBe('conflict');
+    expect(env.send).toHaveBeenCalledTimes(2);
+    expect((await env.outboxes.list(scope))[0].pending?.request).toEqual(exact);
+    await recovered.dispose();
+  });
+
+  it('fences a canonical projection on unmount and adopts the durable prefix before recovered suffix dispatch', async () => {
+    const env = environment();
+    const session = await env.mount();
+    await env.append(session, splitSave());
+    await env.append(session, trimSave());
+    const mergedSplit = { ...split, agent: true };
+    env.send.mockResolvedValueOnce(result(mergedSplit));
+    const building = deferred<void>();
+    const ready = deferred<void>();
+    const prepare = env.prepareDisplay.getMockImplementation()!;
+    env.prepareDisplay.mockImplementationOnce(async (basis, draft) => {
+      ready.resolve();
+      await building.promise;
+      return prepare(basis, draft);
+    });
+    const flushing = session.flush();
+    await ready.promise;
+    await session.dispose();
+    const [stored] = await env.outboxes.list(scope);
+    const recovered = await env.mount();
+    env.send.mockImplementationOnce(async (request) => {
+      expect(env.visible()).toEqual(mergedSplit);
+      expect(request.commands).toEqual(trimCommands);
+      expect(() => recovered.append({ before: mergedSplit, after: { ...mergedSplit, note: true }, label: 'Note' }))
+        .toThrow('dependent saves');
+      return result({ ...trimmed, agent: true }, h2, h1);
+    });
+    await recovered.recover(stored.ownerId);
+    const visible = env.visible();
+    const adoptions = structuredClone(env.adopted);
+    building.resolve();
+    await expect(flushing).rejects.toThrow('unacknowledged');
+    expect(env.visible()).toEqual(visible);
+    expect(env.adopted).toEqual(adoptions);
+    expect(env.send).toHaveBeenCalledTimes(2);
+    await recovered.dispose();
   });
 
   it('drains a local append on disposal and fences a late acknowledgement after the owner is reclaimed', async () => {

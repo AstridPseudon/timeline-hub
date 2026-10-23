@@ -103,7 +103,7 @@ interface UseTimelinePersistenceOptions {
   lastSavedSignatureRef: MutableRefObject<string>;
   interactionStateRef: InteractionStateRef;
   onCanonicalReloadStart?: () => void;
-  /** Original verified assembly + durable session; supplied only after the generated v2 join. */
+  /** Original verified assembly and its durable local-document session. */
   localDocumentSave?: TimelineLocalSaveHandoff;
 }
 
@@ -746,7 +746,8 @@ export function useTimelinePersistence({
             isSchemaIncompatibleRef.current = false;
             if (attempt.seq > savedSeqRef.current) {
               savedSeqRef.current = attempt.seq;
-              lastSavedSignatureRef.current = attempt.stableSignature;
+              lastSavedSignatureRef.current = attempt.session.localDocumentSave
+                ? (attempt.session.dataRef.current?.stableSignature ?? attempt.stableSignature) : attempt.stableSignature;
             }
 
             resolveFlushWaiters(attempt, nextVersion);
