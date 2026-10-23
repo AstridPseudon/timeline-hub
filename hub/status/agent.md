@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T12:06:10Z | dispatcher heartbeat 11s | live 5 (sol 3, luna 2, other 0) | busy30 16 | status age 0m -->
+<!-- agent | 2026-10-23T12:08:14Z | dispatcher heartbeat 13s | live 4 (sol 3, luna 1, other 0) | busy30 17 | status age 1m -->
 # agent board, 2026-10-23T12:04:44Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -86,7 +86,7 @@
 | G2-undo-v2 | normal public undo full v2 metadata | Sol; independent Luna PASS | reviewed78f | merged | agt-D17-joined-proof-1132 FINAL PASS | Actuald1fa+Runtime3b publicwhole/selected2PASS4.36s/fullv2 effects/bindings/deps/retry/preview/redo; joinedcopy40+inverse281PASS. Independent185+2/2149/1912 retained | 78f4ef0d1;d1fa6c133 |
 | G5-test-imports | migrate two document_diff test imports | Luna first return | independent1143 FAIL | doing | agt-G5-test-auth-sol-1208 QUEUED | Source1155PASS33+135; actualsolecentral29910 FAIL1/4.07s firstemitter missingprivatecanonicalimage inpublicbundle. Solpreserves exactauthbase/fullassertions, nofakecache; priorpreflight/cacheattempts notbodies | b4a5b3b7e DRAFT |
 | G5-local-save | retire local save merger dependency | Sol; independentLuna | currentd1fa | review | agt-G5-local-review-1204 QUEUED | Author123TOTAL=61savehistory+55emitter+7processpersistence/type1912/lint2149/toolsPASS; all64originalfunctions unchanged. Sharedapply_change extracted with ASTidentity; DRAFTONLY | author1137 DRAFT |
-| G5-restructure | route restructure publication to commit | Sol; independentLuna | currentd1fa | review | agt-G5-restructure-review-1203 QUEUED | Authoree7 109PASS+carrier1/Ruff2149/type1912/tools; 3restored originalsuccesses. Newnormal timeline.restructure handler + strictpermutation carrier; DRAFTONLY | ee7f0b809 DRAFT |
+| G5-restructure | route restructure publication to commit | Sol; independentLuna | currentd1fa | review | agt-G5-restructure-review-1203 FINALPASS; inverse1210 QUEUED | Independent17PASS101.49s+quality1912/2149/frozen; author109+carrier1reused. Boundednewcommand actualguardedundo/redo1210 closes unqualifiedscope; no wholeG5claim | ee7f0b809 DRAFT |
 | G5-normal-publisher | retire ordinary SDK publisher body | Sol after2LunaFAIL | restructureee7 authorfinished | doing | agt-G5-normal-publisher-1205 QUEUED | Remaining nonrestructure SDK.publish stillcalls store.publish_bundle; preserve ordinarycommit/narration/reset/ACKretry through existingemitter/session. DRAFTONLY | pending |
 | F-agent-requalification | current full after F/source repairs | Farm/test service | currentd1fa+Runtime3b ready | blocked:farm | peer-agent-to-farm-1139 REQUESTED | Soleold4249 terminalclassified380; no newlocalfull. Farm owns ONEmeaningfulcurrentfull+failurecensus | currentd1fa |
 
