@@ -622,6 +622,77 @@ def test_first_use_config_capture_race_does_not_accept(service):
     assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_document_input_contents").fetchone()[0] == 0
 
 
+@pytest.mark.parametrize("kind", ["source", "transcript", "media"])
+@pytest.mark.parametrize("damage", [None, "uncaptured", "missing", "foreign", "version", "digest", "owner",
+                                    "manifest", "kind"])
+def test_recorded_input_requires_exact_capture_and_manifest_before_writes(service, kind, damage):
+    project = service.test_project
+    foreign = service.create_project({"slug": "input-foreign", "name": "Input foreign"})["id"]
+    media = service.ingest(project, b"authority media", media_type="video/mp4", idempotency_key="input-media")["data"]
+    if kind == "media":
+        pin = {"media_id": media["object_id"], "content_digest": media["object_id"]}
+        foreign_id = service.ingest(foreign, b"foreign media", media_type="video/mp4", idempotency_key="foreign-media")["data"]["object_id"]
+        foreign_pin = {"media_id": foreign_id, "content_digest": foreign_id}
+    else:
+        document_kind = "media.transcript" if kind == "transcript" else "pack.config"
+        content = ({"schema": "media.transcript/v1", "media_id": media["object_id"], "source_id": "default", "segments": []}
+                   if kind == "transcript" else {"schema": "pack.config/v1", "fps": 24})
+        document_id = (RuntimeService._transcript_document_id(project, media["object_id"], "default")
+                       if kind == "transcript" else "input-config")
+        source = service.create_document(project, {"document_id": document_id, "kind": document_kind,
+                                                  "content": content}, idempotency_key="input-document")["data"]
+        other = service.create_document(foreign, {"document_id": "foreign-config", "kind": "pack.config",
+                                                  "content": {"fps": 25}}, idempotency_key="foreign-document")["data"]
+        pin = {"document_id": source["document_id"], "version": source["version"], "content_digest": digest(content)}
+        foreign_pin = {"document_id": other["document_id"], "version": other["version"], "content_digest": digest(other["content"])}
+
+    def action(context, port):
+        candidate = prepared(context, port)
+        if damage not in {"uncaptured", "missing", "foreign"}:
+            read = port.raw_media_info if kind == "media" else port.transcript_source if kind == "transcript" else port.config_source
+            read(pin)
+        recorded = copy.deepcopy(pin)
+        if damage == "foreign":
+            recorded = foreign_pin
+        elif damage == "missing":
+            recorded = ({"media_id": "sha256:" + "1" * 64, "content_digest": "sha256:" + "1" * 64}
+                        if kind == "media" else {"document_id": "foreign-document", "version": 1,
+                                                 "content_digest": "sha256:" + "1" * 64})
+        elif damage == "version":
+            recorded["version"] = 2
+        elif damage == "digest":
+            recorded["content_digest"] = "sha256:" + "1" * 64
+        elif damage == "owner":
+            recorded["project_id"] = foreign
+        family = "media" if kind == "media" else "documents"
+        if damage != "manifest":
+            candidate["canonical_document"]["dependency_manifest"][family] = [pin]
+        recorded_kind = ("source" if kind == "transcript" else "transcript") if damage == "kind" else kind
+        candidate["records"]["commands"][0]["dependencies"] = [
+            {"key": "input.authority", "kind": recorded_kind, "policy": "exact", "pin": recorded}]
+        candidate["document_digest"] = digest(candidate["canonical_document"])
+        return port.accept(candidate)
+
+    use_provider(service, PreparedProvider(action))
+    submitted = request(service)
+    submitted["commands"][0].update(op="fixture.inspect", args={"pin": pin})
+    before = tuple(service.store.conn.iterdump())
+    history = service.list_timeline_commits(project, "main", authorize=lambda: None)
+    head = service.get_project_timeline(project, "main")
+    if damage is None:
+        accepted = commit(service, submitted)
+        assert accepted["data"] is not None
+        assert accepted["data"]["status"] == "accepted"
+        assert accepted["data"]["canonical_document"]["dependency_manifest"]["media" if kind == "media" else "documents"] == [pin]
+        assert commit(service, submitted) == accepted
+    else:
+        with pytest.raises(RuntimeErrorBase):
+            commit(service, submitted)
+        assert tuple(service.store.conn.iterdump()) == before
+        assert service.list_timeline_commits(project, "main", authorize=lambda: None) == history
+        assert service.get_project_timeline(project, "main") == head
+
+
 def test_tracked_legacy_publication_rejected_before_writes(service):
     body = request(service)
     publication = {"project_id": service.test_project, "timeline_id": "main", "expected_head": body["base_revision_id"],

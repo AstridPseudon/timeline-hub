@@ -509,6 +509,28 @@ class RequestCommitPort:
         authorized_media.update(item for _, value in self.__takes.values() for item in value["dependency_objects"])
         if any(item["media_id"] not in authorized_media for item in manifest["media"]):
             raise refused("dependency_unavailable", "candidate media was not captured through this port")
+        media_pins = {canonical_json(item) for closure in self.__closures.values()
+                      for item in closure["dependency_manifest"]["media"]}
+        media_pins.update(canonical_json(item) for closure in self.__source_closures.values()
+                          for item in closure["dependency_manifest"]["media"])
+        media_pins.update(canonical_json(item) for closure in self.__shots.values() for item in closure["media"])
+        for captures in (self.__media, self.__raw_media, self.__texts):
+            media_pins.update(canonical_json(pin) for pin, _ in captures.values())
+        for record in prepared["records"]["commands"]:
+            for dependency in record["dependencies"]:
+                pin, kind = dependency["pin"], dependency["kind"]
+                if kind == "media":
+                    media_id = pin.get("object_id", pin.get("media_id"))
+                    if (canonical_json(pin) not in media_pins
+                            or canonical_json({"media_id": media_id, "content_digest": media_id}) not in raw_manifest):
+                        raise refused("dependency_unavailable", "recorded media pin was not captured in the candidate manifest")
+                elif kind in {"source", "transcript"}:
+                    capture = self.__documents.get(canonical_json(pin))
+                    if capture is None or pin not in manifest["documents"]:
+                        raise refused("dependency_unavailable", "recorded document pin was not captured in the candidate manifest")
+                    expected = "transcript" if capture.document["kind"] == "media.transcript" else "source"
+                    if kind != expected:
+                        raise refused("dependency_unavailable", "recorded document kind differs from its capture")
         pins = manifest["documents"]
         if sorted(map(canonical_json, pins)) != sorted(self.__documents):
             raise refused("dependency_unavailable", "candidate document pins differ from captured inputs")
