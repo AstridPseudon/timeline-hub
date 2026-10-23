@@ -30,6 +30,12 @@ def _mock_host_launch(monkeypatch, fake_popen) -> None:
 
 
 def _materialize_source_closure(source: Path) -> None:
+    rendering = source / "astrid" / "core" / "rendering"
+    rendering.mkdir(parents=True)
+    rendering_runtime = Path(__file__).resolve().parents[2] / "astrid/core/rendering/remotion_runtime.py"
+    (rendering / "remotion_runtime.py").write_bytes(rendering_runtime.read_bytes())
+    effect_registry = Path(__file__).resolve().parents[2] / "astrid/core/rendering/_effect_registry.py"
+    (rendering / "_effect_registry.py").write_bytes(effect_registry.read_bytes())
     (source / "astrid" / "core" / "execution").mkdir(parents=True)
     (source / "astrid" / "core" / "execution" / "generic_host.py").write_text(
         "# host fixture\n", encoding="utf-8"
