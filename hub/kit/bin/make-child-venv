@@ -1,22 +1,176 @@
 #!/bin/bash
-# make-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME] — run by the dispatcher (network). Builds a NEW read-only installed-Agent
-# child venv /home/user/work/<NAME> (NAME = venv-agent-child-<suffix>): Python 3.13, the exact pinned set from
-# tests/provision/venv-agent-child-s2.txt (--no-deps), plus astrid installed NON-editably from `git archive` of AGENT_SHA.
-# With BASE_SUITE and RUNTIME: adds suite "<NAME>-full" = BASE_SUITE's line with venv-agent-child-s2 -> NAME and
-# agent-remotion-0012 -> RUNTIME. Never touches an existing venv.
-O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; A=/home/user/work/agent; W=/home/user/work
-N=$1; S=$2; BS=$3; RT=$4; case "$N" in venv-agent-child-[a-z0-9-]*) ;; *) echo "REFUSED: name must be venv-agent-child-<suffix>"; exit 2;; esac
-D=$W/$N; [ -e $D ] && { echo "exists: $D (child venvs are immutable; pick a new name)"; exit 0; }
-git -C $A cat-file -e "$S^{commit}" 2>/dev/null || git -C $A fetch -q hub 2>/dev/null; git -C $A cat-file -e "$S^{commit}" || { echo "unknown agent commit $S"; exit 1; }
-F=$O/tests/provision/venv-agent-child-s2.txt; T=$D.partial; SRC=$(mktemp -d)
-# every pip call is bounded: a hung pip with no timeout wedged the agent dispatcher 09:07-09:42Z (it runs this inline)
-rm -rf $T; python3.13 -m venv $T && P=$T/bin/python && timeout 600 $P -m pip install -q --no-cache-dir 'pip==26.2.1' 'setuptools==80.9.0' 'wheel==0.46.3' \
- && grep -v -e '^astrid @' -e '^pip==' -e '^setuptools==' -e '^wheel==' $F > $T/.provision-requirements.txt \
- && timeout 600 $P -m pip install -q --no-cache-dir --no-deps -r $T/.provision-requirements.txt \
- && git -C $A archive "$S" | tar -x -C $SRC && timeout 600 $P -m pip install -q --no-cache-dir --no-deps $SRC || { echo "build failed"; rm -rf $T $SRC; exit 1; }
-rm -rf $SRC; echo "$S" > $T/.astrid-source-commit
-# venvs record their own path in scripts: rebuild in place is not possible, so fix shebangs/activate for the final path
-grep -rl "$T" $T/bin 2>/dev/null | xargs -r sed -i "s#$T#$D#g"; mv $T $D
-timeout 120 $D/bin/python -m pip freeze --all > $O/tests/provision/$N.txt; chmod -R a-w $D
-if [ -n "$BS" ] && [ -n "$RT" ]; then grep -q "^agent $N-full " $O/tests/suites.conf || { L=$(grep "^agent $BS " $O/tests/suites.conf) && [ -n "$L" ] && echo "$L" | sed "s#^agent $BS #agent $N-full #; s#venv-agent-child-s2#$N#g; s#agent-remotion-0012#$RT#g" >> $O/tests/suites.conf; }; fi
-echo "created $D (astrid from ${S:0:12}, $(wc -l < $O/tests/provision/$N.txt) pins, read-only)$( [ -n "$BS" ] && echo "; suite $N-full")"; $D/bin/python -c 'import astrid; print("astrid import ok")'
+# make-child-venv NAME AGENT_SHA [BASE_SUITE RUNTIME] — dispatcher child-vEnv
+# builder.  This keeps the existing API: RUNTIME is the Remotion graph used by
+# the optional suite substitution, never the Runtime checkout.
+set -u -o pipefail
+
+O=${CHILD_VENV_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
+A=${CHILD_VENV_AGENT_CHECKOUT:-/home/user/work/agent}
+R=${CHILD_VENV_RUNTIME_CHECKOUT:-/home/user/work/runtime}
+W=${CHILD_VENV_WORK_ROOT:-/home/user/work}
+PYTHON=${CHILD_VENV_PYTHON:-python3.13}
+TIMEOUT_BIN=${CHILD_VENV_TIMEOUT_BIN:-timeout}
+
+PIP_TIMEOUT_SECONDS=${CHILD_VENV_PIP_TIMEOUT_SECONDS:-600}
+GIT_TIMEOUT_SECONDS=${CHILD_VENV_GIT_TIMEOUT_SECONDS:-120}
+LOCAL_TIMEOUT_SECONDS=${CHILD_VENV_LOCAL_TIMEOUT_SECONDS:-600}
+FREEZE_TIMEOUT_SECONDS=${CHILD_VENV_FREEZE_TIMEOUT_SECONDS:-120}
+BUILD_TIMEOUT_SECONDS=${CHILD_VENV_BUILD_TIMEOUT_SECONDS:-3600}
+KILL_AFTER_SECONDS=${CHILD_VENV_KILL_AFTER_SECONDS:-30}
+PIP_NETWORK_TIMEOUT_SECONDS=${CHILD_VENV_PIP_NETWORK_TIMEOUT_SECONDS:-30}
+PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
+
+progress() { printf '%s child-venv %s\n' "$(date -u +%FT%TZ)" "$*"; }
+
+N=${1:-}
+S=${2:-}
+BS=${3:-}
+RT=${4:-}
+case "$N" in
+  venv-agent-child-[a-z0-9-]*) ;;
+  *) echo "REFUSED: name must be venv-agent-child-<suffix>"; exit 2 ;;
+esac
+[ -n "$S" ] || { echo "REFUSED: agent commit is required"; exit 2; }
+
+D=$W/$N
+if [ -e "$D" ] || [ -L "$D" ]; then
+  echo "exists: $D (child venvs are immutable; pick a new name)"
+  exit 0
+fi
+
+# Run the body under one bounded budget. The dispatcher invokes this script
+# inline, so a timed-out child must return to its FIFO loop with a non-zero
+# identity rather than being reported as an existing/successful environment.
+if [ "${CHILD_VENV_BUILD_INNER:-0}" != 1 ]; then
+  export CHILD_VENV_BUILD_INNER=1
+  # GNU timeout creates a private process group by default. Keep this
+  # background process-group mode so a timed-out descendant (including one holding the
+  # dispatcher's inherited stdout/FIFO) receives the same bounded kill grace.
+  "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$BUILD_TIMEOUT_SECONDS" "$0" "$@"
+  rc=$?
+  if [ "$rc" -ne 0 ]; then
+    partial=$(find "$W" -maxdepth 1 -type d -name "$N.partial.*" -print -quit 2>/dev/null || true)
+    printf '%s child-venv FAILED stage=overall-build-budget rc=%s name=%s agent=%s partial=%s\n' \
+      "$(date -u +%FT%TZ)" "$rc" "$N" "$S" "${partial:-none}" >&2
+  fi
+  exit "$rc"
+fi
+
+RUN_ID=$(date -u +%Y%m%dT%H%M%SZ)-$$
+T=$D.partial.$RUN_ID
+SRC=$(mktemp -d "$W/.child-venv-source-$N-$RUN_ID.XXXXXX")
+REPORT_DIR=$O/tests/provision
+REPORT_TMP=$REPORT_DIR/.${N}.freeze.$RUN_ID
+F=$REPORT_DIR/$N.txt
+CURRENT_STAGE=initialise
+
+failure() {
+  rc=$1
+  stage=$2
+  if [ -d "$T" ]; then
+    printf 'status=failed\nstage=%s\nrc=%s\nagent_sha=%s\nruntime_sha=%s\npartial=%s\nsource=%s\n' \
+      "$stage" "$rc" "$S" "${RUNTIME_SHA:-unknown}" "$T" "$SRC" > "$T/.provision-failure"
+  fi
+  printf '%s child-venv FAILED stage=%s rc=%s name=%s agent=%s runtime=%s partial=%s source=%s\n' \
+    "$(date -u +%FT%TZ)" "$stage" "$rc" "$N" "$S" "${RUNTIME_SHA:-unknown}" "$T" "$SRC" >&2
+  exit "$rc"
+}
+
+run_stage() {
+  stage=$1
+  budget=$2
+  shift 2
+  CURRENT_STAGE=$stage
+  progress "stage=$stage start budget=${budget}s"
+  # Do not use foreground mode: it deliberately leaves descendants outside the
+  # timeout's process-group termination and can wedge the inline dispatcher.
+  CHILD_VENV_STAGE=$stage "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$budget" "$@"
+  rc=$?
+  if [ "$rc" -ne 0 ]; then
+    failure "$rc" "$stage"
+  fi
+  progress "stage=$stage complete"
+}
+
+if ! git -C "$A" cat-file -e "$S^{commit}" 2>/dev/null; then
+  run_stage agent-fetch "$GIT_TIMEOUT_SECONDS" git -C "$A" fetch -q hub
+  git -C "$A" cat-file -e "$S^{commit}" 2>/dev/null || failure 1 agent-source
+fi
+RUNTIME_SHA=$(git -C "$R" rev-parse --verify HEAD^{commit}) || failure 1 runtime-source
+progress "source agent=$S runtime=$RUNTIME_SHA"
+
+run_stage venv "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -m venv "$T"
+P=$T/bin/python
+PIP_ARGS=(--no-cache-dir --disable-pip-version-check --progress-bar off --retries "$PIP_RETRIES" --timeout "$PIP_NETWORK_TIMEOUT_SECONDS")
+run_stage bootstrap-pip "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q \
+  'pip==26.2.1' 'setuptools==80.9.0' 'wheel==0.46.3'
+
+run_stage requirements "$LOCAL_TIMEOUT_SECONDS" mkdir -p "$REPORT_DIR"
+REQ=$T/.provision-requirements.txt
+run_stage filter-requirements "$LOCAL_TIMEOUT_SECONDS" bash -c \
+  'grep -v -e "^astrid @" -e "^pip==" -e "^setuptools==" -e "^wheel==" "$1" > "$2"' \
+  _ "$O/tests/provision/venv-agent-child-s2.txt" "$REQ"
+run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps -r "$REQ"
+
+AGENT_SRC=$SRC/agent
+RUNTIME_SRC=$SRC/runtime
+run_stage source-directories "$LOCAL_TIMEOUT_SECONDS" mkdir -p "$AGENT_SRC" "$RUNTIME_SRC"
+run_stage archive-agent "$LOCAL_TIMEOUT_SECONDS" bash -c \
+  'set -o pipefail; git -C "$1" archive "$2" | tar -x -C "$3"' \
+  _ "$A" "$S" "$AGENT_SRC"
+run_stage archive-runtime "$LOCAL_TIMEOUT_SECONDS" bash -c \
+  'set -o pipefail; git -C "$1" archive "$2" | tar -x -C "$3"' \
+  _ "$R" "$RUNTIME_SHA" "$RUNTIME_SRC"
+
+run_stage install-agent "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$AGENT_SRC"
+run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$RUNTIME_SRC"
+printf '%s\n' "$S" > "$T/.astrid-source-commit"
+printf '%s\n' "$RUNTIME_SHA" > "$T/.astrid-runtime-source-commit"
+
+run_stage import-provenance "$LOCAL_TIMEOUT_SECONDS" "$P" -I -c \
+  'import importlib.util, pathlib
+names = ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")
+for name in names:
+    spec = importlib.util.find_spec(name)
+    assert spec is not None and spec.origin, name
+    origin = pathlib.Path(spec.origin).resolve()
+    assert "site-packages" in origin.parts, (name, origin)
+    print(f"{name}={origin}")'
+run_stage runtime-cli "$LOCAL_TIMEOUT_SECONDS" bash -c \
+  'set -e; "$1" --help >/dev/null; "$2" --help >/dev/null; "$3" -I -m astrid_runtime --help >/dev/null' \
+  _ "$T/bin/astrid-runtime" "$T/bin/astrid-runtime-protocol" "$P"
+run_stage markers "$LOCAL_TIMEOUT_SECONDS" bash -c \
+  'test "$(cat "$1")" = "$2" && test "$(cat "$3")" = "$4"' \
+  _ "$T/.astrid-source-commit" "$S" "$T/.astrid-runtime-source-commit" "$RUNTIME_SHA"
+
+run_stage freeze "$FREEZE_TIMEOUT_SECONDS" bash -c \
+  '"$1" -I -m pip freeze --all > "$2"' _ "$P" "$REPORT_TMP"
+run_stage freeze-identity "$LOCAL_TIMEOUT_SECONDS" bash -c \
+  'grep -q "^astrid==" "$1" && grep -q "^astrid-runtime==" "$1"' _ "$REPORT_TMP"
+run_stage cleanup-source "$LOCAL_TIMEOUT_SECONDS" rm -rf -- "$SRC"
+
+# Venv launchers contain the partial path. Fix them before the atomic publish;
+# no complete destination exists until all validation above has passed.
+run_stage shebang-relocation "$LOCAL_TIMEOUT_SECONDS" bash -c \
+  'set -e
+   while IFS= read -r file; do sed -i "s#$1#$2#g" "$file"; done < <(grep -rl -- "$1" "$3/bin" 2>/dev/null || true)' \
+  _ "$T" "$D" "$T"
+run_stage readonly-final "$LOCAL_TIMEOUT_SECONDS" chmod -R a-w "$T"
+
+if [ -e "$D" ] || [ -L "$D" ]; then
+  failure 1 immutable-publish-race
+fi
+run_stage publish "$LOCAL_TIMEOUT_SECONDS" mv -T "$T" "$D"
+run_stage provision-report "$LOCAL_TIMEOUT_SECONDS" mv -T "$REPORT_TMP" "$F"
+
+if [ -n "$BS" ] && [ -n "$RT" ]; then
+  if ! grep -q "^agent $N-full " "$O/tests/suites.conf"; then
+    L=$(grep "^agent $BS " "$O/tests/suites.conf" || true)
+    if [ -n "$L" ]; then
+      echo "$L" | sed "s#^agent $BS #agent $N-full #; s#venv-agent-child-s2#$N#g; s#agent-remotion-0012#$RT#g" >> "$O/tests/suites.conf"
+    fi
+  fi
+fi
+
+echo "created $D (astrid from ${S:0:12}, runtime from ${RUNTIME_SHA:0:12}, $(wc -l < "$F") pins, read-only)$( [ -n "$BS" ] && echo "; suite $N-full")"
+echo "imports validated: astrid astrid_runtime runtime_protocol astrid_runtime_client; CLI validated"
