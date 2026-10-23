@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T04:02:41Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 21 | status age 1m -->
-# agent board, 2026-10-23T04:01:09Z
+<!-- agent | 2026-10-23T04:04:06Z | dispatcher heartbeat 9s | live 4 (sol 0, luna 4, other 0) | busy30 23 | status age 0m -->
+# agent board, 2026-10-23T04:03:20Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -11,13 +11,13 @@
 | R2-schema | canonical inverse steps | Luna | R2 | merged | agt-R2-R3-meta-review-0250 | Canonicald106 and f252 floors retained in actual f894; joins preserve exact | 7689/d106;mergecedc07280 |
 | R3 | dry-run/structured errors | Luna | R1,R2r | merged | agt-R3-meta-integrated-0235 | Integratedd6f equals reviewedce863:150+2 and7+3+1 PASS; original422 vs replay409 | 360826a17;73df0a99b |
 | AG-V1seam | authored meta reload | Luna | R3,V1 | merged | agt-R3-meta-integrated-0235 | Independent+integrated150+7+3+1; real params.meta dependency preserved, ViewingACK0247 | ce8639a26 |
-| V2 | D12 only new invalidity | Luna repair; Luna review | R1,D12 | review | agt-V2-baseline-only-review-0359 | Firstreview0342 FAIL valid timing exemption. Repair2ad restricts to proven BASE-unresolvable:145neighbors+22P1 incl valid rational29029/30000 PASS; independent active | 2ad707b7/tree1dd50b86 |
+| V2 | D12 only new invalidity | Sol after repeated Luna FAIL | R1,D12 | doing | agt-V2-shared-beat-sol-0404 | Independent0359 FAIL valid shared-child beat/downbeat omitted after ambiguity. Sol bounded causal repair dispatched. Four P1 positives/create-modify-invalidate/rational controls retained | base2ad707b7 |
 | G2 | open/commit bounded rerun | Sol join; Luna review | R1,U2,adoption | review | agt-G234-current-join-review-0401 | ONE H6 combinedjoin5f0 on adopted723b:280+184+71+41 author PASS,2149/1915. Independent actual assembly/current-preservation review active | 5f0fb2ed/treef48fe7d0 |
 | G3 | emitter/CLI/sheet | Sol join; Luna review | G2 | review | agt-G234-current-join-review-0401 | Same combined source5f0; exactd106/f252, original scope test retained; no pin overlay. No integrated proof yet | 5f0fb2ed |
 | G4-writers | narration/update-element | Luna source; Sol join; Luna review | G2 | review | agt-G234-current-join-review-0401 | Donorf303 independent0340 PASS42+41+3+24; combined5f0 author PASS, normal34e preserved | f30399b02→5f0 |
 | G4-media | create_empty/parent-media | Sol repair/join; Luna review | G2 | review | agt-G4-inverse-independent-review-0353; combined0401 | Inverse076 independently PASS116+155+74; original scope/patch tests exact; combinedparent/bootstrap184 PASS. Real wire old fixture limits separate | 076630e4→5f0 |
 | G4-render | requester render publication | Sol source/join; Luna review | G2 | review | agt-G234-current-join-review-0401 | Donorb538 final0340 PASS13 and exactschema/current requester preservation; combined author PASS. No integrated/physical claim | b53842d30→5f0 |
-| G2-step-undo | public selected-step undo | Luna; Luna review | G2,R2 | review | agt-G2-step-undo-review-0359 | Authora568:144+26+9+schema PASS,2150/1915. Existing inverse.args.steps forwarded; malformed/wholeundo compatibility. Independent active | a568c4eb/tree73e56c0c |
+| G2-step-undo | public selected-step undo | Luna repair; Luna review | G2,R2 | doing | agt-G2-step-public-facade-repair-0404 | Independent0359 PASS sessionselector/FAIL publicTimeline inheritednumericundo. Bounded actualtl.undo wrapper repair, no session bypass; original144 controls retained | basea568c4eb |
 | P4-owner | five reviewed tests/API join | Luna | combinedG234,publicsteps | doing | agt-P4-step-join-0401 | Imports ONLY exact5 donor files0018 (independent0337 PASS15,1collected) plus narrowa568 selector. Rejectedb4f not imported. Proof owns later HTTP bodies | base5f0;donor001802c7a |
 | V3-owner | same Composition artifact | Luna | U2,App archive | merged | agt-V3-integrated-proof-0111; vw-V3-agent-integrated0114 | Exactfa2 both integrated proofs30 and130/gen/types/caller PASS, archive819acf/73451B/80. Package only | b56828de5;mergefa2cf5b66 |
 | V1-copies | canonical691 copies | Luna | RuntimeV1 | merged | agt-V1-integrated-proof-0147 | Independent+integrated64+163subtests PASS;15 mapped691, normal ratchets/artifact/caller | ffcec5d33 |
