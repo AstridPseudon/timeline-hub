@@ -8,6 +8,8 @@ import pytest
 from astrid.sdk.timeline import commands
 from astrid.sdk.timeline._collections import AcceptedRecords
 from astrid.sdk.timeline._command_state import CommandError, State
+from astrid.sdk.timeline._commit_patch import inverse_address_resolver
+from astrid.sdk.timeline._step_undo import select_inverse_records
 from astrid.sdk.timeline.commit import (
     _digest,
     _manifest,
@@ -106,10 +108,21 @@ def test_recorded_registry_creation_and_child_inverse_preserve_authored_state(po
 
 
 def accepted_records(realm, entry):
-    return AcceptedRecords([entry], entry['records']['commands'], lambda edge: (
-        bundle_from_document(realm.documents[edge['previous']['revision_id']]),
-        bundle_from_document(realm.documents[edge['revision_id']]),
-    ))
+    def load_boundary(edge):
+        return (
+            bundle_from_document(realm.documents[edge['previous']['revision_id']]),
+            bundle_from_document(realm.documents[edge['revision_id']]),
+        )
+
+    def load_history(publication):
+        return next(item for item in realm.entries
+                    if item['publication_id'] == publication)
+
+    accepted = AcceptedRecords([entry], entry['records']['commands'], load_boundary)
+    resolver = inverse_address_resolver(
+        [entry], bundle_from_document(realm.documents[entry['revision_id']]),
+        load_boundary=load_boundary, load_history=load_history)
+    return select_inverse_records(accepted, address_resolver=resolver)
 
 
 def accepted_popup(popup_edit):
