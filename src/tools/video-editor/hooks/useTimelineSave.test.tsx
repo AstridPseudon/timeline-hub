@@ -287,9 +287,11 @@ describe('useTimelineSave — recovered draft durability', () => {
         expect(request).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
           base_revision_id: 'r0', base_publication_id: 'p0', label: 'Add media', merge: 'fields', dry_run: false,
           source: { via: 'app' }, steps: [{ id: expect.any(String), label: 'Add media', intent: 'Add media', tags: [], command_ordinals: [0], patch: [] }],
-          commands: [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent', intent: { ownership: 'parent' },
+          commands: [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent', intent: {},
             args: { media, row: { asset: 'import-alias', at: 1.2667, track: 'V1' } } }] });
         expect(request.commands).toHaveLength(1);
+        // clip.add-media's registered operation policy is a closed empty object.
+        expect(request.commands[0].intent).toEqual({});
         expect(request.commands[0].args.media).toEqual(media);
         expect(request).not.toHaveProperty('reads');
         expect(posts[0].key).toBeTruthy();

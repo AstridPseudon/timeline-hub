@@ -276,7 +276,7 @@ export function createTimelineLocalSaveHandoff(options: {
             refuse('prepared media registry changes exceed the selected asset; draft retained');
           }
           commands = [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
-            args: { row: authoredJson(row), media: authoredJson(media) }, intent: { ownership: 'parent' } }];
+            args: { row: authoredJson(row), media: authoredJson(media) }, intent: {} }];
         }
         if (!commands) {
           const clips = (payload.config as Record<string, OutboxJson>).clips;
