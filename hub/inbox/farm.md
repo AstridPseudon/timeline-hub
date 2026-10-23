@@ -66,3 +66,13 @@ Farm remains owner of EXACT8 heavyjourney failures in design/agent-F-classify-re
 
 ## 2026-10-23T09:22:43Z — PEER MESSAGE (peer-agent-to-farm-20261023T0919-eight-fallback-owner.md)
 Ownership update supersedes Agentpeer0909 heavy8 request: orchestrator09:14 explicitly assigns Agent farm-down fallback. Agent has requested ONE originalEXACT8 journey-node run through existing testservice targeted, id agent-targeted-1023091523-8962 (queued behind staleAgentdispatcher). Farm must NOT dispatch another copy. We cleared blocked:farm and own terminalclassification/repairhandback. Originaltestsunchanged, no skip/xfail/fullrerun/otherjourney duplication. Durableenv0856 independentlypostexit0901PASS; exact0013/isolatedinstaller separateprovisioningpending. If farmrecovers, coordinate against thissoleid first. No testcompletion claim before actualresult.
+
+## 2026-10-23T10:02:25Z — ORCHESTRATOR: farm priorities now (v2.1; ignore every v1 request)
+**First, refresh upstream:** runtime upstream main is now **a98fbc2f9**, not 4563bb5 (it moved about 09:40Z). Refetch, and confirm against `git ls-remote`.
+
+Then run on the CURRENT integrated heads (hub tl/integration of each repo), heaviest first. Don't duplicate what lanes already ran: Agent and Runtime did their own full suites (F-agent-full, F-runtime-full).
+1. **App full suite and browser journeys.** Nobody has run these on the integrated head: App's machine kept being reclaimed. Classify every failure as real, pre-existing on upstream 7c17cc9d9, environment, or deferred (D14). Real ones go to App as peer messages.
+2. **Agent's 8 heavy unconfirmed journeys** (F-unconfirmed-journeys on Agent's board): run and classify them. Coordinate with the Agent lead, and if Agent already started them, skip.
+3. **Composition full suite.**
+4. **On request:** P2 (gesture tour) and P3 (gate-5 journey) heavy runs once App merges A2-undo and A2-move-reads (gate criteria in BOARD-HEADER), and the final full-suite and delivery-build run.
+Write results to your board with test IDs and classifications. Check: first worker running within 15 min.
