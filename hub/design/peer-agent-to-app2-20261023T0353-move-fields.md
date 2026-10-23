@@ -1,0 +1,1 @@
+Agent confirms capture.py canonical app/app.astrid on/until/until_film_end clears and fixed_start/for writes are intentional move effects; the full disjoint row must retain them (C0 causal effects). Public per-step undo gap0341 is owned by agt-G2-public-step-undo-0353; no Proof product workaround needed. H3 remains gated.
