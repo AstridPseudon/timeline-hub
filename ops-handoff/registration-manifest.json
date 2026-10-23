@@ -1,0 +1,449 @@
+{
+  "format_version": 1,
+  "purpose": "Exact OPS-bench-store source patch custody; artifact branch must never merge into Runtime integration.",
+  "branch": "tl/rt-OPS-bench-store-registration-packet-sol-2056",
+  "base_commit": "abd47e68de6d7a36bec8ac4f0f6e0bc01d98d14e",
+  "patch": {
+    "path": "ops-handoff/registration.patch",
+    "bytes": 19380,
+    "sha256": "9d5845bb24fbb87ad0eaf4e8b8d34c2dd29162905e00d84529d26cfe0af60d54"
+  },
+  "patch_generation": {
+    "method": "Python difflib.diff_bytes(difflib.unified_diff), n=3, lineterm=b\"\\n\", splitlines(keepends=True); core then caller; no source transformations",
+    "paths": [
+      "bin/bench_store.py",
+      "bin/test-run"
+    ],
+    "private_baseline_directory": "/tmp/w-25c7ca46fd/registration-custody/baseline",
+    "private_candidate_directory": "/tmp/w-25c7ca46fd/registration-custody/candidate",
+    "private_replay_directory": "/tmp/w-25c7ca46fd/registration-custody/replay",
+    "apply_command": "patch --batch --fuzz=0 -p1 -d \"/tmp/w-25c7ca46fd/registration-custody/replay\" -i \"/home/user/work/wt/rt-OPS-bench-store-registration-packet-sol-2056/ops-handoff/registration.patch\"",
+    "apply_exit_code": 0,
+    "both_replayed_files_byte_identical": true
+  },
+  "reviewed_sources": {
+    "core.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-registration-sol-2034-core.py",
+      "bytes": 50089,
+      "sha256": "fa11f8fa12c857497c966023564a0179e7ef15882fc586935de1d9019065e4ad"
+    },
+    "test-run": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-registration-sol-2034-test-run",
+      "bytes": 14261,
+      "sha256": "92e43c5c0a9b5d87a1c9f29d7da7ec15c6025fbb57f66f64fe45f73a5c67f99b"
+    },
+    "fixture.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-registration-sol-2034-fixture.py",
+      "bytes": 21322,
+      "sha256": "2889d0f18736b4e2255c235fc324b6948b21f654b6d3cd83b3c66f724f566c72"
+    }
+  },
+  "input_artifacts": {
+    "source.patch": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-registration-sol-2034-source.patch",
+      "bytes": 19042,
+      "sha256": "775b4459abddfb4ef0c8e5490c171b07c38389b7d459cd26e5cd043033bfcbda"
+    },
+    "plan.md": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-registration-sol-2034-plan.md",
+      "bytes": 2140,
+      "sha256": "d357d44170e390dbcffe02f796f959b70a9f880108ed2d72acf456256a0630d1"
+    },
+    "installed-hashes.json": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-registration-sol-2034-installed-hashes.json",
+      "bytes": 1114,
+      "sha256": "19dc219556a3d0c7d29d545c855d7f398166666e38b05c026a052f19ef844f71"
+    },
+    "tests.log": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-registration-sol-2034-tests.log",
+      "bytes": 2925,
+      "sha256": "78c1c43e40d15738f970b185046e7bd529a2dd4ab5bbb20850f52bfcda9ea8fa"
+    }
+  },
+  "prior_reports": {
+    "rt-OPS-bench-store-registration-review-2044": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-registration-review-2044/report.md",
+      "bytes": 2872,
+      "sha256": "8fcd3e2dc9dd908bca5c91bbfb7f5d6f5743d4f9e2910e48cccfa23a30cb0197"
+    },
+    "rt-OPS-bench-store-registration-packet-return-2049": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-bench-store-registration-packet-return-2049/report.md",
+      "bytes": 20546,
+      "sha256": "b1c4ae7ec4ea01fbe6eb7605619737bf6cbb9666cc1750cfe113f9f9400ea728"
+    }
+  },
+  "installed_before": {
+    "bench_store.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "bytes": 38921,
+      "sha256": "6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8"
+    },
+    "test-run": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run",
+      "bytes": 14134,
+      "sha256": "f599c5ad7bf3cd61aeb01791d903ce6edfa87d5d04a39b3ebb630b3517b17ff4"
+    },
+    "make-child-venv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "bytes": 32441,
+      "sha256": "89d82618c6c67819e40cc73d32b6d1c372f95889761d5170bb1af3a83dc5fcff"
+    },
+    "make-runtime": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime",
+      "bytes": 26508,
+      "sha256": "99cca067330fd87e1f8c475045ab8282e944b2455e25d44d4c6072e77e9e4e28"
+    },
+    "request-child-venv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv",
+      "bytes": 12083,
+      "sha256": "72cafb3a5ec343f648a0e41d59a51e7c803ee51b4d04a394dc2010df828bd731"
+    },
+    "request-runtime": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-runtime",
+      "bytes": 1899,
+      "sha256": "f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1"
+    }
+  },
+  "installed_after": {
+    "bench_store.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "bytes": 38921,
+      "sha256": "6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8"
+    },
+    "test-run": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run",
+      "bytes": 14134,
+      "sha256": "f599c5ad7bf3cd61aeb01791d903ce6edfa87d5d04a39b3ebb630b3517b17ff4"
+    },
+    "make-child-venv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "bytes": 32441,
+      "sha256": "89d82618c6c67819e40cc73d32b6d1c372f95889761d5170bb1af3a83dc5fcff"
+    },
+    "make-runtime": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-runtime",
+      "bytes": 26508,
+      "sha256": "99cca067330fd87e1f8c475045ab8282e944b2455e25d44d4c6072e77e9e4e28"
+    },
+    "request-child-venv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv",
+      "bytes": 12083,
+      "sha256": "72cafb3a5ec343f648a0e41d59a51e7c803ee51b4d04a394dc2010df828bd731"
+    },
+    "request-runtime": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-runtime",
+      "bytes": 1899,
+      "sha256": "f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1"
+    }
+  },
+  "installed_six_hashes_unchanged": true,
+  "checks": [
+    {
+      "command": "cmp /tmp/w-25c7ca46fd/registration-custody/replay/bin/bench_store.py /tmp/w-25c7ca46fd/registration-custody/candidate/bin/bench_store.py",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "cmp /tmp/w-25c7ca46fd/registration-custody/replay/bin/test-run /tmp/w-25c7ca46fd/registration-custody/candidate/bin/test-run",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "bash -n /tmp/w-25c7ca46fd/registration-custody/candidate/bin/test-run",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "cmp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-registration-sol-2034-fixture.py /tmp/w-25c7ca46fd/registration-custody/candidate/fixture.py",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "in_memory_compile": {
+    "status": "PASS",
+    "files": [
+      "baseline/bin/bench_store.py",
+      "candidate/bin/bench_store.py",
+      "candidate/fixture.py",
+      "baseline/bin/test-run:BENCH_LEASE_PY",
+      "candidate/bin/test-run:BENCH_LEASE_PY"
+    ],
+    "method": "compile(source_bytes_or_embedded_python, filename, \"exec\"); no execution/import/pyc"
+  },
+  "fixture_custody": {
+    "status": "PASS",
+    "entire_fixture_byte_identical": true,
+    "test_bodies_unchanged": 21,
+    "test_names": [
+      "test_exact_seven_shared_key_success_and_no_retry",
+      "test_existing_managed_shared_key_and_all_metadata_preserved",
+      "test_crash_after_journal_removal_is_complete",
+      "test_unknown_legacy_cutover_cli_normal_and_empty_env",
+      "test_existing_empty_directory_cannot_fabricate_custody",
+      "test_held_lease_refuses_without_mutation",
+      "test_inherited_child_keeps_prelease_after_parent_context_exits",
+      "test_stale_baseline_and_exact_names",
+      "test_changed_env_and_ambiguous_suite",
+      "test_outside_references_are_refused_kept_not_erased",
+      "test_symlink_hardlink_foreign_and_unsafe_directory",
+      "test_races_refuse_and_preserve_changed_file",
+      "test_symlink_race_after_validation_and_recovery",
+      "test_crash_each_publication_then_forward_recover",
+      "test_crash_during_each_recovery_publication",
+      "test_pending_recovery_refuses_held_lease",
+      "test_recovery_rejects_journal_scope_and_identity_changes",
+      "test_race_after_index_leaves_pending_and_preserves_external_bytes",
+      "test_replaced_or_symlink_lease_refuses",
+      "test_concurrent_real_cli_calls_serialize_one_success_one_refusal",
+      "test_real_caller_shape_normal_and_env_i"
+    ]
+  },
+  "lint": {
+    "version": "ruff 0.16.8",
+    "runs": {
+      "baseline": {
+        "command": [
+          "ruff",
+          "check",
+          "--no-cache",
+          "--isolated",
+          "--select",
+          "E,F",
+          "--ignore",
+          "E501",
+          "/tmp/w-25c7ca46fd/registration-custody/baseline/bin/bench_store.py"
+        ],
+        "exit_code": 0,
+        "output": "All checks passed!\n",
+        "supplemental": {
+          "command": [
+            "ruff",
+            "check",
+            "--no-cache",
+            "--isolated",
+            "--output-format",
+            "json",
+            "/tmp/w-25c7ca46fd/registration-custody/baseline/bin/bench_store.py"
+          ],
+          "exit_code": 1,
+          "findings": [
+            {
+              "code": "I001",
+              "line": 2,
+              "column": 1,
+              "message": "Import block is un-sorted or un-formatted"
+            },
+            {
+              "code": "C410",
+              "line": 151,
+              "column": 73,
+              "message": "Unnecessary tuple literal passed to `list()` (rewrite as a single list literal)"
+            },
+            {
+              "code": "BLE001",
+              "line": 650,
+              "column": 28,
+              "message": "Do not catch blind exception: `Exception`"
+            }
+          ],
+          "count": 3
+        }
+      },
+      "candidate": {
+        "command": [
+          "ruff",
+          "check",
+          "--no-cache",
+          "--isolated",
+          "--select",
+          "E,F",
+          "--ignore",
+          "E501",
+          "/tmp/w-25c7ca46fd/registration-custody/candidate/bin/bench_store.py"
+        ],
+        "exit_code": 0,
+        "output": "All checks passed!\n",
+        "supplemental": {
+          "command": [
+            "ruff",
+            "check",
+            "--no-cache",
+            "--isolated",
+            "--output-format",
+            "json",
+            "/tmp/w-25c7ca46fd/registration-custody/candidate/bin/bench_store.py"
+          ],
+          "exit_code": 1,
+          "findings": [
+            {
+              "code": "I001",
+              "line": 2,
+              "column": 1,
+              "message": "Import block is un-sorted or un-formatted"
+            },
+            {
+              "code": "RUF012",
+              "line": 114,
+              "column": 18,
+              "message": "Mutable default value for class attribute"
+            },
+            {
+              "code": "C410",
+              "line": 195,
+              "column": 73,
+              "message": "Unnecessary tuple literal passed to `list()` (rewrite as a single list literal)"
+            },
+            {
+              "code": "BLE001",
+              "line": 708,
+              "column": 28,
+              "message": "Do not catch blind exception: `Exception`"
+            }
+          ],
+          "count": 4
+        }
+      },
+      "fixture": {
+        "command": [
+          "ruff",
+          "check",
+          "--no-cache",
+          "--isolated",
+          "--select",
+          "E,F",
+          "--ignore",
+          "E501",
+          "/tmp/w-25c7ca46fd/registration-custody/candidate/fixture.py"
+        ],
+        "exit_code": 0,
+        "output": "All checks passed!\n",
+        "supplemental": {
+          "command": [
+            "ruff",
+            "check",
+            "--no-cache",
+            "--isolated",
+            "--output-format",
+            "json",
+            "/tmp/w-25c7ca46fd/registration-custody/candidate/fixture.py"
+          ],
+          "exit_code": 1,
+          "findings": [
+            {
+              "code": "I001",
+              "line": 2,
+              "column": 1,
+              "message": "Import block is un-sorted or un-formatted"
+            },
+            {
+              "code": "S102",
+              "line": 114,
+              "column": 5,
+              "message": "Use of `exec` detected"
+            },
+            {
+              "code": "SIM117",
+              "line": 197,
+              "column": 9,
+              "message": "Use a single `with` statement with multiple contexts instead of nested `with` statements"
+            },
+            {
+              "code": "B023",
+              "line": 279,
+              "column": 28,
+              "message": "Function definition does not bind loop variable `original_fstat`"
+            },
+            {
+              "code": "B023",
+              "line": 280,
+              "column": 55,
+              "message": "Function definition does not bind loop variable `path`"
+            },
+            {
+              "code": "B023",
+              "line": 280,
+              "column": 75,
+              "message": "Function definition does not bind loop variable `path`"
+            },
+            {
+              "code": "SIM117",
+              "line": 285,
+              "column": 17,
+              "message": "Use a single `with` statement with multiple contexts instead of nested `with` statements"
+            },
+            {
+              "code": "B023",
+              "line": 304,
+              "column": 29,
+              "message": "Function definition does not bind loop variable `point`"
+            },
+            {
+              "code": "B023",
+              "line": 305,
+              "column": 21,
+              "message": "Function definition does not bind loop variable `path`"
+            },
+            {
+              "code": "B023",
+              "line": 340,
+              "column": 33,
+              "message": "Function definition does not bind loop variable `point`"
+            },
+            {
+              "code": "B023",
+              "line": 363,
+              "column": 33,
+              "message": "Function definition does not bind loop variable `point`"
+            }
+          ],
+          "count": 11
+        }
+      }
+    },
+    "supplemental_candidate_plus_fixture_findings": 15,
+    "supplemental_status": "FAIL",
+    "baseline_findings": 3,
+    "candidate_new_relative_to_baseline": [
+      {
+        "code": "RUF012",
+        "line": 114,
+        "message": "Mutable default value for class attribute Store.UNREGISTER"
+      }
+    ],
+    "classification": "Candidate I001/C410/BLE001 already present in baseline; RUF012 is new. Fixture findings: I001, S102, SIM117 x2, B023 x7. Supplemental failure is not waived by scoped E,F acceptance. Sources and lint configuration/suppressions unchanged."
+  },
+  "behavioral_evidence": {
+    "status": "SOURCE PASS (reused independent review, not rerun)",
+    "review": "rt-OPS-bench-store-registration-review-2044",
+    "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python /tmp/w-173d90b75d/test-registration.py",
+    "passed": 21,
+    "failed": 0,
+    "skipped": 0,
+    "rerun": false,
+    "foreign_uid_limit": "simulated owner-control only; real cross-UID chown unsupported (errno 22)"
+  },
+  "scope": {
+    "only_worktree_additions": [
+      "ops-handoff/registration.patch",
+      "ops-handoff/registration-manifest.json"
+    ],
+    "source_core_caller_fixture_unchanged": true,
+    "full_suite_requested": false,
+    "live_operations_performed": false,
+    "installed": false,
+    "live_legacy_cutover": "UNKNOWN/STOPPED",
+    "c0v2_request_reply_shapes": "unchanged",
+    "frozen34e": "unchanged",
+    "next_step": "Independent Luna custody review of harness-committed artifacts; no install authorization."
+  }
+}
