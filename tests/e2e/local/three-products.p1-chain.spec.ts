@@ -254,6 +254,9 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   expect(mergedDocument.config.clips).toEqual(mergedDocument.clips);
   expect(mergedDocument.clips[0].app).toEqual(originalClip.app);
   expect(mergedDocument.clips[1].app.opaque).toEqual(originalClip.app.opaque);
+  expect(mergedDocument.clips[1].app['org.example']).toEqual(originalClip.app['org.example']);
+  expect(mergedDocument.clips[1].app['org.example']).toHaveProperty('clear', null);
+  expect(mergedDocument.clips[1].app).not.toHaveProperty('astrid');
   expect(mergedDocument.registry).toEqual(splitDocument.registry);
   expect(mergedDocument.occurrences).toEqual(splitDocument.occurrences);
   expect(acceptedTrim.data.canonical_document.shot_revisions).toEqual(split.response.data.canonical_document.shot_revisions);
@@ -313,6 +316,21 @@ test('P1 split -> trim new clip: a real Agent move refuses the stale trim and th
   expect(traffic.posts[1].response.details).toMatchObject({ status: 'conflict', reason: expect.any(String),
     current: pin(agent), conflicts: expect.any(Array) });
   expect(traffic.posts[1].response.details.conflicts.length).toBeGreaterThan(0);
+  for (const conflict of traffic.posts[1].response.details.conflicts) {
+    expect(conflict).toMatchObject({ kind: expect.any(String), ref: expect.any(String), path: expect.any(Array),
+      base: expect.any(Object), theirs: expect.any(Object), ours: expect.any(Object), choices: expect.any(Array) });
+    for (const token of conflict.path) expect(token).toEqual(expect.any(String));
+    for (const state of [conflict.base, conflict.theirs, conflict.ours]) {
+      if (state.state === 'present') expect(state).toHaveProperty('value');
+      else expect(state).toEqual({ state: 'absent' });
+    }
+  }
+  // C0c normalizes the atomic touched scope to the parent payload root,
+  // rather than a native parent/clip alias or the clips/config.clips mirror.
+  expect(traffic.posts[1].response.details.conflicts).toEqual(expect.arrayContaining([
+    expect.objectContaining({ kind: 'atomic_scope_changed', ref: 'parent', path: [] }),
+  ]));
+  expect(traffic.posts[1].response.details.path).toEqual([]);
   await expect(page.getByTestId('timeline-command-recovery')).toContainText('Your changes are retained and need resolution before they can be saved.');
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).find((owner) => owner.pending)?.pending?.outcome?.kind, CEILING).toBe('rejected');
   const current = await history(harness, seed);
