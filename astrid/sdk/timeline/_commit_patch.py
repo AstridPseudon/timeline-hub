@@ -91,6 +91,8 @@ def canonical_site(closure, ref, path):
         return 'timeline', []
     if ref == 'parent':
         return ref, normalized_path(ref, path)
+    if ref == 'parent/source':
+        return 'parent', ['config', *path]
     if ref == 'parent/registry':
         return 'parent', ['config', 'registry', *path]
     if ref.startswith(('internal:', 'internal-revision:', 'shot-revision:')):
@@ -201,6 +203,30 @@ def effect_diff(before, after):
     return result
 
 
+def inverse_closure(bundle, sources):
+    """Compile inverse effects using the same authenticated immutable reuse as acceptance."""
+    from .commit import document_from_bundle
+
+    closure = Closure(bundle)
+    if not sources:
+        return closure
+    closure.document = document_from_bundle(bundle, source_bundles=sources)
+    closure.images = {'parent': closure.document['parent_revision']}
+    closure.images.update(('shot-revision:' + image['revision_id'], image)
+                         for image in closure.document['shot_revisions'])
+    closure.images.update(('internal-revision:' + image['revision_id'], image)
+                         for image in closure.document['internal_timeline_revisions'])
+    placements = {row['occurrence_id']: row for row in bundle['placements']}
+    closure.owners = {}
+    for row in closure.document['parent_revision']['payload']['occurrences']:
+        shot_ref = 'shot-revision:' + row['shot_revision_id']
+        child_ref = 'internal-revision:' + closure.images[shot_ref]['internal_timeline_revision_id']
+        for ref in (shot_ref, child_ref):
+            closure.owners.setdefault(ref, []).append(('occurrence:' + row['occurrence_id'],
+                placements[row['occurrence_id']]['shot_id']))
+    return closure
+
+
 class CommitPatch:
     def __init__(self, request, calls, bundle, *, evaluated_head=None):
         self.active = request is not None
@@ -225,6 +251,8 @@ class CommitPatch:
         self.closures = {}
         self.boundaries = {}
         self.compiler_effects = []
+        self.inverse_stages = {}
+        self.inverse_sources = {}
 
     def step(self, ordinal):
         return next(step for step in self.steps if ordinal in step['command_ordinals'])
@@ -346,7 +374,13 @@ class CommitPatch:
             return
         ordinal = ctx.record['ordinal']
         step = self.step(ordinal)
+        if hasattr(ctx, 'inverse_stages'):
+            self.inverse_sources[ordinal] = ctx.inverse_sources
+            self.inverse_stages[ordinal] = [(inverse_closure(before, ctx.inverse_sources),
+                inverse_closure(after, ctx.inverse_sources)) for before, after in ctx.inverse_stages]
         for binding in ctx.record['bindings']:
+            if binding['key'] == 'inverse.stage':
+                continue
             if self.v2 and 'physical_ref' not in binding:
                 physical, path = canonical_site(self.closures[ordinal], binding['ref'], [])
                 if physical != 'timeline':
@@ -372,7 +406,9 @@ class CommitPatch:
                 touched.add('timeline')
         for step in self.steps:
             start = step['command_ordinals'][0]
-            before, after = Closure(self.inputs[step['id']]), Closure(self.outputs[step['id']])
+            before = Closure(self.inputs[step['id']])
+            after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(
+                step['command_ordinals'][-1], []))
             dependencies = self.dependencies[step['id']]
             for ordinal in step['command_ordinals']:
                 closure = self.closures[ordinal]
@@ -423,6 +459,22 @@ class CommitPatch:
                         binding.update(key='commit.atomic', policy='fixed', dependencies=[], path=[])
                         record['bindings'].append(binding)
             effects = effect_diff(before, after)
+            segments = [(ordinal, first, second) for ordinal in step['command_ordinals']
+                        for first, second in self.inverse_stages.get(ordinal, [])]
+            if segments:
+                effects = []
+                previous = before
+                for ordinal, first, second in segments:
+                    effects.extend(effect_diff(previous, first))
+                    record = plan.records[ordinal]
+                    stages = [binding for binding in record['bindings'] if binding['key'] == 'inverse.stage']
+                    index = sum(1 for binding in stages if 'effect_range' in binding['boundary'])
+                    start_effect = len(effects)
+                    effects.extend(effect_diff(first, second))
+                    if index < len(stages):
+                        stages[index]['boundary']['effect_range'] = [start_effect, len(effects)]
+                    previous = second
+                effects.extend(effect_diff(segments[-1][2], after))
             # Byte-equal sequential edits still carry intent, history and exact inverse guards.
             if all(self.calls[i]['op'] == 'doc.patch' for i in step['command_ordinals']):
                 if before.document == after.document or all(
@@ -450,10 +502,17 @@ class CommitPatch:
         if self.v2:
             for step in self.steps:
                 ordinal = step['command_ordinals'][-1]
-                before, after = Closure(self.inputs[step['id']]), Closure(self.outputs[step['id']])
+                before = Closure(self.inputs[step['id']])
+                after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(ordinal, []))
                 record = plan.records[ordinal]
                 for index, effect in enumerate(step['patch']):
-                    for side, closure in (('before', before), ('after', after)):
+                    segment = next(((first, second) for source_ordinal in step['command_ordinals']
+                        for stage, (first, second) in zip(
+                            [binding for binding in plan.records[source_ordinal]['bindings']
+                             if binding['key'] == 'inverse.stage'], self.inverse_stages.get(source_ordinal, []))
+                        if stage['boundary']['effect_range'][0] <= index < stage['boundary']['effect_range'][1]),
+                        (before, after))
+                    for side, closure in zip(('before', 'after'), segment):
                         if effect['ref'] not in closure.images:
                             continue
                         binding = closure.binding(effect['ref'], effect['ref'],
@@ -461,25 +520,33 @@ class CommitPatch:
                         binding.update(key='commit.effect', policy='fixed', dependencies=[],
                                        path=effect['path'], step_id=step['id'], effect_ordinal=index)
                         record['bindings'].append(binding)
-                old_rows = {row['occurrence_id']: row for row in before.document['parent_revision']['payload']['occurrences']}
-                new_rows = {row['occurrence_id']: row for row in after.document['parent_revision']['payload']['occurrences']}
-                for identity in old_rows.keys() & new_rows.keys():
-                    owner = 'occurrence:' + identity
-                    if any(write['ref'] == owner and (not write['path'] or write['path'] == ['shot_id'])
-                           for i in step['command_ordinals'] for write in plan.records[i]['writes']):
-                        continue
-                    a, b = 'shot-revision:' + old_rows[identity]['shot_revision_id'], 'shot-revision:' + new_rows[identity]['shot_revision_id']
-                    first = 'internal-revision:' + before.images[a]['internal_timeline_revision_id']
-                    second = 'internal-revision:' + after.images[b]['internal_timeline_revision_id']
-                    for source, successor, edge_before, edge_after in ((a, b, first, second), (first, second, a, b)):
-                        if source != successor:
-                            binding = before.binding(source, source, **self.boundaries[ordinal])
-                            binding.update(key='commit.materialization', policy='fixed', dependencies=[],
-                                           successor=successor, owner=owner + '/shot',
-                                           edge_before=edge_before, edge_after=edge_after, step_id=step['id'])
-                            record['bindings'].append(binding)
+                segments = [(first, second) for index in step['command_ordinals']
+                            for first, second in self.inverse_stages.get(index, [])]
+                for first, second in segments or [(before, after)]:
+                    self.materializations(record, first, second, self.boundaries[ordinal], step,
+                        [write for index in step['command_ordinals'] for write in plan.records[index]['writes']])
         plan.steps, plan.label, plan.merge_mode = self.steps, self.label, self.merge_mode
         return plan
+
+    @staticmethod
+    def materializations(record, before, after, boundary, step, writes):
+        old_rows = {row['occurrence_id']: row for row in before.document['parent_revision']['payload']['occurrences']}
+        new_rows = {row['occurrence_id']: row for row in after.document['parent_revision']['payload']['occurrences']}
+        for identity in old_rows.keys() & new_rows.keys():
+            owner = 'occurrence:' + identity
+            if any(write['ref'] == owner and (not write['path'] or write['path'] == ['shot_id'])
+                   for write in writes):
+                continue
+            a, b = 'shot-revision:' + old_rows[identity]['shot_revision_id'], 'shot-revision:' + new_rows[identity]['shot_revision_id']
+            first = 'internal-revision:' + before.images[a]['internal_timeline_revision_id']
+            second = 'internal-revision:' + after.images[b]['internal_timeline_revision_id']
+            for source, successor, edge_before, edge_after in ((a, b, first, second), (first, second, a, b)):
+                if source != successor:
+                    binding = before.binding(source, source, **boundary)
+                    binding.update(key='commit.materialization', policy='fixed', dependencies=[],
+                                   successor=successor, owner=owner + '/shot',
+                                   edge_before=edge_before, edge_after=edge_after, step_id=step['id'])
+                    record['bindings'].append(binding)
 
 
 def record_sites(record, closure):
@@ -553,9 +620,25 @@ def _managed_boundaries(entry, before, after):
             ref: image for ref, image in after.images.items() if ref != 'parent'
         }, after.images['parent']['payload']['occurrences'], entry['records']['commands'], None
         return
+    segments = []
     for step in steps:
+        stages = [binding for ordinal in step['command_ordinals']
+                  for binding in entry['records']['commands'][ordinal]['bindings']
+                  if binding['key'] == 'inverse.stage' and 'effect_range' in binding['boundary']]
+        cursor = 0
+        for binding in stages:
+            start, end = binding['boundary']['effect_range']
+            if start < cursor or not start <= end <= len(step['patch']):
+                raise CommandError('inverse effect ranges are incomplete', kind='history_unavailable')
+            if cursor < start:
+                segments.append((step, step['patch'][cursor:start]))
+            segments.append(({**step, '_inverse_stage': binding}, step['patch'][start:end]))
+            cursor = end
+        if not stages or cursor < len(step['patch']):
+            segments.append((step, step['patch'][cursor:]))
+    for step, effects in segments:
         output, result = copy.deepcopy(images), copy.deepcopy(parent)
-        for effect in step['patch']:
+        for effect in effects:
             ref, path = effect['ref'], effect['path']
             replacement = present(effect['value']) if effect['op'] == 'set' else ABSENT
             if ref == 'parent' and (not path or path[:1] == ['occurrences']):
@@ -759,3 +842,86 @@ def _materialization_sites(entry, old_images, old_rows, new_images, new_rows, re
                 for site in sites:
                     if site['ref'] == old and site.get('owner') == owner:
                         site['ref'] = new
+
+
+def inverse_address_resolver(entries, head_bundle, *, load_boundary):
+    """Normalize inverse captures at their accepted boundary through R1 edge proofs."""
+    from types import SimpleNamespace
+
+    from ._command_state import logical_address
+
+    landing = Closure(head_bundle)
+    transitions, missing, contexts = [], set(), {}
+    for entry in entries:
+        before, after = (Closure(bundle) for bundle in load_boundary(entry))
+        for old_images, old_rows, new_images, new_rows, records, step in _managed_boundaries(entry, before, after):
+            _materialization_sites(entry, old_images, old_rows, new_images, new_rows, records, step,
+                                   transitions, missing, [])
+            boundary = SimpleNamespace(images={'parent': before.images['parent'], **old_images},
+                document={'parent_revision': {'payload': {'occurrences': old_rows}}})
+            output = SimpleNamespace(images={'parent': after.images['parent'], **new_images},
+                document={'parent_revision': {'payload': {'occurrences': new_rows}}})
+            boundary.resolve = lambda ref, scope=boundary: Closure.resolve(scope, ref)
+            output.resolve = lambda ref, scope=output: Closure.resolve(scope, ref)
+            for record in records:
+                for capture in [*record['writes'], *record['reads'], *record['derived_writes'],
+                                *record['selections'], *record['bindings']]:
+                    stage = step.get('_inverse_stage') if step is not None else None
+                    if stage is not None and capture in record['writes']:
+                        start, end = stage['boundary']['native_write_range']
+                        if not any(capture is write for write in record['writes'][start:end]):
+                            continue
+                    if any(capture is write for write in record['writes']):
+                        contexts[id(capture)] = boundary, output
+                    else:
+                        contexts.setdefault(id(capture), (boundary, output))
+            if step is not None:
+                for dependency in step.get('dependencies', []):
+                    contexts.setdefault(id(dependency), (boundary, output))
+
+    def continuation(ref):
+        seen = set()
+        while ref not in landing.images and ref not in ('parent', 'timeline'):
+            if ref in seen:
+                raise CommandError('cyclic inverse materialization history', kind='history_unavailable', ref=ref)
+            seen.add(ref)
+            successors = {new for old, new, _ in transitions if old == ref}
+            if ref in missing:
+                raise CommandError('missing authenticated materialization history', kind='history_unavailable', ref=ref)
+            if not successors:
+                break  # An authenticated removal keeps its immutable identity.
+            if len(successors) != 1:
+                raise CommandError('inverse image has ambiguous successors', kind='binding_changed', ref=ref)
+            ref = successors.pop()
+        return ref
+
+    def resolve(capture, ref, path):
+        boundary, output = contexts.get(id(capture), (None, None))
+        if boundary is None:
+            boundary = output = landing  # Earlier commands in this new batch.
+        return site(boundary, output, ref, path)
+
+    def site(boundary, output, ref, path):
+        if ref.startswith(('internal-revision:', 'shot-revision:')):
+            physical, path = ref, list(path)
+        else:
+            try:
+                physical, path = canonical_site(boundary, ref, path)
+            except CommandError as exc:
+                if exc.kind != 'outside_closure':
+                    raise
+                physical, path = canonical_site(output, ref, path)
+            except KeyError:
+                physical, path = canonical_site(output, ref, path)
+        if physical == 'timeline' and ref.startswith('shot:'):
+            # Native aggregate roots retain their allocation identity. They
+            # include authored shot and internal data, unlike a payload ref.
+            return logical_address(ref, path)
+        if '/collection:' in ref:
+            path = [*path, ('shape',)]
+        path = tuple(('id', token[3:]) if isinstance(token, str) and token.startswith('id:')
+                     else ('occurrence_id', token[14:]) if isinstance(token, str)
+                     and token.startswith('occurrence_id:') else token for token in path)
+        return logical_address(continuation(physical), path)
+
+    return resolve

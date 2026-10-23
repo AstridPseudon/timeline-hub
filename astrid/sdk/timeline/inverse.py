@@ -3,7 +3,15 @@ from __future__ import annotations
 
 import copy
 
-from ._collections import AcceptedRecords, arrange, member, restoration_orders, selection_overlap
+from ._collections import (
+    KINDS,
+    AcceptedRecords,
+    arrange,
+    container,
+    member,
+    restoration_orders,
+    selection_overlap,
+)
 from ._command_state import (
     ABSENT,
     CommandError,
@@ -59,6 +67,8 @@ def _patch(state, path, replacement, *, insertion_order=None, append_text=False)
         indices = [i for i, row in enumerate(node) if _row_identity(row, path[-1]) == identity]
         if len(indices) > 1:
             raise CommandError('ambiguous collection alias', kind='identity_conflict')
+        if not indices and replacement['state'] == 'present' and callable(insertion_order):
+            insertion_order = insertion_order()
         if replacement['state'] == 'absent':
             if indices:
                 node.pop(indices[0])
@@ -169,21 +179,79 @@ def coalesce(records, state=None, *, cache_stages=None):
                            if value_address(old)[0] == address[0]
                            and value_address(old)[1][:len(address[1])] == address[1]]
             for old in reversed(descendants):
-                write['before'] = _patch(write['before'], value_address(old)[1][len(address[1]):], old['before'])
+                entity = member(old['ref'])
+                insertion_order = None
+                if entity is not None and not old['path'] and old['before'] != ABSENT:
+                    def historical_order(entity=entity):
+                        return [member(ref)[2] for ref in restoration_orders(records)[entity[:2]][0]]
+                    insertion_order = historical_order
+                write['before'] = _patch(write['before'], value_address(old)[1][len(address[1]):], old['before'],
+                                         insertion_order=insertion_order)
                 result.remove(old)
             result.append(write)
     return result
 
 
-def check_intervening(records, intervening_records, *, include_reads=True, state=None, identities_only=False):
+def _effect_writes(record):
+    # This mirror has the same logical sites as the authored clip writes. Its
+    # aggregate storage copy must not turn disjoint clip fields into conflicts.
+    return [*record['writes'], *(write for write in record.get('derived_writes', [])
+             if not (write['ref'] == 'parent' and write['path'] == ['config', 'clips']))]
+
+
+def _dependency_overlap(dependency, write, address):
+    if (not isinstance(dependency, dict) or dependency.get('kind') not in ('field', 'collection', 'scope')
+            or not isinstance(dependency.get('ref'), str) or not isinstance(dependency.get('path'), list)):
+        raise CommandError('accepted step dependency is unavailable', kind='history_unavailable')
+    left = address(dependency, dependency['ref'], dependency['path'])
+    right = address(write, write['ref'], write['path'])
+    if not overlaps(left, right):
+        return False
+    if dependency['kind'] != 'collection':
+        return True
+    root, prefix = left
+    other, path = right
+    if root != other:
+        return True  # A whole-closure write overlaps every collection.
+    if path == prefix:
+        key = 'occurrence_id' if prefix[-1:] == ('occurrences',) else 'id'
+
+        def identities(value):
+            rows = value.get('value')
+            if value.get('state') != 'present' or not isinstance(rows, list):
+                return None
+            if any(not isinstance(row, dict) or not isinstance(row.get(key), str) for row in rows):
+                return None
+            return [row[key] for row in rows]
+
+        before, after = identities(write['before']), identities(write['after'])
+        if before is None or after is None:
+            return True
+        return (set(before) != set(after)
+                or (dependency.get('order') is not None and before != after))
+    if path[:len(prefix)] != prefix:
+        return True  # Replacing a containing object invalidates the shape guard.
+    remaining = path[len(prefix):]
+    if remaining[:1] == (('shape',),):
+        return True
+    if len(remaining) == 1:
+        return (write['before']['state'] != write['after']['state']
+                or (write['before'] != ABSENT and write['after'] != ABSENT
+                    and write['before']['value'].get('id') != write['after']['value'].get('id')))
+    return remaining[1:] in (('id',), ('occurrence_id',))
+
+
+def check_intervening(records, intervening_records, *, include_reads=True, state=None, identities_only=False,
+                      include_dependents=False, dependencies=(), later_dependencies=(), address_resolver=None):
     if intervening_records is None:
         raise CommandError('complete intervening history is required', kind='history_unavailable')
-    guarded, source_roots = [], []
+    guarded, source_roots, writes, bound_owners = [], [], [], []
     selections = []
     for record in records:
         if not isinstance(record, dict) or any(key not in record for key in ('writes', 'reads', 'selections', 'created')):
             raise CommandError('complete accepted recorder history is required', kind='history_unavailable')
-        guarded.extend((w['ref'], tuple(w['path'])) for w in record['writes'])
+        guarded.extend((w['ref'], tuple(w['path'])) for w in _effect_writes(record))
+        writes.extend(_effect_writes(record))
         selections.extend(record['selections'])
         if include_reads:
             for read in record['reads']:
@@ -194,6 +262,8 @@ def check_intervening(records, intervening_records, *, include_reads=True, state
                         source_roots.append(('shot:' + read['state']['value'], ()))
             for binding in record.get('bindings', []):
                 ref = binding['ref']
+                for owner in binding.get('owners', []):
+                    bound_owners.append((binding, owner.removesuffix('/shot'), ('shot_id',)))
                 if member(ref) is not None:
                     guarded.append((ref, ('id',)))
                 elif ref.startswith('occurrence:') and '/' not in ref:
@@ -216,16 +286,55 @@ def check_intervening(records, intervening_records, *, include_reads=True, state
             guarded.append((owner, (root[0] + '_id',) if root else ('id',)))
         selections = []
     root_address = _root_addresses(records, state)
+
+    def address(capture, ref, path):
+        if address_resolver is not None:
+            return address_resolver(capture, ref, path)
+        return root_address(ref, path)
+
+    def selected_overlap(selected, write):
+        if address_resolver is None:
+            return selection_overlap(selected, write)
+        kind = KINDS.get(selected['key'])
+        if kind is not None:
+            ref, path = container(selected['owner'], kind)
+            dependency = {'kind': 'collection', 'ref': ref, 'path': list(path), 'order': selected['order']}
+        elif selected['key'] in ('placement.owners', 'text-binding.owners', 'move.blockers'):
+            # These queries consume occurrence membership as well as captured
+            # fields. Keep the shape in the query's original physical boundary.
+            dependency = {'kind': 'collection', 'ref': 'parent', 'path': ['occurrences'],
+                          'order': selected['order']}
+        else:
+            return False
+
+        def selection_address(capture, ref, path):
+            return address(selected if capture is dependency else capture, ref, path)
+
+        return _dependency_overlap(dependency, write, selection_address)
+
+    def binding_consumes(binding, changed):
+        bound = address(binding, binding['ref'], ())
+        return (changed == ('timeline', ()) or bound == ('timeline', ())
+                or changed[0] == bound[0] and bound[1][:len(changed[1])] == changed[1])
+
+    normalized_guards = [address(capture, capture['ref'], capture['path'])
+                         for record in records for capture in
+                         [*_effect_writes(record), *(record['reads'] if include_reads else [])]]
+    normalized_guards.extend(address(binding, ref, path) for binding, ref, path in bound_owners)
+    if identities_only:
+        normalized_guards = [root_address(*prior) for prior in guarded]
     for record in intervening_records:
         if not isinstance(record, dict) or 'writes' not in record:
             raise CommandError("complete intervening write history is required", kind='history_unavailable')
-        for write in record['writes']:
-            address = write['ref'], tuple(write['path'])
-            if (any(overlaps(address, prior) for prior in [*guarded, *source_roots])
-                    or any(overlaps(root_address(*address), root_address(*prior)) for prior in guarded)
-                    or any(selection_overlap(s, write) for s in selections)):
+        for write in _effect_writes(record):
+            location = write['ref'], tuple(write['path'])
+            resolved = address(write, *location)
+            if ((address_resolver is None and any(overlaps(location, prior) for prior in [*guarded, *source_roots]))
+                    or any(overlaps(resolved, prior) for prior in normalized_guards)
+                    or any(selected_overlap(s, write) for s in selections)
+                    or any(_dependency_overlap(dependency, write, address) for dependency in dependencies)):
                 raise CommandError("an intervening publication wrote a guarded address",
-                                   kind='intervening_write', ref=address[0], path=address[1])
+                                   kind='intervening_write', ref=location[0], path=location[1])
             if not write['path']:
                 if write['ref'] == 'parent' and guarded:
                     raise CommandError('an intervening publication replaced the timeline',
@@ -233,7 +342,28 @@ def check_intervening(records, intervening_records, *, include_reads=True, state
                 # Removing an owner also invalidates every scoped descendant.
                 if any(ref.startswith(write['ref'] + '/') for ref, _ in guarded):
                     raise CommandError("an intervening publication replaced an owner",
-                                       kind='intervening_write', ref=address[0])
+                                       kind='intervening_write', ref=location[0])
+        if include_dependents:
+            for write in writes:
+                changed = address(write, write['ref'], write['path'])
+                if (any(overlaps(changed, address(read, read['ref'], read['path']))
+                        for read in record.get('reads', []))
+                        or any(selected_overlap(selected, write) for selected in record.get('selections', []))
+                        or ((not write['path'] or write['path'] in (['id'], ['occurrence_id'], ['shot_id']))
+                            and any(binding_consumes(binding, changed)
+                                    for binding in record.get('bindings', [])))):
+                    raise CommandError('a surviving command consumed the selected output',
+                                       kind=_consumer_conflict(write), ref=write['ref'], path=write['path'])
+    if include_dependents:
+        for write in writes:
+            if any(_dependency_overlap(dependency, write, address) for dependency in later_dependencies):
+                raise CommandError('a surviving step consumed the selected output',
+                                   kind=_consumer_conflict(write), ref=write['ref'], path=write['path'])
+
+
+def _consumer_conflict(write):
+    return ('surviving_dependents' if not write['path'] and write['before'] == ABSENT
+            and write['after'] != ABSENT else 'inverse_conflict')
 
 
 def _dependents(state, ref):
@@ -326,15 +456,12 @@ def _materialized_payload_read(state, read, record, records):
     if (not isinstance(records, AcceptedRecords) or not read['ref'].endswith('/shot')
             or read['path'] != ['payload'] or read['state']['state'] != 'present'):
         return False
-    offset = 0
+    from ._step_undo import entry_records
+
     for entry in records.entries:
-        count = len(entry['records']['commands'])
-        commands = records[offset:offset + count]
-        offset += count
+        commands = entry_records(records, entry)
         if not any(item is record for item in commands):
             continue
-        if not equal(commands, entry['records']['commands']):
-            raise CommandError('payload records differ from accepted history', kind='history_unavailable')
         before, _ = records.load_boundary(entry)
         owner = read['ref'].removesuffix('/shot')
         prior = State(before, closures=state.closures)
@@ -394,7 +521,7 @@ def _validate_inputs(state, record, records):
                               if equal(selection(stage, selected['key'], selected['owner'],
                                                  selected['members']), selected))
             bindings.update(binding['ref'] for binding in record.get('bindings', [])
-                            if stage.entity(binding['ref'], optional=True) is not None)
+                            if 'physical_ref' not in binding and stage.entity(binding['ref'], optional=True) is not None)
         return reads, selections, bindings
 
     for read in record['reads']:
@@ -416,6 +543,10 @@ def _validate_inputs(state, record, records):
             raise CommandError('inverse selection changed', kind='selection_changed', ref=selected['owner'])
     created = {item['ref'] for item in record['created']}
     for binding in record.get('bindings', []):
+        if 'physical_ref' in binding:
+            # Physical bindings are authenticated guard inputs, not native
+            # entity aliases to re-resolve after historical reversal.
+            continue
         ref = binding['ref']
         if ref not in created and state.entity(ref, optional=True) is None:
             if sites is None:
@@ -423,15 +554,47 @@ def _validate_inputs(state, record, records):
             if ref not in sites[2]:
                 raise CommandError('bound identity disappeared', kind='inverse_dependency_changed', ref=ref)
 
+def _restore_write(ctx, write):
+    ctx.read(write['ref'], write['path'])
+    # An absent-to-absent edge still records authored intent, but restores
+    # no entity and must not allocate an identity or dereference a value.
+    if not write['path'] and write['after'] == ABSENT and write['before']['state'] == 'present':
+        root = root_identity(write['ref'])
+        if root is not None:
+            ctx.create_entity(write['ref'], kind=root[0],
+                              owner=None if root[0] == 'shot' else 'parent',
+                              value=write['before']['value'], restoring=True)
+        elif '/text-binding:' in write['ref']:
+            ctx.assign(write['ref'], write['path'], write['before'])
+        elif '/asset:' in write['ref']:
+            owner, identity = write['ref'].rsplit('/asset:', 1)
+            ctx.create_asset(owner, identity, write['before']['value'])
+        else:
+            owner, entity = write['ref'].rsplit('/', 1)
+            ctx.create(owner, entity.split(':', 1)[0], write['before']['value'], restoring=True)
+    else:
+        ctx.assign(write['ref'], write['path'], write['before'])
+
 
 def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     if not records:
         raise CommandError("inverse requires trusted accepted records", kind='history_unavailable')
     if any(not isinstance(record, dict) or 'writes' not in record for record in records):
         raise CommandError("inverse history lacks authored writes", kind='history_unavailable')
-    check_intervening(records, intervening_records, state=ctx.state)
+    from ._step_undo import check_step_dependents, inverse_stages, selected_dependencies
+
+    dependencies = selected_dependencies(records)
+    address_resolver = getattr(records, 'address_resolver', None)
+    if any('physical_ref' in binding for record in records for binding in record.get('bindings', [])):
+        if not isinstance(records, AcceptedRecords) or address_resolver is None:
+            raise CommandError('inverse needs authenticated physical binding normalization', kind='history_unavailable')
+    check_step_dependents(records, state=ctx.state)
+    check_intervening(records, intervening_records, state=ctx.state, include_dependents=True,
+                      dependencies=dependencies, later_dependencies=selected_dependencies(intervening_records),
+                      address_resolver=address_resolver)
     # Earlier batch commands are intervening writes, not part of this undo group.
-    check_intervening(records, staged_records, state=ctx.state)
+    check_intervening(records, staged_records, state=ctx.state, include_dependents=True,
+                      dependencies=dependencies, address_resolver=address_resolver)
     changes = coalesce(records, ctx.state)
     caches = clip_cache_stages(records)
     guarded_changes = coalesce(records, ctx.state, cache_stages=caches)
@@ -496,35 +659,47 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                 ctx.select(selected['key'].removesuffix('.after'), selected['owner'])
             else:
                 ctx.select(selected['key'], selected['owner'], selected['members'])
-    for write in reversed(changes):
-        ctx.read(write['ref'], write['path'])
-        # An absent-to-absent edge still records authored intent, but restores
-        # no entity and must not allocate an identity or dereference a value.
-        if not write['path'] and write['after'] == ABSENT and write['before']['state'] == 'present':
-            root = root_identity(write['ref'])
-            if root is not None:
-                ctx.create_entity(write['ref'], kind=root[0],
-                                  owner=None if root[0] == 'shot' else 'parent',
-                                  value=write['before']['value'], restoring=True)
-            elif '/text-binding:' in write['ref']:
-                ctx.assign(write['ref'], write['path'], write['before'])
-            elif '/asset:' in write['ref']:
-                owner, identity = write['ref'].rsplit('/asset:', 1)
-                ctx.create_asset(owner, identity, write['before']['value'])
-            else:
-                owner, entity = write['ref'].rsplit('/', 1)
-                ctx.create(owner, entity.split(':', 1)[0], write['before']['value'], restoring=True)
-        else:
-            ctx.assign(write['ref'], write['path'], write['before'])
-    for (owner, kind), (original, _) in orders.items():
-        if ctx.state.entity(owner, optional=True) is None and any(
-                write['ref'] == owner and not write['path'] and write['before'] == ABSENT
-                for write in changes):
-            continue  # Reversing the owner's birth also removes its collections.
-        arrange(ctx.state, owner, kind, original)
+    # Keep sequential effect guards, including repeated/equal-state writes.
+    # Coalescing is useful for the landing guard, never as inverse execution.
+    ctx.inverse_sources = ([source for entry in records.entries for source in records.load_boundary(entry)]
+                           if isinstance(records, AcceptedRecords) else [])
+    ctx.inverse_stages = []
+    for publication, step_id, commands in inverse_stages(records):
+        stage_before = copy.deepcopy(ctx.state.bundle)
+        physical = None
+        if address_resolver is not None:
+            from ._commit_patch import canonical_site
+            from ._doc_patch import Closure
 
-    for record in reversed(records):
-        arrange_restored(ctx.state, record, root_orders.get(id(record)))
+            physical = Closure(stage_before)
+            touched = {canonical_site(physical, write['ref'], write['path'])[0]
+                       for record in commands for write in record['writes']
+                       if write['ref'].startswith('occurrence:') and '/' in write['ref']}
+        start = len(ctx.record['writes'])
+        for record in reversed(commands):
+            for write in reversed([*record['writes'], *caches.get(id(record), [])]):
+                _restore_write(ctx, write)
+            for (owner, kind), (original, _) in restoration_orders(records, only=record).items():
+                if ctx.state.entity(owner, optional=True) is not None:
+                    arrange(ctx.state, owner, kind, original)
+            arrange_restored(ctx.state, record, root_orders.get(id(record)))
+            ctx.compile_mirrors()
+        if physical is not None:
+            from ._doc_patch_materialize import remember
+
+            physical.bundle = ctx.state.bundle
+            live = {'occurrence:' + row['occurrence_id'] for row in ctx.state.bundle['placements']}
+            for ref in touched - {'parent', 'timeline'}:
+                physical.owners[ref] = [(owner, local) for owner, local in physical.owners[ref] if owner in live]
+                remember(physical, ref)
+        ctx.inverse_stages.append((stage_before, copy.deepcopy(ctx.state.bundle)))
+        if step_id is not None:
+            # Keep native segment boundaries in the authenticated recorder. The
+            # provider's effect projection uses these to retain transient roots.
+            ctx.record['bindings'].append({'key': 'inverse.stage', 'ref': 'parent', 'policy': 'fixed',
+                'dependencies': [], 'boundary': {'publication_id': publication, 'step_id': step_id,
+                    'command_ordinals': [record['ordinal'] for record in commands],
+                    'native_write_range': [start, len(ctx.record['writes'])]}})
     for selected in deferred_selections:
         # Deferred structural claims describe the restored head, so they must
         # not be read from the inverse's pre-write input snapshot.

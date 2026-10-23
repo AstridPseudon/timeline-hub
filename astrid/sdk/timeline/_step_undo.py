@@ -1,0 +1,209 @@
+"""Select native inverse stages without rewriting immutable accepted history."""
+from __future__ import annotations
+
+from ._collections import AcceptedRecords
+from ._command_state import CommandError, equal
+
+
+def _commands(entry):
+    recorder = entry.get('records')
+    if not isinstance(recorder, dict) or not isinstance(recorder.get('commands'), list):
+        raise CommandError('complete accepted command history is required', kind='history_unavailable')
+    commands = recorder['commands']
+    if not commands or any(not isinstance(record, dict) or record.get('ordinal') != ordinal
+                           or any(not isinstance(record.get(key), list)
+                                  for key in ('writes', 'reads', 'selections', 'created'))
+                           for ordinal, record in enumerate(commands)):
+        raise CommandError('accepted command ordinals are incomplete', kind='history_unavailable')
+    return commands
+
+
+def _steps(entry, *, required=False):
+    commands = _commands(entry)
+    steps = entry['records'].get('steps')
+    if steps is None and not required:
+        # Historical native captures still support their existing whole inverse.
+        # They supply no authority to select or invent a historical step.
+        return [(None, commands, [])]
+    if not isinstance(steps, list) or not steps:
+        raise CommandError('accepted step history is unavailable', kind='history_unavailable')
+    cursor, seen, result = 0, set(), []
+    for step in steps:
+        if not isinstance(step, dict):
+            raise CommandError('accepted step history is malformed', kind='history_unavailable')
+        identity, ordinals = step.get('id'), step.get('command_ordinals')
+        if (not isinstance(identity, str) or not identity or identity in seen
+                or not isinstance(ordinals, list) or not ordinals
+                or any(type(index) is not int for index in ordinals)
+                or ordinals != list(range(cursor, cursor + len(ordinals)))
+                or cursor + len(ordinals) > len(commands)
+                or not isinstance(step.get('patch'), list)
+                or not isinstance(step.get('dependencies', []), list)):
+            raise CommandError('accepted steps do not partition command history', kind='history_unavailable')
+        seen.add(identity)
+        cursor += len(ordinals)
+        result.append((step, [commands[index] for index in ordinals], step.get('dependencies', [])))
+    if cursor != len(commands):
+        raise CommandError('accepted steps omit command history', kind='history_unavailable')
+    return result
+
+
+class SelectedRecords(AcceptedRecords):
+    """A source-preserving view; entries and command ordinals stay authoritative."""
+
+    def __init__(self, accepted, chosen, address_resolver):
+        self.accepted, self.chosen = accepted, chosen
+        self.address_resolver = address_resolver
+        selected = [record for entry in accepted.entries for record in entry_records(accepted, entry)
+                    if record['ordinal'] in chosen[entry['publication_id']]]
+        super().__init__(accepted.entries, selected, accepted.load_boundary)
+
+    def selected_for(self, entry):
+        ordinals = self.chosen[entry['publication_id']]
+        return [record for record in entry_records(self.accepted, entry) if record['ordinal'] in ordinals]
+
+    def boundary(self, record):
+        return self.accepted.boundary(record)
+
+
+def entry_records(records, entry):
+    """Return selected captures while retaining complete boundary source entries."""
+    if isinstance(records, SelectedRecords):
+        return records.selected_for(entry)
+    offset = 0
+    for source in records.entries:
+        count = len(source['records']['commands'])
+        if source is entry:
+            result = records[offset:offset + count]
+            if not equal(result, source['records']['commands']):
+                break
+            return result
+        offset += count
+    raise CommandError('inverse records differ from accepted history', kind='history_unavailable')
+
+
+def select_inverse_records(accepted, steps=None, *, address_resolver=None):
+    """Select only authenticated command runs; step effect patches are never run."""
+    if not isinstance(accepted, AcceptedRecords) or isinstance(accepted, SelectedRecords):
+        raise CommandError('inverse selection needs complete accepted records', kind='history_unavailable')
+    originals = [record for entry in accepted.entries for record in _commands(entry)]
+    if not equal(list(accepted), originals):
+        raise CommandError('inverse records differ from accepted history', kind='history_unavailable')
+    publications = [entry['publication_id'] for entry in accepted.entries]
+    if not publications or len(set(publications)) != len(publications):
+        raise CommandError('inverse target history is incomplete', kind='history_unavailable')
+    if steps is not None and (not isinstance(steps, dict) or set(steps) != set(publications)):
+        raise CommandError('inverse steps must specify every target publication', kind='invalid_steps')
+    chosen = {}
+    for entry in accepted.entries:
+        publication = entry['publication_id']
+        groups = _steps(entry, required=steps is not None)
+        if steps is None:
+            chosen[publication] = {record['ordinal'] for _, commands, _ in groups for record in commands}
+            continue
+        requested = steps[publication]
+        if (not isinstance(requested, list) or not requested
+                or any(not isinstance(identity, str) or not identity for identity in requested)
+                or len(set(requested)) != len(requested)
+                or not set(requested) <= {step['id'] for step, _, _ in groups}):
+            raise CommandError('inverse step IDs must be known and unique', kind='invalid_steps')
+        chosen[publication] = {record['ordinal'] for step, commands, _ in groups
+                               if step['id'] in requested for record in commands}
+    return SelectedRecords(accepted, chosen, address_resolver)
+
+
+def selected_dependencies(records):
+    if not isinstance(records, AcceptedRecords):
+        return []
+    if not equal(list(records), [record for entry in records.entries for record in entry_records(records, entry)]):
+        raise CommandError('inverse selection differs from accepted history', kind='history_unavailable')
+    result = []
+    for entry in records.entries:
+        selected = {record['ordinal'] for record in entry_records(records, entry)}
+        for _, commands, dependencies in _steps(entry):
+            if any(record['ordinal'] in selected for record in commands):
+                result.extend(dependencies)
+    return result
+
+
+def inverse_stages(records):
+    """Yield reverse execution groups with their original immutable step IDs."""
+    if not isinstance(records, AcceptedRecords):
+        for record in reversed(records):
+            yield None, None, [record]
+        return
+    for entry in reversed(records.entries):
+        commands = {record['ordinal']: record for record in entry_records(records, entry)}
+        for step, originals, _ in reversed(_steps(entry)):
+            chosen = [commands[record['ordinal']] for record in originals if record['ordinal'] in commands]
+            if chosen:
+                yield entry.get('publication_id'), step['id'] if step is not None else None, chosen
+
+
+def _causal_commands(entry, commands):
+    """Project causal compiler ownership without rewriting accepted captures."""
+    originals = entry['records']['commands']
+    for source in originals:
+        for write in source.get('derived_writes', []):
+            cause = write.get('cause', source['ordinal'])
+            if type(cause) is not int or not 0 <= cause <= source['ordinal']:
+                raise CommandError('compiler effect cause is unavailable', kind='history_unavailable')
+    return [{**record, 'derived_writes': [write for source in originals
+        for write in source.get('derived_writes', [])
+        if write.get('cause', source['ordinal']) == record['ordinal']]}
+        for record in commands]
+
+
+def _check_groups(groups, *, state, address_resolver):
+    from .inverse import check_intervening
+
+    for index, (commands, dependencies, active) in enumerate(groups):
+        if not active:
+            continue
+        later = [group for group in groups[index + 1:] if not group[2]]
+        check_intervening(commands, [record for group in later for record in group[0]],
+                          include_dependents=True, state=state, dependencies=dependencies,
+                          later_dependencies=[dependency for group in later for dependency in group[1]],
+                          address_resolver=address_resolver)
+
+
+def check_step_dependents(records, *, state=None):
+    """Recheck same-publication consumers at every inverse execution boundary."""
+    if not isinstance(records, SelectedRecords):
+        return
+    for entry in records.entries:
+        chosen = records.chosen[entry['publication_id']]
+        groups = [(_causal_commands(entry, commands), dependencies, any(record['ordinal'] in chosen for record in commands))
+                  for _, commands, dependencies in _steps(entry)]
+        _check_groups(groups, state=state, address_resolver=records.address_resolver)
+
+
+def check_later_steps(selected, history, *, state=None, address_resolver=None):
+    """Check each selected step against its own complete, unselected suffix.
+
+    The provider authenticates ancestry before calling this helper. A gap before
+    a newer selected target belongs to that target's input, not its later tail.
+    """
+    if not isinstance(selected, SelectedRecords) or history is None:
+        raise CommandError('inverse scan needs selected accepted history', kind='history_unavailable')
+    selected_dependencies(selected)
+    address_resolver = address_resolver or selected.address_resolver
+    groups, found = [], []
+    previous = None
+    for entry in history:
+        publication = entry['publication_id']
+        if previous is not None and entry.get('previous') != previous:
+            raise CommandError('inverse history is not contiguous', kind='history_unavailable')
+        previous = {key: entry[key] for key in ('revision_id', 'publication_id')}
+        source = next((source for source in selected.entries if source['publication_id'] == publication), None)
+        if source is not None:
+            if not equal(source, entry):
+                raise CommandError('inverse target differs from accepted history', kind='history_unavailable')
+            found.append(publication)
+        chosen = selected.chosen.get(publication, set())
+        for step, commands, dependencies in _steps(entry):
+            active = any(record['ordinal'] in chosen for record in commands)
+            groups.append((_causal_commands(entry, commands), dependencies, active))
+    if found != [entry['publication_id'] for entry in selected.entries]:
+        raise CommandError('inverse scan omits accepted targets', kind='history_unavailable')
+    _check_groups(groups, state=state, address_resolver=address_resolver)
