@@ -1,1 +1,1 @@
-2026-10-23T09:26:22Z procs: dispatcher-daemon hub-syncd ; manager NOT running (run-manager start denied, awaiting owner); workers 0; ready-undispatched n/a; disk 21G free; uptime 207m; issues: H6 deadline passed with no runs; origin remotes added but not reported to orchestrator
+2026-10-23T10:27:58Z procs: dispatcher-daemon hub-syncd run-manager run-manager ; manager running, board 10:25Z; workers: tf-app-classify queued, 2 test-service runs done (app-full FAIL 89/18706, composition-full PASS); ready-undispatched 0; disk 21G free; issues: P1 NO-GO gates P2/P3 runs
