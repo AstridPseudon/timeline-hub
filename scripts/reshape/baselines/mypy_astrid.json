@@ -5,7 +5,7 @@
     "scripts/reshape"
   ],
   "command": [
-    "/tmp/w-4f3d8d00b5/typecheck/bin/python",
+    "/home/user/work/venv-agent-typecheck-v2/bin/python",
     "-m",
     "mypy",
     "astrid",
@@ -15,7 +15,7 @@
     "--no-pretty",
     "--show-error-codes"
   ],
-  "finding_count": 1914,
+  "finding_count": 1912,
   "code_counts": {
     "arg-type": 435,
     "assignment": 166,
@@ -37,7 +37,7 @@
     "str-bytes-safe": 1,
     "type-var": 2,
     "typeddict-item": 6,
-    "union-attr": 338,
+    "union-attr": 336,
     "valid-type": 17,
     "var-annotated": 60
   }
