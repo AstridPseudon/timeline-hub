@@ -22,6 +22,9 @@ vi.mock('@/migrations/astridRenameBrowserMigration.ts', () => ({
 describe('main entry boot order', () => {
   beforeEach(() => {
     vi.resetModules();
+    localStorage.clear();
+    // This suite observes the normal connected app branch; first visits now open welcome.
+    localStorage.setItem('astrid.runtime.connectedBefore', '1');
     // doMock per case: a vi.mock factory's result survives resetModules, so its import-time read would run once.
     vi.doMock('@/app/bootstrap', async () => {
       await record('import bootstrap');
@@ -36,6 +39,7 @@ describe('main entry boot order', () => {
   });
 
   afterEach(() => {
+    localStorage.clear();
     vi.unstubAllEnvs();
   });
 

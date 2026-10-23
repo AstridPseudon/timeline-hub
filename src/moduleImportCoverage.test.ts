@@ -295,7 +295,6 @@ const moduleLoaders = [
   () => import('@/shared/components/MediaSelectionPanel'),
   () => import('@/shared/components/selectors/MediaTypeFilter'),
   () => import('@/shared/components/ModalContainer'),
-  () => import('@/shared/components/modals/OnboardingModal'),
   () => import('@/shared/components/PaneControlTab'),
   () => import('@/shared/components/PhaseConfigSelectorModal'),
   () => import('@/shared/components/ProgressiveLoadingManager'),

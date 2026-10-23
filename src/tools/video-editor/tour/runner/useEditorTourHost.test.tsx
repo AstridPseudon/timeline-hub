@@ -2,7 +2,7 @@
 
 import { act, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { exitEditorTour, getEditorTourState, markEditorTourReady } from '@/shared/state/editorTourStore';
+import { exitEditorTour, getEditorTourState, markEditorTourReady, startEditorTour } from '@/shared/state/editorTourStore';
 import { EditorTourSlot } from '../timeline/editorTourSlot';
 import { useEditorTourHost } from './useEditorTourHost';
 
@@ -19,8 +19,8 @@ vi.mock('@/shared/hooks/mobile', () => ({
   isTabletHardware: () => false,
 }));
 
-function Page({ hasSelection }: { hasSelection: boolean }) {
-  useEditorTourHost(hasSelection);
+function Page() {
+  useEditorTourHost();
   return <EditorTourSlot />;
 }
 
@@ -37,9 +37,11 @@ afterEach(async () => {
 });
 
 describe('useEditorTourHost', () => {
-  it('starts on the first mount with a selection and shows the runner only while the tour runs', async () => {
-    const { unmount } = render(<Page hasSelection />);
+  it('never starts automatically and shows the runner only for an explicit replay', async () => {
+    const { unmount } = render(<Page />);
 
+    expect(getEditorTourState().status).toBe('idle');
+    act(() => startEditorTour());
     await waitFor(() => expect(getEditorTourState().status).toBe('running'));
     expect(document.querySelector('[data-editor-tour-shield]')).not.toBeNull();
 
@@ -52,11 +54,12 @@ describe('useEditorTourHost', () => {
   });
 
   it('does not start without a selection, and Enter swallows the keystroke while running', async () => {
-    const idle = render(<Page hasSelection={false} />);
+    const idle = render(<Page />);
     expect(getEditorTourState().status).toBe('idle');
     idle.unmount();
 
-    const { unmount } = render(<Page hasSelection />);
+    const { unmount } = render(<Page />);
+    act(() => startEditorTour());
     await waitFor(() => expect(document.querySelector('[data-editor-tour-shield]')).not.toBeNull());
     // Replay path: the flag is set, so only an explicit start runs it again.
     // The welcome card has played its entrance, so Enter is its OK.

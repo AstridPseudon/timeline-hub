@@ -1,3 +1,4 @@
+import { shouldShowWelcome } from '@/app/onboarding/welcomeProgress.ts';
 import {
   classifyBrowserEntry,
   prefersAppEntry,
@@ -77,6 +78,13 @@ async function startApp(rootElement: HTMLElement): Promise<void> {
   const migration = await migrateAstridBrowserStorage();
   if (!migration.success) {
     showMigrationFailure(rootElement, migration.store, () => startApp(rootElement));
+    releaseBootLayerWhenReady(rootElement);
+    return;
+  }
+
+  if (shouldShowWelcome(new URL(window.location.href))) {
+    const { renderWelcome } = await import('@/app/onboarding/welcomeBootstrap.tsx');
+    renderWelcome(rootElement);
     releaseBootLayerWhenReady(rootElement);
     return;
   }
