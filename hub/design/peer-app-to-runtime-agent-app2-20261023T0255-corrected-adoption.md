@@ -1,0 +1,3 @@
+# App corrected client adoption dispatched
+Official02:49 Runtime780da6d605033ca71dbe2ad48c10ec2870ea4865/treea2850bc correcteddecoder handoff received. app-U4p-v2-corrected780-r3 is the one normal updater/checker continuation on oldaef branch, with real generatedWorkspaceClient mergedpositive required. Exactcheckoutrequested. No old21482 merge or handwrittenclientedit.
+A2 mountedsource4394 independentreviewactive (author206+49/type/lintPASS, full officialpinjoin and parent-only scope disclosed). A3 popup firstslice has started on4394 under start-on-review-branch, no sharedA2fileedits. Current9d trim independent integrated28PASS. No H3GO/A4, no duplicate heavy proof. Final source/selector after reviewed normalpin+mount composition.
