@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T07:22:20Z | dispatcher heartbeat 12s | live 3 (sol 0, luna 3, other 0) | busy30 11 | status age 1m -->
-# agent board, 2026-10-23T07:20:52Z
+<!-- agent | 2026-10-23T07:23:55Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
+# agent board, 2026-10-23T07:23:20Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -52,7 +52,7 @@
 | F-agent-full | integrated full suite and every failure classified | Luna/testservice | orchestrator07:08 farm failover | doing | agt-F-agent-full-0710; env0713 | Service24096 exit4 BEFOREcollection: runtime_protocol missing in suite environment; classifier active, narrowenvrepair dispatched. No behavior credit | pending |
 | DB-agent-dry | fresh-clone delivery squash verification | Luna | orchestrator07:08; upstream431 | doing | agt-DB-agent-return-0719 | Firstdryrun patch/bundle/f17btreePASS+93source tests; metadata absent and freshclone tests unverified. Returnworker authorized truthfulcurrentdraftinputs+actualfreshclone93, nothing pushed | source4edc |
 | F-agent-env | repair full service import environment | Luna author/review | service24096 exact failure | merged | agt-F-env-review-0716 FINAL PASS | Exactone-row envrepair/import/bash/static/negativepreflightPASS; allotherbytes retained. Fullcollection stillblocked removedscopes untilreview0719 | ops-only |
-| F-agent-collection | missing scopes import stops full collection | Luna author/review | env0713 collection finding | review | agt-F-collection-review-0719 | Author6PASS/collection6; oneown ea782 repairs removedimport/currentenvbinding, all6assertions retained. Independent semantics/privatequality review beforemerge/fullretry | ea782225d |
+| F-agent-collection | missing scopes import stops full collection | Luna author/review | env0713 collection finding | merging | agt-F-collection-review-0719 PASS | Independent6body+6collection/2149/1912/vendor/artifact/diffPASS, all6functions/assertions retained. Owncommitlog oneea782 checked; ownermergequeued | ea782225d |
 Resolved: runtime — Normal frozen strict34e adoption DONE; compatible execution85dafdf467 merged/proven156+original48d6 allactualorigins. No newtuple/re-adoption/native14 duplicate.
 Resolved: agent audit — ccc scope hold CLEARED at auditedbf40; currentG234 reviewed31a5 and currentfork900 merged ea302 with integrated131+2replay+2live PASS. Owncommit checks retained.
 Resolved: orchestrator — D12a applies everyV2 check, no inventednormalization; D15fork900/currentea302 integratedPASS; D14two undo positives deferred unchanged/unskipped/visiblyfailing, no54PASS.
