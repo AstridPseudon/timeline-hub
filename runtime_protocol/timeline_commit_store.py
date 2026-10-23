@@ -60,6 +60,19 @@ def _effective_merge_mode(request):
     return requested
 
 
+def _is_v2_request(request, records=None):
+    """Return whether the caller opted into the v2 request annotations.
+
+    ABI-1 requests are intentionally left byte-for-byte compatible: their
+    result and legacy history metadata must not acquire synthetic v2 fields.
+    Once any v2 control is present, the provider's authoritative step records
+    and the effective merge mode are part of the durable result.
+    """
+    return any(key in request for key in ("label", "steps", "merge", "reads")) or (
+        records is not None and "steps" in records
+    )
+
+
 def _history_metadata(request, data):
     """Project request annotations and effective commit facts into one JSON value.
 
@@ -68,12 +81,64 @@ def _history_metadata(request, data):
     history edge from the authenticated execution context by the caller.
     """
     metadata = {key: request[key] for key in _METADATA if key in request}
-    metadata["label"] = data.get("label", request.get("label", "Timeline edit"))
-    metadata["merge"] = request.get("merge", "fields")
-    metadata["merge_mode"] = data["merge_mode"]
-    if "reads" in request:
-        metadata["reads"] = request["reads"]
+    if _is_v2_request(request) or "steps" in data:
+        metadata["label"] = data["label"]
+        metadata["merge"] = request.get("merge", "fields")
+        metadata["merge_mode"] = data["merge_mode"]
+        if "reads" in request:
+            metadata["reads"] = request["reads"]
     return metadata
+
+
+def _provider_images(document):
+    images = {"parent": document["parent_revision"]}
+    images.update(("shot-revision:" + image["revision_id"], image)
+                  for image in document["shot_revisions"])
+    images.update(("internal-revision:" + image["revision_id"], image)
+                  for image in document["internal_timeline_revisions"])
+    return images
+
+
+def _validate_physical_bindings(document, records):
+    """Authenticate R1's physical closure bindings before they become history facts."""
+    images = _provider_images(document)
+    for record in records["commands"]:
+        for binding in record["bindings"]:
+            physical = binding.get("physical_ref")
+            if physical is None:
+                continue  # ABI-1 bindings have no physical provenance.
+            image = images.get(physical)
+            boundary = binding.get("boundary")
+            if image is None or not isinstance(boundary, dict):
+                reject("invalid_records", "provider binding is outside the accepted closure", status=422)
+            if binding.get("revision_id") != image["revision_id"] or binding.get("content_digest") != image["content_digest"]:
+                reject("invalid_records", "provider binding revision provenance differs from the accepted closure", status=422)
+            required_boundary = {"base_revision_id", "base_publication_id", "evaluated_head", "step_id",
+                                 "command_ordinal", "phase"}
+            if not required_boundary <= boundary.keys() or boundary["command_ordinal"] != record["ordinal"]:
+                reject("invalid_records", "provider binding boundary is incomplete or misattributed", status=422)
+            if "change" in binding:
+                change = binding["change"]
+                if not isinstance(change, dict) or change.get("ref") != physical:
+                    reject("invalid_records", "provider patch binding is not tied to its physical root", status=422)
+                path = binding.get("path")
+                write_range = binding.get("write_range")
+                if not isinstance(path, list) or not isinstance(write_range, list) or len(write_range) != 2:
+                    reject("invalid_records", "provider patch binding lacks its write range", status=422)
+
+
+def _validate_record_metadata(request, records):
+    """Require the provider's authoritative v2 metadata, while leaving ABI-1 untouched."""
+    if not _is_v2_request(request, records):
+        return
+    if records.get("label") != request.get("label", "Timeline edit"):
+        reject("invalid_records", "provider label differs from the request", status=422)
+    if records.get("merge_mode") != _effective_merge_mode(request):
+        reject("invalid_records", "provider merge mode differs from the effective request mode", status=422)
+    if "steps" not in records:
+        reject("invalid_records", "provider did not return authoritative step records", status=422)
+    if any("dependencies" not in step for step in records["steps"]):
+        reject("invalid_records", "provider step dependencies are missing", status=422)
 
 
 _SHELL_SCOPE_TABLES = ("timeline_shots", "timeline_references", "timeline_render_publications",
@@ -199,6 +264,11 @@ class TimelineCommitStore:
                 valid = valid and data.get("reads", metadata["reads"]) == metadata["reads"]
             if "steps" in records:
                 valid = valid and data.get("steps") == records["steps"]
+            if "label" in records:
+                valid = valid and data.get("label") == records["label"]
+            if "merge_mode" in records:
+                valid = valid and data.get("merge_mode") == records["merge_mode"]
+            _validate_physical_bindings(document, records)
             ids = json.loads(row["event_ids_json"])
             seq = row["resulting_stream_seq"]
             # Replay verifies the accepted prefix, independent of later writes.
@@ -660,7 +730,9 @@ class TimelineCommitStore:
             reject("invalid_records", status=422)
         recorded_steps = records.get("steps")
         requested_steps = request.get("steps")
-        if requested_steps is not None and recorded_steps is None:
+        _validate_record_metadata(request, records)
+        _validate_physical_bindings(document, records)
+        if _is_v2_request(request) and recorded_steps is None:
             reject("invalid_records", "provider did not return authoritative step records", status=422)
         if recorded_steps is not None:
             ordinals = [ordinal for step in recorded_steps for ordinal in step["command_ordinals"]]
@@ -997,19 +1069,19 @@ class TimelineCommitStore:
                 except ReferenceProjectionError as exc:
                     reject(exc.reason, exc.message, status=exc.status)
                 base = {"revision_id": request["base_revision_id"], "publication_id": request["base_publication_id"]}
-                modern = any(key in request for key in ("label", "steps", "merge", "reads"))
+                modern = _is_v2_request(request, prepared["records"])
                 data = {"status": ("accepted" if previous == base else ("merged" if modern else "rebased")),
                         "base_revision_id": base["revision_id"],
                         "base_publication_id": base["publication_id"], "previous_revision_id": previous["revision_id"],
                         "previous_publication_id": previous["publication_id"],
                         "accepted_revision_id": candidate["canonical_document"]["parent_revision"]["revision_id"],
                         "rebased_onto": None if previous == base else previous, **candidate,
-                        "merge_mode": _effective_merge_mode(request),
                         "publisher": context["publisher"],
                         **{k: request[k] for k in _METADATA if k in request}}
-                if "label" not in data:
-                    data["label"] = "Timeline edit"
-                if "steps" in prepared["records"]:
+                if modern:
+                    data["merge_mode"] = _effective_merge_mode(request)
+                    data.setdefault("label", "Timeline edit")
+                if modern and "steps" in prepared["records"]:
                     data["steps"] = prepared["records"]["steps"]
                 self._persist_closure(candidate["canonical_document"])
                 result = self._publish(context, data, previous, prepared["records"], prepared["semantic_events"])

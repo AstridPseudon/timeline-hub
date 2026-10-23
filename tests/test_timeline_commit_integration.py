@@ -125,9 +125,14 @@ class Editing:
 
     def body(self, commands, base=None):
         base = base or self.head()
+        label = "Real renderer-free integration"
         return {"api_version": 1, "project_id": self.project, "timeline_id": self.timeline,
                 "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
                 "commands": copy.deepcopy(commands), "source": {"via": "python"},
+                "label": label, "merge": "fields", "reads": [], "dry_run": False,
+                "steps": [{"id": "edit", "label": label, "intent": "Exercise native editing",
+                           "tags": ["integration"], "command_ordinals": list(range(len(commands))),
+                           "patch": [], "reads": []}],
                 "rationale": "real renderer-free integration"}
 
     def move(self, clip, on, *, document=None):
@@ -161,6 +166,14 @@ class Editing:
         revision = document["parent_revision"]["revision_id"]
         assert data["accepted_revision_id"] == revision
         assert accepted["receipt"]["result"] == data
+        entry = next(row for row in self.history()
+                     if row["publication_id"] == accepted["receipt"]["receipt_id"])
+        assert entry["receipt"] == accepted["receipt"]
+        assert entry["label"] == data["label"]
+        assert entry["steps"] == entry["records"]["steps"] == data["steps"]
+        assert entry["publisher"] == data["publisher"]
+        assert entry["merge_mode"] == data["merge_mode"]
+        assert all(isinstance(step["patch"], list) for step in data["steps"])
         assert self.document(revision) == document
         parent = self.service.get_project_parent_composition_revision(self.project, self.timeline, revision)
         assert parent["revision_id"] == revision
@@ -229,7 +242,11 @@ def test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip(editing):
     assert editing.service.store._last_idempotency_prune > 0
     second = editing.commit(disjoint, "move-disjoint")
     assert first["data"]["status"] == "accepted"
-    assert second["data"]["status"] == "rebased"
+    assert second["data"]["status"] == "merged"
+    assert second["data"]["rebased_onto"] == {
+        "revision_id": first["data"]["accepted_revision_id"],
+        "publication_id": first["receipt"]["receipt_id"],
+    }
     assert positions(second["data"]["canonical_document"]) == {"music-bed": 1, "music-other": 2}
     editing.assert_readback(first)  # Exact old accepted closure after a newer head.
     editing.assert_readback(second)
@@ -280,7 +297,7 @@ def test_real_door_concurrent_disjoint_moves_accept_and_rebase(film, agent, tmp_
             results = [future.result(timeout=30) for future in futures]
 
         assert sorted(provider_keys) == sorted(key for _, key in requests)
-        assert sorted(result["data"]["status"] for result in results) == ["accepted", "rebased"]
+        assert sorted(result["data"]["status"] for result in results) == ["accepted", "merged"]
         assert len({result["receipt"]["receipt_id"] for result in results}) == 2
         for result in results:
             editing.assert_readback(result)
@@ -480,6 +497,125 @@ def _assert_door_refusal_unchanged(edit, response, expected_status, expected_bod
     assert rows(edit.service) == before_rows
     assert edit.head() == before_head
     assert edit.history() == before_history
+
+
+@pytest.mark.parametrize("merge", ["fields", "atomic"])
+def test_real_door_v2_native_and_patch_preview_accept_retry_and_stale_head(
+        film, agent, tmp_path, monkeypatch, merge):
+    world = _start_door(film, tmp_path)
+    try:
+        edit = Editing(world.daemon.service, film, agent)
+        assert edit.service is not None
+        base, document = edit.head(), edit.document()
+        body = _full_v2_auth_body(edit)
+        body["merge"] = merge
+        change = body["commands"][0]["args"]["changes"][0]
+        # This capture has no meta container; create it as one guarded value.
+        assert "meta" not in document["parent_revision"]["payload"]
+        change["path"] = ["meta"]
+        change["value"] = {"org.example.auth-probe": {"note": "Preserve alongside the native move"}}
+        body["reads"][0]["path"] = ["meta"]
+        body["steps"][0]["reads"][0]["path"] = ["meta"]
+        body["steps"][0]["patch"] = [copy.deepcopy(change)]
+        body["commands"].insert(0, edit.move("music-bed", 1, document=document))
+        body["steps"][0]["command_ordinals"] = [1]
+        body["steps"].insert(0, {
+            "id": "native-move", "label": "Move the music bed", "intent": "Retain native semantics",
+            "tags": ["integration"], "command_ordinals": [0], "patch": [], "reads": [],
+        })
+        frozen = copy.deepcopy(body)
+        before = rows(edit.service)
+        preview = _post_door(world, edit.path, {**body, "dry_run": True}, "v2-preview")
+        assert preview["data"]["status"] == "preview"
+        assert preview["data"]["would_status"] == "accepted"
+        assert preview["data"]["evaluated_head"] == base
+        assert preview["data"]["merge_mode"] == merge
+        assert preview["receipt"] is None
+        assert rows(edit.service) == before
+
+        accepted = _post_door(world, edit.path, body, "v2-mixed")
+        assert accepted["data"]["status"] == "accepted"
+        assert accepted["data"]["label"] == body["label"]
+        assert accepted["data"]["merge_mode"] == merge
+        assert accepted["data"]["reads"] == body["reads"]
+        assert [step["id"] for step in accepted["data"]["steps"]] == ["native-move", "auth-probe"]
+        assert accepted["data"]["steps"][1]["patch"] == [change]
+        assert accepted["data"]["steps"][1]["reads"] == body["steps"][1]["reads"]
+        canonical = accepted["data"]["canonical_document"]
+        assert positions(canonical) == {"music-bed": 1, "music-other": 0}
+        assert canonical["parent_revision"]["payload"]["meta"] == change["value"]
+        edit.assert_readback(accepted)
+        after = rows(edit.service)
+
+        def forbidden(self, context, port):
+            raise AssertionError("exact v2 retry executed the semantic provider")
+
+        with monkeypatch.context() as retry:
+            retry.setattr(type(edit.service._timeline_commit_provider), "commit", forbidden)
+            assert _post_door(world, edit.path, body, "v2-mixed") == accepted
+        assert body == frozen
+        assert rows(edit.service) == after
+
+        stale = edit.body([edit.move("music-other", 2, document=document)], base)
+        stale["merge"] = merge
+        response = world.call("/api/runtime" + edit.path, "POST", body=json.dumps(stale).encode(),
+                              headers={"Content-Type": "application/json", "Idempotency-Key": "v2-stale"})
+        if merge == "fields":
+            assert response.status == 200, response.body
+            merged = response.json()
+            assert merged["data"]["status"] == "merged"
+            assert merged["data"]["rebased_onto"] == {
+                "revision_id": accepted["data"]["accepted_revision_id"],
+                "publication_id": accepted["receipt"]["receipt_id"],
+            }
+            assert positions(merged["data"]["canonical_document"]) == {"music-bed": 1, "music-other": 2}
+            assert merged["data"]["canonical_document"]["parent_revision"]["payload"]["meta"] == canonical["parent_revision"]["payload"]["meta"]
+            edit.assert_readback(merged)
+        else:
+            assert response.status == 409, response.body
+            details = response.json()["details"]
+            assert details["status"] == "conflict"
+            assert details["code"] == "atomic_scope_changed"
+            assert details["current"] == edit.head()
+            assert isinstance(details["path"], list)
+            assert details["hint"] and details["suggested_command"]
+            assert rows(edit.service) == after
+        edit.assert_baseline()
+    finally:
+        world.stop()
+
+
+def test_real_door_v2_invalid_patch_has_structured_failure_without_writes(film, agent, tmp_path):
+    world = _start_door(film, tmp_path)
+    try:
+        edit = Editing(world.daemon.service, film, agent)
+        body = _full_v2_auth_body(edit)
+        change = body["commands"][0]["args"]["changes"][0]
+        change["path"] = ["meta"]
+        change["before"] = {"state": "present", "value": {"org.example.auth-probe": {"note": "never existed"}}}
+        change["value"] = {"org.example.auth-probe": {"note": "must not be accepted"}}
+        body["reads"][0]["path"] = ["meta"]
+        body["steps"][0]["reads"][0]["path"] = ["meta"]
+        body["steps"][0]["patch"] = [copy.deepcopy(change)]
+        before, head, history = rows(edit.service), edit.head(), copy.deepcopy(edit.history())
+        response = world.call("/api/runtime" + edit.path, "POST", body=json.dumps(body).encode(),
+                              headers={"Content-Type": "application/json", "Idempotency-Key": "v2-invalid"})
+        assert response.status == 422, response.body
+        failure = response.json()
+        assert failure["code"] == "validation_error"
+        details = failure["details"]
+        assert details["status"] == "invalid"
+        assert details["code"] == "previous_value_mismatch"
+        assert details["path"] == change["path"]
+        assert details["current"] == head
+        assert details["hint"] and details["suggested_command"]
+        assert "receipt" not in failure
+        assert rows(edit.service) == before
+        assert edit.head() == head
+        assert edit.history() == history
+        edit.assert_baseline()
+    finally:
+        world.stop()
 
 
 def _assert_route_scope_refusal_unchanged(edit, response, before_rows, before_head,
