@@ -648,7 +648,29 @@ def fetch_bundle(project: str, timeline: str, *, revision_id: str | None = None,
         opened = c.timelines.open_bundle(project, timeline, revision_id=revision_id, **options)
         if not opened.ok or not isinstance(opened.data, Mapping):
             raise TimelineEditError(f"could not open {timeline!r} in {project!r}: {opened.error}")
-        return copy.deepcopy(dict(opened.data["bundle"]))
+        bundle = copy.deepcopy(dict(opened.data["bundle"]))
+        if revision_id is None and publication_id is None:
+            # A restored revision can belong to several publications. Only
+            # Runtime's scoped head pair identifies the current publication.
+            project_id, timeline_id = bundle["project_id"], bundle["timeline_id"]
+            page = c.timelines.history(project_id, timeline_id, cursor=None, limit=1)
+            if not page.ok:
+                raise TimelineEditError(f"could not pin checkout publication: {page.error}")
+            head = page.data.get("head") if isinstance(page.data, Mapping) else None
+            if (not isinstance(head, Mapping)
+                    or not isinstance(head.get("revision_id"), str) or not head["revision_id"]
+                    or not isinstance(head.get("publication_id"), str) or not head["publication_id"]):
+                raise TimelineEditError("checkout history omitted its exact head pair")
+            if head["revision_id"] != bundle["base_parent"]["revision_id"]:
+                raise TimelineEditError("checkout head moved while reading; reopen the timeline")
+            hydrated = c.timelines.open_bundle(
+                project_id, timeline_id, revision_id=head["revision_id"],
+                publication_id=head["publication_id"],
+            )
+            if not hydrated.ok or not isinstance(hydrated.data, Mapping):
+                raise TimelineEditError(f"could not hydrate checkout publication: {hydrated.error}")
+            bundle = copy.deepcopy(dict(hydrated.data["bundle"]))
+        return bundle
 
     if client is not None:
         return read(client)
