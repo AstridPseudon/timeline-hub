@@ -1063,7 +1063,8 @@ def find_version(tl: Any, version: str, *, client: Any = None) -> Any:
                 raise SheetError(f"could not read retained sheet basis: {result.error}")
             for row in result.data["items"]:
                 other = Checkout.open(tl.bundle["project_id"], tl.bundle["timeline_id"],
-                                      revision_id=row["revision_id"], client=client)
+                                      revision_id=row["revision_id"],
+                                      publication_id=row["publication_id"], client=client)
                 if sheet_version(other) == version:
                     return other
             cursor = result.data.get("next_cursor")
