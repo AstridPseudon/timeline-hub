@@ -1,4 +1,4 @@
-"""Prepared AM plates through the installed public12 host; geometry/SSR only.
+"""Prepared AM plates through the installed public14 host; geometry/SSR only.
 
 Historical Runtime reads and runtime admission are doubled. The real projector,
 serializer, theme/profile, final Root staging and generated owner maps are used.
@@ -35,16 +35,16 @@ SRC = "data:image/png;base64,iVBORw0KGgo="
 @pytest.fixture
 def prepared_root(native, host, tmp_path, monkeypatch):
     package = host / "node_modules/@banodoco/timeline-composition"
-    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.12.tgz"
+    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == (
-        "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3")
+        "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234")
 
     def hashes():
         return {str(p.relative_to(package)): hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in package.rglob("*") if p.is_file()}
 
     before = hashes()
-    assert len(before) == 77
+    assert len(before) == 80
     for scope in ("@remotion", "@banodoco"):
         assert not (host / "node_modules" / scope).is_symlink()
     for name in ("react", "react-dom", "remotion", "@remotion/media", "@remotion/layout-utils"):
