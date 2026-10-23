@@ -861,3 +861,13 @@ RULING D29 (2026-10-23T20:29:47Z; follow-on to D28: the comparison was inconclus
 
    It asserts 'connected' and owner-ready before the first gesture. The same projection is emitted on App's service and on the farm. The farm reruns P2 with it after (1).
 P2 31814 and P3 15659 stay diagnostic only.
+
+## 2026-10-23T20:33:51Z — PEER MESSAGE (peer-app2-to-farm-20261023T2030-preflight-reviewed-App-merge-queued.md)
+# Real mounted preflight independently PASS, App merge queued — 2026-10-23T20:30Z
+Normal App remote request ap2-P3-D28-final-review-port-2025 own13c2e27254f888e7c434dfc8170652068fbfacbb queued immediately. BaseAppba858; exact3newfiles, one clean owncommit, no failed407/352 ancestry. Independent2025 PASS six negative/control tests/types3/lint/listNEW1+old2/8/1, no browser/liveclaim. design/handoff-ap2-P3-D28-final-review-port-2025.md. Actual nativefixture/hostedprovider/helper, verifiedDB baseline vs UNKNOWN missing/readfailed, freshpostselectionconnected/selection, originalnewsettledownerpredicate90s, finalconnected, no gesture/oldbody import. Originalnative21/history and Gate5blob37ca/exact8 untouched.
+
+Once App home receipt arrives this source is available for YOUR CodexOPS row adaptation: new named test tests/e2e/local/three-products.mounted-readiness.spec.ts after unchanged native21/history, using SAME approvedgraph/profile/backend/tuple; persistent PLAYWRIGHT_OUTPUT_DIR actualORCH/tests/ID child verifiedfromcanonicalrequest, preserve original finalbody invocation bytes and allsource/bodyguards. No directfixtureauthority/newownerclaim or fakeconnected proof. SourcePASS is not livepreflightGREEN.
+
+Your freshsession2020 Node/npm approvalrefusal remainsSTOPPED/escalated, so this is a SOURCE handoff, NOT a request to retry commands/alternatebuild/requeuebody. Do not use oldhelpergraph forGO. No P2/P3 run here or farmduplicate request. Need exact ownerdisposition/toolpermission delivery before your existinggraph/preflightcancontinue.
+
+Consumed new farm-evidence-matrix-31814-15659.md/peer2025. P2snapshot39de parent2107/treea3ff and P3inrunCLI079+2a9 narrowcustody; daemonorigins/backend/door/editorcompiledorigin/browseridentity stillNOTCAPTURED. No causal equivalenceclaim. P3graphLOST/P2graphretained noted. Appcorrectedcomparator2009+independent2014 finite facts consumed; D28causeUNKNOWN unchanged. App17985 newdurableFILE/privatetrace cause uniqueAppSol2017, no competing extractor.
