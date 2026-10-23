@@ -1,0 +1,253 @@
+{
+  "case": {
+    "title": "P1 split -> trim new clip: accepted split, merged trim after Agent edit, lost ACK restart and exact retry",
+    "expectedPostCount": 2,
+    "observedPostCount": 1
+  },
+  "tuple": {
+    "projectId": "60a406bb07684ee8a8c48c3fe5820666",
+    "timelineId": "f63b2e5a-252e-4059-8f41-29d3d66d201f",
+    "sourceId": "UNKNOWN",
+    "rightId": "p1-chain-source-1792798237006"
+  },
+  "available": {
+    "outbox": {
+      "summary": "UNKNOWN",
+      "owners": "UNKNOWN",
+      "readFailed": true
+    },
+    "sourceWindow": {
+      "before": {
+        "sourceIn": {
+          "value": "0",
+          "numericValue": 0,
+          "visible": true
+        },
+        "selectedClip": {
+          "identity": {
+            "tagName": "DIV",
+            "id": null,
+            "clipId": "p1-chain-source-1792798237006",
+            "testId": null,
+            "ariaSelected": null,
+            "className": "clip-action group relative flex h-full w-full select-none overflow-hidden rounded-md border bg-card text-left outline-none border-sky-400 text-foreground"
+          },
+          "status": "UNKNOWN",
+          "visible": true,
+          "text": "p1-video.webm"
+        },
+        "rightId": "p1-chain-source-1792798237006"
+      },
+      "after": {
+        "sourceIn": {
+          "value": "3",
+          "numericValue": 3,
+          "visible": true
+        },
+        "selectedClip": {
+          "identity": {
+            "tagName": "DIV",
+            "id": null,
+            "clipId": "p1-chain-source-1792798237006",
+            "testId": null,
+            "ariaSelected": null,
+            "className": "clip-action group relative flex h-full w-full select-none overflow-hidden rounded-md border bg-card text-left outline-none border-sky-400 text-foreground"
+          },
+          "status": "UNKNOWN",
+          "visible": true,
+          "text": "p1-video.webm"
+        },
+        "rightId": "p1-chain-source-1792798237006"
+      }
+    },
+    "failureContext": "UNKNOWN",
+    "wireHeads": [
+      {
+        "head": {
+          "revisionId": "authoring-parent-revision-2d98c5220a61c4c79eb485f882e8116d7001dcd3a207ab956b8f11387ba25776",
+          "publicationId": "txn-e9614613ab2940f58b7fa706dd22cba2"
+        },
+        "keyProjection": {
+          "present": true,
+          "bytes": 36
+        },
+        "method": "POST",
+        "route": "/api/runtime/v1/projects/:project/timelines/:timeline/commit",
+        "status": 200,
+        "replyReadFailed": false
+      }
+    ],
+    "requestProjections": [
+      {
+        "keyProjection": {
+          "present": true,
+          "bytes": 36,
+          "sameAsPrevious": null
+        },
+        "bodyProjection": {
+          "present": true,
+          "bytes": 3669,
+          "sameAsPrevious": null
+        },
+        "index": 0,
+        "method": "POST",
+        "route": "/api/runtime/v1/projects/:project/timelines/:timeline/commit",
+        "status": 200
+      },
+      {
+        "keyProjection": {
+          "present": true,
+          "bytes": 36,
+          "sameAsPrevious": false
+        },
+        "bodyProjection": {
+          "present": true,
+          "bytes": 2695,
+          "sameAsPrevious": false
+        },
+        "index": 1,
+        "method": "POST",
+        "route": "/api/runtime/v1/projects/:project/timelines/:timeline/commit",
+        "status": null
+      },
+      {
+        "keyProjection": {
+          "present": true,
+          "bytes": 36,
+          "sameAsPrevious": true
+        },
+        "bodyProjection": {
+          "present": true,
+          "bytes": 2695,
+          "sameAsPrevious": true
+        },
+        "index": 2,
+        "method": "POST",
+        "route": "/api/runtime/v1/projects/:project/timelines/:timeline/commit",
+        "status": null
+      }
+    ],
+    "recovery": {
+      "connectionState": "unknown",
+      "runtimePanelVisible": "UNKNOWN",
+      "recoveryVisible": "UNKNOWN",
+      "recoveryMessage": "UNKNOWN",
+      "timelineErrorVisible": "UNKNOWN",
+      "timelineErrorMessage": "UNKNOWN",
+      "alertCount": "UNKNOWN"
+    },
+    "errors": {
+      "page": [],
+      "console": [
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: net::ERR_CONNECTION_RESET"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        },
+        {
+          "type": "error",
+          "signal": "unknown",
+          "message": "Failed to load resource: the server responded with a status of 503 (Service Unavailable)"
+        }
+      ],
+      "requestFailures": [
+        {
+          "error": "net::ERR_CONNECTION_RESET",
+          "method": "POST",
+          "route": "/api/runtime/v1/projects/:project/timelines/:timeline/commit"
+        },
+        {
+          "error": "net::ERR_ABORTED",
+          "method": "POST",
+          "route": "/api/runtime/v1/projects/:project/timelines/:timeline/commit"
+        }
+      ]
+    },
+    "mountedObservations": "UNKNOWN"
+  },
+  "unknowns": {
+    "mountedDataRef": "UNKNOWN",
+    "callbackPatch": "UNKNOWN",
+    "captureResolution": "UNKNOWN"
+  },
+  "losses": {
+    "mountedObservations": "UNKNOWN",
+    "callbackPatch": "UNKNOWN",
+    "cappedConsole": true,
+    "captureResolution": "UNKNOWN"
+  },
+  "captureData": "UNKNOWN",
+  "mountedObservations": "UNKNOWN",
+  "title": "P1 split -> trim new clip: accepted split, merged trim after Agent edit, lost ACK restart and exact retry",
+  "phase": "afterEach_failure_continuation",
+  "status": "failed",
+  "schemaVersion": 1,
+  "expectedStatus": "passed",
+  "capturedAt": "2026-10-23T23:31:12.882Z",
+  "durationMs": 47217
+}
