@@ -304,10 +304,31 @@ def _authoring_identity(kind, *parts):
     return f"{kind}-" + hashlib.sha256(encoded).hexdigest()
 
 
-def _sequential_assertion(claim, ordinals, sequential, key):
+def _sequential_assertion(claim, ordinals, sequential, key, phase="input"):
+    if key == "dependency" and claim == {"kind": "scope", "ref": "timeline", "path": []}:
+        require(len(ordinals) == 1, "timeline scope read has no unique sequential input")
+        ordinal = ordinals[0]
+        pairs = [pair for (index, _), pair in sequential["binding_pairs"].items()
+                 if index == ordinal and pair["original"]["key"] == "commit.read"
+                 and pair["original"]["ref"] == "timeline"
+                 and pair["original"]["boundary"]["phase"] == phase]
+        # Timeline scope reads expand over the entire closure, rather than
+        # carrying one physical dependency. Authenticate every image on both
+        # sides at the declaration's own batch/step input boundary.
+        for side in ("original", "landing"):
+            boundary = images(sequential[side][ordinal]["input"])
+            refs = [pair[side]["physical_ref"] for pair in pairs]
+            require(len(refs) == len(set(refs)) and set(refs) == set(boundary)
+                    and all(pair[side]["key"] == "commit.read"
+                            and pair[side]["ref"] == "timeline"
+                            and pair[side]["path"] == []
+                            and pair[side]["boundary"]["phase"] == phase for pair in pairs),
+                    "timeline scope read lacks complete authenticated sequential bindings")
+        return ordinal, claim
     matches = []
     for (ordinal, _), pair in sequential["binding_pairs"].items():
-        if ordinal not in ordinals or key not in pair["original"]:
+        if (ordinal not in ordinals or key not in pair["original"]
+                or pair["original"]["boundary"]["phase"] != phase):
             continue
         original_input = images(sequential["original"][ordinal]["input"])
         original = pair["original"][key]
@@ -2263,7 +2284,7 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
     batch_reads = []
     for read in request.get("reads", []):
         if sequential is not None and "binding_pairs" in sequential:
-            _, read = _sequential_assertion(read, [0], sequential, "dependency")
+            _, read = _sequential_assertion(read, [0], sequential, "dependency", "batch-read")
         batch_reads.append(validate_read(boundary, read, continuations))
     validate_claims(request, records)
     accepted = images(prepared["canonical_document"])
