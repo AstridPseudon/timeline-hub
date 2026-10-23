@@ -87,7 +87,10 @@ def _public13_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
             "GIT_COMMITTER_EMAIL",
         }:
             monkeypatch.delenv(name, raising=False)
-    monkeypatch.setenv("ASTRID_RUNTIME_CHECKOUT", "/home/user/work/runtime")
+    monkeypatch.setenv(
+        "ASTRID_RUNTIME_CHECKOUT",
+        os.environ.get("ASTRID_RUNTIME_CHECKOUT", "/home/user/work/runtime"),
+    )
     private_profile = tmp_path / "public13-profile"
     shutil.copytree(
         REMOTION,
@@ -102,7 +105,10 @@ def _public13_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
     )
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(private_profile))
     monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(NODE))
-    monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA))
+    monkeypatch.setenv(
+        "ASTRID_TIMELINE_SCHEMA_PYTHONPATH",
+        os.environ.get("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA)),
+    )
     monkeypatch.setenv("ASTRID_PACKS_PATH", os.pathsep.join(str(root) for root in PACK_ROOTS))
     assert private_profile.is_dir()
     assert NODE.is_file() and os.access(NODE, os.X_OK)
